@@ -1,8 +1,12 @@
 import { defineConfig, globalIgnores } from 'eslint/config'
 import nextVitals from 'eslint-config-next/core-web-vitals'
- 
+import { sharedRules } from '@acme/config/eslint/base.mjs'
+
 const eslintConfig = defineConfig([
   ...nextVitals,
+  // This app layers next's preset instead of baseConfig, so the workspace-wide
+  // guardrails (doc 11 §6) have to be spread in explicitly or they stop at the app edge.
+  ...sharedRules(),
   {
     files: ['**/*.ts', '**/*.tsx'],
     ignores: ['components/site/Landing.tsx'],

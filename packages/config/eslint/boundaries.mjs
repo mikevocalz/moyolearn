@@ -53,6 +53,50 @@ export const FORBID_DOMAIN_FROM_UI = [
   },
 ];
 
+// @acme/payload is the content client; only a domain's repository layer may hold it.
+// Applied everywhere EXCEPT **/repository/** — the exemption is the whole rule.
+export const FORBID_PAYLOAD_OUTSIDE_REPOSITORIES = [
+  {
+    group: ['@acme/payload', '@acme/payload/*'],
+    message:
+      'Only <domain>/repository/* touches @acme/payload (doc 11 §3). Go through the domain service ' +
+      'so the operation passes through protectedOperation().',
+  },
+];
+
+// A repository is reachable from its own domain service and nowhere else.
+// Scope this with `files`/`ignores` (exempting **/services/** and **/repository/**),
+// NOT with a `!` negation in the group: negation matches on the specifier as written,
+// so `./repository/x` from a feature slips through while `../repository/x` from the
+// service next door gets blocked — precisely backwards.
+export const FORBID_REPOSITORY_IMPORT = [
+  {
+    group: ['**/repository/*', '**/*.repository'],
+    message:
+      'Repositories are called by their own domain service only (doc 11 §3). Import the ' +
+      "domain's index.ts and use the service.",
+  },
+];
+
+// Nothing reaches past a domain's index.ts.
+export const FORBID_DOMAIN_DEEP_IMPORTS = [
+  {
+    group: ['@acme/app/*/services/*', '@acme/app/*/repository/*', '@acme/app/*/permissions/*'],
+    message: "Import a domain's index.ts — a deep path bypasses its public API (doc 11 §3).",
+  },
+];
+
+// Doc 09's mock session is a dev affordance: screens depend on the session
+// interface, so swapping in the live provider stays a swap and not a rewrite.
+export const FORBID_MOCK_SESSION = [
+  {
+    group: ['**/provider/session/mock', '**/provider/session/mock/*'],
+    message:
+      'Screens use useAppSession(); importing the mock provider directly welds the dev fixture ' +
+      'into the screen and breaks the Mock-Session Contract (doc 09).',
+  },
+];
+
 export function boundaries(extraPatterns = []) {
   return {
     rules: {
