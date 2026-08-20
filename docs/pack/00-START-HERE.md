@@ -26,6 +26,12 @@ The mission in one line: help children get a better education — by opening the
 
 11. **`11-architectural-guardrails.md`** + **`CLAUDE.md`** + **`PROMPTS.md`** — guardrail-coding methodology on the existing stack — **no tRPC, no new dependencies**. The `pnpm gen domain` generator already emits the layered architecture; this doc adds the shared block primitive, the permissions registry, lint rules that turn the generator's header comments into build errors, relationship scoping (identity is never a parameter — the child-safety form of tenant scoping), and the anti-slop/anti-forgetting discipline. `CLAUDE.md` and `PROMPTS.md` drop into the repo as-is.
 
+12. **`12-systems-design-prompt.md`** — the systems-design prompt of record (roster-framed per the standing rule): binding high-level architecture (one server core around the Block, one Postgres with schema-level three-store separation, inference gateway as sole model egress), the five binding flows including the fail-closed learner AI turn, pg-boss/caching/SSE decisions with explicit trade-offs, the token-cost scale model, and the agent's deliverables. Where docs disagree, this one wins.
+
+13. **`13-public-api-spec.md`** — the public API (Operations Cloud surface), studied from Noto's live spec and exceeded: registry-derived errors/scopes/docs/SDK, idempotency on all writes, signed webhooks, opaque IDs, sandbox powered by the persona fixtures, and the child-safety line — learner learning data has no public endpoints in any version.
+
+14. **`14-integrations-spec.md`** — the researched integration catalog (Noto/Teachworks/TutorCruncher/classroom/MCP landscapes verified), tiered T1–T8 with phases: money (QBO+Xero native two-way), time (GCal/Outlook/ICS), the classroom-provider adapter Noto lacks entirely, consent-scoped comms, the catalog-generated Zapier/Make/n8n rail, the education-standards track, and the flagship Moyo MCP server. All of it rides the doc-13 API+webhooks — no side doors.
+
 Build order: doc 11's PR-26 (agent surface + CLAUDE.md) lands in Wave 1 before other work; doc 09 supersedes the PR sequencing in docs 03/05/06 — screens ship against the mock session first; auth lands in Wave 3.
 
 Where documents disagree, the later one wins: security spec > auth spec > monetization spec > briefs > tailoring > design spec > plan (the tailoring doc lists each supersession explicitly).
