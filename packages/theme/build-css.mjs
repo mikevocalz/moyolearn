@@ -1,6 +1,8 @@
 // Emits theme.css + theme-native.css (Tailwind v4 @theme variables) from
 // tokens.ts — the single source.
 // Run: node build-css.mjs   (both are committed; CI can diff-check for drift)
+// SOT: ./tokens.ts
+// SOT-KEYWORDS: theme css build tailwind generate variables native-css
 //
 // TWO self-contained outputs, because the two styling engines disagree about
 // where a themed variable lives:

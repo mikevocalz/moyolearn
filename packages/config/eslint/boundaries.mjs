@@ -3,6 +3,8 @@
  * Compose into a flat config: `boundaries()` for the workspace-wide baseline,
  * or `boundaries(FORBID_DOMAIN_FROM_UI)` etc. for stricter packages.
  */
+// SOT: docs/pack/11-architectural-guardrails.md §6
+// SOT-KEYWORDS: eslint boundaries dependency-direction restricted-imports lint layering
 
 // Browser motion/rendering systems must not enter the native app or shared
 // package code that Metro can resolve.

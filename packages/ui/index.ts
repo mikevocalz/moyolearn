@@ -1,5 +1,9 @@
 // @acme/ui — pure presentational components (depends only on theme).
 // Primitives: '@acme/ui/primitives' · styling wrappers: '@acme/ui/tw'.
+// THE component index: check here before building any UI. `pnpm check:barrels`
+// fails if a module in this package isn't reachable from an entry point.
+// SOT: CLAUDE.md (UI) · docs/pack/10-types-components-spec.md
+// SOT-KEYWORDS: ui component index barrel kit presentational button card text
 
 // layout
 export { Container, type ContainerProps } from './layout/Container';

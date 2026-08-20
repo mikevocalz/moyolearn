@@ -1,4 +1,9 @@
 'use client';
+// TanStack Query provider — one client per mount, held in a ref.
+// A module-scope client would be shared across SSR requests and leak one user's
+// cache into another's response.
+// SOT: docs/pack/11-architectural-guardrails.md §2 (client cache layer)
+// SOT-KEYWORDS: query provider tanstack cache client ssr react-query
 import { useRef, type ReactNode } from 'react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 

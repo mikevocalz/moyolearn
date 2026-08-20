@@ -1,4 +1,6 @@
 // @acme/assets — typed exports for brand assets; no magic string paths in app code.
+// SOT: this file — every font/image path resolves here.
+// SOT-KEYWORDS: assets fonts images brand typed-paths require
 declare const require: (path: string) => number;
 
 // Retro fonts (OFL): Archivo Black = display slab, Space Grotesk = workhorse sans.

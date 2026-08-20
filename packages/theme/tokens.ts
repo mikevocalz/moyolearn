@@ -2,6 +2,11 @@
  * @acme/theme — the single token source (PROMPT-2).
  * Brand: burgundy, black, pumpkin orange. Warm dark mode + elegant light mode.
  *
+ * Raw styling values are banned in feature code: if a value is missing, it is
+ * added here, not inlined at the call site.
+ * SOT: this file · docs/pack/08-visual-hierarchy-spacing-spec.md
+ * SOT-KEYWORDS: theme tokens color spacing typography palette design-system brand
+ *
  * `build-css.mjs` emits theme.css (web/storybook, Tailwind v4 `@theme` with
  * light-dark()) and theme-native.css (mobile, Uniwind `@variant` theme blocks)
  * from the tokens below. TS consumers (Skia, charts,

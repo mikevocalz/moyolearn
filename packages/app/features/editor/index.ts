@@ -1,3 +1,9 @@
+// Rich-text editor feature public API — capability registry plus the editor surface.
+// Capabilities are declared data, not branches, so a host screen can offer a subset
+// (a learner note-taker and an ops booking note are the same editor, gated differently).
+// SOT: this module's CAPABILITIES map
+// SOT-KEYWORDS: editor rich-text capabilities toolbar formatting notes enriched
+
 export {
   CAPABILITIES,
   CAPABILITY_BY_ID,

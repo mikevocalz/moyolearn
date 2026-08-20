@@ -96,6 +96,10 @@ catalog:
   zod: 4.4.3
 
   # backend / cms
+  # The build-time tripwire on repositories/services (doc 11 §6). On native the
+  # leak this catches isn't server actions — it's Payload credentials and
+  # inference keys ending up readable inside an app binary.
+  server-only: 0.0.1
   payload: 4.0.0-canary.28
   "@payloadcms/db-postgres": 4.0.0-canary.28
   "@payloadcms/next": 4.0.0-canary.28
