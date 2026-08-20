@@ -1,6 +1,11 @@
 /**
  * @acme/theme — the single token source (PROMPT-2).
- * Brand: burgundy, black, pumpkin orange. Warm dark mode + elegant light mode.
+ * Moyo brand: highlighter yellow, hot pink, ink black on paper cream.
+ *
+ * The primitive scale NAMES ARE LIES kept for class compatibility: `burgundy` is
+ * electric yellow, `gold` is blue. Feature code must never name a primitive scale
+ * directly — use the schoolhouse semantic aliases below, which say what the colour
+ * IS. This is the whole reason PR-0 exists (doc 03 §6).
  *
  * Raw styling values are banned in feature code: if a value is missing, it is
  * added here, not inlined at the call site.
@@ -60,7 +65,9 @@ export const palette = {
     950: '#0D0C0B',
   },
   white: '#FFFFFF',
-  // choir calendar event-type accents — warm, dignified, readable on light/dark surfaces
+  // Event-type accents — readable on both light and dark surfaces.
+  // `gold` is BLUE: the name predates Moyo and is kept only so emitted class
+  // names stay stable. Reach for the `ballpoint` alias instead.
   gold: {
     50: '#EEF4FF', 100: '#DCE8FF', 200: '#B8D0FF', 300: '#8AB0FF',
     400: '#5C8AFF', 500: '#3B6DF6', 600: '#2952D9', 700: '#1F3FAD',
@@ -111,6 +118,24 @@ export const semantic = {
   focus: { light: palette.gold[500], dark: palette.gold[400] },
   danger: { light: '#D31F2B', dark: '#FF7A85' },
   'on-danger': { light: palette.white, dark: '#3D0508' },
+
+  // ---- schoolhouse aliases (PR-0) -------------------------------------------
+  // The design language is classroom stationery, so the tokens are named for the
+  // instrument that makes the mark. Two different jobs live here, and mixing them
+  // is the mistake this comment exists to prevent:
+  //
+  //   highlighter — a SURFACE. Ink goes on top of it, so it carries `on-*`.
+  //   ballpoint / redpen / grade — MARKS. They are drawn on the paper, so each
+  //   must clear AA against `surface` in both modes and shifts value per mode.
+  //
+  // `redpen` is teacher feedback, deliberately NOT `danger`: a correction is not
+  // an error state, and a child seeing alarm-red for ordinary marking is a
+  // child-outcome problem, not a palette one.
+  highlighter: { light: palette.burgundy[300], dark: palette.burgundy[300] },
+  'on-highlighter': { light: palette.ink[950], dark: palette.ink[950] },
+  ballpoint: { light: palette.gold[600], dark: palette.gold[400] },
+  redpen: { light: palette.rose[600], dark: palette.rose[300] },
+  grade: { light: palette.forest[600], dark: palette.forest[300] },
 } as const;
 
 // ---- typography -------------------------------------------------------------
@@ -119,6 +144,14 @@ export const fontFamilies = {
   // RETRO: Archivo Black shouts the headlines; Space Grotesk does the work.
   display: "'Archivo Black', 'Arial Black', sans-serif",
   sans: "'Space Grotesk', system-ui, -apple-system, sans-serif",
+  // Chivo Mono is Omnibus-Type, same foundry as Archivo Black — it reads as
+  // family with the display face rather than a fourth voice. Variable 100–900,
+  // which matters because hierarchy here is carried by weight (doc 08 §3.2).
+  // Two jobs: tabular data, and the `moyo · n. heart` dictionary device (doc 02,
+  // Addendum B) — which is why the italic cut ships too.
+  // Its `tnum`/`zero` features are OFF until asked for; build-css.mjs turns them
+  // on for the whole family, because unslashed 0 sits a hair from O.
+  mono: "'Chivo Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
 } as const;
 
 /** Display scale for hero/masthead moments; body text uses the Tailwind defaults. */

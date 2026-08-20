@@ -40,9 +40,11 @@ const sharedThemeTokens = () => {
     }
   }
 
-  // typography
-  out.push(`  --font-display: ${fontFamilies.display};`);
-  out.push(`  --font-sans: ${fontFamilies.sans};`);
+  // typography — iterated, so adding a family to tokens.ts emits it here too
+  // instead of silently doing nothing until someone notices the missing variable.
+  for (const [name, stack] of Object.entries(fontFamilies)) {
+    out.push(`  --font-${name}: ${stack};`);
+  }
   for (const [name, t] of Object.entries(typeScale)) {
     out.push(`  --text-${name}: ${t.size};`);
     out.push(`  --text-${name}--line-height: ${t.lineHeight};`);
@@ -88,6 +90,23 @@ const BODY_TEXT_BASE = `@layer base {
   .text-body-default { color: var(--color-text); }
 }`;
 
+// Chivo Mono ships `tnum` and `zero`, but BOTH ARE OFF UNTIL ASKED FOR. Without
+// this rule the mono's default 0 sits a hair away from O — the exact ambiguity the
+// face was chosen to avoid — and columns of times drift. Setting it on the family
+// rather than per call site means nobody has to remember it.
+// Only the family is targeted, so an explicit numeric utility still wins (utilities
+// layer beats base), and `font-mono` keeps setting just the family.
+const MONO_NUMERICS_WEB = `@layer base {
+  .font-mono { font-variant-numeric: tabular-nums slashed-zero; }
+}`;
+
+// React Native's `fontVariant` accepts tabular-nums but has NO slashed-zero
+// equivalent, so native gets the alignment and not the slash. Do not "fix" this by
+// adding slashed-zero here — it would be a style key the runtime silently drops.
+const MONO_NUMERICS_NATIVE = `@layer base {
+  .font-mono { font-variant-numeric: tabular-nums; }
+}`;
+
 // ---------------------------------------------------------------- web ------
 
 const web = [HEADER, '@theme {'];
@@ -108,6 +127,8 @@ web.push("[data-theme='light'] { color-scheme: light; }");
 web.push("[data-theme='dark'] { color-scheme: dark; }");
 web.push('');
 web.push(BODY_TEXT_BASE);
+web.push('');
+web.push(MONO_NUMERICS_WEB);
 web.push(`
 /* @expo/ui BottomSheet (vaul) on web: the drawer hardcodes a white/black
    background and a non-flex inner wrapper, so the kit's SheetSurface can't
@@ -152,6 +173,8 @@ native.push(...rootVars());
 native.push('}');
 native.push('');
 native.push(BODY_TEXT_BASE);
+native.push('');
+native.push(MONO_NUMERICS_NATIVE);
 native.push('');
 
 writeFileSync(new URL('./theme-native.css', import.meta.url), native.join('\n'));

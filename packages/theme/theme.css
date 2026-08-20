@@ -91,6 +91,7 @@
   --color-slate-950: #09090B;
   --font-display: 'Archivo Black', 'Arial Black', sans-serif;
   --font-sans: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Chivo Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --text-display-2xl: 4.5rem;
   --text-display-2xl--line-height: 1.05;
   --text-display-2xl--letter-spacing: -0.02em;
@@ -152,6 +153,11 @@
   --color-focus: light-dark(#3B6DF6, #5C8AFF);
   --color-danger: light-dark(#D31F2B, #FF7A85);
   --color-on-danger: light-dark(#FFFFFF, #3D0508);
+  --color-highlighter: light-dark(#FFE14D, #FFE14D);
+  --color-on-highlighter: light-dark(#0D0C0B, #0D0C0B);
+  --color-ballpoint: light-dark(#2952D9, #5C8AFF);
+  --color-redpen: light-dark(#A03333, #EB9C9C);
+  --color-grade: light-dark(#28613A, #7DB98B);
 }
 
 :root {
@@ -175,6 +181,10 @@
 
 @layer base {
   .text-body-default { color: var(--color-text); }
+}
+
+@layer base {
+  .font-mono { font-variant-numeric: tabular-nums slashed-zero; }
 }
 
 /* @expo/ui BottomSheet (vaul) on web: the drawer hardcodes a white/black

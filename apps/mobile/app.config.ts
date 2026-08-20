@@ -8,9 +8,9 @@ const appDir = dirname(fileURLToPath(import.meta.url));
 loadProjectEnv(join(appDir, '../..'), { silent: true, force: true });
 
 const config: ExpoConfig = {
-  name: 'Solito NativeUI Starter',
-  slug: 'solito-nativeui-starter',
-  scheme: 'solitostarter',
+  name: 'Moyo',
+  slug: 'moyo',
+  scheme: 'moyo',
   // Source of truth is apps/mobile/package.json "version" — keep the two in sync by hand.
   // (Not read dynamically: runtimeVersion policy 'appVersion' derives OTA runtime versions
   // from this field, so it must stay a literal the config loader can resolve without I/O.)
@@ -19,11 +19,11 @@ const config: ExpoConfig = {
   icon: './assets/images/icon.png',
   userInterfaceStyle: 'automatic',
   ios: {
-    bundleIdentifier: 'com.example.solitostarter',
+    bundleIdentifier: 'com.moyolearn.app',
     supportsTablet: true,
   },
   android: {
-    package: 'com.example.solitostarter',
+    package: 'com.moyolearn.app',
     adaptiveIcon: {
       foregroundImage: './assets/images/adaptive-icon.png',
       backgroundColor: palette.ink[50],
@@ -52,6 +52,8 @@ const config: ExpoConfig = {
         fonts: [
           '../../packages/assets/fonts/ArchivoBlack-Regular.ttf',
           '../../packages/assets/fonts/SpaceGrotesk-Variable.ttf',
+          '../../packages/assets/fonts/ChivoMono-Variable.ttf',
+          '../../packages/assets/fonts/ChivoMono-Italic-Variable.ttf',
         ],
       },
     ],

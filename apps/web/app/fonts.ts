@@ -13,3 +13,14 @@ export const sans = localFont({
   variable: '--font-sans',
   display: 'swap',
 });
+
+// Both cuts are shipped: the dictionary device sets the part-of-speech in italic,
+// and a synthesised oblique on a brand lockup reads as cheap.
+export const mono = localFont({
+  src: [
+    { path: '../../../packages/assets/fonts/ChivoMono-Variable.ttf', style: 'normal' },
+    { path: '../../../packages/assets/fonts/ChivoMono-Italic-Variable.ttf', style: 'italic' },
+  ],
+  variable: '--font-mono',
+  display: 'swap',
+});
