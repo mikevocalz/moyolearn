@@ -1,0 +1,16 @@
+{
+  "name": "@acme/config",
+  "version": "0.0.0",
+  "private": true,
+  "exports": {
+    "./typescript/*": "./typescript/*",
+    "./eslint/*": "./eslint/*",
+    "./prettier": "./prettier/index.json"
+  },
+  "dependencies": {
+    "eslint-config-expo": "catalog:"
+  },
+  "peerDependencies": {
+    "eslint": "catalog:"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "name": "solito-nativeui-starter",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Solito NativeUI Starter \u2014 universal Expo + Next.js (Payload) monorepo with a shared Uniwind UI kit and Storybook.",
+  "license": "MIT",
+  "packageManager": "pnpm@10.32.1",
+  "engines": {
+    "node": ">=24.15.0 <26"
+  },
+  "scripts": {
+    "dev": "turbo dev",
+    "build": "turbo build",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "test": "turbo test",
+    "gen": "node tooling/generators/gen.mjs"
+  },
+  "devDependencies": {
+    "turbo": "catalog:"
+  }
+}

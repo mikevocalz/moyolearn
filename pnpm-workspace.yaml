@@ -1,0 +1,126 @@
+packages:
+  - apps/*
+  - packages/*
+
+# uniwind + @expo/metro-config both drive lightningcss; 1.31+ changed the serde
+# structs ("expected an object-like struct named Specifier") so the native CSS
+# pipeline needs 1.30.1 exactly. uniwind itself depends on 1.30.1 exactly, so
+# this override now just holds @expo/metro-config to the same copy.
+overrides:
+  lightningcss: 1.30.1
+  # react/react-dom are ALSO declared in `catalog:` below (the two entries every
+  # package.json resolves through). An override silently outranks the catalog,
+  # so a bump here without the matching catalog bump — or vice versa — produces
+  # a workspace whose declared version is not the installed one. Bump both, or
+  # neither.
+  react: 19.2.8
+  react-dom: 19.2.8
+
+  # expo declares @expo/dom-webview as an OPTIONAL peer with range "*", so a
+  # stale 55.0.3 kept satisfying it while @expo/log-box@57 requires ^57.0.1.
+  # Pin it to the version expo's own dependencies block asks for (~57.0.1).
+  "@expo/dom-webview": 57.0.1
+
+
+onlyBuiltDependencies:
+  - sharp
+  - unrs-resolver
+  - esbuild
+
+# One version per dependency, declared once. Every package.json uses `catalog:`.
+catalog:
+  # runtime core (Expo SDK 57 stable — RN 0.86.2)
+  react: 19.2.8
+  react-dom: 19.2.8
+  react-native: 0.86.2
+  react-native-web: 0.21.2
+  expo: 57.0.15
+  "@expo/metro-runtime": 57.0.12
+  expo-font: 57.0.1
+  expo-image: 57.0.3
+  expo-document-picker: 57.0.1
+  expo-image-picker: 57.0.12
+  react-native-audio-api: 0.13.3
+  react-native-youtube-bridge: 2.2.2
+  expo-linking: 57.0.7
+  expo-router: 57.0.15
+  expo-splash-screen: 57.0.7
+  expo-status-bar: 57.0.1
+  expo-system-ui: 57.0.2
+  "@gorhom/bottom-sheet": 5.2.14
+  react-native-keyboard-controller: 1.22.4
+  react-native-mmkv: 4.3.2
+  react-native-nitro-modules: 0.36.5
+  react-native-enriched-html: 1.1.1
+  react-native-gesture-handler: ~2.32.0
+  react-native-reanimated: 4.5.1
+  react-native-safe-area-context: ~5.7.0
+  react-native-screens: ~4.26.0
+  react-native-worklets: 0.10.1
+  "@react-navigation/native": 7.3.13
+  solito: 5.0.0
+  lucide-react: 1.31.0
+  lucide-react-native: 1.31.0
+  react-native-svg: 15.15.4
+  react-native-pulsar: 1.7.0
+  "@expo/html-elements": 57.0.0
+  "@expo/ui": ~57.0.11
+  expo-paste-input: 0.2.2
+  expo-drag-drop-content-view: 0.9.2
+  sonner: 2.0.8
+  sonner-native: 0.27.0
+
+  # web
+  next: 16.3.1
+  nextjs-toploader: 3.9.17
+
+  # styling (Uniwind — Tailwind 4 only; uniwind pins @tailwindcss/node to the
+  # exact tailwindcss version below, so bump the two together or not at all)
+  uniwind: 1.11.0
+  tailwindcss: 4.3.2
+  "@tailwindcss/postcss": 4.3.2
+  react-native-css: 3.0.7
+  tailwind-merge: 3.6.0
+  tailwind-variants: 3.3.1
+
+  # state / data
+  "@tanstack/react-query": 5.101.4
+  "@tanstack/react-virtual": 3.14.9
+  "@tanstack/react-form": 1.33.5
+  "@tanstack/react-pacer": 0.23.0
+  "@tanstack/react-table": 8.21.3
+  "@legendapp/list": 3.3.6
+  "@legendapp/motion": 2.5.3
+  date-fns: 4.1.0
+  zustand: 5.0.15
+  zod: 4.4.3
+
+  # backend / cms
+  payload: 4.0.0-canary.28
+  "@payloadcms/db-postgres": 4.0.0-canary.28
+  "@payloadcms/next": 4.0.0-canary.28
+  "@payloadcms/ui": 4.0.0-canary.28
+  graphql: 16.14.2 # payload peers ^16
+  pg: 8.23.0
+  sharp: 0.35.3
+  "@types/pg": 8.23.0
+
+  # tooling
+  typescript: ~6.0.3
+  "@types/react": ~19.2.18
+  # Must stay on the Node major `engines.node` (>=24.15.0 <26) actually allows —
+  # typing against 26 describes a runtime this repo refuses to start on.
+  "@types/node": ^24.13.3
+  "@types/react-dom": ^19.2.3
+  eslint: ^9.39.2
+  eslint-config-expo: ~57.0.1
+  eslint-config-next: 16.3.1
+  "@eslint/eslintrc": ^3.3.6
+  storybook: 10.5.8
+  "@storybook/react-vite": 10.5.8
+  "@storybook/addon-a11y": 10.5.8
+  vite: 6.4.1
+  "@vitejs/plugin-react": 4.7.0
+  vite-plugin-react-native-web: 2.5.0
+  babel-plugin-react-compiler: 1.0.0
+  turbo: 2.10.11
