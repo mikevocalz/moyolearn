@@ -110,11 +110,24 @@ export const semantic = {
   'primary-pressed': { light: palette.burgundy[500], dark: palette.burgundy[500] },
   'on-primary': { light: palette.ink[950], dark: palette.ink[950] },
   accent: { light: palette.ember[500], dark: palette.ember[400] },
-  'accent-pressed': { light: palette.ember[600], dark: palette.ember[500] },
+  // Not palette.ember[600] (#DB2777): black ink on it is 4.25:1, under AA, and
+  // this is a hover/press BACKGROUND that carries the button label. Nudged just
+  // light enough to clear 4.5 (4.64:1) while staying visibly darker than
+  // `accent`, so the pressed-is-darker convention `primary-pressed` follows
+  // still holds. The scale step is left alone — nothing else consumes it.
+  'accent-pressed': { light: '#E3307E', dark: palette.ember[500] },
   'on-accent': { light: palette.ink[950], dark: palette.ink[950] },
   // RETRO: borders are ink, not grey — the outline IS the design
   border: { light: palette.ink[950], dark: palette.ink[50] },
   'border-strong': { light: '#000000', dark: '#FFFDF7' },
+  // Ink at 80% — the Cool dial's hairline (doc 02 §5.3). Still an AA text colour
+  // against surface, so remapping --color-border inside .dial-cool is safe.
+  'border-soft': { light: 'rgba(13, 12, 11, 0.80)', dark: 'rgba(255, 253, 247, 0.80)' },
+  // Ink at 10% — the Cool dial's whisper of an offset shadow (doc 02 §5.3).
+  // Pre-resolved rgba rather than color-mix(): React Native cannot evaluate
+  // color-mix, so a shared token has to be a value both engines can read.
+  // Never a text or border colour — it fails contrast by design.
+  'border-faint': { light: 'rgba(13, 12, 11, 0.10)', dark: 'rgba(255, 253, 247, 0.10)' },
   focus: { light: palette.gold[500], dark: palette.gold[400] },
   danger: { light: '#D31F2B', dark: '#FF7A85' },
   'on-danger': { light: palette.white, dark: '#3D0508' },
@@ -224,6 +237,42 @@ export const motion = {
     standard: 'cubic-bezier(0.2, 0, 0, 1)',
     emphasized: 'cubic-bezier(0.3, 0, 0, 1)',
     exit: 'cubic-bezier(0.4, 0, 1, 1)',
+  },
+} as const;
+
+// ---- the dial ---------------------------------------------------------------
+
+/**
+ * One DNA, two temperatures (doc 02 §5.3 + doc 08 §2.5 density row).
+ * Hot = learner/family surfaces; Cool = ops/educator/institution.
+ *
+ * The dial is NOT a theme. Light/dark is one global preference, but a single
+ * parent screen is "cool structure, hot accents on child-related cards" — both
+ * temperatures render in one tree — so it travels as a component prop
+ * (doc 02 §7 already types `InkTile` with `dial: hot·cool`), not as an
+ * app-level variant. That is why these emit as dial-suffixed utilities rather
+ * than as a second @variant axis: React Native has no cascade to inherit from.
+ *
+ * Colour is deliberately absent. The dial governs which fills get USED
+ * (Hot saturated, Cool paper/white with colour reserved for status), not what
+ * the values are — so both temperatures share one palette and one contrast pass.
+ */
+export const dial = {
+  hot: {
+    radius: '0.875rem',      // 14px — chunky-friendly
+    shadow: '4px 4px 0 0 var(--color-border-strong)',
+    inset: '1.25rem',        // 20
+    'inset-roomy': '1.5rem', // 24
+    'row-height': '4rem',    // 64+, roomy enough for an age-band target
+    duration: '200ms',       // tactile physics; the playful end of the ramp
+  },
+  cool: {
+    radius: '0.5rem',        // 8px
+    shadow: '2px 2px 0 0 var(--color-border-faint)',
+    inset: '1rem',           // 16
+    'inset-roomy': '1.25rem',
+    'row-height': '2.75rem', // 44 — the adult target floor
+    duration: '140ms',       // 120–160ms utility transitions
   },
 } as const;
 

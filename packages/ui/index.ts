@@ -14,6 +14,7 @@ export { Heading, type HeadingProps } from './Heading';
 export { Button, type ButtonProps } from './Button';
 export { IconButton, type IconButtonProps } from './IconButton';
 export { Card, type CardProps } from './Card';
+export { Dial, type DialProps, type DialTemperature } from './Dial';
 export { Badge, type BadgeProps } from './Badge';
 export { Avatar, type AvatarProps } from './Avatar';
 export { Image, type ImageProps } from './Image';
