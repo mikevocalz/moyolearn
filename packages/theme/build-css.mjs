@@ -21,6 +21,7 @@ import { writeFileSync } from 'node:fs';
 import {
   palette, semantic, fontFamilies, typeScale, contentWidths,
   radius, shadows, zIndex, motion, breakpoints, dial,
+  uiRamp, spacingTiers, targets, readingComfort,
 } from './tokens.ts';
 
 const HEADER = '/* GENERATED from tokens.ts — do not edit by hand. `node build-css.mjs` */';
@@ -76,10 +77,31 @@ const sharedThemeTokens = () => {
   for (const [temp, props] of Object.entries(dial)) {
     out.push(`  --radius-${temp}: ${props.radius};`);
     out.push(`  --shadow-${temp}: ${props.shadow};`);
-    out.push(`  --spacing-inset-${temp}: ${props.inset};`);
-    out.push(`  --spacing-inset-roomy-${temp}: ${props['inset-roomy']};`);
     out.push(`  --spacing-row-${temp}: ${props['row-height']};`);
     out.push(`  --duration-${temp}: ${props.duration};`);
+  }
+
+  // UI ramp per dial. The generic `--text-<name>` is remapped by the dial scope,
+  // so components name the ROLE (text-title) and never the temperature.
+  for (const [name, byDial] of Object.entries(uiRamp)) {
+    for (const [temp, [size, lineHeight, weight]] of Object.entries(byDial)) {
+      out.push(`  --text-${name}-${temp}: ${size};`);
+      out.push(`  --text-${name}-${temp}--line-height: ${lineHeight};`);
+      out.push(`  --text-${name}-${temp}--font-weight: ${weight};`);
+    }
+  }
+
+  // Spacing tiers per dial → p-inset, gap-stack, gap-group, … after remapping.
+  for (const [name, byDial] of Object.entries(spacingTiers)) {
+    for (const [temp, value] of Object.entries(byDial)) {
+      out.push(`  --spacing-${name}-${temp}: ${value};`);
+    }
+  }
+
+  // Age-band targets are NOT dial-scoped: the band comes from the learner
+  // profile, so a screen picks min-h-target-child explicitly (doc 08 §2.4).
+  for (const [name, value] of Object.entries(targets)) {
+    out.push(`  --spacing-target-${name}: ${value};`);
   }
   return out;
 };
@@ -129,29 +151,46 @@ const MONO_NUMERICS_WEB = `@layer base {
  * cascade; width waits for the Wave-2 component pass. Documented rather than
  * faked, so nobody wonders why one row of the §5.3 table is missing.
  */
-const DIAL_SCOPES = `@layer base {
-  .dial-hot {
-    --radius-card: var(--radius-hot);
-    --radius-sheet: var(--radius-hot);
-    --shadow-card: var(--shadow-hot);
-    --shadow-raised: var(--shadow-hot);
-    --dial-inset: var(--spacing-inset-hot);
-    --dial-inset-roomy: var(--spacing-inset-roomy-hot);
-    --dial-row: var(--spacing-row-hot);
-    --dial-duration: var(--duration-hot);
+const dialScope = (temp) => {
+  const out = [`  .dial-${temp} {`];
+  out.push(`    --radius-card: var(--radius-${temp});`);
+  out.push(`    --radius-sheet: var(--radius-${temp});`);
+  out.push(`    --shadow-card: var(--shadow-${temp});`);
+  out.push(`    --shadow-raised: var(--shadow-${temp});`);
+  // Cool's hairline: 1px ink @ 80% (§5.3). Width still can't cascade.
+  if (temp === 'cool') out.push('    --color-border: var(--color-border-soft);');
+  out.push(`    --dial-row: var(--spacing-row-${temp});`);
+  out.push(`    --dial-duration: var(--duration-${temp});`);
+  // Ramp + tiers, generated from the same tokens that emitted the values above,
+  // so a new ramp entry cannot be added to tokens.ts and silently not remap.
+  for (const name of Object.keys(uiRamp)) {
+    out.push(`    --text-${name}: var(--text-${name}-${temp});`);
+    out.push(`    --text-${name}--line-height: var(--text-${name}-${temp}--line-height);`);
+    out.push(`    --text-${name}--font-weight: var(--text-${name}-${temp}--font-weight);`);
   }
-  .dial-cool {
-    --radius-card: var(--radius-cool);
-    --radius-sheet: var(--radius-cool);
-    --shadow-card: var(--shadow-cool);
-    --shadow-raised: var(--shadow-cool);
-    --color-border: var(--color-border-soft);
-    --dial-inset: var(--spacing-inset-cool);
-    --dial-inset-roomy: var(--spacing-inset-roomy-cool);
-    --dial-row: var(--spacing-row-cool);
-    --dial-duration: var(--duration-cool);
+  for (const name of Object.keys(spacingTiers)) {
+    out.push(`    --spacing-${name}: var(--spacing-${name}-${temp});`);
+  }
+  out.push('  }');
+  return out;
+};
+
+/**
+ * "Comfy reading" (doc 08 §3.3), opt-in per learner. Scoped like the dial so it
+ * composes with it: `<Dial temperature="hot"><View className="reading-comfort">`.
+ * Bumps body to body-lg, opens tracking and leading, and steps gap-stack up one
+ * tier — the four changes the research asks for, in one class.
+ */
+const READING_COMFORT = `@layer base {
+  .reading-comfort {
+    --text-body: var(--text-body-lg);
+    --text-body--line-height: ${readingComfort['line-height']};
+    --text-body--letter-spacing: ${readingComfort['letter-spacing']};
+    --spacing-gap-stack: var(--spacing-gap-group);
   }
 }`;
+
+const DIAL_SCOPES = ['@layer base {', ...dialScope('hot'), ...dialScope('cool'), '}'].join('\n');
 
 // React Native's `fontVariant` accepts tabular-nums but has NO slashed-zero
 // equivalent, so native gets the alignment and not the slash. Do not "fix" this by
@@ -184,6 +223,8 @@ web.push('');
 web.push(MONO_NUMERICS_WEB);
 web.push('');
 web.push(DIAL_SCOPES);
+web.push('');
+web.push(READING_COMFORT);
 web.push(`
 /* @expo/ui BottomSheet (vaul) on web: the drawer hardcodes a white/black
    background and a non-flex inner wrapper, so the kit's SheetSurface can't
@@ -232,6 +273,8 @@ native.push('');
 native.push(MONO_NUMERICS_NATIVE);
 native.push('');
 native.push(DIAL_SCOPES);
+native.push('');
+native.push(READING_COMFORT);
 native.push('');
 
 writeFileSync(new URL('./theme-native.css', import.meta.url), native.join('\n'));

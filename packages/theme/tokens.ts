@@ -240,6 +240,75 @@ export const motion = {
   },
 } as const;
 
+// ---- UI type ramp (doc 08 §3.1) ---------------------------------------------
+
+/**
+ * The UI ramp the display scale never covered — Button and friends were falling
+ * back to Tailwind's raw text-sm/base/lg. Values per dial; the dial scope remaps
+ * the generic name, so a component writes `text-title` and gets the right one.
+ *
+ * `data` is the mono ramp: every time, price, %, and count, so columns align.
+ * Doc 08 §3.1 names Spline Sans Mono here — superseded by Chivo Mono, chosen and
+ * shipped in PR-0; the ramp is what the doc is specifying, not the face.
+ *
+ * caption is the floor: never below 12, and never for anything a user must act on.
+ */
+export const uiRamp = {
+  'title-lg': { cool: ['1.25rem', '1.25', '600'], hot: ['1.5rem', '1.25', '700'] },
+  title: { cool: ['1.0625rem', '1.3', '600'], hot: ['1.25rem', '1.3', '700'] },
+  'body-lg': { cool: ['1rem', '1.5', '400'], hot: ['1.125rem', '1.55', '400'] },
+  body: { cool: ['0.9375rem', '1.45', '400'], hot: ['1.0625rem', '1.5', '400'] },
+  label: { cool: ['0.8125rem', '1.35', '500'], hot: ['0.9375rem', '1.4', '600'] },
+  caption: { cool: ['0.75rem', '1.35', '400'], hot: ['0.8125rem', '1.4', '400'] },
+  data: { cool: ['0.8125rem', '1.35', '500'], hot: ['0.9375rem', '1.4', '500'] },
+  'data-lg': { cool: ['1rem', '1.3', '600'], hot: ['1.25rem', '1.3', '600'] },
+} as const;
+
+// ---- spacing tiers (doc 08 §2.1) --------------------------------------------
+
+/**
+ * Named tiers so spacing is a decision, not a habit. Values per dial.
+ * §2.3's grouping law lives here: `gap-group` is the hierarchy workhorse —
+ * separation between groups is what carries structure, not borders.
+ */
+export const spacingTiers = {
+  'inset-tight': { cool: '0.75rem', hot: '1rem' },
+  inset: { cool: '1rem', hot: '1.25rem' },
+  'inset-roomy': { cool: '1.25rem', hot: '1.5rem' },
+  'gap-element': { cool: '0.5rem', hot: '0.75rem' },
+  'gap-stack': { cool: '0.75rem', hot: '1rem' },
+  'gap-group': { cool: '1.5rem', hot: '2rem' },
+  'gap-section': { cool: '2rem', hot: '3rem' },
+} as const;
+
+// ---- touch targets (doc 08 §2.4) --------------------------------------------
+
+/**
+ * Target size is a function of the signed-in child, not a hardcode: the age band
+ * comes from the learner profile, so a K–2 primary action is 72 (~2cm, the NN/g
+ * 4× finding) while the same component on an ops screen is 44.
+ * `floor` is the absolute CI minimum (WCAG 2.2 AA) — never a design target.
+ */
+export const targets = {
+  floor: '1.5rem',   // 24
+  adult: '2.75rem',  // 44 (48 preferred on Android)
+  teen: '3rem',      // 48 — Hot, grades 6–12
+  child: '3.5rem',   // 56 — Hot, grades 3–5
+  young: '4.5rem',   // 72 — Hot, K–2 primary actions
+} as const;
+
+// ---- reading comfort (doc 08 §3.3) ------------------------------------------
+
+/**
+ * "Comfy reading" — a per-learner toggle, never framed as a diagnosis
+ * (the plan's no-labeling rule). Default OFF: the same literature that supports
+ * wider spacing for some readers shows it slows fast readers.
+ */
+export const readingComfort = {
+  'letter-spacing': '0.06em',
+  'line-height': '1.7',
+} as const;
+
 // ---- the dial ---------------------------------------------------------------
 
 /**
@@ -259,21 +328,21 @@ export const motion = {
  */
 export const dial = {
   hot: {
-    radius: '0.875rem',      // 14px — chunky-friendly
+    radius: '0.875rem',    // 14px — chunky-friendly
     shadow: '4px 4px 0 0 var(--color-border-strong)',
-    inset: '1.25rem',        // 20
-    'inset-roomy': '1.5rem', // 24
-    'row-height': '4rem',    // 64+, roomy enough for an age-band target
-    duration: '200ms',       // tactile physics; the playful end of the ramp
+    'row-height': '4rem',  // 64+, roomy enough for an age-band target
+    duration: '200ms',     // tactile physics; the playful end of the ramp
   },
   cool: {
-    radius: '0.5rem',        // 8px
+    radius: '0.5rem',      // 8px
     shadow: '2px 2px 0 0 var(--color-border-faint)',
-    inset: '1rem',           // 16
-    'inset-roomy': '1.25rem',
     'row-height': '2.75rem', // 44 — the adult target floor
-    duration: '140ms',       // 120–160ms utility transitions
+    duration: '140ms',     // 120–160ms utility transitions
   },
+  // Insets live in `spacingTiers`, NOT here. They were in both briefly and each
+  // emitted --spacing-inset-<temp>: identical values, so nothing broke, but two
+  // sources for one variable means the next edit to one of them silently loses
+  // to whichever the emitter writes last.
 } as const;
 
 export const breakpoints = {
