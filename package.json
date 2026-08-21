@@ -11,9 +11,10 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "lint": "node tooling/check-barrels.mjs && node tooling/check-contrast.mjs && turbo lint",
+    "lint": "node tooling/check-barrels.mjs && node tooling/check-contrast.mjs && node tooling/check-targets.mjs && turbo lint",
     "check:barrels": "node tooling/check-barrels.mjs",
     "check:contrast": "node tooling/check-contrast.mjs",
+    "check:targets": "node tooling/check-targets.mjs",
     "typecheck": "turbo typecheck",
     "test": "turbo test",
     "gen": "node tooling/generators/gen.mjs"

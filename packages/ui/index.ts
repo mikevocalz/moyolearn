@@ -16,6 +16,8 @@ export { IconButton, type IconButtonProps } from './IconButton';
 export { Card, type CardProps } from './Card';
 export { Dial, type DialProps, type DialTemperature } from './Dial';
 export { Badge, type BadgeProps } from './Badge';
+export { MasteryBar, type MasteryBarProps } from './MasteryBar';
+export { StatCard, type StatCardProps } from './StatCard';
 export { Avatar, type AvatarProps } from './Avatar';
 export { Image, type ImageProps } from './Image';
 
