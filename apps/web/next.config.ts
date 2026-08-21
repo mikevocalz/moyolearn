@@ -6,6 +6,13 @@ import { withPayload } from '@payloadcms/next/withPayload'
 // forest. RN globals (__DEV__) come from a runtime shim imported in the root
 // layout instead of DefinePlugin.
 const nextConfig: NextConfig = {
+  // next/image rejects every remote host that is not listed here, so a
+  // thumbnail from YouTube renders as a hard error rather than a broken image.
+  // Only the thumbnail host, and only its /vi/ path: this is not a general
+  // opening of remote images.
+  images: {
+    remotePatterns: [{ protocol: 'https', hostname: 'img.youtube.com', pathname: '/vi/**' }],
+  },
   // React Compiler — auto-memoization, same as the mobile app's
   // experiments.reactCompiler in app.config.ts.
   reactCompiler: true,

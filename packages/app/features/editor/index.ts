@@ -51,6 +51,6 @@ export { useUrlStore, type UrlKind } from './url.store.ts';
 export { useAudioStore, formatDuration, type Recording } from './audio.store.ts';
 export { EditorToolbar } from './EditorToolbar.tsx';
 export { NoteBody } from './NoteBody.tsx';
-export { YouTubeEmbed } from './YouTubeEmbed';
+export { YouTubeEmbed, type PlaylistItem, type YouTubeEmbedProps } from './YouTubeEmbed';
 export { splitNoteSegments, youTubeVideoId, type NoteSegment } from './youtube.ts';
 export { EditorSettingsScreen } from './EditorSettingsScreen.tsx';

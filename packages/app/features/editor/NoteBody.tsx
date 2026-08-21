@@ -44,7 +44,11 @@ export function NoteBody({ html, className }: NoteBodyProps) {
     <View className={`gap-1 ${className ?? ''}`}>
       {segments.map((segment, index) =>
         segment.kind === 'video' ? (
-          <YouTubeEmbed key={`video-${segment.value}-${index}`} videoId={segment.value} />
+          <YouTubeEmbed
+            key={`video-${segment.value}-${segment.playlistId ?? ''}-${index}`}
+            videoId={segment.value === '' ? undefined : segment.value}
+            playlistId={segment.playlistId}
+          />
         ) : segment.kind === 'audio' ? (
           <AudioPlayer key={`audio-${index}`} uri={segment.value} label={segment.label} />
         ) : (

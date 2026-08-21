@@ -201,7 +201,7 @@ const READING_COMFORT = `@layer base {
     --text-body: var(--text-body-lg);
     --text-body--line-height: ${readingComfort['line-height']};
     --text-body--letter-spacing: ${readingComfort['letter-spacing']};
-    --spacing-gap-stack: var(--spacing-gap-group);
+    --spacing-stack: var(--spacing-group);
   }
 }`;
 

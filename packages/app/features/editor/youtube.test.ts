@@ -3,6 +3,9 @@ import { describe, it } from 'node:test';
 import {
   splitNoteSegments,
   videoIdFromThumbnail,
+  youTubeEmbedUrl,
+  youTubePlaylistId,
+  youTubeTarget,
   youTubeThumbnail,
   youTubeVideoId,
 } from './youtube.ts';
@@ -144,5 +147,65 @@ describe('inline voice notes', () => {
   it('keeps a video thumbnail a video, not audio', () => {
     const html = '<img src="https://img.youtube.com/vi/dQw4w9WgXcQ/hqdefault.jpg" />';
     assert.deepEqual(splitNoteSegments(html).map((s) => s.kind), ['video']);
+  });
+});
+
+
+describe('playlists', () => {
+  const LIST = 'UUSMOQeBJ2RAnuFungnQOxLg';
+
+  it('reads a list id from the shapes a share sheet produces', () => {
+    for (const url of [
+      `https://www.youtube.com/playlist?list=${LIST}`,
+      `https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=${LIST}`,
+      `https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=${LIST}&index=3`,
+      `https://youtu.be/dQw4w9WgXcQ?list=${LIST}`,
+    ]) {
+      assert.equal(youTubePlaylistId(url), LIST, url);
+    }
+  });
+
+  it('ignores the viewer-private lists, which cannot render in an embed', () => {
+    assert.equal(youTubePlaylistId('https://www.youtube.com/playlist?list=WL'), null);
+    assert.equal(youTubePlaylistId('https://www.youtube.com/playlist?list=LL'), null);
+  });
+
+  it('keeps BOTH ids when a link was shared from inside a list', () => {
+    const target = youTubeTarget(`https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=${LIST}`);
+    assert.deepEqual(target, { videoId: 'dQw4w9WgXcQ', playlistId: LIST });
+  });
+
+  it('is null for a URL that is neither', () => {
+    assert.equal(youTubeTarget('https://example.com/nope'), null);
+  });
+
+  it('builds videoseries for a list with no starting video', () => {
+    assert.equal(
+      youTubeEmbedUrl({ videoId: null, playlistId: LIST }),
+      `https://www.youtube-nocookie.com/embed/videoseries?list=${LIST}`,
+    );
+  });
+
+  it('keeps the list beside the video so the up-next queue survives', () => {
+    assert.equal(
+      youTubeEmbedUrl({ videoId: 'dQw4w9WgXcQ', playlistId: LIST }),
+      `https://www.youtube-nocookie.com/embed/dQw4w9WgXcQ?list=${LIST}`,
+    );
+  });
+
+  it('turns a playlist-only link in a note into a video segment', () => {
+    const html = `<p>Watch these:</p><p><a href="https://www.youtube.com/playlist?list=${LIST}">list</a></p>`;
+    const segments = splitNoteSegments(html);
+    const video = segments.find((s) => s.kind === 'video');
+    assert.ok(video, 'expected a video segment');
+    assert.equal(video.value, '');
+    assert.equal(video.playlistId, LIST);
+  });
+
+  it('carries the list through a watch link that also names a video', () => {
+    const html = `<p><a href="https://www.youtube.com/watch?v=dQw4w9WgXcQ&list=${LIST}">x</a></p>`;
+    const video = splitNoteSegments(html).find((s) => s.kind === 'video');
+    assert.equal(video?.value, 'dQw4w9WgXcQ');
+    assert.equal(video?.playlistId, LIST);
   });
 });

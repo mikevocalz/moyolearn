@@ -275,10 +275,16 @@ export const spacingTiers = {
   'inset-tight': { cool: '0.75rem', hot: '1rem' },
   inset: { cool: '1rem', hot: '1.25rem' },
   'inset-roomy': { cool: '1.25rem', hot: '1.5rem' },
-  'gap-element': { cool: '0.5rem', hot: '0.75rem' },
-  'gap-stack': { cool: '0.75rem', hot: '1rem' },
-  'gap-group': { cool: '1.5rem', hot: '2rem' },
-  'gap-section': { cool: '2rem', hot: '3rem' },
+  // Doc 08 names these tiers `gap-element`, `gap-stack`, `gap-group`,
+  // `gap-section` — and those ARE the class names, which is why the `gap-`
+  // prefix must NOT be part of the token. Tailwind builds a utility as
+  // <property>-<token suffix>, so `--spacing-gap-stack` yields `gap-gap-stack`
+  // and every `gap-stack` in the codebase silently does nothing. Named for the
+  // role; the property supplies the prefix.
+  element: { cool: '0.5rem', hot: '0.75rem' },
+  stack: { cool: '0.75rem', hot: '1rem' },
+  group: { cool: '1.5rem', hot: '2rem' },
+  section: { cool: '2rem', hot: '3rem' },
 } as const;
 
 // ---- touch targets (doc 08 §2.4) --------------------------------------------

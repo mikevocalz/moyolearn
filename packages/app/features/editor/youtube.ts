@@ -30,12 +30,71 @@ export function youTubeVideoId(url: string): string | null {
   return null;
 }
 
+/**
+ * Playlist id from any YouTube URL carrying `list=`.
+ *
+ * Ids are not a fixed length the way video ids are — `PL…` user playlists,
+ * `UU…`/`LL…` auto-generated ones and `RD…` mixes all differ — so this matches
+ * the parameter rather than a shape. `WL` (Watch Later) and `LL` (Liked) are
+ * excluded deliberately: they are private to the signed-in viewer and render as
+ * an error inside an embed, which would look like a broken note.
+ */
+const PLAYLIST = /[?&]list=([\w-]+)/i;
+const PRIVATE_LISTS = new Set(['WL', 'LL']);
+
+export function youTubePlaylistId(url: string): string | null {
+  const id = PLAYLIST.exec(url)?.[1];
+  if (id === undefined || PRIVATE_LISTS.has(id)) return null;
+  return id;
+}
+
+export interface YouTubeTarget {
+  /** Present when the URL names a specific video. */
+  videoId: string | null;
+  /** Present when the URL carries a playable `list=`. */
+  playlistId: string | null;
+}
+
+/**
+ * What a YouTube URL should actually play.
+ *
+ * A share link from inside a playlist carries BOTH — "start at this video, in
+ * this list" — and that is the shape worth preserving: dropping the list would
+ * silently turn a lesson sequence into a single clip.
+ */
+export function youTubeTarget(url: string): YouTubeTarget | null {
+  const videoId = youTubeVideoId(url);
+  const playlistId = youTubePlaylistId(url);
+  if (videoId === null && playlistId === null) return null;
+  return { videoId, playlistId };
+}
+
+/**
+ * The embed URL for a target. `videoseries` is YouTube's own entry point for a
+ * list with no starting video; with a video id the list rides alongside it so
+ * the player keeps its up-next queue.
+ */
+export function youTubeEmbedUrl({ videoId, playlistId }: YouTubeTarget): string {
+  const base = 'https://www.youtube-nocookie.com/embed';
+  if (videoId === null && playlistId !== null) {
+    return `${base}/videoseries?list=${playlistId}`;
+  }
+  const suffix = playlistId === null ? '' : `?list=${playlistId}`;
+  return `${base}/${videoId}${suffix}`;
+}
+
 export interface NoteSegment {
   kind: 'html' | 'video' | 'audio';
   /** HTML for `html`, the video id for `video`, the file URI for `audio`. */
   value: string;
   /** Link text, kept for an audio segment so the player can label itself. */
   label?: string;
+  /**
+   * Playlist id, when the recognised link carried one. Held beside the video id
+   * rather than replacing it: a link shared from inside a playlist names both,
+   * and the player needs both to start on the right video with the list intact.
+   */
+  playlistId?: string;
 }
 
 /** Audio the app recorded or attached. Matched on extension, because the note
@@ -75,18 +134,25 @@ export function splitNoteSegments(html: string): NoteSegment[] {
     // thumbnail, which is what the editor now inserts) or as a bare link,
     // which older notes and pasted URLs still use.
     const videoId = isImage ? videoIdFromThumbnail(href) : youTubeVideoId(href);
+    // A playlist link may carry no video id at all ("play this whole list"),
+    // so it is recognised independently of one.
+    const playlistId = isImage ? null : youTubePlaylistId(href);
     // Audio arrives two ways: as an inline waveform image (what the editor now
     // inserts once the recording is uploaded) or as a bare link to an audio
     // file, which is what a note written before the upload existed contains.
-    const isAudio = videoId === null && (isImage ? isWaveformUrl(href) : AUDIO.test(href));
+    const isAudio = videoId === null && playlistId === null && (isImage ? isWaveformUrl(href) : AUDIO.test(href));
     // An ordinary inline image is not media — leave it in the HTML run.
-    if (videoId === null && !isAudio) continue;
+    if (videoId === null && playlistId === null && !isAudio) continue;
 
     const index = match.index ?? 0;
     if (index > cursor) segments.push({ kind: 'html', value: html.slice(cursor, index) });
 
-    if (videoId !== null) {
-      segments.push({ kind: 'video', value: videoId });
+    if (videoId !== null || playlistId !== null) {
+      segments.push({
+        kind: 'video',
+        value: videoId ?? '',
+        ...(playlistId === null ? {} : { playlistId }),
+      });
     } else if (isImage) {
       // The node carries only the waveform URL, so the audio URL is derived
       // from it by the shared-id convention the upload contract fixes.

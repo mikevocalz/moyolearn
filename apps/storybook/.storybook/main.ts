@@ -62,6 +62,11 @@ const config: StorybookConfig = {
           here,
           '../../../node_modules/@legendapp/motion/lib/module/index.js',
         ),
+        // SolitoImage resolves to next/image on web, which validates remote
+        // hosts against next.config.ts — a file Vite never reads, so every
+        // story with a remote src failed with "Invalid src prop". The shim
+        // renders the image and nothing else.
+        'next/image': resolve(here, '../next-image-shim.tsx'),
       },
     };
     viteConfig.server = { ...(viteConfig.server ?? {}), hmr: false };

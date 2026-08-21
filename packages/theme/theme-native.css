@@ -225,18 +225,18 @@
   --spacing-inset-roomy: 1.25rem;
   --spacing-inset-roomy-cool: 1.25rem;
   --spacing-inset-roomy-hot: 1.5rem;
-  --spacing-gap-element: 0.5rem;
-  --spacing-gap-element-cool: 0.5rem;
-  --spacing-gap-element-hot: 0.75rem;
-  --spacing-gap-stack: 0.75rem;
-  --spacing-gap-stack-cool: 0.75rem;
-  --spacing-gap-stack-hot: 1rem;
-  --spacing-gap-group: 1.5rem;
-  --spacing-gap-group-cool: 1.5rem;
-  --spacing-gap-group-hot: 2rem;
-  --spacing-gap-section: 2rem;
-  --spacing-gap-section-cool: 2rem;
-  --spacing-gap-section-hot: 3rem;
+  --spacing-element: 0.5rem;
+  --spacing-element-cool: 0.5rem;
+  --spacing-element-hot: 0.75rem;
+  --spacing-stack: 0.75rem;
+  --spacing-stack-cool: 0.75rem;
+  --spacing-stack-hot: 1rem;
+  --spacing-group: 1.5rem;
+  --spacing-group-cool: 1.5rem;
+  --spacing-group-hot: 2rem;
+  --spacing-section: 2rem;
+  --spacing-section-cool: 2rem;
+  --spacing-section-hot: 3rem;
   --spacing-target-floor: 1.5rem;
   --spacing-target-adult: 2.75rem;
   --spacing-target-teen: 3rem;
@@ -362,10 +362,10 @@
     --spacing-inset-tight: var(--spacing-inset-tight-hot);
     --spacing-inset: var(--spacing-inset-hot);
     --spacing-inset-roomy: var(--spacing-inset-roomy-hot);
-    --spacing-gap-element: var(--spacing-gap-element-hot);
-    --spacing-gap-stack: var(--spacing-gap-stack-hot);
-    --spacing-gap-group: var(--spacing-gap-group-hot);
-    --spacing-gap-section: var(--spacing-gap-section-hot);
+    --spacing-element: var(--spacing-element-hot);
+    --spacing-stack: var(--spacing-stack-hot);
+    --spacing-group: var(--spacing-group-hot);
+    --spacing-section: var(--spacing-section-hot);
   }
   .dial-cool {
     --radius-card: var(--radius-cool);
@@ -402,10 +402,10 @@
     --spacing-inset-tight: var(--spacing-inset-tight-cool);
     --spacing-inset: var(--spacing-inset-cool);
     --spacing-inset-roomy: var(--spacing-inset-roomy-cool);
-    --spacing-gap-element: var(--spacing-gap-element-cool);
-    --spacing-gap-stack: var(--spacing-gap-stack-cool);
-    --spacing-gap-group: var(--spacing-gap-group-cool);
-    --spacing-gap-section: var(--spacing-gap-section-cool);
+    --spacing-element: var(--spacing-element-cool);
+    --spacing-stack: var(--spacing-stack-cool);
+    --spacing-group: var(--spacing-group-cool);
+    --spacing-section: var(--spacing-section-cool);
   }
 }
 
@@ -414,6 +414,6 @@
     --text-body: var(--text-body-lg);
     --text-body--line-height: 1.7;
     --text-body--letter-spacing: 0.06em;
-    --spacing-gap-stack: var(--spacing-gap-group);
+    --spacing-stack: var(--spacing-group);
   }
 }
