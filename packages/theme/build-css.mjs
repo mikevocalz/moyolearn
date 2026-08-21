@@ -81,18 +81,33 @@ const sharedThemeTokens = () => {
     out.push(`  --duration-${temp}: ${props.duration};`);
   }
 
-  // UI ramp per dial. The generic `--text-<name>` is remapped by the dial scope,
-  // so components name the ROLE (text-title) and never the temperature.
+  /*
+    UI ramp. The GENERIC name has to be declared here, not only inside the dial
+    scopes: Tailwind generates a utility from what it finds in @theme, so if
+    `--text-title` exists only in `.dial-cool`, the class `text-title` is never
+    generated and every use of it is silently inert. (This is exactly why
+    --radius-card dials correctly — it has always been an @theme entry — and why
+    the ramp did not until this default was added.)
+
+    The default is the Cool value, matching <Dial>'s own default: a component
+    rendered outside any Dial gets ops chrome, and the scope re-points it.
+  */
   for (const [name, byDial] of Object.entries(uiRamp)) {
-    for (const [temp, [size, lineHeight, weight]] of Object.entries(byDial)) {
-      out.push(`  --text-${name}-${temp}: ${size};`);
-      out.push(`  --text-${name}-${temp}--line-height: ${lineHeight};`);
-      out.push(`  --text-${name}-${temp}--font-weight: ${weight};`);
+    const [size, lineHeight, weight] = byDial.cool;
+    out.push(`  --text-${name}: ${size};`);
+    out.push(`  --text-${name}--line-height: ${lineHeight};`);
+    out.push(`  --text-${name}--font-weight: ${weight};`);
+    for (const [temp, [s, lh, w]] of Object.entries(byDial)) {
+      out.push(`  --text-${name}-${temp}: ${s};`);
+      out.push(`  --text-${name}-${temp}--line-height: ${lh};`);
+      out.push(`  --text-${name}-${temp}--font-weight: ${w};`);
     }
   }
 
-  // Spacing tiers per dial → p-inset, gap-stack, gap-group, … after remapping.
+  // Spacing tiers → p-inset, gap-stack, gap-group, … Same rule: the generic
+  // name must exist in @theme or the utility is never generated.
   for (const [name, byDial] of Object.entries(spacingTiers)) {
+    out.push(`  --spacing-${name}: ${byDial.cool};`);
     for (const [temp, value] of Object.entries(byDial)) {
       out.push(`  --spacing-${name}-${temp}: ${value};`);
     }

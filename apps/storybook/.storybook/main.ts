@@ -14,12 +14,14 @@ const config: StorybookConfig = {
   stories: [
     '../../../packages/ui/*.stories.@(ts|tsx)',
     '../../../packages/ui/primitives/*.stories.@(ts|tsx)',
-    // packages/app has no stories yet, and Storybook warns on every pattern
-    // that matches nothing. Re-add this line when the first feature story
-    // lands (features live at packages/app/features/<name>/, so the glob
-    // needs the feature-name level — the old `app/*/components/*` pattern
-    // resolved to packages/app/features/components/ and never matched):
-    //   '../../../packages/app/features/*/**/*.stories.@(ts|tsx)',
+    // Sub-barrels need their own pattern — the root glob is not recursive, which
+    // is why the audio components were invisible in Storybook despite shipping.
+    '../../../packages/ui/audio/*.stories.@(ts|tsx)',
+    '../../../packages/ui/html/*.stories.@(ts|tsx)',
+    // Features live at packages/app/features/<name>/, so the glob needs the
+    // feature-name level (the old `app/*/components/*` pattern resolved to
+    // packages/app/features/components/ and never matched).
+    '../../../packages/app/features/*/**/*.stories.@(ts|tsx)',
   ],
   viteFinal: async (viteConfig) => {
     viteConfig.plugins = [
