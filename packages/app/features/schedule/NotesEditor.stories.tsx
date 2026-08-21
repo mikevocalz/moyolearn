@@ -4,40 +4,40 @@ import { useState } from 'react';
 import { Text, View } from '@acme/ui/tw';
 import { NotesEditor } from './NotesEditor';
 
-const meta = { title: 'Editor/NotesEditor', component: NotesEditor } satisfies Meta<typeof NotesEditor>;
+// `component:` is safe again now that react-docgen is off in .storybook/main.ts
+// — it was docgen, not this component, that broke the module import.
+// Naming the component makes its required props required on every story, so the
+// defaults live here once and the render-only stories inherit them.
+const meta = {
+  title: 'Editor/NotesEditor',
+  component: NotesEditor,
+  args: { label: 'Session note', onChangeHtml: () => {} },
+} satisfies Meta<typeof NotesEditor>;
 export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Empty: Story = {
-  args: {
-    label: 'Session note',
-    placeholder: 'What did you cover?',
-    onChangeHtml: () => {},
-  },
-  render: (args) => (
+  render: () => (
     <View className="bg-surface p-inset">
-      <NotesEditor {...args} />
+      <NotesEditor label="Session note" placeholder="What did you cover?" onChangeHtml={() => {}} />
     </View>
   ),
 };
 
 export const WithExistingNote: Story = {
-  args: {
-    label: 'Session note',
-    defaultValue:
-      '<p>Covered <strong>remainders</strong>. Daniel asked for one more example.</p>',
-    onChangeHtml: () => {},
-  },
-  render: (args) => (
+  render: () => (
     <View className="bg-surface p-inset">
-      <NotesEditor {...args} />
+      <NotesEditor
+        label="Session note"
+        defaultValue="<p>Covered <strong>remainders</strong>. Daniel asked for one more example.</p>"
+        onChangeHtml={() => {}}
+      />
     </View>
   ),
 };
 
 /** The editor is uncontrolled — it owns its document and reports HTML out. */
 export const EmittedHtml: Story = {
-  args: { label: 'Session note', onChangeHtml: () => {} },
   render: function Emitted() {
     // Story-local demo state only; app state uses Zustand per the repo rule.
     const [html, setHtml] = useState('');

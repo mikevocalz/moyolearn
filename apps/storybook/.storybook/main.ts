@@ -22,7 +22,29 @@ const config: StorybookConfig = {
     // feature-name level (the old `app/*/components/*` pattern resolved to
     // packages/app/features/components/ and never matched).
     '../../../packages/app/features/*/**/*.stories.@(ts|tsx)',
+    // A few interaction primitives still live in the mobile app rather than the
+    // kit (SwipeableRow and the split-view pieces). They are as reviewable as
+    // anything in packages/ui, so Storybook reads them where they are instead of
+    // waiting on a move that would touch every import in apps/mobile.
+    '../../mobile/src/**/*.stories.@(ts|tsx)',
   ],
+  /*
+    react-docgen off, deliberately.
+
+    Storybook's default docgen walks a component's prop types through its
+    imports, and in this repo every chain ends up inside react-native's own
+    index.js — which is Flow source. Its `} as ReactNativePublicAPI` fails the
+    babel parse with "Missing semicolon (397:1)", and the plugin surfaces that
+    as a full render error, so the story is unusable rather than merely
+    undocumented. It is not specific to one component: anything importing from
+    @acme/ui reaches react-native eventually.
+
+    Cost: autodocs loses auto-generated prop tables. Props here are documented
+    with JSDoc on the interfaces, which is the source of truth anyway, and the
+    react-docgen-typescript alternative re-reads the whole TS program per file
+    for a dev server that already boots slowly.
+  */
+  typescript: { reactDocgen: false },
   viteFinal: async (viteConfig) => {
     viteConfig.plugins = [
       ...(viteConfig.plugins ?? []),
