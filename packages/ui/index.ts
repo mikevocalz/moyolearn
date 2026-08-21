@@ -17,6 +17,8 @@ export { Card, type CardProps } from './Card';
 export { Dial, type DialProps, type DialTemperature } from './Dial';
 export { Badge, type BadgeProps } from './Badge';
 export { MasteryBar, type MasteryBarProps } from './MasteryBar';
+export { ScheduleCard, type ScheduleCardProps } from './ScheduleCard';
+export { InspectorSection, type InspectorSectionProps } from './InspectorSection';
 export { StatCard, type StatCardProps } from './StatCard';
 export { Avatar, type AvatarProps } from './Avatar';
 export { Image, type ImageProps } from './Image';
