@@ -62,7 +62,11 @@ export function PlanContent() {
           {day.items.length > 0 ? (
             <View className="gap-2">
               {day.items.map((item) => (
-                <PlanRow key={item.id} item={item} onOpen={() => router.push('/tutor')} />
+                <PlanRow
+                  key={item.id}
+                  item={item}
+                  onOpen={() => router.push(item.kind === 'practice' ? '/practice' : '/tutor')}
+                />
               ))}
             </View>
           ) : (
