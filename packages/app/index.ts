@@ -29,4 +29,15 @@ export { TutorScreen } from './features/tutor/screen';
 export { ErrorScreen } from './features/error/screen';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';
+export {
+  SessionProvider,
+  useAppSession,
+  useSetContext,
+  RoleSwitcher,
+  type AppSession,
+  type AppUser,
+  type ActiveContext,
+  type Membership,
+  type RoleKind,
+} from './providers/session';
 export * from './features/editor';
