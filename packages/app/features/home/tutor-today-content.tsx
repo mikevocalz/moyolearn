@@ -6,11 +6,13 @@
 import { Navigation, Video } from '@acme/ui/icons';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Card, Heading, PressScale, Text, FadeIn } from '@acme/ui';
+import { useRouter } from 'solito/router';
 import { useAppSession } from '../../providers/session';
 import { TUTOR_SESSIONS } from './tutor-today.data';
 
 export function TutorTodayContent() {
   const { user } = useAppSession();
+  const router = useRouter();
   const name = user?.name?.split(' ')[0] ?? 'there';
   const next = TUTOR_SESSIONS.find((s) => s.isNext);
   const rest = TUTOR_SESSIONS.filter((s) => !s.isNext);
@@ -55,7 +57,7 @@ export function TutorTodayContent() {
                 </PressScale>
                 <PressScale
                   className="flex-1 items-center rounded-md border-2 border-border bg-surface px-4 py-2"
-                  onPress={() => { /* Wave 3: open prep */ }}
+                  onPress={() => router.push('/session-prep')}
                 >
                   <TWText className="font-semibold text-text">Prep</TWText>
                 </PressScale>
