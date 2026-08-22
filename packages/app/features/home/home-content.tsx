@@ -7,6 +7,7 @@ import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Card, Heading, PressScale, Text, FadeIn, ScaleIn } from '@acme/ui';
 import { useRouter } from 'solito/router';
 import { useAppSession } from '../../providers/session';
+import { StudentHomeContent } from './student-home-content';
 import { STATS, QUICK_ACTIONS, PROJECTS, WELL, INK, BAR } from './home.data';
 import { getHours } from 'date-fns';
 import { useNow } from '../schedule/use-now';
@@ -27,6 +28,10 @@ export function HomeContent() {
   // the day. useNow already ticks for the schedule's current-time line, so the
   // greeting re-renders when the hour rolls over instead of only at mount.
   const greeting = greetingFor(useNow());
+
+  if (isLearner) {
+    return <StudentHomeContent />;
+  }
 
   return (
     <View className="gap-7 md:gap-10 lg:gap-12">
