@@ -67,7 +67,17 @@ export function StudentHomeContent() {
       {/* Today's plan */}
       <FadeIn delay={240}>
         <Section className="gap-3">
-          <Text variant="label" tone="muted">Today&apos;s plan</Text>
+          <View className="flex-row items-center justify-between">
+            <Text variant="label" tone="muted">Today&apos;s plan</Text>
+            <PressScale
+              className="rounded-md px-2 py-1"
+              outerClassName="self-start"
+              aria-label="See the whole plan"
+              onPress={() => router.push('/plan')}
+            >
+              <Text variant="caption" className="font-bold text-text underline">See all</Text>
+            </PressScale>
+          </View>
           <View className="gap-2">
             {PLAN_ITEMS.map((item) => (
               <PressScale

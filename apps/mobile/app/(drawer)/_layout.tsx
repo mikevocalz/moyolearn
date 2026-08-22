@@ -55,6 +55,7 @@ export default function DrawerLayout() {
       <Drawer.Protected guard={isLearner}>
         <Drawer.Screen name="capture/index" />
         <Drawer.Screen name="tutor" />
+        <Drawer.Screen name="plan" />
       </Drawer.Protected>
 
       {/* Staff-only: prep reads derived observations about a learner. */}
