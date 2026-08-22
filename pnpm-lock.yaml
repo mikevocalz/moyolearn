@@ -587,6 +587,9 @@ importers:
       '@acme/ui':
         specifier: workspace:*
         version: link:../ui
+      '@tanstack/react-pacer':
+        specifier: 'catalog:'
+        version: 0.23.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.101.4(react@19.2.8)
