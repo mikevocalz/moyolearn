@@ -9,6 +9,7 @@ import { useRouter } from 'solito/router';
 import { useAppSession } from '../../providers/session';
 import { StudentHomeContent } from './student-home-content';
 import { TutorTodayContent } from './tutor-today-content';
+import { ParentHomeContent } from './parent-home-content';
 import { STATS, QUICK_ACTIONS, PROJECTS, WELL, INK, BAR } from './home.data';
 import { getHours } from 'date-fns';
 import { useNow } from '../schedule/use-now';
@@ -25,6 +26,7 @@ export function HomeContent() {
   const name = user?.name ?? 'there';
   const isLearner = user?.kind === 'learner';
   const isTutor = user?.kind === 'tutor';
+  const isGuardian = user?.kind === 'guardian';
   const router = useRouter();
   // The greeting was hardcoded to "Good morning" and read as wrong for most of
   // the day. useNow already ticks for the schedule's current-time line, so the
@@ -37,6 +39,10 @@ export function HomeContent() {
 
   if (isTutor) {
     return <TutorTodayContent />;
+  }
+
+  if (isGuardian) {
+    return <ParentHomeContent />;
   }
 
   return (
