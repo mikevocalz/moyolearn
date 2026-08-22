@@ -6,6 +6,7 @@
 import { ArrowRight } from '@acme/ui/icons';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, Card, Dial, Heading, PressScale, Text, FadeIn } from '@acme/ui';
+import { useRouter } from 'solito/router';
 import { useAppSession } from '../../providers/session';
 import {
   CHILDREN,
@@ -17,6 +18,7 @@ import {
 
 export function ParentHomeContent() {
   const { user } = useAppSession();
+  const router = useRouter();
   const name = user?.name?.split(' ')[0] ?? 'there';
 
   return (
@@ -40,7 +42,7 @@ export function ParentHomeContent() {
                 key={child.id}
                 className="w-full rounded-card border-2 border-border bg-surface-raised p-4 shadow-card"
                 outerClassName="w-full"
-                onPress={() => { /* Wave 3: child detail */ }}
+                onPress={() => router.push('/ai-activity')}
               >
                 <View className="flex-row items-center gap-3">
                   <Avatar name={child.name} size="md" />
