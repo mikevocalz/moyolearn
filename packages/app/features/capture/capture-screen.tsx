@@ -1,9 +1,10 @@
 'use client';
 // CaptureScreen — orchestrates the five homework-capture entry modes.
 // SOT: docs/pack/24-homework-capture-spec.md §1
-// SOT-KEYWORDS: capture screen homework camera photo file type voice preview
+// SOT-KEYWORDS: capture screen homework camera photo file type voice preview ocr review
 
 import { useState } from 'react';
+import { useRouter } from 'solito/router';
 import * as DocumentPicker from 'expo-document-picker';
 import * as ImagePicker from 'expo-image-picker';
 import { Button, Image, Text, Textarea, VoiceRecorder } from '@acme/ui';
@@ -11,6 +12,9 @@ import type { VoiceRecording } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { CaptureEntryRow } from './entry-row';
 import { GuidedFrame } from './guided-frame';
+import { DigitizedTextReview } from './digitized-text-review';
+import { OcrReview } from './ocr-review';
+import { useCaptureStore } from './capture.store';
 import { CaptureMode, CapturePhoto, CaptureStep } from './types';
 
 type CapturePayload =
@@ -36,26 +40,50 @@ function TypeCapture({ onDone }: { onDone: (text: string) => void }) {
   );
 }
 
-function Preview({ payload, onReset }: { payload: CapturePayload; onReset: () => void }) {
+function Preview({
+  payload,
+  onReset,
+  onReview,
+  onConfirm,
+}: {
+  payload: CapturePayload;
+  onReset: () => void;
+  onReview: () => void;
+  onConfirm: (text: string) => void;
+}) {
   let body: React.ReactNode;
+  let action: React.ReactNode = null;
+
   switch (payload.kind) {
     case 'photo':
       body = <Image alt="Captured work" src={`file://${payload.photo.filePath}`} className="h-64 w-full rounded-card" />;
+      action = <Button title="Review text" variant="highlighter" fullWidth onPress={onReview} />;
       break;
     case 'image':
       body = <Image alt="Selected work" src={payload.uri} className="h-64 w-full rounded-card" />;
+      action = <Button title="Review text" variant="highlighter" fullWidth onPress={onReview} />;
       break;
     case 'file':
       body = <Text className="font-sans text-body text-text">{payload.name}</Text>;
+      action = <Button title="Use this file" variant="highlighter" fullWidth onPress={() => onConfirm(payload.name)} />;
       break;
     case 'text':
       body = <Text className="font-sans text-body text-text">{payload.text}</Text>;
+      action = <Button title="Review text" variant="highlighter" fullWidth onPress={onReview} />;
       break;
     case 'voice':
       body = (
         <Text className="font-sans text-body text-text">
           Voice recording: {Math.round(payload.recording.duration)}s
         </Text>
+      );
+      action = (
+        <Button
+          title="Use this recording"
+          variant="highlighter"
+          fullWidth
+          onPress={() => onConfirm('Voice recording')}
+        />
       );
       break;
     default:
@@ -65,12 +93,15 @@ function Preview({ payload, onReset }: { payload: CapturePayload; onReset: () =>
   return (
     <View className="flex-1 gap-stack p-inset">
       {body}
+      {action}
       <Button title="Start over" variant="outline" fullWidth onPress={onReset} />
     </View>
   );
 }
 
 export function CaptureScreen() {
+  const router = useRouter();
+  const { setProblem } = useCaptureStore();
   const [step, setStep] = useState<CaptureStep>('entry');
   const [mode, setMode] = useState<CaptureMode | undefined>(undefined);
   const [payload, setPayload] = useState<CapturePayload>({ kind: 'none' });
@@ -79,6 +110,11 @@ export function CaptureScreen() {
     setStep('entry');
     setMode(undefined);
     setPayload({ kind: 'none' });
+  };
+
+  const handleConfirm = (text: string) => {
+    setProblem(text);
+    router.push('/tutor');
   };
 
   const handleSelect = async (selected: CaptureMode) => {
@@ -155,5 +191,46 @@ export function CaptureScreen() {
     return null;
   }
 
-  return <Preview payload={payload} onReset={reset} />;
+  if (step === 'review') {
+    if (payload.kind === 'photo') {
+      return (
+        <OcrReview
+          source={payload.photo.filePath}
+          onConfirm={handleConfirm}
+          onCancel={() => setStep('preview')}
+        />
+      );
+    }
+
+    if (payload.kind === 'image') {
+      return (
+        <OcrReview
+          source={payload.uri}
+          onConfirm={handleConfirm}
+          onCancel={() => setStep('preview')}
+        />
+      );
+    }
+
+    if (payload.kind === 'text') {
+      return (
+        <DigitizedTextReview
+          initialText={payload.text}
+          onConfirm={handleConfirm}
+          onCancel={() => setStep('preview')}
+        />
+      );
+    }
+
+    return null;
+  }
+
+  return (
+    <Preview
+      payload={payload}
+      onReset={reset}
+      onReview={() => setStep('review')}
+      onConfirm={handleConfirm}
+    />
+  );
 }
