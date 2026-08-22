@@ -52,6 +52,7 @@ export interface TutorStageProps {
   childName?: string;
   questionNumber?: number;
   captionsEnabled?: boolean;
+  buttonSize?: 'sm' | 'md' | 'lg' | 'xl';
   onBack?: () => void;
   onToggleCaptions?: () => void;
   onSend?: (message: string) => void;
@@ -96,6 +97,7 @@ interface StateBodyProps {
   state: TutorStageState;
   childName?: string;
   questionNumber?: number;
+  buttonSize?: 'sm' | 'md' | 'lg' | 'xl';
   onTryIt?: () => void;
   onNextHint?: () => void;
   onPracticeOnOwn?: () => void;
@@ -106,6 +108,7 @@ function StateBody({
   state,
   childName,
   questionNumber,
+  buttonSize = 'md',
   onTryIt,
   onNextHint,
   onPracticeOnOwn,
@@ -136,14 +139,14 @@ function StateBody({
             <Button
               title="I'll try it"
               variant="highlighter"
-              size="md"
+              size={buttonSize}
               onPress={onTryIt}
               aria-label="Try it myself"
             />
             <Button
               title="Show me the next hint"
               variant="outline"
-              size="md"
+              size={buttonSize}
               onPress={onNextHint}
               aria-label="Show next hint"
             />
@@ -171,7 +174,7 @@ function StateBody({
           <Button
             title="Practice on my own"
             variant="highlighter"
-            size="md"
+            size={buttonSize}
             fullWidth
             onPress={onPracticeOnOwn}
             aria-label="Practice on my own"
@@ -188,7 +191,7 @@ function StateBody({
           <Button
             title="Back to my plan"
             variant="highlighter"
-            size="md"
+            size={buttonSize}
             fullWidth
             onPress={onBackToPlan}
             aria-label="Back to my plan"
@@ -213,6 +216,7 @@ export function TutorStage({
   childName,
   questionNumber,
   captionsEnabled,
+  buttonSize,
   onBack,
   onToggleCaptions,
   onSend,
@@ -242,6 +246,7 @@ export function TutorStage({
           state={state}
           childName={childName}
           questionNumber={questionNumber}
+          buttonSize={buttonSize}
           onTryIt={onTryIt}
           onNextHint={onNextHint}
           onPracticeOnOwn={onPracticeOnOwn}
