@@ -9,7 +9,7 @@ import { usePathname } from 'solito/navigation';
 import { useRouter, type Href } from 'expo-router';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import { Avatar } from '@acme/ui';
-import { AVATAR_URI, useProfile, RoleSwitcher } from '@acme/app';
+import { AVATAR_URI, useAppSession, RoleSwitcher } from '@acme/app';
 
 
 const MAIN_ITEMS = [
@@ -23,10 +23,9 @@ const MAIN_ITEMS = [
 
 export function DrawerContent(props: DrawerContentComponentProps) {
   const pathname = usePathname() ?? '/';
-  // The signed-in user lives in the profile store; the drawer used to hardcode
-  // a second copy of the name, so the two drifted apart.
-  const profileName = useProfile((state) => state.name);
-  const handle = useProfile((state) => state.handle);
+  const { user } = useAppSession();
+  const profileName = user?.name ?? 'Guest';
+  const handle = user?.kind ?? ''
 
   const router = useRouter();
   const navigate = (href: Href) => {
