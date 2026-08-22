@@ -2,9 +2,10 @@
 // Dashboard home — mirrors the liquid-glass template's structure (greeting,
 // hero, stats grid, quick actions, projects) on the kit's tokens, with
 // Legend Motion in place of Reanimated.
-import { ArrowUp } from '@acme/ui/icons';
+import { ArrowUp, ImagePlus } from '@acme/ui/icons';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Card, Heading, PressScale, Text, FadeIn, ScaleIn } from '@acme/ui';
+import { useRouter } from 'solito/router';
 import { useAppSession } from '../../providers/session';
 import { STATS, QUICK_ACTIONS, PROJECTS, WELL, INK, BAR } from './home.data';
 import { getHours } from 'date-fns';
@@ -20,6 +21,8 @@ function greetingFor(now: Date) {
 export function HomeContent() {
   const { user } = useAppSession();
   const name = user?.name ?? 'there';
+  const isLearner = user?.kind === 'learner';
+  const router = useRouter();
   // The greeting was hardcoded to "Good morning" and read as wrong for most of
   // the day. useNow already ticks for the schedule's current-time line, so the
   // greeting re-renders when the hour rolls over instead of only at mount.
@@ -42,18 +45,35 @@ export function HomeContent() {
 
       {/* Hero banner */}
       <FadeIn delay={80}>
-        <PressScale className="w-full overflow-hidden rounded-card bg-primary p-6 shadow-card" outerClassName="w-full">
+        <PressScale
+          className="w-full overflow-hidden rounded-card bg-primary p-6 shadow-card"
+          outerClassName="w-full"
+          onPress={isLearner ? () => router.push('/capture') : undefined}
+          aria-label={isLearner ? 'Scan homework' : 'Weekly summary'}
+        >
           <View aria-hidden className="absolute -right-8 -top-10 h-36 w-36 rounded-full bg-ink-50/10" />
           <View aria-hidden className="absolute -bottom-12 right-16 h-28 w-28 rounded-full bg-ink-50/5" />
           <View className="gap-1">
             <TWText className="text-xs font-semibold uppercase tracking-wider text-on-primary/70">
-              Weekly summary
+              {isLearner ? "Today's work" : 'Weekly summary'}
             </TWText>
-            <TWText className="font-display text-4xl font-bold text-on-primary">$24,820</TWText>
-            <View className="flex-row items-center gap-1.5">
-              <ArrowUp size={14} className="text-on-primary/90" />
-              <TWText className="text-sm text-on-primary/90">12.4% vs last week</TWText>
-            </View>
+            {isLearner ? (
+              <View className="flex-row items-center gap-3">
+                <ImagePlus size={32} className="text-on-primary" />
+                <View className="gap-1">
+                  <TWText className="font-display text-2xl font-bold text-on-primary">Show Natalie your work</TWText>
+                  <TWText className="text-sm text-on-primary/90">Tap to take a picture</TWText>
+                </View>
+              </View>
+            ) : (
+              <>
+                <TWText className="font-display text-4xl font-bold text-on-primary">$24,820</TWText>
+                <View className="flex-row items-center gap-1.5">
+                  <ArrowUp size={14} className="text-on-primary/90" />
+                  <TWText className="text-sm text-on-primary/90">12.4% vs last week</TWText>
+                </View>
+              </>
+            )}
           </View>
         </PressScale>
       </FadeIn>
