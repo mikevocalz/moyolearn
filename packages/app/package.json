@@ -33,6 +33,7 @@
     "react-native-worklets": "catalog:",
     "react-native-vision-camera": "catalog:",
     "react-native-executorch": "catalog:",
+    "@shopify/react-native-skia": "catalog:",
     "react-native-youtube-bridge": "catalog:",
     "server-only": "catalog:",
     "solito": "catalog:",
