@@ -12,6 +12,7 @@ import { Composer } from './Composer';
 import { SessionToolbar } from './SessionToolbar';
 import { Badge } from './Badge';
 import { Button } from './Button';
+import { Avatar } from './Avatar';
 import { LearningCanvas } from './LearningCanvas';
 import { useSizeClass } from './use-size-class';
 
@@ -114,9 +115,7 @@ function StateBody({
     case 'presence':
       return (
         <View className="w-full items-center gap-stack">
-          <View className="rounded-card border-2 border-strong bg-surface-raised p-inset">
-            <Text className="font-mono text-title text-text">N</Text>
-          </View>
+          <Avatar name="Natalie" size="xl" />
           <Text className="max-w-content-prose text-center font-sans text-body text-text">
             Hi {childName ?? 'there'}. We were on question {questionNumber ?? '...'} — want to pick up there?
           </Text>
