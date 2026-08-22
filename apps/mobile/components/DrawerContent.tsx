@@ -1,5 +1,5 @@
 import { DrawerContentScrollView, type DrawerContentComponentProps } from 'expo-router/drawer';
-import { Calendar, Home, Compass, Bell, User, Settings } from '@acme/ui/icons';
+import { Calendar, Home, Compass, Bell, User, Settings, ImagePlus, MessageCircle, FileUp } from '@acme/ui/icons';
 // expo-router's router, NOT solito's, and only because this file is
 // mobile-only. solito's native useRouter goes through react-navigation's
 // useLinkTo, which resolves a path against a linking config that expo-router
@@ -12,14 +12,24 @@ import { Avatar } from '@acme/ui';
 import { AVATAR_URI, useAppSession, RoleSwitcher } from '@acme/app';
 
 
-const MAIN_ITEMS = [
+const BASE_ITEMS = [
   { label: 'Home', icon: Home, href: '/' },
   { label: 'Explore', icon: Compass, href: '/explore' },
   { label: 'Schedule', icon: Calendar, href: '/split' },
   { label: 'Notifications', icon: Bell, href: '/notifications' },
+] as const;
+
+const TAIL_ITEMS = [
   { label: 'Profile', icon: User, href: '/profile' },
   { label: 'Settings', icon: Settings, href: '/settings' },
 ] as const;
+
+const LEARNER_ITEMS = [
+  { label: 'Scan homework', icon: ImagePlus, href: '/capture' },
+  { label: 'Tutor', icon: MessageCircle, href: '/tutor' },
+] as const;
+
+const STAFF_ITEMS = [{ label: 'Session prep', icon: FileUp, href: '/session-prep' }] as const;
 
 export function DrawerContent(props: DrawerContentComponentProps) {
   const pathname = usePathname() ?? '/';
@@ -35,6 +45,16 @@ export function DrawerContent(props: DrawerContentComponentProps) {
 
   const isActive = (href: string) =>
     href === '/' ? pathname === '/' || pathname === '' : pathname.startsWith(href);
+
+  // Mirrors the Drawer.Protected guards in (drawer)/_layout.tsx — a link to a
+  // guarded route would otherwise dead-end for the wrong persona.
+  const roleItems =
+    user?.kind === 'learner'
+      ? LEARNER_ITEMS
+      : user?.kind === 'tutor' || user?.kind === 'teacher' || user?.kind === 'owner'
+        ? STAFF_ITEMS
+        : [];
+  const menuItems = [...BASE_ITEMS, ...roleItems, ...TAIL_ITEMS];
 
   return (
     <DrawerContentScrollView {...props} showsVerticalScrollIndicator={false}>
@@ -58,14 +78,16 @@ export function DrawerContent(props: DrawerContentComponentProps) {
       <Text className="mx-5 mb-1 text-xs font-semibold uppercase text-text-muted">Menu</Text>
 
       <View className="py-2">
-        {MAIN_ITEMS.map((item) => {
+        {menuItems.map((item) => {
           const active = isActive(item.href);
           return (
             <Pressable
               key={item.label}
               aria-label={item.label}
               aria-selected={active}
-              onPress={() => navigate(item.href)}
+              // Guarded routes are conditionally mounted, so expo-router's
+              // typed-routes union does not include them at build time.
+              onPress={() => navigate(item.href as Href)}
               // The selected row is the app's slab — yellow field, ink text,
               // 2px border, hard offset shadow — the same treatment the rail's
               // selected tab and the primary button use. It replaces yellow

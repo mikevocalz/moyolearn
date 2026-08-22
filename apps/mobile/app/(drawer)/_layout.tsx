@@ -1,6 +1,7 @@
 import { Drawer } from 'expo-router/drawer';
 import { useColorScheme } from 'react-native';
 import { palette } from '@acme/theme';
+import { useAppSession } from '@acme/app';
 import { DrawerContent } from '../../components/DrawerContent';
 import { AppHeader } from '../../components/AppHeader';
 import { horizontalGesturesEnabled } from '@/src/navigation/split-view/pane-search';
@@ -17,6 +18,16 @@ export default function DrawerLayout() {
    */
   const searches = usePaneSearchStore((state) => state.panes);
   const swipeEnabled = horizontalGesturesEnabled(Object.values(searches));
+
+  /**
+   * The guard tree ships in Wave 2 against the mock session (doc 09 §2 rule 4).
+   * Under `Stack.Protected` semantics an unguarded route is not merely hidden —
+   * it is unreachable by deep link and purged from history when the persona
+   * flips, so the Wave-3 auth swap changes zero navigation code.
+   */
+  const { user } = useAppSession();
+  const isLearner = user?.kind === 'learner';
+  const isStaff = user?.kind === 'tutor' || user?.kind === 'teacher' || user?.kind === 'owner';
 
   return (
     <Drawer
@@ -36,6 +47,17 @@ export default function DrawerLayout() {
       }}
     >
       <Drawer.Screen name="split" options={{ headerShown: false }} />
+
+      {/* Learner-only: capture and the tutor stage are child surfaces. */}
+      <Drawer.Protected guard={isLearner}>
+        <Drawer.Screen name="capture/index" />
+        <Drawer.Screen name="tutor" />
+      </Drawer.Protected>
+
+      {/* Staff-only: prep reads derived observations about a learner. */}
+      <Drawer.Protected guard={isStaff}>
+        <Drawer.Screen name="session-prep" />
+      </Drawer.Protected>
     </Drawer>
   );
 }
