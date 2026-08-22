@@ -26,6 +26,7 @@ export {
 } from './features/schedule';
 export { CaptureScreen, useCaptureStore } from './features/capture';
 export { TutorScreen } from './features/tutor/screen';
+export { SessionPrepScreen } from './features/session-prep/screen';
 export { ErrorScreen } from './features/error/screen';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';
