@@ -27,7 +27,13 @@ export function RoleSwitcher() {
             variant={currentId === persona.id ? 'highlighter' : 'outline'}
             size="sm"
             onPress={() =>
-              setPersona({ id: persona.id, name: persona.name, kind: persona.kind, gradeBand: persona.gradeBand })
+              setPersona({
+                id: persona.id,
+                name: persona.name,
+                kind: persona.kind,
+                gradeBand: persona.gradeBand,
+                memberships: persona.memberships,
+              })
             }
           />
         ))}
