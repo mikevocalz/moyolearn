@@ -1,7 +1,7 @@
 'use client';
 // TutorScreen — the captured problem flows here for the S9 session.
 // SOT: docs/pack/24-homework-capture-spec.md §5 · docs/pack/23-tutorstage-handoff.md §3
-// SOT-KEYWORDS: tutor screen capture handoff tutorstage session pacer zustand
+// SOT-KEYWORDS: tutor screen capture handoff tutorstage session pacer zustand age band
 
 import { useEffect } from 'react';
 import { useRouter } from 'solito/router';
@@ -9,9 +9,14 @@ import { useDebouncedCallback } from '@tanstack/react-pacer';
 import { TutorStage, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { useCaptureStore } from '../capture';
+import { buttonSizeForBand, type AgeBand } from '../capture';
 import { useTutorStore } from './tutor.store';
 
-export function TutorScreen() {
+export interface TutorScreenProps {
+  ageBand?: AgeBand;
+}
+
+export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   const router = useRouter();
   const problem = useCaptureStore((s) => s.problem);
   const { state, start, send } = useTutorStore();
@@ -46,6 +51,7 @@ export function TutorScreen() {
       title="Natalie"
       childName="there"
       captionsEnabled
+      buttonSize={buttonSizeForBand(ageBand)}
       onBack={router.back}
       onSend={handleSend}
     />

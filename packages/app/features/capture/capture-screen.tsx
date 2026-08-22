@@ -1,7 +1,7 @@
 'use client';
 // CaptureScreen — orchestrates the five homework-capture entry modes.
 // SOT: docs/pack/24-homework-capture-spec.md §1
-// SOT-KEYWORDS: capture screen homework camera photo file type voice preview ocr review
+// SOT-KEYWORDS: capture screen homework camera photo file type voice preview ocr review age band
 
 import { useState } from 'react';
 import { useRouter } from 'solito/router';
@@ -15,6 +15,7 @@ import { GuidedFrame } from './guided-frame';
 import { DigitizedTextReview } from './digitized-text-review';
 import { OcrReview } from './ocr-review';
 import { useCaptureStore } from './capture.store';
+import { buttonSizeForBand, captureLabelsForBand, type AgeBand } from './age-band';
 import { CaptureMode, CapturePhoto, CaptureStep } from './types';
 
 type CapturePayload =
@@ -25,51 +26,56 @@ type CapturePayload =
   | { kind: 'text'; text: string }
   | { kind: 'voice'; recording: VoiceRecording };
 
-function TypeCapture({ onDone }: { onDone: (text: string) => void }) {
+function TypeCapture({ ageBand, onDone }: { ageBand: AgeBand; onDone: (text: string) => void }) {
   const [text, setText] = useState('');
+  const size = buttonSizeForBand(ageBand);
+  const label = ageBand === 'young' ? 'Type the problem' : 'Type the problem';
   return (
     <View className="flex-1 gap-stack p-inset">
       <Textarea
-        label="Type the problem"
+        label={label}
         value={text}
         onChangeText={setText}
         containerClassName="flex-1"
       />
-      <Button title="Done" variant="highlighter" fullWidth onPress={() => onDone(text)} />
+      <Button title="Done" variant="highlighter" size={size} fullWidth onPress={() => onDone(text)} />
     </View>
   );
 }
 
 function Preview({
+  ageBand,
   payload,
   onReset,
   onReview,
   onConfirm,
 }: {
+  ageBand: AgeBand;
   payload: CapturePayload;
   onReset: () => void;
   onReview: () => void;
   onConfirm: (text: string) => void;
 }) {
+  const size = buttonSizeForBand(ageBand);
   let body: React.ReactNode;
   let action: React.ReactNode = null;
 
   switch (payload.kind) {
     case 'photo':
       body = <Image alt="Captured work" src={`file://${payload.photo.filePath}`} className="h-64 w-full rounded-card" />;
-      action = <Button title="Review text" variant="highlighter" fullWidth onPress={onReview} />;
+      action = <Button title="Review text" variant="highlighter" size={size} fullWidth onPress={onReview} />;
       break;
     case 'image':
       body = <Image alt="Selected work" src={payload.uri} className="h-64 w-full rounded-card" />;
-      action = <Button title="Review text" variant="highlighter" fullWidth onPress={onReview} />;
+      action = <Button title="Review text" variant="highlighter" size={size} fullWidth onPress={onReview} />;
       break;
     case 'file':
       body = <Text className="font-sans text-body text-text">{payload.name}</Text>;
-      action = <Button title="Use this file" variant="highlighter" fullWidth onPress={() => onConfirm(payload.name)} />;
+      action = <Button title="Use this file" variant="highlighter" size={size} fullWidth onPress={() => onConfirm(payload.name)} />;
       break;
     case 'text':
       body = <Text className="font-sans text-body text-text">{payload.text}</Text>;
-      action = <Button title="Review text" variant="highlighter" fullWidth onPress={onReview} />;
+      action = <Button title="Review text" variant="highlighter" size={size} fullWidth onPress={onReview} />;
       break;
     case 'voice':
       body = (
@@ -81,6 +87,7 @@ function Preview({
         <Button
           title="Use this recording"
           variant="highlighter"
+          size={size}
           fullWidth
           onPress={() => onConfirm('Voice recording')}
         />
@@ -94,17 +101,23 @@ function Preview({
     <View className="flex-1 gap-stack p-inset">
       {body}
       {action}
-      <Button title="Start over" variant="outline" fullWidth onPress={onReset} />
+      <Button title="Start over" variant="outline" size={size} fullWidth onPress={onReset} />
     </View>
   );
 }
 
-export function CaptureScreen() {
+export interface CaptureScreenProps {
+  ageBand?: AgeBand;
+}
+
+export function CaptureScreen({ ageBand = 'teen' }: CaptureScreenProps) {
   const router = useRouter();
   const { setProblem } = useCaptureStore();
   const [step, setStep] = useState<CaptureStep>('entry');
   const [mode, setMode] = useState<CaptureMode | undefined>(undefined);
   const [payload, setPayload] = useState<CapturePayload>({ kind: 'none' });
+
+  const labels = captureLabelsForBand(ageBand);
 
   const reset = () => {
     setStep('entry');
@@ -152,10 +165,8 @@ export function CaptureScreen() {
   if (step === 'entry') {
     return (
       <View className="flex-1 justify-center p-inset gap-stack">
-        <Text className="font-sans text-title font-bold text-text">
-          How do you want to add your work?
-        </Text>
-        <CaptureEntryRow onSelect={(m) => void handleSelect(m)} />
+        <Text className="font-sans text-title font-bold text-text">{labels.prompt}</Text>
+        <CaptureEntryRow ageBand={ageBand} onSelect={(m) => void handleSelect(m)} />
       </View>
     );
   }
@@ -164,6 +175,7 @@ export function CaptureScreen() {
     if (mode === 'camera') {
       return (
         <GuidedFrame
+          ageBand={ageBand}
           onCapture={(photo) => {
             setPayload({ kind: 'photo', photo });
             setStep('preview');
@@ -173,7 +185,7 @@ export function CaptureScreen() {
     }
 
     if (mode === 'type') {
-      return <TypeCapture onDone={(text) => { setPayload({ kind: 'text', text }); setStep('preview'); }} />;
+      return <TypeCapture ageBand={ageBand} onDone={(text) => { setPayload({ kind: 'text', text }); setStep('preview'); }} />;
     }
 
     if (mode === 'voice') {
@@ -195,6 +207,7 @@ export function CaptureScreen() {
     if (payload.kind === 'photo') {
       return (
         <OcrReview
+          ageBand={ageBand}
           source={payload.photo.filePath}
           onConfirm={handleConfirm}
           onCancel={() => setStep('preview')}
@@ -205,6 +218,7 @@ export function CaptureScreen() {
     if (payload.kind === 'image') {
       return (
         <OcrReview
+          ageBand={ageBand}
           source={payload.uri}
           onConfirm={handleConfirm}
           onCancel={() => setStep('preview')}
@@ -215,6 +229,7 @@ export function CaptureScreen() {
     if (payload.kind === 'text') {
       return (
         <DigitizedTextReview
+          ageBand={ageBand}
           initialText={payload.text}
           onConfirm={handleConfirm}
           onCancel={() => setStep('preview')}
@@ -227,6 +242,7 @@ export function CaptureScreen() {
 
   return (
     <Preview
+      ageBand={ageBand}
       payload={payload}
       onReset={reset}
       onReview={() => setStep('review')}
