@@ -5,7 +5,7 @@
 import { ArrowUp } from '@acme/ui/icons';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Card, Heading, PressScale, Text, FadeIn, ScaleIn } from '@acme/ui';
-import { useProfile } from '../profile/profile.store';
+import { useAppSession } from '../../providers/session';
 import { STATS, QUICK_ACTIONS, PROJECTS, WELL, INK, BAR } from './home.data';
 import { getHours } from 'date-fns';
 import { useNow } from '../schedule/use-now';
@@ -18,7 +18,8 @@ function greetingFor(now: Date) {
 }
 
 export function HomeContent() {
-  const name = useProfile((s) => s.name);
+  const { user } = useAppSession();
+  const name = user?.name ?? 'there';
   // The greeting was hardcoded to "Good morning" and read as wrong for most of
   // the day. useNow already ticks for the schedule's current-time line, so the
   // greeting re-renders when the hour rolls over instead of only at mount.
