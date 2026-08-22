@@ -1,3 +1,9 @@
+// Schedule feature public API — the resource-grid surface behind S1 (Ops Resource Schedule).
+// The first fully-realized screen: it's the one that wins paying businesses, and paying
+// businesses are the distribution channel that puts the tutor in front of children.
+// SOT: docs/pack/04-screen-briefs.md (S1) · docs/pack/09-screens-first-build-order.md
+// SOT-KEYWORDS: schedule booking resource grid calendar lanes slots events S1 ops
+
 export { Schedule, type ScheduleProps } from './Schedule';
 export { ScheduleGrid, type ScheduleGridProps } from './ScheduleGrid';
 export { BookingSurface, type BookingSurfaceProps } from './BookingSurface';

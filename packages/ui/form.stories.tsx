@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useAppForm } from './form';
-import { View } from './tw';
+import { View } from './primitives';
 import { Text } from './Text';
 
 const meta = { title: 'UI/Form' } satisfies Meta;
@@ -12,7 +12,6 @@ export const Profile: Story = {
     const form = useAppForm({
       defaultValues: { name: '', bio: '', terms: false, notifications: true },
       onSubmit: async ({ value }) => {
-        // eslint-disable-next-line no-alert
         alert(JSON.stringify(value, null, 2));
       },
     });

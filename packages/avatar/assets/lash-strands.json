@@ -1,0 +1,11 @@
+{
+  "name": "lash-strands",
+  "width": 256,
+  "height": 128,
+  "seed": 1337,
+  "strands": 120,
+  "supersample": 4,
+  "segments": 24,
+  "colorSpace": "srgb",
+  "sha256": "3c2495f216bde11703aa638a02b2bd49182738211ed4a1a188c0cabf5a0f542e"
+}

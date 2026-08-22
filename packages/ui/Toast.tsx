@@ -1,5 +1,5 @@
 import { tv, type VariantProps } from 'tailwind-variants';
-import { View } from './tw';
+import { View } from './primitives';
 import { Text } from './Text';
 import { SlideUp } from './motion';
 

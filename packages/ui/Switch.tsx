@@ -1,7 +1,7 @@
 'use client';
 import { tv } from 'tailwind-variants';
 import { haptics } from './haptics';
-import { Pressable, View } from './tw';
+import { Pressable, View } from './primitives';
 import { Text } from './Text';
 
 const switchRow = tv({

@@ -1,6 +1,6 @@
 'use client';
 import { Host, Slider as ExpoSlider } from '@expo/ui';
-import { View } from './tw';
+import { View } from './primitives';
 import { Text } from './Text';
 import type { SliderProps } from './Slider.types';
 

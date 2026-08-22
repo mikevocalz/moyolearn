@@ -1,0 +1,27 @@
+{
+  "extends": "@acme/config/typescript/base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+
+    // THE exemption, and the only one in this package. See ../../README.md.
+    // The head evaluator is a numeric kernel over typed arrays whose indices
+    // are in-bounds by construction from dimensions parseContainer validated.
+    // Under the flag it reports 108 errors, all of the shape
+    // `sum[j] += basis[offset + j] * factor`. Everything else stays on.
+    "noUncheckedIndexedAccess": false,
+
+    // composite + a declaration boundary is what CONTAINS the exemption: the
+    // rest of this package, and every consumer, sees model.d.ts rather than
+    // model.ts, so the flag is off for 715 lines and on for the other ~9,000.
+    "composite": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false,
+    "rootDir": ".",
+    "outDir": "../../.types/gnm",
+    "declarationDir": "../../.types/gnm",
+    "tsBuildInfoFile": "../../.tsbuild/gnm.tsbuildinfo"
+  },
+  "include": ["model.ts"]
+}

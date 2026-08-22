@@ -1,6 +1,5 @@
 import { tv } from 'tailwind-variants';
-import { Header, Nav } from './primitives';
-import { View, Text } from './tw';
+import { Header, Nav, Text, View } from './primitives';
 
 // §9 contextual top bar — presentational: leading control (back/menu) and the
 // trailing action row (IconButtons) are passed in as slots.

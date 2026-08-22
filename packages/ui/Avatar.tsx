@@ -1,6 +1,6 @@
 import { tv, type VariantProps } from 'tailwind-variants';
 import { SolitoImage } from 'solito/image';
-import { View, Text } from './tw';
+import { View, Text } from './primitives';
 
 const avatar = tv({
   slots: {

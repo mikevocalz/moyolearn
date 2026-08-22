@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { DropZone, type DropAsset } from './DropZone';
-import { Text as TWText, View } from './tw';
+import { Text as TWText, View } from './primitives';
 import { Text } from './Text';
 import { Image } from './Image';
 import { create } from 'zustand';

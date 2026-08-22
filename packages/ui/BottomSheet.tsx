@@ -1,7 +1,7 @@
 'use client';
 import { tv } from 'tailwind-variants';
 import { BottomSheet as ExpoBottomSheet } from '@expo/ui';
-import { ScrollView, View, Text, Pressable } from './tw';
+import { Pressable, ScrollView, Text, View } from './primitives';
 
 // Expo UI's universal sheet: vaul on web (real drag physics), SwiftUI /
 // Material sheets on native. Two snap points — 55% and 85%, never full

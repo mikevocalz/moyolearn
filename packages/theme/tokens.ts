@@ -1,6 +1,16 @@
 /**
  * @acme/theme — the single token source (PROMPT-2).
- * Brand: burgundy, black, pumpkin orange. Warm dark mode + elegant light mode.
+ * Moyo brand: highlighter yellow, hot pink, ink black on paper cream.
+ *
+ * The primitive scale NAMES ARE LIES kept for class compatibility: `burgundy` is
+ * electric yellow, `gold` is blue. Feature code must never name a primitive scale
+ * directly — use the schoolhouse semantic aliases below, which say what the colour
+ * IS. This is the whole reason PR-0 exists (doc 03 §6).
+ *
+ * Raw styling values are banned in feature code: if a value is missing, it is
+ * added here, not inlined at the call site.
+ * SOT: this file · docs/pack/08-visual-hierarchy-spacing-spec.md
+ * SOT-KEYWORDS: theme tokens color spacing typography palette design-system brand
  *
  * `build-css.mjs` emits theme.css (web/storybook, Tailwind v4 `@theme` with
  * light-dark()) and theme-native.css (mobile, Uniwind `@variant` theme blocks)
@@ -55,7 +65,9 @@ export const palette = {
     950: '#0D0C0B',
   },
   white: '#FFFFFF',
-  // choir calendar event-type accents — warm, dignified, readable on light/dark surfaces
+  // Event-type accents — readable on both light and dark surfaces.
+  // `gold` is BLUE: the name predates Moyo and is kept only so emitted class
+  // names stay stable. Reach for the `ballpoint` alias instead.
   gold: {
     50: '#EEF4FF', 100: '#DCE8FF', 200: '#B8D0FF', 300: '#8AB0FF',
     400: '#5C8AFF', 500: '#3B6DF6', 600: '#2952D9', 700: '#1F3FAD',
@@ -98,14 +110,45 @@ export const semantic = {
   'primary-pressed': { light: palette.burgundy[500], dark: palette.burgundy[500] },
   'on-primary': { light: palette.ink[950], dark: palette.ink[950] },
   accent: { light: palette.ember[500], dark: palette.ember[400] },
-  'accent-pressed': { light: palette.ember[600], dark: palette.ember[500] },
+  // Not palette.ember[600] (#DB2777): black ink on it is 4.25:1, under AA, and
+  // this is a hover/press BACKGROUND that carries the button label. Nudged just
+  // light enough to clear 4.5 (4.64:1) while staying visibly darker than
+  // `accent`, so the pressed-is-darker convention `primary-pressed` follows
+  // still holds. The scale step is left alone — nothing else consumes it.
+  'accent-pressed': { light: '#E3307E', dark: palette.ember[500] },
   'on-accent': { light: palette.ink[950], dark: palette.ink[950] },
   // RETRO: borders are ink, not grey — the outline IS the design
   border: { light: palette.ink[950], dark: palette.ink[50] },
   'border-strong': { light: '#000000', dark: '#FFFDF7' },
+  // Ink at 80% — the Cool dial's hairline (doc 02 §5.3). Still an AA text colour
+  // against surface, so remapping --color-border inside .dial-cool is safe.
+  'border-soft': { light: 'rgba(13, 12, 11, 0.80)', dark: 'rgba(255, 253, 247, 0.80)' },
+  // Ink at 10% — the Cool dial's whisper of an offset shadow (doc 02 §5.3).
+  // Pre-resolved rgba rather than color-mix(): React Native cannot evaluate
+  // color-mix, so a shared token has to be a value both engines can read.
+  // Never a text or border colour — it fails contrast by design.
+  'border-faint': { light: 'rgba(13, 12, 11, 0.10)', dark: 'rgba(255, 253, 247, 0.10)' },
   focus: { light: palette.gold[500], dark: palette.gold[400] },
   danger: { light: '#D31F2B', dark: '#FF7A85' },
   'on-danger': { light: palette.white, dark: '#3D0508' },
+
+  // ---- schoolhouse aliases (PR-0) -------------------------------------------
+  // The design language is classroom stationery, so the tokens are named for the
+  // instrument that makes the mark. Two different jobs live here, and mixing them
+  // is the mistake this comment exists to prevent:
+  //
+  //   highlighter — a SURFACE. Ink goes on top of it, so it carries `on-*`.
+  //   ballpoint / redpen / grade — MARKS. They are drawn on the paper, so each
+  //   must clear AA against `surface` in both modes and shifts value per mode.
+  //
+  // `redpen` is teacher feedback, deliberately NOT `danger`: a correction is not
+  // an error state, and a child seeing alarm-red for ordinary marking is a
+  // child-outcome problem, not a palette one.
+  highlighter: { light: palette.burgundy[300], dark: palette.burgundy[300] },
+  'on-highlighter': { light: palette.ink[950], dark: palette.ink[950] },
+  ballpoint: { light: palette.gold[600], dark: palette.gold[400] },
+  redpen: { light: palette.rose[600], dark: palette.rose[300] },
+  grade: { light: palette.forest[600], dark: palette.forest[300] },
 } as const;
 
 // ---- typography -------------------------------------------------------------
@@ -114,6 +157,14 @@ export const fontFamilies = {
   // RETRO: Archivo Black shouts the headlines; Space Grotesk does the work.
   display: "'Archivo Black', 'Arial Black', sans-serif",
   sans: "'Space Grotesk', system-ui, -apple-system, sans-serif",
+  // Chivo Mono is Omnibus-Type, same foundry as Archivo Black — it reads as
+  // family with the display face rather than a fourth voice. Variable 100–900,
+  // which matters because hierarchy here is carried by weight (doc 08 §3.2).
+  // Two jobs: tabular data, and the `moyo · n. heart` dictionary device (doc 02,
+  // Addendum B) — which is why the italic cut ships too.
+  // Its `tnum`/`zero` features are OFF until asked for; build-css.mjs turns them
+  // on for the whole family, because unslashed 0 sits a hair from O.
+  mono: "'Chivo Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
 } as const;
 
 /** Display scale for hero/masthead moments; body text uses the Tailwind defaults. */
@@ -144,6 +195,7 @@ export const contentWidths = {
   'pane-primary-narrow': '16rem',
   'pane-supplementary': '21rem',
   'pane-inspector': '20rem',
+  'pane-tutor': '23.75rem',  // doc 23 §5: 380px TutorStage primary pane
 } as const;
 
 export const radius = {
@@ -187,6 +239,117 @@ export const motion = {
     emphasized: 'cubic-bezier(0.3, 0, 0, 1)',
     exit: 'cubic-bezier(0.4, 0, 1, 1)',
   },
+} as const;
+
+// ---- UI type ramp (doc 08 §3.1) ---------------------------------------------
+
+/**
+ * The UI ramp the display scale never covered — Button and friends were falling
+ * back to Tailwind's raw text-sm/base/lg. Values per dial; the dial scope remaps
+ * the generic name, so a component writes `text-title` and gets the right one.
+ *
+ * `data` is the mono ramp: every time, price, %, and count, so columns align.
+ * Doc 08 §3.1 names Spline Sans Mono here — superseded by Chivo Mono, chosen and
+ * shipped in PR-0; the ramp is what the doc is specifying, not the face.
+ *
+ * caption is the floor: never below 12, and never for anything a user must act on.
+ */
+export const uiRamp = {
+  'title-lg': { cool: ['1.25rem', '1.25', '600'], hot: ['1.5rem', '1.25', '700'] },
+  title: { cool: ['1.0625rem', '1.3', '600'], hot: ['1.25rem', '1.3', '700'] },
+  'body-lg': { cool: ['1rem', '1.5', '400'], hot: ['1.125rem', '1.55', '400'] },
+  body: { cool: ['0.9375rem', '1.45', '400'], hot: ['1.0625rem', '1.5', '400'] },
+  label: { cool: ['0.8125rem', '1.35', '500'], hot: ['0.9375rem', '1.4', '600'] },
+  caption: { cool: ['0.75rem', '1.35', '400'], hot: ['0.8125rem', '1.4', '400'] },
+  data: { cool: ['0.8125rem', '1.35', '500'], hot: ['0.9375rem', '1.4', '500'] },
+  'data-lg': { cool: ['1rem', '1.3', '600'], hot: ['1.25rem', '1.3', '600'] },
+} as const;
+
+// ---- spacing tiers (doc 08 §2.1) --------------------------------------------
+
+/**
+ * Named tiers so spacing is a decision, not a habit. Values per dial.
+ * §2.3's grouping law lives here: `gap-group` is the hierarchy workhorse —
+ * separation between groups is what carries structure, not borders.
+ */
+export const spacingTiers = {
+  'inset-tight': { cool: '0.75rem', hot: '1rem' },
+  inset: { cool: '1rem', hot: '1.25rem' },
+  'inset-roomy': { cool: '1.25rem', hot: '1.5rem' },
+  // Doc 08 names these tiers `gap-element`, `gap-stack`, `gap-group`,
+  // `gap-section` — and those ARE the class names, which is why the `gap-`
+  // prefix must NOT be part of the token. Tailwind builds a utility as
+  // <property>-<token suffix>, so `--spacing-gap-stack` yields `gap-gap-stack`
+  // and every `gap-stack` in the codebase silently does nothing. Named for the
+  // role; the property supplies the prefix.
+  element: { cool: '0.5rem', hot: '0.75rem' },
+  stack: { cool: '0.75rem', hot: '1rem' },
+  group: { cool: '1.5rem', hot: '2rem' },
+  section: { cool: '2rem', hot: '3rem' },
+} as const;
+
+// ---- touch targets (doc 08 §2.4) --------------------------------------------
+
+/**
+ * Target size is a function of the signed-in child, not a hardcode: the age band
+ * comes from the learner profile, so a K–2 primary action is 72 (~2cm, the NN/g
+ * 4× finding) while the same component on an ops screen is 44.
+ * `floor` is the absolute CI minimum (WCAG 2.2 AA) — never a design target.
+ */
+export const targets = {
+  floor: '1.5rem',   // 24
+  adult: '2.75rem',  // 44 (48 preferred on Android)
+  teen: '3rem',      // 48 — Hot, grades 6–12
+  child: '3.5rem',   // 56 — Hot, grades 3–5
+  young: '4.5rem',   // 72 — Hot, K–2 primary actions
+} as const;
+
+// ---- reading comfort (doc 08 §3.3) ------------------------------------------
+
+/**
+ * "Comfy reading" — a per-learner toggle, never framed as a diagnosis
+ * (the plan's no-labeling rule). Default OFF: the same literature that supports
+ * wider spacing for some readers shows it slows fast readers.
+ */
+export const readingComfort = {
+  'letter-spacing': '0.06em',
+  'line-height': '1.7',
+} as const;
+
+// ---- the dial ---------------------------------------------------------------
+
+/**
+ * One DNA, two temperatures (doc 02 §5.3 + doc 08 §2.5 density row).
+ * Hot = learner/family surfaces; Cool = ops/educator/institution.
+ *
+ * The dial is NOT a theme. Light/dark is one global preference, but a single
+ * parent screen is "cool structure, hot accents on child-related cards" — both
+ * temperatures render in one tree — so it travels as a component prop
+ * (doc 02 §7 already types `InkTile` with `dial: hot·cool`), not as an
+ * app-level variant. That is why these emit as dial-suffixed utilities rather
+ * than as a second @variant axis: React Native has no cascade to inherit from.
+ *
+ * Colour is deliberately absent. The dial governs which fills get USED
+ * (Hot saturated, Cool paper/white with colour reserved for status), not what
+ * the values are — so both temperatures share one palette and one contrast pass.
+ */
+export const dial = {
+  hot: {
+    radius: '0.875rem',    // 14px — chunky-friendly
+    shadow: '4px 4px 0 0 var(--color-border-strong)',
+    'row-height': '4rem',  // 64+, roomy enough for an age-band target
+    duration: '200ms',     // tactile physics; the playful end of the ramp
+  },
+  cool: {
+    radius: '0.5rem',      // 8px
+    shadow: '2px 2px 0 0 var(--color-border-faint)',
+    'row-height': '2.75rem', // 44 — the adult target floor
+    duration: '140ms',     // 120–160ms utility transitions
+  },
+  // Insets live in `spacingTiers`, NOT here. They were in both briefly and each
+  // emitted --spacing-inset-<temp>: identical values, so nothing broke, but two
+  // sources for one variable means the next edit to one of them silently loses
+  // to whichever the emitter writes last.
 } as const;
 
 export const breakpoints = {

@@ -1,5 +1,5 @@
 import { tv } from 'tailwind-variants';
-import { View } from './tw';
+import { View } from './primitives';
 import { FadeIn, ScaleIn } from './motion';
 import { Text } from './Text';
 

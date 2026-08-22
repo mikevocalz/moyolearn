@@ -2,7 +2,7 @@
 import { tv, type VariantProps } from 'tailwind-variants';
 import { ActivityIndicator } from 'react-native';
 import { PressScale } from './press-scale';
-import { Text } from './tw';
+import { Text } from './primitives';
 import { haptics } from './haptics';
 
 // Press feedback: §8 ladder rung 1 — simple active-state opacity/scale via
@@ -22,15 +22,27 @@ const button = tv({
       accent: { root: 'bg-accent shadow-card hover:bg-accent-pressed', label: 'text-on-accent' },
       outline: { root: 'bg-surface-raised shadow-card hover:bg-surface-sunken', label: 'text-text' },
       ghost: { root: 'border-transparent bg-transparent shadow-none hover:bg-surface-sunken active:shadow-none', label: 'text-text' },
+      highlighter: { root: 'bg-highlighter shadow-card hover:bg-highlighter/90 active:opacity-80', label: 'text-on-highlighter' },
       danger: { root: 'bg-danger shadow-card hover:opacity-90', label: 'text-on-danger' },
     },
-    // Labels and padding both step up at md. Scaling the label alone would
-    // leave the text crowded against a phone-sized box on a tablet, so the
-    // control grows with its text.
+    /*
+      Labels and padding both step up at md. Scaling the label alone would
+      leave the text crowded against a phone-sized box on a tablet, so the
+      control grows with its text.
+
+      Every size carries a min-height from an age-band target token (doc 08
+      §2.4), never a bare padding sum: padding plus a line-height happens to
+      clear 44 today, and would quietly stop clearing it the first time someone
+      tightened the type ramp. `pnpm check:targets` fails the build if a size
+      ever ships without one. xl exists for Hot child bands; K–2 primary actions
+      go further to `min-h-target-young` (72) at the call site, because the band
+      comes from the signed-in learner, not from the component.
+    */
     size: {
-      sm: { root: 'px-4 py-2 md:px-5 md:py-2.5', label: 'text-sm md:text-base' },
-      md: { root: 'px-5 py-2.5 md:px-6 md:py-3', label: 'text-sm md:text-base' },
-      lg: { root: 'px-6 py-3.5 md:px-8 md:py-4', label: 'text-base md:text-lg' },
+      sm: { root: 'min-h-target-adult px-4 py-2 md:px-5 md:py-2.5', label: 'text-sm md:text-base' },
+      md: { root: 'min-h-target-adult px-5 py-2.5 md:px-6 md:py-3', label: 'text-sm md:text-base' },
+      lg: { root: 'min-h-target-teen px-6 py-3.5 md:px-8 md:py-4', label: 'text-base md:text-lg' },
+      xl: { root: 'min-h-target-child px-8 py-4 md:px-10 md:py-5', label: 'text-label' },
     },
     /*
       Unavailable has to READ as unavailable. Opacity alone was not enough: a

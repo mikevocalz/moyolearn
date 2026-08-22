@@ -3,7 +3,7 @@ import { useEffect } from 'react';
 import { Modal } from 'react-native';
 import { SolitoImage } from 'solito/image';
 import { useInstanceStore, useStore } from './use-instance-store';
-import { View, Text, Pressable } from './tw';
+import { Pressable, Text, View } from './primitives';
 
 export interface LightboxProps {
   images: string[];

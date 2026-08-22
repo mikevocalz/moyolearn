@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Lightbox } from './Lightbox';
 import { Button } from './Button';
 import { Image } from './Image';
-import { Pressable, View } from './tw';
+import { Pressable, View } from './primitives';
 import { create } from 'zustand';
 
 // Story state — zustand always (repo rule).

@@ -1,0 +1,24 @@
+{
+  // The test files, checked at full strictness. They are excluded from the
+  // emitting project above because a composite project's declaration output
+  // has no business containing test types; this brings them back under the
+  // same flags without emitting anything.
+  "extends": "@acme/config/typescript/base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "lib": ["es2022", "dom"],
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "disableSourceOfProjectReferenceRedirect": true
+  },
+  "references": [{ "path": "./src/gnm" }, { "path": "./src/conform" }],
+  "include": ["**/*.ts"],
+  "exclude": [
+    "node_modules",
+    ".tsbuild",
+    ".types",
+    "src/gnm/model.ts",
+    "src/conform/driver.ts",
+    "src/conform/types.ts"
+  ]
+}

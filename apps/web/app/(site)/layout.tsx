@@ -8,11 +8,11 @@ import '../globals.css';
 
 export const metadata: Metadata = {
   title: {
-    default: 'Solito NativeUI Starter',
-    template: '%s — Solito NativeUI Starter',
+    default: 'Moyo — Learn it by heart.',
+    template: '%s — Moyo',
   },
   description:
-    'Universal app starter — Expo + Next.js + Payload sharing screens via Solito and a Uniwind UI kit.',
+    'Moyo is AI tutoring that helps a child learn it by heart — and helps the parents, tutors, and teachers around them help better.',
 };
 
 export default function SiteLayout({ children }: Readonly<{ children: React.ReactNode }>) {

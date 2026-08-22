@@ -21,3 +21,19 @@
   font-weight: 300 700;
   font-display: swap;
 }
+/* Without these the mono silently falls back to ui-monospace, so a type
+   specimen shows a face the app never ships. Both cuts, matching next/font. */
+@font-face {
+  font-family: 'Chivo Mono';
+  src: url('../../packages/assets/fonts/ChivoMono-Variable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+@font-face {
+  font-family: 'Chivo Mono';
+  src: url('../../packages/assets/fonts/ChivoMono-Italic-Variable.ttf') format('truetype');
+  font-weight: 100 900;
+  font-style: italic;
+  font-display: swap;
+}

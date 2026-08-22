@@ -1,8 +1,9 @@
 'use client';
+import { useColorScheme } from 'react-native';
 import { EnrichedText } from 'react-native-enriched-html';
 import { View } from '@acme/ui/tw';
 import { AudioPlayer } from '@acme/ui';
-import { palette } from '@acme/theme';
+import { semantic, uiRamp } from '@acme/theme';
 import { splitNoteSegments } from './youtube.ts';
 import { YouTubeEmbed } from './YouTubeEmbed';
 
@@ -28,20 +29,35 @@ export interface NoteBodyProps {
 export function NoteBody({ html, className }: NoteBodyProps) {
   const segments = splitNoteSegments(html);
 
+  /*
+    EnrichedText is a native view taking a resolved style object, so it cannot
+    read the CSS variables the rest of the kit uses — the colour has to be
+    picked in JS. It previously hardcoded ink[950], which put near-black text on
+    the near-black dark surface at about 1.1:1: invisible, and a WCAG 1.4.3
+    failure on a learner-facing surface. Semantic tokens, resolved per scheme.
+  */
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+  const ink = semantic.text[scheme];
+  const bodySize = parseFloat(uiRamp['body-lg'].cool[0]) * 16; // rem token → dp
+
   return (
     <View className={`gap-1 ${className ?? ''}`}>
       {segments.map((segment, index) =>
         segment.kind === 'video' ? (
-          <YouTubeEmbed key={`video-${segment.value}-${index}`} videoId={segment.value} />
+          <YouTubeEmbed
+            key={`video-${segment.value}-${segment.playlistId ?? ''}-${index}`}
+            videoId={segment.value === '' ? undefined : segment.value}
+            playlistId={segment.playlistId}
+          />
         ) : segment.kind === 'audio' ? (
           <AudioPlayer key={`audio-${index}`} uri={segment.value} label={segment.label} />
         ) : (
           <EnrichedText
             key={`html-${index}`}
-            style={{ color: palette.ink[950], fontSize: 16 }}
+            style={{ color: ink, fontSize: bodySize }}
             htmlStyle={{
-              blockquote: { borderColor: palette.ink[950], borderWidth: 2, gapWidth: 12 },
-              code: { color: palette.ink[950], backgroundColor: palette.ink[100] },
+              blockquote: { borderColor: semantic.border[scheme], borderWidth: 2, gapWidth: 12 },
+              code: { color: ink, backgroundColor: semantic['surface-sunken'][scheme] },
             }}
           >
             {segment.value}

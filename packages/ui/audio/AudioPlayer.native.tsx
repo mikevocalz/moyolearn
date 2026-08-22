@@ -2,7 +2,7 @@
 import { useEffect, useRef } from 'react';
 import { createStore, useStore } from 'zustand';
 import { AudioContext, decodeAudioData } from 'react-native-audio-api';
-import { View, Pressable } from '../tw';
+import { Pressable, View } from '../primitives';
 import { Text } from '../Text';
 import { Play, Pause, AudioLines } from '../icons';
 import { haptics } from '../haptics';

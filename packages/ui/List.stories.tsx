@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { List, ListItem } from './List';
 import { Avatar } from './Avatar';
 import { Badge } from './Badge';
-import { View } from './tw';
+import { View } from './primitives';
 
 const meta = {
   title: 'UI/List',

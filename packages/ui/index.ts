@@ -1,5 +1,9 @@
 // @acme/ui — pure presentational components (depends only on theme).
 // Primitives: '@acme/ui/primitives' · styling wrappers: '@acme/ui/tw'.
+// THE component index: check here before building any UI. `pnpm check:barrels`
+// fails if a module in this package isn't reachable from an entry point.
+// SOT: CLAUDE.md (UI) · docs/pack/10-types-components-spec.md
+// SOT-KEYWORDS: ui component index barrel kit presentational button card text
 
 // layout
 export { Container, type ContainerProps } from './layout/Container';
@@ -10,9 +14,19 @@ export { Heading, type HeadingProps } from './Heading';
 export { Button, type ButtonProps } from './Button';
 export { IconButton, type IconButtonProps } from './IconButton';
 export { Card, type CardProps } from './Card';
+export { Dial, type DialProps, type DialTemperature } from './Dial';
 export { Badge, type BadgeProps } from './Badge';
+export { MasteryBar, type MasteryBarProps } from './MasteryBar';
+export { ScheduleCard, type ScheduleCardProps } from './ScheduleCard';
+export { InspectorSection, type InspectorSectionProps } from './InspectorSection';
+export { StatCard, type StatCardProps } from './StatCard';
 export { Avatar, type AvatarProps } from './Avatar';
 export { Image, type ImageProps } from './Image';
+export { TutorStage, type TutorStageProps, type TutorStageState } from './TutorStage';
+export { LearningCanvas, type LearningCanvasProps } from './LearningCanvas';
+export { SessionToolbar, type SessionToolbarProps } from './SessionToolbar';
+export { MessageBubble, type MessageBubbleProps } from './MessageBubble';
+export { Composer, type ComposerProps } from './Composer';
 
 // forms
 export { TextField, type TextFieldProps, type PasteEventPayload } from './TextField';

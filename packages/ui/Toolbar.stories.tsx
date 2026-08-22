@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Toolbar } from './Toolbar';
 import { Button } from './Button';
-import { Text } from './tw';
+import { Text } from './primitives';
 
 const meta = {
   title: 'UI/Toolbar',

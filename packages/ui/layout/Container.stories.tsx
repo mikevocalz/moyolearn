@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Container } from './Container';
-import { View, Text } from '../tw';
+import { Text, View } from '../primitives';
 
 const meta = {
   title: 'Layout/Container',

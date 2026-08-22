@@ -28,6 +28,7 @@ export function VirtualList<T>({
 }: VirtualListProps<T>) {
   const parentRef = useRef<HTMLDivElement>(null);
   const endFiredAt = useRef(-1);
+  // eslint-disable-next-line react-hooks/incompatible-library -- useVirtualizer returns unmemoizable functions; React Compiler skipping is expected here.
   const virtualizer = useVirtualizer({
     count: data.length,
     getScrollElement: () => parentRef.current,

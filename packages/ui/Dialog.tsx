@@ -1,7 +1,7 @@
 'use client';
 import { tv } from 'tailwind-variants';
 import { Modal } from 'react-native';
-import { View, Text, Pressable } from './tw';
+import { Pressable, Text, View } from './primitives';
 import { ScaleIn } from './motion';
 
 const dialog = tv({

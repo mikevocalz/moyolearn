@@ -1,0 +1,47 @@
+{
+  "name": "@acme/avatar",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./.types/pkg/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./.types/pkg/index.d.ts",
+      "default": "./index.ts"
+    },
+    "./body": {
+      "types": "./.types/pkg/src/body-index.d.ts",
+      "default": "./src/body-index.ts"
+    },
+    "./gnm": {
+      "types": "./.types/gnm/model.d.ts",
+      "default": "./src/gnm/model.ts"
+    }
+  },
+  "scripts": {
+    "lint": "eslint",
+    "typecheck": "tsc -b . && tsc --noEmit -p tsconfig.tests.json",
+    "test": "node --test 'src/**/*.test.ts'",
+    "bake:lashes": "node tools/bake_lash_texture.ts dist/gnm",
+    "golden:compare": "node tools/golden-compare.ts",
+    "probe:shaders": "node tools/shader-probe/run.mjs",
+    "manifest:build": "node tools/build_asset_manifest.mjs",
+    "probe:rebake": "node tools/shader-probe/run.mjs --only rebake",
+    "verify:doc": "node tools/verify_doc_claims.mjs ../../docs/pack/22-embodied-tutor-avatar-spec.md --strict",
+    "verify:deps": "node tools/verify_deps.mjs"
+  },
+  "dependencies": {
+    "three": "catalog:",
+    "zustand": "catalog:"
+  },
+  "devDependencies": {
+    "@acme/config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/three": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-expo": "catalog:",
+    "typescript": "catalog:",
+    "esbuild": "catalog:",
+    "playwright": "catalog:"
+  }
+}

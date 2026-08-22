@@ -1,6 +1,9 @@
 // @acme/payload — THE ONLY client-side access to Payload content (§3).
 // The CMS itself mounts inside apps/web ((payload) route group) once the
 // database exists; generated types replace these when `payload generate:types` runs.
+// Only repositories import this module (doc 11 §3); features never do.
+// SOT: docs/pack/11-architectural-guardrails.md §3
+// SOT-KEYWORDS: payload cms content collections repository backend
 
 export interface PayloadClientConfig {
   /** Payload REST base, e.g. https://example.com/payload-api */

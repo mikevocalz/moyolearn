@@ -7,7 +7,7 @@ import {
   type DropAsset,
   type Assets,
 } from 'expo-drag-drop-content-view';
-import { View } from './tw';
+import { View } from './primitives';
 import { CloudUpload } from './icons';
 import { Text } from './Text';
 

@@ -4,7 +4,7 @@ import { ErrorMessage } from './ErrorMessage';
 import { Button } from './Button';
 import { Card } from './Card';
 import { Text } from './Text';
-import { View } from './tw';
+import { View } from './primitives';
 
 const meta = {
   title: 'UI/ErrorMessage',

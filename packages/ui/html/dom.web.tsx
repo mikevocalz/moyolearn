@@ -77,8 +77,21 @@ export interface PressBaseProps extends P {
   'aria-disabled'?: boolean;
   'aria-checked'?: boolean;
   'aria-hidden'?: boolean;
+  /**
+   * Disclosure state. A collapsing section is unusable with a screen reader
+   * without it — the control announces as a plain button and never says whether
+   * the content below is showing. React Native's accessibilityState carries the
+   * same idea under `expanded`, so both spellings are accepted and the forks
+   * take one JSX tree.
+   */
+  'aria-expanded'?: boolean;
   accessibilityLabel?: string;
-  accessibilityState?: { checked?: boolean; disabled?: boolean; selected?: boolean };
+  accessibilityState?: {
+    checked?: boolean;
+    disabled?: boolean;
+    selected?: boolean;
+    expanded?: boolean;
+  };
 }
 
 // RN views default to display:flex — raw DOM elements don't, so seed it
@@ -94,6 +107,9 @@ export const ButtonBase = ({
     onClick={onPress}
     disabled={props.disabled ?? accessibilityState?.disabled}
     aria-label={props['aria-label'] ?? accessibilityLabel}
+    // RN spells it accessibilityState.expanded; the DOM wants aria-expanded.
+    // Mapped here so a caller writes one prop and both platforms announce it.
+    aria-expanded={props['aria-expanded'] ?? accessibilityState?.expanded}
     {...toDom(`inline-flex flex-col ${className ?? ''}`, style)}
     {...props}
   />

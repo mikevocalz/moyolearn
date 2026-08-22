@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { FieldGroup } from './FieldGroup';
 import { TextField } from './TextField';
 import { Switch } from './Switch';
-import { View } from './tw';
+import { View } from './primitives';
 
 const meta = {
   title: 'UI/FieldGroup',

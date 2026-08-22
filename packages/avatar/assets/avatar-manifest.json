@@ -1,0 +1,152 @@
+{
+  "version": 1,
+  "baseUrl": "https://cdn.moyo.example/avatar/v1",
+  "assets": [
+    {
+      "id": "gnm-head",
+      "kind": "gnm-head",
+      "path": "gnm/gnm_head_runtime.bin",
+      "bytes": 1925928,
+      "sha256": "4af0cc8eedb88450b483b904f2121de1257bb51e68c1edf8ddbaf06ef1e2ba42"
+    },
+    {
+      "id": "arkit-map",
+      "kind": "json",
+      "path": "gnm/arkit-map.json",
+      "bytes": 69649,
+      "sha256": "88e2af760d2b0313b6e8a6fd8de69dfa6ccd041ec79f07aa2a27e78aeedf03e1"
+    },
+    {
+      "id": "identity",
+      "kind": "json",
+      "path": "gnm/identity.json",
+      "bytes": 2821,
+      "sha256": "29f823d3c93aa30e47fb4fb86e427f31a8a8b01a3a5f7c793f77af7697a15de6"
+    },
+    {
+      "id": "expression-names",
+      "kind": "json",
+      "path": "gnm/expression-names.json",
+      "bytes": 8913,
+      "sha256": "f6aef1de6ab1ba3c8b67cf7204975c58047ee1c85a4580157c8d37cf1da70ade"
+    },
+    {
+      "id": "body-headless",
+      "kind": "body-glb",
+      "path": "body/smplx_female_headless.glb",
+      "bytes": 393028,
+      "sha256": "0ad3638c1b0c453fd7d95bf5d09aab8a86b02e73934173af26b82b94cc7d2557",
+      "declares": {
+        "images": 0,
+        "textures": 0,
+        "materials": 0
+      }
+    },
+    {
+      "id": "body-manifest",
+      "kind": "json",
+      "path": "body/smplx-manifest.json",
+      "bytes": 7679,
+      "sha256": "fad985b600beca03a19575f1199a7eec7b865c822dd858b4963930a44902fe2f"
+    },
+    {
+      "id": "neck-align",
+      "kind": "json",
+      "path": "body/neck-align.json",
+      "bytes": 1376,
+      "sha256": "3da2bf437e0f13818927100368e2640aa4139499b82f5423568a7a396af5c95e"
+    },
+    {
+      "id": "skirt-ring",
+      "kind": "json",
+      "path": "body/skirt-ring.json",
+      "bytes": 403,
+      "sha256": "5731257505189b5b54e0cd2faf56cb9f270d874b036b109dadcd3fca99b7ce25"
+    },
+    {
+      "id": "skirt-conform-rig",
+      "kind": "binary",
+      "path": "gnm/skirt-conform.bin",
+      "bytes": 93864,
+      "sha256": "7d1ac7612b9e0f91660dd255def172ca0da97281c0c2568a1d436e014c51b5b6"
+    },
+    {
+      "id": "skirt-conform-meta",
+      "kind": "json",
+      "path": "gnm/skirt-conform.json",
+      "bytes": 739,
+      "sha256": "b5b8c5d6a7981d7a6709e9a2f4fc61b0b853cd7b20112163c594bbf2211340f5"
+    },
+    {
+      "id": "uv",
+      "kind": "binary",
+      "path": "gnm/uv.bin",
+      "bytes": 142568,
+      "sha256": "9168082106f155eecb6fee58907e8c4af3ced656c00efc9c07cd32cd718e42f7"
+    },
+    {
+      "id": "skin-aux",
+      "kind": "binary",
+      "path": "gnm/skin-aux.bin",
+      "bytes": 142568,
+      "sha256": "18e12d8b4822453662634fd7bbcb175701e829161b3145ed0e4e5661505e8a6c",
+      "minTier": "tablet"
+    },
+    {
+      "id": "skin-aux-meta",
+      "kind": "json",
+      "path": "gnm/skin-aux.json",
+      "bytes": 240,
+      "sha256": "00c9ee70010ce08240bbb892f1a900433bfc87f5d84ff16f9f4b60bbe33a897b",
+      "minTier": "tablet"
+    },
+    {
+      "id": "eye-aux",
+      "kind": "json",
+      "path": "gnm/eye-aux.json",
+      "bytes": 68189,
+      "sha256": "68914ed00947e45e1c15aa172dfeadf237ad74e9d2a4bcb7114b1f8eff76f0a9",
+      "minTier": "tablet"
+    },
+    {
+      "id": "mouth-cavity",
+      "kind": "json",
+      "path": "gnm/mouth-cavity.json",
+      "bytes": 56969,
+      "sha256": "75deec0f40386039e7f666108d19990f59e7d483cdfc8636936dce810f2210b3",
+      "minTier": "tablet"
+    },
+    {
+      "id": "lash-lines",
+      "kind": "json",
+      "path": "gnm/lash-lines.json",
+      "bytes": 858,
+      "sha256": "852fe1c6ffd95e570ccb2d3fe9ecb30d94ac88e07aa9cbcf5401156b15acfdb5",
+      "minTier": "tablet"
+    },
+    {
+      "id": "lash-strands",
+      "kind": "texture",
+      "path": "gnm/lash-strands.png",
+      "bytes": 32616,
+      "sha256": "3c2495f216bde11703aa638a02b2bd49182738211ed4a1a188c0cabf5a0f542e",
+      "minTier": "tablet"
+    },
+    {
+      "id": "brow-strands",
+      "kind": "binary",
+      "path": "gnm/brow-strands.bin",
+      "bytes": 110268,
+      "sha256": "c1ea15103553a68e74c8234920f6649fce0ffbdf5224bc59768b8bd727a9ed0a",
+      "minTier": "tablet"
+    },
+    {
+      "id": "brow-strands-meta",
+      "kind": "json",
+      "path": "gnm/brow-strands.json",
+      "bytes": 152,
+      "sha256": "9866b3525929f2976e7cc229c1eb14deaf79d8885faef139c607bbacd45adba6",
+      "minTier": "tablet"
+    }
+  ]
+}

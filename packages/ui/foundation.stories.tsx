@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import {
   palette, semantic, typeScale, contentWidths, radius, motion,
 } from '@acme/theme';
-import { View, Text, H2 } from './tw';
+import { H2, Text, View } from './primitives';
 
 // PROMPT-2 foundation stories: Colors, Typography, Spacing, Content Widths.
 // Light + dark rendered side by side (light-dark() resolves per color-scheme).

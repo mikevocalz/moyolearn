@@ -11,9 +11,8 @@ import {
 } from '@tanstack/react-table';
 import { useInstanceStore, useStore } from './use-instance-store';
 import {
-  Table, TableHeader, TableBody, TableRow, TableCell, TableHeaderCell,
+  Pressable, Table, TableBody, TableCell, TableHeader, TableHeaderCell, TableRow, Text, View,
 } from './primitives';
-import { View, Text, Pressable } from './tw';
 
 const dataTable = tv({
   slots: {
@@ -48,6 +47,7 @@ export function DataTable<T>({ data, columns, sortable = true, className }: Data
       sorting: typeof updater === 'function' ? updater(s.sorting) : updater,
     }));
 
+  // eslint-disable-next-line react-hooks/incompatible-library -- useReactTable returns unmemoizable functions; React Compiler skipping is expected here.
   const table = useReactTable({
     data,
     columns,

@@ -14,13 +14,37 @@ const config: StorybookConfig = {
   stories: [
     '../../../packages/ui/*.stories.@(ts|tsx)',
     '../../../packages/ui/primitives/*.stories.@(ts|tsx)',
-    // packages/app has no stories yet, and Storybook warns on every pattern
-    // that matches nothing. Re-add this line when the first feature story
-    // lands (features live at packages/app/features/<name>/, so the glob
-    // needs the feature-name level — the old `app/*/components/*` pattern
-    // resolved to packages/app/features/components/ and never matched):
-    //   '../../../packages/app/features/*/**/*.stories.@(ts|tsx)',
+    // Sub-barrels need their own pattern — the root glob is not recursive, which
+    // is why the audio components were invisible in Storybook despite shipping.
+    '../../../packages/ui/audio/*.stories.@(ts|tsx)',
+    '../../../packages/ui/html/*.stories.@(ts|tsx)',
+    // Features live at packages/app/features/<name>/, so the glob needs the
+    // feature-name level (the old `app/*/components/*` pattern resolved to
+    // packages/app/features/components/ and never matched).
+    '../../../packages/app/features/*/**/*.stories.@(ts|tsx)',
+    // A few interaction primitives still live in the mobile app rather than the
+    // kit (SwipeableRow and the split-view pieces). They are as reviewable as
+    // anything in packages/ui, so Storybook reads them where they are instead of
+    // waiting on a move that would touch every import in apps/mobile.
+    '../../mobile/src/**/*.stories.@(ts|tsx)',
   ],
+  /*
+    react-docgen off, deliberately.
+
+    Storybook's default docgen walks a component's prop types through its
+    imports, and in this repo every chain ends up inside react-native's own
+    index.js — which is Flow source. Its `} as ReactNativePublicAPI` fails the
+    babel parse with "Missing semicolon (397:1)", and the plugin surfaces that
+    as a full render error, so the story is unusable rather than merely
+    undocumented. It is not specific to one component: anything importing from
+    @acme/ui reaches react-native eventually.
+
+    Cost: autodocs loses auto-generated prop tables. Props here are documented
+    with JSDoc on the interfaces, which is the source of truth anyway, and the
+    react-docgen-typescript alternative re-reads the whole TS program per file
+    for a dev server that already boots slowly.
+  */
+  typescript: { reactDocgen: false },
   viteFinal: async (viteConfig) => {
     viteConfig.plugins = [
       ...(viteConfig.plugins ?? []),
@@ -38,6 +62,11 @@ const config: StorybookConfig = {
           here,
           '../../../node_modules/@legendapp/motion/lib/module/index.js',
         ),
+        // SolitoImage resolves to next/image on web, which validates remote
+        // hosts against next.config.ts — a file Vite never reads, so every
+        // story with a remote src failed with "Invalid src prop". The shim
+        // renders the image and nothing else.
+        'next/image': resolve(here, '../next-image-shim.tsx'),
       },
     };
     viteConfig.server = { ...(viteConfig.server ?? {}), hmr: false };

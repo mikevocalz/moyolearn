@@ -1,8 +1,7 @@
 'use client';
 import { tv } from 'tailwind-variants';
 import { PasteWrapper, type PasteEventPayload } from './paste-wrapper';
-import { View, Text as TWText } from './tw';
-import { Input, Label } from './primitives';
+import { Input, Label, Text as TWText, View } from './primitives';
 import { Text } from './Text';
 
 const field = tv({

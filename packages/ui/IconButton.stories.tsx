@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { IconButton } from './IconButton';
 import { Text } from './Text';
-import { View } from './tw';
+import { View } from './primitives';
 
 const meta = {
   title: 'UI/IconButton',

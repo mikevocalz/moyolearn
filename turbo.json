@@ -24,6 +24,11 @@
         "theme-native.css"
       ]
     },
+    "@acme/avatar#typecheck": {
+      "outputs": [
+        ".types/**"
+      ]
+    },
     "web#build": {
       "dependsOn": [
         "^build"

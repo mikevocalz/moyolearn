@@ -5,7 +5,7 @@ import { haptics } from './haptics';
 // Native control tint comes from theme tokens — the platform toolkit
 // (SwiftUI / Compose via @expo/ui Host) cannot consume Tailwind classes.
 import { semantic } from '@acme/theme';
-import { View } from './tw';
+import { View } from './primitives';
 import { Text } from './Text';
 
 const checkboxRow = tv({

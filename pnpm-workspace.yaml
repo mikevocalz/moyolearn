@@ -83,6 +83,13 @@ catalog:
   tailwind-merge: 3.6.0
   tailwind-variants: 3.3.1
 
+  # 3D / avatar renderer (doc 22). Pinned exactly, and bumped only by a
+  # reviewed PR with golden diffs attached: r186 removes PCFSoftShadowMap on
+  # WebGPU and changes PhysicalLightingModel.direct(), both of which move the
+  # avatar's look. See docs/pack/22-embodied-tutor-avatar-spec.md §4 and §6.
+  three: 0.185.1
+  "@types/three": 0.185.4
+
   # state / data
   "@tanstack/react-query": 5.101.4
   "@tanstack/react-virtual": 3.14.9
@@ -96,6 +103,10 @@ catalog:
   zod: 4.4.3
 
   # backend / cms
+  # The build-time tripwire on repositories/services (doc 11 §6). On native the
+  # leak this catches isn't server actions — it's Payload credentials and
+  # inference keys ending up readable inside an app binary.
+  server-only: 0.0.1
   payload: 4.0.0-canary.28
   "@payloadcms/db-postgres": 4.0.0-canary.28
   "@payloadcms/next": 4.0.0-canary.28
@@ -107,6 +118,13 @@ catalog:
 
   # tooling
   typescript: ~6.0.3
+  # Dev-only, and used by exactly one package: @acme/avatar's shader probe
+  # bundles its materials for a headless browser (esbuild) and drives that
+  # browser (playwright). Neither reaches a shipped bundle — the probe is a
+  # compile gate, not a runtime path — but they belong in the catalog like
+  # everything else so there is still one declared version.
+  esbuild: 0.28.2
+  playwright: 1.62.1
   "@types/react": ~19.2.18
   # Must stay on the Node major `engines.node` (>=24.15.0 <26) actually allows —
   # typing against 26 describes a runtime this repo refuses to start on.

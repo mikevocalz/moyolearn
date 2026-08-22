@@ -1,0 +1,9 @@
+# tsc -b incremental state for the src/gnm composite project. The emitted
+# declarations in .types/ ARE committed — they are the boundary that contains
+# the kernel's noUncheckedIndexedAccess exemption, and a reviewer should be
+# able to see exactly what the kernel exposes without building anything.
+.tsbuild/
+
+# The shader probe writes bundles and PNGs here. Never committed — SwiftShader
+# output is not a golden and must not be mistaken for one.
+.probe/

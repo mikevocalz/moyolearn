@@ -1,5 +1,5 @@
 import { tv, type VariantProps } from 'tailwind-variants';
-import { View, Pressable } from './tw';
+import { Pressable } from './primitives';
 import { SlideUp } from './motion';
 
 // §9 tab-bar accessory — a slot that docks above the tab bar (mini player,

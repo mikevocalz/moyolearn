@@ -1,5 +1,5 @@
 'use client';
-import { View } from '../tw';
+import { View } from '../primitives';
 import type { AudioPlayerProps } from './AudioPlayer.types.ts';
 
 /**

@@ -1,5 +1,5 @@
 'use client';
-import { View } from '../tw';
+import { View } from '../primitives';
 import { Text } from '../Text';
 import { Mic } from '../icons';
 import type { VoiceRecorderProps } from './VoiceRecorder.types.ts';

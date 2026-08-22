@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Text } from './Text';
-import { View } from './tw';
+import { View } from './primitives';
 
 const meta = { title: 'UI/Text', component: Text } satisfies Meta<typeof Text>;
 export default meta;

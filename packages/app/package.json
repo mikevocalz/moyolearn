@@ -30,6 +30,7 @@
     "react-native-svg": "catalog:",
     "react-native-worklets": "catalog:",
     "react-native-youtube-bridge": "catalog:",
+    "server-only": "catalog:",
     "solito": "catalog:",
     "zustand": "catalog:"
   },

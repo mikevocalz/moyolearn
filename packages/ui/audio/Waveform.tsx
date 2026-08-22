@@ -1,5 +1,5 @@
 'use client';
-import { View } from '../tw';
+import { View } from '../primitives';
 import { BAR_COUNT, barHeight, barProgress } from './waveform.ts';
 
 export interface WaveformProps {

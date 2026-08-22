@@ -1,5 +1,5 @@
 import { tv } from 'tailwind-variants';
-import { View } from '../tw';
+import { View } from '../primitives';
 
 /**
  * §8.2 Container — the ONLY place content max-widths live. Every screen's
