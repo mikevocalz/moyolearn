@@ -9,7 +9,7 @@ import { usePathname } from 'solito/navigation';
 import { useRouter, type Href } from 'expo-router';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import { Avatar } from '@acme/ui';
-import { AVATAR_URI, useProfile } from '@acme/app';
+import { AVATAR_URI, useProfile, RoleSwitcher } from '@acme/app';
 
 
 const MAIN_ITEMS = [
@@ -53,6 +53,8 @@ export function DrawerContent(props: DrawerContentComponentProps) {
           </Text>
         </View>
       </View>
+
+      <RoleSwitcher />
 
       <Text className="mx-5 mb-1 text-xs font-semibold uppercase text-text-muted">Menu</Text>
 
