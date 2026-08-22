@@ -1,34 +1,35 @@
 'use client';
 // TutorScreen — the captured problem flows here for the S9 session.
 // SOT: docs/pack/24-homework-capture-spec.md §5 · docs/pack/23-tutorstage-handoff.md §3
-// SOT-KEYWORDS: tutor screen capture handoff tutorstage session
+// SOT-KEYWORDS: tutor screen capture handoff tutorstage session pacer zustand
 
-import { useState } from 'react';
+import { useEffect } from 'react';
 import { useRouter } from 'solito/router';
-import { TutorStage, type TutorStageState } from '@acme/ui';
-import { Text } from '@acme/ui';
+import { useDebouncedCallback } from '@tanstack/react-pacer';
+import { TutorStage, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { useCaptureStore } from '../capture';
+import { useTutorStore } from './tutor.store';
 
 export function TutorScreen() {
   const router = useRouter();
   const problem = useCaptureStore((s) => s.problem);
-  const [state, setState] = useState<TutorStageState>({
-    kind: 'speaking',
-    utterance: { text: problem ? `Let's work on: ${problem}` : "What would you like to work on?" },
-  });
+  const { state, start, send } = useTutorStore();
+
+  useEffect(() => {
+    start(problem);
+  }, [problem, start]);
+
+  const respond = useDebouncedCallback(
+    (message: string) => useTutorStore.getState().respond(message),
+    { wait: 800 },
+  );
 
   const handleSend = (message: string) => {
     const trimmed = message.trim();
     if (!trimmed) return;
-
-    setState({ kind: 'thinking' });
-    setTimeout(() => {
-      setState({
-        kind: 'speaking',
-        utterance: { text: `You said: ${trimmed}. What do you think the next step is?` },
-      });
-    }, 800);
+    send(trimmed);
+    respond(trimmed);
   };
 
   if (problem == null) {

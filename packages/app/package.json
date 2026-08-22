@@ -17,6 +17,7 @@
     "@acme/theme": "workspace:*",
     "@acme/ui": "workspace:*",
     "@tanstack/react-query": "catalog:",
+    "@tanstack/react-pacer": "catalog:",
     "date-fns": "catalog:",
     "expo-document-picker": "catalog:",
     "expo-image-picker": "catalog:",
