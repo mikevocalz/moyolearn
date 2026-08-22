@@ -34,6 +34,44 @@ export interface CaptureLabels {
   prompt: string;
 }
 
+export type RealtimeHintKey = 'closer' | 'steady' | 'one' | 'light' | 'glare';
+
+export function realtimeHintForBand(key: RealtimeHintKey, ageBand: AgeBand): string {
+  const labels: Record<RealtimeHintKey, Record<AgeBand, string>> = {
+    closer: {
+      young: 'Move a little closer',
+      child: 'Move closer so the page fits',
+      teen: 'Move closer',
+      adult: 'Move closer',
+    },
+    steady: {
+      young: 'Hold still',
+      child: 'Hold the phone steady',
+      teen: 'Hold steady',
+      adult: 'Hold steady',
+    },
+    one: {
+      young: 'One problem at a time',
+      child: 'Show one problem at a time',
+      teen: 'One problem per shot',
+      adult: 'One problem per shot',
+    },
+    light: {
+      young: 'Need more light?',
+      child: 'Make sure it is bright',
+      teen: 'Check the lighting',
+      adult: 'Check the lighting',
+    },
+    glare: {
+      young: 'No shiny spots',
+      child: 'Avoid glare on the page',
+      teen: 'Avoid glare',
+      adult: 'Avoid glare',
+    },
+  };
+  return labels[key][ageBand];
+}
+
 export function captureLabelsForBand(ageBand: AgeBand): CaptureLabels {
   switch (ageBand) {
     case 'young':

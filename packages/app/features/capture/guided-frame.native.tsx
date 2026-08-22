@@ -1,23 +1,42 @@
 'use client';
 // GuidedFrame — native live camera view with Skia edge overlay and capture trigger.
 // SOT: docs/pack/24-homework-capture-spec.md §2
-// SOT-KEYWORDS: guidedframe camera capture takephoto visioncamera native age band skia
+// SOT-KEYWORDS: guidedframe camera capture takephoto visioncamera native age band skia realtime hints
 
 import { useEffect, useRef } from 'react';
 import { StyleSheet } from 'react-native';
-import { useDerivedValue, useSharedValue } from 'react-native-reanimated';
+import { useDerivedValue, useFrameCallback, useSharedValue, runOnJS } from 'react-native-reanimated';
 import { Canvas, Rect } from '@shopify/react-native-skia';
 import type { SkSize } from '@shopify/react-native-skia';
 import { Camera, useCameraDevice, useCameraPermission, usePhotoOutput } from 'react-native-vision-camera';
 import type { CameraRef } from 'react-native-vision-camera';
 import { Button, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
-import { buttonSizeForBand, type AgeBand } from './age-band';
+import { buttonSizeForBand, realtimeHintForBand, type AgeBand, type RealtimeHintKey } from './age-band';
+import { useRealtimeHintsStore } from './realtime-hints.store';
 import type { CapturePhoto } from './types';
 
 export interface GuidedFrameProps {
   ageBand?: AgeBand;
   onCapture: (photo: CapturePhoto) => void;
+}
+
+const HINTS: RealtimeHintKey[] = ['closer', 'steady', 'one', 'light', 'glare'];
+const HINT_INTERVAL_MS = 2500;
+
+function useRealtimeHintCycler() {
+  const setHint = useRealtimeHintsStore((s) => s.setHint);
+  const lastIndex = useSharedValue(-1);
+
+  useFrameCallback((frame) => {
+    'worklet';
+    const index = Math.floor(frame.timestamp / HINT_INTERVAL_MS) % HINTS.length;
+    const key = HINTS[index];
+    if (key && index !== lastIndex.value) {
+      lastIndex.value = index;
+      runOnJS(setHint)(key);
+    }
+  });
 }
 
 export function GuidedFrame({ ageBand = 'teen', onCapture }: GuidedFrameProps) {
@@ -26,6 +45,9 @@ export function GuidedFrame({ ageBand = 'teen', onCapture }: GuidedFrameProps) {
   const photoOutput = usePhotoOutput();
   const cameraRef = useRef<CameraRef>(null);
   const canvasSize = useSharedValue<SkSize>({ width: 0, height: 0 });
+  const hint = useRealtimeHintsStore((s) => s.currentHint);
+
+  useRealtimeHintCycler();
 
   const guideX = useDerivedValue(() => canvasSize.value.width * 0.1);
   const guideY = useDerivedValue(() => canvasSize.value.height * 0.25);
@@ -45,12 +67,13 @@ export function GuidedFrame({ ageBand = 'teen', onCapture }: GuidedFrameProps) {
 
   const buttonSize = buttonSizeForBand(ageBand);
   const captureLabel = ageBand === 'young' ? 'Snap' : 'Capture';
-  const hint =
+  const defaultHint =
     ageBand === 'young'
       ? 'Put the page inside the box!'
       : ageBand === 'child'
         ? 'Keep the page inside the guide.'
         : 'Line up the page inside the frame.';
+  const hintText = hint ? realtimeHintForBand(hint, ageBand) : defaultHint;
 
   if (!hasPermission) {
     const copy =
@@ -94,7 +117,7 @@ export function GuidedFrame({ ageBand = 'teen', onCapture }: GuidedFrameProps) {
           />
         </Canvas>
         <Text className="absolute top-20 w-full p-inset text-center font-sans text-label font-semibold text-text-inverse">
-          {hint}
+          {hintText}
         </Text>
       </View>
       <View className="absolute bottom-0 left-0 right-0 p-inset">
