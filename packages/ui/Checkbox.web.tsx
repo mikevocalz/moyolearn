@@ -1,7 +1,7 @@
 'use client';
 import { tv } from 'tailwind-variants';
 import { haptics } from './haptics';
-import { View, Text, Pressable } from './tw';
+import { Pressable, Text, View } from './primitives';
 
 const checkbox = tv({
   slots: {

@@ -1,7 +1,7 @@
 'use client';
 // Web fork — the browser has no unsafe areas; render a plain view and drop
 // the native-only props.
-import { View } from './tw';
+import { View } from './primitives';
 
 export interface SafeAreaProps extends React.ComponentProps<typeof View> {
   edges?: readonly string[];

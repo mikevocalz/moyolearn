@@ -1,6 +1,6 @@
 // SOT-KEYWORDS: audio player stories playback waveform levels
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Text, View } from '../tw';
+import { Text, View } from '../primitives';
 import { AudioPlayer } from './AudioPlayer';
 
 const meta = { title: 'Audio/AudioPlayer', component: AudioPlayer } satisfies Meta<typeof AudioPlayer>;

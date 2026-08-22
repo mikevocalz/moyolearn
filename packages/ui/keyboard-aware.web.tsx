@@ -1,5 +1,5 @@
 'use client';
-import { ScrollView } from './tw';
+import { ScrollView } from './primitives';
 
 export interface KeyboardAwareScrollProps
   extends Omit<React.ComponentProps<typeof ScrollView>, 'onScroll'> {

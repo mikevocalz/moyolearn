@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Dial } from './Dial';
 import { ScheduleCard } from './ScheduleCard';
-import { Text, View } from './tw';
+import { Text, View } from './primitives';
 
 const meta = { title: 'UI/ScheduleCard', component: ScheduleCard } satisfies Meta<typeof ScheduleCard>;
 export default meta;

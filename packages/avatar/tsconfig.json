@@ -1,0 +1,41 @@
+{
+  "extends": "@acme/config/typescript/base.json",
+  "compilerOptions": {
+    "types": [
+      "node"
+    ],
+    "lib": ["es2022", "dom"],
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+    "disableSourceOfProjectReferenceRedirect": true,
+    "composite": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false,
+    "rootDir": ".",
+    "outDir": "./.types/pkg",
+    "declarationDir": "./.types/pkg",
+    "tsBuildInfoFile": "./.tsbuild/pkg.tsbuildinfo"
+  },
+  "include": [
+    "index.ts",
+    "src/**/*.ts",
+    "tools/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    ".tsbuild",
+    ".types",
+    "src/gnm/model.ts",
+    "src/conform/driver.ts",
+    "src/conform/types.ts",
+    "**/*.test.ts"
+  ],
+  "references": [
+    {
+      "path": "./src/gnm"
+    },
+    {
+      "path": "./src/conform"
+    }
+  ]
+}

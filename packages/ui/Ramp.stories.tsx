@@ -6,7 +6,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Dial, type DialTemperature } from './Dial';
 import { Section, Text } from './html';
-import { View } from './tw';
+import { View } from './primitives';
 
 const meta = { title: 'Foundations/Ramp' } satisfies Meta;
 export default meta;

@@ -1,6 +1,6 @@
 'use client';
 
-import { View } from './tw';
+import { View } from './primitives';
 import { Text } from './Text';
 
 export interface SwitchProps {
@@ -31,10 +31,10 @@ export function Switch({ value, onChange, label, disabled, className }: SwitchPr
         }`}
       >
         <span
-          className={`absolute left-0 top-[2px] h-5 w-5 rounded-sm border-2 transition-transform duration-base ease-out motion-reduce:transition-none ${
+          className={`absolute left-0 top-0.5 h-5 w-5 rounded-sm border-2 transition-transform duration-base ease-out motion-reduce:transition-none ${
             value
-              ? 'translate-x-[22px] border-border-strong bg-ink-950'
-              : 'translate-x-[2px] border-border bg-surface-raised'
+              ? 'translate-x-5.5 border-border-strong bg-ink-950'
+              : 'translate-x-0.5 border-border bg-surface-raised'
           }`}
         />
       </button>

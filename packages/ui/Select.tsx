@@ -1,7 +1,6 @@
 'use client';
 import { tv } from 'tailwind-variants';
-import { View } from './tw';
-import { Select as PrimitiveSelect, Label } from './primitives';
+import { Label, Select as PrimitiveSelect, View } from './primitives';
 import { Text } from './Text';
 
 const field = tv({

@@ -9,7 +9,7 @@ import { Card } from './Card';
 import { Dial, type DialTemperature } from './Dial';
 import { Heading, Paragraph, Section, Text } from './html';
 import { TextField } from './TextField';
-import { View } from './tw';
+import { View } from './primitives';
 
 // No `component:` — Dial's `children` is required, which would make `args`
 // mandatory on every story and defeat the point of a render-only comparison.

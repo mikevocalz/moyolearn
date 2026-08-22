@@ -1,0 +1,24 @@
+{
+  "extends": "@acme/config/typescript/base.json",
+  "compilerOptions": {
+    "types": ["node"],
+    "erasableSyntaxOnly": true,
+    "verbatimModuleSyntax": true,
+
+    // The second — and, per the admission rule in ../../README.md, hopefully
+    // last — numeric-kernel exemption. This file was SPLIT OUT of
+    // ../skirt-conform.ts precisely so the exemption stays this small: the
+    // parser's byte-length, weight-sum and barycentric-sum checks are exactly
+    // the code the flag is good at, and they stay strict next door.
+    "noUncheckedIndexedAccess": false,
+
+    "composite": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false,
+    "rootDir": ".",
+    "outDir": "../../.types/conform",
+    "declarationDir": "../../.types/conform",
+    "tsBuildInfoFile": "../../.tsbuild/conform.tsbuildinfo"
+  },
+  "include": ["types.ts", "driver.ts"]
+}

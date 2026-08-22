@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Menu } from './Menu';
 import { Text } from './Text';
-import { View } from './tw';
+import { View } from './primitives';
 
 const ACTIONS = [
   { id: 'share', title: 'Share' },

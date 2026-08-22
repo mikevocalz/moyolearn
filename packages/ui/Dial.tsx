@@ -4,7 +4,7 @@
 // SOT: docs/pack/02-adaptive-screens-design-spec.md §5.3 · packages/theme/tokens.ts `dial`
 // SOT-KEYWORDS: dial hot cool temperature density scope surface learner ops
 import type { ReactNode } from 'react';
-import { View } from './tw';
+import { View } from './primitives';
 
 export type DialTemperature = 'hot' | 'cool';
 

@@ -195,6 +195,7 @@ export const contentWidths = {
   'pane-primary-narrow': '16rem',
   'pane-supplementary': '21rem',
   'pane-inspector': '20rem',
+  'pane-tutor': '23.75rem',  // doc 23 §5: 380px TutorStage primary pane
 } as const;
 
 export const radius = {

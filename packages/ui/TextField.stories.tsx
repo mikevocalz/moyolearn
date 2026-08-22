@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TextField, type PasteEventPayload } from './TextField';
-import { View } from './tw';
+import { View } from './primitives';
 import { Text } from './Text';
 import { Image } from './Image';
 import { create } from 'zustand';

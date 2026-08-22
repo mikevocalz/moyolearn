@@ -1,5 +1,5 @@
 import { tv, type VariantProps } from 'tailwind-variants';
-import { View, Text } from './tw';
+import { View, Text } from './primitives';
 
 const badge = tv({
   slots: {

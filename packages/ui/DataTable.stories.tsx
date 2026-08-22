@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { DataTable, type ColumnDef } from './DataTable';
 import { Badge } from './Badge';
-import { View } from './tw';
+import { View } from './primitives';
 
 type Row = { name: string; role: string; status: 'Active' | 'Invited'; logins: number };
 

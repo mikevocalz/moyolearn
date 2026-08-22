@@ -2,7 +2,7 @@
 import { tv, type VariantProps } from 'tailwind-variants';
 import { ActivityIndicator } from 'react-native';
 import { PressScale } from './press-scale';
-import { Text } from './tw';
+import { Text } from './primitives';
 import { haptics } from './haptics';
 
 // Press feedback: §8 ladder rung 1 — simple active-state opacity/scale via
@@ -22,6 +22,7 @@ const button = tv({
       accent: { root: 'bg-accent shadow-card hover:bg-accent-pressed', label: 'text-on-accent' },
       outline: { root: 'bg-surface-raised shadow-card hover:bg-surface-sunken', label: 'text-text' },
       ghost: { root: 'border-transparent bg-transparent shadow-none hover:bg-surface-sunken active:shadow-none', label: 'text-text' },
+      highlighter: { root: 'bg-highlighter shadow-card hover:bg-highlighter/90 active:opacity-80', label: 'text-on-highlighter' },
       danger: { root: 'bg-danger shadow-card hover:opacity-90', label: 'text-on-danger' },
     },
     /*

@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Avatar } from './Avatar';
-import { View } from './tw';
+import { View } from './primitives';
 
 const PHOTO = 'https://i.pravatar.cc/256?img=5';
 

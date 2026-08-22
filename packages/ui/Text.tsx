@@ -1,5 +1,5 @@
 import { tv, type VariantProps } from 'tailwind-variants';
-import { Text as TWText } from './tw';
+import { Text as TWText } from './primitives';
 
 /**
  * The type scale steps up with the window, not with the device.

@@ -22,6 +22,11 @@ export { InspectorSection, type InspectorSectionProps } from './InspectorSection
 export { StatCard, type StatCardProps } from './StatCard';
 export { Avatar, type AvatarProps } from './Avatar';
 export { Image, type ImageProps } from './Image';
+export { TutorStage, type TutorStageProps, type TutorStageState } from './TutorStage';
+export { LearningCanvas, type LearningCanvasProps } from './LearningCanvas';
+export { SessionToolbar, type SessionToolbarProps } from './SessionToolbar';
+export { MessageBubble, type MessageBubbleProps } from './MessageBubble';
+export { Composer, type ComposerProps } from './Composer';
 
 // forms
 export { TextField, type TextFieldProps, type PasteEventPayload } from './TextField';

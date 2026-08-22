@@ -3,9 +3,8 @@ import { useEffect } from 'react';
 import { tv } from 'tailwind-variants';
 import { useDebouncedCallback } from '@tanstack/react-pacer';
 import { useInstanceStore, useStore } from './use-instance-store';
-import { View, Text, Pressable } from './tw';
+import { Input, Pressable, Text, View } from './primitives';
 import { X } from './icons';
-import { Input } from './primitives';
 
 const searchBar = tv({
   slots: {

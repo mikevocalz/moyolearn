@@ -3,7 +3,7 @@
 // SOT: docs/pack/08-visual-hierarchy-spacing-spec.md §4.8 · docs/pack/07-security-child-ai-safety-spec.md
 // SOT-KEYWORDS: mastery bar progress learner grade highlighter dignity attention
 import { tv, type VariantProps } from 'tailwind-variants';
-import { Text, View } from './tw';
+import { Text, View } from './primitives';
 
 const bar = tv({
   slots: {

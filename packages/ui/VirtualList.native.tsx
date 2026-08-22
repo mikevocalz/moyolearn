@@ -3,7 +3,7 @@
  * PLATFORM FORK — recycling list on native via @legendapp/list.
  */
 import { LegendList } from '@legendapp/list/react-native';
-import { View } from './tw';
+import { View } from './primitives';
 
 export interface VirtualListProps<T> {
   data: T[];

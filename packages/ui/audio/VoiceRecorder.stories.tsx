@@ -1,7 +1,7 @@
 // SOT-KEYWORDS: audio voice recorder stories microphone permission take
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useRef, useState } from 'react';
-import { Text, View } from '../tw';
+import { Text, View } from '../primitives';
 import { AudioPlayer } from './AudioPlayer';
 import type { VoiceRecording } from './VoiceRecorder.types';
 import { VoiceRecorder } from './VoiceRecorder';

@@ -1,8 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { FormField } from './FormField';
 import { TextField } from './TextField';
-import { Input } from './primitives';
-import { View } from './tw';
+import { Input, View } from './primitives';
 
 const meta = {
   title: 'UI/FormField',

@@ -1,5 +1,5 @@
 'use client';
-import { Pressable, View } from './tw';
+import { Pressable, View } from './primitives';
 import { Text } from './Text';
 import type { ListProps, ListItemProps } from './List.types';
 

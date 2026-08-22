@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Textarea } from './Textarea';
 import type { PasteEventPayload } from './TextField';
-import { View } from './tw';
+import { View } from './primitives';
 import { Text } from './Text';
 import { Image } from './Image';
 import { create } from 'zustand';

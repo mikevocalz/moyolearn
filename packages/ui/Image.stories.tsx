@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Image } from './Image';
-import { View } from './tw';
+import { View } from './primitives';
 
 const meta = {
   title: 'UI/Image',

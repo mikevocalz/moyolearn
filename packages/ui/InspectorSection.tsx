@@ -3,7 +3,7 @@
 // SOT: docs/pack/08-visual-hierarchy-spacing-spec.md §4.5
 // SOT-KEYWORDS: inspectorsection inspector pane collapsible section disclosure L2
 import { useState, type ReactNode } from 'react';
-import { Pressable, Text, View } from './tw';
+import { Pressable, Text, View } from './primitives';
 
 export interface InspectorSectionProps {
   title: string;

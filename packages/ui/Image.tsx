@@ -1,7 +1,7 @@
 'use client';
 import type { ComponentProps } from 'react';
 import { SolitoImage } from 'solito/image';
-import { View } from './tw';
+import { View } from './primitives';
 
 type SolitoImageProps = ComponentProps<typeof SolitoImage>;
 

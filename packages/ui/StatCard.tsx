@@ -4,7 +4,7 @@
 // SOT-KEYWORDS: statcard stat metric number kpi trend caption ops
 import type { ReactNode } from 'react';
 import { tv, type VariantProps } from 'tailwind-variants';
-import { Text, View } from './tw';
+import { Text, View } from './primitives';
 
 const stat = tv({
   slots: {

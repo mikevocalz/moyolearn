@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { SearchBar } from './SearchBar';
-import { View } from './tw';
+import { View } from './primitives';
 import { Text } from './Text';
 import { create } from 'zustand';
 

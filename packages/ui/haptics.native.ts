@@ -28,6 +28,7 @@ function loadPresets() {
   try {
     // Required lazily: importing at module scope makes the TurboModule lookup
     // happen during the import graph, before any try/catch can contain it.
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     presets = (require('react-native-pulsar') as typeof import('react-native-pulsar')).Presets;
   } catch (error) {
     presets = null;

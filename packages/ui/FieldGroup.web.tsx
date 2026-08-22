@@ -1,5 +1,5 @@
 'use client';
-import { View } from './tw';
+import { View } from './primitives';
 import { Text } from './Text';
 import type { FieldGroupProps, FieldSectionProps } from './FieldGroup.types';
 

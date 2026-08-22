@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { LoadingSkeleton } from './LoadingSkeleton';
-import { View } from './tw';
+import { View } from './primitives';
 
 const meta = {
   title: 'UI/LoadingSkeleton',

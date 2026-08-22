@@ -2,7 +2,7 @@
 import { useRef } from 'react';
 import { Modal, useWindowDimensions, View as RNView } from 'react-native';
 import { createStore, useStore } from 'zustand';
-import { Pressable, View } from './tw';
+import { Pressable, View } from './primitives';
 import { Text } from './Text';
 import { haptics } from './haptics';
 import type { MenuProps } from './Menu.types';

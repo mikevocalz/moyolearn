@@ -1,6 +1,6 @@
 'use client';
 import { tv, type VariantProps } from 'tailwind-variants';
-import { Pressable, View } from './tw';
+import { Pressable, View } from './primitives';
 import { Text } from './Text';
 import { Check, Info, LoaderCircle, TriangleAlert, X } from './icons';
 

@@ -5,7 +5,7 @@
 import { tv, type VariantProps } from 'tailwind-variants';
 import { Badge } from './Badge';
 import { Button } from './Button';
-import { Text, View } from './tw';
+import { Text, View } from './primitives';
 
 const card = tv({
   slots: {

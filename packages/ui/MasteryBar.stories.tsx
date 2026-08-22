@@ -1,7 +1,7 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { Dial } from './Dial';
 import { MasteryBar } from './MasteryBar';
-import { Text, View } from './tw';
+import { Text, View } from './primitives';
 
 const meta = { title: 'UI/MasteryBar', component: MasteryBar } satisfies Meta<typeof MasteryBar>;
 export default meta;

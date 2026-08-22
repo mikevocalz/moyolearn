@@ -7,8 +7,7 @@
  * interactive disclosure is a composed component, not a primitive.
  * Styling is applied by the css() shim callers.
  */
-import React from 'react';
-import { Children, isValidElement } from 'react';
+import React, { Children, isValidElement } from 'react';
 import { View, Text, Pressable, TextInput, StyleSheet } from 'react-native';
 import { Host, Picker } from '@expo/ui';
 import { NativeInput, type NativeInputProps } from './native-input.native';

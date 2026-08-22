@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { TabBar } from './TabBar';
-import { Text } from './tw';
+import { Text } from './primitives';
 
 const glyph = (g: string) => <Text className="text-lg">{g}</Text>;
 

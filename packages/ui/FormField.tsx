@@ -1,6 +1,5 @@
 import { tv } from 'tailwind-variants';
-import { View } from './tw';
-import { Label } from './primitives';
+import { Label, View } from './primitives';
 import { Text } from './Text';
 
 // Extracted label + hint/error shell from TextField — presentational only;

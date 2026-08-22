@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { VirtualList } from './VirtualList';
 import { Avatar } from './Avatar';
 import { Text } from './Text';
-import { View } from './tw';
+import { View } from './primitives';
 
 const PEOPLE = Array.from({ length: 5000 }, (_, i) => ({
   id: String(i),

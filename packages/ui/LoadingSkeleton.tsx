@@ -1,5 +1,5 @@
 import { tv, type VariantProps } from 'tailwind-variants';
-import { View } from './tw';
+import { View } from './primitives';
 
 const skeleton = tv({
   base: 'animate-pulse bg-surface-sunken motion-reduce:animate-none',

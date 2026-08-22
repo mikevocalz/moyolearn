@@ -14,7 +14,7 @@ import {
   Text,
   Time,
 } from './html';
-import { View } from './tw';
+import { View } from './primitives';
 
 const meta = { title: 'Foundations/Type' } satisfies Meta;
 export default meta;

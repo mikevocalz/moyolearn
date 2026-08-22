@@ -1,6 +1,6 @@
 // SOT-KEYWORDS: waveform stories levels bars progress audio
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { Text, View } from '../tw';
+import { Text, View } from '../primitives';
 // Extension required: `Waveform.tsx` (component) and `waveform.ts` (level maths)
 // differ only in case, so an extensionless specifier resolves to the wrong one
 // on a case-insensitive filesystem. packages/ui/audio/index.ts does the same.
