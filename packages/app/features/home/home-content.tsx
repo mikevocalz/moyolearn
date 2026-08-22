@@ -8,6 +8,7 @@ import { Card, Heading, PressScale, Text, FadeIn, ScaleIn } from '@acme/ui';
 import { useRouter } from 'solito/router';
 import { useAppSession } from '../../providers/session';
 import { StudentHomeContent } from './student-home-content';
+import { TutorTodayContent } from './tutor-today-content';
 import { STATS, QUICK_ACTIONS, PROJECTS, WELL, INK, BAR } from './home.data';
 import { getHours } from 'date-fns';
 import { useNow } from '../schedule/use-now';
@@ -23,6 +24,7 @@ export function HomeContent() {
   const { user } = useAppSession();
   const name = user?.name ?? 'there';
   const isLearner = user?.kind === 'learner';
+  const isTutor = user?.kind === 'tutor';
   const router = useRouter();
   // The greeting was hardcoded to "Good morning" and read as wrong for most of
   // the day. useNow already ticks for the schedule's current-time line, so the
@@ -31,6 +33,10 @@ export function HomeContent() {
 
   if (isLearner) {
     return <StudentHomeContent />;
+  }
+
+  if (isTutor) {
+    return <TutorTodayContent />;
   }
 
   return (
