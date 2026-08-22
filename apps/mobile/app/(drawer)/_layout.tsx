@@ -60,9 +60,10 @@ export default function DrawerLayout() {
         <Drawer.Screen name="practice" />
       </Drawer.Protected>
 
-      {/* Guardian-only: consent records belong to the account that holds them. */}
+      {/* Guardian-only: consent records and the family calendar. */}
       <Drawer.Protected guard={isGuardian}>
         <Drawer.Screen name="ai-activity" />
+        <Drawer.Screen name="family-calendar" />
       </Drawer.Protected>
 
       {/* Staff-only: prep reads derived observations about a learner. */}

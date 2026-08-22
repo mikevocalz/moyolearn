@@ -30,7 +30,10 @@ const LEARNER_ITEMS = [
   { label: 'Tutor', icon: MessageCircle, href: '/tutor' },
 ] as const;
 
-const GUARDIAN_ITEMS = [{ label: 'AI activity', icon: ShieldCheck, href: '/ai-activity' }] as const;
+const GUARDIAN_ITEMS = [
+  { label: 'AI activity', icon: ShieldCheck, href: '/ai-activity' },
+  { label: 'Family calendar', icon: Calendar, href: '/family-calendar' },
+] as const;
 
 const STAFF_ITEMS = [{ label: 'Session prep', icon: FileUp, href: '/session-prep' }] as const;
 
