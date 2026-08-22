@@ -114,6 +114,9 @@ catalogs:
     expo-image:
       specifier: 57.0.3
       version: 57.0.3
+    expo-image-manipulator:
+      specifier: 57.0.9
+      version: 57.0.9
     expo-image-picker:
       specifier: 57.0.12
       version: 57.0.12
@@ -599,6 +602,9 @@ importers:
       expo-document-picker:
         specifier: 'catalog:'
         version: 57.0.1(expo@58.0.0-canary-20260812-27f94d4)
+      expo-image-manipulator:
+        specifier: 'catalog:'
+        version: 57.0.9(expo@58.0.0-canary-20260812-27f94d4)
       expo-image-picker:
         specifier: 'catalog:'
         version: 57.0.12(expo@58.0.0-canary-20260812-27f94d4)
@@ -5853,6 +5859,11 @@ packages:
 
   expo-image-loader@57.0.1:
     resolution: {integrity: sha512-uhrZKLT/cTl2mXyR28kPpVkS5O+PK9N1QA/07IFM4f5T4g0lTW1JHT3NEWwEEsGFldPmVX4j7LwUVVZxE+woug==}
+    peerDependencies:
+      expo: '*'
+
+  expo-image-manipulator@57.0.9:
+    resolution: {integrity: sha512-G/h0W9LM5Ju505rj2sQO7TdUi1Jz44ht0se66NB9VyZaSqAv+k3pP6eOAFNabf/LA8bAWO5c8p5Fpm1+CD49zg==}
     peerDependencies:
       expo: '*'
 
@@ -15386,6 +15397,11 @@ snapshots:
   expo-image-loader@57.0.1(expo@58.0.0-canary-20260812-27f94d4):
     dependencies:
       expo: 58.0.0-canary-20260812-27f94d4(3736b50227929d3e55dd7a8dc324d872)
+
+  expo-image-manipulator@57.0.9(expo@58.0.0-canary-20260812-27f94d4):
+    dependencies:
+      expo: 58.0.0-canary-20260812-27f94d4(3736b50227929d3e55dd7a8dc324d872)
+      expo-image-loader: 57.0.1(expo@58.0.0-canary-20260812-27f94d4)
 
   expo-image-picker@57.0.12(expo@58.0.0-canary-20260812-27f94d4):
     dependencies:

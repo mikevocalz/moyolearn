@@ -21,6 +21,7 @@
     "date-fns": "catalog:",
     "expo-document-picker": "catalog:",
     "expo-image-picker": "catalog:",
+    "expo-image-manipulator": "catalog:",
     "lucide-react": "catalog:",
     "lucide-react-native": "catalog:",
     "react-native-audio-api": "catalog:",
