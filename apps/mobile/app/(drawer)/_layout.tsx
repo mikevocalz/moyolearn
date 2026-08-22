@@ -25,9 +25,12 @@ export default function DrawerLayout() {
    * it is unreachable by deep link and purged from history when the persona
    * flips, so the Wave-3 auth swap changes zero navigation code.
    */
-  const { user } = useAppSession();
-  const isLearner = user?.kind === 'learner';
-  const isStaff = user?.kind === 'tutor' || user?.kind === 'teacher' || user?.kind === 'owner';
+  const { activeContext } = useAppSession();
+  const isLearner = activeContext.kind === 'learner';
+  const isStaff =
+    activeContext.kind === 'tutor' ||
+    activeContext.kind === 'teacher' ||
+    activeContext.kind === 'owner';
 
   return (
     <Drawer

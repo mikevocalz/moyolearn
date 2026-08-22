@@ -29,11 +29,14 @@ export const PERSONAS: Persona[] = [
     memberships: [],
   },
   {
+    // Dana wears two hats — the S15 switcher only proves itself against a
+    // persona with more than one membership.
     id: 'dana',
     name: 'Dana',
     kind: 'guardian',
     memberships: [
-      { id: 'm1', orgId: 'home', orgName: 'Home', role: 'guardian' },
+      { id: 'm1', orgId: 'home', orgName: "Maya's parent", role: 'guardian' },
+      { id: 'm1b', orgId: 'brightpath', orgName: 'Brightpath Tutoring', role: 'tutor' },
     ],
   },
   {

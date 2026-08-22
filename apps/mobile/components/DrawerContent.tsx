@@ -9,7 +9,7 @@ import { usePathname } from 'solito/navigation';
 import { useRouter, type Href } from 'expo-router';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import { Avatar } from '@acme/ui';
-import { AVATAR_URI, useAppSession, RoleSwitcher } from '@acme/app';
+import { AVATAR_URI, useAppSession, RoleSwitcher, ContextSwitcher } from '@acme/app';
 
 
 const BASE_ITEMS = [
@@ -33,9 +33,9 @@ const STAFF_ITEMS = [{ label: 'Session prep', icon: FileUp, href: '/session-prep
 
 export function DrawerContent(props: DrawerContentComponentProps) {
   const pathname = usePathname() ?? '/';
-  const { user } = useAppSession();
+  const { user, activeContext } = useAppSession();
   const profileName = user?.name ?? 'Guest';
-  const handle = user?.kind ?? ''
+  const handle = activeContext.kind === 'anon' ? '' : activeContext.kind;
 
   const router = useRouter();
   const navigate = (href: Href) => {
@@ -48,10 +48,11 @@ export function DrawerContent(props: DrawerContentComponentProps) {
 
   // Mirrors the Drawer.Protected guards in (drawer)/_layout.tsx — a link to a
   // guarded route would otherwise dead-end for the wrong persona.
+  const shell = activeContext.kind;
   const roleItems =
-    user?.kind === 'learner'
+    shell === 'learner'
       ? LEARNER_ITEMS
-      : user?.kind === 'tutor' || user?.kind === 'teacher' || user?.kind === 'owner'
+      : shell === 'tutor' || shell === 'teacher' || shell === 'owner'
         ? STAFF_ITEMS
         : [];
   const menuItems = [...BASE_ITEMS, ...roleItems, ...TAIL_ITEMS];
@@ -72,6 +73,8 @@ export function DrawerContent(props: DrawerContentComponentProps) {
           </Text>
         </View>
       </View>
+
+      <ContextSwitcher />
 
       <RoleSwitcher />
 

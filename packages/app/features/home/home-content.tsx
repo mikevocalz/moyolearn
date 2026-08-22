@@ -22,11 +22,14 @@ function greetingFor(now: Date) {
 }
 
 export function HomeContent() {
-  const { user } = useAppSession();
+  const { user, activeContext } = useAppSession();
   const name = user?.name ?? 'there';
-  const isLearner = user?.kind === 'learner';
-  const isTutor = user?.kind === 'tutor';
-  const isGuardian = user?.kind === 'guardian';
+  // The SHELL follows the active context, not the account's primary role — a
+  // parent-who-tutors flipping hats (S15) must land in the tutor shell.
+  const shell = activeContext.kind;
+  const isLearner = shell === 'learner';
+  const isTutor = shell === 'tutor';
+  const isGuardian = shell === 'guardian';
   const router = useRouter();
   // The greeting was hardcoded to "Good morning" and read as wrong for most of
   // the day. useNow already ticks for the schedule's current-time line, so the

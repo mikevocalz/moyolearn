@@ -35,6 +35,7 @@ export {
   useAppSession,
   useSetContext,
   RoleSwitcher,
+  ContextSwitcher,
   type AppSession,
   type AppUser,
   type ActiveContext,

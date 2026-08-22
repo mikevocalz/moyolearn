@@ -24,6 +24,7 @@ export function MockSessionProvider({ children }: { children: React.ReactNode })
       name: persona.name,
       kind: persona.kind,
       gradeBand: persona.gradeBand,
+      memberships: persona.memberships,
     });
   }, [setPersona]);
 
