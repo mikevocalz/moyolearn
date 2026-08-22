@@ -20,7 +20,7 @@ export interface PlanItem {
 }
 
 export const PLAN_ITEMS: PlanItem[] = [
-  { id: '1', label: 'Practice factoring · 15 min', done: false, href: '/tutor' },
+  { id: '1', label: 'Practice factoring · 15 min', done: false, href: '/practice' },
   { id: '2', label: 'Watch: solving two-step equations', done: true },
   { id: '3', label: 'Review notes from yesterday', done: true },
 ];
