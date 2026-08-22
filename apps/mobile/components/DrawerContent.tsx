@@ -1,5 +1,5 @@
 import { DrawerContentScrollView, type DrawerContentComponentProps } from 'expo-router/drawer';
-import { Calendar, Home, Compass, Bell, User, Settings, ImagePlus, MessageCircle, FileUp, ListChecks } from '@acme/ui/icons';
+import { Calendar, Home, Compass, Bell, User, Settings, ImagePlus, MessageCircle, FileUp, ListChecks, ShieldCheck } from '@acme/ui/icons';
 // expo-router's router, NOT solito's, and only because this file is
 // mobile-only. solito's native useRouter goes through react-navigation's
 // useLinkTo, which resolves a path against a linking config that expo-router
@@ -30,6 +30,8 @@ const LEARNER_ITEMS = [
   { label: 'Tutor', icon: MessageCircle, href: '/tutor' },
 ] as const;
 
+const GUARDIAN_ITEMS = [{ label: 'AI activity', icon: ShieldCheck, href: '/ai-activity' }] as const;
+
 const STAFF_ITEMS = [{ label: 'Session prep', icon: FileUp, href: '/session-prep' }] as const;
 
 export function DrawerContent(props: DrawerContentComponentProps) {
@@ -53,9 +55,11 @@ export function DrawerContent(props: DrawerContentComponentProps) {
   const roleItems =
     shell === 'learner'
       ? LEARNER_ITEMS
-      : shell === 'tutor' || shell === 'teacher' || shell === 'owner'
-        ? STAFF_ITEMS
-        : [];
+      : shell === 'guardian'
+        ? GUARDIAN_ITEMS
+        : shell === 'tutor' || shell === 'teacher' || shell === 'owner'
+          ? STAFF_ITEMS
+          : [];
   const menuItems = [...BASE_ITEMS, ...roleItems, ...TAIL_ITEMS];
 
   return (

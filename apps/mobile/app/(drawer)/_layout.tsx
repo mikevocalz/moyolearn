@@ -27,6 +27,7 @@ export default function DrawerLayout() {
    */
   const { activeContext } = useAppSession();
   const isLearner = activeContext.kind === 'learner';
+  const isGuardian = activeContext.kind === 'guardian';
   const isStaff =
     activeContext.kind === 'tutor' ||
     activeContext.kind === 'teacher' ||
@@ -57,6 +58,11 @@ export default function DrawerLayout() {
         <Drawer.Screen name="tutor" />
         <Drawer.Screen name="plan" />
         <Drawer.Screen name="practice" />
+      </Drawer.Protected>
+
+      {/* Guardian-only: consent records belong to the account that holds them. */}
+      <Drawer.Protected guard={isGuardian}>
+        <Drawer.Screen name="ai-activity" />
       </Drawer.Protected>
 
       {/* Staff-only: prep reads derived observations about a learner. */}
