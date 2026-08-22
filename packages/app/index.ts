@@ -24,6 +24,7 @@ export {
   type ScheduleEvent,
   type Resource,
 } from './features/schedule';
+export { CaptureScreen } from './features/capture/screen';
 export { ErrorScreen } from './features/error/screen';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';
