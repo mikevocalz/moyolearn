@@ -7,7 +7,10 @@ import { useSessionStore } from './store';
 import { PERSONAS } from '../../fixtures/personas';
 
 function getInitialPersona() {
-  const env = typeof process !== 'undefined' ? process.env.EXPO_PUBLIC_MOCK_PERSONA : undefined;
+  const env =
+    typeof process !== 'undefined'
+      ? process.env.EXPO_PUBLIC_MOCK_PERSONA ?? process.env.NEXT_PUBLIC_MOCK_PERSONA
+      : undefined;
   return PERSONAS.find((p) => p.id === env) ?? PERSONAS[0]!;
 }
 
