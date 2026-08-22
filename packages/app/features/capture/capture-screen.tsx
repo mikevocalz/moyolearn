@@ -16,6 +16,7 @@ import { DigitizedTextReview } from './digitized-text-review';
 import { OcrReview } from './ocr-review';
 import { useCaptureStore } from './capture.store';
 import { buttonSizeForBand, captureLabelsForBand, type AgeBand } from './age-band';
+import { stripExif } from './privacy-process';
 import { CaptureMode, CapturePhoto, CaptureStep } from './types';
 
 type CapturePayload =
@@ -62,7 +63,7 @@ function Preview({
 
   switch (payload.kind) {
     case 'photo':
-      body = <Image alt="Captured work" src={`file://${payload.photo.filePath}`} className="h-64 w-full rounded-card" />;
+      body = <Image alt="Captured work" src={payload.photo.filePath} className="h-64 w-full rounded-card" />;
       action = <Button title="Review text" variant="highlighter" size={size} fullWidth onPress={onReview} />;
       break;
     case 'image':
@@ -141,7 +142,8 @@ export function CaptureScreen({ ageBand = 'teen' }: CaptureScreenProps) {
     if (selected === 'photo-library') {
       const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images' });
       if (!result.canceled && result.assets[0]) {
-        setPayload({ kind: 'image', uri: result.assets[0].uri });
+        const processed = await stripExif(result.assets[0].uri);
+        setPayload({ kind: 'image', uri: processed.uri });
         setStep('preview');
       }
       return;
@@ -176,8 +178,9 @@ export function CaptureScreen({ ageBand = 'teen' }: CaptureScreenProps) {
       return (
         <GuidedFrame
           ageBand={ageBand}
-          onCapture={(photo) => {
-            setPayload({ kind: 'photo', photo });
+          onCapture={async (photo) => {
+            const processed = await stripExif(photo.filePath);
+            setPayload({ kind: 'photo', photo: { filePath: processed.uri } });
             setStep('preview');
           }}
         />
