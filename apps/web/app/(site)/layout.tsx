@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { View } from '@acme/ui/tw';
+import { SessionProvider } from '@acme/app';
 import { Document } from '../Document';
 import { SiteHeader } from '../../components/site/SiteHeader';
 import { SiteFooter } from '../../components/site/SiteFooter';
@@ -17,10 +18,12 @@ export const metadata: Metadata = {
 
 export default function SiteLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <Document>
-      <SiteHeader />
-      <View className="min-h-screen flex-1">{children}</View>
-      <SiteFooter />
-    </Document>
+    <SessionProvider>
+      <Document>
+        <SiteHeader />
+        <View className="min-h-screen flex-1">{children}</View>
+        <SiteFooter />
+      </Document>
+    </SessionProvider>
   );
 }
