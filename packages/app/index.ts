@@ -30,6 +30,7 @@ export { SessionPrepScreen } from './features/session-prep/screen';
 export { PlanScreen } from './features/plan/screen';
 export { PracticeScreen } from './features/practice/screen';
 export { AiActivityScreen } from './features/ai-activity/screen';
+export { FamilyCalendarScreen } from './features/family-calendar/screen';
 export { ErrorScreen } from './features/error/screen';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';
