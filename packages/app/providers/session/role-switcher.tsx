@@ -11,7 +11,10 @@ export function RoleSwitcher() {
   const setPersona = useSessionStore((s) => s.setPersona);
   const currentId = useSessionStore((s) => s.user?.id);
 
-  if (process.env.EXPO_PUBLIC_AUTH_MODE === 'live') return null;
+  const isLive =
+    process.env.EXPO_PUBLIC_AUTH_MODE === 'live' ||
+    process.env.NEXT_PUBLIC_AUTH_MODE === 'live';
+  if (isLive) return null;
 
   return (
     <View className="gap-stack p-inset">

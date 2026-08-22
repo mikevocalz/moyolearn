@@ -11,7 +11,10 @@ export type { RoleKind, ActiveContext, ActiveContextKind, AppSession, AppUser, M
 export { RoleSwitcher } from './role-switcher';
 
 function getAuthMode() {
-  const env = typeof process !== 'undefined' ? process.env.EXPO_PUBLIC_AUTH_MODE : undefined;
+  const env =
+    typeof process !== 'undefined'
+      ? process.env.EXPO_PUBLIC_AUTH_MODE ?? process.env.NEXT_PUBLIC_AUTH_MODE
+      : undefined;
   if (env === 'live' || env === 'mock') return env;
   return 'mock';
 }
