@@ -76,6 +76,34 @@ export type {
   WinItem,
   WinResult,
 } from './features/onboarding/learner/steps';
+export { TutorOnboardingContent } from './features/onboarding/tutor/tutor-onboarding-content';
+export { useTutorOnboarding } from './features/onboarding/tutor/store';
+export {
+  canAdvance as tutorCanAdvance,
+  nextStep as tutorNextStep,
+  previousStep as tutorPreviousStep,
+  stepProgress as tutorStepProgress,
+  slot,
+  summariseSlots,
+  toggleSlot,
+  BLOCKS,
+  DAYS,
+  DEFAULT_SLOTS,
+  MAX_TEACHABLE,
+  OPTIONAL_STEPS,
+  STEP_DESTINATION,
+  TEACHABLE_SUBJECTS,
+  TUTOR_STEPS,
+} from './features/onboarding/tutor/steps';
+export type {
+  Block,
+  Credential,
+  Day,
+  Slot,
+  TeachableSubject,
+  TutorDraft,
+  TutorStep,
+} from './features/onboarding/tutor/steps';
 export { ErrorScreen } from './features/error/screen';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';
