@@ -39,6 +39,35 @@ export function isRestrictedLearnerUpdate(
   return 'email' in incoming || 'emailVerified' in incoming;
 }
 
+/**
+ * A managed learner may not link a social account. The credential provider is
+ * the username/password row Better Auth writes at creation, so it is the one
+ * `providerId` that stays allowed.
+ */
+export function isRestrictedLearnerAccountLink(
+  owner: Record<string, unknown> | null | undefined,
+  account: { providerId?: string },
+): boolean {
+  if (!owner?.guardianManaged) return false;
+  return account.providerId !== 'credential';
+}
+
+/**
+ * Doc 06 §2 puts a managed learner's password under the guardian. The block is
+ * on the *learner acting on itself* — a guardian-initiated reset is the
+ * supported path and must keep working, as must support triggering a
+ * guardian-side reset (which never sets a password directly).
+ */
+export function isRestrictedLearnerPasswordChange(
+  owner: Record<string, unknown> | null | undefined,
+  actorId: string | undefined,
+  incoming: Record<string, unknown>,
+): boolean {
+  if (!owner?.guardianManaged) return false;
+  if (!('password' in incoming)) return false;
+  return actorId === owner.id;
+}
+
 export function createAuth(options?: { connectionString?: string; schema?: string }) {
   const schema = options?.schema ?? 'auth';
   const pool = new Pool({
@@ -66,6 +95,32 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
           before: async (user, ctx) => {
             const existing = (ctx?.context?.session?.user ?? {}) as Record<string, unknown>;
             if (isRestrictedLearnerUpdate(existing, user as Record<string, unknown>)) return false;
+          },
+        },
+      },
+      account: {
+        create: {
+          before: async (account, ctx) => {
+            const owner = await ctx?.context?.internalAdapter?.findUserById(account.userId);
+            if (isRestrictedLearnerAccountLink(owner as Record<string, unknown> | null, account)) {
+              return false;
+            }
+          },
+        },
+        update: {
+          before: async (account, ctx) => {
+            if (!account.userId) return;
+            const owner = await ctx?.context?.internalAdapter?.findUserById(account.userId);
+            const actorId = ctx?.context?.session?.user?.id;
+            if (
+              isRestrictedLearnerPasswordChange(
+                owner as Record<string, unknown> | null,
+                actorId,
+                account as Record<string, unknown>,
+              )
+            ) {
+              return false;
+            }
           },
         },
       },
