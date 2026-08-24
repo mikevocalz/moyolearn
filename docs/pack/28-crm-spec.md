@@ -39,3 +39,5 @@ Funnel conversion, revenue, utilization, and payroll summaries flow through the 
 
 ## 9. Sources (linked)
 [TutorCruncher vs TutorBird](https://tutorcruncher.com/blog/tutorcruncher-vs-tutorbird) · [Teach 'n Go US 2026 roundup](https://www.teachngo.com/blog/best-tutoring-business-software-us) · [Tutorbase: student management systems 2026](https://tutorbase.com/blog/best-student-management-systems-for-tutoring-centers) · [Tutorbase: solopreneur tools 2026](https://tutorbase.com/blog/best-tutoring-management-software-for-solopreneurs) · [Gitnux top-10 2026](https://gitnux.org/best/tutoring-business-management-software/) · [WifiTalents comparison](https://wifitalents.com/best/tutoring-business-management-software/) · [Guideflow 8 best 2026](https://www.guideflow.com/blog/tutoring-software) · [Wise.live tutoring CRMs](https://www.wise.live/blog/top-crms-for-tutoring-businesses/) · Pack docs 05/10/12/13/14/16/17/19/22.
+
+**Full matrix:** the feature/pricing teardown this doc is derived from lives at [`research-crm-market-2026.md`](./research-crm-market-2026.md) — competitor-by-competitor, with the complaint patterns that make the importer the wedge.

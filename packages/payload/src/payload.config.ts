@@ -38,10 +38,18 @@ export default buildConfig({
   sharp,
   plugins: [
     mcpPlugin({
+      // `users` is deliberately absent. It is the auth collection and it is where
+      // learner identity lands — doc 13 keeps learner data off machine-readable
+      // surfaces in every version, so it never gets an MCP tool.
       collections: {
-        users: {},
         media: {},
       },
+      // ponytail: off unless switched on. The plugin's default access is
+      // `Boolean(req.user)`, which would hand the whole tool surface to any
+      // authenticated account — not the fail-closed posture doc 07/12 require.
+      // Per-tool `access` is the real fix; it arrives with doc 13's scope
+      // registry. Until then the endpoint simply isn't registered.
+      disabled: process.env.PAYLOAD_MCP_ENABLED !== 'true',
     }),
   ],
   typescript: {
