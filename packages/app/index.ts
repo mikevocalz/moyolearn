@@ -104,6 +104,49 @@ export type {
   TutorDraft,
   TutorStep,
 } from './features/onboarding/tutor/steps';
+export {
+  BusinessOnboardingContent,
+  type BusinessOnboardingProps,
+} from './features/onboarding/business/business-onboarding-content';
+export { useBusinessOnboarding } from './features/onboarding/business/store';
+export {
+  canAdvance as businessCanAdvance,
+  nextStep as businessNextStep,
+  previousStep as businessPreviousStep,
+  stepProgress as businessStepProgress,
+  parseInvitees,
+  toggleService,
+  BUSINESS_STEPS,
+  SERVICES,
+  SKIP_LABEL,
+} from './features/onboarding/business/steps';
+export type { BusinessDraft, BusinessStep } from './features/onboarding/business/steps';
+// The milestone engine (doc 06 §8 PR-16) — S24 pins it, S17 will sell against it.
+export {
+  milestoneProgress,
+  trialChip,
+  EMPTY_ACTIVATION,
+  MILESTONES,
+} from './features/onboarding/business/milestones';
+export type {
+  ActivationState,
+  Milestone,
+  MilestoneId,
+  MilestoneProgress,
+} from './features/onboarding/business/milestones';
+export {
+  guessMapping,
+  importRoster,
+  parseCsv,
+  ROLE_LABELS,
+} from './features/onboarding/business/roster-csv';
+export type {
+  ColumnRole,
+  RosterImport,
+  RosterRow,
+} from './features/onboarding/business/roster-csv';
+export { readText } from './features/onboarding/business/read-text';
+export type { ReadText } from './features/onboarding/business/read-text.types';
 export { ErrorScreen } from './features/error/screen';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';
