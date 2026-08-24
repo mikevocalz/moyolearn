@@ -75,3 +75,13 @@ export type {
   SubscriptionState,
   SubscriptionStatus,
 } from './src/entitlements';
+
+export {
+  cancellationOutcome,
+  cancellationSummary,
+  trialSchedule,
+  CANCEL_STEPS,
+  MAX_CANCEL_STEPS,
+  TRIAL_REMINDER_DAYS_BEFORE,
+} from './src/trial';
+export type { CancelStep, CancellationOutcome, TrialSchedule } from './src/trial';

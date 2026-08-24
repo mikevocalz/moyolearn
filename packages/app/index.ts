@@ -193,6 +193,9 @@ export {
   type PermissionGateProps,
   type ResolvedEntitlements,
 } from './providers/entitlements';
+export { PaywallContent, type PaywallProps } from './features/paywall/paywall-content';
+export { CancelContent, type CancelProps } from './features/paywall/cancel-content';
+export { formatTrialDate, PAYWALL_OFFERS, type PaywallOffer } from './features/paywall/paywall.data';
 export { ErrorScreen } from './features/error/screen';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';

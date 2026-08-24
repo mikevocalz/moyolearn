@@ -12,7 +12,11 @@ import {
   type ConsentRecord,
 } from '@acme/auth';
 
-export const GUARDIAN_STEPS = ['welcome', 'account', 'consent', 'children', 'grants'] as const;
+// Doc 06 §5's sequence ends "grant-access toggles → S16 paywall → first value".
+// The paywall is a STEP, not a screen the flow bounces out to: a guardian who
+// lands on a standalone paywall has left onboarding, and the brief's whole point
+// is that the conversion moment is the child's face two steps later.
+export const GUARDIAN_STEPS = ['welcome', 'account', 'consent', 'children', 'grants', 'plan'] as const;
 export type GuardianStep = (typeof GUARDIAN_STEPS)[number];
 
 export interface ChildDraft {
@@ -60,6 +64,10 @@ export function canAdvance(step: GuardianStep, draft: GuardianDraft): boolean {
     case 'children':
       return draft.children.length > 0 && draft.children.every((c) => isChildComplete(c, draft));
     case 'grants':
+      return true;
+    case 'plan':
+      // Doc 05 §1.2: the child's floor is never hostage. "Continue with free
+      // practice" is a real way past this step, so it cannot gate.
       return true;
   }
 }

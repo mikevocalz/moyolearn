@@ -18,6 +18,7 @@
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Button, FadeIn, Heading, TextField } from '@acme/ui';
 import { ConsentFlowContent } from '../consent/consent-flow-content';
+import { PaywallContent } from '../../paywall/paywall-content';
 import { useGuardianOnboarding } from './store';
 import {
   canAdvance,
@@ -73,6 +74,13 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
             onChangeText={(email: string) => patch({ email })}
           />
         </Section>
+      ) : null}
+
+      {step === 'plan' ? (
+        <PaywallContent
+          onStartTrial={() => onExit()}
+          onContinueFree={() => onExit()}
+        />
       ) : null}
 
       {step === 'consent' ? (
