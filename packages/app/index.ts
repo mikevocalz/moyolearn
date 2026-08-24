@@ -32,6 +32,26 @@ export { PracticeScreen } from './features/practice/screen';
 export { AiActivityScreen } from './features/ai-activity/screen';
 export { FamilyCalendarScreen } from './features/family-calendar/screen';
 export { OnboardingScreen } from './features/onboarding/screen';
+export { GuardianOnboardingContent } from './features/onboarding/guardian/guardian-onboarding-content';
+export { useGuardianOnboarding } from './features/onboarding/guardian/store';
+export {
+  canAdvance,
+  childProblems,
+  consentRegime,
+  isChildComplete,
+  isValidDob,
+  nextStep,
+  previousStep,
+  stepProgress,
+  GUARDIAN_STEPS,
+  CONSENT_POLICY_VERSION,
+} from './features/onboarding/guardian/steps';
+export type {
+  ChildDraft,
+  ChildProblems,
+  GuardianDraft,
+  GuardianStep,
+} from './features/onboarding/guardian/steps';
 export { ErrorScreen } from './features/error/screen';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';
