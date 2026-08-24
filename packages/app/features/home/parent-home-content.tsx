@@ -6,7 +6,7 @@
 import { ArrowRight } from '@acme/ui/icons';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, Card, Dial, Heading, PressScale, Text, FadeIn } from '@acme/ui';
-import { useRouter } from 'solito/router';
+import { useRouter } from 'solito/navigation';
 import { useAppSession } from '../../providers/session';
 import {
   CHILDREN,

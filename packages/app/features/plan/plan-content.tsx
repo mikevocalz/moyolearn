@@ -7,7 +7,7 @@
 
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, Heading, PressScale, Text, FadeIn } from '@acme/ui';
-import { useRouter } from 'solito/router';
+import { useRouter } from 'solito/navigation';
 import { usePlanStore } from './plan.store';
 import { PLAN_WEEK, type PlanTimelineItem } from './plan.data';
 

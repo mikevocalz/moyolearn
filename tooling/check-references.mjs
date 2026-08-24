@@ -24,7 +24,14 @@ const ROOTS = ['packages/app/features', 'packages/ui'];
 
 // Not surfaces: tests, stories, types, platform forks (the base file carries the
 // citation), barrels, and machinery with no visual design to reference.
-const SKIP = /\.(test|spec|stories|types)\.tsx?$|\.(web|native|ios|android)\.tsx?$|(^|\/)(index|store|steps|keys)\.tsx?$/;
+//
+// `screen.tsx` is on that list for the same reason the forks are, one level up:
+// in this codebase it is always a TS resolution anchor that re-exports
+// `screen.web`, and the design lives in the `*-content.tsx` it renders. Asking
+// an anchor to cite references would put the citation on the one file nobody
+// reads when they change how a screen looks.
+const SKIP =
+  /\.(test|spec|stories|types)\.tsx?$|\.(web|native|ios|android)\.tsx?$|(^|\/)(index|store|steps|keys|screen)\.tsx?$/;
 
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {

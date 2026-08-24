@@ -4,9 +4,12 @@
 // SOT-KEYWORDS: capture screen homework camera photo file type voice preview ocr review age band
 
 import { useState } from 'react';
-import { useRouter } from 'solito/router';
-import * as DocumentPicker from 'expo-document-picker';
-import * as ImagePicker from 'expo-image-picker';
+import { useRouter } from 'solito/navigation';
+// The universal pickers, not the native modules directly: expo-image-picker has
+// no web build and dragging it into the Next graph fails the build. Both forks
+// already exist for exactly this reason — see pick-note-image.web's header.
+import { pickFile } from '../editor/pick-file';
+import { pickNoteImage } from '../schedule/pick-note-image';
 import { Button, Image, Text, Textarea, VoiceRecorder } from '@acme/ui';
 import type { VoiceRecording } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
@@ -140,9 +143,9 @@ export function CaptureScreen({ ageBand = 'teen' }: CaptureScreenProps) {
     }
 
     if (selected === 'photo-library') {
-      const result = await ImagePicker.launchImageLibraryAsync({ mediaTypes: 'images' });
-      if (!result.canceled && result.assets[0]) {
-        const processed = await stripExif(result.assets[0].uri);
+      const picked = await pickNoteImage();
+      if (picked) {
+        const processed = await stripExif(picked.uri);
         setPayload({ kind: 'image', uri: processed.uri });
         setStep('preview');
       }
@@ -150,10 +153,9 @@ export function CaptureScreen({ ageBand = 'teen' }: CaptureScreenProps) {
     }
 
     if (selected === 'file') {
-      const result = await DocumentPicker.getDocumentAsync({});
-      if (!result.canceled && result.assets[0]) {
-        const asset = result.assets[0];
-        setPayload({ kind: 'file', name: asset.name, uri: asset.uri });
+      const file = await pickFile();
+      if (file) {
+        setPayload({ kind: 'file', name: file.name, uri: file.uri });
         setStep('preview');
       }
       return;

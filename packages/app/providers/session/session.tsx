@@ -1,3 +1,4 @@
+'use client';
 // Session provider barrel — picks mock or live by auth mode.
 // SOT: docs/pack/09-screens-first-build-order.md §2
 // SOT-KEYWORDS: session provider barrel mock live use appsession

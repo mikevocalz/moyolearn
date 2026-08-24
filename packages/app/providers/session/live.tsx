@@ -1,3 +1,4 @@
+'use client';
 // LiveSessionProvider — resolves a real Better Auth session into the same store
 // the mock provider writes to. Doc 09 §2 makes Wave 3 a provider swap, not a
 // rewrite: nothing below the store changes, so no screen changes either.

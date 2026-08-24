@@ -5,7 +5,7 @@
 import { ArrowUp, ImagePlus } from '@acme/ui/icons';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Card, Heading, PressScale, Text, FadeIn, ScaleIn } from '@acme/ui';
-import { useRouter } from 'solito/router';
+import { useRouter } from 'solito/navigation';
 import { useAppSession } from '../../providers/session';
 import { StudentHomeContent } from './student-home-content';
 import { TutorTodayContent } from './tutor-today-content';

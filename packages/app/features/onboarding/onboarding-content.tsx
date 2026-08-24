@@ -8,12 +8,13 @@
 // SOT-KEYWORDS: onboarding consent role three-store promise guardian educator business
 
 import { useState } from 'react';
-import { useRouter } from 'solito/router';
+import { useRouter } from 'solito/navigation';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Button, Heading, PressScale, Switch, FadeIn } from '@acme/ui';
 import { Check } from '@acme/ui/icons';
 import { useSessionStore } from '../../providers/session/store';
 import { PERSONAS } from '../../fixtures/personas';
+import { onboardingPath } from './flow/flow';
 
 export function OnboardingContent() {
   const [step, setStep] = useState<'promise' | 'role' | 'consent'>('promise');
@@ -41,7 +42,10 @@ export function OnboardingContent() {
         gradeBand: selectedPersona.gradeBand,
         memberships: selectedPersona.memberships,
       });
-      router.push('/');
+      // Consent is where the shared front door ends and doc 06 §5's per-profile
+      // sequence begins. The role picked here is the whole routing decision —
+      // the flow key IS the RoleKind, so there is no second table.
+      router.push(onboardingPath(selectedPersona.kind));
     }
   };
 

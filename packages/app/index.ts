@@ -32,6 +32,14 @@ export { PracticeScreen } from './features/practice/screen';
 export { AiActivityScreen } from './features/ai-activity/screen';
 export { FamilyCalendarScreen } from './features/family-calendar/screen';
 export { OnboardingScreen } from './features/onboarding/screen';
+export { OnboardingFlowScreen } from './features/onboarding/flow/screen';
+export { OnboardingFlowContent } from './features/onboarding/flow/flow-content';
+export {
+  isOnboardingFlow,
+  onboardingPath,
+  ONBOARDING_FLOWS,
+} from './features/onboarding/flow/flow';
+export type { OnboardingFlow } from './features/onboarding/flow/flow';
 export { GuardianOnboardingContent } from './features/onboarding/guardian/guardian-onboarding-content';
 export { useGuardianOnboarding } from './features/onboarding/guardian/store';
 export {

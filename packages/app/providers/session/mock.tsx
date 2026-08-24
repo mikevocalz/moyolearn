@@ -1,3 +1,4 @@
+'use client';
 // MockSessionProvider — dev-only; boots the session from EXPO_PUBLIC_MOCK_PERSONA or defaults.
 // SOT: docs/pack/09-screens-first-build-order.md §2
 // SOT-KEYWORDS: mock session provider dev persona fixture

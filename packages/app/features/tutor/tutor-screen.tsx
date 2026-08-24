@@ -4,7 +4,7 @@
 // SOT-KEYWORDS: tutor screen capture handoff tutorstage session pacer zustand age band
 
 import { useEffect } from 'react';
-import { useRouter } from 'solito/router';
+import { useRouter } from 'solito/navigation';
 import { useDebouncedCallback } from '@tanstack/react-pacer';
 import { TutorStage, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';

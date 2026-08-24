@@ -6,7 +6,7 @@
 import { ArrowRight, FileUp, Star } from '@acme/ui/icons';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, Card, Heading, PressScale, Text, FadeIn } from '@acme/ui';
-import { useRouter } from 'solito/router';
+import { useRouter } from 'solito/navigation';
 import { useAppSession } from '../../providers/session';
 import { PLAN_ITEMS, NEXT_SESSION, CONTINUE_SKILL, IMPROVEMENT } from './student-home.data';
 
