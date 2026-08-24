@@ -147,6 +147,29 @@ export type {
 } from './features/onboarding/business/roster-csv';
 export { readText } from './features/onboarding/business/read-text';
 export type { ReadText } from './features/onboarding/business/read-text.types';
+export { TeacherOnboardingContent } from './features/onboarding/teacher/teacher-onboarding-content';
+export { useTeacherOnboarding } from './features/onboarding/teacher/store';
+export {
+  canAdvance as teacherCanAdvance,
+  nextStep as teacherNextStep,
+  previousStep as teacherPreviousStep,
+  stepProgress as teacherStepProgress,
+  allowsSelfJoin,
+  classCode,
+  joinOptions,
+  ASSIGNMENT_TEMPLATES,
+  CODE_LENGTH,
+  GRADE_BANDS,
+  TEACHER_STEPS,
+} from './features/onboarding/teacher/steps';
+export type {
+  AssignmentTemplate,
+  GradeBand,
+  JoinMethod,
+  JoinOption,
+  TeacherDraft,
+  TeacherStep,
+} from './features/onboarding/teacher/steps';
 export { ErrorScreen } from './features/error/screen';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';
