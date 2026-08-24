@@ -15,3 +15,4 @@ export type { ConsentMethod, CreateLearnerInput } from './src/create-learner';
 export { isPlaceholderEmail, learnerPlaceholderEmail } from './src/create-learner';
 export { createManagedLearner, CreateLearnerError } from './src/create-managed-learner';
 export type { LearnerWriter } from './src/create-managed-learner';
+export { createPayloadLearnerWriter } from './src/payload-learner-writer';
