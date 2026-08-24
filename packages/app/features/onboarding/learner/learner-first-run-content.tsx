@@ -46,8 +46,10 @@ export function LearnerFirstRunContent({ onDone }: { onDone: () => void }) {
             has to read. The bar is the whole status display. */}
         <FadeIn>
           <View className="flex-row items-center gap-element">
+            {/* A child's target comes from the age band (doc 08 §2.4), so the
+                kit's 44 default is the wrong one on this screen. */}
             {back ? (
-              <Button variant="ghost" size="sm" title="Back" onPress={() => setStep(back)} />
+              <Button variant="ghost" size="xl" title="Back" onPress={() => setStep(back)} />
             ) : null}
             <View
               accessibilityRole="progressbar"
@@ -103,10 +105,20 @@ export function LearnerFirstRunContent({ onDone }: { onDone: () => void }) {
                     className={[
                       'min-w-36 min-h-target-young flex-1 basis-[45%] rounded-card border-2 p-inset',
                       picked ? 'border-strong bg-highlighter' : 'border-border bg-surface-raised',
-                      full ? 'opacity-50' : '',
+                      // Button.tsx's own header: opacity alone was not enough —
+                      // a 50%-opacity tile still reads as a tile, and it drops
+                      // the label under 4.5:1 on the way (WCAG 1.4.3). The kit's
+                      // treatment for unavailable is a muted FILL, full-contrast
+                      // text, and the affordance removed.
+                      full ? 'border-border bg-surface-sunken' : '',
                     ].join(' ')}
                   >
-                    <TWText className="font-display text-body-lg font-bold text-text">
+                    <TWText
+                      className={[
+                        'font-display text-body-lg font-bold',
+                        full ? 'text-text-muted' : 'text-text',
+                      ].join(' ')}
+                    >
                       {tile.label}
                     </TWText>
                     <TWText className="text-caption text-text-muted">{tile.hint}</TWText>
@@ -180,7 +192,11 @@ function Win({ onDone }: { onDone: () => void }) {
       </View>
       {draft.result === 'not-yet' ? (
         <FadeIn>
-          <Text variant="label" tone="muted">
+          {/* Announced (WCAG 4.1.3) and at full contrast (1.4.3): this is the
+              one line telling a child what to do next, and muted grey is where
+              feedback goes to be missed. Not redpen — doc 08 §4.8 keeps red for
+              marking an answer, and this marks the next try. */}
+          <Text role="alert" variant="body" className="text-text">
             {item.notYet}
           </Text>
         </FadeIn>

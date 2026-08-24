@@ -44,7 +44,11 @@ export function TeacherOnboardingContent({ onExit }: { onExit: () => void }) {
             <Text variant="label" tone="muted">
               Step {index} of {total}
             </Text>
-            {draft.code ? <Badge tone="primary" label={draft.code} /> : null}
+            <View className="flex-row items-center gap-element">
+              {draft.code ? <Badge tone="primary" label={draft.code} /> : null}
+              {/* H3/H4: the same way out S21 offers. */}
+              <Button variant="ghost" size="sm" title="Save & exit" onPress={onExit} />
+            </View>
           </View>
         </FadeIn>
 

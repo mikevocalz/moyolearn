@@ -19,7 +19,7 @@
 
 import { useState } from 'react';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
-import { Button, Card, ErrorMessage, FadeIn, Heading, PressScale, Text, TextField } from '@acme/ui';
+import { Badge, Button, Card, ErrorMessage, FadeIn, Heading, PressScale, Text, TextField } from '@acme/ui';
 import {
   availableMethods,
   isFallbackMethod,
@@ -114,9 +114,16 @@ export function ConsentFlowContent({ scope, policyVersion, onComplete }: Consent
               method === option ? 'border-strong bg-highlighter' : 'border-border bg-surface-raised',
             ].join(' ')}
           >
-            <TWText className="text-body font-semibold text-text">
-              {METHOD_LABELS[option].label}
-            </TWText>
+            <View className="flex-row items-center justify-between gap-element">
+              <TWText className="text-body font-semibold text-text">
+                {METHOD_LABELS[option].label}
+              </TWText>
+              {/* Two verification methods a parent has no way to choose between
+                  is a decision offloaded onto them. email-plus was already the
+                  default; saying so is what makes it a recommendation instead of
+                  a silent preselection. */}
+              {option === 'email-plus' ? <Badge label="Most people use this" /> : null}
+            </View>
             <TWText className="text-caption text-text-muted">{METHOD_LABELS[option].hint}</TWText>
           </PressScale>
         ))}

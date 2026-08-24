@@ -81,9 +81,14 @@ export function BusinessOnboardingContent({ onExit, trialDaysLeft = 30 }: Busine
             <Text variant="label" tone="muted">
               Step {index} of {total}
             </Text>
-            {/* Uxcel keeps the trial state visible during setup, not only after.
-                Copy stays on doc 05 §6: what you set up stays. */}
-            <Badge label={trialChip(trialDaysLeft, draft.activation)} />
+            <View className="flex-row items-center gap-element">
+              {/* Uxcel keeps the trial state visible during setup, not only after.
+                  Copy stays on doc 05 §6: what you set up stays. */}
+              <Badge label={trialChip(trialDaysLeft, draft.activation)} />
+              {/* H3/H4: the same way out S21 offers. An operator interrupted
+                  mid-import must not have to finish to keep the org. */}
+              <Button variant="ghost" size="sm" title="Save & exit" onPress={onExit} />
+            </View>
           </View>
         </FadeIn>
 
@@ -266,7 +271,9 @@ function RosterReview({ onConfirm }: { onConfirm: () => void }) {
         </Select>
       ))}
 
-      <TWText className="text-body font-semibold text-text">
+      {/* WCAG 4.1.3: the count changes when a column is re-mapped, and a
+          verdict nobody is told about is a verdict only sighted users get. */}
+      <TWText role="status" className="text-body font-semibold text-text">
         {roster.ready} of {roster.rows.length} rows ready
       </TWText>
       {roster.problemLines.length > 0 ? (

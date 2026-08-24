@@ -69,8 +69,13 @@ export function TutorOnboardingContent({ onExit }: { onExit: () => void }) {
             <Text variant="label" tone="muted">
               Step {index} of {total}
             </Text>
-            {/* Angi: skipping is a labelled choice on the steps where it is one. */}
-            {optional ? <Button variant="ghost" size="sm" title="Not now" onPress={advance} /> : null}
+            <View className="flex-row items-center gap-element">
+              {/* Angi: skipping is a labelled choice on the steps where it is one. */}
+              {optional ? <Button variant="ghost" size="sm" title="Not now" onPress={advance} /> : null}
+              {/* H3, and consistency with S21 (H4): a way out of every step, not
+                  only backwards one at a time. GoHenry keeps it on all of them. */}
+              <Button variant="ghost" size="sm" title="Save & exit" onPress={onExit} />
+            </View>
           </View>
         </FadeIn>
 
@@ -135,10 +140,14 @@ export function TutorOnboardingContent({ onExit }: { onExit: () => void }) {
                       className={[
                         'min-h-target-adult justify-center rounded-card border-2 px-4',
                         picked ? 'border-strong bg-highlighter' : 'border-border bg-surface-raised',
-                        full ? 'opacity-50' : '',
+                        // Muted fill, not opacity — see Button.tsx's header and
+                        // the same fix in S22's grid.
+                        full ? 'border-border bg-surface-sunken' : '',
                       ].join(' ')}
                     >
-                      <TWText className="text-body text-text">{subject.label}</TWText>
+                      <TWText className={full ? 'text-body text-text-muted' : 'text-body text-text'}>
+                        {subject.label}
+                      </TWText>
                     </PressScale>
                   );
                 })}
