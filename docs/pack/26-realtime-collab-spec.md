@@ -1,0 +1,35 @@
+# Realtime Collaboration — Yjs is the state plane, Fishjam is the media plane, Payload is the truth
+**Doc 26 · Moyo platform pack · Date:** Aug 21, 2026
+**The question answered:** Liveblocks-style collaboration without the SaaS bill (adopt the advisor's Yjs stack), and **how Fishjam fits: it doesn't compete with Yjs — they're different planes of the same room.** Media and shared state never ride the same transport.
+
+---
+
+## 1. The three planes of a Tutor Room
+- **State plane — Yjs (self-hosted, adopted):** [Yjs](https://docs.yjs.dev/) CRDTs carry the room's shared truth — whiteboard strokes, homework annotations, shared notes, selected problem, active page, equation blocks — with conflict resolution, offline merge, and per-user undo for free. Transport via [y-websocket](https://github.com/yjs/y-websocket)'s protocol under [Hocuspocus](https://github.com/ueberdosis/hocuspocus) as the production collaboration server (auth hooks, persistence hooks, webhooks) — our infrastructure, our authz.
+- **Media plane — Fishjam:** [Fishjam](https://swmansion.com/rtc-video-streaming) (Software Mansion) carries pixels and audio — video, voice, screenshare — as a WebRTC rooms/peers/tracks platform with **two-tier auth, a REST API, and four SDKs including React Native/Expo with screen sharing, CallKit, foreground service, and Picture-in-Picture**. Honest state note: the original open-source Elixir org is frozen ("Fishjam Media Server is evolving into Fishjam… we will not be updating it"), so the current product is the hosted platform with open-source client SDKs — a vendor relationship on the media plane, unlike the fully self-hosted state plane. MoQ (SM's `react-native-moq`/`moq-kit`, sub-second Media-over-QUIC) is noted as a future large-audience livestream lane, not a Tutor Room need.
+- **Control plane — Payload + the registry:** one authz truth. A single `protectedOperation` mints the room grant, which issues **both** tokens — the Hocuspocus doc token (validated in `onAuthenticate`) and, in owned rooms, the Fishjam peer token. The advisor's core argument is adopted verbatim: with student/guardian/tutor/teacher/school/district permissions this sophisticated, collaboration authorization must live in *our* organization/room model — never in a second source of truth. (Liveblocks rejected for core on exactly that plus its commercial fair-use terms — [pricing](https://liveblocks.io/pricing) — with the advisor's migration hatch noted: Liveblocks can sit under Yjs later if operating realtime infra ever gets old.)
+
+## 2. Staging — this reconciles with doc 13, it doesn't fight it
+Doc 13 decided: rent the live classroom (Lessonspace-class) v1, own the room when "in-session AI co-pilot becomes the play." **The trigger has fired — AI-as-collaborator is the play** — so the staging is: (a) **Yjs ships now** for Natalie sessions, which need no AV at all: learner + AI on a shared canvas, where the doc-24 captured homework crop becomes an annotatable Yjs object (highlights, pointer, step marks) — this is the co-pilot surface; (b) rented rooms continue carrying human-tutor AV sessions v1; (c) the **owned Tutor Room pilot** composes Fishjam AV + the same Y.Docs — and here's the verified bonus: **Fishjam's server SDKs ship AI voice agents with Gemini Live integration**, which plugs directly into ADR-018's Phase-3 realtime-voice lane — Natalie as a server-side agent peer in the media room, gateway-wrapped and sentence-window screened per doc 18. Software Mansion also publishes a Fishjam skill in [software-mansion-labs/skills](https://github.com/software-mansion-labs/skills) — installed via the doc-20 wiring (PR-58 extends) before any Fishjam work.
+
+## 3. The room state model (advisor tree adopted)
+One `Y.Doc` per room; subdocument per board page for size control. Maps/arrays for `whiteboard`, `lessonCanvas`, `homeworkAnnotations`, `sharedNotes`, `selectedProblem`, `activePage`, `drawingStrokes`, `equationBlocks`. **Presence (pointers, who's-here) rides the awareness protocol and is ephemeral by design — awareness is never persisted.** Logged cursor trails of a child are surveillance, not collaboration.
+
+## 4. Natalie is a collaborator — but a server-authored one
+The advisor's best idea, hardened: the AI participates as another collaborator — observing document updates, highlighting a step, pointing, sketching a diagram — **but every AI op originates from a gateway-held headless Yjs client.** The client app never simulates Natalie's edits (doc 11: the AI exists server-side only), every AI write passes the Safety Plane and the pedagogy contract (a highlight is a hint; hints obey `guided-only`), and AI ops carry a distinct origin so `Y.UndoManager` scopes stay per-author.
+
+## 5. Persistence, privacy, and the child in the room
+Hocuspocus persistence hooks write the update log to Postgres with periodic snapshot/compaction. **A child's strokes and notes are learner content:** session docs inherit the transcript TTL, the erasure cascade, and S27 guardian visibility (docs 19/24 rule extended); learner text entering shared notes in AI sessions passes the same Safety Plane as chat. Role capability map enforced server-side: learner draws and erases own-origin ops; tutor can lock/clear boards; teacher gets present-mode; nothing is guardian-visible live by default. Ops rate-limited per peer; room size capped.
+
+## 6. React Native honesty
+Yjs is pure JS — runs fine in RN. The gaps we build rather than pretend away: **offline persistence adapter** (no y-indexeddb on RN — an op-sqlite/MMKV-backed provider is a PR, not a footnote); stroke *rendering* is the doc-27/24 Skia layer with the CRDT carrying geometry only (never render through React state per stroke); exact provider/server APIs pinned against installed versions at the PR per the standing rule.
+
+## 7. PRs
+- **PR-88 · Collaboration server:** Hocuspocus + `onAuthenticate` token validation, Postgres persistence, room lifecycle.
+- **PR-89 · Y schema + RN provider:** doc structure, awareness wiring, offline adapter, UndoManager origins.
+- **PR-90 · Collaborative surfaces:** Skia whiteboard + homework-annotation layer over doc-24 captures.
+- **PR-91 · Natalie the collaborator:** gateway headless client, screened op pipeline, origin tagging.
+- **PR-92 · Owned-room pilot:** Fishjam peer-token twin from the same grant, AV + screenshare wiring, the Gemini-Live agent lane evaluated under ADR-018's Phase-3 rules.
+
+## 8. Sources (linked)
+[Yjs docs](https://docs.yjs.dev/) · [y-websocket](https://github.com/yjs/y-websocket) · [Hocuspocus](https://github.com/ueberdosis/hocuspocus) · [Liveblocks pricing](https://liveblocks.io/pricing) · [Software Mansion RTC/Fishjam](https://swmansion.com/rtc-video-streaming) · [SM skills repo (Fishjam skill, MoQ skills)](https://github.com/software-mansion-labs/skills) · [Fishjam RN tutorial](https://fishjam-dev.github.io/fishjam-docs/next/tutorials/react-native) · [fishjam-cloud web SDK](https://github.com/fishjam-cloud/web-client-sdk) · [legacy fishjam-dev org (frozen)](https://github.com/fishjam-dev) · Advisor analysis (user-provided, this thread) · Pack docs 11/13/18/19/22/24.

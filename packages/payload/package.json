@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@payloadcms/db-postgres": "catalog:",
+    "@payloadcms/plugin-mcp": "catalog:",
     "payload": "catalog:",
     "pg": "catalog:",
     "sharp": "catalog:"

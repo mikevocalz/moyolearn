@@ -32,9 +32,9 @@ The mission in one line: help children get a better education — by opening the
 
 14. **`14-integrations-spec.md`** — the researched integration catalog (Noto/Teachworks/TutorCruncher/classroom/MCP landscapes verified), tiered T1–T8 with phases: money (QBO+Xero native two-way), time (GCal/Outlook/ICS), the classroom-provider adapter Noto lacks entirely, consent-scoped comms, the catalog-generated Zapier/Make/n8n rail, the education-standards track, and the flagship Moyo MCP server. All of it rides the doc-13 API+webhooks — no side doors.
 
-15. **`15-native-ai-client-spec.md`** — Natalie's chat surface built on the Margelo/Callstack stack: streaming client, native sheets and detents, the "thinking" state, and the staged voice plan (v1 on-device `AVSpeechSynthesizer`; the premium Natalie voice with phoneme timing is a Phase-3 server-TTS ADR).
+15. **`15-native-ai-client-spec.md`** — the Margelo/Callstack native AI stack integrated properly: adopt the chat client architecture (LegendList v3 anchored scroll, keyboard-controller, native streaming markdown, true sheets, glass chrome per our own doc-02 policy) pointed at OUR gateway; adopt on-device STT so a child's raw voice never leaves the device; prohibit on-device generation on any learner path — the Safety Plane stays server-side and fail-closed. Plus their measured perf numbers as our budget and rnsec in CI.
 
-16. **`16-i18n-spec.md`** — one message catalog, two renderers (next-intl on web, `use-intl` core in Expo), locale-aware formatting, and the rule that a language ships only when the Safety Plane can screen it.
+16. **`16-i18n-spec.md`** — cross-platform language support: use-intl shared core (official RN support) + next-intl on web with next/root-params (Next >= 16.3); per-profile locale carried in ctx; the two-axis registry rule — a language ships for learner AI only when the Safety Plane passes evals in it, fail-closed per-locale; en -> es -> sw/fr rollout, expansion budgets, RTL readiness, human-reviewed child-facing catalogs.
 
 17. **`17-interaction-quality-spec.md`** — optimistic coordination (Aurora Scharff's ordered-write pattern, which *is* our ops schedule) and layout/view transitions, with reduced-motion killing the lot.
 
@@ -49,6 +49,16 @@ The mission in one line: help children get a better education — by opening the
 22. **`22-embodied-tutor-avatar-spec.md`** — the 3D tutor stage: the working `gnm-avatar` renderer ported to React Native WebGPU (three.js `WebGPURenderer`/TSL), layer-by-layer parity for every shader patch, device tiers with automatic demotion, the on-device golden-image gate, and the child-safety boundary on the *body* — the companionship firewall, reduced motion as a render mode, no paywall on the stage. Fills the `TutorStage` mount point doc 01 reserved; Phase 3+, blocks nothing in Waves 1–2.
 
 23. **`23-tutorstage-handoff.md`** — the build contract for the S9 tutor session surface, written from the TutorStage design canvas: the nine-state discriminated union (including the two states that must exist and are deliberately undrawn), the token map per element, layout at both width classes, the motion table with its reduced-motion column, the 2D↔3D swap contract, and the edge cases. It adds no new decisions — it makes docs 04/07/08/12/17/22 executable for one screen.
+
+24. **`24-homework-capture-spec.md`** — the camera flow that feeds Natalie: the end-to-end attach/photograph path, the realtime capture-coaching layer tailored from Margelo's vision-camera-realtime skill, crop-as-privacy (the crop is the redaction, and it happens before upload), band-adapted UX, and the handoff into the doc-18 stack. One positioning line governs it: **Photomath vends answers; Natalie coaches.**
+
+25. **`25-lms-interop-spec.md`** — two lanes in, one gate out: LTI Advantage carries identity/roster/deep-links/grades, and a separate **Content Connector** carries what the AI actually reads — the split most teams miss, which is why their tutor launches fine and then sits context-blind. Everything the connector ingests still passes the Safety Plane; the gate is not bypassed by a course being "official."
+
+26. **`26-realtime-collab-spec.md`** — **Yjs is the state plane, Fishjam is the media plane, Payload is the truth.** Liveblocks-style collaboration without the SaaS bill; media and shared state never ride the same transport. Yjs ships now for Natalie sessions (no AV needed — learner and AI on a shared canvas over the doc-24 crop); rented rooms keep human-tutor AV until the owned Tutor Room pilot composes both.
+
+27. **`27-reporting-charts-spec.md`** — one data contract, three rendering layers: what renders guardian progress, tutor/teacher views, ops dashboards and the doc-19 district product. Victory Native is the toolbox, `react-native-graph` is the scalpel (two scrub surfaces, not a default). **Kids don't get charts at all — they get celebrations.**
+
+28. **`28-crm-spec.md`** — the Operations Cloud CRM: object model, pipeline, automations, scheduling assist, health scoring, reporting and import, grounded in what the tutoring-software market actually ships in 2026 and bounded by the wall that makes ours different — **business data and learning data never blend.** Import is the switching lever (CSV from Teachworks/TutorCruncher/TutorBird with a mapping UI and dry-run diff).
 
 **On the numbering:** docs are cited by number throughout the pack, and each doc's own header line is the authority on which number it is. There are no fractional numbers.
 

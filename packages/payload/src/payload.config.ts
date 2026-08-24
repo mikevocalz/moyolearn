@@ -3,6 +3,7 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildConfig } from 'payload';
 import sharp from 'sharp';
+import { mcpPlugin } from '@payloadcms/plugin-mcp';
 import { Users } from './collections/Users';
 import { Media } from './collections/Media';
 
@@ -35,6 +36,14 @@ export default buildConfig({
   csrf: [serverURL],
   secret: process.env.PAYLOAD_SECRET || '',
   sharp,
+  plugins: [
+    mcpPlugin({
+      collections: {
+        users: {},
+        media: {},
+      },
+    }),
+  ],
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },

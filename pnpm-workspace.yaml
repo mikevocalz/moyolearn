@@ -114,6 +114,7 @@ catalog:
   payload: 4.0.0-canary.28
   "@payloadcms/db-postgres": 4.0.0-canary.28
   "@payloadcms/next": 4.0.0-canary.28
+  "@payloadcms/plugin-mcp": 4.0.0-canary.28
   "@payloadcms/ui": 4.0.0-canary.28
   graphql: 16.14.2 # payload peers ^16
   pg: 8.23.0
