@@ -120,6 +120,8 @@ catalog:
   pg: 8.23.0
   better-auth: 1.7.1
   "@better-auth/expo": 1.7.1
+  "@better-auth/stripe": 1.7.1
+  stripe: 22.5.0
   sharp: 0.35.3
   "@types/pg": 8.23.0
 

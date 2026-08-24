@@ -7,8 +7,11 @@
 
 import { betterAuth } from 'better-auth';
 import { expo } from '@better-auth/expo';
+import { stripe as stripePlugin } from '@better-auth/stripe';
 import { haveIBeenPwned, multiSession, organization, username } from 'better-auth/plugins';
+import Stripe from 'stripe';
 import { Pool } from 'pg';
+import { authorizeReference, isBillingRole, isPlanName, resolvePrices } from './billing-plans.ts';
 
 /** Doc 06 §6: learner sessions expire sooner than adult ones. */
 const ADULT_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
@@ -153,8 +156,77 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
       // Doc 06 §6 breached-password rejection.
       haveIBeenPwned(),
       expo(),
+      ...billingPlugin(pool),
     ],
   });
+}
+
+/**
+ * Doc 06 §4's config of record, wired. Returned as a TUPLE so Better Auth's
+ * plugin inference survives the spread (same reason as the Expo fork), and
+ * omitted entirely without keys: a dev machine with no Stripe account should run
+ * the app, not fail to construct auth.
+ */
+function billingPlugin(pool: Pool): [] | [ReturnType<typeof stripePlugin>] {
+  const secret = process.env.STRIPE_SECRET_KEY;
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+  if (!secret || !webhookSecret) return [];
+
+  const { priced } = resolvePrices();
+  if (priced.length === 0) return [];
+
+  return [
+    stripePlugin({
+      stripeClient: new Stripe(secret),
+      stripeWebhookSecret: webhookSecret,
+      createCustomerOnSignUp: true,
+      subscription: {
+        enabled: true,
+        plans: priced.map(({ plan, priceId, annualPriceId }) => ({
+          name: plan.name,
+          priceId,
+          ...(annualPriceId ? { annualDiscountPriceId: annualPriceId } : {}),
+          freeTrial: { days: plan.trialDays },
+          ...(plan.limits.payoutAutomation > 0 ? { limits: { ...plan.limits } } : {}),
+        })),
+        // The only thing between a member and their employer's billing page.
+        // The rule itself is in billing-plans.ts, where it is tested without a
+        // network; this is the adapter onto the plugin's callback shape.
+        authorizeReference: async ({ user, referenceId, action }) => {
+          const plan = typeof action === 'string' && isPlanName(action) ? action : null;
+          // An organisation reference is never the acting user's own id, and the
+          // role has to be READ — without it every ops purchase is refused,
+          // including the owner's, which is the failure mode this lookup exists
+          // to prevent.
+          const membershipRole =
+            referenceId === user.id ? undefined : await memberRole(pool, referenceId, user.id);
+
+          if (!plan) {
+            // Not a plan-scoped action (billing portal, cancel): the same two
+            // ways through, so a member cannot open their employer's portal.
+            return referenceId === user.id || isBillingRole(membershipRole);
+          }
+          return authorizeReference({ plan, referenceId, user: { id: user.id }, membershipRole }).ok;
+        },
+      },
+    }),
+  ];
+}
+
+/**
+ * The acting user's role in an organisation, straight from the org plugin's own
+ * table. Read here rather than passed in because `authorizeReference` is called
+ * by the plugin, not by us — there is no call site to thread it through.
+ *
+ * Unqualified table name: the pool's search_path already points at the auth
+ * schema. Quoted columns: Better Auth's kysely adapter writes camelCase.
+ */
+async function memberRole(pool: Pool, organizationId: string, userId: string) {
+  const { rows } = await pool.query<{ role: string }>(
+    'SELECT role FROM member WHERE "organizationId" = $1 AND "userId" = $2 LIMIT 1',
+    [organizationId, userId],
+  );
+  return rows[0]?.role;
 }
 
 export type Auth = ReturnType<typeof createAuth>;

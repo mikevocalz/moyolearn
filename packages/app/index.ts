@@ -186,6 +186,13 @@ export type {
   TeacherDraft,
   TeacherStep,
 } from './features/onboarding/teacher/steps';
+export {
+  PermissionGate,
+  useEntitlements,
+  useEntitlementStore,
+  type PermissionGateProps,
+  type ResolvedEntitlements,
+} from './providers/entitlements';
 export { ErrorScreen } from './features/error/screen';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';

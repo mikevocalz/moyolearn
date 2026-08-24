@@ -44,3 +44,34 @@ export type {
   ConsentRecord,
   KbaQuestion,
 } from './src/consent-flow';
+
+export {
+  authorizeReference,
+  isBillingRole,
+  isPlanName,
+  plansFor,
+  resolvePrices,
+  BILLING_ROLES,
+  PLANS,
+} from './src/billing-plans';
+export type {
+  BillingRole,
+  CustomerType,
+  Plan,
+  PlanLimits,
+  PlanName,
+  ReferenceRequest,
+} from './src/billing-plans';
+export {
+  can,
+  daysLeft,
+  entitlementsFor,
+  subscriptionFor,
+  NO_SUBSCRIPTION,
+} from './src/entitlements';
+export type {
+  Capability,
+  Entitlements,
+  SubscriptionState,
+  SubscriptionStatus,
+} from './src/entitlements';
