@@ -72,7 +72,7 @@ export { Menu, type MenuProps, type MenuAction } from './Menu';
 export { useSizeClass, type SizeClass } from './use-size-class';
 export {
   Motion, AnimatePresence, createMotionComponent, createMotionAnimatedComponent,
-  motion, MotionView, MotionText, FadeIn, ScaleIn, SlideUp, useHydrated,
+  motion, MotionView, MotionText, FadeIn, ScaleIn, SlideUp, useHydrated, useReducedMotion,
   type MotionViewProps, type MotionTextProps, type MotionPresetProps,
 } from './motion';
 export { PressScale, type PressScaleProps } from './press-scale';

@@ -52,6 +52,30 @@ export type {
   GuardianDraft,
   GuardianStep,
 } from './features/onboarding/guardian/steps';
+export { LearnerFirstRunContent } from './features/onboarding/learner/learner-first-run-content';
+export { useLearnerFirstRun } from './features/onboarding/learner/store';
+// Aliased: the guardian machine already owns the unprefixed step-machine names,
+// and two `canAdvance` exports from one barrel is how the wrong one gets imported.
+export {
+  canAdvance as learnerCanAdvance,
+  nextStep as learnerNextStep,
+  previousStep as learnerPreviousStep,
+  stepProgress as learnerStepProgress,
+  toggleSubject,
+  winItem,
+  LEARNER_STEPS,
+  MAX_SUBJECTS,
+  SUBJECT_TILES,
+  FIRST_WIN,
+} from './features/onboarding/learner/steps';
+export type {
+  LearnerDraft,
+  LearnerStep,
+  SubjectId,
+  SubjectTile,
+  WinItem,
+  WinResult,
+} from './features/onboarding/learner/steps';
 export { ErrorScreen } from './features/error/screen';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';
