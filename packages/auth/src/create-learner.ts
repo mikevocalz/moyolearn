@@ -56,6 +56,26 @@ export function validateConsent(consent: CreateLearnerInput['consent']): { ok: t
   return { ok: true };
 }
 
+/**
+ * Doc 06 §2 says a learner account carries no email. Better Auth's user table
+ * makes `email` required AND unique, so "no email" cannot be expressed as null —
+ * something has to occupy the column.
+ *
+ * This is that something: an opaque id under the RFC 2606 `.invalid` TLD, which
+ * is guaranteed never to resolve. It is derived from a random id and never from
+ * the child's name or username, so it identifies nobody; nothing is ever
+ * delivered to it; password reset for these accounts runs through the guardian
+ * (§2), never through this address; and `isRestrictedLearnerUpdate` already
+ * refuses any attempt to change it to a real one.
+ */
+export function learnerPlaceholderEmail(opaqueId: string): string {
+  return `${opaqueId}@learners.invalid`;
+}
+
+export function isPlaceholderEmail(email: string): boolean {
+  return email.endsWith('@learners.invalid');
+}
+
 export function validateCreateLearner(
   input: CreateLearnerInput,
 ): { ok: true } | { ok: false; reason: string } {

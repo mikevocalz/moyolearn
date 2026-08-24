@@ -12,3 +12,6 @@ export {
   validateLearnerUsername,
 } from './src/create-learner';
 export type { ConsentMethod, CreateLearnerInput } from './src/create-learner';
+export { isPlaceholderEmail, learnerPlaceholderEmail } from './src/create-learner';
+export { createManagedLearner, CreateLearnerError } from './src/create-managed-learner';
+export type { LearnerWriter } from './src/create-managed-learner';
