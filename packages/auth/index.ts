@@ -5,3 +5,10 @@
 
 export { createMoyoAuthClient } from './src/client';
 export type { MoyoAuthClient } from './src/client';
+export {
+  validateConsent,
+  validateCreateLearner,
+  validateLearnerPassword,
+  validateLearnerUsername,
+} from './src/create-learner';
+export type { ConsentMethod, CreateLearnerInput } from './src/create-learner';

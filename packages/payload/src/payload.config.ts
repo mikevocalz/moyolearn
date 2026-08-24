@@ -6,6 +6,8 @@ import sharp from 'sharp';
 import { mcpPlugin } from '@payloadcms/plugin-mcp';
 import { Users } from './collections/Users';
 import { Media } from './collections/Media';
+import { Guardianships } from './collections/Guardianships';
+import { Consents } from './collections/Consents';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverURL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -21,7 +23,7 @@ export default buildConfig({
   routes: {
     api: '/payload-api',
   },
-  collections: [Users, Media],
+  collections: [Users, Media, Guardianships, Consents],
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URL,
