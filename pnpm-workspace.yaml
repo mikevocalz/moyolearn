@@ -118,6 +118,8 @@ catalog:
   "@payloadcms/ui": 4.0.0-canary.28
   graphql: 16.14.2 # payload peers ^16
   pg: 8.23.0
+  better-auth: 1.7.1
+  "@better-auth/expo": 1.7.1
   sharp: 0.35.3
   "@types/pg": 8.23.0
 

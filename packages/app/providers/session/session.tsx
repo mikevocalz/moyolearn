@@ -2,6 +2,7 @@
 // SOT: docs/pack/09-screens-first-build-order.md §2
 // SOT-KEYWORDS: session provider barrel mock live use appsession
 
+import { useShallow } from 'zustand/react/shallow';
 import { MockSessionProvider } from './mock';
 import { LiveSessionProvider } from './live';
 import { useSessionStore } from './store';
@@ -26,12 +27,16 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
 }
 
 export function useAppSession(): AppSession {
-  return useSessionStore((s) => ({
-    user: s.user,
-    activeContext: s.activeContext,
-    memberships: s.memberships,
-    status: s.status,
-  }));
+  // zustand v5 compares snapshots with Object.is, so a selector building a fresh
+  // object every call makes React re-render forever. useShallow is the fix.
+  return useSessionStore(
+    useShallow((s) => ({
+      user: s.user,
+      activeContext: s.activeContext,
+      memberships: s.memberships,
+      status: s.status,
+    })),
+  );
 }
 
 export function useSetContext() {
