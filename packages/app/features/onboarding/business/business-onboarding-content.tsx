@@ -36,7 +36,7 @@ import {
 import { pickFile } from '../../editor/pick-file';
 import { readText } from './read-text';
 import { ROLE_LABELS, type ColumnRole } from './roster-csv';
-import { MILESTONES, milestoneProgress, trialChip } from './milestones';
+import { MILESTONES, milestoneProgress, trialChip } from '../../trial/milestones';
 import { useBusinessOnboarding } from './store';
 import {
   canAdvance,

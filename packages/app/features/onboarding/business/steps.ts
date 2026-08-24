@@ -11,7 +11,7 @@
 // SOT-KEYWORDS: onboarding business s24 org import invite payments milestones steps
 
 import type { RosterImport } from './roster-csv.ts';
-import { EMPTY_ACTIVATION, type ActivationState } from './milestones.ts';
+import { EMPTY_ACTIVATION, type ActivationState } from '../../trial/milestones.ts';
 
 export const BUSINESS_STEPS = ['org', 'import', 'invite', 'payments', 'checklist'] as const;
 export type BusinessStep = (typeof BUSINESS_STEPS)[number];

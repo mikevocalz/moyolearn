@@ -143,13 +143,13 @@ export {
   trialChip,
   EMPTY_ACTIVATION,
   MILESTONES,
-} from './features/onboarding/business/milestones';
+} from './features/trial/milestones';
 export type {
   ActivationState,
   Milestone,
   MilestoneId,
   MilestoneProgress,
-} from './features/onboarding/business/milestones';
+} from './features/trial/milestones';
 export {
   guessMapping,
   importRoster,
@@ -193,6 +193,8 @@ export {
   type PermissionGateProps,
   type ResolvedEntitlements,
 } from './providers/entitlements';
+export { ConvertContent, TrialRailChip, type ConvertProps } from './features/trial/convert-content';
+export { tierGateNote, trialSentence, trialStats, type TrialStat } from './features/trial/convert';
 export { PaywallContent, type PaywallProps } from './features/paywall/paywall-content';
 export { CancelContent, type CancelProps } from './features/paywall/cancel-content';
 export { formatTrialDate, PAYWALL_OFFERS, type PaywallOffer } from './features/paywall/paywall.data';

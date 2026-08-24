@@ -1,5 +1,7 @@
-// The milestone checklist engine (doc 06 §8 PR-16), which S24 pins in the rail
-// and S17 later sells against.
+// The milestone checklist engine (doc 06 §8 PR-16). S24 pins it in the rail and
+// S17 sells against it, which is why it lives HERE rather than inside onboarding:
+// it outlives the flow that first showed it, and a trial screen importing from
+// `features/onboarding` would have had the dependency pointing backwards.
 //
 // Doc 05 §1.1 is the reason it is an engine and not a list of tick boxes on one
 // screen: activation milestones drive B2B conversion, and the chart doc 05 §2.3
