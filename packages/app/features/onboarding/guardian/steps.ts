@@ -9,6 +9,7 @@ import {
   validateLearnerPassword,
   validateLearnerUsername,
   type ConsentMethod,
+  type ConsentRecord,
 } from '@acme/auth';
 
 export const GUARDIAN_STEPS = ['welcome', 'account', 'consent', 'children', 'grants'] as const;
@@ -25,6 +26,13 @@ export interface GuardianDraft {
   email: string;
   consentMethod: ConsentMethod | null;
   consentAccepted: boolean;
+  /**
+   * The verified record from ConsentFlow, not a checkbox. Until PR-14 this step
+   * accepted a tick and wrote `email-plus` beside it, which named a method
+   * nobody had performed — the evidence reference in here is the difference
+   * between a consent record and a claim.
+   */
+  consentRecord: ConsentRecord | null;
   children: ChildDraft[];
 }
 
@@ -32,6 +40,7 @@ export const EMPTY_DRAFT: GuardianDraft = {
   email: '',
   consentAccepted: false,
   consentMethod: null,
+  consentRecord: null,
   children: [],
 };
 
@@ -45,8 +54,9 @@ export function canAdvance(step: GuardianStep, draft: GuardianDraft): boolean {
     case 'consent':
       // Consent gates everything after it — doc 06 §2 forbids a child existing
       // without one, and the only way to guarantee that here is to refuse to
-      // move on.
-      return draft.consentAccepted && draft.consentMethod !== null;
+      // move on. A finished VERIFICATION, not an accepted notice: reading the
+      // notice is the first half, and the half that has no legal weight alone.
+      return draft.consentRecord !== null;
     case 'children':
       return draft.children.length > 0 && draft.children.every((c) => isChildComplete(c, draft));
     case 'grants':
@@ -78,14 +88,14 @@ export function childProblems(child: ChildDraft): ChildProblems {
 }
 
 export function isChildComplete(child: ChildDraft, draft: GuardianDraft): boolean {
-  if (!draft.consentMethod) return false;
+  if (!draft.consentRecord) return false;
   if (Object.keys(childProblems(child)).length > 0) return false;
   return validateCreateLearner({
     guardianAuthId: 'pending',
     username: child.username,
     password: child.password,
     displayName: child.displayName,
-    consent: { method: draft.consentMethod, scope: 'tutoring', policyVersion: CONSENT_POLICY_VERSION },
+    consent: draft.consentRecord,
   }).ok;
 }
 

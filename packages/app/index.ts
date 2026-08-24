@@ -60,6 +60,9 @@ export type {
   GuardianDraft,
   GuardianStep,
 } from './features/onboarding/guardian/steps';
+export { ConsentFlowContent, type ConsentFlowProps } from './features/onboarding/consent/consent-flow-content';
+export { useConsentFlow, type ConsentStage } from './features/onboarding/consent/consent.store';
+export { demoKbaProvider, type KbaProvider } from './features/onboarding/consent/kba.data';
 export { LearnerFirstRunContent } from './features/onboarding/learner/learner-first-run-content';
 export { useLearnerFirstRun } from './features/onboarding/learner/store';
 // Aliased: the guardian machine already owns the unprefixed step-machine names,

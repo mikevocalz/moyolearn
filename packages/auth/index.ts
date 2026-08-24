@@ -16,3 +16,26 @@ export { isPlaceholderEmail, learnerPlaceholderEmail } from './src/create-learne
 export { createManagedLearner, CreateLearnerError } from './src/create-managed-learner';
 export type { LearnerWriter } from './src/create-managed-learner';
 export { createPayloadLearnerWriter } from './src/payload-learner-writer';
+export {
+  availableMethods,
+  completeConsent,
+  confirm,
+  isChallengeComplete,
+  isFallbackMethod,
+  needsReconsent,
+  scoreKba,
+  startChallenge,
+  verifyCode,
+  CONSENT_DISCLOSURES,
+  CONSENT_PROMISES,
+  DEFAULT_CONSENT_ENVIRONMENT,
+  KBA_PASS_MARK,
+  KBA_QUESTION_COUNT,
+} from './src/consent-flow';
+export type {
+  ConsentChallenge,
+  ConsentDisclosure,
+  ConsentEnvironment,
+  ConsentRecord,
+  KbaQuestion,
+} from './src/consent-flow';

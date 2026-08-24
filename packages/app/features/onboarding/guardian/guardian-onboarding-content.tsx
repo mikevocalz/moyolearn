@@ -16,7 +16,8 @@
 // SOT-KEYWORDS: onboarding guardian s21 consent children grants screen
 
 import { Section, View, Text as TWText } from '@acme/ui/tw';
-import { Button, Checkbox, FadeIn, Heading, TextField } from '@acme/ui';
+import { Button, FadeIn, Heading, TextField } from '@acme/ui';
+import { ConsentFlowContent } from '../consent/consent-flow-content';
 import { useGuardianOnboarding } from './store';
 import {
   canAdvance,
@@ -79,26 +80,15 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
           <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
             Your permission
           </Heading>
-          {/* H2 — plain language, doc 06 §5 copy rule. Real text, not a link. */}
-          <View className="gap-3 rounded-card border-2 border-border bg-surface-sunken p-4">
-            <TWText className="text-body text-text">
-              We never sell data. We never train AI on your child’s conversations.
-            </TWText>
-            <TWText className="text-body text-text">
-              You decide what your child’s tutor can see, and you can change or withdraw that at any
-              time from the family screen.
-            </TWText>
-            <TWText className="text-caption text-text-muted">
-              Policy version {CONSENT_POLICY_VERSION}. If this ever changes materially, we ask you
-              again rather than assuming.
-            </TWText>
-          </View>
-          <Checkbox
-            checked={draft.consentAccepted}
-            onChange={(consentAccepted: boolean) =>
-              patch({ consentAccepted, consentMethod: consentAccepted ? 'email-plus' : null })
+          {/* The notice and the verification are one flow now (doc 06 §3.1). A
+              checkbox recorded that a guardian had READ this; it could not
+              record that a guardian, rather than the child, agreed to it. */}
+          <ConsentFlowContent
+            scope="tutoring"
+            policyVersion={CONSENT_POLICY_VERSION}
+            onComplete={(record) =>
+              patch({ consentRecord: record, consentMethod: record.method, consentAccepted: true })
             }
-            label="I have read this and I give permission as this child’s parent or guardian."
           />
         </Section>
       ) : null}
