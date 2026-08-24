@@ -32,6 +32,7 @@
  * SOT: docs/pack/22-embodied-tutor-avatar-spec.md §4, §10.5
  * SOT-KEYWORDS: shader probe runner playwright esbuild swiftshader compile gate ci
  */
+import { Buffer } from 'node:buffer';
 import { execFileSync } from 'node:child_process';
 import { copyFileSync, existsSync, globSync, mkdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { dirname, join, resolve } from 'node:path';

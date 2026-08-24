@@ -122,6 +122,6 @@ export function baseConfig(extraBoundaryPatterns = []) {
       },
     },
     ...DOMAIN_LAYERING,
-    { ignores: ['dist/**', 'node_modules/**', '*.config.js', '*.config.mjs'] },
+    { ignores: ['dist/**', '.types/**', 'node_modules/**', '*.config.js', '*.config.mjs'] },
   ]);
 }
