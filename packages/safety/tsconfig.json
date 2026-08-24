@@ -1,0 +1,9 @@
+{
+  "extends": "@acme/config/typescript/react-library.json",
+  // This package's tests run on node:test, and its only runtime is the server —
+  // so node's own types are declared rather than inherited by accident from a
+  // sibling's transitive @types.
+  "compilerOptions": { "types": ["node"] },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
+}
