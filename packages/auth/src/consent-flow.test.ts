@@ -9,6 +9,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
   availableMethods,
+  isCodeExpired,
   completeConsent,
   confirm,
   isChallengeComplete,
@@ -17,8 +18,10 @@ import {
   startChallenge,
   verifyCode,
   DEFAULT_CONSENT_ENVIRONMENT,
+  CODE_TTL_MINUTES,
   KBA_PASS_MARK,
   KBA_QUESTION_COUNT,
+  MAX_CODE_ATTEMPTS,
   type ConsentChallenge,
   type KbaQuestion,
 } from './consent-flow.ts';
@@ -34,6 +37,9 @@ const started = (method: 'email-plus' | 'text-plus' | 'kba' | 'card', to = 'ada@
   assert.ok(result.ok, 'challenge should start');
   return result.challenge;
 };
+
+/** The happy path through the channel: the code matched. */
+const verified = (challenge: ConsentChallenge) => verifyCode(challenge, true).challenge;
 
 const questions = (ids: string[]): KbaQuestion[] =>
   ids.map((id) => ({ id, prompt: id, options: ['a', 'b', 'c', 'd'], answerIndex: 1 }));
@@ -65,7 +71,7 @@ describe('which methods are on offer', () => {
 
 describe('the "plus" is not optional', () => {
   it('refuses to complete on a verified code alone', () => {
-    const challenge = verifyCode(started('email-plus'), true);
+    const challenge = verified(started('email-plus'));
     assert.equal(isChallengeComplete(challenge), false);
     const result = completeConsent(challenge, SCOPE);
     assert.equal(result.ok, false);
@@ -78,7 +84,7 @@ describe('the "plus" is not optional', () => {
   });
 
   it('completes once both contacts have happened', () => {
-    const challenge = confirm(verifyCode(started('email-plus'), true));
+    const challenge = confirm(verified(started('email-plus')));
     assert.ok(isChallengeComplete(challenge));
     const result = completeConsent(challenge, SCOPE);
     assert.ok(result.ok);
@@ -125,7 +131,7 @@ describe('the record', () => {
   const complete = (method: Parameters<typeof started>[0], to?: string): ConsentChallenge =>
     method === 'kba'
       ? scoreKba(started('kba'), questions(['q1', 'q2', 'q3', 'q4']), [1, 1, 1, 1])
-      : confirm(verifyCode(started(method, to), true));
+      : confirm(verified(started(method, to)));
 
   it('carries evidence every method can be audited by', () => {
     for (const method of ['email-plus', 'text-plus', 'kba', 'card'] as const) {
@@ -149,5 +155,56 @@ describe('the record', () => {
     assert.ok(result.ok);
     assert.equal(needsReconsent(result.record, '2026-08-01'), false);
     assert.equal(needsReconsent(result.record, '2026-12-01'), true);
+  });
+});
+
+describe('code limits', () => {
+  const issued = new Date('2026-08-24T15:00:00Z');
+  const fresh = () => {
+    const started = startChallenge('email-plus', 'ada@example.com', DEFAULT_CONSENT_ENVIRONMENT, issued);
+    assert.ok(started.ok);
+    return started.challenge;
+  };
+
+  it('counts wrong guesses and burns the challenge at the limit', () => {
+    let challenge = fresh();
+    for (let i = 1; i < MAX_CODE_ATTEMPTS; i += 1) {
+      const result = verifyCode(challenge, false, issued);
+      assert.equal(result.verdict, 'wrong', `attempt ${i}`);
+      challenge = result.challenge;
+    }
+    const last = verifyCode(challenge, false, issued);
+    assert.equal(last.verdict, 'burnt');
+    assert.equal(last.challenge.attempts, MAX_CODE_ATTEMPTS);
+  });
+
+  it('refuses the RIGHT code once the challenge is burnt', () => {
+    let challenge = fresh();
+    for (let i = 0; i < MAX_CODE_ATTEMPTS; i += 1) {
+      challenge = verifyCode(challenge, false, issued).challenge;
+    }
+    const late = verifyCode(challenge, true, issued);
+    assert.equal(late.verdict, 'burnt');
+    assert.equal(late.challenge.codeVerified, false);
+  });
+
+  it('refuses the right code after it expires', () => {
+    const challenge = fresh();
+    const justInside = new Date(issued.getTime() + (CODE_TTL_MINUTES - 1) * 60_000);
+    const justOutside = new Date(issued.getTime() + (CODE_TTL_MINUTES + 1) * 60_000);
+
+    assert.equal(isCodeExpired(challenge, justInside), false);
+    assert.equal(verifyCode(challenge, true, justInside).verdict, 'verified');
+
+    assert.equal(isCodeExpired(challenge, justOutside), true);
+    const late = verifyCode(challenge, true, justOutside);
+    assert.equal(late.verdict, 'expired');
+    assert.equal(late.challenge.codeVerified, false);
+  });
+
+  it('does not spend an attempt on an expired code', () => {
+    const challenge = fresh();
+    const tooLate = new Date(issued.getTime() + (CODE_TTL_MINUTES + 5) * 60_000);
+    assert.equal(verifyCode(challenge, false, tooLate).challenge.attempts, 0);
   });
 });

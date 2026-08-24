@@ -26,13 +26,18 @@ export {
   scoreKba,
   startChallenge,
   verifyCode,
+  isCodeExpired,
+  CODE_TTL_MINUTES,
   CONSENT_DISCLOSURES,
+  CONSENT_POLICY_VERSION,
   CONSENT_PROMISES,
   DEFAULT_CONSENT_ENVIRONMENT,
   KBA_PASS_MARK,
   KBA_QUESTION_COUNT,
+  MAX_CODE_ATTEMPTS,
 } from './src/consent-flow';
 export type {
+  CodeVerdict,
   ConsentChallenge,
   ConsentDisclosure,
   ConsentEnvironment,

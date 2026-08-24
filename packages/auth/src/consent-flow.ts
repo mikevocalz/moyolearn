@@ -96,10 +96,23 @@ export interface KbaQuestion {
 export const KBA_QUESTION_COUNT = 4;
 export const KBA_PASS_MARK = 3;
 
+/**
+ * A code is worth exactly as much as its limits. Six digits with unlimited tries
+ * is a four-minute brute force, and one that never expires is a code sitting in
+ * an inbox a year later — so both live here, next to the method they protect,
+ * rather than in whichever screen happens to send it.
+ */
+export const CODE_TTL_MINUTES = 15;
+export const MAX_CODE_ATTEMPTS = 5;
+
 export interface ConsentChallenge {
   method: ConsentMethod;
   /** Where the code went — an email address or a phone number, never the child's. */
   sentTo: string;
+  /** When the code was issued; `CODE_TTL_MINUTES` from here it is dead. */
+  sentAt: string;
+  /** Wrong guesses so far. At `MAX_CODE_ATTEMPTS` the challenge is burnt. */
+  attempts: number;
   /** The first contact is verified; the "plus" step has not happened yet. */
   codeVerified: boolean;
   /** The second, separate contact — what makes email-plus more than email. */
@@ -116,6 +129,7 @@ export function startChallenge(
   method: ConsentMethod,
   sentTo: string,
   env: ConsentEnvironment = DEFAULT_CONSENT_ENVIRONMENT,
+  now: Date = new Date(),
 ): { ok: true; challenge: ConsentChallenge } | { ok: false; reason: string } {
   if (!availableMethods(env).includes(method)) {
     return {
@@ -134,6 +148,8 @@ export function startChallenge(
     challenge: {
       method,
       sentTo: sentTo.trim(),
+      sentAt: now.toISOString(),
+      attempts: 0,
       codeVerified: false,
       confirmed: false,
       askedIds: [],
@@ -143,8 +159,33 @@ export function startChallenge(
   };
 }
 
-export function verifyCode(challenge: ConsentChallenge, ok: boolean): ConsentChallenge {
-  return ok ? { ...challenge, codeVerified: true } : challenge;
+export type CodeVerdict = 'verified' | 'wrong' | 'expired' | 'burnt';
+
+/**
+ * `matched` is the channel's answer to "is this the code we sent" — comparing it
+ * is the channel's job because only the channel knows what it issued. Whether a
+ * match still COUNTS is this function's: an expired or burnt challenge refuses a
+ * correct code, which is the whole point of having limits.
+ */
+export function verifyCode(
+  challenge: ConsentChallenge,
+  matched: boolean,
+  now: Date = new Date(),
+): { challenge: ConsentChallenge; verdict: CodeVerdict } {
+  if (challenge.attempts >= MAX_CODE_ATTEMPTS) return { challenge, verdict: 'burnt' };
+  if (isCodeExpired(challenge, now)) return { challenge, verdict: 'expired' };
+  if (matched) return { challenge: { ...challenge, codeVerified: true }, verdict: 'verified' };
+  const attempts = challenge.attempts + 1;
+  return {
+    challenge: { ...challenge, attempts },
+    verdict: attempts >= MAX_CODE_ATTEMPTS ? 'burnt' : 'wrong',
+  };
+}
+
+export function isCodeExpired(challenge: ConsentChallenge, now: Date = new Date()): boolean {
+  const sent = new Date(challenge.sentAt).getTime();
+  if (Number.isNaN(sent)) return true;
+  return now.getTime() - sent > CODE_TTL_MINUTES * 60_000;
 }
 
 /**
@@ -251,6 +292,14 @@ function redact(target: string): string {
   if (domain) return `${(local ?? '').slice(0, 2)}***@${domain}`;
   return `***${target.slice(-4)}`;
 }
+
+/**
+ * The version a new consent is recorded against. It lives HERE, next to
+ * `needsReconsent`, because the two are one decision: bumping this is what makes
+ * §6's re-consent fire, and a copy of it in a screen is a copy that can disagree
+ * with the function that reads it.
+ */
+export const CONSENT_POLICY_VERSION = '2026-08-01';
 
 /**
  * Doc 06 §6: consent records are immutable and versioned, and a material change

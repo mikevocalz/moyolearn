@@ -249,7 +249,7 @@ function CodeChallenge({ onDone }: { onDone: () => void }) {
       <Button
         title="Verify"
         disabled={code.trim().length === 0}
-        onPress={() => enterCode(code.trim().length >= 4)}
+        onPress={() => void enterCode(code)}
       />
     </Section>
   );

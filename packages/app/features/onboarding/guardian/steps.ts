@@ -121,8 +121,12 @@ export function consentRegime(dob: string, now: Date = new Date()): 'under-13' |
   return age < 13 ? 'under-13' : 'teen';
 }
 
-/** Bumping this is what makes doc 06 §6's re-consent fire. */
-export const CONSENT_POLICY_VERSION = '2026-08-01';
+/**
+ * Re-exported, not redeclared: the version a record is written against belongs
+ * with `needsReconsent` in @acme/auth, and two constants that must agree are one
+ * constant with a bug waiting.
+ */
+export { CONSENT_POLICY_VERSION } from '@acme/auth';
 
 export function nextStep(step: GuardianStep): GuardianStep | null {
   const i = GUARDIAN_STEPS.indexOf(step);
