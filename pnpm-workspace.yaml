@@ -45,9 +45,12 @@ catalog:
   react-native-youtube-bridge: 2.2.2
   expo-linking: 57.0.7
   expo-router: 57.0.15
+  expo-screen-capture: 57.0.2
+  expo-secure-store: 57.0.1
   expo-splash-screen: 57.0.7
   expo-status-bar: 57.0.1
   expo-system-ui: 57.0.2
+  expo-updates: 57.0.17
   "@gorhom/bottom-sheet": 5.2.14
   react-native-keyboard-controller: 1.22.4
   react-native-mmkv: 4.3.2

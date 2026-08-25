@@ -1,0 +1,8 @@
+{
+  "extends": "@acme/config/typescript/react-library.json",
+  // The pure half of this package runs on node:test; the device half is RN.
+  // Both sets of globals are declared rather than inherited from a sibling.
+  "compilerOptions": { "types": ["node", "react"] },
+  "include": ["**/*.ts", "**/*.tsx"],
+  "exclude": ["node_modules"]
+}

@@ -1,0 +1,33 @@
+{
+  "name": "@acme/secure",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "test": "node --experimental-strip-types --test src/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "expo-screen-capture": "catalog:",
+    "expo-secure-store": "catalog:",
+    "react-native-mmkv": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@acme/config": "workspace:*",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-expo": "catalog:",
+    "typescript": "catalog:"
+  },
+  "peerDependencies": {
+    "react": "*",
+    "react-native": "*"
+  }
+}

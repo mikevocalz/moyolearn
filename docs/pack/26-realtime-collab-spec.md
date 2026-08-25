@@ -22,7 +22,7 @@ The advisor's best idea, hardened: the AI participates as another collaborator �
 Hocuspocus persistence hooks write the update log to Postgres with periodic snapshot/compaction. **A child's strokes and notes are learner content:** session docs inherit the transcript TTL, the erasure cascade, and S27 guardian visibility (docs 19/24 rule extended); learner text entering shared notes in AI sessions passes the same Safety Plane as chat. Role capability map enforced server-side: learner draws and erases own-origin ops; tutor can lock/clear boards; teacher gets present-mode; nothing is guardian-visible live by default. Ops rate-limited per peer; room size capped.
 
 ## 6. React Native honesty
-Yjs is pure JS — runs fine in RN. The gaps we build rather than pretend away: **offline persistence adapter** (no y-indexeddb on RN — an op-sqlite/MMKV-backed provider is a PR, not a footnote); stroke *rendering* is the doc-27/24 Skia layer with the CRDT carrying geometry only (never render through React state per stroke); exact provider/server APIs pinned against installed versions at the PR per the standing rule.
+Yjs is pure JS — runs fine in RN. The gaps we build rather than pretend away: **offline persistence adapter** (no y-indexeddb on RN — an op-sqlite/MMKV-backed provider is a PR, not a footnote); stroke *rendering* is the doc-22/24 Skia layer with the CRDT carrying geometry only (never render through React state per stroke); exact provider/server APIs pinned against installed versions at the PR per the standing rule.
 
 ## 7. PRs
 - **PR-88 · Collaboration server:** Hocuspocus + `onAuthenticate` token validation, Postgres persistence, room lifecycle.

@@ -28,7 +28,12 @@ yarn-error.*
 
 # macOS
 .DS_Store
+# Update code signing (doc 07 §2.5). The certificate is public by construction
+# and MUST be committed — the build reads it and a missing one silently disables
+# signing. The private key belongs in KMS and never in the repo.
 *.pem
+!certs/certificate.pem
+keys/
 
 # local env files
 .env*.local

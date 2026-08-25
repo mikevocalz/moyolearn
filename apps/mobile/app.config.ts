@@ -21,6 +21,13 @@ const config: ExpoConfig = {
   ios: {
     bundleIdentifier: 'com.moyolearn.app',
     supportsTablet: true,
+    config: {
+      // Doc 07 §2.1: the documented setting when the app's only use of
+      // encryption is SecureStore/the platform keychain. Declaring it here keeps
+      // every App Store submission from stopping on the export-compliance
+      // question with an answer someone has to remember.
+      usesNonExemptEncryption: false,
+    },
   },
   android: {
     package: 'com.moyolearn.app',
@@ -58,12 +65,37 @@ const config: ExpoConfig = {
       },
     ],
     'expo-image',
+    [
+      'expo-secure-store',
+      {
+        // Doc 07 §2.1: Android Auto Backup must exclude the secure prefs, for
+        // the same reason every entry is `THIS_DEVICE_ONLY` on iOS — session
+        // material must never restore onto a different device. This is the
+        // plugin's default; it is written out because a default that is a
+        // security control should be visible in the config, not inferred.
+        configureAndroidBackup: true,
+        // Read on the parent gate (§2.3), so the prompt is worded for the adult
+        // being asked rather than with the module's generic default.
+        faceIDPermission: 'Confirm it is you before opening billing, permissions, or your child’s AI activity.',
+      },
+    ],
+    'expo-screen-capture',
+    'expo-updates',
   ],
   experiments: {
     typedRoutes: true,
     reactCompiler: true,
   },
   runtimeVersion: { policy: 'appVersion' },
+  updates: {
+    // Doc 07 §2.5: end-to-end code signing on from day one. The certificate is
+    // committed (it is public by construction); `keys/` is gitignored and the
+    // private key belongs in KMS — see docs/runbooks/update-signing-rotation.md.
+    // Certificate validity is one year deliberately: the Expo docs' own guidance
+    // is that shorter validity limits the blast radius of a compromised key.
+    codeSigningCertificate: './certs/certificate.pem',
+    codeSigningMetadata: { keyid: 'main', alg: 'rsa-v1_5-sha256' },
+  },
 };
 
 export default config;
