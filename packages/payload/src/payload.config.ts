@@ -8,6 +8,10 @@ import { Users } from './collections/Users';
 import { Media } from './collections/Media';
 import { Guardianships } from './collections/Guardianships';
 import { Consents } from './collections/Consents';
+import { Skills } from './collections/Skills';
+import { Misconceptions } from './collections/Misconceptions';
+import { SessionTranscripts } from './collections/SessionTranscripts';
+import { StudentModelFacts } from './collections/StudentModelFacts';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverURL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -23,7 +27,19 @@ export default buildConfig({
   routes: {
     api: '/payload-api',
   },
-  collections: [Users, Media, Guardianships, Consents],
+  collections: [
+    Users,
+    Media,
+    Guardianships,
+    Consents,
+    // Loop A (doc 07 §4): curriculum content, then the per-learner model
+    // derived from it. The two are separate collections because only the
+    // second is learner data and only the second is erasable.
+    Skills,
+    Misconceptions,
+    SessionTranscripts,
+    StudentModelFacts,
+  ],
   db: postgresAdapter({
     pool: {
       connectionString: process.env.DATABASE_URL,

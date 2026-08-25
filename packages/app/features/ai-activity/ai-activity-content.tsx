@@ -8,13 +8,15 @@
 // SOT: docs/pack/04-screen-briefs.md §S12
 // SOT-KEYWORDS: ai activity permissions consent retention observation parent
 
+import { useRouter } from 'solito/navigation';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
-import { Card, Dial, Heading, PressScale, Switch, Text, FadeIn } from '@acme/ui';
+import { Button, Card, Dial, Heading, PressScale, Switch, Text, FadeIn } from '@acme/ui';
 import { CHILDREN } from '../home/parent-home.data';
 import { CONSENTS, OBSERVATIONS, RAW_ARTEFACTS } from './ai-activity.data';
 import { useAiActivityStore } from './ai-activity.store';
 
 export function AiActivityContent() {
+  const router = useRouter();
   const values = useAiActivityStore((s) => s.values);
   const setConsent = useAiActivityStore((s) => s.setConsent);
   const selectedChildId = useAiActivityStore((s) => s.selectedChildId);
@@ -92,6 +94,15 @@ export function AiActivityContent() {
               </View>
             ))}
           </View>
+          {/* The preview stops here. Every line is erasable, but erasing happens
+              on S27, which shows the whole model and what a delete takes with it —
+              a delete offered next to three of six rows would be a delete whose
+              reach the parent cannot see. */}
+          <Button
+            title="See everything Natalie remembers"
+            variant="outline"
+            onPress={() => router.push('/memory')}
+          />
         </Section>
       </FadeIn>
 

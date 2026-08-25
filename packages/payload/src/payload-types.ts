@@ -69,6 +69,12 @@ export interface Config {
   collections: {
     users: User;
     media: Media;
+    guardianships: Guardianship;
+    consents: Consent;
+    skills: Skill;
+    misconceptions: Misconception;
+    sessionTranscripts: SessionTranscript;
+    studentModelFacts: StudentModelFact;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -78,6 +84,12 @@ export interface Config {
   collectionsSelect: {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
+    guardianships: GuardianshipsSelect<false> | GuardianshipsSelect<true>;
+    consents: ConsentsSelect<false> | ConsentsSelect<true>;
+    skills: SkillsSelect<false> | SkillsSelect<true>;
+    misconceptions: MisconceptionsSelect<false> | MisconceptionsSelect<true>;
+    sessionTranscripts: SessionTranscriptsSelect<false> | SessionTranscriptsSelect<true>;
+    studentModelFacts: StudentModelFactsSelect<false> | StudentModelFactsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -166,6 +178,112 @@ export interface Media {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "guardianships".
+ */
+export interface Guardianship {
+  id: number;
+  guardianAuthId: string;
+  learnerAuthId: string;
+  relationship: 'guardian' | 'parent' | 'carer';
+  status: 'active' | 'invited' | 'revoked';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "consents".
+ */
+export interface Consent {
+  id: number;
+  learnerAuthId: string;
+  guardianAuthId: string;
+  method: 'email-plus' | 'text-plus' | 'kba' | 'card';
+  scope: string;
+  policyVersion: string;
+  evidenceRef?: string | null;
+  grantedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "skills".
+ */
+export interface Skill {
+  id: number;
+  slug: string;
+  title: string;
+  subject: 'math' | 'reading' | 'writing' | 'science';
+  band: 'elementary' | 'junior-high' | 'high-school';
+  prerequisites?: (number | Skill)[] | null;
+  tutorable?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "misconceptions".
+ */
+export interface Misconception {
+  id: number;
+  tag: string;
+  skill: number | Skill;
+  sentence: string;
+  strategy: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sessionTranscripts".
+ */
+export interface SessionTranscript {
+  id: number;
+  sessionId: string;
+  learnerAuthId: string;
+  turns:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  capturedAt: string;
+  expiresAt: string;
+  distilledAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "studentModelFacts".
+ */
+export interface StudentModelFact {
+  id: number;
+  factId: string;
+  learnerAuthId: string;
+  kind: 'mastery' | 'misconception' | 'review' | 'interest' | 'scaffolding';
+  skill?: (number | null) | Skill;
+  sentence: string;
+  detail:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  derivedFrom: string[];
+  observedAt: string;
+  expiresAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -195,6 +313,30 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'media';
         value: number | Media;
+      } | null)
+    | ({
+        relationTo: 'guardianships';
+        value: number | Guardianship;
+      } | null)
+    | ({
+        relationTo: 'consents';
+        value: number | Consent;
+      } | null)
+    | ({
+        relationTo: 'skills';
+        value: number | Skill;
+      } | null)
+    | ({
+        relationTo: 'misconceptions';
+        value: number | Misconception;
+      } | null)
+    | ({
+        relationTo: 'sessionTranscripts';
+        value: number | SessionTranscript;
+      } | null)
+    | ({
+        relationTo: 'studentModelFacts';
+        value: number | StudentModelFact;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -281,6 +423,90 @@ export interface MediaSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "guardianships_select".
+ */
+export interface GuardianshipsSelect<T extends boolean = true> {
+  guardianAuthId?: T;
+  learnerAuthId?: T;
+  relationship?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "consents_select".
+ */
+export interface ConsentsSelect<T extends boolean = true> {
+  learnerAuthId?: T;
+  guardianAuthId?: T;
+  method?: T;
+  scope?: T;
+  policyVersion?: T;
+  evidenceRef?: T;
+  grantedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "skills_select".
+ */
+export interface SkillsSelect<T extends boolean = true> {
+  slug?: T;
+  title?: T;
+  subject?: T;
+  band?: T;
+  prerequisites?: T;
+  tutorable?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "misconceptions_select".
+ */
+export interface MisconceptionsSelect<T extends boolean = true> {
+  tag?: T;
+  skill?: T;
+  sentence?: T;
+  strategy?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sessionTranscripts_select".
+ */
+export interface SessionTranscriptsSelect<T extends boolean = true> {
+  sessionId?: T;
+  learnerAuthId?: T;
+  turns?: T;
+  capturedAt?: T;
+  expiresAt?: T;
+  distilledAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "studentModelFacts_select".
+ */
+export interface StudentModelFactsSelect<T extends boolean = true> {
+  factId?: T;
+  learnerAuthId?: T;
+  kind?: T;
+  skill?: T;
+  sentence?: T;
+  detail?: T;
+  derivedFrom?: T;
+  observedAt?: T;
+  expiresAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -336,7 +562,15 @@ export interface CollectionsWidget {
 export interface CollectionQueryWidget {
   data?: {
     title?: string | null;
-    relatedCollection: 'users' | 'media';
+    relatedCollection:
+      | 'users'
+      | 'media'
+      | 'guardianships'
+      | 'consents'
+      | 'skills'
+      | 'misconceptions'
+      | 'sessionTranscripts'
+      | 'studentModelFacts';
     where?:
       | {
           [k: string]: unknown;
@@ -358,7 +592,18 @@ export interface CollectionQueryWidget {
  */
 export interface ActivityWidget {
   data?: {
-    excludedCollections?: ('users' | 'media')[] | null;
+    excludedCollections?:
+      | (
+          | 'users'
+          | 'media'
+          | 'guardianships'
+          | 'consents'
+          | 'skills'
+          | 'misconceptions'
+          | 'sessionTranscripts'
+          | 'studentModelFacts'
+        )[]
+      | null;
   };
   width: 'x-small' | 'small' | 'medium' | 'large' | 'x-large' | 'full';
 }

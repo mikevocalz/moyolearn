@@ -6,6 +6,8 @@
 // SOT: docs/pack/04-screen-briefs.md §S12
 // SOT-KEYWORDS: ai activity permissions consent retention derived observation expiry
 
+import { MEMORY_FACTS, provenanceLabel } from '../memory/memory.data';
+
 export interface ConsentToggle {
   id: string;
   label: string;
@@ -56,11 +58,15 @@ export const CONSENTS: ConsentToggle[] = [
   },
 ];
 
-export const OBSERVATIONS: DerivedObservation[] = [
-  { id: '1', summary: 'Difficulty when a ≠ 1', source: '2 AI practice sessions this week' },
-  { id: '2', summary: 'Sign errors in binomials', source: '1 AI practice session this week' },
-  { id: '3', summary: 'Factoring improved 64% → 72%', source: 'Across 4 sessions' },
-];
+// S12 shows a preview; S27 owns the model and the eraser (doc 07 §S27). This is
+// a projection of the same rows rather than a second hand-written list, because
+// two screens telling a parent different things about what the AI knows is the
+// exact trust failure both screens exist to prevent.
+export const OBSERVATIONS: DerivedObservation[] = MEMORY_FACTS.slice(0, 3).map((fact) => ({
+  id: fact.id,
+  summary: fact.sentence,
+  source: provenanceLabel(fact),
+}));
 
 export const RAW_ARTEFACTS: RawArtefact[] = [
   { id: '1', label: 'Session transcript · Mon 4:00 PM', expiresLabel: 'Deleted Sep 17, 2026' },

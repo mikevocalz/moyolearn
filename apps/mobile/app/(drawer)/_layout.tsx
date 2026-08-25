@@ -60,9 +60,13 @@ export default function DrawerLayout() {
         <Drawer.Screen name="practice" />
       </Drawer.Protected>
 
-      {/* Guardian-only: consent records and the family calendar. */}
+      {/* Guardian-only: consent records, the student model, the family calendar.
+          S27 is guarded rather than merely hidden — the erasure controls on it act
+          on one child's record, so an unguarded route is a deep link into another
+          family's model (doc 07 §4). */}
       <Drawer.Protected guard={isGuardian}>
         <Drawer.Screen name="ai-activity" />
+        <Drawer.Screen name="memory" />
         <Drawer.Screen name="family-calendar" />
       </Drawer.Protected>
 
