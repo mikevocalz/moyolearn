@@ -8,14 +8,13 @@ import {
 import { View, Text } from '@acme/ui/tw';
 import { AudioPlayer } from '@acme/ui';
 import { uploadVoiceNote } from '../media';
-import { useVideoStore } from '../editor/video.store.ts';
+import { useRecordAudio, useRecordVideo } from '../editor/record-media';
 import { Section } from '@acme/ui/primitives';
 import { palette } from '@acme/theme';
 import {
   COALESCE_MS,
   splitNoteSegments,
   useAttachStore,
-  useAudioStore,
   useUrlStore,
   EditorToolbar,
   EMPTY_HISTORY,
@@ -100,8 +99,13 @@ export function NotesEditor({
   const activeState = useStore(store.current, (state) => state.activeState);
   const selection = useStore(store.current, (state) => state.selection);
   const requestAttachment = useAttachStore((state) => state.request);
-  const requestRecording = useAudioStore((state) => state.request);
-  const requestVideo = useVideoStore((state) => state.request);
+  /*
+    Undefined on web, and that IS the gate: `isEnabled` hides a capability whose
+    handler is missing, so the toolbar simply has no recording buttons there
+    rather than buttons that do nothing when tapped.
+  */
+  const recordAudio = useRecordAudio();
+  const recordVideo = useRecordVideo();
   const requestUrl = useUrlStore((state) => state.request);
   const html = useStore(store.current, (state) => state.html);
 
@@ -160,13 +164,13 @@ export function NotesEditor({
     // bottom sheet stops the sheet mounting at all. The store carries the
     // request across that boundary and settles when the user picks or cancels.
     pickFile: () => requestAttachment(),
-    recordAudio: () => requestRecording(),
+    recordAudio,
     /*
       Records AND uploads in one call, unlike the voice note's pair. A video
       upload is resumable and keeps going after the bytes land, so the sheet
       owns both halves — see CapabilityContext.recordVideo.
     */
-    recordVideo: () => requestVideo(),
+    recordVideo,
     /*
       Supplying this is what stops a note keeping a `file://` link. Without it
       `capabilities.ts` takes its fallback branch and writes a link to the local
