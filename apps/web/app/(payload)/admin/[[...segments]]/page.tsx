@@ -11,7 +11,7 @@ type Args = {
   searchParams: Promise<Record<string, string | string[]>>;
 };
 
-export const instant = false;
+export const dynamic = 'force-dynamic';
 
 export const generateMetadata = ({ params, searchParams }: Args): Promise<Metadata> =>
   generatePageMetadata({ config, params, searchParams });

@@ -50,8 +50,7 @@ const nextConfig: NextConfig = {
   logging: {
     browserToTerminal: true,
   },
-  cacheComponents: true,
-  partialPrefetching: true,
+  cacheComponents: false,
   // DO NOT add `experimental.scrollRestoration` here. It still exists in the
   // 16.3 config schema (config-shared.d.ts) so it looks available, but its only
   // consumer is shared/lib/router/router.js — the PAGES router. This app is App
