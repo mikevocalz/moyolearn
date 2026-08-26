@@ -54,6 +54,14 @@ const config: ExpoConfig = {
       absent — one video stack, not two.
     */
     'react-native-video',
+    /*
+      Nitro-backed fetch: Cronet on Android, URLSession on iOS, so HTTP/2 and
+      HTTP/3-over-QUIC and connection reuse come from the platform rather than
+      RN's own stack. It ships a config plugin despite the README not saying so,
+      and it needs it — without the native side wired, `prefetchOnAppStart` has
+      nothing to run before JS starts, which is the whole reason it is here.
+    */
+    'react-native-nitro-fetch',
     [
       'expo-splash-screen',
       {

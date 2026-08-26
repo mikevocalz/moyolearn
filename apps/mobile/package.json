@@ -41,6 +41,7 @@
     "react-native-gesture-handler": "catalog:",
     "react-native-keyboard-controller": "catalog:",
     "react-native-mmkv": "catalog:",
+    "react-native-nitro-fetch": "1.6.2",
     "react-native-nitro-modules": "catalog:",
     "react-native-pulsar": "catalog:",
     "react-native-reanimated": "catalog:",
