@@ -64,7 +64,7 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
 
       {step === 'account' ? (
         <Section className="gap-4">
-          <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+          <Heading level={1} size="title">
             Your account
           </Heading>
           <TextField
@@ -85,7 +85,7 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
 
       {step === 'consent' ? (
         <Section className="gap-4">
-          <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+          <Heading level={1} size="title">
             Your permission
           </Heading>
           {/* The notice and the verification are one flow now (doc 06 §3.1). A
@@ -103,7 +103,7 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
 
       {step === 'children' ? (
         <Section className="gap-4">
-          <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+          <Heading level={1} size="title">
             Add your children
           </Heading>
           <TWText className="text-body text-text">
@@ -161,7 +161,7 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
 
       {step === 'grants' ? (
         <Section className="gap-4">
-          <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+          <Heading level={1} size="title">
             What the tutor can see
           </Heading>
           <TWText className="text-body text-text">

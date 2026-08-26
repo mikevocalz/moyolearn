@@ -108,7 +108,7 @@ export function TutorOnboardingContent({ onExit }: { onExit: () => void }) {
 
         {step === 'profile' ? (
           <Section className="gap-group">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+            <Heading level={1} size="title">
               Your profile
             </Heading>
             <TextField
@@ -185,7 +185,7 @@ export function TutorOnboardingContent({ onExit }: { onExit: () => void }) {
 
         {step === 'availability' ? (
           <Section className="gap-group">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+            <Heading level={1} size="title">
               When are you free?
             </Heading>
             {/* Seeded, not empty: after-school on weekdays is the real answer for
@@ -226,7 +226,7 @@ export function TutorOnboardingContent({ onExit }: { onExit: () => void }) {
 
         {step === 'connect' ? (
           <Section className="gap-group">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+            <Heading level={1} size="title">
               Who do you teach with?
             </Heading>
             <TextField
@@ -281,7 +281,7 @@ export function TutorOnboardingContent({ onExit }: { onExit: () => void }) {
 function PrepPreview() {
   return (
     <Section className="gap-group">
-      <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+      <Heading level={1} size="title">
         This is what you&apos;ll know before every session
       </Heading>
       <Card className="gap-stack">

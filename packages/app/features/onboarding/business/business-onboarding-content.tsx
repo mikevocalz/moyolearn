@@ -138,7 +138,7 @@ export function BusinessOnboardingContent({ onExit, trialDaysLeft = 30 }: Busine
 
         {step === 'import' ? (
           <Section className="gap-group">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+            <Heading level={1} size="title">
               Bring your students over
             </Heading>
             {/* Sprout Social states the requirements before the picker, so a
@@ -162,7 +162,7 @@ export function BusinessOnboardingContent({ onExit, trialDaysLeft = 30 }: Busine
 
         {step === 'invite' ? (
           <Section className="gap-group">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+            <Heading level={1} size="title">
               Invite your tutors
             </Heading>
             <Textarea
@@ -189,7 +189,7 @@ export function BusinessOnboardingContent({ onExit, trialDaysLeft = 30 }: Busine
 
         {step === 'payments' ? (
           <Section className="gap-group">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+            <Heading level={1} size="title">
               Get paid in the app
             </Heading>
             <TWText className="text-body text-text">
@@ -211,7 +211,7 @@ export function BusinessOnboardingContent({ onExit, trialDaysLeft = 30 }: Busine
 
         {step === 'checklist' ? (
           <Section className="gap-group">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+            <Heading level={1} size="title">
               You&apos;re live
             </Heading>
             <Checklist />

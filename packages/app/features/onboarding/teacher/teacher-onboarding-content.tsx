@@ -78,7 +78,7 @@ export function TeacherOnboardingContent({ onExit }: { onExit: () => void }) {
 
         {step === 'class' ? (
           <Section className="gap-group">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+            <Heading level={1} size="title">
               Your class
             </Heading>
             <TextField
@@ -124,7 +124,7 @@ export function TeacherOnboardingContent({ onExit }: { onExit: () => void }) {
 
         {step === 'assignment' ? (
           <Section className="gap-group">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+            <Heading level={1} size="title">
               Send them something today
             </Heading>
             {/* Finished work, not an empty composer — the brief's metric is "first
@@ -186,7 +186,7 @@ function Roster({ onSetGuardianEmails }: { onSetGuardianEmails: (emails: string[
 
   return (
     <Section className="gap-group">
-      <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text">
+      <Heading level={1} size="title">
         How students join
       </Heading>
       {options.map((option) => (
