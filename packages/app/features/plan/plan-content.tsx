@@ -22,7 +22,7 @@ export function PlanContent() {
   return (
     <View className="gap-7">
       <FadeIn>
-        <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text md:text-3xl">
+        <Heading level={1} size="title">
           Your plan
         </Heading>
       </FadeIn>

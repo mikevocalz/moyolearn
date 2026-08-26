@@ -81,7 +81,7 @@ export function TutorOnboardingContent({ onExit }: { onExit: () => void }) {
 
         {step === 'account' ? (
           <Section className="gap-stack">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text md:text-3xl">
+            <Heading level={1} size="title">
               Set up your tutoring profile
             </Heading>
             {/* Upwork states the time cost and the reversibility up front. Both are

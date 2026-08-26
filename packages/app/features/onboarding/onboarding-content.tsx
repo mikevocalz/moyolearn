@@ -69,7 +69,7 @@ export function OnboardingContent() {
       {step === 'promise' ? (
         <FadeIn delay={80}>
           <Section className="gap-4">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text md:text-3xl">
+            <Heading level={1} size="title">
               Welcome to Moyo
             </Heading>
             <TWText className="text-body text-text">
@@ -94,7 +94,7 @@ export function OnboardingContent() {
       ) : step === 'role' ? (
         <FadeIn delay={80}>
           <Section className="gap-4">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text md:text-3xl">
+            <Heading level={1} size="title">
               Who is using Moyo?
             </Heading>
             <TWText className="text-body text-text">
@@ -145,7 +145,7 @@ export function OnboardingContent() {
       ) : (
         <FadeIn delay={80}>
           <Section className="gap-4">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text md:text-3xl">
+            <Heading level={1} size="title">
               Consent
             </Heading>
             <TWText className="text-body text-text">

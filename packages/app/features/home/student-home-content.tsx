@@ -19,7 +19,7 @@ export function StudentHomeContent() {
       <FadeIn>
         <Section className="flex-row flex-wrap items-baseline gap-x-2">
           <Text className="text-2xl font-semibold text-text-muted md:text-3xl">Hi</Text>
-          <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text md:text-3xl">
+          <Heading level={1} size="title">
             {user?.name?.split(' ')[0] ?? 'there'}
           </Heading>
         </Section>

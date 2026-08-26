@@ -46,7 +46,7 @@ export function ConvertContent({
       <View className="gap-group">
         <FadeIn>
           <Section className="gap-stack">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text md:text-3xl">
+            <Heading level={1} size="title">
               {trialSentence(daysLeft, endsAt)}
             </Heading>
             {/* Docusign's fraction: "4 of 14" is a position, a bare "4" is a

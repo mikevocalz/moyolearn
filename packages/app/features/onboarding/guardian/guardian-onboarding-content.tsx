@@ -52,7 +52,7 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
 
       {step === 'welcome' ? (
         <Section className="gap-4">
-          <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text md:text-3xl">
+          <Heading level={1} size="title">
             Let’s set up your family
           </Heading>
           <TWText className="text-body text-text">

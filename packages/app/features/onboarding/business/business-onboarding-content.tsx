@@ -94,7 +94,7 @@ export function BusinessOnboardingContent({ onExit, trialDaysLeft = 30 }: Busine
 
         {step === 'org' ? (
           <Section className="gap-group">
-            <Heading level={1} size="display-sm" className="text-2xl font-semibold text-text md:text-3xl">
+            <Heading level={1} size="title">
               Set up your business
             </Heading>
             <TextField
