@@ -13,7 +13,8 @@
     "payload:types": "payload generate:types",
     "payload:migrate": "payload migrate",
     "payload:migrate:create": "payload migrate:create",
-    "seed": "tsx scripts/seed.mts"
+    "seed": "tsx scripts/seed.mts",
+    "bunny:verify:media": "tsx scripts/bunny-verify-media.mts"
   },
   "dependencies": {
     "@acme/app": "workspace:*",
