@@ -11,6 +11,7 @@ import { View } from '@acme/ui/primitives';
 import { useCaptureStore } from '../capture';
 import { buttonSizeForBand, type AgeBand } from '../capture';
 import { useTutorStore } from './tutor.store';
+import { evaluateArithmetic } from './evaluate';
 
 export interface TutorScreenProps {
   ageBand?: AgeBand;
@@ -33,10 +34,11 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   const handleSend = (message: string) => {
     const trimmed = message.trim();
     if (!trimmed) return;
+    const isCorrect = evaluateArithmetic(problem ?? '', trimmed);
     send(trimmed);
-    // Real evaluation goes through the Safety Plane; the client marks wrong for
-    // the demo until that endpoint is wired (doc 19 §1, doc 07 §2).
-    respond(false);
+    // The Safety Plane will eventually confirm / override; the client-side
+    // arithmetic evaluator lets the demo react correctly to simple problems.
+    respond(isCorrect ?? false);
   };
 
   if (problem == null) {
