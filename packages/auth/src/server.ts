@@ -94,7 +94,9 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
       enabled: true,
       // Doc 06 §6: 12+ chars, strength-estimated, no composition theater.
       minPasswordLength: 12,
-      requireEmailVerification: true,
+      // Dev can sign up and sign in without an email adapter; verification is
+      // still enforced in production builds.
+      requireEmailVerification: process.env.NODE_ENV !== 'development',
     },
     databaseHooks: {
       user: {
