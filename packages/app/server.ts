@@ -55,6 +55,13 @@ export {
 */
 export { orgBrandingFor, type OrgBranding, type LoadOrgBranding } from './features/org';
 export {
+  presignStreamUpload,
+  StreamRejected,
+  type StreamUploadCredential,
+  type CreateStreamVideo,
+  type SignStreamUpload,
+} from './features/media/stream.service';
+export {
   presignUpload,
   presignVoiceNote,
   PresignRejected,

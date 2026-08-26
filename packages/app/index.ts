@@ -234,6 +234,7 @@ export {
 export {
   tusUrlStorage,
   useBunnyUpload,
+  useVideoUpload,
   uploadVoiceNote,
   MAX_BYTES,
   type TusUrlStorage,

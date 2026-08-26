@@ -7,3 +7,4 @@ export { useBunnyUpload, type UploadPhase, type PickedFile } from './use-bunny-u
 export { uploadTransport, type UploadInput, type UploadTransport } from './transport';
 export { uploadVoiceNote, type UploadedVoiceNote } from './upload-voice-note';
 export { renderWaveform, type RenderedWaveform } from './render-waveform';
+export { useVideoUpload, type VideoPhase, type VideoFile } from './use-video-upload';
