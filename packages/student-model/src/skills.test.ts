@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { inferSkillTitle } from './skills.ts';
+import { inferSkillTitle, firstHint, secondHint } from './skills.ts';
 
 describe('inferSkillTitle', () => {
   it('detects fraction problems', () => {
@@ -25,5 +25,25 @@ describe('inferSkillTitle', () => {
 
   it('falls back to number sense', () => {
     assert.equal(inferSkillTitle('Count the apples'), 'Number sense');
+  });
+});
+
+describe('firstHint', () => {
+  it('returns a skill-specific hint', () => {
+    assert.ok(firstHint('Fractions').includes('shared whole'));
+  });
+
+  it('returns the default hint for unknown skills', () => {
+    assert.ok(firstHint('Unknown').includes('precedence'));
+  });
+});
+
+describe('secondHint', () => {
+  it('returns a skill-specific follow-up', () => {
+    assert.ok(secondHint('Order of operations').includes('parentheses'));
+  });
+
+  it('returns the default follow-up for unknown skills', () => {
+    assert.ok(secondHint('Unknown').includes('one step at a time'));
   });
 });
