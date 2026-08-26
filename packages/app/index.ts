@@ -231,7 +231,16 @@ export {
   type ShareableView,
   type StageChange,
 } from './features/ops';
-export { tusUrlStorage, type TusUrlStorage } from './features/media';
+export {
+  tusUrlStorage,
+  useBunnyUpload,
+  MAX_BYTES,
+  type TusUrlStorage,
+  type MediaKind,
+  type PresignResult,
+  type UploadPhase,
+  type PickedFile,
+} from './features/media';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';
 export {

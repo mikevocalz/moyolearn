@@ -55,6 +55,15 @@ export {
 */
 export { orgBrandingFor, type OrgBranding, type LoadOrgBranding } from './features/org';
 export {
+  presignUpload,
+  PresignRejected,
+  MAX_BYTES,
+  type PresignRequest,
+  type PresignResult,
+  type MediaKind,
+  type SignUpload,
+} from './features/media/presign.service';
+export {
   saveLearnerProfile,
   type SaveGradeBand,
 } from './features/onboarding/learner-profile.service';
