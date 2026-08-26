@@ -19,11 +19,18 @@ import { BusinessOnboardingContent } from '../business/business-onboarding-conte
 import { TeacherOnboardingContent } from '../teacher/teacher-onboarding-content';
 import { isOnboardingFlow, type OnboardingFlow } from './flow';
 
+const NEXT_PATH: Record<OnboardingFlow, string> = {
+  learner: '/tutor',
+  guardian: '/',
+  tutor: '/',
+  teacher: '/',
+  owner: '/',
+};
+
 export function OnboardingFlowContent({ flow }: { flow: string }) {
   const router = useRouter();
-  // Every sequence ends in the same place: the shell the role already routes to.
-  // Onboarding is not a destination, so it does not push one of its own.
-  const done = () => router.replace('/');
+  // Learners land in the tutor; other roles land at the home shell.
+  const done = () => router.replace(isOnboardingFlow(flow) ? NEXT_PATH[flow] : '/');
 
   if (!isOnboardingFlow(flow)) {
     return (
