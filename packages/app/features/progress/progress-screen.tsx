@@ -14,10 +14,29 @@ const SEED = [
   { subject: 'Word problems', value: 34, state: 'needs-attention' as const },
 ];
 
+function masteryState(mastery: number): 'steady' | 'needs-attention' {
+  return mastery < 0.5 ? 'needs-attention' : 'steady';
+}
+
 export function ProgressScreen() {
-  const { skillTitle, mastery, attempts } = useTutorStore();
-  const liveLower = skillTitle.toLowerCase();
-  const seeded = SEED.filter(({ subject }) => subject.toLowerCase() !== liveLower);
+  const { skillTitle, mastery, attempts, masteryBySkill } = useTutorStore();
+
+  const practiced = Object.entries(masteryBySkill).map(([subject, value]) => ({
+    subject,
+    value: Math.round(value * 100),
+    state: masteryState(value),
+  }));
+
+  const live =
+    attempts > 0 && skillTitle && !masteryBySkill[skillTitle]
+      ? [{ subject: `Live: ${skillTitle}`, value: Math.round(mastery * 100), state: masteryState(mastery) }]
+      : [];
+
+  const activeLower = skillTitle.toLowerCase();
+  const practicedKeys = new Set(Object.keys(masteryBySkill).map((s) => s.toLowerCase()));
+  const seeded = SEED.filter(
+    ({ subject }) => !practicedKeys.has(subject.toLowerCase()) && subject.toLowerCase() !== activeLower,
+  );
 
   return (
     <View className="flex-1 gap-stack p-inset">
@@ -28,13 +47,12 @@ export function ProgressScreen() {
         </Text>
       </View>
       <View className="gap-stack">
-        {attempts > 0 && skillTitle ? (
-          <MasteryBar
-            label={`Live: ${skillTitle}`}
-            value={Math.round(mastery * 100)}
-            state={mastery < 0.5 ? 'needs-attention' : 'steady'}
-          />
-        ) : null}
+        {live.map(({ subject, value, state }) => (
+          <MasteryBar key={subject} label={subject} value={value} state={state} />
+        ))}
+        {practiced.map(({ subject, value, state }) => (
+          <MasteryBar key={subject} label={subject} value={value} state={state} />
+        ))}
         {seeded.map(({ subject, value, state }) => (
           <MasteryBar key={subject} label={subject} value={value} state={state} />
         ))}
