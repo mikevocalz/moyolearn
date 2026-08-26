@@ -145,10 +145,29 @@ for (const [label, cmd] of Object.entries(probes)) {
 
 /* ---- 3. Are the overrides one missing variant, or a real long tail? -------- */
 
+/*
+  Call sites using the KIT component, not the `@acme/ui/tw` primitive of the
+  same name. The primitive has no variants, so styling it with a className is
+  what a primitive is for — counting those as drift is what made `Text` look
+  like a 113-string long tail when the kit component accounts for 48 of them.
+*/
+const kitOverrides = (tag) =>
+  lines(sh(`grep -rlE "<${tag}[^>]*className=" ${TSX}`))
+    .filter((f) => {
+      try {
+        return new RegExp(`import\\s*\\{[^}]*\\b${tag}\\b[^}]*\\}\\s*from\\s*'@acme/ui'`).test(
+          readFileSync(`${ROOT}/${f}`, 'utf8'),
+        );
+      } catch {
+        return false;
+      }
+    })
+    .flatMap((f) => readFileSync(`${ROOT}/${f}`, 'utf8').match(new RegExp(`<${tag}\\b[^>]*className="[^"]*"`, 'g')) ?? []);
+
 const TYPE_SCALE = /\b(text-(xs|sm|base|lg|xl|[2-9]xl|display|title|body|caption|data|label)|font-(thin|light|normal|medium|semibold|bold|black)|leading-|tracking-)/;
 const repetition = {};
 for (const tag of ['Heading', 'Text']) {
-  const hits = lines(sh(`grep -rhoE "<${tag}[^>]*className=\\"[^\\"]*\\"" ${TSX}`));
+  const hits = kitOverrides(tag);
   const freq = new Map();
   let typeScale = 0;
   for (const h of hits) {
@@ -191,7 +210,10 @@ for (const tag of ['Heading', 'Text']) {
     for (const m of block.matchAll(/['"]?([\w-]+)['"]?:\s*'([^']*)'/g)) out.set(m[1], m[2]);
     return out;
   };
-  const sizes = classesOf('size');
+  // Heading calls its axis `size`; Text calls it `variant`. Ask for both rather
+  // than assuming, or the probe silently reports "none" for one of them.
+  const sizes = classesOf('size').size ? classesOf('size') : classesOf('variant');
+  const axis = classesOf('size').size ? 'size' : 'variant';
   const tones = classesOf('tone');
   const defaultTone = /defaultVariants:\s*\{[^}]*tone:\s*'([^']+)'/.exec(src)?.[1];
   const defaultToneClasses = defaultTone ? (tones.get(defaultTone) ?? '') : '';
@@ -200,13 +222,13 @@ for (const tag of ['Heading', 'Text']) {
   // Every combination the component can already produce, normalised.
   const reachable = new Map();
   for (const [sizeName, sizeClasses] of sizes) {
-    reachable.set(norm(`${sizeClasses} ${defaultToneClasses}`), `size="${sizeName}"`);
+    reachable.set(norm(`${sizeClasses} ${defaultToneClasses}`), `${axis}="${sizeName}"`);
     for (const [toneName, toneClasses] of tones) {
-      reachable.set(norm(`${sizeClasses} ${toneClasses}`), `size="${sizeName}" tone="${toneName}"`);
+      reachable.set(norm(`${sizeClasses} ${toneClasses}`), `${axis}="${sizeName}" tone="${toneName}"`);
     }
   }
 
-  const hits = lines(sh(`grep -rhoE "<${tag}[^>]*className=\\"[^\\"]*\\"" ${TSX}`));
+  const hits = kitOverrides(tag);
   const matches = new Map();
   for (const h of hits) {
     const cls = (/className="([^"]*)"/.exec(h)?.[1] ?? '').trim();

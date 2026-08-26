@@ -89,7 +89,7 @@ export function LoginContent({ org }: LoginContentProps) {
           />
           <Text className="font-display text-display-sm text-text">{heading}</Text>
           {org ? (
-            <Text className="text-caption text-text-muted">Moyo, for {org.name}</Text>
+            <Text variant="caption" tone="muted">Moyo, for {org.name}</Text>
           ) : null}
         </View>
 

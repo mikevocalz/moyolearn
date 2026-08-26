@@ -246,3 +246,41 @@ keeping `500` for the bar and dot, or raise the selected title's size and weight
 past the large-text threshold. Each changes how the schedule looks. The pairs
 should be added to `check-contrast.mjs` at the same time, since adding them
 first turns `pnpm lint` red until the colours move.
+
+## Addendum 2 — the Text finding was mostly wrong
+
+Phase 3 rewired `Text`'s variants to the ramp, and doing so exposed an error in
+this report's central claim.
+
+**`<Text>` names two different components.** The kit's `Text` from `@acme/ui`
+has variants; the `@acme/ui/tw` primitive of the same name has none. Every probe
+above counted both. Splitting them:
+
+| | overrides | files |
+|---|---|---|
+| kit `Text` (has variants) | 48 | 25 |
+| `tw` primitive (has none) | 319 | 94 |
+
+So **319 of the 367 are not drift.** Styling a primitive with a className is
+what a primitive is for; there is no variant being bypassed. The "113 distinct
+strings, top six cover only 31%" long tail — the finding this report leaned on
+to argue Heading and Text were different problems — was mostly a census of
+correct primitive usage.
+
+The conclusion that Heading and Text are different problems still holds, but for
+a smaller reason than stated: after Phase 3, the kit components carry 13 and 46
+overrides respectively, not 50 and 287.
+
+**How the error survived.** The probe matched a tag name. Two components share
+one. Nothing in a `grep` for `<Text` can tell them apart, and the number it
+produced was large enough to look like a finding rather than a question. It took
+running the migration — and watching `pnpm typecheck` reject 16 sites where the
+primitive had been handed a `variant` prop — to surface it. The sweep now
+resolves each file's import before counting, so the two are never conflated
+again.
+
+**What Phase 3 did change, and it stands:** `Text`'s variants used raw Tailwind
+while 224 call sites hand-wrote ramp tokens to reach the surface dial the
+component could not express. That was a real wiring gap, and the 89 sites using
+`variant=` now get the dial. It was just never the 287-site problem this report
+described.

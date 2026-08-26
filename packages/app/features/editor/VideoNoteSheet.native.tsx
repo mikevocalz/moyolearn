@@ -129,7 +129,7 @@ function VideoNoteBody() {
 
       {rec.phase === 'idle' ? (
         <>
-          <Text className="text-caption text-text-muted">
+          <Text variant="caption" tone="muted">
             Up to {formatClock(VIDEO_MAX_SECONDS)}. Recording stops on its own at the limit.
           </Text>
           <Button title="Record" onPress={() => void rec.start()} />
@@ -162,12 +162,12 @@ function VideoNoteBody() {
       {rec.phase === 'finished' ? (
         <>
           {rec.reason === 'max-duration-reached' ? (
-            <Text className="text-caption text-text-muted">
+            <Text variant="caption" tone="muted">
               Stopped at the {formatClock(VIDEO_MAX_SECONDS)} limit. The recording is complete.
             </Text>
           ) : null}
           {rec.reason === 'max-file-size-reached' ? (
-            <Text className="text-caption text-text-muted">
+            <Text variant="caption" tone="muted">
               Stopped at the size limit. The recording is complete.
             </Text>
           ) : null}
