@@ -1,37 +1,69 @@
 'use client';
 import { create } from 'zustand';
 import type { TutorStageState } from '@acme/ui';
-import { traceAttempt, DEFAULT_TRACING, masterySentence, inferSkillTitle } from '@acme/student-model/pure';
+import {
+  traceAttempt,
+  DEFAULT_TRACING,
+  masterySentence,
+  inferSkillTitle,
+} from '@acme/student-model/pure';
 import { useCaptureStore } from '../capture';
 
 interface TutorState {
   state: TutorStageState;
+  problem: string;
   skillTitle: string;
   mastery: number;
   attempts: number;
   start: (problem: string | null) => void;
+  tryIt: () => void;
+  nextHint: () => void;
   send: (message: string) => void;
   respond: (isCorrect: boolean) => void;
 }
 
-function openingUterance(problem: string | null): TutorStageState {
+function askingState(problem: string): TutorStageState {
   return {
     kind: 'speaking',
-    utterance: { text: problem ? `Let's work on: ${problem}` : "What would you like to work on?" },
+    utterance: { text: `Now you try: ${problem}` },
   };
 }
 
 export const useTutorStore = create<TutorState>((set) => ({
-  state: openingUterance(null),
+  state: { kind: 'presence' },
+  problem: '',
   skillTitle: '',
   mastery: DEFAULT_TRACING.prior,
   attempts: 0,
-  start: (problem) => set({
-    state: openingUterance(problem),
-    skillTitle: inferSkillTitle(problem ?? ''),
-    mastery: DEFAULT_TRACING.prior,
-    attempts: 0,
-  }),
+  start: (problem) => {
+    const p = problem ?? '';
+    const skillTitle = inferSkillTitle(p);
+    set({
+      state: {
+        kind: 'hint',
+        step: {
+          index: 1,
+          total: 2,
+          message: `For ${skillTitle}, start by identifying the most important operation in the problem.`,
+        },
+      },
+      problem: p,
+      skillTitle,
+      mastery: DEFAULT_TRACING.prior,
+      attempts: 0,
+    });
+  },
+  nextHint: () => set((s) => ({
+    state: {
+      kind: 'hint',
+      step: {
+        index: 2,
+        total: 2,
+        message: `Then work through ${s.skillTitle} one step at a time.`,
+      },
+    },
+  })),
+  tryIt: () => set((s) => ({ state: askingState(s.problem) })),
   send: (message) => set((s) => ({
     state: { kind: 'thinking' },
     attempts: s.attempts + 1,

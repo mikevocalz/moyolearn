@@ -20,7 +20,7 @@ export interface TutorScreenProps {
 export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   const router = useRouter();
   const problem = useCaptureStore((s) => s.problem);
-  const { state, start, send } = useTutorStore();
+  const { state, start, send, tryIt, nextHint } = useTutorStore();
 
   useEffect(() => {
     start(problem);
@@ -58,7 +58,8 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
       buttonSize={buttonSizeForBand(ageBand)}
       onBack={router.back}
       onSend={handleSend}
-      onTryIt={() => start(problem)}
+      onTryIt={tryIt}
+      onNextHint={nextHint}
     />
   );
 }
