@@ -18,6 +18,7 @@
 export { eraseFact, eraseTranscript, cascadePreview } from './src/erasure';
 export type { ErasureResult } from './src/erasure';
 export { isExpired } from './src/facts';
+export { masteryFact, misconceptionFact, masterySentence, isMisconceptionTag, MISCONCEPTIONS } from './src/facts';
 export type {
   DerivedFact,
   FactKind,
@@ -27,4 +28,7 @@ export type {
   ReviewFact,
   InterestFact,
   ScaffoldingFact,
+  MisconceptionTag,
 } from './src/facts';
+export { traceAttempt, decayMastery, isFrontier, DEFAULT_TRACING, FRONTIER_LOW, FRONTIER_HIGH } from './src/mastery';
+export type { TracingParams } from './src/mastery';

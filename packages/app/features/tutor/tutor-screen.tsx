@@ -26,7 +26,7 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   }, [problem, start]);
 
   const respond = useDebouncedCallback(
-    () => useTutorStore.getState().respond(),
+    (isCorrect: boolean) => useTutorStore.getState().respond(isCorrect),
     { wait: 800 },
   );
 
@@ -34,7 +34,9 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
     const trimmed = message.trim();
     if (!trimmed) return;
     send(trimmed);
-    respond();
+    // Real evaluation goes through the Safety Plane; the client marks wrong for
+    // the demo until that endpoint is wired (doc 19 §1, doc 07 §2).
+    respond(false);
   };
 
   if (problem == null) {

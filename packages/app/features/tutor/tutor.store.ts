@@ -1,13 +1,17 @@
 'use client';
 import { create } from 'zustand';
 import type { TutorStageState } from '@acme/ui';
+import { traceAttempt, DEFAULT_TRACING } from '@acme/student-model/pure';
 import { useCaptureStore } from '../capture';
 
 interface TutorState {
   state: TutorStageState;
+  skillTitle: string;
+  mastery: number;
+  attempts: number;
   start: (problem: string | null) => void;
   send: (message: string) => void;
-  respond: () => void;
+  respond: (isCorrect: boolean) => void;
 }
 
 function openingUterance(problem: string | null): TutorStageState {
@@ -19,15 +23,31 @@ function openingUterance(problem: string | null): TutorStageState {
 
 export const useTutorStore = create<TutorState>((set) => ({
   state: openingUterance(null),
-  start: (problem) => set({ state: openingUterance(problem) }),
-  send: (message) => set({ state: { kind: 'thinking' } }),
-  respond: () => {
-    set({
-      state: {
-        kind: 'diagnosis',
-        name: 'Addition before multiplication',
-        message: "It looks like the addition got done before the multiplication. That's the most common order-of-operations hiccup. Let's try once more, doing the multiplication first.",
-      },
-    });
-  },
+  skillTitle: '',
+  mastery: DEFAULT_TRACING.prior,
+  attempts: 0,
+  start: (problem) => set({
+    state: openingUterance(problem),
+    skillTitle: problem ?? 'this problem',
+    mastery: DEFAULT_TRACING.prior,
+    attempts: 0,
+  }),
+  send: (message) => set((s) => ({
+    state: { kind: 'thinking' },
+    attempts: s.attempts + 1,
+  })),
+  respond: (isCorrect) => set((s) => {
+    const nextMastery = traceAttempt(s.mastery, isCorrect);
+    const state: TutorStageState = isCorrect
+      ? {
+          kind: 'speaking',
+          utterance: { text: `Nice work on ${s.skillTitle}. That's the right idea — keep going.` },
+        }
+      : {
+          kind: 'diagnosis',
+          name: s.skillTitle,
+          message: `It looks like ${s.skillTitle} is still tricky. Let's try once more, one step at a time.`,
+        };
+    return { mastery: nextMastery, state };
+  }),
 }));
