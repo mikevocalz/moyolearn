@@ -264,7 +264,12 @@ export function TutorStage({
     setDraft('');
   }, [draft, onSend]);
 
-  const inputDisabled = state.kind === 'ended' || state.kind === 'crisis' || state.kind === 'paused';
+  const inputDisabled =
+    state.kind === 'ended' ||
+    state.kind === 'crisis' ||
+    state.kind === 'paused' ||
+    state.kind === 'hint' ||
+    state.kind === 'thinking';
 
   const stageBody = (
     <View className="w-full gap-stack p-inset">
