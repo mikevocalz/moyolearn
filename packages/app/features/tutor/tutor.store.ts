@@ -117,19 +117,26 @@ export const useTutorStore = create<TutorState>((set) => ({
           set({ state: { kind: 'paused', since: Date.now() } });
           return;
         }
+        if (event.kind === 'unavailable') {
+          // Retryable, not fail-closed. `paused` is the plane's terminal state
+          // and it locks the composer; a missing key or a vendor blip must not
+          // put a child in it.
+          set({ state: { kind: 'retry' } });
+          return;
+        }
         return;
       }
     } catch {
-      // Doc 23 §3.6: the fail-closed state is worded as Natalie taking a break,
-      // never as an error the child has to interpret or act on.
-      set({ state: { kind: 'paused', since: Date.now() } });
+      // A transport failure is retryable. Only a Safety Plane decision earns the
+      // terminal paused state.
+      set({ state: { kind: 'retry' } });
       return;
     }
 
     // The stream ended without a terminal frame — a dropped connection. The
     // partial turn stays on screen because it already passed the plane, but a
     // turn with nothing in it is the paused state.
-    if (!spoken) set({ state: { kind: 'paused', since: Date.now() } });
+    if (!spoken) set({ state: { kind: 'retry' } });
   },
   respond: (isCorrect) => set((s) => {
     const nextAttempts = s.attempts + 1;

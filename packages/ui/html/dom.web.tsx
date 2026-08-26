@@ -153,10 +153,19 @@ export const InputBase = ({
   />
 );
 
+export interface TextareaBaseProps extends InputBaseProps {
+  /**
+   * React 19 passes refs as an ordinary prop. Declared here because the tutor
+   * composer measures `scrollHeight` to grow the field with its content, and a
+   * component you cannot get a handle on cannot be measured.
+   */
+  ref?: React.Ref<HTMLTextAreaElement | null>;
+}
+
 export const TextareaBase = ({
   onChangeText, onSubmitEditing: _s, editable, secureTextEntry: _p, returnKeyType: _r,
   placeholderTextColor: _ptc, numberOfLines, role: _role, className, style, ...props
-}: InputBaseProps) => (
+}: TextareaBaseProps) => (
   <textarea
     readOnly={editable === false}
     rows={numberOfLines}

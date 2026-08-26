@@ -68,6 +68,8 @@ export interface TutorStageProps {
   onNextHint?: () => void;
   onPracticeOnOwn?: () => void;
   onBackToPlan?: () => void;
+  /** Re-attempt a turn that never reached the tutor. */
+  onRetry?: () => void;
   /**
    * Worked-out content for the side canvas (doc 23 §5). Omit it and the
    * conversation takes the whole screen — an empty workspace is not a
@@ -119,6 +121,7 @@ interface StateBodyProps {
   onNextHint?: () => void;
   onPracticeOnOwn?: () => void;
   onBackToPlan?: () => void;
+  onRetry?: () => void;
 }
 
 function StateBody({
@@ -130,6 +133,7 @@ function StateBody({
   onNextHint,
   onPracticeOnOwn,
   onBackToPlan,
+  onRetry,
 }: StateBodyProps) {
   switch (state.kind) {
     case 'presence':
@@ -239,7 +243,20 @@ function StateBody({
         </View>
       );
     case 'retry':
-      return <Text className="font-sans text-body text-text-muted">Hmm, that didn&apos;t stick — try again</Text>;
+      return (
+        <View className="w-full gap-stack">
+          <Text className="font-sans text-body text-text">
+            I couldn&apos;t reach Natalie just then. Your work is saved.
+          </Text>
+          <Button
+            title="Try again"
+            variant="highlighter"
+            size={buttonSize}
+            onPress={onRetry}
+            aria-label="Try reaching Natalie again"
+          />
+        </View>
+      );
     case 'crisis':
       return <Text className="font-sans text-body text-text">Please tell a trusted adult.</Text>;
   }
@@ -264,6 +281,7 @@ export function TutorStage({
   onNextHint,
   onPracticeOnOwn,
   onBackToPlan,
+  onRetry,
   canvas,
   className,
 }: TutorStageProps) {
@@ -277,12 +295,12 @@ export function TutorStage({
     setDraft('');
   }, [draft, onSend]);
 
-  const inputDisabled =
-    state.kind === 'ended' ||
-    state.kind === 'crisis' ||
-    state.kind === 'paused' ||
-    state.kind === 'hint' ||
-    state.kind === 'thinking';
+  // Only states where the session is genuinely over lock the composer.
+  // `hint` and `thinking` locked out a child who was mid-answer, and `paused`
+  // made an unreachable tutor look like an app that had stopped accepting
+  // input at all. A learner can always write; whether it sends is a separate
+  // question, and `canSend` already answers it.
+  const inputDisabled = state.kind === 'ended' || state.kind === 'crisis';
 
   const stageBody = (
     <View className="w-full flex-1 gap-stack p-inset">
@@ -300,6 +318,7 @@ export function TutorStage({
           onNextHint={onNextHint}
           onPracticeOnOwn={onPracticeOnOwn}
           onBackToPlan={onBackToPlan}
+          onRetry={onRetry}
         />
       </View>
       <Composer

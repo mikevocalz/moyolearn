@@ -39,7 +39,16 @@ export interface CoachTurnInput {
 export type CoachEvent =
   | { kind: 'chunk'; text: string }
   | { kind: 'replace'; text: string }
+  /** The Safety Plane stopped this turn. A decision, and a terminal one. */
   | { kind: 'blocked' }
+  /**
+   * The turn could not be attempted — no API key, vendor outage, transport
+   * failure. Deliberately NOT `blocked`: conflating "the plane refused" with
+   * "the server is misconfigured" sent an unconfigured dev environment into the
+   * fail-closed paused state, which locks the composer and reads to a child as
+   * Natalie having withdrawn. This is retryable and says so.
+   */
+  | { kind: 'unavailable' }
   | { kind: 'end' };
 
 /**
@@ -111,9 +120,8 @@ async function* coach(
       return;
     }
   } catch {
-    // A vendor outage or a model refusal is not something a child should be
-    // shown a stack trace for. `blocked` renders as the plane's paused state,
-    // which doc 23 §3.6 already words as "nothing you did".
-    yield { kind: 'blocked' };
+    // Reaching here means generation never completed — the plane itself returns
+    // an outcome rather than throwing. So this is infrastructure, not policy.
+    yield { kind: 'unavailable' };
   }
 }

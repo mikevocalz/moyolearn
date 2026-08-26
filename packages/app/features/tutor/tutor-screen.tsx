@@ -103,6 +103,7 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
       buttonSize={buttonSizeForBand(ageBand)}
       onBack={router.back}
       onSend={handleSend}
+      onRetry={() => void coach('')}
     />
   );
 }
