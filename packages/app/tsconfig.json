@@ -3,6 +3,7 @@
   "compilerOptions": {},
   "include": [
     "features/**/*",
+    "core/**/*",
     "index.ts"
   ]
 }
