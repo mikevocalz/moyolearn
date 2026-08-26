@@ -75,6 +75,7 @@ export interface Config {
     misconceptions: Misconception;
     sessionTranscripts: SessionTranscript;
     studentModelFacts: StudentModelFact;
+    organizations: Organization;
     leads: Lead;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -91,6 +92,7 @@ export interface Config {
     misconceptions: MisconceptionsSelect<false> | MisconceptionsSelect<true>;
     sessionTranscripts: SessionTranscriptsSelect<false> | SessionTranscriptsSelect<true>;
     studentModelFacts: StudentModelFactsSelect<false> | StudentModelFactsSelect<true>;
+    organizations: OrganizationsSelect<false> | OrganizationsSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -290,6 +292,23 @@ export interface StudentModelFact {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "organizations".
+ */
+export interface Organization {
+  id: number;
+  name: string;
+  /**
+   * The tenant key. This is the value rows carry as orgId.
+   */
+  slug: string;
+  kind: 'tutoring' | 'school' | 'district';
+  logoUrl?: string | null;
+  brandAccent?: ('ember' | 'gold' | 'forest' | 'sky' | 'rose') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "leads".
  */
 export interface Lead {
@@ -366,6 +385,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'studentModelFacts';
         value: number | StudentModelFact;
+      } | null)
+    | ({
+        relationTo: 'organizations';
+        value: number | Organization;
       } | null)
     | ({
         relationTo: 'leads';
@@ -541,6 +564,19 @@ export interface StudentModelFactsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "organizations_select".
+ */
+export interface OrganizationsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  kind?: T;
+  logoUrl?: T;
+  brandAccent?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "leads_select".
  */
 export interface LeadsSelect<T extends boolean = true> {
@@ -627,6 +663,7 @@ export interface CollectionQueryWidget {
       | 'misconceptions'
       | 'sessionTranscripts'
       | 'studentModelFacts'
+      | 'organizations'
       | 'leads';
     where?:
       | {
@@ -659,6 +696,7 @@ export interface ActivityWidget {
           | 'misconceptions'
           | 'sessionTranscripts'
           | 'studentModelFacts'
+          | 'organizations'
           | 'leads'
         )[]
       | null;

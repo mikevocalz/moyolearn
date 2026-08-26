@@ -13,6 +13,7 @@ import { Misconceptions } from './collections/Misconceptions';
 import { SessionTranscripts } from './collections/SessionTranscripts';
 import { StudentModelFacts } from './collections/StudentModelFacts';
 import { Leads } from './collections/Leads';
+import { Organizations } from './collections/Organizations';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverURL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -53,6 +54,7 @@ export default buildConfig({
     // Operations Cloud (doc 28). Kept apart from the Loop A collections above
     // on purpose: business data and learning data never blend, and the schema
     // is where that wall is real rather than a convention.
+    Organizations,
     Leads,
   ],
   db: postgresAdapter({
