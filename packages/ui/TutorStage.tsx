@@ -8,6 +8,7 @@ import { useCallback, useState } from 'react';
 import { Dial } from './Dial';
 import { View, Text } from './primitives';
 import { MessageBubble } from './MessageBubble';
+import { StreamedText } from './StreamedText';
 import { Composer } from './Composer';
 import { SessionToolbar } from './SessionToolbar';
 import { Badge } from './Badge';
@@ -125,13 +126,19 @@ function StateBody({
         </View>
       );
     case 'speaking':
-      return <MessageBubble from="tutor">{state.utterance.text}</MessageBubble>;
+      return (
+        <MessageBubble from="tutor">
+          <StreamedText>{state.utterance.text}</StreamedText>
+        </MessageBubble>
+      );
     case 'thinking':
       return <Text className="font-sans text-body text-text-muted">Natalie is thinking</Text>;
     case 'hint':
       return (
         <View className="w-full gap-stack">
-          <MessageBubble from="tutor">{state.step.message}</MessageBubble>
+          <MessageBubble from="tutor">
+            <StreamedText>{state.step.message}</StreamedText>
+          </MessageBubble>
           <Text className="font-mono text-data text-text-muted">
             Hint {state.step.index} of {state.step.total}
           </Text>

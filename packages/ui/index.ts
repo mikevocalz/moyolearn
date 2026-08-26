@@ -26,6 +26,7 @@ export { TutorStage, type TutorStageProps, type TutorStageState } from './TutorS
 export { LearningCanvas, type LearningCanvasProps } from './LearningCanvas';
 export { SessionToolbar, type SessionToolbarProps } from './SessionToolbar';
 export { MessageBubble, type MessageBubbleProps } from './MessageBubble';
+export { StreamedText, type StreamedTextProps } from './StreamedText';
 export { Composer, type ComposerProps } from './Composer';
 
 // forms
