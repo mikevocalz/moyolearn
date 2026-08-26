@@ -1,7 +1,7 @@
 'use client';
-// useProgress — client hook for the persisted learner mastery snapshot.
+// useProgress — client hook for the persisted learner student model snapshot.
 // SOT: docs/pack/22-reporting-charts-spec.md §2
-// SOT-KEYWORDS: progress mastery hook client fetch
+// SOT-KEYWORDS: progress mastery hook client fetch review scaffolding
 import { useEffect, useState } from 'react';
 
 const API_URL =
@@ -11,10 +11,16 @@ const API_URL =
 
 export interface ProgressData {
   masteryBySkill: Record<string, number>;
+  reviewBySkill: Record<string, string>;
+  scaffoldingBySkill: Record<string, number>;
 }
 
 export function useProgress(revision = 0) {
-  const [data, setData] = useState<ProgressData>({ masteryBySkill: {} });
+  const [data, setData] = useState<ProgressData>({
+    masteryBySkill: {},
+    reviewBySkill: {},
+    scaffoldingBySkill: {},
+  });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 

@@ -1,7 +1,7 @@
 'use client';
 // ProgressScreen — persisted mastery view with live practice integration.
 // SOT: docs/pack/19-learning-outcomes-spec.md §3 · docs/pack/22-reporting-charts-spec.md §2
-// SOT-KEYWORDS: progress screen mastery chart learner persisted live
+// SOT-KEYWORDS: progress screen mastery chart learner persisted live review scaffolding
 
 import { useRouter } from 'solito/navigation';
 import { MasteryBar, Heading, Text } from '@acme/ui';
@@ -31,7 +31,7 @@ export function ProgressScreen() {
   const router = useRouter();
   const { setProblem } = useCaptureStore();
   const { skillTitle, mastery, attempts } = useTutorStore();
-  const { masteryBySkill, loading } = useProgress(attempts);
+  const { masteryBySkill, reviewBySkill, scaffoldingBySkill, loading } = useProgress(attempts);
 
   const handlePractice = (subject: string) => {
     const problem = generatePracticeProblem(subject);
@@ -62,6 +62,19 @@ export function ProgressScreen() {
   const seeded = SEED.filter(
     ({ subject }) => !practicedKeys.has(subject.toLowerCase()) && subject.toLowerCase() !== activeLower,
   );
+
+  const reviews = Object.entries(reviewBySkill).map(([subject, dueAt]) => ({
+    subject,
+    dueAt: new Date(dueAt).toLocaleDateString(),
+    onPress: generatePracticeProblem(subject) ? () => handlePractice(subject) : undefined,
+  }));
+
+  const scaffolds = Object.entries(scaffoldingBySkill).map(([subject, hintDepth]) => ({
+    subject,
+    value: Math.min(Math.round(hintDepth * 25), 100),
+    state: 'steady' as const,
+    onPress: generatePracticeProblem(subject) ? () => handlePractice(subject) : undefined,
+  }));
 
   return (
     <View className="flex-1 gap-stack p-inset">
@@ -103,6 +116,25 @@ export function ProgressScreen() {
                 />
               );
             })}
+          </View>
+        ) : null}
+        {reviews.length > 0 ? (
+          <View className="gap-group">
+            <SectionHeading>Coming up for review</SectionHeading>
+            {reviews.map(({ subject, dueAt }) => (
+              <View key={subject} className="flex-row justify-between">
+                <Text className="font-sans text-body text-text">{subject}</Text>
+                <Text className="font-sans text-body text-text-muted">{dueAt}</Text>
+              </View>
+            ))}
+          </View>
+        ) : null}
+        {scaffolds.length > 0 ? (
+          <View className="gap-group">
+            <SectionHeading>Scaffolding</SectionHeading>
+            {scaffolds.map(({ subject, value, onPress }) => (
+              <MasteryBar key={subject} label={subject} value={value} state="steady" onPress={onPress} />
+            ))}
           </View>
         ) : null}
       </View>
