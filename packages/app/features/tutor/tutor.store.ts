@@ -15,6 +15,8 @@ interface TutorState {
   skillTitle: string;
   mastery: number;
   attempts: number;
+  masteryBySkill: Record<string, number>;
+  attemptsBySkill: Record<string, number>;
   start: (problem: string | null) => void;
   tryIt: () => void;
   nextHint: () => void;
@@ -35,22 +37,28 @@ export const useTutorStore = create<TutorState>((set) => ({
   skillTitle: '',
   mastery: DEFAULT_TRACING.prior,
   attempts: 0,
+  masteryBySkill: {},
+  attemptsBySkill: {},
   start: (problem) => {
     const p = problem ?? '';
     const skillTitle = inferSkillTitle(p);
-    set({
-      state: {
-        kind: 'hint',
-        step: {
-          index: 1,
-          total: 2,
-          message: `For ${skillTitle}, start by identifying the most important operation in the problem.`,
+    set((s) => {
+      const mastery = s.masteryBySkill[skillTitle] ?? DEFAULT_TRACING.prior;
+      const attempts = s.attemptsBySkill[skillTitle] ?? 0;
+      return {
+        state: {
+          kind: 'hint',
+          step: {
+            index: 1,
+            total: 2,
+            message: `For ${skillTitle}, start by identifying the most important operation in the problem.`,
+          },
         },
-      },
-      problem: p,
-      skillTitle,
-      mastery: DEFAULT_TRACING.prior,
-      attempts: 0,
+        problem: p,
+        skillTitle,
+        mastery,
+        attempts,
+      };
     });
   },
   nextHint: () => set((s) => ({
@@ -70,6 +78,7 @@ export const useTutorStore = create<TutorState>((set) => ({
   })),
   respond: (isCorrect) => set((s) => {
     const nextMastery = traceAttempt(s.mastery, isCorrect);
+    const nextAttempts = s.attempts;
     const state: TutorStageState = isCorrect
       ? {
           kind: 'speaking',
@@ -78,8 +87,14 @@ export const useTutorStore = create<TutorState>((set) => ({
       : {
           kind: 'diagnosis',
           name: s.skillTitle,
-          message: `${masterySentence(s.skillTitle, nextMastery, s.attempts)} Let's try once more.`,
+          message: `${masterySentence(s.skillTitle, nextMastery, nextAttempts)} Let's try once more.`,
         };
-    return { mastery: nextMastery, state };
+    return {
+      mastery: nextMastery,
+      attempts: nextAttempts,
+      masteryBySkill: { ...s.masteryBySkill, [s.skillTitle]: nextMastery },
+      attemptsBySkill: { ...s.attemptsBySkill, [s.skillTitle]: nextAttempts },
+      state,
+    };
   }),
 }));
