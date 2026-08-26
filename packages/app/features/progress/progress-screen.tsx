@@ -1,13 +1,14 @@
 'use client';
-// ProgressScreen — pre-seeded mastery view so the demo never lands on an empty chart.
+// ProgressScreen — persisted mastery view with live practice integration.
 // SOT: docs/pack/19-learning-outcomes-spec.md §3 · docs/pack/22-reporting-charts-spec.md §2
-// SOT-KEYWORDS: progress screen mastery chart pre-seeded learner subject
+// SOT-KEYWORDS: progress screen mastery chart learner persisted live
 
 import { useRouter } from 'solito/navigation';
 import { MasteryBar, Heading, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { useTutorStore, useCaptureStore } from '@acme/app';
 import { generatePracticeProblem } from '@acme/student-model/pure';
+import { useProgress } from './use-progress';
 
 const SEED = [
   { subject: 'Number sense', value: 72 },
@@ -29,7 +30,8 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 export function ProgressScreen() {
   const router = useRouter();
   const { setProblem } = useCaptureStore();
-  const { skillTitle, mastery, attempts, masteryBySkill } = useTutorStore();
+  const { skillTitle, mastery, attempts } = useTutorStore();
+  const { masteryBySkill, loading } = useProgress();
 
   const handlePractice = (subject: string) => {
     const problem = generatePracticeProblem(subject);
@@ -46,7 +48,7 @@ export function ProgressScreen() {
       ? [{ subject: `Live: ${skillTitle}`, value: Math.round(mastery * 100), state: masteryState(mastery), onPress: liveOnPress }]
       : [];
 
-  const activeLower = skillTitle.toLowerCase();
+  const activeLower = (skillTitle ?? '').toLowerCase();
   const practiced = Object.entries(masteryBySkill)
     .filter(([subject]) => subject.toLowerCase() !== activeLower)
     .map(([subject, value]) => ({
@@ -66,7 +68,7 @@ export function ProgressScreen() {
       <View className="gap-group">
         <Heading level={2}>Your progress</Heading>
         <Text className="font-sans text-body text-text-muted">
-          The bars show what you have mastered so far. The seeded data keeps the demo useful.
+          {loading ? 'Loading your mastery...' : 'The bars show what you have mastered so far.'}
         </Text>
       </View>
       <View className="gap-stack">

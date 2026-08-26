@@ -30,6 +30,7 @@ export { useTutorStore } from './features/tutor/tutor.store';
 export { SessionPrepScreen } from './features/session-prep/screen';
 export { PlanScreen } from './features/plan/screen';
 export { ProgressScreen } from './features/progress/screen';
+export { useProgress } from './features/progress/use-progress';
 export { PracticeScreen } from './features/practice/screen';
 export { AiActivityScreen } from './features/ai-activity/screen';
 export { MemoryScreen } from './features/memory/screen';
