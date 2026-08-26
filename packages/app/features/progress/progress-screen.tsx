@@ -38,19 +38,21 @@ export function ProgressScreen() {
     router.push('/tutor');
   };
 
-  const practiced = Object.entries(masteryBySkill).map(([subject, value]) => ({
-    subject,
-    value: Math.round(value * 100),
-    state: masteryState(value),
-    onPress: generatePracticeProblem(subject) ? () => handlePractice(subject) : undefined,
-  }));
-
   const live =
-    attempts > 0 && skillTitle && !masteryBySkill[skillTitle]
+    attempts > 0 && skillTitle
       ? [{ subject: `Live: ${skillTitle}`, value: Math.round(mastery * 100), state: masteryState(mastery) }]
       : [];
 
   const activeLower = skillTitle.toLowerCase();
+  const practiced = Object.entries(masteryBySkill)
+    .filter(([subject]) => subject.toLowerCase() !== activeLower)
+    .map(([subject, value]) => ({
+      subject,
+      value: Math.round(value * 100),
+      state: masteryState(value),
+      onPress: generatePracticeProblem(subject) ? () => handlePractice(subject) : undefined,
+    }));
+
   const practicedKeys = new Set(Object.keys(masteryBySkill).map((s) => s.toLowerCase()));
   const seeded = SEED.filter(
     ({ subject }) => !practicedKeys.has(subject.toLowerCase()) && subject.toLowerCase() !== activeLower,
