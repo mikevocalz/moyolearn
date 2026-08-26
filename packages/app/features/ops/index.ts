@@ -9,7 +9,8 @@ export { useViewParams, type ShareableView, type ViewParams } from './use-view-p
 export { applyStageChange, MANUAL_STAGES, type StageChange } from './stage-change';
 export { useStageAction } from './use-stage-action';
 export {
-  TODAY_SESSIONS,
+  SESSIONS_BY_ORG,
+  REVENUE_BY_ORG,
   STAGE_TONE,
   MIN_COHORT,
   attendanceCell,

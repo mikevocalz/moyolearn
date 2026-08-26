@@ -39,8 +39,12 @@ export async function protectedOperation<R>(
         The mock session carries an org too. Without one every org-scoped read
         fails closed to an empty result, and the ops dashboard looks broken in
         exactly the mode it is meant to be developed in.
+
+        It is a REAL slug from the organizations table, not a `dev-org-1`
+        placeholder: a mock tenant key that matches no row reads as "the query is
+        broken" rather than "you are signed in as nobody".
       */
-      orgId: 'dev-org-1',
+      orgId: 'riverside-unified',
     });
   }
 

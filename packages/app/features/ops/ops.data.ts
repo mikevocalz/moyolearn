@@ -8,6 +8,7 @@
 // SOT: docs/pack/28-crm-spec.md §2 (object model) · §3 (pipeline) · docs/pack/19-learning-outcomes-spec.md §3–§4 · docs/pack/27-reporting-charts-spec.md §4
 // SOT-KEYWORDS: ops dashboard crm leads sessions pipeline stage suppression k-anonymity cohort
 import type { Suppressible, TrendPoint } from '@acme/ui';
+import { MOCK_LEARNERS, MOCK_STAFF } from '../../fixtures/cast.ts';
 
 /** Doc 28 §3 — the trial is a first-class stage, not a note. */
 export type Stage =
@@ -73,11 +74,32 @@ export interface Session {
   needsAttention?: boolean;
 }
 
-export const TODAY_SESSIONS: readonly Session[] = [
-  { id: 's1', time: '09:00–09:45', learner: 'Maya Rodriguez', subject: 'Algebra II', tutor: 'Priya Raman', mode: 'Virtual' },
-  { id: 's2', time: '10:00–10:45', learner: 'Daniel Okafor', subject: 'Trial · Fractions', tutor: 'Marcus Bell', mode: 'In person', needsAttention: true },
-  { id: 's3', time: '14:30–15:15', learner: 'Elena Fischer', subject: 'Reading', tutor: 'Priya Raman', mode: 'Virtual' },
-];
+/*
+  Sessions and revenue are still fixtures, and honestly so: doc 01 §7.1 plans a
+  `sessions` collection and doc 28 §7 routes revenue through doc 19's rollup
+  tables, but neither exists. What changed is that they are no longer a cast of
+  strangers — the names are READ from the roster, so a person renamed in one
+  place cannot survive in the other, and each district has its own.
+
+  Doc 10 §2.3 specs session mode as a discriminated union
+  (`{mode:'virtual'; joinUrl} | {mode:'in-person'; room}`) with lowercase
+  literals. This shape predates that and carries neither `joinUrl` nor `room`;
+  aligning it belongs with the `sessions` collection, not with a fixture swap.
+*/
+const named = (id: string) =>
+  [...MOCK_LEARNERS, ...MOCK_STAFF].find((p) => p.id === id)?.name ?? id;
+
+export const SESSIONS_BY_ORG: Readonly<Record<string, readonly Session[]>> = {
+  'riverside-unified': [
+    { id: 'rs1', time: '09:00\u201309:45', learner: named('learner-maya'), subject: 'Algebra II', tutor: named('staff-priya'), mode: 'Virtual' },
+    { id: 'rs2', time: '10:00\u201310:45', learner: named('learner-daniel'), subject: 'Trial \u00b7 Fractions', tutor: named('staff-priya'), mode: 'In person', needsAttention: true },
+    { id: 'rs3', time: '14:30\u201315:15', learner: named('learner-maya'), subject: 'Reading', tutor: named('staff-priya'), mode: 'Virtual' },
+  ],
+  'lincoln-public': [
+    { id: 'lp1', time: '13:00\u201313:45', learner: named('learner-sofia'), subject: 'Reading', tutor: named('staff-kenji'), mode: 'Virtual' },
+    { id: 'lp2', time: '15:00\u201315:45', learner: named('learner-tomi'), subject: 'Chemistry', tutor: named('staff-kenji'), mode: 'In person', needsAttention: true },
+  ],
+};
 
 export const STAGE_TONE = {
   Inquiry: 'neutral',
@@ -89,16 +111,31 @@ export const STAGE_TONE = {
 } as const satisfies Record<Stage, 'neutral' | 'primary' | 'success' | 'attention'>;
 
 /**
- * Invoiced revenue by month. Two months carry a suppressed figure so the chart's
- * hole-handling is exercised by the default fixture rather than only by a test —
- * doc 27 §4 requires every chart component to render both variants.
+ * Invoiced revenue by month, per district.
+ *
+ * Riverside hides ONE month and Lincoln hides TWO ADJACENT ones, deliberately.
+ * A single hole and a run of holes take different paths through the chart —
+ * `TrendLine` merges consecutive suppressed points into one hatched span — and
+ * a branch only the tests reach is a branch that breaks in front of a customer.
+ * The previous fixture's comment claimed two suppressed months and shipped one.
  */
-export const REVENUE_BY_MONTH: readonly TrendPoint[] = [
-  { label: 'Feb', value: { value: 2140 } },
-  { label: 'Mar', value: { value: 2680 } },
-  { label: 'Apr', value: { suppressed: true } },
-  { label: 'May', value: { value: 3120 } },
-  { label: 'Jun', value: { value: 2960 } },
-  { label: 'Jul', value: { value: 3870 } },
-  { label: 'Aug', value: { value: 4210 } },
-];
+export const REVENUE_BY_ORG: Readonly<Record<string, readonly TrendPoint[]>> = {
+  'riverside-unified': [
+    { label: 'Feb', value: { value: 2140 } },
+    { label: 'Mar', value: { value: 2680 } },
+    { label: 'Apr', value: { suppressed: true } },
+    { label: 'May', value: { value: 3120 } },
+    { label: 'Jun', value: { value: 2960 } },
+    { label: 'Jul', value: { value: 3870 } },
+    { label: 'Aug', value: { value: 4210 } },
+  ],
+  'lincoln-public': [
+    { label: 'Feb', value: { value: 1180 } },
+    { label: 'Mar', value: { suppressed: true } },
+    { label: 'Apr', value: { suppressed: true } },
+    { label: 'May', value: { value: 1640 } },
+    { label: 'Jun', value: { value: 1890 } },
+    { label: 'Jul', value: { value: 2310 } },
+    { label: 'Aug', value: { value: 2480 } },
+  ],
+};

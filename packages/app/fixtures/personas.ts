@@ -64,6 +64,31 @@ export const PERSONAS: Persona[] = [
       { id: 'm5', orgId: 'uptown', orgName: 'Moyo Uptown', role: 'owner' },
     ],
   },
+  {
+    /*
+      The ops personas, and the only two whose `orgId` is a REAL tenant key —
+      the slugs above are shells that match no organization row. Amara and Elena
+      exist so /ops can be opened as somebody, since the screen now reads its
+      district from the session instead of naming one in JSX.
+
+      Two of them, in different districts, because co-branding that has only ever
+      been seen against one logo has not been seen working.
+    */
+    id: 'amara',
+    name: 'Amara',
+    kind: 'owner',
+    memberships: [
+      { id: 'm6', orgId: 'riverside-unified', orgName: 'Riverside Unified', role: 'owner' },
+    ],
+  },
+  {
+    id: 'elena',
+    name: 'Elena',
+    kind: 'owner',
+    memberships: [
+      { id: 'm7', orgId: 'lincoln-public', orgName: 'Lincoln Public Schools', role: 'owner' },
+    ],
+  },
 ];
 
 export function appUserFromPersona(persona: Persona): ActiveContext {

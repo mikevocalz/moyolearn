@@ -12,7 +12,8 @@
     "payload:importmap": "payload generate:importmap",
     "payload:types": "payload generate:types",
     "payload:migrate": "payload migrate",
-    "payload:migrate:create": "payload migrate:create"
+    "payload:migrate:create": "payload migrate:create",
+    "seed": "tsx scripts/seed.mts"
   },
   "dependencies": {
     "@acme/app": "workspace:*",

@@ -12,7 +12,7 @@
 //   collapse control lives in the sidebar's own header row) ·
 //   https://mobbin.com/screens/7edb1dcf-9015-471a-8625-11a0f51767d7 (Uxcel —
 //   breadcrumb left, account right, nothing else in the top bar)
-import { Avatar, DashboardShell, type NavGroup } from '@acme/ui';
+import { Avatar, DashboardShell, Image, type NavGroup } from '@acme/ui';
 import {
   CalendarDays,
   CircleDot,
@@ -26,34 +26,94 @@ import {
 import { Text, View } from '@acme/ui/primitives';
 import { OpsDashboardContent } from './ops-dashboard-content';
 import { useOpsChrome } from './ops.store';
+import { useAppSession } from '../../providers/session';
+import { MOCK_ORGS, MOCK_STAFF, orgBySlug, type MockOrg } from '../../fixtures/cast.ts';
+import { REVENUE_BY_ORG, SESSIONS_BY_ORG } from './ops.data';
 
 // Size only — DashboardShell owns icon colour so it tracks the active state.
 const ICON = 'h-4 w-4';
 
-function Brand() {
+/*
+  The co-branded lockup: Moyo's mark, a divider, then the district's own.
+
+  A district that has paid for this product and put its logo on the door does not
+  want to look like a tenant of somebody else's software, and the two marks sit at
+  the same size for that reason — a shrunken partner logo reads as a footnote.
+  The `\u00d7` is a real multiplication sign rather than a lowercase x, because a
+  letter between two logos looks like a typo at 8px.
+
+  The district image is a plain `Image`, not `Avatar`: an avatar is a person, and
+  its `rounded-md` + border treatment is the person language. A logo carries its
+  own shape.
+*/
+function Brand({ org }: { org: MockOrg }) {
   return (
     <View className="flex-row items-center gap-element">
       <View className="h-8 w-8 items-center justify-center rounded-control border-2 border-border-strong bg-primary">
         <Text className="font-display text-label text-on-primary">M</Text>
       </View>
+      <Text className="text-caption text-text-muted" aria-hidden>
+        {'\u00d7'}
+      </Text>
+      <Image
+        src={org.logoUrl}
+        alt={`${org.name} logo`}
+        className="h-8 w-8 rounded-control border-2 border-border-strong"
+        unoptimized
+      />
       <View className="gap-0">
         <Text className="font-display text-title text-text">Moyo</Text>
-        <Text className="text-caption text-text-muted">Riverside Tutoring</Text>
+        <Text className="text-caption text-text-muted">{org.name}</Text>
       </View>
     </View>
   );
 }
 
-function BrandMark() {
+/*
+  Collapsed, the district mark wins and Moyo's is dropped.
+
+  The rail is 32px of a district employee's screen. They know whose software this
+  is; what they need at a glance is which of their two districts they are looking
+  at, which is exactly the thing the full lockup disambiguates.
+*/
+function BrandMark({ org }: { org: MockOrg }) {
   return (
-    <View className="h-8 w-8 items-center justify-center rounded-control border-2 border-border-strong bg-primary">
-      <Text className="font-display text-label text-on-primary">M</Text>
-    </View>
+    <Image
+      src={org.logoUrl}
+      alt={`${org.name} logo`}
+      className="h-8 w-8 rounded-control border-2 border-border-strong"
+      unoptimized
+    />
   );
 }
 
 export function OpsScreen() {
   const { collapsed, menuOpen, section, toggleCollapsed, toggleMenu, setSection } = useOpsChrome();
+  /*
+    The district comes from the SESSION, not from a literal. This screen used to
+    type "Riverside Tutoring" into two separate places and greet a hardcoded
+    "Amara" while the leads table scoped itself to whatever org the real session
+    carried — so the chrome could confidently name one district while the table
+    below it showed another's families.
+
+    Falling back to the first org rather than rendering blank: an ops user always
+    belongs somewhere, and a sidebar with no name is harder to diagnose than one
+    naming the wrong district.
+  */
+  const { activeContext } = useAppSession();
+  const org = orgBySlug(activeContext.orgId ?? '') ?? MOCK_ORGS[0]!;
+  const operator = MOCK_STAFF.find((m) => m.orgSlug === org.slug && m.role === 'owner');
+
+  /*
+    Computed, not typed. `today` was the string "Tuesday, 26 August", which was
+    correct on exactly one day. `OpsDashboardContentProps` already documents this
+    as "computed by the caller so this stays pure" — the caller just wasn't.
+  */
+  const today = new Date().toLocaleDateString('en-US', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+  });
 
   const item = (
     id: string,
@@ -107,21 +167,26 @@ export function OpsScreen() {
   return (
     <DashboardShell
       groups={groups}
-      brand={<Brand />}
-      brandMark={<BrandMark />}
+      brand={<Brand org={org} />}
+      brandMark={<BrandMark org={org} />}
       collapsed={collapsed}
       onToggleCollapsed={toggleCollapsed}
       menuOpen={menuOpen}
       onToggleMenu={toggleMenu}
       topBarStart={
-        <Text className="text-label text-text-muted">Operations · Riverside Tutoring</Text>
+        <Text className="text-label text-text-muted">Operations · {org.name}</Text>
       }
       /* The kit Avatar, not a hand-rolled circle: avatars in this language are
          rounded SQUARES (Avatar.tsx `rounded-md`). A circular account chip is
          the single most common way a neubrutalist UI stops looking like itself. */
-      topBarEnd={<Avatar name="Amara Osei" size="sm" />}
+      topBarEnd={<Avatar name={operator?.name ?? 'Operations'} imageUri={operator?.avatarUrl} size="sm" />}
     >
-      <OpsDashboardContent today="Tuesday, 26 August" operatorName="Amara" />
+      <OpsDashboardContent
+        today={today}
+        operatorName={operator?.name.split(' ')[0] ?? 'there'}
+        sessions={SESSIONS_BY_ORG[org.slug] ?? []}
+        revenue={REVENUE_BY_ORG[org.slug] ?? []}
+      />
     </DashboardShell>
   );
 }

@@ -1,5 +1,8 @@
 import { addMinutes, set, startOfDay } from 'date-fns';
 import type { Resource, ScheduleDay, ScheduleEvent } from './model.ts';
+// The base moved to `fixtures/avatars.ts` when the ops roster needed the same
+// faces; a second copy of this URL is how two casts start drifting apart.
+import { AVATAR } from '../../fixtures/avatars.ts';
 
 /**
  * Demo data for the schedule screen.
@@ -37,14 +40,6 @@ export function buildDemoDay(reference: Date = new Date()): ScheduleDay {
 }
 
 type At = (hour: number, minute?: number) => Date;
-
-/**
- * Avatar base. Every visual feature is pinned per person — seeded avatars come
- * back random (bald, X-ed eyes), and photographic services skew so heavily
- * white and East Asian that sampling 16 portraits turned up no Black faces.
- * Pinning `skinColor` is what makes the roster's variety deliberate.
- */
-const AVATAR = 'https://api.dicebear.com/9.x/avataaars/png?size=256&eyes=default&mouth=smile&eyebrows=default';
 
 export const DEMO_RESOURCES: Resource[] = [
   { id: 'maya', name: 'Maya Rodriguez', avatarUrl: `${AVATAR}&seed=maya&top=bigHair&hairColor=2c1b18&skinColor=d08b5b&clothing=blazerAndSweater`, accent: 'ember' },

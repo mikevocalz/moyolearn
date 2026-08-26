@@ -50,7 +50,8 @@ import {
   type Suppressible,
 } from '@acme/ui';
 import { Text, View } from '@acme/ui/primitives';
-import { MIN_COHORT, REVENUE_BY_MONTH, STAGE_TONE, TODAY_SESSIONS, type Lead } from './ops.data';
+import { MIN_COHORT, STAGE_TONE, type Lead, type Session } from './ops.data';
+import type { TrendPoint } from '@acme/ui';
 import { useLeads } from './use-leads';
 import { useViewParams } from './use-view-params';
 import type { LeadSortField } from './ops.service';
@@ -221,9 +222,23 @@ export interface OpsDashboardContentProps {
   /** "Tuesday, 26 August" — computed by the caller so this stays pure. */
   today: string;
   operatorName: string;
+  /*
+    Sessions and revenue arrive as PROPS rather than as module imports, because
+    they are now per-district. Importing a constant would have hard-wired this
+    screen to one tenant — the same mistake as the org name that used to be typed
+    into the sidebar — and a component that reaches for its own data cannot be
+    rendered for a second district, or in a story, or in a test.
+  */
+  sessions: readonly Session[];
+  revenue: readonly TrendPoint[];
 }
 
-export function OpsDashboardContent({ today, operatorName }: OpsDashboardContentProps) {
+export function OpsDashboardContent({
+  today,
+  operatorName,
+  sessions,
+  revenue,
+}: OpsDashboardContentProps) {
   /*
     Reads and writes use different systems (the brief's fourth trap). This is the
     READ model only: Query owns the rows, the URL owns the shareable view, and
@@ -297,7 +312,7 @@ export function OpsDashboardContent({ today, operatorName }: OpsDashboardContent
           </View>
         </View>
         <Text className="text-body-lg text-text-muted">
-          {total} families need a decision today, and {TODAY_SESSIONS.length} sessions run
+          {total} families need a decision today, and {sessions.length} sessions run
           before 5pm.
         </Text>
       </View>
@@ -310,9 +325,9 @@ export function OpsDashboardContent({ today, operatorName }: OpsDashboardContent
       */}
       <View className="flex-col gap-stack xl:flex-row xl:items-start">
         <View className="min-w-0 flex-1 gap-stack xl:flex-[2]">
-          <SectionHeader title="Today's sessions" count={String(TODAY_SESSIONS.length)} />
+          <SectionHeader title="Today's sessions" count={String(sessions.length)} />
           <View className="gap-stack">
-            {TODAY_SESSIONS.map((session) => (
+            {sessions.map((session) => (
               <ScheduleCard
                 key={session.id}
                 time={session.time}
@@ -342,8 +357,8 @@ export function OpsDashboardContent({ today, operatorName }: OpsDashboardContent
           */}
           <View className="gap-stack rounded-card border-2 border-border bg-surface-raised p-inset shadow-card">
             <TrendLine
-              data={REVENUE_BY_MONTH}
-              title="Invoiced · 7 months"
+              data={revenue}
+              title={`Invoiced · ${revenue.length} months`}
               height={120}
               // 'en-US' pinned, not the ambient locale: the server and the browser can
               // resolve a bare toLocaleString() differently, and a number that
