@@ -23,6 +23,7 @@ interface TutorState {
   tryIt: () => void;
   nextHint: () => void;
   send: (message: string) => void;
+  unanswerable: () => void;
   respond: (isCorrect: boolean) => void;
 }
 
@@ -74,13 +75,18 @@ export const useTutorStore = create<TutorState>((set) => ({
     },
   })),
   tryIt: () => set((s) => ({ state: askingState(s.problem) })),
-  send: (message) => set((s) => ({
+  send: (message) => set({
     state: { kind: 'thinking' },
-    attempts: s.attempts + 1,
+  }),
+  unanswerable: () => set((s) => ({
+    state: {
+      kind: 'speaking',
+      utterance: { text: `I can't check this ${s.skillTitle} answer on my own. Let's try a number problem.` },
+    },
   })),
   respond: (isCorrect) => set((s) => {
+    const nextAttempts = s.attempts + 1;
     const nextMastery = traceAttempt(s.mastery, isCorrect);
-    const nextAttempts = s.attempts;
     const state: TutorStageState = isCorrect
       ? {
           kind: 'speaking',

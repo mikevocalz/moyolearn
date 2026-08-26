@@ -20,7 +20,7 @@ export interface TutorScreenProps {
 export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   const router = useRouter();
   const problem = useCaptureStore((s) => s.problem);
-  const { state, start, send, tryIt, nextHint } = useTutorStore();
+  const { state, start, send, tryIt, nextHint, unanswerable } = useTutorStore();
 
   useEffect(() => {
     start(problem);
@@ -53,7 +53,11 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
     if (!trimmed) return;
     send(trimmed);
     const isCorrect = await checkAnswer(problem ?? '', trimmed);
-    respond(isCorrect ?? false);
+    if (isCorrect === null) {
+      unanswerable();
+      return;
+    }
+    respond(isCorrect);
   };
 
   if (problem == null) {
