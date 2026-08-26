@@ -6,10 +6,13 @@
 import 'server-only';
 
 export { protectedOperation, type ProtectedCtx } from './core/protected-operation';
+export type { DerivedFact, MasteryFact } from '@acme/student-model';
 export {
   evaluateTutorTurn,
   type TutorTurnInput,
   type TutorTurnResult,
   type TranscriptToSave,
   type SaveTranscript,
+  type LoadPriorFacts,
+  type SaveFacts,
 } from './features/tutor/tutor.service';
