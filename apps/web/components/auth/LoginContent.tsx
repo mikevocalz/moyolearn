@@ -6,9 +6,8 @@
 // would have meant two forms, and the second one would have missed the next fix.
 // SOT: docs/pack/06-auth-onboarding-spec.md §5 §7 · CLAUDE.md (UI)
 // SOT-KEYWORDS: login sign-in co-branded district org lockup auth form web
-import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BrandLockup, Button, Text, TextField } from '@acme/ui';
+import { BrandLockup, Button, Text, TextField, useInstanceStore, useStore } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import type { OrgBranding } from '@acme/app/server';
 import { authClient } from '@/lib/auth-client';
@@ -20,16 +19,31 @@ export interface LoginContentProps {
 
 export function LoginContent({ org }: LoginContentProps) {
   const router = useRouter();
-  const [mode, setMode] = useState<'signin' | 'signup'>('signin');
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+
+  /*
+    One store, not six `useState` calls — this codebase's state rule is zustand
+    always. `useInstanceStore` holds a vanilla store in a ref, so the state is
+    scoped PER MOUNT: a module-level `create()` would look equivalent and would
+    silently share one email box between two mounted login forms.
+
+    The form fields live together because they change together — one `patch`
+    call per edit, one subscription, and no chance of a half-updated render
+    where `loading` has flipped but `error` has not been cleared.
+  */
+  const store = useInstanceStore(() => ({
+    mode: 'signin' as 'signin' | 'signup',
+    email: '',
+    name: '',
+    password: '',
+    error: null as string | null,
+    loading: false,
+  }));
+  const { mode, email, name, password, error, loading } = useStore(store, (s) => s);
+  const patch = (next: Partial<ReturnType<typeof store.getState>>) =>
+    store.setState((s) => ({ ...s, ...next }));
 
   async function handleSubmit() {
-    setError(null);
-    setLoading(true);
+    patch({ error: null, loading: true });
     try {
       if (mode === 'signin') {
         const res = await authClient.signIn.email({ email, password });
@@ -42,9 +56,9 @@ export function LoginContent({ org }: LoginContentProps) {
         router.push('/onboarding/learner');
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Auth failed');
+      patch({ error: err instanceof Error ? err.message : 'Auth failed' });
     } finally {
-      setLoading(false);
+      patch({ loading: false });
     }
   }
 
@@ -84,7 +98,7 @@ export function LoginContent({ org }: LoginContentProps) {
             <TextField
               label="Your name"
               value={name}
-              onChangeText={setName}
+              onChangeText={(name: string) => patch({ name })}
               autoComplete="name"
             />
           )}
@@ -97,7 +111,7 @@ export function LoginContent({ org }: LoginContentProps) {
           <TextField
             label="Email"
             value={email}
-            onChangeText={setEmail}
+            onChangeText={(email: string) => patch({ email })}
             inputMode="email"
             autoComplete="email"
             autoCapitalize="none"
@@ -106,7 +120,7 @@ export function LoginContent({ org }: LoginContentProps) {
             label="Password"
             hint="At least 12 characters."
             value={password}
-            onChangeText={setPassword}
+            onChangeText={(password: string) => patch({ password })}
             secureTextEntry
             autoComplete={mode === 'signin' ? 'current-password' : 'new-password'}
             error={error ?? undefined}
@@ -123,7 +137,7 @@ export function LoginContent({ org }: LoginContentProps) {
           fullWidth
           variant="ghost"
           title={mode === 'signin' ? 'Need an account? Sign up' : 'Have an account? Sign in'}
-          onPress={() => setMode(mode === 'signin' ? 'signup' : 'signin')}
+          onPress={() => patch({ mode: mode === 'signin' ? 'signup' : 'signin', error: null })}
         />
       </View>
     </View>
