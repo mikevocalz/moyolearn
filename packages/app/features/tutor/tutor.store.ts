@@ -1,7 +1,7 @@
 'use client';
 import { create } from 'zustand';
 import type { TutorStageState } from '@acme/ui';
-import { traceAttempt, DEFAULT_TRACING, masterySentence } from '@acme/student-model/pure';
+import { traceAttempt, DEFAULT_TRACING, masterySentence, inferSkillTitle } from '@acme/student-model/pure';
 import { useCaptureStore } from '../capture';
 
 interface TutorState {
@@ -28,7 +28,7 @@ export const useTutorStore = create<TutorState>((set) => ({
   attempts: 0,
   start: (problem) => set({
     state: openingUterance(problem),
-    skillTitle: problem ?? 'this problem',
+    skillTitle: inferSkillTitle(problem ?? ''),
     mastery: DEFAULT_TRACING.prior,
     attempts: 0,
   }),
