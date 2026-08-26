@@ -1,7 +1,7 @@
 // Server-side tutor evaluation service.
 // Wraps the arithmetic evaluator in a protected operation so learner identity
 // and the result are bound at the service boundary, not passed as arguments.
-// SOT: docs/pack/19-learning-outcomes-spec.md §3 · docs/pack/07-security-child-ai-safety-spec.md §2
+// SOT: docs/pack/19-learning-outcomes-spec.md §3 · docs/pack/07-security-child-ai-safety-spec.md §3
 // SOT-KEYWORDS: tutor service evaluate server-only protected operation safety plane transcript distill
 import 'server-only';
 import { randomUUID } from 'node:crypto';
@@ -14,6 +14,7 @@ import { transcriptExpiry } from '@acme/student-model';
 import type { SessionTurn, SessionTranscript, DerivedFact } from '@acme/student-model';
 import { distill } from '@acme/student-model';
 import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation';
+import { runTutorSafetyPlane } from './tutor-safety';
 
 export interface TutorTurnInput {
   problem: string;
@@ -24,7 +25,7 @@ export interface TutorTurnInput {
 
 export interface TutorTurnResult {
   skillTitle: string;
-  /** null when the problem is not arithmetic and the Safety Plane has not classified it. */
+  /** null when the Safety Plane blocked or could not classify the problem. */
   isCorrect: boolean | null;
 }
 
@@ -43,13 +44,9 @@ export type SaveTranscript = (ctx: ProtectedCtx, transcript: TranscriptToSave) =
 export type SaveFacts = (ctx: ProtectedCtx, facts: readonly DerivedFact[]) => Promise<void>;
 
 /**
- * Evaluates one learner answer inside the protected boundary, persists the
- * transcript, distills the updated student model, and writes the derived facts
- * back.
- *
- * Today this runs the client-safe arithmetic evaluator on the server; later the
- * Safety Plane confirms or overrules this result before the learner model is
- * updated.
+ * Evaluates one learner answer inside the protected boundary, runs the Safety
+ * Plane, persists the transcript, distills the updated student model, and writes
+ * the derived facts back.
  */
 export async function evaluateTutorTurn(
   auth: Auth,
@@ -61,6 +58,31 @@ export async function evaluateTutorTurn(
 ): Promise<TutorTurnResult> {
   return protectedOperation(auth, headers, async (ctx) => {
     const skillTitle = inferSkillTitle(input.problem);
+    const safety = await runTutorSafetyPlane(input.problem, ctx);
+
+    if (!safety.outcome.storeInStudentModel) {
+      const turn: SessionTurn = {
+        skillId: skillTitle,
+        skillTitle,
+        correct: false,
+        hintDepth: input.hintDepth,
+        storable: false,
+      };
+      const now = new Date();
+      const sessionId = randomUUID();
+      const transcriptToSave: TranscriptToSave = {
+        sessionId,
+        learnerAuthId: ctx.learnerId,
+        turns: [turn],
+        capturedAt: now.toISOString(),
+        expiresAt: transcriptExpiry(now),
+      };
+      if (saveTranscript) {
+        await saveTranscript(ctx, transcriptToSave);
+      }
+      return { skillTitle, isCorrect: null };
+    }
+
     const isCorrect = evaluateArithmetic(input.problem, input.answer);
 
     const turn: SessionTurn = {

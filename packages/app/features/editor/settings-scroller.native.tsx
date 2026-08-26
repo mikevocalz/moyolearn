@@ -5,11 +5,20 @@
 import { ScrollView } from 'react-native-gesture-handler';
 import type { SettingsScrollerProps } from './settings-scroller.types.ts';
 
-export function SettingsScroller({ children, ref, ...props }: SettingsScrollerProps) {
+export function SettingsScroller({
+  children,
+  ref,
+  style,
+  showsVerticalScrollIndicator,
+}: SettingsScrollerProps) {
   // Same cast as ReorderRow's `blocksExternalGesture(scrollRef as never)`: the
   // ref exists to be read as a handler tag, never as a typed instance.
   return (
-    <ScrollView ref={ref as never} {...props}>
+    <ScrollView
+      ref={ref as never}
+      style={style as never}
+      showsVerticalScrollIndicator={showsVerticalScrollIndicator}
+    >
       {children}
     </ScrollView>
   );

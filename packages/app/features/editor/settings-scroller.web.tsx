@@ -13,7 +13,16 @@ import type { SettingsScrollerProps } from './settings-scroller.types.ts';
  * exist to settle a gesture race the web fork of the row never starts, so both
  * are accepted and dropped rather than making the call site branch.
  */
-export function SettingsScroller({ children, ref, ...props }: SettingsScrollerProps) {
+export function SettingsScroller({
+  children,
+  ref,
+  style,
+  showsVerticalScrollIndicator,
+}: SettingsScrollerProps) {
   void ref;
-  return <ScrollView {...props}>{children}</ScrollView>;
+  return (
+    <ScrollView style={style as never} showsVerticalScrollIndicator={showsVerticalScrollIndicator}>
+      {children}
+    </ScrollView>
+  );
 }
