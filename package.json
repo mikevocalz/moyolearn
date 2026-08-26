@@ -2,7 +2,7 @@
   "name": "moyo",
   "version": "0.1.0",
   "private": true,
-  "description": "Moyo — AI tutoring that helps children learn it by heart. Universal Expo + Next.js (Payload) monorepo.",
+  "description": "Moyo \u2014 AI tutoring that helps children learn it by heart. Universal Expo + Next.js (Payload) monorepo.",
   "license": "MIT",
   "packageManager": "pnpm@10.32.1",
   "engines": {
@@ -21,7 +21,8 @@
     "check:utilities": "node tooling/check-utilities.mjs",
     "check:references": "node tooling/check-references.mjs",
     "check:training": "node tooling/check-no-training-path.mjs",
-    "check:runtime": "node tooling/check-runtime-classes.mjs"
+    "check:runtime": "node tooling/check-runtime-classes.mjs",
+    "ui:sweep": "node tooling/ui-sweep.mjs"
   },
   "devDependencies": {
     "turbo": "catalog:"
