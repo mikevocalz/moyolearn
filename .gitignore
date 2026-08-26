@@ -20,3 +20,8 @@ storybook-static
 
 # OS
 .DS_Store
+
+# Local MCP server config. Untracked on purpose: it holds absolute paths to this
+# machine's checkout, so a committed copy breaks for everyone else and silently
+# points their tools at a directory they do not have.
+.mcp.json
