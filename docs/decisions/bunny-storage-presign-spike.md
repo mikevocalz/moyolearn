@@ -77,11 +77,51 @@ transcode phase, so an image is done when the PUT completes.
 - `Content-Type` signed into the URL must match the header the client sends, or
   the signature fails.
 
-## Still open
+## The adapter: tested, and it genuinely cannot work
 
-`@seshuk/payload-storage-bunny@3.0.0` (note: `@seshuk`, not `@maximseshuk` —
-that name 404s on npm) peers `payload ^3.83.0`, and this repo runs
-`4.0.0-canary.29`. It will not install cleanly. Nor is there a stable Payload 4
-line for `@payloadcms/storage-s3` or `plugin-cloud-storage` — only
-`4.0.0-internal.*` builds. So the adapter does not remove the work; the transport
-above is ours to write either way.
+`@seshuk/payload-storage-bunny@3.0.0` (note `@seshuk`, not `@maximseshuk` — that
+name 404s on npm; `maximseshuk` is the GitHub org). **Tested rather than inferred**,
+against `payload@4.0.0-canary.29` in an isolated install.
+
+The first read of this was wrong twice, which is why the steps are recorded:
+
+| Step | Result |
+|---|---|
+| `npm i payload@4.0.0-canary.29 @seshuk/payload-storage-bunny@3.0.0` | **installs cleanly**, no `--force`, no peer error |
+| `import` | OK — exports `bunnyStorage`, `getBunnyConfig`, … |
+| `bunnyStorage({...})` factory | OK |
+| plugin executed against a Payload 4 config | OK — attaches `upload.adapter`, 5 hooks, `disableLocalStorage` |
+| Payload 4 `buildConfig` | **OK** — full build, adapter present |
+| `getPayload()` | **FAILS** |
+
+The failure is Payload 4's own runtime guard:
+
+> `Mismatching "payload" dependency versions found:`
+> `@payloadcms/plugin-cloud-storage@3.88.0 (Please change this to 4.0.0-canary.29).`
+
+The adapter depends on `@payloadcms/plugin-cloud-storage ^3.87.0`. Payload 4
+refuses to boot when any `@payloadcms/*` package disagrees with core.
+
+Forcing them to match with npm `overrides` clears that check and fails harder,
+at module load:
+
+> `SyntaxError: requested module '@payloadcms/plugin-cloud-storage/utilities'`
+> `does not provide export named 'initClientUploads'`
+
+Payload 4's cloud-storage plugin no longer exports `initClientUploads`, which the
+adapter imports at the top of `dist/index.js`. **That is a real API break, not a
+version string**, so no override, alias or resolution rescues it. It needs an
+upstream release of the adapter targeting Payload 4.
+
+Note the shape of the failure, because it is the dangerous kind: everything works
+right up to `buildConfig`, so a config looks correct and only dies when Payload
+actually boots.
+
+**Consequence: PR-97 does not shrink.** The transport is ours to write. That is
+less bad than it sounds — the spike above proves the presigned path works, and
+the client-direct architecture in doc 29 §3 does not want an adapter in the
+upload path anyway. An adapter is for server-side writes; our bytes never touch
+the server. The adapter would only have earned its place for admin-panel uploads.
+
+For the same reason `@payloadcms/storage-s3` is no help either: only
+`4.0.0-internal.*` builds exist, no stable 4.x line.
