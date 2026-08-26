@@ -209,22 +209,6 @@ export function TrendLine({
           role="img"
           aria-label={summary}
         >
-          {/*
-            Suppressed months are BANDED, not left blank. An empty span reads as
-            a rendering failure — the chart looked broken, which is worse than
-            the thing it was hiding. A marked band says "something is here and
-            you may not see it", which is the claim doc 27 §4 actually makes.
-          */}
-          {suppressedSpans.map((band) => (
-            <rect
-              key={`gap-${band.from}`}
-              x={band.from}
-              y={PAD_Y}
-              width={band.to - band.from}
-              height={plotH}
-              fill="var(--color-border-faint)"
-            />
-          ))}
           {GRID_STOPS.map((stop) => (
             <line
               key={stop}
@@ -279,6 +263,40 @@ export function TrendLine({
         </svg>
 
         {/*
+          Suppressed months are HATCHED and LABELLED IN PLACE.
+
+          They were a flat grey rectangle with the explanation parked in the
+          footer, and the first person to see it asked whether the data was
+          missing — which is the exact question the band exists to answer. Flat
+          grey reads as "nothing rendered"; a 45° hatch reads as "deliberately
+          excluded", and doc 08 §4.3 already uses a 45° hatch for exactly that
+          meaning elsewhere in the kit, so this is the system's vocabulary
+          rather than a new one. Ink, not redpen: nobody got this wrong.
+
+          HTML rather than an SVG <pattern>: the plot carries
+          `preserveAspectRatio="none"` so it can fill any width, which shears a
+          pattern off 45°. An overlay is measured in screen space and stays
+          true. Inline style because a repeating gradient has no token — and
+          this is the .web fork, where gradients exist at all.
+        */}
+        {suppressedSpans.map((band) => (
+          <View
+            key={`gap-${band.from}`}
+            className="absolute items-center justify-end"
+            style={{
+              left: `${(band.from / VB_W) * 100}%`,
+              width: `${((band.to - band.from) / VB_W) * 100}%`,
+              top: `${(PAD_Y / VB_H) * 100}%`,
+              height: `${(plotH / VB_H) * 100}%`,
+              backgroundImage:
+                'repeating-linear-gradient(45deg, var(--color-border-faint) 0 1px, transparent 1px 7px)',
+            }}
+          >
+            <Text className="pb-element text-caption text-text-muted">Not shown</Text>
+          </View>
+        ))}
+
+        {/*
           Marker and tooltip are HTML, positioned in percentages. In SVG they
           would inherit `preserveAspectRatio="none"` and stretch — the same
           distortion that turned the old end-point dot into a slash.
@@ -317,12 +335,10 @@ export function TrendLine({
 
       <View className="flex-row items-center justify-between gap-element">
         <Text className="text-caption text-text-muted">{plotted[0]?.label}</Text>
-        {/* Never silent about a hole: an unexplained gap reads as missing data,
-            which is a different claim from "we are not allowed to show this". */}
+        {/* The count moved onto the band itself; this line only has to explain
+            WHY, since the band already says where. */}
         {suppressedCount > 0 ? (
-          <Text className="text-caption text-text-muted">
-            {suppressedCount} not shown (small group)
-          </Text>
+          <Text className="text-caption text-text-muted">Hidden: group too small</Text>
         ) : null}
         <Text className="text-caption text-text-muted">{plotted[plotted.length - 1]?.label}</Text>
       </View>
