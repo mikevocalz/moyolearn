@@ -75,6 +75,7 @@ export interface Config {
     misconceptions: Misconception;
     sessionTranscripts: SessionTranscript;
     studentModelFacts: StudentModelFact;
+    leads: Lead;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -90,6 +91,7 @@ export interface Config {
     misconceptions: MisconceptionsSelect<false> | MisconceptionsSelect<true>;
     sessionTranscripts: SessionTranscriptsSelect<false> | SessionTranscriptsSelect<true>;
     studentModelFacts: StudentModelFactsSelect<false> | StudentModelFactsSelect<true>;
+    leads: LeadsSelect<false> | LeadsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -288,6 +290,29 @@ export interface StudentModelFact {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leads".
+ */
+export interface Lead {
+  id: number;
+  orgId: string;
+  family: string;
+  learnerRef?: string | null;
+  learner?: string | null;
+  subject?: string | null;
+  stage: 'Inquiry' | 'Trial scheduled' | 'Trial completed' | 'Proposal' | 'Enrolled' | 'At risk';
+  owner?: string | null;
+  valueCents?: number | null;
+  currency?: string | null;
+  sessions?: number | null;
+  nextSessionAt?: string | null;
+  needsAttention?: boolean | null;
+  attendancePct?: number | null;
+  cohortSize?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -341,6 +366,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'studentModelFacts';
         value: number | StudentModelFact;
+      } | null)
+    | ({
+        relationTo: 'leads';
+        value: number | Lead;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -512,6 +541,28 @@ export interface StudentModelFactsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "leads_select".
+ */
+export interface LeadsSelect<T extends boolean = true> {
+  orgId?: T;
+  family?: T;
+  learnerRef?: T;
+  learner?: T;
+  subject?: T;
+  stage?: T;
+  owner?: T;
+  valueCents?: T;
+  currency?: T;
+  sessions?: T;
+  nextSessionAt?: T;
+  needsAttention?: T;
+  attendancePct?: T;
+  cohortSize?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -575,7 +626,8 @@ export interface CollectionQueryWidget {
       | 'skills'
       | 'misconceptions'
       | 'sessionTranscripts'
-      | 'studentModelFacts';
+      | 'studentModelFacts'
+      | 'leads';
     where?:
       | {
           [k: string]: unknown;
@@ -607,6 +659,7 @@ export interface ActivityWidget {
           | 'misconceptions'
           | 'sessionTranscripts'
           | 'studentModelFacts'
+          | 'leads'
         )[]
       | null;
   };
