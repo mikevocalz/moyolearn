@@ -17,6 +17,7 @@ import { CaptureEntryRow } from './entry-row';
 import { GuidedFrame } from './guided-frame';
 import { DigitizedTextReview } from './digitized-text-review';
 import { OcrReview } from './ocr-review';
+import { CropPreview } from './crop-preview';
 import { useCaptureStore } from './capture.store';
 import { buttonSizeForBand, captureLabelsForBand, type AgeBand } from './age-band';
 import { stripExif } from './privacy-process';
@@ -67,11 +68,11 @@ function Preview({
   switch (payload.kind) {
     case 'photo':
       body = <Image alt="Captured work" src={payload.photo.filePath} className="h-64 w-full rounded-card" />;
-      action = <Button title="Review text" variant="highlighter" size={size} fullWidth onPress={onReview} />;
+      action = <Button title="Crop & review" variant="highlighter" size={size} fullWidth onPress={onReview} />;
       break;
     case 'image':
       body = <Image alt="Selected work" src={payload.uri} className="h-64 w-full rounded-card" />;
-      action = <Button title="Review text" variant="highlighter" size={size} fullWidth onPress={onReview} />;
+      action = <Button title="Crop & review" variant="highlighter" size={size} fullWidth onPress={onReview} />;
       break;
     case 'file':
       body = <Text className="font-sans text-body text-text">{payload.name}</Text>;
@@ -245,12 +246,38 @@ export function CaptureScreen({ ageBand = 'teen' }: CaptureScreenProps) {
     return null;
   }
 
+  if (step === 'crop') {
+    if (payload.kind === 'photo') {
+      return (
+        <CropPreview
+          ageBand={ageBand}
+          source={payload.photo.filePath}
+          onCrop={(uri) => { setPayload({ kind: 'image', uri }); setStep('review'); }}
+          onCancel={() => setStep('preview')}
+        />
+      );
+    }
+
+    if (payload.kind === 'image') {
+      return (
+        <CropPreview
+          ageBand={ageBand}
+          source={payload.uri}
+          onCrop={(uri) => { setPayload({ kind: 'image', uri }); setStep('review'); }}
+          onCancel={() => setStep('preview')}
+        />
+      );
+    }
+
+    return null;
+  }
+
   return (
     <Preview
       ageBand={ageBand}
       payload={payload}
       onReset={reset}
-      onReview={() => setStep('review')}
+      onReview={() => setStep(payload.kind === 'photo' || payload.kind === 'image' ? 'crop' : 'review')}
       onConfirm={handleConfirm}
     />
   );

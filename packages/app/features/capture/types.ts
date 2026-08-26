@@ -3,7 +3,7 @@
 // SOT-KEYWORDS: capture mode homework entry camera photo file voice type
 
 export type CaptureMode = 'camera' | 'photo-library' | 'file' | 'type' | 'voice';
-export type CaptureStep = 'entry' | 'capture' | 'preview' | 'review';
+export type CaptureStep = 'entry' | 'capture' | 'preview' | 'crop' | 'review';
 
 export interface CapturePhoto {
   filePath: string;
