@@ -3,13 +3,15 @@
 // SOT: docs/pack/19-learning-outcomes-spec.md §3 · docs/pack/22-reporting-charts-spec.md §2
 // SOT-KEYWORDS: progress screen mastery chart pre-seeded learner subject
 
+import { useRouter } from 'solito/navigation';
 import { MasteryBar, Heading, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
-import { useTutorStore } from '@acme/app';
+import { useTutorStore, useCaptureStore } from '@acme/app';
+import { generatePracticeProblem } from '@acme/student-model/pure';
 
 const SEED = [
   { subject: 'Number sense', value: 72 },
-  { subject: 'Operations', value: 45, state: 'needs-attention' as const },
+  { subject: 'Order of operations', value: 45, state: 'needs-attention' as const },
   { subject: 'Fractions', value: 60 },
   { subject: 'Word problems', value: 34, state: 'needs-attention' as const },
 ];
@@ -25,12 +27,22 @@ function SectionHeading({ children }: { children: React.ReactNode }) {
 }
 
 export function ProgressScreen() {
+  const router = useRouter();
+  const { setProblem } = useCaptureStore();
   const { skillTitle, mastery, attempts, masteryBySkill } = useTutorStore();
+
+  const handlePractice = (subject: string) => {
+    const problem = generatePracticeProblem(subject);
+    if (!problem) return;
+    setProblem(problem);
+    router.push('/tutor');
+  };
 
   const practiced = Object.entries(masteryBySkill).map(([subject, value]) => ({
     subject,
     value: Math.round(value * 100),
     state: masteryState(value),
+    onPress: generatePracticeProblem(subject) ? () => handlePractice(subject) : undefined,
   }));
 
   const live =
@@ -64,17 +76,26 @@ export function ProgressScreen() {
         {practiced.length > 0 ? (
           <View className="gap-group">
             <SectionHeading>Practiced</SectionHeading>
-            {practiced.map(({ subject, value, state }) => (
-              <MasteryBar key={subject} label={subject} value={value} state={state} />
+            {practiced.map(({ subject, value, state, onPress }) => (
+              <MasteryBar key={subject} label={subject} value={value} state={state} onPress={onPress} />
             ))}
           </View>
         ) : null}
         {seeded.length > 0 ? (
           <View className="gap-group">
             <SectionHeading>More to explore</SectionHeading>
-            {seeded.map(({ subject, value, state }) => (
-              <MasteryBar key={subject} label={subject} value={value} state={state} />
-            ))}
+            {seeded.map(({ subject, value, state }) => {
+              const onPress = generatePracticeProblem(subject) ? () => handlePractice(subject) : undefined;
+              return (
+                <MasteryBar
+                  key={subject}
+                  label={subject}
+                  value={value}
+                  state={state}
+                  onPress={onPress}
+                />
+              );
+            })}
           </View>
         ) : null}
       </View>

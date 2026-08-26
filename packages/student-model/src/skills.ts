@@ -63,3 +63,23 @@ export function firstHint(skillTitle: string): string {
 export function secondHint(skillTitle: string): string {
   return hintsForSkill(skillTitle)[1];
 }
+
+/** Generate a simple auto-tutor problem for a known skill. */
+export function generatePracticeProblem(skillTitle: string): string | null {
+  switch (skillTitle) {
+    case 'Fractions':
+      return 'What is 1/2 + 1/4?';
+    case 'Decimals':
+      return 'What is 3.14 + 2.71?';
+    case 'Percent':
+      return 'What is 25% of 80?';
+    case 'Equation sense':
+      return 'Solve for x: 2x + 3 = 7';
+    case 'Algebra basics':
+      return 'Simplify 2x + 3 + 4x - 1';
+    case 'Order of operations':
+      return 'What is 2 + 3 * 4 - 1?';
+    default:
+      return null;
+  }
+}

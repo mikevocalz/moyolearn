@@ -3,7 +3,7 @@
 // SOT: docs/pack/08-visual-hierarchy-spacing-spec.md §4.8 · docs/pack/07-security-child-ai-safety-spec.md
 // SOT-KEYWORDS: mastery bar progress learner grade highlighter dignity attention
 import { tv, type VariantProps } from 'tailwind-variants';
-import { Text, View } from './primitives';
+import { Pressable, Text, View } from './primitives';
 
 const bar = tv({
   slots: {
@@ -40,14 +40,23 @@ export interface MasteryBarProps extends VariantProps<typeof bar> {
   label: string;
   showValue?: boolean;
   className?: string;
+  /** When present, the entire bar becomes a practice shortcut. */
+  onPress?: () => void;
 }
 
-export function MasteryBar({ value, label, state, size, showValue = true, className }: MasteryBarProps) {
+export function MasteryBar({ value, label, state, size, showValue = true, className, onPress }: MasteryBarProps) {
   const pct = Math.max(0, Math.min(100, Math.round(value)));
   const { track, fill, value: valueText } = bar({ state, size });
+  const Root = onPress ? Pressable : View;
 
   return (
-    <View className={`gap-element${className ? ` ${className}` : ''}`}>
+    <Root
+      onPress={onPress}
+      className={`gap-element${className ? ` ${className}` : ''}`}
+      accessibilityRole={onPress ? 'button' : 'progressbar'}
+      accessibilityLabel={label}
+      accessibilityValue={onPress ? undefined : { min: 0, max: 100, now: pct }}
+    >
       <View className="flex-row items-center justify-between gap-element">
         <Text className="text-label text-text">{label}</Text>
         {showValue ? <Text className={valueText()}>{pct}%</Text> : null}
@@ -59,12 +68,9 @@ export function MasteryBar({ value, label, state, size, showValue = true, classN
       */}
       <View
         className={track()}
-        accessibilityRole="progressbar"
-        accessibilityLabel={label}
-        accessibilityValue={{ min: 0, max: 100, now: pct }}
       >
         <View className={fill()} style={{ width: `${pct}%` }} />
       </View>
-    </View>
+    </Root>
   );
 }
