@@ -16,6 +16,8 @@ const SEED = [
 
 export function ProgressScreen() {
   const { skillTitle, mastery, attempts } = useTutorStore();
+  const liveLower = skillTitle.toLowerCase();
+  const seeded = SEED.filter(({ subject }) => subject.toLowerCase() !== liveLower);
 
   return (
     <View className="flex-1 gap-stack p-inset">
@@ -33,7 +35,7 @@ export function ProgressScreen() {
             state={mastery < 0.5 ? 'needs-attention' : 'steady'}
           />
         ) : null}
-        {SEED.map(({ subject, value, state }) => (
+        {seeded.map(({ subject, value, state }) => (
           <MasteryBar key={subject} label={subject} value={value} state={state} />
         ))}
       </View>
