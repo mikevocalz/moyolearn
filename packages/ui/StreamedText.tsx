@@ -15,10 +15,20 @@ export interface StreamedTextProps {
 
 export function StreamedText({ children, intervalMs = 18, className, onComplete }: StreamedTextProps) {
   const [visible, setVisible] = useState(0);
+  const [source, setSource] = useState(children);
 
-  useEffect(() => {
-    setVisible(0);
-  }, [children]);
+  // Adjusting state during render, which is React's documented alternative to
+  // a prop-syncing effect and the reason this is not one.
+  //
+  // Text that grew is a stream still arriving, so the reveal continues from
+  // where it is; only a genuinely different string restarts it. Restarting on
+  // every prop change — which is what this did when the only streaming was
+  // simulated — would make each arriving sentence retype the whole turn from
+  // the first character.
+  if (source !== children) {
+    setSource(children);
+    if (!children.startsWith(source)) setVisible(0);
+  }
 
   useEffect(() => {
     if (visible >= children.length) {

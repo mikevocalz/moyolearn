@@ -12,7 +12,7 @@
 // client never supplies age context" — an optional field is a field a caller
 // forgets, and a forgotten minor flag is an adult policy applied to a child.
 // SOT: docs/pack/07-security-child-ai-safety-spec.md §3
-// SOT-KEYWORDS: safety plane layers classify route crisis firewall inference learner server
+// SOT-KEYWORDS: safety plane layers classify route crisis firewall inference learner server stream sentence window
 
 import { crisisResponse, isPedagogicallyStorable, type CrisisResponse } from './crisis.ts';
 import { screen, type FirewallRuleId } from './firewall.ts';
@@ -80,69 +80,12 @@ export async function runSafetyPlane(
   context: IdentityContext,
   deps: { classifier: Classifier; generator: Generator },
 ): Promise<PlaneResult> {
-  const trace: PlaneLog[] = [{ layer: '1-identity', detail: context.gradeBand }];
+  // Layers 1–4 live in `screenInput`, shared with the streaming path below so
+  // the two cannot drift apart. Everything from here down is layer 5 onward.
+  const gate = await screenInput(message, context, deps.classifier);
+  if (!gate.passed) return gate.result;
 
-  // Guardian policy is checked before anything is sent anywhere. A learner whose
-  // guardian turned AI off does not reach a classifier, let alone a model.
-  if (!context.aiEnabled) {
-    return {
-      outcome: {
-        kind: 'refused',
-        reason: 'AI tutoring is turned off for this learner.',
-        storeInStudentModel: false,
-      },
-      trace: [...trace, { layer: '1-identity', detail: 'ai-disabled' }],
-    };
-  }
-
-  // Layer 3 — before generation, always. A message that never reaches a model is
-  // the cheapest possible failure mode.
-  const inputClass = await deps.classifier.classifyInput(message, context);
-  trace.push({ layer: '3-input', detail: inputClass });
-
-  if (inputClass === 'crisis') {
-    // Layer 6. Nothing is generated, nothing is stored, the session is over.
-    return {
-      outcome: {
-        kind: 'crisis',
-        response: crisisResponse(context.gradeBand),
-        storeInStudentModel: false,
-      },
-      trace: [...trace, { layer: '6-crisis' }],
-    };
-  }
-
-  if (inputClass === 'prohibited') {
-    return {
-      outcome: { kind: 'blocked', broke: [], storeInStudentModel: false },
-      trace: [...trace, { layer: '3-input', detail: 'prohibited' }],
-    };
-  }
-
-  if (inputClass === 'sensitive') {
-    return {
-      outcome: { kind: 'redirect', text: SENSITIVE_HANDOFF, storeInStudentModel: false },
-      trace: [...trace, { layer: '3-input', detail: 'sensitive-handoff' }],
-    };
-  }
-
-  // Layer 4 — the topic fence. Boundary-testing is logged, never punished: a
-  // curious kid probing the tutor is normal behaviour (doc 07 §3 layer 4).
-  if (inputClass === 'off-task') {
-    return {
-      outcome: { kind: 'redirect', text: OFF_TASK_REDIRECT, storeInStudentModel: false },
-      trace: [...trace, { layer: '4-fence', detail: 'redirect' }],
-    };
-  }
-
-  // The child's own words also run the two-directional firewall rules (§2.3).
-  const inbound = screen(message, 'learner');
-  if (!inbound.allowed) {
-    return {
-      outcome: { kind: 'blocked', broke: inbound.broke, storeInStudentModel: false },
-      trace: [...trace, { layer: '2-firewall', detail: inbound.broke.join(',') }],
-    };
-  }
+  const { inputClass, trace } = gate;
 
   const draft = await deps.generator.generate(message, context);
 
@@ -180,6 +123,242 @@ export async function runSafetyPlane(
       kind: 'reply',
       text: draft,
       storeInStudentModel: isPedagogicallyStorable(inputClass),
+    },
+    trace: [...trace, { layer: '7-memory', detail: 'storable' }],
+  };
+}
+
+/**
+ * The streaming half of the plane (doc 18 §2's "sentence-window screening").
+ *
+ * Layer 5 says generated text is screened BEFORE it is rendered, which reads as
+ * a prohibition on streaming: you cannot screen a draft you have not finished.
+ * The resolution is the window — the plane emits only whole sentences, and a
+ * sentence is emitted only after `screen()` has passed it. Time-to-first-token
+ * becomes time-to-first-SENTENCE, which is the price of layer 5 and is worth it.
+ *
+ * The deterministic firewall runs per sentence; the output CLASSIFIER cannot,
+ * because it needs the whole turn to judge it. So it runs once at end-of-stream
+ * and a failure arrives as a terminal `blocked` outcome — the client's contract
+ * is that a blocked outcome retracts everything already rendered. That is a real
+ * gap for the seconds the text is on screen, and it is why the sentence window
+ * (not the classifier) carries the hard rules.
+ */
+export interface StreamingGenerator {
+  generateStream: (text: string, context: IdentityContext) => AsyncIterable<string>;
+}
+
+/** What a consumer of the streaming plane sees, in order. Exactly one `done`. */
+export type PlaneStreamEvent =
+  | { kind: 'chunk'; text: string }
+  | { kind: 'done'; outcome: PlaneOutcome; trace: PlaneLog[] };
+
+/**
+ * Layers 1–4, which are identical for the buffered and streaming paths. Split
+ * out so the two paths cannot drift: a layer added to one is added to both.
+ */
+async function screenInput(
+  message: string,
+  context: IdentityContext,
+  classifier: Classifier,
+): Promise<{ passed: true; inputClass: InputClass; trace: PlaneLog[] } | { passed: false; result: PlaneResult }> {
+  const trace: PlaneLog[] = [{ layer: '1-identity', detail: context.gradeBand }];
+
+  if (!context.aiEnabled) {
+    return {
+      passed: false,
+      result: {
+        outcome: {
+          kind: 'refused',
+          reason: 'AI tutoring is turned off for this learner.',
+          storeInStudentModel: false,
+        },
+        trace: [...trace, { layer: '1-identity', detail: 'ai-disabled' }],
+      },
+    };
+  }
+
+  const inputClass = await classifier.classifyInput(message, context);
+  trace.push({ layer: '3-input', detail: inputClass });
+
+  if (inputClass === 'crisis') {
+    return {
+      passed: false,
+      result: {
+        outcome: {
+          kind: 'crisis',
+          response: crisisResponse(context.gradeBand),
+          storeInStudentModel: false,
+        },
+        trace: [...trace, { layer: '6-crisis' }],
+      },
+    };
+  }
+
+  if (inputClass === 'prohibited') {
+    return {
+      passed: false,
+      result: {
+        outcome: { kind: 'blocked', broke: [], storeInStudentModel: false },
+        trace: [...trace, { layer: '3-input', detail: 'prohibited' }],
+      },
+    };
+  }
+
+  if (inputClass === 'sensitive') {
+    return {
+      passed: false,
+      result: {
+        outcome: { kind: 'redirect', text: SENSITIVE_HANDOFF, storeInStudentModel: false },
+        trace: [...trace, { layer: '3-input', detail: 'sensitive-handoff' }],
+      },
+    };
+  }
+
+  if (inputClass === 'off-task') {
+    return {
+      passed: false,
+      result: {
+        outcome: { kind: 'redirect', text: OFF_TASK_REDIRECT, storeInStudentModel: false },
+        trace: [...trace, { layer: '4-fence', detail: 'redirect' }],
+      },
+    };
+  }
+
+  const inbound = screen(message, 'learner');
+  if (!inbound.allowed) {
+    return {
+      passed: false,
+      result: {
+        outcome: { kind: 'blocked', broke: inbound.broke, storeInStudentModel: false },
+        trace: [...trace, { layer: '2-firewall', detail: inbound.broke.join(',') }],
+      },
+    };
+  }
+
+  return { passed: true, inputClass, trace };
+}
+
+/**
+ * Splits off the part of `buffer` that is safe to screen and emit.
+ *
+ * A window closes on sentence-ending punctuation followed by whitespace, or on
+ * a newline. The digit guard exists because this tutor teaches arithmetic: in
+ * "divide 7.5 by 3" the period is a decimal point, and a splitter that treats
+ * it as a boundary emits "divide 7." on its own — which reads to a child as a
+ * finished, wrong instruction.
+ */
+export function takeSentences(buffer: string): { emit: string; rest: string } {
+  let cut = -1;
+
+  for (let i = 0; i < buffer.length; i += 1) {
+    const char = buffer[i];
+
+    if (char === '\n') {
+      cut = i + 1;
+      continue;
+    }
+
+    if (char !== '.' && char !== '!' && char !== '?') continue;
+    if (char === '.' && /\d/.test(buffer[i - 1] ?? '') && /\d/.test(buffer[i + 1] ?? '')) continue;
+
+    let end = i + 1;
+    while (end < buffer.length && `"')]`.includes(buffer[end] ?? '')) end += 1;
+
+    // A boundary is only a boundary once the NEXT character has arrived; at the
+    // end of the buffer we cannot yet tell "7." (decimal, more coming) from
+    // "Try it." (finished), so leave it for the next chunk or the final flush.
+    if (end >= buffer.length || !/\s/.test(buffer[end] ?? '')) continue;
+
+    // The separating whitespace travels with the sentence it closes, so the
+    // emitted chunks concatenate back to exactly what the model produced.
+    while (end < buffer.length && /\s/.test(buffer[end] ?? '')) end += 1;
+    cut = end;
+  }
+
+  if (cut < 0) return { emit: '', rest: buffer };
+  return { emit: buffer.slice(0, cut), rest: buffer.slice(cut) };
+}
+
+/**
+ * Runs the plane over a streaming generator. Same layer order as
+ * `runSafetyPlane`; the difference is only WHEN layer 5 gets to run.
+ */
+export async function* runSafetyPlaneStream(
+  message: string,
+  context: IdentityContext,
+  deps: { classifier: Classifier; generator: StreamingGenerator },
+): AsyncGenerator<PlaneStreamEvent> {
+  const gate = await screenInput(message, context, deps.classifier);
+  if (!gate.passed) {
+    yield { kind: 'done', outcome: gate.result.outcome, trace: gate.result.trace };
+    return;
+  }
+
+  const trace = gate.trace;
+  let buffer = '';
+  let draft = '';
+
+  for await (const chunk of deps.generator.generateStream(message, context)) {
+    buffer += chunk;
+    const { emit, rest } = takeSentences(buffer);
+    buffer = rest;
+    if (!emit) continue;
+
+    const verdict = screen(emit, 'tutor');
+    if (!verdict.allowed) {
+      trace.push({ layer: '5-output', detail: verdict.broke.join(',') });
+      yield { kind: 'done', outcome: { kind: 'blocked', broke: verdict.broke, storeInStudentModel: false }, trace };
+      return;
+    }
+
+    draft += emit;
+    yield { kind: 'chunk', text: emit };
+  }
+
+  if (buffer) {
+    const verdict = screen(buffer, 'tutor');
+    if (!verdict.allowed) {
+      trace.push({ layer: '5-output', detail: verdict.broke.join(',') });
+      yield { kind: 'done', outcome: { kind: 'blocked', broke: verdict.broke, storeInStudentModel: false }, trace };
+      return;
+    }
+    draft += buffer;
+    yield { kind: 'chunk', text: buffer };
+  }
+
+  // Whole-draft screen: the per-sentence pass cannot see a banned construction
+  // that straddles a boundary, so the assembled turn is screened once more.
+  const whole = screen(draft, 'tutor');
+  if (!whole.allowed) {
+    trace.push({ layer: '5-output', detail: whole.broke.join(',') });
+    yield { kind: 'done', outcome: { kind: 'blocked', broke: whole.broke, storeInStudentModel: false }, trace };
+    return;
+  }
+
+  const outputClasses = await deps.classifier.classifyOutput(draft, context);
+  trace.push({ layer: '5-output', detail: outputClasses.join(',') || 'clean' });
+
+  if (outputClasses.includes('crisis')) {
+    yield {
+      kind: 'done',
+      outcome: { kind: 'crisis', response: crisisResponse(context.gradeBand), storeInStudentModel: false },
+      trace: [...trace, { layer: '6-crisis' }],
+    };
+    return;
+  }
+
+  if (outputClasses.some((c) => c === 'prohibited' || c === 'sensitive')) {
+    yield { kind: 'done', outcome: { kind: 'blocked', broke: [], storeInStudentModel: false }, trace };
+    return;
+  }
+
+  yield {
+    kind: 'done',
+    outcome: {
+      kind: 'reply',
+      text: draft,
+      storeInStudentModel: isPedagogicallyStorable(gate.inputClass),
     },
     trace: [...trace, { layer: '7-memory', detail: 'storable' }],
   };

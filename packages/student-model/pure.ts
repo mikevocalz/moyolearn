@@ -13,12 +13,15 @@
 // guardian's device compute" rather than on "what is convenient" is why this is
 // a second entry point and not simply a wider index.
 // SOT: docs/pack/07-security-child-ai-safety-spec.md §4 §S27
+// Re-exports carry the `.ts` extension, matching every file under `src/`. This
+// entry point is imported by tests that run on bare `node --test`, and Node's
+// ESM resolver does not guess extensions the way a bundler does.
 // SOT-KEYWORDS: student model pure client cascade preview erasure subpath guardian s27
 
-export { eraseFact, eraseTranscript, cascadePreview } from './src/erasure';
-export type { ErasureResult } from './src/erasure';
-export { isExpired } from './src/facts';
-export { masteryFact, misconceptionFact, masterySentence, isMisconceptionTag, MISCONCEPTIONS } from './src/facts';
+export { eraseFact, eraseTranscript, cascadePreview } from './src/erasure.ts';
+export type { ErasureResult } from './src/erasure.ts';
+export { isExpired } from './src/facts.ts';
+export { masteryFact, misconceptionFact, masterySentence, isMisconceptionTag, MISCONCEPTIONS } from './src/facts.ts';
 export type {
   DerivedFact,
   FactKind,
@@ -29,8 +32,8 @@ export type {
   InterestFact,
   ScaffoldingFact,
   MisconceptionTag,
-} from './src/facts';
-export { traceAttempt, decayMastery, isFrontier, DEFAULT_TRACING, FRONTIER_LOW, FRONTIER_HIGH } from './src/mastery';
-export type { TracingParams } from './src/mastery';
-export { evaluateArithmetic } from './src/evaluate';
-export { inferSkillTitle, firstHint, secondHint, generatePracticeProblem } from './src/skills';
+} from './src/facts.ts';
+export { traceAttempt, decayMastery, isFrontier, DEFAULT_TRACING, FRONTIER_LOW, FRONTIER_HIGH } from './src/mastery.ts';
+export type { TracingParams } from './src/mastery.ts';
+export { evaluateArithmetic } from './src/evaluate.ts';
+export { inferSkillTitle, firstHint, secondHint, generatePracticeProblem } from './src/skills.ts';

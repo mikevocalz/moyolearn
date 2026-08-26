@@ -16,7 +16,16 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { screen, FIREWALL_RULES } from './firewall.ts';
 import { crisisResponse, guardianAlert, isPedagogicallyStorable, CRISIS_STEPS } from './crisis.ts';
-import { runSafetyPlane, type Classifier, type Generator, type IdentityContext } from './plane.ts';
+import {
+  runSafetyPlane,
+  runSafetyPlaneStream,
+  takeSentences,
+  type Classifier,
+  type Generator,
+  type IdentityContext,
+  type PlaneOutcome,
+  type StreamingGenerator,
+} from './plane.ts';
 import { runPassed, summariseRun, PROBES, RED_TEAM_VERSION } from './red-team.ts';
 
 const learner: IdentityContext = {
@@ -217,5 +226,89 @@ describe('the crisis protocol', () => {
         assert.doesNotMatch(line, /your child (said|did|tried)/i, category);
       }
     }
+  });
+});
+
+describe('the streaming plane', () => {
+  /** Splits a reply into arbitrary token-sized chunks, the way a model does. */
+  const streamOf = (reply: string, size = 7): StreamingGenerator => ({
+    generateStream: async function* () {
+      for (let i = 0; i < reply.length; i += size) yield reply.slice(i, i + size);
+    },
+  });
+
+  const collect = async (
+    message: string,
+    classifier: Classifier,
+    generator: StreamingGenerator,
+  ): Promise<{ chunks: string[]; outcome: PlaneOutcome }> => {
+    const chunks: string[] = [];
+    let outcome: PlaneOutcome | undefined;
+    for await (const event of runSafetyPlaneStream(message, learner, { classifier, generator })) {
+      if (event.kind === 'chunk') chunks.push(event.text);
+      else outcome = event.outcome;
+    }
+    assert.ok(outcome, 'stream ended without a terminal event');
+    return { chunks, outcome };
+  };
+
+  it('never splits a decimal, because this tutor teaches arithmetic', () => {
+    // "divide 7." rendered alone reads as a finished, wrong instruction.
+    assert.deepEqual(takeSentences('divide 7.5 by 3 and '), { emit: '', rest: 'divide 7.5 by 3 and ' });
+    assert.deepEqual(takeSentences('Try 7.5 next. Then '), { emit: 'Try 7.5 next. ', rest: 'Then ' });
+  });
+
+  it('holds a boundary until the next character proves it is one', () => {
+    // Mid-stream "Try it." could still become "Try it.5" — wait for proof.
+    assert.deepEqual(takeSentences('Try it.'), { emit: '', rest: 'Try it.' });
+    assert.deepEqual(takeSentences('Try it. '), { emit: 'Try it. ', rest: '' });
+  });
+
+  it('reassembles to exactly what the model produced', async () => {
+    const reply = 'What did you get for the first step? Show me your thinking.';
+    const { chunks, outcome } = await collect('2 + 2', stub('safe').classifier, streamOf(reply));
+    assert.equal(chunks.join(''), reply);
+    assert.equal(outcome.kind, 'reply');
+  });
+
+  it('stops the stream at the sentence that breaks a firewall rule', async () => {
+    // Two clean sentences, then a §2.3 secrecy violation.
+    const reply = 'Nice start. Keep going. This is our little secret, do not tell your parents. One more step.';
+    const { chunks, outcome } = await collect('2 + 2', stub('safe').classifier, streamOf(reply));
+    assert.equal(outcome.kind, 'blocked');
+    assert.ok(!chunks.join('').includes('secret'), 'a blocked sentence was rendered');
+    assert.ok(!chunks.join('').includes('One more step'), 'the stream continued past a block');
+  });
+
+  it('runs layers 1-4 before a single token is generated', async () => {
+    let generated = false;
+    const generator: StreamingGenerator = {
+      generateStream: async function* () {
+        generated = true;
+        yield 'anything at all. ';
+      },
+    };
+
+    for (const [inputClass, expected] of [
+      ['crisis', 'crisis'],
+      ['sensitive', 'redirect'],
+      ['off-task', 'redirect'],
+      ['prohibited', 'blocked'],
+    ] as const) {
+      const { chunks, outcome } = await collect('...', stub(inputClass).classifier, generator);
+      assert.equal(outcome.kind, expected, inputClass);
+      assert.equal(chunks.length, 0, `${inputClass} rendered text`);
+      assert.equal(generated, false, `${inputClass} reached the model`);
+    }
+  });
+
+  it('retracts a clean-looking turn the output classifier rejects', async () => {
+    const { chunks, outcome } = await collect(
+      '2 + 2',
+      stub('safe', ['prohibited']).classifier,
+      streamOf('Here is a perfectly ordinary sentence. '),
+    );
+    assert.ok(chunks.length > 0, 'nothing streamed, so nothing was retracted');
+    assert.equal(outcome.kind, 'blocked');
   });
 });

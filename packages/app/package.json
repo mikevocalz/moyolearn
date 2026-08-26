@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@acme/auth": "workspace:*",
+    "@anthropic-ai/sdk": "catalog:",
     "@acme/safety": "workspace:*",
     "@acme/student-model": "workspace:*",
     "@acme/theme": "workspace:*",

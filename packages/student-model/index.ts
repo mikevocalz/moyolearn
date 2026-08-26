@@ -56,5 +56,5 @@ export {
 } from './src/erasure';
 export type { ErasureResult } from './src/erasure';
 
-export { withLearnerBrief, briefPreamble } from './src/inference';
-export type { BriefLookup, ModelCall } from './src/inference';
+export { withLearnerBrief, withLearnerBriefStream, briefPreamble } from './src/inference';
+export type { BriefLookup, ModelCall, ModelStreamCall, TutorPrompt } from './src/inference';

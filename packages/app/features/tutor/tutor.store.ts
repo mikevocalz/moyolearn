@@ -1,15 +1,9 @@
 'use client';
 import { create } from 'zustand';
 import type { TutorStageState } from '@acme/ui';
-import {
-  traceAttempt,
-  DEFAULT_TRACING,
-  masterySentence,
-  inferSkillTitle,
-  firstHint,
-  secondHint,
-} from '@acme/student-model/pure';
+import { traceAttempt, DEFAULT_TRACING, inferSkillTitle } from '@acme/student-model/pure';
 import { useCaptureStore } from '../capture';
+import type { CoachEvent } from './coach.service';
 
 interface TutorState {
   state: TutorStageState;
@@ -21,18 +15,47 @@ interface TutorState {
   masteryBySkill: Record<string, number>;
   attemptsBySkill: Record<string, number>;
   start: (problem: string | null) => void;
-  tryIt: () => void;
-  nextHint: () => void;
-  send: (message: string) => void;
-  unanswerable: () => void;
+  /** Records the attempt against the student model. Says nothing — `coach` does. */
   respond: (isCorrect: boolean) => void;
+  /** Streams a coaching turn. Owns everything the learner sees. */
+  coach: (message: string) => Promise<void>;
 }
 
-function askingState(problem: string): TutorStageState {
-  return {
-    kind: 'speaking',
-    utterance: { text: `Now you try: ${problem}` },
-  };
+/** One definition, imported by the screen — two would drift in one deploy. */
+export const API_URL =
+  process.env.NEXT_PUBLIC_APP_URL ??
+  process.env.EXPO_PUBLIC_APP_URL ??
+  'http://localhost:3001';
+
+/**
+ * Reads the coach route's SSE frames. Written by hand rather than with
+ * `EventSource` because the turn is a POST — `EventSource` is GET-only, and
+ * putting a child's problem in a query string puts it in every access log
+ * between here and the server.
+ */
+async function* readCoachEvents(response: Response): AsyncGenerator<CoachEvent> {
+  const reader = response.body?.getReader();
+  if (!reader) return;
+
+  const decoder = new TextDecoder();
+  let buffer = '';
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+
+    buffer += decoder.decode(value, { stream: true });
+    const frames = buffer.split('\n\n');
+    // The last element is whatever arrived after the final blank line: either
+    // an empty string or a half-received frame. Either way it is not complete.
+    buffer = frames.pop() ?? '';
+
+    for (const frame of frames) {
+      const line = frame.trim();
+      if (!line.startsWith('data:')) continue;
+      yield JSON.parse(line.slice(5).trim()) as CoachEvent;
+    }
+  }
 }
 
 export const useTutorStore = create<TutorState>((set) => ({
@@ -51,14 +74,12 @@ export const useTutorStore = create<TutorState>((set) => ({
       const mastery = s.masteryBySkill[skillTitle] ?? DEFAULT_TRACING.prior;
       const attempts = s.attemptsBySkill[skillTitle] ?? 0;
       return {
-        state: {
-          kind: 'hint',
-          step: {
-            index: 1,
-            total: 2,
-            message: `For ${skillTitle}: ${firstHint(skillTitle)}`,
-          },
-        },
+        // `coach` is called the moment a problem lands and owns the surface from
+        // there. The canned two-rung hint ladder this used to open with is gone:
+        // hinting is the pedagogy contract's job now (doc 18 §3 layer 1), and a
+        // fixed ladder underneath a model that scaffolds properly is a second
+        // way to do one thing.
+        state: { kind: 'thinking' },
         problem: p,
         skillTitle,
         mastery,
@@ -67,47 +88,60 @@ export const useTutorStore = create<TutorState>((set) => ({
       };
     });
   },
-  nextHint: () => set((s) => ({
-    state: {
-      kind: 'hint',
-      step: {
-        index: 2,
-        total: 2,
-        message: `${secondHint(s.skillTitle)}`,
-      },
-    },
-    hintDepth: 2,
-  })),
-  tryIt: () => set((s) => ({ state: askingState(s.problem), hintDepth: 1 })),
-  send: (message) => set({
-    state: { kind: 'thinking' },
-  }),
-  unanswerable: () => set((s) => ({
-    state: {
-      kind: 'speaking',
-      utterance: { text: `I can't check this ${s.skillTitle} answer on my own. Let's try a number problem.` },
-    },
-  })),
+  coach: async (message) => {
+    const { problem } = useTutorStore.getState();
+    set({ state: { kind: 'thinking' } });
+
+    let spoken = '';
+    try {
+      const response = await fetch(`${API_URL}/api/tutor/coach`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ problem, message }),
+      });
+      if (!response.ok) throw new Error(`Server returned ${response.status}`);
+
+      for await (const event of readCoachEvents(response)) {
+        if (event.kind === 'chunk') {
+          spoken += event.text;
+          set({ state: { kind: 'speaking', utterance: { text: spoken } } });
+          continue;
+        }
+        if (event.kind === 'replace') {
+          // A retraction, not an append: the plane withdrew what came before it.
+          set({ state: { kind: 'speaking', utterance: { text: event.text } } });
+          return;
+        }
+        if (event.kind === 'blocked') {
+          set({ state: { kind: 'paused', since: Date.now() } });
+          return;
+        }
+        return;
+      }
+    } catch {
+      // Doc 23 §3.6: the fail-closed state is worded as Natalie taking a break,
+      // never as an error the child has to interpret or act on.
+      set({ state: { kind: 'paused', since: Date.now() } });
+      return;
+    }
+
+    // The stream ended without a terminal frame — a dropped connection. The
+    // partial turn stays on screen because it already passed the plane, but a
+    // turn with nothing in it is the paused state.
+    if (!spoken) set({ state: { kind: 'paused', since: Date.now() } });
+  },
   respond: (isCorrect) => set((s) => {
     const nextAttempts = s.attempts + 1;
     const nextMastery = traceAttempt(s.mastery, isCorrect);
-    const state: TutorStageState = isCorrect
-      ? {
-          kind: 'speaking',
-          utterance: { text: `Nice work on ${s.skillTitle}. That's the right idea — keep going.` },
-        }
-      : {
-          kind: 'diagnosis',
-          name: s.skillTitle,
-          message: `${masterySentence(s.skillTitle, nextMastery, nextAttempts)} Let's try once more.`,
-        };
+    // No `state` here on purpose. Two writers to one surface race, and the one
+    // that wins is whichever network call returned last — so the coaching turn
+    // is the only writer and this is bookkeeping ProgressScreen reads.
     return {
       mastery: nextMastery,
       attempts: nextAttempts,
-      hintDepth: 0,
       masteryBySkill: { ...s.masteryBySkill, [s.skillTitle]: nextMastery },
       attemptsBySkill: { ...s.attemptsBySkill, [s.skillTitle]: nextAttempts },
-      state,
     };
   }),
 }));

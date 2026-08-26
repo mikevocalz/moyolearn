@@ -18,9 +18,9 @@
 // warmth". Everything that reaches the model is a field of `LearnerBrief`, and
 // `LearnerBrief` has no field for a name.
 // SOT: docs/pack/07-security-child-ai-safety-spec.md §3 §4 · docs/pack/19-learning-outcomes-spec.md §1
-// SOT-KEYWORDS: inference retrieval rag brief generator gateway prompt pseudonymous context
+// SOT-KEYWORDS: inference retrieval rag brief generator gateway prompt pseudonymous context stream contract
 
-import type { Generator, IdentityContext } from '@acme/safety';
+import type { Generator, IdentityContext, StreamingGenerator } from '@acme/safety';
 import type { LearnerBrief } from './brief.ts';
 
 /** The raw model call the gateway owns. It never sees an identity. */
@@ -81,5 +81,47 @@ export function withLearnerBrief(model: ModelCall, lookup: BriefLookup): Generat
       const brief = await lookup(context);
       return model(`${briefPreamble(brief)}\n\nStudent: ${text}`);
     },
+  };
+}
+
+/**
+ * The streaming counterpart. It takes the prompt in two pieces rather than one
+ * concatenated string because the pedagogy contract and the brief are stable
+ * across a session while the student's turn is not — splitting them is what
+ * lets a provider cache the expensive half, and it keeps the contract in the
+ * system position where a provider weights it as policy rather than as
+ * something the student said.
+ */
+export interface TutorPrompt {
+  /** Pedagogy contract + brief preamble. Stable within a session. */
+  system: string;
+  /** The student's turn. */
+  message: string;
+}
+
+/** The raw streaming model call the gateway owns. It never sees an identity. */
+export type ModelStreamCall = (prompt: TutorPrompt) => AsyncIterable<string>;
+
+/**
+ * Wraps a streaming model call into the plane's `StreamingGenerator`.
+ *
+ * `contract` is a parameter rather than a constant in this file because the
+ * pedagogy contract is owned by the tutor application layer (doc 18 §5) and
+ * this package holds only what the system learned about the child. Passing it
+ * in keeps the dependency pointing the right way and keeps the contract in one
+ * place instead of two.
+ */
+export function withLearnerBriefStream(
+  model: ModelStreamCall,
+  lookup: BriefLookup,
+  contract: string,
+): StreamingGenerator {
+  return {
+    generateStream: (text, context) => ({
+      async *[Symbol.asyncIterator]() {
+        const brief = await lookup(context);
+        yield* model({ system: `${contract}\n\n${briefPreamble(brief)}`, message: text });
+      },
+    }),
   };
 }

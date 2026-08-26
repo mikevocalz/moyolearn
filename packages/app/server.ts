@@ -23,3 +23,11 @@ export {
   type LoadPriorFacts,
   type SaveFacts,
 } from './features/tutor/tutor.service';
+
+export {
+  coachTutorTurn,
+  type CoachTurnInput,
+  type CoachEvent,
+  type LoadGradeBand,
+} from './features/tutor/coach.service';
+export { PEDAGOGY_CONTRACT, revealsAnswer } from './features/tutor/pedagogy';

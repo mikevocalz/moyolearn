@@ -4,7 +4,7 @@
 // SOT: docs/pack/07-security-child-ai-safety-spec.md §2 · §3
 // SOT-KEYWORDS: safety barrel plane firewall crisis red team classifier
 
-export { runSafetyPlane } from './src/plane';
+export { runSafetyPlane, runSafetyPlaneStream, takeSentences } from './src/plane';
 export type {
   Classifier,
   Generator,
@@ -13,6 +13,8 @@ export type {
   PlaneLog,
   PlaneOutcome,
   PlaneResult,
+  PlaneStreamEvent,
+  StreamingGenerator,
 } from './src/plane';
 export { screen, ruleById, FIREWALL_RULES } from './src/firewall';
 export type { FirewallRule, FirewallRuleId, FirewallVerdict, TextOrigin } from './src/firewall';

@@ -30,6 +30,7 @@ onlyBuiltDependencies:
 # One version per dependency, declared once. Every package.json uses `catalog:`.
 catalog:
   # runtime core (Expo SDK 57 stable — RN 0.86.2)
+  "@anthropic-ai/sdk": 0.120.0
   react: 19.2.8
   react-dom: 19.2.8
   react-native: 0.86.2

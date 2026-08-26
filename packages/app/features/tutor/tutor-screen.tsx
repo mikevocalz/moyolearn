@@ -1,22 +1,22 @@
 'use client';
 // TutorScreen — the captured problem flows here for the S9 session.
-// SOT: docs/pack/24-homework-capture-spec.md §5 · docs/pack/23-tutorstage-handoff.md §3
-// SOT-KEYWORDS: tutor screen capture handoff tutorstage session pacer zustand age band next problem
+//
+// Two things happen when the learner sends a turn, and only one of them is
+// visible. `coach` streams what Natalie says; `checkAnswer` updates the student
+// model behind it. They are deliberately not chained: the coaching turn must
+// not wait on a mastery write, and a mastery write must not be skipped because
+// a model call was slow.
+// SOT: docs/pack/24-homework-capture-spec.md §5 · docs/pack/23-tutorstage-handoff.md §3 · docs/pack/18-tutor-ai-stack.md §3
+// SOT-KEYWORDS: tutor screen capture handoff tutorstage session coach stream age band next problem
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'solito/navigation';
-import { useDebouncedCallback } from '@tanstack/react-pacer';
 import { TutorStage, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { useCaptureStore } from '../capture';
 import { buttonSizeForBand, type AgeBand } from '../capture';
-import { useTutorStore } from './tutor.store';
+import { useTutorStore, API_URL } from './tutor.store';
 import { evaluateArithmetic } from '@acme/student-model/pure';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ??
-  process.env.EXPO_PUBLIC_APP_URL ??
-  'http://localhost:3001';
 
 export interface TutorScreenProps {
   ageBand?: AgeBand;
@@ -26,7 +26,7 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   const router = useRouter();
   const problem = useCaptureStore((s) => s.problem);
   const setProblem = useCaptureStore((s) => s.setProblem);
-  const { state, start, send, tryIt, nextHint, unanswerable, hintDepth } = useTutorStore();
+  const { state, start, coach, hintDepth } = useTutorStore();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -50,12 +50,15 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
       });
   }, [problem, setProblem]);
 
-  const respond = useDebouncedCallback(
-    (isCorrect: boolean) => useTutorStore.getState().respond(isCorrect),
-    { wait: 800 },
-  );
+  // The opening turn. Doc 29 §8's demo arc turns on the first thing a child sees
+  // being a question rather than a solution, so the coaching starts on arrival
+  // rather than waiting for the learner to type something first.
+  useEffect(() => {
+    if (!problem) return;
+    void coach('');
+  }, [problem, coach]);
 
-  async function checkAnswer(p: string, answer: string, depth: number): Promise<boolean | null> {
+  async function recordAttempt(p: string, answer: string, depth: number): Promise<void> {
     try {
       const res = await fetch(`${API_URL}/api/tutor/evaluate`, {
         method: 'POST',
@@ -64,25 +67,21 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
         body: JSON.stringify({ problem: p, answer, hintDepth: depth }),
       });
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
-      const data = await res.json() as { isCorrect: boolean | null };
-      return data.isCorrect;
+      const data = (await res.json()) as { isCorrect: boolean | null };
+      if (data.isCorrect !== null) useTutorStore.getState().respond(data.isCorrect);
     } catch {
       // The Safety Plane is the source of truth; the client-side evaluator is
       // the offline fallback for demo and low-connectivity cases.
-      return evaluateArithmetic(p, answer);
+      const offline = evaluateArithmetic(p, answer);
+      if (offline !== null) useTutorStore.getState().respond(offline);
     }
   }
 
-  const handleSend = async (message: string) => {
+  const handleSend = (message: string) => {
     const trimmed = message.trim();
     if (!trimmed) return;
-    send(trimmed);
-    const isCorrect = await checkAnswer(problem ?? '', trimmed, hintDepth);
-    if (isCorrect === null) {
-      unanswerable();
-      return;
-    }
-    respond(isCorrect);
+    void coach(trimmed);
+    void recordAttempt(problem ?? '', trimmed, hintDepth);
   };
 
   if (problem == null) {
@@ -104,8 +103,6 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
       buttonSize={buttonSizeForBand(ageBand)}
       onBack={router.back}
       onSend={handleSend}
-      onTryIt={tryIt}
-      onNextHint={nextHint}
     />
   );
 }
