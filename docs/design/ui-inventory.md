@@ -8,20 +8,24 @@ fresh run, this document is stale — the script is the source of truth.
 
 ## Read this part first
 
-The headline finding is that **33 of the kit's 91 value exports have no consumer
+The headline finding is that **40 of the kit's 91 value exports have no importer
 outside `packages/ui`**. That sentence invites exactly one wrong conclusion, so:
 **these are not dead code, and deleting them would break working components.**
 
-All 33 were checked, and **every one of them is imported by other files inside
+All 40 were checked, and **every one of them is imported by other files inside
 `packages/ui`**. Not one is an orphan. What they lack is a caller in
 `packages/app` or `apps`.
 
 Story coverage splits them, and the split is informative rather than alarming:
-18 are used internally *and* have a Storybook story, while 15 are used
+23 are used internally *and* have a Storybook story, while 17 are used
 internally with no story — `barProgress`, `frameLevel`, `pushLevel`,
 `summarise`, `ToastCard`, `isSuppressed`, `withForm`, `useFieldContext`,
 `useFormContext`, `NativeSlot`, `createMotionComponent`,
 `createMotionAnimatedComponent`, `MotionText`, `SlideUp`, `useReducedMotion`.
+
+The import-edge recount also surfaced four names the identifier match had hidden:
+`Waveform`, `BottomSheet`, `AnimatePresence`, and `motion` — the last two being
+re-exports whose bare names appear widely enough in unrelated code to look used.
 Read that list and the reason is plain: most are helpers, hooks, and factories
 rather than rendered components, and a story is the wrong artefact for a
 function that returns a number.
@@ -37,7 +41,15 @@ So the finding is narrower and duller than "33 unused exports": the barrel's
 — what the kit chooses to advertise to its consumers — and not a dead-code
 question. Nothing in this document supports a deletion.
 
-This is a full census of all 33, not a sample.
+This is a full census of all 40, not a sample.
+
+**These numbers replace an earlier draft's 33 and 16.** The first pass counted a
+name as "used" if the identifier appeared anywhere outside `packages/ui`, which
+is not the same question. `packages/avatar` defines its own unrelated
+`summarise` and its own `TutorStage`, so both looked like kit consumers and
+neither is one. Counting actual `import { … } from '@acme/ui'` edges instead
+moved the figure UP, from 33 to 40 — identifier matching had been hiding seven
+unimported exports behind coincidental uses of the same word.
 
 ## What was measured, and how
 
@@ -114,6 +126,11 @@ Ordered as the script emits them. Presence here means "not imported by
 | useFormStore | `BookingForm.tsx` |
 | useHydrated | `SiteHeader.tsx` |
 | useSizeClass | `Schedule.tsx` |
+| Select | (import-edge recount) |
+| DropZone | (import-edge recount) |
+| TrendLine | (import-edge recount) |
+| DataTable | (import-edge recount) |
+| DashboardShell | (import-edge recount) |
 
 A pattern worth noticing without over-reading: several of these cluster by
 consumer. `BookingForm.tsx` is the only external caller of three form exports,
@@ -129,7 +146,7 @@ count would only be interesting if the component were meant to be general. The
 table records the shape, not a verdict on it.
 
 Zero external consumers is likewise not evidence of dead code — that is the
-point of the opening section, and it now holds for all 33 — every one has an
+point of the opening section, and it now holds for all 40 — every one has an
 internal importer. Anyone acting on this list should still open the specific
 export first, because the one case where the pattern fails
 would look identical in this table to the 32 where it holds.

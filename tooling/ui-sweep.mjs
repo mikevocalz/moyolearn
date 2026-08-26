@@ -20,18 +20,34 @@ import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..');
+/*
+  grep exits 1 for "no match" and 2 for "bad usage", and the difference matters:
+  swallowing both as an empty string made a broken pattern indistinguishable
+  from a clean result. That is exactly how this script once reported all 91
+  exports as unused — a quoting error inside the pattern, silently returning
+  nothing, read as a finding. Exit 1 is data; anything else is a bug and stops
+  the run.
+*/
 const sh = (c) => {
   try {
     return execSync(c, { cwd: ROOT, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 }).trim();
-  } catch {
-    return ''; // grep exits 1 on no match, which is a valid answer here.
+  } catch (error) {
+    if (error.status === 1) return '';
+    throw new Error(`sweep probe failed (exit ${error.status}): ${c}\n${error.stderr ?? ''}`);
   }
 };
 const lines = (o) => (o ? o.split('\n').filter(Boolean) : []);
 
 const EXCLUDE = '--exclude-dir=node_modules --exclude-dir=.next --exclude-dir=dist --exclude-dir=.expo';
-const SCOPE = `packages/app packages/ui apps --include=*.tsx --include=*.ts ${EXCLUDE}`;
-const TSX = `packages/app packages/ui apps --include=*.tsx ${EXCLUDE}`;
+/*
+  Every package, not just app + ui. The first version scoped to
+  `packages/app packages/ui apps` and silently skipped the other eight
+  workspaces — `packages/avatar` imports the kit, so its call sites were missing
+  from every count. A scope that names its members drifts the moment a package
+  is added; `packages` does not.
+*/
+const SCOPE = `packages apps --include=*.tsx --include=*.ts ${EXCLUDE}`;
+const TSX = `packages apps --include=*.tsx ${EXCLUDE}`;
 
 /* ---- 1. What the kit exports, and who outside the kit uses it -------------- */
 
@@ -60,7 +76,40 @@ const inventory = [...exports].map(([name, meta]) => ({
   ...meta,
   // Consumers OUTSIDE the kit. Zero does NOT mean dead — it usually means the
   // component is composed inside packages/ui and should not be public.
-  external: lines(sh(`grep -rlE "\\b${name}\\b" packages/app apps --include=*.ts --include=*.tsx ${EXCLUDE}`)).length,
+  /*
+    Counts IMPORT EDGES, not identifier matches.
+
+    Matching the bare name counted any file that happened to use the same word.
+    `packages/avatar` defines its own unrelated `summarise` and its own
+    `TutorStage`, so both looked like kit consumers and neither is one — the
+    error only appeared once the scope widened past `packages/app`, which is a
+    good argument for not trusting a number that has never been stressed.
+
+    A file counts only if it imports the name FROM the kit. Multi-line import
+    blocks are the common shape here, so the file is read rather than grepped
+    line by line.
+  */
+  external: (() => {
+    const candidates = lines(
+      // `.` for the quote — an escaped double quote inside this double-quoted
+      // shell argument terminates it and breaks the whole pattern.
+      sh(`grep -rlE "from .@acme/ui" packages apps --include=*.ts --include=*.tsx ${EXCLUDE} | grep -v '^packages/ui/'`),
+    );
+    return candidates.filter((f) => {
+      let src = '';
+      try {
+        src = readFileSync(`${ROOT}/${f}`, 'utf8');
+      } catch {
+        return false;
+      }
+      // Each `import { ... } from '@acme/ui...'` block, braces included.
+      for (const m of src.matchAll(/import\s+(?:type\s+)?\{([^}]*)\}\s*from\s*['"]@acme\/ui[^'"]*['"]/g)) {
+        const names = m[1].split(',').map((t) => t.trim().replace(/^type\s+/, '').split(/\s+as\s+/)[0].trim());
+        if (names.includes(name)) return true;
+      }
+      return false;
+    }).length;
+  })(),
 }));
 
 const values = inventory.filter((r) => r.kind === 'value');
