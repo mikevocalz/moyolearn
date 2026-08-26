@@ -85,7 +85,7 @@ export function AttachSheet() {
           cap keeps the card inside the viewport on a short window, and the drop
           zone gives up its own space first. */}
       <View className="w-full max-w-lg gap-4 overflow-hidden rounded-card border-2 border-border bg-surface-raised p-5 shadow-overlay">
-        <View className="flex-row items-center gap-2">
+        <View className="flex-row items-center gap-element">
           <Paperclip size={20} className="text-accent" />
           <Text className="flex-1 text-lg font-semibold text-text md:text-xl">Attach a file</Text>
           <Pressable
@@ -116,7 +116,7 @@ export function AttachSheet() {
             void run({ uri: asset.uri, name: asset.fileName });
           }}
         >
-          <View className="h-full w-full items-center justify-center gap-3">
+          <View className="h-full w-full items-center justify-center gap-stack">
             <View className="h-16 w-16 items-center justify-center rounded-md border-2 border-border bg-surface-raised shadow-card">
               <CloudUpload size={28} className={hovering ? 'text-accent' : 'text-text-muted'} />
             </View>
@@ -138,8 +138,8 @@ export function AttachSheet() {
         </DropZone>
 
         {progress.phase === 'idle' ? null : (
-          <View className="gap-2">
-            <View className="flex-row items-baseline justify-between gap-2">
+          <View className="gap-element">
+            <View className="flex-row items-baseline justify-between gap-element">
               <Text numberOfLines={1} className="flex-1 text-sm text-text md:text-base">
                 {progress.name}
               </Text>

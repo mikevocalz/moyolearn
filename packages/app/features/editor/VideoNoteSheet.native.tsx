@@ -37,7 +37,7 @@ export function VideoNoteSheet() {
     <Modal visible={open} transparent animationType="fade" onRequestClose={() => resolve(null)}>
       <View className="flex-1 items-center justify-center bg-ink-950/40 p-6">
         <View className="w-full max-w-md gap-5 overflow-hidden rounded-card border-2 border-border bg-surface-raised p-5 shadow-overlay">
-          <View className="flex-row items-center gap-2">
+          <View className="flex-row items-center gap-element">
             <Video size={20} className="text-accent" />
             <Text className="flex-1 text-lg font-semibold text-text md:text-xl">Video note</Text>
             <Pressable

@@ -19,7 +19,7 @@ export type { DropAsset, Assets };
 const dropZone = tv({
   slots: {
     root:
-      'items-center justify-center gap-3 rounded-sheet border-2 border-dashed border-border-strong ' +
+      'items-center justify-center gap-stack rounded-sheet border-2 border-dashed border-border-strong ' +
       'bg-surface-sunken p-10 transition-all duration-base ' +
       'hover:border-focus/60 hover:bg-surface-raised motion-reduce:transition-none',
     well:

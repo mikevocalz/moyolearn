@@ -42,7 +42,7 @@ const TARGETS = [
 
 function RampColumn({ temperature }: { temperature: DialTemperature }) {
   return (
-    <View className="flex-1 gap-3">
+    <View className="flex-1 gap-stack">
       <Text className={LABEL}>{temperature}</Text>
       <Dial temperature={temperature}>
         <View className="gap-stack">
@@ -66,7 +66,7 @@ function RampColumn({ temperature }: { temperature: DialTemperature }) {
 /** Same role names, two temperatures — the ramp is what the dial is scaling. */
 export const TypeRamp: Story = {
   render: () => (
-    <Section className="flex-row flex-wrap gap-6 bg-surface p-6">
+    <Section className="flex-row flex-wrap gap-group bg-surface p-6">
       <RampColumn temperature="cool" />
       <RampColumn temperature="hot" />
     </Section>
@@ -75,7 +75,7 @@ export const TypeRamp: Story = {
 
 function TierColumn({ temperature }: { temperature: DialTemperature }) {
   return (
-    <View className="flex-1 gap-3">
+    <View className="flex-1 gap-stack">
       <Text className={LABEL}>{temperature}</Text>
       <Dial temperature={temperature}>
         <View className="gap-group">
@@ -99,7 +99,7 @@ function TierColumn({ temperature }: { temperature: DialTemperature }) {
 /** The gap between the swatches IS the token — Hot runs one step looser throughout. */
 export const SpacingTiers: Story = {
   render: () => (
-    <Section className="flex-row flex-wrap gap-6 bg-surface p-6">
+    <Section className="flex-row flex-wrap gap-group bg-surface p-6">
       <TierColumn temperature="cool" />
       <TierColumn temperature="hot" />
     </Section>
@@ -129,7 +129,7 @@ export const TouchTargets: Story = {
 export const ReadingComfort: Story = {
   render: () => (
     <Dial temperature="hot">
-      <Section className="flex-row flex-wrap gap-6 bg-surface p-6">
+      <Section className="flex-row flex-wrap gap-group bg-surface p-6">
         <View className="flex-1 gap-stack">
           <Text className={LABEL}>Default</Text>
           <Text className="text-body text-text">

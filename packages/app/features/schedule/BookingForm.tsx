@@ -115,9 +115,9 @@ export function BookingForm({ onDone, onOpenEditorSettings }: BookingFormProps) 
         {(field) => <field.TextField label="What is it?" placeholder="Theory lesson" />}
       </form.AppField>
 
-      <Section className="gap-2">
+      <Section className="gap-element">
         <Text className="text-sm font-medium text-text">Instructor</Text>
-        <View className="flex-row flex-wrap gap-2">
+        <View className="flex-row flex-wrap gap-element">
           {DEMO_RESOURCES.map((resource) => {
             const active = resource.id === resourceId;
             return (
@@ -129,7 +129,7 @@ export function BookingForm({ onDone, onOpenEditorSettings }: BookingFormProps) 
                   form.setFieldValue('slot', '');
                 }}
                 accessibilityState={{ selected: active }}
-                className={`flex-row items-center gap-2 rounded-md border-2 border-border px-2.5 py-1.5 ${
+                className={`flex-row items-center gap-element rounded-md border-2 border-border px-2.5 py-1.5 ${
                   active ? 'bg-primary' : 'bg-surface'
                 }`}
               >
@@ -145,7 +145,7 @@ export function BookingForm({ onDone, onOpenEditorSettings }: BookingFormProps) 
         </View>
       </Section>
 
-      <Section className="gap-3">
+      <Section className="gap-stack">
         <View className="flex-row items-baseline justify-between">
           <Text className="text-sm font-medium text-text">Available times</Text>
           {/* Duration stated ONCE here instead of repeated in every chip — the
@@ -166,13 +166,13 @@ export function BookingForm({ onDone, onOpenEditorSettings }: BookingFormProps) 
             if (inGroup.length === 0) return null;
 
             return (
-              <View key={group} className="gap-2">
+              <View key={group} className="gap-element">
                 {/* Chunked into morning/afternoon so the eye scans a short
                     list twice instead of one undifferentiated block of ten. */}
                 <Text className="text-xs font-semibold uppercase text-text-muted">
                   {group}
                 </Text>
-                <View className="flex-row flex-wrap gap-2">
+                <View className="flex-row flex-wrap gap-element">
                   {inGroup.map((slot) => {
                     const iso = slot.start.toISOString();
                     const active = iso === selectedSlot;
@@ -220,7 +220,7 @@ export function BookingForm({ onDone, onOpenEditorSettings }: BookingFormProps) 
 
       {/* Cancel sits beside Create so there is an explicit exit, not just a
           swipe-down. Secondary weight, so it never competes with the action. */}
-      <View className="flex-row gap-3 border-t-2 border-border/20 pt-5">
+      <View className="flex-row gap-stack border-t-2 border-border/20 pt-5">
         <Button variant="outline" title="Cancel" onPress={onDone} className="flex-1" />
         <form.AppForm>
           <form.SubmitButton title="Create booking" className="flex-[2]" />

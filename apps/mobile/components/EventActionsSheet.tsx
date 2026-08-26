@@ -75,7 +75,7 @@ export function EventActionsSheet({
         style={{ marginHorizontal: 24, overflow: 'hidden', borderRadius: 14 }}
       >
         <BottomSheetView style={{ overflow: 'hidden' }}>
-          <View className="gap-3 p-5">
+          <View className="gap-stack p-5">
             <Text numberOfLines={1} className="text-lg font-semibold text-text md:text-xl">
               {eventTitle}
             </Text>
@@ -88,7 +88,7 @@ export function EventActionsSheet({
                   action.onPress();
                   onClose();
                 }}
-                className={`min-h-11 flex-row items-center gap-3 rounded-md border-2 border-border px-4 py-3 transition-colors duration-fast motion-reduce:transition-none ${
+                className={`min-h-11 flex-row items-center gap-stack rounded-md border-2 border-border px-4 py-3 transition-colors duration-fast motion-reduce:transition-none ${
                   action.danger
                     ? 'bg-surface-raised hover:bg-danger/10 active:bg-danger/10'
                     : 'bg-surface-raised hover:bg-surface-sunken active:bg-surface-sunken'

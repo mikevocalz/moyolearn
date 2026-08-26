@@ -225,7 +225,7 @@ export function VoiceRecorder({ onComplete, onCancel, maxSeconds, className }: V
           label="Your recording"
         />
 
-        <View className="flex-row gap-3">
+        <View className="flex-row gap-stack">
           <Pressable
             role="button"
             aria-label="Record again"
@@ -253,7 +253,7 @@ export function VoiceRecorder({ onComplete, onCancel, maxSeconds, className }: V
   return (
     <View className={`gap-4 ${className ?? ''}`}>
       {/* The waveform is the subject, so it gets the slab and the space. */}
-      <View className="gap-2 rounded-md border-2 border-border bg-surface-sunken px-3 py-3">
+      <View className="gap-element rounded-md border-2 border-border bg-surface-sunken px-3 py-3">
         <Waveform levels={levels} height={56} />
         <View className="flex-row items-center justify-between">
           <Text className="text-sm font-semibold text-text md:text-base">{clock_}</Text>

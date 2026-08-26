@@ -34,7 +34,7 @@ export const Debounced: Story = {
   render: function Render() {
     const { query, deliveries, setQuery } = useDebounceStory();
     return (
-      <View className="max-w-content-form gap-3 p-4">
+      <View className="max-w-content-form gap-stack p-4">
         <SearchBar value={query} onChangeText={setQuery} debounceMs={400} placeholder="Type fast…" />
         <Text variant="caption" tone="muted">
           Upstream received: “{query}” ({deliveries} deliveries — 400ms debounce via @tanstack/react-pacer)

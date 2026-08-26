@@ -58,7 +58,7 @@ export function UrlSheet() {
       <KeyboardAvoidingView behavior="padding" style={{ flex: 1 }}>
       <View className="flex-1 items-center justify-center bg-ink-950/40 p-6">
         <View className="w-full max-w-md gap-4 overflow-hidden rounded-card border-2 border-border bg-surface-raised p-5 shadow-overlay">
-          <View className="flex-row items-center gap-2">
+          <View className="flex-row items-center gap-element">
             {isYouTube ? (
               <Video size={20} className="text-accent" />
             ) : (
@@ -97,7 +97,7 @@ export function UrlSheet() {
             </Text>
           ) : null}
 
-          <View className="flex-row justify-end gap-3">
+          <View className="flex-row justify-end gap-stack">
             <Button variant="outline" title="Cancel" onPress={() => close(null)} />
             <Button
               variant="primary"

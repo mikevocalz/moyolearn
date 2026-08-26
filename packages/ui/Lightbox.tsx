@@ -79,7 +79,7 @@ export function Lightbox({ images, initialIndex = 0, open, onClose }: LightboxPr
         ) : null}
 
         {hasMultiple ? (
-          <View className="absolute inset-x-0 bottom-8 flex-row justify-center gap-2">
+          <View className="absolute inset-x-0 bottom-8 flex-row justify-center gap-element">
             {images.map((_, i) => (
               <View
                 key={i}

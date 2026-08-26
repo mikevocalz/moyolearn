@@ -27,7 +27,7 @@ export const FiveThousandRows: Story = {
         estimatedItemSize={64}
         className="h-96 rounded-card border border-border/60 bg-surface-raised shadow-card"
         renderItem={({ item }) => (
-          <View className="flex-row items-center gap-3 border-b border-border px-4 py-3">
+          <View className="flex-row items-center gap-stack border-b border-border px-4 py-3">
             <Avatar name={item.name} size="sm" />
             <View className="flex-1">
               <Text className="font-medium">{item.name}</Text>

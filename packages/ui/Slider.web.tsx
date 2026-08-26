@@ -8,7 +8,7 @@ export function Slider({
   value, onValueChange, min = 0, max = 1, step, disabled, label, className,
 }: SliderProps) {
   return (
-    <View className={`gap-2 ${className ?? ''}`}>
+    <View className={`gap-element ${className ?? ''}`}>
       {label ? <Text className="text-sm font-medium text-text md:text-base">{label}</Text> : null}
       <input
         type="range"

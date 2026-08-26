@@ -24,7 +24,7 @@ export const Pressable: Story = {
     onPress: () => {},
     'aria-label': 'Open the mini player',
     children: (
-      <View className="flex-row items-center gap-3">
+      <View className="flex-row items-center gap-stack">
         <Text className="text-sm font-medium text-text">Now playing</Text>
         <Text className="text-sm text-text-muted">Ride On, King Jesus</Text>
       </View>

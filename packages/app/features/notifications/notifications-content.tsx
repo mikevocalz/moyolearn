@@ -13,7 +13,7 @@ function NotificationRow({ item, index }: { item: Notification; index: number })
       <Pressable
         aria-label={item.title}
         onPress={() => markRead(item.id)}
-        className={`flex-row items-start gap-3 px-4 py-3.5 transition-colors duration-fast hover:bg-surface-sunken ${
+        className={`flex-row items-start gap-stack px-4 py-3.5 transition-colors duration-fast hover:bg-surface-sunken ${
           item.read ? '' : 'bg-primary/5'
         }`}
       >
@@ -21,7 +21,7 @@ function NotificationRow({ item, index }: { item: Notification; index: number })
           <item.icon size={18} className={INK[item.tone]} />
         </View>
         <View className="flex-1 gap-0.5">
-          <View className="flex-row items-center gap-2">
+          <View className="flex-row items-center gap-element">
             <TWText className={`flex-1 text-sm text-text ${item.read ? 'font-medium' : 'font-bold'}`}>
               {item.title}
             </TWText>
@@ -38,7 +38,7 @@ function NotificationRow({ item, index }: { item: Notification; index: number })
 function Group({ label, items, offset }: { label: string; items: Notification[]; offset: number }) {
   if (!items.length) return null;
   return (
-    <Section className="gap-2">
+    <Section className="gap-element">
       <Text variant="label" tone="muted">{label}</Text>
       <View className="overflow-hidden rounded-card border-2 border-border bg-surface-raised shadow-card">
         {items.map((item, i) => (
@@ -59,9 +59,9 @@ export function NotificationsContent() {
   const earlier = items.slice(3);
 
   return (
-    <View className="gap-6 md:gap-10 lg:gap-12">
+    <View className="gap-group md:gap-10 lg:gap-12">
       <FadeIn>
-        <Section className="flex-row items-end justify-between gap-3">
+        <Section className="flex-row items-end justify-between gap-stack">
           <View className="gap-0.5">
             <Heading level={1} size="display-sm">Notifications</Heading>
             {unread > 0 ? <Text variant="caption" tone="muted">{unread} unread</Text> : null}

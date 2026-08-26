@@ -53,7 +53,7 @@ export const WithPaste: Story = {
           onPaste={onPaste}
         />
         {images.length ? (
-          <View className="flex-row flex-wrap gap-3">
+          <View className="flex-row flex-wrap gap-stack">
             {images.map((uri, i) => (
               <Image
                 key={i}

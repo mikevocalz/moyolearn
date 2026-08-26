@@ -162,7 +162,7 @@ function StateBody({
           <Text className="font-mono text-data text-text-muted">
             Hint {state.step.index} of {state.step.total}
           </Text>
-          <View className="flex-row flex-wrap gap-3">
+          <View className="flex-row flex-wrap gap-stack">
             <Button
               title="I'll try it"
               variant="highlighter"
@@ -199,7 +199,7 @@ function StateBody({
       );
     case 'listening':
       return (
-        <View className="flex-row items-center gap-2">
+        <View className="flex-row items-center gap-element">
           <View className="h-3 w-3 rounded-full bg-danger" />
           <Text className="font-sans text-body text-text-muted">Listening</Text>
         </View>

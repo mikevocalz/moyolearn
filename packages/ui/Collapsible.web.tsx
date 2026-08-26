@@ -10,12 +10,12 @@ import type { CollapsibleProps } from './Collapsible.types';
  */
 export function Collapsible({ label, isOpen, onOpenChange, children, className }: CollapsibleProps) {
   return (
-    <View className={`gap-2 ${className ?? ''}`}>
+    <View className={`gap-element ${className ?? ''}`}>
       <Pressable
         role="button"
         aria-expanded={isOpen}
         onPress={() => onOpenChange(!isOpen)}
-        className="min-h-11 flex-row items-center gap-2 rounded-md border-2 border-border bg-surface-raised px-3 py-2 transition-colors duration-fast hover:bg-surface-sunken motion-reduce:transition-none"
+        className="min-h-11 flex-row items-center gap-element rounded-md border-2 border-border bg-surface-raised px-3 py-2 transition-colors duration-fast hover:bg-surface-sunken motion-reduce:transition-none"
       >
         <ChevronRight
           size={18}
@@ -25,7 +25,7 @@ export function Collapsible({ label, isOpen, onOpenChange, children, className }
         />
         <Text className="flex-1 text-base font-medium text-text">{label}</Text>
       </Pressable>
-      {isOpen ? <View className="gap-2 pl-6">{children}</View> : null}
+      {isOpen ? <View className="gap-element pl-6">{children}</View> : null}
     </View>
   );
 }

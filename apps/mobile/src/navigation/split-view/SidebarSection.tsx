@@ -36,7 +36,7 @@ export function SidebarSection({
   children,
 }: SidebarSectionProps) {
   if (rail) {
-    return <View className="gap-2">{children}</View>;
+    return <View className="gap-element">{children}</View>;
   }
 
   return (
@@ -66,7 +66,7 @@ export function SidebarSection({
       {/* Mounted only when open: a sidebar group is a list of navigable rows,
           and keeping them mounted-but-hidden would leave them in the
           accessibility tree and reachable by keyboard while invisible. */}
-      {open ? <View className="gap-2 pl-2">{children}</View> : null}
+      {open ? <View className="gap-element pl-2">{children}</View> : null}
     </View>
   );
 }

@@ -16,7 +16,7 @@ export function ExploreContent() {
   );
 
   return (
-    <View className="gap-6 md:gap-10 lg:gap-12">
+    <View className="gap-group md:gap-10 lg:gap-12">
       <FadeIn>
         <Section className="gap-1">
           <Heading level={1} size="display-sm">Explore</Heading>
@@ -30,7 +30,7 @@ export function ExploreContent() {
 
       {/* Category pills */}
       <FadeIn delay={100}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="flex-row gap-2">
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="flex-row gap-element">
           {CATEGORIES.map((cat) => {
             const active = category === cat.label;
             return (
@@ -57,13 +57,13 @@ export function ExploreContent() {
 
       {/* Featured rail */}
       <FadeIn delay={140}>
-        <Section className="gap-3">
+        <Section className="gap-stack">
           <Text variant="label" tone="muted">Featured</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="flex-row gap-3 pb-1.5 pr-1.5">
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerClassName="flex-row gap-stack pb-1.5 pr-1.5">
             {FEATURED.map((item, i) => (
               <ScaleIn key={item.title} delay={160 + i * 60}>
                 <PressScale
-                  className={`w-48 gap-8 overflow-hidden rounded-card p-5 shadow-card ${item.bg}`}
+                  className={`w-48 gap-section overflow-hidden rounded-card p-5 shadow-card ${item.bg}`}
                   outerClassName="self-start"
                 >
                   <View aria-hidden className="absolute -right-6 -top-8 h-24 w-24 rounded-full bg-ink-50/10" />
@@ -80,13 +80,13 @@ export function ExploreContent() {
       </FadeIn>
 
       {/* Resource grid */}
-      <Section className="gap-3">
+      <Section className="gap-stack">
         <Text variant="label" tone="muted">Resources</Text>
-        <View className="flex-row flex-wrap gap-3">
+        <View className="flex-row flex-wrap gap-stack">
           {visible.map((card, i) => (
             <FadeIn key={card.title} delay={200 + i * 50} className="min-w-40 flex-1 basis-[45%]">
               <PressScale
-                className="w-full gap-3 rounded-card border-2 border-border bg-surface-raised p-4 shadow-card"
+                className="w-full gap-stack rounded-card border-2 border-border bg-surface-raised p-4 shadow-card"
                 outerClassName="w-full"
               >
                 <View className="flex-row items-start justify-between">

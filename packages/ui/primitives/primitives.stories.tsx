@@ -23,7 +23,7 @@ export const Landmarks: Story = {
         </Nav>
       </Header>
       <Main className="gap-4">
-        <Section className="gap-2">
+        <Section className="gap-element">
           <Heading level={2} className="font-display text-display-sm text-text">Schedule</Heading>
           <Article className="gap-1 rounded-card bg-surface-raised p-4 shadow-card">
             <Heading level={3} className="text-lg font-semibold text-text">Tuesday standup</Heading>
@@ -105,7 +105,7 @@ export const FormControls: Story = {
             </Select>
           </Label>
         </Fieldset>
-        <Page className="flex-row items-center gap-3">
+        <Page className="flex-row items-center gap-stack">
           <Button className="items-center rounded-md border-2 border-border-strong bg-primary px-5 py-2.5 shadow-card transition-all duration-fast hover:bg-primary-pressed active:translate-x-[3px] active:translate-y-[3px] active:shadow-none">
             <Text className="font-semibold text-on-primary">Save changes</Text>
           </Button>

@@ -8,7 +8,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Variants: Story = {
   render: () => (
-    <View className="gap-2 p-4">
+    <View className="gap-element p-4">
       <Text variant="display">Display</Text>
       <Text variant="title">Title</Text>
       <Text variant="heading">Heading</Text>

@@ -59,7 +59,7 @@ export function Schedule({
         // or the grid sits flush against the pane edge.
         className={`flex-1 gap-4 bg-surface-sunken py-4 ${fill ? 'px-4 sm:px-6' : ''}`}
       >
-        <View className="flex-row items-center gap-3">
+        <View className="flex-row items-center gap-stack">
           <Text className="flex-1 text-xl font-semibold text-text md:text-2xl lg:text-3xl">Today&apos;s Schedule</Text>
 
           {/* The platform's own segmented control (@expo/ui), not a hand-rolled
@@ -85,7 +85,7 @@ export function Schedule({
         )}
 
         {selectedTime ? (
-          <Card className="gap-3">
+          <Card className="gap-stack">
             <View className="flex-row items-center justify-between">
               <Text className="text-base font-semibold text-text">
                 {format(selectedTime, 'h:mm a')} · Selected slot
@@ -94,7 +94,7 @@ export function Schedule({
                 <Text className="text-sm text-text-muted">Close</Text>
               </Pressable>
             </View>
-            <View className="flex-row gap-2">
+            <View className="flex-row gap-element">
               <Button variant="outline" title="Edit" onPress={() => { /* Wave 3: edit */ }} />
               <Button variant="primary" title="Book" onPress={() => onBook({ start: selectedTime, end: new Date(selectedTime.getTime() + 30 * 60_000), available: true })} />
             </View>

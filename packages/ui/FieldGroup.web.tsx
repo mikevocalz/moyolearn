@@ -8,12 +8,12 @@ import type { FieldGroupProps, FieldSectionProps } from './FieldGroup.types';
  * section with the app's own eyebrow heading, matching Card.
  */
 export function FieldGroup({ children }: FieldGroupProps) {
-  return <View className="gap-6">{children}</View>;
+  return <View className="gap-group">{children}</View>;
 }
 
 FieldGroup.Section = function FieldSection({ children, title, titleUppercase = true }: FieldSectionProps) {
   return (
-    <View className="gap-2">
+    <View className="gap-element">
       {title ? (
         <Text
           className={`text-xs font-semibold text-text-muted md:text-sm ${
@@ -23,7 +23,7 @@ FieldGroup.Section = function FieldSection({ children, title, titleUppercase = t
           {title}
         </Text>
       ) : null}
-      <View className="gap-3 rounded-card border-2 border-border bg-surface-raised p-4 shadow-card">
+      <View className="gap-stack rounded-card border-2 border-border bg-surface-raised p-4 shadow-card">
         {children}
       </View>
     </View>

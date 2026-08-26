@@ -10,7 +10,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Sizes: Story = {
   render: () => (
-    <View className="flex-row items-end gap-3 p-4">
+    <View className="flex-row items-end gap-stack p-4">
       <Avatar name="Maya Rodriguez" size="sm" />
       <Avatar name="Maya Rodriguez" size="md" />
       <Avatar name="Maya Rodriguez" size="lg" />
@@ -21,7 +21,7 @@ export const Sizes: Story = {
 
 export const WithImage: Story = {
   render: () => (
-    <View className="flex-row items-end gap-3 p-4">
+    <View className="flex-row items-end gap-stack p-4">
       <Avatar name="Maya Rodriguez" imageUri={PHOTO} size="sm" />
       <Avatar name="Maya Rodriguez" imageUri={PHOTO} size="md" />
       <Avatar name="Maya Rodriguez" imageUri={PHOTO} size="lg" />

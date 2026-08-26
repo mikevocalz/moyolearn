@@ -83,7 +83,7 @@ export function BookingSurface({ day, resource, onBook }: BookingSurfaceProps) {
         })}
       </View>
 
-      <ScrollView className="flex-1" contentContainerClassName="gap-2">
+      <ScrollView className="flex-1" contentContainerClassName="gap-element">
         {slots.map((slot) => {
           const iso = slot.start.toISOString();
           const isSelected = iso === selectedEventId;

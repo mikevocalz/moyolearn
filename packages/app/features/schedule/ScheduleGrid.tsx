@@ -283,7 +283,7 @@ function ColumnHeader({ column, width }: { column: GridColumn; width: number }) 
   return (
     <View
       style={{ width }}
-      className="flex-row items-center gap-2 border-l border-border px-3 py-2"
+      className="flex-row items-center gap-element border-l border-border px-3 py-2"
     >
       {column.resource ? (
         <Avatar size="sm" name={column.resource.name} imageUri={column.resource.avatarUrl} />

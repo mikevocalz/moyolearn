@@ -5,7 +5,7 @@ import { Text } from './Text';
 
 const emptyState = tv({
   slots: {
-    root: 'items-center justify-center gap-2 p-10',
+    root: 'items-center justify-center gap-element p-10',
     icon: 'mb-2 h-16 w-16 items-center justify-center rounded-md border-2 border-border bg-surface-sunken',
     title: 'text-center',
     description: 'max-w-content-form text-center',

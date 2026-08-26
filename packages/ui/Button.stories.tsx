@@ -20,7 +20,7 @@ export const Disabled: Story = { args: { disabled: true } };
 export const Loading: Story = { args: { loading: true } };
 export const Sizes: Story = {
   render: () => (
-    <View className="flex-row items-end gap-3 p-4">
+    <View className="flex-row items-end gap-stack p-4">
       <Button title="Small" size="sm" onPress={() => {}} />
       <Button title="Medium" size="md" onPress={() => {}} />
       <Button title="Large" size="lg" onPress={() => {}} />

@@ -13,7 +13,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Variants: Story = {
   render: () => (
-    <View className="flex-row gap-3 p-4">
+    <View className="flex-row gap-stack p-4">
       <IconButton icon={<Text className="text-on-primary">＋</Text>} aria-label="Primary" />
       <IconButton variant="ghost" icon={<Text>＋</Text>} aria-label="Ghost" />
       <IconButton variant="outline" icon={<Text>＋</Text>} aria-label="Outline" />

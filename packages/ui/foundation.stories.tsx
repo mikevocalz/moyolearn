@@ -25,12 +25,12 @@ function Swatch({ name, value }: { name: string; value: string }) {
 
 export const Colors: Story = {
   render: () => (
-    <View className="gap-6 p-6 bg-surface">
+    <View className="gap-group p-6 bg-surface">
       {Object.entries(palette).map(([family, scale]) =>
         typeof scale === 'string' ? null : (
-          <View key={family} className="gap-2">
+          <View key={family} className="gap-element">
             <H2 className="text-lg font-semibold text-text">{family}</H2>
-            <View className="flex-row flex-wrap gap-3">
+            <View className="flex-row flex-wrap gap-stack">
               {Object.entries(scale).map(([step, hex]) => (
                 <Swatch key={step} name={step} value={hex} />
               ))}
@@ -38,9 +38,9 @@ export const Colors: Story = {
           </View>
         ),
       )}
-      <View className="gap-2">
+      <View className="gap-element">
         <H2 className="text-lg font-semibold text-text">semantic (light / dark)</H2>
-        <View className="flex-row flex-wrap gap-3">
+        <View className="flex-row flex-wrap gap-stack">
           {Object.entries(semantic).map(([name, { light, dark }]) => (
             <View key={name} className="items-center gap-1">
               <View className="flex-row">
@@ -78,9 +78,9 @@ export const Typography: Story = {
 
 export const Spacing: Story = {
   render: () => (
-    <View className="gap-3 p-6 bg-surface">
+    <View className="gap-stack p-6 bg-surface">
       {Object.entries(radius).map(([name, value]) => (
-        <View key={name} className="flex-row items-center gap-3">
+        <View key={name} className="flex-row items-center gap-stack">
           <View className="h-10 w-20 bg-primary" style={{ borderRadius: value as never }} />
           <Text className="text-sm text-text-muted">radius-{name} · {value}</Text>
         </View>
@@ -94,7 +94,7 @@ export const Spacing: Story = {
 
 export const ContentWidths: Story = {
   render: () => (
-    <View className="gap-3 p-6 bg-surface">
+    <View className="gap-stack p-6 bg-surface">
       {Object.entries(contentWidths).map(([name, width]) => (
         <View key={name} className="gap-1">
           <Text className="text-xs text-text-muted">{name} · {width}</Text>

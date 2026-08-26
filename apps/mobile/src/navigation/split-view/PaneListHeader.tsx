@@ -27,7 +27,7 @@ export function PaneListHeader({ title, subtitle, header, children }: PaneListHe
     <Animated.View
       onLayout={(event) => header.onHeaderLayout(event.nativeEvent.layout.height)}
       style={header.headerStyle}
-      className="absolute left-0 right-0 top-0 z-10 flex-row items-center gap-2 border-b-2 border-border bg-surface px-4 py-3"
+      className="absolute left-0 right-0 top-0 z-10 flex-row items-center gap-element border-b-2 border-border bg-surface px-4 py-3"
     >
       <View className="flex-1">
         <Text numberOfLines={1} className="text-base font-semibold text-text md:text-lg">

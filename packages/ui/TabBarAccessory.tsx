@@ -8,7 +8,7 @@ import { SlideUp } from './motion';
 // only the NW transition covers opacity changes.
 const accessory = tv({
   base:
-    'w-full flex-row items-center gap-3 rounded-t-md border-t-2 border-border px-4 py-2 ' +
+    'w-full flex-row items-center gap-stack rounded-t-md border-t-2 border-border px-4 py-2 ' +
     'transition-opacity duration-base motion-reduce:transition-none',
   variants: {
     tone: {

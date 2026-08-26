@@ -12,7 +12,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Sizes: Story = {
   render: () => (
-    <View className="gap-3 p-4">
+    <View className="gap-stack p-4">
       <Heading level={1} size="display-xl">Display XL</Heading>
       <Heading level={2} size="display-lg">Display LG</Heading>
       <Heading level={2} size="display-md">Display MD</Heading>

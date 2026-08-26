@@ -58,7 +58,7 @@ export function OnboardingContent() {
     <View className="gap-7">
       <FadeIn>
         <View className="rounded-card border-2 border-border bg-surface-sunken p-3">
-          <View className="flex-row gap-2">
+          <View className="flex-row gap-element">
             <Dot active={step === 'promise'} label="Promise" />
             <Dot active={step === 'role'} label="Role" />
             <Dot active={step === 'consent'} label="Consent" />
@@ -75,7 +75,7 @@ export function OnboardingContent() {
             <TWText className="text-body text-text">
               We keep three things in separate boxes:
             </TWText>
-            <View className="gap-3">
+            <View className="gap-stack">
               <PromiseItem
                 title="Your child’s learning"
                 body="Work they do, their model, and what their tutor needs to know."
@@ -100,7 +100,7 @@ export function OnboardingContent() {
             <TWText className="text-body text-text">
               Pick a starting role. You can switch hats later if your account is linked to more than one.
             </TWText>
-            <View className="gap-2">
+            <View className="gap-element">
               {PERSONAS.map((persona) => (
                 <PressScale
                   key={persona.id}
@@ -151,7 +151,7 @@ export function OnboardingContent() {
             <TWText className="text-body text-text">
               Learner profiles are owned by a guardian. We do not create independent accounts for children under 13.
             </TWText>
-            <View className="gap-2">
+            <View className="gap-element">
               <Switch
                 label="I agree to the Terms of Use"
                 value={consents.terms}
@@ -173,7 +173,7 @@ export function OnboardingContent() {
       )}
 
       <FadeIn delay={160}>
-        <View className="flex-row gap-2">
+        <View className="flex-row gap-element">
           {step !== 'promise' ? (
             <Button
               variant="outline"
@@ -192,7 +192,7 @@ export function OnboardingContent() {
 
 function PromiseItem({ title, body }: { title: string; body: string }) {
   return (
-    <View className="flex-row items-start gap-3 rounded-card border-2 border-border bg-surface-raised p-3">
+    <View className="flex-row items-start gap-stack rounded-card border-2 border-border bg-surface-raised p-3">
       <View className="mt-0.5 h-6 w-6 items-center justify-center rounded-full bg-grade">
         <Check size={14} className="text-on-grade" />
       </View>

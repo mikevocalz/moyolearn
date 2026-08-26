@@ -78,7 +78,7 @@ export function HomeContent() {
               {isLearner ? "Today's work" : 'Weekly summary'}
             </TWText>
             {isLearner ? (
-              <View className="flex-row items-center gap-3">
+              <View className="flex-row items-center gap-stack">
                 <ImagePlus size={32} className="text-on-primary" />
                 <View className="gap-1">
                   <TWText className="font-display text-2xl font-bold text-on-primary">Show Natalie your work</TWText>
@@ -100,13 +100,13 @@ export function HomeContent() {
 
       {/* Stats grid */}
       <FadeIn delay={160}>
-        <Section className="gap-3">
+        <Section className="gap-stack">
           <Text variant="label" tone="muted">Overview</Text>
-          <View className="flex-row flex-wrap gap-3">
+          <View className="flex-row flex-wrap gap-stack">
             {STATS.map((stat, i) => (
               <ScaleIn key={stat.label} delay={180 + i * 50} className="min-w-36 flex-1 basis-[45%]">
                 <PressScale
-                  className="w-full gap-2 rounded-card border-2 border-border bg-surface-raised p-4 shadow-card"
+                  className="w-full gap-element rounded-card border-2 border-border bg-surface-raised p-4 shadow-card"
                   outerClassName="w-full"
                 >
                   <View className={`h-9 w-9 items-center justify-center rounded-lg ${WELL[stat.tone]}`}>
@@ -128,13 +128,13 @@ export function HomeContent() {
 
       {/* Quick actions */}
       <FadeIn delay={260}>
-        <Section className="gap-3">
+        <Section className="gap-stack">
           <Text variant="label" tone="muted">Quick actions</Text>
-          <View className="flex-row flex-wrap gap-3">
+          <View className="flex-row flex-wrap gap-stack">
             {QUICK_ACTIONS.map((action, i) => (
               <FadeIn key={action.label} delay={280 + i * 40} className="min-w-20 flex-1">
                 <PressScale
-                  className="w-full items-center gap-2 rounded-card border-2 border-border bg-surface-raised px-3 py-4"
+                  className="w-full items-center gap-element rounded-card border-2 border-border bg-surface-raised px-3 py-4"
                   outerClassName="w-full"
                 >
                   <View className={`h-11 w-11 items-center justify-center rounded-xl ${WELL[action.tone]}`}>
@@ -150,17 +150,17 @@ export function HomeContent() {
 
       {/* Active projects */}
       <FadeIn delay={340}>
-        <Section className="gap-3">
+        <Section className="gap-stack">
           <View className="flex-row items-center justify-between">
             <Text variant="label" tone="muted">Active projects</Text>
             <PressScale onPress={() => {}} className="rounded-md px-2 py-1" outerClassName="self-start">
               <Text variant="caption" className="font-bold text-text underline">See all</Text>
             </PressScale>
           </View>
-          <View className="gap-3">
+          <View className="gap-stack">
             {PROJECTS.map((project, i) => (
               <FadeIn key={project.name} delay={360 + i * 60}>
-                <Card className="gap-3">
+                <Card className="gap-stack">
                   <View className="flex-row items-center gap-2.5">
                     <View className={`h-2.5 w-2.5 rounded-full ${BAR[project.tone]}`} />
                     <TWText className="flex-1 text-base font-semibold text-text">{project.name}</TWText>

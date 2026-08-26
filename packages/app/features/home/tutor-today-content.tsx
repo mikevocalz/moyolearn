@@ -32,7 +32,7 @@ export function TutorTodayContent() {
       {next ? (
         <FadeIn delay={80}>
           <Card className="border-2 border-highlighter bg-highlighter/10 shadow-card">
-            <View className="gap-2">
+            <View className="gap-element">
               <View className="flex-row items-center justify-between">
                 <TWText className="text-xs font-semibold uppercase tracking-wider text-text-muted">Next</TWText>
                 <View className="flex-row items-center gap-1">
@@ -48,7 +48,7 @@ export function TutorTodayContent() {
               <TWText className="text-base text-text-muted">{next.timeLabel}</TWText>
               {next.travel ? <TWText className="text-sm text-text-muted">{next.travel}</TWText> : null}
               <TWText className="font-mono text-sm text-text">AI PREP: {next.prepLine}</TWText>
-              <View className="flex-row gap-2 pt-1">
+              <View className="flex-row gap-element pt-1">
                 <PressScale
                   className="flex-1 items-center rounded-md bg-primary px-4 py-2"
                   onPress={() => { /* Wave 3: start session */ }}
@@ -68,10 +68,10 @@ export function TutorTodayContent() {
       ) : null}
 
       <FadeIn delay={160}>
-        <Section className="gap-3">
+        <Section className="gap-stack">
           <Text variant="label" tone="muted">Run list</Text>
           {hasDay ? (
-            <View className="gap-2">
+            <View className="gap-element">
               {rest.map((session) => (
                 <PressScale
                   key={session.id}

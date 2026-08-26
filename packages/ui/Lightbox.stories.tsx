@@ -34,7 +34,7 @@ export const Gallery: Story = {
     const { open, index, openAt, close } = useLightboxStory();
     return (
       <View className="gap-4 p-4">
-        <View className="flex-row gap-3">
+        <View className="flex-row gap-stack">
           {IMAGES.map((uri, i) => (
             <Pressable
               key={uri}

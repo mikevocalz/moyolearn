@@ -14,7 +14,7 @@ export interface SwitchProps {
 export function Switch({ value, onChange, label, disabled, className }: SwitchProps) {
   return (
     <View
-      className={`w-full flex-row items-center justify-between gap-3 ${disabled ? 'opacity-50' : ''} ${className ?? ''}`}
+      className={`w-full flex-row items-center justify-between gap-stack ${disabled ? 'opacity-50' : ''} ${className ?? ''}`}
     >
       <Text className="min-w-0 flex-1">{label}</Text>
       <button

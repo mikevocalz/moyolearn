@@ -19,7 +19,7 @@ export function RoleSwitcher() {
   return (
     <View className="gap-stack p-inset">
       <Text className="font-sans text-caption text-text-muted">Switch persona</Text>
-      <View className="flex-row flex-wrap gap-2">
+      <View className="flex-row flex-wrap gap-element">
         {PERSONAS.map((persona) => (
           <Button
             key={persona.id}

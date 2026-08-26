@@ -111,7 +111,7 @@ export function AppTabBar({ state, navigation, rail }: BottomTabBarProps & { rai
         paddingTop: insets.top + 12,
         paddingBottom: insets.bottom + MENU_BOTTOM_GAP,
       }}
-      className="h-full items-center gap-2 bg-surface px-1.5"
+      className="h-full items-center gap-element bg-surface px-1.5"
     >
       {items}
       {/* No trailing rule: the rail shares the screen's surface colour, so the

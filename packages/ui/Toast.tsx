@@ -9,7 +9,7 @@ import { SlideUp } from './motion';
 const toast = tv({
   slots: {
     root:
-      'w-full max-w-content-form flex-row items-start gap-3 rounded-card border-2 border-border bg-surface-raised p-4 ' +
+      'w-full max-w-content-form flex-row items-start gap-stack rounded-card border-2 border-border bg-surface-raised p-4 ' +
       'shadow-overlay transition-opacity duration-base motion-reduce:transition-none',
     indicator: 'w-1 self-stretch rounded-full',
     body: 'flex-1 gap-0.5',

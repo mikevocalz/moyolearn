@@ -5,7 +5,7 @@ import { Pressable, View } from './primitives';
 import { Text } from './Text';
 
 const switchRow = tv({
-  slots: { root: 'w-full flex-row items-center justify-between gap-3' },
+  slots: { root: 'w-full flex-row items-center justify-between gap-stack' },
   variants: { disabled: { true: { root: 'opacity-50' } } },
 });
 

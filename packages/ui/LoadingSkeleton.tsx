@@ -27,7 +27,7 @@ export function LoadingSkeleton({ variant, count = 1, className }: LoadingSkelet
     return <View aria-hidden className={skeleton({ variant, className })} />;
   }
   return (
-    <View aria-hidden className="gap-2">
+    <View aria-hidden className="gap-element">
       {Array.from({ length: count }, (_, i) => (
         <View key={i} className={skeleton({ variant, className })} />
       ))}

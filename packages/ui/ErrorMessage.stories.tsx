@@ -26,8 +26,8 @@ export const CollapsesWhenEmpty: Story = {
   render: function Render() {
     const { show, toggle } = useErrorDemo();
     return (
-      <View className="max-w-content-form gap-3 p-4">
-        <Card className="gap-2">
+      <View className="max-w-content-form gap-stack p-4">
+        <Card className="gap-element">
           <Text variant="heading">Form footer</Text>
           <ErrorMessage message={show ? 'Something went wrong — try again.' : undefined} />
           <Text variant="caption" tone="muted">

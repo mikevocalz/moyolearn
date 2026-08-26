@@ -22,7 +22,7 @@ export function SiteFooter() {
     <Footer className="border-t-2 border-border bg-surface-sunken">
       <View className="mx-auto w-full max-w-screen-2xl gap-10 px-4 py-12 sm:px-6 md:flex-row md:justify-between">
         {/* Brand */}
-        <View className="max-w-xs gap-3">
+        <View className="max-w-xs gap-stack">
           <View className="flex-row items-center gap-2.5">
             <View className="h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-card">
               <TWText className="text-base font-bold text-on-primary">M</TWText>
@@ -76,7 +76,7 @@ export function SiteFooter() {
 
       {/* Legal bar */}
       <View className="border-t-2 border-border">
-        <View className="mx-auto w-full max-w-screen-2xl flex-row flex-wrap items-center justify-between gap-2 px-4 py-5 sm:px-6">
+        <View className="mx-auto w-full max-w-screen-2xl flex-row flex-wrap items-center justify-between gap-element px-4 py-5 sm:px-6">
           <TWText className="text-xs text-text-muted">© Moyo</TWText>
           <TWText className="text-xs text-text-muted">Learn it by heart.</TWText>
         </View>

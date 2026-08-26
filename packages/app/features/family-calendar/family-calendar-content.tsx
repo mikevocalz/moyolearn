@@ -39,7 +39,7 @@ export function FamilyCalendarContent() {
       {/* Child chips — filter, not tabs. Consistent color everywhere. */}
       {children.length > 0 ? (
         <FadeIn delay={80}>
-          <View className="flex-row flex-wrap gap-2">
+          <View className="flex-row flex-wrap gap-element">
             <PressScale
               className={`rounded-full border-2 px-3 py-1.5 ${
                 selectedChildId === null
@@ -70,7 +70,7 @@ export function FamilyCalendarContent() {
 
       {/* Day strip */}
       <FadeIn delay={160}>
-        <View className="flex-row gap-2">
+        <View className="flex-row gap-element">
           {FAMILY_DAYS.map((d) => {
             const active = d.id === activeDayId;
             return (
@@ -98,10 +98,10 @@ export function FamilyCalendarContent() {
 
       {/* Agenda */}
       <FadeIn delay={240}>
-        <Section className="gap-3">
+        <Section className="gap-stack">
           <Text variant="label" tone="muted">{day.label}</Text>
           {filtered.length > 0 ? (
-            <View className="gap-2">
+            <View className="gap-element">
               {filtered.map((event) => (
                 <EventRow key={event.id} event={event} />
               ))}
@@ -117,8 +117,8 @@ export function FamilyCalendarContent() {
 
 function EventRow({ event }: { event: FamilyEvent }) {
   return (
-    <View className="w-full gap-2 rounded-card border-2 border-border bg-surface-raised p-3 shadow-card">
-      <View className="flex-row items-center gap-3">
+    <View className="w-full gap-element rounded-card border-2 border-border bg-surface-raised p-3 shadow-card">
+      <View className="flex-row items-center gap-stack">
         <Avatar name={event.childName} size="sm" />
         <View className="flex-1 gap-0.5">
           <TWText className="text-base font-semibold text-text">{event.title}</TWText>
@@ -126,7 +126,7 @@ function EventRow({ event }: { event: FamilyEvent }) {
         </View>
       </View>
       {event.reschedulable ? (
-        <View className="flex-row gap-2">
+        <View className="flex-row gap-element">
           <Button
             variant="outline"
             title={event.requiresApproval ? 'Request new time' : 'Reschedule'}

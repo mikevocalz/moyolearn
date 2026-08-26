@@ -6,7 +6,7 @@ import { Header, Nav, Text, View } from './primitives';
 const toolbar = tv({
   slots: {
     root: 'h-14 flex-row items-center justify-between border-b-2 border-border bg-surface px-4',
-    leading: 'flex-row items-center gap-2',
+    leading: 'flex-row items-center gap-element',
     title: 'flex-1 px-3 text-lg font-semibold text-text',
     actions: 'flex-row items-center gap-1',
   },

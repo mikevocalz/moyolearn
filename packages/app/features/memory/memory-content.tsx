@@ -86,15 +86,15 @@ export function MemoryContent() {
           if (rows.length === 0) return null;
           return (
             <FadeIn key={group.kind} delay={80 + index * 60}>
-              <Section className="gap-3">
+              <Section className="gap-stack">
                 <Text variant="label" tone="muted">
                   {group.heading}
                 </Text>
-                <View className="gap-2">
+                <View className="gap-element">
                   {rows.map((fact) => (
                     <View
                       key={fact.id}
-                      className="flex-row items-center gap-3 rounded-card border-2 border-border bg-surface-raised p-3"
+                      className="flex-row items-center gap-stack rounded-card border-2 border-border bg-surface-raised p-3"
                     >
                       <View className="flex-1 gap-0.5">
                         <TWText className="text-base text-text">{fact.sentence}</TWText>
@@ -124,15 +124,15 @@ export function MemoryContent() {
 
       {transcripts.length > 0 ? (
         <FadeIn delay={420}>
-          <Section className="gap-3">
+          <Section className="gap-stack">
             <Text variant="label" tone="muted">
               Sessions Natalie can still read
             </Text>
-            <View className="gap-2">
+            <View className="gap-element">
               {transcripts.map((transcript) => (
                 <View
                   key={transcript.id}
-                  className="flex-row items-center gap-3 rounded-card border-2 border-border bg-surface-raised p-3"
+                  className="flex-row items-center gap-stack rounded-card border-2 border-border bg-surface-raised p-3"
                 >
                   <View className="flex-1 gap-0.5">
                     <TWText className="text-base text-text">{transcript.label}</TWText>
@@ -158,7 +158,7 @@ export function MemoryContent() {
 
       {facts.length > 0 || transcripts.length > 0 ? (
         <FadeIn delay={480}>
-          <Card className="gap-3">
+          <Card className="gap-stack">
             <Text variant="heading">Forget everything</Text>
             <TWText className="text-base text-text-muted">
               Removes all {facts.length} things Natalie remembers and all {transcripts.length}{' '}

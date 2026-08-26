@@ -50,7 +50,7 @@ const TONE: Record<Slot['tone'], string> = {
 /** The display moment: Archivo Black, one highlighter accent, nothing else shouting. */
 export const Masthead: Story = {
   render: () => (
-    <Section className="gap-3 p-6">
+    <Section className="gap-stack p-6">
       <Heading level={1} className="font-display text-display-lg text-text">
         Learn it <Text className="bg-highlighter text-on-highlighter">by heart.</Text>
       </Heading>
@@ -71,7 +71,7 @@ export const DictionaryDevice: Story = {
     <View className="p-6">
       <Section className={`${CARD} max-w-content-form gap-1`}>
         <Text className={LABEL}>Dictionary device</Text>
-        <View className="flex-row items-baseline gap-2 pt-2">
+        <View className="flex-row items-baseline gap-element pt-2">
           <Text className="font-mono text-4xl font-bold text-text">moyo</Text>
           <Text className="font-mono text-lg italic text-text-muted">n.</Text>
         </View>
@@ -90,7 +90,7 @@ export const DictionaryDevice: Story = {
 export const ScheduleFigures: Story = {
   render: () => (
     <View className="p-6">
-      <Section className={`${CARD} gap-3`}>
+      <Section className={`${CARD} gap-stack`}>
         <Text className={LABEL}>Tue 24 Jun · Room B</Text>
         <Table>
           <TableBody>
@@ -134,14 +134,14 @@ export const ScheduleFigures: Story = {
 export const MonoRange: Story = {
   render: () => (
     <View className="flex-row flex-wrap gap-4 p-6">
-      <Section className={`${CARD} flex-1 gap-2`}>
+      <Section className={`${CARD} flex-1 gap-element`}>
         <Text className={LABEL}>Weight axis 100–900</Text>
         <Text className="font-mono text-lg font-extralight text-text">200 · quiet gutter time</Text>
         <Text className="font-mono text-lg font-normal text-text">400 · ordinary row</Text>
         <Text className="font-mono text-lg font-bold text-text">700 · the now-marker</Text>
         <Text className="font-mono text-lg font-black text-text">900 · emphatic</Text>
       </Section>
-      <Section className={`${CARD} flex-1 gap-2`}>
+      <Section className={`${CARD} flex-1 gap-element`}>
         <Text className={LABEL}>Figures · 0 never reads as O</Text>
         <Text className="font-mono text-2xl font-semibold text-text">0O · 10:05 · ROOM B0</Text>
         <Text className="font-mono text-2xl font-semibold text-text">$30.00 · 09:45 · 100%</Text>

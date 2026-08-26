@@ -40,7 +40,7 @@ export const Profile: Story = {
         >
           {(field) => <field.Checkbox label="Accept terms" />}
         </form.AppField>
-        <View className="gap-2 pt-2">
+        <View className="gap-element pt-2">
           <form.AppForm>
             <form.SubmitButton title="Save profile" />
           </form.AppForm>

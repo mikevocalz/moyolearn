@@ -8,7 +8,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Tones: Story = {
   render: () => (
-    <View className="flex-row flex-wrap gap-2 p-4">
+    <View className="flex-row flex-wrap gap-element p-4">
       <Badge label="Neutral" />
       <Badge label="Primary" tone="primary" />
       <Badge label="Accent" tone="accent" />

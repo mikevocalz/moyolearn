@@ -34,9 +34,9 @@ export function ParentHomeContent() {
 
       {/* Child summary cards */}
       <FadeIn delay={80}>
-        <Section className="gap-3">
+        <Section className="gap-stack">
           <Text variant="label" tone="muted">Your children</Text>
-          <View className="gap-2">
+          <View className="gap-element">
             {CHILDREN.map((child) => (
               <PressScale
                 key={child.id}
@@ -44,7 +44,7 @@ export function ParentHomeContent() {
                 outerClassName="w-full"
                 onPress={() => router.push('/ai-activity')}
               >
-                <View className="flex-row items-center gap-3">
+                <View className="flex-row items-center gap-stack">
                   <Avatar name={child.name} size="md" />
                   <View className="flex-1 gap-0.5">
                     <TWText className="text-base font-semibold text-text">{child.name}</TWText>
@@ -62,9 +62,9 @@ export function ParentHomeContent() {
 
       {/* This week */}
       <FadeIn delay={160}>
-        <Card className="gap-3">
+        <Card className="gap-stack">
           <Text variant="label" tone="muted">This week</Text>
-          <View className="flex-row gap-2">
+          <View className="flex-row gap-element">
             <Stat value={THIS_WEEK.sessions} label="Sessions" />
             <Stat value={THIS_WEEK.assignments} label="Assignments" />
             <Stat value={THIS_WEEK.aiPractice} label="AI practice" />
@@ -75,7 +75,7 @@ export function ParentHomeContent() {
       {/* Needs attention */}
       {NEEDS_ATTENTION.length > 0 ? (
         <FadeIn delay={240}>
-          <Card className="gap-3 border-2 border-redpen/20 bg-redpen/5">
+          <Card className="gap-stack border-2 border-redpen/20 bg-redpen/5">
             <Text variant="label" tone="muted">Needs attention</Text>
             <View className="gap-1">
               {NEEDS_ATTENTION.map((item) => (
@@ -90,9 +90,9 @@ export function ParentHomeContent() {
 
       {/* Action needed */}
       <FadeIn delay={320}>
-        <Section className="gap-3">
+        <Section className="gap-stack">
           <Text variant="label" tone="muted">Action needed</Text>
-          <View className="gap-2">
+          <View className="gap-element">
             {ACTION_ITEMS.map((item) => (
               <PressScale
                 key={item.id}
@@ -112,9 +112,9 @@ export function ParentHomeContent() {
 
       {/* Upcoming */}
       <FadeIn delay={400}>
-        <Section className="gap-3">
+        <Section className="gap-stack">
           <Text variant="label" tone="muted">Upcoming</Text>
-          <View className="gap-2">
+          <View className="gap-element">
             {UPCOMING.map((item) => (
               <View
                 key={item.id}

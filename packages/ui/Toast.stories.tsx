@@ -12,7 +12,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Variants: Story = {
   render: () => (
-    <View className="max-w-content-form gap-3 p-4">
+    <View className="max-w-content-form gap-stack p-4">
       <Toast variant="info" title="Update available" description="A new version is ready to install." />
       <Toast variant="success" title="RSVP saved" />
       <Toast variant="error" title="Upload failed" description="Check your connection and retry." />

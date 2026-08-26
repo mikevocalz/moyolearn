@@ -10,7 +10,7 @@ import type { AudioPlayerProps } from './AudioPlayer.types.ts';
 export function AudioPlayer({ uri, label, className }: AudioPlayerProps) {
   return (
     <View
-      className={`my-2 gap-2 rounded-md border-2 border-border bg-surface-raised p-3 shadow-card ${className ?? ''}`}
+      className={`my-2 gap-element rounded-md border-2 border-border bg-surface-raised p-3 shadow-card ${className ?? ''}`}
     >
       {/* No caption track: a voice note has none, and the note's own text is
           the transcript. (No jsx-a11y directive here — this package lints with

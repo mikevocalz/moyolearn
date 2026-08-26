@@ -23,7 +23,7 @@ export function ListItem({
   children, onPress, leading, trailing, supportingText, className,
 }: ListItemProps) {
   const content = (
-    <View className="min-h-11 flex-row items-center gap-3 px-4 py-3">
+    <View className="min-h-11 flex-row items-center gap-stack px-4 py-3">
       {leading}
       <View className="flex-1">
         <Text className="text-base text-text">{children}</Text>

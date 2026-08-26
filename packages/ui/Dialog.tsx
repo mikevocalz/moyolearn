@@ -13,7 +13,7 @@ const dialog = tv({
     title: 'font-display text-xl font-semibold text-text',
     description: 'mt-2 text-base text-text-muted',
     body: 'mt-4',
-    actions: 'mt-6 flex-row items-center justify-end gap-3',
+    actions: 'mt-6 flex-row items-center justify-end gap-stack',
   },
 });
 

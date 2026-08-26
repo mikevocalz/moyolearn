@@ -43,7 +43,7 @@ export function SettingsContent() {
   const p = useProfile();
 
   return (
-    <View className="gap-6 md:gap-10 lg:gap-12">
+    <View className="gap-group md:gap-10 lg:gap-12">
       <FadeIn>
         <Section className="gap-1">
           <Heading level={1} size="display-sm">Settings</Heading>
@@ -74,12 +74,12 @@ export function SettingsContent() {
       </FadeIn>
 
       <FadeIn delay={200}>
-        <Card className="gap-3">
+        <Card className="gap-stack">
           <View className="gap-1">
             <Text variant="heading">Session</Text>
             <Text variant="caption" tone="muted">Sign out on this device only.</Text>
           </View>
-          <View className="flex-row gap-3">
+          <View className="flex-row gap-stack">
             <Button title="Sign out" variant="outline" onPress={() => {}} />
             <Button title="Delete account" variant="ghost" onPress={() => {}} />
           </View>

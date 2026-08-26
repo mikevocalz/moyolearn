@@ -30,7 +30,7 @@ export function ProfileContent() {
   const router = useRouter();
 
   return (
-    <View className="gap-6 md:gap-10 lg:gap-12">
+    <View className="gap-group md:gap-10 lg:gap-12">
       {/* Identity */}
       <FadeIn>
         <Section className="gap-4">
@@ -45,7 +45,7 @@ export function ProfileContent() {
             </View>
             <Button title="Edit profile" variant="outline" size="sm" onPress={() => {}} />
           </View>
-          <View className="flex-row flex-wrap gap-2">
+          <View className="flex-row flex-wrap gap-element">
             {TAGS.map((tag) => (
               <View key={tag} className="rounded-sm border-2 border-border bg-primary/20 px-3 py-1">
                 <Text variant="caption" className="font-semibold text-text">{tag}</Text>
@@ -80,7 +80,7 @@ export function ProfileContent() {
         <PressScale
           aria-label="Open settings"
           onPress={() => router.push('/settings')}
-          className="w-full flex-row items-center gap-3 rounded-card border-2 border-border bg-surface-raised p-4 shadow-card"
+          className="w-full flex-row items-center gap-stack rounded-card border-2 border-border bg-surface-raised p-4 shadow-card"
           outerClassName="w-full"
         >
           <View className="h-10 w-10 items-center justify-center rounded-xl bg-primary/10">

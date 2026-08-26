@@ -11,7 +11,7 @@ const SNAP_POINTS = [{ fraction: 0.55 }, { fraction: 0.85 }];
 const sheet = tv({
   slots: {
     content: 'h-full flex-1 rounded-t-sheet bg-surface-raised px-4 pb-6',
-    header: 'mb-3 flex-row items-center justify-between gap-3',
+    header: 'mb-3 flex-row items-center justify-between gap-stack',
     title: 'flex-1 font-display text-xl font-semibold text-text',
     close: 'rounded-md bg-surface-sunken p-2 active:opacity-70',
   },

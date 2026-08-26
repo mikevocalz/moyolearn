@@ -48,7 +48,7 @@ export function MiniCalendar({
   const weeks = monthMatrix(month);
 
   return (
-    <View className="gap-2 rounded-md border-2 border-border bg-surface-raised p-3 shadow-card">
+    <View className="gap-element rounded-md border-2 border-border bg-surface-raised p-3 shadow-card">
       <View className="flex-row items-center justify-between">
         <IconButton
           variant="ghost"

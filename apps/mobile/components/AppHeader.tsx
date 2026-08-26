@@ -52,7 +52,7 @@ export function AppHeader() {
           and ink text — the same primary/on-primary pairing as the selected
           rail item and the main action button, so the header belongs to the
           same system instead of being a neutral strip. */}
-      <Header className="flex-row items-center gap-3 border-b-2 border-border bg-primary px-4 py-3">
+      <Header className="flex-row items-center gap-stack border-b-2 border-border bg-primary px-4 py-3">
         {railHasMenu ? null : <MenuButton />}
         <Text className="flex-1 text-lg font-semibold text-on-primary md:text-xl lg:text-2xl">
           {TITLES[pathname] ?? 'Home'}

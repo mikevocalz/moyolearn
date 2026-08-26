@@ -61,7 +61,7 @@ export function EditorSettingsScreen() {
       style={{ flex: 1 }}
       showsVerticalScrollIndicator={false}
     >
-    <Container width="detail" className="flex-1 gap-8 py-6">
+    <Container width="detail" className="flex-1 gap-section py-6">
       <View className="gap-1">
         <KitText variant="title">Editor</KitText>
         <Text className="text-sm text-text-muted md:text-base">
@@ -69,7 +69,7 @@ export function EditorSettingsScreen() {
         </Text>
       </View>
 
-      <View className="gap-3">
+      <View className="gap-stack">
         <Text className="text-xs font-semibold uppercase text-text-muted md:text-sm">
           Toolbar order
         </Text>
@@ -99,11 +99,11 @@ export function EditorSettingsScreen() {
       </View>
 
       {grouped.map(([group, capabilities]) => (
-        <View key={group} className="gap-3">
+        <View key={group} className="gap-stack">
           <Text className="text-xs font-semibold uppercase text-text-muted md:text-sm">
             {GROUP_LABEL[group]}
           </Text>
-          <View className="gap-3 rounded-card border-2 border-border bg-surface-raised p-4 shadow-card">
+          <View className="gap-stack rounded-card border-2 border-border bg-surface-raised p-4 shadow-card">
             {capabilities.map((capability) => (
               <Switch
                 key={capability.id}

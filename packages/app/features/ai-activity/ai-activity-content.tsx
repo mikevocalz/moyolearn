@@ -37,7 +37,7 @@ export function AiActivityContent() {
 
       {CHILDREN.length > 1 ? (
         <FadeIn delay={80}>
-          <View className="flex-row gap-2">
+          <View className="flex-row gap-element">
             {CHILDREN.map((child) => {
               const active = child.id === activeChildId;
               return (
@@ -62,11 +62,11 @@ export function AiActivityContent() {
       ) : null}
 
       <FadeIn delay={160}>
-        <Section className="gap-3">
+        <Section className="gap-stack">
           <Text variant="label" tone="muted">Permissions</Text>
-          <View className="gap-2">
+          <View className="gap-element">
             {CONSENTS.map((consent) => (
-              <Card key={consent.id} className="gap-2">
+              <Card key={consent.id} className="gap-element">
                 <Switch
                   label={consent.label}
                   value={values[consent.id] ?? false}
@@ -81,9 +81,9 @@ export function AiActivityContent() {
       </FadeIn>
 
       <FadeIn delay={240}>
-        <Section className="gap-3">
+        <Section className="gap-stack">
           <Text variant="label" tone="muted">What Natalie learned</Text>
-          <View className="gap-2">
+          <View className="gap-element">
             {OBSERVATIONS.map((observation) => (
               <View
                 key={observation.id}
@@ -107,9 +107,9 @@ export function AiActivityContent() {
       </FadeIn>
 
       <FadeIn delay={320}>
-        <Section className="gap-3">
+        <Section className="gap-stack">
           <Text variant="label" tone="muted">What Natalie keeps</Text>
-          <View className="gap-2">
+          <View className="gap-element">
             {RAW_ARTEFACTS.map((artefact) => (
               <View
                 key={artefact.id}

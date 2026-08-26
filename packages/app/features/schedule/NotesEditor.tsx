@@ -186,7 +186,7 @@ export function NotesEditor({
   };
 
   return (
-    <Section className="gap-2">
+    <Section className="gap-element">
       <Text className="text-sm font-medium text-text">{label}</Text>
 
       <EditorToolbar context={context} activeState={activeState} onOpenSettings={onOpenSettings} />
@@ -225,7 +225,7 @@ export function NotesEditor({
       </View>
 
       {media.length > 0 ? (
-        <View className="gap-2">
+        <View className="gap-element">
           {media.map((segment, index) => (
             <AudioPlayer key={`audio-${segment.value}-${index}`} uri={segment.value} label={segment.label} />
           ))}

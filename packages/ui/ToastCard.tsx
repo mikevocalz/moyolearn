@@ -18,7 +18,7 @@ import { Check, Info, LoaderCircle, TriangleAlert, X } from './icons';
 const card = tv({
   slots: {
     root:
-      'w-full max-w-content-form self-center flex-row items-start gap-3 rounded-card border-2 border-border ' +
+      'w-full max-w-content-form self-center flex-row items-start gap-stack rounded-card border-2 border-border ' +
       'bg-surface-raised p-3.5 shadow-overlay',
     // A rounded square inside the rounded rectangle — the same containment the
     // switches and icon buttons use, so a toast reads as part of this app.

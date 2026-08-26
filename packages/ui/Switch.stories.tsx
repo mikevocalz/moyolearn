@@ -12,7 +12,7 @@ type Story = StoryObj<typeof meta>;
 
 export const States: Story = {
   render: () => (
-    <View className="gap-3 p-4">
+    <View className="gap-stack p-4">
       <Switch value={false} onChange={() => {}} label="Off" />
       <Switch value onChange={() => {}} label="On" />
       <Switch value={false} onChange={() => {}} label="Disabled" disabled />

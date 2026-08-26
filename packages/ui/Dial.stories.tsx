@@ -22,24 +22,24 @@ const LABEL = 'font-mono text-xs font-bold uppercase tracking-widest text-text-m
 /** One column of the comparison — identical children, only the temperature differs. */
 function Column({ temperature, caption }: { temperature: DialTemperature; caption: string }) {
   return (
-    <View className="flex-1 gap-3">
+    <View className="flex-1 gap-stack">
       <Text className={LABEL}>{caption}</Text>
       <Dial temperature={temperature}>
         <View className="gap-4">
-          <Card className="gap-2">
+          <Card className="gap-element">
             <Heading level={3} className="font-sans text-lg font-bold text-text">
               Long division
             </Heading>
             <Paragraph className="font-sans text-sm text-text-muted">
               Daniel worked through remainders today and asked for one more example.
             </Paragraph>
-            <View className="flex-row flex-wrap gap-2 pt-1">
+            <View className="flex-row flex-wrap gap-element pt-1">
               <Badge label="Mastery 41%" tone="danger" />
               <Badge label="Needs review" />
             </View>
           </Card>
 
-          <View className="flex-row flex-wrap gap-2">
+          <View className="flex-row flex-wrap gap-element">
             <Button title="Book a session" />
             <Button title="Reschedule" variant="outline" />
           </View>
@@ -58,7 +58,7 @@ function Column({ temperature, caption }: { temperature: DialTemperature; captio
  */
 export const HotAndCool: Story = {
   render: () => (
-    <Section className="flex-row flex-wrap gap-6 bg-surface p-6">
+    <Section className="flex-row flex-wrap gap-group bg-surface p-6">
       <Column temperature="hot" caption="Hot · learner + family" />
       <Column temperature="cool" caption="Cool · ops + educator" />
     </Section>
@@ -74,7 +74,7 @@ export const NestedParentSurface: Story = {
     <Dial temperature="cool">
       <Section className="gap-4 bg-surface p-6">
         <Text className={LABEL}>Cool structure</Text>
-        <Card className="gap-3">
+        <Card className="gap-stack">
           <Heading level={3} className="font-sans text-lg font-bold text-text">
             This week
           </Heading>

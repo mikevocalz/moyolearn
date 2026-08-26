@@ -22,7 +22,7 @@ type Story = StoryObj<typeof meta>;
 
 export const States: Story = {
   render: () => (
-    <View className="max-w-content-form gap-3 p-4">
+    <View className="max-w-content-form gap-stack p-4">
       <Collapsible label="Rehearsal notes" isOpen onOpenChange={() => {}}>
         <Text variant="caption" tone="muted">
           Run the second verse a cappella before the full band comes back in.

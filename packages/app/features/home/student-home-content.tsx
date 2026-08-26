@@ -52,9 +52,9 @@ export function StudentHomeContent() {
 
       {/* Next session */}
       <FadeIn delay={160}>
-        <Card className="gap-3">
+        <Card className="gap-stack">
           <Text variant="label" tone="muted">Next session</Text>
-          <View className="flex-row items-center gap-3">
+          <View className="flex-row items-center gap-stack">
             <Avatar name={NEXT_SESSION.tutorName} size="md" />
             <View className="flex-1 gap-0.5">
               <TWText className="text-base font-semibold text-text">{NEXT_SESSION.tutorName}</TWText>
@@ -66,7 +66,7 @@ export function StudentHomeContent() {
 
       {/* Today's plan */}
       <FadeIn delay={240}>
-        <Section className="gap-3">
+        <Section className="gap-stack">
           <View className="flex-row items-center justify-between">
             <Text variant="label" tone="muted">Today&apos;s plan</Text>
             <PressScale
@@ -78,11 +78,11 @@ export function StudentHomeContent() {
               <Text variant="caption" className="font-bold text-text underline">See all</Text>
             </PressScale>
           </View>
-          <View className="gap-2">
+          <View className="gap-element">
             {PLAN_ITEMS.map((item) => (
               <PressScale
                 key={item.id}
-                className="flex-row items-center gap-3 rounded-card border-2 border-border bg-surface-raised p-3 shadow-card"
+                className="flex-row items-center gap-stack rounded-card border-2 border-border bg-surface-raised p-3 shadow-card"
                 outerClassName="w-full"
                 onPress={item.href ? () => router.push(item.href!) : undefined}
               >
@@ -104,12 +104,12 @@ export function StudentHomeContent() {
 
       {/* Improvement moment */}
       <FadeIn delay={320}>
-        <Card className="gap-3">
-          <View className="flex-row items-center gap-2">
+        <Card className="gap-stack">
+          <View className="flex-row items-center gap-element">
             <Star size={18} className="text-grade" />
             <Text variant="label" tone="muted">Improvement moment</Text>
           </View>
-          <View className="flex-row items-baseline gap-2">
+          <View className="flex-row items-baseline gap-element">
             <TWText className="font-display text-4xl font-bold text-grade">+{IMPROVEMENT.delta}%</TWText>
             <TWText className="text-text-muted">on {IMPROVEMENT.skill}</TWText>
           </View>

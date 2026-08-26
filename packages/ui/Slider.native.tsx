@@ -25,7 +25,7 @@ export function Slider({
   className,
 }: SliderProps) {
   return (
-    <View className={`gap-2 ${className ?? ''}`}>
+    <View className={`gap-element ${className ?? ''}`}>
       {label ? <Text className="text-sm font-medium text-text md:text-base">{label}</Text> : null}
       <Host matchContents>
         <ExpoSlider

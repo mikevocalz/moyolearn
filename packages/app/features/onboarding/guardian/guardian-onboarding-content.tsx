@@ -112,7 +112,7 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
           {draft.children.map((child, i) => (
             <View
               key={i}
-              className="gap-3 rounded-card border-2 border-highlighter bg-surface p-4"
+              className="gap-stack rounded-card border-2 border-highlighter bg-surface p-4"
             >
               {/* DOB first: it selects the consent regime, so asking it after the
                   credentials would let a guardian fill a form the answer invalidates. */}
@@ -170,7 +170,7 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
         </Section>
       ) : null}
 
-      <View className="flex-row gap-3">
+      <View className="flex-row gap-stack">
         {back ? (
           <Button variant="outline" title="Back" onPress={() => setStep(back)} />
         ) : null}

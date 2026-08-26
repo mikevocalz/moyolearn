@@ -29,7 +29,7 @@ export function PlanContent() {
 
       {/* WeekStrip */}
       <FadeIn delay={80}>
-        <View className="flex-row gap-2">
+        <View className="flex-row gap-element">
           {PLAN_WEEK.map((d) => {
             const active = d.id === activeId;
             return (
@@ -57,10 +57,10 @@ export function PlanContent() {
 
       {/* Agenda */}
       <FadeIn delay={160}>
-        <Section className="gap-3">
+        <Section className="gap-stack">
           <Text variant="label" tone="muted">{day.label}</Text>
           {day.items.length > 0 ? (
-            <View className="gap-2">
+            <View className="gap-element">
               {day.items.map((item) => (
                 <PlanRow
                   key={item.id}
@@ -83,7 +83,7 @@ export function PlanContent() {
 function PlanRow({ item, onOpen }: { item: PlanTimelineItem; onOpen: () => void }) {
   return (
     <PressScale
-      className="w-full flex-row items-center gap-3 rounded-card border-2 border-border bg-surface-raised p-3 shadow-card"
+      className="w-full flex-row items-center gap-stack rounded-card border-2 border-border bg-surface-raised p-3 shadow-card"
       outerClassName="w-full"
       aria-label={`${item.title}, ${item.dueLabel}`}
       onPress={onOpen}

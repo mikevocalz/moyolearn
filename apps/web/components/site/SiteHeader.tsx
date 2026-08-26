@@ -185,7 +185,7 @@ export function SiteHeader() {
         </Link>
 
         {/* Nav + avatar — right */}
-        <View className="flex-row items-center gap-3">
+        <View className="flex-row items-center gap-stack">
           <Nav aria-label="Primary" className="relative hidden flex-row items-center gap-1 md:flex">
             {NAV_ITEMS.map((item, index) => (
               <DesktopNavLink key={item.href} {...item} index={index} active={isActive(pathname, item.href)} />
@@ -257,7 +257,7 @@ export function SiteHeader() {
                 href={PROFILE.href}
                 onClick={close}
                 aria-current={profileActive ? 'page' : undefined}
-                className={`mx-3 mt-3 flex items-center gap-3 rounded-xl px-3 py-3 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 ${
+                className={`mx-3 mt-3 flex items-center gap-stack rounded-xl px-3 py-3 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 ${
                   profileActive ? 'bg-surface-sunken' : 'hover:bg-surface-sunken'
                 }`}
               >

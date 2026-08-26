@@ -38,7 +38,7 @@ export function PracticeContent() {
     <View className="gap-7">
       {/* Progress is a filling ink bar — never a countdown, never a score. */}
       <FadeIn>
-        <Section className="gap-2">
+        <Section className="gap-element">
           <View className="flex-row items-center justify-between">
             <Text variant="label" tone="muted">
               Question {itemIndex + 1} of {total}
@@ -61,7 +61,7 @@ export function PracticeContent() {
       </FadeIn>
 
       <FadeIn delay={160}>
-        <View className="gap-2">
+        <View className="gap-element">
           {item.choices.map((choice, index) => {
             const active = selectedChoice === index;
             return (
@@ -87,7 +87,7 @@ export function PracticeContent() {
       {/* The ladder is visible so effort feels fair, not withheld. */}
       {ladderDepth > 0 ? (
         <FadeIn>
-          <Card className="gap-2">
+          <Card className="gap-element">
             {item.ladder.slice(0, ladderDepth).map((rung, index) => (
               <View key={rung} className="gap-1">
                 <Text variant="caption" tone="muted">
@@ -102,13 +102,13 @@ export function PracticeContent() {
 
       {result === 'retry' ? (
         <FadeIn>
-          <Card className="gap-2 border-2 border-redpen/20 bg-redpen/5">
+          <Card className="gap-element border-2 border-redpen/20 bg-redpen/5">
             <TWText className="text-base text-text">Not yet — look at it once more.</TWText>
           </Card>
         </FadeIn>
       ) : null}
 
-      <View className="flex-row gap-2">
+      <View className="flex-row gap-element">
         {ladderDepth < item.ladder.length ? (
           <Button
             variant="outline"

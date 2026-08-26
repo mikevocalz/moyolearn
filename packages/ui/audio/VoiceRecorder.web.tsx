@@ -15,7 +15,7 @@ import type { VoiceRecorderProps } from './VoiceRecorder.types.ts';
 export function VoiceRecorder({ className }: VoiceRecorderProps) {
   return (
     <View
-      className={`items-center gap-2 rounded-md border-2 border-border bg-surface-sunken p-6 ${className ?? ''}`}
+      className={`items-center gap-element rounded-md border-2 border-border bg-surface-sunken p-6 ${className ?? ''}`}
     >
       <Mic size={24} className="text-text-muted" />
       <Text className="text-center text-sm text-text-muted md:text-base">

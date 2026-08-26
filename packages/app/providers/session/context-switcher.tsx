@@ -45,7 +45,7 @@ export function ContextSwitcher() {
   return (
     <View className="gap-stack p-inset">
       <Text className="font-sans text-caption text-text-muted">Switch context</Text>
-      <View className="gap-2">
+      <View className="gap-element">
         {memberships.map((membership) => {
           const active = activeContext.orgId === membership.orgId;
           return (
@@ -59,7 +59,7 @@ export function ContextSwitcher() {
                   orgId: membership.orgId,
                 })
               }
-              className={`min-h-11 flex-row items-center gap-3 rounded-md border-2 px-3 py-2.5 ${
+              className={`min-h-11 flex-row items-center gap-stack rounded-md border-2 px-3 py-2.5 ${
                 active
                   ? 'border-border bg-primary shadow-card'
                   : 'border-transparent hover:bg-surface-sunken'

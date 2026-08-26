@@ -158,16 +158,16 @@ export function AudioPlayer({ uri, duration, levels, label, className }: AudioPl
 
   return (
     <View
-      className={`my-2 gap-2 rounded-md border-2 border-border bg-surface-raised p-3 shadow-card ${className ?? ''}`}
+      className={`my-2 gap-element rounded-md border-2 border-border bg-surface-raised p-3 shadow-card ${className ?? ''}`}
     >
       {label ? (
-        <View className="flex-row items-center gap-2">
+        <View className="flex-row items-center gap-element">
           <AudioLines size={16} className="text-accent" />
           <Text className="flex-1 text-sm font-medium text-text md:text-base">{label}</Text>
         </View>
       ) : null}
 
-      <View className="flex-row items-center gap-3">
+      <View className="flex-row items-center gap-stack">
         <Pressable
           role="button"
           aria-label={playing ? 'Pause' : 'Play'}

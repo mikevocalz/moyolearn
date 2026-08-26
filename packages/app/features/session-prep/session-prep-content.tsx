@@ -24,7 +24,7 @@ export function SessionPrepContent() {
       <FadeIn delay={80}>
         <Card className="gap-4">
           <Text variant="label" tone="muted">Mastery</Text>
-          <View className="gap-3">
+          <View className="gap-stack">
             {SESSION_PREP.mastery.map((item) => {
               const delta = item.value - item.previous;
               const barColor = item.tone === 'grade' ? 'bg-grade' : 'bg-redpen';
@@ -33,7 +33,7 @@ export function SessionPrepContent() {
                 <View key={item.skill} className="gap-1">
                   <View className="flex-row items-center justify-between">
                     <TWText className="text-base text-text">{item.skill}</TWText>
-                    <View className="flex-row items-center gap-2">
+                    <View className="flex-row items-center gap-element">
                       <TWText className={`font-semibold ${textColor}`}>
                         {delta > 0 ? '+' : ''}{delta}%
                       </TWText>
@@ -51,9 +51,9 @@ export function SessionPrepContent() {
       </FadeIn>
 
       <FadeIn delay={160}>
-        <Card className="gap-3">
+        <Card className="gap-stack">
           <Text variant="label" tone="muted">Likely misconceptions</Text>
-          <View className="flex-row flex-wrap gap-2">
+          <View className="flex-row flex-wrap gap-element">
             {SESSION_PREP.misconceptions.map((chip) => (
               <View
                 key={chip}

@@ -9,7 +9,7 @@ import { X } from './icons';
 const searchBar = tv({
   slots: {
     root:
-      'flex-row items-center gap-2 rounded-lg border-2 border-border bg-surface-raised px-4 py-2.5 ' +
+      'flex-row items-center gap-element rounded-lg border-2 border-border bg-surface-raised px-4 py-2.5 ' +
       'transition-all duration-fast hover:border-border-strong ' +
       'focus-within:shadow-card ' +
       'motion-reduce:transition-none',

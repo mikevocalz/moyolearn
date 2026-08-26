@@ -147,7 +147,7 @@ export default function SplitLayout() {
         the screen — so without this row there is no title and no way back to
         the drawer from the schedule.
       */}
-      <Header className="flex-row items-center gap-3 border-b-2 border-border bg-primary px-4 py-3">
+      <Header className="flex-row items-center gap-stack border-b-2 border-border bg-primary px-4 py-3">
         <MenuButton />
         <Text className="flex-1 text-lg font-semibold text-on-primary md:text-xl lg:text-2xl">Schedule</Text>
         {/* A control that hides a pane cannot live inside that pane, or there
@@ -171,7 +171,7 @@ export default function SplitLayout() {
               a clipped word reads as a bug, an icon reads as a rail. */}
           <Link href="/split">
             <View
-              className={`flex-row items-center gap-2 rounded-md border-2 border-border bg-primary py-2 shadow-card ${
+              className={`flex-row items-center gap-element rounded-md border-2 border-border bg-primary py-2 shadow-card ${
                 rail ? 'justify-center px-2' : 'px-3'
               }`}
             >
@@ -191,7 +191,7 @@ export default function SplitLayout() {
             {DEMO_RESOURCES.map((resource) => (
               <View
                 key={resource.id}
-                className={`flex-row items-center gap-2 py-1.5 ${rail ? 'justify-center' : 'px-1'}`}
+                className={`flex-row items-center gap-element py-1.5 ${rail ? 'justify-center' : 'px-1'}`}
               >
                 <Avatar
                   size="sm"
@@ -302,7 +302,7 @@ export default function SplitLayout() {
                 }
               >
                 <View
-                  className={`flex-row items-center gap-2 bg-surface-raised py-1 ${
+                  className={`flex-row items-center gap-element bg-surface-raised py-1 ${
                     hidden ? 'opacity-40' : ''
                   }`}
                 >
@@ -334,7 +334,7 @@ export default function SplitLayout() {
       </SplitView.Column>
 
       <SplitView.Inspector>
-        <View className="flex-1 gap-3 bg-surface p-4">
+        <View className="flex-1 gap-stack bg-surface p-4">
           <DetailNavbar title="Details" onDismiss={() => selectEvent(null)}>
             {selectedEvent ? (
               /* An ANCHORED menu, not the ⋯-opens-a-bottom-sheet pattern this
@@ -370,7 +370,7 @@ export default function SplitLayout() {
                 {formatTimeRange(selectedEvent, DEMO_DAY.timeZone)}
               </Text>
               {eventResource ? (
-                <View className="flex-row items-center gap-2 pt-1">
+                <View className="flex-row items-center gap-element pt-1">
                   <Avatar size="sm" className="md:h-11 md:w-11" name={eventResource.name} imageUri={eventResource.avatarUrl} />
                   <Text className="text-sm text-text md:text-base">{eventResource.name}</Text>
                 </View>

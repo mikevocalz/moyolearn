@@ -284,3 +284,27 @@ while 224 call sites hand-wrote ramp tokens to reach the surface dial the
 component could not express. That was a real wiring gap, and the 89 sites using
 `variant=` now get the dial. It was just never the 287-site problem this report
 described.
+
+## Addendum 3 — the spacing sweep, and why it was safe
+
+226 of the 394 numeric gaps matched a tier's Cool value exactly — `gap-2` = 8px
+= `element`, `gap-3` = 12px = `stack`, `gap-6` = 24px = `group`, `gap-8` = 32px
+= `section` — and were converted. The other 168 were left: `gap-1` and `gap-0.5`
+sit below the `element` floor deliberately, and `gap-4` at 16px has no tier at
+its value. Rounding someone's 16px to 12 or 24 is a visual change with no design
+mandate behind it.
+
+**This report worried the sweep would change values, not just names, because the
+tiers are `{cool, hot}` pairs. It would not — today.** `<Dial temperature="hot">`
+appears only in stories; no product screen is Hot, so everything renders Cool,
+where the converted values are identical to what they replaced. The change is a
+no-op now and becomes meaningful the moment a learner surface adopts the dial,
+which is the argument for doing it while it is free rather than after.
+
+Worth stating because it is the report's own caveat resolved rather than
+ignored: the concern was correct in principle and the sweep was safe in fact,
+and only checking where `Dial` is actually mounted could tell the two apart.
+
+The tiers were already the majority pattern — 248 existing uses against the 226
+numeric ones — so this aligned a minority with the house style rather than
+introducing one.
