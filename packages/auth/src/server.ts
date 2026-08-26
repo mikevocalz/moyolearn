@@ -73,11 +73,15 @@ export function isRestrictedLearnerPasswordChange(
 
 export function createAuth(options?: { connectionString?: string; schema?: string }) {
   const schema = options?.schema ?? 'auth';
+  const connectionString = options?.connectionString ?? process.env.DATABASE_URL;
   const pool = new Pool({
-    connectionString: options?.connectionString ?? process.env.DATABASE_URL,
+    connectionString,
     // Better Auth's kysely dialect has no schema option; pg's own search_path
     // is the native lever, and it keeps auth tables off the payload schema.
     options: `-c search_path=${schema}`,
+    ssl: connectionString?.includes('supabase.co')
+      ? { rejectUnauthorized: false }
+      : undefined,
   });
 
   return betterAuth({
