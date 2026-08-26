@@ -3,7 +3,7 @@
 // learner model must run inside a protectedOperation so identity is never a
 // parameter and unauthenticated callers fail closed.
 // SOT: docs/pack/06-auth-onboarding-spec.md §7 · docs/pack/07-security-child-ai-safety-spec.md §2
-// SOT-KEYWORDS: protected operation auth boundary server-only learner context
+// SOT-KEYWORDS: protected operation auth boundary server-only learner context mock
 import 'server-only';
 import type { Auth } from '@acme/auth/server';
 
@@ -22,12 +22,22 @@ export interface ProtectedCtx {
  * The caller passes the `Auth` instance and the request headers. This function
  * derives the session and hands the operation a `ProtectedCtx`. It never asks
  * the operation to validate identity or accept an id as input.
+ *
+ * In dev with `NEXT_PUBLIC_AUTH_MODE=mock`, a deterministic mock learner is
+ * used so that features can be exercised without a real Better Auth session.
  */
 export async function protectedOperation<R>(
   auth: Auth,
   headers: Headers,
   operation: (ctx: ProtectedCtx) => Promise<R>,
 ): Promise<R> {
+  if (process.env.NEXT_PUBLIC_AUTH_MODE === 'mock' && process.env.NODE_ENV === 'development') {
+    return operation({
+      learnerId: 'dev-learner-1',
+      isLearner: true,
+    });
+  }
+
   const session = await auth.api.getSession({ headers });
   if (!session) throw new Error('Unauthenticated');
 
