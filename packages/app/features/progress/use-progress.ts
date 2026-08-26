@@ -13,7 +13,7 @@ export interface ProgressData {
   masteryBySkill: Record<string, number>;
 }
 
-export function useProgress() {
+export function useProgress(revision = 0) {
   const [data, setData] = useState<ProgressData>({ masteryBySkill: {} });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -39,7 +39,7 @@ export function useProgress() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [revision]);
 
   return { ...data, loading, error };
 }

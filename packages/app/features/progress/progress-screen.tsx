@@ -31,7 +31,7 @@ export function ProgressScreen() {
   const router = useRouter();
   const { setProblem } = useCaptureStore();
   const { skillTitle, mastery, attempts } = useTutorStore();
-  const { masteryBySkill, loading } = useProgress();
+  const { masteryBySkill, loading } = useProgress(attempts);
 
   const handlePractice = (subject: string) => {
     const problem = generatePracticeProblem(subject);
