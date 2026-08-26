@@ -26,6 +26,7 @@ export {
 } from './features/schedule';
 export { CaptureScreen, useCaptureStore } from './features/capture';
 export { TutorScreen } from './features/tutor/screen';
+export { useTutorStore } from './features/tutor/tutor.store';
 export { SessionPrepScreen } from './features/session-prep/screen';
 export { PlanScreen } from './features/plan/screen';
 export { ProgressScreen } from './features/progress/screen';

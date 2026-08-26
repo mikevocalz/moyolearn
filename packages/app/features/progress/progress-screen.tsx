@@ -5,6 +5,7 @@
 
 import { MasteryBar, Heading, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
+import { useTutorStore } from '@acme/app';
 
 const SEED = [
   { subject: 'Number sense', value: 72 },
@@ -14,6 +15,8 @@ const SEED = [
 ];
 
 export function ProgressScreen() {
+  const { skillTitle, mastery, attempts } = useTutorStore();
+
   return (
     <View className="flex-1 gap-stack p-inset">
       <View className="gap-group">
@@ -23,6 +26,13 @@ export function ProgressScreen() {
         </Text>
       </View>
       <View className="gap-stack">
+        {attempts > 0 && skillTitle ? (
+          <MasteryBar
+            label={`Live: ${skillTitle}`}
+            value={Math.round(mastery * 100)}
+            state={mastery < 0.5 ? 'needs-attention' : 'steady'}
+          />
+        ) : null}
         {SEED.map(({ subject, value, state }) => (
           <MasteryBar key={subject} label={subject} value={value} state={state} />
         ))}
