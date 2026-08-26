@@ -75,7 +75,15 @@ const probes = {
   'raw <div>': `grep -rnE "<div[ >]" ${SCOPE}`,
   'FlatList (LegendList is the primitive)': `grep -rnE "\\bFlatList\\b" ${SCOPE}`,
   'React useState (Zustand only)': `grep -rnE "\\buseState\\(" ${SCOPE}`,
-  'RN KeyboardAvoidingView': `grep -rnE "\\bKeyboardAvoidingView\\b" ${SCOPE}`,
+  /*
+    Only React Native's. Matching the bare component name reported six false
+    positives — every hit was `react-native-keyboard-controller`'s version (the
+    one the repo standardised on) or a comment explaining why RN's is avoided.
+    A probe that flags the correct choice as a violation trains people to ignore
+    the report, so it matches the import source, not the identifier.
+  */
+  'RN KeyboardAvoidingView': `grep -rnE "KeyboardAvoidingView[^\\n]*from ['\\"]react-native['\\"]" ${SCOPE}`,
+  'moti import (use @legendapp/motion)': `grep -rnE "from ['\\"]moti" ${SCOPE}`,
   'numeric gap-N instead of a tier': `grep -rnE "\\bgap-[0-9]" ${SCOPE}`,
 };
 
@@ -111,12 +119,65 @@ for (const tag of ['Heading', 'Text']) {
   };
 }
 
+/* ---- 4. Overrides that retype a variant the component already has --------- */
+
+/*
+  The most actionable signal here, and the one the raw counts hide.
+  `<Heading className="text-2xl font-semibold text-text md:text-3xl">` appears 16
+  times — and it is character-for-character what `size="title"` already renders.
+  Those sites do not need a new variant added; they need the existing one used.
+  A report that cannot tell those two cases apart prescribes the wrong fix.
+
+  Variants are read out of the component's own `tv()` block rather than listed
+  here, so a variant added tomorrow is checked tomorrow without editing this.
+*/
+const redundant = {};
+for (const tag of ['Heading', 'Text']) {
+  const src = sh(`cat packages/ui/${tag}.tsx 2>/dev/null`);
+  if (!src) continue;
+
+  const classesOf = (group) => {
+    const block = new RegExp(`${group}:\\s*\\{([\\s\\S]*?)\\n\\s{4}\\}`).exec(src)?.[1] ?? '';
+    const out = new Map();
+    for (const m of block.matchAll(/['"]?([\w-]+)['"]?:\s*'([^']*)'/g)) out.set(m[1], m[2]);
+    return out;
+  };
+  const sizes = classesOf('size');
+  const tones = classesOf('tone');
+  const defaultTone = /defaultVariants:\s*\{[^}]*tone:\s*'([^']+)'/.exec(src)?.[1];
+  const defaultToneClasses = defaultTone ? (tones.get(defaultTone) ?? '') : '';
+
+  const norm = (c) => c.trim().split(/\s+/).filter(Boolean).sort().join(' ');
+  // Every combination the component can already produce, normalised.
+  const reachable = new Map();
+  for (const [sizeName, sizeClasses] of sizes) {
+    reachable.set(norm(`${sizeClasses} ${defaultToneClasses}`), `size="${sizeName}"`);
+    for (const [toneName, toneClasses] of tones) {
+      reachable.set(norm(`${sizeClasses} ${toneClasses}`), `size="${sizeName}" tone="${toneName}"`);
+    }
+  }
+
+  const hits = lines(sh(`grep -rhoE "<${tag}[^>]*className=\\"[^\\"]*\\"" ${TSX}`));
+  const matches = new Map();
+  for (const h of hits) {
+    const cls = (/className="([^"]*)"/.exec(h)?.[1] ?? '').trim();
+    if (!cls) continue;
+    const already = reachable.get(norm(cls));
+    if (already) matches.set(already, (matches.get(already) ?? 0) + 1);
+  }
+  redundant[tag] = {
+    total: [...matches.values()].reduce((a, b) => a + b, 0),
+    byVariant: [...matches].sort((a, b) => b[1] - a[1]),
+  };
+}
+
 const result = {
   exports: { total: inventory.length, value: values.length, type: inventory.length - values.length },
   noExternalConsumer: values.filter((r) => r.external === 0).map((r) => r.name),
   singleConsumer: values.filter((r) => r.external === 1).map((r) => r.name),
   drift,
   repetition,
+  redundant,
 };
 
 if (process.argv.includes('--json')) {
@@ -135,4 +196,14 @@ for (const [tag, r] of Object.entries(repetition)) {
   console.log(
     `${tag}: ${r.overrides} overrides · ${r.distinct} distinct strings · ${r.touchingTypeScale} touch the type scale · top 6 cover ${r.top6Share}%`,
   );
+}
+
+console.log('\noverrides that retype an EXISTING variant (use it, do not add one):');
+for (const [tag, r] of Object.entries(redundant)) {
+  if (r.total === 0) {
+    console.log(`  ${tag}: none`);
+    continue;
+  }
+  console.log(`  ${tag}: ${r.total}`);
+  for (const [variant, n] of r.byVariant) console.log(`      ${String(n).padStart(3)}x  ${variant}`);
 }
