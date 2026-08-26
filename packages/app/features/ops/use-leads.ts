@@ -13,7 +13,7 @@ import { useMemo } from 'react';
 import { keepPreviousData, useQuery } from '@tanstack/react-query';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import type { Lead, Stage } from './ops.data';
-import type { LeadSortField } from './ops.service';
+import type { LeadSortField, LeadStats } from './ops.service';
 
 const API_URL =
   process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
@@ -34,6 +34,7 @@ export interface LeadsPage {
   nextCursor?: string;
   total: number;
   totalUnfiltered: number;
+  stats: LeadStats;
 }
 
 /**

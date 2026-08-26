@@ -92,7 +92,18 @@ export function OpsScreen() {
     {
       title: 'Pipeline',
       items: [
-        item('leads', 'Leads', <Contact className={ICON} />, 3),
+        /*
+          No badges here any more. They read `3` and `2` and were typed — with 31
+          families in this district's pipeline, the Leads chip was quietly wrong
+          by an order of magnitude, and Invoices has no collection behind it at
+          all, so its count was pure fiction.
+
+          Removed rather than wired: the real attention count already leads the
+          page ("15 families need a decision today") and sits on the Pipeline
+          header, and a nav badge would have to run a second query to repeat it.
+          A count that is right in one place beats the same count guessed twice.
+        */
+        item('leads', 'Leads', <Contact className={ICON} />),
         item('families', 'Families', <Users className={ICON} />),
         item('enrolments', 'Enrolments', <GraduationCap className={ICON} />, undefined, 'Enrol'),
       ],
@@ -100,7 +111,7 @@ export function OpsScreen() {
     {
       title: 'Money',
       items: [
-        item('invoices', 'Invoices', <Receipt className={ICON} />, 2),
+        item('invoices', 'Invoices', <Receipt className={ICON} />),
         item('payroll', 'Payroll', <CreditCard className={ICON} />),
       ],
     },

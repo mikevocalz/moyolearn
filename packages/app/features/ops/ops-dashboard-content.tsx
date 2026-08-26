@@ -246,6 +246,24 @@ export function OpsDashboardContent({
   */
   const { view, setView } = useViewParams();
   const { rows: serverRows, page, status, queryKey } = useLeads({ ...view, limit: 25 });
+  const stats = page?.stats;
+
+  /*
+    Greeting by clock, not by hope. It said "Good morning" at every hour, which
+    is the kind of small lie that tells someone the screen is not really looking
+    at them.
+  */
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 18 ? 'Good afternoon' : 'Good evening';
+
+  /*
+    The end of the last session, taken from the schedule rather than asserted.
+    Times arrive as "09:00–09:45", so the half after the en dash is the end.
+  */
+  const lastSessionEnds =
+    sessions.length > 0
+      ? (sessions[sessions.length - 1]!.time.split('\u2013')[1] ?? '').trim() || 'the end of the day'
+      : '';
 
   /*
     The write path. `rows` from here — not from the query — because the
@@ -304,7 +322,7 @@ export function OpsDashboardContent({
         </Text>
         <View className="flex-row flex-wrap items-end justify-between gap-stack">
           <Text className="font-display text-display-sm text-text">
-            Good morning, {operatorName}
+            {greeting}, {operatorName}
           </Text>
           <View className="flex-row items-center gap-element">
             <Button title="Add lead" size="sm" />
@@ -312,8 +330,14 @@ export function OpsDashboardContent({
           </View>
         </View>
         <Text className="text-body-lg text-text-muted">
-          {total} families need a decision today, and {sessions.length} sessions run
-          before 5pm.
+          {/*
+            "before 5pm" was typed, and the last session in the seed starts at
+            16:30 — so on any day the schedule ran late the sentence was simply
+            wrong. It reads the last session now, and drops the clause entirely
+            when there are none rather than claiming a deadline for an empty day.
+          */}
+          {stats?.needsAttention ?? total} families need a decision today
+          {sessions.length > 0 ? `, and ${sessions.length} ${sessions.length === 1 ? 'session runs' : 'sessions run'} before ${lastSessionEnds}.` : '.'}
         </Text>
       </View>
 
@@ -367,8 +391,27 @@ export function OpsDashboardContent({
               format={(v) => `$${v.toLocaleString('en-US')}`}
             />
           </View>
-          <StatCard size="lg" value="38" label="Sessions delivered" />
-          <StatCard size="lg" value="61%" label="Trial conversion" trend="−4 pts vs July" trendDirection="down" />
+          {/*
+            Both were literals — "38" and "61%" with a hand-typed "−4 pts vs
+            July" beneath. Nothing computed them, so they said the same thing for
+            every district and every month, and the trend arrow pointed down at a
+            decline that had never happened. They are counted from the pipeline
+            now, org-wide rather than page-wide.
+
+            No trend line on either: a delta needs last month's number, and the
+            rollup tables that would hold it (doc 28 §7 → doc 19) do not exist.
+            An honest number with no arrow beats an invented arrow.
+          */}
+          <StatCard
+            size="lg"
+            value={String(stats?.sessionsDelivered ?? 0)}
+            label="Sessions delivered"
+          />
+          <StatCard
+            size="lg"
+            value={stats?.trialConversionPct == null ? '—' : `${stats.trialConversionPct}%`}
+            label="Trial conversion"
+          />
         </View>
       </View>
 

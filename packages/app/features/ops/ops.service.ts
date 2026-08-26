@@ -8,9 +8,13 @@ import 'server-only';
 // in apps/web is the only place that does (CLAUDE.md · The block).
 // SOT: docs/pack/28-crm-spec.md §2–§3
 // SOT-KEYWORDS: ops service leads cursor pagination filter sort server-only crm repository
-import type { ProtectedCtx } from '../../core/protected-operation';
-import type { Lead, Stage } from './ops.data';
-import { clearsAttention, type StageChange } from './stage-change';
+import type { ProtectedCtx } from '../../core/protected-operation.ts';
+import type { Lead, Stage } from './ops.data.ts';
+import { clearsAttention, type StageChange } from './stage-change.ts';
+// Pure and therefore testable — see the header of that file.
+import { statsFor, type LeadStats } from './lead-stats.ts';
+
+export type { LeadStats };
 
 /** Repository ports — the caller provides the Payload adapters. */
 export type LoadLeads = (ctx: ProtectedCtx) => Promise<readonly Lead[]>;
@@ -57,9 +61,16 @@ export interface ListLeadsResult {
   total: number;
   /** Count before filtering — the "show all" affordance needs it. */
   totalUnfiltered: number;
+  stats: LeadStats;
 }
 
-const EMPTY: ListLeadsResult = { rows: [], total: 0, totalUnfiltered: 0 };
+const EMPTY: ListLeadsResult = {
+  rows: [],
+  total: 0,
+  totalUnfiltered: 0,
+  stats: { needsAttention: 0, sessionsDelivered: 0 },
+};
+
 
 const numericValue = (v: string) => Number(v.replace(/[^0-9.-]/g, '')) || 0;
 
@@ -132,6 +143,9 @@ export async function listLeads(
     nextCursor: start + limit < total && last ? last.id : undefined,
     total,
     totalUnfiltered: all.length,
+    // From `all`, never from `page`: a statistic that changes when you filter or
+    // turn to page two is not a statistic about the business.
+    stats: statsFor(all),
   };
 }
 
