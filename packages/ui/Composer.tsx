@@ -43,21 +43,29 @@ export function Composer({
     // themselves they disagree by a few pixels at every band. Stretching makes
     // the row the single source of height.
     <View className={`flex-row items-stretch gap-stack ${className ?? ''}`}>
+      {/* A textarea top-aligns its text, so it must never be taller than its
+          own content — otherwise a one-line answer sits against the top edge
+          with a band of dead space beneath it. It carries no min-height and
+          grows with what is typed; the FIELD sets the row height and the button
+          follows it, rather than a 64px button stretching a 47px field. */}
       <Textarea
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}
         editable={!disabled}
-        className="flex-1 rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field font-sans text-body text-text placeholder:text-text-muted"
+        className="flex-1 resize-none overflow-y-auto rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field font-sans text-body text-text placeholder:text-text-muted"
         numberOfLines={1}
         aria-label="Message composer"
-        onSubmitEditing={handleSubmit}
       />
+      {/* `min-h-0` + the field's own padding tier: the size scale's `py-4` made
+          the button 64px, and with `items-stretch` that is what dragged the
+          field out of shape. Same padding on both means both stay the same
+          height without either one dictating a number. */}
       <Button
         title="Send"
         variant="primary"
         size={size}
-        className="h-auto self-stretch"
+        className="h-auto min-h-0 self-stretch py-inset-field md:py-inset-field"
         disabled={!canSend}
         onPress={handleSubmit}
         aria-label="Send message"
