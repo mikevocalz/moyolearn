@@ -34,7 +34,7 @@ import { REVENUE_BY_ORG, SESSIONS_BY_ORG } from './ops.data';
 const ICON = 'h-4 w-4';
 
 export function OpsScreen() {
-  const { collapsed, menuOpen, section, toggleCollapsed, toggleMenu, setSection } = useOpsChrome();
+  const { sidebarMode, menuOpen, section, setSidebarMode, toggleMenu, setSection } = useOpsChrome();
   /*
     The district comes from the SESSION, not from a literal. This screen used to
     type "Riverside Tutoring" into two separate places and greet a hardcoded
@@ -121,8 +121,8 @@ export function OpsScreen() {
            they need at that width is which district they are looking at. */
         <BrandLockup orgName={org.name} orgLogoUrl={org.logoUrl} orgLogoAspect={org.logoAspect} variant="partner" />
       }
-      collapsed={collapsed}
-      onToggleCollapsed={toggleCollapsed}
+      mode={sidebarMode}
+      onSetMode={setSidebarMode}
       menuOpen={menuOpen}
       onToggleMenu={toggleMenu}
       topBarStart={

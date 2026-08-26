@@ -52,15 +52,28 @@ export interface NavGroup {
   items: NavItem[];
 }
 
+/** `auto` defers to the breakpoint; the other two are the user overriding it. */
+export type SidebarMode = 'auto' | 'rail' | 'menu';
+
 export interface DashboardShellProps {
   groups: NavGroup[];
   /** Brand lockup, top of the sidebar. */
   brand: ReactNode;
-  /** Compact brand mark shown when collapsed. */
+  /** Compact brand mark shown on the rail. */
   brandMark: ReactNode;
-  collapsed: boolean;
-  onToggleCollapsed: () => void;
-  /** Below `lg` the sidebar is an overlay driven by this pair. */
+  /**
+   * `auto` is the responsive default — rail on a tablet, menu on a desktop —
+   * and it is a THIRD state rather than a boolean seeded at mount.
+   *
+   * A boolean cannot say "rail by default here, menu by default there, until the
+   * user decides otherwise". Resolving it in JS from a window width would work
+   * but has to guess during SSR, so the first paint flickers to the other layout
+   * on every load. As a mode, CSS resolves `auto` per breakpoint with no
+   * measurement at all, and an explicit choice simply stops consulting it.
+   */
+  mode: SidebarMode;
+  onSetMode: (mode: 'rail' | 'menu') => void;
+  /** Below `md` the sidebar is an overlay driven by this pair. */
   menuOpen: boolean;
   onToggleMenu: () => void;
   /** Left of the top bar — breadcrumb or page title. */
@@ -69,6 +82,46 @@ export interface DashboardShellProps {
   topBarEnd?: ReactNode;
   children: ReactNode;
 }
+
+/*
+  Which FORM is on screen at each breakpoint, as visibility classes.
+
+  Both the menu form and the rail form of a thing are rendered and CSS picks,
+  because under `auto` the answer differs by breakpoint and no JS value can hold
+  two answers at once. `aria-label` on the row carries the real label, so the
+  duplicate text is never announced twice.
+*/
+const MENU_ONLY: Record<SidebarMode, string> = {
+  auto: 'flex md:hidden lg:flex',
+  rail: 'flex md:hidden',
+  menu: 'flex',
+};
+
+const RAIL_ONLY: Record<SidebarMode, string> = {
+  auto: 'hidden md:flex lg:hidden',
+  rail: 'hidden md:flex',
+  menu: 'hidden',
+};
+
+/*
+  The same rule for TEXT, and it must not say `flex`.
+
+  Making a label a flex container stops `text-center` centring it — the label
+  becomes a flex item aligned to the start instead — which is why "Enrol" sat
+  flush against the rail's left edge while every label without a rail variant
+  stayed centred under its icon.
+*/
+const MENU_ONLY_TEXT: Record<SidebarMode, string> = {
+  auto: 'block md:hidden lg:block',
+  rail: 'block md:hidden',
+  menu: 'block',
+};
+
+const RAIL_ONLY_TEXT: Record<SidebarMode, string> = {
+  auto: 'hidden md:block lg:hidden',
+  rail: 'hidden md:block',
+  menu: 'hidden',
+};
 
 const shell = tv({
   slots: {
@@ -116,17 +169,28 @@ const shell = tv({
       word. It is also already proven — it is the same layout the lg collapsed
       state uses.
     */
+    /*
+      The base is the MENU, and the rail is only ever the `collapsed` variant.
+
+      It used to be the other way round: the base was a 112px rail and `lg:`
+      classes grew it into a menu, while `collapsed` shrank it back at `lg:`. So
+      the rail was encoded twice, and between md and lg the sidebar was a rail
+      NOBODY COULD LEAVE — the toggle whose entire job is menu-versus-rail was
+      `lg:flex` and simply absent at the width where you were stuck in one.
+      One source of truth now: `collapsed` decides, everywhere the sidebar is
+      docked.
+    */
     sidebar:
-      'absolute inset-y-0 left-0 z-50 w-28 flex-col border-r-2 border-border bg-surface-raised ' +
-      'md:relative md:z-auto lg:relative lg:z-auto',
-    sidebarInner: 'flex-1 flex-col gap-group overflow-y-auto px-element py-inset-tight lg:p-inset-tight',
+      'absolute inset-y-0 left-0 z-50 w-pane-primary-narrow flex-col border-r-2 border-border bg-surface-raised ' +
+      'md:relative md:z-auto',
+    sidebarInner: 'flex-1 flex-col gap-group overflow-y-auto p-inset-tight',
     // whitespace-nowrap so the rail CLIPS the heading instead of wrapping it —
     // at 56px "PIPELINE" reflowed to one letter per line and turned the rail
     // into a column of vertical text.
     // Hidden on the rail: two-word headings cannot survive a 112px column, and
     // the icons already do the grouping there.
     groupLabel:
-      'hidden shrink-0 whitespace-nowrap px-inset-tight pb-element text-caption font-semibold uppercase tracking-wide text-text-muted lg:flex',
+      'flex shrink-0 whitespace-nowrap px-inset-tight pb-element text-caption font-semibold uppercase tracking-wide text-text-muted',
     /*
       Active = a filled rounded rect, no border. Six shipped sidebars were
       pulled for this (Revolut Business, TravelPerk, Slite, Linear, Kajabi,
@@ -144,12 +208,12 @@ const shell = tv({
       belongs to the thing needing a decision. Weight plus a neutral fill carry
       state here, which costs no colour at all.
     */
-    item: 'min-h-target-adult flex-col items-center justify-center gap-0 rounded-control px-0 py-element transition-colors duration-fast hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 motion-reduce:transition-none lg:flex-row lg:justify-start lg:gap-element lg:px-inset-tight lg:py-0',
+    item: 'min-h-target-adult flex-row items-center justify-start gap-element rounded-control px-inset-tight py-0 transition-colors duration-fast hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 motion-reduce:transition-none',
     itemActive: 'bg-surface-sunken',
-    itemLabel: 'w-full shrink-0 whitespace-nowrap px-0.5 text-center text-caption text-text-muted lg:w-auto lg:text-left lg:text-label',
+    itemLabel: 'w-auto shrink-0 whitespace-nowrap text-left text-label text-text-muted',
     itemLabelActive: 'font-semibold text-text',
     // rounded-control, not a pill — the kit has no circular chrome.
-    badge: 'hidden rounded-control border-2 border-border px-element font-mono text-caption text-text lg:ml-auto lg:flex',
+    badge: 'ml-auto flex rounded-control border-2 border-border px-element font-mono text-caption text-text',
     // Fixed height, matching the sidebar's brand row, so the two horizontal
     // rules across the top of the app are one line and not two.
     topBar:
@@ -166,33 +230,43 @@ const shell = tv({
     scrim: 'absolute inset-0 z-40 bg-ink-950/50 md:hidden',
   },
   variants: {
-    collapsed: {
+    mode: {
       /*
-        Collapsed keeps a label under each icon rather than going icon-only: a
-        bare icon rail costs a hover-and-wait on every navigation.
-
-        w-24, not w-20. At 80px "Enrolments" clipped against the rail edge and
-        the group headings wrapped into "PIPE / LINE" and "WORKS / PAC / E" —
-        the rail has to be wide enough for the longest label the product uses,
-        and the labels themselves are clamped to one line so a longer one
-        truncates instead of re-wrapping the whole rail.
+        The responsive default: a tablet is not a small desktop. At md the
+        content pane cannot spare 256px of chrome, so the sidebar starts as a
+        rail; at lg there is room for the menu and the labels, headings and
+        badges earn their space. Neither is a prison — the control below flips
+        into `rail` or `menu` and this variant stops applying.
       */
-      true: {
-        sidebar: 'lg:w-28',
-        // Every horizontal inset comes off the label's usable width, and at
-        // w-24 with the standard insets the label box measured 43px — enough to
-        // truncate "Enrolments" to "Enrol…". The rail trades its padding for
-        // legible labels, since a rail whose labels are all elided is an
-        // icon-only rail wearing an ellipsis.
-        sidebarInner: 'lg:px-element lg:py-inset-tight',
-        item: 'lg:flex-col lg:justify-center lg:gap-0 lg:px-0 lg:py-element',
-        itemLabel: 'lg:w-full lg:px-0.5 lg:text-center lg:text-caption',
-        // Group headings are the first thing to go: they are two-word phrases
-        // that cannot survive a 96px column, and the icons already group.
-        groupLabel: 'lg:hidden',
-        badge: 'lg:hidden',
+      auto: {
+        sidebar: 'md:w-28 lg:w-pane-primary-narrow',
+        sidebarInner: 'md:px-element md:py-inset-tight lg:p-inset-tight',
+        item: 'md:flex-col md:justify-center md:gap-0 md:px-0 md:py-element lg:flex-row lg:justify-start lg:gap-element lg:px-inset-tight lg:py-0',
+        itemLabel: 'md:w-full md:px-0.5 md:text-center md:text-caption lg:w-auto lg:text-left lg:text-label',
+        groupLabel: 'md:hidden lg:flex',
+        badge: 'md:hidden lg:ml-auto lg:flex',
       },
-      false: { sidebar: 'lg:w-pane-primary-narrow' },
+      /*
+        Chosen rail. Keeps a label under each icon rather than going icon-only:
+        a bare icon rail costs a hover-and-wait on every navigation.
+
+        w-28, not w-20. At 80px "Enrolments" clipped against the rail edge and
+        the group headings wrapped into "PIPE / LINE" — the rail has to fit the
+        longest label the product uses, and labels are clamped to one line so a
+        longer one truncates instead of re-wrapping the whole rail.
+      */
+      rail: {
+        sidebar: 'md:w-28',
+        sidebarInner: 'md:px-element md:py-inset-tight',
+        item: 'md:flex-col md:justify-center md:gap-0 md:px-0 md:py-element',
+        itemLabel: 'md:w-full md:px-0.5 md:text-center md:text-caption',
+        // Group headings are the first to go: two-word phrases cannot survive a
+        // 112px column, and the icons already do the grouping there.
+        groupLabel: 'md:hidden',
+        badge: 'md:hidden',
+      },
+      /* Chosen menu — the base slots already are the menu. */
+      menu: { sidebar: 'md:w-pane-primary-narrow' },
     },
     menuOpen: {
       // `md:flex` — the tablet rail is always present; the hamburger is only
@@ -202,22 +276,31 @@ const shell = tv({
       true: { sidebar: 'flex shadow-overlay lg:shadow-none' },
     },
   },
-  defaultVariants: { collapsed: false, menuOpen: false },
+  defaultVariants: { mode: 'auto', menuOpen: false },
 });
 
 export function DashboardShell({
   groups,
   brand,
   brandMark,
-  collapsed,
-  onToggleCollapsed,
+  mode,
+  onSetMode,
   menuOpen,
   onToggleMenu,
   topBarStart,
   topBarEnd,
   children,
 }: DashboardShellProps) {
-  const s = shell({ collapsed, menuOpen });
+  const s = shell({ mode, menuOpen });
+
+  /*
+    What each breakpoint is SHOWING, which is what the toggle at that breakpoint
+    has to invert. `auto` means rail at md and menu at lg, so the two controls
+    below disagree with each other on purpose — and that disagreement is exactly
+    why one shared button could never be labelled correctly.
+  */
+  const railAtMd = mode === 'auto' ? true : mode === 'rail';
+  const railAtLg = mode === 'auto' ? false : mode === 'rail';
 
   return (
     <View className={s.root()}>
@@ -237,24 +320,18 @@ export function DashboardShell({
           32px mark, a 44px target and their gaps — so it overflowed the rail
           and collided with the top bar's rule. It now lives in the footer.
 
-          The mark/lockup swap has to follow the LAYOUT, not just the `collapsed`
-          prop: md–lg is a 112px rail whatever the user's desktop preference is,
-          so keying only off the prop rendered the full lockup there and cut
-          "Riverside Tutoring" off against the rail edge. When expanded, both are
-          rendered and the breakpoint picks one — the prop alone cannot know the
-          width.
+          The swap follows the same variant that sets the width, so the two
+          cannot disagree. Both are rendered and CSS picks — including the phone
+          drawer, which is a full-width overlay where a lone mark would look
+          broken, so below md the lockup always wins.
         */}
         <View
-          className={`h-14 shrink-0 flex-row items-center gap-element border-b-2 border-border px-inset-tight ${collapsed ? 'justify-center' : 'justify-center lg:justify-start'}`}
+          className={`h-14 shrink-0 flex-row items-center gap-element border-b-2 border-border px-inset-tight justify-start ${
+            mode === 'auto' ? 'md:justify-center lg:justify-start' : mode === 'rail' ? 'md:justify-center' : ''
+          }`}
         >
-          {collapsed ? (
-            brandMark
-          ) : (
-            <>
-              <View className="lg:hidden">{brandMark}</View>
-              <View className="hidden lg:flex">{brand}</View>
-            </>
-          )}
+          <View className={MENU_ONLY[mode]}>{brand}</View>
+          <View className={RAIL_ONLY[mode]}>{brandMark}</View>
         </View>
 
         <Nav aria-label="Sections" className={s.sidebarInner()}>
@@ -272,37 +349,87 @@ export function DashboardShell({
                   <View className={`shrink-0 ${item.active ? 'text-text' : 'text-text-muted'}`}>
                     {item.icon}
                   </View>
-                  <Text
-                    numberOfLines={1}
-                    className={s.itemLabel({ className: item.active ? s.itemLabelActive() : '' })}
-                  >
-                    {collapsed ? (item.railLabel ?? item.label) : item.label}
-                  </Text>
-                  {item.badge && !collapsed ? (
-                    <Text className={s.badge()}>{item.badge}</Text>
-                  ) : null}
+                    {/*
+                      The rail label is rendered as a SECOND node rather than
+                      swapped in JS, because which one is right depends on the
+                      breakpoint whenever the mode is `auto`. `aria-label` on the
+                      row above carries the full label either way, so a screen
+                      reader never hears the abbreviation.
+                    */}
+                    {item.railLabel ? (
+                      <>
+                        <Text
+                          className={s.itemLabel({
+                            className: `${MENU_ONLY_TEXT[mode]} ${item.active ? s.itemLabelActive() : ''}`,
+                          })}
+                        >
+                          {item.label}
+                        </Text>
+                        <Text
+                          className={s.itemLabel({
+                            className: `${RAIL_ONLY_TEXT[mode]} ${item.active ? s.itemLabelActive() : ''}`,
+                          })}
+                        >
+                          {item.railLabel}
+                        </Text>
+                      </>
+                    ) : (
+                      <Text
+                        className={s.itemLabel({ className: item.active ? s.itemLabelActive() : '' })}
+                      >
+                        {item.label}
+                      </Text>
+                    )}
+                  {item.badge ? <Text className={s.badge()}>{item.badge}</Text> : null}
                 </Pressable>
               ))}
             </View>
           ))}
         </Nav>
 
-        {/* Collapse is a desktop affordance: below lg the sidebar is an overlay,
-            where "collapsed" has no meaning, so the control is hidden there. */}
+        {/*
+          ONE control, whose LABEL is responsive and whose ACTION is resolved at
+          press time.
+
+          It was two Pressables — `md:flex lg:hidden` and `hidden lg:flex` — so
+          that each breakpoint could show a correctly-labelled button under
+          `auto`, where the tablet is railed while the desktop is not. Two
+          buttons appeared stacked in the rail. One control cannot do that at
+          all, which is worth more than the symmetry was.
+
+          The label still varies by breakpoint, on child nodes, and the press
+          handler asks `matchMedia` which width it is actually on. Reading it in
+          the handler rather than at render keeps the server and the first paint
+          out of it entirely — a width measured during render is a width the
+          server has to guess, and guessing it means the first paint flips.
+        */}
         <Pressable
-          aria-label={collapsed ? 'Expand menu' : 'Collapse menu'}
-          aria-expanded={!collapsed}
-          onPress={onToggleCollapsed}
-          className={`hidden min-h-target-adult shrink-0 flex-row items-center gap-element border-t-2 border-border-faint px-inset-tight hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 lg:flex ${collapsed ? 'justify-center' : ''}`}
+          aria-label="Toggle menu width"
+          onPress={() => {
+            const atLg =
+              typeof window !== 'undefined' &&
+              window.matchMedia('(min-width: 64rem)').matches;
+            onSetMode((atLg ? railAtLg : railAtMd) ? 'menu' : 'rail');
+          }}
+          className="hidden min-h-target-adult shrink-0 flex-row items-center justify-center gap-element border-t-2 border-border-faint px-inset-tight hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 md:flex"
         >
-          {collapsed ? (
-            <PanelLeftOpen aria-hidden className="h-4 w-4 shrink-0 text-text-muted" />
-          ) : (
-            <>
+          <View className={RAIL_ONLY[mode]}>
+            {railAtMd ? (
+              <PanelLeftOpen aria-hidden className="h-4 w-4 shrink-0 text-text-muted" />
+            ) : (
               <PanelLeftClose aria-hidden className="h-4 w-4 shrink-0 text-text-muted" />
-              <Text className="text-caption text-text-muted">Collapse</Text>
-            </>
-          )}
+            )}
+          </View>
+          <View className={`${MENU_ONLY[mode]} flex-row items-center gap-element`}>
+            {railAtLg ? (
+              <PanelLeftOpen aria-hidden className="h-4 w-4 shrink-0 text-text-muted" />
+            ) : (
+              <>
+                <PanelLeftClose aria-hidden className="h-4 w-4 shrink-0 text-text-muted" />
+                <Text className="text-caption text-text-muted">Collapse</Text>
+              </>
+            )}
+          </View>
         </Pressable>
       </View>
 

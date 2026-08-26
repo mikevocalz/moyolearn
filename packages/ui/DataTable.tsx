@@ -83,7 +83,21 @@ const dataTable = tv({
       edge has to occupy its space always, or selecting a row shifts every cell
       in it three pixels to the right.
     */
-    row: 'min-h-row-cool flex-row items-center border-b border-border-faint border-l-3 border-l-transparent',
+    /*
+      `[&:has(details[open])]:z-50` — the row lifts itself while a menu inside it
+      is open.
+
+      Every row and cell computes `position: relative; z-index: 0` from React
+      Native Web's base View style, and `z-index: 0` CREATES A STACKING CONTEXT.
+      So a popover inside a cell could ask for `z-50` and still be painted over
+      by the next row: its z-index only ever competed inside its own cell, while
+      the rows themselves were all tied at 0 and settled by DOM order. The stage
+      menu rendered under the four rows beneath it and read as transparent.
+
+      The lift therefore has to happen on the element that is a sibling of the
+      other rows, and `:has()` lets CSS do it with no state and no JS.
+    */
+    row: 'min-h-row-cool flex-row items-center border-b border-border-faint border-l-3 border-l-transparent [&:has(details[open])]:z-50',
     rowInteractive: 'transition-colors duration-fast hover:bg-surface-sunken motion-reduce:transition-none',
     rowSelected: 'border-l-border-strong bg-highlighter-underlay',
     cell: 'flex-1 justify-center p-inset-tight',

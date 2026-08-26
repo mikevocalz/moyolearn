@@ -69,6 +69,7 @@ export {
   type DashboardShellProps,
   type NavGroup,
   type NavItem,
+  type SidebarMode,
 } from './DashboardShell';
 export { useAppForm, withForm, useFieldContext, useFormContext, useFormStore } from './form';
 

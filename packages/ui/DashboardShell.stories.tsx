@@ -1,5 +1,6 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { DashboardShell, type NavGroup } from './DashboardShell';
+import { DashboardShell, type NavGroup, type SidebarMode } from './DashboardShell';
+import { BrandLockup } from './BrandLockup';
 import { useInstanceStore, useStore } from './use-instance-store';
 import { Button } from './Button';
 import { StatCard } from './StatCard';
@@ -35,34 +36,20 @@ const GROUPS: NavGroup[] = [
   },
 ];
 
-const Brand = () => (
-  <View className="flex-row items-center gap-element">
-    <View className="h-8 w-8 items-center justify-center rounded-control border-2 border-border-strong bg-primary">
-      <Text className="font-display text-label text-on-primary">M</Text>
-    </View>
-    <Text className="font-display text-title text-text">Moyo</Text>
-  </View>
-);
 
-const BrandMark = () => (
-  <View className="h-8 w-8 items-center justify-center rounded-control border-2 border-border-strong bg-primary">
-    <Text className="font-display text-label text-on-primary">M</Text>
-  </View>
-);
-
-/** Collapse and menu state are durable view prefs, so they live in a store —
+/** Sidebar mode and menu state are durable view prefs, so they live in a store —
  *  never React state (repo rule). A real screen swaps this for the app store. */
-function Demo({ startCollapsed = false }: { startCollapsed?: boolean }) {
-  const store = useInstanceStore(() => ({ collapsed: startCollapsed, menuOpen: false }));
-  const { collapsed, menuOpen } = useStore(store, (s) => s);
+function Demo({ startMode = 'auto' as SidebarMode }: { startMode?: SidebarMode }) {
+  const store = useInstanceStore(() => ({ mode: startMode, menuOpen: false }));
+  const { mode, menuOpen } = useStore(store, (s) => s);
 
   return (
     <DashboardShell
       groups={GROUPS}
-      brand={<Brand />}
-      brandMark={<BrandMark />}
-      collapsed={collapsed}
-      onToggleCollapsed={() => store.setState((s) => ({ ...s, collapsed: !s.collapsed }))}
+      brand={<BrandLockup orgName="Riverside Unified" />}
+      brandMark={<BrandLockup variant="partner" />}
+      mode={mode}
+      onSetMode={(next) => store.setState((s) => ({ ...s, mode: next }))}
       menuOpen={menuOpen}
       onToggleMenu={() => store.setState((s) => ({ ...s, menuOpen: !s.menuOpen }))}
       topBarStart={<Text className="text-label text-text-muted">Riverside Tutoring</Text>}
@@ -93,8 +80,12 @@ const meta: Meta = { title: 'UI/DashboardShell' };
 export default meta;
 type Story = StoryObj;
 
-export const Expanded: Story = { render: () => <Demo /> };
+/** The shipped default: rail on a tablet, menu on a desktop. Resize to see it. */
+export const Auto: Story = { render: () => <Demo /> };
 
-/** Collapsed keeps a label under each icon — a bare rail costs a hover-and-wait
- *  on every navigation. */
-export const Collapsed: Story = { render: () => <Demo startCollapsed /> };
+/** The user having chosen the menu — it then holds at tablet width too. */
+export const Menu: Story = { render: () => <Demo startMode="menu" /> };
+
+/** The user having chosen the rail. It keeps a label under each icon: a bare
+ *  icon rail costs a hover-and-wait on every navigation. */
+export const Rail: Story = { render: () => <Demo startMode="rail" /> };

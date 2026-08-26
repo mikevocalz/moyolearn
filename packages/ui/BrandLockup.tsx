@@ -22,6 +22,9 @@ import { Image } from './Image';
   unreadable inside its own product. Both boxes are the same HEIGHT, which is
   what the eye reads as parity in a horizontal lockup.
 */
+// Mobbin: https://mobbin.com/screens/cb9fafea-3310-4ffa-86d4-6b8c2a39e87e (Expensify — partner brand gets its own territory, not a shrunken header slot) · https://mobbin.com/screens/aa905e20-651b-4ad3-85b7-5f256c90e266 (Deputy — brand panel carries equal weight beside the form) · https://mobbin.com/screens/a06d16a0-8f95-4502-a9c3-c2b70636ad1f (Teachable — org name as chrome above a neutral form; the version to beat, since the name gets lost) · https://mobbin.com/screens/213841a9-5eea-4ddb-a12a-d03aab7760e6 (Optimal Workshop — mark plus "Welcome back to X" naming the org in the heading) · https://mobbin.com/screens/6016e708-16a6-4ce3-a87c-5cee9bc3d3d6 (SchoolAI — districts need a find-your-district state, which is why an unknown slug degrades rather than 404s)
+// SOT: docs/pack/09-screens-first-build-order.md §7
+// SOT-KEYWORDS: brand lockup co-branding district logo mark wordmark partner login sidebar
 const lockup = tv({
   slots: {
     root: 'flex-row items-center gap-element',
@@ -34,30 +37,37 @@ const lockup = tv({
   },
   variants: {
     size: {
+      /*
+        THE HEIGHTS MATCH, and the sizes are picked so that they can.
+
+        Both marks must be the same height — that is what the eye reads as two
+        partners rather than a brand and its subtitle. A 4:3 box at the same
+        height as a 36px square needs to be 48px wide, and at 48px tall needs to
+        be 64px: every one of those is a real step on the spacing scale, so the
+        parity costs no arbitrary value. Heights of 32 and 56 were tried first
+        and neither has a 4:3 partner on the scale, which is how the wordmark
+        ended up shorter than the tile beside it.
+      */
       sm: {
-        tile: 'h-8 w-8',
+        tile: 'h-9 w-9',
         letter: 'text-label',
-        partner: 'h-8 w-8',
+        partner: 'h-9 w-9',
         word: 'text-title',
         times: 'text-caption',
       },
       lg: {
-        tile: 'h-14 w-14',
+        tile: 'h-12 w-12',
         letter: 'text-title',
-        partner: 'h-14 w-14',
+        partner: 'h-12 w-12',
         word: 'text-display-sm',
         times: 'text-label',
       },
     },
-    /*
-      4:3 comes from the standard spacing scale rather than an arbitrary
-      `aspect-[4/3]`: 32×24 and 64×48 are both exactly 4:3 and both are real
-      tokens, so no raw value enters the stylesheet (CLAUDE.md · UI).
-    */
     wide: { true: {} },
   },
   compoundVariants: [
-    { size: 'sm', wide: true, class: { partner: 'h-6 w-8' } },
+    // 36×48 and 48×64 — exactly 4:3, exactly as tall as the square beside them.
+    { size: 'sm', wide: true, class: { partner: 'h-9 w-12' } },
     { size: 'lg', wide: true, class: { partner: 'h-12 w-16' } },
   ],
   defaultVariants: { size: 'sm' },

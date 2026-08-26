@@ -19,7 +19,7 @@
 // scheduling, attendance and billing context and never learning content.
 // SOT: docs/pack/06-auth-onboarding-spec.md §2 §7 · docs/pack/01-ai-tutoring-platform-plan.md §(auth mapping) · docs/pack/28-crm-spec.md §2
 // SOT-KEYWORDS: cast fixtures mock districts orgs staff learners guardians family seed roster
-import { avatarFor } from './avatars.ts';
+import { portrait } from './avatars.ts';
 
 /**
  * Ops-staff roles. Doc 06 §2 lists `owner, manager, scheduler, finance` for
@@ -29,6 +29,30 @@ import { avatarFor } from './avatars.ts';
  * "Coordinator" appears in neither and is deliberately absent.
  */
 export type StaffRole = 'owner' | 'manager' | 'scheduler' | 'finance' | 'tutor' | 'teacher';
+
+/**
+ * How a role is WRITTEN when a person reads it. The stored values are lowercase
+ * because they are union members, and a union member is not a label — rendering
+ * `owner` under someone's name spells their job in the schema's voice rather
+ * than the interface's.
+ */
+export const ROLE_LABEL = {
+  owner: 'Owner',
+  manager: 'Manager',
+  scheduler: 'Scheduler',
+  finance: 'Finance',
+  tutor: 'Tutor',
+  teacher: 'Teacher',
+} as const satisfies Record<StaffRole, string>;
+
+/** Everyone in the cast, labelled the way a screen should say it. */
+export const PERSON_LABEL = {
+  ...ROLE_LABEL,
+  parent: 'Parent',
+  guardian: 'Guardian',
+  student: 'Student',
+  learner: 'Learner',
+} as const;
 
 export interface MockOrg {
   /** The tenant key. This is `organizations.slug` and every row's `orgId`. */
@@ -94,10 +118,16 @@ const seal = (mark: string, bg: string, fg: string) =>
   districts uses it so the lockup's letterboxing path ships by default rather
   than living only in a story — a partner logo that has only ever been tested
   square is a partner logo that will be cropped in front of a customer.
+
+  `textLength` + `lengthAdjust` rather than a chosen font-size: the first pass
+  set a size that made "PUBLIC SCHOOLS" wider than the 64-unit viewBox, so the
+  SVG clipped its own text to "BLIC SCHOO" long before any CSS object-fit could
+  help. Pinning the drawn width means a longer district name compresses instead
+  of overflowing.
 */
 const wordmark = (line1: string, line2: string, bg: string, fg: string) =>
   `data:image/svg+xml;utf8,${encodeURIComponent(
-    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48" role="img"><rect width="64" height="48" rx="6" fill="${bg}"/><text x="32" y="21" font-family="Georgia,serif" font-size="13" font-weight="700" text-anchor="middle" fill="${fg}">${line1}</text><text x="32" y="36" font-family="Georgia,serif" font-size="9" letter-spacing="1.5" text-anchor="middle" fill="${fg}" opacity="0.85">${line2}</text></svg>`,
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48" role="img"><rect width="64" height="48" rx="6" fill="${bg}"/><text x="32" y="24" font-family="Georgia,serif" font-size="11" font-weight="700" text-anchor="middle" textLength="52" lengthAdjust="spacingAndGlyphs" fill="${fg}">${line1}</text><text x="32" y="36" font-family="Georgia,serif" font-size="6" text-anchor="middle" textLength="50" lengthAdjust="spacingAndGlyphs" fill="${fg}" opacity="0.85">${line2}</text></svg>`,
   )}`;
 
 export const MOCK_ORGS: readonly MockOrg[] = [
@@ -126,7 +156,7 @@ export const MOCK_STAFF: readonly MockStaff[] = [
     orgSlug: 'riverside-unified',
     role: 'owner',
     email: 'amara.osei@riverside.example',
-    avatarUrl: avatarFor('amara', 'top=curly&hairColor=2c1b18&skinColor=614335&clothing=blazerAndShirt'),
+    avatarUrl: portrait('women', 36),
   },
   {
     id: 'staff-jonah',
@@ -134,7 +164,7 @@ export const MOCK_STAFF: readonly MockStaff[] = [
     orgSlug: 'riverside-unified',
     role: 'scheduler',
     email: 'jonah.mercer@riverside.example',
-    avatarUrl: avatarFor('jonah', 'top=shortFlat&hairColor=b58143&skinColor=ffdbb4&clothing=shirtCrewNeck'),
+    avatarUrl: portrait('men', 22),
   },
   {
     id: 'staff-priya',
@@ -142,7 +172,7 @@ export const MOCK_STAFF: readonly MockStaff[] = [
     orgSlug: 'riverside-unified',
     role: 'tutor',
     email: 'priya.raman@riverside.example',
-    avatarUrl: avatarFor('priya', 'top=straightAndStrand&hairColor=090806&skinColor=ae5d29&clothing=blazerAndShirt'),
+    avatarUrl: portrait('women', 13),
   },
   {
     id: 'staff-elena',
@@ -150,7 +180,7 @@ export const MOCK_STAFF: readonly MockStaff[] = [
     orgSlug: 'lincoln-public',
     role: 'owner',
     email: 'elena.fischer@lincoln.example',
-    avatarUrl: avatarFor('elena', 'top=longButNotTooLong&hairColor=b58143&skinColor=ffdbb4&clothing=blazerAndShirt'),
+    avatarUrl: portrait('women', 23),
   },
   {
     id: 'staff-kenji',
@@ -158,7 +188,7 @@ export const MOCK_STAFF: readonly MockStaff[] = [
     orgSlug: 'lincoln-public',
     role: 'teacher',
     email: 'kenji.watanabe@lincoln.example',
-    avatarUrl: avatarFor('kenji', 'top=shortFlat&hairColor=090806&skinColor=edb98a&clothing=shirtScoopNeck'),
+    avatarUrl: portrait('men', 26),
   },
 ];
 
@@ -170,7 +200,7 @@ export const MOCK_LEARNERS: readonly MockLearner[] = [
     username: 'blue-falcon-42',
     isMinor: true,
     gradeBand: 'older',
-    avatarUrl: avatarFor('maya', 'top=bigHair&hairColor=2c1b18&skinColor=d08b5b&clothing=blazerAndSweater'),
+    avatarUrl: portrait('women', 19),
   },
   {
     id: 'learner-daniel',
@@ -179,7 +209,7 @@ export const MOCK_LEARNERS: readonly MockLearner[] = [
     username: 'amber-otter-17',
     isMinor: true,
     gradeBand: 'young',
-    avatarUrl: avatarFor('daniel', 'top=shortCurly&hairColor=2c1b18&skinColor=614335&clothing=shirtCrewNeck'),
+    avatarUrl: portrait('men', 54),
   },
   {
     id: 'learner-sofia',
@@ -188,7 +218,7 @@ export const MOCK_LEARNERS: readonly MockLearner[] = [
     username: 'green-heron-08',
     isMinor: true,
     gradeBand: 'young',
-    avatarUrl: avatarFor('sofia', 'top=bob&hairColor=724133&skinColor=f8d25c&clothing=graphicShirt'),
+    avatarUrl: portrait('women', 30),
   },
   {
     id: 'learner-tomi',
@@ -197,7 +227,7 @@ export const MOCK_LEARNERS: readonly MockLearner[] = [
     username: 'silver-marten-63',
     isMinor: true,
     gradeBand: 'older',
-    avatarUrl: avatarFor('tomi', 'top=dreads01&hairColor=090806&skinColor=614335&clothing=hoodie'),
+    avatarUrl: portrait('men', 53),
   },
 ];
 
@@ -216,7 +246,7 @@ export const MOCK_GUARDIANS: readonly MockGuardian[] = [
     email: 'dana.rodriguez@example.com',
     learnerIds: ['learner-maya'],
     consentMethod: 'email-plus',
-    avatarUrl: avatarFor('dana', 'top=straight02&hairColor=2c1b18&skinColor=d08b5b&clothing=overall'),
+    avatarUrl: portrait('women', 47),
   },
   {
     id: 'guardian-marcus',
@@ -227,7 +257,7 @@ export const MOCK_GUARDIANS: readonly MockGuardian[] = [
     // The invited second guardian, so the pair is verified by a different route
     // than the first (doc 06 §3.1 step 2 makes text-plus the alternative).
     consentMethod: 'text-plus',
-    avatarUrl: avatarFor('marcusr', 'top=shortWaved&hairColor=2c1b18&facialHair=beardMedium&facialHairColor=2c1b18&skinColor=ae5d29&clothing=shirtVNeck'),
+    avatarUrl: portrait('men', 47),
   },
   {
     id: 'guardian-ruth',
@@ -236,7 +266,7 @@ export const MOCK_GUARDIANS: readonly MockGuardian[] = [
     email: 'ruth.bell@example.com',
     learnerIds: ['learner-sofia'],
     consentMethod: 'email-plus',
-    avatarUrl: avatarFor('ruth', 'top=bun&hairColor=724133&skinColor=f8d25c&clothing=blazerAndSweater'),
+    avatarUrl: portrait('women', 16),
   },
 ];
 

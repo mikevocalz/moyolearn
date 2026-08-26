@@ -53,7 +53,7 @@ export {
   — a login page has no session to take identity from. The reasoning, and what
   bounds the exposure, is in org.service.ts.
 */
-export { orgBrandingFor, type OrgBranding, type LoadOrgBranding } from './features/org/org.service';
+export { orgBrandingFor, type OrgBranding, type LoadOrgBranding } from './features/org';
 export {
   saveLearnerProfile,
   type SaveGradeBand,

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import type { SidebarMode } from '@acme/ui';
 
 // Ops chrome state — zustand always (repo rule), never React useState.
 //
@@ -9,21 +10,25 @@ import { create } from 'zustand';
 // SOT: CLAUDE.md (UI · state) · docs/pack/28-crm-spec.md §3 (views)
 // SOT-KEYWORDS: ops store sidebar collapse nav zustand view prefs dashboard
 interface OpsChromeState {
-  /** Desktop only: the sidebar shrinks to a labelled rail. */
-  collapsed: boolean;
-  /** Below lg the sidebar is an overlay; this is its open state. */
+  /**
+   * `auto` is the responsive default — rail on a tablet, menu on a desktop.
+   * The other two are the user having overridden it, which then holds at every
+   * width. Not a boolean: a boolean cannot express "depends, until told".
+   */
+  sidebarMode: SidebarMode;
+  /** Below md the sidebar is an overlay drawer; this is its open state. */
   menuOpen: boolean;
   section: string;
-  toggleCollapsed: () => void;
+  setSidebarMode: (mode: 'rail' | 'menu') => void;
   toggleMenu: () => void;
   setSection: (section: string) => void;
 }
 
 export const useOpsChrome = create<OpsChromeState>((set) => ({
-  collapsed: false,
+  sidebarMode: 'auto',
   menuOpen: false,
   section: 'today',
-  toggleCollapsed: () => set((s) => ({ collapsed: !s.collapsed })),
+  setSidebarMode: (sidebarMode) => set({ sidebarMode }),
   toggleMenu: () => set((s) => ({ menuOpen: !s.menuOpen })),
   // Navigating on a phone must also dismiss the overlay, or the user taps a
   // section and stares at the menu that is still covering it.

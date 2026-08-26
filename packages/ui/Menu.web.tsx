@@ -12,9 +12,21 @@ import type { MenuProps } from './Menu.types';
  */
 export function Menu({ children, actions, onAction, title, className }: MenuProps) {
   return (
-    <details className={`relative ${className ?? ''}`}>
+    /*
+      `open:z-50` on the DETAILS, not just on the panel.
+
+      The panel already had a background and `z-10`, and rows below it still
+      painted straight through — because in a table every row is a positioned
+      sibling at `z-index: auto`, so a later row wins on DOM order no matter what
+      z-index a child of an earlier row asks for. The lift has to happen on the
+      element that is a sibling of those rows. Scoped to `open` so a closed menu
+      never steals the stack from anything.
+    */
+    <details className={`relative open:z-50 ${className ?? ''}`}>
       <summary className="cursor-pointer list-none">{children}</summary>
-      <View className="absolute right-0 top-full z-10 mt-1 min-w-48 gap-1 rounded-md border-2 border-border bg-surface-raised p-1 shadow-card">
+      {/* `isolate` so the panel's own children stack against the panel rather
+          than against whatever ancestor happens to be the nearest context. */}
+      <View className="absolute right-0 top-full isolate z-50 mt-1 min-w-48 gap-1 rounded-md border-2 border-border bg-surface-raised p-1 shadow-overlay">
         {title ? (
           <Text className="px-2 py-1 text-xs font-semibold uppercase text-text-muted">{title}</Text>
         ) : null}

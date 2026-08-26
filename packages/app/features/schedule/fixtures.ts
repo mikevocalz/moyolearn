@@ -1,8 +1,8 @@
 import { addMinutes, set, startOfDay } from 'date-fns';
 import type { Resource, ScheduleDay, ScheduleEvent } from './model.ts';
-// The base moved to `fixtures/avatars.ts` when the ops roster needed the same
-// faces; a second copy of this URL is how two casts start drifting apart.
-import { AVATAR } from '../../fixtures/avatars.ts';
+// Portraits live in `fixtures/avatars.ts` so this roster and the ops cast show
+// the same face for the same person; a second copy is how the two start drifting.
+import { portrait } from '../../fixtures/avatars.ts';
 
 /**
  * Demo data for the schedule screen.
@@ -42,11 +42,11 @@ export function buildDemoDay(reference: Date = new Date()): ScheduleDay {
 type At = (hour: number, minute?: number) => Date;
 
 export const DEMO_RESOURCES: Resource[] = [
-  { id: 'maya', name: 'Maya Rodriguez', avatarUrl: `${AVATAR}&seed=maya&top=bigHair&hairColor=2c1b18&skinColor=d08b5b&clothing=blazerAndSweater`, accent: 'ember' },
-  { id: 'daniel', name: 'Daniel Okafor', avatarUrl: `${AVATAR}&seed=daniel&top=shortCurly&hairColor=2c1b18&facialHair=beardLight&facialHairColor=2c1b18&skinColor=614335&clothing=shirtCrewNeck`, accent: 'gold' },
-  { id: 'priya', name: 'Priya Raman', avatarUrl: `${AVATAR}&seed=priya&top=straightAndStrand&hairColor=090806&skinColor=ae5d29&clothing=blazerAndShirt`, accent: 'forest' },
-  { id: 'kenji', name: 'Kenji Watanabe', avatarUrl: `${AVATAR}&seed=kenji&top=shortFlat&hairColor=090806&skinColor=edb98a&clothing=shirtScoopNeck`, accent: 'sky' },
-  { id: 'elena', name: 'Elena Fischer', avatarUrl: `${AVATAR}&seed=elena&top=longButNotTooLong&hairColor=b58143&skinColor=ffdbb4&clothing=blazerAndShirt`, accent: 'rose' },
+  { id: 'maya', name: 'Maya Rodriguez', avatarUrl: portrait('women', 19), accent: 'ember' },
+  { id: 'daniel', name: 'Daniel Okafor', avatarUrl: portrait('men', 54), accent: 'gold' },
+  { id: 'priya', name: 'Priya Raman', avatarUrl: portrait('women', 13), accent: 'forest' },
+  { id: 'kenji', name: 'Kenji Watanabe', avatarUrl: portrait('men', 26), accent: 'sky' },
+  { id: 'elena', name: 'Elena Fischer', avatarUrl: portrait('women', 23), accent: 'rose' },
 ];
 
 function buildDemoEvents(at: At): ScheduleEvent[] {
