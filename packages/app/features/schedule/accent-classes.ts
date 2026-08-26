@@ -27,7 +27,24 @@ export interface AccentClasses {
   title: string;
   /** Solid selected block. */
   selectedSurface: string;
-  /** Title colour on the solid block. */
+  /**
+   * Title colour on the solid block.
+   *
+   * `text-white`, deliberately, and NOT `text-text-inverse`: the block beneath
+   * it is a saturated accent that does not change between light and dark, so a
+   * foreground that flips with the theme would be wrong half the time.
+   *
+   * The block is the 600 step rather than the 500 used by the bar and the dot.
+   * At 500 white cleared 4.5 on only two of the five accents — ember 3.44, sky
+   * 4.32, gold 4.46 — and the title renders at 14px semibold with a 12px time
+   * line beneath it, both body text, so 4.5 is the bar and the 3.0 large-text
+   * allowance does not apply. Every accent passes at 600.
+   *
+   * One step, applied uniformly, rather than per-accent tuning: these five are
+   * peers in a legend, and an ember that had to travel two steps while the rest
+   * moved one would read as a different weight of thing. A selected block that
+   * sits deeper than its own bar also reads correctly as selected.
+   */
   selectedTitle: string;
   /** Resource header dot. */
   dot: string;
@@ -38,7 +55,7 @@ export const ACCENT_CLASSES: Record<ResourceAccent, AccentClasses> = {
     bar: 'bg-ember-500',
     surface: 'bg-ember-500/10 dark:bg-ember-500/20',
     title: 'text-ember-700 dark:text-ember-200',
-    selectedSurface: 'bg-ember-500',
+    selectedSurface: 'bg-ember-600',
     selectedTitle: 'text-white',
     dot: 'bg-ember-500',
   },
@@ -46,7 +63,7 @@ export const ACCENT_CLASSES: Record<ResourceAccent, AccentClasses> = {
     bar: 'bg-gold-500',
     surface: 'bg-gold-500/10 dark:bg-gold-500/20',
     title: 'text-gold-700 dark:text-gold-200',
-    selectedSurface: 'bg-gold-500',
+    selectedSurface: 'bg-gold-600',
     selectedTitle: 'text-white',
     dot: 'bg-gold-500',
   },
@@ -54,7 +71,7 @@ export const ACCENT_CLASSES: Record<ResourceAccent, AccentClasses> = {
     bar: 'bg-forest-500',
     surface: 'bg-forest-500/10 dark:bg-forest-500/20',
     title: 'text-forest-700 dark:text-forest-200',
-    selectedSurface: 'bg-forest-500',
+    selectedSurface: 'bg-forest-600',
     selectedTitle: 'text-white',
     dot: 'bg-forest-500',
   },
@@ -62,7 +79,7 @@ export const ACCENT_CLASSES: Record<ResourceAccent, AccentClasses> = {
     bar: 'bg-sky-500',
     surface: 'bg-sky-500/10 dark:bg-sky-500/20',
     title: 'text-sky-700 dark:text-sky-200',
-    selectedSurface: 'bg-sky-500',
+    selectedSurface: 'bg-sky-600',
     selectedTitle: 'text-white',
     dot: 'bg-sky-500',
   },
@@ -70,7 +87,7 @@ export const ACCENT_CLASSES: Record<ResourceAccent, AccentClasses> = {
     bar: 'bg-rose-500',
     surface: 'bg-rose-500/10 dark:bg-rose-500/20',
     title: 'text-rose-700 dark:text-rose-200',
-    selectedSurface: 'bg-rose-500',
+    selectedSurface: 'bg-rose-600',
     selectedTitle: 'text-white',
     dot: 'bg-rose-500',
   },

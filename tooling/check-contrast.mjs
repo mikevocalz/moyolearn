@@ -7,7 +7,7 @@
 // SOT-KEYWORDS: contrast wcag accessibility a11y tokens colour check gate
 // ponytail: the maths is eight lines of sRGB — a colour library would be a
 // dependency to avoid writing them.
-import { semantic } from '../packages/theme/tokens.ts';
+import { palette, semantic } from '../packages/theme/tokens.ts';
 
 /** WCAG 2.1 relative luminance. Accepts #rgb, #rrggbb, and rgba() over a known backdrop. */
 const channels = (colour) => {
@@ -91,6 +91,27 @@ const PAIRS = [
  */
 const EXEMPT = new Set(['border-faint']);
 
+/**
+ * Resource accents, checked separately because they are palette steps rather
+ * than semantic tokens and so cannot be expressed as a `PAIRS` entry.
+ *
+ * These exist because the declared-pairs design has one cost, and this is where
+ * it landed: a pairing nobody adds is a pairing nobody checks. White on
+ * `accent-500` shipped below AA on three of the five accents — ember 3.44, sky
+ * 4.32, gold 4.46 — for as long as the schedule has had a selected state,
+ * because no line here described it.
+ *
+ * White, not `text-inverse`: the block underneath is a saturated accent that
+ * does not change with the theme, so its foreground must not either. That also
+ * makes this the one check with no per-theme dimension — the same two colours
+ * meet in both.
+ *
+ * 4.5, not 3.0: `EventBlock` draws the title at 14px semibold and the time at
+ * 12px. Both are body text; the large-text allowance needs 18.66px bold.
+ */
+const RESOURCE_ACCENTS = ['ember', 'gold', 'forest', 'sky', 'rose'];
+const SELECTED_STEP = 600;
+
 const THEMES = ['light', 'dark'];
 let failures = 0;
 let checked = 0;
@@ -121,6 +142,24 @@ for (const theme of THEMES) {
   if (rows.length) {
     console.error(`\n${theme}:`);
     rows.forEach((r) => console.error(r));
+  }
+}
+
+for (const accent of RESOURCE_ACCENTS) {
+  const bg = palette[accent]?.[SELECTED_STEP];
+  if (!bg) {
+    console.error(`unknown resource accent step: ${accent}-${SELECTED_STEP}`);
+    failures++;
+    continue;
+  }
+  const r = ratio(palette.white ?? '#ffffff', bg);
+  checked++;
+  if (r === null || r < 4.5) {
+    failures++;
+    console.error(
+      `\n  FAIL  white on ${accent}-${SELECTED_STEP}  ${r === null ? '?' : r.toFixed(2)}:1  (needs 4.5:1)` +
+        '\n        This is the schedule\'s selected event block. Move the step, not the threshold.',
+    );
   }
 }
 
