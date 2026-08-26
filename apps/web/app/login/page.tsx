@@ -24,11 +24,13 @@ export default function LoginPage() {
       if (mode === 'signin') {
         const res = await authClient.signIn.email({ email, password });
         if (res.error) throw new Error(res.error.message);
+        router.push('/tutor');
       } else {
         const res = await authClient.signUp.email({ email, password, name });
         if (res.error) throw new Error(res.error.message);
+        // New accounts go through the learner onboarding before landing in the app.
+        router.push('/onboarding/learner');
       }
-      router.push('/tutor');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Auth failed');
     } finally {
