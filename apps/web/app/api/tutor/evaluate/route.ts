@@ -5,7 +5,18 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import { evaluateTutorTurn } from '@acme/app/server';
-import type { ProtectedCtx, TranscriptToSave, LoadPriorFacts, SaveFacts, DerivedFact, MasteryFact } from '@acme/app/server';
+import type {
+  ProtectedCtx,
+  TranscriptToSave,
+  LoadPriorFacts,
+  SaveFacts,
+  DerivedFact,
+  MasteryFact,
+  ReviewFact,
+  ScaffoldingFact,
+  MisconceptionFact,
+  InterestFact,
+} from '@acme/app/server';
 import { auth } from '@/lib/auth';
 
 async function withPayload<T>(fn: (payload: Awaited<ReturnType<typeof getPayload>>) => Promise<T>): Promise<T> {
@@ -38,27 +49,83 @@ const loadPriorFacts: LoadPriorFacts = async (ctx) => {
         observedAt: doc.observedAt as string,
         expiresAt: doc.expiresAt as string,
       };
-      if (doc.kind === 'mastery') {
-        const detail = (doc.detail ?? {}) as { skillId?: string; skillTitle?: string; p?: number; attempts?: number };
+
+      const detail = (doc.detail ?? {}) as Record<string, unknown>;
+      const kind = doc.kind as DerivedFact['kind'];
+
+      if (kind === 'mastery') {
         return {
           ...common,
           kind: 'mastery' as const,
-          skillId: detail.skillId ?? '',
-          skillTitle: detail.skillTitle ?? '',
-          p: detail.p ?? 0,
-          attempts: detail.attempts ?? 0,
+          skillId: (detail.skillId as string) ?? '',
+          skillTitle: (detail.skillTitle as string) ?? '',
+          p: (detail.p as number) ?? 0,
+          attempts: (detail.attempts as number) ?? 0,
         } satisfies MasteryFact;
       }
-      // The tutor currently only emits mastery facts; other kinds are ignored on load.
+      if (kind === 'review') {
+        return {
+          ...common,
+          kind: 'review' as const,
+          skillId: (detail.skillId as string) ?? '',
+          skillTitle: (detail.skillTitle as string) ?? '',
+          dueAt: (detail.dueAt as string) ?? common.observedAt,
+          intervalDays: (detail.intervalDays as number) ?? 0,
+        } satisfies ReviewFact;
+      }
+      if (kind === 'scaffolding') {
+        return {
+          ...common,
+          kind: 'scaffolding' as const,
+          skillId: (detail.skillId as string) ?? '',
+          hintDepth: (detail.hintDepth as number) ?? 0,
+        } satisfies ScaffoldingFact;
+      }
+      if (kind === 'misconception') {
+        return {
+          ...common,
+          kind: 'misconception' as const,
+          skillId: (detail.skillId as string) ?? '',
+          tag: (detail.tag as string) ?? '',
+          strategy: (detail.strategy as string) ?? '',
+          active: (detail.active as boolean) ?? false,
+        } satisfies MisconceptionFact;
+      }
+      if (kind === 'interest') {
+        return {
+          ...common,
+          kind: 'interest' as const,
+          tag: (detail.tag as string) ?? '',
+          guardianApproved: (detail.guardianApproved as boolean) ?? false,
+        } satisfies InterestFact;
+      }
       return null;
     }).filter(Boolean) as DerivedFact[];
   });
 };
 
+function factDetail(fact: DerivedFact): Record<string, unknown> {
+  if (fact.kind === 'mastery') {
+    return { skillId: fact.skillId, skillTitle: fact.skillTitle, p: fact.p, attempts: fact.attempts };
+  }
+  if (fact.kind === 'review') {
+    return { skillId: fact.skillId, skillTitle: fact.skillTitle, dueAt: fact.dueAt, intervalDays: fact.intervalDays };
+  }
+  if (fact.kind === 'scaffolding') {
+    return { skillId: fact.skillId, hintDepth: fact.hintDepth };
+  }
+  if (fact.kind === 'misconception') {
+    return { skillId: fact.skillId, tag: fact.tag, strategy: fact.strategy, active: fact.active };
+  }
+  if (fact.kind === 'interest') {
+    return { tag: fact.tag, guardianApproved: fact.guardianApproved };
+  }
+  return {};
+}
+
 const saveFacts: SaveFacts = async (ctx, facts) => {
   return withPayload(async (payload) => {
     for (const fact of facts) {
-      if (fact.kind !== 'mastery') continue;
       const { docs } = await payload.find({
         collection: 'studentModelFacts',
         where: {
@@ -73,7 +140,7 @@ const saveFacts: SaveFacts = async (ctx, facts) => {
         learnerAuthId: ctx.learnerId,
         kind: fact.kind,
         sentence: fact.sentence,
-        detail: { skillId: fact.skillId, skillTitle: fact.skillTitle, p: fact.p, attempts: fact.attempts } as Record<string, unknown>,
+        detail: factDetail(fact),
         derivedFrom: [...fact.derivedFrom],
         observedAt: fact.observedAt,
         expiresAt: fact.expiresAt,

@@ -6,7 +6,14 @@
 import 'server-only';
 
 export { protectedOperation, type ProtectedCtx } from './core/protected-operation';
-export type { DerivedFact, MasteryFact } from '@acme/student-model';
+export type {
+  DerivedFact,
+  MasteryFact,
+  ReviewFact,
+  ScaffoldingFact,
+  MisconceptionFact,
+  InterestFact,
+} from '@acme/student-model';
 export {
   evaluateTutorTurn,
   type TutorTurnInput,
