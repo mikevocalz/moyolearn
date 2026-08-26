@@ -236,7 +236,6 @@ export {
   useBunnyUpload,
   useVideoUpload,
   useVideoRecorder,
-  VideoNoteSheet,
   VIDEO_MAX_SECONDS,
   formatClock,
   uploadVoiceNote,

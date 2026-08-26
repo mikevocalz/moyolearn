@@ -57,3 +57,11 @@ export function isWaveformUrl(src: string): boolean {
 /** 16:5 — wide and short, so a waveform reads as audio rather than a photo. */
 export const INLINE_WAVEFORM_WIDTH = 320;
 export const INLINE_WAVEFORM_HEIGHT = 100;
+
+/**
+ * 16:9 — a video thumbnail should read as a video, the same way the waveform's
+ * 16:5 reads as audio. Same width as the waveform so a note holding both does
+ * not look ragged down its left edge.
+ */
+export const INLINE_VIDEO_WIDTH = 320;
+export const INLINE_VIDEO_HEIGHT = 180;

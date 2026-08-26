@@ -18,17 +18,16 @@
  */
 import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
 import type { VoiceRecording } from '@acme/ui';
+import type { UploadedVideo } from './video.store.ts';
+import type { IconName } from './icon-map.ts';
 import {
+  INLINE_VIDEO_HEIGHT,
+  INLINE_VIDEO_WIDTH,
   INLINE_WAVEFORM_HEIGHT,
   INLINE_WAVEFORM_WIDTH,
   type UploadVoiceNote,
 } from './upload.ts';
-import {
-  INLINE_VIDEO_HEIGHT,
-  INLINE_VIDEO_WIDTH,
-  youTubeThumbnail,
-  youTubeVideoId,
-} from './youtube.ts';
+import { youTubeThumbnail, youTubeVideoId } from './youtube.ts';
 
 /** Keys of `OnChangeStateEvent`, which reports what is active at the caret. */
 export type EditorStateKey =
@@ -88,6 +87,17 @@ export interface CapabilityContext {
    * removed afterwards, so a local path must not reach a saved note.
    */
   uploadVoiceNote?: UploadVoiceNote;
+  /**
+   * Records a video note AND uploads it. Native only — VisionCamera has no web
+   * build, and the capability hides itself where this is absent.
+   *
+   * One call rather than the record-then-upload pair the voice note uses, and
+   * deliberately so: a video upload is resumable and has a transcode phase
+   * after the bytes land, so the sheet has to stay open across both. Splitting
+   * it would hand the editor a local `file://` path in between — the exact
+   * thing the voice note's fallback branch exists to warn about.
+   */
+  recordVideo?: () => Promise<UploadedVideo | null>;
   /** Collects a URL from the user. Supplied by the host screen. */
   promptUrl?: (title: string) => Promise<string | null>;
   /**
@@ -107,7 +117,8 @@ export interface Capability {
   id: string;
   label: string;
   /** Lucide icon name, resolved by the toolbar against `@acme/ui/icons`. */
-  icon: string;
+  /** Must name a real export of `@acme/ui/icons` — checked at compile time. */
+  icon: IconName;
   role: CapabilityRole;
   group: CapabilityGroup;
   /**
@@ -278,6 +289,33 @@ export const CAPABILITIES = [
       editor.setLink(caret, caret, `Voice note (${minutes}:${seconds})`, recording.uri);
     },
     isEnabled: ({ recordAudio }) => recordAudio !== undefined,
+  },
+
+  {
+    /**
+     * A recorded video note, inserted as its thumbnail.
+     *
+     * The thumbnail goes inline and links to the playback URL — the same
+     * mechanism the voice note's waveform uses, and the only kind of node this
+     * editor's span-based layout can place in the text flow. There is no video
+     * node in the schema and this does not pretend otherwise.
+     *
+     * No local-file fallback, unlike the voice note. A video is not reachable
+     * until it is uploaded, so there is nothing honest to write for a failed
+     * one; the sheet reports the failure and this inserts nothing.
+     */
+    id: 'video',
+    label: 'Video note',
+    icon: 'Video',
+    role: 'toolbar',
+    group: 'insert',
+    basic: false,
+    run: async ({ editor, recordVideo }) => {
+      const video = await recordVideo?.();
+      if (!video) return;
+      editor.setImage(video.thumbnailUrl, INLINE_VIDEO_WIDTH, INLINE_VIDEO_HEIGHT);
+    },
+    isEnabled: ({ recordVideo }) => recordVideo !== undefined,
   },
 
   // History — see `history.ts`. The native editor exposes no undo/redo, so

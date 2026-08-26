@@ -8,6 +8,7 @@ import {
 import { View, Text } from '@acme/ui/tw';
 import { AudioPlayer } from '@acme/ui';
 import { uploadVoiceNote } from '../media';
+import { useVideoStore } from '../editor/video.store.ts';
 import { Section } from '@acme/ui/primitives';
 import { palette } from '@acme/theme';
 import {
@@ -100,6 +101,7 @@ export function NotesEditor({
   const selection = useStore(store.current, (state) => state.selection);
   const requestAttachment = useAttachStore((state) => state.request);
   const requestRecording = useAudioStore((state) => state.request);
+  const requestVideo = useVideoStore((state) => state.request);
   const requestUrl = useUrlStore((state) => state.request);
   const html = useStore(store.current, (state) => state.html);
 
@@ -159,6 +161,12 @@ export function NotesEditor({
     // request across that boundary and settles when the user picks or cancels.
     pickFile: () => requestAttachment(),
     recordAudio: () => requestRecording(),
+    /*
+      Records AND uploads in one call, unlike the voice note's pair. A video
+      upload is resumable and keeps going after the bytes land, so the sheet
+      owns both halves — see CapabilityContext.recordVideo.
+    */
+    recordVideo: () => requestVideo(),
     /*
       Supplying this is what stops a note keeping a `file://` link. Without it
       `capabilities.ts` takes its fallback branch and writes a link to the local

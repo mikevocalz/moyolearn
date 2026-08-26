@@ -5,15 +5,27 @@ import * as Icons from '@acme/ui/icons';
  *
  * The registry stores a NAME rather than a component so it stays a plain,
  * serialisable value that the settings screen and the tests can import without
- * pulling the icon set — and so a missing icon is a lookup that fails loudly
- * here rather than an undefined element deep in a render.
+ * pulling in the icon set.
+ *
+ * `IconName` is derived from the icon module rather than written down, so a
+ * capability naming an icon that does not exist fails `pnpm typecheck` instead
+ * of throwing when the toolbar renders. This used to be `Record<string, …>`
+ * behind an `as unknown` cast — which made every name compile and moved the
+ * whole class of error to runtime, where it crashes the toolbar rather than the
+ * build. A `Video` capability shipped with no `Video` icon is how that was
+ * found.
  */
-const ICONS = Icons as unknown as Record<string, React.FC<{ size?: number; className?: string }>>;
+/*
+  Spread into a plain object rather than indexing the namespace directly:
+  `import/namespace` cannot validate a computed reference into an imported
+  namespace, and disabling the rule would give up the check everywhere else it
+  is doing real work. The type is still derived from the module, so the guard is
+  unchanged.
+*/
+const ICONS = { ...Icons };
 
-export function iconFor(name: string): React.FC<{ size?: number; className?: string }> {
-  const icon = ICONS[name];
-  if (icon === undefined) {
-    throw new Error(`Unknown icon "${name}" in the editor capability registry.`);
-  }
-  return icon;
+export type IconName = keyof typeof ICONS;
+
+export function iconFor(name: IconName): React.FC<{ size?: number; className?: string }> {
+  return ICONS[name] as React.FC<{ size?: number; className?: string }>;
 }

@@ -54,3 +54,5 @@ export { NoteBody } from './NoteBody.tsx';
 export { YouTubeEmbed, type PlaylistItem, type YouTubeEmbedProps } from './YouTubeEmbed';
 export { splitNoteSegments, youTubeVideoId, type NoteSegment } from './youtube.ts';
 export { EditorSettingsScreen } from './EditorSettingsScreen.tsx';
+export { VideoNoteSheet } from './VideoNoteSheet';
+export { useVideoStore, type UploadedVideo } from './video.store.ts';

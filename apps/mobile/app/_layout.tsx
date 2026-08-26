@@ -5,7 +5,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { withUniwind } from "uniwind";
-import { AppQueryProvider, SafeAreaProvider, SessionProvider , AttachSheet, AudioRecorderSheet, UrlSheet } from "@acme/app";
+import { AppQueryProvider, SafeAreaProvider, SessionProvider , AttachSheet, AudioRecorderSheet, UrlSheet, VideoNoteSheet } from "@acme/app";
 import { BookingSheet } from "../components/BookingSheet";
 import { Toaster } from "@acme/ui";
 import "../global.css";
@@ -56,6 +56,7 @@ export default function RootLayout() {
             <BookingSheet />
             <AttachSheet />
             <AudioRecorderSheet />
+            <VideoNoteSheet />
             <UrlSheet />
             {/* Last, so a toast paints above the sheets it reports on. */}
             <Toaster />

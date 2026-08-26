@@ -28,6 +28,13 @@ export interface VideoFile {
   size: number;
 }
 
+/** What a finished upload gives its caller. Final the moment the bytes land. */
+export interface UploadedVideoResult {
+  videoId: string;
+  playbackUrl: string;
+  thumbnailUrl: string;
+}
+
 interface VideoState {
   phase: VideoPhase;
   ratio: number | null;
@@ -72,7 +79,19 @@ export function useVideoUpload() {
     patch({ ...INITIAL });
   };
 
-  const upload = async (file: VideoFile, title: string) => {
+  /**
+   * Uploads a video and resolves with its URLs once the BYTES have landed.
+   *
+   * It resolves at `processing`, not at `ready`: Bunny is still transcoding,
+   * but the video row exists and its playback and thumbnail URLs are already
+   * final, so a caller has everything it needs to persist. Waiting for the
+   * transcode would block a note on work the user does not have to watch.
+   *
+   * Resolves `null` on failure rather than throwing — the phase and the message
+   * are already in the store, and a caller that awaits this wants to know
+   * whether to proceed, not to handle a second copy of the error.
+   */
+  const upload = async (file: VideoFile, title: string): Promise<UploadedVideoResult | null> => {
     patch({ ...INITIAL, phase: 'preparing' });
     try {
       const res = await fetch(`${API_URL}/api/media/video`, {
@@ -95,7 +114,7 @@ export function useVideoUpload() {
         | { ok: false; error: string };
       if (!res.ok || body.ok !== true) {
         patch({ phase: 'error', error: body.ok === false ? body.error : `Could not start (${res.status})` });
-        return;
+        return null;
       }
 
       patch({
@@ -119,6 +138,17 @@ export function useVideoUpload() {
       const asTusFile = (f: VideoFile) =>
         f as unknown as ConstructorParameters<typeof tus.Upload>[0];
 
+      /*
+        The tus callbacks are the only place success and failure are known, so
+        the promise is settled from inside them. `settle` rather than two
+        callbacks because tus can call onError after a retry sequence that
+        already reported progress, and a promise must resolve exactly once.
+      */
+      let settle: (result: UploadedVideoResult | null) => void = () => {};
+      const finished = new Promise<UploadedVideoResult | null>((r) => {
+        settle = r;
+      });
+
       const tusUpload = new tus.Upload(asTusFile(file), {
         endpoint: body.endpoint,
         retryDelays: [0, 3000, 5000, 10000, 20000],
@@ -135,11 +165,20 @@ export function useVideoUpload() {
         metadata: { filetype: file.type, title },
         onProgress: (sent, total) =>
           patch({ bytesSent: sent, bytesTotal: total, ratio: total > 0 ? sent / total : null }),
-        onSuccess: () =>
+        onSuccess: () => {
           // NOT `ready`. The bytes have landed; Bunny has not finished
           // transcoding, and claiming otherwise shows a broken player.
-          patch({ phase: 'processing', ratio: 1 }),
-        onError: (error) => patch({ phase: 'error', error: error.message }),
+          patch({ phase: 'processing', ratio: 1 });
+          settle({
+            videoId: body.videoId,
+            playbackUrl: body.playbackUrl,
+            thumbnailUrl: body.thumbnailUrl,
+          });
+        },
+        onError: (error) => {
+          patch({ phase: 'error', error: error.message });
+          settle(null);
+        },
       });
 
       const previous = await tusUpload.findPreviousUploads();
@@ -149,8 +188,10 @@ export function useVideoUpload() {
       }
       patch({ upload: tusUpload });
       tusUpload.start();
+      return finished;
     } catch (error) {
       patch({ phase: 'error', error: error instanceof Error ? error.message : 'Upload failed.' });
+      return null;
     }
   };
 
