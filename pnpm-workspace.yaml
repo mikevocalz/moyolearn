@@ -114,11 +114,11 @@ catalog:
   # leak this catches isn't server actions — it's Payload credentials and
   # inference keys ending up readable inside an app binary.
   server-only: 0.0.1
-  payload: 4.0.0-canary.28
-  "@payloadcms/db-postgres": 4.0.0-canary.28
-  "@payloadcms/next": 4.0.0-canary.28
-  "@payloadcms/plugin-mcp": 4.0.0-canary.28
-  "@payloadcms/ui": 4.0.0-canary.28
+  payload: 4.0.0-canary.29
+  "@payloadcms/db-postgres": 4.0.0-canary.29
+  "@payloadcms/next": 4.0.0-canary.29
+  "@payloadcms/plugin-mcp": 4.0.0-canary.29
+  "@payloadcms/ui": 4.0.0-canary.29
   graphql: 16.14.2 # payload peers ^16
   pg: 8.23.0
   better-auth: 1.7.1

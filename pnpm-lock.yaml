@@ -34,17 +34,17 @@ catalogs:
       specifier: 2.5.3
       version: 2.5.3
     '@payloadcms/db-postgres':
-      specifier: 4.0.0-canary.28
-      version: 4.0.0-canary.28
+      specifier: 4.0.0-canary.29
+      version: 4.0.0-canary.29
     '@payloadcms/next':
-      specifier: 4.0.0-canary.28
-      version: 4.0.0-canary.28
+      specifier: 4.0.0-canary.29
+      version: 4.0.0-canary.29
     '@payloadcms/plugin-mcp':
-      specifier: 4.0.0-canary.28
-      version: 4.0.0-canary.28
+      specifier: 4.0.0-canary.29
+      version: 4.0.0-canary.29
     '@payloadcms/ui':
-      specifier: 4.0.0-canary.28
-      version: 4.0.0-canary.28
+      specifier: 4.0.0-canary.29
+      version: 4.0.0-canary.29
     '@react-navigation/native':
       specifier: 7.3.13
       version: 7.3.13
@@ -178,8 +178,8 @@ catalogs:
       specifier: 3.9.17
       version: 3.9.17
     payload:
-      specifier: 4.0.0-canary.28
-      version: 4.0.0-canary.28
+      specifier: 4.0.0-canary.29
+      version: 4.0.0-canary.29
     pg:
       specifier: 8.23.0
       version: 8.23.0
@@ -537,13 +537,13 @@ importers:
         version: link:../../packages/ui
       '@payloadcms/db-postgres':
         specifier: 'catalog:'
-        version: 4.0.0-canary.28(@electric-sql/pglite@0.5.4)(kysely@0.29.4)(payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3))
+        version: 4.0.0-canary.29(@electric-sql/pglite@0.5.4)(kysely@0.29.4)(payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3))
       '@payloadcms/next':
         specifier: 'catalog:'
-        version: 4.0.0-canary.28(@types/react@19.2.18)(graphql@16.14.2)(monaco-editor@0.55.1)(next@16.3.1(@babel/core@7.29.7)(@types/node@24.13.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.77.4))(payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
+        version: 4.0.0-canary.29(@types/react@19.2.18)(graphql@16.14.2)(monaco-editor@0.55.1)(next@16.3.1(@babel/core@7.29.7)(@types/node@24.13.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.77.4))(payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
       '@payloadcms/ui':
         specifier: 'catalog:'
-        version: 4.0.0-canary.28(@types/react@19.2.18)(monaco-editor@0.55.1)(payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
+        version: 4.0.0-canary.29(@types/react@19.2.18)(monaco-editor@0.55.1)(payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.101.4(react@19.2.8)
@@ -558,7 +558,7 @@ importers:
         version: 3.9.17(next@16.3.1(@babel/core@7.29.7)(@types/node@24.13.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.77.4))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       payload:
         specifier: 'catalog:'
-        version: 4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3)
+        version: 4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3)
       pg:
         specifier: 'catalog:'
         version: 8.23.0
@@ -823,13 +823,13 @@ importers:
     dependencies:
       '@payloadcms/db-postgres':
         specifier: 'catalog:'
-        version: 4.0.0-canary.28(@electric-sql/pglite@0.5.4)(kysely@0.29.4)(payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3))
+        version: 4.0.0-canary.29(@electric-sql/pglite@0.5.4)(kysely@0.29.4)(payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3))
       '@payloadcms/plugin-mcp':
         specifier: 'catalog:'
-        version: 4.0.0-canary.28(payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3))
+        version: 4.0.0-canary.29(payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3))
       payload:
         specifier: 'catalog:'
-        version: 4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3)
+        version: 4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3)
       pg:
         specifier: 'catalog:'
         version: 8.23.0
@@ -3449,45 +3449,45 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@payloadcms/db-postgres@4.0.0-canary.28':
-    resolution: {integrity: sha512-NaPRWnMxP84zv11+iWhg99S5Jj93vuCXHLiInL4nAtL5fgmKbIISt4S41FHgFV/X8dDmywlbx6P1AcOyWOguHQ==}
+  '@payloadcms/db-postgres@4.0.0-canary.29':
+    resolution: {integrity: sha512-6ej8LYxJRA2pA4o4z0MUwItd+TISiduTIDZzizRd4AC5qPePzuo4wuA8J+/wB9RvFtcm+dXoaMBBy3hlR95aeQ==}
     peerDependencies:
-      payload: 4.0.0-canary.28
+      payload: 4.0.0-canary.29
 
-  '@payloadcms/drizzle@4.0.0-canary.28':
-    resolution: {integrity: sha512-jbbtxjvYp1oRuk1M1hcJ/wChkDqD3d5oabql6baSYCFRU3ZwvWji674hHg+CbMZNAqhVQQ/69/3h7s4bQS/AcQ==}
+  '@payloadcms/drizzle@4.0.0-canary.29':
+    resolution: {integrity: sha512-Pt6v4weGAV3Bvo/zx90Vs8hnElkyWsfeWVI5Pco/mMDvGengWRBU81HuP6NcOfICFCBXi0Ds/Src11CpGd8Zyw==}
     peerDependencies:
-      payload: 4.0.0-canary.28
+      payload: 4.0.0-canary.29
 
-  '@payloadcms/graphql@4.0.0-canary.28':
-    resolution: {integrity: sha512-EXBrxCck6LlrwOFV/fCS2/mVuPneL2L5TDTBU7nudB6qRyRfTlNt/ED4N/vBvIFqr2cXpsPPZ3SK/MGPO7Zg2A==}
+  '@payloadcms/graphql@4.0.0-canary.29':
+    resolution: {integrity: sha512-/WSBwnHY2eM5w9UueJGBY9cpR5D+DJymBwHL/SlvwYy6KHAd0L4mGG6J/Tl244O0VqddKgfdT6P8UOftlIWV5A==}
     hasBin: true
     peerDependencies:
       graphql: ^16.8.1
-      payload: 4.0.0-canary.28
+      payload: 4.0.0-canary.29
 
-  '@payloadcms/next@4.0.0-canary.28':
-    resolution: {integrity: sha512-gkVwczULgMOrZfhk5p+LpJqOlpGTqPblUVwp9TlZ3pVk6AiApCxOiceVAphbF9b/dZUUz/zxhuWHv+Y9v8xYQA==}
+  '@payloadcms/next@4.0.0-canary.29':
+    resolution: {integrity: sha512-hBgIXf0vNtYnKO+lGvph7dG7JSYIK9gyv3XqD2FzbIoLFBeGLmy7s0XFc2dgMxienmGoW+5sZmMfSS47zit8oQ==}
     engines: {node: '>=24.15.0'}
     peerDependencies:
       graphql: ^16.8.1
       next: '>=16.2.6 <17.0.0'
-      payload: 4.0.0-canary.28
+      payload: 4.0.0-canary.29
 
-  '@payloadcms/plugin-mcp@4.0.0-canary.28':
-    resolution: {integrity: sha512-vx3aPF9BjgcX5Wzv3dybFSZ6rJh1o2H4Wlo18r2uCUcI9x0hCsQDz1ZhsuD0wQemHwQUh/zTHK6bRz68QhqQYw==}
+  '@payloadcms/plugin-mcp@4.0.0-canary.29':
+    resolution: {integrity: sha512-nhKAPhcDqDEABE/PLJZS9OQLermcBqbiofWZu7gIB1y+Blt7MYyAB8thoOs2rdFljys4JPc6vKx2img0FE1zDA==}
     hasBin: true
     peerDependencies:
-      payload: 4.0.0-canary.28
+      payload: 4.0.0-canary.29
 
-  '@payloadcms/translations@4.0.0-canary.28':
-    resolution: {integrity: sha512-V5+SKiuDwe5MaKpjwDmFr2TulE0qEpa47uDzDyTRkbHPQVBxta6jZWxGTvgnwxwqi/nDmn/qx12jwrzgghY5Cg==}
+  '@payloadcms/translations@4.0.0-canary.29':
+    resolution: {integrity: sha512-6Pxk1QFY7dVjd2tk5uXb9D4hNGmnkRaJ+db6TJygmaq6FvHiJhopYzwF+DN8z9iBDO63+lIZwkxoAploWy7CZg==}
 
-  '@payloadcms/ui@4.0.0-canary.28':
-    resolution: {integrity: sha512-xNTkOUHnEshvSbzaumSOzJX3E0SwLbe7GFcjw0fvoyS+iJgsIFFg3YKSuX0PbqS8Hgh+SQI10gtkjVbiSS4SHg==}
+  '@payloadcms/ui@4.0.0-canary.29':
+    resolution: {integrity: sha512-NrW5yhIXG+V+wQVoVeXZurzebhgh9Z+GS8mp96ghlfAppB+5K54cC8hNQM2U84j7Po4HMBF7S+XSOOc7WXpT0Q==}
     engines: {node: '>=24.15.0'}
     peerDependencies:
-      payload: 4.0.0-canary.28
+      payload: 4.0.0-canary.29
       react: 19.2.8
       react-dom: 19.2.8
 
@@ -7929,8 +7929,8 @@ packages:
     resolution: {integrity: sha512-//nshmD55c46FuFw26xV/xFAaB5HF9Xdap7HJBBnrKdAd6/GxDBaNA1870O79+9ueg61cZLSVc+OaFlfmObYVQ==}
     engines: {node: '>= 14.16'}
 
-  payload@4.0.0-canary.28:
-    resolution: {integrity: sha512-QCplhyz/vWMn6omComXvcQc/Cl5JX2HmDbNannW1xvuis0PYDSCKNYvueSby3jGDToh4DFGfgYFdR1HI+3R+6w==}
+  payload@4.0.0-canary.29:
+    resolution: {integrity: sha512-Mruq43WQg0HO7KvK4LC3SAjsuOkMxYKjLzBErBt9S+q1RjufFqZ/ddiky47gxtJkpj7e24v4MZIdDatqJH5JYQ==}
     engines: {node: '>=24.15.0'}
     hasBin: true
     peerDependencies:
@@ -12527,14 +12527,14 @@ snapshots:
   '@oxc-resolver/binding-win32-x64-msvc@11.23.0':
     optional: true
 
-  '@payloadcms/db-postgres@4.0.0-canary.28(@electric-sql/pglite@0.5.4)(kysely@0.29.4)(payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3))':
+  '@payloadcms/db-postgres@4.0.0-canary.29(@electric-sql/pglite@0.5.4)(kysely@0.29.4)(payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3))':
     dependencies:
-      '@payloadcms/drizzle': 4.0.0-canary.28(@electric-sql/pglite@0.5.4)(@types/pg@8.20.0)(kysely@0.29.4)(payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3))(pg@8.20.0)
+      '@payloadcms/drizzle': 4.0.0-canary.29(@electric-sql/pglite@0.5.4)(@types/pg@8.20.0)(kysely@0.29.4)(payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3))(pg@8.20.0)
       '@types/pg': 8.20.0
       console-table-printer: 2.15.0
       drizzle-kit: 0.31.7
       drizzle-orm: 0.45.2(@electric-sql/pglite@0.5.4)(@types/pg@8.20.0)(kysely@0.29.4)(pg@8.20.0)
-      payload: 4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3)
+      payload: 4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3)
       pg: 8.20.0
       prompts: 2.4.2
       to-snake-case: 1.0.0
@@ -12570,12 +12570,12 @@ snapshots:
       - sqlite3
       - supports-color
 
-  '@payloadcms/drizzle@4.0.0-canary.28(@electric-sql/pglite@0.5.4)(@types/pg@8.20.0)(kysely@0.29.4)(payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3))(pg@8.20.0)':
+  '@payloadcms/drizzle@4.0.0-canary.29(@electric-sql/pglite@0.5.4)(@types/pg@8.20.0)(kysely@0.29.4)(payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3))(pg@8.20.0)':
     dependencies:
       console-table-printer: 2.15.0
       dequal: 2.0.3
       drizzle-orm: 0.45.2(@electric-sql/pglite@0.5.4)(@types/pg@8.20.0)(kysely@0.29.4)(pg@8.20.0)
-      payload: 4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3)
+      payload: 4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3)
       prompts: 2.4.2
       to-snake-case: 1.0.0
       uuid: 14.0.0
@@ -12610,25 +12610,25 @@ snapshots:
       - sql.js
       - sqlite3
 
-  '@payloadcms/graphql@4.0.0-canary.28(graphql@16.14.2)(payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3))(typescript@6.0.3)':
+  '@payloadcms/graphql@4.0.0-canary.29(graphql@16.14.2)(payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3))(typescript@6.0.3)':
     dependencies:
       graphql: 16.14.2
       graphql-scalars: 1.22.2(graphql@16.14.2)
-      payload: 4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3)
+      payload: 4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3)
       pluralize: 8.0.0
       ts-essentials: 10.0.3(typescript@6.0.3)
       tsx: 4.22.4
     transitivePeerDependencies:
       - typescript
 
-  '@payloadcms/next@4.0.0-canary.28(@types/react@19.2.18)(graphql@16.14.2)(monaco-editor@0.55.1)(next@16.3.1(@babel/core@7.29.7)(@types/node@24.13.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.77.4))(payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)':
+  '@payloadcms/next@4.0.0-canary.29(@types/react@19.2.18)(graphql@16.14.2)(monaco-editor@0.55.1)(next@16.3.1(@babel/core@7.29.7)(@types/node@24.13.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.77.4))(payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)':
     dependencies:
       '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@dnd-kit/modifiers': 9.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
       '@dnd-kit/sortable': 10.0.0(@dnd-kit/core@6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(react@19.2.8)
-      '@payloadcms/graphql': 4.0.0-canary.28(graphql@16.14.2)(payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3))(typescript@6.0.3)
-      '@payloadcms/translations': 4.0.0-canary.28
-      '@payloadcms/ui': 4.0.0-canary.28(@types/react@19.2.18)(monaco-editor@0.55.1)(payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
+      '@payloadcms/graphql': 4.0.0-canary.29(graphql@16.14.2)(payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3))(typescript@6.0.3)
+      '@payloadcms/translations': 4.0.0-canary.29
+      '@payloadcms/ui': 4.0.0-canary.29(@types/react@19.2.18)(monaco-editor@0.55.1)(payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)
       busboy: 1.6.0
       dequal: 2.0.3
       file-type: 22.0.1
@@ -12638,7 +12638,7 @@ snapshots:
       http-status: 2.1.0
       next: 16.3.1(@babel/core@7.29.7)(@types/node@24.13.3)(babel-plugin-react-compiler@1.0.0)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(sass@1.77.4)
       path-to-regexp: 6.3.0
-      payload: 4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3)
+      payload: 4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3)
       qs-esm: 8.0.1
       sass: 1.77.4
       uuid: 14.0.0
@@ -12650,18 +12650,18 @@ snapshots:
       - supports-color
       - typescript
 
-  '@payloadcms/plugin-mcp@4.0.0-canary.28(payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3))':
+  '@payloadcms/plugin-mcp@4.0.0-canary.29(payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3))':
     dependencies:
       '@modelcontextprotocol/server': 2.0.0
-      payload: 4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3)
+      payload: 4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3)
       tsx: 4.22.4
       zod: 4.4.3
 
-  '@payloadcms/translations@4.0.0-canary.28':
+  '@payloadcms/translations@4.0.0-canary.29':
     dependencies:
       date-fns: 4.1.0
 
-  '@payloadcms/ui@4.0.0-canary.28(@types/react@19.2.18)(monaco-editor@0.55.1)(payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)':
+  '@payloadcms/ui@4.0.0-canary.29(@types/react@19.2.18)(monaco-editor@0.55.1)(payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@6.0.3)':
     dependencies:
       '@date-fns/tz': 1.2.0
       '@dnd-kit/core': 6.3.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -12673,14 +12673,14 @@ snapshots:
       '@faceless-ui/window-info': 3.0.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@floating-ui/dom': 1.7.6
       '@monaco-editor/react': 4.7.0(monaco-editor@0.55.1)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      '@payloadcms/translations': 4.0.0-canary.28
+      '@payloadcms/translations': 4.0.0-canary.29
       bson-objectid: 2.0.4
       date-fns: 4.1.0
       dequal: 2.0.3
       md5: 2.3.0
       object-to-formdata: 4.5.1
       path-to-regexp: 6.3.0
-      payload: 4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3)
+      payload: 4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3)
       qs-esm: 8.0.1
       react: 19.2.8
       react-datepicker: 7.6.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -18577,10 +18577,10 @@ snapshots:
 
   pathval@2.0.1: {}
 
-  payload@4.0.0-canary.28(graphql@16.14.2)(typescript@6.0.3):
+  payload@4.0.0-canary.29(graphql@16.14.2)(typescript@6.0.3):
     dependencies:
       '@next/env': 16.3.0
-      '@payloadcms/translations': 4.0.0-canary.28
+      '@payloadcms/translations': 4.0.0-canary.29
       '@types/busboy': 1.5.4
       ajv: 8.20.0
       bson-objectid: 2.0.4
