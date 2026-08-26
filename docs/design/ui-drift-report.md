@@ -204,3 +204,45 @@ Source of truth: `pnpm ui:sweep` (tooling/ui-sweep.mjs). If a figure here disagr
 with that command, this doc is stale — the script is not.
 SOT-KEYWORDS: ui drift report overrides type scale tokens heading text gap tiers audit design system
 -->
+
+## Addendum — a real contrast failure the probe found by accident
+
+The `text-white` category was investigated during Phase 3 and turned out to be
+two findings, one of which is not a styling question at all.
+
+**It is not drift.** All five hits are `selectedTitle` in
+`packages/app/features/schedule/accent-classes.ts`, and each sits on
+`selectedSurface: 'bg-{accent}-500'` — a solid saturated fill that does *not*
+change between light and dark. A theme-invariant background wants a
+theme-invariant foreground, so `text-white` is the correct choice and
+`text-text-inverse` would be the wrong one: that token flips with the theme
+while the accent under it does not.
+
+**But white does not pass on three of the five.** `EventBlock.tsx` renders the
+selected title at `text-sm font-semibold` (14px) and the time line at `text-xs`
+(12px). Both are body text under WCAG — the 3.0 large-text allowance needs
+≥18.66px bold or ≥24px — so the bar is 4.5:
+
+| accent | 500 | white contrast | verdict at 4.5 |
+|---|---|---|---|
+| ember | `#F7418F` | 3.44 | **fails** |
+| sky | `#3B7EB8` | 4.32 | **fails** |
+| gold | `#3B6DF6` | 4.46 | **fails**, marginally |
+| rose | `#C04444` | 5.06 | passes |
+| forest | `#357A49` | 5.21 | passes |
+
+So a selected event in the schedule is below AA for three of the five resource
+accents, on a product used by children.
+
+`tooling/check-contrast.mjs` did not catch this because its `PAIRS` list is
+declared rather than derived, and this pair is not in it. That design is
+defensible for the reason its own comment gives — a checker that reports
+impossible combinations gets muted — but it means a new colour pairing is only
+enforced once somebody adds it.
+
+**No fix is applied here.** The remedies are a design call, not a refactor:
+darken the three accents, use a darker step (`600`) for `selectedSurface` while
+keeping `500` for the bar and dot, or raise the selected title's size and weight
+past the large-text threshold. Each changes how the schedule looks. The pairs
+should be added to `check-contrast.mjs` at the same time, since adding them
+first turns `pnpm lint` red until the colours move.
