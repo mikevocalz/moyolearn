@@ -95,6 +95,15 @@ const buildColumns = (
     accessorKey: 'stage',
     header: 'Stage',
     /*
+      A RESERVED width, because this column's content is a badge whose width
+      follows its label. Sharing space with `flex-1` sizes every column to the
+      same fraction, so "Trial scheduled" and "Trial completed" — the two longest
+      stages — spilled out of the cell and printed over the owner's name. The
+      column is sized for the longest value it can ever hold; the stage list is a
+      closed enum, so that width is knowable rather than guessed.
+    */
+    meta: { widthClass: 'w-48' },
+    /*
       The badge IS the control (folk / Coda / Juicebox all do this). A separate
       row-action menu would put the most common edit in this table two clicks
       away behind a "…" that says nothing about what it opens.
@@ -112,8 +121,12 @@ const buildColumns = (
         onAction={(id) => moveStage({ leadId: row.original.id, to: id as Lead['stage'] })}
       >
         <View className="min-h-target-adult flex-row items-center gap-element">
-          <Badge label={row.original.stage} tone={STAGE_TONE[row.original.stage]} />
-          <Text aria-hidden className="text-caption text-text-muted">
+          {/* `shrink-0`: the badge is the thing being read, so it keeps its size
+              and the cell gives way — not the other way round. */}
+          <View className="shrink-0">
+            <Badge label={row.original.stage} tone={STAGE_TONE[row.original.stage]} />
+          </View>
+          <Text aria-hidden className="shrink-0 text-caption text-text-muted">
             ▾
           </Text>
         </View>

@@ -44,7 +44,16 @@ declare module '@tanstack/react-table' {
   interface ColumnMeta<TData extends RowData, TValue> {
     /** Right-aligned, mono, tabular figures — so the column reads as a column. */
     numeric?: boolean;
-    /** Column width class from the scale, e.g. `w-40`. Omit to share space. */
+    /**
+     * Reserve a fixed width for this column, e.g. `w-44`. Omit to share space.
+     *
+     * The cell slot is `flex-1`, which sets `flex-basis: 0%` — and a basis of 0
+     * beats a `width`, so a width class on its own silently does nothing. The
+     * table pairs this with `flex-none` for you rather than making every caller
+     * remember, which is what the first attempt at a fixed Stage column got
+     * wrong: the class was there, the column stayed 114px, and the badge printed
+     * over the next column.
+     */
     widthClass?: string;
   }
 }
@@ -56,6 +65,13 @@ declare module '@tanstack/react-table' {
  * equity consequence, and a school board cannot tell the two apart.
  */
 export type Suppressible<T> = { value: T } | { suppressed: true };
+
+/*
+  A reserved column width has to switch the cell OUT of `flex-1` to take effect —
+  `flex-1` means `flex: 1 1 0%`, and a zero basis wins over any `width`. Kept
+  here rather than at the call site so a column only has to say how wide it is.
+*/
+const fixedWidth = (widthClass?: string) => (widthClass ? `flex-none ${widthClass}` : '');
 
 export const isSuppressed = <T,>(cell: Suppressible<T>): cell is { suppressed: true } =>
   'suppressed' in cell;
@@ -178,7 +194,7 @@ export function DataTable<T>({
                     key={header.id}
                     aria-sort={sortable ? ariaSort(sorted) : undefined}
                     className={s.headCell({
-                      className: `${numeric ? 'justify-end' : ''} ${column.columnDef.meta?.widthClass ?? ''}`,
+                      className: `${numeric ? 'justify-end' : ''} ${fixedWidth(column.columnDef.meta?.widthClass)}`,
                     })}
                   >
                     {sortable ? (
@@ -235,7 +251,7 @@ export function DataTable<T>({
                         <TableCell
                           key={cell.id}
                           className={s.cell({
-                            className: cell.column.columnDef.meta?.widthClass ?? '',
+                            className: fixedWidth(cell.column.columnDef.meta?.widthClass),
                           })}
                         >
                           <Text className={numeric ? s.cellNumeric() : s.cellText()}>
