@@ -31,13 +31,28 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
     { wait: 800 },
   );
 
-  const handleSend = (message: string) => {
+  async function checkAnswer(p: string, answer: string): Promise<boolean | null> {
+    try {
+      const res = await fetch('/api/tutor/evaluate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ problem: p, answer }),
+      });
+      if (!res.ok) throw new Error(`Server returned ${res.status}`);
+      const data = await res.json() as { isCorrect: boolean | null };
+      return data.isCorrect;
+    } catch {
+      // The Safety Plane is the source of truth; the client-side evaluator is
+      // the offline fallback for demo and low-connectivity cases.
+      return evaluateArithmetic(p, answer);
+    }
+  }
+
+  const handleSend = async (message: string) => {
     const trimmed = message.trim();
     if (!trimmed) return;
-    const isCorrect = evaluateArithmetic(problem ?? '', trimmed);
     send(trimmed);
-    // The Safety Plane will eventually confirm / override; the client-side
-    // arithmetic evaluator lets the demo react correctly to simple problems.
+    const isCorrect = await checkAnswer(problem ?? '', trimmed);
     respond(isCorrect ?? false);
   };
 
