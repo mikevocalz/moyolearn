@@ -19,6 +19,7 @@
     "@payloadcms/next": "catalog:",
     "@payloadcms/ui": "catalog:",
     "@acme/app": "workspace:*",
+    "@acme/auth": "workspace:*",
     "@acme/payload": "workspace:*",
     "@acme/theme": "workspace:*",
     "@acme/ui": "workspace:*",

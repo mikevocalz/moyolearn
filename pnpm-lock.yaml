@@ -523,6 +523,9 @@ importers:
       '@acme/app':
         specifier: workspace:*
         version: link:../../packages/app
+      '@acme/auth':
+        specifier: workspace:*
+        version: link:../../packages/auth
       '@acme/payload':
         specifier: workspace:*
         version: link:../../packages/payload
