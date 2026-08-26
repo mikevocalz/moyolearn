@@ -38,9 +38,12 @@ export function ProgressScreen() {
     router.push('/tutor');
   };
 
+  const liveOnPress = skillTitle && generatePracticeProblem(skillTitle)
+    ? () => handlePractice(skillTitle)
+    : undefined;
   const live =
     attempts > 0 && skillTitle
-      ? [{ subject: `Live: ${skillTitle}`, value: Math.round(mastery * 100), state: masteryState(mastery) }]
+      ? [{ subject: `Live: ${skillTitle}`, value: Math.round(mastery * 100), state: masteryState(mastery), onPress: liveOnPress }]
       : [];
 
   const activeLower = skillTitle.toLowerCase();
