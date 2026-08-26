@@ -231,6 +231,7 @@ export {
   type ShareableView,
   type StageChange,
 } from './features/ops';
+export { tusUrlStorage, type TusUrlStorage } from './features/media';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';
 export {

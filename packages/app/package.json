@@ -17,11 +17,11 @@
   },
   "dependencies": {
     "@acme/auth": "workspace:*",
-    "@anthropic-ai/sdk": "catalog:",
     "@acme/safety": "workspace:*",
     "@acme/student-model": "workspace:*",
     "@acme/theme": "workspace:*",
     "@acme/ui": "workspace:*",
+    "@anthropic-ai/sdk": "catalog:",
     "@shopify/react-native-skia": "catalog:",
     "@tanstack/react-pacer": "catalog:",
     "@tanstack/react-query": "catalog:",
@@ -43,6 +43,7 @@
     "react-native-youtube-bridge": "catalog:",
     "server-only": "catalog:",
     "solito": "catalog:",
+    "tus-js-client": "4.3.1",
     "zustand": "catalog:"
   },
   "devDependencies": {
