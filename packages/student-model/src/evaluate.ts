@@ -1,8 +1,8 @@
-// Safe arithmetic evaluator for the S9 tutor surface.
-// Strips non-math noise from the problem string, tokenizes, and evaluates
-// with a shunting-yard parser — no `eval` or `new Function` ever.
+// Safe arithmetic evaluator — client-safe pure helper used by the tutor surface.
+// Strips non-math noise from a problem string, tokenizes, and evaluates with a
+// shunting-yard parser. No `eval` or `new Function`.
 // SOT: docs/pack/19-learning-outcomes-spec.md §3 · docs/pack/07-security-child-ai-safety-spec.md §2
-// SOT-KEYWORDS: tutor evaluate arithmetic shunting-yard parse safe answer
+// SOT-KEYWORDS: student model evaluate arithmetic shunting-yard parse safe
 
 const PRECEDENCE: Record<string, number> = {
   '+': 1,

@@ -32,3 +32,4 @@ export type {
 } from './src/facts';
 export { traceAttempt, decayMastery, isFrontier, DEFAULT_TRACING, FRONTIER_LOW, FRONTIER_HIGH } from './src/mastery';
 export type { TracingParams } from './src/mastery';
+export { evaluateArithmetic } from './src/evaluate';

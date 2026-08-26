@@ -11,7 +11,7 @@ import { View } from '@acme/ui/primitives';
 import { useCaptureStore } from '../capture';
 import { buttonSizeForBand, type AgeBand } from '../capture';
 import { useTutorStore } from './tutor.store';
-import { evaluateArithmetic } from './evaluate';
+import { evaluateArithmetic } from '@acme/student-model/pure';
 
 export interface TutorScreenProps {
   ageBand?: AgeBand;
