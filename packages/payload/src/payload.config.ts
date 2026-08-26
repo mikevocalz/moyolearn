@@ -46,6 +46,9 @@ export default buildConfig({
       max: 8,
       connectionTimeoutMillis: 10_000,
       query_timeout: 30_000,
+      ssl: process.env.DATABASE_URL?.includes('supabase.co')
+        ? { rejectUnauthorized: false }
+        : undefined,
     },
     push: process.env.PAYLOAD_PUSH === 'true',
     schemaName: 'payload',

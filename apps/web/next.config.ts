@@ -75,6 +75,12 @@ const nextConfig: NextConfig = {
     'react-native-enriched-html',
     'solito',
   ],
+  async redirects() {
+    return [
+      { source: '/payload/admin/:path*', destination: '/admin/:path*', permanent: false },
+    ];
+  },
+
   turbopack: {
     resolveAlias: {
       'react-native': 'react-native-web',
