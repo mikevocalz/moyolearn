@@ -20,7 +20,7 @@ export interface TutorScreenProps {
 export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   const router = useRouter();
   const problem = useCaptureStore((s) => s.problem);
-  const { state, start, send, tryIt, nextHint, unanswerable } = useTutorStore();
+  const { state, start, send, tryIt, nextHint, unanswerable, hintDepth } = useTutorStore();
 
   useEffect(() => {
     start(problem);
@@ -31,12 +31,12 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
     { wait: 800 },
   );
 
-  async function checkAnswer(p: string, answer: string): Promise<boolean | null> {
+  async function checkAnswer(p: string, answer: string, depth: number): Promise<boolean | null> {
     try {
       const res = await fetch('/api/tutor/evaluate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problem: p, answer }),
+        body: JSON.stringify({ problem: p, answer, hintDepth: depth }),
       });
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
       const data = await res.json() as { isCorrect: boolean | null };
@@ -52,7 +52,7 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
     const trimmed = message.trim();
     if (!trimmed) return;
     send(trimmed);
-    const isCorrect = await checkAnswer(problem ?? '', trimmed);
+    const isCorrect = await checkAnswer(problem ?? '', trimmed, hintDepth);
     if (isCorrect === null) {
       unanswerable();
       return;

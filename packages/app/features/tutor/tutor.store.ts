@@ -17,6 +17,7 @@ interface TutorState {
   skillTitle: string;
   mastery: number;
   attempts: number;
+  hintDepth: number;
   masteryBySkill: Record<string, number>;
   attemptsBySkill: Record<string, number>;
   start: (problem: string | null) => void;
@@ -40,6 +41,7 @@ export const useTutorStore = create<TutorState>((set) => ({
   skillTitle: '',
   mastery: DEFAULT_TRACING.prior,
   attempts: 0,
+  hintDepth: 0,
   masteryBySkill: {},
   attemptsBySkill: {},
   start: (problem) => {
@@ -61,6 +63,7 @@ export const useTutorStore = create<TutorState>((set) => ({
         skillTitle,
         mastery,
         attempts,
+        hintDepth: 0,
       };
     });
   },
@@ -71,10 +74,11 @@ export const useTutorStore = create<TutorState>((set) => ({
         index: 2,
         total: 2,
         message: `${secondHint(s.skillTitle)}`,
-      }
+      },
     },
+    hintDepth: 2,
   })),
-  tryIt: () => set((s) => ({ state: askingState(s.problem) })),
+  tryIt: () => set((s) => ({ state: askingState(s.problem), hintDepth: 1 })),
   send: (message) => set({
     state: { kind: 'thinking' },
   }),
@@ -100,6 +104,7 @@ export const useTutorStore = create<TutorState>((set) => ({
     return {
       mastery: nextMastery,
       attempts: nextAttempts,
+      hintDepth: 0,
       masteryBySkill: { ...s.masteryBySkill, [s.skillTitle]: nextMastery },
       attemptsBySkill: { ...s.attemptsBySkill, [s.skillTitle]: nextAttempts },
       state,

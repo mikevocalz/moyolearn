@@ -10,4 +10,6 @@ export {
   evaluateTutorTurn,
   type TutorTurnInput,
   type TutorTurnResult,
+  type TranscriptToSave,
+  type SaveTranscript,
 } from './features/tutor/tutor.service';
