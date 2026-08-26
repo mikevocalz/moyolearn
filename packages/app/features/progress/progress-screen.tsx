@@ -18,6 +18,12 @@ function masteryState(mastery: number): 'steady' | 'needs-attention' {
   return mastery < 0.5 ? 'needs-attention' : 'steady';
 }
 
+function SectionHeading({ children }: { children: React.ReactNode }) {
+  return (
+    <Heading level={4} className="text-text">{children}</Heading>
+  );
+}
+
 export function ProgressScreen() {
   const { skillTitle, mastery, attempts, masteryBySkill } = useTutorStore();
 
@@ -47,15 +53,30 @@ export function ProgressScreen() {
         </Text>
       </View>
       <View className="gap-stack">
-        {live.map(({ subject, value, state }) => (
-          <MasteryBar key={subject} label={subject} value={value} state={state} />
-        ))}
-        {practiced.map(({ subject, value, state }) => (
-          <MasteryBar key={subject} label={subject} value={value} state={state} />
-        ))}
-        {seeded.map(({ subject, value, state }) => (
-          <MasteryBar key={subject} label={subject} value={value} state={state} />
-        ))}
+        {live.length > 0 ? (
+          <View className="gap-group">
+            <SectionHeading>This session</SectionHeading>
+            {live.map(({ subject, value, state }) => (
+              <MasteryBar key={subject} label={subject} value={value} state={state} />
+            ))}
+          </View>
+        ) : null}
+        {practiced.length > 0 ? (
+          <View className="gap-group">
+            <SectionHeading>Practiced</SectionHeading>
+            {practiced.map(({ subject, value, state }) => (
+              <MasteryBar key={subject} label={subject} value={value} state={state} />
+            ))}
+          </View>
+        ) : null}
+        {seeded.length > 0 ? (
+          <View className="gap-group">
+            <SectionHeading>More to explore</SectionHeading>
+            {seeded.map(({ subject, value, state }) => (
+              <MasteryBar key={subject} label={subject} value={value} state={state} />
+            ))}
+          </View>
+        ) : null}
       </View>
     </View>
   );
