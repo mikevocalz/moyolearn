@@ -6,6 +6,8 @@ import {
   DEFAULT_TRACING,
   masterySentence,
   inferSkillTitle,
+  firstHint,
+  secondHint,
 } from '@acme/student-model/pure';
 import { useCaptureStore } from '../capture';
 
@@ -51,7 +53,7 @@ export const useTutorStore = create<TutorState>((set) => ({
           step: {
             index: 1,
             total: 2,
-            message: `For ${skillTitle}, start by identifying the most important operation in the problem.`,
+            message: `For ${skillTitle}: ${firstHint(skillTitle)}`,
           },
         },
         problem: p,
@@ -67,8 +69,8 @@ export const useTutorStore = create<TutorState>((set) => ({
       step: {
         index: 2,
         total: 2,
-        message: `Then work through ${s.skillTitle} one step at a time.`,
-      },
+        message: `${secondHint(s.skillTitle)}`,
+      }
     },
   })),
   tryIt: () => set((s) => ({ state: askingState(s.problem) })),
