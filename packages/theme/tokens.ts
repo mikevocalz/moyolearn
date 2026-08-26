@@ -146,6 +146,15 @@ export const semantic = {
   // child-outcome problem, not a palette one.
   highlighter: { light: palette.burgundy[300], dark: palette.burgundy[300] },
   'on-highlighter': { light: palette.ink[950], dark: palette.ink[950] },
+  // Highlighter at 24% — the selected DataTable row (doc 08 §4.6) and the
+  // selected InkTile. Pre-resolved rather than `bg-highlighter/24`, for the same
+  // reason as `border-faint`: the opacity modifier compiles to color-mix(), which
+  // React Native cannot evaluate. A fill only — ink on it still clears AA, but it
+  // is never a text or border colour.
+  'highlighter-underlay': {
+    light: 'rgba(255, 225, 77, 0.24)',
+    dark: 'rgba(255, 225, 77, 0.24)',
+  },
   ballpoint: { light: palette.gold[600], dark: palette.gold[400] },
   redpen: { light: palette.rose[600], dark: palette.rose[300] },
   grade: { light: palette.forest[600], dark: palette.forest[300] },

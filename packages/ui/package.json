@@ -37,6 +37,7 @@
     "lucide-react": "catalog:",
     "lucide-react-native": "catalog:",
     "react-native-css": "catalog:",
+    "react-native-graph": "1.4.0",
     "react-native-pulsar": "catalog:",
     "react-native-safe-area-context": "catalog:",
     "react-native-svg": "catalog:",

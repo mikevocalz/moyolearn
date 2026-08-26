@@ -19,6 +19,16 @@ const serverURL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
 export default buildConfig({
   admin: {
     user: Users.slug,
+    // The login screen is the first Moyo surface a staff member sees, and
+    // Payload's own wordmark there reads as "you have left the product".
+    // Paths are resolved against `importMap.baseDir`, then compiled into
+    // importMap.js by `pnpm --filter web payload:importmap`.
+    components: {
+      graphics: {
+        Logo: './components/Logo#Logo',
+        Icon: './components/Icon#Icon',
+      },
+    },
     importMap: {
       baseDir: dirname,
       importMapFile: path.resolve(dirname, '../../../apps/web/app/(payload)/admin/importMap.js'),

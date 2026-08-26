@@ -277,6 +277,7 @@
       --color-on-danger: #FFFFFF;
       --color-highlighter: #FFE14D;
       --color-on-highlighter: #0D0C0B;
+      --color-highlighter-underlay: rgba(255, 225, 77, 0.24);
       --color-ballpoint: #2952D9;
       --color-redpen: #A03333;
       --color-grade: #28613A;
@@ -303,6 +304,7 @@
       --color-on-danger: #3D0508;
       --color-highlighter: #FFE14D;
       --color-on-highlighter: #0D0C0B;
+      --color-highlighter-underlay: rgba(255, 225, 77, 0.24);
       --color-ballpoint: #5C8AFF;
       --color-redpen: #EB9C9C;
       --color-grade: #7DB98B;

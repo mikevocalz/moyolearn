@@ -1,4 +1,4 @@
-import { tv, type VariantProps } from 'tailwind-variants';
+import { tv, type VariantProps } from './tv';
 import { View } from './primitives';
 
 const skeleton = tv({
@@ -7,7 +7,9 @@ const skeleton = tv({
     variant: {
       line: 'h-4 w-full rounded-md',
       card: 'h-32 w-full rounded-card',
-      avatar: 'h-12 w-12 rounded-full',
+      // Matches Avatar.tsx, which is rounded-md — a circular skeleton then
+      // popping into a square avatar is a visible shape change on every load.
+      avatar: 'h-12 w-12 rounded-md',
       custom: '',
     },
   },

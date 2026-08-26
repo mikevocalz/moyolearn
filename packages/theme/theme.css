@@ -268,6 +268,7 @@
   --color-on-danger: light-dark(#FFFFFF, #3D0508);
   --color-highlighter: light-dark(#FFE14D, #FFE14D);
   --color-on-highlighter: light-dark(#0D0C0B, #0D0C0B);
+  --color-highlighter-underlay: light-dark(rgba(255, 225, 77, 0.24), rgba(255, 225, 77, 0.24));
   --color-ballpoint: light-dark(#2952D9, #5C8AFF);
   --color-redpen: light-dark(#A03333, #EB9C9C);
   --color-grade: light-dark(#28613A, #7DB98B);

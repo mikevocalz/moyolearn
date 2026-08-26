@@ -1,4 +1,4 @@
-import { tv } from 'tailwind-variants';
+import { tv } from './tv';
 import { Header, Nav, Text, View } from './primitives';
 
 // §9 contextual top bar — presentational: leading control (back/menu) and the

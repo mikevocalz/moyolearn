@@ -207,6 +207,28 @@ export { PaywallContent, type PaywallProps } from './features/paywall/paywall-co
 export { CancelContent, type CancelProps } from './features/paywall/cancel-content';
 export { formatTrialDate, PAYWALL_OFFERS, type PaywallOffer } from './features/paywall/paywall.data';
 export { ErrorScreen } from './features/error/screen';
+export {
+  OpsScreen,
+  OpsDashboardContent,
+  useOpsChrome,
+  useLeads,
+  leadsQueryKey,
+  useViewParams,
+  useStageAction,
+  applyStageChange,
+  MANUAL_STAGES,
+  LEADS,
+  TODAY_SESSIONS,
+  STAGE_TONE,
+  type OpsDashboardContentProps,
+  type Lead,
+  type Session,
+  type Stage,
+  type LeadsView,
+  type LeadsPage,
+  type ShareableView,
+  type StageChange,
+} from './features/ops';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';
 export {

@@ -22,6 +22,12 @@ const nextConfig: NextConfig = {
   // experiments.reactCompiler in app.config.ts.
   reactCompiler: true,
   experimental: {
+    // Owns URLs that match no route at all. Without it Next serves its own
+    // black default 404, because a per-group root layout leaves nothing for
+    // `app/not-found.tsx` to render inside. Still flagged in 16.3.1
+    // (config-shared.d.ts, default false); drop the flag once it stabilises.
+    globalNotFound: true,
+
     // NOTE: `viewTransition` was removed in Next 16.3 stable — React's
     // <ViewTransition> now works in the App Router with no configuration
     // (node_modules/next/dist/docs/01-app/02-guides/view-transitions.md).

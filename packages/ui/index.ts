@@ -58,7 +58,17 @@ export { TabBarAccessory, type TabBarAccessoryProps } from './TabBarAccessory';
 
 // data
 export { VirtualList, type VirtualListProps } from './VirtualList';
-export { DataTable, type DataTableProps, type ColumnDef } from './DataTable';
+export { TrendLine, type TrendLineProps, type TrendPoint } from './TrendLine';
+export {
+  DataTable, SuppressibleValue, isSuppressed,
+  type DataTableProps, type ColumnDef, type Row, type Table, type Suppressible,
+} from './DataTable';
+export {
+  DashboardShell,
+  type DashboardShellProps,
+  type NavGroup,
+  type NavItem,
+} from './DashboardShell';
 export { useAppForm, withForm, useFieldContext, useFormContext, useFormStore } from './form';
 
 export { SafeArea, type SafeAreaProps } from './SafeArea';

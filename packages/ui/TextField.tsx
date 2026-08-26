@@ -1,5 +1,5 @@
 'use client';
-import { tv } from 'tailwind-variants';
+import { tv } from './tv';
 import { PasteWrapper, type PasteEventPayload } from './paste-wrapper';
 import { Input, Label, Text as TWText, View } from './primitives';
 import { Text } from './Text';

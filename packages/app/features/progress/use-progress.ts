@@ -1,8 +1,8 @@
 'use client';
 // useProgress — client hook for the persisted learner student model snapshot.
 // SOT: docs/pack/22-reporting-charts-spec.md §2
-// SOT-KEYWORDS: progress mastery hook client fetch review scaffolding
-import { useEffect, useState } from 'react';
+// SOT-KEYWORDS: progress mastery hook client fetch review scaffolding query
+import { useQuery, keepPreviousData } from '@tanstack/react-query';
 
 const API_URL =
   process.env.NEXT_PUBLIC_APP_URL ??
@@ -15,37 +15,40 @@ export interface ProgressData {
   scaffoldingBySkill: Record<string, number>;
 }
 
+const EMPTY: ProgressData = {
+  masteryBySkill: {},
+  reviewBySkill: {},
+  scaffoldingBySkill: {},
+};
+
+/** Exported so a write path can invalidate exactly this surface. */
+export const progressQueryKey = (revision: number) => ['progress', revision] as const;
+
+/**
+ * This was a hand-rolled fetch inside useEffect writing to three useState
+ * slots, which is the shape the repo bans twice over: server data does not live
+ * in component state (Query owns it), and the synchronous setState in the
+ * effect made React re-render the whole ProgressScreen an extra time per load.
+ *
+ * `revision` stays in the query key rather than becoming an imperative refetch:
+ * bumping it is a new key, so Query fetches, caches and dedupes it like any
+ * other — and `keepPreviousData` means the mastery bars hold their last value
+ * through the refresh instead of collapsing to zero, which on a progress screen
+ * reads as "you lost your progress".
+ */
 export function useProgress(revision = 0) {
-  const [data, setData] = useState<ProgressData>({
-    masteryBySkill: {},
-    reviewBySkill: {},
-    scaffoldingBySkill: {},
-  });
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  useEffect(() => {
-    let cancelled = false;
-    setLoading(true);
-    fetch(`${API_URL}/api/progress`, { credentials: 'include' })
-      .then(async (res) => {
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
-        const json = (await res.json()) as ProgressData;
-        if (!cancelled) {
-          setData(json);
-          setError(null);
-        }
-      })
-      .catch((err) => {
-        if (!cancelled) setError(err as Error);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
+  const { data, isPending, error } = useQuery({
+    queryKey: progressQueryKey(revision),
+    queryFn: async ({ signal }): Promise<ProgressData> => {
+      const res = await fetch(`${API_URL}/api/progress`, {
+        credentials: 'include',
+        signal,
       });
-    return () => {
-      cancelled = true;
-    };
-  }, [revision]);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return (await res.json()) as ProgressData;
+    },
+    placeholderData: keepPreviousData,
+  });
 
-  return { ...data, loading, error };
+  return { ...(data ?? EMPTY), loading: isPending, error };
 }

@@ -49,24 +49,25 @@ const COPY = {
 /*
   The sheet is built from real elements, not a background gradient: this screen
   renders on native too, and React Native has no repeating-linear-gradient.
-  Seven rules and four holes is what reads as "a page" at every width we ship —
+  Twelve rules and six holes is what reads as "a page" at every width we ship —
   a count, not a measurement, so nothing here needs an arbitrary value.
 */
-const RULES = [0, 1, 2, 3, 4, 5, 6];
-const HOLES = [0, 1, 2, 3];
+const RULES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11];
+const HOLES = [0, 1, 2, 3, 4, 5];
 
 function TornSheet({ mark }: { mark: string }) {
   return (
     /*
-      Tilted so it reads as a loose sheet on a desk rather than as one more
-      bordered card in a stack of bordered cards — with a border on everything,
-      the only way this artefact separates from the frame is that it is askew.
+      `aspect-square` is doing real work: at a card's proportions this reads as
+      one more bordered box, and page-shaped is the entire point of the device.
+      Tilted, because with a border on everything the only way an artefact
+      separates from the frame is that it is askew.
       aria-hidden: the number is decoration, and the <h1> beside it already
       says what happened.
     */
     <ScaleIn
       aria-hidden
-      className="relative w-full max-w-content-form rotate-2 justify-center rounded-card border-2 border-border bg-surface-raised p-inset-roomy shadow-raised"
+      className="relative aspect-square w-full max-w-content-form rotate-2 justify-center rounded-card border-2 border-border bg-surface-raised p-inset-roomy shadow-raised"
     >
       {/* Ruled lines sit behind the number, so the number sits ON the paper. */}
       <View className="pointer-events-none absolute inset-0 justify-between p-inset-roomy">
@@ -76,13 +77,13 @@ function TornSheet({ mark }: { mark: string }) {
       </View>
 
       {/* Punched holes down the binding edge — the tell that it was torn out. */}
-      <View className="pointer-events-none absolute inset-y-0 left-0 justify-evenly pl-element">
+      <View className="pointer-events-none absolute inset-y-0 left-0 justify-evenly pl-inset-tight">
         {HOLES.map((i) => (
-          <View key={i} className="h-3 w-3 rounded-full border-2 border-border bg-surface" />
+          <View key={i} className="h-4 w-4 rounded-full border-2 border-border bg-surface" />
         ))}
       </View>
 
-      <Text className="pl-group text-center font-display text-display-xl text-text">{mark}</Text>
+      <Text className="pl-section text-center font-display text-display-2xl text-text">{mark}</Text>
     </ScaleIn>
   );
 }
@@ -105,7 +106,7 @@ export function ErrorScreen({
           Copy leads on desktop; the sheet leads on phones, where the artefact
           says something is wrong before you have read a word.
         */}
-        <View className="flex-col-reverse items-center gap-group lg:flex-row lg:items-center lg:justify-between lg:gap-section">
+        <View className="flex-col-reverse items-center gap-group lg:flex-row lg:items-center lg:justify-center lg:gap-section">
           <FadeIn className="w-full max-w-content-form items-start gap-stack">
             {/*
               One display moment per screen (§3.2) and the sheet has it, so the

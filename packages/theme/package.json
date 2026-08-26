@@ -11,7 +11,8 @@
     "./switch": {
       "react-native": "./switch.native.ts",
       "default": "./switch.ts"
-    }
+    },
+    "./payload-admin.css": "./payload-admin.css"
   },
   "scripts": {
     "lint": "eslint",

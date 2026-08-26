@@ -1,4 +1,4 @@
-import { tv } from 'tailwind-variants';
+import { tv } from './tv';
 import { Nav, Pressable, Text, View } from './primitives';
 
 // Presentational bottom tab bar — active state and handlers come in via props

@@ -3,13 +3,17 @@
 // SOT: docs/pack/08-visual-hierarchy-spacing-spec.md §4.7
 // SOT-KEYWORDS: statcard stat metric number kpi trend caption ops
 import type { ReactNode } from 'react';
-import { tv, type VariantProps } from 'tailwind-variants';
+import { tv, type VariantProps } from './tv';
 import { Text, View } from './primitives';
 
 const stat = tv({
   slots: {
     root: 'gap-element rounded-card border-2 border-border bg-surface-raised p-inset shadow-card',
-    value: 'font-mono text-data-lg text-text',
+    // No font-size here on purpose — it lives in the `size` variant. Two custom
+    // text-* tokens on one element do not resolve against each other in
+    // tailwind-merge (neither is a known scale name), so both survive and the
+    // stylesheet's order silently picks the winner.
+    value: 'font-mono text-text',
     label: 'text-caption text-text-muted',
     trend: 'self-start rounded-sm px-2 py-0.5 font-mono text-caption font-semibold',
   },
@@ -19,8 +23,18 @@ const stat = tv({
       down: { trend: 'bg-redpen/15 text-redpen' },
       flat: { trend: 'bg-surface-sunken text-text-muted' },
     },
+    /*
+      §4.7 offers `data-lg` OR `display-sm` for the number. `md` is the inline
+      size that reads correctly beside body copy; `lg` is for a metric strip,
+      where a 16px figure stops being the point of its own card. Default stays
+      `md` so no existing card changes.
+    */
+    size: {
+      md: { value: 'text-data-lg' },
+      lg: { value: 'text-display-sm', root: 'p-inset-roomy' },
+    },
   },
-  defaultVariants: { trendDirection: 'flat' },
+  defaultVariants: { trendDirection: 'flat', size: 'md' },
 });
 
 export interface StatCardProps extends VariantProps<typeof stat> {
@@ -37,8 +51,8 @@ export interface StatCardProps extends VariantProps<typeof stat> {
   className?: string;
 }
 
-export function StatCard({ value, label, trend, trendDirection, icon, className }: StatCardProps) {
-  const s = stat({ trendDirection });
+export function StatCard({ value, label, trend, trendDirection, size, icon, className }: StatCardProps) {
+  const s = stat({ trendDirection, size });
   return (
     <View className={s.root({ className })}>
       {icon ? <View className="self-start">{icon}</View> : null}

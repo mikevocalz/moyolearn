@@ -1,4 +1,4 @@
-import { tv, type VariantProps } from 'tailwind-variants';
+import { tv, type VariantProps } from './tv';
 import { SolitoImage } from 'solito/image';
 import { View, Text } from './primitives';
 

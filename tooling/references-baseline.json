@@ -47,7 +47,6 @@
   "packages/ui/Card.tsx",
   "packages/ui/Checkbox.tsx",
   "packages/ui/Collapsible.tsx",
-  "packages/ui/DataTable.tsx",
   "packages/ui/Dial.tsx",
   "packages/ui/Dialog.tsx",
   "packages/ui/DropZone.tsx",

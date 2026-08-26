@@ -15,7 +15,7 @@ export const WithTrend: Story = {
   render: () => (
     <View className="flex-row flex-wrap gap-stack bg-surface p-6">
       <StatCard value="128" label="Sessions this month" trend="+12 vs May" trendDirection="up" />
-      <StatCard value="£4,210" label="Invoiced" trend="−£340 vs May" trendDirection="down" />
+      <StatCard value="$4,210" label="Invoiced" trend="−$340 vs May" trendDirection="down" />
       <StatCard value="94%" label="Attendance" trend="flat" />
     </View>
   ),

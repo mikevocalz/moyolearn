@@ -53,7 +53,7 @@ function RampColumn({ temperature }: { temperature: DialTemperature }) {
             </View>
           ))}
           <View className="gap-element">
-            <Text className="font-mono text-data text-text">data · 09:00–09:45 · £30.00 · 100%</Text>
+            <Text className="font-mono text-data text-text">data · 09:00–09:45 · $30.00 · 100%</Text>
             <Text className="font-mono text-data-lg text-text">data-lg · 41%</Text>
             <Text className={NOTE}>Mono, tabular — columns align, always</Text>
           </View>

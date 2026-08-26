@@ -2,7 +2,7 @@
   "name": "moyo",
   "version": "0.1.0",
   "private": true,
-  "description": "Moyo \u2014 AI tutoring that helps children learn it by heart. Universal Expo + Next.js (Payload) monorepo.",
+  "description": "Moyo — AI tutoring that helps children learn it by heart. Universal Expo + Next.js (Payload) monorepo.",
   "license": "MIT",
   "packageManager": "pnpm@10.32.1",
   "engines": {
@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "lint": "node tooling/check-barrels.mjs && node tooling/check-contrast.mjs && node tooling/check-targets.mjs && node tooling/check-utilities.mjs && node tooling/check-controls.mjs && node tooling/check-references.mjs && node tooling/check-no-training-path.mjs && turbo lint",
+    "lint": "node tooling/check-barrels.mjs && node tooling/check-contrast.mjs && node tooling/check-targets.mjs && node tooling/check-utilities.mjs && node tooling/check-controls.mjs && node tooling/check-references.mjs && node tooling/check-runtime-classes.mjs && node tooling/check-no-training-path.mjs && turbo lint",
     "check:barrels": "node tooling/check-barrels.mjs",
     "check:contrast": "node tooling/check-contrast.mjs",
     "check:targets": "node tooling/check-targets.mjs",
@@ -20,7 +20,8 @@
     "gen": "node tooling/generators/gen.mjs",
     "check:utilities": "node tooling/check-utilities.mjs",
     "check:references": "node tooling/check-references.mjs",
-    "check:training": "node tooling/check-no-training-path.mjs"
+    "check:training": "node tooling/check-no-training-path.mjs",
+    "check:runtime": "node tooling/check-runtime-classes.mjs"
   },
   "devDependencies": {
     "turbo": "catalog:"

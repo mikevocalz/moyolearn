@@ -2,7 +2,7 @@
 // One session, as a card (doc 08 §4.2).
 // SOT: docs/pack/08-visual-hierarchy-spacing-spec.md §4.2 · docs/pack/02-adaptive-screens-design-spec.md §1
 // SOT-KEYWORDS: schedulecard session card time mode chip budget actions schedule
-import { tv, type VariantProps } from 'tailwind-variants';
+import { tv, type VariantProps } from './tv';
 import { Badge } from './Badge';
 import { Button } from './Button';
 import { Text, View } from './primitives';

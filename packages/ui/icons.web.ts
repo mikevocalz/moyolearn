@@ -84,5 +84,11 @@ export {
   AudioLines,
   Play,
   Pause,
+  CalendarDays,
+  CircleDot,
+  Contact,
+  CreditCard,
+  GraduationCap,
+  Receipt,
 } from 'lucide-react';
 export type { LucideProps as IconProps } from 'lucide-react';

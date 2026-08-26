@@ -1,1 +1,183 @@
-/* Payload admin overrides — see https://payloadcms.com/docs/admin/customizing-css */
+/*
+  Payload admin overrides — https://payloadcms.com/docs/admin/customizing-css
+
+  Colour, shape, type and target size are all done by re-declaring Payload's own
+  variables; that file is GENERATED from tokens.ts so no hex lives outside the
+  token source. Payload wraps its rules in `@layer payload-default`, so a plain
+  selector already outranks them — nothing here needs !important, and a rule
+  that fails to land has the wrong selector, not a specificity problem.
+
+  Deliberately NOT imported here:
+  - `@acme/theme/theme.css` — Payload owns `--color-text`, `--color-border` and
+    `--color-border-strong` too, with different meanings. Loading both into one
+    document silently corrupts whichever loses.
+  - `tailwindcss` — its Preflight resets Payload's element styling. If a custom
+    admin view ever needs utilities, import the layers individually with
+    preflight left out.
+
+  Every class name below was read off the running admin (Payload
+  4.0.0-canary.29), not taken from 3.x documentation — the 4.x panel is a
+  different DOM. Rules are wrapped in `:where()` so they add no specificity and
+  a block Payload renames degrades to "unstyled" rather than to a broken panel.
+*/
+@import '@acme/theme/payload-admin.css';
+
+/* ----------------------------------------------------------------- type ---- */
+
+/*
+  next/font RENAMES a face — `Archivo Black` is served as `__ArchivoBlack_<hash>`
+  — so the literal family names the generated stylesheet carries never match a
+  loaded face and every one of them silently fell through to system-ui. Inside
+  the wrapper, point Payload's font slots at next/font's own variables, which
+  hold the hashed names. The literals stay in place as the fallback for the
+  little Payload chrome that renders outside this wrapper.
+*/
+.moyo-admin {
+  --font-family-sans: var(--font-sans);
+  --font-family-mono: var(--font-mono);
+  --font-family-display: var(--font-display);
+}
+
+/* ---------------------------------------------------------------- brand ---- */
+
+/*
+  The lockup rendered by admin.components.graphics.Logo / .Icon. Sized off
+  Payload's own spacers so it sits on the same rhythm as the panel around it.
+*/
+.moyo-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--spacer-2);
+}
+
+.moyo-lockup__tile {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--spacer-5);
+  height: var(--spacer-5);
+  border: var(--stroke-width-medium) solid var(--color-border-strong);
+  border-radius: var(--radius-medium);
+  background: var(--color-bg-brand);
+  color: var(--color-text-onbrand);
+  box-shadow: var(--elevation-100-canvas);
+  font-family: var(--font-family-display), sans-serif;
+  font-size: var(--text-heading-medium-font-size);
+  line-height: 1;
+}
+
+.moyo-lockup__word {
+  font-family: var(--font-family-display), sans-serif;
+  font-size: var(--text-heading-large-font-size);
+  letter-spacing: var(--text-heading-large-letter-spacing);
+  color: var(--color-text);
+}
+
+/* ---------------------------------------------------------------- login ---- */
+
+/*
+  Payload's login form is unframed, so the fields floated in the canvas. Framing
+  it makes it an object; the padding is what stops the field borders sitting
+  flush against the card's border, which reads as a 4px drawing error rather
+  than as two elements (doc 08 §2.2).
+*/
+:where(.login__form) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-2-5);
+  padding: var(--spacer-4);
+  border: var(--stroke-width-medium) solid var(--color-border-strong);
+  border-radius: var(--radius-large);
+  background: var(--color-bg-elevated);
+  box-shadow: var(--elevation-400-menu-panel);
+}
+
+:where(.login__form__inputWrap) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-2-5);
+}
+
+/* Related items at one step, the action group at the ≥2× jump — the gap IS the
+   grouping signal, so there is no divider here (doc 08 §2.3). */
+:where(.login__form__actions) {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacer-2);
+  margin-top: var(--spacer-2);
+}
+
+:where(.login__brand) {
+  display: flex;
+  justify-content: center;
+  margin-bottom: var(--spacer-4);
+}
+
+/*
+  Payload renders "Forgot password?" as a ghost `.btn`, so it arrived with a
+  button's height and the brand link colour — a blue hyperlink sitting directly
+  under the yellow primary, competing for the one accent this screen is allowed
+  (doc 08 §3.2). It is a tertiary action, so it reads as a pencil note: ink,
+  underlined, graphite until you reach for it. `--color-text-brand` is left
+  alone globally because real links elsewhere in the panel do want it.
+*/
+:where(.login__form__forgotPassword) {
+  align-self: center;
+  min-height: var(--spacer-4);
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+}
+
+:where(.login__form__forgotPassword) .btn__label {
+  color: var(--color-text-secondary);
+  font-size: var(--text-body-medium-font-size);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  /* The face's own underline metric — 2px is the border weight, and borrowing
+     it here made a text link read as a rule. */
+  text-decoration-thickness: from-font;
+}
+
+:where(.login__form__forgotPassword):hover .btn__label {
+  color: var(--color-text);
+}
+
+/* --------------------------------------------------------------- buttons --- */
+
+/*
+  The kit's press physics, at admin scale: the hard offset shadow IS the
+  pressable affordance, so pressing moves the button onto its own shadow.
+  Button.tsx explains why disabled drops the slab — same reasoning applies here.
+*/
+:where(.btn--style-primary) {
+  border: var(--stroke-width-medium) solid var(--color-border-strong);
+  box-shadow: 3px 3px 0 0 var(--color-border-strong);
+  transition:
+    transform 120ms,
+    box-shadow 120ms;
+}
+
+:where(.btn--style-primary):active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
+
+:where(.btn--style-primary):disabled {
+  box-shadow: none;
+  transform: none;
+}
+
+/* ---------------------------------------------------------------- tables --- */
+
+/* Numbers that line up: tabular figures on every cell (doc 08 §4.6). */
+:where(.table) td {
+  font-variant-numeric: tabular-nums slashed-zero;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where(.btn--style-primary) {
+    transition: none;
+  }
+}

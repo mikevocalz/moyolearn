@@ -1,4 +1,4 @@
-import { tv, type VariantProps } from 'tailwind-variants';
+import { tv, type VariantProps } from './tv';
 import { View } from './primitives';
 import { Text } from './Text';
 import { SlideUp } from './motion';

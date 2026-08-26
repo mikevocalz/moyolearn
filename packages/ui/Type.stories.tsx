@@ -144,7 +144,7 @@ export const MonoRange: Story = {
       <Section className={`${CARD} flex-1 gap-2`}>
         <Text className={LABEL}>Figures · 0 never reads as O</Text>
         <Text className="font-mono text-2xl font-semibold text-text">0O · 10:05 · ROOM B0</Text>
-        <Text className="font-mono text-2xl font-semibold text-text">£30.00 · 09:45 · 100%</Text>
+        <Text className="font-mono text-2xl font-semibold text-text">$30.00 · 09:45 · 100%</Text>
       </Section>
     </View>
   ),
