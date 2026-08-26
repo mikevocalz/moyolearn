@@ -2,10 +2,10 @@
 import { View, Text, Pressable } from '@acme/ui/tw';
 import { Button, Card, Container, Dial, EmptyState, LoadingSkeleton, SegmentedControl, useSizeClass } from '@acme/ui';
 import { Calendar } from '@acme/ui/icons';
-import { format } from 'date-fns';
 import { BookingSurface } from './BookingSurface.tsx';
 import { ScheduleGrid } from './ScheduleGrid.tsx';
 import type { ScheduleDay } from './model.ts';
+import { formatTimeRange } from './format.ts';
 import type { Slot } from './slots.ts';
 import { useScheduleStore, type ScheduleView } from './store.ts';
 
@@ -42,7 +42,20 @@ export function Schedule({
   const selectEvent = useScheduleStore((state) => state.selectEvent);
 
   const [firstResource] = day.resources;
-  const selectedTime = selectedEventId ? new Date(selectedEventId) : null;
+  /*
+    Look the event UP; do not try to read a time out of its id.
+
+    This was `new Date(selectedEventId)`, which assumed the id was a timestamp.
+    `selectEvent` is wired to real events whose ids are `'a1'`, so every click
+    produced an Invalid Date and `format()` threw a RangeError — the whole
+    schedule fell into its error boundary the first time anyone selected
+    anything.
+
+    The event carries its own `start` and `end`, so there is nothing to parse.
+  */
+  const selectedEvent = selectedEventId
+    ? (day.events.find((event) => event.id === selectedEventId) ?? null)
+    : null;
 
   return (
     // Recessed canvas: the grid card is surface-raised, so a deeper ground is
@@ -84,11 +97,15 @@ export function Schedule({
           <ScheduleGrid day={day} now={now} />
         )}
 
-        {selectedTime ? (
+        {selectedEvent ? (
           <Card className="gap-stack">
             <View className="flex-row items-center justify-between">
+              {/* The event's own range, rendered in the CALENDAR's zone.
+                  `format()` renders in the host's zone, so a schedule authored
+                  in New York and read in London showed the wrong hour — the
+                  same bug `zonedMinutesOfDay` exists to avoid on the grid. */}
               <Text className="text-base font-semibold text-text">
-                {format(selectedTime, 'h:mm a')} · Selected slot
+                {selectedEvent.title} · {formatTimeRange(selectedEvent, day.timeZone)}
               </Text>
               <Pressable onPress={() => selectEvent(null)}>
                 <Text className="text-sm text-text-muted">Close</Text>
@@ -96,7 +113,12 @@ export function Schedule({
             </View>
             <View className="flex-row gap-element">
               <Button variant="outline" title="Edit" onPress={() => { /* Wave 3: edit */ }} />
-              <Button variant="primary" title="Book" onPress={() => onBook({ start: selectedTime, end: new Date(selectedTime.getTime() + 30 * 60_000), available: true })} />
+              {/* The event's real span, not a fabricated 30 minutes. */}
+              <Button
+                variant="primary"
+                title="Book"
+                onPress={() => onBook({ start: selectedEvent.start, end: selectedEvent.end, available: true })}
+              />
             </View>
           </Card>
         ) : null}
