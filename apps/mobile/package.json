@@ -47,6 +47,7 @@
     "react-native-safe-area-context": "catalog:",
     "react-native-screens": "catalog:",
     "react-native-svg": "catalog:",
+    "react-native-video": "7.0.0-beta.11",
     "react-native-web": "catalog:",
     "react-native-worklets": "catalog:",
     "solito": "catalog:",

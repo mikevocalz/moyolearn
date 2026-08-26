@@ -43,6 +43,17 @@ const config: ExpoConfig = {
   },
   plugins: [
     'expo-router',
+    /*
+      react-native-video 7 is a Nitro module, so it needs native config — it is
+      not autolinked into a prebuilt binary by itself. Registering the plugin
+      here means `expo prebuild` writes the native bits; without it the JS
+      imports resolve and the component fails at runtime, which reads as a
+      broken player rather than a missing build step.
+
+      It plays Bunny Stream's HLS output. `expo-video`/`expo-av` are deliberately
+      absent — one video stack, not two.
+    */
+    'react-native-video',
     [
       'expo-splash-screen',
       {
