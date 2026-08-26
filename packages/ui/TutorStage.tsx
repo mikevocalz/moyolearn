@@ -35,12 +35,13 @@ export interface SessionSummary {
   masteryDelta: number;
 }
 
-/** The nine-state contract. Kinds are drawn only when the canvas has signed off. */
+/** The ten-state contract. Kinds are drawn only when the canvas has signed off. */
 export type TutorStageState =
   | { kind: 'presence' }                        // §3.1 first paint, 2D mark
   | { kind: 'speaking'; utterance: Utterance }  // §3.2 her turn, captioned
   | { kind: 'thinking' }                        // §3.3 streaming first token
   | { kind: 'hint'; step: HintStep }            // §3.4 hint ladder
+  | { kind: 'diagnosis'; name: string; message: string } // §3.4a named misconception
   | { kind: 'listening' }                       // §3.5 mic open
   | { kind: 'paused'; since: number }           // §3.6 fail-closed, safe
   | { kind: 'ended'; summary: SessionSummary }  // §3.7 session end
@@ -70,6 +71,7 @@ function statusFor(state: TutorStageState): string {
     case 'speaking': return 'Speaking';
     case 'thinking': return 'Thinking';
     case 'hint': return 'Waiting for you';
+    case 'diagnosis': return 'Diagnosis';
     case 'listening': return 'Listening';
     case 'paused': return 'Taking a break';
     case 'ended': return 'Session done';
@@ -87,6 +89,8 @@ function statusTone(state: TutorStageState): React.ComponentProps<typeof Badge>[
       return 'success';
     case 'thinking':
       return 'primary';
+    case 'diagnosis':
+      return 'accent';
     case 'hint':
     case 'paused':
     default:
@@ -158,6 +162,23 @@ function StateBody({
               aria-label="Show next hint"
             />
           </View>
+        </View>
+      );
+    case 'diagnosis':
+      return (
+        <View className="w-full gap-stack">
+          <MessageBubble from="tutor">
+            <StreamedText>{state.message}</StreamedText>
+          </MessageBubble>
+          <Badge label={state.name} tone="accent" />
+          <Button
+            title="Try again"
+            variant="highlighter"
+            size={buttonSize}
+            fullWidth
+            onPress={onTryIt}
+            aria-label="Try the problem again"
+          />
         </View>
       );
     case 'listening':

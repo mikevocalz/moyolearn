@@ -7,7 +7,7 @@ interface TutorState {
   state: TutorStageState;
   start: (problem: string | null) => void;
   send: (message: string) => void;
-  respond: (message: string) => void;
+  respond: () => void;
 }
 
 function openingUterance(problem: string | null): TutorStageState {
@@ -21,12 +21,12 @@ export const useTutorStore = create<TutorState>((set) => ({
   state: openingUterance(null),
   start: (problem) => set({ state: openingUterance(problem) }),
   send: (message) => set({ state: { kind: 'thinking' } }),
-  respond: (message) => {
-    const problem = useCaptureStore.getState().problem;
+  respond: () => {
     set({
       state: {
-        kind: 'speaking',
-        utterance: { text: `${problem ? `Working on ${problem}. ` : ''}You said: ${message}. What do you think the next step is?` },
+        kind: 'diagnosis',
+        name: 'Addition before multiplication',
+        message: "It looks like the addition got done before the multiplication. That's the most common order-of-operations hiccup. Let's try once more, doing the multiplication first.",
       },
     });
   },

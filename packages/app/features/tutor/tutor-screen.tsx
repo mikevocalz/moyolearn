@@ -26,7 +26,7 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   }, [problem, start]);
 
   const respond = useDebouncedCallback(
-    (message: string) => useTutorStore.getState().respond(message),
+    () => useTutorStore.getState().respond(),
     { wait: 800 },
   );
 
@@ -34,7 +34,7 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
     const trimmed = message.trim();
     if (!trimmed) return;
     send(trimmed);
-    respond(trimmed);
+    respond();
   };
 
   if (problem == null) {
@@ -54,6 +54,7 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
       buttonSize={buttonSizeForBand(ageBand)}
       onBack={router.back}
       onSend={handleSend}
+      onTryIt={() => start(problem)}
     />
   );
 }
