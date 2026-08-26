@@ -12,7 +12,7 @@
 //   collapse control lives in the sidebar's own header row) ·
 //   https://mobbin.com/screens/7edb1dcf-9015-471a-8625-11a0f51767d7 (Uxcel —
 //   breadcrumb left, account right, nothing else in the top bar)
-import { Avatar, DashboardShell, Image, type NavGroup } from '@acme/ui';
+import { Avatar, BrandLockup, DashboardShell, type NavGroup } from '@acme/ui';
 import {
   CalendarDays,
   CircleDot,
@@ -27,65 +27,11 @@ import { Text, View } from '@acme/ui/primitives';
 import { OpsDashboardContent } from './ops-dashboard-content';
 import { useOpsChrome } from './ops.store';
 import { useAppSession } from '../../providers/session';
-import { MOCK_ORGS, MOCK_STAFF, orgBySlug, type MockOrg } from '../../fixtures/cast.ts';
+import { MOCK_ORGS, MOCK_STAFF, orgBySlug } from '../../fixtures/cast.ts';
 import { REVENUE_BY_ORG, SESSIONS_BY_ORG } from './ops.data';
 
 // Size only — DashboardShell owns icon colour so it tracks the active state.
 const ICON = 'h-4 w-4';
-
-/*
-  The co-branded lockup: Moyo's mark, a divider, then the district's own.
-
-  A district that has paid for this product and put its logo on the door does not
-  want to look like a tenant of somebody else's software, and the two marks sit at
-  the same size for that reason — a shrunken partner logo reads as a footnote.
-  The `\u00d7` is a real multiplication sign rather than a lowercase x, because a
-  letter between two logos looks like a typo at 8px.
-
-  The district image is a plain `Image`, not `Avatar`: an avatar is a person, and
-  its `rounded-md` + border treatment is the person language. A logo carries its
-  own shape.
-*/
-function Brand({ org }: { org: MockOrg }) {
-  return (
-    <View className="flex-row items-center gap-element">
-      <View className="h-8 w-8 items-center justify-center rounded-control border-2 border-border-strong bg-primary">
-        <Text className="font-display text-label text-on-primary">M</Text>
-      </View>
-      <Text className="text-caption text-text-muted" aria-hidden>
-        {'\u00d7'}
-      </Text>
-      <Image
-        src={org.logoUrl}
-        alt={`${org.name} logo`}
-        className="h-8 w-8 rounded-control border-2 border-border-strong"
-        unoptimized
-      />
-      <View className="gap-0">
-        <Text className="font-display text-title text-text">Moyo</Text>
-        <Text className="text-caption text-text-muted">{org.name}</Text>
-      </View>
-    </View>
-  );
-}
-
-/*
-  Collapsed, the district mark wins and Moyo's is dropped.
-
-  The rail is 32px of a district employee's screen. They know whose software this
-  is; what they need at a glance is which of their two districts they are looking
-  at, which is exactly the thing the full lockup disambiguates.
-*/
-function BrandMark({ org }: { org: MockOrg }) {
-  return (
-    <Image
-      src={org.logoUrl}
-      alt={`${org.name} logo`}
-      className="h-8 w-8 rounded-control border-2 border-border-strong"
-      unoptimized
-    />
-  );
-}
 
 export function OpsScreen() {
   const { collapsed, menuOpen, section, toggleCollapsed, toggleMenu, setSection } = useOpsChrome();
@@ -167,8 +113,14 @@ export function OpsScreen() {
   return (
     <DashboardShell
       groups={groups}
-      brand={<Brand org={org} />}
-      brandMark={<BrandMark org={org} />}
+      brand={<BrandLockup orgName={org.name} orgLogoUrl={org.logoUrl} orgLogoAspect={org.logoAspect} />}
+      brandMark={
+        /* Collapsed, the district's mark stands alone: the rail is 32px wide
+           and cannot fit two marks and a separator. Dropping Moyo's is the right
+           half to lose — a district employee knows whose software this is; what
+           they need at that width is which district they are looking at. */
+        <BrandLockup orgName={org.name} orgLogoUrl={org.logoUrl} orgLogoAspect={org.logoAspect} variant="partner" />
+      }
       collapsed={collapsed}
       onToggleCollapsed={toggleCollapsed}
       menuOpen={menuOpen}

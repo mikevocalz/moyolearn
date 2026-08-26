@@ -5,6 +5,10 @@
 // SOT: docs/pack/11-architectural-guardrails.md §3
 // SOT-KEYWORDS: payload cms content collections repository backend
 
+// Generated types are the source of truth for collection shapes (CLAUDE.md
+// §Types). Re-exported so repositories can name them without a deep path.
+export type { Organization, Lead, Media, User } from './src/payload-types';
+
 export interface PayloadClientConfig {
   /** Payload REST base, e.g. https://example.com/payload-api */
   baseUrl: string;

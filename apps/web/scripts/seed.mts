@@ -43,6 +43,7 @@ for (const org of MOCK_ORGS) {
     slug: org.slug,
     kind: org.kind,
     logoUrl: org.logoUrl,
+    logoAspect: org.logoAspect,
     brandAccent: org.brandAccent,
   };
   if (docs[0]?.id) {

@@ -34,7 +34,19 @@ export async function saveTranscript(_ctx: ProtectedCtx, transcript: TranscriptT
   await withPayload((payload) =>
     payload.create({
       collection: 'sessionTranscripts',
-      data: transcript as unknown as Record<string, unknown>,
+      /*
+        Spread field by field rather than cast. `turns` is a readonly array on
+        the service's type and a mutable JSON column on the collection's, and a
+        cast through `unknown` hid that mismatch instead of resolving it — while
+        also silencing every future field the two shapes stop agreeing on.
+      */
+      data: {
+        sessionId: transcript.sessionId,
+        learnerAuthId: transcript.learnerAuthId,
+        turns: [...transcript.turns],
+        capturedAt: transcript.capturedAt,
+        expiresAt: transcript.expiresAt,
+      },
     }),
   );
 }
@@ -156,12 +168,12 @@ export const saveFacts: SaveFacts = async (ctx, facts) => {
         await payload.update({
           collection: 'studentModelFacts',
           id: docs[0].id,
-          data: base as Record<string, unknown>,
+          data: base,
         });
       } else {
         await payload.create({
           collection: 'studentModelFacts',
-          data: base as Record<string, unknown>,
+          data: base,
         });
       }
     }

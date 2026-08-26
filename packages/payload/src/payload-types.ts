@@ -303,6 +303,7 @@ export interface Organization {
   slug: string;
   kind: 'tutoring' | 'school' | 'district';
   logoUrl?: string | null;
+  logoAspect?: ('square' | 'wide') | null;
   brandAccent?: ('ember' | 'gold' | 'forest' | 'sky' | 'rose') | null;
   updatedAt: string;
   createdAt: string;
@@ -571,6 +572,7 @@ export interface OrganizationsSelect<T extends boolean = true> {
   slug?: T;
   kind?: T;
   logoUrl?: T;
+  logoAspect?: T;
   brandAccent?: T;
   updatedAt?: T;
   createdAt?: T;

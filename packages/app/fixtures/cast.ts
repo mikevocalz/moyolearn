@@ -38,6 +38,8 @@ export interface MockOrg {
   /** A palette token name, never a hex — see the Organizations collection. */
   brandAccent: 'ember' | 'gold' | 'forest' | 'sky' | 'rose';
   logoUrl: string;
+  /** A wordmark letterboxes in a 4:3 box; a seal stays square. */
+  logoAspect: 'square' | 'wide';
 }
 
 export interface MockPerson {
@@ -82,9 +84,20 @@ export interface MockGuardian extends MockPerson {
   demo. A real district replaces this with its own hosted URL — the field does
   not change.
 */
-const logo = (mark: string, bg: string, fg: string) =>
+const seal = (mark: string, bg: string, fg: string) =>
   `data:image/svg+xml;utf8,${encodeURIComponent(
     `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img"><rect width="64" height="64" rx="14" fill="${bg}"/><text x="32" y="43" font-family="Georgia,serif" font-size="30" font-weight="700" text-anchor="middle" fill="${fg}">${mark}</text></svg>`,
+  )}`;
+
+/*
+  A 4:3 wordmark, which is what most district logos actually are. One of the two
+  districts uses it so the lockup's letterboxing path ships by default rather
+  than living only in a story — a partner logo that has only ever been tested
+  square is a partner logo that will be cropped in front of a customer.
+*/
+const wordmark = (line1: string, line2: string, bg: string, fg: string) =>
+  `data:image/svg+xml;utf8,${encodeURIComponent(
+    `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 48" role="img"><rect width="64" height="48" rx="6" fill="${bg}"/><text x="32" y="21" font-family="Georgia,serif" font-size="13" font-weight="700" text-anchor="middle" fill="${fg}">${line1}</text><text x="32" y="36" font-family="Georgia,serif" font-size="9" letter-spacing="1.5" text-anchor="middle" fill="${fg}" opacity="0.85">${line2}</text></svg>`,
   )}`;
 
 export const MOCK_ORGS: readonly MockOrg[] = [
@@ -93,14 +106,16 @@ export const MOCK_ORGS: readonly MockOrg[] = [
     name: 'Riverside Unified',
     kind: 'district',
     brandAccent: 'sky',
-    logoUrl: logo('RU', '#1E4B8F', '#FFFFFF'),
+    logoUrl: seal('RU', '#1E4B8F', '#FFFFFF'),
+    logoAspect: 'square',
   },
   {
     slug: 'lincoln-public',
     name: 'Lincoln Public Schools',
     kind: 'district',
     brandAccent: 'forest',
-    logoUrl: logo('LP', '#1F5B3A', '#FFFFFF'),
+    logoUrl: wordmark('LINCOLN', 'PUBLIC SCHOOLS', '#1F5B3A', '#FFFFFF'),
+    logoAspect: 'wide',
   },
 ];
 

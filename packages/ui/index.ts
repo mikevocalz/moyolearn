@@ -22,6 +22,7 @@ export { InspectorSection, type InspectorSectionProps } from './InspectorSection
 export { StatCard, type StatCardProps } from './StatCard';
 export { Avatar, type AvatarProps } from './Avatar';
 export { Image, type ImageProps } from './Image';
+export { BrandLockup, type BrandLockupProps } from './BrandLockup';
 export { TutorStage, type TutorStageProps, type TutorStageState } from './TutorStage';
 export { LearningCanvas, type LearningCanvasProps } from './LearningCanvas';
 export { SessionToolbar, type SessionToolbarProps } from './SessionToolbar';

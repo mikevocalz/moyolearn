@@ -132,6 +132,16 @@ export interface InputBaseProps extends P {
   role?: string;
   'aria-label'?: string;
   'aria-invalid'?: boolean;
+  /*
+    Autofill hints. Absent until a login form needed them, which meant no field
+    in the kit could tell a password manager what it was looking at — so every
+    sign-in was typed by hand, and `autoCapitalize` left mobile browsers
+    Capitalising Email Addresses. React Native's TextInput takes all three under
+    these exact names, so the native fork gets them for free.
+  */
+  autoComplete?: string;
+  inputMode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url';
+  autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
 }
 
 const ENTER_KEY_HINT: Record<string, React.HTMLAttributes<HTMLElement>['enterKeyHint']> = {
@@ -140,12 +150,15 @@ const ENTER_KEY_HINT: Record<string, React.HTMLAttributes<HTMLElement>['enterKey
 
 export const InputBase = ({
   onChangeText, onSubmitEditing, editable, secureTextEntry, returnKeyType,
-  placeholderTextColor: _ptc, numberOfLines: _n, role: _role, className, style, ...props
+  placeholderTextColor: _ptc, numberOfLines: _n, role: _role,
+  autoCapitalize, className, style, ...props
 }: InputBaseProps) => (
   <input
     type={secureTextEntry ? 'password' : 'text'}
     readOnly={editable === false}
     enterKeyHint={returnKeyType ? ENTER_KEY_HINT[returnKeyType] : undefined}
+    // RN's `none` is the DOM's `off`; the other three names match.
+    autoCapitalize={autoCapitalize === 'none' ? 'off' : autoCapitalize}
     onChange={(e) => onChangeText?.(e.target.value)}
     onKeyDown={(e) => { if (e.key === 'Enter') onSubmitEditing?.(); }}
     {...toDom(className, style)}

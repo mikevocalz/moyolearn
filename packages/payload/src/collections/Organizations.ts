@@ -62,6 +62,23 @@ export const Organizations: CollectionConfig = {
     { name: 'logoUrl', type: 'text' },
     {
       /*
+        Real district logos are WORDMARKS, not squares — a seal beside a name, or
+        a name alone. Cropping one to a square to match Moyo's tile is how a
+        partner's brand ends up unreadable in its own product, so the lockup
+        reserves a 4:3 box for those and letterboxes inside it rather than
+        cropping. Per-district because the shape is a property of their logo, not
+        a global guess.
+      */
+      name: 'logoAspect',
+      type: 'select',
+      defaultValue: 'square',
+      options: [
+        { label: 'Square (1:1)', value: 'square' },
+        { label: 'Wordmark (4:3)', value: 'wide' },
+      ],
+    },
+    {
+      /*
         A TOKEN NAME, not a colour. Doc 08's palette is the accessible surface —
         contrast pairs are checked per token by `pnpm check:contrast` — so letting
         a district paste a hex would let it ship unreadable text under its own

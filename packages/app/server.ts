@@ -48,6 +48,12 @@ export {
   type LoadLeads,
   type SaveLeadStage,
 } from './features/ops/ops.service';
+/*
+  The org branding read is PUBLIC and deliberately outside `protectedOperation`
+  — a login page has no session to take identity from. The reasoning, and what
+  bounds the exposure, is in org.service.ts.
+*/
+export { orgBrandingFor, type OrgBranding, type LoadOrgBranding } from './features/org/org.service';
 export {
   saveLearnerProfile,
   type SaveGradeBand,
