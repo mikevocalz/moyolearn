@@ -1,0 +1,17 @@
+{
+  "mcpServers": {
+    "payload": {
+      "command": "node",
+      "args": [
+        "node_modules/@payloadcms/plugin-mcp/bin.js"
+      ],
+      "env": {
+        "PAYLOAD_CONFIG_PATH": "/Users/mikevocalz/MoyoLearn/packages/payload/src/payload.config.ts",
+        "PAYLOAD_MCP_ENABLED": "true",
+        "PAYLOAD_MCP_OVERRIDE_ACCESS": "true",
+        "NODE_ENV": "development",
+        "PAYLOAD_PUSH": "false"
+      }
+    }
+  }
+}

@@ -171,7 +171,7 @@ export function SiteHeader() {
             transition={{ type: 'spring', damping: 15, stiffness: 320, delay: 60 }}
             className="h-9 w-9 items-center justify-center rounded-md border-2 border-border-strong bg-primary shadow-card"
           >
-            <TWText className="text-base font-bold text-on-primary">S</TWText>
+            <TWText className="text-base font-bold text-on-primary">M</TWText>
           </MotionView>
           <MotionView
             initial={hydrated ? { x: -8 } : undefined}
@@ -179,7 +179,7 @@ export function SiteHeader() {
             transition={{ type: 'timing', duration: 240, ease: 'easeOut', delay: 140 }}
           >
             <TWText className="font-display text-lg font-bold tracking-tight text-text">
-              Starter
+              Moyo
             </TWText>
           </MotionView>
         </Link>

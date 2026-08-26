@@ -9,7 +9,7 @@ const field = tv({
     root: 'gap-1.5',
     label: 'text-sm font-medium text-text',
     input:
-      'min-h-24 rounded-lg border-2 border-border bg-surface-raised px-3.5 py-2.5 text-base text-text ' +
+      'min-h-24 rounded-control border-2 border-border bg-surface-raised px-3.5 py-2.5 text-base text-text ' +
       'placeholder:text-text-muted/70 transition-all duration-fast ' +
       'focus:shadow-card focus:outline-none motion-reduce:transition-none',
     message: 'text-sm',
@@ -52,7 +52,7 @@ export function Textarea({
             {input}
             <View
               aria-hidden
-              className="absolute right-3 top-3 rounded-md border-2 border-border bg-surface-sunken px-1.5 py-0.5"
+              className="absolute right-3 top-3 rounded-control border-2 border-border bg-surface-sunken px-1.5 py-0.5"
             >
               <TWText className="text-[10px] font-semibold tracking-wide text-text-muted">⌘V</TWText>
             </View>

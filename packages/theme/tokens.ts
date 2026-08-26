@@ -199,6 +199,11 @@ export const contentWidths = {
 } as const;
 
 export const radius = {
+  // Every interactive control shares one radius. A button at `md` (6px) beside
+  // an input at `card` (10px) reads as two components from two systems sitting
+  // in the same row — which is exactly what the composer looked like.
+  // `tooling/check-controls.mjs` enforces this; it is a rule with a gate.
+  control: '0.375rem',
   xs: '0.125rem',
   sm: '0.25rem',
   md: '0.375rem',
@@ -273,6 +278,11 @@ export const uiRamp = {
  * separation between groups is what carries structure, not borders.
  */
 export const spacingTiers = {
+  // A single-line field is not a box of prose. `inset-tight` (16px hot) on a
+  // 25.5px line pushed the composer to 64px, which read as an oversized slab
+  // next to a one-line placeholder. This tier exists so the field's height is
+  // governed by the age-band target token instead of by its padding.
+  'inset-field': { cool: '0.5625rem', hot: '0.5625rem' },
   'inset-tight': { cool: '0.75rem', hot: '1rem' },
   inset: { cool: '1rem', hot: '1.25rem' },
   'inset-roomy': { cool: '1.25rem', hot: '1.5rem' },

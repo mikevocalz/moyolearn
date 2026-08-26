@@ -6,6 +6,11 @@ import { withPayload } from '@payloadcms/next/withPayload'
 // forest. RN globals (__DEV__) come from a runtime shim imported in the root
 // layout instead of DefinePlugin.
 const nextConfig: NextConfig = {
+  // Next 16.3 writes `AGENTS.md` and `CLAUDE.md` into apps/web on every `dev`
+  // boot. This repo keeps one hand-written CLAUDE.md at the root, and generated
+  // agent files landing next to it are both noise and a thing that gets
+  // committed by accident.
+  agentRules: false,
   // next/image rejects every remote host that is not listed here, so a
   // thumbnail from YouTube renders as a hard error rather than a broken image.
   // Only the thumbnail host, and only its /vi/ path: this is not a general

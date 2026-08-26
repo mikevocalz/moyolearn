@@ -8,7 +8,7 @@ const field = tv({
     root: 'gap-1.5',
     label: 'text-sm font-medium text-text',
     select:
-      'rounded-lg border-2 border-border bg-surface-raised px-3.5 py-2.5 text-base text-text ' +
+      'rounded-control border-2 border-border bg-surface-raised px-3.5 py-2.5 text-base text-text ' +
       'placeholder:text-text-muted/70 transition-all duration-fast ' +
       'focus:shadow-card focus:outline-none motion-reduce:transition-none',
     message: 'text-sm',

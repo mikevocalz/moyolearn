@@ -10,7 +10,7 @@ import { haptics } from './haptics';
 const button = tv({
   slots: {
     root:
-      'shrink-0 flex-row items-center justify-center gap-2 self-start rounded-md border-2 border-border-strong ' +
+      'shrink-0 flex-row items-center justify-center gap-2 self-start rounded-control border-2 border-border-strong ' +
       'transition-all duration-fast active:translate-x-[3px] active:translate-y-[3px] active:shadow-none ' +
       'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2 ' +
       'motion-reduce:transition-none',

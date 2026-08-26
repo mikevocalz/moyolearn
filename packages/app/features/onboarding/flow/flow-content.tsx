@@ -18,6 +18,9 @@ import { TutorOnboardingContent } from '../tutor/tutor-onboarding-content';
 import { BusinessOnboardingContent } from '../business/business-onboarding-content';
 import { TeacherOnboardingContent } from '../teacher/teacher-onboarding-content';
 import { isOnboardingFlow, type OnboardingFlow } from './flow';
+import { planeBandFor } from '../../capture/age-band';
+import { useSessionStore } from '../../../providers/session/store';
+import { API_URL } from '../../tutor/tutor.store';
 
 const NEXT_PATH: Record<OnboardingFlow, string> = {
   learner: '/tutor',
@@ -29,8 +32,29 @@ const NEXT_PATH: Record<OnboardingFlow, string> = {
 
 export function OnboardingFlowContent({ flow }: { flow: string }) {
   const router = useRouter();
-  // Learners land in the tutor; other roles land at the home shell.
-  const done = () => router.replace(isOnboardingFlow(flow) ? NEXT_PATH[flow] : '/');
+  const ageBand = useSessionStore((s) => s.activeContext.gradeBand);
+
+  const done = () => {
+    // The band was collected at S14 and, until now, only ever reached the client
+    // session store — so the server's copy stayed at its default and every
+    // learner got the older register. Persist before routing, and do not block
+    // a child on the write: the band has a safe default, and a learner staring
+    // at a spinner because a PATCH is slow is the worse outcome.
+    if (flow === 'learner' && ageBand) {
+      void fetch(`${API_URL}/api/learner/profile`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ gradeBand: planeBandFor(ageBand) }),
+      }).catch(() => {
+        // Nothing to say to the learner here. The band falls back to `older`,
+        // which is the same default the field carries.
+      });
+    }
+
+    // Learners land in the tutor; other roles land at the home shell.
+    router.replace(isOnboardingFlow(flow) ? NEXT_PATH[flow] : '/');
+  };
 
   if (!isOnboardingFlow(flow)) {
     return (

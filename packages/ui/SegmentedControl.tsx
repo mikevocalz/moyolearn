@@ -29,7 +29,7 @@ export function SegmentedControl<T extends string>({
   return (
     <View
       role="tablist"
-      className={`flex-row gap-1 rounded-md border-2 border-border bg-surface-sunken p-1 ${className ?? ''}`}
+      className={`flex-row gap-1 rounded-control border-2 border-border bg-surface-sunken p-1 ${className ?? ''}`}
     >
       {options.map((option) => {
         const isActive = option.value === value;
@@ -39,7 +39,7 @@ export function SegmentedControl<T extends string>({
             role="tab"
             aria-selected={isActive}
             onPress={() => onChange(option.value)}
-            className={`min-h-9 items-center justify-center rounded-sm px-3 py-1.5 transition-colors duration-fast md:px-4 md:py-2 motion-reduce:transition-none ${
+            className={`/* radius-exempt: selected pill nests inside the track */ min-h-9 items-center justify-center rounded-sm px-3 py-1.5 transition-colors duration-fast md:px-4 md:py-2 motion-reduce:transition-none ${
               isActive ? 'bg-primary' : 'hover:bg-surface-raised'
             }`}
           >

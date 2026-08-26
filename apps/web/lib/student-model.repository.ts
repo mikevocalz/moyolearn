@@ -15,6 +15,7 @@ import type {
   TranscriptToSave,
   LoadPriorFacts,
   LoadGradeBand,
+  SaveGradeBand,
   SaveFacts,
   DerivedFact,
   MasteryFact,
@@ -178,4 +179,11 @@ export const loadGradeBand: LoadGradeBand = async (ctx) => {
     const user = await payload.findByID({ collection: 'users', id: ctx.learnerId }).catch(() => null);
     return (user as { gradeBand?: string } | null)?.gradeBand === 'young' ? 'young' : 'older';
   });
+};
+
+/** The write half of `loadGradeBand`. Doc 07 §3 layer 1's band, persisted. */
+export const saveGradeBand: SaveGradeBand = async (ctx, gradeBand) => {
+  await withPayload((payload) =>
+    payload.update({ collection: 'users', id: ctx.learnerId, data: { gradeBand } }),
+  );
 };

@@ -1,5 +1,9 @@
 'use client';
 // StreamedText — renders a string as if tokens are arriving one at a time.
+// Mobbin: https://mobbin.com/screens/9c13ada9-0c95-45c8-9932-d20010b96e14 (ChatGPT — assistant text
+// arrives in place and the block grows downward) · https://mobbin.com/screens/5def00a9-6228-4ccc-81a3-25cdb2fe20bd
+// (Pi — a turn reads as one settled paragraph, never a re-typing line). Structure only: the reveal
+// continues from where it is instead of restarting when more text arrives.
 // SOT: docs/pack/15-native-ai-client-spec.md §1
 // SOT-KEYWORDS: streamed text chat tutor stream message ui
 

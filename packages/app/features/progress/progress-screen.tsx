@@ -1,5 +1,11 @@
 'use client';
 // ProgressScreen — persisted mastery view with live practice integration.
+// Mobbin: https://mobbin.com/screens/fc220106-b147-4b55-b43b-7d231d1b9a54 (Mindvalley — skill rows grouped
+// in one bounded card under a small section title) · https://mobbin.com/screens/4049eb3f-4010-41bf-b385-75ca29eae9f3
+// (Noom — one display moment, then section labels clearly subordinate to it) ·
+// https://mobbin.com/screens/26e848ed-2272-470d-8a78-8444b98e79eb (Ahead — the metric sits next to its
+// label, not at the far edge of the row). Structure only: the measure cap, the heading step-down, and
+// the row rhythm.
 // SOT: docs/pack/19-learning-outcomes-spec.md §3 · docs/pack/22-reporting-charts-spec.md §2
 // SOT-KEYWORDS: progress screen mastery chart learner persisted live review scaffolding
 
@@ -21,9 +27,16 @@ function masteryState(mastery: number): 'steady' | 'needs-attention' {
   return mastery < 0.5 ? 'needs-attention' : 'steady';
 }
 
+/**
+ * `Heading` sizes from its `size` variant, not its `level` — level is the tag.
+ * Both this and the page title were rendering at the default `display-md`, so
+ * "Your progress", "Practiced" and "More to explore" came out identical and the
+ * page had no hierarchy at all. One display moment per screen (CLAUDE.md §UI):
+ * the title keeps it, sections step down to `title`.
+ */
 function SectionHeading({ children }: { children: React.ReactNode }) {
   return (
-    <Heading level={4} className="text-text">{children}</Heading>
+    <Heading level={3} size="title" className="text-text">{children}</Heading>
   );
 }
 
@@ -77,9 +90,12 @@ export function ProgressScreen() {
   }));
 
   return (
-    <View className="flex-1 gap-stack p-inset">
-      <View className="gap-group">
-        <Heading level={2}>Your progress</Heading>
+    // Capped and centred. Uncapped, a mastery bar stretched the full ~1480px
+    // viewport with its percentage at the far right edge, so the label and the
+    // number it belongs to were a screen's width apart.
+    <View className="mx-auto w-full max-w-screen-md flex-1 gap-section p-inset">
+      <View className="gap-stack">
+        <Heading level={1} size="display-lg">Your progress</Heading>
         <Text className="font-sans text-body text-text-muted">
           {loading ? 'Loading your mastery...' : 'The bars show what you have mastered so far.'}
         </Text>

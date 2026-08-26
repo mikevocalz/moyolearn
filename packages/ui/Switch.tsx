@@ -47,12 +47,12 @@ export function Switch({ value, onChange, label, disabled, className }: SwitchPr
           haptics.selection();
           onChange(!value);
         }}
-        className={`relative h-7 w-12 shrink-0 rounded-md border-2 transition-colors duration-base ease-out ${
+        className={`relative h-7 w-12 shrink-0 rounded-control border-2 transition-colors duration-base ease-out ${
           value ? 'border-border-strong bg-primary' : 'border-border bg-surface-sunken'
         }`}
       >
         <View
-          className={`absolute top-[2px] h-5 w-5 rounded-sm border-2 transition-transform duration-base ease-out ${
+          className={`/* radius-exempt: thumb sits INSIDE the track; matching radii would fill the corners */ absolute top-[2px] h-5 w-5 rounded-sm border-2 transition-transform duration-base ease-out ${
             value
               ? 'translate-x-[22px] border-border-strong bg-ink-950'
               : 'translate-x-[2px] border-border bg-surface-raised'

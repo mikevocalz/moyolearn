@@ -25,15 +25,15 @@ export function SiteFooter() {
         <View className="max-w-xs gap-3">
           <View className="flex-row items-center gap-2.5">
             <View className="h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-card">
-              <TWText className="text-base font-bold text-on-primary">S</TWText>
+              <TWText className="text-base font-bold text-on-primary">M</TWText>
             </View>
             <TWText className="font-display text-lg font-bold tracking-tight text-text">
-              Starter
+              Moyo
             </TWText>
           </View>
           <P className="text-sm leading-relaxed text-text-muted">
-            One codebase for iOS, Android, and the web — screens shared through
-            Solito, styled by one token system.
+            AI tutoring that helps a child learn it by heart — and helps the
+            parents, tutors, and teachers around them help better.
           </P>
         </View>
 

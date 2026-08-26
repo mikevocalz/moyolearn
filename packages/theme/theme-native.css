@@ -119,6 +119,7 @@
   --container-pane-supplementary: 21rem;
   --container-pane-inspector: 20rem;
   --container-pane-tutor: 23.75rem;
+  --radius-control: 0.375rem;
   --radius-xs: 0.125rem;
   --radius-sm: 0.25rem;
   --radius-md: 0.375rem;
@@ -217,6 +218,9 @@
   --text-data-lg-hot: 1.25rem;
   --text-data-lg-hot--line-height: 1.3;
   --text-data-lg-hot--font-weight: 600;
+  --spacing-inset-field: 0.5625rem;
+  --spacing-inset-field-cool: 0.5625rem;
+  --spacing-inset-field-hot: 0.5625rem;
   --spacing-inset-tight: 0.75rem;
   --spacing-inset-tight-cool: 0.75rem;
   --spacing-inset-tight-hot: 1rem;
@@ -360,6 +364,7 @@
     --text-data-lg: var(--text-data-lg-hot);
     --text-data-lg--line-height: var(--text-data-lg-hot--line-height);
     --text-data-lg--font-weight: var(--text-data-lg-hot--font-weight);
+    --spacing-inset-field: var(--spacing-inset-field-hot);
     --spacing-inset-tight: var(--spacing-inset-tight-hot);
     --spacing-inset: var(--spacing-inset-hot);
     --spacing-inset-roomy: var(--spacing-inset-roomy-hot);
@@ -400,6 +405,7 @@
     --text-data-lg: var(--text-data-lg-cool);
     --text-data-lg--line-height: var(--text-data-lg-cool--line-height);
     --text-data-lg--font-weight: var(--text-data-lg-cool--font-weight);
+    --spacing-inset-field: var(--spacing-inset-field-cool);
     --spacing-inset-tight: var(--spacing-inset-tight-cool);
     --spacing-inset: var(--spacing-inset-cool);
     --spacing-inset-roomy: var(--spacing-inset-roomy-cool);

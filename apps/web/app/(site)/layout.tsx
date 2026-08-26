@@ -21,7 +21,10 @@ export default function SiteLayout({ children }: Readonly<{ children: React.Reac
     <SessionProvider>
       <Document>
         <SiteHeader />
-        <View className="min-h-screen flex-1">{children}</View>
+        {/* `flex-1`, not `min-h-screen`. The body is already a `min-h-dvh` column, so
+            forcing 100vh here stacked a full viewport on TOP of the header and footer
+            — every short screen ended in a ~200px void above the footer. */}
+        <View className="flex-1 pb-section">{children}</View>
         <SiteFooter />
       </Document>
     </SessionProvider>

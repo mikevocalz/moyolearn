@@ -113,3 +113,17 @@ export function captureLabelsForBand(ageBand: AgeBand): CaptureLabels {
       };
   }
 }
+
+/**
+ * Doc 08's four presentation bands collapse to doc 07 §3's two-value policy
+ * register. They are different things and stay different types: the UI band
+ * decides how big a button is, the plane band decides the tutor's voice and
+ * which crisis wording a child is shown.
+ *
+ * `child` maps to `young` rather than `older` because the register is a safety
+ * default — a nine-year-old shown the teenage crisis script is the failure
+ * worth avoiding, and a teenager shown a slightly plainer one is not.
+ */
+export function planeBandFor(ageBand: AgeBand): 'young' | 'older' {
+  return ageBand === 'young' || ageBand === 'child' ? 'young' : 'older';
+}

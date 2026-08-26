@@ -1,6 +1,12 @@
 'use client';
 // TutorStage — the S9 tutor session surface (doc 23 §3).
 // Renders one state of the discriminated union; no `error` or `paywall` state exists.
+// Mobbin: https://mobbin.com/screens/84573c60-48ee-428c-9cf7-c0ad14ddf7f2 (Speak — tutor turn owns the
+// full column, composer pinned full-width beneath it) · https://mobbin.com/screens/5def00a9-6228-4ccc-81a3-25cdb2fe20bd
+// (Pi — secondary affordances are small icon rows under the message, never a filled button beside the
+// composer) · https://mobbin.com/screens/9c13ada9-0c95-45c8-9932-d20010b96e14 (ChatGPT — one minimal
+// header, actions as icons). Structure only: the reading measure, the composer position, and the rule
+// that nothing sits beside the conversation unless it has content.
 // SOT: docs/pack/23-tutorstage-handoff.md §3 · §5
 // SOT-KEYWORDS: tutorstage s9 tutor session state union hot dial learner
 
@@ -62,6 +68,12 @@ export interface TutorStageProps {
   onNextHint?: () => void;
   onPracticeOnOwn?: () => void;
   onBackToPlan?: () => void;
+  /**
+   * Worked-out content for the side canvas (doc 23 §5). Omit it and the
+   * conversation takes the whole screen — an empty workspace is not a
+   * workspace, it is a large empty box competing with the thing that matters.
+   */
+  canvas?: React.ReactNode;
   className?: string;
 }
 
@@ -252,6 +264,7 @@ export function TutorStage({
   onNextHint,
   onPracticeOnOwn,
   onBackToPlan,
+  canvas,
   className,
 }: TutorStageProps) {
   const [draft, setDraft] = useState('');
@@ -272,9 +285,12 @@ export function TutorStage({
     state.kind === 'thinking';
 
   const stageBody = (
-    <View className="w-full gap-stack p-inset">
+    <View className="w-full flex-1 gap-stack p-inset">
       <Badge label={statusFor(state)} tone={statusTone(state)} />
-      <View className="flex-1 justify-center">
+      {/* Top-aligned, not centred. A turn grows downward as it streams, and a
+          vertically centred block re-centres on every arriving sentence — the
+          text slides under the reader while they are reading it. */}
+      <View className="flex-1">
         <StateBody
           state={state}
           childName={childName}
@@ -286,9 +302,22 @@ export function TutorStage({
           onBackToPlan={onBackToPlan}
         />
       </View>
-      <Composer value={draft} onChangeText={setDraft} onSend={handleSend} disabled={inputDisabled} />
+      <Composer
+        value={draft}
+        onChangeText={setDraft}
+        onSend={handleSend}
+        disabled={inputDisabled}
+        size={buttonSize}
+      />
     </View>
   );
+
+  // Doc 23 §5 sizes the tutor pane at 380px for the case it describes: a
+  // conversation running BESIDE a worked canvas. With no canvas that split put a
+  // 380px column of content next to a ~1000px empty bordered box, which read as
+  // the empty box being the subject of the screen. So the canvas is opt-in, and
+  // without one the conversation gets the screen and a readable measure cap.
+  const twoPane = sizeClass === 'regular' && canvas !== undefined;
 
   return (
     <Dial temperature="hot">
@@ -299,13 +328,13 @@ export function TutorStage({
           onBack={onBack}
           onToggleCaptions={onToggleCaptions}
         />
-        {sizeClass === 'regular' ? (
+        {twoPane ? (
           <View className="flex-1 flex-row gap-group p-inset">
             <View className="w-pane-tutor">{stageBody}</View>
-            <LearningCanvas className="flex-1" />
+            <LearningCanvas className="flex-1">{canvas}</LearningCanvas>
           </View>
         ) : (
-          <View className="flex-1">{stageBody}</View>
+          <View className="mx-auto w-full max-w-content-prose flex-1">{stageBody}</View>
         )}
       </View>
     </Dial>

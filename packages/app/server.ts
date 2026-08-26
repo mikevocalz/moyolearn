@@ -31,3 +31,7 @@ export {
   type LoadGradeBand,
 } from './features/tutor/coach.service';
 export { PEDAGOGY_CONTRACT, revealsAnswer } from './features/tutor/pedagogy';
+export {
+  saveLearnerProfile,
+  type SaveGradeBand,
+} from './features/onboarding/learner-profile.service';
