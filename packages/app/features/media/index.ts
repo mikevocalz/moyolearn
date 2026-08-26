@@ -8,3 +8,5 @@ export { uploadTransport, type UploadInput, type UploadTransport } from './trans
 export { uploadVoiceNote, type UploadedVoiceNote } from './upload-voice-note';
 export { renderWaveform, type RenderedWaveform } from './render-waveform';
 export { useVideoUpload, type VideoPhase, type VideoFile } from './use-video-upload';
+export { useVideoRecorder, type RecorderPhase, type StopReason } from './use-video-recorder';
+export { VIDEO_MAX_SECONDS, VIDEO_MAX_BYTES, formatClock } from './video-note.constants.ts';
