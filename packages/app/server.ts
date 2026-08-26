@@ -56,7 +56,9 @@ export {
 export { orgBrandingFor, type OrgBranding, type LoadOrgBranding } from './features/org';
 export {
   presignUpload,
+  presignVoiceNote,
   PresignRejected,
+  type VoiceNotePresign,
   MAX_BYTES,
   type PresignRequest,
   type PresignResult,

@@ -17,7 +17,12 @@ import 'server-only';
 import type { ProtectedCtx } from '../../core/protected-operation.ts';
 import { MAX_BYTES, type MediaKind, type PresignResult } from './media.types.ts';
 // Pure, and therefore testable — see the header of that file.
-import { assertUploadable, buildKey, PresignRejected } from './presign.rules.ts';
+import {
+  assertUploadable,
+  buildKey,
+  buildVoiceNoteKeys,
+  PresignRejected,
+} from './presign.rules.ts';
 
 export { PresignRejected };
 
@@ -66,4 +71,35 @@ export function presignUpload(
   const key = buildKey(kind, owner, filename, id, now());
 
   return signUpload(key, contentType);
+}
+
+export interface VoiceNotePresign {
+  audio: PresignResult;
+  waveform: PresignResult;
+}
+
+/**
+ * A voice note is two objects that must share a folder, so it gets one call.
+ *
+ * The waveform is rendered on the device from the levels captured while
+ * recording, then uploaded beside the audio. Rendering it server-side would mean
+ * shipping the audio to us first, which is the one thing this architecture
+ * exists to avoid.
+ */
+export function presignVoiceNote(
+  ctx: ProtectedCtx,
+  request: { contentType: string; size: number; audioExtension: string },
+  signUpload: SignUpload,
+  now: () => Date = () => new Date(),
+): VoiceNotePresign {
+  assertUploadable('audio', request.contentType, request.size);
+
+  const owner = ctx.orgId ?? ctx.learnerId;
+  const id = globalThis.crypto.randomUUID();
+  const keys = buildVoiceNoteKeys(owner, request.audioExtension, id, now());
+
+  return {
+    audio: signUpload(keys.audio, request.contentType),
+    waveform: signUpload(keys.waveform, 'image/png'),
+  };
 }

@@ -234,6 +234,7 @@ export {
 export {
   tusUrlStorage,
   useBunnyUpload,
+  uploadVoiceNote,
   MAX_BYTES,
   type TusUrlStorage,
   type MediaKind,

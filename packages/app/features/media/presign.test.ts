@@ -4,7 +4,13 @@
 // SOT-KEYWORDS: presign media upload validation test limits key ownership
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { assertUploadable, buildKey, PresignRejected, safeName } from './presign.rules.ts';
+import {
+  assertUploadable,
+  buildKey,
+  buildVoiceNoteKeys,
+  PresignRejected,
+  safeName,
+} from './presign.rules.ts';
 import { MAX_BYTES, type MediaKind } from './media.types.ts';
 
 const AT = new Date('2026-08-26T12:00:00Z');
@@ -68,5 +74,34 @@ describe('presign rules', () => {
       assert.ok(!safeName(bad).includes('/'), bad);
       assert.ok(!safeName(bad).includes('..'), bad);
     }
+  });
+});
+
+describe('voice note keys', () => {
+  const keys = buildVoiceNoteKeys('riverside-unified', 'm4a', 'abc', AT);
+
+  it('puts the audio and its waveform in the same folder', () => {
+    // The editor node carries ONLY the waveform URL, so the audio URL has to be
+    // recoverable from it. Different folders would break that silently.
+    const base = (k: string) => k.slice(0, k.lastIndexOf('/'));
+    assert.equal(base(keys.audio), base(keys.waveform));
+  });
+
+  it('names them exactly what audioUrlFromWaveform expects', () => {
+    assert.ok(keys.audio.endsWith('/audio.m4a'), keys.audio);
+    assert.ok(keys.waveform.endsWith('/waveform.png'), keys.waveform);
+  });
+
+  it('keeps the real extension so a webm recording is not mislabelled', () => {
+    assert.ok(buildVoiceNoteKeys('o', 'webm', 'id', AT).audio.endsWith('/audio.webm'));
+  });
+
+  it('falls back to m4a rather than emitting an extensionless object', () => {
+    assert.ok(buildVoiceNoteKeys('o', '', 'id', AT).audio.endsWith('/audio.m4a'));
+    assert.ok(buildVoiceNoteKeys('o', '../x', 'id', AT).audio.endsWith('/audio.x'));
+  });
+
+  it('scopes to the owner, like every other key', () => {
+    assert.ok(keys.audio.startsWith('audio/riverside-unified/'), keys.audio);
   });
 });

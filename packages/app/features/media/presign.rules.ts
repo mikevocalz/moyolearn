@@ -58,3 +58,28 @@ export const buildKey = (
   id: string,
   now: Date,
 ): string => `${kind}/${owner}/${now.toISOString().slice(0, 10)}/${id}/${safeName(filename)}`;
+
+/**
+ * The two keys a voice note needs, in ONE folder.
+ *
+ * `features/editor/upload.ts` requires the waveform image to sit beside the
+ * audio — `<base>/waveform.png` next to `<base>/audio.m4a` — because the inline
+ * editor node carries only the image URL and the audio URL has to be
+ * recoverable from it (`audioUrlFromWaveform`).
+ *
+ * They are minted TOGETHER rather than by two calls, and that is the security
+ * point as much as the convenience one: two independent presigns would land in
+ * two different folders, and the only way to make them agree would be to let the
+ * client name the second key — which is exactly the thing the rest of this file
+ * refuses to allow.
+ */
+export const buildVoiceNoteKeys = (
+  owner: string,
+  audioExtension: string,
+  id: string,
+  now: Date,
+): { audio: string; waveform: string } => {
+  const ext = audioExtension.replace(/[^a-z0-9]/gi, '').toLowerCase() || 'm4a';
+  const base = `audio/${owner}/${now.toISOString().slice(0, 10)}/${id}`;
+  return { audio: `${base}/audio.${ext}`, waveform: `${base}/waveform.png` };
+};

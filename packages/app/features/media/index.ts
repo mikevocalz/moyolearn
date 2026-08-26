@@ -5,3 +5,4 @@ export { tusUrlStorage, type TusUrlStorage } from './tus-url-storage';
 export { MAX_BYTES, type MediaKind, type PresignResult } from './media.types.ts';
 export { useBunnyUpload, type UploadPhase, type PickedFile } from './use-bunny-upload';
 export { uploadTransport, type UploadInput, type UploadTransport } from './transport';
+export { uploadVoiceNote, type VoiceNoteSources, type UploadedVoiceNote } from './upload-voice-note';
