@@ -17,6 +17,7 @@
  * foot of this file with the reason, rather than left as dead buttons.
  */
 import type { EnrichedTextInputInstance } from 'react-native-enriched-html';
+import type { VoiceRecording } from '@acme/ui';
 import {
   INLINE_WAVEFORM_HEIGHT,
   INLINE_WAVEFORM_WIDTH,
@@ -69,14 +70,22 @@ export interface CapabilityContext {
   pickImage?: () => Promise<{ uri: string; width: number; height: number } | null>;
   /** Resolves a file to link. Supplied by the host screen. */
   pickFile?: () => Promise<{ uri: string; name: string } | null>;
-  /** Records a voice note. Native only — see AudioRecorderSheet.web. */
-  recordAudio?: () => Promise<{ uri: string; duration: number } | null>;
+  /**
+   * Records a voice note. Native only — see AudioRecorderSheet.web.
+   *
+   * Returns the whole `VoiceRecording`, `levels` included. It used to be typed
+   * as just `{ uri, duration }`, which threw away the one thing the waveform is
+   * drawn from and made the documented inline-waveform behaviour impossible to
+   * implement against this type.
+   */
+  recordAudio?: () => Promise<VoiceRecording | null>;
   /**
    * Uploads the recording and returns its remote URLs.
    *
    * Omit and the voice note falls back to a link to the local file. Supply it
-   * and the note goes INLINE as the server-rendered waveform — the recording is
-   * removed from the device, so a local path must not reach a saved note.
+   * and the note goes INLINE as the waveform image — rendered on the device from
+   * the captured levels, then uploaded beside the audio. The recording is
+   * removed afterwards, so a local path must not reach a saved note.
    */
   uploadVoiceNote?: UploadVoiceNote;
   /** Collects a URL from the user. Supplied by the host screen. */
@@ -252,7 +261,7 @@ export const CAPABILITIES = [
       // note must never be written holding the local `file://` path — it would
       // point at nothing by the time anyone opened the note.
       if (uploadVoiceNote !== undefined) {
-        const uploaded = await uploadVoiceNote(recording.uri, recording.duration);
+        const uploaded = await uploadVoiceNote(recording);
         // Inline, at the caret: the waveform the server rendered. Same
         // mechanism as a video thumbnail, which is the only kind of node this
         // editor's span-based layout can place in the text flow.

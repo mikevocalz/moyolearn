@@ -1,12 +1,17 @@
 'use client';
 import { create } from 'zustand';
+import type { VoiceRecording } from '@acme/ui';
 
-export interface Recording {
-  /** File URI of the finished recording. */
-  uri: string;
-  /** Length in seconds, as reported by the recorder. */
-  duration: number;
-}
+/*
+  The recorder's own type, not a narrower copy of it.
+
+  This used to redeclare `{ uri, duration }` and drop `levels` — so the levels
+  captured while recording were thrown away one line after they were produced,
+  and the inline waveform that `features/editor/upload.ts` documents could not be
+  drawn from anything. A duplicated type that is a subset of the real one is how
+  a field disappears without anybody deleting it.
+*/
+export type Recording = VoiceRecording;
 
 /**
  * The voice-note recorder's open state.

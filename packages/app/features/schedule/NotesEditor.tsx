@@ -7,6 +7,7 @@ import {
 } from 'react-native-enriched-html';
 import { View, Text } from '@acme/ui/tw';
 import { AudioPlayer } from '@acme/ui';
+import { uploadVoiceNote } from '../media';
 import { Section } from '@acme/ui/primitives';
 import { palette } from '@acme/theme';
 import {
@@ -158,6 +159,13 @@ export function NotesEditor({
     // request across that boundary and settles when the user picks or cancels.
     pickFile: () => requestAttachment(),
     recordAudio: () => requestRecording(),
+    /*
+      Supplying this is what stops a note keeping a `file://` link. Without it
+      `capabilities.ts` takes its fallback branch and writes a link to the local
+      recording — dead as soon as the file is cleaned up or the app reinstalled,
+      exactly what the header of features/editor/upload.ts warns against.
+    */
+    uploadVoiceNote,
     selection,
     undo: () => restore(undoHistory(history)),
     redo: () => restore(redoHistory(history)),

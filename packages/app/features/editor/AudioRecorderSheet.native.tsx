@@ -37,9 +37,9 @@ export function AudioRecorderSheet() {
           </View>
 
           <VoiceRecorder
-            onComplete={(recording) =>
-              resolve({ uri: recording.uri, duration: recording.duration })
-            }
+            // The whole recording, levels included — the waveform is drawn from
+            // them, and this line is where they used to be discarded.
+            onComplete={resolve}
             onCancel={() => resolve(null)}
           />
         </View>

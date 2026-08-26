@@ -12,6 +12,8 @@
  * could — YouTube hosts a thumbnail. Once the server returns a rendered
  * waveform image, audio becomes inline by exactly the same mechanism.
  */
+import type { VoiceRecording } from '@acme/ui';
+
 export interface UploadedVoiceNote {
   /** Playable audio, served remotely. Replaces the local recording. */
   audioUrl: string;
@@ -28,7 +30,15 @@ export interface UploadedVoiceNote {
   duration: number;
 }
 
-export type UploadVoiceNote = (localUri: string, duration: number) => Promise<UploadedVoiceNote>;
+/*
+  Takes the whole recording, not a URI and a duration.
+
+  It used to take `(localUri, duration)`, which dropped `levels` — and levels are
+  exactly what the waveform image is drawn from. The old signature made the
+  documented waveform requirement unimplementable, which is part of why it stayed
+  unimplemented.
+*/
+export type UploadVoiceNote = (recording: VoiceRecording) => Promise<UploadedVoiceNote>;
 
 /** The shared-id convention above, as code. */
 const WAVEFORM = /^(.*)\/waveform\.(png|jpg|jpeg|webp)$/i;

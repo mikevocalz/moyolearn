@@ -10,23 +10,18 @@
 // player that 404s forever.
 // SOT: packages/app/features/editor/upload.ts
 // SOT-KEYWORDS: voice note upload audio waveform bunny presign editor inline
+import type { VoiceRecording } from '@acme/ui';
 import { uploadTransport } from './transport';
+import { renderWaveform } from './render-waveform';
+import { fileSize } from './file-size';
 import type { PresignResult } from './media.types.ts';
+
+/** 16:5 — wide and short, so a waveform reads as audio rather than a photo. */
+const WAVEFORM_WIDTH = 320;
+const WAVEFORM_HEIGHT = 100;
 
 const API_URL =
   process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
-
-export interface VoiceNoteSources {
-  /** Local recording URI. */
-  uri: string;
-  /** Seconds, measured at record time. */
-  duration: number;
-  /** e.g. `audio/m4a`. Signed by the server, so it must be sent verbatim. */
-  contentType: string;
-  size: number;
-  /** PNG bytes of the rendered waveform, and its own size. */
-  waveform: { uri: string; size: number };
-}
 
 export interface UploadedVoiceNote {
   audioUrl: string;
@@ -48,18 +43,26 @@ const extensionOf = (contentType: string, uri: string): string => {
  * stall at 99% for the part nobody is waiting on.
  */
 export async function uploadVoiceNote(
-  sources: VoiceNoteSources,
+  recording: VoiceRecording,
   onProgress?: (sent: number, total: number) => void,
   signal?: AbortSignal,
 ): Promise<UploadedVoiceNote> {
+  /*
+    The waveform is drawn HERE rather than by the caller, so every call site
+    cannot get it subtly different — the image has to match the live meter, and
+    it has to land beside the audio. One place owns both facts.
+  */
+  const waveform = await renderWaveform(recording.levels, WAVEFORM_WIDTH, WAVEFORM_HEIGHT);
+  const contentType = recording.uri.endsWith('.webm') ? 'audio/webm' : 'audio/m4a';
+  const size = await fileSize(recording.uri);
   const res = await fetch(`${API_URL}/api/media/voice-note`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify({
-      contentType: sources.contentType,
-      size: sources.size,
-      audioExtension: extensionOf(sources.contentType, sources.uri),
+      contentType,
+      size,
+      audioExtension: extensionOf(contentType, recording.uri),
     }),
     signal,
   });
@@ -71,15 +74,15 @@ export async function uploadVoiceNote(
   }
 
   await uploadTransport({
-    file: { uri: sources.uri, name: 'audio', type: sources.contentType, size: sources.size },
+    file: { uri: recording.uri, name: 'audio', type: contentType, size },
     url: body.audio.uploadUrl,
-    contentType: sources.contentType,
+    contentType,
     onProgress: (sent, total) => onProgress?.(sent, total),
     signal,
   });
 
   await uploadTransport({
-    file: { uri: sources.waveform.uri, name: 'waveform.png', type: 'image/png', size: sources.waveform.size },
+    file: { uri: waveform.uri, name: 'waveform.png', type: 'image/png', size: waveform.size },
     url: body.waveform.uploadUrl,
     contentType: 'image/png',
     onProgress: () => {},
@@ -89,6 +92,6 @@ export async function uploadVoiceNote(
   return {
     audioUrl: body.audio.publicUrl,
     waveformUrl: body.waveform.publicUrl,
-    duration: sources.duration,
+    duration: recording.duration,
   };
 }
