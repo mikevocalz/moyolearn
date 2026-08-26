@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { buildConfig } from 'payload';
 import sharp from 'sharp';
 import { mcpPlugin } from '@payloadcms/plugin-mcp';
+import { bunnyStorage } from '@seshuk/payload-storage-bunny';
 import { Users } from './collections/Users';
 import { Media } from './collections/Media';
 import { Guardianships } from './collections/Guardianships';
@@ -75,6 +76,45 @@ export default buildConfig({
   secret: process.env.PAYLOAD_SECRET || '',
   sharp,
   plugins: [
+    /*
+      Admin-panel uploads go to Bunny, not to local disk.
+
+      `Media` is `upload: true` with no storage adapter, which means Payload
+      writes to the filesystem next to the config — a path that survives neither
+      a serverless deploy nor a second instance, so anything uploaded through the
+      admin was effectively lost on the next deploy.
+
+      `prefix` namespaces us inside a zone SHARED with sosinspires-mono. It is a
+      namespace, not a boundary: the credential still opens the whole zone.
+
+      This adapter is patched (see patches/) — it targets Payload 3 and imports
+      `initClientUploads`, which Payload 4 removed. The patch vendors that one
+      function; everything else it imports still exists.
+
+      Note this covers the ADMIN path only. Doc 29 §3's learner/guardian uploads
+      go client-direct to Bunny with a server-minted presigned URL and never pass
+      through here — see docs/decisions/bunny-storage-presign-spike.md.
+    */
+    ...(process.env.BUNNY_STORAGE_ACCESS_KEY
+      ? [
+          bunnyStorage({
+            collections: {
+              media: {
+                prefix: (process.env.BUNNY_MEDIA_PREFIX ?? 'moyolearn/').replace(/\/$/, ''),
+                disablePayloadAccessControl: true,
+              },
+            },
+            storage: {
+              apiKey: process.env.BUNNY_STORAGE_ACCESS_KEY,
+              hostname: new URL(
+                process.env.NEXT_PUBLIC_BUNNY_CDN_BASE_URL ?? 'https://example.b-cdn.net',
+              ).host,
+              zoneName: process.env.BUNNY_STORAGE_ZONE_NAME ?? '',
+              region: process.env.BUNNY_STORAGE_REGION,
+            },
+          }),
+        ]
+      : []),
     mcpPlugin({
       // `users` is deliberately absent. It is the auth collection and it is where
       // learner identity lands — doc 13 keeps learner data off machine-readable

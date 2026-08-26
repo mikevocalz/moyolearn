@@ -19,7 +19,9 @@ whole point. It also warns that CORS "is not configurable".
 ## What was actually measured
 
 Signed with SigV4 against the live zone (region `ny`), Access Key ID = storage
-zone name, Secret = zone password.
+zone name, Secret = zone password. **The zone name is discoverable**: a signed
+`ListBuckets` against the S3 endpoint returns it, so only the password is needed
+to find it — which is how `moyolearn` was recovered rather than asked for.
 
 | Test | Result |
 |---|---|
@@ -67,12 +69,17 @@ transcode phase, so an image is done when the PUT completes.
 - **Credentials are all-or-nothing.** Access Key ID is the zone name and Secret is
   the zone password; there is no scoped write key. That is precisely why the
   presigned URL must be minted server-side and the key must never ship.
-- **The zone is shared with sosinspires-mono.** One credential opens both
-  products' media. Everything Moyo writes is namespaced under `moyolearn/`
-  (`BUNNY_MEDIA_PREFIX`), but the namespace is a convention, not a boundary —
-  the key can still read and write outside it. Splitting the zone is the fix
-  before this carries real children's media.
-- 500 RPS combined up+down, 1 Gbps, both shared with SOS.
+- **Moyo now owns its zone** (`moyolearn`, region `ny`, S3 compatibility on).
+  The spike was first run against a zone shared with sosinspires-mono, where one
+  credential opened both products' media; that risk is gone. Re-verified against
+  the Moyo zone with identical results: signed list 200, credential-free
+  presigned PUT 200, preflight 204 `*`, and a full `payload.create()` landing
+  bytes at `https://moyolearn.b-cdn.net/moyolearn/…` with `payload.delete()`
+  cascading.
+- **The `moyolearn/` prefix is now redundant** — a dedicated zone means the path
+  reads `moyolearn.b-cdn.net/moyolearn/…`. Harmless, but this is the cheapest
+  moment to drop it, since no production object exists yet.
+- 500 RPS combined up+down, 1 Gbps.
 - No batch delete, no custom `x-amz-meta-*`, no versioning, no ACLs, no SSE.
 - `Content-Type` signed into the URL must match the header the client sends, or
   the signature fails.
