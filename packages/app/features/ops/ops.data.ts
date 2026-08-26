@@ -5,7 +5,7 @@
 // the row shape, the stage tone map, and the k-anonymity rule — plus the two
 // panels (today's sessions, revenue by month) whose collections do not exist
 // yet.
-// SOT: docs/pack/28-crm-spec.md §2 (object model) · §3 (pipeline) · docs/pack/19-learning-outcomes-spec.md §5
+// SOT: docs/pack/28-crm-spec.md §2 (object model) · §3 (pipeline) · docs/pack/19-learning-outcomes-spec.md §3–§4 · docs/pack/27-reporting-charts-spec.md §4
 // SOT-KEYWORDS: ops dashboard crm leads sessions pipeline stage suppression k-anonymity cohort
 import type { Suppressible, TrendPoint } from '@acme/ui';
 
@@ -34,11 +34,17 @@ export interface Lead {
 }
 
 /**
- * The smallest cohort whose aggregate a human may see. Doc 19 §5 requires
- * small-cell suppression on every human-viewed aggregate but fixes no number;
- * 10 is the ESSA n-size most states report against, so it is the defensible
- * default. It is a single constant because a threshold that appears twice is a
- * threshold that will disagree with itself.
+ * The smallest cohort whose aggregate a human may see.
+ *
+ * Doc 19 §3–§4 requires small-cell suppression on every human-viewed aggregate
+ * and doc 27 §4 requires a suppressed cell to say so rather than render zero —
+ * but NO document in the pack states a number. 10 is the ESSA n-size most
+ * states report against, so it is the defensible default, and it is a decision
+ * this file is making rather than one it is quoting.
+ *
+ * One constant, because a threshold that appears twice is a threshold that will
+ * disagree with itself — which it already did: the dashboard footer promised
+ * suppression under 5 while this said 10.
  */
 export const MIN_COHORT = 10;
 

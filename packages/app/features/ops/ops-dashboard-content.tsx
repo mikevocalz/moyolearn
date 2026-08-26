@@ -50,7 +50,7 @@ import {
   type Suppressible,
 } from '@acme/ui';
 import { Text, View } from '@acme/ui/primitives';
-import { REVENUE_BY_MONTH, STAGE_TONE, TODAY_SESSIONS, type Lead } from './ops.data';
+import { MIN_COHORT, REVENUE_BY_MONTH, STAGE_TONE, TODAY_SESSIONS, type Lead } from './ops.data';
 import { useLeads } from './use-leads';
 import { useViewParams } from './use-view-params';
 import type { LeadSortField } from './ops.service';
@@ -436,8 +436,14 @@ export function OpsDashboardContent({ today, operatorName }: OpsDashboardContent
             */
             <>
               <Text className="text-caption text-text-muted">
+                {/*
+                  The threshold is INTERPOLATED, not typed. This line read
+                  "under 5" while the rule was 10, so the interface was
+                  publishing a privacy promise the code did not keep — and the
+                  number a reader trusts is the one on screen.
+                */}
                 {rows.length} of {total} shown · {totalUnfiltered} families total · attendance
-                hidden for groups under 5
+                hidden for groups under {MIN_COHORT}
               </Text>
               <View className="flex-row items-center gap-element">
                 <Button
