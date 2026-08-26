@@ -17,7 +17,6 @@
   "packages/app/features/editor/prompt-url.tsx",
   "packages/app/features/editor/reorder-row.tsx",
   "packages/app/features/editor/settings-scroller.tsx",
-  "packages/app/features/error/screen.shared.tsx",
   "packages/app/features/explore/explore-content.tsx",
   "packages/app/features/family-calendar/family-calendar-content.tsx",
   "packages/app/features/home/home-content.tsx",

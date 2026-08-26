@@ -32,9 +32,10 @@ export function Composer({
   className,
 }: ComposerProps) {
   const canSend = !disabled && value.trim().length > 0;
-  // Grows with what is typed on web; a no-op on native, where the multiline
-  // TextInput already does it.
-  const { ref: fieldRef } = useAutoGrow(value);
+  // Grows with what is typed. The two platforms use different mechanisms —
+  // `scrollHeight` on web, `onContentSizeChange` on native — so the hook returns
+  // props to spread rather than a single ref.
+  const autoGrow = useAutoGrow(value);
 
   const handleSubmit = useCallback(() => {
     if (canSend) onSend();
@@ -53,7 +54,7 @@ export function Composer({
           grows with what is typed; the FIELD sets the row height and the button
           follows it, rather than a 64px button stretching a 47px field. */}
       <Textarea
-        ref={fieldRef}
+        {...autoGrow}
         value={value}
         onChangeText={onChangeText}
         placeholder={placeholder}

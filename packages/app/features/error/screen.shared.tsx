@@ -5,6 +5,16 @@
 // answer for "this page is missing" and it is not a centred stack of grey text.
 // SOT: docs/pack/08-visual-hierarchy-spacing-spec.md §3.2 (hierarchy recipe)
 // SOT-KEYWORDS: error screen 404 not-found failure boundary ruled paper sheet
+// Mobbin: https://mobbin.com/screens/7c9797be-c1fc-432b-a251-d74b0e0f3728 (Rive —
+//   asymmetric copy-left/artefact-right, artefact oversized and off-axis) ·
+//   https://mobbin.com/screens/e556dced-1023-41a8-a567-7a4d24570b72 (Contractbook —
+//   a quotable error reference in a quiet strip under the actions) ·
+//   https://mobbin.com/screens/bd98fbd3-903c-4b52-9a17-fd3ce92fc0ad (Height — "try
+//   again" is a different verb from "go home", so both get a button) ·
+//   https://mobbin.com/screens/f8e16f35-df5d-4f58-bdd2-cb93ce432ada (Headspace —
+//   the copy, not an illustration, carries the warmth) ·
+//   https://mobbin.com/screens/a7b3ff5b-38e8-4d00-8b50-0900ee10f423 (Coinbase — a
+//   404 inside app chrome keeps its navigation)
 import { View, H1, Text } from '@acme/ui/tw';
 import { Container, Button, FadeIn, ScaleIn } from '@acme/ui';
 
