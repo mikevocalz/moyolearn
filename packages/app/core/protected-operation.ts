@@ -35,6 +35,12 @@ export async function protectedOperation<R>(
     return operation({
       learnerId: 'dev-learner-1',
       isLearner: true,
+      /*
+        The mock session carries an org too. Without one every org-scoped read
+        fails closed to an empty result, and the ops dashboard looks broken in
+        exactly the mode it is meant to be developed in.
+      */
+      orgId: 'dev-org-1',
     });
   }
 

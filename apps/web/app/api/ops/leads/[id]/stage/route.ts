@@ -3,6 +3,7 @@
 // SOT-KEYWORDS: ops api lead stage write pipeline protected operation route
 import { NextRequest, NextResponse } from 'next/server';
 import { MANUAL_STAGES, commitStageChange, protectedOperation } from '@acme/app/server';
+import { saveLeadStage } from '@/lib/leads.repository';
 import { auth } from '@/lib/auth';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -19,10 +20,16 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       if (!stage) {
         return { ok: false as const, error: `\`${body.stage}\` is not a stage you can move a family to.` };
       }
-      // Persistence is the fixture layer's in-memory map until the CRM
-      // repositories land (doc 28 PR-72). Everything around it — auth, tenancy
-      // from ctx, validation, response shape — is already the real contract.
-      commitStageChange({ leadId: id, to: stage });
+      /*
+        A miss is reported, not swallowed. The write is scoped to the caller's
+        org in the repository, so "no row matched" means the id belongs to
+        nobody the caller can see — answering `ok` there would leave the
+        optimistic row showing a stage the database never took.
+      */
+      const saved = await commitStageChange(ctx, { leadId: id, to: stage }, saveLeadStage);
+      if (!saved) {
+        return { ok: false as const, error: 'That family is no longer in your pipeline.' };
+      }
       return { ok: true as const, id, stage, orgId: ctx.orgId };
     });
 

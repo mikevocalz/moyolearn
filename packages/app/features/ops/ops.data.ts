@@ -1,8 +1,12 @@
-// Demo fixtures for the ops dashboard until the CRM repositories land (doc 28
-// PR-72/73). Kept in one file so the screen imports a shape, not a literal, and
-// swapping in the real service is a one-import change.
-// SOT: docs/pack/28-crm-spec.md §2 (object model) · §3 (pipeline)
-// SOT-KEYWORDS: ops dashboard crm demo fixtures leads sessions pipeline stage
+// The ops dashboard's shared shapes and read-time disclosure policy.
+//
+// Leads are NO LONGER a fixture: they come from the `leads` collection through
+// `leads.repository`. What stays here is what both sides of that boundary need —
+// the row shape, the stage tone map, and the k-anonymity rule — plus the two
+// panels (today's sessions, revenue by month) whose collections do not exist
+// yet.
+// SOT: docs/pack/28-crm-spec.md §2 (object model) · §3 (pipeline) · docs/pack/19-learning-outcomes-spec.md §5
+// SOT-KEYWORDS: ops dashboard crm leads sessions pipeline stage suppression k-anonymity cohort
 import type { Suppressible, TrendPoint } from '@acme/ui';
 
 /** Doc 28 §3 — the trial is a first-class stage, not a note. */
@@ -29,6 +33,30 @@ export interface Lead {
   needsAttention?: boolean;
 }
 
+/**
+ * The smallest cohort whose aggregate a human may see. Doc 19 §5 requires
+ * small-cell suppression on every human-viewed aggregate but fixes no number;
+ * 10 is the ESSA n-size most states report against, so it is the defensible
+ * default. It is a single constant because a threshold that appears twice is a
+ * threshold that will disagree with itself.
+ */
+export const MIN_COHORT = 10;
+
+/**
+ * Decides attendance disclosure at READ time, never at write time.
+ *
+ * The row stores the raw percentage (doc 28 §2); suppression is a property of
+ * who is asking and how big the cohort is, so baking it into the row would
+ * freeze one reader's answer for every reader.
+ */
+export function attendanceCell(
+  attendancePct: number | null | undefined,
+  cohortSize: number | null | undefined,
+): Suppressible<string> {
+  if (attendancePct == null || (cohortSize ?? 0) < MIN_COHORT) return { suppressed: true };
+  return { value: `${Math.round(attendancePct)}%` };
+}
+
 export interface Session {
   id: string;
   time: string;
@@ -43,16 +71,6 @@ export const TODAY_SESSIONS: readonly Session[] = [
   { id: 's1', time: '09:00–09:45', learner: 'Maya Rodriguez', subject: 'Algebra II', tutor: 'Priya Raman', mode: 'Virtual' },
   { id: 's2', time: '10:00–10:45', learner: 'Daniel Okafor', subject: 'Trial · Fractions', tutor: 'Marcus Bell', mode: 'In person', needsAttention: true },
   { id: 's3', time: '14:30–15:15', learner: 'Elena Fischer', subject: 'Reading', tutor: 'Priya Raman', mode: 'Virtual' },
-];
-
-export const LEADS: readonly Lead[] = [
-  { id: 'l1', family: 'Okafor', learner: 'Daniel', subject: 'Fractions', stage: 'Trial scheduled', owner: 'Amara', nextSession: '10:00', sessions: 1, value: '$45', attendance: { suppressed: true }, needsAttention: true },
-  { id: 'l2', family: 'Whitfield', learner: 'Noah', subject: 'Algebra I', stage: 'Proposal', owner: 'Amara', nextSession: '—', sessions: 0, value: '$0', attendance: { suppressed: true }, needsAttention: true },
-  { id: 'l3', family: 'Bell', learner: 'Sofia', subject: 'Reading', stage: 'At risk', owner: 'Jonah', nextSession: '14:30', sessions: 11, value: '$495', attendance: { value: '61%' }, needsAttention: true },
-  { id: 'l4', family: 'Rodriguez', learner: 'Maya', subject: 'Algebra II', stage: 'Enrolled', owner: 'Amara', nextSession: '09:00', sessions: 24, value: '$1,080', attendance: { value: '96%' } },
-  { id: 'l5', family: 'Fischer', learner: 'Elena', subject: 'Reading', stage: 'Enrolled', owner: 'Jonah', nextSession: '16:00', sessions: 38, value: '$1,710', attendance: { value: '99%' } },
-  { id: 'l6', family: 'Adeyemi', learner: 'Tomi', subject: 'Chemistry', stage: 'Trial completed', owner: 'Jonah', nextSession: '—', sessions: 1, value: '$45', attendance: { suppressed: true } },
-  { id: 'l7', family: 'Nakamura', learner: 'Rin', subject: 'Geometry', stage: 'Inquiry', owner: 'Amara', nextSession: '—', sessions: 0, value: '$0', attendance: { suppressed: true } },
 ];
 
 export const STAGE_TONE = {

@@ -2,48 +2,39 @@ import 'server-only';
 // Lead listing for the ops dashboard — cursor paginated, sorted and filtered on
 // the server so the client never pulls a whole CRM table to slice it locally.
 //
-// The data source is still the doc-28 fixture set: the CRM collections land with
-// PR-72. Everything ABOVE this function is already the real contract — cursor
-// semantics, the filter shape, the response envelope — so swapping the fixture
-// array for a repository call is a change to this file and nothing else.
+// The rows come from the `leads` collection through a repository port. This file
+// owns the read model — cursor semantics, the filter shape, the response
+// envelope, the tenant guard — and knows nothing about Payload; `leads.repository`
+// in apps/web is the only place that does (CLAUDE.md · The block).
 // SOT: docs/pack/28-crm-spec.md §2–§3
-// SOT-KEYWORDS: ops service leads cursor pagination filter sort server-only crm
-import { LEADS, type Lead, type Stage } from './ops.data';
-import { applyStageChange, type StageChange } from './stage-change';
+// SOT-KEYWORDS: ops service leads cursor pagination filter sort server-only crm repository
+import type { ProtectedCtx } from '../../core/protected-operation';
+import type { Lead, Stage } from './ops.data';
+import { clearsAttention, type StageChange } from './stage-change';
 
-/*
-  In-memory stage overrides, so a write is visible on the next read.
+/** Repository ports — the caller provides the Payload adapters. */
+export type LoadLeads = (ctx: ProtectedCtx) => Promise<readonly Lead[]>;
 
-  Without this the route validated a change and discarded it, the optimistic row
-  reverted on the refetch, and the feature looked broken while behaving
-  correctly — the server genuinely had not changed.
+/**
+ * Persists one stage move. Resolves FALSE when no lead in the caller's org has
+ * that id, so a cross-tenant id fails loudly instead of reporting a write that
+ * never happened.
+ */
+export type SaveLeadStage = (
+  ctx: ProtectedCtx,
+  leadId: string,
+  patch: LeadStagePatch,
+) => Promise<boolean>;
 
-  Keyed off `globalThis`, not a plain module const: Next bundles each route
-  separately, so `GET /leads` and `POST /leads/:id/stage` each got their OWN
-  copy of this module and the write landed in a Map the read never saw. Same
-  reason the Prisma-client singleton is written this way. It also survives HMR,
-  which would otherwise reset the fixture on every save.
-
-  Process-local and lost on restart, which is what a fixture should be; the CRM
-  repositories (doc 28 PR-72) replace this map, not the code around it.
-*/
-const OVERRIDES_KEY = Symbol.for('@acme/app/ops/stage-overrides');
-const globalStore = globalThis as typeof globalThis & {
-  [OVERRIDES_KEY]?: Map<string, Stage>;
-};
-const stageOverrides = (globalStore[OVERRIDES_KEY] ??= new Map<string, Stage>());
-
-export function commitStageChange(change: StageChange): void {
-  stageOverrides.set(change.leadId, change.to);
+export interface LeadStagePatch {
+  stage: Stage;
+  /**
+   * Only ever `false`, and only when the move clears the flag. Absent means
+   * "leave it alone" — a write that always sent a boolean would re-raise the
+   * flag on every move the scorer had just cleared.
+   */
+  needsAttention?: false;
 }
-
-const withOverrides = (): Lead[] => {
-  let rows = LEADS.map((lead) => ({ ...lead }));
-  for (const [leadId, to] of stageOverrides) {
-    rows = applyStageChange(rows, { leadId, to });
-  }
-  return rows;
-};
 
 export type LeadSortField = 'family' | 'stage' | 'owner' | 'sessions' | 'value';
 
@@ -68,6 +59,8 @@ export interface ListLeadsResult {
   totalUnfiltered: number;
 }
 
+const EMPTY: ListLeadsResult = { rows: [], total: 0, totalUnfiltered: 0 };
+
 const numericValue = (v: string) => Number(v.replace(/[^0-9.-]/g, '')) || 0;
 
 const compare = (a: Lead, b: Lead, field: LeadSortField): number => {
@@ -88,14 +81,29 @@ const compare = (a: Lead, b: Lead, field: LeadSortField): number => {
  * after that row no matter what happened around it.
  *
  * Identity is never a parameter: `orgId` arrives on `ctx` at the route's
- * `protectedOperation` boundary and is applied here, never accepted from the
- * client (CLAUDE.md · The block).
+ * `protectedOperation` boundary and is applied by the repository, never accepted
+ * from the client (CLAUDE.md · The block). A session with no org resolves to an
+ * empty page rather than an unscoped read — an ops dashboard that fails open is
+ * a cross-tenant leak.
+ *
+ * The repository returns the org's rows and this function slices them, because
+ * filter, sort and cursor all have to agree on one ordering and splitting that
+ * across two systems is how a cursor starts pointing into a different sort. A
+ * tutoring org holds thousands of leads, not millions; when one outgrows a
+ * single read, `LoadLeads` is where the predicate moves, not this function.
  */
-export function listLeads(_ctx: { orgId?: string }, input: ListLeadsInput): ListLeadsResult {
+export async function listLeads(
+  ctx: ProtectedCtx,
+  input: ListLeadsInput,
+  loadLeads: LoadLeads,
+): Promise<ListLeadsResult> {
+  if (!ctx.orgId) return EMPTY;
+
   const limit = Math.min(Math.max(input.limit ?? 25, 1), 100);
   const needle = input.q?.trim().toLowerCase();
 
-  let rows = withOverrides();
+  const all = await loadLeads(ctx);
+  let rows = [...all];
 
   if (input.onlyAttention) rows = rows.filter((l) => l.needsAttention);
   if (input.stage) rows = rows.filter((l) => l.stage === input.stage);
@@ -123,6 +131,23 @@ export function listLeads(_ctx: { orgId?: string }, input: ListLeadsInput): List
     rows: page,
     nextCursor: start + limit < total && last ? last.id : undefined,
     total,
-    totalUnfiltered: LEADS.length,
+    totalUnfiltered: all.length,
   };
+}
+
+/**
+ * The write half of the pipeline. The attention flag is derived from the SAME
+ * predicate the optimistic reducer uses, so the row the user sees during the
+ * mutation and the row that comes back on the refetch cannot disagree.
+ */
+export async function commitStageChange(
+  ctx: ProtectedCtx,
+  change: StageChange,
+  saveLeadStage: SaveLeadStage,
+): Promise<boolean> {
+  if (!ctx.orgId) return false;
+  return saveLeadStage(ctx, change.leadId, {
+    stage: change.to,
+    ...(clearsAttention(change.to) ? { needsAttention: false as const } : {}),
+  });
 }

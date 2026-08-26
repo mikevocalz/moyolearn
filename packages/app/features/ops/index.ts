@@ -8,4 +8,12 @@ export { useLeads, leadsQueryKey, type LeadsView, type LeadsPage } from './use-l
 export { useViewParams, type ShareableView, type ViewParams } from './use-view-params';
 export { applyStageChange, MANUAL_STAGES, type StageChange } from './stage-change';
 export { useStageAction } from './use-stage-action';
-export { LEADS, TODAY_SESSIONS, STAGE_TONE, type Lead, type Session, type Stage } from './ops.data';
+export {
+  TODAY_SESSIONS,
+  STAGE_TONE,
+  MIN_COHORT,
+  attendanceCell,
+  type Lead,
+  type Session,
+  type Stage,
+} from './ops.data';

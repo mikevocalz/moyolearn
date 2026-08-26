@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { listLeads, protectedOperation, type LeadSortField } from '@acme/app/server';
 import type { Stage } from '@acme/app';
+import { loadLeads } from '@/lib/leads.repository';
 import { auth } from '@/lib/auth';
 
 const SORT_FIELDS: readonly LeadSortField[] = ['family', 'stage', 'owner', 'sessions', 'value'];
@@ -21,7 +22,7 @@ export async function GET(request: NextRequest) {
       const sortField = SORT_FIELDS.find((f) => f === rawSort);
 
       return listLeads(
-        { orgId: ctx.orgId },
+        ctx,
         {
           cursor: params.get('cursor') ?? undefined,
           limit: Number(params.get('limit')) || 25,
@@ -30,6 +31,7 @@ export async function GET(request: NextRequest) {
           onlyAttention: params.get('attention') === '1',
           sort: sortField ? { field: sortField, desc: params.get('sortDesc') === '1' } : undefined,
         },
+        loadLeads,
       );
     });
     return NextResponse.json(result);

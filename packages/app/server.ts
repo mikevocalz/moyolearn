@@ -32,13 +32,21 @@ export {
 } from './features/tutor/coach.service';
 export { PEDAGOGY_CONTRACT, revealsAnswer } from './features/tutor/pedagogy';
 // Pure, so the write route can validate against the same list the client edits.
-export { MANUAL_STAGES, applyStageChange, type StageChange } from './features/ops/stage-change';
-export { commitStageChange } from './features/ops/ops.service';
+export {
+  MANUAL_STAGES,
+  applyStageChange,
+  clearsAttention,
+  type StageChange,
+} from './features/ops/stage-change';
 export {
   listLeads,
+  commitStageChange,
   type ListLeadsInput,
   type ListLeadsResult,
   type LeadSortField,
+  type LeadStagePatch,
+  type LoadLeads,
+  type SaveLeadStage,
 } from './features/ops/ops.service';
 export {
   saveLearnerProfile,

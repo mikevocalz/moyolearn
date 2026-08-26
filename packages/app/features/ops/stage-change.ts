@@ -15,6 +15,18 @@
 // SOT-KEYWORDS: ops write stage change reducer optimistic action invalidate crm
 import type { Lead, Stage } from './ops.data';
 
+/**
+ * Moving a family OUT of a decision stage clears its attention flag — that is
+ * the point of moving it. Leaving the flag set would keep the row in the "needs
+ * attention" filter after the user just dealt with it, which reads as the action
+ * having failed.
+ *
+ * Exported because the optimistic reducer below and the persisted write must
+ * agree. When this was an inline ternary in one and a re-derivation in the
+ * other, the row's flag flipped back on the refetch.
+ */
+export const clearsAttention = (to: Stage): boolean => to === 'Enrolled' || to === 'At risk';
+
 export interface StageChange {
   leadId: string;
   to: Stage;
@@ -38,13 +50,7 @@ export function applyStageChange(rows: readonly Lead[], change: StageChange): Le
       ? {
           ...row,
           stage: change.to,
-          /*
-            Moving a family OUT of a decision stage clears its attention flag —
-            that is the point of moving it. Leaving the flag set would keep the
-            row in the "needs attention" filter after the user just dealt with
-            it, which reads as the action having failed.
-          */
-          needsAttention: change.to === 'Enrolled' || change.to === 'At risk' ? false : row.needsAttention,
+          needsAttention: clearsAttention(change.to) ? false : row.needsAttention,
         }
       : row,
   );

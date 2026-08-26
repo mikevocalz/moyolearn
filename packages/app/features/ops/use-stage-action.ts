@@ -50,7 +50,16 @@ export function useStageAction(rows: Lead[], queryKey: readonly unknown[]) {
           headers: { 'content-type': 'application/json' },
           body: JSON.stringify({ stage: change.to }),
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+        if (!res.ok) {
+          /*
+            The route explains a rejected move in the interface's voice — an
+            unmovable stage, a family no longer in this pipeline. Surfacing
+            `HTTP 422` instead would replace a sentence the user can act on
+            with a number they cannot.
+          */
+          const body = (await res.json().catch(() => null)) as { error?: string } | null;
+          throw new Error(body?.error ?? `HTTP ${res.status}`);
+        }
         return {};
       } catch (error) {
         // The optimistic row reverts on its own when the action settles; all
