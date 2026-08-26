@@ -10,3 +10,4 @@ export { renderWaveform, type RenderedWaveform } from './render-waveform';
 export { useVideoUpload, type VideoPhase, type VideoFile } from './use-video-upload';
 export { useVideoRecorder, type RecorderPhase, type StopReason } from './use-video-recorder';
 export { VIDEO_MAX_SECONDS, VIDEO_MAX_BYTES, formatClock } from './video-note.constants.ts';
+export { VideoNoteSheet, type VideoNoteSheetProps } from './VideoNoteSheet';
