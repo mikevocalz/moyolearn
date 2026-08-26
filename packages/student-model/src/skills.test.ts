@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
-import { inferSkillTitle, firstHint, secondHint } from './skills.ts';
+import { inferSkillTitle, firstHint, secondHint, generatePracticeProblem } from './skills.ts';
 
 describe('inferSkillTitle', () => {
   it('detects fraction problems', () => {
@@ -45,5 +45,19 @@ describe('secondHint', () => {
 
   it('returns the default follow-up for unknown skills', () => {
     assert.ok(secondHint('Unknown').includes('one step at a time'));
+  });
+});
+
+describe('generatePracticeProblem', () => {
+  it('returns a known arithmetic problem for a supported skill', () => {
+    const problem = generatePracticeProblem('Order of operations');
+    assert.equal(typeof problem, 'string');
+    assert.ok(problem);
+    assert.ok(inferSkillTitle(problem!));
+  });
+
+  it('returns null for non-arithmetic skills', () => {
+    assert.equal(generatePracticeProblem('Number sense'), null);
+    assert.equal(generatePracticeProblem('Word problems'), null);
   });
 });
