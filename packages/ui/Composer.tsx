@@ -156,6 +156,22 @@ export function Composer({
     lg: 'h-target-teen',
     xl: 'h-target-child',
   }[size];
+
+  /*
+    The field's FLOOR is the same token, so an empty composer is one level row.
+
+    Autogrow sizes the field to its content — about 40px for a single line of
+    body text plus padding — which is under the 44px touch target the buttons
+    take. The row then read as a short field between two taller keys. A minimum
+    equal to the action height makes them start level; growth happens upward
+    from there, and only the field grows.
+  */
+  const fieldFloor = {
+    sm: 'min-h-target-adult',
+    md: 'min-h-target-adult',
+    lg: 'min-h-target-teen',
+    xl: 'min-h-target-child',
+  }[size];
   // Grows with what is typed. The two platforms use different mechanisms —
   // `scrollHeight` on web, `onContentSizeChange` on native — so the hook returns
   // props to spread rather than a single ref.
@@ -328,7 +344,7 @@ export function Composer({
           // `resize-none`: the browser handle would fight the measured height.
           // Overflow is set by `useAutoGrow` once the cap is reached, so a
           // one-line answer never shows a scrollbar track.
-          className="min-w-0 flex-1 resize-none rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field font-sans text-body text-text placeholder:text-text-muted"
+          className={`${fieldFloor} min-w-0 flex-1 resize-none rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field font-sans text-body text-text placeholder:text-text-muted`}
           numberOfLines={1}
           aria-label="Message composer"
         />

@@ -42,7 +42,14 @@ export function useAutoGrow(value: string): AutoGrowProps {
     const padding = Number.parseFloat(style.paddingTop) + Number.parseFloat(style.paddingBottom);
     const max = Number.isNaN(lineHeight) ? Infinity : lineHeight * MAX_LINES + padding;
 
-    const next = Math.min(field.scrollHeight, max);
+    /*
+      Floored by the element's own `min-height`, so the measured content height
+      can never write the field shorter than the row's touch target. Reading it
+      from computed style rather than passing a number keeps the floor in the
+      stylesheet, where the age band already sets it.
+    */
+    const floor = Number.parseFloat(style.minHeight);
+    const next = Math.max(Number.isNaN(floor) ? 0 : floor, Math.min(field.scrollHeight, max));
     field.style.height = `${next}px`;
     // Only scroll once it is actually capped, so a one-line answer never shows
     // a scrollbar track.
