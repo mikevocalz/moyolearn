@@ -13,6 +13,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { openSession } from '@acme/app/server';
 import { createSession, loadOpenSession } from '@/lib/tutor-session.repository';
+import { signCdnUrl } from '@/lib/bunny-token';
 import { budgetedGateway } from '@/lib/inference';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
@@ -36,7 +37,26 @@ export async function GET(request: NextRequest) {
       */
       budgetedGateway(),
     );
-    return NextResponse.json({ ok: true, session });
+    /*
+      SIGNED AT READ TIME, per doc 29 §5. The stored url is canonical and
+      unsigned; the pull zone now refuses unsigned reads, so every attachment is
+      re-signed here with a one-hour window. Signing on write instead would bake
+      an expiry into the database and strand the other device an hour later.
+    */
+    return NextResponse.json({
+      ok: true,
+      session: {
+        ...session,
+        messages: session.messages.map((message) => ({
+          ...message,
+          attachments: message.attachments.map((attachment) =>
+            attachment.url !== undefined
+              ? { ...attachment, url: signCdnUrl(attachment.url) }
+              : attachment,
+          ),
+        })),
+      },
+    });
   } catch (error) {
     if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';

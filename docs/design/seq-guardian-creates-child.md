@@ -60,7 +60,7 @@ sequenceDiagram
     end
 
     rect rgb(238, 242, 250)
-    Note over Action,Adapter: Step 1. The learner user, in the auth schema.
+    Note over Action,Adapter: Step 1. The learner user, in the better_auth schema.
     Action->>Writer: createUser email password name username
     Note right of Action: email is learnerPlaceholderEmail randomUUID.<br/>A child account never carries a real address.
     Writer->>BA: auth.api.signUpEmail body

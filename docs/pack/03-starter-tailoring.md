@@ -98,7 +98,7 @@ Every add is a `catalog:` entry first; exact versions resolved against the regis
 
 | Add | For | Notes |
 |---|---|---|
-| `better-auth` (+ its CLI for schema gen) | identity, orgs, guardianship | tables land in the same Postgres, **`schemaName`-style separation like Payload's**: run Better Auth against a dedicated `auth` schema so `payload` / `auth` / app schemas stay distinct in one database |
+| `better-auth` (+ its CLI for schema gen) | identity, orgs, guardianship | tables land in the same Postgres, **`schemaName`-style separation like Payload's**: run Better Auth against a dedicated `better_auth` schema so `payload` / `better_auth` / app schemas stay distinct in one database. **Not `auth`** — on Supabase that name is already taken by the managed GoTrue schema |
 | `stripe` (server) + Better Auth Stripe plugin | billing/Connect | plugin choice per plan ADR-004 |
 | `@supabase/supabase-js` (server) or plain `pg` channels decision | realtime + storage, **iff ADR-001's Supabase path is exercised** | `DATABASE_URL` is already provider-agnostic (`.env.example`); pointing it at Supabase Postgres changes nothing in `payload.config.ts`. Realtime tokens are minted server-side per ADR-003 — the client never gets a Supabase key |
 | tabular mono font package | schedule data typography | §2.6 |

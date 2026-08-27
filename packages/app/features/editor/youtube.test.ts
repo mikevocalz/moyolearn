@@ -134,7 +134,12 @@ describe('inline voice notes', () => {
     const html = '<p>notes</p><img src="https://cdn.example.com/n/abc/waveform.png" />';
     const segments = splitNoteSegments(html);
     assert.deepEqual(segments.map((segment) => segment.kind), ['html', 'audio']);
-    assert.equal(segments[1]?.value, 'https://cdn.example.com/n/abc/audio.m4a');
+    // Through the signing door — the pull zone refuses unsigned reads (doc 29
+    // §5) and this value feeds an <audio> element that cannot sign anything.
+    assert.equal(
+      segments[1]?.value,
+      `/api/media/view?url=${encodeURIComponent('https://cdn.example.com/n/abc/audio.m4a')}`,
+    );
   });
 
   it('still reads an older note that links a local recording', () => {

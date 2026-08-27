@@ -48,7 +48,7 @@ sequenceDiagram
     participant PLe as educational collections
     participant Ver as version tables underscore v
     participant Sys as payload system collections
-    participant Auth as auth schema
+    participant Auth as better_auth schema
     participant Bun as Bunny Storage and Stream
     participant Stripe as Stripe billing store
     participant Audit as auditEvents

@@ -8,8 +8,9 @@
 --
 --     pnpm jobs:install          # pg-boss create --schema jobs
 --
--- which is the same arrangement `packages/auth` already has with the `auth`
--- schema: a library that versions its own tables installs them itself, because
+-- which is the same arrangement `packages/auth` already has with the
+-- `better_auth` schema: a library that versions its own tables generates them
+-- itself (`better_auth_tables.sql` is CLI output, verbatim), because
 -- a hand-transcribed copy of generated DDL is a copy that will be one release
 -- behind on the day it matters. `pnpm jobs:doctor` checks the live schema
 -- against the shape the installed pg-boss expects.

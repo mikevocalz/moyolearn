@@ -40,7 +40,7 @@ sequenceDiagram
     participant Plugin as better-auth stripe plugin
     participant Authz as authorizeReference billing-plans.ts
     participant Stripe as Stripe
-    participant SubTbl as auth schema subscription table
+    participant SubTbl as better_auth schema subscription table
     participant Cache as useEntitlementStore
     participant Gate as PermissionGate and Drawer.Protected
 
@@ -186,7 +186,7 @@ sequenceDiagram
    `misconceptions`, `sessionTranscripts`, `tutorSessions`, `studentModelFacts`,
    `organizations`, `leads` and the four `payload-*` system collections. None of
    the billing collections exist. The only local projection of Stripe truth is
-   the plugin's own `subscription` table in the `auth` schema.
+   the plugin's own `subscription` table in the `better_auth` schema.
 7. **Server-side route guards on web.** Only `apps/mobile` uses
    `Drawer.Protected`. Doc 05 PR-9's "server layout checks on web" are not
    present.

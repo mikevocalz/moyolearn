@@ -31,7 +31,7 @@ Expo app (iOS/Android)          Next.js web (SSR/RSC)          Payload Admin (in
                           ▼                             ▼
                 Postgres (Supabase)               Third parties
                 ├─ payload schema (operational)   ├─ Model providers (no-training contracts)
-                ├─ auth schema (Better Auth)      ├─ Stripe (Billing + Connect; card data never local)
+                ├─ better_auth schema (Better Auth)├─ Stripe (Billing + Connect; card data never local)
                 ├─ edu schema (transcripts TTL,   ├─ Email/SMS provider (consent, alerts, reminders)
                 │   knowledge graph, pgvector)    └─ Expo push
                 └─ jobs schema (pg-boss)
@@ -83,6 +83,61 @@ Expo app (iOS/Android)          Next.js web (SSR/RSC)          Payload Admin (in
 6. **Capacity worksheet:** token-cost model per learner-day at the §7 load, with the routing split shown.
 7. Everything passes the standing gates: `turbo typecheck` cold, the doc-11 lint set, red-team suite green, no invented APIs (cite file+symbol for every seam you rely on).
 Work the waves: nothing here blocks Wave 2 screens; §9.2–9.4 land with Wave 3+.
+
+## §11 · Schema corrections — found in the live database (binding)
+Two findings from reading the deployed `payload` schema. Both are recorded here because they contradict guarantees made elsewhere in the pack, and a guarantee that isn't enforced in the database isn't a guarantee.
+
+### 11.1 Versions on `tutor_sessions` break the erasure cascade
+**Observed:** `payload._tutor_sessions_v` held 11 version rows for a single session. Versions are enabled on the collection, and appending a message is a read-modify-write of the whole document, so **every conversational turn writes a full snapshot of the transcript.** The retention sweep targets `expires_at` on the main table and never touches `_v`.
+
+**Why this is not a storage problem.** Docs 19 and 24 state that learner content inherits the TTL and the erasure cascade. If the transcript survives in `_tutor_sessions_v` after the parent row is swept, then *"delete my child's data" does not delete it*. Disk growth is the symptom; the broken guarantee is the defect. It is also the one a district's counsel will ask about.
+
+**Fix, in order of correctness:**
+1. **Versions off for this collection.** `versions: false`. Versions are an editorial feature — draft/publish, revert, who-changed-what. A tutor session is an append-only event log. Wrong tool for the shape of the data.
+2. **Fix the shape, which is the root cause.** Messages as a nested array on the session document means every turn rewrites the entire transcript: O(n²) writes across a conversation, lock contention on the hot row, and version churn as a side effect. **Messages become their own collection** with a relationship to the session — one insert per turn, no rewrite, and retention becomes targetable per message rather than per conversation. This is also the shape doc 19's event stream and analytics rollups already assume.
+3. **If versions must stay** on any collection holding learner content, cap them (`maxPerDoc` — verify the option name against installed Payload) **and extend the retention sweep to the `_v` tables**:
+```sql
+-- expired parents
+DELETE FROM payload._tutor_sessions_v v
+USING payload.tutor_sessions s
+WHERE v.parent_id = s.id AND s.expires_at < now();
+
+-- orphans: parent already erased, version survived
+DELETE FROM payload._tutor_sessions_v v
+WHERE NOT EXISTS (
+  SELECT 1 FROM payload.tutor_sessions s WHERE s.id = v.parent_id
+);
+```
+4. **Prove it with a test, don't assert it.** Create a session, append N messages, run the erasure job, then assert zero rows in the main table, in every `_v` table, and zero surviving Bunny objects (doc 29 §5). **That test *is* the erasure cascade** — without it there is intent and no evidence. It belongs with the §9.2 build checks, as a failing test first.
+
+### 11.2 RLS disabled across the `payload` schema — decide it, don't inherit it
+**Observed:** RLS off on all 32 tables in the `payload` schema, pre-existing rather than introduced by any recent migration; Supabase flags it critical. Payload enforces access in its own layer, so this is defensible — but it means **anything holding the Supabase anon key can reach children's learning data directly**, and the anon key is designed to ship in client bundles.
+
+**Check exposure before designing anything.** Supabase's PostgREST only serves schemas listed under Settings → API → Exposed schemas (default `public`, `graphql_public`). If `payload` is not listed, the anon key cannot reach these tables through the API at all, and most of the risk evaporates. Verify first.
+
+**Then fix it with privileges, not policies.** RLS is one mechanism; a missing grant is simpler and stricter. If `anon` has no privilege, RLS is moot for it:
+```sql
+REVOKE ALL ON ALL TABLES    IN SCHEMA payload FROM anon, authenticated;
+REVOKE ALL ON ALL SEQUENCES IN SCHEMA payload FROM anon, authenticated;
+REVOKE ALL ON SCHEMA payload FROM anon, authenticated;
+
+-- without this, the next migration silently re-grants on every new table
+ALTER DEFAULT PRIVILEGES IN SCHEMA payload
+  REVOKE ALL ON TABLES FROM anon, authenticated;
+```
+Verify — expect zero rows:
+```sql
+SELECT grantee, table_name, privilege_type
+FROM information_schema.role_table_grants
+WHERE table_schema = 'payload' AND grantee IN ('anon','authenticated');
+```
+
+**Then belt-and-braces on the learner tables:** enable RLS with **no policies at all** — default-deny. Safe precisely because Payload connects as the table owner (or a `BYPASSRLS` role) and is unaffected, while anything else gets nothing. **Confirm which role `DATABASE_URI` uses before running this**, and do **not** add `FORCE ROW LEVEL SECURITY`, which would apply to the owner too and break the app.
+
+This also converts Supabase's critical advisory from "ignored" into a documented, deliberate posture — which is the answer a district's security review is actually asking for.
+
+### 11.3 Standing practice: reads and DDL take different paths
+Schema state was read with the `pg` driver because `execute_sql` returned content references that couldn't be opened; the DDL went through the MCP's `apply_migration`. **Keep this split.** Migrations belong in the migration history where they can be reviewed, replayed, and rolled back; ad-hoc reads should never enter it. This is the pattern, not a workaround.
 
 ## §10 · Sources & spine
 This prompt binds decisions from docs 01 (ADRs 001–006), 03 (repo law), 05 (money movement), 06 (auth wiring), 07 (Safety Plane, two-loop personalization), 09 (waves), 10 (types), 11 (Block/registry/enforcement). Where this doc and an earlier doc disagree, **this doc wins** — it was written last, with all of them on the table.

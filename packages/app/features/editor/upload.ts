@@ -43,10 +43,18 @@ export type UploadVoiceNote = (recording: VoiceRecording) => Promise<UploadedVoi
 /** The shared-id convention above, as code. */
 const WAVEFORM = /^(.*)\/waveform\.(png|jpg|jpeg|webp)$/i;
 
-/** The audio URL for an inline waveform image, or null if it is not one. */
+/**
+ * The audio URL for an inline waveform image, or null if it is not one.
+ *
+ * Routed through `/api/media/view` rather than returned bare. The pull zone
+ * refuses unsigned reads now (doc 29 §5), and this URL is consumed by an
+ * `<audio>` element on the client, which cannot sign anything. The view door
+ * authenticates, signs, and 302s to the edge; the element follows the redirect.
+ */
 export function audioUrlFromWaveform(src: string, extension = 'm4a'): string | null {
   const match = WAVEFORM.exec(src);
-  return match?.[1] === undefined ? null : `${match[1]}/audio.${extension}`;
+  if (match?.[1] === undefined) return null;
+  return `/api/media/view?url=${encodeURIComponent(`${match[1]}/audio.${extension}`)}`;
 }
 
 /** Whether a URL is one of our inline waveform images. */

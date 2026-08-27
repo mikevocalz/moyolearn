@@ -3,10 +3,16 @@ import { describe, it } from 'node:test';
 import { audioUrlFromWaveform, isWaveformUrl } from './upload.ts';
 
 describe('inline waveform URLs', () => {
-  it('recovers the audio URL from the waveform beside it', () => {
+  it('recovers the audio URL, routed through the signing door', () => {
+    /*
+      Not the bare CDN URL any more. The pull zone refuses unsigned reads
+      (doc 29 §5) and an <audio> element cannot sign anything, so the player is
+      handed the view door, which authenticates, signs and 302s to the edge.
+      The recovered audio path travels as the `url` param, intact.
+    */
     assert.equal(
       audioUrlFromWaveform('https://cdn.example.com/notes/abc123/waveform.png'),
-      'https://cdn.example.com/notes/abc123/audio.m4a',
+      `/api/media/view?url=${encodeURIComponent('https://cdn.example.com/notes/abc123/audio.m4a')}`,
     );
   });
 
