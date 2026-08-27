@@ -374,7 +374,14 @@ export function Composer({
             title="Send"
             variant="primary"
             size={size}
-            className={`${actionHeight} min-h-0 shrink-0 py-0 md:py-0`}
+            /*
+              `self-end` is not redundant. Button's base carries `self-start`,
+              which beats the row's `items-end` — so Send hung from the TOP of a
+              grown field while the attach key sat correctly at the bottom. The
+              two actions must anchor to the same edge, and the bottom is where
+              the thumb already is.
+            */
+            className={`${actionHeight} min-h-0 shrink-0 self-end py-0 md:py-0`}
             disabled={!canSend}
             onPress={handleSubmit}
             aria-label="Send message"
