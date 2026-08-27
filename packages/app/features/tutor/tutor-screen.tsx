@@ -30,7 +30,7 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   const router = useRouter();
   const problem = useCaptureStore((s) => s.problem);
   const setProblem = useCaptureStore((s) => s.setProblem);
-  const { state, start, coach, hintDepth, attachments, addAttachment, removeAttachment } =
+  const { state, start, coach, hintDepth, attachments, addAttachment, removeAttachment, messages, say } =
     useTutorStore();
   const [loading, setLoading] = useState(false);
 
@@ -113,8 +113,17 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
         ...(trimmed ? [trimmed] : []),
       ];
 
-      // Cleared only after the turn is on its way, so a failed read still
-      // leaves the photos in the tray rather than silently dropping them.
+      /*
+        Into the transcript BEFORE clearing the tray, and carrying the
+        attachments themselves — the bubble renders the photo the child sent,
+        not the text that was read out of it. A thread that showed only the OCR
+        result would be showing the app's reading of their homework rather than
+        their homework.
+      */
+      say({ role: 'learner', text: trimmed, attachments: staged });
+
+      // Cleared only after the turn is in the transcript, so a failed read
+      // still leaves the photos somewhere rather than dropping them silently.
       staged.forEach((a) => removeAttachment(a.id));
 
       const turn = parts.join('\n\n');
@@ -201,6 +210,7 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
       onBack={router.back}
       onSend={handleSend}
       onRetry={() => void coach('')}
+      messages={messages}
       attachments={attachments}
       onRemoveAttachment={removeAttachment}
       /*

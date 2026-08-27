@@ -17,6 +17,8 @@ import { MessageBubble } from './MessageBubble';
 import { StreamedText } from './StreamedText';
 import { Composer } from './Composer';
 import type { TutorAttachment } from './tutor-attachment.ts';
+import type { TutorMessage } from './tutor-message.ts';
+import { TutorThread } from './TutorThread';
 import { SessionToolbar } from './SessionToolbar';
 import { Badge } from './Badge';
 import { Button } from './Button';
@@ -65,6 +67,8 @@ export interface TutorStageProps {
   onBack?: () => void;
   onToggleCaptions?: () => void;
   onSend?: (message: string) => void;
+  /** The conversation so far. Empty on a fresh session. */
+  messages?: readonly TutorMessage[];
   /*
     Composer pass-throughs. The stage deliberately holds none of this state:
     what a learner has attached belongs to the session, not to the layout that
@@ -292,6 +296,7 @@ export function TutorStage({
   onBack,
   onToggleCaptions,
   onSend,
+  messages,
   attachments,
   onRemoveAttachment,
   onPickCamera,
@@ -339,7 +344,11 @@ export function TutorStage({
       {/* Top-aligned, not centred. A turn grows downward as it streams, and a
           vertically centred block re-centres on every arriving sentence — the
           text slides under the reader while they are reading it. */}
-      <View className="flex-1">
+      {/* History above, live turn below. A sent photo stays where the child
+          put it instead of vanishing when Natalie replies. */}
+      {messages && messages.length > 0 ? <TutorThread messages={messages} /> : null}
+
+      <View className={messages && messages.length > 0 ? undefined : 'flex-1'}>
         <StateBody
           state={state}
           childName={childName}

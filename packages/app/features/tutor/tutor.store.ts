@@ -1,6 +1,6 @@
 'use client';
 import { create } from 'zustand';
-import { countImages, MAX_TUTOR_IMAGES, type TutorAttachment } from '@acme/ui';
+import { countImages, MAX_TUTOR_IMAGES, type TutorAttachment, type TutorMessage } from '@acme/ui';
 import { streamFetch } from './stream-fetch';
 import type { TutorStageState } from '@acme/ui';
 import { traceAttempt, DEFAULT_TRACING, inferSkillTitle } from '@acme/student-model/pure';
@@ -18,6 +18,16 @@ interface TutorState {
    * in component state would be lost the moment the stage re-rendered around a
    * streaming reply.
    */
+  /**
+   * The conversation so far.
+   *
+   * Kept because the stage used to render only the CURRENT turn, so a photo a
+   * child sent vanished the moment Natalie replied. A tutoring session is a
+   * history: re-reading the hint from two turns back is the normal case.
+   */
+  messages: readonly TutorMessage[];
+  /** Appends a learner turn. Tutor turns are appended by the stream itself. */
+  say: (message: Omit<TutorMessage, 'id'>) => void;
   attachments: readonly TutorAttachment[];
   addAttachment: (attachment: TutorAttachment) => void;
   removeAttachment: (id: string) => void;
@@ -75,6 +85,7 @@ export const useTutorStore = create<TutorState>((set) => ({
   state: { kind: 'presence' },
   problem: '',
   attachments: [],
+  messages: [],
   skillTitle: '',
   mastery: DEFAULT_TRACING.prior,
   attempts: 0,
@@ -110,6 +121,12 @@ export const useTutorStore = create<TutorState>((set) => ({
     it. The composer separately hides the attach control at the cap — that is
     the courtesy; this is the rule.
   */
+  say: (message) =>
+    set((s) => ({
+      ...s,
+      messages: [...s.messages, { ...message, id: `${Date.now()}-${s.messages.length}` }],
+    })),
+
   addAttachment: (attachment) =>
     set((s) => {
       if (attachment.kind === 'image' && countImages(s.attachments) >= MAX_TUTOR_IMAGES) return s;

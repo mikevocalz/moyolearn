@@ -93,3 +93,5 @@ export { useInstanceStore, useStore } from './use-instance-store';
 export * from './audio';
 export type { TutorAttachment, TutorAttachmentKind } from './tutor-attachment.ts';
 export { ATTACHMENT_CHOICES, MAX_TUTOR_IMAGES, countImages } from './tutor-attachment.ts';
+export { TutorThread, type TutorThreadProps } from './TutorThread';
+export type { TutorMessage } from './tutor-message.ts';
