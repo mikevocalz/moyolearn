@@ -185,6 +185,39 @@ async function screenInput(
     };
   }
 
+  /*
+    THE INBOUND FIREWALL RUNS HERE, and its verdict is held rather than
+    returned.
+
+    It used to sit at the bottom of this function, after every routing branch
+    had already returned — which made it reachable ONLY on a turn the
+    classifier had called `safe`, i.e. only on turns with nothing wrong with
+    them. Doc 07 §2.3 makes the secrecy rule two-directional precisely because
+    a child asking to keep a secret may have been taught to, and that child's
+    message reads as off-task to a classifier: it was filed as a fence test
+    (S1 — no incident, nobody told) instead of the logged safety event the
+    rule names. `screen(input, 'learner')` was tested in isolation and passed,
+    which is why the corpus never went red.
+
+    The branches below are ordered by SERIOUSNESS, the way `classifyCoachInput`
+    and `categoryFor` already order theirs — not by layer number:
+
+      · `crisis` outranks it. A child who discloses harm and asks in the same
+        breath that nobody be told is a child in crisis first; they get the
+        resources, and the firewall's finding still rides the trace.
+      · `sensitive` outranks it too, and files the same S3. Doc 07 §3 layer 3
+        prescribes "a caring acknowledgment + gentle handoff to trusted
+        adults" for bullying and family stress, and a bare block is a worse
+        answer to the same disclosure — the guardian is told either way.
+      · `prohibited` and `off-task` do NOT. Both are strictly less informative
+        endings for a turn that broke a named rule, and `off-task` is the gap
+        this ordering exists to close.
+  */
+  const inbound = safetyLayerSync('2-firewall', () => screen(message, 'learner'));
+  const firewallLog: PlaneLog[] = inbound.allowed
+    ? []
+    : [{ layer: '2-firewall', detail: inbound.broke.join(',') }];
+
   const inputClass = await safetyLayer('3-input', () => classifier.classifyInput(message, context));
   trace.push({ layer: '3-input', detail: inputClass });
 
@@ -197,7 +230,27 @@ async function screenInput(
           response: crisisResponse(context.gradeBand),
           storeInStudentModel: false,
         },
-        trace: [...trace, { layer: '6-crisis' }],
+        trace: [...trace, ...firewallLog, { layer: '6-crisis' }],
+      },
+    };
+  }
+
+  if (inputClass === 'sensitive') {
+    return {
+      passed: false,
+      result: {
+        outcome: { kind: 'redirect', text: SENSITIVE_HANDOFF, storeInStudentModel: false },
+        trace: [...trace, ...firewallLog, { layer: '3-input', detail: 'sensitive-handoff' }],
+      },
+    };
+  }
+
+  if (!inbound.allowed) {
+    return {
+      passed: false,
+      result: {
+        outcome: { kind: 'blocked', broke: inbound.broke, storeInStudentModel: false },
+        trace: [...trace, ...firewallLog],
       },
     };
   }
@@ -212,33 +265,12 @@ async function screenInput(
     };
   }
 
-  if (inputClass === 'sensitive') {
-    return {
-      passed: false,
-      result: {
-        outcome: { kind: 'redirect', text: SENSITIVE_HANDOFF, storeInStudentModel: false },
-        trace: [...trace, { layer: '3-input', detail: 'sensitive-handoff' }],
-      },
-    };
-  }
-
   if (inputClass === 'off-task') {
     return {
       passed: false,
       result: {
         outcome: { kind: 'redirect', text: OFF_TASK_REDIRECT, storeInStudentModel: false },
         trace: [...trace, { layer: '4-fence', detail: 'redirect' }],
-      },
-    };
-  }
-
-  const inbound = safetyLayerSync('2-firewall', () => screen(message, 'learner'));
-  if (!inbound.allowed) {
-    return {
-      passed: false,
-      result: {
-        outcome: { kind: 'blocked', broke: inbound.broke, storeInStudentModel: false },
-        trace: [...trace, { layer: '2-firewall', detail: inbound.broke.join(',') }],
       },
     };
   }

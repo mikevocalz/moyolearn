@@ -257,6 +257,24 @@ describe('the pseudonymization boundary', () => {
     assert.equal(scrubText(problem), problem);
   });
 
+  it('leaves a chain of subtractions alone — a spaced minus is an operator', () => {
+    /*
+      The separator class used to swallow ` - `, so any subtraction chain read
+      as one long digit run and became `[redacted]`. The child's actual
+      worksheet reached the model with the numbers gone — the silent-blanking
+      failure, on the half of the payload that carries the question.
+    */
+    for (const problem of ['1000 - 250 - 125', '45.75 - 12.50', '2.5 - 1.25 - 0.25']) {
+      assert.equal(scrubText(problem), problem);
+    }
+  });
+
+  it('still redacts the phone shapes, whose separators are not spaced', () => {
+    assert.equal(scrubText('Call me at 555-123-4567'), 'Call me at [redacted]');
+    assert.equal(scrubText('My number is +1 (555) 123-4567'), 'My number is [redacted]');
+    assert.equal(scrubText('reach 5551234567'), 'reach [redacted]');
+  });
+
   it('is idempotent, which is what lets it run twice on the same payload', () => {
     // The gateway scrubs on assembly and the adapter scrubs again at the socket.
     // Without idempotence the second pass would produce nested redactions.

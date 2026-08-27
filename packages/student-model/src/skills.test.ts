@@ -26,6 +26,28 @@ describe('inferSkillTitle', () => {
   it('falls back to number sense', () => {
     assert.equal(inferSkillTitle('Count the apples'), 'Number sense');
   });
+
+  it('reads x and y as variables, not as letters inside ordinary words', () => {
+    /*
+      `includes('x') || includes('y')` matched `many`, `six`, `you`, `next` and
+      `explain`, so most word problems were filed as algebra — and a first
+      grader doing subtraction got `firstHint('Algebra basics')`: "Combine only
+      the like terms — same variable, same power."
+    */
+    assert.equal(inferSkillTitle('How many apples are left?'), 'Number sense');
+    assert.equal(inferSkillTitle('What is six plus two?'), 'Number sense');
+    assert.equal(inferSkillTitle('Explain your answer'), 'Number sense');
+    assert.equal(inferSkillTitle('There are 4 boxes on the day shelf'), 'Number sense');
+  });
+
+  it('still reads a real variable, attached to a coefficient or standing alone', () => {
+    assert.equal(inferSkillTitle('Simplify 2x + 3y'), 'Algebra basics');
+    assert.equal(inferSkillTitle('What does x mean here'), 'Algebra basics');
+  });
+
+  it('reaches the word-problem branch the algebra test used to swallow', () => {
+    assert.equal(inferSkillTitle('A word problem about how many cookies'), 'Word problems');
+  });
 });
 
 describe('firstHint', () => {
