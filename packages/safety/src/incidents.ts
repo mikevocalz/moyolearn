@@ -171,7 +171,9 @@ export const INCIDENT_TTL_DAYS = 30;
  *
  * So what is built here is the WORKFLOW and nothing else: the record is
  * preserved, the sweep cannot delete it, the tier pages a human, and the human
- * is the one who decides what is reported to whom. There is no NCMEC submission
+ * is the one who decides what is reported to whom. The launch-gating review
+ * brief for counsel — what is built, the statutory surface, and the seven
+ * questions — is docs/design/counsel-review-s4.md. There is no NCMEC submission
  * path, no report-generation, and no jurisdiction table in this codebase, and
  * inventing any of them would be inventing legal process.
  *
