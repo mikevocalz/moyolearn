@@ -9,7 +9,7 @@
 // SOT: docs/pack/24-homework-capture-spec.md §5 · docs/pack/23-tutorstage-handoff.md §3 · docs/pack/18-tutor-ai-stack.md §3
 // SOT-KEYWORDS: tutor screen capture handoff tutorstage session coach stream age band next problem
 
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'solito/navigation';
 import { TutorStage, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
@@ -199,10 +199,26 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   const resolveRecording = useAudioStore((s) => s.resolve);
   const enqueue = useUploadQueue((s) => s.enqueue);
 
+  /*
+    Set when the child ends a take with SEND rather than STOP, and cleared by
+    the effect below once the note is actually in the tray.
+
+    The send cannot fire where it is pressed. `stop()` resolves the recorder
+    asynchronously and the attachment only exists after that resolution, so
+    calling the send path immediately would read a tray that does not yet hold
+    the note — and send an empty turn.
+  */
+  const sendOnStop = useRef(false);
+  const sendWhenStaged = useRef<string | null>(null);
+
   const handleStartRecording = useCallback(() => {
     void requestRecording().then((recording) => {
       if (!recording) return;
       const id = `${Date.now()}-voice`;
+      if (sendOnStop.current) {
+        sendOnStop.current = false;
+        sendWhenStaged.current = id;
+      }
       addAttachment({
         id,
         kind: 'audio',
@@ -226,6 +242,19 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
       });
     });
   }, [requestRecording, addAttachment]);
+
+  /*
+    Fires the deferred send once the staged note is visible in `attachments`.
+    Keyed on the tray rather than a timer: the only thing that makes the turn
+    sendable is the note being IN it, so that is what this waits for.
+  */
+  useEffect(() => {
+    const id = sendWhenStaged.current;
+    if (id === null) return;
+    if (!attachments.some((a) => a.id === id)) return;
+    sendWhenStaged.current = null;
+    handleSend('');
+  });
 
   const handlePickDocument = useCallback(() => {
     void pickFile().then((picked) => stage(picked, 'document', 'application/octet-stream'));
@@ -267,9 +296,16 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
       /* Discard settles the promise as cancelled, so the take is dropped and
          the composer returns to its normal row. */
       onCancelRecording={() => resolveRecording(null)}
-      /* Keep: stop the recorder and let its own `onstop` resolve with the file,
-         rather than racing it here. */
-      onSendRecording={() => stopRecording?.()}
+      /* Stop: end the take and let the recorder's own `onstop` resolve with the
+         file, rather than racing it here. The note lands in the tray with a
+         player, so the child hears it before deciding. */
+      onStopRecording={() => stopRecording?.()}
+      /* Send: the same stop, plus a flag the effect above acts on once the note
+         is staged. One press for a child who does not want to check. */
+      onSendRecording={() => {
+        sendOnStop.current = true;
+        stopRecording?.();
+      }}
     />
   );
 }

@@ -53,7 +53,7 @@ function DesktopNavLink({
     <MotionView
       initial={hydrated ? { y: -10 } : undefined}
       animate={hydrated ? { y: 0 } : undefined}
-      transition={{ type: 'timing', duration: 260, ease: 'easeOut', delay: 120 + index * 50 }}
+      transition={{ type: 'timing', duration: 260, easing: 'easeOut', delay: 120 + index * 50 }}
     >
       <Link
         href={href}
@@ -105,7 +105,7 @@ function MobileNavLink({
     <MotionView
       initial={hydrated ? { x: -12 } : undefined}
       animate={hydrated ? { x: 0 } : undefined}
-      transition={{ type: 'timing', duration: 200, ease: 'easeOut', delay: 60 + index * 40 }}
+      transition={{ type: 'timing', duration: 200, easing: 'easeOut', delay: 60 + index * 40 }}
     >
       <Link
         href={href}
@@ -176,7 +176,7 @@ export function SiteHeader() {
           <MotionView
             initial={hydrated ? { x: -8 } : undefined}
             animate={hydrated ? { x: 0 } : undefined}
-            transition={{ type: 'timing', duration: 240, ease: 'easeOut', delay: 140 }}
+            transition={{ type: 'timing', duration: 240, easing: 'easeOut', delay: 140 }}
           >
             <TWText className="font-display text-lg font-bold tracking-tight text-text">
               Moyo
@@ -251,7 +251,7 @@ export function SiteHeader() {
             <MotionView
               initial={{ x: -12 }}
               animate={{ x: 0 }}
-              transition={{ type: 'timing', duration: 200, ease: 'easeOut', delay: 20 }}
+              transition={{ type: 'timing', duration: 200, easing: 'easeOut', delay: 20 }}
             >
               <Link
                 href={PROFILE.href}

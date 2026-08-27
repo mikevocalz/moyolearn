@@ -13,6 +13,7 @@
 // SOT: packages/app/features/editor/audio.store.ts
 // SOT-KEYWORDS: voice recorder web mediarecorder audio tutor composer microphone
 import { useEffect, useRef } from 'react';
+import { frameLevel } from '@acme/ui';
 import { useAudioStore } from './audio.store.ts';
 
 export function AudioRecorderSheet() {
@@ -58,14 +59,24 @@ export function AudioRecorderSheet() {
 
         sampler = globalThis.setInterval(() => {
           analyser.getByteTimeDomainData(buffer);
-          let sum = 0;
-          for (const v of buffer) {
-            const centred = (v - 128) / 128;
-            sum += centred * centred;
-          }
-          // Gained up: speech RMS sits low, and a meter that never moves reads
-          // as a broken microphone rather than a quiet room.
-          captured.push(Math.min(1, Math.sqrt(sum / buffer.length) * 3));
+          /*
+            `frameLevel`, not a local RMS.
+
+            This fork hand-rolled the same sum-of-squares and then scaled it with
+            `min(1, rms * 3)`. Linear is the wrong scale for a level meter and the
+            wrong-ness is invisible until you measure it: against the real
+            microphone a quiet room reads RMS 0.0055, so the meter drew 0.0165 —
+            under half a pixel of a 24px bar, clamped to the floor. Every bar sat
+            on the floor and the waveform rendered as a dashed straight line while
+            the elapsed count ticked up. Speech at arm's length is RMS 0.02–0.15,
+            which linear gain puts at 1–4px: still flat.
+
+            The kit has carried the correct curve the whole time — `frameLevel`
+            maps -60..-6 dBFS, and the native recorder has always used it. This
+            fork drew a different waveform from the same microphone for no reason
+            other than that nobody checked whether the function existed.
+          */
+          captured.push(frameLevel(buffer));
           setLive({ elapsedSec: (Date.now() - startedAt) / 1000, levels: [...captured] });
         }, 100);
 

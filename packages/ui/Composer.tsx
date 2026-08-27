@@ -25,12 +25,13 @@ import { View, Text, Pressable, Textarea } from './primitives';
 import { useAutoGrow } from './use-autogrow';
 import { Button } from './Button';
 import { SolitoImage } from 'solito/image';
-import { Camera, FileUp, Image, Mic, Plus, Send, Trash2, X } from './icons';
+import { Camera, FileUp, Image, Mic, Plus, Send, Square, Trash2, X } from './icons';
 // Through the barrel, not the file. `waveform.ts` (the pure bar maths) and
 // `Waveform.tsx` (the component) differ only in case, so a direct path import
 // resolves ambiguously on a case-insensitive filesystem and TS refuses it.
-import { Waveform } from './audio';
+import { AudioPlayer, Waveform } from './audio';
 import { Lightbox } from './Lightbox';
+import { SlideIn } from './motion';
 import { useInstanceStore, useStore } from './use-instance-store';
 import { countImages, MAX_TUTOR_IMAGES, type TutorAttachment } from './tutor-attachment.ts';
 
@@ -61,6 +62,13 @@ export interface ComposerProps {
   /** Live recording state, owned by the host. */
   recording?: { elapsedSec: number; levels: readonly number[] };
   onCancelRecording?: () => void;
+  /**
+   * Ends the take and STAGES it, so the child can hear it back before it goes.
+   * Without this the only ways out of a recording were send and discard, which
+   * meant a voice note could never be checked — only gambled on.
+   */
+  onStopRecording?: () => void;
+  /** Ends the take and sends it in one press. */
   onSendRecording?: () => void;
   className?: string;
 }
@@ -80,6 +88,7 @@ export function Composer({
   onStartRecording,
   recording,
   onCancelRecording,
+  onStopRecording,
   onSendRecording,
   className,
 }: ComposerProps) {
@@ -203,6 +212,7 @@ export function Composer({
         not change shape between typing and speaking — only its contents do.
       */
       <View
+        key="recording"
         className={`gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field ${className ?? ''}`}
       >
         <View className="flex-row items-center gap-element">
@@ -222,36 +232,65 @@ export function Composer({
         <View className="flex-row items-center justify-between">
           {/* Discard far left, send far right — opposite intentions, opposite
               ends, so a mis-tap cannot cost the take. */}
-          <Pressable
-            onPress={onCancelRecording}
-            aria-label="Discard recording"
-            className={`${iconTarget} items-center justify-center rounded-control`}
-          >
-            <Trash2 size={20} className="text-danger" />
-          </Pressable>
+          <SlideIn from="left" distance={40} duration={160} delay={100}>
+            <Pressable
+              onPress={onCancelRecording}
+              aria-label="Discard recording"
+              className={`${iconTarget} items-center justify-center rounded-control`}
+            >
+              <Trash2 size={20} className="text-danger" />
+            </Pressable>
+          </SlideIn>
 
-          {/* A live indicator, centred, where the reference puts its stop key.
-              Not a button: the take ends by sending or discarding, and a third
-              way to stop is a third thing to explain to a child mid-sentence. */}
-          <View className="flex-row items-center gap-element">
-            <View className="h-2 w-2 rounded-full bg-danger" />
-            <Text className="font-sans text-caption text-text-muted">Listening</Text>
-          </View>
+          {/*
+            STOP, centred, exactly where the reference puts it.
 
-          <Pressable
-            onPress={onSendRecording}
-            aria-label="Send voice message"
-            className={`${iconTarget} items-center justify-center rounded-control bg-primary`}
-          >
-            <Send size={20} className="text-on-primary" />
-          </Pressable>
+            This was a passive "Listening" dot, on the reasoning that a take ends
+            by sending or discarding and a third control is a third thing to
+            explain. That was wrong, and wrong in the direction that costs a
+            child the most: with no stop, a voice note could never be HEARD back
+            before it went. Send was a gamble and discard was the only way to
+            change your mind. Stopping is not a third way to finish — it is the
+            only way to check.
+
+            The live signal the dot was carrying has not gone anywhere: the
+            waveform above is moving and the elapsed count is running, which is
+            evidence the microphone is working rather than a label claiming it.
+          */}
+          {onStopRecording ? (
+            <Pressable
+              onPress={onStopRecording}
+              aria-label="Stop recording"
+              className={`${iconTarget} items-center justify-center rounded-control border-2 border-danger`}
+            >
+              {/* Filled, not the bare outline. An outline square inside an
+                  outlined button is a box drawn inside a box; a SOLID square is
+                  the universal stop glyph and reads as one at a glance. */}
+              <Square size={16} className="text-danger" fill="currentColor" />
+            </Pressable>
+          ) : (
+            <View className="flex-row items-center gap-element">
+              <View className="h-2 w-2 rounded-full bg-danger" />
+              <Text className="font-sans text-caption text-text-muted">Listening</Text>
+            </View>
+          )}
+
+          <SlideIn from="right" distance={20} duration={200}>
+            <Pressable
+              onPress={onSendRecording}
+              aria-label="Send voice message"
+              className={`${iconTarget} items-center justify-center rounded-control bg-primary`}
+            >
+              <Send size={20} className="text-on-primary" />
+            </Pressable>
+          </SlideIn>
         </View>
       </View>
     );
   }
 
   return (
-    <View className={`gap-stack ${className ?? ''}`}>
+    <View key="idle" className={`gap-stack ${className ?? ''}`}>
       {/* Staged attachments, above the field.
           An image shows the IMAGE. A filename is not a photo — a child who
           attached the wrong page of homework cannot tell from "photo.jpg", and
@@ -297,13 +336,38 @@ export function Composer({
               </View>
             ) : (
               /* A document has no picture, so it keeps a labelled chip — the
-                 name IS the only identifying thing about it. */
+                 name IS the only identifying thing about it.
+
+                 A voice note is NOT in that category and used to be treated as
+                 if it were: a mic glyph and "Voice note (2s)". A filename is not
+                 a recording. The child had just spoken into the microphone and
+                 the only thing offered back was a word for what they had done,
+                 so stopping a take bought them nothing they could act on. It
+                 gets the kit's player, the same one the thread uses. */
+              attachment.kind === 'audio' ? (
+                <View
+                  key={attachment.id}
+                  className="flex-row items-center gap-element rounded-control border-2 border-border bg-surface-raised p-inset-tight"
+                >
+                  <AudioPlayer
+                    uri={attachment.uri}
+                    duration={attachment.durationSec}
+                    className="w-56"
+                  />
+                  <Pressable
+                    onPress={() => onRemoveAttachment?.(attachment.id)}
+                    aria-label={`Remove ${attachment.name}`}
+                    className="min-h-target-adult min-w-target-adult items-center justify-center rounded-control"
+                  >
+                    <X size={14} className="text-text-muted" />
+                  </Pressable>
+                </View>
+              ) : (
               <View
                 key={attachment.id}
                 className="flex-row items-center gap-element rounded-control border-2 border-border bg-surface-raised py-1 pl-inset-tight pr-1"
               >
                 {attachment.kind === 'document' ? <FileUp size={16} className="text-text-muted" /> : null}
-                {attachment.kind === 'audio' ? <Mic size={16} className="text-text-muted" /> : null}
                 <Text numberOfLines={1} className="max-w-40 font-sans text-caption text-text">
                   {attachment.name}
                 </Text>
@@ -315,6 +379,7 @@ export function Composer({
                   <X size={14} className="text-text-muted" />
                 </Pressable>
               </View>
+              )
             ),
           )}
         </View>
@@ -376,27 +441,47 @@ export function Composer({
           {/* Attach leads, as it does in every reference. Hidden — not disabled —
               when there is no picker or the image cap is reached. */}
           {canAttach ? (
-            <Pressable
-              onPress={onPickCamera ?? onPickImage ?? onPickDocument}
-              aria-label="Add a photo or file"
-              className={`${iconTarget} items-center justify-center rounded-control`}
-            >
-              <Plus size={20} className="text-text" />
-            </Pressable>
+            /* Leading group, arriving from the left and settling rightward —
+               the later half of the convergence described on `SlideIn`. */
+            <SlideIn from="left" distance={40} duration={160} delay={100}>
+              <Pressable
+                onPress={onPickCamera ?? onPickImage ?? onPickDocument}
+                aria-label="Add a photo or file"
+                className={`${iconTarget} items-center justify-center rounded-control`}
+              >
+                <Plus size={20} className="text-text" />
+              </Pressable>
+            </SlideIn>
           ) : (
             // Holds the row's shape so the trailing action does not slide left
             // when attach is unavailable.
             <View className={iconTarget} />
           )}
 
-          <View className="flex-row items-center gap-element">
+          {/* Trailing group, arriving from the right edge and settling
+              leftward. It starts FIRST — the counter-motion against the attach
+              key is the whole effect, and it only reads as counter-motion if
+              the two do not start together. */}
+          <SlideIn
+            from="right"
+            distance={20}
+            duration={200}
+            className="flex-row items-center gap-element"
+          >
             {/*
-              Speak or send, never both. An empty field offers the microphone,
-              because a child who has typed nothing is likelier to want to talk;
-              the moment there is something to send, sending is the only thing
-              that button does.
+              BOTH, always. This swapped — microphone on an empty field, send
+              once there was something to send — which is what WhatsApp and the
+              rest of the references do.
+
+              It is wrong here. Speaking and sending are two different
+              intentions, not two states of one key, and swapping meant the send
+              control a child had just used was gone the next time they looked
+              for it. A control that moves house depending on what you have
+              typed is a control you have to re-find every time. Send is dimmed
+              when there is nothing to send, which says the same thing without
+              the button leaving.
             */}
-            {!canSend && onStartRecording ? (
+            {onStartRecording ? (
               <Pressable
                 onPress={onStartRecording}
                 disabled={disabled}
@@ -405,29 +490,26 @@ export function Composer({
               >
                 <Mic size={20} className="text-text" />
               </Pressable>
-            ) : (
-              /* A filled circle, as every reference draws it — the one piece of
-                 colour in the bar, so the eye finds it without a label. */
-              <Pressable
-                onPress={handleSubmit}
-                disabled={!canSend}
-                aria-label="Send message"
-                /*
-                  A rounded SQUARE, not a circle. The references draw circular
-                  send keys; this design system does not — `radius.control` is
-                  the one shape every interactive thing takes, and a pill in the
-                  middle of a squared-off kit reads as an import from somewhere
-                  else. Borrowing structure from a reference does not mean
-                  borrowing its shape language.
-                */
-                className={`${iconTarget} items-center justify-center rounded-control ${
-                  canSend ? 'bg-primary' : 'bg-surface-sunken'
-                }`}
-              >
-                <Send size={20} className={canSend ? 'text-on-primary' : 'text-text-muted'} />
-              </Pressable>
-            )}
-          </View>
+            ) : null}
+
+            {/* The one piece of colour in the bar, so the eye finds it without
+                a label — and a rounded SQUARE, not a circle. The references draw
+                circular send keys; this design system does not. `radius.control`
+                is the one shape every interactive thing takes, and a pill in the
+                middle of a squared-off kit reads as an import from somewhere
+                else. Borrowing structure from a reference does not mean
+                borrowing its shape language. */}
+            <Pressable
+              onPress={handleSubmit}
+              disabled={!canSend}
+              aria-label="Send message"
+              className={`${iconTarget} items-center justify-center rounded-control ${
+                canSend ? 'bg-primary' : 'bg-surface-sunken'
+              }`}
+            >
+              <Send size={20} className={canSend ? 'text-on-primary' : 'text-text-muted'} />
+            </Pressable>
+          </SlideIn>
         </View>
       </View>
     </View>

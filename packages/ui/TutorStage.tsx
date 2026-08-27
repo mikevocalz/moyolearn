@@ -82,6 +82,7 @@ export interface TutorStageProps {
   onStartRecording?: () => void;
   recording?: { elapsedSec: number; levels: readonly number[] };
   onCancelRecording?: () => void;
+  onStopRecording?: () => void;
   onSendRecording?: () => void;
   onTryIt?: () => void;
   onNextHint?: () => void;
@@ -305,6 +306,7 @@ export function TutorStage({
   onStartRecording,
   recording,
   onCancelRecording,
+  onStopRecording,
   onSendRecording,
   onTryIt,
   onNextHint,
@@ -384,6 +386,7 @@ export function TutorStage({
         onStartRecording={onStartRecording}
         recording={recording}
         onCancelRecording={onCancelRecording}
+        onStopRecording={onStopRecording}
         onSendRecording={onSendRecording}
       />
     </View>

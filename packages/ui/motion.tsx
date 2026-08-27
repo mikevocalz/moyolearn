@@ -106,6 +106,21 @@ const useAnimated = () => {
   return hydrated && !reduced;
 };
 
+/*
+  `easing`, NOT `ease`.
+
+  @legendapp/motion's types accept BOTH (`EaseFunction | ((v:number)=>number)`
+  on each), and it resolves the string to an `Easing` function for both — but it
+  then spreads the transition straight into `Animated.timing`, which only reads
+  `easing`. A resolved `ease` rides along as an unknown key and is dropped, so
+  the animation silently falls back to Animated's default `inOut(ease)`.
+
+  Every timing preset in this kit said `ease` and had been running ease-in-out
+  since it was written. It is invisible in review — the code says what you meant
+  — and only shows up if you sample the transform per frame, which is how it was
+  found: the composer's entrance accelerated before it decelerated, where the
+  reference decayed monotonically.
+*/
 /** Soft rise-and-fade entrance — content blocks, empty states, list headers. */
 export const FadeIn = ({ delay = 0, ...props }: MotionPresetProps) => {
   const animated = useAnimated();
@@ -114,7 +129,7 @@ export const FadeIn = ({ delay = 0, ...props }: MotionPresetProps) => {
     key={animated ? 'animated' : 'static'}
     initial={animated ? { y: 12 } : undefined}
     animate={animated ? { y: 0 } : undefined}
-    transition={{ type: 'timing', duration: 280, ease: 'easeOut', delay }}
+    transition={{ type: 'timing', duration: 280, easing: 'easeOut', delay }}
     {...props}
   />
   );
@@ -145,5 +160,53 @@ export const SlideUp = ({ delay = 0, ...props }: MotionPresetProps) => {
     transition={{ type: 'spring', damping: 20, stiffness: 300, delay }}
     {...props}
   />
+  );
+};
+
+/**
+ * Horizontal entrance — a row ASSEMBLING rather than appearing.
+ *
+ * Measured off WhatsApp's return from a voice take (frame-by-frame at 30fps,
+ * the recording ScreenRecording_08-26-2026 23-02-15). Three things about that
+ * transition are worth copying and none of them are obvious from watching it
+ * at speed:
+ *
+ *  - The two states do NOT cross-fade. The recording row is simply gone for one
+ *    frame (~33ms) before the composer starts arriving. A dissolve between two
+ *    rows of different controls reads as a smear; a cut plus an entrance reads
+ *    as a swap.
+ *  - The row arrives in two groups that CONVERGE. The trailing keys come in
+ *    from the right edge and settle leftward; the leading group comes in from
+ *    the left and settles rightward, starting ~100ms later. That counter-motion
+ *    is what makes it feel assembled rather than slid.
+ *  - Ease-out, no spring. Per-frame travel decayed 21, 16, 10, 4 px — monotonic,
+ *    no overshoot. A bounce here would draw the eye to the bar at the exact
+ *    moment the child's attention should be going back to the thread.
+ */
+export interface SlideInProps extends MotionPresetProps {
+  /** Which edge the element travels IN from. */
+  from?: 'left' | 'right';
+  /** Travel distance in px. */
+  distance?: number;
+  duration?: number;
+}
+
+export const SlideIn = ({
+  from = 'left',
+  distance = 24,
+  duration = 200,
+  delay = 0,
+  ...props
+}: SlideInProps) => {
+  const animated = useAnimated();
+  const offset = from === 'left' ? -distance : distance;
+  return (
+    <MotionView
+      key={animated ? 'animated' : 'static'}
+      initial={animated ? { x: offset, opacity: 0 } : undefined}
+      animate={animated ? { x: 0, opacity: 1 } : undefined}
+      transition={{ type: 'timing', duration, easing: 'easeOut', delay }}
+      {...props}
+    />
   );
 };
