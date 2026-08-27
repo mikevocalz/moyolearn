@@ -87,6 +87,19 @@ export type LoadGuardianSummaries = (
   ctx: ProtectedCtx,
 ) => Promise<{ readonly wards: readonly string[]; readonly reports: readonly SessionSummaryReport[] }>;
 
+/**
+ * The active-ward list ALONE — the by-id paths' scoping half.
+ *
+ * `loadGuardianSummaries` bounds its reports at a feed's worth, which is right
+ * for a feed and wrong for an ownership question: a share lives 30 days and a
+ * report leaves the newest-N window long before that, so proving ownership out
+ * of the feed would let a live link outlive the guardian's power to revoke it.
+ * The by-id paths load the ONE report they name and check it against this list
+ * instead — same two filters (the query scopes to active guardianships, the
+ * pure projection re-checks the ward), no window.
+ */
+export type LoadGuardianWards = (ctx: ProtectedCtx) => Promise<readonly string[]>;
+
 /** Writes `guardianViewedAt` once — the §5 visibility loop's honest metric. */
 export type MarkGuardianViewed = (sessionId: string, at: string) => Promise<void>;
 
@@ -174,10 +187,25 @@ export async function generateSessionSummary(
     ),
   });
 
-  const { narrative, model } = await narrativeFor(evidence, ports.narrativeModel);
+  const candidate = await narrativeFor(evidence, ports.narrativeModel);
 
   // §4 step 4 — the safety screen, over the narrative AND the verbatim answers.
-  const screened = await screenSummary(narrative, evidence.problems, ctx, band);
+  let screened = await screenSummary(candidate.narrative, evidence.problems, ctx, band);
+  let model = candidate.model;
+
+  /*
+    STAGE TWO. A dirty MODEL narrative is a fallback, not a suppression: the
+    screen accepts false positives precisely because callers regenerate, and
+    the deterministic wording of the same evidence is always available. Only
+    copy that screens dirty even when this file wrote it every word means the
+    evidence itself is the problem — that is the one thing that stops
+    publication. Skipped when the narrative was already deterministic, because
+    re-screening identical text cannot change the verdict.
+  */
+  if (!screened.narrativeSafe && model !== 'deterministic') {
+    screened = await screenSummary(deterministicNarrative(evidence), evidence.problems, ctx, band);
+    model = 'deterministic';
+  }
 
   /*
     All sessions this codebase can currently produce are AI-tutor sessions —
@@ -197,7 +225,7 @@ export async function generateSessionSummary(
     mastery: screened.narrative.mastery,
     effortMoment: screened.narrative.effortMoment,
     nextUp: screened.narrative.nextUp,
-    homeSupport: homeSupportFor(screened.narrative.workedOn[0]?.parentLabel ?? evidence.skills[0]?.skillTitle ?? ''),
+    homeSupport: homeSupportFor(homeSupportSkillTitle(evidence, screened.narrative)),
     facts: evidence.facts,
     evidenceRefs: evidence.evidenceRefs,
     generator: { model, promptVersion: PROMPT_VERSION, schemaVersion: SCHEMA_VERSION },
@@ -243,6 +271,22 @@ async function narrativeFor(
     */
   }
   return { narrative: deterministicNarrative(evidence), model: 'deterministic' };
+}
+
+/**
+ * Block 7 is keyed on the SKILL TITLE `inferSkillTitle` produces, never on the
+ * narrative's `parentLabel` — that label is the model's plain-language
+ * rewording ("splitting things into equal parts") and would miss every curated
+ * entry, silently handing each report the default. The narrative's first
+ * worked-on skill still chooses WHICH skill; only the key comes from evidence.
+ */
+function homeSupportSkillTitle(
+  evidence: ExtractedEvidence,
+  narrative: NarrativeCandidate,
+): string {
+  const chosen = narrative.workedOn[0]?.skillId;
+  const skill = chosen === undefined ? undefined : evidence.skills.find((row) => row.skillId === chosen);
+  return skill?.skillTitle ?? evidence.skills[0]?.skillTitle ?? '';
 }
 
 interface ScreenedSummary {
@@ -374,6 +418,15 @@ export function guardianSummariesFrom(
   );
 }
 
+/** The same double filter for ONE report — the by-id paths' half of it. */
+export function guardianSummaryFrom(
+  report: SessionSummaryReport | null,
+  wards: readonly string[],
+): SessionSummaryReport | null {
+  if (report === null) return null;
+  return guardianSummariesFrom([report], wards)[0] ?? null;
+}
+
 const cardFrom = (report: SessionSummaryReport): GuardianSummaryCard => ({
   sessionId: report.sessionId,
   learnerId: report.learnerAuthId,
@@ -404,7 +457,9 @@ export async function guardianSummaries(
   );
 }
 
-export interface GuardianReportPorts extends GuardianSummaryPorts {
+export interface GuardianReportPorts {
+  readonly loadGuardianWards: LoadGuardianWards;
+  readonly loadSummary: LoadSummaryBySession;
   readonly markGuardianViewed: MarkGuardianViewed;
   readonly resolveCaptureCrop: ResolveCaptureCrop;
 }
@@ -428,11 +483,12 @@ export async function guardianSummaryReport(
     auth,
     headers,
     async (ctx) => {
-      const { wards, reports } = await ports.loadGuardianSummaries(ctx);
-      const report = guardianSummariesFrom(reports, wards).find(
-        (candidate) => candidate.sessionId === sessionId,
-      );
-      if (!report) return null;
+      const [wards, loaded] = await Promise.all([
+        ports.loadGuardianWards(ctx),
+        ports.loadSummary(sessionId),
+      ]);
+      const report = guardianSummaryFrom(loaded, wards);
+      if (report === null) return null;
 
       if (report.guardianViewedAt === null) {
         await ports.markGuardianViewed(sessionId, new Date().toISOString());
@@ -514,7 +570,8 @@ export interface TeacherShareGrant {
   readonly expiresAt: string;
 }
 
-export interface TeacherSharePorts extends GuardianSummaryPorts {
+export interface TeacherSharePorts {
+  readonly loadGuardianWards: LoadGuardianWards;
   readonly loadSummary: LoadSummaryBySession;
   readonly saveSummary: SaveSummaryReport;
 }
@@ -540,12 +597,11 @@ export async function createTeacherShare(
     auth,
     headers,
     async (ctx) => {
-      const { wards, reports } = await ports.loadGuardianSummaries(ctx);
-      const owned = guardianSummariesFrom(reports, wards).some(
-        (report) => report.sessionId === sessionId,
-      );
-      if (!owned) return null;
-      const report = await ports.loadSummary(sessionId);
+      const [wards, loaded] = await Promise.all([
+        ports.loadGuardianWards(ctx),
+        ports.loadSummary(sessionId),
+      ]);
+      const report = guardianSummaryFrom(loaded, wards);
       if (report === null) return null;
 
       const secret = randomBytes(32).toString('base64url');
@@ -582,12 +638,11 @@ export async function revokeTeacherShare(
     auth,
     headers,
     async (ctx) => {
-      const { wards, reports } = await ports.loadGuardianSummaries(ctx);
-      const owned = guardianSummariesFrom(reports, wards).some(
-        (report) => report.sessionId === sessionId,
-      );
-      if (!owned) return false;
-      const report = await ports.loadSummary(sessionId);
+      const [wards, loaded] = await Promise.all([
+        ports.loadGuardianWards(ctx),
+        ports.loadSummary(sessionId),
+      ]);
+      const report = guardianSummaryFrom(loaded, wards);
       if (report === null || report.teacherShare === null) return false;
       await ports.saveSummary({
         ...report,

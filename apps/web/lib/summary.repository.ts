@@ -30,6 +30,7 @@ import type {
   EvidenceRef,
   ForgetSessionSummaries,
   LoadGuardianSummaries,
+  LoadGuardianWards,
   LoadSessionForSummary,
   LoadSummaryBySession,
   LoadSummaryQueue,
@@ -259,6 +260,25 @@ export const loadGuardianSummaries: LoadGuardianSummaries = async (ctx) =>
       limit: FEED_LIMIT,
     });
     return { wards: learnerIds, reports: docs.map(reportFromDoc) };
+  });
+
+/**
+ * The wards half on its own, for the by-id paths. They name ONE report and
+ * load it directly, so the feed's `FEED_LIMIT` — right for a feed, wrong for
+ * an ownership question — never bounds which reports a guardian can open,
+ * share or revoke.
+ */
+export const loadGuardianWards: LoadGuardianWards = async (ctx) =>
+  withPayload(async (payload) => {
+    const { docs } = await payload.find({
+      collection: 'guardianships',
+      where: {
+        guardianAuthId: { equals: ctx.learnerId },
+        status: { equals: 'active' },
+      },
+      limit: WARDS_LIMIT,
+    });
+    return docs.map((ward) => ward.learnerAuthId);
   });
 
 /**

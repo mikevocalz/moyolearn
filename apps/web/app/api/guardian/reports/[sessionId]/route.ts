@@ -15,7 +15,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { guardianSummaryReport } from '@acme/app/server';
 import {
-  loadGuardianSummaries,
+  loadGuardianWards,
+  loadSummaryBySession,
   markGuardianViewed,
   resolveCaptureCrop,
 } from '@/lib/summary.repository';
@@ -33,7 +34,8 @@ export async function GET(
 
   try {
     const report = await guardianSummaryReport(auth, request.headers, sessionId, {
-      loadGuardianSummaries,
+      loadGuardianWards,
+      loadSummary: loadSummaryBySession,
       markGuardianViewed,
       resolveCaptureCrop,
     });
