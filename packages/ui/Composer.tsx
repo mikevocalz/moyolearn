@@ -271,7 +271,11 @@ export function Composer({
                   aria-label={`Remove ${attachment.name}`}
                   className="absolute -right-2 -top-2 min-h-target-adult min-w-target-adult items-center justify-center"
                 >
-                  <View className="h-6 w-6 items-center justify-center rounded-full border-2 border-border bg-surface">
+                  {/* Square too. Every reference draws this badge as a circle;
+                      this kit has one radius and a dismiss badge is still a
+                      button. Consistency inside the product beats matching a
+                      screenshot from another one. */}
+                  <View className="h-6 w-6 items-center justify-center rounded-control border-2 border-border bg-surface">
                     <X size={12} className="text-text" />
                   </View>
                 </Pressable>
@@ -360,7 +364,7 @@ export function Composer({
             <Pressable
               onPress={onPickCamera ?? onPickImage ?? onPickDocument}
               aria-label="Add a photo or file"
-              className={`${iconTarget} items-center justify-center rounded-full`}
+              className={`${iconTarget} items-center justify-center rounded-control`}
             >
               <Plus size={20} className="text-text" />
             </Pressable>
@@ -382,7 +386,7 @@ export function Composer({
                 onPress={onStartRecording}
                 disabled={disabled}
                 aria-label="Record a voice message"
-                className={`${iconTarget} items-center justify-center rounded-full`}
+                className={`${iconTarget} items-center justify-center rounded-control`}
               >
                 <Mic size={20} className="text-text" />
               </Pressable>
@@ -393,7 +397,15 @@ export function Composer({
                 onPress={handleSubmit}
                 disabled={!canSend}
                 aria-label="Send message"
-                className={`${iconTarget} items-center justify-center rounded-full ${
+                /*
+                  A rounded SQUARE, not a circle. The references draw circular
+                  send keys; this design system does not — `radius.control` is
+                  the one shape every interactive thing takes, and a pill in the
+                  middle of a squared-off kit reads as an import from somewhere
+                  else. Borrowing structure from a reference does not mean
+                  borrowing its shape language.
+                */
+                className={`${iconTarget} items-center justify-center rounded-control ${
                   canSend ? 'bg-primary' : 'bg-surface-sunken'
                 }`}
               >
