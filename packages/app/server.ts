@@ -49,8 +49,17 @@ export {
 */
 export {
   eraseMemoryLine,
+  eraseMemoryTranscript,
+  forgetEverything,
   type ErasedLine,
+  type ErasedTranscript,
+  type ErasedMedia,
+  type ForgottenRecord,
   type EraseFactAndBlockTag,
+  type EraseTranscriptCascade,
+  type EraseLearnerMedia,
+  type ForgetLearnerRecord,
+  type ForgetEverythingPorts,
 } from './features/memory/memory.service';
 
 export {
@@ -61,6 +70,14 @@ export {
   type LoadGradeBand,
   type LoadLearnerFlags,
 } from './features/tutor/coach.service';
+/*
+  Doc 31 §2.1's band reader, re-exported for the same reason `DerivedFact` is:
+  the repository that reads the column has to name what the column means, and
+  `apps/web` reaching past this barrel into `@acme/student-model` for it would be
+  the app package importing prompt assembly to decode a string. The mapping of
+  the two pre-doc-31 values is part of the read, so it travels with it.
+*/
+export { asVoiceBand, VOICE_BANDS, type VoiceBand } from '@acme/student-model';
 export type { RecordSafetyEvent } from './features/tutor/safety-events';
 /*
   The safety-event shape travels with the ports that move it, exactly as
@@ -83,6 +100,67 @@ export {
   type LoadGuardianSafetyEvents,
   type SafetyAlertSummary,
 } from './features/ai-activity/safety-status.service';
+/*
+  Doc 31 §4 — the incident system's server surface.
+
+  It sits beside the safety-status export above because they are the two halves
+  of what an adult is told: the status line is doc 12 §5's "is the tutor running
+  right now", and an incident is "something crossed a line and here is what
+  happens next". A screen gets these shapes; it never gets the query.
+
+  The `IncidentReport` type travels through this barrel for the same reason
+  `SafetyEvent` does two exports up — `apps/web` does not depend on
+  `@acme/safety` and must not start, but the repository that writes the row has
+  to be able to name what a row is.
+*/
+export {
+  acknowledgeGuardianIncident,
+  guardianIncidents,
+  guardianIncidentsFrom,
+  incidentTriageQueue,
+  submitIncident,
+  triageIncident,
+  triageQueueFrom,
+  CONVERSATION_STARTERS,
+  type FanOutIncident,
+  type GuardianIncidentPorts,
+  type GuardianIncidentView,
+  type LoadGuardianIncidents,
+  type LoadIncident,
+  type LoadIncidentQueue,
+  type SaveIncident,
+  type SubmitIncidentInput,
+  type SubmitIncidentPorts,
+  type TriagePorts,
+  type TriageQueue,
+  type TriageRow,
+} from './features/safety/incidents.service';
+export type {
+  IncidentCategory,
+  IncidentReport,
+  IncidentStatus,
+  IncidentTimelineEntry,
+  SafetyTier,
+} from '@acme/safety';
+/*
+  The ladder's pure half, re-exported for the same reason the types above are.
+
+  `apps/web` has `@acme/safety` on its dependency list, so this is a convention
+  rather than a resolution problem — and the convention is the point: the plane
+  is server-side and a repository reaching into it directly is how a classifier
+  ends up called from somewhere that is not the boundary. What crosses here is
+  arithmetic — a rolling-window climb, a rung's policy, an incident constructor
+  — and it crosses through the barrel that already hands the app the ports that
+  move those values.
+*/
+export {
+  escalate,
+  escalatedSafetyEvent,
+  incidentFromSafetyEvent,
+  markFannedOut,
+  LADDER,
+  REPETITION_WINDOW_MINUTES,
+} from '@acme/safety';
 export { PEDAGOGY_CONTRACT, revealsAnswer } from './features/tutor/pedagogy';
 export {
   openSession,

@@ -23,8 +23,24 @@
 import type { DerivedFact } from './facts.ts';
 import type { SessionTranscript, SessionTurn } from './distill.ts';
 
-export interface ErasureResult {
-  facts: DerivedFact[];
+/**
+ * The only two fields the cascade reads: an identity and a provenance list.
+ *
+ * Named so the cascade can run over a PROJECTION rather than over a rebuilt
+ * `DerivedFact`. That is not a convenience. `edu.repository.ts:factFromRow`
+ * returns `null` for a row this build cannot represent — an unknown `kind` from
+ * a newer deployment mid-rollout, or a misconception whose tag has since left
+ * the taxonomy — and a guardian's erasure that walked reconstructed facts would
+ * silently skip exactly those rows, leaving a belief whose only source the
+ * parent just deleted. Two columns cannot fail to decode.
+ */
+export interface Provenanced {
+  readonly id: string;
+  readonly derivedFrom: readonly string[];
+}
+
+export interface ErasureResult<F extends Provenanced = DerivedFact> {
+  facts: F[];
   /** Ids removed, for the audit row and for the "we deleted N things" copy. */
   erasedFactIds: string[];
 }
@@ -41,12 +57,18 @@ export function eraseFact(facts: readonly DerivedFact[], factId: string): Erasur
 /**
  * Deletes a transcript and everything it is the sole source of. This is what
  * runs when a transcript hits its TTL and when a guardian erases a session.
+ *
+ * Generic over `Provenanced` so the same function decides the cascade for the
+ * TTL sweep (whole `DerivedFact`s, from `expireTranscripts`) and for the
+ * guardian's erase-session button (two columns off `edu.knowledge_graph`). The
+ * alternative was a second implementation in the repository, which is how a
+ * screen ends up promising one cascade while the server performs another.
  */
-export function eraseTranscript(
-  facts: readonly DerivedFact[],
+export function eraseTranscript<F extends Provenanced>(
+  facts: readonly F[],
   transcriptId: string,
-): ErasureResult {
-  const kept: DerivedFact[] = [];
+): ErasureResult<F> {
+  const kept: F[] = [];
   const erasedFactIds: string[] = [];
 
   for (const fact of facts) {

@@ -90,3 +90,38 @@ DO $$ BEGIN
     EXECUTE 'DELETE FROM payload.safety_events WHERE expires_at < now()';
   END IF;
 END $$;
+
+/*
+  Incident reports (doc 31 §4.1), on the LEARNER-CONTENT clock — and the one
+  statement in this file that deliberately leaves rows behind.
+
+  §4.1: "retention follows the learner-content schedule *except* S4 and
+  abuse-disclosure records, which follow the legal-hold schedule counsel sets."
+  `legal_hold` is that exception as a nullable REASON on the row
+  (`packages/safety/src/incidents.ts:LEGAL_HOLD_REASON`), and this is the sweep
+  refusing to cross it.
+
+  THE PREDICATE IS THE WHOLE FEATURE. `legal_hold IS NULL` is not a filter for
+  tidiness — it is the difference between a record that is preserved because
+  somebody has an obligation to preserve it, and a record that was deleted on
+  schedule by a job that did not know. `expires_at` is still written on a held
+  row, so a hold released by counsel lands on a schedule that is already under
+  it rather than on one somebody has to invent afterwards. Nothing in this
+  repository releases a hold; there is no function that clears the column.
+
+  Payload's `delete` access on the collection is closed outright, so this
+  statement and its `incident_reports_texts` cascade are the ONLY path by which
+  an incident is ever removed — which is what makes the predicate load-bearing
+  rather than one of two ways out.
+
+  GUARDED with `to_regclass` for the reason this file's header records at
+  length: the whole script runs as one multi-statement string inside an implicit
+  transaction, so naming a table that has not been created yet raises 42P01 and
+  takes every other statement down with it. A database that has not had
+  `incident_reports_additive.sql` applied is a no-op here, not a broken sweep.
+*/
+DO $$ BEGIN
+  IF to_regclass('payload.incident_reports') IS NOT NULL THEN
+    EXECUTE 'DELETE FROM payload.incident_reports WHERE expires_at < now() AND legal_hold IS NULL';
+  END IF;
+END $$;

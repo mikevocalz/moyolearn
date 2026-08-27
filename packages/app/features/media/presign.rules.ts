@@ -4,7 +4,7 @@
 // cannot import (because of `server-only`) is a module nobody checks.
 // SOT: docs/decisions/bunny-storage-presign-spike.md
 // SOT-KEYWORDS: presign rules media upload validation key ownership pure
-import { MAX_BYTES, type MediaKind } from './media.types.ts';
+import { MAX_BYTES, MEDIA_KINDS, type MediaKind } from './media.types.ts';
 
 const ALLOWED: Record<MediaKind, readonly RegExp[]> = {
   image: [/^image\/(jpeg|png|webp|heic|heif|gif)$/],
@@ -42,6 +42,63 @@ export function assertUploadable(kind: MediaKind, contentType: string, size: num
     );
   }
 }
+
+/**
+ * Whose folder an upload lands in, decided in ONE place.
+ *
+ * An org shares a folder: a school's uploads are the school's, and `ctx.orgId`
+ * is what a district's media is filed under. A family account has no org, so the
+ * learner is the owner.
+ *
+ * Extracted from `presign.service.ts` rather than left inline because erasure
+ * has to answer the same question in reverse — "which objects are this
+ * learner's" — and two copies of this expression is how a forget-everything
+ * ends up deleting a prefix nobody writes to.
+ */
+export const mediaOwner = (learnerId: string, orgId: string | undefined): string =>
+  orgId ?? learnerId;
+
+/**
+ * Which storage prefixes hold THIS learner's uploads and nobody else's — or the
+ * reason there is no such answer.
+ *
+ * A discriminated union rather than an empty array, because "delete nothing" and
+ * "we cannot tell whose these are" are opposite facts that an empty list spells
+ * identically, and the second one has to reach a guardian's screen.
+ *
+ * WHEN THERE IS NO ANSWER. `mediaOwner` files an org's uploads under the ORG, so
+ * a school learner's photograph sits at `image/<orgId>/<date>/<id>/…` beside
+ * every classmate's, with no learner segment anywhere in the key. There is no
+ * prefix that selects one child's objects, and the only enumeration that would
+ * is the org's whole folder — i.e. deleting other children's bytes to satisfy
+ * one family's request. So this refuses, and `forgetLearnerRecord` reports the
+ * refusal instead of guessing. Fixing it means putting the learner in the key,
+ * which is a migration of existing objects and not a branch in an eraser.
+ */
+export type LearnerMediaScope =
+  | { readonly scoped: true; readonly prefixes: readonly string[] }
+  | { readonly scoped: false; readonly reason: string };
+
+export const learnerMediaScope = (
+  learnerId: string,
+  orgId: string | undefined,
+): LearnerMediaScope =>
+  orgId === undefined
+    ? {
+        scoped: true,
+        // `${kind}/${owner}` is `buildKey`'s first two segments, and
+        // `buildVoiceNoteKeys` writes its pair under `audio/${owner}` — so these
+        // prefixes cover every object either function can mint, and no other
+        // function mints one.
+        prefixes: MEDIA_KINDS.map((kind) => `${kind}/${learnerId}`),
+      }
+    : {
+        scoped: false,
+        reason:
+          'Uploads on a school account are stored under the school, not the child, ' +
+          'so we cannot tell which files are hers without touching other children’s. ' +
+          'They are deleted on their own seven-day schedule.',
+      };
 
 /**
  * The object key, built from the caller's identity rather than their request.

@@ -21,6 +21,7 @@ import {
   assertUploadable,
   buildKey,
   buildVoiceNoteKeys,
+  mediaOwner,
   PresignRejected,
 } from './presign.rules.ts';
 
@@ -66,7 +67,7 @@ export function presignUpload(
     two objects, which is what makes replace-keeps-history possible instead of
     the CDN serving stale bytes from a reused path.
   */
-  const owner = ctx.orgId ?? ctx.learnerId;
+  const owner = mediaOwner(ctx.learnerId, ctx.orgId);
   const id = globalThis.crypto.randomUUID();
   const key = buildKey(kind, owner, filename, id, now());
 
@@ -94,7 +95,7 @@ export function presignVoiceNote(
 ): VoiceNotePresign {
   assertUploadable('audio', request.contentType, request.size);
 
-  const owner = ctx.orgId ?? ctx.learnerId;
+  const owner = mediaOwner(ctx.learnerId, ctx.orgId);
   const id = globalThis.crypto.randomUUID();
   const keys = buildVoiceNoteKeys(owner, request.audioExtension, id, now());
 

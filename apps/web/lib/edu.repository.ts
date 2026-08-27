@@ -27,6 +27,7 @@
 // SOT-KEYWORDS: edu repository educational store tutoring write path transcripts knowledge graph retention sweep erasure cascade provenance derived fact separation
 import 'server-only';
 import {
+  eraseTranscript,
   interestFact,
   isMisconceptionTag,
   masteryFact,
@@ -34,10 +35,13 @@ import {
   reviewFact,
   scaffoldingFact,
   type DerivedFact,
+  type Provenanced,
   type SessionTranscript,
 } from '@acme/student-model';
 import type {
   EraseFactAndBlockTag,
+  EraseTranscriptCascade,
+  ForgetLearnerRecord,
   LoadBlockedTags,
   LoadPriorFacts,
   SaveFacts,
@@ -304,6 +308,174 @@ export const eraseEduFactAndBlockTag: EraseFactAndBlockTag = async (ctx, factId)
         statement fails `25P02` — one failed erasure would take out unrelated
         traffic until the pool recycled.
       */
+      await client.query('rollback');
+      throw error;
+    }
+  });
+
+/**
+ * One session, erased — the transcript, its vectors, and every belief it was the
+ * sole source of — in one transaction.
+ *
+ * THE CASCADE IS NOT DECIDED HERE. `eraseTranscript` in `@acme/student-model` is
+ * the same function the TTL sweep runs and the same one S27's dialog previews
+ * through `cascadePreview`; a second implementation in this file is how a
+ * guardian is shown "3 of 6 notes go with it" and has a different three deleted.
+ * It is called over a two-column PROJECTION rather than over rebuilt
+ * `DerivedFact`s on purpose — see `Provenanced`: `factFromRow` drops a row this
+ * build cannot represent, and a row dropped here is a belief that outlives the
+ * only session that justified it.
+ *
+ * `for update` ON THE READ, and the whole thing in one transaction, because the
+ * cascade is a decision computed from rows and then written back. A distillation
+ * committing between the two would re-provenance a fact onto the transcript this
+ * transaction is about to delete, and the fact would survive pointing at nothing
+ * — the orphaned belief `knowledge_graph_has_provenance` exists to make
+ * impossible. The lock makes the read-decide-write atomic rather than optimistic.
+ *
+ * NOTHING IS BLOCKED. `edu.blocked_tags` is written by the single-line eraser,
+ * where the guardian named the belief itself. A tag on a fact that merely lost
+ * one of its sources may be supported by sessions the family kept, and recording
+ * a block from a request to delete one evening would forbid a topic nobody asked
+ * to forbid — `erasure.ts`'s "a deleted interest stays deleted" is about a
+ * deleted interest, not about a deleted Tuesday.
+ *
+ * `edu.embeddings` is not touched and must not be: `embeddings_owner_shape`
+ * makes `transcript_id` NOT NULL for every learner-scoped vector and the foreign
+ * key is ON DELETE CASCADE, so the transcript delete takes them. The retention
+ * sweep says the same thing about itself for the same reason.
+ */
+export const eraseEduTranscriptCascade: EraseTranscriptCascade = async (ctx, transcriptId) =>
+  withEdu(async (client: EduClient) => {
+    await client.query('begin');
+    try {
+      const { rows } = await client.query<{ fact_id: string; derived_from: string[] }>(
+        /*
+          `$2::edu.opaque_id[]` on the PARAMETER and `derived_from::text[]` in the
+          projection — the two casts go in opposite directions and both are
+          load-bearing. `loadEduFactsDerivedFrom` explains each at length; the
+          short version is that casting the column instead would cost the GIN
+          index, and not casting the projection hands `pg` a domain array OID it
+          has no parser for and returns `{a,b}` as a string.
+        */
+        `select fact_id, derived_from::text[] as derived_from
+           from edu.knowledge_graph
+          where learner_id = $1 and derived_from && $2::edu.opaque_id[]
+          for update`,
+        [ctx.learnerId, [transcriptId]],
+      );
+
+      const facts: Provenanced[] = rows.map((row) => ({
+        id: row.fact_id,
+        derivedFrom: row.derived_from,
+      }));
+      const cascade = eraseTranscript(facts, transcriptId);
+
+      if (cascade.erasedFactIds.length > 0) {
+        await client.query(
+          'delete from edu.knowledge_graph where fact_id = any($1) and learner_id = $2',
+          [cascade.erasedFactIds, ctx.learnerId],
+        );
+      }
+
+      /*
+        Only the facts whose provenance actually shrank are rewritten, and the
+        difference is a length comparison — `derivedFrom` only ever loses entries
+        here, so a shorter list is a changed one. The sweep route computes the
+        same set the same way.
+      */
+      const sourcesBefore = new Map(facts.map((fact) => [fact.id, fact.derivedFrom.length]));
+      const trimmed = cascade.facts.filter(
+        (fact) => sourcesBefore.get(fact.id) !== fact.derivedFrom.length,
+      );
+      for (const fact of trimmed) {
+        await client.query(
+          'update edu.knowledge_graph set derived_from = $2 where fact_id = $1 and learner_id = $3',
+          [fact.id, fact.derivedFrom, ctx.learnerId],
+        );
+      }
+
+      const { rowCount } = await client.query(
+        'delete from edu.transcripts where session_id = $1 and learner_id = $2',
+        [transcriptId, ctx.learnerId],
+      );
+
+      await client.query('commit');
+      /*
+        `erased: false` when the id named no session of this learner's, committed
+        rather than thrown — the same answer `eraseEduFactAndBlockTag` gives to a
+        double-press, and for the same reason: the session is gone, which is what
+        was asked for, and an error would make S27 restore a row that no longer
+        exists.
+      */
+      return {
+        erased: (rowCount ?? 0) > 0,
+        erasedFactIds: cascade.erasedFactIds,
+        trimmedFactIds: trimmed.map((fact) => fact.id),
+      };
+    } catch (error) {
+      // Rolled back before rethrowing — `withEdu` releases into a shared pool,
+      // and a connection freed inside an aborted transaction fails `25P02` for
+      // its next borrower. Same reasoning as `eraseEduFactAndBlockTag`.
+      await client.query('rollback');
+      throw error;
+    }
+  });
+
+/**
+ * Everything the educational store holds about one learner, gone, in one
+ * transaction.
+ *
+ * `where learner_id = $1` on every statement and `ctx.learnerId` as the only
+ * source of that value. This is the operation in the product whose blast radius
+ * is other people's children if a predicate is ever dropped, which is why the
+ * integration test seeds a second learner and asserts every one of their rows
+ * intact rather than only counting this learner's to zero.
+ *
+ * ONE TRANSACTION, not four statements. A crash between them leaves a guardian
+ * who pressed "forget everything" with a partly-erased record and a screen that
+ * already told them it was empty — and no second pass, because the client has
+ * nothing left to retry from.
+ *
+ * BLOCKED TAGS GO TOO, and this is the one place they are cleared. Erasing a
+ * single line RECORDS a block; erasing everything REMOVES them, because after
+ * this statement there is no transcript left to re-derive anything from, so the
+ * rows can no longer be protecting against the thing they were written for. What
+ * they would still do is suppress a tag in sessions that have not happened yet,
+ * enforced by an instruction referring to a fact nobody can look up any more —
+ * a family who asked us to forget everything would have left behind a standing
+ * note about their child, which is the opposite of what they pressed. S27's own
+ * dialog says "Natalie starts over knowing nothing", and a surviving blocklist
+ * is knowing something.
+ *
+ * `edu.embeddings` is absent for the reason above: the FK takes the vectors when
+ * the transcripts go, and the test asserts it so a relaxed constraint goes red
+ * here instead of leaving a child's embeddings behind quietly.
+ */
+export const forgetEduLearnerRecord: ForgetLearnerRecord = async (ctx) =>
+  withEdu(async (client: EduClient) => {
+    await client.query('begin');
+    try {
+      const tags = await client.query('delete from edu.blocked_tags where learner_id = $1', [
+        ctx.learnerId,
+      ]);
+      const facts = await client.query('delete from edu.knowledge_graph where learner_id = $1', [
+        ctx.learnerId,
+      ]);
+      // Facts before transcripts, the order the sweep route argues for: both can
+      // be interrupted, and only this one is interrupted in the direction the
+      // retention promise was made.
+      const transcripts = await client.query('delete from edu.transcripts where learner_id = $1', [
+        ctx.learnerId,
+      ]);
+
+      await client.query('commit');
+      return {
+        transcripts: transcripts.rowCount ?? 0,
+        facts: facts.rowCount ?? 0,
+        blockedTags: tags.rowCount ?? 0,
+      };
+    } catch (error) {
       await client.query('rollback');
       throw error;
     }

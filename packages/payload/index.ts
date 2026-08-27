@@ -27,6 +27,15 @@ export type { SessionTranscript, StudentModelFact } from './src/payload-types';
 */
 export type { SafetyEvent } from './src/payload-types';
 
+/*
+  Doc 31 §4's case file, and the same collision a third time: `@acme/safety`
+  exports an `IncidentReport` too, and that one is the DOMAIN object the ladder
+  produces. The row carries a numeric Payload id, `subjectLearnerAuthId` rather
+  than `subjectLearnerId`, and `timeline`/`transcriptExcerpt` as JSON columns
+  rather than as narrowed shapes. `incident.repository.ts` aliases this one.
+*/
+export type { IncidentReport } from './src/payload-types';
+
 export interface PayloadClientConfig {
   /** Payload REST base, e.g. https://example.com/payload-api */
   baseUrl: string;

@@ -1,7 +1,18 @@
 // Shapes both sides of the upload boundary need. Kept out of the service so a
 // client can import them without pulling `server-only` in behind them.
 // SOT-KEYWORDS: media types upload presign kind limits shared
-export type MediaKind = 'image' | 'audio' | 'document';
+/**
+ * Every kind there is, as a value — because erasure has to ENUMERATE them.
+ *
+ * `buildKey` puts the kind first in the object key, so "everything this learner
+ * uploaded" is one prefix per kind and nothing else. A hand-written union plus a
+ * separately hand-written list is how a fourth kind ships with a folder no
+ * forget-everything ever walks, so the type is derived from the list rather than
+ * declared beside it (CLAUDE.md §Types).
+ */
+export const MEDIA_KINDS = ['image', 'audio', 'document'] as const;
+
+export type MediaKind = (typeof MEDIA_KINDS)[number];
 
 export interface PresignResult {
   /** PUT the bytes here. Carries its own signature; send no credentials. */

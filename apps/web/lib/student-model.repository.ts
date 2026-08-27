@@ -25,6 +25,7 @@ import 'server-only';
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import type { StudentModelFact } from '@acme/payload';
+import { asVoiceBand } from '@acme/app/server';
 import type {
   LoadGradeBand,
   SaveGradeBand,
@@ -120,15 +121,20 @@ export function factFromDoc(doc: StudentModelFact): DerivedFact | null {
 }
 
 /**
- * Doc 07 §3 layer 1's band, read from the learner's own record. Falls back to
- * `older` when the field is unset, which is the same default `crisisResponse`
- * carries: the older register does not baby-talk a teenager, and a young child
- * shown it is still shown a correct crisis resource.
+ * Doc 31 §2.1's voice band, read from the learner's own record.
+ *
+ * `asVoiceBand` owns both the fallback and the migration, which is why the
+ * comparison that used to live here is gone. A row written before the field was
+ * split still says `young` or `older`, and mapping rather than rejecting those
+ * is what keeps a six-year-old out of the register doc 31 was written about.
+ * The fallback for an unreadable value stays 9-12 for the reason it always was:
+ * a band is a safe thing to be wrong about in that direction, and the flag read
+ * next to it — which is not — has no fallback at all.
  */
 export const loadGradeBand: LoadGradeBand = async (ctx) => {
   return withPayload(async (payload) => {
     const user = await payload.findByID({ collection: 'users', id: ctx.learnerId }).catch(() => null);
-    return (user as { gradeBand?: string } | null)?.gradeBand === 'young' ? 'young' : 'older';
+    return asVoiceBand((user as { gradeBand?: string } | null)?.gradeBand);
   });
 };
 

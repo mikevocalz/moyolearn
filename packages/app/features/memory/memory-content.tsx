@@ -201,7 +201,16 @@ export function MemoryContent() {
         actions={
           <>
             <Button title="Keep it" variant="ghost" onPress={cancelErase} />
-            <Button title="Delete session" variant="danger" onPress={confirmEraseTranscript} />
+            {/* `void`, like the row's trash icon: `onPress` is fire-and-forget on
+                both platforms and the store owns the failure path — it reinstates
+                the session and sets `eraseError`, which renders above. */}
+            <Button
+              title="Delete session"
+              variant="danger"
+              onPress={() => {
+                void confirmEraseTranscript();
+              }}
+            />
           </>
         }
       />
@@ -214,7 +223,13 @@ export function MemoryContent() {
         actions={
           <>
             <Button title="Cancel" variant="ghost" onPress={cancelErase} />
-            <Button title="Forget everything" variant="danger" onPress={confirmForgetAll} />
+            <Button
+              title="Forget everything"
+              variant="danger"
+              onPress={() => {
+                void confirmForgetAll();
+              }}
+            />
           </>
         }
       />

@@ -1040,3 +1040,461 @@ test(
     }
   },
 );
+
+/*
+  S27's SECOND eraser: a guardian deleting one session.
+
+  `memory.store.ts:confirmEraseTranscript` filtered a zustand array and stopped,
+  exactly as `eraseLine` did before the commit above — the transcript vanished
+  from the guardian's screen, the row and every belief derived from it stayed in
+  `edu`, and a reload brought the lot back. The cascade this test drives is the
+  REAL `eraseTranscript` from `@acme/student-model`, called on the rows the
+  DATABASE holds, because the promise doc 07 §4 makes is about the store and not
+  about a React tree.
+
+  THE CONTROL COMES FIRST, and it is the naive implementation held still: a
+  separate transcript is deleted with the one statement anybody would write, and
+  the fact it was the sole source of is proved to SURVIVE that. Without it, a
+  foreign key or a trigger somebody added later would make the assertions below
+  pass while the cascade did nothing — the test would be green and the tutor
+  would still be able to state a belief whose only source a parent deleted.
+
+  Same allowlisted-SQL arrangement as every test above, for the same reason:
+  `apps/web/lib/edu.repository.ts` begins with `import 'server-only'`. The
+  statements in `runErase` are `eraseEduTranscriptCascade`, statement for
+  statement, `for update` and transaction included.
+*/
+test(
+  'erasing one session takes the beliefs it alone supports and its vectors, and trims the rest',
+  { skip: url ? false : 'no DATABASE_URL' },
+  async () => {
+    const { default: pg } = await import('pg');
+    const { eraseTranscript } = await import('../../../student-model/src/erasure.ts');
+
+    const c = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+    await c.connect();
+
+    const stamp = `erase-transcript-${randomUUID()}`;
+    const learner = `${stamp}-learner`;
+    const TARGET = randomUUID();
+    const OTHER = randomUUID();
+    const CONTROL = randomUUID();
+    const SOLE = `${stamp}:mastery:sole`;
+    const SHARED = `${stamp}:mastery:shared`;
+    const UNRELATED = `${stamp}:mastery:unrelated`;
+    const CONTROL_FACT = `${stamp}:mastery:control`;
+
+    const seedTranscript = async (sessionId) => {
+      await c.query(
+        `insert into edu.transcripts (session_id, learner_id, captured_at, expires_at, turns)
+         values ($1, $2, now(), now() + interval '29 days', '[]'::jsonb)`,
+        [sessionId, learner],
+      );
+      await c.query(
+        `insert into edu.embeddings (kind, transcript_id, learner_id, model, embedding)
+         select 'transcript', $1, $2, 'pinned-1024',
+                ('[' || string_agg('0.01', ',') || ']')::extensions.vector(1024)
+           from generate_series(1, 1024)`,
+        [sessionId, learner],
+      );
+    };
+
+    const seedFact = async (factId, provenance) =>
+      c.query(
+        `insert into edu.knowledge_graph
+           (fact_id, learner_id, kind, skill_id, skill_title, p, attempts,
+            derived_from, observed_at, expires_at)
+         values ($1, $2, 'mastery', 'fraction-addition', 'Adding fractions', 0.5, 3,
+                 $3, now(), now() + interval '400 days')`,
+        [factId, learner, provenance],
+      );
+
+    const countFact = async (factId) =>
+      (await c.query('select count(*)::int n from edu.knowledge_graph where fact_id = $1', [factId]))
+        .rows[0].n;
+
+    const provenanceOf = async (factId) =>
+      (
+        await c.query(
+          'select derived_from::text[] as derived_from from edu.knowledge_graph where fact_id = $1',
+          [factId],
+        )
+      ).rows[0]?.derived_from ?? null;
+
+    const countTranscript = async (sessionId) =>
+      (await c.query('select count(*)::int n from edu.transcripts where session_id = $1', [sessionId]))
+        .rows[0].n;
+
+    const countVectors = async (sessionId) =>
+      (await c.query('select count(*)::int n from edu.embeddings where transcript_id = $1', [sessionId]))
+        .rows[0].n;
+
+    /** `eraseEduTranscriptCascade`, statement for statement. */
+    const runErase = async (transcriptId) => {
+      await c.query('begin');
+      try {
+        /*
+          `for update`, and the cascade computed from what this SELECT returned.
+          A distillation landing between the read and the write would otherwise
+          rewrite `derived_from` under the erasure and re-provenance a fact back
+          onto a transcript this transaction is about to delete.
+        */
+        const { rows } = await c.query(
+          `select fact_id, derived_from::text[] as derived_from
+             from edu.knowledge_graph
+            where learner_id = $1 and derived_from && $2::edu.opaque_id[]
+            for update`,
+          [learner, [transcriptId]],
+        );
+        const facts = rows.map((row) => ({ id: row.fact_id, derivedFrom: row.derived_from }));
+        const cascade = eraseTranscript(facts, transcriptId);
+
+        if (cascade.erasedFactIds.length > 0) {
+          await c.query(
+            'delete from edu.knowledge_graph where fact_id = any($1) and learner_id = $2',
+            [cascade.erasedFactIds, learner],
+          );
+        }
+
+        const before = new Map(facts.map((fact) => [fact.id, fact.derivedFrom.length]));
+        const trimmed = cascade.facts.filter(
+          (fact) => before.get(fact.id) !== fact.derivedFrom.length,
+        );
+        for (const fact of trimmed) {
+          await c.query(
+            'update edu.knowledge_graph set derived_from = $2 where fact_id = $1 and learner_id = $3',
+            [fact.id, fact.derivedFrom, learner],
+          );
+        }
+
+        const { rowCount } = await c.query(
+          'delete from edu.transcripts where session_id = $1 and learner_id = $2',
+          [transcriptId, learner],
+        );
+        await c.query('commit');
+        return {
+          erased: (rowCount ?? 0) > 0,
+          erasedFactIds: cascade.erasedFactIds,
+          trimmedFactIds: trimmed.map((fact) => fact.id),
+        };
+      } catch (error) {
+        await c.query('rollback');
+        throw error;
+      }
+    };
+
+    try {
+      await seedTranscript(TARGET);
+      await seedTranscript(OTHER);
+      await seedTranscript(CONTROL);
+      await seedFact(SOLE, [TARGET]);
+      await seedFact(SHARED, [TARGET, OTHER]);
+      await seedFact(UNRELATED, [OTHER]);
+      await seedFact(CONTROL_FACT, [CONTROL]);
+
+      /*
+        THE CONTROL. The obvious one-statement implementation — delete the
+        transcript the guardian named — and the belief derived from nothing else
+        is still there afterwards. This assertion is the bug, held still: if it
+        ever fails, something outside the cascade is removing these facts and
+        every assertion below stops proving that the cascade does.
+      */
+      await c.query('delete from edu.transcripts where session_id = $1 and learner_id = $2', [
+        CONTROL,
+        learner,
+      ]);
+      assert.equal(
+        await countFact(CONTROL_FACT),
+        1,
+        'control failed: deleting the transcript row alone already removed its sole-source fact, ' +
+          'so the cascade assertions below prove nothing',
+      );
+
+      const result = await runErase(TARGET);
+
+      assert.equal(result.erased, true, 'the guardian erased a session and no transcript row went');
+      assert.deepEqual(result.erasedFactIds, [SOLE], 'the sole-source fact was not identified');
+      assert.deepEqual(result.trimmedFactIds, [SHARED], 'the shared fact was not re-provenanced');
+
+      assert.equal(await countTranscript(TARGET), 0, 'the erased session survived');
+      assert.equal(await countTranscript(OTHER), 1, 'erasing one session deleted another');
+
+      assert.equal(
+        await countFact(SOLE),
+        0,
+        'a belief whose only source the guardian deleted survived — the tutor can still state it',
+      );
+      assert.deepEqual(
+        await provenanceOf(SHARED),
+        [OTHER],
+        'a fact with another source was deleted instead of having its provenance trimmed',
+      );
+      assert.deepEqual(await provenanceOf(UNRELATED), [OTHER], 'an untouched fact was rewritten');
+
+      assert.equal(
+        await countVectors(TARGET),
+        0,
+        'the session is gone and its embedding is not — doc 19 §5.5: an embedding of learner content IS learner content',
+      );
+      assert.equal(await countVectors(OTHER), 1, 'another session lost its embedding');
+
+      /*
+        Erasing a SESSION blocks nothing. The tag on a surviving fact may be
+        supported by transcripts the guardian kept, and recording a block here
+        would forbid a topic on the strength of a request to delete one evening.
+        `edu.blocked_tags` is written by the single-line eraser, which knows the
+        guardian named the belief itself.
+      */
+      assert.equal(
+        (
+          await c.query('select count(*)::int n from edu.blocked_tags where learner_id = $1', [
+            learner,
+          ])
+        ).rows[0].n,
+        0,
+        'erasing a session recorded a blocked tag — a session delete is not a topic ban',
+      );
+
+      // A double-press, or a retry of a request that already committed.
+      const again = await runErase(TARGET);
+      assert.equal(again.erased, false, 'a second erasure of the same session reported a deletion');
+      assert.deepEqual(again.erasedFactIds, [], 'a retry erased facts the first pass already had');
+      assert.deepEqual(await provenanceOf(SHARED), [OTHER], 'a retry rewrote a settled fact');
+    } finally {
+      try {
+        await c.query('rollback');
+        await c.query('delete from edu.knowledge_graph where learner_id = $1', [learner]);
+        await c.query('delete from edu.transcripts where learner_id = $1', [learner]);
+      } finally {
+        await c.end();
+      }
+    }
+  },
+);
+
+/*
+  "Forget everything" — and everything means every table, for ONE learner.
+
+  `memory.store.ts:confirmForgetAll` was `set({ facts: [], transcripts: [] })`.
+  The dialog told a guardian "all N notes and N sessions are deleted. Her
+  account, her plan and her past work are not touched", and the only true clause
+  in it was the second one.
+
+  TWO THINGS THIS PROVES THAT A ROW COUNT CANNOT.
+
+  1. THE BLOCKED TAGS GO TOO, and the control is what makes that a decision
+     rather than an omission. Before the erasure it proves a surviving
+     `edu.blocked_tags` row really does suppress the next derivation — so a
+     forget-all that kept them would leave a child unable to be noticed liking
+     something, on the strength of a fact that no longer exists and that nobody
+     can look up to explain why. After it, the same turns derive the interest
+     again: the child starts over knowable, which is what the dialog says.
+
+  2. NOBODY ELSE'S ROWS MOVE. A second learner is seeded with a row in every one
+     of the four tables and asserted intact afterwards, because the whole
+     operation is a `where learner_id = $1` and a missing predicate is the one
+     bug here whose blast radius is other people's children.
+
+  The statements are `forgetEduLearnerRecord`, statement for statement. Same
+  allowlist reason as every test above.
+*/
+test(
+  'forget everything empties every edu table for one learner and touches no other learner',
+  { skip: url ? false : 'no DATABASE_URL' },
+  async () => {
+    const { default: pg } = await import('pg');
+    const { distill, transcriptExpiry } = await import('../../../student-model/src/distill.ts');
+    const { withoutBlockedTags } = await import('../../../student-model/src/erasure.ts');
+
+    const c = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+    await c.connect();
+
+    const stamp = `forget-all-${randomUUID()}`;
+    const learner = `${stamp}-learner`;
+    const bystander = `${stamp}-bystander`;
+    const TAG = 'basketball';
+    const options = { guardianApprovedInterests: [TAG] };
+
+    const seedTranscript = async (who, sessionId) => {
+      await c.query(
+        `insert into edu.transcripts (session_id, learner_id, captured_at, expires_at, turns)
+         values ($1, $2, now(), now() + interval '29 days', '[]'::jsonb)`,
+        [sessionId, who],
+      );
+      await c.query(
+        `insert into edu.embeddings (kind, transcript_id, learner_id, model, embedding)
+         select 'transcript', $1, $2, 'pinned-1024',
+                ('[' || string_agg('0.01', ',') || ']')::extensions.vector(1024)
+           from generate_series(1, 1024)`,
+        [sessionId, who],
+      );
+    };
+
+    const seedFact = async (who, factId, provenance) =>
+      c.query(
+        `insert into edu.knowledge_graph
+           (fact_id, learner_id, kind, skill_id, skill_title, p, attempts,
+            derived_from, observed_at, expires_at)
+         values ($1, $2, 'mastery', 'fraction-addition', 'Adding fractions', 0.5, 3,
+                 $3, now(), now() + interval '400 days')`,
+        [factId, who, provenance],
+      );
+
+    const seedBlockedTag = async (who, tag) =>
+      c.query(
+        `insert into edu.blocked_tags (learner_id, tag, kind)
+         values ($1, $2, 'interest'::edu.fact_kind)
+         on conflict (learner_id, tag) do nothing`,
+        [who, tag],
+      );
+
+    const rowsIn = async (table, who) =>
+      (await c.query(`select count(*)::int n from edu.${table} where learner_id = $1`, [who]))
+        .rows[0].n;
+
+    /** `loadEduBlockedTags`, statement for statement. */
+    const loadBlockedTags = async (who) =>
+      (await c.query('select tag from edu.blocked_tags where learner_id = $1', [who])).rows.map(
+        (row) => row.tag,
+      );
+
+    /** `forgetEduLearnerRecord`, statement for statement. */
+    const forgetEverything = async (who) => {
+      await c.query('begin');
+      try {
+        const tags = await c.query('delete from edu.blocked_tags where learner_id = $1', [who]);
+        const facts = await c.query('delete from edu.knowledge_graph where learner_id = $1', [who]);
+        /*
+          `edu.embeddings` is NOT deleted here, exactly as the retention sweep
+          does not delete it: `embeddings_owner_shape` makes `transcript_id` NOT
+          NULL for every learner-scoped row and the foreign key is ON DELETE
+          CASCADE, so the statement below takes the vectors with it. Asserted,
+          never issued — if someone ever relaxes that constraint this test goes
+          red instead of a child's embeddings quietly outliving the request to
+          delete them.
+        */
+        const transcripts = await c.query('delete from edu.transcripts where learner_id = $1', [who]);
+        await c.query('commit');
+        return {
+          transcripts: transcripts.rowCount ?? 0,
+          facts: facts.rowCount ?? 0,
+          blockedTags: tags.rowCount ?? 0,
+        };
+      } catch (error) {
+        await c.query('rollback');
+        throw error;
+      }
+    };
+
+    const capturedAt = new Date();
+    const nextSession = {
+      id: randomUUID(),
+      learnerId: learner,
+      capturedAt: capturedAt.toISOString(),
+      expiresAt: transcriptExpiry(capturedAt),
+      turns: [
+        {
+          skillId: 'Fractions',
+          skillTitle: 'Fractions',
+          correct: true,
+          hintDepth: 1,
+          interestTags: [TAG],
+          storable: true,
+        },
+      ],
+    };
+    const interestId = `${learner}:interest:${TAG}`;
+
+    try {
+      await seedTranscript(learner, randomUUID());
+      await seedTranscript(learner, randomUUID());
+      await seedFact(learner, `${stamp}:mastery:one`, [nextSession.id]);
+      await seedFact(learner, `${stamp}:mastery:two`, [nextSession.id]);
+      await seedBlockedTag(learner, TAG);
+
+      await seedTranscript(bystander, randomUUID());
+      await seedFact(bystander, `${stamp}:mastery:bystander`, [nextSession.id]);
+      await seedBlockedTag(bystander, TAG);
+
+      /*
+        THE CONTROL, in two halves. Unfiltered, the next session derives the
+        interest — so the distiller can still see the thing this test is about.
+        Filtered through the blocked tag as it stands BEFORE the erasure, it
+        cannot. That is what a surviving `edu.blocked_tags` row would do to a
+        child who was told everything had been forgotten.
+      */
+      assert.ok(
+        distill(nextSession, [], new Date(), options).some((fact) => fact.id === interestId),
+        'control failed: the distiller derives no interest from these turns, ' +
+          'so the blocked-tag assertions below prove nothing',
+      );
+      const before = await loadBlockedTags(learner);
+      assert.deepEqual(before, [TAG], 'the blocked tag was not seeded');
+      assert.equal(
+        distill(
+          { ...nextSession, turns: withoutBlockedTags(nextSession.turns, before) },
+          [],
+          new Date(),
+          options,
+        ).some((fact) => fact.id === interestId),
+        false,
+        'control failed: a blocked tag no longer suppresses derivation, so clearing it proves nothing',
+      );
+
+      const forgotten = await forgetEverything(learner);
+      assert.equal(forgotten.transcripts, 2, 'forget-all did not delete both sessions');
+      assert.equal(forgotten.facts, 2, 'forget-all did not delete both facts');
+      assert.equal(forgotten.blockedTags, 1, 'forget-all did not clear the blocked tag');
+
+      for (const table of ['transcripts', 'knowledge_graph', 'embeddings', 'blocked_tags']) {
+        assert.equal(
+          await rowsIn(table, learner),
+          0,
+          `forget-all left rows in edu.${table} — the guardian was told everything was deleted`,
+        );
+      }
+
+      /*
+        The other family. One row in each of the same four tables, seeded before
+        the erasure and asserted after it, because "delete this child's record"
+        and "delete a child's record" are one missing predicate apart.
+      */
+      for (const table of ['transcripts', 'knowledge_graph', 'embeddings', 'blocked_tags']) {
+        assert.equal(
+          await rowsIn(table, bystander),
+          1,
+          `forget-all for one learner deleted another learner's edu.${table} rows`,
+        );
+      }
+
+      /*
+        And the point of clearing the blocked tags: the same turns derive the
+        interest again. A forget-all that kept them would leave the child
+        permanently unable to be noticed liking basketball, enforced by a row
+        referring to a fact that no longer exists.
+      */
+      const after = await loadBlockedTags(learner);
+      assert.deepEqual(after, [], 'a blocked tag survived a request to forget everything');
+      assert.ok(
+        distill(
+          { ...nextSession, turns: withoutBlockedTags(nextSession.turns, after) },
+          [],
+          new Date(),
+          options,
+        ).some((fact) => fact.id === interestId),
+        'the child cannot be known again after starting over — an erased instruction is still suppressing derivation',
+      );
+    } finally {
+      try {
+        await c.query('rollback');
+        for (const who of [learner, bystander]) {
+          await c.query('delete from edu.blocked_tags where learner_id = $1', [who]);
+          await c.query('delete from edu.knowledge_graph where learner_id = $1', [who]);
+          await c.query('delete from edu.transcripts where learner_id = $1', [who]);
+        }
+      } finally {
+        await c.end();
+      }
+    }
+  },
+);

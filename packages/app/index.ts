@@ -242,6 +242,17 @@ export {
   type ShareableView,
   type StageChange,
 } from './features/ops';
+/*
+  Doc 31 §4's incident domain, TYPES ONLY — deliberately, and this barrel is the
+  wrong place for anything else.
+
+  `@acme/app`'s index is the client-side entry: everything above it is a screen
+  or a store. An incident is read behind `protectedOperation` and its service
+  opens with `import 'server-only'`, so what a component may hold is the SHAPE it
+  renders and never the function that fetches it. The server half is exported
+  from `./server.ts` beside the safety-status service it belongs with.
+*/
+export type { GuardianIncidentView, TriageQueue, TriageRow } from './features/safety';
 export {
   tusUrlStorage,
   useBunnyUpload,

@@ -21,7 +21,7 @@
 
 import { create } from 'zustand';
 import { cascadePreview, eraseFact, eraseTranscript, type DerivedFact } from '@acme/student-model/pure';
-import { MEMORY_FACTS, MEMORY_TRANSCRIPTS, type TranscriptLine } from './memory.data';
+import { MEMORY_FACTS, MEMORY_TRANSCRIPTS, type TranscriptLine } from './memory.data.ts';
 
 /**
  * The same three-way env read every client module in this tree does, copied for
@@ -66,10 +66,46 @@ interface MemoryState {
   eraseLine: (factId: string) => Promise<void>;
   askEraseTranscript: (transcriptId: string) => void;
   cancelErase: () => void;
-  confirmEraseTranscript: () => void;
+  confirmEraseTranscript: () => Promise<void>;
   askForgetAll: () => void;
-  confirmForgetAll: () => void;
+  confirmForgetAll: () => Promise<void>;
 }
+
+/**
+ * What `/api/memory/forget-all` says about the child's uploaded files.
+ *
+ * Mirrors `ErasedMedia` in `memory.service.ts` and is declared here rather than
+ * imported, because that module begins with `import 'server-only'` and this one
+ * runs in a browser and on a phone. Narrowed from the parsed body by
+ * `mediaIncomplete` below rather than asserted, so a response shape that stops
+ * matching reads as "we cannot vouch for the files" instead of throwing on a
+ * screen whose whole job is to be truthful about deletion.
+ */
+interface ForgetAllResponse {
+  media?: {
+    scoped?: boolean;
+    deleted?: number;
+    failed?: readonly string[];
+    /** Present only on the refusal branch, and shown to the guardian verbatim. */
+    reason?: string;
+  };
+}
+
+/**
+ * True when the record went and the FILES did not — a 200 the guardian still has
+ * to be told about.
+ *
+ * `scoped: false` is the school-account case (`presign.rules.ts` explains why
+ * there is no per-child prefix there); a non-empty `failed` is Bunny refusing.
+ * Either way "forget everything" is not yet true, and this screen may not report
+ * a deletion it cannot vouch for.
+ */
+const mediaIncomplete = (body: ForgetAllResponse): boolean => {
+  const media = body.media;
+  if (media === undefined) return true;
+  if (media.scoped !== true) return true;
+  return (media.failed?.length ?? 0) > 0;
+};
 
 export const useMemoryStore = create<MemoryState>((set, get) => ({
   facts: MEMORY_FACTS,
@@ -119,18 +155,109 @@ export const useMemoryStore = create<MemoryState>((set, get) => ({
   askEraseTranscript: (transcriptId) => set({ pendingTranscriptId: transcriptId }),
   cancelErase: () => set({ pendingTranscriptId: null, forgetAllOpen: false }),
 
-  confirmEraseTranscript: () => {
+  /**
+   * The session, and the beliefs it alone supported — optimistic, then
+   * reconciled, exactly as `eraseLine` above.
+   *
+   * The cascade is `eraseTranscript` from `@acme/student-model/pure`, which is
+   * the same function `apps/web/lib/edu.repository.ts:eraseEduTranscriptCascade`
+   * runs against the rows, and the same one `cascadePreview` counted in the
+   * dialog the guardian just read. Three call sites, one definition of what a
+   * session takes with it — a local re-implementation is how a screen promises
+   * "3 notes go with it" and a different three are deleted.
+   *
+   * REINSTATEMENT RESTORES THE WHOLE PRE-ERASURE STATE here, and this is the one
+   * place that is right. `eraseLine` re-inserts a single fact at its index
+   * precisely so a failure cannot undo other erasures that settled in flight; a
+   * cascade has no single index — it removed a session and an unknown set of
+   * facts from several groups — and putting those back individually would be a
+   * second implementation of the cascade, run backwards. The dialog closes on
+   * confirm, so no second cascade can start while this one is in the air.
+   */
+  confirmEraseTranscript: async () => {
     const { pendingTranscriptId, facts, transcripts } = get();
     if (pendingTranscriptId === null) return;
+
     set({
       facts: eraseTranscript(facts, pendingTranscriptId).facts,
       transcripts: transcripts.filter((t) => t.id !== pendingTranscriptId),
       pendingTranscriptId: null,
+      eraseError: null,
     });
+
+    try {
+      const response = await fetch(`${API_URL}/api/memory/erase-transcript`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ transcriptId: pendingTranscriptId }),
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+    } catch {
+      set({
+        facts,
+        transcripts,
+        eraseError:
+          'That session could not be deleted just now. It is still here — try again.',
+      });
+    }
   },
 
   askForgetAll: () => set({ forgetAllOpen: true }),
-  confirmForgetAll: () => set({ facts: [], transcripts: [], forgetAllOpen: false }),
+
+  /**
+   * Everything — and the only action on this screen that can succeed and still
+   * owe the guardian a sentence.
+   *
+   * `/api/memory/forget-all` empties the educational store transactionally and
+   * then deletes the child's uploaded files. The second half can refuse: on a
+   * school account there is no prefix that selects one child's objects
+   * (`presign.rules.ts:learnerMediaScope`), and Bunny can simply be down. The
+   * record is gone either way — it is not put back, because it really was
+   * deleted — but the screen says what was left, since a guardian told
+   * "everything is deleted" while their child's voice recordings survive is this
+   * feature's failure wearing a success message.
+   *
+   * A refusal of the whole request restores both lists. The empty screen is the
+   * lie `confirmForgetAll` used to tell unconditionally.
+   */
+  confirmForgetAll: async () => {
+    const { facts, transcripts } = get();
+    set({ facts: [], transcripts: [], forgetAllOpen: false, eraseError: null });
+
+    try {
+      const response = await fetch(`${API_URL}/api/memory/forget-all`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!response.ok) throw new Error(`HTTP ${response.status}`);
+
+      /*
+        A body that will not parse is treated as an unverifiable media outcome,
+        not as a failure: the 200 means the transaction committed, so restoring
+        the rows would put a model back on screen that no longer exists.
+      */
+      const body: ForgetAllResponse = await response
+        .json()
+        .then((parsed: ForgetAllResponse) => parsed)
+        .catch(() => ({}));
+
+      if (mediaIncomplete(body)) {
+        set({
+          eraseError:
+            body.media?.scoped === false && typeof body.media.reason === 'string'
+              ? `Everything Natalie remembered is deleted. ${body.media.reason}`
+              : 'Everything Natalie remembered is deleted. Some of Maya’s uploaded photos or recordings could not be removed just now — they will be deleted automatically within seven days.',
+        });
+      }
+    } catch {
+      set({
+        facts,
+        transcripts,
+        eraseError: 'Nothing could be deleted just now. It is all still here — try again.',
+      });
+    }
+  },
 }));
 
 /** What confirming would take. Drives the count in the dialog, per doc 07 §4. */
