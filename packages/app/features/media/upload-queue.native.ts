@@ -60,6 +60,18 @@ TaskManager.defineTask(UPLOAD_TASK, async () => {
  * hint and may run it far less often. Anything that must happen at a known time
  * does not belong here.
  */
+/**
+ * Reports a completed upload to whoever registered interest, if anyone.
+ *
+ * Exported so a caller that drives its own drain — the provider, when an item
+ * is enqueued mid-session — reports through the SAME reporter the platform
+ * drains use, rather than closing over one at mount. Reading it at fire time is
+ * the point: the drain that matters may run hours after registration.
+ */
+export function reportUpload(completed: Parameters<UploadReporter>[0]): void {
+  (report ?? unreported)(completed);
+}
+
 export async function registerUploadDrain(minimumIntervalMinutes = 15): Promise<void> {
   const status = await BackgroundTask.getStatusAsync();
   if (status === BackgroundTask.BackgroundTaskStatus.Restricted) return;

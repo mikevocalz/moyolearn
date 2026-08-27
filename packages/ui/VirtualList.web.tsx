@@ -33,6 +33,28 @@ export function VirtualList<T>({
     count: data.length,
     getScrollElement: () => parentRef.current,
     estimateSize: () => estimatedItemSize,
+    /*
+      MEASUREMENTS FOLLOW THE ITEM, NOT ITS POSITION.
+
+      Without this the virtualizer caches self-measured heights against the
+      INDEX, which is correct only for a list that grows at the end. The tutor
+      thread does not: resuming a session replaces the whole array at once, so
+      index 2 stops being the short text bubble it measured and becomes a tall
+      one carrying an audio player. The old height is then applied to the new
+      row and every row after it is laid out at the wrong offset — bubbles drew
+      on top of each other.
+
+      `keyExtractor` was already being passed for React's benefit and the
+      virtualizer was never told about it, so the two disagreed about what a row
+      was. This is a kit-wide fix: any list whose data is replaced rather than
+      appended to had the same bug waiting.
+    */
+    getItemKey: keyExtractor
+      ? (index) => {
+          const item = data[index];
+          return item === undefined ? index : keyExtractor(item, index);
+        }
+      : undefined,
     overscan: 8,
   });
   const items = virtualizer.getVirtualItems();

@@ -31,6 +31,31 @@ export {
   type LoadGradeBand,
 } from './features/tutor/coach.service';
 export { PEDAGOGY_CONTRACT, revealsAnswer } from './features/tutor/pedagogy';
+export {
+  openSession,
+  addMessage,
+  attachUploadedMedia,
+  SessionNotFound,
+  type TutorSessionRow,
+  type AttachmentPatch,
+  type OpenSessionInput,
+  type AddMessageInput,
+  type AttachUploadedMediaInput,
+  type LoadOpenSession,
+  type CreateSession,
+  type AppendMessage,
+  type PatchAttachment,
+} from './features/tutor/session.service';
+/*
+  The stored shapes travel with the ports that move them. The repository has to
+  name `StoredMessage` to decode the JSON column, and re-exporting it here means
+  it reaches for the service barrel rather than a deep path into the feature.
+*/
+export type {
+  StoredAttachment,
+  StoredMessage,
+  TutorSessionSnapshot,
+} from './features/tutor/session.types';
 // Pure, so the write route can validate against the same list the client edits.
 export {
   MANUAL_STAGES,

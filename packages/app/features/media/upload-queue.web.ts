@@ -35,6 +35,18 @@ export function setUploadReporter(fn: UploadReporter): void {
   report = fn;
 }
 
+/**
+ * Reports a completed upload to whoever registered interest, if anyone.
+ *
+ * Exported so a caller that drives its own drain — the provider, when an item
+ * is enqueued mid-session — reports through the SAME reporter the platform
+ * drains use, rather than closing over one at mount. Reading it at fire time is
+ * the point: the drain that matters may run hours after registration.
+ */
+export function reportUpload(completed: Parameters<UploadReporter>[0]): void {
+  (report ?? unreported)(completed);
+}
+
 export async function registerUploadDrain(): Promise<void> {
   if (listening || typeof window === 'undefined') return;
   listening = true;

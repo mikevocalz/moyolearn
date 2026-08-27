@@ -21,7 +21,8 @@ import { pickFile } from '../editor/pick-file';
 import { useAudioStore } from '../editor/audio.store.ts';
 import { readAttachment } from '../capture/read-attachment';
 import { transcribe } from '../capture/transcribe';
-import { useUploadQueue } from '../media';
+import { useUploadQueue, setUploadReporter } from '../media';
+import { patchAttachment, postMessage } from './session.client.ts';
 import { evaluateArithmetic } from '@acme/student-model/pure';
 
 export interface TutorScreenProps {
@@ -32,13 +33,52 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   const router = useRouter();
   const problem = useCaptureStore((s) => s.problem);
   const setProblem = useCaptureStore((s) => s.setProblem);
-  const { state, start, coach, hintDepth, attachments, addAttachment, removeAttachment, setAttachmentTranscript, messages, say } =
+  const { state, start, coach, hintDepth, attachments, addAttachment, removeAttachment, setAttachmentTranscript, messages, say, hydrate, sessionId } =
     useTutorStore();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     start(problem);
   }, [problem, start]);
+
+  /*
+    RESUME BEFORE ANYTHING ELSE.
+
+    A child does homework on the family laptop and finishes it on a phone in the
+    car, and until this ran the conversation did not survive a page RELOAD, let
+    alone a change of device: the store was a bare `create` with no persistence
+    and Natalie's half was never recorded at all.
+
+    The conversation belongs to the learner rather than to the tab, so both
+    devices ask the same question — "what is my open session" — and the server
+    answers it from `ctx`. Nothing about identity travels.
+  */
+  const [resumed, setResumed] = useState(false);
+  useEffect(() => {
+    void hydrate(problem ?? '').finally(() => setResumed(true));
+  }, [problem, hydrate]);
+
+  /*
+    Points a stored attachment at its bytes the moment the queue lands them.
+
+    The upload drains AFTER the turn is written — deliberately, so the tutor
+    answers while the transfer is still going — which means the message exists
+    for a while with no url on it. The other device shows that turn as pending
+    and picks the picture up on its next read. Registered once, at the surface
+    that owns the session, because the reporter is process-wide.
+  */
+  useEffect(() => {
+    setUploadReporter((completed) => {
+      if (completed.messageId === undefined || completed.attachmentId === undefined) return;
+      void patchAttachment({
+        sessionId: completed.sessionId,
+        messageId: completed.messageId,
+        attachmentId: completed.attachmentId,
+        url: completed.url,
+        storageKey: completed.storageKey,
+      });
+    });
+  }, []);
 
   useEffect(() => {
     if (problem) return;
@@ -60,10 +100,26 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   // The opening turn. Doc 29 §8's demo arc turns on the first thing a child sees
   // being a question rather than a solution, so the coaching starts on arrival
   // rather than waiting for the learner to type something first.
+  const opened = useRef(false);
   useEffect(() => {
-    if (!problem) return;
+    if (!problem || !resumed || opened.current) return;
+    /*
+      ONLY WHEN THERE IS NOTHING TO RESUME.
+
+      This fired on every mount, which was harmless while the conversation died
+      with the tab and is not now: a resumed session would get a fresh opening
+      turn appended on every reload, so a child returning to their homework
+      three times would find Natalie had introduced the problem three times.
+
+      Gated on hydration having finished rather than on `messages` being empty
+      at first paint — the thread is empty for the round trip either way, and
+      opening on that would race the resume and duplicate exactly what it is
+      meant to prevent.
+    */
+    opened.current = true;
+    if (useTutorStore.getState().messages.length > 0) return;
     void coach('');
-  }, [problem, coach]);
+  }, [problem, resumed, coach]);
 
   async function recordAttempt(p: string, answer: string, depth: number): Promise<void> {
     try {
@@ -166,7 +222,37 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
           : a;
       });
 
-      say({ role: 'learner', text: trimmed, attachments: said });
+      /*
+        PERSISTED FIRST, so the local turn can adopt the SERVER's id.
+
+        The id is not cosmetic: a queued upload finishes minutes later and has
+        to say which attachment of which message it just filled in. A local
+        `Date.now()` id means nothing to the other device, so the completion
+        would have nowhere to land and the picture would stay pending forever.
+
+        A failed write is not a blocked turn. `postMessage` returns null and the
+        turn proceeds unsynced — a child on a dropped connection keeps working,
+        and the next `hydrate` reconciles. Losing the sync is a smaller failure
+        than refusing to let them answer.
+      */
+      const persisted =
+        sessionId === null
+          ? null
+          : await postMessage({
+              sessionId,
+              role: 'learner',
+              text: trimmed,
+              attachments: said.map((a) => ({
+                id: a.id,
+                kind: a.kind,
+                name: a.name,
+                mimeType: a.mimeType,
+                durationSec: a.durationSec,
+                transcript: a.transcript,
+              })),
+            });
+
+      say({ role: 'learner', text: trimmed, attachments: said, id: persisted?.id });
 
       /*
         Queued, not uploaded inline.
@@ -184,7 +270,16 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
           uri: item.uri,
           name: item.name,
           mimeType: item.mimeType,
-          sessionId: problem ?? 'session',
+          /*
+            The real session, not the problem text. This passed
+            `problem ?? 'session'` — the problem STRING used as a grouping key —
+            while the field's own comment said it existed "so a drained upload
+            can be attached to its turn". It never was, because nothing
+            downstream could turn a maths question into a conversation.
+          */
+          sessionId: sessionId ?? '',
+          messageId: persisted?.id,
+          attachmentId: item.id,
         }),
       );
 

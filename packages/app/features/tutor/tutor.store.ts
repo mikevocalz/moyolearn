@@ -2,6 +2,7 @@
 import { create } from 'zustand';
 import { countImages, MAX_TUTOR_IMAGES, type TutorAttachment, type TutorMessage } from '@acme/ui';
 import { streamFetch } from './stream-fetch';
+import { fetchSession, postMessage } from './session.client.ts';
 import type { TutorStageState } from '@acme/ui';
 import { traceAttempt, DEFAULT_TRACING, inferSkillTitle } from '@acme/student-model/pure';
 import { useCaptureStore } from '../capture';
@@ -26,8 +27,27 @@ interface TutorState {
    * history: re-reading the hint from two turns back is the normal case.
    */
   messages: readonly TutorMessage[];
-  /** Appends a learner turn. Tutor turns are appended by the stream itself. */
-  say: (message: Omit<TutorMessage, 'id'>) => void;
+  /**
+   * The server's id for this conversation, once resolved.
+   *
+   * Null means nothing has been persisted yet, and every write below is a
+   * no-op rather than a crash: losing the sync is a smaller failure than
+   * refusing to let a child carry on working offline.
+   */
+  sessionId: string | null;
+  /**
+   * Resolves the learner's open session and replaces the thread with it.
+   *
+   * The conversation belongs to the LEARNER, not to the tab, so both devices
+   * ask the same question and get the same answer. Identity never travels —
+   * the server reads it from `ctx`.
+   */
+  hydrate: (problem: string) => Promise<void>;
+  /**
+   * Appends a learner turn. Pass `id` to adopt the server's, which is what
+   * lets a queued upload address its attachment later.
+   */
+  say: (message: Omit<TutorMessage, 'id'> & { id?: string }) => void;
   attachments: readonly TutorAttachment[];
   addAttachment: (attachment: TutorAttachment) => void;
   removeAttachment: (id: string) => void;
@@ -94,12 +114,85 @@ export const useTutorStore = create<TutorState>((set) => ({
   problem: '',
   attachments: [],
   messages: [],
+  sessionId: null,
   skillTitle: '',
   mastery: DEFAULT_TRACING.prior,
   attempts: 0,
   hintDepth: 0,
   masteryBySkill: {},
   attemptsBySkill: {},
+  hydrate: async (problem) => {
+    const snapshot = await fetchSession(problem);
+    if (snapshot === null) return;
+
+    const problemText = snapshot.problem.length > 0 ? snapshot.problem : problem;
+
+    set((s) => ({
+      sessionId: snapshot.sessionId,
+      problem: problemText.length > 0 ? problemText : s.problem,
+      /*
+        A RESUMED session is not a thinking one.
+
+        `start` sets `thinking` because a problem landing is immediately
+        followed by a coaching turn — true on a fresh session, false on a
+        resumed one, where the opening turn is deliberately suppressed. Nothing
+        was coming, so the badge sat on "Thinking" forever and the child was
+        told the tutor was working on something she had already answered.
+
+        `presence` is the right state and not a fallback: it draws "we were on
+        question N — want to pick up there?", which is precisely what resuming
+        is. The last reply is in `messages` now, so the stage must not also
+        draw one live.
+      */
+      state: snapshot.messages.length > 0 ? { kind: 'presence' as const } : s.state,
+      /*
+        REPLACED, not merged.
+
+        The server is the conversation; this store is a view of it. Merging
+        would mean inventing a reconciliation rule for two devices that appended
+        while offline, and the honest version of that rule is "ask the server",
+        which is what this does. A turn typed here and not yet persisted is the
+        only thing at risk, and it is at risk for one round trip.
+      */
+      messages: [
+        /*
+          The problem leads, on every device.
+
+          `start` seeds it locally when the thread is empty, and this replaces
+          the thread wholesale — so without re-seeding here, a hydrate would
+          delete the question on a fresh session and never show it on a resumed
+          one. Keyed on the session rather than the clock so it is the same
+          bubble on both devices instead of two different ids for one question.
+        */
+        ...(problemText.length > 0
+          ? [{ id: `problem-${snapshot.sessionId}`, role: 'tutor' as const, text: problemText }]
+          : []),
+        ...snapshot.messages.map((m) => ({
+        id: m.id,
+        role: m.role,
+        text: m.text,
+        attachments: m.attachments.map((a) => ({
+          id: a.id,
+          kind: a.kind,
+          /*
+            The REMOTE url when the bytes have landed, and the attachment's own
+            id when they have not. A second device has no access to the first
+            one's `blob:`/`file:` uri, so a turn whose upload is still draining
+            renders as pending rather than as a broken picture.
+          */
+          uri: a.url ?? '',
+          name: a.name,
+          mimeType: a.mimeType,
+          durationSec: a.durationSec,
+          transcript: a.transcript,
+          expiresAt: a.expiresAt,
+          storageKey: a.storageKey,
+        })),
+        })),
+      ],
+    }));
+  },
+
   start: (problem) => {
     const p = problem ?? '';
     const skillTitle = inferSkillTitle(p);
@@ -179,7 +272,7 @@ export const useTutorStore = create<TutorState>((set) => ({
               },
             ]
           : []),
-        { ...message, id: `${Date.now()}-${s.messages.length}` },
+        { ...message, id: message.id ?? `${Date.now()}-${s.messages.length}` },
       ],
     })),
 
@@ -207,6 +300,31 @@ export const useTutorStore = create<TutorState>((set) => ({
     const { problem } = useTutorStore.getState();
     set({ state: { kind: 'thinking' } });
 
+    /*
+      Called from every exit that ends with a reply the child can read, which is
+      not the same set as "the loop finished".
+
+      I first put this after the loop and it never ran once: the terminal frame
+      hits the bare `return` below, so a normal, successful turn leaves through
+      the middle of the loop and skips everything after it. The learner's half
+      of the conversation persisted and Natalie's silently did not — visible
+      only by reading the session back off the server, because on screen the
+      reply was right there.
+
+      `blocked` and `unavailable` are deliberately NOT here. A withheld turn is
+      not a turn, and storing it would resume a child into a conversation that
+      contains the moment the plane stopped it.
+    */
+    const remember = (text: string) => {
+      if (text.length === 0) return;
+      const { sessionId } = useTutorStore.getState();
+      if (sessionId === null) return;
+      // Fire-and-forget: the reply is already on screen and already through the
+      // plane, so a slow write must not hold the child up and a failed one
+      // costs a resume, not a turn.
+      void postMessage({ sessionId, role: 'tutor', text });
+    };
+
     let spoken = '';
     try {
       const response = await streamFetch(`${API_URL}/api/tutor/coach`, {
@@ -226,6 +344,7 @@ export const useTutorStore = create<TutorState>((set) => ({
         if (event.kind === 'replace') {
           // A retraction, not an append: the plane withdrew what came before it.
           set({ state: { kind: 'speaking', utterance: { text: event.text } } });
+          remember(event.text);
           return;
         }
         if (event.kind === 'blocked') {
@@ -239,6 +358,8 @@ export const useTutorStore = create<TutorState>((set) => ({
           set({ state: { kind: 'retry' } });
           return;
         }
+        // The terminal frame. This is how a NORMAL turn leaves the loop.
+        remember(spoken);
         return;
       }
     } catch {
@@ -251,7 +372,11 @@ export const useTutorStore = create<TutorState>((set) => ({
     // The stream ended without a terminal frame — a dropped connection. The
     // partial turn stays on screen because it already passed the plane, but a
     // turn with nothing in it is the paused state.
-    if (!spoken) set({ state: { kind: 'retry' } });
+    if (!spoken) {
+      set({ state: { kind: 'retry' } });
+      return;
+    }
+    remember(spoken);
   },
   respond: (isCorrect) => set((s) => {
     const nextAttempts = s.attempts + 1;

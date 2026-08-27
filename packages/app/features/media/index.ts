@@ -14,6 +14,7 @@ export {
   UPLOAD_TASK,
   setUploadDrain,
   setUploadReporter,
+  reportUpload,
   registerUploadDrain,
   unregisterUploadDrain,
 } from './upload-queue';
