@@ -16,7 +16,8 @@
     "seed": "tsx scripts/seed.mts",
     "bunny:verify:media": "tsx scripts/bunny-verify-media.mts",
     "bunny:verify:video": "tsx scripts/bunny-verify-video.mts",
-    "tutor:verify": "tsx scripts/tutor-check.mts"
+    "tutor:verify": "tsx scripts/tutor-check.mts",
+    "sweep:verify": "tsx scripts/sweep-verify.mts"
   },
   "dependencies": {
     "@acme/app": "workspace:*",
