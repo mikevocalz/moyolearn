@@ -25,7 +25,7 @@ import { View, Text, Pressable, Textarea } from './primitives';
 import { useAutoGrow } from './use-autogrow';
 import { Button } from './Button';
 import { SolitoImage } from 'solito/image';
-import { Camera, FileUp, Image, Mic, Plus, Trash2, X } from './icons';
+import { Camera, FileUp, Image, Mic, Plus, Send, Trash2, X } from './icons';
 // Through the barrel, not the file. `waveform.ts` (the pure bar maths) and
 // `Waveform.tsx` (the component) differ only in case, so a direct path import
 // resolves ambiguously on a case-insensitive filesystem and TS refuses it.
@@ -317,83 +317,91 @@ export function Composer({
       />
 
       {/*
-        `items-end`, not `items-stretch`.
+        ONE surface, two rows inside it.
 
-        Stretching tied the buttons to the field's height, so a four-line answer
-        produced four-line-tall buttons — a Send key the size of a postcard. The
-        field is the only thing that should grow; the actions keep their touch
-        target and sit at the bottom, where the thumb already is and where they
-        stay put as the text reflows above them.
+        This was three separately bordered boxes in a row — attach, field, send —
+        which reads as a form, not a composer. Every shipped AI chat surveyed
+        (Meta AI, ChatGPT, Claude, Grok, Copilot) does the same thing instead:
+        a single container with the text on its own full-width line and the
+        actions on a row beneath it, inside.
+
+        It is not only nicer. It fixes the layout problem underneath: with the
+        actions on their own row nothing competes with the field for height, so
+        the field grows and the keys sit still without either being told to.
+        Text also gets the full width, which matters for a long answer.
       */}
-      <View className="flex-row items-end gap-stack">
-        {/* Attach, leading. One flat list behind it, never a submenu — see the
-            header. Hidden entirely when the host supplies no picker. */}
-        {canAttach ? (
-          <Pressable
-            onPress={onPickCamera ?? onPickImage ?? onPickDocument}
-            aria-label="Add a photo or file"
-            className={`${iconTarget} ${actionHeight} shrink-0 items-center justify-center rounded-control border-2 border-strong bg-surface-raised`}
-          >
-            <Plus size={20} className="text-text" />
-          </Pressable>
-        ) : null}
-
-        {/* A textarea top-aligns its text, so it must never be taller than its
-            own content — otherwise a one-line answer sits against the top edge
-            with dead space beneath. It carries no min-height and grows with what
-            is typed; the FIELD sets the row height and the actions follow. */}
+      <View
+        className={`gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field ${
+          disabled ? 'opacity-60' : ''
+        }`}
+      >
+        {/* No border of its own — the container is the field now. */}
         <Textarea
           {...autoGrow}
           value={value}
           onChangeText={onChangeText}
           placeholder={placeholder}
           editable={!disabled}
-          // `resize-none`: the browser handle would fight the measured height.
-          // Overflow is set by `useAutoGrow` once the cap is reached, so a
-          // one-line answer never shows a scrollbar track.
-          className={`${fieldFloor} min-w-0 flex-1 resize-none rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field font-sans text-body text-text placeholder:text-text-muted`}
+          /*
+            No minimum height. That floor existed when the field sat BESIDE the
+            buttons and had to match their touch target; now the actions have
+            their own row and the container carries the height, so a floor here
+            just opens a band of dead space under a one-line answer.
+          */
+          className="w-full resize-none border-0 bg-transparent font-sans text-body text-text placeholder:text-text-muted" 
           numberOfLines={1}
           aria-label="Message composer"
         />
 
-        {/*
-          Speak or send, never both. An empty field offers the microphone,
-          because a child who has typed nothing is likelier to want to talk; the
-          moment there is something to send, sending is the only thing that
-          button should do. Swapping in place rather than showing two buttons
-          keeps one action under the thumb at a time.
-        */}
-        {!canSend && onStartRecording ? (
-          <Pressable
-            onPress={onStartRecording}
-            disabled={disabled}
-            aria-label="Record a voice message"
-            className={`${iconTarget} ${actionHeight} shrink-0 items-center justify-center rounded-control border-2 border-strong bg-surface-raised`}
-          >
-            <Mic size={20} className="text-text" />
-          </Pressable>
-        ) : (
-          /* `min-h-0` + the field's own padding tier: the size scale's `py-4`
-             made the button 64px, and with `items-stretch` that dragged the
-             field out of shape. Same padding on both keeps them level without
-             either dictating a number. */
-          <Button
-            title="Send"
-            variant="primary"
-            size={size}
-            /*
-              `self-end` is not redundant. Button's base carries `self-start`,
-              which beats the row's `items-end` — so Send hung from the TOP of a
-              grown field while the attach key sat correctly at the bottom. The
-              two actions must anchor to the same edge, and the bottom is where
-              the thumb already is.
-            */
-            className={`${actionHeight} min-h-0 shrink-0 self-end py-0 md:py-0`}
-            disabled={!canSend}
-            onPress={handleSubmit}
-            aria-label="Send message"
-          />
-        )}
+        <View className="flex-row items-center justify-between">
+          {/* Attach leads, as it does in every reference. Hidden — not disabled —
+              when there is no picker or the image cap is reached. */}
+          {canAttach ? (
+            <Pressable
+              onPress={onPickCamera ?? onPickImage ?? onPickDocument}
+              aria-label="Add a photo or file"
+              className={`${iconTarget} items-center justify-center rounded-full`}
+            >
+              <Plus size={20} className="text-text" />
+            </Pressable>
+          ) : (
+            // Holds the row's shape so the trailing action does not slide left
+            // when attach is unavailable.
+            <View className={iconTarget} />
+          )}
+
+          <View className="flex-row items-center gap-element">
+            {/*
+              Speak or send, never both. An empty field offers the microphone,
+              because a child who has typed nothing is likelier to want to talk;
+              the moment there is something to send, sending is the only thing
+              that button does.
+            */}
+            {!canSend && onStartRecording ? (
+              <Pressable
+                onPress={onStartRecording}
+                disabled={disabled}
+                aria-label="Record a voice message"
+                className={`${iconTarget} items-center justify-center rounded-full`}
+              >
+                <Mic size={20} className="text-text" />
+              </Pressable>
+            ) : (
+              /* A filled circle, as every reference draws it — the one piece of
+                 colour in the bar, so the eye finds it without a label. */
+              <Pressable
+                onPress={handleSubmit}
+                disabled={!canSend}
+                aria-label="Send message"
+                className={`${iconTarget} items-center justify-center rounded-full ${
+                  canSend ? 'bg-primary' : 'bg-surface-sunken'
+                }`}
+              >
+                <Send size={20} className={canSend ? 'text-on-primary' : 'text-text-muted'} />
+              </Pressable>
+            )}
+          </View>
+        </View>
       </View>
     </View>
   );
