@@ -28,6 +28,7 @@
     "@expo/ui": "catalog:",
     "@legendapp/list": "catalog:",
     "@legendapp/motion": "catalog:",
+    "@nandorojo/galeria": "3.0.3",
     "@tanstack/react-form": "catalog:",
     "@tanstack/react-pacer": "catalog:",
     "@tanstack/react-table": "catalog:",

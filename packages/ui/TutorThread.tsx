@@ -14,13 +14,12 @@
 // twenty. It is also the only list primitive this repo permits.
 // SOT: packages/ui/tutor-message.ts
 // SOT-KEYWORDS: tutor thread conversation list bubbles image audio virtual legendlist
-import { useCallback } from 'react';
 import { SolitoImage } from 'solito/image';
-import { Pressable, Text, View } from './primitives';
+import { Text, View } from './primitives';
 import { VirtualList } from './VirtualList';
-import { Lightbox } from './Lightbox';
+import { ImageViewer } from './ImageViewer';
 import { AudioPlayer } from './audio/AudioPlayer';
-import { useInstanceStore, useStore } from './use-instance-store';
+import { useStore } from './use-instance-store';
 import type { TutorMessage } from './tutor-message.ts';
 
 export interface TutorThreadProps {
@@ -38,11 +37,6 @@ export function TutorThread({ messages, className }: TutorThreadProps) {
   const imageUris = images.map((a) => a.previewUri ?? a.uri);
   const indexById = new Map(images.map((a, i) => [a.id, i]));
 
-  const store = useInstanceStore<{ open: boolean; index: number }>(() => ({ open: false, index: 0 }));
-  const lightbox = useStore(store, (s) => s);
-  const open = useCallback((id: string) => store.setState({ open: true, index: indexById.get(id) ?? 0 }), [store, indexById]);
-  const close = useCallback(() => store.setState({ open: false, index: 0 }), [store]);
-
   return (
     <View className={`flex-1 ${className ?? ''}`}>
       <VirtualList
@@ -54,21 +48,23 @@ export function TutorThread({ messages, className }: TutorThreadProps) {
           // Spacing per row rather than a container gap: VirtualList recycles,
           // so a gap on the container would not survive a recycled row.
           <View className="pb-stack">
-            <Bubble message={item} onOpenImage={open} />
+            <Bubble message={item} urls={imageUris} indexById={indexById} />
           </View>
         )}
       />
-      <Lightbox images={imageUris} initialIndex={lightbox.index} open={lightbox.open} onClose={close} />
     </View>
   );
 }
 
 function Bubble({
   message,
-  onOpenImage,
+  urls,
+  indexById,
 }: {
   message: TutorMessage;
-  onOpenImage: (id: string) => void;
+  /** Every image in the conversation, so the viewer pages across turns. */
+  urls: readonly string[];
+  indexById: Map<string, number>;
 }) {
   const learner = message.role === 'learner';
   const attachments = message.attachments ?? [];
@@ -84,21 +80,20 @@ function Bubble({
         {attachments
           .filter((a) => a.kind === 'image')
           .map((image) => (
-            <Pressable
-              key={image.id}
-              onPress={() => onOpenImage(image.id)}
-              aria-label={`Open ${image.name}`}
-              className="h-48 w-64 overflow-hidden rounded-control border-2 border-border"
-            >
-              <SolitoImage
-                src={image.previewUri ?? image.uri}
-                alt={image.name}
-                fill
-                unoptimized
-                contentFit="cover"
-                sizes="256px"
-              />
-            </Pressable>
+            <ImageViewer key={image.id} urls={urls} index={indexById.get(image.id) ?? 0}>
+              {/* Galeria animates THIS element into the full-screen view, so the
+                  thumbnail is the shared element — it must be the single child. */}
+              <View className="h-48 w-64 overflow-hidden rounded-control border-2 border-border">
+                <SolitoImage
+                  src={image.previewUri ?? image.uri}
+                  alt={image.name}
+                  fill
+                  unoptimized
+                  contentFit="cover"
+                  sizes="256px"
+                />
+              </View>
+            </ImageViewer>
           ))}
 
         {/* A voice note is playable IN the thread. Sending speech that can only
