@@ -9,9 +9,20 @@
 // back a minute later, and the tab is still open. It does NOT cover a closed
 // tab, and no amount of API wishing changes that.
 // SOT-KEYWORDS: upload queue web drain online listener offline
-type Drain = () => Promise<void>;
+import type { UploadReporter } from './upload-queue.shared.ts';
+
+type Drain = (onUploaded: UploadReporter) => Promise<void>;
 let drain: Drain | undefined;
 let listening = false;
+
+/*
+  Nobody to tell. A drain fired by the `online` listener has no call stack to
+  return a URL to, and the app may not have mounted a reporter yet — so the
+  absent case is a function that does nothing, not a missing argument. An
+  upload that lands while nothing is listening is still an upload that landed.
+*/
+const unreported: UploadReporter = () => {};
+let report: UploadReporter | undefined;
 
 export const UPLOAD_TASK = 'moyo-media-upload';
 
@@ -19,13 +30,18 @@ export function setUploadDrain(fn: Drain): void {
   drain = fn;
 }
 
+/** Where finished uploads go. Optional: see `unreported` above. */
+export function setUploadReporter(fn: UploadReporter): void {
+  report = fn;
+}
+
 export async function registerUploadDrain(): Promise<void> {
   if (listening || typeof window === 'undefined') return;
   listening = true;
   // `online` rather than a timer: retrying on a dead network burns battery to
   // learn what the browser already knows.
-  window.addEventListener('online', () => void drain?.());
-  await drain?.();
+  window.addEventListener('online', () => void drain?.(report ?? unreported));
+  await drain?.(report ?? unreported);
 }
 
 export async function unregisterUploadDrain(): Promise<void> {

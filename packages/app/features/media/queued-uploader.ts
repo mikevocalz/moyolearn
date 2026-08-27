@@ -15,7 +15,8 @@
 // SOT-KEYWORDS: queued uploader presign put bunny background drain retry
 import { uploadTransport } from './transport';
 import { fileSize } from './file-size';
-import type { QueuedUpload } from './upload-queue.shared.ts';
+import type { PresignResult } from './media.types.ts';
+import type { CompletedUpload, QueuedUpload } from './upload-queue.shared.ts';
 
 const API_URL =
   (typeof process !== 'undefined' ? process.env.EXPO_PUBLIC_API_URL : undefined) ??
@@ -38,7 +39,7 @@ function kindFor(mimeType: string): 'image' | 'audio' | 'document' {
   return 'document';
 }
 
-export async function uploadQueued(item: QueuedUpload): Promise<void> {
+export async function uploadQueued(item: QueuedUpload): Promise<CompletedUpload> {
   const size = await fileSize(item.uri);
   const res = await fetch(`${API_URL}/api/media/presign`, {
     method: 'POST',
@@ -61,7 +62,17 @@ export async function uploadQueued(item: QueuedUpload): Promise<void> {
     }),
   });
 
-  const body = (await res.json()) as { ok: true; uploadUrl: string } | { ok: false; error: string };
+  /*
+    Spread from `PresignResult` rather than restating the fields.
+
+    This declared only `uploadUrl`, and the other three were on the wire the
+    whole time: the route has always answered with `publicUrl` and `key`. So the
+    drain PUT the bytes, deleted the item, and threw away the only record of
+    where they had landed — which is why a photo could be displayed on the
+    device that took it and nowhere else. Naming the route's own result type
+    here means the two can only drift apart by failing to compile.
+  */
+  const body = (await res.json()) as ({ ok: true } & PresignResult) | { ok: false; error: string };
   if (!res.ok || body.ok !== true) {
     throw new Error(body.ok === false ? body.error : `Presign failed (${res.status})`);
   }
@@ -77,4 +88,19 @@ export async function uploadQueued(item: QueuedUpload): Promise<void> {
     */
     onProgress: () => {},
   });
+
+  /*
+    Reported only after the PUT resolves. `publicUrl` is readable the instant
+    the object exists and not one moment before, so handing it back off the
+    presign response alone would name a URL that 404s for as long as the
+    transfer takes — and forever if it fails.
+  */
+  return {
+    id: item.id,
+    sessionId: item.sessionId,
+    messageId: item.messageId,
+    attachmentId: item.attachmentId,
+    url: body.publicUrl,
+    storageKey: body.key,
+  };
 }

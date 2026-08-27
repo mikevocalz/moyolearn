@@ -21,7 +21,14 @@ export function UploadQueueProvider() {
       never learns what Bunny is and stays testable without a network. This is
       the one place the two meet.
     */
-    setUploadDrain(() => useUploadQueue.getState().drain(uploadQueued));
+    /*
+      The reporter is handed down from the platform drain rather than closed
+      over here: a background wake-up decides at fire time whether anything is
+      listening, and this effect ran once, at launch, possibly hours earlier.
+    */
+    setUploadDrain(async (onUploaded) => {
+      await useUploadQueue.getState().drain(uploadQueued, onUploaded);
+    });
     void registerUploadDrain();
 
     return () => {

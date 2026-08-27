@@ -12,20 +12,36 @@
 // SOT-KEYWORDS: upload queue background task native expo retry offline drain
 import * as BackgroundTask from 'expo-background-task';
 import * as TaskManager from 'expo-task-manager';
+import type { UploadReporter } from './upload-queue.shared.ts';
 
 export const UPLOAD_TASK = 'moyo-media-upload';
 
-type Drain = () => Promise<void>;
+type Drain = (onUploaded: UploadReporter) => Promise<void>;
 let drain: Drain | undefined;
+
+/*
+  Nobody to tell. The OS can wake this task with the app closed and no React
+  tree in existence, so the reporter is genuinely absent rather than late — the
+  absent case is a function that does nothing, not a missing argument. The URL
+  is not lost by going unreported: it is on the object the drain just wrote, and
+  the item was deleted only because the bytes are there.
+*/
+const unreported: UploadReporter = () => {};
+let report: UploadReporter | undefined;
 
 /** Supplied by the app at startup — the queue needs a repository to upload to. */
 export function setUploadDrain(fn: Drain): void {
   drain = fn;
 }
 
+/** Where finished uploads go when something is mounted to receive them. */
+export function setUploadReporter(fn: UploadReporter): void {
+  report = fn;
+}
+
 TaskManager.defineTask(UPLOAD_TASK, async () => {
   try {
-    await drain?.();
+    await drain?.(report ?? unreported);
     return BackgroundTask.BackgroundTaskResult.Success;
   } catch {
     /*

@@ -10,7 +10,13 @@ export { renderWaveform, type RenderedWaveform } from './render-waveform';
 export { useVideoUpload, type VideoPhase, type VideoFile, type UploadedVideoResult } from './use-video-upload';
 export { useVideoRecorder, type RecorderPhase, type StopReason } from './use-video-recorder';
 export { VIDEO_MAX_SECONDS, VIDEO_MAX_BYTES, formatClock } from './video-note.constants.ts';
-export { UPLOAD_TASK, setUploadDrain, registerUploadDrain, unregisterUploadDrain } from './upload-queue';
+export {
+  UPLOAD_TASK,
+  setUploadDrain,
+  setUploadReporter,
+  registerUploadDrain,
+  unregisterUploadDrain,
+} from './upload-queue';
 export {
   MAX_ATTEMPTS,
   backoffMs,
@@ -18,7 +24,11 @@ export {
   due,
   abandoned,
   afterFailure,
+  reviveQueue,
+  drainQueue,
   type QueuedUpload,
+  type CompletedUpload,
+  type UploadReporter,
 } from './upload-queue.shared.ts';
 export { useUploadQueue } from './upload-queue.store';
 export { UploadQueueProvider } from './UploadQueueProvider';
