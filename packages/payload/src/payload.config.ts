@@ -8,6 +8,7 @@ import { bunnyStorage } from '@seshuk/payload-storage-bunny';
 import { Users } from './collections/Users';
 import { Media } from './collections/Media';
 import { Guardianships } from './collections/Guardianships';
+import { HandoffCodes } from './collections/HandoffCodes';
 import { Consents } from './collections/Consents';
 import { Skills } from './collections/Skills';
 import { Misconceptions } from './collections/Misconceptions';
@@ -49,6 +50,9 @@ export default buildConfig({
     Users,
     Media,
     Guardianships,
+    // Sits beside guardianships because it is the same trust relationship in
+    // motion: a code is a guardian handing a session to their own ward.
+    HandoffCodes,
     Consents,
     // Loop A (doc 07 §4): curriculum content, then the per-learner model
     // derived from it. The two are separate collections because only the

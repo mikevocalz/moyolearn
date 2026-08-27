@@ -343,9 +343,17 @@ export async function incidentTriageQueue(
     auth,
     headers,
     async (ctx) => triageQueueFrom(await ports.loadIncidentQueue(ctx), now),
-    // Staff work, not a child's practice floor. `write` is what the ops surfaces
-    // already require, so a lapsed org cannot silently keep triaging.
-    { requires: 'write' },
+    /*
+      Staff work, gated on WHO the caller is before what they pay: doc 31 §5.3's
+      triage is owner/manager work ("org staff see org-scoped queues by role",
+      §4.2, and §4.3 fans S3 into the org OWNER queue) — scheduler and finance
+      have no seat at an incident. `requiresMembership` is the wall; `write`
+      alone was a billing capability any active family plan satisfied, which put
+      this queue in front of paying guardians. `write` stays so a lapsed org
+      cannot silently keep triaging. Set HERE, not in the route, so no route can
+      lower it.
+    */
+    { requires: 'write', requiresMembership: ['owner', 'manager'] },
   );
 }
 
@@ -387,6 +395,8 @@ export async function triageIncident(
 
       return triageQueueFrom([moved], now).rows[0] ?? null;
     },
-    { requires: 'write' },
+    // Same wall as the queue read: a lifecycle move is MORE staff-shaped than a
+    // read, and it writes the audit trail — never a family session's to write.
+    { requires: 'write', requiresMembership: ['owner', 'manager'] },
   );
 }

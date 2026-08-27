@@ -63,11 +63,18 @@ describe('S22 the tiny win', () => {
 });
 
 describe('S22 step order', () => {
-  it('runs hello → subjects → win and stops', () => {
+  it('runs avatar → hello → subjects → win and stops', () => {
+    assert.equal(nextStep('avatar'), 'hello');
     assert.equal(nextStep('hello'), 'subjects');
     assert.equal(nextStep('subjects'), 'win');
     assert.equal(nextStep('win'), null);
-    assert.equal(previousStep('hello'), null);
+    assert.equal(previousStep('avatar'), null);
+    assert.equal(previousStep('hello'), 'avatar');
     assert.equal(previousStep('win'), 'subjects');
+  });
+
+  it('the avatar step is satisfiable by one tap and gates until it lands', () => {
+    assert.equal(canAdvance('avatar', draft()), false);
+    assert.equal(canAdvance('avatar', draft({ avatar: 'fox' })), true);
   });
 });

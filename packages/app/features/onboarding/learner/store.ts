@@ -19,16 +19,18 @@ interface LearnerFirstRunState {
   draft: LearnerDraft;
   setStep: (step: LearnerStep) => void;
   start: (firstName: string) => void;
+  pickAvatar: (id: string) => void;
   toggle: (id: SubjectId) => void;
   answer: (choiceIndex: number) => void;
   reset: () => void;
 }
 
 export const useLearnerFirstRun = create<LearnerFirstRunState>((set) => ({
-  step: 'hello',
+  step: 'avatar',
   draft: EMPTY_LEARNER_DRAFT,
   setStep: (step) => set({ step }),
-  start: (firstName) => set({ step: 'hello', draft: { ...EMPTY_LEARNER_DRAFT, firstName } }),
+  start: (firstName) => set({ step: 'avatar', draft: { ...EMPTY_LEARNER_DRAFT, firstName } }),
+  pickAvatar: (id) => set((s) => ({ draft: { ...s.draft, avatar: id } })),
   toggle: (id) =>
     set((s) => ({ draft: { ...s.draft, subjects: toggleSubject(s.draft.subjects, id) } })),
   answer: (choiceIndex) =>
@@ -39,5 +41,5 @@ export const useLearnerFirstRun = create<LearnerFirstRunState>((set) => ({
         result: choiceIndex === winItem(s.draft).answerIndex ? 'correct' : 'not-yet',
       },
     })),
-  reset: () => set({ step: 'hello', draft: EMPTY_LEARNER_DRAFT }),
+  reset: () => set({ step: 'avatar', draft: EMPTY_LEARNER_DRAFT }),
 }));

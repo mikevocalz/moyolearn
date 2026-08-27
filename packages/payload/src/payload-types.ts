@@ -70,6 +70,7 @@ export interface Config {
     users: User;
     media: Media;
     guardianships: Guardianship;
+    'handoff-codes': HandoffCode;
     consents: Consent;
     skills: Skill;
     misconceptions: Misconception;
@@ -92,6 +93,7 @@ export interface Config {
     users: UsersSelect<false> | UsersSelect<true>;
     media: MediaSelect<false> | MediaSelect<true>;
     guardianships: GuardianshipsSelect<false> | GuardianshipsSelect<true>;
+    'handoff-codes': HandoffCodesSelect<false> | HandoffCodesSelect<true>;
     consents: ConsentsSelect<false> | ConsentsSelect<true>;
     skills: SkillsSelect<false> | SkillsSelect<true>;
     misconceptions: MisconceptionsSelect<false> | MisconceptionsSelect<true>;
@@ -205,6 +207,20 @@ export interface Guardianship {
   learnerAuthId: string;
   relationship: 'guardian' | 'parent' | 'carer';
   status: 'active' | 'invited' | 'revoked';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "handoff-codes".
+ */
+export interface HandoffCode {
+  id: number;
+  codeHash: string;
+  learnerAuthId: string;
+  guardianAuthId: string;
+  expiresAt: string;
+  redeemedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -621,6 +637,10 @@ export interface PayloadLockedDocument {
         value: number | Guardianship;
       } | null)
     | ({
+        relationTo: 'handoff-codes';
+        value: number | HandoffCode;
+      } | null)
+    | ({
         relationTo: 'consents';
         value: number | Consent;
       } | null)
@@ -762,6 +782,19 @@ export interface GuardianshipsSelect<T extends boolean = true> {
   learnerAuthId?: T;
   relationship?: T;
   status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "handoff-codes_select".
+ */
+export interface HandoffCodesSelect<T extends boolean = true> {
+  codeHash?: T;
+  learnerAuthId?: T;
+  guardianAuthId?: T;
+  expiresAt?: T;
+  redeemedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1048,6 +1081,7 @@ export interface CollectionQueryWidget {
       | 'users'
       | 'media'
       | 'guardianships'
+      | 'handoff-codes'
       | 'consents'
       | 'skills'
       | 'misconceptions'
@@ -1086,6 +1120,7 @@ export interface ActivityWidget {
           | 'users'
           | 'media'
           | 'guardianships'
+          | 'handoff-codes'
           | 'consents'
           | 'skills'
           | 'misconceptions'

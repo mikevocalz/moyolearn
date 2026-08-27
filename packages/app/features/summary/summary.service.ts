@@ -694,9 +694,12 @@ export interface SummaryQueuePorts {
  * Platform-scoped rather than org-scoped, the SAME documented gap the incident
  * triage queue records: summaries carry a learner pointer and no org edge,
  * because doc 23 §2 puts the learner behind a LearnerRef. Until that edge is a
- * query this codebase can issue, the boundary is `requires: 'write'` — a staff
- * capability no family plan grants — plus the session itself. NOT `export`:
- * this is a work queue, not a data egress.
+ * query this codebase can issue, the boundary is `requiresMembership` — the
+ * role wall. It is NOT `requires: 'write'` alone: `write` is a billing
+ * capability an active family plan satisfies, so "no family plan grants it"
+ * was false and a paying guardian could read every child's draft queue.
+ * `write` stays beside the role so a lapsed org cannot keep reviewing, and it
+ * is NOT `export`: this is a work queue, not a data egress.
  */
 export async function summaryQueue(
   auth: Auth,
@@ -723,6 +726,9 @@ export async function summaryQueue(
     },
     {
       requires: 'write',
+      // Doc 34 §5's Cool surface is review work: owner/manager. Scheduler and
+      // finance have no reason to read children's session drafts.
+      requiresMembership: ['owner', 'manager'],
       telemetry: { op: 'summary.queue.list', resource: 'sessionSummaries', action: 'read' },
     },
   );
@@ -761,6 +767,9 @@ export async function approveSummaryDraft(
     },
     {
       requires: 'write',
+      // The approver is recorded as the audit line's actor — staff identity by
+      // definition, so the role wall matches the queue read's.
+      requiresMembership: ['owner', 'manager'],
       telemetry: { op: 'summary.draft.approve', resource: 'sessionSummaries', action: 'write' },
     },
   );
@@ -794,6 +803,10 @@ export async function suppressSummary(
     },
     {
       requires: 'write',
+      // A takedown of a family-facing report is reviewer authority — the same
+      // owner/manager wall as approval, or the two actions disagree about who
+      // a reviewer is.
+      requiresMembership: ['owner', 'manager'],
       telemetry: { op: 'summary.suppress', resource: 'sessionSummaries', action: 'write' },
     },
   );

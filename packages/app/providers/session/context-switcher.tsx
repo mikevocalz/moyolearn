@@ -8,6 +8,7 @@ import { Check } from '@acme/ui/icons';
 import { Text } from '@acme/ui';
 import { Pressable, View } from '@acme/ui/tw';
 import { useSessionStore } from './store';
+import { setLastShellRole } from './last-shell';
 import type { ActiveContextKind, Membership } from './types';
 
 /**
@@ -53,12 +54,16 @@ export function ContextSwitcher() {
               key={membership.id}
               aria-label={labelFor(membership)}
               aria-selected={active}
-              onPress={() =>
+              onPress={() => {
+                // Doc 36 §2: "n roles → last-used shell". The memory is written
+                // at the moment of choice, so the next cold start opens the
+                // door this person walked through last.
+                setLastShellRole(membership.role);
                 setContext({
                   kind: membership.role as ActiveContextKind,
                   orgId: membership.orgId,
-                })
-              }
+                });
+              }}
               className={`min-h-11 flex-row items-center gap-stack rounded-md border-2 px-3 py-2.5 ${
                 active
                   ? 'border-border bg-primary shadow-card'

@@ -5,8 +5,29 @@
 // SOT: docs/pack/06-auth-onboarding-spec.md §5
 // SOT-KEYWORDS: onboarding learner s22 first-run subjects tiny win steps
 
-export const LEARNER_STEPS = ['hello', 'subjects', 'win'] as const;
+// `avatar` opens the run (doc 36 §2: redeem → avatar pick → baked greeting →
+// Today). The set is CURATED, never an upload — doc 30 §8.4's child-safety
+// decision: a photo path on a learner profile is a moderation and PII surface
+// a curated set makes unnecessary.
+export const LEARNER_STEPS = ['avatar', 'hello', 'subjects', 'win'] as const;
 export type LearnerStep = (typeof LEARNER_STEPS)[number];
+
+export interface AvatarChoice {
+  id: string;
+  label: string;
+  /** The rendered glyph — illustration-as-emoji keeps the set token-pure. */
+  glyph: string;
+}
+
+/** Six choices, like the subject grid: a glance, not a menu (doc 06 §5). */
+export const AVATAR_CHOICES: AvatarChoice[] = [
+  { id: 'fox', label: 'Fox', glyph: '🦊' },
+  { id: 'owl', label: 'Owl', glyph: '🦉' },
+  { id: 'turtle', label: 'Turtle', glyph: '🐢' },
+  { id: 'tiger', label: 'Tiger', glyph: '🐯' },
+  { id: 'penguin', label: 'Penguin', glyph: '🐧' },
+  { id: 'dragon', label: 'Dragon', glyph: '🐲' },
+];
 
 export type SubjectId = 'math' | 'reading' | 'writing' | 'science' | 'history' | 'languages';
 
@@ -87,11 +108,18 @@ export type WinResult = 'correct' | 'not-yet' | null;
 export interface LearnerDraft {
   /** From the guardian's S21 child row; the tutor greets by it, never asks for it. */
   firstName: string;
+  /** The curated pick. Null until tapped — the avatar step gates on it. */
+  avatar: string | null;
   subjects: SubjectId[];
   result: WinResult;
 }
 
-export const EMPTY_LEARNER_DRAFT: LearnerDraft = { firstName: '', subjects: [], result: null };
+export const EMPTY_LEARNER_DRAFT: LearnerDraft = {
+  firstName: '',
+  avatar: null,
+  subjects: [],
+  result: null,
+};
 
 /** The item is chosen by the first subject tapped, so the win is about what they came for. */
 export function winItem(draft: LearnerDraft): WinItem {
@@ -101,6 +129,9 @@ export function winItem(draft: LearnerDraft): WinItem {
 /** H5 (error prevention): forward is disabled until it is actually available — never a dead tap. */
 export function canAdvance(step: LearnerStep, draft: LearnerDraft): boolean {
   switch (step) {
+    case 'avatar':
+      // One tap satisfies it — nothing here can ask a child to type.
+      return draft.avatar !== null;
     case 'hello':
       return true;
     case 'subjects':

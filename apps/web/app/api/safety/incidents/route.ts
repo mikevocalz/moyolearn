@@ -9,14 +9,18 @@
 // it ever does. Same building, different door, and the door is what the check
 // watches.
 //
-// STAFF WORK, at `requires: 'write'` — set inside `incidentTriageQueue` rather
-// than here, so no route can lower it. A lapsed org cannot keep triaging; a child
-// on the free floor cannot reach this at all.
+// STAFF WORK, walled by ROLE: `requiresMembership: ['owner', 'manager']` — set
+// inside `incidentTriageQueue` and `triageIncident` rather than here, so no
+// route can lower it. The role is the wall because `requires: 'write'` alone is
+// a billing capability an active FAMILY plan satisfies — it stays only so a
+// lapsed org cannot keep triaging. A guardian, whatever they pay, and a child on
+// the free floor cannot reach this at all.
 // SOT: docs/pack/31-grade-voice-safety-incidents.md §4.2 §4.3 §5.3 · docs/pack/23-crm-spec.md §2 · tooling/check-crm-wall.mjs
 // SOT-KEYWORDS: safety incidents triage queue api route patch transition sla breach unassigned s4 crm wall staff
 import { NextRequest, NextResponse } from 'next/server';
 import {
   CapabilityDenied,
+  MembershipDenied,
   incidentTriageQueue,
   triageIncident,
   type IncidentCategory,
@@ -62,7 +66,10 @@ const CATEGORIES: readonly IncidentCategory[] = [
 const RESOLUTION_MAX = 4_000;
 
 function respond(error: unknown): NextResponse {
-  if (error instanceof CapabilityDenied) {
+  // Two different refusals, one wire shape: the role wall (403 by nature) and
+  // the plan gate, which this staff route also flattens to 403 — an incident
+  // queue is never an upsell surface, so a 402 has no business leaving it.
+  if (error instanceof MembershipDenied || error instanceof CapabilityDenied) {
     return NextResponse.json({ error: error.message }, { status: 403 });
   }
   if (error instanceof Error) reportRouteError(error);

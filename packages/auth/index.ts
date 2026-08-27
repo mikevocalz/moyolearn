@@ -17,6 +17,22 @@ export { createManagedLearner, CreateLearnerError } from './src/create-managed-l
 export type { LearnerWriter } from './src/create-managed-learner';
 export { createPayloadLearnerWriter } from './src/payload-learner-writer';
 export {
+  HANDOFF_CODE_LENGTH,
+  HANDOFF_TTL_MS,
+  handoffUrl,
+  isWellFormedHandoffCode,
+  normalizeHandoffCode,
+} from './src/handoff-code';
+export {
+  createDeviceHandoff,
+  redeemDeviceHandoff,
+  generateHandoffCode,
+  hashHandoffCode,
+  handoffSecret,
+  HandoffError,
+} from './src/handoff';
+export type { HandoffStore, GuardianshipReader, HandoffIssue } from './src/handoff';
+export {
   availableMethods,
   completeConsent,
   confirm,

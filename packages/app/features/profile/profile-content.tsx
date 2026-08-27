@@ -17,6 +17,7 @@ import {
 } from '@acme/ui';
 import { Settings as SettingsIcon, ChevronRight } from '@acme/ui/icons';
 import { AVATAR_URI, useProfile } from './profile.store';
+import { ContextSwitcher } from '../../providers/session';
 
 const TAGS = ['Design', 'Mobile', 'Web'];
 const STATS = [
@@ -94,8 +95,13 @@ export function ProfileContent() {
         </PressScale>
       </FadeIn>
 
-
-
+      {/* The role switcher lives HERE, in Profile/You (doc 36 §4.3): shells
+          never blend, so changing hats is a full shell swap — the switcher
+          rewrites the active context and the guard trees do the rest. Renders
+          nothing for the single-hat majority. */}
+      <FadeIn delay={180}>
+        <ContextSwitcher />
+      </FadeIn>
     </View>
   );
 }
