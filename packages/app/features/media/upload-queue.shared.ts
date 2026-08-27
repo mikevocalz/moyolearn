@@ -29,6 +29,12 @@ export interface QueuedUpload {
   mimeType: string;
   /** What this belongs to, so a drained upload can be attached to its turn. */
   sessionId: string;
+  /**
+   * When the stored object may be deleted. Stamped at ENQUEUE, not at upload:
+   * the window starts when the child took the picture, so a file that sat in a
+   * queue for two days does not get a fresh week once it finally lands.
+   */
+  expiresAt?: string;
   attempts: number;
   /** Epoch ms. Set when an attempt fails, so backoff is computable offline. */
   lastAttemptAt?: number;

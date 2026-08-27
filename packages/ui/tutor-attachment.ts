@@ -32,6 +32,17 @@ export interface TutorAttachment {
   transcript?: string;
   /** Image/document only: a thumbnail to show in the tray and the bubble. */
   previewUri?: string;
+  /**
+   * When the stored file is deleted (doc 07 §4 — one week for media).
+   *
+   * The thread reads this rather than discovering expiry from a 404: a child
+   * scrolling back through last week's session should see "this picture was
+   * removed", not a broken image icon. Absent means never uploaded, and so
+   * nothing to expire.
+   */
+  expiresAt?: string;
+  /** Storage key, so a retention sweep knows what to delete. */
+  storageKey?: string;
 }
 
 /**

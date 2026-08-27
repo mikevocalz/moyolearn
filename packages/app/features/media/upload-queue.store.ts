@@ -13,6 +13,7 @@
 import { create } from 'zustand';
 import { problemStorage } from '../capture/problem-storage';
 import { afterFailure, due, MAX_ATTEMPTS, type QueuedUpload } from './upload-queue.shared.ts';
+import { mediaExpiry } from './retention.ts';
 
 const QUEUE_KEY = 'media-upload-queue';
 
@@ -45,7 +46,8 @@ export const useUploadQueue = create<QueueState>((set, get) => ({
 
   enqueue: (item) =>
     set((s) => {
-      const queue = [...s.queue, { ...item, attempts: 0 }];
+      // The retention clock starts at capture, not at upload.
+      const queue = [...s.queue, { ...item, attempts: 0, expiresAt: item.expiresAt ?? mediaExpiry(new Date()) }];
       write(queue);
       return { queue };
     }),

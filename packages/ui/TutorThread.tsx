@@ -21,6 +21,16 @@ import { ImageViewer } from './ImageViewer';
 import { AudioPlayer } from './audio/AudioPlayer';
 import { useStore } from './use-instance-store';
 import type { TutorMessage } from './tutor-message.ts';
+import type { TutorAttachment } from './tutor-attachment.ts';
+
+/*
+  Read from the record rather than probing the file. A HEAD request per bubble
+  would put a network round-trip in a scroll, and a 404 cannot tell "deleted on
+  schedule" apart from "upload failed" — which are different things to say to a
+  child.
+*/
+const isExpired = (a: TutorAttachment): boolean =>
+  a.expiresAt !== undefined && Date.parse(a.expiresAt) <= Date.now();
 
 export interface TutorThreadProps {
   messages: readonly TutorMessage[];
@@ -133,7 +143,23 @@ function Bubble({
         {/* Picture first: it is the subject, and the words are about it. */}
         {attachments
           .filter((a) => a.kind === 'image')
-          .map((image) => (
+          .map((image) =>
+            isExpired(image) ? (
+              /*
+                Expired media is stated, not silently absent and not a broken
+                image. A child scrolling back through last week should learn
+                that the picture was removed on purpose — that is the product
+                keeping a promise, and it reads as one only if it is said.
+              */
+              <View
+                key={image.id}
+                className="h-48 w-64 items-center justify-center rounded-control border-2 border-dashed border-border bg-surface"
+              >
+                <Text className="max-w-40 text-center font-sans text-caption text-text-muted">
+                  Picture removed after a week
+                </Text>
+              </View>
+            ) : (
             <ImageViewer key={image.id} urls={urls} index={indexById.get(image.id) ?? 0}>
               {/* Galeria animates THIS element into the full-screen view, so the
                   thumbnail is the shared element — it must be the single child. */}
@@ -148,15 +174,22 @@ function Bubble({
                 />
               </View>
             </ImageViewer>
-          ))}
+            ),
+          )}
 
         {/* A voice note is playable IN the thread. Sending speech that can only
             be re-read as a filename is not sending speech. */}
         {attachments
           .filter((a) => a.kind === 'audio')
-          .map((audio) => (
-            <AudioPlayer key={audio.id} uri={audio.uri} label={audio.name} />
-          ))}
+          .map((audio) =>
+            isExpired(audio) ? (
+              <Text key={audio.id} className="font-sans text-caption text-text-muted">
+                Voice note removed after a week
+              </Text>
+            ) : (
+              <AudioPlayer key={audio.id} uri={audio.uri} label={audio.name} />
+            ),
+          )}
 
         {message.text.length > 0 ? (
           <Text className="font-sans text-body text-text">{message.text}</Text>

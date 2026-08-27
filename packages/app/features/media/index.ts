@@ -23,3 +23,4 @@ export {
 export { useUploadQueue } from './upload-queue.store';
 export { UploadQueueProvider } from './UploadQueueProvider';
 export { uploadQueued } from './queued-uploader';
+export { MEDIA_TTL_DAYS, mediaExpiry, isMediaExpired, expiredKeys } from './retention.ts';
