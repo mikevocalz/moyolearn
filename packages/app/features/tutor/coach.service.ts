@@ -12,13 +12,15 @@
 // framing: the same stream serves SSE on web and whatever native uses later,
 // and neither one gets to see a chunk the plane has not passed.
 // SOT: docs/pack/18-tutor-ai-stack.md §3 · docs/pack/29-shipaton-plan.md §3 · docs/pack/12-systems-design-prompt.md §5 · CLAUDE.md §The block
-// SOT-KEYWORDS: coach service tutor turn stream protected operation safety plane pedagogy contract fail closed unavailable paused
+// SOT-KEYWORDS: coach service tutor turn stream protected operation safety plane pedagogy contract fail closed unavailable paused refusal safety event guardian visible learner flags
 import 'server-only';
-import type { Auth } from '@acme/auth/server';
+import type { Auth, LearnerFlags } from '@acme/auth/server';
+import { ModelDeclined } from '@acme/inference';
 import { runSafetyPlaneStream, safetyLayer, SafetyLayerUnavailable } from '@acme/safety';
 import { compileLearnerBrief, withLearnerBriefStream, LEARNER_TURN_LABEL } from '@acme/student-model';
 import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation.ts';
 import { coachClassifier, coachIdentity } from './tutor-safety.ts';
+import { recordPlaneOutcome, recordTurnFailure, type RecordSafetyEvent } from './safety-events.ts';
 import { tutorTurnFor } from './tutor-model.ts';
 import { PEDAGOGY_CONTRACT, REVEAL_WITHHELD, revealsAnswer } from './pedagogy.ts';
 import type { LoadPriorFacts } from './tutor.service';
@@ -28,6 +30,16 @@ export interface CoachTurnInput {
   problem: string;
   /** What the student just said. Empty on the opening turn. */
   message: string;
+  /**
+   * The conversation this turn belongs to, so a safety event can be traced back
+   * to the exchange doc 07 §S26 offers a guardian an excerpt of.
+   *
+   * A handle, not an identity: `learnerId` still comes from `ctx` and is what
+   * scopes every read of the event. A client that named someone else's session
+   * would only mislabel its own row — the event is still filed against the
+   * learner the cookie says it is.
+   */
+  sessionId?: string;
 }
 
 /**
@@ -40,12 +52,18 @@ export type CoachEvent =
   | { kind: 'chunk'; text: string }
   | { kind: 'replace'; text: string }
   /**
-   * The Safety Plane stopped this turn. A decision, and a terminal one — and
-   * also doc 12 §5's fail-closed pause, because a layer that could not reach a
-   * verdict is a turn nothing screened. The client draws both as "Natalie is
-   * taking a break"; a child is owed the same calm surface either way, and the
-   * difference between them is a guardian-visible detail, not a child-visible
-   * one.
+   * A safety verdict stopped this turn. Terminal, and now three things:
+   *
+   *   · the Safety Plane blocked it;
+   *   · doc 12 §5's fail-closed pause — a layer that could not reach a verdict
+   *     is a turn nothing screened;
+   *   · the PROVIDER'S own classifier refused it (`ModelDeclined`).
+   *
+   * The client draws all three as "Natalie is taking a break". A child is owed
+   * the same calm surface however the turn was stopped, and the differences
+   * between them are guardian-visible details, not child-visible ones — they
+   * survive as separate rows in `safetyEvents`, which is where an adult reads
+   * them.
    */
   | { kind: 'blocked' }
   /**
@@ -55,8 +73,10 @@ export type CoachEvent =
    * fail-closed paused state, which locks the composer and reads to a child as
    * Natalie having withdrawn. This is retryable and says so.
    *
-   * The line between the two is `SafetyLayerUnavailable`, and nothing else: a
-   * MODEL that cannot answer is retryable, a LAYER that cannot answer is not.
+   * The line is `SafetyLayerUnavailable` or `ModelDeclined` on one side and
+   * everything else on the other: a model that CANNOT answer is retryable, a
+   * layer that cannot answer is not, and a model that WOULD NOT answer has
+   * answered — it said no.
    */
   | { kind: 'unavailable' }
   | { kind: 'end' };
@@ -70,16 +90,39 @@ export type CoachEvent =
  */
 export type LoadGradeBand = (ctx: ProtectedCtx) => Promise<'young' | 'older'>;
 
+/**
+ * The guardian's policy for this learner (doc 06 §110's `learnerFlags`), read
+ * from the server's own record for the same reason the band is.
+ *
+ * It is layer 1, not a preference: `aiEnabled` is what the plane's `refused`
+ * branch honours, so a policy the server cannot resolve is a layer that is down.
+ * The boundary reads it inside `safetyLayer('1-identity')`, and
+ * `tooling/check-fail-closed.mjs` fails the build if that stops being true.
+ */
+export type LoadLearnerFlags = (ctx: ProtectedCtx) => Promise<LearnerFlags>;
+
+/**
+ * Everything the turn needs from a store, in one object.
+ *
+ * Four positional ports was already one too many, and the safety-event writer
+ * made it six. A bag also makes the composition root read as a list of
+ * decisions — `apps/web/app/api/tutor/coach/route.ts` names each binding — rather
+ * than as an argument order nobody can check at the call site.
+ */
+export interface CoachPorts {
+  loadPriorFacts: LoadPriorFacts;
+  loadGradeBand: LoadGradeBand;
+  loadLearnerFlags: LoadLearnerFlags;
+  recordSafetyEvent: RecordSafetyEvent;
+}
+
 export async function coachTutorTurn(
   auth: Auth,
   headers: Headers,
   input: CoachTurnInput,
-  loadPriorFacts: LoadPriorFacts,
-  loadGradeBand: LoadGradeBand,
+  ports: CoachPorts,
 ): Promise<AsyncGenerator<CoachEvent>> {
-  return protectedOperation(auth, headers, async (ctx) =>
-    coachStream(input, ctx, loadPriorFacts, loadGradeBand),
-  );
+  return protectedOperation(auth, headers, async (ctx) => coachStream(input, ctx, ports));
 }
 
 /**
@@ -100,15 +143,30 @@ export async function coachTutorTurn(
 export async function* coachStream(
   input: CoachTurnInput,
   ctx: ProtectedCtx,
-  loadPriorFacts: LoadPriorFacts,
-  loadGradeBand: LoadGradeBand,
+  ports: CoachPorts,
 ): AsyncGenerator<CoachEvent> {
+  /*
+    The conversation handle, resolved once so the `catch` below can file a pause
+    against the same exchange the outcome path would have. It is not identity —
+    `recordPlaneOutcome` takes `learnerId` from `ctx` — it is only what lets a
+    guardian's alert point at the turn it is about.
+  */
+  const scope = { sessionId: input.sessionId ?? null };
+
   try {
     // Doc 07 §3 layer 1. A band the server cannot resolve is a layer that is
     // down, not a band to guess at — guessing `young` mis-registers a crisis
     // and guessing `older` hands an eight-year-old the adult one.
-    const gradeBand = await safetyLayer('1-identity', () => loadGradeBand(ctx));
-    const identity = coachIdentity(ctx, gradeBand);
+    const gradeBand = await safetyLayer('1-identity', () => ports.loadGradeBand(ctx));
+    /*
+      The other half of layer 1, and it is a LAYER rather than a lookup for the
+      same reason: doc 07 §3 layer 1 names "guardian policy (from `learnerFlags`)"
+      in the same breath as the band. A flags read that failed open would run the
+      tutor for a child whose parent had switched it off, every time the read
+      failed — so an unresolvable policy pauses, exactly like an unresolvable band.
+    */
+    const flags = await safetyLayer('1-identity', () => ports.loadLearnerFlags(ctx));
+    const identity = coachIdentity(ctx, gradeBand, flags);
 
     /*
       The learner id reaches the gateway as the BUDGET key and stops there — it
@@ -119,7 +177,7 @@ export async function* coachStream(
     */
     const generator = withLearnerBriefStream(
       tutorTurnFor(ctx.learnerId),
-      async () => compileLearnerBrief(await loadPriorFacts(ctx), gradeBand, new Date()),
+      async () => compileLearnerBrief(await ports.loadPriorFacts(ctx), gradeBand, new Date()),
       PEDAGOGY_CONTRACT,
     );
 
@@ -146,7 +204,21 @@ export async function* coachStream(
         continue;
       }
 
-      const { outcome } = event;
+      const { outcome, trace } = event;
+      /*
+        THE TRACE STOPS BEING THROWN AWAY HERE.
+
+        `runSafetyPlaneStream` has always built it — "what ran, in order, the
+        duty-of-care paper trail doc 07 §3 layer 8 wants" — and this loop used to
+        destructure `outcome` and let the rest fall off the end of the frame. A
+        record nobody keeps is doc 12 §5's pause being invisible to the only
+        people who can act on it.
+
+        Before the yield, deliberately: the frames below `return` out of the
+        loop, and a write placed after them would run on no path at all.
+      */
+      recordPlaneOutcome(ports.recordSafetyEvent, ctx, outcome, trace, scope);
+
       if (outcome.kind === 'reply') yield { kind: 'end' };
       else if (outcome.kind === 'redirect') yield { kind: 'replace', text: outcome.text };
       else if (outcome.kind === 'refused') yield { kind: 'replace', text: outcome.reason };
@@ -156,22 +228,45 @@ export async function* coachStream(
     }
   } catch (error) {
     /*
-      The two ways a turn can end without an outcome, and doc 12 §5 wants them
-      told apart. A safety layer that could not reach a verdict leaves the turn
-      UNSCREENED, so it pauses: `blocked` is what the store maps to `paused`,
-      and `paused` is "Natalie is taking a break" — never an error screen at a
-      child, and never a retry, because a retry is a second trip past the layer
-      that just failed to screen the first one.
+      THREE ways a turn can end without an outcome, and doc 12 §5's failure table
+      puts two of them on the same side.
 
-      This used to be a bare `catch` justified by "the plane returns an outcome
-      rather than throwing", which was true only because L3/L4/L5 were pure
-      regex and could not be unavailable. It made the rule vacuous, and the
-      first model-backed classifier would have silently inverted it into a retry
-      into an unscreened tutor.
+      `SafetyLayerUnavailable` — a layer could not reach a verdict, so the turn
+      is UNSCREENED. It pauses: `blocked` is what the store maps to `paused`, and
+      `paused` is "Natalie is taking a break" — never an error screen at a child,
+      and never a retry, because a retry is a second trip past the layer that
+      just failed to screen the first one.
+
+      `ModelDeclined` — the PROVIDER'S OWN safety classifier refused the turn.
+      This used to fall through to `unavailable` → `retry`, and that was the bug:
+      a refusal is a safety verdict reached by a classifier, not a socket that
+      dropped. Doc 12 §5 routes "a surviving refusal" to the fail-closed pause on
+      exactly that ground, `packages/inference/src/errors.ts` names the gap and
+      leaves it for the change that owns this catch, and this is that change. A
+      retry after a refusal asks the same classifier the same question and is
+      answered the same way — or, worse, is answered differently, which is a
+      child rerolling a safety decision until it goes their way.
+
+      It reuses `blocked` rather than growing the union, and that is the honest
+      shape rather than a saving: `blocked`'s own doc comment already says the
+      frame means "the Safety Plane stopped this turn… the client draws both as
+      'Natalie is taking a break'; a child is owed the same calm surface either
+      way, and the difference between them is a guardian-visible detail, not a
+      child-visible one". A refusal is a third thing that is guardian-visible and
+      child-identical, so it is a third thing that belongs behind this frame. The
+      distinction survives where it matters — `recordTurnFailure` files a pause
+      and a refusal as different rows.
 
       Everything else — no API key, vendor outage, a dropped socket — is the
       model, and the model is not a layer.
     */
-    yield { kind: error instanceof SafetyLayerUnavailable ? 'blocked' : 'unavailable' };
+    const stopped = error instanceof SafetyLayerUnavailable || error instanceof ModelDeclined;
+
+    // Before the yield: this is the only place doc 12 §5's pause becomes visible
+    // to an adult, and a consumer that stops iterating on the terminal frame
+    // would never reach a write placed after it.
+    recordTurnFailure(ports.recordSafetyEvent, ctx, error instanceof Error ? error : null, scope);
+
+    yield { kind: stopped ? 'blocked' : 'unavailable' };
   }
 }

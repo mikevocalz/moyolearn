@@ -17,6 +17,16 @@ export type { Organization, Lead, Media, User } from './src/payload-types';
 // must alias one of them rather than assume they interchange.
 export type { SessionTranscript, StudentModelFact } from './src/payload-types';
 
+/*
+  The safety store's ROW, and the same collision as `SessionTranscript` above:
+  `@acme/safety` exports a `SafetyEvent` too, and that one is the DOMAIN object
+  the plane produces. The row carries a numeric Payload id, a `learnerAuthId`
+  rather than a `learnerId`, and a `trace` that is a JSON column rather than a
+  `PlaneLog[]`. A consumer importing both aliases one — `safety-event.repository.ts`
+  does exactly that.
+*/
+export type { SafetyEvent } from './src/payload-types';
+
 export interface PayloadClientConfig {
   /** Payload REST base, e.g. https://example.com/payload-api */
   baseUrl: string;

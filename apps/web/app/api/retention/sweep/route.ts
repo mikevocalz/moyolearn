@@ -33,6 +33,7 @@ import {
   updateEduFactProvenance,
   deleteEduTranscripts,
 } from '@/lib/edu.repository';
+import { reportRouteError } from '@/lib/report-error';
 
 export const dynamic = 'force-dynamic';
 
@@ -139,6 +140,7 @@ export async function POST(request: NextRequest) {
       eduUpdatedFacts,
     });
   } catch (error) {
+    if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Sweep failed';
     return NextResponse.json({ ok: false, error: message }, { status: 500 });
   }

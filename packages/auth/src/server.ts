@@ -18,14 +18,61 @@ const ADULT_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
 const LEARNER_SESSION_MAX_AGE = 60 * 60 * 24 * 7;
 
 /**
- * Fields a guardian-created learner carries. `guardianManaged` is what every
- * restricted-account hook keys off, so it is set at creation and never by the
- * account itself.
+ * Fields a guardian-created learner carries — doc 06 §110's `learnerFlags`.
+ * `guardianManaged` is what every restricted-account hook keys off, so it is set
+ * at creation and never by the account itself.
+ *
+ * `input: false` on all three is the load-bearing part: doc 07 §3 layer 1 says
+ * the server injects the guardian's policy and "the client never supplies age
+ * context". A field a sign-up body could set is a field a child could set.
  */
 const learnerFields = {
   isMinor: { type: 'boolean', required: false, defaultValue: false, input: false },
   guardianManaged: { type: 'boolean', required: false, defaultValue: false, input: false },
+  /**
+   * Doc 07 §3 layer 1's guardian policy: AI tutoring on or off for this child.
+   *
+   * Defaults ON, and that direction is a decision rather than an oversight. The
+   * plane's `refused` branch exists to honour a guardian who turned tutoring
+   * OFF; defaulting the column off would refuse every learner who predates it,
+   * which is a product outage dressed as a safety posture. Absence means "no
+   * guardian has said otherwise", not "assume the worst".
+   */
+  aiEnabled: { type: 'boolean', required: false, defaultValue: true, input: false },
 } as const;
+
+/**
+ * The guardian policy the Safety Plane's layer 1 needs, read from the learner's
+ * own Better Auth row.
+ *
+ * Lives beside the auth instance for the same reason `readSubscriptions` does:
+ * it reads a table `learnerFields` declares, so declaration and reader cannot
+ * drift into two ideas of what a flag is called.
+ *
+ * It does NOT swallow a lookup failure. A guardian who switched AI off and a
+ * database that cannot answer look identical from here, and defaulting to `true`
+ * would turn the second into the first — the tutor would run for a child whose
+ * parent had switched it off, every time the read failed. So a failure
+ * propagates, and the caller wraps it in `safetyLayer('1-identity')`, which is
+ * doc 12 §5's pause.
+ *
+ * A MISSING ROW is different and is not a failure: an account this build cannot
+ * find has no guardian policy to honour, so it gets the default.
+ */
+export interface LearnerFlags {
+  aiEnabled: boolean;
+}
+
+export async function readLearnerFlags(auth: Auth, userId: string): Promise<LearnerFlags> {
+  const context = await auth.$context;
+  const user = (await context.internalAdapter.findUserById(userId)) as
+    | { aiEnabled?: boolean | null }
+    | null
+    | undefined;
+  // `!== false` rather than `=== true`: null, undefined and a column that has
+  // not been backfilled all mean "nobody has switched this off".
+  return { aiEnabled: user?.aiEnabled !== false };
+}
 
 /**
  * A managed learner may never gain an email, link an OAuth account, or change

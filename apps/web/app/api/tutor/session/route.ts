@@ -13,7 +13,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { openSession } from '@acme/app/server';
 import { createSession, loadOpenSession } from '@/lib/tutor-session.repository';
+import { budgetedGateway } from '@/lib/inference';
 import { auth } from '@/lib/auth';
+import { reportRouteError } from '@/lib/report-error';
 
 export async function GET(request: NextRequest) {
   const problem = request.nextUrl.searchParams.get('problem') ?? undefined;
@@ -25,9 +27,18 @@ export async function GET(request: NextRequest) {
       { problem },
       loadOpenSession,
       createSession,
+      /*
+        Passed rather than defaulted. `openSession` reads `budgetState` to decide
+        whether the composer opens, and the answer has to come from the same
+        Postgres row the coaching turn debits — a gateway defaulted here would
+        read the process-local fallback and tell a child their day was fresh
+        after a deploy that had already spent it.
+      */
+      budgetedGateway(),
     );
     return NextResponse.json({ ok: true, session });
   } catch (error) {
+    if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';
     return NextResponse.json({ error: message }, { status: message === 'Unauthenticated' ? 401 : 500 });
   }

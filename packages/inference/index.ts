@@ -39,9 +39,12 @@ export type { EffortModel, FlatModel, ModelId, ModelProfile } from './src/models
 
 export {
   budgetStateFor,
+  budgetLedgerInstalled,
   dayKey,
   endedOnCeiling,
   inMemoryLedger,
+  installBudgetLedger,
+  sharedBudgetLedger,
   BREAK_NUDGE,
   DEFAULT_LEARNER_BUDGET,
   GREAT_WORK_TODAY,

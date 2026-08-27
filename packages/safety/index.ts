@@ -30,3 +30,15 @@ export { probesFor, runPassed, summariseRun, PROBES, RED_TEAM_VERSION } from './
 export type { Probe, ProbeFamily, RedTeamRun } from './src/red-team.ts';
 export { safetyLayer, safetyLayerSync, SafetyLayerUnavailable, SAFETY_LAYERS } from './src/unavailable.ts';
 export type { SafetyLayer } from './src/unavailable.ts';
+export {
+  externalRefusalSafetyEvent,
+  isTutoringPaused,
+  pausedSafetyEvent,
+  safetyEventExpiry,
+  safetyEventFor,
+  PAUSE_STATUS_MINUTES,
+  SAFETY_EVENT_CATEGORIES,
+  SAFETY_EVENT_DISPOSITIONS,
+  SAFETY_EVENT_TTL_DAYS,
+} from './src/events.ts';
+export type { SafetyEvent, SafetyEventCategory, SafetyEventDisposition } from './src/events.ts';

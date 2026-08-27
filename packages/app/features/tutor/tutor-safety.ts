@@ -16,6 +16,7 @@ import {
   type InputClass,
   type PlaneResult,
 } from '@acme/safety';
+import type { LearnerFlags } from '@acme/auth/server';
 import type { ProtectedCtx } from '../../core/protected-operation';
 
 function classifyProblem(problem: string, answer: string): InputClass {
@@ -35,6 +36,22 @@ const tutorGenerator: Generator = {
     `Solve: ${message}`,
 };
 
+/**
+ * The answer-check path does not consult the guardian's AI switch, and that is a
+ * decision rather than the leftover literal it looks like.
+ *
+ * `IdentityContext.aiEnabled` gates the plane's `refused` branch, which exists
+ * so a guardian can turn AI TUTORING off. Nothing on this path is AI: the
+ * generator below is a string template and the verdict comes from
+ * `evaluateArithmetic`. Wiring the flag in here would mean a parent who switched
+ * the tutor off also switched off marking `12 + 5`, which is not what the switch
+ * says and is not what they chose.
+ *
+ * The coaching turn — the one that reaches a model — reads the real flag; see
+ * `coachIdentity` below.
+ */
+const ANSWER_CHECK_IS_NOT_AI = true;
+
 export async function runTutorSafetyPlane(
   problem: string,
   ctx: ProtectedCtx,
@@ -43,7 +60,7 @@ export async function runTutorSafetyPlane(
     learnerId: ctx.learnerId,
     gradeBand: 'older',
     isMinor: true,
-    aiEnabled: true,
+    aiEnabled: ANSWER_CHECK_IS_NOT_AI,
   };
   return runSafetyPlane(problem, identity, { classifier: tutorClassifier, generator: tutorGenerator });
 }
@@ -124,12 +141,26 @@ export const coachClassifier: Classifier = {
   },
 };
 
-/** Doc 07 §3 layer 1: the band is server-derived, never client-supplied. */
-export function coachIdentity(ctx: ProtectedCtx, gradeBand: IdentityContext['gradeBand']): IdentityContext {
+/**
+ * Doc 07 §3 layer 1: every field here is server-derived, never client-supplied.
+ *
+ * `aiEnabled` used to be the literal `true`, which made the plane's `refused`
+ * branch unreachable in production — a guardian could not have turned AI
+ * tutoring off if they had wanted to, because nothing read the switch. It now
+ * comes from `learnerFields` in `@acme/auth`, resolved by the boundary inside
+ * `safetyLayer('1-identity')` alongside the band: guardian policy IS layer 1, so
+ * a policy the server cannot resolve is a layer that is down rather than a
+ * default to fall back on.
+ */
+export function coachIdentity(
+  ctx: ProtectedCtx,
+  gradeBand: IdentityContext['gradeBand'],
+  flags: LearnerFlags,
+): IdentityContext {
   return {
     learnerId: ctx.learnerId,
     gradeBand,
     isMinor: ctx.isLearner,
-    aiEnabled: true,
+    aiEnabled: flags.aiEnabled,
   };
 }

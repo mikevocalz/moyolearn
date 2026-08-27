@@ -14,6 +14,7 @@ import { protectedOperation } from '@acme/app/server';
 import { readSessionSubscriptions } from '@acme/auth/server';
 import type { EntitlementsResponse } from '@acme/app';
 import { auth } from '@/lib/auth';
+import { reportRouteError } from '@/lib/report-error';
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,9 +22,11 @@ export async function GET(request: NextRequest) {
       // `ctx.learnerId`, never a query parameter: the orgs are derived from the
       // session's user id inside the reader.
       readSessionSubscriptions(auth, ctx.learnerId),
+      { telemetry: { op: 'entitlements.read', resource: 'subscriptions', action: 'read' } },
     );
     return NextResponse.json({ subscriptions } satisfies EntitlementsResponse);
   } catch (error) {
+    if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';
     return NextResponse.json(
       { error: message },

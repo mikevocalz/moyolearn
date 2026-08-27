@@ -9,6 +9,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { presignStreamUpload, StreamRejected, protectedOperation } from '@acme/app/server';
 import { createStreamVideo, signStreamUpload } from '@/lib/bunny-stream.repository';
 import { auth } from '@/lib/auth';
+import { reportRouteError } from '@/lib/report-error';
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,9 +35,10 @@ export async function POST(request: NextRequest) {
       session. No learner surface reaches Bunny Stream at all, so gating this
       cannot put a paywall in front of a child.
     */
-    { requires: 'write' });
+    { requires: 'write', telemetry: { op: 'media.video.presign', resource: 'streamVideos', action: 'write' } });
     return NextResponse.json(result, { status: result.ok ? 200 : 422 });
   } catch (error) {
+    if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';
     return NextResponse.json({ error: message }, { status: message === 'Unauthenticated' ? 401 : 500 });
   }

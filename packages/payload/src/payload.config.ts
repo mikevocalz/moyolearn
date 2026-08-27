@@ -12,6 +12,7 @@ import { Consents } from './collections/Consents';
 import { Skills } from './collections/Skills';
 import { Misconceptions } from './collections/Misconceptions';
 import { SessionTranscripts } from './collections/SessionTranscripts';
+import { SafetyEvents } from './collections/SafetyEvents';
 import { TutorMessages } from './collections/TutorMessages';
 import { TutorSessions } from './collections/TutorSessions';
 import { StudentModelFacts } from './collections/StudentModelFacts';
@@ -59,6 +60,13 @@ export default buildConfig({
     TutorSessions,
     TutorMessages,
     StudentModelFacts,
+    /*
+      The guarded safety store (doc 07 §3 layer 7). Listed after the Loop A
+      collections and apart from them on purpose: nothing that reads the
+      pedagogical model may reach it, and it keeps its own retention window
+      rather than the transcript's — a crisis is never a personalization feature.
+    */
+    SafetyEvents,
     // Operations Cloud (doc 28). Kept apart from the Loop A collections above
     // on purpose: business data and learning data never blend, and the schema
     // is where that wall is real rather than a convention.

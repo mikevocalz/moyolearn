@@ -7,12 +7,24 @@
 // PLAN & ENTITLEMENT → handler. The plan gate is the last of those and it is
 // here, not on the client: `PermissionGate` decides what a screen SHOWS, and a
 // screen is not a boundary.
-// SOT: docs/pack/06-auth-onboarding-spec.md §7 · docs/pack/07-security-child-ai-safety-spec.md §2 · docs/pack/11-architectural-guardrails.md §3
-// SOT-KEYWORDS: protected operation auth boundary server-only learner context mock capability plan entitlement
+// Doc 12 §7 also makes this the one place uniform telemetry can come from —
+// "every operation logs {op, resource, action, ctx.kind, latency, outcome}".
+// The record is built and emitted in the `finally` below; the shape, and why
+// naming the operation is optional, are in `telemetry.ts`.
+// SOT: docs/pack/06-auth-onboarding-spec.md §7 · docs/pack/07-security-child-ai-safety-spec.md §2 · docs/pack/11-architectural-guardrails.md §3 · docs/pack/12-systems-design-prompt.md §7
+// SOT-KEYWORDS: protected operation auth boundary server-only learner context mock capability plan entitlement telemetry record latency outcome
 import 'server-only';
 import { readSubscriptions, type Auth } from '@acme/auth/server';
 import type { Capability, SubscriptionState } from '@acme/auth/entitlements';
-import { billingReferenceFor, withCapability, type LoadSubscriptions } from './capability-gate.ts';
+import { billingReferenceFor, withCapability, CapabilityDenied, type LoadSubscriptions } from './capability-gate.ts';
+import {
+  ctxKindOf,
+  operationRecord,
+  recordOperation,
+  type OperationCtxKind,
+  type OperationDescriptor,
+  type OperationOutcome,
+} from './telemetry.ts';
 
 export interface ProtectedCtx {
   /** The acting learner's Better Auth user id. */
@@ -46,6 +58,16 @@ export interface ProtectedOperationOptions {
    * route can wire the wrong one.
    */
   loadSubscriptions?: LoadSubscriptions;
+  /**
+   * What this operation IS, for the telemetry record.
+   *
+   * Optional on purpose (see `telemetry.ts`): making it required would be an
+   * API change to every call site at once, including ones owned elsewhere, and
+   * the record is worth more emitted-and-unnamed than not emitted at all. An
+   * operation that omits it is recorded as `attributed: false` so the gap is
+   * countable on the dashboard rather than invisible.
+   */
+  telemetry?: OperationDescriptor;
 }
 
 const MOCK_CTX: ProtectedCtx = {
@@ -96,30 +118,74 @@ export async function protectedOperation<R>(
   options: ProtectedOperationOptions = {},
 ): Promise<R> {
   const capability = options.requires ?? 'practise';
+  const isMock =
+    process.env.NEXT_PUBLIC_AUTH_MODE === 'mock' && process.env.NODE_ENV === 'development';
 
-  if (process.env.NEXT_PUBLIC_AUTH_MODE === 'mock' && process.env.NODE_ENV === 'development') {
-    const loadMock: LoadSubscriptions = options.loadSubscriptions ?? (async () => MOCK_SUBSCRIPTIONS);
-    return withCapability(MOCK_CTX, capability, loadMock, operation);
-  }
+  /*
+    Captured before the session read, so the recorded latency is the whole block
+    — session, capability gate and handler. That is the quantity slo.md §1.1
+    budgets at 150 ms for context assembly and LAT-1 measures at p95; timing
+    only the handler would hide a slow `getSession` behind a fast operation.
+  */
+  const startedAt = performance.now();
+  let ctxKind: OperationCtxKind = 'anonymous';
+  let outcome: OperationOutcome = 'error';
 
-  const session = await auth.api.getSession({ headers });
-  if (!session) throw new Error('Unauthenticated');
+  try {
+    if (isMock) {
+      ctxKind = ctxKindOf(MOCK_CTX);
+      const loadMock: LoadSubscriptions = options.loadSubscriptions ?? (async () => MOCK_SUBSCRIPTIONS);
+      const result = await withCapability(MOCK_CTX, capability, loadMock, operation);
+      outcome = 'ok';
+      return result;
+    }
 
-  const user = session.user as { id: string; guardianManaged?: boolean; orgId?: string };
-  const ctx: ProtectedCtx = {
-    learnerId: user.id,
-    isLearner: !!user.guardianManaged,
-    orgId: user.orgId,
-  };
+    const session = await auth.api.getSession({ headers });
+    if (!session) throw new Error('Unauthenticated');
 
-  const load: LoadSubscriptions =
-    options.loadSubscriptions ??
+    const user = session.user as { id: string; guardianManaged?: boolean; orgId?: string };
+    const ctx: ProtectedCtx = {
+      learnerId: user.id,
+      isLearner: !!user.guardianManaged,
+      orgId: user.orgId,
+    };
+    ctxKind = ctxKindOf(ctx);
+
+    const load: LoadSubscriptions =
+      options.loadSubscriptions ??
+      /*
+        Read once per operation and never cached across requests: a subscription
+        that lapsed, or a card that just cleared, has to take effect on the next
+        call rather than whenever a process happens to recycle.
+      */
+      ((c) => readSubscriptions(auth, billingReferenceFor(c)));
+
+    const result = await withCapability(ctx, capability, load, operation);
+    outcome = 'ok';
+    return result;
+  } catch (error) {
     /*
-      Read once per operation and never cached across requests: a subscription
-      that lapsed, or a card that just cleared, has to take effect on the next
-      call rather than whenever a process happens to recycle.
+      A refusal is not a failure. `denied` and `unauthenticated` are the block
+      doing its job, and folding them into `error` would burn SLO-3's budget
+      every time a lapsed card is correctly turned away (slo.md §4.4).
     */
-    ((c) => readSubscriptions(auth, billingReferenceFor(c)));
-
-  return withCapability(ctx, capability, load, operation);
+    outcome =
+      error instanceof CapabilityDenied
+        ? 'denied'
+        : error instanceof Error && error.message === 'Unauthenticated'
+          ? 'unauthenticated'
+          : 'error';
+    throw error;
+  } finally {
+    recordOperation(
+      operationRecord({
+        descriptor: options.telemetry,
+        capability,
+        ctxKind,
+        outcome,
+        latencyMs: performance.now() - startedAt,
+        authMode: isMock ? 'mock' : 'session',
+      }),
+    );
+  }
 }

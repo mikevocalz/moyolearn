@@ -11,15 +11,20 @@
 // `edu` schema exists. Same sweep, two stores, two repositories — which is the
 // shape doc 12 §4 asks for when it says the erasure cascade spans all three.
 //
-// SCOPE, stated so nobody reads more into it: this is the RETENTION and ERASURE
-// surface. The tutoring write path still lands in `payload.session_transcripts`
-// and `payload.student_model_facts` (`student-model.repository.ts`), so `edu`
-// holds no production rows yet. Moving that write path is its own change with
-// its own cutover; what is finished here is that when a row DOES exist in `edu`,
-// the sweep already deletes it, and the build check already refuses to let a
-// feature reach past this file to touch it.
-// SOT: docs/pack/12-systems-design-prompt.md §3 §4 · packages/student-model/src/erasure.ts · packages/payload/migrations/edu_schema.sql
-// SOT-KEYWORDS: edu repository educational store retention sweep erasure cascade provenance derived fact transcript separation
+// SCOPE: the WHOLE educational store — the tutoring write path and the retention
+// sweep, in that order below. It used to be the sweep alone, and said so: the
+// tutoring path wrote `payload.session_transcripts` and
+// `payload.student_model_facts`, so `edu` was built, privileged, swept, gated —
+// and empty. Doc 12 §4's separation was documented and not in effect. The write
+// path moved here with `edu_backfill_from_payload.sql`, which copied the rows
+// that already existed; those two things together are what put the separation
+// into effect rather than into a diagram.
+//
+// The `payload` collections still exist and are still swept
+// (`retention.repository.ts`), for the reasons the backfill migration states at
+// its foot. Nothing writes them any more.
+// SOT: docs/pack/12-systems-design-prompt.md §3 §4 · packages/student-model/src/erasure.ts · packages/payload/migrations/edu_schema.sql · packages/payload/migrations/edu_backfill_from_payload.sql
+// SOT-KEYWORDS: edu repository educational store tutoring write path transcripts knowledge graph retention sweep erasure cascade provenance derived fact separation
 import 'server-only';
 import {
   interestFact,
@@ -31,6 +36,7 @@ import {
   type DerivedFact,
   type SessionTranscript,
 } from '@acme/student-model';
+import type { LoadPriorFacts, SaveFacts, SaveTranscript } from '@acme/app/server';
 import { withEdu, type EduClient } from './edu.client';
 
 /**
@@ -152,6 +158,202 @@ function factFromRow(row: FactRow): DerivedFact | null {
 }
 
 /**
+ * The projection every fact read in this file uses, written once.
+ *
+ * `derived_from::text[]` is the load-bearing part: the column's declared type is
+ * `edu.opaque_id[]`, an array OF A DOMAIN, and `pg` ships no type parser for that
+ * OID — without the cast the driver returns the raw literal `{a,b}` as a string
+ * and the first consumer to call `.filter` on a provenance list throws. Two
+ * readers wanted the same sixteen columns and the same cast, and a second copy
+ * is where one of them eventually loses it.
+ */
+const FACT_PROJECTION = `fact_id, learner_id, kind, skill_id, skill_title, tag, p, attempts,
+       due_at, interval_days, hint_depth, active, guardian_approved,
+       derived_from::text[] as derived_from, observed_at, expires_at`;
+
+/**
+ * The learner's whole model, for the tutoring read path.
+ *
+ * `ctx.learnerId` and never a parameter — CLAUDE.md §The block: identity comes
+ * from the protected boundary, so a caller cannot ask this for somebody else's
+ * child by passing a different string.
+ *
+ * NOT filtered on `expires_at`. `isExpired` in `facts.ts` is the reader's gate
+ * and `distill` needs the prior fact even when it has aged out — dropping it
+ * here would make the next session read a missing prior as a fresh start and
+ * reset a mastery estimate the sweep had not yet removed. The sweep is what
+ * deletes; a read that also deleted-by-omission would be a second policy.
+ */
+export const loadEduPriorFacts: LoadPriorFacts = async (ctx) =>
+  withEdu(async (client: EduClient) => {
+    const { rows } = await client.query<FactRow>(
+      `select ${FACT_PROJECTION}
+         from edu.knowledge_graph
+        where learner_id = $1`,
+      [ctx.learnerId],
+    );
+    return rows.map(factFromRow).filter((fact): fact is DerivedFact => fact !== null);
+  });
+
+/**
+ * One session transcript, landed in the educational store.
+ *
+ * `learnerAuthId` on the incoming shape is already `ctx.learnerId` — the service
+ * builds it there — so it is written verbatim rather than re-read from `ctx`,
+ * which would silently repair a mismatch instead of letting the two disagree
+ * loudly if the service ever stopped binding them.
+ *
+ * `turns` is the only jsonb column `edu` has, and `transcripts_turns_shape` is
+ * why it is allowed to exist: the constraint whitelists `SessionTurn`'s keys, so
+ * a turn that carried what the child SAID is rejected by the database rather
+ * than by a reviewer. Nothing is stripped here on the way in — stripping would
+ * make the constraint unreachable and therefore untested.
+ */
+export const saveEduTranscript: SaveTranscript = async (_ctx, transcript) => {
+  await withEdu(async (client: EduClient) => {
+    await client.query(
+      /*
+        `on conflict do nothing`, not `do update`. A transcript is a capture, not
+        a document — `SessionTranscripts.ts` says the collection is immutable for
+        the same reason — so a repeated `sessionId` is a retry of a write that
+        already succeeded, and the honest response is to leave the first one
+        alone rather than to overwrite a record of what happened.
+      */
+      `insert into edu.transcripts
+         (session_id, learner_id, captured_at, expires_at, turns)
+       values ($1, $2, $3, $4, $5::jsonb)
+       on conflict (session_id) do nothing`,
+      [
+        transcript.sessionId,
+        transcript.learnerAuthId,
+        transcript.capturedAt,
+        transcript.expiresAt,
+        JSON.stringify(transcript.turns),
+      ],
+    );
+  });
+};
+
+/**
+ * `skillId` → the human title, taken from whatever fact in the SAME batch has
+ * one.
+ *
+ * `ScaffoldingFact` does not carry `skillTitle`: `scaffoldingFact` takes it,
+ * spends it on the sentence and drops it. `knowledge_graph_variant_shape`
+ * nonetheless requires `skill_title` for a scaffolding row, because the table
+ * stores what the CONSTRUCTOR consumes so the row can be rebuilt through the one
+ * function allowed to author that sentence (`edu_schema.sql` says this at
+ * length). The title is not invented: `distill` emits mastery, review and
+ * scaffolding together for every storable turn, and the first two carry it, so
+ * the batch always holds the answer.
+ *
+ * The fallback to `skillId` covers the one case the batch cannot answer — a
+ * scaffolding fact surviving from a prior model whose skill saw no turn this
+ * session. In this product the two are the same string (`tutor.service.ts` sets
+ * `skillId: skillTitle` from one `inferSkillTitle` call), so the fallback is
+ * exact today and is a legible degradation rather than a guess if they diverge.
+ */
+function skillTitleIndex(facts: readonly DerivedFact[]): Map<string, string> {
+  const titles = new Map<string, string>();
+  for (const fact of facts) {
+    if (fact.kind === 'mastery' || fact.kind === 'review') titles.set(fact.skillId, fact.skillTitle);
+  }
+  return titles;
+}
+
+/**
+ * One `DerivedFact` as the sixteen values `edu.knowledge_graph` takes.
+ *
+ * Written as an exhaustive switch over the union rather than as a spread of
+ * whatever the fact happens to hold, because the destination is a discriminated
+ * union too — `knowledge_graph_variant_shape` requires every column belonging to
+ * another variant to be NULL, so "not applicable" has to be stated, not omitted.
+ * A fact kind added to `facts.ts` without a branch here fails to compile.
+ */
+function factColumns(
+  fact: DerivedFact,
+  titles: Map<string, string>,
+): readonly (string | number | boolean | null | readonly string[])[] {
+  const common = [fact.id, fact.learnerId, fact.kind] as const;
+  const provenance = [fact.derivedFrom, fact.observedAt, fact.expiresAt] as const;
+  // skill_id, skill_title, tag, p, attempts, due_at, interval_days, hint_depth,
+  // active, guardian_approved — in the column order of the statement below.
+  const variant: (string | number | boolean | null)[] =
+    fact.kind === 'mastery'
+      ? [fact.skillId, fact.skillTitle, null, fact.p, fact.attempts, null, null, null, null, null]
+      : fact.kind === 'review'
+        ? [fact.skillId, fact.skillTitle, null, null, null, fact.dueAt, fact.intervalDays, null, null, null]
+        : fact.kind === 'scaffolding'
+          ? [
+              fact.skillId,
+              titles.get(fact.skillId) ?? fact.skillId,
+              null, null, null, null, null,
+              fact.hintDepth,
+              null, null,
+            ]
+          : fact.kind === 'misconception'
+            ? [fact.skillId, null, fact.tag, null, null, null, null, null, fact.active, null]
+            : [null, null, fact.tag, null, null, null, null, null, null, fact.guardianApproved];
+  return [...common, ...variant, ...provenance];
+}
+
+/**
+ * The distilled model, written back.
+ *
+ * UPSERT, because `distill` keys a fact deterministically per learner+kind+skill
+ * and returns the WHOLE model rather than a patch — so every call restates every
+ * belief, and the row is a current belief rather than an entry in an observation
+ * log. The `payload` version of this did a `find` then a `create`-or-`update`
+ * per fact, three round trips where the primary key already answers the
+ * question.
+ *
+ * `sentence` and `strategy` have nowhere to go and are dropped: the constructors
+ * in `facts.ts` rebuild both from the structured values on the way out, and a
+ * column for either would be a second, editable copy of prose about a child.
+ *
+ * A statement per fact rather than one multi-row insert. The values differ per
+ * row, the batch is the size of a learner's model, and a failure that names the
+ * fact it happened on is worth more here than a round trip: a fact the schema
+ * refuses is a fact the distiller should not have produced, and swallowing it
+ * would leave the store's guarantee unverifiable.
+ */
+export const saveEduFacts: SaveFacts = async (_ctx, facts) => {
+  if (facts.length === 0) return;
+  const titles = skillTitleIndex(facts);
+  await withEdu(async (client: EduClient) => {
+    for (const fact of facts) {
+      await client.query(
+        `insert into edu.knowledge_graph
+           (fact_id, learner_id, kind,
+            skill_id, skill_title, tag, p, attempts,
+            due_at, interval_days, hint_depth, active, guardian_approved,
+            derived_from, observed_at, expires_at)
+         values ($1, $2, $3::edu.fact_kind,
+                 $4, $5, $6, $7, $8,
+                 $9, $10, $11, $12, $13,
+                 $14::edu.opaque_id[], $15, $16)
+         on conflict (fact_id) do update set
+           kind = excluded.kind,
+           skill_id = excluded.skill_id,
+           skill_title = excluded.skill_title,
+           tag = excluded.tag,
+           p = excluded.p,
+           attempts = excluded.attempts,
+           due_at = excluded.due_at,
+           interval_days = excluded.interval_days,
+           hint_depth = excluded.hint_depth,
+           active = excluded.active,
+           guardian_approved = excluded.guardian_approved,
+           derived_from = excluded.derived_from,
+           observed_at = excluded.observed_at,
+           expires_at = excluded.expires_at`,
+        factColumns(fact, titles),
+      );
+    }
+  });
+};
+
+/**
  * Every transcript in the educational store whose window has closed by `cutoff`.
  *
  * `turns` comes back EMPTY, for the reason `retention.repository.ts` gives about
@@ -192,23 +394,15 @@ export async function loadEduFactsDerivedFrom(
   return withEdu(async (client: EduClient) => {
     const { rows } = await client.query<FactRow>(
       /*
-        Two different casts, for two different reasons, and neither is optional.
-
-        `derived_from::text[]` in the SELECT list: the column's declared type is
-        `edu.opaque_id[]`, an array OF A DOMAIN, and `pg` ships no type parser for
-        that OID — without the cast the driver returns the raw literal `{a,b}` as
-        a string and the first consumer to call `.filter` on a provenance list
-        throws. Casting in the projection only; it touches no predicate.
-
         `$1::edu.opaque_id[]` in the predicate, NOT `derived_from::text[] && $1`:
         Postgres has no `edu.opaque_id[] && text[]` operator, and casting the
         COLUMN to reach one would make the predicate an expression the GIN index
         cannot serve — turning every erasure into a sequential scan of the whole
-        graph. Casting the parameter instead keeps the bitmap index scan.
+        graph. Casting the parameter instead keeps the bitmap index scan. The
+        cast in the projection is the other direction and is explained on
+        `FACT_PROJECTION`.
       */
-      `select fact_id, learner_id, kind, skill_id, skill_title, tag, p, attempts,
-              due_at, interval_days, hint_depth, active, guardian_approved,
-              derived_from::text[] as derived_from, observed_at, expires_at
+      `select ${FACT_PROJECTION}
          from edu.knowledge_graph
         where derived_from && $1::edu.opaque_id[]`,
       [transcriptIds],

@@ -22,7 +22,7 @@ import {
   budgetStateFor,
   dayKey,
   endedOnCeiling,
-  inMemoryLedger,
+  sharedBudgetLedger,
   BREAK_NUDGE,
   DEFAULT_LEARNER_BUDGET,
   type BudgetLedger,
@@ -162,15 +162,23 @@ let shared: InferenceGateway | undefined;
 /**
  * The process-wide gateway.
  *
- * A singleton because the in-memory ledger is the counter: a gateway per call
- * site would be a budget per call site, which is the failure mode §7.2 names.
- * The adapter is built on first use so a process that never coaches never needs
- * a credential.
+ * A singleton because the ledger is the counter: a gateway per call site would
+ * be a budget per call site, which is the failure mode §7.2 names. The adapter
+ * is built on first use so a process that never coaches never needs a
+ * credential.
+ *
+ * `sharedBudgetLedger()` rather than a ledger value, and the difference is the
+ * whole point of doc 12 §7 holding across a deploy. It is LATE-BOUND: it reads
+ * the installed repository on every call, so this singleton may be built by the
+ * first route to touch it and still count against Postgres rather than against a
+ * Map that dies with the lambda. The composition root that fills it is
+ * `apps/web/lib/inference.ts`; with nothing installed it degrades to the
+ * process-local counter and says so loudly, once.
  */
 export function inferenceGateway(): InferenceGateway {
   shared ??= createInferenceGateway({
     adapter: anthropicAdapter(),
-    ledger: inMemoryLedger(),
+    ledger: sharedBudgetLedger(),
     budget: DEFAULT_LEARNER_BUDGET,
   });
   return shared;

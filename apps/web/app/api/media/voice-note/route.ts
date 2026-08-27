@@ -10,6 +10,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { presignVoiceNote, PresignRejected, protectedOperation } from '@acme/app/server';
 import { signUpload } from '@/lib/bunny.repository';
 import { auth } from '@/lib/auth';
+import { reportRouteError } from '@/lib/report-error';
 
 export async function POST(request: NextRequest) {
   try {
@@ -52,9 +53,10 @@ export async function POST(request: NextRequest) {
       at the floor deliberately: a child's homework capture must never depend on
       what an adult is paying.
     */
-    { requires: 'write' });
+    { requires: 'write', telemetry: { op: 'media.voiceNote.presign', resource: 'media', action: 'write' } });
     return NextResponse.json(result, { status: result.ok ? 200 : 422 });
   } catch (error) {
+    if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';
     return NextResponse.json({ error: message }, { status: message === 'Unauthenticated' ? 401 : 500 });
   }

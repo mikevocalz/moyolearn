@@ -9,18 +9,49 @@
 // SOT-KEYWORDS: tutor coach api route sse stream protected operation safety plane
 import { NextRequest, NextResponse } from 'next/server';
 import { coachTutorTurn, type CoachEvent } from '@acme/app/server';
-import { loadGradeBand, loadPriorFacts } from '@/lib/student-model.repository';
+/*
+  Two stores, named separately because they ARE separate (doc 12 §4). The model
+  the coaching turn reasons over is educational data and comes from `edu`; the
+  grade band is an attribute of the user's account and stays in the operational
+  store. Reading both through one repository would have been the convenient lie.
+*/
+import { loadEduPriorFacts } from '@/lib/edu.repository';
+import { loadGradeBand } from '@/lib/student-model.repository';
+/*
+  The guardian's own policy (doc 07 §3 layer 1) and the record of anything the
+  plane stops (doc 07 §3 layer 7). A THIRD store, again named separately: safety
+  events are Payload's by doc 12 §4 and are the one place a crisis may be
+  written, which is exactly why they are not in `edu` beside the model.
+*/
+import { loadLearnerFlags } from '@/lib/learner-flags.repository';
+import { recordSafetyEvent } from '@/lib/safety-event.repository';
 import { auth } from '@/lib/auth';
+/*
+  A bare import, and the only kind that works here. `coachTutorTurn` takes no
+  gateway — it reaches the shared one through `tutorTurnFor`'s defaulted
+  parameter four frames down — so the durable budget ledger can only arrive by
+  being installed before this handler runs. Importing the composition root IS
+  that installation; there is no value to bind. Deleting this line does not break
+  a type, it silently returns the §7 ceiling to a counter that dies with the
+  lambda, which is why it is commented rather than terse.
+*/
+import '@/lib/inference';
+import { reportRouteError } from '@/lib/report-error';
 
 // The turn holds a connection open while a model generates, which a statically
 // rendered route cannot do.
 export const dynamic = 'force-dynamic';
 
-function isCoachBody(body: unknown): body is { problem: string; message?: string } {
+function isCoachBody(
+  body: unknown,
+): body is { problem: string; message?: string; sessionId?: string } {
   if (typeof body !== 'object' || body === null) return false;
   const record = body as Record<string, unknown>;
   if (typeof record.problem !== 'string' || record.problem.trim().length === 0) return false;
-  return record.message === undefined || typeof record.message === 'string';
+  if (record.message !== undefined && typeof record.message !== 'string') return false;
+  // A conversation handle, not an identity — see `CoachTurnInput.sessionId`. It
+  // is optional because a turn can legitimately run before the session resolves.
+  return record.sessionId === undefined || typeof record.sessionId === 'string';
 }
 
 export async function POST(request: NextRequest) {
@@ -40,11 +71,16 @@ export async function POST(request: NextRequest) {
     events = await coachTutorTurn(
       auth,
       request.headers,
-      { problem: body.problem, message: body.message ?? '' },
-      loadPriorFacts,
-      loadGradeBand,
+      { problem: body.problem, message: body.message ?? '', sessionId: body.sessionId },
+      {
+        loadPriorFacts: loadEduPriorFacts,
+        loadGradeBand,
+        loadLearnerFlags,
+        recordSafetyEvent,
+      },
     );
   } catch (error) {
+    if (error instanceof Error) reportRouteError(error);
     // Auth and validation fail before the stream opens, so they can still be a
     // status code. Anything that goes wrong after this point is a `blocked`
     // event on an already-200 response.

@@ -122,12 +122,28 @@ catalog:
   "@payloadcms/ui": 4.0.0-canary.29
   graphql: 16.14.2 # payload peers ^16
   pg: 8.23.0
+  # The job runner (doc 12 §6 · docs/design/jobs.md). Same Postgres, `jobs`
+  # schema. Its own `pg` dependency is `^8.23.0`, which is the line above
+  # exactly — one driver in the workspace, not two, so the queue and the
+  # repositories cannot disagree about how a timestamp comes back.
+  pg-boss: 12.28.0
   better-auth: 1.7.1
   "@better-auth/expo": 1.7.1
   "@better-auth/stripe": 1.7.1
   stripe: 22.5.0
   sharp: 0.35.3
   "@types/pg": 8.23.0
+
+  # observability (doc 12 §7 · docs/design/slo.md). Two SDKs, one release train
+  # — @sentry/nextjs 10.x and @sentry/react-native 8.x are cut together and
+  # share @sentry/core, so they are bumped together or the two apps report
+  # against different event schemas. @sentry/react-native 8.24.0 builds and
+  # tests against react-native 0.86.2, which is the version in this catalog.
+  #
+  # Neither SDK initialises without a DSN, so a checkout with no SENTRY_DSN /
+  # EXPO_PUBLIC_SENTRY_DSN runs with the reporter off rather than half on.
+  "@sentry/nextjs": 10.71.0
+  "@sentry/react-native": 8.24.0
 
   # tooling
   typescript: ~6.0.3

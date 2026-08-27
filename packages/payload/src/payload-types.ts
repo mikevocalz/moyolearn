@@ -77,6 +77,7 @@ export interface Config {
     tutorSessions: TutorSession;
     tutorMessages: TutorMessage;
     studentModelFacts: StudentModelFact;
+    safetyEvents: SafetyEvent;
     organizations: Organization;
     leads: Lead;
     'payload-kv': PayloadKv;
@@ -96,6 +97,7 @@ export interface Config {
     tutorSessions: TutorSessionsSelect<false> | TutorSessionsSelect<true>;
     tutorMessages: TutorMessagesSelect<false> | TutorMessagesSelect<true>;
     studentModelFacts: StudentModelFactsSelect<false> | StudentModelFactsSelect<true>;
+    safetyEvents: SafetyEventsSelect<false> | SafetyEventsSelect<true>;
     organizations: OrganizationsSelect<false> | OrganizationsSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -344,6 +346,33 @@ export interface StudentModelFact {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "safetyEvents".
+ */
+export interface SafetyEvent {
+  id: number;
+  eventId: string;
+  learnerAuthId: string;
+  sessionId?: string | null;
+  category: 'crisis' | 'safety' | 'boundary' | 'paused';
+  disposition: 'crisis' | 'blocked' | 'redirect' | 'paused';
+  stoppedAt: string;
+  trace:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  guardianVisible: boolean;
+  occurredAt: string;
+  expiresAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "organizations".
  */
 export interface Organization {
@@ -446,6 +475,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'studentModelFacts';
         value: number | StudentModelFact;
+      } | null)
+    | ({
+        relationTo: 'safetyEvents';
+        value: number | SafetyEvent;
       } | null)
     | ({
         relationTo: 'organizations';
@@ -655,6 +688,24 @@ export interface StudentModelFactsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "safetyEvents_select".
+ */
+export interface SafetyEventsSelect<T extends boolean = true> {
+  eventId?: T;
+  learnerAuthId?: T;
+  sessionId?: T;
+  category?: T;
+  disposition?: T;
+  stoppedAt?: T;
+  trace?: T;
+  guardianVisible?: T;
+  occurredAt?: T;
+  expiresAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "organizations_select".
  */
 export interface OrganizationsSelect<T extends boolean = true> {
@@ -757,6 +808,7 @@ export interface CollectionQueryWidget {
       | 'tutorSessions'
       | 'tutorMessages'
       | 'studentModelFacts'
+      | 'safetyEvents'
       | 'organizations'
       | 'leads';
     where?:
@@ -792,6 +844,7 @@ export interface ActivityWidget {
           | 'tutorSessions'
           | 'tutorMessages'
           | 'studentModelFacts'
+          | 'safetyEvents'
           | 'organizations'
           | 'leads'
         )[]

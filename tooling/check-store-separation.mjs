@@ -48,8 +48,13 @@ const EDU_CLIENT = /(?:from|import|require\()\s*['"`][^'"`]*\bedu\.client['"`]/;
  * bare table name would flag the prose in this file, in the sweep route's own
  * comments and in the design docs — and a check that fails on an explanation of
  * itself gets deleted rather than obeyed.
+ *
+ * The table list is EXPLICIT rather than `\w+`, so a table added to `edu` without
+ * being added here is unguarded — which is why it is added in the same commit as
+ * the migration that creates it. `inference_budget` (doc 12 §7's daily ledger)
+ * joined the list with `edu_inference_budget.sql`.
  */
-const EDU_SQL = /\b(?:from|into|update|join|table|truncate)\s+"?edu"?\s*\.\s*"?(?:transcripts|knowledge_graph|embeddings)\b/i;
+const EDU_SQL = /\b(?:from|into|update|join|table|truncate)\s+"?edu"?\s*\.\s*"?(?:transcripts|knowledge_graph|embeddings|inference_budget)\b/i;
 
 /** The raw driver. A file holding one is talking to a database, whatever it calls itself. */
 const RAW_DRIVER = /(?:from|import|require\()\s*['"`]pg['"`]/;
@@ -74,6 +79,11 @@ const FEATURE_ROOTS = ['packages/app'];
  */
 const SQL_ALLOWLIST = new Set([
   'packages/payload/src/retention/erasure.integration.test.mjs',
+  // Proves the doc 12 §7 budget survives a restart by reading one row from two
+  // independent connections, which is a claim about the TABLE. Same reason as
+  // above: `budget-ledger.repository.ts` begins with `import 'server-only'` and
+  // will not load outside a server bundle, so the proof issues its own SQL.
+  'packages/payload/src/retention/budget-ledger.integration.test.mjs',
 ]);
 
 function walk(dir, out = []) {

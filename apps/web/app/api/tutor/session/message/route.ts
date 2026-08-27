@@ -16,6 +16,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { addMessage, SessionNotFound, type StoredAttachment } from '@acme/app/server';
 import { appendMessage } from '@/lib/tutor-session.repository';
 import { auth } from '@/lib/auth';
+import { reportRouteError } from '@/lib/report-error';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -102,6 +103,7 @@ export async function POST(request: NextRequest) {
     );
     return NextResponse.json({ ok: true, message });
   } catch (error) {
+    if (error instanceof Error) reportRouteError(error);
     if (error instanceof SessionNotFound) {
       return NextResponse.json({ error: 'No such session' }, { status: 404 });
     }

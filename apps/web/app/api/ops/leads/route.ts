@@ -11,6 +11,7 @@ import {
 import type { Stage } from '@acme/app';
 import { loadLeads } from '@/lib/leads.repository';
 import { auth } from '@/lib/auth';
+import { reportRouteError } from '@/lib/report-error';
 
 const SORT_FIELDS: readonly LeadSortField[] = ['family', 'stage', 'owner', 'sessions', 'value'];
 
@@ -49,10 +50,11 @@ export async function GET(request: NextRequest) {
         `canExport` true on every status for exactly that reason. Gating this
         read on `write` would take a lapsed org's own CRM away from it.
       */
-      { requires: 'export' },
+      { requires: 'export', telemetry: { op: 'ops.leads.list', resource: 'leads', action: 'read' } },
     );
     return NextResponse.json(result);
   } catch (error) {
+    if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';
     const status = error instanceof CapabilityDenied ? error.status
       : message === 'Unauthenticated' ? 401

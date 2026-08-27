@@ -22,5 +22,7 @@ export async function saveLearnerProfile(
   // The band is validated at the route rather than trusted, but it is still the
   // learner's own record being written from their own session — identity comes
   // from `ctx`, so there is no id in the payload to forge.
-  return protectedOperation(auth, headers, (ctx) => saveGradeBand(ctx, input.gradeBand));
+  return protectedOperation(auth, headers, (ctx) => saveGradeBand(ctx, input.gradeBand), {
+    telemetry: { op: 'onboarding.learnerProfile.save', resource: 'learners', action: 'write' },
+  });
 }

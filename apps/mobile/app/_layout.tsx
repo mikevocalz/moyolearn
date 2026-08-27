@@ -1,3 +1,8 @@
+// Boots Sentry before anything else in the tree evaluates (slo.md §7 W-2). It
+// is a side-effect import because the SDK has to be initialised, not rendered —
+// see src/telemetry.ts for what is and is not enabled, and why.
+import "../src/telemetry";
+
 import { Slot } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 

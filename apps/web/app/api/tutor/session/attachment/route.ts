@@ -18,6 +18,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { attachUploadedMedia, SessionNotFound } from '@acme/app/server';
 import { patchAttachment } from '@/lib/tutor-session.repository';
 import { auth } from '@/lib/auth';
+import { reportRouteError } from '@/lib/report-error';
 
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -67,6 +68,7 @@ export async function PATCH(request: NextRequest) {
     );
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (error instanceof Error) reportRouteError(error);
     // The same 404 covers "no such session", "not yours" and "no such
     // attachment" — telling them apart would let a caller probe for ids.
     if (error instanceof SessionNotFound) {

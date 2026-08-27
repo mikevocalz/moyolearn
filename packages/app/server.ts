@@ -40,8 +40,32 @@ export {
   coachTutorTurn,
   type CoachTurnInput,
   type CoachEvent,
+  type CoachPorts,
   type LoadGradeBand,
+  type LoadLearnerFlags,
 } from './features/tutor/coach.service';
+export type { RecordSafetyEvent } from './features/tutor/safety-events';
+/*
+  The safety-event shape travels with the ports that move it, exactly as
+  `DerivedFact` does above. `apps/web` does not depend on `@acme/safety` and
+  should not start: the plane is server-side and reaching it from an app package
+  is how a classifier ends up called from somewhere that is not the boundary. The
+  repository that writes the row still has to name what a row is, so the type
+  comes through the barrel that already hands it the port.
+*/
+export type { SafetyEvent, PlaneLog } from '@acme/safety';
+/*
+  Doc 12 §5's other half: the pause a child sees, told to the adult who can do
+  something about it. Exported from the server barrel because the read runs
+  inside `protectedOperation` and the events are a Payload collection — the
+  screen gets the shape, never the query.
+*/
+export {
+  guardianSafetyStatus,
+  type GuardianSafetyStatus,
+  type LoadGuardianSafetyEvents,
+  type SafetyAlertSummary,
+} from './features/ai-activity/safety-status.service';
 export { PEDAGOGY_CONTRACT, revealsAnswer } from './features/tutor/pedagogy';
 export {
   openSession,

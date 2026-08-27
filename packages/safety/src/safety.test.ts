@@ -28,6 +28,13 @@ import {
 } from './plane.ts';
 import { runPassed, summariseRun, PROBES, RED_TEAM_VERSION } from './red-team.ts';
 import { safetyLayerSync, SafetyLayerUnavailable, type SafetyLayer } from './unavailable.ts';
+import {
+  isTutoringPaused,
+  pausedSafetyEvent,
+  safetyEventFor,
+  PAUSE_STATUS_MINUTES,
+  SAFETY_EVENT_TTL_DAYS,
+} from './events.ts';
 
 const learner: IdentityContext = {
   learnerId: 'learner_1',
@@ -423,5 +430,126 @@ describe('the fail-closed rule', () => {
         throw new Error('rule set failed to load');
       });
     }, isDown('2-firewall'));
+  });
+});
+
+describe('the safety-event record', () => {
+  const identity = { learnerId: 'learner_1', sessionId: 'sess_1' };
+  const at = new Date('2026-08-27T16:00:00.000Z');
+
+  it('writes nothing down for a clean turn', () => {
+    const outcome: PlaneOutcome = { kind: 'reply', text: 'What did you get?', storeInStudentModel: true };
+    assert.equal(safetyEventFor(outcome, [{ layer: '7-memory' }], identity, at), null);
+  });
+
+  it('writes nothing down when the guardian’s own switch is off', () => {
+    // A refusal is the `aiEnabled` setting working. Reporting a parent's own
+    // choice back to them is noise in the one feed that has to stay readable.
+    const outcome: PlaneOutcome = { kind: 'refused', reason: 'off', storeInStudentModel: false };
+    assert.equal(safetyEventFor(outcome, [{ layer: '1-identity' }], identity, at), null);
+  });
+
+  it('carries the verdict and the trace, and never a word of the turn', () => {
+    const outcome: PlaneOutcome = { kind: 'blocked', broke: ['secrecy'], storeInStudentModel: false };
+    const trace = [{ layer: '3-input', detail: 'safe' }, { layer: '2-firewall', detail: 'secrecy' }];
+    const event = safetyEventFor(outcome, trace, identity, at);
+
+    assert.ok(event);
+    assert.equal(event.category, 'safety');
+    assert.equal(event.disposition, 'blocked');
+    assert.equal(event.stoppedAt, '2-firewall');
+    assert.deepEqual(event.trace, trace);
+
+    // The whole store's premise: layer names and class labels, nothing a child
+    // or the tutor actually said. The words stay in the transcript, on the
+    // transcript's clock.
+    const serialised = JSON.stringify(event);
+    assert.ok(!serialised.includes('secret'), serialised);
+    assert.equal(Object.hasOwn(event, 'text'), false);
+    assert.equal(Object.hasOwn(event, 'excerpt'), false);
+  });
+
+  it('tells a disclosure apart from a child poking at the topic fence', () => {
+    const outcome: PlaneOutcome = { kind: 'redirect', text: 'not my thing', storeInStudentModel: false };
+
+    const fence = safetyEventFor(outcome, [{ layer: '4-fence', detail: 'redirect' }], identity, at);
+    assert.equal(fence?.category, 'boundary');
+    // Doc 07 §3 layer 4: boundary-testing is logged, never punished. Forwarding
+    // every off-task line to a parent is how logging becomes punishment.
+    assert.equal(fence?.guardianVisible, false);
+
+    const handoff = safetyEventFor(
+      outcome,
+      [{ layer: '3-input', detail: 'sensitive-handoff' }],
+      identity,
+      at,
+    );
+    assert.equal(handoff?.category, 'safety');
+    assert.equal(handoff?.guardianVisible, true);
+  });
+
+  it('always shows a crisis to the guardian', () => {
+    const outcome: PlaneOutcome = {
+      kind: 'crisis',
+      response: crisisResponse('older'),
+      storeInStudentModel: false,
+    };
+    const event = safetyEventFor(outcome, [{ layer: '6-crisis' }], identity, at);
+    assert.equal(event?.category, 'crisis');
+    assert.equal(event?.guardianVisible, true);
+  });
+
+  it('keeps its own window, longer than the transcript and far shorter than a fact', () => {
+    // The transcript's 30 days is a clock on a child's WORDS; an event holds
+    // none, so the number does not transfer. Asserted as the gap rather than as
+    // a literal so a change to either constant has to be argued for here.
+    assert.equal(SAFETY_EVENT_TTL_DAYS, 90);
+    assert.ok(SAFETY_EVENT_TTL_DAYS > 30, 'an event must outlive the transcript it refers to');
+    assert.ok(SAFETY_EVENT_TTL_DAYS < 400, 'doc 07 §3 layer 7: short retention, shorter than a fact');
+
+    const event = safetyEventFor(
+      { kind: 'blocked', broke: [], storeInStudentModel: false },
+      [{ layer: '5-output' }],
+      identity,
+      at,
+    );
+    assert.equal(
+      event?.expiresAt,
+      new Date(at.getTime() + SAFETY_EVENT_TTL_DAYS * 86_400_000).toISOString(),
+    );
+  });
+
+  it('records a fail-closed pause as a system state, not as something the child did', () => {
+    const event = pausedSafetyEvent('3-input', identity, at);
+    assert.equal(event.category, 'paused');
+    assert.equal(event.stoppedAt, '3-input');
+    // Filing this as `safety` would tell a parent their child triggered
+    // something, when a classifier timed out.
+    assert.notEqual(event.category, 'safety');
+    assert.equal(event.guardianVisible, true);
+  });
+
+  it('reads a recent pause as the CURRENT status and an old one as history', () => {
+    const now = new Date('2026-08-27T16:00:00.000Z');
+    const recent = pausedSafetyEvent('5-output', identity, new Date(now.getTime() - 60_000));
+    const stale = pausedSafetyEvent(
+      '5-output',
+      identity,
+      new Date(now.getTime() - (PAUSE_STATUS_MINUTES + 1) * 60_000),
+    );
+
+    assert.equal(isTutoringPaused([recent], now), true);
+    assert.equal(isTutoringPaused([stale], now), false);
+    assert.equal(isTutoringPaused([], now), false);
+
+    // A blocked turn is a verdict, not an outage: it must never read as a
+    // tutor that has stopped working.
+    const blocked = safetyEventFor(
+      { kind: 'blocked', broke: [], storeInStudentModel: false },
+      [{ layer: '5-output' }],
+      identity,
+      now,
+    );
+    assert.equal(isTutoringPaused(blocked ? [blocked] : [], now), false);
   });
 });

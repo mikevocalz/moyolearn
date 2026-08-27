@@ -8,12 +8,14 @@
     ".": "./index.ts",
     "./server": "./server.ts",
     "./features/*": "./features/*",
+    "./telemetry": "./core/telemetry.ts",
+    "./telemetry/mask": "./core/telemetry-mask.ts",
     "./fixtures/*": "./fixtures/*"
   },
   "scripts": {
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test 'core/**/*.test.ts' 'features/**/*.test.ts' 'providers/**/*.test.ts' && node --test --conditions=react-server 'features/**/*.server-test.ts'"
+    "test": "node --test 'core/**/*.test.ts' 'features/**/*.test.ts' 'providers/**/*.test.ts' && node --test --conditions=react-server 'core/**/*.server-test.ts' 'features/**/*.server-test.ts'"
   },
   "dependencies": {
     "@acme/auth": "workspace:*",

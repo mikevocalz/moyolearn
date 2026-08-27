@@ -65,7 +65,9 @@ sequenceDiagram
     Coach->>Repo: loadGradeBand ctx
     Repo-->>Coach: young or older
     Coach->>Coach: coachIdentity ctx gradeBand
-    Note right of Coach: aiEnabled is HARDCODED true.<br/>learnerFlags guardian policy NOT YET IMPLEMENTED.
+    Coach->>Repo: loadLearnerFlags ctx inside safetyLayer 1-identity
+    Repo-->>Coach: aiEnabled from learnerFields
+    Note right of Coach: Guardian policy is READ, not assumed.<br/>An unresolvable policy pauses, like an unresolvable band.
     end
 
     rect rgb(240, 245, 238)
@@ -90,7 +92,7 @@ sequenceDiagram
     alt crisis
         Plane-->>Coach: done crisis crisisResponse gradeBand plus trace 6-crisis
         Coach-->>Route: replace outcome.response.message
-        Note over Route: safetyEvents write and guardian alert S26<br/>NOT YET IMPLEMENTED
+        Coach->>Repo: recordSafetyEvent ctx safetyEventFor outcome trace
     else prohibited
         Plane-->>Coach: done blocked
         Coach-->>Route: blocked
@@ -172,8 +174,8 @@ sequenceDiagram
     rect rgb(242, 242, 242)
     Note over Route,Repo: Async after close, per doc 12 §5. None of this is wired.
     Note over Repo: Distillation job NOT YET IMPLEMENTED as a job.<br/>distill runs SYNCHRONOUSLY inside evaluateTutorTurn,<br/>a different operation on a different route.
-    Note over Repo: safetyEvents store plus alert pipeline S26 NOT YET IMPLEMENTED.<br/>No collection, no write, no guardian notification.
-    Note over Repo: Guardian-visible paused status NOT YET IMPLEMENTED.<br/>The paused state is learner-side only.
+    Note over Repo: safetyEvents is written SYNCHRONOUSLY on the turn, not after close.<br/>A record taken after the connection drops is a record that is not taken.<br/>Guardian notification by email or SMS S26 NOT YET IMPLEMENTED.
+    Note over Repo: Guardian-visible paused status IS wired.<br/>GET /api/guardian/safety-status feeds S12's Safety section.
     end
 ```
 
@@ -250,7 +252,11 @@ measuring nothing.
 | Client turn driver, SSE reader, paused/retry mapping | `packages/app/features/tutor/tutor.store.ts` : `useTutorStore`, `readCoachEvents`, `API_URL` |
 | Platform-forked streaming fetch | `packages/app/features/tutor/stream-fetch.ts` : `streamFetch` |
 | SSE route, body guard, cancel teardown | `apps/web/app/api/tutor/coach/route.ts` : `POST`, `isCoachBody` |
-| Turn orchestration and wire contract | `packages/app/features/tutor/coach.service.ts` : `coachTutorTurn`, `CoachEvent`, `LoadGradeBand`, `coach` |
+| Turn orchestration and wire contract | `packages/app/features/tutor/coach.service.ts` : `coachTutorTurn`, `coachStream`, `CoachEvent`, `CoachPorts`, `LoadGradeBand`, `LoadLearnerFlags` |
+| Safety-event shape, categories and retention | `packages/safety/src/events.ts` : `SafetyEvent`, `safetyEventFor`, `pausedSafetyEvent`, `externalRefusalSafetyEvent`, `isTutoringPaused`, `SAFETY_EVENT_TTL_DAYS`, `PAUSE_STATUS_MINUTES` |
+| Safety-event write from the boundary | `packages/app/features/tutor/safety-events.ts` : `RecordSafetyEvent`, `recordPlaneOutcome`, `recordTurnFailure` · `apps/web/lib/safety-event.repository.ts` : `recordSafetyEvent`, `loadGuardianSafetyEvents` |
+| Guardian-visible status | `packages/app/features/ai-activity/safety-status.service.ts` : `guardianSafetyStatus`, `safetyStatusFrom` · `apps/web/app/api/guardian/safety-status/route.ts` · `packages/app/features/ai-activity/safety-section.tsx` |
+| Guardian policy (`aiEnabled`) | `packages/auth/src/server.ts` : `learnerFields`, `readLearnerFlags`, `LearnerFlags` · `apps/web/lib/learner-flags.repository.ts` : `loadLearnerFlags` |
 | Auth boundary | `packages/app/core/protected-operation.ts` : `protectedOperation`, `ProtectedCtx` |
 | Server-only barrel | `packages/app/server.ts` : re-exports `coachTutorTurn`, `CoachEvent`, `LoadGradeBand` |
 | Grade-band and prior-fact reads | `apps/web/lib/student-model.repository.ts` : `loadGradeBand`, `loadPriorFacts`, `saveTranscript`, `saveFacts` |
@@ -264,6 +270,7 @@ measuring nothing.
 | Answer-reveal guard | `packages/app/features/tutor/pedagogy.ts` : `revealsAnswer`, `PEDAGOGY_CONTRACT`, `REVEAL_WITHHELD` |
 | Paused-state surface and copy | `packages/ui/TutorStage.tsx` : `TutorStageState` `'paused'` case (line 231 renders the break copy) |
 | Session persistence for the turn | `packages/app/features/tutor/session.service.ts` : `openSession`, `addMessage` · `apps/web/lib/tutor-session.repository.ts` : `loadOpenSession`, `createSession`, `appendMessage` |
+| Safety-event collection | `packages/payload/src/collections/SafetyEvents.ts` · `packages/payload/migrations/safety_events_additive.sql` |
 | Transcript / fact collections | `packages/payload/src/collections/SessionTranscripts.ts` · `packages/payload/src/collections/StudentModelFacts.ts` · `packages/payload/src/collections/TutorSessions.ts` |
 
 ## NOT YET IMPLEMENTED
@@ -288,23 +295,43 @@ specifies for this flow and the tree does not contain.
    `ProtectedCtx.learnerId` never reaches `streamTutorTurn` — but no module
    asserts it and no test guards it. It is an accident of composition, not a
    boundary.
-4. **`aiEnabled` from guardian policy.** `coachIdentity` hardcodes
-   `aiEnabled: true`. `IdentityContext.aiEnabled` is documented as "Guardian
-   policy from `learnerFlags`"; there is no `learnerFlags` collection and no
-   read. The `refused` branch in `screenInput` is therefore currently unreachable
-   in production.
-5. **Fail-closed on classifier or firewall *unavailability*.** The plane fails
-   closed on a *verdict*. It has no notion of a layer being *down*: `screen` is
-   synchronous and in-process, and `coachClassifier` cannot throw. When layer 3
-   becomes a model call (doc 18 §3 layer 5's eval registry), a thrown classifier
-   surfaces through `coach`'s `catch` as `unavailable` → `retry`, which is
-   **explicitly not** the fail-closed paused state. Doc 12 §5 requires the
-   opposite. This is the single highest-value gap in the flow.
-6. **`safetyEvents` + the alert pipeline (S26).** No collection, no write, no
-   guardian notification, no human review queue. `PlaneResult.trace` is built
-   and then discarded — `coach()` reads `event.outcome` and drops `trace`.
-7. **Guardian-visible paused status.** The paused state lives in
-   `useTutorStore` on the child's device only.
+4. **~~`aiEnabled` from guardian policy.~~ WIRED.** `learnerFields` in
+   `packages/auth/src/server.ts` carries `aiEnabled` (`input: false`, defaults
+   ON so no existing learner is refused by a column arriving), the boundary
+   reads it through `LoadLearnerFlags` → `apps/web/lib/learner-flags.repository.ts`
+   → `readLearnerFlags`, and it runs inside `safetyLayer('1-identity')` —
+   guardian policy is layer 1, so an unresolvable policy pauses rather than
+   defaulting. `tooling/check-fail-closed.mjs` lists `loadLearnerFlags` beside
+   `loadGradeBand` in `IDENTITY_LOOKUPS`, so moving it out of the wrapper fails
+   the build. The `refused` branch is reachable and covered by
+   `fail-closed.server-test.ts`. **Still missing:** any UI for a guardian to
+   TOGGLE the flag — it can be read and honoured, and is set server-side.
+5. **~~Fail-closed on classifier or firewall *unavailability*.~~ WIRED**, and
+   extended. `safetyLayer`/`safetyLayerSync` turn any layer failure into
+   `SafetyLayerUnavailable`, which the boundary's catch maps to `blocked` →
+   `paused`. `ModelDeclined` joins it: a PROVIDER refusal is a safety verdict,
+   not a socket, and doc 12 §5's failure table routes a surviving refusal to the
+   pause — it used to fall through to `unavailable` → `retry`, which offered a
+   child a second attempt at the same refusal.
+6. **~~`safetyEvents` + the alert pipeline (S26).~~ COLLECTION AND WRITE WIRED.**
+   `packages/payload/src/collections/SafetyEvents.ts` (`versions: false`,
+   `update: () => false`), `packages/payload/migrations/safety_events_additive.sql`,
+   written from the coaching boundary via `RecordSafetyEvent` →
+   `apps/web/lib/safety-event.repository.ts`. `PlaneResult.trace` is no longer
+   discarded — it is the row's `trace` column. Retention is the store's OWN:
+   `SAFETY_EVENT_TTL_DAYS` is 90 against the transcript's 30 and a fact's 400,
+   swept by the same job through `packages/payload/src/retention/sweep.sql`.
+   **Still missing:** push delivery (email/SMS per guardian preference, doc 07
+   §S26's a11y line) and the human review queue. The record exists and is
+   readable; nothing is yet pushed at anybody.
+7. **~~Guardian-visible paused status.~~ WIRED.** `GET /api/guardian/safety-status`
+   → `guardianSafetyStatus` (inside `protectedOperation`, scoped by ACTIVE
+   guardianships) → the Safety section at the top of S12
+   (`packages/app/features/ai-activity/safety-section.tsx`). It leads the screen
+   because a stopped tutor is a thing a parent must be told, not a thing they
+   came to read. `unreachable` is its own rendered state: a status that falls
+   back to "all clear" when the read failed is the one lie this surface must not
+   tell.
 8. **The distillation job.** `distill` is called synchronously at
    `packages/app/features/tutor/tutor.service.ts:119`, inside `evaluateTutorTurn`
    (the answer-check operation, `POST /api/tutor/evaluate`), not asynchronously

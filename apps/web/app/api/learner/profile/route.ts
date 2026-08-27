@@ -5,6 +5,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { saveLearnerProfile } from '@acme/app/server';
 import { saveGradeBand } from '@/lib/student-model.repository';
 import { auth } from '@/lib/auth';
+import { reportRouteError } from '@/lib/report-error';
 
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -25,6 +26,7 @@ export async function POST(request: NextRequest) {
     await saveLearnerProfile(auth, request.headers, { gradeBand }, saveGradeBand);
     return NextResponse.json({ ok: true });
   } catch (error) {
+    if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';
     return NextResponse.json({ error: message }, { status: message === 'Unauthenticated' ? 401 : 500 });
   }

@@ -24,9 +24,13 @@
     "check:separation": "node tooling/check-store-separation.mjs",
     "check:failclosed": "node tooling/check-fail-closed.mjs",
     "check:runtime": "node tooling/check-runtime-classes.mjs",
+    "jobs:install": "pg-boss create --schema jobs --connection-string \"$DATABASE_URL\"",
+    "jobs:migrate": "pg-boss migrate --schema jobs --connection-string \"$DATABASE_URL\"",
+    "jobs:doctor": "pg-boss doctor --schema jobs --connection-string \"$DATABASE_URL\"",
     "ui:sweep": "node tooling/ui-sweep.mjs"
   },
   "devDependencies": {
+    "pg-boss": "catalog:",
     "turbo": "catalog:"
   },
   "pnpm": {

@@ -10,6 +10,7 @@ import {
 } from '@acme/app/server';
 import { saveLeadStage } from '@/lib/leads.repository';
 import { auth } from '@/lib/auth';
+import { reportRouteError } from '@/lib/report-error';
 
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -47,11 +48,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         client's own gate can be empty, stale, or bypassed entirely; this is the
         refusal that counts.
       */
-      { requires: 'write' },
+      { requires: 'write', telemetry: { op: 'ops.leads.stage', resource: 'leads', action: 'write' } },
     );
 
     return NextResponse.json(result, { status: result.ok ? 200 : 422 });
   } catch (error) {
+    if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';
     const status = error instanceof CapabilityDenied ? error.status
       : message === 'Unauthenticated' ? 401

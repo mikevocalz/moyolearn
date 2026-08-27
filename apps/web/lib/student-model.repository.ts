@@ -1,23 +1,33 @@
-// Student-model repository — the only place the tutor's routes touch Payload.
+// Student-model repository — what is left of the tutor's Payload surface after
+// the educational store took the model.
 //
-// CLAUDE.md's block says only repositories touch `@acme/payload`, and this file
-// exists because the fact-loading code was living inside the evaluate route. A
-// second route (the coaching turn) needs the same reads, and a repository
-// copied into two routes is a repository that will disagree with itself by the
-// third.
-// SOT: CLAUDE.md §The block · docs/pack/19-learning-outcomes-spec.md §3
-// SOT-KEYWORDS: student model repository payload facts transcript grade band load save
+// It used to hold the whole thing: `saveTranscript`, `saveFacts` and
+// `loadPriorFacts` against `payload.session_transcripts` and
+// `payload.student_model_facts`. Doc 12 §4 puts that store in `edu`, and it now
+// actually is there — the three moved to `edu.repository.ts` and are NOT
+// re-exported from here. A shim would have been the kind thing to do for call
+// sites and the wrong thing for the separation: two names for one write path is
+// how a feature ends up pointed at the store that stopped being authoritative.
+//
+// Two things stay, for one reason each:
+//
+//   `factFromDoc` — the retention sweep still drains the `payload` copies
+//   (`retention.repository.ts`), and it needs to decode a row to run the cascade
+//   over it. It decodes; it does not serve a read path.
+//
+//   `loadGradeBand` / `saveGradeBand` — the grade band is a property of the USER
+//   record, doc 07 §3 layer 1. That is the operational store and it belongs in
+//   `payload`; moving it to `edu` would put an account attribute in the
+//   educational store because it happens to be read by a tutoring turn.
+// SOT: CLAUDE.md §The block · docs/pack/19-learning-outcomes-spec.md §3 · apps/web/lib/edu.repository.ts
+// SOT-KEYWORDS: student model repository payload grade band fact decoder retention sweep separation edu cutover
 import 'server-only';
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import type { StudentModelFact } from '@acme/payload';
 import type {
-  ProtectedCtx,
-  TranscriptToSave,
-  LoadPriorFacts,
   LoadGradeBand,
   SaveGradeBand,
-  SaveFacts,
   DerivedFact,
   MasteryFact,
   ReviewFact,
@@ -31,35 +41,16 @@ async function withPayload<T>(fn: (payload: Awaited<ReturnType<typeof getPayload
   return fn(payload);
 }
 
-export async function saveTranscript(_ctx: ProtectedCtx, transcript: TranscriptToSave) {
-  await withPayload((payload) =>
-    payload.create({
-      collection: 'sessionTranscripts',
-      /*
-        Spread field by field rather than cast. `turns` is a readonly array on
-        the service's type and a mutable JSON column on the collection's, and a
-        cast through `unknown` hid that mismatch instead of resolving it — while
-        also silencing every future field the two shapes stop agreeing on.
-      */
-      data: {
-        sessionId: transcript.sessionId,
-        learnerAuthId: transcript.learnerAuthId,
-        turns: [...transcript.turns],
-        capturedAt: transcript.capturedAt,
-        expiresAt: transcript.expiresAt,
-      },
-    }),
-  );
-}
-
 /**
  * One `studentModelFacts` row decoded into the discriminated union the model is
  * written in.
  *
- * Exported rather than kept inside `loadPriorFacts` because the retention sweep
- * (`retention.repository.ts`) reads the same rows through a different `where`,
- * and a second decoder would be a second place for the JSON `detail` column to
- * disagree about what a fact is.
+ * Its ONLY caller now is the retention sweep (`retention.repository.ts`), which
+ * has to decode a `payload` fact to run the cascade over it. It was shared with
+ * the tutoring read path until that path moved to `edu`; it stayed here rather
+ * than moving with it because `edu.repository.ts:factFromRow` decodes typed
+ * columns and this decodes a `detail` blob — same job, two schemas, and merging
+ * them would mean one function pretending both stores have the same shape.
  *
  * A row whose `kind` this build does not know is returned as `null` and skipped
  * rather than coerced — an unreadable fact is not shown, and it is not deleted
@@ -127,75 +118,6 @@ export function factFromDoc(doc: StudentModelFact): DerivedFact | null {
   }
   return null;
 }
-
-export const loadPriorFacts: LoadPriorFacts = async (ctx) => {
-  return withPayload(async (payload) => {
-    const { docs } = await payload.find({
-      collection: 'studentModelFacts',
-      where: { learnerAuthId: { equals: ctx.learnerId } },
-      limit: 1000,
-    });
-    return docs.map(factFromDoc).filter((fact): fact is DerivedFact => fact !== null);
-  });
-};
-
-function factDetail(fact: DerivedFact): Record<string, unknown> {
-  if (fact.kind === 'mastery') {
-    return { skillId: fact.skillId, skillTitle: fact.skillTitle, p: fact.p, attempts: fact.attempts };
-  }
-  if (fact.kind === 'review') {
-    return { skillId: fact.skillId, skillTitle: fact.skillTitle, dueAt: fact.dueAt, intervalDays: fact.intervalDays };
-  }
-  if (fact.kind === 'scaffolding') {
-    return { skillId: fact.skillId, hintDepth: fact.hintDepth };
-  }
-  if (fact.kind === 'misconception') {
-    return { skillId: fact.skillId, tag: fact.tag, strategy: fact.strategy, active: fact.active };
-  }
-  if (fact.kind === 'interest') {
-    return { tag: fact.tag, guardianApproved: fact.guardianApproved };
-  }
-  return {};
-}
-
-export const saveFacts: SaveFacts = async (ctx, facts) => {
-  return withPayload(async (payload) => {
-    for (const fact of facts) {
-      const { docs } = await payload.find({
-        collection: 'studentModelFacts',
-        where: {
-          factId: { equals: fact.id },
-          learnerAuthId: { equals: ctx.learnerId },
-        },
-        limit: 1,
-      });
-
-      const base = {
-        factId: fact.id,
-        learnerAuthId: ctx.learnerId,
-        kind: fact.kind,
-        sentence: fact.sentence,
-        detail: factDetail(fact),
-        derivedFrom: [...fact.derivedFrom],
-        observedAt: fact.observedAt,
-        expiresAt: fact.expiresAt,
-      };
-
-      if (docs.length > 0 && docs[0].id) {
-        await payload.update({
-          collection: 'studentModelFacts',
-          id: docs[0].id,
-          data: base,
-        });
-      } else {
-        await payload.create({
-          collection: 'studentModelFacts',
-          data: base,
-        });
-      }
-    }
-  });
-};
 
 /**
  * Doc 07 §3 layer 1's band, read from the learner's own record. Falls back to

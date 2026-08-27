@@ -531,3 +531,263 @@ test(
     }
   },
 );
+
+/*
+  THE NEW WRITE PATH, swept end to end.
+
+  The three tests above prove the cascade's ALGEBRA against rows somebody
+  hand-wrote to suit it. That was the honest limit of them while the tutoring
+  path still wrote `payload.session_transcripts` and `payload.student_model_facts`
+  and `edu` held nothing: they proved a sweep would work on rows of a shape no
+  production writer produced.
+
+  It produces them now. `apps/web/lib/edu.repository.ts:saveEduTranscript` and
+  `saveEduFacts` are what `POST /api/tutor/evaluate` calls, so this test seeds
+  the store the way THEY do — a real `SessionTurn`, through the real `distill`,
+  written with the same column mapping — and then sweeps it. What it is
+  therefore able to catch, and the tests above are not, is a model the distiller
+  can emit that the educational store refuses to hold, or holds in a shape the
+  cascade cannot walk.
+
+  It caught one immediately, which is the reason `eduFactColumns` below is not
+  a spread of the fact: `distill` emits a scaffolding fact for every storable
+  turn, `ScaffoldingFact` carries no `skillTitle` (`scaffoldingFact` spends it on
+  the sentence and drops it), and `knowledge_graph_variant_shape` requires
+  `skill_title` for a scaffolding row. Writing the fact's own fields produced
+
+    new row for relation "knowledge_graph" violates check constraint
+    "knowledge_graph_variant_shape"
+
+  on the third fact of the first turn — i.e. every tutoring turn would have
+  500'd. The title is recovered from the mastery or review fact for the same
+  skill in the same batch, which `distill` always emits alongside it.
+
+  The mapping is MIRRORED here rather than imported for the reason the two tests
+  above give about themselves: `edu.repository.ts` begins with
+  `import 'server-only'` and will not load outside a server bundle. This file is
+  the one `tooling/check-store-separation.mjs` allowlists to write `edu` SQL.
+*/
+
+/** `skillId` → a title, from whichever fact in the batch has one. */
+function skillTitleIndex(facts) {
+  const titles = new Map();
+  for (const fact of facts) {
+    if (fact.kind === 'mastery' || fact.kind === 'review') titles.set(fact.skillId, fact.skillTitle);
+  }
+  return titles;
+}
+
+/** One `DerivedFact` as the sixteen values `edu.knowledge_graph` takes. */
+function eduFactColumns(fact, titles) {
+  const variant =
+    fact.kind === 'mastery'
+      ? [fact.skillId, fact.skillTitle, null, fact.p, fact.attempts, null, null, null, null, null]
+      : fact.kind === 'review'
+        ? [fact.skillId, fact.skillTitle, null, null, null, fact.dueAt, fact.intervalDays, null, null, null]
+        : fact.kind === 'scaffolding'
+          ? [fact.skillId, titles.get(fact.skillId) ?? fact.skillId, null, null, null, null, null, fact.hintDepth, null, null]
+          : fact.kind === 'misconception'
+            ? [fact.skillId, null, fact.tag, null, null, null, null, null, fact.active, null]
+            : [null, null, fact.tag, null, null, null, null, null, null, fact.guardianApproved];
+  return [
+    fact.id,
+    fact.learnerId,
+    fact.kind,
+    ...variant,
+    fact.derivedFrom,
+    fact.observedAt,
+    fact.expiresAt,
+  ];
+}
+
+test(
+  'erasure spans the tutoring write path: a distilled model written to edu is swept whole',
+  { skip: url ? false : 'no DATABASE_URL' },
+  async () => {
+    const { default: pg } = await import('pg');
+    const { distill, transcriptExpiry } = await import('../../../student-model/src/distill.ts');
+    const { expireTranscripts } = await import('../../../student-model/src/erasure.ts');
+
+    const c = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+    await c.connect();
+
+    const stamp = `edu-writepath-${randomUUID()}`;
+    const learner = `${stamp}-learner`;
+    const sessionId = randomUUID();
+
+    /*
+      Captured 31 days ago so the REAL `transcriptExpiry` — the same function
+      `tutor.service.ts` calls — puts the window one day in the past. The row is
+      expired because the published 30-day window says so, not because the test
+      wrote a date it liked.
+    */
+    const capturedAt = new Date(Date.now() - 31 * 86_400_000);
+    const observedAt = new Date();
+
+    // Exactly what `evaluateTutorTurn` builds for a storable turn.
+    const turn = {
+      skillId: 'Fractions',
+      skillTitle: 'Fractions',
+      correct: false,
+      hintDepth: 2,
+      storable: true,
+    };
+    const transcript = {
+      id: sessionId,
+      learnerId: learner,
+      capturedAt: capturedAt.toISOString(),
+      expiresAt: transcriptExpiry(capturedAt),
+      turns: [turn],
+    };
+    const facts = distill(transcript, [], observedAt);
+
+    // The distiller's contract, asserted before the store's: a storable turn
+    // produces mastery, review and scaffolding. If this ever stops being true
+    // the coverage below silently narrows.
+    assert.deepEqual(
+      [...facts.map((f) => f.kind)].sort(),
+      ['mastery', 'review', 'scaffolding'],
+      'distill no longer emits the three facts this test sweeps',
+    );
+
+    try {
+      // `saveEduTranscript`, statement for statement.
+      await c.query(
+        `insert into edu.transcripts (session_id, learner_id, captured_at, expires_at, turns)
+         values ($1, $2, $3, $4, $5::jsonb)
+         on conflict (session_id) do nothing`,
+        [
+          transcript.id,
+          transcript.learnerId,
+          transcript.capturedAt,
+          transcript.expiresAt,
+          JSON.stringify(transcript.turns),
+        ],
+      );
+
+      // `saveEduFacts`, statement for statement.
+      const titles = skillTitleIndex(facts);
+      for (const fact of facts) {
+        await c.query(
+          `insert into edu.knowledge_graph
+             (fact_id, learner_id, kind,
+              skill_id, skill_title, tag, p, attempts,
+              due_at, interval_days, hint_depth, active, guardian_approved,
+              derived_from, observed_at, expires_at)
+           values ($1, $2, $3::edu.fact_kind,
+                   $4, $5, $6, $7, $8,
+                   $9, $10, $11, $12, $13,
+                   $14::edu.opaque_id[], $15, $16)
+           on conflict (fact_id) do update set
+             kind = excluded.kind, skill_id = excluded.skill_id,
+             skill_title = excluded.skill_title, tag = excluded.tag,
+             p = excluded.p, attempts = excluded.attempts,
+             due_at = excluded.due_at, interval_days = excluded.interval_days,
+             hint_depth = excluded.hint_depth, active = excluded.active,
+             guardian_approved = excluded.guardian_approved,
+             derived_from = excluded.derived_from,
+             observed_at = excluded.observed_at, expires_at = excluded.expires_at`,
+          eduFactColumns(fact, titles),
+        );
+      }
+
+      /*
+        The write path landed, in the store doc 12 §4 names. Asserted rather than
+        assumed: before the cutover this count was 0 for every learner in
+        production, because the tutoring path wrote the other schema.
+      */
+      const landed = await c.query(
+        'select count(*)::int n from edu.knowledge_graph where learner_id = $1',
+        [learner],
+      );
+      assert.equal(landed.rows[0].n, 3, 'the distilled model did not reach the educational store');
+
+      // A second write of the same turn is an UPSERT, not a duplicate: `distill`
+      // keys facts deterministically and returns the whole model every time.
+      for (const fact of facts) {
+        await c.query(
+          `insert into edu.knowledge_graph
+             (fact_id, learner_id, kind, skill_id, skill_title, tag, p, attempts,
+              due_at, interval_days, hint_depth, active, guardian_approved,
+              derived_from, observed_at, expires_at)
+           values ($1,$2,$3::edu.fact_kind,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,
+                   $14::edu.opaque_id[],$15,$16)
+           on conflict (fact_id) do update set attempts = excluded.attempts`,
+          eduFactColumns(fact, titles),
+        );
+      }
+      const afterRewrite = await c.query(
+        'select count(*)::int n from edu.knowledge_graph where learner_id = $1',
+        [learner],
+      );
+      assert.equal(afterRewrite.rows[0].n, 3, 'the write path appends instead of upserting');
+
+      // The sweep, as `app/api/retention/sweep` runs its edu leg.
+      const cutoff = new Date();
+      const { rows: transcriptRows } = await c.query(
+        `select session_id, learner_id, captured_at, expires_at
+           from edu.transcripts
+          where learner_id = $1 and expires_at <= $2`,
+        [learner, cutoff.toISOString()],
+      );
+      assert.equal(transcriptRows.length, 1, 'the 30-day window did not close on a 31-day-old capture');
+
+      const expired = transcriptRows.map((r) => ({
+        id: r.session_id,
+        learnerId: r.learner_id,
+        capturedAt: r.captured_at.toISOString(),
+        expiresAt: r.expires_at.toISOString(),
+        turns: [],
+      }));
+      const ids = expired.map((t) => t.id);
+      const { rows: factRows } = await c.query(
+        'select fact_id, derived_from::text[] as derived_from from edu.knowledge_graph where derived_from && $1::edu.opaque_id[]',
+        [ids],
+      );
+      const cascade = expireTranscripts(
+        expired,
+        factRows.map((r) => ({ id: r.fact_id, derivedFrom: r.derived_from })),
+        cutoff,
+      );
+
+      /*
+        EVERY fact, not some. The turn had one source, so `distill` gave all
+        three facts a single-element provenance and the cascade must take all
+        three — a model whose only session is gone is a model with nothing left
+        to say about the child.
+      */
+      assert.deepEqual(
+        [...cascade.erasedFactIds].sort(),
+        [...facts.map((f) => f.id)].sort(),
+        'the cascade left part of a single-session model standing',
+      );
+
+      await c.query('delete from edu.knowledge_graph where fact_id = any($1)', [
+        cascade.erasedFactIds,
+      ]);
+      await c.query('delete from edu.transcripts where session_id = any($1)', [ids]);
+
+      const factsLeft = await c.query(
+        'select count(*)::int n from edu.knowledge_graph where learner_id = $1',
+        [learner],
+      );
+      assert.equal(factsLeft.rows[0].n, 0, 'derived facts survived the sweep of their only source');
+
+      const transcriptsLeft = await c.query(
+        'select count(*)::int n from edu.transcripts where learner_id = $1',
+        [learner],
+      );
+      assert.equal(transcriptsLeft.rows[0].n, 0, 'the expired transcript survived');
+
+      const vectorsLeft = await c.query(
+        'select count(*)::int n from edu.embeddings where learner_id = $1',
+        [learner],
+      );
+      assert.equal(vectorsLeft.rows[0].n, 0, 'an embedding of learner content outlived its transcript');
+    } finally {
+      await c.query('delete from edu.knowledge_graph where learner_id = $1', [learner]);
+      await c.query('delete from edu.transcripts where learner_id = $1', [learner]);
+      await c.end();
+    }
+  },
+);

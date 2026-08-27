@@ -67,3 +67,26 @@ END $$;
 -- turn every one of them into an orphan mid-transaction.
 DELETE FROM payload.tutor_sessions      WHERE expires_at < now();
 DELETE FROM payload.session_transcripts WHERE expires_at < now();
+
+/*
+  Safety events, on a DIFFERENT clock and swept by the same job.
+
+  Doc 12 §7 keeps audit and safety events in "separate stores with separate
+  retention", and this is the separation made real: the two DELETEs above act on
+  a 30-day window over a child's WORDS, and this one acts on a 90-day window over
+  a verdict that contains none. Same sweeper because two schedulers is two things
+  to forget to run, not because the windows are related — `SAFETY_EVENT_TTL_DAYS`
+  in `packages/safety/src/events.ts` owns the number and says why.
+
+  GUARDED, for the reason this file's header records at length: the whole script
+  runs as one multi-statement string inside an implicit transaction, so naming a
+  table that does not exist yet raises 42P01 and takes every other statement down
+  with it. That is exactly how the sweep once stopped sweeping anything, in the
+  change that was meant to make it thorough. A database that has not had
+  `safety_events_additive.sql` applied is a no-op here, not a broken sweep.
+*/
+DO $$ BEGIN
+  IF to_regclass('payload.safety_events') IS NOT NULL THEN
+    EXECUTE 'DELETE FROM payload.safety_events WHERE expires_at < now()';
+  END IF;
+END $$;

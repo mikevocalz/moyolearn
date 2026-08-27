@@ -51,15 +51,44 @@ const PATH_MODULES = [
   'packages/app/features/tutor/tutor-safety.ts',
   'packages/app/features/tutor/tutor-model.ts',
   'packages/app/features/tutor/pedagogy.ts',
+  /*
+    The safety-event writer. It is on the path and it is NOT in the import scan
+    below, and both of those are deliberate: recording is not screening, so its
+    functions may be called from the boundary's `catch` (where a layer call is
+    correctly forbidden) — but a `catch` inside it that swallowed a layer outage
+    would fail the rule just as thoroughly as one anywhere else, so it is held
+    to the rethrow-or-classify rule like every other module here.
+  */
+  'packages/app/features/tutor/safety-events.ts',
   PLANE,
 ];
 
 /**
- * Doc 07 §3 layer 1 — the server-injected grade band. Named here because it is
- * a layer that arrives as a plain function parameter rather than as an import,
- * so nothing else in this file could recognise it as one.
+ * Doc 07 §3 layer 1 — the two things the server injects into every turn: the
+ * grade band, and the guardian's policy. Named here because they arrive as plain
+ * function parameters rather than as imports, so nothing else in this file could
+ * recognise them as layers.
+ *
+ * `loadLearnerFlags` is on this list because `aiEnabled` is what the plane's
+ * `refused` branch honours. A flags read that failed open would run the tutor
+ * for a child whose guardian had switched it off, every time the read failed —
+ * which is the same class of mistake as guessing a grade band, with a worse
+ * ending.
  */
-const IDENTITY_LOOKUPS = ['loadGradeBand'];
+const IDENTITY_LOOKUPS = ['loadGradeBand', 'loadLearnerFlags'];
+
+/**
+ * Errors the boundary's catch must be able to tell apart, and the frame each
+ * one is owed.
+ *
+ * `ModelDeclined` is here because a refusal is a VERDICT: the provider's own
+ * safety classifier said no. It spent a long time falling through to
+ * `unavailable` → `retry`, which offered a child a second attempt at the same
+ * refusal — and doc 12 §5's failure table routes a surviving refusal to the
+ * fail-closed pause on exactly that ground. A catch that stops naming it has
+ * silently restored the retry.
+ */
+const CLASSIFIED_ERRORS = ['SafetyLayerUnavailable', 'ModelDeclined'];
 
 /** The plane's ports. A call to one is a safety layer being consulted. */
 const LAYER_CALLS = [/\bscreen\s*\(/g, /\bclassifyInput\s*\(/g, /\bclassifyOutput\s*\(/g];
@@ -293,12 +322,27 @@ for (const at of catches) {
   }
 
   const [from, to] = body;
-  if (!boundary.code.slice(from, to).includes('SafetyLayerUnavailable')) {
+  const classified = boundary.code.slice(from, to);
+
+  if (!classified.includes('SafetyLayerUnavailable')) {
     fail(
       boundary,
       at,
       'this catch does not tell a layer outage from a vendor blip — doc 12 §5 needs it to,\n' +
         '    because one pauses the tutor and the other offers a child a retry',
+    );
+    continue;
+  }
+
+  const unclassified = CLASSIFIED_ERRORS.filter((name) => !classified.includes(name));
+  if (unclassified.length > 0) {
+    fail(
+      boundary,
+      at,
+      `this catch never mentions ${unclassified.join(', ')}. A refusal is a safety VERDICT — the\n` +
+        "    provider's own classifier said no — and doc 12 §5 routes it to the pause. Letting it\n" +
+        '    fall through to `unavailable` puts a retry button under a child and asks the same\n' +
+        '    classifier the same question a second time',
     );
     continue;
   }

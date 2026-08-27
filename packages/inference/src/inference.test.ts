@@ -13,14 +13,17 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  budgetLedgerInstalled,
   budgetStateFor,
   createAnthropicAdapter,
   createInferenceGateway,
   dayKey,
   endedOnCeiling,
   inMemoryLedger,
+  installBudgetLedger,
   modelFor,
   paramsFor,
+  sharedBudgetLedger,
   priceUsd,
   profileFor,
   requestFor,
@@ -35,6 +38,7 @@ import {
 import type {
   AnthropicTransport,
   BudgetLedger,
+  LedgerDay,
   InferencePayload,
   InferenceRequest,
   InferenceRole,
@@ -491,5 +495,106 @@ describe('the prompt the gateway is actually handed', () => {
   it('still redacts a real worksheet header', () => {
   assert.equal(scrubText('Name: Ada Lovelace'), `Name: ${REDACTED}`);
     assert.equal(scrubText('Student: Ada'), `Student: ${REDACTED}`);
+  });
+});
+
+/*
+  THE BUDGET SURVIVING A RESTART.
+
+  `inMemoryLedger` is process-local and the file has always said so; what the
+  suite never asserted is the property that makes the §7 ceiling real — that a
+  SECOND reader of the same store sees the first one's turns. A deploy is exactly
+  that: a new process reading a ledger it did not write.
+
+  These tests are at the PORT, not at Postgres, because `packages/inference` may
+  not reach a database and must not learn how to. The real-row proof is
+  `packages/payload/src/retention/budget-ledger.integration.test.mjs`, which runs
+  the same shape over two independent `pg` connections against
+  `edu.inference_budget`. Between them: the port's contract here, the
+  implementation's behaviour there.
+*/
+describe('the budget across a restart', () => {
+  const now = new Date('2026-08-27T10:00:00.000Z');
+
+  /**
+   * A ledger backed by a store OUTSIDE the ledger object — which is what a table
+   * is. Two instances built over one `store` are the fair proxy for two
+   * processes over one row: they share no closure state, only the data.
+   */
+  const sharedStoreLedger = (store: Map<string, LedgerDay>): BudgetLedger => ({
+    read: async (learnerId, day) => store.get(`${learnerId}/${day}`) ?? { turns: 0, usd: 0 },
+    record: async (learnerId, day, usd) => {
+      const current = store.get(`${learnerId}/${day}`) ?? { turns: 0, usd: 0 };
+      store.set(`${learnerId}/${day}`, { turns: current.turns + 1, usd: current.usd + usd });
+    },
+  });
+
+  it('a second process reads the turns the first one spent', async () => {
+    const store = new Map<string, LedgerDay>();
+
+    const before = sharedStoreLedger(store);
+    for (let i = 0; i < DEFAULT_LEARNER_BUDGET.dailyTurns; i += 1) {
+      await before.record('learner-9', dayKey(now), 0.01);
+    }
+
+    // The restart. Nothing of `before` survives except what it wrote.
+    const after = sharedStoreLedger(store);
+    const day = await after.read('learner-9', dayKey(now));
+
+    assert.equal(day.turns, DEFAULT_LEARNER_BUDGET.dailyTurns);
+    assert.deepEqual(budgetStateFor(day, DEFAULT_LEARNER_BUDGET), { kind: 'session-complete' });
+  });
+
+  it('the process-local ledger is what a restart used to forgive', async () => {
+    // The bug, stated as a passing assertion so the fix cannot be undone
+    // quietly: this is what the shared gateway did on every deploy.
+    const before = inMemoryLedger();
+    for (let i = 0; i < DEFAULT_LEARNER_BUDGET.dailyTurns; i += 1) {
+      await before.record('learner-9', dayKey(now), 0.01);
+    }
+
+    const after = inMemoryLedger();
+    assert.deepEqual(await after.read('learner-9', dayKey(now)), { turns: 0, usd: 0 });
+  });
+
+  it('installs a durable ledger under the shared gateway', async () => {
+    const store = new Map<string, LedgerDay>();
+    assert.equal(budgetLedgerInstalled(), false);
+
+    installBudgetLedger(sharedStoreLedger(store));
+    assert.equal(budgetLedgerInstalled(), true);
+
+    // Late-bound: this ledger was taken BEFORE the next installation and still
+    // follows it, which is what lets `inferenceGateway()` be constructed by
+    // whichever route happens to run first.
+    const shared = sharedBudgetLedger();
+    await shared.record('learner-9', dayKey(now), 0.02);
+    assert.deepEqual(store.get(`learner-9/${dayKey(now)}`), { turns: 1, usd: 0.02 });
+
+    const second = new Map<string, LedgerDay>();
+    installBudgetLedger(sharedStoreLedger(second));
+    await shared.record('learner-9', dayKey(now), 0.03);
+    assert.deepEqual(second.get(`learner-9/${dayKey(now)}`), { turns: 1, usd: 0.03 });
+  });
+
+  it('a gateway built on the shared ledger enforces the installed count', async () => {
+    const store = new Map<string, LedgerDay>();
+    installBudgetLedger(sharedStoreLedger(store));
+
+    const { transport, sent } = fakeTransport();
+    const gateway = createInferenceGateway({
+      adapter: createAnthropicAdapter(transport),
+      ledger: sharedBudgetLedger(),
+      budget: DEFAULT_LEARNER_BUDGET,
+    });
+
+    // The day was spent by the PREVIOUS process. Nothing in this one recorded it.
+    for (let i = 0; i < DEFAULT_LEARNER_BUDGET.dailyTurns; i += 1) {
+      store.set(`learner-9/${dayKey(now)}`, { turns: i + 1, usd: 0 });
+    }
+
+    const turn = await gateway.tutorTurn({ learnerId: 'learner-9', payload: payload('c', 'hi'), now });
+    assert.equal(turn.kind, 'session-complete');
+    assert.equal(sent.length, 0);
   });
 });

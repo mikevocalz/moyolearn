@@ -1,19 +1,36 @@
 'use client';
-// AI activity & permissions — what the AI knows, said, and keeps.
+// AI activity & permissions — what the AI knows, said, and keeps, and whether it
+// is running at all.
 //
 // The calmest screen in the product by intent: no urgency, no nudge toward the
 // permissive option, no dark pattern anywhere near a consent toggle. Every
 // switch states its effect in the row, so consent is informed at the point of
 // decision rather than in a policy the parent will never open.
-// SOT: docs/pack/04-screen-briefs.md §S12
-// SOT-KEYWORDS: ai activity permissions consent retention observation parent
+//
+// It is also where doc 12 §5's other half surfaces. The rule reads "tutoring
+// pauses — 'Natalie is taking a break' (never an error screen at a child),
+// guardian-visible status", and only the child's half was built: the paused
+// state lived in `useTutorStore`, on the child's device, and ended with the tab.
+// From the kitchen table a tutor that has silently stopped working and a child
+// who has silently stopped trying look identical.
+//
+// The status leads the screen. Permissions and memory are things a parent came
+// here to READ; a stopped tutor is a thing they need to be TOLD.
+//
+// A GUARDIAN surface, and it renders inside the same `(site)` shell a learner
+// uses — so nothing here is a price, a plan, or an upgrade. The section below
+// adds a status and an alert list and no action that costs money.
+// SOT: docs/pack/04-screen-briefs.md §S12 · docs/pack/07-security-child-ai-safety-spec.md §S26 · docs/pack/12-systems-design-prompt.md §5
+// SOT-KEYWORDS: ai activity permissions consent retention observation parent safety status paused alert crisis guardian
 
+import { useEffect } from 'react';
 import { useRouter } from 'solito/navigation';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Button, Card, Dial, Heading, PressScale, Switch, Text, FadeIn } from '@acme/ui';
 import { CHILDREN } from '../home/parent-home.data';
 import { CONSENTS, OBSERVATIONS, RAW_ARTEFACTS } from './ai-activity.data';
 import { useAiActivityStore } from './ai-activity.store';
+import { SafetySection } from './safety-section';
 
 export function AiActivityContent() {
   const router = useRouter();
@@ -21,6 +38,15 @@ export function AiActivityContent() {
   const setConsent = useAiActivityStore((s) => s.setConsent);
   const selectedChildId = useAiActivityStore((s) => s.selectedChildId);
   const selectChild = useAiActivityStore((s) => s.selectChild);
+  const safety = useAiActivityStore((s) => s.safety);
+  const loadSafety = useAiActivityStore((s) => s.loadSafety);
+
+  // On mount, not on an interval. A pause is read when a parent opens the
+  // screen; polling a household's safety status in the background is a
+  // different product with a different consent conversation.
+  useEffect(() => {
+    void loadSafety();
+  }, [loadSafety]);
 
   const activeChildId = selectedChildId ?? CHILDREN[0]?.id;
 
@@ -60,6 +86,10 @@ export function AiActivityContent() {
           </View>
         </FadeIn>
       ) : null}
+
+      <FadeIn delay={120}>
+        <SafetySection safety={safety} />
+      </FadeIn>
 
       <FadeIn delay={160}>
         <Section className="gap-stack">

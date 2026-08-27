@@ -3,18 +3,20 @@
   Why it exists: doc 12 §7 fixes the numbers and names Sentry as the destination
   for errors and traces; §9.5 asks for the SLO document and the alert rules that
   make those numbers enforceable, with safety-pipeline degradation paging.
-  What this doc had to correct: §7 says Sentry is "already connected". In THIS
-  repository it is not — see §2. Rather than invent a config against an SDK that
-  is absent, every rule below names the instrumentation point it needs (which
-  does exist, and is cited), then states the rule in Sentry's own alert-rule
-  shape so it can be created the day the SDK lands.
+  What this doc had to correct: §7 says Sentry is "already connected". When it
+  was written that was false of THIS repository. The SDK, the instrumentation,
+  the scrubber and the Block record have since landed; the Sentry project and
+  its DSN have not — see §2. Every rule below still names the instrumentation
+  point it needs and states itself in Sentry's own alert-rule shape, and §7
+  carries a per-item status so nothing here reads as working that is not.
   SOT: docs/pack/12-systems-design-prompt.md §2 §6 §7 §9.5 · docs/pack/07-security-child-ai-safety-spec.md §3
-  SOT-KEYWORDS: slo alert rules sentry golden signals first token latency safety pipeline page severity error budget shed order availability rpo rto
+  SOT-KEYWORDS: slo alert rules sentry golden signals first token latency safety pipeline page severity error budget shed order availability rpo rto block telemetry record scrubber beforeSend wiring order
 -->
 
 # SLOs and alert rules
 
-**Date:** Aug 27, 2026 · **Status:** design of record for §9.5
+**Date:** Aug 27, 2026 (revised same day: W-1, W-3, W-7 landed; W-2 partial)
+· **Status:** design of record for §9.5
 **Applies to:** the Next.js server core (`apps/web`), the Expo client
 (`apps/mobile`), and the Postgres behind both.
 
@@ -80,49 +82,106 @@ availability one, and it never counts against the availability budget.
 
 ## 2 · Sentry, as it actually stands
 
-Doc 12 §7 says *"errors + traces to **Sentry** (already connected)"*. Verified
-against this tree on Aug 27, 2026, that is **not true of this repository**:
+### 2.0 · What this section said on Aug 27, and what changed the same day
 
-- **No SDK.** Zero `@sentry/*` entries across every `package.json` in the
-  workspace (`apps/web`, `apps/mobile`, `apps/storybook`, all of `packages/`,
-  `tooling/`, and the root).
-- **No instrumentation.** No `apps/web/instrumentation.ts`, no
-  `instrumentation-client.ts`, no `sentry.*.config.ts`, no
-  `withSentryConfig` in any Next config.
-- **No DSN.** `.env.example`, `.env`, and `apps/web/.env.example` contain zero
-  lines matching `sentry`.
-- **The only occurrences of the word "Sentry" in the tree** are two Mobbin
-  reference URLs in header comments:
-  `packages/ui/DashboardShell.tsx:16` and
-  `packages/app/features/ops/screen.shared.tsx:11`.
-- **The connected Sentry account** (reachable from this workstation) exposes one
-  organization, `deviant`, whose only project is `react-native`. There is no
-  `moyolearn` organization and no `moyolearn` project.
-- **No alternative.** No OpenTelemetry packages, and no structured logging in
-  the API routes — `apps/web/app/api/**/route.ts` catch blocks map an error to a
-  status code and discard it. `console.error` appears nowhere in the route tree.
+Doc 12 §7 says *"errors + traces to **Sentry** (already connected)"*. When this
+document was first written that was **not true of this repository**: no
+`@sentry/*` package anywhere in the workspace, no `instrumentation.ts`, no DSN
+in any env file, and no structured logging in the API routes — every
+`apps/web/app/api/**/route.ts` catch block mapped an error to a status code and
+discarded it.
 
-**Therefore:** nothing in §3–§6 below can fire today. Each rule names its
-prerequisite instrumentation point, and §7 lists the wiring work in the order it
-has to happen. This is stated rather than papered over because a rule written
-against a config that does not exist is indistinguishable, on a dashboard, from
-one that is working.
+The SDK, the instrumentation, the scrubber and the Block record have since
+landed (W-1, W-2 partial, W-3, W-7 — see §7). **The DSN has not**, and neither
+has the project it would point at. What follows is the state now.
 
-### 2.1 · The prerequisite that gates everything
+### 2.1 · What exists
+
+- **SDKs installed and pinned in the catalog.** `@sentry/nextjs` 10.71.0 on
+  `apps/web`, `@sentry/react-native` 8.24.0 on `apps/mobile`, both through
+  `catalog:` in `pnpm-workspace.yaml`. 8.24.0 builds and tests against
+  `react-native` 0.86.2, which is the version this workspace pins, so Expo SDK
+  57 support was never in question.
+- **Instrumentation.** `apps/web/instrumentation.ts` (`register()` +
+  `onRequestError`), `apps/web/sentry.server.config.ts`,
+  `apps/web/instrumentation-client.ts`, `apps/mobile/src/telemetry.ts`.
+- **The scrubber, before anything could be sent.** See §3.1.
+- **The Block record.** See §2.3.
+
+### 2.2 · What still does not exist
+
+- **No DSN, and no project to point one at.** `SENTRY_DSN`,
+  `NEXT_PUBLIC_SENTRY_DSN` and `EXPO_PUBLIC_SENTRY_DSN` are declared, empty, in
+  `.env.example`. The connected Sentry account exposes one organization,
+  `deviant`, whose only project is `react-native` and belongs to a different
+  product. **Every `Sentry.init` in this repo is inside an `if (dsn)`**, so a
+  checkout with no DSN behaves exactly like one that never had the SDK. Nothing
+  in §3–§6 fires until a `moyolearn` project exists.
+- **No edge runtime client.** `sentry.edge.config.ts` is deliberately absent —
+  the only edge surface is `middleware.ts`, no rule below queries it, and the
+  server scrubber's mask reaches into `@acme/inference`, which would drag a
+  vendor SDK into the middleware bundle.
+- **No source maps, no releases, no cron/uptime monitors.**
+  `withSentryConfig` and the `@sentry/react-native/expo` config plugin are both
+  unwired; they need `SENTRY_ORG`/`SENTRY_PROJECT`/`SENTRY_AUTH_TOKEN` against
+  the project that does not exist. Stack frames will read as bundled output
+  until they land. Both apps are in the same state deliberately, rather than one
+  silently ahead of the other.
+- **No queue instrumentation, no `safetyEvents`-backed alerting** — W-9, W-10.
+
+### 2.3 · The prerequisite that gated everything — landed
 
 Doc 12 §7 claims *"the Block gives uniform telemetry for free — every operation
 logs `{op, resource, action, ctx.kind, latency, outcome}` structured."*
 
-`packages/app/core/protected-operation.ts:protectedOperation` takes
-`(auth, headers, operation)` and returns `operation(ctx)`. It has no `op`, no
-`resource`, no `action`, and emits nothing. **Every latency, availability and
-outcome rule in this document depends on that record existing.** Adding it is
-`W-1` in §7 and is a change to one file.
+`packages/app/core/protected-operation.ts:protectedOperation` now emits exactly
+that, from a `finally` that covers every branch:
 
-Note the mock branch while instrumenting: with `NEXT_PUBLIC_AUTH_MODE=mock` and
-`NODE_ENV=development`, `protectedOperation` returns a fixed ctx without calling
-Better Auth. Any measurement taken in that mode measures nothing; the telemetry
-record must carry the mode so those samples can be excluded.
+```json
+{"evt":"op","op":"ops.leads.list","resource":"leads","action":"read",
+ "ctxKind":"org","capability":"export","latencyMs":84,"outcome":"ok",
+ "authMode":"session","attributed":true}
+```
+
+Built by `packages/app/core/telemetry.ts:operationRecord`, emitted through
+`recordOperation` into a settable `OperationSink`. The default sink is
+structured stdout — Vercel's log drain is the collector when no vendor is
+configured — and `sentry.server.config.ts` installs one that additionally files
+each record as a Sentry breadcrumb, so a captured issue arrives already carrying
+the operation that produced it.
+
+Four decisions in that record are load-bearing:
+
+- **`op`/`resource`/`action` are optional, and their absence is recorded.**
+  W-1 called naming them "an API change to every call site". They arrive
+  instead as one grouped `options.telemetry` descriptor, and an operation that
+  omits it is recorded as `attributed: false` with `op: "unattributed"` rather
+  than guessed at. `count() by attributed` is therefore the burn-down of the
+  remaining call sites, on the same dashboard as the signal. **9 of the 14 call
+  sites are named today**; the 5 that are not are all in
+  `packages/app/features/tutor/`. Latency, outcome, capability and ctx kind are
+  emitted for all 14, so SLO-1, SLO-3 and SLO-4 are measurable now — only
+  LAT-2's per-operation grouping waits on the rest.
+- **`ctxKind` is derived, never stored.** `learner` · `guardian` · `org` ·
+  `anonymous`, from `isLearner` and the presence of `orgId`. No `learnerId`, no
+  `orgId`, no `userId`, no email, no message text is in the record, and
+  `operationRecord`'s input type has no field one could arrive through. A test
+  serialises the record for every outcome × ctx-kind pair and asserts none of
+  them appears (`packages/app/core/telemetry.test.ts`).
+- **`authMode` distinguishes the mock branch.** With
+  `NEXT_PUBLIC_AUTH_MODE=mock` and `NODE_ENV=development`, `protectedOperation`
+  returns a fixed ctx without calling Better Auth. A measurement taken in that
+  mode measures nothing, so every rule below must add `authMode:session` or
+  silently average dev samples into a production p95.
+- **`denied` and `unauthenticated` are outcomes, not errors.** Folding a
+  correctly refused call into `error` would burn SLO-3's budget on the Block
+  working. §4.4's `failure_rate()` rules and `reportRouteError` both honour
+  that split.
+
+`latencyMs` spans the whole block — session read, capability gate and handler
+— which is the quantity §1.1 budgets at 150 ms and LAT-1 measures. The sink is
+wrapped so a failing transport can never replace the operation's own error with
+the telemetry's.
 
 ---
 
@@ -133,9 +192,9 @@ symbol that must emit them.
 
 | Signal | Sentry surface | Emitted by | Status |
 |---|---|---|---|
-| **Latency** | transaction duration, `event.type:transaction` | Next.js server instrumentation (`apps/web/instrumentation.ts` `register()`), plus the Block record from §2.1 | needs W-1, W-2 |
-| **Traffic** | transaction count per `transaction` tag | same | needs W-2 |
-| **Errors** | issues + `failure_rate()` on transactions; `onRequestError` from `instrumentation.ts` | Next 16 `onRequestError` hook; explicit `captureException` in the route catch blocks that currently swallow (`apps/web/app/api/tutor/coach/route.ts`, `.../evaluate/route.ts`, `.../session/route.ts`, `.../progress/route.ts`, `.../learner/profile/route.ts`, `.../ops/leads/route.ts`) | needs W-2, W-3 |
+| **Latency** | transaction duration, `event.type:transaction` | Next.js server instrumentation (`apps/web/instrumentation.ts` `register()` → `sentry.server.config.ts`), plus the Block record from §2.3 | **wired**, waiting on a DSN |
+| **Traffic** | transaction count per `transaction` tag | same | **wired**, waiting on a DSN |
+| **Errors** | issues + `failure_rate()` on transactions; `onRequestError` from `instrumentation.ts` | Next 16 `onRequestError` hook, exported from `instrumentation.ts`; plus `reportRouteError` (`apps/web/lib/report-error.ts`) in **17** route catch blocks that previously discarded the error — including all six this table used to name. It refuses to report `CapabilityDenied` and `Unauthenticated`, which are the Block working | **wired**, waiting on a DSN |
 | **Saturation** | Postgres connection + CPU (Supabase), plus job-queue depth | Supabase metrics; queue depth has no source — pg-boss is **NOT YET IMPLEMENTED** (see `docs/design/seq-pay-run.md`) | partial |
 
 Plus the two doc 12 §7 names explicitly beyond the four:
@@ -145,7 +204,7 @@ Plus the two doc 12 §7 names explicitly beyond the four:
 | **AI first-token (first screened sentence)** | custom measurement `ai_first_sentence_ms` on the `POST /api/tutor/coach` transaction | must be set at the first `{kind:'chunk'}` yield in `apps/web/app/api/tutor/coach/route.ts`'s `ReadableStream.start` | **NOT YET IMPLEMENTED** |
 | **Safety-pipeline health** | counted spans, tagged by plane outcome | `packages/app/features/tutor/coach.service.ts:coach` already has the exact branch points — `blocked`, `unavailable`, `replace`, `end` — and `PlaneResult.trace` from `packages/safety/src/plane.ts` already carries the layer that stopped a turn, then **discards it** | **NOT YET IMPLEMENTED** |
 
-### 3.1 · Cardinality rules, non-negotiable
+### 3.1 · Cardinality rules, non-negotiable — the scrubber, landed
 
 This is a children's product; telemetry is a data-egress path like any other.
 
@@ -156,13 +215,56 @@ This is a children's product; telemetry is a data-egress path like any other.
   `2-firewall`, `5-output`, `6-crisis`, `7-memory`) and the `InputClass`, both
   of which are closed enumerations in `packages/safety/src/plane.ts`. Nothing
   free-form.
-- `Sentry.init` must set `sendDefaultPii: false` and install a `beforeSend` that
-  drops request bodies on `/api/tutor/*`, `/api/learner/*`, `/api/capture/*` and
-  `/api/media/*`.
 - The `beforeSend` scrubber is a **red-team-suite obligation**, not a nice to
-  have: `packages/safety/src/red-team.ts` runs in `packages/safety/src/safety.test.ts`,
-  and a prompt that reaches Sentry unscrubbed is a Safety-Plane skip path by
+  have: a prompt that reaches Sentry unscrubbed is a Safety-Plane skip path by
   another name (doc 07 §6 lists exactly that class).
+
+**What was built.** `sendDefaultPii: false` on all three `Sentry.init` calls,
+plus `beforeSend` *and* `beforeSendTransaction` running
+`packages/app/core/telemetry-scrub.ts:scrubTelemetryEvent` on every event.
+
+It is **not a second copy of the redaction rules**. Free-text masking is
+injected as a `TextMask`, so:
+
+| Bundle | Mask | Behaviour |
+|---|---|---|
+| `apps/web` Node runtime | `@acme/app/telemetry/mask` → `@acme/inference`'s `scrubText` | The reviewed, red-teamed rule set already guarding model egress. Ordinary text survives; contact-shaped spans become `[redacted]` |
+| `apps/web` browser, `apps/mobile` | `dropText` | Every message string becomes `[redacted]` |
+
+The browser and RN bundles cannot reach `scrubText`:
+`packages/inference/src/pseudonymize.ts` opens with `import 'server-only'`,
+which resolves to a throwing shim off the server. The choice there was a second,
+unreviewed copy of the patterns in a client bundle or refusing free text
+outright. It refuses. Exception **type**, stack frames and the route survive;
+the message string does not.
+
+Beyond masking, the scrubber is deny-by-default on structure:
+
+- Request `data`, `cookies`, `headers`, `query_string` and `env` are **dropped
+  wholesale**, not per-path. §3.1 originally asked only for bodies on
+  `/api/tutor/*`, `/api/learner/*`, `/api/capture/*` and `/api/media/*`;
+  dropping every body is strictly stronger and has no allowlist to forget.
+- `request.url` and every `span.description` are stripped of query and fragment.
+- Stack-frame `vars`, breadcrumb `data` and `logentry.params` are deleted —
+  those are where a whole turn lands.
+- `user`, `extra` and `server_name` are deleted.
+- `contexts` is **allowlisted, not deleted**: `trace`, `runtime`, `os`,
+  `device`, `app`, `culture`, `cloud_resource` survive; `response` (which
+  carries headers and cookies) and anything a future `setContext` adds do not.
+  Deleting `contexts` wholesale — the obvious first version — would have
+  silently disarmed every rule in §4.3 and §4.4 by unlinking events from their
+  transaction while still delivering them.
+- **Session Replay is not enabled and must not be.** It records the DOM of a
+  screen showing a child's own work.
+
+**Proof.** `packages/app/core/telemetry.test.ts` builds a Sentry-shaped event
+carrying a learner id, a name, a guardian email, a session cookie, a bearer
+token and a transcript turn in eleven different fields, scrubs it, and asserts
+none of the six strings survives anywhere in the serialised result — plus that
+`contexts.trace` does. `packages/app/core/telemetry-mask.server-test.ts` asserts
+by function identity that the server mask **is** `scrubText`, then runs a
+worksheet header, an email and a phone number through a real exception value.
+Both run in `pnpm --filter @acme/app test`.
 
 ---
 
@@ -323,24 +425,35 @@ never the place a safety event is *stored*.
 ## 7 · Wiring order
 
 Nothing above fires until these land. Ordered by what unblocks the most.
+**Status is per-item and deliberately not rounded up** — a table that reads
+"done" next to work that is half there is the same failure as an alert rule
+written against a config that does not exist.
 
-| id | Work | Touches | Unblocks |
-|---|---|---|---|
-| **W-1** | Emit the Block record `{op, resource, action, ctx.kind, latency, outcome, authMode}` | `packages/app/core/protected-operation.ts` — needs an `op`/`resource` argument it does not currently take, so it is an API change to every call site | everything |
-| **W-2** | Install `@sentry/nextjs` on `apps/web` (Next 16.3.1 → `instrumentation.ts` `register()` + `onRequestError`) and `@sentry/react-native` on `apps/mobile` (Expo 57.0.15); create a `moyolearn` Sentry project — the connected org `deviant` has only `react-native`, which belongs to a different product | `apps/web`, `apps/mobile`, catalog in `pnpm-workspace.yaml` | golden signals |
-| **W-3** | `captureException` in the six API route catch blocks that currently discard the error | `apps/web/app/api/**/route.ts` | ERR signals |
-| **W-4** | Set `measurements.ai_first_sentence_ms` at the first `chunk` frame | `apps/web/app/api/tutor/coach/route.ts` `ReadableStream.start` | AI-1, SLO-2 |
-| **W-5** | Tag the coach transaction with `coach.event`, `safety.outcome`, and `safety.trace_layers` from the `PlaneResult.trace` that `coach()` currently drops | `packages/app/features/tutor/coach.service.ts` | SAFE-1, SAFE-3, SAFE-4, SAFE-5 |
-| **W-6** | Distinguish a *thrown* safety layer from a *thrown* vendor call so SAFE-2 has an error type — today both land in one `catch` and become `unavailable` | `packages/app/features/tutor/coach.service.ts:coach` | SAFE-2, and the doc 12 §5 fail-closed rule itself |
-| **W-7** | `beforeSend` scrubber + `sendDefaultPii: false`, with a red-team case asserting no prompt text escapes | `apps/web`, `apps/mobile`, `packages/safety/src/red-team.ts` | §3.1 — **must land with W-2, not after** |
-| **W-8** | Sentry Cron monitor check-ins for the media sweep | `apps/web/app/api/media/sweep/cron/route.ts` | JOB-1, JOB-2 |
-| **W-9** | pg-boss, then JOB-3 and JOB-4 | see `docs/design/seq-pay-run.md` | job signals |
-| **W-10** | `safetyEvents` collection + guardian alert delivery | `packages/payload/src/collections/` | SAFE-4's review queue, SAFE-6 |
+| id | Work | Touches | Unblocks | Status |
+|---|---|---|---|---|
+| **W-1** | Emit the Block record `{op, resource, action, ctx.kind, latency, outcome, authMode}` | `packages/app/core/protected-operation.ts` — needs an `op`/`resource` argument it does not currently take, so it is an API change to every call site | everything | **DONE**, with the API change avoided: the descriptor is an optional grouped `options.telemetry`, and its absence is recorded as `attributed: false`. 9 of 14 call sites named; the 5 unnamed are all in `packages/app/features/tutor/`. See §2.3 |
+| **W-2** | Install `@sentry/nextjs` on `apps/web` (Next 16.3.1 → `instrumentation.ts` `register()` + `onRequestError`) and `@sentry/react-native` on `apps/mobile` (Expo 57.0.15); create a `moyolearn` Sentry project — the connected org `deviant` has only `react-native`, which belongs to a different product | `apps/web`, `apps/mobile`, catalog in `pnpm-workspace.yaml` | golden signals | **PARTIAL.** SDKs installed and catalog-pinned; server, browser and Expo clients initialised behind a DSN guard. **Still open:** the Sentry project and DSN itself; the edge runtime client; `withSentryConfig`, the `@sentry/react-native/expo` plugin, and therefore source maps and releases |
+| **W-3** | `captureException` in the six API route catch blocks that currently discard the error | `apps/web/app/api/**/route.ts` | ERR signals | **DONE**, and wider than six — 17 route catch blocks call `reportRouteError` (`apps/web/lib/report-error.ts`), which excludes `CapabilityDenied` and `Unauthenticated` |
+| **W-4** | Set `measurements.ai_first_sentence_ms` at the first `chunk` frame | `apps/web/app/api/tutor/coach/route.ts` `ReadableStream.start` | AI-1, SLO-2 | open |
+| **W-5** | Tag the coach transaction with `coach.event`, `safety.outcome`, and `safety.trace_layers` from the `PlaneResult.trace` that `coach()` currently drops | `packages/app/features/tutor/coach.service.ts` | SAFE-1, SAFE-3, SAFE-4, SAFE-5 | open |
+| **W-6** | Distinguish a *thrown* safety layer from a *thrown* vendor call so SAFE-2 has an error type — today both land in one `catch` and become `unavailable` | `packages/app/features/tutor/coach.service.ts:coach` | SAFE-2, and the doc 12 §5 fail-closed rule itself | open |
+| **W-7** | `beforeSend` scrubber + `sendDefaultPii: false`, with a red-team case asserting no prompt text escapes | `apps/web`, `apps/mobile`, `packages/safety/src/red-team.ts` | §3.1 — **must land with W-2, not after** | **DONE**, and it did land with W-2. Scrubber in `packages/app/core/telemetry-scrub.ts`, server mask bound to `scrubText` in `telemetry-mask.ts`, proof in `telemetry.test.ts` + `telemetry-mask.server-test.ts`. The assertions live in `@acme/app`'s suite rather than `packages/safety/src/red-team.ts` because the scrubbed thing is a Sentry event, not a model prompt — the red-team suite's subject |
+| **W-8** | Sentry Cron monitor check-ins for the media sweep | `apps/web/app/api/media/sweep/cron/route.ts` | JOB-1, JOB-2 | open |
+| **W-9** | pg-boss, then JOB-3 and JOB-4 | see `docs/design/seq-pay-run.md` | job signals | open |
+| **W-10** | `safetyEvents` collection + guardian alert delivery | `packages/payload/src/collections/` | SAFE-4's review queue, SAFE-6 | open |
 
 W-7 is not optional and not deferrable. Turning on an error reporter in a
 children's product before the scrubber exists ships prompts, transcript turns
 and usernames to a third party — which is the same class of failure doc 07 §4's
-never-train wall exists to prevent, arriving through a different door.
+never-train wall exists to prevent, arriving through a different door. It landed
+in the same change as W-2, which is the only ordering this document ever
+accepted.
+
+### 7.1 · The next thing to do
+
+Create the `moyolearn` Sentry project and set `SENTRY_DSN`. Every rule in §3
+whose Emitted-by column now says "wired" starts producing data the moment that
+lands; nothing else in this table is between them and a working dashboard.
 
 ---
 
@@ -348,7 +461,11 @@ never-train wall exists to prevent, arriving through a different door.
 
 | Seam | File : symbol |
 |---|---|
-| Auth boundary and the telemetry gap | `packages/app/core/protected-operation.ts` : `protectedOperation`, `ProtectedCtx` |
+| Auth boundary, and the Block record it now emits | `packages/app/core/protected-operation.ts` : `protectedOperation`, `ProtectedCtx`, `ProtectedOperationOptions.telemetry` |
+| The record itself and its sink | `packages/app/core/telemetry.ts` : `operationRecord`, `recordOperation`, `setOperationSink`, `ctxKindOf`, `OperationRecord` |
+| Telemetry egress scrubber | `packages/app/core/telemetry-scrub.ts` : `scrubTelemetryEvent`, `dropText`, `stripUrlParams` · `packages/app/core/telemetry-mask.ts` : `maskTelemetryText` (= `scrubText`) |
+| Sentry initialisation | `apps/web/instrumentation.ts` : `register`, `onRequestError` · `apps/web/sentry.server.config.ts` · `apps/web/instrumentation-client.ts` · `apps/mobile/src/telemetry.ts` |
+| Route error reporting | `apps/web/lib/report-error.ts` : `reportRouteError` |
 | Coach turn branch points | `packages/app/features/tutor/coach.service.ts` : `coachTutorTurn`, `coach`, `CoachEvent` (`chunk` · `replace` · `blocked` · `unavailable` · `end`) |
 | Plane trace and outcomes | `packages/safety/src/plane.ts` : `runSafetyPlaneStream`, `PlaneResult`, `PlaneLog`, `PlaneOutcome`, `InputClass`, `screenInput`, `takeSentences` |
 | Deterministic firewall | `packages/safety/src/firewall.ts` : `screen`, `FirewallRuleId` |
@@ -363,17 +480,33 @@ never-train wall exists to prevent, arriving through a different door.
 | Trial reminders (shed tier 1) | `packages/auth/src/trial.ts` : `TRIAL_REMINDER_DAYS_BEFORE`, `trialSchedule` |
 | Retention sweep and its schedule | `apps/web/app/api/media/sweep/route.ts` : `POST` · `apps/web/app/api/media/sweep/cron/route.ts` : `GET` · `apps/web/vercel.json` crons `0 3 * * *` · `packages/app/features/media/retention.ts` : `MEDIA_TTL_DAYS` |
 | No-training-path gate | `tooling/check-no-training-path.mjs` (runs inside `pnpm lint`) |
-| Mobbin references that are the only "Sentry" strings in the tree | `packages/ui/DashboardShell.tsx:16` · `packages/app/features/ops/screen.shared.tsx:11` |
+| Mobbin references that were, before this change, the only "Sentry" strings in the tree | `packages/ui/DashboardShell.tsx:16` · `packages/app/features/ops/screen.shared.tsx:11` |
 
 ## 9 · NOT YET IMPLEMENTED, collected
 
-1. The Sentry SDK, project, DSN and instrumentation — §2.
-2. The Block telemetry record — §2.1.
-3. `measurements.ai_first_sentence_ms` — §3.
-4. Safety-pipeline spans and tags; `PlaneResult.trace` is built and discarded — §3.
+1. **The Sentry project and DSN.** The SDK, the instrumentation and the scrubber
+   are in the tree; there is nothing to point them at, so every `Sentry.init`
+   no-ops — §2.2, W-2.
+2. The edge-runtime Sentry client, `withSentryConfig`, the
+   `@sentry/react-native/expo` plugin, and therefore source maps and releases —
+   §2.2, W-2.
+3. `measurements.ai_first_sentence_ms` — §3, W-4.
+4. Safety-pipeline spans and tags; `PlaneResult.trace` is built and discarded — §3, W-5.
 5. A distinction between "a safety layer threw" and "the vendor threw" — SAFE-2, W-6.
-6. `safetyEvents` store and guardian alert delivery — SAFE-4, SAFE-6.
+6. `safetyEvents` store and guardian alert delivery — SAFE-4, SAFE-6, W-10.
 7. pg-boss, and therefore queue depth, dead-letter and shed instrumentation — JOB-3, JOB-4, §5. See `docs/design/seq-pay-run.md`.
 8. The Inference Gateway fallback chain that AI-2 assumes as the first line of defence — see `docs/design/seq-learner-ai-turn.md`.
-9. Structured logging of any kind in the API routes.
-10. Sentry Cron monitors, Uptime monitors, and release-health reporting.
+9. Sentry Cron monitors, Uptime monitors, and release-health reporting — W-8.
+10. Operation names on the 5 `protectedOperation` call sites in
+    `packages/app/features/tutor/`, which is what LAT-2's per-operation
+    grouping is waiting on. Query `attributed:false` to see them — §2.3.
+
+### 9.1 · Landed since this document was written
+
+- The Block telemetry record — §2.3, W-1.
+- The Sentry SDKs and their server/browser/Expo initialisation — §2.1, W-2 (partial).
+- `reportRouteError` in 17 API route catch blocks — §3, W-3.
+- The `beforeSend`/`beforeSendTransaction` scrubber and `sendDefaultPii: false`
+  on every client — §3.1, W-7.
+- Structured logging in the server path: every `protectedOperation` writes one
+  JSON line, with or without a vendor configured — §2.3.

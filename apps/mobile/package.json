@@ -20,6 +20,7 @@
     "@expo/ui": "catalog:",
     "@gorhom/bottom-sheet": "catalog:",
     "@react-navigation/native": "catalog:",
+    "@sentry/react-native": "catalog:",
     "@tanstack/react-query": "catalog:",
     "expo": "catalog:",
     "expo-background-task": "57.0.14",
