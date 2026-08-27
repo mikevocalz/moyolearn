@@ -112,7 +112,21 @@ function Bubble({
   return (
     <View className={learner ? 'items-end' : 'items-start'}>
       <View
-        className={`max-w-content-prose gap-element rounded-card border-2 p-inset-tight ${
+        /*
+          `rounded-control`, not `rounded-card`.
+
+          A bubble at 10px sitting directly above a Send button at 6px reads as
+          two components from two systems in one column — which is the exact
+          failure `radius`'s own comment describes for the composer row. In a
+          session the thread and the composer ARE one system: the bubbles, the
+          field, the attach and send keys and the thumbnails inside the bubbles
+          all take the control radius, so the eye reads one surface rather than
+          a card stack with a toolbar under it.
+
+          `rounded-card` stays right for a Card — a discrete object on a page.
+          A bubble is not that; it is a shape in a conversation.
+        */
+        className={`max-w-content-prose gap-element rounded-control border-2 p-inset-tight ${
           learner ? 'border-primary bg-primary/10' : 'border-border bg-surface-raised'
         }`}
       >
