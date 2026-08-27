@@ -28,14 +28,33 @@ export interface OcrResult {
 }
 
 /**
- * Below this, treat the page as handwriting and escalate.
+ * Escalate ONLY when Tesseract found nothing at all.
  *
- * Tesseract reports ~85–95 on clean print and collapses into the 40s–60s on
- * handwriting. 70 sits in the gap: high enough that a poor print scan still
- * escalates rather than being served badly, low enough that ordinary worksheet
- * noise does not pay for a model download.
+ * This threshold has now been wrong twice, and the second time is the
+ * instructive one.
+ *
+ * First it was a confidence of 70, on the theory that Tesseract is reliably
+ * unsure about handwriting. Running it disproved that: `12 x 8 = ?` in clean
+ * bold print reads as `12x8="?` at confidence 47 — right enough to coach from.
+ * Confidence is averaged per character, and symbols and short strings drag it
+ * down, which describes most homework maths.
+ *
+ * Then it was 8 characters. That read is 7. A number picked to feel safe cut
+ * straight through the commonest case in the product.
+ *
+ * The real lesson is not the number, it is that TrOCR should not be a fallback
+ * for a PAGE at all. It is a line-level model with no layout analysis: given a
+ * whole photograph it returns one confused line, so escalating to it made a
+ * nearly-correct read worse and the tutor refused the turn. Doing that
+ * usefully needs line detection first — which is exactly what CRAFT provides on
+ * native and what the web path does not have.
+ *
+ * So: keep whatever Tesseract found, and let the child correct it in
+ * `DigitizedTextReview`, which exists for precisely this. Handwriting stays
+ * reachable through `readHandwriting` for a caller that has already cropped to
+ * a line; it is no longer guessed at from a full page.
  */
-export const HANDWRITING_CONFIDENCE_THRESHOLD = 70;
+export const MIN_USABLE_CHARS = 1;
 
 /** Printed-page pass. Returns text plus how sure it is. */
 export async function readPrinted(source: string): Promise<OcrResult> {
@@ -85,14 +104,20 @@ export async function readHandwriting(source: string): Promise<OcrResult> {
  */
 export async function readHomework(source: string): Promise<OcrResult> {
   const printed = await readPrinted(source);
-  if ((printed.confidence ?? 0) >= HANDWRITING_CONFIDENCE_THRESHOLD && printed.text.length > 0) {
-    return printed;
-  }
+
+  // Anything at all is kept, however unsure Tesseract says it is. A slightly
+  // wrong reading of the real problem beats a confident reading of a different
+  // one, and the child confirms it in review either way.
+  if (printed.text.length >= MIN_USABLE_CHARS) return printed;
+
   try {
     const handwritten = await readHandwriting(source);
-    // Only prefer it if it actually produced something. A failed model download
-    // must not turn a mediocre read into an empty one.
-    return handwritten.text.length > 0 ? handwritten : printed;
+    /*
+      Keep whichever actually said more. TrOCR on printed input, or on a page it
+      cannot lay out, returns a short confident-looking fragment — so a failed
+      escalation must not be allowed to replace what Tesseract managed.
+    */
+    return handwritten.text.length > printed.text.length ? handwritten : printed;
   } catch {
     return printed;
   }

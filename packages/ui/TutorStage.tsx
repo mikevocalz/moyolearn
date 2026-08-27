@@ -339,7 +339,16 @@ export function TutorStage({
   const inputDisabled = state.kind === 'ended' || state.kind === 'crisis';
 
   const stageBody = (
-    <View className="w-full flex-1 gap-stack p-inset">
+    /*
+      Extra room BELOW the composer, not just the container's inset.
+
+      The row sat flush against the bottom edge — on a phone that is where the
+      home indicator lives, and on any device it reads as the input having been
+      cut off rather than placed. A composer needs the same air beneath it that
+      the thread has above it, or the screen looks like it continues past the
+      fold.
+    */
+    <View className="w-full flex-1 gap-stack p-inset pb-group">
       <Badge label={statusFor(state)} tone={statusTone(state)} />
       {/* Top-aligned, not centred. A turn grows downward as it streams, and a
           vertically centred block re-centres on every arriving sentence — the

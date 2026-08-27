@@ -252,7 +252,7 @@ export function Composer({
                     alt={attachment.name}
                     fill
                     unoptimized
-                    contentFit="cover"
+                    contentFit="contain"
                     sizes="64px"
                   />
                 </Pressable>

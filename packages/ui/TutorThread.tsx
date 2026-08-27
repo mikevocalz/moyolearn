@@ -164,12 +164,19 @@ function Bubble({
               {/* Galeria animates THIS element into the full-screen view, so the
                   thumbnail is the shared element — it must be the single child. */}
               <View className="h-48 w-64 overflow-hidden rounded-control border-2 border-border">
+                {/*
+                  `contain`, not `cover`. A homework photo is wide and the
+                  problem is spread across it, so cropping to the centre showed
+                  a child "= ?" and nothing else — the one part that tells them
+                  nothing about which problem this was. Letterboxing is the
+                  right trade when the whole frame is the content.
+                */}
                 <SolitoImage
                   src={image.previewUri ?? image.uri}
                   alt={image.name}
                   fill
                   unoptimized
-                  contentFit="cover"
+                  contentFit="contain"
                   sizes="256px"
                 />
               </View>
