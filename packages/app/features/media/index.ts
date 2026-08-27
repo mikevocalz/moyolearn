@@ -20,3 +20,4 @@ export {
   afterFailure,
   type QueuedUpload,
 } from './upload-queue.shared.ts';
+export { useUploadQueue } from './upload-queue.store';
