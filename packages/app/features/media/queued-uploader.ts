@@ -14,13 +14,32 @@
 // SOT: packages/app/features/media/upload-queue.store.ts
 // SOT-KEYWORDS: queued uploader presign put bunny background drain retry
 import { uploadTransport } from './transport';
+import { fileSize } from './file-size';
 import type { QueuedUpload } from './upload-queue.shared.ts';
 
 const API_URL =
   (typeof process !== 'undefined' ? process.env.EXPO_PUBLIC_API_URL : undefined) ??
   'http://localhost:3001';
 
+/**
+ * MediaKind from the MIME type.
+ *
+ * There are THREE kinds, and this collapsed everything non-image to
+ * `document` — so every voice note was presigned as a document and rejected
+ * with "audio/m4a can't be uploaded here." The queue then retried it on
+ * schedule, forever, against a rule that could never pass. The retry policy
+ * worked perfectly and was the reason nobody would have noticed.
+ */
+function kindFor(mimeType: string): 'image' | 'audio' | 'document' {
+  if (mimeType.startsWith('image/')) return 'image';
+  // `video/mp4` is in the audio allowlist: a recorder writing an .mp4 container
+  // is still a voice note, and the presign rules already say so.
+  if (mimeType.startsWith('audio/') || mimeType === 'video/mp4') return 'audio';
+  return 'document';
+}
+
 export async function uploadQueued(item: QueuedUpload): Promise<void> {
+  const size = await fileSize(item.uri);
   const res = await fetch(`${API_URL}/api/media/presign`, {
     method: 'POST',
     credentials: 'include',
@@ -28,10 +47,17 @@ export async function uploadQueued(item: QueuedUpload): Promise<void> {
     body: JSON.stringify({
       filename: item.name,
       contentType: item.mimeType,
-      // The queue holds a local URI, not bytes, so the size is unknown here.
-      // The presign route treats 0 as "unmeasured" rather than rejecting it.
-      size: 0,
-      kind: item.mimeType.startsWith('image/') ? 'image' : 'document',
+      /*
+        MEASURED, not assumed.
+
+        This sent 0 with a comment asserting the presign route reads that as
+        "unmeasured". It does not — it rejects it with "That file appears to be
+        empty", so every queued upload failed validation and the retry policy
+        dutifully re-failed it on schedule. `fileSize` already existed for
+        exactly this, platform-forked; I wrote an assumption instead of using it.
+      */
+      size,
+      kind: kindFor(item.mimeType),
     }),
   });
 
@@ -41,7 +67,7 @@ export async function uploadQueued(item: QueuedUpload): Promise<void> {
   }
 
   await uploadTransport({
-    file: { uri: item.uri, name: item.name, type: item.mimeType, size: 0 },
+    file: { uri: item.uri, name: item.name, type: item.mimeType, size },
     url: body.uploadUrl,
     contentType: item.mimeType,
     /*
