@@ -25,10 +25,21 @@ import {
 } from './facts.ts';
 import { decayMastery, isFrontier, type TracingParams } from './mastery.ts';
 import { isDue } from './review.ts';
+import type { VoiceBand } from './voice-band.ts';
 
 export interface LearnerBrief {
-  /** Drives voice and reading level. Doc 07 §3 layer 1: server-injected. */
-  gradeBand: 'young' | 'older';
+  /**
+   * Drives voice and reading level. Doc 07 §3 layer 1: server-injected.
+   *
+   * Named for what it decides rather than for where it comes from, and that is
+   * doc 31 §2.1's distinction rather than a preference: the band DEFAULTS from
+   * grade, but voice follows reading level and curriculum follows grade, so a
+   * field called `gradeBand` that actually picks the register is a name that
+   * will be wrong the day `readsAt` ships. It also stops colliding with the
+   * Safety Plane's `gradeBand`, which is a two-value policy register and a
+   * different thing — `planeRegisterFor` is the one-way trip between them.
+   */
+  voiceBand: VoiceBand;
   /** Skills where the next session moves the needle, closest first. */
   frontier: readonly { skillTitle: string; sentence: string }[];
   /** Only the unresolved ones. A retired misconception is history, not context. */
@@ -56,7 +67,7 @@ export interface CompileOptions {
  */
 export function compileLearnerBrief(
   facts: readonly DerivedFact[],
-  gradeBand: LearnerBrief['gradeBand'],
+  voiceBand: LearnerBrief['voiceBand'],
   now: Date,
   options: CompileOptions = {},
 ): LearnerBrief {
@@ -84,7 +95,7 @@ export function compileLearnerBrief(
       : scaffoldSource.reduce((sum, fact) => sum + fact.hintDepth, 0) / scaffoldSource.length;
 
   return {
-    gradeBand,
+    voiceBand,
     frontier: frontier.map((fact) => ({ skillTitle: fact.skillTitle, sentence: fact.sentence })),
     misconceptions: live
       .filter((fact): fact is MisconceptionFact => fact.kind === 'misconception' && fact.active)

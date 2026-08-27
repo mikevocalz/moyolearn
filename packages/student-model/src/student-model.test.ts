@@ -28,7 +28,21 @@ import {
   withoutBlockedTags,
 } from './erasure.ts';
 import { FACT_TTL_DAYS, TRANSCRIPT_TTL_DAYS, addDays, type DerivedFact } from './facts.ts';
-import { briefPreamble, withLearnerBrief, LEARNER_TURN_LABEL } from './inference.ts';
+import {
+  bandExamplesBlock,
+  briefPreamble,
+  withLearnerBrief,
+  COACH_TURN_LABEL,
+  LEARNER_TURN_LABEL,
+} from './inference.ts';
+import {
+  asVoiceBand,
+  planeRegisterFor,
+  BAND_EXAMPLES,
+  BAND_FRAMES,
+  VOICE_BANDS,
+  type VoiceBand,
+} from './voice-band.ts';
 import { DEFAULT_TRACING, decayMastery, traceAttempt } from './mastery.ts';
 import { REVIEW_LADDER, scheduleReview } from './review.ts';
 
@@ -153,7 +167,7 @@ test('the brief carries no identifier — the type has nowhere to put one', () =
   const facts = distill(transcript({ turns: [turn({ interestTags: ['basketball'] })] }), [], NOW, {
     guardianApprovedInterests: ['basketball'],
   });
-  const brief = compileLearnerBrief(facts, 'young', NOW);
+  const brief = compileLearnerBrief(facts, 'k-2', NOW);
   const serialized = JSON.stringify(brief);
   assert.equal(serialized.includes('learner-9'), false);
   assert.equal(serialized.includes('t1'), false);
@@ -173,7 +187,7 @@ test('the brief holds only frontier skills — mastered and not-started are both
       derivedFrom: ['t1'], observedAt: NOW.toISOString(), expiresAt: addDays(NOW, FACT_TTL_DAYS),
     },
   ];
-  const brief = compileLearnerBrief(facts, 'older', NOW);
+  const brief = compileLearnerBrief(facts, '9-12', NOW);
   assert.deepEqual(brief.frontier.map((f) => f.skillTitle), ['frontier thing']);
 });
 
@@ -188,13 +202,13 @@ test('a resolved misconception leaves the brief even though it stays on the reco
     NOW,
   );
   assert.ok(facts.some((f) => f.kind === 'misconception'));
-  assert.deepEqual(compileLearnerBrief(facts, 'young', NOW).misconceptions, []);
+  assert.deepEqual(compileLearnerBrief(facts, 'k-2', NOW).misconceptions, []);
 });
 
 test('an expired fact never reaches the brief', () => {
   const facts = distill(transcript(), [], NOW);
   const later = new Date(NOW.getTime() + (FACT_TTL_DAYS + 1) * 86_400_000);
-  const brief = compileLearnerBrief(facts, 'young', later);
+  const brief = compileLearnerBrief(facts, 'k-2', later);
   assert.deepEqual(brief.frontier, []);
   assert.deepEqual(brief.reviewDue, []);
 });
@@ -215,7 +229,7 @@ test('a deleted line is out of the brief in the same tick — no stale belief', 
   const interest = facts.find((f) => f.kind === 'interest');
   assert.ok(interest);
   const after = eraseFact(facts, interest.id).facts;
-  assert.deepEqual(compileLearnerBrief(after, 'young', NOW).interests, []);
+  assert.deepEqual(compileLearnerBrief(after, 'k-2', NOW).interests, []);
 });
 
 test('erasing a transcript takes every fact it is the sole source of', () => {
@@ -264,7 +278,7 @@ test('a misconception reaches the model with its strategy attached, never alone'
     [],
     NOW,
   );
-  const preamble = briefPreamble(compileLearnerBrief(facts, 'young', NOW));
+  const preamble = briefPreamble(compileLearnerBrief(facts, 'k-2', NOW));
   assert.match(preamble, /Watch for: .+\. Approach: .+/);
 });
 
@@ -278,7 +292,9 @@ test('the generator retrieves on the plane identity, not on anything a caller pa
     },
     async (context) => {
       seen = context.learnerId;
-      return compileLearnerBrief(distill(transcript(), [], NOW), context.gradeBand, NOW);
+      // The plane hands over a two-value policy register; the brief wants the
+      // four-value voice band, and `asVoiceBand` is the sanctioned widening.
+      return compileLearnerBrief(distill(transcript(), [], NOW), asVoiceBand(context.gradeBand), NOW);
     },
   );
 
@@ -320,4 +336,176 @@ test('LEARNER_TURN_LABEL avoids every word the gateway redacts a header on', () 
       `label contains "${word}" — the gateway would redact the turn`,
     );
   }
+});
+
+/*
+  DOC 31 §2 — THE BAND VOICE SYSTEM.
+
+  Doc 31 opens on a measured failure rather than an anecdote: frontier models
+  answer a first grader at or above 10th-grade reading level by default, and
+  asking politely for "first grade level" in the prompt does not fix it. What
+  works is metric-guided frames (layer 1) and graded few-shots (layer 2), which
+  is what this package now ships. Layer 3, the readability gate that measures
+  the actual reply, is platform work (doc 31 PR-112) and is deliberately not
+  asserted here — a test that pretended to cover it would be worse than its
+  absence.
+
+  These assertions are on CONTENT, because doc 31 §2.3 is explicit that the
+  frames and few-shots are content: versioned, committed, and re-evaluated when
+  they change. Content that is committed is content a test can hold.
+*/
+
+test('there are four bands, exactly the ones doc 31 §2.1 names', () => {
+  assert.deepEqual([...VOICE_BANDS], ['k-2', '3-5', '6-8', '9-12']);
+});
+
+test('every band has a frame and a graded example set', () => {
+  for (const band of VOICE_BANDS) {
+    assert.ok(BAND_FRAMES[band].length > 0, `${band} has no frame`);
+    // Doc 31 §2.3: "Each band frame ships with 3–4 exemplar exchanges."
+    const examples = BAND_EXAMPLES[band];
+    assert.ok(examples.length >= 3 && examples.length <= 4, `${band} has ${examples.length}`);
+  }
+});
+
+test('every band frame names its readability target, not a vibe', () => {
+  // Doc 31 §1's finding: metric-guided prompts beat "keep it simple" prose.
+  // A frame that stopped naming a number would be the thing that already failed.
+  for (const band of VOICE_BANDS) {
+    assert.match(BAND_FRAMES[band], /Flesch-Kincaid/i, `${band} frame names no metric`);
+  }
+});
+
+/*
+  The word cap is checked on clauses rather than on sentences, and the em dash
+  counts as a boundary. That is not a loophole around doc 31's "sentences of N
+  words or fewer" — it is what the rule is for. The cap exists so one idea
+  arrives per breath, and doc 26b's own 3-5 anchor ("the bottoms tell us the
+  size of the pieces — what size pieces would let us add these?") is two ideas
+  with a dash between them, at 9 and 8 words. Counting it as one 18-word
+  sentence would fail an exemplar the doc ships as correct.
+*/
+const clauses = (text: string): string[] =>
+  text
+    .split(/[.!?;]+|\s[—–-]\s/)
+    .map((part) => part.trim())
+    .filter((part) => part.length > 0);
+
+const wordsIn = (clause: string): number => clause.split(/\s+/).filter(Boolean).length;
+
+test('the graded few-shots actually sit at their band, per doc 31 §2.3', () => {
+  // Only the bands whose frame states a hard word cap. 9-12 states a ceiling on
+  // reading level and explicitly refuses artificial simplification, so a word
+  // cap there would enforce the condescension doc 31 §2.2 calls a failure.
+  const caps: Partial<Record<VoiceBand, number>> = { 'k-2': 8, '3-5': 12, '6-8': 17 };
+
+  for (const [band, cap] of Object.entries(caps) as [VoiceBand, number][]) {
+    for (const example of BAND_EXAMPLES[band]) {
+      for (const clause of clauses(example.tutor)) {
+        assert.ok(
+          wordsIn(clause) <= cap,
+          `${band} exemplar clause is ${wordsIn(clause)} words, cap ${cap}: "${clause}"`,
+        );
+      }
+    }
+  }
+});
+
+test('every exemplar asks at most one question — doc 31 §2.2, all four bands', () => {
+  for (const band of VOICE_BANDS) {
+    for (const example of BAND_EXAMPLES[band]) {
+      const asked = (example.tutor.match(/\?/g) ?? []).length;
+      assert.ok(asked <= 1, `${band} exemplar asks ${asked} questions: "${example.tutor}"`);
+    }
+  }
+});
+
+test('every band rehearses the refusal, because that exchange IS the product', () => {
+  /*
+    Doc 26b's wiring notes: "Type 'just tell me the answer' during dress
+    rehearsal at least five times — if it ever caves, fix it before anything
+    else." A band whose few-shots never show the refusal is a band where the
+    only anchor for the hardest moment is prose in the frame above it.
+  */
+  for (const band of VOICE_BANDS) {
+    const asks = BAND_EXAMPLES[band].filter((example) =>
+      /tell me the answer|what'?s the answer|just give me/i.test(example.learner),
+    );
+    const refusal = asks[0];
+    assert.ok(refusal, `${band} has no answer-demand exemplar to rehearse`);
+    assert.equal(asks.length, 1, `${band} has ${asks.length} answer-demand exemplars`);
+    // The refusal has to hand the work back, not just say no. A "no" with no
+    // question is where a stuck child leaves the session.
+    assert.ok(refusal.tutor.includes('?'), `${band} refusal offers no next step`);
+  }
+});
+
+/*
+  THE LABEL DIVERGENCE FROM DOC 26b, PINNED.
+
+  Doc 26b writes its few-shots with `Student:` as the speaker label. Shipping
+  that literal is the bug this package already fixed once: the gateway's
+  pseudonymizer matches `student` plus a separator and eats the rest of the
+  line, so every exemplar answer would reach the model as `Student: [redacted]`
+  — and the few-shots, whose entire job is to show the model what a child's
+  wrong answer looks like, would show it nothing at all. The examples are
+  therefore rendered with `LEARNER_TURN_LABEL`, and this test is why nobody can
+  quietly "fix" them back to match the doc.
+*/
+test('the rendered few-shots use the label the gateway survives, not doc 26b’s', () => {
+  const block = bandExamplesBlock('k-2');
+  assert.ok(block.includes(LEARNER_TURN_LABEL), block);
+  assert.doesNotMatch(block, /^\s*Student\s*:/im, 'doc 26b’s label would be redacted');
+});
+
+test('no prompt text trips the header rule that redacted the turn once already', () => {
+  /*
+    The same trigger list `LEARNER_TURN_LABEL` is held against, applied to every
+    string that reaches the model from this package. `scrubOutbound` scrubs the
+    SYSTEM half too, so a frame line reading "child - " would lose everything
+    after it, silently, exactly as the speaker label did.
+
+    Re-declared rather than imported: `@acme/inference` is downstream of prompt
+    assembly and this package must not depend on it, which is the same reason
+    the label literal is pinned in both places.
+  */
+  const HEADER_RULE =
+    /\b(name|student|pupil|learner|child|teacher|parent|guardian|class|school|dob)(?:'s)?\s*(?:name)?\s*[:\-–—]/i;
+
+  for (const band of VOICE_BANDS) {
+    assert.doesNotMatch(BAND_FRAMES[band], HEADER_RULE, `${band} frame would be redacted`);
+    assert.doesNotMatch(bandExamplesBlock(band), HEADER_RULE, `${band} examples would be redacted`);
+  }
+  assert.doesNotMatch(COACH_TURN_LABEL, HEADER_RULE);
+});
+
+test('the four voice bands collapse to the plane’s two-value register', () => {
+  // The Safety Plane's `IdentityContext` carries a policy register, not a voice:
+  // it picks the crisis wording. Doc 31 §2.1 splits elementary for VOICE, which
+  // does not make a third crisis script — so the register stays two-valued and
+  // is derived here rather than stored twice.
+  assert.equal(planeRegisterFor('k-2'), 'young');
+  assert.equal(planeRegisterFor('3-5'), 'young');
+  assert.equal(planeRegisterFor('6-8'), 'older');
+  assert.equal(planeRegisterFor('9-12'), 'older');
+});
+
+test('an unreadable band falls back rather than guessing a young register', () => {
+  assert.equal(asVoiceBand('3-5'), '3-5');
+  assert.equal(asVoiceBand('undergrad'), '9-12');
+  assert.equal(asVoiceBand(null), '9-12');
+  // The two values the field held before doc 31 still read, so a row written by
+  // the old build is a band rather than a fallback.
+  assert.equal(asVoiceBand('young'), 'k-2');
+  assert.equal(asVoiceBand('older'), '9-12');
+});
+
+test('the preamble carries the band frame and its few-shots into the prompt', () => {
+  const preamble = briefPreamble(compileLearnerBrief([], 'k-2', NOW));
+  assert.ok(preamble.includes(BAND_FRAMES['k-2']), 'the frame never reached the prompt');
+  const first = BAND_EXAMPLES['k-2'][0];
+  assert.ok(first);
+  assert.ok(preamble.includes(first.tutor), 'the few-shots never reached the prompt');
+  // Still pseudonymous: doc 07 §4's promise does not bend for a band.
+  assert.equal(preamble.includes('learner-9'), false);
 });

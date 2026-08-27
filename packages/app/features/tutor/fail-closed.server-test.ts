@@ -67,7 +67,7 @@ const recorder = (): { record: CoachPorts['recordSafetyEvent']; written: SafetyE
  */
 const ports = (over: Partial<CoachPorts> = {}): CoachPorts => ({
   loadPriorFacts: noPriorFacts,
-  loadGradeBand: async () => 'older',
+  loadGradeBand: async () => '9-12',
   loadLearnerFlags: async () => ({ aiEnabled: true }),
   recordSafetyEvent: () => {},
   ...over,

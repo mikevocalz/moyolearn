@@ -54,7 +54,23 @@ export {
   expireTranscripts,
   withoutBlockedTags,
 } from './src/erasure.ts';
-export type { ErasureResult } from './src/erasure.ts';
+export type { ErasureResult, Provenanced } from './src/erasure.ts';
 
-export { withLearnerBrief, withLearnerBriefStream, briefPreamble, LEARNER_TURN_LABEL } from './src/inference.ts';
+export {
+  withLearnerBrief,
+  withLearnerBriefStream,
+  bandExamplesBlock,
+  briefPreamble,
+  COACH_TURN_LABEL,
+  LEARNER_TURN_LABEL,
+} from './src/inference.ts';
+
+/*
+  Doc 31 §2's band voice system, layers 1 and 2. Exported because the tutor
+  application layer owns the two things that need it: the coaching boundary
+  resolves a learner's band, and `planeRegisterFor` is the only sanctioned way
+  to turn one into the Safety Plane's two-value policy register.
+*/
+export { asVoiceBand, planeRegisterFor, BAND_EXAMPLES, BAND_FRAMES, VOICE_BANDS } from './src/voice-band.ts';
+export type { BandExample, VoiceBand } from './src/voice-band.ts';
 export type { BriefLookup, ModelCall, ModelStreamCall, TutorPrompt } from './src/inference.ts';

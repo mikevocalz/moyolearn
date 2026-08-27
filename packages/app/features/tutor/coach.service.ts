@@ -17,7 +17,13 @@ import 'server-only';
 import type { Auth, LearnerFlags } from '@acme/auth/server';
 import { ModelDeclined } from '@acme/inference';
 import { runSafetyPlaneStream, safetyLayer, SafetyLayerUnavailable } from '@acme/safety';
-import { compileLearnerBrief, withLearnerBriefStream, LEARNER_TURN_LABEL } from '@acme/student-model';
+import {
+  compileLearnerBrief,
+  planeRegisterFor,
+  withLearnerBriefStream,
+  LEARNER_TURN_LABEL,
+  type VoiceBand,
+} from '@acme/student-model';
 import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation.ts';
 import { coachClassifier, coachIdentity } from './tutor-safety.ts';
 import { recordPlaneOutcome, recordTurnFailure, type RecordSafetyEvent } from './safety-events.ts';
@@ -87,8 +93,16 @@ export type CoachEvent =
  * `@acme/payload`. It is a lookup rather than an input because doc 07 §3 layer
  * 1 requires the band be server-injected — a client that could pick its own
  * band could pick the adult crisis register.
+ *
+ * It returns doc 31 §2.1's FOUR bands, not the plane's two. The plane's
+ * `gradeBand` is a policy register that selects crisis wording and there are
+ * still two of those; the voice band is what decides whether a reply lands on a
+ * six-year-old, and doc 31 exists because two values could not tell a first
+ * grader from a fifth grader. `planeRegisterFor` collapses one into the other
+ * at the single point below where the plane needs it, so the finer value is
+ * stored once and the coarser one is never stored at all.
  */
-export type LoadGradeBand = (ctx: ProtectedCtx) => Promise<'young' | 'older'>;
+export type LoadGradeBand = (ctx: ProtectedCtx) => Promise<VoiceBand>;
 
 /**
  * The guardian's policy for this learner (doc 06 §110's `learnerFlags`), read
@@ -157,7 +171,7 @@ export async function* coachStream(
     // Doc 07 §3 layer 1. A band the server cannot resolve is a layer that is
     // down, not a band to guess at — guessing `young` mis-registers a crisis
     // and guessing `older` hands an eight-year-old the adult one.
-    const gradeBand = await safetyLayer('1-identity', () => ports.loadGradeBand(ctx));
+    const voiceBand = await safetyLayer('1-identity', () => ports.loadGradeBand(ctx));
     /*
       The other half of layer 1, and it is a LAYER rather than a lookup for the
       same reason: doc 07 §3 layer 1 names "guardian policy (from `learnerFlags`)"
@@ -166,7 +180,7 @@ export async function* coachStream(
       failed — so an unresolvable policy pauses, exactly like an unresolvable band.
     */
     const flags = await safetyLayer('1-identity', () => ports.loadLearnerFlags(ctx));
-    const identity = coachIdentity(ctx, gradeBand, flags);
+    const identity = coachIdentity(ctx, planeRegisterFor(voiceBand), flags);
 
     /*
       The learner id reaches the gateway as the BUDGET key and stops there — it
@@ -177,7 +191,7 @@ export async function* coachStream(
     */
     const generator = withLearnerBriefStream(
       tutorTurnFor(ctx.learnerId),
-      async () => compileLearnerBrief(await ports.loadPriorFacts(ctx), gradeBand, new Date()),
+      async () => compileLearnerBrief(await ports.loadPriorFacts(ctx), voiceBand, new Date()),
       PEDAGOGY_CONTRACT,
     );
 

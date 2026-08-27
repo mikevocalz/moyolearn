@@ -19,7 +19,7 @@
 // SOT-KEYWORDS: student model pure client cascade preview erasure subpath guardian s27
 
 export { eraseFact, eraseTranscript, cascadePreview } from './src/erasure.ts';
-export type { ErasureResult } from './src/erasure.ts';
+export type { ErasureResult, Provenanced } from './src/erasure.ts';
 export { isExpired } from './src/facts.ts';
 export { masteryFact, misconceptionFact, masterySentence, isMisconceptionTag, MISCONCEPTIONS } from './src/facts.ts';
 export type {

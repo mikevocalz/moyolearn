@@ -2,7 +2,7 @@
 // SOT: docs/pack/06-auth-onboarding-spec.md §5 · docs/pack/07-security-child-ai-safety-spec.md §3
 // SOT-KEYWORDS: learner profile api route grade band onboarding protected operation
 import { NextRequest, NextResponse } from 'next/server';
-import { saveLearnerProfile } from '@acme/app/server';
+import { saveLearnerProfile, VOICE_BANDS, type VoiceBand } from '@acme/app/server';
 import { saveGradeBand } from '@/lib/student-model.repository';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
@@ -15,15 +15,22 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
   }
 
-  // The band is a policy register, so an unrecognised value is rejected rather
-  // than coerced — a typo must not quietly select the adult crisis script.
+  /*
+    Rejected rather than coerced. `asVoiceBand` exists and would happily turn a
+    typo into 9-12, but a fallback is for a value the server READ and could not
+    understand; this one is a value a client SENT, and silently rewriting it is
+    how a nine-year-old ends up in the wrong register with a 200 in the log.
+  */
   const gradeBand = (body as { gradeBand?: unknown })?.gradeBand;
-  if (gradeBand !== 'young' && gradeBand !== 'older') {
-    return NextResponse.json({ error: 'gradeBand must be young or older' }, { status: 400 });
+  if (typeof gradeBand !== 'string' || !(VOICE_BANDS as readonly string[]).includes(gradeBand)) {
+    return NextResponse.json(
+      { error: `gradeBand must be one of ${VOICE_BANDS.join(', ')}` },
+      { status: 400 },
+    );
   }
 
   try {
-    await saveLearnerProfile(auth, request.headers, { gradeBand }, saveGradeBand);
+    await saveLearnerProfile(auth, request.headers, { gradeBand: gradeBand as VoiceBand }, saveGradeBand);
     return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof Error) reportRouteError(error);

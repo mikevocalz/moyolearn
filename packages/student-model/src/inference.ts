@@ -22,6 +22,7 @@
 
 import type { Generator, IdentityContext, StreamingGenerator } from '@acme/safety';
 import type { LearnerBrief } from './brief.ts';
+import { BAND_EXAMPLES, BAND_FRAMES, type VoiceBand } from './voice-band.ts';
 
 /** The raw model call the gateway owns. It never sees an identity. */
 export type ModelCall = (prompt: string) => Promise<string>;
@@ -29,10 +30,29 @@ export type ModelCall = (prompt: string) => Promise<string>;
 /** Retrieval, keyed on the plane's server-injected identity. */
 export type BriefLookup = (context: IdentityContext) => Promise<LearnerBrief>;
 
-const VOICE = {
-  young: 'Speak plainly and warmly, short sentences, one idea at a time.',
-  older: 'Speak directly and without baby talk; assume she can follow two steps.',
-} as const;
+/**
+ * The graded few-shots for a band, rendered with the speaker labels.
+ *
+ * Rendering lives here rather than beside the examples because the labels live
+ * here, and the labels are the whole reason these exchanges do not match doc
+ * 26b character for character — see `BAND_EXAMPLES` for the full account. In
+ * short: doc 26b writes `Student:`, the gateway's header rule eats everything
+ * after it, and a few-shot whose learner turn is `[redacted]` teaches the model
+ * to reply to nothing.
+ *
+ * Last in the system prompt on purpose. Doc 31 §2.3's point is that few-shots
+ * move reading level more reliably than instructions do, and an exemplar sitting
+ * immediately above the child's turn is the one the model is still holding.
+ */
+export function bandExamplesBlock(band: VoiceBand): string {
+  const header =
+    'Here is what a reply at this level sounds like. Match the length and the moves, never the wording:';
+  const exchanges = BAND_EXAMPLES[band].map(
+    (example) =>
+      `${LEARNER_TURN_LABEL} ${example.learner}\n${COACH_TURN_LABEL} ${example.tutor}`,
+  );
+  return [header, ...exchanges].join('\n\n');
+}
 
 /**
  * The brief as prompt text. Exported because the red-team and the eval harness
@@ -42,7 +62,14 @@ const VOICE = {
 export function briefPreamble(brief: LearnerBrief): string {
   const lines = [
     'You are tutoring one student. Everything below is what the system has learned about her from her own work; none of it is her identity.',
-    VOICE[brief.gradeBand],
+    /*
+      Doc 31 §2.2's frame, whole. It used to be a single line per band — "speak
+      plainly and warmly" — which is exactly the "keep it simple" prompt doc 31
+      §1 measured and found wanting: models drift back upward within a
+      conversation and stereotype rather than simplify. The frames name numbers
+      because naming the target is the intervention that works.
+    */
+    BAND_FRAMES[brief.voiceBand],
   ];
 
   if (brief.frontier.length > 0) {
@@ -67,6 +94,9 @@ export function briefPreamble(brief: LearnerBrief): string {
       ? 'Offer a hint sooner than you would by default; she uses them well.'
       : 'Hold hints back a beat; she gets there with room.',
   );
+
+  // Doc 31 §2.3's layer 2, and the last thing the model reads before the turn.
+  lines.push('', bandExamplesBlock(brief.voiceBand));
 
   return lines.join('\n');
 }
@@ -148,3 +178,14 @@ export function withLearnerBriefStream(
  * with the answer intact.
  */
 export const LEARNER_TURN_LABEL = 'Their answer:';
+
+/**
+ * How the tutor's own words are introduced, in the graded few-shots.
+ *
+ * `Tutor:` is safe — "tutor" is not on the gateway's header-rule list, and
+ * "teacher" (which is) is exactly the word a careless edit would reach for
+ * instead. It is a constant rather than a literal for that reason: the pairing
+ * with `LEARNER_TURN_LABEL` is what the scrubber test scans, and a label that
+ * only existed inline would not be scanned at all.
+ */
+export const COACH_TURN_LABEL = 'Tutor:';

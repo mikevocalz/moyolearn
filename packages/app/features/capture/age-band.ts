@@ -1,6 +1,8 @@
 // Age-band helpers for capture surfaces.
 // SOT: docs/pack/08-visual-hierarchy-spacing-spec.md §2.4
-// SOT-KEYWORDS: age band capture young child teen adult target size labels
+// SOT-KEYWORDS: age band capture young child teen adult target size labels voice band
+
+import type { VoiceBand } from '@acme/student-model';
 
 export type AgeBand = 'young' | 'child' | 'teen' | 'adult';
 
@@ -115,15 +117,32 @@ export function captureLabelsForBand(ageBand: AgeBand): CaptureLabels {
 }
 
 /**
- * Doc 08's four presentation bands collapse to doc 07 §3's two-value policy
- * register. They are different things and stay different types: the UI band
- * decides how big a button is, the plane band decides the tutor's voice and
- * which crisis wording a child is shown.
+ * Doc 08's four presentation bands map onto doc 31 §2.1's four voice bands.
+ * They stay different types: the UI band decides how big a button is, the voice
+ * band decides how the tutor talks, and conflating them is how a type-scale
+ * change silently rewrites a six-year-old's reading level.
  *
- * `child` maps to `young` rather than `older` because the register is a safety
- * default — a nine-year-old shown the teenage crisis script is the failure
- * worth avoiding, and a teenager shown a slightly plainer one is not.
+ * This used to collapse to the plane's two-value register instead, which threw
+ * away the distinction doc 31 was written to restore — `child` and `teen` both
+ * became `older`, so a nine-year-old and a seventeen-year-old were handed the
+ * same prompt. The two-value register still exists and is still two values, but
+ * it is now derived from the band at the coaching boundary rather than stored
+ * in place of it (`planeRegisterFor` in `@acme/student-model`).
+ *
+ * `adult` maps to 9-12 because doc 08's adult band is the Cool dial — an
+ * educator or a guardian — and the register they should meet is the unsimplified
+ * one, which is what 9-12 is.
  */
-export function planeBandFor(ageBand: AgeBand): 'young' | 'older' {
-  return ageBand === 'young' || ageBand === 'child' ? 'young' : 'older';
+export function voiceBandFor(ageBand: AgeBand): VoiceBand {
+  switch (ageBand) {
+    case 'young':
+      return 'k-2';
+    case 'child':
+      return '3-5';
+    case 'teen':
+      return '6-8';
+    case 'adult':
+    default:
+      return '9-12';
+  }
 }

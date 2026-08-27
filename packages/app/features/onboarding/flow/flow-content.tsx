@@ -18,7 +18,7 @@ import { TutorOnboardingContent } from '../tutor/tutor-onboarding-content';
 import { BusinessOnboardingContent } from '../business/business-onboarding-content';
 import { TeacherOnboardingContent } from '../teacher/teacher-onboarding-content';
 import { isOnboardingFlow, type OnboardingFlow } from './flow';
-import { planeBandFor } from '../../capture/age-band';
+import { voiceBandFor } from '../../capture/age-band';
 import { useSessionStore } from '../../../providers/session/store';
 import { API_URL } from '../../tutor/tutor.store';
 
@@ -45,9 +45,9 @@ export function OnboardingFlowContent({ flow }: { flow: string }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ gradeBand: planeBandFor(ageBand) }),
+        body: JSON.stringify({ gradeBand: voiceBandFor(ageBand) }),
       }).catch(() => {
-        // Nothing to say to the learner here. The band falls back to `older`,
+        // Nothing to say to the learner here. The band falls back to 9-12,
         // which is the same default the field carries.
       });
     }

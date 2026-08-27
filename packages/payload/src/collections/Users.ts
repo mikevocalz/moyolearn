@@ -26,16 +26,34 @@ export const Users: CollectionConfig = {
   fields: [
     { name: 'name', type: 'text' },
     {
-      // Doc 07 §3 layer 1: the Safety Plane's band must be server-injected, so
-      // it is stored on the learner rather than sent with a request. The two
-      // values are the plane's register, not doc 08's four UI bands — this
-      // field drives the crisis wording and the tutor's voice, and a policy
-      // register with two settings is one a reviewer can hold in their head.
+      /*
+        Doc 07 §3 layer 1: the band must be server-injected, so it is stored on
+        the learner rather than sent with a request.
+
+        FOUR VALUES SINCE DOC 31, and the reason is the failure that doc was
+        written about: the tutor answered a first grader "like an Ivy League
+        adult". Two values could not tell a first grader from a fifth grader, so
+        both got one prompt, and this field's old comment argued for exactly
+        that — "a policy register with two settings is one a reviewer can hold
+        in their head". True of a policy register, and this was never only one:
+        it also picks the tutor's voice, and doc 31 §2.1 splits elementary for
+        voice precisely because a K-2 reply and a 3-5 reply are different
+        replies.
+
+        The two-value policy register did not go away; it stopped being stored.
+        `planeRegisterFor` derives it at the coaching boundary, so the crisis
+        wording still has its two settings and there is still one column.
+
+        Migration: `packages/payload/migrations/users_voice_bands.sql`. It maps
+        `young` to `k-2` and `older` to `9-12` rather than dropping them —
+        `asVoiceBand` reads the old labels the same way, so a row this codebase
+        has not seen yet is a band rather than a fallback.
+      */
       name: 'gradeBand',
       type: 'select',
-      options: ['young', 'older'],
-      defaultValue: 'older',
-      admin: { description: 'Drives tutor voice and the crisis register.' },
+      options: ['k-2', '3-5', '6-8', '9-12'],
+      defaultValue: '9-12',
+      admin: { description: 'Doc 31 §2 voice band. Drives tutor voice and the crisis register.' },
     },
   ],
 };
