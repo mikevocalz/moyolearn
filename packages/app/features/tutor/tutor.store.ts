@@ -142,6 +142,15 @@ export const useTutorStore = create<TutorState>((set) => ({
     const problemText = snapshot.problem.length > 0 ? snapshot.problem : problem;
     const sessionComplete = snapshot.budget.kind === 'session-complete';
 
+    /*
+      Only a TRAILING tutor turn. One with the child's reply after it is finished
+      business and belongs in the thread; only the last one is still awaiting an
+      answer.
+    */
+    const last = snapshot.messages[snapshot.messages.length - 1];
+    const lastTutorTurn = last?.role === 'tutor' ? last : undefined;
+    const history = lastTutorTurn ? snapshot.messages.slice(0, -1) : snapshot.messages;
+
     set((s) => ({
       sessionId: snapshot.sessionId,
       problem: problemText.length > 0 ? problemText : s.problem,
@@ -154,10 +163,23 @@ export const useTutorStore = create<TutorState>((set) => ({
         was coming, so the badge sat on "Thinking" forever and the child was
         told the tutor was working on something she had already answered.
 
-        `presence` is the right state and not a fallback: it draws "we were on
-        question N — want to pick up there?", which is precisely what resuming
-        is. The last reply is in `messages` now, so the stage must not also
-        draw one live.
+        THE LAST TUTOR TURN COMES BACK LIVE, not as history.
+
+        `presence` was wrong here twice over. It draws "we were on question N —
+        want to pick up there?", and nothing has ever passed a question number,
+        so a returning child read "we were on question ..." — a placeholder
+        standing exactly where the question should be. Worse, it answered a
+        question nobody asked while withholding the one that matters: WHERE THEY
+        LEFT OFF.
+
+        Natalie's last turn is what the child was in the middle of answering, so
+        it is restored where it was when they closed the laptop — the live turn,
+        above the composer, thread behind it. The screen looks like they never
+        left, which is the only version of "pick up where you left off" that does
+        not make the child reconstruct it.
+
+        Held out of `messages` for the same reason a reply is held out while it
+        is still being spoken: live or historical, never both, or it draws twice.
       */
       /*
         The end-of-session state OUTRANKS both, because it is the only one of
@@ -168,8 +190,8 @@ export const useTutorStore = create<TutorState>((set) => ({
       */
       state: sessionComplete
         ? DONE_FOR_TODAY
-        : snapshot.messages.length > 0
-          ? { kind: 'presence' as const }
+        : lastTutorTurn !== undefined
+          ? { kind: 'speaking' as const, utterance: { text: lastTutorTurn.text, restored: true } }
           : s.state,
       /*
         REPLACED, not merged.
@@ -193,7 +215,7 @@ export const useTutorStore = create<TutorState>((set) => ({
         ...(problemText.length > 0
           ? [{ id: `problem-${snapshot.sessionId}`, role: 'tutor' as const, text: problemText }]
           : []),
-        ...snapshot.messages.map((m) => ({
+        ...history.map((m) => ({
         id: m.id,
         role: m.role,
         text: m.text,
@@ -323,7 +345,7 @@ export const useTutorStore = create<TutorState>((set) => ({
     })),
 
   coach: async (message) => {
-    const { problem, state } = useTutorStore.getState();
+    const { problem, state, sessionId } = useTutorStore.getState();
 
     /*
       The floor under the closed composer.
@@ -372,7 +394,16 @@ export const useTutorStore = create<TutorState>((set) => ({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ problem, message }),
+        /*
+          The session travels so a safety event can point at the conversation it
+          came from — doc 07 §S26 offers a guardian an excerpt, and an alert with
+          nothing to open is an alert a parent cannot act on. It is a handle and
+          not an identity: the server files the event against whoever the cookie
+          says this is, so naming someone else's session mislabels only your own
+          row. `null` before the session resolves, which is a real case on the
+          opening turn.
+        */
+        body: JSON.stringify({ problem, message, sessionId: sessionId ?? undefined }),
       });
       if (!response.ok) throw new Error(`Server returned ${response.status}`);
 

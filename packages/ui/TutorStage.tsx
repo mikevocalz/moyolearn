@@ -29,6 +29,16 @@ import { useSizeClass } from './use-size-class';
 /** A spoken or written turn from the tutor. */
 export interface Utterance {
   text: string;
+  /**
+   * True when this turn is being RESTORED rather than spoken.
+   *
+   * A resumed session puts Natalie's last turn back as the live turn, so the
+   * child lands on the question they were mid-answer on. Without this flag the
+   * reveal animation replays it character by character — retyping, slowly, a
+   * reply they already read and closed the laptop on. The animation belongs to
+   * text arriving, not to text remembered.
+   */
+  restored?: boolean;
 }
 
 /** One rung on the productive-struggle hint ladder. */
@@ -161,14 +171,28 @@ function StateBody({
         <View className="w-full items-center gap-stack">
           <Avatar name="Natalie" size="xl" />
           <Text className="max-w-content-prose text-center font-sans text-body text-text">
-            Hi {childName ?? 'there'}. We were on question {questionNumber ?? '...'} — want to pick up there?
+            {/*
+                NO PLACEHOLDER. This read "We were on question ..." — literally
+                three dots — because nothing has ever passed `questionNumber`. A
+                greeting that names the question when it knows it and greets
+                plainly when it does not is honest; one that shows an ellipsis
+                where the question goes tells a child their place was lost.
+
+                A resumed session no longer lands here at all: the last tutor
+                turn is restored as the live turn, so the child sees the actual
+                question. This is the FIRST-paint state now, which is what §3.1
+                always meant.
+            */}
+            {questionNumber !== undefined
+              ? `Hi ${childName ?? 'there'}. We were on question ${questionNumber} — want to pick up there?`
+              : `Hi ${childName ?? 'there'}. Ready when you are.`}
           </Text>
         </View>
       );
     case 'speaking':
       return (
         <MessageBubble from="tutor">
-          <StreamedText>{state.utterance.text}</StreamedText>
+          <StreamedText instant={state.utterance.restored}>{state.utterance.text}</StreamedText>
         </MessageBubble>
       );
     case 'thinking':

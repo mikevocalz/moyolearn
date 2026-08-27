@@ -12,13 +12,20 @@ import { Text } from './primitives';
 
 export interface StreamedTextProps {
   children: string;
+  /**
+   * Render whole, with no reveal.
+   *
+   * For text that is being restored rather than arriving — a resumed session's
+   * last tutor turn. Animating it retypes a reply the child has already read.
+   */
+  instant?: boolean;
   intervalMs?: number;
   className?: string;
   onComplete?: () => void;
 }
 
-export function StreamedText({ children, intervalMs = 18, className, onComplete }: StreamedTextProps) {
-  const [visible, setVisible] = useState(0);
+export function StreamedText({ children, instant = false, intervalMs = 18, className, onComplete }: StreamedTextProps) {
+  const [visible, setVisible] = useState(instant ? children.length : 0);
   const [source, setSource] = useState(children);
 
   // Adjusting state during render, which is React's documented alternative to
@@ -31,11 +38,11 @@ export function StreamedText({ children, intervalMs = 18, className, onComplete 
   // the first character.
   if (source !== children) {
     setSource(children);
-    if (!children.startsWith(source)) setVisible(0);
+    if (!children.startsWith(source)) setVisible(instant ? children.length : 0);
   }
 
   useEffect(() => {
-    if (visible >= children.length) {
+    if (instant || visible >= children.length) {
       onComplete?.();
       return;
     }
@@ -45,7 +52,7 @@ export function StreamedText({ children, intervalMs = 18, className, onComplete 
     }, intervalMs);
 
     return () => clearInterval(timer);
-  }, [children, intervalMs, visible, onComplete]);
+  }, [children, instant, intervalMs, visible, onComplete]);
 
   return <Text className={className}>{children.slice(0, visible)}</Text>;
 }
