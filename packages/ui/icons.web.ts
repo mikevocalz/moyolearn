@@ -79,6 +79,8 @@ export {
   Settings2,
   CloudUpload,
   FileUp,
+  FileText,
+  FileSpreadsheet,
   Mic,
   Camera,
   Image,

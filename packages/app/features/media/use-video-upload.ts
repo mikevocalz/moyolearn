@@ -15,6 +15,7 @@
 import * as tus from 'tus-js-client';
 import { useInstanceStore, useStore } from '@acme/ui';
 import { tusUrlStorage } from './tus-url-storage';
+import { useTransferTray } from './transfer-tray.store';
 
 const API_URL =
   process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
@@ -126,6 +127,19 @@ export function useVideoUpload() {
       });
 
       /*
+        The tray mirrors this transfer under `video-<id>` so a video that
+        outlives its sheet still shows its TWO phases there — `processing` when
+        the bytes land, never a bar that claims done at 100% (doc 29 §4). The
+        row stays at `processing` until whatever subscribes to the Payload
+        doc's status dispatches `done`; this hook resolves before the
+        transcode on purpose and cannot honestly claim it.
+      */
+      const trayId = `video-${body.videoId}`;
+      const tray = useTransferTray.getState();
+      tray.dispatch({ type: 'queued', id: trayId, name: title || file.name, mimeType: file.type, bytesTotal: file.size });
+      tray.dispatch({ type: 'begin', id: trayId });
+
+      /*
         React Native has no File or Blob, so tus-js-client accepts the picker's
         `{ uri, type, name }` object and resolves it natively — its own docs say
         so and its React Native demo does exactly this. Its TYPES do not admit
@@ -163,12 +177,15 @@ export function useVideoUpload() {
           LibraryId: body.libraryId,
         },
         metadata: { filetype: file.type, title },
-        onProgress: (sent, total) =>
-          patch({ bytesSent: sent, bytesTotal: total, ratio: total > 0 ? sent / total : null }),
+        onProgress: (sent, total) => {
+          patch({ bytesSent: sent, bytesTotal: total, ratio: total > 0 ? sent / total : null });
+          useTransferTray.getState().dispatch({ type: 'progress', id: trayId, bytesSent: sent, bytesTotal: total });
+        },
         onSuccess: () => {
           // NOT `ready`. The bytes have landed; Bunny has not finished
           // transcoding, and claiming otherwise shows a broken player.
           patch({ phase: 'processing', ratio: 1 });
+          useTransferTray.getState().dispatch({ type: 'processing', id: trayId });
           settle({
             videoId: body.videoId,
             playbackUrl: body.playbackUrl,
@@ -177,6 +194,7 @@ export function useVideoUpload() {
         },
         onError: (error) => {
           patch({ phase: 'error', error: error.message });
+          useTransferTray.getState().dispatch({ type: 'failed', id: trayId, error: error.message });
           settle(null);
         },
       });

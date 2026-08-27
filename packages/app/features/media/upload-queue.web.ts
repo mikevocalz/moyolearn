@@ -47,6 +47,15 @@ export function reportUpload(completed: Parameters<UploadReporter>[0]): void {
   (report ?? unreported)(completed);
 }
 
+/**
+ * One pass, on demand — the per-file retry path (doc 30 §4). Runs through the
+ * SAME registered drain and reporter the platform triggers use, so a retried
+ * item reports its completion exactly the way a scheduled one does.
+ */
+export async function drainNow(): Promise<void> {
+  await drain?.(report ?? unreported);
+}
+
 export async function registerUploadDrain(): Promise<void> {
   if (listening || typeof window === 'undefined') return;
   listening = true;

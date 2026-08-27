@@ -17,6 +17,7 @@ export { Card, type CardProps } from './Card';
 export { Dial, type DialProps, type DialTemperature } from './Dial';
 export { Badge, type BadgeProps } from './Badge';
 export { MasteryBar, type MasteryBarProps } from './MasteryBar';
+export { ProgressBar, type ProgressBarProps } from './ProgressBar';
 export { ScheduleCard, type ScheduleCardProps } from './ScheduleCard';
 export { InspectorSection, type InspectorSectionProps } from './InspectorSection';
 export { StatCard, type StatCardProps } from './StatCard';
@@ -40,6 +41,8 @@ export { FormField, type FormFieldProps } from './FormField';
 export { ErrorMessage, type ErrorMessageProps } from './ErrorMessage';
 export { SearchBar, type SearchBarProps } from './SearchBar';
 export { DropZone, type DropZoneProps, type DropAsset } from './DropZone';
+export { FileTrigger, type FileTriggerProps, type FileTriggerFile } from './file-trigger';
+export { PasteWrapper } from './paste-wrapper';
 
 // feedback
 export { EmptyState, type EmptyStateProps } from './EmptyState';
@@ -62,7 +65,7 @@ export { VirtualList, type VirtualListProps } from './VirtualList';
 export { TrendLine, type TrendLineProps, type TrendPoint } from './TrendLine';
 export {
   DataTable, SuppressibleValue, isSuppressed,
-  type DataTableProps, type ColumnDef, type Row, type Table, type Suppressible,
+  type DataTableProps, type DataTableDensity, type ColumnDef, type Row, type Table, type Suppressible,
 } from './DataTable';
 export {
   DashboardShell,

@@ -7,6 +7,13 @@
 // sorting, filtering, pagination and selection models stay headless and the
 // fetching stays in Query. That split is the whole point: the moment this
 // component fetches anything, two systems own the same rows.
+//
+// Deliberately NOT windowed. Doc 28 §6 draws the line at ~100 rows — below it,
+// virtualization costs more than it saves — and every ops page is capped at
+// 100 by the service (`listLeads` clamps `limit`), so this body never crosses
+// the line. A surface that outgrows the cap windows through `VirtualList`
+// (the kit's ONE virtualizer, @tanstack/react-virtual on web) rather than
+// growing a second windowing implementation here.
 // SOT: docs/pack/08-visual-hierarchy-spacing-spec.md §4.6
 // SOT-KEYWORDS: datatable table row cell cool ops sort selection suppression
 // Mobbin: https://mobbin.com/screens/35f5c474-ed6a-4c77-a6cb-f2e1d6b12398 (Twenty —
@@ -73,6 +80,19 @@ export type Suppressible<T> = { value: T } | { suppressed: true };
 */
 const fixedWidth = (widthClass?: string) => (widthClass ? `flex-none ${widthClass}` : '');
 
+/**
+ * Row density — the two heights the dial already defines, not a new scale.
+ * `cool` (44px) is the ops default; `roomy` borrows the hot row (64px) for
+ * readers who want air. A caller persists the choice (doc 28 §2: density is a
+ * durable view preference and lives in Zustand); this component only draws it.
+ */
+export type DataTableDensity = 'cool' | 'roomy';
+
+const DENSITY_ROW: Record<DataTableDensity, string> = {
+  cool: 'min-h-row-cool',
+  roomy: 'min-h-row-hot',
+};
+
 export const isSuppressed = <T,>(cell: Suppressible<T>): cell is { suppressed: true } =>
   'suppressed' in cell;
 
@@ -113,7 +133,7 @@ const dataTable = tv({
       The lift therefore has to happen on the element that is a sibling of the
       other rows, and `:has()` lets CSS do it with no state and no JS.
     */
-    row: 'min-h-row-cool flex-row items-center border-b border-border-faint border-l-3 border-l-transparent [&:has(details[open])]:z-50',
+    row: 'flex-row items-center border-b border-border-faint border-l-3 border-l-transparent [&:has(details[open])]:z-50',
     rowInteractive: 'transition-colors duration-fast hover:bg-surface-sunken motion-reduce:transition-none',
     rowSelected: 'border-l-border-strong bg-highlighter-underlay',
     cell: 'flex-1 justify-center p-inset-tight',
@@ -146,6 +166,8 @@ export interface DataTableProps<T> {
   renderCard?: (row: Row<T>) => ReactNode;
   /** A pinned summary strip under the body — counts, totals, suppression notes. */
   footer?: ReactNode;
+  /** Row height. A durable preference the caller owns — see `DataTableDensity`. */
+  density?: DataTableDensity;
   className?: string;
 }
 
@@ -163,6 +185,7 @@ export function DataTable<T>({
   onRowPress,
   renderCard,
   footer,
+  density = 'cool',
   className,
 }: DataTableProps<T>) {
   const s = dataTable();
@@ -242,7 +265,7 @@ export function DataTable<T>({
                     key={row.id}
                     aria-selected={canSelect ? selected : undefined}
                     className={s.row({
-                      className: `${interactive ? s.rowInteractive() : ''} ${selected ? s.rowSelected() : ''}`,
+                      className: `${DENSITY_ROW[density]} ${interactive ? s.rowInteractive() : ''} ${selected ? s.rowSelected() : ''}`,
                     })}
                   >
                     {row.getVisibleCells().map((cell) => {

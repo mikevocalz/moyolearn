@@ -27,13 +27,20 @@
 //   https://mobbin.com/screens/d085bc38-7a20-4dfd-b3e1-0e853c8fbe75 (Coda) ·
 //   https://mobbin.com/screens/4370b80b-b6e5-4404-8343-72a57659a9a9 (Juicebox —
 //   all three: the status BADGE is the control, opening its options in place,
-//   with a chevron on the badge to say so. No separate row-action menu.)
+//   with a chevron on the badge to say so. No separate row-action menu.) ·
+//   https://mobbin.com/screens/eeea2d53-b9d5-4955-bd28-d6d14b3ad4a0 (Supabase —
+//   search field and columns dropdown share the toolbar row above the table) ·
+//   https://mobbin.com/screens/8215ed92-68d7-42fb-836b-36b3b7b4e16d (Obvious —
+//   row density lives inside the Display dropdown, not as its own control) ·
+//   https://mobbin.com/screens/4896dd71-fc2f-4222-b22b-2bab9b3ec225 (Twenty —
+//   Options→Fields lists toggleable columns with the identity field pinned)
 import {
   useReactTable,
   getCoreRowModel,
   type ColumnDef,
   type SortingState,
   type Updater,
+  type VisibilityState,
 } from '@tanstack/react-table';
 import {
   Badge,
@@ -42,6 +49,7 @@ import {
   DataTable,
   EmptyState,
   ScheduleCard,
+  SearchBar,
   StatCard,
   SuppressibleValue,
   TrendLine,
@@ -57,6 +65,8 @@ import { useViewParams } from './use-view-params';
 import type { LeadSortField } from './ops.service';
 import { MANUAL_STAGES } from './stage-change';
 import { useStageAction } from './use-stage-action';
+import { HIDEABLE_COLUMNS, columnVisibilityFor } from './ops.prefs';
+import { useOpsTablePrefs } from './ops.prefs.store';
 
 /*
   The page gutter. `p-inset` (16 at Cool) is a CARD inset — using it as the page
@@ -80,6 +90,9 @@ const buildColumns = (
   {
     accessorKey: 'family',
     header: 'Family',
+    // Never hideable: the family is what a row IS. Twenty pins its Name field
+    // for the same reason — a table of values with no identities is unreadable.
+    enableHiding: false,
     // The identity column carries two facts, so it is the one cell allowed to
     // stack: the family is what you scan, the learner is what disambiguates.
     cell: ({ row }) => (
@@ -94,6 +107,9 @@ const buildColumns = (
   {
     accessorKey: 'stage',
     header: 'Stage',
+    // Never hideable: the badge is the write control, and hiding the one way to
+    // act on a row leaves a pipeline you can read but not run.
+    enableHiding: false,
     /*
       A RESERVED width, because this column's content is a badge whose width
       follows its label. Sharing space with `flex-1` sizes every column to the
@@ -287,6 +303,17 @@ export function OpsDashboardContent({
   const { rows, moveStage, pending, error: writeError } = useStageAction(serverRows, queryKey);
 
   /*
+    Doc 28 §2's Zustand column, exactly: density and hidden columns are the
+    prefs nobody would paste into Slack, so they persist per device rather than
+    travel in the URL. The store holds preferences ABOUT the pipeline and never
+    a row of it — trap 1 has a shape test in ops.prefs.test.ts.
+  */
+  const prefs = useOpsTablePrefs((s) => s.prefs);
+  const toggleColumn = useOpsTablePrefs((s) => s.toggleColumn);
+  const toggleDensity = useOpsTablePrefs((s) => s.toggleDensity);
+  const adoptVisibility = useOpsTablePrefs((s) => s.adoptVisibility);
+
+  /*
     `manualSorting` + `manualPagination`: the server already sorted and paged, so
     letting the table re-sort would reorder ONE page and present it as the whole
     ordering. Never pull a CRM table client-side to sort it.
@@ -301,10 +328,20 @@ export function OpsDashboardContent({
     // Stable identity, or selection re-binds to whatever now sits at that index
     // after a refetch — and someone acts on the wrong family.
     getRowId: (row) => row.id,
-    state: { sorting },
+    state: { sorting, columnVisibility: columnVisibilityFor(prefs) },
     manualSorting: true,
     manualFiltering: true,
     manualPagination: true,
+    /*
+      Visibility is CONTROLLED by the prefs store: the table reports what it
+      wants and the store — filtering through the hideable registry — decides
+      what persists. Letting the table own this state would give the durable
+      preference two owners, one of which forgets on unmount.
+    */
+    onColumnVisibilityChange: (updater: Updater<VisibilityState>) => {
+      const current = columnVisibilityFor(prefs);
+      adoptVisibility(typeof updater === 'function' ? updater(current) : updater);
+    },
     onSortingChange: (updater: Updater<SortingState>) => {
       const next = typeof updater === 'function' ? updater(sorting) : updater;
       const first = next[0];
@@ -436,12 +473,49 @@ export function OpsDashboardContent({
           count={`${total} need attention`}
           accent={view.onlyAttention}
           action={
-            <Button
-              title={view.onlyAttention ? 'Show all' : 'Needs attention'}
-              variant="outline"
-              size="sm"
-              onPress={() => setView({ onlyAttention: !view.onlyAttention })}
-            />
+            <View className="flex-row items-center gap-element">
+              <Button
+                title={view.onlyAttention ? 'Show all' : 'Needs attention'}
+                variant="outline"
+                size="sm"
+                onPress={() => setView({ onlyAttention: !view.onlyAttention })}
+              />
+              {/*
+                One Display menu for density and columns together (Obvious puts
+                row density in its Display dropdown; Twenty lists toggleable
+                fields the same way). Titles are verb-first — "Hide Owner",
+                "Roomy rows" — because the kit Menu has no checkmark state, so
+                the label must say what pressing it DOES, not what is.
+              */}
+              <Menu
+                title="Display"
+                actions={[
+                  {
+                    id: 'density',
+                    title: prefs.density === 'cool' ? 'Roomy rows' : 'Cool rows',
+                  },
+                  ...HIDEABLE_COLUMNS.map((column) => ({
+                    id: column.id,
+                    title: `${prefs.hiddenColumns.includes(column.id) ? 'Show' : 'Hide'} ${column.label}`,
+                  })),
+                ]}
+                onAction={(id) => (id === 'density' ? toggleDensity() : toggleColumn(id))}
+              >
+                {/*
+                  A styled View, NOT the kit Button: Menu's web fork is a
+                  details/summary, and a real <button> inside <summary> consumes
+                  the click so the menu never opens. The stage badge anchors its
+                  menu on a plain View for the same reason. Outline-button
+                  clothes, summary semantics — the ▾ says it opens something.
+                */}
+                <View className="min-h-target-adult flex-row items-center gap-element rounded-control border-2 border-border-strong bg-surface-raised px-4 shadow-card">
+                  <Text className="text-sm font-semibold text-text">Display</Text>
+                  <Text aria-hidden className="text-caption text-text-muted">
+                    ▾
+                  </Text>
+                </View>
+              </Menu>
+            </View>
           }
         />
 
@@ -456,15 +530,32 @@ export function OpsDashboardContent({
         ) : null}
 
         <View className="flex-row flex-wrap items-center gap-element">
+          {/*
+            The search box the debounced key was built for. NO `debounceMs` here,
+            deliberately: `useLeads` already debounces the value's arrival at the
+            query key (trap 2 — time the keystrokes once, at the key boundary),
+            so a second debounce in the field would just add lag on top of lag.
+            Every keystroke lands in the URL via `replace`, which is the point —
+            the URL is the source of truth the chips and the key both read.
+          */}
+          <SearchBar
+            value={view.q}
+            onChangeText={(q) => setView({ q })}
+            placeholder="Search families…"
+            aria-label="Search the pipeline"
+            className="w-64"
+          />
           {view.onlyAttention ? (
             <FilterChip label="Needs attention" onRemove={() => setView({ onlyAttention: false })} />
           ) : null}
           {view.stage ? (
             <FilterChip label={`Stage: ${view.stage}`} onRemove={() => setView({ stage: undefined })} />
           ) : null}
-          {view.q ? (
-            <FilterChip label={`Search: ${view.q}`} onRemove={() => setView({ q: '' })} />
-          ) : null}
+          {/*
+            No "Search: …" chip any more: the query is visible in the field two
+            inches to the left, and a chip restating it gave the same fact two
+            removal affordances that could disagree.
+          */}
           {!view.onlyAttention && !view.stage && !view.q ? (
             <Text className="text-caption text-text-muted">No filters — showing every family.</Text>
           ) : null}
@@ -472,6 +563,7 @@ export function OpsDashboardContent({
 
         <DataTable
           table={table}
+          density={prefs.density}
           status={status}
           onRowPress={() => {}}
           renderCard={(row) => <LeadCard lead={row.original} />}

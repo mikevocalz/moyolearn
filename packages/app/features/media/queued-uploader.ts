@@ -17,29 +17,51 @@ import { uploadTransport } from './transport';
 import { fileSize } from './file-size';
 import type { PresignResult } from './media.types.ts';
 import type { CompletedUpload, QueuedUpload } from './upload-queue.shared.ts';
+import { kindForMime } from './upload-surfaces.shared.ts';
+import { useTransferTray } from './transfer-tray.store';
 
 const API_URL =
   (typeof process !== 'undefined' ? process.env.EXPO_PUBLIC_API_URL : undefined) ??
   'http://localhost:3001';
 
-/**
- * MediaKind from the MIME type.
- *
- * There are THREE kinds, and this collapsed everything non-image to
- * `document` — so every voice note was presigned as a document and rejected
- * with "audio/m4a can't be uploaded here." The queue then retried it on
- * schedule, forever, against a rule that could never pass. The retry policy
- * worked perfectly and was the reason nobody would have noticed.
- */
-function kindFor(mimeType: string): 'image' | 'audio' | 'document' {
-  if (mimeType.startsWith('image/')) return 'image';
-  // `video/mp4` is in the audio allowlist: a recorder writing an .mp4 container
-  // is still a voice note, and the presign rules already say so.
-  if (mimeType.startsWith('audio/') || mimeType === 'video/mp4') return 'audio';
-  return 'document';
-}
+/*
+  MediaKind mapping moved to `upload-surfaces.shared.ts` (`kindForMime`) so the
+  dropzone's on-drop validation and this presign path can never disagree about
+  which rulebook a MIME type answers to. The lesson that put it here originally
+  stands: collapsing everything non-image to `document` sent every voice note
+  to the wrong allowlist, and the retry policy dutifully re-failed it forever.
+*/
+
+/** The tray's event sink. A store, not a hook — this runs with no React tree. */
+const tray = () => useTransferTray.getState();
 
 export async function uploadQueued(item: QueuedUpload): Promise<CompletedUpload> {
+  /*
+    Announced to the tray around the transfer, not inside the queue: the queue's
+    retry policy stays pure, and a background drain with no tray mounted just
+    updates rows nobody is looking at — which is exactly what "survives
+    navigation" costs. `retried` first because this attempt may BE the retry of
+    a row the tray shows as failed; on a fresh row it is a no-op.
+  */
+  tray().dispatch({ type: 'queued', id: item.id, name: item.name, mimeType: item.mimeType, bytesTotal: null });
+  tray().dispatch({ type: 'retried', id: item.id });
+  tray().dispatch({ type: 'begin', id: item.id });
+  try {
+    const completed = await uploadQueuedBytes(item);
+    tray().dispatch({ type: 'done', id: item.id });
+    return completed;
+  } catch (error) {
+    tray().dispatch({
+      type: 'failed',
+      id: item.id,
+      error: error instanceof Error ? error.message : 'Upload failed.',
+    });
+    // Rethrown untouched — the queue's retry policy is driven by exceptions.
+    throw error;
+  }
+}
+
+async function uploadQueuedBytes(item: QueuedUpload): Promise<CompletedUpload> {
   const size = await fileSize(item.uri);
   const res = await fetch(`${API_URL}/api/media/presign`, {
     method: 'POST',
@@ -58,7 +80,7 @@ export async function uploadQueued(item: QueuedUpload): Promise<CompletedUpload>
         exactly this, platform-forked; I wrote an assumption instead of using it.
       */
       size,
-      kind: kindFor(item.mimeType),
+      kind: kindForMime(item.mimeType),
     }),
   });
 
@@ -82,11 +104,14 @@ export async function uploadQueued(item: QueuedUpload): Promise<CompletedUpload>
     url: body.uploadUrl,
     contentType: item.mimeType,
     /*
-      No progress handler and no abort signal. Nothing is watching, and a
-      controller that outlives the component that made it is a leak — the queue
-      abandons an item by exhausting its attempts, not by cancelling it.
+      Progress goes to the TRAY, not to a component: the row outlives whatever
+      screen enqueued it, which is the tray's whole job (doc 30 §4 — per-file
+      bytes, never one spinner). Still no abort signal — a controller that
+      outlives the component that made it is a leak, and the queue abandons an
+      item by exhausting its attempts, not by cancelling it.
     */
-    onProgress: () => {},
+    onProgress: (sent, total) =>
+      tray().dispatch({ type: 'progress', id: item.id, bytesSent: sent, bytesTotal: total }),
   });
 
   /*

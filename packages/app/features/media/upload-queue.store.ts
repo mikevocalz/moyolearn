@@ -66,6 +66,12 @@ interface QueueState {
   ) => Promise<CompletedUpload[]>;
   /** Items that gave up, for telling the learner rather than failing silently. */
   failed: () => QueuedUpload[];
+  /**
+   * Makes ONE item due again — a per-file retry, never a batch restart
+   * (doc 30 §4). Attempts reset so the exhausted item re-enters the drain's
+   * `due` set; everything else keeps its own backoff clock.
+   */
+  retry: (id: string) => void;
 }
 
 export const useUploadQueue = create<QueueState>((set, get) => ({
@@ -99,4 +105,13 @@ export const useUploadQueue = create<QueueState>((set, get) => ({
     }),
 
   failed: () => get().queue.filter((q) => q.attempts >= MAX_ATTEMPTS),
+
+  retry: (id) =>
+    set((s) => {
+      const queue = s.queue.map((item) =>
+        item.id === id ? { ...item, attempts: 0, lastAttemptAt: undefined } : item,
+      );
+      write(queue);
+      return { queue };
+    }),
 }));

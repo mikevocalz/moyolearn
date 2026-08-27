@@ -72,6 +72,15 @@ export function reportUpload(completed: Parameters<UploadReporter>[0]): void {
   (report ?? unreported)(completed);
 }
 
+/**
+ * One pass, on demand — the per-file retry path (doc 30 §4). A retry the user
+ * just pressed must not wait for the OS scheduler's next whim; it runs through
+ * the SAME registered drain and reporter the background task uses.
+ */
+export async function drainNow(): Promise<void> {
+  await drain?.(report ?? unreported);
+}
+
 export async function registerUploadDrain(minimumIntervalMinutes = 15): Promise<void> {
   const status = await BackgroundTask.getStatusAsync();
   if (status === BackgroundTask.BackgroundTaskStatus.Restricted) return;

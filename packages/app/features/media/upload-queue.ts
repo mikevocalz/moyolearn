@@ -8,4 +8,5 @@ export {
   reportUpload,
   registerUploadDrain,
   unregisterUploadDrain,
+  drainNow,
 } from './upload-queue.web';
