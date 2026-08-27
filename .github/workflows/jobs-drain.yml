@@ -1,0 +1,45 @@
+# The */30 handler tick — doc 35 §5 / PR-135's GitHub-Actions half, replacing
+# the `*/30` Vercel cron that kept the deployment off the Hobby tier.
+#
+# This is the RETRY path, not the primary one: sweeps run inside their own
+# daily crons, and request-adjacent work drains via `after()` in the routes
+# that enqueue it. What this tick guarantees is that a job whose handler threw
+# comes back on its queue's ladder within ~30 minutes, and that JOB-3
+# dead-letter depth is evaluated even on a queue with no new work. GitHub's
+# schedule floor is ~5 minutes and timing is best-effort — acceptable for a
+# path whose latency floor was always the schedule (`packages/jobs/src/drain.ts`).
+# The in-database half (pg-boss retention maintenance) runs on Supabase
+# pg_cron — see `packages/payload/migrations/jobs_pg_cron_maintenance.sql` for
+# the full split. `/api/health/jobs` is the dead-man switch over both.
+#
+# Secrets (repo settings → Actions):
+#   JOBS_DRAIN_URL     https://<production-host>/api/jobs/drain
+#   JOBS_DRAIN_SECRET  the same bearer the route already requires
+name: jobs-drain
+on:
+  schedule:
+    - cron: '*/30 * * * *'
+  workflow_dispatch:
+
+permissions: {}
+
+jobs:
+  drain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Drain the live queues
+        env:
+          JOBS_DRAIN_URL: ${{ secrets.JOBS_DRAIN_URL }}
+          JOBS_DRAIN_SECRET: ${{ secrets.JOBS_DRAIN_SECRET }}
+        run: |
+          if [ -z "$JOBS_DRAIN_URL" ] || [ -z "$JOBS_DRAIN_SECRET" ]; then
+            echo '::error::JOBS_DRAIN_URL / JOBS_DRAIN_SECRET are not configured — the retry tick is not running.'
+            exit 1
+          fi
+          # -f fails the step on a non-2xx, so a 500 drain pages through the
+          # workflow's failure email rather than passing silently. The body is
+          # queue names and counts only; printing it leaks nothing.
+          curl -fsS -X POST "$JOBS_DRAIN_URL" \
+            -H "Authorization: Bearer $JOBS_DRAIN_SECRET" \
+            --max-time 320

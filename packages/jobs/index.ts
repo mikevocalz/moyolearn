@@ -75,6 +75,14 @@ export type { BossOptions, Depths } from './src/boss.ts';
 export { enqueue } from './src/enqueue.ts';
 export type { EnqueueOptions } from './src/enqueue.ts';
 
+export { QUEUE_HEALTH_RULES, evaluateJobsHealth } from './src/health.ts';
+export type {
+  JobsHealthReport,
+  QueueHealth,
+  QueueHealthRule,
+  QueueHealthSample,
+} from './src/health.ts';
+
 export { drainQueues } from './src/drain.ts';
 export type {
   DrainOptions,

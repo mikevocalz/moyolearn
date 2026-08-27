@@ -37,6 +37,27 @@ export {
   type TextMask,
 } from './telemetry-scrub.ts';
 
+export {
+  createStormBreaker,
+  fingerprintOf,
+  messageClassOf,
+  MAX_EVENTS_PER_FINGERPRINT,
+  MAX_EVENTS_PER_SESSION,
+  type StormBreaker,
+  type StormBreakerOptions,
+  type StormEvent,
+  type StormFrame,
+} from './telemetry-storm.ts';
+
+export {
+  telemetryInitOptions,
+  TELEMETRY_IGNORE_ERRORS,
+  type TelemetryInitInput,
+  type TelemetryInitOptions,
+  type TelemetrySurface,
+  type TelemetryTags,
+} from './telemetry-options.ts';
+
 /** What the operation does to the resource. */
 export type OperationAction = 'read' | 'write' | 'delete' | 'stream';
 

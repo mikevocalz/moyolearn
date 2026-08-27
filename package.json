@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "lint": "node tooling/check-no-flatlist.mjs && node tooling/check-barrels.mjs && node tooling/check-contrast.mjs && node tooling/check-targets.mjs && node tooling/check-utilities.mjs && node tooling/check-controls.mjs && node tooling/check-references.mjs && node tooling/check-runtime-classes.mjs && node tooling/check-no-training-path.mjs && node tooling/check-voice-egress.mjs && node tooling/check-store-separation.mjs && node tooling/check-crm-wall.mjs && node tooling/check-fail-closed.mjs && node tooling/check-versions-off.mjs && turbo lint",
+    "lint": "node tooling/check-no-flatlist.mjs && node tooling/check-barrels.mjs && node tooling/check-contrast.mjs && node tooling/check-targets.mjs && node tooling/check-utilities.mjs && node tooling/check-controls.mjs && node tooling/check-references.mjs && node tooling/check-runtime-classes.mjs && node tooling/check-no-training-path.mjs && node tooling/check-voice-egress.mjs && node tooling/check-store-separation.mjs && node tooling/check-crm-wall.mjs && node tooling/check-fail-closed.mjs && node tooling/check-versions-off.mjs && node tooling/check-sentry-invariants.mjs && turbo lint",
     "check:barrels": "node tooling/check-barrels.mjs",
     "check:contrast": "node tooling/check-contrast.mjs",
     "check:targets": "node tooling/check-targets.mjs",
@@ -29,7 +29,8 @@
     "jobs:migrate": "pg-boss migrate --schema jobs --connection-string \"$DATABASE_URL\"",
     "jobs:doctor": "pg-boss doctor --schema jobs --connection-string \"$DATABASE_URL\"",
     "ui:sweep": "node tooling/ui-sweep.mjs",
-    "check:voice": "node tooling/check-voice-egress.mjs"
+    "check:voice": "node tooling/check-voice-egress.mjs",
+    "check:sentry": "node tooling/check-sentry-invariants.mjs"
   },
   "devDependencies": {
     "pg-boss": "catalog:",

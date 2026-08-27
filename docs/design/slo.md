@@ -92,8 +92,15 @@ in any env file, and no structured logging in the API routes — every
 discarded it.
 
 The SDK, the instrumentation, the scrubber and the Block record have since
-landed (W-1, W-2 partial, W-3, W-7 — see §7). **The DSN has not**, and neither
-has the project it would point at. What follows is the state now.
+landed (W-1, W-2, W-3, W-7 — see §7). **The DSN has now landed too** (the
+`moyolearn` project; keys in `.env.local` / hosting env, never in git), and
+doc 35 refined the whole posture to the free tier: one shared init factory
+(`packages/app/core/telemetry-options.ts` — enabled only in production,
+`tracesSampleRate: 0`, storm breaker in every `beforeSend`), a `surface` tag
+standing in for the deferred three-project split, and
+`tooling/check-sentry-invariants.mjs` in `pnpm lint` guarding the §3.1 laws.
+What follows below was the state before doc 35; where it says "no DSN", read
+"resolved — doc 35".
 
 ### 2.1 · What exists
 
@@ -432,13 +439,13 @@ written against a config that does not exist.
 | id | Work | Touches | Unblocks | Status |
 |---|---|---|---|---|
 | **W-1** | Emit the Block record `{op, resource, action, ctx.kind, latency, outcome, authMode}` | `packages/app/core/protected-operation.ts` — needs an `op`/`resource` argument it does not currently take, so it is an API change to every call site | everything | **DONE**, with the API change avoided: the descriptor is an optional grouped `options.telemetry`, and its absence is recorded as `attributed: false`. 9 of 14 call sites named; the 5 unnamed are all in `packages/app/features/tutor/`. See §2.3 |
-| **W-2** | Install `@sentry/nextjs` on `apps/web` (Next 16.3.1 → `instrumentation.ts` `register()` + `onRequestError`) and `@sentry/react-native` on `apps/mobile` (Expo 57.0.15); create a `moyolearn` Sentry project — the connected org `deviant` has only `react-native`, which belongs to a different product | `apps/web`, `apps/mobile`, catalog in `pnpm-workspace.yaml` | golden signals | **PARTIAL.** SDKs installed and catalog-pinned; server, browser and Expo clients initialised behind a DSN guard. **Still open:** the Sentry project and DSN itself; the edge runtime client; `withSentryConfig`, the `@sentry/react-native/expo` plugin, and therefore source maps and releases |
+| **W-2** | Install `@sentry/nextjs` on `apps/web` (Next 16.3.1 → `instrumentation.ts` `register()` + `onRequestError`) and `@sentry/react-native` on `apps/mobile` (Expo 57.0.15); create a `moyolearn` Sentry project — the connected org `deviant` has only `react-native`, which belongs to a different product | `apps/web`, `apps/mobile`, catalog in `pnpm-workspace.yaml` | golden signals | **DONE** (doc 35 form). SDKs installed and catalog-pinned; the `moyolearn` project and DSN exist and all three inits run doc 35 §4's shared factory (`@acme/app/telemetry`) behind a DSN guard, production-only; `withSentryConfig` is wired with `tunnelRoute: '/monitoring'`. **Still open, deliberately:** the edge runtime client (unchanged reasoning in `instrumentation.ts`); source-map upload on both apps, gated on `SENTRY_AUTH_TOKEN` in CI/EAS; the doc 35 §3 three-project split (free tier — the `surface` tag stands in) |
 | **W-3** | `captureException` in the six API route catch blocks that currently discard the error | `apps/web/app/api/**/route.ts` | ERR signals | **DONE**, and wider than six — 17 route catch blocks call `reportRouteError` (`apps/web/lib/report-error.ts`), which excludes `CapabilityDenied` and `Unauthenticated` |
 | **W-4** | Set `measurements.ai_first_sentence_ms` at the first `chunk` frame | `apps/web/app/api/tutor/coach/route.ts` `ReadableStream.start` | AI-1, SLO-2 | open |
 | **W-5** | Tag the coach transaction with `coach.event`, `safety.outcome`, and `safety.trace_layers` from the `PlaneResult.trace` that `coach()` currently drops | `packages/app/features/tutor/coach.service.ts` | SAFE-1, SAFE-3, SAFE-4, SAFE-5 | open |
 | **W-6** | Distinguish a *thrown* safety layer from a *thrown* vendor call so SAFE-2 has an error type — today both land in one `catch` and become `unavailable` | `packages/app/features/tutor/coach.service.ts:coach` | SAFE-2, and the doc 12 §5 fail-closed rule itself | open |
 | **W-7** | `beforeSend` scrubber + `sendDefaultPii: false`, with a red-team case asserting no prompt text escapes | `apps/web`, `apps/mobile`, `packages/safety/src/red-team.ts` | §3.1 — **must land with W-2, not after** | **DONE**, and it did land with W-2. Scrubber in `packages/app/core/telemetry-scrub.ts`, server mask bound to `scrubText` in `telemetry-mask.ts`, proof in `telemetry.test.ts` + `telemetry-mask.server-test.ts`. The assertions live in `@acme/app`'s suite rather than `packages/safety/src/red-team.ts` because the scrubbed thing is a Sentry event, not a model prompt — the red-team suite's subject |
-| **W-8** | Sentry Cron monitor check-ins for the media sweep | `apps/web/app/api/media/sweep/cron/route.ts` | JOB-1, JOB-2 | open |
+| **W-8** | Sentry Cron monitor check-ins for the media sweep | `apps/web/app/api/media/sweep/cron/route.ts` | JOB-1, JOB-2 | **DONE, redirected by doc 35 §5**: the ONE free cron monitor guards the erasure sweep instead (`withMonitor('retention-sweep')` in `apps/web/lib/jobs.ts` — a dead eraser is silent, a dead drain is loud), and the media sweep is watched by the `/api/health/jobs` dead-man endpoint the one free uptime monitor polls |
 | **W-9** | pg-boss, then JOB-3 and JOB-4 | see `docs/design/seq-pay-run.md` | job signals | open |
 | **W-10** | `safetyEvents` collection + guardian alert delivery | `packages/payload/src/collections/` | SAFE-4's review queue, SAFE-6 | open |
 
@@ -496,7 +503,11 @@ lands; nothing else in this table is between them and a working dashboard.
 6. `safetyEvents` store and guardian alert delivery — SAFE-4, SAFE-6, W-10.
 7. pg-boss, and therefore queue depth, dead-letter and shed instrumentation — JOB-3, JOB-4, §5. See `docs/design/seq-pay-run.md`.
 8. The Inference Gateway fallback chain that AI-2 assumes as the first line of defence — see `docs/design/seq-learner-ai-turn.md`.
-9. Sentry Cron monitors, Uptime monitors, and release-health reporting — W-8.
+9. ~~Sentry Cron monitors, Uptime monitors, and release-health reporting — W-8.~~
+   Landed via doc 35: `retention-sweep` cron check-in, `/api/health/jobs`
+   dead-man endpoint for the uptime monitor, `enableAutoSessionTracking` on
+   mobile. The monitor objects themselves are Sentry-UI actions — checklist in
+   `packages/app/core/telemetry-options.ts`.
 10. Operation names on the 5 `protectedOperation` call sites in
     `packages/app/features/tutor/`, which is what LAT-2's per-operation
     grouping is waiting on. Query `attributed:false` to see them — §2.3.
