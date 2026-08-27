@@ -7,6 +7,7 @@ import 'server-only';
 
 export {
   protectedOperation,
+  isMockAuth,
   type ProtectedCtx,
   type ProtectedOperationOptions,
 } from './core/protected-operation';

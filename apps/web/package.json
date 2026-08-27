@@ -23,6 +23,7 @@
     "@acme/app": "workspace:*",
     "@acme/auth": "workspace:*",
     "@acme/inference": "workspace:*",
+    "@acme/jobs": "workspace:*",
     "@acme/payload": "workspace:*",
     "@acme/safety": "workspace:*",
     "@acme/student-model": "workspace:*",

@@ -7,7 +7,7 @@
   "types": "./index.ts",
   "exports": {
     ".": "./index.ts",
-    "./topology": "./topology.ts"
+    "./topology": "./src/topology.ts"
   },
   "scripts": {
     "lint": "eslint",

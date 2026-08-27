@@ -111,6 +111,24 @@ const MOCK_SUBSCRIPTIONS: SubscriptionState[] = [
  * The capability gate still runs against that mock's plans — a dev typo in a
  * capability name has to fail in dev, not first in production.
  */
+/**
+ * The one definition of "this process is running a mock identity".
+ *
+ * Exported because it has to be shared, not restated. The Block mocks the
+ * learner in dev, and a downstream layer that reads that learner's ATTRIBUTES
+ * from the real database is asking about somebody who does not exist — which is
+ * exactly what happened: `loadLearnerFlags` threw on a Better Auth table this
+ * project has never had, the throw reached `safetyLayer('1-identity')`, and
+ * every coaching turn in dev came back `blocked`. The child would have been
+ * told "Natalie is taking a break" forever, and the mechanism reporting it was
+ * working perfectly.
+ *
+ * Half-mocked is the bug. If identity is a fixture, its attributes are too.
+ */
+export function isMockAuth(): boolean {
+  return process.env.NEXT_PUBLIC_AUTH_MODE === 'mock' && process.env.NODE_ENV === 'development';
+}
+
 export async function protectedOperation<R>(
   auth: Auth,
   headers: Headers,
@@ -118,8 +136,7 @@ export async function protectedOperation<R>(
   options: ProtectedOperationOptions = {},
 ): Promise<R> {
   const capability = options.requires ?? 'practise';
-  const isMock =
-    process.env.NEXT_PUBLIC_AUTH_MODE === 'mock' && process.env.NODE_ENV === 'development';
+  const isMock = isMockAuth();
 
   /*
     Captured before the session read, so the recorded latency is the whole block

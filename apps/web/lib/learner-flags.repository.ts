@@ -16,7 +16,7 @@
 // SOT-KEYWORDS: learner flags repository ai enabled guardian policy better auth layer 1 identity refused
 import 'server-only';
 import { readLearnerFlags } from '@acme/auth/server';
-import type { LoadLearnerFlags } from '@acme/app/server';
+import { isMockAuth, type LoadLearnerFlags } from '@acme/app/server';
 import { auth } from './auth';
 
 /**
@@ -34,4 +34,26 @@ import { auth } from './auth';
  * missing row, and it lives in `readLearnerFlags` where the column's meaning
  * does: absence means nobody has switched anything off.
  */
-export const loadLearnerFlags: LoadLearnerFlags = (ctx) => readLearnerFlags(auth, ctx.learnerId);
+export const loadLearnerFlags: LoadLearnerFlags = async (ctx) => {
+  /*
+    A MOCK IDENTITY ANSWERS FOR ITSELF.
+
+    The comment above is right about production and wrong about dev, and the
+    difference took the tutor down: the Block mocks the learner in development,
+    this then asked the real database about that fixture, Better Auth's `user`
+    table has never existed in this project, and the throw reached
+    `safetyLayer('1-identity')`. Every coaching turn returned `blocked` and every
+    child would have been told "Natalie is taking a break" — the fail-closed
+    mechanism working exactly as designed, on a schema gap rather than a safety
+    condition.
+
+    This is not the forbidden `.catch(() => ({ aiEnabled: true }))`. That would
+    guess on behalf of a real guardian whose answer could not be read. In mock
+    mode there is no guardian and no row to read: identity is a fixture, so its
+    attributes are the fixture's too. The predicate is IMPORTED from the Block
+    rather than restated, so the two halves cannot drift into being half-mocked
+    again.
+  */
+  if (isMockAuth()) return { aiEnabled: true };
+  return readLearnerFlags(auth, ctx.learnerId);
+};

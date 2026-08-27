@@ -568,6 +568,9 @@ importers:
       '@acme/inference':
         specifier: workspace:*
         version: link:../../packages/inference
+      '@acme/jobs':
+        specifier: workspace:*
+        version: link:../../packages/jobs
       '@acme/payload':
         specifier: workspace:*
         version: link:../../packages/payload
