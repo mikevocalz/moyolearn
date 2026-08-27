@@ -7,3 +7,5 @@ export { useCaptureStore } from './capture.store';
 export { asAgeBand, buttonSizeForBand, captureLabelsForBand } from './age-band';
 export type { AgeBand } from './age-band';
 export type { CaptureMode, CapturePhoto, CaptureStep } from './types';
+export { problemStorage } from './problem-storage';
+export { readProblem, writeProblem, PROBLEM_KEY } from './problem-storage.shared.ts';

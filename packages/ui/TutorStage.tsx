@@ -16,6 +16,7 @@ import { View, Text } from './primitives';
 import { MessageBubble } from './MessageBubble';
 import { StreamedText } from './StreamedText';
 import { Composer } from './Composer';
+import type { TutorAttachment } from './tutor-attachment.ts';
 import { SessionToolbar } from './SessionToolbar';
 import { Badge } from './Badge';
 import { Button } from './Button';
@@ -64,6 +65,20 @@ export interface TutorStageProps {
   onBack?: () => void;
   onToggleCaptions?: () => void;
   onSend?: (message: string) => void;
+  /*
+    Composer pass-throughs. The stage deliberately holds none of this state:
+    what a learner has attached belongs to the session, not to the layout that
+    happens to be drawing the input this frame.
+  */
+  attachments?: readonly TutorAttachment[];
+  onRemoveAttachment?: (id: string) => void;
+  onPickCamera?: () => void;
+  onPickImage?: () => void;
+  onPickDocument?: () => void;
+  onStartRecording?: () => void;
+  recording?: { elapsedSec: number; levels: readonly number[] };
+  onCancelRecording?: () => void;
+  onSendRecording?: () => void;
   onTryIt?: () => void;
   onNextHint?: () => void;
   onPracticeOnOwn?: () => void;
@@ -277,6 +292,15 @@ export function TutorStage({
   onBack,
   onToggleCaptions,
   onSend,
+  attachments,
+  onRemoveAttachment,
+  onPickCamera,
+  onPickImage,
+  onPickDocument,
+  onStartRecording,
+  recording,
+  onCancelRecording,
+  onSendRecording,
   onTryIt,
   onNextHint,
   onPracticeOnOwn,
@@ -327,6 +351,15 @@ export function TutorStage({
         onSend={handleSend}
         disabled={inputDisabled}
         size={buttonSize}
+        attachments={attachments}
+        onRemoveAttachment={onRemoveAttachment}
+        onPickCamera={onPickCamera}
+        onPickImage={onPickImage}
+        onPickDocument={onPickDocument}
+        onStartRecording={onStartRecording}
+        recording={recording}
+        onCancelRecording={onCancelRecording}
+        onSendRecording={onSendRecording}
       />
     </View>
   );

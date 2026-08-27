@@ -1,5 +1,6 @@
 'use client';
 import { create } from 'zustand';
+import type { TutorAttachment } from '@acme/ui';
 import { streamFetch } from './stream-fetch';
 import type { TutorStageState } from '@acme/ui';
 import { traceAttempt, DEFAULT_TRACING, inferSkillTitle } from '@acme/student-model/pure';
@@ -9,6 +10,17 @@ import type { CoachEvent } from './coach.service';
 interface TutorState {
   state: TutorStageState;
   problem: string;
+  /**
+   * Staged for the next turn, not yet sent.
+   *
+   * Lives on the store rather than in the composer because a turn is
+   * message-plus-attachments: the send path has to read both, and a photo held
+   * in component state would be lost the moment the stage re-rendered around a
+   * streaming reply.
+   */
+  attachments: readonly TutorAttachment[];
+  addAttachment: (attachment: TutorAttachment) => void;
+  removeAttachment: (id: string) => void;
   skillTitle: string;
   mastery: number;
   attempts: number;
@@ -62,6 +74,7 @@ async function* readCoachEvents(response: Response): AsyncGenerator<CoachEvent> 
 export const useTutorStore = create<TutorState>((set) => ({
   state: { kind: 'presence' },
   problem: '',
+  attachments: [],
   skillTitle: '',
   mastery: DEFAULT_TRACING.prior,
   attempts: 0,
@@ -89,6 +102,12 @@ export const useTutorStore = create<TutorState>((set) => ({
       };
     });
   },
+  addAttachment: (attachment) =>
+    set((s) => ({ ...s, attachments: [...s.attachments, attachment] })),
+
+  removeAttachment: (id) =>
+    set((s) => ({ ...s, attachments: s.attachments.filter((a) => a.id !== id) })),
+
   coach: async (message) => {
     const { problem } = useTutorStore.getState();
     set({ state: { kind: 'thinking' } });

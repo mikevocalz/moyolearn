@@ -24,7 +24,10 @@ import { useCallback } from 'react';
 import { View, Text, Pressable, Textarea } from './primitives';
 import { useAutoGrow } from './use-autogrow';
 import { Button } from './Button';
+import { SolitoImage } from 'solito/image';
 import { Camera, FileUp, Image, Mic, Plus, Trash2, X } from './icons';
+import { Lightbox } from './Lightbox';
+import { useInstanceStore, useStore } from './use-instance-store';
 import type { TutorAttachment } from './tutor-attachment.ts';
 
 export interface ComposerProps {
@@ -83,6 +86,52 @@ export function Composer({
   */
   const canSend = !disabled && (value.trim().length > 0 || (attachments?.length ?? 0) > 0);
   const canAttach = !disabled && (onPickCamera ?? onPickImage ?? onPickDocument) !== undefined;
+
+  /*
+    Icon buttons carry the age band's touch target, same as every other control.
+
+    This is written as a map because I first wrote `w-target-md` — a token that
+    does not exist. `targets` is keyed by BAND (floor/adult/teen/child/young),
+    not by the size scale, so Tailwind generated nothing and the attach button
+    rendered 24px wide: its icon, with no box. 24px is also under the WCAG 2.2
+    floor of 44, on a product used by children.
+
+    `buttonSizeForBand` maps young and child to `xl`, teen to `lg`, adult to
+    `md`, so this map is that mapping read backwards.
+  */
+  /*
+    Lightbox state, scoped to this composer instance rather than a module store —
+    two composers on one screen must not share which picture is open.
+  */
+  const lightboxStore = useInstanceStore<{ open: boolean; index: number }>(() => ({
+    open: false,
+    index: 0,
+  }));
+  const lightbox = useStore(lightboxStore, (l) => l);
+  const openLightbox = useCallback(
+    (index: number) => lightboxStore.setState({ open: true, index }),
+    [lightboxStore],
+  );
+  const closeLightbox = useCallback(
+    () => lightboxStore.setState({ open: false, index: 0 }),
+    [lightboxStore],
+  );
+  /*
+    The lightbox takes an index into the IMAGES, while the tray iterates all
+    attachments. A document staged before a photo would otherwise make the two
+    disagree and open the wrong picture, so the map is built once and looked up
+    by id rather than recomputed from a position.
+  */
+  const images = (attachments ?? []).filter((a) => a.kind === 'image');
+  const imageUris = images.map((a) => a.previewUri ?? a.uri);
+  const imageIndexById = new Map(images.map((a, i) => [a.id, i]));
+
+  const iconTarget = {
+    sm: 'min-h-target-adult min-w-target-adult',
+    md: 'min-h-target-adult min-w-target-adult',
+    lg: 'min-h-target-teen min-w-target-teen',
+    xl: 'min-h-target-child min-w-target-child',
+  }[size];
   // Grows with what is typed. The two platforms use different mechanisms —
   // `scrollHeight` on web, `onContentSizeChange` on native — so the hook returns
   // props to spread rather than a single ref.
@@ -103,7 +152,7 @@ export function Composer({
         <Pressable
           onPress={onCancelRecording}
           aria-label="Discard recording"
-          className="h-target-md w-target-md items-center justify-center rounded-control border-2 border-strong bg-surface-raised"
+          className={`${iconTarget} items-center justify-center rounded-control border-2 border-strong bg-surface-raised`}
         >
           <Trash2 size={20} className="text-danger" />
         </Pressable>
@@ -141,34 +190,78 @@ export function Composer({
 
   return (
     <View className={`gap-stack ${className ?? ''}`}>
-      {/* Staged attachments, above the field. A child should see what is about
-          to be sent while there is still time to take it back. */}
+      {/* Staged attachments, above the field.
+          An image shows the IMAGE. A filename is not a photo — a child who
+          attached the wrong page of homework cannot tell from "photo.jpg", and
+          checking costs them the send. Every reference does the same thing:
+          a square thumbnail with a small dismiss badge on its corner, and the
+          badge sits ON the picture rather than beside it so the tray stays one
+          row of pictures instead of a list of rows. */}
       {attachments && attachments.length > 0 ? (
         <View className="flex-row flex-wrap gap-element">
-          {attachments.map((attachment) => (
-            <View
-              key={attachment.id}
-              className="flex-row items-center gap-element rounded-control border-2 border-border bg-surface-raised py-1 pl-inset-tight pr-1"
-            >
-              {attachment.kind === 'image' ? <Image size={16} className="text-text-muted" /> : null}
-              {attachment.kind === 'document' ? <FileUp size={16} className="text-text-muted" /> : null}
-              {attachment.kind === 'audio' ? <Mic size={16} className="text-text-muted" /> : null}
-              {/* Truncated, never wrapped: a long filename should not push the
-                  field down the screen while a child is mid-thought. */}
-              <Text numberOfLines={1} className="max-w-40 font-sans text-caption text-text">
-                {attachment.name}
-              </Text>
-              <Pressable
-                onPress={() => onRemoveAttachment?.(attachment.id)}
-                aria-label={`Remove ${attachment.name}`}
-                className="h-target-sm w-target-sm items-center justify-center rounded-control"
+          {attachments.map((attachment) =>
+            attachment.kind === 'image' ? (
+              <View key={attachment.id} className="relative">
+                <Pressable
+                  onPress={() => openLightbox(imageIndexById.get(attachment.id) ?? 0)}
+                  aria-label={`Open ${attachment.name}`}
+                  className="h-16 w-16 overflow-hidden rounded-control border-2 border-border bg-surface-raised"
+                >
+                  <SolitoImage
+                    src={attachment.previewUri ?? attachment.uri}
+                    alt={attachment.name}
+                    fill
+                    unoptimized
+                    contentFit="cover"
+                    sizes="64px"
+                  />
+                </Pressable>
+                {/* Offset onto the corner. Its hit area is the WCAG floor even
+                    though the badge is drawn small — a 16px target on a
+                    children's surface is a target only an adult can hit. */}
+                <Pressable
+                  onPress={() => onRemoveAttachment?.(attachment.id)}
+                  aria-label={`Remove ${attachment.name}`}
+                  className="absolute -right-2 -top-2 min-h-target-adult min-w-target-adult items-center justify-center"
+                >
+                  <View className="h-6 w-6 items-center justify-center rounded-full border-2 border-border bg-surface">
+                    <X size={12} className="text-text" />
+                  </View>
+                </Pressable>
+              </View>
+            ) : (
+              /* A document has no picture, so it keeps a labelled chip — the
+                 name IS the only identifying thing about it. */
+              <View
+                key={attachment.id}
+                className="flex-row items-center gap-element rounded-control border-2 border-border bg-surface-raised py-1 pl-inset-tight pr-1"
               >
-                <X size={14} className="text-text-muted" />
-              </Pressable>
-            </View>
-          ))}
+                {attachment.kind === 'document' ? <FileUp size={16} className="text-text-muted" /> : null}
+                {attachment.kind === 'audio' ? <Mic size={16} className="text-text-muted" /> : null}
+                <Text numberOfLines={1} className="max-w-40 font-sans text-caption text-text">
+                  {attachment.name}
+                </Text>
+                <Pressable
+                  onPress={() => onRemoveAttachment?.(attachment.id)}
+                  aria-label={`Remove ${attachment.name}`}
+                  className="min-h-target-adult min-w-target-adult items-center justify-center rounded-control"
+                >
+                  <X size={14} className="text-text-muted" />
+                </Pressable>
+              </View>
+            ),
+          )}
         </View>
       ) : null}
+
+      {/* Tap a thumbnail to check it full-size before sending. The kit already
+          had this component and nothing used it. */}
+      <Lightbox
+        images={imageUris}
+        initialIndex={lightbox.index}
+        open={lightbox.open}
+        onClose={closeLightbox}
+      />
 
       {/* `items-stretch` is what makes the field and the actions one height.
           They size from independent systems — the field from its padding, the
@@ -181,7 +274,7 @@ export function Composer({
           <Pressable
             onPress={onPickCamera ?? onPickImage ?? onPickDocument}
             aria-label="Add a photo or file"
-            className="w-target-md items-center justify-center rounded-control border-2 border-strong bg-surface-raised"
+            className={`${iconTarget} items-center justify-center rounded-control border-2 border-strong bg-surface-raised`}
           >
             <Plus size={20} className="text-text" />
           </Pressable>
@@ -214,7 +307,7 @@ export function Composer({
             onPress={onStartRecording}
             disabled={disabled}
             aria-label="Record a voice message"
-            className="w-target-md items-center justify-center rounded-control border-2 border-strong bg-surface-raised"
+            className={`${iconTarget} items-center justify-center rounded-control border-2 border-strong bg-surface-raised`}
           >
             <Mic size={20} className="text-text" />
           </Pressable>

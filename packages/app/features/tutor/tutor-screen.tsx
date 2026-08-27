@@ -9,13 +9,16 @@
 // SOT: docs/pack/24-homework-capture-spec.md §5 · docs/pack/23-tutorstage-handoff.md §3 · docs/pack/18-tutor-ai-stack.md §3
 // SOT-KEYWORDS: tutor screen capture handoff tutorstage session coach stream age band next problem
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'solito/navigation';
 import { TutorStage, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { useCaptureStore } from '../capture';
 import { buttonSizeForBand, type AgeBand } from '../capture';
 import { useTutorStore, API_URL } from './tutor.store';
+import { pickNoteImage } from '../schedule/pick-note-image';
+import { pickFile } from '../editor/pick-file';
+import { useAudioStore } from '../editor/audio.store.ts';
 import { evaluateArithmetic } from '@acme/student-model/pure';
 
 export interface TutorScreenProps {
@@ -26,7 +29,8 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   const router = useRouter();
   const problem = useCaptureStore((s) => s.problem);
   const setProblem = useCaptureStore((s) => s.setProblem);
-  const { state, start, coach, hintDepth } = useTutorStore();
+  const { state, start, coach, hintDepth, attachments, addAttachment, removeAttachment } =
+    useTutorStore();
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -84,6 +88,64 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
     void recordAttempt(problem ?? '', trimmed, hintDepth);
   };
 
+  /*
+    A local URI, staged. Nothing is uploaded until the turn is sent — a child
+    who attaches the wrong photo and removes it should never have put it on a
+    server in the first place, which is doc 07's data-minimisation rule applied
+    to the commonest mistake in the flow.
+  */
+  const stage = useCallback(
+    (picked: { uri: string; name: string } | null, kind: 'image' | 'document', mimeType: string) => {
+      if (!picked) return;
+      addAttachment({
+        id: `${Date.now()}-${picked.name}`,
+        kind,
+        uri: picked.uri,
+        name: picked.name,
+        mimeType,
+      });
+    },
+    [addAttachment],
+  );
+
+  const handlePickImage = useCallback(() => {
+    void pickNoteImage().then((picked) =>
+      stage(picked && { uri: picked.uri, name: 'photo.jpg' }, 'image', 'image/jpeg'),
+    );
+  }, [stage]);
+
+  /*
+    Voice, through the recorder the editor already uses.
+
+    Not a second recorder: `AudioRecorderSheet` is mounted at the app root and
+    asked for a recording through `audio.store`, exactly as the note editor asks.
+    Building a parallel one here would be the "never invent a second way"
+    rule broken in the most expensive place — the mic is the affordance a child
+    who cannot type quickly depends on.
+
+    The result becomes an attachment like any other, so one send path carries
+    words, photos and speech rather than three.
+  */
+  const requestRecording = useAudioStore((s) => s.request);
+
+  const handleStartRecording = useCallback(() => {
+    void requestRecording().then((recording) => {
+      if (!recording) return;
+      addAttachment({
+        id: `${Date.now()}-voice`,
+        kind: 'audio',
+        uri: recording.uri,
+        name: `Voice note (${Math.round(recording.duration)}s)`,
+        mimeType: 'audio/m4a',
+        durationSec: recording.duration,
+      });
+    });
+  }, [requestRecording, addAttachment]);
+
+  const handlePickDocument = useCallback(() => {
+    void pickFile().then((picked) => stage(picked, 'document', 'application/octet-stream'));
+  }, [stage]);
+
   if (problem == null) {
     return (
       <View className="flex-1 items-center justify-center p-inset">
@@ -104,6 +166,17 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
       onBack={router.back}
       onSend={handleSend}
       onRetry={() => void coach('')}
+      attachments={attachments}
+      onRemoveAttachment={removeAttachment}
+      /*
+        Camera stays absent deliberately — the composer hides a control whose
+        handler is missing, so an unwired affordance is invisible rather than
+        dead. A child who taps something and gets nothing learns the app is
+        broken. Photos, files and voice are wired.
+      */
+      onPickImage={handlePickImage}
+      onPickDocument={handlePickDocument}
+      onStartRecording={handleStartRecording}
     />
   );
 }
