@@ -29,7 +29,7 @@ import {
   shedOrder,
   type QueueName,
 } from './topology.ts';
-import { distillKey, sweepKey, utcDay } from './keys.ts';
+import { distillKey, incidentFanOutKey, sweepKey, utcDay } from './keys.ts';
 import { QUEUE_POLICY, managedQueueNames } from './boss.ts';
 import {
   BACKLOG_SHED_DEPTH,
@@ -57,12 +57,35 @@ test('the topology is the fourteen queues doc 12 §6 and jobs.md §2 commit to',
   assert.ok(PRIORITY.cleanup > PRIORITY.notify);
 });
 
-test('the three live queues are the three with real work today', () => {
+test('the five live queues are the five with real work today', () => {
+  /*
+    Doc 31 §4.3 promoted the two safety fan-outs. They are named here rather
+    than counted because the list is the assertion: a queue that goes live
+    without a handler is a silent failure — jobs accumulate, nothing errors, and
+    the dashboard shows a healthy zero-failure rate.
+  */
   assert.deepEqual([...liveQueues()].sort(), [
     'edu.distill',
     'retention.sweep.media',
     'retention.sweep.transcripts',
+    'safety.alert.guardian',
+    'safety.review.enqueue',
   ]);
+});
+
+test('both safety fan-out queues are live, protected, and page on one dead letter', () => {
+  /*
+    The three properties doc 31 §4.3 needs together, and the reason they are
+    asserted in one place: a safety queue that went live WITHOUT staying
+    protected would become sheddable at exactly the load where a guardian most
+    needs telling, and nothing at runtime would say so.
+  */
+  for (const name of ['safety.alert.guardian', 'safety.review.enqueue'] as const) {
+    assert.equal(QUEUES[name].status, 'live');
+    assert.equal(QUEUES[name].shed, 'protected');
+    assert.equal(QUEUES[name].band, 'safety');
+    assert.equal(deadLetterAlertThreshold(name), 1);
+  }
 });
 
 test('liveQueues() is sorted by priority descending — the order pg-boss drains in', () => {
@@ -183,6 +206,26 @@ test('§3: keys are built from ids, never from the payload’s content', () => {
 test('utcDay is a calendar day, and the same one either side of a local midnight', () => {
   assert.equal(utcDay(new Date('2026-08-27T23:59:59.999Z')), '2026-08-27');
   assert.equal(utcDay(new Date('2026-08-28T00:00:00.000Z')), '2026-08-28');
+});
+
+test('an incident fan-out key names the LEG, not just the incident', () => {
+  /*
+    An S4 report fans out to both queues at once. A key that named only the
+    incident would let the guardian alert and the on-call page collide on the one
+    rung where doc 31 §4.3 requires both — and pg-boss would refuse the second
+    enqueue as a duplicate, silently.
+  */
+  assert.notEqual(
+    incidentFanOutKey('guardian', 'incident_1'),
+    incidentFanOutKey('review', 'incident_1'),
+  );
+  assert.equal(incidentFanOutKey('guardian', 'incident_1'), 'incident:guardian:incident_1');
+  // Deterministic, and derived from the id rather than from the row's content —
+  // §3: hashing a payload turns "sent once" into "sent once per schema version".
+  assert.equal(
+    incidentFanOutKey('review', 'incident_2'),
+    incidentFanOutKey('review', 'incident_2'),
+  );
 });
 
 test('§6: the revisit trigger needs a SUSTAINED rate, or any latency breach', () => {

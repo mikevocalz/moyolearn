@@ -9,7 +9,8 @@
 // types — CLAUDE.md §Types: derived, never hand-written.
 //
 // THE `status` FIELD IS THE POINT OF THIS FILE. Doc 12 §6 asks for fourteen
-// queues; three of them have real work today. Declaring the other eleven with
+// queues; five of them have real work today — the three original ones plus doc
+// 31 §4.3's two safety fan-outs. Declaring the other nine with
 // `status: 'declared'` and refusing to register a worker for them is what keeps
 // the topology honest in both directions: a reader can see the whole ladder, and
 // nothing pretends `payroll.transfer.send` is running when Stripe Connect does
@@ -93,13 +94,21 @@ export const QUEUES = {
     retryLimit: 10,
     retryDelay: 15,
     shed: 'protected',
-    status: 'declared',
-    // jobs.md §3.1: `safetyEvents` does not exist, so the queue has a
-    // `singletonKey` and no natural key behind it. Registering a worker that
-    // delivers guardian alerts with no durable dedupe, and no delivery path in
-    // `packages/safety/src/crisis.ts` besides, would be worse than not having
-    // the queue: it would make the alert look shipped.
-    blockedOn: 'safetyEvents collection + a delivery path (jobs.md §8.4)',
+    /*
+      LIVE as of doc 31 §4.3. It was declared-only because jobs.md §3.1 named
+      the missing half exactly: "`safetyEvents` does not exist, so the queue has
+      a `singletonKey` and no natural key behind it" — a guardian alert with no
+      durable dedupe would tell a parent the same thing twice, and registering it
+      anyway "would make the alert look shipped".
+
+      Both halves are closed now. `safetyEvents` shipped, and doc 31 §4's
+      `incidentReports` gives the queue the natural key it lacked: the payload is
+      an `incidentId`, and the handler's own no-op condition is
+      `guardianNotifiedAt IS NOT NULL` on that row. A replayed job finds the
+      notification already recorded and completes.
+    */
+    status: 'live',
+    blockedOn: null,
   },
   'safety.review.enqueue': {
     priority: PRIORITY.safety,
@@ -107,8 +116,15 @@ export const QUEUES = {
     retryLimit: 10,
     retryDelay: 15,
     shed: 'protected',
-    status: 'declared',
-    blockedOn: 'safetyEvents collection + a human review surface (jobs.md §8.4)',
+    /*
+      LIVE as of doc 31 §4.3's S4 rung: "on-call human paged, 2h SLA, session
+      stays in safe mode until a human clears it." The review surface it was
+      blocked on is the incident's own triage lifecycle — an S4 report lands in
+      the queue as `status: 'new'` with a two-hour `slaDueAt`, which is what a
+      human is being paged AT.
+    */
+    status: 'live',
+    blockedOn: null,
   },
   'billing.webhook.replay': {
     priority: PRIORITY.webhook,
@@ -226,7 +242,7 @@ export const QUEUES = {
 /** Every queue name in the committed topology, live or not. */
 export type QueueName = keyof typeof QUEUES;
 
-/** The three that have a producer and a handler today. */
+/** The five that have a producer and a handler today. */
 export type LiveQueueName = {
   [K in QueueName]: (typeof QUEUES)[K]['status'] extends 'live' ? K : never;
 }[QueueName];
@@ -246,7 +262,7 @@ export function liveQueues(): LiveQueueName[] {
   );
 }
 
-/** The eleven that are part of the topology and deliberately unregistered. */
+/** The nine that are part of the topology and deliberately unregistered. */
 export function declaredQueues(): QueueName[] {
   return NAMES.filter((name) => QUEUES[name].status === 'declared');
 }

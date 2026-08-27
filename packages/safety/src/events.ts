@@ -22,6 +22,7 @@
 
 import { randomUUID } from 'node:crypto';
 import type { PlaneLog, PlaneOutcome } from './plane.ts';
+import { tierFor, tierIsGuardianVisible, type SafetyTier } from './ladder.ts';
 import type { SafetyLayer } from './unavailable.ts';
 
 /**
@@ -72,6 +73,19 @@ export const PAUSE_STATUS_MINUTES = 15;
 export const SAFETY_EVENT_CATEGORIES = ['crisis', 'safety', 'boundary', 'paused'] as const;
 export type SafetyEventCategory = (typeof SAFETY_EVENT_CATEGORIES)[number];
 
+/*
+  THE CATEGORY IS NO LONGER THE SEVERITY, and that is doc 31 §3.2 arriving.
+
+  It used to be both — `guardianVisible` was `category !== 'boundary'`, so "who
+  is this about" and "how bad is it" were one field wearing one name. Doc 31
+  fixes the severity taxonomy as the S1–S4 ladder, and the ladder can express
+  things this list cannot: a rung a child reaches by REPEATING, an SLA, a paging
+  rule. So `category` keeps the question it was always answering well — whose
+  turn was this about, and was anybody's turn involved at all (`paused`) — and
+  `tier` in `ladder.ts` answers the rest. `tierFor` is the migration between
+  them and lives beside the ladder, not here.
+*/
+
 /** What the plane did about the turn. Mirrors `PlaneOutcome['kind']`, plus the pause. */
 export const SAFETY_EVENT_DISPOSITIONS = ['crisis', 'blocked', 'redirect', 'paused'] as const;
 export type SafetyEventDisposition = (typeof SAFETY_EVENT_DISPOSITIONS)[number];
@@ -84,6 +98,17 @@ export interface SafetyEvent {
   /** The conversation this turn belonged to, when the caller holds one. */
   sessionId: string | null;
   category: SafetyEventCategory;
+  /**
+   * Doc 31 §3.2's rung, and the field that now decides what happens next —
+   * whether a guardian is told, whether §4 files an Incident Report, and what
+   * clock starts when it does.
+   *
+   * `null` ONLY for `paused`. Doc 12 §5's fail-closed stop is a fact about a
+   * classifier that could not answer, and there is no severity of child
+   * behaviour to assign to it; `tierFor` returns null rather than inventing an
+   * S1, because S1 is a judgement about a person and nobody was judged.
+   */
+  tier: SafetyTier | null;
   disposition: SafetyEventDisposition;
   /** The layer that stopped the turn, named as `PlaneLog.layer` names it. */
   stoppedAt: string;
@@ -147,18 +172,47 @@ export function safetyEventFor(
   if (outcome.kind === 'reply' || outcome.kind === 'refused') return null;
 
   const category = categoryFor(outcome, trace);
+  const tier = tierFor(category);
   return {
     eventId: randomUUID(),
     learnerId: identity.learnerId,
     sessionId: identity.sessionId,
     category,
+    tier,
     disposition: outcome.kind,
     stoppedAt: lastLayer(trace),
     trace: [...trace],
-    guardianVisible: category !== 'boundary',
+    /*
+      Read off the ladder now, not off the category.
+
+      It answers identically today — `boundary` maps to S1 and S1 does not
+      notify — which is the point: doc 31's taxonomy replaces the old one
+      without silently starting or stopping one notification to one parent. What
+      changes is that the rule is now stated once, on the rung, where §4.3's
+      fan-out and §5.2's guardian view read it from too.
+    */
+    guardianVisible: tierIsGuardianVisible(tier),
     occurredAt: occurredAt.toISOString(),
     expiresAt: safetyEventExpiry(occurredAt),
   };
+}
+
+/**
+ * The same event, re-judged after doc 31 §3.2's rolling-window escalation.
+ *
+ * Escalation needs the learner's RECENT HISTORY, which is a query, and this
+ * package holds no store — so the climb happens at the service boundary where
+ * the priors are already in hand and lands back here. Returning a new event
+ * rather than mutating one keeps the record append-only in the same sense the
+ * collection does: the row that reaches the database is judged once, by this
+ * function, with everything that decides it in one frame.
+ *
+ * `guardianVisible` is re-derived because that is the entire consequence of an
+ * escalation: an S2 that becomes S3 is a turn a parent is now told about.
+ */
+export function escalatedSafetyEvent(event: SafetyEvent, tier: SafetyTier): SafetyEvent {
+  if (tier === event.tier) return event;
+  return { ...event, tier, guardianVisible: tierIsGuardianVisible(tier) };
 }
 
 /**
@@ -179,6 +233,8 @@ export function pausedSafetyEvent(
     learnerId: identity.learnerId,
     sessionId: identity.sessionId,
     category: 'paused',
+    // Not a rung. Nothing about a timed-out classifier is a fact about a child.
+    tier: null,
     disposition: 'paused',
     stoppedAt: layer,
     trace: [{ layer, detail: 'unavailable' }],
@@ -213,6 +269,14 @@ export function externalRefusalSafetyEvent(
     learnerId: identity.learnerId,
     sessionId: identity.sessionId,
     category: 'safety',
+    /*
+      S3, from `tierFor('safety')`, and stated literally rather than derived so
+      the one row on this path that a provider's classifier produced cannot
+      quietly change rung when the mapping does. A refusal reached outside our
+      plane is an incident-filing event: something crossed a line, the guardian
+      is told, and 48 hours start.
+    */
+    tier: tierFor('safety'),
     disposition: 'blocked',
     stoppedAt: source,
     trace: [{ layer: source, detail: detail ?? 'unspecified' }],

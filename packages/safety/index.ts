@@ -21,9 +21,11 @@ export type { FirewallRule, FirewallRuleId, FirewallVerdict, TextOrigin } from '
 export {
   crisisResponse,
   guardianAlert,
+  isFixedCrisisScript,
   isPedagogicallyStorable,
   CRISIS_RESOURCES,
   CRISIS_STEPS,
+  S4_SCRIPTS,
 } from './src/crisis.ts';
 export type { CrisisResource, CrisisResponse, CrisisStep, GuardianAlert } from './src/crisis.ts';
 export { probesFor, runPassed, summariseRun, PROBES, RED_TEAM_VERSION } from './src/red-team.ts';
@@ -31,6 +33,7 @@ export type { Probe, ProbeFamily, RedTeamRun } from './src/red-team.ts';
 export { safetyLayer, safetyLayerSync, SafetyLayerUnavailable, SAFETY_LAYERS } from './src/unavailable.ts';
 export type { SafetyLayer } from './src/unavailable.ts';
 export {
+  escalatedSafetyEvent,
   externalRefusalSafetyEvent,
   isTutoringPaused,
   pausedSafetyEvent,
@@ -42,3 +45,50 @@ export {
   SAFETY_EVENT_TTL_DAYS,
 } from './src/events.ts';
 export type { SafetyEvent, SafetyEventCategory, SafetyEventDisposition } from './src/events.ts';
+
+// Doc 31 §3.2's ladder. The tier is what decides notification, incident filing
+// and SLA now; `category` above answers a narrower question and says so.
+export {
+  escalate,
+  incidentCategoryFor,
+  slaDueAt,
+  tierAtLeast,
+  tierFor,
+  tierIsGuardianVisible,
+  worstTier,
+  INCIDENT_CATEGORIES,
+  LADDER,
+  REPETITION_THRESHOLD,
+  REPETITION_WINDOW_MINUTES,
+  SAFETY_TIERS,
+} from './src/ladder.ts';
+export type { IncidentCategory, LadderRung, PriorRung, SafetyTier } from './src/ladder.ts';
+
+// Doc 31 §4. The report shape, its lifecycle, and the legal-hold marker the
+// retention sweep refuses to cross.
+export {
+  acknowledgeIncident,
+  appendTimeline,
+  guardianVisibleByDefault,
+  incidentExpiry,
+  incidentFromSafetyEvent,
+  incidentFromSubmission,
+  isHeld,
+  markFannedOut,
+  slaBreached,
+  transitionIncident,
+  INCIDENT_SOURCES,
+  INCIDENT_STATUSES,
+  INCIDENT_TTL_DAYS,
+  LEGAL_HOLD_REASON,
+  REPORTER_ROLES,
+} from './src/incidents.ts';
+export type {
+  IncidentReport,
+  IncidentSource,
+  IncidentStatus,
+  IncidentTimelineEntry,
+  ReporterRole,
+  SubmittedIncident,
+  TranscriptExcerptRef,
+} from './src/incidents.ts';

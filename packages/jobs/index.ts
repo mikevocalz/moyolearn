@@ -9,7 +9,7 @@
 // top. That is why `topology.ts`, `keys.ts` and `shed.ts` are covered by tests
 // that need no connection, and `boss.ts`, `enqueue.ts` and `drain.ts` are not.
 //
-// ELEVEN OF THE FOURTEEN QUEUES ARE DECLARED AND DELIBERATELY UNREGISTERED, and
+// NINE OF THE FOURTEEN QUEUES ARE DECLARED AND DELIBERATELY UNREGISTERED, and
 // the package says so in three places rather than one: `QueueSpec.status`,
 // `QueueSpec.blockedOn`, and `declaredQueues()`. Nothing here creates a queue in
 // pg-boss that has no producer and no handler — an empty queue with no worker
@@ -40,7 +40,7 @@ export type {
   ShedOrder,
 } from './src/topology.ts';
 
-export { distillKey, sweepKey, utcDay } from './src/keys.ts';
+export { distillKey, incidentFanOutKey, sweepKey, utcDay } from './src/keys.ts';
 export type { JobPayload, JobPayloads } from './src/keys.ts';
 
 export {

@@ -26,13 +26,16 @@ import type { SafetyEvent as SafetyEventRow } from '@acme/payload';
   that is aliased: this file is a repository, and its subject is the object the
   rest of the tree speaks in.
 */
+import { REPETITION_WINDOW_MINUTES } from '@acme/app/server';
 import type {
   LoadGuardianSafetyEvents,
   PlaneLog,
   ProtectedCtx,
   RecordSafetyEvent,
   SafetyEvent,
+  SafetyTier,
 } from '@acme/app/server';
+import { escalateAndFile } from './incident.service';
 import { reportRouteError } from './report-error';
 
 /**
@@ -46,6 +49,15 @@ const FEED_LIMIT = 50;
 
 /** Two guardians per learner is normal (doc 06 §2); a whole classroom is not. */
 const WARDS_LIMIT = 50;
+
+/**
+ * How many recent rungs the escalation reads.
+ *
+ * `REPETITION_THRESHOLD` is three, so three would be arithmetically sufficient —
+ * and would silently stop being sufficient the day somebody raises the threshold.
+ * Twenty is a bound on a pathological hour rather than on the rule.
+ */
+const RUNGS_LIMIT = 20;
 
 async function withPayload<T>(
   fn: (payload: Awaited<ReturnType<typeof getPayload>>) => Promise<T>,
@@ -72,8 +84,25 @@ async function withPayload<T>(
  * the absence of a row and the absence of an incident look the same.
  */
 export const recordSafetyEvent: RecordSafetyEvent = (_ctx: ProtectedCtx, event: SafetyEvent) => {
-  void withPayload((payload) =>
-    payload.create({
+  /*
+    DOC 31 §3.2's CLIMB HAPPENS BEFORE THE INSERT, and it has to.
+
+    `safetyEvents` has no update path — a verdict that can be edited is not a
+    record — so an S2 that the rolling window turns into an S3 must be JUDGED
+    before the row exists, or it never can be. `escalateAndFile` reads the
+    learner's recent rungs, returns the event at its final tier, and files §4's
+    Incident Report on the way past when the tier earns one.
+
+    It is inside the detached chain rather than in front of it for the reason
+    this port returns `void` at all: an awaited read that rejected would surface
+    at `coach.service.ts`'s catch as an ordinary error, which is `unavailable` →
+    `retry`, so a slow database would hand a child a retry button into the layer
+    that had just blocked them. A failure here loses the escalation and files the
+    event at its unescalated rung, which is the safe direction to fail.
+  */
+  void withPayload(async (payload) => {
+    const judged = await escalateAndFile(event);
+    return payload.create({
       collection: 'safetyEvents',
       /*
         Spread field by field rather than cast, for the reason `saveTranscript`
@@ -82,22 +111,25 @@ export const recordSafetyEvent: RecordSafetyEvent = (_ctx: ProtectedCtx, event: 
         alongside every future field the two shapes stop agreeing on.
       */
       data: {
-        eventId: event.eventId,
-        learnerAuthId: event.learnerId,
-        sessionId: event.sessionId,
-        category: event.category,
-        disposition: event.disposition,
-        stoppedAt: event.stoppedAt,
-        trace: [...event.trace],
-        guardianVisible: event.guardianVisible,
-        occurredAt: event.occurredAt,
-        expiresAt: event.expiresAt,
+        eventId: judged.eventId,
+        learnerAuthId: judged.learnerId,
+        sessionId: judged.sessionId,
+        category: judged.category,
+        // Doc 31 §3.2's rung, at its FINAL value — after the rolling-window
+        // climb, which is the only value anybody is ever shown.
+        tier: judged.tier,
+        disposition: judged.disposition,
+        stoppedAt: judged.stoppedAt,
+        trace: [...judged.trace],
+        guardianVisible: judged.guardianVisible,
+        occurredAt: judged.occurredAt,
+        expiresAt: judged.expiresAt,
       },
-    }),
+    });
     // `Error` rather than the `unknown` a rejection is typed as, for the reason
     // `reportRouteError` gives about its own signature: the driver rejects with
     // an Error, and nothing untyped should cross into the reporter.
-  ).catch((error: Error) => {
+  }).catch((error: Error) => {
     /*
       The IDS and the verdict, never the trace and never the turn. A log line is
       the least protected surface in the system, so what goes in it is what an
@@ -120,6 +152,14 @@ function eventFromDoc(doc: SafetyEventRow): SafetyEvent {
     learnerId: doc.learnerAuthId,
     sessionId: doc.sessionId ?? null,
     category: doc.category,
+    /*
+      Doc 31 §3.2's rung, read rather than recomputed. A row written before the
+      column existed answers `null`, which is the same value the pause carries
+      and which `tierIsGuardianVisible` treats as visible — so an un-tiered
+      historical row lands in front of a guardian rather than disappearing from
+      their view, which is the right direction for a field nobody has graded.
+    */
+    tier: doc.tier ?? null,
     disposition: doc.disposition,
     stoppedAt: doc.stoppedAt,
     /*
@@ -150,6 +190,45 @@ function eventFromDoc(doc: SafetyEventRow): SafetyEvent {
  * completed doc 06 §2's ladder, and a `revoked` one is a household that has
  * changed. Neither is somebody to hand a child's safety history to.
  */
+/**
+ * Doc 31 §3.2's priors — the learner's recent rungs, for the rolling-window
+ * escalation.
+ *
+ * LEARNER-SCOPED AND NOT SESSION-SCOPED, because "repeated profanity after
+ * redirect" is a fact about a child in an hour, and a child who closes the tab
+ * and reopens it has not started again. It reads the events store rather than
+ * the incident store for the same reason: S1 and S2 never become incidents, so
+ * the only place the climb's own history lives is here.
+ *
+ * `tier IS NOT NULL` excludes the `paused` rows, which are facts about a
+ * classifier rather than about anybody's conduct and must not push a child up a
+ * ladder because a layer was down.
+ */
+export async function loadRecentRungs(
+  learnerId: string,
+  now: Date,
+): Promise<readonly { tier: SafetyTier; at: string }[]> {
+  const floor = new Date(now.getTime() - REPETITION_WINDOW_MINUTES * 60_000).toISOString();
+  return withPayload(async (payload) => {
+    const { docs } = await payload.find({
+      collection: 'safetyEvents',
+      where: {
+        learnerAuthId: { equals: learnerId },
+        occurredAt: { greater_than_equal: floor },
+        tier: { exists: true },
+      },
+      sort: '-occurredAt',
+      limit: RUNGS_LIMIT,
+    });
+
+    return docs.flatMap((doc) =>
+      doc.tier === null || doc.tier === undefined
+        ? []
+        : [{ tier: doc.tier, at: doc.occurredAt }],
+    );
+  });
+}
+
 export const loadGuardianSafetyEvents: LoadGuardianSafetyEvents = async (ctx) => {
   return withPayload(async (payload) => {
     const { docs: wards } = await payload.find({

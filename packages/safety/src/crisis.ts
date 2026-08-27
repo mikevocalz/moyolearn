@@ -45,6 +45,39 @@ export const CRISIS_STEPS = [
 ] as const;
 export type CrisisStep = (typeof CRISIS_STEPS)[number];
 
+/**
+ * THE S4 SCRIPTS. Doc 31 §3.2's hardest sentence — "**Never a generated response
+ * in this tier**" — is this constant plus the fact that nothing else can reach
+ * the field it fills.
+ *
+ * Two registers, because a message that reads right to a sixteen-year-old reads
+ * as cold to an eight-year-old, and vice versa. Neither asks a question: a child
+ * in crisis is not owed another prompt from a machine, they are owed a person.
+ *
+ * Frozen, so a caller cannot edit the published protocol in place — SB 243
+ * requires the protocol be MAINTAINED AND PUBLISHED, and a string somebody can
+ * reassign at runtime is neither.
+ */
+export const S4_SCRIPTS = Object.freeze({
+  young:
+    'I’m stopping our work here. What you said matters, and a grown-up who can really help should hear it. Someone is ready to talk to you right now, and I’m telling your grown-up too.',
+  older:
+    'I’m stopping our session here. What you’ve said matters and it deserves a person, not a tutor. Someone is available right now, and I’ve let your parent or guardian know.',
+} as const satisfies Record<'young' | 'older', string>);
+
+/**
+ * Whether a string is one of the published scripts, character for character.
+ *
+ * Exported so the rule can be ASSERTED rather than trusted: the regression suite
+ * runs every S4 trigger through the plane and checks the text a child would see
+ * against this predicate, which no model output can satisfy by accident. A
+ * paraphrase fails it, and a paraphrase is exactly what "never a generated
+ * response" forbids — the failure mode is not a wrong answer, it is a
+ * plausible-sounding one nobody wrote.
+ */
+export const isFixedCrisisScript = (text: string): boolean =>
+  Object.values(S4_SCRIPTS).includes(text as (typeof S4_SCRIPTS)[keyof typeof S4_SCRIPTS]);
+
 export interface CrisisResponse {
   /** Tutoring is over for this session. Not paused-and-resumed into fractions. */
   sessionEnded: true;
@@ -56,25 +89,40 @@ export interface CrisisResponse {
   /** Doc 07 §3 layer 7: never enters the pedagogical student model. */
   storeInStudentModel: false;
   steps: readonly CrisisStep[];
+  /**
+   * Doc 31 §3.2 S4 and §4.3: the session is in safe mode and STAYS there until a
+   * human clears it.
+   *
+   * A literal rather than a boolean, because `false` is not a state this type
+   * ever holds and a boolean invites one — a `safeMode: false` crisis response
+   * would be a contradiction the compiler was happy with. The clearer is named
+   * in the value: no code path in this repository ends safe mode, because ending
+   * it is a human's decision (§4.3).
+   */
+  safeMode: 'until-human-clears';
+  /**
+   * That the message came from `S4_SCRIPTS` rather than from a model.
+   *
+   * Carried on the response so a consumer that never imported the predicate
+   * still cannot mistake a generated string for the protocol, and so the field
+   * shows up in the frame a reviewer reads.
+   */
+  scripted: true;
 }
 
 /**
- * Two registers, because a message that reads right to a sixteen-year-old reads
- * as cold to an eight-year-old, and vice versa. Neither asks a question: a
- * child in crisis is not owed another prompt from a machine, they are owed a
- * person.
+ * The protocol, as a value. The message is LOOKED UP, never composed.
  */
 export function crisisResponse(gradeBand: 'young' | 'older' = 'older'): CrisisResponse {
   return {
     sessionEnded: true,
-    message:
-      gradeBand === 'young'
-        ? 'I’m stopping our work here. What you said matters, and a grown-up who can really help should hear it. Someone is ready to talk to you right now, and I’m telling your grown-up too.'
-        : 'I’m stopping our session here. What you’ve said matters and it deserves a person, not a tutor. Someone is available right now, and I’ve let your parent or guardian know.',
+    message: S4_SCRIPTS[gradeBand],
     resources: CRISIS_RESOURCES,
     alertGuardian: true,
     storeInStudentModel: false,
     steps: CRISIS_STEPS,
+    safeMode: 'until-human-clears',
+    scripted: true,
   };
 }
 

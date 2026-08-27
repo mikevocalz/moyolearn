@@ -96,6 +96,27 @@ export const SafetyEvents: CollectionConfig = {
       options: ['crisis', 'safety', 'boundary', 'paused'],
     },
     {
+      /*
+        Doc 31 §3.2's ladder, and the field that now decides what happens next.
+
+        It REPLACES `category` as the severity dimension rather than sitting
+        beside it: `guardianVisible` below used to be `category !== 'boundary'`
+        and is now read off the rung, which answers identically for every row
+        that exists — the migration in `incident_reports_additive.sql` backfills
+        crisis→S4, safety→S3, boundary→S1 for exactly that reason. What the
+        ladder can express and the category could not is a rung a child reaches
+        by REPEATING (§3.2's rolling window), an SLA, and a paging rule.
+
+        NULLABLE, and the null is load-bearing: doc 12 §5's `paused` row is a
+        fact about a classifier that could not answer, and there is no severity
+        of child behaviour to assign to it.
+      */
+      name: 'tier',
+      type: 'select',
+      index: true,
+      options: ['S1', 'S2', 'S3', 'S4'],
+    },
+    {
       name: 'disposition',
       type: 'select',
       required: true,

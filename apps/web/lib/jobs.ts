@@ -1,4 +1,4 @@
-// The job runner's composition root — where the three live queues meet the work
+// The job runner's composition root — where the five live queues meet the work
 // they actually do.
 //
 // `@acme/jobs` holds the topology, the keys, the shed order and the drain, and
@@ -24,6 +24,7 @@ import {
   distillKey,
   drainQueues,
   enqueue,
+  incidentFanOutKey,
   sweepKey,
   utcDay,
   type DrainOptions,
@@ -32,9 +33,11 @@ import {
   type JobsReporter,
   type LiveQueueName,
 } from '@acme/jobs';
+import { markFannedOut } from '@acme/app/server';
 import { POST as retentionSweep } from '@/app/api/retention/sweep/route';
 import { POST as mediaSweep } from '@/app/api/media/sweep/route';
 import { distillTranscript } from './distill.service';
+import { loadIncident, saveIncident } from './incident.repository';
 import { reportRouteError } from './report-error';
 
 /**
@@ -102,6 +105,43 @@ export function jobHandlers(): JobHandlers {
     },
     'edu.distill': async (payload) => {
       await distillTranscript(payload.transcriptId);
+    },
+    /*
+      Doc 31 §4.3's two fan-out legs.
+
+      BOTH ARE IDEMPOTENT ON A NATURAL KEY, which is what `docs/design/jobs.md`
+      §3 requires beside the `singletonKey` and what these queues lacked for as
+      long as they sat `declared`: `markFannedOut` returns the report UNCHANGED
+      when the marker is already set, so a pg-boss retry, a dead-letter replay
+      and a hand-run drain between them produce one notification and one timeline
+      line. A guardian alert without that is a queue that tells a parent their
+      child is in crisis twice.
+
+      A MISSING ROW COMPLETES, it does not fail. §4.1's ids-only payload means a
+      job outlives the record it names — the retention sweep may have taken it,
+      and a handler that threw on absence would retry ten times and dead-letter
+      into a JOB-3 page about a row that was correctly deleted.
+
+      WHAT IS DELIBERATELY NOT HERE IS THE DELIVERY. `docs/design/jobs.md` §8.5
+      records that there is no notification sender and no `notificationsSent`
+      store in this repository, and inventing an email call here would be the
+      same mistake the `notify.*` queues are still declared-only to avoid. What
+      these handlers do is make the obligation DURABLE and VISIBLE: the marker
+      and the timeline entry are what a guardian's screen and the §5.3 queue read,
+      and they are what an auditor is shown. The channel is named in the timeline
+      note so the day a sender lands, it lands in one place.
+    */
+    'safety.alert.guardian': async (payload) => {
+      const report = await loadIncident(payload.incidentId);
+      if (report === null) return;
+      const notified = markFannedOut(report, 'guardian', 'in-app');
+      if (notified !== report) await saveIncident(notified);
+    },
+    'safety.review.enqueue': async (payload) => {
+      const report = await loadIncident(payload.incidentId);
+      if (report === null) return;
+      const paged = markFannedOut(report, 'review', 'on-call');
+      if (paged !== report) await saveIncident(paged);
     },
   };
 }
@@ -173,4 +213,29 @@ export function enqueueSweep(
  */
 export function enqueueDistillation(transcriptId: string): Promise<string | null> {
   return enqueue('edu.distill', { transcriptId }, distillKey(transcriptId));
+}
+
+/**
+ * One leg of doc 31 §4.3's incident fan-out.
+ *
+ * `priority` and `deadLetter` are NOT arguments — `enqueue` reads them off the
+ * topology, where both legs sit at `PRIORITY.safety` with `shed: 'protected'`.
+ * That is the whole mechanism behind doc 12 §7's "reminders before pay runs,
+ * NEVER safety alerts": `shedPlan` walks `shedOrder()`, a protected queue is not
+ * in that list at any depth, and there is no argument a caller could pass here
+ * that would put one there.
+ *
+ * Returns `null` when the leg is already queued or running, which is the dedupe
+ * working rather than a failure — see `enqueue`'s own comment. Callers that log
+ * should say "already queued".
+ */
+export function enqueueIncidentFanOut(
+  leg: 'guardian' | 'review',
+  incidentId: string,
+): Promise<string | null> {
+  return enqueue(
+    leg === 'guardian' ? 'safety.alert.guardian' : 'safety.review.enqueue',
+    { incidentId },
+    incidentFanOutKey(leg, incidentId),
+  );
 }

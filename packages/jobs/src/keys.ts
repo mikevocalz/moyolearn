@@ -45,6 +45,18 @@ export interface JobPayloads {
    * keeps identity out of a client-reachable value (CLAUDE.md §The block).
    */
   readonly 'edu.distill': { readonly transcriptId: string };
+  /**
+   * Doc 31 §4.3's fan-out, both legs. `incidentReports.incidentId`, and nothing
+   * else — the handler loads the row.
+   *
+   * The ids-only rule bites hardest here, which is why it is stated again: an
+   * incident is the one record in this system whose SUMMARY is a sentence about
+   * a child's worst day. A payload carrying it would be a copy of that sentence
+   * in `jobs.job`, outside the retention sweep, outside the legal-hold predicate,
+   * and outside the erasure cascade — three guarantees broken by one convenience.
+   */
+  readonly 'safety.alert.guardian': { readonly incidentId: string };
+  readonly 'safety.review.enqueue': { readonly incidentId: string };
 }
 
 export type JobPayload<Q extends LiveQueueName> = JobPayloads[Q];
@@ -86,4 +98,21 @@ export function sweepKey(queue: 'transcripts' | 'media', day: string): string {
  */
 export function distillKey(transcriptId: string): string {
   return transcriptId;
+}
+
+/**
+ * `singletonKey` for one leg of one incident's fan-out (doc 31 §4.3).
+ *
+ * The LEG is part of the key, not just the incident: an S4 report fans out to
+ * both queues at once, and a key that named only the incident would let the
+ * guardian alert and the human page collide on the one rung where both are
+ * required. Two queues, two keys, one incident.
+ *
+ * The natural key behind it is `incidentReports.guardianNotifiedAt` /
+ * `.reviewPagedAt` — `docs/design/jobs.md` §3 wants both mechanisms, because
+ * `singletonKey` stops protecting the moment the first job COMPLETES and a
+ * dead-letter replay happens long after that.
+ */
+export function incidentFanOutKey(leg: 'guardian' | 'review', incidentId: string): string {
+  return `incident:${leg}:${incidentId}`;
 }

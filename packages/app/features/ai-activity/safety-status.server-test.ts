@@ -109,6 +109,12 @@ describe('the guardian safety status', () => {
           alertGuardian: true,
           storeInStudentModel: false,
           steps: [],
+          // Doc 31 §3.2's S4 tier: the response is a looked-up script and the
+          // session stays in safe mode until a human clears it. Both are on the
+          // fixture because both are on the type — a crisis frame a test can
+          // build without them is a frame that could reach a child without them.
+          safeMode: 'until-human-clears',
+          scripted: true,
         },
         storeInStudentModel: false,
       },
