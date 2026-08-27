@@ -108,10 +108,34 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
       // one — the child's own work outranks anything the app would have picked.
       if (fromImages[0] !== undefined && !problem) setProblem(fromImages[0]);
 
+      /*
+        SPEECH IS A TURN, and this is where it stopped being one.
+
+        The turn was built from the photos' OCR and the typed text, and nothing
+        else. A voice note carried a transcript — `transcribe()` produced one and
+        `setAttachmentTranscript` stored it — and then the send path did not read
+        it. So a child who answered out loud sent an EMPTY turn, and the tutor,
+        handed nothing, asked its question again. Every part of the voice feature
+        worked except the one line that puts it in front of the model.
+
+        Awaited, not read optimistically. Transcription is deliberately deferred
+        so the note appears in the tray the instant the child stops speaking, and
+        the first Whisper run downloads a model — so on a fast send the field is
+        still empty. Awaiting here is the same shape the photos already use, and
+        it removes the race rather than narrowing it.
+      */
+      const spoken = await Promise.all(
+        staged
+          .filter((a) => a.kind === 'audio')
+          .map(async (a) => a.transcript ?? (await transcribe(a.uri))),
+      );
+      const fromAudio = spoken.filter((t) => t.trim().length > 0);
+
       const parts = [
         ...fromImages.map((text, i) =>
           fromImages.length > 1 ? `Problem ${i + 1}:\n${text}` : text,
         ),
+        ...fromAudio,
         ...(trimmed ? [trimmed] : []),
       ];
 
@@ -122,7 +146,27 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
         result would be showing the app's reading of their homework rather than
         their homework.
       */
-      say({ role: 'learner', text: trimmed, attachments: staged });
+      /*
+        Carrying the transcript we just awaited, not the copy captured before it
+        existed. `staged` was read at the top of this function — for a voice note
+        sent quickly that snapshot predates transcription, so the bubble would
+        render a player with no words under it and a guardian reviewing the
+        session would find a turn they cannot read. Doc 07's premise is that an
+        adult can see what a child said to the model.
+      */
+      const spokenById = new Map(
+        staged
+          .filter((a) => a.kind === 'audio')
+          .map((a, i) => [a.id, spoken[i] ?? ''] as const),
+      );
+      const said = staged.map((a) => {
+        const text = spokenById.get(a.id);
+        return text !== undefined && text.length > 0 && a.transcript === undefined
+          ? { ...a, transcript: text }
+          : a;
+      });
+
+      say({ role: 'learner', text: trimmed, attachments: said });
 
       /*
         Queued, not uploaded inline.
@@ -150,7 +194,7 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
 
       const turn = parts.join('\n\n');
       void coach(turn);
-      void recordAttempt(problem ?? fromImages[0] ?? '', trimmed, hintDepth);
+      void recordAttempt(problem ?? fromImages[0] ?? '', trimmed || fromAudio.join(' '), hintDepth);
     })();
   };
 
