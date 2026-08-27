@@ -313,3 +313,10 @@ export {
   toSubscriptionState,
   type SubscriptionRow,
 } from './subscription-reader.ts';
+
+/*
+  The role read lives beside the entitlement read for the identical reason: it
+  reads the auth instance's own `member` table, and the barrel must never carry
+  it into a client bundle.
+*/
+export { readMembershipRole } from './membership-reader.ts';

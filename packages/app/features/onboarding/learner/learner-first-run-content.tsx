@@ -18,8 +18,21 @@
 // SOT: docs/pack/06-auth-onboarding-spec.md §5
 // SOT-KEYWORDS: onboarding learner s22 first-run hello subjects tiny win screen
 
+import { useStore } from 'zustand';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
-import { Avatar, Button, Dial, FadeIn, Heading, MessageBubble, PressScale, ScaleIn, Text } from '@acme/ui';
+import {
+  Avatar,
+  Button,
+  Dial,
+  FadeIn,
+  Heading,
+  MessageBubble,
+  PressScale,
+  ScaleIn,
+  Text,
+  AudioPlayer,
+  useInstanceStore,
+} from '@acme/ui';
 import { useLearnerFirstRun } from './store';
 import {
   canAdvance,
@@ -27,12 +40,42 @@ import {
   previousStep,
   stepProgress,
   winItem,
+  AVATAR_CHOICES,
   MAX_SUBJECTS,
   SUBJECT_TILES,
 } from './steps';
 
+const API_URL =
+  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
+
+type GreetingAudio = { phase: 'idle' } | { phase: 'loading' } | { phase: 'ready'; uri: string } | { phase: 'silent' };
+
 export function LearnerFirstRunContent({ onDone }: { onDone: () => void }) {
-  const { step, draft, setStep, toggle } = useLearnerFirstRun();
+  const { step, draft, setStep, toggle, pickAvatar } = useLearnerFirstRun();
+  /*
+    Doc 32 Path B: the greeting is a BAKED piece — cached audio behind a signed
+    URL, never a live TTS call in front of a waiting child. Fetched on tap, and
+    every failure is 'silent': the same words are already on screen, so a miss
+    costs nothing and reports nothing.
+  */
+  const greetingStore = useInstanceStore<GreetingAudio>(() => ({ phase: 'idle' }));
+  const greeting = useStore(greetingStore);
+  const hearGreeting = async () => {
+    greetingStore.setState({ phase: 'loading' });
+    try {
+      const res = await fetch(`${API_URL}/api/tutor/voice/baked/greeting-first`, {
+        credentials: 'include',
+      });
+      if (!res.ok || res.status === 204) {
+        greetingStore.setState({ phase: 'silent' });
+        return;
+      }
+      const data = (await res.json()) as { url?: string };
+      greetingStore.setState(data.url ? { phase: 'ready', uri: data.url } : { phase: 'silent' });
+    } catch {
+      greetingStore.setState({ phase: 'silent' });
+    }
+  };
   const { index, total } = stepProgress(step);
   const back = previousStep(step);
   const forward = nextStep(step);
@@ -64,6 +107,40 @@ export function LearnerFirstRunContent({ onDone }: { onDone: () => void }) {
           </View>
         </FadeIn>
 
+        {step === 'avatar' ? (
+          <Section className="gap-group">
+            <MessageBubble from="tutor">Pick your buddy, {name}! They&apos;ll learn with you.</MessageBubble>
+            {/* Curated set only (doc 30 §8.4): no camera, no library, no upload
+                path in the UI at all — one tap picks, tapping another re-picks,
+                so a mis-tap is recoverable without an undo concept. */}
+            <View className="flex-row flex-wrap gap-stack">
+              {AVATAR_CHOICES.map((choice) => {
+                const picked = draft.avatar === choice.id;
+                return (
+                  <PressScale
+                    key={choice.id}
+                    aria-label={choice.label}
+                    aria-selected={picked}
+                    onPress={() => pickAvatar(choice.id)}
+                    className={`min-h-target-young min-w-28 flex-1 items-center gap-1 rounded-card border-2 p-inset ${
+                      picked
+                        ? 'border-border bg-primary shadow-card'
+                        : 'border-border bg-surface'
+                    }`}
+                  >
+                    <TWText className="text-4xl">{choice.glyph}</TWText>
+                    <TWText
+                      className={`text-label font-semibold ${picked ? 'text-on-primary' : 'text-text'}`}
+                    >
+                      {choice.label}
+                    </TWText>
+                  </PressScale>
+                );
+              })}
+            </View>
+          </Section>
+        ) : null}
+
         {step === 'hello' ? (
           <Section className="items-center gap-group">
             {/* Replika gives the character the frame and puts one action under it.
@@ -73,6 +150,21 @@ export function LearnerFirstRunContent({ onDone }: { onDone: () => void }) {
               Hi {name}. I&apos;m Moyo, and I help you with schoolwork. Tell me what you&apos;re
               working on and we&apos;ll do one together right now.
             </MessageBubble>
+            {/* The baked greeting (doc 36 §2 · doc 32 Path B): the same words,
+                out loud, on tap. When the clip can't come back the button simply
+                goes — the text is the guarantee, the audio is the warmth. */}
+            {greeting.phase === 'ready' ? (
+              <AudioPlayer uri={greeting.uri} label="Natalie says hi" className="w-full" />
+            ) : greeting.phase === 'silent' ? null : (
+              <Button
+                size="lg"
+                variant="outline"
+                title={greeting.phase === 'loading' ? 'One sec…' : 'Hear Natalie say hi'}
+                className="min-h-target-child w-full"
+                onPress={() => void hearGreeting()}
+                disabled={greeting.phase === 'loading'}
+              />
+            )}
             <Button
               size="lg"
               title="Hi Moyo"

@@ -19,6 +19,8 @@ import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Button, FadeIn, Heading, TextField } from '@acme/ui';
 import { ConsentFlowContent } from '../consent/consent-flow-content';
 import { PaywallContent } from '../../paywall/paywall-content';
+import { HandoffCodePanel } from '../handoff/handoff-code-panel';
+import { createLearnerOnServer } from '../handoff/handoff.client';
 import { useGuardianOnboarding } from './store';
 import {
   canAdvance,
@@ -31,11 +33,64 @@ import {
 } from './steps';
 
 export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
-  const { step, draft, setStep, patch, addChild, patchChild, removeChild } = useGuardianOnboarding();
+  const {
+    step,
+    draft,
+    setStep,
+    patch,
+    addChild,
+    patchChild,
+    removeChild,
+    committing,
+    commitError,
+    setCommitting,
+    setCommitError,
+  } = useGuardianOnboarding();
   const { index, total } = stepProgress(step);
   const back = previousStep(step);
   const forward = nextStep(step);
   const ready = canAdvance(step, draft);
+
+  /**
+   * Leaving the children step is the commit point (doc 36 §2: add learner →
+   * device handoff): each drafted child becomes a real learner account, and the
+   * returned ids are what the handoff step mints codes against. A row that
+   * already carries an id (Back → Continue again) is not re-created.
+   */
+  const advance = async () => {
+    if (!forward) return;
+    if (step !== 'children') {
+      setStep(forward);
+      return;
+    }
+    setCommitting(true);
+    setCommitError(null);
+    for (let i = 0; i < draft.children.length; i++) {
+      const child = draft.children[i]!;
+      if (child.learnerAuthId || !draft.consentRecord) continue;
+      const result = await createLearnerOnServer({
+        username: child.username,
+        password: child.password,
+        displayName: child.displayName,
+        consent: {
+          method: draft.consentRecord.method,
+          scope: draft.consentRecord.scope,
+          policyVersion: draft.consentRecord.policyVersion,
+          evidenceRef: draft.consentRecord.evidenceRef,
+        },
+      });
+      if (result.kind === 'failed') {
+        setCommitting(false);
+        // H9: name the child the failure belongs to; the guardian fixes one
+        // row, not a mystery.
+        setCommitError(`${child.displayName || 'One child'}: ${result.message}`);
+        return;
+      }
+      patchChild(i, { learnerAuthId: result.learnerAuthId });
+    }
+    setCommitting(false);
+    setStep(forward);
+  };
 
   return (
     <View className="gap-7">
@@ -170,12 +225,42 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
         </Section>
       ) : null}
 
+      {step === 'handoff' ? (
+        <Section className="gap-4">
+          <Heading level={1} size="title">
+            Hand them their device
+          </Heading>
+          {/* Doc 36 §2: the code IS the child's sign-in — no email, no password,
+              nothing for a child to type but six friendly characters. */}
+          <TWText className="text-body text-text">
+            Open Moyo on your child&apos;s device and enter their code. That&apos;s their whole
+            sign-in — no email, no password.
+          </TWText>
+          {draft.children.map((child, i) => (
+            <HandoffCodePanel
+              key={i}
+              displayName={child.displayName || `Child ${i + 1}`}
+              learnerAuthId={child.learnerAuthId}
+            />
+          ))}
+          <TWText className="text-caption text-text-muted">
+            No device handy? Skip this — the Family tab can show a fresh code any time.
+          </TWText>
+        </Section>
+      ) : null}
+
+      {commitError ? <TWText className="text-body text-redpen">{commitError}</TWText> : null}
+
       <View className="flex-row gap-stack">
         {back ? (
           <Button variant="outline" title="Back" onPress={() => setStep(back)} />
         ) : null}
         {forward ? (
-          <Button title="Continue" onPress={() => setStep(forward)} disabled={!ready} />
+          <Button
+            title={committing ? 'Saving…' : 'Continue'}
+            onPress={() => void advance()}
+            disabled={!ready || committing}
+          />
         ) : null}
       </View>
     </View>

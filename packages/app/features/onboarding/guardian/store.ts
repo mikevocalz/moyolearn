@@ -10,11 +10,16 @@ import { EMPTY_DRAFT, type ChildDraft, type GuardianDraft, type GuardianStep } f
 interface GuardianOnboardingState {
   step: GuardianStep;
   draft: GuardianDraft;
+  /** True while the children step is committing rows server-side. */
+  committing: boolean;
+  commitError: string | null;
   setStep: (step: GuardianStep) => void;
   patch: (patch: Partial<GuardianDraft>) => void;
   addChild: () => void;
   patchChild: (index: number, patch: Partial<ChildDraft>) => void;
   removeChild: (index: number) => void;
+  setCommitting: (committing: boolean) => void;
+  setCommitError: (commitError: string | null) => void;
   reset: () => void;
 }
 
@@ -23,6 +28,10 @@ const BLANK_CHILD: ChildDraft = { displayName: '', username: '', password: '', d
 export const useGuardianOnboarding = create<GuardianOnboardingState>((set) => ({
   step: 'welcome',
   draft: EMPTY_DRAFT,
+  committing: false,
+  commitError: null,
+  setCommitting: (committing) => set({ committing }),
+  setCommitError: (commitError) => set({ commitError }),
   setStep: (step) => set({ step }),
   patch: (patch) => set((s) => ({ draft: { ...s.draft, ...patch } })),
   addChild: () => set((s) => ({ draft: { ...s.draft, children: [...s.draft.children, { ...BLANK_CHILD }] } })),
@@ -35,5 +44,5 @@ export const useGuardianOnboarding = create<GuardianOnboardingState>((set) => ({
     })),
   removeChild: (index) =>
     set((s) => ({ draft: { ...s.draft, children: s.draft.children.filter((_, i) => i !== index) } })),
-  reset: () => set({ step: 'welcome', draft: EMPTY_DRAFT }),
+  reset: () => set({ step: 'welcome', draft: EMPTY_DRAFT, committing: false, commitError: null }),
 }));

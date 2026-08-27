@@ -4,6 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   CapabilityDenied,
+  MembershipDenied,
   MANUAL_STAGES,
   commitStageChange,
   protectedOperation,
@@ -48,14 +49,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         client's own gate can be empty, stale, or bypassed entirely; this is the
         refusal that counts.
       */
-      { requires: 'write', telemetry: { op: 'ops.leads.stage', resource: 'leads', action: 'write' } },
+      {
+        requires: 'write',
+        /*
+          The role wall on top of the plan wall: `write` is a billing capability
+          an active FAMILY plan also satisfies, so alone it admitted paying
+          guardians to an org's pipeline. Moving a family between stages is
+          pipeline-running work — owner and manager own it, and the scheduler
+          moves families as a direct effect of booking (doc 06 §1 names the
+          role for exactly that). Finance reads; it does not move families.
+        */
+        requiresMembership: ['owner', 'manager', 'scheduler'],
+        telemetry: { op: 'ops.leads.stage', resource: 'leads', action: 'write' },
+      },
     );
 
     return NextResponse.json(result, { status: result.ok ? 200 : 422 });
   } catch (error) {
     if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';
-    const status = error instanceof CapabilityDenied ? error.status
+    const status = error instanceof CapabilityDenied || error instanceof MembershipDenied
+      ? error.status
       : message === 'Unauthenticated' ? 401
       : 500;
     return NextResponse.json({ error: message }, { status });

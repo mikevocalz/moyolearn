@@ -10,13 +10,22 @@
 // tutor routes instead, and the wall check names the summary modules so an ops
 // import of them fails the build.
 //
-// `requires: 'write'` inside both service calls — a staff capability no family
-// plan grants — is the boundary, plus the same documented org-scoping gap the
-// incident triage queue records.
+// The boundary inside all three service calls is `requiresMembership:
+// ['owner', 'manager']` — the role wall, which is what `requires: 'write'`
+// alone never was: `write` is a billing capability an active family plan also
+// satisfies, so "no family plan grants it" was false and a paying guardian
+// could reach this queue. The same documented org-scoping gap the incident
+// triage queue records still applies.
 // SOT: docs/pack/34-session-summary-reports.md §5 · docs/pack/23-crm-spec.md §2 · packages/app/features/summary/summary.service.ts
 // SOT-KEYWORDS: summary queue api route drafts approve suppress cool datatable crm wall staff write
 import { NextRequest, NextResponse } from 'next/server';
-import { approveSummaryDraft, summaryQueue, suppressSummary } from '@acme/app/server';
+import {
+  approveSummaryDraft,
+  summaryQueue,
+  suppressSummary,
+  CapabilityDenied,
+  MembershipDenied,
+} from '@acme/app/server';
 import {
   loadSummaryBySession,
   loadSummaryQueue,
@@ -27,7 +36,15 @@ import { reportRouteError } from '@/lib/report-error';
 
 export const dynamic = 'force-dynamic';
 
-const statusFor = (message: string): number => (message === 'Unauthenticated' ? 401 : 500);
+// Both refusals flatten to 403, the same choice the incident route makes: a
+// staff review queue is never an upsell surface, so a 402 has no business
+// leaving it even when the underlying refusal was the plan gate's.
+const statusFor = (error: unknown, message: string): number =>
+  error instanceof MembershipDenied || error instanceof CapabilityDenied
+    ? 403
+    : message === 'Unauthenticated'
+      ? 401
+      : 500;
 
 export async function GET(request: NextRequest) {
   try {
@@ -36,7 +53,7 @@ export async function GET(request: NextRequest) {
   } catch (error) {
     if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';
-    return NextResponse.json({ error: message }, { status: statusFor(message) });
+    return NextResponse.json({ error: message }, { status: statusFor(error, message) });
   }
 }
 
@@ -103,6 +120,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';
-    return NextResponse.json({ error: message }, { status: statusFor(message) });
+    return NextResponse.json({ error: message }, { status: statusFor(error, message) });
   }
 }

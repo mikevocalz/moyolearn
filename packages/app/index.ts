@@ -5,6 +5,10 @@
 // SOT: CLAUDE.md ("Features import a domain's index.ts — never a deep path")
 // SOT-KEYWORDS: app package index barrel public-api screens features
 export { HomeScreen } from './features/home/screen';
+export { LearnerTodayScreen } from './features/home/learner-today-screen';
+export { LearnerHubContent } from './features/home/learner-hub-content';
+export { GuardianHomeScreen } from './features/home/guardian-home-screen';
+export { TutorTodayScreen } from './features/home/tutor-today-screen';
 export { ExploreScreen } from './features/explore/screen';
 export { NotificationsScreen } from './features/notifications/screen';
 export { ProfileScreen } from './features/profile/screen';
@@ -100,6 +104,16 @@ export {
 } from './features/onboarding/consent/consent-channel';
 export { LearnerFirstRunContent } from './features/onboarding/learner/learner-first-run-content';
 export { useLearnerFirstRun } from './features/onboarding/learner/store';
+export { HandoffCodePanel, type HandoffCodePanelProps } from './features/onboarding/handoff/handoff-code-panel';
+export { HandoffRedeemContent, type HandoffRedeemContentProps } from './features/onboarding/handoff/redeem-content';
+export {
+  mintHandoffCode,
+  redeemHandoffCode,
+  createLearnerOnServer,
+  type HandoffMintResult,
+  type HandoffRedeemResult,
+  type CreateLearnerResult,
+} from './features/onboarding/handoff/handoff.client';
 // Aliased: the guardian machine already owns the unprefixed step-machine names,
 // and two `canAdvance` exports from one barrel is how the wrong one gets imported.
 export {
@@ -299,9 +313,18 @@ export {
   useSetContext,
   RoleSwitcher,
   ContextSwitcher,
+  shellForRole,
+  availableRoles,
+  resolveBootRole,
+  membershipForRole,
+  SHELL_ROOTS,
+  getLastShellRole,
+  setLastShellRole,
+  type Shell,
   type AppSession,
   type AppUser,
   type ActiveContext,
+  type ActiveContextKind,
   type Membership,
   type RoleKind,
 } from './providers/session';

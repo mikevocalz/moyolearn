@@ -23,8 +23,12 @@ import {
   type IncidentCategory,
   type IncidentReport,
 } from '@acme/safety';
+import type { Auth } from '@acme/auth/server';
+import { MembershipDenied } from '../../core/membership-gate.ts';
+import { setOperationSink } from '../../core/telemetry.ts';
 import {
   guardianIncidentsFrom,
+  incidentTriageQueue,
   triageQueueFrom,
   CONVERSATION_STARTERS,
 } from './incidents.service.ts';
@@ -147,5 +151,35 @@ describe('doc 31 §5.3 — the triage queue', () => {
 
     const done = transitionIncident(open, { status: 'resolved' }, 'staff_7', NOW);
     assert.equal(triageQueueFrom([done], late).rows[0]?.breached, false);
+  });
+});
+
+describe('doc 31 §5.3 — the queue is staff-only, and a paying family is not staff', () => {
+  // Through the real service in mock mode: the dev mock carries an ACTIVE family
+  // plan and an ACTIVE org plan, so `requires: 'write'` alone waves it through —
+  // which is exactly the hole this describe holds shut. The mock identity is a
+  // guardian-managed learner with no role in any org's member table, and that
+  // absence, not its card, is what must refuse it.
+  it('refuses the dev mock the triage queue and never reads a row', async () => {
+    process.env.NEXT_PUBLIC_AUTH_MODE = 'mock';
+    process.env.NODE_ENV = 'development';
+    setOperationSink(() => {});
+    try {
+      let reads = 0;
+      await assert.rejects(
+        () =>
+          incidentTriageQueue({} as Auth, new Headers(), {
+            loadIncidentQueue: async () => {
+              reads += 1;
+              return [report('learner_1', 'bullying')];
+            },
+          }),
+        MembershipDenied,
+      );
+      assert.equal(reads, 0, 'a refused caller must not cause a queue read');
+    } finally {
+      delete process.env.NEXT_PUBLIC_AUTH_MODE;
+      setOperationSink(null);
+    }
   });
 });

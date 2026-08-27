@@ -3,10 +3,12 @@
 // learner model must run inside a protectedOperation so identity is never a
 // parameter and unauthenticated callers fail closed.
 //
-// Doc 11 §3 orders the gates inside this block: session → context → permission →
-// PLAN & ENTITLEMENT → handler. The plan gate is the last of those and it is
-// here, not on the client: `PermissionGate` decides what a screen SHOWS, and a
-// screen is not a boundary.
+// Doc 11 §3 orders the gates inside this block: session → context →
+// MEMBERSHIP/ROLE → PLAN & ENTITLEMENT → handler. Both gates are here, not on
+// the client: `PermissionGate` decides what a screen SHOWS, and a screen is not
+// a boundary. The role step runs BEFORE the plan step because their refusals
+// mean different things — a 403 role refusal is never allowed to surface as a
+// 402, which is an upsell.
 // Doc 12 §7 also makes this the one place uniform telemetry can come from —
 // "every operation logs {op, resource, action, ctx.kind, latency, outcome}".
 // The record is built and emitted in the `finally` below; the shape, and why
@@ -14,9 +16,15 @@
 // SOT: docs/pack/06-auth-onboarding-spec.md §7 · docs/pack/07-security-child-ai-safety-spec.md §2 · docs/pack/11-architectural-guardrails.md §3 · docs/pack/12-systems-design-prompt.md §7
 // SOT-KEYWORDS: protected operation auth boundary server-only learner context mock capability plan entitlement telemetry record latency outcome
 import 'server-only';
-import { readSubscriptions, type Auth } from '@acme/auth/server';
+import { readMembershipRole, readSubscriptions, type Auth } from '@acme/auth/server';
 import type { Capability, SubscriptionState } from '@acme/auth/entitlements';
 import { billingReferenceFor, withCapability, CapabilityDenied, type LoadSubscriptions } from './capability-gate.ts';
+import {
+  withMembership,
+  MembershipDenied,
+  type LoadMembershipRole,
+  type RequiredMembership,
+} from './membership-gate.ts';
 import {
   ctxKindOf,
   operationRecord,
@@ -51,6 +59,28 @@ export interface ProtectedOperationOptions {
    * §1.2 and CLAUDE.md both forbid outright.
    */
   requires?: Capability;
+  /**
+   * The organisation roles allowed to run this operation — the STAFF wall, and
+   * a different question from `requires`. `requires` asks what the caller's
+   * plan pays for; this asks who the caller IS to the org, and no subscription
+   * status can answer it: an active family plan satisfies `write`, and a
+   * guardian must still never reach an incident queue. Absent means the
+   * operation is not staff work, not that the wall is open by default — a
+   * staff surface that forgets this argument is the bug doc 11 §3's ordering
+   * exists to name, which is why every staff service sets it inside the
+   * service, where no route can lower it.
+   *
+   * Non-empty by type (`RequiredMembership`); denial is `MembershipDenied`,
+   * 403-shaped and never an upsell.
+   */
+  requiresMembership?: RequiredMembership;
+  /**
+   * Overrides where the caller's org role is read from — tests only, same
+   * contract as `loadSubscriptions`. The default reads the organization
+   * plugin's own `member` table with both ids off `ctx`, so no route wires a
+   * reader and none can wire the wrong one.
+   */
+  loadMembershipRole?: LoadMembershipRole;
   /**
    * Overrides where the caller's plan is read from. Production never passes
    * this — the default reads Better Auth's own subscription rows through the
@@ -97,6 +127,19 @@ const MOCK_SUBSCRIPTIONS: SubscriptionState[] = [
   { plan: 'family', status: 'active', referenceId: MOCK_CTX.learnerId, periodEnd: null },
   { plan: 'ops-studio', status: 'active', referenceId: MOCK_CTX.orgId ?? null, periodEnd: null },
 ];
+
+/*
+  The mock's org role: none. If identity is a fixture, its attributes are too
+  (see `isMockAuth`), and this identity is a guardian-managed LEARNER — a child
+  holds no row in any org's member table, so the honest fixture is null and
+  every `requiresMembership` surface refuses the mock in dev. That refusal is
+  the point, not a gap: the vulnerability this gate closes was precisely a
+  family-shaped session reaching staff surfaces, and a mock that waved itself
+  through would develop every staff screen against a wall that is open.
+  Staff-surface work in dev runs as a real org member, or a test passes
+  `loadMembershipRole` explicitly.
+*/
+const MOCK_MEMBERSHIP_ROLE = null;
 
 /**
  * Runs an operation inside an authenticated, learner-scoped context whose plan
@@ -148,11 +191,29 @@ export async function protectedOperation<R>(
   let ctxKind: OperationCtxKind = 'anonymous';
   let outcome: OperationOutcome = 'error';
 
+  /*
+    Doc 11 §3's ordering, held in one place for both branches: membership/role
+    wraps the plan gate, so a caller who is not staff is refused before a
+    subscription is ever read — and a role refusal can never arrive dressed as
+    a 402.
+  */
+  const membership = options.requiresMembership;
+  const gated = (
+    c: ProtectedCtx,
+    loadRole: LoadMembershipRole,
+    loadSubs: LoadSubscriptions,
+  ): Promise<R> => {
+    const planGated = (cc: ProtectedCtx) => withCapability(cc, capability, loadSubs, operation);
+    return membership ? withMembership(c, membership, loadRole, planGated) : planGated(c);
+  };
+
   try {
     if (isMock) {
       ctxKind = ctxKindOf(MOCK_CTX);
       const loadMock: LoadSubscriptions = options.loadSubscriptions ?? (async () => MOCK_SUBSCRIPTIONS);
-      const result = await withCapability(MOCK_CTX, capability, loadMock, operation);
+      const loadMockRole: LoadMembershipRole =
+        options.loadMembershipRole ?? (async () => MOCK_MEMBERSHIP_ROLE);
+      const result = await gated(MOCK_CTX, loadMockRole, loadMock);
       outcome = 'ok';
       return result;
     }
@@ -177,17 +238,28 @@ export async function protectedOperation<R>(
       */
       ((c) => readSubscriptions(auth, billingReferenceFor(c)));
 
-    const result = await withCapability(ctx, capability, load, operation);
+    /*
+      Both ids off `ctx`, never off input — the role is the acting user's role
+      in the org their SESSION is scoped to, which is what makes a posted org
+      id worthless here.
+    */
+    const loadRole: LoadMembershipRole =
+      options.loadMembershipRole ??
+      ((c) => (c.orgId ? readMembershipRole(auth, c.orgId, c.learnerId) : Promise.resolve(null)));
+
+    const result = await gated(ctx, loadRole, load);
     outcome = 'ok';
     return result;
   } catch (error) {
     /*
       A refusal is not a failure. `denied` and `unauthenticated` are the block
       doing its job, and folding them into `error` would burn SLO-3's budget
-      every time a lapsed card is correctly turned away (slo.md §4.4).
+      every time a lapsed card is correctly turned away (slo.md §4.4) — or, for
+      the role gate, every time a family session is correctly turned away from
+      a staff surface.
     */
     outcome =
-      error instanceof CapabilityDenied
+      error instanceof CapabilityDenied || error instanceof MembershipDenied
         ? 'denied'
         : error instanceof Error && error.message === 'Unauthenticated'
           ? 'unauthenticated'

@@ -19,6 +19,13 @@ export {
   withCapability,
   type LoadSubscriptions,
 } from './core/capability-gate';
+export {
+  MembershipDenied,
+  withMembership,
+  type LoadMembershipRole,
+  type RequiredMembership,
+} from './core/membership-gate';
+export { MEMBERSHIP_ROLES, isMembershipRole, type MembershipRole } from '@acme/auth/membership';
 export type {
   DerivedFact,
   MasteryFact,
@@ -316,3 +323,7 @@ export {
   saveLearnerProfile,
   type SaveGradeBand,
 } from './features/onboarding/learner-profile.service';
+export {
+  issueHandoffCode,
+  type HandoffDeps,
+} from './features/onboarding/handoff/handoff.service';

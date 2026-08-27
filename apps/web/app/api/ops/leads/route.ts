@@ -4,6 +4,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   CapabilityDenied,
+  MembershipDenied,
+  MEMBERSHIP_ROLES,
   listLeads,
   protectedOperation,
   type LeadSortField,
@@ -49,14 +51,25 @@ export async function GET(request: NextRequest) {
         the dashboard stays readable and exportable, and `entitlementsFor` keeps
         `canExport` true on every status for exactly that reason. Gating this
         read on `write` would take a lapsed org's own CRM away from it.
+
+        Which makes the ROLE the only wall: `export` is free on every status
+        there is, so without `requiresMembership` any authenticated session was
+        one org edge away from a pipeline of family names. Every doc 06 §1 role
+        may read — running the pipeline is what an org's staff are — but a
+        session with no role in the org is not staff, whatever it pays.
       */
-      { requires: 'export', telemetry: { op: 'ops.leads.list', resource: 'leads', action: 'read' } },
+      {
+        requires: 'export',
+        requiresMembership: MEMBERSHIP_ROLES,
+        telemetry: { op: 'ops.leads.list', resource: 'leads', action: 'read' },
+      },
     );
     return NextResponse.json(result);
   } catch (error) {
     if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';
-    const status = error instanceof CapabilityDenied ? error.status
+    const status = error instanceof CapabilityDenied || error instanceof MembershipDenied
+      ? error.status
       : message === 'Unauthenticated' ? 401
       : 500;
     return NextResponse.json({ error: message }, { status });

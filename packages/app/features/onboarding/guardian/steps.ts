@@ -16,7 +16,10 @@ import {
 // The paywall is a STEP, not a screen the flow bounces out to: a guardian who
 // lands on a standalone paywall has left onboarding, and the brief's whole point
 // is that the conversion moment is the child's face two steps later.
-export const GUARDIAN_STEPS = ['welcome', 'account', 'consent', 'children', 'grants', 'plan'] as const;
+// `handoff` sits between grants and plan (doc 36 §2): the learner accounts now
+// exist, so the guardian's device can mint the code the child's device redeems
+// — a child never types an email or password.
+export const GUARDIAN_STEPS = ['welcome', 'account', 'consent', 'children', 'grants', 'handoff', 'plan'] as const;
 export type GuardianStep = (typeof GUARDIAN_STEPS)[number];
 
 export interface ChildDraft {
@@ -24,6 +27,12 @@ export interface ChildDraft {
   username: string;
   password: string;
   dob: string;
+  /**
+   * Set when the children step commits the row server-side. Absent means the
+   * account is not created yet — which is exactly what the handoff step keys
+   * off to decide whether a code can be minted for this child.
+   */
+  learnerAuthId?: string;
 }
 
 export interface GuardianDraft {
@@ -64,6 +73,11 @@ export function canAdvance(step: GuardianStep, draft: GuardianDraft): boolean {
     case 'children':
       return draft.children.length > 0 && draft.children.every((c) => isChildComplete(c, draft));
     case 'grants':
+      return true;
+    case 'handoff':
+      // Handoff is offered, never forced: the child's device may not be in the
+      // room, and the Family tab can mint a fresh code any time. Gating here
+      // would block the signup on a second device's presence.
       return true;
     case 'plan':
       // Doc 05 §1.2: the child's floor is never hostage. "Continue with free

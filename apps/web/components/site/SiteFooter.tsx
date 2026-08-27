@@ -1,6 +1,7 @@
+'use client';
 import { Link } from 'solito/link';
 import { Footer, Nav, View, Text as TWText, P } from '@acme/ui/tw';
-import { NAV_ITEMS, PROFILE } from './nav';
+import { PROFILE, useNavItems } from './nav';
 
 // The footer is a system map of the template, not decoration: every column
 // states something true — the pages that exist, the tools that run, the
@@ -18,6 +19,7 @@ const footerLink =
   'rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50';
 
 export function SiteFooter() {
+  const navItems = useNavItems();
   return (
     <Footer className="border-t-2 border-border bg-surface-sunken">
       <View className="mx-auto w-full max-w-screen-2xl gap-10 px-4 py-12 sm:px-6 md:flex-row md:justify-between">
@@ -43,7 +45,7 @@ export function SiteFooter() {
             <TWText className="text-xs font-semibold uppercase tracking-wider text-text-muted">
               Pages
             </TWText>
-            {[...NAV_ITEMS, PROFILE].map((item) => (
+            {[...navItems, PROFILE].map((item) => (
               <Link key={item.href} href={item.href} className={footerLink}>
                 {item.label}
               </Link>

@@ -6,7 +6,7 @@ import { create } from 'zustand';
 import { Header, Nav, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, MotionView, useHydrated } from '@acme/ui';
 import { AVATAR_URI, useProfile } from '@acme/app';
-import { NAV_ITEMS, PROFILE, useMobileMenu } from './nav';
+import { PROFILE, useMobileMenu, useNavItems, type NavItem } from './nav';
 
 const isActive = (pathname: string, href: string) =>
   href === '/' ? pathname === '/' : pathname.startsWith(href);
@@ -76,10 +76,10 @@ function DesktopNavLink({
   );
 }
 
-function NavIndicator({ pathname }: { pathname: string }) {
+function NavIndicator({ pathname, items }: { pathname: string; items: NavItem[] }) {
   const hydrated = useHydrated();
   const metrics = useNavMetrics((s) => s.metrics);
-  const activeItem = NAV_ITEMS.find((item) => isActive(pathname, item.href));
+  const activeItem = items.find((item) => isActive(pathname, item.href));
   const m = activeItem ? metrics[activeItem.href] : undefined;
 
   // Measurement-driven — meaningless during SSR and a hydration-mismatch
@@ -130,6 +130,8 @@ export function SiteHeader() {
   const name = useProfile((s) => s.name);
   const handle = useProfile((s) => s.handle);
   const profileActive = isActive(pathname, PROFILE.href);
+  // Role-scoped IA (doc 36 §3): the header shows the active role's destinations.
+  const navItems = useNavItems();
 
   useEffect(() => {
     const onScroll = () => useScrolled.getState().set(window.scrollY > 8);
@@ -187,10 +189,10 @@ export function SiteHeader() {
         {/* Nav + avatar — right */}
         <View className="flex-row items-center gap-stack">
           <Nav aria-label="Primary" className="relative hidden flex-row items-center gap-1 md:flex">
-            {NAV_ITEMS.map((item, index) => (
+            {navItems.map((item, index) => (
               <DesktopNavLink key={item.href} {...item} index={index} active={isActive(pathname, item.href)} />
             ))}
-            <NavIndicator pathname={pathname} />
+            <NavIndicator pathname={pathname} items={navItems} />
           </Nav>
 
           {/* Profile — a face, not a word; settings live inside */}
@@ -273,7 +275,7 @@ export function SiteHeader() {
             <View className="mx-6 my-2 h-px bg-border/60" />
 
             <Nav aria-label="Primary" id="mobile-menu" className="gap-1 px-3 pb-4">
-              {NAV_ITEMS.map((item, index) => (
+              {navItems.map((item, index) => (
                 <MobileNavLink
                   key={item.href}
                   {...item}

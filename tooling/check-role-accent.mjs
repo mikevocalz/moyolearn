@@ -33,6 +33,9 @@ const SKIP_DIR = /node_modules|\.next|\.turbo|dist|build/;
  */
 const ALLOWLIST = new Map([
   ['packages/ui/RoleScope.stories.tsx', 'kit review surface — all five doors on one skeleton'],
+  // PR-138/139/140 shell chrome, joining as the gate's header anticipates.
+  ['apps/mobile/components/ShellTabBar.tsx', 'active tab/nav indicator underlay (focused-slab pip)'],
+  ['apps/mobile/components/ShellHeader.tsx', 'shell header underline'],
 ]);
 
 /**

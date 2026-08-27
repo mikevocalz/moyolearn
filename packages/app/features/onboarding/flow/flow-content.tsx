@@ -23,7 +23,9 @@ import { useSessionStore } from '../../../providers/session/store';
 import { API_URL } from '../../tutor/tutor.store';
 
 const NEXT_PATH: Record<OnboardingFlow, string> = {
-  learner: '/tutor',
+  // Doc 36 §2: the learner lands on TODAY with one action (Snap), not inside a
+  // live session. '/' is the dispatcher, whose learner shell root is Today.
+  learner: '/',
   guardian: '/',
   tutor: '/',
   teacher: '/',
