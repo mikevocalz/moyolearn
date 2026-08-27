@@ -19,6 +19,7 @@
 // SOT: packages/jobs/index.ts · apps/web/app/api/retention/sweep/route.ts · apps/web/app/api/media/sweep/route.ts · docs/design/jobs.md §2.1 §7
 // SOT-KEYWORDS: jobs composition root handlers retention sweep media sweep distill drain enqueue reporter dead letter shed ops.shed
 import 'server-only';
+import * as Sentry from '@sentry/nextjs';
 import { NextRequest } from 'next/server';
 import {
   distillKey,
@@ -106,8 +107,22 @@ async function callSweep(
  */
 export function jobHandlers(): JobHandlers {
   return {
+    /*
+      THE ONE FREE CRON MONITOR GUARDS THIS QUEUE — doc 35 §5: of every
+      scheduled job, the one whose SILENT death is a compliance breach is
+      erasure. A dead drain is loud (queues back up); a dead eraser is a
+      retention promise that looks kept and is not. `withMonitor` files an
+      in-progress check-in, then ok/error from the callback's outcome — real on
+      the installed SDK: `withMonitor<T>(monitorSlug: CheckIn['monitorSlug'],
+      callback: () => T, upsertMonitorConfig?)` (@sentry/core 10.71.0,
+      build/types/exports.d.ts:151, re-exported by @sentry/nextjs). A no-op
+      while the SDK is disabled (dev, no DSN), and the throw still propagates,
+      so pg-boss's retry ladder is unchanged.
+    */
     'retention.sweep.transcripts': async () => {
-      await callSweep('/api/retention/sweep', 'RETENTION_SWEEP_SECRET', retentionSweep);
+      await Sentry.withMonitor('retention-sweep', () =>
+        callSweep('/api/retention/sweep', 'RETENTION_SWEEP_SECRET', retentionSweep),
+      );
     },
     'retention.sweep.media': async () => {
       await callSweep('/api/media/sweep', 'MEDIA_SWEEP_SECRET', mediaSweep);
@@ -177,33 +192,61 @@ export function jobHandlers(): JobHandlers {
 }
 
 /**
+ * Runs `capture` inside a scope tagged the way doc 35 §4.4 requires of every
+ * worker event: `surface`/`runtime` mark it worker traffic (the free-tier
+ * stand-in for the `moyo-server` project split, §3), `queue` and `jobId` say
+ * which promise broke — and NOTHING else. `jobId` is a pg-boss uuid, ids-only
+ * by construction; payload contents never reach a tag, a message, or a context,
+ * and every tag used here is in §7.7's allowlist that
+ * `tooling/check-sentry-invariants.mjs` enforces.
+ */
+function withWorkerScope(tags: { queue?: string; jobId?: string }, capture: () => void): void {
+  Sentry.withScope((scope) => {
+    scope.setTag('surface', 'worker');
+    scope.setTag('runtime', 'worker');
+    if (tags.queue !== undefined) scope.setTag('queue', tags.queue);
+    if (tags.jobId !== undefined) scope.setTag('jobId', tags.jobId);
+    capture();
+  });
+}
+
+/**
  * Where the drain's alerts go.
  *
- * `reportRouteError` is the reporter every route in this app already uses, so a
- * dead-letter page and a 500 land in the same place rather than in two. When the
- * Sentry SDK lands (`docs/design/slo.md` §2 records that it has not), JOB-3 and
- * JOB-7 become alert rules over these same events without this file changing.
+ * Every handler throw is captured HERE rather than inside each handler, because
+ * this is the one place that also knows the `jobId` — the drain calls
+ * `jobFailed(queue, jobId, error)` for every throw, so "wrap every pg-boss
+ * handler" is a property of the drain's contract, not of six functions
+ * remembering to. The ORIGINAL error object is captured (its message crosses
+ * `sentry.server.config.ts`'s scrubber like everything else); JOB-3 and JOB-7
+ * synthesize theirs from queue names and depths only.
  *
  * No learner id in any line. A queue name and a depth is what an operator needs;
  * a child's handle is not something an operations log needs to hold.
  */
 const reporter: JobsReporter = {
   deadLetter: (alert) => {
-    reportRouteError(
-      new Error(
-        `JOB-3 ${alert.severity} — ${alert.queue}.dlq depth ${alert.depth} (threshold ${alert.threshold})`,
-      ),
-    );
+    withWorkerScope({ queue: alert.queue }, () => {
+      reportRouteError(
+        new Error(
+          `JOB-3 ${alert.severity} — ${alert.queue}.dlq depth ${alert.depth} (threshold ${alert.threshold})`,
+        ),
+      );
+    });
   },
   shed: (plan) => {
-    reportRouteError(
-      new Error(
-        `ops.shed — backlog ${plan.totalDepth}, shed to order ${String(plan.depth)}: ${plan.shed.join(', ')}`,
-      ),
-    );
+    withWorkerScope({}, () => {
+      reportRouteError(
+        new Error(
+          `ops.shed — backlog ${plan.totalDepth}, shed to order ${String(plan.depth)}: ${plan.shed.join(', ')}`,
+        ),
+      );
+    });
   },
   jobFailed: (queue, jobId, error) => {
-    reportRouteError(new Error(`${queue} job ${jobId} failed: ${error.message}`));
+    withWorkerScope({ queue, jobId }, () => {
+      reportRouteError(error);
+    });
   },
   maintenance: (error) => {
     // §4.1's archival pass. Reported rather than thrown — see `JobsReporter`.

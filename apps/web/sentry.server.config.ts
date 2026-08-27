@@ -1,38 +1,34 @@
-// Sentry for the Next.js Node runtime — slo.md §7 W-2 and W-7, which that
-// document says must land together and do.
+// Sentry for the Next.js Node runtime — slo.md §7 W-2/W-7, refined to doc 35's
+// free-tier posture: errors and crash health, nothing else.
 //
-// This is the surface every rule in slo.md §4 actually queries: LAT-*, AVL-*
-// and the SAFE-* transaction rules are all server transactions. It is loaded
-// from `instrumentation.ts`'s `register()` rather than imported at module
-// scope, so the edge runtime never pulls the inference package (and its vendor
-// SDK) into a middleware bundle.
+// The base options come from `telemetryInitOptions` in `@acme/app/telemetry` —
+// one factory, four surfaces — so `sendDefaultPii: false`, `enabled` only in
+// production, and `tracesSampleRate: 0` are facts about a function rather than
+// about four files agreeing. Doc 35 §2 retired this file's old 10% trace
+// sample: the ≤2s SLO is measured by our own timing rows in Postgres, and a
+// 1–2% vendor trace answers no rule in slo.md §4 that those rows don't. If
+// Phase-1 tuning ever wants the capture→first-token waterfall, the sanctioned
+// exception is a `tracesSampler` returning ~0.02 for that one transaction,
+// added HERE, temporarily — never a default in the factory.
 //
-// NOT WIRED HERE, deliberately: `withSentryConfig`. Source-map upload and
-// release health need `SENTRY_AUTH_TOKEN`/`SENTRY_ORG`/`SENTRY_PROJECT` and a
-// Sentry project that does not exist yet (slo.md §2 — the connected org has one
-// project, belonging to another product). Errors and traces do not depend on
-// it; stack frames will read as bundled output until it lands.
-// SOT: docs/design/slo.md §3 · §3.1 · §7 W-2 · §7 W-7 · docs/pack/12-systems-design-prompt.md §7
-// SOT-KEYWORDS: sentry server config init dsn traces beforeSend scrubber sendDefaultPii operation sink breadcrumb
+// `beforeSend` is storm breaker THEN scrubber (doc 35 §4.1 + §7): the breaker
+// drops a repeat before any work is spent on it, and everything that will
+// actually leave carries the server mask (`scrubText`, the reviewed rule set).
+//
+// The DSN read is per-surface with the shared fallback — the doc 35 §3
+// three-project split is deferred (free tier), so `SENTRY_DSN_SERVER` is empty
+// today and the `surface`/`runtime` tags stand in for the split.
+// SOT: docs/pack/35-sentry-free-tier.md §2 §4 §4.4 · docs/design/slo.md §3 §3.1 §7 W-2 W-7
+// SOT-KEYWORDS: sentry server config init dsn factory storm breaker scrubber sendDefaultPii traces zero operation sink breadcrumb
 import * as Sentry from '@sentry/nextjs';
 import {
+  createStormBreaker,
   setOperationSink,
   scrubTelemetryEvent,
+  telemetryInitOptions,
   type OperationOutcome,
 } from '@acme/app/telemetry';
 import { maskTelemetryText } from '@acme/app/telemetry/mask';
-
-/**
- * 10 % by default.
- *
- * A p95 latency SLO (slo.md §4.3) and a `failure_rate()` burn rate (§4.4) are
- * both distribution questions, and 10 % of this app's traffic answers them
- * without paying to store nine tenths of a duplicate. Override per environment;
- * set it to 1 while calibrating the SLO-2 budget in §1.1.
- */
-const DEFAULT_TRACES_SAMPLE_RATE = 0.1;
-
-const sampleRate = Number(process.env.SENTRY_TRACES_SAMPLE_RATE);
 
 /**
  * The record's severity, so `ok` traffic does not colour a breadcrumb trail red
@@ -41,30 +37,36 @@ const sampleRate = Number(process.env.SENTRY_TRACES_SAMPLE_RATE);
 const levelFor = (outcome: OperationOutcome): 'info' | 'warning' | 'error' =>
   outcome === 'ok' ? 'info' : outcome === 'error' ? 'error' : 'warning';
 
+const dsn = process.env.SENTRY_DSN_SERVER ?? process.env.SENTRY_DSN;
+
 /*
-  No DSN means the reporter is OFF, not half on. A checkout with no Sentry
-  project — which is every checkout today, slo.md §2 — must behave exactly like
-  one that never had the SDK, so nothing downstream can start depending on a
-  reporter that is not there.
+  No DSN means the reporter is OFF, not half on — a checkout without one must
+  behave exactly like one that never had the SDK. The factory's `enabled` flag
+  additionally keeps dev and preview silent even WITH a DSN (doc 35 §2: dev
+  noise is the #1 silent quota leak).
 */
-if (process.env.SENTRY_DSN) {
+if (dsn) {
+  const breaker = createStormBreaker({
+    addBreadcrumb: (message) => Sentry.addBreadcrumb({ category: 'storm-breaker', message }),
+  });
+
   Sentry.init({
-    dsn: process.env.SENTRY_DSN,
-    environment: process.env.SENTRY_ENVIRONMENT ?? process.env.VERCEL_ENV ?? process.env.NODE_ENV,
-    tracesSampleRate: Number.isFinite(sampleRate) ? sampleRate : DEFAULT_TRACES_SAMPLE_RATE,
-
-    /*
-      §3.1, first line. With this false the SDK does not attach IP addresses,
-      cookies, headers or user identity of its own accord. `beforeSend` below is
-      the second wall, for everything an integration or a future `setContext`
-      call adds after this option was decided.
-    */
-    sendDefaultPii: false,
-
-    beforeSend(event) {
+    ...telemetryInitOptions({
+      dsn,
+      surface: 'server',
+      environment:
+        process.env.SENTRY_ENVIRONMENT ?? process.env.VERCEL_ENV ?? process.env.NODE_ENV,
+      isProduction: process.env.NODE_ENV === 'production',
+      ...(process.env.VERCEL_GIT_COMMIT_SHA === undefined
+        ? {}
+        : { release: process.env.VERCEL_GIT_COMMIT_SHA }),
+    }),
+    beforeSend: breaker.wrap((event) => {
       scrubTelemetryEvent(event, maskTelemetryText);
       return event;
-    },
+    }),
+    // Belt for the day a tracesSampler exception is temporarily added above:
+    // whatever transaction leaves, it leaves scrubbed.
     beforeSendTransaction(event) {
       scrubTelemetryEvent(event, maskTelemetryText);
       return event;

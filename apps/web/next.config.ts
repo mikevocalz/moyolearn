@@ -1,5 +1,6 @@
 import type { NextConfig } from 'next'
 import { withPayload } from '@payloadcms/next/withPayload'
+import { withSentryConfig } from '@sentry/nextjs'
 
 // Turbopack (Next 16 default). webpack is unusable in this workspace — its
 // FileSystemInfo snapshot walker dies with RangeError on the pnpm symlink
@@ -111,4 +112,29 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default withPayload(nextConfig, { devBundleServerPackages: false })
+/*
+  Sentry's build wrapper, outermost so it sees the final config. Two jobs here:
+
+  `tunnelRoute: '/monitoring'` — doc 35 §4.3: ad-blockers eat direct
+  `ingest.sentry.io` requests, and an unreported crash is worse than a blocked
+  one. The option is real on the installed SDK: `SentryBuildOptions.tunnelRoute?:
+  string | boolean` (@sentry/nextjs 10.71.0,
+  build/types/config/types.d.ts:533) — the wrapper adds a same-origin rewrite
+  that proxies envelopes through this deployment, so no CSP/DNS third-party
+  fetch is left for an extension to block.
+
+  Source maps upload only when `SENTRY_AUTH_TOKEN` exists (CI), so a local
+  `pnpm --filter web build` neither fails nor phones home. `SENTRY_ORG` and
+  `SENTRY_PROJECT` come from env — never inlined.
+*/
+export default withSentryConfig(withPayload(nextConfig, { devBundleServerPackages: false }), {
+  org: process.env.SENTRY_ORG,
+  project: process.env.SENTRY_PROJECT,
+  authToken: process.env.SENTRY_AUTH_TOKEN,
+  silent: true,
+  tunnelRoute: '/monitoring',
+  sourcemaps: { disable: !process.env.SENTRY_AUTH_TOKEN },
+  // Build-time telemetry to Sentry about the plugin itself — off, same posture
+  // as every other vendor phone-home in this repo.
+  telemetry: false,
+})

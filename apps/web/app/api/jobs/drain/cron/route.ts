@@ -1,9 +1,14 @@
-// GET /api/jobs/drain/cron — the scheduled trigger for the bounded drain.
+// GET /api/jobs/drain/cron — the Vercel-Cron door onto the bounded drain.
 //
-// Same two-door arrangement as the two sweeps, and separate from the drain
-// itself for the same reason: Vercel Cron signs with `CRON_SECRET`, the drain
-// takes `JOBS_DRAIN_SECRET`, and conflating them would mean loosening one to
-// suit the other.
+// NO LONGER SCHEDULED. Doc 35 §5 / PR-135 moved the */30 tick off Vercel cron
+// (it kept the deployment off the Hobby tier): the retry tick is now
+// `.github/workflows/jobs-drain.yml`, which hits POST /api/jobs/drain with its
+// own bearer, and pg-boss retention maintenance runs in-database on Supabase
+// pg_cron (`packages/payload/migrations/jobs_pg_cron_maintenance.sql` holds
+// the full split). This door stays for the day a paid Vercel tier brings the
+// schedule back — same two-door arrangement as the two sweeps: Vercel Cron
+// signs with `CRON_SECRET`, the drain takes `JOBS_DRAIN_SECRET`, and
+// conflating them would mean loosening one to suit the other.
 //
 // WHAT THIS SCHEDULE IS FOR. It is not the sweeps' trigger — each sweep's own
 // cron enqueues AND drains its queue inside its own window, so the daily

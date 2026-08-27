@@ -8,10 +8,6 @@
     {
       "path": "/api/retention/sweep/cron",
       "schedule": "0 4 * * *"
-    },
-    {
-      "path": "/api/jobs/drain/cron",
-      "schedule": "*/30 * * * *"
     }
   ]
 }
