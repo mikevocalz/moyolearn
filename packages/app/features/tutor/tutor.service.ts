@@ -58,19 +58,52 @@ export type SaveFacts = (ctx: ProtectedCtx, facts: readonly DerivedFact[]) => Pr
 export type LoadBlockedTags = (ctx: ProtectedCtx) => Promise<readonly string[]>;
 
 /**
+ * Everything distillation needs, as ONE argument — which is the fix, not the
+ * tidying.
+ *
+ * These were three independent optional parameters and the middle of the three
+ * was optional in the worst possible way: `loadBlockedTags ? await … : []` meant
+ * a caller who supplied the other two got distillation with the erasure filter
+ * silently disabled, and every caller did exactly that. Declaring the port and
+ * defaulting it to "no tags are blocked" made forgetting it invisible.
+ *
+ * Grouped, it is unrepresentable. There is no way to distil without saying where
+ * a guardian's erasures are read from, because the type that turns distillation
+ * on is the type that carries the reader. CLAUDE.md §Types: invalid combinations
+ * must be unrepresentable, not merely unusual.
+ */
+export interface DistillationPorts {
+  readonly loadPriorFacts: LoadPriorFacts;
+  readonly saveFacts: SaveFacts;
+  readonly loadBlockedTags: LoadBlockedTags;
+}
+
+/**
+ * The repositories this service acts through.
+ *
+ * `distillation` is absent on the tutoring request path on purpose — doc 12 §5
+ * puts distillation "async after close" and `app/api/tutor/evaluate` enqueues
+ * `edu.distill` instead (see that route's header). Absent means "not here",
+ * which is a decision; it no longer means "here, unfiltered".
+ */
+export interface TutorTurnPorts {
+  readonly saveTranscript?: SaveTranscript;
+  readonly distillation?: DistillationPorts;
+}
+
+/**
  * Evaluates one learner answer inside the protected boundary, runs the Safety
- * Plane, persists the transcript, distills the updated student model, and writes
- * the derived facts back.
+ * Plane, persists the transcript, and — when the caller supplies the
+ * distillation ports — distills the updated student model and writes the derived
+ * facts back.
  */
 export async function evaluateTutorTurn(
   auth: Auth,
   headers: Headers,
   input: TutorTurnInput,
-  loadPriorFacts?: LoadPriorFacts,
-  saveTranscript?: SaveTranscript,
-  saveFacts?: SaveFacts,
-  loadBlockedTags?: LoadBlockedTags,
+  ports: TutorTurnPorts = {},
 ): Promise<TutorTurnResult> {
+  const { saveTranscript, distillation } = ports;
   return protectedOperation(auth, headers, async (ctx) => {
     const skillTitle = inferSkillTitle(input.problem);
     const safety = await runTutorSafetyPlane(input.problem, ctx);
@@ -122,8 +155,8 @@ export async function evaluateTutorTurn(
       await saveTranscript(ctx, transcriptToSave);
     }
 
-    if (loadPriorFacts && saveFacts) {
-      const priorFacts = await loadPriorFacts(ctx);
+    if (distillation) {
+      const priorFacts = await distillation.loadPriorFacts(ctx);
       const transcript: SessionTranscript = {
         id: sessionId,
         learnerId: ctx.learnerId,
@@ -140,13 +173,13 @@ export async function evaluateTutorTurn(
         the erased thing is not in the input at all, which is the only version of
         this that stays true when the distiller changes.
       */
-      const blockedTags = loadBlockedTags ? await loadBlockedTags(ctx) : [];
+      const blockedTags = await distillation.loadBlockedTags(ctx);
       const nextFacts = distill(
         { ...transcript, turns: withoutBlockedTags(transcript.turns, blockedTags) },
         priorFacts,
         now,
       );
-      await saveFacts(ctx, nextFacts);
+      await distillation.saveFacts(ctx, nextFacts);
     }
 
     return { skillTitle, isCorrect };

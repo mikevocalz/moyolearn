@@ -46,6 +46,7 @@ export function MemoryContent() {
   const confirmForgetAll = useMemoryStore((s) => s.confirmForgetAll);
   const pendingTranscriptId = useMemoryStore((s) => s.pendingTranscriptId);
   const forgetAllOpen = useMemoryStore((s) => s.forgetAllOpen);
+  const eraseError = useMemoryStore((s) => s.eraseError);
   const cascade = useMemoryStore(pendingCascade);
 
   const pending = transcripts.find((t) => t.id === pendingTranscriptId);
@@ -71,6 +72,17 @@ export function MemoryContent() {
           </TWText>
         </Section>
       </FadeIn>
+
+      {/* An erasure that did not reach the server has already put its line back
+          above; this is the sentence that stops the restoration reading as a
+          glitch. Stated rather than swallowed because the failure it describes —
+          a line shown as erased when it is not — is the one this screen exists
+          to make impossible. */}
+      {eraseError === null ? null : (
+        <TWText className="text-base text-redpen" role="alert">
+          {eraseError}
+        </TWText>
+      )}
 
       {facts.length === 0 ? (
         <FadeIn delay={80}>
@@ -111,7 +123,13 @@ export function MemoryContent() {
                         size="sm"
                         icon={<Trash2 className="h-4 w-4 text-redpen" />}
                         aria-label={`Forget: ${fact.sentence}`}
-                        onPress={() => eraseLine(fact.id)}
+                        onPress={() => {
+                          // `void`, not an async handler: `onPress` is fire-and-forget
+                          // on both platforms, and the store already owns the failure
+                          // path — returning the promise here would only give a lint
+                          // rule something to complain about.
+                          void eraseLine(fact.id);
+                        }}
                       />
                     </View>
                   ))}

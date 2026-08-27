@@ -35,7 +35,23 @@ export {
   type SaveTranscript,
   type LoadPriorFacts,
   type SaveFacts,
+  type LoadBlockedTags,
+  type DistillationPorts,
+  type TutorTurnPorts,
 } from './features/tutor/tutor.service';
+
+/*
+  S27's eraser. Exported beside the tutoring ports because it is the other end of
+  the same loop: `LoadBlockedTags` is what distillation reads, and
+  `EraseFactAndBlockTag` is what writes it. Splitting them across two barrels
+  would let one land without the other, which is the state this feature was
+  already in.
+*/
+export {
+  eraseMemoryLine,
+  type ErasedLine,
+  type EraseFactAndBlockTag,
+} from './features/memory/memory.service';
 
 export {
   coachTutorTurn,

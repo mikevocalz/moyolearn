@@ -118,8 +118,25 @@ export function isRestrictedLearnerPasswordChange(
   return actorId === owner.id;
 }
 
+/**
+ * The Postgres schema Better Auth's own tables live in.
+ *
+ * NOT `auth`. On Supabase `auth` is GoTrue's managed schema — it already holds
+ * `auth.users`, Supabase alters it on platform upgrades, and its grants are
+ * theirs to set. Better Auth's `user`/`session`/`account`/`verification` are
+ * application tables and belong in a schema this repo owns, beside `payload`,
+ * `edu` and `jobs`, each of which already has its own. Pointing at `auth` also
+ * put two different tables called "the user table" one search_path entry apart.
+ *
+ * Overridable through `createAuth({ schema })` for tests and for a future
+ * multi-tenant split; there is deliberately no env var, because a schema name
+ * that can drift between the migration and the reader is a schema name that
+ * will.
+ */
+export const AUTH_SCHEMA = 'better_auth';
+
 export function createAuth(options?: { connectionString?: string; schema?: string }) {
-  const schema = options?.schema ?? 'auth';
+  const schema = options?.schema ?? AUTH_SCHEMA;
   const connectionString = options?.connectionString ?? process.env.DATABASE_URL;
   const pool = new Pool({
     connectionString,
@@ -271,8 +288,8 @@ function billingPlugin(pool: Pool): [] | [ReturnType<typeof stripePlugin>] {
  * table. Read here rather than passed in because `authorizeReference` is called
  * by the plugin, not by us — there is no call site to thread it through.
  *
- * Unqualified table name: the pool's search_path already points at the auth
- * schema. Quoted columns: Better Auth's kysely adapter writes camelCase.
+ * Unqualified table name: the pool's search_path already points at
+ * `AUTH_SCHEMA`. Quoted columns: Better Auth's kysely adapter writes camelCase.
  */
 async function memberRole(pool: Pool, organizationId: string, userId: string) {
   const { rows } = await pool.query<{ role: string }>(

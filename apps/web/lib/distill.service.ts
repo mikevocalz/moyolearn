@@ -20,9 +20,9 @@
 // SOT: packages/student-model/src/distill.ts · docs/design/jobs.md §2.1 §3 · docs/pack/12-systems-design-prompt.md §5
 // SOT-KEYWORDS: distill service job handler student model facts async after close transcript learner identity from row idempotent
 import 'server-only';
-import { distill } from '@acme/student-model';
+import { distill, withoutBlockedTags } from '@acme/student-model';
 import type { ProtectedCtx } from '@acme/app/server';
-import { loadEduPriorFacts, saveEduFacts } from './edu.repository';
+import { loadEduBlockedTags, loadEduPriorFacts, saveEduFacts } from './edu.repository';
 import { loadTranscriptForDistillation } from './distill.repository';
 
 export interface DistillationResult {
@@ -61,6 +61,31 @@ export async function distillTranscript(transcriptId: string): Promise<Distillat
   const ctx: ProtectedCtx = { learnerId: transcript.learnerId, isLearner: true };
 
   const priorFacts = await loadEduPriorFacts(ctx);
+
+  /*
+    THE ERASURE FILTER, and this job is the reason it has to be here rather than
+    only on the request path.
+
+    Distillation moved off `POST /api/tutor/evaluate` and into this handler, so
+    this is now the ONLY thing in production that derives a fact — which makes it
+    the only place a guardian's erasure can be undone. A blocked tag stripped in
+    `tutor.service.ts` and not here would be a filter guarding a door nobody uses
+    any more.
+
+    Read fresh on every run, never carried on the payload, for the same reason
+    the prior facts are: a job that sat in the queue while a guardian erased a
+    line must honour the erasure it can see NOW. A dead-letter replay a week
+    later must too — and a payload holding the blocked list would be a snapshot
+    from before the deletion, faithfully re-deriving the thing the family
+    deleted.
+
+    FILTERED BEFORE DISTILLATION, not after — `tutor.service.ts` explains the
+    ordering at length: stripping the tags from the turns means the erased thing
+    is not in the input at all, so it cannot influence what else is derived and
+    cannot return the moment the distiller gains a second consumer.
+  */
+  const blockedTags = await loadEduBlockedTags(ctx);
+
   /*
     `new Date()` and not the transcript's `capturedAt`.
 
@@ -70,7 +95,11 @@ export async function distillTranscript(transcriptId: string): Promise<Distillat
     and a dead-letter replay a month later schedule one for last month. The turns
     are historical; the derived schedule is not.
   */
-  const facts = distill(transcript, priorFacts, new Date());
+  const facts = distill(
+    { ...transcript, turns: withoutBlockedTags(transcript.turns, blockedTags) },
+    priorFacts,
+    new Date(),
+  );
   await saveEduFacts(ctx, facts);
 
   return { found: true, facts: facts.length };

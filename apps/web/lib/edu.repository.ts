@@ -36,7 +36,13 @@ import {
   type DerivedFact,
   type SessionTranscript,
 } from '@acme/student-model';
-import type { LoadPriorFacts, SaveFacts, SaveTranscript } from '@acme/app/server';
+import type {
+  EraseFactAndBlockTag,
+  LoadBlockedTags,
+  LoadPriorFacts,
+  SaveFacts,
+  SaveTranscript,
+} from '@acme/app/server';
 import { withEdu, type EduClient } from './edu.client';
 
 /**
@@ -193,6 +199,114 @@ export const loadEduPriorFacts: LoadPriorFacts = async (ctx) =>
       [ctx.learnerId],
     );
     return rows.map(factFromRow).filter((fact): fact is DerivedFact => fact !== null);
+  });
+
+/**
+ * Every tag this learner's family has erased and forbidden.
+ *
+ * The read that makes `erasure.ts:withoutBlockedTags` reachable. It was
+ * exported, unit-tested and had no production call site for one reason: there
+ * was no table to read from, so `tutor.service.ts` declared the port and every
+ * caller passed nothing. `edu_blocked_tags.sql` is the table; this is the read.
+ *
+ * `ctx.learnerId`, never a parameter — a blocked tag is a family's instruction
+ * about their own child and a query that accepted the learner would let one
+ * family's erasure filter another's model.
+ *
+ * NOT filtered on anything else. `edu.blocked_tags` has no expiry column on
+ * purpose (the migration says why): an instruction that aged out would restore a
+ * deleted belief on a schedule nobody was told about.
+ */
+export const loadEduBlockedTags: LoadBlockedTags = async (ctx) =>
+  withEdu(async (client: EduClient) => {
+    const { rows } = await client.query<{ tag: string }>(
+      'select tag from edu.blocked_tags where learner_id = $1',
+      [ctx.learnerId],
+    );
+    return rows.map((row) => row.tag);
+  });
+
+/**
+ * One line of the student model, erased — the row deleted AND its tag blocked,
+ * in one transaction.
+ *
+ * WHY A TRANSACTION AND NOT TWO STATEMENTS. The delete alone is the version of
+ * this feature that already shipped and did not work: the fact goes, the next
+ * distillation reads the same turns, and the same tag returns under the same
+ * deterministic `fact_id`. A crash between the two statements reproduces that
+ * exactly — a guardian who deleted a line and watches it come back — so the two
+ * are committed together or neither is. `withEdu` hands out one connection, so
+ * `begin`/`commit` here is a real transaction and not an optimistic pair.
+ *
+ * THE TAG COMES FROM `RETURNING`, not from the caller. A tag accepted as input
+ * would let a request block a tag it had no fact for, which is a way to silently
+ * suppress part of a child's model without deleting anything a guardian could
+ * see. Reading it off the deleted row means the block can only ever be as wide
+ * as the erasure that justified it.
+ *
+ * The delete is scoped by `learner_id` as well as `fact_id`. `fact_id` is
+ * globally unique and already carries the learner as its first segment, so this
+ * is redundant today and is here anyway: it is the predicate that keeps a
+ * client-supplied id from reaching another family's row if that key convention
+ * ever changes, and it costs nothing on a primary-key lookup.
+ */
+export const eraseEduFactAndBlockTag: EraseFactAndBlockTag = async (ctx, factId) =>
+  withEdu(async (client: EduClient) => {
+    await client.query('begin');
+    try {
+      const { rows } = await client.query<{ kind: string; tag: string | null }>(
+        `delete from edu.knowledge_graph
+          where fact_id = $1 and learner_id = $2
+          returning kind::text as kind, tag`,
+        [factId, ctx.learnerId],
+      );
+
+      const deleted = rows[0];
+      if (deleted === undefined) {
+        /*
+          Committed rather than rolled back, and reported as `erased: false`
+          rather than thrown. Nothing was written, so the two are equivalent to
+          the database — but "the line is already gone" is the honest answer to a
+          double-press or a retry, and turning it into an error would make S27
+          tell a guardian an erasure failed on the one screen where being wrong
+          about that is the whole problem.
+        */
+        await client.query('commit');
+        return { erased: false, blockedTag: null };
+      }
+
+      /*
+        Only interests and misconceptions are blockable, and the table's
+        `blocked_tags_blockable_kind` CHECK is the enforcement — this condition
+        is what keeps the correct case from hitting it. `erasure.ts`: mastery,
+        review and scaffolding are records of work the child did, and blocking
+        them would leave the tutor forbidden to notice a child improving.
+      */
+      const blockable = deleted.kind === 'interest' || deleted.kind === 'misconception';
+      const blockedTag = blockable ? deleted.tag : null;
+
+      if (blockedTag !== null) {
+        await client.query(
+          `insert into edu.blocked_tags (learner_id, tag, kind)
+           values ($1, $2, $3::edu.fact_kind)
+           on conflict (learner_id, tag) do nothing`,
+          [ctx.learnerId, blockedTag, deleted.kind],
+        );
+      }
+
+      await client.query('commit');
+      return { erased: true, blockedTag };
+    } catch (error) {
+      /*
+        Rolled back before rethrowing, because `withEdu` returns the connection
+        to the shared pool in its own `finally`. A connection released inside an
+        aborted transaction hands the next borrower a session where every
+        statement fails `25P02` — one failed erasure would take out unrelated
+        traffic until the pool recycled.
+      */
+      await client.query('rollback');
+      throw error;
+    }
   });
 
 /**

@@ -130,6 +130,12 @@ catalog:
   better-auth: 1.7.1
   "@better-auth/expo": 1.7.1
   "@better-auth/stripe": 1.7.1
+  # The Better Auth CLI, and yes it is called `auth`. `@better-auth/cli` was
+  # renamed to the bare `auth` package at v1.6 and the old name stops at 1.4.22,
+  # so "install the CLI matching better-auth@1.7.1" means this line and not that
+  # one. Same version as `better-auth` above on purpose: it generates the DDL for
+  # the adapter shipped in that exact release.
+  auth: 1.7.1
   stripe: 22.5.0
   sharp: 0.35.3
   "@types/pg": 8.23.0

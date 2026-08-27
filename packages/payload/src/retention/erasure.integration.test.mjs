@@ -791,3 +791,252 @@ test(
     }
   },
 );
+
+/*
+  ERASURE THAT SURVIVES THE NEXT SESSION.
+
+  Every test above proves that a deleted thing goes away. None of them proves it
+  STAYS away, and that is the gap doc 07 §S27's "the eraser works" actually
+  stands or falls on: a guardian erases "likes examples about basketball", the
+  next distillation reads the same turns, and the same tag walks back into
+  `edu.knowledge_graph` under the same deterministic `fact_id`. Nothing in the
+  cascade is wrong when that happens. The cascade ran, the row went, and the loop
+  around it put it back — which from the family's side is indistinguishable from
+  the delete button not being wired up at all.
+
+  `erasure.ts:withoutBlockedTags` is the guard, and it was exported, unit-tested
+  and unreachable: there was no table to read a blocked tag from and no writer to
+  put one there. So this test is deliberately end-to-end over the DURABLE record
+  — `edu.blocked_tags` — rather than over the pure function, because the pure
+  function was already green while the product was already broken.
+
+  THE CONTROL ASSERTION IS THE POINT. Before filtering, the test proves the fact
+  DOES come back; only then does it prove that filtering stops it. Without the
+  control, a distiller that stopped deriving interests for any unrelated reason
+  would turn this test green while erasure quietly went back to being theatre.
+
+  Same allowlisted-SQL arrangement as the three tests above and for the same
+  reason: `apps/web/lib/edu.repository.ts` begins with `import 'server-only'`.
+  The statements below are `loadEduBlockedTags` and `eraseEduFactAndBlockTag`,
+  statement for statement, transaction included.
+*/
+test(
+  'an erased interest does not come back: distillation reads the blocked tag, not just the deleted row',
+  { skip: url ? false : 'no DATABASE_URL' },
+  async () => {
+    const { default: pg } = await import('pg');
+    const { distill, transcriptExpiry } = await import('../../../student-model/src/distill.ts');
+    const { withoutBlockedTags } = await import('../../../student-model/src/erasure.ts');
+
+    const c = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+    await c.connect();
+
+    const stamp = `blocked-tags-${randomUUID()}`;
+    const learner = `${stamp}-learner`;
+    const sessionId = randomUUID();
+    const TAG = 'basketball';
+
+    /*
+      `guardianApprovedInterests` is passed because doc 07 §4 Loop A makes
+      interests opt-in and `distill` derives none without it. A family that never
+      consented has no interest fact to erase, so the scenario under test only
+      exists for a family that did — and the erasure has to beat the consent,
+      which is precisely the case that would otherwise re-derive forever.
+    */
+    const options = { guardianApprovedInterests: [TAG] };
+
+    const capturedAt = new Date();
+    const turn = {
+      skillId: 'Fractions',
+      skillTitle: 'Fractions',
+      correct: true,
+      hintDepth: 1,
+      interestTags: [TAG],
+      storable: true,
+    };
+    const transcript = {
+      id: sessionId,
+      learnerId: learner,
+      capturedAt: capturedAt.toISOString(),
+      expiresAt: transcriptExpiry(capturedAt),
+      turns: [turn],
+    };
+
+    /** `saveEduFacts`, statement for statement. */
+    const writeFacts = async (facts) => {
+      const titles = skillTitleIndex(facts);
+      for (const fact of facts) {
+        await c.query(
+          `insert into edu.knowledge_graph
+             (fact_id, learner_id, kind,
+              skill_id, skill_title, tag, p, attempts,
+              due_at, interval_days, hint_depth, active, guardian_approved,
+              derived_from, observed_at, expires_at)
+           values ($1, $2, $3::edu.fact_kind,
+                   $4, $5, $6, $7, $8,
+                   $9, $10, $11, $12, $13,
+                   $14::edu.opaque_id[], $15, $16)
+           on conflict (fact_id) do update set
+             kind = excluded.kind, skill_id = excluded.skill_id,
+             skill_title = excluded.skill_title, tag = excluded.tag,
+             p = excluded.p, attempts = excluded.attempts,
+             due_at = excluded.due_at, interval_days = excluded.interval_days,
+             hint_depth = excluded.hint_depth, active = excluded.active,
+             guardian_approved = excluded.guardian_approved,
+             derived_from = excluded.derived_from,
+             observed_at = excluded.observed_at, expires_at = excluded.expires_at`,
+          eduFactColumns(fact, titles),
+        );
+      }
+    };
+
+    const countFact = async (factId) =>
+      (
+        await c.query('select count(*)::int n from edu.knowledge_graph where fact_id = $1', [
+          factId,
+        ])
+      ).rows[0].n;
+
+    /** `loadEduBlockedTags`, statement for statement. */
+    const loadBlockedTags = async () =>
+      (
+        await c.query('select tag from edu.blocked_tags where learner_id = $1', [learner])
+      ).rows.map((row) => row.tag);
+
+    try {
+      await c.query(
+        `insert into edu.transcripts (session_id, learner_id, captured_at, expires_at, turns)
+         values ($1, $2, $3, $4, $5::jsonb)
+         on conflict (session_id) do nothing`,
+        [
+          transcript.id,
+          transcript.learnerId,
+          transcript.capturedAt,
+          transcript.expiresAt,
+          JSON.stringify(transcript.turns),
+        ],
+      );
+
+      // Session one, through the real distiller and the real column mapping.
+      const first = distill(transcript, [], new Date(), options);
+      const interest = first.find((fact) => fact.kind === 'interest');
+      assert.ok(
+        interest !== undefined,
+        'distill derived no interest fact — this test can no longer see the thing it erases',
+      );
+      await writeFacts(first);
+      assert.equal(await countFact(interest.id), 1, 'the interest fact did not reach the store');
+
+      /*
+        THE ERASURE, as `eraseEduFactAndBlockTag` performs it: one transaction,
+        the delete scoped by `learner_id` as well as `fact_id` so the id a client
+        supplies can only ever name a row the caller's own ctx owns, and the tag
+        taken from the DELETED ROW's `returning` rather than from anything the
+        client sent — a caller who could name the tag could block a tag it never
+        had a fact for.
+      */
+      await c.query('begin');
+      const { rows: deleted } = await c.query(
+        `delete from edu.knowledge_graph
+          where fact_id = $1 and learner_id = $2
+          returning kind::text as kind, tag`,
+        [interest.id, learner],
+      );
+      assert.equal(deleted.length, 1, 'the guardian erased a line and no row was deleted');
+      await c.query(
+        `insert into edu.blocked_tags (learner_id, tag, kind)
+         values ($1, $2, $3::edu.fact_kind)
+         on conflict (learner_id, tag) do nothing`,
+        [learner, deleted[0].tag, deleted[0].kind],
+      );
+      await c.query('commit');
+
+      assert.equal(await countFact(interest.id), 0, 'the erased fact survived its own deletion');
+
+      /*
+        The model as it stands after the erasure — which is what
+        `loadEduPriorFacts` returns on the next turn. Taken from the batch rather
+        than re-read and reconstructed, because the id set is what distillation
+        keys on and reconstructing the rows here would be a fourth copy of
+        `factFromRow` proving nothing this test is about.
+      */
+      const priorFacts = first.filter((fact) => fact.id !== interest.id);
+
+      /*
+        THE CONTROL. Unfiltered, over turns that still carry the tag — because
+        the turns are a record of what happened and erasure does not rewrite
+        them — the fact walks straight back under the same deterministic id.
+        This assertion is the bug, held still.
+      */
+      const unfiltered = distill(transcript, priorFacts, new Date(), options);
+      assert.ok(
+        unfiltered.some((fact) => fact.id === interest.id),
+        'control failed: the distiller no longer re-derives an erased interest on its own, ' +
+          'so the assertion below proves nothing',
+      );
+
+      // The real path: the durable record, read back, through the real filter.
+      assert.deepEqual(
+        await loadBlockedTags(),
+        [TAG],
+        'the erasure recorded no blocked tag — the next session has nothing to filter on',
+      );
+
+      const blockedTags = await loadBlockedTags();
+      const filtered = distill(
+        { ...transcript, turns: withoutBlockedTags(transcript.turns, blockedTags) },
+        priorFacts,
+        new Date(),
+        options,
+      );
+      assert.equal(
+        filtered.some((fact) => fact.id === interest.id),
+        false,
+        'the erased interest was re-derived — erasure works once, on one device',
+      );
+
+      /*
+        And written back, because a filter that holds in memory and a store that
+        holds the row are two different claims. This is the one the guardian sees
+        when S27 reloads.
+      */
+      await writeFacts(filtered);
+      assert.equal(
+        await countFact(interest.id),
+        0,
+        'the erased line came back into the educational store on the next session',
+      );
+
+      /*
+        The work the child did is untouched. `erasure.ts` refuses to make mastery
+        blockable on purpose, and a filter that quietly took the whole turn with
+        the tag would be the easy wrong implementation of this feature.
+      */
+      assert.ok(
+        filtered.some((fact) => fact.id === `${learner}:mastery:Fractions`),
+        'blocking an interest tag also suppressed the mastery estimate for the same turn',
+      );
+    } finally {
+      /*
+        ROLLBACK FIRST, and `c.end()` in a nested finally.
+
+        This is the only test here that opens an explicit transaction, and a
+        failure inside one leaves the connection in an aborted block where every
+        cleanup statement comes back `25P02: current transaction is aborted`. The
+        first version of this teardown therefore reported the aborted-block error
+        instead of the assertion that actually failed, and then never reached
+        `c.end()` — so the runner hung on an open socket and the real message was
+        lost twice over. A teardown that can hide the failure it is tidying up
+        after is worse than no teardown.
+      */
+      try {
+        await c.query('rollback');
+        await c.query('delete from edu.blocked_tags where learner_id = $1', [learner]);
+        await c.query('delete from edu.knowledge_graph where learner_id = $1', [learner]);
+        await c.query('delete from edu.transcripts where learner_id = $1', [learner]);
+      } finally {
+        await c.end();
+      }
+    }
+  },
+);

@@ -77,13 +77,20 @@ export async function POST(request: NextRequest) {
       request.headers,
       { problem, answer, hintDepth },
       /*
-        No `loadPriorFacts` and no `saveFacts`. `evaluateTutorTurn` distils only
-        when it is given both, so withholding them is what takes distillation off
-        the request — not a flag, and not a second code path inside the service.
+        NO `distillation` PORTS. `evaluateTutorTurn` distils only when it is
+        given them, so withholding them is what takes distillation off the
+        request — not a flag, and not a second code path inside the service.
+
+        They are one object rather than three optional arguments because of what
+        the three-argument version allowed: `loadBlockedTags` defaulted to "no
+        tags are blocked", so supplying the other two turned distillation on with
+        a guardian's erasures silently ignored. The grouped type makes that
+        unrepresentable — anything that distils here must also say where
+        `edu.blocked_tags` is read from. The live distiller is
+        `lib/distill.service.ts`, behind the `edu.distill` job enqueued below,
+        and it reads them on every run.
       */
-      undefined,
-      saveTranscriptAndQueueDistillation,
-      undefined,
+      { saveTranscript: saveTranscriptAndQueueDistillation },
     );
 
     /*
