@@ -1498,3 +1498,156 @@ test(
     }
   },
 );
+
+/*
+  DOC 34 §3 — SESSION SUMMARIES ARE THEIR OWN RETENTION CLASS, both halves.
+
+  1. THE TRANSCRIPT TTL DOES NOT TAKE THE REPORT. A summary is the durable
+     record of learning and may outlive the transcript it describes; the sweep
+     deletes on `expires_at` predicates and `session_summaries` deliberately
+     has no such column. The control proves the transcript beside it WAS swept,
+     so the summary's survival is a decision and not a broken sweep.
+
+  2. THE GUARDIAN'S ERASURE STILL COVERS IT. "Forget everything" must take the
+     summaries with the model — a report about a child whose record was erased
+     is the erasure promise broken in the one store a parent actually reads.
+     The statements mirror `forgetEverything`'s ports in order:
+     `forgetEduLearnerRecord` (edu.repository.ts) then `forgetSessionSummaries`
+     (summary.repository.ts), statement for statement, same allowlist reason as
+     every test above. A bystander learner's summary is asserted intact — the
+     whole delete is a `where learner_auth_id = $1`, and a missing predicate's
+     blast radius is other people's children.
+*/
+test(
+  'the transcript TTL sweep does not touch a session summary that outlives it',
+  { skip: url ? false : 'no DATABASE_URL' },
+  async () => {
+    const { default: pg } = await import('pg');
+    const c = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+    await c.connect();
+
+    const stamp = `summary-outlives-${randomUUID()}`;
+    const learner = `${stamp}-learner`;
+    const EXPIRED = `${stamp}-session`;
+
+    try {
+      await c.query(
+        `insert into payload.session_transcripts (session_id, learner_auth_id, turns, captured_at, expires_at)
+         values ($1, $2, '[]'::jsonb, now() - interval '31 days', now() - interval '1 day')`,
+        [EXPIRED, learner],
+      );
+      await c.query(
+        `insert into payload.session_summaries
+           (session_id, learner_auth_id, band, headline, next_up, home_support, facts, generator, status, published_at)
+         values ($1, $2, '3-5', 'seeded headline', 'seeded next',
+                 '{"conversationStarter":"s","activity":"a"}'::jsonb,
+                 '{"durationMin":10,"attempted":1,"solvedIndependently":1,"solvedWithHelp":0}'::jsonb,
+                 '{"model":"test","promptVersion":"t","schemaVersion":"1"}'::jsonb,
+                 'published', now())`,
+        [EXPIRED, learner],
+      );
+
+      await applySweepSql(c);
+
+      const transcripts = await c.query(
+        'select count(*)::int n from payload.session_transcripts where session_id = $1',
+        [EXPIRED],
+      );
+      assert.equal(
+        transcripts.rows[0].n,
+        0,
+        'control failed: the expired transcript was not swept, so the summary surviving proves nothing',
+      );
+
+      const summaries = await c.query(
+        'select count(*)::int n from payload.session_summaries where session_id = $1',
+        [EXPIRED],
+      );
+      assert.equal(
+        summaries.rows[0].n,
+        1,
+        'the transcript sweep deleted a session summary — summaries are their own retention class (doc 34 §3) and may outlive the transcript they describe',
+      );
+    } finally {
+      await c.query('delete from payload.session_summaries where learner_auth_id = $1', [learner]);
+      await c.query('delete from payload.session_transcripts where learner_auth_id = $1', [learner]);
+      await c.end();
+    }
+  },
+);
+
+test(
+  'forget everything takes the session summaries with it, and only this learner’s',
+  { skip: url ? false : 'no DATABASE_URL' },
+  async () => {
+    const { default: pg } = await import('pg');
+    const c = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+    await c.connect();
+
+    const stamp = `forget-summaries-${randomUUID()}`;
+    const learner = `${stamp}-learner`;
+    const bystander = `${stamp}-bystander`;
+
+    const seedSummary = async (who, sessionId) => {
+      await c.query(
+        `insert into payload.session_summaries
+           (session_id, learner_auth_id, band, headline, next_up, home_support, facts, generator, status, published_at)
+         values ($1, $2, '3-5', 'seeded headline', 'seeded next',
+                 '{"conversationStarter":"s","activity":"a"}'::jsonb,
+                 '{"durationMin":10,"attempted":1,"solvedIndependently":1,"solvedWithHelp":0}'::jsonb,
+                 '{"model":"test","promptVersion":"t","schemaVersion":"1"}'::jsonb,
+                 'published', now())`,
+        [sessionId, who],
+      );
+    };
+
+    try {
+      await seedSummary(learner, `${stamp}-s1`);
+      await seedSummary(learner, `${stamp}-s2`);
+      await seedSummary(bystander, `${stamp}-s3`);
+      // The learner has edu rows too — the cascade's two halves run together.
+      await c.query(
+        `insert into edu.transcripts (session_id, learner_id, captured_at, expires_at, turns)
+         values ($1, $2, now(), now() + interval '29 days', '[]'::jsonb)`,
+        [`${stamp}-edu`, learner],
+      );
+
+      // `forgetEverything`'s record half, statement for statement:
+      // forgetEduLearnerRecord (edu.repository.ts)…
+      await c.query('begin');
+      await c.query('delete from edu.blocked_tags where learner_id = $1', [learner]);
+      await c.query('delete from edu.knowledge_graph where learner_id = $1', [learner]);
+      await c.query('delete from edu.transcripts where learner_id = $1', [learner]);
+      await c.query('commit');
+      // …then forgetSessionSummaries (summary.repository.ts).
+      await c.query('delete from payload.session_summaries where learner_auth_id = $1', [learner]);
+
+      const mine = await c.query(
+        'select count(*)::int n from payload.session_summaries where learner_auth_id = $1',
+        [learner],
+      );
+      assert.equal(
+        mine.rows[0].n,
+        0,
+        'forget-all left session summaries behind — the durable record survived the erasure that was supposed to be guardian-controlled',
+      );
+
+      const theirs = await c.query(
+        'select count(*)::int n from payload.session_summaries where learner_auth_id = $1',
+        [bystander],
+      );
+      assert.equal(theirs.rows[0].n, 1, 'another learner’s summary was deleted — the erasure is unscoped');
+
+      // Idempotence: the second pass is a no-op, not an error.
+      await c.query('delete from payload.session_summaries where learner_auth_id = $1', [learner]);
+    } finally {
+      await c.query('rollback').catch(() => {});
+      await c.query('delete from payload.session_summaries where learner_auth_id in ($1, $2)', [
+        learner,
+        bystander,
+      ]);
+      await c.query('delete from edu.transcripts where learner_id = $1', [learner]);
+      await c.end();
+    }
+  },
+);

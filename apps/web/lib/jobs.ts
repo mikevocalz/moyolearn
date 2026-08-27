@@ -25,6 +25,7 @@ import {
   drainQueues,
   enqueue,
   incidentFanOutKey,
+  summaryKey,
   sweepKey,
   utcDay,
   type DrainOptions,
@@ -33,11 +34,19 @@ import {
   type JobsReporter,
   type LiveQueueName,
 } from '@acme/jobs';
-import { markFannedOut } from '@acme/app/server';
+import { generateSessionSummary, markFannedOut, type NarrativeModel } from '@acme/app/server';
 import { POST as retentionSweep } from '@/app/api/retention/sweep/route';
 import { POST as mediaSweep } from '@/app/api/media/sweep/route';
 import { distillTranscript } from './distill.service';
 import { loadIncident, saveIncident } from './incident.repository';
+import { loadEduPriorFacts, loadEduTurnsInWindow } from './edu.repository';
+import { loadGradeBand } from './student-model.repository';
+import {
+  loadSessionForSummary,
+  loadSummaryBySession,
+  saveSummaryReport,
+} from './summary.repository';
+import { budgetedGateway } from './inference';
 import { reportRouteError } from './report-error';
 
 /**
@@ -105,6 +114,27 @@ export function jobHandlers(): JobHandlers {
     },
     'edu.distill': async (payload) => {
       await distillTranscript(payload.transcriptId);
+    },
+    /*
+      Doc 34 §4 — the report pipeline, shaped on `distillTranscript`'s rules:
+      ids-only payload, identity read off the session row, every store re-read
+      on every run so a dead-letter replay honours an erasure that happened
+      after enqueue, and a missing session COMPLETES (the sweep may have taken
+      it). The narrative call goes through `budgetedGateway()` — importing
+      `./inference` above is also what installs the durable budget ledger in
+      this lambda, the module's stated rule: any route that can reach a model
+      must import it.
+    */
+    'summary.generate': async (payload) => {
+      await generateSessionSummary(payload.sessionId, {
+        loadSession: loadSessionForSummary,
+        loadSummary: loadSummaryBySession,
+        loadEvidenceTurns: loadEduTurnsInWindow,
+        loadPriorFacts: loadEduPriorFacts,
+        loadBand: loadGradeBand,
+        narrativeModel: summaryNarrativeModel,
+        saveSummary: saveSummaryReport,
+      });
     },
     /*
       Doc 31 §4.3's two fan-out legs.
@@ -213,6 +243,28 @@ export function enqueueSweep(
  */
 export function enqueueDistillation(transcriptId: string): Promise<string | null> {
   return enqueue('edu.distill', { transcriptId }, distillKey(transcriptId));
+}
+
+/**
+ * Doc 34 §4 step 2's one model call, composed here so the service stays
+ * gateway-agnostic. `classify` is the classifier-tier door — the routing table
+ * owns which model answers (`summary-narrative` → the small model), and a
+ * feature never names one (CLAUDE.md §Children's surfaces: no model calls from
+ * features; the gateway is the boundary).
+ */
+const summaryNarrativeModel: NarrativeModel = async (payload) => {
+  const completion = await budgetedGateway().classify('summary-narrative', payload);
+  return { text: completion.text, model: completion.outcome.servedBy };
+};
+
+/**
+ * Doc 34 §4's producer: one report job per closed session, keyed on the
+ * session. Called from the session-close route immediately after `closedAt`
+ * lands — enqueue-after-write, the same ordering `enqueueDistillation`
+ * documents. `null` is the singleton dedupe working, not a failure.
+ */
+export function enqueueSummary(sessionId: string): Promise<string | null> {
+  return enqueue('summary.generate', { sessionId }, summaryKey(sessionId));
 }
 
 /**

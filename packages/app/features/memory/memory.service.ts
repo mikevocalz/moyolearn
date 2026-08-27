@@ -143,13 +143,28 @@ export interface ForgottenRecord {
    * decision is ever revisited.
    */
   readonly blockedTags: number;
+  /**
+   * Session summaries deleted (doc 34 §3). Their own retention class — no TTL,
+   * the sweep never touches them — so the guardian's erasure is the ONLY thing
+   * that ever removes one, and the count proves the cascade reached the one
+   * store that outlives the transcripts.
+   */
+  readonly summaries: number;
   readonly media: ErasedMedia;
 }
 
 /** Repository port — empties every `edu` table for the learner, in one transaction. */
 export type ForgetLearnerRecord = (
   ctx: ProtectedCtx,
-) => Promise<Omit<ForgottenRecord, 'media'>>;
+) => Promise<Omit<ForgottenRecord, 'media' | 'summaries'>>;
+
+/**
+ * Repository port — deletes the learner's session summaries (doc 34 §3's
+ * retention class), returning the count. Separate from `ForgetLearnerRecord`
+ * because the summaries live in the Payload store and that port is `edu`-bound;
+ * one port per store is what keeps each repository single-schema.
+ */
+export type ForgetSessionSummaries = (ctx: ProtectedCtx) => Promise<number>;
 
 /**
  * Erases one session and everything derived only from it, inside the protected
@@ -174,9 +189,15 @@ export async function eraseMemoryTranscript(
   });
 }
 
-/** The two stores "forget everything" has to reach. */
+/** The three stores "forget everything" has to reach. */
 export interface ForgetEverythingPorts {
   readonly forgetLearnerRecord: ForgetLearnerRecord;
+  /**
+   * Doc 34 §3 joined the cascade: summaries may OUTLIVE transcripts, which
+   * makes this port the only deleter they have — leave it out and "forget
+   * everything" quietly keeps the most readable record of the child there is.
+   */
+  readonly forgetSessionSummaries: ForgetSessionSummaries;
   readonly eraseLearnerMedia: EraseLearnerMedia;
 }
 
@@ -213,9 +234,16 @@ export async function forgetEverything(
     auth,
     headers,
     async (ctx) => {
+      /*
+        Rows first, objects last — and the summaries ride the row half: both
+        deletes are transactional in their own store, and a Bunny failure after
+        them leaves nothing readable behind, only bytes already scheduled for
+        the report the guardian sees.
+      */
       const record = await ports.forgetLearnerRecord(ctx);
+      const summaries = await ports.forgetSessionSummaries(ctx);
       const media = await ports.eraseLearnerMedia(ctx);
-      return { ...record, media };
+      return { ...record, summaries, media };
     },
     { telemetry: { op: 'memory.forgetEverything', resource: 'knowledgeGraph', action: 'delete' } },
   );

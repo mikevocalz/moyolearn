@@ -18,6 +18,7 @@
 // SOT-KEYWORDS: budget ledger repository durable daily turns usd ceiling learner upsert atomic increment retention prune edu
 import 'server-only';
 import type { BudgetLedger, LedgerDay } from '@acme/inference';
+import type { VoiceBudgetLedger, VoiceLedgerDay } from '@acme/voice';
 import { withEdu, type EduClient } from './edu.client';
 
 /**
@@ -84,6 +85,68 @@ export function durableBudgetLedger(): BudgetLedger {
                        usd   = edu.inference_budget.usd + excluded.usd,
                        last_turn_at = now()`,
           [learnerId, day, usd],
+        );
+      });
+    },
+  };
+}
+
+/**
+ * `pg` numerics arrive as strings; see `BudgetRow`.
+ */
+interface VoiceBudgetRow {
+  voice_chars: number;
+  voice_usd: string;
+}
+
+/**
+ * The durable VOICE ledger — doc 32 §5's cost line, on the SAME row as the
+ * inference budget and deliberately not the same columns.
+ *
+ * Same row: one learner-day is one record of a child's activity, swept by one
+ * retention rule (`expires_at` covers the whole row), behind the one `edu`
+ * door `check-store-separation.mjs` already guards. A second table would be a
+ * second place a learner id lives that the sweep has to know about.
+ *
+ * Separate columns: doc 32 §6's shed order — "voice degrades to text before
+ * tutoring degrades at all" — needs voice spend and tutoring spend to hit
+ * DIFFERENT ceilings, and `record` on the inference ledger counts a TURN per
+ * call, which a per-sentence TTS debit would burn through in minutes. Voice is
+ * priced per character; it gets a character column and a usd column of its own
+ * (`edu_inference_budget_voice.sql`).
+ */
+export function durableVoiceBudgetLedger(): VoiceBudgetLedger {
+  return {
+    read: async (learnerId: string, day: string): Promise<VoiceLedgerDay> =>
+      withEdu(async (client: EduClient) => {
+        const { rows } = await client.query<VoiceBudgetRow>(
+          `select voice_chars, voice_usd
+             from edu.inference_budget
+            where learner_id = $1 and day = $2::date`,
+          [learnerId, day],
+        );
+        const row = rows[0];
+        return row === undefined
+          ? { chars: 0, usd: 0 }
+          : { chars: row.voice_chars, usd: Number(row.voice_usd) };
+      }),
+
+    /**
+     * One atomic statement, exactly like `record` above and for its reason —
+     * two lambdas debiting the same child must not hand out a free sentence
+     * per collision. `turns` is NOT incremented: a spoken sentence is not a
+     * tutoring turn, and charging one against the other would let the voice
+     * budget end a child's lesson.
+     */
+    record: async (learnerId: string, day: string, chars: number, usd: number): Promise<void> => {
+      await withEdu(async (client: EduClient) => {
+        await client.query(
+          `insert into edu.inference_budget (learner_id, day, voice_chars, voice_usd)
+                values ($1, $2::date, $3, $4)
+           on conflict (learner_id, day) do update
+                   set voice_chars = edu.inference_budget.voice_chars + excluded.voice_chars,
+                       voice_usd   = edu.inference_budget.voice_usd + excluded.voice_usd`,
+          [learnerId, day, chars, usd],
         );
       });
     },

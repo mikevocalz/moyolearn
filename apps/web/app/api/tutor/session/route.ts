@@ -10,9 +10,10 @@
 // the alternative lets a reload silently rewrite what the session was about.
 // SOT: CLAUDE.md §The block · docs/pack/23-tutorstage-handoff.md
 // SOT-KEYWORDS: tutor session api route resume cross-device protected operation open create
-import { NextRequest, NextResponse } from 'next/server';
-import { openSession } from '@acme/app/server';
-import { createSession, loadOpenSession } from '@/lib/tutor-session.repository';
+import { NextRequest, NextResponse, after } from 'next/server';
+import { closeSession, openSession } from '@acme/app/server';
+import { closeTutorSession, createSession, loadOpenSession } from '@/lib/tutor-session.repository';
+import { drain, enqueueSummary } from '@/lib/jobs';
 import { signCdnUrl } from '@/lib/bunny-token';
 import { budgetedGateway } from '@/lib/inference';
 import { auth } from '@/lib/auth';
@@ -57,6 +58,64 @@ export async function GET(request: NextRequest) {
         })),
       },
     });
+  } catch (error) {
+    if (error instanceof Error) reportRouteError(error);
+    const message = error instanceof Error ? error.message : 'Server error';
+    return NextResponse.json({ error: message }, { status: message === 'Unauthenticated' ? 401 : 500 });
+  }
+}
+
+/**
+ * POST — the session ends. Doc 34 §4's trigger: `closedAt` lands, then
+ * `summary.generate` is enqueued on the session's own key, then — after the
+ * response is already on its way — the queue is drained the same way the
+ * evaluate route drains `edu.distill`: scoped to this one queue, failures
+ * swallowed because the job row is committed and the cron drain is the retry
+ * path.
+ *
+ * `sessionId` is the only input, and it is a CLAIM, not authority — the
+ * repository re-proves ownership against `ctx.learnerId` before writing, so
+ * naming someone else's session closes nothing and reports `closed: false`
+ * indistinguishably from a session that does not exist.
+ */
+export async function POST(request: NextRequest) {
+  let body: unknown;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+  }
+
+  if (
+    typeof body !== 'object' ||
+    body === null ||
+    !('sessionId' in body) ||
+    typeof (body as Record<string, unknown>).sessionId !== 'string' ||
+    (body as { sessionId: string }).sessionId.length === 0
+  ) {
+    return NextResponse.json({ error: 'sessionId is required' }, { status: 400 });
+  }
+
+  const { sessionId } = body as { sessionId: string };
+
+  try {
+    const result = await closeSession(
+      auth,
+      request.headers,
+      { sessionId },
+      closeTutorSession,
+      enqueueSummary,
+    );
+
+    after(async () => {
+      try {
+        await drain({ only: ['summary.generate'], batchSize: 2 });
+      } catch (error) {
+        if (error instanceof Error) reportRouteError(error);
+      }
+    });
+
+    return NextResponse.json({ ok: true, ...result });
   } catch (error) {
     if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';

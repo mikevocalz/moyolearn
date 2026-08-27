@@ -31,6 +31,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { forgetEverything } from '@acme/app/server';
 import { forgetEduLearnerRecord } from '@/lib/edu.repository';
+import { forgetSessionSummaries } from '@/lib/summary.repository';
 import { eraseLearnerMedia } from '@/lib/bunny.repository';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
@@ -41,6 +42,9 @@ export async function POST(request: NextRequest) {
   try {
     const result = await forgetEverything(auth, request.headers, {
       forgetLearnerRecord: forgetEduLearnerRecord,
+      // Doc 34 §3: summaries outlive transcripts, so this cascade is the ONLY
+      // deleter they have. The port is required, not optional, for that reason.
+      forgetSessionSummaries,
       eraseLearnerMedia,
     });
     /*

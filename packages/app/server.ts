@@ -59,8 +59,68 @@ export {
   type EraseTranscriptCascade,
   type EraseLearnerMedia,
   type ForgetLearnerRecord,
+  type ForgetSessionSummaries,
   type ForgetEverythingPorts,
 } from './features/memory/memory.service';
+
+/*
+  Doc 34 — the session-summary domain: §4's pipeline for the job handler, §5's
+  guardian and queue reads for their routes, §3's teacher share for both ends
+  of the link. Values and port types together, the tutoring-service idiom; the
+  repository names the row shapes through this barrel and never a deep path.
+*/
+export {
+  approveSummaryDraft,
+  closeSession,
+  createTeacherShare,
+  generateSessionSummary,
+  guardianSummaries,
+  guardianSummariesFrom,
+  guardianSummaryReport,
+  revokeTeacherShare,
+  sharedSummaryView,
+  summaryQueue,
+  suppressSummary,
+  TEACHER_SHARE_TTL_DAYS,
+  type CloseTutorSession,
+  type DraftActionPorts,
+  type EnqueueSummaryJob,
+  type GenerateSummaryPorts,
+  type GenerateSummaryResult,
+  type GuardianReportPorts,
+  type GuardianSummaryCard,
+  type GuardianSummaryPorts,
+  type GuardianSummaryView,
+  type LoadEvidenceTurns,
+  type LoadGuardianSummaries,
+  type LoadSessionForSummary,
+  type LoadSummaryBySession,
+  type LoadSummaryQueue,
+  type MarkGuardianViewed,
+  type NarrativeModel,
+  type ResolveCaptureCrop,
+  type ResolvedProblemRow,
+  type SaveSummaryReport,
+  type SharedSummaryPorts,
+  type SubjectGroup,
+  type SummaryQueuePorts,
+  type SummaryQueueRow,
+  type SummarySessionRow,
+  type TeacherShareGrant,
+  type TeacherSharePorts,
+  type TeacherShareView,
+} from './features/summary/summary.service';
+export { extractEvidence, type EvidencedTurn, type MasteryFactEvidence } from './features/summary/evidence';
+export type {
+  EvidenceRef,
+  MasteryMovement,
+  ProblemRow,
+  SessionSummaryReport,
+  SummaryBand,
+  SummaryFacts,
+  SummaryStatus,
+  TeacherShare,
+} from './features/summary/summary.types';
 
 export {
   coachTutorTurn,
@@ -78,6 +138,28 @@ export {
   the two pre-doc-31 values is part of the read, so it travels with it.
 */
 export { asVoiceBand, VOICE_BANDS, type VoiceBand } from '@acme/student-model';
+/*
+  Doc 32's voice turn. Exported beside the coach service because they are two
+  halves of one wire: the coach route mints the utterance tag each chunk frame
+  carries, and this service is the only thing that will render audio for it.
+  The egress itself (`@acme/voice`) is NOT re-exported — it arrives through the
+  `SpeakSentence`/`ResolveBakedClip` ports, and `tooling/check-voice-egress.mjs`
+  keeps it that way.
+*/
+export {
+  speakTutorSentence,
+  voiceOutcome,
+  bakedTutorVoice,
+  type SpokenSentenceInput,
+  type VerifyUtterance,
+  type SpeakResult,
+  type SpeakSentence,
+  type BakedClipResult,
+  type ResolveBakedClip,
+  type VoicePorts,
+  type BakedVoicePorts,
+  type VoiceTurnOutcome,
+} from './features/tutor/voice.service';
 export type { RecordSafetyEvent } from './features/tutor/safety-events';
 /*
   The safety-event shape travels with the ports that move it, exactly as

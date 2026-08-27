@@ -41,8 +41,10 @@ import {
 import type {
   EraseFactAndBlockTag,
   EraseTranscriptCascade,
+  EvidencedTurn,
   ForgetLearnerRecord,
   LoadBlockedTags,
+  LoadEvidenceTurns,
   LoadPriorFacts,
   SaveFacts,
   SaveTranscript,
@@ -756,3 +758,72 @@ export async function deleteEduTranscripts(sessionIds: readonly string[]): Promi
     return rowCount ?? 0;
   });
 }
+
+/**
+ * Doc 34 §4 step 1's graded evidence stream: every storable-or-not turn this
+ * learner produced inside one tutoring session's wall-clock window.
+ *
+ * WINDOWED BY LEARNER + `captured_at`, and that is a documented join, not a
+ * shortcut: the evaluate path writes each turn as its own `edu.transcripts`
+ * row under a fresh UUID (`tutor.service.ts` mints one per turn), so "the
+ * session's turns" exists nowhere as a key. The tutoring session's open/close
+ * timestamps are the honest scope — a turn graded while the session was open
+ * belongs to it, and the summary pipeline is the only reader that asks.
+ *
+ * `turns` IS decoded here, unlike `loadExpiredEduTranscripts` above, because
+ * this caller genuinely reads them. The DB CHECK `transcripts_turns_shape`
+ * whitelists `SessionTurn`'s keys, so the narrowing trusts the discriminants
+ * and drops any element that still fails it — one lost turn, never a lost
+ * report.
+ */
+export const loadEduTurnsInWindow: LoadEvidenceTurns = async (ctx, fromIso, toIso) => {
+  interface TurnsRow {
+    session_id: string;
+    turns: unknown[];
+  }
+  return withEdu(async (client: EduClient) => {
+    const { rows } = await client.query<TurnsRow>(
+      `select session_id, turns
+         from edu.transcripts
+        where learner_id = $1
+          and captured_at >= $2
+          and captured_at <= $3
+        order by captured_at`,
+      [ctx.learnerId, new Date(fromIso), new Date(toIso)],
+    );
+
+    const evidenced: EvidencedTurn[] = [];
+    for (const row of rows) {
+      if (!Array.isArray(row.turns)) continue;
+      row.turns.forEach((value, index) => {
+        if (typeof value !== 'object' || value === null || Array.isArray(value)) return;
+        const turn = value as {
+          skillId?: string;
+          skillTitle?: string;
+          correct?: boolean;
+          hintDepth?: number;
+          storable?: boolean;
+        };
+        if (
+          typeof turn.skillId !== 'string' ||
+          typeof turn.skillTitle !== 'string' ||
+          typeof turn.correct !== 'boolean' ||
+          typeof turn.hintDepth !== 'number' ||
+          typeof turn.storable !== 'boolean'
+        ) {
+          return;
+        }
+        evidenced.push({
+          transcriptId: row.session_id,
+          index,
+          skillId: turn.skillId,
+          skillTitle: turn.skillTitle,
+          correct: turn.correct,
+          hintDepth: turn.hintDepth,
+          storable: turn.storable,
+        });
+      });
+    }
+    return evidenced;
+  });
+};

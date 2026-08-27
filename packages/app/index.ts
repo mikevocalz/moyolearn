@@ -36,6 +36,23 @@ export { SessionPrepScreen } from './features/session-prep/screen';
 export { PlanScreen } from './features/plan/screen';
 export { ProgressScreen } from './features/progress/screen';
 export { useProgress } from './features/progress/use-progress';
+// Doc 34's surfaces: the guardian feed and report (Hot), the tutor queue
+// (Cool), and the teacher's tokened read. Screens and their read hooks only —
+// the pipeline, the share minting and every port live in `server.ts`.
+export { ReportsScreen } from './features/summary/reports-content';
+export { SessionReportScreen } from './features/summary/report-content';
+export { SummaryQueueScreen } from './features/summary/draft-queue-content';
+export { ShareReportContent } from './features/summary/share-report-content';
+export { ReportBody, LEVEL_LABEL, type ReportBodyProps } from './features/summary/report-blocks';
+export {
+  reportQueryKey,
+  reportsQueryKey,
+  summaryQueueQueryKey,
+  useGuardianReport,
+  useGuardianReports,
+  useSummaryQueue,
+  useTeacherShare,
+} from './features/summary/use-reports';
 export { PracticeScreen } from './features/practice/screen';
 export { AiActivityScreen } from './features/ai-activity/screen';
 export { MemoryScreen } from './features/memory/screen';

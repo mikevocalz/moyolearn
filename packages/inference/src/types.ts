@@ -19,9 +19,20 @@ import type { BetaStopReason } from '@anthropic-ai/sdk/resources/beta/messages';
  * Which job a call is doing. Not a model name — `ROUTING` maps a role to a
  * model, and a caller that could name a model could name the wrong one.
  */
-export type InferenceRole = 'tutor-turn' | 'classify-input' | 'classify-output' | 'topic-fence';
+export type InferenceRole =
+  | 'tutor-turn'
+  | 'classify-input'
+  | 'classify-output'
+  | 'topic-fence'
+  | 'summary-narrative';
 
-/** Every role except the tutoring turn: one shot, no stream, a class label. */
+/**
+ * Every role except the tutoring turn: one shot, no stream, a small-model
+ * completion. `summary-narrative` (doc 34 §4 step 2) rides this arm on
+ * purpose: the report's phrasing pass is a small-model job over an extracted
+ * evidence table — never a frontier call, never a stream, and never a call
+ * that sees a transcript.
+ */
 export type ClassifierRole = Exclude<InferenceRole, 'tutor-turn'>;
 
 /**

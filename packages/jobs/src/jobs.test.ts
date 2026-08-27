@@ -43,9 +43,9 @@ import {
 
 const NAMES = Object.keys(QUEUES) as QueueName[];
 
-test('the topology is the fourteen queues doc 12 §6 and jobs.md §2 commit to', () => {
-  assert.equal(NAMES.length, 14);
-  assert.equal(liveQueues().length + declaredQueues().length, 14);
+test('the topology is the fifteen queues doc 12 §6, jobs.md §2 and doc 34 §4 commit to', () => {
+  assert.equal(NAMES.length, 15);
+  assert.equal(liveQueues().length + declaredQueues().length, 15);
 
   // §2's five-band ladder, in the order pg-boss drains: priority DESCENDING.
   assert.ok(PRIORITY.safety > PRIORITY.webhook);
@@ -57,12 +57,13 @@ test('the topology is the fourteen queues doc 12 §6 and jobs.md §2 commit to',
   assert.ok(PRIORITY.cleanup > PRIORITY.notify);
 });
 
-test('the five live queues are the five with real work today', () => {
+test('the six live queues are the six with real work today', () => {
   /*
-    Doc 31 §4.3 promoted the two safety fan-outs. They are named here rather
-    than counted because the list is the assertion: a queue that goes live
-    without a handler is a silent failure — jobs accumulate, nothing errors, and
-    the dashboard shows a healthy zero-failure rate.
+    Doc 31 §4.3 promoted the two safety fan-outs; doc 34 §4 promoted the
+    summary pipeline. They are named here rather than counted because the list
+    is the assertion: a queue that goes live without a handler is a silent
+    failure — jobs accumulate, nothing errors, and the dashboard shows a
+    healthy zero-failure rate.
   */
   assert.deepEqual([...liveQueues()].sort(), [
     'edu.distill',
@@ -70,6 +71,7 @@ test('the five live queues are the five with real work today', () => {
     'retention.sweep.transcripts',
     'safety.alert.guardian',
     'safety.review.enqueue',
+    'summary.generate',
   ]);
 });
 

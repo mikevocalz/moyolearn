@@ -13,6 +13,8 @@ import { Skills } from './collections/Skills';
 import { Misconceptions } from './collections/Misconceptions';
 import { SessionTranscripts } from './collections/SessionTranscripts';
 import { SafetyEvents } from './collections/SafetyEvents';
+import { IncidentReports } from './collections/IncidentReports';
+import { SessionSummaries } from './collections/SessionSummaries';
 import { TutorMessages } from './collections/TutorMessages';
 import { TutorSessions } from './collections/TutorSessions';
 import { StudentModelFacts } from './collections/StudentModelFacts';
@@ -67,6 +69,23 @@ export default buildConfig({
       rather than the transcript's — a crisis is never a personalization feature.
     */
     SafetyEvents,
+    /*
+      Doc 31 §4's case file, beside the verdict store and not inside it: the
+      event is what the plane did and is never edited, the incident is what a
+      person now owes and has a lifecycle. Listed BEFORE the Operations Cloud
+      block below, because doc 31 §4.2 extends doc 23's wall to it — the CRM
+      never reads incidents, and `tooling/check-crm-wall.mjs` fails the build if
+      an import path from ops code to this collection ever appears.
+    */
+    IncidentReports,
+    /*
+      Doc 34 §3 — the durable record of learning a guardian is shown. Beside the
+      transcript stores but on its OWN retention class: no `expiresAt`, swept by
+      nothing, deleted only by the guardian's erasure cascade. Doc 34 extends
+      doc 23's wall to it too — CRM sales surfaces never read summaries, and
+      `tooling/check-crm-wall.mjs` enforces that on the module graph.
+    */
+    SessionSummaries,
     // Operations Cloud (doc 28). Kept apart from the Loop A collections above
     // on purpose: business data and learning data never blend, and the schema
     // is where that wall is real rather than a convention.

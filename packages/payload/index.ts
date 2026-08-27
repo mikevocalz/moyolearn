@@ -36,6 +36,15 @@ export type { SafetyEvent } from './src/payload-types';
 */
 export type { IncidentReport } from './src/payload-types';
 
+/*
+  Doc 34 §3's report row. No domain-object collision this time — the eight-block
+  domain shapes live in `packages/app/features/summary/summary.types.ts` and are
+  named per block (`ProblemRow`, `MasteryMovement`, …), so the row keeps the
+  generated name. The JSON columns come back as Payload's wide `json` union;
+  `summary.repository.ts` is the one place that narrows them.
+*/
+export type { SessionSummary } from './src/payload-types';
+
 export interface PayloadClientConfig {
   /** Payload REST base, e.g. https://example.com/payload-api */
   baseUrl: string;

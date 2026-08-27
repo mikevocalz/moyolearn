@@ -69,6 +69,25 @@ DELETE FROM payload.tutor_sessions      WHERE expires_at < now();
 DELETE FROM payload.session_transcripts WHERE expires_at < now();
 
 /*
+  SESSION SUMMARIES ARE ABSENT FROM THIS FILE ON PURPOSE.
+
+  Doc 34 §3: "summaries are their own retention class — they are the durable
+  record of learning and may outlive transcripts." The DELETE above is the
+  transcript's 30-day clock, and adding `session_summaries` to it would destroy
+  the one artefact the family was told they keep, on a schedule that belongs to
+  the evidence rather than to the record. The table carries no `expires_at` at
+  all, so there is no predicate to write here even by accident. A summary's
+  `evidenceRefs` degrading to "source expired" after this sweep runs is the
+  DESIGNED outcome of a report outliving its transcript — not litter to tidy.
+
+  It IS deleted — by `forgetSessionSummaries` in
+  `apps/web/lib/summary.repository.ts`, when a guardian asks, which is a
+  decision about a person rather than a clock. Absence here and presence there
+  is the whole retention class, and `erasure.integration.test.mjs` holds both
+  halves still.
+*/
+
+/*
   Safety events, on a DIFFERENT clock and swept by the same job.
 
   Doc 12 §7 keeps audit and safety events in "separate stores with separate

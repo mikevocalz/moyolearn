@@ -78,6 +78,8 @@ export interface Config {
     tutorMessages: TutorMessage;
     studentModelFacts: StudentModelFact;
     safetyEvents: SafetyEvent;
+    incidentReports: IncidentReport;
+    sessionSummaries: SessionSummary;
     organizations: Organization;
     leads: Lead;
     'payload-kv': PayloadKv;
@@ -98,6 +100,8 @@ export interface Config {
     tutorMessages: TutorMessagesSelect<false> | TutorMessagesSelect<true>;
     studentModelFacts: StudentModelFactsSelect<false> | StudentModelFactsSelect<true>;
     safetyEvents: SafetyEventsSelect<false> | SafetyEventsSelect<true>;
+    incidentReports: IncidentReportsSelect<false> | IncidentReportsSelect<true>;
+    sessionSummaries: SessionSummariesSelect<false> | SessionSummariesSelect<true>;
     organizations: OrganizationsSelect<false> | OrganizationsSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
@@ -149,9 +153,9 @@ export interface User {
   id: number;
   name?: string | null;
   /**
-   * Drives tutor voice and the crisis register.
+   * Doc 31 §2 voice band. Drives tutor voice and the crisis register.
    */
-  gradeBand?: ('young' | 'older') | null;
+  gradeBand?: ('k-2' | '3-5' | '6-8' | '9-12') | null;
   updatedAt: string;
   createdAt: string;
   email: string;
@@ -354,6 +358,7 @@ export interface SafetyEvent {
   learnerAuthId: string;
   sessionId?: string | null;
   category: 'crisis' | 'safety' | 'boundary' | 'paused';
+  tier?: ('S1' | 'S2' | 'S3' | 'S4') | null;
   disposition: 'crisis' | 'blocked' | 'redirect' | 'paused';
   stoppedAt: string;
   trace:
@@ -368,6 +373,173 @@ export interface SafetyEvent {
   guardianVisible: boolean;
   occurredAt: string;
   expiresAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "incidentReports".
+ */
+export interface IncidentReport {
+  id: number;
+  incidentId: string;
+  source: 'automated' | 'submitted';
+  reporterRole: 'system' | 'tutor' | 'staff' | 'guardian' | 'learner';
+  reporterAuthId?: string | null;
+  anonymous: boolean;
+  subjectLearnerAuthId: string;
+  relatedSessionId?: string | null;
+  relatedEventId?: string | null;
+  category:
+    | 'profanity'
+    | 'sexual-content'
+    | 'bullying'
+    | 'pii-shared'
+    | 'violence'
+    | 'substances'
+    | 'self-harm'
+    | 'abuse-disclosure'
+    | 'tutor-behavior'
+    | 'safety-concern'
+    | 'other';
+  severity: 'S1' | 'S2' | 'S3' | 'S4';
+  occurredAt: string;
+  summary: string;
+  transcriptExcerpt?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  attachmentIds?: string[] | null;
+  immediateActionTaken?: string | null;
+  status: 'new' | 'triaged' | 'in-review' | 'actioned' | 'resolved' | 'closed';
+  assigneeAuthId?: string | null;
+  slaDueAt?: string | null;
+  guardianVisible: boolean;
+  guardianNotifiedAt?: string | null;
+  reviewPagedAt?: string | null;
+  guardianAcknowledgedAt?: string | null;
+  resolution?: string | null;
+  timeline:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  expiresAt: string;
+  legalHold?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sessionSummaries".
+ */
+export interface SessionSummary {
+  id: number;
+  sessionId: string;
+  learnerAuthId: string;
+  sessionKind: 'ai-tutor' | 'human-tutor' | 'hybrid';
+  band: 'k-2' | '3-5' | '6-8' | '9-12';
+  headline: string;
+  workedOn:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  problems:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  mastery:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  effortMoment?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  nextUp: string;
+  homeSupport:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  facts:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  evidenceRefs:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  generator:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  safetyScreened: boolean;
+  tutorDraft?: string | null;
+  tutorApprovedByAuthId?: string | null;
+  status: 'generating' | 'draft' | 'published' | 'suppressed';
+  publishedAt?: string | null;
+  guardianViewedAt?: string | null;
+  suppressionReason?: string | null;
+  suppressedAt?: string | null;
+  teacherShare?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  digestBatchId?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -479,6 +651,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'safetyEvents';
         value: number | SafetyEvent;
+      } | null)
+    | ({
+        relationTo: 'incidentReports';
+        value: number | IncidentReport;
+      } | null)
+    | ({
+        relationTo: 'sessionSummaries';
+        value: number | SessionSummary;
       } | null)
     | ({
         relationTo: 'organizations';
@@ -695,12 +875,79 @@ export interface SafetyEventsSelect<T extends boolean = true> {
   learnerAuthId?: T;
   sessionId?: T;
   category?: T;
+  tier?: T;
   disposition?: T;
   stoppedAt?: T;
   trace?: T;
   guardianVisible?: T;
   occurredAt?: T;
   expiresAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "incidentReports_select".
+ */
+export interface IncidentReportsSelect<T extends boolean = true> {
+  incidentId?: T;
+  source?: T;
+  reporterRole?: T;
+  reporterAuthId?: T;
+  anonymous?: T;
+  subjectLearnerAuthId?: T;
+  relatedSessionId?: T;
+  relatedEventId?: T;
+  category?: T;
+  severity?: T;
+  occurredAt?: T;
+  summary?: T;
+  transcriptExcerpt?: T;
+  attachmentIds?: T;
+  immediateActionTaken?: T;
+  status?: T;
+  assigneeAuthId?: T;
+  slaDueAt?: T;
+  guardianVisible?: T;
+  guardianNotifiedAt?: T;
+  reviewPagedAt?: T;
+  guardianAcknowledgedAt?: T;
+  resolution?: T;
+  timeline?: T;
+  expiresAt?: T;
+  legalHold?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sessionSummaries_select".
+ */
+export interface SessionSummariesSelect<T extends boolean = true> {
+  sessionId?: T;
+  learnerAuthId?: T;
+  sessionKind?: T;
+  band?: T;
+  headline?: T;
+  workedOn?: T;
+  problems?: T;
+  mastery?: T;
+  effortMoment?: T;
+  nextUp?: T;
+  homeSupport?: T;
+  facts?: T;
+  evidenceRefs?: T;
+  generator?: T;
+  safetyScreened?: T;
+  tutorDraft?: T;
+  tutorApprovedByAuthId?: T;
+  status?: T;
+  publishedAt?: T;
+  guardianViewedAt?: T;
+  suppressionReason?: T;
+  suppressedAt?: T;
+  teacherShare?: T;
+  digestBatchId?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -809,6 +1056,8 @@ export interface CollectionQueryWidget {
       | 'tutorMessages'
       | 'studentModelFacts'
       | 'safetyEvents'
+      | 'incidentReports'
+      | 'sessionSummaries'
       | 'organizations'
       | 'leads';
     where?:
@@ -845,6 +1094,8 @@ export interface ActivityWidget {
           | 'tutorMessages'
           | 'studentModelFacts'
           | 'safetyEvents'
+          | 'incidentReports'
+          | 'sessionSummaries'
           | 'organizations'
           | 'leads'
         )[]

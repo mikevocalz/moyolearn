@@ -40,7 +40,7 @@ export type {
   ShedOrder,
 } from './src/topology.ts';
 
-export { distillKey, incidentFanOutKey, sweepKey, utcDay } from './src/keys.ts';
+export { distillKey, incidentFanOutKey, summaryKey, sweepKey, utcDay } from './src/keys.ts';
 export type { JobPayload, JobPayloads } from './src/keys.ts';
 
 export {

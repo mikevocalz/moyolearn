@@ -57,6 +57,18 @@ export interface JobPayloads {
    */
   readonly 'safety.alert.guardian': { readonly incidentId: string };
   readonly 'safety.review.enqueue': { readonly incidentId: string };
+  /**
+   * Doc 34 §4 — `tutorSessions.sessionId`, and nothing else; the handler loads
+   * the turns, the mastery evidence and the learner's band itself.
+   *
+   * The ids-only rule matters here for the same reason it does on the safety
+   * legs: the pipeline's OUTPUT is eight blocks about a child's session, and a
+   * payload that carried extracted evidence would be a copy of that material in
+   * `jobs.job`, outside the retention sweep and outside the erasure cascade.
+   * The learner id is read off the session row by the handler — identity never
+   * rides a queue (CLAUDE.md §The block).
+   */
+  readonly 'summary.generate': { readonly sessionId: string };
 }
 
 export type JobPayload<Q extends LiveQueueName> = JobPayloads[Q];
@@ -115,4 +127,18 @@ export function distillKey(transcriptId: string): string {
  */
 export function incidentFanOutKey(leg: 'guardian' | 'review', incidentId: string): string {
   return `incident:${leg}:${incidentId}`;
+}
+
+/**
+ * `singletonKey` for one session's summary generation (doc 34 §4).
+ *
+ * The SESSION, not the learner — keying on the learner would collapse two
+ * sessions closed in the same window into one report and silently lose the
+ * second, the same failure mode `distillKey` records. The natural key behind it
+ * is the UNIQUE `session_summaries.session_id` column: a replayed job long
+ * after the first completed finds the row and updates it in place, so a parent
+ * is never shown two reports about one session.
+ */
+export function summaryKey(sessionId: string): string {
+  return `summary:${sessionId}`;
 }

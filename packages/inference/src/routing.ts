@@ -61,6 +61,17 @@ export const ROUTING = {
   'classify-input': { model: 'claude-haiku-4-5', maxTokens: 64, serverSideFallback: false },
   'classify-output': { model: 'claude-haiku-4-5', maxTokens: 64, serverSideFallback: false },
   'topic-fence': { model: 'claude-haiku-4-5', maxTokens: 64, serverSideFallback: false },
+  /*
+    Doc 34 §4 step 2 — the session-report narrative pass. The SAME small model
+    as the classifier cells (the phrasing job is classifier-tier by design: the
+    numbers come from extracted evidence rows, the model only words them), but
+    its own cell because 64 tokens cannot hold the five narrative blocks — the
+    output is a small JSON object, not a class label. Fallback stays off for
+    the classifier reason inverted: a declined or truncated narrative is not
+    rescued by a second model, it falls back to the deterministic evidence
+    copy in `packages/app/features/summary/narrative.ts`.
+  */
+  'summary-narrative': { model: 'claude-haiku-4-5', maxTokens: 1024, serverSideFallback: false },
 } as const satisfies Record<InferenceRole, RoutingCell>;
 
 export function routeFor(role: InferenceRole): RoutingCell {

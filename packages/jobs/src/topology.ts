@@ -183,6 +183,29 @@ export const QUEUES = {
     status: 'live',
     blockedOn: null,
   },
+  'summary.generate': {
+    priority: PRIORITY.derived,
+    band: 'derived',
+    retryLimit: 5,
+    retryDelay: 30,
+    /*
+      Doc 34 §4's pipeline, enqueued when a session closes. LIVE as of doc 34:
+      the producer is the session-close route and the handler is
+      `generateSessionSummary` in `apps/web/lib/jobs.ts`.
+
+      DERIVED, deliberately, on both axes. Priority: the report is work the
+      learner is not waiting for — the child has closed the session, and a
+      parent reading tonight instead of this minute is a delay, not a breach.
+      Shed order 2, beside `edu.distill`: under backlog a late report beats a
+      dropped safety alert, and the singletonKey (the sessionId) plus the
+      unique `session_summaries.session_id` column mean a shed-then-recovered
+      job regenerates exactly one row. §5's ladder stays honest — reports are
+      never the reason a guardian alert waits.
+    */
+    shed: 2,
+    status: 'live',
+    blockedOn: null,
+  },
   'payroll.statement.render': {
     priority: PRIORITY.render,
     band: 'render',

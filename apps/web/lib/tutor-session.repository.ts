@@ -19,6 +19,7 @@ import { getPayload } from 'payload';
 import config from '@payload-config';
 import type {
   AppendMessage,
+  CloseTutorSession,
   CreateSession,
   LoadOpenSession,
   PatchAttachment,
@@ -260,4 +261,24 @@ export const patchAttachment: PatchAttachment = async (
 
     await payload.update({ collection: 'tutorMessages', id: doc.id, data: { attachments } });
     return true;
+  });
+
+/**
+ * Doc 34 §4's producer-side write: the session ends. `closedAt` is written
+ * once — a second close reports `alreadyClosed` rather than moving the
+ * timestamp, because "when did this end" (the question the retention view and
+ * the report's duration both ask) must not depend on how many devices tapped
+ * Done. Ownership is the same `findOwned` gate every other write here passes.
+ */
+export const closeTutorSession: CloseTutorSession = async (ctx, sessionId) =>
+  withPayload(async (payload) => {
+    const doc = await findOwned(payload, ctx.learnerId, sessionId);
+    if (!doc) return { closed: false, alreadyClosed: false };
+    if (doc.closedAt) return { closed: false, alreadyClosed: true };
+    await payload.update({
+      collection: 'tutorSessions',
+      id: doc.id,
+      data: { closedAt: new Date().toISOString() },
+    });
+    return { closed: true, alreadyClosed: false };
   });

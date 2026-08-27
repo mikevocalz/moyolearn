@@ -69,6 +69,20 @@ const INCIDENT_MODULES = [
   /apps\/web\/lib\/incident\.(repository|service)\.ts$/,
   /packages\/payload\/src\/collections\/IncidentReports\.ts$/,
   /apps\/web\/app\/api\/safety\/incidents\//,
+  /*
+    Doc 34 §3 extends the same wall to session summaries: "CRM sales surfaces
+    never read summaries." A safety incident in a sales funnel is a family's
+    worst day as a retention signal; a session report in one is the §1 flattery
+    machine industrialised — the report exists to be HONEST with a parent, and
+    honesty does not survive being a renewal instrument. Same wall, second
+    wing.
+  */
+  /packages\/app\/features\/summary\//,
+  /apps\/web\/lib\/summary\.repository\.ts$/,
+  /packages\/payload\/src\/collections\/SessionSummaries\.ts$/,
+  /apps\/web\/app\/api\/guardian\/reports\//,
+  /apps\/web\/app\/api\/summary\//,
+  /apps\/web\/app\/api\/share\/report\//,
 ];
 
 /**
@@ -99,6 +113,31 @@ const INCIDENT_NAMES = [
   'escalateAndFile',
   'IncidentReport',
   'IncidentTimelineEntry',
+  /*
+    Doc 34 §3's wing of the wall, by name — the bindings that travel through
+    the shared `@acme/app/server` barrel, where reachability cannot tell them
+    from `listLeads`, plus the Payload slug a raw `payload.find` would name.
+  */
+  'sessionSummaries',
+  'session_summaries',
+  'SessionSummaryReport',
+  'SessionSummary',
+  'guardianSummaries',
+  'guardianSummariesFrom',
+  'guardianSummaryReport',
+  'generateSessionSummary',
+  'summaryQueue',
+  'approveSummaryDraft',
+  'suppressSummary',
+  'createTeacherShare',
+  'revokeTeacherShare',
+  'sharedSummaryView',
+  'loadGuardianSummaries',
+  'loadSummaryBySession',
+  'loadSummaryQueue',
+  'saveSummaryReport',
+  'forgetSessionSummaries',
+  'enqueueSummary',
 ];
 
 const SKIP_DIRS = new Set(['node_modules', 'dist', 'build', '.next', '.expo', '.turbo']);

@@ -4,8 +4,8 @@
   Why it exists: doc 12 §6 binds the job runner to pg-boss on the SAME Postgres
   (`jobs` schema) and states the reason — transactional enqueue with the domain
   write. §9.4 asks for the topology that decision implies. This document is that
-  topology. Three of the fourteen queues
-  below are implemented and running (see §0); the other eleven are declared in
+  topology. Six of the fifteen queues
+  below are implemented and running (see §0); the other nine are declared in
   `packages/jobs/src/topology.ts` and deliberately unregistered, which is a state
   the code carries rather than one this page asserts.
   SOT: docs/pack/12-systems-design-prompt.md §5 §6 §7 §9.4 · docs/design/seq-pay-run.md · docs/design/slo.md §4.5 §5
@@ -14,7 +14,7 @@
 
 # pg-boss topology — queues, priorities, idempotency, dead letters
 
-**Doc 12 §9.4 · Date: Aug 27, 2026 · Status: design of record. Three of the fourteen queues run; eleven are declared and deliberately unregistered.**
+**Doc 12 §9.4 · Date: Aug 27, 2026 · Status: design of record. Six of the fifteen queues run; nine are declared and deliberately unregistered.**
 
 ---
 
@@ -129,6 +129,7 @@ nobody can justify is a number that drifts.
 | `retention.sweep.transcripts` | **50** | (retention sweeps) | 3 × exponential from 5 min | **LIVE** |
 | `retention.sweep.media` | **50** | (retention sweeps) | 3 × exponential from 5 min | **LIVE** |
 | `edu.distill` | **40** | distillation | 5 × exponential from 30 s | **LIVE** |
+| `summary.generate` | **40** | (derived) | 5 × exponential from 30 s | **LIVE** |
 | `payroll.statement.render` | **30** | pay runs | 5 × exponential from 60 s | NOT YET IMPLEMENTED |
 | `cleanup.unlinkedLearner` | **20** | cleanups | 3 × exponential from 5 min | NOT YET IMPLEMENTED |
 | `cleanup.staleTutorSession` | **20** | cleanups | 3 × exponential from 5 min | NOT YET IMPLEMENTED |
@@ -231,6 +232,7 @@ completes and something enqueues again.
 | `retention.sweep.transcripts` | `retention:transcripts:${YYYY-MM-DD}` (UTC date of the scheduled run) | **already idempotent without a key.** The route reads `expiresAt <= cutoff` and deletes exactly that set; a second run finds nothing. `apps/web/app/api/retention/sweep/route.ts` |
 | `retention.sweep.media` | `retention:media:${YYYY-MM-DD}` | age is read off the bucket listing, and `apps/web/lib/bunny-delete.ts:deleteObject` counts a 404 as success — deleting an absent object is the state the caller wanted |
 | `edu.distill` | `${transcriptId}` — the `sessionTranscripts.sessionId`, which is what `tutor.service.ts` already writes into a fact's `derivedFrom` | `packages/student-model/src/distill.ts:factId` produces `${learnerId}:${kind}:${subject}`, a deterministic id, and `saveFacts` upserts on it. Re-running distillation over the same transcript recomputes the same rows |
+| `summary.generate` | `summary:${sessionId}` — the session the report is about (doc 34 §4) | `session_summaries.session_id` is UNIQUE; a replay finds the row and updates it in place, so a parent is never shown two reports about one session |
 | `cleanup.unlinkedLearner` | `${learnerAuthId}` | the delete is conditional on *still* being unlinked; a learner linked since enqueue is skipped, not deleted |
 | `cleanup.staleTutorSession` | `${sessionId}` | closing an already-closed session is a no-op on `closedAt` |
 | `notify.reminder.trial` | `${subscriptionId}:${TRIAL_REMINDER_DAYS_BEFORE}` | a `notificationsSent` row keyed on the same string; the send is skipped if it exists |
