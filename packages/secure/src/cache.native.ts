@@ -18,6 +18,7 @@
 import { createMMKV, type MMKV } from 'react-native-mmkv';
 import { getSecure, setSecure, deleteSecure } from './store.native.ts';
 import { assertNotTranscriptShaped } from './projection.ts';
+import { withIndexedUser, withoutIndexedUser } from './reinstall.ts';
 
 /** 256 bits, hex — 64 characters, comfortably inside the 2KB SecureStore limit. */
 function mintKey(): string {
@@ -42,6 +43,15 @@ export async function openUserCache(userId: string): Promise<MMKV> {
   if (encryptionKey === null) {
     encryptionKey = mintKey();
     await setSecure('mmkv.key', encryptionKey, userId);
+    /*
+      The id joins `mmkv.users` in the same breath as the key it names. That
+      index is the ONLY thing that can name this entry after an uninstall —
+      expo-secure-store cannot enumerate, and every other record of who signed
+      in here lives in the app container the uninstall deletes. Written after
+      the key, so a crash between them leaves an unindexed key (the next
+      `openUserCache` re-indexes it) rather than an index naming nothing.
+    */
+    await setSecure('mmkv.users', withIndexedUser(await getSecure('mmkv.users'), userId));
   }
 
   const instance = createMMKV({ id: `user.${userId}`, encryptionKey });
@@ -59,6 +69,10 @@ export async function wipeUserCache(userId: string): Promise<void> {
   instance.clearAll();
   instances.delete(userId);
   await deleteSecure('mmkv.key', userId);
+  // Out of the index too — an id naming a key that is gone would make the
+  // reinstall wipe delete nothing, which is harmless, and would make the index
+  // a lengthening record of who has used this device, which is not.
+  await setSecure('mmkv.users', withoutIndexedUser(await getSecure('mmkv.users'), userId));
 }
 
 /** The only supported way to cache anything on a learner's device. */

@@ -29,8 +29,12 @@ export {
   runReinstallWipe,
   shouldWipeSecureStore,
   wipeableKeys,
+  parseUserIndex,
+  withIndexedUser,
+  withoutIndexedUser,
   INSTALL_MARKER,
   INSTALL_GENERATION,
+  MAX_INDEXED_USERS,
 } from './src/reinstall';
 export type { InstallMarkerStore, ReinstallDeps } from './src/reinstall';
 

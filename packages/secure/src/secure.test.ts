@@ -31,6 +31,10 @@ import {
   INSTALL_GENERATION,
   INSTALL_MARKER,
   runReinstallWipe,
+  parseUserIndex,
+  withIndexedUser,
+  withoutIndexedUser,
+  MAX_INDEXED_USERS,
   shouldWipeSecureStore,
   wipeableKeys,
   type InstallMarkerStore,
@@ -108,6 +112,53 @@ test('the wipe clears every shared key and the known per-user ones, then marks',
   for (const key of wipeableKeys()) assert.ok(deleted.includes(key));
   assert.ok(deleted.includes('mmkv.key.u-1'));
   assert.equal(marker.getString(INSTALL_MARKER), INSTALL_GENERATION);
+});
+
+test('the wipe finds the previous child’s key with no caller who knows their id', async () => {
+  /*
+    The scenario the file's header opens with, exactly: child A used the family
+    iPad, the app was deleted, child B reinstalls it. `knownUserIds` is empty
+    and unknowable — the marker is absent precisely because the app container,
+    and every record of who signed in, went with the uninstall. `wipeableKeys()`
+    filters per-user entries out, so `mmkv.key.<A>` used to survive in the
+    keychain beside child A's MMKV file. The keychain-resident index is what
+    names it.
+  */
+  const marker = markerStore();
+  const deleted: string[] = [];
+  const wiped = await runReinstallWipe({
+    marker,
+    readSecure: async (key: SecureKey) =>
+      key === 'mmkv.users' ? JSON.stringify(['child-a', 'child-b']) : null,
+    deleteSecure: async (key: SecureKey, userId?: string) => {
+      deleted.push(userId === undefined ? key : `${key}.${userId}`);
+    },
+  });
+
+  assert.equal(wiped, true);
+  assert.ok(deleted.includes('mmkv.key.child-a'), 'the previous child’s key survived the wipe');
+  assert.ok(deleted.includes('mmkv.key.child-b'));
+  assert.ok(deleted.includes('mmkv.users'), 'the index outlived the keys it named');
+});
+
+test('the index is a set, bounded, and survives a corrupt entry', () => {
+  assert.deepEqual(parseUserIndex(JSON.stringify(['u-1', 'u-2'])), ['u-1', 'u-2']);
+  // Re-adding moves an id to newest rather than duplicating it.
+  assert.equal(withIndexedUser(JSON.stringify(['u-1', 'u-2']), 'u-1'), JSON.stringify(['u-2', 'u-1']));
+  assert.equal(withoutIndexedUser(JSON.stringify(['u-1', 'u-2']), 'u-1'), JSON.stringify(['u-2']));
+
+  // Total on garbage: a wipe that throws on a bad index is a wipe that does not
+  // run, and not running is the failure this whole file exists to prevent.
+  assert.deepEqual(parseUserIndex('not json'), []);
+  assert.deepEqual(parseUserIndex(JSON.stringify({ u: 1 })), []);
+  assert.deepEqual(parseUserIndex(JSON.stringify(['u-1', 7, null])), ['u-1']);
+  assert.deepEqual(parseUserIndex(null), []);
+
+  let index = JSON.stringify([]);
+  for (let i = 0; i < MAX_INDEXED_USERS + 5; i += 1) index = withIndexedUser(index, `u-${String(i)}`);
+  const bounded = parseUserIndex(index);
+  assert.equal(bounded.length, MAX_INDEXED_USERS);
+  assert.equal(bounded[bounded.length - 1], `u-${String(MAX_INDEXED_USERS + 4)}`);
 });
 
 test('a crash mid-wipe leaves the marker unset, so the next launch wipes again', async () => {
