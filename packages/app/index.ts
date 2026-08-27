@@ -245,6 +245,8 @@ export {
   type PresignResult,
   type UploadPhase,
   type PickedFile,
+  UploadQueueProvider,
+  useUploadQueue,
 } from './features/media';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';

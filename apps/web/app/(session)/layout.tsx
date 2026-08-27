@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { AppQueryProvider, SessionProvider, AudioRecorderSheet } from '@acme/app';
+import { AppQueryProvider, SessionProvider, AudioRecorderSheet, UploadQueueProvider } from '@acme/app';
 import { Document } from '../Document';
 import '../rn-globals';
 import '../globals.css';
@@ -41,6 +41,8 @@ export default function SessionLayout({ children }: Readonly<{ children: React.R
               render of the input, and a recorder that unmounts mid-take loses
               the take. Same reason its native twin sits in _layout. */}
           <AudioRecorderSheet />
+          {/* Drains queued uploads on load and when the network returns. */}
+          <UploadQueueProvider />
         </Document>
       </AppQueryProvider>
     </SessionProvider>

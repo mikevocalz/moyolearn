@@ -20,6 +20,7 @@ import { pickNoteImage } from '../schedule/pick-note-image';
 import { pickFile } from '../editor/pick-file';
 import { useAudioStore } from '../editor/audio.store.ts';
 import { readAttachment } from '../capture/read-attachment';
+import { useUploadQueue } from '../media';
 import { evaluateArithmetic } from '@acme/student-model/pure';
 
 export interface TutorScreenProps {
@@ -122,6 +123,26 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
       */
       say({ role: 'learner', text: trimmed, attachments: staged });
 
+      /*
+        Queued, not uploaded inline.
+
+        The turn has already gone — the tutor is coaching from the OCR text, and
+        the child is waiting on a reply, not on a file transfer. Uploading here
+        would make a slow network delay the answer, and a dropped one lose the
+        photo entirely. The queue outlives both the request and the process, so
+        a failed transfer is retried later instead of costing the child their
+        homework.
+      */
+      staged.forEach((item) =>
+        enqueue({
+          id: item.id,
+          uri: item.uri,
+          name: item.name,
+          mimeType: item.mimeType,
+          sessionId: problem ?? 'session',
+        }),
+      );
+
       // Cleared only after the turn is in the transcript, so a failed read
       // still leaves the photos somewhere rather than dropping them silently.
       staged.forEach((a) => removeAttachment(a.id));
@@ -171,6 +192,7 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
     words, photos and speech rather than three.
   */
   const requestRecording = useAudioStore((s) => s.request);
+  const enqueue = useUploadQueue((s) => s.enqueue);
 
   const handleStartRecording = useCallback(() => {
     void requestRecording().then((recording) => {

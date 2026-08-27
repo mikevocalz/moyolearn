@@ -37,7 +37,7 @@ function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
     if (statSync(full).isDirectory()) walk(full, out);
-    else if (/\.tsx$/.test(entry) && !SKIP.test(full)) out.push(full);
+    else if (/\.tsx$/.test(entry) && !SKIP.test(full) && !isHeadless(full)) out.push(full);
   }
   return out;
 }
@@ -47,6 +47,24 @@ function walk(dir, out = []) {
 // gate switched off. Baselined files are allowed to lack a citation; ANY new or
 // renamed surface must cite. The baseline may only shrink — citing a baselined
 // file and leaving it listed is itself a failure, so the list cannot rot.
+/*
+  A component that renders nothing is not a surface.
+
+  Providers, task registrars and store bridges live in `.tsx` because they use
+  hooks, not because they have a design. Asking them for Mobbin references
+  produces invented citations — a reference to a screen the file does not draw —
+  and that is worse than no citation, because the next reader trusts it.
+
+  Detected by what the file DOES (returns null and paints nothing) rather than
+  by a name convention, so it cannot be gamed by calling something a provider.
+*/
+const isHeadless = (file) => {
+  const src = readFileSync(file, 'utf8');
+  if (!/return null;?\s*\n?\}/.test(src)) return false;
+  // A file that returns null on one branch and renders on another is a surface.
+  return !/<[A-Z][A-Za-z]*[\s/>]/.test(src.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, ''));
+};
+
 const BASELINE = join(ROOT, 'tooling/references-baseline.json');
 const baseline = new Set(existsSync(BASELINE) ? JSON.parse(readFileSync(BASELINE, 'utf8')) : []);
 

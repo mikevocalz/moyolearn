@@ -21,3 +21,5 @@ export {
   type QueuedUpload,
 } from './upload-queue.shared.ts';
 export { useUploadQueue } from './upload-queue.store';
+export { UploadQueueProvider } from './UploadQueueProvider';
+export { uploadQueued } from './queued-uploader';
