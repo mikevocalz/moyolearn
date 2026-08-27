@@ -21,7 +21,7 @@ import { writeFileSync } from 'node:fs';
 import {
   palette, semantic, fontFamilies, typeScale, contentWidths,
   radius, shadows, zIndex, motion, breakpoints, dial,
-  uiRamp, spacingTiers, targets, readingComfort,
+  uiRamp, spacingTiers, targets, readingComfort, accentRoles,
 } from './tokens.ts';
 
 const HEADER = '/* GENERATED from tokens.ts — do not edit by hand. `node build-css.mjs` */';
@@ -207,6 +207,22 @@ const READING_COMFORT = `@layer base {
 
 const DIAL_SCOPES = ['@layer base {', ...dialScope('hot'), ...dialScope('cool'), '}'].join('\n');
 
+/**
+ * Role scopes (doc 36 §5): the shell wrapper re-points the ONE themed pair at
+ * its door's hue, exactly as the dial re-points chrome — slot components write
+ * `bg-role-accent(-underlay)` once and every shell colours them by nesting.
+ * Generated from `accentRoles` so a new role cannot mint tokens and silently
+ * miss its scope. No `.role-admin` exists: the back office has no accent, and
+ * an unscoped tree resolves to the learner default declared in @theme.
+ */
+const roleScope = (role) => [
+  `  .role-${role} {`,
+  `    --color-role-accent: var(--color-role-${role});`,
+  `    --color-role-accent-underlay: var(--color-role-${role}-underlay);`,
+  '  }',
+];
+const ROLE_SCOPES = ['@layer base {', ...accentRoles.flatMap(roleScope), '}'].join('\n');
+
 // React Native's `fontVariant` accepts tabular-nums but has NO slashed-zero
 // equivalent, so native gets the alignment and not the slash. Do not "fix" this by
 // adding slashed-zero here — it would be a style key the runtime silently drops.
@@ -238,6 +254,8 @@ web.push('');
 web.push(MONO_NUMERICS_WEB);
 web.push('');
 web.push(DIAL_SCOPES);
+web.push('');
+web.push(ROLE_SCOPES);
 web.push('');
 web.push(READING_COMFORT);
 web.push(`
@@ -288,6 +306,8 @@ native.push('');
 native.push(MONO_NUMERICS_NATIVE);
 native.push('');
 native.push(DIAL_SCOPES);
+native.push('');
+native.push(ROLE_SCOPES);
 native.push('');
 native.push(READING_COMFORT);
 native.push('');

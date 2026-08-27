@@ -49,6 +49,10 @@ const ratio = (fg, bg) => {
  * Declared pairs. `min` is the bar this pair must clear:
  *   4.5 — WCAG AA body text
  *   3.0 — AA large text (>=18.66px bold / 24px) and UI component boundaries (1.4.11)
+ *   14  — doc 36 §5 role-accent parity: ink-on-accent must be the SAME class in
+ *         every shell (ink on the learner brand yellow measures 14.36:1), so the
+ *         role bar is parity with the highlighter, not mere AA. A hue tweak that
+ *         drops under it breaks "one product, five doors" long before WCAG.
  * Pairs are declared rather than derived from a cartesian product: most token
  * combinations are never rendered together, and a check that reports impossible
  * failures gets muted, which is worse than no check.
@@ -76,6 +80,14 @@ const PAIRS = [
   ['redpen', 'surface-raised', 4.5],
   ['grade', 'surface', 4.5],
   ['grade', 'surface-raised', 4.5],
+  // role accents (doc 36 §5): ink rides every door's accent identically. The
+  // generic `role-accent` is checked too so its learner default cannot drift.
+  ['on-role-accent', 'role-accent', 14],
+  ['on-role-accent', 'role-learner', 14],
+  ['on-role-accent', 'role-guardian', 14],
+  ['on-role-accent', 'role-tutor', 14],
+  ['on-role-accent', 'role-org', 14],
+  ['on-role-accent', 'role-district', 14],
   // non-text boundaries: WCAG 1.4.11 asks 3:1 of anything carrying meaning
   ['border', 'surface', 3],
   ['border-strong', 'surface', 3],

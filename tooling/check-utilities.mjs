@@ -60,6 +60,10 @@ const CONTRACT = [
   // doc 02 §5.3 — dial chrome the scope re-points
   ['rounded-card', 'radius-card'],
   ['shadow-card', 'shadow-card'],
+  // doc 36 §5 / PR-141 — the role-accent pair the .role-* scopes re-point.
+  // The generic name must exist in @theme or every slot class is inert.
+  ['bg-role-accent', 'color-role-accent'],
+  ['bg-role-accent-underlay', 'color-role-accent-underlay'],
   // PR-0 — schoolhouse aliases
   ['bg-highlighter', 'color-highlighter'],
   ['text-on-highlighter', 'color-on-highlighter'],
