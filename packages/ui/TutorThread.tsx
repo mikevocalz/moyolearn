@@ -1,7 +1,7 @@
 'use client';
 // The tutor conversation, as a list.
 //
-// Mobbin: https://mobbin.com/screens/63d3bc73-3bc9-4f4d-b8fe-f6732303a9b8 (Claude — sent image sits ABOVE its caption in the same trailing bubble) · https://mobbin.com/screens/95bda61d-00e2-4893-8169-0a6ef484210a (ChatGPT — same, image then question) · https://mobbin.com/screens/4f5f4f46-9b33-46ed-8a54-924c57d3c5de (Clubhouse — a voice note is play + waveform + duration on one row, inside the bubble) · https://mobbin.com/screens/df5e3d89-6c61-446d-a5a3-d0f8d0eba194 (Alan — image bubble in an assistant thread). Structure only.
+// Mobbin: https://mobbin.com/screens/63d3bc73-3bc9-4f4d-b8fe-f6732303a9b8 (Claude — sent image sits ABOVE its caption in the same trailing bubble) · https://mobbin.com/screens/95bda61d-00e2-4893-8169-0a6ef484210a (ChatGPT — same, image then question) · https://mobbin.com/screens/4716caa7-1ec5-4bdf-89b1-aab1cff36993 (WhatsApp — voice note is play + waveform + duration on ONE row, with the transcript line UNDERNEATH inside the same bubble) · https://mobbin.com/screens/4f5f4f46-9b33-46ed-8a54-924c57d3c5de (Clubhouse — same row, duration trailing) · https://mobbin.com/screens/df5e3d89-6c61-446d-a5a3-d0f8d0eba194 (Alan — "See transcript" under a sent voice note). Structure only.
 //
 // Every reference agrees on two things and this follows both: an attachment
 // belongs INSIDE the bubble that carried it, not floating beside the thread,
@@ -187,7 +187,33 @@ function Bubble({
                 Voice note removed after a week
               </Text>
             ) : (
-              <AudioPlayer key={audio.id} uri={audio.uri} label={audio.name} />
+              <View key={audio.id} className="gap-element">
+                {/* The player is one row — play, waveform, duration — exactly as
+                    WhatsApp and Clubhouse lay it out. A voice note is a single
+                    object, not a stack of controls. */}
+                <AudioPlayer uri={audio.uri} label={audio.name} />
+
+                {/*
+                  The transcript sits UNDERNEATH, in the same bubble.
+
+                  WhatsApp puts it there and doc 07 §3 requires it: an adult must
+                  be able to review what a child said to the model, and sound
+                  alone cannot be skimmed. It is also the accessible copy — a
+                  deaf child, or one in a noisy room, reads the note instead of
+                  playing it.
+
+                  When it has not arrived yet the row says so rather than
+                  vanishing, because a transcript that appears silently later
+                  looks like something the app hid.
+                */}
+                {audio.transcript !== undefined && audio.transcript.length > 0 ? (
+                  <Text className="font-sans text-caption text-text-muted">{audio.transcript}</Text>
+                ) : (
+                  <Text className="font-sans text-caption text-text-muted">
+                    Writing this out…
+                  </Text>
+                )}
+              </View>
             ),
           )}
 
