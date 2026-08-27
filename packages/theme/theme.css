@@ -272,6 +272,19 @@
   --color-ballpoint: light-dark(#2952D9, #5C8AFF);
   --color-redpen: light-dark(#A03333, #EB9C9C);
   --color-grade: light-dark(#28613A, #7DB98B);
+  --color-role-accent: light-dark(#FFDB33, #FFDB33);
+  --color-role-accent-underlay: light-dark(rgba(255, 219, 51, 0.24), rgba(255, 219, 51, 0.24));
+  --color-on-role-accent: light-dark(#0D0C0B, #0D0C0B);
+  --color-role-learner: light-dark(#FFDB33, #FFDB33);
+  --color-role-learner-underlay: light-dark(rgba(255, 219, 51, 0.24), rgba(255, 219, 51, 0.24));
+  --color-role-guardian: light-dark(#95EBFF, #95EBFF);
+  --color-role-guardian-underlay: light-dark(rgba(149, 235, 255, 0.24), rgba(149, 235, 255, 0.24));
+  --color-role-tutor: light-dark(#EDD4FF, #EDD4FF);
+  --color-role-tutor-underlay: light-dark(rgba(237, 212, 255, 0.24), rgba(237, 212, 255, 0.24));
+  --color-role-org: light-dark(#FFD7A5, #FFD7A5);
+  --color-role-org-underlay: light-dark(rgba(255, 215, 165, 0.24), rgba(255, 215, 165, 0.24));
+  --color-role-district: light-dark(#83EFF5, #83EFF5);
+  --color-role-district-underlay: light-dark(rgba(131, 239, 245, 0.24), rgba(131, 239, 245, 0.24));
 }
 
 :root {
@@ -382,6 +395,29 @@
     --spacing-stack: var(--spacing-stack-cool);
     --spacing-group: var(--spacing-group-cool);
     --spacing-section: var(--spacing-section-cool);
+  }
+}
+
+@layer base {
+  .role-learner {
+    --color-role-accent: var(--color-role-learner);
+    --color-role-accent-underlay: var(--color-role-learner-underlay);
+  }
+  .role-guardian {
+    --color-role-accent: var(--color-role-guardian);
+    --color-role-accent-underlay: var(--color-role-guardian-underlay);
+  }
+  .role-tutor {
+    --color-role-accent: var(--color-role-tutor);
+    --color-role-accent-underlay: var(--color-role-tutor-underlay);
+  }
+  .role-org {
+    --color-role-accent: var(--color-role-org);
+    --color-role-accent-underlay: var(--color-role-org-underlay);
+  }
+  .role-district {
+    --color-role-accent: var(--color-role-district);
+    --color-role-accent-underlay: var(--color-role-district-underlay);
   }
 }
 

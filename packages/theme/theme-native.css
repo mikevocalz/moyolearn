@@ -281,6 +281,19 @@
       --color-ballpoint: #2952D9;
       --color-redpen: #A03333;
       --color-grade: #28613A;
+      --color-role-accent: #FFDB33;
+      --color-role-accent-underlay: rgba(255, 219, 51, 0.24);
+      --color-on-role-accent: #0D0C0B;
+      --color-role-learner: #FFDB33;
+      --color-role-learner-underlay: rgba(255, 219, 51, 0.24);
+      --color-role-guardian: #95EBFF;
+      --color-role-guardian-underlay: rgba(149, 235, 255, 0.24);
+      --color-role-tutor: #EDD4FF;
+      --color-role-tutor-underlay: rgba(237, 212, 255, 0.24);
+      --color-role-org: #FFD7A5;
+      --color-role-org-underlay: rgba(255, 215, 165, 0.24);
+      --color-role-district: #83EFF5;
+      --color-role-district-underlay: rgba(131, 239, 245, 0.24);
     }
     @variant dark {
       --color-surface: #161411;
@@ -308,6 +321,19 @@
       --color-ballpoint: #5C8AFF;
       --color-redpen: #EB9C9C;
       --color-grade: #7DB98B;
+      --color-role-accent: #FFDB33;
+      --color-role-accent-underlay: rgba(255, 219, 51, 0.24);
+      --color-on-role-accent: #0D0C0B;
+      --color-role-learner: #FFDB33;
+      --color-role-learner-underlay: rgba(255, 219, 51, 0.24);
+      --color-role-guardian: #95EBFF;
+      --color-role-guardian-underlay: rgba(149, 235, 255, 0.24);
+      --color-role-tutor: #EDD4FF;
+      --color-role-tutor-underlay: rgba(237, 212, 255, 0.24);
+      --color-role-org: #FFD7A5;
+      --color-role-org-underlay: rgba(255, 215, 165, 0.24);
+      --color-role-district: #83EFF5;
+      --color-role-district-underlay: rgba(131, 239, 245, 0.24);
     }
   }
 }
@@ -415,6 +441,29 @@
     --spacing-stack: var(--spacing-stack-cool);
     --spacing-group: var(--spacing-group-cool);
     --spacing-section: var(--spacing-section-cool);
+  }
+}
+
+@layer base {
+  .role-learner {
+    --color-role-accent: var(--color-role-learner);
+    --color-role-accent-underlay: var(--color-role-learner-underlay);
+  }
+  .role-guardian {
+    --color-role-accent: var(--color-role-guardian);
+    --color-role-accent-underlay: var(--color-role-guardian-underlay);
+  }
+  .role-tutor {
+    --color-role-accent: var(--color-role-tutor);
+    --color-role-accent-underlay: var(--color-role-tutor-underlay);
+  }
+  .role-org {
+    --color-role-accent: var(--color-role-org);
+    --color-role-accent-underlay: var(--color-role-org-underlay);
+  }
+  .role-district {
+    --color-role-accent: var(--color-role-district);
+    --color-role-accent-underlay: var(--color-role-district-underlay);
   }
 }
 

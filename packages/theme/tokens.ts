@@ -158,7 +158,60 @@ export const semantic = {
   ballpoint: { light: palette.gold[600], dark: palette.gold[400] },
   redpen: { light: palette.rose[600], dark: palette.rose[300] },
   grade: { light: palette.forest[600], dark: palette.forest[300] },
+
+  // ---- role accents (doc 36 §5 · PR-141) ------------------------------------
+  // One product, five doors: everything is invariant per role except this ONE
+  // themed pair — `role-accent` + its 24% underlay. build-css.mjs emits a
+  // `.role-<name>` scope per role (same mechanism as the dial) that re-points
+  // the generic pair, so a slot component writes `bg-role-accent-underlay`
+  // once and every shell colours it.
+  //
+  // Minted at the highlighter's OKLCH lightness so ink-on-accent lands in the
+  // same ~14:1 class in every shell — but WCAG luminance is not OKLab L, so
+  // doc 36's working L 0.88 measured LOW on three hues (guardian 13.69, tutor
+  // 13.03, org 12.27 vs the learner bar of 14.36). Lightness was raised
+  // minimally per hue until each accent meets ink at >= that bar; the OKLCH
+  // source of each hex is recorded on its line and check-contrast.mjs gates
+  // the parity at 14:1, so a hue tweak cannot quietly leave the class.
+  //
+  // Accents carry hue, never meaning: redpen/grade keep their jobs in every
+  // shell, and tooling/check-role-accent.mjs keeps these out of body text,
+  // borders, and the primary button (underlay/ring/band slots only). Admin
+  // mints NOTHING on purpose — the back office earns no colour, so there is
+  // deliberately no `role-admin` token. Values match in both modes, like
+  // `highlighter`: the accent is the door's identity and must not shift under
+  // the theme. Underlays are pre-resolved rgba for the same reason as
+  // `highlighter-underlay`: React Native cannot evaluate color-mix().
+  'role-accent': { light: palette.burgundy[400], dark: palette.burgundy[400] },
+  'role-accent-underlay': { light: 'rgba(255, 219, 51, 0.24)', dark: 'rgba(255, 219, 51, 0.24)' },
+  'on-role-accent': { light: palette.ink[950], dark: palette.ink[950] },
+  // learner: the brand yellow, hue 95° — referenced from the existing scale,
+  // never re-minted. 14.36:1 under ink; this ratio IS the parity bar.
+  'role-learner': { light: palette.burgundy[400], dark: palette.burgundy[400] },
+  'role-learner-underlay': { light: 'rgba(255, 219, 51, 0.24)', dark: 'rgba(255, 219, 51, 0.24)' },
+  // oklch(0.90 0.10 230) sky — doc L .88 read 13.69:1; .90 gives 14.52:1.
+  'role-guardian': { light: '#95EBFF', dark: '#95EBFF' },
+  'role-guardian-underlay': { light: 'rgba(149, 235, 255, 0.24)', dark: 'rgba(149, 235, 255, 0.24)' },
+  // oklch(0.915 0.10 300) violet — doc L .88 read 13.03:1; .915 gives 14.39:1.
+  'role-tutor': { light: '#EDD4FF', dark: '#EDD4FF' },
+  'role-tutor-underlay': { light: 'rgba(237, 212, 255, 0.24)', dark: 'rgba(237, 212, 255, 0.24)' },
+  // oklch(0.95 0.12 50) tangerine — the furthest move: warm hues carry the
+  // least WCAG luminance at fixed OKLab L, so .88 read 12.27:1; .95 gives 14.44:1.
+  'role-org': { light: '#FFD7A5', dark: '#FFD7A5' },
+  'role-org-underlay': { light: 'rgba(255, 215, 165, 0.24)', dark: 'rgba(255, 215, 165, 0.24)' },
+  // oklch(0.89 0.10 200) teal — doc L .88 read 14.13:1; .89 gives 14.55:1.
+  'role-district': { light: '#83EFF5', dark: '#83EFF5' },
+  'role-district-underlay': { light: 'rgba(131, 239, 245, 0.24)', dark: 'rgba(131, 239, 245, 0.24)' },
 } as const;
+
+/**
+ * The five doors, in shell order (doc 36 §5). Drives the `.role-*` scopes
+ * build-css.mjs emits, the RoleScope kit component, and the contrast pairs —
+ * one list, so a sixth role cannot be added in one place and missed in another.
+ * Admin is absent on purpose: graphite ramp, no accent.
+ */
+export const accentRoles = ['learner', 'guardian', 'tutor', 'org', 'district'] as const;
+export type AccentRole = (typeof accentRoles)[number];
 
 // ---- typography -------------------------------------------------------------
 
