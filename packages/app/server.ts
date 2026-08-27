@@ -5,7 +5,19 @@
 // SOT-KEYWORDS: app server barrel protected operation service server-only
 import 'server-only';
 
-export { protectedOperation, type ProtectedCtx } from './core/protected-operation';
+export {
+  protectedOperation,
+  type ProtectedCtx,
+  type ProtectedOperationOptions,
+} from './core/protected-operation';
+export {
+  CapabilityDenied,
+  billingReferenceFor,
+  grants,
+  isFloorCapability,
+  withCapability,
+  type LoadSubscriptions,
+} from './core/capability-gate';
 export type {
   DerivedFact,
   MasteryFact,

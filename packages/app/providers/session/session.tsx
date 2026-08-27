@@ -6,25 +6,29 @@
 import { useShallow } from 'zustand/react/shallow';
 import { MockSessionProvider } from './mock';
 import { LiveSessionProvider } from './live';
+import { getAuthMode } from './auth-mode';
 import { useSessionStore } from './store';
 import type { AppSession } from './types';
+import { EntitlementsSync } from '../entitlements/entitlements-sync';
 
 export type { RoleKind, ActiveContext, ActiveContextKind, AppSession, AppUser, Membership } from './types';
 export { RoleSwitcher } from './role-switcher';
 
-function getAuthMode() {
-  const env =
-    typeof process !== 'undefined'
-      ? process.env.EXPO_PUBLIC_AUTH_MODE ?? process.env.NEXT_PUBLIC_AUTH_MODE
-      : undefined;
-  if (env === 'live' || env === 'mock') return env;
-  return 'mock';
-}
-
+/**
+ * `EntitlementsSync` is mounted HERE rather than in each app's layout. There are
+ * five layouts across web and native that mount a session, and an entitlement
+ * store that four of them fill is a store that silently grants or hides features
+ * depending on which shell you entered through. A session and the plans attached
+ * to it arrive together or the pair is a bug.
+ */
 export function SessionProvider({ children }: { children: React.ReactNode }) {
-  const mode = getAuthMode();
-  const Provider = mode === 'live' ? LiveSessionProvider : MockSessionProvider;
-  return <Provider>{children}</Provider>;
+  const Provider = getAuthMode() === 'live' ? LiveSessionProvider : MockSessionProvider;
+  return (
+    <Provider>
+      <EntitlementsSync />
+      {children}
+    </Provider>
+  );
 }
 
 export function useAppSession(): AppSession {

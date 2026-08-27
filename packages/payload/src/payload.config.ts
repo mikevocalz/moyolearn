@@ -12,6 +12,7 @@ import { Consents } from './collections/Consents';
 import { Skills } from './collections/Skills';
 import { Misconceptions } from './collections/Misconceptions';
 import { SessionTranscripts } from './collections/SessionTranscripts';
+import { TutorMessages } from './collections/TutorMessages';
 import { TutorSessions } from './collections/TutorSessions';
 import { StudentModelFacts } from './collections/StudentModelFacts';
 import { Leads } from './collections/Leads';
@@ -56,6 +57,7 @@ export default buildConfig({
     // `sessionTranscripts` is what distillation reads; this is what the child is
     // still typing into, and it is the only Loop A collection that is mutable.
     TutorSessions,
+    TutorMessages,
     StudentModelFacts,
     // Operations Cloud (doc 28). Kept apart from the Loop A collections above
     // on purpose: business data and learning data never blend, and the schema

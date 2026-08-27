@@ -11,6 +11,15 @@ const nextConfig: NextConfig = {
   // agent files landing next to it are both noise and a thing that gets
   // committed by accident.
   agentRules: false,
+  // `sweep.sql` is read from disk at request time by the retention sweep and is
+  // imported by nothing, so Next's tracer has no reason to know it exists and
+  // the deployed function would 500 on a missing file. Named here rather than
+  // inlined into the route because the .sql file is the source of truth for the
+  // version-shadow half of the sweep (see apps/web/lib/retention.repository.ts).
+  outputFileTracingIncludes: {
+    '/api/retention/sweep': ['../../packages/payload/src/retention/sweep.sql'],
+    '/api/retention/sweep/cron': ['../../packages/payload/src/retention/sweep.sql'],
+  },
   // next/image rejects every remote host that is not listed here, so a
   // thumbnail from YouTube renders as a hard error rather than a broken image.
   // Only the thumbnail host, and only its /vi/ path: this is not a general

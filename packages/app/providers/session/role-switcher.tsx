@@ -5,16 +5,14 @@
 import { Button, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { PERSONAS } from '../../fixtures/personas';
+import { getAuthMode } from './auth-mode';
 import { useSessionStore } from './store';
 
 export function RoleSwitcher() {
   const setPersona = useSessionStore((s) => s.setPersona);
   const currentId = useSessionStore((s) => s.user?.id);
 
-  const isLive =
-    process.env.EXPO_PUBLIC_AUTH_MODE === 'live' ||
-    process.env.NEXT_PUBLIC_AUTH_MODE === 'live';
-  if (isLive) return null;
+  if (getAuthMode() === 'live') return null;
 
   return (
     <View className="gap-stack p-inset">

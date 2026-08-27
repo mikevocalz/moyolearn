@@ -14,8 +14,15 @@ const ROOT = resolve(import.meta.dirname, '..');
 /** Packages to check, with the entry points declared in their package.json `exports`. */
 const PACKAGES = ['packages/ui', 'packages/app'];
 
-/** Never required to be exported: stories, tests, config, and build scripts. */
-const EXEMPT = /(\.stories\.tsx?|\.test\.tsx?|\.spec\.tsx?|\.config\.(js|mjs|ts)|\.d\.ts)$/;
+/**
+ * Never required to be exported: stories, tests, config, and build scripts.
+ *
+ * `.server-test.ts` is a test too. It is spelled with a hyphen so a glob can
+ * hold it back from the ordinary suite — server modules need node's
+ * `react-server` condition to resolve `server-only`, and that condition breaks
+ * the kit tests, so the two cannot share a process.
+ */
+const EXEMPT = /(\.stories\.tsx?|\.(server-)?test\.tsx?|\.spec\.tsx?|\.config\.(js|mjs|ts)|\.d\.ts)$/;
 
 const SOURCE = /\.(ts|tsx)$/;
 

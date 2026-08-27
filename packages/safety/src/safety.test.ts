@@ -27,6 +27,7 @@ import {
   type StreamingGenerator,
 } from './plane.ts';
 import { runPassed, summariseRun, PROBES, RED_TEAM_VERSION } from './red-team.ts';
+import { safetyLayerSync, SafetyLayerUnavailable, type SafetyLayer } from './unavailable.ts';
 
 const learner: IdentityContext = {
   learnerId: 'learner_1',
@@ -310,5 +311,117 @@ describe('the streaming plane', () => {
     );
     assert.ok(chunks.length > 0, 'nothing streamed, so nothing was retracted');
     assert.equal(outcome.kind, 'blocked');
+  });
+});
+
+describe('the fail-closed rule', () => {
+  /*
+    Doc 12 §5: "if any safety layer is unavailable, tutoring pauses." The rule
+    only bites if a layer that is DOWN is distinguishable from a layer that
+    returned a verdict, and that distinction is the whole of what this block
+    holds.
+
+    The stubs below are deliberately not today's classifiers. L3/L4/L5 are pure
+    regex right now and so cannot be unavailable at all — a test written against
+    them would pass vacuously forever, which is the exact failure this suite
+    exists to prevent. These fail the way the model-backed classifier of doc 18
+    §3 layer 5 will fail: a network call that does not come back.
+  */
+  const down = (layer: 'input' | 'output'): Classifier => ({
+    classifyInput: async () => {
+      if (layer === 'input') throw new Error('classifier gateway timed out');
+      return 'safe';
+    },
+    classifyOutput: async () => {
+      if (layer === 'output') throw new Error('classifier gateway timed out');
+      return [];
+    },
+  });
+
+  const isDown = (layer: SafetyLayer) => (error: Error) =>
+    error instanceof SafetyLayerUnavailable && error.layer === layer;
+
+  const streamOf = (reply: string): StreamingGenerator => ({
+    generateStream: async function* () {
+      yield reply;
+    },
+  });
+
+  it('names the layer that is down, and carries the cause', () => {
+    const cause = new Error('classifier gateway timed out');
+    const error = new SafetyLayerUnavailable('3-input', cause);
+    assert.equal(error.layer, '3-input');
+    assert.equal(error.cause, cause);
+    assert.ok(error instanceof Error);
+  });
+
+  it('stops a turn when the input classifier is down, and generates nothing', async () => {
+    const deps = stub('safe');
+    await assert.rejects(
+      runSafetyPlane('12 + 5', learner, { classifier: down('input'), generator: deps.generator }),
+      isDown('3-input'),
+    );
+    assert.equal(deps.generated(), 0, 'a model answered a child no layer had screened');
+  });
+
+  it('stops a turn when the output classifier is down', async () => {
+    await assert.rejects(
+      runSafetyPlane('12 + 5', learner, { classifier: down('output'), generator: stub('safe').generator }),
+      isDown('5-output'),
+    );
+  });
+
+  it('stops a stream when a layer is down, rather than finishing it unscreened', async () => {
+    const run = async (classifier: Classifier): Promise<void> => {
+      for await (const _event of runSafetyPlaneStream('12 + 5', learner, {
+        classifier,
+        generator: streamOf('What did you get for the first step? '),
+      }));
+    };
+
+    await assert.rejects(run(down('input')), isDown('3-input'));
+    // The output classifier judges the whole turn, so this one fails AFTER text
+    // has streamed. A retraction is the client's job; stopping is this one's.
+    await assert.rejects(run(down('output')), isDown('5-output'));
+  });
+
+  it('leaves a model outage alone — that is availability, not policy', async () => {
+    const outage = new Error('ANTHROPIC_API_KEY is not set');
+    const generator: Generator = {
+      generate: async () => {
+        throw outage;
+      },
+    };
+
+    await assert.rejects(
+      runSafetyPlane('12 + 5', learner, { classifier: stub('safe').classifier, generator }),
+      (error: Error) => error === outage && !(error instanceof SafetyLayerUnavailable),
+    );
+  });
+
+  it('does not re-wrap a layer that already named itself', async () => {
+    const classifier: Classifier = {
+      classifyInput: async () => {
+        throw new SafetyLayerUnavailable('6-crisis');
+      },
+      classifyOutput: async () => [],
+    };
+
+    await assert.rejects(
+      runSafetyPlane('12 + 5', learner, { classifier, generator: stub('safe').generator }),
+      isDown('6-crisis'),
+    );
+  });
+
+  it('wraps a synchronous layer on the same terms', () => {
+    assert.equal(
+      safetyLayerSync('2-firewall', () => screen('Nice work.', 'tutor').allowed),
+      true,
+    );
+    assert.throws(() => {
+      safetyLayerSync('2-firewall', (): boolean => {
+        throw new Error('rule set failed to load');
+      });
+    }, isDown('2-firewall'));
   });
 });

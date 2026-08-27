@@ -12,7 +12,7 @@ import {
 } from '@acme/student-model/pure';
 import { transcriptExpiry } from '@acme/student-model';
 import type { SessionTurn, SessionTranscript, DerivedFact } from '@acme/student-model';
-import { distill } from '@acme/student-model';
+import { distill, withoutBlockedTags } from '@acme/student-model';
 import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation';
 import { runTutorSafetyPlane } from './tutor-safety';
 
@@ -42,6 +42,20 @@ export interface TranscriptToSave {
 export type LoadPriorFacts = (ctx: ProtectedCtx) => Promise<readonly DerivedFact[]>;
 export type SaveTranscript = (ctx: ProtectedCtx, transcript: TranscriptToSave) => Promise<void>;
 export type SaveFacts = (ctx: ProtectedCtx, facts: readonly DerivedFact[]) => Promise<void>;
+/**
+ * Tags a guardian has erased, which distillation must not re-derive.
+ *
+ * `withoutBlockedTags` has existed in `@acme/student-model` since the erasure
+ * cascade was written, is exported, and is covered by two tests — and had NO
+ * production call site. So erasure worked exactly once: a guardian deleted the
+ * interest, and the next session read the same turns and derived it again. The
+ * cascade was correct and the loop around it put the fact straight back.
+ *
+ * A port rather than a direct read, like every other store this service
+ * touches, so the filter is on the distillation path structurally instead of
+ * being something a future caller can forget.
+ */
+export type LoadBlockedTags = (ctx: ProtectedCtx) => Promise<readonly string[]>;
 
 /**
  * Evaluates one learner answer inside the protected boundary, runs the Safety
@@ -55,6 +69,7 @@ export async function evaluateTutorTurn(
   loadPriorFacts?: LoadPriorFacts,
   saveTranscript?: SaveTranscript,
   saveFacts?: SaveFacts,
+  loadBlockedTags?: LoadBlockedTags,
 ): Promise<TutorTurnResult> {
   return protectedOperation(auth, headers, async (ctx) => {
     const skillTitle = inferSkillTitle(input.problem);
@@ -116,7 +131,21 @@ export async function evaluateTutorTurn(
         expiresAt: transcriptToSave.expiresAt,
         turns: transcriptToSave.turns,
       };
-      const nextFacts = distill(transcript, priorFacts, now);
+      /*
+        FILTERED BEFORE DISTILLATION, not after.
+
+        Filtering the OUTPUT facts would still let a blocked tag influence what
+        else is derived from the same turn, and would re-derive it the moment
+        anyone added a second consumer. Stripping the tags from the turns means
+        the erased thing is not in the input at all, which is the only version of
+        this that stays true when the distiller changes.
+      */
+      const blockedTags = loadBlockedTags ? await loadBlockedTags(ctx) : [];
+      const nextFacts = distill(
+        { ...transcript, turns: withoutBlockedTags(transcript.turns, blockedTags) },
+        priorFacts,
+        now,
+      );
       await saveFacts(ctx, nextFacts);
     }
 

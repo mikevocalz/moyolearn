@@ -13,7 +13,7 @@
   "scripts": {
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test 'features/**/*.test.ts'"
+    "test": "node --test 'core/**/*.test.ts' 'features/**/*.test.ts' 'providers/**/*.test.ts' && node --test --conditions=react-server 'features/**/*.server-test.ts'"
   },
   "dependencies": {
     "@acme/auth": "workspace:*",

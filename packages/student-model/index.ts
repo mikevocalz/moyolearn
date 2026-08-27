@@ -22,7 +22,7 @@ export {
   MISCONCEPTIONS,
   FACT_TTL_DAYS,
   TRANSCRIPT_TTL_DAYS,
-} from './src/facts';
+} from './src/facts.ts';
 export type {
   DerivedFact,
   FactKind,
@@ -33,19 +33,19 @@ export type {
   ReviewFact,
   InterestFact,
   ScaffoldingFact,
-} from './src/facts';
+} from './src/facts.ts';
 
-export { traceAttempt, decayMastery, isFrontier, DEFAULT_TRACING, FRONTIER_LOW, FRONTIER_HIGH } from './src/mastery';
-export type { TracingParams } from './src/mastery';
+export { traceAttempt, decayMastery, isFrontier, DEFAULT_TRACING, FRONTIER_LOW, FRONTIER_HIGH } from './src/mastery.ts';
+export type { TracingParams } from './src/mastery.ts';
 
-export { scheduleReview, isDue, REVIEW_LADDER } from './src/review';
-export type { ReviewState } from './src/review';
+export { scheduleReview, isDue, REVIEW_LADDER } from './src/review.ts';
+export type { ReviewState } from './src/review.ts';
 
-export { distill, transcriptExpiry, factId, masteryFacts, reviewFacts } from './src/distill';
-export type { DistillOptions, SessionTranscript, SessionTurn } from './src/distill';
+export { distill, transcriptExpiry, factId, masteryFacts, reviewFacts } from './src/distill.ts';
+export type { DistillOptions, SessionTranscript, SessionTurn } from './src/distill.ts';
 
-export { compileLearnerBrief } from './src/brief';
-export type { CompileOptions, LearnerBrief } from './src/brief';
+export { compileLearnerBrief } from './src/brief.ts';
+export type { CompileOptions, LearnerBrief } from './src/brief.ts';
 
 export {
   eraseFact,
@@ -53,8 +53,8 @@ export {
   cascadePreview,
   expireTranscripts,
   withoutBlockedTags,
-} from './src/erasure';
-export type { ErasureResult } from './src/erasure';
+} from './src/erasure.ts';
+export type { ErasureResult } from './src/erasure.ts';
 
-export { withLearnerBrief, withLearnerBriefStream, briefPreamble } from './src/inference';
-export type { BriefLookup, ModelCall, ModelStreamCall, TutorPrompt } from './src/inference';
+export { withLearnerBrief, withLearnerBriefStream, briefPreamble } from './src/inference.ts';
+export type { BriefLookup, ModelCall, ModelStreamCall, TutorPrompt } from './src/inference.ts';

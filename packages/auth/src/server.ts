@@ -236,3 +236,16 @@ async function memberRole(pool: Pool, organizationId: string, userId: string) {
 }
 
 export type Auth = ReturnType<typeof createAuth>;
+
+/*
+  The entitlement read lives beside the auth instance because it reads the auth
+  instance's own tables. Re-exported HERE and not from the package barrel: the
+  barrel is imported by screens, and a subscription read has no business in a
+  client bundle.
+*/
+export {
+  readSubscriptions,
+  readSessionSubscriptions,
+  toSubscriptionState,
+  type SubscriptionRow,
+} from './subscription-reader.ts';

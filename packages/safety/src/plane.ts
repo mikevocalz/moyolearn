@@ -16,6 +16,7 @@
 
 import { crisisResponse, isPedagogicallyStorable, type CrisisResponse } from './crisis.ts';
 import { screen, type FirewallRuleId } from './firewall.ts';
+import { safetyLayer, safetyLayerSync } from './unavailable.ts';
 
 /** Doc 07 §3 layer 3's five classes. Routing, not censorship. */
 export type InputClass = 'safe' | 'off-task' | 'sensitive' | 'crisis' | 'prohibited';
@@ -87,19 +88,25 @@ export async function runSafetyPlane(
 
   const { inputClass, trace } = gate;
 
+  // NOT a `safetyLayer` call, and that is the whole of doc 12 §5's split: every
+  // layer above and below fails closed to a paused tutor, while the model
+  // failing is availability and stays retryable. Wrapping this line would turn
+  // a missing API key into "Natalie is taking a break".
   const draft = await deps.generator.generate(message, context);
 
   // Layer 5 — the generated text is screened before it is rendered, by the
   // deterministic firewall AND the output classifier. Both, because they fail
   // differently: one cannot be talked out of a rule, the other catches what no
   // pattern anticipated.
-  const outbound = screen(draft, 'tutor');
+  const outbound = safetyLayerSync('5-output', () => screen(draft, 'tutor'));
   if (!outbound.allowed) {
     trace.push({ layer: '5-output', detail: outbound.broke.join(',') });
     return { outcome: { kind: 'blocked', broke: outbound.broke, storeInStudentModel: false }, trace };
   }
 
-  const outputClasses = await deps.classifier.classifyOutput(draft, context);
+  const outputClasses = await safetyLayer('5-output', () =>
+    deps.classifier.classifyOutput(draft, context),
+  );
   trace.push({ layer: '5-output', detail: outputClasses.join(',') || 'clean' });
 
   if (outputClasses.includes('crisis')) {
@@ -178,7 +185,7 @@ async function screenInput(
     };
   }
 
-  const inputClass = await classifier.classifyInput(message, context);
+  const inputClass = await safetyLayer('3-input', () => classifier.classifyInput(message, context));
   trace.push({ layer: '3-input', detail: inputClass });
 
   if (inputClass === 'crisis') {
@@ -225,7 +232,7 @@ async function screenInput(
     };
   }
 
-  const inbound = screen(message, 'learner');
+  const inbound = safetyLayerSync('2-firewall', () => screen(message, 'learner'));
   if (!inbound.allowed) {
     return {
       passed: false,
@@ -299,13 +306,14 @@ export async function* runSafetyPlaneStream(
   let buffer = '';
   let draft = '';
 
+  // Unwrapped for the same reason as `generate` above: the model is not a layer.
   for await (const chunk of deps.generator.generateStream(message, context)) {
     buffer += chunk;
     const { emit, rest } = takeSentences(buffer);
     buffer = rest;
     if (!emit) continue;
 
-    const verdict = screen(emit, 'tutor');
+    const verdict = safetyLayerSync('5-output', () => screen(emit, 'tutor'));
     if (!verdict.allowed) {
       trace.push({ layer: '5-output', detail: verdict.broke.join(',') });
       yield { kind: 'done', outcome: { kind: 'blocked', broke: verdict.broke, storeInStudentModel: false }, trace };
@@ -317,7 +325,7 @@ export async function* runSafetyPlaneStream(
   }
 
   if (buffer) {
-    const verdict = screen(buffer, 'tutor');
+    const verdict = safetyLayerSync('5-output', () => screen(buffer, 'tutor'));
     if (!verdict.allowed) {
       trace.push({ layer: '5-output', detail: verdict.broke.join(',') });
       yield { kind: 'done', outcome: { kind: 'blocked', broke: verdict.broke, storeInStudentModel: false }, trace };
@@ -329,14 +337,16 @@ export async function* runSafetyPlaneStream(
 
   // Whole-draft screen: the per-sentence pass cannot see a banned construction
   // that straddles a boundary, so the assembled turn is screened once more.
-  const whole = screen(draft, 'tutor');
+  const whole = safetyLayerSync('5-output', () => screen(draft, 'tutor'));
   if (!whole.allowed) {
     trace.push({ layer: '5-output', detail: whole.broke.join(',') });
     yield { kind: 'done', outcome: { kind: 'blocked', broke: whole.broke, storeInStudentModel: false }, trace };
     return;
   }
 
-  const outputClasses = await deps.classifier.classifyOutput(draft, context);
+  const outputClasses = await safetyLayer('5-output', () =>
+    deps.classifier.classifyOutput(draft, context),
+  );
   trace.push({ layer: '5-output', detail: outputClasses.join(',') || 'clean' });
 
   if (outputClasses.includes('crisis')) {

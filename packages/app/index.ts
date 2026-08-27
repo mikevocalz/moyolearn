@@ -200,9 +200,15 @@ export type {
   TeacherStep,
 } from './features/onboarding/teacher/steps';
 export {
+  EntitlementsSync,
   PermissionGate,
+  fetchEntitlements,
+  gateDecision,
   useEntitlements,
   useEntitlementStore,
+  type EntitlementsResponse,
+  type GateInput,
+  type GateRender,
   type PermissionGateProps,
   type ResolvedEntitlements,
 } from './providers/entitlements';

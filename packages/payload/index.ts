@@ -9,6 +9,14 @@
 // §Types). Re-exported so repositories can name them without a deep path.
 export type { Organization, Lead, Media, User } from './src/payload-types';
 
+// The Loop A row shapes, named so the repositories that decode them do not have
+// to reach through a deep path into the generated file. `SessionTranscript` is
+// the ROW; `@acme/student-model`'s type of the same name is the DOMAIN object
+// distillation works on. They are deliberately different — the row carries a
+// numeric Payload id and a JSON `turns` column — so a consumer importing both
+// must alias one of them rather than assume they interchange.
+export type { SessionTranscript, StudentModelFact } from './src/payload-types';
+
 export interface PayloadClientConfig {
   /** Payload REST base, e.g. https://example.com/payload-api */
   baseUrl: string;

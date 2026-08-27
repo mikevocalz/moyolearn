@@ -10,6 +10,7 @@
 import 'server-only';
 import { getPayload } from 'payload';
 import config from '@payload-config';
+import type { StudentModelFact } from '@acme/payload';
 import type {
   ProtectedCtx,
   TranscriptToSave,
@@ -51,6 +52,82 @@ export async function saveTranscript(_ctx: ProtectedCtx, transcript: TranscriptT
   );
 }
 
+/**
+ * One `studentModelFacts` row decoded into the discriminated union the model is
+ * written in.
+ *
+ * Exported rather than kept inside `loadPriorFacts` because the retention sweep
+ * (`retention.repository.ts`) reads the same rows through a different `where`,
+ * and a second decoder would be a second place for the JSON `detail` column to
+ * disagree about what a fact is.
+ *
+ * A row whose `kind` this build does not know is returned as `null` and skipped
+ * rather than coerced — an unreadable fact is not shown, and it is not deleted
+ * either, because deleting on a shape we could not parse would be guessing with
+ * a child's data.
+ */
+export function factFromDoc(doc: StudentModelFact): DerivedFact | null {
+  const common = {
+    id: doc.factId,
+    learnerId: doc.learnerAuthId,
+    sentence: doc.sentence,
+    derivedFrom: (doc.derivedFrom ?? []) as readonly string[],
+    observedAt: doc.observedAt,
+    expiresAt: doc.expiresAt,
+  };
+
+  const detail = (doc.detail ?? {}) as Record<string, string | number | boolean | undefined>;
+  const kind: DerivedFact['kind'] = doc.kind;
+
+  if (kind === 'mastery') {
+    return {
+      ...common,
+      kind: 'mastery' as const,
+      skillId: (detail.skillId as string) ?? '',
+      skillTitle: (detail.skillTitle as string) ?? '',
+      p: (detail.p as number) ?? 0,
+      attempts: (detail.attempts as number) ?? 0,
+    } satisfies MasteryFact;
+  }
+  if (kind === 'review') {
+    return {
+      ...common,
+      kind: 'review' as const,
+      skillId: (detail.skillId as string) ?? '',
+      skillTitle: (detail.skillTitle as string) ?? '',
+      dueAt: (detail.dueAt as string) ?? common.observedAt,
+      intervalDays: (detail.intervalDays as number) ?? 0,
+    } satisfies ReviewFact;
+  }
+  if (kind === 'scaffolding') {
+    return {
+      ...common,
+      kind: 'scaffolding' as const,
+      skillId: (detail.skillId as string) ?? '',
+      hintDepth: (detail.hintDepth as number) ?? 0,
+    } satisfies ScaffoldingFact;
+  }
+  if (kind === 'misconception') {
+    return {
+      ...common,
+      kind: 'misconception' as const,
+      skillId: (detail.skillId as string) ?? '',
+      tag: (detail.tag as string) ?? '',
+      strategy: (detail.strategy as string) ?? '',
+      active: (detail.active as boolean) ?? false,
+    } satisfies MisconceptionFact;
+  }
+  if (kind === 'interest') {
+    return {
+      ...common,
+      kind: 'interest' as const,
+      tag: (detail.tag as string) ?? '',
+      guardianApproved: (detail.guardianApproved as boolean) ?? false,
+    } satisfies InterestFact;
+  }
+  return null;
+}
+
 export const loadPriorFacts: LoadPriorFacts = async (ctx) => {
   return withPayload(async (payload) => {
     const { docs } = await payload.find({
@@ -58,67 +135,7 @@ export const loadPriorFacts: LoadPriorFacts = async (ctx) => {
       where: { learnerAuthId: { equals: ctx.learnerId } },
       limit: 1000,
     });
-    return docs.map((doc) => {
-      const common = {
-        id: doc.factId as string,
-        learnerId: doc.learnerAuthId as string,
-        sentence: doc.sentence as string,
-        derivedFrom: (doc.derivedFrom ?? []) as readonly string[],
-        observedAt: doc.observedAt as string,
-        expiresAt: doc.expiresAt as string,
-      };
-
-      const detail = (doc.detail ?? {}) as Record<string, unknown>;
-      const kind = doc.kind as DerivedFact['kind'];
-
-      if (kind === 'mastery') {
-        return {
-          ...common,
-          kind: 'mastery' as const,
-          skillId: (detail.skillId as string) ?? '',
-          skillTitle: (detail.skillTitle as string) ?? '',
-          p: (detail.p as number) ?? 0,
-          attempts: (detail.attempts as number) ?? 0,
-        } satisfies MasteryFact;
-      }
-      if (kind === 'review') {
-        return {
-          ...common,
-          kind: 'review' as const,
-          skillId: (detail.skillId as string) ?? '',
-          skillTitle: (detail.skillTitle as string) ?? '',
-          dueAt: (detail.dueAt as string) ?? common.observedAt,
-          intervalDays: (detail.intervalDays as number) ?? 0,
-        } satisfies ReviewFact;
-      }
-      if (kind === 'scaffolding') {
-        return {
-          ...common,
-          kind: 'scaffolding' as const,
-          skillId: (detail.skillId as string) ?? '',
-          hintDepth: (detail.hintDepth as number) ?? 0,
-        } satisfies ScaffoldingFact;
-      }
-      if (kind === 'misconception') {
-        return {
-          ...common,
-          kind: 'misconception' as const,
-          skillId: (detail.skillId as string) ?? '',
-          tag: (detail.tag as string) ?? '',
-          strategy: (detail.strategy as string) ?? '',
-          active: (detail.active as boolean) ?? false,
-        } satisfies MisconceptionFact;
-      }
-      if (kind === 'interest') {
-        return {
-          ...common,
-          kind: 'interest' as const,
-          tag: (detail.tag as string) ?? '',
-          guardianApproved: (detail.guardianApproved as boolean) ?? false,
-        } satisfies InterestFact;
-      }
-      return null;
-    }).filter(Boolean) as DerivedFact[];
+    return docs.map(factFromDoc).filter((fact): fact is DerivedFact => fact !== null);
   });
 };
 

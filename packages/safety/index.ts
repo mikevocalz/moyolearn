@@ -1,10 +1,10 @@
 // @acme/safety — the Safety Plane (doc 07 §3). Server-side only: a compromised
 // client cannot lower it, so nothing here is imported into a feature. Learner
 // inference goes through `runSafetyPlane` or it does not happen.
-// SOT: docs/pack/07-security-child-ai-safety-spec.md §2 · §3
-// SOT-KEYWORDS: safety barrel plane firewall crisis red team classifier
+// SOT: docs/pack/07-security-child-ai-safety-spec.md §2 · §3 · docs/pack/12-systems-design-prompt.md §5
+// SOT-KEYWORDS: safety barrel plane firewall crisis red team classifier fail closed unavailable
 
-export { runSafetyPlane, runSafetyPlaneStream, takeSentences } from './src/plane';
+export { runSafetyPlane, runSafetyPlaneStream, takeSentences } from './src/plane.ts';
 export type {
   Classifier,
   Generator,
@@ -15,16 +15,18 @@ export type {
   PlaneResult,
   PlaneStreamEvent,
   StreamingGenerator,
-} from './src/plane';
-export { screen, ruleById, FIREWALL_RULES } from './src/firewall';
-export type { FirewallRule, FirewallRuleId, FirewallVerdict, TextOrigin } from './src/firewall';
+} from './src/plane.ts';
+export { screen, ruleById, FIREWALL_RULES } from './src/firewall.ts';
+export type { FirewallRule, FirewallRuleId, FirewallVerdict, TextOrigin } from './src/firewall.ts';
 export {
   crisisResponse,
   guardianAlert,
   isPedagogicallyStorable,
   CRISIS_RESOURCES,
   CRISIS_STEPS,
-} from './src/crisis';
-export type { CrisisResource, CrisisResponse, CrisisStep, GuardianAlert } from './src/crisis';
-export { probesFor, runPassed, summariseRun, PROBES, RED_TEAM_VERSION } from './src/red-team';
-export type { Probe, ProbeFamily, RedTeamRun } from './src/red-team';
+} from './src/crisis.ts';
+export type { CrisisResource, CrisisResponse, CrisisStep, GuardianAlert } from './src/crisis.ts';
+export { probesFor, runPassed, summariseRun, PROBES, RED_TEAM_VERSION } from './src/red-team.ts';
+export type { Probe, ProbeFamily, RedTeamRun } from './src/red-team.ts';
+export { safetyLayer, safetyLayerSync, SafetyLayerUnavailable, SAFETY_LAYERS } from './src/unavailable.ts';
+export type { SafetyLayer } from './src/unavailable.ts';
