@@ -31,6 +31,14 @@ interface TutorState {
   attachments: readonly TutorAttachment[];
   addAttachment: (attachment: TutorAttachment) => void;
   removeAttachment: (id: string) => void;
+  /**
+   * Fills in a voice note's transcript once it has been written out.
+   *
+   * Updates the STAGED attachment and any already sent, because a note is
+   * commonly transcribed after its turn has gone — the thread should catch up
+   * rather than keep saying "Writing this out…" forever.
+   */
+  setAttachmentTranscript: (id: string, transcript: string) => void;
   skillTitle: string;
   mastery: number;
   attempts: number;
@@ -150,6 +158,17 @@ export const useTutorStore = create<TutorState>((set) => ({
 
   removeAttachment: (id) =>
     set((s) => ({ ...s, attachments: s.attachments.filter((a) => a.id !== id) })),
+
+  setAttachmentTranscript: (id, transcript) =>
+    set((s) => ({
+      ...s,
+      attachments: s.attachments.map((a) => (a.id === id ? { ...a, transcript } : a)),
+      messages: s.messages.map((m) =>
+        m.attachments?.some((a) => a.id === id)
+          ? { ...m, attachments: m.attachments.map((a) => (a.id === id ? { ...a, transcript } : a)) }
+          : m,
+      ),
+    })),
 
   coach: async (message) => {
     const { problem } = useTutorStore.getState();

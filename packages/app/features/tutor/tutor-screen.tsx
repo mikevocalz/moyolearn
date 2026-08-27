@@ -20,6 +20,7 @@ import { pickNoteImage } from '../schedule/pick-note-image';
 import { pickFile } from '../editor/pick-file';
 import { useAudioStore } from '../editor/audio.store.ts';
 import { readAttachment } from '../capture/read-attachment';
+import { transcribe } from '../capture/transcribe';
 import { useUploadQueue } from '../media';
 import { evaluateArithmetic } from '@acme/student-model/pure';
 
@@ -31,7 +32,7 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   const router = useRouter();
   const problem = useCaptureStore((s) => s.problem);
   const setProblem = useCaptureStore((s) => s.setProblem);
-  const { state, start, coach, hintDepth, attachments, addAttachment, removeAttachment, messages, say } =
+  const { state, start, coach, hintDepth, attachments, addAttachment, removeAttachment, setAttachmentTranscript, messages, say } =
     useTutorStore();
   const [loading, setLoading] = useState(false);
 
@@ -201,13 +202,27 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
   const handleStartRecording = useCallback(() => {
     void requestRecording().then((recording) => {
       if (!recording) return;
+      const id = `${Date.now()}-voice`;
       addAttachment({
-        id: `${Date.now()}-voice`,
+        id,
         kind: 'audio',
         uri: recording.uri,
         name: `Voice note (${Math.round(recording.duration)}s)`,
         mimeType: 'audio/m4a',
         durationSec: recording.duration,
+      });
+
+      /*
+        Transcribed AFTER staging, not before.
+
+        A child should see their note appear the instant they stop speaking;
+        Whisper's first run downloads a model and takes seconds. Blocking the
+        tray on it would make the app feel broken at the one moment the child is
+        least sure it heard them. The bubble says "Writing this out…" until this
+        lands.
+      */
+      void transcribe(recording.uri).then((text) => {
+        if (text.length > 0) setAttachmentTranscript(id, text);
       });
     });
   }, [requestRecording, addAttachment]);
