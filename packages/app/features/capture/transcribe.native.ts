@@ -5,6 +5,8 @@
 // SOT: packages/app/features/capture/read-attachment.native.ts
 // SOT-KEYWORDS: transcribe native whisper executorch speech to text voice on-device
 import { SpeechToTextModule, WHISPER_TINY_EN } from 'react-native-executorch';
+import { decodeAudioData } from 'react-native-audio-api';
+import { toMono } from './pcm.ts';
 
 let stt: SpeechToTextModule | undefined;
 
@@ -22,11 +24,23 @@ export async function transcribe(uri: string): Promise<string> {
 /**
  * Whisper wants raw mono PCM at 16kHz, not a file path.
  *
- * Decoding is deliberately left to the caller's platform audio stack rather
- * than reimplemented here — this is the seam where a real decoder plugs in, and
- * naming it is better than a silent `new Float32Array()` that returns empty
- * transcripts forever and looks like a model problem.
+ * This threw. The throw was deliberate — a named seam beats a silent
+ * `new Float32Array()` that returns empty transcripts forever and reads as a
+ * model problem — but it meant every voice note on device transcribed to
+ * nothing, and `transcribe()` swallows the error by contract, so it failed
+ * quietly and looked exactly like a quiet child.
+ *
+ * `react-native-audio-api` was already a dependency of this package. It is
+ * Web Audio on native, so the decode is the same call the browser makes, and
+ * passing the target rate resamples during decode rather than after.
  */
-async function waveformFrom(_uri: string): Promise<Float32Array> {
-  throw new Error('PCM decoding for native transcription is not wired yet');
+const WHISPER_SAMPLE_RATE = 16_000;
+
+async function waveformFrom(uri: string): Promise<Float32Array> {
+  const decoded = await decodeAudioData(uri, WHISPER_SAMPLE_RATE);
+
+  const channels = Array.from({ length: decoded.numberOfChannels }, (_, i) =>
+    decoded.getChannelData(i),
+  );
+  return toMono(channels);
 }
