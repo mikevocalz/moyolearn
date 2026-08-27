@@ -38,7 +38,42 @@ export interface QueuedUpload {
   attempts: number;
   /** Epoch ms. Set when an attempt fails, so backoff is computable offline. */
   lastAttemptAt?: number;
+  /**
+   * Which message the attachment hangs off, and which attachment inside it.
+   *
+   * Both OPTIONAL, and not because they are decoration: the queue is persisted,
+   * so a photo enqueued by yesterday's build is read back by today's and has
+   * never heard of either field. Making them required would make every item
+   * already on a device unrevivable — the exact photos the queue exists to
+   * protect. `sessionId` is enough to file an upload under a session; these two
+   * are what let it be filed against the message a child is looking at.
+   */
+  messageId?: string;
+  attachmentId?: string;
 }
+
+/**
+ * What a finished upload reports back.
+ *
+ * The drain used to delete the item and return nothing, so the location Bunny
+ * had just handed us died inside the loop and only the device that took the
+ * photo could ever display it. `url` is what renders; `storageKey` is the
+ * durable handle (`url` is derived from it, and a CDN hostname change does not
+ * invalidate it). The identifiers travel back with them because a background
+ * drain finishing minutes later cannot be correlated by arrival order.
+ */
+export interface CompletedUpload {
+  /** The queue item's `id` — the handle the caller enqueued under. */
+  id: string;
+  sessionId: string;
+  messageId?: string;
+  attachmentId?: string;
+  url: string;
+  storageKey: string;
+}
+
+/** Told about each upload that really landed. Never told about failures. */
+export type UploadReporter = (completed: CompletedUpload) => void;
 
 /**
  * Five attempts, then it stops trying.

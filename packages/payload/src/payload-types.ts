@@ -74,6 +74,7 @@ export interface Config {
     skills: Skill;
     misconceptions: Misconception;
     sessionTranscripts: SessionTranscript;
+    tutorSessions: TutorSession;
     studentModelFacts: StudentModelFact;
     organizations: Organization;
     leads: Lead;
@@ -91,6 +92,7 @@ export interface Config {
     skills: SkillsSelect<false> | SkillsSelect<true>;
     misconceptions: MisconceptionsSelect<false> | MisconceptionsSelect<true>;
     sessionTranscripts: SessionTranscriptsSelect<false> | SessionTranscriptsSelect<true>;
+    tutorSessions: TutorSessionsSelect<false> | TutorSessionsSelect<true>;
     studentModelFacts: StudentModelFactsSelect<false> | StudentModelFactsSelect<true>;
     organizations: OrganizationsSelect<false> | OrganizationsSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
@@ -267,6 +269,29 @@ export interface SessionTranscript {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tutorSessions".
+ */
+export interface TutorSession {
+  id: number;
+  sessionId: string;
+  learnerAuthId: string;
+  problem?: string | null;
+  messages:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  closedAt?: string | null;
+  expiresAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "studentModelFacts".
  */
 export interface StudentModelFact {
@@ -383,6 +408,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'sessionTranscripts';
         value: number | SessionTranscript;
+      } | null)
+    | ({
+        relationTo: 'tutorSessions';
+        value: number | TutorSession;
       } | null)
     | ({
         relationTo: 'studentModelFacts';
@@ -550,6 +579,20 @@ export interface SessionTranscriptsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tutorSessions_select".
+ */
+export interface TutorSessionsSelect<T extends boolean = true> {
+  sessionId?: T;
+  learnerAuthId?: T;
+  problem?: T;
+  messages?: T;
+  closedAt?: T;
+  expiresAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "studentModelFacts_select".
  */
 export interface StudentModelFactsSelect<T extends boolean = true> {
@@ -666,6 +709,7 @@ export interface CollectionQueryWidget {
       | 'skills'
       | 'misconceptions'
       | 'sessionTranscripts'
+      | 'tutorSessions'
       | 'studentModelFacts'
       | 'organizations'
       | 'leads';
@@ -699,6 +743,7 @@ export interface ActivityWidget {
           | 'skills'
           | 'misconceptions'
           | 'sessionTranscripts'
+          | 'tutorSessions'
           | 'studentModelFacts'
           | 'organizations'
           | 'leads'

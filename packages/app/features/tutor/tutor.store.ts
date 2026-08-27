@@ -147,7 +147,40 @@ export const useTutorStore = create<TutorState>((set) => ({
   say: (message) =>
     set((s) => ({
       ...s,
-      messages: [...s.messages, { ...message, id: `${Date.now()}-${s.messages.length}` }],
+      /*
+        THE STANDING REPLY BECOMES HISTORY HERE, ahead of the turn that
+        supersedes it.
+
+        Natalie's turns were never in `messages` at all — `coach` only set
+        `state.utterance`, which the stage draws as the live bubble, so each
+        reply was overwritten by the next and a child could scroll back through
+        only their own half of the conversation. The comment on `messages` said
+        tutor turns "are appended by the stream itself"; nothing ever did.
+
+        It has to happen on the CHILD's turn rather than at the start of the
+        next coaching call, and that ordering is the whole subtlety: `handleSend`
+        says the learner message first and asks for coaching second, so flushing
+        inside `coach` filed each reply AFTER the question that followed it. The
+        thread read answer-then-question. Verified on screen, which is the only
+        way that class of mistake shows up.
+
+        A tutor turn is live or historical and never both — appending while the
+        utterance still stands would draw it twice, once from `messages` and
+        once from the stage.
+      */
+      messages: [
+        ...s.messages,
+        ...(s.state.kind === 'speaking' && s.state.utterance.text.length > 0
+          ? [
+              {
+                id: `tutor-${Date.now()}`,
+                role: 'tutor' as const,
+                text: s.state.utterance.text,
+              },
+            ]
+          : []),
+        { ...message, id: `${Date.now()}-${s.messages.length}` },
+      ],
     })),
 
   addAttachment: (attachment) =>
