@@ -44,45 +44,18 @@ function databaseUrl() {
 const url = databaseUrl();
 
 /*
-  `sweep.sql` applied the way the route applies it — statement by statement,
-  inside one transaction, with a savepoint each.
+  Sent WHOLE, exactly as `apps/web/lib/retention.repository.ts:sweepVersionShadows`
+  sends it. If the two ever disagree about how the file is executed, this test
+  stops testing the thing that runs in production.
 
-  Sending the file as one string is what this test used to do, and it stopped
-  working: every collection now pins `versions: false`, and a Payload schema push
-  against that config DROPS the `_<table>_v` tables. Eight of the file's ten
-  statements name a relation that no longer exists, and libpq's implicit
-  transaction around a multi-statement string means one missing relation aborts
-  the other two as well — so the expired parents were never deleted either.
-
-  `42P01` alone is skipped, because it means the shadow table this statement
-  exists to empty is already gone, which is the state the file is trying to
-  reach. This mirrors `apps/web/lib/retention.repository.ts:sweepVersionShadows`
-  exactly; if that tolerance changes, this must change with it.
+  It used to split on `;` and tolerate `42P01`, to survive the file naming
+  shadow tables that had been dropped. The guard belongs in the SQL and is there
+  now — `sweep.sql` resolves each table with `to_regclass` — and the splitter
+  could not survive it: the guard is written as a dollar-quoted PL/pgSQL block,
+  which is precisely what the splitter's own comment warned would break it.
 */
 async function applySweepSql(client) {
-  const statements = readFileSync(SWEEP_SQL, 'utf8')
-    .split('\n')
-    .map((line) => line.replace(/--.*$/, ''))
-    .join('\n')
-    .split(';')
-    .map((statement) => statement.trim())
-    .filter((statement) => statement.length > 0);
-
-  await client.query('BEGIN');
-  for (const statement of statements) {
-    await client.query('SAVEPOINT sweep_statement');
-    try {
-      await client.query(statement);
-      await client.query('RELEASE SAVEPOINT sweep_statement');
-    } catch (error) {
-      await client.query('ROLLBACK TO SAVEPOINT sweep_statement');
-      if (error.code !== '42P01') {
-        await client.query('ROLLBACK');
-        throw error;
-      }
-    }
-  }
-  await client.query('COMMIT');
+  await client.query(readFileSync(SWEEP_SQL, 'utf8'));
 }
 
 /**

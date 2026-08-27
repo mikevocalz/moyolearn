@@ -2,9 +2,10 @@
   Sequence diagram — the erasure cascade (doc 12 §5 and §4, flow 5 of 5).
   Why it exists: doc 12 §9.1 asks for the cascade drawn across the operational,
   educational and billing stores, the version tables, and the Bunny objects.
-  The cascade LOGIC exists and is tested; the cascade DRIVER does not — the pure
-  functions in packages/student-model have no caller outside their own package.
-  Only the Bunny leg is wired end to end. This diagram separates the two so a
+  The cascade LOGIC has always existed and been tested. The TTL half of the
+  driver now exists too (POST /api/retention/sweep, daily at 04:00); the
+  ON-DEMAND half — a guardian erasing a line or a session — still does not.
+  This diagram separates the two so a
   later worker does not read a green test suite as a shipped promise.
   SOT: docs/pack/12-systems-design-prompt.md §4 §5 · docs/pack/07-security-child-ai-safety-spec.md §4 · docs/pack/19-learning-outcomes-spec.md §3
   SOT-KEYWORDS: sequence diagram erasure cascade delete provenance transcript fact bunny version tables retention ttl guardian right to delete
@@ -23,9 +24,13 @@ the derived artifact keeps the belief, and the tutor goes on saying the deleted
 thing. That is why deletion here is defined on **provenance**, not on rows.
 
 **What is real:** the cascade algebra (`eraseFact`, `eraseTranscript`,
-`cascadePreview`, `expireTranscripts`, `withoutBlockedTags`), and the Bunny
-Storage sweep (`POST /api/media/sweep` + its cron door).
-**What is not:** any caller that applies the algebra to the database.
+`cascadePreview`, `expireTranscripts`, `withoutBlockedTags`); the Bunny Storage
+sweep (`POST /api/media/sweep` + its cron door); and the **TTL half of the
+driver** — `POST /api/retention/sweep` applies `expireTranscripts` to the
+database, deleting expired transcripts, the facts they are the sole source of,
+and the version shadow rows behind both.
+**What is not:** the ON-DEMAND half. Nothing lets a guardian erase a chosen line
+or session; `eraseFact` and `eraseTranscript` still have no caller.
 
 ---
 
@@ -75,7 +80,7 @@ sequenceDiagram
     Op--xPLe: delete studentModelFacts by factId
     Op--xPLe: delete sessionTranscripts by sessionId
     Op--xPLe: update studentModelFacts derivedFrom for partial losses
-    Note over PLe: NOT YET IMPLEMENTED. The pure functions<br/>return new arrays. Nothing writes them back.
+    Note over PLe: These three writes are REAL on the TTL path<br/>(retention.repository.ts deleteFacts,<br/>updateFactProvenance, deleteTranscripts).<br/>On the GUARDIAN path above they are NOT YET<br/>IMPLEMENTED — no route reaches them.
     end
 
     rect rgb(240, 240, 248)
@@ -161,7 +166,9 @@ also carries an indexed `expiresAt`.
 
 | Seam | File : symbol | Status |
 |---|---|---|
-| Cascade algebra | `packages/student-model/src/erasure.ts` : `eraseFact`, `eraseTranscript`, `cascadePreview`, `expireTranscripts`, `withoutBlockedTags`, `ErasureResult` | real, unit-tested, **no caller** |
+| Cascade algebra | `packages/student-model/src/erasure.ts` : `eraseFact`, `eraseTranscript`, `cascadePreview`, `expireTranscripts`, `withoutBlockedTags`, `ErasureResult` | real, unit-tested. `expireTranscripts` is **called** by the TTL sweep; `eraseFact`/`eraseTranscript`/`cascadePreview` still have **no caller** |
+| TTL cascade driver | `apps/web/app/api/retention/sweep/route.ts` : `POST` (bearer `RETENTION_SWEEP_SECRET`) · `apps/web/app/api/retention/sweep/cron/route.ts` : `GET` (bearer `CRON_SECRET`) · `apps/web/lib/retention.repository.ts` : `loadExpiredTranscripts`, `loadFactsDerivedFrom`, `deleteFacts`, `updateFactProvenance`, `deleteTranscripts`, `sweepVersionShadows` | **real, wired, scheduled `0 4 * * *`** in `apps/web/vercel.json` |
+| Cascade proof against real rows | `packages/payload/src/retention/erasure.integration.test.mjs` : *transcript sweep erases expired transcripts and every fact they are the sole source of* | real; skipped without a `DATABASE_URL` |
 | Guardian-device entry point | `packages/student-model/pure.ts` : re-exports `eraseFact`, `eraseTranscript`, `cascadePreview` | real |
 | Server barrel | `packages/student-model/index.ts` : re-exports the above plus `expireTranscripts` | real |
 | Provenance edge | `packages/student-model/src/facts.ts` : `DerivedFact.derivedFrom`, `FactProvenance`, `FACT_TTL_DAYS`, `TRANSCRIPT_TTL_DAYS`, `isExpired`, `addDays` | real |
@@ -180,11 +187,13 @@ also carries an indexed `expiresAt`.
 
 ## NOT YET IMPLEMENTED
 
-1. **A cascade driver.** `eraseFact`, `eraseTranscript`, `expireTranscripts`,
-   `cascadePreview` and `withoutBlockedTags` have **no caller outside
-   `packages/student-model`** — the only references are the two barrels and the
-   test file. There is no route, no server action, no job. The algebra is
-   correct and unreachable.
+1. **The ON-DEMAND cascade driver.** The TTL half now exists:
+   `apps/web/app/api/retention/sweep/route.ts` applies `expireTranscripts` to
+   the database nightly. `eraseFact`, `eraseTranscript` and `cascadePreview`
+   still have **no caller outside `packages/student-model`** — a guardian
+   tapping delete on one line in S27 reaches nothing. There is no
+   `erasure.request` route and no server action; that algebra is still correct
+   and unreachable.
 2. **`withoutBlockedTags` in the distillation path.** `distill` is called at
    `packages/app/features/tutor/tutor.service.ts:119` with
    `(transcript, priorFacts, now)`. `blockedTags` are never assembled, never

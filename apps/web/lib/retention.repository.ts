@@ -43,7 +43,7 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
 }
 
 /**
- * Every transcript whose window has closed by `horizon`.
+ * Every transcript whose window has closed by `cutoff`.
  *
  * Returned as the DOMAIN `SessionTranscript` so `expireTranscripts` can consume
  * it directly, with `id` carrying the row's `sessionId` rather than its numeric
@@ -57,13 +57,13 @@ function chunk<T>(items: readonly T[], size: number): T[][] {
  * column into `SessionTurn[]` here would be an unchecked assertion about a shape
  * this file has no reason to inspect.
  */
-export async function loadExpiredTranscripts(horizon: Date): Promise<SessionTranscript[]> {
+export async function loadExpiredTranscripts(cutoff: Date): Promise<SessionTranscript[]> {
   return withPayload(async (payload) => {
     const expired: SessionTranscript[] = [];
     for (let page = 1; ; page += 1) {
       const result = await payload.find({
         collection: 'sessionTranscripts',
-        where: { expiresAt: { less_than_equal: horizon.toISOString() } },
+        where: { expiresAt: { less_than_equal: cutoff.toISOString() } },
         limit: PAGE_SIZE,
         page,
         sort: 'id',
@@ -239,7 +239,15 @@ const SWEEP_SQL_CANDIDATES = [
 function readSweepSql(): string {
   for (const candidate of SWEEP_SQL_CANDIDATES) {
     try {
-      return readFileSync(candidate, 'utf8');
+      /*
+        `turbopackIgnore` because a read Turbopack cannot resolve statically makes
+        it trace the ENTIRE project into this function's bundle — every source
+        file and the whole public folder, on a route that needs one .sql file.
+        The trade is that Turbopack then ships nothing for this read, which is
+        why `outputFileTracingIncludes` in `next.config.ts` names the file
+        explicitly. Opting out of a guess and stating the answer, not skipping it.
+      */
+      return readFileSync(/* turbopackIgnore: true */ candidate, 'utf8');
     } catch {
       continue;
     }
@@ -252,74 +260,41 @@ function readSweepSql(): string {
   );
 }
 
-/** Postgres `undefined_table`. */
-const UNDEFINED_TABLE = '42P01';
-
-/*
-  Split into statements rather than sent as one string.
-
-  Sending the file whole is what you would do first: libpq's simple query
-  protocol wraps a multi-statement string in an implicit transaction, which is
-  exactly the atomicity `sweep.sql`'s children-before-parents ordering wants. It
-  is also why the file cannot be sent that way any more — one missing relation
-  aborts every statement in it, including the ones that would have worked.
-
-  That is not hypothetical. Every collection now pins `versions: false`, and a
-  Payload schema push against that config DROPS the `_<table>_v` tables. Eight of
-  the file's ten statements currently name a relation that no longer exists, so
-  sent whole it does nothing at all while returning no error a caller can see.
-
-  The split is safe for THIS file and is not a general SQL parser: `sweep.sql`
-  contains no string literals, no dollar-quoted bodies, and no semicolons inside
-  its comments. A future statement with any of those needs this revisited.
-*/
-function sweepStatements(sql: string): string[] {
-  return sql
-    .split('\n')
-    .map((line) => line.replace(/--.*$/, ''))
-    .join('\n')
-    .split(';')
-    .map((statement) => statement.trim())
-    .filter((statement) => statement.length > 0);
-}
-
 /**
  * Runs `packages/payload/src/retention/sweep.sql` — the Payload version shadow
  * tables, which hold a full copy of every learner row the main sweep deletes.
  *
- * Atomic via one explicit transaction, with a savepoint per statement so a
- * shadow table that has already been dropped is skipped instead of taking the
- * rest of the sweep with it. `42P01` alone is tolerated, and only because it
- * means the table this statement exists to empty is already gone — which is the
- * state the file is trying to reach. Every other error fails the sweep.
+ * SENT WHOLE, in one transaction, which is what the ordering wants: libpq wraps
+ * a multi-statement string in an implicit transaction, so children-before-parents
+ * either all happens or none of it does.
+ *
+ * This used to split the file on `;` and tolerate `42P01` per statement, because
+ * the file named `_<table>_v` tables that had been dropped and one missing
+ * relation aborted every other statement with it — including the expired-parent
+ * deletes that had nothing to do with versions. That was a real outage of the
+ * sweep, introduced by the same change that dropped the tables.
+ *
+ * The guard belongs in the SQL, not in a hand-rolled splitter around it, and it
+ * is there now: `sweep.sql` resolves each shadow table with `to_regclass` and
+ * skips what is absent. The splitter's own comment warned it was "not a general
+ * SQL parser" and named dollar-quoted bodies as the thing that would break it —
+ * which is precisely what the guard is written in.
  */
 export async function sweepVersionShadows(): Promise<number> {
   return withPayload(async (payload) => {
-    const statements = sweepStatements(readSweepSql());
     const client = await payload.db.pool.connect();
-    let affected = 0;
     try {
-      await client.query('BEGIN');
-      for (const statement of statements) {
-        await client.query('SAVEPOINT retention_sweep');
-        try {
-          const result: QueryResult<QueryResultRow> = await client.query(statement);
-          affected += result.rowCount ?? 0;
-          await client.query('RELEASE SAVEPOINT retention_sweep');
-        } catch (error) {
-          await client.query('ROLLBACK TO SAVEPOINT retention_sweep');
-          const code = error instanceof Error && 'code' in error ? String(error.code) : '';
-          if (code === UNDEFINED_TABLE) continue;
-          throw error;
-        }
-      }
-      await client.query('COMMIT');
-    } catch (error) {
-      await client.query('ROLLBACK');
-      throw error;
+      /*
+        `pg` returns an ARRAY of results for a multi-statement query, so the
+        count stays honest instead of reporting only the last statement's rows.
+      */
+      const results = (await client.query(readSweepSql())) as unknown as
+        | QueryResult<QueryResultRow>
+        | QueryResult<QueryResultRow>[];
+      const list = Array.isArray(results) ? results : [results];
+      return list.reduce((total, result) => total + (result.rowCount ?? 0), 0);
     } finally {
       client.release();
     }
-    return affected;
   });
 }
