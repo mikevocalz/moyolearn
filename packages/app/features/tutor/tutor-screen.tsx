@@ -19,6 +19,7 @@ import { useTutorStore, API_URL } from './tutor.store';
 import { pickNoteImage } from '../schedule/pick-note-image';
 import { pickFile } from '../editor/pick-file';
 import { useAudioStore } from '../editor/audio.store.ts';
+import { readAttachment } from '../capture/read-attachment';
 import { evaluateArithmetic } from '@acme/student-model/pure';
 
 export interface TutorScreenProps {
@@ -83,9 +84,43 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
 
   const handleSend = (message: string) => {
     const trimmed = message.trim();
-    if (!trimmed) return;
-    void coach(trimmed);
-    void recordAttempt(problem ?? '', trimmed, hintDepth);
+    const staged = attachments;
+    if (!trimmed && staged.length === 0) return;
+
+    /*
+      Photos are READ before the turn goes out, and their text becomes part of
+      it. This is what closes the loop the whole feature exists for: a child
+      photographs a problem, and the tutor coaches THAT problem rather than
+      generating one of its own.
+
+      The read happens on-device — ExecuTorch on native, Tesseract with a
+      TrOCR escalation for handwriting on web — so a photograph costs nothing
+      per image and never leaves the device to be understood.
+    */
+    void (async () => {
+      const images = staged.filter((a) => a.kind === 'image');
+      const readings = await Promise.all(images.map((image) => readAttachment(image.uri)));
+      const fromImages = readings.filter((r) => r.length > 0);
+
+      // The first legible photo becomes the session's problem when there isn't
+      // one — the child's own work outranks anything the app would have picked.
+      if (fromImages[0] !== undefined && !problem) setProblem(fromImages[0]);
+
+      const parts = [
+        ...fromImages.map((text, i) =>
+          fromImages.length > 1 ? `Problem ${i + 1}:\n${text}` : text,
+        ),
+        ...(trimmed ? [trimmed] : []),
+      ];
+
+      // Cleared only after the turn is on its way, so a failed read still
+      // leaves the photos in the tray rather than silently dropping them.
+      staged.forEach((a) => removeAttachment(a.id));
+
+      const turn = parts.join('\n\n');
+      void coach(turn);
+      void recordAttempt(problem ?? fromImages[0] ?? '', trimmed, hintDepth);
+    })();
   };
 
   /*

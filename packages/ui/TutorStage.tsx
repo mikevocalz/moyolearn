@@ -314,10 +314,17 @@ export function TutorStage({
 
   const handleSend = useCallback(() => {
     const message = draft.trim();
-    if (!message) return;
+    /*
+      An attachment is a message. Gating on text alone meant a photo of a
+      problem with no caption hit an enabled Send button that did nothing — the
+      composer said the turn was sendable and this threw it away. A child
+      photographing homework usually has nothing to add in words; that IS the
+      question.
+    */
+    if (!message && (attachments?.length ?? 0) === 0) return;
     onSend?.(message);
     setDraft('');
-  }, [draft, onSend]);
+  }, [draft, onSend, attachments]);
 
   // Only states where the session is genuinely over lock the composer.
   // `hint` and `thinking` locked out a child who was mid-answer, and `paused`

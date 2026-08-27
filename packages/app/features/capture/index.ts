@@ -9,3 +9,5 @@ export type { AgeBand } from './age-band';
 export type { CaptureMode, CapturePhoto, CaptureStep } from './types';
 export { problemStorage } from './problem-storage';
 export { readProblem, writeProblem, PROBLEM_KEY } from './problem-storage.shared.ts';
+export { readAttachment } from './read-attachment';
+export { readHomework, readPrinted, readHandwriting, HANDWRITING_CONFIDENCE_THRESHOLD, type OcrResult } from './ocr-web.ts';
