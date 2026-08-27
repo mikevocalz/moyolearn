@@ -16,10 +16,10 @@
 import 'server-only';
 import type { Auth } from '@acme/auth/server';
 import { runSafetyPlaneStream, safetyLayer, SafetyLayerUnavailable } from '@acme/safety';
-import { compileLearnerBrief, withLearnerBriefStream } from '@acme/student-model';
+import { compileLearnerBrief, withLearnerBriefStream, LEARNER_TURN_LABEL } from '@acme/student-model';
 import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation.ts';
 import { coachClassifier, coachIdentity } from './tutor-safety.ts';
-import { streamTutorTurn } from './tutor-model.ts';
+import { tutorTurnFor } from './tutor-model.ts';
 import { PEDAGOGY_CONTRACT, REVEAL_WITHHELD, revealsAnswer } from './pedagogy.ts';
 import type { LoadPriorFacts } from './tutor.service';
 
@@ -110,8 +110,15 @@ export async function* coachStream(
     const gradeBand = await safetyLayer('1-identity', () => loadGradeBand(ctx));
     const identity = coachIdentity(ctx, gradeBand);
 
+    /*
+      The learner id reaches the gateway as the BUDGET key and stops there — it
+      is not a field of `TutorPrompt`, so there is no shape it could travel to
+      the provider in. It comes from `ctx` like every other identity on this
+      path (CLAUDE.md §The block); a turn whose budget key was a parameter would
+      be a turn a client could spend someone else's day on.
+    */
     const generator = withLearnerBriefStream(
-      streamTutorTurn,
+      tutorTurnFor(ctx.learnerId),
       async () => compileLearnerBrief(await loadPriorFacts(ctx), gradeBand, new Date()),
       PEDAGOGY_CONTRACT,
     );
@@ -120,7 +127,7 @@ export async function* coachStream(
     // the brief is what the system knows about the child, and today's worksheet
     // is not that. It also keeps the cached system prefix stable across turns.
     const turn = input.message
-      ? `Problem we are working on: ${input.problem}\n\nStudent: ${input.message}`
+      ? `Problem we are working on: ${input.problem}\n\n${LEARNER_TURN_LABEL} ${input.message}`
       : `Problem we are working on: ${input.problem}\n\nThe student has just shown you this and said nothing yet. Open the coaching.`;
 
     for await (const event of runSafetyPlaneStream(turn, identity, {

@@ -1,79 +1,55 @@
-// The Claude adapter — the gateway's raw streaming model call (doc 18 §2).
+// The tutoring turn, as a caller of the Inference Gateway.
 //
-// This is the ONLY file in the codebase that imports a model vendor's SDK, and
-// it is deliberately the dumbest one: it takes an already-assembled prompt and
-// yields text. It does not know what a learner is, does not take an identity,
-// does not read the student model, and cannot be called as a tutor turn — the
-// only export is a `ModelStreamCall`, and the only thing that accepts one is
-// `withLearnerBriefStream`, which returns a `StreamingGenerator`, which only
-// `runSafetyPlaneStream` accepts. The Safety Plane is not a convention here;
-// it is the only path the types allow.
+// This file used to be the vendor surface: it held the SDK import, the model
+// constant, and the request shape. All three moved to `@acme/inference`, which
+// doc 12 §3 makes the sole egress to a model provider — the routing table, the
+// pseudonymization scrub and the per-learner budget are only true of every call
+// if there is only one place a call can be made from, and a second feature that
+// reached for the SDK directly would have been a second place.
 //
-// Claude is the tutor brain per ADR-018 §1. Keeping the vendor surface to one
-// file is what makes the per-cell routing table in doc 18 §2 a later change
-// rather than a rewrite.
-// SOT: docs/pack/18-tutor-ai-stack.md §1 §2 · docs/pack/07-security-child-ai-safety-spec.md §3
-// SOT-KEYWORDS: tutor model claude anthropic stream gateway model call adapter vendor
+// What is left is the seam the rest of the coaching path already depends on.
+// The only export is still a `ModelStreamCall`, the only thing that accepts one
+// is `withLearnerBriefStream`, which returns a `StreamingGenerator`, which only
+// `runSafetyPlaneStream` accepts. The Safety Plane is not a convention here; it
+// is the only path the types allow, and moving the vendor out did not change
+// that.
+//
+// `tutorTurnFor` takes a learner id where the old constant took nothing. It is
+// the BUDGET key and nothing else: it is read from `ProtectedCtx` at the
+// service boundary per CLAUDE.md, it is closed over rather than passed on, and
+// `TutorPrompt` still has no field it could travel in.
+// SOT: docs/design/inference-gateway.md §2 §7 · docs/pack/18-tutor-ai-stack.md §1 §2 · docs/pack/12-systems-design-prompt.md §3 §7
+// SOT-KEYWORDS: tutor model claude gateway stream model call adapter vendor budget session complete
 import 'server-only';
-import Anthropic from '@anthropic-ai/sdk';
+import { inferenceGateway, type InferenceGateway } from '@acme/inference';
 import type { ModelStreamCall } from '@acme/student-model';
 
 /**
- * ADR-018 §1: Claude is the tutor brain, frontier tier for the coaching turn.
- * Pinned rather than read from the environment — which model teaches a child is
- * a decision that belongs in a reviewed commit, not in a deploy variable.
- */
-const TUTOR_MODEL = 'claude-opus-5';
-
-/**
- * A coaching turn is one question and a sentence or two of scaffolding. The cap
- * is a guard against a runaway generation, not a length target; the contract's
- * "one question at a time" is what actually keeps turns short.
- */
-const MAX_TOKENS = 1024;
-
-let client: Anthropic | undefined;
-
-function anthropic(): Anthropic {
-  if (!process.env.ANTHROPIC_API_KEY) {
-    throw new Error('ANTHROPIC_API_KEY is not set');
-  }
-  client ??= new Anthropic();
-  return client;
-}
-
-/**
- * Streams a coaching turn from Claude.
+ * Streams a coaching turn through the gateway, budgeted against `learnerId`.
  *
- * `effort: 'low'` with adaptive thinking is the setting a coaching turn wants:
- * the reasoning is shallow (one pedagogical move on a problem the brief already
- * frames) and the latency is in front of a child waiting for a reply. The
- * system half of the prompt carries a cache breakpoint because the contract and
- * the brief repeat unchanged across every turn of a session.
+ * A learner whose day is spent yields NO TEXT and no error. That is doc 12 §7's
+ * "great work today" state and it is deliberately not a failure: throwing here
+ * would reach `coach.service.ts`'s catch and offer a child a retry button for
+ * having finished their homework, and there is no `CoachEvent` that means
+ * "well done, stop" because the composer is meant to have closed before a turn
+ * was ever attempted. The screen reads `budgetState` off the session snapshot
+ * and does exactly that; this branch is the floor under it, and it is silent on
+ * purpose.
  */
-export const streamTutorTurn: ModelStreamCall = ({ system, message }) => ({
-  async *[Symbol.asyncIterator]() {
-    const stream = anthropic().messages.stream({
-      model: TUTOR_MODEL,
-      max_tokens: MAX_TOKENS,
-      thinking: { type: 'adaptive' },
-      output_config: { effort: 'low' },
-      system: [{ type: 'text', text: system, cache_control: { type: 'ephemeral' } }],
-      messages: [{ role: 'user', content: message }],
-    });
+export function tutorTurnFor(learnerId: string, gateway: InferenceGateway = inferenceGateway()): ModelStreamCall {
+  return ({ system, message }) => ({
+    async *[Symbol.asyncIterator]() {
+      const turn = await gateway.tutorTurn({ learnerId, payload: { system, message } });
+      if (turn.kind === 'session-complete') return;
 
-    for await (const event of stream) {
-      if (event.type !== 'content_block_delta') continue;
-      if (event.delta.type !== 'text_delta') continue;
-      yield event.delta.text;
-    }
+      yield* turn.stream.text;
 
-    // A safety refusal is not a tutor turn. Ending the stream silently would
-    // render as Natalie trailing off mid-thought, so it fails loudly and the
-    // service turns it into the plane's paused state.
-    const final = await stream.finalMessage();
-    if (final.stop_reason === 'refusal') {
-      throw new Error('Model declined the turn');
-    }
-  },
-});
+      // A safety refusal is not a tutor turn. Ending the stream silently would
+      // render as Natalie trailing off mid-thought, so `settled` rejects with
+      // `ModelDeclined` and the service turns it into a retryable frame. The
+      // budget has already been debited by the time this throws — the tokens
+      // were spent whether or not the turn was usable.
+      await turn.stream.settled;
+    },
+  });
+}

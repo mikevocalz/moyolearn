@@ -26,6 +26,13 @@ import {
   updateFactProvenance,
   sweepVersionShadows,
 } from '@/lib/retention.repository';
+import {
+  loadExpiredEduTranscripts,
+  loadEduFactsDerivedFrom,
+  eraseEduFacts,
+  updateEduFactProvenance,
+  deleteEduTranscripts,
+} from '@/lib/edu.repository';
 
 export const dynamic = 'force-dynamic';
 
@@ -83,6 +90,37 @@ export async function POST(request: NextRequest) {
     );
     const shadowRows = await sweepVersionShadows();
 
+    /*
+      The SAME sweep against the `edu` schema (doc 12 §4's educational store).
+
+      Two stores, one cascade: `expireTranscripts` is called a second time rather
+      than the two row sets being merged, because a transcript id is only unique
+      within its own store and a merged run could let one store's transcript
+      strip provenance off the other store's fact. Same algebra, same cutoff,
+      same fact-before-transcript order, separate universes.
+
+      `edu.embeddings` is not swept explicitly and must not be: its rows hang off
+      `edu.transcripts` by a foreign key declared ON DELETE CASCADE, so
+      `deleteEduTranscripts` already takes them. A loop here would be a second,
+      forgettable copy of a guarantee the database is making.
+    */
+    const eduTranscripts = await loadExpiredEduTranscripts(cutoff);
+    const eduFacts = await loadEduFactsDerivedFrom(
+      eduTranscripts.map((transcript) => transcript.id),
+    );
+    const eduCascade = expireTranscripts(eduTranscripts, eduFacts, cutoff);
+    const eduSourcesBefore = new Map(eduFacts.map((fact) => [fact.id, fact.derivedFrom.length]));
+    const eduReprovenanced = eduCascade.facts.filter(
+      (fact) =>
+        (eduSourcesBefore.get(fact.id) ?? fact.derivedFrom.length) !== fact.derivedFrom.length,
+    );
+
+    const eduErasedFacts = await eraseEduFacts(eduCascade.erasedFactIds);
+    const eduUpdatedFacts = await updateEduFactProvenance(eduReprovenanced);
+    const eduDeletedTranscripts = await deleteEduTranscripts(
+      eduTranscripts.map((transcript) => transcript.id),
+    );
+
     return NextResponse.json({
       ok: true,
       expiredTranscripts: transcripts.length,
@@ -92,6 +130,13 @@ export async function POST(request: NextRequest) {
       erasedFacts,
       updatedFacts,
       shadowRows,
+      // Reported under their own names rather than summed into the counts above.
+      // A response that says "4 facts erased" without saying which store cannot
+      // answer the question the separation exists to make answerable.
+      eduExpiredTranscripts: eduTranscripts.length,
+      eduDeletedTranscripts,
+      eduErasedFacts,
+      eduUpdatedFacts,
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Sweep failed';

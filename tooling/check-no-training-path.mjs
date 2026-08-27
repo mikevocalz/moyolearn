@@ -76,6 +76,38 @@ for (const rel of present) {
   }
 }
 
+/**
+ * The gateway (doc 12 §9.3), which is the same rule pointed the other way.
+ *
+ * `packages/inference` is the one package that legitimately holds provider
+ * credentials, and it must not ALSO be able to read a child's record: a package
+ * that can do both is one function call away from being the training path this
+ * file exists to forbid. So it is scanned against the same forbidden list —
+ * minus `@acme/safety`, which is not the educational store and which the
+ * gateway may legitimately reach for when the model-backed classifier cells in
+ * doc 18 §3 land.
+ *
+ * Doc 07 §4's sentence applies unchanged: "we can't" beats "we won't".
+ */
+const GATEWAY = 'packages/inference';
+const GATEWAY_FORBIDDEN = FORBIDDEN.filter((name) => name !== '@acme/safety');
+
+let gatewayScanned = 0;
+if (existsSync(join(ROOT, GATEWAY))) {
+  for (const file of walk(join(ROOT, GATEWAY))) {
+    gatewayScanned += 1;
+    const source = readFileSync(file, 'utf8');
+    for (const forbidden of GATEWAY_FORBIDDEN) {
+      const pattern = new RegExp(
+        `(?:from|import|require\\()\\s*['"\`][^'"\`]*${forbidden.replace(/[/\\]/g, '\\$&')}`,
+      );
+      if (pattern.test(source)) {
+        violations.push(`${relative(ROOT, file)} → ${forbidden} (the gateway must not read the educational store)`);
+      }
+    }
+  }
+}
+
 if (violations.length > 0) {
   console.error('\ncheck-no-training-path — a training/eval path can read the educational store.\n');
   console.error(
@@ -88,8 +120,13 @@ if (violations.length > 0) {
   process.exit(1);
 }
 
-console.log(
+const pipelines =
   present.length === 0
-    ? `no-training-path OK — no training/eval pipeline exists (watching ${TRAINING_ROOTS.length} paths)`
-    : `no-training-path OK — ${scanned} files across ${present.length} pipeline path(s) read nothing from the educational store`,
+    ? `no training/eval pipeline exists (watching ${TRAINING_ROOTS.length} paths)`
+    : `${scanned} files across ${present.length} pipeline path(s) read nothing from the educational store`;
+
+console.log(
+  gatewayScanned === 0
+    ? `no-training-path OK — ${pipelines}`
+    : `no-training-path OK — ${pipelines}; ${gatewayScanned} gateway files hold credentials and no read path`,
 );

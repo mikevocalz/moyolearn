@@ -1,0 +1,9 @@
+{
+  "extends": "@acme/config/typescript/react-library.json",
+  // Same posture as @acme/safety and @acme/student-model: node:test is the
+  // runner and the server is the only runtime this package has, so node's types
+  // are declared rather than inherited by accident from a sibling.
+  "compilerOptions": { "types": ["node"] },
+  "include": ["**/*.ts"],
+  "exclude": ["node_modules"]
+}

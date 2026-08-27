@@ -28,7 +28,7 @@ import {
   withoutBlockedTags,
 } from './erasure.ts';
 import { FACT_TTL_DAYS, TRANSCRIPT_TTL_DAYS, addDays, type DerivedFact } from './facts.ts';
-import { briefPreamble, withLearnerBrief } from './inference.ts';
+import { briefPreamble, withLearnerBrief, LEARNER_TURN_LABEL } from './inference.ts';
 import { DEFAULT_TRACING, decayMastery, traceAttempt } from './mastery.ts';
 import { REVIEW_LADDER, scheduleReview } from './review.ts';
 
@@ -291,6 +291,33 @@ test('the generator retrieves on the plane identity, not on anything a caller pa
 
   assert.equal(reply, 'ok');
   assert.equal(seen, 'learner-9');
-  assert.match(prompt, /Student: how do I add 1\/2 and 1\/3\?$/);
+  // Derived from the constant, not the literal it used to be. This assertion
+  // pinned `Student:` — the very label the gateway's header rule redacted, so
+  // the test was holding the bug in place.
+  assert.ok(prompt.endsWith(`${LEARNER_TURN_LABEL} how do I add 1/2 and 1/3?`), prompt);
   assert.equal(prompt.includes('learner-9'), false);
+});
+
+/*
+  The gateway's pseudonymizer redacts OCR'd worksheet headers by matching a label
+  and consuming the rest of the line. This prompt's speaker label used to be
+  `Student:`, so the rule matched the scaffold and redacted the child's entire
+  answer on every turn — silently, because the request still succeeded and the
+  model simply replied that it could not see anything.
+
+  Pinned here because the constant lives here. `@acme/inference` cannot import it
+  (the gateway is downstream of prompt assembly and must not depend on it), so it
+  asserts the same literal; changing the label fails HERE and names that file.
+*/
+test('LEARNER_TURN_LABEL matches the literal the inference package pins', () => {
+  assert.equal(LEARNER_TURN_LABEL, 'Their answer:');
+});
+
+test('LEARNER_TURN_LABEL avoids every word the gateway redacts a header on', () => {
+    for (const word of ['name', 'student', 'pupil', 'learner', 'child', 'teacher', 'parent', 'guardian', 'class', 'school', 'dob']) {
+      assert.ok(
+        !new RegExp(`\\b${word}\\b`, 'i').test(LEARNER_TURN_LABEL),
+      `label contains "${word}" — the gateway would redact the turn`,
+    );
+  }
 });

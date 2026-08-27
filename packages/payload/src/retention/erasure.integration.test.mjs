@@ -333,3 +333,201 @@ test(
     }
   },
 );
+
+/*
+  The EDUCATIONAL store's half of the same guarantee.
+
+  Doc 12 §4: "Erasure cascades span all three (tested)." Until now the tested
+  part meant the `payload` schema only, which was the whole cascade while the
+  educational store was a paragraph in a spec. `edu` exists now
+  (`packages/payload/migrations/edu_schema.sql`), so a sweep that leaves it alone
+  is a sweep that deletes a child's transcript from one schema and leaves the
+  same child's transcript in another.
+
+  Same shape as the transcript test above and for the same reasons: the DECISION
+  comes from the real `expireTranscripts`, imported rather than restated, and the
+  writes are issued as SQL here because `apps/web/lib/edu.repository.ts` begins
+  with `import 'server-only'` and will not load outside a server bundle. This is
+  the file `tooling/check-store-separation.mjs` allowlists to write `edu` SQL.
+
+  `edu.embeddings` is asserted but never deleted by anything below. That is the
+  point of the assertion: the vectors are removed by the foreign key declared
+  ON DELETE CASCADE, so this test fails if someone ever "optimises" that
+  constraint away, and no sweep has to remember doc 19 §5.5's rule that an
+  embedding of learner content IS learner content.
+*/
+test(
+  'the sweep spans the edu schema — transcripts, derived facts and their vectors',
+  { skip: url ? false : 'no DATABASE_URL' },
+  async () => {
+    const { default: pg } = await import('pg');
+    const { expireTranscripts } = await import('../../../student-model/src/erasure.ts');
+
+    const c = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+    await c.connect();
+
+    const stamp = `edu-sweep-${randomUUID()}`;
+    const learner = `${stamp}-learner`;
+    const EXPIRED = randomUUID();
+    const LIVE = randomUUID();
+    const SOLE = `${stamp}:mastery:sole`;
+    const SHARED = `${stamp}:mastery:shared`;
+    const UNRELATED = `${stamp}:mastery:unrelated`;
+
+    // The edu leg of `apps/web/app/api/retention/sweep`, statement for statement:
+    // load expired, load every fact naming one of them through the GIN-indexed
+    // `derived_from &&`, hand both to the real cascade, then apply its answer in
+    // the route's order — facts before transcripts.
+    const runEduSweep = async () => {
+      const cutoff = new Date();
+      const { rows: transcriptRows } = await c.query(
+        `select session_id, learner_id, captured_at, expires_at
+           from edu.transcripts
+          where learner_id = $1 and expires_at <= $2`,
+        [learner, cutoff.toISOString()],
+      );
+      const transcripts = transcriptRows.map((r) => ({
+        id: r.session_id,
+        learnerId: r.learner_id,
+        capturedAt: r.captured_at.toISOString(),
+        expiresAt: r.expires_at.toISOString(),
+        turns: [],
+      }));
+      const ids = transcripts.map((transcript) => transcript.id);
+
+      const factRows =
+        ids.length === 0
+          ? []
+          : (
+              await c.query(
+                // `::text[]` on both sides: `derived_from` is an array of the
+                // `edu.opaque_id` DOMAIN, and `pg` has no parser for that OID — it
+                // hands back the raw `{a,b}` literal as a string. The repository
+                // carries the same cast for the same reason.
+                'select fact_id, derived_from::text[] as derived_from from edu.knowledge_graph where derived_from && $1::edu.opaque_id[]',
+                [ids],
+              )
+            ).rows;
+      const facts = factRows.map((r) => ({ id: r.fact_id, derivedFrom: r.derived_from }));
+
+      const cascade = expireTranscripts(transcripts, facts, cutoff);
+
+      if (cascade.erasedFactIds.length > 0) {
+        await c.query('delete from edu.knowledge_graph where fact_id = any($1)', [
+          cascade.erasedFactIds,
+        ]);
+      }
+      /*
+        An UPDATE of the array, not a delete-then-insert. `edu.knowledge_graph`
+        carries `knowledge_graph_has_provenance`, so the empty-array state a
+        two-step rewrite passes through is not merely wrong, it is illegal —
+        the constraint that encodes erasure.ts's "a fact left with no provenance
+        is DELETED, never kept as an orphan" also refuses to hold one briefly.
+      */
+      const before = new Map(facts.map((f) => [f.id, f.derivedFrom.length]));
+      for (const fact of cascade.facts) {
+        if (before.get(fact.id) === fact.derivedFrom.length) continue;
+        await c.query('update edu.knowledge_graph set derived_from = $2 where fact_id = $1', [
+          fact.id,
+          fact.derivedFrom,
+        ]);
+      }
+      if (ids.length > 0) {
+        await c.query('delete from edu.transcripts where session_id = any($1)', [ids]);
+      }
+      return cascade;
+    };
+
+    const provenanceOf = async (factId) => {
+      const { rows } = await c.query(
+        'select derived_from::text[] as derived_from from edu.knowledge_graph where fact_id = $1',
+        [factId],
+      );
+      return rows[0]?.derived_from ?? null;
+    };
+
+    const countTranscript = async (sessionId) =>
+      (
+        await c.query('select count(*)::int n from edu.transcripts where session_id = $1', [
+          sessionId,
+        ])
+      ).rows[0].n;
+
+    const countVectors = async (sessionId) =>
+      (
+        await c.query('select count(*)::int n from edu.embeddings where transcript_id = $1', [
+          sessionId,
+        ])
+      ).rows[0].n;
+
+    try {
+      await c.query(
+        `insert into edu.transcripts (session_id, learner_id, captured_at, expires_at, turns)
+         values ($1, $3, now() - interval '31 days', now() - interval '1 day', '[]'::jsonb),
+                ($2, $3, now(),                      now() + interval '29 days', '[]'::jsonb)`,
+        [EXPIRED, LIVE, learner],
+      );
+
+      for (const [factId, provenance] of [
+        [SOLE, [EXPIRED]],
+        [SHARED, [EXPIRED, LIVE]],
+        [UNRELATED, [LIVE]],
+      ]) {
+        await c.query(
+          `insert into edu.knowledge_graph
+             (fact_id, learner_id, kind, skill_id, skill_title, p, attempts,
+              derived_from, observed_at, expires_at)
+           values ($1, $2, 'mastery', 'fraction-addition', 'Adding fractions', 0.5, 3,
+                   $3, now(), now() + interval '400 days')`,
+          [factId, learner, provenance],
+        );
+      }
+
+      for (const sessionId of [EXPIRED, LIVE]) {
+        await c.query(
+          `insert into edu.embeddings (kind, transcript_id, learner_id, model, embedding)
+           select 'transcript', $1, $2, 'pinned-1024',
+                  ('[' || string_agg('0.01', ',') || ']')::extensions.vector(1024)
+             from generate_series(1, 1024)`,
+          [sessionId, learner],
+        );
+      }
+
+      const first = await runEduSweep();
+      assert.deepEqual(first.erasedFactIds, [SOLE], 'the sole-source edu fact was not identified');
+
+      assert.equal(await countTranscript(EXPIRED), 0, 'the expired edu transcript survived');
+      assert.equal(await countTranscript(LIVE), 1, 'an edu transcript inside its window was deleted');
+
+      assert.equal(
+        await provenanceOf(SOLE),
+        null,
+        'an edu fact whose only source expired survived — the tutor can still state a deleted belief',
+      );
+      assert.deepEqual(await provenanceOf(SHARED), [LIVE], 'shared edu provenance was not trimmed');
+      assert.deepEqual(await provenanceOf(UNRELATED), [LIVE], 'an untouched edu fact was rewritten');
+
+      assert.equal(
+        await countVectors(EXPIRED),
+        0,
+        'the expired transcript is gone and its embedding is not — learner content survived its source',
+      );
+      assert.equal(
+        await countVectors(LIVE),
+        1,
+        'a live transcript lost its embedding',
+      );
+
+      // The scheduler retries. A second pass must be a no-op rather than
+      // trimming a shared fact's provenance twice.
+      const second = await runEduSweep();
+      assert.deepEqual(second.erasedFactIds, [], 'a second edu sweep erased facts the first already had');
+      assert.deepEqual(await provenanceOf(SHARED), [LIVE], 'a retry rewrote a settled edu fact');
+      assert.deepEqual(await provenanceOf(UNRELATED), [LIVE], 'a retry rewrote an untouched edu fact');
+    } finally {
+      await c.query('delete from edu.knowledge_graph where learner_id = $1', [learner]);
+      await c.query('delete from edu.transcripts where learner_id = $1', [learner]);
+      await c.end();
+    }
+  },
+);

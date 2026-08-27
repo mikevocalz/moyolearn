@@ -79,7 +79,7 @@ export function withLearnerBrief(model: ModelCall, lookup: BriefLookup): Generat
   return {
     generate: async (text, context) => {
       const brief = await lookup(context);
-      return model(`${briefPreamble(brief)}\n\nStudent: ${text}`);
+      return model(`${briefPreamble(brief)}\n\n${LEARNER_TURN_LABEL} ${text}`);
     },
   };
 }
@@ -125,3 +125,26 @@ export function withLearnerBriefStream(
     }),
   };
 }
+
+/**
+ * How a learner's words are introduced to the model.
+ *
+ * NOT `Student:`, and the reason is not style. The Inference Gateway's
+ * pseudonymizer redacts OCR'd worksheet headers — `Name: Ada Lovelace`,
+ * `Student: Ada` — by matching a label and consuming the rest of the line. The
+ * prompt used `Student:` as its speaker label, so the rule matched the scaffold
+ * the system had just written and redacted the CHILD'S ENTIRE ANSWER on every
+ * single turn.
+ *
+ * It failed silently and expensively: the request succeeded, the reply streamed,
+ * the turn persisted, and the model — handed `Student: [redacted]` — answered
+ * "I can't see what you wrote, it came through blank." Nothing in the stack was
+ * broken except the meaning.
+ *
+ * The label must therefore avoid every word that rule matches: name, student,
+ * pupil, learner, child, teacher, parent, guardian, class, school, dob.
+ * `LEARNER_TURN_LABEL` is a constant so there is one place to keep that true,
+ * and `inference.test.ts` asserts the assembled prompt survives the scrubber
+ * with the answer intact.
+ */
+export const LEARNER_TURN_LABEL = 'Their answer:';

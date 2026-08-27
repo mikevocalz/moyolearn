@@ -17,6 +17,7 @@
   },
   "dependencies": {
     "@acme/auth": "workspace:*",
+    "@acme/inference": "workspace:*",
     "@acme/safety": "workspace:*",
     "@acme/student-model": "workspace:*",
     "@acme/theme": "workspace:*",

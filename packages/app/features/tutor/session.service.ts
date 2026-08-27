@@ -26,6 +26,7 @@ import { transcriptExpiry } from '@acme/student-model';
   graph for one date function. Same reason `api/media/sweep` reaches for this
   exact file.
 */
+import { inferenceGateway, type InferenceGateway, type SessionBudgetState } from '@acme/inference';
 import { mediaExpiry } from '../media/retention';
 import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation';
 import type { StoredAttachment, StoredMessage, TutorSessionSnapshot } from './session.types';
@@ -105,10 +106,11 @@ export interface AttachUploadedMediaInput {
   expiresAt?: string;
 }
 
-const snapshot = (row: TutorSessionRow): TutorSessionSnapshot => ({
+const snapshot = (row: TutorSessionRow, budget: SessionBudgetState): TutorSessionSnapshot => ({
   sessionId: row.sessionId,
   problem: row.problem,
   messages: row.messages,
+  budget,
 });
 
 /**
@@ -141,10 +143,19 @@ export async function openSession(
   input: OpenSessionInput,
   loadOpenSession: LoadOpenSession,
   createSession: CreateSession,
+  gateway: InferenceGateway = inferenceGateway(),
 ): Promise<TutorSessionSnapshot> {
   return protectedOperation(auth, headers, async (ctx) => {
+    /*
+      Read from the gateway, which is the only thing that counts turns, using
+      the learner id from `ctx` — the budget key is never a parameter
+      (CLAUDE.md §The block). This is a read: it debits nothing, and it opens no
+      socket to a provider.
+    */
+    const budget = await gateway.budgetState(ctx.learnerId);
+
     const existing = await loadOpenSession(ctx);
-    if (existing) return snapshot(existing);
+    if (existing) return snapshot(existing, budget);
 
     const now = new Date();
     const row: TutorSessionRow = {
@@ -162,7 +173,7 @@ export async function openSession(
       expiresAt: transcriptExpiry(now),
     };
     await createSession(ctx, row);
-    return snapshot(row);
+    return snapshot(row, budget);
   });
 }
 

@@ -72,6 +72,20 @@ interface TutorState {
   coach: (message: string) => Promise<void>;
 }
 
+/**
+ * The end of a day's work, in the stage's own vocabulary.
+ *
+ * Effort and what she did, never a streak and never a limit (doc 07's
+ * break-nudge). `masteryDelta: 0` because the summary is about the session
+ * ending, not about a measurement — the progress surfaces own that number and
+ * inventing one here would put a score on a screen whose message is "you're
+ * done for today".
+ */
+const DONE_FOR_TODAY: TutorStageState = {
+  kind: 'ended',
+  summary: { title: 'Great work today', masteryDelta: 0 },
+};
+
 /** One definition, imported by the screen — two would drift in one deploy. */
 export const API_URL =
   process.env.NEXT_PUBLIC_APP_URL ??
@@ -126,6 +140,7 @@ export const useTutorStore = create<TutorState>((set) => ({
     if (snapshot === null) return;
 
     const problemText = snapshot.problem.length > 0 ? snapshot.problem : problem;
+    const sessionComplete = snapshot.budget.kind === 'session-complete';
 
     set((s) => ({
       sessionId: snapshot.sessionId,
@@ -144,7 +159,18 @@ export const useTutorStore = create<TutorState>((set) => ({
         is. The last reply is in `messages` now, so the stage must not also
         draw one live.
       */
-      state: snapshot.messages.length > 0 ? { kind: 'presence' as const } : s.state,
+      /*
+        The end-of-session state OUTRANKS both, because it is the only one of
+        the three that closes the composer. Doc 12 §7's exhausted budget is not
+        a failure and gets no error surface: the stage draws the "great work
+        today" summary, which is doc 07's break-nudge and the cost ceiling being
+        the same control. A child is never shown a limit, a count, or a price.
+      */
+      state: sessionComplete
+        ? DONE_FOR_TODAY
+        : snapshot.messages.length > 0
+          ? { kind: 'presence' as const }
+          : s.state,
       /*
         REPLACED, not merged.
 
@@ -297,7 +323,22 @@ export const useTutorStore = create<TutorState>((set) => ({
     })),
 
   coach: async (message) => {
-    const { problem } = useTutorStore.getState();
+    const { problem, state } = useTutorStore.getState();
+
+    /*
+      The floor under the closed composer.
+
+      `hydrate` already put the stage in `ended` when the gateway said the day
+      was done, and the stage draws no composer in that state — so this branch
+      should be unreachable. It is here because "should be unreachable" is what
+      the screen believes and this store is what a second entry point would call:
+      the ONE thing that must never happen is a spent day producing an error
+      surface, and the cheapest way to guarantee it is to never make the call.
+      The gateway refuses it too, silently; this is what keeps the badge from
+      sitting on "Thinking" while it does.
+    */
+    if (state.kind === 'ended') return;
+
     set({ state: { kind: 'thinking' } });
 
     /*

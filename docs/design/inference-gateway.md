@@ -10,7 +10,19 @@
 
 # The Inference Gateway
 
-**Doc 12 §9.3 · Date: Aug 27, 2026 · Status: spec, not yet built as a package**
+**Doc 12 §9.3 · Date: Aug 27, 2026 · Status: built as `packages/inference`; §8 items 1, 2 and 4 have landed**
+
+> **Since this was written.** `packages/inference` exists: `ProviderAdapter`,
+> `AnthropicAdapter`, `ROUTING`, the pseudonymization scrub of §4.3, and the
+> budget of §7. `packages/app/features/tutor/tutor-model.ts` is a caller rather
+> than a vendor surface, and `check-no-training-path.mjs` now asserts the
+> gateway holds credentials and no read path. Two things this document asks for
+> are still open and are marked where they appear: the `LearnerBrief` shape
+> guard (§4.4), and routing a surviving `refusal` to `blocked` rather than
+> `unavailable` (§6) — the latter changes a shipped behaviour on the coaching
+> path, so it belongs to the change that owns `coach.service.ts`'s catch.
+> `ModelDeclined` in `packages/inference/src/errors.ts` is the type that branch
+> will test for.
 
 The gateway is the one place in the system that talks to a model provider. Everything
 else — features, services, the Safety Plane — reaches a model by handing the gateway a

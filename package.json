@@ -11,7 +11,7 @@
   "scripts": {
     "dev": "turbo dev",
     "build": "turbo build",
-    "lint": "node tooling/check-no-flatlist.mjs && node tooling/check-barrels.mjs && node tooling/check-contrast.mjs && node tooling/check-targets.mjs && node tooling/check-utilities.mjs && node tooling/check-controls.mjs && node tooling/check-references.mjs && node tooling/check-runtime-classes.mjs && node tooling/check-no-training-path.mjs && node tooling/check-fail-closed.mjs && node tooling/check-versions-off.mjs && turbo lint",
+    "lint": "node tooling/check-no-flatlist.mjs && node tooling/check-barrels.mjs && node tooling/check-contrast.mjs && node tooling/check-targets.mjs && node tooling/check-utilities.mjs && node tooling/check-controls.mjs && node tooling/check-references.mjs && node tooling/check-runtime-classes.mjs && node tooling/check-no-training-path.mjs && node tooling/check-store-separation.mjs && node tooling/check-fail-closed.mjs && node tooling/check-versions-off.mjs && turbo lint",
     "check:barrels": "node tooling/check-barrels.mjs",
     "check:contrast": "node tooling/check-contrast.mjs",
     "check:targets": "node tooling/check-targets.mjs",
@@ -21,6 +21,7 @@
     "check:utilities": "node tooling/check-utilities.mjs",
     "check:references": "node tooling/check-references.mjs",
     "check:training": "node tooling/check-no-training-path.mjs",
+    "check:separation": "node tooling/check-store-separation.mjs",
     "check:failclosed": "node tooling/check-fail-closed.mjs",
     "check:runtime": "node tooling/check-runtime-classes.mjs",
     "ui:sweep": "node tooling/ui-sweep.mjs"
