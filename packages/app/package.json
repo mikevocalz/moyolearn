@@ -35,6 +35,7 @@
     "react-native-enriched-html": "catalog:",
     "react-native-executorch": "catalog:",
     "react-native-gesture-handler": "catalog:",
+    "react-native-nitro-fetch": "1.6.2",
     "react-native-reanimated": "catalog:",
     "react-native-safe-area-context": "catalog:",
     "react-native-svg": "catalog:",

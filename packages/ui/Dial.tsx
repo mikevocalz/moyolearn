@@ -36,6 +36,13 @@ const SCOPE: Record<DialTemperature, string> = {
  *
  * Does not carry border WIDTH — `border-2` is a literal, not a variable. That
  * row of the §5.3 table lands with the Wave-2 component variants.
+ *
+ * It is NOT layout-transparent, and that catches people. This renders a real
+ * View, so a Dial between a flex parent and a `flex-1` child breaks the chain:
+ * the child has nothing to fill and collapses to content height. A full-height
+ * screen wrapped in a Dial must pass `className="flex-1"` here too. It has no
+ * flex of its own by default because most Dials wrap content-height blocks,
+ * where stretching would be the wrong answer.
  */
 export function Dial({ temperature = 'cool', children, className }: DialProps) {
   return <View className={`${SCOPE[temperature]}${className ? ` ${className}` : ''}`}>{children}</View>;

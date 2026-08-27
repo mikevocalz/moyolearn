@@ -1,5 +1,6 @@
 'use client';
 import { create } from 'zustand';
+import { streamFetch } from './stream-fetch';
 import type { TutorStageState } from '@acme/ui';
 import { traceAttempt, DEFAULT_TRACING, inferSkillTitle } from '@acme/student-model/pure';
 import { useCaptureStore } from '../capture';
@@ -94,7 +95,7 @@ export const useTutorStore = create<TutorState>((set) => ({
 
     let spoken = '';
     try {
-      const response = await fetch(`${API_URL}/api/tutor/coach`, {
+      const response = await streamFetch(`${API_URL}/api/tutor/coach`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',

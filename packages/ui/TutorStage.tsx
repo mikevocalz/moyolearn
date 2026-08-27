@@ -339,7 +339,14 @@ export function TutorStage({
   const twoPane = sizeClass === 'regular' && canvas !== undefined;
 
   return (
-    <Dial temperature="hot">
+    /*
+      `flex-1` on the Dial, not just inside it. Dial renders a plain View, so it
+      is a link in the flex chain like any other — without it the chain broke
+      here and every `flex-1` below collapsed to content height. On web that
+      showed as a tutor screen ending halfway down with the footer pulled up
+      under it; the conversation is the whole screen and should own it.
+    */
+    <Dial temperature="hot" className="flex-1">
       <View className={`flex-1 bg-surface gap-stack ${className ?? ''}`}>
         <SessionToolbar
           title={title}
