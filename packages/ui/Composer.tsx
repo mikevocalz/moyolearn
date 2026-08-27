@@ -28,7 +28,7 @@ import { SolitoImage } from 'solito/image';
 import { Camera, FileUp, Image, Mic, Plus, Trash2, X } from './icons';
 import { Lightbox } from './Lightbox';
 import { useInstanceStore, useStore } from './use-instance-store';
-import type { TutorAttachment } from './tutor-attachment.ts';
+import { countImages, MAX_TUTOR_IMAGES, type TutorAttachment } from './tutor-attachment.ts';
 
 export interface ComposerProps {
   value: string;
@@ -85,7 +85,15 @@ export function Composer({
     alongside it would be a toll booth on the exact moment they are struggling.
   */
   const canSend = !disabled && (value.trim().length > 0 || (attachments?.length ?? 0) > 0);
-  const canAttach = !disabled && (onPickCamera ?? onPickImage ?? onPickDocument) !== undefined;
+  /*
+    At the cap the attach control goes away rather than greying out. A disabled
+    button a child keeps tapping teaches nothing; the count beside the tray says
+    what happened, once, in words.
+  */
+  const imageCount = countImages(attachments ?? []);
+  const atImageCap = imageCount >= MAX_TUTOR_IMAGES;
+  const canAttach =
+    !disabled && !atImageCap && (onPickCamera ?? onPickImage ?? onPickDocument) !== undefined;
 
   /*
     Icon buttons carry the age band's touch target, same as every other control.
@@ -252,6 +260,12 @@ export function Composer({
             ),
           )}
         </View>
+      ) : null}
+
+      {atImageCap ? (
+        <Text className="font-sans text-caption text-text-muted">
+          That&apos;s {MAX_TUTOR_IMAGES} pictures — enough to work with. Remove one to swap it.
+        </Text>
       ) : null}
 
       {/* Tap a thumbnail to check it full-size before sending. The kit already

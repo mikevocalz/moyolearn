@@ -67,6 +67,33 @@ export function Lightbox({ images, initialIndex = 0, open, onClose }: LightboxPr
 
         <SolitoImage src={current} alt="" fill unoptimized contentFit="contain" sizes="100vw" />
 
+        {/* Pagination, in the brand's own yellow.
+            Dots rather than "2 of 4": a child counting pages should not have to
+            read a number, and four is few enough that the dots ARE the count.
+            `bg-primary` is the semantic token — the palette calls this scale
+            `gold` and it is electric yellow, which is exactly why feature code
+            must never name the primitive.
+            Tappable, because arrows at the screen edge are an adult's gesture:
+            a small hand holding a phone two-handed cannot reach them. */}
+        {hasMultiple ? (
+          <View className="absolute inset-x-0 bottom-0 z-10 flex-row items-center justify-center gap-element pb-inset">
+            {images.map((image, i) => (
+              <Pressable
+                key={image}
+                onPress={() => store.setState({ index: i })}
+                aria-label={`Image ${i + 1} of ${count}`}
+                className="min-h-target-adult min-w-target-adult items-center justify-center"
+              >
+                <View
+                  className={`h-2 rounded-full transition-all duration-fast motion-reduce:transition-none ${
+                    i === index ? 'w-6 bg-primary' : 'w-2 bg-ink-50/40'
+                  }`}
+                />
+              </Pressable>
+            ))}
+          </View>
+        ) : null}
+
         {hasMultiple ? (
           <Pressable
             onPress={() => setIndex((i) => Math.min(images.length - 1, i + 1))}

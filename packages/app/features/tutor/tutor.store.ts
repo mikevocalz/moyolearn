@@ -1,6 +1,6 @@
 'use client';
 import { create } from 'zustand';
-import type { TutorAttachment } from '@acme/ui';
+import { countImages, MAX_TUTOR_IMAGES, type TutorAttachment } from '@acme/ui';
 import { streamFetch } from './stream-fetch';
 import type { TutorStageState } from '@acme/ui';
 import { traceAttempt, DEFAULT_TRACING, inferSkillTitle } from '@acme/student-model/pure';
@@ -102,8 +102,19 @@ export const useTutorStore = create<TutorState>((set) => ({
       };
     });
   },
+  /*
+    The cap is enforced HERE, not in the composer.
+
+    The picker can hand back several images at once and a screen could call this
+    directly, so a check that lives in the button is a check with a way around
+    it. The composer separately hides the attach control at the cap — that is
+    the courtesy; this is the rule.
+  */
   addAttachment: (attachment) =>
-    set((s) => ({ ...s, attachments: [...s.attachments, attachment] })),
+    set((s) => {
+      if (attachment.kind === 'image' && countImages(s.attachments) >= MAX_TUTOR_IMAGES) return s;
+      return { ...s, attachments: [...s.attachments, attachment] };
+    }),
 
   removeAttachment: (id) =>
     set((s) => ({ ...s, attachments: s.attachments.filter((a) => a.id !== id) })),

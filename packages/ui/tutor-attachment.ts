@@ -34,6 +34,25 @@ export interface TutorAttachment {
   previewUri?: string;
 }
 
+/**
+ * Four images per turn, and the number is a teaching decision rather than a
+ * technical one.
+ *
+ * A page of homework is one photo; four is a double-page spread or a problem
+ * set photographed in pieces. Past that a child is not asking about a problem,
+ * they are handing over the whole book — and a tutor that accepts a book gives
+ * a worse answer than one that asks which part is stuck, because every image
+ * dilutes the context the coaching turn is built from.
+ *
+ * It also bounds the on-device OCR: each image is a separate ExecuTorch pass,
+ * and four is what a mid-range phone can run before the child is waiting.
+ */
+export const MAX_TUTOR_IMAGES = 4;
+
+/** Documents and voice notes are counted separately — the cap is on IMAGES. */
+export const countImages = (attachments: readonly TutorAttachment[]): number =>
+  attachments.filter((a) => a.kind === 'image').length;
+
 /** The kinds a learner may attach, in the order the sheet offers them. */
 export const ATTACHMENT_CHOICES = [
   { kind: 'image' as const, label: 'Take a photo', icon: 'Camera' as const },
