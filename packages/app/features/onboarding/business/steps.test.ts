@@ -40,6 +40,10 @@ describe('S24 gates', () => {
       assert.equal(canAdvance(step, draft()), true, `${step} offers a skip it cannot honour`);
     }
   });
+
+  it('runs Stripe Connect before tutor invites — doc 37 §2 order', () => {
+    assert.deepEqual(BUSINESS_STEPS, ['org', 'import', 'payments', 'invite', 'checklist']);
+  });
 });
 
 describe('invitee parsing', () => {

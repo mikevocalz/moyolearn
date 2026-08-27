@@ -1,15 +1,20 @@
 // S22 learner first-run — the step machine, kept out of the component so the
-// "zero forms, ≤2 minutes" contract is testable. Doc 06 §5 fixes the sequence:
-// greeting → subject grid → one tiny win → home. Every gate below is satisfiable
-// by tapping; nothing here can ask a child to type.
-// SOT: docs/pack/06-auth-onboarding-spec.md §5
-// SOT-KEYWORDS: onboarding learner s22 first-run subjects tiny win steps
+// "zero forms, ≤2 minutes" contract is testable. Doc 06 §5 fixes the opening
+// sequence — greeting → subject grid → one tiny win — and doc 37 §2 closes it
+// with the guided first Snap. Every gate below is satisfiable by tapping;
+// nothing here can ask a child to type.
+// SOT: docs/pack/06-auth-onboarding-spec.md §5 · docs/pack/37-onboarding-dual-pane.md §2
+// SOT-KEYWORDS: onboarding learner s22 first-run subjects tiny win snap steps
 
 // `avatar` opens the run (doc 36 §2: redeem → avatar pick → baked greeting →
 // Today). The set is CURATED, never an upload — doc 30 §8.4's child-safety
 // decision: a photo path on a learner profile is a moderation and PII surface
 // a curated set makes unnecessary.
-export const LEARNER_STEPS = ['avatar', 'hello', 'subjects', 'win'] as const;
+// `snap` closes it (doc 37 §2's guided first Snap): a short "try it" beat that
+// routes into the real capture flow — camera permission is asked AT the camera
+// (doc 37 §1.5, guided-frame already does), so this step holds no permission
+// prompt and no camera of its own, and it always offers an explicit skip.
+export const LEARNER_STEPS = ['avatar', 'hello', 'subjects', 'win', 'snap'] as const;
 export type LearnerStep = (typeof LEARNER_STEPS)[number];
 
 export interface AvatarChoice {
@@ -137,9 +142,13 @@ export function canAdvance(step: LearnerStep, draft: LearnerDraft): boolean {
     case 'subjects':
       return draft.subjects.length > 0 && draft.subjects.length <= MAX_SUBJECTS;
     case 'win':
-      // Home is earned by the win, not by waiting it out: doc 06 §5 makes the
-      // tiny win the point of the screen, and a Skip would make it optional.
+      // Moving on is earned by the win, not by waiting it out: doc 06 §5 makes
+      // the tiny win the point of the screen, and a Skip would make it optional.
       return draft.result === 'correct';
+    case 'snap':
+      // The Snap is an invitation, never a gate (doc 37 §2's explicit skip):
+      // a child with no homework in reach still finishes onboarding.
+      return true;
   }
 }
 

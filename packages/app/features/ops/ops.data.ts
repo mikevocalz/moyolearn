@@ -64,6 +64,55 @@ export function attendanceCell(
   return { value: `${Math.round(attendancePct)}%` };
 }
 
+/**
+ * Doc 37 §2: a brand-new org's Overview shows "seeded example rows labeled as
+ * examples" instead of a bare empty table — an operator's first look at the
+ * pipeline should show what a row will look like, not a void. These render
+ * ONLY when the pipeline is genuinely empty (zero rows before any filter),
+ * every row is labelled "Example" where it renders, and nothing here is ever
+ * written to the leads collection — they are copy, not data, which is why they
+ * live beside the row SHAPE rather than in a fixture cast: fixtures play real
+ * people, and an example row must never be mistakable for one.
+ */
+export const EXAMPLE_LEADS: readonly Lead[] = [
+  {
+    id: 'example-inquiry',
+    family: 'The Alvarez family',
+    learner: 'Maya',
+    subject: 'Math',
+    stage: 'Inquiry',
+    owner: 'You',
+    nextSession: '—',
+    sessions: 0,
+    value: '$0',
+    attendance: { value: '—' },
+  },
+  {
+    id: 'example-trial',
+    family: 'The Chen family',
+    learner: 'Daniel',
+    subject: 'Reading',
+    stage: 'Trial scheduled',
+    owner: 'You',
+    nextSession: 'Thu 4:00pm',
+    sessions: 1,
+    value: '$45',
+    attendance: { value: '—' },
+  },
+  {
+    id: 'example-enrolled',
+    family: 'The Okafor family',
+    learner: 'Zuri',
+    subject: 'Science',
+    stage: 'Enrolled',
+    owner: 'You',
+    nextSession: 'Mon 5:30pm',
+    sessions: 11,
+    value: '$495',
+    attendance: { value: '92%' },
+  },
+];
+
 export interface Session {
   id: string;
   time: string;

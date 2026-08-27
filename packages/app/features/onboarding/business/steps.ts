@@ -1,7 +1,9 @@
 // S24 business-owner onboarding — the step machine. Doc 06 §5: org live and a
-// first real booking inside day one, via org create → import students/families →
-// invite tutors → embedded Stripe Merchant onboarding → milestone checklist
-// pinned in the rail.
+// first real booking inside day one; doc 37 §2 fixes the order as org create →
+// import students/families → embedded Stripe Merchant onboarding → invite
+// tutors → milestone checklist pinned in the rail. Payments BEFORE invites:
+// a tutor who accepts an invite into an org that cannot pay them is a promise
+// the owner has not finished making.
 //
 // Only the org step is gated. Everything after it is a milestone, and a
 // milestone that blocks the flow is just a gate with better PR — doc 05 §2.3
@@ -13,7 +15,7 @@
 import type { RosterImport } from './roster-csv.ts';
 import { EMPTY_ACTIVATION, type ActivationState } from '../../trial/milestones.ts';
 
-export const BUSINESS_STEPS = ['org', 'import', 'invite', 'payments', 'checklist'] as const;
+export const BUSINESS_STEPS = ['org', 'import', 'payments', 'invite', 'checklist'] as const;
 export type BusinessStep = (typeof BUSINESS_STEPS)[number];
 
 export interface BusinessDraft {

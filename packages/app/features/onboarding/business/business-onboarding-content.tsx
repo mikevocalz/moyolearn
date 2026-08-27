@@ -1,7 +1,8 @@
 'use client';
-// S24 · Business owner onboarding — org → roster import → tutors → payments →
-// the milestone checklist that outlives this flow. Cool dial throughout: this is
-// an operator's tool.
+// S24 · Business owner onboarding — org → roster import → payments → tutors →
+// the milestone checklist that outlives this flow (doc 37 §2 puts Stripe
+// Connect before the invites). Cool dial throughout: this is an operator's
+// tool.
 //
 // Mobbin: https://mobbin.com/flows/941c6e90-47f7-4d03-b079-34d7227aa322 (Sprout
 // Social import — required fields and formatting are stated ABOVE the drop zone,

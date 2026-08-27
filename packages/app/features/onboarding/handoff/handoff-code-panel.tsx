@@ -2,8 +2,9 @@
 // The guardian side of device handoff: one panel per child, minting and
 // showing the short code the child's device redeems. The code is the hero —
 // display type, mono, letter-spaced — because its whole job is to be read
-// aloud across a room (doc 36 §2). The moyo:// link rides under it for the
-// same-device case.
+// aloud across a room (doc 36 §2). The same code renders as a QR of the
+// moyo:// link underneath (doc 36 §2 "QR/short code" · doc 37 §2's "first
+// magic trick"): scan when the devices are together, read aloud when apart.
 //
 // Mobbin: Posh "Enter your code" — the code as the screen's one object
 // (mobbin.com/screens/6e3bd021-387b-4ee5-9ea3-1454202a1924) · ShopBack
@@ -16,6 +17,7 @@ import { useStore } from 'zustand';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Button, useInstanceStore } from '@acme/ui';
 import { mintHandoffCode, type HandoffIssueResponse } from './handoff.client';
+import { HandoffQr } from './handoff-qr';
 
 type PanelState =
   | { phase: 'idle' }
@@ -54,9 +56,15 @@ export function HandoffCodePanel({ displayName, learnerAuthId }: HandoffCodePane
           <TWText className="text-center font-mono text-4xl font-bold tracking-wider text-text">
             {state.issue.code}
           </TWText>
+          {/* The issue's own moyo:// url, never rebuilt here — one definition
+              of the link (handoff.client.ts), two renderings of it. */}
+          <HandoffQr
+            value={state.issue.url}
+            label={`QR code for ${displayName}'s sign-in — scan it with their device's camera`}
+          />
           <TWText className="text-center text-body text-text-muted">
-            On {displayName}&apos;s device, open Moyo and enter this code. It works once and
-            expires in 15 minutes.
+            On {displayName}&apos;s device, open Moyo and enter this code — or scan the square with
+            its camera. Either way it works once and expires in 15 minutes.
           </TWText>
           <Button variant="outline" title="Get a new code" onPress={mint} />
         </View>

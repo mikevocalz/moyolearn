@@ -12,14 +12,18 @@ import {
   type ConsentRecord,
 } from '@acme/auth';
 
-// Doc 06 §5's sequence ends "grant-access toggles → S16 paywall → first value".
-// The paywall is a STEP, not a screen the flow bounces out to: a guardian who
-// lands on a standalone paywall has left onboarding, and the brief's whole point
-// is that the conversion moment is the child's face two steps later.
-// `handoff` sits between grants and plan (doc 36 §2): the learner accounts now
-// exist, so the guardian's device can mint the code the child's device redeems
-// — a child never types an email or password.
-export const GUARDIAN_STEPS = ['welcome', 'account', 'consent', 'children', 'grants', 'handoff', 'plan'] as const;
+// Doc 37 §2's guardian sequence: value → evidence → consent → name the family
+// (the personalization moment) → add learner → handoff → plan. The paywall is a
+// STEP, not a screen the flow bounces out to: a guardian who lands on a
+// standalone paywall has left onboarding, and the brief's whole point is that
+// the conversion moment is the child's face two steps later.
+// `handoff` sits between children and plan (doc 36 §2): the learner accounts
+// now exist, so the guardian's device can mint the code the child's device
+// redeems — a child never types an email or password.
+// `grants` is GONE (pane-audit-37 §A.2): it was a heading and one prose line
+// with zero controls — a step that asked for nothing and granted nothing, so
+// keeping it was a faked surface. Tutor visibility lives on the family screen.
+export const GUARDIAN_STEPS = ['welcome', 'account', 'consent', 'family', 'children', 'handoff', 'plan'] as const;
 export type GuardianStep = (typeof GUARDIAN_STEPS)[number];
 
 export interface ChildDraft {
@@ -37,6 +41,13 @@ export interface ChildDraft {
 
 export interface GuardianDraft {
   email: string;
+  /**
+   * Doc 37 §1.3 / §2 — the personalization moment: the instant the guardian
+   * names the family, the flow answers with "WELCOME, THE ___ FAMILY" (Nike Run
+   * Club's "you're in" beat). Kept on the draft so the handoff and feed copy
+   * can greet by it later.
+   */
+  familyName: string;
   consentMethod: ConsentMethod | null;
   consentAccepted: boolean;
   /**
@@ -51,6 +62,7 @@ export interface GuardianDraft {
 
 export const EMPTY_DRAFT: GuardianDraft = {
   email: '',
+  familyName: '',
   consentAccepted: false,
   consentMethod: null,
   consentRecord: null,
@@ -70,10 +82,12 @@ export function canAdvance(step: GuardianStep, draft: GuardianDraft): boolean {
       // move on. A finished VERIFICATION, not an accepted notice: reading the
       // notice is the first half, and the half that has no legal weight alone.
       return draft.consentRecord !== null;
+    case 'family':
+      // One word is a family name; the gate only refuses silence, because the
+      // welcome beat this step answers with needs a name to say.
+      return draft.familyName.trim().length > 0;
     case 'children':
       return draft.children.length > 0 && draft.children.every((c) => isChildComplete(c, draft));
-    case 'grants':
-      return true;
     case 'handoff':
       // Handoff is offered, never forced: the child's device may not be in the
       // room, and the Family tab can mint a fresh code any time. Gating here
@@ -110,6 +124,11 @@ export function childProblems(child: ChildDraft): ChildProblems {
 }
 
 export function isChildComplete(child: ChildDraft, draft: GuardianDraft): boolean {
+  // A committed row IS complete: the account exists server-side. This is also
+  // what lets a resumed draft pass — the persisted store deliberately drops
+  // child passwords (store.ts), so re-validating a committed row's blank
+  // password would strand a guardian behind a field they already used.
+  if (child.learnerAuthId) return true;
   if (!draft.consentRecord) return false;
   if (Object.keys(childProblems(child)).length > 0) return false;
   return validateCreateLearner({
