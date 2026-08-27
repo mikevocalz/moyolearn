@@ -15,7 +15,7 @@
 // SOT: packages/ui/tutor-message.ts
 // SOT-KEYWORDS: tutor thread conversation list bubbles image audio virtual legendlist
 import { SolitoImage } from 'solito/image';
-import { Text, View } from './primitives';
+import { Pressable, Text, View } from './primitives';
 import { VirtualList } from './VirtualList';
 import { ImageViewer } from './ImageViewer';
 import { AudioPlayer } from './audio/AudioPlayer';
@@ -24,10 +24,27 @@ import type { TutorMessage } from './tutor-message.ts';
 
 export interface TutorThreadProps {
   messages: readonly TutorMessage[];
+  /**
+   * Older turns exist beyond what `messages` holds.
+   *
+   * A tutoring session can run for an hour; holding every turn in memory to
+   * scroll back through is how a cheap Android tablet runs out of it. The
+   * thread asks for more only when a child actually reaches the top.
+   */
+  hasOlder?: boolean;
+  /** Fetch the previous page. The thread shows a spinner-free label while it runs. */
+  onLoadOlder?: () => void;
+  loadingOlder?: boolean;
   className?: string;
 }
 
-export function TutorThread({ messages, className }: TutorThreadProps) {
+export function TutorThread({
+  messages,
+  hasOlder,
+  onLoadOlder,
+  loadingOlder,
+  className,
+}: TutorThreadProps) {
   /*
     Every image in the whole conversation, in order, so the lightbox can page
     across turns — a child comparing problem 1 with problem 3 should not have to
@@ -39,6 +56,29 @@ export function TutorThread({ messages, className }: TutorThreadProps) {
 
   return (
     <View className={`flex-1 ${className ?? ''}`}>
+      {/*
+        Pagination at the TOP, where older turns are, and as an explicit control
+        rather than an invisible scroll trigger.
+
+        A child scrolling back to re-read a hint does not want the list to
+        silently grow and shift under their thumb; a labelled row tells them
+        there is more and lets them decide. It also degrades honestly on a slow
+        connection — "Loading" is a state a person can understand, where a
+        stalled auto-load just looks broken.
+      */}
+      {hasOlder ? (
+        <Pressable
+          onPress={onLoadOlder}
+          disabled={loadingOlder}
+          aria-label="Show earlier messages"
+          className="min-h-target-adult items-center justify-center border-b-2 border-border"
+        >
+          <Text className="font-sans text-caption text-text-muted">
+            {loadingOlder ? 'Loading earlier messages' : 'Earlier in this session'}
+          </Text>
+        </Pressable>
+      ) : null}
+
       <VirtualList
         data={messages as TutorMessage[]}
         keyExtractor={(message) => message.id}

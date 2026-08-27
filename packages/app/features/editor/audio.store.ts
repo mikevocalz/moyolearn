@@ -21,8 +21,28 @@ export type Recording = VoiceRecording;
  * or — if it uses a Modal — stops the sheet mounting at all. So the recorder is
  * mounted once at the app root and asked for a recording through this store.
  */
+/**
+ * What the composer draws while a recording is in flight.
+ *
+ * The recorder used to report nothing between "start" and "here is a file", so
+ * the composer's recording UI existed and never rendered: a child pressed the
+ * microphone and the input sat there looking exactly as it had a second before.
+ * Silence from a microphone is the one thing a recorder must never do.
+ */
+export interface LiveRecording {
+  elapsedSec: number;
+  /** 0–1 per sample, newest last. Drawn as the level meter. */
+  levels: readonly number[];
+}
+
 interface AudioState {
   open: boolean;
+  /** Non-null only while recording. */
+  live: LiveRecording | null;
+  setLive: (live: LiveRecording | null) => void;
+  /** Stops the take and keeps it. Set by whichever sheet is mounted. */
+  stop: (() => void) | null;
+  setStop: (stop: (() => void) | null) => void;
   settle: ((recording: Recording | null) => void) | null;
   request: () => Promise<Recording | null>;
   resolve: (recording: Recording | null) => void;
@@ -30,7 +50,12 @@ interface AudioState {
 
 export const useAudioStore = create<AudioState>((set, get) => ({
   open: false,
+  live: null,
+  stop: null,
   settle: null,
+
+  setLive: (live) => set({ live }),
+  setStop: (stop) => set({ stop }),
 
   request: () =>
     new Promise<Recording | null>((settle) => {
@@ -40,7 +65,9 @@ export const useAudioStore = create<AudioState>((set, get) => ({
 
   resolve: (recording) => {
     get().settle?.(recording);
-    set({ open: false, settle: null });
+    // `live` and `stop` clear with the take: leaving a stale elapsed count
+    // behind would make the next recording start mid-way through the last one.
+    set({ open: false, settle: null, live: null, stop: null });
   },
 }));
 

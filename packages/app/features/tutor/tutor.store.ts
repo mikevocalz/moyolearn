@@ -106,6 +106,21 @@ export const useTutorStore = create<TutorState>((set) => ({
         // way to do one thing.
         state: { kind: 'thinking' },
         problem: p,
+        /*
+          The problem is the FIRST message, not just live state.
+
+          It used to live only in the state block, so the moment a child
+          answered, the thing they were answering scrolled out of existence.
+          A child re-reading the question halfway through working it out is not
+          an edge case — it is what working something out looks like.
+
+          Seeded only when the session has a problem and the thread is empty, so
+          resuming a conversation does not staple a duplicate to the top.
+        */
+        messages:
+          p && s.messages.length === 0
+            ? [{ id: `problem-${Date.now()}`, role: 'tutor' as const, text: p }]
+            : s.messages,
         skillTitle,
         mastery,
         attempts,

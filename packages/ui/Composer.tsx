@@ -140,6 +140,22 @@ export function Composer({
     lg: 'min-h-target-teen min-w-target-teen',
     xl: 'min-h-target-child min-w-target-child',
   }[size];
+
+  /*
+    Height only, shared by BOTH actions.
+
+    Attach and Send sized from different systems — attach from the age-band
+    target, Send from Button's own scale — so they disagreed by a few pixels and
+    the row looked misaligned. They now take the same height token, and only the
+    field grows: the two buttons are fixed anchors at either end of a row whose
+    middle stretches.
+  */
+  const actionHeight = {
+    sm: 'h-target-adult',
+    md: 'h-target-adult',
+    lg: 'h-target-teen',
+    xl: 'h-target-child',
+  }[size];
   // Grows with what is typed. The two platforms use different mechanisms —
   // `scrollHeight` on web, `onContentSizeChange` on native — so the hook returns
   // props to spread rather than a single ref.
@@ -277,18 +293,23 @@ export function Composer({
         onClose={closeLightbox}
       />
 
-      {/* `items-stretch` is what makes the field and the actions one height.
-          They size from independent systems — the field from its padding, the
-          button from its own scale — so left alone they disagree by a few
-          pixels at every band. Stretching makes the row the source of height. */}
-      <View className="flex-row items-stretch gap-stack">
+      {/*
+        `items-end`, not `items-stretch`.
+
+        Stretching tied the buttons to the field's height, so a four-line answer
+        produced four-line-tall buttons — a Send key the size of a postcard. The
+        field is the only thing that should grow; the actions keep their touch
+        target and sit at the bottom, where the thumb already is and where they
+        stay put as the text reflows above them.
+      */}
+      <View className="flex-row items-end gap-stack">
         {/* Attach, leading. One flat list behind it, never a submenu — see the
             header. Hidden entirely when the host supplies no picker. */}
         {canAttach ? (
           <Pressable
             onPress={onPickCamera ?? onPickImage ?? onPickDocument}
             aria-label="Add a photo or file"
-            className={`${iconTarget} items-center justify-center rounded-control border-2 border-strong bg-surface-raised`}
+            className={`${iconTarget} ${actionHeight} shrink-0 items-center justify-center rounded-control border-2 border-strong bg-surface-raised`}
           >
             <Plus size={20} className="text-text" />
           </Pressable>
@@ -304,7 +325,10 @@ export function Composer({
           onChangeText={onChangeText}
           placeholder={placeholder}
           editable={!disabled}
-          className="flex-1 resize-none overflow-y-auto rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field font-sans text-body text-text placeholder:text-text-muted"
+          // `resize-none`: the browser handle would fight the measured height.
+          // Overflow is set by `useAutoGrow` once the cap is reached, so a
+          // one-line answer never shows a scrollbar track.
+          className="min-w-0 flex-1 resize-none rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field font-sans text-body text-text placeholder:text-text-muted"
           numberOfLines={1}
           aria-label="Message composer"
         />
@@ -321,7 +345,7 @@ export function Composer({
             onPress={onStartRecording}
             disabled={disabled}
             aria-label="Record a voice message"
-            className={`${iconTarget} items-center justify-center rounded-control border-2 border-strong bg-surface-raised`}
+            className={`${iconTarget} ${actionHeight} shrink-0 items-center justify-center rounded-control border-2 border-strong bg-surface-raised`}
           >
             <Mic size={20} className="text-text" />
           </Pressable>
@@ -334,7 +358,7 @@ export function Composer({
             title="Send"
             variant="primary"
             size={size}
-            className="h-auto min-h-0 self-stretch py-inset-field md:py-inset-field"
+            className={`${actionHeight} min-h-0 shrink-0 py-0 md:py-0`}
             disabled={!canSend}
             onPress={handleSubmit}
             aria-label="Send message"

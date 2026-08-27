@@ -192,6 +192,10 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
     words, photos and speech rather than three.
   */
   const requestRecording = useAudioStore((s) => s.request);
+  // Live state so the composer can draw the take as it happens.
+  const live = useAudioStore((s) => s.live);
+  const stopRecording = useAudioStore((s) => s.stop);
+  const resolveRecording = useAudioStore((s) => s.resolve);
   const enqueue = useUploadQueue((s) => s.enqueue);
 
   const handleStartRecording = useCallback(() => {
@@ -244,6 +248,13 @@ export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
       onPickImage={handlePickImage}
       onPickDocument={handlePickDocument}
       onStartRecording={handleStartRecording}
+      recording={live ?? undefined}
+      /* Discard settles the promise as cancelled, so the take is dropped and
+         the composer returns to its normal row. */
+      onCancelRecording={() => resolveRecording(null)}
+      /* Keep: stop the recorder and let its own `onstop` resolve with the file,
+         rather than racing it here. */
+      onSendRecording={() => stopRecording?.()}
     />
   );
 }
