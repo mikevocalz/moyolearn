@@ -154,10 +154,36 @@ export async function stopBoss(): Promise<void> {
  */
 export async function ensureLiveQueues(boss: PgBoss): Promise<readonly LiveQueueName[]> {
   const names = liveQueues();
+  const existing = new Map(
+    (await boss.getQueues([...managedQueueNames()])).map((queue) => [queue.name, queue]),
+  );
 
   for (const name of names) {
     const spec = QUEUES[name];
     const dlq = deadLetterFor(name);
+    const expireInSeconds = expireSecondsFor(name);
+
+    /*
+      A QUEUE'S POLICY IS FIXED AT CREATION, and pg-boss's `updateQueue` cannot
+      change it — the policy selects which partial unique index the queue's rows
+      are deduped by, and rewriting that under live jobs is not an update. So a
+      topology whose policy has drifted from the database's is a deployment
+      error, raised here, rather than a queue that silently stops deduping.
+
+      This check is not hypothetical. The first version of this file created the
+      queues with `singleton`, whose index is `WHERE state = 'active'` — meaning
+      a second job with the same key was accepted while the first was merely
+      QUEUED. `docs/design/jobs.md` §3 asks for "queued OR active", which is
+      `exclusive` (`WHERE state <= 'active'`), and the difference is a retention
+      sweep running twice.
+    */
+    const live = existing.get(name);
+    if (live !== undefined && live.policy !== QUEUE_POLICY) {
+      throw new Error(
+        `jobs.queue '${name}' has policy '${String(live.policy)}', topology requires '${QUEUE_POLICY}'. ` +
+          'Drain the queue and recreate it — a policy cannot be updated in place.',
+      );
+    }
 
     /*
       The DLQ takes no retries and no dead letter of its own. `docs/design/jobs.md`
@@ -172,15 +198,7 @@ export async function ensureLiveQueues(boss: PgBoss): Promise<readonly LiveQueue
     });
 
     await boss.createQueue(name, {
-      /*
-        `singleton` rather than `standard`. The policy is what makes
-        `singletonKey` mean "at most one of these queued OR active" — under
-        `standard` the key is only checked against the created state, so a sweep
-        that is still running when the next cron fires would be enqueued a second
-        time. §3's whole point is that the key has to hold across the window in
-        which the job is actually working.
-      */
-      policy: 'singleton',
+      policy: QUEUE_POLICY,
       retryLimit: spec.retryLimit,
       retryDelay: spec.retryDelay,
       /*
@@ -191,17 +209,51 @@ export async function ensureLiveQueues(boss: PgBoss): Promise<readonly LiveQueue
       */
       retryBackoff: true,
       deadLetter: dlq,
-      /*
-        The retention sweeps take minutes against a month of rows, and pg-boss's
-        default `expireInSeconds` of 900 would mark a slow-but-healthy sweep as
-        expired and retry it on top of itself. Doubled for the sweeps, left at
-        the default elsewhere.
-      */
-      expireInSeconds: spec.band === 'retention' ? 1_800 : 900,
+      expireInSeconds,
     });
+
+    /*
+      `createQueue` is `ON CONFLICT DO NOTHING`, so it is the creation path and
+      NOT the update path — a retry ladder edited in `topology.ts` would never
+      reach a database that already had the queue. `updateQueue` is what makes
+      the topology the source of truth on every cold start rather than only on
+      the first one.
+    */
+    if (live !== undefined) {
+      await boss.updateQueue(name, {
+        retryLimit: spec.retryLimit,
+        retryDelay: spec.retryDelay,
+        retryBackoff: true,
+        deadLetter: dlq,
+        expireInSeconds,
+      });
+    }
   }
 
   return names;
+}
+
+/**
+ * `exclusive`, on every live queue.
+ *
+ * `docs/design/jobs.md` §3: "at most one job with that key may be queued or
+ * active at a time". In pg-boss 12 that sentence names exactly one policy —
+ * `exclusive`, whose unique index is `(name, singleton_key) WHERE state <=
+ * 'active'`. The neighbouring policies each drop half of it: `short` only covers
+ * `created`, so a second sweep is accepted the moment the first starts running,
+ * and `singleton` only covers `active`, so two are accepted while both are still
+ * queued.
+ */
+export const QUEUE_POLICY = 'exclusive';
+
+/**
+ * The retention sweeps run multi-statement deletes over a month of rows across
+ * two stores, and pg-boss's default 900 s would mark a slow-but-healthy sweep
+ * expired and start a second one on top of it. Doubled for those two, left at
+ * the default everywhere else.
+ */
+function expireSecondsFor(name: LiveQueueName): number {
+  return QUEUES[name].band === 'retention' ? 1_800 : 900;
 }
 
 /**

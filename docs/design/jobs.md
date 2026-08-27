@@ -4,43 +4,86 @@
   Why it exists: doc 12 §6 binds the job runner to pg-boss on the SAME Postgres
   (`jobs` schema) and states the reason — transactional enqueue with the domain
   write. §9.4 asks for the topology that decision implies. This document is that
-  topology, and it is a DESIGN: pg-boss is not installed (see §0), so every queue
-  below is marked NOT YET IMPLEMENTED rather than described as running.
+  topology. Three of the fourteen queues
+  below are implemented and running (see §0); the other eleven are declared in
+  `packages/jobs/src/topology.ts` and deliberately unregistered, which is a state
+  the code carries rather than one this page asserts.
   SOT: docs/pack/12-systems-design-prompt.md §5 §6 §7 §9.4 · docs/design/seq-pay-run.md · docs/design/slo.md §4.5 §5
   SOT-KEYWORDS: pg-boss jobs queue topology priority idempotency singleton key dead letter dlq alerting shed order backlog distillation reminders pay run cleanup webhook retry retention sweep revisit trigger
 -->
 
 # pg-boss topology — queues, priorities, idempotency, dead letters
 
-**Doc 12 §9.4 · Date: Aug 27, 2026 · Status: design of record. Nothing here runs.**
+**Doc 12 §9.4 · Date: Aug 27, 2026 · Status: design of record. Three of the fourteen queues run; eleven are declared and deliberately unregistered.**
 
 ---
 
 ## 0 · Status, stated before anything else
 
-**pg-boss is NOT installed.** As of this date:
+**pg-boss is installed and three queues run.** As of this revision:
 
-- No `pg-boss` dependency in any of the 14 workspace manifests, nor in the root
-  `package.json`, nor in `pnpm-workspace.yaml`'s catalog. `pnpm-lock.yaml`
-  contains zero occurrences of the string.
-- No `jobs` schema in the database. The `payload` and `auth` schemas exist; a
-  live `information_schema.tables` read finds no pg-boss tables.
-- No boss instance, no queue module, no worker process, no queue names in code.
+- `pg-boss: 12.28.0` is in `pnpm-workspace.yaml`'s catalog — one version for the
+  workspace, as everything else is — and is a dependency of `@acme/jobs` and of
+  the root manifest (for the `pnpm jobs:install` / `jobs:migrate` / `jobs:doctor`
+  CLI). Its own `pg` dependency is `^8.23.0`, the catalog's `pg` exactly, so the
+  queue and the repositories cannot disagree about how a timestamp comes back.
+- The `jobs` schema exists in the database at pg-boss schema version 38, applied
+  out of band and recorded in `packages/payload/migrations/jobs_schema.sql`. The
+  anon/authenticated REVOKE around it is a Supabase migration
+  (`jobs_schema_deny_anon`).
+- `packages/jobs` is the runner: `topology.ts` (this document's §2 table as
+  `as const satisfies` data), `keys.ts` (§3), `shed.ts` (§4.2 and §5 as pure
+  functions), `boss.ts`, `enqueue.ts`, `drain.ts`.
+- `apps/web/lib/jobs.ts` is the composition root — the queue package holds no
+  handler, so it does not drag Payload, Bunny and the educational store into the
+  runner's dependency graph.
 
-The only scheduled work that exists in this repository is **Vercel Cron**, and it
-is two daily GETs, both registered in `apps/web/vercel.json`:
+**Three queues are LIVE**, meaning they have a producer, a handler, and a row in
+`jobs.queue`:
+
+| Queue | Producer | Handler |
+|---|---|---|
+| `retention.sweep.transcripts` | `apps/web/app/api/retention/sweep/cron/route.ts` : `GET` | wraps `apps/web/app/api/retention/sweep/route.ts` : `POST` |
+| `retention.sweep.media` | `apps/web/app/api/media/sweep/cron/route.ts` : `GET` | wraps `apps/web/app/api/media/sweep/route.ts` : `POST` |
+| `edu.distill` | `apps/web/app/api/tutor/evaluate/route.ts` : `POST` | `apps/web/lib/distill.service.ts` : `distillTranscript` |
+
+**The other eleven are DECLARED AND UNREGISTERED**, and that is a state the code
+carries rather than a state this document asserts: `QueueSpec.status` is
+`'declared'`, `QueueSpec.blockedOn` says what is missing, and
+`ensureLiveQueues` creates nothing for them. An empty queue with no worker reads
+on every dashboard exactly like a healthy one, so none is created in pg-boss at
+all. `@acme/jobs`'s `JobHandlers` is a TOTAL map over the live set, so promoting
+a queue is a compile error until it has a handler.
+
+**§8.2's worker question is answered, and the answer is the narrow one.** The
+runner is a bounded drain (`POST /api/jobs/drain`, cron door at
+`/api/jobs/drain/cron`) rather than a long-lived process, because that is the
+option that needs no new infrastructure and therefore no cost analysis to
+justify. What it buys and what it does not is stated in
+`packages/jobs/src/drain.ts`'s header; the short version is that latency is
+bounded by the SCHEDULE, so any queue needing slo.md JOB-4's five minutes needs a
+real worker first. Nothing live today does — the sweeps are daily and
+distillation is drained by `after()` inside the turn that enqueued it.
+
+**Transactional enqueue is still NOT available** (§8.3), and that is the one
+promise §1 makes that this implementation does not yet keep. `enqueue`'s `db`
+option is the seam; nothing passes it, because `protectedOperation` hands an
+operation a `ctx` and not a transaction handle.
+
+The two Vercel Crons that existed before this work still exist and still fire on
+the same schedules; what changed is that each now enqueues its queue and drains
+it inside its own window, so the daily guarantee is unchanged and the queue adds
+deduplication, a retry ladder and a dead letter on top of it. A third cron drains
+everything every 30 minutes, which is the retry path.
 
 | Path | Schedule | Handler |
 |---|---|---|
 | `/api/media/sweep/cron` | `0 3 * * *` | `apps/web/app/api/media/sweep/cron/route.ts` : `GET` |
 | `/api/retention/sweep/cron` | `0 4 * * *` | `apps/web/app/api/retention/sweep/cron/route.ts` : `GET` |
+| `/api/jobs/drain/cron` | `*/30 * * * *` | `apps/web/app/api/jobs/drain/cron/route.ts` : `GET` |
 
-Everything in §2–§6 below is therefore **NOT YET IMPLEMENTED**. It is written as
-the topology to build, with the seams it will attach to cited by `file:symbol`,
-so that installing pg-boss is a wiring exercise and not a design exercise. Where
-a queue's *work* already exists behind a different trigger, that is said so
-explicitly — a queue that already has a running non-pg-boss implementation is a
-migration, not a build, and the two cost very different things.
+Sections §2–§6 below describe the whole topology, live and declared. Where a
+queue is not live, the table says so.
 
 ---
 
@@ -83,9 +126,9 @@ nobody can justify is a number that drifts.
 | `billing.webhook.replay` | **80** | webhook retries | 8 × exponential from 30 s | NOT YET IMPLEMENTED |
 | `payroll.payRun.execute` | **60** | pay runs | 5 × exponential from 60 s | NOT YET IMPLEMENTED |
 | `payroll.transfer.send` | **60** | pay runs | 5 × exponential from 60 s | NOT YET IMPLEMENTED |
-| `retention.sweep.transcripts` | **50** | (retention sweeps) | 3 × exponential from 5 min | **runs today** as a Vercel Cron, not as a job |
-| `retention.sweep.media` | **50** | (retention sweeps) | 3 × exponential from 5 min | **runs today** as a Vercel Cron, not as a job |
-| `edu.distill` | **40** | distillation | 5 × exponential from 30 s | NOT YET IMPLEMENTED |
+| `retention.sweep.transcripts` | **50** | (retention sweeps) | 3 × exponential from 5 min | **LIVE** |
+| `retention.sweep.media` | **50** | (retention sweeps) | 3 × exponential from 5 min | **LIVE** |
+| `edu.distill` | **40** | distillation | 5 × exponential from 30 s | **LIVE** |
 | `payroll.statement.render` | **30** | pay runs | 5 × exponential from 60 s | NOT YET IMPLEMENTED |
 | `cleanup.unlinkedLearner` | **20** | cleanups | 3 × exponential from 5 min | NOT YET IMPLEMENTED |
 | `cleanup.staleTutorSession` | **20** | cleanups | 3 × exponential from 5 min | NOT YET IMPLEMENTED |
@@ -123,18 +166,29 @@ that swallowed the first attempt would convert a 500 Stripe would retry into a
 — exactly as drawn in `docs/design/seq-pay-run.md`. No payroll domain code
 exists yet; the diagram is the contract.
 
-**`retention.sweep.transcripts` / `retention.sweep.media`** — the two sweeps that
-**already run**, today, as Vercel Crons. They are listed because §7's shed order
-has to make a ruling about them (§5), not because they need moving. See §7.1 for
-when moving them would be justified and why it currently is not.
+**`retention.sweep.transcripts` / `retention.sweep.media`** — the two sweeps.
+LIVE. Each cron door now enqueues its queue and drains it inside the same
+request, so the daily guarantee is exactly where it was and the queue adds the
+three things a bare cron cannot have: a `singletonKey` on the UTC day, so a
+Vercel retry or a hand-triggered run cannot start a second sweep on top of the
+first; a retry ladder, so a sweep that fails at 04:00 comes back minutes later on
+the general drain rather than being lost until 04:00 tomorrow — a twenty-four-hour
+hole in a published window on a child's data; and a dead letter with an alert
+when the ladder runs out. The sweep implementation did not move and was not
+copied: `apps/web/lib/jobs.ts` calls the same POST the cron door already called.
 
-**`edu.distill`** — moves distillation off the request path. Today
-`packages/app/features/tutor/tutor.service.ts:evaluateTutorTurn` calls
-`packages/student-model/src/distill.ts:distill` **inline, inside the learner's
-turn**, and writes through `apps/web/lib/student-model.repository.ts:saveFacts`
-before responding. That is doc 12 §5's *"Async after close: distillation job"*
-being done synchronously, and it spends the learner's latency budget on work the
-learner is not waiting for.
+**`edu.distill`** — distillation, off the request path. LIVE.
+`evaluateTutorTurn` distils only when it is handed BOTH a `loadPriorFacts` and a
+`saveFacts` port, so `apps/web/app/api/tutor/evaluate/route.ts` — the composition
+root for the tutoring write path — now withholds them and wraps the transcript
+port instead: the row lands, then `edu.distill` is enqueued on the transcript id,
+then `after()` drains that one queue once the answer is already on its way to the
+child. That is doc 12 §5's *"Async after close: distillation job"* in the only
+shape a Vercel function can offer it. The service's algebra did not change; what
+changed is when it runs. `apps/web/lib/distill.service.ts:distillTranscript` is
+the handler, and it reads the learner id off `edu.transcripts.learner_id` rather
+than taking one — a job has no session, and the row is the durable record of
+whose turn it was.
 
 **`cleanup.unlinkedLearner`** — doc 06 §3.1's rule that an unlinked child account
 is deleted within 7 days. `docs/design/seq-guardian-creates-child.md` draws it
@@ -258,8 +312,13 @@ Three additions this document asks slo.md for, in its own rule shape:
 | **JOB-7** | Shed occurred | `count()` on the `ops.shed` event slo.md §5 already specifies | 24 h | warning ≥ 1 | TICKET |
 
 JOB-5 and JOB-6 are implementable **today** — the cron and the route both exist
-and both already fail loudly rather than returning a false 200. JOB-7 needs the
-shed mechanism, which needs pg-boss.
+and both already fail loudly rather than returning a false 200. JOB-7 now has something to count:
+`packages/jobs/src/shed.ts:shedPlan` decides the shed, `drain.ts` emits it
+through the `JobsReporter` port, and `apps/web/lib/jobs.ts` routes that into
+`reportRouteError` — the same reporter every route already uses, so a dead-letter
+page and a 500 land in one place rather than two. All three become Sentry alert
+rules without any of those files changing, on the day `docs/design/slo.md` §2's
+missing SDK lands.
 
 ---
 
@@ -343,13 +402,13 @@ runner swap that is 100× away is a swap you design for when it is 2× away.
 | Transactional boundary jobs must enqueue inside | `packages/app/core/protected-operation.ts` : `protectedOperation`, `ProtectedCtx` | real; does not yet expose a transaction handle |
 | Postgres pool the `jobs` schema would share | `packages/payload/src/payload.config.ts` : `postgresAdapter({ pool: { max: 8 }, schemaName: 'payload' })` | real |
 | Raw pool access from a repository | `apps/web/lib/retention.repository.ts` : `sweepVersionShadows` (`payload.db.pool`) | real — the only non-Payload SQL path in the app |
-| Distillation (the work `edu.distill` would carry) | `packages/student-model/src/distill.ts` : `distill`, `factId`, `transcriptExpiry` · `packages/app/features/tutor/tutor.service.ts` : `evaluateTutorTurn` | real, **called inline on the request path** |
+| Distillation, the work `edu.distill` carries | `packages/student-model/src/distill.ts` : `distill`, `factId`, `transcriptExpiry` · `packages/app/features/tutor/tutor.service.ts` : `evaluateTutorTurn` | **real, LIVE, off the request path** |
 | Distillation's writes | `apps/web/lib/student-model.repository.ts` : `saveTranscript`, `saveFacts`, `loadPriorFacts` | real |
 | Re-derivation guard the queue must preserve | `packages/student-model/src/erasure.ts` : `withoutBlockedTags` · `tutor.service.ts` : `LoadBlockedTags` | real |
-| Retention sweep, transcripts + derived facts | `apps/web/app/api/retention/sweep/route.ts` : `POST` (bearer `RETENTION_SWEEP_SECRET`) · `apps/web/lib/retention.repository.ts` : `loadExpiredTranscripts`, `loadFactsDerivedFrom`, `deleteFacts`, `updateFactProvenance`, `deleteTranscripts`, `sweepVersionShadows` · `packages/student-model/src/erasure.ts` : `expireTranscripts` | **real, wired, scheduled** |
+| Retention sweep, transcripts + derived facts | `apps/web/app/api/retention/sweep/route.ts` : `POST` (bearer `RETENTION_SWEEP_SECRET`) · `apps/web/lib/retention.repository.ts` : `loadExpiredTranscripts`, `loadFactsDerivedFrom`, `deleteFacts`, `updateFactProvenance`, `deleteTranscripts`, `sweepVersionShadows` · `packages/student-model/src/erasure.ts` : `expireTranscripts` | **real, wired, scheduled, LIVE as a job** |
 | Retention sweep, version shadow tables | `packages/payload/src/retention/sweep.sql` | real |
-| Retention sweep, media | `apps/web/app/api/media/sweep/route.ts` : `POST` (bearer `MEDIA_SWEEP_SECRET`) · `apps/web/lib/bunny-delete.ts` : `deleteObject`, `deleteObjects` | **real, wired, scheduled** |
-| Cron doors (the pattern a pg-boss trigger would replace) | `apps/web/app/api/media/sweep/cron/route.ts` : `GET` · `apps/web/app/api/retention/sweep/cron/route.ts` : `GET` (both bearer `CRON_SECRET`) | real |
+| Retention sweep, media | `apps/web/app/api/media/sweep/route.ts` : `POST` (bearer `MEDIA_SWEEP_SECRET`) · `apps/web/lib/bunny-delete.ts` : `deleteObject`, `deleteObjects` | **real, wired, scheduled, LIVE as a job** |
+| Cron doors — now enqueue + drain their own queue | `apps/web/app/api/media/sweep/cron/route.ts` : `GET` · `apps/web/app/api/retention/sweep/cron/route.ts` : `GET` (both bearer `CRON_SECRET`) | real, LIVE |
 | Cron schedule | `apps/web/vercel.json` : `crons` | real |
 | Reminder timing | `packages/auth/src/trial.ts` : `TRIAL_REMINDER_DAYS_BEFORE`, `trialSchedule`, `TrialSchedule` | real, no sender |
 | Reminder surface | `packages/app/features/notifications/notifications.store.ts` : `useNotifications`, `Notification` | real, client-side only |
@@ -360,38 +419,50 @@ runner swap that is 100× away is a swap you design for when it is 2× away.
 | Pay-run contract | `docs/design/seq-pay-run.md` · `packages/auth/src/billing-plans.ts` : `BILLING_ROLES`, `authorizeReference`, `PlanLimits.payoutAutomation` | diagram real, payroll domain absent |
 | Cleanup target | `packages/auth/src/create-managed-learner.ts` : `createManagedLearner`, `LearnerWriter` · `docs/design/seq-guardian-creates-child.md` | real, cleanup absent |
 | Stale-session target | `packages/payload/src/collections/TutorSessions.ts` : `expiresAt`, `closedAt` | real |
+| The runner itself | `packages/jobs/index.ts` : `getBoss`, `ensureLiveQueues`, `enqueue`, `drainQueues`, `shedPlan`, `deadLetterAlerts` | **real, LIVE** |
+| Handlers, and the only place they are bound to queues | `apps/web/lib/jobs.ts` : `jobHandlers`, `drain`, `enqueueSweep`, `enqueueDistillation` | **real, LIVE** |
+| The worker (§8.2's bounded drain) | `apps/web/app/api/jobs/drain/route.ts` : `POST` (bearer `JOBS_DRAIN_SECRET`) · `.../drain/cron/route.ts` : `GET` (bearer `CRON_SECRET`) | **real, LIVE** |
 | Alert rules this topology feeds | `docs/design/slo.md` §4.5 (JOB-1…JOB-4), §5 (shed order) | real |
 
 ---
 
-## 8 · NOT YET IMPLEMENTED — the whole list
+## 8 · Still NOT IMPLEMENTED — the whole list
 
-1. **pg-boss itself.** No dependency, no catalog entry, no `jobs` schema, no boss
-   instance, no workers. Everything in §2–§6 depends on this first step.
-2. **A worker process.** `apps/web` is a Next.js deployment on Vercel; a pg-boss
-   worker is a long-lived process and Vercel functions are not. This is the
-   decision that has to be made *before* the queues, and it is not made here — it
-   is a hosting question (a separate always-on service, a container, or a
-   scheduled invocation that drains a bounded batch) with real cost attached, and
-   picking one on this page without that analysis would be exactly the invented
-   answer doc 12 §1 forbids.
-3. **A transaction handle on the Block.** `protectedOperation` gives a `ctx`, not
-   a transaction. Transactional enqueue — the entire reason for this runner — is
+Renumbered against §0. Items 1, 2 and 6 of the original list are done; what
+follows is what is left, unchanged in substance.
+
+1. **A transaction handle on the Block.** `protectedOperation` gives a `ctx`, not
+   a transaction. Transactional enqueue — §1's entire reason for this runner — is
    unavailable until an operation can hand the same transaction to both the
-   domain write and `boss.send`.
-4. **`safetyEvents`.** Doc 12 §4 names it; `payload.config.ts` does not have it.
-   Without it, `safety.alert.guardian` has no natural key (§3.1) and JOB-3's
-   "≥ 1 on a safety queue" has nothing to count.
-5. **A `notificationsSent` store.** Every `notify.*` natural key in §3 points at
-   it. It does not exist, so reminder idempotency currently rests on
-   `singletonKey` alone, which stops protecting once a job completes.
-6. **Distillation is still synchronous.** `evaluateTutorTurn` distills and writes
-   facts inside the learner's request. Moving it to `edu.distill` is doc 12 §5's
-   *"Async after close"* and is the single highest-value queue on this page.
-7. **The payroll domain.** No `payRuns`, no `payRates`, no `transfers`
-   projection. `docs/design/seq-pay-run.md` is the contract; nothing implements it.
-8. **Shed mechanism.** No depth reader, no `ops.shed` event, no queue-priority
-   gate. §5 is a policy with nothing to enforce it.
-9. **Sentry.** Doc 12 §7 says Sentry is "already connected"; `docs/design/slo.md`
+   domain write and `boss.send`. `enqueue`'s `db` option is the seam and nothing
+   passes it. The window this leaves is one statement wide (`saveEduTranscript`
+   then `enqueue`), and the failure it produces — a transcript with no
+   distillation job — is recoverable by re-enqueueing on the same key, because
+   the key is the transcript id.
+2. **`safetyEvents` as a queue key.** Doc 12 §4 names the collection;
+   `payload.config.ts` does not have it. Without it `safety.alert.guardian` has
+   no natural key (§3.1) and JOB-3's "≥ 1 on a safety queue" has nothing to
+   count. The queue is declared, `blockedOn` says exactly this, and no worker is
+   registered for it — which is the safe direction, because a queue that looked
+   registered would make the alert look shipped.
+3. **A `notificationsSent` store.** Every `notify.*` natural key in §3 points at
+   it. It does not exist, so all three `notify.*` queues are declared-only.
+4. **The payroll domain.** No `payRuns`, no `payRates`, no `transfers`
+   projection, and **no Stripe Connect in this repository at all**.
+   `docs/design/seq-pay-run.md` is the contract; nothing implements it, so all
+   three `payroll.*` queues are declared-only and a test asserts that they are.
+5. **Automatic shed enforcement above the drain.** §5 is decided and emitted —
+   `shedPlan` refuses to fetch a shed queue and `ops.shed` is raised — but the
+   threshold is a constant (`BACKLOG_SHED_DEPTH`), not something read from the
+   §6 latency signal. That is the honest v1: §6.1 puts the design load two orders
+   of magnitude below the revisit trigger, and a tuning loop for a backlog that
+   has never happened is a mechanism nobody can validate.
+6. **A real worker.** The bounded drain's latency floor is its cron schedule
+   (§0), so slo.md JOB-4's five-minute budget is unreachable for any queue that
+   is not drained inside its own producing request. Nothing live needs it today;
+   `notify.reminder.session` would.
+7. **Sentry.** Doc 12 §7 says Sentry is "already connected"; `docs/design/slo.md`
    §2 records that in this repository it is not. JOB-3…JOB-7 are written in
-   Sentry's alert-rule shape so they can be created the day the SDK lands.
+   Sentry's alert-rule shape, and the drain already emits them through
+   `JobsReporter` into `reportRouteError`, so the day the SDK lands the rules are
+   a dashboard change rather than a code change.

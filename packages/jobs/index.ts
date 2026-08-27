@@ -61,7 +61,15 @@ export type {
   ShedPlan,
 } from './src/shed.ts';
 
-export { JOBS_SCHEMA, ensureLiveQueues, getBoss, managedQueueNames, readDepths, stopBoss } from './src/boss.ts';
+export {
+  JOBS_SCHEMA,
+  QUEUE_POLICY,
+  ensureLiveQueues,
+  getBoss,
+  managedQueueNames,
+  readDepths,
+  stopBoss,
+} from './src/boss.ts';
 export type { BossOptions, Depths } from './src/boss.ts';
 
 export { enqueue } from './src/enqueue.ts';

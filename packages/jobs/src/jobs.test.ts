@@ -30,6 +30,7 @@ import {
   type QueueName,
 } from './topology.ts';
 import { distillKey, sweepKey, utcDay } from './keys.ts';
+import { QUEUE_POLICY, managedQueueNames } from './boss.ts';
 import {
   BACKLOG_SHED_DEPTH,
   REVISIT_JOBS_PER_SECOND,
@@ -208,4 +209,28 @@ test('§6: the revisit trigger needs a SUSTAINED rate, or any latency breach', (
     revisitTriggered({ jobsPerSecond: 0.6, sustainedMinutes: 1_440, p95LatencySeconds: 4 }),
     false,
   );
+});
+
+test('§3 needs "queued OR active", which is exactly one pg-boss policy', () => {
+  /*
+    THIS TEST EXISTS BECAUSE THE FIRST VERSION WAS WRONG, and wrong in a way that
+    compiled, typechecked and looked right in review. `singleton` reads like the
+    policy a `singletonKey` belongs to; its unique index is
+    `(name, singleton_key) WHERE state = 'active'`, so a second sweep for the same
+    UTC day is ACCEPTED while the first is still queued. A live enqueue-twice
+    check against the real `jobs` schema is what caught it.
+
+    `exclusive` is `WHERE state <= 'active'` — created, retry and active — which
+    is the sentence `docs/design/jobs.md` §3 actually wrote.
+  */
+  assert.equal(QUEUE_POLICY, 'exclusive');
+});
+
+test('only live queues and their dead letters are ever created in pg-boss', () => {
+  const managed = managedQueueNames();
+  assert.equal(managed.length, liveQueues().length * 2);
+  for (const name of declaredQueues()) {
+    assert.ok(!managed.includes(name), `${name} is declared-only and must not be created`);
+    assert.ok(!managed.includes(deadLetterFor(name)));
+  }
 });
