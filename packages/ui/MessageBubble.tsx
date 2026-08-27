@@ -27,7 +27,23 @@ const TEXT: Record<MessageFrom, string> = {
 export function MessageBubble({ from, children, className }: MessageBubbleProps) {
   return (
     <View
-      className={`${ALIGN[from]} max-w-content-prose rounded-card border-2 border-strong bg-surface-raised p-inset-tight gap-stack ${className ?? ''}`}>
+      /*
+        `rounded-control`, and this is the one place the dial does not get its
+        way.
+
+        `rounded-card` resolves to the DIAL's radius — 14px on a hot surface,
+        which is what the tutor screen is. The composer directly beneath uses
+        `control` at 6px, so one screen was speaking in two radii: a 14px bubble
+        sitting on a 6px bar, which is exactly the mismatch that reads as
+        sloppiness however defensible each half is on its own.
+
+        The dial's chunkier radius is right for a card floating on a page. A
+        chat bubble is not floating — it is stacked against the input, and
+        adjacency is what makes a radius difference visible. Same reasoning that
+        moved `TutorThread`'s bubbles; this is the live-turn bubble, which I
+        missed because it lives in a different component.
+      */
+      className={`${ALIGN[from]} max-w-content-prose rounded-control border-2 border-strong bg-surface-raised p-inset-tight gap-stack ${className ?? ''}`}>
       <Text className={TEXT[from]}>{children}</Text>
     </View>
   );

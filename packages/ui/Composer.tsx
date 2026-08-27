@@ -192,45 +192,60 @@ export function Composer({
   */
   if (recording) {
     return (
-      <View className={`flex-row items-center gap-stack ${className ?? ''}`}>
-        <Pressable
-          onPress={onCancelRecording}
-          aria-label="Discard recording"
-          className={`${iconTarget} items-center justify-center rounded-control border-2 border-strong bg-surface-raised`}
-        >
-          <Trash2 size={20} className="text-danger" />
-        </Pressable>
+      /*
+        TWO rows, the same shape the composer takes when idle — waveform where
+        the field sits, actions on their own row beneath.
 
-        <View className="flex-1 flex-row items-center gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field">
-          {/* Live level meter. Bars, not a spinner: a spinner says "busy", and
-              what a child needs to know is "it can hear me". */}
-          {/*
-            The kit's own Waveform — square-ended, flat-filled bars, already in
-            Storybook. I had hand-rolled a second level meter here with its own
-            bar maths and its own height bug, which is exactly the "never invent
-            a second way" rule broken in a component that already existed.
-
-            It slices and pads `levels` to its own bar count internally, so the
-            recorder hands it everything captured and the component decides what
-            fits.
-          */}
-          <Waveform levels={recording.levels} height={24} className="flex-1" />
-
-          {/* Mono so the seconds do not shift the waveform as they tick. */}
-          <Text className="font-mono text-data text-text-muted">
+        It was one row: discard, waveform, send, all competing for width. The
+        waveform is the thing a child is watching while they speak, and squeezing
+        it between two keys left it a sliver. WhatsApp puts the recording on its
+        own line and the three decisions under it, which also means the bar does
+        not change shape between typing and speaking — only its contents do.
+      */
+      <View
+        className={`gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field ${className ?? ''}`}
+      >
+        <View className="flex-row items-center gap-element">
+          {/* Elapsed leads, as it does in the reference: it is the number that
+              answers "how long have I been talking". */}
+          <Text className="font-mono text-data text-text">
             {Math.floor(recording.elapsedSec / 60)}:
             {String(Math.floor(recording.elapsedSec % 60)).padStart(2, '0')}
           </Text>
+
+          {/* The kit's own Waveform — square-ended flat bars, already in
+              Storybook. It slices and pads `levels` to its own bar count, so the
+              recorder hands over everything captured. */}
+          <Waveform levels={recording.levels} height={24} className="flex-1" />
         </View>
 
-        <Button
-          title="Send"
-          variant="primary"
-          size={size}
-          className="h-auto min-h-0 self-stretch py-inset-field md:py-inset-field"
-          onPress={onSendRecording}
-          aria-label="Send voice message"
-        />
+        <View className="flex-row items-center justify-between">
+          {/* Discard far left, send far right — opposite intentions, opposite
+              ends, so a mis-tap cannot cost the take. */}
+          <Pressable
+            onPress={onCancelRecording}
+            aria-label="Discard recording"
+            className={`${iconTarget} items-center justify-center rounded-control`}
+          >
+            <Trash2 size={20} className="text-danger" />
+          </Pressable>
+
+          {/* A live indicator, centred, where the reference puts its stop key.
+              Not a button: the take ends by sending or discarding, and a third
+              way to stop is a third thing to explain to a child mid-sentence. */}
+          <View className="flex-row items-center gap-element">
+            <View className="h-2 w-2 rounded-full bg-danger" />
+            <Text className="font-sans text-caption text-text-muted">Listening</Text>
+          </View>
+
+          <Pressable
+            onPress={onSendRecording}
+            aria-label="Send voice message"
+            className={`${iconTarget} items-center justify-center rounded-control bg-primary`}
+          >
+            <Send size={20} className="text-on-primary" />
+          </Pressable>
+        </View>
       </View>
     );
   }
