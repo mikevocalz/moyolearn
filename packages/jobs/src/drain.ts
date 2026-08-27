@@ -79,6 +79,12 @@ export interface JobsReporter {
   shed(plan: ShedPlan): void;
   /** A handler that threw. The job is failed and will retry or dead-letter. */
   jobFailed(queue: QueueName, jobId: string, error: Error): void;
+  /**
+   * §4.1's archival pass failed. Reported and not thrown: the drain exists to
+   * run queued work, and a queue table that needs trimming is a slower problem
+   * than a child's job that did not run.
+   */
+  maintenance(error: Error): void;
 }
 
 const consoleReporter: JobsReporter = {
@@ -92,6 +98,7 @@ const consoleReporter: JobsReporter = {
     ),
   jobFailed: (queue, jobId, error) =>
     console.error(`[jobs] ${queue} job ${jobId} failed: ${error.message}`),
+  maintenance: (error) => console.error(`[jobs] maintenance pass failed: ${error.message}`),
 };
 
 export interface DrainOptions {
@@ -206,7 +213,28 @@ export async function drainQueues(
 ): Promise<DrainReport> {
   const reporter = options.reporter ?? consoleReporter;
   const batchSize = options.batchSize ?? DEFAULT_BATCH_SIZE;
-  const boss = await getBoss({ supervise: true });
+  const boss = await getBoss();
+
+  /*
+    MAINTENANCE IS A CALL, NOT A CONSTRUCTOR FLAG.
+
+    This used to be `getBoss({ supervise: true })`. `getBoss` memoises on the
+    first call and returns the cached promise without looking at later options,
+    and the one route that runs this — `api/retention/sweep/cron` — calls
+    `enqueueSweep` first, in the same request. That call constructed the boss
+    with `supervise: false`, so the drain's `true` was dropped on the floor and
+    §4.1's archival pass never ran on the single path designed to run it. The
+    symptom is `jobs.job` growing without bound and no error anywhere.
+
+    A failed maintenance pass does NOT abort the drain: housekeeping is not the
+    reason this function was invoked, and refusing to run a child's queued work
+    because an archival statement failed is the wrong trade.
+  */
+  try {
+    await boss.supervise();
+  } catch (error) {
+    reporter.maintenance(error instanceof Error ? error : new Error(String(error)));
+  }
 
   try {
     const depths = await readDepths(boss);

@@ -154,6 +154,16 @@ export function createVoiceEgress(options: VoiceEgressOptions = {}): VoiceEgress
       }
 
       if (!response.ok || response.body === null) {
+        /*
+          The body is CANCELLED, not just dropped. Under undici an unconsumed
+          body keeps its socket checked out of the pool until GC, and this
+          branch is the high-volume one: a 429 or 5xx during a provider outage
+          means every sentence of every turn for every learner opens a
+          connection nobody drains, so the leak is worst exactly when the
+          provider is already struggling. `void` because a cancel that fails
+          has nothing to add to a request that already failed.
+        */
+        void response.body?.cancel().catch(() => undefined);
         return { kind: 'text-only', reason: 'voice-unavailable' };
       }
 
@@ -197,7 +207,12 @@ export function createVoiceEgress(options: VoiceEgressOptions = {}): VoiceEgress
         return { kind: 'text-only' };
       }
 
-      if (!response.ok) return { kind: 'text-only' };
+      if (!response.ok) {
+        // Same reason as the streaming path above: an abandoned error body
+        // holds its socket open.
+        void response.body?.cancel().catch(() => undefined);
+        return { kind: 'text-only' };
+      }
 
       return {
         kind: 'audio',

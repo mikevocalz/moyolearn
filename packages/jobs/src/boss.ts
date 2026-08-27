@@ -47,19 +47,24 @@ export interface BossOptions {
    * omitted, pg-boss opens its own small pool (see `MAX_CONNECTIONS`).
    */
   readonly db?: Db;
-  /**
-   * Whether this instance runs pg-boss maintenance — the archival pass
-   * `docs/design/jobs.md` §4.1 asks for, which moves completed jobs out and
-   * drops them.
-   *
-   * Off by default because most instances of this process are enqueuing from
-   * inside a learner's request and have no business running housekeeping on the
-   * way past. The bounded drain turns it on: the drain is the closest thing this
-   * deployment has to a maintenance window, and a queue table that only grows is
-   * the next incident.
-   */
-  readonly supervise?: boolean;
 }
+
+/*
+  THERE IS NO `supervise` OPTION HERE, and its absence is the fix rather than an
+  omission.
+
+  `docs/design/jobs.md` §4.1's archival pass must run on the bounded drain and
+  nowhere else — most instances of this process are enqueuing from inside a
+  learner's request and have no business running housekeeping on the way past.
+  That was expressed as a constructor flag the drain passed, which `getBoss`
+  silently dropped whenever it had already been memoised: `api/retention/sweep/
+  cron` enqueues and then drains in ONE request, so the enqueue built the boss
+  without maintenance and the drain inherited it. Archival never ran on the one
+  path built to run it, with no error to notice.
+
+  `drainQueues` calls `boss.supervise()` directly instead. A call cannot be
+  dropped by a memo.
+*/
 
 /**
  * pg-boss's own pool, when one is not injected.
@@ -108,7 +113,8 @@ export function getBoss(options: BossOptions = {}): Promise<PgBoss> {
     // See the file header. Both false, always, in every runtime.
     migrate: false,
     createSchema: false,
-    supervise: options.supervise ?? false,
+    // Never on construction — see the note above `BossOptions`.
+    supervise: false,
     /*
       pg-boss's own cron scheduler is off. The schedule this product runs on is
       Vercel Cron (`apps/web/vercel.json`), which is the trigger that already

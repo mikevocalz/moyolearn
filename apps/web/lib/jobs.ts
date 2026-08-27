@@ -205,6 +205,10 @@ const reporter: JobsReporter = {
   jobFailed: (queue, jobId, error) => {
     reportRouteError(new Error(`${queue} job ${jobId} failed: ${error.message}`));
   },
+  maintenance: (error) => {
+    // §4.1's archival pass. Reported rather than thrown — see `JobsReporter`.
+    reportRouteError(new Error(`jobs maintenance pass failed: ${error.message}`));
+  },
 };
 
 /** One bounded pass, with this app's handlers and this app's reporter. */

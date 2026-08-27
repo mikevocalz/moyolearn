@@ -96,6 +96,29 @@ test('distillation upserts one fact per learner+skill+kind rather than appending
   assert.deepEqual([...mastery.derivedFrom], ['t1', 't2']);
 });
 
+test('replaying ONE transcript changes nothing — the second run is not a second session', () => {
+  /*
+    §4.1's replay is a human re-running a dead-lettered job by hand, and
+    `singletonKey` has long since stopped protecting. Every accumulating value
+    here advances from the stored one, so the replay used to trace `p` forward
+    a second time, count a second attempt and move the review rung — turning
+    one correct turn into "Has this down" and dropping the skill out of the
+    frontier brief.
+  */
+  const first = distill(transcript(), [], NOW);
+  const replayed = distill(transcript(), first, NOW);
+  assert.deepEqual(replayed, first);
+});
+
+test('a transcript with two turns on one skill still counts both, on its first run', () => {
+  // The guard reads `priorFacts`, not the running map — otherwise it would
+  // swallow the second turn of the very transcript it is distilling.
+  const twice = distill(transcript({ turns: [turn(), turn()] }), [], NOW);
+  const mastery = twice.find((f) => f.kind === 'mastery');
+  assert.ok(mastery);
+  assert.equal(mastery.attempts, 2);
+});
+
 test('an unapproved interest never becomes a fact', () => {
   const facts = distill(transcript({ turns: [turn({ interestTags: ['basketball'] })] }), [], NOW);
   assert.equal(facts.some((f) => f.kind === 'interest'), false);
@@ -192,8 +215,11 @@ test('the brief holds only frontier skills — mastered and not-started are both
 });
 
 test('a resolved misconception leaves the brief even though it stays on the record', () => {
+  // Two SESSIONS, so two transcript ids — the fixture used to reuse `t1` for
+  // both, which is a replay of one session rather than the second session it
+  // models, and `distill` now tells them apart.
   const facts = distill(
-    transcript({ turns: [turn({ correct: true, misconceptionTag: 'adds-denominators' })] }),
+    transcript({ id: 't2', turns: [turn({ correct: true, misconceptionTag: 'adds-denominators' })] }),
     distill(
       transcript({ turns: [turn({ correct: false, misconceptionTag: 'adds-denominators' })] }),
       [],

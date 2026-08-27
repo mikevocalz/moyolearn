@@ -120,6 +120,21 @@ describe('KBA', () => {
     assert.equal(retried.correct, 0);
   });
 
+  it('spends it as a SET — reshuffling the same four questions is the same set', () => {
+    /*
+      The comparison was `ids.join()` on presentation order, so re-serving the
+      same four questions in any other order missed the spent check entirely.
+      A child who failed once already knows the four correct answers; a second
+      pass over the same screens grants `codeVerified` and `confirmed` — full
+      parental consent, which is the exact brute-force the spend exists to stop.
+    */
+    const failed = scoreKba(started('kba'), set, [0, 0, 0, 0]);
+    const shuffled = questions(['q2', 'q1', 'q4', 'q3']);
+    const retried = scoreKba(failed, shuffled, [1, 1, 1, 1]);
+    assert.equal(isChallengeComplete(retried), false);
+    assert.equal(retried.correct, 0);
+  });
+
   it('lets a fresh set through after a failure', () => {
     const failed = scoreKba(started('kba'), set, [0, 0, 0, 0]);
     const fresh = scoreKba(failed, questions(['q5', 'q6', 'q7', 'q8']), [1, 1, 1, 1]);

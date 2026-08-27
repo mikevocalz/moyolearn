@@ -105,8 +105,14 @@ export function sweepKey(queue: 'transcripts' | 'media', day: string): string {
  *
  * The natural key behind it is `packages/student-model/src/distill.ts:factId`,
  * which is `${learnerId}:${kind}:${subject}` and deterministic — `saveFacts`
- * upserts on it, so re-running distillation over the same transcript recomputes
- * the same rows rather than appending a second set.
+ * upserts on it, so re-running distillation over the same transcript lands on
+ * one row rather than appending a second set.
+ *
+ * ONE ROW IS NOT THE SAME ROW, and the key alone never made it one: mastery,
+ * review scheduling and the hint-depth mean all advance from the stored value,
+ * so a replay compounded them. `distill` guards that itself now, on the
+ * provenance list each fact carries — the durable half of the pair, since this
+ * key stops protecting the moment the first job completes.
  */
 export function distillKey(transcriptId: string): string {
   return transcriptId;
