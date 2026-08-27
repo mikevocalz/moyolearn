@@ -14,6 +14,19 @@ const KINDS: readonly MediaKind[] = ['image', 'audio', 'document'];
 
 export async function POST(request: NextRequest) {
   try {
+    /*
+      DELIBERATELY AT THE `practise` FLOOR, stated rather than inherited.
+
+      This is the learner's path: `features/media/queued-uploader.ts` drains a
+      child's homework photos and voice answers through here. CLAUDE.md forbids a
+      paywall on a learner surface, and a capability check that can refuse would
+      be one — the child would lose the picture of the problem they are stuck on
+      because an adult's card expired.
+
+      The editor's media routes (`voice-note`, `video`) DO require `write`; they
+      are tutor authoring, not a child answering. Left implicit, this route would
+      have read as an oversight next to those two.
+    */
     const result = await protectedOperation(auth, request.headers, async (ctx) => {
       const body = (await request.json()) as Partial<{
         filename: string;

@@ -38,7 +38,21 @@ export async function POST(request: NextRequest) {
         }
         throw error;
       }
-    });
+    },
+    /*
+      `write`, not the `practise` floor every route inherits by default.
+
+      Its only callers are the notes editor — `features/schedule/NotesEditor.tsx`
+      through `features/editor/capabilities.ts` — so this is a tutor authoring a
+      note about a session: business content creation, not a child answering
+      homework.
+
+      The learner's own voice notes do NOT come through here. They go through
+      `/api/media/presign` from `features/media/queued-uploader.ts`, which stays
+      at the floor deliberately: a child's homework capture must never depend on
+      what an adult is paying.
+    */
+    { requires: 'write' });
     return NextResponse.json(result, { status: result.ok ? 200 : 422 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Server error';

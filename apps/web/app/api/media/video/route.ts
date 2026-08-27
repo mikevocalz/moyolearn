@@ -25,7 +25,16 @@ export async function POST(request: NextRequest) {
         }
         throw error;
       }
-    });
+    },
+    /*
+      `write`, not the `practise` floor every route inherits by default.
+
+      Callers are `features/editor/VideoNoteSheet.native.tsx` and
+      `features/editor/video.store.ts` — a tutor recording a video note about a
+      session. No learner surface reaches Bunny Stream at all, so gating this
+      cannot put a paywall in front of a child.
+    */
+    { requires: 'write' });
     return NextResponse.json(result, { status: result.ok ? 200 : 422 });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Server error';
