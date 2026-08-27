@@ -106,6 +106,28 @@ export function TutorThread({
   );
 }
 
+/** What to call a turn that carried attachments and no words. */
+function CaptionlessLabel({ attachments }: { attachments: readonly TutorAttachment[] }) {
+  const kinds = new Set(attachments.map((a) => a.kind));
+  const audioHasTranscript = attachments.some(
+    (a) => a.kind === 'audio' && (a.transcript?.length ?? 0) > 0,
+  );
+  if (kinds.size === 1 && kinds.has('audio') && audioHasTranscript) return null;
+
+  const label =
+    kinds.size > 1
+      ? 'Sent some work'
+      : kinds.has('audio')
+        ? 'Sent a voice note'
+        : kinds.has('document')
+          ? 'Sent a file'
+          : attachments.length > 1
+            ? `Sent ${attachments.length} pictures`
+            : 'Sent a picture';
+
+  return <Text className="font-sans text-caption text-text-muted">{label}</Text>;
+}
+
 function Bubble({
   message,
   urls,
@@ -194,7 +216,9 @@ function Bubble({
                 Voice note removed after a week
               </Text>
             ) : (
-              <View key={audio.id} className="gap-element">
+              // A voice note is a row, and a row needs width — squeezed into a
+              // bubble sized to its own content it collapsed to a pill.
+              <View key={audio.id} className="w-64 gap-element">
                 {/* The player is one row — play, waveform, duration — exactly as
                     WhatsApp and Clubhouse lay it out. A voice note is a single
                     object, not a stack of controls. */}
@@ -214,7 +238,17 @@ function Bubble({
                   looks like something the app hid.
                 */}
                 {audio.transcript !== undefined && audio.transcript.length > 0 ? (
-                  <Text className="font-sans text-caption text-text-muted">{audio.transcript}</Text>
+                  /*
+                    Capped at four lines. A transcript is a reference for what
+                    was said, not the message itself — the audio is. Left
+                    unbounded, a long note pushes the rest of the conversation
+                    off the screen, and a model that mishears silence can emit a
+                    wall of repeated punctuation that buries the thread
+                    entirely. Four lines is enough to recognise the note by.
+                  */
+                  <Text numberOfLines={4} className="font-sans text-caption text-text-muted">
+                    {audio.transcript}
+                  </Text>
                 ) : (
                   <Text className="font-sans text-caption text-text-muted">
                     Writing this out…
@@ -228,12 +262,19 @@ function Bubble({
           <Text className="font-sans text-body text-text">{message.text}</Text>
         ) : null}
 
-        {/* A caption-less photo still needs a line, or the bubble reads as
-            broken rather than as a question asked in pictures. */}
-        {message.text.length === 0 && attachments.length > 0 ? (
-          <Text className="font-sans text-caption text-text-muted">
-            {learner ? 'Sent a picture' : ''}
-          </Text>
+        {/*
+          A caption-less attachment still needs a line, or the bubble reads as
+          broken rather than as a question asked without words — but the line
+          has to match what was actually sent. It said "Sent a picture" under a
+          voice note, because the copy was written when images were the only
+          kind and never revisited when audio arrived.
+
+          A voice note that already shows its transcript needs no label at all:
+          the transcript IS what was said, and "Sent a voice note" above it
+          would be the app narrating something the reader can see.
+        */}
+        {message.text.length === 0 && attachments.length > 0 && learner ? (
+          <CaptionlessLabel attachments={attachments} />
         ) : null}
       </View>
     </View>

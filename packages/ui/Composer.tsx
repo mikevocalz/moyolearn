@@ -26,6 +26,10 @@ import { useAutoGrow } from './use-autogrow';
 import { Button } from './Button';
 import { SolitoImage } from 'solito/image';
 import { Camera, FileUp, Image, Mic, Plus, Trash2, X } from './icons';
+// Through the barrel, not the file. `waveform.ts` (the pure bar maths) and
+// `Waveform.tsx` (the component) differ only in case, so a direct path import
+// resolves ambiguously on a case-insensitive filesystem and TS refuses it.
+import { Waveform } from './audio';
 import { Lightbox } from './Lightbox';
 import { useInstanceStore, useStore } from './use-instance-store';
 import { countImages, MAX_TUTOR_IMAGES, type TutorAttachment } from './tutor-attachment.ts';
@@ -200,15 +204,18 @@ export function Composer({
         <View className="flex-1 flex-row items-center gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field">
           {/* Live level meter. Bars, not a spinner: a spinner says "busy", and
               what a child needs to know is "it can hear me". */}
-          <View className="flex-1 flex-row items-end gap-0.5" aria-label="Recording">
-            {recording.levels.slice(-32).map((level, i) => (
-              <View
-                key={i}
-                className="flex-1 rounded-full bg-danger"
-                style={{ height: `${Math.max(12, Math.min(100, level * 100))}%` }}
-              />
-            ))}
-          </View>
+          {/*
+            The kit's own Waveform — square-ended, flat-filled bars, already in
+            Storybook. I had hand-rolled a second level meter here with its own
+            bar maths and its own height bug, which is exactly the "never invent
+            a second way" rule broken in a component that already existed.
+
+            It slices and pads `levels` to its own bar count internally, so the
+            recorder hands it everything captured and the component decides what
+            fits.
+          */}
+          <Waveform levels={recording.levels} height={24} className="flex-1" />
+
           {/* Mono so the seconds do not shift the waveform as they tick. */}
           <Text className="font-mono text-data text-text-muted">
             {Math.floor(recording.elapsedSec / 60)}:
