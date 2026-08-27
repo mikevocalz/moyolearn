@@ -36,6 +36,15 @@ import { auth } from '@/lib/auth';
   lambda, which is why it is commented rather than terse.
 */
 import '@/lib/inference';
+/*
+  Doc 32's voice tags. Each chunk frame gains `voice: { tone, tag }` beside the
+  text — the `CoachEvent` union itself is untouched (its kinds are load-bearing
+  per `check-fail-closed.mjs`; consumers switch on `kind` and ignore the extra
+  field). The tag is the MAC `/api/tutor/voice` verifies before it will render
+  audio, which is what keeps the TTS payload server-emitted-only; the scheme
+  and the full argument live in `lib/voice-utterance.ts`.
+*/
+import { mintUtteranceTag, toneForTurn } from '@/lib/voice-utterance';
 import { reportRouteError } from '@/lib/report-error';
 
 // The turn holds a connection open while a model generates, which a statically
@@ -89,11 +98,31 @@ export async function POST(request: NextRequest) {
   }
 
   const encoder = new TextEncoder();
+
+  /*
+    One tone per turn, from lesson state the route already knows (the PR-120
+    seam — see `toneForTurn`), and `previousText` threaded chunk-to-chunk so
+    the voice route can hand ElevenLabs its `previous_text` prosody stitching
+    without trusting the client for either value: both ride inside the MAC.
+    Chunk frames only — `replace` carries redirects and the crisis scripts,
+    whose audio is the BAKED path (`/api/tutor/voice/baked/*`), never a live
+    Flash render.
+  */
+  const tone = toneForTurn((body.message ?? '') === '');
+  let previousText: string | null = null;
+  const framed = (event: CoachEvent): string => {
+    if (event.kind !== 'chunk') return JSON.stringify(event);
+    const tag = mintUtteranceTag({ text: event.text, previousText, tone });
+    const frame = tag === null ? event : { ...event, voice: { tone, tag } };
+    previousText = event.text;
+    return JSON.stringify(frame);
+  };
+
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
       try {
         for await (const event of events) {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`));
+          controller.enqueue(encoder.encode(`data: ${framed(event)}\n\n`));
         }
       } catch {
         controller.enqueue(encoder.encode(`data: ${JSON.stringify({ kind: 'blocked' })}\n\n`));

@@ -17,7 +17,8 @@
     "bunny:verify:media": "tsx scripts/bunny-verify-media.mts",
     "bunny:verify:video": "tsx scripts/bunny-verify-video.mts",
     "tutor:verify": "tsx scripts/tutor-check.mts",
-    "sweep:verify": "tsx scripts/sweep-verify.mts"
+    "sweep:verify": "tsx scripts/sweep-verify.mts",
+    "voice:bake": "NODE_OPTIONS=--conditions=react-server tsx scripts/voice-bake.mts"
   },
   "dependencies": {
     "@acme/app": "workspace:*",
@@ -29,6 +30,7 @@
     "@acme/student-model": "workspace:*",
     "@acme/theme": "workspace:*",
     "@acme/ui": "workspace:*",
+    "@acme/voice": "workspace:*",
     "@payloadcms/db-postgres": "catalog:",
     "@payloadcms/next": "catalog:",
     "@payloadcms/ui": "catalog:",
