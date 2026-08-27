@@ -58,7 +58,7 @@ import {
   type Suppressible,
 } from '@acme/ui';
 import { Text, View } from '@acme/ui/primitives';
-import { MIN_COHORT, STAGE_TONE, type Lead, type Session } from './ops.data';
+import { EXAMPLE_LEADS, MIN_COHORT, STAGE_TONE, type Lead, type Session } from './ops.data';
 import type { TrendPoint } from '@acme/ui';
 import { useLeads } from './use-leads';
 import { useViewParams } from './use-view-params';
@@ -193,6 +193,33 @@ function LeadCard({ lead }: { lead: Lead }) {
           </View>
         ))}
       </View>
+    </View>
+  );
+}
+
+/**
+ * The empty-ORG state, not the empty-FILTER state (doc 37 §2): before the
+ * first real lead exists, the table's slot shows what rows will look like —
+ * three example families, each labelled, none of them data. As cards rather
+ * than table rows so the "Example" chip can sit ON the row it describes and
+ * the stage badge stays a picture, not a live control that would "move" a
+ * family that does not exist.
+ */
+function ExampleLeads() {
+  return (
+    <View className="gap-stack p-inset">
+      <Text className="text-body text-text">
+        No families yet — here&apos;s what your pipeline will look like. Add a lead or import your
+        roster and these examples disappear.
+      </Text>
+      {EXAMPLE_LEADS.map((lead) => (
+        <View key={lead.id} className="gap-element">
+          <View className="self-start">
+            <Badge label="Example" />
+          </View>
+          <LeadCard lead={lead} />
+        </View>
+      ))}
     </View>
   );
 }
@@ -568,18 +595,29 @@ export function OpsDashboardContent({
           onRowPress={() => {}}
           renderCard={(row) => <LeadCard lead={row.original} />}
           empty={
-            <EmptyState
-              icon={<Text className="text-title">＋</Text>}
-              title="Nothing needs attention"
-              description="Every family in the pipeline has a next step booked."
-              action={
-                <Button
-                  title="Show all leads"
-                  variant="outline"
-                  onPress={() => setView({ onlyAttention: false })}
-                />
-              }
-            />
+            /*
+              Two different empties (doc 37 §2): a pipeline that is genuinely
+              empty — zero rows before ANY filter — seeds labelled example rows,
+              while a filter that merely matched nothing keeps the honest "your
+              filter did this" state with the way out. `totalUnfiltered` is the
+              discriminator because it ignores the view entirely.
+            */
+            totalUnfiltered === 0 ? (
+              <ExampleLeads />
+            ) : (
+              <EmptyState
+                icon={<Text className="text-title">＋</Text>}
+                title="Nothing needs attention"
+                description="Every family in the pipeline has a next step booked."
+                action={
+                  <Button
+                    title="Show all leads"
+                    variant="outline"
+                    onPress={() => setView({ onlyAttention: false })}
+                  />
+                }
+              />
+            )
           }
           error={
             <EmptyState

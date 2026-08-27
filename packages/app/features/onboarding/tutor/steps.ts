@@ -1,12 +1,16 @@
-// S23 tutor onboarding — the step machine. Doc 06 §5 fixes the sequence:
-// account (Google-first) → profile + subjects + credentials → availability →
-// connect → a SessionPrepCard preview on demo data. The metric this screen is
-// judged on is "availability completed", so availability is the one step with a
-// gate that cannot be waved through — everything genuinely optional says so.
-// SOT: docs/pack/06-auth-onboarding-spec.md §5
-// SOT-KEYWORDS: onboarding tutor s23 steps profile subjects credentials availability connect
+// S23 tutor onboarding — the step machine. Doc 37 §2 reordered doc 06 §5's
+// sequence: account (Google-first) → connect (the org invite code FIRST — a
+// tutor arriving from a school's email should land their invite before
+// building a profile the org may pre-fill) → profile + subjects + credentials
+// → availability → a SessionPrepCard preview on demo data. The metric this
+// screen is judged on is "availability completed", so availability is the one
+// step with a gate that cannot be waved through — everything genuinely
+// optional says so. `preview` stays for now; PR-147 moves its teaching to the
+// first Notes visit.
+// SOT: docs/pack/06-auth-onboarding-spec.md §5 · docs/pack/37-onboarding-dual-pane.md §2
+// SOT-KEYWORDS: onboarding tutor s23 steps invite connect profile subjects credentials availability
 
-export const TUTOR_STEPS = ['account', 'profile', 'availability', 'connect', 'preview'] as const;
+export const TUTOR_STEPS = ['account', 'connect', 'profile', 'availability', 'preview'] as const;
 export type TutorStep = (typeof TUTOR_STEPS)[number];
 
 export type TeachableSubject =
@@ -151,10 +155,10 @@ export function stepProgress(step: TutorStep): { index: number; total: number } 
 
 /** The label on the forward button: where it goes, not what it does. */
 export const STEP_DESTINATION: Record<TutorStep, string> = {
-  account: 'Build your profile',
+  account: 'Connect a school or family',
+  connect: 'Build your profile',
   profile: 'Set your hours',
-  availability: 'Connect a school or family',
-  connect: 'See your session prep',
+  availability: 'See your session prep',
   preview: 'Finish',
 };
 

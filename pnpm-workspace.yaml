@@ -109,6 +109,13 @@ catalog:
   date-fns: 4.1.0
   zustand: 5.0.15
   zod: 4.4.3
+  # Handoff QR (doc 36 §2 / doc 37 §2): pure-JS encoder only — `create()` gives
+  # the module matrix synchronously and the panel draws it with kit Views, so
+  # one universal component serves web and native with no react-native-svg on
+  # the web bundle (see TrendLine.web.tsx's header for why that import is fatal
+  # under Turbopack).
+  qrcode: 1.5.4
+  "@types/qrcode": 1.5.6
 
   # backend / cms
   # The build-time tripwire on repositories/services (doc 11 §6). On native the

@@ -55,7 +55,7 @@ describe('S22 the tiny win', () => {
     }
   });
 
-  it('opens home only on a correct answer', () => {
+  it('advances past the win only on a correct answer', () => {
     assert.equal(canAdvance('win', draft({ result: null })), false);
     assert.equal(canAdvance('win', draft({ result: 'not-yet' })), false);
     assert.equal(canAdvance('win', draft({ result: 'correct' })), true);
@@ -63,14 +63,20 @@ describe('S22 the tiny win', () => {
 });
 
 describe('S22 step order', () => {
-  it('runs avatar → hello → subjects → win and stops', () => {
+  it('runs avatar → hello → subjects → win → snap and stops', () => {
     assert.equal(nextStep('avatar'), 'hello');
     assert.equal(nextStep('hello'), 'subjects');
     assert.equal(nextStep('subjects'), 'win');
-    assert.equal(nextStep('win'), null);
+    assert.equal(nextStep('win'), 'snap');
+    assert.equal(nextStep('snap'), null);
     assert.equal(previousStep('avatar'), null);
     assert.equal(previousStep('hello'), 'avatar');
     assert.equal(previousStep('win'), 'subjects');
+    assert.equal(previousStep('snap'), 'win');
+  });
+
+  it('never gates the snap — the first Snap is an invitation with a real skip', () => {
+    assert.equal(canAdvance('snap', draft()), true);
   });
 
   it('the avatar step is satisfiable by one tap and gates until it lands', () => {

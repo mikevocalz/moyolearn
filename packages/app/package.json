@@ -36,6 +36,7 @@
     "expo-image-picker": "catalog:",
     "lucide-react": "catalog:",
     "lucide-react-native": "catalog:",
+    "qrcode": "catalog:",
     "react-native-audio-api": "catalog:",
     "react-native-enriched-html": "catalog:",
     "react-native-executorch": "catalog:",
@@ -56,6 +57,7 @@
   },
   "devDependencies": {
     "@acme/config": "workspace:*",
+    "@types/qrcode": "catalog:",
     "@types/react": "catalog:",
     "eslint": "catalog:",
     "eslint-config-expo": "catalog:",

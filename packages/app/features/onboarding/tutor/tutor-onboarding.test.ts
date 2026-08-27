@@ -100,4 +100,10 @@ describe('S23 shape', () => {
     assert.equal(nextStep('preview'), null);
     assert.deepEqual(stepProgress('preview'), { index: 5, total: 5 });
   });
+
+  it('puts the invite code before the profile — doc 37 §2 order', () => {
+    assert.deepEqual(TUTOR_STEPS, ['account', 'connect', 'profile', 'availability', 'preview']);
+    assert.equal(nextStep('account'), 'connect');
+    assert.equal(nextStep('connect'), 'profile');
+  });
 });

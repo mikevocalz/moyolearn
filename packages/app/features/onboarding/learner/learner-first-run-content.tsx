@@ -1,8 +1,11 @@
 'use client';
 // S22 · Learner first-run — the tutor says hello, the child picks what they came
-// for, and answers one question they can actually get right. Under two minutes,
-// zero forms: doc 06 §5 gives this screen no text input at all, so every gate on
-// the step machine is satisfiable by tapping.
+// for, answers one question they can actually get right, and is invited into
+// their first Snap. Under two minutes, zero forms: doc 06 §5 gives this screen
+// no text input at all, so every gate on the step machine is satisfiable by
+// tapping. Naming law (docs 32/37): MOYO is the product, NATALIE is the tutor —
+// the character on this screen is Natalie, everywhere, or the child meets two
+// strangers in one minute.
 //
 // Mobbin: https://mobbin.com/flows/63b774b7-a199-4a57-8bee-54ec27c551a4
 // (Duolingo ABC onboarding — a thin progress bar with the back arrow beside it on
@@ -50,7 +53,13 @@ const API_URL =
 
 type GreetingAudio = { phase: 'idle' } | { phase: 'loading' } | { phase: 'ready'; uri: string } | { phase: 'silent' };
 
-export function LearnerFirstRunContent({ onDone }: { onDone: () => void }) {
+export interface LearnerFirstRunProps {
+  onDone: () => void;
+  /** Routes into the real capture flow — the snap step teaches at the camera, it never carries one. */
+  onTrySnap: () => void;
+}
+
+export function LearnerFirstRunContent({ onDone, onTrySnap }: LearnerFirstRunProps) {
   const { step, draft, setStep, toggle, pickAvatar } = useLearnerFirstRun();
   /*
     Doc 32 Path B: the greeting is a BAKED piece — cached audio behind a signed
@@ -145,9 +154,13 @@ export function LearnerFirstRunContent({ onDone }: { onDone: () => void }) {
           <Section className="items-center gap-group">
             {/* Replika gives the character the frame and puts one action under it.
                 The tutor IS the screen here (doc 06 §5's "full hot dial"). */}
-            <Avatar name="Moyo" size="xl" />
+            <Avatar name="Natalie" size="xl" />
+            {/* The bubble IS the caption (doc 37 §2 "captioned always"): these
+                are the words the baked clip speaks, on screen before, during and
+                after any audio — the words are the content, the voice is the
+                enhancement. Never hide or swap this text while audio plays. */}
             <MessageBubble from="tutor">
-              Hi {name}. I&apos;m Moyo, and I help you with schoolwork. Tell me what you&apos;re
+              Hi {name}. I&apos;m Natalie, and I help you with schoolwork. Tell me what you&apos;re
               working on and we&apos;ll do one together right now.
             </MessageBubble>
             {/* The baked greeting (doc 36 §2 · doc 32 Path B): the same words,
@@ -167,7 +180,7 @@ export function LearnerFirstRunContent({ onDone }: { onDone: () => void }) {
             )}
             <Button
               size="lg"
-              title="Hi Moyo"
+              title="Hi Natalie"
               className="min-h-target-child w-full"
               onPress={() => forward && setStep(forward)}
             />
@@ -228,7 +241,37 @@ export function LearnerFirstRunContent({ onDone }: { onDone: () => void }) {
           </Section>
         ) : null}
 
-        {step === 'win' ? <Win onDone={onDone} /> : null}
+        {step === 'win' ? <Win onNext={() => forward && setStep(forward)} /> : null}
+
+        {step === 'snap' ? (
+          <Section className="items-center gap-group">
+            <Avatar name="Natalie" size="xl" />
+            {/* No sample worksheet: the asset doc 37 §2 imagined does not exist
+                yet (open item, doc 37 §2 amendment), and a pretend worksheet
+                would make the first Snap a rehearsal of nothing. Their own
+                homework is the honest subject — it is also the doc's whole
+                thesis (§1.2): teach the camera at the camera, on real work. */}
+            <MessageBubble from="tutor">
+              One more thing, {name} — this is how we work together. Point the camera at your own
+              homework and I&apos;ll look at it with you. Want to try?
+            </MessageBubble>
+            <Button
+              size="lg"
+              title="Try it on your homework"
+              className="min-h-target-child w-full"
+              onPress={onTrySnap}
+            />
+            {/* The explicit skip doc 37 §2 requires: a full-size button, not a
+                corner link a child cannot find — declining is a real choice. */}
+            <Button
+              size="lg"
+              variant="outline"
+              title="Maybe later"
+              className="min-h-target-child w-full"
+              onPress={onDone}
+            />
+          </Section>
+        ) : null}
       </View>
     </Dial>
   );
@@ -239,7 +282,7 @@ export function LearnerFirstRunContent({ onDone }: { onDone: () => void }) {
  * first thing they get right is the thing they came for. A wrong tap answers
  * again — no lockout, no score, and the copy is "Not yet" (doc 04 §S10).
  */
-function Win({ onDone }: { onDone: () => void }) {
+function Win({ onNext }: { onNext: () => void }) {
   const draft = useLearnerFirstRun((s) => s.draft);
   const answer = useLearnerFirstRun((s) => s.answer);
   const item = winItem(draft);
@@ -261,7 +304,7 @@ function Win({ onDone }: { onDone: () => void }) {
           That&apos;s it. That&apos;s how this works — you try, I help, you get there. Ready when
           you are.
         </MessageBubble>
-        <Button size="lg" title="Let's go" className="min-h-target-child w-full" onPress={onDone} />
+        <Button size="lg" title="Let's go" className="min-h-target-child w-full" onPress={onNext} />
       </Section>
     );
   }

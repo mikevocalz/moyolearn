@@ -1,10 +1,15 @@
 'use client';
-// S21 · Guardian onboarding — account → consent → children → grants.
-// Doc 06 §5: cool structure, hot accents on the child cards. Consent is real
-// text, not a checkbox with a link, because §5 requires it be screen-reader
-// complete and readable at AA.
+// S21 · Guardian onboarding — account → consent → name the family → children →
+// handoff → plan. Doc 06 §5: cool structure, hot accents on the child cards.
+// Consent is real text, not a checkbox with a link, because §5 requires it be
+// screen-reader complete and readable at AA. Doc 37 §2 added the family step
+// (the personalization moment) and removed `grants`, a control-free stub.
 //
-// Mobbin: https://mobbin.com/flows/fac935c1-143a-43e5-861e-b1e65aa6d3a5 (Garmin
+// Mobbin: https://mobbin.com/screens/71a1ed74-dc52-4be7-9435-4279182183cd
+// (Nike Run Club — the personalized "WELCOME SAM, YOU'RE IN" beat the family
+// step answers with) · https://mobbin.com/screens/940e830e-d7b9-4c97-b122-fd6c24d037be
+// (Strava — social proof as ONE evidence-flavoured line on the value beat) ·
+// https://mobbin.com/flows/fac935c1-143a-43e5-861e-b1e65aa6d3a5 (Garmin
 // Connect, "Creating a child account" — DOB carries an explicit "once set, it
 // cannot be changed", and permissions sit per-child rather than as one flat
 // list) · https://mobbin.com/flows/24719932-c82c-4512-a140-d4421b8b7d78
@@ -16,7 +21,8 @@
 // SOT-KEYWORDS: onboarding guardian s21 consent children grants screen
 
 import { Section, View, Text as TWText } from '@acme/ui/tw';
-import { Button, FadeIn, Heading, TextField } from '@acme/ui';
+import { Button, FadeIn, Heading, ScaleIn, TextField } from '@acme/ui';
+import { useGuardianWhatsNext } from './whats-next.store';
 import { ConsentFlowContent } from '../consent/consent-flow-content';
 import { PaywallContent } from '../../paywall/paywall-content';
 import { HandoffCodePanel } from '../handoff/handoff-code-panel';
@@ -45,11 +51,26 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
     commitError,
     setCommitting,
     setCommitError,
+    reset,
   } = useGuardianOnboarding();
   const { index, total } = stepProgress(step);
   const back = previousStep(step);
   const forward = nextStep(step);
   const ready = canAdvance(step, draft);
+  const armWhatsNext = useGuardianWhatsNext((s) => s.arm);
+
+  /**
+   * Exiting FROM the plan step is completion — it is the last step and both of
+   * its buttons are honest ways out — so it arms the feed's one-time "what
+   * happens next" card (doc 37 §2) and clears the persisted draft: a finished
+   * flow that rehydrated onto its own paywall would read as never finished.
+   * "Save & exit" anywhere earlier keeps the draft; that is what it is for.
+   */
+  const complete = () => {
+    armWhatsNext();
+    reset();
+    onExit();
+  };
 
   /**
    * Leaving the children step is the commit point (doc 36 §2: add learner →
@@ -110,9 +131,16 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
           <Heading level={1} size="title">
             Let’s set up your family
           </Heading>
+          {/* No step count in the copy: it said "Four" while the machine ran
+              seven, and the progress row above already tells the truth. */}
           <TWText className="text-body text-text">
-            Four short steps. You stay in control of every one of them, and you can go back at any
+            A few short steps. You stay in control of every one of them, and you can go back at any
             point.
+          </TWText>
+          {/* Doc 37 §1.4's one evidence-flavoured line (Strava's register, doc
+              33's number) — stated once, on the value beat, never repeated. */}
+          <TWText className="text-body font-semibold text-text">
+            Tutors that guide beat answer-machines 3-to-1 — Moyo never just gives the answer.
           </TWText>
         </Section>
       ) : null}
@@ -133,9 +161,37 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
 
       {step === 'plan' ? (
         <PaywallContent
-          onStartTrial={() => onExit()}
-          onContinueFree={() => onExit()}
+          onStartTrial={complete}
+          onContinueFree={complete}
         />
+      ) : null}
+
+      {step === 'family' ? (
+        <Section className="gap-4">
+          <Heading level={1} size="title">
+            Name your family
+          </Heading>
+          <TextField
+            label="What should Moyo call your family?"
+            hint="A last name works — it’s what your children will see on their screen."
+            value={draft.familyName}
+            onChangeText={(familyName: string) => patch({ familyName })}
+          />
+          {/* The Nike Run Club beat (doc 37 §1.3): the form answers the moment
+              it has a name — a relationship, not an acknowledgement. ScaleIn is
+              the kit's confirmation-moment entrance and reads Reduce Motion
+              itself, so this lands as a still line where the device asks. */}
+          {ready ? (
+            <ScaleIn>
+              <View className="rounded-card border-2 border-strong bg-highlighter p-inset">
+                <TWText className="font-display text-3xl font-bold uppercase text-on-highlighter">
+                  Welcome, the {draft.familyName.trim()} family
+                </TWText>
+                <TWText className="text-body text-on-highlighter">You’re in.</TWText>
+              </View>
+            </ScaleIn>
+          ) : null}
+        </Section>
       ) : null}
 
       {step === 'consent' ? (
@@ -211,17 +267,6 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
             </View>
           ))}
           <Button variant="outline" title="Add a child" onPress={addChild} />
-        </Section>
-      ) : null}
-
-      {step === 'grants' ? (
-        <Section className="gap-4">
-          <Heading level={1} size="title">
-            What the tutor can see
-          </Heading>
-          <TWText className="text-body text-text">
-            You can change any of this later from the family screen.
-          </TWText>
         </Section>
       ) : null}
 

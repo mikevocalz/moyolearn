@@ -1,7 +1,8 @@
 'use client';
-// S23 · Tutor onboarding — account → profile → availability → connect → a look at
-// what the AI will hand them before every session. Cool dial: this is a
-// professional's working surface, not a learner one.
+// S23 · Tutor onboarding — account → connect (invite code first, doc 37 §2) →
+// profile → availability → a look at what the AI will hand them before every
+// session. Cool dial: this is a professional's working surface, not a learner
+// one.
 //
 // Mobbin: https://mobbin.com/flows/6abfd825-cf44-4f09-a7ea-2644aed11cf7 (Upwork
 // profile builder — an intro that states the time cost and "you can edit it
@@ -243,7 +244,7 @@ export function TutorOnboardingContent({ onExit }: { onExit: () => void }) {
                 Share your connect code and the guardian adds you from their side — a tutor never
                 creates a child&apos;s account.
               </TWText>
-              <Badge tone="primary" label={connectCode(draft.displayName)} />
+              <Badge tone="primary" label={connectCode(draft.displayName, draft.email)} />
             </Card>
             {optional ? (
               <Text variant="label" tone="muted">
@@ -312,10 +313,16 @@ function PrepPreview() {
 
 /**
  * Derived from the name so it is memorable enough to read down a phone, and
- * regenerated server-side when the account is really created — this is a preview
- * of the code, not the credential itself.
+ * regenerated server-side when the account is really created — this is a
+ * preview of the code, not the credential itself. The email local part is the
+ * fallback stem now that connect runs BEFORE profile (doc 37 §2): at this step
+ * the display name is usually still blank, and a code that reads "TUTOR-4821"
+ * for everyone previews nothing.
  */
-function connectCode(displayName: string): string {
-  const stem = displayName.trim().split(/\s+/)[0] ?? 'TUTOR';
+function connectCode(displayName: string, email: string): string {
+  const stem =
+    displayName.trim().split(/\s+/)[0] ||
+    email.split('@')[0]?.replace(/[^a-z0-9]/gi, '') ||
+    'TUTOR';
   return `${stem.toUpperCase().slice(0, 6)}-4821`;
 }

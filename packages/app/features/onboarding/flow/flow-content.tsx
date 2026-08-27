@@ -36,7 +36,12 @@ export function OnboardingFlowContent({ flow }: { flow: string }) {
   const router = useRouter();
   const ageBand = useSessionStore((s) => s.activeContext.gradeBand);
 
-  const done = () => {
+  /**
+   * Every way out of a learner flow — Today OR the guided first Snap — runs the
+   * same band persist, because the Snap route ends in a live tutor exchange and
+   * an unsaved band there means the wrong register out loud (doc 32).
+   */
+  const finish = (path: string) => {
     // The band was collected at S14 and, until now, only ever reached the client
     // session store — so the server's copy stayed at its default and every
     // learner got the older register. Persist before routing, and do not block
@@ -54,9 +59,14 @@ export function OnboardingFlowContent({ flow }: { flow: string }) {
       });
     }
 
-    // Learners land in the tutor; other roles land at the home shell.
-    router.replace(isOnboardingFlow(flow) ? NEXT_PATH[flow] : '/');
+    router.replace(path);
   };
+
+  // Learners land in the tutor; other roles land at the home shell.
+  const done = () => finish(isOnboardingFlow(flow) ? NEXT_PATH[flow] : '/');
+  // Doc 37 §2's guided first Snap: onboarding ends INTO the capture flow, which
+  // owns the camera and its permission ask (guided-frame, doc 37 §1.5).
+  const trySnap = () => finish('/capture');
 
   if (!isOnboardingFlow(flow)) {
     return (
@@ -69,17 +79,23 @@ export function OnboardingFlowContent({ flow }: { flow: string }) {
     );
   }
 
-  return FLOWS[flow](done);
+  return FLOWS[flow]({ done, trySnap });
+}
+
+interface FlowExits {
+  done: () => void;
+  /** Only the learner flow uses it; it rides the same band-persisting finish. */
+  trySnap: () => void;
 }
 
 /**
  * A map, not a switch, so adding S26 is one line and TypeScript names the case
  * you forgot: `Record<OnboardingFlow, …>` is exhaustive by construction.
  */
-const FLOWS: Record<OnboardingFlow, (done: () => void) => React.ReactElement> = {
-  guardian: (done) => <GuardianOnboardingContent onExit={done} />,
-  learner: (done) => <LearnerFirstRunContent onDone={done} />,
-  tutor: (done) => <TutorOnboardingContent onExit={done} />,
-  owner: (done) => <BusinessOnboardingContent onExit={done} />,
-  teacher: (done) => <TeacherOnboardingContent onExit={done} />,
+const FLOWS: Record<OnboardingFlow, (exits: FlowExits) => React.ReactElement> = {
+  guardian: ({ done }) => <GuardianOnboardingContent onExit={done} />,
+  learner: ({ done, trySnap }) => <LearnerFirstRunContent onDone={done} onTrySnap={trySnap} />,
+  tutor: ({ done }) => <TutorOnboardingContent onExit={done} />,
+  owner: ({ done }) => <BusinessOnboardingContent onExit={done} />,
+  teacher: ({ done }) => <TeacherOnboardingContent onExit={done} />,
 };

@@ -21,6 +21,8 @@
 - **Tutor:** invite → profile → availability → a 30-second "how session notes work" contextual card at the first Notes visit, not before.
 - **Org:** owner setup → Stripe Connect → invite tutors → Overview with seeded example rows labeled as examples.
 
+**Amendment (PR-145, Aug 27 2026):** this list omitted the **teacher (S25)** flow, which exists and ships: account → class → roster → assignment. It keeps that sequence as-is; its contextual polish (photography, Natalie beats) is deferred until the guardian/learner treatment has proven out. Two items above are **externally blocked**, not skipped: onboarding **photography** waits on the doc 08-conformant shoot (no asset exists; type-on-surface stays until it does), and **Natalie's baked greeting clips** wait on doc 32 Path B renders — the baked *audio* path shipped and degrades gracefully, but the clip contract (≤6s, captioned, reduced-motion still-frame swap) has nothing to bind to yet. The learner **sample worksheet** for the guided first Snap is likewise an open asset item: until it exists the snap beat honestly offers "try it on your own homework" rather than staging a pretend one.
+
 ## §3 · The dual-pane system
 **Three different problems wearing one trenchcoat — name them apart:**
 
