@@ -35,13 +35,33 @@ const dropZone = tv({
         well: '-translate-y-0.5 scale-105 bg-ember-50 shadow-raised',
       },
     },
+    /*
+      `bare` [add] (doc 30 §1): the ReplaceTarget case, where the avatar or
+      logo ITSELF is the drop target — an avatar does not want a dashed
+      rectangle. Same drag machinery, none of the box; the active state stays
+      a highlighter ring because in this language borders are structure and
+      state arrives by fill/underlay, never by border colour (doc 30 §7).
+    */
+    bare: {
+      true: {
+        root: 'items-stretch justify-start gap-0 rounded-none border-0 bg-transparent p-0 hover:border-0 hover:bg-transparent',
+      },
+    },
   },
+  compoundVariants: [
+    { bare: true, active: true, class: { root: 'shadow-none ring-4 ring-focus/30' } },
+  ],
 });
 
 export interface DropZoneProps extends DragDropContentViewProps {
   className?: string;
   /** Highlight state while a drag hovers the zone — drive it from onEnter/onExit. */
   active?: boolean;
+  /**
+   * [add] No box: the child IS the drop target (avatar, logo — doc 30 §1).
+   * Same drag machinery, none of the dashed frame.
+   */
+  bare?: boolean;
   /** Default-content heading (ignored when children are passed). */
   title?: string;
   /** Default-content supporting line (ignored when children are passed). */
@@ -58,13 +78,14 @@ const CssDragDrop = css(
 export function DropZone({
   className,
   active,
+  bare,
   title = 'Drag and drop a file here',
   description = 'Or browse from your device. Images, documents and audio.',
   glyph,
   children,
   ...props
 }: DropZoneProps) {
-  const s = dropZone({ active });
+  const s = dropZone({ active, bare });
   return (
     <CssDragDrop className={s.root({ className })} {...props}>
       {children ?? (

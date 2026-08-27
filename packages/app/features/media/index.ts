@@ -34,4 +34,28 @@ export {
 export { useUploadQueue } from './upload-queue.store';
 export { UploadQueueProvider } from './UploadQueueProvider';
 export { uploadQueued } from './queued-uploader';
+export { ReplaceTarget, type ReplaceTargetProps } from './ReplaceTarget';
+export { UploadDropzone, type UploadDropzoneProps } from './UploadDropzone';
+export { TransferTray, type TransferTrayProps } from './TransferTray';
+export { useTransferTray } from './transfer-tray.store';
+export {
+  kindForMime,
+  validateCandidates,
+  primaryAction,
+  verdictSummary,
+  acceptForKinds,
+  zoneRules,
+  formatBytes,
+  applyTransfer,
+  rowsForTab,
+  trayTitle,
+  TRAY_TABS,
+  type CandidateFile,
+  type FileVerdict,
+  type TransferEvent,
+  type TransferRow,
+  type TransferStatus,
+  type TrayTab,
+} from './upload-surfaces.shared.ts';
+export { pickUploadFiles, type PickUploadFiles, type PickUploadOptions } from './pick-upload-files';
 export { MEDIA_TTL_DAYS, mediaExpiry, isMediaExpired, expiredKeys } from './retention.ts';

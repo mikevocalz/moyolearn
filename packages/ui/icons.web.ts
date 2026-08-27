@@ -67,6 +67,8 @@ export {
   Video,
   Undo2,
   Redo2,
+  ChevronDown,
+  ChevronUp,
   SquareCode,
   AlignLeft,
   AlignCenter,
