@@ -365,7 +365,7 @@ nothing pre-selected.
 | `site.start.price.struck` | $15.99 | Struck price, same baseline and size class as the live price (the Craft geometry) | `display` |
 | `site.start.price.current` | $11 | Live price | `display` |
 | `site.start.price.period` | /mo | Qualifier, attached to the numeral on the same baseline — never a separate line of small print | `label` |
-| `site.start.price.eligibility` 🚩 | Founding-family price, open until {EARLY_BIRD_LIMIT}. | The honest-scarcity line. `{EARLY_BIRD_LIMIT}` is a real cap ("the first 500 families") **or** a real date ("31 January 2027") — see F-06 | `body` |
+| `site.start.price.eligibility` ✅ | Founding-family price, open until 1 November 2026. | **RESOLVED 2026-08-28** — Mike set a hard date, which is what doc 05 §2.2 requires ("a real, stated limit … or a hard date printed on the paywall — never a fake countdown"). A date and not a countdown: the Mobbin pass found no honest early-bird pattern in the index, every one being a manufactured deadline. When the date passes the offer is gone. | `body` |
 | `site.start.price.lock` | Your price stays $11 a month for as long as you stay subscribed. | Grandfathering, stated plainly (doc 05 §2.2) | `body` |
 | `site.start.price.regular` | Regular price is $15.99 a month. | The un-discounted price, stated at the same level as the offer | `body` |
 | `site.start.included.title` | What's included | Inclusion list heading | `label` |
@@ -401,7 +401,7 @@ nothing pre-selected.
 | Key | String | Surface | Register |
 | --- | --- | --- | --- |
 | `site.footer.contact.title` | Talk to a person | Contact band, placed *above* the sitemap (the In Common With move) | `label` |
-| `site.footer.contact.email` | {SUPPORT_EMAIL} | Real address required — none is invented here | `label` |
+| `site.footer.contact.email` | mikeallen@moyolearn.com | Real address required — none is invented here | `label` |
 | `site.footer.col.product` | Product | Column heading | `label` |
 | `site.footer.link.how` | How it works | Sitemap link | `label` |
 | `site.footer.link.parents` | For parents | Sitemap link | `label` |
@@ -501,7 +501,7 @@ Flagging is a required output. Every row needs an owner decision before launch;
   `Start learning` (14) and `Talk to us` (10) both hold.
 - **Never concatenate.** `site.footer.legal` interpolates `{YEAR}`;
   `site.start.price.eligibility` interpolates `{EARLY_BIRD_LIMIT}`;
-  `site.footer.contact.email` interpolates `{SUPPORT_EMAIL}`. Any possessive
+  `site.footer.contact.email` interpolates `mikeallen@moyolearn.com`. Any possessive
   built from a name goes through ICU, never string addition.
 - **Prices are formatted, not typed.** `$11` and `$15.99` render through
   `useFormatter` with the currency from the catalog (doc 16 §4) — the literal

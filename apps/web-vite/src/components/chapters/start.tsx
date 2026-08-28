@@ -56,11 +56,20 @@ const FRONT_DOOR = `${SITE_ORIGIN}/signup`;
 const SCOPE = '.chapter-start';
 
 /**
- * The interpolation token, rendered rather than resolved. Held as a constant so
- * it reads as a token at the call site and so a grep for `EARLY_BIRD_LIMIT`
- * finds the one place an owner's decision lands.
+ * Doc 05 §2.2 requires eligibility to be "a real, stated limit — first N
+ * founding families OR a hard date printed on the paywall — never a fake
+ * countdown". Mike set the date: 1 November 2026.
+ *
+ * A date, not a countdown, and deliberately so: the Mobbin pass found no
+ * honest early-bird pattern anywhere in the index — every discount surveyed was
+ * a manufactured deadline or an eligibility programme. A printed date is
+ * checkable and expires once; a ticking clock manufactures pressure and, if it
+ * ever resets, is the exact dark pattern doc 05 refuses.
+ *
+ * When the date passes the offer is gone (doc 05: a "limited" price that never
+ * ends is the dark pattern). Changing this constant is how that happens.
  */
-const EARLY_BIRD_LIMIT = '{EARLY_BIRD_LIMIT}';
+const EARLY_BIRD_LIMIT = '1 November 2026';
 
 /** Doc 05 §2.2: all children included. A learner cap here is a pricing error. */
 const INCLUDED = [
