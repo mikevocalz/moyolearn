@@ -11,6 +11,9 @@
  * still pass a plain className string; both merge.
  */
 import React from 'react';
+// Type-only, so the web bundle never pulls React Native in — the same rule the
+// SafeArea/keyboard-aware forks follow for values.
+import type { TextInputProps } from 'react-native';
 
 type StyleqEntry = { $$css?: boolean; [key: string]: unknown } | React.CSSProperties;
 type WebStyle = StyleqEntry | (StyleqEntry | null | undefined)[] | null | undefined;
@@ -142,6 +145,18 @@ export interface InputBaseProps extends P {
   autoComplete?: string;
   inputMode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url';
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
+  /*
+    iOS's own autofill hint, which is a SEPARATE contract from `autoComplete`:
+    Safari and the iOS keychain read `textContentType`, everything else reads
+    `autoComplete`, and a credential field needs both to be offered a saved
+    password. Derived from React Native's own prop rather than restated, so the
+    web fork can never accept a value the native fork rejects.
+
+    Declared here and dropped below: it is a native prop with no DOM attribute,
+    and forwarding it would put `textcontenttype="..."` in the markup and a
+    React unknown-prop warning in the console.
+  */
+  textContentType?: TextInputProps['textContentType'];
 }
 
 const ENTER_KEY_HINT: Record<string, React.HTMLAttributes<HTMLElement>['enterKeyHint']> = {
@@ -151,6 +166,7 @@ const ENTER_KEY_HINT: Record<string, React.HTMLAttributes<HTMLElement>['enterKey
 export const InputBase = ({
   onChangeText, onSubmitEditing, editable, secureTextEntry, returnKeyType,
   placeholderTextColor: _ptc, numberOfLines: _n, role: _role,
+  textContentType: _tct,
   autoCapitalize, className, style, ...props
 }: InputBaseProps) => (
   <input
@@ -177,7 +193,8 @@ export interface TextareaBaseProps extends InputBaseProps {
 
 export const TextareaBase = ({
   onChangeText, onSubmitEditing: _s, editable, secureTextEntry: _p, returnKeyType: _r,
-  placeholderTextColor: _ptc, numberOfLines, role: _role, className, style, ...props
+  placeholderTextColor: _ptc, numberOfLines, role: _role, textContentType: _tct,
+  className, style, ...props
 }: TextareaBaseProps) => (
   <textarea
     readOnly={editable === false}
