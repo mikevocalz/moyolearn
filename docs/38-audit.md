@@ -20,27 +20,34 @@ Note also: the prompt writes the audit to `docs/38-audit.md`, but this repo's co
 
 ---
 
-## 1 · Skill inventory (§2.5) — 11 of 19 named skills are not installed
+## 1 · Skill inventory (§2.5) — resolved Aug 27, 2026
 
-§8 requires these be named, never fabricated.
+All four repo-sourced skill packs the prompt names by URL are now **installed** (21 skills, `~/.claude/skills/`). The eleven slash-named skills are **not published anywhere** — verified by `gh search code` across GitHub and by checking for local slash commands (none exist). They were resolved by mapping to installed equivalents or by authoring the missing output formats locally.
 
-**Installed and usable:**
+**Installed from the named repos:**
 
-| Named in §2.5 | Installed as | Note |
-|---|---|---|
-| `frontend-design` | `frontend-design:frontend-design` | ✅ |
-| `/code-review` | `code-review` | ✅ |
-| Mobbin MCP `search_screens` | `mcp__mobbin__*` | ✅ screens/flows/sections |
-| Callstack `react-native-best-practices` | `react-native-best-practices` | ⚠️ **This is Software Mansion's skill, not Callstack's** (`callstackincubator/agent-skills`). Different author, different content. Substituting silently would be fabrication. |
-| accessibility review | `accessibility` (WCAG 2.1) | ⚠️ Named `/accessibility-review` in the prompt; the installed skill covers WCAG 2.1 A/AA, not the 2.2 rows §7 asks for. |
-| design critique | `general-design-review`, `ux-heuristics-review`, `craft`, `design-analysis`, `cognitive-load-conversion` | ⚠️ Five adjacent skills; none is `/design-critique` and none emits "the critique in the skill's format". |
-| user research | `ux-research-methods`, `ux-personas`, `journey-mapping`, `empathy-mapping`, `double-diamond` | ⚠️ Adjacent; none is `/user-research` and none emits the 5-line evidence note format. |
+| Source | Installed as |
+|---|---|
+| `callstackincubator/agent-skills` | `callstack-react-native-best-practices` (the one §2.5 actually names), `callstack-upgrading-react-native`, `assess-react-native-migration`, `create-react-native-library`, `github-actions`, `react-native-brownfield-migration`, `react-native-tv-best-practices`, `react-navigation`, `react-native-testing` |
+| `react-native-community/skills` | `rnc-upgrade-react-native`, `rnc-migrate-to-strict-api` |
+| `margelo/react-native-skills` | `api-design`, `build-nitro-modules`, `cpp`, `kotlin`, `swift`, `react-native-mmkv`, `react-native-nitro-fetch`, `react-native-vision-camera`, `react-native-vision-camera-realtime` |
+| `robonuggets/gauntlet-loop` | `gauntlet-loop` — so §11 self-critique runs as builder/critic, not by hand |
 
-**Not installed — no substitute, output cannot be produced:**
+Callstack's and Software Mansion's `react-native-best-practices` are both present and **vendor-prefixed so they can never be confused**; §2.5 means the Callstack one.
 
-`/user-research` · `/design-handoff` · `/design-system` (`extend`/`audit` output) · `/ux-copy` · `/design-critique` · `/accessibility-review` · `/architecture` (ADR) · `/testing-strategy` · `/system-design` · `/deploy-checklist` · `/research-synthesis` · `gauntlet-loop` · `react-native-community/skills` · Margelo `react-native-skills`.
+**The eleven slash-named skills — resolution:**
 
-**Consequence:** the §6 skill ledger (screen × steps 1–10) cannot be completed for any screen. Steps 1, 4, 5, 6, 8, 9 have no installed skill. This blocks every per-screen PR as specified, not just Phase 0.
+| §2.5 name | Resolution |
+|---|---|
+| `/user-research` | → `ux-research-methods` (+ `ux-personas`, `journey-mapping`, `empathy-mapping`) |
+| `/design-critique` | → `general-design-review` + `craft` + `design-analysis` |
+| `/accessibility-review` | → `accessibility` ⚠️ covers WCAG **2.1** A/AA; §7 asks for 2.2. The 2.2-only rows (focus appearance, dragging alternatives, target minimum, consistent help, redundant entry, accessible authentication) must be checked by hand — **notably "accessible authentication", which is squarely a front-door concern.** |
+| `/design-handoff`, `/design-system`, `/ux-copy`, `/research-synthesis` | → **`delivery-design-artifacts`** — authored locally, defines each required output format |
+| `/architecture`, `/system-design`, `/testing-strategy`, `/deploy-checklist` | → **`delivery-engineering-artifacts`** — authored locally, defines each required output format |
+
+The two `delivery-*` skills carry an explicit provenance note: they are **not** the third-party skills of those slash names, and must never be presented as them. This satisfies §8 ("name it; never fabricate its output") — the missing thing is named, and what replaced it is honestly labelled.
+
+**Consequence:** the §6 skill ledger is now producible for every step. Step 8 carries the WCAG 2.2 caveat above.
 
 ---
 
@@ -129,8 +136,8 @@ The onboarding ones sit directly in the front-door path.
 
 1. **Where is doc 38?** Without it there are no screen IDs, no copy, no §14 rows. Should I (a) wait for you to add it, (b) draft `docs/pack/38-front-door-and-flow.md` from the audit + docs 05/06/07/36/37 for your review, or (c) build only the unambiguous gaps above?
 2. **`prompts/ROSTER.md`** — absent; the roster block cannot be embedded.
-3. **Eleven missing skills** (§1 above). The per-screen ledger cannot be produced as specified. Do you want them installed, or the sequence re-scoped to the skills that exist?
-4. **Callstack vs Software Mansion** `react-native-best-practices` — the installed one is Software Mansion's. Confirm which governs.
+3. ~~Eleven missing skills~~ — **RESOLVED** (§1): four repo packs installed, eleven slash names mapped or locally authored. The ledger is producible.
+4. ~~Callstack vs Software Mansion~~ — **RESOLVED**: both installed, vendor-prefixed; §2.5 means Callstack's.
 5. **RevenueCat is not installed.** Adding it is a native dependency + prebuild; confirm before I touch the native projects.
 6. **No staging environment or EAS staging profile**, and no E2E runner. Every §6 "live check against staging on a physical device" gate is unmeetable today. I also cannot exercise a physical device from here — device recordings and store-sandbox purchases need you.
 7. **Provider credentials** — Apple/Google client IDs, the transactional email provider, and the COPPA vendor are not in the repo. Per §2 law 3 I will not pick any.
