@@ -289,6 +289,24 @@ export {
   from `./server.ts` beside the safety-status service it belongs with.
 */
 export type { GuardianIncidentView, TriageQueue, TriageRow } from './features/safety';
+/*
+  …plus the one screen that renders them. `SafetyQueueScreen` is doc 36 §3.4's
+  org Safety tab: a client surface over `GET /api/safety/incidents`, which keeps
+  `protectedOperation`'s owner/manager wall on the server where no route can
+  lower it. It reads the barrel's projections and never the service.
+*/
+export {
+  SafetyQueueScreen,
+  IncidentQueueContent,
+  useIncidentQueue,
+  incidentQueueKey,
+  incidentQueueItemsFrom,
+  slaClock,
+  unassignedS4Line,
+  type IncidentQueueItem,
+  type IncidentQueueRead,
+  type QueueTone,
+} from './features/safety';
 export {
   tusUrlStorage,
   useBunnyUpload,

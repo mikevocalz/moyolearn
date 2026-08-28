@@ -15,6 +15,7 @@ import type { VoiceRecording } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { CaptureEntryRow } from './entry-row';
 import { GuidedFrame } from './guided-frame';
+import { CaptureTip } from './capture-tip';
 import { DigitizedTextReview } from './digitized-text-review';
 import { OcrReview } from './ocr-review';
 import { CropPreview } from './crop-preview';
@@ -178,15 +179,25 @@ export function CaptureScreen({ ageBand = 'teen' }: CaptureScreenProps) {
 
   if (step === 'capture') {
     if (mode === 'camera') {
+      /*
+        The tip is a SIBLING of the frame, not a layer over it (doc 37 §4:
+        never modal-stacked). `GuidedFrame` is `flex-1`, so the viewfinder takes
+        whatever the tip does not, and the capture control — which is absolutely
+        positioned inside the frame — can never end up underneath a card.
+        Dismissing the tip returns the space to the camera.
+      */
       return (
-        <GuidedFrame
-          ageBand={ageBand}
-          onCapture={async (photo) => {
-            const processed = await stripExif(photo.filePath);
-            setPayload({ kind: 'photo', photo: { filePath: processed.uri } });
-            setStep('preview');
-          }}
-        />
+        <View className="flex-1">
+          <GuidedFrame
+            ageBand={ageBand}
+            onCapture={async (photo) => {
+              const processed = await stripExif(photo.filePath);
+              setPayload({ kind: 'photo', photo: { filePath: processed.uri } });
+              setStep('preview');
+            }}
+          />
+          <CaptureTip ageBand={ageBand} />
+        </View>
       );
     }
 

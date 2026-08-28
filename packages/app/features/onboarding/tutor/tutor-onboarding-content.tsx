@@ -254,8 +254,6 @@ export function TutorOnboardingContent({ onExit }: { onExit: () => void }) {
           </Section>
         ) : null}
 
-        {step === 'preview' ? <PrepPreview /> : null}
-
         <View className="flex-row items-center gap-element">
           {back ? (
             <Button variant="outline" title="Back" onPress={() => setStep(back)} />
@@ -271,43 +269,6 @@ export function TutorOnboardingContent({ onExit }: { onExit: () => void }) {
         </View>
       </View>
     </Dial>
-  );
-}
-
-/**
- * The last step is the promise the rest of the flow was making: this is what the
- * tutor knows before they walk in. Demo data on purpose — a new tutor has no
- * students yet, and doc 06 §5 wants them to meet AI prep on day one anyway.
- */
-function PrepPreview() {
-  return (
-    <Section className="gap-group">
-      <Heading level={1} size="title">
-        This is what you&apos;ll know before every session
-      </Heading>
-      <Card className="gap-stack">
-        <View className="flex-row items-center justify-between">
-          <Text variant="label" tone="muted">
-            {SESSION_PREP.studentName} · sample
-          </Text>
-          <Badge label="Demo" />
-        </View>
-        {/* `needs-attention` is the highlighter state, never redpen: MasteryBar's
-            own rule is that red marks an answer, never a child. */}
-        {SESSION_PREP.mastery.map((item) => (
-          <MasteryBar
-            key={item.skill}
-            label={item.skill}
-            value={item.value}
-            state={item.tone === 'grade' ? 'steady' : 'needs-attention'}
-          />
-        ))}
-        <Text variant="label" tone="muted">
-          Watch for: {SESSION_PREP.misconceptions.join(' · ')}
-        </Text>
-        <TWText className="text-caption text-text-muted">{SESSION_PREP.provenance}</TWText>
-      </Card>
-    </Section>
   );
 }
 

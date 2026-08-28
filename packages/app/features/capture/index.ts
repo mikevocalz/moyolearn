@@ -3,6 +3,7 @@
 // SOT-KEYWORDS: capture feature barrel screen store age band
 
 export { CaptureScreen } from './screen';
+export { CaptureTip, type CaptureTipProps } from './capture-tip';
 export { useCaptureStore } from './capture.store';
 export { asAgeBand, buttonSizeForBand, captureLabelsForBand } from './age-band';
 export type { AgeBand } from './age-band';

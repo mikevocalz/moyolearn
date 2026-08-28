@@ -97,13 +97,20 @@ describe('S23 shape', () => {
 
   it('labels every forward button with a destination', () => {
     for (const step of TUTOR_STEPS) assert.ok(STEP_DESTINATION[step]);
-    assert.equal(nextStep('preview'), null);
-    assert.deepEqual(stepProgress('preview'), { index: 5, total: 5 });
+    assert.equal(nextStep('availability'), null);
+    assert.deepEqual(stepProgress('availability'), { index: 4, total: 4 });
   });
 
   it('puts the invite code before the profile — doc 37 §2 order', () => {
-    assert.deepEqual(TUTOR_STEPS, ['account', 'connect', 'profile', 'availability', 'preview']);
+    assert.deepEqual(TUTOR_STEPS, ['account', 'connect', 'profile', 'availability']);
     assert.equal(nextStep('account'), 'connect');
     assert.equal(nextStep('connect'), 'profile');
+  });
+
+  // Doc 37 §1.2/§2: the session-notes explainer moved to the first Notes visit
+  // (the `tutor-notes` CoachMark). The flow must not teach it twice.
+  it('ends at availability — no front-loaded preview step', () => {
+    assert.equal(TUTOR_STEPS.at(-1), 'availability');
+    assert.ok(!(TUTOR_STEPS as readonly string[]).includes('preview'));
   });
 });

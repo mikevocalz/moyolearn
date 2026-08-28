@@ -11,6 +11,11 @@
 // Suppression deliberately stays on the queue's own inline form — one
 // suppression surface, one logged reason (doc 34 §3), not two.
 //
+// The `tutor-notes` CoachMark is doc 37 §1.2 taught at the point of use: it is
+// what REPLACES the front-loaded `preview` step in tutor onboarding, so it
+// mounts on the queue column (which exists at every width) rather than on the
+// detail pane (which does not exist on compact).
+//
 // Mobbin: https://mobbin.com/screens/1764602c-b875-482f-a13f-059bf78c15b7 (Plain —
 //   support queue list beside the open item, triage actions on the detail) ·
 //   https://mobbin.com/screens/0b8a7848-7bbb-4b35-8999-d71b47f469c3 (Featurebase —
@@ -23,6 +28,7 @@ import {
   AdaptivePanes,
   Badge,
   Button,
+  CoachMark,
   DetailNavbar,
   EmptyState,
   Heading,
@@ -160,6 +166,13 @@ export function SummaryQueuePaneScreen() {
   return (
     <AdaptivePanes detail={<SelectedDraftPane />}>
       <AdaptivePanes.Column>
+        <CoachMark
+          id="tutor-notes"
+          title="How session notes work"
+          body="Write the note while the session is fresh. It becomes the family's report once you approve it, so say what happened and what comes next — nothing a parent would have to decode."
+          placement="below"
+          align="start"
+        />
         <ScrollView className="flex-1">
           <SummaryQueueScreen />
         </ScrollView>

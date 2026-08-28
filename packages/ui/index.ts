@@ -53,6 +53,12 @@ export { ToastCard, type ToastCardProps } from './ToastCard';
 export { notify, Toaster } from './notify';
 export type { NotifyOptions, NotifyVariant } from './notify.shared';
 
+// The contextual one-time tip (doc 37 §4). Filed with feedback rather than with
+// the overlays below on purpose: it is deliberately NOT an overlay.
+export { CoachMark, type CoachMarkProps } from './CoachMark';
+export { useCoachMarkStore } from './coach-mark.store';
+export type { CoachMarkId } from './coach-mark.store.shared';
+
 // overlays + nav
 export { Dialog, DialogCard, type DialogProps } from './Dialog';
 export { Lightbox, type LightboxProps } from './Lightbox';
@@ -104,3 +110,13 @@ export { ImageViewer, type ImageViewerProps } from './ImageViewer';
 // adaptive panes — the list-detail navigator (doc 37 §3.2) and its chrome.
 // The sub-barrel owns the full surface; everything reachable there is public.
 export * from './adaptive-panes';
+
+// The auth/marketing split (doc 37 §3.1). Layout, not navigation — it shares no
+// machinery with adaptive-panes above, and deliberately so.
+export {
+  TwoPaneShell,
+  type TwoPaneShellProps,
+  type TwoPaneBrand,
+  type TwoPaneBrandOrg,
+  type TwoPaneBrandImage,
+} from './TwoPaneShell';

@@ -2,15 +2,20 @@
 // sequence: account (Google-first) → connect (the org invite code FIRST — a
 // tutor arriving from a school's email should land their invite before
 // building a profile the org may pre-fill) → profile + subjects + credentials
-// → availability → a SessionPrepCard preview on demo data. The metric this
-// screen is judged on is "availability completed", so availability is the one
-// step with a gate that cannot be waved through — everything genuinely
-// optional says so. `preview` stays for now; PR-147 moves its teaching to the
-// first Notes visit.
-// SOT: docs/pack/06-auth-onboarding-spec.md §5 · docs/pack/37-onboarding-dual-pane.md §2
+// → availability, and the flow ENDS there. The metric this screen is judged on
+// is "availability completed", so availability is the one step with a gate that
+// cannot be waved through — everything genuinely optional says so.
+//
+// The old `preview` step (a SessionPrepCard on demo data) was removed in PR-147:
+// doc 37 §1.2 rules that teaching belongs at the point of use, and §2 puts the
+// tutor's session-notes explainer "at the first Notes visit, not before". That
+// card now lives on the Notes queue as the `tutor-notes` CoachMark, so keeping
+// a front-loaded tour of the same material would teach it twice and land it
+// when the tutor has no session to apply it to.
+// SOT: docs/pack/06-auth-onboarding-spec.md §5 · docs/pack/37-onboarding-dual-pane.md §1.2 §2
 // SOT-KEYWORDS: onboarding tutor s23 steps invite connect profile subjects credentials availability
 
-export const TUTOR_STEPS = ['account', 'connect', 'profile', 'availability', 'preview'] as const;
+export const TUTOR_STEPS = ['account', 'connect', 'profile', 'availability'] as const;
 export type TutorStep = (typeof TUTOR_STEPS)[number];
 
 export type TeachableSubject =
@@ -110,8 +115,6 @@ export function canAdvance(step: TutorStep, draft: TutorDraft): boolean {
       // Skippable on purpose: an independent tutor has nobody to connect to yet,
       // and blocking them here loses the supply doc 06 §5 is trying to retain.
       return true;
-    case 'preview':
-      return true;
   }
 }
 
@@ -158,8 +161,7 @@ export const STEP_DESTINATION: Record<TutorStep, string> = {
   account: 'Connect a school or family',
   connect: 'Build your profile',
   profile: 'Set your hours',
-  availability: 'See your session prep',
-  preview: 'Finish',
+  availability: 'Finish',
 };
 
 /** Steps a tutor may pass through untouched, and what they lose by doing it. */
