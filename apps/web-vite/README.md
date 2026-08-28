@@ -1,25 +1,30 @@
-# web-vite — the Moyo marketing site **and the super admin**
+# web-vite — the Moyo marketing site
 
-Two surfaces on one TanStack Start server, exactly as
+One surface, as
 [`docs/deploy/moyo-vercel-deployment.md`](../../docs/deploy/moyo-vercel-deployment.md)
-§1 lays them out:
+§1 lays it out:
 
 | Surface | Path | Host in production | Rendering |
 | --- | --- | --- | --- |
 | Marketing | `/`, `/motion-lab`, `/globe-lab`, `/chapters-lab` | `www.moyolearn.com` | prerendered to static HTML at build time |
-| Payload super admin | `/admin`, `/payload-api` | `admin.moyolearn.com` | server-rendered per request, never cached, never prerendered |
 
-Marketing pages are built from the shared kit (`@acme/ui`) rather than a parallel
-set of marketing components, and a crawler reads their copy without executing
-JavaScript. The admin is Payload's own panel, mounted through
-`@payloadcms/tanstack-start`, consuming the **one shared config** in
-`packages/payload`.
+Pages are built from the shared kit (`@acme/ui`) rather than a parallel set of
+marketing components, and a crawler reads their copy without executing
+JavaScript.
+
+**The Payload super admin used to live here** and does not any more. It is
+[`apps/admin-vite`](../admin-vite/README.md), on its own Vercel project, and the
+reason is a measurement: `tanstackStart({ rsc: { enabled: true } })` builds one
+client entry for the whole app, so turning RSC on for the panel put
+`@vitejs/plugin-rsc`'s browser runtime on this app's critical path — 155.8 →
+245.6 kB gz of initial JS on `/`, none of it Payload code, with no per-route
+opt-out. The split put it back to 155.8 kB gz.
 
 Decisions, what was measured, and what each costs:
-**[docs/site/adr-001-ssr-lane.md](../../docs/site/adr-001-ssr-lane.md)** (the SSR
-lane) and
-**[docs/site/adr-003-payload-admin-on-tanstack.md](../../docs/site/adr-003-payload-admin-on-tanstack.md)**
-(the admin).
+**[adr-001](../../docs/site/adr-001-ssr-lane.md)** (the SSR lane),
+**[adr-003](../../docs/site/adr-003-payload-admin-on-tanstack.md)** (how the
+admin was built) and
+**[adr-004](../../docs/site/adr-004-admin-app-split.md)** (why it moved out).
 
 ## Commands
 
@@ -31,60 +36,15 @@ pnpm --filter web-vite build      # client + SSR builds, then the prerender pass
 pnpm --filter web-vite preview    # serve the built output
 pnpm --filter web-vite typecheck  # tsc --noEmit
 pnpm --filter web-vite lint       # eslint (shared flat config)
-
-pnpm --filter web-vite payload:importmap   # regenerate the admin's import map
 ```
 
 Node must satisfy the root `engines` field (`>=24.15.0 <26`); the machine's
 default `node` may be newer, in which case put the pinned major first:
 `export PATH=/opt/homebrew/opt/node@24/bin:$PATH`.
 
-## Running the admin locally
-
-The marketing side needs no environment at all. The admin needs a database and a
-secret, and **will not boot without both** — Payload connects on the first
-request, so a missing `DATABASE_URL` is a 500 on `/admin`, not a build failure.
-
-Put these in `apps/web-vite/.env` (not committed, and there is no `.env` in this
-repo — get the values from the same place `apps/web` gets them):
-
-| Variable | Required | Notes |
-| --- | --- | --- |
-| `DATABASE_URL` | yes | Postgres. Same database `apps/web` uses; the config keeps its tables in the `payload` schema. |
-| `PAYLOAD_SECRET` | yes | **Must be byte-identical to `apps/web`'s.** It signs JWTs and encrypts stored field values, so a mismatch means this app cannot decrypt what the other wrote (deployment §5.2 item 4). |
-| `NEXT_PUBLIC_SITE_URL` | no | Becomes Payload's `serverURL` and its single `cors`/`csrf` origin. Defaults to `http://localhost:3000`; set it if you run on another port or auth will be rejected. |
-| `PAYLOAD_PUSH` | no | `true` runs Drizzle push instead of migrations. **Never against a shared database** — it rewrites tables under `apps/web`. Leave unset. |
-| `BUNNY_STORAGE_ACCESS_KEY` + `BUNNY_STORAGE_ZONE_NAME` + `NEXT_PUBLIC_BUNNY_CDN_BASE_URL` | no | Admin-panel media uploads. Absent, the storage adapter is not registered at all and uploads fall back to local disk. |
-| `PAYLOAD_MCP_ENABLED` | no | `true` registers the MCP endpoint. Off by default and deliberately so. |
-
-Then:
-
-```bash
-pnpm --filter web-vite dev     # http://localhost:3000/admin
-```
-
-**This app never migrates.** `apps/web` owns the schema and runs
-`payload migrate` in its build command; `push: false` everywhere in production.
-Deployment §5.2 is the rule and it is not negotiable — two apps migrating one
-database is schema drift with extra steps.
-
-### The import map
-
-`src/routes/_payload/importMap.js` is **generated**. Payload derives it from the
-shared config, so any change to `admin.components.*` in
-`packages/payload/src/payload.config.ts` means regenerating it in **both**
-consumers:
-
-```bash
-pnpm --filter web payload:importmap        # apps/web/app/(payload)/admin/importMap.js
-pnpm --filter web-vite payload:importmap   # apps/web-vite/src/routes/_payload/importMap.js
-```
-
-The second script sets `PAYLOAD_IMPORT_MAP_FILE`, which is the only reason one
-config can serve two maps. Run it from the repo root or via `pnpm --filter`, not
-by hand from a shell whose CWD spells the repo root differently — the generator
-writes paths relative to the file it emits, and a case-mismatched root produces
-specifiers that resolve on macOS and fail on the Linux builder.
+The dev server is on **5173**; the super admin is on 5174, so both run at once.
+This app needs no environment at all — there is nothing here that reads a
+database.
 
 ## Layout
 
@@ -92,26 +52,18 @@ specifiers that resolve on macOS and fail on the Linux builder.
 src/
   router.tsx        required Start entry — exports getRouter()
   routes/
-    __root.tsx      the <html> document, wrapped by withPayloadRoot: Payload owns
-                    its own shell on /admin, RootDocument owns everything else
+    __root.tsx      the <html> document — one shell, one surface
     index.tsx       "/" — the hero
-    _payload.tsx    pathless layout for the admin; sets no-store + noindex
-    _payload/
-      admin.index.tsx     /admin
-      admin.$.tsx         /admin/*      every panel view
-      payload-api.$.ts    /payload-api/*  REST + GraphQL
-      server.functions.ts the three createServerFn handlers
-      importMap.js        GENERATED — see above; never hand-edited
+    chapters-lab.tsx · globe-lab.tsx · motion-lab.tsx   unlinked audit surfaces
   routeTree.gen.ts  generated on every dev/build; never edited, never linted
   globals.css       Tailwind 4 entry + @acme/theme tokens + fonts + @source globs
   fonts.css         @font-face for the four self-hosted site faces
 public/
   fonts/            the woff2 files + their licence texts
-vite.config.ts      withPayload guest mode: plugins, react-native-web SSR wiring,
-                    and the prerender exclusion that keeps /admin off disk
+vite.config.ts      plugins, react-native-web SSR wiring, the prerender pass
 ```
 
-`@` is aliased to `./src`; `@payload-config` to `packages/payload/src/payload.config.ts`.
+`@` is aliased to `./src`.
 
 Tailwind is wired through `@tailwindcss/vite`, not PostCSS — there is no
 `postcss.config.mjs`. Vite 8 stopped resolving the bare `@import 'tailwindcss'`
@@ -153,23 +105,26 @@ in the emitted HTML rather than in a client-side effect.
 ```
 dist/client/index.html   the prerendered page — grep it to check your copy shipped
 dist/client/**           client bundle + the compiled stylesheet
-dist/server/server.js    the SSR fetch handler — now REQUIRED, the admin lives here
+dist/server/server.js    the SSR fetch handler
 ```
 
 `dist/client` is a plain static directory, and it must contain **exactly four**
-HTML files: `index.html`, `chapters-lab/`, `globe-lab/`, `motion-lab/`. If
-`dist/client/admin/index.html` ever appears, the prerender exclusion in
-`vite.config.ts` has been broken and the panel is about to be served as a stale,
-logged-out snapshot from a CDN:
+HTML files: `index.html`, `chapters-lab/`, `globe-lab/`, `motion-lab/`:
 
 ```bash
 pnpm --filter web-vite build
-find apps/web-vite/dist/client -name '*.html'   # four files, none of them admin
+find apps/web-vite/dist/client -name '*.html'   # four files
 ```
 
 If a page ever renders empty, look for `<!--$!-->` in the HTML: that is React's
 marker for an SSR throw that fell back to client rendering, and it is the only
 symptom — the build still exits 0.
+
+**Initial JS on `/` is the budget this app is measured against**, and the number
+is what forced the admin out (ADR-004). Resolve the script graph out of the
+prerendered `index.html` — the `<script src>` plus every `modulepreload` link —
+and gzip those files. It is **155.8 kB gz** at the time of writing, across six
+files, `dist/client/index.js` being 99.9 kB gz of it.
 
 ## Things that will bite you
 
@@ -186,16 +141,18 @@ Tokens only, as everywhere: spacing and colour come from
 there is no `tailwind.config.js` — new sources are registered with `@source` in
 `src/globals.css`.
 
-Two more, now that Payload shares the config:
+Two more:
 
 - **`define` belongs in a plugin here, not at the top level.**
   `vite-plugin-react-native-web` sets `global: 'self'` in its `config()` hook, and
   Vite merges plugin config *over* the user's — the opposite of what you would
-  expect. The `moyo:global-is-globalthis` plugin (`enforce: 'post'`) is what
-  actually wins. Removing it does not fail the build; it fails the *prerender*,
-  with `ReferenceError: self is not defined` from a server chunk.
-- **Three canary versions move together.** `payload`, `@payloadcms/ui` and
-  `@payloadcms/tanstack-start` are all `4.0.0-canary.29`, and the adapter's
-  `payload` peer is an exact pin rather than a range. Bump one, bump all three in
-  `pnpm-workspace.yaml`, or `pnpm install` fails outright — which is the good
-  outcome.
+  expect, and the opposite of what a `define` block that used to sit at the top of
+  `vite.config.ts` claimed. The `moyo:global-is-globalthis` plugin
+  (`enforce: 'post'`) is what actually wins. The build is currently green without
+  it — measured during the ADR-004 split, both ways, same 155.8 kB gz — and it is
+  kept anyway, because `self` is a browser-only identifier and the SSR/prerender
+  pass runs in Node. The failure mode it prevents is not a build error; it is a
+  `ReferenceError: self is not defined` thrown out of a *server* chunk mid-
+  prerender, which is what `@payloadcms/ui` did when it was in this graph.
+- **Do not reintroduce `@vitejs/plugin-rsc` or `withPayload` here.** They are what
+  the split removed; see the header of `vite.config.ts` for the number.

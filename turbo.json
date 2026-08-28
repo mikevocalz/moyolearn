@@ -75,6 +75,20 @@
         "dist/**"
       ]
     },
+    "admin-vite#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULTS$",
+        "../../.env*",
+        "../../packages/payload/**",
+        "../../packages/theme/**"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
     "typecheck": {
       "dependsOn": [
         "^typecheck"

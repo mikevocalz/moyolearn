@@ -7,7 +7,7 @@
  *
  * SOT: node_modules/@payloadcms/tanstack-start/dist/routes/adminRoutes.d.ts:
  *        payloadAdminSplatRoute
- * SOT-KEYWORDS: web-vite payload admin splat route collections views super admin
+ * SOT-KEYWORDS: admin-vite payload admin splat route collections views super admin
  */
 import { payloadAdminSplatRoute } from '@payloadcms/tanstack-start/client';
 import { createFileRoute } from '@tanstack/react-router';

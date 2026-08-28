@@ -14,33 +14,14 @@ export default [
     rules: { 'react/no-unknown-property': 'off' },
   },
   /*
-    The Payload mount (ADR-003) IS "the web app server code" that
-    FORBID_BACKEND_DIRECT names as its exemption (packages/config/eslint/
-    boundaries.mjs:32) — the rule exists so features reach content through
-    @acme/payload's client instead of the SDK, and this subtree is not a
-    feature, it is the admin panel itself. `src/routes/_payload/importMap.js`
-    is the sharpest case: Payload GENERATES it, `pnpm --filter web-vite
-    payload:importmap` rewrites it wholesale, and its imports are the panel's
-    component registry.
-
-    Scoped to the mount and nothing else, so a marketing chapter that reaches
-    for `payload` still fails.
+    No `no-restricted-imports` exemption here, and that is deliberate. Between
+    ADR-003 and ADR-004 this file opened FORBID_BACKEND_DIRECT
+    (packages/config/eslint/boundaries.mjs:32) for `src/routes/_payload*`,
+    because the Payload mount IS "the web app server code" the rule exempts.
+    The mount lives in apps/admin-vite now, so this app is back to the workspace
+    baseline: a marketing chapter that reaches for `payload` or `@payloadcms/*`
+    fails, with nothing carved out of the rule to argue about.
   */
-  {
-    files: ['src/routes/_payload.tsx', 'src/routes/_payload/**'],
-    rules: { 'no-restricted-imports': 'off' },
-  },
-  /*
-    The generated import map emits one `import` statement per registered
-    component, so four components from `@payloadcms/ui` arrive as four
-    statements from the same module. `import/no-duplicates` is right about the
-    shape and there is nobody to tell — the file is overwritten by
-    `pnpm --filter web-vite payload:importmap` on every regeneration.
-  */
-  {
-    files: ['src/routes/_payload/importMap.js'],
-    rules: { 'import/no-duplicates': 'off' },
-  },
   // routeTree.gen.ts is written by the router plugin on every build.
   { ignores: ['dist/**', '.output/**', '.tanstack/**', 'src/routeTree.gen.ts'] },
 ];
