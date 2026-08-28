@@ -117,7 +117,11 @@ export function ParentsChapter() {
   useMotionScene(SCOPE, buildScene);
 
   return (
-    <Section id="for-parents" className="chapter-parents bg-moyo-paper py-section">
+    <Section
+      id="for-parents"
+      aria-labelledby="parents-headline"
+      className="chapter-parents bg-moyo-paper py-section"
+    >
       <Container width="wide" className="gap-section">
         {/*
           Kinfolk's opening move: the section is announced by a rule, not by a
@@ -133,6 +137,7 @@ export function ParentsChapter() {
           </Text>
           <View className="gap-stack">
             <Heading
+              id="parents-headline"
               level={2}
               size="display-xl"
               className="parents-headline font-moyo-display text-site-chapter md:text-site-chapter"
@@ -148,8 +153,21 @@ export function ParentsChapter() {
               values: there is nothing in the token layer for "the curve a hand
               draws", the same reason the scroll thresholds are named in
               primitives.ts rather than in the theme.
+
+              SIZED IN CSS, NEVER IN ATTRIBUTES — the PencilRule pattern from
+              conversation.tsx. A literal `width="320"` is a floor no container
+              can compress, and 320px is the WCAG 2.2 1.4.10 reflow width
+              itself: inside this chapter's own inset the rule reached 336px and
+              put the whole document into horizontal scroll. `vectorEffect`
+              holds the stroke at 3px once `preserveAspectRatio="none"` starts
+              scaling the box non-uniformly.
             */}
-            <svg width="320" height="16" viewBox="0 0 320 16" aria-hidden="true">
+            <svg
+              className="h-4 w-full max-w-content-detail"
+              viewBox="0 0 320 16"
+              preserveAspectRatio="none"
+              aria-hidden="true"
+            >
               <path
                 className="parents-underline"
                 d="M3 11 C 70 3, 180 15, 317 5"
@@ -157,6 +175,7 @@ export function ParentsChapter() {
                 stroke="var(--color-moyo-secondary)"
                 strokeWidth="3"
                 strokeLinecap="round"
+                vectorEffect="non-scaling-stroke"
               />
             </svg>
           </View>
@@ -230,16 +249,27 @@ export function ParentsChapter() {
                   <View className="h-1/2 flex-1 bg-moyo-ink-muted" />
                 </View>
               </View>
-              <Figcaption className="gap-stack">
-                <Text variant="label" className="text-site-label text-moyo-secondary">
-                  Placeholder
-                </Text>
-                <Text className="text-site-body md:text-site-body text-moyo-ink-muted">
+              {/*
+                The two lines are wrapped in a View, not laid out by the
+                Figcaption itself. `<figcaption>` and `<figure>` are html
+                elements — display:block — so a `gap-*` on either is inert and
+                two `Text` children, which render as inline spans, simply
+                concatenate: the caption shipped reading "PlaceholderNo
+                photography has been shot…" as one run. `View` is the kit's
+                flex box, so the gap it is given is the gap it keeps.
+              */}
+              <Figcaption>
+                <View className="gap-stack">
+                  <Text variant="label" className="text-site-label text-moyo-secondary">
+                    Placeholder
+                  </Text>
+                  <Text className="text-site-body md:text-site-body text-moyo-ink-muted">
                   No photography has been shot for this chapter yet. The plate that
                   replaces this one, from the alt-text register: &ldquo;A session report on
                   a phone: a headline sentence, a list of problems, and a short note about
-                  what to try at home.&rdquo;
-                </Text>
+                    what to try at home.&rdquo;
+                  </Text>
+                </View>
               </Figcaption>
             </Figure>
           </View>
@@ -295,7 +325,14 @@ interface TrustCellProps {
 function TrustCell({ cell }: TrustCellProps) {
   return (
     <View className={`parents-cell ${CELL}`}>
-      <Text className="text-site-subtitle md:text-site-subtitle text-moyo-ink">{cell.title}</Text>
+      {/* An `h3`, not styled text: the four trust claims are the chapter's
+          navigable structure, and 1.3.1 wants that in the markup. */}
+      <Heading
+        level={3}
+        className="my-0 font-moyo-text text-site-subtitle font-normal md:text-site-subtitle text-moyo-ink"
+      >
+        {cell.title}
+      </Heading>
       <Paragraph className="text-site-body text-moyo-ink-muted">{cell.body}</Paragraph>
       {cell.link ? (
         <Link href={cell.link.href} className="text-site-body text-moyo-primary underline">

@@ -180,13 +180,34 @@ export function SiteFooter() {
           </Link>
         </View>
 
-        <Nav className={`${RULE} flex-col gap-section pt-section md:flex-row`}>
+        {/*
+          `aria-label` because this is the page's SECOND navigation landmark —
+          the header carries "Primary". Two same-role landmarks and only one
+          name is the ambiguity the reader has to resolve by guessing.
+        */}
+        <Nav
+          aria-label="Footer"
+          className={`${RULE} flex-col gap-section pt-section md:flex-row`}
+        >
           {COLUMNS.map((column) => (
             <View key={column.heading} className="gap-stack md:flex-1">
-              <Text variant="label" className="text-site-label text-moyo-secondary">
+              {/*
+                The column label NAMES the list rather than being restyled into
+                a heading. The footer shipped eleven links across three visually
+                grouped columns with no programmatic relationship between a
+                column and its label — one flat run to a screen reader (1.3.1).
+                `Heading` was the wrong instrument: its base is `font-display`
+                and it carries no `uppercase`, so it would have re-set these
+                three words in Clash Display and lost the eyebrow entirely.
+              */}
+              <Text
+                id={`footer-col-${column.heading}`}
+                variant="label"
+                className="text-site-label text-moyo-secondary"
+              >
                 {column.heading}
               </Text>
-              <List className="gap-stack">
+              <List aria-labelledby={`footer-col-${column.heading}`} className="gap-stack">
                 {column.links.map((link) => (
                   <ListItem key={link.label}>
                     <Link href={link.href} className="text-site-body text-moyo-ink">
@@ -294,7 +315,27 @@ function MarkSignature() {
  * there is no branch here that has to remember the preference.
  */
 function buildScene({ motion, scope }: MotionScene): () => void {
-  motion.draw({ targets: '.footer-mark', stagger: 0.14, scroll: { once: true } });
+  /*
+    `start` is overridden, and it is the only place on the site that needs to
+    be. The default enter threshold is `top 78%` — the element's top crossing
+    78% of the viewport — and the mark sits roughly 200px above the END of the
+    document, so at 820 it tops out at exactly 80% at maximum scroll and the
+    threshold is never reached. Measured, at maximum scroll, 900px viewport:
+    390 → 67% (fires) · 1440 → 75% (marginal) · 820 → 80% (never fires). The
+    stroke stayed at `stroke-dashoffset: 120px` of a 120px dash: drawn by
+    nobody, invisible for the life of the page, and only at wide widths, which
+    is why it read as a rendering glitch rather than as a trigger that could
+    not be reached.
+
+    `top bottom` fires the moment the mark enters the viewport at all. Nothing
+    below it can be scrolled past, so an entry threshold expressed as a
+    fraction of the viewport is the wrong instrument here.
+  */
+  motion.draw({
+    targets: '.footer-mark',
+    stagger: 0.14,
+    scroll: { once: true, start: 'top bottom' },
+  });
 
   const peel = motion.peel({ targets: '.footer-sticker', paused: true });
   const sticker = scope.querySelector('.footer-sticker');

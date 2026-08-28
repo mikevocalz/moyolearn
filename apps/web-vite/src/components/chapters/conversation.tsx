@@ -228,9 +228,18 @@ export function Conversation() {
                 </Text>
                 <ClaimArrow />
               </View>
-              <Text className="font-moyo-display text-site-subtitle md:text-site-subtitle">
+              {/*
+                A real `h3`. Each claim is a titled section of the chapter, so
+                the level is what a screen-reader user navigates by — a `Text`
+                at `site-subtitle` looks identical and is not reachable at all.
+                `md:` restated for the tokens.md reason.
+              */}
+              <Heading
+                level={3}
+                className="my-0 font-moyo-display text-site-subtitle font-normal md:text-site-subtitle"
+              >
                 {claim.title}
-              </Text>
+              </Heading>
               <Paragraph className="max-w-content-prose text-site-body text-moyo-ink-muted">
                 {claim.body}
               </Paragraph>

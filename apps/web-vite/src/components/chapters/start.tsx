@@ -85,7 +85,11 @@ export function StartChapter() {
   useMotionScene(SCOPE, buildScene);
 
   return (
-    <Section id="start" className="chapter-start bg-moyo-paper py-section">
+    <Section
+      id="start"
+      aria-labelledby="start-headline"
+      className="chapter-start bg-moyo-paper py-section"
+    >
       <Container width="detail" className="gap-section">
         <View className="gap-group">
           <Text variant="label" className="text-site-label text-moyo-secondary">
@@ -94,6 +98,7 @@ export function StartChapter() {
           <Heading
             level={2}
             size="display-xl"
+            id="start-headline"
             className="start-headline font-moyo-display text-site-chapter md:text-site-chapter"
           >
             One plan. Every child.
@@ -115,7 +120,12 @@ export function StartChapter() {
         */}
         <View className="start-card border-moyo-slab rounded-moyo-square border-moyo-outline bg-moyo-paper-raised p-inset-roomy gap-group shadow-moyo-3">
           <View className="flex-row flex-wrap items-center gap-stack">
-            <Text className="text-site-subtitle md:text-site-subtitle text-moyo-ink">Family plan</Text>
+            <Heading
+              level={3}
+              className="my-0 font-moyo-text text-site-subtitle font-normal md:text-site-subtitle text-moyo-ink"
+            >
+              Family plan
+            </Heading>
             {/*
               A badge, outlined rather than filled: the chapter's one highlighter
               accent is spent on the placeholder below, where a reader actually

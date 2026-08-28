@@ -142,7 +142,11 @@ export function TutorRoomChapter() {
   useMotionScene(`#${TUTOR_ROOM_CHAPTER_ID}`, buildTutorRoomScene);
 
   return (
-    <Section id={TUTOR_ROOM_CHAPTER_ID} className="moyo-tutor-room bg-moyo-paper">
+    <Section
+      id={TUTOR_ROOM_CHAPTER_ID}
+      aria-labelledby="tutor-room-headline"
+      className="moyo-tutor-room bg-moyo-paper"
+    >
       {/*
         The band chapter 04's flood lands on. It is the top of this section, so
         the disc that filled the viewport a moment earlier releases onto the same
@@ -164,6 +168,7 @@ export function TutorRoomChapter() {
             group.
           */}
           <Heading
+            id="tutor-room-headline"
             level={2}
             className={`moyo-tutor-room-headline font-moyo-display text-site-chapter md:text-site-chapter ${HANDOFF_ON_GROUND_CLASS}`}
           >

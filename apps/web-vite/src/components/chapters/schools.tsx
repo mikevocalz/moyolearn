@@ -100,7 +100,11 @@ export function SchoolsChapter() {
   useMotionScene(SCOPE, buildScene);
 
   return (
-    <Section id="for-schools" className="chapter-schools bg-moyo-paper py-section">
+    <Section
+      id="for-schools"
+      aria-labelledby="schools-headline"
+      className="chapter-schools bg-moyo-paper py-section"
+    >
       <Container width="wide" className="gap-section">
         {/*
           The ElevenLabs half: kicker, one sentence, one button. Nothing else is
@@ -113,6 +117,7 @@ export function SchoolsChapter() {
             For schools and tutoring businesses
           </Text>
           <Heading
+            id="schools-headline"
             level={2}
             size="display-xl"
             className="schools-headline max-w-content-detail font-moyo-display text-site-chapter md:text-site-chapter"
@@ -159,9 +164,15 @@ export function SchoolsChapter() {
               <Text className="text-site-label md:text-site-label text-moyo-ink-muted md:basis-1/12">
                 {`0${index + 1}`}
               </Text>
-              <Text className="text-site-subtitle md:text-site-subtitle text-moyo-ink md:basis-1/4">
+              {/* The capability name is a heading, not text that looks like
+                  one: a `Text` at `site-subtitle` is invisible to every
+                  heading-navigation affordance (1.3.1). */}
+              <Heading
+                level={3}
+                className="my-0 font-moyo-text text-site-subtitle font-normal md:text-site-subtitle text-moyo-ink md:basis-1/4"
+              >
                 {capability.term}
-              </Text>
+              </Heading>
               <View className="gap-stack md:flex-1">
                 <Text className="text-site-body md:text-site-body text-moyo-ink-muted">
                   {capability.detail}
@@ -181,8 +192,15 @@ export function SchoolsChapter() {
               </View>
             </ListItem>
           ))}
-          <View className="border-moyo-hair border-transparent border-t-moyo-outline" />
         </List>
+        {/*
+          The table's closing rule. It lives AFTER the list, not inside it: a
+          `<div>` among `<li>`s is invalid markup, and assistive technology that
+          honours it announces a five-item list with a stray sixth child. The
+          rule is structure, so it renders the same either way — only the
+          semantics were wrong.
+        */}
+        <View className="border-moyo-hair border-transparent border-t-moyo-outline" />
 
         {/*
           The O11 proof, drawn. This is the strongest line in the chapter and a
@@ -191,9 +209,12 @@ export function SchoolsChapter() {
           data, which a bar chart on this page would have had to.
         */}
         <View className="gap-group">
-          <Text className="text-site-title md:text-site-title text-moyo-ink">
+          <Heading
+            level={3}
+            className="my-0 font-moyo-text text-site-title font-normal md:text-site-title text-moyo-ink"
+          >
             Your sales tools can&rsquo;t read a child&rsquo;s session
-          </Text>
+          </Heading>
           <View className="flex-col items-stretch md:flex-row">
             <View className="schools-field flex-1 bg-moyo-primary p-inset-roomy gap-stack">
               <Text variant="label" className="text-site-label text-moyo-on-primary">
@@ -253,9 +274,12 @@ export function SchoolsChapter() {
          * the build for describing the problem it was documenting.)
          */}
         <View className="max-w-content-prose gap-stack">
-          <Text className="text-site-title md:text-site-title text-moyo-ink">
+          <Heading
+            level={3}
+            className="my-0 font-moyo-text text-site-title font-normal md:text-site-title text-moyo-ink"
+          >
             Guided-only isn&rsquo;t a setting
-          </Text>
+          </Heading>
           <Paragraph className="text-site-body text-moyo-ink-muted">
             No district, school or teacher can switch Moyo into answering mode, because there isn’t one. And no answer key or teacher material enters the index the student tutor can read.
           </Paragraph>
