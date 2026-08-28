@@ -10,12 +10,18 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as ChaptersLabRouteImport } from './routes/chapters-lab'
 import { Route as GlobeLabRouteImport } from './routes/globe-lab'
 import { Route as MotionLabRouteImport } from './routes/motion-lab'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChaptersLabRoute = ChaptersLabRouteImport.update({
+  id: '/chapters-lab',
+  path: '/chapters-lab',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GlobeLabRoute = GlobeLabRouteImport.update({
@@ -31,30 +37,34 @@ const MotionLabRoute = MotionLabRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/chapters-lab': typeof ChaptersLabRoute
   '/globe-lab': typeof GlobeLabRoute
   '/motion-lab': typeof MotionLabRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/chapters-lab': typeof ChaptersLabRoute
   '/globe-lab': typeof GlobeLabRoute
   '/motion-lab': typeof MotionLabRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/chapters-lab': typeof ChaptersLabRoute
   '/globe-lab': typeof GlobeLabRoute
   '/motion-lab': typeof MotionLabRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/globe-lab' | '/motion-lab'
+  fullPaths: '/' | '/chapters-lab' | '/globe-lab' | '/motion-lab'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/globe-lab' | '/motion-lab'
-  id: '__root__' | '/' | '/globe-lab' | '/motion-lab'
+  to: '/' | '/chapters-lab' | '/globe-lab' | '/motion-lab'
+  id: '__root__' | '/' | '/chapters-lab' | '/globe-lab' | '/motion-lab'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ChaptersLabRoute: typeof ChaptersLabRoute
   GlobeLabRoute: typeof GlobeLabRoute
   MotionLabRoute: typeof MotionLabRoute
 }
@@ -66,6 +76,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/chapters-lab': {
+      id: '/chapters-lab'
+      path: '/chapters-lab'
+      fullPath: '/chapters-lab'
+      preLoaderRoute: typeof ChaptersLabRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/globe-lab': {
@@ -87,6 +104,7 @@ declare module '@tanstack/react-router' {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ChaptersLabRoute: ChaptersLabRoute,
   GlobeLabRoute: GlobeLabRoute,
   MotionLabRoute: MotionLabRoute,
 }

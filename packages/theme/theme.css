@@ -291,12 +291,12 @@
   --font-moyo-text: 'General Sans', 'General Sans Fallback', system-ui, sans-serif;
   --font-moyo-serif: 'Instrument Serif', 'Instrument Serif Fallback', Georgia, serif;
   --font-moyo-hand: 'Shantell Sans', 'Shantell Sans Fallback', system-ui, sans-serif;
-  --text-site-hero: clamp(4rem, 12vw, 12.5rem);
-  --text-site-hero--line-height: 0.88;
-  --text-site-hero--letter-spacing: -0.03em;
-  --text-site-chapter: clamp(2.75rem, 7vw, 6.5rem);
-  --text-site-chapter--line-height: 0.95;
-  --text-site-chapter--letter-spacing: -0.025em;
+  --text-site-hero: clamp(2.75rem, 7.5vw, 7rem);
+  --text-site-hero--line-height: 0.94;
+  --text-site-hero--letter-spacing: -0.02em;
+  --text-site-chapter: clamp(2rem, 4.6vw, 4rem);
+  --text-site-chapter--line-height: 1.02;
+  --text-site-chapter--letter-spacing: -0.02em;
   --text-site-title: clamp(2rem, 4vw, 3.25rem);
   --text-site-title--line-height: 1.05;
   --text-site-title--letter-spacing: -0.02em;

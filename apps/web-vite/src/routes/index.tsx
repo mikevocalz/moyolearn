@@ -1,29 +1,40 @@
 /**
- * `/` — the hero, and the end-to-end proof of the site token layer.
+ * `/` — the landing page. Nine chapters in one scroll.
  *
- * Two jobs, both deliberate:
+ * This file composes and does nothing else. Every chapter owns its own copy,
+ * layout, motion and anchor id; this route decides only the ORDER and the
+ * document-level concerns (title, description, canonical, OG), because that is
+ * the one thing no chapter can decide for itself.
  *
- * 1. It still proves the SSR chain of ADR-001 — @acme/ui →
- *    @expo/html-elements → react-native-web → real HTML, with the className
- *    boundary (react-native-css) resolving during the prerender pass.
- * 2. It now proves the §5.1/§5.2 layer reaches the page: the ground is
- *    `moyoPaper` (not `bg-surface`, which followed the reader's OS theme and
- *    inverted the whole design language on a dark-mode machine), the display
- *    face is Clash Display through `font-moyo-display`, and the size comes from
- *    the fluid `text-site-hero` step rather than the product's fixed ramp.
+ * The order is the emotional arc, not an arbitrary stack:
+ * curiosity (hero) → connection (desk) → conversation (how it tutors) →
+ * discovery (the globe) → the tutor herself → the parent's case →
+ * the institution's case → the ask → rest.
  *
- * Still ONE hero. Chapters, motion and the globe are other agents' work and are
- * deliberately absent — a second section here would be a merge conflict, not a
- * design.
+ * ANCHOR CONTRACT — the nav and the footer link to these, and a chapter that
+ * renders under a different id breaks a link silently rather than loudly:
+ *   #hero · #desk · #conversation · #for-parents · #for-schools · #start
  *
- * SOT: packages/ui/index.ts (component index) · docs/site/tokens.md
- *      docs/site/adr-001-ssr-lane.md
- * SOT-KEYWORDS: web-vite marketing hero route index prerender ssr kit proof
- *               moyo-paper site-hero clash-display tokens
+ * Chapters render <Section>; SiteNav renders <Header>; SiteFooter renders
+ * <Footer role="contentinfo">. Only this file renders <Main>, so the landmarks
+ * nest correctly and a screen reader gets one main region.
+ *
+ * SOT: docs/site/copy-deck.md · docs/site/tokens.md · docs/site/adr-001-ssr-lane.md
+ * SOT-KEYWORDS: web-vite marketing landing route index compose chapters anchors prerender ssr
  */
-import { Container, Heading, Text } from '@acme/ui/typography';
-import { Main, Section, View } from '@acme/ui/primitives';
 import { createFileRoute } from '@tanstack/react-router';
+import { Main } from '@acme/ui/primitives';
+
+import { SiteNav } from '@/components/site-nav';
+import { SiteFooter } from '@/components/site-footer';
+import { Hero } from '@/components/chapters/hero';
+import { Desk } from '@/components/chapters/desk';
+import { Conversation } from '@/components/chapters/conversation';
+import { WorldChapter } from '@/components/chapters/world';
+import { TutorRoomChapter } from '@/components/chapters/tutor-room';
+import { ParentsChapter } from '@/components/chapters/parents';
+import { SchoolsChapter } from '@/components/chapters/schools';
+import { StartChapter } from '@/components/chapters/start';
 
 const TITLE = 'Moyo — AI tutoring that helps children learn it by heart';
 const DESCRIPTION =
@@ -51,44 +62,19 @@ export const Route = createFileRoute('/')({
 
 function MarketingHome() {
   return (
-    <Main className="min-h-screen bg-moyo-paper py-section">
-      <Section>
-        <Container width="wide" className="gap-group">
-          <Text variant="label" className="text-site-label text-moyo-secondary">
-            Moyo · n. heart
-          </Text>
-          {/*
-            `md:text-site-hero` is not a typo and not belt-and-braces. Heading's
-            `size` variant steps up at md (`text-display-xl md:text-display-2xl`),
-            and tailwind-merge only lets a class beat another in the SAME
-            modifier group — so overriding the base step alone would leave the
-            product's fixed 72px winning from 768px up, which is precisely where
-            a fluid hero is supposed to be at its most dramatic. Restating it in
-            the md group removes that one. The site-local `MoyoDisplay` in the
-            component inventory closes this seam properly; this route documents
-            it rather than hiding it.
-          */}
-          <Heading
-            level={1}
-            size="display-xl"
-            className="font-moyo-display text-site-hero md:text-site-hero"
-          >
-            AI tutoring that helps children learn it by heart
-          </Heading>
-          {/*
-            The lead sits in a framed slab: 3px outline, square corners, and a
-            hard offset shadow with zero blur. One element, and it exercises the
-            whole shape half of the layer — border width, radius law, offset
-            elevation — so a regression in any of the three is visible on the
-            one page that exists.
-          */}
-          <View className="border-moyo-rule max-w-content-prose rounded-moyo-square border-moyo-outline bg-moyo-paper-raised p-inset-roomy shadow-moyo-2">
-            <Text variant="body" className="text-site-lead">
-              {DESCRIPTION}
-            </Text>
-          </View>
-        </Container>
-      </Section>
-    </Main>
+    <>
+      <SiteNav />
+      <Main role="main" className="bg-moyo-paper">
+        <Hero />
+        <Desk />
+        <Conversation />
+        <WorldChapter />
+        <TutorRoomChapter />
+        <ParentsChapter />
+        <SchoolsChapter />
+        <StartChapter />
+      </Main>
+      <SiteFooter />
+    </>
   );
 }
