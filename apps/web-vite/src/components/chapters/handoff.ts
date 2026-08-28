@@ -1,25 +1,26 @@
 /**
  * The chapter 04 → chapter 05 seam, in one file so it cannot drift.
  *
- * The two chapters are ONE move, not two sections stacked: chapter 04's pinned
- * timeline ends by growing a hard-edged cobalt circle past the viewport (the
- * Oryzo hand-off from `docs/site/mobbin/globe.md` — the next section arrives as
- * a reveal *through* the outgoing one), and the field it leaves behind is
- * literally chapter 05's ground. That only reads as continuous while both sides
- * agree on the same fill, so the fill is named once, here, and both import it.
+ * Chapter 04 ends on paper and chapter 05 opens on cobalt, and the seam only
+ * reads as one move while both sides agree on the fill — so the fill is named
+ * once, here, and imported rather than spelled twice.
  *
- * A `<Nav>`-style shared component was the alternative and it is the wrong
- * shape: the flood belongs to the pinned stage's stacking context and the ground
- * belongs to the next section's box. They are two elements. What they share is a
- * value, and a value is what this module exports.
+ * THE FLOOD DISC IS GONE. This module used to serve a second consumer: chapter
+ * 04's pinned stage grew a hard-edged cobalt circle past the viewport on the way
+ * out (the Oryzo hand-off from `docs/site/mobbin/globe.md`). That move needs a
+ * viewport-height crop to land in, and the crop is what cut the globe in half,
+ * clipped a node card off the right edge and buried the chapter's own display
+ * line behind the figure. The pin went with the defects; see `world.tsx`. What
+ * survives is the value, which is the only part the seam actually needed —
+ * `HANDOFF_GROUND_CLASS` now has exactly one consumer, chapter 05's band.
  *
  * The ids are here for the same reason. `routes/index.tsx` composes the page and
  * the nav anchors into it (`site.nav.how` → chapter 03, and so on, from the copy
  * deck §1); an id spelled twice is an anchor that silently stops resolving.
  *
- * SOT: docs/site/mobbin/globe.md (Oryzo) · docs/site/tokens.md §5.1
- *      docs/site/copy-deck.md §5, §6
- * SOT-KEYWORDS: site chapters handoff cobalt flood ground chapter 04 05 world
+ * SOT: docs/site/tokens.md §5.1 · docs/site/copy-deck.md §5, §6
+ *      ./world.tsx (why the Oryzo flood is not built)
+ * SOT-KEYWORDS: site chapters handoff cobalt ground chapter 04 05 world
  *               tutor room seam anchor ids web-vite
  */
 

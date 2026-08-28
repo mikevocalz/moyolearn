@@ -1,0 +1,34 @@
+/*
+ * The sticky masthead's scroll offset.
+ *
+ * WHY THIS FILE EXISTS. `site-nav.tsx` renders a `sticky top-0` header, and a
+ * sticky header means every in-page anchor lands with the target's first lines
+ * underneath it. Observed: following `#chapter-04` put the chapter's headline
+ * behind the bar, so the reader arrived at a section whose first line was
+ * missing. That is a defect the anchor targets cannot fix individually — a
+ * `scroll-mt-*` per `<Section>` is the same value written eight times, and the
+ * ninth chapter ships without it — so it is declared once, here, beside the
+ * element that causes it.
+ *
+ * WHY `scroll-padding` ON THE ROOT and not `scroll-margin` on the sections: the
+ * scroll container is the viewport, whose scroll-padding is taken from the root
+ * element, and padding on the container covers EVERY target — the four nav
+ * anchors, the footer's links, the skip link, and `:target` — including ids
+ * added later by files that never hear about this rule.
+ *
+ * THE VALUE IS DERIVED, NOT MEASURED. The bar is one row of controls inside
+ * `py-inset`: its height is the tallest control (`min-h-target-adult`) plus its
+ * own vertical inset and the row's, which is `--spacing-inset * 4`. No raw
+ * pixel appears; if the inset tier or the adult target moves, this moves with
+ * them. Measured against the built page it clears the bar at 390, 820 and 1440.
+ *
+ * SOT: ./site-nav.tsx · docs/site/tokens.md · packages/theme/tokens.ts
+ * SOT-KEYWORDS: site nav sticky header anchor offset scroll padding target
+ *               chapter anchors skip link web-vite
+ */
+
+html {
+  scroll-padding-block-start: calc(
+    var(--spacing-target-adult) + var(--spacing-inset) * 4
+  );
+}

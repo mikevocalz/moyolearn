@@ -1,46 +1,37 @@
 /*
- * Layout geometry for chapters 04 and 05, and the choreography channel that
- * joins them.
+ * Layout geometry for chapters 04 and 05.
  *
  * WHY A STYLESHEET AND NOT UTILITIES — the same reason `src/globe/globe.css`
  * gives: every value below is either a Moyo token read through `var()` or a pure
- * geometric ratio (a percentage, a viewport multiple, an aspect-ratio, a
- * stacking order). Tailwind has no utility for "the globe is cropped by the
- * bottom of the stage", and writing it as `h-[62%]` would be exactly the
+ * geometric ratio (a percentage, an aspect-ratio, a stacking order, a container
+ * breakpoint). Tailwind has no utility for "the node cards need a gutter wider
+ * than the globe's own disc", and writing it as `w-[26%]` would be exactly the
  * arbitrary value CLAUDE.md bans. No colour, font, radius, border width, shadow,
  * duration or spacing step is spelled here — those arrive as token classes on
  * the elements or as `var()`s from `.moyo-site`.
  *
- * THE CHOREOGRAPHY CHANNEL. `--moyo-world-*` are written once per frame by
- * chapter 04's scrubbed timeline (`world.tsx`) and consumed here. Three
- * properties make that safe:
+ * ── WHAT USED TO BE HERE, AND WHY IT IS NOT ─────────────────────────────────
+ * Chapter 04 was a 500svh sticky stage driven by a `--moyo-world-*` custom
+ * property channel: a crop, a spin, a lateral drift, a progress rail and a
+ * cobalt flood disc. The composition it produced collided with itself at every
+ * width — the display line was occluded by the globe, the globe was cut off by
+ * the crop, the node cards sat on the disc and ran off the right edge of the
+ * viewport, and the flood covered the cards on the way out. The channel and the
+ * gate are gone with it. `world.tsx`'s header records the decision; this file
+ * now describes an ordinary chapter that reads top to bottom.
  *
- *   1. They are declared with a REST VALUE on `.moyo-world-stage`. Nothing on
- *      this page is authored mid-animation, so with JS off, with the bundle
- *      failing, or under reduced motion — where no ScrollTrigger is created at
- *      all and the driver never runs — the composition sits at its finished,
- *      unpinned state. That is the end-state law, expressed in CSS.
- *   2. They drive `scale`, `rotate` and `translate`, which are STANDALONE CSS
- *      properties, never `transform`. GSAP owns the transform matrix of any
- *      element it animates; a stylesheet writing `transform` on the same node
- *      would be silently overwritten by the first tween. Same split as
- *      `.moyo-pressable` in `globals.css`.
- *   3. Every rule that consumes one lives inside the single media gate below.
- *      The choreography is an enhancement over a composition that is already
- *      complete, and the gate is the only place that is decided.
- *
- * WHY MEDIA QUERIES AND NOT CONTAINER QUERIES, unlike `globe.css`: the stage
- * holds with `position: sticky`, and a container query ancestor declares
- * `contain: layout`, which changes what `sticky` and any `fixed` descendant are
- * measured against. These chapters are full-bleed by construction — the viewport
- * IS their container — so the reason `globe.css` gives for preferring a
- * container query (the chapter might be dropped into a narrow column) does not
- * apply, and the containment side-effect does.
+ * WHY CONTAINER QUERIES ARE SAFE NOW. The old note here said media queries were
+ * required because a container-query ancestor declares `contain: layout`, which
+ * changes what `position: sticky` is measured against. Nothing in this file is
+ * sticky any more, and the one query below asks about the GLOBE STAGE's own
+ * inline size — which is the thing the answer actually depends on — so it is
+ * scoped to the container `globe.css` already established.
  *
  * SOT: apps/web-vite/src/components/chapters/world.tsx · ./tutor-room.tsx
- *      docs/site/tokens.md · docs/site/mobbin/globe.md · ./tutor-room.md
- * SOT-KEYWORDS: site chapters css world tutor room sticky stage flood cobalt
- *               parallax layers crop drift progress rule straddle web-vite
+ *      apps/web-vite/src/globe/globe.css · docs/site/tokens.md
+ *      docs/site/mobbin/globe.md · ./tutor-room.md
+ * SOT-KEYWORDS: site chapters css world tutor room globe well gutters node cards
+ *               leader lines cobalt band plate straddle web-vite
  */
 
 /* ── chapter 04 · A WORLD OF LEARNING ─────────────────────────────────────── */
@@ -50,18 +41,10 @@
 }
 
 /*
-  The stage. At rest it is an ordinary block that grows to fit its contents:
-  back type, then the headline panel, then the globe with its node list under
-  it. The sticky, viewport-height, cropped version is the enhancement, and it
-  lives entirely in the gate at the bottom of this block.
+  The stage: one column, three blocks, in reading order. Headline, then the
+  globe in its own reserved height, then the availability slab.
 */
 .moyo-world-stage {
-  --moyo-world-crop: 1;
-  --moyo-world-spin: 0deg;
-  --moyo-world-drift: 0rem;
-  --moyo-world-flood: 0;
-  --moyo-world-progress: 0;
-
   position: relative;
   display: grid;
   /*
@@ -75,96 +58,60 @@
     the track definite and the percentage resolvable.
   */
   grid-template-columns: minmax(0, 1fr);
-  gap: var(--spacing-group);
+  gap: var(--spacing-section);
   padding-block: var(--spacing-section);
   padding-inline: var(--spacing-inset);
 }
 
-.moyo-world-front,
+/*
+  One lane, so the headline, the figure and the qualifying sentence share a left
+  edge. The globe needs the full lane — its node cards live in the stage's own
+  corners — which is why the lane is `content-wide` and not `content-detail`.
+*/
+.moyo-world-copy,
 .moyo-world-well,
-.moyo-world-backtype {
+.moyo-world-foot {
   inline-size: 100%;
   max-inline-size: var(--container-content-wide);
   justify-self: center;
 }
 
 /*
-  Back layer. Brand type behind the figure — depth here is OCCLUSION, not
-  opacity, which is what keeps it at full contrast where it is visible instead
-  of fading it toward the ground it has to stay legible against.
+  The chapter's copy, in flow, crossed by nothing. The display line, the
+  sub-line and the deck paragraph step down in size — which is where the
+  hierarchy comes from. This is also the one layer `world.tsx` gives a parallax
+  travel to.
 */
-.moyo-world-backtype {
-  z-index: 0;
-  display: grid;
-  /*
-    `place-content` as well as `place-items`, and this is not belt-and-braces:
-    react-native-web's base View style sets `align-content: flex-start`, which
-    parks the single implicit row TRACK at the top of the box. `place-items`
-    only centres the item inside that track, so on its own the type stays pinned
-    to the top of a box it is supposed to be centred in — observed, not
-    theorised. Every centred grid in this file needs both.
-  */
-  place-content: center;
-  place-items: center;
-  /* Brand type, not a control surface: it must never eat a globe drag. */
-  pointer-events: none;
-}
-
-/*
-  Mid layer: small drawn fragments living BETWEEN the type and the globe, so the
-  stage reads as three depths rather than a picture on a wall. Decorative by
-  construction and `aria-hidden` in the markup — every claim in this chapter is
-  card text the globe owns.
-*/
-.moyo-world-fragments {
-  position: absolute;
-  inset: 0;
-  z-index: 1;
-  pointer-events: none;
-}
-
-.moyo-world-fragment {
-  position: absolute;
-  inline-size: 3%;
-  aspect-ratio: 1;
-  min-inline-size: var(--spacing-stack);
-}
-
-.moyo-world-fragment--a {
-  inset-block-start: 18%;
-  inset-inline-start: 9%;
-}
-.moyo-world-fragment--b {
-  inset-block-start: 31%;
-  inset-inline-end: 13%;
-}
-.moyo-world-fragment--c {
-  inset-block-end: 24%;
-  inset-inline-start: 17%;
-}
-.moyo-world-fragment--d {
-  inset-block-end: 12%;
-  inset-inline-end: 8%;
-}
-
-/*
-  Foreground. The Klarna move: the headline and the qualifying availability
-  sentence are set OUTSIDE and ABOVE the figure, so the globe reads as a figure
-  with a caption rather than as decoration bleeding across the page. It is also
-  the fastest-travelling layer — `travel.parallax-near` in world.tsx.
-*/
-.moyo-world-front {
-  z-index: 3;
-  display: grid;
-  gap: var(--spacing-group);
-  align-items: start;
-}
-
-.moyo-world-front-copy {
+.moyo-world-copy {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: var(--spacing-stack);
-  max-inline-size: var(--container-content-prose);
+}
+
+/*
+  The globe's reserved height. A plain block that takes its size from the figure
+  inside it: there is no crop, no viewport height and no overflow rule here, so
+  there is no composition in which the disc, its rings or its offset shadow can
+  be cut by an edge.
+*/
+.moyo-world-well {
+  position: relative;
+  display: grid;
+  /* See `.moyo-world-stage` — an implicit track here collapsed the globe. */
+  grid-template-columns: minmax(0, 1fr);
+  /*
+    Clearance ON TOP of the stage's own gap, because the copy above is the one
+    layer with a parallax travel: it drifts down by `travel.parallax-far` across
+    the chapter's range, and a gap exactly equal to that travel is a gap that is
+    zero at the bottom of the range. The depth cue has to be paid for out of
+    space that exists, not out of the paragraph's clearance.
+  */
+  padding-block-start: var(--spacing-group);
+}
+
+.moyo-world-globe {
+  inline-size: 100%;
+  margin-inline: auto;
 }
 
 .moyo-world-availability {
@@ -172,165 +119,42 @@
 }
 
 /*
-  The globe's well. `align-content: end` parks the disc on the stage's bottom
-  edge, so when the crop is on it takes the SOUTHERN arc — the composition keeps
-  its horizon and the four node cards, which sit in the stage's upper corners,
-  stay whole.
+  ── THE NODE CARDS' GUTTER ─────────────────────────────────────────────────
+  `globe.css` parks the four cards in the corners of the square globe stage and
+  runs a leader line from each down to its anchor — the Braintrust move, and the
+  right one, because no label ever lands on a landmass. It holds only while the
+  stage is wide enough that a card's INNER corner falls outside the ocean disc,
+  whose radius is `GLOBE_SCREEN_FRACTION` (0.36) of the stage.
+
+  That is a circle-versus-rectangle test, so it is a ratio, not a breakpoint the
+  eye picks: a card of width w and height h clears the disc when
+  `hypot(0.5 - w, 0.5 - h) > 0.36` in stage fractions. At the 44rem breakpoint
+  `globe.css` uses, a 40%-wide card is about 0.28 from the centre and lands
+  squarely on the Atlantic — which is what shipped, at 1440 as well as at 820.
+
+  So this chapter raises the threshold to 60rem of stage. Above it the cards are
+  capped at 20rem by `globe.css` and the corners are genuinely empty; below it
+  the composition becomes globe-then-list, which is the arrangement `globe.css`
+  already defines. The three rules are restated rather than shared because the
+  breakpoint is a property of THIS chapter's lane width, not of the globe.
 */
-.moyo-world-well {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  /* See `.moyo-world-stage` — an implicit track here collapsed the globe. */
-  grid-template-columns: minmax(0, 1fr);
-  align-content: end;
-  min-block-size: 0;
-}
-
-/*
-  The choreographed layer. The transform is applied HERE — to a wrapper holding
-  the whole globe figure — and never to the globe's inner frame: the leader lines
-  are a sibling of that frame, and scaling one without the other would leave
-  every line pointing at open ocean through the entrance.
-*/
-.moyo-world-globe {
-  inline-size: 100%;
-  max-inline-size: var(--container-content-detail);
-  margin-inline: auto;
-  transform-origin: center bottom;
-}
-
-/*
-  Structured's move: the scroll-progress read is drawn INSIDE the artwork rather
-  than chromed onto the page edge. It is the single thing that makes a held
-  section tolerable — the reader can see how much of it is left — and it only
-  exists when there is a held section, so it is gated with everything else.
-*/
-.moyo-world-progress {
-  display: none;
-  position: absolute;
-  inset-block: var(--spacing-section);
-  inset-inline-end: var(--spacing-inset);
-  z-index: 3;
-  inline-size: var(--moyo-border-w-hair);
-  background-color: var(--color-moyo-paper-sunken);
-  pointer-events: none;
-}
-
-.moyo-world-progress::before {
-  content: '';
-  display: block;
-  inline-size: 100%;
-  block-size: calc(var(--moyo-world-progress) * 100%);
-  background-color: var(--color-moyo-outline);
-}
-
-/*
-  The hand-off. A hard-edged circle grown past the viewport — the Oryzo move,
-  where the next section arrives as a reveal THROUGH the outgoing one rather
-  than stacking under it. Only meaningful while the stage is held at viewport
-  height, so it renders only inside the gate.
-*/
-.moyo-world-flood {
-  display: none;
-  position: absolute;
-  inset: 0;
-  grid-template-columns: minmax(0, 1fr);
-  z-index: 4;
-  /* See `.moyo-world-backtype` for why both, and not just `place-items`. */
-  place-content: center;
-  place-items: center;
-  /* Nothing here is operable, and a full-viewport disc must never trap a drag. */
-  pointer-events: none;
-}
-
-.moyo-world-flood-disc {
-  inline-size: 100%;
-  aspect-ratio: 1;
-  border-radius: 50%;
-  scale: var(--moyo-world-flood);
-}
-
-/*
-  ── THE GATE ───────────────────────────────────────────────────────────────
-  The whole pinned composition, and every rule that reads the choreography
-  channel, in one block with two conditions:
-
-  `prefers-reduced-motion: no-preference` — the globe's own spec asks for an
-  unpinned static composition with all facts reachable, and this is where that
-  is honoured. It also keeps the 400% of scroll runway from existing at all for
-  that reader: four empty viewports is precisely the wrong reward for asking for
-  less movement. A browser that does not support the feature fails the query and
-  lands on the same safe side.
-
-  `min-width: 52rem` — below it, `globe.css`'s own container query moves the four
-  node cards out of the stage corners and stacks them under the globe, which
-  makes the composition far taller than a viewport. Cropping that to 100svh would
-  clip the cards, and a claim you have to scroll a clipped box to reach is a
-  claim you cannot reach.
-
-  500svh and `end: 'bottom bottom'` in `world.tsx` are the same length expressed
-  once each: the timeline finishes exactly as the sticky stage reaches the
-  section's bottom edge and releases into chapter 05.
-*/
-@media (min-width: 52rem) and (prefers-reduced-motion: no-preference) {
-  .moyo-world {
-    min-block-size: 500svh;
-  }
-
-  .moyo-world-stage {
-    position: sticky;
-    inset-block-start: 0;
-    block-size: 100svh;
-    grid-template-rows: auto 1fr;
-    /*
-      The crop — the Visitors move, the globe read as a horizon rather than a
-      centred ball. `clip` and not `hidden`: it creates no scroll container, so a
-      focus landing inside the stage can never scroll the crop out of alignment.
-    */
-    overflow: clip;
-  }
-
-  /*
-    Held clear of the headline panel's row and centred over the globe's upper
-    arc instead. Centring it in the whole stage put 100px display type straight
-    through the deck paragraph, which is not depth, it is a collision — and the
-    Mobbin pass refused KODE Immersive for exactly that ("scale is not an excuse
-    for a collision, and this fails immediately for anyone with low vision").
-  */
-  .moyo-world-backtype {
-    position: absolute;
-    inset: 22% 0 0;
-    /* Opposite to the globe's lateral drift — the two layers pass each other. */
-    translate: calc(var(--moyo-world-drift) * -1) 0;
-  }
-
-  .moyo-world-globe {
-    scale: var(--moyo-world-crop);
-    rotate: var(--moyo-world-spin);
-    translate: var(--moyo-world-drift) 0;
-  }
-
-  .moyo-world-front {
-    grid-template-columns: 1fr auto;
-  }
-
-  /*
-    Clearance between the deck paragraph and the globe's node cards, which sit
-    in the globe stage's own top corners and are therefore the first thing the
-    figure puts under the copy. Without it the two are ~35px apart at rest and
-    the foreground's parallax closes the gap entirely.
-  */
-  .moyo-world-well {
-    padding-block-start: var(--spacing-group);
-  }
-
-  .moyo-world-progress {
-    display: block;
-  }
-
-  .moyo-world-flood {
+@container (max-width: 60rem) {
+  .moyo-world .moyo-globe-nodes {
+    position: static;
     display: grid;
+    gap: var(--spacing-stack);
+    margin-block-start: var(--spacing-group);
+  }
+
+  .moyo-world .moyo-globe-node {
+    position: static;
+    inline-size: 100%;
+    max-inline-size: none;
+  }
+
+  /* With the cards off the stage there is nothing for a leader line to reach. */
+  .moyo-world .moyo-globe-leaders {
+    display: none;
   }
 }
 

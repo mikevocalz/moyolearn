@@ -25,6 +25,11 @@
  * would have to supply, so this component is complete on its own: a skip link
  * that depends on somebody else adding an id is a skip link that ships broken.
  *
+ * Because the bar is sticky, it also owes every one of those anchors a scroll
+ * offset — without it a chapter's first line lands behind the bar. That is
+ * declared once in `./site-nav.css`, next to the element that causes it, rather
+ * than as a `scroll-mt-*` repeated on every `<Section>` on the page.
+ *
  * Mobbin: no nav-specific pass exists in docs/site/mobbin/ — the index was
  * queried for heroes, bentos, conversations and footers, not for mastheads. The
  * two structural moves borrowed here therefore come from the hero pass and are
@@ -47,6 +52,7 @@ import { Button, Header, Link, Nav, View } from '@acme/ui/primitives';
 import { create } from 'zustand';
 import { useMotionScene } from '@/motion';
 import type { MotionScene } from '@/motion';
+import './site-nav.css';
 
 const SCOPE = '.site-nav';
 
