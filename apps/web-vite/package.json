@@ -41,6 +41,7 @@
     "@vitejs/plugin-react": "catalog:",
     "eslint": "catalog:",
     "eslint-config-expo": "catalog:",
+    "nitro": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
