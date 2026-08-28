@@ -963,15 +963,35 @@ test(
       const priorFacts = first.filter((fact) => fact.id !== interest.id);
 
       /*
-        THE CONTROL. Unfiltered, over turns that still carry the tag — because
-        the turns are a record of what happened and erasure does not rewrite
-        them — the fact walks straight back under the same deterministic id.
-        This assertion is the bug, held still.
+        THE CONTROL, and it has to run over a SECOND session rather than the one
+        already distilled.
+
+        `distill` gained transcript-level idempotence: it skips a turn whose
+        mastery fact already lists that transcript in `derivedFrom`, because
+        every accumulating value is a function of the previous run's output and
+        a replay was silently advancing p. Re-running the ORIGINAL transcript
+        therefore returns early and derives nothing — which made this control
+        fail, and the control failing is the test correctly refusing to prove
+        something with a rigged fixture.
+
+        Idempotence is not the guarantee under test, and leaning on it here
+        would be a false pass: it holds only while the mastery fact keeps this
+        transcript in its provenance. The moment a LATER session mentions the
+        interest again — the ordinary case, a child who still likes basketball —
+        the turn is new, the guard does not fire, and the tag is the only thing
+        standing between an erased line and its return. So the control is that
+        session, and it is a stronger claim than the original.
       */
-      const unfiltered = distill(transcript, priorFacts, new Date(), options);
+      const laterSession = {
+        ...transcript,
+        id: randomUUID(),
+        turns: [turn],
+      };
+
+      const unfiltered = distill(laterSession, priorFacts, new Date(), options);
       assert.ok(
         unfiltered.some((fact) => fact.id === interest.id),
-        'control failed: the distiller no longer re-derives an erased interest on its own, ' +
+        'control failed: a later session no longer re-derives an erased interest on its own, ' +
           'so the assertion below proves nothing',
       );
 
@@ -984,7 +1004,7 @@ test(
 
       const blockedTags = await loadBlockedTags();
       const filtered = distill(
-        { ...transcript, turns: withoutBlockedTags(transcript.turns, blockedTags) },
+        { ...laterSession, turns: withoutBlockedTags(laterSession.turns, blockedTags) },
         priorFacts,
         new Date(),
         options,
