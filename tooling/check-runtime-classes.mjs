@@ -106,7 +106,7 @@ for (const dir of ['packages/ui', 'packages/app']) {
 }
 
 // ---- 3. the tailwind-merge font-size list must cover the whole ramp --------
-const { uiRamp, typeScale } = await import('../packages/theme/tokens.ts');
+const { uiRamp, typeScale, siteTypeScale } = await import('../packages/theme/tokens.ts');
 const tvSrc = readFileSync(join(ROOT, 'packages/ui/tv.ts'), 'utf8');
 const registered = new Set(
   [...(tvSrc.match(/RAMP_FONT_SIZES = \[([\s\S]*?)\]/)?.[1] ?? '').matchAll(/'([^']+)'/g)].map(
@@ -114,7 +114,11 @@ const registered = new Set(
   ),
 );
 
-for (const step of [...Object.keys(uiRamp), ...Object.keys(typeScale)]) {
+for (const step of [
+  ...Object.keys(uiRamp),
+  ...Object.keys(typeScale),
+  ...Object.keys(siteTypeScale),
+]) {
   if (!registered.has(step)) {
     failures.push(
       `packages/ui/tv.ts\n    \`text-${step}\` is missing from RAMP_FONT_SIZES — tailwind-merge will read it as a\n    COLOUR and delete it whenever the same element also sets a text colour.`,

@@ -454,6 +454,203 @@ export const breakpoints = {
   '2xl': '96rem',
 } as const;
 
+// ---- marketing site layer (site spec §5.1 · §5.2) ---------------------------
+
+/**
+ * The marketing site's own semantic layer. Everything above this line themes the
+ * PRODUCT; everything below themes moyolearn.com, and the two must not be
+ * confused for one another.
+ *
+ * Three rules make this a layer rather than a second design system:
+ *
+ * 1. **It is theme-independent.** These are flat hex values, not `light-dark()`
+ *    pairs, because a marketing page has one ground: warm cream paper. Phase 0's
+ *    hero sat on `bg-surface`, which follows the reader's OS preference, so the
+ *    site inverted itself on a dark-mode machine and the whole design language —
+ *    ink on paper, hard offset shadows in the outline colour — stopped meaning
+ *    anything. `.moyo-site` (build-css.mjs) is the scope that makes the ground
+ *    explicit; it pins `color-scheme: light` so the product's `light-dark()`
+ *    tokens resolve light inside it, and re-points the product's chrome at these
+ *    values so `@acme/ui` components render on paper without being restyled.
+ * 2. **Only the web output carries it.** There is no native marketing surface,
+ *    so emitting these into theme-native.css would grow the mobile app's Uniwind
+ *    registry with utilities it can never use.
+ * 3. **The six names in the spec are binding**, so the colour keys are camelCase
+ *    (`moyoPrimary`) where the rest of this file is kebab. build-css.mjs
+ *    kebab-cases them on the way out — the TS key is `moyoPrimary`, the variable
+ *    is `--color-moyo-primary`, and the class is `bg-moyo-primary`. Shape and
+ *    type maps keep the file's kebab step names; their binding names
+ *    (`moyoShadowOffset`, `moyoBorderW`) are the export identifiers.
+ *
+ * Every value here is measured, not chosen by eye — the ratios are in
+ * docs/site/tokens.md and `tooling/check-contrast.mjs` gates them.
+ * SOT: docs/site/tokens.md · this file
+ * SOT-KEYWORDS: site marketing moyo paper ink tokens palette web-vite
+ */
+export const siteColors = {
+  /** The ground. Warm cream, not white: the site is printed matter, not a screen. */
+  moyoPaper: '#F7F1E3',
+  /** A card lifted off the ground. Ink on it is 17.99:1. */
+  moyoPaperRaised: '#FFFCF2',
+  /** A recessed band — the only way a section changes value without changing hue. */
+  moyoPaperSunken: '#EFE7D4',
+  /** Warm near-black. Never `#000`: pure black on cream reads as a printing error. */
+  moyoInk: '#171310',
+  /** Secondary prose. 6.91:1 on paper — muted is a value step, never a legibility cut. */
+  moyoInkMuted: '#5A5145',
+  /**
+   * The outline IS the ink. It is a separate token because a section may soften
+   * its rules without touching type colour; today it resolves to the same value,
+   * which is what makes the 2–4px frames read as drawn rather than as chrome.
+   */
+  moyoOutline: '#171310',
+  /**
+   * Cobalt. The only hue in the brief without a name of its own, and the one the
+   * globe chapter fixes publicly as the oceans — the largest colour area on the
+   * site — so it is the primary. 7.42:1 on paper: safe as body text, links, and
+   * as a fill under paper-coloured type.
+   */
+  moyoPrimary: '#1C3FBF',
+  /**
+   * The sun hue at mark strength. NOT a duplicate of `moyoSun`: that one is a
+   * BLOCK (1.69:1 on paper — a fill that can never carry type), this one is a
+   * MARK (7.06:1). The product layer already draws this distinction between
+   * `highlighter` and `ballpoint`; the site inherits the discipline, not the
+   * values.
+   */
+  moyoSecondary: '#6E4A00',
+  /** Red-orange. Moyo is heart — this is the one colour that is allowed to shout. */
+  moyoHeart: '#C7350F',
+  /**
+   * Mustard. Fixed publicly by the globe chapter as the Africa block. A FILL
+   * ONLY — 1.69:1 against paper — so it is never type, never a border, never a
+   * focus ring. Ink on it is 9.68:1.
+   */
+  moyoSun: '#F2B01E',
+  /** Clay. The earth band under a section, and the second-warmest fill. */
+  moyoEarth: '#9A4526',
+  /** Leaf green. Growth, and the only cool-warm counterweight to cobalt. */
+  moyoLeaf: '#286641',
+
+  // Foregrounds. Paper rather than white on every chromatic fill: a white knockout
+  // on a cream page reads as a hole punched through it.
+  moyoOnPrimary: '#F7F1E3',
+  moyoOnSecondary: '#F7F1E3',
+  moyoOnHeart: '#F7F1E3',
+  moyoOnSun: '#171310',
+  moyoOnEarth: '#F7F1E3',
+  moyoOnLeaf: '#F7F1E3',
+} as const;
+
+/**
+ * Hard offset shadows — x/y steps, **zero blur, always**. A blurred shadow is a
+ * different design language and there is no token for one.
+ *
+ * The offset is stored on its own (`--moyo-shadow-offset-*`) as well as composed
+ * into the Tailwind shadow namespace, because a chapter that animates depth
+ * needs the scalar, not the finished string.
+ */
+export const moyoShadowOffset = {
+  1: '0.1875rem', // 3px — a rule that has lifted off the page
+  2: '0.375rem', // 6px — the default card
+  3: '0.625rem', // 10px — a hero slab
+  4: '1rem', // 16px — one per page, at most
+} as const;
+
+/**
+ * Border widths. 2px is the floor: below it the frame stops reading as drawn.
+ *
+ * Emitted as custom properties AND as `.border-moyo-*` classes, because Tailwind
+ * builds `border-2` from a bare number and has no border-width theme namespace —
+ * a `border-moyo-rule` utility would otherwise be silently inert, which is the
+ * exact class of bug `tooling/check-runtime-classes.mjs` exists to catch.
+ */
+export const moyoBorderW = {
+  hair: '2px',
+  rule: '3px',
+  slab: '4px',
+} as const;
+
+/**
+ * The radius law: mostly square, with ONE small step for tactile cards. Two
+ * entries, deliberately — a third would turn a law into a scale.
+ */
+export const moyoRadius = {
+  square: '0rem',
+  card: '0.25rem',
+} as const;
+
+/**
+ * Paper grain. 2–4% is the whole range: at 5% it is grunge, and the design
+ * language is a clean workbook, not a distressed poster.
+ */
+export const moyoTexture = {
+  grain: '0.03',
+} as const;
+
+/**
+ * The site's faces (§5.2). Self-hosted woff2 only — `apps/web-vite/src/fonts.css`
+ * declares the `@font-face` rules against `apps/web-vite/public/fonts/`, and no
+ * request to a font CDN is emitted from any surface.
+ *
+ * Each stack names a `* Fallback` face before the system fallback. Those are
+ * `local()`-backed `@font-face` blocks carrying measured `size-adjust` and
+ * ascent/descent overrides, so the swap from fallback to webfont does not move a
+ * single line and CLS stays ~0. The metrics are in docs/site/tokens.md.
+ *
+ * Shantell Sans is the ONLY handwriting on the site, and it is reserved for
+ * margin notes and annotation arrows — a tutor's pen in the margin, never a
+ * heading, never a button, never body copy.
+ */
+export const siteFontFamilies = {
+  moyoDisplay: "'Clash Display', 'Clash Display Fallback', 'Arial Black', sans-serif",
+  moyoText: "'General Sans', 'General Sans Fallback', system-ui, sans-serif",
+  moyoSerif: "'Instrument Serif', 'Instrument Serif Fallback', Georgia, serif",
+  moyoHand: "'Shantell Sans', 'Shantell Sans Fallback', system-ui, sans-serif",
+} as const;
+
+/**
+ * The fluid site ramp. Every step is a `clamp()`, so there is no breakpoint at
+ * which type jumps — the page is one continuous composition from 320px to 2560px
+ * and the display sizes do the dramatic-scale work the brief asks for.
+ *
+ * `site-hero` is the spec's `clamp(64px, 12vw, 200px)` in rem. Leading tightens
+ * as size grows (0.88 at hero, 1.6 at body) because a 200px line set at 1.2
+ * leaves a corridor of dead space no layout can absorb.
+ *
+ * Keys stay kebab like `typeScale`, so Tailwind emits `text-site-hero` directly.
+ * Every key must also appear in `RAMP_FONT_SIZES` in packages/ui/tv.ts or
+ * tailwind-merge reads it as a COLOUR and deletes it — see that file's header.
+ */
+export const siteTypeScale = {
+  /** The one hero moment per page. Clash Display, tight, unapologetic. */
+  'site-hero': { size: 'clamp(4rem, 12vw, 12.5rem)', lineHeight: '0.88', tracking: '-0.03em' },
+  /** Chapter openers. */
+  'site-chapter': { size: 'clamp(2.75rem, 7vw, 6.5rem)', lineHeight: '0.95', tracking: '-0.025em' },
+  'site-title': { size: 'clamp(2rem, 4vw, 3.25rem)', lineHeight: '1.05', tracking: '-0.02em' },
+  'site-subtitle': {
+    size: 'clamp(1.375rem, 2.4vw, 1.875rem)',
+    lineHeight: '1.15',
+    tracking: '-0.01em',
+  },
+  /** The paragraph directly under a display moment. */
+  'site-lead': { size: 'clamp(1.125rem, 1.6vw, 1.375rem)', lineHeight: '1.5', tracking: '0' },
+  'site-body': { size: 'clamp(1rem, 1.05vw, 1.125rem)', lineHeight: '1.6', tracking: '0' },
+  /** Eyebrows and structural labels. Tracked open because it is set in caps. */
+  'site-label': {
+    size: 'clamp(0.8125rem, 0.9vw, 0.875rem)',
+    lineHeight: '1.3',
+    tracking: '0.08em',
+  },
+  /** Instrument Serif only — pull-quotes and the For Parents register. */
+  'site-quote': { size: 'clamp(1.5rem, 3vw, 2.5rem)', lineHeight: '1.2', tracking: '-0.01em' },
+  /** Shantell Sans only — the margin note. */
+  'site-note': { size: 'clamp(0.9375rem, 1.1vw, 1.0625rem)', lineHeight: '1.45', tracking: '0' },
+} as const;
+
 export type Palette = typeof palette;
 export type SemanticColor = keyof typeof semantic;
 export type ContentWidth = keyof typeof contentWidths;
+export type SiteColor = keyof typeof siteColors;
+export type SiteTypeStep = keyof typeof siteTypeScale;
+export type SiteFontFamily = keyof typeof siteFontFamilies;

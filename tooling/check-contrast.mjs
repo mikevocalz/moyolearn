@@ -7,7 +7,7 @@
 // SOT-KEYWORDS: contrast wcag accessibility a11y tokens colour check gate
 // ponytail: the maths is eight lines of sRGB — a colour library would be a
 // dependency to avoid writing them.
-import { palette, semantic } from '../packages/theme/tokens.ts';
+import { palette, semantic, siteColors } from '../packages/theme/tokens.ts';
 
 /** WCAG 2.1 relative luminance. Accepts #rgb, #rrggbb, and rgba() over a known backdrop. */
 const channels = (colour) => {
@@ -124,6 +124,64 @@ const EXEMPT = new Set(['border-faint']);
 const RESOURCE_ACCENTS = ['ember', 'gold', 'forest', 'sky', 'rose'];
 const SELECTED_STEP = 600;
 
+/**
+ * The marketing site layer (tokens.ts `siteColors`). One dimension, not two:
+ * the site has a single ground by design, so there is no per-theme axis here —
+ * that IS the design decision, and `.moyo-site` pins `color-scheme: light` to
+ * enforce it.
+ *
+ * `min` is read the same way as PAIRS above. Three entries sit at 3.0 and each
+ * says why on its own line; everything a reader has to read at body size is at
+ * 4.5. Ratios are reproduced in docs/site/tokens.md — this is what generates
+ * them, so the doc cannot drift from the palette without this failing first.
+ */
+const SITE_PAIRS = [
+  // ink on every ground it can land on
+  ['moyoInk', 'moyoPaper', 4.5],
+  ['moyoInk', 'moyoPaperRaised', 4.5],
+  ['moyoInk', 'moyoPaperSunken', 4.5],
+  ['moyoInkMuted', 'moyoPaper', 4.5],
+  ['moyoInkMuted', 'moyoPaperRaised', 4.5],
+  ['moyoInkMuted', 'moyoPaperSunken', 4.5],
+  // chromatic MARKS — set as body text, so no large-text allowance applies
+  ['moyoPrimary', 'moyoPaper', 4.5],
+  ['moyoPrimary', 'moyoPaperRaised', 4.5],
+  ['moyoSecondary', 'moyoPaper', 4.5],
+  ['moyoSecondary', 'moyoPaperRaised', 4.5],
+  ['moyoHeart', 'moyoPaper', 4.5],
+  ['moyoHeart', 'moyoPaperRaised', 4.5],
+  ['moyoEarth', 'moyoPaper', 4.5],
+  ['moyoEarth', 'moyoPaperRaised', 4.5],
+  ['moyoLeaf', 'moyoPaper', 4.5],
+  ['moyoLeaf', 'moyoPaperRaised', 4.5],
+  // chromatic FILLS carry their own foreground
+  ['moyoOnPrimary', 'moyoPrimary', 4.5],
+  ['moyoOnSecondary', 'moyoSecondary', 4.5],
+  ['moyoOnHeart', 'moyoHeart', 4.5],
+  ['moyoOnSun', 'moyoSun', 4.5],
+  ['moyoOnEarth', 'moyoEarth', 4.5],
+  ['moyoOnLeaf', 'moyoLeaf', 4.5],
+  // non-text boundaries: WCAG 1.4.11
+  ['moyoOutline', 'moyoPaper', 3],
+  ['moyoOutline', 'moyoPaperRaised', 3],
+  ['moyoOutline', 'moyoPaperSunken', 3],
+  ['moyoOutline', 'moyoSun', 3],
+  /*
+    Cobalt display type on a sun block is 4.38:1 — the one pairing in the layer
+    that is LARGE-TEXT ONLY. Checked at 3.0 rather than dropped, because a
+    pairing nobody declares is a pairing nobody measures (the lesson recorded in
+    RESOURCE_ACCENTS below), and docs/site/tokens.md marks it as restricted.
+  */
+  ['moyoPrimary', 'moyoSun', 3],
+];
+
+/**
+ * `moyoSun` is the site's `highlighter`: a FILL that can never carry type
+ * (1.69:1 against paper) and never draws a border or a focus ring. It is exempt
+ * as a FOREGROUND only — every pairing where it is the background is above.
+ */
+const SITE_FILL_ONLY = new Set(['moyoSun']);
+
 const THEMES = ['light', 'dark'];
 let failures = 0;
 let checked = 0;
@@ -155,6 +213,36 @@ for (const theme of THEMES) {
     console.error(`\n${theme}:`);
     rows.forEach((r) => console.error(r));
   }
+}
+
+const siteRows = [];
+for (const [fgName, bgName, min] of SITE_PAIRS) {
+  const fg = siteColors[fgName];
+  const bg = siteColors[bgName];
+  if (!fg || !bg) {
+    console.error(`unknown site token in pair: ${fgName} on ${bgName}`);
+    failures++;
+    continue;
+  }
+  if (SITE_FILL_ONLY.has(fgName)) {
+    console.error(
+      `${fgName} is fill-only and cannot be a foreground — remove the pair, don't lower the bar.`,
+    );
+    failures++;
+    continue;
+  }
+  const r = ratio(fg, bg);
+  checked++;
+  if (r === null || r < min) {
+    failures++;
+    siteRows.push(
+      `  FAIL  ${fgName} on ${bgName}  ${r === null ? '?' : r.toFixed(2)}:1  (needs ${min}:1)`,
+    );
+  }
+}
+if (siteRows.length) {
+  console.error('\nmarketing site layer:');
+  siteRows.forEach((r) => console.error(r));
 }
 
 for (const accent of RESOURCE_ACCENTS) {

@@ -71,6 +71,49 @@ const CONTRACT = [
   ['text-redpen', 'color-redpen'],
   ['text-grade', 'color-grade'],
   ['font-mono', 'font-mono'],
+  /*
+    Marketing site layer (site spec §5.1/§5.2). Web output only, so this is also
+    the check that catches the site tokens being emitted into the wrong file:
+    they are read out of theme.css, and moving them under the shared emitter
+    would not fail here, but dropping them would.
+
+    `border-moyo-*` is deliberately ABSENT. Tailwind has no border-width theme
+    namespace, so those are real classes in the base layer rather than utilities
+    — asserting a @theme variable for them would assert the wrong thing.
+  */
+  ['bg-moyo-paper', 'color-moyo-paper'],
+  ['bg-moyo-paper-raised', 'color-moyo-paper-raised'],
+  ['bg-moyo-paper-sunken', 'color-moyo-paper-sunken'],
+  ['text-moyo-ink', 'color-moyo-ink'],
+  ['text-moyo-ink-muted', 'color-moyo-ink-muted'],
+  ['border-moyo-outline', 'color-moyo-outline'],
+  ['bg-moyo-primary', 'color-moyo-primary'],
+  ['text-moyo-secondary', 'color-moyo-secondary'],
+  ['bg-moyo-heart', 'color-moyo-heart'],
+  ['bg-moyo-sun', 'color-moyo-sun'],
+  ['bg-moyo-earth', 'color-moyo-earth'],
+  ['bg-moyo-leaf', 'color-moyo-leaf'],
+  ['text-moyo-on-primary', 'color-moyo-on-primary'],
+  ['text-moyo-on-sun', 'color-moyo-on-sun'],
+  ['font-moyo-display', 'font-moyo-display'],
+  ['font-moyo-text', 'font-moyo-text'],
+  ['font-moyo-serif', 'font-moyo-serif'],
+  ['font-moyo-hand', 'font-moyo-hand'],
+  ['text-site-hero', 'text-site-hero'],
+  ['text-site-chapter', 'text-site-chapter'],
+  ['text-site-title', 'text-site-title'],
+  ['text-site-subtitle', 'text-site-subtitle'],
+  ['text-site-lead', 'text-site-lead'],
+  ['text-site-body', 'text-site-body'],
+  ['text-site-label', 'text-site-label'],
+  ['text-site-quote', 'text-site-quote'],
+  ['text-site-note', 'text-site-note'],
+  ['shadow-moyo-1', 'shadow-moyo-1'],
+  ['shadow-moyo-2', 'shadow-moyo-2'],
+  ['shadow-moyo-3', 'shadow-moyo-3'],
+  ['shadow-moyo-4', 'shadow-moyo-4'],
+  ['rounded-moyo-square', 'radius-moyo-square'],
+  ['rounded-moyo-card', 'radius-moyo-card'],
 ];
 
 let failures = 0;
