@@ -16,6 +16,16 @@
  * variants the deck marks **recommended** are what ship. Sample data no screen
  * in the product can produce is a defect, not a mockup.
  *
+ * SUBJECT SPREAD. Every cell in this chapter used to be arithmetic —
+ * subtraction, fractions, regrouping, borrowing, and a plan cell that said
+ * "Math" outright — which made a K-12 tutor across reading, writing, science
+ * and history read as an arithmetic app, and argued against the hero's own
+ * "kindergarten through 12th grade". The photographed session stays maths,
+ * because a worked page is what the Snap flow actually produces and cells 07
+ * and the what's-next block follow THAT session coherently. Everything
+ * representing the WEEK — mastery, movement, the day's path — now names
+ * different subjects, so the evidence spans the product.
+ *
  * `site.desk.disclaimer` renders INSIDE this section, which F-12 requires: the
  * sample child is Maya throughout because doc 34 uses that name in its own
  * examples, and illustrative data that leaves its own disclaimer behind reads
@@ -194,7 +204,7 @@ export function Desk() {
                 <View aria-hidden className="h-stack w-full bg-moyo-sun" />
               </View>
               <Text variant="label" className="text-site-label text-moyo-ink">
-                Two-digit subtraction &middot; mastery
+                Reading for meaning &middot; mastery
               </Text>
             </View>
           </View>
@@ -202,14 +212,14 @@ export function Desk() {
           {/* ── 03 · movement, in words ────────────────────────────────── */}
           <View className={`${CELL} md:col-span-5`}>
             <CellLabel index="03" name="Movement" />
-            <Text className="text-site-subtitle md:text-site-subtitle">Fractions &mdash; practicing &rarr; getting it</Text>
+            <Text className="text-site-subtitle md:text-site-subtitle">Sentence structure &mdash; practicing &rarr; getting it</Text>
             <Text className="mt-auto text-site-note text-moyo-ink-muted md:text-site-note">This week</Text>
           </View>
 
           {/* ── 04 · today's path ──────────────────────────────────────── */}
           <View className={`${CELL} md:col-span-4`}>
             <CellLabel index="04" name="The plan" />
-            <Text className="text-site-subtitle md:text-site-subtitle">Today&rsquo;s path &middot; Math</Text>
+            <Text className="text-site-subtitle md:text-site-subtitle">Today&rsquo;s path &middot; Reading, then math</Text>
           </View>
 
           {/* ── 05 · how each problem went ─────────────────────────────── */}
@@ -236,7 +246,7 @@ export function Desk() {
           <View className={`${CELL} md:col-span-4`}>
             <CellLabel index="06" name="The facts" />
             <Text className="mt-auto text-site-note text-moyo-ink-muted md:text-site-note">
-              22 min &middot; 6 problems &middot; 4 on their own
+              22 min &middot; 6 questions &middot; 4 on their own
             </Text>
           </View>
 
