@@ -2,9 +2,11 @@
 // emitter for the latency, traffic and error golden signals, and §7 W-2 as the
 // work that unblocks them.
 //
-// It does two things and no more: boot the Node-runtime Sentry client, and
-// forward the framework's own request errors. Both are deferred behind
-// `register()` so nothing is imported into a runtime that will not use it.
+// It boots the Node-runtime Sentry client, binds the Block's host→organisation
+// reader, and forwards the framework's own request errors. All three are
+// deferred behind `register()` so nothing is imported into a runtime that will
+// not use it — and the tenancy wiring in particular must not reach the edge
+// bundle, since it carries the Payload config.
 //
 // The EDGE runtime is intentionally not initialised. The only edge surface in
 // this app is `middleware.ts`, no rule in slo.md §4 queries it, and the server
@@ -19,6 +21,9 @@ import * as Sentry from '@sentry/nextjs';
 export async function register(): Promise<void> {
   if (process.env.NEXT_RUNTIME === 'nodejs') {
     await import('./sentry.server.config');
+    // Before the first request reaches `protectedOperation`, so no district
+    // host is ever served by a process that cannot resolve it.
+    await import('./lib/tenancy.wiring');
   }
 }
 

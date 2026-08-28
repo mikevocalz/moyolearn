@@ -12,6 +12,11 @@ import { haveIBeenPwned, multiSession, organization, username } from 'better-aut
 import Stripe from 'stripe';
 import { Pool } from 'pg';
 import { authorizeReference, isBillingRole, isPlanName, resolvePrices } from './billing-plans.ts';
+import {
+  hostFromHeaderValues,
+  permitsLoginAtHost,
+  tenantSlugFromHost,
+} from './host-tenant.ts';
 
 /** Doc 06 §6: learner sessions expire sooner than adult ones. */
 const ADULT_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
@@ -200,6 +205,38 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
       session: {
         create: {
           before: async (session, ctx) => {
+            /*
+              THE LOGIN HOST CHECK. Better Auth's own docs name this hook as the
+              place to block a sign-in, and a session is what a sign-in produces,
+              so refusing here is refusing at the door: the account never reaches
+              an admin screen belonging to a district it has no claim on, empty
+              or otherwise.
+
+              Returning `false` aborts session creation and the caller gets Better
+              Auth's own generic sign-in failure — which is the requirement, not a
+              convenience. A response that distinguished "wrong district" from
+              "wrong password" would let anyone enumerate, one subdomain at a
+              time, which districts an email address belongs to.
+
+              The role is read from the org plugin's own `member` table, the same
+              table `readMembershipRole` and `authorizeReference` read, because a
+              second idea of what membership means is a second answer waiting to
+              disagree with the Block's.
+
+              A context with no request (an internal session creation, a script)
+              names no host, so it is not a district login and is not gated.
+            */
+            const hostSlug = tenantSlugFromHost(
+              hostFromHeaderValues(
+                typeof ctx?.getHeader === 'function' ? ctx.getHeader('x-forwarded-host') : null,
+                typeof ctx?.getHeader === 'function' ? ctx.getHeader('host') : null,
+              ),
+            );
+            if (hostSlug !== null) {
+              const role = await memberRole(pool, hostSlug, session.userId);
+              if (!permitsLoginAtHost(hostSlug, role)) return false;
+            }
+
             // A Session row carries userId, not the user's flags, so the owner
             // has to be read before the shorter learner expiry can be applied.
             const owner = await ctx?.context?.internalAdapter?.findUserById(session.userId);

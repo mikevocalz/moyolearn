@@ -25,6 +25,21 @@ export {
   type LoadMembershipRole,
   type RequiredMembership,
 } from './core/membership-gate';
+/*
+  The host step. `setTenantOrgReader` is the only piece apps/web calls directly —
+  once, from `instrumentation.ts` — because the resolver reads a Payload
+  collection and only a repository may do that. `HostTenantDenied` is exported so
+  an audit line can name it; routes need no change, because it IS a
+  `MembershipDenied` and every refusal mapper already handles one.
+*/
+export {
+  HostTenantDenied,
+  resolveHostTenant,
+  setTenantOrgReader,
+  NO_HOST_TENANT,
+  type HostTenant,
+  type LoadTenantOrgId,
+} from './core/host-tenant';
 export { MEMBERSHIP_ROLES, isMembershipRole, type MembershipRole } from '@acme/auth/membership';
 export type {
   DerivedFact,

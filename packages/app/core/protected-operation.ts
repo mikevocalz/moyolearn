@@ -13,11 +13,17 @@
 // "every operation logs {op, resource, action, ctx.kind, latency, outcome}".
 // The record is built and emitted in the `finally` below; the shape, and why
 // naming the operation is optional, are in `telemetry.ts`.
-// SOT: docs/pack/06-auth-onboarding-spec.md §7 · docs/pack/07-security-child-ai-safety-spec.md §2 · docs/pack/11-architectural-guardrails.md §3 · docs/pack/12-systems-design-prompt.md §7
-// SOT-KEYWORDS: protected operation auth boundary server-only learner context mock capability plan entitlement telemetry record latency outcome
+//
+// The HOST step runs before both gates, because it decides what `ctx.orgId` IS
+// and every gate below reads that field. See `host-tenant.ts` for why the
+// address outranks the session's own claim.
+// SOT: docs/pack/06-auth-onboarding-spec.md §7 · docs/pack/07-security-child-ai-safety-spec.md §2 · docs/pack/11-architectural-guardrails.md §3 · docs/pack/12-systems-design-prompt.md §7 · docs/deploy/moyo-district-tenancy.md §5
+// SOT-KEYWORDS: protected operation auth boundary server-only learner context mock capability plan entitlement telemetry record latency outcome host tenant district scoping
 import 'server-only';
 import { readMembershipRole, readSubscriptions, type Auth } from '@acme/auth/server';
+import type { MembershipRole } from '@acme/auth/membership';
 import type { Capability, SubscriptionState } from '@acme/auth/entitlements';
+import { HostTenantDenied, resolveHostTenant, type LoadTenantOrgId } from './host-tenant.ts';
 import { billingReferenceFor, withCapability, CapabilityDenied, type LoadSubscriptions } from './capability-gate.ts';
 import {
   withMembership,
@@ -81,6 +87,16 @@ export interface ProtectedOperationOptions {
    * reader and none can wire the wrong one.
    */
   loadMembershipRole?: LoadMembershipRole;
+  /**
+   * Overrides how the request host is resolved to an organisation — tests only.
+   *
+   * Production passes nothing and the process-wide reader registered by
+   * `setTenantOrgReader` is used, so no route wires a resolver and none can wire
+   * the wrong one. An explicit `null` means "no reader at all", which is how a
+   * test exercises the fail-closed path; `undefined` (the default) is not the
+   * same thing and falls through to the registry.
+   */
+  loadTenantOrgId?: LoadTenantOrgId | null;
   /**
    * Overrides where the caller's plan is read from. Production never passes
    * this — the default reads Better Auth's own subscription rows through the
@@ -209,6 +225,15 @@ export async function protectedOperation<R>(
 
   try {
     if (isMock) {
+      /*
+        The mock branch takes NO host step, and that is the same rule
+        `MOCK_MEMBERSHIP_ROLE` follows: if identity is a fixture, its attributes
+        are too. Host scoping is a statement about a real account's real rows in
+        the `member` table, and the mock has none to intersect with — a mock that
+        adopted the host org would be granting itself a district on the strength
+        of a URL, which is the exact move this step exists to refuse. Dev on
+        `localhost` names no district anyway, so this changes nothing there.
+      */
       ctxKind = ctxKindOf(MOCK_CTX);
       const loadMock: LoadSubscriptions = options.loadSubscriptions ?? (async () => MOCK_SUBSCRIPTIONS);
       const loadMockRole: LoadMembershipRole =
@@ -222,12 +247,20 @@ export async function protectedOperation<R>(
     if (!session) throw new Error('Unauthenticated');
 
     const user = session.user as { id: string; guardianManaged?: boolean; orgId?: string };
-    const ctx: ProtectedCtx = {
+    /*
+      The session's own scope. It is a STARTING POINT, not the answer: `orgId`
+      here is what the account defaults to, which is a value the caller carries
+      and can be stale, multi-valued or — in the case this step was written for —
+      simply not the district whose address they are standing at.
+    */
+    const sessionCtx: ProtectedCtx = {
       learnerId: user.id,
       isLearner: !!user.guardianManaged,
       orgId: user.orgId,
     };
-    ctxKind = ctxKindOf(ctx);
+    // Recorded before the host step so a host refusal is still attributed to the
+    // kind of caller it refused; re-derived below once the org is settled.
+    ctxKind = ctxKindOf(sessionCtx);
 
     const load: LoadSubscriptions =
       options.loadSubscriptions ??
@@ -240,12 +273,52 @@ export async function protectedOperation<R>(
 
     /*
       Both ids off `ctx`, never off input — the role is the acting user's role
-      in the org their SESSION is scoped to, which is what makes a posted org
+      in the org their CONTEXT is scoped to, which is what makes a posted org
       id worthless here.
+
+      Memoised per operation because the host step and the role gate ask the same
+      question of the same row: without this a district request pays two member
+      reads against slo.md §1.1's 150 ms context budget. One read per org per
+      operation, never across operations — a role revoked mid-session has to
+      take effect on the next call.
     */
-    const loadRole: LoadMembershipRole =
+    const readRole: LoadMembershipRole =
       options.loadMembershipRole ??
       ((c) => (c.orgId ? readMembershipRole(auth, c.orgId, c.learnerId) : Promise.resolve(null)));
+    const roleByOrg = new Map<string, Promise<MembershipRole | null>>();
+    const loadRole: LoadMembershipRole = (c) => {
+      const key = c.orgId ?? '';
+      const seen = roleByOrg.get(key);
+      if (seen) return seen;
+      const pending = readRole(c);
+      roleByOrg.set(key, pending);
+      return pending;
+    };
+
+    /*
+      THE HOST STEP. `host-tenant.ts` carries the argument; the shape of it is
+      that a resolved district REPLACES the session's org, but only across the
+      intersection with what the caller's membership already allows. So:
+
+        · `none`       — no district in the address (app./admin./dev/preview).
+                         Today's behaviour, byte for byte: scope by session.
+        · `org`        — the address names a district. Read the caller's role in
+                         THAT district; no role is a refusal, not a fallback to
+                         their own org. A host can only ever narrow.
+        · `unresolved` — the address is district-shaped and resolved to nothing.
+                         Refuse. Falling back here would make a lookup failure a
+                         silent scoping change.
+    */
+    const hostTenant = await resolveHostTenant(headers, options.loadTenantOrgId);
+    if (hostTenant.kind === 'unresolved') throw new HostTenantDenied(hostTenant.slug);
+
+    let ctx = sessionCtx;
+    if (hostTenant.kind === 'org') {
+      const hostCtx: ProtectedCtx = { ...sessionCtx, orgId: hostTenant.orgId };
+      if ((await loadRole(hostCtx)) === null) throw new HostTenantDenied(hostTenant.orgId);
+      ctx = hostCtx;
+    }
+    ctxKind = ctxKindOf(ctx);
 
     const result = await gated(ctx, loadRole, load);
     outcome = 'ok';

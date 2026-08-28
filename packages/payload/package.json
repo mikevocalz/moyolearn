@@ -11,7 +11,7 @@
   },
   "scripts": {
     "lint": "eslint",
-    "test": "node --test src/retention/*.test.mjs",
+    "test": "node --test src/tenancy/*.test.ts src/retention/*.test.mjs",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

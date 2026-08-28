@@ -1,4 +1,5 @@
 import type { CollectionConfig } from 'payload';
+import { validateOrgSlug } from '../tenancy/org-slug';
 
 // The tenant. Doc 01 §(auth mapping) is explicit that this ONE object covers a
 // tutoring company, a school and a district — "organization = tutoring company /
@@ -42,7 +43,20 @@ export const Organizations: CollectionConfig = {
       required: true,
       unique: true,
       index: true,
-      admin: { description: 'The tenant key. This is the value rows carry as orgId.' },
+      /*
+        It is also a HOSTNAME: this string is the label in
+        `<slug>.moyolearn.com`, and `@acme/auth/host-tenant` reads it back off
+        the request to decide which district a caller is in. So the rule that a
+        slug must be a legal DNS label and must not be one of Moyo's own
+        subdomains belongs at the write, where a bad key cannot come into
+        existence — not at the read, where it would merely be unresolvable.
+        The rule and its reasoning are in `org-slug.ts`.
+      */
+      validate: (value: string | null | undefined) => validateOrgSlug(value),
+      admin: {
+        description:
+          'The tenant key. This is the value rows carry as orgId, and the subdomain the district signs in at.',
+      },
     },
     {
       name: 'kind',

@@ -1,15 +1,16 @@
-// Organizations repository — the only place the login surface touches Payload.
+// Organizations repository — the only place the login surface and the Block's
+// host step touch Payload.
 //
 // Reads four columns of one row and nothing else. That narrowness is the
 // security argument for the public carve-out in `org.service`: the query cannot
 // widen into learner or pipeline data because it does not know how to.
-// SOT: CLAUDE.md §The block · docs/pack/06-auth-onboarding-spec.md §5
-// SOT-KEYWORDS: org organizations repository payload branding login district public
+// SOT: CLAUDE.md §The block · docs/pack/06-auth-onboarding-spec.md §5 · docs/deploy/moyo-district-tenancy.md §4
+// SOT-KEYWORDS: org organizations repository payload branding login district public host tenant slug resolve
 import 'server-only';
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import type { Organization } from '@acme/payload';
-import type { LoadOrgBranding } from '@acme/app/server';
+import type { LoadOrgBranding, LoadTenantOrgId } from '@acme/app/server';
 
 export const loadOrgBranding: LoadOrgBranding = async (slug) => {
   const payload = await getPayload({ config });
@@ -42,4 +43,32 @@ export const loadOrgBranding: LoadOrgBranding = async (slug) => {
     logoAspect: org.logoAspect ?? undefined,
     brandAccent: org.brandAccent ?? undefined,
   };
+};
+
+/**
+ * Does this tenant key name a real organisation? The Block's host step, bound to
+ * the collection.
+ *
+ * `overrideAccess: true` on purpose: whether `nycdoe.moyolearn.com` IS a
+ * district cannot depend on who is asking, or an unauthenticated request would
+ * resolve to "no district" and be handled as an unscoped one. This read decides
+ * SCOPE; the caller's rights are decided after it, by the membership the Block
+ * then reads (`host-tenant.ts` — intersect, never replace).
+ *
+ * It returns the row's own slug rather than a boolean, so the value that lands
+ * on `ctx.orgId` came out of the database rather than out of the `Host` header
+ * that asked about it. One column, so it cannot widen.
+ */
+export const loadTenantOrgId: LoadTenantOrgId = async (slug) => {
+  const payload = await getPayload({ config });
+  const { docs } = await payload.find({
+    collection: 'organizations',
+    where: { slug: { equals: slug } },
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+    select: { slug: true },
+  });
+  const org = docs[0] as Pick<Organization, 'slug'> | undefined;
+  return org?.slug ?? null;
 };
