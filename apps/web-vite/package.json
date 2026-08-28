@@ -13,12 +13,18 @@
   "dependencies": {
     "@acme/theme": "workspace:*",
     "@acme/ui": "workspace:*",
+    "@react-three/drei": "catalog:",
+    "@react-three/fiber": "catalog:",
     "@tanstack/react-router": "catalog:",
     "@tanstack/react-start": "catalog:",
+    "gsap": "catalog:",
+    "lenis": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-native-css": "catalog:",
-    "react-native-web": "catalog:"
+    "react-native-web": "catalog:",
+    "three": "catalog:",
+    "topojson-client": "catalog:"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",
@@ -26,6 +32,7 @@
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "@types/topojson-client": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "eslint": "catalog:",
     "eslint-config-expo": "catalog:",
