@@ -132,14 +132,14 @@ copy only, and this site has no learner-band surface.
 | `site.desk.body` | Every cell here is something Moyo shows you for real: the problem your child photographed, the answer they gave, and where the skill moved. | Section body | `deck` |
 | `site.desk.disclaimer` | Example report. Real reports are built from your child's own work. | One caption line at the foot of the grid | `caption` |
 | `site.desk.cell.mastery.value` | 87% | Oversized numeral cell | `display` |
-| `site.desk.cell.mastery.label` | Two-digit subtraction · mastery | Label beneath the numeral | `label` |
-| `site.desk.cell.movement` | Fractions — practicing → getting it | Movement cell (**recommended**; mirrors doc 34 §2.4's MasteryBar words) | `label` |
+| `site.desk.cell.mastery.label` | Reading for meaning · mastery | Label beneath the numeral | `label` |
+| `site.desk.cell.movement` | Sentence structure — practicing → getting it | Movement cell (**recommended**; mirrors doc 34 §2.4's MasteryBar words) | `label` |
 | `site.desk.cell.movement.caption` | This week | Caption under the movement cell | `caption` |
-| `site.desk.cell.movement.numeric` 🚩 | Fractions ↑ 18% this week | Movement cell, **conditional variant** — ships only if the guardian surface really renders a weekly percentage delta (F-02) | `label` |
+| `site.desk.cell.movement.numeric` 🚩 | Sentence structure ↑ 18% this week | Movement cell, **conditional variant** — ships only if the guardian surface really renders a weekly percentage delta (F-02) | `label` |
 | `site.desk.cell.homework.annotation` | You're close. Look at this part again ↑ | Annotation over the photographed homework sheet | `annotation` |
 | `site.desk.cell.homework.caption` | Photographed on the kitchen table, then worked through step by step. | Caption for the homework cell | `caption` |
-| `site.desk.cell.path` | Today's path · Math | Schedule cell (**recommended**; `Today's Path` is the real family-facing noun, doc 19) | `label` |
-| `site.desk.cell.path.timed` 🚩 | 3:30 PM — Math with Natalie | Schedule cell, **conditional variant** — ships only if a clock-timed family session surface exists (F-03) | `label` |
+| `site.desk.cell.path` | Today's path · Reading, then math | Schedule cell (**recommended**; `Today's Path` is the real family-facing noun, doc 19) | `label` |
+| `site.desk.cell.path.timed` 🚩 | 3:30 PM — Reading with Natalie | Schedule cell, **conditional variant** — ships only if a clock-timed family session surface exists (F-03) | `label` |
 | `site.desk.cell.report.headline` | Maya solved 4 two-digit subtraction problems on her own — including one she'd missed twice before. | The report's headline block, quoted from doc 34 §2.1 | `body` |
 | `site.desk.cell.effort` | She tried three strategies on the hardest one and stuck with it after two misses. | The effort-moment block, quoted from doc 34 §2.5 | `body` |
 | `site.desk.cell.status.independent` | Solved on their own | Status pill — verbatim from doc 34 §2.3 | `label` |
