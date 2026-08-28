@@ -10,7 +10,7 @@
  *
  * SOT: node_modules/@payloadcms/tanstack-start/dist/routes/adminRoutes.d.ts:
  *        payloadAdminIndexRoute
- * SOT-KEYWORDS: web-vite payload admin index route super admin dashboard
+ * SOT-KEYWORDS: admin-vite payload admin index route super admin dashboard
  */
 import { payloadAdminIndexRoute } from '@payloadcms/tanstack-start/client';
 import { createFileRoute } from '@tanstack/react-router';

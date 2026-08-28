@@ -14,7 +14,8 @@
  * handler rather than at module scope, because this file is imported by the
  * route modules that ship to the browser. The Start compiler prunes the handler
  * body from the client build; a top-level import of `@payload-config` would
- * pull the Postgres adapter into the marketing bundle before it got the chance.
+ * pull the Postgres adapter, sharp and the whole collection set into the
+ * BROWSER bundle before it got the chance.
  *
  * SOT: node_modules/@payloadcms/tanstack-start/dist/exports/server.d.ts:loadAdminPage,
  *        handleServerFunctions
@@ -23,7 +24,7 @@
  *        createServerFunctionClient
  *      node_modules/@payloadcms/tanstack-start/dist/withPayload/index.js
  *        (payloadTanstackStartOptions → routeFileIgnorePattern)
- * SOT-KEYWORDS: web-vite payload admin server functions rsc loadAdminPage
+ * SOT-KEYWORDS: admin-vite payload admin server functions rsc loadAdminPage
  *               importMap super admin
  */
 import type { SerializableRecord } from '@payloadcms/tanstack-start/server';

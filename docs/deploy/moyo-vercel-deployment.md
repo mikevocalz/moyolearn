@@ -7,6 +7,7 @@
 | 1 | Initial — assumed three projects incl. a separate `apps/admin` |
 | 2 | Corrected: no `apps/admin`; super admin lives in `apps/web-vite` |
 | 3 | District URL shape — bare subdomain preferred; redirect wired as default, separate-app variant specced |
+| 4 | Corrected again: the super admin is `apps/admin-vite` on its own project `moyo-admin`. Rev 2 was right about there being no `apps/admin`; it was wrong that co-hosting was free. §2.5's three-project shape, applied to the super admin instead of to districts — measurement and reversal in `docs/site/adr-004-admin-app-split.md` |
 
 Companion: `moyo-district-tenancy.md` (host→tenant binding and access enforcement).
 
@@ -14,16 +15,21 @@ Companion: `moyo-district-tenancy.md` (host→tenant binding and access enforcem
 
 ## 1. Topology
 
-Two Vercel Projects against one repo, each with its own Root Directory.
+Three Vercel Projects against one repo, each with its own Root Directory.
 
 | Project | Root Directory | Framework | Serves |
 |---|---|---|---|
-| `moyo-www` | `apps/web-vite` | TanStack Start (Vite + Nitro) | `moyolearn.com` → 308 → `www.moyolearn.com` (marketing)<br>`admin.moyolearn.com` (company-wide super admin, Payload) |
+| `moyo-www` | `apps/web-vite` | TanStack Start (Vite + Nitro) | `moyolearn.com` → 308 → `www.moyolearn.com` (marketing) |
+| `moyo-admin` | `apps/admin-vite` | TanStack Start (Vite + Nitro) | `admin.moyolearn.com` (company-wide super admin, Payload) |
 | `moyo-app` | `apps/web` | Next.js | `app.moyolearn.com` (learning app)<br>`*.moyolearn.com` (district portals) |
 
-`web-vite` runs two surfaces on one Nitro server — public marketing and the super admin. §3.2 keeps them apart.
+Each domain lands on exactly one project. `admin.moyolearn.com` is the only one that moved: it was assigned to `moyo-www` in revs 1–3.
 
-A three-project variant exists if district portals need true bare-root URLs. See §2.
+**Why the super admin is its own project.** Rev 2 removed `apps/admin` and put the panel inside `apps/web-vite`, on the reasoning that two surfaces on one Nitro server cost nothing but a `Cache-Control` header. They cost 89.8 kB gzipped on the marketing critical path. `@payloadcms/tanstack-start` requires `tanstackStart({ rsc: { enabled: true } })`, which builds **one** client entry for the whole app: `@vitejs/plugin-rsc`'s browser runtime shipped to every marketing visitor, and initial JS on `/` went 155.8 → 245.6 kB gz. None of it was Payload code — the panel itself code-splits correctly — and there is no per-route opt-out. Splitting the apps returned `/` to 155.8 kB gz. The measurement, both directions, is `docs/site/adr-004-admin-app-split.md`; how the mount itself was built is `adr-003`.
+
+This is §2.5's three-project shape, taken for the super admin rather than for districts. It does **not** change the district URL decision in §2 — that is still option 2 (redirect), and a `moyo-district` project would be a **fourth**.
+
+The shared-config rules in §5.2 are unchanged and now bind three apps instead of two: one `buildConfig()` in `packages/payload`, `apps/web` owns migrations, `PAYLOAD_SECRET` identical everywhere.
 
 ---
 
@@ -82,9 +88,12 @@ Take this if the bare subdomain is a positioning decision — districts seeing o
 
 | Project | Root Directory | Serves |
 |---|---|---|
-| `moyo-www` | `apps/web-vite` | marketing + super admin |
+| `moyo-www` | `apps/web-vite` | marketing |
+| `moyo-admin` | `apps/admin-vite` | `admin.moyolearn.com` — super admin |
 | `moyo-app` | `apps/web` | learner app. Payload **API only**, no admin UI |
 | `moyo-district` | `apps/district` | `*.moyolearn.com` — Payload admin at `/` |
+
+This would be the **fourth** project, not the third: §1 already spends the third on the super admin.
 
 **Structure** — contents of `admin/` move up one level:
 
@@ -128,7 +137,7 @@ Payload's docs warn that IDE auto-updates miss stale references after this move,
 
 ## 3. Build configuration
 
-### 3.1 `apps/web-vite` — marketing + super admin
+### 3.1 `apps/web-vite` — marketing
 
 TanStack Start deploys through the Nitro Vite plugin, which compiles server code into Vercel Functions on Fluid compute.
 
@@ -169,13 +178,14 @@ Leave `nitro()` unconfigured — it detects Vercel and emits Build Output API v3
 
 Set the Framework Preset in the dashboard (Settings → General → Framework Preset → *TanStack Start*). Auto-detection is known to fail inside monorepos. No `"framework"` slug is hardcoded here — read the exact string off your project settings before committing one.
 
-### 3.2 Two surfaces, one server
+### 3.2 `apps/admin-vite` — super admin
 
-Marketing wants aggressive edge caching. The admin must never be cached and never prerender. On one Nitro server that's explicit, not default.
+The same stack, one surface, opposite caching. Marketing wants aggressive edge caching; the admin must never be cached and never prerender. Both are explicit, not default:
 
 ```ts
-// apps/web-vite/app/routes/admin/route.tsx  (adjust to your route tree)
-export const Route = createFileRoute('/admin')({
+// apps/admin-vite/src/routes/_payload.tsx — the pathless layout, so /payload-api inherits it
+export const Route = createFileRoute('/_payload')({
+  ...payloadLayoutRoute({ load: getLayoutDataFn, serverFunction: serverFunctionHandler }),
   headers: () => ({
     'Cache-Control': 'private, no-store, max-age=0',
     'X-Robots-Tag': 'noindex, nofollow',
@@ -183,13 +193,22 @@ export const Route = createFileRoute('/admin')({
 })
 ```
 
-Three consequences of co-hosting:
+```ts
+// apps/admin-vite/vite.config.ts — the other half. Headers only matter once a
+// request reaches the server, and a prerendered file never lets it.
+tanstackStart({ ...pluginOptions.tanstackStart, prerender: { enabled: false } })
+```
 
-1. **`moyo-www` holds production secrets** — `DATABASE_URL`, `PAYLOAD_SECRET`, `BLOB_READ_WRITE_TOKEN`. Scope Production-only; don't let marketing previews carry live database credentials.
-2. **Admin routes stay out of any prerender/SSG config** added for marketing pages.
-3. **Super admin shares an origin with public pages.** Strict CSP on `/admin`; auth cookie `HttpOnly; Secure; SameSite=Lax`.
+`find apps/admin-vite/dist/client -name '*.html'` must print nothing.
 
-Pin `nitro`, `@tanstack/react-start`, and `@payloadcms/tanstack-start` to **exact** versions. Two surfaces ride the Nitro Vite plugin, which is under active development — a lockfile refresh the week of the demo is an avoidable lost day.
+Four consequences, now that this is its own project:
+
+1. **`moyo-admin` holds production secrets** — `DATABASE_URL`, `PAYLOAD_SECRET`, `BLOB_READ_WRITE_TOKEN`. Scope Production-only. `moyo-www` no longer needs any of them, which is the security half of the split: a marketing preview deployment cannot carry live database credentials because the marketing app has no code that reads them.
+2. **The Payload REST + GraphQL API moved with the panel.** `/payload-api/*` answers on `admin.moyolearn.com`, not on `www.moyolearn.com`. The public marketing origin is back to serving static files.
+3. **Strict CSP on `admin.moyolearn.com`**; auth cookie `HttpOnly; Secure; SameSite=Lax`, host-scoped per §5.3.
+4. **This app defines nothing and migrates nothing** (§5.2). No collections, no schema, no `payload migrate` in its build command.
+
+Pin `nitro`, `@tanstack/react-start`, `@vitejs/plugin-rsc` and `@payloadcms/tanstack-start` to **exact** versions. Both TanStack apps ride the Nitro Vite plugin, which is under active development — a lockfile refresh the week of the demo is an avoidable lost day. `@payloadcms/tanstack-start`'s `payload` peer is an exact pin rather than a range, so those two versions move together or `pnpm install` fails.
 
 ### 3.3 `apps/web` — learner app + district portals
 
@@ -284,7 +303,7 @@ ns2.vercel-dns.com
 |---|---|---|
 | `moyolearn.com` | `moyo-www` (308 → www) | `moyo-www` |
 | `www.moyolearn.com` | `moyo-www` | `moyo-www` |
-| `admin.moyolearn.com` | `moyo-www` | `moyo-www` |
+| `admin.moyolearn.com` | `moyo-admin` | `moyo-admin` |
 | `app.moyolearn.com` | `moyo-app` | `moyo-app` |
 | `*.moyolearn.com` | `moyo-app` | `moyo-district` |
 
@@ -331,7 +350,7 @@ plugins: [
 
 Payload derives schema from config, so multiple configs on one database is drift waiting to happen.
 
-1. **One shared config package.** `packages/payload-config` exports the single `buildConfig()`. Every app imports it; none define collections locally.
+1. **One shared config package.** `packages/payload` (`@acme/payload`) exports the single `buildConfig()`. Every app imports it; none define collections locally. Three consumers now: `apps/web` (Next, via `withPayload`), `apps/admin-vite` (TanStack Start, via the `@payload-config` alias) and any future district app.
 2. **`apps/web` owns migrations.** It runs `payload migrate` in its build command. No other app does.
 3. **`push: false` in production** everywhere. Dev push against a shared database rewrites tables under the other apps.
 4. **`PAYLOAD_SECRET` identical across all projects.** It signs JWTs and encrypts stored field values — a mismatch means one app can't decrypt what another wrote.
@@ -352,23 +371,27 @@ Payload `cors` / `csrf` still need every origin listed, including a wildcard pat
 
 ## 6. Environment variables
 
-| Variable | `moyo-www` | `moyo-app` | `moyo-district`¹ | Notes |
-|---|:--:|:--:|:--:|---|
-| `DATABASE_URL` | ● | ● | ● | Pooled |
-| `DATABASE_URL_UNPOOLED` | | ● | | Migrations only |
-| `PAYLOAD_SECRET` | ● | ● | ● | **Must match** |
-| `BLOB_READ_WRITE_TOKEN` | ● | ● | ● | Auto-injected by Vercel Blob |
-| `BETTER_AUTH_SECRET` | ● | ● | ● | Must match |
-| `BETTER_AUTH_URL` | ● | ● | ● | Per-origin |
-| `STRIPE_SECRET_KEY` | ● | ● | | |
-| `STRIPE_WEBHOOK_SECRET` | | ● | | Webhook lands on `app` |
-| `ANTHROPIC_API_KEY` | | ● | | |
-| `ELEVENLABS_API_KEY` | | ● | | |
-| `NEXT_PUBLIC_APP_URL` | | ● | ● | `https://app.moyolearn.com` |
-| `VITE_APP_URL` | ● | | | Marketing CTAs → app |
-| `SENTRY_DSN` | ● | ● | ● | Separate Sentry projects |
+| Variable | `moyo-www` | `moyo-admin` | `moyo-app` | `moyo-district`¹ | Notes |
+|---|:--:|:--:|:--:|:--:|---|
+| `DATABASE_URL` | | ● | ● | ● | Pooled |
+| `DATABASE_URL_UNPOOLED` | | | ● | | Migrations only |
+| `PAYLOAD_SECRET` | | ● | ● | ● | **Must match** |
+| `BLOB_READ_WRITE_TOKEN` | | ● | ● | ● | Auto-injected by Vercel Blob |
+| `NEXT_PUBLIC_SITE_URL` | | ● | | | Payload `serverURL` + its only `cors`/`csrf` origin. `https://admin.moyolearn.com` |
+| `BUNNY_STORAGE_ACCESS_KEY` | | ● | ● | ● | Admin-panel uploads (§5.1) |
+| `BETTER_AUTH_SECRET` | ● | | ● | ● | Must match |
+| `BETTER_AUTH_URL` | ● | | ● | ● | Per-origin |
+| `STRIPE_SECRET_KEY` | ● | | ● | | |
+| `STRIPE_WEBHOOK_SECRET` | | | ● | | Webhook lands on `app` |
+| `ANTHROPIC_API_KEY` | | | ● | | |
+| `ELEVENLABS_API_KEY` | | | ● | | |
+| `NEXT_PUBLIC_APP_URL` | | | ● | ● | `https://app.moyolearn.com` |
+| `VITE_APP_URL` | ● | | | | Marketing CTAs → app |
+| `SENTRY_DSN` | ● | ● | ● | ● | Separate Sentry projects |
 
 ¹ option 3 only.
+
+`moyo-www` losing `DATABASE_URL` and `PAYLOAD_SECRET` is a **result of the rev-4 split, not an oversight**: `apps/web-vite` no longer contains any code that opens a database. If a marketing page ever needs content out of Payload, it fetches `admin.moyolearn.com/payload-api` over the network like any other client — it does not get the credentials back.
 
 Declare every one in `turbo.json` under the `build` task's `env`. Turborepo caches per environment hash — an undeclared var means a staging build can be served as production from cache.
 
@@ -423,7 +446,10 @@ Tradeoff: builds cancelled via Ignored Build Step still count against deployment
 - [ ] Verify apex → www returns 308
 - [ ] **Verify `nycdoe.moyolearn.com` reaches the portal** — 307 to `/admin` (option 2) or serves at root (option 3)
 - [ ] Confirm the redirect is 307, not 308 (check response headers, not the browser)
-- [ ] Confirm `/admin` on `moyo-www` returns `no-store` and `noindex`
+- [ ] Confirm `/admin` on `moyo-admin` returns `no-store` and `noindex`, and that **neither header appears on `www.moyolearn.com/`**
+- [ ] Confirm `admin.moyolearn.com/` 307s to `/admin` rather than 404ing
+- [ ] Confirm `moyo-www` has **no** `DATABASE_URL` or `PAYLOAD_SECRET` set
+- [ ] Confirm `moyo-www`'s deployed `/` still prerenders to real HTML and its initial JS has not regressed past 155.8 kB gz (ADR-004)
 - [ ] Run the cross-tenant tests in `moyo-district-tenancy.md` §10
 - [ ] Confirm a preview deployment still authenticates
 

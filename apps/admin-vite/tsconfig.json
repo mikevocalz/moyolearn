@@ -1,0 +1,17 @@
+{
+  "extends": "@acme/config/typescript/react-library.json",
+  "compilerOptions": {
+    "types": ["vite/client"],
+    // The one `.js` under src/ is `routes/_payload/importMap.js`, which Payload
+    // GENERATES and ships without types. Same setting apps/web carries for the
+    // same file (apps/web/tsconfig.json:9) — the alternative is hand-writing a
+    // declaration for a generated artefact.
+    "allowJs": true,
+    "paths": {
+      "@/*": ["./src/*"],
+      "@payload-config": ["../../packages/payload/src/payload.config.ts"]
+    }
+  },
+  "include": ["src", "vite.config.ts"],
+  "exclude": ["node_modules", "dist", ".tanstack", ".output"]
+}

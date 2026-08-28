@@ -1,5 +1,23 @@
 # ADR 003: The Payload super admin on TanStack Start
-Status: proposed · Date: 2026-08-28
+Status: proposed · Date: 2026-08-28 · **host app superseded by
+[ADR-004](adr-004-admin-app-split.md)**
+
+> **Read this first.** ADR-004 took this ADR's own Option C. The super admin no
+> longer lives in `apps/web-vite`; it is `apps/admin-vite`, its own app and its
+> own Vercel project. **Every `apps/web-vite/src/routes/_payload*` path below
+> should be read as `apps/admin-vite/src/routes/_payload*`** — the route files
+> moved across unchanged, so everything this ADR records about *how the mount
+> works* still stands and this is still the source of truth for it.
+>
+> Three things below are now wrong, and ADR-004 says why in each case:
+> the host app; the claim that `/payload-api` inherits the layout's
+> `Cache-Control` (a `server.handlers` response never passes through a route's
+> `headers()`); and `payloadApiHandlers` itself, which hardcodes `/api` and
+> 404s against this config's `routes.api: '/payload-api'`.
+>
+> The trigger this ADR asked for — *"a marketing performance budget, not
+> taste"* — was the 245.6 kB gz figure in its own Consequences section. The
+> split returned `/` to 155.8 kB gz.
 
 <!--
 The company-wide super admin's mount decision. Filed under docs/site/ beside
