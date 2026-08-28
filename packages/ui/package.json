@@ -20,7 +20,7 @@
   "scripts": {
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test 'audio/**/*.test.ts'"
+    "test": "node --test 'audio/**/*.test.ts' 'adaptive-panes/*.test.ts'"
   },
   "dependencies": {
     "@acme/theme": "workspace:*",
@@ -38,8 +38,11 @@
     "lucide-react": "catalog:",
     "lucide-react-native": "catalog:",
     "react-native-css": "catalog:",
+    "react-native-gesture-handler": "catalog:",
     "react-native-graph": "1.4.0",
+    "react-native-mmkv": "catalog:",
     "react-native-pulsar": "catalog:",
+    "react-native-reanimated": "catalog:",
     "react-native-safe-area-context": "catalog:",
     "react-native-svg": "catalog:",
     "solito": "catalog:",
@@ -47,7 +50,8 @@
     "sonner-native": "catalog:",
     "tailwind-merge": "catalog:",
     "tailwind-variants": "catalog:",
-    "uniwind": "catalog:"
+    "uniwind": "catalog:",
+    "zustand": "catalog:"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",
@@ -61,7 +65,13 @@
     "typescript": "catalog:"
   },
   "peerDependencies": {
+    "expo-router": "*",
     "react": "*",
     "react-native": "*"
+  },
+  "peerDependenciesMeta": {
+    "expo-router": {
+      "optional": true
+    }
   }
 }

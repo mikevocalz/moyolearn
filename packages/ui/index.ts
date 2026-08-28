@@ -100,3 +100,7 @@ export { ATTACHMENT_CHOICES, MAX_TUTOR_IMAGES, countImages } from './tutor-attac
 export { TutorThread, type TutorThreadProps } from './TutorThread';
 export type { TutorMessage } from './tutor-message.ts';
 export { ImageViewer, type ImageViewerProps } from './ImageViewer';
+
+// adaptive panes — the list-detail navigator (doc 37 §3.2) and its chrome.
+// The sub-barrel owns the full surface; everything reachable there is public.
+export * from './adaptive-panes';

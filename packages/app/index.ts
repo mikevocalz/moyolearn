@@ -46,6 +46,11 @@ export { useProgress } from './features/progress/use-progress';
 export { ReportsScreen } from './features/summary/reports-content';
 export { SessionReportScreen } from './features/summary/report-content';
 export { SummaryQueueScreen } from './features/summary/draft-queue-content';
+// Doc 37 §3.3's pane hosts: the same screens inside AdaptivePanes — tutor
+// Notes queue|draft and guardian Reports|report on expanded widths, exactly
+// the single-column screens on compact.
+export { ReportsPaneScreen } from './features/summary/reports-pane-content';
+export { SummaryQueuePaneScreen } from './features/summary/draft-queue-pane-content';
 export { ShareReportContent } from './features/summary/share-report-content';
 export { ReportBody, LEVEL_LABEL, type ReportBodyProps } from './features/summary/report-blocks';
 export {
