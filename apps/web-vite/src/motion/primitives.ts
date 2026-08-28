@@ -564,8 +564,14 @@ export function splitReveal({ unit = 'lines', ...options }: SplitOptions): Split
     return { timeline: gsap.timeline({ paused: true }), split: null };
   }
 
+  // Splitting to `chars` alone emits every letter as its own inline element,
+  // which hands the browser a legal break point between any two letters — a
+  // display headline then sets as "LEARNING H / AS A HEART". Asking for
+  // 'words,chars' keeps each word as a wrapper the line breaker cannot enter,
+  // while still yielding the per-character targets the animation staggers over.
+  // Words wrap at spaces or the line overflows; a letterform is never split.
   const split = SplitText.create(options.targets as gsap.DOMTarget, {
-    type: unit,
+    type: unit === 'chars' ? 'words,chars' : unit,
     mask: unit,
     aria: 'auto',
     autoSplit: true,

@@ -75,3 +75,26 @@ html.lenis body {
   translate: calc(var(--moyo-shadow-offset-2) - var(--moyo-press-offset))
     calc(var(--moyo-shadow-offset-2) - var(--moyo-press-offset));
 }
+
+/*
+ * Display type must never break inside a word.
+ *
+ * react-native-web's Text sets `word-wrap: break-word` so that long strings in
+ * a fixed-width native layout cannot overflow their box. On a marketing
+ * headline that rule is actively harmful: at display scale a single word is
+ * wider than any sensible measure, so the browser splits it mid-glyph and
+ * "LEARNING HAS A HEART" sets as "LEARNI / NG HAS / A HEAR / T".
+ *
+ * Words wrap at spaces or they overflow — never through a letterform. Balance
+ * evens the resulting rag so a three-word line does not leave one orphan.
+ */
+.moyo-site .font-moyo-display,
+.moyo-site .font-moyo-hand {
+  /* !important because react-native-web writes word-wrap into the element's
+   * own generated rule; without it the browser keeps its licence to split a
+   * word mid-glyph and the headline sets as "LEAR / NING H / AS A H / EART". */
+  overflow-wrap: normal !important;
+  word-break: normal !important;
+  hyphens: none;
+  text-wrap: balance;
+}

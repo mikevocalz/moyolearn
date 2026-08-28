@@ -703,6 +703,17 @@ export const siteMotion = {
     snap: '1.25rem',
     'page-turn': '3rem',
     'lock-in': '0.75rem',
+    /*
+      Parallax depth inside a PINNED chapter. The five entrance travels above
+      are sized for an object arriving into its own slot; across four viewports
+      of pinned scroll they read as nothing at all, because in a pin the layer
+      differential IS the whole effect and there is no page movement underneath
+      it to borrow from. Three steps, roughly a ratio apart, so a composition
+      can say far/mid/near without a chapter inventing a fourth depth.
+    */
+    'parallax-far': '2rem',
+    'parallax-mid': '5rem',
+    'parallax-near': '8rem',
   },
   /**
    * Rotations, as unsigned MAGNITUDES. Direction belongs to the primitive — a
@@ -724,6 +735,13 @@ export const siteMotion = {
     peel: 1.04,
     snap: 0.92,
     pulse: 1.04,
+    /**
+     * A full-bleed figure entering OVERSIZED and cropped by its own stage,
+     * settling to true size. Deliberately an order of magnitude past `peel`:
+     * the others are the few percent an object overshoots by, this is the
+     * composition being wider than the frame on purpose.
+     */
+    crop: 1.25,
   },
   opacity: {
     /** The floor of the listening breath. It softens; it never disappears. */
@@ -767,9 +785,9 @@ export const siteFontFamilies = {
  */
 export const siteTypeScale = {
   /** The one hero moment per page. Clash Display, tight, unapologetic. */
-  'site-hero': { size: 'clamp(4rem, 12vw, 12.5rem)', lineHeight: '0.88', tracking: '-0.03em' },
+  'site-hero': { size: 'clamp(2.75rem, 7.5vw, 7rem)', lineHeight: '0.94', tracking: '-0.02em' },
   /** Chapter openers. */
-  'site-chapter': { size: 'clamp(2.75rem, 7vw, 6.5rem)', lineHeight: '0.95', tracking: '-0.025em' },
+  'site-chapter': { size: 'clamp(2rem, 4.6vw, 4rem)', lineHeight: '1.02', tracking: '-0.02em' },
   'site-title': { size: 'clamp(2rem, 4vw, 3.25rem)', lineHeight: '1.05', tracking: '-0.02em' },
   'site-subtitle': {
     size: 'clamp(1.375rem, 2.4vw, 1.875rem)',

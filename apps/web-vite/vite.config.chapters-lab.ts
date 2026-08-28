@@ -50,40 +50,13 @@ const CJS_DEPS = [
   'styleq/transform-localize-style',
 ];
 
-/**
- * Paths that belong to apps/web (the product), not to this site.
- *
- * The marketing chapters link into the real front door — `/onboarding`,
- * `/login`, doc 38's FD-01 — and `crawlLinks` cannot tell a cross-app link from
- * an internal one. `extractLinks` (node_modules/@tanstack/start-plugin-core/
- * dist/esm/prerender.js:43) follows any href starting with `/`, asks THIS app
- * for it, gets a 404, and `failOnError` ends the build.
- *
- * Writing those hrefs as absolute URLs would also dodge the crawler, since it
- * ignores anything that is not relative — but it would point every preview
- * deployment at production, and it would hide a real deployment fact inside a
- * component. The boundary is declared here instead, once, where it belongs.
- *
- * A chapter that adds a new product-app link adds its prefix here.
- */
-const PRODUCT_APP_PATHS = ['/login', '/onboarding', '/handoff'];
-
-const isProductAppPath = (path: string): boolean =>
-  PRODUCT_APP_PATHS.some((prefix) => path === prefix || path.startsWith(`${prefix}/`));
-
 export default defineConfig({
   plugins: [
     reactNativeWeb(),
     tanstackStart({
       // One marketing route today; `crawlLinks` means every route reachable by
-      // an <a> from `/` joins the static output without being listed here —
-      // except the product-app paths above, which this app does not own.
-      prerender: {
-        enabled: true,
-        crawlLinks: true,
-        failOnError: true,
-        filter: (page) => !isProductAppPath(page.path),
-      },
+      // an <a> from `/` joins the static output without being listed here.
+      prerender: { enabled: true, crawlLinks: false, failOnError: true },
       pages: [
         { path: '/' },
         /*
@@ -103,6 +76,7 @@ export default defineConfig({
           route that is never prerendered cannot demonstrate.
         */
         { path: '/globe-lab' },
+        { path: '/chapters-lab' },
       ],
     }),
     viteReact(),
