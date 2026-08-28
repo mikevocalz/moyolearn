@@ -22,8 +22,12 @@
  * as a customer result.
  *
  * ACCENT BUDGET. This chapter spends the page's highlighter: one `moyoSun`
- * band, behind the mastery numeral, carrying ink at 9.68:1. No heart is used
- * here — chapter 01 spent it on the learner door.
+ * swipe, UNDER the mastery numeral rather than across it. It was a band behind
+ * the lower half of the glyphs and it cut them, so the geometry is now a
+ * sibling in a shrink-to-fit column — the swipe's width is the numeral's own
+ * width and its top is the numeral's bottom, at every viewport. `moyoSun` is
+ * fill-only and never carries type; the label below it sits on paper. No heart
+ * is used here — chapter 01 spent it on the learner door.
  *
  * TYPE NOTE. `text-site-chapter` appears twice in this section: once on the
  * chapter opener, which is what the step is for, and once on the mastery
@@ -39,11 +43,16 @@
  * https://mobbin.com/sites/sections/34a2151f-c9b2-4121-b790-8e85202fe9ca
  * (Spade — four corner crop marks instead of a card border, tiny kicker pinned
  * top-left, value anchored to the bottom edge, so the figure reads as printed
- * on the page) · https://mobbin.com/sites/sections/679cf598-2beb-4257-8152-d2efddac64f7
- * (Gumroad — cell content crossing its own boundary, which is what stitches the
- * grid to the page instead of tiling it) · https://mobbin.com/sites/sections/229496fd-8db0-4230-b10b-573b5b028300
+ * on the page) · https://mobbin.com/sites/sections/229496fd-8db0-4230-b10b-573b5b028300
  * (Claude — labels anchored to the bottom of each cell, which is what makes
  * uneven cell heights survivable). Structure only.
+ *
+ * The Gumroad "escape" — cell content written across its own boundary — was
+ * cited here and is deliberately NOT built: the annotation it was applied to
+ * crossed the next cell's `02 MASTERY` label. Doc 08's law is that hierarchy
+ * comes from size, weight and space; an element may leave its container only
+ * into whitespace, never onto another element's type. The note now lives on
+ * the plate it annotates.
  *
  * SOT: docs/site/copy-deck.md §3 (+ §12 F-02, F-03, F-12) · docs/site/research.md §4.2
  *      docs/site/mobbin/bento.md · docs/site/tokens.md · docs/site/motion-matrix.md
@@ -110,7 +119,15 @@ export function Desk() {
           {/* ── 01 · the loud cell ─────────────────────────────────────── */}
           <View className={`${CELL} md:col-span-7 md:row-span-2`}>
             <CellLabel index="01" name="The work" />
-            <View className="border-moyo-hair relative rounded-moyo-square border-moyo-outline bg-moyo-paper p-inset-roomy">
+            {/*
+              `flex-1` — the same move parents.tsx makes, and here it closes a
+              real defect: this cell spans two grid rows, so its height is set
+              by the two cells beside it, and a fixed-height plate left a
+              corridor of dead cream between the work and its caption. The plate
+              absorbs that height instead. What fills it is ruled paper, which
+              is what a worked page actually looks like; empty cream is not.
+            */}
+            <View className="border-moyo-hair relative flex-1 gap-stack rounded-moyo-square border-moyo-outline bg-moyo-paper p-inset-roomy">
               <GraphPaper />
               <View className="gap-element">
                 <Text className="font-moyo-display text-site-title md:text-site-title">47 &minus; 19</Text>
@@ -118,20 +135,26 @@ export function Desk() {
                   Two-digit subtraction &middot; regrouping
                 </Text>
               </View>
+              {/*
+                The margin note lives ON the page it annotates, docked to the
+                plate's lower-right, and it crosses nothing. It used to escape
+                the cell's right rule and land across the next cell's "02
+                MASTERY" label — two messages in one set of pixels, which is a
+                collision and not depth. A margin note belongs in a margin, and
+                the plate's own lower half is the margin the work leaves.
+
+                `relative` puts it in the positioned layer, above the ruled
+                pattern; `self-end` keeps its box the width of its own text so
+                the arrow stays beside the work rather than at the cell edge.
+              */}
+              <Text
+                aria-label="Handwritten note: You are close. Look at this part again."
+                className="relative mt-auto max-w-content-form self-end text-right font-moyo-hand text-site-note text-moyo-secondary md:text-site-note"
+              >
+                You&rsquo;re close. Look at this part again &uarr;
+              </Text>
             </View>
-            {/*
-              The Gumroad escape. The margin note is written across the cell's
-              own right rule, so the grid reads as pages on a desk rather than
-              as tiles. It stays inside the container, so nothing here can push
-              the document sideways.
-            */}
-            <Text
-              aria-label="Handwritten note: You are close. Look at this part again."
-              className="absolute right-0 top-inset-roomy w-1/2 translate-x-1/3 font-moyo-hand text-site-note text-moyo-secondary md:text-site-note"
-            >
-              You&rsquo;re close. Look at this part again &uarr;
-            </Text>
-            <Text className="mt-auto text-site-note text-moyo-ink-muted md:text-site-note">
+            <Text className="text-site-note text-moyo-ink-muted md:text-site-note">
               Photographed on the kitchen table, then worked through step by step.
             </Text>
           </View>
@@ -140,9 +163,7 @@ export function Desk() {
           {/*
             Spade's crop marks instead of a frame, and nothing on the numeral's
             baseline — bento.md refuses the Deel pattern of an icon sharing an
-            eye-stop with a figure. The highlighter band sits behind the lower
-            half of the numeral so the mark reads as a swipe over the page
-            rather than as a filled card.
+            eye-stop with a figure.
 
             This is the one cell WITHOUT `.moyo-pressable`, so it is also the
             one cell that does not compress under the pointer. That is the
@@ -152,15 +173,29 @@ export function Desk() {
           */}
           <View className="desk-cell relative md:col-span-5 md:flex md:flex-col md:justify-end">
             <CropMarks />
-            <View className="relative p-inset-roomy">
-              <View className="absolute inset-x-0 bottom-inset-roomy h-1/3 bg-moyo-sun" />
-              <View className="relative gap-element">
-                <CellLabel index="02" name="Mastery" />
+            <View className="gap-stack p-inset-roomy">
+              <CellLabel index="02" name="Mastery" />
+              {/*
+                The page's one highlighter, and it UNDERLINES the numeral rather
+                than crossing it. Before, the band was an absolutely-positioned
+                third of the cell's height sitting behind the lower half of the
+                glyphs: it started at a different x, ended at a different x, and
+                cut `87%` through the middle — a collision whose geometry
+                changed with every reflow because neither edge was tied to
+                anything.
+
+                Now both are in one shrink-to-fit column, so the swipe's width
+                IS the numeral's measured width and its top IS the numeral's
+                bottom. It cannot cut a glyph, at any width, because there is no
+                overlap left to get wrong. `moyoSun` stays fill-only.
+              */}
+              <View className="self-start">
                 <Text className="font-moyo-display text-site-chapter text-moyo-ink md:text-site-chapter">87%</Text>
-                <Text variant="label" className="text-site-label text-moyo-ink">
-                  Two-digit subtraction &middot; mastery
-                </Text>
+                <View aria-hidden className="h-stack w-full bg-moyo-sun" />
               </View>
+              <Text variant="label" className="text-site-label text-moyo-ink">
+                Two-digit subtraction &middot; mastery
+              </Text>
             </View>
           </View>
 
