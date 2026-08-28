@@ -87,6 +87,7 @@ catalog:
   uniwind: 1.11.0
   tailwindcss: 4.3.2
   "@tailwindcss/postcss": 4.3.2
+  "@tailwindcss/vite": 4.3.2
   react-native-css: 3.0.7
   tailwind-merge: 3.6.0
   tailwind-variants: 3.3.1
@@ -194,12 +195,13 @@ catalog:
   storybook: 10.5.8
   "@storybook/react-vite": 10.5.8
   "@storybook/addon-a11y": 10.5.8
-  # 7.x, not 6.x: @tanstack/react-start peers `vite: >=7.0.0` (ADR-001). The
-  # other two consumers accept it — @storybook/builder-vite@10.5.8 peers
-  # `^5 || ^6 || ^7 || ^8`, @vitejs/plugin-react@4.7.0 peers `^4.2 || ^5 || ^6
-  # || ^7`. 7.3.6 rather than 8.x because plugin-react 4.7.0 stops at ^7.
-  vite: 7.3.6
-  "@vitejs/plugin-react": 4.7.0
+  # Vite 8 + plugin-react 6, required by @payloadcms/tanstack-start (it peers
+  # vite >=8, @vitejs/plugin-react ^6 and @vitejs/plugin-rsc ^0.5.21). The
+  # earlier 7.x pin existed only because plugin-react 4.7.0 stopped at ^7;
+  # bumping both together removes that ceiling. @storybook/builder-vite@10.5.8
+  # peers ^5||^6||^7||^8, so Storybook rides along.
+  vite: 8.2.2
+  "@vitejs/plugin-react": 6.1.1
   vite-plugin-react-native-web: 2.5.0
   babel-plugin-react-compiler: 1.0.0
   turbo: 2.10.11
