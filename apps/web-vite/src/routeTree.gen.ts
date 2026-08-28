@@ -10,33 +10,53 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as GlobeLabRouteImport } from './routes/globe-lab'
+import { Route as MotionLabRouteImport } from './routes/motion-lab'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GlobeLabRoute = GlobeLabRouteImport.update({
+  id: '/globe-lab',
+  path: '/globe-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MotionLabRoute = MotionLabRouteImport.update({
+  id: '/motion-lab',
+  path: '/motion-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/globe-lab': typeof GlobeLabRoute
+  '/motion-lab': typeof MotionLabRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/globe-lab': typeof GlobeLabRoute
+  '/motion-lab': typeof MotionLabRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/globe-lab': typeof GlobeLabRoute
+  '/motion-lab': typeof MotionLabRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/globe-lab' | '/motion-lab'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/globe-lab' | '/motion-lab'
+  id: '__root__' | '/' | '/globe-lab' | '/motion-lab'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  GlobeLabRoute: typeof GlobeLabRoute
+  MotionLabRoute: typeof MotionLabRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,11 +68,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/globe-lab': {
+      id: '/globe-lab'
+      path: '/globe-lab'
+      fullPath: '/globe-lab'
+      preLoaderRoute: typeof GlobeLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/motion-lab': {
+      id: '/motion-lab'
+      path: '/motion-lab'
+      fullPath: '/motion-lab'
+      preLoaderRoute: typeof MotionLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  GlobeLabRoute: GlobeLabRoute,
+  MotionLabRoute: MotionLabRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

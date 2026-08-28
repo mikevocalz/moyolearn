@@ -154,6 +154,12 @@ const SITE_PAIRS = [
   ['moyoEarth', 'moyoPaperRaised', 4.5],
   ['moyoLeaf', 'moyoPaper', 4.5],
   ['moyoLeaf', 'moyoPaperRaised', 4.5],
+  /*
+    The identity plum is the darkest chromatic token in the layer, so it is held
+    to the full body bar like every other mark.
+  */
+  ['moyoMarkDeep', 'moyoPaper', 4.5],
+  ['moyoMarkDeep', 'moyoPaperRaised', 4.5],
   // chromatic FILLS carry their own foreground
   ['moyoOnPrimary', 'moyoPrimary', 4.5],
   ['moyoOnSecondary', 'moyoSecondary', 4.5],
@@ -161,6 +167,8 @@ const SITE_PAIRS = [
   ['moyoOnSun', 'moyoSun', 4.5],
   ['moyoOnEarth', 'moyoEarth', 4.5],
   ['moyoOnLeaf', 'moyoLeaf', 4.5],
+  ['moyoOnMark', 'moyoMark', 4.5],
+  ['moyoOnMarkDeep', 'moyoMarkDeep', 4.5],
   // non-text boundaries: WCAG 1.4.11
   ['moyoOutline', 'moyoPaper', 3],
   ['moyoOutline', 'moyoPaperRaised', 3],
@@ -173,6 +181,15 @@ const SITE_PAIRS = [
     RESOURCE_ACCENTS below), and docs/site/tokens.md marks it as restricted.
   */
   ['moyoPrimary', 'moyoSun', 3],
+  /*
+    The identity teal on paper is 3.63:1 — the SECOND large-text-only pairing in
+    the layer, and the reason it is declared here at 3.0 rather than omitted is
+    the same as for cobalt-on-sun: a pairing nobody declares is a pairing nobody
+    measures. It is a wordmark and display colour, never a paragraph and never a
+    caption. docs/site/tokens.md carries the restriction.
+  */
+  ['moyoMark', 'moyoPaper', 3],
+  ['moyoMark', 'moyoPaperRaised', 3],
 ];
 
 /**

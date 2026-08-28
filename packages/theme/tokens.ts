@@ -532,6 +532,34 @@ export const siteColors = {
   /** Leaf green. Growth, and the only cool-warm counterweight to cobalt. */
   moyoLeaf: '#286641',
 
+  /*
+    THE IDENTITY PAIR. These two are the Moyo logo's own colours, so they are
+    named for the mark rather than for a hue or for whatever they happen to be
+    colouring this month — the same discipline the file's opening warning
+    demands, applied before the name has a chance to become a lie. They are
+    first-class site tokens, usable on the wordmark, a chapter accent, the
+    footer signature or a landmass, and they are deliberately NOT called
+    "primary": `moyoPrimary` is cobalt and stays cobalt.
+
+    They are also a documented widening of the palette. The brief's colour
+    direction is cream, warm ink, red-orange, mustard, cobalt, leaf and clay;
+    teal and plum are neither. That is an owner decision, recorded here so the
+    growth is visible rather than discovered.
+  */
+  /**
+   * The mark's teal. 3.63:1 on paper, so it is **large text only** as a
+   * foreground — a display word, never a paragraph and never a caption. Ink on
+   * it is 4.52:1, which is what makes it usable as a fill.
+   */
+  moyoMark: '#0E8B94',
+  /**
+   * The mark's plum. 12.41:1 on paper — the darkest chromatic token in the
+   * layer and safe at any size. Its one hazard is at the other end: `moyoInk`
+   * on it is 1.32:1, so the outline that frames every other fill VANISHES on
+   * this one. Anything drawn in plum needs its own separation.
+   */
+  moyoMarkDeep: '#352252',
+
   // Foregrounds. Paper rather than white on every chromatic fill: a white knockout
   // on a cream page reads as a hole punched through it.
   moyoOnPrimary: '#F7F1E3',
@@ -540,6 +568,9 @@ export const siteColors = {
   moyoOnSun: '#171310',
   moyoOnEarth: '#F7F1E3',
   moyoOnLeaf: '#F7F1E3',
+  /** Ink, not paper: paper on teal is 3.63:1 and fails, ink on it is 4.52:1. */
+  moyoOnMark: '#171310',
+  moyoOnMarkDeep: '#F7F1E3',
 } as const;
 
 /**
@@ -586,6 +617,118 @@ export const moyoRadius = {
  */
 export const moyoTexture = {
   grain: '0.03',
+} as const;
+
+/**
+ * The site's motion vocabulary (site spec §10). Objects on moyolearn.com have
+ * physical personalities — a card thunks, a sticker peels, a page turns — and
+ * this is where each personality's physics is spelled ONCE so a chapter never
+ * types a duration, an ease, a distance or an overshoot at a call site.
+ *
+ * Four things about the shape are deliberate:
+ *
+ * 1. **`duration` is ms strings**, matching `motion.duration` above, because
+ *    build-css.mjs emits them as `--moyo-duration-*` for the CSS-transition
+ *    micro-interactions. `apps/web-vite/src/motion/tokens.ts` is the one place
+ *    that converts them to the seconds GSAP wants.
+ * 2. **`ease` values are GSAP ease identifiers, not cubic-beziers**, and they
+ *    are deliberately NOT emitted as CSS. GSAP is the site's only animation
+ *    system, `power4.out` has no CSS spelling, and re-encoding each curve as a
+ *    bezier would be two sources for one shape. CSS transitions use the
+ *    product's `--ease-*` tokens; anything needing these curves is a timeline.
+ * 3. **Nothing here is a generic "fade up".** The easing law is that an element
+ *    with no personality assigned does not animate, so there is no default
+ *    entrance token to reach for by accident.
+ * 4. `compress` has no travel entry on purpose: a button compresses *toward its
+ *    own shadow*, so its distance is `moyoShadowOffset[1]` and inventing a
+ *    second number here would let the two drift.
+ *
+ * SOT: docs/site/motion-matrix.md · apps/web-vite/src/motion/primitives.ts
+ * SOT-KEYWORDS: site motion tokens gsap duration ease personality thunk peel
+ *               snap draw page-turn compress pulse marketing
+ */
+export const siteMotion = {
+  /**
+   * Entrances are decisive (300–500ms) and settles are short. `pulse` is the
+   * one slow value in the set — it is the only ambient, repeating motion on the
+   * site, and it exists solely for the mark while Natalie is listening.
+   */
+  duration: {
+    thunk: '300ms',
+    /** The hard landing after a thunk's overshoot. Short enough to read as impact. */
+    settle: '110ms',
+    open: '460ms',
+    peel: '380ms',
+    draw: '520ms',
+    /** A strike-through is fast and final; a slow one reads as indecision. */
+    'cross-out': '220ms',
+    /** Quick or it is not a snap. */
+    snap: '200ms',
+    /** The heaviest object on the site, and still under the 600ms ceiling. */
+    'page-turn': '560ms',
+    /** Below the ramp's `fast`: a button under a finger has to feel simultaneous. */
+    compress: '80ms',
+    release: '160ms',
+    'lock-in': '260ms',
+    /** One full breath. Ambient movement is slow and rare. */
+    pulse: '1800ms',
+  },
+  ease: {
+    entrance: 'power3.out',
+    /** Decelerates harder than `entrance`: a card that lands, not one that arrives. */
+    thunk: 'power4.out',
+    settle: 'power2.out',
+    snap: 'power4.out',
+    /** A pencil accelerates into the stroke and lifts off it. */
+    draw: 'power2.inOut',
+    peel: 'power2.out',
+    /** A page has mass at both ends of the turn. */
+    turn: 'power2.inOut',
+    strike: 'power4.out',
+    compress: 'power2.out',
+    release: 'power3.out',
+    /** The only cyclical ease. Anything else makes a breath read as a machine. */
+    breath: 'sine.inOut',
+    lock: 'power4.out',
+  },
+  /** Multipliers past the rest state. The spec's ceiling for a thunk is 3%. */
+  overshoot: {
+    thunk: 1.025,
+    snap: 1.02,
+  },
+  /** Distances, in rem so they scale with the root the type ramp is built on. */
+  travel: {
+    thunk: '1.5rem',
+    peel: '0.5rem',
+    snap: '1.25rem',
+    'page-turn': '3rem',
+    'lock-in': '0.75rem',
+  },
+  /**
+   * Rotations, as unsigned MAGNITUDES. Direction belongs to the primitive — a
+   * workbook hinged on its right spine opens the other way, and a token that
+   * carried the sign would need a second entry for the mirror. Every one of
+   * these exists to keep an object off-axis: a hand drew it.
+   */
+  rotate: {
+    peel: '6deg',
+    'page-turn': '12deg',
+    strike: '2deg',
+    /** Past vertical, the way a workbook cover actually falls open. */
+    open: '105deg',
+    /** The ceiling on a draggable's rotational inertia. "Slight" is the brief. */
+    drag: '7deg',
+    snap: '3deg',
+  },
+  scale: {
+    peel: 1.04,
+    snap: 0.92,
+    pulse: 1.04,
+  },
+  opacity: {
+    /** The floor of the listening breath. It softens; it never disappears. */
+    pulse: 0.82,
+  },
 } as const;
 
 /**
@@ -654,3 +797,5 @@ export type ContentWidth = keyof typeof contentWidths;
 export type SiteColor = keyof typeof siteColors;
 export type SiteTypeStep = keyof typeof siteTypeScale;
 export type SiteFontFamily = keyof typeof siteFontFamilies;
+export type SiteMotionDuration = keyof typeof siteMotion.duration;
+export type SiteMotionEase = keyof typeof siteMotion.ease;

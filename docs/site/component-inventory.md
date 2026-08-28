@@ -10,7 +10,8 @@ SOT: packages/ui/index.ts (the component index) · docs/site/tokens.md
 SOT-KEYWORDS: site components inventory marketing kit reuse web-vite chapters
 -->
 
-Status: inventory only — **nothing in this document has been built** · Date: 2026-08-28
+Status: inventory only, **except** the motion vocabulary, which ships — see
+"The site's motion vocabulary" below · Date: 2026-08-28
 
 ## The rule this inventory applies
 
@@ -55,7 +56,7 @@ re-points the variables they read. Verified end-to-end by the prerendered hero.
 | Tabs / segmented switching | `SegmentedControl`, `TabBar` | For a "for parents / for schools" register switch. |
 | Modal, sheet, lightbox | `Dialog`, `BottomSheet`, `Lightbox` | Note: `Lightbox` for media chapters. |
 | Badges / pills | `Badge` | |
-| Motion primitives | `Motion`, `FadeIn`, `SlideUp`, `ScaleIn`, `AnimatePresence`, `useReducedMotion`, `PressScale` | **The motion agent must start here.** `useReducedMotion` is already wired; a bespoke motion layer would be a second system. |
+| Motion primitives | `Motion`, `FadeIn`, `SlideUp`, `ScaleIn`, `AnimatePresence`, `useReducedMotion`, `PressScale` | **Product only — superseded on the site.** See "The site's motion vocabulary" below: the site runs on GSAP, and these `@legendapp/motion` presets are the second system that must not appear on a marketing surface. `useHydrated` from the same module is still used, and the site's reduced-motion store reads the same OS signal these do. |
 | Empty / loading states | `EmptyState`, `LoadingSkeleton` | |
 | Forms (waitlist, contact) | `useAppForm`, `FormField`, `TextField`, `Checkbox`, `ErrorMessage` | The kit's form stack. A marketing form is still a form. |
 | Reduced-motion + hydration guards | `useHydrated`, `useReducedMotion` | |
@@ -89,13 +90,50 @@ consume, so none of them can quietly invent a value.
 | 8 | `MoyoSeoHead` | **A** | Per-route `head()` composition — title, description, OG, canonical from a single `SITE_ORIGIN`. Currently inline in `routes/index.tsx`; the second route is where it must be extracted or the canonical origin gets spelled twice. Pure marketing/SEO, no product analogue. | none (metadata only) |
 | 9 | `MoyoSiteNav` / `MoyoSiteFooter` | **B** | Marketing chrome. `Nav`/`Footer` primitives supply the elements, but the site's header and footer are content structures — nav model, legal links, sitemap. The kit's app shells assume an authenticated session and a role. | `moyoPaper`, `moyoOutline`, `moyoBorderW.hair`, `site-label`, `site-body` |
 
+## The site's motion vocabulary — `apps/web-vite/src/motion/` (BUILT)
+
+The one exception to "nothing in this document has been built": the motion
+foundation ships. A chapter animates by calling these and nothing else; a
+marketing page that reaches for `gsap.to()` directly is inventing a second
+design language. Full spec, including the reduced-motion behaviour of every
+entry, in `docs/site/motion-matrix.md`.
+
+| What you want | Call | Notes |
+| --- | --- | --- |
+| Animate anything in a chapter | `useMotionScene(scope, builder, deps)` from `@/motion` | The only entry point. Hands the builder the vocabulary, scopes it with `gsap.context`, and reverts on unmount — which is what keeps ScrollTriggers from leaking across routes. |
+| A card arriving | `motion.thunk` | Fast in, 2.5% overshoot, hard settle. |
+| A workbook cover | `motion.open` | |
+| A sticker | `motion.peel` | Fires once. Never loops. |
+| A pencil underline | `motion.draw` | SVG `stroke-dashoffset`; the primitive owns the dash, CSS must not. |
+| A wrong approach | `motion.crossOut` | |
+| A mastery block | `motion.snap` / `motion.lockIn` | Progress is pieces locking into place. **Never confetti.** |
+| A register change | `motion.pageTurn` | |
+| A button press | `motion.compress` + the `.moyo-pressable` class | Travel and shadow are `calc()`'d from one token so they cannot drift. |
+| The listening mark | `motion.pulse` | Only while Natalie listens. Paired with a live region. |
+| A draggable | `motion.inertialTilt` / `motion.bindDragInertia` | |
+| A depth layer | `motion.parallax` | The only ambient scroll motion. Use sparingly. |
+| A display heading | `motion.splitReveal` | GSAP SplitText, verified present in the installed package. |
+| Reduced motion, in a component | `useReducedMotion()` from `@/stores/perf-store` | |
+| Reduced motion, outside React | `isReducedMotion()` | For GSAP builders and ticker callbacks. |
+| Smooth scroll | nothing — `MotionRuntime` in `__root.tsx` owns it | Lenis drives ScrollTrigger's ticker. Off entirely under reduced motion. |
+| See it all working | `/motion-lab` | Every primitive in both motion states. `noindex`, not in the sitemap. |
+
+Two rules a chapter cannot break without breaking the system:
+
+- **Never import `gsap`, `motion/primitives` or `motion/register` directly.**
+  They arrive as the `motion` argument. A static import pulls ~48 kB gz of GSAP
+  into that route's chunk; the initial-JS margin is under 1 kB.
+- **Never author an element hidden.** Markup carries the END state; primitives
+  create their own start states in the browser. That is what makes "animates in,
+  stays invisible" structurally impossible under reduced motion and with JS off.
+
 ### Not site-local, despite looking like it
 
 | Candidate | Verdict | Why |
 | --- | --- | --- |
 | `MoyoButton` | **No** | `Button` already reads `--color-primary` / `--color-on-primary` / `--radius-control` / `--shadow-card`, all of which `.moyo-site` re-points. A site button would be a fork with no behavioural difference — the exact duplication the rule forbids. |
 | `MoyoCard` | **No** | Covered by `MoyoSlab` (#4) for the neubrutalist frame and by `Card` for anything tactile. Three card components would be two too many. |
-| `MoyoMotion*` | **No** | `@acme/ui`'s motion exports plus `useReducedMotion` cover it. The motion agent extends those. |
+| `MoyoMotion*` | **Superseded** | This entry predated the §10 spec. The site does NOT extend `@acme/ui`'s `@legendapp/motion` presets: §10 fixes one animation system, GSAP, and two would be the failure the rest of this document exists to prevent. The vocabulary is in `apps/web-vite/src/motion/` and there is still no `MoyoMotion` component — motion is a hook, not a wrapper. |
 | `MoyoGlobe` | **Not mine** | Owned by the globe chapter agent. Recorded here only so its two public colour commitments are traceable: Africa = `moyoSun`, oceans = `moyoPrimary`. |
 
 ## Conventions for anything built here

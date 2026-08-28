@@ -1,0 +1,131 @@
+/*
+ * The globe stage's layout geometry.
+ *
+ * WHY A STYLESHEET AND NOT UTILITIES. Every value here is either a Moyo token
+ * read through `var()` or a pure geometric ratio — a percentage, an
+ * aspect-ratio, a container-query breakpoint. Tailwind has no token for "the
+ * card sits in the top-left quadrant of a square stage", and expressing it as
+ * `left-[8%]` would be exactly the arbitrary value `CLAUDE.md` bans. Nothing
+ * here names a colour, a font, a radius, a border width, a shadow or a duration
+ * that is not a token; those all come from `packages/theme/tokens.ts` through
+ * `.moyo-site`.
+ *
+ * SOT: apps/web-vite/src/globe/globe.tsx · docs/site/tokens.md
+ * SOT-KEYWORDS: globe stage css layout node card corner leader line container query
+ */
+
+.moyo-globe-stage {
+  position: relative;
+  width: 100%;
+  container-type: inline-size;
+}
+
+/*
+  The globe itself is always square. `globeRadiusPx` keys off the SHORTER side,
+  so a wide frame would only make the globe smaller and leave dead cream on both
+  flanks.
+*/
+.moyo-globe-frame {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  /* Vertical page scroll keeps working through a horizontal globe drag. */
+  touch-action: pan-y;
+}
+
+/* The canvas and the Tier C SVG occupy the same box, so a tier switch is a
+   swap and never a reflow. */
+.moyo-globe-layer {
+  position: absolute;
+  inset: 0;
+  display: block;
+}
+
+/* Leader lines. Painted over the globe, under the cards, never interactive. */
+.moyo-globe-leaders {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+/*
+  Node cards.
+
+  A real <ul>. Absolute placement moves where each <li> is PAINTED, not where it
+  sits in the document, so tab order is source order and stays stable no matter
+  how the globe is rotated — the reason the cards do not ride the sphere.
+*/
+.moyo-globe-nodes {
+  position: absolute;
+  inset: 0;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+
+.moyo-globe-node {
+  position: absolute;
+  width: 40%;
+  max-width: 20rem;
+  pointer-events: auto;
+  /*
+    Reveal is a modifier class, not a mount. A card that leaves the DOM takes
+    focus with it, and a keyboard reader part-way through the list would be
+    thrown back to the document. `--moyo-duration-open` is the site's own token
+    and the theme's prefers-reduced-motion block already zeroes it.
+  */
+  transition:
+    opacity var(--moyo-duration-open) ease-out,
+    transform var(--moyo-duration-open) ease-out;
+}
+
+.moyo-globe-node--hidden {
+  opacity: 0;
+  transform: translateY(0.75rem);
+  visibility: hidden;
+}
+
+.moyo-globe-node--top-start {
+  top: 0;
+  left: 0;
+}
+.moyo-globe-node--top-end {
+  top: 0;
+  right: 0;
+}
+.moyo-globe-node--bottom-start {
+  bottom: 0;
+  left: 0;
+}
+.moyo-globe-node--bottom-end {
+  bottom: 0;
+  right: 0;
+}
+
+/*
+  Below 44rem of stage width the four corners overlap the globe, so the cards
+  leave the stage entirely and the composition becomes globe-then-list. A
+  container query and not a viewport media query, because this chapter can be
+  dropped into a narrow column on a wide screen.
+*/
+@container (max-width: 44rem) {
+  .moyo-globe-nodes {
+    position: static;
+    display: grid;
+    gap: var(--spacing-stack);
+    margin-block-start: var(--spacing-group);
+  }
+
+  .moyo-globe-node {
+    position: static;
+    width: 100%;
+    max-width: none;
+  }
+
+  /* With the cards off the stage there is nothing for a leader line to reach. */
+  .moyo-globe-leaders {
+    display: none;
+  }
+}

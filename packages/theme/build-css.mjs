@@ -23,7 +23,7 @@ import {
   radius, shadows, zIndex, motion, breakpoints, dial,
   uiRamp, spacingTiers, targets, readingComfort, accentRoles,
   siteColors, siteFontFamilies, siteTypeScale,
-  moyoShadowOffset, moyoBorderW, moyoRadius, moyoTexture,
+  moyoShadowOffset, moyoBorderW, moyoRadius, moyoTexture, siteMotion,
 } from './tokens.ts';
 
 const HEADER = '/* GENERATED from tokens.ts — do not edit by hand. `node build-css.mjs` */';
@@ -188,8 +188,44 @@ const siteThemeTokens = () => {
     out.push(`  --radius-moyo-${name}: ${value};`);
   }
   out.push(`  --moyo-grain-opacity: ${moyoTexture.grain};`);
+  /*
+    Durations only. `siteMotion.ease` holds GSAP ease identifiers ('power4.out'),
+    which no CSS engine can parse — the site's timelines read those straight off
+    the token module, and a CSS micro-interaction uses the product's `--ease-*`.
+    Emitting a fake bezier here would be a second source for every curve.
+
+    `--moyo-duration-` and not `--duration-`: the latter is a Tailwind namespace
+    and would mint `duration-thunk` utilities that read as product ramp steps.
+  */
+  for (const [name, value] of Object.entries(siteMotion.duration)) {
+    out.push(`  --moyo-duration-${name}: ${value};`);
+  }
   return out;
 };
+
+/**
+ * The CSS half of the reduced-motion law (docs/site/motion-matrix.md).
+ *
+ * The GSAP half lives in apps/web-vite/src/motion — a timeline built under
+ * reduced motion applies its documented END STATE immediately, so nothing is
+ * ever left mid-flight or invisible. CSS transitions cannot be reached from
+ * there, so they are zeroed at the source instead: every `--moyo-duration-*`
+ * collapses and any transition written against a motion token becomes a state
+ * change with no tween. The property still animates to the same final value,
+ * which is why this is a duration override and not `transition: none`.
+ *
+ * Emitted per token key rather than as a blanket rule so a duration added to
+ * tokens.ts cannot quietly escape the override.
+ */
+const SITE_REDUCED_MOTION = `@layer base {
+  @media (prefers-reduced-motion: reduce) {
+    .moyo-site {
+${Object.keys(siteMotion.duration)
+  .map((name) => `      --moyo-duration-${name}: 0ms;`)
+  .join('\n')}
+    }
+  }
+}`;
 
 /**
  * `.moyo-site` — the ground, made explicit.
@@ -396,6 +432,8 @@ web.push('');
 web.push(READING_COMFORT);
 web.push('');
 web.push(SITE_SCOPE);
+web.push('');
+web.push(SITE_REDUCED_MOTION);
 web.push(`
 /* @expo/ui BottomSheet (vaul) on web: the drawer hardcodes a white/black
    background and a non-flex inner wrapper, so the kit's SheetSurface can't

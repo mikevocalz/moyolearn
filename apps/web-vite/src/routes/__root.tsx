@@ -14,13 +14,27 @@
  * product's chrome variables, which have to be in scope for any portal or
  * overlay a kit component renders outside the route subtree.
  *
+ * `MotionRuntime` is the site's scroll runtime (Lenis → ScrollTrigger). It sits
+ * inside <body> rather than in a page component because the runtime is a
+ * property of the DOCUMENT — Lenis takes over `window` scrolling and
+ * ScrollTrigger measures against it, so a per-route mount would tear the whole
+ * thing down and rebuild it on every navigation. It renders null and imports
+ * nothing at module scope; the libraries arrive in an async chunk from an
+ * effect, which is what keeps the prerender pass free of any scroll library.
+ *
  * SOT: node_modules/@tanstack/react-router/dist/esm/index.d.ts:HeadContent,Scripts
  *      node_modules/@tanstack/react-router/dist/esm/route.d.ts:shellComponent
  *      packages/theme/build-css.mjs (SITE_SCOPE) · apps/web-vite/src/fonts.css
+ *      apps/web-vite/src/motion/MotionRuntime.tsx
  * SOT-KEYWORDS: web-vite root route shell document head scripts stylesheet ssr
- *               moyo-site ground preload font
+ *               moyo-site ground preload font motion lenis runtime
  */
 import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
+// Imported from the file, NOT from `../motion`: the barrel reaches
+// `useMotionScene` → `@/stores/perf-store`, whose module-scope media-query
+// subscription is a side effect Rollup cannot shake, so a barrel import would
+// pull Zustand and the store into the initial bundle in order to render null.
+import { MotionRuntime } from '../motion/MotionRuntime';
 import appCss from '../globals.css?url';
 
 export const Route = createRootRoute({
@@ -67,6 +81,7 @@ function RootDocument({ children }: { children: React.ReactNode }) {
       </head>
       <body className="moyo-site bg-moyo-paper font-moyo-text text-moyo-ink">
         {children}
+        <MotionRuntime />
         <Scripts />
       </body>
     </html>
