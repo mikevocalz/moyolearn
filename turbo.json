@@ -61,6 +61,20 @@
         "storybook-static/**"
       ]
     },
+    "web-vite#build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULTS$",
+        "../../.env*",
+        "../../packages/ui/**",
+        "../../packages/theme/**"
+      ],
+      "outputs": [
+        "dist/**"
+      ]
+    },
     "typecheck": {
       "dependsOn": [
         "^typecheck"

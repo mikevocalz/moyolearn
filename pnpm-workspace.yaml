@@ -104,6 +104,12 @@ catalog:
   "@tanstack/react-form": 1.33.5
   "@tanstack/react-pacer": 0.23.0
   "@tanstack/react-table": 8.21.3
+  # Marketing-site routing + SSR (ADR-001). Start is Router plus a server, so
+  # `src/routes` + createFileRoute + routeTree.gen.ts are the same artefacts in
+  # both — the SPA fallback (Lane B) is a plugin swap, not a rewrite. Start's
+  # vite peer is `>=7.0.0`, which is why the `vite` entry below is 7.x.
+  "@tanstack/react-router": 1.170.32
+  "@tanstack/react-start": 1.168.49
   "@legendapp/list": 3.3.6
   "@legendapp/motion": 2.5.3
   date-fns: 4.1.0
@@ -179,7 +185,11 @@ catalog:
   storybook: 10.5.8
   "@storybook/react-vite": 10.5.8
   "@storybook/addon-a11y": 10.5.8
-  vite: 6.4.1
+  # 7.x, not 6.x: @tanstack/react-start peers `vite: >=7.0.0` (ADR-001). The
+  # other two consumers accept it — @storybook/builder-vite@10.5.8 peers
+  # `^5 || ^6 || ^7 || ^8`, @vitejs/plugin-react@4.7.0 peers `^4.2 || ^5 || ^6
+  # || ^7`. 7.3.6 rather than 8.x because plugin-react 4.7.0 stops at ^7.
+  vite: 7.3.6
   "@vitejs/plugin-react": 4.7.0
   vite-plugin-react-native-web: 2.5.0
   babel-plugin-react-compiler: 1.0.0
