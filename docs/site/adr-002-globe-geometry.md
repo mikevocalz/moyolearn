@@ -47,7 +47,7 @@ the result get instead?**
 
 | Option | How it works | Verified seam (file:symbol) | Pros | Cons |
 | --- | --- | --- | --- | --- |
-| **A. Build-time conversion to a quantised binary + a build-time SVG fallback** (chosen) | `scripts/build-globe-geometry.mjs` reads a vendored `countries-110m.json`, groups countries into six UN M49 regions, triangulates each polygon, refines it onto the sphere, sweeps a bevelled side wall, and writes two LOD binaries plus a generated TS manifest **and** an orthographic SVG silhouette. The client fetches a `.bin` and uploads it to a `BufferGeometry`. | `node_modules/@types/three/src/extras/ShapeUtils.d.ts:triangulateShape` · `node_modules/topojson-client/src/feature.js:feature` · `node_modules/@types/three/src/core/BufferGeometry.d.ts:addGroup,setIndex` · `node_modules/@types/three/src/core/BufferAttribute.d.ts:Uint16BufferAttribute` | No topojson, no earcut and no 107 kB of source JSON in any bundle. The conversion is reviewable in a diff and reproducible offline. The **same pass** emits the Tier C artwork, so the fallback cannot drift from the real thing. Uint16 + Int16 halve the asset. | A generated artefact can go stale — needs a `--check` gate (added, wired into `pnpm --filter web-vite lint`). Two more committed files. A source-data change is a rebuild, not a refresh. |
+| **A. Build-time conversion to a quantised binary + a build-time SVG fallback** (chosen) | `scripts/build-globe-geometry.mjs` reads a vendored `countries-110m.json`, groups countries into eight UN M49 regions, triangulates each polygon, refines it onto the sphere, sweeps a bevelled side wall, and writes two LOD binaries plus a generated TS manifest **and** an orthographic SVG silhouette. The client fetches a `.bin` and uploads it to a `BufferGeometry`. | `node_modules/@types/three/src/extras/ShapeUtils.d.ts:triangulateShape` · `node_modules/topojson-client/src/feature.js:feature` · `node_modules/@types/three/src/core/BufferGeometry.d.ts:addGroup,setIndex` · `node_modules/@types/three/src/core/BufferAttribute.d.ts:Uint16BufferAttribute` | No topojson, no earcut and no 107 kB of source JSON in any bundle. The conversion is reviewable in a diff and reproducible offline. The **same pass** emits the Tier C artwork, so the fallback cannot drift from the real thing. Uint16 + Int16 halve the asset. | A generated artefact can go stale — needs a `--check` gate (added, wired into `pnpm --filter web-vite lint`). Two more committed files. A source-data change is a rebuild, not a refresh. |
 | **B. Ship the topojson, convert on the client** | `import countries from '../data/…json'` + `topojson-client.feature()` + earcut in the browser at mount. | same `feature` seam; `topojson-client@3.1.0` is installed | One artefact. Trivially re-tunable. | 107 kB of JSON **plus** the parser **plus** the triangulator in the client bundle, and ~90 ms of main-thread triangulation on the exact devices already being demoted. Worse: the topojson would sit in the first-paint graph unless *also* lazy-loaded, and then Tier C — the tier that never loads three — would have no globe at all. |
 | **C. Author a `.glb` in Blender and load it with `GLTFLoader`** | Model the slabs once, export, `useGLTF`. | `three/examples/jsm/loaders/GLTFLoader.js` (present in the installed three) | Full art control. Standard pipeline. | The geometry stops being derived from Natural Earth, so "real data" becomes a claim nobody can re-run. Region ids, centroids and the token→region mapping would live in a binary nobody can diff. A second LOD is a second export by hand. GLTFLoader is ~40 kB the island does not otherwise need. |
 | **D. No geometry — a `<canvas>` texture on a sphere** | Render a Natural Earth raster or an SVG-to-canvas map, use it as a `map` texture. | `three` `TextureLoader`/`CanvasTexture` | Cheapest possible mesh. | §9 says **no giant textures ever**, and the whole art direction is *extruded* puzzle pieces — a texture has no silhouette, no edge and no thickness. It also reintroduces colour management: a texture's pixels are not the token, they are a resampling of it. |
@@ -113,6 +113,57 @@ import three and read a live camera matrix — and would then only work on the
 tiers that have a camera. It also flatters a printed object badly: a globe with
 foreshortening reads as a photograph of a ball.
 
+### The palette, widened
+
+Art direction added two colours during the build: **South America in `#0E8B94`
+(teal)** and **Canada in `#352252` (plum)**. They are the Moyo logo's own
+colours, so the globe is echoing the mark.
+
+They are recorded here because they are a **widening of the palette**, not an
+application of it. The brief's colour direction is cream, warm ink, red-orange
+heart, mustard sun, cobalt, leaf green and clay earth; teal and plum are
+neither. That is the owner's decision and it stands — this is the record so the
+growth is visible rather than discovered later.
+
+They ship as first-class tokens in `packages/theme/tokens.ts`, named
+`moyoMark` and `moyoMarkDeep` — for the **identity mark they come from**, not
+for a hue or for a landmass, because a colour named `moyoCanada` becomes a lie
+the first time art direction moves it (the discipline that file's own opening
+warning demands). `moyoPrimary` is untouched and the oceans stay cobalt.
+
+South America and Canada became their own **regions** rather than an exception
+list in the material code, because a region is already the unit of both fill and
+`focusRegion()`; a special case would have been a second way to colour a
+landmass. Their country codes follow the same UN M49 standard as the rest of the
+table (005 South America; 124 Canada).
+
+Measured, and gated in `tooling/check-contrast.mjs`:
+
+| Pair | Ratio | Bar | Result |
+| --- | --- | --- | --- |
+| `moyoMarkDeep` on `moyoPaper` | **12.41:1** | 4.5 | PASS — the darkest chromatic token in the layer |
+| `moyoMarkDeep` on `moyoPaperRaised` | **13.62:1** | 4.5 | PASS |
+| `moyoMark` on `moyoPaper` | **3.63:1** | 3 | PASS as **large text only** — the second restricted pairing in the layer, beside cobalt-on-sun |
+| `moyoMark` on `moyoPaperRaised` | **3.98:1** | 3 | PASS, same restriction |
+| `moyoOnMark` (ink) on `moyoMark` | **4.52:1** | 4.5 | PASS — a teal fill carries INK; paper on teal is 3.63 and fails |
+| `moyoOnMarkDeep` (paper) on `moyoMarkDeep` | **12.41:1** | 4.5 | PASS |
+
+**Two adjacency findings, reported rather than fixed** — they are art direction,
+not defects, and the call is not this ADR's to make:
+
+- `moyoMark` against `moyoPrimary` is **2.05:1**. Teal South America on the
+  cobalt ocean separates by hue and by the ink border, not by value. It reads,
+  but it is the weakest adjacency on the globe.
+- `moyoMarkDeep` against `moyoPrimary` is **1.67:1**, and — the sharper problem —
+  `moyoOutline` on `moyoMarkDeep` is **1.32:1**. The extruded ink border that
+  frames every other landmass **disappears on Canada**. Plum is the one fill in
+  the composition that cannot use the site's own outline, so it separates on
+  value alone. Anything drawn in plum needs its own separation.
+
+`moyoMark`'s large-text-only restriction belongs in
+`docs/site/tokens.md`'s "Restricted and forbidden pairings" table; that file is
+another agent's, so it is listed under Follow-ups rather than edited here.
+
 ### Colour comes from CSS, at runtime
 
 The pipeline emits a token **name** per region (`moyoSun`, `moyoLeaf`, …), never
@@ -170,12 +221,12 @@ Every number below is from `pnpm --filter web-vite build`, gzip level 9.
 | Measurement | Value | Budget |
 | --- | --- | --- |
 | Lazy island chunk (`three.module` 183.2 + `scene` 49.6 + `geometry` 0.6) | **233.4 kB gz** | < 350 kB gz ✓ |
-| `/globe-lab` initial JS, pre-globe | **146.5 kB gz** (+ 12.8 kB CSS) | < 200 kB gz ✓ |
-| `/` initial JS (pre-existing, ADR-001's `@acme/ui` barrel) | 194.5 kB gz | < 200 kB gz ✓ |
+| `/globe-lab` initial JS, pre-globe | **159.1 kB gz** (+ 12.9 kB CSS) | < 200 kB gz ✓ |
+| `/` initial JS | 143.0 kB gz | < 200 kB gz ✓ |
 | `continents-hi.bin` | 145.6 kB raw / **108.6 kB gz** | — |
-| `continents-lo.bin` | 73.7 kB raw / **55.4 kB gz** | — |
+| `continents-lo.bin` | 73.7 kB raw / **55.2 kB gz** | — |
 | Tier C silhouette in the JS + HTML | 21.6 kB raw / **9.4 kB gz** | — |
-| Tier A worst case (island + hi geometry) | **342.0 kB gz** | — |
+| Tier A worst case (island + hi geometry) | **342.0 kB gz** | also under 350 |
 | Prerendered `/globe-lab/index.html` | 36.3 kB, real `<h1>`, **no `<!--$!-->`**, no reference to the three chunk | — |
 | Frame probe on the dev machine, Tier A | **120 fps** (reason held at `capable`, no demotion) | — |
 
@@ -223,13 +274,28 @@ verified at 0 / 0.5 / 1 → 0 / 2 / 4 cards.
   colours to review.
 - Adding a region is a row in `REGIONS`; the union types, the manifest and the
   Tier C artwork all follow from it, and the script **fails loudly** if any
-  country in the source is unassigned.
+  country in the source is unassigned. Splitting South America and Canada out to
+  carry the identity pair was exactly that — one table edit, no code.
 - Tier C is not a placeholder, so a WebGL failure at any point — 404, SPA-shell
   HTML, decode mismatch, blocked context — degrades to a complete composition
   instead of a hole.
 
 **Harder / costs**
 
+- **Tailwind v4 prunes a theme variable nothing "uses", and it cannot see
+  `getComputedStyle`.** Reading tokens at runtime is what keeps the globe on the
+  palette, and it is invisible to every scanner. `--color-moyo-earth` and
+  `--color-moyo-leaf` were reaching the browser only because an unrelated lab
+  route happened to write `bg-moyo-earth` — delete that route and two continents
+  render black, with nothing in either file to explain it. The identity pair had
+  no such accident and resolved to the empty string on its first run, which is
+  how this was found. Fixed at the source: `packages/theme/build-css.mjs` now
+  emits the site COLOURS in a `@theme static` block, which Tailwind never prunes.
+  Cost: +0.1 kB raw, +0.0 kB gzipped on `globals.css`, and one more thing about
+  the theme build that has to stay true. `tooling/check-utilities.mjs` had to
+  learn to read *every* `@theme` block rather than only the first, or it reports
+  fourteen live utilities as inert — a gate that is wrong about the thing it
+  exists to check is worse than no gate.
 - **Two generated artefacts can go stale.** Mitigated by `globe:check`, which
   re-runs the conversion into memory and compares bytes; it is in
   `pnpm --filter web-vite lint`. It is a real cost: a pipeline edit that is not
@@ -276,6 +342,10 @@ verified at 0 / 0.5 / 1 → 0 / 2 / 4 cards.
 - The chapter's copy (`site.world.backtype`, `.headline`, `.body`,
   `.availability`) belongs to the chapters agent. Only the four node cards ship
   from this work, and only because they are anchored geometry.
+- `docs/site/tokens.md` needs three rows: `moyoMark`, `moyoMarkDeep` and
+  `moyoOnMark`/`moyoOnMarkDeep` in §5.1, plus `moyoMark`-on-paper in the
+  restricted-pairings table (large text only, 3.63:1). Left to that file's owner
+  rather than edited mid-flight.
 - `docs/site/tokens.md` priority action 3 (grain) is now partly discharged: the
   fullscreen quad consumes `--moyo-grain-opacity`. A page-level grain surface for
   the non-globe chapters is still open.

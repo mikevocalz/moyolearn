@@ -31,8 +31,8 @@
  * SOT-KEYWORDS: web-vite motion lab demo route primitives audit reduced-motion
  *               noindex thunk peel draw snap compress page-turn pulse parallax
  */
-import { Container, Heading, Text, useHydrated } from '@acme/ui';
-import { Button, List, ListItem, Main, Paragraph, Section, View } from '@acme/ui/primitives';
+import { Container, Heading, Text } from '@acme/ui/typography';
+import { Button, List, ListItem, Main, Paragraph, Section, View, useHydrated } from '@acme/ui/primitives';
 import { createFileRoute } from '@tanstack/react-router';
 import { create } from 'zustand';
 import { usePerfStore } from '@/stores/perf-store';

@@ -21,7 +21,7 @@
  * SOT-KEYWORDS: web-vite marketing hero route index prerender ssr kit proof
  *               moyo-paper site-hero clash-display tokens
  */
-import { Container, Heading, Text } from '@acme/ui';
+import { Container, Heading, Text } from '@acme/ui/typography';
 import { Main, Section, View } from '@acme/ui/primitives';
 import { createFileRoute } from '@tanstack/react-router';
 

@@ -32,9 +32,14 @@ export { Motion, AnimatePresence, createMotionComponent, createMotionAnimatedCom
 // animation runs. On native and CSR the snapshot is true from the first
 // render: animated immediately, no remount. (External-store read, not state.)
 // The same remount carries the Reduce Motion answer, which also arrives late.
-const noopSubscribe = () => () => {};
-export const useHydrated = () =>
-  useSyncExternalStore(noopSubscribe, () => true, () => false);
+// Implementation moved to `./use-hydrated` so an SSR surface can reach it
+// without importing this module's react-native and Legend Motion closure.
+// Imported as well as re-exported: the presets below call it, and every
+// existing consumer imports it from this module or the barrel. One hook with
+// two implementations is how the answers start disagreeing.
+import { useHydrated } from './use-hydrated';
+
+export { useHydrated };
 
 type CN = { className?: string };
 

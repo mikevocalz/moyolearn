@@ -287,28 +287,6 @@
   --color-role-district-underlay: light-dark(rgba(131, 239, 245, 0.24), rgba(131, 239, 245, 0.24));
 
   /* --- marketing site layer (moyolearn.com) --- */
-  --color-moyo-paper: #F7F1E3;
-  --color-moyo-paper-raised: #FFFCF2;
-  --color-moyo-paper-sunken: #EFE7D4;
-  --color-moyo-ink: #171310;
-  --color-moyo-ink-muted: #5A5145;
-  --color-moyo-outline: #171310;
-  --color-moyo-primary: #1C3FBF;
-  --color-moyo-secondary: #6E4A00;
-  --color-moyo-heart: #C7350F;
-  --color-moyo-sun: #F2B01E;
-  --color-moyo-earth: #9A4526;
-  --color-moyo-leaf: #286641;
-  --color-moyo-mark: #0E8B94;
-  --color-moyo-mark-deep: #352252;
-  --color-moyo-on-primary: #F7F1E3;
-  --color-moyo-on-secondary: #F7F1E3;
-  --color-moyo-on-heart: #F7F1E3;
-  --color-moyo-on-sun: #171310;
-  --color-moyo-on-earth: #F7F1E3;
-  --color-moyo-on-leaf: #F7F1E3;
-  --color-moyo-on-mark: #171310;
-  --color-moyo-on-mark-deep: #F7F1E3;
   --font-moyo-display: 'Clash Display', 'Clash Display Fallback', 'Arial Black', sans-serif;
   --font-moyo-text: 'General Sans', 'General Sans Fallback', system-ui, sans-serif;
   --font-moyo-serif: 'Instrument Serif', 'Instrument Serif Fallback', Georgia, serif;
@@ -366,6 +344,33 @@
   --moyo-duration-release: 160ms;
   --moyo-duration-lock-in: 260ms;
   --moyo-duration-pulse: 1800ms;
+}
+
+@theme static {
+
+  /* --- marketing site colours: read at runtime, never pruned --- */
+  --color-moyo-paper: #F7F1E3;
+  --color-moyo-paper-raised: #FFFCF2;
+  --color-moyo-paper-sunken: #EFE7D4;
+  --color-moyo-ink: #171310;
+  --color-moyo-ink-muted: #5A5145;
+  --color-moyo-outline: #171310;
+  --color-moyo-primary: #1C3FBF;
+  --color-moyo-secondary: #6E4A00;
+  --color-moyo-heart: #C7350F;
+  --color-moyo-sun: #F2B01E;
+  --color-moyo-earth: #9A4526;
+  --color-moyo-leaf: #286641;
+  --color-moyo-mark: #0E8B94;
+  --color-moyo-mark-deep: #352252;
+  --color-moyo-on-primary: #F7F1E3;
+  --color-moyo-on-secondary: #F7F1E3;
+  --color-moyo-on-heart: #F7F1E3;
+  --color-moyo-on-sun: #171310;
+  --color-moyo-on-earth: #F7F1E3;
+  --color-moyo-on-leaf: #F7F1E3;
+  --color-moyo-on-mark: #171310;
+  --color-moyo-on-mark-deep: #F7F1E3;
 }
 
 :root {

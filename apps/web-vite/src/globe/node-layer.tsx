@@ -62,6 +62,14 @@ const LEADER_ORIGIN: Record<NodeCorner, readonly [number, number]> = {
   'bottom-end': [85, 78],
 };
 
+/**
+ * Titles are copy-deck strings and some already end in a full stop ("English
+ * today. Spanish next."). Composing an accessible name around them naively
+ * produces "…Spanish next.. Turn the globe to Spain.", which a screen reader
+ * reads as a stutter. One sentence terminator, wherever the copy put it.
+ */
+const sentence = (text: string): string => text.replace(/[.!?]+$/, '');
+
 /** Disc radius as a percentage of the square frame. */
 const DISC_PERCENT = GLOBE_SCREEN_FRACTION * 100;
 
@@ -205,8 +213,8 @@ export function NodeLayer({ interactive }: NodeLayerProps) {
                 onPress={() => globeApi.focusNode(isActive ? null : node.id)}
                 aria-label={
                   interactive
-                    ? `${node.title}. Turn the globe to ${node.anchorName}.`
-                    : `${node.title}. Marked on the map at ${node.anchorName}.`
+                    ? `${sentence(node.title)}. Turn the globe to ${node.anchorName}.`
+                    : `${sentence(node.title)}. Marked on the map at ${node.anchorName}.`
                 }
                 className={
                   'w-full items-start gap-element rounded-moyo-card border-moyo-rule border-moyo-outline bg-moyo-paper-raised p-inset text-left ' +
