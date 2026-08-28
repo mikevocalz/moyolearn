@@ -285,6 +285,71 @@
   --color-role-org-underlay: light-dark(rgba(255, 215, 165, 0.24), rgba(255, 215, 165, 0.24));
   --color-role-district: light-dark(#83EFF5, #83EFF5);
   --color-role-district-underlay: light-dark(rgba(131, 239, 245, 0.24), rgba(131, 239, 245, 0.24));
+
+  /* --- marketing site layer (moyolearn.com) --- */
+  --color-moyo-paper: #F7F1E3;
+  --color-moyo-paper-raised: #FFFCF2;
+  --color-moyo-paper-sunken: #EFE7D4;
+  --color-moyo-ink: #171310;
+  --color-moyo-ink-muted: #5A5145;
+  --color-moyo-outline: #171310;
+  --color-moyo-primary: #1C3FBF;
+  --color-moyo-secondary: #6E4A00;
+  --color-moyo-heart: #C7350F;
+  --color-moyo-sun: #F2B01E;
+  --color-moyo-earth: #9A4526;
+  --color-moyo-leaf: #286641;
+  --color-moyo-on-primary: #F7F1E3;
+  --color-moyo-on-secondary: #F7F1E3;
+  --color-moyo-on-heart: #F7F1E3;
+  --color-moyo-on-sun: #171310;
+  --color-moyo-on-earth: #F7F1E3;
+  --color-moyo-on-leaf: #F7F1E3;
+  --font-moyo-display: 'Clash Display', 'Clash Display Fallback', 'Arial Black', sans-serif;
+  --font-moyo-text: 'General Sans', 'General Sans Fallback', system-ui, sans-serif;
+  --font-moyo-serif: 'Instrument Serif', 'Instrument Serif Fallback', Georgia, serif;
+  --font-moyo-hand: 'Shantell Sans', 'Shantell Sans Fallback', system-ui, sans-serif;
+  --text-site-hero: clamp(4rem, 12vw, 12.5rem);
+  --text-site-hero--line-height: 0.88;
+  --text-site-hero--letter-spacing: -0.03em;
+  --text-site-chapter: clamp(2.75rem, 7vw, 6.5rem);
+  --text-site-chapter--line-height: 0.95;
+  --text-site-chapter--letter-spacing: -0.025em;
+  --text-site-title: clamp(2rem, 4vw, 3.25rem);
+  --text-site-title--line-height: 1.05;
+  --text-site-title--letter-spacing: -0.02em;
+  --text-site-subtitle: clamp(1.375rem, 2.4vw, 1.875rem);
+  --text-site-subtitle--line-height: 1.15;
+  --text-site-subtitle--letter-spacing: -0.01em;
+  --text-site-lead: clamp(1.125rem, 1.6vw, 1.375rem);
+  --text-site-lead--line-height: 1.5;
+  --text-site-lead--letter-spacing: 0;
+  --text-site-body: clamp(1rem, 1.05vw, 1.125rem);
+  --text-site-body--line-height: 1.6;
+  --text-site-body--letter-spacing: 0;
+  --text-site-label: clamp(0.8125rem, 0.9vw, 0.875rem);
+  --text-site-label--line-height: 1.3;
+  --text-site-label--letter-spacing: 0.08em;
+  --text-site-quote: clamp(1.5rem, 3vw, 2.5rem);
+  --text-site-quote--line-height: 1.2;
+  --text-site-quote--letter-spacing: -0.01em;
+  --text-site-note: clamp(0.9375rem, 1.1vw, 1.0625rem);
+  --text-site-note--line-height: 1.45;
+  --text-site-note--letter-spacing: 0;
+  --moyo-shadow-offset-1: 0.1875rem;
+  --shadow-moyo-1: 0.1875rem 0.1875rem 0 0 var(--color-moyo-outline);
+  --moyo-shadow-offset-2: 0.375rem;
+  --shadow-moyo-2: 0.375rem 0.375rem 0 0 var(--color-moyo-outline);
+  --moyo-shadow-offset-3: 0.625rem;
+  --shadow-moyo-3: 0.625rem 0.625rem 0 0 var(--color-moyo-outline);
+  --moyo-shadow-offset-4: 1rem;
+  --shadow-moyo-4: 1rem 1rem 0 0 var(--color-moyo-outline);
+  --moyo-border-w-hair: 2px;
+  --moyo-border-w-rule: 3px;
+  --moyo-border-w-slab: 4px;
+  --radius-moyo-square: 0rem;
+  --radius-moyo-card: 0.25rem;
+  --moyo-grain-opacity: 0.03;
 }
 
 :root {
@@ -428,6 +493,62 @@
     --text-body--letter-spacing: 0.06em;
     --spacing-stack: var(--spacing-group);
   }
+}
+
+@layer base {
+  .moyo-site {
+    color-scheme: light;
+
+    /* ground + type */
+    --color-surface: var(--color-moyo-paper);
+    --color-surface-raised: var(--color-moyo-paper-raised);
+    --color-surface-sunken: var(--color-moyo-paper-sunken);
+    --color-text: var(--color-moyo-ink);
+    --color-text-muted: var(--color-moyo-ink-muted);
+    --color-text-inverse: var(--color-moyo-paper);
+
+    /* structure — the outline is the design */
+    --color-border: var(--color-moyo-outline);
+    --color-border-strong: var(--color-moyo-outline);
+
+    /*
+      The product's accent pair is electric yellow on ink. On the site the
+      equivalent slot is the heart, because marketing has exactly one colour
+      that is allowed to shout and the yellow is spoken for: the globe chapter
+      fixes it as the Africa block.
+    */
+    --color-primary: var(--color-moyo-primary);
+    --color-on-primary: var(--color-moyo-on-primary);
+    --color-accent: var(--color-moyo-heart);
+    --color-on-accent: var(--color-moyo-on-heart);
+    --color-highlighter: var(--color-moyo-sun);
+    --color-on-highlighter: var(--color-moyo-on-sun);
+    --color-focus: var(--color-moyo-primary);
+
+    /* shape + elevation: square by default, one small step for tactile cards */
+    --radius-card: var(--radius-moyo-card);
+    --radius-sheet: var(--radius-moyo-card);
+    --radius-control: var(--radius-moyo-card);
+    --shadow-card: var(--shadow-moyo-2);
+    --shadow-raised: var(--shadow-moyo-3);
+    --shadow-overlay: var(--shadow-moyo-4);
+
+    /* the site's own faces replace the product's inside this scope */
+    --font-display: var(--font-moyo-display);
+    --font-sans: var(--font-moyo-text);
+  }
+
+  /*
+    Border WIDTH cannot travel as a variable through a utility: Tailwind builds
+    `border-2` from a bare number and has no border-width theme namespace, so a
+    `border-moyo-rule` utility would be generated by nothing and silently do
+    nothing — the exact failure tooling/check-runtime-classes.mjs exists to
+    catch. Declared as real classes instead, in the base layer so an explicit
+    `border-4` at a call site still wins.
+  */
+  .border-moyo-hair { border-width: var(--moyo-border-w-hair); }
+  .border-moyo-rule { border-width: var(--moyo-border-w-rule); }
+  .border-moyo-slab { border-width: var(--moyo-border-w-slab); }
 }
 
 /* @expo/ui BottomSheet (vaul) on web: the drawer hardcodes a white/black

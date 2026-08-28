@@ -30,15 +30,42 @@ default `node` may be newer, in which case put the pinned major first:
 src/
   router.tsx        required Start entry — exports getRouter()
   routes/
-    __root.tsx      the <html> document: shellComponent + HeadContent + Scripts
+    __root.tsx      the <html> document: shellComponent + HeadContent + Scripts,
+                    the `moyo-site` ground class, and the display-face preload
     index.tsx       "/" — the hero
   routeTree.gen.ts  generated on every dev/build; never edited, never linted
-  globals.css       Tailwind 4 entry + @acme/theme tokens + @source globs
+  globals.css       Tailwind 4 entry + @acme/theme tokens + fonts + @source globs
+  fonts.css         @font-face for the four self-hosted site faces
+public/
+  fonts/            the woff2 files + their licence texts
 vite.config.ts      plugins, the react-native-web SSR wiring
 postcss.config.mjs  @tailwindcss/postcss
 ```
 
 `@` is aliased to `./src`.
+
+## The site's design layer
+
+Colour, shape and type for moyolearn.com are a **semantic layer inside the shared
+token pipeline** (`packages/theme/tokens.ts` → `build-css.mjs` → `theme.css`),
+not a second system. Every token, its usage rule, and the measured contrast
+ratios: **[docs/site/tokens.md](../../docs/site/tokens.md)**. What to build from
+the kit versus what must live in `src/components/`:
+**[docs/site/component-inventory.md](../../docs/site/component-inventory.md)**.
+
+Two things about this app in particular:
+
+- **The site does not follow dark mode.** `.moyo-site` on `<body>` pins
+  `color-scheme: light` and re-points the product's chrome variables at the site
+  palette. That is deliberate: the ground is warm cream paper, and the hard
+  offset shadows are drawn in the outline colour, so an inverted page loses the
+  design language rather than adapting it. Do not "fix" a page by reaching for a
+  `light-dark()` product token.
+- **Fonts are self-hosted and there is no CDN request.** Four faces in
+  `public/fonts/`, declared in `src/fonts.css`, each shadowed by a
+  `size-adjust`ed `local()` fallback so `font-display: swap` costs no layout
+  shift. The metrics are measured, not guessed — remeasure (don't hand-edit) if a
+  font file is ever replaced.
 
 ## Adding a page
 

@@ -22,9 +22,19 @@ import {
   palette, semantic, fontFamilies, typeScale, contentWidths,
   radius, shadows, zIndex, motion, breakpoints, dial,
   uiRamp, spacingTiers, targets, readingComfort, accentRoles,
+  siteColors, siteFontFamilies, siteTypeScale,
+  moyoShadowOffset, moyoBorderW, moyoRadius, moyoTexture,
 } from './tokens.ts';
 
 const HEADER = '/* GENERATED from tokens.ts — do not edit by hand. `node build-css.mjs` */';
+
+/**
+ * `moyoPaper` → `moyo-paper`. The site spec fixes the TS names in camelCase and
+ * this file's every other variable is kebab, so the conversion happens once,
+ * here, rather than by writing each name twice in tokens.ts and hoping the two
+ * spellings stay in step.
+ */
+const kebab = (name) => name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 
 // Everything that is theme-independent: identical in both outputs.
 const sharedThemeTokens = () => {
@@ -133,6 +143,131 @@ const rootVars = () => {
   return out;
 };
 
+/**
+ * The marketing site layer (tokens.ts §5.1/§5.2), WEB OUTPUT ONLY.
+ *
+ * There is no native marketing surface, so shipping these into theme-native.css
+ * would grow the mobile app's Uniwind registry with utilities it can never use.
+ * That is the one place the two outputs deliberately diverge in coverage rather
+ * than only in shape.
+ *
+ * Flat values, no light-dark(): the site has one ground. See `siteScope()` for
+ * how a page stops inheriting the product's dark mode.
+ */
+const siteThemeTokens = () => {
+  const out = ['', '  /* --- marketing site layer (moyolearn.com) --- */'];
+
+  for (const [name, hex] of Object.entries(siteColors)) {
+    out.push(`  --color-${kebab(name)}: ${hex};`);
+  }
+  for (const [name, stack] of Object.entries(siteFontFamilies)) {
+    out.push(`  --font-${kebab(name)}: ${stack};`);
+  }
+  for (const [name, t] of Object.entries(siteTypeScale)) {
+    out.push(`  --text-${name}: ${t.size};`);
+    out.push(`  --text-${name}--line-height: ${t.lineHeight};`);
+    out.push(`  --text-${name}--letter-spacing: ${t.tracking};`);
+  }
+  /*
+    Two forms of the same offset. The Tailwind namespace gives `shadow-moyo-2`;
+    the bare scalar exists because a parallax/depth chapter needs the number to
+    interpolate, and re-deriving it by parsing the composed string is how a
+    second source of truth gets born.
+
+    `var(--color-moyo-outline)` and not the hex: the shadow is the outline, and
+    a section that softens its rules must not leave its shadows behind.
+  */
+  for (const [step, offset] of Object.entries(moyoShadowOffset)) {
+    out.push(`  --moyo-shadow-offset-${step}: ${offset};`);
+    out.push(`  --shadow-moyo-${step}: ${offset} ${offset} 0 0 var(--color-moyo-outline);`);
+  }
+  for (const [name, width] of Object.entries(moyoBorderW)) {
+    out.push(`  --moyo-border-w-${name}: ${width};`);
+  }
+  for (const [name, value] of Object.entries(moyoRadius)) {
+    out.push(`  --radius-moyo-${name}: ${value};`);
+  }
+  out.push(`  --moyo-grain-opacity: ${moyoTexture.grain};`);
+  return out;
+};
+
+/**
+ * `.moyo-site` — the ground, made explicit.
+ *
+ * Phase 0's hero sat on `bg-surface`, a `light-dark()` token, so the marketing
+ * page inverted itself on a dark-mode machine: cream paper became near-black and
+ * every hard offset shadow — drawn in the outline colour — vanished into it.
+ * The site is printed matter and has exactly one ground.
+ *
+ * Two mechanisms, and both are needed:
+ *
+ *   `color-scheme: light` fixes how `light-dark()` RESOLVES inside the subtree,
+ *   which covers every product token this scope does not name explicitly.
+ *   The re-points below cover the ones it does, and they hold even where the
+ *   value never passes through a CSS engine — react-native-css compiles kit
+ *   components to inline styles, and an unconditional `var()` survives that
+ *   where a `light-dark()` resolution would not.
+ *
+ * Scoped like `.dial-*` and `.role-*`, for the same reason: a class on the
+ * document lets every `@acme/ui` component inside render on paper without one
+ * of them being restyled at the call site.
+ */
+const SITE_SCOPE = `@layer base {
+  .moyo-site {
+    color-scheme: light;
+
+    /* ground + type */
+    --color-surface: var(--color-moyo-paper);
+    --color-surface-raised: var(--color-moyo-paper-raised);
+    --color-surface-sunken: var(--color-moyo-paper-sunken);
+    --color-text: var(--color-moyo-ink);
+    --color-text-muted: var(--color-moyo-ink-muted);
+    --color-text-inverse: var(--color-moyo-paper);
+
+    /* structure — the outline is the design */
+    --color-border: var(--color-moyo-outline);
+    --color-border-strong: var(--color-moyo-outline);
+
+    /*
+      The product's accent pair is electric yellow on ink. On the site the
+      equivalent slot is the heart, because marketing has exactly one colour
+      that is allowed to shout and the yellow is spoken for: the globe chapter
+      fixes it as the Africa block.
+    */
+    --color-primary: var(--color-moyo-primary);
+    --color-on-primary: var(--color-moyo-on-primary);
+    --color-accent: var(--color-moyo-heart);
+    --color-on-accent: var(--color-moyo-on-heart);
+    --color-highlighter: var(--color-moyo-sun);
+    --color-on-highlighter: var(--color-moyo-on-sun);
+    --color-focus: var(--color-moyo-primary);
+
+    /* shape + elevation: square by default, one small step for tactile cards */
+    --radius-card: var(--radius-moyo-card);
+    --radius-sheet: var(--radius-moyo-card);
+    --radius-control: var(--radius-moyo-card);
+    --shadow-card: var(--shadow-moyo-2);
+    --shadow-raised: var(--shadow-moyo-3);
+    --shadow-overlay: var(--shadow-moyo-4);
+
+    /* the site's own faces replace the product's inside this scope */
+    --font-display: var(--font-moyo-display);
+    --font-sans: var(--font-moyo-text);
+  }
+
+  /*
+    Border WIDTH cannot travel as a variable through a utility: Tailwind builds
+    \`border-2\` from a bare number and has no border-width theme namespace, so a
+    \`border-moyo-rule\` utility would be generated by nothing and silently do
+    nothing — the exact failure tooling/check-runtime-classes.mjs exists to
+    catch. Declared as real classes instead, in the base layer so an explicit
+    \`border-4\` at a call site still wins.
+  */
+  .border-moyo-hair { border-width: var(--moyo-border-w-hair); }
+  .border-moyo-rule { border-width: var(--moyo-border-w-rule); }
+  .border-moyo-slab { border-width: var(--moyo-border-w-slab); }
+}`;
+
 // Default body text color for the tw Text/heading/paragraph wrappers. Lives in
 // the base layer so any explicit text-color utility (utilities layer) overrides
 // it on web; on native the runtime resolves by class order, where it comes first.
@@ -238,6 +373,7 @@ web.push(...sharedThemeTokens());
 for (const [name, { light, dark }] of Object.entries(semantic)) {
   web.push(`  --color-${name}: light-dark(${light}, ${dark});`);
 }
+web.push(...siteThemeTokens());
 web.push('}');
 web.push('');
 web.push(':root {');
@@ -258,6 +394,8 @@ web.push('');
 web.push(ROLE_SCOPES);
 web.push('');
 web.push(READING_COMFORT);
+web.push('');
+web.push(SITE_SCOPE);
 web.push(`
 /* @expo/ui BottomSheet (vaul) on web: the drawer hardcodes a white/black
    background and a non-flex inner wrapper, so the kit's SheetSurface can't

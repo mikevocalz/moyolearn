@@ -18,8 +18,16 @@
 import { createTV } from 'tailwind-variants';
 
 /**
- * Keep in step with `uiRamp` and `typeScale` in tokens.ts. `check-utilities.mjs`
- * asserts the same names generate a utility; this asserts they survive merging.
+ * Keep in step with `uiRamp`, `typeScale` and `siteTypeScale` in tokens.ts.
+ * `check-utilities.mjs` asserts the same names generate a utility; this asserts
+ * they survive merging.
+ *
+ * The `site-*` steps are the marketing site's fluid ramp. They are listed here
+ * even though the site does not render through `tv()` today, because the trap is
+ * the merger's, not the kit's: `apps/web-vite` composes kit components whose own
+ * slots run through this config, so a site class landing on a kit element hits
+ * exactly the same classification. Registering them costs one line each and
+ * removes a bug that is invisible in review.
  */
 export const RAMP_FONT_SIZES = [
   'title-lg',
@@ -35,6 +43,15 @@ export const RAMP_FONT_SIZES = [
   'display-lg',
   'display-md',
   'display-sm',
+  'site-hero',
+  'site-chapter',
+  'site-title',
+  'site-subtitle',
+  'site-lead',
+  'site-body',
+  'site-label',
+  'site-quote',
+  'site-note',
 ] as const;
 
 export const tv = createTV({

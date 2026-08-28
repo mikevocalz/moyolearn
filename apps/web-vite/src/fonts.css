@@ -1,0 +1,134 @@
+/*
+ * The marketing site's four faces, self-hosted. NO CDN font request is emitted
+ * from this site — not at build time, not at runtime, not via an @import.
+ *
+ * WHY public/fonts AND NOT packages/assets/fonts
+ * packages/assets is the product's font home and it is a Metro `require()`
+ * registry: `apps/mobile` embeds those files through the expo-font config
+ * plugin and `apps/web` loads them through next/font. Neither mechanism can
+ * produce the thing this file needs — a stable URL that also survives into a
+ * `<link rel="preload">` in the PRERENDERED head. Vite hashes any asset it
+ * resolves through the module graph, and __root.tsx cannot know that hash, so
+ * the display face would be discovered only after the stylesheet parsed. These
+ * four faces are also web-only: there is no native marketing surface, so putting
+ * them in the shared package would ship 178 kB of webfont into the mobile
+ * bundle for a screen that does not exist.
+ *
+ * LICENCES — all four permit self-hosting; the texts ship beside the files.
+ *   Clash Display, General Sans   ITF Free Font License v2.0 (public/fonts/
+ *     ITF-Free-Font-License.txt). §01 grants self-hosting explicitly and names
+ *     CSS @font-face: "You may self-host Font Software on own servers ...
+ *     Self-hosting by end users is permitted and recommended". Free for
+ *     commercial use, no attribution required.
+ *   Instrument Serif, Shantell Sans   SIL OFL 1.1 (public/fonts/OFL-*.txt).
+ *     Redistribution requires the licence to travel with the font, which is why
+ *     both texts are in the same directory as the binaries.
+ *
+ * SUBSETTING
+ * The two Fontshare faces ship latin-only from the foundry and are variable
+ * (one file covers 200–700), so there is nothing to strip: 29 kB and 37 kB.
+ * The two Google faces are served per-subset, so only the `latin` slices are
+ * stored — the latin-ext, cyrillic and vietnamese cuts are not downloaded and
+ * not referenced. Total: 178 kB across five files, one of which (Shantell,
+ * 78 kB) is lazy by construction because nothing above the fold is set in it.
+ *
+ * CLS
+ * Every face is `font-display: swap`, so text is readable immediately. The swap
+ * does not reflow because each real face is shadowed by a `* Fallback` face:
+ * a `local()` system font carrying `size-adjust` plus ascent/descent/line-gap
+ * overrides measured off the real font's own hmtx and hhea tables. The metrics
+ * and the method are recorded in docs/site/tokens.md. Do not hand-edit these
+ * percentages — remeasure if a font file is ever replaced.
+ *
+ * SOT: packages/theme/tokens.ts `siteFontFamilies` · docs/site/tokens.md §5.2
+ * SOT-KEYWORDS: fonts font-face woff2 self-host clash-display general-sans
+ *               instrument-serif shantell-sans cls size-adjust preload site
+ */
+
+/* ---- Clash Display — hero and chapter titles only ------------------------ */
+
+@font-face {
+  font-family: 'Clash Display';
+  src: url('/fonts/ClashDisplay-Variable.woff2') format('woff2-variations');
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Clash Display Fallback';
+  src: local('Arial');
+  size-adjust: 111.9%;
+  ascent-override: 79.54%;
+  descent-override: 22.34%;
+  line-gap-override: 8.04%;
+}
+
+/* ---- General Sans — everything the reader actually reads ----------------- */
+
+@font-face {
+  font-family: 'General Sans';
+  src: url('/fonts/GeneralSans-Variable.woff2') format('woff2-variations');
+  font-weight: 200 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'General Sans Fallback';
+  src: local('Arial');
+  size-adjust: 109.83%;
+  ascent-override: 91.96%;
+  descent-override: 21.85%;
+  line-gap-override: 9.1%;
+}
+
+/* ---- Instrument Serif — pull-quotes and the For Parents register --------- *
+ * Both cuts ship: the register's emphasis is a real italic, and a synthesised
+ * oblique on a 40px serif pull-quote reads as a rendering fault.              */
+
+@font-face {
+  font-family: 'Instrument Serif';
+  src: url('/fonts/InstrumentSerif-Regular-latin.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instrument Serif';
+  src: url('/fonts/InstrumentSerif-Italic-latin.woff2') format('woff2');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Instrument Serif Fallback';
+  src: local('Times New Roman');
+  size-adjust: 84.28%;
+  ascent-override: 117.47%;
+  descent-override: 36.78%;
+  line-gap-override: 0%;
+}
+
+/* ---- Shantell Sans — the margin note, and nothing else ------------------- *
+ * The only handwriting on the site. It exists to sound like a tutor's pen in
+ * the margin; it is never a heading, never a control, never body copy.        */
+
+@font-face {
+  font-family: 'Shantell Sans';
+  src: url('/fonts/ShantellSans-Variable-latin.woff2') format('woff2-variations');
+  font-weight: 300 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Shantell Sans Fallback';
+  src: local('Arial');
+  size-adjust: 111.43%;
+  ascent-override: 91.53%;
+  descent-override: 28.72%;
+  line-gap-override: 0%;
+}
