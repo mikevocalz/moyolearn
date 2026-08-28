@@ -20,7 +20,8 @@
  * SOT-KEYWORDS: globe lab route demo tiers reduced motion prerender noindex
  *               performance override phase seam
  */
-import { Button, Heading, List, ListItem, Main, Paragraph, Section, Text, View } from '@acme/ui/primitives';
+import { Heading, Text } from '@acme/ui/typography';
+import { Button, List, ListItem, Main, Paragraph, Section, View } from '@acme/ui/primitives';
 import { createFileRoute } from '@tanstack/react-router';
 import { globeApi } from '@/globe/api';
 import { Globe } from '@/globe/globe';

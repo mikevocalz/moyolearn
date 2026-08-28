@@ -154,12 +154,38 @@ const rootVars = () => {
  * Flat values, no light-dark(): the site has one ground. See `siteScope()` for
  * how a page stops inheriting the product's dark mode.
  */
-const siteThemeTokens = () => {
-  const out = ['', '  /* --- marketing site layer (moyolearn.com) --- */'];
-
+/**
+ * The site COLOURS, emitted into their own `@theme static` block.
+ *
+ * `static` is load-bearing. Tailwind v4 prunes a `@theme` variable nothing
+ * uses, and "uses" means a generated utility or a `var()` it can see — it
+ * cannot see `getComputedStyle(document.body).getPropertyValue('--color-moyo-sun')`,
+ * which is how the globe chapter resolves every fill so that WebGL renders the
+ * TOKEN rather than a hex copied out of it.
+ *
+ * Before this split, `--color-moyo-earth` and `--color-moyo-leaf` reached the
+ * browser only because an unrelated lab route happened to write `bg-moyo-earth`;
+ * deleting that route would have turned two continents black, with nothing in
+ * either file to explain why. `--color-moyo-mark` and `--color-moyo-mark-deep`
+ * had no such accident and resolved to the empty string on their first run,
+ * which is how this was found.
+ *
+ * Only the twenty-odd site colours are static. Everything else in the site
+ * layer — fonts, the type scale, shadows, border widths, radii — is consumed by
+ * a real utility class or by `.moyo-site`, so pruning is correct for those and
+ * the product layer keeps pruning entirely.
+ */
+const siteColorThemeTokens = () => {
+  const out = ['', '  /* --- marketing site colours: read at runtime, never pruned --- */'];
   for (const [name, hex] of Object.entries(siteColors)) {
     out.push(`  --color-${kebab(name)}: ${hex};`);
   }
+  return out;
+};
+
+const siteThemeTokens = () => {
+  const out = ['', '  /* --- marketing site layer (moyolearn.com) --- */'];
+
   for (const [name, stack] of Object.entries(siteFontFamilies)) {
     out.push(`  --font-${kebab(name)}: ${stack};`);
   }
@@ -410,6 +436,10 @@ for (const [name, { light, dark }] of Object.entries(semantic)) {
   web.push(`  --color-${name}: light-dark(${light}, ${dark});`);
 }
 web.push(...siteThemeTokens());
+web.push('}');
+web.push('');
+web.push('@theme static {');
+web.push(...siteColorThemeTokens());
 web.push('}');
 web.push('');
 web.push(':root {');

@@ -8,6 +8,7 @@
     ".": "./index.ts",
     "./tw": "./tw.tsx",
     "./primitives": "./primitives/index.tsx",
+    "./typography": "./typography.ts",
     "./haptics": {
       "react-native": "./haptics.native.ts",
       "default": "./haptics.web.ts"

@@ -24,9 +24,19 @@ const css = readFileSync(join(ROOT, 'packages/theme/theme.css'), 'utf8');
 /**
  * Only @theme counts. A variable declared solely in a .dial-* scope re-points a
  * utility that already exists; it cannot bring one into being.
+ *
+ * EVERY @theme block, not just the first. `build-css.mjs` emits a second one,
+ * `@theme static`, for the marketing site's colours: Tailwind v4 prunes a theme
+ * variable nothing "uses", and the globe chapter resolves its fills through
+ * `getComputedStyle` at runtime, which no scanner can see. `static` is what
+ * stops those colours being pruned. Reading only `@theme {` made this gate
+ * report fourteen live utilities as inert — a check that is wrong about the
+ * thing it exists to check is worse than no check.
  */
-const theme = css.split('@theme {')[1]?.split('\n}')[0] ?? '';
-const declared = new Set([...theme.matchAll(/--([a-z0-9-]+):/g)].map((m) => m[1]));
+const themeBlocks = [...css.matchAll(/@theme[^{]*\{([\s\S]*?)\n\}/g)].map((m) => m[1]);
+const declared = new Set(
+  themeBlocks.flatMap((block) => [...block.matchAll(/--([a-z0-9-]+):/g)].map((m) => m[1])),
+);
 
 /**
  * The classes the spec tells people to write, and the custom property each one

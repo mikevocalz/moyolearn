@@ -1,5 +1,8 @@
 import { tv } from '../tv';
-import { View } from '../primitives';
+// Imported from `../tw` (View's actual home) rather than the `../primitives`
+// barrel: that barrel now re-exports Container, so going through it would
+// close a cycle.
+import { View } from '../tw';
 
 /**
  * §8.2 Container — the ONLY place content max-widths live. Every screen's
