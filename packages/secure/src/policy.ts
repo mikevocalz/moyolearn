@@ -67,6 +67,26 @@ export const SECURE_KEYS = {
     requireAuthentication: false,
     perUser: true,
   },
+  /**
+   * The ids whose `mmkv.key` entries exist, as a JSON array.
+   *
+   * IT LIVES IN THE KEYCHAIN BECAUSE THE PER-USER KEYS DO. `mmkv.key` is
+   * namespaced by auth user id and expo-secure-store has no enumeration API,
+   * so a per-user entry can only be deleted by a caller who already knows the
+   * id — and after an uninstall nobody does: every store that held the id list
+   * went with the app container, which is the exact asymmetry the reinstall
+   * wipe is built on. This index survives alongside the keys it names, so the
+   * wipe can find them.
+   *
+   * Ids, never anything about the person. On a family device this is at most a
+   * handful of entries, and `MAX_INDEXED_USERS` keeps it inside the 2KB limit.
+   */
+  'mmkv.users': {
+    content: 'Auth user ids whose per-user MMKV keys exist, for the reinstall wipe',
+    keychainAccessible: 'WHEN_UNLOCKED_THIS_DEVICE_ONLY',
+    requireAuthentication: false,
+    perUser: false,
+  },
   /** The parent gate's secret (§2.3) — the one entry behind a biometric. */
   'parentgate.secret': {
     content: 'Parent-gate secret, read behind a biometric/passcode challenge',

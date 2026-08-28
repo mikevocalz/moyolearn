@@ -200,6 +200,38 @@ describe('extractEvidence', () => {
     }
   });
 
+  it('gives the capture crop only to the skill the photographed problem IS', () => {
+    /*
+      The failure this pins: one worksheet photo becoming the question image on
+      every row of a multi-skill session, so a parent reads a fractions photo
+      above the decimals row and above the order-of-operations row too. The
+      crop belongs to the session's OWN problem; generated practice never had a
+      picture and claims its problem text instead.
+    */
+    const evidence = extractEvidence(
+      input({
+        problem: '1/2 + 1/4',
+        turns: [
+          turn({ skillId: '1/2 + 1/4', skillTitle: 'Fractions' }),
+          turn({ transcriptId: 't-2', skillId: 'Decimals', skillTitle: 'Decimals' }),
+        ],
+        messages: [
+          message({
+            id: 'm-photo',
+            attachments: [
+              { id: 'att-1', kind: 'image', name: 'worksheet.jpg', mimeType: 'image/jpeg' },
+            ],
+          }),
+        ],
+      }),
+    );
+    const crops = evidence.problems.filter((row) => row.questionRef.kind === 'capture-crop');
+    assert.equal(crops.length, 1, 'the one photo was handed to more than one problem');
+    assert.equal(crops[0]?.skillId, '1/2 + 1/4');
+    const decimals = evidence.problems.find((row) => row.skillId === 'Decimals');
+    assert.equal(decimals?.questionRef.kind, 'problem-text');
+  });
+
   it('extracts persistence-after-miss as the strongest effort story', () => {
     const evidence = extractEvidence(
       input({

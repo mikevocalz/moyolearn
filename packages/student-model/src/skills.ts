@@ -44,7 +44,16 @@ export function inferSkillTitle(problem: string): string {
   if (lower.includes('decimal') || /\d+\.\d+/.test(problem)) return 'Decimals';
   if (lower.includes('percent') || lower.includes('%')) return 'Percent';
   if (lower.includes('equation') || lower.includes('=') || lower.includes('solve for')) return 'Equation sense';
-  if (lower.includes('algebra') || lower.includes('x') || lower.includes('y')) return 'Algebra basics';
+  /*
+    A STANDALONE `x` or `y`, not the letter anywhere in a word. `includes('x')`
+    and `includes('y')` matched `many`, `you`, `day`, `six`, `next`, `box` and
+    `explain` — so "How many apples are left?" was filed as algebra, the
+    `word problem` branch below it was near-unreachable, and a first grader
+    doing subtraction was handed "Combine only the like terms". The lookarounds
+    rather than `\b` because `2x` has no word boundary between the digit and
+    the variable, and `2x` is the shape that matters.
+  */
+  if (lower.includes('algebra') || /(?<![a-z])[xy](?![a-z])/.test(lower)) return 'Algebra basics';
   if (lower.includes('word problem')) return 'Word problems';
   if (/[+/\-*/]/.test(problem)) return 'Order of operations';
   return 'Number sense';

@@ -66,8 +66,16 @@ const RULES: readonly { readonly id: string; readonly pattern: RegExp; readonly 
     // The separator class is spaces and punctuation but NOT `\s`, which would
     // include newlines: a phone number on one line and a sum on the next would
     // then match as one run and take the sum's first operand with it.
+    //
+    // A `-` COUNTS AS A SEPARATOR ONLY BETWEEN TWO DIGITS, which is the whole
+    // difference between `555-123-4567` and `1000 - 250 - 125`. Without the
+    // lookarounds the separator class swallowed the spaced minus and every
+    // chain of subtractions was a "digit run": `45.75 - 12.50` reached the
+    // model as `[redacted] = ?`, which is the silent-blanking failure this
+    // file's header is written about. A homework subtraction is spaced; a
+    // phone number is not.
     id: 'phone',
-    pattern: /\+?\d[\d ().-]{7,}\d/g,
+    pattern: /\+?\d(?:[\d ().]|(?<=\d)-(?=\d)){7,}\d/g,
     replace: REDACTED,
   },
   {

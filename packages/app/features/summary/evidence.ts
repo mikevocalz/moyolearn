@@ -384,11 +384,13 @@ function questionRefFor(skill: SkillEvidence, input: SessionEvidenceInput): Ques
     (skill.skillId === input.problem || skill.refs.some((ref) => ref.kind === 'message'));
   const text = isSessionProblem ? input.problem : skill.skillTitle;
 
-  for (const message of input.messages) {
-    if (message.role !== 'learner') continue;
-    for (const attachment of message.attachments) {
-      if (attachment.kind === 'image') {
-        return { kind: 'capture-crop', messageId: message.id, attachmentId: attachment.id, text };
+  if (isSessionProblem) {
+    for (const message of input.messages) {
+      if (message.role !== 'learner') continue;
+      for (const attachment of message.attachments) {
+        if (attachment.kind === 'image') {
+          return { kind: 'capture-crop', messageId: message.id, attachmentId: attachment.id, text };
+        }
       }
     }
   }

@@ -98,10 +98,37 @@ export function distill(
   const storable = transcript.turns.filter((turn) => turn.storable);
   const { learnerId, id: transcriptId } = transcript;
 
+  /*
+    IDEMPOTENCE ON THE TRANSCRIPT, not merely on the fact id.
+
+    `distillKey`'s `singletonKey` stops protecting the moment the first job
+    completes (`jobs/src/keys.ts` says so in place), and every accumulating
+    value below is a function of the PREVIOUS RUN'S OUTPUT rather than of the
+    turns: `p` traces forward from the stored `p`, `attempts` increments, the
+    review rung advances, the hint-depth mean re-blends. So a dead-letter
+    replay a week later — the one §4.1 has a human perform by hand — took one
+    correct turn from p=0.25 to 0.66 and then to 0.85, flipping the
+    parent-facing sentence from "Getting there on…" to "Has … down" and
+    dropping the skill out of the frontier brief. The upsert made it one ROW.
+    It never made it the same row.
+
+    The provenance list is the record of which transcripts a fact already
+    counts, and `mergeProvenance` was computing it all along. Read from
+    `priorFacts` rather than the running map, so a transcript with two turns on
+    one skill still applies both of them on a first run.
+  */
+  const alreadyCounted = new Set(
+    priorFacts.filter((fact) => fact.derivedFrom.includes(transcriptId)).map((fact) => fact.id),
+  );
+
   for (const turn of storable) {
     const { skillId, skillTitle } = turn;
 
     const masteryKey = factId(learnerId, 'mastery', skillId);
+    // The misconception and interest facts below are assignments rather than
+    // accumulations, so a replay would recompute them identically — skipping
+    // the whole turn is equivalent, and says the rule once.
+    if (alreadyCounted.has(masteryKey)) continue;
     const priorMastery = byId.get(masteryKey);
     const previousP =
       priorMastery?.kind === 'mastery' ? priorMastery.p : tracing.prior;

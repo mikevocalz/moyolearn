@@ -201,13 +201,25 @@ export function confirm(challenge: ConsentChallenge): ConsentChallenge {
  * child in the household could not reasonably ascertain, and a set that can be
  * re-answered is one a child can brute-force from the same four screens.
  */
+/** Order-independent identity for a KBA set — see `scoreKba`. */
+const spentKey = (ids: readonly string[]): string => [...ids].sort().join('\u0000');
+
 export function scoreKba(
   challenge: ConsentChallenge,
   questions: KbaQuestion[],
   answers: number[],
 ): ConsentChallenge {
+  /*
+    A SET, COMPARED AS A SET. `spentIds` stored the ids in PRESENTATION order
+    and compared them the same way, so re-serving the same four questions
+    shuffled produced a different `join()`, missed the spent check and scored
+    normally — with the correct answers already known from the failed attempt.
+    Two passes over four screens is exactly the brute-force this function's own
+    docstring says a spent set exists to prevent, and it granted `confirmed`.
+  */
   const ids = questions.map((q) => q.id);
-  if (challenge.spentIds.some((set) => set.join() === ids.join())) {
+  const key = spentKey(ids);
+  if (challenge.spentIds.some((set) => spentKey(set) === key)) {
     return { ...challenge, askedIds: ids, correct: 0 };
   }
   const correct = questions.reduce(

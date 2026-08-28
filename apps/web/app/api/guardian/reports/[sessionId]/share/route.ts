@@ -14,7 +14,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createTeacherShare, revokeTeacherShare } from '@acme/app/server';
 import {
-  loadGuardianSummaries,
+  loadGuardianWards,
   loadSummaryBySession,
   saveSummaryReport,
 } from '@/lib/summary.repository';
@@ -24,7 +24,7 @@ import { reportRouteError } from '@/lib/report-error';
 export const dynamic = 'force-dynamic';
 
 const ports = {
-  loadGuardianSummaries,
+  loadGuardianWards,
   loadSummary: loadSummaryBySession,
   saveSummary: saveSummaryReport,
 };

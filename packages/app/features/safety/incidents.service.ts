@@ -26,6 +26,7 @@ import {
   acknowledgeIncident,
   incidentFromSubmission,
   slaBreached,
+  tierAtLeast,
   transitionIncident,
   LADDER,
   type IncidentCategory,
@@ -389,7 +390,18 @@ export async function triageIncident(
       const moved = transitionIncident(report, change, ctx.learnerId, now);
       await ports.saveIncident(moved);
 
-      if (LADDER[moved.severity].slaHours !== null && moved.severity !== report.severity) {
+      /*
+        RAISED, not merely changed. The plain inequality re-fanned on a
+        DOWNGRADE too, so a triager correcting an over-filed S4 to S3 enqueued
+        a second guardian notification about an incident being de-escalated —
+        the opposite of what the docstring above promises. `tierAtLeast` is in
+        `ladder.ts` for exactly this comparison.
+      */
+      if (
+        LADDER[moved.severity].slaHours !== null &&
+        moved.severity !== report.severity &&
+        tierAtLeast(moved.severity, report.severity)
+      ) {
         await ports.fanOutIncident(moved);
       }
 

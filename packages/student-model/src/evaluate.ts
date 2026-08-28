@@ -11,9 +11,56 @@ const PRECEDENCE: Record<string, number> = {
   '/': 2,
 };
 
+/** A literal, sign included — the shunting-yard's operands after `tokenize`. */
+const NUMBER = /^-?\d+(?:\.\d+)?$/;
+
+/**
+ * Splits the expression, resolving UNARY MINUS — which the binary
+ * shunting-yard below cannot represent.
+ *
+ * `-3 + 5` used to tokenize to `- 3 + 5` and reach `evaluatePostfix` an
+ * operand short. A `-` is unary exactly when nothing evaluable precedes it:
+ * the start of the expression, an open paren, or another operator. Two shapes
+ * resolve it and one deliberately does not:
+ *
+ *   · before a literal, the sign folds INTO the literal — `2 * -3` must stay
+ *     `2 × (−3)`, so a synthesized zero (`2 * 0 - 3`) would bind wrong;
+ *   · at the start or after `(`, where no operator can bind tighter, a zero IS
+ *     the negation — `-(3+1)` becomes `0 - (3+1)`;
+ *   · after an operator and before `(` — `2 * -(3+1)` — has neither, and is
+ *     left to fail into the caller's `null`. A wrong number is worse than
+ *     "cannot evaluate": it marks a child's correct answer incorrect.
+ */
 function tokenize(expr: string): string[] {
-  const matches = expr.match(/\d+(?:\.\d+)?|[+\-*/()]/g);
-  return matches ?? [];
+  const raw = expr.match(/\d+(?:\.\d+)?|[+\-*/()]/g) ?? [];
+  const tokens: string[] = [];
+
+  for (let i = 0; i < raw.length; i += 1) {
+    const token = raw[i]!;
+    if (token !== '-') {
+      tokens.push(token);
+      continue;
+    }
+
+    const previous = tokens[tokens.length - 1];
+    const opens = previous === undefined || previous === '(';
+    if (!opens && PRECEDENCE[previous] === undefined) {
+      tokens.push(token);
+      continue;
+    }
+
+    const next = raw[i + 1];
+    if (next !== undefined && NUMBER.test(next)) {
+      tokens.push(`-${next}`);
+      i += 1;
+    } else if (opens) {
+      tokens.push('0', '-');
+    } else {
+      tokens.push(token);
+    }
+  }
+
+  return tokens;
 }
 
 function toPostfix(tokens: string[]): string[] {
@@ -21,7 +68,7 @@ function toPostfix(tokens: string[]): string[] {
   const ops: string[] = [];
 
   for (const token of tokens) {
-    if (/^\d+(?:\.\d+)?$/.test(token)) {
+    if (NUMBER.test(token)) {
       output.push(token);
       continue;
     }
@@ -67,11 +114,22 @@ function evaluatePostfix(tokens: string[]): number {
   const stack: number[] = [];
 
   for (const token of tokens) {
-    if (/^\d+(?:\.\d+)?$/.test(token)) {
+    if (NUMBER.test(token)) {
       stack.push(Number(token));
       continue;
     }
 
+    /*
+      UNDERFLOW IS "CANNOT EVALUATE", NOT "WRONG". A leading unary minus —
+      `-3 + 5`, the shape half of arithmetic homework arrives in — produces one
+      operand too few, and popping an empty stack used to yield `undefined`,
+      then `NaN`, then a `stack.length === 1` that slipped past the malformed
+      guard below. `evaluateArithmetic` only null-checks the ANSWER, so
+      `Math.abs(NaN - 2) < 1e-9` came back `false`: a child who answered
+      correctly was marked wrong and their mastery estimate moved DOWN for it.
+      Throwing is what routes this to the `null` the caller's contract has.
+    */
+    if (stack.length < 2) throw new Error('Operand underflow');
     const b = stack.pop()!;
     const a = stack.pop()!;
     switch (token) {
@@ -118,6 +176,9 @@ export function evaluateArithmetic(problem: string, answer: string): boolean | n
 
   const answerNum = Number(answer);
   if (Number.isNaN(answerNum)) return null;
+  // A non-finite VALUE is the same "cannot evaluate" as a non-numeric answer.
+  // Comparing against it silently answers `false`, which is a verdict.
+  if (!Number.isFinite(value)) return null;
 
   return Math.abs(value - answerNum) < 1e-9;
 }
