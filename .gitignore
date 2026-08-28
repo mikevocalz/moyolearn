@@ -28,3 +28,10 @@ storybook-static
 # machine's checkout, so a committed copy breaks for everyone else and silently
 # points their tools at a directory they do not have.
 .mcp.json
+
+# The marketing site's photography cache. Unlike the globe's vendored topojson
+# these are not a build input: `scripts/build-photography.mjs` runs by hand, its
+# OUTPUT is committed under public/images, and the originals are re-fetchable
+# from the Pexels ids recorded in public/images/MANIFEST.md. Committing a 2400px
+# colour original per photograph would be repo weight nothing reads.
+apps/web-vite/data/photography/

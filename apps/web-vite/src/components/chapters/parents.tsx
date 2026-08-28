@@ -32,7 +32,8 @@
  *
  * SOT: docs/site/copy-deck.md §7 (every string) · docs/site/research.md §4.6 and
  *      §3 O2/O3/O6/O8 · docs/site/tokens.md · docs/site/motion-matrix.md
- *      docs/pack/08-visual-hierarchy-spacing-spec.md §5 (the ink frame)
+ *      docs/pack/08-visual-hierarchy-spacing-spec.md §5 (the ink frame) and §6
+ *      (imagery policy, the paper/ink duotone) · ../photography.ts
  * SOT-KEYWORDS: site chapter parents magazine editorial serif session report
  *               trust safety screentime controls price honesty ink-frame web-vite
  */
@@ -49,6 +50,7 @@ import {
 } from '@acme/ui/primitives';
 import { useMotionScene } from '@/motion';
 import type { MotionScene } from '@/motion';
+import { Photo } from '@/components/photo';
 
 /*
   Policy destinations are ABSOLUTE on purpose. `/safety` and `/privacy` are not
@@ -233,21 +235,37 @@ export function ParentsChapter() {
           */}
           <View className="gap-group md:flex-1">
             {/*
-              THE PHOTOGRAPH DOES NOT EXIST YET, and this says so rather than
-              pretending. The plate is the doc 08 §5 ink frame — 2px outline,
-              card radius, hard offset shadow — over a paper/ink duotone built
-              from two ground tokens, so the composition and the treatment are
-              both real and only the image is missing. It carries no `alt`
-              because there is no image: a described-but-absent photograph is
-              worse than an honest blank.
+              THE PHOTOGRAPH. The plate is the doc 08 §5/§6 ink frame — 2px
+              outline, card radius, hard offset shadow — and the image inside it
+              is a real Pexels frame baked into the paper/ink duotone the same
+              section permits, so the photography cannot break the palette. The
+              treatment is in the pixels (scripts/build-photography.mjs), not in
+              a runtime filter: a `filter:` stack would decode a full-colour
+              image, repaint it every frame, and show a reader whose filters do
+              not apply a picture in a palette this page does not own.
+
+              WHAT IT IS A PHOTOGRAPH OF, AND WHY NOT THE REGISTER'S ROW. The
+              copy deck's `site.alt.parents.report` describes a session report
+              on a phone — a screenshot of a product surface, not photography.
+              Shooting that is a mock-up, and this chapter's whole argument is
+              that it does not flatter. So the plate carries the thing the
+              report is ABOUT: a child part-way through the page, which is what
+              the note the chapter promises would be written from. The caption
+              names the work rather than praising it, in the register the
+              standfirst already set.
+
+              FULL BLEED INSIDE THE FRAME. `p-inset-roomy` would set the picture
+              on a paper mat; the ink frame in doc 08 is a frame, not a mount.
+              `overflow-hidden` is what makes the card radius cut the image.
             */}
             <Figure className="parents-plate gap-stack">
-              <View className="border-moyo-hair rounded-moyo-card border-moyo-outline bg-moyo-paper-sunken p-inset-roomy shadow-moyo-2">
-                <View className="h-40 flex-row items-end gap-stack" aria-hidden>
-                  <View className="h-full flex-1 bg-moyo-ink-muted" />
-                  <View className="h-3/4 flex-1 bg-moyo-paper-raised" />
-                  <View className="h-1/2 flex-1 bg-moyo-ink-muted" />
-                </View>
+              <View className="border-moyo-hair overflow-hidden rounded-moyo-card border-moyo-outline bg-moyo-paper-sunken shadow-moyo-2">
+                {/*
+                  `sizes` is the article column, not the viewport: this plate
+                  takes what is left of the 72rem container after the rail's
+                  third and the gap, and the full measure once the two stack.
+                */}
+                <Photo name="parents-homework" sizes="(min-width: 48rem) 44rem, 92vw" />
               </View>
               {/*
                 The two lines are wrapped in a View, not laid out by the
@@ -261,13 +279,12 @@ export function ParentsChapter() {
               <Figcaption>
                 <View className="gap-stack">
                   <Text variant="label" className="text-site-label text-moyo-secondary">
-                    Placeholder
+                    A session, before the note
                   </Text>
                   <Text className="text-site-body md:text-site-body text-moyo-ink-muted">
-                  No photography has been shot for this chapter yet. The plate that
-                  replaces this one, from the alt-text register: &ldquo;A session report on
-                  a phone: a headline sentence, a list of problems, and a short note about
-                    what to try at home.&rdquo;
+                    Two textbooks open, one problem part-answered. This is the half hour
+                    the note is written from &mdash; what was worked on, what was
+                    answered, and the one thing to try at the table tonight.
                   </Text>
                 </View>
               </Figcaption>

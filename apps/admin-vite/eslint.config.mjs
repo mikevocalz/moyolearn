@@ -30,6 +30,17 @@ export default [
     files: ['src/routes/_payload/importMap.js'],
     rules: { 'import/no-duplicates': 'off' },
   },
-  // routeTree.gen.ts is written by the router plugin on every build.
-  { ignores: ['dist/**', '.output/**', '.tanstack/**', 'src/routeTree.gen.ts'] },
+  /*
+    routeTree.gen.ts is written by the router plugin on every build.
+
+    `.vercel/**` is this app's OWN build output — it is in .gitignore beside
+    `dist`, but it was missing here, so `pnpm lint` crashed for anyone with a
+    local build present: ESLint walked the minified Nitro bundles and then died
+    formatting the result ("RangeError: Invalid string length"). A build
+    artefact is never lintable, and the crash names neither the app nor the
+    reason, which is why it reads as a broken repo rather than a stale folder.
+  */
+  {
+    ignores: ['dist/**', '.output/**', '.vercel/**', '.tanstack/**', 'src/routeTree.gen.ts'],
+  },
 ];
