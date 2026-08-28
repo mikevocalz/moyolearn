@@ -282,9 +282,8 @@ export function ParentsChapter() {
                     A session, before the note
                   </Text>
                   <Text className="text-site-body md:text-site-body text-moyo-ink-muted">
-                    Two textbooks open, one problem part-answered. This is the half hour
-                    the note is written from &mdash; what was worked on, what was
-                    answered, and the one thing to try at the table tonight.
+                    Two textbooks open, a pencil, and a problem not finished yet. The note
+                    is written from a half hour like this one &mdash; not from a score.
                   </Text>
                 </View>
               </Figcaption>
