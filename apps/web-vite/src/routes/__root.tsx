@@ -29,6 +29,7 @@
  * SOT-KEYWORDS: web-vite root route shell document head scripts stylesheet ssr
  *               moyo-site ground preload font motion lenis runtime
  */
+import { withPayloadRoot } from '@payloadcms/tanstack-start/client';
 import { HeadContent, Outlet, Scripts, createRootRoute } from '@tanstack/react-router';
 // Imported from the file, NOT from `../motion`: the barrel reaches
 // `useMotionScene` → `@/stores/perf-store`, whose module-scope media-query
@@ -69,7 +70,19 @@ export const Route = createRootRoute({
       { rel: 'stylesheet', href: appCss },
     ],
   }),
-  shellComponent: RootDocument,
+  /*
+    Two surfaces, two documents, one root (deployment §3.2). `withPayloadRoot`
+    returns a shell that renders Payload's own `<html>` — with the server-computed
+    `data-theme`, `lang` and `dir` the panel needs on first paint — for anything
+    under `config.routes.admin` (default `/admin`), and `RootDocument` for
+    everything else.
+
+    This is the reason the marketing `head()` above is safe to keep at the root:
+    the admin never renders `RootDocument`, so it never links `globals.css`,
+    never preloads the display face, and never picks up the `moyo-site` ground.
+    A shared document would have had to fork all three by pathname.
+  */
+  shellComponent: withPayloadRoot(RootDocument),
   component: Outlet,
 });
 

@@ -10,13 +10,21 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PayloadRouteImport } from './routes/_payload'
 import { Route as ChaptersLabRouteImport } from './routes/chapters-lab'
 import { Route as GlobeLabRouteImport } from './routes/globe-lab'
 import { Route as MotionLabRouteImport } from './routes/motion-lab'
+import { Route as PayloadAdminIndexRouteImport } from './routes/_payload/admin.index'
+import { Route as PayloadAdminSplatRouteImport } from './routes/_payload/admin.$'
+import { Route as PayloadPayloadApiSplatRouteImport } from './routes/_payload/payload-api.$'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PayloadRoute = PayloadRouteImport.update({
+  id: '/_payload',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ChaptersLabRoute = ChaptersLabRouteImport.update({
@@ -34,36 +42,85 @@ const MotionLabRoute = MotionLabRouteImport.update({
   path: '/motion-lab',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PayloadAdminIndexRoute = PayloadAdminIndexRouteImport.update({
+  id: '/admin/',
+  path: '/admin/',
+  getParentRoute: () => PayloadRoute,
+} as any)
+const PayloadAdminSplatRoute = PayloadAdminSplatRouteImport.update({
+  id: '/admin/$',
+  path: '/admin/$',
+  getParentRoute: () => PayloadRoute,
+} as any)
+const PayloadPayloadApiSplatRoute = PayloadPayloadApiSplatRouteImport.update({
+  id: '/payload-api/$',
+  path: '/payload-api/$',
+  getParentRoute: () => PayloadRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/chapters-lab': typeof ChaptersLabRoute
   '/globe-lab': typeof GlobeLabRoute
   '/motion-lab': typeof MotionLabRoute
+  '/admin/$': typeof PayloadAdminSplatRoute
+  '/payload-api/$': typeof PayloadPayloadApiSplatRoute
+  '/admin/': typeof PayloadAdminIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/chapters-lab': typeof ChaptersLabRoute
   '/globe-lab': typeof GlobeLabRoute
   '/motion-lab': typeof MotionLabRoute
+  '/admin/$': typeof PayloadAdminSplatRoute
+  '/payload-api/$': typeof PayloadPayloadApiSplatRoute
+  '/admin': typeof PayloadAdminIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_payload': typeof PayloadRouteWithChildren
   '/chapters-lab': typeof ChaptersLabRoute
   '/globe-lab': typeof GlobeLabRoute
   '/motion-lab': typeof MotionLabRoute
+  '/_payload/admin/$': typeof PayloadAdminSplatRoute
+  '/_payload/payload-api/$': typeof PayloadPayloadApiSplatRoute
+  '/_payload/admin/': typeof PayloadAdminIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/chapters-lab' | '/globe-lab' | '/motion-lab'
+  fullPaths:
+    | '/'
+    | '/chapters-lab'
+    | '/globe-lab'
+    | '/motion-lab'
+    | '/admin/$'
+    | '/payload-api/$'
+    | '/admin/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/chapters-lab' | '/globe-lab' | '/motion-lab'
-  id: '__root__' | '/' | '/chapters-lab' | '/globe-lab' | '/motion-lab'
+  to:
+    | '/'
+    | '/chapters-lab'
+    | '/globe-lab'
+    | '/motion-lab'
+    | '/admin/$'
+    | '/payload-api/$'
+    | '/admin'
+  id:
+    | '__root__'
+    | '/'
+    | '/_payload'
+    | '/chapters-lab'
+    | '/globe-lab'
+    | '/motion-lab'
+    | '/_payload/admin/$'
+    | '/_payload/payload-api/$'
+    | '/_payload/admin/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  PayloadRoute: typeof PayloadRouteWithChildren
   ChaptersLabRoute: typeof ChaptersLabRoute
   GlobeLabRoute: typeof GlobeLabRoute
   MotionLabRoute: typeof MotionLabRoute
@@ -76,6 +133,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_payload': {
+      id: '/_payload'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof PayloadRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/chapters-lab': {
@@ -99,11 +163,48 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MotionLabRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_payload/admin/': {
+      id: '/_payload/admin/'
+      path: '/admin'
+      fullPath: '/admin/'
+      preLoaderRoute: typeof PayloadAdminIndexRouteImport
+      parentRoute: typeof PayloadRoute
+    }
+    '/_payload/admin/$': {
+      id: '/_payload/admin/$'
+      path: '/admin/$'
+      fullPath: '/admin/$'
+      preLoaderRoute: typeof PayloadAdminSplatRouteImport
+      parentRoute: typeof PayloadRoute
+    }
+    '/_payload/payload-api/$': {
+      id: '/_payload/payload-api/$'
+      path: '/payload-api/$'
+      fullPath: '/payload-api/$'
+      preLoaderRoute: typeof PayloadPayloadApiSplatRouteImport
+      parentRoute: typeof PayloadRoute
+    }
   }
 }
 
+interface PayloadRouteChildren {
+  PayloadAdminSplatRoute: typeof PayloadAdminSplatRoute
+  PayloadPayloadApiSplatRoute: typeof PayloadPayloadApiSplatRoute
+  PayloadAdminIndexRoute: typeof PayloadAdminIndexRoute
+}
+
+const PayloadRouteChildren: PayloadRouteChildren = {
+  PayloadAdminSplatRoute: PayloadAdminSplatRoute,
+  PayloadPayloadApiSplatRoute: PayloadPayloadApiSplatRoute,
+  PayloadAdminIndexRoute: PayloadAdminIndexRoute,
+}
+
+const PayloadRouteWithChildren =
+  PayloadRoute._addFileChildren(PayloadRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  PayloadRoute: PayloadRouteWithChildren,
   ChaptersLabRoute: ChaptersLabRoute,
   GlobeLabRoute: GlobeLabRoute,
   MotionLabRoute: MotionLabRoute,
