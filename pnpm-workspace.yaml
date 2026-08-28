@@ -143,6 +143,10 @@ catalog:
   "@payloadcms/next": 4.0.0-canary.29
   "@payloadcms/plugin-mcp": 4.0.0-canary.29
   "@payloadcms/ui": 4.0.0-canary.29
+  # The super admin's mount (ADR-003). Its `payload` peer is an EXACT pin —
+  # `4.0.0-canary.29`, not a range — so this line and the `payload` line above
+  # move together or install fails outright rather than drifting.
+  "@payloadcms/tanstack-start": 4.0.0-canary.29
   graphql: 16.14.2 # payload peers ^16
   pg: 8.23.0
   # The job runner (doc 12 §6 · docs/design/jobs.md). Same Postgres, `jobs`
@@ -202,6 +206,18 @@ catalog:
   # peers ^5||^6||^7||^8, so Storybook rides along.
   vite: 8.2.2
   "@vitejs/plugin-react": 6.1.1
+  # The React Server Components environment the Payload admin renders in
+  # (ADR-003). `@payloadcms/tanstack-start` peers `^0.5.21`; this is the
+  # version its own demo ships against, which is the only combination anyone
+  # has run.
+  #
+  # `react-server-dom-webpack` is NOT here, although plugin-rsc names it as an
+  # optional peer and the Payload demo declares it. plugin-rsc vendors its own
+  # copy (node_modules/@vitejs/plugin-rsc/dist/vendor/react-server-dom/) and
+  # never resolves the bare specifier; adding then removing it produced a
+  # byte-identical `dist/client/index.js` (md5 e5d5b495…), so it was carrying
+  # nothing but install weight and an unmet `webpack` peer.
+  "@vitejs/plugin-rsc": 0.5.26
   vite-plugin-react-native-web: 2.5.0
   babel-plugin-react-compiler: 1.0.0
   turbo: 2.10.11

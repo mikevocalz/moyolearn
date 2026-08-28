@@ -38,9 +38,30 @@ export default buildConfig({
         Icon: './components/Icon#Icon',
       },
     },
+    /*
+      The map is DERIVED from this config, so every app that mounts the panel
+      needs the same entries — but each needs them at its own path, because the
+      generator writes module specifiers relative to the file it emits. Payload
+      exposes exactly one `importMapFile`, so the second consumer
+      (apps/web-vite, ADR-003) points the generator at itself for the length of
+      one command rather than getting a config of its own. Unset — which is
+      every runtime, and every build — this resolves to apps/web exactly as
+      before.
+    */
     importMap: {
       baseDir: dirname,
-      importMapFile: path.resolve(dirname, '../../../apps/web/app/(payload)/admin/importMap.js'),
+      /*
+        `path.resolve` against the CWD rather than taking the env value raw: the
+        generator writes the component specifiers as paths RELATIVE to the file
+        it emits, so if the two sides disagree about the repo root — on a
+        case-insensitive filesystem an absolute path spelled `moyolearn` and one
+        spelled `MoyoLearn` are the same directory but not the same string — it
+        emits a relative path that climbs out of the repo and back in by name.
+        That resolves locally and fails on the Linux builder.
+      */
+      importMapFile: process.env.PAYLOAD_IMPORT_MAP_FILE
+        ? path.resolve(process.env.PAYLOAD_IMPORT_MAP_FILE)
+        : path.resolve(dirname, '../../../apps/web/app/(payload)/admin/importMap.js'),
     },
   },
   routes: {
