@@ -74,14 +74,8 @@ const SITE_ORIGIN = 'https://moyolearn.com';
 
 const SCOPE = '.site-footer';
 
-/**
- * `{SUPPORT_EMAIL}` is a copy-deck interpolation with no real value yet —
- * "Real address required — none is invented here" (§10). It renders as the
- * token, marked, for the same reason chapter 08's early-bird limit does: a
- * missing contact line reads as finished work, and a made-up one is worse than
- * either.
- */
-const SUPPORT_EMAIL = '{SUPPORT_EMAIL}';
+/** The real contact address, supplied by Mike. Chapter 07's "Talk to us" lands here. */
+const SUPPORT_EMAIL = 'mikeallen@moyolearn.com';
 
 /**
  * Three columns, not six. Past roughly four a footer sitemap stops being
@@ -172,13 +166,18 @@ export function SiteFooter() {
             Talk to a person
           </Text>
           {/*
-            Marked by an outline rather than by the sun block: this screen's one
-            highlighter accent is spent on the sticker, and the braces already
-            say the value is unresolved.
+            A real address, so a real mailto: a contact line you have to retype
+            is friction on the one block that exists to be contacted. Outlined
+            rather than filled because this screen's single highlighter accent
+            is spent on the sticker — the slab now frames something that works
+            instead of marking an unresolved token.
           */}
-          <View className="border-moyo-rule self-start rounded-moyo-square border-moyo-outline bg-moyo-paper-raised px-inset-tight py-inset-field">
-            <Text className="text-site-subtitle md:text-site-subtitle text-moyo-ink">{SUPPORT_EMAIL}</Text>
-          </View>
+          <Link
+            href={`mailto:${SUPPORT_EMAIL}`}
+            className="border-moyo-rule self-start rounded-moyo-square border-moyo-outline bg-moyo-paper-raised px-inset-tight py-inset-field text-site-subtitle md:text-site-subtitle text-moyo-ink"
+          >
+            {SUPPORT_EMAIL}
+          </Link>
         </View>
 
         <Nav className={`${RULE} flex-col gap-section pt-section md:flex-row`}>
