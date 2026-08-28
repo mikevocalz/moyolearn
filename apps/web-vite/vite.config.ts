@@ -16,6 +16,7 @@ import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import reactNativeWeb from 'vite-plugin-react-native-web';
+import tailwindcss from '@tailwindcss/vite';
 
 const src = fileURLToPath(new URL('./src', import.meta.url));
 
@@ -73,6 +74,16 @@ const isProductAppPath = (path: string): boolean =>
 
 export default defineConfig({
   plugins: [
+    /*
+      Tailwind's own Vite plugin rather than the PostCSS one. Vite 8 stopped
+      resolving the bare `@import 'tailwindcss'` in src/globals.css through
+      node_modules — with `node-linker=hoisted` the package sits at the
+      workspace root, so PostCSS looked for `apps/web-vite/tailwindcss` and
+      failed with ENOENT. This plugin owns the resolution itself and is
+      Tailwind's documented Vite path; it peers `^5.2 || ^6 || ^7 || ^8`, so it
+      spans the version we came from and the one Payload's adapter requires.
+    */
+    tailwindcss(),
     reactNativeWeb(),
     tanstackStart({
       // One marketing route today; `crawlLinks` means every route reachable by
