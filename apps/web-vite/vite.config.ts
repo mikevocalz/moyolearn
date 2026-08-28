@@ -57,7 +57,26 @@ export default defineConfig({
       // One marketing route today; `crawlLinks` means every route reachable by
       // an <a> from `/` joins the static output without being listed here.
       prerender: { enabled: true, crawlLinks: true, failOnError: true },
-      pages: [{ path: '/' }],
+      pages: [
+        { path: '/' },
+        /*
+          The motion audit surface. Listed explicitly because nothing links to
+          it — `crawlLinks` would never find it — and it has to exist in the
+          BUILT output, not just under `vite dev`, or the reduced-motion and
+          prerender claims are only ever checked against the dev server.
+          It carries `robots: noindex, nofollow` and is excluded from the
+          sitemap; being unlinked is what keeps it out of the crawl in the first
+          place. Delete this entry, not the route, if it ever needs to go.
+        */
+        { path: '/motion-lab' },
+        /*
+          The globe lab, on the same terms and for the same reason. The single
+          strongest check on chapter 04 is that a page carrying the R3F island
+          still prerenders to real HTML with no `<!--$!-->` marker — which a
+          route that is never prerendered cannot demonstrate.
+        */
+        { path: '/globe-lab' },
+      ],
     }),
     viteReact(),
   ],

@@ -758,6 +758,9 @@ importers:
       topojson-client:
         specifier: 'catalog:'
         version: 3.1.0
+      zustand:
+        specifier: 'catalog:'
+        version: 5.0.15(@types/react@19.2.18)(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))
     devDependencies:
       '@acme/config':
         specifier: workspace:*
@@ -774,6 +777,9 @@ importers:
       '@types/react-dom':
         specifier: 'catalog:'
         version: 19.2.3(@types/react@19.2.18)
+      '@types/three':
+        specifier: 'catalog:'
+        version: 0.185.4
       '@types/topojson-client':
         specifier: 'catalog:'
         version: 3.1.5
