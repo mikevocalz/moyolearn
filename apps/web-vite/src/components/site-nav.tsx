@@ -49,6 +49,9 @@
 import { useEffect } from 'react';
 import { Container, Text } from '@acme/ui/typography';
 import { Button, Header, Link, Nav, View } from '@acme/ui/primitives';
+// Icons come from the kit's web entry — no new dependency, and the same glyph
+// set the rest of the product uses.
+import { Menu, X } from '@acme/ui/icons';
 import { create } from 'zustand';
 import { useMotionScene } from '@/motion';
 import type { MotionScene } from '@/motion';
@@ -175,13 +178,20 @@ export function SiteNav() {
           The mobile trigger. A real <button>, because it operates a widget on
           this page rather than going anywhere — and it carries `aria-expanded`
           so the state is announced rather than only drawn.
+
+          An ICON, not the words: at this size the label was the widest control
+          in the bar and read as a third destination beside the nav links. The
+          glyph carries the affordance and `aria-label` carries the name, so a
+          screen reader still hears "Open menu" — the text was doing a job the
+          accessible name already does.
         */}
         <Button
-          className={`site-nav-cta ${CONTROL} border-moyo-rule rounded-moyo-square border-moyo-outline bg-moyo-paper-raised text-site-body lg:hidden`}
+          className={`site-nav-cta ${CONTROL} border-moyo-rule aspect-square items-center justify-center rounded-moyo-square border-moyo-outline bg-moyo-paper-raised p-0 lg:hidden`}
           onPress={toggle}
           aria-expanded={open}
+          aria-label={open ? 'Close menu' : 'Open menu'}
         >
-          {open ? 'Close menu' : 'Open menu'}
+          {open ? <X size={20} aria-hidden /> : <Menu size={20} aria-hidden />}
         </Button>
       </Container>
 
