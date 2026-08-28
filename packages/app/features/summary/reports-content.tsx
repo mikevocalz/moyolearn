@@ -14,7 +14,18 @@
 // SOT: docs/pack/34-session-summary-reports.md §5 · docs/pack/08-visual-hierarchy-spacing-spec.md
 // SOT-KEYWORDS: reports feed screen guardian cards headline mastery delta viewed hot dial
 import { useRouter } from 'solito/navigation';
-import { Badge, Card, EmptyState, Heading, LoadingSkeleton, MasteryBar, Text } from '@acme/ui';
+import {
+  Badge,
+  Card,
+  EmptyState,
+  Heading,
+  LoadingSkeleton,
+  MasteryBar,
+  Text,
+  isCollapsed,
+  useAdaptivePaneSelection,
+  useWindowSizeClass,
+} from '@acme/ui';
 import { Pressable, View } from '@acme/ui/primitives';
 import { LEVEL_LABEL } from './report-blocks.tsx';
 import { useGuardianReports } from './use-reports.ts';
@@ -22,6 +33,18 @@ import { useGuardianReports } from './use-reports.ts';
 export function ReportsScreen() {
   const router = useRouter();
   const { reports, loading } = useGuardianReports();
+
+  /*
+    Pane-aware, route-safe (doc 37 §3.2/§3.3). Inside an AdaptivePanes host at
+    an expanded width, a card SELECTS — the report opens in the detail pane
+    beside this list and the selection survives the fold. On compact, and on
+    every surface with no host (the web reports page), a card NAVIGATES to the
+    detail route exactly as before. `useAdaptivePaneSelection` is null-safe
+    outside a host, so this screen stays mountable anywhere.
+  */
+  const { selectedId, select } = useAdaptivePaneSelection();
+  const sizeClass = useWindowSizeClass();
+  const paneOpen = select !== null && !isCollapsed(sizeClass);
 
   return (
     <View className="mx-auto w-full max-w-2xl gap-section px-inset py-section">
@@ -48,11 +71,22 @@ export function ReportsScreen() {
             <Pressable
               key={card.sessionId}
               onPress={() => {
+                if (paneOpen) {
+                  select(card.sessionId);
+                  return;
+                }
                 router.push(`/reports/${card.sessionId}`);
               }}
               aria-label={`Open report: ${card.headline}`}
+              aria-selected={paneOpen ? card.sessionId === selectedId : undefined}
             >
-              <Card className="gap-group">
+              {/* Selected fill uses the doc 08 §4.6 selection token — the same
+                  underlay the DataTable row uses, never a border colour. */}
+              <Card
+                className={`gap-group ${
+                  paneOpen && card.sessionId === selectedId ? 'bg-highlighter-underlay' : ''
+                }`}
+              >
                 <View className="flex-row items-start justify-between gap-group">
                   <Text variant="body" className="flex-1 font-semibold text-text">
                     {card.headline}

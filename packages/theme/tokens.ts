@@ -260,6 +260,28 @@ export const contentWidths = {
   'pane-tutor': '23.75rem',  // doc 23 §5: 380px TutorStage primary pane
 } as const;
 
+/**
+ * Doc 02 §2.1 window width classes — lower bound of each class, inclusive, in
+ * dp. The Material 3 Adaptive bands under the doc's own names (`large`, not
+ * androidx's `extraLarge`). TS-only export (not emitted to CSS): consumers are
+ * layout policy modules that compare numbers, starting with
+ * `packages/ui/adaptive-panes/constants.ts`.
+ *
+ * TWO WIDTH SYSTEMS COEXIST, deliberately — see
+ * `packages/ui/size-class.constants.ts` for the other one: a binary
+ * `compact|regular` split at 768 that TutorStage and DashboardShell hold the
+ * line on. These four-band classes drive multi-pane layouts; the 768 split
+ * drives one-column/two-column decisions. Do not merge them by nudging numbers.
+ */
+export const widthClassMinDp = {
+  compact: 0,
+  medium: 600,
+  expanded: 840,
+  large: 1200,
+} as const;
+
+export type WidthClassName = keyof typeof widthClassMinDp;
+
 export const radius = {
   // Every interactive control shares one radius. A button at `md` (6px) beside
   // an input at `card` (10px) reads as two components from two systems sitting

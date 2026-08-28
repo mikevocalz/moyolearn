@@ -18,15 +18,14 @@ const config: StorybookConfig = {
     // is why the audio components were invisible in Storybook despite shipping.
     '../../../packages/ui/audio/*.stories.@(ts|tsx)',
     '../../../packages/ui/html/*.stories.@(ts|tsx)',
+    // PR-146 moved the split-view module into the kit as adaptive-panes; its
+    // stories (the AdaptivePanes host + pane chrome + SwipeableRow) moved with
+    // it, so the old mobile-src glob is gone.
+    '../../../packages/ui/adaptive-panes/*.stories.@(ts|tsx)',
     // Features live at packages/app/features/<name>/, so the glob needs the
     // feature-name level (the old `app/*/components/*` pattern resolved to
     // packages/app/features/components/ and never matched).
     '../../../packages/app/features/*/**/*.stories.@(ts|tsx)',
-    // A few interaction primitives still live in the mobile app rather than the
-    // kit (SwipeableRow and the split-view pieces). They are as reviewable as
-    // anything in packages/ui, so Storybook reads them where they are instead of
-    // waiting on a move that would touch every import in apps/mobile.
-    '../../mobile/src/**/*.stories.@(ts|tsx)',
   ],
   /*
     react-docgen off, deliberately.

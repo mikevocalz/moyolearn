@@ -1,3 +1,3 @@
-import { SummaryQueueScreen } from "@acme/app";
+import { SummaryQueuePaneScreen } from "@acme/app";
 
-export default SummaryQueueScreen;
+export default SummaryQueuePaneScreen;

@@ -28,8 +28,18 @@ import {
   getCoreRowModel,
   type ColumnDef,
 } from '@tanstack/react-table';
-import { Badge, Button, DataTable, EmptyState, Heading, Text } from '@acme/ui';
-import { TextInput, View } from '@acme/ui/primitives';
+import {
+  Badge,
+  Button,
+  DataTable,
+  EmptyState,
+  Heading,
+  Text,
+  isCollapsed,
+  useAdaptivePaneSelection,
+  useWindowSizeClass,
+} from '@acme/ui';
+import { Pressable, TextInput, View } from '@acme/ui/primitives';
 import type { SummaryQueueRow } from './summary.service.ts';
 import { useSummaryQueue } from './use-reports.ts';
 
@@ -50,6 +60,17 @@ export function SummaryQueueScreen() {
   const [suppressing, setSuppressing] = useState<string | null>(null);
   const [reason, setReason] = useState('');
 
+  /*
+    Pane-aware, route-safe (doc 37 §3.2/§3.3): inside an AdaptivePanes host at
+    an expanded width, the headline SELECTS the draft into the detail pane
+    beside this queue (the host's scoped store — selection survives the fold).
+    On compact, and anywhere with no host (the ops web surface), the table is
+    byte-for-byte today's behaviour: no press affordance, actions on the row.
+  */
+  const { selectedId, select } = useAdaptivePaneSelection();
+  const sizeClass = useWindowSizeClass();
+  const paneOpen = select !== null && !isCollapsed(sizeClass);
+
   const columns: ColumnDef<SummaryQueueRow>[] = [
     {
       id: 'createdAt',
@@ -66,11 +87,26 @@ export function SummaryQueueScreen() {
       id: 'headline',
       header: 'Report',
       accessorKey: 'headline',
-      cell: ({ row }) => (
-        <Text variant="body" className="text-text" numberOfLines={2}>
-          {row.original.headline}
-        </Text>
-      ),
+      // The headline is the press target for pane selection — a real control,
+      // not a row-level hit area, so the Approve/Suppress buttons in the
+      // trailing cell never fight it for the tap.
+      cell: ({ row }) =>
+        paneOpen ? (
+          <Pressable
+            onPress={() => {
+              select(row.original.sessionId);
+            }}
+            aria-label={`Open draft: ${row.original.headline}`}
+          >
+            <Text variant="body" className="text-text underline" numberOfLines={2}>
+              {row.original.headline}
+            </Text>
+          </Pressable>
+        ) : (
+          <Text variant="body" className="text-text" numberOfLines={2}>
+            {row.original.headline}
+          </Text>
+        ),
     },
     {
       id: 'attempted',
@@ -151,6 +187,13 @@ export function SummaryQueueScreen() {
     columns,
     getCoreRowModel: getCoreRowModel(),
     getRowId: (row) => row.sessionId,
+    // Controlled, display-only selection: the pane's selectedId drives the
+    // DataTable's selected-row treatment (doc 08 §4.6 underlay + edge), so the
+    // queue shows which draft the detail pane holds. Row ids are sessionIds.
+    enableRowSelection: paneOpen,
+    state: {
+      rowSelection: paneOpen && selectedId !== null ? { [selectedId]: true } : {},
+    },
   });
 
   return (

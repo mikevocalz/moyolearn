@@ -1,3 +1,3 @@
-import { ReportsScreen } from "@acme/app";
+import { ReportsPaneScreen } from "@acme/app";
 
-export default ReportsScreen;
+export default ReportsPaneScreen;
