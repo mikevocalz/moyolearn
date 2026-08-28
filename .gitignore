@@ -17,6 +17,9 @@ storybook-static
 .turbo
 .expo
 .vercel
+# TanStack Start's scratch dir (apps/web-vite). Empty between runs, so it only
+# shows up once a dev server has written the route generator's temp files.
+.tanstack
 
 # OS
 .DS_Store
