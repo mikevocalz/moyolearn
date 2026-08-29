@@ -396,6 +396,53 @@ ns2.vercel-dns.com
 
 Lower TTLs to ≤3600 at IONOS before cutover so rollback is fast.
 
+### 4.1 The live zone, read from public DNS 2026-08-29
+
+All five hostnames are already attached to their Vercel projects, so the only
+remaining action is the nameserver switch. What follows is the zone as it
+actually resolves — read with `dig`, not from a screenshot — because delegation
+moves **everything**, and anything not recreated in Vercel DNS simply stops
+existing.
+
+| Record | Value | After delegation |
+|---|---|---|
+| `MX` | `1 smtp.google.com.` | **RECREATE — mail dies without it** |
+| `TXT @` | `google-site-verification=i-8P7…8PIY` | **RECREATE** |
+| `TXT google._domainkey` | DKIM, 414 bytes | **RECREATE — copy from IONOS, do not retype** |
+| `A @` | `74.208.236.190` | drop (IONOS parking) |
+| `AAAA @` | `2607:f1c0:100f:f000::200` | drop (IONOS parking) |
+| `A admin` / `A app` | `74.208.236.190` | drop — Vercel serves these |
+| `TXT admin` / `TXT app` | `v=spf1 include:_spf-us.ionos.com ~all` | drop — IONOS hosting artefact |
+| `www` | *no record at all* | Vercel serves it |
+
+There is **no wildcard record** — a probe for a random subdomain returns
+nothing, so `admin` and `app` are explicit A records into IONOS parking rather
+than a `*` catch-all. That is why they currently answer with an IONOS page.
+
+**Two mail-authentication gaps, present before any of this and worth fixing
+while the zone is open:**
+
+1. **No SPF at the apex.** The only apex `TXT` is the Google site
+   verification. The `v=spf1 include:_spf-us.ionos.com ~all` records sit on
+   `admin` and `app`, which do not send mail, while `@moyolearn.com` — which
+   does, through Google Workspace — has no SPF policy at all. It should be:
+   ```
+   TXT @   v=spf1 include:_spf.google.com ~all
+   ```
+   Note this is `_spf.google.com`, not the IONOS include being carried on the
+   subdomains. Recreating those IONOS records verbatim would authorise the wrong
+   sender.
+2. **No DMARC.** `_dmarc.moyolearn.com` does not exist. Start in report-only so
+   nothing is rejected while the zone settles:
+   ```
+   TXT _dmarc   v=DMARC1; p=none; rua=mailto:mikeallen@moyolearn.com
+   ```
+
+Do the mail records **first**, in Vercel DNS, and confirm they resolve before
+switching nameservers at IONOS. The order matters: delegation is the moment the
+IONOS zone stops answering, and a domain whose MX disappears loses mail
+immediately and silently.
+
 ### Interim path — per-district CNAME, no delegation
 
 For pilot districts before the nameserver move:
