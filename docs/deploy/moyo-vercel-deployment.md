@@ -201,6 +201,49 @@ tanstackStart({ ...pluginOptions.tanstackStart, prerender: { enabled: false } })
 
 `find apps/admin-vite/dist/client -name '*.html'` must print nothing.
 
+#### 3.2.1 Build it on Vercel, not locally
+
+`vercel deploy --prebuilt` works but buys nothing and costs the thing you need
+most when something breaks: **a `--prebuilt` deploy produces no build log on
+Vercel**, and a server crash inside it logs as `λ GET /admin 500 (no message)`
+with the error masked by production error handling. There is nothing to read.
+
+`apps/admin-vite/vercel.json` carries the two commands:
+
+```json
+{
+  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
+  "buildCommand": "cd ../.. && pnpm --filter admin-vite... build",
+  "framework": null
+}
+```
+
+Both `cd ../..` because pnpm must resolve the workspace from the repo root — the
+lockfile, the catalog and every `@acme/*` dependency live there, not in the app.
+The `...` suffix on the filter is load-bearing: it means *this package and
+everything it depends on*, so `@acme/payload` and `@acme/theme` build first.
+
+Three settings remain in the dashboard, because `vercel.json` cannot express
+them (Project → Settings → Build & Deployment):
+
+| Setting | Value |
+|---|---|
+| Root Directory | `apps/admin-vite` |
+| Include source files outside of the Root Directory | **on** |
+| Skew Protection | on (optional, but the admin is long-lived in a tab) |
+
+Without the second, `cd ../..` lands in an empty directory and install fails
+immediately.
+
+**Nitro picks its output format from `VERCEL=1`**, which Vercel sets during its
+own builds. Run `pnpm --filter admin-vite build` on a laptop and you get
+`.output/`; run it with `VERCEL=1` and you get `.vercel/output/` in the Build
+Output API v3 layout. This is why `turbo.json` must list **all three** of
+`dist/**`, `.output/**` and `.vercel/output/**` as build outputs for both vite
+apps. It previously listed only `dist/**`, which meant a Turborepo cache hit
+restored no deployable artifact at all — the build would "succeed" and ship
+whatever stale files happened to be on disk.
+
 Four consequences, now that this is its own project:
 
 1. **`moyo-admin` holds production secrets** — `DATABASE_URL`, `PAYLOAD_SECRET`, `BLOB_READ_WRITE_TOKEN`. Scope Production-only. `moyo-www` no longer needs any of them, which is the security half of the split: a marketing preview deployment cannot carry live database credentials because the marketing app has no code that reads them.
