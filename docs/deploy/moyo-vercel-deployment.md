@@ -391,6 +391,38 @@ Payload `cors` / `csrf` still need every origin listed, including a wildcard pat
 
 ¹ option 3 only.
 
+### 6.1 An empty variable is not a missing one
+
+`moyo-admin` returned a 500 on every request for its first three deploys, and the
+cause was neither the build nor `sharp` — the deployed bundle carries
+`@img/sharp-linux-x64` and loads cleanly under Node on Linux. Both
+`DATABASE_URL` and `PAYLOAD_SECRET` existed on the project and **were set to the
+empty string**. `vercel env ls` renders an empty value as `Encrypted`, exactly
+like a real one, so the dashboard and the CLI both reported the variable as
+present and correct.
+
+The failure mode this produces is the least legible one available. The module
+graph imports fine, so nothing fails at cold start; Payload only reads the
+connection string when the first request asks for data, and it throws there,
+inside the request, after the log stream has already been handed off. The runtime
+log reads:
+
+```
+λ GET /admin     500     (no message)
+```
+
+To confirm a variable actually carries a value, measure it rather than look at
+it — pull the environment and check the length, never the contents:
+
+```bash
+vercel env pull /tmp/.env.check --environment production --yes
+awk -F= '$1=="DATABASE_URL"||$1=="PAYLOAD_SECRET" {print $1, length($0)-length($1)-1}' /tmp/.env.check
+rm /tmp/.env.check   # it also contains VERCEL_OIDC_TOKEN
+```
+
+A value of `2` is `""` — an empty variable. Delete and re-add it; `vercel env
+rm` first, because `add` will not overwrite.
+
 `moyo-www` losing `DATABASE_URL` and `PAYLOAD_SECRET` is a **result of the rev-4 split, not an oversight**: `apps/web-vite` no longer contains any code that opens a database. If a marketing page ever needs content out of Payload, it fetches `admin.moyolearn.com/payload-api` over the network like any other client — it does not get the credentials back.
 
 Declare every one in `turbo.json` under the `build` task's `env`. Turborepo caches per environment hash — an undeclared var means a staging build can be served as production from cache.
