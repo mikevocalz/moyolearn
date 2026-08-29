@@ -391,37 +391,42 @@ Payload `cors` / `csrf` still need every origin listed, including a wildcard pat
 
 ¹ option 3 only.
 
-### 6.1 An empty variable is not a missing one
+### 6.1 You cannot read a production secret back, so do not try to verify one
 
-`moyo-admin` returned a 500 on every request for its first three deploys, and the
-cause was neither the build nor `sharp` — the deployed bundle carries
-`@img/sharp-linux-x64` and loads cleanly under Node on Linux. Both
-`DATABASE_URL` and `PAYLOAD_SECRET` existed on the project and **were set to the
-empty string**. `vercel env ls` renders an empty value as `Encrypted`, exactly
-like a real one, so the dashboard and the CLI both reported the variable as
-present and correct.
+`vercel env pull` returns **every sensitive Production variable as an empty
+string**. Production variables are write-only by default, and the pull is not
+allowed to decrypt them, so `DATABASE_URL=""` in a pulled file says nothing
+whatever about what the variable contains.
 
-The failure mode this produces is the least legible one available. The module
-graph imports fine, so nothing fails at cold start; Payload only reads the
-connection string when the first request asks for data, and it throws there,
-inside the request, after the log stream has already been handed off. The runtime
-log reads:
-
-```
-λ GET /admin     500     (no message)
-```
-
-To confirm a variable actually carries a value, measure it rather than look at
-it — pull the environment and check the length, never the contents:
+This wasted a diagnosis. Pulling `moyo-admin` showed `DATABASE_URL` and
+`PAYLOAD_SECRET` as two characters each — the surrounding quotes — which reads
+exactly like two empty variables, and `vercel env ls` prints `Encrypted` for an
+empty value and a real one alike. The conclusion drawn from that ("both
+variables are empty, that is the 500") was **wrong**, and the measurement is
+incapable of distinguishing the two cases. Proof, with a throwaway value:
 
 ```bash
-vercel env pull /tmp/.env.check --environment production --yes
-awk -F= '$1=="DATABASE_URL"||$1=="PAYLOAD_SECRET" {print $1, length($0)-length($1)-1}' /tmp/.env.check
-rm /tmp/.env.check   # it also contains VERCEL_OIDC_TOKEN
+vercel env add PROBE production --value hello --no-sensitive   # pulls back as 5 chars
+vercel env add PROBE production --value hello                  # pulls back as 0 chars
 ```
 
-A value of `2` is `""` — an empty variable. Delete and re-add it; `vercel env
-rm` first, because `add` will not overwrite.
+Same write path, same value, different readability. Only the second is how a
+real secret is stored.
+
+So there is no way to confirm a production secret from outside, and no point
+attempting it. Verify by **behaviour** instead — deploy and watch what the app
+does — or set the variable again and redeploy, which costs less than any check.
+
+Two related facts, both established by probe rather than assumption:
+
+- **Piping into `vercel env add` works.** `printf '%s' "$v" | vercel env add NAME
+  production` stores the value correctly, as does `--value`. An earlier claim
+  that stdin silently wrote empty strings was the same redaction artefact.
+- **`add` will not overwrite.** Run `vercel env rm NAME production --yes` first,
+  or pass `--force`.
+
+Note also that a pulled env file contains `VERCEL_OIDC_TOKEN`. Delete it after
+reading; never leave it in a scratch directory.
 
 `moyo-www` losing `DATABASE_URL` and `PAYLOAD_SECRET` is a **result of the rev-4 split, not an oversight**: `apps/web-vite` no longer contains any code that opens a database. If a marketing page ever needs content out of Payload, it fetches `admin.moyolearn.com/payload-api` over the network like any other client — it does not get the credentials back.
 
