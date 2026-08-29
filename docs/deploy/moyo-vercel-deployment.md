@@ -235,6 +235,48 @@ them (Project → Settings → Build & Deployment):
 Without the second, `cd ../..` lands in an empty directory and install fails
 immediately.
 
+#### 3.2.2 `sharp` needs its Linux binaries installed, not copied
+
+The admin's 500 was `sharp`, and it took three wrong diagnoses to find because
+every cheap check said `sharp` was fine:
+
+```
+Could not load the "sharp" module using the linux-x64 runtime
+```
+
+`sharp` is a native module. A `--prebuilt` deploy uploads whatever
+`node_modules` a **macOS** laptop produced, and pnpm installs only the current
+platform's optional dependencies — so the bundle carried
+`@img/sharp-darwin-arm64` and nothing a Linux lambda can load. Payload imports
+`sharp` at config level (`payload.config.ts`), so **every** database-touching
+route dies while `/` still redirects normally, which is what made it look like a
+database fault.
+
+Hand-copying the Linux binaries in appears to work and does not survive: the
+next build wipes them, silently, and the deploy goes back to failing. Let pnpm
+own it instead — root `package.json`:
+
+```jsonc
+"pnpm": {
+  "supportedArchitectures": {
+    "cpu": ["current", "x64"],
+    "os":  ["current", "linux"]
+  }
+}
+```
+
+`pnpm install` then fetches every Linux variant alongside the native one, and
+they land in the function bundle by the normal trace. Verify both halves — the
+addon **and** its shared library, since the addon alone still will not load:
+
+```bash
+find apps/admin-vite/.vercel/output/functions/__server.func/node_modules/@img \
+  \( -name '*.node' -o -name 'libvips-cpp.so*' \) | grep linux
+```
+
+Building on Vercel (§3.2.1) avoids this entirely, because install runs on Linux.
+`supportedArchitectures` is what makes a laptop `--prebuilt` deploy correct too.
+
 **Nitro picks its output format from `VERCEL=1`**, which Vercel sets during its
 own builds. Run `pnpm --filter admin-vite build` on a laptop and you get
 `.output/`; run it with `VERCEL=1` and you get `.vercel/output/` in the Build

@@ -45,6 +45,16 @@
     },
     "patchedDependencies": {
       "@seshuk/payload-storage-bunny@3.0.0": "patches/@seshuk__payload-storage-bunny@3.0.0.patch"
+    },
+    "supportedArchitectures": {
+      "cpu": [
+        "current",
+        "x64"
+      ],
+      "os": [
+        "current",
+        "linux"
+      ]
     }
   }
 }
