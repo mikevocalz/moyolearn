@@ -111,6 +111,22 @@ html[data-reduced-motion='true'] .moyo-photo-image {
 }
 
 /*
+ * React Native Web assigns its system stack directly to generated Text,
+ * Paragraph and Link classes, so a font on <body> alone does not inherit into
+ * most of the document. The marketing surface has exactly two voices: General
+ * Sans everywhere, with an explicit Clash Display override for authored display
+ * moments. Important is required for the same unlayered RNW reason documented
+ * at the top of this file.
+ */
+.moyo-site * {
+  font-family: var(--font-moyo-text) !important;
+}
+
+.moyo-site .font-moyo-display {
+  font-family: var(--font-moyo-display) !important;
+}
+
+/*
  * Display type must never break inside a word.
  *
  * react-native-web's Text sets `word-wrap: break-word` so that long strings in
