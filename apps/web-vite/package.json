@@ -7,12 +7,10 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint && node scripts/build-globe-geometry.mjs --check && node scripts/build-photography.mjs --check",
+    "lint": "eslint && node scripts/build-globe-geometry.mjs --check",
     "typecheck": "tsc --noEmit",
     "globe:geometry": "node scripts/build-globe-geometry.mjs",
-    "globe:check": "node scripts/build-globe-geometry.mjs --check",
-    "photography": "node scripts/build-photography.mjs",
-    "photography:check": "node scripts/build-photography.mjs --check"
+    "globe:check": "node scripts/build-globe-geometry.mjs --check"
   },
   "dependencies": {
     "@acme/theme": "workspace:*",
@@ -43,7 +41,6 @@
     "@vitejs/plugin-react": "catalog:",
     "eslint": "catalog:",
     "eslint-config-expo": "catalog:",
-    "nitro": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",

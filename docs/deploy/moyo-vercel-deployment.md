@@ -201,91 +201,6 @@ tanstackStart({ ...pluginOptions.tanstackStart, prerender: { enabled: false } })
 
 `find apps/admin-vite/dist/client -name '*.html'` must print nothing.
 
-#### 3.2.1 Build it on Vercel, not locally
-
-`vercel deploy --prebuilt` works but buys nothing and costs the thing you need
-most when something breaks: **a `--prebuilt` deploy produces no build log on
-Vercel**, and a server crash inside it logs as `λ GET /admin 500 (no message)`
-with the error masked by production error handling. There is nothing to read.
-
-`apps/admin-vite/vercel.json` carries the two commands:
-
-```json
-{
-  "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-  "buildCommand": "cd ../.. && pnpm --filter admin-vite... build",
-  "framework": null
-}
-```
-
-Both `cd ../..` because pnpm must resolve the workspace from the repo root — the
-lockfile, the catalog and every `@acme/*` dependency live there, not in the app.
-The `...` suffix on the filter is load-bearing: it means *this package and
-everything it depends on*, so `@acme/payload` and `@acme/theme` build first.
-
-Three settings remain in the dashboard, because `vercel.json` cannot express
-them (Project → Settings → Build & Deployment):
-
-| Setting | Value |
-|---|---|
-| Root Directory | `apps/admin-vite` |
-| Include source files outside of the Root Directory | **on** |
-| Skew Protection | on (optional, but the admin is long-lived in a tab) |
-
-Without the second, `cd ../..` lands in an empty directory and install fails
-immediately.
-
-#### 3.2.2 `sharp` needs its Linux binaries installed, not copied
-
-The admin's 500 was `sharp`, and it took three wrong diagnoses to find because
-every cheap check said `sharp` was fine:
-
-```
-Could not load the "sharp" module using the linux-x64 runtime
-```
-
-`sharp` is a native module. A `--prebuilt` deploy uploads whatever
-`node_modules` a **macOS** laptop produced, and pnpm installs only the current
-platform's optional dependencies — so the bundle carried
-`@img/sharp-darwin-arm64` and nothing a Linux lambda can load. Payload imports
-`sharp` at config level (`payload.config.ts`), so **every** database-touching
-route dies while `/` still redirects normally, which is what made it look like a
-database fault.
-
-Hand-copying the Linux binaries in appears to work and does not survive: the
-next build wipes them, silently, and the deploy goes back to failing. Let pnpm
-own it instead — root `package.json`:
-
-```jsonc
-"pnpm": {
-  "supportedArchitectures": {
-    "cpu": ["current", "x64"],
-    "os":  ["current", "linux"]
-  }
-}
-```
-
-`pnpm install` then fetches every Linux variant alongside the native one, and
-they land in the function bundle by the normal trace. Verify both halves — the
-addon **and** its shared library, since the addon alone still will not load:
-
-```bash
-find apps/admin-vite/.vercel/output/functions/__server.func/node_modules/@img \
-  \( -name '*.node' -o -name 'libvips-cpp.so*' \) | grep linux
-```
-
-Building on Vercel (§3.2.1) avoids this entirely, because install runs on Linux.
-`supportedArchitectures` is what makes a laptop `--prebuilt` deploy correct too.
-
-**Nitro picks its output format from `VERCEL=1`**, which Vercel sets during its
-own builds. Run `pnpm --filter admin-vite build` on a laptop and you get
-`.output/`; run it with `VERCEL=1` and you get `.vercel/output/` in the Build
-Output API v3 layout. This is why `turbo.json` must list **all three** of
-`dist/**`, `.output/**` and `.vercel/output/**` as build outputs for both vite
-apps. It previously listed only `dist/**`, which meant a Turborepo cache hit
-restored no deployable artifact at all — the build would "succeed" and ship
-whatever stale files happened to be on disk.
-
 Four consequences, now that this is its own project:
 
 1. **`moyo-admin` holds production secrets** — `DATABASE_URL`, `PAYLOAD_SECRET`, `BLOB_READ_WRITE_TOKEN`. Scope Production-only. `moyo-www` no longer needs any of them, which is the security half of the split: a marketing preview deployment cannot carry live database credentials because the marketing app has no code that reads them.
@@ -396,53 +311,6 @@ ns2.vercel-dns.com
 
 Lower TTLs to ≤3600 at IONOS before cutover so rollback is fast.
 
-### 4.1 The live zone, read from public DNS 2026-08-29
-
-All five hostnames are already attached to their Vercel projects, so the only
-remaining action is the nameserver switch. What follows is the zone as it
-actually resolves — read with `dig`, not from a screenshot — because delegation
-moves **everything**, and anything not recreated in Vercel DNS simply stops
-existing.
-
-| Record | Value | After delegation |
-|---|---|---|
-| `MX` | `1 smtp.google.com.` | **RECREATE — mail dies without it** |
-| `TXT @` | `google-site-verification=i-8P7…8PIY` | **RECREATE** |
-| `TXT google._domainkey` | DKIM, 414 bytes | **RECREATE — copy from IONOS, do not retype** |
-| `A @` | `74.208.236.190` | drop (IONOS parking) |
-| `AAAA @` | `2607:f1c0:100f:f000::200` | drop (IONOS parking) |
-| `A admin` / `A app` | `74.208.236.190` | drop — Vercel serves these |
-| `TXT admin` / `TXT app` | `v=spf1 include:_spf-us.ionos.com ~all` | drop — IONOS hosting artefact |
-| `www` | *no record at all* | Vercel serves it |
-
-There is **no wildcard record** — a probe for a random subdomain returns
-nothing, so `admin` and `app` are explicit A records into IONOS parking rather
-than a `*` catch-all. That is why they currently answer with an IONOS page.
-
-**Two mail-authentication gaps, present before any of this and worth fixing
-while the zone is open:**
-
-1. **No SPF at the apex.** The only apex `TXT` is the Google site
-   verification. The `v=spf1 include:_spf-us.ionos.com ~all` records sit on
-   `admin` and `app`, which do not send mail, while `@moyolearn.com` — which
-   does, through Google Workspace — has no SPF policy at all. It should be:
-   ```
-   TXT @   v=spf1 include:_spf.google.com ~all
-   ```
-   Note this is `_spf.google.com`, not the IONOS include being carried on the
-   subdomains. Recreating those IONOS records verbatim would authorise the wrong
-   sender.
-2. **No DMARC.** `_dmarc.moyolearn.com` does not exist. Start in report-only so
-   nothing is rejected while the zone settles:
-   ```
-   TXT _dmarc   v=DMARC1; p=none; rua=mailto:info@moyolearn.com
-   ```
-
-Do the mail records **first**, in Vercel DNS, and confirm they resolve before
-switching nameservers at IONOS. The order matters: delegation is the moment the
-IONOS zone stops answering, and a domain whose MX disappears loses mail
-immediately and silently.
-
 ### Interim path — per-district CNAME, no delegation
 
 For pilot districts before the nameserver move:
@@ -522,43 +390,6 @@ Payload `cors` / `csrf` still need every origin listed, including a wildcard pat
 | `SENTRY_DSN` | ● | ● | ● | ● | Separate Sentry projects |
 
 ¹ option 3 only.
-
-### 6.1 You cannot read a production secret back, so do not try to verify one
-
-`vercel env pull` returns **every sensitive Production variable as an empty
-string**. Production variables are write-only by default, and the pull is not
-allowed to decrypt them, so `DATABASE_URL=""` in a pulled file says nothing
-whatever about what the variable contains.
-
-This wasted a diagnosis. Pulling `moyo-admin` showed `DATABASE_URL` and
-`PAYLOAD_SECRET` as two characters each — the surrounding quotes — which reads
-exactly like two empty variables, and `vercel env ls` prints `Encrypted` for an
-empty value and a real one alike. The conclusion drawn from that ("both
-variables are empty, that is the 500") was **wrong**, and the measurement is
-incapable of distinguishing the two cases. Proof, with a throwaway value:
-
-```bash
-vercel env add PROBE production --value hello --no-sensitive   # pulls back as 5 chars
-vercel env add PROBE production --value hello                  # pulls back as 0 chars
-```
-
-Same write path, same value, different readability. Only the second is how a
-real secret is stored.
-
-So there is no way to confirm a production secret from outside, and no point
-attempting it. Verify by **behaviour** instead — deploy and watch what the app
-does — or set the variable again and redeploy, which costs less than any check.
-
-Two related facts, both established by probe rather than assumption:
-
-- **Piping into `vercel env add` works.** `printf '%s' "$v" | vercel env add NAME
-  production` stores the value correctly, as does `--value`. An earlier claim
-  that stdin silently wrote empty strings was the same redaction artefact.
-- **`add` will not overwrite.** Run `vercel env rm NAME production --yes` first,
-  or pass `--force`.
-
-Note also that a pulled env file contains `VERCEL_OIDC_TOKEN`. Delete it after
-reading; never leave it in a scratch directory.
 
 `moyo-www` losing `DATABASE_URL` and `PAYLOAD_SECRET` is a **result of the rev-4 split, not an oversight**: `apps/web-vite` no longer contains any code that opens a database. If a marketing page ever needs content out of Payload, it fetches `admin.moyolearn.com/payload-api` over the network like any other client — it does not get the credentials back.
 

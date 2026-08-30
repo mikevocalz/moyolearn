@@ -159,7 +159,7 @@ export function Desk() {
               */}
               <Text
                 aria-label="Handwritten note: You are close. Look at this part again."
-                className="relative mt-auto max-w-content-form self-end text-right font-moyo-text text-site-note font-medium text-moyo-secondary md:text-site-note"
+                className="relative mt-auto max-w-content-form self-end text-right font-moyo-hand text-site-note text-moyo-secondary md:text-site-note"
               >
                 You&rsquo;re close. Look at this part again &uarr;
               </Text>

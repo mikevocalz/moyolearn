@@ -222,24 +222,15 @@ export function Conversation() {
               <View className="flex-row items-end gap-element">
                 <Text
                   aria-label={`Handwritten note: ${claim.arrow}`}
-                  className="font-moyo-text text-site-note font-medium text-moyo-secondary md:text-site-note"
+                  className="font-moyo-hand text-site-note text-moyo-secondary md:text-site-note"
                 >
                   {claim.arrow}
                 </Text>
                 <ClaimArrow />
               </View>
-              {/*
-                A real `h3`. Each claim is a titled section of the chapter, so
-                the level is what a screen-reader user navigates by — a `Text`
-                at `site-subtitle` looks identical and is not reachable at all.
-                `md:` restated for the tokens.md reason.
-              */}
-              <Heading
-                level={3}
-                className="my-0 font-moyo-display text-site-subtitle font-normal md:text-site-subtitle"
-              >
+              <Text className="font-moyo-display text-site-subtitle md:text-site-subtitle">
                 {claim.title}
-              </Heading>
+              </Text>
               <Paragraph className="max-w-content-prose text-site-body text-moyo-ink-muted">
                 {claim.body}
               </Paragraph>

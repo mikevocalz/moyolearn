@@ -1,7 +1,6 @@
 'use client';
 import { Link } from 'solito/link';
 import { Footer, Nav, View, Text as TWText, P } from '@acme/ui/tw';
-import { MoyoLearnLogo } from '@acme/ui/brand';
 import { PROFILE, useNavItems } from './nav';
 
 // The footer is a system map of the template, not decoration: every column

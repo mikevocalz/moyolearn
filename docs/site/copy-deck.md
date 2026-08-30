@@ -401,7 +401,7 @@ nothing pre-selected.
 | Key | String | Surface | Register |
 | --- | --- | --- | --- |
 | `site.footer.contact.title` | Talk to a person | Contact band, placed *above* the sitemap (the In Common With move) | `label` |
-| `site.footer.contact.email` | info@moyolearn.com | Real address required — none is invented here | `label` |
+| `site.footer.contact.email` | mikeallen@moyolearn.com | Real address required — none is invented here | `label` |
 | `site.footer.col.product` | Product | Column heading | `label` |
 | `site.footer.link.how` | How it works | Sitemap link | `label` |
 | `site.footer.link.parents` | For parents | Sitemap link | `label` |
@@ -501,7 +501,7 @@ Flagging is a required output. Every row needs an owner decision before launch;
   `Start learning` (14) and `Talk to us` (10) both hold.
 - **Never concatenate.** `site.footer.legal` interpolates `{YEAR}`;
   `site.start.price.eligibility` interpolates `{EARLY_BIRD_LIMIT}`;
-  `site.footer.contact.email` interpolates `info@moyolearn.com`. Any possessive
+  `site.footer.contact.email` interpolates `mikeallen@moyolearn.com`. Any possessive
   built from a name goes through ICU, never string addition.
 - **Prices are formatted, not typed.** `$11` and `$15.99` render through
   `useFormatter` with the currency from the catalog (doc 16 §4) — the literal

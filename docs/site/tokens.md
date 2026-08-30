@@ -61,16 +61,16 @@ neon accent. That absence is the enforcement.
 | `moyoInkMuted` | `#5A5145` | `text-moyo-ink-muted` | Secondary prose, captions, metadata. Muted is a **value** step, never a legibility cut — it still clears AA on all three grounds. |
 | `moyoOutline` | `#171310` | `border-moyo-outline` | Every rule, frame and offset shadow. The outline *is* the ink; the token is separate so a section can soften its rules without touching type colour. |
 
-### The logo hues
+### The five hues
 
 | Token | Value | Utility | Usage rule |
 | --- | --- | --- | --- |
-| `moyoPrimary` | `#3C2357` | `bg-`/`text-moyo-primary` | **Logo plum.** Links, labels, the primary action and structural fills. Safe as body text on paper (11.88:1). |
-| `moyoSecondary` | `#3C2357` | `text-moyo-secondary` | The same plum in an annotation role. The semantic alias keeps hierarchy explicit without adding another hue. |
-| `moyoHeart` | `#E55545` | `bg-moyo-heart` | **Logo coral. FILL ONLY.** Dark ink on it is 5.03:1; coral itself is not body text on paper. |
-| `moyoSun` | `#F4A629` | `bg-moyo-sun` | **Logo orange. FILL ONLY.** Dark ink on it is 9.09:1. |
-| `moyoMark` / `moyoLeaf` | `#0A9FA6` | `bg-moyo-mark` / `bg-moyo-leaf` | **Logo teal. FILL ONLY.** Dark ink on it is 5.74:1. |
-| `moyoMarkDeep` | `#3C2357` | `bg-`/`text-moyo-mark-deep` | Identity alias for the logo plum. |
+| `moyoPrimary` | `#1C3FBF` | `bg-`/`text-moyo-primary` | **Cobalt.** The only hue in the brief without a name of its own, and the one the globe chapter fixes publicly as the oceans — the largest colour area on the site. Links, the primary action, structural fills. Safe as body text (7.42:1). |
+| `moyoSecondary` | `#6E4A00` | `text-moyo-secondary` | **The sun hue at mark strength.** Eyebrows, underlines, annotation rules. Not a duplicate of `moyoSun`: that is a block, this is a mark — the same `highlighter` vs `ballpoint` split the product layer already enforces. |
+| `moyoHeart` | `#C7350F` | `bg-`/`text-moyo-heart` | **Red-orange.** Moyo means heart. The one colour allowed to shout — **one heart moment per page**, and never two on the same screen. |
+| `moyoSun` | `#F2B01E` | `bg-moyo-sun` | **Mustard. FILL ONLY.** Fixed publicly by the globe chapter as the Africa block. 1.69:1 against paper, so it is never type, never a border, never a focus ring. Ink on it is 9.68:1. |
+| `moyoEarth` | `#9A4526` | `bg-`/`text-moyo-earth` | **Clay.** Earth bands, section grounds, the second warm fill. |
+| `moyoLeaf` | `#286641` | `bg-`/`text-moyo-leaf` | **Leaf green.** Growth and the only cool-warm counterweight to cobalt. |
 
 ### Foregrounds
 
@@ -79,12 +79,12 @@ reads as a hole punched through it.
 
 | Token | Value | Rides on | Usage rule |
 | --- | --- | --- | --- |
-| `moyoOnPrimary` | `#F7F1E3` | `moyoPrimary` | Cream type or icons on plum. |
-| `moyoOnSecondary` | `#F7F1E3` | `moyoSecondary` | Cream type on plum. |
-| `moyoOnHeart` | `#171310` | `moyoHeart` | Ink on coral. |
-| `moyoOnSun` | `#171310` | `moyoSun` | Ink on orange. |
-| `moyoOnEarth` | `#171310` | `moyoEarth` | Ink on coral. |
-| `moyoOnLeaf` / `moyoOnMark` | `#171310` | teal fills | Ink on teal. |
+| `moyoOnPrimary` | `#F7F1E3` | `moyoPrimary` | Any type or icon on a cobalt fill. |
+| `moyoOnSecondary` | `#F7F1E3` | `moyoSecondary` | Type on a mark-strength mustard fill. |
+| `moyoOnHeart` | `#F7F1E3` | `moyoHeart` | Type on the heart. **Never ink** — ink on heart is 3.47:1 and fails. |
+| `moyoOnSun` | `#171310` | `moyoSun` | Ink on the Africa block. This is the only foreground the sun accepts. |
+| `moyoOnEarth` | `#F7F1E3` | `moyoEarth` | Type on clay. |
+| `moyoOnLeaf` | `#F7F1E3` | `moyoLeaf` | Type on leaf. |
 
 ### Shape and elevation
 
@@ -145,16 +145,21 @@ grepping the built stylesheet and the prerendered HTML for
 | --- | --- | --- | --- | --- |
 | `moyoDisplay` | `font-moyo-display` | Clash Display 200–700 var. | `ClashDisplay-Variable.woff2` · 29 kB | Hero and chapter titles only. Tight tracking. Never body, never UI. |
 | `moyoText` | `font-moyo-text` | General Sans 200–700 var. | `GeneralSans-Variable.woff2` · 37 kB | Everything the reader actually reads, plus all UI. |
+| `moyoSerif` | `font-moyo-serif` | Instrument Serif 400 + italic | `InstrumentSerif-Regular-latin.woff2` · 15 kB, `-Italic-` · 15 kB | **Sparingly.** Pull-quotes and the For Parents register. Both cuts ship because a synthesised oblique on a 40px serif reads as a rendering fault. |
+| `moyoHand` | `font-moyo-hand` | Shantell Sans 300–800 var. | `ShantellSans-Variable-latin.woff2` · 78 kB | Margin notes and annotation arrows. **The only handwriting on the site.** A caring tutor's pen — never a heading, never a control, never body copy. |
 
-Total active webfont weight is 66 kB across two variable files. The site uses
-one display voice and one reading/UI voice; quote and note hierarchy now comes
-from scale, weight and placement rather than two additional font personalities.
+Total 178 kB across five files. The two Fontshare faces ship latin-only from the
+foundry and are variable, so there was nothing to subset. The two Google faces
+are served per-subset and only the `latin` slices are stored — latin-ext,
+cyrillic and vietnamese are neither downloaded nor referenced.
 
-**Licence — both permit self-hosting.** The text ships beside the binaries.
+**Licences — all four permit self-hosting.** Texts ship beside the binaries.
 
 | Face | Licence | Self-hosting | Evidence |
 | --- | --- | --- | --- |
 | Clash Display, General Sans | ITF Free Font License v2.0 | Permitted and recommended | `public/fonts/ITF-Free-Font-License.txt` §01: "You may self-host Font Software on own servers … including through standard webfont technologies such [as] CSS @font-face." Free for commercial use, no attribution required, Fontshare API explicitly optional. |
+| Instrument Serif | SIL OFL 1.1 | Permitted | `public/fonts/OFL-InstrumentSerif.txt` — licence must travel with the font, which is why it is in the same directory. |
+| Shantell Sans | SIL OFL 1.1 | Permitted | `public/fonts/OFL-ShantellSans.txt` — same. |
 
 ### CLS ≈ 0 — the measured fallback metrics
 
@@ -164,7 +169,8 @@ does not reflow because each real face is shadowed by a `local()`-backed
 
 Method: `size-adjust = webfont avg glyph width ÷ fallback avg glyph width`, where
 average width is the English-letter-frequency-weighted mean of `hmtx` advances
-(the `fontaine`/`next/font` method). Overrides
+(the `fontaine`/`next/font` method — `OS/2.xAvgCharWidth` is stale or wrong in
+three of these four files; Shantell reports `1460` against a `1000` em). Overrides
 are the real face's own `hhea` values divided by `unitsPerEm` and by
 `size-adjust`. Measured with `fontTools` 4.61.1 against the shipped woff2 files
 and the system fallback binaries.
@@ -173,6 +179,8 @@ and the system fallback binaries.
 | --- | --- | --- | --- | --- | --- |
 | Clash Display | Arial | 111.9% | 79.54% | 22.34% | 8.04% |
 | General Sans | Arial | 109.83% | 91.96% | 21.85% | 9.1% |
+| Instrument Serif | Times New Roman | 84.28% | 117.47% | 36.78% | 0% |
+| Shantell Sans | Arial | 111.43% | 91.53% | 28.72% | 0% |
 
 **Do not hand-edit these percentages.** Remeasure if a font file is replaced.
 
@@ -199,8 +207,8 @@ grows because a 200px line set at 1.2 leaves a corridor no layout can absorb.
 | `site-lead` | `text-site-lead` | `clamp(1.125rem, 1.6vw, 1.375rem)` | 1.5 | 0 | The paragraph directly under a display moment. |
 | `site-body` | `text-site-body` | `clamp(1rem, 1.05vw, 1.125rem)` | 1.6 | 0 | Prose. General Sans. |
 | `site-label` | `text-site-label` | `clamp(0.8125rem, 0.9vw, 0.875rem)` | 1.3 | 0.08em | Eyebrows and structural labels. Tracked open because it is set in caps. **13px is the floor** — nothing goes below it. |
-| `site-quote` | `text-site-quote` | `clamp(1.5rem, 3vw, 2.5rem)` | 1.2 | -0.01em | Display-weight pull quote. |
-| `site-note` | `text-site-note` | `clamp(0.9375rem, 1.1vw, 1.0625rem)` | 1.45 | 0 | General Sans annotation. |
+| `site-quote` | `text-site-quote` | `clamp(1.5rem, 3vw, 2.5rem)` | 1.2 | -0.01em | Instrument Serif only. |
+| `site-note` | `text-site-note` | `clamp(0.9375rem, 1.1vw, 1.0625rem)` | 1.45 | 0 | Shantell Sans only. |
 
 **Every step is registered in `RAMP_FONT_SIZES` (`packages/ui/tv.ts`).** Adding a
 step without registering it means tailwind-merge classifies `text-site-*` as a
@@ -227,29 +235,36 @@ WCAG 1.4.11 non-text boundaries.
 | `moyoInkMuted` | `moyoPaper` | #5A5145 | #F7F1E3 | **6.91:1** | 4.5:1 | PASS |
 | `moyoInkMuted` | `moyoPaperRaised` | #5A5145 | #FFFCF2 | **7.58:1** | 4.5:1 | PASS |
 | `moyoInkMuted` | `moyoPaperSunken` | #5A5145 | #EFE7D4 | **6.32:1** | 4.5:1 | PASS |
-| `moyoPrimary` | `moyoPaper` | #3C2357 | #F7F1E3 | **11.88:1** | 4.5:1 | PASS |
-| `moyoPrimary` | `moyoPaperRaised` | #3C2357 | #FFFCF2 | **13.03:1** | 4.5:1 | PASS |
-| `moyoSecondary` | `moyoPaper` | #3C2357 | #F7F1E3 | **11.88:1** | 4.5:1 | PASS |
-| `moyoSecondary` | `moyoPaperRaised` | #3C2357 | #FFFCF2 | **13.03:1** | 4.5:1 | PASS |
-| `moyoOnPrimary` | `moyoPrimary` | #F7F1E3 | #3C2357 | **11.88:1** | 4.5:1 | PASS |
-| `moyoOnSecondary` | `moyoSecondary` | #F7F1E3 | #3C2357 | **11.88:1** | 4.5:1 | PASS |
-| `moyoOnHeart` | `moyoHeart` | #171310 | #E55545 | **5.03:1** | 4.5:1 | PASS |
-| `moyoOnSun` | `moyoSun` | #171310 | #F4A629 | **9.09:1** | 4.5:1 | PASS |
-| `moyoOnEarth` | `moyoEarth` | #171310 | #E55545 | **5.03:1** | 4.5:1 | PASS |
-| `moyoOnLeaf` | `moyoLeaf` | #171310 | #0A9FA6 | **5.74:1** | 4.5:1 | PASS |
+| `moyoPrimary` | `moyoPaper` | #1C3FBF | #F7F1E3 | **7.42:1** | 4.5:1 | PASS |
+| `moyoPrimary` | `moyoPaperRaised` | #1C3FBF | #FFFCF2 | **8.14:1** | 4.5:1 | PASS |
+| `moyoSecondary` | `moyoPaper` | #6E4A00 | #F7F1E3 | **7.06:1** | 4.5:1 | PASS |
+| `moyoSecondary` | `moyoPaperRaised` | #6E4A00 | #FFFCF2 | **7.74:1** | 4.5:1 | PASS |
+| `moyoHeart` | `moyoPaper` | #C7350F | #F7F1E3 | **4.73:1** | 4.5:1 | PASS |
+| `moyoHeart` | `moyoPaperRaised` | #C7350F | #FFFCF2 | **5.19:1** | 4.5:1 | PASS |
+| `moyoEarth` | `moyoPaper` | #9A4526 | #F7F1E3 | **5.73:1** | 4.5:1 | PASS |
+| `moyoEarth` | `moyoPaperRaised` | #9A4526 | #FFFCF2 | **6.29:1** | 4.5:1 | PASS |
+| `moyoLeaf` | `moyoPaper` | #286641 | #F7F1E3 | **6.08:1** | 4.5:1 | PASS |
+| `moyoLeaf` | `moyoPaperRaised` | #286641 | #FFFCF2 | **6.67:1** | 4.5:1 | PASS |
+| `moyoOnPrimary` | `moyoPrimary` | #F7F1E3 | #1C3FBF | **7.42:1** | 4.5:1 | PASS |
+| `moyoOnSecondary` | `moyoSecondary` | #F7F1E3 | #6E4A00 | **7.06:1** | 4.5:1 | PASS |
+| `moyoOnHeart` | `moyoHeart` | #F7F1E3 | #C7350F | **4.73:1** | 4.5:1 | PASS |
+| `moyoOnSun` | `moyoSun` | #171310 | #F2B01E | **9.68:1** | 4.5:1 | PASS |
+| `moyoOnEarth` | `moyoEarth` | #F7F1E3 | #9A4526 | **5.73:1** | 4.5:1 | PASS |
+| `moyoOnLeaf` | `moyoLeaf` | #F7F1E3 | #286641 | **6.08:1** | 4.5:1 | PASS |
 | `moyoOutline` | `moyoPaper` | #171310 | #F7F1E3 | **16.40:1** | 3:1 | PASS |
 | `moyoOutline` | `moyoPaperRaised` | #171310 | #FFFCF2 | **17.99:1** | 3:1 | PASS |
 | `moyoOutline` | `moyoPaperSunken` | #171310 | #EFE7D4 | **15.00:1** | 3:1 | PASS |
-| `moyoOutline` | `moyoSun` | #171310 | #F4A629 | **9.09:1** | 3:1 | PASS |
-| `moyoPrimary` | `moyoSun` | #3C2357 | #F4A629 | **6.58:1** | 4.5:1 | PASS |
+| `moyoOutline` | `moyoSun` | #171310 | #F2B01E | **9.68:1** | 3:1 | PASS |
+| `moyoPrimary` | `moyoSun` | #1C3FBF | #F2B01E | **4.38:1** | 3:1 | PASS *(large-text only)* |
 
 ### Restricted and forbidden pairings
 
 | Pairing | Ratio | Rule |
 | --- | --- | --- |
-| Coral, orange or teal as body text on paper | 1.80–3.25:1 | **Forbidden.** These logo colors are fills; use dark ink on top. |
-| `moyoInk` on `moyoPrimary` | 1.38:1 | **Forbidden.** Plum fills carry `moyoOnPrimary`. |
-| Paper on coral, orange or teal | 1.98–3.57:1 | **Forbidden.** These fills carry dark ink. |
+| `moyoPrimary` on `moyoSun` | 4.38:1 | **Large text only** — `site-hero`, `site-chapter`, `site-title`, `site-subtitle`. Never at `site-body` or `site-label`. Declared in `SITE_PAIRS` at 3:1 rather than omitted, because a pairing nobody declares is a pairing nobody measures. |
+| `moyoSun` as any foreground | 1.69:1 on paper | **Forbidden.** `moyoSun` is fill-only, like the product's `highlighter`. `check-contrast.mjs` fails the build if it ever appears as a foreground in `SITE_PAIRS`. |
+| `moyoInk` on `moyoPrimary` | 2.21:1 | **Forbidden.** Cobalt fills carry `moyoOnPrimary`. |
+| `moyoInk` on `moyoHeart` | 3.47:1 | **Forbidden.** Heart fills carry `moyoOnHeart`. |
 
 ### Not covered here
 
@@ -262,7 +277,8 @@ Focus rings, target sizes, keyboard order and reduced motion are screen-level
 findings, not token-level ones. They belong to the per-screen
 `accessibility-review` pass when chapters land. What this layer guarantees is
 that `--color-focus` inside `.moyo-site` resolves to `moyoPrimary`, which is
-11.88:1 against the ground — a ring that remains clearly visible.
+7.42:1 against the ground — a ring that is actually visible, unlike a mustard one
+(1.69:1), which is the specific mistake the product layer already records.
 
 ---
 

@@ -29,7 +29,6 @@ import viteReact from '@vitejs/plugin-react';
 import { defineConfig } from 'vite';
 import reactNativeWeb from 'vite-plugin-react-native-web';
 import tailwindcss from '@tailwindcss/vite';
-import { nitro } from 'nitro/vite';
 
 const src = fileURLToPath(new URL('./src', import.meta.url));
 
@@ -162,14 +161,6 @@ export default defineConfig({
         { path: '/globe-lab' },
       ],
     }),
-    /*
-      Nitro compiles the server into Vercel Functions and emits Build Output
-      API v3 to .vercel/output. Deliberately unconfigured — it detects the
-      platform itself, and deployment §3.1 warns that overriding
-      outputDirectory in vercel.json breaks the pickup and produces the
-      classic 'home page loads, every other route 404s'.
-    */
-    nitro(),
     viteReact(),
     globalAsGlobalThis,
   ],

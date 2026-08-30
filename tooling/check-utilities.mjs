@@ -107,6 +107,8 @@ const CONTRACT = [
   ['text-moyo-on-sun', 'color-moyo-on-sun'],
   ['font-moyo-display', 'font-moyo-display'],
   ['font-moyo-text', 'font-moyo-text'],
+  ['font-moyo-serif', 'font-moyo-serif'],
+  ['font-moyo-hand', 'font-moyo-hand'],
   ['text-site-hero', 'text-site-hero'],
   ['text-site-chapter', 'text-site-chapter'],
   ['text-site-title', 'text-site-title'],

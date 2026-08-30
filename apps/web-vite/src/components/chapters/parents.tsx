@@ -11,7 +11,7 @@
  *
  *  1. The serif carries the STANDFIRST and the pull-quote, not the chapter
  *     title. `docs/site/tokens.md` §5.2 binds `site-chapter` to Clash Display
- *     and `site-quote` to a larger display measure, and every chapter opener on the page
+ *     and `site-quote` to Instrument Serif, and every chapter opener on the page
  *     has to agree or the composition stops being one document. So the register
  *     turn is made where the type ramp already sanctions it — plus the measure,
  *     the rules-not-boxes hierarchy and the margin spec sheet.
@@ -32,8 +32,7 @@
  *
  * SOT: docs/site/copy-deck.md §7 (every string) · docs/site/research.md §4.6 and
  *      §3 O2/O3/O6/O8 · docs/site/tokens.md · docs/site/motion-matrix.md
- *      docs/pack/08-visual-hierarchy-spacing-spec.md §5 (the ink frame) and §6
- *      (imagery policy, editorial grayscale at rest) · ../photography.ts
+ *      docs/pack/08-visual-hierarchy-spacing-spec.md §5 (the ink frame)
  * SOT-KEYWORDS: site chapter parents magazine editorial serif session report
  *               trust safety screentime controls price honesty ink-frame web-vite
  */
@@ -50,7 +49,6 @@ import {
 } from '@acme/ui/primitives';
 import { useMotionScene } from '@/motion';
 import type { MotionScene } from '@/motion';
-import { Photo } from '@/components/photo';
 
 /*
   Policy destinations are ABSOLUTE on purpose. `/safety` and `/privacy` are not
@@ -119,11 +117,7 @@ export function ParentsChapter() {
   useMotionScene(SCOPE, buildScene);
 
   return (
-    <Section
-      id="for-parents"
-      aria-labelledby="parents-headline"
-      className="chapter-parents bg-moyo-paper py-section"
-    >
+    <Section id="for-parents" className="chapter-parents bg-moyo-paper py-section">
       <Container width="wide" className="gap-section">
         {/*
           Kinfolk's opening move: the section is announced by a rule, not by a
@@ -139,7 +133,6 @@ export function ParentsChapter() {
           </Text>
           <View className="gap-stack">
             <Heading
-              id="parents-headline"
               level={2}
               size="display-xl"
               className="parents-headline font-moyo-display text-site-chapter md:text-site-chapter"
@@ -155,21 +148,8 @@ export function ParentsChapter() {
               values: there is nothing in the token layer for "the curve a hand
               draws", the same reason the scroll thresholds are named in
               primitives.ts rather than in the theme.
-
-              SIZED IN CSS, NEVER IN ATTRIBUTES — the PencilRule pattern from
-              conversation.tsx. A literal `width="320"` is a floor no container
-              can compress, and 320px is the WCAG 2.2 1.4.10 reflow width
-              itself: inside this chapter's own inset the rule reached 336px and
-              put the whole document into horizontal scroll. `vectorEffect`
-              holds the stroke at 3px once `preserveAspectRatio="none"` starts
-              scaling the box non-uniformly.
             */}
-            <svg
-              className="h-4 w-full max-w-content-detail"
-              viewBox="0 0 320 16"
-              preserveAspectRatio="none"
-              aria-hidden="true"
-            >
+            <svg width="320" height="16" viewBox="0 0 320 16" aria-hidden="true">
               <path
                 className="parents-underline"
                 d="M3 11 C 70 3, 180 15, 317 5"
@@ -177,18 +157,17 @@ export function ParentsChapter() {
                 stroke="var(--color-moyo-secondary)"
                 strokeWidth="3"
                 strokeLinecap="round"
-                vectorEffect="non-scaling-stroke"
               />
             </svg>
           </View>
 
           {/*
-            The standfirst, and the register turn. Display type at
-            `site-quote` — a deliberate scale step — set
+            The standfirst, and the register turn. Instrument Serif at
+            `site-quote` — the one ramp step tokens.md reserves for it — set
             noticeably larger than the body (Intercom) at the article measure.
           */}
           <Paragraph
-            className={`${MEASURE} font-moyo-display text-site-quote text-moyo-ink`}
+            className={`${MEASURE} font-moyo-serif text-site-quote text-moyo-ink`}
           >
             Most homework apps hand you a streak and a smiley face. Moyo writes you a
             short, honest note after every session: what your child worked on, what they
@@ -235,54 +214,32 @@ export function ParentsChapter() {
           */}
           <View className="gap-group md:flex-1">
             {/*
-              THE PHOTOGRAPH. The plate is the doc 08 §5/§6 ink frame — 2px
-              outline, card radius, hard offset shadow — and the image inside it
-              is a real Pexels frame shown grayscale at rest and in source color
-              on hover. One responsive image serves both states, and the color
-              reveal carries no meaning that is absent from the caption.
-
-              WHAT IT IS A PHOTOGRAPH OF, AND WHY NOT THE REGISTER'S ROW. The
-              copy deck's `site.alt.parents.report` describes a session report
-              on a phone — a screenshot of a product surface, not photography.
-              Shooting that is a mock-up, and this chapter's whole argument is
-              that it does not flatter. So the plate carries the thing the
-              report is ABOUT: a child part-way through the page, which is what
-              the note the chapter promises would be written from. The caption
-              names the work rather than praising it, in the register the
-              standfirst already set.
-
-              FULL BLEED INSIDE THE FRAME. `p-inset-roomy` would set the picture
-              on a paper mat; the ink frame in doc 08 is a frame, not a mount.
-              `overflow-hidden` is what makes the card radius cut the image.
+              THE PHOTOGRAPH DOES NOT EXIST YET, and this says so rather than
+              pretending. The plate is the doc 08 §5 ink frame — 2px outline,
+              card radius, hard offset shadow — over a paper/ink duotone built
+              from two ground tokens, so the composition and the treatment are
+              both real and only the image is missing. It carries no `alt`
+              because there is no image: a described-but-absent photograph is
+              worse than an honest blank.
             */}
             <Figure className="parents-plate gap-stack">
-              <View className="border-moyo-hair overflow-hidden rounded-moyo-card border-moyo-outline bg-moyo-paper-sunken shadow-moyo-2">
-                {/*
-                  `sizes` is the article column, not the viewport: this plate
-                  takes what is left of the 72rem container after the rail's
-                  third and the gap, and the full measure once the two stack.
-                */}
-                <Photo name="parents-homework" sizes="(min-width: 48rem) 44rem, 92vw" />
-              </View>
-              {/*
-                The two lines are wrapped in a View, not laid out by the
-                Figcaption itself. `<figcaption>` and `<figure>` are html
-                elements — display:block — so a `gap-*` on either is inert and
-                two `Text` children, which render as inline spans, simply
-                concatenate: the caption shipped reading "PlaceholderNo
-                photography has been shot…" as one run. `View` is the kit's
-                flex box, so the gap it is given is the gap it keeps.
-              */}
-              <Figcaption>
-                <View className="gap-stack">
-                  <Text variant="label" className="text-site-label text-moyo-secondary">
-                    A session, before the note
-                  </Text>
-                  <Text className="text-site-body md:text-site-body text-moyo-ink-muted">
-                    A notebook open, a pencil, and a page not finished yet. The note
-                    is written from a half hour like this one &mdash; not from a score.
-                  </Text>
+              <View className="border-moyo-hair rounded-moyo-card border-moyo-outline bg-moyo-paper-sunken p-inset-roomy shadow-moyo-2">
+                <View className="h-40 flex-row items-end gap-stack" aria-hidden>
+                  <View className="h-full flex-1 bg-moyo-ink-muted" />
+                  <View className="h-3/4 flex-1 bg-moyo-paper-raised" />
+                  <View className="h-1/2 flex-1 bg-moyo-ink-muted" />
                 </View>
+              </View>
+              <Figcaption className="gap-stack">
+                <Text variant="label" className="text-site-label text-moyo-secondary">
+                  Placeholder
+                </Text>
+                <Text className="text-site-body md:text-site-body text-moyo-ink-muted">
+                  No photography has been shot for this chapter yet. The plate that
+                  replaces this one, from the alt-text register: &ldquo;A session report on
+                  a phone: a headline sentence, a list of problems, and a short note about
+                  what to try at home.&rdquo;
+                </Text>
               </Figcaption>
             </Figure>
           </View>
@@ -317,7 +274,7 @@ export function ParentsChapter() {
           <Text variant="label" className="text-site-label text-moyo-secondary">
             One price, every child
           </Text>
-          <Paragraph className="font-moyo-display text-site-lead text-moyo-ink">
+          <Paragraph className="font-moyo-serif text-site-lead text-moyo-ink">
             $11 a month as an early-bird family, $15.99 a month at the regular price. One
             family plan, every one of your children included. No ads. Nothing about your
             child sold, ever.
@@ -338,14 +295,7 @@ interface TrustCellProps {
 function TrustCell({ cell }: TrustCellProps) {
   return (
     <View className={`parents-cell ${CELL}`}>
-      {/* An `h3`, not styled text: the four trust claims are the chapter's
-          navigable structure, and 1.3.1 wants that in the markup. */}
-      <Heading
-        level={3}
-        className="my-0 font-moyo-text text-site-subtitle font-normal md:text-site-subtitle text-moyo-ink"
-      >
-        {cell.title}
-      </Heading>
+      <Text className="text-site-subtitle md:text-site-subtitle text-moyo-ink">{cell.title}</Text>
       <Paragraph className="text-site-body text-moyo-ink-muted">{cell.body}</Paragraph>
       {cell.link ? (
         <Link href={cell.link.href} className="text-site-body text-moyo-primary underline">

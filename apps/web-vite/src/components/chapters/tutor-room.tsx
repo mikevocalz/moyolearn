@@ -30,25 +30,6 @@
  * "Play with sound" control over a clip that does not exist would be a promise,
  * and "Muted until you tap" describes a tap this page cannot offer.
  *
- * NO PHOTOGRAPH GOES IN THIS CHAPTER, and that is a decision, not an omission.
- * Chapters 01 and 06 now carry real Pexels photography (../photography.ts);
- * this one is deliberately excluded on two grounds:
- *
- *  - The aperture is NATALIE. She is a specific product character whose only
- *    sanctioned likeness is a doc 32 baked render. A photograph of a woman put
- *    in that frame would not read as "a tutor" — it would read as *her*, and
- *    the page would be asserting a product asset that does not exist. The
- *    copy deck's one-voice guard is the same rule one layer down.
- *  - The plate's dock carries `site.room.embodiment.*` and the section below it
- *    `site.room.bridge.*`, both of which describe Phase 2 work in the roadmap
- *    tense the copy law requires. Docking a photograph of a real adult tutoring
- *    a real child to either of them illustrates an unshipped capability with
- *    evidence — which is the precise overpromise this chapter exists to refuse,
- *    only harder to argue with than a sentence would be.
- *
- * The plate becomes photography when doc 32 Path B renders exist. Until then
- * the empty outlined aperture is the honest object.
- *
  * F-05: the shared canvas is specced in doc 26 but absent from doc 33 §7's v1 FR
  * list, so feature 2 uses `site.room.canvas.body.safe` — the variant that is
  * true today regardless — and not the present-tense annotation copy.
@@ -161,11 +142,7 @@ export function TutorRoomChapter() {
   useMotionScene(`#${TUTOR_ROOM_CHAPTER_ID}`, buildTutorRoomScene);
 
   return (
-    <Section
-      id={TUTOR_ROOM_CHAPTER_ID}
-      aria-labelledby="tutor-room-headline"
-      className="moyo-tutor-room bg-moyo-paper"
-    >
+    <Section id={TUTOR_ROOM_CHAPTER_ID} className="moyo-tutor-room bg-moyo-paper">
       {/*
         The band chapter 04's flood lands on. It is the top of this section, so
         the disc that filled the viewport a moment earlier releases onto the same
@@ -187,7 +164,6 @@ export function TutorRoomChapter() {
             group.
           */}
           <Heading
-            id="tutor-room-headline"
             level={2}
             className={`moyo-tutor-room-headline font-moyo-display text-site-chapter md:text-site-chapter ${HANDOFF_ON_GROUND_CLASS}`}
           >

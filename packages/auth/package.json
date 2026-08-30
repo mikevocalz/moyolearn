@@ -10,8 +10,7 @@
     "./server": "./src/server.ts",
     "./client": "./src/client.ts",
     "./entitlements": "./src/entitlements.ts",
-    "./membership": "./src/membership.ts",
-    "./host-tenant": "./src/host-tenant.ts"
+    "./membership": "./src/membership.ts"
   },
   "scripts": {
     "lint": "eslint",

@@ -47,7 +47,6 @@ import { Container, Heading, Text } from '@acme/ui/typography';
 import { Link, Paragraph, Section, View } from '@acme/ui/primitives';
 import { useMotionScene } from '@/motion';
 import type { MotionScene } from '@/motion';
-import { Photo } from '@/components/photo';
 
 /** The scene root. Unique per chapter, so `gsap.context` cannot cross into another. */
 const SCOPE = '.hero-chapter';
@@ -78,8 +77,8 @@ const DOOR =
   'moyo-pressable border-moyo-outline items-center justify-center px-inset-roomy py-inset text-center text-site-body';
 
 /** The one primary action on the page — same label in the nav and chapter 08. */
-const DOOR_PRIMARY = `${DOOR} hero-door border-moyo-rule rounded-moyo-card bg-moyo-primary text-moyo-on-primary min-h-target-adult`;
-const DOOR_SECONDARY = `${DOOR} hero-door border-moyo-rule rounded-moyo-card bg-moyo-paper-raised min-h-target-adult`;
+const DOOR_PRIMARY = `${DOOR} hero-door border-moyo-rule rounded-moyo-square bg-moyo-primary text-moyo-on-primary min-h-target-adult`;
+const DOOR_SECONDARY = `${DOOR} hero-door border-moyo-rule rounded-moyo-square bg-moyo-paper-raised min-h-target-adult`;
 /*
   The kid's door, and it has to be findable by a kid rather than read by one:
   heavier frame, the single soft radius the shape law allows, the heart fill,
@@ -187,70 +186,38 @@ export function Hero() {
 }
 
 /**
- * The object in the notch — and it is now the photograph the art direction
- * always specified.
+ * The object in the notch — a worked page, not a photograph.
  *
- * This element used to be a ruled sheet drawn from tokens, standing in for a
- * photograph nobody had shot, and its comment promised that "the photograph
- * replaces this element without moving anything around it". That is exactly
- * what happened: the plate, the annotation, the arrow and the notch geometry
- * are unchanged, and only the thing inside the frame is different. The two
- * strings the stand-in carried ("Two-digit subtraction", "47 − 19") are gone
- * with it — they were scaffolding invented here, not deck copy; the deck keys
- * "47 minus 19" only inside `site.conversation.demo.natalie`, in chapter 03.
- *
- * FULL BLEED INSIDE THE FRAME, no mat. `p-inset-roomy` on the plate would set
- * the photograph on a paper margin, which is a mounted print; the shape ladder
- * here is a hero slab, and a slab holds its picture right out to the ink.
- * `overflow-hidden` is what makes the frame's radius cut the image rather than
- * letting a square corner poke through a rounded one.
- *
- * `priority`: this is the largest thing above the fold and the page's LCP
- * candidate, so it loads eagerly and decodes synchronously. It is the only
- * photograph on the site that does.
+ * The art direction's hero image is real photography (`site.alt.hero`) and no
+ * such asset exists in the repo yet. Rendering an `Image` against a missing
+ * file would ship a broken hero; inventing a stock-looking illustration would
+ * ship the register the direction explicitly refuses. So the notch carries the
+ * thing the photograph would have been OF: a ruled sheet with one problem on
+ * it, drawn from the same tokens as everything else. The photograph replaces
+ * this element without moving anything around it.
  */
 function Worksheet() {
   return (
-    <View className="relative max-w-content-form lg:w-4/12 lg:self-end">
-      <View className="border-moyo-slab relative overflow-hidden rounded-moyo-square border-moyo-outline bg-moyo-paper-raised shadow-moyo-3">
-        {/*
-          `sizes` describes the plate, not the viewport: a third of the 72rem
-          container from `lg` up, and the `max-w-content-form` cap below it.
-          Without this the browser assumes 100vw and downloads the 840px file
-          onto a phone that is showing it at 320.
-        */}
-        <Photo name="hero-kitchen-table" sizes="(min-width: 64rem) 24rem, (min-width: 30rem) 28rem, 92vw" priority />
+    <View className="relative self-start lg:w-4/12 lg:self-end">
+      <View className="border-moyo-slab relative rounded-moyo-square border-moyo-outline bg-moyo-paper-raised p-inset-roomy shadow-moyo-3">
+        <GraphPaper />
+        <View className="gap-stack">
+          <Text variant="label" className="text-site-label text-moyo-ink-muted">
+            Two-digit subtraction
+          </Text>
+          <Text className="font-moyo-display text-site-title md:text-site-title">47 &minus; 19</Text>
+        </View>
       </View>
 
       {/*
         The annotation, and the arrow that points it at the sheet. The note is
         CONTENT — deck §11 rule 5 — so it carries `site.hero.annotation.aria` as
         its accessible name; only the arrow is decorative.
-
-        `flex-col-reverse`, and the photograph is the reason. The group still
-        straddles the plate's bottom edge exactly as before — same offset, same
-        footprint, so it still clears the doors below — but the two children
-        have swapped ends of it. That was free while the plate was a cream ruled
-        sheet, because annotation ink reads the same on `paper-raised` above
-        the edge as on `paper` below it. Over a photograph the half of the note
-        that landed inside went to mid-grey and stopped being legible: text over
-        photography is not a stable contrast pair, and a scrim to rescue it is a
-        surface this design language does not have.
-
-        So the NOTE takes the outside half, where it is on paper and legible,
-        and the ARROW takes the inside half, over the plate. That is the right
-        way round on its own merits: the arrow is `aria-hidden` decoration, a
-        2px line rather than letterforms, and an arrow drawn onto the picture is
-        what the gesture was always describing.
-
-        Reversed with flex rather than by moving the JSX, so the note stays
-        first in the DOM — it is the content, and the reading order should not
-        be decided by which end of a box it is painted at.
       */}
-      <View className="absolute bottom-0 right-0 translate-y-1/2 flex-col-reverse items-end gap-element">
+      <View className="absolute bottom-0 right-0 translate-y-1/2 items-end gap-element">
         <Text
           aria-label="Handwritten note: fractions, Tuesday"
-          className="font-moyo-text text-site-note font-medium text-moyo-secondary md:text-site-note"
+          className="font-moyo-hand text-site-note text-moyo-secondary md:text-site-note"
         >
           fractions, Tuesday
         </Text>
@@ -282,6 +249,31 @@ function Worksheet() {
         </svg>
       </View>
     </View>
+  );
+}
+
+/**
+ * Ruled paper, as a tiled SVG pattern rather than a raster texture. Absolutely
+ * placed and `aria-hidden`, so it is ground and never content. The numbers in
+ * the pattern are SVG user units — geometry, not design values — the same
+ * exemption the motion primitives take for scroll trigger positions.
+ */
+function GraphPaper() {
+  return (
+    <svg className="absolute inset-0 size-full" aria-hidden="true">
+      <defs>
+        <pattern id="hero-graph" width="22" height="22" patternUnits="userSpaceOnUse">
+          <path
+            d="M22 0 L 0 0 0 22"
+            fill="none"
+            stroke="var(--color-moyo-ink-muted)"
+            strokeWidth="0.5"
+            opacity="0.45"
+          />
+        </pattern>
+      </defs>
+      <rect width="100%" height="100%" fill="url(#hero-graph)" />
+    </svg>
   );
 }
 

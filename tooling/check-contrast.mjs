@@ -148,6 +148,12 @@ const SITE_PAIRS = [
   ['moyoPrimary', 'moyoPaperRaised', 4.5],
   ['moyoSecondary', 'moyoPaper', 4.5],
   ['moyoSecondary', 'moyoPaperRaised', 4.5],
+  ['moyoHeart', 'moyoPaper', 4.5],
+  ['moyoHeart', 'moyoPaperRaised', 4.5],
+  ['moyoEarth', 'moyoPaper', 4.5],
+  ['moyoEarth', 'moyoPaperRaised', 4.5],
+  ['moyoLeaf', 'moyoPaper', 4.5],
+  ['moyoLeaf', 'moyoPaperRaised', 4.5],
   /*
     The identity plum is the darkest chromatic token in the layer, so it is held
     to the full body bar like every other mark.
@@ -168,8 +174,22 @@ const SITE_PAIRS = [
   ['moyoOutline', 'moyoPaperRaised', 3],
   ['moyoOutline', 'moyoPaperSunken', 3],
   ['moyoOutline', 'moyoSun', 3],
-  // Logo plum on logo orange is safe even at body size (6.58:1).
-  ['moyoPrimary', 'moyoSun', 4.5],
+  /*
+    Cobalt display type on a sun block is 4.38:1 — the one pairing in the layer
+    that is LARGE-TEXT ONLY. Checked at 3.0 rather than dropped, because a
+    pairing nobody declares is a pairing nobody measures (the lesson recorded in
+    RESOURCE_ACCENTS below), and docs/site/tokens.md marks it as restricted.
+  */
+  ['moyoPrimary', 'moyoSun', 3],
+  /*
+    The identity teal on paper is 3.63:1 — the SECOND large-text-only pairing in
+    the layer, and the reason it is declared here at 3.0 rather than omitted is
+    the same as for cobalt-on-sun: a pairing nobody declares is a pairing nobody
+    measures. It is a wordmark and display colour, never a paragraph and never a
+    caption. docs/site/tokens.md carries the restriction.
+  */
+  ['moyoMark', 'moyoPaper', 3],
+  ['moyoMark', 'moyoPaperRaised', 3],
 ];
 
 /**
@@ -177,13 +197,7 @@ const SITE_PAIRS = [
  * (1.69:1 against paper) and never draws a border or a focus ring. It is exempt
  * as a FOREGROUND only — every pairing where it is the background is above.
  */
-const SITE_FILL_ONLY = new Set([
-  'moyoHeart',
-  'moyoSun',
-  'moyoEarth',
-  'moyoLeaf',
-  'moyoMark',
-]);
+const SITE_FILL_ONLY = new Set(['moyoSun']);
 
 const THEMES = ['light', 'dark'];
 let failures = 0;

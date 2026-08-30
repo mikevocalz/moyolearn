@@ -21,7 +21,6 @@
 // SOT-KEYWORDS: protected operation auth boundary server-only learner context mock capability plan entitlement telemetry record latency outcome host tenant district scoping
 import 'server-only';
 import { readMembershipRole, readSubscriptions, type Auth } from '@acme/auth/server';
-import type { MembershipRole } from '@acme/auth/membership';
 import type { Capability, SubscriptionState } from '@acme/auth/entitlements';
 import { HostTenantDenied, resolveHostTenant, type LoadTenantOrgId } from './host-tenant.ts';
 import { billingReferenceFor, withCapability, CapabilityDenied, type LoadSubscriptions } from './capability-gate.ts';
@@ -87,16 +86,6 @@ export interface ProtectedOperationOptions {
    * reader and none can wire the wrong one.
    */
   loadMembershipRole?: LoadMembershipRole;
-  /**
-   * Overrides how the request host is resolved to an organisation — tests only.
-   *
-   * Production passes nothing and the process-wide reader registered by
-   * `setTenantOrgReader` is used, so no route wires a resolver and none can wire
-   * the wrong one. An explicit `null` means "no reader at all", which is how a
-   * test exercises the fail-closed path; `undefined` (the default) is not the
-   * same thing and falls through to the registry.
-   */
-  loadTenantOrgId?: LoadTenantOrgId | null;
   /**
    * Overrides where the caller's plan is read from. Production never passes
    * this — the default reads Better Auth's own subscription rows through the
@@ -273,52 +262,12 @@ export async function protectedOperation<R>(
 
     /*
       Both ids off `ctx`, never off input — the role is the acting user's role
-      in the org their CONTEXT is scoped to, which is what makes a posted org
+      in the org their SESSION is scoped to, which is what makes a posted org
       id worthless here.
-
-      Memoised per operation because the host step and the role gate ask the same
-      question of the same row: without this a district request pays two member
-      reads against slo.md §1.1's 150 ms context budget. One read per org per
-      operation, never across operations — a role revoked mid-session has to
-      take effect on the next call.
     */
-    const readRole: LoadMembershipRole =
+    const loadRole: LoadMembershipRole =
       options.loadMembershipRole ??
       ((c) => (c.orgId ? readMembershipRole(auth, c.orgId, c.learnerId) : Promise.resolve(null)));
-    const roleByOrg = new Map<string, Promise<MembershipRole | null>>();
-    const loadRole: LoadMembershipRole = (c) => {
-      const key = c.orgId ?? '';
-      const seen = roleByOrg.get(key);
-      if (seen) return seen;
-      const pending = readRole(c);
-      roleByOrg.set(key, pending);
-      return pending;
-    };
-
-    /*
-      THE HOST STEP. `host-tenant.ts` carries the argument; the shape of it is
-      that a resolved district REPLACES the session's org, but only across the
-      intersection with what the caller's membership already allows. So:
-
-        · `none`       — no district in the address (app./admin./dev/preview).
-                         Today's behaviour, byte for byte: scope by session.
-        · `org`        — the address names a district. Read the caller's role in
-                         THAT district; no role is a refusal, not a fallback to
-                         their own org. A host can only ever narrow.
-        · `unresolved` — the address is district-shaped and resolved to nothing.
-                         Refuse. Falling back here would make a lookup failure a
-                         silent scoping change.
-    */
-    const hostTenant = await resolveHostTenant(headers, options.loadTenantOrgId);
-    if (hostTenant.kind === 'unresolved') throw new HostTenantDenied(hostTenant.slug);
-
-    let ctx = sessionCtx;
-    if (hostTenant.kind === 'org') {
-      const hostCtx: ProtectedCtx = { ...sessionCtx, orgId: hostTenant.orgId };
-      if ((await loadRole(hostCtx)) === null) throw new HostTenantDenied(hostTenant.orgId);
-      ctx = hostCtx;
-    }
-    ctxKind = ctxKindOf(ctx);
 
     const result = await gated(ctx, loadRole, load);
     outcome = 'ok';

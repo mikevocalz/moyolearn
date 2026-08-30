@@ -204,9 +204,6 @@ catalog:
   # earlier 7.x pin existed only because plugin-react 4.7.0 stopped at ^7;
   # bumping both together removes that ceiling. @storybook/builder-vite@10.5.8
   # peers ^5||^6||^7||^8, so Storybook rides along.
-  # Nitro emits Vercel Build Output API v3 from the TanStack apps (deployment
-  # §3.1). Left unconfigured on purpose — it detects Vercel itself.
-  nitro: 3.0.260610-beta
   vite: 8.2.2
   "@vitejs/plugin-react": 6.1.1
   # The React Server Components environment the Payload admin renders in

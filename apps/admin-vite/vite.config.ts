@@ -38,7 +38,6 @@ import { withPayload } from '@payloadcms/tanstack-start';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
 import rsc from '@vitejs/plugin-rsc';
-import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
 
 const src = fileURLToPath(new URL('./src', import.meta.url));
@@ -102,14 +101,6 @@ export default defineConfig(
           plugin-react's default `exclude` would skip.
         */
         viteReact(pluginOptions.react),
-        /*
-          Nitro emits Vercel Build Output API v3 so this app can deploy as its
-          own project (deployment §3.1). Unconfigured on purpose — it detects
-          the platform itself, and §3.1 warns that overriding outputDirectory
-          in vercel.json breaks the pickup and gives you the classic "home page
-          loads, every other route 404s".
-        */
-        nitro(),
       ],
       resolve: { alias: { '@': src } },
       server: { port: DEV_PORT, strictPort: true },

@@ -23,5 +23,5 @@ export default [
     fails, with nothing carved out of the rule to argue about.
   */
   // routeTree.gen.ts is written by the router plugin on every build.
-  { ignores: ['dist/**', '.output/**', '.vercel/**', '.tanstack/**', 'src/routeTree.gen.ts'] },
+  { ignores: ['dist/**', '.output/**', '.tanstack/**', 'src/routeTree.gen.ts'] },
 ];
