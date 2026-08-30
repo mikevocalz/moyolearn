@@ -212,7 +212,7 @@ export function Hero() {
 function Worksheet() {
   return (
     <View className="relative max-w-content-form lg:w-4/12 lg:self-end">
-      <View className="border-moyo-slab relative overflow-hidden rounded-moyo-square border-moyo-outline bg-moyo-paper-raised shadow-moyo-3">
+      <View className="border-moyo-slab relative overflow-hidden rounded-moyo-card border-moyo-outline bg-moyo-paper-raised shadow-moyo-3">
         {/*
           `sizes` describes the plate, not the viewport: a third of the 72rem
           container from `lg` up, and the `max-w-content-form` cap below it.

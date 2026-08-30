@@ -261,7 +261,7 @@ export function WorldChapter() {
           a claim it is actually correcting.
         */}
         <View className="moyo-world-foot">
-          <View className="moyo-world-availability rounded-moyo-square border-moyo-rule border-moyo-outline bg-moyo-paper-raised p-inset-roomy shadow-moyo-2">
+          <View className="moyo-world-availability rounded-moyo-card border-moyo-rule border-moyo-outline bg-moyo-paper-raised p-inset-roomy shadow-moyo-2">
             <Paragraph className="text-site-body text-moyo-ink">{COPY.availability}</Paragraph>
           </View>
         </View>

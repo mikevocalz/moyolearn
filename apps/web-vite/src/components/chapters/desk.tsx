@@ -82,7 +82,7 @@ const SCOPE = '.desk-chapter';
   that disagrees with how far it moves when it is pressed.
 */
 const CELL =
-  'desk-cell moyo-pressable relative border-moyo-rule rounded-moyo-square border-moyo-outline bg-moyo-paper-raised p-inset-roomy gap-stack';
+  'desk-cell moyo-pressable relative border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-paper-raised p-inset-roomy gap-stack';
 
 /** The three status pills, verbatim from doc 34 §2.3 via the deck. */
 const STATUSES = [
@@ -137,7 +137,7 @@ export function Desk() {
               absorbs that height instead. What fills it is ruled paper, which
               is what a worked page actually looks like; empty cream is not.
             */}
-            <View className="border-moyo-hair relative flex-1 gap-stack rounded-moyo-square border-moyo-outline bg-moyo-paper p-inset-roomy">
+            <View className="border-moyo-hair relative flex-1 gap-stack rounded-moyo-card border-moyo-outline bg-moyo-paper p-inset-roomy">
               <GraphPaper />
               <View className="gap-element">
                 <Text className="font-moyo-display text-site-title md:text-site-title">47 &minus; 19</Text>

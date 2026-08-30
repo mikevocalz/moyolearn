@@ -61,7 +61,7 @@ import type { MotionScene } from '@/motion';
 const SCOPE = '.conversation-chapter';
 
 const SLAB =
-  'border-moyo-rule rounded-moyo-square border-moyo-outline bg-moyo-paper-raised';
+  'border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-paper-raised';
 
 /**
  * The three supporting claims. Each carries a hand-drawn arrow annotation,
@@ -159,7 +159,7 @@ export function Conversation() {
                 already aligned dropping the last millimetre, which is the
                 progress language the site uses for learning.
               */}
-              <View className="conversation-step border-moyo-slab self-start rounded-moyo-square border-moyo-outline bg-moyo-leaf px-inset-roomy py-inset">
+              <View className="conversation-step border-moyo-slab self-start rounded-moyo-card border-moyo-outline bg-moyo-leaf px-inset-roomy py-inset">
                 <Text className="text-site-subtitle text-moyo-on-leaf md:text-site-subtitle">
                   Borrow one ten &rarr; 17 &minus; 9
                 </Text>
@@ -192,7 +192,7 @@ export function Conversation() {
               was typed — lower case, no punctuation — because a tidied-up
               version of the prompt is what makes a demo promotional.
             */}
-            <View className="border-moyo-hair gap-element rounded-moyo-square border-moyo-outline bg-moyo-paper-sunken p-inset-roomy">
+            <View className="border-moyo-hair gap-element rounded-moyo-card border-moyo-outline bg-moyo-paper-sunken p-inset-roomy">
               {/*
                 `Learner` and `Natalie` are the only two words on this exchange
                 the copy deck does not key, and neither is authored copy: both

@@ -179,7 +179,7 @@ function PricingCard({
   readonly note?: string;
 }) {
   return (
-    <View className="start-card flex-1 border-moyo-slab rounded-moyo-square border-moyo-outline bg-moyo-paper-raised p-inset-roomy gap-group shadow-moyo-3">
+    <View className="start-card flex-1 border-moyo-slab rounded-moyo-card border-moyo-outline bg-moyo-paper-raised p-inset-roomy gap-group shadow-moyo-3">
       <View className="flex-row flex-wrap items-center gap-stack">
         <Heading
           level={3}

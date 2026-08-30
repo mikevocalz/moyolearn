@@ -205,7 +205,7 @@ export function TutorRoomChapter() {
           artwork is an honest placeholder, and the claim it will illustrate is
           docked to its bottom edge in the roadmap tense the law requires.
         */}
-        <View className="moyo-tutor-room-plate rounded-moyo-square border-moyo-slab border-moyo-outline bg-moyo-paper-raised shadow-moyo-3">
+        <View className="moyo-tutor-room-plate rounded-moyo-card border-moyo-slab border-moyo-outline bg-moyo-paper-raised shadow-moyo-3">
           <View className="moyo-tutor-room-plate-art" aria-hidden>
             <View className="moyo-tutor-room-plate-block--tall border-moyo-rule border-moyo-outline bg-moyo-earth">
               <View className="moyo-tutor-room-plate-aperture border-moyo-slab border-moyo-outline" />
