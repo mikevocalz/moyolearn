@@ -244,7 +244,6 @@ export const usePerfStore = create<PerfState>()((set, get) => ({
  * for every primitive built afterwards.
  */
 if (typeof window !== 'undefined') {
-  reflectReducedMotion(usePerfStore.getState().reducedMotion);
   const query = window.matchMedia(REDUCED_MOTION_QUERY);
   query.addEventListener('change', (event) => {
     usePerfStore.getState().setReducedMotion(event.matches);
