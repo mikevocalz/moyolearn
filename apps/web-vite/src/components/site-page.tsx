@@ -27,7 +27,7 @@ export function SitePage({ heading, lead, children }: SitePageProps) {
   return (
     <>
       <SiteNav />
-      <Main role="main" className="bg-moyo-paper pb-section">
+      <Main role="main" className="bg-moyo-paper pb-40">
         <Section className="pt-section">
           <Container width="detail" className="gap-section">
             <View className="gap-group">

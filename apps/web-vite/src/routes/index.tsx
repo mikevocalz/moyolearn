@@ -64,7 +64,7 @@ function MarketingHome() {
   return (
     <>
       <SiteNav />
-      <Main role="main" className="bg-moyo-paper pb-section">
+      <Main role="main" className="bg-moyo-paper pb-40">
         <Hero />
         <Desk />
         <Conversation />
