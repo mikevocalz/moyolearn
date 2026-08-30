@@ -1,12 +1,14 @@
 /**
  * /contact — How to reach Moyo.
  *
- * SOT: docs/site/copy-deck.md §10
+ * SOT: .claude/skills/ux-copy/SKILL.md · apps/web-vite/src/copy/content-pages.ts
  * SOT-KEYWORDS: route contact page email support content page web-vite
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { Paragraph } from '@acme/ui/primitives';
+import { Link, Paragraph } from '@acme/ui/primitives';
 import { SitePage } from '@/components/site-page';
+import { PageSection } from '@/components/page-section';
+import { contact, EMAIL } from '@/copy/content-pages';
 
 const SITE_ORIGIN = 'https://moyolearn.com';
 const TITLE = 'Contact — Moyo';
@@ -25,22 +27,18 @@ export const Route = createFileRoute('/contact')({
 
 function ContactPage() {
   return (
-    <SitePage heading="Contact">
-      <Paragraph className="text-site-lead text-moyo-ink">
-        We read every message. If you have a question, a safety concern, or a school inquiry, write to us.
-      </Paragraph>
-
-      <Paragraph className="text-site-body text-moyo-ink">
-        Email: <a href="mailto:info@moyolearn.com" className="text-moyo-primary underline">info@moyolearn.com</a>
-      </Paragraph>
-
-      <Paragraph className="text-site-body text-moyo-ink">
-        For schools, tutoring businesses, or press: use the same address and it will reach the right person.
-      </Paragraph>
-
-      <Paragraph className="text-site-body text-moyo-ink">
-        Moyo does not have a public phone line, but we aim to reply to every email within one business day.
-      </Paragraph>
+    <SitePage heading={contact.heading} lead={contact.lead}>
+      {contact.sections.map((section) => (
+        <PageSection key={section.title} title={section.title}>
+          {section.title === 'Email' ? (
+            <Paragraph className="text-site-body text-moyo-ink">
+              The best way to reach us is <Link href={`mailto:${EMAIL}`} className="text-moyo-primary underline">{EMAIL}</Link>. A real person reads every message.
+            </Paragraph>
+          ) : (
+            <Paragraph className="text-site-body text-moyo-ink">{section.body}</Paragraph>
+          )}
+        </PageSection>
+      ))}
     </SitePage>
   );
 }
