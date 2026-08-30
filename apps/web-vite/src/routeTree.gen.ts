@@ -10,18 +10,45 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as ChaptersLabRouteImport } from './routes/chapters-lab'
+import { Route as ChildrensPrivacyRouteImport } from './routes/childrens-privacy'
+import { Route as ContactRouteImport } from './routes/contact'
+import { Route as FaqRouteImport } from './routes/faq'
 import { Route as GlobeLabRouteImport } from './routes/globe-lab'
 import { Route as MotionLabRouteImport } from './routes/motion-lab'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as SafetyRouteImport } from './routes/safety'
+import { Route as TermsRouteImport } from './routes/terms'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const ChaptersLabRoute = ChaptersLabRouteImport.update({
   id: '/chapters-lab',
   path: '/chapters-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ChildrensPrivacyRoute = ChildrensPrivacyRouteImport.update({
+  id: '/childrens-privacy',
+  path: '/childrens-privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ContactRoute = ContactRouteImport.update({
+  id: '/contact',
+  path: '/contact',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FaqRoute = FaqRouteImport.update({
+  id: '/faq',
+  path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
 const GlobeLabRoute = GlobeLabRouteImport.update({
@@ -34,39 +61,116 @@ const MotionLabRoute = MotionLabRouteImport.update({
   path: '/motion-lab',
   getParentRoute: () => rootRouteImport,
 } as any)
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SafetyRoute = SafetyRouteImport.update({
+  id: '/safety',
+  path: '/safety',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/chapters-lab': typeof ChaptersLabRoute
+  '/childrens-privacy': typeof ChildrensPrivacyRoute
+  '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
   '/globe-lab': typeof GlobeLabRoute
   '/motion-lab': typeof MotionLabRoute
+  '/privacy': typeof PrivacyRoute
+  '/safety': typeof SafetyRoute
+  '/terms': typeof TermsRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/chapters-lab': typeof ChaptersLabRoute
+  '/childrens-privacy': typeof ChildrensPrivacyRoute
+  '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
   '/globe-lab': typeof GlobeLabRoute
   '/motion-lab': typeof MotionLabRoute
+  '/privacy': typeof PrivacyRoute
+  '/safety': typeof SafetyRoute
+  '/terms': typeof TermsRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/about': typeof AboutRoute
   '/chapters-lab': typeof ChaptersLabRoute
+  '/childrens-privacy': typeof ChildrensPrivacyRoute
+  '/contact': typeof ContactRoute
+  '/faq': typeof FaqRoute
   '/globe-lab': typeof GlobeLabRoute
   '/motion-lab': typeof MotionLabRoute
+  '/privacy': typeof PrivacyRoute
+  '/safety': typeof SafetyRoute
+  '/terms': typeof TermsRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/chapters-lab' | '/globe-lab' | '/motion-lab'
+  fullPaths:
+    | '/'
+    | '/about'
+    | '/chapters-lab'
+    | '/childrens-privacy'
+    | '/contact'
+    | '/faq'
+    | '/globe-lab'
+    | '/motion-lab'
+    | '/privacy'
+    | '/safety'
+    | '/terms'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/chapters-lab' | '/globe-lab' | '/motion-lab'
-  id: '__root__' | '/' | '/chapters-lab' | '/globe-lab' | '/motion-lab'
+  to:
+    | '/'
+    | '/about'
+    | '/chapters-lab'
+    | '/childrens-privacy'
+    | '/contact'
+    | '/faq'
+    | '/globe-lab'
+    | '/motion-lab'
+    | '/privacy'
+    | '/safety'
+    | '/terms'
+  id:
+    | '__root__'
+    | '/'
+    | '/about'
+    | '/chapters-lab'
+    | '/childrens-privacy'
+    | '/contact'
+    | '/faq'
+    | '/globe-lab'
+    | '/motion-lab'
+    | '/privacy'
+    | '/safety'
+    | '/terms'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AboutRoute: typeof AboutRoute
   ChaptersLabRoute: typeof ChaptersLabRoute
+  ChildrensPrivacyRoute: typeof ChildrensPrivacyRoute
+  ContactRoute: typeof ContactRoute
+  FaqRoute: typeof FaqRoute
   GlobeLabRoute: typeof GlobeLabRoute
   MotionLabRoute: typeof MotionLabRoute
+  PrivacyRoute: typeof PrivacyRoute
+  SafetyRoute: typeof SafetyRoute
+  TermsRoute: typeof TermsRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -78,11 +182,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/chapters-lab': {
       id: '/chapters-lab'
       path: '/chapters-lab'
       fullPath: '/chapters-lab'
       preLoaderRoute: typeof ChaptersLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/childrens-privacy': {
+      id: '/childrens-privacy'
+      path: '/childrens-privacy'
+      fullPath: '/childrens-privacy'
+      preLoaderRoute: typeof ChildrensPrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/contact': {
+      id: '/contact'
+      path: '/contact'
+      fullPath: '/contact'
+      preLoaderRoute: typeof ContactRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/faq': {
+      id: '/faq'
+      path: '/faq'
+      fullPath: '/faq'
+      preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/globe-lab': {
@@ -99,14 +231,42 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MotionLabRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/safety': {
+      id: '/safety'
+      path: '/safety'
+      fullPath: '/safety'
+      preLoaderRoute: typeof SafetyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AboutRoute: AboutRoute,
   ChaptersLabRoute: ChaptersLabRoute,
+  ChildrensPrivacyRoute: ChildrensPrivacyRoute,
+  ContactRoute: ContactRoute,
+  FaqRoute: FaqRoute,
   GlobeLabRoute: GlobeLabRoute,
   MotionLabRoute: MotionLabRoute,
+  PrivacyRoute: PrivacyRoute,
+  SafetyRoute: SafetyRoute,
+  TermsRoute: TermsRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

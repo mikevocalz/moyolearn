@@ -81,17 +81,18 @@ const COLUMNS = [
   {
     heading: 'Trust',
     links: [
-      { label: 'Safety', href: `${SITE_ORIGIN}/safety` },
-      { label: 'Privacy', href: `${SITE_ORIGIN}/privacy` },
-      { label: 'Children’s privacy', href: `${SITE_ORIGIN}/childrens-privacy` },
-      { label: 'Terms', href: `${SITE_ORIGIN}/terms` },
+      { label: 'Safety', href: '/safety' },
+      { label: 'Privacy', href: '/privacy' },
+      { label: 'Children’s privacy', href: '/childrens-privacy' },
+      { label: 'Terms', href: '/terms' },
     ],
   },
   {
     heading: 'Company',
     links: [
-      { label: 'About', href: `${SITE_ORIGIN}/about` },
-      { label: 'Contact', href: `${SITE_ORIGIN}/contact` },
+      { label: 'About', href: '/about' },
+      { label: 'FAQ', href: '/faq' },
+      { label: 'Contact', href: '/contact' },
       { label: 'Log in', href: `${SITE_ORIGIN}/login` },
     ],
   },
