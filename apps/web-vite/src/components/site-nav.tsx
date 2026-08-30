@@ -93,8 +93,10 @@ const useNavStore = create<NavState>()((set) => ({
 
 const RULE = 'border-moyo-rule border-moyo-outline border-x-0 border-t-0';
 const CONTROL = 'moyo-pressable items-center justify-center min-h-target-adult px-inset-roomy py-inset';
-/** The one filled object in the bar. Slab frame, because it is the page's primary. */
-const CTA = `site-nav-cta ${CONTROL} border-moyo-slab rounded-moyo-card border-moyo-outline bg-moyo-primary text-moyo-on-primary text-site-body`;
+/** The one filled object in the bar. */
+const CTA = `site-nav-cta ${CONTROL} border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-primary text-moyo-on-primary text-site-body`;
+/** The secondary action in the bar — framed, not filled, so it sits at the same target size. */
+const LOGIN = `site-nav-login ${CONTROL} border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-paper-raised text-moyo-ink text-site-body`;
 
 export function SiteNav() {
   const open = useNavStore((state) => state.open);
@@ -167,7 +169,7 @@ export function SiteNav() {
         </Nav>
 
         <View className="hidden lg:flex lg:flex-row lg:items-center lg:gap-stack">
-          <Link href={APP_LOGIN} className="text-site-body underline">
+          <Link href={APP_LOGIN} className={LOGIN}>
             Log in
           </Link>
           <Link href={APP_START} className={CTA}>
@@ -233,11 +235,11 @@ export function SiteNav() {
             ))}
           </Nav>
 
-          <View className="gap-stack">
-            <Link href={APP_START} className={`site-nav-item ${CTA} self-start`}>
+          <View className="w-full gap-stack">
+            <Link href={APP_START} className={`site-nav-item ${CTA} w-full text-center`}>
               Start learning
             </Link>
-            <Link href={APP_LOGIN} className="site-nav-item text-site-body underline">
+            <Link href={APP_LOGIN} className={`site-nav-item ${LOGIN} w-full text-center`}>
               Log in
             </Link>
           </View>
@@ -271,7 +273,7 @@ function buildNavScene({ motion, scope }: MotionScene): () => void {
   }
 
   const disposers: (() => void)[] = [];
-  for (const control of scope.querySelectorAll<HTMLElement>('.site-nav-cta')) {
+  for (const control of scope.querySelectorAll<HTMLElement>('.site-nav-cta, .site-nav-login')) {
     const press = motion.compress({ targets: control });
     const down = (): void => {
       press.play();
