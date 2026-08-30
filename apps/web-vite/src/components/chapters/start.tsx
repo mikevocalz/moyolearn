@@ -73,7 +73,7 @@ const EARLY_BIRD_LIMIT = '1 November 2026';
 
 /** Doc 05 §2.2: all children included. A learner cap here is a pricing error. */
 const INCLUDED = [
-  'Every child in your family',
+  'Every child in your family — 3, 4, or more, one price',
   'Homework help from a photo — coached, never answered',
   'Natalie, one voice, speaking at your child’s grade level',
   'A written report after every session',

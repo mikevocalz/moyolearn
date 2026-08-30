@@ -1,6 +1,6 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "installCommand": "cd ../.. && pnpm install --frozen-lockfile",
-  "buildCommand": "cd ../.. && pnpm --filter web-vite... build",
+  "buildCommand": "cd ../.. && NODE_OPTIONS=--max-old-space-size=7168 pnpm --filter web-vite... build",
   "framework": null
 }

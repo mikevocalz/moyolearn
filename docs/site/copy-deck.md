@@ -369,7 +369,7 @@ nothing pre-selected.
 | `site.start.price.lock` | Your price stays $11 a month for as long as you stay subscribed. | Grandfathering, stated plainly (doc 05 §2.2) | `body` |
 | `site.start.price.regular` | Regular price is $15.99 a month. | The un-discounted price, stated at the same level as the offer | `body` |
 | `site.start.included.title` | What's included | Inclusion list heading | `label` |
-| `site.start.included.1` | Every child in your family | Inclusion item (doc 05 §2.2: all children included) | `label` |
+| `site.start.included.1` | Every child in your family — 3, 4, or more, one price | Inclusion item (doc 05 §2.2: all children included; the `3, 4, or more` wording makes the one-price model concrete without capping the family) | `label` |
 | `site.start.included.2` | Homework help from a photo — coached, never answered | Inclusion item | `label` |
 | `site.start.included.3` | Natalie, one voice, speaking at your child's grade level | Inclusion item | `label` |
 | `site.start.included.4` | A written report after every session | Inclusion item | `label` |
