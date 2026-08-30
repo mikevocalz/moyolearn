@@ -216,10 +216,11 @@ export function SiteNav() {
               <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
             </View>
             <Button
-              className={`site-nav-close site-nav-cta ${CONTROL} border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-paper-raised text-site-body`}
+              className={`site-nav-close site-nav-cta ${CONTROL} aspect-square border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-paper-raised p-0`}
               onPress={close}
+              aria-label="Close menu"
             >
-              Close menu
+              <X size={20} aria-hidden />
             </Button>
           </View>
 
