@@ -5,9 +5,8 @@
  * SOT-KEYWORDS: route faq page questions answers content page web-vite
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { Paragraph } from '@acme/ui/primitives';
 import { SitePage } from '@/components/site-page';
-import { PageSection } from '@/components/page-section';
+import { FaqAccordion } from '@/components/faq-accordion';
 import { faq } from '@/copy/content-pages';
 
 const SITE_ORIGIN = 'https://moyolearn.com';
@@ -28,11 +27,7 @@ export const Route = createFileRoute('/faq')({
 function FaqPage() {
   return (
     <SitePage heading={faq.heading} lead={faq.lead}>
-      {faq.faqs.map((item) => (
-        <PageSection key={item.q} title={item.q}>
-          <Paragraph className="text-site-body text-moyo-ink">{item.a}</Paragraph>
-        </PageSection>
-      ))}
+      <FaqAccordion items={faq.faqs} />
     </SitePage>
   );
 }

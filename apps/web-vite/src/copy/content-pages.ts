@@ -118,6 +118,12 @@ export const about = {
       body: 'Made by teachers, engineers, and parents in New York.',
     },
   ],
+  beliefs: [
+    'Learners first. A child should understand the work, not copy an answer.',
+    'Safety is not optional. Every feature is checked for the learner before it ships.',
+    'Parents are the loop. Grown-ups can see progress, set limits, and step in anytime.',
+    'No shortcuts. Real learning takes patience, and Moyo is built for that.',
+  ],
 } as const;
 
 export const contact = {

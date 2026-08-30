@@ -5,7 +5,8 @@
  * SOT-KEYWORDS: route about page mission team content page web-vite
  */
 import { createFileRoute } from '@tanstack/react-router';
-import { Paragraph } from '@acme/ui/primitives';
+import { List, ListItem, Paragraph } from '@acme/ui/primitives';
+import { Text } from '@acme/ui/typography';
 import { SitePage } from '@/components/site-page';
 import { PageSection } from '@/components/page-section';
 import { about } from '@/copy/content-pages';
@@ -33,6 +34,16 @@ function AboutPage() {
           <Paragraph className="text-site-body text-moyo-ink">{section.body}</Paragraph>
         </PageSection>
       ))}
+
+      <PageSection title="What we believe">
+        <List className="gap-element">
+          {about.beliefs.map((belief) => (
+            <ListItem key={belief} className="py-inset-tight">
+              <Text className="text-site-body text-moyo-ink">{belief}</Text>
+            </ListItem>
+          ))}
+        </List>
+      </PageSection>
     </SitePage>
   );
 }
