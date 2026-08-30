@@ -318,8 +318,8 @@ export function ParentsChapter() {
             One price, every child
           </Text>
           <Paragraph className="font-moyo-display text-site-lead text-moyo-ink">
-            $11 a month as an early-bird family, $15.99 a month at the regular price. One
-            family plan, every one of your children included. No ads. Nothing about your
+            $14.99 a month for one learner, $24.99 a month for the whole family. Each
+            additional child after the first 3 is $11. No ads. Nothing about your
             child sold, ever.
           </Paragraph>
           <Link href="#start" className="text-site-body text-moyo-primary underline">
