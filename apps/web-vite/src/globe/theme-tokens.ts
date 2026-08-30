@@ -41,6 +41,9 @@ export const MOYO_SCENE_TOKENS = [
   // The identity pair — the Moyo mark's own teal and plum. See tokens.ts.
   'moyoMark',
   'moyoMarkDeep',
+  // Asia is separated from the Eurasian green so Russia keeps its green while
+  // the rest of Asia can carry a teal.
+  'moyoAsia',
 ] as const;
 
 export type MoyoSceneToken = (typeof MOYO_SCENE_TOKENS)[number];

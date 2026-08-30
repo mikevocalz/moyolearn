@@ -36,7 +36,7 @@ export type GlobeRegionId = 'africa' | 'americas' | 'south-america' | 'canada' |
  * time `colors[slice.fillToken]` is written — a region whose token nobody reads
  * fails the build instead of rendering black.
  */
-export type GlobeFillToken = 'moyoSun' | 'moyoEarth' | 'moyoMark' | 'moyoMarkDeep' | 'moyoLeaf' | 'moyoPaperSunken';
+export type GlobeFillToken = 'moyoSun' | 'moyoEarth' | 'moyoMark' | 'moyoMarkDeep' | 'moyoLeaf' | 'moyoAsia' | 'moyoPaperSunken';
 export type GlobeLodId = 'hi' | 'lo';
 
 export interface GlobeRegionSlice {
@@ -129,7 +129,7 @@ export const GLOBE_LODS = {
       {
         id: 'asia',
         label: 'Asia',
-        fillToken: 'moyoLeaf',
+        fillToken: 'moyoAsia',
         centroid: [95.8, 28.4],
         positionOffset: 19371,
         vertexCount: 2356,
@@ -226,7 +226,7 @@ export const GLOBE_LODS = {
       {
         id: 'asia',
         label: 'Asia',
-        fillToken: 'moyoLeaf',
+        fillToken: 'moyoAsia',
         centroid: [95.8, 28.4],
         positionOffset: 9951,
         vertexCount: 1240,
