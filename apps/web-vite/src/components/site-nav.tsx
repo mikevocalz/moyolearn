@@ -47,7 +47,8 @@
  *               log in mobile takeover menu zustand thunk compress web-vite
  */
 import { useEffect } from 'react';
-import { Container, Text } from '@acme/ui/typography';
+import { MoyoLearnLogo } from '@acme/ui/brand';
+import { Container } from '@acme/ui/typography';
 import { Button, Header, Link, Nav, View } from '@acme/ui/primitives';
 // Icons come from the kit's web entry — no new dependency, and the same glyph
 // set the rest of the product uses.
@@ -151,10 +152,10 @@ export function SiteNav() {
       >
         <Link
           href="/"
-          aria-label="Moyo AI — home"
-          className="font-moyo-display text-site-subtitle uppercase"
+          aria-label="Moyo Learn — home"
+          className="flex w-48 items-center"
         >
-          Moyo AI
+          <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
         </Link>
 
         <Nav aria-label="Primary" className="hidden lg:flex lg:flex-row lg:items-center lg:gap-group">
@@ -209,9 +210,9 @@ export function SiteNav() {
           className="site-nav-takeover fixed inset-0 z-50 gap-section overflow-y-auto bg-moyo-paper p-inset-roomy"
         >
           <View className="flex-row items-center justify-between gap-group">
-            <Text className="font-moyo-display text-site-subtitle uppercase md:text-site-subtitle">
-              Moyo AI
-            </Text>
+            <View className="w-48">
+              <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
+            </View>
             <Button
               className={`site-nav-close site-nav-cta ${CONTROL} border-moyo-rule rounded-moyo-square border-moyo-outline bg-moyo-paper-raised text-site-body`}
               onPress={close}

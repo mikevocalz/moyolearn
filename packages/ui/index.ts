@@ -25,6 +25,7 @@ export { StatCard, type StatCardProps } from './StatCard';
 export { Avatar, type AvatarProps } from './Avatar';
 export { Image, type ImageProps } from './Image';
 export { BrandLockup, type BrandLockupProps } from './BrandLockup';
+export { default as MoyoLearnLogo, type MoyoLearnLogoProps } from './MoyoLearnLogo';
 export { TutorStage, type TutorStageProps, type TutorStageState } from './TutorStage';
 export { LearningCanvas, type LearningCanvasProps } from './LearningCanvas';
 export { SessionToolbar, type SessionToolbarProps } from './SessionToolbar';

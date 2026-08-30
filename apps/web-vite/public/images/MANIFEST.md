@@ -36,19 +36,95 @@ doc 08 §6 ink frame, full bleed, drawn by the chapter that mounts it.
 
 ## `parents-homework`
 
-- **Pexels id:** 5905842 · **Photographer:** Katerina Holmes
-- **Source:** https://www.pexels.com/photo/5905842/
-- **Depicts:** A boy leaning on one arm at a living-room table, pencil held over a notebook, two textbooks open and overlapping in front of him.
-- **Cast:** The chapter argues that Moyo reports what happened rather than what flatters, so its photograph had to be the work actually happening. He is part-way through a page and slightly fed up with it — the moment, not the category. Chosen over every "family doing homework together" frame in the same shoot because nobody in it is performing.
+- **Pexels id:** 8618018 · **Photographer:** Yan Krukau
+- **Source:** https://www.pexels.com/photo/8618018/
+- **Depicts:** A girl writing in an open notebook at a classroom desk, with workbooks in front of her and another student working in the background.
+- **Cast:** The chapter argues that Moyo reports what happened rather than what flatters, so the photograph shows the work in progress: pencil moving, page open, attention on the notebook rather than the camera. The second student keeps the classroom context legible without competing with the child and her work.
 - **Used in:** src/components/chapters/parents.tsx — chapter 06, the article’s plate
-- **Alt:** “A boy part-way through a page of homework, pencil in hand, two textbooks open in front of him” — docs/site/copy-deck.md §11 rules 1–6. No row in the register describes this frame: `site.alt.parents.report` describes a session report on a phone, which is a product screenshot rather than photography. The string is written to the register’s rules instead — it names the work, describes what is happening, and carries no adjective about how it feels.
+- **Alt:** “A girl writing in a notebook at a classroom desk while another student works behind her” — docs/site/copy-deck.md §11 rules 1–6. No row in the register describes this frame: `site.alt.parents.report` describes a session report on a phone, which is a product screenshot rather than photography. The string is written to the register’s rules instead — it names the work, describes what is happening, and carries no adjective about how it feels.
 - **Crop:** 2400×1600 at (0, 0) of the 2400px rendition
 
 | File | Bytes |
 | --- | --- |
-| `parents-homework-720.avif` | 12 kB |
-| `parents-homework-720.webp` | 17 kB |
-| `parents-homework-720.jpg` | 29 kB |
-| `parents-homework-1440.avif` | 34 kB |
-| `parents-homework-1440.webp` | 45 kB |
-| `parents-homework-1440.jpg` | 86 kB |
+| `parents-homework-720.avif` | 11 kB |
+| `parents-homework-720.webp` | 14 kB |
+| `parents-homework-720.jpg` | 25 kB |
+| `parents-homework-1440.avif` | 29 kB |
+| `parents-homework-1440.webp` | 38 kB |
+| `parents-homework-1440.jpg` | 72 kB |
+
+## `schools-operations`
+
+- **Pexels id:** 7654178 · **Photographer:** Thirdman
+- **Source:** https://www.pexels.com/photo/7654178/
+- **Depicts:** Four staff members working with laptops, folders, calculators and paper files around a shared office table.
+- **Cast:** The schools chapter promises infrastructure beneath the lesson, so the bento begins with the operational work itself rather than another generic classroom. The frame is busy but legible: people, tools and paper all share the same working surface.
+- **Used in:** src/components/chapters/schools.tsx — chapter 07, operations bento tile
+- **Alt:** “Four staff members working around laptops and files in a shared office” — docs/site/copy-deck.md §11 rules 1–6
+- **Crop:** 2400×1600 at (0, 1) of the 2400px rendition
+
+| File | Bytes |
+| --- | --- |
+| `schools-operations-720.avif` | 20 kB |
+| `schools-operations-720.webp` | 28 kB |
+| `schools-operations-720.jpg` | 43 kB |
+| `schools-operations-1440.avif` | 53 kB |
+| `schools-operations-1440.webp` | 71 kB |
+| `schools-operations-1440.jpg` | 124 kB |
+
+## `schools-instruction`
+
+- **Pexels id:** 37476309 · **Photographer:** Pexels contributor
+- **Source:** https://www.pexels.com/photo/37476309/
+- **Depicts:** A teacher speaking beside a whiteboard while students in uniform work at individual classroom desks.
+- **Cast:** The photograph holds instruction and independent work in the same frame. The teacher is present without performing for the camera, and the writing student keeps the lesson—not the room—as the subject.
+- **Used in:** src/components/chapters/schools.tsx — chapter 07, instruction bento tile
+- **Alt:** “A teacher addressing students in a classroom while a student writes in a notebook” — docs/site/copy-deck.md §11 rules 1–6
+- **Crop:** 2400×3200 at (0, 0) of the 2400px rendition
+
+| File | Bytes |
+| --- | --- |
+| `schools-instruction-480.avif` | 17 kB |
+| `schools-instruction-480.webp` | 23 kB |
+| `schools-instruction-480.jpg` | 36 kB |
+| `schools-instruction-960.avif` | 42 kB |
+| `schools-instruction-960.webp` | 55 kB |
+| `schools-instruction-960.jpg` | 98 kB |
+
+## `schools-educator`
+
+- **Pexels id:** 8423069 · **Photographer:** Pavel Danilyuk
+- **Source:** https://www.pexels.com/photo/8423069/
+- **Depicts:** A teacher holding an open notebook and pen in front of drawings pinned to a classroom wall.
+- **Cast:** A direct educator portrait gives the people running sessions equal visual weight with the operations around them. The notebook keeps the role grounded in preparation and observation rather than in a generic corporate headshot.
+- **Used in:** src/components/chapters/schools.tsx — chapter 07, educator bento tile
+- **Alt:** “A teacher holding a notebook in front of a classroom wall” — docs/site/copy-deck.md §11 rules 1–6
+- **Crop:** 2400×3200 at (0, 190) of the 2400px rendition
+
+| File | Bytes |
+| --- | --- |
+| `schools-educator-480.avif` | 18 kB |
+| `schools-educator-480.webp` | 23 kB |
+| `schools-educator-480.jpg` | 35 kB |
+| `schools-educator-960.avif` | 50 kB |
+| `schools-educator-960.webp` | 63 kB |
+| `schools-educator-960.jpg` | 100 kB |
+
+## `schools-classroom`
+
+- **Pexels id:** 5212703 · **Photographer:** Max Fischer
+- **Source:** https://www.pexels.com/photo/5212703/
+- **Depicts:** A teacher standing at the front of a classroom while students sit at desks facing her.
+- **Cast:** The wide classroom frame closes the bento at the scale of the whole room. Teacher and students remain distinct and readable, which makes the chapter’s promise of operations underneath learning visible without putting software on a screen.
+- **Used in:** src/components/chapters/schools.tsx — chapter 07, classroom bento tile
+- **Alt:** “A teacher standing at the front of a classroom with students at their desks” — docs/site/copy-deck.md §11 rules 1–6
+- **Crop:** 2400×1600 at (0, 0) of the 2400px rendition
+
+| File | Bytes |
+| --- | --- |
+| `schools-classroom-720.avif` | 17 kB |
+| `schools-classroom-720.webp` | 23 kB |
+| `schools-classroom-720.jpg` | 38 kB |
+| `schools-classroom-1440.avif` | 39 kB |
+| `schools-classroom-1440.webp` | 54 kB |
+| `schools-classroom-1440.jpg` | 104 kB |

@@ -5,6 +5,7 @@ import { usePathname } from 'solito/navigation';
 import { create } from 'zustand';
 import { Header, Nav, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, MotionView, useHydrated } from '@acme/ui';
+import { MoyoLearnLogo } from '@acme/ui/brand';
 import { AVATAR_URI, useProfile } from '@acme/app';
 import { PROFILE, useMobileMenu, useNavItems, type NavItem } from './nav';
 
@@ -171,18 +172,9 @@ export function SiteHeader() {
             initial={hydrated ? { scale: 0.6 } : undefined}
             animate={hydrated ? { scale: 1 } : undefined}
             transition={{ type: 'spring', damping: 15, stiffness: 320, delay: 60 }}
-            className="h-9 w-9 items-center justify-center rounded-md border-2 border-border-strong bg-primary shadow-card"
+            className="h-9 w-[136px]"
           >
-            <TWText className="text-base font-bold text-on-primary">M</TWText>
-          </MotionView>
-          <MotionView
-            initial={hydrated ? { x: -8 } : undefined}
-            animate={hydrated ? { x: 0 } : undefined}
-            transition={{ type: 'timing', duration: 240, easing: 'easeOut', delay: 140 }}
-          >
-            <TWText className="font-display text-lg font-bold tracking-tight text-text">
-              Moyo
-            </TWText>
+            <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
           </MotionView>
         </Link>
 

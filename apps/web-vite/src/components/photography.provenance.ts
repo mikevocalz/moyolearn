@@ -24,7 +24,7 @@
  *      docs/pack/08-visual-hierarchy-spacing-spec.md §6 ·
  *      docs/38-front-door-and-flow.md §5 FD-01 · docs/site/copy-deck.md §11
  * SOT-KEYWORDS: web-vite photography provenance pexels licence casting manifest
- *               attribution photographer crop hero parents
+ *               attribution photographer crop hero parents schools
  */
 import type { PhotoName } from './photography';
 
@@ -55,14 +55,54 @@ export const PHOTOGRAPHY_PROVENANCE = {
     usedIn: 'src/components/chapters/hero.tsx — chapter 01, the plate in the headline’s notch',
   },
   'parents-homework': {
-    pexelsId: 5905842,
-    photographer: 'Katerina Holmes',
-    source: 'https://www.pexels.com/photo/5905842/',
+    pexelsId: 8618018,
+    photographer: 'Yan Krukau',
+    source: 'https://www.pexels.com/photo/8618018/',
     depicts:
-      'A boy leaning on one arm at a living-room table, pencil held over a notebook, two textbooks open and overlapping in front of him.',
-    cast: 'The chapter argues that Moyo reports what happened rather than what flatters, so its photograph had to be the work actually happening. He is part-way through a page and slightly fed up with it — the moment, not the category. Chosen over every "family doing homework together" frame in the same shoot because nobody in it is performing.',
+      'A girl writing in an open notebook at a classroom desk, with workbooks in front of her and another student working in the background.',
+    cast: 'The chapter argues that Moyo reports what happened rather than what flatters, so the photograph shows the work in progress: pencil moving, page open, attention on the notebook rather than the camera. The second student keeps the classroom context legible without competing with the child and her work.',
     altSource:
       'docs/site/copy-deck.md §11 rules 1–6. No row in the register describes this frame: `site.alt.parents.report` describes a session report on a phone, which is a product screenshot rather than photography. The string is written to the register’s rules instead — it names the work, describes what is happening, and carries no adjective about how it feels.',
     usedIn: 'src/components/chapters/parents.tsx — chapter 06, the article’s plate',
+  },
+  'schools-operations': {
+    pexelsId: 7654178,
+    photographer: 'Thirdman',
+    source: 'https://www.pexels.com/photo/7654178/',
+    depicts:
+      'Four staff members working with laptops, folders, calculators and paper files around a shared office table.',
+    cast: 'The schools chapter promises infrastructure beneath the lesson, so the bento begins with the operational work itself rather than another generic classroom. The frame is busy but legible: people, tools and paper all share the same working surface.',
+    altSource: 'docs/site/copy-deck.md §11 rules 1–6',
+    usedIn: 'src/components/chapters/schools.tsx — chapter 07, operations bento tile',
+  },
+  'schools-instruction': {
+    pexelsId: 37476309,
+    photographer: 'Pexels contributor',
+    source: 'https://www.pexels.com/photo/37476309/',
+    depicts:
+      'A teacher speaking beside a whiteboard while students in uniform work at individual classroom desks.',
+    cast: 'The photograph holds instruction and independent work in the same frame. The teacher is present without performing for the camera, and the writing student keeps the lesson—not the room—as the subject.',
+    altSource: 'docs/site/copy-deck.md §11 rules 1–6',
+    usedIn: 'src/components/chapters/schools.tsx — chapter 07, instruction bento tile',
+  },
+  'schools-educator': {
+    pexelsId: 8423069,
+    photographer: 'Pavel Danilyuk',
+    source: 'https://www.pexels.com/photo/8423069/',
+    depicts:
+      'A teacher holding an open notebook and pen in front of drawings pinned to a classroom wall.',
+    cast: 'A direct educator portrait gives the people running sessions equal visual weight with the operations around them. The notebook keeps the role grounded in preparation and observation rather than in a generic corporate headshot.',
+    altSource: 'docs/site/copy-deck.md §11 rules 1–6',
+    usedIn: 'src/components/chapters/schools.tsx — chapter 07, educator bento tile',
+  },
+  'schools-classroom': {
+    pexelsId: 5212703,
+    photographer: 'Max Fischer',
+    source: 'https://www.pexels.com/photo/5212703/',
+    depicts:
+      'A teacher standing at the front of a classroom while students sit at desks facing her.',
+    cast: 'The wide classroom frame closes the bento at the scale of the whole room. Teacher and students remain distinct and readable, which makes the chapter’s promise of operations underneath learning visible without putting software on a screen.',
+    altSource: 'docs/site/copy-deck.md §11 rules 1–6',
+    usedIn: 'src/components/chapters/schools.tsx — chapter 07, classroom bento tile',
   },
 } as const satisfies Record<PhotoName, PhotoProvenance>;

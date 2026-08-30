@@ -38,6 +38,8 @@ import { Container, Heading, Text } from '@acme/ui/typography';
 import { Link, List, ListItem, Paragraph, Section, View } from '@acme/ui/primitives';
 import { useMotionScene } from '@/motion';
 import type { MotionScene } from '@/motion';
+import { Photo } from '@/components/photo';
+import type { PhotoName } from '@/components/photography';
 
 const SCOPE = '.chapter-schools';
 
@@ -147,6 +149,70 @@ export function SchoolsChapter() {
             <Text className="text-site-body md:text-site-body text-moyo-ink-muted">
               We&rsquo;ll ask what you run today and what&rsquo;s breaking.
             </Text>
+          </View>
+        </View>
+
+        {/*
+          The chapter's visual bento. Two 3:2 landscapes pair with two 3:4
+          portraits; the desktop 2:1 flex ratio makes each row land at one
+          shared height without fixed pixels, while phones receive a simple
+          one-column reading order. Every tile uses the same ink frame and
+          raised paper caption as the rest of the site.
+        */}
+        <View className="gap-group">
+          <View className="max-w-content-prose gap-stack">
+            <Text variant="label" className="text-site-label text-moyo-secondary">
+              Built around the people doing the work
+            </Text>
+            <Heading
+              level={3}
+              className="my-0 font-moyo-text text-site-title font-normal md:text-site-title text-moyo-ink"
+            >
+              The lesson is only one part of the day.
+            </Heading>
+            <Paragraph className="text-site-body text-moyo-ink-muted">
+              The classroom stays human. Moyo Learn handles the work around it without
+              mixing the operational record with what a child says or does in a session.
+            </Paragraph>
+          </View>
+
+          <View className="gap-stack">
+            <View className="flex-col gap-stack md:flex-row">
+              <SchoolBentoCard
+                name="schools-operations"
+                sizes="(min-width: 48rem) 48rem, 92vw"
+                index="01"
+                title="The back office"
+                detail="Families, schedules, payroll and administration."
+                className="md:flex-[2]"
+              />
+              <SchoolBentoCard
+                name="schools-educator"
+                sizes="(min-width: 48rem) 24rem, 92vw"
+                index="02"
+                title="The educator"
+                detail="Preparation stays connected to every session."
+                className="md:flex-1"
+              />
+            </View>
+            <View className="flex-col gap-stack md:flex-row">
+              <SchoolBentoCard
+                name="schools-instruction"
+                sizes="(min-width: 48rem) 24rem, 92vw"
+                index="03"
+                title="The classroom"
+                detail="The teacher leads; students keep doing the work."
+                className="md:flex-1"
+              />
+              <SchoolBentoCard
+                name="schools-classroom"
+                sizes="(min-width: 48rem) 48rem, 92vw"
+                index="04"
+                title="The whole school day"
+                detail="Learning above. Operations underneath."
+                className="md:flex-[2]"
+              />
+            </View>
           </View>
         </View>
 
@@ -289,6 +355,43 @@ export function SchoolsChapter() {
   );
 }
 
+interface SchoolBentoCardProps {
+  name: PhotoName;
+  sizes: string;
+  index: string;
+  title: string;
+  detail: string;
+  className?: string;
+}
+
+function SchoolBentoCard({
+  name,
+  sizes,
+  index,
+  title,
+  detail,
+  className,
+}: SchoolBentoCardProps) {
+  return (
+    <View
+      className={`schools-bento-card border-moyo-rule overflow-hidden rounded-moyo-card border-moyo-outline bg-moyo-paper-raised shadow-moyo-2 ${className ?? ''}`}
+    >
+      <Photo name={name} sizes={sizes} />
+      <View className="flex-row items-start justify-between gap-group p-inset-roomy">
+        <View className="flex-1 gap-stack">
+          <Text variant="label" className="text-site-label text-moyo-secondary">
+            {title}
+          </Text>
+          <Text className="text-site-body md:text-site-body text-moyo-ink">{detail}</Text>
+        </View>
+        <View className="size-8 items-center justify-center bg-moyo-sun">
+          <Text className="text-site-label md:text-site-label text-moyo-ink">{index}</Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
 /**
  * Five personalities and nothing else moves. `snap` carries the capability rows
  * because the register is construction — pieces squaring up into a grid — and
@@ -296,6 +399,7 @@ export function SchoolsChapter() {
  */
 function buildScene({ motion, scope }: MotionScene): () => void {
   const { split } = motion.splitReveal({ targets: '.schools-headline', scroll: {} });
+  motion.thunk({ targets: '.schools-bento-card', stagger: 0.08, scroll: {} });
   motion.snap({ targets: '.schools-row', from: 'left', stagger: 0.05, scroll: {} });
   motion.thunk({ targets: '.schools-field', stagger: 0.08, scroll: {} });
   motion.lockIn({ targets: '.schools-wall', scroll: {} });

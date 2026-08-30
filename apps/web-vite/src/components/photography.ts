@@ -32,7 +32,7 @@
  *      docs/pack/08-visual-hierarchy-spacing-spec.md §6 (imagery policy, ink frame,
  *      paper/ink duotone) · docs/pack/37-onboarding-dual-pane.md §2 (casting law)
  * SOT-KEYWORDS: web-vite photography pexels register crop duotone alt ink frame
- *               avif webp marketing hero parents
+ *               avif webp marketing hero parents schools
  */
 
 /** A crop in source-image pixels. Fed straight to sharp's `extract`. */
@@ -64,7 +64,27 @@ export const PHOTOGRAPHY = {
   'parents-homework': {
     crop: { left: 0, top: 0, width: 2400, height: 1600 },
     widths: [720, 1440],
-    alt: 'A boy part-way through a page of homework, pencil in hand, two textbooks open in front of him',
+    alt: 'A girl writing in a notebook at a classroom desk while another student works behind her',
+  },
+  'schools-operations': {
+    crop: { left: 0, top: 1, width: 2400, height: 1600 },
+    widths: [720, 1440],
+    alt: 'Four staff members working around laptops and files in a shared office',
+  },
+  'schools-instruction': {
+    crop: { left: 0, top: 0, width: 2400, height: 3200 },
+    widths: [480, 960],
+    alt: 'A teacher addressing students in a classroom while a student writes in a notebook',
+  },
+  'schools-educator': {
+    crop: { left: 0, top: 190, width: 2400, height: 3200 },
+    widths: [480, 960],
+    alt: 'A teacher holding a notebook in front of a classroom wall',
+  },
+  'schools-classroom': {
+    crop: { left: 0, top: 0, width: 2400, height: 1600 },
+    widths: [720, 1440],
+    alt: 'A teacher standing at the front of a classroom with students at their desks',
   },
 } as const satisfies Record<string, PhotoEntry>;
 

@@ -282,7 +282,7 @@ export function ParentsChapter() {
                     A session, before the note
                   </Text>
                   <Text className="text-site-body md:text-site-body text-moyo-ink-muted">
-                    Two textbooks open, a pencil, and a problem not finished yet. The note
+                    A notebook open, a pencil, and a page not finished yet. The note
                     is written from a half hour like this one &mdash; not from a score.
                   </Text>
                 </View>

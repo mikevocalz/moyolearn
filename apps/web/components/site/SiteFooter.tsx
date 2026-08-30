@@ -1,6 +1,7 @@
 'use client';
 import { Link } from 'solito/link';
 import { Footer, Nav, View, Text as TWText, P } from '@acme/ui/tw';
+import { MoyoLearnLogo } from '@acme/ui/brand';
 import { PROFILE, useNavItems } from './nav';
 
 // The footer is a system map of the template, not decoration: every column
@@ -25,13 +26,8 @@ export function SiteFooter() {
       <View className="mx-auto w-full max-w-screen-2xl gap-10 px-4 py-12 sm:px-6 md:flex-row md:justify-between">
         {/* Brand */}
         <View className="max-w-xs gap-stack">
-          <View className="flex-row items-center gap-2.5">
-            <View className="h-9 w-9 items-center justify-center rounded-xl bg-primary shadow-card">
-              <TWText className="text-base font-bold text-on-primary">M</TWText>
-            </View>
-            <TWText className="font-display text-lg font-bold tracking-tight text-text">
-              Moyo
-            </TWText>
+          <View className="h-9 w-[136px]">
+            <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
           </View>
           <P className="text-sm leading-relaxed text-text-muted">
             AI tutoring that helps a child learn it by heart — and helps the
