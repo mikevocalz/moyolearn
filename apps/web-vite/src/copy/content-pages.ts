@@ -6,7 +6,8 @@
  * snapshot-tested without touching layout. Every string follows the Moyo voice:
  * warm, plain, specific; sentence case; contractions yes; no legal theater.
  *
- * SOT: .claude/skills/ux-copy/SKILL.md · docs/site/copy-deck.md §10
+ * SOT: .claude/skills/ux-copy/SKILL.md · .claude/skills/cognitive-load-conversion/SKILL.md
+ *      docs/site/copy-deck.md §10
  * SOT-KEYWORDS: copy content pages safety privacy terms about contact faq footer
  */
 
@@ -14,126 +15,126 @@ export const EMAIL = 'info@moyolearn.com' as const;
 
 export const safety = {
   heading: 'Safety at Moyo',
-  lead: 'Moyo is built for children. Every design choice starts with the question: is this safe for a learner?',
+  lead: 'Moyo is built for children. If it is not safe for a learner, we do not ship it.',
   sections: [
     {
       title: 'AI guardrails',
-      body: 'Natalie, the tutor, is instructed to coach rather than answer. She stays grade-appropriate, refuses harmful requests, and helps the learner explain what they already know before trying the next step.',
+      body: 'Natalie coaches, not answers. She speaks at the right grade level, refuses harmful requests, and asks the learner to explain what they already know before trying the next step.',
     },
     {
       title: 'Human review',
-      body: 'Safety incidents and edge cases are reviewed by a human team. We do not train our models on a child\'s sessions without explicit consent.',
+      body: 'People review safety incidents. We do not train models on a child\'s sessions without explicit consent.',
     },
     {
       title: 'No ads, no selling data',
-      body: 'Moyo has no advertising and no data brokers. A learner\'s sessions, mistakes, and progress are never for sale.',
+      body: 'No ads to children. No data brokers. A learner\'s progress is not for sale.',
     },
     {
       title: 'Report a concern',
-      body: `If something does not feel right, email us at ${EMAIL} and a real person will read it.`,
+      body: `Something feel off? Email ${EMAIL}. A real person reads it.`,
     },
   ],
 } as const;
 
 export const privacy = {
   heading: 'Privacy',
-  lead: 'Your family\'s information is not our product. Moyo collects only what is needed to tutor your child and keep the account secure.',
+  lead: 'We collect only what we need to tutor your child and run the account. Your data is not our product.',
   sections: [
     {
       title: 'What we collect',
-      body: 'The learner\'s name, grade level, prompts and answers during sessions, and any photos a grown-up chooses to share for homework help. We also collect the email and payment information tied to the account.',
+      body: 'Learner name, grade level, prompts and answers, and any photos a grown-up adds for homework help. Email and payment info for the account.',
     },
     {
       title: 'Why we collect it',
-      body: 'To personalize the tutor\'s voice and difficulty, to generate the session report, and to let grown-ups see progress. Payment information is used only for billing.',
+      body: 'To match the tutor to the learner, build the session report, and let grown-ups track progress. Payment info is for billing only.',
     },
     {
       title: 'Who sees it',
-      body: 'The learner\'s data is shared only with the grown-ups on the family account, the Moyo safety team when needed, and the service providers that run our infrastructure under strict contracts.',
+      body: 'Grown-ups on the account, the Moyo safety team when needed, and a few contracted service providers. That is it.',
     },
     {
       title: 'Your choices',
-      body: `You can cancel anytime, export your data, or ask us to delete it by emailing ${EMAIL}.`,
+      body: `Cancel, export, or delete your data anytime. Email ${EMAIL}.`,
     },
   ],
 } as const;
 
 export const childrens = {
   heading: 'Children\'s Privacy',
-  lead: 'Moyo is designed for learners, and that changes how we treat information. We follow COPPA, FERPA-aligned practices, and one simple rule: collect less, keep it safe, and give parents control.',
+  lead: 'A grown-up is in charge. We follow COPPA and FERPA-aligned practices, and we keep it simple: collect less, protect it, and give parents control.',
   sections: [
     {
       title: 'Parental consent',
-      body: 'A grown-up must create the account and add learners. We do not knowingly allow a child under 13 to sign up alone.',
+      body: 'A grown-up creates the account and adds each learner. We do not allow children under 13 to sign up alone.',
     },
     {
       title: 'No advertising',
-      body: 'We do not show ads to children or target them with marketing. We do not sell a child\'s data to anyone.',
+      body: 'No ads to children. No selling a child\'s data. Ever.',
     },
     {
       title: 'Parent rights',
-      body: `Parents can review a learner\'s sessions, delete the learner\'s data, or cancel the account at any time. To request deletion or a copy of your data, email ${EMAIL}.`,
+      body: `Review sessions, delete data, or cancel the account anytime. Request a copy or deletion by emailing ${EMAIL}.`,
     },
   ],
 } as const;
 
 export const terms = {
   heading: 'Terms',
-  lead: 'By using Moyo, you agree to these terms. We have written them in plain language so you actually know what you are agreeing to.',
+  lead: 'These terms are plain. Read them and you will know exactly what you are agreeing to.',
   sections: [
     {
       title: 'Accounts',
-      body: 'Moyo accounts are for families and their learners. You must be 18 or older to create an account and add a learner.',
+      body: 'Moyo accounts are for families. You must be 18 or older to create an account.',
     },
     {
       title: 'Payments and trials',
-      body: 'New subscriptions start with a 30-day free trial. After that, the plan you chose renews monthly. You can cancel anytime in the app; your access continues through the paid period.',
+      body: 'Start with 30 days free. Then your chosen plan renews monthly. Cancel anytime in the app.',
     },
     {
       title: 'Acceptable use',
-      body: 'Moyo is a learning tool. Do not use it to generate harmful content, impersonate others, or attempt to bypass the safety guardrails.',
+      body: 'Use Moyo for learning. Do not generate harmful content, impersonate, or bypass the guardrails.',
     },
     {
       title: 'Changes',
-      body: 'If we change these terms or our pricing, we will email you and give you a chance to cancel before the change takes effect.',
+      body: 'If we change these terms or pricing, we will email you first. You can cancel before the change takes effect.',
     },
   ],
 } as const;
 
 export const about = {
   heading: 'About Moyo',
-  lead: 'Moyo is an AI tutor for children: patient, safe, and built to turn practice into understanding that lasts.',
+  lead: 'Moyo is an AI tutor that helps children understand their work instead of copying it.',
   sections: [
     {
       title: 'What Moyo does',
-      body: 'Most homework tools hand out answers. Moyo does not. Natalie, the tutor, asks questions, points out what a learner already knows, and guides them to the next step. A parent gets a real report after every session, not a score.',
+      body: 'Homework tools give answers. Moyo does not. Natalie asks questions, points out what the learner already knows, and guides the next step. Parents get a real report after every session.',
     },
     {
       title: 'Why we made it',
-      body: 'We started Moyo because a child should not need a parent who can tutor every subject. The product is designed for the dinner-table moment: the learner is stuck, the grown-up is busy, and someone still needs to explain it well.',
+      body: 'No parent can tutor every subject. Moyo is for the dinner-table moment: the learner is stuck, the grown-up is busy, and the explanation still needs to be good.',
     },
     {
       title: 'Who we are',
-      body: 'Moyo is made by a small team of teachers, engineers, and parents in New York.',
+      body: 'Made by teachers, engineers, and parents in New York.',
     },
   ],
 } as const;
 
 export const contact = {
   heading: 'Contact',
-  lead: 'We read every message. If you have a question, a safety concern, or a school inquiry, write to us.',
+  lead: 'We read every message. Ask a question, report a concern, or start a school conversation.',
   sections: [
     {
       title: 'Email',
-      body: `The best way to reach us is ${EMAIL}. A real person reads every message.`,
+      body: `Email ${EMAIL}. A real person reads it.`,
     },
     {
       title: 'Schools and business',
-      body: `For schools, tutoring businesses, or press, use the same address and it will reach the right person.`,
+      body: 'Schools, tutoring businesses, and press: use the same address. It will reach the right person.',
     },
     {
       title: 'Response time',
-      body: 'Moyo does not have a public phone line, but we aim to reply to every email within one business day.',
+      body: 'No public phone line. We aim to reply within one business day.',
     },
   ],
 } as const;

@@ -30,7 +30,7 @@ export function SitePage({ heading, lead, children }: SitePageProps) {
       <Main role="main" className="bg-moyo-paper pb-40">
         <Section className="pt-section">
           <Container width="detail" className="gap-section">
-            <View className="gap-group">
+            <View className="gap-group pb-40">
               <Heading
                 level={1}
                 size="display-xl"
