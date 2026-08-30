@@ -567,7 +567,7 @@ export interface Organization {
   id: number;
   name: string;
   /**
-   * The tenant key. This is the value rows carry as orgId.
+   * The tenant key. This is the value rows carry as orgId, and the subdomain the district signs in at.
    */
   slug: string;
   kind: 'tutoring' | 'school' | 'district';
