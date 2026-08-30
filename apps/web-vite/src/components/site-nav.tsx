@@ -47,8 +47,12 @@
  *               log in mobile takeover menu zustand thunk compress web-vite
  */
 import { useEffect } from 'react';
-import { Container, Text } from '@acme/ui/typography';
+import { MoyoLearnLogo } from '@acme/ui/brand';
+import { Container } from '@acme/ui/typography';
 import { Button, Header, Link, Nav, View } from '@acme/ui/primitives';
+// Icons come from the kit's web entry — no new dependency, and the same glyph
+// set the rest of the product uses.
+import { Menu, X } from '@acme/ui/icons';
 import { create } from 'zustand';
 import { useMotionScene } from '@/motion';
 import type { MotionScene } from '@/motion';
@@ -90,7 +94,7 @@ const useNavStore = create<NavState>()((set) => ({
 const RULE = 'border-moyo-rule border-moyo-outline border-x-0 border-t-0';
 const CONTROL = 'moyo-pressable items-center justify-center min-h-target-adult px-inset-roomy py-inset';
 /** The one filled object in the bar. Slab frame, because it is the page's primary. */
-const CTA = `site-nav-cta ${CONTROL} border-moyo-slab rounded-moyo-square border-moyo-outline bg-moyo-primary text-moyo-on-primary text-site-body`;
+const CTA = `site-nav-cta ${CONTROL} border-moyo-slab rounded-moyo-card border-moyo-outline bg-moyo-primary text-moyo-on-primary text-site-body`;
 
 export function SiteNav() {
   const open = useNavStore((state) => state.open);
@@ -148,10 +152,10 @@ export function SiteNav() {
       >
         <Link
           href="/"
-          aria-label="Moyo AI — home"
-          className="font-moyo-display text-site-subtitle uppercase"
+          aria-label="Moyo Learn — home"
+          className="flex w-48 items-center"
         >
-          Moyo AI
+          <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
         </Link>
 
         <Nav aria-label="Primary" className="hidden lg:flex lg:flex-row lg:items-center lg:gap-group">
@@ -175,13 +179,20 @@ export function SiteNav() {
           The mobile trigger. A real <button>, because it operates a widget on
           this page rather than going anywhere — and it carries `aria-expanded`
           so the state is announced rather than only drawn.
+
+          An ICON, not the words: at this size the label was the widest control
+          in the bar and read as a third destination beside the nav links. The
+          glyph carries the affordance and `aria-label` carries the name, so a
+          screen reader still hears "Open menu" — the text was doing a job the
+          accessible name already does.
         */}
         <Button
-          className={`site-nav-cta ${CONTROL} border-moyo-rule rounded-moyo-square border-moyo-outline bg-moyo-paper-raised text-site-body lg:hidden`}
+          className={`site-nav-cta ${CONTROL} border-moyo-rule aspect-square items-center justify-center rounded-moyo-card border-moyo-outline bg-moyo-paper-raised p-0 lg:hidden`}
           onPress={toggle}
           aria-expanded={open}
+          aria-label={open ? 'Close menu' : 'Open menu'}
         >
-          {open ? 'Close menu' : 'Open menu'}
+          {open ? <X size={20} aria-hidden /> : <Menu size={20} aria-hidden />}
         </Button>
       </Container>
 
@@ -199,11 +210,11 @@ export function SiteNav() {
           className="site-nav-takeover fixed inset-0 z-50 gap-section overflow-y-auto bg-moyo-paper p-inset-roomy"
         >
           <View className="flex-row items-center justify-between gap-group">
-            <Text className="font-moyo-display text-site-subtitle uppercase md:text-site-subtitle">
-              Moyo AI
-            </Text>
+            <View className="w-48">
+              <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
+            </View>
             <Button
-              className={`site-nav-close site-nav-cta ${CONTROL} border-moyo-rule rounded-moyo-square border-moyo-outline bg-moyo-paper-raised text-site-body`}
+              className={`site-nav-close site-nav-cta ${CONTROL} border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-paper-raised text-site-body`}
               onPress={close}
             >
               Close menu

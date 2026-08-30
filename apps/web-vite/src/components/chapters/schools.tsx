@@ -38,6 +38,8 @@ import { Container, Heading, Text } from '@acme/ui/typography';
 import { Link, List, ListItem, Paragraph, Section, View } from '@acme/ui/primitives';
 import { useMotionScene } from '@/motion';
 import type { MotionScene } from '@/motion';
+import { Photo } from '@/components/photo';
+import type { PhotoName } from '@/components/photography';
 
 const SCOPE = '.chapter-schools';
 
@@ -87,10 +89,10 @@ const CAPABILITIES = [
 ] as const;
 
 /**
- * The two sides of the wall, as the duotone. Cobalt against the sunken paper is
+ * The two sides of the wall, as a two-value graphic. Logo plum against the sunken paper is
  * the only two-value pairing the token layer offers that reads as a data
  * graphic rather than as decoration, and both foregrounds are measured:
- * `moyoOnPrimary` on `moyoPrimary` is 7.42:1, `moyoInk` on `moyoPaperSunken` is
+ * `moyoOnPrimary` on `moyoPrimary` is 11.88:1, `moyoInk` on `moyoPaperSunken` is
  * 15.00:1 (tokens.md, `SITE_PAIRS`).
  */
 const OPERATIONS = ['CRM', 'Scheduling', 'Payroll', 'Org administration'] as const;
@@ -100,7 +102,11 @@ export function SchoolsChapter() {
   useMotionScene(SCOPE, buildScene);
 
   return (
-    <Section id="for-schools" className="chapter-schools bg-moyo-paper py-section">
+    <Section
+      id="for-schools"
+      aria-labelledby="schools-headline"
+      className="chapter-schools bg-moyo-paper py-section"
+    >
       <Container width="wide" className="gap-section">
         {/*
           The ElevenLabs half: kicker, one sentence, one button. Nothing else is
@@ -113,6 +119,7 @@ export function SchoolsChapter() {
             For schools and tutoring businesses
           </Text>
           <Heading
+            id="schools-headline"
             level={2}
             size="display-xl"
             className="schools-headline max-w-content-detail font-moyo-display text-site-chapter md:text-site-chapter"
@@ -135,13 +142,77 @@ export function SchoolsChapter() {
           <View className="gap-stack">
             <Link
               href={CONTACT_ANCHOR}
-              className="schools-cta moyo-pressable border-moyo-rule self-start rounded-moyo-square border-moyo-outline bg-moyo-paper-raised px-inset-roomy py-inset text-site-body text-moyo-ink"
+              className="schools-cta moyo-pressable border-moyo-rule self-start rounded-moyo-card border-moyo-outline bg-moyo-heart px-inset-roomy py-inset text-site-body text-moyo-on-heart"
             >
               Talk to us
             </Link>
             <Text className="text-site-body md:text-site-body text-moyo-ink-muted">
               We&rsquo;ll ask what you run today and what&rsquo;s breaking.
             </Text>
+          </View>
+        </View>
+
+        {/*
+          The chapter's visual bento. Two 3:2 landscapes pair with two 3:4
+          portraits; the desktop 2:1 flex ratio makes each row land at one
+          shared height without fixed pixels, while phones receive a simple
+          one-column reading order. Every tile uses the same ink frame and
+          raised paper caption as the rest of the site.
+        */}
+        <View className="gap-group">
+          <View className="max-w-content-prose gap-stack">
+            <Text variant="label" className="text-site-label text-moyo-secondary">
+              Built around the people doing the work
+            </Text>
+            <Heading
+              level={3}
+              className="my-0 font-moyo-text text-site-title font-normal md:text-site-title text-moyo-ink"
+            >
+              The lesson is only one part of the day.
+            </Heading>
+            <Paragraph className="text-site-body text-moyo-ink-muted">
+              The classroom stays human. Moyo Learn handles the work around it without
+              mixing the operational record with what a child says or does in a session.
+            </Paragraph>
+          </View>
+
+          <View className="gap-stack">
+            <View className="flex-col gap-stack md:flex-row">
+              <SchoolBentoCard
+                name="schools-operations"
+                sizes="(min-width: 48rem) 48rem, 92vw"
+                index="01"
+                title="The back office"
+                detail="Families, schedules, payroll and administration."
+                className="md:flex-[2]"
+              />
+              <SchoolBentoCard
+                name="schools-educator"
+                sizes="(min-width: 48rem) 24rem, 92vw"
+                index="02"
+                title="The educator"
+                detail="Preparation stays connected to every session."
+                className="md:flex-1"
+              />
+            </View>
+            <View className="flex-col gap-stack md:flex-row">
+              <SchoolBentoCard
+                name="schools-instruction"
+                sizes="(min-width: 48rem) 24rem, 92vw"
+                index="03"
+                title="The classroom"
+                detail="The teacher leads; students keep doing the work."
+                className="md:flex-1"
+              />
+              <SchoolBentoCard
+                name="schools-classroom"
+                sizes="(min-width: 48rem) 48rem, 92vw"
+                index="04"
+                title="The whole school day"
+                detail="Learning above. Operations underneath."
+                className="md:flex-[2]"
+              />
+            </View>
           </View>
         </View>
 
@@ -159,9 +230,15 @@ export function SchoolsChapter() {
               <Text className="text-site-label md:text-site-label text-moyo-ink-muted md:basis-1/12">
                 {`0${index + 1}`}
               </Text>
-              <Text className="text-site-subtitle md:text-site-subtitle text-moyo-ink md:basis-1/4">
+              {/* The capability name is a heading, not text that looks like
+                  one: a `Text` at `site-subtitle` is invisible to every
+                  heading-navigation affordance (1.3.1). */}
+              <Heading
+                level={3}
+                className="my-0 font-moyo-text text-site-subtitle font-normal md:text-site-subtitle text-moyo-ink md:basis-1/4"
+              >
                 {capability.term}
-              </Text>
+              </Heading>
               <View className="gap-stack md:flex-1">
                 <Text className="text-site-body md:text-site-body text-moyo-ink-muted">
                   {capability.detail}
@@ -181,8 +258,15 @@ export function SchoolsChapter() {
               </View>
             </ListItem>
           ))}
-          <View className="border-moyo-hair border-transparent border-t-moyo-outline" />
         </List>
+        {/*
+          The table's closing rule. It lives AFTER the list, not inside it: a
+          `<div>` among `<li>`s is invalid markup, and assistive technology that
+          honours it announces a five-item list with a stray sixth child. The
+          rule is structure, so it renders the same either way — only the
+          semantics were wrong.
+        */}
+        <View className="border-moyo-hair border-transparent border-t-moyo-outline" />
 
         {/*
           The O11 proof, drawn. This is the strongest line in the chapter and a
@@ -191,9 +275,12 @@ export function SchoolsChapter() {
           data, which a bar chart on this page would have had to.
         */}
         <View className="gap-group">
-          <Text className="text-site-title md:text-site-title text-moyo-ink">
+          <Heading
+            level={3}
+            className="my-0 font-moyo-text text-site-title font-normal md:text-site-title text-moyo-ink"
+          >
             Your sales tools can&rsquo;t read a child&rsquo;s session
-          </Text>
+          </Heading>
           <View className="flex-col items-stretch md:flex-row">
             <View className="schools-field flex-1 bg-moyo-primary p-inset-roomy gap-stack">
               <Text variant="label" className="text-site-label text-moyo-on-primary">
@@ -208,7 +295,7 @@ export function SchoolsChapter() {
             {/*
               The wall. 4px of ink is the slab weight, the heaviest rule the
               token layer has, and the sun block beside it is this screen's one
-              highlighter accent — fill only, ink on it at 9.68:1.
+              highlighter accent — fill only, ink on it at 9.09:1.
             */}
             <View className="schools-wall border-moyo-slab flex-row items-center justify-center border-transparent border-t-moyo-outline gap-stack py-inset md:flex-col md:border-t-transparent md:border-l-moyo-outline md:px-inset md:py-0">
               <View className="size-6 bg-moyo-sun" />
@@ -253,15 +340,55 @@ export function SchoolsChapter() {
          * the build for describing the problem it was documenting.)
          */}
         <View className="max-w-content-prose gap-stack">
-          <Text className="text-site-title md:text-site-title text-moyo-ink">
+          <Heading
+            level={3}
+            className="my-0 font-moyo-text text-site-title font-normal md:text-site-title text-moyo-ink"
+          >
             Guided-only isn&rsquo;t a setting
-          </Text>
+          </Heading>
           <Paragraph className="text-site-body text-moyo-ink-muted">
             No district, school or teacher can switch Moyo into answering mode, because there isn’t one. And no answer key or teacher material enters the index the student tutor can read.
           </Paragraph>
         </View>
       </Container>
     </Section>
+  );
+}
+
+interface SchoolBentoCardProps {
+  name: PhotoName;
+  sizes: string;
+  index: string;
+  title: string;
+  detail: string;
+  className?: string;
+}
+
+function SchoolBentoCard({
+  name,
+  sizes,
+  index,
+  title,
+  detail,
+  className,
+}: SchoolBentoCardProps) {
+  return (
+    <View
+      className={`schools-bento-card border-moyo-rule overflow-hidden rounded-moyo-card border-moyo-outline bg-moyo-paper-raised shadow-moyo-2 ${className ?? ''}`}
+    >
+      <Photo name={name} sizes={sizes} />
+      <View className="flex-row items-start justify-between gap-group p-inset-roomy">
+        <View className="flex-1 gap-stack">
+          <Text variant="label" className="text-site-label text-moyo-secondary">
+            {title}
+          </Text>
+          <Text className="text-site-body md:text-site-body text-moyo-ink">{detail}</Text>
+        </View>
+        <View className="size-8 items-center justify-center bg-moyo-sun">
+          <Text className="text-site-label md:text-site-label text-moyo-ink">{index}</Text>
+        </View>
+      </View>
+    </View>
   );
 }
 
@@ -272,6 +399,7 @@ export function SchoolsChapter() {
  */
 function buildScene({ motion, scope }: MotionScene): () => void {
   const { split } = motion.splitReveal({ targets: '.schools-headline', scroll: {} });
+  motion.thunk({ targets: '.schools-bento-card', stagger: 0.08, scroll: {} });
   motion.snap({ targets: '.schools-row', from: 'left', stagger: 0.05, scroll: {} });
   motion.thunk({ targets: '.schools-field', stagger: 0.08, scroll: {} });
   motion.lockIn({ targets: '.schools-wall', scroll: {} });

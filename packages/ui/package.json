@@ -9,6 +9,10 @@
     "./tw": "./tw.tsx",
     "./primitives": "./primitives/index.tsx",
     "./typography": "./typography.ts",
+    "./brand": {
+      "react-native": "./brand.ts",
+      "default": "./brand.web.ts"
+    },
     "./haptics": {
       "react-native": "./haptics.native.ts",
       "default": "./haptics.web.ts"

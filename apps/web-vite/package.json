@@ -7,10 +7,12 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint && node scripts/build-globe-geometry.mjs --check",
+    "lint": "eslint && node scripts/build-globe-geometry.mjs --check && node scripts/build-photography.mjs --check",
     "typecheck": "tsc --noEmit",
     "globe:geometry": "node scripts/build-globe-geometry.mjs",
-    "globe:check": "node scripts/build-globe-geometry.mjs --check"
+    "globe:check": "node scripts/build-globe-geometry.mjs --check",
+    "photography": "node scripts/build-photography.mjs",
+    "photography:check": "node scripts/build-photography.mjs --check"
   },
   "dependencies": {
     "@acme/theme": "workspace:*",
@@ -40,8 +42,8 @@
     "@types/topojson-client": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "eslint": "catalog:",
-    "nitro": "catalog:",
     "eslint-config-expo": "catalog:",
+    "nitro": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",

@@ -132,18 +132,34 @@ export default defineConfig({
     tailwindcss(),
     reactNativeWeb(),
     tanstackStart({
-      // One marketing route today. `crawlLinks` is off and only `/` is
-      // prerendered for now, because the R3F globe and motion labs push the
-      // 8 GB hobby build runner over its heap limit. Re-enable once the
-      // project is on a larger Vercel build machine.
+      // One marketing route today; `crawlLinks` means every route reachable by
+      // an <a> from `/` joins the static output without being listed here —
+      // except the cross-app paths above, which this app does not own.
       prerender: {
         enabled: true,
-        crawlLinks: false,
+        crawlLinks: true,
         failOnError: true,
         filter: (page) => !isCrossAppPath(page.path),
       },
       pages: [
         { path: '/' },
+        /*
+          The motion audit surface. Listed explicitly because nothing links to
+          it — `crawlLinks` would never find it — and it has to exist in the
+          BUILT output, not just under `vite dev`, or the reduced-motion and
+          prerender claims are only ever checked against the dev server.
+          It carries `robots: noindex, nofollow` and is excluded from the
+          sitemap; being unlinked is what keeps it out of the crawl in the first
+          place. Delete this entry, not the route, if it ever needs to go.
+        */
+        { path: '/motion-lab' },
+        /*
+          The globe lab, on the same terms and for the same reason. The single
+          strongest check on chapter 04 is that a page carrying the R3F island
+          still prerenders to real HTML with no `<!--$!-->` marker — which a
+          route that is never prerendered cannot demonstrate.
+        */
+        { path: '/globe-lab' },
       ],
     }),
     /*

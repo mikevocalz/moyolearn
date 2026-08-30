@@ -505,32 +505,21 @@ export const siteColors = {
    */
   moyoOutline: '#171310',
   /**
-   * Cobalt. The only hue in the brief without a name of its own, and the one the
-   * globe chapter fixes publicly as the oceans — the largest colour area on the
-   * site — so it is the primary. 7.42:1 on paper: safe as body text, links, and
-   * as a fill under paper-coloured type.
+   * Logo plum. The darkest brand hue and the only chromatic fill that accepts
+   * paper-coloured type. 11.88:1 on paper: safe for links, labels and the
+   * primary action.
    */
-  moyoPrimary: '#1C3FBF',
-  /**
-   * The sun hue at mark strength. NOT a duplicate of `moyoSun`: that one is a
-   * BLOCK (1.69:1 on paper — a fill that can never carry type), this one is a
-   * MARK (7.06:1). The product layer already draws this distinction between
-   * `highlighter` and `ballpoint`; the site inherits the discipline, not the
-   * values.
-   */
-  moyoSecondary: '#6E4A00',
-  /** Red-orange. Moyo is heart — this is the one colour that is allowed to shout. */
-  moyoHeart: '#C7350F',
-  /**
-   * Mustard. Fixed publicly by the globe chapter as the Africa block. A FILL
-   * ONLY — 1.69:1 against paper — so it is never type, never a border, never a
-   * focus ring. Ink on it is 9.68:1.
-   */
-  moyoSun: '#F2B01E',
-  /** Clay. The earth band under a section, and the second-warmest fill. */
-  moyoEarth: '#9A4526',
-  /** Leaf green. Growth, and the only cool-warm counterweight to cobalt. */
-  moyoLeaf: '#286641',
+  moyoPrimary: '#3C2357',
+  /** Logo plum in its annotation role; safe for body text on paper. */
+  moyoSecondary: '#3C2357',
+  /** Logo coral. A fill and large accent; ink on it clears AA at 5.03:1. */
+  moyoHeart: '#E55545',
+  /** Logo orange. Fill only; ink on it clears AA at 9.09:1. */
+  moyoSun: '#F4A629',
+  /** Coral alias used by the globe's warm land and existing section fills. */
+  moyoEarth: '#E55545',
+  /** Teal alias used by the globe's cool land and existing section fills. */
+  moyoLeaf: '#0A9FA6',
 
   /*
     THE IDENTITY PAIR. These two are the Moyo logo's own colours, so they are
@@ -538,37 +527,31 @@ export const siteColors = {
     colouring this month — the same discipline the file's opening warning
     demands, applied before the name has a chance to become a lie. They are
     first-class site tokens, usable on the wordmark, a chapter accent, the
-    footer signature or a landmass, and they are deliberately NOT called
-    "primary": `moyoPrimary` is cobalt and stays cobalt.
-
-    They are also a documented widening of the palette. The brief's colour
-    direction is cream, warm ink, red-orange, mustard, cobalt, leaf and clay;
-    teal and plum are neither. That is an owner decision, recorded here so the
-    growth is visible rather than discovered.
+    footer signature or a landmass. `moyoPrimary` now points at the same plum;
+    the alias remains because "mark deep" describes identity while "primary"
+    describes interaction hierarchy.
   */
   /**
-   * The mark's teal. 3.63:1 on paper, so it is **large text only** as a
-   * foreground — a display word, never a paragraph and never a caption. Ink on
-   * it is 4.52:1, which is what makes it usable as a fill.
+   * The mark's teal. 2.84:1 on paper, so it is fill-only. Ink on it is 5.74:1.
    */
-  moyoMark: '#0E8B94',
+  moyoMark: '#0A9FA6',
   /**
-   * The mark's plum. 12.41:1 on paper — the darkest chromatic token in the
+   * The mark's plum. 11.88:1 on paper — the darkest chromatic token in the
    * layer and safe at any size. Its one hazard is at the other end: `moyoInk`
-   * on it is 1.32:1, so the outline that frames every other fill VANISHES on
+    * on it is 1.38:1, so the outline that frames every other fill VANISHES on
    * this one. Anything drawn in plum needs its own separation.
    */
-  moyoMarkDeep: '#352252',
+  moyoMarkDeep: '#3C2357',
 
   // Foregrounds. Paper rather than white on every chromatic fill: a white knockout
   // on a cream page reads as a hole punched through it.
   moyoOnPrimary: '#F7F1E3',
   moyoOnSecondary: '#F7F1E3',
-  moyoOnHeart: '#F7F1E3',
+  moyoOnHeart: '#171310',
   moyoOnSun: '#171310',
-  moyoOnEarth: '#F7F1E3',
-  moyoOnLeaf: '#F7F1E3',
-  /** Ink, not paper: paper on teal is 3.63:1 and fails, ink on it is 4.52:1. */
+  moyoOnEarth: '#171310',
+  moyoOnLeaf: '#171310',
+  /** Ink, not paper: paper on teal fails, ink on it clears AA at 5.74:1. */
   moyoOnMark: '#171310',
   moyoOnMarkDeep: '#F7F1E3',
 } as const;
@@ -759,15 +742,13 @@ export const siteMotion = {
  * ascent/descent overrides, so the swap from fallback to webfont does not move a
  * single line and CLS stays ~0. The metrics are in docs/site/tokens.md.
  *
- * Shantell Sans is the ONLY handwriting on the site, and it is reserved for
- * margin notes and annotation arrows — a tutor's pen in the margin, never a
- * heading, never a button, never body copy.
+ * Two voices only: Clash Display for authored headings and General Sans for
+ * everything read or operated. Notes use weight, angle and placement rather
+ * than loading a third novelty face; pull-quotes use scale rather than a serif.
  */
 export const siteFontFamilies = {
   moyoDisplay: "'Clash Display', 'Clash Display Fallback', 'Arial Black', sans-serif",
   moyoText: "'General Sans', 'General Sans Fallback', system-ui, sans-serif",
-  moyoSerif: "'Instrument Serif', 'Instrument Serif Fallback', Georgia, serif",
-  moyoHand: "'Shantell Sans', 'Shantell Sans Fallback', system-ui, sans-serif",
 } as const;
 
 /**
@@ -803,9 +784,9 @@ export const siteTypeScale = {
     lineHeight: '1.3',
     tracking: '0.08em',
   },
-  /** Instrument Serif only — pull-quotes and the For Parents register. */
+  /** Display scale for pull-quotes; type family is chosen by the component. */
   'site-quote': { size: 'clamp(1.5rem, 3vw, 2.5rem)', lineHeight: '1.2', tracking: '-0.01em' },
-  /** Shantell Sans only — the margin note. */
+  /** General Sans note scale; placement and weight carry its annotation role. */
   'site-note': { size: 'clamp(0.9375rem, 1.1vw, 1.0625rem)', lineHeight: '1.45', tracking: '0' },
 } as const;
 
