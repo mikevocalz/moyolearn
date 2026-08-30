@@ -75,6 +75,7 @@ html.lenis body {
   translate: calc(var(--moyo-shadow-offset-2) - var(--moyo-press-offset))
     calc(var(--moyo-shadow-offset-2) - var(--moyo-press-offset));
   cursor: pointer;
+  font-family: var(--font-moyo-text);
   transition:
     box-shadow var(--moyo-duration-compress) var(--ease-standard),
     translate var(--moyo-duration-compress) var(--ease-standard);
