@@ -205,6 +205,7 @@ catalog:
   # bumping both together removes that ceiling. @storybook/builder-vite@10.5.8
   # peers ^5||^6||^7||^8, so Storybook rides along.
   vite: 8.2.2
+  nitro: 3.0.260610-beta
   "@vitejs/plugin-react": 6.1.1
   # The React Server Components environment the Payload admin renders in
   # (ADR-003). `@payloadcms/tanstack-start` peers `^0.5.21`; this is the

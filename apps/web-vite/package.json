@@ -40,6 +40,7 @@
     "@types/topojson-client": "catalog:",
     "@vitejs/plugin-react": "catalog:",
     "eslint": "catalog:",
+    "nitro": "catalog:",
     "eslint-config-expo": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
