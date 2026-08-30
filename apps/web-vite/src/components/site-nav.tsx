@@ -53,6 +53,7 @@ import { Button, Header, Link, Nav, View } from '@acme/ui/primitives';
 // Icons come from the kit's web entry — no new dependency, and the same glyph
 // set the rest of the product uses.
 import { Menu, X } from '@acme/ui/icons';
+import { useLocation } from '@tanstack/react-router';
 import { create } from 'zustand';
 import { useMotionScene } from '@/motion';
 import type { MotionScene } from '@/motion';
@@ -60,8 +61,11 @@ import './site-nav.css';
 
 const SCOPE = '.site-nav';
 
-const APP_START = '/onboarding';
-const APP_LOGIN = '/login';
+const SITE_ORIGIN = 'https://moyolearn.com';
+// Front door routes from doc 38; absolute so the prerenderer does not try to
+// crawl an unfinished route and fail the build.
+const APP_START = `${SITE_ORIGIN}/signup`;
+const APP_LOGIN = `${SITE_ORIGIN}/login`;
 
 /** The four sitemap anchors, in the deck's order. */
 const LINKS = [
@@ -102,6 +106,8 @@ export function SiteNav() {
   const open = useNavStore((state) => state.open);
   const toggle = useNavStore((state) => state.toggle);
   const close = useNavStore((state) => state.close);
+  const { pathname } = useLocation();
+  const isHome = pathname === '/';
 
   useMotionScene(SCOPE, buildNavScene, [open]);
 
@@ -142,7 +148,7 @@ export function SiteNav() {
         tab to it is a skip link that does not exist.
       */}
       <Link
-        href="#hero"
+        href={isHome ? '#hero' : '/#hero'}
         className="sr-only focus:not-sr-only focus:absolute focus:left-0 focus:top-0 focus:z-50 focus:border-moyo-rule focus:border-moyo-outline focus:bg-moyo-paper-raised focus:px-inset-roomy focus:py-inset focus:text-site-body"
       >
         Skip to main content
@@ -161,11 +167,14 @@ export function SiteNav() {
         </Link>
 
         <Nav aria-label="Primary" className="hidden lg:flex lg:flex-row lg:items-center lg:gap-group">
-          {LINKS.map((link) => (
-            <Link key={link.href} href={link.href} className="text-site-body">
-              {link.label}
-            </Link>
-          ))}
+          {LINKS.map((link) => {
+            const productHref = isHome ? link.href : `/${link.href}`;
+            return (
+              <Link key={link.href} href={productHref} className="text-site-body">
+                {link.label}
+              </Link>
+            );
+          })}
         </Nav>
 
         <View className="hidden lg:flex lg:flex-row lg:items-center lg:gap-stack">
@@ -225,15 +234,18 @@ export function SiteNav() {
           </View>
 
           <Nav aria-label="Primary" className="gap-group">
-            {LINKS.map((link) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                className="site-nav-item font-moyo-display text-site-title uppercase"
-              >
-                {link.label}
-              </Link>
-            ))}
+            {LINKS.map((link) => {
+              const productHref = isHome ? link.href : `/${link.href}`;
+              return (
+                <Link
+                  key={link.href}
+                  href={productHref}
+                  className="site-nav-item font-moyo-display text-site-title uppercase"
+                >
+                  {link.label}
+                </Link>
+              );
+            })}
           </Nav>
 
           <View className="w-full gap-stack">

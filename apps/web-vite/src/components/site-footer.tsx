@@ -43,6 +43,7 @@ import {
   View,
   useHydrated,
 } from '@acme/ui/primitives';
+import { useLocation } from '@tanstack/react-router';
 import { usePerfStore } from '@/stores/perf-store';
 
 /*
@@ -72,7 +73,7 @@ const COLUMNS = [
   {
     heading: 'Product',
     links: [
-      { label: 'How it works', href: '#how-it-works' },
+      { label: 'How it works', href: '#conversation' },
       { label: 'For parents', href: '#for-parents' },
       { label: 'For schools', href: '#for-schools' },
       { label: 'Pricing', href: '#start' },
@@ -112,6 +113,8 @@ export function SiteFooter() {
     bypass, or the control would not be the thing being audited.
   */
   const hydrated = useHydrated();
+  const { pathname } = useLocation();
+  const isHome = pathname === '/';
   const reducedMotion = usePerfStore((state) => state.reducedMotion) && hydrated;
   const setReducedMotion = usePerfStore((state) => state.setReducedMotion);
 
@@ -162,13 +165,19 @@ export function SiteFooter() {
                   {column.heading}
                 </Text>
                 <List aria-labelledby={`footer-col-${column.heading}`} className="gap-stack">
-                  {column.links.map((link) => (
-                    <ListItem key={link.label}>
-                      <Link href={link.href} className="text-site-body text-moyo-ink">
-                        {link.label}
-                      </Link>
-                    </ListItem>
-                  ))}
+                  {column.links.map((link) => {
+                    const href =
+                      link.href.startsWith('#') && !isHome
+                        ? `${SITE_ORIGIN}${link.href}`
+                        : link.href;
+                    return (
+                      <ListItem key={link.label}>
+                        <Link href={href} className="text-site-body text-moyo-ink">
+                          {link.label}
+                        </Link>
+                      </ListItem>
+                    );
+                  })}
                 </List>
               </View>
             ))}
