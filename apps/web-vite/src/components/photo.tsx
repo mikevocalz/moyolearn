@@ -33,7 +33,7 @@
  * SOT: ./photography.ts · docs/pack/08-visual-hierarchy-spacing-spec.md §6
  *      docs/site/tokens.md §5.1 (shape and elevation)
  * SOT-KEYWORDS: web-vite photo picture avif webp srcset sizes alt cls lazy
- *               duotone photography marketing
+ *               grayscale color hover photography marketing
  */
 import { PHOTOGRAPHY, type PhotoName } from './photography';
 
@@ -84,7 +84,7 @@ export function Photo({ name, sizes, priority = false }: PhotoProps) {
     the image formats of the web do.
   */
   return (
-    <picture>
+    <picture className="moyo-photo block overflow-hidden">
       <source type="image/avif" srcSet={srcSet(name, widths, 'avif')} sizes={sizes} />
       <source type="image/webp" srcSet={srcSet(name, widths, 'webp')} sizes={sizes} />
       <img
@@ -103,7 +103,7 @@ export function Photo({ name, sizes, priority = false }: PhotoProps) {
           aspect ratio do the sizing, so the box never changes height between
           the empty frame and the decoded image.
         */
-        className="block h-auto w-full"
+        className="moyo-photo-image block h-auto w-full"
       />
     </picture>
   );

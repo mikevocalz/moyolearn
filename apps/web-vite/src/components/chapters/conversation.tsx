@@ -222,7 +222,7 @@ export function Conversation() {
               <View className="flex-row items-end gap-element">
                 <Text
                   aria-label={`Handwritten note: ${claim.arrow}`}
-                  className="font-moyo-hand text-site-note text-moyo-secondary md:text-site-note"
+                  className="font-moyo-text text-site-note font-medium text-moyo-secondary md:text-site-note"
                 >
                   {claim.arrow}
                 </Text>

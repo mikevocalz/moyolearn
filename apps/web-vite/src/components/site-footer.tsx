@@ -123,7 +123,7 @@ export function SiteFooter() {
             <View className="w-full max-w-content-form">
               <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
             </View>
-            <Text className="font-moyo-serif text-site-quote md:text-site-quote text-moyo-ink">
+            <Text className="font-moyo-display text-site-quote md:text-site-quote text-moyo-ink">
               Learn it by heart.
             </Text>
 
@@ -195,7 +195,7 @@ export function SiteFooter() {
 
           <View className="gap-stack md:items-end">
             <Button
-              className="moyo-pressable border-moyo-rule self-start rounded-moyo-square border-moyo-outline bg-moyo-paper-raised px-inset-roomy py-inset text-site-body text-moyo-ink md:self-end"
+              className="moyo-pressable border-moyo-rule self-start rounded-moyo-card border-moyo-outline bg-moyo-mark px-inset-roomy py-inset text-site-body text-moyo-on-mark md:self-end"
               onPress={() => setReducedMotion(!reducedMotion)}
               aria-pressed={reducedMotion}
             >

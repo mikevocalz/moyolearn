@@ -9,9 +9,9 @@ those, not this file.
 commercial use, no attribution required. Photographer and source URL are
 recorded anyway so any pick can be re-verified against the licence.
 
-**Treatment.** Each file is cropped from the 2400px Pexels rendition and baked
-into a `moyoPaper`→`moyoInk` duotone at build time (doc 08 §6), so the palette
-is in the pixels and no runtime filter is involved. AVIF and WebP are offered
+**Treatment.** Each file is cropped from the 2400px Pexels rendition with its
+source colour intact. The shared `Photo` component renders it grayscale at rest
+and reveals colour on hover-capable pointers. AVIF and WebP are offered
 through `<picture>`; the JPEG is the fallback `src`. Every file sits in the
 doc 08 §6 ink frame, full bleed, drawn by the chapter that mounts it.
 
@@ -27,12 +27,12 @@ doc 08 §6 ink frame, full bleed, drawn by the chapter that mounts it.
 
 | File | Bytes |
 | --- | --- |
-| `hero-kitchen-table-420.avif` | 13 kB |
-| `hero-kitchen-table-420.webp` | 19 kB |
-| `hero-kitchen-table-420.jpg` | 27 kB |
-| `hero-kitchen-table-840.avif` | 47 kB |
-| `hero-kitchen-table-840.webp` | 73 kB |
-| `hero-kitchen-table-840.jpg` | 98 kB |
+| `hero-kitchen-table-420.avif` | 14 kB |
+| `hero-kitchen-table-420.webp` | 21 kB |
+| `hero-kitchen-table-420.jpg` | 37 kB |
+| `hero-kitchen-table-840.avif` | 48 kB |
+| `hero-kitchen-table-840.webp` | 74 kB |
+| `hero-kitchen-table-840.jpg` | 118 kB |
 
 ## `parents-homework`
 
@@ -46,12 +46,12 @@ doc 08 §6 ink frame, full bleed, drawn by the chapter that mounts it.
 
 | File | Bytes |
 | --- | --- |
-| `parents-homework-720.avif` | 11 kB |
-| `parents-homework-720.webp` | 14 kB |
-| `parents-homework-720.jpg` | 25 kB |
-| `parents-homework-1440.avif` | 29 kB |
-| `parents-homework-1440.webp` | 38 kB |
-| `parents-homework-1440.jpg` | 72 kB |
+| `parents-homework-720.avif` | 14 kB |
+| `parents-homework-720.webp` | 18 kB |
+| `parents-homework-720.jpg` | 40 kB |
+| `parents-homework-1440.avif` | 35 kB |
+| `parents-homework-1440.webp` | 45 kB |
+| `parents-homework-1440.jpg` | 107 kB |
 
 ## `schools-operations`
 
@@ -65,12 +65,12 @@ doc 08 §6 ink frame, full bleed, drawn by the chapter that mounts it.
 
 | File | Bytes |
 | --- | --- |
-| `schools-operations-720.avif` | 20 kB |
-| `schools-operations-720.webp` | 28 kB |
-| `schools-operations-720.jpg` | 43 kB |
-| `schools-operations-1440.avif` | 53 kB |
-| `schools-operations-1440.webp` | 71 kB |
-| `schools-operations-1440.jpg` | 124 kB |
+| `schools-operations-720.avif` | 22 kB |
+| `schools-operations-720.webp` | 30 kB |
+| `schools-operations-720.jpg` | 58 kB |
+| `schools-operations-1440.avif` | 59 kB |
+| `schools-operations-1440.webp` | 76 kB |
+| `schools-operations-1440.jpg` | 165 kB |
 
 ## `schools-instruction`
 
@@ -84,12 +84,12 @@ doc 08 §6 ink frame, full bleed, drawn by the chapter that mounts it.
 
 | File | Bytes |
 | --- | --- |
-| `schools-instruction-480.avif` | 17 kB |
-| `schools-instruction-480.webp` | 23 kB |
-| `schools-instruction-480.jpg` | 36 kB |
-| `schools-instruction-960.avif` | 42 kB |
-| `schools-instruction-960.webp` | 55 kB |
-| `schools-instruction-960.jpg` | 98 kB |
+| `schools-instruction-480.avif` | 21 kB |
+| `schools-instruction-480.webp` | 27 kB |
+| `schools-instruction-480.jpg` | 56 kB |
+| `schools-instruction-960.avif` | 53 kB |
+| `schools-instruction-960.webp` | 66 kB |
+| `schools-instruction-960.jpg` | 149 kB |
 
 ## `schools-educator`
 
@@ -103,12 +103,12 @@ doc 08 §6 ink frame, full bleed, drawn by the chapter that mounts it.
 
 | File | Bytes |
 | --- | --- |
-| `schools-educator-480.avif` | 18 kB |
-| `schools-educator-480.webp` | 23 kB |
-| `schools-educator-480.jpg` | 35 kB |
-| `schools-educator-960.avif` | 50 kB |
-| `schools-educator-960.webp` | 63 kB |
-| `schools-educator-960.jpg` | 100 kB |
+| `schools-educator-480.avif` | 21 kB |
+| `schools-educator-480.webp` | 26 kB |
+| `schools-educator-480.jpg` | 50 kB |
+| `schools-educator-960.avif` | 57 kB |
+| `schools-educator-960.webp` | 70 kB |
+| `schools-educator-960.jpg` | 137 kB |
 
 ## `schools-classroom`
 
@@ -122,9 +122,9 @@ doc 08 §6 ink frame, full bleed, drawn by the chapter that mounts it.
 
 | File | Bytes |
 | --- | --- |
-| `schools-classroom-720.avif` | 17 kB |
-| `schools-classroom-720.webp` | 23 kB |
-| `schools-classroom-720.jpg` | 38 kB |
-| `schools-classroom-1440.avif` | 39 kB |
-| `schools-classroom-1440.webp` | 54 kB |
-| `schools-classroom-1440.jpg` | 104 kB |
+| `schools-classroom-720.avif` | 19 kB |
+| `schools-classroom-720.webp` | 26 kB |
+| `schools-classroom-720.jpg` | 53 kB |
+| `schools-classroom-1440.avif` | 44 kB |
+| `schools-classroom-1440.webp` | 61 kB |
+| `schools-classroom-1440.jpg` | 138 kB |

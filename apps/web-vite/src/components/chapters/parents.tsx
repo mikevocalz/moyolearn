@@ -11,7 +11,7 @@
  *
  *  1. The serif carries the STANDFIRST and the pull-quote, not the chapter
  *     title. `docs/site/tokens.md` §5.2 binds `site-chapter` to Clash Display
- *     and `site-quote` to Instrument Serif, and every chapter opener on the page
+ *     and `site-quote` to a larger display measure, and every chapter opener on the page
  *     has to agree or the composition stops being one document. So the register
  *     turn is made where the type ramp already sanctions it — plus the measure,
  *     the rules-not-boxes hierarchy and the margin spec sheet.
@@ -33,7 +33,7 @@
  * SOT: docs/site/copy-deck.md §7 (every string) · docs/site/research.md §4.6 and
  *      §3 O2/O3/O6/O8 · docs/site/tokens.md · docs/site/motion-matrix.md
  *      docs/pack/08-visual-hierarchy-spacing-spec.md §5 (the ink frame) and §6
- *      (imagery policy, the paper/ink duotone) · ../photography.ts
+ *      (imagery policy, editorial grayscale at rest) · ../photography.ts
  * SOT-KEYWORDS: site chapter parents magazine editorial serif session report
  *               trust safety screentime controls price honesty ink-frame web-vite
  */
@@ -183,12 +183,12 @@ export function ParentsChapter() {
           </View>
 
           {/*
-            The standfirst, and the register turn. Instrument Serif at
-            `site-quote` — the one ramp step tokens.md reserves for it — set
+            The standfirst, and the register turn. Display type at
+            `site-quote` — a deliberate scale step — set
             noticeably larger than the body (Intercom) at the article measure.
           */}
           <Paragraph
-            className={`${MEASURE} font-moyo-serif text-site-quote text-moyo-ink`}
+            className={`${MEASURE} font-moyo-display text-site-quote text-moyo-ink`}
           >
             Most homework apps hand you a streak and a smiley face. Moyo writes you a
             short, honest note after every session: what your child worked on, what they
@@ -237,12 +237,9 @@ export function ParentsChapter() {
             {/*
               THE PHOTOGRAPH. The plate is the doc 08 §5/§6 ink frame — 2px
               outline, card radius, hard offset shadow — and the image inside it
-              is a real Pexels frame baked into the paper/ink duotone the same
-              section permits, so the photography cannot break the palette. The
-              treatment is in the pixels (scripts/build-photography.mjs), not in
-              a runtime filter: a `filter:` stack would decode a full-colour
-              image, repaint it every frame, and show a reader whose filters do
-              not apply a picture in a palette this page does not own.
+              is a real Pexels frame shown grayscale at rest and in source color
+              on hover. One responsive image serves both states, and the color
+              reveal carries no meaning that is absent from the caption.
 
               WHAT IT IS A PHOTOGRAPH OF, AND WHY NOT THE REGISTER'S ROW. The
               copy deck's `site.alt.parents.report` describes a session report
@@ -320,7 +317,7 @@ export function ParentsChapter() {
           <Text variant="label" className="text-site-label text-moyo-secondary">
             One price, every child
           </Text>
-          <Paragraph className="font-moyo-serif text-site-lead text-moyo-ink">
+          <Paragraph className="font-moyo-display text-site-lead text-moyo-ink">
             $11 a month as an early-bird family, $15.99 a month at the regular price. One
             family plan, every one of your children included. No ads. Nothing about your
             child sold, ever.

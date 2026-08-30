@@ -78,8 +78,8 @@ const DOOR =
   'moyo-pressable border-moyo-outline items-center justify-center px-inset-roomy py-inset text-center text-site-body';
 
 /** The one primary action on the page — same label in the nav and chapter 08. */
-const DOOR_PRIMARY = `${DOOR} hero-door border-moyo-rule rounded-moyo-square bg-moyo-primary text-moyo-on-primary min-h-target-adult`;
-const DOOR_SECONDARY = `${DOOR} hero-door border-moyo-rule rounded-moyo-square bg-moyo-paper-raised min-h-target-adult`;
+const DOOR_PRIMARY = `${DOOR} hero-door border-moyo-rule rounded-moyo-card bg-moyo-primary text-moyo-on-primary min-h-target-adult`;
+const DOOR_SECONDARY = `${DOOR} hero-door border-moyo-rule rounded-moyo-card bg-moyo-paper-raised min-h-target-adult`;
 /*
   The kid's door, and it has to be findable by a kid rather than read by one:
   heavier frame, the single soft radius the shape law allows, the heart fill,
@@ -231,10 +231,10 @@ function Worksheet() {
         straddles the plate's bottom edge exactly as before — same offset, same
         footprint, so it still clears the doors below — but the two children
         have swapped ends of it. That was free while the plate was a cream ruled
-        sheet, because brown handwriting reads the same on `paper-raised` above
+        sheet, because annotation ink reads the same on `paper-raised` above
         the edge as on `paper` below it. Over a photograph the half of the note
-        that landed inside went to mid-grey and stopped being legible: brown ink
-        on a duotone is not a contrast pair, and a scrim to rescue it is a
+        that landed inside went to mid-grey and stopped being legible: text over
+        photography is not a stable contrast pair, and a scrim to rescue it is a
         surface this design language does not have.
 
         So the NOTE takes the outside half, where it is on paper and legible,
@@ -250,7 +250,7 @@ function Worksheet() {
       <View className="absolute bottom-0 right-0 translate-y-1/2 flex-col-reverse items-end gap-element">
         <Text
           aria-label="Handwritten note: fractions, Tuesday"
-          className="font-moyo-hand text-site-note text-moyo-secondary md:text-site-note"
+          className="font-moyo-text text-site-note font-medium text-moyo-secondary md:text-site-note"
         >
           fractions, Tuesday
         </Text>

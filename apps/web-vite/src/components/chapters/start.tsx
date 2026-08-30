@@ -153,7 +153,7 @@ export function StartChapter() {
 
           {/*
             F-06, made visible. `{EARLY_BIRD_LIMIT}` sits on the sun block —
-            fill only, ink on it at 9.68:1 — which is this screen's single
+            fill only, ink on it at 9.09:1 — which is this screen's single
             highlighter accent and its single unresolved value. It is left
             unfilled deliberately: doc 05 requires a real cap or a real printed
             date and decides neither, so a number here would be invented
@@ -222,7 +222,7 @@ export function StartChapter() {
           */}
           <Link
             href={FRONT_DOOR}
-            className="start-cta moyo-pressable border-moyo-rule self-start rounded-moyo-square border-moyo-outline bg-moyo-primary px-inset-roomy py-inset text-site-subtitle text-moyo-on-primary"
+            className="start-cta moyo-pressable border-moyo-rule self-start rounded-moyo-card border-moyo-outline bg-moyo-primary px-inset-roomy py-inset text-site-subtitle text-moyo-on-primary"
           >
             Start learning
           </Link>

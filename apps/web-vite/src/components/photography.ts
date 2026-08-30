@@ -30,8 +30,8 @@
  * SOT: ./photography.provenance.ts · docs/38-front-door-and-flow.md §5 FD-01 ·
  *      docs/site/copy-deck.md §11 (alt-text register) ·
  *      docs/pack/08-visual-hierarchy-spacing-spec.md §6 (imagery policy, ink frame,
- *      paper/ink duotone) · docs/pack/37-onboarding-dual-pane.md §2 (casting law)
- * SOT-KEYWORDS: web-vite photography pexels register crop duotone alt ink frame
+ *      editorial grayscale treatment) · docs/pack/37-onboarding-dual-pane.md §2 (casting law)
+ * SOT-KEYWORDS: web-vite photography pexels register crop grayscale color hover alt ink frame
  *               avif webp marketing hero parents schools
  */
 

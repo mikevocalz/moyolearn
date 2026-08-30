@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 /**
- * The photography pipeline. Pexels originals → cropped, paper/ink duotoned
+ * The photography pipeline. Pexels originals → cropped, colour-preserving
  * AVIF + WebP + JPEG in `public/images`, plus the manifest recording where
  * every file came from.
  *
@@ -14,23 +14,11 @@
  *  2. The originals are fetched over the network. A build that reaches the
  *     internet for an asset is a build that fails offline and in CI.
  *
- * THE TREATMENT, AND WHY IT IS BAKED RATHER THAN A CSS FILTER.
- * doc 08 §6 puts every in-product photograph in an ink frame and permits a
- * paper/ink duotone "so photography never breaks the palette". As a runtime
- * `filter:` stack the browser would decode the full-colour image, re-composite
- * it on every paint, and hand a reader whose filters do not apply a picture in
- * a palette this page does not own. Baked, it is just pixels: the file that
- * arrives is already in the palette, costs nothing to paint, and compresses far
- * better than the colour original — two of its three channels are a fixed
- * function of the third, which is most of why these files are as small as they
- * are.
- *
- * The map is a luminance ramp between two real tokens, `moyoPaper` at white and
- * `moyoInk` at black, with a contrast curve applied first. No third colour and
- * no hue: a duotone that invents a tint is a palette `packages/theme/tokens.ts`
- * has never heard of. The two token values are read from the theme at run time
- * rather than typed here, for the same reason the globe pipeline emits token
- * NAMES instead of colours.
+ * THE TREATMENT. The committed files retain their source colour. `Photo` applies
+ * a CSS grayscale treatment at rest and removes it on hover-capable pointers,
+ * so the interaction can reveal real colour without downloading a second image
+ * or swapping the accessible image. Reduced-motion readers get the same two
+ * states with an instant transition.
  *
  * Usage:
  *   node scripts/build-photography.mjs            fetch (if needed), cut, emit
@@ -44,7 +32,7 @@
  *      apps/web-vite/src/components/photography.provenance.ts (source, casting) ·
  *      docs/pack/08-visual-hierarchy-spacing-spec.md §6 · packages/theme/tokens.ts
  *      https://www.pexels.com/license/
- * SOT-KEYWORDS: web-vite photography pipeline pexels duotone paper ink avif webp
+ * SOT-KEYWORDS: web-vite photography pipeline pexels grayscale hover color avif webp
  *               jpeg sharp build-time crop manifest images
  */
 // Explicitly imported rather than taken off the global: this file is linted
@@ -91,65 +79,8 @@ const ENCODE = {
   jpeg: { quality: 78, mozjpeg: true, chromaSubsampling: '4:4:4' },
 };
 
-/*
-  The tone curve, applied to luminance before the ramp.
-
-  `CONTRAST` opens the midtones back up: converting to luminance flattens a
-  photograph, and a flat duotone on a cream page reads as a faded photocopy
-  rather than as print. `SHADOW_LIFT` then holds the darkest pixels a hair off
-  `moyoInk` — a photograph that reaches the exact value of the frame around it
-  loses its edge, and the frame is the treatment.
-*/
-const CONTRAST = 1.38;
-const SHADOW_LIFT = 0.03;
-
-/** `#RRGGBB` → `[r, g, b]`. The theme stores hex; sharp wants bytes. */
-function rgb(hex) {
-  const n = Number.parseInt(hex.replace('#', ''), 16);
-  return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
-}
-
-/**
- * The two ends of the ramp, read from the theme rather than typed here — the
- * same rule the globe pipeline follows when it emits token names instead of
- * colours. Loaded lazily so `--check`, which only stats files, does not pull a
- * workspace package (and its type-stripping cost) into a lint run.
- */
-async function ramp() {
-  const { siteColors } = await import('@acme/theme');
-  const paper = rgb(siteColors.moyoPaper);
-  const ink = rgb(siteColors.moyoInk);
-  return { ink, slope: paper.map((channel, i) => (channel - ink[i]) / 255) };
-}
-
-function toneMap(value) {
-  const x = 0.5 + (value / 255 - 0.5) * CONTRAST;
-  return Math.max(0, Math.min(1, SHADOW_LIFT + x * (1 - SHADOW_LIFT)));
-}
-
-/**
- * Greyscale → three bands. sharp's `linear()` refuses to expand a one-band
- * image into three ("Band expansion using linear is unsupported"), and joining
- * three copies of the same band through a pipeline costs more code than the
- * loop does. So the ramp is applied to raw bytes, once, here.
- */
-async function duotone(sharp, { ink, slope }, source, crop, width) {
-  const { data, info } = await sharp(source)
-    .extract(crop)
-    .resize(width)
-    .greyscale()
-    .raw()
-    .toBuffer({ resolveWithObject: true });
-
-  const pixels = info.width * info.height;
-  const out = Buffer.allocUnsafe(pixels * 3);
-  for (let i = 0; i < pixels; i += 1) {
-    const luminance = toneMap(data[i]) * 255;
-    for (let c = 0; c < 3; c += 1) {
-      out[i * 3 + c] = Math.round(luminance * slope[c] + ink[c]);
-    }
-  }
-  return sharp(out, { raw: { width: info.width, height: info.height, channels: 3 } });
+function photograph(sharp, source, crop, width) {
+  return sharp(source).extract(crop).resize(width).rotate();
 }
 
 async function original(name) {
@@ -193,9 +124,9 @@ function writeManifest(sizes) {
     'commercial use, no attribution required. Photographer and source URL are',
     'recorded anyway so any pick can be re-verified against the licence.',
     '',
-    '**Treatment.** Each file is cropped from the 2400px Pexels rendition and baked',
-    'into a `moyoPaper`→`moyoInk` duotone at build time (doc 08 §6), so the palette',
-    'is in the pixels and no runtime filter is involved. AVIF and WebP are offered',
+    '**Treatment.** Each file is cropped from the 2400px Pexels rendition with its',
+    'source colour intact. The shared `Photo` component renders it grayscale at rest',
+    'and reveals colour on hover-capable pointers. AVIF and WebP are offered',
     'through `<picture>`; the JPEG is the fallback `src`. Every file sits in the',
     'doc 08 §6 ink frame, full bleed, drawn by the chapter that mounts it.',
     '',
@@ -263,18 +194,16 @@ async function main() {
 
   mkdirSync(OUT, { recursive: true });
   const sizes = new Map();
-  const tones = await ramp();
-
   for (const [name, entry] of Object.entries(PHOTOGRAPHY)) {
     const source = await original(name);
     for (const width of entry.widths) {
-      const toned = await duotone(sharp, tones, source, { ...entry.crop }, width);
+      const photo = photograph(sharp, source, { ...entry.crop }, width);
       for (const [format, extension] of [
         ...PHOTO_FORMATS.map((f) => [f, f]),
         ['jpeg', PHOTO_FALLBACK_EXTENSION],
       ]) {
         const file = join(OUT, `${name}-${width}.${extension}`);
-        await toned.clone()[format](ENCODE[format]).toFile(file);
+        await photo.clone()[format](ENCODE[format]).toFile(file);
         sizes.set(file, kb(file));
         console.log(`  ${relative(APP, file)}  ${sizes.get(file)}`);
       }

@@ -151,6 +151,11 @@ const REDUCED_MOTION_QUERY = '(prefers-reduced-motion: reduce)';
 const initialReducedMotion = (): boolean =>
   typeof window !== 'undefined' && window.matchMedia(REDUCED_MOTION_QUERY).matches;
 
+function reflectReducedMotion(reducedMotion: boolean): void {
+  if (typeof document === 'undefined') return;
+  document.documentElement.dataset.reducedMotion = String(reducedMotion);
+}
+
 function readProfile(): PerfProfile {
   // `deviceMemory` is not in lib.dom; it is a Device Memory API extension to
   // Navigator that Chromium ships and the TS DOM lib does not model. Declared
@@ -200,7 +205,10 @@ export const usePerfStore = create<PerfState>()((set, get) => ({
   profile: null,
   probeFps: null,
 
-  setReducedMotion: (reducedMotion) => set({ reducedMotion }),
+  setReducedMotion: (reducedMotion) => {
+    reflectReducedMotion(reducedMotion);
+    set({ reducedMotion });
+  },
 
   detect: () => {
     if (typeof window === 'undefined') return;
@@ -236,6 +244,7 @@ export const usePerfStore = create<PerfState>()((set, get) => ({
  * for every primitive built afterwards.
  */
 if (typeof window !== 'undefined') {
+  reflectReducedMotion(usePerfStore.getState().reducedMotion);
   const query = window.matchMedia(REDUCED_MOTION_QUERY);
   query.addEventListener('change', (event) => {
     usePerfStore.getState().setReducedMotion(event.matches);

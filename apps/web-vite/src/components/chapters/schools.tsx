@@ -89,10 +89,10 @@ const CAPABILITIES = [
 ] as const;
 
 /**
- * The two sides of the wall, as the duotone. Cobalt against the sunken paper is
+ * The two sides of the wall, as a two-value graphic. Logo plum against the sunken paper is
  * the only two-value pairing the token layer offers that reads as a data
  * graphic rather than as decoration, and both foregrounds are measured:
- * `moyoOnPrimary` on `moyoPrimary` is 7.42:1, `moyoInk` on `moyoPaperSunken` is
+ * `moyoOnPrimary` on `moyoPrimary` is 11.88:1, `moyoInk` on `moyoPaperSunken` is
  * 15.00:1 (tokens.md, `SITE_PAIRS`).
  */
 const OPERATIONS = ['CRM', 'Scheduling', 'Payroll', 'Org administration'] as const;
@@ -142,7 +142,7 @@ export function SchoolsChapter() {
           <View className="gap-stack">
             <Link
               href={CONTACT_ANCHOR}
-              className="schools-cta moyo-pressable border-moyo-rule self-start rounded-moyo-square border-moyo-outline bg-moyo-paper-raised px-inset-roomy py-inset text-site-body text-moyo-ink"
+              className="schools-cta moyo-pressable border-moyo-rule self-start rounded-moyo-card border-moyo-outline bg-moyo-heart px-inset-roomy py-inset text-site-body text-moyo-on-heart"
             >
               Talk to us
             </Link>
@@ -295,7 +295,7 @@ export function SchoolsChapter() {
             {/*
               The wall. 4px of ink is the slab weight, the heaviest rule the
               token layer has, and the sun block beside it is this screen's one
-              highlighter accent — fill only, ink on it at 9.68:1.
+              highlighter accent — fill only, ink on it at 9.09:1.
             */}
             <View className="schools-wall border-moyo-slab flex-row items-center justify-center border-transparent border-t-moyo-outline gap-stack py-inset md:flex-col md:border-t-transparent md:border-l-moyo-outline md:px-inset md:py-0">
               <View className="size-6 bg-moyo-sun" />

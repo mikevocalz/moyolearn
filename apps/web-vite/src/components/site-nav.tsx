@@ -94,7 +94,7 @@ const useNavStore = create<NavState>()((set) => ({
 const RULE = 'border-moyo-rule border-moyo-outline border-x-0 border-t-0';
 const CONTROL = 'moyo-pressable items-center justify-center min-h-target-adult px-inset-roomy py-inset';
 /** The one filled object in the bar. Slab frame, because it is the page's primary. */
-const CTA = `site-nav-cta ${CONTROL} border-moyo-slab rounded-moyo-square border-moyo-outline bg-moyo-primary text-moyo-on-primary text-site-body`;
+const CTA = `site-nav-cta ${CONTROL} border-moyo-slab rounded-moyo-card border-moyo-outline bg-moyo-primary text-moyo-on-primary text-site-body`;
 
 export function SiteNav() {
   const open = useNavStore((state) => state.open);
@@ -187,7 +187,7 @@ export function SiteNav() {
           accessible name already does.
         */}
         <Button
-          className={`site-nav-cta ${CONTROL} border-moyo-rule aspect-square items-center justify-center rounded-moyo-square border-moyo-outline bg-moyo-paper-raised p-0 lg:hidden`}
+          className={`site-nav-cta ${CONTROL} border-moyo-rule aspect-square items-center justify-center rounded-moyo-card border-moyo-outline bg-moyo-paper-raised p-0 lg:hidden`}
           onPress={toggle}
           aria-expanded={open}
           aria-label={open ? 'Close menu' : 'Open menu'}
@@ -214,7 +214,7 @@ export function SiteNav() {
               <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
             </View>
             <Button
-              className={`site-nav-close site-nav-cta ${CONTROL} border-moyo-rule rounded-moyo-square border-moyo-outline bg-moyo-paper-raised text-site-body`}
+              className={`site-nav-close site-nav-cta ${CONTROL} border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-paper-raised text-site-body`}
               onPress={close}
             >
               Close menu
