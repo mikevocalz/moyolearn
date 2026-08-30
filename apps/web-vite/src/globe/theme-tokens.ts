@@ -65,7 +65,8 @@ export function moyoCustomProperty(token: string): string {
  * one answer, wherever the island mounts.
  */
 export function readSceneColors(): MoyoColors {
-  const style = getComputedStyle(document.body);
+  const stage = document.querySelector('.moyo-globe-stage') ?? document.body;
+  const style = getComputedStyle(stage);
   const out = {} as Record<MoyoSceneToken, string>;
   for (const token of MOYO_SCENE_TOKENS) {
     out[token] = style.getPropertyValue(moyoCustomProperty(token)).trim();
@@ -75,7 +76,8 @@ export function readSceneColors(): MoyoColors {
 
 /** A single numeric custom property, e.g. `--moyo-grain-opacity`. */
 export function readMoyoNumber(property: string, fallback: number): number {
-  const raw = getComputedStyle(document.body).getPropertyValue(property).trim();
+  const stage = document.querySelector('.moyo-globe-stage') ?? document.body;
+  const raw = getComputedStyle(stage).getPropertyValue(property).trim();
   const value = Number.parseFloat(raw);
   return Number.isFinite(value) ? value : fallback;
 }

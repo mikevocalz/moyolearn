@@ -14,7 +14,24 @@
  * SOT-KEYWORDS: globe stage css layout node card corner leader line container query
  */
 
+/*
+  Globe-only palette. The WebGL scene and the Tier C SVG read the same
+  `--color-moyo-*` names as the rest of the site, but scoped to the stage so
+  the oceans can be the old cobalt while the rest of the page keeps the new
+  marketing palette. This is the only place a raw hex is allowed: it is
+  deliberately not in `packages/theme/tokens.ts` because these colours belong
+  to the globe, not the site.
+*/
 .moyo-globe-stage {
+  --color-moyo-primary: #1c3fbf;
+  --color-moyo-sun: #f2b01e;
+  --color-moyo-earth: #9a4526;
+  --color-moyo-leaf: #286641;
+  --color-moyo-mark: #0e8b94;
+  --color-moyo-mark-deep: #352252;
+  --color-moyo-paper-sunken: #efe7d4;
+  --color-moyo-outline: #171310;
+  --color-moyo-ink: #171310;
   position: relative;
   width: 100%;
   container-type: inline-size;
