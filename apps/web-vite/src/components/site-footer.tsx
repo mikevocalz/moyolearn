@@ -56,8 +56,8 @@ import { usePerfStore } from '@/stores/perf-store';
 */
 const SITE_ORIGIN = 'https://moyolearn.com';
 
-/** The real contact address, supplied by Mike. Chapter 07's "Talk to us" lands here. */
-const SUPPORT_EMAIL = 'mikeallen@moyolearn.com';
+/** The real contact address for support. Chapter 07's "Talk to us" lands here. */
+const SUPPORT_EMAIL = 'info@moyolearn.com';
 
 /**
  * Three columns, not six. Past roughly four a footer sitemap stops being

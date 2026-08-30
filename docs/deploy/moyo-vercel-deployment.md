@@ -435,7 +435,7 @@ while the zone is open:**
 2. **No DMARC.** `_dmarc.moyolearn.com` does not exist. Start in report-only so
    nothing is rejected while the zone settles:
    ```
-   TXT _dmarc   v=DMARC1; p=none; rua=mailto:mikeallen@moyolearn.com
+   TXT _dmarc   v=DMARC1; p=none; rua=mailto:info@moyolearn.com
    ```
 
 Do the mail records **first**, in Vercel DNS, and confirm they resolve before
