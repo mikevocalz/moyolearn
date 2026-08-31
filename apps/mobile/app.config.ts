@@ -98,7 +98,6 @@ const config: ExpoConfig = {
         faceIDPermission: 'Confirm it is you before opening billing, permissions, or your child’s AI activity.',
       },
     ],
-    'expo-screen-capture',
     'expo-updates',
   ],
   experiments: {
