@@ -56,15 +56,15 @@ export interface PhotoEntry {
 }
 
 export const PHOTOGRAPHY = {
-  'hero-kitchen-table': {
-    crop: { left: 330, top: 1050, width: 1650, height: 2200 },
-    widths: [420, 840],
-    alt: 'A child working through a math problem at a kitchen table while a parent looks on',
+  'hero-boy': {
+    crop: { left: 0, top: 0, width: 2400, height: 1600 },
+    widths: [720, 1440],
+    alt: 'A boy part-way through a page of homework, pencil in hand, two textbooks open in front of him',
   },
   'parents-homework': {
     crop: { left: 0, top: 0, width: 2400, height: 1600 },
     widths: [720, 1440],
-    alt: 'A boy part-way through a page of homework, pencil in hand, two textbooks open in front of him',
+    alt: 'A girl writing in an open notebook at a classroom desk, with workbooks in front of her and another student working in the background',
   },
   'schools-operations': {
     crop: { left: 0, top: 1, width: 2400, height: 1600 },

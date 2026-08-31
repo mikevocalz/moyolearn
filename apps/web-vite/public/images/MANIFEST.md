@@ -15,43 +15,43 @@ and reveals colour on hover-capable pointers. AVIF and WebP are offered
 through `<picture>`; the JPEG is the fallback `src`. Every file sits in the
 doc 08 §6 ink frame, full bleed, drawn by the chapter that mounts it.
 
-## `hero-kitchen-table`
-
-- **Pexels id:** 8055131 · **Photographer:** Annushka Ahuja
-- **Source:** https://www.pexels.com/photo/8055131/
-- **Depicts:** A girl writing in a workbook at a kitchen table, pencil in hand, open textbook and spiral notebook in front of her; her father stands behind her, reading the page over her shoulder.
-- **Cast:** The adult is in the frame and is not the subject — the child and the page hold the centre, which is the FD-01 brief exactly. Nobody looks at the camera and nobody is smiling at it. No screen appears anywhere, which matters more here than on any other surface: the hero is where "AI tutor" would otherwise be read as a camera-solver.
-- **Used in:** src/components/chapters/hero.tsx — chapter 01, the plate in the headline’s notch
-- **Alt:** “A child working through a math problem at a kitchen table while a parent looks on” — docs/38-front-door-and-flow.md §5 FD-01 (A11y)
-- **Crop:** 1650×2200 at (330, 1050) of the 2400px rendition
-
-| File | Bytes |
-| --- | --- |
-| `hero-kitchen-table-420.avif` | 14 kB |
-| `hero-kitchen-table-420.webp` | 21 kB |
-| `hero-kitchen-table-420.jpg` | 37 kB |
-| `hero-kitchen-table-840.avif` | 48 kB |
-| `hero-kitchen-table-840.webp` | 74 kB |
-| `hero-kitchen-table-840.jpg` | 118 kB |
-
-## `parents-homework`
+## `hero-boy`
 
 - **Pexels id:** 5905842 · **Photographer:** Katerina Holmes
 - **Source:** https://www.pexels.com/photo/5905842/
 - **Depicts:** A boy leaning on one arm at a living-room table, pencil held over a notebook, two textbooks open and overlapping in front of him.
-- **Cast:** The chapter argues that Moyo reports what happened rather than what flatters, so its photograph had to be the work actually happening. He is part-way through a page and slightly fed up with it — the moment, not the category. Chosen over every "family doing homework together" frame in the same shoot because nobody in it is performing.
+- **Cast:** The hero is the page's one display moment, and the photograph has to show a child in the middle of the work rather than a child performing for a camera. The boy is part-way through a page, pencil held above it, the moment before the answer — which is the "learn it by heart" idea the headline names. No screen appears anywhere, which matters more here than on any other surface.
+- **Used in:** src/components/chapters/hero.tsx — chapter 01, the plate in the headline’s notch
+- **Alt:** “A boy part-way through a page of homework, pencil in hand, two textbooks open in front of him” — docs/38-front-door-and-flow.md §5 FD-01 (A11y)
+- **Crop:** 2400×1600 at (0, 0) of the 2400px rendition
+
+| File | Bytes |
+| --- | --- |
+| `hero-boy-720.avif` | 14 kB |
+| `hero-boy-720.webp` | 19 kB |
+| `hero-boy-720.jpg` | 40 kB |
+| `hero-boy-1440.avif` | 37 kB |
+| `hero-boy-1440.webp` | 50 kB |
+| `hero-boy-1440.jpg` | 112 kB |
+
+## `parents-homework`
+
+- **Pexels id:** 8618018 · **Photographer:** Yan Krukau
+- **Source:** https://www.pexels.com/photo/8618018/
+- **Depicts:** A girl writing in an open notebook at a classroom desk, with workbooks in front of her and another student working in the background.
+- **Cast:** The chapter argues that Moyo reports what happened rather than what flatters, so the photograph shows the work in progress: pencil moving, page open, attention on the notebook rather than the camera. The second student keeps the classroom context legible without competing with the child and her work.
 - **Used in:** src/components/chapters/parents.tsx — chapter 06, the article’s plate
-- **Alt:** “A boy part-way through a page of homework, pencil in hand, two textbooks open in front of him” — docs/site/copy-deck.md §11 rules 1–6. No row in the register describes this frame: `site.alt.parents.report` describes a session report on a phone, which is a product screenshot rather than photography. The string is written to the register’s rules instead — it names the work, describes what is happening, and carries no adjective about how it feels.
+- **Alt:** “A girl writing in an open notebook at a classroom desk, with workbooks in front of her and another student working in the background” — docs/site/copy-deck.md §11 rules 1–6. No row in the register describes this frame: `site.alt.parents.report` describes a session report on a phone, which is a product screenshot rather than photography. The string is written to the register’s rules instead — it names the work, describes what is happening, and carries no adjective about how it feels.
 - **Crop:** 2400×1600 at (0, 0) of the 2400px rendition
 
 | File | Bytes |
 | --- | --- |
 | `parents-homework-720.avif` | 14 kB |
-| `parents-homework-720.webp` | 19 kB |
+| `parents-homework-720.webp` | 18 kB |
 | `parents-homework-720.jpg` | 40 kB |
-| `parents-homework-1440.avif` | 37 kB |
-| `parents-homework-1440.webp` | 50 kB |
-| `parents-homework-1440.jpg` | 112 kB |
+| `parents-homework-1440.avif` | 35 kB |
+| `parents-homework-1440.webp` | 45 kB |
+| `parents-homework-1440.jpg` | 107 kB |
 
 ## `schools-operations`
 

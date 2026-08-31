@@ -44,23 +44,23 @@ export interface PhotoProvenance {
 }
 
 export const PHOTOGRAPHY_PROVENANCE = {
-  'hero-kitchen-table': {
-    pexelsId: 8055131,
-    photographer: 'Annushka Ahuja',
-    source: 'https://www.pexels.com/photo/8055131/',
-    depicts:
-      'A girl writing in a workbook at a kitchen table, pencil in hand, open textbook and spiral notebook in front of her; her father stands behind her, reading the page over her shoulder.',
-    cast: 'The adult is in the frame and is not the subject — the child and the page hold the centre, which is the FD-01 brief exactly. Nobody looks at the camera and nobody is smiling at it. No screen appears anywhere, which matters more here than on any other surface: the hero is where "AI tutor" would otherwise be read as a camera-solver.',
-    altSource: 'docs/38-front-door-and-flow.md §5 FD-01 (A11y)',
-    usedIn: 'src/components/chapters/hero.tsx — chapter 01, the plate in the headline’s notch',
-  },
-  'parents-homework': {
+  'hero-boy': {
     pexelsId: 5905842,
     photographer: 'Katerina Holmes',
     source: 'https://www.pexels.com/photo/5905842/',
     depicts:
       'A boy leaning on one arm at a living-room table, pencil held over a notebook, two textbooks open and overlapping in front of him.',
-    cast: 'The chapter argues that Moyo reports what happened rather than what flatters, so its photograph had to be the work actually happening. He is part-way through a page and slightly fed up with it — the moment, not the category. Chosen over every "family doing homework together" frame in the same shoot because nobody in it is performing.',
+    cast: 'The hero is the page\'s one display moment, and the photograph has to show a child in the middle of the work rather than a child performing for a camera. The boy is part-way through a page, pencil held above it, the moment before the answer — which is the "learn it by heart" idea the headline names. No screen appears anywhere, which matters more here than on any other surface.',
+    altSource: 'docs/38-front-door-and-flow.md §5 FD-01 (A11y)',
+    usedIn: 'src/components/chapters/hero.tsx — chapter 01, the plate in the headline’s notch',
+  },
+  'parents-homework': {
+    pexelsId: 8618018,
+    photographer: 'Yan Krukau',
+    source: 'https://www.pexels.com/photo/8618018/',
+    depicts:
+      'A girl writing in an open notebook at a classroom desk, with workbooks in front of her and another student working in the background.',
+    cast: 'The chapter argues that Moyo reports what happened rather than what flatters, so the photograph shows the work in progress: pencil moving, page open, attention on the notebook rather than the camera. The second student keeps the classroom context legible without competing with the child and her work.',
     altSource:
       'docs/site/copy-deck.md §11 rules 1–6. No row in the register describes this frame: `site.alt.parents.report` describes a session report on a phone, which is a product screenshot rather than photography. The string is written to the register’s rules instead — it names the work, describes what is happening, and carries no adjective about how it feels.',
     usedIn: 'src/components/chapters/parents.tsx — chapter 06, the article’s plate',
