@@ -24,12 +24,26 @@ const CROP_H = 0.5;
 
 export function CropPreview({ ageBand = 'teen', source, onCrop, onCancel }: CropPreviewProps) {
   const [busy, setBusy] = useState(false);
+  const [workingUri, setWorkingUri] = useState(source);
   const [size, setSize] = useState<{ width: number; height: number } | null>(null);
   const buttonSize = buttonSizeForBand(ageBand);
 
   useEffect(() => {
-    RNImage.getSize(source, (width, height) => setSize({ width, height }));
+    setWorkingUri(source);
   }, [source]);
+
+  useEffect(() => {
+    RNImage.getSize(workingUri, (width, height) => setSize({ width, height }));
+  }, [workingUri]);
+
+  const handleRotate = async () => {
+    const result = await ImageManipulator.manipulateAsync(
+      workingUri,
+      [{ rotate: 90 }],
+      { format: ImageManipulator.SaveFormat.JPEG, compress: 0.95 },
+    );
+    setWorkingUri(result.uri);
+  };
 
   const handleCrop = async () => {
     if (!size) return;
@@ -39,7 +53,7 @@ export function CropPreview({ ageBand = 'teen', source, onCrop, onCancel }: Crop
     const width = Math.round(size.width * CROP_W);
     const height = Math.round(size.height * CROP_H);
     const result = await ImageManipulator.manipulateAsync(
-      source,
+      workingUri,
       [{ crop: { originX, originY, width, height } }],
       { format: ImageManipulator.SaveFormat.JPEG, compress: 0.95 },
     );
@@ -49,12 +63,21 @@ export function CropPreview({ ageBand = 'teen', source, onCrop, onCancel }: Crop
 
   return (
     <View className="flex-1 gap-stack p-inset">
-      <Image alt="Captured work" src={source} className="h-64 w-full rounded-card" />
+      <Image alt="Captured work" src={workingUri} className="h-64 w-full rounded-card" />
       <Text className="font-sans text-body text-text text-center">
         {ageBand === 'young'
           ? 'We will zoom in on the middle. Tap when it looks good!'
           : 'Cropping to the problem in the center.'}
       </Text>
+      <Button
+        title="Rotate"
+        variant="outline"
+        size={buttonSize}
+        fullWidth
+        onPress={handleRotate}
+        disabled={busy}
+        aria-label="Rotate the page 90 degrees"
+      />
       <Button
         title={busy ? 'Cropping...' : 'Use this crop'}
         variant="highlighter"
