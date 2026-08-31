@@ -64,7 +64,7 @@ export const PHOTOGRAPHY = {
   'parents-homework': {
     crop: { left: 0, top: 0, width: 2400, height: 1600 },
     widths: [720, 1440],
-    alt: 'A girl writing in a notebook at a classroom desk while another student works behind her',
+    alt: 'A boy part-way through a page of homework, pencil in hand, two textbooks open in front of him',
   },
   'schools-operations': {
     crop: { left: 0, top: 1, width: 2400, height: 1600 },

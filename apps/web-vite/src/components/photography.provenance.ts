@@ -55,12 +55,12 @@ export const PHOTOGRAPHY_PROVENANCE = {
     usedIn: 'src/components/chapters/hero.tsx — chapter 01, the plate in the headline’s notch',
   },
   'parents-homework': {
-    pexelsId: 8618018,
-    photographer: 'Yan Krukau',
-    source: 'https://www.pexels.com/photo/8618018/',
+    pexelsId: 5905842,
+    photographer: 'Katerina Holmes',
+    source: 'https://www.pexels.com/photo/5905842/',
     depicts:
-      'A girl writing in an open notebook at a classroom desk, with workbooks in front of her and another student working in the background.',
-    cast: 'The chapter argues that Moyo reports what happened rather than what flatters, so the photograph shows the work in progress: pencil moving, page open, attention on the notebook rather than the camera. The second student keeps the classroom context legible without competing with the child and her work.',
+      'A boy leaning on one arm at a living-room table, pencil held over a notebook, two textbooks open and overlapping in front of him.',
+    cast: 'The chapter argues that Moyo reports what happened rather than what flatters, so its photograph had to be the work actually happening. He is part-way through a page and slightly fed up with it — the moment, not the category. Chosen over every "family doing homework together" frame in the same shoot because nobody in it is performing.',
     altSource:
       'docs/site/copy-deck.md §11 rules 1–6. No row in the register describes this frame: `site.alt.parents.report` describes a session report on a phone, which is a product screenshot rather than photography. The string is written to the register’s rules instead — it names the work, describes what is happening, and carries no adjective about how it feels.',
     usedIn: 'src/components/chapters/parents.tsx — chapter 06, the article’s plate',

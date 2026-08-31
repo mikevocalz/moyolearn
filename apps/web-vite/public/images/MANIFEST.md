@@ -36,22 +36,22 @@ doc 08 §6 ink frame, full bleed, drawn by the chapter that mounts it.
 
 ## `parents-homework`
 
-- **Pexels id:** 8618018 · **Photographer:** Yan Krukau
-- **Source:** https://www.pexels.com/photo/8618018/
-- **Depicts:** A girl writing in an open notebook at a classroom desk, with workbooks in front of her and another student working in the background.
-- **Cast:** The chapter argues that Moyo reports what happened rather than what flatters, so the photograph shows the work in progress: pencil moving, page open, attention on the notebook rather than the camera. The second student keeps the classroom context legible without competing with the child and her work.
+- **Pexels id:** 5905842 · **Photographer:** Katerina Holmes
+- **Source:** https://www.pexels.com/photo/5905842/
+- **Depicts:** A boy leaning on one arm at a living-room table, pencil held over a notebook, two textbooks open and overlapping in front of him.
+- **Cast:** The chapter argues that Moyo reports what happened rather than what flatters, so its photograph had to be the work actually happening. He is part-way through a page and slightly fed up with it — the moment, not the category. Chosen over every "family doing homework together" frame in the same shoot because nobody in it is performing.
 - **Used in:** src/components/chapters/parents.tsx — chapter 06, the article’s plate
-- **Alt:** “A girl writing in a notebook at a classroom desk while another student works behind her” — docs/site/copy-deck.md §11 rules 1–6. No row in the register describes this frame: `site.alt.parents.report` describes a session report on a phone, which is a product screenshot rather than photography. The string is written to the register’s rules instead — it names the work, describes what is happening, and carries no adjective about how it feels.
+- **Alt:** “A boy part-way through a page of homework, pencil in hand, two textbooks open in front of him” — docs/site/copy-deck.md §11 rules 1–6. No row in the register describes this frame: `site.alt.parents.report` describes a session report on a phone, which is a product screenshot rather than photography. The string is written to the register’s rules instead — it names the work, describes what is happening, and carries no adjective about how it feels.
 - **Crop:** 2400×1600 at (0, 0) of the 2400px rendition
 
 | File | Bytes |
 | --- | --- |
 | `parents-homework-720.avif` | 14 kB |
-| `parents-homework-720.webp` | 18 kB |
+| `parents-homework-720.webp` | 19 kB |
 | `parents-homework-720.jpg` | 40 kB |
-| `parents-homework-1440.avif` | 35 kB |
-| `parents-homework-1440.webp` | 45 kB |
-| `parents-homework-1440.jpg` | 107 kB |
+| `parents-homework-1440.avif` | 37 kB |
+| `parents-homework-1440.webp` | 50 kB |
+| `parents-homework-1440.jpg` | 112 kB |
 
 ## `schools-operations`
 
