@@ -55,6 +55,10 @@ export {
   type OrgPeople,
 } from './features/institution/people.service';
 export {
+  loadEnrollmentReport,
+  type EnrollmentReport,
+} from './features/institution/reports.service';
+export {
   loadEnrollmentsByOrg,
   type LoadEnrollments,
 } from './features/enrollment/enrollment.service';

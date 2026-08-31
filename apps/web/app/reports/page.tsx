@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { InstitutionPlaceholderScreen } from '@acme/app';
-import { loadInstitutionOverview } from '@acme/app/server';
+import { InstitutionReportsScreen } from '@acme/app';
+import { loadEnrollmentReport } from '@acme/app/server';
 import { tenantSlugFromHost } from '@acme/auth/host-tenant';
 import { auth } from '../../lib/auth';
-import { loadOrgBranding, loadOrgKind } from '../../lib/org.repository';
+import { loadEnrollments } from '../../lib/enrollment.repository';
+import { loadOrgBranding, loadOrgKind, loadSchools } from '../../lib/org.repository';
 
 export const metadata: Metadata = {
   title: 'Reports — Moyo',
@@ -25,17 +26,10 @@ export default async function ReportsPage() {
     notFound();
   }
 
-  const org = await loadInstitutionOverview(
-    loadOrgBranding,
-    { scope: kind, resource: 'reports' },
-    auth,
-    h,
-  );
+  const [org, report] = await Promise.all([
+    loadOrgBranding(slug),
+    loadEnrollmentReport(loadEnrollments, loadSchools, auth, h, kind),
+  ]);
 
-  const description =
-    kind === 'district'
-      ? 'District reports will appear here.'
-      : 'School reports will appear here.';
-
-  return <InstitutionPlaceholderScreen title="Reports" description={description} org={org} />;
+  return <InstitutionReportsScreen title="Reports" org={org} report={report} />;
 }
