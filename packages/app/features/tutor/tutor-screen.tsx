@@ -391,7 +391,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
         if (text.length > 0) setAttachmentTranscript(id, text);
       });
     });
-  }, [requestRecording, addAttachment]);
+  }, [requestRecording, addAttachment, setAttachmentTranscript]);
 
   /*
     Fires the deferred send once the staged note is visible in `attachments`.
