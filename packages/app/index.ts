@@ -15,6 +15,7 @@ export { SchoolHomeScreen } from './features/home/school-home-screen';
 export { DistrictHomeScreen } from './features/home/district-home-screen';
 export { ExploreScreen } from './features/explore/screen';
 export { NotificationsScreen } from './features/notifications/screen';
+export { InboxScreen } from './features/notifications/inbox-screen';
 export { ProfileScreen } from './features/profile/screen';
 export { SettingsScreen } from './features/settings/screen';
 export { useProfile, AVATAR_URI, type ThemePreference } from './features/profile/profile.store';
@@ -337,6 +338,7 @@ export {
 } from './features/media';
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';
+export * from './features/conference';
 export {
   SessionProvider,
   useAppSession,
@@ -359,3 +361,19 @@ export {
   type RoleKind,
 } from './providers/session';
 export * from './features/editor';
+export {
+  AppHeader,
+  AppFooter,
+  type AppHeaderProps,
+  type AppFooterProps,
+  type AppHeaderTheme,
+  type AppFooterTheme,
+} from './features/shell';
+export {
+  resolveTenantTheme,
+  type ResolvedBrandTheme,
+  type MoyoSurface,
+  type MoyoBrand,
+} from './core/tenant-brand';
+export { ThemeProvider, useResolvedBrand, type ThemeProviderProps } from './providers/theme';
+export { type OrgBranding } from './features/org';
