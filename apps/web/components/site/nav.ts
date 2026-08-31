@@ -55,6 +55,24 @@ const NAV_BY_ROLE: Record<ActiveContextKind, NavItem[]> = {
     { label: 'Schedule', href: '/schedule' },
     { label: 'Reports', href: '/reports' },
   ],
+  staff: [
+    { label: 'Today', href: '/' },
+    { label: 'Schedule', href: '/schedule' },
+    { label: 'Clients', href: '/ops' },
+    { label: 'Inbox', href: '/notifications' },
+  ],
+  school_admin: [
+    { label: 'Overview', href: '/' },
+    { label: 'Academics', href: '/academics' },
+    { label: 'People', href: '/people' },
+    { label: 'Reports', href: '/reports' },
+  ],
+  district_admin: [
+    { label: 'Outcomes', href: '/' },
+    { label: 'Schools', href: '/schools' },
+    { label: 'People', href: '/people' },
+    { label: 'Reports', href: '/reports' },
+  ],
 };
 
 export function useNavItems(): NavItem[] {

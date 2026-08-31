@@ -25,6 +25,12 @@ export {
   type LoadMembershipRole,
   type RequiredMembership,
 } from './core/membership-gate';
+export {
+  setTenantOrgReader,
+  resolveHostTenant,
+  HostTenantDenied,
+  type LoadTenantOrgId,
+} from './core/host-tenant';
 export { MEMBERSHIP_ROLES, isMembershipRole, type MembershipRole } from '@acme/auth/membership';
 export type {
   DerivedFact,

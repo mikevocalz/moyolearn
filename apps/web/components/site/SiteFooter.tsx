@@ -1,18 +1,14 @@
 'use client';
 import { Link } from 'solito/link';
+import { MoyoLearnLogo } from '@acme/ui/brand';
 import { Footer, Nav, View, Text as TWText, P } from '@acme/ui/tw';
 import { PROFILE, useNavItems } from './nav';
 
-// The footer is a system map of the template, not decoration: every column
-// states something true — the pages that exist, the tools that run, the
-// stack underneath.
-const TOOLKIT = [
-  { label: 'Storybook', href: 'http://localhost:6006' },
-  { label: 'Payload admin', href: '/admin' },
-  { label: 'README', href: 'https://github.com' },
-] as const;
-
-const STACK = ['Expo SDK 57', 'Next.js 16', 'Solito 5', 'Uniwind 1', 'TanStack', 'Payload 4'] as const;
+// The footer is a system map of the consumer site, not a dumping ground for
+// admin tools or internal stack badges. Keep the Toolkit/Stack columns off
+// public pages; they belong in internal docs or dev-only shells.
+// SOT: docs/pack/CLAUDE.md §Children's surfaces
+// SOT-KEYWORDS: site footer consumer public nav payload admin safety
 
 const footerLink =
   'text-sm text-text-muted transition-colors duration-fast hover:text-text ' +
@@ -34,41 +30,17 @@ export function SiteFooter() {
           </P>
         </View>
 
-        {/* Columns */}
-        <View className="flex-row flex-wrap gap-10 md:gap-16">
-          <Nav aria-label="Pages" className="min-w-28 gap-2.5">
-            <TWText className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-              Pages
-            </TWText>
-            {[...navItems, PROFILE].map((item) => (
-              <Link key={item.href} href={item.href} className={footerLink}>
-                {item.label}
-              </Link>
-            ))}
-          </Nav>
-
-          <Nav aria-label="Toolkit" className="min-w-28 gap-2.5">
-            <TWText className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-              Toolkit
-            </TWText>
-            {TOOLKIT.map((item) => (
-              <Link key={item.label} href={item.href} className={footerLink}>
-                {item.label}
-              </Link>
-            ))}
-          </Nav>
-
-          <View className="min-w-28 gap-2.5">
-            <TWText className="text-xs font-semibold uppercase tracking-wider text-text-muted">
-              Stack
-            </TWText>
-            {STACK.map((item) => (
-              <TWText key={item} className="text-sm text-text-muted">
-                {item}
-              </TWText>
-            ))}
-          </View>
-        </View>
+        {/* Pages */}
+        <Nav aria-label="Pages" className="min-w-28 gap-2.5">
+          <TWText className="text-xs font-semibold uppercase tracking-wider text-text-muted">
+            Pages
+          </TWText>
+          {[...navItems, PROFILE].map((item) => (
+            <Link key={item.href} href={item.href} className={footerLink}>
+              {item.label}
+            </Link>
+          ))}
+        </Nav>
       </View>
 
       {/* Legal bar */}
