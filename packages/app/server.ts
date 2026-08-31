@@ -39,6 +39,12 @@ export {
   type OrganizationKind,
   roleForOrganizationRoleAndKind,
 } from './providers/session/role-mapping';
+export {
+  loadInstitutionOverview,
+  loadDistrictOverview,
+  loadSchoolOverview,
+  type InstitutionOverviewOptions,
+} from './features/institution/institution.service';
 export type {
   DerivedFact,
   MasteryFact,

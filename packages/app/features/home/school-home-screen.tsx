@@ -7,15 +7,16 @@
 
 import { ScrollView, View, Text as TWText } from '@acme/ui/tw';
 import { Container, Heading, SafeArea } from '@acme/ui';
+import type { OrgBranding } from '@acme/app';
 
-export function SchoolHomeScreen() {
+export function SchoolHomeScreen({ org }: { org?: OrgBranding | null }) {
   return (
     <SafeArea edges={['top']} className="flex-1 bg-surface">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <Container width="detail" className="py-4 pb-48">
           <View className="gap-stack">
             <Heading level={1} size="title">
-              School overview
+              {org?.name ? `${org.name} — School overview` : 'School overview'}
             </Heading>
             <TWText className="text-body text-text">
               School overview will list campuses, staff, and programs.
