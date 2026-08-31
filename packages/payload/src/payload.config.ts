@@ -219,6 +219,24 @@ export default buildConfig({
             update: { access: adminMcpAccess },
           },
         },
+        organizations: {
+          // Same admin-host lock for tenant management. No learner data is in this
+          // collection, but the tenant list still needs to be scope-gated.
+          tools: {
+            count: { access: adminMcpAccess },
+            countVersions: { access: adminMcpAccess },
+            create: { access: adminMcpAccess },
+            delete: { access: adminMcpAccess },
+            duplicate: { access: adminMcpAccess },
+            find: { access: adminMcpAccess },
+            findDistinct: { access: adminMcpAccess },
+            findVersionByID: { access: adminMcpAccess },
+            findVersions: { access: adminMcpAccess },
+            getCollectionSchema: { access: adminMcpAccess },
+            restoreVersion: { access: adminMcpAccess },
+            update: { access: adminMcpAccess },
+          },
+        },
       },
       // ponytail: off unless switched on. The plugin's default access is
       // `Boolean(req.user)`, which would hand the whole tool surface to any
