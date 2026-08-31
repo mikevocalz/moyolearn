@@ -20,6 +20,9 @@ export function isRoleKind(role: string | undefined): role is RoleKind {
   return role !== undefined && (ROLE_KINDS as readonly string[]).includes(role);
 }
 
+export const ORGANIZATION_KINDS = ['tutoring', 'school', 'district'] as const;
+export type OrganizationKind = (typeof ORGANIZATION_KINDS)[number];
+
 export const DEFAULT_ORGANIZATION_TO_EDUCATION: Record<MembershipRole, RoleKind> = {
   owner: 'owner',
   manager: 'staff',
@@ -39,4 +42,21 @@ export function roleForOrganizationRole(
   if (organizationRole === undefined || organizationRole === null) return undefined;
   if (!isMembershipRole(organizationRole)) return undefined;
   return DEFAULT_ORGANIZATION_TO_EDUCATION[organizationRole];
+}
+
+/**
+ * Resolves a role kind from the member's organisation role and the kind of
+ * organisation they are acting in. Owner of a district becomes `district_admin`,
+ * owner of a school becomes `school_admin`, and owner of a tutoring business
+ * stays `owner`; other member roles map to `staff`.
+ */
+export function roleForOrganizationRoleAndKind(
+  organizationRole: MembershipRole | null | undefined,
+  orgKind: OrganizationKind | undefined,
+): RoleKind | undefined {
+  const base = roleForOrganizationRole(organizationRole);
+  if (base === undefined) return undefined;
+  if (orgKind === 'district' && base === 'owner') return 'district_admin';
+  if (orgKind === 'school' && base === 'owner') return 'school_admin';
+  return base;
 }

@@ -32,6 +32,12 @@ import {
   type RequiredMembership,
 } from './membership-gate.ts';
 import {
+  InstitutionPermissionDenied,
+  requirePermission,
+} from '../features/institution/institution.policy.ts';
+import type { InstitutionAction, InstitutionResource, InstitutionScope } from '../features/institution/institution.types.ts';
+import { roleForOrganizationRoleAndKind, type OrganizationKind } from '../providers/session/role-mapping.ts';
+import {
   ctxKindOf,
   operationRecord,
   recordOperation,
@@ -48,6 +54,8 @@ export interface ProtectedCtx {
   /** Organization id when the session is scoped to one. */
   orgId?: string;
 }
+
+export type LoadOrgKind = (ctx: ProtectedCtx) => Promise<OrganizationKind | null>;
 
 export interface ProtectedOperationOptions {
   /**
@@ -93,6 +101,20 @@ export interface ProtectedOperationOptions {
    * without a CMS connection.
    */
   loadTenantOrgId?: LoadTenantOrgId | null;
+  /**
+   * Reads the kind of the current organization so the institution permission
+   * policy can map `MembershipRole` to `RoleKind`. Required when
+   * `requiresInstitution` is used; tests inject a fixture so the policy gate
+   * is testable without a CMS connection.
+   */
+  loadOrgKind?: LoadOrgKind;
+  /**
+   * An institutional permission check: { scope, resource, action }. The caller
+   * must hold the required permission for the current tenant scope after host
+   * and membership have been resolved. Fail-closed: missing `loadOrgKind` or
+   * a role that cannot be resolved is a refusal.
+   */
+  requiresInstitution?: { scope: InstitutionScope; resource: InstitutionResource; action: InstitutionAction };
   /**
    * Overrides where the caller's plan is read from. Production never passes
    * this — the default reads Better Auth's own subscription rows through the
@@ -304,6 +326,20 @@ export async function protectedOperation<R>(
       return loadRole(c);
     };
 
+    const heldRole = await opLoadRole(hostCtx);
+
+    if (options.requiresInstitution) {
+      const orgKind = options.loadOrgKind ? await options.loadOrgKind(hostCtx) : null;
+      const roleKind = roleForOrganizationRoleAndKind(heldRole, orgKind ?? undefined);
+      requirePermission(
+        roleKind,
+        options.requiresInstitution.scope,
+        options.requiresInstitution.resource,
+        options.requiresInstitution.action,
+        () => undefined,
+      );
+    }
+
     const result = await gated(hostCtx, opLoadRole, load);
     outcome = 'ok';
     return result;
@@ -316,7 +352,9 @@ export async function protectedOperation<R>(
       a staff surface.
     */
     outcome =
-      error instanceof CapabilityDenied || error instanceof MembershipDenied
+      error instanceof CapabilityDenied ||
+      error instanceof MembershipDenied ||
+      error instanceof InstitutionPermissionDenied
         ? 'denied'
         : error instanceof Error && error.message === 'Unauthenticated'
           ? 'unauthenticated'

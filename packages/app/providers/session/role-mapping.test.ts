@@ -5,7 +5,11 @@
 
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { isRoleKind, roleForOrganizationRole } from './role-mapping.ts';
+import {
+  isRoleKind,
+  roleForOrganizationRole,
+  roleForOrganizationRoleAndKind,
+} from './role-mapping.ts';
 
 describe('session role mapping', () => {
   it('identifies valid education roles', () => {
@@ -27,5 +31,14 @@ describe('session role mapping', () => {
     assert.equal(roleForOrganizationRole(null), undefined);
     assert.equal(roleForOrganizationRole(undefined), undefined);
     assert.equal(roleForOrganizationRole('admin' as never), undefined);
+  });
+
+  it('resolves district and school owners to admin role kinds', () => {
+    assert.equal(roleForOrganizationRoleAndKind('owner', 'district'), 'district_admin');
+    assert.equal(roleForOrganizationRoleAndKind('owner', 'school'), 'school_admin');
+    assert.equal(roleForOrganizationRoleAndKind('owner', 'tutoring'), 'owner');
+    assert.equal(roleForOrganizationRoleAndKind('manager', 'district'), 'staff');
+    assert.equal(roleForOrganizationRoleAndKind('manager', 'school'), 'staff');
+    assert.equal(roleForOrganizationRoleAndKind(undefined, 'district'), undefined);
   });
 });

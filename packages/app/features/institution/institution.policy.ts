@@ -12,12 +12,17 @@ import type { InstitutionAction, InstitutionResource, InstitutionScope } from '.
 
 export class InstitutionPermissionDenied extends Error {
   readonly status = 403;
-  readonly role: RoleKind;
+  readonly role: RoleKind | undefined;
   readonly scope: InstitutionScope;
   readonly resource: InstitutionResource;
   readonly action: InstitutionAction;
 
-  constructor(role: RoleKind, scope: InstitutionScope, resource: InstitutionResource, action: InstitutionAction) {
+  constructor(
+    role: RoleKind | undefined,
+    scope: InstitutionScope,
+    resource: InstitutionResource,
+    action: InstitutionAction,
+  ) {
     super(`This operation requires ${action} on ${resource} in ${scope}.`);
     this.name = 'InstitutionPermissionDenied';
     this.role = role;
@@ -93,17 +98,18 @@ function impliedActions(actions: ActionSet): ActionSet {
 }
 
 export function allowedActions(
-  role: RoleKind,
+  role: RoleKind | undefined,
   scope: InstitutionScope,
   resource: InstitutionResource,
 ): readonly InstitutionAction[] {
+  if (!role) return [];
   const cell = GRANTS[role]?.[scope]?.[resource];
   if (!cell) return [];
   return [...new Set(impliedActions(cell))];
 }
 
 export function can(
-  role: RoleKind,
+  role: RoleKind | undefined,
   scope: InstitutionScope,
   resource: InstitutionResource,
   action: InstitutionAction,
@@ -112,7 +118,7 @@ export function can(
 }
 
 export function requirePermission<R>(
-  role: RoleKind,
+  role: RoleKind | undefined,
   scope: InstitutionScope,
   resource: InstitutionResource,
   action: InstitutionAction,
