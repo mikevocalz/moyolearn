@@ -7,8 +7,16 @@
 // SOT-KEYWORDS: auth client better-auth expo session plugins
 
 import { createAuthClient } from 'better-auth/react';
-import { multiSessionClient, organizationClient, usernameClient } from 'better-auth/client/plugins';
+import type { createAuth } from './server.ts';
+import {
+  multiSessionClient,
+  organizationClient,
+  usernameClient,
+  inferOrgAdditionalFields,
+} from 'better-auth/client/plugins';
 import { expoPlugins } from './expo-plugin';
+
+type MoyoAuthServer = ReturnType<typeof createAuth>;
 
 export function createMoyoAuthClient(options: {
   baseURL: string;
@@ -20,7 +28,7 @@ export function createMoyoAuthClient(options: {
     baseURL: options.baseURL,
     plugins: [
       usernameClient(),
-      organizationClient(),
+      organizationClient({ schema: inferOrgAdditionalFields<MoyoAuthServer>() }),
       multiSessionClient(),
       ...expoPlugins({ storage: options.storage, scheme: options.scheme }),
     ],

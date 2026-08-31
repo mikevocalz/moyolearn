@@ -256,7 +256,19 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
       // email, so a non-identifying username is the whole credential (doc 06 §2).
       username(),
       // Orgs are born through ops onboarding, never self-serve (doc 06 §10).
-      organization({ allowUserToCreateOrganization: false }),
+      organization({
+        allowUserToCreateOrganization: false,
+        schema: {
+          member: {
+            additionalFields: {
+              educationRole: {
+                type: 'string',
+                required: false,
+              },
+            },
+          },
+        },
+      }),
       // The family shared-device switcher: guardian authenticates once, learner
       // sessions coexist, one tap swaps active (doc 06 §10).
       multiSession(),

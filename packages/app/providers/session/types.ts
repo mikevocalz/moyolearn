@@ -2,6 +2,7 @@
 // SOT: docs/pack/09-screens-first-build-order.md §2
 // SOT-KEYWORDS: session app-session role kind active context mock live
 
+import type { MembershipRole } from '@acme/auth/membership';
 import type { AgeBand } from '../../features/capture/age-band';
 
 export type RoleKind =
@@ -27,7 +28,10 @@ export interface Membership {
   id: string;
   orgId: string;
   orgName: string;
+  /** The person's education/application role — what shell they wear. */
   role: RoleKind;
+  /** The organisation-level authority (owner, manager, scheduler, finance). */
+  organizationRole?: MembershipRole;
 }
 
 export interface AppUser {
