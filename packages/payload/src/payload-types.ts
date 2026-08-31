@@ -82,6 +82,7 @@ export interface Config {
     incidentReports: IncidentReport;
     sessionSummaries: SessionSummary;
     organizations: Organization;
+    enrollments: Enrollment;
     leads: Lead;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -105,6 +106,7 @@ export interface Config {
     incidentReports: IncidentReportsSelect<false> | IncidentReportsSelect<true>;
     sessionSummaries: SessionSummariesSelect<false> | SessionSummariesSelect<true>;
     organizations: OrganizationsSelect<false> | OrganizationsSelect<true>;
+    enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -584,6 +586,40 @@ export interface Organization {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments".
+ */
+export interface Enrollment {
+  id: number;
+  /**
+   * The Better Auth user id of the learner.
+   */
+  learnerAuthId: string;
+  /**
+   * The school or district slug the learner is enrolled in.
+   */
+  orgId: string;
+  /**
+   * The district slug, denormalized for district-level rollups.
+   */
+  districtId?: string | null;
+  /**
+   * Optional program or cohort name.
+   */
+  program?: string | null;
+  status: 'active' | 'inactive';
+  /**
+   * When the learner began enrollment.
+   */
+  enrolledAt: string;
+  /**
+   * When the learner left the program, if applicable.
+   */
+  exitedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "leads".
  */
 export interface Lead {
@@ -688,6 +724,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'organizations';
         value: number | Organization;
+      } | null)
+    | ({
+        relationTo: 'enrollments';
+        value: number | Enrollment;
       } | null)
     | ({
         relationTo: 'leads';
@@ -1007,6 +1047,21 @@ export interface OrganizationsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "enrollments_select".
+ */
+export interface EnrollmentsSelect<T extends boolean = true> {
+  learnerAuthId?: T;
+  orgId?: T;
+  districtId?: T;
+  program?: T;
+  status?: T;
+  enrolledAt?: T;
+  exitedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "leads_select".
  */
 export interface LeadsSelect<T extends boolean = true> {
@@ -1100,6 +1155,7 @@ export interface CollectionQueryWidget {
       | 'incidentReports'
       | 'sessionSummaries'
       | 'organizations'
+      | 'enrollments'
       | 'leads';
     where?:
       | {
@@ -1139,6 +1195,7 @@ export interface ActivityWidget {
           | 'incidentReports'
           | 'sessionSummaries'
           | 'organizations'
+          | 'enrollments'
           | 'leads'
         )[]
       | null;

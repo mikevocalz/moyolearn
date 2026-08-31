@@ -7,7 +7,7 @@
 
 // Generated types are the source of truth for collection shapes (CLAUDE.md
 // §Types). Re-exported so repositories can name them without a deep path.
-export type { Organization, Lead, Media, User } from './src/payload-types';
+export type { Organization, Lead, Media, User, Enrollment } from './src/payload-types';
 
 // The Loop A row shapes, named so the repositories that decode them do not have
 // to reach through a deep path into the generated file. `SessionTranscript` is

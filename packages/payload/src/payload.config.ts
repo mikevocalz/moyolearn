@@ -22,6 +22,7 @@ import { TutorSessions } from './collections/TutorSessions';
 import { StudentModelFacts } from './collections/StudentModelFacts';
 import { Leads } from './collections/Leads';
 import { Organizations } from './collections/Organizations';
+import { Enrollments } from './collections/Enrollments';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverURL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -134,6 +135,10 @@ export default buildConfig({
     // on purpose: business data and learning data never blend, and the schema
     // is where that wall is real rather than a convention.
     Organizations,
+    // The canonical learner-to-organization roster. This is the bridge that
+    // lets institutional reports scope tutor sessions and learning data to a
+    // school or district without adding orgId to those learner-only tables.
+    Enrollments,
     Leads,
   ],
   db: postgresAdapter({

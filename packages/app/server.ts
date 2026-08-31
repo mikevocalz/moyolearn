@@ -54,6 +54,11 @@ export {
   type LoadOrgMembers,
   type OrgPeople,
 } from './features/institution/people.service';
+export {
+  loadEnrollmentsByOrg,
+  type LoadEnrollments,
+} from './features/enrollment/enrollment.service';
+export type { Enrollment } from './features/enrollment/enrollment.types';
 export type {
   DerivedFact,
   MasteryFact,
