@@ -27,6 +27,7 @@ export function TutorTodayContent() {
             {name}
           </Heading>
         </Section>
+        <TWText className="text-label text-grade">Example schedule</TWText>
       </FadeIn>
 
       {next ? (
@@ -51,7 +52,7 @@ export function TutorTodayContent() {
               <View className="flex-row gap-element pt-1">
                 <PressScale
                   className="flex-1 items-center rounded-md bg-primary px-4 py-2"
-                  onPress={() => { /* Wave 3: start session */ }}
+                  onPress={() => router.push('/tutor')}
                 >
                   <TWText className="font-semibold text-on-primary">Start session</TWText>
                 </PressScale>
@@ -77,7 +78,7 @@ export function TutorTodayContent() {
                   key={session.id}
                   className="w-full gap-1 rounded-card border-2 border-border bg-surface-raised p-3 shadow-card"
                   outerClassName="w-full"
-                  onPress={() => { /* Wave 3: open session */ }}
+                  onPress={() => router.push('/tutor')}
                 >
                   <View className="flex-row items-center justify-between">
                     <TWText className="text-base font-semibold text-text">{session.studentName}</TWText>

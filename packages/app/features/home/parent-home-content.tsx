@@ -30,6 +30,7 @@ export function ParentHomeContent() {
             {name}
           </Heading>
         </Section>
+        <TWText className="text-label text-grade">Example family</TWText>
       </FadeIn>
 
       {/* Child summary cards */}

@@ -3,7 +3,7 @@
 // SOT: docs/pack/04-screen-briefs.md §S7
 // SOT-KEYWORDS: student home learner continue next session today plan improvement
 
-import { ArrowRight, FileUp, Star } from '@acme/ui/icons';
+import { ArrowRight, Check, FileUp, Star } from '@acme/ui/icons';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, Card, Heading, PressScale, Text, FadeIn } from '@acme/ui';
 import { useRouter } from 'solito/navigation';
@@ -23,6 +23,7 @@ export function StudentHomeContent() {
             {user?.name?.split(' ')[0] ?? 'there'}
           </Heading>
         </Section>
+        <TWText className="text-label text-grade">Example day</TWText>
       </FadeIn>
 
       {/* Continue learning — resumes the skill, first tap lands in the work */}
@@ -121,5 +122,5 @@ export function StudentHomeContent() {
 }
 
 function CheckIcon() {
-  return <View className="h-3 w-3 rounded-full bg-on-primary" />;
+  return <Check size={14} className="text-on-primary" />;
 }
