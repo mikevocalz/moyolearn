@@ -65,6 +65,7 @@ function buildDemoEvents(at: At): ScheduleEvent[] {
   // Alan — a single short lesson, to prove the minimum-height clamp.
   { id: 't1', resourceId: 'priya', title: 'Check-in', start: at(10), end: at(10, 15), kind: 'lesson' },
   { id: 't2', resourceId: 'priya', title: 'Ensemble', start: at(14), end: at(16), kind: 'lesson' },
+  { id: 'c1', resourceId: 'priya', title: 'Conference', start: at(16), end: at(17), kind: 'conference' },
 
   // Katherine — a straightforward afternoon.
   { id: 'k1', resourceId: 'kenji', title: 'Orbital mechanics', start: at(13), end: at(15), kind: 'lesson' },

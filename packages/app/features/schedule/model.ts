@@ -27,7 +27,7 @@ export interface Resource {
   accent: ResourceAccent;
 }
 
-export type ScheduleEventKind = 'lesson' | 'block' | 'break';
+export type ScheduleEventKind = 'lesson' | 'block' | 'break' | 'conference';
 
 export interface ScheduleEvent {
   id: string;

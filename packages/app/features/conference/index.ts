@@ -2,6 +2,7 @@
 // SOT: Conference Room brief
 // SOT-KEYWORDS: conference feature barrel export types policy
 
+export { ConferenceHubScreen } from './hub-screen.tsx';
 export {
   admitStudent,
   admitParticipant,

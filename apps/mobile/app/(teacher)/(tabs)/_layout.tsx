@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Calendar, FileText, GraduationCap, Home, Users } from '@acme/ui/icons';
+import { Calendar, FileText, GraduationCap, Home, Users, Video } from '@acme/ui/icons';
 import { ShellHeader } from '../../../components/ShellHeader';
 import { ShellTabBar, type ShellTabItem } from '../../../components/ShellTabBar';
 
@@ -13,6 +13,7 @@ const ITEMS: ShellTabItem[] = [
   { name: 'classes', label: 'Classes', Icon: Users },
   { name: 'assign', label: 'Assign', Icon: FileText },
   { name: 'calendar', label: 'Calendar', Icon: Calendar },
+  { name: 'conference', label: 'Conferences', Icon: Video },
   { name: 'students', label: 'Students', Icon: GraduationCap },
 ];
 
@@ -21,6 +22,7 @@ const TITLES: Record<string, string> = {
   '/classes': 'Classes',
   '/assign': 'Assign',
   '/calendar': 'Calendar',
+  '/conference': 'Conferences',
   '/students': 'Students',
 };
 
@@ -33,6 +35,7 @@ export default function TeacherTabs() {
       tabBar={(props) => <ShellTabBar {...props} items={ITEMS} />}
     >
       <Tabs.Screen name="teacher-home" options={{ title: 'Home' }} />
+      <Tabs.Screen name="conference" options={{ title: 'Conferences' }} />
     </Tabs>
   );
 }
