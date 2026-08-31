@@ -20,7 +20,7 @@ import { TeacherOnboardingContent } from '../teacher/teacher-onboarding-content'
 import { isOnboardingFlow, type OnboardingFlow } from './flow';
 import { voiceBandFor } from '../../capture/age-band';
 import { useSessionStore } from '../../../providers/session/store';
-import { API_URL } from '../../tutor/tutor.store';
+import { API_URL } from '../../tutor/tutor-constants.ts';
 
 const NEXT_PATH: Record<OnboardingFlow, string> = {
   // Doc 36 §2: the learner lands on TODAY with one action (Snap), not inside a

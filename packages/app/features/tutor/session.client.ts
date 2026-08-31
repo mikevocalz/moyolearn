@@ -10,7 +10,7 @@
 // whoever the cookie says you are, resolved server-side from `ctx`.
 // SOT: packages/app/features/tutor/session.types.ts
 // SOT-KEYWORDS: tutor session client fetch resume cross-device sync message attachment
-import { API_URL } from './tutor.store.ts';
+import { API_URL } from './tutor-constants.ts';
 import type { StoredAttachment, StoredMessage, TutorSessionSnapshot } from './session.types.ts';
 
 async function readJson<T>(response: Response): Promise<T | null> {

@@ -55,7 +55,7 @@ export interface CoachTurnInput {
  * retracted text on a child's screen.
  */
 export type CoachEvent =
-  | { kind: 'chunk'; text: string }
+  | { kind: 'chunk'; text: string; voice?: { tone: string; tag: string } }
   | { kind: 'replace'; text: string }
   /**
    * A safety verdict stopped this turn. Terminal, and now three things:

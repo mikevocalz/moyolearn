@@ -1,11 +1,12 @@
 'use client';
 import { create } from 'zustand';
-import { countImages, MAX_TUTOR_IMAGES, type TutorAttachment, type TutorMessage } from '@acme/ui';
+import { countImages, MAX_TUTOR_IMAGES, type TutorAttachment, type TutorMessage , TutorStageState } from '@acme/ui';
 import { streamFetch } from './stream-fetch';
 import { fetchSession, postMessage } from './session.client.ts';
-import type { TutorStageState } from '@acme/ui';
 import { traceAttempt, DEFAULT_TRACING, inferSkillTitle } from '@acme/student-model/pure';
 import { useCaptureStore } from '../capture';
+import { API_URL } from './tutor-constants.ts';
+import { TutorAudioQueue } from './tutor-audio.ts';
 import type { CoachEvent } from './coach.service';
 
 interface TutorState {
@@ -86,11 +87,11 @@ const DONE_FOR_TODAY: TutorStageState = {
   summary: { title: 'Great work today', masteryDelta: 0 },
 };
 
-/** One definition, imported by the screen — two would drift in one deploy. */
-export const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ??
-  process.env.EXPO_PUBLIC_APP_URL ??
-  'http://localhost:3001';
+/**
+ * Module-level audio queue for the live tutor voice. It is not React state so
+ * it survives re-renders and is owned by the store, not a component.
+ */
+const audioQueue = new TutorAudioQueue();
 
 /**
  * Reads the coach route's SSE frames. Written by hand rather than with
@@ -388,6 +389,11 @@ export const useTutorStore = create<TutorState>((set) => ({
       void postMessage({ sessionId, role: 'tutor', text });
     };
 
+    // A new coaching turn starts; anything still queued for the previous turn
+    // is now stale and should be stopped as soon as the queue tracks the active
+    // source for barge-in.
+    audioQueue.stop();
+
     let spoken = '';
     try {
       const response = await streamFetch(`${API_URL}/api/tutor/coach`, {
@@ -411,19 +417,25 @@ export const useTutorStore = create<TutorState>((set) => ({
         if (event.kind === 'chunk') {
           spoken += event.text;
           set({ state: { kind: 'speaking', utterance: { text: spoken } } });
+          if (event.voice) {
+            audioQueue.enqueue(event.text, event.voice);
+          }
           continue;
         }
         if (event.kind === 'replace') {
+          audioQueue.stop();
           // A retraction, not an append: the plane withdrew what came before it.
           set({ state: { kind: 'speaking', utterance: { text: event.text } } });
           remember(event.text);
           return;
         }
         if (event.kind === 'blocked') {
+          audioQueue.stop();
           set({ state: { kind: 'paused', since: Date.now() } });
           return;
         }
         if (event.kind === 'unavailable') {
+          audioQueue.stop();
           // Retryable, not fail-closed. `paused` is the plane's terminal state
           // and it locks the composer; a missing key or a vendor blip must not
           // put a child in it.
@@ -435,6 +447,7 @@ export const useTutorStore = create<TutorState>((set) => ({
         return;
       }
     } catch {
+      audioQueue.stop();
       // A transport failure is retryable. Only a Safety Plane decision earns the
       // terminal paused state.
       set({ state: { kind: 'retry' } });

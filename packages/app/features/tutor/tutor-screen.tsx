@@ -15,7 +15,9 @@ import { TutorStage, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { useCaptureStore } from '../capture';
 import { buttonSizeForBand, type AgeBand } from '../capture';
-import { useTutorStore, API_URL } from './tutor.store';
+import { useAppSession } from '../../providers/session';
+import { useTutorStore } from './tutor.store';
+import { API_URL } from './tutor-constants.ts';
 import { pickNoteImage } from '../schedule/pick-note-image';
 import { pickFile } from '../editor/pick-file';
 import { useAudioStore } from '../editor/audio.store.ts';
@@ -29,7 +31,12 @@ export interface TutorScreenProps {
   ageBand?: AgeBand;
 }
 
-export function TutorScreen({ ageBand = 'teen' }: TutorScreenProps) {
+export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
+  const { activeContext } = useAppSession();
+  // Resolve the learner's presentation band from the session before rendering.
+  // No implicit `teen` fallback: an unknown band is treated as the adult (9-12)
+  // register so a missed context does not hand a high-schooler a childish shell.
+  const ageBand = ageBandProp ?? activeContext?.gradeBand ?? 'adult';
   const router = useRouter();
   const problem = useCaptureStore((s) => s.problem);
   const setProblem = useCaptureStore((s) => s.setProblem);
