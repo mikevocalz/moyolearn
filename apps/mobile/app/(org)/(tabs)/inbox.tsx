@@ -1,3 +1,3 @@
-import { NotificationsScreen } from "@acme/app";
+import { NotificationsScreen } from '@acme/app';
 
 export default NotificationsScreen;
