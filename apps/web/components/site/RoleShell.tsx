@@ -10,8 +10,10 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import Image from 'next/image';
 import { useRouter, usePathname } from 'solito/navigation';
 import { Link } from 'solito/link';
+import Image from 'next/image';
 import type { AccentRole } from '@acme/theme';
 import {
   useAppSession,
@@ -276,7 +278,7 @@ function HotShell({
             href="/"
             onClick={close}
             aria-label="Home"
-            className="h-9 w-[136px] rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+            className="h-9 w-34 rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
           >
             <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
           </Link>
@@ -364,13 +366,13 @@ function HotShell({
 function BrandLockup({ orgBranding }: { orgBranding?: OrgBranding | null }) {
   if (!orgBranding) {
     return (
-      <View className="h-9 w-[136px]">
+      <View className="h-9 w-34">
         <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
       </View>
     );
   }
   return (
-    <View className="h-9 max-w-[136px] flex-row items-center gap-2 px-1">
+    <View className="h-9 max-w-34 flex-row items-center gap-2 px-1">
       <View className="h-8 w-8 items-center justify-center rounded-md bg-surface-sunken">
         <TWText className="text-sm font-bold text-text">
           {orgBranding.name[0]?.toUpperCase() ?? 'M'}
@@ -390,7 +392,7 @@ function BrandMark({ orgBranding }: { orgBranding?: OrgBranding | null }) {
     );
   }
   if (orgBranding.logoUrl) {
-    return <img src={orgBranding.logoUrl} alt="" className="h-8 w-8 rounded-md object-contain" />;
+    return <Image src={orgBranding.logoUrl} alt="" width={32} height={32} className="h-8 w-8 rounded-md object-contain" unoptimized />;
   }
   return (
     <View className="h-8 w-8 items-center justify-center rounded-md bg-surface-sunken">
