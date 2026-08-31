@@ -1,14 +1,12 @@
-// Next.js middleware — enforces real Better Auth sessions on learner surfaces.
+// Next.js proxy — enforces real Better Auth sessions on learner surfaces.
 //
-// Two things here are load-bearing and both were learned by the whole app
-// returning 500 on every route. Middleware defaults to the EDGE runtime, where
-// `node:util/types` does not exist — and Better Auth's pg/kysely stack reaches
-// it — so this file must declare the nodejs runtime. And the import has to be
-// dynamic: the `!== 'live'` check below is a runtime guard, but a static import
-// is evaluated when the module loads, so in mock mode the app still paid the
-// cost of loading an auth stack it had already decided not to use.
+// This proxy runs on the Node.js runtime by default in Next 16, so the dynamic
+// import is the remaining load-bearing piece: the `!== 'live'` check below is a
+// runtime guard, but a static import is evaluated when the module loads, so in
+// mock mode the app still paid the cost of loading an auth stack it had already
+// decided not to use.
 // SOT: docs/pack/06-auth-onboarding-spec.md §7
-// SOT-KEYWORDS: middleware auth session redirect login protected operation runtime nodejs edge
+// SOT-KEYWORDS: proxy auth session redirect login protected operation
 import { NextResponse, type NextRequest } from 'next/server';
 
 const PUBLIC_PATHS = [
@@ -21,7 +19,7 @@ const PUBLIC_PATHS = [
   '/favicon.ico',
 ];
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (process.env.NEXT_PUBLIC_AUTH_MODE !== 'live') return NextResponse.next();
 
   const isPublic = PUBLIC_PATHS.some((prefix) =>
@@ -44,6 +42,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  runtime: 'nodejs',
   matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
 };

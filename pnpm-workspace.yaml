@@ -79,7 +79,7 @@ catalog:
   sonner-native: 0.27.0
 
   # web
-  next: 16.3.1
+  next: 16.3.3
   nextjs-toploader: 3.9.17
 
   # styling (Uniwind — Tailwind 4 only; uniwind pins @tailwindcss/node to the
@@ -194,7 +194,7 @@ catalog:
   "@types/react-dom": ^19.2.3
   eslint: ^9.39.2
   eslint-config-expo: ~57.0.1
-  eslint-config-next: 16.3.1
+  eslint-config-next: 16.3.3
   "@eslint/eslintrc": ^3.3.6
   storybook: 10.5.8
   "@storybook/react-vite": 10.5.8
