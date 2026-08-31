@@ -65,6 +65,14 @@ export const Organizations: CollectionConfig = {
       defaultValue: 'tutoring',
       options: ['tutoring', 'school', 'district'],
     },
+    {
+      name: 'district',
+      type: 'relationship',
+      relationTo: 'organizations',
+      hasMany: false,
+      filterOptions: () => ({ kind: { equals: 'district' } }),
+      admin: { description: 'The district this school belongs to. Only valid for schools.' },
+    },
     /*
       A URL rather than an upload relationship. `Media` is `upload: true` with no
       storage adapter, so it writes to local disk — which survives neither a

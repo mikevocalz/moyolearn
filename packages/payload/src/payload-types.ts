@@ -571,6 +571,10 @@ export interface Organization {
    */
   slug: string;
   kind: 'tutoring' | 'school' | 'district';
+  /**
+   * The district this school belongs to. Only valid for schools.
+   */
+  district?: (number | null) | Organization;
   logoUrl?: string | null;
   logoAspect?: ('square' | 'wide') | null;
   brandAccent?: ('ember' | 'gold' | 'forest' | 'sky' | 'rose') | null;
@@ -993,6 +997,7 @@ export interface OrganizationsSelect<T extends boolean = true> {
   name?: T;
   slug?: T;
   kind?: T;
+  district?: T;
   logoUrl?: T;
   logoAspect?: T;
   brandAccent?: T;

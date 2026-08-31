@@ -103,11 +103,13 @@ export const loadOrgKind: LoadOrgKind = async (ctx) => {
  * after the caller has already passed the `district/schools/view` institution
  * gate, so it uses `overrideAccess: true`.
  */
-export const loadSchools: LoadSchools = async () => {
+export const loadSchools: LoadSchools = async (districtId) => {
   const payload = await getPayload({ config });
   const { docs } = await payload.find({
     collection: 'organizations',
-    where: { kind: { equals: 'school' } },
+    where: {
+      and: [{ kind: { equals: 'school' } }, { district: { equals: districtId } }],
+    },
     limit: 100,
     depth: 0,
     overrideAccess: true,

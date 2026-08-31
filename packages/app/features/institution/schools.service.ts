@@ -12,15 +12,14 @@ import { protectedOperation } from '../../core/protected-operation.ts';
 import type { OrgBranding } from '../org/org.service.ts';
 
 /** Repository port — the caller provides the Payload adapter. */
-export type LoadSchools = () => Promise<OrgBranding[]>;
+export type LoadSchools = (districtId: string) => Promise<OrgBranding[]>;
 
 /**
- * Loads all school organizations for a district admin.
+ * Loads the school organizations that belong to the current district.
  *
- * The list is not yet scoped to the calling district because the Organizations
- * collection does not currently carry a `districtId` (doc 01 §auth mapping
- * deliberately uses a single tenant key). This returns the global school list;
- * a tenant-scoped filter should be added once that relationship exists.
+ * The service receives the resolved district from `ctx.orgId` and passes it to
+ * the repository so the list is tenant-scoped. The permission gate is
+ * `district/schools/view`.
  */
 export async function loadDistrictSchools(
   loadSchools: LoadSchools,
@@ -30,7 +29,7 @@ export async function loadDistrictSchools(
   return protectedOperation(
     authInstance,
     headers,
-    async () => loadSchools(),
+    async (ctx) => loadSchools(ctx.orgId ?? ''),
     {
       requires: 'practise',
       requiresInstitution: { scope: 'district', resource: 'schools', action: 'view' },
