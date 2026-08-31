@@ -10,7 +10,7 @@ import 'server-only';
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import type { Organization } from '@acme/payload';
-import type { LoadOrgBranding, LoadOrgKind, LoadTenantOrgId } from '@acme/app/server';
+import type { LoadOrgBranding, LoadOrgKind, LoadSchools, LoadTenantOrgId } from '@acme/app/server';
 import { ORGANIZATION_KINDS, type OrganizationKind } from '@acme/app/server';
 
 export const loadOrgBranding: LoadOrgBranding = async (slug) => {
@@ -96,4 +96,31 @@ export const loadOrgKind: LoadOrgKind = async (ctx) => {
   const kind = org?.kind as OrganizationKind | undefined;
   if (!kind || !ORGANIZATION_KINDS.includes(kind)) return null;
   return kind;
+};
+
+/**
+ * Lists all school organizations. This is called inside `protectedOperation`
+ * after the caller has already passed the `district/schools/view` institution
+ * gate, so it uses `overrideAccess: true`.
+ */
+export const loadSchools: LoadSchools = async () => {
+  const payload = await getPayload({ config });
+  const { docs } = await payload.find({
+    collection: 'organizations',
+    where: { kind: { equals: 'school' } },
+    limit: 100,
+    depth: 0,
+    overrideAccess: true,
+    select: { slug: true, name: true, logoUrl: true, logoAspect: true, brandAccent: true, brandTheme: true },
+  });
+  return (docs as Pick<Organization, 'slug' | 'name' | 'logoUrl' | 'logoAspect' | 'brandAccent' | 'brandTheme'>[]).map(
+    (org) => ({
+      slug: org.slug,
+      name: org.name,
+      logoUrl: org.logoUrl ?? undefined,
+      logoAspect: org.logoAspect ?? undefined,
+      brandAccent: org.brandAccent ?? undefined,
+      brandTheme: org.brandTheme ?? undefined,
+    }),
+  );
 };

@@ -45,6 +45,10 @@ export {
   loadSchoolOverview,
   type InstitutionOverviewOptions,
 } from './features/institution/institution.service';
+export {
+  loadDistrictSchools,
+  type LoadSchools,
+} from './features/institution/schools.service';
 export type {
   DerivedFact,
   MasteryFact,

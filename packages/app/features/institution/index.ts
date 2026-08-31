@@ -4,6 +4,7 @@
 
 export { can, allowedActions, requirePermission, InstitutionPermissionDenied } from './institution.policy.ts';
 export { InstitutionPlaceholderScreen } from './placeholder-screen.tsx';
+export { SchoolListScreen } from './schools-list-screen.tsx';
 export type {
   InstitutionAction,
   InstitutionResource,
