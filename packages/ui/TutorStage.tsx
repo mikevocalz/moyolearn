@@ -54,6 +54,12 @@ export interface SessionSummary {
   masteryDelta: number;
 }
 
+/**
+ * Natalie's presentation. These are display values; they do not change the
+ * model, voice, captions, or learning policy.
+ */
+export type TutorView = 'visible' | 'compact' | 'hidden';
+
 /** The ten-state contract. Kinds are drawn only when the canvas has signed off. */
 export type TutorStageState =
   | { kind: 'presence' }                        // §3.1 first paint, 2D mark
@@ -72,6 +78,7 @@ export interface TutorStageProps {
   title: string;
   childName?: string;
   questionNumber?: number;
+  tutorView?: TutorView;
   captionsEnabled?: boolean;
   buttonSize?: 'sm' | 'md' | 'lg' | 'xl';
   onBack?: () => void;
@@ -146,6 +153,7 @@ interface StateBodyProps {
   state: TutorStageState;
   childName?: string;
   questionNumber?: number;
+  tutorView?: TutorView;
   buttonSize?: 'sm' | 'md' | 'lg' | 'xl';
   onTryIt?: () => void;
   onNextHint?: () => void;
@@ -158,6 +166,7 @@ function StateBody({
   state,
   childName,
   questionNumber,
+  tutorView = 'compact',
   buttonSize = 'md',
   onTryIt,
   onNextHint,
@@ -165,11 +174,12 @@ function StateBody({
   onBackToPlan,
   onRetry,
 }: StateBodyProps) {
+  const avatarSize = tutorView === 'visible' ? 'xl' : tutorView === 'compact' ? 'md' : undefined;
   switch (state.kind) {
     case 'presence':
       return (
         <View className="w-full items-center gap-stack">
-          <Avatar name="Natalie" size="xl" />
+          {avatarSize ? <Avatar name="Natalie" size={avatarSize} /> : null}
           <Text className="max-w-content-prose text-center font-sans text-body text-text">
             {/*
                 NO PLACEHOLDER. This read "We were on question ..." — literally
@@ -316,6 +326,7 @@ export function TutorStage({
   title,
   childName,
   questionNumber,
+  tutorView = 'compact',
   captionsEnabled,
   buttonSize,
   onBack,
@@ -388,6 +399,7 @@ export function TutorStage({
           state={state}
           childName={childName}
           questionNumber={questionNumber}
+          tutorView={tutorView}
           buttonSize={buttonSize}
           onTryIt={onTryIt}
           onNextHint={onNextHint}
