@@ -11,7 +11,7 @@
 import { useEffect, useRef } from 'react';
 import { Avatar } from '@acme/ui';
 import type { TutorView } from '@acme/ui';
-import { createTutorStage } from '@acme/avatar';
+import { createTutorStage, type TutorStage } from '@acme/avatar';
 
 export interface TutorAvatarProps {
   tutorView: TutorView;
@@ -22,13 +22,21 @@ export function TutorAvatar({ tutorView, isSpeaking }: TutorAvatarProps) {
   // Keep the controller stable for the session. `presence-2d` is the only
   // guaranteed-safe opening tier; higher tiers are introduced by the device
   // capability manager once it has measured.
-  const stage = useRef(createTutorStage({ tier: 'presence-2d' })).current;
+  const stageRef = useRef<TutorStage | null>(null);
 
   useEffect(() => {
-    stage.setSpeaking(isSpeaking);
-  }, [stage, isSpeaking]);
+    if (stageRef.current === null) {
+      stageRef.current = createTutorStage({ tier: 'presence-2d' });
+    }
+  }, []);
 
   useEffect(() => {
+    stageRef.current?.setSpeaking(isSpeaking);
+  }, [isSpeaking]);
+
+  useEffect(() => {
+    const stage = stageRef.current;
+    if (!stage) return;
     let raf: number;
     const tick = () => {
       stage.tick(performance.now());
@@ -36,7 +44,7 @@ export function TutorAvatar({ tutorView, isSpeaking }: TutorAvatarProps) {
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-  }, [stage]);
+  }, []);
 
   if (tutorView === 'hidden') return null;
   return <Avatar name="Natalie" size={tutorView === 'visible' ? 'xl' : 'md'} />;
