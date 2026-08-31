@@ -9,7 +9,7 @@
 
 import { useEffect, useRef } from 'react';
 import { Avatar } from '@acme/ui';
-import type { TutorView } from '@acme/ui';
+import type { TutorPresencePreference } from '@acme/ui';
 import {
   createFaceBus,
   createTutorStage,
@@ -21,7 +21,7 @@ import {
 import { audioQueue } from './tutor-audio';
 
 export interface TutorAvatarProps {
-  tutorView: TutorView;
+  tutorPresence: TutorPresencePreference;
   isSpeaking: boolean;
 }
 
@@ -34,7 +34,7 @@ const speechDriver: SpeechDriver = {
   scheduledOnsetAt: 0,
 };
 
-export function TutorAvatar({ tutorView, isSpeaking }: TutorAvatarProps) {
+export function TutorAvatar({ tutorPresence, isSpeaking }: TutorAvatarProps) {
   const stageRef = useRef<TutorStage | null>(null);
   const faceBusRef = useRef<FaceBus | null>(null);
 
@@ -70,6 +70,8 @@ export function TutorAvatar({ tutorView, isSpeaking }: TutorAvatarProps) {
     return () => cancelAnimationFrame(raf);
   }, []);
 
-  if (tutorView === 'hidden') return null;
-  return <Avatar name="Natalie" size={tutorView === 'visible' ? 'xl' : 'md'} />;
+  // Audio-only mode intentionally bypasses the face bus and the 2D/3D mark.
+  // The stage still renders captions and state chips as the full interface.
+  if (tutorPresence === 'audio-only') return null;
+  return <Avatar name="Natalie" size={tutorPresence === 'visible' ? 'xl' : 'md'} />;
 }

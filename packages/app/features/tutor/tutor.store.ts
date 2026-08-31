@@ -1,10 +1,17 @@
 'use client';
 import { create } from 'zustand';
-import { countImages, MAX_TUTOR_IMAGES, type TutorAttachment, type TutorMessage , TutorStageState } from '@acme/ui';
+import {
+  countImages,
+  MAX_TUTOR_IMAGES,
+  type TutorAttachment,
+  type TutorMessage,
+  TutorStageState,
+  type TutorPresencePreference,
+} from '@acme/ui';
 import { streamFetch } from './stream-fetch';
 import { fetchSession, postMessage } from './session.client.ts';
 import { traceAttempt, DEFAULT_TRACING, inferSkillTitle } from '@acme/student-model/pure';
-import { API_URL, type TutorView } from './tutor-constants.ts';
+import { API_URL } from './tutor-constants.ts';
 import { audioQueue } from './tutor-audio.ts';
 import type { CoachEvent } from './coach.service';
 
@@ -71,9 +78,9 @@ interface TutorState {
   /** Streams a coaching turn. Owns everything the learner sees. */
   coach: (message: string) => Promise<void>;
   /** Natalie's display presentation. Does not affect the model, voice, or captions. */
-  tutorView: TutorView;
-  /** Override the recommended default (e.g. the learner chose Hide Natalie). */
-  setTutorView: (view: TutorView) => void;
+  tutorPresence: TutorPresencePreference;
+  /** Override the recommended default (e.g. the learner chose Voice only). */
+  setTutorPresence: (presence: TutorPresencePreference) => void;
 }
 
 /**
@@ -132,7 +139,7 @@ export const useTutorStore = create<TutorState>((set) => ({
   problem: '',
   attachments: [],
   messages: [],
-  tutorView: 'compact' as TutorView,
+  tutorPresence: 'compact' as TutorPresencePreference,
   sessionId: null,
   skillTitle: '',
   mastery: DEFAULT_TRACING.prior,
@@ -485,5 +492,5 @@ export const useTutorStore = create<TutorState>((set) => ({
       attemptsBySkill: { ...s.attemptsBySkill, [s.skillTitle]: nextAttempts },
     };
   }),
-  setTutorView: (view) => set({ tutorView: view }),
+  setTutorPresence: (presence) => set({ tutorPresence: presence }),
 }));

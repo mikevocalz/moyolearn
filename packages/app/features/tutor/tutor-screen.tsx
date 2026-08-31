@@ -11,13 +11,13 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'solito/navigation';
-import { TutorStage, Text } from '@acme/ui';
+import { TutorStage, Text, useSizeClass, useReducedMotion, type TutorPresencePreference } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { useCaptureStore } from '../capture';
 import { buttonSizeForBand, type AgeBand } from '../capture';
 import { useAppSession } from '../../providers/session';
 import { useTutorStore } from './tutor.store';
-import { API_URL, recommendedTutorViewFor } from './tutor-constants.ts';
+import { API_URL, recommendedTutorPresenceFor } from './tutor-constants.ts';
 import { TutorAvatar } from './tutor-avatar';
 import { pickNoteImage } from '../schedule/pick-note-image';
 import { pickFile } from '../editor/pick-file';
@@ -41,17 +41,39 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   const router = useRouter();
   const problem = useCaptureStore((s) => s.problem);
   const setProblem = useCaptureStore((s) => s.setProblem);
-  const { state, start, coach, hintDepth, attachments, addAttachment, removeAttachment, setAttachmentTranscript, messages, say, hydrate, sessionId, tutorView, setTutorView } =
-    useTutorStore();
+  const {
+    state,
+    start,
+    coach,
+    hintDepth,
+    attachments,
+    addAttachment,
+    removeAttachment,
+    setAttachmentTranscript,
+    messages,
+    say,
+    hydrate,
+    sessionId,
+    tutorPresence,
+    setTutorPresence,
+  } = useTutorStore();
   const [loading, setLoading] = useState(false);
+  const sizeClass = useSizeClass();
+  const reducedMotion = useReducedMotion();
 
   useEffect(() => {
     start(problem);
   }, [problem, start]);
 
-  useEffect(() => {
-    setTutorView(recommendedTutorViewFor(ageBand));
-  }, [ageBand, setTutorView]);
+  const base = recommendedTutorPresenceFor(ageBand);
+  const resolvedTutorPresence: TutorPresencePreference =
+    tutorPresence === 'auto'
+      ? reducedMotion
+        ? 'audio-only'
+        : sizeClass === 'compact' && base === 'visible'
+          ? 'compact'
+          : base
+      : tutorPresence;
 
   /*
     RESUME BEFORE ANYTHING ELSE.
@@ -426,9 +448,9 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       state={state}
       title="Natalie"
       childName="there"
-      tutorView={tutorView}
-      onTutorViewChange={setTutorView}
-      avatar={<TutorAvatar tutorView={tutorView} isSpeaking={state.kind === 'speaking'} />}
+      tutorPresence={resolvedTutorPresence}
+      onTutorPresenceChange={setTutorPresence}
+      avatar={<TutorAvatar tutorPresence={resolvedTutorPresence} isSpeaking={state.kind === 'speaking'} />}
       captionsEnabled
       buttonSize={buttonSizeForBand(ageBand)}
       onBack={router.back}

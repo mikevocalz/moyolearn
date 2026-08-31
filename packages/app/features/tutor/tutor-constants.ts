@@ -6,6 +6,7 @@
 // SOT-KEYWORDS: tutor api url constants base tutor view presentation
 
 import type { AgeBand } from '../capture/age-band.ts';
+import type { TutorPresencePreference } from '@acme/ui';
 
 /** The tutor API base for the current platform. */
 export const API_URL =
@@ -14,16 +15,11 @@ export const API_URL =
   'http://localhost:3001';
 
 /**
- * Natalie's presentation. These are display values; they do not change the
- * model, voice, captions, or learning policy.
+ * The baseline presentation for the learner's age band when no explicit
+ * preference is set. Screen size, reduced motion, and device state are resolved
+ * at the screen level; this is only the starting register.
  */
-export type TutorView = 'visible' | 'compact' | 'hidden';
-
-/**
- * Doc 23 §3's default presentation by age band. A child can override this, but
- * the room starts here.
- */
-export function recommendedTutorViewFor(ageBand: AgeBand): TutorView {
+export function recommendedTutorPresenceFor(ageBand: AgeBand): TutorPresencePreference {
   switch (ageBand) {
     case 'young':
     case 'child':
@@ -32,6 +28,7 @@ export function recommendedTutorViewFor(ageBand: AgeBand): TutorView {
       return 'compact';
     case 'adult':
     default:
-      return 'hidden';
+      // 9-12 and unknown bands are treated as the adult register.
+      return 'compact';
   }
 }
