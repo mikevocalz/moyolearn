@@ -157,7 +157,7 @@ Requirements are numbered and testable; **must** = v1 launch-blocking unless a p
 
 ## 8 · Non-goals (v1 — explicit)
 1. **No social features** between learners (no DMs, no feeds, no friend graphs) — eliminates the grooming/moderation surface entirely.
-2. **No voice input v1** — mic capture of the child's speech is a separate PRD; direction is on-device STT so children's audio (personal info under amended COPPA) never leaves the device.
+2. **On-device voice input v1** — mic capture of the child's speech is supported only through on-device STT (Whisper via ExecuTorch on native, `@huggingface/transformers` on web). Children's audio never leaves the device, satisfying the COPPA/FERPA posture. A separate PRD may extend the feature later.
 3. **No emotion recognition of minors** — permanent, not deferred.
 4. **No answer mode.** Not a toggle, not a premium tier. Ever.
 5. **No EU launch** — US market and US compliance framing only.
