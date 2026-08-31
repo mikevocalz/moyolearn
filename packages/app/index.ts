@@ -345,6 +345,7 @@ export {
   useSetContext,
   RoleSwitcher,
   ContextSwitcher,
+  ScopeSwitcher,
   shellForRole,
   availableRoles,
   resolveBootRole,

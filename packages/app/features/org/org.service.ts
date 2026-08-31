@@ -26,6 +26,8 @@ export interface OrgBranding {
   logoAspect?: 'square' | 'wide';
   /** A palette token name, never a colour — see the Organizations collection. */
   brandAccent?: string;
+  /** A curated Moyo surface token for the tenant shell. */
+  brandTheme?: string;
 }
 
 /** Repository port — the caller provides the Payload adapter. */

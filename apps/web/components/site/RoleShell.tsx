@@ -21,8 +21,11 @@ import {
   AVATAR_URI,
   ContextSwitcher,
   RoleSwitcher,
+  ScopeSwitcher,
+  ThemeProvider,
+  resolveTenantTheme,
 } from '@acme/app';
-import type { ActiveContextKind, Membership, AppUser } from '@acme/app';
+import type { ActiveContextKind, Membership, AppUser, OrgBranding } from '@acme/app';
 import { DashboardShell, LoadingSkeleton, Menu, MoyoLearnLogo, RoleScope } from '@acme/ui';
 import type { MenuAction, NavGroup } from '@acme/ui';
 import { Header, Main, Nav, Pressable, View, Text as TWText } from '@acme/ui/tw';
@@ -358,12 +361,54 @@ function HotShell({
   );
 }
 
+function BrandLockup({ orgBranding }: { orgBranding?: OrgBranding | null }) {
+  if (!orgBranding) {
+    return (
+      <View className="h-9 w-[136px]">
+        <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
+      </View>
+    );
+  }
+  return (
+    <View className="h-9 max-w-[136px] flex-row items-center gap-2 px-1">
+      <View className="h-8 w-8 items-center justify-center rounded-md bg-surface-sunken">
+        <TWText className="text-sm font-bold text-text">
+          {orgBranding.name[0]?.toUpperCase() ?? 'M'}
+        </TWText>
+      </View>
+      <TWText className="truncate text-base font-semibold text-text">{orgBranding.name}</TWText>
+    </View>
+  );
+}
+
+function BrandMark({ orgBranding }: { orgBranding?: OrgBranding | null }) {
+  if (!orgBranding) {
+    return (
+      <View className="h-8 w-8 overflow-hidden rounded-md">
+        <MoyoLearnLogo accessibilityLabel="Moyo" />
+      </View>
+    );
+  }
+  if (orgBranding.logoUrl) {
+    return <img src={orgBranding.logoUrl} alt="" className="h-8 w-8 rounded-md object-contain" />;
+  }
+  return (
+    <View className="h-8 w-8 items-center justify-center rounded-md bg-surface-sunken">
+      <TWText className="text-sm font-bold text-text">
+        {orgBranding.name[0]?.toUpperCase() ?? 'M'}
+      </TWText>
+    </View>
+  );
+}
+
 function CoolShell({
   children,
   navItems,
+  orgBranding,
 }: {
   children: ReactNode;
   navItems: typeof NAV_BY_ROLE.learner;
+  orgBranding?: OrgBranding | null;
 }) {
   const pathname = usePathname() ?? '/';
   const router = useRouter();
@@ -389,20 +434,13 @@ function CoolShell({
   return (
     <DashboardShell
       groups={groups}
-      brand={
-        <View className="h-9 w-[136px]">
-          <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
-        </View>
-      }
-      brandMark={
-        <View className="h-8 w-8 overflow-hidden rounded-md">
-          <MoyoLearnLogo accessibilityLabel="Moyo" />
-        </View>
-      }
+      brand={<BrandLockup orgBranding={orgBranding} />}
+      brandMark={<BrandMark orgBranding={orgBranding} />}
       mode={mode}
       onSetMode={setMode}
       menuOpen={menuOpen}
       onToggleMenu={() => setMenuOpen((o) => !o)}
+      topBarStart={<ScopeSwitcher />}
       topBarEnd={<MembershipMenu user={user} />}
     >
       {children}
@@ -416,9 +454,12 @@ export interface RoleShellProps {
    * switched to a matching membership if they have one, or redirected to login.
    * Omit for the shared `(site)` chrome, which follows the active context. */
   allowedKinds?: readonly ActiveContextKind[];
+  /** Tenant branding resolved from the request host, used for co-branding the
+   * institutional cool shell and its theme. */
+  orgBranding?: OrgBranding | null;
 }
 
-export function RoleShell({ children, allowedKinds }: RoleShellProps) {
+export function RoleShell({ children, allowedKinds, orgBranding }: RoleShellProps) {
   const { user, activeContext, memberships, status } = useAppSession();
   const setContext = useSetContext();
   const router = useRouter();
@@ -470,8 +511,15 @@ export function RoleShell({ children, allowedKinds }: RoleShellProps) {
   const shell = hotFor(activeContext.kind) ? (
     <HotShell navItems={navItems}>{children}</HotShell>
   ) : (
-    <CoolShell navItems={navItems}>{children}</CoolShell>
+    <CoolShell navItems={navItems} orgBranding={orgBranding}>
+      {children}
+    </CoolShell>
   );
+  const brand = resolveTenantTheme(orgBranding?.brandTheme, accent);
 
-  return <RoleScope role={accent}>{shell}</RoleScope>;
+  return (
+    <ThemeProvider value={brand}>
+      <RoleScope role={accent}>{shell}</RoleScope>
+    </ThemeProvider>
+  );
 }
