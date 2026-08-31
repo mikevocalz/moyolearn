@@ -82,11 +82,11 @@ export function ShellTabBar({ state, navigation, items, targetClass, fillActive 
               physically the biggest, highest thing on the bar on every band. */}
           <View className="-mt-8 items-center gap-0.5">
             <View
-              className={`h-16 w-16 items-center justify-center rounded-full border-2 border-border bg-primary shadow-card ${
-                focused ? '' : 'hover:bg-primary-pressed'
+              className={`h-16 w-16 items-center justify-center rounded-full border-2 border-border bg-action-primary shadow-card ${
+                focused ? '' : 'active:opacity-80'
               }`}
             >
-              <item.Icon size={30} className="text-on-primary" />
+              <item.Icon size={30} className="text-on-action" />
             </View>
             <Text numberOfLines={1} className="text-xs font-semibold text-text">
               {item.label}
@@ -103,9 +103,9 @@ export function ShellTabBar({ state, navigation, items, targetClass, fillActive 
       and doc 08 §4.9 reserves solid fills for the child's world.
     */
     const focusedSlab = fillActive
-      ? 'border-border bg-primary shadow-card'
+      ? 'border-border bg-action-primary shadow-card'
       : 'border-border bg-role-accent-underlay shadow-card';
-    const focusedText = fillActive ? 'text-on-primary' : 'text-text';
+    const focusedText = fillActive ? 'text-on-action' : 'text-text';
 
     return (
       <Pressable key={route.key} aria-label={item.label} aria-selected={focused} onPress={onPress} className="flex-1">
@@ -131,7 +131,7 @@ export function ShellTabBar({ state, navigation, items, targetClass, fillActive 
   return (
     <View
       style={{ paddingBottom: insets.bottom }}
-      className="flex-row items-end gap-1 border-t-2 border-border bg-surface px-2 pt-1"
+      className="flex-row items-end gap-1 border-t-2 border-border bg-surface-footer px-2 pt-1"
     >
       {rendered}
     </View>

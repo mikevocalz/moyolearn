@@ -89,6 +89,14 @@
   --color-slate-800: #18181B;
   --color-slate-900: #121215;
   --color-slate-950: #09090B;
+  --color-moyo-purple: #43216B;
+  --color-moyo-coral: #F0543F;
+  --color-moyo-teal: #12A7A3;
+  --color-moyo-mango: #FFB21D;
+  --color-moyo-lavender: #E9DDF5;
+  --color-moyo-guava: #FADBD5;
+  --color-moyo-mint: #CFEDEA;
+  --color-moyo-mango-pastel: #FFE8A8;
   --font-display: 'Archivo Black', 'Arial Black', sans-serif;
   --font-sans: 'Space Grotesk', system-ui, -apple-system, sans-serif;
   --font-mono: 'Chivo Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
@@ -283,8 +291,26 @@
   --color-role-tutor-underlay: light-dark(rgba(237, 212, 255, 0.24), rgba(237, 212, 255, 0.24));
   --color-role-org: light-dark(#FFD7A5, #FFD7A5);
   --color-role-org-underlay: light-dark(rgba(255, 215, 165, 0.24), rgba(255, 215, 165, 0.24));
+  --color-role-teacher: light-dark(#FFC7B2, #FFC7B2);
+  --color-role-teacher-underlay: light-dark(rgba(255, 199, 178, 0.24), rgba(255, 199, 178, 0.24));
+  --color-role-school: light-dark(#BFF5C8, #BFF5C8);
+  --color-role-school-underlay: light-dark(rgba(191, 245, 200, 0.24), rgba(191, 245, 200, 0.24));
   --color-role-district: light-dark(#83EFF5, #83EFF5);
   --color-role-district-underlay: light-dark(rgba(131, 239, 245, 0.24), rgba(131, 239, 245, 0.24));
+  --color-surface-header: light-dark(#E9DDF5, #E9DDF5);
+  --color-surface-footer: light-dark(#CFEDEA, #CFEDEA);
+  --color-surface-muted: light-dark(#FADBD5, #FADBD5);
+  --color-surface-ai: light-dark(#E9DDF5, #E9DDF5);
+  --color-surface-family: light-dark(#FADBD5, #FADBD5);
+  --color-surface-learning: light-dark(#CFEDEA, #CFEDEA);
+  --color-surface-achievement: light-dark(#FFE8A8, #FFE8A8);
+  --color-action-primary: light-dark(#43216B, #43216B);
+  --color-action-primary-foreground: light-dark(#FFFFFF, #FFFFFF);
+  --color-text-on-header: light-dark(#43216B, #43216B);
+  --color-text-on-footer: light-dark(#43216B, #43216B);
+  --color-text-on-action: light-dark(#FFFFFF, #FFFFFF);
+  --color-surface-accent: light-dark(#F0543F, #F0543F);
+  --color-text-on-accent: light-dark(#FFFFFF, #FFFFFF);
 
   /* --- marketing site layer (moyolearn.com) --- */
   --font-moyo-display: 'Clash Display', 'Clash Display Fallback', 'Arial Black', sans-serif;
@@ -486,22 +512,79 @@
   .role-learner {
     --color-role-accent: var(--color-role-learner);
     --color-role-accent-underlay: var(--color-role-learner-underlay);
+    --color-surface-header: var(--color-moyo-lavender);
+    --color-surface-footer: var(--color-moyo-mint);
+    --color-surface-muted: var(--color-moyo-guava);
+    --color-action-primary: var(--color-moyo-purple);
+    --color-text-on-header: var(--color-moyo-purple);
+    --color-text-on-footer: var(--color-moyo-purple);
+    --color-surface-accent: var(--color-moyo-coral);
   }
   .role-guardian {
     --color-role-accent: var(--color-role-guardian);
     --color-role-accent-underlay: var(--color-role-guardian-underlay);
+    --color-surface-header: var(--color-moyo-guava);
+    --color-surface-footer: var(--color-moyo-mint);
+    --color-surface-muted: var(--color-moyo-lavender);
+    --color-action-primary: var(--color-moyo-purple);
+    --color-text-on-header: var(--color-moyo-purple);
+    --color-text-on-footer: var(--color-moyo-purple);
+    --color-surface-accent: var(--color-moyo-coral);
   }
   .role-tutor {
     --color-role-accent: var(--color-role-tutor);
     --color-role-accent-underlay: var(--color-role-tutor-underlay);
+    --color-surface-header: var(--color-moyo-mango-pastel);
+    --color-surface-footer: var(--color-moyo-mint);
+    --color-surface-muted: var(--color-moyo-guava);
+    --color-action-primary: var(--color-moyo-purple);
+    --color-text-on-header: var(--color-moyo-purple);
+    --color-text-on-footer: var(--color-moyo-purple);
+    --color-surface-accent: var(--color-moyo-coral);
+  }
+  .role-teacher {
+    --color-role-accent: var(--color-role-teacher);
+    --color-role-accent-underlay: var(--color-role-teacher-underlay);
+    --color-surface-header: var(--color-moyo-mint);
+    --color-surface-footer: var(--color-moyo-mint);
+    --color-surface-muted: var(--color-moyo-guava);
+    --color-action-primary: var(--color-moyo-purple);
+    --color-text-on-header: var(--color-moyo-purple);
+    --color-text-on-footer: var(--color-moyo-purple);
+    --color-surface-accent: var(--color-moyo-coral);
   }
   .role-org {
     --color-role-accent: var(--color-role-org);
     --color-role-accent-underlay: var(--color-role-org-underlay);
+    --color-surface-header: var(--color-moyo-mint);
+    --color-surface-footer: var(--color-moyo-mint);
+    --color-surface-muted: var(--color-moyo-guava);
+    --color-action-primary: var(--color-moyo-purple);
+    --color-text-on-header: var(--color-moyo-purple);
+    --color-text-on-footer: var(--color-moyo-purple);
+    --color-surface-accent: var(--color-moyo-coral);
+  }
+  .role-school {
+    --color-role-accent: var(--color-role-school);
+    --color-role-accent-underlay: var(--color-role-school-underlay);
+    --color-surface-header: var(--color-moyo-mint);
+    --color-surface-footer: var(--color-moyo-mint);
+    --color-surface-muted: var(--color-moyo-guava);
+    --color-action-primary: var(--color-moyo-purple);
+    --color-text-on-header: var(--color-moyo-purple);
+    --color-text-on-footer: var(--color-moyo-purple);
+    --color-surface-accent: var(--color-moyo-coral);
   }
   .role-district {
     --color-role-accent: var(--color-role-district);
     --color-role-accent-underlay: var(--color-role-district-underlay);
+    --color-surface-header: var(--color-moyo-lavender);
+    --color-surface-footer: var(--color-moyo-mint);
+    --color-surface-muted: var(--color-moyo-guava);
+    --color-action-primary: var(--color-moyo-purple);
+    --color-text-on-header: var(--color-moyo-purple);
+    --color-text-on-footer: var(--color-moyo-purple);
+    --color-surface-accent: var(--color-moyo-coral);
   }
 }
 

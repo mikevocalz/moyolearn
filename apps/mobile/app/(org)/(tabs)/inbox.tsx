@@ -1,3 +1,3 @@
-import { NotificationsScreen } from '@acme/app';
+import { InboxScreen } from '@acme/app';
 
-export default NotificationsScreen;
+export default InboxScreen;

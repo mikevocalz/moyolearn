@@ -103,5 +103,18 @@ export const Organizations: CollectionConfig = {
       defaultValue: 'ember',
       options: ['ember', 'gold', 'forest', 'sky', 'rose'],
     },
+    {
+      /*
+        The tenant's Moyo shell theme. This is the pastel surface used for the
+        app header, not the district's raw brand colour. Co-branding is curated:
+        the value is one of the validated Moyo surface tokens so derived
+        foregrounds always clear contrast. Admin/district shells fall back to
+        `lavender`.
+      */
+      name: 'brandTheme',
+      type: 'select',
+      defaultValue: 'lavender',
+      options: ['lavender', 'guava', 'mint', 'mango-pastel'],
+    },
   ],
 };

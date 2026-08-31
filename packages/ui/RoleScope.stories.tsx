@@ -26,7 +26,9 @@ const DOORS: Record<
   learner: { door: 'Learner', person: 'Amara Diallo', landing: 'Lands on the camera', tabs: ['Home', 'Practice', 'You'] },
   guardian: { door: 'Guardian', person: 'Ngozi Diallo', landing: 'Lands on the newest report', tabs: ['Family', 'Reports', 'You'] },
   tutor: { door: 'Tutor', person: 'Maya Rodriguez', landing: 'Lands on the next session', tabs: ['Sessions', 'Notes', 'You'] },
+  teacher: { door: 'Teacher', person: 'Ms. Liu', landing: 'Lands on assignments', tabs: ['Today', 'Class', 'You'] },
   org: { door: 'Org', person: 'Sam Ortiz', landing: "Lands on today's exceptions", tabs: ['Today', 'People', 'You'] },
+  school: { door: 'School', person: 'Principal Okonkwo', landing: 'Lands on weekly report', tabs: ['Outcomes', 'Teachers', 'You'] },
   district: { door: 'District', person: 'Dr. Adeyemi', landing: 'Lands on outcomes', tabs: ['Outcomes', 'Schools', 'You'] },
 };
 

@@ -93,6 +93,16 @@ export const palette = {
     400: '#71717A', 500: '#52525B', 600: '#3F3F46', 700: '#27272A',
     800: '#18181B', 900: '#121215', 950: '#09090B',
   },
+  // Moyo brand primitives — saturated identities + pastel surfaces.
+  // These are the raw building blocks; feature code uses the semantic aliases below.
+  'moyo-purple': '#43216B',
+  'moyo-coral': '#F0543F',
+  'moyo-teal': '#12A7A3',
+  'moyo-mango': '#FFB21D',
+  'moyo-lavender': '#E9DDF5',
+  'moyo-guava': '#FADBD5',
+  'moyo-mint': '#CFEDEA',
+  'moyo-mango-pastel': '#FFE8A8',
 } as const;
 
 // ---- semantic colors (light / dark) ----------------------------------------
@@ -210,6 +220,24 @@ export const semantic = {
   // oklch(0.89 0.10 200) teal — doc L .88 read 14.13:1; .89 gives 14.55:1.
   'role-district': { light: '#83EFF5', dark: '#83EFF5' },
   'role-district-underlay': { light: 'rgba(131, 239, 245, 0.24)', dark: 'rgba(131, 239, 245, 0.24)' },
+
+  // ---- Moyo tenant shell surface tokens ---------------------------------------
+  // These are the semantic slots shells consume, not raw tenant hexes.
+  // Role scopes re-point surface-header / surface-footer per door.
+  'surface-header': { light: palette['moyo-lavender'], dark: palette['moyo-lavender'] },
+  'surface-footer': { light: palette['moyo-mint'], dark: palette['moyo-mint'] },
+  'surface-muted': { light: palette['moyo-guava'], dark: palette['moyo-guava'] },
+  'surface-ai': { light: palette['moyo-lavender'], dark: palette['moyo-lavender'] },
+  'surface-family': { light: palette['moyo-guava'], dark: palette['moyo-guava'] },
+  'surface-learning': { light: palette['moyo-mint'], dark: palette['moyo-mint'] },
+  'surface-achievement': { light: palette['moyo-mango-pastel'], dark: palette['moyo-mango-pastel'] },
+  'action-primary': { light: palette['moyo-purple'], dark: palette['moyo-purple'] },
+  'action-primary-foreground': { light: palette.white, dark: palette.white },
+  'text-on-header': { light: palette['moyo-purple'], dark: palette['moyo-purple'] },
+  'text-on-footer': { light: palette['moyo-purple'], dark: palette['moyo-purple'] },
+  'text-on-action': { light: palette.white, dark: palette.white },
+  'surface-accent': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
+  'text-on-accent': { light: palette.white, dark: palette.white },
 } as const;
 
 /**
@@ -220,6 +248,79 @@ export const semantic = {
  */
 export const accentRoles = ['learner', 'guardian', 'tutor', 'teacher', 'org', 'school', 'district'] as const;
 export type AccentRole = (typeof accentRoles)[number];
+
+/**
+ * Per-role Moyo shell surfaces. Every shell re-points the same semantic slots
+ * (surface-header, surface-footer, surface-muted, action-primary, ...) so a
+ * component writes `bg-surface-header` once and the role wrapper picks the hue.
+ * Tenant brand overrides live one layer above, at the theme-provider boundary.
+ */
+export const roleTheme = {
+  learner: {
+    surfaceHeader: 'moyo-lavender',
+    surfaceFooter: 'moyo-mint',
+    surfaceMuted: 'moyo-guava',
+    actionPrimary: 'moyo-purple',
+    textOnHeader: 'moyo-purple',
+    textOnFooter: 'moyo-purple',
+    surfaceAccent: 'moyo-coral',
+  },
+  guardian: {
+    surfaceHeader: 'moyo-guava',
+    surfaceFooter: 'moyo-mint',
+    surfaceMuted: 'moyo-lavender',
+    actionPrimary: 'moyo-purple',
+    textOnHeader: 'moyo-purple',
+    textOnFooter: 'moyo-purple',
+    surfaceAccent: 'moyo-coral',
+  },
+  tutor: {
+    surfaceHeader: 'moyo-mango-pastel',
+    surfaceFooter: 'moyo-mint',
+    surfaceMuted: 'moyo-guava',
+    actionPrimary: 'moyo-purple',
+    textOnHeader: 'moyo-purple',
+    textOnFooter: 'moyo-purple',
+    surfaceAccent: 'moyo-coral',
+  },
+  teacher: {
+    surfaceHeader: 'moyo-mint',
+    surfaceFooter: 'moyo-mint',
+    surfaceMuted: 'moyo-guava',
+    actionPrimary: 'moyo-purple',
+    textOnHeader: 'moyo-purple',
+    textOnFooter: 'moyo-purple',
+    surfaceAccent: 'moyo-coral',
+  },
+  org: {
+    surfaceHeader: 'moyo-mint',
+    surfaceFooter: 'moyo-mint',
+    surfaceMuted: 'moyo-guava',
+    actionPrimary: 'moyo-purple',
+    textOnHeader: 'moyo-purple',
+    textOnFooter: 'moyo-purple',
+    surfaceAccent: 'moyo-coral',
+  },
+  school: {
+    surfaceHeader: 'moyo-mint',
+    surfaceFooter: 'moyo-mint',
+    surfaceMuted: 'moyo-guava',
+    actionPrimary: 'moyo-purple',
+    textOnHeader: 'moyo-purple',
+    textOnFooter: 'moyo-purple',
+    surfaceAccent: 'moyo-coral',
+  },
+  district: {
+    surfaceHeader: 'moyo-lavender',
+    surfaceFooter: 'moyo-mint',
+    surfaceMuted: 'moyo-guava',
+    actionPrimary: 'moyo-purple',
+    textOnHeader: 'moyo-purple',
+    textOnFooter: 'moyo-purple',
+    surfaceAccent: 'moyo-coral',
+  },
+} as const;
+export type RoleTheme = (typeof roleTheme)[AccentRole];
 
 // ---- typography -------------------------------------------------------------
 

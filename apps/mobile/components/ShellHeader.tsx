@@ -34,9 +34,9 @@ export function ShellHeader({ titles, fallback, profileHref }: ShellHeaderProps)
   const profileName = useProfile((state) => state.name);
 
   return (
-    <SafeArea edges={['top']} className="bg-primary">
-      <Header className="flex-row items-center gap-stack border-b-2 border-border bg-primary px-4 py-3">
-        <Text className="flex-1 text-lg font-semibold text-on-primary md:text-xl">
+    <SafeArea edges={['top']} className="bg-surface-header">
+      <Header className="flex-row items-center gap-stack border-b-2 border-border bg-surface-header px-4 py-3">
+        <Text className="flex-1 text-lg font-semibold text-on-header md:text-xl">
           {titles[pathname] ?? fallback}
         </Text>
         {profileHref ? (
@@ -49,7 +49,7 @@ export function ShellHeader({ titles, fallback, profileHref }: ShellHeaderProps)
           </Pressable>
         ) : null}
       </Header>
-      <View className="h-1 bg-role-accent" />
+      <View className="h-1 bg-surface-accent" />
     </SafeArea>
   );
 }

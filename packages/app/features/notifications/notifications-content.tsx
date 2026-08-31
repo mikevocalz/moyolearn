@@ -51,7 +51,7 @@ function Group({ label, items, offset }: { label: string; items: Notification[];
   );
 }
 
-export function NotificationsContent() {
+export function NotificationsContent({ title = 'Notifications' }: { readonly title?: string }) {
   const items = useNotifications((s) => s.items);
   const markAllRead = useNotifications((s) => s.markAllRead);
   const unread = items.filter((n) => !n.read).length;
@@ -63,7 +63,7 @@ export function NotificationsContent() {
       <FadeIn>
         <Section className="flex-row items-end justify-between gap-stack">
           <View className="gap-0.5">
-            <Heading level={1} size="display-sm">Notifications</Heading>
+            <Heading level={1} size="display-sm">{title}</Heading>
             {unread > 0 ? <Text variant="caption" tone="muted">{unread} unread</Text> : null}
           </View>
           {unread > 0 ? (

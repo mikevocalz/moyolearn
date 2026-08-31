@@ -24,6 +24,7 @@ import {
   uiRamp, spacingTiers, targets, readingComfort, accentRoles,
   siteColors, siteFontFamilies, siteTypeScale,
   moyoShadowOffset, moyoBorderW, moyoRadius, moyoTexture, siteMotion,
+  roleTheme,
 } from './tokens.ts';
 
 const HEADER = '/* GENERATED from tokens.ts — do not edit by hand. `node build-css.mjs` */';
@@ -436,12 +437,17 @@ const DIAL_SCOPES = ['@layer base {', ...dialScope('hot'), ...dialScope('cool'),
  * miss its scope. No `.role-admin` exists: the back office has no accent, and
  * an unscoped tree resolves to the learner default declared in @theme.
  */
-const roleScope = (role) => [
-  `  .role-${role} {`,
-  `    --color-role-accent: var(--color-role-${role});`,
-  `    --color-role-accent-underlay: var(--color-role-${role}-underlay);`,
-  '  }',
-];
+const roleScope = (role) => {
+  const t = roleTheme[role];
+  const out = [`  .role-${role} {`];
+  out.push(`    --color-role-accent: var(--color-role-${role});`);
+  out.push(`    --color-role-accent-underlay: var(--color-role-${role}-underlay);`);
+  for (const [slot, token] of Object.entries(t)) {
+    out.push(`    --color-${kebab(slot)}: var(--color-${token});`);
+  }
+  out.push('  }');
+  return out;
+};
 const ROLE_SCOPES = ['@layer base {', ...accentRoles.flatMap(roleScope), '}'].join('\n');
 
 // React Native's `fontVariant` accepts tabular-nums but has NO slashed-zero

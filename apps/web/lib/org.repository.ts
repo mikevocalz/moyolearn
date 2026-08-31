@@ -23,17 +23,17 @@ export const loadOrgBranding: LoadOrgBranding = async (slug) => {
       field — a billing contact, an internal note — from being handed to an
       unauthenticated page just because somebody added it to the collection.
     */
-    select: { slug: true, name: true, logoUrl: true, logoAspect: true, brandAccent: true },
+    select: { slug: true, name: true, logoUrl: true, logoAspect: true, brandAccent: true, brandTheme: true },
   });
   /*
     `select` widens Payload's return type to a partial whose members infer as
     `unknown`, which this codebase bans. The cast is to the GENERATED type
-    narrowed to the same four keys, so the shape still comes from
+    narrowed to the same five keys, so the shape still comes from
     `payload-types.ts` rather than being hand-written here — and adding a field
     to the collection cannot silently widen what this returns.
   */
   const org = docs[0] as
-    | Pick<Organization, 'slug' | 'name' | 'logoUrl' | 'logoAspect' | 'brandAccent'>
+    | Pick<Organization, 'slug' | 'name' | 'logoUrl' | 'logoAspect' | 'brandAccent' | 'brandTheme'>
     | undefined;
   if (!org) return null;
   return {
@@ -42,6 +42,7 @@ export const loadOrgBranding: LoadOrgBranding = async (slug) => {
     logoUrl: org.logoUrl ?? undefined,
     logoAspect: org.logoAspect ?? undefined,
     brandAccent: org.brandAccent ?? undefined,
+    brandTheme: org.brandTheme ?? undefined,
   };
 };
 

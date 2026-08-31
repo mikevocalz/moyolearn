@@ -574,6 +574,7 @@ export interface Organization {
   logoUrl?: string | null;
   logoAspect?: ('square' | 'wide') | null;
   brandAccent?: ('ember' | 'gold' | 'forest' | 'sky' | 'rose') | null;
+  brandTheme?: ('lavender' | 'guava' | 'mint' | 'mango-pastel') | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -995,6 +996,7 @@ export interface OrganizationsSelect<T extends boolean = true> {
   logoUrl?: T;
   logoAspect?: T;
   brandAccent?: T;
+  brandTheme?: T;
   updatedAt?: T;
   createdAt?: T;
 }
