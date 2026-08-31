@@ -13,7 +13,6 @@ import type { ReactNode } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'solito/navigation';
 import { Link } from 'solito/link';
-import Image from 'next/image';
 import type { AccentRole } from '@acme/theme';
 import {
   useAppSession,
