@@ -71,6 +71,9 @@ export { MEMORY_FACTS, MEMORY_TRANSCRIPTS, GROUPS as MEMORY_GROUPS, provenanceLa
 export type { TranscriptLine } from './features/memory/memory.data';
 export { FamilyCalendarScreen } from './features/family-calendar/screen';
 export { OnboardingScreen } from './features/onboarding/screen';
+export { PublicEntryContent } from './features/onboarding/public-entry-content';
+export { SignInContent } from './features/onboarding/sign-in-content';
+export { DevPersonaSwitch } from './features/onboarding/dev-persona-switch';
 export { OnboardingFlowScreen } from './features/onboarding/flow/screen';
 export { OnboardingFlowContent } from './features/onboarding/flow/flow-content';
 export {

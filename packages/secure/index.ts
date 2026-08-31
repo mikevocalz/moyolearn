@@ -25,6 +25,8 @@ export type { KeychainAccessible, SecureKey, SecureKeySpec } from './src/policy'
 
 export { setSecure, getSecure, deleteSecure, isSecureStoreAvailable } from './src/store';
 
+export { betterAuthCookieStorage } from './src/better-auth-cookie-store';
+
 export {
   runReinstallWipe,
   shouldWipeSecureStore,

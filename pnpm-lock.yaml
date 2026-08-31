@@ -898,6 +898,9 @@ importers:
       '@acme/safety':
         specifier: workspace:*
         version: link:../safety
+      '@acme/secure':
+        specifier: workspace:*
+        version: link:../secure
       '@acme/student-model':
         specifier: workspace:*
         version: link:../student-model

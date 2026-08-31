@@ -87,6 +87,12 @@ export interface ProtectedOperationOptions {
    */
   loadMembershipRole?: LoadMembershipRole;
   /**
+   * Overrides where the tenant org id is read from. The default is a real
+   * lookup; tests inject a fixed table so the host-tenant branch is testable
+   * without a CMS connection.
+   */
+  loadTenantOrgId?: LoadTenantOrgId | null;
+  /**
    * Overrides where the caller's plan is read from. Production never passes
    * this — the default reads Better Auth's own subscription rows through the
    * `auth` instance already in hand, so no route has to wire a reader and no
@@ -269,7 +275,7 @@ export async function protectedOperation<R>(
       options.loadMembershipRole ??
       ((c) => (c.orgId ? readMembershipRole(auth, c.orgId, c.learnerId) : Promise.resolve(null)));
 
-    const result = await gated(ctx, loadRole, load);
+    const result = await gated(sessionCtx, loadRole, load);
     outcome = 'ok';
     return result;
   } catch (error) {

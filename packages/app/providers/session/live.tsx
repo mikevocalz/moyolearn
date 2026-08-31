@@ -7,14 +7,17 @@
 
 import { useEffect } from 'react';
 import { createMoyoAuthClient } from '@acme/auth';
+import { betterAuthCookieStorage } from '@acme/secure';
 import { useSessionStore } from './store';
 import type { Membership, RoleKind } from './types';
 
-const authClient = createMoyoAuthClient({
+export const authClient = createMoyoAuthClient({
   baseURL:
     (typeof process !== 'undefined'
       ? process.env.EXPO_PUBLIC_AUTH_URL ?? process.env.NEXT_PUBLIC_AUTH_URL
       : undefined) ?? '',
+  storage: betterAuthCookieStorage,
+  scheme: 'moyo',
 });
 
 /**
