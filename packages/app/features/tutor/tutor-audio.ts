@@ -17,6 +17,7 @@ import {
   decodeTutorAudioBuffer,
   resumeTutorAudioContext,
   setTutorSourceEnded,
+  type TutorAudioSource,
 } from './tutor-audio-context';
 
 export interface TutorVoiceRef {
@@ -43,6 +44,7 @@ export class TutorAudioQueue {
   private queue: QueuedSentence[] = [];
   private previousText: string | undefined;
   private isPlaying = false;
+  private activeSource: TutorAudioSource | null = null;
 
   /** Enqueue a sentence the coach has emitted with its voice metadata. */
   enqueue(text: string, voice: TutorVoiceRef): void {
@@ -54,14 +56,13 @@ export class TutorAudioQueue {
     }
   }
 
-  /** Stop immediately and throw away the rest of the turn. */
+  /** Stop the active sentence and throw away the rest of the turn. */
   stop(): void {
+    this.activeSource?.stop();
+    this.activeSource = null;
     this.queue = [];
     this.previousText = undefined;
     this.isPlaying = false;
-    // The currently playing source reaches its natural end; we cannot stop it
-    // from here without a source handle. The next design step is to track the
-    // active source for barge-in.
   }
 
   private async playNext(): Promise<void> {
@@ -97,8 +98,17 @@ export class TutorAudioQueue {
       const buffer = await response.arrayBuffer();
       const decoded = await decodeTutorAudioBuffer(buffer);
       const source = createTutorBufferSource(decoded);
+      this.activeSource = source;
+
+      // If `stop()` was called while we were fetching/decoding, do not start.
+      if (!this.isPlaying) {
+        this.activeSource = null;
+        this.advance();
+        return;
+      }
 
       setTutorSourceEnded(source, () => {
+        this.activeSource = null;
         this.advance();
       });
 

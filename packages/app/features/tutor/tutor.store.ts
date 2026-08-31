@@ -4,7 +4,6 @@ import { countImages, MAX_TUTOR_IMAGES, type TutorAttachment, type TutorMessage 
 import { streamFetch } from './stream-fetch';
 import { fetchSession, postMessage } from './session.client.ts';
 import { traceAttempt, DEFAULT_TRACING, inferSkillTitle } from '@acme/student-model/pure';
-import { useCaptureStore } from '../capture';
 import { API_URL } from './tutor-constants.ts';
 import { TutorAudioQueue } from './tutor-audio.ts';
 import type { CoachEvent } from './coach.service';
@@ -286,7 +285,11 @@ export const useTutorStore = create<TutorState>((set) => ({
     it. The composer separately hides the attach control at the cap — that is
     the courtesy; this is the rule.
   */
-  say: (message) =>
+  say: (message) => {
+    // A new learner turn is the barge-in signal: stop whatever Natalie is saying
+    // so the child is not competing with the previous reply.
+    audioQueue.stop();
+
     set((s) => ({
       ...s,
       /*
@@ -323,7 +326,8 @@ export const useTutorStore = create<TutorState>((set) => ({
           : []),
         { ...message, id: message.id ?? `${Date.now()}-${s.messages.length}` },
       ],
-    })),
+    }));
+  },
 
   addAttachment: (attachment) =>
     set((s) => {
