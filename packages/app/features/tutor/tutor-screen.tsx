@@ -18,6 +18,7 @@ import { buttonSizeForBand, type AgeBand } from '../capture';
 import { useAppSession } from '../../providers/session';
 import { useTutorStore } from './tutor.store';
 import { API_URL, recommendedTutorViewFor } from './tutor-constants.ts';
+import { TutorAvatar } from './tutor-avatar';
 import { pickNoteImage } from '../schedule/pick-note-image';
 import { pickFile } from '../editor/pick-file';
 import { useAudioStore } from '../editor/audio.store.ts';
@@ -427,6 +428,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       childName="there"
       tutorView={tutorView}
       onTutorViewChange={setTutorView}
+      avatar={<TutorAvatar tutorView={tutorView} isSpeaking={state.kind === 'speaking'} />}
       captionsEnabled
       buttonSize={buttonSizeForBand(ageBand)}
       onBack={router.back}

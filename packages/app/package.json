@@ -18,6 +18,7 @@
     "test": "node --test 'core/**/*.test.ts' 'features/**/*.test.ts' 'providers/**/*.test.ts' && node --test --conditions=react-server 'core/**/*.server-test.ts' 'features/**/*.server-test.ts'"
   },
   "dependencies": {
+    "@acme/avatar": "workspace:*",
     "@acme/auth": "workspace:*",
     "@acme/inference": "workspace:*",
     "@acme/safety": "workspace:*",
@@ -25,6 +26,7 @@
     "@acme/student-model": "workspace:*",
     "@acme/theme": "workspace:*",
     "@acme/ui": "workspace:*",
+    "@acme/voice": "workspace:*",
     "@anthropic-ai/sdk": "catalog:",
     "@huggingface/transformers": "4.2.0",
     "@shopify/react-native-skia": "catalog:",

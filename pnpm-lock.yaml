@@ -892,6 +892,9 @@ importers:
       '@acme/auth':
         specifier: workspace:*
         version: link:../auth
+      '@acme/avatar':
+        specifier: workspace:*
+        version: link:../avatar
       '@acme/inference':
         specifier: workspace:*
         version: link:../inference
@@ -910,6 +913,9 @@ importers:
       '@acme/ui':
         specifier: workspace:*
         version: link:../ui
+      '@acme/voice':
+        specifier: workspace:*
+        version: link:../voice
       '@anthropic-ai/sdk':
         specifier: 'catalog:'
         version: 0.120.0(zod@4.4.3)

@@ -75,6 +75,8 @@ export interface TutorStageProps {
   questionNumber?: number;
   tutorView?: TutorView;
   onTutorViewChange?: (view: TutorView) => void;
+  /** Optional embodied presence. When absent the stage draws its own 2D mark. */
+  avatar?: React.ReactNode;
   captionsEnabled?: boolean;
   buttonSize?: 'sm' | 'md' | 'lg' | 'xl';
   onBack?: () => void;
@@ -150,6 +152,7 @@ interface StateBodyProps {
   childName?: string;
   questionNumber?: number;
   tutorView?: TutorView;
+  avatar?: React.ReactNode;
   buttonSize?: 'sm' | 'md' | 'lg' | 'xl';
   onTryIt?: () => void;
   onNextHint?: () => void;
@@ -163,6 +166,7 @@ function StateBody({
   childName,
   questionNumber,
   tutorView = 'compact',
+  avatar,
   buttonSize = 'md',
   onTryIt,
   onNextHint,
@@ -175,7 +179,7 @@ function StateBody({
     case 'presence':
       return (
         <View className="w-full items-center gap-stack">
-          {avatarSize ? <Avatar name="Natalie" size={avatarSize} /> : null}
+          {avatar ?? (avatarSize ? <Avatar name="Natalie" size={avatarSize} /> : null)}
           <Text className="max-w-content-prose text-center font-sans text-body text-text">
             {/*
                 NO PLACEHOLDER. This read "We were on question ..." — literally
@@ -324,6 +328,7 @@ export function TutorStage({
   questionNumber,
   tutorView = 'compact',
   onTutorViewChange,
+  avatar,
   captionsEnabled,
   buttonSize,
   onBack,
@@ -397,6 +402,7 @@ export function TutorStage({
           childName={childName}
           questionNumber={questionNumber}
           tutorView={tutorView}
+          avatar={avatar}
           buttonSize={buttonSize}
           onTryIt={onTryIt}
           onNextHint={onNextHint}
