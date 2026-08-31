@@ -49,6 +49,11 @@ export {
   loadDistrictSchools,
   type LoadSchools,
 } from './features/institution/schools.service';
+export {
+  loadOrgPeople,
+  type LoadOrgMembers,
+  type OrgPeople,
+} from './features/institution/people.service';
 export type {
   DerivedFact,
   MasteryFact,

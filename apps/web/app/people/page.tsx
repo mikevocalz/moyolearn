@@ -1,11 +1,12 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
 import { notFound } from 'next/navigation';
-import { InstitutionPlaceholderScreen } from '@acme/app';
-import { loadInstitutionOverview } from '@acme/app/server';
+import { PeopleListScreen } from '@acme/app';
+import { loadOrgPeople } from '@acme/app/server';
 import { tenantSlugFromHost } from '@acme/auth/host-tenant';
 import { auth } from '../../lib/auth';
 import { loadOrgBranding, loadOrgKind } from '../../lib/org.repository';
+import { loadOrgMembers } from '../../lib/people.repository';
 
 export const metadata: Metadata = {
   title: 'People — Moyo',
@@ -25,17 +26,13 @@ export default async function PeoplePage() {
     notFound();
   }
 
-  const org = await loadInstitutionOverview(
+  const { org, members } = await loadOrgPeople(
     loadOrgBranding,
-    { scope: kind, resource: 'people' },
+    loadOrgMembers,
     auth,
     h,
+    kind,
   );
 
-  const description =
-    kind === 'district'
-      ? 'District staff and contacts will appear here.'
-      : 'School staff, learners and guardians will appear here.';
-
-  return <InstitutionPlaceholderScreen title="People" description={description} org={org} />;
+  return <PeopleListScreen org={org} members={members} kind={kind} />;
 }
