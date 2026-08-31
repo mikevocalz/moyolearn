@@ -4,6 +4,7 @@
   "include": [
     "features/**/*",
     "core/**/*",
+    "providers/**/*.test.ts",
     "index.ts"
   ]
 }
