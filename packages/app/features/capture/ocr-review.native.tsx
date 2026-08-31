@@ -20,11 +20,20 @@ export interface OcrReviewProps {
 export function OcrReview({ ageBand = 'teen', source, onConfirm, onCancel }: OcrReviewProps) {
   const ocr = useOCR({ model: OCR_ENGLISH });
   const [text, setText] = useState('');
+  const [confidence, setConfidence] = useState<number | undefined>();
 
   useEffect(() => {
     if (ocr.isReady && source) {
       void ocr.forward(source).then((detections) => {
-        setText(detections.map((detection) => detection.text).join('\n'));
+        const joined = detections.map((detection) => detection.text).join('\n');
+        const avg =
+          detections.length > 0
+            ? Math.round(
+                (detections.reduce((sum, d) => sum + (d.score ?? 0), 0) / detections.length) * 100,
+              )
+            : undefined;
+        setText(joined);
+        setConfidence(avg);
       });
     }
   }, [ocr.isReady, source, ocr]);
@@ -50,5 +59,13 @@ export function OcrReview({ ageBand = 'teen', source, onConfirm, onCancel }: Ocr
     );
   }
 
-  return <DigitizedTextReview ageBand={ageBand} initialText={text} onConfirm={onConfirm} onCancel={onCancel} />;
+  return (
+    <DigitizedTextReview
+      ageBand={ageBand}
+      initialText={text}
+      confidence={confidence}
+      onConfirm={onConfirm}
+      onCancel={onCancel}
+    />
+  );
 }

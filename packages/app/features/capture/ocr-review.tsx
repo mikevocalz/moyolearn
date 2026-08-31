@@ -25,6 +25,7 @@ import { useEffect, useState } from 'react';
 import { Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { DigitizedTextReview } from './digitized-text-review';
+import { readHomework, type OcrResult } from './ocr-web';
 import type { AgeBand } from './age-band';
 
 export interface OcrReviewProps {
@@ -38,38 +39,22 @@ type Phase = 'loading' | 'ready' | 'error';
 
 export function OcrReview({ ageBand = 'teen', source, onConfirm, onCancel }: OcrReviewProps) {
   const [phase, setPhase] = useState<Phase>('loading');
-  const [text, setText] = useState('');
+  const [result, setResult] = useState<OcrResult | null>(null);
 
   useEffect(() => {
     if (!source) return;
     let cancelled = false;
 
-    void (async () => {
-      try {
-        /*
-          Imported inside the effect, not at module scope. The worker pulls a
-          ~30MB WASM core and a language file on first use, and a static import
-          would put that in the route's bundle for every learner — including the
-          ones who never photograph anything.
-        */
-        const { createWorker } = await import('tesseract.js');
-        const worker = await createWorker('eng');
-        try {
-          const result = await worker.recognize(source);
-          if (!cancelled) {
-            setText(result.data.text.trim());
-            setPhase('ready');
-          }
-        } finally {
-          // Always, even if recognition threw: a live worker holds the WASM
-          // heap and its own thread, and a child photographing four problems
-          // would otherwise leave four behind.
-          await worker.terminate();
+    void readHomework(source)
+      .then((r) => {
+        if (!cancelled) {
+          setResult(r);
+          setPhase('ready');
         }
-      } catch {
+      })
+      .catch(() => {
         if (!cancelled) setPhase('error');
-      }
-    })();
+      });
 
     return () => {
       cancelled = true;
@@ -103,6 +88,12 @@ export function OcrReview({ ageBand = 'teen', source, onConfirm, onCancel }: Ocr
     what the problem says; the app is the one that could not read it.
   */
   return (
-    <DigitizedTextReview ageBand={ageBand} initialText={text} onConfirm={onConfirm} onCancel={onCancel} />
+    <DigitizedTextReview
+      ageBand={ageBand}
+      initialText={result?.text ?? ''}
+      confidence={result?.confidence}
+      onConfirm={onConfirm}
+      onCancel={onCancel}
+    />
   );
 }
