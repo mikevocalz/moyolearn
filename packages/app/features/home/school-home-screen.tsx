@@ -22,7 +22,7 @@ export function SchoolHomeScreen({ org }: { org?: OrgBranding | null }) {
               School overview will list campuses, staff, and programs.
             </TWText>
             <TWText className="text-body text-text-muted">
-              For now, this is the school-admin shell's landing screen. The planned tabs are
+              For now, this is the school-admin shell&apos;s landing screen. The planned tabs are
               Overview, People, Academics, Calendar, and More.
             </TWText>
           </View>

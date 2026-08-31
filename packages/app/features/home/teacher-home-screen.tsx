@@ -21,7 +21,7 @@ export function TeacherHomeScreen() {
               Your classroom overview will list classes, assignments, and students.
             </TWText>
             <TWText className="text-body text-text-muted">
-              For now, this is the teacher shell's landing screen. The planned tabs are
+              For now, this is the teacher shell&apos;s landing screen. The planned tabs are
               Home, Classes, Assign, Calendar, and Students.
             </TWText>
           </View>

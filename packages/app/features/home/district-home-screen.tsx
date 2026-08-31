@@ -22,7 +22,7 @@ export function DistrictHomeScreen({ org }: { org?: OrgBranding | null }) {
               District overview will list schools, campuses, and programs.
             </TWText>
             <TWText className="text-body text-text-muted">
-              For now, this is the district-admin shell's landing screen. The planned tabs are
+              For now, this is the district-admin shell&apos;s landing screen. The planned tabs are
               Overview, Schools, Programs, Calendar, and More.
             </TWText>
           </View>
