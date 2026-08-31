@@ -22,6 +22,7 @@
 import 'server-only';
 import { readMembershipRole, readSubscriptions, type Auth } from '@acme/auth/server';
 import type { Capability, SubscriptionState } from '@acme/auth/entitlements';
+import type { MembershipRole } from '@acme/auth/membership';
 import { HostTenantDenied, resolveHostTenant, type LoadTenantOrgId } from './host-tenant.ts';
 import { billingReferenceFor, withCapability, CapabilityDenied, type LoadSubscriptions } from './capability-gate.ts';
 import {
@@ -257,6 +258,22 @@ export async function protectedOperation<R>(
     // kind of caller it refused; re-derived below once the org is settled.
     ctxKind = ctxKindOf(sessionCtx);
 
+    /*
+      The host step: the address the request arrived at wins over the session's
+      own org claim. A district-shaped host narrows the context to that district
+      and refuses the operation if the caller has no role there; an `app.`,
+      `admin.` or preview host carries no tenant and leaves the session scope as
+      the starting point. The reader is a port so tests can inject a fixture.
+    */
+    const host = options.loadTenantOrgId
+      ? await resolveHostTenant(headers, options.loadTenantOrgId)
+      : await resolveHostTenant(headers);
+    if (host.kind === 'unresolved') throw new HostTenantDenied(host.slug);
+    const hostCtx: ProtectedCtx = {
+      ...sessionCtx,
+      orgId: host.kind === 'org' ? host.orgId : sessionCtx.orgId,
+    };
+
     const load: LoadSubscriptions =
       options.loadSubscriptions ??
       /*
@@ -275,7 +292,19 @@ export async function protectedOperation<R>(
       options.loadMembershipRole ??
       ((c) => (c.orgId ? readMembershipRole(auth, c.orgId, c.learnerId) : Promise.resolve(null)));
 
-    const result = await gated(sessionCtx, loadRole, load);
+    let membershipRole: MembershipRole | undefined;
+    if (host.kind === 'org') {
+      const held = await loadRole(hostCtx);
+      if (held === null) throw new HostTenantDenied(host.orgId);
+      membershipRole = held;
+    }
+
+    const opLoadRole: LoadMembershipRole = async (c) => {
+      if (c === hostCtx && membershipRole !== undefined) return membershipRole;
+      return loadRole(c);
+    };
+
+    const result = await gated(hostCtx, opLoadRole, load);
     outcome = 'ok';
     return result;
   } catch (error) {

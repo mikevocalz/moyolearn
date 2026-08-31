@@ -339,6 +339,7 @@ export {
 export { AppQueryProvider, createQueryClient } from './providers/query-provider';
 export { SafeAreaProvider } from './providers/safe-area';
 export * from './features/conference';
+export * from './features/institution';
 export {
   SessionProvider,
   useAppSession,
