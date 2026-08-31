@@ -7,22 +7,26 @@
 
 import { Container, Heading, SafeArea } from '@acme/ui';
 import { View, Text as TWText } from '@acme/ui/tw';
+import type { OrgBranding } from '@acme/app';
 
 export interface InstitutionPlaceholderScreenProps {
   title: string;
   description: string;
+  org?: OrgBranding | null;
 }
 
 export function InstitutionPlaceholderScreen({
   title,
   description,
+  org,
 }: InstitutionPlaceholderScreenProps) {
+  const displayTitle = org?.name ? `${org.name} — ${title}` : title;
   return (
     <SafeArea edges={['top']} className="flex-1 bg-surface">
       <Container width="detail" className="py-4 pb-48">
         <View className="gap-stack">
           <Heading level={1} size="title">
-            {title}
+            {displayTitle}
           </Heading>
           <TWText className="text-body text-text-muted">{description}</TWText>
         </View>

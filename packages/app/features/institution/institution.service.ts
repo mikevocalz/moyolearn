@@ -11,13 +11,14 @@ import 'server-only';
 
 import type { Auth } from '@acme/auth/server';
 import { protectedOperation } from '../../core/protected-operation.ts';
+import type { InstitutionResource } from './institution.types.ts';
 import type { OrgBranding, LoadOrgBranding } from '../org/org.service.ts';
 
 export interface InstitutionOverviewOptions {
   /** The permission the caller must hold in the current tenant scope. */
   scope: 'district' | 'school' | 'own_org';
   /** The resource the overview represents. */
-  resource: 'schools' | 'people' | 'programs' | 'settings' | 'tenant';
+  resource: InstitutionResource;
 }
 
 /**
