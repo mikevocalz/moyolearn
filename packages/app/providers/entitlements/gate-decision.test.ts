@@ -7,7 +7,17 @@ import { describe, it } from 'node:test';
 import type { ActiveContextKind } from '../session/types.ts';
 import { gateDecision, type GateInput } from './gate-decision.ts';
 
-const KINDS: ActiveContextKind[] = ['anon', 'learner', 'guardian', 'tutor', 'teacher', 'owner'];
+const KINDS: ActiveContextKind[] = [
+  'anon',
+  'learner',
+  'guardian',
+  'tutor',
+  'teacher',
+  'owner',
+  'staff',
+  'school_admin',
+  'district_admin',
+];
 
 const decide = (over: Partial<GateInput>) =>
   gateDecision({ loaded: true, allowed: true, contextKind: 'guardian', hasPending: false, ...over });

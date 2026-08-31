@@ -1,6 +1,6 @@
 // Persona fixtures — dev and test identities, one per role shell.
 // SOT: docs/pack/09-screens-first-build-order.md §2
-// SOT-KEYWORDS: persona fixtures mock session learner guardian tutor teacher owner
+// SOT-KEYWORDS: persona fixtures mock session learner guardian tutor teacher owner staff school admin district
 
 import type { AgeBand } from '../features/capture/age-band';
 import type { ActiveContext, AppUser, Membership, RoleKind } from '../providers/session/types';
@@ -87,6 +87,30 @@ export const PERSONAS: Persona[] = [
     kind: 'owner',
     memberships: [
       { id: 'm7', orgId: 'lincoln-public', orgName: 'Lincoln Public Schools', role: 'owner' },
+    ],
+  },
+  {
+    id: 'carlos',
+    name: 'Carlos',
+    kind: 'staff',
+    memberships: [
+      { id: 'm8', orgId: 'main', orgName: 'Moyo Main St', role: 'staff' },
+    ],
+  },
+  {
+    id: 'luisa',
+    name: 'Luisa',
+    kind: 'school_admin',
+    memberships: [
+      { id: 'm9', orgId: 'lincoln', orgName: 'Lincoln Elementary', role: 'school_admin' },
+    ],
+  },
+  {
+    id: 'marcus',
+    name: 'Marcus',
+    kind: 'district_admin',
+    memberships: [
+      { id: 'm10', orgId: 'lincoln-public', orgName: 'Lincoln Public Schools', role: 'district_admin' },
     ],
   },
 ];

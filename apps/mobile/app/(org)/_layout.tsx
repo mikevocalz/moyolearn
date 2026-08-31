@@ -11,19 +11,19 @@ import { ShellHeader } from '../../components/ShellHeader';
  */
 export default function OrgShell() {
   const { activeContext } = useAppSession();
-  const isOwner = activeContext.kind === 'owner';
+  const isOrg = activeContext.kind === 'owner' || activeContext.kind === 'staff';
 
   return (
     <RoleScope role="org" className="flex-1">
-    <Stack
-      screenOptions={{
-        header: () => <ShellHeader titles={{}} fallback="Moyo Ops" />,
-      }}
-    >
-      <Stack.Protected guard={isOwner}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      </Stack.Protected>
-    </Stack>
+      <Stack
+        screenOptions={{
+          header: () => <ShellHeader titles={{}} fallback="Moyo Ops" />,
+        }}
+      >
+        <Stack.Protected guard={isOrg}>
+          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        </Stack.Protected>
+      </Stack>
     </RoleScope>
   );
 }

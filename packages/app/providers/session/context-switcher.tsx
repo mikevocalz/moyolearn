@@ -28,6 +28,12 @@ function roleNoun(role: Membership['role']) {
       return 'Teacher';
     case 'owner':
       return 'Owner';
+    case 'staff':
+      return 'Staff';
+    case 'school_admin':
+      return 'School admin';
+    case 'district_admin':
+      return 'District admin';
     case 'guardian':
       return 'Parent';
     default:

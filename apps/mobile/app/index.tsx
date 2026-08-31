@@ -1,6 +1,7 @@
 'use client';
 import { useEffect } from 'react';
 import { Redirect } from 'expo-router';
+import type { Href } from 'expo-router';
 import {
   SHELL_ROOTS,
   availableRoles,
@@ -49,5 +50,5 @@ export default function Dispatcher() {
 
   const shell = shellForRole(session.activeContext.kind);
   if (!shell) return <Redirect href="/onboarding" />;
-  return <Redirect href={SHELL_ROOTS[shell]} />;
+  return <Redirect href={SHELL_ROOTS[shell] as unknown as Href} />;
 }

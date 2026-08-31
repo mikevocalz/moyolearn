@@ -4,9 +4,17 @@
 
 import type { AgeBand } from '../../features/capture/age-band';
 
-export type RoleKind = 'learner' | 'guardian' | 'tutor' | 'teacher' | 'owner';
+export type RoleKind =
+  | 'learner'
+  | 'guardian'
+  | 'tutor'
+  | 'teacher'
+  | 'owner'
+  | 'staff'
+  | 'school_admin'
+  | 'district_admin';
 
-export type ActiveContextKind = 'anon' | 'learner' | 'guardian' | 'tutor' | 'teacher' | 'owner';
+export type ActiveContextKind = RoleKind | 'anon';
 
 export interface ActiveContext {
   kind: ActiveContextKind;

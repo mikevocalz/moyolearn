@@ -1,5 +1,5 @@
 'use client';
-// One product, five doors (doc 36 §5): re-points the SINGLE themed pair
+// One product, seven doors (doc 36 §5): re-points the SINGLE themed pair
 // (--color-role-accent + its 24% underlay) at this door's hue for everything
 // inside — the same custom-property scope mechanism as <Dial>, so both engines
 // inherit it down the tree and slot components carry no role prop of their own.
@@ -33,7 +33,9 @@ const SCOPE: Record<AccentRole, string> = {
   learner: 'role-learner',
   guardian: 'role-guardian',
   tutor: 'role-tutor',
+  teacher: 'role-teacher',
   org: 'role-org',
+  school: 'role-school',
   district: 'role-district',
 };
 

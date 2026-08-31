@@ -17,6 +17,9 @@ export const ONBOARDING_FLOWS: Record<OnboardingFlow, { screen: string; title: s
   tutor: { screen: 'S23', title: 'Set up your tutoring profile' },
   owner: { screen: 'S24', title: 'Set up your business' },
   teacher: { screen: 'S25', title: 'Set up your class' },
+  staff: { screen: 'S26', title: 'Set up your staff profile' },
+  school_admin: { screen: 'S27', title: 'Set up your school' },
+  district_admin: { screen: 'S28', title: 'Set up your district' },
 };
 
 export function isOnboardingFlow(value: string | undefined): value is OnboardingFlow {

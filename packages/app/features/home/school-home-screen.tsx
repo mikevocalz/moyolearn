@@ -1,0 +1,32 @@
+'use client';
+// School Home — the school-admin shell's landing tab.
+// Honest empty state: this slice does not wire campuses or programs yet, but it
+// makes the school shell reachable and fail-closed.
+// SOT: docs/pack/36-role-navigation-flows.md §3.4
+// SOT-KEYWORDS: school home screen admin shell landing empty
+
+import { ScrollView, View, Text as TWText } from '@acme/ui/tw';
+import { Container, Heading, SafeArea } from '@acme/ui';
+
+export function SchoolHomeScreen() {
+  return (
+    <SafeArea edges={['top']} className="flex-1 bg-surface">
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <Container width="detail" className="py-4 pb-48">
+          <View className="gap-stack">
+            <Heading level={1} size="title">
+              School overview
+            </Heading>
+            <TWText className="text-body text-text">
+              School overview will list campuses, staff, and programs.
+            </TWText>
+            <TWText className="text-body text-text-muted">
+              For now, this is the school-admin shell's landing screen. The planned tabs are
+              Overview, People, Academics, Calendar, and More.
+            </TWText>
+          </View>
+        </Container>
+      </ScrollView>
+    </SafeArea>
+  );
+}

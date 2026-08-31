@@ -8,11 +8,18 @@
 import type { ActiveContextKind, AppSession, Membership, RoleKind } from './types';
 
 /**
- * The four consumer shells. `teacher` folds into the tutor shell (doc 36 §3.3 —
- * the educator IA is one shell; the school-teacher share-link viewer has no
- * shell at all), and `anon` has none.
+ * The seven consumer shells. `teacher` now gets its own tree; `owner` and
+ * `staff` share the org shell; `school_admin` and `district_admin` each get
+ * their own back-office tree. `anon` has none.
  */
-export type Shell = 'learner' | 'guardian' | 'tutor' | 'org';
+export type Shell =
+  | 'learner'
+  | 'guardian'
+  | 'tutor'
+  | 'teacher'
+  | 'org'
+  | 'school'
+  | 'district';
 
 export function shellForRole(kind: ActiveContextKind): Shell | null {
   switch (kind) {
@@ -21,10 +28,16 @@ export function shellForRole(kind: ActiveContextKind): Shell | null {
     case 'guardian':
       return 'guardian';
     case 'tutor':
-    case 'teacher':
       return 'tutor';
+    case 'teacher':
+      return 'teacher';
     case 'owner':
+    case 'staff':
       return 'org';
+    case 'school_admin':
+      return 'school';
+    case 'district_admin':
+      return 'district';
     case 'anon':
       return null;
   }
@@ -35,7 +48,10 @@ export const SHELL_ROOTS = {
   learner: '/today',
   guardian: '/family-home',
   tutor: '/tutor-today',
+  teacher: '/teacher-home',
   org: '/overview',
+  school: '/school-home',
+  district: '/district-home',
 } as const satisfies Record<Shell, string>;
 
 /**

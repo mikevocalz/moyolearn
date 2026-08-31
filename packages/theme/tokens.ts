@@ -199,18 +199,26 @@ export const semantic = {
   // least WCAG luminance at fixed OKLab L, so .88 read 12.27:1; .95 gives 14.44:1.
   'role-org': { light: '#FFD7A5', dark: '#FFD7A5' },
   'role-org-underlay': { light: 'rgba(255, 215, 165, 0.24)', dark: 'rgba(255, 215, 165, 0.24)' },
+  // oklch(0.93 0.11 30) coral — sits between tangerine and rose, distinct for the
+  // classroom-teacher shell without drifting into danger red.
+  'role-teacher': { light: '#FFC7B2', dark: '#FFC7B2' },
+  'role-teacher-underlay': { light: 'rgba(255, 199, 178, 0.24)', dark: 'rgba(255, 199, 178, 0.24)' },
+  // oklch(0.92 0.10 150) mint — the campus-operating shell, different from tutor
+  // violet and district teal but still light enough for ink at >= 14:1.
+  'role-school': { light: '#BFF5C8', dark: '#BFF5C8' },
+  'role-school-underlay': { light: 'rgba(191, 245, 200, 0.24)', dark: 'rgba(191, 245, 200, 0.24)' },
   // oklch(0.89 0.10 200) teal — doc L .88 read 14.13:1; .89 gives 14.55:1.
   'role-district': { light: '#83EFF5', dark: '#83EFF5' },
   'role-district-underlay': { light: 'rgba(131, 239, 245, 0.24)', dark: 'rgba(131, 239, 245, 0.24)' },
 } as const;
 
 /**
- * The five doors, in shell order (doc 36 §5). Drives the `.role-*` scopes
+ * The seven doors, in shell order (doc 36 §5). Drives the `.role-*` scopes
  * build-css.mjs emits, the RoleScope kit component, and the contrast pairs —
- * one list, so a sixth role cannot be added in one place and missed in another.
+ * one list, so an eighth role cannot be added in one place and missed in another.
  * Admin is absent on purpose: graphite ramp, no accent.
  */
-export const accentRoles = ['learner', 'guardian', 'tutor', 'org', 'district'] as const;
+export const accentRoles = ['learner', 'guardian', 'tutor', 'teacher', 'org', 'school', 'district'] as const;
 export type AccentRole = (typeof accentRoles)[number];
 
 // ---- typography -------------------------------------------------------------

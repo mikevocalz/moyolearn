@@ -17,7 +17,16 @@ export interface LastShellStorage {
   set: (key: string, value: string) => void;
 }
 
-const ROLE_KINDS: readonly RoleKind[] = ['learner', 'guardian', 'tutor', 'teacher', 'owner'];
+const ROLE_KINDS: readonly RoleKind[] = [
+  'learner',
+  'guardian',
+  'tutor',
+  'teacher',
+  'owner',
+  'staff',
+  'school_admin',
+  'district_admin',
+];
 
 /** Never trusted as-is: the save may predate a role rename. */
 export function readLastShellRole(storage: LastShellStorage): RoleKind | null {

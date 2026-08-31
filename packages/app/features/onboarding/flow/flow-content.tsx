@@ -1,13 +1,13 @@
 'use client';
-// The S21–S25 sequences behind one route. Each content component owns its own
+// The S21–S28 sequences behind one route. Each content component owns its own
 // steps; this only picks which one runs and answers "what happens when it ends".
 //
 // Mobbin: not applicable — this file renders no UI of its own beyond the
 // unknown-flow fallback, which is the kit's EmptyState. Every surface it can
-// render carries its own citations (guardian-, learner-, tutor-, business- and
-// teacher-onboarding-content).
+// render carries its own citations (guardian-, learner-, tutor-, business-,
+// teacher-, staff-, school- and district-onboarding-content).
 // SOT: docs/pack/06-auth-onboarding-spec.md §5
-// SOT-KEYWORDS: onboarding flow content router guardian learner tutor owner teacher
+// SOT-KEYWORDS: onboarding flow content router guardian learner tutor owner teacher staff school district
 
 import { useRouter } from 'solito/navigation';
 import { Button, EmptyState } from '@acme/ui';
@@ -30,6 +30,9 @@ const NEXT_PATH: Record<OnboardingFlow, string> = {
   tutor: '/',
   teacher: '/',
   owner: '/',
+  staff: '/',
+  school_admin: '/',
+  district_admin: '/',
 };
 
 export function OnboardingFlowContent({ flow }: { flow: string }) {
@@ -98,4 +101,9 @@ const FLOWS: Record<OnboardingFlow, (exits: FlowExits) => React.ReactElement> = 
   tutor: ({ done }) => <TutorOnboardingContent onExit={done} />,
   owner: ({ done }) => <BusinessOnboardingContent onExit={done} />,
   teacher: ({ done }) => <TeacherOnboardingContent onExit={done} />,
+  // Staff, school, and district are dev-only personas in this slice; the
+  // business flow is the generic organization setup path for all three.
+  staff: ({ done }) => <BusinessOnboardingContent onExit={done} />,
+  school_admin: ({ done }) => <BusinessOnboardingContent onExit={done} />,
+  district_admin: ({ done }) => <BusinessOnboardingContent onExit={done} />,
 };
