@@ -25,6 +25,7 @@ import { Button } from './Button';
 import { Avatar } from './Avatar';
 import { LearningCanvas } from './LearningCanvas';
 import { useSizeClass } from './use-size-class';
+import type { TutorView } from './tutor-view';
 
 /** A spoken or written turn from the tutor. */
 export interface Utterance {
@@ -54,12 +55,6 @@ export interface SessionSummary {
   masteryDelta: number;
 }
 
-/**
- * Natalie's presentation. These are display values; they do not change the
- * model, voice, captions, or learning policy.
- */
-export type TutorView = 'visible' | 'compact' | 'hidden';
-
 /** The ten-state contract. Kinds are drawn only when the canvas has signed off. */
 export type TutorStageState =
   | { kind: 'presence' }                        // §3.1 first paint, 2D mark
@@ -79,6 +74,7 @@ export interface TutorStageProps {
   childName?: string;
   questionNumber?: number;
   tutorView?: TutorView;
+  onTutorViewChange?: (view: TutorView) => void;
   captionsEnabled?: boolean;
   buttonSize?: 'sm' | 'md' | 'lg' | 'xl';
   onBack?: () => void;
@@ -327,6 +323,7 @@ export function TutorStage({
   childName,
   questionNumber,
   tutorView = 'compact',
+  onTutorViewChange,
   captionsEnabled,
   buttonSize,
   onBack,
@@ -448,8 +445,10 @@ export function TutorStage({
         <SessionToolbar
           title={title}
           captionsEnabled={captionsEnabled}
+          tutorView={tutorView}
           onBack={onBack}
           onToggleCaptions={onToggleCaptions}
+          onTutorViewChange={onTutorViewChange}
         />
         {twoPane ? (
           <View className="flex-1 flex-row gap-group p-inset">

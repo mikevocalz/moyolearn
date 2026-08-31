@@ -426,6 +426,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       title="Natalie"
       childName="there"
       tutorView={tutorView}
+      onTutorViewChange={setTutorView}
       captionsEnabled
       buttonSize={buttonSizeForBand(ageBand)}
       onBack={router.back}
