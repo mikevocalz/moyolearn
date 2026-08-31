@@ -2,6 +2,7 @@ import { postgresAdapter } from '@payloadcms/db-postgres';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { buildConfig } from 'payload';
+import type { PayloadRequest } from 'payload';
 import sharp from 'sharp';
 import { mcpPlugin } from '@payloadcms/plugin-mcp';
 import { bunnyStorage } from '@seshuk/payload-storage-bunny';
@@ -24,6 +25,24 @@ import { Organizations } from './collections/Organizations';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverURL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
+
+/**
+ * Per-tool MCP access for the `media` collection.
+ *
+ * The MCP endpoint can only be enabled on the super-admin `admin.` host. Even
+ * then, the caller must be a signed-in Payload user. This keeps a stray
+ * `PAYLOAD_MCP_ENABLED=true` from exposing the `media` collection on `app.`,
+ * district, or preview hosts.
+ */
+const adminMcpAccess = ({ req }: { req: PayloadRequest }): boolean => {
+  if (!req.user) return false;
+  const headers = req.headers;
+  if (!headers) return false;
+  const rawHost = headers.get('x-forwarded-host') ?? headers.get('host') ?? '';
+  const host = (rawHost.split(':')[0] ?? '').toLowerCase();
+  const root = (process.env.NEXT_PUBLIC_ROOT_DOMAIN ?? 'moyolearn.com').toLowerCase();
+  return host === `admin.${root}`;
+};
 
 export default buildConfig({
   admin: {
@@ -179,13 +198,31 @@ export default buildConfig({
       // learner identity lands — doc 13 keeps learner data off machine-readable
       // surfaces in every version, so it never gets an MCP tool.
       collections: {
-        media: {},
+        media: {
+          // Fail-closed per-tool access: every built-in media tool is locked to
+          // the `admin.<ROOT>` host and a signed-in Payload user. This is the
+          // guard that makes `PAYLOAD_MCP_ENABLED=true` safe on admin.moyolearn.com
+          // and a no-op elsewhere.
+          tools: {
+            count: { access: adminMcpAccess },
+            countVersions: { access: adminMcpAccess },
+            create: { access: adminMcpAccess },
+            delete: { access: adminMcpAccess },
+            duplicate: { access: adminMcpAccess },
+            find: { access: adminMcpAccess },
+            findDistinct: { access: adminMcpAccess },
+            findVersionByID: { access: adminMcpAccess },
+            findVersions: { access: adminMcpAccess },
+            getCollectionSchema: { access: adminMcpAccess },
+            getUploadInstructions: { access: adminMcpAccess },
+            restoreVersion: { access: adminMcpAccess },
+            update: { access: adminMcpAccess },
+          },
+        },
       },
       // ponytail: off unless switched on. The plugin's default access is
       // `Boolean(req.user)`, which would hand the whole tool surface to any
       // authenticated account — not the fail-closed posture doc 07/12 require.
-      // Per-tool `access` is the real fix; it arrives with doc 13's scope
-      // registry. Until then the endpoint simply isn't registered.
       disabled: process.env.PAYLOAD_MCP_ENABLED !== 'true',
     }),
   ],
