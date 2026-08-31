@@ -222,12 +222,14 @@ function SuccessView({
   context,
   isExample,
   onStart,
+  onReset,
 }: {
   ageBand: AgeBand;
   pages: CapturePage[];
   context: CaptureContext;
   isExample: boolean;
   onStart: () => void;
+  onReset: () => void;
 }) {
   const size = buttonSizeForBand(ageBand);
   const title =
@@ -265,6 +267,14 @@ function SuccessView({
         </View>
       ) : null}
       <Button title="Start with Natalie" variant="highlighter" size={size} fullWidth onPress={onStart} />
+      <Button
+        title={ageBand === 'young' ? 'Start over' : 'Start over'}
+        variant="outline"
+        size={size}
+        fullWidth
+        onPress={onReset}
+        aria-label="Start the capture over"
+      />
       {context.stuck.trim() ? (
         <Text className="font-sans text-body text-text">Stuck on: {context.stuck}</Text>
       ) : null}
@@ -777,6 +787,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
         context={context}
         isExample={isExample}
         onStart={startWithNatalie}
+        onReset={reset}
       />
     </SafeArea>
   );
