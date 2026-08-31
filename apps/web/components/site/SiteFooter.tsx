@@ -2,7 +2,7 @@
 import { Link } from 'solito/link';
 import { MoyoLearnLogo } from '@acme/ui/brand';
 import { Footer, Nav, View, Text as TWText, P } from '@acme/ui/tw';
-import { PROFILE, useNavItems } from './nav';
+import { MARKETING_ITEMS, PROFILE } from './nav';
 
 // The footer is a system map of the consumer site, not a dumping ground for
 // admin tools or internal stack badges. Keep the Toolkit/Stack columns off
@@ -15,7 +15,6 @@ const footerLink =
   'rounded focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50';
 
 export function SiteFooter() {
-  const navItems = useNavItems();
   return (
     <Footer className="border-t-2 border-border bg-surface-sunken">
       <View className="mx-auto w-full max-w-screen-2xl gap-10 px-4 py-12 sm:px-6 md:flex-row md:justify-between">
@@ -35,7 +34,7 @@ export function SiteFooter() {
           <TWText className="text-xs font-semibold uppercase tracking-wider text-text-muted">
             Pages
           </TWText>
-          {[...navItems, PROFILE].map((item) => (
+          {[...MARKETING_ITEMS, PROFILE].map((item) => (
             <Link key={item.href} href={item.href} className={footerLink}>
               {item.label}
             </Link>

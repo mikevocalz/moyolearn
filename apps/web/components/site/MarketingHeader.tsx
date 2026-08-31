@@ -1,4 +1,11 @@
 'use client';
+// Public site header — the anon marketing nav, isolated from authenticated shells.
+// The old `SiteHeader` mixed every role's nav into one bar; this file is only
+// the marketing set and the existing profile/avatar slot (which becomes a login
+// link when no session is present).
+// SOT: apps/web/components/site/nav.ts
+// SOT-KEYWORDS: marketing header public anon nav consumer footer
+
 import { useEffect } from 'react';
 import { Link } from 'solito/link';
 import { usePathname } from 'solito/navigation';
@@ -7,22 +14,16 @@ import { Header, Nav, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, MotionView, useHydrated } from '@acme/ui';
 import { MoyoLearnLogo } from '@acme/ui/brand';
 import { AVATAR_URI, useProfile } from '@acme/app';
-import { PROFILE, useMobileMenu, useNavItems, type NavItem } from './nav';
+import { MARKETING_ITEMS, PROFILE, useMobileMenu } from './nav';
 
 const isActive = (pathname: string, href: string) =>
   href === '/' ? pathname === '/' : pathname.startsWith(href);
 
-
-
-// Scroll elevation — zustand always (repo rule).
 const useScrolled = create<{ scrolled: boolean; set: (scrolled: boolean) => void }>((set) => ({
   scrolled: false,
   set: (scrolled) => set({ scrolled }),
 }));
 
-// Sliding active indicator (dvnt GlassHeader pattern): every desktop link
-// self-measures against the Nav container; ONE absolutely-positioned bar
-// springs to the active link's x/width instead of remounting per route.
 const useNavMetrics = create<{
   metrics: Record<string, { x: number; width: number }>;
   measure: (href: string, x: number, width: number) => void;
@@ -45,9 +46,15 @@ const measureAll = () => {
 };
 
 function DesktopNavLink({
-  href, label, active, index,
+  href,
+  label,
+  active,
+  index,
 }: {
-  href: string; label: string; active: boolean; index: number;
+  href: string;
+  label: string;
+  active: boolean;
+  index: number;
 }) {
   const hydrated = useHydrated();
   return (
@@ -77,14 +84,12 @@ function DesktopNavLink({
   );
 }
 
-function NavIndicator({ pathname, items }: { pathname: string; items: NavItem[] }) {
+function NavIndicator({ pathname, items }: { pathname: string; items: typeof MARKETING_ITEMS }) {
   const hydrated = useHydrated();
   const metrics = useNavMetrics((s) => s.metrics);
   const activeItem = items.find((item) => isActive(pathname, item.href));
   const m = activeItem ? metrics[activeItem.href] : undefined;
 
-  // Measurement-driven — meaningless during SSR and a hydration-mismatch
-  // source; render client-side only.
   if (!hydrated) return null;
   return (
     <MotionView
@@ -97,9 +102,17 @@ function NavIndicator({ pathname, items }: { pathname: string; items: NavItem[] 
 }
 
 function MobileNavLink({
-  href, label, active, index, onNavigate,
+  href,
+  label,
+  active,
+  index,
+  onNavigate,
 }: {
-  href: string; label: string; active: boolean; index: number; onNavigate: () => void;
+  href: string;
+  label: string;
+  active: boolean;
+  index: number;
+  onNavigate: () => void;
 }) {
   const hydrated = useHydrated();
   return (
@@ -123,23 +136,21 @@ function MobileNavLink({
   );
 }
 
-export function SiteHeader() {
+export function MarketingHeader() {
   const pathname = usePathname() ?? '/';
+  const navItems = MARKETING_ITEMS;
   const { open, toggle, close } = useMobileMenu();
   const scrolled = useScrolled((s) => s.scrolled);
   const hydrated = useHydrated();
   const name = useProfile((s) => s.name);
   const handle = useProfile((s) => s.handle);
   const profileActive = isActive(pathname, PROFILE.href);
-  // Role-scoped IA (doc 36 §3): the header shows the active role's destinations.
-  const navItems = useNavItems();
 
   useEffect(() => {
     const onScroll = () => useScrolled.getState().set(window.scrollY > 8);
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     window.addEventListener('resize', measureAll, { passive: true });
-    // Re-measure once fonts settle — widths shift when the display/sans fonts load.
     document.fonts?.ready.then(measureAll).catch(() => {});
     return () => {
       window.removeEventListener('scroll', onScroll);
@@ -153,7 +164,6 @@ export function SiteHeader() {
         scrolled ? 'border-border bg-surface/95 shadow-card' : 'border-border bg-surface/80'
       }`}
     >
-      {/* Load choreography: the bar settles first, then logo, then links. */}
       <MotionView
         key={hydrated ? 'ready' : 'ssr'}
         initial={hydrated ? { y: -16 } : undefined}
@@ -161,7 +171,6 @@ export function SiteHeader() {
         transition={{ type: 'spring', damping: 24, stiffness: 320 }}
         className="mx-auto w-full max-w-screen-2xl flex-row items-center justify-between gap-4 px-4 py-3 sm:px-6"
       >
-        {/* Logo — left */}
         <Link
           href="/"
           onClick={close}
@@ -178,7 +187,6 @@ export function SiteHeader() {
           </MotionView>
         </Link>
 
-        {/* Nav + avatar — right */}
         <View className="flex-row items-center gap-stack">
           <Nav aria-label="Primary" className="relative hidden flex-row items-center gap-1 md:flex">
             {navItems.map((item, index) => (
@@ -187,7 +195,6 @@ export function SiteHeader() {
             <NavIndicator pathname={pathname} items={navItems} />
           </Nav>
 
-          {/* Profile — a face, not a word; settings live inside */}
           <MotionView
             initial={hydrated ? { scale: 0.6 } : undefined}
             animate={hydrated ? { scale: 1 } : undefined}
@@ -207,7 +214,6 @@ export function SiteHeader() {
             </Link>
           </MotionView>
 
-          {/* Mobile menu button */}
           <button
             type="button"
             aria-label={open ? 'Close menu' : 'Open menu'}
@@ -221,10 +227,6 @@ export function SiteHeader() {
         </View>
       </MotionView>
 
-      {/* Mobile menu — overlay sheet; never pushes page content.
-          NOTE: no AnimatePresence here — Legend's presence wrapper freezes
-          enter animations in this tree; conditional mount + entrance presets
-          are the proven path (exit animation traded for reliability). */}
       {open ? (
         <>
           <MotionView
@@ -241,7 +243,6 @@ export function SiteHeader() {
             transition={{ type: 'spring', damping: 24, stiffness: 380 }}
             className="absolute inset-x-0 top-full rounded-b-sheet border-b-2 border-border bg-surface shadow-raised md:hidden"
           >
-            {/* Identity row — profile anchors the menu; settings live inside it */}
             <MotionView
               initial={{ x: -12 }}
               animate={{ x: 0 }}

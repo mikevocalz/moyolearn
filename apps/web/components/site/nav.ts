@@ -13,7 +13,7 @@ export interface NavItem {
   href: string;
 }
 
-const MARKETING_ITEMS: NavItem[] = [
+export const MARKETING_ITEMS: NavItem[] = [
   { label: 'Home', href: '/' },
   { label: 'Explore', href: '/explore' },
   { label: 'Schedule', href: '/schedule' },
@@ -24,7 +24,7 @@ const MARKETING_ITEMS: NavItem[] = [
  * §3.1: the learner web nav is the same IA as the tabs — a Hot top-nav, no
  * sidebar, and the camera present as a first-class destination.
  */
-const NAV_BY_ROLE: Record<ActiveContextKind, NavItem[]> = {
+export const NAV_BY_ROLE: Record<ActiveContextKind, NavItem[]> = {
   anon: MARKETING_ITEMS,
   learner: [
     { label: 'Today', href: '/' },
