@@ -12,7 +12,7 @@ const ITEMS: ShellTabItem[] = [
   { name: 'family-home', label: 'Home', Icon: Home },
   { name: 'reports', label: 'Reports', Icon: FileText },
   { name: 'alerts', label: 'Alerts', Icon: Bell },
-  { name: 'family', label: 'Family', Icon: Users },
+  { name: 'family', label: 'Children', Icon: Users },
 ];
 
 const TITLES: Record<string, string> = {

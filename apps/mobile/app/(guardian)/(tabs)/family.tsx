@@ -1,3 +1,3 @@
-import { SettingsScreen } from "@acme/app";
+import { FamilyScreen } from "@acme/app";
 
-export default SettingsScreen;
+export default FamilyScreen;

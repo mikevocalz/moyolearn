@@ -8,6 +8,7 @@ export { HomeScreen } from './features/home/screen';
 export { LearnerTodayScreen } from './features/home/learner-today-screen';
 export { LearnerHubContent } from './features/home/learner-hub-content';
 export { GuardianHomeScreen } from './features/home/guardian-home-screen';
+export { FamilyScreen } from './features/home/family-screen';
 export { TutorTodayScreen } from './features/home/tutor-today-screen';
 export { ExploreScreen } from './features/explore/screen';
 export { NotificationsScreen } from './features/notifications/screen';
