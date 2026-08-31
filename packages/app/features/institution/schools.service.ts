@@ -12,13 +12,13 @@ import { protectedOperation } from '../../core/protected-operation.ts';
 import type { OrgBranding } from '../org/org.service.ts';
 
 /** Repository port — the caller provides the Payload adapter. */
-export type LoadSchools = (districtId: string) => Promise<OrgBranding[]>;
+export type LoadSchools = (districtSlug: string) => Promise<OrgBranding[]>;
 
 /**
  * Loads the school organizations that belong to the current district.
  *
- * The service receives the resolved district from `ctx.orgId` and passes it to
- * the repository so the list is tenant-scoped. The permission gate is
+ * The service receives the resolved district slug from `ctx.orgId` and passes it
+ * to the repository so the list is tenant-scoped. The permission gate is
  * `district/schools/view`.
  */
 export async function loadDistrictSchools(

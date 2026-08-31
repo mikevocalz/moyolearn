@@ -103,12 +103,27 @@ export const loadOrgKind: LoadOrgKind = async (ctx) => {
  * after the caller has already passed the `district/schools/view` institution
  * gate, so it uses `overrideAccess: true`.
  */
-export const loadSchools: LoadSchools = async (districtId) => {
+export const loadSchools: LoadSchools = async (districtSlug) => {
   const payload = await getPayload({ config });
+  // The `district` relationship stores the related organization numeric id,
+  // not its slug, so we resolve the id from the current host slug first.
+  const { docs: districts } = await payload.find({
+    collection: 'organizations',
+    where: {
+      and: [{ slug: { equals: districtSlug } }, { kind: { equals: 'district' } }],
+    },
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+    select: { slug: true },
+  });
+  const district = districts[0] as Pick<Organization, 'id'> | undefined;
+  if (!district) return [];
+
   const { docs } = await payload.find({
     collection: 'organizations',
     where: {
-      and: [{ kind: { equals: 'school' } }, { district: { equals: districtId } }],
+      and: [{ kind: { equals: 'school' } }, { district: { equals: district.id } }],
     },
     limit: 100,
     depth: 0,
