@@ -1,5 +1,5 @@
 import { Button } from '@acme/ui';
-import { View } from '@acme/ui/primitives';
+import { View } from '@acme/ui/tw';
 import { buttonSizeForBand, captureLabelsForBand, type AgeBand } from './age-band';
 import { CaptureMode } from './types';
 
@@ -14,11 +14,11 @@ export function CaptureEntryRow({ ageBand = 'teen', value, onSelect }: CaptureEn
   const size = buttonSizeForBand(ageBand);
 
   const modes: { mode: CaptureMode; label: string; a11y: string }[] = [
-    { mode: 'camera', label: labels.camera, a11y: 'Take a picture of your work' },
-    { mode: 'photo-library', label: labels.photoLibrary, a11y: 'Choose a picture from your device' },
-    { mode: 'file', label: labels.file, a11y: 'Upload a file' },
-    { mode: 'type', label: labels.type, a11y: 'Type the problem' },
-    { mode: 'voice', label: labels.voice, a11y: 'Record your voice' },
+    { mode: 'camera', label: labels.takePhoto, a11y: 'Take a photo of your work' },
+    { mode: 'photo-library', label: labels.choosePhotos, a11y: 'Choose photos from your device' },
+    { mode: 'file', label: labels.uploadFile, a11y: 'Upload a PDF or file' },
+    { mode: 'type', label: labels.typePaste, a11y: 'Type or paste the problem' },
+    { mode: 'voice', label: labels.describeVoice, a11y: 'Describe the work by voice' },
   ];
 
   return (

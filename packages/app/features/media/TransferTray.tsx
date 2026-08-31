@@ -19,12 +19,14 @@ import { Button, IconButton, ProgressBar, SegmentedControl, Text } from '@acme/u
 import { Pressable, ScrollView, View } from '@acme/ui/tw';
 import { Check, ChevronDown, ChevronUp } from '@acme/ui/icons';
 import { useTransferTray } from './transfer-tray.store';
+import { useOnline } from './use-online';
 import {
   formatBytes,
   rowsForTab,
   trayTitle,
   TRAY_TABS,
   type TransferRow,
+  type TransferStatus,
   type TrayTab,
 } from './upload-surfaces.shared.ts';
 import { FileGlyph } from './file-glyph';
@@ -52,10 +54,24 @@ const milestones = (rows: readonly TransferRow[]): string => {
   return parts.join(', ');
 };
 
+/**
+ * The four learner-facing upload phases the build prompt asks for.
+ * Internal status names stay the same; these are the human labels.
+ */
+const PHASE_LABEL: Record<TransferStatus, string> = {
+  queued: 'Preparing',
+  uploading: 'Uploading',
+  processing: 'Processing',
+  done: 'Ready',
+  failed: 'Waiting for connection',
+};
+
 function TrayRow({ row }: { row: TransferRow }) {
   const retry = useTransferTray((s) => s.retry);
+  const online = useOnline();
   const ratio =
     row.bytesTotal !== null && row.bytesTotal > 0 ? row.bytesSent / row.bytesTotal : null;
+  const isWaiting = !online && row.status !== 'done';
   return (
     <View className="flex-row items-center gap-element border-b border-border py-2">
       <FileGlyph name={row.name} mimeType={row.mimeType} />
@@ -65,13 +81,13 @@ function TrayRow({ row }: { row: TransferRow }) {
         </Text>
         {row.status === 'queued' ? (
           <Text variant="caption" tone="muted">
-            Waiting to upload
+            {PHASE_LABEL.queued}
           </Text>
         ) : null}
         {row.status === 'uploading' ? (
           <ProgressBar
             ratio={ratio}
-            label={`Uploading ${row.name}`}
+            label={`${PHASE_LABEL.uploading} ${row.name}`}
             valueText={
               row.bytesTotal !== null && row.bytesTotal > 0
                 ? `${formatBytes(row.bytesSent)} / ${formatBytes(row.bytesTotal)}`
@@ -82,11 +98,11 @@ function TrayRow({ row }: { row: TransferRow }) {
         {row.status === 'processing' ? (
           // Phase 2 (doc 29 §4): bytes landed, Bunny is encoding. No honest
           // percentage exists, so the bar says "moving, amount unknown".
-          <ProgressBar ratio={null} label={`Processing ${row.name}`} valueText="Processing" />
+          <ProgressBar ratio={null} label={`${PHASE_LABEL.processing} ${row.name}`} valueText={PHASE_LABEL.processing} />
         ) : null}
         {row.status === 'failed' ? (
-          <Text variant="caption" className="text-redpen">
-            {row.error ?? 'This file didn’t send.'}
+          <Text variant="caption" className={isWaiting ? 'text-text-muted' : 'text-redpen'}>
+            {isWaiting ? PHASE_LABEL.failed : row.error ?? 'This file didn’t send.'}
           </Text>
         ) : null}
       </View>
@@ -94,7 +110,7 @@ function TrayRow({ row }: { row: TransferRow }) {
         <View className="flex-row items-center gap-1">
           <Check size={16} className="text-grade" aria-hidden />
           <Text variant="caption" tone="muted">
-            Done
+            {PHASE_LABEL.done}
           </Text>
         </View>
       ) : null}

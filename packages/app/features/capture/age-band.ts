@@ -27,12 +27,17 @@ export function buttonSizeForBand(ageBand: AgeBand): 'sm' | 'md' | 'lg' | 'xl' {
   }
 }
 
+/**
+ * The five choices on the "Choose how to share work" hub.
+ * The build prompt asks for these exact learner-facing labels:
+ * Take photo, Choose photos, Upload PDF/file, Type/paste, Describe by voice.
+ */
 export interface CaptureLabels {
-  camera: string;
-  photoLibrary: string;
-  file: string;
-  type: string;
-  voice: string;
+  takePhoto: string;
+  choosePhotos: string;
+  uploadFile: string;
+  typePaste: string;
+  describeVoice: string;
   prompt: string;
 }
 
@@ -78,40 +83,40 @@ export function captureLabelsForBand(ageBand: AgeBand): CaptureLabels {
   switch (ageBand) {
     case 'young':
       return {
-        camera: 'Take a picture',
-        photoLibrary: 'Choose a photo',
-        file: 'Pick a file',
-        type: 'Type the words',
-        voice: 'Say it out loud',
-        prompt: 'How do you want to add your work?',
+        takePhoto: 'Take photo',
+        choosePhotos: 'Choose photos',
+        uploadFile: 'Upload PDF/file',
+        typePaste: 'Type or paste',
+        describeVoice: 'Describe by voice',
+        prompt: 'How do you want to share your work?',
       };
     case 'child':
       return {
-        camera: 'Take a photo',
-        photoLibrary: 'Photo library',
-        file: 'Upload a file',
-        type: 'Type it',
-        voice: 'Say it',
-        prompt: 'How do you want to add your work?',
+        takePhoto: 'Take photo',
+        choosePhotos: 'Choose photos',
+        uploadFile: 'Upload PDF/file',
+        typePaste: 'Type or paste',
+        describeVoice: 'Describe by voice',
+        prompt: 'How do you want to share your work?',
       };
     case 'adult':
       return {
-        camera: 'Camera',
-        photoLibrary: 'Photo library',
-        file: 'File',
-        type: 'Type',
-        voice: 'Voice',
-        prompt: 'Choose an input method',
+        takePhoto: 'Take photo',
+        choosePhotos: 'Choose photos',
+        uploadFile: 'Upload PDF/file',
+        typePaste: 'Type or paste',
+        describeVoice: 'Describe by voice',
+        prompt: 'Choose how to share your work',
       };
     case 'teen':
     default:
       return {
-        camera: 'Camera',
-        photoLibrary: 'Photo library',
-        file: 'File',
-        type: 'Type it',
-        voice: 'Say it',
-        prompt: 'How do you want to add your work?',
+        takePhoto: 'Take photo',
+        choosePhotos: 'Choose photos',
+        uploadFile: 'Upload PDF/file',
+        typePaste: 'Type or paste',
+        describeVoice: 'Describe by voice',
+        prompt: 'How do you want to share your work?',
       };
   }
 }
