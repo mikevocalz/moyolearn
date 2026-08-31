@@ -1,45 +1,69 @@
 'use client';
 // TutorAvatar — the embodied Natalie presence.
 //
-// This is the 2D-to-3D handoff point. For now it draws the 2D mark while the
-// `@acme/avatar` controller is wired, ticks on a frame loop, and speaks. The
-// 3D renderer will replace the `Avatar` fallback once it is ready to draw a
-// real face; 2D remains the safe first-paint surface.
-// SOT: packages/avatar/src/tutor-stage.ts · packages/ui/TutorStage.tsx
-// SOT-KEYWORDS: tutor avatar presence 2d 3d handoff face speaking tick
+// This is the 2D->3D handoff point. For now it draws the 2D mark while the
+// `@acme/avatar` controller and face bus are wired, ticked on requestAnimationFrame,
+// and driven by the live tutor audio queue's viseme samples.
+// SOT: packages/avatar/src/tutor-stage.ts · packages/app/features/tutor/tutor-audio.ts
+// SOT-KEYWORDS: tutor avatar presence 2d 3d handoff face bus speech driver viseme
 
 import { useEffect, useRef } from 'react';
 import { Avatar } from '@acme/ui';
 import type { TutorView } from '@acme/ui';
-import { createTutorStage, type TutorStage } from '@acme/avatar';
+import {
+  createFaceBus,
+  createTutorStage,
+  directEncoder,
+  type FaceBus,
+  type SpeechDriver,
+  type TutorStage,
+} from '@acme/avatar';
+import { audioQueue } from './tutor-audio';
 
 export interface TutorAvatarProps {
   tutorView: TutorView;
   isSpeaking: boolean;
 }
 
+const speechDriver: SpeechDriver = {
+  sampleSpeech: (nowMs) => audioQueue.sampleSpeech(nowMs),
+  sampleGesture: () => null,
+  speak: async () => {},
+  stop: () => {},
+  now: () => audioQueue.now(),
+  scheduledOnsetAt: 0,
+};
+
 export function TutorAvatar({ tutorView, isSpeaking }: TutorAvatarProps) {
+  const stageRef = useRef<TutorStage | null>(null);
+  const faceBusRef = useRef<FaceBus | null>(null);
+
   // Keep the controller stable for the session. `presence-2d` is the only
   // guaranteed-safe opening tier; higher tiers are introduced by the device
   // capability manager once it has measured.
-  const stageRef = useRef<TutorStage | null>(null);
-
   useEffect(() => {
     if (stageRef.current === null) {
       stageRef.current = createTutorStage({ tier: 'presence-2d' });
+      faceBusRef.current = createFaceBus({
+        speech: speechDriver,
+        encoder: directEncoder(['jawOpen']),
+      });
     }
   }, []);
 
   useEffect(() => {
     stageRef.current?.setSpeaking(isSpeaking);
+    faceBusRef.current?.setConversationCues({ partnerSpeaking: isSpeaking });
   }, [isSpeaking]);
 
   useEffect(() => {
     const stage = stageRef.current;
-    if (!stage) return;
+    const faceBus = faceBusRef.current;
+    if (!stage || !faceBus) return;
     let raf: number;
     const tick = () => {
       stage.tick(performance.now());
+      faceBus.step(0.016);
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);

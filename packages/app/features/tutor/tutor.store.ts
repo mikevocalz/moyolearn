@@ -5,7 +5,7 @@ import { streamFetch } from './stream-fetch';
 import { fetchSession, postMessage } from './session.client.ts';
 import { traceAttempt, DEFAULT_TRACING, inferSkillTitle } from '@acme/student-model/pure';
 import { API_URL, type TutorView } from './tutor-constants.ts';
-import { TutorAudioQueue } from './tutor-audio.ts';
+import { audioQueue } from './tutor-audio.ts';
 import type { CoachEvent } from './coach.service';
 
 interface TutorState {
@@ -93,8 +93,8 @@ const DONE_FOR_TODAY: TutorStageState = {
 /**
  * Module-level audio queue for the live tutor voice. It is not React state so
  * it survives re-renders and is owned by the store, not a component.
+ * Imported from `tutor-audio` so the avatar can share the same instance.
  */
-const audioQueue = new TutorAudioQueue();
 
 /**
  * Reads the coach route's SSE frames. Written by hand rather than with

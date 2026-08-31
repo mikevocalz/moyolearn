@@ -6,19 +6,22 @@
 // verifies the server emitted the sentence. A 204 or failed request degrades
 // that sentence to text without stopping the session.
 //
-// This is a single queue shared by the visible and hidden avatar presentations;
-// there is no separate "avatar audio" path.
+// The queue also doubles as the avatar's `SpeechDriver`: it computes an even
+// viseme track from the text and duration, then samples it on the audio clock.
+// The 2D/3D face bus reads `sampleSpeech` to drive the mouth.
 // SOT: packages/app/features/tutor/tutor.store.ts · apps/web/app/api/tutor/voice/route.ts
-// SOT-KEYWORDS: tutor audio queue elevenlabs voice playback captions barge-in
+// SOT-KEYWORDS: tutor audio queue elevenlabs voice playback captions barge-in viseme
 
 import { API_URL } from './tutor-constants.ts';
 import {
   createTutorBufferSource,
   decodeTutorAudioBuffer,
+  getTutorAudioContextTime,
   resumeTutorAudioContext,
   setTutorSourceEnded,
   type TutorAudioSource,
 } from './tutor-audio-context';
+import { evenTrack, sampleTrack, type Track, type SpeechSample } from '@acme/avatar';
 
 export interface TutorVoiceRef {
   /** The closed tone palette key for this turn. */
@@ -37,14 +40,19 @@ interface QueuedSentence {
  * A session-scoped audio controller for the live tutor voice.
  *
  * It owns fetch/decode ordering, play, stop, and cleanup. The public surface is
- * intentionally tiny: `enqueue`, `stop`, and `clear`. Playback clock and
- * caption/avatar timing live here; later work can expose a `now()` for sync.
+ * intentionally tiny: `enqueue`, `stop`, `now`, and `sampleSpeech`. Playback
+ * clock and viseme sampling live here; the face bus consumes `sampleSpeech`.
  */
 export class TutorAudioQueue {
   private queue: QueuedSentence[] = [];
   private previousText: string | undefined;
   private isPlaying = false;
   private activeSource: TutorAudioSource | null = null;
+  private activeText: string = '';
+  private activeTrack: Track | null = null;
+  private activeTrackIdx = 0;
+  private activeDuration = 0;
+  private playbackStartAt = 0;
 
   /** Enqueue a sentence the coach has emitted with its voice metadata. */
   enqueue(text: string, voice: TutorVoiceRef): void {
@@ -63,6 +71,29 @@ export class TutorAudioQueue {
     this.queue = [];
     this.previousText = undefined;
     this.isPlaying = false;
+    this.activeTrack = null;
+    this.activeTrackIdx = 0;
+    this.activeDuration = 0;
+    this.playbackStartAt = 0;
+  }
+
+  /** Playback position in seconds, or 0 when nothing is playing. */
+  now(): number {
+    if (!this.activeTrack || this.playbackStartAt === 0) return 0;
+    const t = getTutorAudioContextTime() - this.playbackStartAt;
+    return t;
+  }
+
+  /** Sample the active utterance's viseme track. Matches `SpeechDriver.sampleSpeech`. */
+  sampleSpeech(_nowMs: number): SpeechSample {
+    if (!this.activeTrack || this.playbackStartAt === 0) {
+      return { shape: {}, active: false, gap: false };
+    }
+    const t = this.now();
+    const sampled = sampleTrack(this.activeTrack, t, this.activeTrackIdx);
+    this.activeTrackIdx = sampled.idx;
+    const active = t < this.activeDuration;
+    return { shape: sampled.shape, active, gap: false };
   }
 
   private async playNext(): Promise<void> {
@@ -107,12 +138,19 @@ export class TutorAudioQueue {
         return;
       }
 
+      this.activeText = item.text;
+      this.activeDuration = (decoded as { duration: number }).duration;
+      this.activeTrack = evenTrack(item.text, this.activeDuration);
+      this.activeTrackIdx = 0;
+
       setTutorSourceEnded(source, () => {
         this.activeSource = null;
+        this.playbackStartAt = 0;
         this.advance();
       });
 
       source.start(0);
+      this.playbackStartAt = getTutorAudioContextTime();
     } catch {
       // Decode or network failure: continue the turn in text.
       this.advance();
@@ -127,3 +165,6 @@ export class TutorAudioQueue {
     }
   }
 }
+
+/** The single session audio queue, shared by the store and the avatar. */
+export const audioQueue = new TutorAudioQueue();

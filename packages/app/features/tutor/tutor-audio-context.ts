@@ -34,6 +34,10 @@ export function resumeTutorAudioContext(): void {
   }
 }
 
+export function getTutorAudioContextTime(): number {
+  return ensureTutorAudioContext().currentTime;
+}
+
 export async function decodeTutorAudioBuffer(buffer: ArrayBuffer): Promise<TutorAudioBuffer> {
   const ctx = ensureTutorAudioContext();
   return ctx.decodeAudioData(buffer) as unknown as TutorAudioBuffer;
