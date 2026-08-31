@@ -10,7 +10,8 @@ import 'server-only';
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import type { Organization } from '@acme/payload';
-import type { LoadOrgBranding, LoadTenantOrgId } from '@acme/app/server';
+import type { LoadOrgBranding, LoadOrgKind, LoadTenantOrgId } from '@acme/app/server';
+import { ORGANIZATION_KINDS, type OrganizationKind } from '@acme/app/server';
 
 export const loadOrgBranding: LoadOrgBranding = async (slug) => {
   const payload = await getPayload({ config });
@@ -72,4 +73,27 @@ export const loadTenantOrgId: LoadTenantOrgId = async (slug) => {
   });
   const org = docs[0] as Pick<Organization, 'slug'> | undefined;
   return org?.slug ?? null;
+};
+
+/**
+ * Loads the `kind` of the current organization for the Block's institution
+ * permission gate. This is a narrow, one-column, override read: the caller is
+ * already inside `protectedOperation`, and the kind is needed to decide which
+ * `RoleKind` the membership maps to.
+ */
+export const loadOrgKind: LoadOrgKind = async (ctx) => {
+  if (!ctx.orgId) return null;
+  const payload = await getPayload({ config });
+  const { docs } = await payload.find({
+    collection: 'organizations',
+    where: { slug: { equals: ctx.orgId } },
+    limit: 1,
+    depth: 0,
+    overrideAccess: true,
+    select: { kind: true },
+  });
+  const org = docs[0] as Pick<Organization, 'kind'> | undefined;
+  const kind = org?.kind as OrganizationKind | undefined;
+  if (!kind || !ORGANIZATION_KINDS.includes(kind)) return null;
+  return kind;
 };

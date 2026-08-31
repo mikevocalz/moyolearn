@@ -20,7 +20,8 @@
 // SOT: CLAUDE.md §The block · docs/deploy/moyo-district-tenancy.md §4 §5
 // SOT-KEYWORDS: tenancy wiring host tenant reader register instrumentation organizations repository block
 import 'server-only';
-import { setTenantOrgReader } from '@acme/app/server';
-import { loadTenantOrgId } from './org.repository';
+import { setTenantOrgReader, setOrgKindReader } from '@acme/app/server';
+import { loadTenantOrgId, loadOrgKind } from './org.repository';
 
 setTenantOrgReader(loadTenantOrgId);
+setOrgKindReader(loadOrgKind);

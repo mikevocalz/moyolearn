@@ -8,8 +8,10 @@ import 'server-only';
 export {
   protectedOperation,
   isMockAuth,
+  setOrgKindReader,
   type ProtectedCtx,
   type ProtectedOperationOptions,
+  type LoadOrgKind,
 } from './core/protected-operation';
 export {
   CapabilityDenied,
@@ -32,6 +34,11 @@ export {
   type LoadTenantOrgId,
 } from './core/host-tenant';
 export { MEMBERSHIP_ROLES, isMembershipRole, type MembershipRole } from '@acme/auth/membership';
+export {
+  ORGANIZATION_KINDS,
+  type OrganizationKind,
+  roleForOrganizationRoleAndKind,
+} from './providers/session/role-mapping';
 export type {
   DerivedFact,
   MasteryFact,

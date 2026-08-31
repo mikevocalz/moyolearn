@@ -57,6 +57,12 @@ export interface ProtectedCtx {
 
 export type LoadOrgKind = (ctx: ProtectedCtx) => Promise<OrganizationKind | null>;
 
+let orgKindReader: LoadOrgKind | null = null;
+
+export function setOrgKindReader(next: LoadOrgKind | null): void {
+  orgKindReader = next;
+}
+
 export interface ProtectedOperationOptions {
   /**
    * What the operation costs. Defaults to `practise`, which doc 05 §1.2 makes
@@ -329,7 +335,8 @@ export async function protectedOperation<R>(
     const heldRole = await opLoadRole(hostCtx);
 
     if (options.requiresInstitution) {
-      const orgKind = options.loadOrgKind ? await options.loadOrgKind(hostCtx) : null;
+      const reader = options.loadOrgKind ?? orgKindReader;
+      const orgKind = reader ? await reader(hostCtx) : null;
       const roleKind = roleForOrganizationRoleAndKind(heldRole, orgKind ?? undefined);
       requirePermission(
         roleKind,
