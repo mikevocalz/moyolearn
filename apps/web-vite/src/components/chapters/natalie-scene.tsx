@@ -163,8 +163,13 @@ function setMorph(mesh: THREE.SkinnedMesh, name: string, value: number) {
   targets[index] = value;
 }
 
+// Degrees of deflection that map to a full ARKit eye-look morph. 5° made every
+// tiny saccade a full-range eye dart; 15° keeps saccades subtle while leaving
+// room for the constant look-at-camera bias.
+const GAZE_RANGE_DEG = 15;
+
 function applyEyeGaze(meshes: THREE.SkinnedMesh[], yaw: number, pitch: number) {
-  const clamped = (v: number) => Math.max(-1, Math.min(1, v / (5 * DEG)));
+  const clamped = (v: number) => Math.max(-1, Math.min(1, v / (GAZE_RANGE_DEG * DEG)));
   const y = clamped(yaw);
   const p = clamped(pitch);
   const up = Math.max(0, p);
@@ -201,6 +206,7 @@ export interface BakedAlignment {
 
 interface LipShape {
   jawOpen: number;
+  mouthClose: number;
   mouthSmileLeft: number;
   mouthSmileRight: number;
   mouthFunnel: number;
@@ -209,11 +215,34 @@ interface LipShape {
 
 const LIP_ZERO: LipShape = {
   jawOpen: 0,
+  mouthClose: 0,
   mouthSmileLeft: 0,
   mouthSmileRight: 0,
   mouthFunnel: 0,
   mouthPucker: 0,
 };
+
+/** Target mouth pose for one aligned character. Word gaps return LIP_ZERO so
+ * the mouth relaxes between words; quick characters articulate less than held
+ * ones so fast speech doesn't flap the jaw full-range. */
+function lipShapeForChar(c: string, span: number): LipShape {
+  if (!/[a-zA-Z]/.test(c)) return LIP_ZERO;
+  const isVowel = /^[aeiouAEIOU]$/.test(c);
+  const isRounded = /^[oOuUwW]$/.test(c);
+  const isSmile = /^[eEiI]$/.test(c);
+  const isClosed = /^[bmpBMP]$/.test(c);
+  const isNarrow = /^[szSZfFvV]$/.test(c);
+  const held = Math.max(0.55, Math.min(1, span / 0.09));
+  const jaw = isClosed ? 0 : isNarrow ? 0.05 : isVowel ? 0.42 * held : 0.16;
+  return {
+    jawOpen: jaw,
+    mouthClose: isClosed ? 0.5 : 0,
+    mouthSmileLeft: isSmile ? 0.3 : 0,
+    mouthSmileRight: isSmile ? 0.3 : 0,
+    mouthFunnel: isRounded ? 0.55 * held : 0,
+    mouthPucker: isRounded ? 0.35 * held : 0,
+  };
+}
 
 interface NatalieModelProps {
   action: string | null;
@@ -307,10 +336,13 @@ function NatalieModel({
     const chars = a.characters;
 
     // The bake prepends Eleven style tags like `[warmly] ` to the spoken text.
-    // These are not voiced, so we skip them for lip sync.
+    // These are not voiced, so we skip them for lip sync. Fallback caption
+    // alignments carry no tag, so only skip when one is actually present.
     let startIndex = 0;
-    while (startIndex < chars.length && chars[startIndex] !== ']') startIndex += 1;
-    if (startIndex < chars.length) startIndex += 1;
+    if (chars[0] === '[') {
+      while (startIndex < chars.length && chars[startIndex] !== ']') startIndex += 1;
+      if (startIndex < chars.length) startIndex += 1;
+    }
     const firstSpokenIndex = startIndex;
 
     let i = firstSpokenIndex;
@@ -319,28 +351,31 @@ function NatalieModel({
       // During the tag or after the final character, keep the mouth closed.
       return LIP_ZERO;
     }
-    const c = chars[i] ?? ' ';
+    // Co-articulation: hold this character's shape, then glide into the next
+    // one over the back half of its span. The mouth flows shape-to-shape and
+    // never snaps shut between letters — the old per-character sine envelope
+    // read as laggy puppet flutter once it went through the smoother.
     const tStart = starts[i] ?? 0;
     const tEnd = ends[i] ?? tStart;
     const span = Math.max(0.02, tEnd - tStart);
     const local = Math.max(0, Math.min(1, (t - tStart) / span));
-    const attack = Math.sin(local * Math.PI); // soft open/close over the character
-    const isVowel = /^[aeiouAEIOU]$/.test(c);
-    const isRounded = /^[oOuUwW]$/.test(c);
-    const isSmile = /^[eEiI]$/.test(c);
-    const isClosed = /^[bmpBMP]$/.test(c);
-    const isNarrow = /^[szSZfFvV]$/.test(c);
-    const jaw = isClosed ? 0 : isNarrow ? 0.03 : isVowel ? 0.22 : 0.08;
-    return {
-      jawOpen: jaw * attack,
-      mouthSmileLeft: isSmile ? 0.25 * attack : 0,
-      mouthSmileRight: isSmile ? 0.25 * attack : 0,
-      mouthFunnel: isRounded ? 0.35 * attack : 0,
-      mouthPucker: isRounded ? 0.2 * attack : 0,
-    };
+    const cur = lipShapeForChar(chars[i] ?? ' ', span);
+    const nextSpan = Math.max(0.02, (ends[i + 1] ?? 0) - (starts[i + 1] ?? 0));
+    const next = i + 1 < chars.length ? lipShapeForChar(chars[i + 1] ?? ' ', nextSpan) : LIP_ZERO;
+    const f = local < 0.5 ? 0 : (local - 0.5) * 2;
+    const blend = f * f * (3 - 2 * f);
+    const out = { ...LIP_ZERO };
+    for (const key of Object.keys(LIP_ZERO) as (keyof LipShape)[]) {
+      out[key] = cur[key] + (next[key] - cur[key]) * blend;
+    }
+    return out;
   };
 
-  useFrame((_, rawDelta) => {
+  const tmpEyeMid = useRef(new THREE.Vector3());
+  const tmpEyeR = useRef(new THREE.Vector3());
+  const tmpToCamera = useRef(new THREE.Vector3());
+
+  useFrame((state, rawDelta) => {
     const delta = reducedMotion ? 0 : Math.min(rawDelta, 0.05);
     const active = actionRef.current
       ? PRESENCE_ACTIONS[actionRef.current]
@@ -371,12 +406,21 @@ function NatalieModel({
         ? Math.max(0, Math.sin((now / playDuration) * Math.PI))
         : 0;
 
-    // --- lip sync from baked alignment ---
-    const targetLip = active && audioRef.current && alignment ? targetLipFromTime(now) : LIP_ZERO;
-    const rate = 1 - Math.exp(-rawDelta * 20);
+    // --- lip sync from alignment (baked audio, or the caption fallback) ---
+    // Deliberately NOT scaled by `env`: that whole-clip envelope belongs to the
+    // gesture morphs. Applying it to speech kept the mouth nearly shut for the
+    // first and last third of every line.
+    const targetLip =
+      !reducedMotion && active && alignment ? targetLipFromTime(now) : LIP_ZERO;
+    // Asymmetric smoothing, like real articulation: the mouth snaps toward a
+    // shape (~22ms) and relaxes out of it more slowly (~60ms). A symmetric
+    // low-pass here made every shape land late and mushy.
+    const rise = 1 - Math.exp(-rawDelta * 45);
+    const fall = 1 - Math.exp(-rawDelta * 16);
     const lip = lipStateRef.current;
     for (const key of Object.keys(LIP_ZERO) as (keyof LipShape)[]) {
-      lip[key] += (targetLip[key] - lip[key]) * rate;
+      const target = targetLip[key];
+      lip[key] += (target - lip[key]) * (target > lip[key] ? rise : fall);
     }
 
     // --- morph targets ---
@@ -395,16 +439,45 @@ function NatalieModel({
         }
       }
 
-      setMorph(mesh, 'jawOpen', (lip.jawOpen + (active?.morphs.jawOpen ?? 0) * 0.5) * env);
-      setMorph(mesh, 'mouthSmileLeft', lip.mouthSmileLeft * env);
-      setMorph(mesh, 'mouthSmileRight', lip.mouthSmileRight * env);
-      setMorph(mesh, 'mouthFunnel', lip.mouthFunnel * env);
-      setMorph(mesh, 'mouthPucker', lip.mouthPucker * env);
+      // Speech shapes are added on top of the gesture pose, not written over it
+      // — the old overwrite erased the action's smile whenever she spoke.
+      setMorph(mesh, 'jawOpen', lip.jawOpen + (active?.morphs.jawOpen ?? 0) * 0.5 * env);
+      setMorph(mesh, 'mouthClose', lip.mouthClose);
+      setMorph(
+        mesh,
+        'mouthSmileLeft',
+        lip.mouthSmileLeft + (active?.morphs.mouthSmileLeft ?? 0) * env
+      );
+      setMorph(
+        mesh,
+        'mouthSmileRight',
+        lip.mouthSmileRight + (active?.morphs.mouthSmileRight ?? 0) * env
+      );
+      setMorph(mesh, 'mouthFunnel', lip.mouthFunnel);
+      setMorph(mesh, 'mouthPucker', lip.mouthPucker);
     }
-    applyEyeGaze(meshes, frame.eyeYaw, frame.eyePitch);
+
+    // --- eye contact: bias the gaze at the viewer's camera, saccades on top ---
+    // Without this the eyes saccade around the model's neutral forward axis,
+    // which points past the lens — the "staring into space" look.
+    const bones = bonesRef.current;
+    let gazeYaw = frame.eyeYaw;
+    let gazePitch = frame.eyePitch;
+    const eyeAnchor = bones.eyeL ?? bones.head;
+    if (eyeAnchor) {
+      eyeAnchor.getWorldPosition(tmpEyeMid.current);
+      if (bones.eyeL && bones.eyeR) {
+        bones.eyeR.getWorldPosition(tmpEyeR.current);
+        tmpEyeMid.current.add(tmpEyeR.current).multiplyScalar(0.5);
+      }
+      const d = tmpToCamera.current.copy(state.camera.position).sub(tmpEyeMid.current);
+      // The model faces +Z toward the camera, so face space ≈ world space here.
+      gazeYaw += Math.atan2(d.x, d.z);
+      gazePitch += Math.atan2(d.y, Math.hypot(d.x, d.z));
+    }
+    applyEyeGaze(meshes, gazeYaw, gazePitch);
 
     // --- body: stable root/pelvis, subtle chest breath, tiny neck drift ---
-    const bones = bonesRef.current;
     const restPose = restPoseRef.current;
     const chest = bones.chest;
     if (chest && restPose.has(chest)) {
@@ -436,9 +509,10 @@ function NatalieModel({
       neck.position.copy(rest.position);
       neck.rotation.copy(rest.rotation);
       neck.scale.copy(rest.scale);
-      // Very small, irregular neck adjustments — not continuous nodding.
-      neck.rotation.y = rest.rotation.y + frame.driftYaw * 0.03;
-      neck.rotation.x = rest.rotation.x + frame.driftPitch * 0.03;
+      // Irregular drift + backchannel nods. The engine's drift is already in
+      // radians (max ~0.3°); the old 0.03 factor scaled it to 0.009° — frozen.
+      neck.rotation.y = rest.rotation.y + frame.driftYaw * 1.2;
+      neck.rotation.x = rest.rotation.x + frame.driftPitch * 1.2 + frame.nodPitch * 0.5;
       if (active?.neck) {
         neck.rotation.x += (active.neck.x ?? 0) * env;
         neck.rotation.y += (active.neck.y ?? 0) * env;
@@ -451,9 +525,15 @@ function NatalieModel({
       head.position.copy(rest.position);
       head.rotation.copy(rest.rotation);
       head.scale.copy(rest.scale);
-      // Head stays conversationally stable; only minuscule drift.
-      head.rotation.y = rest.rotation.y + frame.driftYaw * 0.015;
-      head.rotation.x = rest.rotation.x + frame.driftPitch * 0.015;
+      // Head stays conversationally stable: subtle drift, the rest of the nod,
+      // and a light jaw coupling so the chin dips with open vowels while she
+      // speaks — the strongest single cue that the face and voice are one.
+      head.rotation.y = rest.rotation.y + frame.driftYaw * 0.8;
+      head.rotation.x =
+        rest.rotation.x +
+        frame.driftPitch * 0.8 +
+        frame.nodPitch * 0.5 +
+        lip.jawOpen * 0.05;
       if (active?.head) {
         head.rotation.x += (active.head.x ?? 0) * env;
         head.rotation.y += (active.head.y ?? 0) * env;

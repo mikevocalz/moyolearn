@@ -25,8 +25,11 @@ import { PRESENCE_ACTIONS, type BakedAlignment } from './natalie-scene';
 
 const NatalieScene = lazy(() => import('./natalie-scene'));
 
+// The marketing site deploys on nitro with no /api routes of its own, so a
+// relative fallback can only 500 there — default to the deployed Next app.
 const VOICE_BASE =
-  import.meta.env.VITE_MOYO_VOICE_BASE_URL || '/api/marketing/voice/baked';
+  import.meta.env.VITE_MOYO_VOICE_BASE_URL ||
+  'https://app.moyolearn.com/api/marketing/voice/baked';
 
 export interface VoiceClip {
   url: string;
@@ -43,6 +46,44 @@ function PlaceholderPlate() {
       <View className="border-moyo-rule border-moyo-outline bg-moyo-leaf" />
     </View>
   );
+}
+
+/**
+ * Voice-unavailable fallback: spread the caption's characters evenly across the
+ * action duration so the mouth still performs the line instead of freezing.
+ */
+function captionAlignment(caption: string, duration: number): BakedAlignment {
+  const characters = Array.from(caption);
+  const per = duration / Math.max(1, characters.length);
+  return {
+    characters,
+    character_start_times_seconds: characters.map((_, i) => i * per),
+    character_end_times_seconds: characters.map((_, i) => (i + 1) * per),
+  };
+}
+
+/** Rewinds and starts a (possibly reused) player. `on*` assignments, not
+ * addEventListener, so replays don't stack handlers. Lives outside the
+ * component because the compiler forbids mutating ref-aliased values there. */
+function startPlayer(
+  audio: HTMLAudioElement,
+  opts: {
+    muted: boolean;
+    onReady: (duration: number) => void;
+    onEnded: () => void;
+    onError: () => void;
+  },
+) {
+  audio.muted = opts.muted;
+  audio.onended = opts.onEnded;
+  audio.onerror = opts.onError;
+  const begin = () => {
+    audio.currentTime = 0;
+    opts.onReady(audio.duration || 0);
+    if (!opts.muted) audio.play().catch(opts.onError);
+  };
+  if (audio.readyState >= 1) begin();
+  else audio.onloadedmetadata = begin;
 }
 
 async function resolveVoiceClip(piece: string): Promise<VoiceClip | null> {
@@ -73,6 +114,9 @@ export function NatalieSurface() {
   const [voiceStatus, setVoiceStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const urlCacheRef = useRef<Record<string, { clip: VoiceClip; at: number }>>({});
+  // Pre-buffered players, one per piece, so a tap starts speech immediately
+  // instead of paying a resolve + CDN round-trip first.
+  const audioCacheRef = useRef<Record<string, HTMLAudioElement>>({});
 
   useEffect(() => {
     detect();
@@ -85,17 +129,30 @@ export function NatalieSurface() {
     return () => mql.removeEventListener('change', onChange);
   }, []);
 
-  // Preload the first likely response so the first tap is snappy.
+  // Resolve a piece's signed URL and keep a buffered player for it.
+  // Bunny signed URLs are one-hour; refresh if older than 50 minutes.
+  const ensureClip = useCallback(async (piece: string) => {
+    let cached = urlCacheRef.current[piece];
+    if (!cached || Date.now() - cached.at > 50 * 60 * 1000) {
+      const fresh = await resolveVoiceClip(piece);
+      if (fresh?.url) {
+        cached = { clip: fresh, at: Date.now() };
+        urlCacheRef.current[piece] = cached;
+        const audio = new Audio(fresh.url);
+        audio.preload = 'auto';
+        audioCacheRef.current[piece] = audio;
+      }
+    }
+    return cached ?? null;
+  }, []);
+
+  // Preload every response so any tap is snappy, not just the first.
   useEffect(() => {
-    if (muted || !mounted || tier === 'C') return;
-    const hint = PRESENCE_ACTIONS.hint;
-    if (!hint) return;
-    resolveVoiceClip(hint.voicePiece)
-      .then((clip) => {
-        if (clip) urlCacheRef.current[hint.voicePiece] = { clip, at: Date.now() };
-      })
-      .catch(() => undefined);
-  }, [mounted, tier, muted]);
+    if (!mounted || tier === 'C') return;
+    for (const choice of Object.values(PRESENCE_ACTIONS)) {
+      ensureClip(choice.voicePiece).catch(() => undefined);
+    }
+  }, [mounted, tier, ensureClip]);
 
   const stopAudio = useCallback(() => {
     const audio = audioRef.current;
@@ -126,44 +183,34 @@ export function NatalieSurface() {
     setAudioDuration(null);
     setAlignment(null);
 
-    let cached = urlCacheRef.current[choice.voicePiece];
-    // Bunny signed URLs are one-hour; refresh if older than 50 minutes.
-    if (!cached || Date.now() - cached.at > 50 * 60 * 1000) {
-      const fresh = await resolveVoiceClip(choice.voicePiece);
-      if (fresh) {
-        cached = { clip: fresh, at: Date.now() };
-        urlCacheRef.current[choice.voicePiece] = cached;
-      }
-    }
-
-    if (!cached || !cached.clip.url) {
+    const speakSilently = () => {
       setVoiceStatus('error');
       setAudioDuration(choice.duration);
+      audioRef.current = null;
+      setAlignment(captionAlignment(choice.caption, choice.duration));
+    };
+
+    const cached = await ensureClip(choice.voicePiece);
+    if (!cached) {
+      speakSilently();
       return;
     }
 
-    const pieceAlignment = cached.clip.alignment ?? null;
-    setAlignment(pieceAlignment);
+    setAlignment(cached.clip.alignment ?? null);
 
-    const audio = new Audio(cached.clip.url);
+    const audio = audioCacheRef.current[choice.voicePiece] ?? new Audio(cached.clip.url);
+    audioCacheRef.current[choice.voicePiece] = audio;
     audioRef.current = audio;
-    audio.muted = muted;
-    audio.preload = 'auto';
-
-    audio.addEventListener('loadedmetadata', () => {
-      setAudioDuration(audio.duration || choice.duration);
-      setVoiceStatus('idle');
-      if (!muted) audio.play().catch(() => setVoiceStatus('error'));
+    startPlayer(audio, {
+      muted,
+      onReady: (duration) => {
+        setAudioDuration(duration || choice.duration);
+        setVoiceStatus('idle');
+      },
+      onEnded: () => onActionComplete(),
+      onError: speakSilently,
     });
-
-    audio.addEventListener('ended', () => onActionComplete());
-
-    audio.addEventListener('error', () => {
-      setVoiceStatus('error');
-      // If the audio fails, the visual action can still complete by its fallback duration.
-      setAudioDuration(choice.duration);
-    });
-  }, [action, muted, onActionComplete, stopAudio]);
+  }, [action, muted, onActionComplete, stopAudio, ensureClip]);
 
   useEffect(() => {
     const audio = audioRef.current;
