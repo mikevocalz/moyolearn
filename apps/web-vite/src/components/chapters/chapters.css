@@ -215,6 +215,46 @@
   aspect-ratio: 4 / 3;
 }
 
+/* When the canvas is the only child it must span the full 4:3 plate, not just
+   the first grid cell, and should touch the plate edges. */
+.moyo-tutor-room-plate-art > :only-child {
+  grid-column: 1 / -1;
+  grid-row: 1 / -1;
+  min-width: 0;
+  min-height: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.moyo-tutor-room-plate-art--live {
+  padding: 0;
+  position: relative;
+  /* The live plate has one child (the canvas) plus the overlay caption. */
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.moyo-tutor-room-caption {
+  position: absolute;
+  inset-block-end: var(--spacing-element);
+  inset-inline: var(--spacing-element);
+  max-inline-size: calc(100% - var(--spacing-element) * 2);
+  margin-inline: auto;
+  padding: var(--spacing-inset-tight);
+  background: var(--color-moyo-paper);
+  border: var(--moyo-border-w-rule) solid var(--color-moyo-outline);
+  border-radius: var(--radius-moyo-card);
+  text-align: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .moyo-tutor-room-plate-art--live canvas {
+    animation: none;
+  }
+}
+
 .moyo-tutor-room-plate-block--tall {
   grid-row: span 2;
   display: grid;
@@ -235,6 +275,20 @@
    the rule between them is the dock and not a decoration. */
 .moyo-tutor-room-plate-dock {
   border-block-start: var(--moyo-border-w-rule) solid var(--color-moyo-outline);
+}
+
+.moyo-tutor-room-plate-body {
+  inline-size: 100%;
+}
+
+.moyo-tutor-room-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--spacing-element);
+  padding-block: var(--spacing-element);
+  border-block-start: var(--moyo-border-w-rule) solid var(--color-moyo-outline);
+  background: var(--color-moyo-paper-raised);
 }
 
 .moyo-tutor-room-truths {

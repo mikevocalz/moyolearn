@@ -15,9 +15,16 @@
 // on a TTS API call. This file only supplies the cache probe and the once-only
 // render.
 // SOT: docs/pack/32-tutor-voice-tone.md §3 · packages/voice/src/baked.ts · apps/web/lib/bunny-token.ts
-// SOT-KEYWORDS: baked clip resolver bunny cache render once signed url s4 cache or nothing text only
+// SOT-KEYWORDS: baked clip resolver bunny cache render once signed url s4 cache or nothing text only alignment
 import 'server-only';
-import { BAKED_PIECES, bakedObjectKey, bakedServePlan, voiceEgress, type BakedPieceId } from '@acme/voice';
+import {
+  BAKED_PIECES,
+  bakedAlignmentObjectKey,
+  bakedObjectKey,
+  bakedServePlan,
+  voiceEgress,
+  type BakedPieceId,
+} from '@acme/voice';
 import type { ResolveBakedClip } from '@acme/app/server';
 import { encodeKey } from './bunny-sign';
 import { signCdnUrl } from './bunny-token';
@@ -28,6 +35,12 @@ const mediaPrefix = (): string => (process.env.BUNNY_MEDIA_PREFIX ?? '').replace
 const objectKeyFor = (id: BakedPieceId): string => {
   const prefix = mediaPrefix();
   const key = bakedObjectKey(id);
+  return prefix ? `${prefix}/${key}` : key;
+};
+
+const alignmentKeyFor = (id: BakedPieceId): string => {
+  const prefix = mediaPrefix();
+  const key = bakedAlignmentObjectKey(id);
   return prefix ? `${prefix}/${key}` : key;
 };
 
@@ -74,6 +87,16 @@ export async function storeBakedClip(
   return putClip(objectKeyFor(id), bytes, contentType);
 }
 
+/** The once-only alignment upload, exported for the bake script. */
+export async function storeBakedAlignment(
+  id: BakedPieceId,
+  alignment: unknown,
+): Promise<boolean> {
+  const text = JSON.stringify(alignment);
+  const bytes = new TextEncoder().encode(text);
+  return putClip(alignmentKeyFor(id), bytes, 'application/json');
+}
+
 /**
  * Uploads once, via the Edge Storage API — the zone password is the write
  * credential, exactly as `bunny-delete.ts` uses it for the other direction.
@@ -115,7 +138,14 @@ export const resolveBakedClip: ResolveBakedClip = async (id) => {
   if (url === null) return { kind: 'text-only' };
 
   const plan = bakedServePlan(pieceId, await cached(url));
-  if (plan === 'serve-cache') return { kind: 'url', url: signCdnUrl(url) };
+  if (plan === 'serve-cache') {
+    const alignmentKey = alignmentKeyFor(pieceId);
+    const alignmentCdnUrl = cdnUrlFor(alignmentKey);
+    const alignmentUrl = alignmentCdnUrl && (await cached(alignmentCdnUrl))
+      ? signCdnUrl(alignmentCdnUrl)
+      : undefined;
+    return { kind: 'url', url: signCdnUrl(url), alignmentUrl };
+  }
   if (plan === 'text-only') return { kind: 'text-only' };
 
   // render-then-cache: the once-only v3 render for a non-crisis piece.
@@ -123,5 +153,10 @@ export const resolveBakedClip: ResolveBakedClip = async (id) => {
   if (clip.kind === 'text-only') return { kind: 'text-only' };
   const stored = await putClip(key, clip.bytes, clip.contentType);
   if (!stored) return { kind: 'text-only' };
-  return { kind: 'url', url: signCdnUrl(url) };
+  const alignmentStored = await storeBakedAlignment(pieceId, clip.alignment);
+  const alignmentCdnUrl = cdnUrlFor(alignmentKeyFor(pieceId));
+  const alignmentUrl = alignmentStored && alignmentCdnUrl
+    ? signCdnUrl(alignmentCdnUrl)
+    : undefined;
+  return { kind: 'url', url: signCdnUrl(url), alignmentUrl };
 };

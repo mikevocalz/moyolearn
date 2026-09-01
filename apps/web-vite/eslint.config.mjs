@@ -10,7 +10,7 @@ export default [
     renders them so a real unknown DOM prop anywhere else still fails.
   */
   {
-    files: ['src/globe/scene.tsx'],
+    files: ['src/globe/scene.tsx', 'src/components/chapters/natalie-scene.tsx'],
     rules: { 'react/no-unknown-property': 'off' },
   },
   /*
@@ -23,5 +23,5 @@ export default [
     fails, with nothing carved out of the rule to argue about.
   */
   // routeTree.gen.ts is written by the router plugin on every build.
-  { ignores: ['dist/**', '.output/**', '.vercel/**', '.tanstack/**', 'src/routeTree.gen.ts'] },
+  { ignores: ['dist/**', '.output/**', '.vercel/**', '.tanstack/**', 'public/draco/**', 'src/routeTree.gen.ts'] },
 ];

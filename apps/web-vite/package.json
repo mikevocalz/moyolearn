@@ -15,6 +15,7 @@
     "photography:check": "node scripts/build-photography.mjs --check"
   },
   "dependencies": {
+    "@acme/avatar": "workspace:*",
     "@acme/theme": "workspace:*",
     "@acme/ui": "workspace:*",
     "@react-three/drei": "catalog:",

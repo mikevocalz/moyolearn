@@ -62,6 +62,7 @@ import { Container, Heading, Text } from '@acme/ui/typography';
 import { List, ListItem, Paragraph, Section, View } from '@acme/ui/primitives';
 import { useMotionScene } from '@/motion';
 import type { MotionSceneBuilder } from '@/motion';
+import { NatalieSurface } from './natalie-surface';
 import {
   HANDOFF_GROUND_CLASS,
   HANDOFF_ON_GROUND_CLASS,
@@ -201,20 +202,13 @@ export function TutorRoomChapter() {
 
       <Container width="wide" className="moyo-tutor-room-body gap-section">
         {/*
-          The plate, straddling the band's bottom edge. See the file header: the
-          artwork is an honest placeholder, and the claim it will illustrate is
-          docked to its bottom edge in the roadmap tense the law requires.
+          The plate, straddling the band's bottom edge. The 3D Natalie surface
+          is client-gated and tier-gated exactly like the globe: prerendered
+          HTML still serves the static placeholder, and capable browsers swap in
+          the rendered waist-up tutor.
         */}
         <View className="moyo-tutor-room-plate rounded-moyo-card border-moyo-slab border-moyo-outline bg-moyo-paper-raised shadow-moyo-3">
-          <View className="moyo-tutor-room-plate-art" aria-hidden>
-            <View className="moyo-tutor-room-plate-block--tall border-moyo-rule border-moyo-outline bg-moyo-earth">
-              <View className="moyo-tutor-room-plate-aperture border-moyo-slab border-moyo-outline" />
-            </View>
-            {/* The chapter's one accent moment. `moyoSun` is fill-only — never
-                type, never a border, never a focus ring. */}
-            <View className="border-moyo-rule border-moyo-outline bg-moyo-sun" />
-            <View className="border-moyo-rule border-moyo-outline bg-moyo-leaf" />
-          </View>
+          <NatalieSurface />
 
           <View className="moyo-tutor-room-plate-dock gap-stack p-inset-roomy">
             <Heading

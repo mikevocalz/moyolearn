@@ -38,5 +38,8 @@ export async function GET(
 
   // The URL is already signed with its own one-hour expiry; the response
   // itself must not be cached past it by an intermediary.
-  return NextResponse.json({ url: clip.url }, { headers: { 'Cache-Control': 'private, no-store' } });
+  return NextResponse.json(
+    { url: clip.url, alignmentUrl: clip.alignmentUrl },
+    { headers: { 'Cache-Control': 'private, no-store' } },
+  );
 }

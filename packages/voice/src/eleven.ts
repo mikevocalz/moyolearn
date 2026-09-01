@@ -53,8 +53,14 @@ export type SpokenSentence =
       readonly reason: 'no-voice-configured' | 'voice-budget-spent' | 'voice-unavailable';
     };
 
+export interface BakedAlignment {
+  readonly characters: readonly string[];
+  readonly character_start_times_seconds: readonly number[];
+  readonly character_end_times_seconds: readonly number[];
+}
+
 export type BakedClip =
-  | { readonly kind: 'audio'; readonly contentType: string; readonly bytes: Uint8Array }
+  | { readonly kind: 'audio'; readonly contentType: string; readonly bytes: Uint8Array; readonly alignment: BakedAlignment }
   | { readonly kind: 'text-only' };
 
 export interface SpeakSentenceInput {
@@ -196,7 +202,7 @@ export function createVoiceEgress(options: VoiceEgressOptions = {}): VoiceEgress
       let response: Response;
       try {
         response = await transport(
-          `${API_BASE}/v1/text-to-speech/${registry.voiceId}?output_format=${BAKED_OUTPUT_FORMAT}`,
+          `${API_BASE}/v1/text-to-speech/${registry.voiceId}/with-timestamps?output_format=${BAKED_OUTPUT_FORMAT}`,
           {
             method: 'POST',
             headers: { 'xi-api-key': key, 'content-type': 'application/json' },
@@ -214,10 +220,20 @@ export function createVoiceEgress(options: VoiceEgressOptions = {}): VoiceEgress
         return { kind: 'text-only' };
       }
 
+      const payload = (await response.json()) as {
+        audio_base64: string;
+        alignment: BakedAlignment | undefined;
+      };
+
+      if (!payload.alignment) return { kind: 'text-only' };
+
+      const bytes = Uint8Array.from(atob(payload.audio_base64), (c) => c.charCodeAt(0));
+
       return {
         kind: 'audio',
-        contentType: response.headers.get('content-type') ?? 'audio/mpeg',
-        bytes: new Uint8Array(await response.arrayBuffer()),
+        contentType: 'audio/mpeg',
+        bytes,
+        alignment: payload.alignment,
       };
     },
   };

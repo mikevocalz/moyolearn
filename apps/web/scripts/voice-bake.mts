@@ -19,7 +19,7 @@ nextEnv.loadEnvConfig(resolve(dirname(fileURLToPath(import.meta.url)), '../../..
 // After env, so the egress and the signer see their keys. `server-only`
 // resolves via the react-server condition configured in the script runner.
 const { BAKED_PIECE_IDS, BAKED_PIECES, voiceEgress } = await import('@acme/voice');
-const { bakedClipCacheState, storeBakedClip } = await import('../lib/voice-baked');
+const { bakedClipCacheState, storeBakedClip, storeBakedAlignment } = await import('../lib/voice-baked');
 
 let baked = 0;
 let cachedAlready = 0;
@@ -50,9 +50,15 @@ for (const id of BAKED_PIECE_IDS) {
     console.error(`  FAILED   ${id} — Bunny upload did not land`);
     continue;
   }
+  const alignmentStored = await storeBakedAlignment(id, clip.alignment);
+  if (!alignmentStored) {
+    failed += 1;
+    console.error(`  FAILED   ${id} — alignment upload did not land`);
+    continue;
+  }
   baked += 1;
   const crisis = BAKED_PIECES[id].crisis ? ' (S4 — now servable in a crisis)' : '';
-  console.log(`  baked    ${id} — ${clip.bytes.length} bytes${crisis}`);
+  console.log(`  baked    ${id} — ${clip.bytes.length} bytes + alignment${crisis}`);
 }
 
 console.log(`voice-bake: ${baked} rendered, ${cachedAlready} already cached, ${failed} failed`);

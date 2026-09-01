@@ -795,6 +795,9 @@ importers:
 
   apps/web-vite:
     dependencies:
+      '@acme/avatar':
+        specifier: workspace:*
+        version: link:../../packages/avatar
       '@acme/theme':
         specifier: workspace:*
         version: link:../../packages/theme

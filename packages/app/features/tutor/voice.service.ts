@@ -64,7 +64,9 @@ export type SpeakSentence = (input: {
   signal?: AbortSignal;
 }) => Promise<SpeakResult>;
 
-export type BakedClipResult = { kind: 'url'; url: string } | { kind: 'text-only' };
+export type BakedClipResult =
+  | { kind: 'url'; url: string; alignmentUrl?: string }
+  | { kind: 'text-only' };
 
 /**
  * The baked path: cache-or-render-once for ordinary pieces, cache-or-nothing

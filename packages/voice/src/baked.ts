@@ -19,7 +19,7 @@ import { S4_SCRIPTS } from '@acme/safety';
 import type { ToneKey } from './tones.ts';
 
 /** Bumped when any piece's text or tone changes, so a stale cache cannot serve the old wording. */
-export const BAKED_VERSION = 1;
+export const BAKED_VERSION = 2;
 
 export interface BakedPiece {
   readonly text: string;
@@ -46,6 +46,21 @@ export const BAKED_PIECES = Object.freeze({
     tone: 'celebrate-big',
     crisis: false,
   },
+  'marketing-hint': {
+    text: 'Try looking for the part that matches what the question is asking.',
+    tone: 'warm-open',
+    crisis: false,
+  },
+  'marketing-explain': {
+    text: 'Another way to think about it: start with what you already know.',
+    tone: 'warm-open',
+    crisis: false,
+  },
+  'marketing-got-it': {
+    text: 'Nice work — that kind of thinking is what makes it stick.',
+    tone: 'celebrate-big',
+    crisis: false,
+  },
 } as const satisfies Record<string, BakedPiece>);
 
 export type BakedPieceId = keyof typeof BAKED_PIECES;
@@ -60,6 +75,10 @@ export const isBakedPieceId = (value: string): value is BakedPieceId => value in
  */
 export function bakedObjectKey(id: BakedPieceId): string {
   return `voice/baked/v${BAKED_VERSION}/${id}.mp3`;
+}
+
+export function bakedAlignmentObjectKey(id: BakedPieceId): string {
+  return `voice/baked/v${BAKED_VERSION}/${id}.json`;
 }
 
 export type BakedServePlan = 'serve-cache' | 'render-then-cache' | 'text-only';

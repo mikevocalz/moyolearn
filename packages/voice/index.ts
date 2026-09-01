@@ -41,6 +41,7 @@ export {
   BAKED_PIECES,
   BAKED_PIECE_IDS,
   BAKED_VERSION,
+  bakedAlignmentObjectKey,
   bakedObjectKey,
   bakedServePlan,
   isBakedPieceId,
