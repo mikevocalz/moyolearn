@@ -219,9 +219,9 @@ function HotNavLink({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring/50 ${
+      className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring/50 ${
         active
-          ? 'bg-tenant-primary font-semibold text-tenant-primary-foreground'
+          ? 'bg-tenant-header text-tenant-header-foreground shadow-sm'
           : 'text-tenant-header-muted hover:bg-tenant-surface-subtle hover:text-tenant-header-foreground'
       } ${className ?? ''}`}
     >
@@ -282,7 +282,7 @@ function HotShell({
             <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
           </Link>
 
-          <Nav aria-label="Primary" className="relative hidden flex-1 justify-center gap-1 md:flex">
+          <Nav aria-label="Primary" className="relative hidden flex-1 justify-center rounded-full border border-tenant-header-border bg-tenant-surface-subtle p-1 md:flex">
             {navItems.map((item) => (
               <HotNavLink key={item.href} {...item} active={isActive(pathname, item.href)} />
             ))}
@@ -297,7 +297,7 @@ function HotShell({
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
             aria-controls="mobile-menu"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md border-2 border-tenant-header-border transition-colors duration-fast hover:bg-tenant-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring active:opacity-80 md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-tenant-surface-subtle transition-colors duration-fast hover:bg-tenant-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring active:opacity-80 md:hidden"
           >
             <MenuIcon className="h-5 w-5 text-tenant-header-foreground" />
           </Pressable>
