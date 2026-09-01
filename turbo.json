@@ -11,6 +11,15 @@
         ".env*",
         "../../.env*"
       ],
+      "env": [
+        "BUNNY_STORAGE_ZONE_NAME",
+        "BUNNY_STORAGE_REGION",
+        "BUNNY_STORAGE_ACCESS_KEY",
+        "BUNNY_MEDIA_PREFIX",
+        "NEXT_PUBLIC_BUNNY_CDN_BASE_URL",
+        "BUNNY_PULL_ZONE_TOKEN_KEY",
+        "VITE_MOYO_VOICE_BASE_URL"
+      ],
       "outputs": [
         ".next/**",
         "!.next/cache/**",
