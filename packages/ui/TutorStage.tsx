@@ -25,7 +25,7 @@ import { Button } from './Button';
 import { Avatar } from './Avatar';
 import { LearningCanvas } from './LearningCanvas';
 import { useSizeClass } from './use-size-class';
-import type { TutorView } from './tutor-view';
+import type { TutorPresencePreference } from './tutor-view';
 
 /** A spoken or written turn from the tutor. */
 export interface Utterance {
@@ -73,8 +73,8 @@ export interface TutorStageProps {
   title: string;
   childName?: string;
   questionNumber?: number;
-  tutorView?: TutorView;
-  onTutorViewChange?: (view: TutorView) => void;
+  tutorPresence?: TutorPresencePreference;
+  onTutorPresenceChange?: (presence: TutorPresencePreference) => void;
   /** Optional embodied presence. When absent the stage draws its own 2D mark. */
   avatar?: React.ReactNode;
   captionsEnabled?: boolean;
@@ -151,7 +151,7 @@ interface StateBodyProps {
   state: TutorStageState;
   childName?: string;
   questionNumber?: number;
-  tutorView?: TutorView;
+  tutorPresence?: TutorPresencePreference;
   avatar?: React.ReactNode;
   buttonSize?: 'sm' | 'md' | 'lg' | 'xl';
   onTryIt?: () => void;
@@ -165,7 +165,7 @@ function StateBody({
   state,
   childName,
   questionNumber,
-  tutorView = 'compact',
+  tutorPresence = 'compact',
   avatar,
   buttonSize = 'md',
   onTryIt,
@@ -174,12 +174,15 @@ function StateBody({
   onBackToPlan,
   onRetry,
 }: StateBodyProps) {
-  const avatarSize = tutorView === 'visible' ? 'xl' : tutorView === 'compact' ? 'md' : undefined;
+  const avatarSize =
+    tutorPresence === 'visible' ? 'xl' : tutorPresence === 'compact' || tutorPresence === 'auto' ? 'md' : undefined;
   switch (state.kind) {
     case 'presence':
       return (
         <View className="w-full items-center gap-stack">
-          {avatar ?? (avatarSize ? <Avatar name="Natalie" size={avatarSize} /> : null)}
+          {tutorPresence === 'audio-only' ? (
+            <Badge label="Natalie — voice only" tone="neutral" />
+          ) : avatar ?? (avatarSize ? <Avatar name="Natalie" size={avatarSize} /> : null)}
           <Text className="max-w-content-prose text-center font-sans text-body text-text">
             {/*
                 NO PLACEHOLDER. This read "We were on question ..." — literally
@@ -326,8 +329,8 @@ export function TutorStage({
   title,
   childName,
   questionNumber,
-  tutorView = 'compact',
-  onTutorViewChange,
+  tutorPresence = 'compact',
+  onTutorPresenceChange,
   avatar,
   captionsEnabled,
   buttonSize,
@@ -401,7 +404,7 @@ export function TutorStage({
           state={state}
           childName={childName}
           questionNumber={questionNumber}
-          tutorView={tutorView}
+          tutorPresence={tutorPresence}
           avatar={avatar}
           buttonSize={buttonSize}
           onTryIt={onTryIt}
@@ -451,10 +454,10 @@ export function TutorStage({
         <SessionToolbar
           title={title}
           captionsEnabled={captionsEnabled}
-          tutorView={tutorView}
+          tutorPresence={tutorPresence}
           onBack={onBack}
           onToggleCaptions={onToggleCaptions}
-          onTutorViewChange={onTutorViewChange}
+          onTutorPresenceChange={onTutorPresenceChange}
         />
         {twoPane ? (
           <View className="flex-1 flex-row gap-group p-inset">

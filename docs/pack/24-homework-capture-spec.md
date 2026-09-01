@@ -8,28 +8,12 @@
 The market runs two capture models: **Photomath's scan-window-first** (a resizable scanning rectangle in the live viewfinder — drag the corner to size it before capture) and **Socratic's crop-after** (shoot the page, then drag corner handles to isolate "only the section you want to ask about," then Go). The field-tested rule both serve: **isolate a single question** — capture a full page of 20 problems and the model "panics and spits out a jumbled response." Our flow uses both, band-adapted:
 1. **Entry** — from the session screen and Today's Path: `Camera` · `Photo library` · `File (PDF/worksheet page)` · `Type it` · `Say it` (doc-15 STT, but see the note below). Never camera-only — Socratic ships keyboard and voice entry as peers, and so do we (access, broken cameras, shy kids).
 
-   > **`Say it` — doc/code divergence, unresolved (flagged 2026-08-28).** Doc 33
-   > §8.2 lists it as a v1 **non-goal**: *"No voice input v1 — mic capture of
-   > child's speech separate PRD; direction is on-device STT so children's audio
-   > (personal info under amended COPPA) never leaves device."*
-   >
-   > **It is nevertheless built and reachable today.** `(learner)/(tabs)/capture`
-   > renders `CaptureScreen` → `CaptureEntryRow`, which offers "Record your
-   > voice"; `age-band.ts` carries band-specific copy for it.
-   >
-   > **The audio does not leave the device**, so the COPPA reasoning behind the
-   > non-goal is satisfied: `transcribe.native.ts` runs Whisper on-device via
-   > `react-native-executorch`, and `transcribe.web.ts` runs
-   > `@huggingface/transformers` in the browser. Neither uploads. The code built
-   > precisely the on-device direction doc 33 named — it is ahead of doc 33's
-   > *schedule*, not across its *line*.
-   >
-   > **Someone must decide**, because a third artifact already assumes the
-   > non-goal: the marketing copy deck is forbidden to describe voice input, so
-   > the product currently ships an affordance the site may not name. Either
-   > doc 33 §8.2 is amended to admit the shipped on-device path, or the entry is
-   > withdrawn until the separate PRD lands. Do not resolve this by editing one
-   > document — all three have to agree.
+   > **`Say it` — resolved (2026-08-31).** The shipped on-device STT path is
+   > accepted for v1. Doc 33 §8.2 has been amended; `transcribe.native.ts` runs
+   > Whisper on-device via `react-native-executorch`, and `transcribe.web.ts` runs
+   > `@huggingface/transformers` in the browser. The child's raw audio never
+   > leaves the device, satisfying the COPPA/FERPA reasoning. The marketing copy
+   > deck may now describe this path.
 
 2. **Frame** — live guided frame with realtime coaching (§2): page-edge quad, tilt/parallel hint, light/glare/blur hints, and a "one problem at a time" nudge when many text blocks are detected. Auto-capture fires on stability (manual shutter always present).
 3. **Capture** — `takePhoto()` still at capped resolution (the general `react-native-vision-camera` skill owns setup/capture; this doc's realtime layer follows its specialized companion).

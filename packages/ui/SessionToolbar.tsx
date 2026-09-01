@@ -7,34 +7,37 @@ import { View, Text } from './primitives';
 import { IconButton } from './IconButton';
 import { Button } from './Button';
 import { ChevronLeft } from './icons';
-import type { TutorView } from './tutor-view';
+import type { TutorPresencePreference } from './tutor-view';
 
 export interface SessionToolbarProps {
   title: string;
   captionsEnabled?: boolean;
-  tutorView?: TutorView;
+  tutorPresence?: TutorPresencePreference;
   onBack?: () => void;
   onToggleCaptions?: () => void;
-  onTutorViewChange?: (view: TutorView) => void;
+  onTutorPresenceChange?: (presence: TutorPresencePreference) => void;
   className?: string;
 }
 
-const VIEW_ACTION: Record<TutorView, { next: TutorView; label: string }> = {
+const PRESENCE_ACTION: Record<
+  Exclude<TutorPresencePreference, 'auto'>,
+  { next: Exclude<TutorPresencePreference, 'auto'>; label: string }
+> = {
   visible: { next: 'compact', label: 'Make Natalie smaller' },
-  compact: { next: 'hidden', label: 'Hide Natalie' },
-  hidden: { next: 'visible', label: 'Show Natalie' },
+  compact: { next: 'audio-only', label: 'Voice only' },
+  'audio-only': { next: 'visible', label: 'Show Natalie' },
 };
 
 export function SessionToolbar({
   title,
   captionsEnabled,
-  tutorView = 'compact',
+  tutorPresence = 'compact',
   onBack,
   onToggleCaptions,
-  onTutorViewChange,
+  onTutorPresenceChange,
   className,
 }: SessionToolbarProps) {
-  const hasRightAction = onToggleCaptions !== undefined || onTutorViewChange !== undefined;
+  const hasRightAction = onToggleCaptions !== undefined || onTutorPresenceChange !== undefined;
 
   return (
     <View
@@ -60,13 +63,13 @@ export function SessionToolbar({
               aria-label="Toggle captions"
             />
           ) : null}
-          {onTutorViewChange ? (
+          {onTutorPresenceChange && tutorPresence !== 'auto' ? (
             <Button
-              title={VIEW_ACTION[tutorView].label}
+              title={PRESENCE_ACTION[tutorPresence].label}
               variant="ghost"
               size="sm"
-              onPress={() => onTutorViewChange(VIEW_ACTION[tutorView].next)}
-              aria-label={VIEW_ACTION[tutorView].label}
+              onPress={() => onTutorPresenceChange(PRESENCE_ACTION[tutorPresence].next)}
+              aria-label={PRESENCE_ACTION[tutorPresence].label}
             />
           ) : null}
         </View>
