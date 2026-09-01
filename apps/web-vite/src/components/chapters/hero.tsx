@@ -174,7 +174,7 @@ export function Hero() {
               One plan. Every child in your family.
             </Text>
 
-            <Link href="#conversation" className="text-site-body text-moyo-primary underline">
+            <Link href="/how-it-works" className="text-site-body text-moyo-primary underline">
               See how Moyo teaches
             </Link>
           </View>

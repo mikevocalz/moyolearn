@@ -15,8 +15,12 @@ import { Route as ChaptersLabRouteImport } from './routes/chapters-lab'
 import { Route as ChildrensPrivacyRouteImport } from './routes/childrens-privacy'
 import { Route as ContactRouteImport } from './routes/contact'
 import { Route as FaqRouteImport } from './routes/faq'
+import { Route as ForParentsRouteImport } from './routes/for-parents'
+import { Route as ForSchoolsRouteImport } from './routes/for-schools'
 import { Route as GlobeLabRouteImport } from './routes/globe-lab'
+import { Route as HowItWorksRouteImport } from './routes/how-it-works'
 import { Route as MotionLabRouteImport } from './routes/motion-lab'
+import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SafetyRouteImport } from './routes/safety'
 import { Route as TermsRouteImport } from './routes/terms'
@@ -51,14 +55,34 @@ const FaqRoute = FaqRouteImport.update({
   path: '/faq',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ForParentsRoute = ForParentsRouteImport.update({
+  id: '/for-parents',
+  path: '/for-parents',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ForSchoolsRoute = ForSchoolsRouteImport.update({
+  id: '/for-schools',
+  path: '/for-schools',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const GlobeLabRoute = GlobeLabRouteImport.update({
   id: '/globe-lab',
   path: '/globe-lab',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HowItWorksRoute = HowItWorksRouteImport.update({
+  id: '/how-it-works',
+  path: '/how-it-works',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MotionLabRoute = MotionLabRouteImport.update({
   id: '/motion-lab',
   path: '/motion-lab',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const PricingRoute = PricingRouteImport.update({
+  id: '/pricing',
+  path: '/pricing',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PrivacyRoute = PrivacyRouteImport.update({
@@ -84,8 +108,12 @@ export interface FileRoutesByFullPath {
   '/childrens-privacy': typeof ChildrensPrivacyRoute
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
+  '/for-parents': typeof ForParentsRoute
+  '/for-schools': typeof ForSchoolsRoute
   '/globe-lab': typeof GlobeLabRoute
+  '/how-it-works': typeof HowItWorksRoute
   '/motion-lab': typeof MotionLabRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/safety': typeof SafetyRoute
   '/terms': typeof TermsRoute
@@ -97,8 +125,12 @@ export interface FileRoutesByTo {
   '/childrens-privacy': typeof ChildrensPrivacyRoute
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
+  '/for-parents': typeof ForParentsRoute
+  '/for-schools': typeof ForSchoolsRoute
   '/globe-lab': typeof GlobeLabRoute
+  '/how-it-works': typeof HowItWorksRoute
   '/motion-lab': typeof MotionLabRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/safety': typeof SafetyRoute
   '/terms': typeof TermsRoute
@@ -111,8 +143,12 @@ export interface FileRoutesById {
   '/childrens-privacy': typeof ChildrensPrivacyRoute
   '/contact': typeof ContactRoute
   '/faq': typeof FaqRoute
+  '/for-parents': typeof ForParentsRoute
+  '/for-schools': typeof ForSchoolsRoute
   '/globe-lab': typeof GlobeLabRoute
+  '/how-it-works': typeof HowItWorksRoute
   '/motion-lab': typeof MotionLabRoute
+  '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/safety': typeof SafetyRoute
   '/terms': typeof TermsRoute
@@ -126,8 +162,12 @@ export interface FileRouteTypes {
     | '/childrens-privacy'
     | '/contact'
     | '/faq'
+    | '/for-parents'
+    | '/for-schools'
     | '/globe-lab'
+    | '/how-it-works'
     | '/motion-lab'
+    | '/pricing'
     | '/privacy'
     | '/safety'
     | '/terms'
@@ -139,8 +179,12 @@ export interface FileRouteTypes {
     | '/childrens-privacy'
     | '/contact'
     | '/faq'
+    | '/for-parents'
+    | '/for-schools'
     | '/globe-lab'
+    | '/how-it-works'
     | '/motion-lab'
+    | '/pricing'
     | '/privacy'
     | '/safety'
     | '/terms'
@@ -152,8 +196,12 @@ export interface FileRouteTypes {
     | '/childrens-privacy'
     | '/contact'
     | '/faq'
+    | '/for-parents'
+    | '/for-schools'
     | '/globe-lab'
+    | '/how-it-works'
     | '/motion-lab'
+    | '/pricing'
     | '/privacy'
     | '/safety'
     | '/terms'
@@ -166,8 +214,12 @@ export interface RootRouteChildren {
   ChildrensPrivacyRoute: typeof ChildrensPrivacyRoute
   ContactRoute: typeof ContactRoute
   FaqRoute: typeof FaqRoute
+  ForParentsRoute: typeof ForParentsRoute
+  ForSchoolsRoute: typeof ForSchoolsRoute
   GlobeLabRoute: typeof GlobeLabRoute
+  HowItWorksRoute: typeof HowItWorksRoute
   MotionLabRoute: typeof MotionLabRoute
+  PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   SafetyRoute: typeof SafetyRoute
   TermsRoute: typeof TermsRoute
@@ -217,6 +269,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof FaqRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/for-parents': {
+      id: '/for-parents'
+      path: '/for-parents'
+      fullPath: '/for-parents'
+      preLoaderRoute: typeof ForParentsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/for-schools': {
+      id: '/for-schools'
+      path: '/for-schools'
+      fullPath: '/for-schools'
+      preLoaderRoute: typeof ForSchoolsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/globe-lab': {
       id: '/globe-lab'
       path: '/globe-lab'
@@ -224,11 +290,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GlobeLabRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/how-it-works': {
+      id: '/how-it-works'
+      path: '/how-it-works'
+      fullPath: '/how-it-works'
+      preLoaderRoute: typeof HowItWorksRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/motion-lab': {
       id: '/motion-lab'
       path: '/motion-lab'
       fullPath: '/motion-lab'
       preLoaderRoute: typeof MotionLabRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/pricing': {
+      id: '/pricing'
+      path: '/pricing'
+      fullPath: '/pricing'
+      preLoaderRoute: typeof PricingRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/privacy': {
@@ -262,8 +342,12 @@ const rootRouteChildren: RootRouteChildren = {
   ChildrensPrivacyRoute: ChildrensPrivacyRoute,
   ContactRoute: ContactRoute,
   FaqRoute: FaqRoute,
+  ForParentsRoute: ForParentsRoute,
+  ForSchoolsRoute: ForSchoolsRoute,
   GlobeLabRoute: GlobeLabRoute,
+  HowItWorksRoute: HowItWorksRoute,
   MotionLabRoute: MotionLabRoute,
+  PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   SafetyRoute: SafetyRoute,
   TermsRoute: TermsRoute,
@@ -271,12 +355,3 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-  }
-}

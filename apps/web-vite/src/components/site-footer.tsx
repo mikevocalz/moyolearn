@@ -73,10 +73,10 @@ const COLUMNS = [
   {
     heading: 'Product',
     links: [
-      { label: 'How it works', href: '#conversation' },
-      { label: 'For parents', href: '#for-parents' },
-      { label: 'For schools', href: '#for-schools' },
-      { label: 'Pricing', href: '#start' },
+      { label: 'How it works', href: '/how-it-works' },
+      { label: 'For parents', href: '/for-parents' },
+      { label: 'For schools', href: '/for-schools' },
+      { label: 'Pricing', href: '/pricing' },
     ],
   },
   {
@@ -120,7 +120,10 @@ export function SiteFooter() {
 
   return (
     <Footer className={`site-footer ${RULE} bg-moyo-paper-sunken`}>
-      <Container width="wide" className="gap-section py-section">
+      <Container
+        width="wide"
+        className="max-w-screen-2xl gap-section py-section"
+      >
         <View className="flex-col gap-section lg:flex-row lg:gap-section">
           {/* Brand and direct contact form one clear starting point. */}
           <View className="gap-group lg:flex-1">

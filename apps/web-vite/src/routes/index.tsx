@@ -29,12 +29,8 @@ import { SiteNav } from '@/components/site-nav';
 import { SiteFooter } from '@/components/site-footer';
 import { Hero } from '@/components/chapters/hero';
 import { Desk } from '@/components/chapters/desk';
-import { Conversation } from '@/components/chapters/conversation';
 import { WorldChapter } from '@/components/chapters/world';
 import { TutorRoomChapter } from '@/components/chapters/tutor-room';
-import { ParentsChapter } from '@/components/chapters/parents';
-import { SchoolsChapter } from '@/components/chapters/schools';
-import { StartChapter } from '@/components/chapters/start';
 
 const TITLE = 'Moyo — AI tutoring that helps children learn it by heart';
 const DESCRIPTION =
@@ -67,12 +63,8 @@ function MarketingHome() {
       <Main role="main" className="bg-moyo-paper pb-40">
         <Hero />
         <Desk />
-        <Conversation />
         <WorldChapter />
         <TutorRoomChapter />
-        <ParentsChapter />
-        <SchoolsChapter />
-        <StartChapter />
       </Main>
       <SiteFooter />
     </>

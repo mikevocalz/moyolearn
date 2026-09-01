@@ -150,7 +150,7 @@ export function StartChapter() {
 
         <View className="gap-stack">
           {/* A link, never a second card — chapter 07 is a different audience. */}
-          <Link href="#for-schools" className="text-site-body text-moyo-primary underline">
+          <Link href="/for-schools" className="text-site-body text-moyo-primary underline">
             Run a school or a tutoring business? Talk to us.
           </Link>
           <Text className="text-site-body md:text-site-body text-moyo-ink-muted">

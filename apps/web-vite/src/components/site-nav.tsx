@@ -67,12 +67,12 @@ const SITE_ORIGIN = 'https://moyolearn.com';
 const APP_START = `${SITE_ORIGIN}/signup`;
 const APP_LOGIN = `${SITE_ORIGIN}/login`;
 
-/** The four sitemap anchors, in the deck's order. */
+/** The four product pages, in the deck's order. */
 const LINKS = [
-  { href: '#conversation', label: 'How it works' },
-  { href: '#for-parents', label: 'For parents' },
-  { href: '#for-schools', label: 'For schools' },
-  { href: '#start', label: 'Pricing' },
+  { href: '/how-it-works', label: 'How it works' },
+  { href: '/for-parents', label: 'For parents' },
+  { href: '/for-schools', label: 'For schools' },
+  { href: '/pricing', label: 'Pricing' },
 ] as const;
 
 /**
@@ -155,7 +155,7 @@ export function SiteNav() {
 
       <Container
         width="wide"
-        className="flex-row items-center justify-between gap-group py-inset"
+        className="max-w-screen-2xl flex-row items-center justify-between gap-group py-inset"
       >
         <Link
           href="/"
@@ -166,18 +166,15 @@ export function SiteNav() {
         </Link>
 
         <Nav aria-label="Primary" className="hidden lg:flex lg:flex-row lg:items-center lg:gap-group">
-          {LINKS.map((link) => {
-            const productHref = isHome ? link.href : `/${link.href}`;
-            return (
-              <Link
-                key={link.href}
-                href={productHref}
-                className="rounded-moyo-card px-inset-roomy py-inset text-site-body transition-colors duration-fast hover:bg-moyo-paper-sunken hover:text-moyo-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
-              >
-                {link.label}
-              </Link>
-            );
-          })}
+          {LINKS.map((link) => (
+            <Link
+              key={link.href}
+              href={link.href}
+              className="rounded-moyo-card px-inset-roomy py-inset text-site-body transition-colors duration-fast hover:bg-moyo-paper-sunken hover:text-moyo-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+            >
+              {link.label}
+            </Link>
+          ))}
         </Nav>
 
         <View className="hidden lg:flex lg:flex-row lg:items-center lg:gap-stack">
@@ -237,18 +234,15 @@ export function SiteNav() {
           </View>
 
           <Nav aria-label="Primary" className="gap-group">
-            {LINKS.map((link) => {
-              const productHref = isHome ? link.href : `/${link.href}`;
-              return (
-                <Link
-                  key={link.href}
-                  href={productHref}
-                  className="site-nav-item rounded-moyo-card px-inset-roomy py-inset font-moyo-display text-site-title text-moyo-ink transition-colors duration-fast hover:bg-moyo-paper-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
-                >
-                  {link.label}
-                </Link>
-              );
-            })}
+            {LINKS.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className="site-nav-item rounded-moyo-card px-inset-roomy py-inset font-moyo-display text-site-title text-moyo-ink transition-colors duration-fast hover:bg-moyo-paper-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+              >
+                {link.label}
+              </Link>
+            ))}
           </Nav>
 
           <View className="w-full gap-stack">

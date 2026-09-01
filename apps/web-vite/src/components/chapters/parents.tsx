@@ -322,7 +322,7 @@ export function ParentsChapter() {
             additional child after the first 3 is $11. No ads. Nothing about your
             child sold, ever.
           </Paragraph>
-          <Link href="#start" className="text-site-body text-moyo-primary underline">
+          <Link href="/pricing" className="text-site-body text-moyo-primary underline">
             See what&rsquo;s included
           </Link>
         </View>
