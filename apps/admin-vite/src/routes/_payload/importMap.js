@@ -1,3 +1,4 @@
+import { BrandPreview as BrandPreview_e1220b6bf9470dca3a4e8e7704afd48c } from '../../../../../packages/payload/src/components/BrandPreview'
 import { Icon as Icon_32d15b2b13e1e9f604c74e03d9ff8022 } from '../../../../../packages/payload/src/components/Icon'
 import { Logo as Logo_2396ffa5fcb8566707b31b0d1917b213 } from '../../../../../packages/payload/src/components/Logo'
 import { CollectionCards as CollectionCards_ab83ff7e88da8d3530831f296ec4756a } from '@payloadcms/ui/rsc'
@@ -9,6 +10,7 @@ import { RecentlyViewedCollectionsField as RecentlyViewedCollectionsField_3817bf
 
 /** @type import('payload').ImportMap */
 export const importMap = {
+  "./components/BrandPreview#BrandPreview": BrandPreview_e1220b6bf9470dca3a4e8e7704afd48c,
   "./components/Icon#Icon": Icon_32d15b2b13e1e9f604c74e03d9ff8022,
   "./components/Logo#Logo": Logo_2396ffa5fcb8566707b31b0d1917b213,
   "@payloadcms/ui/rsc#CollectionCards": CollectionCards_ab83ff7e88da8d3530831f296ec4756a,
