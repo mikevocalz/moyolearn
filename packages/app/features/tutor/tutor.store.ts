@@ -13,6 +13,7 @@ import { fetchSession, postMessage } from './session.client.ts';
 import { traceAttempt, DEFAULT_TRACING, inferSkillTitle } from '@acme/student-model/pure';
 import { API_URL } from './tutor-constants.ts';
 import { audioQueue } from './tutor-audio.ts';
+import { isToneKey, type ToneKey } from './tutor-tone';
 import type { CoachEvent } from './coach.service';
 
 interface TutorState {
@@ -81,6 +82,8 @@ interface TutorState {
   tutorPresence: TutorPresencePreference;
   /** Override the recommended default (e.g. the learner chose Voice only). */
   setTutorPresence: (presence: TutorPresencePreference) => void;
+  /** The current tone from the coaching turn; drives voice and face. */
+  currentTone: ToneKey | null;
 }
 
 /**
@@ -140,6 +143,7 @@ export const useTutorStore = create<TutorState>((set) => ({
   attachments: [],
   messages: [],
   tutorPresence: 'compact' as TutorPresencePreference,
+  currentTone: null,
   sessionId: null,
   skillTitle: '',
   mastery: DEFAULT_TRACING.prior,
@@ -432,7 +436,11 @@ export const useTutorStore = create<TutorState>((set) => ({
       for await (const event of readCoachEvents(response)) {
         if (event.kind === 'chunk') {
           spoken += event.text;
-          set({ state: { kind: 'speaking', utterance: { text: spoken } } });
+          const tone = event.voice?.tone;
+          set({
+            state: { kind: 'speaking', utterance: { text: spoken } },
+            currentTone: tone && isToneKey(tone) ? tone : null,
+          });
           if (event.voice) {
             audioQueue.enqueue(event.text, event.voice);
           }

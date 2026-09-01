@@ -57,6 +57,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     sessionId,
     tutorPresence,
     setTutorPresence,
+    currentTone,
   } = useTutorStore();
   const [loading, setLoading] = useState(false);
   const sizeClass = useSizeClass();
@@ -457,7 +458,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       childName="there"
       tutorPresence={resolvedTutorPresence}
       onTutorPresenceChange={setTutorPresence}
-      avatar={<TutorAvatar tutorPresence={resolvedTutorPresence} isSpeaking={state.kind === 'speaking'} />}
+      avatar={<TutorAvatar tutorPresence={resolvedTutorPresence} isSpeaking={state.kind === 'speaking'} tone={currentTone} />}
       captionsEnabled
       buttonSize={buttonSizeForBand(ageBand)}
       onBack={router.back}

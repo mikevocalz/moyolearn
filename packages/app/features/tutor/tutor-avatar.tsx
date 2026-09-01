@@ -19,10 +19,12 @@ import {
   type TutorStage,
 } from '@acme/avatar';
 import { audioQueue } from './tutor-audio';
+import { toneRenderFor, type ToneKey } from './tutor-tone';
 
 export interface TutorAvatarProps {
   tutorPresence: TutorPresencePreference;
   isSpeaking: boolean;
+  tone?: ToneKey | null;
 }
 
 const speechDriver: SpeechDriver = {
@@ -34,7 +36,7 @@ const speechDriver: SpeechDriver = {
   scheduledOnsetAt: 0,
 };
 
-export function TutorAvatar({ tutorPresence, isSpeaking }: TutorAvatarProps) {
+export function TutorAvatar({ tutorPresence, isSpeaking, tone }: TutorAvatarProps) {
   const stageRef = useRef<TutorStage | null>(null);
   const faceBusRef = useRef<FaceBus | null>(null);
 
@@ -54,7 +56,11 @@ export function TutorAvatar({ tutorPresence, isSpeaking }: TutorAvatarProps) {
   useEffect(() => {
     stageRef.current?.setSpeaking(isSpeaking);
     faceBusRef.current?.setConversationCues({ partnerSpeaking: isSpeaking });
-  }, [isSpeaking]);
+    if (tone) {
+      const { emotion, intensity } = toneRenderFor(tone);
+      faceBusRef.current?.setEmotion(emotion, intensity);
+    }
+  }, [isSpeaking, tone]);
 
   useEffect(() => {
     const stage = stageRef.current;
