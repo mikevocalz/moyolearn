@@ -60,7 +60,7 @@ export function SiteHeader({ orgBranding }: SiteHeaderProps) {
           <MoyoLearnLogo accessibilityLabel={orgBranding?.name ?? 'Moyo Learn'} />
         </Link>
 
-        <Nav aria-label="Primary" className="relative hidden flex-1 justify-center rounded-full border border-tenant-header-border bg-tenant-surface-subtle p-1 md:flex">
+        <Nav aria-label="Primary" className="relative hidden flex-1 flex-row items-center justify-center gap-1 rounded-full border border-tenant-header-border bg-tenant-surface-subtle p-1 md:flex">
           {MARKETING_ITEMS.map((item) => (
             <NavLink key={item.href} {...item} active={isActive(pathname, item.href)} />
           ))}

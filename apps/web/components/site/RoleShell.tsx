@@ -282,7 +282,7 @@ function HotShell({
             <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
           </Link>
 
-          <Nav aria-label="Primary" className="relative hidden flex-1 justify-center rounded-full border border-tenant-header-border bg-tenant-surface-subtle p-1 md:flex">
+          <Nav aria-label="Primary" className="relative hidden flex-1 flex-row items-center justify-center gap-1 rounded-full border border-tenant-header-border bg-tenant-surface-subtle p-1 md:flex">
             {navItems.map((item) => (
               <HotNavLink key={item.href} {...item} active={isActive(pathname, item.href)} />
             ))}
