@@ -26,6 +26,7 @@
 import 'server-only';
 import type { Auth } from '@acme/auth/server';
 import type { VoiceBand } from '@acme/student-model';
+import type { BakedAlignment } from '@acme/voice';
 import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation.ts';
 import type { LoadGradeBand } from './coach.service.ts';
 
@@ -65,7 +66,7 @@ export type SpeakSentence = (input: {
 }) => Promise<SpeakResult>;
 
 export type BakedClipResult =
-  | { kind: 'url'; url: string; alignmentUrl?: string }
+  | { kind: 'url'; url: string; alignmentUrl?: string; alignment?: BakedAlignment }
   | { kind: 'text-only' };
 
 /**

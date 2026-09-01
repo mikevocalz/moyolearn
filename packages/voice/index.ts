@@ -49,6 +49,7 @@ export {
 export type { BakedPiece, BakedPieceId, BakedServePlan } from './src/baked.ts';
 export { createVoiceEgress, voiceEgress } from './src/eleven.ts';
 export type {
+  BakedAlignment,
   BakedClip,
   SpeakSentenceInput,
   SpokenSentence,

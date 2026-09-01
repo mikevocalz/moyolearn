@@ -18,8 +18,8 @@
 import { S4_SCRIPTS } from '@acme/safety';
 import type { ToneKey } from './tones.ts';
 
-/** Bumped when any piece's text or tone changes, so a stale cache cannot serve the old wording. */
-export const BAKED_VERSION = 2;
+/** Bumped when any piece's text, tone, or voice identity changes, so a stale cache cannot serve the old wording. */
+export const BAKED_VERSION = 3;
 
 export interface BakedPiece {
   readonly text: string;

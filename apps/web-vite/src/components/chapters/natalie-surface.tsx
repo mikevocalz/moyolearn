@@ -30,7 +30,7 @@ const VOICE_BASE =
 
 export interface VoiceClip {
   url: string;
-  alignmentUrl?: string;
+  alignment?: BakedAlignment;
 }
 
 function PlaceholderPlate() {
@@ -73,7 +73,6 @@ export function NatalieSurface() {
   const [voiceStatus, setVoiceStatus] = useState<'idle' | 'loading' | 'error'>('idle');
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const urlCacheRef = useRef<Record<string, { clip: VoiceClip; at: number }>>({});
-  const alignmentCacheRef = useRef<Record<string, BakedAlignment>>({});
 
   useEffect(() => {
     detect();
@@ -143,18 +142,7 @@ export function NatalieSurface() {
       return;
     }
 
-    let pieceAlignment: BakedAlignment | null = alignmentCacheRef.current[choice.voicePiece] ?? null;
-    if (!pieceAlignment && cached.clip.alignmentUrl) {
-      try {
-        const alignmentResponse = await fetch(cached.clip.alignmentUrl, { cache: 'no-store' });
-        if (alignmentResponse.ok) {
-          pieceAlignment = (await alignmentResponse.json()) as BakedAlignment;
-          alignmentCacheRef.current[choice.voicePiece] = pieceAlignment;
-        }
-      } catch {
-        pieceAlignment = null;
-      }
-    }
+    const pieceAlignment = cached.clip.alignment ?? null;
     setAlignment(pieceAlignment);
 
     const audio = new Audio(cached.clip.url);

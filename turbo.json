@@ -8,7 +8,9 @@
     "BUNNY_MEDIA_PREFIX",
     "NEXT_PUBLIC_BUNNY_CDN_BASE_URL",
     "BUNNY_PULL_ZONE_TOKEN_KEY",
-    "VITE_MOYO_VOICE_BASE_URL"
+    "VITE_MOYO_VOICE_BASE_URL",
+    "ELEVENLABS_API_KEY",
+    "ELEVENLABS_VOICE_ID"
   ],
   "tasks": {
     "build": {
@@ -27,7 +29,9 @@
         "BUNNY_MEDIA_PREFIX",
         "NEXT_PUBLIC_BUNNY_CDN_BASE_URL",
         "BUNNY_PULL_ZONE_TOKEN_KEY",
-        "VITE_MOYO_VOICE_BASE_URL"
+        "VITE_MOYO_VOICE_BASE_URL",
+        "ELEVENLABS_API_KEY",
+        "ELEVENLABS_VOICE_ID"
       ],
       "outputs": [
         ".next/**",

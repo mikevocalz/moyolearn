@@ -35,7 +35,7 @@ export async function GET(
     const clip = await resolveBakedClip(piece);
     if (clip.kind === 'text-only') return new Response(null, { status: 204, headers: corsHeaders() });
     return NextResponse.json(
-      { url: clip.url, alignmentUrl: clip.alignmentUrl },
+      { url: clip.url, alignmentUrl: clip.alignmentUrl, alignment: clip.alignment },
       { headers: { ...corsHeaders(), 'Cache-Control': 'private, no-store' } },
     );
   } catch (error) {

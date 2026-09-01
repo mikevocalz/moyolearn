@@ -23,6 +23,7 @@ import {
   bakedObjectKey,
   bakedServePlan,
   voiceEgress,
+  type BakedAlignment,
   type BakedPieceId,
 } from '@acme/voice';
 import type { ResolveBakedClip } from '@acme/app/server';
@@ -59,6 +60,18 @@ async function cached(url: string): Promise<boolean> {
     // An unreachable CDN reads as a miss; the plan then renders (ordinary
     // pieces) or goes text-only (crisis), and neither outcome throws at a child.
     return false;
+  }
+}
+
+/** Reads a cached alignment JSON from the signed CDN. */
+async function fetchCachedAlignment(url: string): Promise<BakedAlignment | undefined> {
+  try {
+    const response = await fetch(signCdnUrl(url), { cache: 'no-store' });
+    if (!response.ok) return undefined;
+    const data = (await response.json()) as BakedAlignment;
+    return data;
+  } catch {
+    return undefined;
   }
 }
 
@@ -141,10 +154,9 @@ export const resolveBakedClip: ResolveBakedClip = async (id) => {
   if (plan === 'serve-cache') {
     const alignmentKey = alignmentKeyFor(pieceId);
     const alignmentCdnUrl = cdnUrlFor(alignmentKey);
-    const alignmentUrl = alignmentCdnUrl && (await cached(alignmentCdnUrl))
-      ? signCdnUrl(alignmentCdnUrl)
-      : undefined;
-    return { kind: 'url', url: signCdnUrl(url), alignmentUrl };
+    const alignment = alignmentCdnUrl ? await fetchCachedAlignment(alignmentCdnUrl) : undefined;
+    const alignmentUrl = alignment && alignmentCdnUrl ? signCdnUrl(alignmentCdnUrl) : undefined;
+    return { kind: 'url', url: signCdnUrl(url), alignmentUrl, alignment };
   }
   if (plan === 'text-only') return { kind: 'text-only' };
 
@@ -158,5 +170,5 @@ export const resolveBakedClip: ResolveBakedClip = async (id) => {
   const alignmentUrl = alignmentStored && alignmentCdnUrl
     ? signCdnUrl(alignmentCdnUrl)
     : undefined;
-  return { kind: 'url', url: signCdnUrl(url), alignmentUrl };
+  return { kind: 'url', url: signCdnUrl(url), alignmentUrl, alignment: clip.alignment };
 };
