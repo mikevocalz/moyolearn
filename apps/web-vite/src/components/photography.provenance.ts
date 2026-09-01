@@ -52,7 +52,7 @@ export const PHOTOGRAPHY_PROVENANCE = {
       'A girl writing in a workbook at a kitchen table, pencil in hand, open textbook and spiral notebook in front of her; her father stands behind her, reading the page over her shoulder.',
     cast: 'The adult is in the frame and is not the subject — the child and the page hold the centre, which is the FD-01 brief exactly. Nobody looks at the camera and nobody is smiling at it. No screen appears anywhere, which matters more here than on any other surface: the hero is where "AI tutor" would otherwise be read as a camera-solver.',
     altSource: 'docs/38-front-door-and-flow.md §5 FD-01 (A11y)',
-    usedIn: "src/components/chapters/parents.tsx — chapter 06, the article's plate",
+    usedIn: 'src/components/chapters/hero.tsx — chapter 01, the plate in the headline’s notch',
   },
   'parents-homework': {
     pexelsId: 5905842,
@@ -63,7 +63,7 @@ export const PHOTOGRAPHY_PROVENANCE = {
     cast: 'The chapter argues that Moyo reports what happened rather than what flatters, so its photograph had to be the work actually happening. He is part-way through a page and slightly fed up with it — the moment, not the category. Chosen over every "family doing homework together" frame in the same shoot because nobody in it is performing.',
     altSource:
       'docs/site/copy-deck.md §11 rules 1–6. No row in the register describes this frame: `site.alt.parents.report` describes a session report on a phone, which is a product screenshot rather than photography. The string is written to the register’s rules instead — it names the work, describes what is happening, and carries no adjective about how it feels.',
-    usedIn: 'src/components/chapters/hero.tsx — chapter 01, the plate in the headline’s notch',
+    usedIn: 'src/components/chapters/parents.tsx — chapter 06, the article’s plate',
   },
   'schools-operations': {
     pexelsId: 7654178,
