@@ -83,6 +83,7 @@ export {
   type DistillationPorts,
   type TutorTurnPorts,
 } from './features/tutor/tutor.service';
+export { tutorCellFor, TUTOR_CAPABILITIES } from './features/tutor/tutor-capabilities';
 
 /*
   S27's eraser. Exported beside the tutoring ports because it is the other end of
