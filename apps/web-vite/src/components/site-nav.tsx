@@ -98,9 +98,9 @@ const useNavStore = create<NavState>()((set) => ({
 const RULE = 'border-moyo-rule border-moyo-outline border-x-0 border-t-0';
 const CONTROL = 'moyo-pressable items-center justify-center min-h-target-adult px-inset-roomy py-inset';
 /** The one filled object in the bar. */
-const CTA = `site-nav-cta ${CONTROL} border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-primary text-moyo-on-primary text-site-body`;
+const CTA = `site-nav-cta ${CONTROL} border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-primary text-moyo-on-primary text-site-body transition-opacity duration-fast hover:opacity-90 active:opacity-80`;
 /** The secondary action in the bar — framed, not filled, so it sits at the same target size. */
-const LOGIN = `site-nav-login ${CONTROL} border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-paper-raised text-moyo-ink text-site-body`;
+const LOGIN = `site-nav-login ${CONTROL} border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-paper-raised text-moyo-ink text-site-body transition-colors duration-fast hover:bg-moyo-paper-sunken active:opacity-80`;
 
 export function SiteNav() {
   const open = useNavStore((state) => state.open);
@@ -141,7 +141,7 @@ export function SiteNav() {
   }, [open, close]);
 
   return (
-    <Header className={`site-nav sticky top-0 z-50 bg-moyo-paper ${RULE}`}>
+    <Header className={`site-nav isolate sticky top-0 z-50 bg-moyo-paper ${RULE}`}>
       {/*
         The first focusable element on the page. `sr-only` until focused, then a
         real, visible, outlined control — a skip link nobody can see when they
@@ -161,7 +161,7 @@ export function SiteNav() {
         <Link
           href="/"
           aria-label="Moyo Learn — home"
-          className="flex w-48 items-center"
+          className="flex w-48 items-center rounded-moyo-card transition duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
         >
           <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
         </Link>
@@ -170,7 +170,11 @@ export function SiteNav() {
           {LINKS.map((link) => {
             const productHref = isHome ? link.href : `/${link.href}`;
             return (
-              <Link key={link.href} href={productHref} className="text-site-body">
+              <Link
+                key={link.href}
+                href={productHref}
+                className="rounded-moyo-card px-inset-roomy py-inset text-site-body transition-colors duration-fast hover:bg-moyo-paper-sunken hover:text-moyo-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+              >
                 {link.label}
               </Link>
             );
@@ -240,7 +244,7 @@ export function SiteNav() {
                 <Link
                   key={link.href}
                   href={productHref}
-                  className="site-nav-item font-moyo-display text-site-title uppercase"
+                  className="site-nav-item rounded-moyo-card px-inset-roomy py-inset font-moyo-display text-site-title uppercase transition-colors duration-fast hover:bg-moyo-paper-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
                 >
                   {link.label}
                 </Link>
