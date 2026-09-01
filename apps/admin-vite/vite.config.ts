@@ -103,11 +103,11 @@ export default defineConfig(
         viteReact(pluginOptions.react),
         /*
           Nitro compiles the server into Vercel Functions and emits Build Output
-          API v3 to .vercel/output. Deliberately unconfigured — it detects the
-          platform itself, and deployment §3.1 warns that overriding
-          outputDirectory in vercel.json breaks the pickup.
+          API v3 to .vercel/output. The preset is explicit so the same build
+          produces Vercel-ready output both locally and in CI; the vercel.json
+          outputDirectory is still not overridden.
         */
-        nitro(),
+        nitro({ preset: 'vercel' }),
       ],
       resolve: { alias: { '@': src } },
       server: { port: DEV_PORT, strictPort: true },
