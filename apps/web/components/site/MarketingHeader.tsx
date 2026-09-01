@@ -204,7 +204,7 @@ export function MarketingHeader() {
               href={PROFILE.href}
               aria-label="Your profile and settings"
               aria-current={profileActive ? 'page' : undefined}
-              className={`rounded-full transition-shadow duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 ${
+              className={`rounded-md transition-shadow duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 ${
                 profileActive
                   ? 'ring-2 ring-accent ring-offset-2 ring-offset-surface'
                   : 'hover:ring-2 hover:ring-border-strong'

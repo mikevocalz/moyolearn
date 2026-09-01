@@ -70,7 +70,7 @@ export function SiteHeader({ orgBranding }: SiteHeaderProps) {
           <Link
             href={PROFILE.href}
             aria-label="Your profile and settings"
-            className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 hover:ring-2 hover:ring-border-strong"
+            className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 hover:ring-2 hover:ring-border-strong"
           >
             <Avatar name={name} imageUri={AVATAR_URI} size="md" />
           </Link>
