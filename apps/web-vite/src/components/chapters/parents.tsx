@@ -262,7 +262,7 @@ export function ParentsChapter() {
                   takes what is left of the 72rem container after the rail's
                   third and the gap, and the full measure once the two stack.
                 */}
-                <Photo name="parents-homework" sizes="(min-width: 48rem) 44rem, 92vw" />
+                <Photo name="hero-kitchen-table" sizes="(min-width: 48rem) 44rem, 92vw" />
               </View>
               {/*
                 The two lines are wrapped in a View, not laid out by the
