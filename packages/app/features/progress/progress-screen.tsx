@@ -10,7 +10,8 @@
 // SOT-KEYWORDS: progress screen mastery chart learner persisted live review scaffolding
 
 import { useRouter } from 'solito/navigation';
-import { MasteryBar, Heading, Text } from '@acme/ui';
+import { MasteryBar, Heading, Text, SafeArea, Container } from '@acme/ui';
+import { ScrollView } from '@acme/ui/tw';
 import { View } from '@acme/ui/primitives';
 import { useTutorStore, useCaptureStore } from '@acme/app';
 import { generatePracticeProblem } from '@acme/student-model/pure';
@@ -90,70 +91,71 @@ export function ProgressScreen() {
   }));
 
   return (
-    // Capped and centred. Uncapped, a mastery bar stretched the full ~1480px
-    // viewport with its percentage at the far right edge, so the label and the
-    // number it belongs to were a screen's width apart.
-    <View className="mx-auto w-full max-w-screen-md flex-1 gap-section p-inset">
-      <View className="gap-stack">
-        <Heading level={1} size="display-lg">Your progress</Heading>
-        <Text className="font-sans text-body text-text-muted">
-          {loading ? 'Loading your mastery...' : 'The bars show what you have mastered so far.'}
-        </Text>
-      </View>
-      <View className="gap-stack">
-        {live.length > 0 ? (
-          <View className="gap-group">
-            <SectionHeading>This session</SectionHeading>
-            {live.map(({ subject, value, state }) => (
-              <MasteryBar key={subject} label={subject} value={value} state={state} />
-            ))}
+    <SafeArea edges={['top']} className="flex-1 bg-surface">
+      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+        <Container width="detail" className="py-4 pb-48 gap-section">
+          <View className="gap-stack">
+            <Heading level={1} size="display-lg">Your progress</Heading>
+            <Text className="font-sans text-body text-text-muted">
+              {loading ? 'Loading your mastery...' : 'The bars show what you have mastered so far.'}
+            </Text>
           </View>
-        ) : null}
-        {practiced.length > 0 ? (
-          <View className="gap-group">
-            <SectionHeading>Practiced</SectionHeading>
-            {practiced.map(({ subject, value, state, onPress }) => (
-              <MasteryBar key={subject} label={subject} value={value} state={state} onPress={onPress} />
-            ))}
-          </View>
-        ) : null}
-        {seeded.length > 0 ? (
-          <View className="gap-group">
-            <SectionHeading>More to explore</SectionHeading>
-            {seeded.map(({ subject, value, state }) => {
-              const onPress = generatePracticeProblem(subject) ? () => handlePractice(subject) : undefined;
-              return (
-                <MasteryBar
-                  key={subject}
-                  label={subject}
-                  value={value}
-                  state={state}
-                  onPress={onPress}
-                />
-              );
-            })}
-          </View>
-        ) : null}
-        {reviews.length > 0 ? (
-          <View className="gap-group">
-            <SectionHeading>Coming up for review</SectionHeading>
-            {reviews.map(({ subject, dueAt }) => (
-              <View key={subject} className="flex-row justify-between">
-                <Text className="font-sans text-body text-text">{subject}</Text>
-                <Text className="font-sans text-body text-text-muted">{dueAt}</Text>
+          <View className="gap-stack">
+            {live.length > 0 ? (
+              <View className="gap-group">
+                <SectionHeading>This session</SectionHeading>
+                {live.map(({ subject, value, state }) => (
+                  <MasteryBar key={subject} label={subject} value={value} state={state} />
+                ))}
               </View>
-            ))}
+            ) : null}
+            {practiced.length > 0 ? (
+              <View className="gap-group">
+                <SectionHeading>Practiced</SectionHeading>
+                {practiced.map(({ subject, value, state, onPress }) => (
+                  <MasteryBar key={subject} label={subject} value={value} state={state} onPress={onPress} />
+                ))}
+              </View>
+            ) : null}
+            {seeded.length > 0 ? (
+              <View className="gap-group">
+                <SectionHeading>More to explore</SectionHeading>
+                {seeded.map(({ subject, value, state }) => {
+                  const onPress = generatePracticeProblem(subject) ? () => handlePractice(subject) : undefined;
+                  return (
+                    <MasteryBar
+                      key={subject}
+                      label={subject}
+                      value={value}
+                      state={state}
+                      onPress={onPress}
+                    />
+                  );
+                })}
+              </View>
+            ) : null}
+            {reviews.length > 0 ? (
+              <View className="gap-group">
+                <SectionHeading>Coming up for review</SectionHeading>
+                {reviews.map(({ subject, dueAt }) => (
+                  <View key={subject} className="flex-row justify-between">
+                    <Text className="font-sans text-body text-text">{subject}</Text>
+                    <Text className="font-sans text-body text-text-muted">{dueAt}</Text>
+                  </View>
+                ))}
+              </View>
+            ) : null}
+            {scaffolds.length > 0 ? (
+              <View className="gap-group">
+                <SectionHeading>Scaffolding</SectionHeading>
+                {scaffolds.map(({ subject, value, onPress }) => (
+                  <MasteryBar key={subject} label={subject} value={value} state="steady" onPress={onPress} />
+                ))}
+              </View>
+            ) : null}
           </View>
-        ) : null}
-        {scaffolds.length > 0 ? (
-          <View className="gap-group">
-            <SectionHeading>Scaffolding</SectionHeading>
-            {scaffolds.map(({ subject, value, onPress }) => (
-              <MasteryBar key={subject} label={subject} value={value} state="steady" onPress={onPress} />
-            ))}
-          </View>
-        ) : null}
-      </View>
-    </View>
+        </Container>
+      </ScrollView>
+    </SafeArea>
   );
 }
