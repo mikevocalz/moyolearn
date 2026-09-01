@@ -219,7 +219,7 @@ function Worksheet() {
           Without this the browser assumes 100vw and downloads the 840px file
           onto a phone that is showing it at 320.
         */}
-        <Photo name="hero-kitchen-table" sizes="(min-width: 64rem) 24rem, (min-width: 30rem) 28rem, 92vw" priority />
+        <Photo name="parents-homework" sizes="(min-width: 64rem) 24rem, (min-width: 30rem) 28rem, 92vw" priority />
       </View>
 
       {/*
