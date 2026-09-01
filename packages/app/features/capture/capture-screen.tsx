@@ -513,7 +513,10 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
       ids.push(id);
     }
 
-    setUploadIds(ids);
+    // Defer the state handoff so the effect does not trigger a synchronous
+    // cascade; the upload flow is a state machine that advances on derived
+    // readiness, not on user input.
+    queueMicrotask(() => setUploadIds(ids));
     void drainNow();
   }, [step, pages, recording, uploadIds]);
 
@@ -521,12 +524,12 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
   useEffect(() => {
     if (step !== 'upload-process' || uploadIds === null) return;
     if (uploadIds.length === 0) {
-      setStep('success');
+      queueMicrotask(() => setStep('success'));
       return;
     }
     const ours = transferRows.filter((r) => uploadIds.includes(r.id));
     if (ours.length > 0 && ours.every((r) => r.status === 'done')) {
-      setStep('success');
+      queueMicrotask(() => setStep('success'));
     }
   }, [step, uploadIds, transferRows]);
 

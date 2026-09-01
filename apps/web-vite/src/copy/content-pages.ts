@@ -107,7 +107,7 @@ export const about = {
   sections: [
     {
       title: 'What Moyo does',
-      body: 'Homework tools give answers. Moyo does not. Natalie asks questions, points out what the learner already knows, and guides the next step. Parents get a real report after every session.',
+      body: 'Other homework tools hand out the answer. Moyo never just gives it; it teaches the next step. Natalie asks questions, points out what the learner already knows, and guides the next step. Parents get a real report after every session.',
     },
     {
       title: 'Why we made it',
@@ -162,7 +162,7 @@ export const faq = {
       a: 'Yes. Moyo is built with guardrails, human review, no ads, and no selling of learner data. A grown-up creates the account and can see reports after every session.',
     },
     {
-      q: 'Does Moyo give answers?',
+      q: 'Does Moyo complete the work for the learner?',
       a: 'No. Natalie, the tutor, coaches the learner through the problem. The goal is for the child to understand the next step, not to copy a solution.',
     },
     {
