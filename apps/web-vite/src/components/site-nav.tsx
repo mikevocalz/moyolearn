@@ -95,12 +95,11 @@ const useNavStore = create<NavState>()((set) => ({
   close: () => set({ open: false }),
 }));
 
-const RULE = 'border-moyo-rule border-moyo-outline border-x-0 border-t-0';
 const CONTROL = 'moyo-pressable items-center justify-center min-h-target-adult px-inset-roomy py-inset';
 /** The one filled object in the bar. */
-const CTA = `site-nav-cta ${CONTROL} border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-primary text-moyo-on-primary text-site-body transition-opacity duration-fast hover:opacity-90 active:opacity-80`;
-/** The secondary action in the bar — framed, not filled, so it sits at the same target size. */
-const LOGIN = `site-nav-login ${CONTROL} border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-paper-raised text-moyo-ink text-site-body transition-colors duration-fast hover:bg-moyo-paper-sunken active:opacity-80`;
+const CTA = `site-nav-cta ${CONTROL} rounded-moyo-card bg-moyo-primary text-moyo-on-primary text-site-body shadow-moyo-1 transition-opacity duration-fast hover:opacity-90 active:opacity-80`;
+/** The secondary action in the bar — plain type, so the CTA is the only filled object. */
+const LOGIN = `site-nav-login ${CONTROL} text-moyo-ink text-site-body transition-colors duration-fast hover:bg-moyo-paper-sunken hover:text-moyo-ink-strong focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50`;
 
 export function SiteNav() {
   const open = useNavStore((state) => state.open);
@@ -141,7 +140,7 @@ export function SiteNav() {
   }, [open, close]);
 
   return (
-    <Header className={`site-nav isolate sticky top-0 z-50 bg-moyo-paper ${RULE}`}>
+    <Header className="site-nav isolate sticky top-0 z-50 bg-moyo-paper shadow-moyo-1">
       {/*
         The first focusable element on the page. `sr-only` until focused, then a
         real, visible, outlined control — a skip link nobody can see when they
@@ -202,7 +201,7 @@ export function SiteNav() {
           accessible name already does.
         */}
         <Button
-          className={`site-nav-cta ${CONTROL} border-moyo-rule aspect-square items-center justify-center rounded-moyo-card border-moyo-outline bg-moyo-paper-raised p-0 lg:hidden`}
+          className={`site-nav-cta ${CONTROL} aspect-square items-center justify-center rounded-moyo-card bg-moyo-paper-raised p-0 shadow-moyo-1 lg:hidden`}
           onPress={toggle}
           aria-expanded={open}
           aria-label={open ? 'Close menu' : 'Open menu'}
@@ -229,7 +228,7 @@ export function SiteNav() {
               <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
             </View>
             <Button
-              className={`site-nav-close site-nav-cta ${CONTROL} aspect-square border-moyo-rule rounded-moyo-card border-moyo-outline bg-moyo-paper-raised p-0`}
+              className={`site-nav-close site-nav-cta ${CONTROL} aspect-square rounded-moyo-card bg-moyo-paper-raised p-0 shadow-moyo-1`}
               onPress={close}
               aria-label="Close menu"
             >
@@ -244,7 +243,7 @@ export function SiteNav() {
                 <Link
                   key={link.href}
                   href={productHref}
-                  className="site-nav-item rounded-moyo-card px-inset-roomy py-inset font-moyo-display text-site-title uppercase transition-colors duration-fast hover:bg-moyo-paper-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+                  className="site-nav-item rounded-moyo-card px-inset-roomy py-inset font-moyo-display text-site-title text-moyo-ink transition-colors duration-fast hover:bg-moyo-paper-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
                 >
                   {link.label}
                 </Link>
