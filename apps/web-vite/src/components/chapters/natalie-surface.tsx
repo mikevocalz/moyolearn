@@ -26,7 +26,7 @@ import { PRESENCE_ACTIONS, type BakedAlignment } from './natalie-scene';
 const NatalieScene = lazy(() => import('./natalie-scene'));
 
 const VOICE_BASE =
-  import.meta.env.VITE_MOYO_VOICE_BASE_URL ?? '/api/marketing/voice/baked';
+  import.meta.env.VITE_MOYO_VOICE_BASE_URL || '/api/marketing/voice/baked';
 
 export interface VoiceClip {
   url: string;
