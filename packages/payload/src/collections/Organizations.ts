@@ -124,5 +124,15 @@ export const Organizations: CollectionConfig = {
       defaultValue: 'lavender',
       options: ['lavender', 'guava', 'mint', 'mango-pastel'],
     },
+    {
+      name: 'brandPreview',
+      type: 'ui',
+      admin: {
+        position: 'sidebar',
+        components: {
+          Field: './components/BrandPreview#BrandPreview',
+        },
+      },
+    },
   ],
 };
