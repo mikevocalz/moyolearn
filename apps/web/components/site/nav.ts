@@ -15,7 +15,6 @@ export interface NavItem {
 
 export const MARKETING_ITEMS: NavItem[] = [
   { label: 'Home', href: '/' },
-  { label: 'Explore', href: '/explore' },
   { label: 'Schedule', href: '/schedule' },
   { label: 'Notifications', href: '/notifications' },
 ];
@@ -28,7 +27,7 @@ export const NAV_BY_ROLE: Record<ActiveContextKind, NavItem[]> = {
   anon: MARKETING_ITEMS,
   learner: [
     { label: 'Today', href: '/' },
-    { label: 'Subjects', href: '/explore' },
+    { label: 'Subjects', href: '/subjects' },
     { label: 'Snap', href: '/capture' },
     { label: 'Progress', href: '/progress' },
   ],
