@@ -446,10 +446,10 @@ export function Composer({
             <SlideIn from="left" distance={40} duration={160} delay={100}>
               <Pressable
                 onPress={onPickCamera ?? onPickImage ?? onPickDocument}
-                aria-label="Add a photo or file"
+                aria-label={onPickCamera ? 'Take a photo' : 'Add a photo or file'}
                 className={`${iconTarget} items-center justify-center rounded-control`}
               >
-                <Plus size={20} className="text-text" />
+                {onPickCamera ? <Camera size={20} className="text-text" /> : <Plus size={20} className="text-text" />}
               </Pressable>
             </SlideIn>
           ) : (

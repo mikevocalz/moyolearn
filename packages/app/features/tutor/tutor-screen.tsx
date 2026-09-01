@@ -20,6 +20,7 @@ import { useTutorStore } from './tutor.store';
 import { API_URL, recommendedTutorPresenceFor } from './tutor-constants.ts';
 import { TutorAvatar } from './tutor-avatar';
 import { pickNoteImage } from '../schedule/pick-note-image';
+import { pickCamera } from './pick-camera';
 import { pickFile } from '../editor/pick-file';
 import { useAudioStore } from '../editor/audio.store.ts';
 import { readAttachment } from '../capture/read-attachment';
@@ -353,6 +354,12 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     );
   }, [stage]);
 
+  const handlePickCamera = useCallback(() => {
+    void pickCamera().then((picked) =>
+      stage(picked && { uri: picked.uri, name: 'camera.jpg' }, 'image', 'image/jpeg'),
+    );
+  }, [stage]);
+
   /*
     Voice, through the recorder the editor already uses.
 
@@ -465,6 +472,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
         dead. A child who taps something and gets nothing learns the app is
         broken. Photos, files and voice are wired.
       */
+      onPickCamera={handlePickCamera}
       onPickImage={handlePickImage}
       onPickDocument={handlePickDocument}
       onStartRecording={handleStartRecording}
