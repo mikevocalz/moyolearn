@@ -97,6 +97,29 @@ const PAIRS = [
 ];
 
 /**
+ * Tenant shell tokens are overridable at runtime, so the DEFAULT values in
+ * tokens.ts must clear contrast for the build. Admins can pick from the curated
+ * palette only, which is what guarantees real documents stay accessible.
+ */
+const TENANT_PAIRS = [
+  ['tenant-header-foreground', 'tenant-header', 4.5],
+  ['tenant-header-muted', 'tenant-header', 4.5],
+  ['tenant-sidebar-foreground', 'tenant-sidebar', 4.5],
+  ['tenant-sidebar-muted', 'tenant-sidebar', 4.5],
+  ['tenant-sidebar-active-foreground', 'tenant-sidebar-active', 4.5],
+  ['tenant-primary-foreground', 'tenant-primary', 4.5],
+  ['tenant-primary-foreground', 'tenant-primary-hover', 4.5],
+  ['tenant-accent-foreground', 'tenant-accent', 4.5],
+  ['tenant-success', 'tenant-surface', 4.5],
+  ['tenant-warning', 'tenant-surface', 4.5],
+  ['tenant-danger', 'tenant-surface', 4.5],
+  ['tenant-border', 'tenant-surface', 3],
+  ['tenant-focus-ring', 'tenant-surface', 3],
+  ['tenant-border', 'tenant-surface-subtle', 3],
+  ['tenant-focus-ring', 'tenant-surface-subtle', 3],
+];
+
+/**
  * `border-faint` is the Cool dial's 10% shadow ink. It is deliberately invisible
  * and carries no meaning on its own, so it is exempt — named here so the
  * exemption is a decision on the record rather than an oversight.
@@ -229,6 +252,33 @@ for (const theme of THEMES) {
   if (rows.length) {
     console.error(`\n${theme}:`);
     rows.forEach((r) => console.error(r));
+  }
+
+  const tenantRows = [];
+  for (const [fgName, bgName, min] of TENANT_PAIRS) {
+    if (EXEMPT.has(fgName) || EXEMPT.has(bgName)) continue;
+    const fg = semantic[fgName]?.[theme];
+    const bg = semantic[bgName]?.[theme];
+    if (!fg || !bg) {
+      console.error(`unknown tenant token in pair: ${fgName} on ${bgName}`);
+      failures++;
+      continue;
+    }
+    const r = ratio(fg, bg);
+    if (r === null) {
+      console.error(`could not parse colour for ${fgName} on ${bgName} (${fg} / ${bg})`);
+      failures++;
+      continue;
+    }
+    checked++;
+    if (r < min) {
+      failures++;
+      tenantRows.push(`  FAIL  ${fgName} on ${bgName}  ${r.toFixed(2)}:1  (needs ${min}:1)`);
+    }
+  }
+  if (tenantRows.length) {
+    console.error(`\n${theme} tenant:`);
+    tenantRows.forEach((r) => console.error(r));
   }
 }
 

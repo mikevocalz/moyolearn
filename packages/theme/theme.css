@@ -318,9 +318,9 @@
   --color-tenant-header-foreground: light-dark(#43216B, #43216B);
   --color-tenant-header-muted: light-dark(#43216BB3, #43216BB3);
   --color-tenant-header-border: light-dark(#43216B26, #43216B26);
-  --color-tenant-sidebar: light-dark(#FFFDF7, #FFFDF7);
+  --color-tenant-sidebar: light-dark(#FFFDF7, #211F1B);
   --color-tenant-sidebar-foreground: light-dark(#0D0C0B, #FFFDF7);
-  --color-tenant-sidebar-muted: light-dark(#55524A, #94917F);
+  --color-tenant-sidebar-muted: light-dark(#55524A, #C4C0B0);
   --color-tenant-sidebar-active: light-dark(#F0543F, #F0543F);
   --color-tenant-sidebar-active-foreground: light-dark(#0D0C0B, #0D0C0B);
   --color-tenant-sidebar-active-indicator: light-dark(#F0543F, #F0543F);
@@ -332,7 +332,7 @@
   --color-tenant-border: light-dark(#0D0C0B, #FFFDF7);
   --color-tenant-focus-ring: light-dark(#F0543F, #F0543F);
   --color-tenant-success: light-dark(#28613A, #7DB98B);
-  --color-tenant-warning: light-dark(#FFB21D, #FFB21D);
+  --color-tenant-warning: light-dark(#C04444, #FFB21D);
   --color-tenant-danger: light-dark(#A03333, #EB9C9C);
 
   /* --- marketing site layer (moyolearn.com) --- */

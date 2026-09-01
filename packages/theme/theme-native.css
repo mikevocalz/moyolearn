@@ -341,7 +341,7 @@
       --color-tenant-border: #0D0C0B;
       --color-tenant-focus-ring: #F0543F;
       --color-tenant-success: #28613A;
-      --color-tenant-warning: #FFB21D;
+      --color-tenant-warning: #C04444;
       --color-tenant-danger: #A03333;
     }
     @variant dark {
@@ -408,9 +408,9 @@
       --color-tenant-header-foreground: #43216B;
       --color-tenant-header-muted: #43216BB3;
       --color-tenant-header-border: #43216B26;
-      --color-tenant-sidebar: #FFFDF7;
+      --color-tenant-sidebar: #211F1B;
       --color-tenant-sidebar-foreground: #FFFDF7;
-      --color-tenant-sidebar-muted: #94917F;
+      --color-tenant-sidebar-muted: #C4C0B0;
       --color-tenant-sidebar-active: #F0543F;
       --color-tenant-sidebar-active-foreground: #0D0C0B;
       --color-tenant-sidebar-active-indicator: #F0543F;

@@ -249,9 +249,9 @@ export const semantic = {
   'tenant-header-foreground': { light: palette['moyo-purple'], dark: palette['moyo-purple'] },
   'tenant-header-muted': { light: `${palette['moyo-purple']}B3`, dark: `${palette['moyo-purple']}B3` },
   'tenant-header-border': { light: `${palette['moyo-purple']}26`, dark: `${palette['moyo-purple']}26` },
-  'tenant-sidebar': { light: palette.ink[50], dark: palette.ink[50] },
+  'tenant-sidebar': { light: palette.ink[50], dark: '#211F1B' },
   'tenant-sidebar-foreground': { light: palette.ink[950], dark: palette.ink[50] },
-  'tenant-sidebar-muted': { light: palette.ink[600], dark: palette.ink[400] },
+  'tenant-sidebar-muted': { light: palette.ink[600], dark: palette.ink[300] },
   'tenant-sidebar-active': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
   'tenant-sidebar-active-foreground': { light: palette.ink[950], dark: palette.ink[950] },
   'tenant-sidebar-active-indicator': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
@@ -263,7 +263,7 @@ export const semantic = {
   'tenant-border': { light: palette.ink[950], dark: palette.ink[50] },
   'tenant-focus-ring': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
   'tenant-success': { light: palette.forest[600], dark: palette.forest[300] },
-  'tenant-warning': { light: palette['moyo-mango'], dark: palette['moyo-mango'] },
+  'tenant-warning': { light: palette.rose[500], dark: palette['moyo-mango'] },
   'tenant-danger': { light: palette.rose[600], dark: palette.rose[300] },
 } as const;
 
