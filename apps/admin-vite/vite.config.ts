@@ -13,9 +13,8 @@
  * must build the one permitted copy of each plugin itself. It deep-merges what
  * the callback returns onto Payload's base (aliases `@payload-config`, adds the
  * RSC/SSR externalisation the admin needs, registers its own workaround
- * plugins). `nitro()` is deliberately NOT instantiated here either: it is
- * conditional on deploying through Nitro, and wiring it changes the output
- * directory, which is the deployment §3.1 task and not this one.
+ * plugins). `nitro()` is left unconfigured: it detects Vercel and emits Build
+ * Output API v3 to `.vercel/output`, which is the deployment §3.1 output.
  *
  * What is NOT here is the point of the file. No `vite-plugin-react-native-web`,
  * no `@tailwindcss/vite`, no `ssr.noExternal` list, no `optimizeDeps` CJS
@@ -38,6 +37,7 @@ import { withPayload } from '@payloadcms/tanstack-start';
 import { tanstackStart } from '@tanstack/react-start/plugin/vite';
 import viteReact from '@vitejs/plugin-react';
 import rsc from '@vitejs/plugin-rsc';
+import { nitro } from 'nitro/vite';
 import { defineConfig } from 'vite';
 
 const src = fileURLToPath(new URL('./src', import.meta.url));
@@ -101,6 +101,13 @@ export default defineConfig(
           plugin-react's default `exclude` would skip.
         */
         viteReact(pluginOptions.react),
+        /*
+          Nitro compiles the server into Vercel Functions and emits Build Output
+          API v3 to .vercel/output. Deliberately unconfigured — it detects the
+          platform itself, and deployment §3.1 warns that overriding
+          outputDirectory in vercel.json breaks the pickup.
+        */
+        nitro(),
       ],
       resolve: { alias: { '@': src } },
       server: { port: DEV_PORT, strictPort: true },
