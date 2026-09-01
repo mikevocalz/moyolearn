@@ -32,9 +32,9 @@ function NavLink({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={`rounded-md px-3.5 py-2 text-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring/50 ${
+      className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring/50 ${
         active
-          ? 'bg-tenant-primary font-semibold text-tenant-primary-foreground'
+          ? 'bg-tenant-header text-tenant-header-foreground shadow-sm'
           : 'text-tenant-header-muted hover:bg-tenant-surface-subtle hover:text-tenant-header-foreground'
       }`}
     >
@@ -60,7 +60,7 @@ export function SiteHeader({ orgBranding }: SiteHeaderProps) {
           <MoyoLearnLogo accessibilityLabel={orgBranding?.name ?? 'Moyo Learn'} />
         </Link>
 
-        <Nav aria-label="Primary" className="relative hidden flex-1 justify-center gap-1 md:flex">
+        <Nav aria-label="Primary" className="relative hidden flex-1 justify-center rounded-full border border-tenant-header-border bg-tenant-surface-subtle p-1 md:flex">
           {MARKETING_ITEMS.map((item) => (
             <NavLink key={item.href} {...item} active={isActive(pathname, item.href)} />
           ))}
@@ -70,7 +70,7 @@ export function SiteHeader({ orgBranding }: SiteHeaderProps) {
           <Link
             href={PROFILE.href}
             aria-label="Your profile and settings"
-            className="rounded-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 hover:ring-2 hover:ring-border-strong"
+            className="rounded-md p-1 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring/50 hover:bg-tenant-surface-subtle hover:ring-2 hover:ring-tenant-header-border"
           >
             <Avatar name={name} imageUri={AVATAR_URI} size="md" />
           </Link>
@@ -80,7 +80,7 @@ export function SiteHeader({ orgBranding }: SiteHeaderProps) {
           aria-label={open ? 'Close menu' : 'Open menu'}
           aria-expanded={open}
           onPress={toggle}
-          className="inline-flex h-10 w-10 items-center justify-center rounded-md border-2 border-tenant-header-border transition-colors duration-fast hover:bg-tenant-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring/50 active:opacity-80 md:hidden"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-tenant-surface-subtle transition-colors duration-fast hover:bg-tenant-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring/50 active:opacity-80 md:hidden"
         >
           {open ? (
             <X className="h-5 w-5 text-tenant-header-foreground" />
@@ -91,9 +91,8 @@ export function SiteHeader({ orgBranding }: SiteHeaderProps) {
       </View>
 
       {open ? (
-        <View className="border-t-2 border-tenant-border bg-tenant-surface px-3 pb-4 md:hidden">
-          <View className="my-2 h-px bg-tenant-border/60" />
-          <Nav aria-label="Primary" id="mobile-menu" className="gap-1">
+        <View className="border-t-2 border-tenant-border bg-tenant-surface p-4 md:hidden">
+          <Nav aria-label="Primary" id="mobile-menu" className="gap-2">
             {MARKETING_ITEMS.map((item) => (
               <NavLink key={item.href} {...item} active={isActive(pathname, item.href)} />
             ))}
