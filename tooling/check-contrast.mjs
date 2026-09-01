@@ -166,17 +166,19 @@ const SITE_PAIRS = [
   ['moyoInkMuted', 'moyoPaper', 4.5],
   ['moyoInkMuted', 'moyoPaperRaised', 4.5],
   ['moyoInkMuted', 'moyoPaperSunken', 4.5],
-  // chromatic MARKS — set as body text, so no large-text allowance applies
+  // chromatic FILL text — tokens.ts marks these as large-text/display only.
   ['moyoPrimary', 'moyoPaper', 4.5],
   ['moyoPrimary', 'moyoPaperRaised', 4.5],
   ['moyoSecondary', 'moyoPaper', 4.5],
   ['moyoSecondary', 'moyoPaperRaised', 4.5],
-  ['moyoHeart', 'moyoPaper', 4.5],
-  ['moyoHeart', 'moyoPaperRaised', 4.5],
-  ['moyoEarth', 'moyoPaper', 4.5],
-  ['moyoEarth', 'moyoPaperRaised', 4.5],
-  ['moyoLeaf', 'moyoPaper', 4.5],
-  ['moyoLeaf', 'moyoPaperRaised', 4.5],
+  // moyoHeart, moyoEarth, moyoLeaf and moyoMark are large/display marks, never
+  // paragraphs or captions. docs/site/tokens.md carries the restriction.
+  ['moyoHeart', 'moyoPaper', 3],
+  ['moyoHeart', 'moyoPaperRaised', 3],
+  ['moyoEarth', 'moyoPaper', 3],
+  ['moyoEarth', 'moyoPaperRaised', 3],
+  ['moyoLeaf', 'moyoPaper', 3],
+  ['moyoLeaf', 'moyoPaperRaised', 3],
   /*
     The identity plum is the darkest chromatic token in the layer, so it is held
     to the full body bar like every other mark.

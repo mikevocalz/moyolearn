@@ -655,7 +655,7 @@ export const siteColors = {
   /** Coral alias used by the globe's warm land and existing section fills. */
   moyoEarth: '#E55545',
   /** Teal alias used by the globe's cool land and existing section fills. */
-  moyoLeaf: '#0A9FA6',
+  moyoLeaf: '#0A9299',
 
   /*
     THE IDENTITY PAIR. These two are the Moyo logo's own colours, so they are
@@ -668,9 +668,10 @@ export const siteColors = {
     describes interaction hierarchy.
   */
   /**
-   * The mark's teal. 2.84:1 on paper, so it is fill-only. Ink on it is 5.74:1.
+   * The mark's teal. 3.34:1 on paper, so it is fill-only or large display type.
+   * Ink on it is 5.74:1.
    */
-  moyoMark: '#0A9FA6',
+  moyoMark: '#0A9299',
   /**
    * The mark's plum. 11.88:1 on paper — the darkest chromatic token in the
    * layer and safe at any size. Its one hazard is at the other end: `moyoInk`
@@ -885,6 +886,8 @@ export const siteMotion = {
 export const siteFontFamilies = {
   moyoDisplay: "'Clash Display', 'Clash Display Fallback', 'Arial Black', sans-serif",
   moyoText: "'General Sans', 'General Sans Fallback', system-ui, sans-serif",
+  moyoSerif: "'Instrument Serif', Georgia, 'Times New Roman', serif",
+  moyoHand: "'Shantell Sans', 'Comic Sans MS', cursive",
 } as const;
 
 /**

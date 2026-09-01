@@ -338,6 +338,8 @@
   /* --- marketing site layer (moyolearn.com) --- */
   --font-moyo-display: 'Clash Display', 'Clash Display Fallback', 'Arial Black', sans-serif;
   --font-moyo-text: 'General Sans', 'General Sans Fallback', system-ui, sans-serif;
+  --font-moyo-serif: 'Instrument Serif', Georgia, 'Times New Roman', serif;
+  --font-moyo-hand: 'Shantell Sans', 'Comic Sans MS', cursive;
   --text-site-hero: clamp(2.75rem, 7.5vw, 7rem);
   --text-site-hero--line-height: 0.94;
   --text-site-hero--letter-spacing: -0.02em;
@@ -407,8 +409,8 @@
   --color-moyo-heart: #E55545;
   --color-moyo-sun: #F4A629;
   --color-moyo-earth: #E55545;
-  --color-moyo-leaf: #0A9FA6;
-  --color-moyo-mark: #0A9FA6;
+  --color-moyo-leaf: #0A9299;
+  --color-moyo-mark: #0A9299;
   --color-moyo-mark-deep: #3C2357;
   --color-moyo-on-primary: #F7F1E3;
   --color-moyo-on-secondary: #F7F1E3;
