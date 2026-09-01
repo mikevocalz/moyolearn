@@ -23,11 +23,11 @@ import {
   ContextSwitcher,
   RoleSwitcher,
   ScopeSwitcher,
-  ThemeProvider,
   resolveTenantTheme,
+  tenantCssVariables,
 } from '@acme/app';
 import type { ActiveContextKind, Membership, AppUser, OrgBranding } from '@acme/app';
-import { DashboardShell, LoadingSkeleton, Menu, MoyoLearnLogo, RoleScope } from '@acme/ui';
+import { DashboardShell, LoadingSkeleton, Menu, MoyoLearnLogo, RoleScope, TenantScope } from '@acme/ui';
 import type { MenuAction, NavGroup } from '@acme/ui';
 import { Header, Main, Nav, Pressable, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar } from '@acme/ui';
@@ -219,10 +219,10 @@ function HotNavLink({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 ${
+      className={`flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring/50 ${
         active
-          ? 'bg-primary font-semibold text-on-primary'
-          : 'text-text-muted hover:bg-surface-sunken hover:text-text'
+          ? 'bg-tenant-primary font-semibold text-tenant-primary-foreground'
+          : 'text-tenant-header-muted hover:bg-tenant-surface-subtle hover:text-tenant-header-foreground'
       } ${className ?? ''}`}
     >
       {iconFor(label, 'h-4 w-4')}
@@ -244,10 +244,10 @@ function BottomNavLink({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-md py-1.5 text-xs font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 ${
+      className={`flex flex-1 flex-col items-center justify-center gap-0.5 rounded-md py-1.5 text-xs font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring/50 ${
         active
-          ? 'bg-primary font-semibold text-on-primary'
-          : 'text-text-muted hover:bg-surface-sunken hover:text-text'
+          ? 'bg-tenant-primary font-semibold text-tenant-primary-foreground'
+          : 'text-tenant-header-muted hover:bg-tenant-surface-subtle hover:text-tenant-header-foreground'
       }`}
     >
       {iconFor(label, 'h-6 w-6')}
@@ -270,8 +270,8 @@ function HotShell({
   const profileActive = isActive(pathname, PROFILE.href);
 
   return (
-    <View className="flex min-h-dvh flex-col">
-      <Header className="sticky top-0 z-50 border-b bg-surface px-4 py-3 sm:px-6">
+    <View className="flex min-h-dvh flex-col bg-tenant-surface">
+      <Header className="sticky top-0 z-50 border-b border-tenant-header-border bg-tenant-header px-4 py-3 sm:px-6">
         <View className="mx-auto w-full max-w-screen-2xl flex-row items-center justify-between gap-4">
           <Link
             href="/"
@@ -297,9 +297,9 @@ function HotShell({
             aria-label={open ? 'Close menu' : 'Open menu'}
             aria-expanded={open}
             aria-controls="mobile-menu"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-md border-2 border-border transition-colors duration-fast hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 active:opacity-80 md:hidden"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-md border-2 border-tenant-header-border transition-colors duration-fast hover:bg-tenant-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring active:opacity-80 md:hidden"
           >
-            <MenuIcon className="h-5 w-5 text-text" />
+            <MenuIcon className="h-5 w-5 text-tenant-header-foreground" />
           </Pressable>
         </View>
       </Header>
@@ -311,24 +311,24 @@ function HotShell({
             aria-label="Close menu"
             className="fixed inset-x-0 top-0 z-40 h-screen cursor-default items-start justify-start bg-ink-950/50 backdrop-blur-[2px] md:hidden"
           />
-          <View className="absolute inset-x-0 top-[70px] z-50 rounded-b-sheet border-b-2 border-border bg-surface shadow-raised md:hidden">
+          <View className="absolute inset-x-0 top-[70px] z-50 rounded-b-sheet border-b-2 border-tenant-border bg-tenant-surface shadow-raised md:hidden">
             <Link
               href={PROFILE.href}
               onClick={close}
               aria-current={profileActive ? 'page' : undefined}
-              className={`mx-3 mt-3 flex items-center gap-stack rounded-xl px-3 py-3 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 ${
-                profileActive ? 'bg-surface-sunken' : 'hover:bg-surface-sunken'
+              className={`mx-3 mt-3 flex items-center gap-stack rounded-xl px-3 py-3 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring ${
+                profileActive ? 'bg-tenant-surface-subtle' : 'hover:bg-tenant-surface-subtle'
               }`}
             >
               <Avatar name={name} imageUri={AVATAR_URI} size="lg" />
               <View className="flex-1 gap-0.5">
-                <TWText className="text-base font-semibold text-text">{name}</TWText>
-                <TWText className="text-sm text-text-muted">Profile & settings</TWText>
+                <TWText className="text-base font-semibold text-tenant-header-foreground">{name}</TWText>
+                <TWText className="text-sm text-tenant-header-muted">Profile & settings</TWText>
               </View>
-              <TWText className="text-lg text-text-muted">›</TWText>
+              <TWText className="text-lg text-tenant-header-muted">›</TWText>
             </Link>
 
-            <View className="mx-6 my-2 h-px bg-border/60" />
+            <View className="mx-6 my-2 h-px bg-tenant-border/60" />
 
             <Nav aria-label="Primary" id="mobile-menu" className="gap-1 px-3 pb-4">
               {navItems.map((item) => (
@@ -341,7 +341,7 @@ function HotShell({
               ))}
             </Nav>
 
-            <View className="mx-6 my-2 h-px bg-border/60" />
+            <View className="mx-6 my-2 h-px bg-tenant-border/60" />
             <ContextSwitcher />
             <RoleSwitcher />
           </View>
@@ -352,7 +352,7 @@ function HotShell({
 
       <Nav
         aria-label="Primary"
-        className="fixed bottom-0 left-0 right-0 z-50 flex flex-row border-t-2 border-border bg-surface px-2 py-1 md:hidden"
+        className="fixed bottom-0 left-0 right-0 z-50 flex flex-row border-t-2 border-tenant-border bg-tenant-surface px-2 py-1 md:hidden"
       >
         {navItems.map((item) => (
           <BottomNavLink key={item.href} {...item} active={isActive(pathname, item.href)} />
@@ -372,12 +372,12 @@ function BrandLockup({ orgBranding }: { orgBranding?: OrgBranding | null }) {
   }
   return (
     <View className="h-9 max-w-34 flex-row items-center gap-2 px-1">
-      <View className="h-8 w-8 items-center justify-center rounded-md bg-surface-sunken">
-        <TWText className="text-sm font-bold text-text">
+      <View className="h-8 w-8 items-center justify-center rounded-md bg-tenant-surface-subtle">
+        <TWText className="text-sm font-bold text-tenant-sidebar-foreground">
           {orgBranding.name[0]?.toUpperCase() ?? 'M'}
         </TWText>
       </View>
-      <TWText className="truncate text-base font-semibold text-text">{orgBranding.name}</TWText>
+      <TWText className="truncate text-base font-semibold text-tenant-sidebar-foreground">{orgBranding.name}</TWText>
     </View>
   );
 }
@@ -394,8 +394,8 @@ function BrandMark({ orgBranding }: { orgBranding?: OrgBranding | null }) {
     return <Image src={orgBranding.logoUrl} alt="" width={32} height={32} className="h-8 w-8 rounded-md object-contain" unoptimized />;
   }
   return (
-    <View className="h-8 w-8 items-center justify-center rounded-md bg-surface-sunken">
-      <TWText className="text-sm font-bold text-text">
+    <View className="h-8 w-8 items-center justify-center rounded-md bg-tenant-surface-subtle">
+      <TWText className="text-sm font-bold text-tenant-sidebar-foreground">
         {orgBranding.name[0]?.toUpperCase() ?? 'M'}
       </TWText>
     </View>
@@ -509,18 +509,23 @@ export function RoleShell({ children, allowedKinds, orgBranding }: RoleShellProp
 
   const accent = accentFor(activeContext.kind);
   const navItems = NAV_BY_ROLE[activeContext.kind] ?? [];
+  const tenantBrand = orgBranding ?? { name: 'Moyo' };
+  const tenantTheme = resolveTenantTheme(tenantBrand, accent);
+  const tenantVars = tenantCssVariables(tenantTheme);
+
   const shell = hotFor(activeContext.kind) ? (
-    <HotShell navItems={navItems}>{children}</HotShell>
+    <HotShell navItems={navItems}>
+      {children}
+    </HotShell>
   ) : (
     <CoolShell navItems={navItems} orgBranding={orgBranding}>
       {children}
     </CoolShell>
   );
-  const brand = resolveTenantTheme(orgBranding?.brandTheme, accent);
 
   return (
-    <ThemeProvider value={brand}>
+    <TenantScope variables={tenantVars} className="flex min-h-dvh flex-1">
       <RoleScope role={accent}>{shell}</RoleScope>
-    </ThemeProvider>
+    </TenantScope>
   );
 }

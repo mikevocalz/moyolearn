@@ -2,13 +2,15 @@
 // Site chrome — one public shell and one authenticated role shell per doc 36 §2.
 // The `(site)` route group keeps its URLs while the chrome swaps: anon users see
 // the branded site header+footer, authed users see the role shell for their
-// active context. Theme resolution lives in the `(site)` layout, not here.
+// active context. The resolved tenant CSS variables are injected by a single
+// TenantScope that wraps whichever chrome renders.
 // SOT: apps/web/components/site/SiteHeader.tsx · apps/web/components/site/SiteFooter.tsx
-// SOT-KEYWORDS: site chrome marketing role shell public authenticated switch
+// SOT-KEYWORDS: site chrome marketing role shell public authenticated switch tenant
 
+import { useMemo } from 'react';
 import { View } from '@acme/ui/tw';
-import { LoadingSkeleton } from '@acme/ui';
-import { useAppSession } from '@acme/app';
+import { LoadingSkeleton, TenantScope } from '@acme/ui';
+import { resolveTenantTheme, tenantCssVariables, useAppSession } from '@acme/app';
 import type { OrgBranding } from '@acme/app';
 import { SiteHeader } from './SiteHeader';
 import { SiteFooter } from './SiteFooter';
@@ -22,23 +24,34 @@ export interface SiteChromeProps {
 export function SiteChrome({ children, orgBranding }: SiteChromeProps) {
   const { status } = useAppSession();
 
+  const tenantVars = useMemo(() => {
+    const brand = orgBranding ?? { name: 'Moyo' };
+    return tenantCssVariables(resolveTenantTheme(brand, null));
+  }, [orgBranding]);
+
   if (status === 'loading') {
     return (
-      <View className="flex-1">
-        <LoadingSkeleton count={6} className="m-inset" />
-      </View>
+      <TenantScope variables={tenantVars} className="flex-1">
+        <View className="flex-1">
+          <LoadingSkeleton count={6} className="m-inset" />
+        </View>
+      </TenantScope>
     );
   }
 
   if (status === 'anon') {
     return (
-      <>
+      <TenantScope variables={tenantVars} className="flex min-h-dvh flex-col">
         <SiteHeader orgBranding={orgBranding} />
         <View className="flex-1 pb-section">{children}</View>
         <SiteFooter />
-      </>
+      </TenantScope>
     );
   }
 
-  return <RoleShell>{children}</RoleShell>;
+  return (
+    <TenantScope variables={tenantVars} className="flex min-h-dvh flex-col">
+      <RoleShell>{children}</RoleShell>
+    </TenantScope>
+  );
 }

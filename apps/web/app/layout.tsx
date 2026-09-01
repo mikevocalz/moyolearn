@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { headers } from 'next/headers';
-import { AppQueryProvider, SessionProvider, ThemeProvider, resolveTenantTheme } from '@acme/app';
+import { AppQueryProvider, SessionProvider, resolveTenantTheme, tenantCssVariables } from '@acme/app';
 import { tenantSlugFromHost } from '@acme/auth/host-tenant';
 import { Document } from './Document';
 import { RoleShell } from '../components/site/RoleShell';
@@ -30,7 +30,10 @@ export default async function RootLayout({
     slug ? loadOrgBranding(slug) : null,
     slug ? loadOrgKind({ orgId: slug, learnerId: '', isLearner: false }) : null,
   ]);
-  const brand = resolveTenantTheme(org?.brandTheme, null);
+  const moyoDefault = { name: 'Moyo' };
+  const tenantBrand = org ?? moyoDefault;
+  const tenantTheme = resolveTenantTheme(tenantBrand, null);
+  const tenantStyle = tenantCssVariables(tenantTheme);
 
   const allowedKinds =
     kind === 'district' ? (['district_admin'] as const)
@@ -38,7 +41,7 @@ export default async function RootLayout({
     : undefined;
 
   return (
-    <Document>
+    <Document style={tenantStyle}>
       <SessionProvider>
         <AppQueryProvider>
           {allowedKinds ? (
@@ -46,9 +49,7 @@ export default async function RootLayout({
               {children}
             </RoleShell>
           ) : (
-            <ThemeProvider value={brand}>
-              <SiteChrome orgBranding={org}>{children}</SiteChrome>
-            </ThemeProvider>
+            <SiteChrome orgBranding={org}>{children}</SiteChrome>
           )}
         </AppQueryProvider>
       </SessionProvider>

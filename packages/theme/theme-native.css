@@ -320,6 +320,29 @@
       --color-text-on-action: #FFFFFF;
       --color-surface-accent: #F0543F;
       --color-text-on-accent: #FFFFFF;
+      --color-tenant-primary: #43216B;
+      --color-tenant-primary-hover: #43216B;
+      --color-tenant-primary-foreground: #FFFFFF;
+      --color-tenant-header: #E9DDF5;
+      --color-tenant-header-foreground: #43216B;
+      --color-tenant-header-muted: #43216BB3;
+      --color-tenant-header-border: #43216B26;
+      --color-tenant-sidebar: #FFFDF7;
+      --color-tenant-sidebar-foreground: #0D0C0B;
+      --color-tenant-sidebar-muted: #55524A;
+      --color-tenant-sidebar-active: #F0543F;
+      --color-tenant-sidebar-active-foreground: #0D0C0B;
+      --color-tenant-sidebar-active-indicator: #F0543F;
+      --color-tenant-accent: #F0543F;
+      --color-tenant-accent-hover: #F0543F;
+      --color-tenant-accent-foreground: #0D0C0B;
+      --color-tenant-surface: #FFFDF7;
+      --color-tenant-surface-subtle: #F6F3E8;
+      --color-tenant-border: #0D0C0B;
+      --color-tenant-focus-ring: #F0543F;
+      --color-tenant-success: #28613A;
+      --color-tenant-warning: #FFB21D;
+      --color-tenant-danger: #A03333;
     }
     @variant dark {
       --color-surface: #161411;
@@ -378,6 +401,29 @@
       --color-text-on-action: #FFFFFF;
       --color-surface-accent: #F0543F;
       --color-text-on-accent: #FFFFFF;
+      --color-tenant-primary: #43216B;
+      --color-tenant-primary-hover: #43216B;
+      --color-tenant-primary-foreground: #FFFFFF;
+      --color-tenant-header: #E9DDF5;
+      --color-tenant-header-foreground: #43216B;
+      --color-tenant-header-muted: #43216BB3;
+      --color-tenant-header-border: #43216B26;
+      --color-tenant-sidebar: #FFFDF7;
+      --color-tenant-sidebar-foreground: #FFFDF7;
+      --color-tenant-sidebar-muted: #94917F;
+      --color-tenant-sidebar-active: #F0543F;
+      --color-tenant-sidebar-active-foreground: #0D0C0B;
+      --color-tenant-sidebar-active-indicator: #F0543F;
+      --color-tenant-accent: #F0543F;
+      --color-tenant-accent-hover: #F0543F;
+      --color-tenant-accent-foreground: #0D0C0B;
+      --color-tenant-surface: #161411;
+      --color-tenant-surface-subtle: #0F0E0C;
+      --color-tenant-border: #FFFDF7;
+      --color-tenant-focus-ring: #F0543F;
+      --color-tenant-success: #7DB98B;
+      --color-tenant-warning: #FFB21D;
+      --color-tenant-danger: #EB9C9C;
     }
   }
 }

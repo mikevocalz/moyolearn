@@ -135,7 +135,7 @@ const shell = tv({
       root's classes to inline styles and drops `dvh`; the shell then sized to
       its content and the sidebar scrolled with the page.
     */
-    root: 'dial-cool relative h-full flex-1 flex-row overflow-hidden bg-surface',
+    root: 'dial-cool relative h-full flex-1 flex-row overflow-hidden bg-tenant-surface',
     /*
       `border-border`, not `border-border-strong`. Inside `.dial-cool` that
       resolves to `border-soft` — ink at 80% — which is what doc 02 §5.3
@@ -181,7 +181,7 @@ const shell = tv({
       docked.
     */
     sidebar:
-      'absolute inset-y-0 left-0 z-50 w-pane-primary-narrow flex-col border-r-2 border-border bg-surface-raised ' +
+      'absolute inset-y-0 left-0 z-50 w-pane-primary-narrow flex-col border-r-2 border-tenant-border bg-tenant-sidebar ' +
       'md:relative md:z-auto',
     sidebarInner: 'flex-1 flex-col gap-group overflow-y-auto p-inset-tight',
     // whitespace-nowrap so the rail CLIPS the heading instead of wrapping it —
@@ -190,7 +190,7 @@ const shell = tv({
     // Hidden on the rail: two-word headings cannot survive a 112px column, and
     // the icons already do the grouping there.
     groupLabel:
-      'flex shrink-0 whitespace-nowrap px-inset-tight pb-element text-caption font-semibold uppercase tracking-wide text-text-muted',
+      'flex shrink-0 whitespace-nowrap px-inset-tight pb-element text-caption font-semibold uppercase tracking-wide text-tenant-sidebar-muted',
     /*
       Active = a filled rounded rect, no border. Six shipped sidebars were
       pulled for this (Revolut Business, TravelPerk, Slite, Linear, Kajabi,
@@ -208,16 +208,16 @@ const shell = tv({
       belongs to the thing needing a decision. Weight plus a neutral fill carry
       state here, which costs no colour at all.
     */
-    item: 'min-h-target-adult flex-row items-center justify-start gap-element rounded-control px-inset-tight py-0 transition-colors duration-fast hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 motion-reduce:transition-none',
-    itemActive: 'bg-surface-sunken',
-    itemLabel: 'w-auto shrink-0 whitespace-nowrap text-left text-label text-text-muted',
-    itemLabelActive: 'font-semibold text-text',
+    item: 'min-h-target-adult flex-row items-center justify-start gap-element rounded-control px-inset-tight py-0 text-tenant-sidebar-foreground transition-colors duration-fast hover:bg-tenant-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring motion-reduce:transition-none',
+    itemActive: 'bg-tenant-sidebar-active',
+    itemLabel: 'w-auto shrink-0 whitespace-nowrap text-left text-label text-tenant-sidebar-muted',
+    itemLabelActive: 'font-semibold text-tenant-sidebar-active-foreground',
     // rounded-control, not a pill — the kit has no circular chrome.
-    badge: 'ml-auto flex rounded-control border-2 border-border px-element font-mono text-caption text-text',
+    badge: 'ml-auto flex rounded-control border-2 border-tenant-border px-element font-mono text-caption text-tenant-sidebar-foreground',
     // Fixed height, matching the sidebar's brand row, so the two horizontal
     // rules across the top of the app are one line and not two.
     topBar:
-      'h-14 shrink-0 flex-row items-center gap-stack border-b-2 border-border bg-surface-raised px-inset',
+      'h-16 shrink-0 flex-row items-center gap-stack border-b-2 border-tenant-header-border bg-tenant-header px-inset text-tenant-header-foreground',
     content: 'min-w-0 flex-1 flex-col overflow-hidden',
     scroll: 'flex-1 overflow-y-auto',
     /*
@@ -346,7 +346,7 @@ export function DashboardShell({
                   aria-label={item.label}
                   className={s.item({ className: item.active ? s.itemActive() : '' })}
                 >
-                  <View className={`shrink-0 ${item.active ? 'text-text' : 'text-text-muted'}`}>
+                  <View className={`shrink-0 ${item.active ? 'text-tenant-sidebar-active-foreground' : 'text-tenant-sidebar-muted'}`}>
                     {item.icon}
                   </View>
                     {/*
@@ -439,9 +439,9 @@ export function DashboardShell({
             aria-label="Open menu"
             aria-expanded={menuOpen}
             onPress={onToggleMenu}
-            className="min-h-target-adult min-w-target-adult items-center justify-center rounded-control border-2 border-border hover:bg-surface-sunken focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 md:hidden"
+            className="min-h-target-adult min-w-target-adult items-center justify-center rounded-control border-2 border-tenant-header-border hover:bg-tenant-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring md:hidden"
           >
-            <Menu aria-hidden className="h-4 w-4 text-text" />
+            <Menu aria-hidden className="h-4 w-4 text-tenant-header-foreground" />
           </Pressable>
           {topBarStart}
           {/* `ml-auto` rather than `justify-between`: with only one child, a

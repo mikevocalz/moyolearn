@@ -311,6 +311,29 @@
   --color-text-on-action: light-dark(#FFFFFF, #FFFFFF);
   --color-surface-accent: light-dark(#F0543F, #F0543F);
   --color-text-on-accent: light-dark(#FFFFFF, #FFFFFF);
+  --color-tenant-primary: light-dark(#43216B, #43216B);
+  --color-tenant-primary-hover: light-dark(#43216B, #43216B);
+  --color-tenant-primary-foreground: light-dark(#FFFFFF, #FFFFFF);
+  --color-tenant-header: light-dark(#E9DDF5, #E9DDF5);
+  --color-tenant-header-foreground: light-dark(#43216B, #43216B);
+  --color-tenant-header-muted: light-dark(#43216BB3, #43216BB3);
+  --color-tenant-header-border: light-dark(#43216B26, #43216B26);
+  --color-tenant-sidebar: light-dark(#FFFDF7, #FFFDF7);
+  --color-tenant-sidebar-foreground: light-dark(#0D0C0B, #FFFDF7);
+  --color-tenant-sidebar-muted: light-dark(#55524A, #94917F);
+  --color-tenant-sidebar-active: light-dark(#F0543F, #F0543F);
+  --color-tenant-sidebar-active-foreground: light-dark(#0D0C0B, #0D0C0B);
+  --color-tenant-sidebar-active-indicator: light-dark(#F0543F, #F0543F);
+  --color-tenant-accent: light-dark(#F0543F, #F0543F);
+  --color-tenant-accent-hover: light-dark(#F0543F, #F0543F);
+  --color-tenant-accent-foreground: light-dark(#0D0C0B, #0D0C0B);
+  --color-tenant-surface: light-dark(#FFFDF7, #161411);
+  --color-tenant-surface-subtle: light-dark(#F6F3E8, #0F0E0C);
+  --color-tenant-border: light-dark(#0D0C0B, #FFFDF7);
+  --color-tenant-focus-ring: light-dark(#F0543F, #F0543F);
+  --color-tenant-success: light-dark(#28613A, #7DB98B);
+  --color-tenant-warning: light-dark(#FFB21D, #FFB21D);
+  --color-tenant-danger: light-dark(#A03333, #EB9C9C);
 
   /* --- marketing site layer (moyolearn.com) --- */
   --font-moyo-display: 'Clash Display', 'Clash Display Fallback', 'Arial Black', sans-serif;

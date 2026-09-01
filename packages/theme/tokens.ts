@@ -238,6 +238,33 @@ export const semantic = {
   'text-on-action': { light: palette.white, dark: palette.white },
   'surface-accent': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
   'text-on-accent': { light: palette.white, dark: palette.white },
+
+  // ---- tenant shell tokens ----------------------------------------------------
+  // Defaults mirror Moyo brand values. The web `TenantScope` overrides these per
+  // active tenant; declaring them in @theme makes `bg-tenant-*` utilities real.
+  'tenant-primary': { light: palette['moyo-purple'], dark: palette['moyo-purple'] },
+  'tenant-primary-hover': { light: palette['moyo-purple'], dark: palette['moyo-purple'] },
+  'tenant-primary-foreground': { light: palette.white, dark: palette.white },
+  'tenant-header': { light: palette['moyo-lavender'], dark: palette['moyo-lavender'] },
+  'tenant-header-foreground': { light: palette['moyo-purple'], dark: palette['moyo-purple'] },
+  'tenant-header-muted': { light: `${palette['moyo-purple']}B3`, dark: `${palette['moyo-purple']}B3` },
+  'tenant-header-border': { light: `${palette['moyo-purple']}26`, dark: `${palette['moyo-purple']}26` },
+  'tenant-sidebar': { light: palette.ink[50], dark: palette.ink[50] },
+  'tenant-sidebar-foreground': { light: palette.ink[950], dark: palette.ink[50] },
+  'tenant-sidebar-muted': { light: palette.ink[600], dark: palette.ink[400] },
+  'tenant-sidebar-active': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
+  'tenant-sidebar-active-foreground': { light: palette.ink[950], dark: palette.ink[950] },
+  'tenant-sidebar-active-indicator': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
+  'tenant-accent': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
+  'tenant-accent-hover': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
+  'tenant-accent-foreground': { light: palette.ink[950], dark: palette.ink[950] },
+  'tenant-surface': { light: palette.ink[50], dark: '#161411' },
+  'tenant-surface-subtle': { light: palette.ink[100], dark: '#0F0E0C' },
+  'tenant-border': { light: palette.ink[950], dark: palette.ink[50] },
+  'tenant-focus-ring': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
+  'tenant-success': { light: palette.forest[600], dark: palette.forest[300] },
+  'tenant-warning': { light: palette['moyo-mango'], dark: palette['moyo-mango'] },
+  'tenant-danger': { light: palette.rose[600], dark: palette.rose[300] },
 } as const;
 
 /**

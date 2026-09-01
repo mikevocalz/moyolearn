@@ -64,7 +64,7 @@ export function ScopeSwitcher() {
   if (scopes.length === 1) {
     return (
       <View className="h-10 flex-row items-center px-2">
-        <Text className="text-base font-semibold text-text">
+        <Text className="text-base font-semibold text-tenant-header-foreground">
           {activeScope?.orgName ?? scopes[0]!.orgName}
         </Text>
       </View>
@@ -91,11 +91,11 @@ export function ScopeSwitcher() {
         });
       }}
     >
-      <View className="h-10 flex-row cursor-pointer items-center gap-1 rounded-md px-2 hover:bg-surface-sunken">
-        <Text className="text-base font-semibold text-text">
+      <View className="h-10 flex-row cursor-pointer items-center gap-1 rounded-md px-2 hover:bg-tenant-surface-subtle">
+        <Text className="text-base font-semibold text-tenant-header-foreground">
           {activeScope?.orgName ?? 'Select organization'}
         </Text>
-        <ChevronDown className="h-4 w-4 text-text-muted" />
+        <ChevronDown className="h-4 w-4 text-tenant-header-muted" />
       </View>
     </Menu>
   );

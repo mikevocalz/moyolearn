@@ -373,9 +373,9 @@ export {
 } from './features/shell';
 export {
   resolveTenantTheme,
-  type ResolvedBrandTheme,
-  type MoyoSurface,
-  type MoyoBrand,
-} from './core/tenant-brand';
+  tenantCssVariables,
+  type ResolvedTenantTheme,
+  type TenantBrand,
+} from './core/tenant-theme';
 export { ThemeProvider, useResolvedBrand, type ThemeProviderProps } from './providers/theme';
 export { type OrgBranding } from './features/org';
