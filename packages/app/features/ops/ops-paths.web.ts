@@ -12,8 +12,11 @@ export const leadsRootPath = () => '/leads';
 /** `/leads/[leadId]` — the record detail (route-based per contract back_behavior). */
 export const leadDetailPath = (leadId: string) => `/leads/${encodeURIComponent(leadId)}`;
 
-/** `/families` — the interim server-derived family grouping. */
+/** `/families` — the household list (ADR-109's real rows). */
 export const familiesRootPath = () => '/families';
+
+/** `/families/[familyId]` — the household record (route-based, the lead-detail idiom). */
+export const familyDetailPath = (familyId: string) => `/families/${encodeURIComponent(familyId)}`;
 
 /** `/enrollment` — the completion queue over the same pipeline machinery. */
 export const enrollmentRootPath = () => '/enrollment';

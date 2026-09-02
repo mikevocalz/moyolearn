@@ -6,6 +6,7 @@ export { OpsDashboardContent, type OpsDashboardContentProps } from './ops-dashbo
 export { LeadsScreen } from './leads-content';
 export { LeadDetailScreen } from './lead-detail-content';
 export { FamiliesScreen } from './families-content';
+export { FamilyDetailScreen } from './family-detail-content';
 export { EnrollmentScreen } from './enrollment-content';
 export { useOpsTablePrefs } from './ops.prefs.store';
 export {
@@ -41,6 +42,7 @@ export {
   leadsRootPath,
   leadDetailPath,
   familiesRootPath,
+  familyDetailPath,
   enrollmentRootPath,
 } from './ops-paths';
 export {

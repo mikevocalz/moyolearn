@@ -14,4 +14,6 @@ export const leadDetailPath = (_leadId: string) => '/overview';
 
 export const familiesRootPath = () => '/overview';
 
+export const familyDetailPath = (_familyId: string) => '/overview';
+
 export const enrollmentRootPath = () => '/overview';
