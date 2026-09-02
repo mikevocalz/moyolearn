@@ -1,23 +1,31 @@
 // /api/teacher/assignments/[assignmentId] — GET one assignment; PATCH moves
-// its lifecycle: publish (sets publishedAt + status together, never
+// its lifecycle — publish (sets publishedAt + status together, never
 // half-published), close, or extend (new due date; a closed assignment
-// reopens).
+// reopens) — or, action 'edit', patches a DRAFT's fields (title, subject,
+// dueAt, workItems, classId; the service refuses non-drafts).
 //
 // 404 for not-found and not-yours alike — the contract's "deep link to
 // another teacher's assignment resolves to not-found (silent drop, doc 36
 // §4.4)".
 // SOT: design/screens/teacher/teacher.assign/contract.md · packages/app/features/assignments/assignments.service.ts
-// SOT-KEYWORDS: teacher assignment api route detail publish close extend lifecycle patch
+// SOT-KEYWORDS: teacher assignment api route detail publish close extend edit fields lifecycle patch
 import { NextRequest, NextResponse } from 'next/server';
 import {
   CapabilityDenied,
   MembershipDenied,
   closeAssignment,
+  editAssignmentDraft,
   extendAssignment,
   publishAssignment,
   teacherAssignmentDetail,
 } from '@acme/app/server';
-import { loadTeacherAssignment, updateAssignment } from '@/lib/assignments.repository';
+import { asEditFields } from '@/lib/assignments.body';
+import {
+  loadTeacherAssignment,
+  updateAssignment,
+  updateAssignmentFields,
+} from '@/lib/assignments.repository';
+import { loadTeacherClass } from '@/lib/classes.repository';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
 
@@ -64,7 +72,11 @@ export async function PATCH(
   } catch {
     return NextResponse.json({ error: 'Invalid body' }, { status: 400 });
   }
-  const { action, dueAt } = (body ?? {}) as { action?: unknown; dueAt?: unknown };
+  const { action, dueAt, fields } = (body ?? {}) as {
+    action?: unknown;
+    dueAt?: unknown;
+    fields?: unknown;
+  };
 
   const ports = { loadTeacherAssignment, updateAssignment };
   try {
@@ -78,6 +90,18 @@ export async function PATCH(
         return NextResponse.json({ error: 'An extension needs a due date' }, { status: 400 });
       }
       assignment = await extendAssignment(ports, auth, request.headers, assignmentId, dueAt);
+    } else if (action === 'edit') {
+      const input = asEditFields(fields);
+      if (input === null) {
+        return NextResponse.json({ error: 'Invalid assignment fields' }, { status: 400 });
+      }
+      assignment = await editAssignmentDraft(
+        { loadTeacherAssignment, loadTeacherClass, updateAssignmentFields },
+        auth,
+        request.headers,
+        assignmentId,
+        input,
+      );
     } else {
       return NextResponse.json({ error: 'Unknown action' }, { status: 400 });
     }

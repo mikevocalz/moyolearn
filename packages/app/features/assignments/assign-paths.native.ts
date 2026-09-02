@@ -18,3 +18,10 @@ export const newAssignmentPath = (classId?: string) =>
 
 export const assignmentDetailPath = (assignmentId: string) =>
   `/assign/${encodeURIComponent(assignmentId)}`;
+
+/**
+ * Edit a DRAFT's fields — the create form in edit mode; the target rides as a
+ * query param on the form route (the web fork states the idiom).
+ */
+export const editAssignmentPath = (assignmentId: string) =>
+  `/assign/new?assignmentId=${encodeURIComponent(assignmentId)}`;

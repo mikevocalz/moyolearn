@@ -48,3 +48,18 @@ export interface CreateAssignmentInput {
   dueAt: string;
   workItems: AssignmentWorkItem[];
 }
+
+/**
+ * A field patch for a DRAFT the teacher already owns. Every member is
+ * optional — only what changed travels — and the same floors as create apply
+ * to whatever is present (non-empty title, valid dueAt, ≥1 work item). Status
+ * and publishedAt are deliberately absent: lifecycle moves stay their own
+ * actions, and editing a published row is refused at the service.
+ */
+export interface EditAssignmentInput {
+  classId?: string;
+  title?: string;
+  subject?: string | null;
+  dueAt?: string;
+  workItems?: AssignmentWorkItem[];
+}

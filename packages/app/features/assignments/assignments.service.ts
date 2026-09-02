@@ -1,6 +1,6 @@
 import 'server-only';
-// Assignments service — create, publish, close, extend; scoped to the
-// authoring teacher.
+// Assignments service — create, edit (drafts only), publish, close, extend;
+// scoped to the authoring teacher.
 //
 // Same walls as classes.service.ts: `requiresMembership` makes it a staff
 // surface, `ctx.learnerId` is the ownership key, and identity is never a
@@ -13,7 +13,7 @@ import 'server-only';
 // so "never half-published" holds at the row level; a failed publish leaves a
 // draft (contract's publish_failed path) because nothing was written at all.
 // SOT: design/screens/teacher/teacher.assign/contract.md · packages/payload/src/collections/Assignments.ts
-// SOT-KEYWORDS: assignments service teacher publish close extend draft own scope not-found
+// SOT-KEYWORDS: assignments service teacher publish close extend edit draft own scope not-found
 
 import { MEMBERSHIP_ROLES } from '@acme/auth/membership';
 import type { Auth } from '@acme/auth/server';
@@ -23,6 +23,7 @@ import type {
   Assignment,
   AssignmentStatus,
   CreateAssignmentInput,
+  EditAssignmentInput,
 } from './assignments.types.ts';
 
 /** Repository ports — the caller provides the Payload adapters. */
@@ -42,6 +43,16 @@ export type UpdateAssignment = (
   assignmentId: string,
   patch: { status?: AssignmentStatus; publishedAt?: string; dueAt?: string },
 ) => Promise<Assignment>;
+/**
+ * Applies a FIELD patch to a proven-owned row. A separate port from
+ * `UpdateAssignment` on purpose: the lifecycle patch's narrowness is what
+ * keeps publish/close/extend unable to rewrite content, and widening it would
+ * quietly hand every lifecycle caller that power.
+ */
+export type UpdateAssignmentFields = (
+  assignmentId: string,
+  patch: EditAssignmentInput,
+) => Promise<Assignment>;
 
 export interface CreateAssignmentPorts {
   loadTeacherClass: LoadTeacherClass;
@@ -51,6 +62,12 @@ export interface CreateAssignmentPorts {
 export interface AssignmentLifecyclePorts {
   loadTeacherAssignment: LoadTeacherAssignment;
   updateAssignment: UpdateAssignment;
+}
+
+export interface EditAssignmentPorts {
+  loadTeacherAssignment: LoadTeacherAssignment;
+  loadTeacherClass: LoadTeacherClass;
+  updateAssignmentFields: UpdateAssignmentFields;
 }
 
 // Same floors as classes.service.ts: reads are never hostage to a lapsed
@@ -141,6 +158,71 @@ export async function createAssignmentDraft(
     {
       ...WRITE_GATE,
       telemetry: { op: 'teacher.assignments.create', resource: 'assignments', action: 'write' },
+    },
+  );
+}
+
+/**
+ * Edits a DRAFT's fields. Drafts only: published work is already on students'
+ * plans, and rewriting it under them would make "what the teacher assigned"
+ * and "what the student sees" two different things — a published row's only
+ * movable fact is its due date, which `extendAssignment` already owns. The
+ * patch applies the same floors as create to whatever it carries, and a new
+ * `classId` is re-resolved against the teacher's OWN classes exactly as
+ * create resolves it (foreign class → null → 404 before anything is written).
+ */
+export async function editAssignmentDraft(
+  ports: EditAssignmentPorts,
+  authInstance: Auth,
+  headers: Headers,
+  assignmentId: string,
+  input: EditAssignmentInput,
+): Promise<Assignment | null> {
+  return protectedOperation(
+    authInstance,
+    headers,
+    async (ctx) => {
+      const owned = await ports.loadTeacherAssignment(assignmentId, ctx.learnerId, ctx.orgId ?? '');
+      if (owned === null) return null;
+      if (owned.status !== 'draft') {
+        throw new Error(
+          'Only a draft can be edited — this assignment is already visible to students',
+        );
+      }
+
+      const patch: EditAssignmentInput = {};
+      if (input.classId !== undefined) {
+        const target = await ports.loadTeacherClass(input.classId, ctx.learnerId, ctx.orgId ?? '');
+        if (target === null) return null;
+        patch.classId = target.id;
+      }
+      if (input.title !== undefined) {
+        const title = input.title.trim();
+        if (title.length === 0) throw new Error('An assignment needs a title');
+        patch.title = title;
+      }
+      if (input.dueAt !== undefined) {
+        if (Number.isNaN(Date.parse(input.dueAt))) throw new Error('An assignment needs a due date');
+        patch.dueAt = input.dueAt;
+      }
+      if (input.subject !== undefined) patch.subject = input.subject;
+      if (input.workItems !== undefined) {
+        // The same blank-page floor as create: an edit may not leave a draft empty.
+        if (input.workItems.length === 0)
+          throw new Error('An assignment needs at least one work item');
+        patch.workItems = input.workItems.map((item) => ({
+          templateId: item.templateId ?? null,
+          title: item.title,
+          description: item.description,
+          minutes: item.minutes,
+        }));
+      }
+
+      return ports.updateAssignmentFields(owned.id, patch);
+    },
+    {
+      ...WRITE_GATE,
+      telemetry: { op: 'teacher.assignments.edit', resource: 'assignments', action: 'write' },
     },
   );
 }

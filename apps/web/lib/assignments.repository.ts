@@ -21,6 +21,7 @@ import type {
   LoadTeacherAssignment,
   LoadTeacherAssignments,
   UpdateAssignment,
+  UpdateAssignmentFields,
 } from '@acme/app/server';
 
 type PayloadRow = Pick<
@@ -185,6 +186,39 @@ export const updateAssignment: UpdateAssignment = async (assignmentId, patch) =>
       ...(patch.status !== undefined ? { status: patch.status } : {}),
       ...(patch.publishedAt !== undefined ? { publishedAt: patch.publishedAt } : {}),
       ...(patch.dueAt !== undefined ? { dueAt: patch.dueAt } : {}),
+    },
+    depth: 0,
+    overrideAccess: true,
+  });
+  return toAssignment(updated as PayloadRow);
+};
+
+/*
+  The field-patch sibling of `updateAssignment` — a separate port so the
+  lifecycle patch stays as narrow as the services that rely on it. Same
+  posture: the id arrives already proven owned (the service resolved it via
+  `loadTeacherAssignment`, and a supplied classId via `loadTeacherClass`).
+*/
+export const updateAssignmentFields: UpdateAssignmentFields = async (assignmentId, patch) => {
+  const payload = await getPayload({ config });
+  const updated = await payload.update({
+    collection: 'assignments',
+    id: Number(assignmentId),
+    data: {
+      ...(patch.classId !== undefined ? { classId: patch.classId } : {}),
+      ...(patch.title !== undefined ? { title: patch.title } : {}),
+      ...(patch.subject !== undefined ? { subject: patch.subject } : {}),
+      ...(patch.dueAt !== undefined ? { dueAt: patch.dueAt } : {}),
+      ...(patch.workItems !== undefined
+        ? {
+            workItems: patch.workItems.map((item) => ({
+              templateId: item.templateId ?? null,
+              title: item.title,
+              description: item.description,
+              minutes: item.minutes,
+            })),
+          }
+        : {}),
     },
     depth: 0,
     overrideAccess: true,

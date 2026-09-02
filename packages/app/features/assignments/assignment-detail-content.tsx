@@ -1,8 +1,10 @@
 'use client';
 // AssignmentDetailScreen — one assignment: status, class, due date, work
-// items, and the lifecycle actions its status allows (publish a draft, close
-// a published one, extend any — extending a closed one reopens it, which is
-// what "extend" means to a teacher who closed a day early). A null read is the
+// items, and the lifecycle actions its status allows (edit or publish a
+// draft, close a published one, extend any — extending a closed one reopens
+// it, which is what "extend" means to a teacher who closed a day early).
+// Edit is drafts-only: published fields are what students already see, and
+// the service refuses to rewrite them. A null read is the
 // service's silent-drop wall, worded exactly like the class detail's: a
 // foreign assignment and a missing one must be indistinguishable (contract
 // permission path, doc 36 §4.4). Completion-per-student is teacher.classes'
@@ -19,7 +21,7 @@
 //   status object with its action row beneath the summary, items as rows).
 //   Structure only.
 // SOT: design/screens/teacher/teacher.assign/contract.md · packages/app/features/classes/class-detail-content.tsx
-// SOT-KEYWORDS: assignment detail screen teacher status publish close extend due work items lifecycle
+// SOT-KEYWORDS: assignment detail screen teacher status edit publish close extend due work items lifecycle
 import { useRouter } from 'solito/navigation';
 import {
   Badge,
@@ -39,7 +41,7 @@ import { ListChecks } from '@acme/ui/icons';
 import { View } from '@acme/ui/primitives';
 import { useTeacherClasses } from '../classes/use-classes.ts';
 import { STATUS_BADGE, dueLabel } from './assign-copy.ts';
-import { assignRootPath } from './assign-paths';
+import { assignRootPath, editAssignmentPath } from './assign-paths';
 import type { Assignment } from './assignments.types.ts';
 import { useAssignment, useAssignmentAction } from './use-assignments.ts';
 
@@ -159,6 +161,14 @@ export function AssignmentDetailScreen({ assignmentId }: { assignmentId: string 
                   'publish',
                   `Assigned to ${className}; it will appear on students' plans`,
                 );
+              }}
+            />
+            <Button
+              title="Edit draft"
+              variant="outline"
+              disabled={lifecycle.isPending}
+              onPress={() => {
+                router.push(editAssignmentPath(assignment.id));
               }}
             />
           </>

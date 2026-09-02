@@ -1,16 +1,21 @@
 'use client';
-// AssignmentFormScreen — teacher.assign's create form: class, title, subject,
-// due date, work items → save as draft or publish. The Add-a-class card's twin
-// (classes-content.tsx): TanStack Form owns field state (repo rule, never
-// React state), the mutations own success/failure, and failure surfaces as a
-// sibling Banner while onSubmit swallows the throw. Every change mirrors into
-// assign.store, so backing out KEEPS the draft (contract back_behavior:
-// "drafts are kept, never silently discarded") and a reopened form resumes it.
-// Work items seed from FD-23's ASSIGNMENT_TEMPLATES — the same "hand over
-// finished work, not a blank composer" reasoning as onboarding's last step —
-// plus a write-your-own composer. Publish is create-then-publish: a failed
-// publish leaves the created row a DRAFT on the tracking list (contract
-// publish_failed, "never half-published") and retries publish that same row.
+// AssignmentFormScreen — teacher.assign's create AND edit form: class, title,
+// subject, due date, work items → save as draft or publish. With an
+// `assignmentId` (editAssignmentPath) the same surface edits an existing
+// DRAFT: a gate loads the row, seeds the store's session-only edit slice, and
+// saves go through useEditAssignment — published rows hit a wall here and at
+// the service alike. The Add-a-class card's twin (classes-content.tsx):
+// TanStack Form owns field state (repo rule, never React state), the
+// mutations own success/failure, and failure surfaces as a sibling Banner
+// while onSubmit swallows the throw. Every change mirrors into assign.store's
+// ACTIVE draft, so backing out of create KEEPS the draft (contract
+// back_behavior: "drafts are kept, never silently discarded") and a reopened
+// form resumes it. Work items seed from FD-23's ASSIGNMENT_TEMPLATES — the
+// same "hand over finished work, not a blank composer" reasoning as
+// onboarding's last step — plus a write-your-own composer. Publish is
+// create-then-publish: a failed publish leaves the created row a DRAFT on the
+// tracking list (contract publish_failed, "never half-published") and the
+// retry pushes the form's current fields onto that row before republishing.
 //
 // Mobbin: https://mobbin.com/screens/bca4b5b6-00a3-45dc-8347-e09c3f424734 (Grab —
 //   Save draft beside the primary publish action at the form's foot, suggested
@@ -21,7 +26,7 @@
 //   Collective — a draft-keeping create flow: leaving saves, nothing is lost).
 //   Structure only.
 // SOT: design/screens/teacher/teacher.assign/contract.md · packages/app/features/classes/classes-content.tsx
-// SOT-KEYWORDS: assignment form screen teacher create draft publish work items templates due class picker
+// SOT-KEYWORDS: assignment form screen teacher create edit draft publish work items templates due class picker
 import { useEffect } from 'react';
 import { useRouter } from 'solito/navigation';
 import {
@@ -37,21 +42,145 @@ import {
   useAppForm,
   useFormStore,
 } from '@acme/ui';
-import { GraduationCap } from '@acme/ui/icons';
+import { GraduationCap, ListChecks } from '@acme/ui/icons';
 import { View } from '@acme/ui/primitives';
 import { classesRootPath } from '../classes/classes-paths';
 import { useTeacherClasses } from '../classes/use-classes.ts';
 import { bandLabel } from '../classes/classes-content.tsx';
 import { ASSIGNMENT_TEMPLATES } from '../onboarding/teacher/steps.ts';
-import { assignRootPath } from './assign-paths';
-import { useAssignStore } from './assign.store.ts';
-import type { AssignmentWorkItem } from './assignments.types.ts';
-import { useAssignmentAction, useCreateAssignment } from './use-assignments.ts';
+import { assignRootPath, assignmentDetailPath } from './assign-paths';
+import { useAssignStore, type AssignDraft } from './assign.store.ts';
+import type { Assignment, AssignmentWorkItem } from './assignments.types.ts';
+import {
+  useAssignment,
+  useAssignmentAction,
+  useCreateAssignment,
+  useEditAssignment,
+} from './use-assignments.ts';
 
-export function AssignmentFormScreen({ classId }: { classId?: string }) {
+/** Maps a loaded server draft to the store's draft shape for the edit session. */
+function draftFromAssignment(assignment: Assignment): AssignDraft {
+  return {
+    classId: assignment.classId,
+    title: assignment.title,
+    subject: assignment.subject ?? '',
+    // Payload may hand dueAt back as a full ISO timestamp; the field expects
+    // the YYYY-MM-DD the teacher typed, and the first ten chars are exactly that.
+    dueAt: assignment.dueAt.slice(0, 10),
+    workItems: assignment.workItems,
+  };
+}
+
+export function AssignmentFormScreen({
+  classId,
+  assignmentId,
+}: {
+  classId?: string;
+  assignmentId?: string;
+}) {
+  // Two modes, one surface: with `assignmentId` (editAssignmentPath) the form
+  // edits an existing DRAFT behind a load-and-seed gate; without it the
+  // create path is exactly what it always was.
+  if (assignmentId !== undefined) return <EditAssignmentGate assignmentId={assignmentId} />;
+  return <AssignmentFormBody classId={classId} editing={null} />;
+}
+
+/**
+ * Edit mode's wall and seeder. Loads the row, refuses what cannot be edited
+ * (the service refuses too — this just says it in words before a stale deep
+ * link reaches a form that cannot save), and seeds the store's session-only
+ * edit slice so the mode-blind composer mutators write to it.
+ */
+function EditAssignmentGate({ assignmentId }: { assignmentId: string }) {
+  const router = useRouter();
+  const { assignment, loading } = useAssignment(assignmentId);
+  const beginEdit = useAssignStore((s) => s.beginEdit);
+  const seeded = useAssignStore((s) => s.editingAssignmentId === assignmentId);
+
+  useEffect(() => {
+    /*
+      Seed ONCE per row: a refocus refetch hands back a fresh `assignment`
+      object, and re-seeding from it would clobber composer changes the
+      teacher has not saved yet — so the guard is the store's session id,
+      not this effect's dep list.
+    */
+    if (assignment === null || assignment.status !== 'draft') return;
+    if (useAssignStore.getState().editingAssignmentId !== assignment.id) {
+      beginEdit(assignment.id, draftFromAssignment(assignment));
+    }
+  }, [assignment, beginEdit]);
+
+  // The session closes with the screen — the persisted create draft becomes
+  // the active one again, untouched by anything that happened here.
+  useEffect(
+    () => () => {
+      useAssignStore.getState().endEdit();
+    },
+    [],
+  );
+
+  if (loading || (assignment !== null && assignment.status === 'draft' && !seeded)) {
+    return (
+      <View className="mx-auto w-full max-w-2xl gap-section px-inset py-section">
+        <LoadingSkeleton count={3} />
+      </View>
+    );
+  }
+
+  if (assignment === null) {
+    /*
+      The service's silent-drop wall, worded like the detail screen's: a
+      foreign draft and a missing one must be indistinguishable (contract
+      permission path, doc 36 §4.4).
+    */
+    return (
+      <View className="mx-auto w-full max-w-2xl px-inset py-section">
+        <EmptyState
+          icon={<ListChecks size={28} className="text-text-muted" />}
+          title="Assignment not available"
+          description="It may have been removed, or the link may be out of date."
+        />
+      </View>
+    );
+  }
+
+  if (assignment.status !== 'draft') {
+    return (
+      <View className="mx-auto w-full max-w-2xl px-inset py-section">
+        <EmptyState
+          icon={<ListChecks size={28} className="text-text-muted" />}
+          title="Only drafts can be edited"
+          description="This assignment has been published — students may already be working from it. You can extend its due date or close it from its page."
+          action={
+            <Button
+              title="Back to the assignment"
+              variant="primary"
+              onPress={() => {
+                router.replace(assignmentDetailPath(assignmentId));
+              }}
+            />
+          }
+        />
+      </View>
+    );
+  }
+
+  return <AssignmentFormBody editing={assignment} />;
+}
+
+function AssignmentFormBody({
+  classId,
+  editing,
+}: {
+  classId?: string;
+  /** The server draft being edited, or null in create mode. */
+  editing: Assignment | null;
+}) {
   const router = useRouter();
   const { classes, loading: classesLoading } = useTeacherClasses();
-  const draft = useAssignStore((s) => s.draft);
+  // The ACTIVE draft — the edit slice while a session is open (this body only
+  // mounts inside the gate then), the persisted create draft otherwise.
+  const draft = useAssignStore((s) => (s.editingAssignmentId !== null ? s.editDraft : s.draft));
   const patch = useAssignStore((s) => s.patch);
   const toggleTemplateItem = useAssignStore((s) => s.toggleTemplateItem);
   const addWorkItem = useAssignStore((s) => s.addWorkItem);
@@ -60,6 +189,7 @@ export function AssignmentFormScreen({ classId }: { classId?: string }) {
   const setSubmitIntent = useAssignStore((s) => s.setSubmitIntent);
   const submitIntent = useAssignStore((s) => s.submitIntent);
   const createAssignment = useCreateAssignment();
+  const editAssignment = useEditAssignment();
   const lifecycle = useAssignmentAction();
 
   /*
@@ -95,29 +225,55 @@ export function AssignmentFormScreen({ classId }: { classId?: string }) {
       },
     },
     onSubmit: async ({ value, meta }) => {
-      // Work items live in the store, not the form — read fresh at submit.
-      const { draft: current, savedAssignmentId } = useAssignStore.getState();
+      // Work items live in the store, not the form — read fresh at submit,
+      // from whichever draft is active.
+      const state = useAssignStore.getState();
+      const current = state.editingAssignmentId !== null ? state.editDraft : state.draft;
       if (value.classId === null || current.workItems.length === 0) return;
       const target = classes.find((klass) => klass.id === value.classId);
       setSubmitIntent(meta.intent);
       try {
+        const fields = {
+          classId: value.classId,
+          title: value.title.trim(),
+          subject: value.subject.trim() === '' ? null : value.subject.trim(),
+          dueAt: value.dueAt.trim(),
+          workItems: current.workItems,
+        };
+
+        if (editing !== null) {
+          // Edit mode: the row already exists — patch it, then publish if
+          // that was the button. The create draft is NOT cleared: it belongs
+          // to a different, unfinished assignment.
+          await editAssignment.mutateAsync({ assignmentId: editing.id, ...fields });
+          if (meta.intent === 'publish') {
+            await lifecycle.mutateAsync({ assignmentId: editing.id, action: 'publish' });
+            // The contract's propagation-naming confirmation, verbatim.
+            notify.success(
+              `Assigned to ${target?.name ?? 'the class'}; it will appear on students' plans`,
+            );
+            router.replace(assignRootPath());
+          } else {
+            notify.success('Changes saved');
+            router.replace(assignmentDetailPath(editing.id));
+          }
+          return;
+        }
+
         /*
           A row already created by an earlier publish attempt is reused, never
-          duplicated — there is no field-edit API, so the retry publishes that
-          draft exactly as it was saved (contract publish_failed: retry, still
-          never half-published).
+          duplicated — and now that fields ARE editable (editAssignmentDraft),
+          the retry first writes the form as it currently reads onto that
+          saved row, so a fix made after the failure ships with the republish
+          (contract publish_failed: retry, still never half-published).
         */
-        let assignmentId = savedAssignmentId;
+        let assignmentId = state.savedAssignmentId;
         if (assignmentId === null) {
-          const created = await createAssignment.mutateAsync({
-            classId: value.classId,
-            title: value.title.trim(),
-            subject: value.subject.trim() === '' ? null : value.subject.trim(),
-            dueAt: value.dueAt.trim(),
-            workItems: current.workItems,
-          });
+          const created = await createAssignment.mutateAsync(fields);
           assignmentId = created.id;
           useAssignStore.getState().setSavedAssignmentId(assignmentId);
+        } else {
+          await editAssignment.mutateAsync({ assignmentId, ...fields });
         }
         if (meta.intent === 'publish') {
           await lifecycle.mutateAsync({ assignmentId, action: 'publish' });
@@ -181,21 +337,29 @@ export function AssignmentFormScreen({ classId }: { classId?: string }) {
     <View className="mx-auto w-full max-w-2xl gap-section px-inset py-section">
       <View className="gap-element">
         <Heading level={1} size="display-sm" className="text-text">
-          New assignment
+          {editing !== null ? 'Edit assignment' : 'New assignment'}
         </Heading>
         <Text variant="body" tone="muted">
-          It stays a draft — and stays on this device — until you publish it.
+          {editing !== null
+            ? 'Still a draft — nothing reaches students until you publish it.'
+            : 'It stays a draft — and stays on this device — until you publish it.'}
         </Text>
       </View>
 
-      {/* Contract failure paths: a failed save saved nothing; a failed publish
-          left a DRAFT (create succeeded) — each says which, and retry is the
-          same button. */}
+      {/* Contract failure paths: a failed save saved nothing; a failed edit
+          changed nothing; a failed publish left a DRAFT (the row exists) —
+          each says which, and retry is the same button. */}
       {lifecycle.isError ? (
         <Banner
           tone="warning"
           title="Couldn't publish"
           description="It's saved as a draft — nothing reached students. Check your connection and press Publish again."
+        />
+      ) : editAssignment.isError ? (
+        <Banner
+          tone="warning"
+          title="Couldn't save changes"
+          description="The assignment is unchanged. Check your connection and try again."
         />
       ) : createAssignment.isError ? (
         <Banner
@@ -362,7 +526,7 @@ export function AssignmentFormScreen({ classId }: { classId?: string }) {
           }}
         />
         <Button
-          title="Save draft"
+          title={editing !== null ? 'Save changes' : 'Save draft'}
           variant="outline"
           disabled={!ready || isSubmitting}
           loading={isSubmitting && submitIntent === 'draft'}

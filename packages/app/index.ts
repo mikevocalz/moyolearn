@@ -126,6 +126,7 @@ export {
   useAssignment,
   useAssignmentAction,
   useCreateAssignment,
+  useEditAssignment,
   useTeacherAssignments,
 } from './features/assignments/use-assignments';
 export type {
@@ -133,6 +134,7 @@ export type {
   AssignmentStatus,
   AssignmentWorkItem,
   CreateAssignmentInput,
+  EditAssignmentInput,
 } from './features/assignments/assignments.types';
 // The learner's read of the same domain — the J1 arrival signal. The shape is
 // type-only from the server file (erased at build; the use-reports precedent),

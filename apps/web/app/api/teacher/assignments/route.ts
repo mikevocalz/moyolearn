@@ -15,6 +15,7 @@ import {
   teacherAssignments,
   type AssignmentWorkItem,
 } from '@acme/app/server';
+import { asWorkItem } from '@/lib/assignments.body';
 import { createAssignment, loadTeacherAssignments } from '@/lib/assignments.repository';
 import { loadTeacherClass } from '@/lib/classes.repository';
 import { auth } from '@/lib/auth';
@@ -27,23 +28,6 @@ export const dynamic = 'force-dynamic';
 function routeStatus(error: unknown, message: string): number {
   if (error instanceof CapabilityDenied || error instanceof MembershipDenied) return error.status;
   return message === 'Unauthenticated' ? 401 : 500;
-}
-
-/** Narrows one posted work item, or null when it is not one. */
-function asWorkItem(raw: unknown): AssignmentWorkItem | null {
-  if (typeof raw !== 'object' || raw === null) return null;
-  const item = raw as { templateId?: unknown; title?: unknown; description?: unknown; minutes?: unknown };
-  if (typeof item.title !== 'string' || item.title.trim().length === 0) return null;
-  if (typeof item.description !== 'string') return null;
-  if (typeof item.minutes !== 'number' || !Number.isFinite(item.minutes) || item.minutes <= 0) {
-    return null;
-  }
-  return {
-    templateId: typeof item.templateId === 'string' ? item.templateId : null,
-    title: item.title.trim(),
-    description: item.description,
-    minutes: item.minutes,
-  };
 }
 
 export async function GET(request: NextRequest) {

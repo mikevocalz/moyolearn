@@ -44,6 +44,16 @@ export type AssignStatusFilter = AssignmentStatus | 'all';
 interface AssignState {
   draft: AssignDraft;
   /**
+   * The working copy of a SERVER draft being edited, seeded from the row the
+   * edit form loaded. Session-only, like the in-flight facts: the server row
+   * is its truth, so a reload just re-seeds — and it must never displace the
+   * persisted `draft`, or opening Edit would silently discard a half-composed
+   * NEW assignment (contract back_behavior).
+   */
+  editDraft: AssignDraft;
+  /** Which server row `editDraft` mirrors — null when no edit session is open. */
+  editingAssignmentId: string | null;
+  /**
    * Server id of this draft once `POST` has accepted it — the publish-retry
    * key. A failed publish leaves that row a draft (contract publish_failed);
    * retrying publishes IT instead of creating a twin. Session-only.
@@ -59,6 +69,10 @@ interface AssignState {
   removeWorkItem: (index: number) => void;
   /** Template cards toggle: present (by templateId) → removed; absent → added. */
   toggleTemplateItem: (item: AssignmentWorkItem & { templateId: string }) => void;
+  /** Opens an edit session: `editDraft` becomes the ACTIVE draft the composer mutators write to. */
+  beginEdit: (assignmentId: string, seed: AssignDraft) => void;
+  /** Closes the edit session (the edit form's unmount) — the create draft is active again. */
+  endEdit: () => void;
   setSavedAssignmentId: (savedAssignmentId: string | null) => void;
   setSubmitIntent: (submitIntent: 'draft' | 'publish' | null) => void;
   setStatusFilter: (statusFilter: AssignStatusFilter) => void;
@@ -69,34 +83,54 @@ interface AssignState {
 
 export const useAssignStore = create<AssignState>()(
   persist(
-    (set) => ({
-      draft: EMPTY_ASSIGN_DRAFT,
-      savedAssignmentId: null,
-      submitIntent: null,
-      statusFilter: 'all',
-      classFilter: null,
-      patch: (patch) => set((s) => ({ draft: { ...s.draft, ...patch } })),
-      addWorkItem: (item) =>
-        set((s) => ({ draft: { ...s.draft, workItems: [...s.draft.workItems, item] } })),
-      removeWorkItem: (index) =>
-        set((s) => ({
-          draft: { ...s.draft, workItems: s.draft.workItems.filter((_, i) => i !== index) },
-        })),
-      toggleTemplateItem: (item) =>
-        set((s) => ({
-          draft: {
-            ...s.draft,
-            workItems: s.draft.workItems.some((w) => w.templateId === item.templateId)
-              ? s.draft.workItems.filter((w) => w.templateId !== item.templateId)
-              : [...s.draft.workItems, item],
-          },
-        })),
-      setSavedAssignmentId: (savedAssignmentId) => set({ savedAssignmentId }),
-      setSubmitIntent: (submitIntent) => set({ submitIntent }),
-      setStatusFilter: (statusFilter) => set({ statusFilter }),
-      setClassFilter: (classFilter) => set({ classFilter }),
-      clearDraft: () => set({ draft: EMPTY_ASSIGN_DRAFT, savedAssignmentId: null }),
-    }),
+    (set) => {
+      /*
+        The composer mutators write to whichever draft is ACTIVE — the edit
+        working copy while an edit session is open, the persisted create
+        draft otherwise — so the form's field mirror and work-item composer
+        are mode-blind. The edit form brackets its session with
+        beginEdit/endEdit (mount/unmount), which is what makes this routing
+        safe: no create form accepts input while a session is open.
+      */
+      const setActive = (mutate: (draft: AssignDraft) => AssignDraft) =>
+        set((s) =>
+          s.editingAssignmentId !== null
+            ? { editDraft: mutate(s.editDraft) }
+            : { draft: mutate(s.draft) },
+        );
+      return {
+        draft: EMPTY_ASSIGN_DRAFT,
+        editDraft: EMPTY_ASSIGN_DRAFT,
+        editingAssignmentId: null,
+        savedAssignmentId: null,
+        submitIntent: null,
+        statusFilter: 'all',
+        classFilter: null,
+        patch: (patch) => setActive((draft) => ({ ...draft, ...patch })),
+        addWorkItem: (item) =>
+          setActive((draft) => ({ ...draft, workItems: [...draft.workItems, item] })),
+        removeWorkItem: (index) =>
+          setActive((draft) => ({
+            ...draft,
+            workItems: draft.workItems.filter((_, i) => i !== index),
+          })),
+        toggleTemplateItem: (item) =>
+          setActive((draft) => ({
+            ...draft,
+            workItems: draft.workItems.some((w) => w.templateId === item.templateId)
+              ? draft.workItems.filter((w) => w.templateId !== item.templateId)
+              : [...draft.workItems, item],
+          })),
+        beginEdit: (assignmentId, seed) =>
+          set({ editingAssignmentId: assignmentId, editDraft: seed }),
+        endEdit: () => set({ editingAssignmentId: null, editDraft: EMPTY_ASSIGN_DRAFT }),
+        setSavedAssignmentId: (savedAssignmentId) => set({ savedAssignmentId }),
+        setSubmitIntent: (submitIntent) => set({ submitIntent }),
+        setStatusFilter: (statusFilter) => set({ statusFilter }),
+        setClassFilter: (classFilter) => set({ classFilter }),
+        clearDraft: () => set({ draft: EMPTY_ASSIGN_DRAFT, savedAssignmentId: null }),
+      };
+    },
     {
       name: 'assign-draft',
       storage: createJSONStorage(() => assignStateStorage),

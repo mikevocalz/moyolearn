@@ -1,14 +1,19 @@
 'use client';
 // useTeacherAssignments / useAssignment / useCreateAssignment /
-// useAssignmentAction — the client models for teacher.assign's tracking list
-// and lifecycle, on the use-reports.ts pattern: exported key factories,
+// useEditAssignment / useAssignmentAction — the client models for
+// teacher.assign's tracking list, draft field edits, and lifecycle, on the
+// use-reports.ts pattern: exported key factories,
 // exact-key invalidation, server data in Query only. The DRAFT a teacher is
 // composing is not here — that is assign.store's job (Zustand + MMKV, per the
 // contract); these hooks own only what the server has accepted.
 // SOT: design/screens/teacher/teacher.assign/contract.md · packages/app/features/summary/use-reports.ts
-// SOT-KEYWORDS: assignments hooks client query teacher tracking list detail create publish close extend keys
+// SOT-KEYWORDS: assignments hooks client query teacher tracking list detail create edit publish close extend keys
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { Assignment, CreateAssignmentInput } from './assignments.types.ts';
+import type {
+  Assignment,
+  CreateAssignmentInput,
+  EditAssignmentInput,
+} from './assignments.types.ts';
 
 const API_URL =
   process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
@@ -75,6 +80,38 @@ export function useCreateAssignment() {
       return ((await res.json()) as { assignment: Assignment }).assignment;
     },
     onSuccess: () => {
+      void client.invalidateQueries({ queryKey: teacherAssignmentsQueryKey() });
+    },
+  });
+}
+
+/**
+ * The field-edit mutation: patches a DRAFT's fields (PATCH action 'edit').
+ * A sibling of `useAssignmentAction`, not a fourth case of it — a field patch
+ * carries a `fields` object where the lifecycle actions carry at most a
+ * dueAt, and the server refuses it for non-drafts.
+ */
+export function useEditAssignment() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (
+      input: { assignmentId: string } & EditAssignmentInput,
+    ): Promise<Assignment> => {
+      const { assignmentId, ...fields } = input;
+      const res = await fetch(
+        `${API_URL}/api/teacher/assignments/${encodeURIComponent(assignmentId)}`,
+        {
+          method: 'PATCH',
+          credentials: 'include',
+          headers: { 'content-type': 'application/json' },
+          body: JSON.stringify({ action: 'edit', fields }),
+        },
+      );
+      if (!res.ok) throw new Error(`HTTP ${String(res.status)}`);
+      return ((await res.json()) as { assignment: Assignment }).assignment;
+    },
+    onSuccess: (_updated, { assignmentId }) => {
+      void client.invalidateQueries({ queryKey: assignmentQueryKey(assignmentId) });
       void client.invalidateQueries({ queryKey: teacherAssignmentsQueryKey() });
     },
   });

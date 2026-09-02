@@ -1,8 +1,10 @@
-// /teachers/assign/new — the create-assignment form. A thin param unwrapper:
-// `classId` rides as an optional query param (class detail's "Assign work to
-// this class" pre-fills the picker with it); the screen owns everything else.
+// /teachers/assign/new — the create/edit assignment form. A thin param
+// unwrapper: `classId` rides as an optional query param (class detail's
+// "Assign work to this class" pre-fills the picker with it), and
+// `assignmentId` puts the same form in edit mode for an existing draft
+// (editAssignmentPath); the screen owns everything else.
 // SOT: design/screens/teacher/teacher.assign/contract.md
-// SOT-KEYWORDS: assignment new page route teacher create form draft classId
+// SOT-KEYWORDS: assignment new page route teacher create edit form draft classId assignmentId
 import type { Metadata } from 'next';
 import { AssignmentFormScreen } from '@acme/app';
 
@@ -14,8 +16,8 @@ export const metadata: Metadata = {
 export default async function NewAssignmentPage({
   searchParams,
 }: {
-  searchParams: Promise<{ classId?: string }>;
+  searchParams: Promise<{ classId?: string; assignmentId?: string }>;
 }) {
-  const { classId } = await searchParams;
-  return <AssignmentFormScreen classId={classId} />;
+  const { classId, assignmentId } = await searchParams;
+  return <AssignmentFormScreen classId={classId} assignmentId={assignmentId} />;
 }

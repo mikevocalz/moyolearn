@@ -22,3 +22,12 @@ export const newAssignmentPath = (classId?: string) =>
 /** `/teachers/assign/[assignmentId]` — one assignment's status and lifecycle. */
 export const assignmentDetailPath = (assignmentId: string) =>
   `/teachers/assign/${encodeURIComponent(assignmentId)}`;
+
+/**
+ * Edit a DRAFT's fields — the create form in edit mode. The same route as
+ * `newAssignmentPath` with the target riding as a query param (the house
+ * idiom for form context: classId above, studentDetailPath's classId), not a
+ * second form route.
+ */
+export const editAssignmentPath = (assignmentId: string) =>
+  `/teachers/assign/new?assignmentId=${encodeURIComponent(assignmentId)}`;

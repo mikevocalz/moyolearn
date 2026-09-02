@@ -88,6 +88,7 @@ export type {
 export {
   closeAssignment,
   createAssignmentDraft,
+  editAssignmentDraft,
   extendAssignment,
   publishAssignment,
   teacherAssignmentDetail,
@@ -95,15 +96,18 @@ export {
   type AssignmentLifecyclePorts,
   type CreateAssignment,
   type CreateAssignmentPorts,
+  type EditAssignmentPorts,
   type LoadTeacherAssignment,
   type LoadTeacherAssignments,
   type UpdateAssignment,
+  type UpdateAssignmentFields,
 } from './features/assignments/assignments.service';
 export type {
   Assignment,
   AssignmentStatus,
   AssignmentWorkItem,
   CreateAssignmentInput,
+  EditAssignmentInput,
 } from './features/assignments/assignments.types';
 /*
   The arrival side of the same domain (J1): what a LEARNER sees of published
