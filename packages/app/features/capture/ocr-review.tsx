@@ -22,11 +22,11 @@
 // SOT: docs/pack/24-homework-capture-spec.md §5 · ./ocr-review.native.tsx
 // SOT-KEYWORDS: ocr review web tesseract wasm on-device capture age band
 import { useEffect, useState } from 'react';
-import { Text } from '@acme/ui';
+import { Button, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { DigitizedTextReview } from './digitized-text-review';
 import { readHomework, type OcrResult } from './ocr-web';
-import type { AgeBand } from './age-band';
+import { buttonSizeForBand, type AgeBand } from './age-band';
 
 export interface OcrReviewProps {
   ageBand?: AgeBand;
@@ -35,7 +35,7 @@ export interface OcrReviewProps {
   onCancel: () => void;
 }
 
-type Phase = 'loading' | 'ready' | 'error';
+type Phase = 'loading' | 'ready' | 'error' | 'manual';
 
 export function OcrReview({ ageBand = 'teen', source, onConfirm, onCancel }: OcrReviewProps) {
   const [phase, setPhase] = useState<Phase>('loading');
@@ -75,10 +75,26 @@ export function OcrReview({ ageBand = 'teen', source, onConfirm, onCancel }: Ocr
       ageBand === 'young'
         ? "I couldn't read the words. You can type them instead."
         : 'Could not read the text. You can type it instead.';
+    // The copy always promised typing; now the door exists. 'manual' reuses
+    // the same editable review the happy path lands in, with an empty box.
     return (
       <View className="flex-1 items-center justify-center gap-stack p-inset">
         <Text className="font-sans text-body text-text text-center">{copy}</Text>
+        <Button
+          title={ageBand === 'young' ? 'Type the words' : 'Type it instead'}
+          variant="highlighter"
+          size={buttonSizeForBand(ageBand)}
+          fullWidth
+          onPress={() => setPhase('manual')}
+          aria-label="Type the problem yourself"
+        />
       </View>
+    );
+  }
+
+  if (phase === 'manual') {
+    return (
+      <DigitizedTextReview ageBand={ageBand} initialText="" onConfirm={onConfirm} onCancel={onCancel} />
     );
   }
 

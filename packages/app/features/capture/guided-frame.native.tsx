@@ -19,6 +19,9 @@ import type { CapturePhoto } from './types';
 export interface GuidedFrameProps {
   ageBand?: AgeBand;
   onCapture: (photo: CapturePhoto) => void;
+  /** Web-fallback exits; the live viewfinder has the shared cancel chrome. */
+  onPickPhoto?: () => void;
+  onBack?: () => void;
 }
 
 const HINTS: RealtimeHintKey[] = ['closer', 'steady', 'one', 'light', 'glare'];

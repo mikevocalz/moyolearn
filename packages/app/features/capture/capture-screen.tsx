@@ -1,11 +1,12 @@
 'use client';
-// CaptureScreen — the six-stage homework-capture journey.
+// CaptureScreen — the six-stage homework-capture journey plus its terminal
+// success surface.
 //
 // The media layer underneath (queue, TUS, presign, retry, EXIF stripping)
 // is unchanged. Only the learner-facing surface and the step vocabulary
 // move to the "one confident journey" build prompt.
 //
-// Stages:
+// Stages (1–6) and the terminal surface (7):
 //   1. Choose how to share work
 //   2. Capture (camera, photo library, file, type, voice)
 //   3. Review pages (reorder, remove, crop, add another, confirm count)
@@ -49,6 +50,7 @@ import { useCaptureStore } from './capture.store';
 import { buttonSizeForBand, captureLabelsForBand, type AgeBand } from './age-band';
 import { stripExif } from './privacy-process';
 import { transcribe } from './transcribe';
+import { uploadPhaseKey, type UploadPhaseKey } from './upload-phase';
 import { CaptureContext, CaptureMode, CapturePage, CaptureStep } from './types';
 
 function newId(): string {
@@ -148,12 +150,21 @@ function VoiceReadVerify({
 
   useEffect(() => {
     let cancelled = false;
-    void transcribe(recording.uri).then((t) => {
-      if (!cancelled) {
-        setText(t);
-        setPhase('ready');
-      }
-    });
+    void transcribe(recording.uri)
+      .then((t) => {
+        if (!cancelled) {
+          setText(t);
+          setPhase('ready');
+        }
+      })
+      .catch(() => {
+        /*
+          A rejected transcription lands in the editable review, never a
+          spinner that never ends. The child said the words; an empty box they
+          can type into beats "Getting your words ready..." forever.
+        */
+        if (!cancelled) setPhase('ready');
+      });
     return () => { cancelled = true; };
   }, [recording.uri]);
 
@@ -161,7 +172,7 @@ function VoiceReadVerify({
     return (
       <View className="flex-1 items-center justify-center p-inset">
         <Text className="font-sans text-body text-text text-center">
-          {ageBand === 'young' ? 'Getting your words ready...' : 'Getting your words ready...'}
+          Getting your words ready...
         </Text>
       </View>
     );
@@ -184,32 +195,43 @@ function AddContext({
   onSkip: () => void;
 }) {
   const size = buttonSizeForBand(ageBand);
+  /*
+    Doc 31 band law: no due-work pressure on the young bands. A free-text
+    "Due date" in front of a K-2/3-5 learner is schedule anxiety they can
+    neither read nor own, so young/child get a single subject field and
+    nothing else. Skip stays on every band — context is always optional.
+  */
+  const youngBand = ageBand === 'young' || ageBand === 'child';
   return (
     <ScrollView className="flex-1" contentContainerClassName="p-inset gap-stack">
       <Text className="font-sans text-title font-bold text-text">
-        {ageBand === 'young' ? 'Add a little info' : 'Add context (optional)'}
+        {youngBand ? 'Add a little info' : 'Add context (optional)'}
       </Text>
       <TextField
-        label="Subject / class"
+        label={youngBand ? 'What subject?' : 'Subject / class'}
         value={context.subject}
         onChangeText={(subject) => onChange({ ...context, subject })}
       />
-      <TextField
-        label="Assignment"
-        value={context.assignment}
-        onChangeText={(assignment) => onChange({ ...context, assignment })}
-      />
-      <TextField
-        label="Due date"
-        value={context.dueDate}
-        onChangeText={(dueDate) => onChange({ ...context, dueDate })}
-      />
-      <Textarea
-        label="Where are you stuck?"
-        value={context.stuck}
-        onChangeText={(stuck) => onChange({ ...context, stuck })}
-        containerClassName="min-h-32"
-      />
+      {youngBand ? null : (
+        <>
+          <TextField
+            label="Assignment"
+            value={context.assignment}
+            onChangeText={(assignment) => onChange({ ...context, assignment })}
+          />
+          <TextField
+            label="Due date"
+            value={context.dueDate}
+            onChangeText={(dueDate) => onChange({ ...context, dueDate })}
+          />
+          <Textarea
+            label="Where are you stuck?"
+            value={context.stuck}
+            onChangeText={(stuck) => onChange({ ...context, stuck })}
+            containerClassName="min-h-32"
+          />
+        </>
+      )}
       <Button title="Continue" variant="highlighter" size={size} fullWidth onPress={onContinue} />
       <Button title="Skip" variant="outline" size={size} fullWidth onPress={onSkip} />
     </ScrollView>
@@ -235,9 +257,7 @@ function SuccessView({
   const title =
     context.assignment.trim() || context.subject.trim()
       ? [context.subject.trim(), context.assignment.trim()].filter(Boolean).join(' — ')
-      : ageBand === 'young'
-        ? 'Your work is ready'
-        : 'Your work is ready';
+      : 'Your work is ready';
 
   return (
     <ScrollView className="flex-1" contentContainerClassName="p-inset gap-stack">
@@ -268,7 +288,7 @@ function SuccessView({
       ) : null}
       <Button title="Start with Natalie" variant="highlighter" size={size} fullWidth onPress={onStart} />
       <Button
-        title={ageBand === 'young' ? 'Start over' : 'Start over'}
+        title="Start over"
         variant="outline"
         size={size}
         fullWidth
@@ -291,26 +311,36 @@ function UploadProcessView({
 }) {
   const online = useOnline();
   const rows = useTransferTray((s) => s.rows.filter((r) => ids.includes(r.id)));
-  const done = rows.filter((r) => r.status === 'done').length;
-  const failed = rows.filter((r) => r.status === 'failed').length;
-  const active = rows.filter((r) => r.status !== 'done' && r.status !== 'failed');
+  const retry = useTransferTray((s) => s.retry);
+  const young = ageBand === 'young' || ageBand === 'child';
 
-  const phase: { key: 'preparing' | 'uploading' | 'processing' | 'ready'; label: string } = useMemo(() => {
-    if (failed > 0 && !online) return { key: 'preparing', label: 'Waiting for connection' };
-    if (done === ids.length && ids.length > 0) return { key: 'ready', label: 'Ready' };
-    if (rows.some((r) => r.status === 'processing')) return { key: 'processing', label: 'Processing' };
-    if (rows.some((r) => r.status === 'uploading')) return { key: 'uploading', label: 'Uploading' };
-    return { key: 'preparing', label: 'Preparing' };
-  }, [rows, ids.length, done, failed, online]);
+  const phaseKey = useMemo(
+    () => uploadPhaseKey(rows.map((r) => r.status), ids.length, online),
+    [rows, ids.length, online],
+  );
+
+  const phaseLabels: Record<UploadPhaseKey, string> = {
+    preparing: 'Preparing',
+    uploading: 'Uploading',
+    processing: 'Processing',
+    ready: 'Ready',
+    waiting: 'Waiting for connection',
+    error: young ? 'Some pages need another try' : 'Some files didn’t send',
+  };
+
+  const body =
+    phaseKey === 'error'
+      ? young
+        ? 'That’s okay. Tap Try again.'
+        : 'No harm done — retry the files below whenever you’re ready.'
+      : young
+        ? 'We are sending your work. You can leave this screen and come back later.'
+        : 'Your work is uploading. You can leave this screen or continue in the background.';
 
   return (
     <View className="flex-1 p-inset gap-stack">
-      <Text className="font-sans text-title font-bold text-text">{phase.label}</Text>
-      <Text className="font-sans text-body text-text">
-        {ageBand === 'young'
-          ? 'We are sending your work. You can leave this screen and come back later.'
-          : 'Your work is uploading. You can leave this screen or continue in the background.'}
-      </Text>
+      <Text className="font-sans text-title font-bold text-text">{phaseLabels[phaseKey]}</Text>
+      <Text className="font-sans text-body text-text">{body}</Text>
       <ScrollView className="flex-1" contentContainerClassName="gap-element">
         {rows.map((r) => (
           <View
@@ -333,6 +363,16 @@ function UploadProcessView({
                       ? 'Processing'
                       : 'Preparing'}
             </Text>
+            {r.status === 'failed' && online ? (
+              /* Per-file retry, never a batch restart (doc 30 §4). */
+              <Button
+                title="Try again"
+                size="sm"
+                variant="outline"
+                onPress={() => retry(r.id)}
+                aria-label={`Try sending ${r.name} again`}
+              />
+            ) : null}
           </View>
         ))}
       </ScrollView>
@@ -469,7 +509,10 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
   };
 
   const startWithNatalie = () => {
-    const fullProblem = [context.assignment, context.stuck, verifiedText]
+    // The subject AddContext just collected travels with the problem —
+    // downstream attribution needs it (contract note: the confirm exit must
+    // carry subject context to learner.tutor).
+    const fullProblem = [context.subject, context.assignment, context.stuck, verifiedText]
       .filter(Boolean)
       .join('\n\n');
     setProblem(fullProblem.trim() || verifiedText);
@@ -520,7 +563,10 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
     void drainNow();
   }, [step, pages, recording, uploadIds]);
 
-  // Advance to success once every enqueued item is ready.
+  // Advance to success once every enqueued item is ready. The effect resolves
+  // on done||failed: a batch with failures SETTLES on the upload step, where
+  // the error phase offers a per-file retry — success only ever means every
+  // page actually sent.
   useEffect(() => {
     if (step !== 'upload-process' || uploadIds === null) return;
     if (uploadIds.length === 0) {
@@ -528,49 +574,55 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
       return;
     }
     const ours = transferRows.filter((r) => uploadIds.includes(r.id));
-    if (ours.length > 0 && ours.every((r) => r.status === 'done')) {
+    const settled =
+      ours.length > 0 && ours.every((r) => r.status === 'done' || r.status === 'failed');
+    if (settled && ours.every((r) => r.status === 'done')) {
       queueMicrotask(() => setStep('success'));
     }
   }, [step, uploadIds, transferRows]);
 
-  if (step === 'choose') {
-    return (
-      <SafeArea className="flex-1" edges={['top']}>
-        <ScrollView className="flex-1" contentContainerClassName="p-inset gap-stack">
-          <Container className="gap-stack">
-            {isExample ? (
-              <Text variant="caption" tone="muted" className="rounded-control bg-surface-raised p-2 text-center">
-                Example — practice worksheet
-              </Text>
-            ) : null}
-            <Text className="font-sans text-title font-bold text-text">{labels.prompt}</Text>
-            <CaptureEntryRow ageBand={ageBand} onSelect={(m) => void chooseMode(m)} />
-          </Container>
-        </ScrollView>
-      </SafeArea>
-    );
-  }
+  // Contract cancel exit: back to the learner's home surface (learner.home).
+  // '/' is the role dispatcher on both apps — the same door the error screen
+  // uses — so it lands on the learner shell without hardcoding a tab path.
+  const exitToHome = () => router.push('/');
 
-  if (step === 'capture') {
-    if (mode === 'camera') {
+  const stepBody = () => {
+    if (step === 'choose') {
       return (
-        <SafeArea className="flex-1" edges={['top']}>
+        <ScrollView className="flex-1" contentContainerClassName="p-inset gap-stack">
+          {isExample ? (
+            <Text variant="caption" tone="muted" className="rounded-control bg-surface-raised p-2 text-center">
+              Example — practice worksheet
+            </Text>
+          ) : null}
+          <Text className="font-sans text-title font-bold text-text">{labels.prompt}</Text>
+          <CaptureEntryRow ageBand={ageBand} onSelect={(m) => void chooseMode(m)} />
+        </ScrollView>
+      );
+    }
+
+    if (step === 'capture') {
+      if (mode === 'camera') {
+        return (
           <View className="flex-1">
             <GuidedFrame
               ageBand={ageBand}
               onCapture={async (photo) => {
                 await handleCameraCapture(photo);
               }}
+              onPickPhoto={() => void chooseMode('photo-library')}
+              onBack={() => {
+                setMode(null);
+                setStep('choose');
+              }}
             />
             <CaptureTip ageBand={ageBand} />
           </View>
-        </SafeArea>
-      );
-    }
+        );
+      }
 
-    if (mode === 'type') {
-      return (
-        <SafeArea className="flex-1" edges={['top']}>
+      if (mode === 'type') {
+        return (
           <TypeCapture
             ageBand={ageBand}
             onDone={(text) => {
@@ -578,13 +630,11 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
               setStep('read-verify');
             }}
           />
-        </SafeArea>
-      );
-    }
+        );
+      }
 
-    if (mode === 'voice') {
-      return (
-        <SafeArea className="flex-1" edges={['top']}>
+      if (mode === 'voice') {
+        return (
           <VoiceCapture
             ageBand={ageBand}
             onDone={(r) => {
@@ -593,18 +643,16 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
             }}
             onCancel={reset}
           />
-        </SafeArea>
-      );
+        );
+      }
+
+      return null;
     }
 
-    return null;
-  }
-
-  if (step === 'review-pages' && editingId !== null) {
-    const page = pages.find((p) => p.id === editingId);
-    if (page) {
-      return (
-        <SafeArea className="flex-1" edges={['top']}>
+    if (step === 'review-pages' && editingId !== null) {
+      const page = pages.find((p) => p.id === editingId);
+      if (page) {
+        return (
           <CropPreview
             ageBand={ageBand}
             source={page.uri}
@@ -614,104 +662,98 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
             }}
             onCancel={() => setEditingId(null)}
           />
-        </SafeArea>
+        );
+      }
+    }
+
+    if (step === 'review-pages') {
+      return (
+        <ScrollView className="flex-1" contentContainerClassName="p-inset gap-stack">
+          <Text className="font-sans text-title font-bold text-text">Review your pages</Text>
+          <Text className="font-sans text-body text-text">
+            {pages.length} {pages.length === 1 ? 'page' : 'pages'} ready
+          </Text>
+          <View className="gap-element">
+            {pages.map((page, index) => (
+              <View
+                key={page.id}
+                className="flex-row items-center gap-element rounded-card border-2 border-border bg-surface-raised p-2"
+              >
+                {page.kind === 'photo' || page.kind === 'image' ? (
+                  <Image alt="Page" src={page.uri} className="h-24 w-20 rounded-card" />
+                ) : (
+                  <View className="h-24 w-20 items-center justify-center rounded-card bg-surface-sunken">
+                    <Text variant="caption" tone="muted" className="text-center">
+                      {page.uri.split('/').pop() ?? 'File'}
+                    </Text>
+                  </View>
+                )}
+                <View className="flex-1 gap-1">
+                  <Text className="font-sans text-body text-text">
+                    Page {index + 1}
+                  </Text>
+                  <View className="flex-row gap-1">
+                    <IconButton
+                      icon={<ChevronUp size={18} />}
+                      aria-label={`Move page ${index + 1} up`}
+                      size="sm"
+                      variant="outline"
+                      onPress={() => movePage(page.id, -1)}
+                      disabled={index === 0}
+                    />
+                    <IconButton
+                      icon={<ChevronDown size={18} />}
+                      aria-label={`Move page ${index + 1} down`}
+                      size="sm"
+                      variant="outline"
+                      onPress={() => movePage(page.id, 1)}
+                      disabled={index === pages.length - 1}
+                    />
+                    {page.kind !== 'file' ? (
+                      <Button
+                        title="Crop"
+                        aria-label={`Crop page ${index + 1}`}
+                        size="sm"
+                        variant="outline"
+                        onPress={() => setEditingId(page.id)}
+                      />
+                    ) : null}
+                  </View>
+                </View>
+                <IconButton
+                  icon={<X size={18} />}
+                  aria-label={`Remove page ${index + 1}`}
+                  size="sm"
+                  variant="outline"
+                  onPress={() => removePage(page.id)}
+                />
+              </View>
+            ))}
+          </View>
+          <Button
+            title="Add another page"
+            variant="outline"
+            size={size}
+            fullWidth
+            onPress={addAnother}
+          />
+          <Button
+            title="Looks good — next step"
+            variant="highlighter"
+            size={size}
+            fullWidth
+            onPress={beginReadVerify}
+            disabled={pages.length === 0}
+          />
+          <Button title="Start over" variant="ghost" size={size} fullWidth onPress={reset} />
+        </ScrollView>
       );
     }
-  }
 
-  if (step === 'review-pages') {
-    return (
-      <SafeArea className="flex-1" edges={['top']}>
-        <ScrollView className="flex-1" contentContainerClassName="p-inset gap-stack">
-          <Container className="gap-stack">
-            <Text className="font-sans text-title font-bold text-text">Review your pages</Text>
-            <Text className="font-sans text-body text-text">
-              {pages.length} {pages.length === 1 ? 'page' : 'pages'} ready
-            </Text>
-            <View className="gap-element">
-              {pages.map((page, index) => (
-                <View
-                  key={page.id}
-                  className="flex-row items-center gap-element rounded-card border-2 border-border bg-surface-raised p-2"
-                >
-                  {page.kind === 'photo' || page.kind === 'image' ? (
-                    <Image alt="Page" src={page.uri} className="h-24 w-20 rounded-card" />
-                  ) : (
-                    <View className="h-24 w-20 items-center justify-center rounded-card bg-surface-sunken">
-                      <Text variant="caption" tone="muted" className="text-center">
-                        {page.uri.split('/').pop() ?? 'File'}
-                      </Text>
-                    </View>
-                  )}
-                  <View className="flex-1 gap-1">
-                    <Text className="font-sans text-body text-text">
-                      Page {index + 1}
-                    </Text>
-                    <View className="flex-row gap-1">
-                      <IconButton
-                        icon={<ChevronUp size={18} />}
-                        aria-label={`Move page ${index + 1} up`}
-                        size="sm"
-                        variant="outline"
-                        onPress={() => movePage(page.id, -1)}
-                        disabled={index === 0}
-                      />
-                      <IconButton
-                        icon={<ChevronDown size={18} />}
-                        aria-label={`Move page ${index + 1} down`}
-                        size="sm"
-                        variant="outline"
-                        onPress={() => movePage(page.id, 1)}
-                        disabled={index === pages.length - 1}
-                      />
-                      {page.kind !== 'file' ? (
-                        <Button
-                          title="Crop"
-                          aria-label={`Crop page ${index + 1}`}
-                          size="sm"
-                          variant="outline"
-                          onPress={() => setEditingId(page.id)}
-                        />
-                      ) : null}
-                    </View>
-                  </View>
-                  <IconButton
-                    icon={<X size={18} />}
-                    aria-label={`Remove page ${index + 1}`}
-                    size="sm"
-                    variant="outline"
-                    onPress={() => removePage(page.id)}
-                  />
-                </View>
-              ))}
-            </View>
-            <Button
-              title="Add another page"
-              variant="outline"
-              size={size}
-              fullWidth
-              onPress={addAnother}
-            />
-            <Button
-              title="Looks good — next step"
-              variant="highlighter"
-              size={size}
-              fullWidth
-              onPress={beginReadVerify}
-              disabled={pages.length === 0}
-            />
-            <Button title="Start over" variant="ghost" size={size} fullWidth onPress={reset} />
-          </Container>
-        </ScrollView>
-      </SafeArea>
-    );
-  }
-
-  if (step === 'read-verify') {
-    const firstPage = pages[0];
-    if (firstPage && (firstPage.kind === 'photo' || firstPage.kind === 'image')) {
-      return (
-        <SafeArea className="flex-1" edges={['top']}>
+    if (step === 'read-verify') {
+      const firstPage = pages[0];
+      if (firstPage && (firstPage.kind === 'photo' || firstPage.kind === 'image')) {
+        return (
           <OcrReview
             ageBand={ageBand}
             source={firstPage.uri}
@@ -721,13 +763,11 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
             }}
             onCancel={() => setStep('review-pages')}
           />
-        </SafeArea>
-      );
-    }
+        );
+      }
 
-    if (mode === 'type') {
-      return (
-        <SafeArea className="flex-1" edges={['top']}>
+      if (mode === 'type') {
+        return (
           <DigitizedTextReview
             ageBand={ageBand}
             initialText={typed}
@@ -737,13 +777,11 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
             }}
             onCancel={() => setStep('capture')}
           />
-        </SafeArea>
-      );
-    }
+        );
+      }
 
-    if (mode === 'voice' && recording) {
-      return (
-        <SafeArea className="flex-1" edges={['top']}>
+      if (mode === 'voice' && recording) {
+        return (
           <VoiceReadVerify
             ageBand={ageBand}
             recording={recording}
@@ -753,16 +791,14 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
             }}
             onCancel={() => setStep('capture')}
           />
-        </SafeArea>
-      );
+        );
+      }
+
+      return null;
     }
 
-    return null;
-  }
-
-  if (step === 'add-context') {
-    return (
-      <SafeArea className="flex-1" edges={['top']}>
+    if (step === 'add-context') {
+      return (
         <AddContext
           ageBand={ageBand}
           context={context}
@@ -770,20 +806,14 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
           onContinue={beginUpload}
           onSkip={beginUpload}
         />
-      </SafeArea>
-    );
-  }
+      );
+    }
 
-  if (step === 'upload-process') {
+    if (step === 'upload-process') {
+      return <UploadProcessView ids={uploadIds ?? []} ageBand={ageBand} />;
+    }
+
     return (
-      <SafeArea className="flex-1" edges={['top']}>
-        <UploadProcessView ids={uploadIds ?? []} ageBand={ageBand} />
-      </SafeArea>
-    );
-  }
-
-  return (
-    <SafeArea className="flex-1" edges={['top']}>
       <SuccessView
         ageBand={ageBand}
         pages={pages}
@@ -792,6 +822,51 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
         onStart={startWithNatalie}
         onReset={reset}
       />
+    );
+  };
+
+  /*
+    Choose and success keep their surrounding chrome (tab bar / their own clear
+    actions); every step in between is chrome-minimal, so it carries the
+    contract's cancel exit itself — words for the young bands, a small X for
+    the older ones.
+  */
+  const showCancel = step !== 'choose' && step !== 'success';
+
+  /*
+    ONE width cap for the whole journey (P0): every step used to pick its own
+    wrapper, so desktop jumped between a centered column (choose/review) and
+    full-bleed forms (type/voice/context/upload/success). The single Container
+    at the step switch ends that. px-0 because each step owns its p-inset
+    gutter — on phones max-w-content-form exceeds the viewport, so mobile
+    renders exactly as before.
+  */
+  return (
+    <SafeArea className="flex-1" edges={['top']}>
+      <Container width="form" className="flex-1 px-0">
+        {showCancel ? (
+          <View className="flex-row justify-end px-inset pt-2">
+            {ageBand === 'young' || ageBand === 'child' ? (
+              <Button
+                title="I'm done"
+                variant="ghost"
+                size={size}
+                onPress={exitToHome}
+                aria-label="Stop and go back home"
+              />
+            ) : (
+              <IconButton
+                icon={<X size={20} />}
+                aria-label="Close and go back home"
+                variant="ghost"
+                size="md"
+                onPress={exitToHome}
+              />
+            )}
+          </View>
+        ) : null}
+        {stepBody()}
+      </Container>
     </SafeArea>
   );
 }

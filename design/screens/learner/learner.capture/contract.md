@@ -9,7 +9,7 @@ shell: learner
 entry_points:
   - "tab: Snap — raised center tab on EVERY band (doc 36 §3.1 law; G §1.1 confirms raised: true all bands)"
   - "push: from learner.home K–2 hub giant tile (band variant primary)"
-  - "flow: FD-17 'Snap your homework' — the single landing action after learner onboarding (doc 38 §1.2)"
+  - "flow: 'Snap your homework' — the ONE action on Learner Today after onboarding (doc 38 §1.2; FD-17 is the Natalie greeting that precedes it)"
   - "back_from: learner.tutor (learner returns to snap another problem)"
 answers_within_5s:
   - "How do I show Natalie my homework?"
@@ -39,7 +39,7 @@ state_owner: "capture.store (existing) + realtime-hints.store (existing) for gui
 **Status:** Route EXISTS — `/(learner)/(tabs)/capture` + web `/capture`, classified **PARTIAL**.
 
 **Notes:**
-- **Band defect (b):** `capture.tsx` re-exports `CaptureScreen` bare, so `ageBand` defaults to `'teen'` on every path — a six-year-old gets the teen capture UX (A-audit; F §J1 finding 2). One-line wrapper reading the session band is the fix; this contract's band scaling is fictional until then.
+- **Band defect (b) — resolved:** both wrappers now read the session band and pass it (`apps/mobile/app/(learner)/(tabs)/capture.tsx` and `apps/web/app/(site)/capture/page.tsx`); the band scaling this contract describes is live, not fictional.
 - **Missing fork (J1 finding 3):** post-OCR confirm is hardwired to the AI path. The AI / human-tutor / self-guided fork has no screen and no inventory row. This contract records capture as AI-only (`confirm_ocr → learner.tutor`); adding the fork requires a new inventory row + contract first.
 - **No subject-match step (J1 finding 4):** `CapturePayload` carries no subject; downstream mastery attribution depends on it. Contract-relevant: the confirm exit must eventually carry subject context to learner.tutor.
 - Camera raised-center on every band is a law of this contract — any tab reconciliation that demotes it is a violation.
