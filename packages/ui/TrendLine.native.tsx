@@ -8,7 +8,12 @@
 // Bars, pies and real axes are NOT its job; those go to Victory Native.
 // SOT: docs/pack/27-reporting-charts-spec.md §2
 // SOT-KEYWORDS: trendline chart native skia react-native-graph scrub line
+import { useColorScheme } from 'react-native';
 import { LineGraph } from 'react-native-graph';
+// LineGraph takes a concrete colour string, not a className, so the ballpoint
+// mark token (the web fork's `var(--color-ballpoint)`) is resolved per scheme
+// here from the theme source directly.
+import { semantic } from '@acme/theme';
 import { Text, View } from './primitives';
 import { isSuppressed } from './DataTable';
 import type { TrendLineProps } from './TrendLine.types';
@@ -20,6 +25,7 @@ export function TrendLine({
   height = 160,
   className,
 }: TrendLineProps) {
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   /*
     react-native-graph takes one continuous series and has no concept of a hole,
     so suppressed points are DROPPED rather than zero-filled, and the count is
@@ -51,7 +57,7 @@ export function TrendLine({
           points={points}
           animated
           enablePanGesture
-          color="#2952D9"
+          color={semantic.ballpoint[scheme]}
           style={{ height }}
         />
       ) : null}

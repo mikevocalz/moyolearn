@@ -1,8 +1,10 @@
 'use client';
 // Settings — reached from Profile. Preferences, appearance, and session
 // controls live here; identity stays on the profile screen.
+import { useRouter } from 'solito/navigation';
 import { Section, View, Pressable } from '@acme/ui/tw';
 import { Button, Card, Heading, Switch, Text, FadeIn } from '@acme/ui';
+import { authClient } from '../../providers/session';
 import { useProfile, type ThemePreference } from '../profile/profile.store';
 
 const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
@@ -41,6 +43,19 @@ function ThemeSegment() {
 
 export function SettingsContent() {
   const p = useProfile();
+  const router = useRouter();
+
+  const signOut = async () => {
+    // Replace to the dispatcher, not a login deep-link: the front door (doc 38
+    // FD-01/FD-02) owns where an anon session lands on each platform. `finally`
+    // so a failed revocation still leaves the settings surface instead of
+    // stranding the person on a dead button.
+    try {
+      await authClient.signOut();
+    } finally {
+      router.replace('/');
+    }
+  };
 
   return (
     <View className="gap-group md:gap-10 lg:gap-12">
@@ -80,7 +95,7 @@ export function SettingsContent() {
             <Text variant="caption" tone="muted">Sign out on this device only.</Text>
           </View>
           <View className="flex-row gap-stack">
-            <Button title="Sign out" variant="outline" onPress={() => {}} />
+            <Button title="Sign out" variant="outline" onPress={() => { void signOut(); }} />
             <Button title="Delete account" variant="ghost" onPress={() => {}} />
           </View>
         </Card>

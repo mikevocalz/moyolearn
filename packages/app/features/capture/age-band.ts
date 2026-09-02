@@ -151,3 +151,30 @@ export function voiceBandFor(ageBand: AgeBand): VoiceBand {
       return '9-12';
   }
 }
+
+/**
+ * The exact inverse of `voiceBandFor`, for reading the persisted band back into
+ * the presentation register — the live session bootstrap turns the server's
+ * doc 31 voice band into the band the shell IA and touch targets key off
+ * (doc 36 §3.1 maps k-2→young … 9-12→adult, same table).
+ *
+ * `undefined` for an unreadable value rather than a coerced band: "no band"
+ * already has a meaning at every call site (the shell's teen default), and a
+ * value the server never wrote is transport noise, not a learner's answer —
+ * `asVoiceBand` owns coercion for values the server READ, not ones a response
+ * body carried.
+ */
+export function ageBandForVoiceBand(value?: string | null): AgeBand | undefined {
+  switch (value) {
+    case 'k-2':
+      return 'young';
+    case '3-5':
+      return 'child';
+    case '6-8':
+      return 'teen';
+    case '9-12':
+      return 'adult';
+    default:
+      return undefined;
+  }
+}

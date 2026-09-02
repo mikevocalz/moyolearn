@@ -15,8 +15,31 @@ import 'server-only';
 import type { Auth } from '@acme/auth/server';
 import type { VoiceBand } from '@acme/student-model';
 import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation';
+import type { LoadGradeBand } from '../tutor/coach.service';
 
 export type SaveGradeBand = (ctx: ProtectedCtx, gradeBand: VoiceBand) => Promise<void>;
+
+/**
+ * The read half of the profile, for the session bootstrap. The band is
+ * server-injected (doc 07 §3 layer 1), which cuts both ways: the client may not
+ * SEND one, and it cannot invent one either — the live session has to read the
+ * record onboarding wrote or every learner wears the shell's teen default.
+ * Identity comes from `ctx`; there is no learner id in the request to forge.
+ */
+export async function loadLearnerProfile(
+  auth: Auth,
+  headers: Headers,
+  loadGradeBand: LoadGradeBand,
+): Promise<{ gradeBand: VoiceBand }> {
+  return protectedOperation(
+    auth,
+    headers,
+    async (ctx) => ({ gradeBand: await loadGradeBand(ctx) }),
+    {
+      telemetry: { op: 'onboarding.learnerProfile.load', resource: 'learners', action: 'read' },
+    },
+  );
+}
 
 export async function saveLearnerProfile(
   auth: Auth,

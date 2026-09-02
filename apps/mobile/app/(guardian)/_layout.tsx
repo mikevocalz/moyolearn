@@ -12,7 +12,7 @@ import { ShellHeader } from '../../components/ShellHeader';
 const TITLES: Record<string, string> = {
   '/memory': 'Memory & Data',
   '/ai-activity': 'AI Activity',
-  '/family-calendar': 'Family Calendar',
+  '/calendar': 'Calendar',
 };
 
 export default function GuardianShell() {
@@ -30,7 +30,9 @@ export default function GuardianShell() {
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
         <Stack.Screen name="memory" />
         <Stack.Screen name="ai-activity" />
-        <Stack.Screen name="family-calendar" />
+        {/* A stack route, not a tab — ADR-101 keeps calendar one push away
+            from Home/Family so Reports and Alerts hold the tab slots. */}
+        <Stack.Screen name="calendar" />
         <Stack.Screen name="reports/[sessionId]" options={{ title: 'Report' }} />
       </Stack.Protected>
     </Stack>

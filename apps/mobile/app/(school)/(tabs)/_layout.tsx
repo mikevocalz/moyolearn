@@ -4,9 +4,14 @@ import { ShellHeader } from '../../../components/ShellHeader';
 import { ShellTabBar, type ShellTabItem } from '../../../components/ShellTabBar';
 
 /**
- * School-admin tabs — doc 36 §3.4: Overview · People · Academics · Calendar · More.
- * This slice only lands the overview (home) tab; the other routes are reserved
- * for the next build slice and do not yet have files, so they do not render.
+ * School-admin tabs. Doc 36 defines no school-admin IA — its §3.4 is the ORG
+ * companion set, not a school set. ADR-103
+ * (docs/decisions/adr-103-school-admin-ia.md) makes the role web-first and
+ * parks mobile at Overview-only until a PRD persona and entitlement story
+ * exist; if mobile ever ships it is Overview · People · Academics · Inbox,
+ * never a More tab. ITEMS below still carries the pre-ADR five until the shell
+ * build phase shrinks it; only school-home has a route file, so only it
+ * renders.
  */
 const ITEMS: ShellTabItem[] = [
   { name: 'school-home', label: 'Overview', Icon: LayoutGrid },

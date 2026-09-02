@@ -83,7 +83,7 @@ export function FamilyScreen() {
             <ToolRow
               label="Calendar"
               hint="Sessions and due work"
-              onPress={() => router.push('/family-calendar')}
+              onPress={() => router.push('/calendar')}
               Icon={Calendar}
             />
             <ToolRow

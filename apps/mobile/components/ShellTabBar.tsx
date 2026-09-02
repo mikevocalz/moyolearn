@@ -57,7 +57,17 @@ export function ShellTabBar({ state, navigation, items, targetClass, fillActive 
 
   const rendered = items.map((item) => {
     const index = state.routes.findIndex((route) => route.name === item.name);
-    if (index === -1) return null;
+    if (index === -1) {
+      // The silent skip once shipped a 1-of-5 tab bar (G §1.8 · ADR-101):
+      // dev fails loud; production keeps the safe skip so a bad ITEMS entry
+      // degrades a shell instead of crashing it.
+      if (__DEV__) {
+        console.error(
+          `ShellTabBar: ITEMS entry "${item.name}" has no route file in this (tabs) group — the tab is silently dropped. Add the route file or remove the entry.`,
+        );
+      }
+      return null;
+    }
     const route = state.routes[index]!;
     const focused = state.index === index;
 

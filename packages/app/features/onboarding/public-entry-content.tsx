@@ -42,7 +42,9 @@ export function PublicEntryContent() {
         </TWText>
         <EntryOption
           label="I have a handoff code"
-          onPress={() => router.push('/onboarding/handoff')}
+          // The canonical redemption route (mobile app/handoff.tsx, web
+          // (auth)/handoff) — the /onboarding/handoff duplicate is deleted.
+          onPress={() => router.push('/handoff')}
         />
         <EntryOption
           label="Set up my family"

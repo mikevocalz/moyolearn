@@ -359,6 +359,7 @@ export {
 } from './features/media/presign.service';
 export {
   saveLearnerProfile,
+  loadLearnerProfile,
   type SaveGradeBand,
 } from './features/onboarding/learner-profile.service';
 export {

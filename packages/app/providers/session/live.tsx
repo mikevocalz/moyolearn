@@ -7,12 +7,14 @@
 // so we call `getFullOrganization` for each org to read the member row. The
 // member row is the source of truth; the client does not supply the role.
 // SOT: docs/pack/09-screens-first-build-order.md §2 · docs/pack/06-auth-onboarding-spec.md §2
-// SOT-KEYWORDS: live session provider better auth wave3 membership context role education
+// SOT-KEYWORDS: live session provider better auth wave3 membership context role education grade band
 
 import { useEffect } from 'react';
 import { isMembershipRole } from '@acme/auth/membership';
 import { createMoyoAuthClient } from '@acme/auth';
 import { betterAuthCookieStorage } from '@acme/secure';
+import { ageBandForVoiceBand, type AgeBand } from '../../features/capture/age-band';
+import { API_URL } from '../../features/tutor/tutor-constants.ts';
 import { useSessionStore } from './store';
 import { isRoleKind, roleForOrganizationRole } from './role-mapping';
 import type { Membership, RoleKind } from './types';
@@ -35,6 +37,25 @@ type FullOrgMember = {
 
 function primaryEducationRole(memberships: Membership[]): RoleKind {
   return memberships[0]?.role ?? 'guardian';
+}
+
+/**
+ * The learner's band, read back from the record onboarding wrote (doc 07 §3
+ * layer 1: server-injected, so this is the client's only lawful source). A
+ * failure yields `undefined` rather than a guess — the shell already has a
+ * defined meaning for "no band" (the teen default), and the same silent-persist
+ * posture the onboarding write takes applies to the read: a learner staring at
+ * a blocked session because a profile fetch is slow is the worse outcome.
+ */
+async function fetchLearnerGradeBand(): Promise<AgeBand | undefined> {
+  try {
+    const res = await fetch(`${API_URL}/api/learner/profile`, { credentials: 'include' });
+    if (!res.ok) return undefined;
+    const body = (await res.json()) as { gradeBand?: string };
+    return ageBandForVoiceBand(body.gradeBand);
+  } catch {
+    return undefined;
+  }
 }
 
 function memberEducationRole(member: FullOrgMember): RoleKind {
@@ -96,10 +117,17 @@ export function LiveSessionProvider({ children }: { children: React.ReactNode })
         } satisfies Membership;
       });
 
+      const kind = primaryEducationRole(memberships);
+      // Learner contexts only: a guardian's users row carries the field's 9-12
+      // default, and reading it would dress an account default up as a band.
+      const gradeBand = kind === 'learner' ? await fetchLearnerGradeBand() : undefined;
+      if (cancelled) return;
+
       setPersona({
         id: user.id,
         name: user.name,
-        kind: primaryEducationRole(memberships),
+        kind,
+        gradeBand,
         memberships,
       });
     })();

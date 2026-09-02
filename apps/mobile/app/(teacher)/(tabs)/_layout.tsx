@@ -4,9 +4,14 @@ import { ShellHeader } from '../../../components/ShellHeader';
 import { ShellTabBar, type ShellTabItem } from '../../../components/ShellTabBar';
 
 /**
- * Teacher tabs — doc 36 §3.3: Home · Classes · Assign · Calendar · Students.
- * This slice only lands the home tab; the other routes are reserved for the
- * next build slice and do not yet have files, so they do not render.
+ * Teacher tabs. Doc 36 §3.3 defines NO teacher tab set — it makes the
+ * school-teacher a tokened read-only share page. The shell's actual authority
+ * is doc 37 §2's PR-145 amendment plus ADR-102
+ * (docs/decisions/adr-102-teacher-shell-ia.md), which fixes the IA at four
+ * tabs — Home · Classes · Assign · You — with Conferences and Calendar demoted
+ * to stack routes. ITEMS below still carries the pre-ADR set until the shell
+ * build phase re-cuts it; only teacher-home and conference have route files
+ * today, so only they render.
  */
 const ITEMS: ShellTabItem[] = [
   { name: 'teacher-home', label: 'Home', Icon: Home },
