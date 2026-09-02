@@ -15,7 +15,7 @@ import 'server-only';
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import { attendanceCell, type Lead } from '@acme/app';
-import type { LoadLeads, SaveLeadStage } from '@acme/app/server';
+import type { CreateLeadRecord, LoadLead, LoadLeads, SaveLeadStage } from '@acme/app/server';
 
 async function withPayload<T>(fn: (payload: Awaited<ReturnType<typeof getPayload>>) => Promise<T>): Promise<T> {
   const payload = await getPayload({ config });
@@ -48,6 +48,38 @@ const clock = new Intl.DateTimeFormat('en-US', {
 
 const NO_SESSION = '—';
 
+/** One translation, used by every read and the create's echo — the row shape
+ *  cannot drift between the list, the detail and a freshly created lead. */
+type LeadDoc = {
+  id: string | number;
+  family: string;
+  learner?: string | null;
+  subject?: string | null;
+  stage: Lead['stage'];
+  owner?: string | null;
+  nextSessionAt?: string | null;
+  sessions?: number | null;
+  valueCents?: number | null;
+  currency?: string | null;
+  attendancePct?: number | null;
+  cohortSize?: number | null;
+  needsAttention?: boolean | null;
+};
+
+const toLead = (doc: LeadDoc): Lead => ({
+  id: String(doc.id),
+  family: doc.family,
+  learner: doc.learner ?? '',
+  subject: doc.subject ?? '',
+  stage: doc.stage,
+  owner: doc.owner ?? '',
+  nextSession: doc.nextSessionAt ? clock.format(new Date(doc.nextSessionAt)) : NO_SESSION,
+  sessions: doc.sessions ?? 0,
+  value: money(doc.valueCents ?? 0, doc.currency ?? 'USD'),
+  attendance: attendanceCell(doc.attendancePct, doc.cohortSize),
+  needsAttention: doc.needsAttention ?? false,
+});
+
 export const loadLeads: LoadLeads = async (ctx) => {
   if (!ctx.orgId) return [];
   return withPayload(async (payload) => {
@@ -63,19 +95,54 @@ export const loadLeads: LoadLeads = async (ctx) => {
       sort: '-createdAt',
     });
 
-    return docs.map<Lead>((doc) => ({
-      id: String(doc.id),
-      family: doc.family,
-      learner: doc.learner ?? '',
-      subject: doc.subject ?? '',
-      stage: doc.stage,
-      owner: doc.owner ?? '',
-      nextSession: doc.nextSessionAt ? clock.format(new Date(doc.nextSessionAt)) : NO_SESSION,
-      sessions: doc.sessions ?? 0,
-      value: money(doc.valueCents ?? 0, doc.currency ?? 'USD'),
-      attendance: attendanceCell(doc.attendancePct, doc.cohortSize),
-      needsAttention: doc.needsAttention ?? false,
-    }));
+    return docs.map((doc) => toLead(doc));
+  });
+};
+
+export const loadLead: LoadLead = async (ctx, leadId) => {
+  if (!ctx.orgId) return null;
+  const id = Number(leadId);
+  if (!Number.isInteger(id)) return null;
+
+  return withPayload(async (payload) => {
+    /*
+      Resolved by WHERE — id AND org — for the saveLeadStage reason: a find by
+      bare id would hand a guessed cross-tenant id another org's family. Anding
+      the tenant makes the wrong org's read an empty page, which the route
+      reports as a 404 indistinguishable from "never existed".
+    */
+    const { docs } = await payload.find({
+      collection: 'leads',
+      where: { and: [{ id: { equals: id } }, { orgId: { equals: ctx.orgId } }] },
+      limit: 1,
+    });
+    const doc = docs[0];
+    return doc ? toLead(doc) : null;
+  });
+};
+
+export const createLeadRecord: CreateLeadRecord = async (ctx, input) => {
+  return withPayload(async (payload) => {
+    const doc = await payload.create({
+      collection: 'leads',
+      data: {
+        /*
+          The tenant is written from `ctx` HERE, never accepted from input —
+          the service already refused a session with no org, so the assertion
+          documents rather than guards.
+        */
+        orgId: ctx.orgId!,
+        family: input.family,
+        learner: input.learner ?? null,
+        subject: input.subject ?? null,
+        stage: input.stage,
+        valueCents: input.valueCents,
+        currency: 'USD',
+        sessions: 0,
+        needsAttention: false,
+      },
+    });
+    return toLead(doc);
   });
 };
 

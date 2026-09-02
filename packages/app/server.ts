@@ -412,14 +412,23 @@ export {
 } from './features/ops/stage-change';
 export {
   listLeads,
+  getLead,
+  createLead,
+  listFamilies,
   commitStageChange,
   type ListLeadsInput,
   type ListLeadsResult,
   type LeadSortField,
   type LeadStagePatch,
   type LoadLeads,
+  type LoadLead,
+  type CreateLeadRecord,
   type SaveLeadStage,
+  type FamilyGroup,
+  type NewLeadInput,
 } from './features/ops/ops.service';
+// Pure validation floor for the create route — same reasoning as stage-change.
+export { parseNewLead, NEW_LEAD_STAGE } from './features/ops/lead-create';
 /*
   The org branding read is PUBLIC and deliberately outside `protectedOperation`
   — a login page has no session to take identity from. The reasoning, and what

@@ -10,10 +10,10 @@
 // SOT: docs/pack/28-crm-spec.md §3 · CLAUDE.md (UI · state)
 // SOT-KEYWORDS: ops leads hook query cursor pagination pacer debounce searchparams
 import { useMemo } from 'react';
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import type { Lead, Stage } from './ops.data';
-import type { LeadSortField, LeadStats } from './ops.service';
+import type { LeadSortField, LeadStats, NewLeadInput } from './ops.service';
 
 const API_URL =
   process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
@@ -38,10 +38,18 @@ export interface LeadsPage {
 }
 
 /**
+ * The list views' common PREFIX — what `useCreateLead` invalidates, because a
+ * new lead can appear in any cached view. The record keys (`leadQueryKey`)
+ * deliberately live under a different root so a prefix invalidation of the
+ * lists never matches a record page the mutation did not touch.
+ */
+export const leadsScopeKey = () => ['ops', 'leads'] as const;
+
+/**
  * Exported so a write path can invalidate EXACTLY this surface after a mutation
  * settles, rather than nuking the whole cache and refetching six other screens.
  */
-export const leadsQueryKey = (view: LeadsView) => ['ops', 'leads', view] as const;
+export const leadsQueryKey = (view: LeadsView) => [...leadsScopeKey(), view] as const;
 
 export function useLeads(view: LeadsView) {
   /*
@@ -105,4 +113,61 @@ export function useLeads(view: LeadsView) {
     page: query.data,
     rows: query.data?.rows ?? [],
   };
+}
+
+/**
+ * A distinct root from the list views' `['ops','leads',view]`, so the detail
+ * key can be invalidated by itself — and so `useCreateLead`'s prefix
+ * invalidation of every list view does not accidentally match a record page
+ * the mutation did not touch.
+ */
+export const leadQueryKey = (leadId: string) => ['ops', 'lead', leadId] as const;
+
+/** One record, for the route-based lead detail. A 404 surfaces as `null`. */
+export function useLead(leadId: string) {
+  const queryKey = leadQueryKey(leadId);
+  const query = useQuery({
+    queryKey,
+    queryFn: async ({ signal }): Promise<Lead | null> => {
+      const res = await fetch(`${API_URL}/api/ops/leads/${encodeURIComponent(leadId)}`, {
+        credentials: 'include',
+        signal,
+      });
+      // A miss is a STATE the screen renders (gone from this pipeline), not an
+      // error to retry — retrying a 404 would just re-ask for the same absence.
+      if (res.status === 404) return null;
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return ((await res.json()) as { lead: Lead }).lead;
+    },
+    enabled: leadId.length > 0,
+  });
+  return { ...query, queryKey, lead: query.data ?? null };
+}
+
+/**
+ * The create door. Invalidates the list views' PREFIX (`leadsScopeKey`) —
+ * every cached view, whatever its filters — because a new lead can appear in
+ * any of them, and invalidating one exact view would leave the others showing
+ * a pipeline that no longer exists.
+ */
+export function useCreateLead() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: NewLeadInput): Promise<Lead> => {
+      const res = await fetch(`${API_URL}/api/ops/leads`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      if (!res.ok) {
+        const body = (await res.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(body?.error ?? `HTTP ${res.status}`);
+      }
+      return ((await res.json()) as { lead: Lead }).lead;
+    },
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: leadsScopeKey() });
+    },
+  });
 }

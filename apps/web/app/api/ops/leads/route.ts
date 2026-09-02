@@ -1,17 +1,20 @@
-// GET /api/ops/leads — cursor-paginated CRM pipeline for the ops dashboard.
-// SOT: docs/pack/28-crm-spec.md §3 · CLAUDE.md (The block)
-// SOT-KEYWORDS: ops api leads cursor pagination crm protected operation route
+// GET /api/ops/leads — cursor-paginated CRM pipeline for the ops surfaces.
+// POST /api/ops/leads — create a lead at the pipeline's first stage.
+// SOT: docs/pack/28-crm-spec.md §2–§3 · CLAUDE.md (The block)
+// SOT-KEYWORDS: ops api leads cursor pagination create crm protected operation route
 import { NextRequest, NextResponse } from 'next/server';
 import {
   CapabilityDenied,
   MembershipDenied,
   MEMBERSHIP_ROLES,
+  createLead,
   listLeads,
+  parseNewLead,
   protectedOperation,
   type LeadSortField,
 } from '@acme/app/server';
 import type { Stage } from '@acme/app';
-import { loadLeads } from '@/lib/leads.repository';
+import { createLeadRecord, loadLeads } from '@/lib/leads.repository';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
 
@@ -65,6 +68,50 @@ export async function GET(request: NextRequest) {
       },
     );
     return NextResponse.json(result);
+  } catch (error) {
+    if (error instanceof Error) reportRouteError(error);
+    const message = error instanceof Error ? error.message : 'Server error';
+    const status = error instanceof CapabilityDenied || error instanceof MembershipDenied
+      ? error.status
+      : message === 'Unauthenticated' ? 401
+      : 500;
+    return NextResponse.json({ error: message }, { status });
+  }
+}
+
+export async function POST(request: NextRequest) {
+  try {
+    const result = await protectedOperation(
+      auth,
+      request.headers,
+      async (ctx) => {
+        /*
+          The floor is pure and tested (`parseNewLead`): the family name is the
+          one thing a lead cannot exist without, money is whole non-negative
+          CENTS, and the STAGE is never read from the body — the service pins a
+          new lead to the pipeline's first stage, because a client that could
+          choose its starting stage could skip the funnel. `orgId` comes off
+          `ctx` inside the repository, never from input.
+        */
+        const parsed = parseNewLead(await request.json().catch(() => null));
+        if (!parsed.ok) return { ok: false as const, error: parsed.error };
+        const lead = await createLead(ctx, parsed.input, createLeadRecord);
+        if (lead === null) return { ok: false as const, error: 'No organization on this session.' };
+        return { ok: true as const, lead };
+      },
+      /*
+        Creating a lead is the organisation's data changing, so it is `write` —
+        and the same role wall as the stage move: owner and manager run the
+        pipeline, the scheduler feeds it as a direct effect of booking
+        (doc 06 §1). Finance reads; it does not add families.
+      */
+      {
+        requires: 'write',
+        requiresMembership: ['owner', 'manager', 'scheduler'],
+        telemetry: { op: 'ops.leads.create', resource: 'leads', action: 'write' },
+      },
+    );
+    return NextResponse.json(result, { status: result.ok ? 201 : 422 });
   } catch (error) {
     if (error instanceof Error) reportRouteError(error);
     const message = error instanceof Error ? error.message : 'Server error';

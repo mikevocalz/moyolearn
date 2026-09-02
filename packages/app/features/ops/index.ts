@@ -1,9 +1,12 @@
 // @acme/app · ops domain public API — features import THIS, never a deep path.
 // SOT: CLAUDE.md (The block)
-// SOT-KEYWORDS: ops index barrel domain public-api dashboard crm
+// SOT-KEYWORDS: ops index barrel domain public-api dashboard crm leads families enrollment
 export { OpsScreen } from './screen';
 export { OpsDashboardContent, type OpsDashboardContentProps } from './ops-dashboard-content';
-export { useOpsChrome } from './ops.store';
+export { LeadsScreen } from './leads-content';
+export { LeadDetailScreen } from './lead-detail-content';
+export { FamiliesScreen } from './families-content';
+export { EnrollmentScreen } from './enrollment-content';
 export { useOpsTablePrefs } from './ops.prefs.store';
 export {
   DEFAULT_TABLE_PREFS,
@@ -11,10 +14,27 @@ export {
   type OpsDensity,
   type OpsTablePrefs,
 } from './ops.prefs';
-export { useLeads, leadsQueryKey, type LeadsView, type LeadsPage } from './use-leads';
+export {
+  useLeads,
+  useLead,
+  useCreateLead,
+  leadsQueryKey,
+  leadQueryKey,
+  type LeadsView,
+  type LeadsPage,
+} from './use-leads';
+export { useFamilies, familiesQueryKey } from './use-families';
 export { useViewParams, type ShareableView, type ViewParams } from './use-view-params';
 export { applyStageChange, MANUAL_STAGES, type StageChange } from './stage-change';
 export { useStageAction } from './use-stage-action';
+export { type FamilyGroup } from './family-groups';
+export { NEW_LEAD_STAGE, parseNewLead, type NewLeadInput } from './lead-create';
+export {
+  leadsRootPath,
+  leadDetailPath,
+  familiesRootPath,
+  enrollmentRootPath,
+} from './ops-paths';
 export {
   SESSIONS_BY_ORG,
   REVENUE_BY_ORG,

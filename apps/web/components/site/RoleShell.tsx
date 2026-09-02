@@ -41,6 +41,7 @@ import {
   Users,
   FileText,
   Calendar,
+  Contact,
   LayoutGrid,
   GraduationCap,
   CircleDot,
@@ -127,12 +128,17 @@ function iconFor(label: string, className: string): ReactNode {
     case 'Inbox':
       return <Bell className={className} />;
     case 'Family':
+    case 'Families':
     case 'Learners':
     case 'My learners':
     case 'Clients':
     case 'People':
     case 'Educators':
       return <Users className={className} />;
+    // Contact matches the retired ops sidebar's Leads glyph — one glyph per
+    // surface, carried across the chrome move.
+    case 'Leads':
+      return <Contact className={className} />;
     case 'Notes':
     case 'Session notes':
       return <FileText className={className} />;
@@ -149,6 +155,7 @@ function iconFor(label: string, className: string): ReactNode {
       return <LayoutGrid className={className} />;
     case 'Academics':
     case 'Schools':
+    case 'Enrollment':
       return <GraduationCap className={className} />;
     default:
       return <CircleDot className={className} />;

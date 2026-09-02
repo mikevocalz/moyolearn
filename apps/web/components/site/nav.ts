@@ -100,10 +100,17 @@ export const HOT_NAV_BY_ROLE: Record<'guardian', NavItem[]> = {
  */
 const ORG_RAIL: NavGroup[] = [
   { items: [{ label: 'Overview', href: '/ops' }] },
-  // pending: org.crm (contract exists) — doc 36 §3.4 CRM group (Leads ·
-  // Families · Enrollment) is embedded in the /ops blob today; the split rail
-  // items get standalone routes before they get nav rows. Overview keeps /ops
-  // so the CRM content stays reachable meanwhile.
+  // Doc 36 §3.4's CRM group, split out of the /ops blob: every item renders
+  // because its route exists (flow law) — /leads, /families, /enrollment all
+  // live under the (business) shell.
+  {
+    title: 'CRM',
+    items: [
+      { label: 'Leads', href: '/leads' },
+      { label: 'Families', href: '/families' },
+      { label: 'Enrollment', href: '/enrollment', railLabel: 'Enroll' },
+    ],
+  },
   { title: 'Scheduling', items: [{ label: 'Calendar', href: '/schedule' }] },
   // pending: org.money (contract exists) — Payouts · Invoices (doc 36 §3.4).
   // Doc 36 §3.4's Safety group (G §3.2 marked it ✱; built now): the incident

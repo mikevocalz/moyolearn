@@ -3,8 +3,8 @@
 //
 // Sorting, filters and the active view go here rather than into a store because
 // people SHARE and BOOKMARK them: "the at-risk families I own, by value" is a
-// link you paste to a colleague. Anything nobody would paste — sidebar collapse,
-// density, hidden columns — stays in Zustand (`ops.store.ts`).
+// link you paste to a colleague. Anything nobody would paste — density, hidden
+// columns — stays in Zustand (`ops.prefs.store`).
 // SOT: docs/pack/28-crm-spec.md §3 (views are saved configurations)
 // SOT-KEYWORDS: ops view params url searchparams shareable sort filter web
 import { useCallback, useMemo } from 'react';

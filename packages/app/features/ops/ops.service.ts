@@ -11,13 +11,27 @@ import 'server-only';
 import type { ProtectedCtx } from '../../core/protected-operation.ts';
 import type { Lead, Stage } from './ops.data.ts';
 import { clearsAttention, type StageChange } from './stage-change.ts';
-// Pure and therefore testable — see the header of that file.
+// Pure and therefore testable — see the headers of those files.
 import { statsFor, type LeadStats } from './lead-stats.ts';
+import { familiesFrom, leadValueNumber, type FamilyGroup } from './family-groups.ts';
+import { NEW_LEAD_STAGE, type NewLeadInput } from './lead-create.ts';
 
-export type { LeadStats };
+export type { FamilyGroup, LeadStats, NewLeadInput };
 
 /** Repository ports — the caller provides the Payload adapters. */
 export type LoadLeads = (ctx: ProtectedCtx) => Promise<readonly Lead[]>;
+
+/** Resolves one lead by id WITHIN the caller's org, or null — never across it. */
+export type LoadLead = (ctx: ProtectedCtx, leadId: string) => Promise<Lead | null>;
+
+/**
+ * Persists a new lead. The stage is fixed by the service (`NEW_LEAD_STAGE`) and
+ * `orgId` comes off `ctx` inside the repository — neither is caller input.
+ */
+export type CreateLeadRecord = (
+  ctx: ProtectedCtx,
+  input: NewLeadInput & { stage: Stage },
+) => Promise<Lead>;
 
 /**
  * Persists one stage move. Resolves FALSE when no lead in the caller's org has
@@ -72,14 +86,12 @@ const EMPTY: ListLeadsResult = {
 };
 
 
-const numericValue = (v: string) => Number(v.replace(/[^0-9.-]/g, '')) || 0;
-
 const compare = (a: Lead, b: Lead, field: LeadSortField): number => {
   switch (field) {
     case 'sessions':
       return a.sessions - b.sessions;
     case 'value':
-      return numericValue(a.value) - numericValue(b.value);
+      return leadValueNumber(a.value) - leadValueNumber(b.value);
     default:
       return String(a[field]).localeCompare(String(b[field]));
   }
@@ -147,6 +159,50 @@ export async function listLeads(
     // turn to page two is not a statistic about the business.
     stats: statsFor(all),
   };
+}
+
+/**
+ * One record, for the route-based detail. The tenant guard is the same shape
+ * as every read here: no org on the session resolves to nothing, and the
+ * repository applies `orgId` to the predicate so a guessed id from another
+ * tenant is a miss, not a leak.
+ */
+export async function getLead(
+  ctx: ProtectedCtx,
+  leadId: string,
+  loadLead: LoadLead,
+): Promise<Lead | null> {
+  if (!ctx.orgId) return null;
+  return loadLead(ctx, leadId);
+}
+
+/**
+ * The interim Families read — the pipeline grouped by family text, server-side
+ * (see family-groups.ts for why this derivation exists instead of a household
+ * collection). Rides the same repository read the pipeline uses, so the wall
+ * holds by construction: nothing here can see what the leads read cannot.
+ */
+export async function listFamilies(
+  ctx: ProtectedCtx,
+  loadLeads: LoadLeads,
+): Promise<{ families: FamilyGroup[] }> {
+  if (!ctx.orgId) return { families: [] };
+  return { families: familiesFrom(await loadLeads(ctx)) };
+}
+
+/**
+ * Creates a lead at the pipeline's first stage. Validation happened at the
+ * route (`parseNewLead` — pure, tested); what the service owns is the tenant
+ * guard and the stage assignment, because a client that could choose either
+ * could write into someone else's funnel or skip its own.
+ */
+export async function createLead(
+  ctx: ProtectedCtx,
+  input: NewLeadInput,
+  createLeadRecord: CreateLeadRecord,
+): Promise<Lead | null> {
+  if (!ctx.orgId) return null;
+  return createLeadRecord(ctx, { ...input, stage: NEW_LEAD_STAGE });
 }
 
 /**
