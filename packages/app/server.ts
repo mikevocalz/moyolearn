@@ -105,6 +105,19 @@ export type {
   AssignmentWorkItem,
   CreateAssignmentInput,
 } from './features/assignments/assignments.types';
+/*
+  The arrival side of the same domain (J1): what a LEARNER sees of published
+  work. A separate service from the teacher's because the gates differ — see
+  learner-assignments.service.ts — but exported beside it so both ends of the
+  assign loop are found in one place.
+*/
+export {
+  learnerAssignments,
+  type LearnerAssignment,
+  type LearnerAssignmentPorts,
+  type LoadLearnerEnrollments,
+  type LoadPublishedAssignments,
+} from './features/assignments/learner-assignments.service';
 export type {
   DerivedFact,
   MasteryFact,

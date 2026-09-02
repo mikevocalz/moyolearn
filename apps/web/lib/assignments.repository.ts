@@ -17,6 +17,7 @@ import type {
   Assignment,
   AssignmentWorkItem,
   CreateAssignment,
+  LoadPublishedAssignments,
   LoadTeacherAssignment,
   LoadTeacherAssignments,
   UpdateAssignment,
@@ -120,6 +121,33 @@ export const loadTeacherAssignment: LoadTeacherAssignment = async (
   });
   const row = (docs as PayloadRow[])[0];
   return row ? toAssignment(row) : null;
+};
+
+/*
+  The learner-side read (learner-assignments.service.ts). Status is filtered
+  HERE, not in the service: a draft is the teacher's private desk, and the
+  cheapest way to guarantee one never crosses the wall is to never read it.
+  `classIds` arrive already proven — the service derived them from the
+  learner's own enrollments — and an empty list short-circuits because
+  Payload's `in` on an empty array is not a no-match, it is a malformed query.
+*/
+export const loadPublishedAssignmentsForClasses: LoadPublishedAssignments = async (classIds) => {
+  if (classIds.length === 0) return [];
+  const payload = await getPayload({ config });
+  const { docs } = await payload.find({
+    collection: 'assignments',
+    where: {
+      and: [{ classId: { in: classIds } }, { status: { equals: 'published' } }],
+    },
+    // Soonest due first — the learner's "what should I start first?" order,
+    // the opposite of the teacher tracking list's newest-first.
+    sort: 'dueAt',
+    limit: 200,
+    depth: 0,
+    overrideAccess: true,
+    select: ROW_SELECT,
+  });
+  return (docs as PayloadRow[]).map(toAssignment);
 };
 
 export const createAssignment: CreateAssignment = async (row) => {

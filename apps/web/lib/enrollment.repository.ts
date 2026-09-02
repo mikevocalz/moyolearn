@@ -1,15 +1,21 @@
 import 'server-only';
 // Enrollment repository — reads the learner-to-organization roster from Payload.
 //
-// The caller has already passed `protectedOperation`'s `institution/people/view`
-// gate, so this uses `overrideAccess: true` and only touches `enrollments`.
+// Every caller is behind `protectedOperation` — the org readers behind the
+// `institution/people/view` gate, the learner reader keyed on `ctx.learnerId`
+// only — so this uses `overrideAccess: true` and only touches `enrollments`.
 // SOT: packages/payload/src/collections/Enrollments.ts · packages/app/features/enrollment/enrollment.service.ts
 // SOT-KEYWORDS: enrollment repository payload roster learner orgId districtId
 
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import type { Enrollment as PayloadEnrollment } from '@acme/payload';
-import type { Enrollment, LoadClassRoster, LoadEnrollments } from '@acme/app/server';
+import type {
+  Enrollment,
+  LoadClassRoster,
+  LoadEnrollments,
+  LoadLearnerEnrollments,
+} from '@acme/app/server';
 
 type PayloadRow = Pick<
   PayloadEnrollment,
@@ -73,6 +79,26 @@ export const loadEnrollments: LoadEnrollments = async (orgId, kind) => {
   teacher, and `orgId` rides along anyway so a stale or cross-tenant class id
   can never widen the read.
 */
+/*
+  The learner's own enrollments — the `learnerAuthId` dimension (indexed on the
+  collection). The caller (learner-assignments.service.ts) supplies the id off
+  `ctx`, never from client input, so this read can only ever be self-scoped.
+*/
+export const loadEnrollmentsByLearner: LoadLearnerEnrollments = async (learnerAuthId) => {
+  const payload = await getPayload({ config });
+
+  const { docs } = await payload.find({
+    collection: 'enrollments',
+    where: { and: [{ learnerAuthId: { equals: learnerAuthId } }] },
+    limit: 100,
+    depth: 0,
+    overrideAccess: true,
+    select: ROW_SELECT,
+  });
+
+  return (docs as PayloadRow[]).map(toEnrollment);
+};
+
 export const loadEnrollmentsByClass: LoadClassRoster = async (classId, orgId) => {
   const payload = await getPayload({ config });
 

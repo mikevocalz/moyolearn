@@ -3,16 +3,34 @@
 // SOT: docs/pack/04-screen-briefs.md §S7
 // SOT-KEYWORDS: student home learner continue next session today plan improvement
 
+import { useMemo } from 'react';
 import { ArrowRight, Check, FileUp, Star } from '@acme/ui/icons';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, Card, Heading, PressScale, Text, FadeIn } from '@acme/ui';
 import { useRouter } from 'solito/navigation';
 import { useAppSession } from '../../providers/session';
+import { useLearnerAssignments } from '../assignments/use-learner-assignments';
+import { dueLabelFor, isDueSoon } from '../plan/plan.data';
 import { PLAN_ITEMS, NEXT_SESSION, CONTINUE_SKILL, IMPROVEMENT } from './student-home.data';
 
 export function StudentHomeContent() {
-  const { user } = useAppSession();
+  const { user, activeContext } = useAppSession();
   const router = useRouter();
+
+  /*
+    Due work is a 6–12 surface. The gate is the EXPLICIT teen|adult pair, not
+    `!isYoung`: 3–5 (`child`) renders this same component — learner-today only
+    forks K–2 off to the hub — and the learner.home band variants give 3–5 a
+    simpler home with no due-work strip and no `see_all_plan` exit (plan is
+    6–12 only). The hook takes the gate as `enabled`, so the bands that must
+    not see due work never even fetch it.
+  */
+  const showsDueWork = activeContext.gradeBand === 'teen' || activeContext.gradeBand === 'adult';
+  const { assignments } = useLearnerAssignments(showsDueWork);
+  const dueWork = useMemo(
+    () => (showsDueWork ? assignments.filter((a) => isDueSoon(a.dueAt)) : []),
+    [assignments, showsDueWork],
+  );
 
   return (
     <View className="gap-7">
@@ -70,16 +88,39 @@ export function StudentHomeContent() {
         <Section className="gap-stack">
           <View className="flex-row items-center justify-between">
             <Text variant="label" tone="muted">Today&apos;s plan</Text>
-            <PressScale
-              className="rounded-md px-2 py-1"
-              outerClassName="self-start"
-              aria-label="See the whole plan"
-              onPress={() => router.push('/plan')}
-            >
-              <Text variant="caption" className="font-bold text-text underline">See all</Text>
-            </PressScale>
+            {/* See-all drills into /plan, a 6–12-only route — same gate as the
+                due-work rows above it, so 3–5 never grows a dead exit. */}
+            {showsDueWork ? (
+              <PressScale
+                className="rounded-md px-2 py-1"
+                outerClassName="self-start"
+                aria-label="See the whole plan"
+                onPress={() => router.push('/plan')}
+              >
+                <Text variant="caption" className="font-bold text-text underline">See all</Text>
+              </PressScale>
+            ) : null}
           </View>
           <View className="gap-element">
+            {/* Real published assignments due today/soon, first in the same
+                mixed list as the fixture rows — never a segregated
+                "assignments" block (plan.data's one-timeline law). Past-due
+                renders the same calm row; the label never says "late". */}
+            {dueWork.map((assignment) => (
+              <PressScale
+                key={`assignment-${assignment.id}`}
+                className="flex-row items-center gap-stack rounded-card border-2 border-border bg-surface-raised p-3 shadow-card"
+                outerClassName="w-full"
+                aria-label={`${assignment.title}, ${dueLabelFor(assignment.dueAt)}`}
+                onPress={() => router.push('/tutor')}
+              >
+                <View className="h-6 w-6 items-center justify-center rounded-full border-2 border-text-muted" />
+                <View className="flex-1 gap-0.5">
+                  <TWText className="text-base text-text">{assignment.title}</TWText>
+                  <TWText className="text-sm text-text-muted">{dueLabelFor(assignment.dueAt)}</TWText>
+                </View>
+              </PressScale>
+            ))}
             {PLAN_ITEMS.map((item) => (
               <PressScale
                 key={item.id}

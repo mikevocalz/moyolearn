@@ -106,10 +106,20 @@ export type {
   TeacherClass,
   TeacherClassDetail,
 } from './features/classes/classes.types';
-// teacher.assign's read/write hooks — exported with the classes hooks they
-// pair with (the barrel-completeness rule: an unexported hook is invisible to
-// search and gets rebuilt); the assign SCREENS stay pending until their
-// contract's slice lands.
+// teacher.assign — ADR-102's Assign tab: the tracking list, the create form
+// (draft in assign.store, per-device by contract), and the assignment detail
+// with its lifecycle actions. Screens, hooks, the draft store, and the shared
+// display copy — the service and its ports live in `server.ts`.
+export { AssignScreen } from './features/assignments/assign-content';
+export { AssignmentFormScreen } from './features/assignments/assignment-form-content';
+export { AssignmentDetailScreen } from './features/assignments/assignment-detail-content';
+export {
+  useAssignStore,
+  EMPTY_ASSIGN_DRAFT,
+  type AssignDraft,
+  type AssignStatusFilter,
+} from './features/assignments/assign.store';
+export { dueLabel, STATUS_BADGE } from './features/assignments/assign-copy';
 export {
   assignmentQueryKey,
   teacherAssignmentsQueryKey,
@@ -118,6 +128,20 @@ export {
   useCreateAssignment,
   useTeacherAssignments,
 } from './features/assignments/use-assignments';
+export type {
+  Assignment,
+  AssignmentStatus,
+  AssignmentWorkItem,
+  CreateAssignmentInput,
+} from './features/assignments/assignments.types';
+// The learner's read of the same domain — the J1 arrival signal. The shape is
+// type-only from the server file (erased at build; the use-reports precedent),
+// so the client names what arrived without touching the service wall.
+export {
+  learnerAssignmentsQueryKey,
+  useLearnerAssignments,
+} from './features/assignments/use-learner-assignments';
+export type { LearnerAssignment } from './features/assignments/learner-assignments.service';
 export { PracticeScreen } from './features/practice/screen';
 export { AiActivityScreen } from './features/ai-activity/screen';
 export { MemoryScreen } from './features/memory/screen';

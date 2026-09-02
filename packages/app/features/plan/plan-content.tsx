@@ -5,19 +5,26 @@
 // SOT: docs/pack/04-screen-briefs.md §S8
 // SOT-KEYWORDS: student plan week strip agenda timeline join practice
 
+import { useMemo } from 'react';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, Heading, PressScale, Text, FadeIn } from '@acme/ui';
 import { useRouter } from 'solito/navigation';
 import { usePlanStore } from './plan.store';
-import { PLAN_WEEK, type PlanTimelineItem } from './plan.data';
+import { useLearnerAssignments } from '../assignments/use-learner-assignments';
+import { mergeAssignmentsIntoWeek, PLAN_WEEK, type PlanTimelineItem } from './plan.data';
 
 export function PlanContent() {
   const selectedDayId = usePlanStore((s) => s.selectedDayId);
   const selectDay = usePlanStore((s) => s.selectDay);
   const router = useRouter();
 
-  const activeId = selectedDayId ?? PLAN_WEEK[0]!.id;
-  const day = PLAN_WEEK.find((d) => d.id === activeId) ?? PLAN_WEEK[0]!;
+  // Real published assignments, bucketed by dueAt into the week's mixed
+  // timeline; sessions/practice are still the fixture scaffold (see plan.data).
+  const { assignments } = useLearnerAssignments();
+  const week = useMemo(() => mergeAssignmentsIntoWeek(PLAN_WEEK, assignments), [assignments]);
+
+  const activeId = selectedDayId ?? week[0]!.id;
+  const day = week.find((d) => d.id === activeId) ?? week[0]!;
 
   return (
     <View className="gap-7">
@@ -30,7 +37,7 @@ export function PlanContent() {
       {/* WeekStrip */}
       <FadeIn delay={80}>
         <View className="flex-row gap-element">
-          {PLAN_WEEK.map((d) => {
+          {week.map((d) => {
             const active = d.id === activeId;
             return (
               <PressScale
@@ -70,9 +77,9 @@ export function PlanContent() {
               ))}
             </View>
           ) : (
-            <TWText className="text-body text-text-muted">
-              Nothing planned. Want to get ahead? Natalie has a 10-minute challenge.
-            </TWText>
+            // Contract copy, verbatim — calm empty state, no manufactured
+            // urgency (learner.plan no_data path).
+            <TWText className="text-body text-text-muted">Nothing due — nice.</TWText>
           )}
         </Section>
       </FadeIn>
