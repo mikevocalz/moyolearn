@@ -419,6 +419,8 @@ export {
   getLead,
   createLead,
   listFamilies,
+  getFamily,
+  updateFamilyContacts,
   commitStageChange,
   type ListLeadsInput,
   type ListLeadsResult,
@@ -427,12 +429,25 @@ export {
   type LoadLeads,
   type LoadLead,
   type CreateLeadRecord,
+  type CreateLeadPorts,
   type SaveLeadStage,
   type FamilyGroup,
+  type FamilyContact,
+  type FamilyRecord,
+  type FamilyDetail,
+  type FamilyListPorts,
+  type FamilyDetailPorts,
+  type LoadFamilies,
+  type LoadFamily,
+  type SaveFamilyContacts,
+  type UpsertFamilyByName,
   type NewLeadInput,
 } from './features/ops/ops.service';
 // Pure validation floor for the create route — same reasoning as stage-change.
 export { parseNewLead, NEW_LEAD_STAGE } from './features/ops/lead-create';
+// The contacts floor, beside the lead floor it copies: pure, tested, and the
+// PATCH route validates against the same shape the record page edits.
+export { parseFamilyContacts, MAX_FAMILY_CONTACTS } from './features/ops/family-record';
 /*
   The org branding read is PUBLIC and deliberately outside `protectedOperation`
   — a login page has no session to take identity from. The reasoning, and what

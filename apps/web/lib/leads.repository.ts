@@ -53,6 +53,7 @@ const NO_SESSION = '—';
 type LeadDoc = {
   id: string | number;
   family: string;
+  familyId?: string | null;
   learner?: string | null;
   subject?: string | null;
   stage: Lead['stage'];
@@ -69,6 +70,9 @@ type LeadDoc = {
 const toLead = (doc: LeadDoc): Lead => ({
   id: String(doc.id),
   family: doc.family,
+  // Absent (pre-stamp rows) travels as absent — the read model's name
+  // fallback (family-groups.ts) is what decides, never a fabricated stamp.
+  familyId: doc.familyId ?? undefined,
   learner: doc.learner ?? '',
   subject: doc.subject ?? '',
   stage: doc.stage,
@@ -133,6 +137,8 @@ export const createLeadRecord: CreateLeadRecord = async (ctx, input) => {
         */
         orgId: ctx.orgId!,
         family: input.family,
+        // Stamped by the service's ctx-scoped upsert (ADR-109), never by input.
+        familyId: input.familyId,
         learner: input.learner ?? null,
         subject: input.subject ?? null,
         stage: input.stage,

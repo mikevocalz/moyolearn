@@ -21,6 +21,7 @@ import { TutorMessages } from './collections/TutorMessages';
 import { TutorSessions } from './collections/TutorSessions';
 import { StudentModelFacts } from './collections/StudentModelFacts';
 import { Leads } from './collections/Leads';
+import { Families } from './collections/Families';
 import { Organizations } from './collections/Organizations';
 import { Enrollments } from './collections/Enrollments';
 import { TutorEngagements } from './collections/TutorEngagements';
@@ -157,6 +158,11 @@ export default buildConfig({
     // completion is a fact ABOUT an assignment, keyed by pointer like every
     // other cross-collection reference here.
     AssignmentCompletions,
+    // Doc 28 §2's household object (ADR-109), beside the pipeline rows that
+    // point into it: a lead's `familyId` is a text pointer to this collection,
+    // and its `learnerRefs` are text pointers OUT of the Operations Cloud —
+    // never relationships, so the wall above stays structural.
+    Families,
     Leads,
   ],
   db: postgresAdapter({

@@ -1,8 +1,8 @@
-// GET /api/ops/families — the interim server-derived family grouping over the
-// org's leads (family-groups.ts records why this is a derivation, not a
-// household collection — doc 28 §2's Family/GuardianContact are unbuilt).
-// SOT: docs/pack/28-crm-spec.md §2 · CLAUDE.md (The block)
-// SOT-KEYWORDS: ops api families derived grouping crm protected operation route
+// GET /api/ops/families — the org's household rows (ADR-109), each with the
+// stage rollup over its leads. The derivation this route used to serve
+// retired when doc 28 §2's Family object landed as a collection.
+// SOT: docs/pack/28-crm-spec.md §2 · docs/decisions/adr-109-family-household-object.md · CLAUDE.md (The block)
+// SOT-KEYWORDS: ops api families household rollup crm protected operation route
 import { NextRequest, NextResponse } from 'next/server';
 import {
   CapabilityDenied,
@@ -12,6 +12,7 @@ import {
   protectedOperation,
 } from '@acme/app/server';
 import { loadLeads } from '@/lib/leads.repository';
+import { loadFamilies } from '@/lib/families.repository';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
 
@@ -20,9 +21,9 @@ export async function GET(request: NextRequest) {
     const result = await protectedOperation(
       auth,
       request.headers,
-      (ctx) => listFamilies(ctx, loadLeads),
+      (ctx) => listFamilies(ctx, { loadFamilies, loadLeads }),
       /*
-        The same wall as the pipeline read it derives from: `export` (a lapsed
+        The same wall as the pipeline read beside it: `export` (a lapsed
         org keeps reading its own CRM, doc 05 §2.3) with the role membership as
         the only gate that ever closes.
       */

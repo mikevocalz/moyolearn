@@ -15,6 +15,7 @@ import {
 } from '@acme/app/server';
 import type { Stage } from '@acme/app';
 import { createLeadRecord, loadLeads } from '@/lib/leads.repository';
+import { upsertFamilyByName } from '@/lib/families.repository';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
 
@@ -91,11 +92,13 @@ export async function POST(request: NextRequest) {
           CENTS, and the STAGE is never read from the body — the service pins a
           new lead to the pipeline's first stage, because a client that could
           choose its starting stage could skip the funnel. `orgId` comes off
-          `ctx` inside the repository, never from input.
+          `ctx` inside the repository, never from input — and the household
+          stamp comes from the service's own ctx-scoped upsert (ADR-109), so a
+          new family's row exists before its first lead does.
         */
         const parsed = parseNewLead(await request.json().catch(() => null));
         if (!parsed.ok) return { ok: false as const, error: parsed.error };
-        const lead = await createLead(ctx, parsed.input, createLeadRecord);
+        const lead = await createLead(ctx, parsed.input, { createLeadRecord, upsertFamilyByName });
         if (lead === null) return { ok: false as const, error: 'No organization on this session.' };
         return { ok: true as const, lead };
       },

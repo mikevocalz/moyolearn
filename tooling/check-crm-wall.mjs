@@ -54,6 +54,10 @@ const CRM_ROOTS = [
   'packages/app/features/org',
   'apps/web/app/api/ops',
   'apps/web/lib/leads.repository.ts',
+  // ADR-109's household repository, registered in the SAME commit that created
+  // it: a CRM file outside these roots is silently unwalled, and the family
+  // record is the CRM surface most tempted to resolve a learner ref.
+  'apps/web/lib/families.repository.ts',
   'apps/web/lib/org.repository.ts',
 ];
 

@@ -23,7 +23,15 @@ export {
   type LeadsView,
   type LeadsPage,
 } from './use-leads';
-export { useFamilies, familiesQueryKey } from './use-families';
+export {
+  useFamilies,
+  useFamily,
+  useUpdateFamilyContacts,
+  familiesQueryKey,
+  familyQueryKey,
+  type FamilyDetailPayload,
+} from './use-families';
+export { type FamilyContact, type FamilyRecord } from './family-record';
 export { useViewParams, type ShareableView, type ViewParams } from './use-view-params';
 export { applyStageChange, MANUAL_STAGES, type StageChange } from './stage-change';
 export { useStageAction } from './use-stage-action';

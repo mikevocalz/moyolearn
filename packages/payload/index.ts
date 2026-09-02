@@ -13,6 +13,10 @@
 export type {
   Organization,
   Lead,
+  // ADR-109's household row. No domain-object collision — the app side speaks
+  // in `FamilyRecord`/`FamilyGroup` projections, so the row keeps the
+  // generated name; `families.repository.ts` is the one place that reads it.
+  Family,
   Media,
   User,
   Enrollment,

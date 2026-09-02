@@ -87,6 +87,7 @@ export interface Config {
     classes: Class;
     assignments: Assignment;
     'assignment-completions': AssignmentCompletion;
+    families: Family;
     leads: Lead;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -115,6 +116,7 @@ export interface Config {
     classes: ClassesSelect<false> | ClassesSelect<true>;
     assignments: AssignmentsSelect<false> | AssignmentsSelect<true>;
     'assignment-completions': AssignmentCompletionsSelect<false> | AssignmentCompletionsSelect<true>;
+    families: FamiliesSelect<false> | FamiliesSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -765,12 +767,42 @@ export interface AssignmentCompletion {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "families".
+ */
+export interface Family {
+  id: number;
+  orgId: string;
+  name: string;
+  contacts?:
+    | {
+        name: string;
+        /**
+         * The contact’s relationship to the household — "Mother", "Guardian", …
+         */
+        relationship: string;
+        email?: string | null;
+        phone?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  learnerRefs?:
+    | {
+        ref: string;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "leads".
  */
 export interface Lead {
   id: number;
   orgId: string;
   family: string;
+  familyId?: string | null;
   learnerRef?: string | null;
   learner?: string | null;
   subject?: string | null;
@@ -889,6 +921,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'assignment-completions';
         value: number | AssignmentCompletion;
+      } | null)
+    | ({
+        relationTo: 'families';
+        value: number | Family;
       } | null)
     | ({
         relationTo: 'leads';
@@ -1290,11 +1326,37 @@ export interface AssignmentCompletionsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "families_select".
+ */
+export interface FamiliesSelect<T extends boolean = true> {
+  orgId?: T;
+  name?: T;
+  contacts?:
+    | T
+    | {
+        name?: T;
+        relationship?: T;
+        email?: T;
+        phone?: T;
+        id?: T;
+      };
+  learnerRefs?:
+    | T
+    | {
+        ref?: T;
+        id?: T;
+      };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "leads_select".
  */
 export interface LeadsSelect<T extends boolean = true> {
   orgId?: T;
   family?: T;
+  familyId?: T;
   learnerRef?: T;
   learner?: T;
   subject?: T;
@@ -1388,6 +1450,7 @@ export interface CollectionQueryWidget {
       | 'classes'
       | 'assignments'
       | 'assignment-completions'
+      | 'families'
       | 'leads';
     where?:
       | {
@@ -1432,6 +1495,7 @@ export interface ActivityWidget {
           | 'classes'
           | 'assignments'
           | 'assignment-completions'
+          | 'families'
           | 'leads'
         )[]
       | null;

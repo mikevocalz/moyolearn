@@ -22,6 +22,12 @@ export type Stage =
 export interface Lead {
   id: string;
   family: string;
+  /**
+   * The ADR-109 household stamp — a `families` document id. Optional because
+   * rows can predate the stamp (see family-groups.ts `leadsOfFamily` for the
+   * fallback); the example rows carry none because they are copy, not data.
+   */
+  familyId?: string;
   learner: string;
   subject: string;
   stage: Stage;

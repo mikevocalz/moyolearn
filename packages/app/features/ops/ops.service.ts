@@ -13,10 +13,16 @@ import type { Lead, Stage } from './ops.data.ts';
 import { clearsAttention, type StageChange } from './stage-change.ts';
 // Pure and therefore testable — see the headers of those files.
 import { statsFor, type LeadStats } from './lead-stats.ts';
-import { familiesFrom, leadValueNumber, type FamilyGroup } from './family-groups.ts';
+import {
+  attachRollups,
+  leadValueNumber,
+  leadsOfFamily,
+  type FamilyGroup,
+} from './family-groups.ts';
+import type { FamilyContact, FamilyRecord } from './family-record.ts';
 import { NEW_LEAD_STAGE, type NewLeadInput } from './lead-create.ts';
 
-export type { FamilyGroup, LeadStats, NewLeadInput };
+export type { FamilyContact, FamilyGroup, FamilyRecord, LeadStats, NewLeadInput };
 
 /** Repository ports — the caller provides the Payload adapters. */
 export type LoadLeads = (ctx: ProtectedCtx) => Promise<readonly Lead[]>;
@@ -25,13 +31,59 @@ export type LoadLeads = (ctx: ProtectedCtx) => Promise<readonly Lead[]>;
 export type LoadLead = (ctx: ProtectedCtx, leadId: string) => Promise<Lead | null>;
 
 /**
- * Persists a new lead. The stage is fixed by the service (`NEW_LEAD_STAGE`) and
- * `orgId` comes off `ctx` inside the repository — neither is caller input.
+ * Persists a new lead. The stage is fixed by the service (`NEW_LEAD_STAGE`),
+ * the household stamp comes from the service's own upsert, and `orgId` comes
+ * off `ctx` inside the repository — none of the three is caller input.
  */
 export type CreateLeadRecord = (
   ctx: ProtectedCtx,
-  input: NewLeadInput & { stage: Stage },
+  input: NewLeadInput & { stage: Stage; familyId: string },
 ) => Promise<Lead>;
+
+/** The org's household rows — the ADR-109 read the derivation retired into. */
+export type LoadFamilies = (ctx: ProtectedCtx) => Promise<readonly FamilyRecord[]>;
+
+/** Resolves one family by id WITHIN the caller's org, or null — never across it. */
+export type LoadFamily = (ctx: ProtectedCtx, familyId: string) => Promise<FamilyRecord | null>;
+
+/**
+ * Persists the household's full contact list (the record's one write surface).
+ * Resolves null when no family in the caller's org has that id — the same
+ * silent cross-tenant miss every read here makes.
+ */
+export type SaveFamilyContacts = (
+  ctx: ProtectedCtx,
+  familyId: string,
+  contacts: FamilyContact[],
+) => Promise<FamilyRecord | null>;
+
+/**
+ * Finds or creates the org's household for a name, returning its id — the
+ * create path's stamp. Ctx-scoped: the (orgId, name) key means the same
+ * spelling in two orgs is two households, never one.
+ */
+export type UpsertFamilyByName = (ctx: ProtectedCtx, name: string) => Promise<string>;
+
+export interface FamilyListPorts {
+  loadFamilies: LoadFamilies;
+  loadLeads: LoadLeads;
+}
+
+export interface FamilyDetailPorts {
+  loadFamily: LoadFamily;
+  loadLeads: LoadLeads;
+}
+
+/** The record page in one read: the household row plus its pipeline rows. */
+export interface FamilyDetail {
+  family: FamilyRecord;
+  leads: Lead[];
+}
+
+export interface CreateLeadPorts {
+  upsertFamilyByName: UpsertFamilyByName;
+  createLeadRecord: CreateLeadRecord;
+}
 
 /**
  * Persists one stage move. Resolves FALSE when no lead in the caller's org has
@@ -177,32 +229,74 @@ export async function getLead(
 }
 
 /**
- * The interim Families read — the pipeline grouped by family text, server-side
- * (see family-groups.ts for why this derivation exists instead of a household
- * collection). Rides the same repository read the pipeline uses, so the wall
- * holds by construction: nothing here can see what the leads read cannot.
+ * The Families read — ADR-109's real household rows, each carrying a stage
+ * rollup over its leads. Both loads ride ctx-scoped repository reads, so the
+ * wall holds by construction: nothing here can see what the CRM reads cannot.
+ * The two run in parallel because neither shapes the other's query.
  */
 export async function listFamilies(
   ctx: ProtectedCtx,
-  loadLeads: LoadLeads,
+  ports: FamilyListPorts,
 ): Promise<{ families: FamilyGroup[] }> {
   if (!ctx.orgId) return { families: [] };
-  return { families: familiesFrom(await loadLeads(ctx)) };
+  const [families, rows] = await Promise.all([
+    ports.loadFamilies(ctx),
+    ports.loadLeads(ctx),
+  ]);
+  return { families: attachRollups(families, rows) };
+}
+
+/**
+ * One household record, for the route-based family detail: the row plus its
+ * pipeline rows (stage jump-links on the record page). Leads load only AFTER
+ * the family resolves — a cross-tenant id learns nothing, not even that the
+ * org has a pipeline.
+ */
+export async function getFamily(
+  ctx: ProtectedCtx,
+  familyId: string,
+  ports: FamilyDetailPorts,
+): Promise<FamilyDetail | null> {
+  if (!ctx.orgId) return null;
+  const family = await ports.loadFamily(ctx, familyId);
+  if (family === null) return null;
+  const rows = await ports.loadLeads(ctx);
+  return { family, leads: leadsOfFamily({ id: family.id, name: family.name }, rows) };
+}
+
+/**
+ * The record's one write surface. Validation happened at the route
+ * (`parseFamilyContacts` — pure, tested); what the service owns is the tenant
+ * guard, and the repository resolves the id WHERE it also matches `ctx.orgId`
+ * so a guessed cross-tenant id writes nothing and reads as a 404.
+ */
+export async function updateFamilyContacts(
+  ctx: ProtectedCtx,
+  familyId: string,
+  contacts: FamilyContact[],
+  saveFamilyContacts: SaveFamilyContacts,
+): Promise<FamilyRecord | null> {
+  if (!ctx.orgId) return null;
+  return saveFamilyContacts(ctx, familyId, contacts);
 }
 
 /**
  * Creates a lead at the pipeline's first stage. Validation happened at the
  * route (`parseNewLead` — pure, tested); what the service owns is the tenant
- * guard and the stage assignment, because a client that could choose either
- * could write into someone else's funnel or skip its own.
+ * guard, the stage assignment, and the household stamp — the upsert runs HERE,
+ * ctx-scoped, because a client that could choose any of the three could write
+ * into someone else's funnel, skip its own, or point a lead at a foreign
+ * household. Upsert-by-(orgId, name) means creating two leads for one family
+ * yields one household with two rows, not two households.
  */
 export async function createLead(
   ctx: ProtectedCtx,
   input: NewLeadInput,
-  createLeadRecord: CreateLeadRecord,
+  ports: CreateLeadPorts,
 ): Promise<Lead | null> {
   if (!ctx.orgId) return null;
-  return createLeadRecord(ctx, { ...input, stage: NEW_LEAD_STAGE });
+  const familyId = await ports.upsertFamilyByName(ctx, input.family);
+  return ports.createLeadRecord(ctx, { ...input, stage: NEW_LEAD_STAGE, familyId });
 }
 
 /**

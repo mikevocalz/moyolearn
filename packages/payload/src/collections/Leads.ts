@@ -47,6 +47,16 @@ export const Leads: CollectionConfig = {
     { name: 'orgId', type: 'text', required: true, index: true },
     { name: 'family', type: 'text', required: true, index: true },
     /*
+      The household row this lead belongs to (ADR-109) — a `families` document
+      id as a POINTER by convention (doc 13 §5), not a Payload relationship,
+      matching every cross-collection reference in this schema. Nullable
+      because rows predate the collection; the backfill stamps them and the
+      create path stamps every new one. The display `family` text above stays:
+      the pipeline grid renders it on every row, and a display string is not a
+      join.
+    */
+    { name: 'familyId', type: 'text', index: true },
+    /*
       A pointer, not a relationship. Doc 28 §2 makes LearnerRef a reference to
       the identity docs precisely so the CRM cannot traverse into learner data;
       a Payload `relationship` would hand every ops query a populated join.
