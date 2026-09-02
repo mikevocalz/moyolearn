@@ -69,3 +69,27 @@ export const MANUAL_STAGES = [
   'Proposal',
   'Enrolled',
 ] as const satisfies readonly Stage[];
+
+/**
+ * Translates a board drop into the ONE write this pipeline has, or into
+ * nothing. Pure so the board's gate is testable beside the reducer it feeds:
+ *
+ *  - a drop in the card's own column is a re-order, and no manual ordering
+ *    exists to write — the server owns sort, so the card simply settles back;
+ *  - a drop into a column outside MANUAL_STAGES ('At risk') is refused for the
+ *    same reason the table's menu never offers it: the scorer owns that stage,
+ *    and the card visibly snaps home instead of pretending the move took.
+ *
+ * Column ids arrive as strings from the generic StageBoard; the MANUAL_STAGES
+ * lookup is also the narrowing back to Stage, exactly as the route validates.
+ */
+export function boardStageChange(
+  leadId: string,
+  fromColumnId: string,
+  toColumnId: string,
+): StageChange | null {
+  if (toColumnId === fromColumnId) return null;
+  const to = MANUAL_STAGES.find((stage) => stage === toColumnId);
+  if (to === undefined) return null;
+  return { leadId, to };
+}

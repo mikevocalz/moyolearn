@@ -11,6 +11,7 @@ import {
   applyVisibility,
   columnVisibilityFor,
   reconcileTablePrefs,
+  setViewMode,
   toggleColumn,
   toggleDensity,
 } from './ops.prefs.ts';
@@ -50,6 +51,18 @@ describe('toggleDensity', () => {
   });
 });
 
+describe('setViewMode', () => {
+  it('switches faces without touching the table-only prefs', () => {
+    const hidden = toggleColumn(DEFAULT_TABLE_PREFS, 'owner');
+    const board = setViewMode(hidden, 'board');
+    assert.equal(board.viewMode, 'board');
+    // The org.crm law: switching views must never lose the rest of the view.
+    assert.deepEqual(board.hiddenColumns, ['owner']);
+    assert.equal(board.density, hidden.density);
+    assert.equal(setViewMode(board, 'table').viewMode, 'table');
+  });
+});
+
 describe('columnVisibilityFor', () => {
   it('maps hidden ids to false and says nothing about the rest', () => {
     const prefs = toggleColumn(DEFAULT_TABLE_PREFS, 'sessions');
@@ -84,9 +97,22 @@ describe('reconcileTablePrefs', () => {
     assert.equal(reconcileTablePrefs({ density: 'cozy', hiddenColumns: [] }).density, 'cool');
   });
 
+  it('keeps a saved board preference across reloads', () => {
+    assert.equal(reconcileTablePrefs({ viewMode: 'board' }).viewMode, 'board');
+  });
+
+  it('degrades an unknown or missing view mode to the table, never to a blank face', () => {
+    assert.equal(reconcileTablePrefs({ viewMode: 'calendar' }).viewMode, 'table');
+    assert.equal(reconcileTablePrefs({ density: 'roomy' }).viewMode, 'table');
+  });
+
   it('holds NO server data by construction — the trap-1 shape check', () => {
     // If someone adds `rows`, `leads` or any server-owned field to the prefs,
     // this enumeration of keys is the test that names the day it happened.
-    assert.deepEqual(Object.keys(DEFAULT_TABLE_PREFS).sort(), ['density', 'hiddenColumns']);
+    assert.deepEqual(Object.keys(DEFAULT_TABLE_PREFS).sort(), [
+      'density',
+      'hiddenColumns',
+      'viewMode',
+    ]);
   });
 });

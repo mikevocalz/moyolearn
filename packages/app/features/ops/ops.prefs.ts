@@ -13,10 +13,19 @@
  *  A pair, not a scale: a third density would need a third token first. */
 export type OpsDensity = 'cool' | 'roomy';
 
+/**
+ * The pipeline's two faces (org.crm contract: the board is a VIEW, not a
+ * screen). A per-device durable pref like density — nobody pastes "I prefer
+ * the board" into Slack — which is why it lives HERE, in the state_owner's
+ * mandated store, and never in the URL or a second store.
+ */
+export type OpsViewMode = 'table' | 'board';
+
 export interface OpsTablePrefs {
   density: OpsDensity;
   /** Column ids the user has hidden. Only ids from `HIDEABLE_COLUMNS` may appear. */
   hiddenColumns: readonly string[];
+  viewMode: OpsViewMode;
 }
 
 /**
@@ -35,7 +44,17 @@ export const HIDEABLE_COLUMNS = [
 
 const HIDEABLE_IDS: readonly string[] = HIDEABLE_COLUMNS.map((c) => c.id);
 
-export const DEFAULT_TABLE_PREFS: OpsTablePrefs = { density: 'cool', hiddenColumns: [] };
+export const DEFAULT_TABLE_PREFS: OpsTablePrefs = {
+  density: 'cool',
+  hiddenColumns: [],
+  // The table stays the default face: it is the denser read, and a first-run
+  // board would hide the columns preference the Display menu just offered.
+  viewMode: 'table',
+};
+
+export function setViewMode(prefs: OpsTablePrefs, viewMode: OpsViewMode): OpsTablePrefs {
+  return { ...prefs, viewMode };
+}
 
 export function toggleColumn(prefs: OpsTablePrefs, id: string): OpsTablePrefs {
   if (!HIDEABLE_IDS.includes(id)) return prefs;
@@ -83,7 +102,11 @@ export function applyVisibility(
  */
 /** What a save might look like: written by ANY past version, so every field is
  *  loose — a density string this build never shipped, ids for renamed columns. */
-export type SavedTablePrefs = Partial<{ density: string; hiddenColumns: readonly string[] }>;
+export type SavedTablePrefs = Partial<{
+  density: string;
+  hiddenColumns: readonly string[];
+  viewMode: string;
+}>;
 
 export function reconcileTablePrefs(saved: SavedTablePrefs | null): OpsTablePrefs {
   return {
@@ -93,5 +116,8 @@ export function reconcileTablePrefs(saved: SavedTablePrefs | null): OpsTablePref
           (id): id is string => typeof id === 'string' && HIDEABLE_IDS.includes(id),
         )
       : [],
+    // Same posture as density: only the one non-default literal is honoured,
+    // so a save from a version with more (or other) views degrades to the table.
+    viewMode: saved?.viewMode === 'board' ? 'board' : 'table',
   };
 }

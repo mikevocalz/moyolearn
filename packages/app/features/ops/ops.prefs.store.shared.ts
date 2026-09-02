@@ -3,9 +3,11 @@ import {
   DEFAULT_TABLE_PREFS,
   applyVisibility,
   reconcileTablePrefs,
+  setViewMode,
   toggleColumn,
   toggleDensity,
   type OpsTablePrefs,
+  type OpsViewMode,
   type SavedTablePrefs,
 } from './ops.prefs.ts';
 
@@ -36,6 +38,7 @@ export interface OpsPrefsState {
   toggleColumn: (id: string) => void;
   toggleDensity: () => void;
   adoptVisibility: (visibility: Record<string, boolean>) => void;
+  setViewMode: (viewMode: OpsViewMode) => void;
 }
 
 export function readTablePrefs(storage: OpsPrefsStorage): OpsTablePrefs {
@@ -68,6 +71,7 @@ export function createOpsPrefsStore(storage: OpsPrefsStorage, initial: OpsTableP
       toggleColumn: (id) => persist(toggleColumn(get().prefs, id)),
       toggleDensity: () => persist(toggleDensity(get().prefs)),
       adoptVisibility: (visibility) => persist(applyVisibility(get().prefs, visibility)),
+      setViewMode: (viewMode) => persist(setViewMode(get().prefs, viewMode)),
     };
   });
 }

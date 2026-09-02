@@ -3,7 +3,7 @@
 // SOT-KEYWORDS: ops stage change reducer test pipeline attention
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
-import { applyStageChange } from './stage-change.ts';
+import { applyStageChange, boardStageChange } from './stage-change.ts';
 import type { Lead } from './ops.data.ts';
 
 const lead = (over: Partial<Lead> = {}): Lead => ({
@@ -43,5 +43,35 @@ describe('applyStageChange', () => {
     const rows = [lead()];
     applyStageChange(rows, { leadId: 'l1', to: 'Enrolled' });
     assert.equal(rows[0]?.stage, 'Trial scheduled');
+  });
+});
+
+describe('boardStageChange', () => {
+  it('turns a cross-column drop into the one stage write', () => {
+    assert.deepEqual(boardStageChange('l1', 'Trial scheduled', 'Proposal'), {
+      leadId: 'l1',
+      to: 'Proposal',
+    });
+  });
+
+  it('refuses a same-column drop — no manual ordering exists to write', () => {
+    assert.equal(boardStageChange('l1', 'Inquiry', 'Inquiry'), null);
+  });
+
+  it("refuses a drop into the scorer-owned 'At risk' lane", () => {
+    // The same rule the table's menu enforces by omission: doc 28 §6 derives
+    // 'At risk' from health signals, so no hand may set it — on any face.
+    assert.equal(boardStageChange('l1', 'Enrolled', 'At risk'), null);
+  });
+
+  it('lets a card leave At risk through the manual stages', () => {
+    assert.deepEqual(boardStageChange('l1', 'At risk', 'Enrolled'), {
+      leadId: 'l1',
+      to: 'Enrolled',
+    });
+  });
+
+  it('refuses a column id that is not a stage at all', () => {
+    assert.equal(boardStageChange('l1', 'Inquiry', 'Won'), null);
   });
 });

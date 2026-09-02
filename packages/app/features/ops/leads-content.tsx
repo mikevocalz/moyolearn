@@ -45,6 +45,7 @@ import {
   DataTable,
   EmptyState,
   SearchBar,
+  SegmentedControl,
   SuppressibleValue,
   useAppForm,
   type Suppressible,
@@ -56,8 +57,9 @@ import { useViewParams } from './use-view-params';
 import type { LeadSortField } from './ops.service';
 import { MANUAL_STAGES } from './stage-change';
 import { useStageAction } from './use-stage-action';
-import { HIDEABLE_COLUMNS, columnVisibilityFor } from './ops.prefs';
+import { HIDEABLE_COLUMNS, columnVisibilityFor, type OpsViewMode } from './ops.prefs';
 import { useOpsTablePrefs } from './ops.prefs.store';
+import { LeadsBoard } from './leads-board';
 import { leadDetailPath } from './ops-paths';
 
 /*
@@ -397,6 +399,7 @@ export function LeadsScreen() {
   const toggleColumn = useOpsTablePrefs((s) => s.toggleColumn);
   const toggleDensity = useOpsTablePrefs((s) => s.toggleDensity);
   const adoptVisibility = useOpsTablePrefs((s) => s.adoptVisibility);
+  const setViewMode = useOpsTablePrefs((s) => s.setViewMode);
 
   /*
     `manualSorting` + `manualPagination`: the server already sorted and paged, so
@@ -444,6 +447,81 @@ export function LeadsScreen() {
   const total = page?.total ?? 0;
   const totalUnfiltered = page?.totalUnfiltered ?? 0;
 
+  /*
+    The six states are built ONCE and handed to whichever face is showing —
+    the org.crm law is two views over one store, and that includes the empty,
+    error and paging states reading word-for-word the same. `totalUnfiltered`
+    discriminates the two empties exactly as before (doc 37 §2): a genuinely
+    empty pipeline seeds the labelled examples, a filter that matched nothing
+    keeps the way out.
+  */
+  const emptyNode =
+    totalUnfiltered === 0 ? (
+      <ExampleLeads />
+    ) : (
+      <EmptyState
+        icon={<Text className="text-title">＋</Text>}
+        title="Nothing needs attention"
+        description="Every family in the pipeline has a next step booked."
+        action={
+          <Button
+            title="Show all leads"
+            variant="outline"
+            onPress={() => setView({ onlyAttention: false })}
+          />
+        }
+      />
+    );
+
+  const errorNode = (
+    <EmptyState
+      icon={<Text className="text-title">!</Text>}
+      title="Could not load the pipeline"
+      description="The list is stale, not gone. Try again in a moment."
+      action={<Button title="Try again" variant="outline" onPress={() => setView({})} />}
+    />
+  );
+
+  /*
+    Navattic's arrangement: range and totals on the left, the pager on the
+    right. Cursor pagination is forward-only by nature, so there is no
+    "page 4 of 9" to offer — "First" is the honest way back, and pretending to
+    random-access pages you have not fetched is how an offset bug gets
+    reintroduced. The BOARD pages with this same pager: it is a view over the
+    current cursor page, never a fetch-all (the decision is stated in
+    leads-board.tsx where the lanes render).
+  */
+  const pagerFooter = (
+    <>
+      <Text className="text-caption text-text-muted">
+        {/*
+          The threshold is INTERPOLATED, not typed. This line read
+          "under 5" while the rule was 10, so the interface was
+          publishing a privacy promise the code did not keep — and the
+          number a reader trusts is the one on screen.
+        */}
+        {rows.length} of {total} shown · {totalUnfiltered} families total · attendance hidden for
+        groups under {MIN_COHORT}
+      </Text>
+      <View className="flex-row items-center gap-element">
+        <Button
+          title="First"
+          variant="outline"
+          size="sm"
+          disabled={!view.cursor}
+          onPress={() => setView({ cursor: undefined })}
+        />
+        <Button
+          title="Next"
+          variant="outline"
+          size="sm"
+          disabled={!page?.nextCursor}
+          onPress={() => setView({ cursor: page?.nextCursor })}
+        />
+      </View>
+    </>
+  );
+
   return (
     <View className={`gap-section ${GUTTER}`}>
       <View className="gap-element">
@@ -462,6 +540,20 @@ export function LeadsScreen() {
           accent={view.onlyAttention}
           action={
             <View className="flex-row items-center gap-element">
+              {/*
+                The view switcher (Lightfield/Outseta put Table⇄Board with the
+                toolbar, never on the board). A durable per-device pref beside
+                density — it patches the ops prefs store, so the URL's filters
+                and the table's selection are untouched by a switch.
+              */}
+              <SegmentedControl<OpsViewMode>
+                options={[
+                  { value: 'table', label: 'Table' },
+                  { value: 'board', label: 'Board' },
+                ]}
+                value={prefs.viewMode}
+                onChange={setViewMode}
+              />
               <Button
                 title={view.onlyAttention ? 'Show all' : 'Needs attention'}
                 variant="outline"
@@ -549,89 +641,46 @@ export function LeadsScreen() {
           ) : null}
         </View>
 
-        <DataTable
-          table={table}
-          density={prefs.density}
-          status={status}
-          renderCard={(row) => (
-            <Pressable
-              onPress={() => openLead(row.original.id)}
-              aria-label={`Open lead: ${row.original.family}`}
-            >
-              <LeadCard lead={row.original} />
-            </Pressable>
-          )}
-          empty={
-            /*
-              Two different empties (doc 37 §2): a pipeline that is genuinely
-              empty — zero rows before ANY filter — seeds labelled example rows,
-              while a filter that merely matched nothing keeps the honest "your
-              filter did this" state with the way out. `totalUnfiltered` is the
-              discriminator because it ignores the view entirely.
-            */
-            totalUnfiltered === 0 ? (
-              <ExampleLeads />
-            ) : (
-              <EmptyState
-                icon={<Text className="text-title">＋</Text>}
-                title="Nothing needs attention"
-                description="Every family in the pipeline has a next step booked."
-                action={
-                  <Button
-                    title="Show all leads"
-                    variant="outline"
-                    onPress={() => setView({ onlyAttention: false })}
-                  />
-                }
-              />
-            )
-          }
-          error={
-            <EmptyState
-              icon={<Text className="text-title">!</Text>}
-              title="Could not load the pipeline"
-              description="The list is stale, not gone. Try again in a moment."
-              action={<Button title="Try again" variant="outline" onPress={() => setView({})} />}
-            />
-          }
-          footer={
-            /*
-              Navattic's arrangement: range and totals on the left, the pager on
-              the right. Cursor pagination is forward-only by nature, so there is
-              no "page 4 of 9" to offer — "First" is the honest way back, and
-              pretending to random-access pages you have not fetched is how an
-              offset bug gets reintroduced.
-            */
-            <>
-              <Text className="text-caption text-text-muted">
-                {/*
-                  The threshold is INTERPOLATED, not typed. This line read
-                  "under 5" while the rule was 10, so the interface was
-                  publishing a privacy promise the code did not keep — and the
-                  number a reader trusts is the one on screen.
-                */}
-                {rows.length} of {total} shown · {totalUnfiltered} families total · attendance
-                hidden for groups under {MIN_COHORT}
-              </Text>
-              <View className="flex-row items-center gap-element">
-                <Button
-                  title="First"
-                  variant="outline"
-                  size="sm"
-                  disabled={!view.cursor}
-                  onPress={() => setView({ cursor: undefined })}
-                />
-                <Button
-                  title="Next"
-                  variant="outline"
-                  size="sm"
-                  disabled={!page?.nextCursor}
-                  onPress={() => setView({ cursor: page?.nextCursor })}
-                />
-              </View>
-            </>
-          }
-        />
+        {/*
+          The pipeline's two faces (contract: the board is a VIEW, not a
+          screen). Both branches read `rows` — the optimistic layer over the
+          same URL-filtered query — and both write through `moveStage`, so a
+          move made on either face is the same reducer, the same rollback and
+          the same error strip above. Offline follows the existing pattern on
+          both: `keepPreviousData` keeps the last-synced page on screen and a
+          failed write states itself in the strip (no offline queue for CRM
+          writes, per contract).
+        */}
+        {prefs.viewMode === 'board' ? (
+          <LeadsBoard
+            rows={rows}
+            status={status}
+            density={prefs.density}
+            pending={pending}
+            moveStage={moveStage}
+            openLead={openLead}
+            empty={emptyNode}
+            error={errorNode}
+            footer={pagerFooter}
+          />
+        ) : (
+          <DataTable
+            table={table}
+            density={prefs.density}
+            status={status}
+            renderCard={(row) => (
+              <Pressable
+                onPress={() => openLead(row.original.id)}
+                aria-label={`Open lead: ${row.original.family}`}
+              >
+                <LeadCard lead={row.original} />
+              </Pressable>
+            )}
+            empty={emptyNode}
+            error={errorNode}
+            footer={pagerFooter}
+          />
+        )}
       </View>
 
       <AddLeadCard />

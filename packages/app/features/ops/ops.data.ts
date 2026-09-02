@@ -160,6 +160,15 @@ export const STAGE_TONE = {
 } as const satisfies Record<Stage, 'neutral' | 'primary' | 'success' | 'attention'>;
 
 /**
+ * The pipeline order as a runtime list — the board's column axis. Derived from
+ * STAGE_TONE rather than typed again: its `satisfies Record<Stage, …>` is the
+ * completeness check (a new Stage that skips the tone map fails to compile),
+ * and its declaration order above IS doc 28 §3's pipeline order, ending on the
+ * scorer-owned 'At risk'. A second hand-written list would be a second order.
+ */
+export const STAGES = Object.keys(STAGE_TONE) as readonly Stage[];
+
+/**
  * Invoiced revenue by month, per district.
  *
  * Riverside hides ONE month and Lincoln hides TWO ADJACENT ones, deliberately.
