@@ -109,6 +109,14 @@ export function EnrollmentScreen() {
         <>
           <View className="gap-stack">
             <SectionHeader title="Ready to complete" count={String(inProgress.length)} />
+            {/* The cap is STATED, not silent: this surface reads one page of
+                ENROLLMENT_VIEW.limit rows and slices it, so a pipeline past
+                that size would quietly drop families from the queue — the
+                reader deserves the caveat the code lives with. */}
+            <Text className="text-caption text-text-muted">
+              Reads the first {ENROLLMENT_VIEW.limit} pipeline rows — a larger pipeline pages on
+              the Leads screen.
+            </Text>
             {inProgress.length === 0 ? (
               <EmptyState
                 icon={<Text className="text-title">＋</Text>}
@@ -152,6 +160,13 @@ export function EnrollmentScreen() {
                         title="Book sessions"
                         variant="outline"
                         size="sm"
+                        /*
+                          DECISION — no ?familyId= passthrough: BookingForm's
+                          props are onDone/onOpenEditorSettings only and the
+                          schedule feature reads no search params, so a param
+                          here would be a message nobody receives. Preselecting
+                          the family lands WITH a BookingForm prop for it.
+                        */
                         onPress={() => router.push('/schedule')}
                       />
                     }

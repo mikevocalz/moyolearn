@@ -35,7 +35,7 @@ max_interactions_to_primary: 1
 state_owner: "server count projections via React Query; URL owns period/filter"
 ```
 
-**Status:** MISSING (D-screen-inventory verbatim). Build is Phase 3 per doc 36; IA and this contract now.
+**Status:** MISSING (D-screen-inventory verbatim). Build is Phase 3 per doc 36; IA and this contract now. DEFERRED with the blocker named (nav.ts's pending-rail note, carried here so the contract states what the code already knows): IncidentReports and Consents carry no orgId/districtId (the doc 31 channel is platform-scoped), and the only bridge — Enrollments (learnerAuthId → districtId) — is temporally wrong for occurredAt-in-period counting (it reattributes history to wherever the learner sits today) and ambiguous for multi-district/exited learners. Attribution needs a schema ADR, not a query; Phase 3 per doc 36 §3.5 / ADR-104.
 
 **Notes:**
 - The counts-not-contents boundary is the contract's core invariant. Any future "view incident" affordance here is a violation, not an enhancement — incidents travel doc 31's channel (guardian view + org triage queue) only.

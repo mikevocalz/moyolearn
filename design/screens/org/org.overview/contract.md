@@ -42,7 +42,7 @@ max_interactions_to_primary: 1 (top exception card)
 state_owner: "Existing: useOpsChrome (features/ops/ops.store.ts — sidebar mode + active section) for chrome; [add] exceptions query replacing screen.shared.tsx demo data. Filters/sort stay in URL search params (ops store header comment's law: shareable state goes in the URL)."
 ```
 
-**Status:** PARTIAL (D: `org.overview` — demo data in `ops/screen.shared.tsx`; mobile companion renders the full web CRM, slim to exceptions per doc 36 §3.4).
+**Status:** PARTIAL. Today's sessions are REAL per ADR-110 (`use-sessions` reads the `sessions` collection behind `protectedOperation`; loading/error thread into the hero, so a failed read renders a stale/failed banner and never a calm zero, and a genuinely clean day renders the contract's "Nothing needs you" with live exits to org.schedule and org.crm). Revenue remains the documented fixture (`ops.data.ts` `REVENUE_BY_ORG` — doc 19 §5's rollups do not exist) and is labelled "Example data" on-surface. Still [add]: the exceptions query — the hero shows today's sessions, not yet the exception list this contract's primary action is written against.
 
 **Notes:**
 - The rail this screen anchors is doc 36 §3.4's grouping verbatim: `Overview · CRM · Scheduling · Money · Safety · Settings` (G §3.2 split of the current one-blob `/ops`).

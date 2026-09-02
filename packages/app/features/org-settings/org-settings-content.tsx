@@ -21,8 +21,9 @@
 //   Structure only.
 // SOT: design/screens/org/org.settings/contract.md · docs/38-front-door-and-flow.md §5B
 // SOT-KEYWORDS: org settings content identity plan seats status owner finance role wall pw-05
+import { useRouter } from 'solito/navigation';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
-import { Avatar, Badge, Card, FadeIn, Heading, LoadingSkeleton, PlanCard, Text } from '@acme/ui';
+import { Avatar, Badge, Button, Card, FadeIn, Heading, LoadingSkeleton, PlanCard, Text } from '@acme/ui';
 import { useAppSession } from '../../providers/session';
 import { useEntitlements } from '../../providers/entitlements';
 import type { SubscriptionState } from '@acme/auth';
@@ -30,6 +31,7 @@ import type { OrgSettingsRead } from './org-settings.service';
 import { formatPeriodDate, PLAN_DISPLAY } from './org-settings.data';
 
 export function OrgSettingsContent({ read }: { read: OrgSettingsRead }) {
+  const router = useRouter();
   /*
     The role wall mirrors org.safety's denied card: a correct answer, never a
     broken screen — and never an upsell (the refusal is 403-shaped; there is
@@ -44,6 +46,11 @@ export function OrgSettingsContent({ read }: { read: OrgSettingsRead }) {
         <Text variant="caption" tone="muted">
           Organization settings are owner and finance work. Nothing is wrong with your account.
         </Text>
+        {/* org.safety's no_data idiom: the wall carries a way out, because a
+            correct refusal with no door is still a dead end. */}
+        <View className="self-start">
+          <Button title="Back to Overview" variant="outline" onPress={() => router.push('/ops')} />
+        </View>
       </Card>
     );
   }

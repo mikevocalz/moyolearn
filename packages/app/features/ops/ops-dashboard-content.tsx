@@ -19,11 +19,13 @@
 //   one dominant panel, supporting stats demoted underneath it) ·
 //   https://mobbin.com/screens/5ee90a6f-5d97-495c-ad2a-d3dd74ab8b7d (Rocket Money
 //   — phone card: identity left, headline figure right, labelled facts beneath)
-import { ScheduleCard, StatCard, TrendLine } from '@acme/ui';
+import { useRouter } from 'solito/navigation';
+import { Badge, Banner, Button, EmptyState, LoadingSkeleton, ScheduleCard, StatCard, TrendLine } from '@acme/ui';
 import { Text, View } from '@acme/ui/primitives';
 import type { Session } from './ops.data';
 import type { TrendPoint } from '@acme/ui';
 import { useLeads } from './use-leads';
+import { leadsRootPath } from './ops-paths';
 import { GUTTER, SectionHeader } from './leads-content';
 
 /** Stats-only view of the pipeline: one row of transfer, org-wide statistics. */
@@ -41,6 +43,13 @@ export interface OpsDashboardContentProps {
     rendered for a second district, or in a story, or in a test.
   */
   sessions: readonly Session[];
+  /*
+    The read's OWN state, threaded from useSessions rather than discarded at
+    the screen boundary: this surface used to render a failed fetch as a calm
+    "0 sessions" day, which is the exact lie org-safety's Body is written
+    against — "no sessions" and "we could not check" are different sentences.
+  */
+  sessionsStatus: 'loading' | 'error' | 'ready';
   revenue: readonly TrendPoint[];
 }
 
@@ -48,8 +57,10 @@ export function OpsDashboardContent({
   today,
   operatorName,
   sessions,
+  sessionsStatus,
   revenue,
 }: OpsDashboardContentProps) {
+  const router = useRouter();
   /*
     The dedicated stats read. `statsFor` in the service computes over every row
     in the org regardless of the page, so `limit: 1` buys the headline numbers
@@ -101,7 +112,9 @@ export function OpsDashboardContent({
             when there are none rather than claiming a deadline for an empty day.
           */}
           {stats?.needsAttention ?? 0} families need a decision today
-          {sessions.length > 0 ? `, and ${sessions.length} ${sessions.length === 1 ? 'session runs' : 'sessions run'} before ${lastSessionEnds}.` : '.'}
+          {/* The session clause only speaks when the read succeeded — a loading
+              or failed read must not narrate a schedule it does not have. */}
+          {sessionsStatus === 'ready' && sessions.length > 0 ? `, and ${sessions.length} ${sessions.length === 1 ? 'session runs' : 'sessions run'} before ${lastSessionEnds}.` : '.'}
         </Text>
       </View>
 
@@ -113,26 +126,80 @@ export function OpsDashboardContent({
       */}
       <View className="flex-col gap-stack xl:flex-row xl:items-start">
         <View className="min-w-0 flex-1 gap-stack xl:flex-[2]">
-          <SectionHeader title="Today's sessions" count={String(sessions.length)} />
-          <View className="gap-stack">
-            {sessions.map((session) => (
-              <ScheduleCard
-                key={session.id}
-                time={session.time}
-                title={session.learner}
-                meta={[`${session.subject} · ${session.tutor}`]}
-                mode={session.mode}
-                status={session.needsAttention ? 'attention' : 'default'}
-                /*
-                  `secondaryAction`, so the card's button renders outline. A
-                  primary here would put three yellow buttons down the hero and
-                  spend the screen's single accent (§3.2) three times over —
-                  the accent belongs to the one thing that needs a decision.
-                */
-                secondaryAction={{ label: 'Open session', onPress: () => {} }}
-              />
-            ))}
-          </View>
+          <SectionHeader
+            title="Today's sessions"
+            /* The count chip speaks only for a settled read — a "0" chip over a
+               failed or in-flight fetch is the calm-zero lie in miniature. */
+            count={sessionsStatus === 'ready' ? String(sessions.length) : undefined}
+          />
+          {sessionsStatus === 'error' ? (
+            /*
+              A failed read states itself. With cached rows below it the list is
+              STALE (Query keeps the last success on a refetch failure); with
+              nothing cached the banner is the whole answer — never the calm
+              empty day.
+            */
+            <Banner
+              tone="warning"
+              title={sessions.length > 0 ? "Today's schedule may be stale" : "Couldn't load today's sessions"}
+              description={
+                sessions.length > 0
+                  ? 'The last read failed — these sessions are from the previous sync.'
+                  : 'The read failed, so an empty list here means unknown, not a clear day. Try again in a moment.'
+              }
+            />
+          ) : null}
+          {sessionsStatus === 'loading' ? (
+            <LoadingSkeleton variant="card" count={2} />
+          ) : sessionsStatus === 'ready' && sessions.length === 0 ? (
+            /* The contract's clean day (org.overview no_data): "Nothing needs
+               you", with live exits to the schedule and the pipeline — a calm
+               state, not a dead end. */
+            <EmptyState
+              icon={<Text className="text-title">✓</Text>}
+              title="Nothing needs you"
+              description="No sessions run today and nothing is waiting on a decision here."
+              action={
+                <View className="flex-row flex-wrap gap-element">
+                  <Button
+                    title="Open the schedule"
+                    variant="outline"
+                    onPress={() => router.push('/schedule')}
+                  />
+                  <Button
+                    title="Open the pipeline"
+                    variant="outline"
+                    onPress={() => router.push(leadsRootPath())}
+                  />
+                </View>
+              }
+            />
+          ) : (
+            <View className="gap-stack">
+              {sessions.map((session) => (
+                <ScheduleCard
+                  key={session.id}
+                  time={session.time}
+                  title={session.learner}
+                  meta={[`${session.subject} · ${session.tutor}`]}
+                  mode={session.mode}
+                  status={session.needsAttention ? 'attention' : 'default'}
+                  /*
+                    `secondaryAction`, so the card's button renders outline. A
+                    primary here would put three yellow buttons down the hero and
+                    spend the screen's single accent (§3.2) three times over —
+                    the accent belongs to the one thing that needs a decision.
+
+                    It opens the org schedule: no per-session detail route exists
+                    yet, so the door opens the day the session lives on rather
+                    than doing nothing (the dead onPress this replaces) — the
+                    Import-button law says a control either works or is absent.
+                  */
+                  secondaryAction={{ label: 'Open session', onPress: () => router.push('/schedule') }}
+                />
+              ))}
+            </View>
+          )}
         </View>
 
         <View className="gap-stack xl:flex-1">
@@ -144,6 +211,13 @@ export function OpsDashboardContent({
             the month, not a thing to act on before 5pm.
           */}
           <View className="gap-stack rounded-card border-2 border-border bg-surface-raised p-inset shadow-card">
+            {/* REVENUE_BY_ORG is still a fixture (its own comment records why —
+                doc 19 §5's rollups do not exist), so the panel says so with the
+                EXAMPLE_LEADS labelling idiom rather than rendering copy as
+                real money. The label leaves with the rollup read. */}
+            <View className="self-start">
+              <Badge label="Example data" />
+            </View>
             <TrendLine
               data={revenue}
               title={`Invoiced · ${revenue.length} months`}

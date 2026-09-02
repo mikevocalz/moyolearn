@@ -1,7 +1,21 @@
+// The org Inbox's item store — org-scoped items only, each carrying the exit
+// where it is HANDLED (org.inbox contract: "an item with no action target is a
+// dead end and may not ship"). The liquid-glass template feed this replaced
+// ("New follower", "Order shipped", a $149 invoice) belonged to another
+// product; rendering it as an org's inbox presented demo copy as business
+// truth. Server wiring is still the contract's [add] — until it lands these
+// are seeded dev-persona items shaped like the real inbound kinds (reschedule
+// requests → schedule, lead replies → CRM), never platform notices.
+//
+// DECISION — no incident-shaped item may ever be seeded or wired here:
+// doc 31's channel is org.safety exclusively (contract Notes: "an
+// incident-shaped item appearing in the inbox is a contract violation").
+// The old "Security alert" Shield row is gone for exactly that reason.
+// SOT: design/screens/org/org.inbox/contract.md · docs/pack/36-role-navigation-flows.md §3.4
+// SOT-KEYWORDS: org inbox notifications store items exit target schedule crm zustand
 import { create } from 'zustand';
-import {
-  UserPlus, Package, MessageCircle, Wallet, Flag, Shield, BarChart3,
-} from '@acme/ui/icons';
+import { Calendar, MessageCircle, UserPlus } from '@acme/ui/icons';
+import { leadsRootPath } from '../ops';
 
 export interface Notification {
   id: string;
@@ -10,6 +24,9 @@ export interface Notification {
   /** Real timestamp (epoch ms) — grouping and relative labels derive from it,
    * never from a hand-written "2m ago" string or a list position. */
   at: number;
+  /** The exit where this item is handled — REQUIRED, so an actionless item is
+   * unrepresentable (org.inbox law). */
+  href: string;
   icon: React.ComponentType<{ size?: number; className?: string }>;
   tone: 'primary' | 'accent' | 'gold';
   read: boolean;
@@ -22,14 +39,17 @@ const MINUTE = 60_000;
 const HOUR = 60 * MINUTE;
 const DAY = 24 * HOUR;
 
+/*
+  Exit targets ride the ops-paths fork where the platforms differ: the CRM is
+  web-first, so `leadsRootPath()` is /leads on web and the Overview tab on
+  mobile (a real surface, never a 404). /schedule exists on both. No
+  billing_notice item is seeded: its contract exit is org.money, which is
+  STRUCK — an item whose door leads nowhere may not ship.
+*/
 const SEED: Notification[] = [
-  { id: '1', title: 'New follower', body: 'Sarah Chen started following you', at: NOW - 2 * MINUTE, icon: UserPlus, tone: 'primary', read: false },
-  { id: '2', title: 'Order shipped', body: 'Your order #1042 is on its way', at: NOW - 18 * MINUTE, icon: Package, tone: 'accent', read: false },
-  { id: '3', title: 'Comment on your post', body: 'alex: "Great work on the UI!"', at: NOW - 1 * HOUR, icon: MessageCircle, tone: 'primary', read: false },
-  { id: '4', title: 'Payment received', body: '$149.00 · Invoice #1029', at: NOW - 3 * HOUR, icon: Wallet, tone: 'gold', read: true },
-  { id: '5', title: 'Project milestone', body: 'Mobile app v2 reached 80%', at: NOW - 1 * DAY, icon: Flag, tone: 'accent', read: true },
-  { id: '6', title: 'Security alert', body: 'New sign-in from Safari on MacBook', at: NOW - 1 * DAY - 2 * HOUR, icon: Shield, tone: 'primary', read: true },
-  { id: '7', title: 'Weekly digest', body: 'Your stats are up 12% this week', at: NOW - 2 * DAY, icon: BarChart3, tone: 'gold', read: true },
+  { id: '1', title: 'Reschedule request', body: 'The Chen family asked to move Thursday 4:00pm', at: NOW - 18 * MINUTE, href: '/schedule', icon: Calendar, tone: 'accent', read: false },
+  { id: '2', title: 'Lead replied', body: 'The Alvarez family answered your trial follow-up', at: NOW - 1 * HOUR, href: leadsRootPath(), icon: MessageCircle, tone: 'primary', read: false },
+  { id: '3', title: 'New inquiry', body: 'The Okafor family asked about Science tutoring', at: NOW - 1 * DAY, href: leadsRootPath(), icon: UserPlus, tone: 'gold', read: true },
 ];
 
 // Notification state — zustand always (repo rule).

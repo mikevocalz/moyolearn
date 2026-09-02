@@ -1,7 +1,13 @@
 'use client';
-// Notifications — mirrors the liquid-glass template (unread header + mark-all,
-// Today/Earlier groups, icon-well rows, tap to read) with Legend Motion.
+// The org Inbox surface (unread header + mark-all, Today/Earlier groups,
+// icon-well rows) with Legend Motion. A row is a DOOR: pressing it marks the
+// item read and opens the exit where it is handled (org.inbox contract — every
+// item carries an action target; triage happens on the schedule/CRM surface,
+// never in the list).
+// SOT: design/screens/org/org.inbox/contract.md
+// SOT-KEYWORDS: org inbox notifications content rows groups unread exit door
 import { formatDistanceToNow, isToday } from 'date-fns';
+import { useRouter } from 'solito/navigation';
 import { Section, View, Text as TWText, Pressable } from '@acme/ui/tw';
 import { Heading, Text, FadeIn, EmptyState } from '@acme/ui';
 import { Bell } from '@acme/ui/icons';
@@ -10,11 +16,15 @@ import { useNotifications, type Notification } from './notifications.store';
 
 function NotificationRow({ item, index }: { item: Notification; index: number }) {
   const markRead = useNotifications((s) => s.markRead);
+  const router = useRouter();
   return (
     <FadeIn delay={80 + index * 45}>
       <Pressable
-        aria-label={item.title}
-        onPress={() => markRead(item.id)}
+        aria-label={`${item.title} — open where it’s handled`}
+        onPress={() => {
+          markRead(item.id);
+          router.push(item.href);
+        }}
         className={`flex-row items-start gap-stack px-4 py-3.5 transition-colors duration-fast hover:bg-surface-sunken ${
           item.read ? '' : 'bg-primary/5'
         }`}

@@ -237,9 +237,19 @@ function FilterChip({ label, onRemove }: { label: string; onRemove?: () => void 
     <View className="min-h-target-adult flex-row items-center gap-element self-start rounded-control border-2 border-border bg-surface-raised px-inset-tight">
       <Text className="text-caption text-text">{label}</Text>
       {onRemove ? (
-        <Text aria-hidden className="text-caption text-text-muted">
-          ×
-        </Text>
+        /*
+          The × is the chip's one job — it was an aria-hidden glyph with the
+          handler never wired, a control that could be seen but not pressed.
+          A real Pressable now, full-height so the target matches the adult
+          floor the chip's own min-h sets.
+        */
+        <Pressable
+          onPress={onRemove}
+          aria-label={`Remove filter: ${label}`}
+          className="min-h-target-adult items-center justify-center px-element rounded-control focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+        >
+          <Text className="text-caption text-text-muted">×</Text>
+        </Pressable>
       ) : null}
     </View>
   );
@@ -441,7 +451,13 @@ export function LeadsScreen() {
       });
     },
     getCoreRowModel: getCoreRowModel(),
-    enableRowSelection: true,
+    /*
+      DECISION — no `enableRowSelection`: it was switched on with no selection
+      column, no bulk action, and state that silently died on a Table⇄Board
+      switch. Selection isn't a feature yet; a half-open door to one is worse
+      than none. It returns with the first bulk action, alongside a checkbox
+      column and a selection model that survives the view toggle.
+    */
   });
 
   const total = page?.total ?? 0;
@@ -536,7 +552,14 @@ export function LeadsScreen() {
       <View className="gap-stack">
         <SectionHeader
           title="Pipeline"
-          count={`${total} need attention`}
+          /*
+            `stats.needsAttention`, never `total`: total is the FILTERED count,
+            so with a stage filter on, the chip claimed a number that was
+            really "rows matching this view". The stats block is computed over
+            the whole org regardless of the page (statsFor's contract), which
+            is the only honest source for an org-wide claim.
+          */
+          count={`${page?.stats.needsAttention ?? 0} need attention`}
           accent={view.onlyAttention}
           action={
             <View className="flex-row items-center gap-element">

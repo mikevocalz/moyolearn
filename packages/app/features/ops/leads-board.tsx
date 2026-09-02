@@ -42,6 +42,22 @@ import type { OpsDensity } from './ops.prefs';
 const CARD_PITCH = 96;
 
 /**
+ * Lane chrome above the pitch stack: StageColumnFrame's cool inset (p-inset-
+ * tight top and bottom) plus its header row and pb-element — what the frame
+ * spends before the first card starts.
+ */
+const COLUMN_CHROME = 72;
+
+/**
+ * The stories' 480 harness, as the board's floor. StageBoard's root is
+ * `flex-1` (StageBoard.web.tsx:349), which in this screen's auto-height
+ * column resolved to ZERO — the board rendered collapsed. Every harness in
+ * StageBoard.stories.tsx wraps it in a definite height for exactly this
+ * reason, so the screen does what the stories do.
+ */
+const BOARD_MIN_HEIGHT = 480;
+
+/**
  * DECISION — 'At risk' is a COLUMN, not a flag treatment: doc 28 §6's scorer
  * writes that stage, and a pipeline view that hides the scorer's verdicts
  * would answer "which leads are stalling?" with a lie. But it is a read-only
@@ -173,6 +189,17 @@ export function LeadsBoard({
     return <View className="items-center justify-center gap-stack p-section">{empty}</View>;
   }
 
+  /*
+    The tallest lane decides the board's height (fixed-pitch stacks don't
+    scroll vertically inside a lane), floored at the stories' harness so an
+    almost-empty pipeline still reads as a board of lanes, not a strip.
+  */
+  const tallestLane = COLUMNS.reduce(
+    (max, column) => Math.max(max, cards.filter((card) => card.columnId === column.id).length),
+    1,
+  );
+  const boardHeight = Math.max(BOARD_MIN_HEIGHT, COLUMN_CHROME + tallestLane * CARD_PITCH);
+
   return (
     <View className="gap-stack">
       {/*
@@ -184,20 +211,24 @@ export function LeadsBoard({
         never performs — a bigger board page is a future limit change, made
         honestly, not a silent fetch-all here.
       */}
-      <StageBoard
-        columns={COLUMNS}
-        cards={cards}
-        renderCard={renderCard}
-        cardPitch={CARD_PITCH}
-        density={density}
-        onMove={(cardId, fromColumnId, toColumnId) => {
-          const change = boardStageChange(cardId, fromColumnId, toColumnId);
-          // Null covers both refusals: a same-column re-order (no manual
-          // ordering exists to write) and a drop into the scorer-owned
-          // 'At risk' — the card snaps home, and the write path never fires.
-          if (change) moveStage(change);
-        }}
-      />
+      {/* A DEFINITE height for StageBoard's flex-1 root to fill — inline style
+          like the stories and ScheduleGrid, because the value is computed. */}
+      <View style={{ height: boardHeight }}>
+        <StageBoard
+          columns={COLUMNS}
+          cards={cards}
+          renderCard={renderCard}
+          cardPitch={CARD_PITCH}
+          density={density}
+          onMove={(cardId, fromColumnId, toColumnId) => {
+            const change = boardStageChange(cardId, fromColumnId, toColumnId);
+            // Null covers both refusals: a same-column re-order (no manual
+            // ordering exists to write) and a drop into the scorer-owned
+            // 'At risk' — the card snaps home, and the write path never fires.
+            if (change) moveStage(change);
+          }}
+        />
+      </View>
       <View className="flex-row items-center justify-between gap-group rounded-card border-2 border-border bg-surface-sunken p-inset-tight">
         {footer}
       </View>

@@ -578,6 +578,17 @@ function Body({
         <Text variant="caption" tone="muted">
           Incident triage is owner and manager work. Nothing is wrong with your account.
         </Text>
+        {/* The wall carries a way out — the no_data state's exact exit below —
+            because a correct refusal with no door is still a dead end. */}
+        <View className="self-start">
+          <Button
+            title="Back to Overview"
+            variant="outline"
+            onPress={() => {
+              router.push('/ops');
+            }}
+          />
+        </View>
       </Card>
     );
   }

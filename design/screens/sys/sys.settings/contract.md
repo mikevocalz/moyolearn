@@ -41,7 +41,7 @@ max_interactions_to_primary: 1
 state_owner: "Existing settings/preferences store (features/settings) + session provider for sign-out; no [add]"
 ```
 
-**Status:** PARTIAL (D-screen-inventory verbatim). Contract-blocking defects: (1) sign-out is a scaffolded dead button (`settings-content.tsx:83` `onPress={() => {}}`) — wire to the live AuthPort (doc 38 §AuthPort; release with `auth-mock` fails the release job); (2) delete-account is unwired and FD-26 is MISSING — this contract's `delete_account` exit is declared against FD-26's doc-38 spec, not an existing screen; (3) guardian web nav mislabels this screen "Family" → repoint Family at the real family surface per G §3.1 (href fix only).
+**Status:** PARTIAL. Sign-out is LIVE (`settings-content.tsx` calls `authClient.signOut()` and replaces to the dispatcher, `finally`-guarded so a failed revocation still leaves the surface). One contract-blocking gap remains: FD-26 is MISSING — the `delete_account` exit is declared against FD-26's doc-38 spec, not an existing screen, so the surface renders NO delete row (absence over a ghost; the dead button was removed with the decision recorded in `settings-content.tsx`). The row returns with FD-26. The `manage_plan` exit is live for owner/finance sessions on web (`/settings/org`); absent on native, where no org-settings route exists yet.
 
 **Notes:**
 - One shared surface, role-gated rows — never a second settings screen per shell (patterns-are-law). Editor preferences are explicitly out of scope here (sys.editor-settings, toolbar-entry only); notification prefs join per G §2's account-sheet rows when that ships.

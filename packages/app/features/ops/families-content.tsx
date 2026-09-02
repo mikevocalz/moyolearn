@@ -18,13 +18,14 @@
 //   a grouped view's header carries the record count for its group).
 //   Structure only.
 import { Link } from 'solito/link';
-import { Badge, EmptyState, Heading, LoadingSkeleton } from '@acme/ui';
+import { useRouter } from 'solito/navigation';
+import { Badge, Button, EmptyState, Heading, LoadingSkeleton } from '@acme/ui';
 import { Text, View } from '@acme/ui/primitives';
 import { STAGE_TONE } from './ops.data';
 import type { FamilyGroup } from './family-groups';
 import { useFamilies } from './use-families';
 import { GUTTER, SectionHeader } from './leads-content';
-import { familyDetailPath } from './ops-paths';
+import { familyDetailPath, leadsRootPath } from './ops-paths';
 
 function FamilyRow({ group }: { group: FamilyGroup }) {
   return (
@@ -51,7 +52,8 @@ function FamilyRow({ group }: { group: FamilyGroup }) {
 }
 
 export function FamiliesScreen() {
-  const { families, status } = useFamilies();
+  const { families, status, refetch } = useFamilies();
+  const router = useRouter();
 
   return (
     <View className={`gap-section ${GUTTER}`}>
@@ -73,12 +75,26 @@ export function FamiliesScreen() {
             icon={<Text className="text-title">!</Text>}
             title="Could not load families"
             description="The list is stale, not gone. Try again in a moment."
+            /* The retry the copy promises — "try again" with no way to was an
+               instruction the screen refused to take itself. */
+            action={
+              <Button title="Try again" variant="outline" onPress={() => void refetch()} />
+            }
           />
         ) : families.length === 0 ? (
           <EmptyState
             icon={<Text className="text-title">＋</Text>}
             title="No families yet"
             description="Families appear here as leads join the pipeline — add your first lead on the Leads page."
+            /* The copy's "add your first lead" is a live door now, not a
+               sentence about a door somewhere else. */
+            action={
+              <Button
+                title="Add your first lead"
+                variant="outline"
+                onPress={() => router.push(leadsRootPath())}
+              />
+            }
           />
         ) : (
           <View className="gap-stack">

@@ -35,13 +35,13 @@ export function OpsScreen() {
 
   /*
     ADR-110's real read: today's rows off the `sessions` collection, scoped to
-    the session's org behind `protectedOperation`. While the query is in
-    flight the hero renders an empty day rather than a skeleton — the same
-    posture as the stats read below it, whose numbers count up when they land.
-    Revenue stays the honest fixture ops.data.ts documents (doc 19 §5's
-    rollups do not exist yet).
+    the session's org behind `protectedOperation`. Loading and error travel
+    WITH the rows now — discarding them here was how a failed fetch rendered
+    as a calm "0 sessions" day. Revenue stays the honest fixture ops.data.ts
+    documents (doc 19 §5's rollups do not exist yet).
   */
-  const { sessions } = useSessions();
+  const { sessions, loading, error } = useSessions();
+  const sessionsStatus = loading ? 'loading' : error ? 'error' : 'ready';
 
   /*
     Computed, not typed. `today` was the string "Tuesday, 26 August", which was
@@ -59,6 +59,7 @@ export function OpsScreen() {
       today={today}
       operatorName={operator?.name.split(' ')[0] ?? 'there'}
       sessions={sessions}
+      sessionsStatus={sessionsStatus}
       revenue={REVENUE_BY_ORG[org.slug] ?? []}
     />
   );
