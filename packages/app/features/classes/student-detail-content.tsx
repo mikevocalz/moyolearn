@@ -18,10 +18,12 @@
 // SOT: design/screens/teacher/teacher.classes/contract.md · packages/app/features/enrollment/enrollment.types.ts
 // SOT-KEYWORDS: student detail screen teacher enrollment basics facts folded no safety no mastery
 import type { ReactNode } from 'react';
+import { useRouter } from 'solito/navigation';
 import {
   Avatar,
   Badge,
   Banner,
+  Button,
   Card,
   EmptyState,
   Heading,
@@ -31,6 +33,7 @@ import {
 import { User } from '@acme/ui/icons';
 import { View } from '@acme/ui/primitives';
 import { bandLabel } from './classes-content.tsx';
+import { classDetailPath } from './classes-paths';
 import { useClassRoster } from './use-classes.ts';
 
 function FactRow({ label, children }: { label: string; children: ReactNode }) {
@@ -51,6 +54,7 @@ export function StudentDetailScreen({
   studentId: string;
   classId?: string;
 }) {
+  const router = useRouter();
   /*
     Decision: the enrollment row is read THROUGH its class roster — no
     per-student API exists, and the contract's own-class wall makes the roster
@@ -58,7 +62,7 @@ export function StudentDetailScreen({
     roster loads). That is why `classId` rides the route as a param and why a
     student link without one gets an instruction, not a spinner.
   */
-  const { class: klass, roster, loading, error } = useClassRoster(classId ?? '');
+  const { class: klass, roster, loading, error, retry } = useClassRoster(classId ?? '');
 
   if (classId === undefined || classId.length === 0) {
     return (
@@ -76,6 +80,36 @@ export function StudentDetailScreen({
     return (
       <View className="mx-auto w-full max-w-2xl gap-section px-inset py-section">
         <LoadingSkeleton count={2} />
+      </View>
+    );
+  }
+
+  if (error !== null && klass === null) {
+    /*
+      Error before not-found (the class-detail rule): a failed roster read
+      also resolves to a null class, and without this branch the calm "not
+      available" copy below would swallow every outage. Retry plus a live
+      exit back to the roster this row is read through.
+    */
+    return (
+      <View className="mx-auto w-full max-w-2xl px-inset py-section">
+        <Card className="gap-element">
+          <Badge label="Not loaded" tone="attention" />
+          <Text>We couldn&rsquo;t load this student.</Text>
+          <Text variant="caption" tone="muted">
+            Nothing has changed in the enrollment — this screen just needs a connection.
+          </Text>
+          <View className="flex-row gap-group">
+            <Button title="Try again" variant="outline" onPress={retry} />
+            <Button
+              title="Back to the class"
+              variant="ghost"
+              onPress={() => {
+                router.push(classDetailPath(classId));
+              }}
+            />
+          </View>
+        </Card>
       </View>
     );
   }

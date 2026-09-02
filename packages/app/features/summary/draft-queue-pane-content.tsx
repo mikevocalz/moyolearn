@@ -33,10 +33,11 @@ import {
   EmptyState,
   Heading,
   Text,
+  notify,
   useAdaptivePaneSelection,
 } from '@acme/ui';
 import { ScrollView, View } from '@acme/ui/primitives';
-import { SummaryQueueScreen } from './draft-queue-content.tsx';
+import { SummaryQueueScreen, approvedNote } from './draft-queue-content.tsx';
 import { useSummaryQueue } from './use-reports.ts';
 
 const STATUS_TONE = {
@@ -146,7 +147,13 @@ function SelectedDraftPane() {
               variant="primary"
               loading={act.isPending}
               onPress={() => {
-                act.mutate({ action: 'approve', sessionId: row.sessionId });
+                const { sessionId, learnerId } = row;
+                act.mutate(
+                  { action: 'approve', sessionId },
+                  // Same propagation-naming confirm as the queue's row action
+                  // — one sentence, shared, so the two never drift.
+                  { onSuccess: () => notify.success(approvedNote(learnerId)) },
+                );
               }}
             />
           ) : (

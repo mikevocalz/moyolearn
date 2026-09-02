@@ -6,7 +6,9 @@ export interface MasteryItem {
   skill: string;
   value: number;
   previous: number;
-  tone: 'grade' | 'redpen';
+  /** `grade` marks growth; `attention` marks a dip — highlighter, never red
+   * (redpen is a teacher's correction mark, not a status; doc 08 §4.8). */
+  tone: 'grade' | 'attention';
 }
 
 export const SESSION_PREP = {
@@ -14,7 +16,7 @@ export const SESSION_PREP = {
   provenance: 'From 2 AI practice sessions this week',
   mastery: [
     { skill: 'Factoring', value: 72, previous: 64, tone: 'grade' as const },
-    { skill: 'Quadratic expressions', value: 45, previous: 50, tone: 'redpen' as const },
+    { skill: 'Quadratic expressions', value: 45, previous: 50, tone: 'attention' as const },
     { skill: 'Distributing negatives', value: 88, previous: 82, tone: 'grade' as const },
   ],
   misconceptions: ["a ≠ 1", 'sign errors in binomials'],

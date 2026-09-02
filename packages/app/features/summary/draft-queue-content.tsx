@@ -23,6 +23,7 @@
 // SOT: docs/pack/34-session-summary-reports.md §5 · docs/pack/08-visual-hierarchy-spacing-spec.md §4.6 · docs/pack/23-crm-spec.md §2
 // SOT-KEYWORDS: summary queue screen drafts approve suppress reason cool datatable trail viewed rate
 import { useState } from 'react';
+import { useRouter } from 'solito/navigation';
 import {
   useReactTable,
   getCoreRowModel,
@@ -36,12 +37,22 @@ import {
   Heading,
   Text,
   isCollapsed,
+  notify,
   useAdaptivePaneSelection,
   useWindowSizeClass,
 } from '@acme/ui';
 import { Pressable, TextInput, View } from '@acme/ui/primitives';
 import type { SummaryQueueRow } from './summary.service.ts';
 import { useSummaryQueue } from './use-reports.ts';
+
+/**
+ * The assignment-detail propagation-naming idiom (its Publish confirm): the
+ * moment approval makes a report visible to someone else, the confirmation
+ * names who. The learner id is the honest label — the queue row carries no
+ * display name (the class-roster identity decision).
+ */
+export const approvedNote = (learnerId: string) =>
+  `Report is now visible to ${learnerId}'s guardian`;
 
 const STATUS_TONE = {
   generating: 'neutral',
@@ -51,7 +62,8 @@ const STATUS_TONE = {
 } as const;
 
 export function SummaryQueueScreen() {
-  const { rows, loading, error, act } = useSummaryQueue();
+  const router = useRouter();
+  const { rows, loading, error, act, retry } = useSummaryQueue();
   /*
     Ephemeral form state for the one suppression in flight — which row, and the
     reason being typed. Screen-local by design: nothing outside this form ever
@@ -162,7 +174,13 @@ export function SummaryQueueScreen() {
               variant="primary"
               loading={act.isPending}
               onPress={() => {
-                act.mutate({ action: 'approve', sessionId: row.original.sessionId });
+                const { sessionId, learnerId } = row.original;
+                act.mutate(
+                  { action: 'approve', sessionId },
+                  // Approval propagates (doc 34: the family can now read it),
+                  // and the confirmation names that propagation.
+                  { onSuccess: () => notify.success(approvedNote(learnerId)) },
+                );
               }}
             />
           ) : null}
@@ -252,12 +270,33 @@ export function SummaryQueueScreen() {
             icon={<Text className="text-title">✎</Text>}
             title="No reports yet"
             description="Reports appear here as sessions close."
+            /* The live exit: an empty queue's next act is running a session,
+               which starts from Today. '/' is tutor.today on both platforms —
+               the mobile dispatcher lands the tutor shell there and web's
+               HomeContent renders TutorTodayContent for the tutor hat — so
+               the href needs no fork. */
+            action={
+              <Button
+                title="Go to Today"
+                variant="outline"
+                onPress={() => {
+                  router.push('/');
+                }}
+              />
+            }
           />
         }
         error={
-          <Text variant="body" tone="muted">
-            The queue could not load. Refresh the page; if it persists, check the API.
-          </Text>
+          /* Retry in place (the tutor-incidents rule) — and no developer
+             copy: "check the API" is a sentence for us, not for the human
+             clearing a queue. */
+          <View className="gap-element">
+            <Text variant="body" tone="muted">
+              The queue could not load. Nothing has changed in your reports — this screen just
+              needs a connection.
+            </Text>
+            <Button title="Try again" variant="outline" className="self-start" onPress={retry} />
+          </View>
         }
       />
     </View>

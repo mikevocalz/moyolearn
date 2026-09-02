@@ -41,12 +41,12 @@ import { View } from '@acme/ui/primitives';
 import { newAssignmentPath } from '../assignments/assign-paths';
 import { joinOptions } from '../onboarding/teacher/steps.ts';
 import { bandLabel } from './classes-content.tsx';
-import { studentDetailPath } from './classes-paths';
+import { classesRootPath, studentDetailPath } from './classes-paths';
 import { useClassRoster } from './use-classes.ts';
 
 export function ClassDetailScreen({ classId }: { classId: string }) {
   const router = useRouter();
-  const { class: klass, roster, loading, error } = useClassRoster(classId);
+  const { class: klass, roster, loading, error, retry } = useClassRoster(classId);
 
   // Same pane-aware branch as the list (doc 37 §3.2): a student row selects
   // beside this detail on expanded widths, navigates everywhere else.
@@ -58,6 +58,37 @@ export function ClassDetailScreen({ classId }: { classId: string }) {
     return (
       <View className="mx-auto w-full max-w-2xl gap-section px-inset py-section">
         <LoadingSkeleton count={3} />
+      </View>
+    );
+  }
+
+  if (error !== null && klass === null) {
+    /*
+      Error before not-found: a failed read also resolves to a null class, so
+      without this branch the calm "not available" copy below would swallow
+      every outage. "Not available" and "we could not check" are different
+      sentences (the tutor-incidents rule) — the failed read gets a retry and
+      a live exit back to the list, never the silent-drop copy.
+    */
+    return (
+      <View className="mx-auto w-full max-w-2xl px-inset py-section">
+        <Card className="gap-element">
+          <Badge label="Not loaded" tone="attention" />
+          <Text>We couldn&rsquo;t load this class.</Text>
+          <Text variant="caption" tone="muted">
+            Nothing has changed in the class — this screen just needs a connection.
+          </Text>
+          <View className="flex-row gap-group">
+            <Button title="Try again" variant="outline" onPress={retry} />
+            <Button
+              title="Back to Classes"
+              variant="ghost"
+              onPress={() => {
+                router.push(classesRootPath());
+              }}
+            />
+          </View>
+        </Card>
       </View>
     );
   }

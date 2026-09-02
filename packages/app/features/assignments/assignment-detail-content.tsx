@@ -47,7 +47,7 @@ import { useAssignment, useAssignmentAction } from './use-assignments.ts';
 
 export function AssignmentDetailScreen({ assignmentId }: { assignmentId: string }) {
   const router = useRouter();
-  const { assignment, loading, error } = useAssignment(assignmentId);
+  const { assignment, loading, error, retry } = useAssignment(assignmentId);
   const { classes } = useTeacherClasses();
   const lifecycle = useAssignmentAction();
 
@@ -55,6 +55,37 @@ export function AssignmentDetailScreen({ assignmentId }: { assignmentId: string 
     return (
       <View className="mx-auto w-full max-w-2xl gap-section px-inset py-section">
         <LoadingSkeleton count={3} />
+      </View>
+    );
+  }
+
+  if (error !== null && assignment === null) {
+    /*
+      Error before not-found: a failed read also resolves to a null
+      assignment, so without this branch the calm "not available" copy below
+      would swallow every outage. "Not available" and "we could not check"
+      are different sentences (the tutor-incidents rule) — the failed read
+      gets a retry and a live exit back to the tracking list.
+    */
+    return (
+      <View className="mx-auto w-full max-w-2xl px-inset py-section">
+        <Card className="gap-element">
+          <Badge label="Not loaded" tone="attention" />
+          <Text>We couldn&rsquo;t load this assignment.</Text>
+          <Text variant="caption" tone="muted">
+            Nothing has changed in the assignment — this screen just needs a connection.
+          </Text>
+          <View className="flex-row gap-group">
+            <Button title="Try again" variant="outline" onPress={retry} />
+            <Button
+              title="Back to Assign"
+              variant="ghost"
+              onPress={() => {
+                router.push(assignRootPath());
+              }}
+            />
+          </View>
+        </Card>
       </View>
     );
   }

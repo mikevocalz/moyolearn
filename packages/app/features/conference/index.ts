@@ -3,6 +3,7 @@
 // SOT-KEYWORDS: conference feature barrel export types policy
 
 export { ConferenceHubScreen } from './hub-screen.tsx';
+export { conferenceHubPath } from './conference-paths';
 export {
   admitStudent,
   admitParticipant,

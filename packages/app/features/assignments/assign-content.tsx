@@ -33,6 +33,7 @@ import {
   List,
   ListItem,
   LoadingSkeleton,
+  Menu,
   SegmentedControl,
   Text,
 } from '@acme/ui';
@@ -132,7 +133,17 @@ export function AssignScreen() {
               }}
             >
               <SegmentedControl options={STATUS_OPTIONS} value={statusFilter} onChange={setStatusFilter} />
-              {classes.length > 1 ? (
+              {/*
+                The class picker changes shape with the roster size. A
+                SegmentedControl is a closed, glanceable set — right for the
+                status enum and for a couple of classes — but every class adds
+                a segment, and past three the row outgrows the bar (segments
+                elide or shove Clear-all off-screen). Beyond that the picker
+                becomes FilterBar's Menu-anchored chip (the FilterBar slot
+                contract names it): one chip stating the current choice, the
+                list behind it.
+              */}
+              {classes.length > 1 && classes.length <= 3 ? (
                 <SegmentedControl
                   options={[
                     { value: '', label: 'All classes' },
@@ -143,6 +154,39 @@ export function AssignScreen() {
                     setClassFilter(value === '' ? null : value);
                   }}
                 />
+              ) : classes.length > 3 ? (
+                <Menu
+                  title="Class"
+                  actions={[
+                    // The current choice stays listed but inert (the leads
+                    // stage-menu rule): removing it would shuffle the list
+                    // under the cursor every time the value changed.
+                    { id: '', title: 'All classes', disabled: classFilter === null },
+                    ...classes.map((klass) => ({
+                      id: klass.id,
+                      title: klass.name,
+                      disabled: classFilter === klass.id,
+                    })),
+                  ]}
+                  onAction={(id) => {
+                    setClassFilter(id === '' ? null : id);
+                  }}
+                >
+                  {/*
+                    A styled View, NOT the kit Button: Menu's web fork is a
+                    details/summary, and a real <button> inside <summary>
+                    consumes the click so the menu never opens (the
+                    leads-content Display-menu precedent).
+                  */}
+                  <View className="min-h-target-adult flex-row items-center gap-element rounded-control border-2 border-border-strong bg-surface-raised px-4 shadow-card">
+                    <Text className="text-sm font-semibold text-text">
+                      {classNames.get(classFilter ?? '') ?? 'All classes'}
+                    </Text>
+                    <Text aria-hidden className="text-caption text-text-muted">
+                      ▾
+                    </Text>
+                  </View>
+                </Menu>
               ) : null}
             </FilterBar>
           ) : null}

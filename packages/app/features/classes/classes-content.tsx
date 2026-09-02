@@ -27,6 +27,7 @@ import {
   Avatar,
   Badge,
   Banner,
+  Button,
   Card,
   EmptyState,
   Heading,
@@ -50,7 +51,7 @@ export const bandLabel = (band: GradeBand) =>
 
 export function ClassesScreen() {
   const router = useRouter();
-  const { classes, loading, error } = useTeacherClasses();
+  const { classes, loading, error, retry } = useTeacherClasses();
 
   /*
     Pane-aware, route-safe (doc 37 §3.2/§3.3, the reports-content idiom).
@@ -77,8 +78,11 @@ export function ClassesScreen() {
       </View>
 
       {/* Contract offline path: reads keep serving the cached list, labelled
-          stale — the banner is the label, never a blocking state. */}
-      {error !== null ? (
+          stale — the banner is the label, never a blocking state. It renders
+          only WITH a cached list: a cold failure has nothing to label, and
+          "showing the last saved list" over "No classes yet" would be two
+          contradictory sentences on one screen. */}
+      {error !== null && classes.length > 0 ? (
         <Banner
           tone="offline"
           title="Out of sync"
@@ -88,6 +92,18 @@ export function ClassesScreen() {
 
       {loading ? (
         <LoadingSkeleton count={3} />
+      ) : error !== null && classes.length === 0 ? (
+        /* Error wins over empty (the tutor-incidents rule): "no classes" and
+           "we could not check" are different sentences, so a cold failed read
+           gets the retry — never the calm add-your-first-class prompt. */
+        <Card className="gap-element">
+          <Badge label="Not loaded" tone="attention" />
+          <Text>We couldn&rsquo;t load your classes.</Text>
+          <Text variant="caption" tone="muted">
+            Nothing has changed in your classroom — this screen just needs a connection.
+          </Text>
+          <Button title="Try again" variant="outline" className="self-start" onPress={retry} />
+        </Card>
       ) : classes.length === 0 ? (
         <EmptyState
           icon={<GraduationCap size={28} className="text-text-muted" />}

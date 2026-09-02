@@ -23,18 +23,28 @@ async function getJson<T>(path: string, signal: AbortSignal | undefined): Promis
 }
 
 export function useTeacherClasses() {
-  const { data, isPending, error } = useQuery({
+  const { data, isPending, error, refetch } = useQuery({
     queryKey: teacherClassesQueryKey(),
     queryFn: async ({ signal }) =>
       (await getJson<{ classes: TeacherClass[] }>('/api/teacher/classes', signal)).classes,
     placeholderData: keepPreviousData,
   });
-  return { classes: data ?? [], loading: isPending, error };
+  // The use-tutor-incidents idiom: a failed read's screen owes an inline
+  // retry, so the callable ships with the hook rather than each screen
+  // re-deriving it from the query client.
+  return {
+    classes: data ?? [],
+    loading: isPending,
+    error,
+    retry: () => {
+      void refetch();
+    },
+  };
 }
 
 /** One class with its roster — the detail pane read. 404 surfaces as an error. */
 export function useClassRoster(classId: string) {
-  const { data, isPending, error } = useQuery({
+  const { data, isPending, error, refetch } = useQuery({
     queryKey: classRosterQueryKey(classId),
     queryFn: async ({ signal }) =>
       getJson<{ class: TeacherClass; roster: Enrollment[] }>(
@@ -43,7 +53,15 @@ export function useClassRoster(classId: string) {
       ),
     enabled: classId.length > 0,
   });
-  return { class: data?.class ?? null, roster: data?.roster ?? [], loading: isPending, error };
+  return {
+    class: data?.class ?? null,
+    roster: data?.roster ?? [],
+    loading: isPending,
+    error,
+    retry: () => {
+      void refetch();
+    },
+  };
 }
 
 export function useCreateClass() {

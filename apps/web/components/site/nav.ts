@@ -168,15 +168,20 @@ export const RAIL_BY_ROLE: Record<RailKind, NavGroup[]> = {
   tutor: [
     {
       items: [
-        { label: 'Today', href: '/' },
+        // tutor.today's contract names the web Today mount `/tutors/me`
+        // (entry_points: "web rail first group, /tutors/me") — the teacher
+        // /teachers/me precedent, and the page that renders TutorTodayScreen
+        // whole. The rail pointed at '/' before, which only reaches the same
+        // content through HomeContent's hat dispatch (the parent-who-tutors
+        // fallback, S15) and left the contract-named page an orphan.
+        { label: 'Today', href: '/tutors/me' },
         { label: 'My learners', href: '/session-prep', railLabel: 'Learners' },
         { label: 'Session notes', href: '/report-queue', railLabel: 'Notes' },
       ],
     },
     // Second group per ADR-105 (doc 36 §3.3). Incidents renders: `/incidents`
-    // exists (tutor.incidents, reporter-scoped lifecycle view). Scope is
-    // "mine" only until TutorSessions carries a tutor link (schema ADR —
-    // see incident.repository.ts).
+    // exists (tutor.incidents — what I filed plus incidents on sessions I
+    // run, ADR-110's session→tutor edge).
     // struck: tutor.resources — STRUCK 2026-09-02 per its own contract's
     // Notes: the item was conditional on a resource content pipeline
     // existing, and none does (no collection, no catalog; Media is upload

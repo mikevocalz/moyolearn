@@ -1,10 +1,10 @@
 'use client';
 // Session Prep — give the human tutor a 30-second readiness read.
 // SOT: docs/pack/04-screen-briefs.md §S5
-// SOT-KEYWORDS: session prep mastery misconception generate plan
+// SOT-KEYWORDS: session prep mastery misconception provenance example learner
 
 import { Section, View, Text as TWText } from '@acme/ui/tw';
-import { Card, Heading, PressScale, Text, FadeIn } from '@acme/ui';
+import { Card, Heading, Text, FadeIn } from '@acme/ui';
 import { SESSION_PREP } from './session-prep.data';
 
 export function SessionPrepContent() {
@@ -18,6 +18,9 @@ export function SessionPrepContent() {
           <Heading level={1} size="title">
             {studentName}
           </Heading>
+          {/* The tutor-today fixture label, verbatim — this read is demo data
+              (session-prep.data), not a real learner's derived observations. */}
+          <TWText className="text-label text-grade">Example learner</TWText>
         </Section>
       </FadeIn>
 
@@ -27,8 +30,16 @@ export function SessionPrepContent() {
           <View className="gap-stack">
             {SESSION_PREP.mastery.map((item) => {
               const delta = item.value - item.previous;
-              const barColor = item.tone === 'grade' ? 'bg-grade' : 'bg-redpen';
-              const textColor = item.tone === 'grade' ? 'text-grade' : 'text-redpen';
+              /*
+                A dipping skill fills highlighter, never redpen: this bar is
+                about a child, and red on a child's mastery reads as a verdict.
+                The tutor-incidents STATUS_TONE rule generalises — calm tones
+                only; attention without alarm is the highlighter's whole job
+                (doc 08 §4.8, the Badge `attention` reasoning). The delta text
+                stays in plain ink for the same reason.
+              */
+              const barColor = item.tone === 'grade' ? 'bg-grade' : 'bg-highlighter';
+              const textColor = item.tone === 'grade' ? 'text-grade' : 'text-text';
               return (
                 <View key={item.skill} className="gap-1">
                   <View className="flex-row items-center justify-between">
@@ -67,13 +78,14 @@ export function SessionPrepContent() {
       </FadeIn>
 
       <FadeIn delay={240}>
-        <PressScale
-          className="w-full items-center rounded-card bg-primary p-4 shadow-card"
-          outerClassName="w-full"
-          onPress={() => { /* Wave 3: generate plan */ }}
-        >
-          <TWText className="font-semibold text-on-primary">Generate session plan</TWText>
-        </PressScale>
+        {/*
+          Decision: no "Generate session plan" button. No plan-generation
+          endpoint exists (nothing in the API surface produces one), so the old
+          primary rendered as the screen's biggest promise and did nothing.
+          Removed rather than disabled: a permanent primary that never enables
+          is a dead button wearing a reason. The read above IS the prep; the
+          button returns with the endpoint.
+        */}
         <TWText className="text-center text-sm text-text-muted">{SESSION_PREP.provenance}</TWText>
       </FadeIn>
     </View>

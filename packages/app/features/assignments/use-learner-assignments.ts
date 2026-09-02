@@ -14,6 +14,7 @@
 // SOT-KEYWORDS: learner assignments hook client query arrival due work published keys enabled band mark done mutation
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { LearnerAssignment } from './learner-assignments.service.ts';
+import { assignmentQueryKey, teacherAssignmentsQueryKey } from './use-assignments.ts';
 
 const API_URL =
   process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
@@ -41,7 +42,13 @@ export function useLearnerAssignments(enabled = true) {
 /**
  * The self-report: POSTs "done" for one of the learner's own assignments.
  * Exact-key invalidation over the single learner list — home's due strip and
- * the plan both read it, so one refetch settles every surface.
+ * the plan both read it, so one refetch settles every surface. The teacher
+ * keys are invalidated too: mark-done moves the "X of Y done" counts the
+ * tracking list and detail render, and a household where teacher and learner
+ * share a device (or a query cache via the same web session) would otherwise
+ * show the teacher a stale count until an unrelated write happened to refresh
+ * it. The key factories come from use-assignments so the two sides can never
+ * drift apart on key shape.
  */
 export function useMarkAssignmentDone() {
   const client = useQueryClient();
@@ -54,8 +61,12 @@ export function useMarkAssignmentDone() {
       if (!res.ok) throw new Error(`HTTP ${String(res.status)}`);
       return ((await res.json()) as { assignment: LearnerAssignment }).assignment;
     },
-    onSuccess: () => {
+    onSuccess: (_assignment, assignmentId) => {
       void client.invalidateQueries({ queryKey: learnerAssignmentsQueryKey() });
+      // Prefix invalidation covers the unfiltered list and every per-class
+      // filter (the use-assignments discipline); the detail key is exact.
+      void client.invalidateQueries({ queryKey: teacherAssignmentsQueryKey() });
+      void client.invalidateQueries({ queryKey: assignmentQueryKey(assignmentId) });
     },
   });
 }

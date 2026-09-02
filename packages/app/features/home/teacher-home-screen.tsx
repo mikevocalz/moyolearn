@@ -1,36 +1,198 @@
 'use client';
-// Teacher Home — the classroom-teacher shell's landing tab.
-// Honest empty state: this slice does not wire classes, assignments, or students
-// yet, but it makes the teacher shell reachable and fail-closed. Conferences is
-// a stack route per ADR-102 (demoted from the tab bar), so Home carries its
-// entry point — the contract's `push_conference` exit.
+// Teacher Home — the classroom-teacher shell's landing tab, as an actual
+// overview: the classes the teacher runs (the same read Classes renders) and
+// the due-soon slice of what they've assigned, each row a live door into its
+// own surface. The ≤1-tap primary action is opening today's first class —
+// its roster is where a teacher's day starts. Conferences keeps its entry
+// point here: it is a stack route per ADR-102 (demoted from the tab bar), so
+// Home carries the contract's `push_conference` exit, forked per platform
+// through conference-paths.
 // SOT: docs/pack/36-role-navigation-flows.md §3.3 · docs/decisions/adr-102-teacher-shell-ia.md
-// SOT-KEYWORDS: teacher home screen classroom shell landing empty conference
+// SOT-KEYWORDS: teacher home screen classroom shell landing overview classes due soon conference
 
 import { useRouter } from 'solito/navigation';
 import { ScrollView, View, Text as TWText } from '@acme/ui/tw';
-import { Container, Heading, PressScale, SafeArea } from '@acme/ui';
-import { ArrowRight, Video } from '@acme/ui/icons';
+import {
+  Badge,
+  Banner,
+  Button,
+  Card,
+  Container,
+  EmptyState,
+  Heading,
+  List,
+  ListItem,
+  LoadingSkeleton,
+  PressScale,
+  SafeArea,
+  Text,
+} from '@acme/ui';
+import { ArrowRight, GraduationCap, Video } from '@acme/ui/icons';
+import { STATUS_BADGE, dueLabel } from '../assignments/assign-copy.ts';
+import { assignmentDetailPath } from '../assignments/assign-paths';
+import { useTeacherAssignments } from '../assignments/use-assignments.ts';
+import { bandLabel } from '../classes/classes-content.tsx';
+import { classDetailPath, classesRootPath } from '../classes/classes-paths';
+import { useTeacherClasses } from '../classes/use-classes.ts';
+import { conferenceHubPath } from '../conference';
+
+/** Due-soon is the published slice, soonest first — drafts have no audience
+ * and closed work is finished business, so neither belongs on a landing read. */
+const DUE_SOON_COUNT = 3;
 
 export function TeacherHomeScreen() {
   const router = useRouter();
+  const { classes, loading: classesLoading, error: classesError, retry } = useTeacherClasses();
+  const {
+    assignments,
+    loading: assignmentsLoading,
+    error: assignmentsError,
+  } = useTeacherAssignments();
+
+  const active = classes.filter((klass) => klass.status === 'active');
+  const dueSoon = assignments
+    .filter((assignment) => assignment.status === 'published')
+    .sort((a, b) => Date.parse(a.dueAt) - Date.parse(b.dueAt))
+    .slice(0, DUE_SOON_COUNT);
+  const loading = classesLoading || assignmentsLoading;
+  // keepPreviousData means an errored read can still hold yesterday's list —
+  // stale-with-label (the classes-content offline idiom). Only a cold failure
+  // with nothing cached gets the blocking error branch below.
+  const staleSomewhere =
+    (classesError !== null && classes.length > 0) ||
+    (assignmentsError !== null && assignments.length > 0);
+
   return (
     <SafeArea edges={['top']} className="flex-1 bg-surface">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <Container width="detail" className="py-4 pb-48">
-          <View className="gap-stack">
-            <Heading level={1} size="title">
-              Teacher home
-            </Heading>
-            <TWText className="text-body text-text">
-              Your classroom overview will list classes, assignments, and students.
-            </TWText>
-            <TWText className="text-body text-text-muted">
-              For now, this is the teacher shell&apos;s landing screen. The planned tabs are
-              Home, Classes, Assign, and You.
-            </TWText>
+          <View className="gap-section">
+            <View className="gap-element">
+              <Heading level={1} size="title">
+                Teacher home
+              </Heading>
+              <Text variant="body" tone="muted">
+                Your classes and what&rsquo;s due soon.
+              </Text>
+            </View>
+
+            {staleSomewhere ? (
+              <Banner
+                tone="offline"
+                title="Out of sync"
+                description="Showing the last saved overview — it may be stale until you reconnect."
+              />
+            ) : null}
+
+            {loading ? (
+              <LoadingSkeleton count={3} />
+            ) : classesError !== null && classes.length === 0 ? (
+              /*
+                Error before empty (the tutor-incidents rule): "no classes" and
+                "we could not check" are different sentences, so a cold failed
+                read gets the retry — never the calm create-a-class prompt.
+              */
+              <Card className="gap-element">
+                <Badge label="Not loaded" tone="attention" />
+                <Text>We couldn&rsquo;t load your classes.</Text>
+                <Text variant="caption" tone="muted">
+                  Nothing has changed in your classroom — this screen just needs a connection.
+                </Text>
+                <Button title="Try again" variant="outline" className="self-start" onPress={retry} />
+              </Card>
+            ) : active.length === 0 ? (
+              /* No classes is a routed exit, never a dead end — the create
+                 form lives on the Classes tab (its always-rendered card). */
+              <EmptyState
+                icon={<GraduationCap size={28} className="text-text-muted" />}
+                title="No classes yet"
+                description="Set up your first class — students join it with its class code, and your day starts here."
+                action={
+                  <Button
+                    title="Go to Classes"
+                    variant="primary"
+                    onPress={() => {
+                      router.push(classesRootPath());
+                    }}
+                  />
+                }
+              />
+            ) : (
+              <>
+                <View className="gap-group">
+                  <Heading level={2} size="title" className="text-text">
+                    Today&rsquo;s classes
+                  </Heading>
+                  {/* The contract's primary action: open the first class →
+                      its roster (classes carry no timetable yet, so "first"
+                      is list order — the same order Classes renders). */}
+                  <Button
+                    title={`Open ${active[0]?.name ?? 'your first class'}`}
+                    variant="primary"
+                    className="self-start"
+                    onPress={() => {
+                      const first = active[0];
+                      if (first) router.push(classDetailPath(first.id));
+                    }}
+                  />
+                  <List>
+                    {active.map((klass) => (
+                      <ListItem
+                        key={klass.id}
+                        onPress={() => {
+                          router.push(classDetailPath(klass.id));
+                        }}
+                        supportingText={`${klass.subject ? `${klass.subject} · ` : ''}Join code ${klass.code}`}
+                        trailing={<Badge label={bandLabel(klass.gradeBand)} tone="neutral" />}
+                      >
+                        {klass.name}
+                      </ListItem>
+                    ))}
+                  </List>
+                </View>
+
+                <View className="gap-group">
+                  <Heading level={2} size="title" className="text-text">
+                    Due soon
+                  </Heading>
+                  {assignmentsError !== null && assignments.length === 0 ? (
+                    /* Same error-before-empty rule as the classes read: a
+                       failed check must not read as a clear desk. */
+                    <Text variant="body" tone="muted">
+                      We couldn&rsquo;t check what&rsquo;s due — it refreshes when you reconnect.
+                    </Text>
+                  ) : dueSoon.length === 0 ? (
+                    <Text variant="body" tone="muted">
+                      Nothing published is due soon. Assignments you publish show up here as their
+                      due dates approach.
+                    </Text>
+                  ) : (
+                    <List>
+                      {dueSoon.map((assignment) => (
+                        <ListItem
+                          key={assignment.id}
+                          onPress={() => {
+                            router.push(assignmentDetailPath(assignment.id));
+                          }}
+                          supportingText={`${dueLabel(assignment.dueAt)} · ${assignment.doneCount} of ${assignment.rosterCount} done`}
+                          trailing={
+                            <Badge
+                              label={STATUS_BADGE[assignment.status].label}
+                              tone={STATUS_BADGE[assignment.status].tone}
+                            />
+                          }
+                        >
+                          {assignment.title}
+                        </ListItem>
+                      ))}
+                    </List>
+                  )}
+                </View>
+              </>
+            )}
+
             <PressScale
-              onPress={() => router.push('/conference')}
+              onPress={() => router.push(conferenceHubPath())}
               className="w-full flex-row items-center gap-stack rounded-card border-2 border-border bg-surface-raised p-4"
               outerClassName="w-full"
               aria-label="Conferences, upcoming and scheduled"

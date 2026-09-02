@@ -33,7 +33,7 @@ async function getJson<T>(path: string, signal: AbortSignal | undefined): Promis
 }
 
 export function useTeacherAssignments(classId?: string) {
-  const { data, isPending, error } = useQuery({
+  const { data, isPending, error, refetch } = useQuery({
     queryKey: teacherAssignmentsQueryKey(classId),
     queryFn: async ({ signal }) =>
       (
@@ -46,11 +46,21 @@ export function useTeacherAssignments(classId?: string) {
       ).assignments,
     placeholderData: keepPreviousData,
   });
-  return { assignments: data ?? [], loading: isPending, error };
+  // The use-tutor-incidents inline-retry idiom: readers with no cached copy
+  // (teacher Home's due-soon strip on a cold failure) retry the same read in
+  // place instead of asking for a reload.
+  return {
+    assignments: data ?? [],
+    loading: isPending,
+    error,
+    retry: () => {
+      void refetch();
+    },
+  };
 }
 
 export function useAssignment(assignmentId: string) {
-  const { data, isPending, error } = useQuery({
+  const { data, isPending, error, refetch } = useQuery({
     queryKey: assignmentQueryKey(assignmentId),
     queryFn: async ({ signal }) =>
       (
@@ -61,7 +71,16 @@ export function useAssignment(assignmentId: string) {
       ).assignment,
     enabled: assignmentId.length > 0,
   });
-  return { assignment: data ?? null, loading: isPending, error };
+  // Inline-retry callable (the use-tutor-incidents idiom): the detail screen's
+  // error branch retries the same read, never a page reload.
+  return {
+    assignment: data ?? null,
+    loading: isPending,
+    error,
+    retry: () => {
+      void refetch();
+    },
+  };
 }
 
 /*

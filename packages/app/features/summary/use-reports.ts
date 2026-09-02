@@ -112,5 +112,15 @@ export function useSummaryQueue() {
     },
   });
 
-  return { rows: query.data ?? [], loading: query.isPending, error: query.error, act };
+  // Inline-retry callable (the use-tutor-incidents idiom): the queue's error
+  // state retries the same read in place, never a page reload.
+  return {
+    rows: query.data ?? [],
+    loading: query.isPending,
+    error: query.error,
+    act,
+    retry: () => {
+      void query.refetch();
+    },
+  };
 }

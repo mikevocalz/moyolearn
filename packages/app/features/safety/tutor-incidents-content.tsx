@@ -489,9 +489,11 @@ export function TutorIncidentsContent() {
             <Heading level={1} size="display-sm">
               Incidents
             </Heading>
-            {/* No count in the caption — the no-badge law covers every tally. */}
+            {/* No count in the caption — the no-badge law covers every tally.
+                Scope is mine + my-sessions (ADR-110), and the caption says so:
+                "you've filed" alone would deny half the list. */}
             <Text variant="caption" tone="muted">
-              Reports you’ve filed, and where each one stands.
+              Reports you’ve filed and incidents on your sessions, and where each one stands.
             </Text>
           </View>
           {/* The contract's secondary action — outline weight, so opening a
@@ -597,8 +599,8 @@ function Body({
       <EmptyState
         className="flex-1"
         icon={<ShieldCheck size={28} className="text-text-muted" />}
-        title="Nothing filed"
-        description="Reports you file appear here with their status and full timeline. If something crossed a line in a session, file it — how serious it is gets decided at triage, not by you."
+        title="Nothing here yet"
+        description="Reports you file and incidents on sessions you run appear here with their status and full timeline. If something crossed a line in a session, file it — how serious it is gets decided at triage, not by you."
         action={<Button title="File a report" variant="outline" onPress={openIntake} />}
       />
     );
@@ -610,7 +612,7 @@ function Body({
         className="flex-1"
         icon={<ShieldCheck size={28} className="text-text-muted" />}
         title="Nothing in this state"
-        description="Clear the filter to see everything you’ve filed."
+        description="Clear the filter to see every report on your list."
       />
     );
   }
