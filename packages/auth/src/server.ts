@@ -369,3 +369,25 @@ export {
   it into a client bundle.
 */
 export { readMembershipRole } from './membership-reader.ts';
+
+/*
+  The two node:crypto modules, re-exported HERE and removed from the root
+  barrel. Metro cannot resolve `node:crypto` for a mobile bundle, and the root
+  barrel is reachable from a client import chain — guardian onboarding steps
+  import `validateCreateLearner` from '@acme/auth', which dragged
+  create-managed-learner and handoff in behind it and red-screened the device
+  with "Unable to resolve module node:crypto". Both are server work by nature:
+  minting a learner account and hashing a handoff code.
+*/
+export { createManagedLearner, CreateLearnerError } from './create-managed-learner.ts';
+export type { LearnerWriter } from './create-managed-learner.ts';
+export { createPayloadLearnerWriter } from './payload-learner-writer.ts';
+export {
+  createDeviceHandoff,
+  redeemDeviceHandoff,
+  generateHandoffCode,
+  hashHandoffCode,
+  handoffSecret,
+  HandoffError,
+} from './handoff.ts';
+export type { HandoffStore, GuardianshipReader, HandoffIssue } from './handoff.ts';

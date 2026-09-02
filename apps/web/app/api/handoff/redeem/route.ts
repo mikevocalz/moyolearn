@@ -15,7 +15,7 @@
 // SOT: docs/pack/36-role-navigation-flows.md §2 §4.4 · packages/auth/src/handoff.ts
 // SOT-KEYWORDS: handoff redeem api route sign-in session anonymous single-use fail closed
 import { NextRequest, NextResponse } from 'next/server';
-import { redeemDeviceHandoff } from '@acme/auth';
+import { redeemDeviceHandoff } from '@acme/auth/server';
 import { handoffStore } from '@/lib/handoff.repository';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';

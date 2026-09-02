@@ -13,7 +13,7 @@
 import 'server-only';
 import { getPayload } from 'payload';
 import config from '@payload-config';
-import type { GuardianshipReader, HandoffStore } from '@acme/auth';
+import type { GuardianshipReader, HandoffStore } from '@acme/auth/server';
 
 export const handoffStore: HandoffStore = {
   async create(row) {

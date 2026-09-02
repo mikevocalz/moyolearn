@@ -13,9 +13,13 @@ export {
 } from './src/create-learner';
 export type { ConsentMethod, CreateLearnerInput } from './src/create-learner';
 export { isPlaceholderEmail, learnerPlaceholderEmail } from './src/create-learner';
-export { createManagedLearner, CreateLearnerError } from './src/create-managed-learner';
-export type { LearnerWriter } from './src/create-managed-learner';
-export { createPayloadLearnerWriter } from './src/payload-learner-writer';
+/*
+  createManagedLearner, createPayloadLearnerWriter and the device-handoff
+  functions are NOT re-exported here: they import node:crypto, and this barrel
+  is reachable from client code (guardian onboarding steps import the learner
+  validators below), which broke the mobile bundle with "Unable to resolve
+  module node:crypto". They live at '@acme/auth/server'.
+*/
 export {
   HANDOFF_CODE_LENGTH,
   HANDOFF_TTL_MS,
@@ -23,15 +27,6 @@ export {
   isWellFormedHandoffCode,
   normalizeHandoffCode,
 } from './src/handoff-code';
-export {
-  createDeviceHandoff,
-  redeemDeviceHandoff,
-  generateHandoffCode,
-  hashHandoffCode,
-  handoffSecret,
-  HandoffError,
-} from './src/handoff';
-export type { HandoffStore, GuardianshipReader, HandoffIssue } from './src/handoff';
 export {
   availableMethods,
   completeConsent,

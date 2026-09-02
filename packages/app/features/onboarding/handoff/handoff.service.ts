@@ -19,7 +19,7 @@ import {
   type GuardianshipReader,
   type HandoffIssue,
   type HandoffStore,
-} from '@acme/auth';
+} from '@acme/auth/server';
 import { protectedOperation } from '../../../core/protected-operation.ts';
 
 export interface HandoffDeps {

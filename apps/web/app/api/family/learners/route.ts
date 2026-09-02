@@ -17,8 +17,8 @@ import {
   createManagedLearner,
   createPayloadLearnerWriter,
   CreateLearnerError,
-  type ConsentMethod,
-} from '@acme/auth';
+} from '@acme/auth/server';
+import type { ConsentMethod } from '@acme/auth';
 import { protectedOperation } from '@acme/app/server';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
