@@ -66,10 +66,12 @@ import {
   FilterBar,
   Heading,
   LoadingSkeleton,
+  ReadFailure,
   SegmentedControl,
   Text,
   Textarea,
 } from '@acme/ui';
+import { readFailureCopy } from '../../core/read-failure-copy.ts';
 import { Pressable } from '@acme/ui/primitives';
 import { ShieldCheck } from '@acme/ui/icons';
 import type { StaffTimelineActor, TriageRow } from './incidents.service.ts';
@@ -441,7 +443,7 @@ function QueueRow({
 }
 
 export function OrgSafetyContent() {
-  const { queue, loading, error, denied } = useIncidentQueue();
+  const { queue, loading, error, denied, retry } = useIncidentQueue();
   const severityFilter = useOrgSafetyStore((s) => s.severityFilter);
   const statusFilter = useOrgSafetyStore((s) => s.statusFilter);
   const openIncidentId = useOrgSafetyStore((s) => s.openIncidentId);
@@ -481,9 +483,24 @@ export function OrgSafetyContent() {
           <Heading level={1} size="display-sm">
             Safety
           </Heading>
+          {/*
+            The count is a CLAIM about the org, so it speaks only for a queue
+            that arrived. It used to read straight off `queue.rows.length`,
+            which is `EMPTY` until the fetch resolves and stays `EMPTY` when
+            the fetch fails — so a 401 and a genuinely quiet org both printed
+            "0 incidents", the calmest possible sentence, directly above a card
+            saying we could not reach the queue. On this domain that is not a
+            cosmetic mismatch: an unread S4 reported as zero is the failure
+            this whole surface exists to prevent.
+          */}
           <Text variant="caption" tone="muted">
-            {queue.rows.length === 1 ? '1 incident' : `${queue.rows.length} incidents`} · soonest
-            deadline first
+            {denied
+              ? 'Incident triage is owner and manager work'
+              : loading
+                ? 'Loading the queue'
+                : error !== null && queue.rows.length === 0
+                  ? 'Queue unread — this is not a count'
+                  : `${queue.rows.length === 1 ? '1 incident' : `${queue.rows.length} incidents`} · soonest deadline first`}
           </Text>
         </View>
 
@@ -529,6 +546,7 @@ export function OrgSafetyContent() {
         loading={loading}
         denied={denied}
         error={error}
+        onRetry={retry}
         stale={stale}
         anyRows={queue.rows.length > 0}
         visible={visible}
@@ -544,6 +562,8 @@ interface BodyProps {
   loading: boolean;
   denied: boolean;
   error: Error | null;
+  /** Re-runs the queue read — the failed-read card's one action. */
+  onRetry: () => void;
   stale: boolean;
   anyRows: boolean;
   visible: readonly TriageRow[];
@@ -556,6 +576,7 @@ function Body({
   loading,
   denied,
   error,
+  onRetry,
   stale,
   anyRows,
   visible,
@@ -609,14 +630,44 @@ function Body({
     said it, and the last-synced rows render read-only below.
   */
   if (error !== null && !stale) {
+    /*
+      `ReadFailure`, not a hand-rolled card: the kit component IS the split
+      between "answered zero" and "could not check", and this surface owned a
+      private fourth copy of it. `readFailureCopy` also settles the sentence
+      from the CAUSE — a 401 gets "you've been signed out" and a sign-in exit,
+      because the old card's "open Safety again in a moment" was advice that
+      fails identically forever when the session is what expired.
+    */
+    const copy = readFailureCopy(
+      error,
+      'the incident queue',
+      'Nothing on this queue changed and no incident was cleared — this is the screen, not the record.',
+    );
     return (
-      <Card className="mx-4 gap-element">
-        <Badge label="Not loaded" tone="attention" />
-        <Text>We couldn’t reach the queue.</Text>
-        <Text variant="caption" tone="muted">
-          This needs a connection. Nothing has changed — open Safety again in a moment.
-        </Text>
-      </Card>
+      <ReadFailure
+        className="mx-4"
+        title={copy.title}
+        description={copy.description}
+        onRetry={onRetry}
+        action={
+          copy.signedOut ? (
+            <Button
+              title="Sign in"
+              onPress={() => {
+                router.push('/login');
+              }}
+            />
+          ) : (
+            <Button
+              title="Back to Overview"
+              variant="ghost"
+              onPress={() => {
+                router.push('/ops');
+              }}
+            />
+          )
+        }
+      />
     );
   }
 

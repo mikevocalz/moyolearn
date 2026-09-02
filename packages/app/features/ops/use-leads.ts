@@ -7,14 +7,15 @@
 //   URL search params  sort + filters + view — the shareable state
 //   Zustand          durable view prefs nobody would paste into Slack
 //
-// SOT: docs/pack/28-crm-spec.md §3 · CLAUDE.md (UI · state)
-// SOT-KEYWORDS: ops leads hook query cursor pagination pacer debounce searchparams
+// SOT: docs/pack/28-crm-spec.md §3 · CLAUDE.md (UI · state) · packages/app/core/api-fetch.ts
+// SOT-KEYWORDS: ops leads hook query cursor pagination pacer debounce searchparams api error retry
 import { useMemo } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import type { Lead, Stage } from './ops.data';
 import type { LeadSortField, LeadStats, NewLeadInput } from './ops.service';
 import { API_URL } from '../../core/api-url.ts';
+import { getJson, isNotFound } from '../../core/api-fetch.ts';
 
 export interface LeadsView {
   q: string;
@@ -89,12 +90,14 @@ export function useLeads(view: LeadsView) {
         params.set('sortField', effective.sortField);
         params.set('sortDesc', effective.sortDesc ? '1' : '0');
       }
-      const res = await fetch(`${API_URL}/api/ops/leads?${params}`, {
-        credentials: 'include',
-        signal,
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return (await res.json()) as LeadsPage;
+      /*
+        `getJson` carries the status as data (core/api-fetch.ts): the retry
+        predicate stops backing off on a settled 401/403, so the table reaches
+        its error branch on the first response instead of holding "Loading…"
+        through the whole backoff — and the branch can then say "signed out"
+        rather than offering a retry that fails identically forever.
+      */
+      return getJson<LeadsPage>(`/api/ops/leads?${params.toString()}`, signal);
     },
     /*
       Without this the table flashes empty on every sort and page change, which
@@ -127,15 +130,18 @@ export function useLead(leadId: string) {
   const query = useQuery({
     queryKey,
     queryFn: async ({ signal }): Promise<Lead | null> => {
-      const res = await fetch(`${API_URL}/api/ops/leads/${encodeURIComponent(leadId)}`, {
-        credentials: 'include',
-        signal,
-      });
-      // A miss is a STATE the screen renders (gone from this pipeline), not an
-      // error to retry — retrying a 404 would just re-ask for the same absence.
-      if (res.status === 404) return null;
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return ((await res.json()) as { lead: Lead }).lead;
+      try {
+        return (
+          await getJson<{ lead: Lead }>(`/api/ops/leads/${encodeURIComponent(leadId)}`, signal)
+        ).lead;
+      } catch (error) {
+        // A miss is a STATE the screen renders (gone from this pipeline), not
+        // an error to retry — retrying a 404 would just re-ask for the same
+        // absence. Every OTHER status stays an error, so a failed read is
+        // never mistaken for a record that does not exist.
+        if (isNotFound(error)) return null;
+        throw error;
+      }
     },
     enabled: leadId.length > 0,
   });

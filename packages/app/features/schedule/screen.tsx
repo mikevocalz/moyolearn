@@ -30,8 +30,22 @@ export function ScheduleScreen({ onNewBooking, fill }: ScheduleScreenProps = {})
     <Schedule
       day={DEMO_DAY}
       now={now}
+      /*
+        DEMO_DAY names itself on the surface. The screen's own doc line has
+        said "swap DEMO_DAY for a query" since it was written, and the contract
+        records the same gap — but only the code knew: five portraits and a full
+        day of lessons read as an org's real Wednesday to everyone else.
+      */
+      exampleData
       onBook={handleBook}
-      onNewBooking={onNewBooking ?? (() => selectEvent(null))}
+      /*
+        Passed through UNDEFAULTED. The fallback here was
+        `() => selectEvent(null)`, so on web — the only host that passes no
+        handler — the screen's primary action deselected an event and returned
+        the calendar unchanged. `Schedule` shuts the control and states why
+        instead of firing at nothing.
+      */
+      onNewBooking={onNewBooking}
       fill={fill}
     />
   );

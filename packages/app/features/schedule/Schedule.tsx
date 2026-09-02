@@ -1,6 +1,31 @@
 'use client';
+// org.schedule's resource-major calendar — columns are tutors and rooms, never
+// clients (doc 36 §3.4's binding orientation, restated in the contract).
+//
+// The day it draws is STILL the fixture (`schedule/fixtures.ts` — the
+// contract's own Status: "real UI on DEMO_DAY fixtures"), so the surface says
+// so on itself rather than presenting five invented tutors as an org's roster.
+// The label is the ops-overview revenue idiom, and it leaves with the live
+// sessions read, not before.
+//
+// `onNewBooking` is OPTIONAL by type for the same reason: a host that can
+// open the booking sheet passes one, and a host that cannot gets a disabled
+// control with the reason on screen — never a button that quietly deselects
+// an event and calls that a booking.
+// SOT: design/screens/org/org.schedule/contract.md · docs/pack/36-role-navigation-flows.md §3.4
+// SOT-KEYWORDS: schedule calendar resource major day week booking fixture example data heading
+// Mobbin: https://mobbin.com/screens/02f2467d-9239-45da-8747-646d19989917 (Zoho
+//   CRM — calendar header: page title on the leading edge, Day/Week segment and
+//   the create action on the trailing edge, resource lanes beneath) ·
+//   https://mobbin.com/screens/710a5c70-57fb-4177-ad6f-5a1a2e14c397 (Wix Booking
+//   Calendar — staff-view columns headed by avatar + name over a time gutter) ·
+//   https://mobbin.com/screens/1b3c5a4b-5f4e-4825-a1c1-a3534bdeeec8 (Fresha — a
+//   demo resource is marked as demo IN the column header, beside the real ones) ·
+//   https://mobbin.com/screens/dcc6b94e-b619-4d43-9149-4e712eca95a3 (Deputy —
+//   a standing status strip sits above the grid, in flow, not floating over it).
+//   Structure only.
 import { View, Text, Pressable } from '@acme/ui/tw';
-import { Button, Card, Container, Dial, EmptyState, LoadingSkeleton, SegmentedControl, useSizeClass } from '@acme/ui';
+import { Badge, Button, Card, Container, Dial, EmptyState, Heading, LoadingSkeleton, SegmentedControl, useSizeClass } from '@acme/ui';
 import { Calendar } from '@acme/ui/icons';
 import { BookingSurface } from './BookingSurface.tsx';
 import { ScheduleGrid } from './ScheduleGrid.tsx';
@@ -16,9 +41,18 @@ export interface ScheduleProps {
   /** Injected rather than read from the clock, so renders stay deterministic. */
   now: Date;
   loading?: boolean;
+  /**
+   * True when `day` is the built-in fixture rather than an org's real calendar.
+   * Drives the on-surface label; a caller reading live sessions passes false.
+   */
+  exampleData?: boolean;
   onBook: (slot: Slot) => void;
-  /** Header action — create a booking outside the slot list. */
-  onNewBooking: () => void;
+  /**
+   * Header action — create a booking outside the slot list. Absent means the
+   * host has no booking surface to open, and the control renders disabled with
+   * the reason stated, rather than firing at nothing.
+   */
+  onNewBooking?: () => void;
 }
 
 const VIEWS: { value: ScheduleView; label: string }[] = [
@@ -34,7 +68,7 @@ const VIEWS: { value: ScheduleView; label: string }[] = [
  * what lets the detail pane host it without either side importing the other.
  */
 export function Schedule({
-  fill, day, now, loading = false, onBook, onNewBooking }: ScheduleProps) {
+  fill, day, now, loading = false, exampleData = false, onBook, onNewBooking }: ScheduleProps) {
   const sizeClass = useSizeClass();
   const view = useScheduleStore((state) => state.view);
   const setView = useScheduleStore((state) => state.setView);
@@ -73,15 +107,58 @@ export function Schedule({
         className={`flex-1 gap-4 bg-surface-sunken py-4 ${fill ? 'px-4 sm:px-6' : ''}`}
       >
         <View className="flex-row items-center gap-stack">
-          <Text className="flex-1 text-xl font-semibold text-text md:text-2xl lg:text-3xl">Today&apos;s Schedule</Text>
+          {/*
+            A real <h1>. This was a styled <Text>, so /schedule was the one org
+            rail destination with NO heading anywhere in its outline — the page
+            looked titled and announced as an untitled slab of controls.
+          */}
+          <Heading level={1} size="title" className="flex-1">
+            Today&apos;s Schedule
+          </Heading>
 
           {/* The platform's own segmented control (@expo/ui), not a hand-rolled
               row of pressables — same reasoning as every other native control in
               the kit. */}
           <SegmentedControl options={VIEWS} value={view} onChange={setView} />
 
-          <Button variant="primary" title="New booking" onPress={onNewBooking} />
+          {/*
+            A control that works or is honestly shut. `onNewBooking` used to
+            default to `() => selectEvent(null)` one level up, so on web the
+            primary action of this screen deselected an event and looked like
+            it had booked something.
+          */}
+          <Button
+            variant="primary"
+            title="New booking"
+            disabled={onNewBooking === undefined}
+            onPress={onNewBooking}
+          />
         </View>
+
+        {/*
+          The data label, in flow above the grid (Deputy's standing strip) and
+          never floating over it. Five tutors, their portraits and a full day of
+          lessons are convincing enough to be read as this org's actual
+          Wednesday — which is precisely why it has to say what it is.
+        */}
+        {exampleData ? (
+          <View className="flex-row flex-wrap items-center gap-element">
+            <Badge label="Example data" />
+            <Text className="text-caption text-text-muted">
+              These tutors and lessons are a sample day. Your org&apos;s real calendar appears here
+              once sessions are wired to this view.
+            </Text>
+          </View>
+        ) : null}
+
+        {onNewBooking === undefined ? (
+          // The disabled control's reason, on screen rather than in a tooltip:
+          // an aria-disabled button with no stated cause reads as broken.
+          <Text className="text-caption text-text-muted">
+            Booking isn&apos;t open on this surface yet — sessions are created from the mobile
+            schedule while the write path is being wired.
+          </Text>
+        ) : null}
 
         {loading ? (
           <LoadingSkeleton count={6} className="h-12 w-full" />
@@ -112,7 +189,14 @@ export function Schedule({
               </Pressable>
             </View>
             <View className="flex-row gap-element">
-              <Button variant="outline" title="Edit" onPress={() => { /* Wave 3: edit */ }} />
+              {/*
+                DECISION — "Edit" is GONE rather than disabled. Its handler was
+                an empty body with a `Wave 3` note inside it, so it looked
+                pressable, took the press and did nothing; there is no event
+                editor anywhere in this feature for it to be shut against, and
+                a control with no destination is absence, not a disabled state
+                (the Import-button law). It returns with the editor.
+              */}
               {/* The event's real span, not a fabricated 30 minutes. */}
               <Button
                 variant="primary"

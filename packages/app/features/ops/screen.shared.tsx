@@ -40,7 +40,7 @@ export function OpsScreen() {
     as a calm "0 sessions" day. Revenue stays the honest fixture ops.data.ts
     documents (doc 19 §5's rollups do not exist yet).
   */
-  const { sessions, loading, error } = useSessions();
+  const { sessions, loading, error, retry } = useSessions();
   const sessionsStatus = loading ? 'loading' : error ? 'error' : 'ready';
 
   /*
@@ -60,6 +60,8 @@ export function OpsScreen() {
       operatorName={operator?.name.split(' ')[0] ?? 'there'}
       sessions={sessions}
       sessionsStatus={sessionsStatus}
+      sessionsError={error}
+      onRetrySessions={retry}
       revenue={REVENUE_BY_ORG[org.slug] ?? []}
     />
   );

@@ -13,6 +13,7 @@ export type { OrgMember } from './people.types.ts';
 export type { EnrollmentReport } from './reports.types.ts';
 export type {
   InstitutionAction,
+  InstitutionRead,
   InstitutionResource,
   InstitutionScope,
 } from './institution.types.ts';

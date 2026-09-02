@@ -40,9 +40,11 @@ export {
   roleForOrganizationRoleAndKind,
 } from './providers/session/role-mapping';
 export {
+  institutionRead,
   loadInstitutionOverview,
   loadDistrictOverview,
   loadSchoolOverview,
+  readInstitutionOverview,
   type InstitutionOverviewOptions,
 } from './features/institution/institution.service';
 export {
@@ -51,6 +53,7 @@ export {
 } from './features/org-settings/org-settings.service';
 export {
   loadDistrictSchools,
+  readDistrictSchools,
   type LoadSchools,
 } from './features/institution/schools.service';
 export {

@@ -19,8 +19,9 @@
 //   Structure only.
 import { Link } from 'solito/link';
 import { useRouter } from 'solito/navigation';
-import { Badge, Button, EmptyState, Heading, LoadingSkeleton } from '@acme/ui';
+import { Badge, Button, EmptyState, Heading, LoadingSkeleton, ReadFailure } from '@acme/ui';
 import { Text, View } from '@acme/ui/primitives';
+import { readFailureCopy } from '../../core/read-failure-copy.ts';
 import { STAGE_TONE } from './ops.data';
 import type { FamilyGroup } from './family-groups';
 import { useFamilies } from './use-families';
@@ -52,8 +53,18 @@ function FamilyRow({ group }: { group: FamilyGroup }) {
 }
 
 export function FamiliesScreen() {
-  const { families, status, refetch } = useFamilies();
+  const { families, status, error, refetch } = useFamilies();
   const router = useRouter();
+  /*
+    The sentence comes from the CAUSE. The old copy was one string for every
+    failure, so a signed-out owner was told the list was "stale, not gone" and
+    handed a retry that fails identically forever.
+  */
+  const failure = readFailureCopy(
+    error,
+    'your families',
+    'No household was removed and no lead moved — this is the list, not the records.',
+  );
 
   return (
     <View className={`gap-section ${GUTTER}`}>
@@ -67,18 +78,31 @@ export function FamiliesScreen() {
       </View>
 
       <View className="gap-stack">
-        <SectionHeader title="Households" count={String(families.length)} />
+        {/* The count speaks only for a settled read: "Households 0" over a
+            failed fetch is a claim about the org nobody made. */}
+        <SectionHeader
+          title="Households"
+          count={status === 'success' ? String(families.length) : undefined}
+        />
         {status === 'pending' ? (
           <LoadingSkeleton count={4} />
         ) : status === 'error' ? (
-          <EmptyState
-            icon={<Text className="text-title">!</Text>}
-            title="Could not load families"
-            description="The list is stale, not gone. Try again in a moment."
-            /* The retry the copy promises — "try again" with no way to was an
-               instruction the screen refused to take itself. */
+          <ReadFailure
+            title={failure.title}
+            description={failure.description}
+            onRetry={() => {
+              void refetch();
+            }}
             action={
-              <Button title="Try again" variant="outline" onPress={() => void refetch()} />
+              failure.signedOut ? (
+                <Button title="Sign in" onPress={() => router.push('/login')} />
+              ) : (
+                <Button
+                  title="Open the pipeline"
+                  variant="ghost"
+                  onPress={() => router.push(leadsRootPath())}
+                />
+              )
             }
           />
         ) : families.length === 0 ? (

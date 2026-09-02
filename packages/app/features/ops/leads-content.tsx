@@ -44,6 +44,7 @@ import {
   Menu,
   DataTable,
   EmptyState,
+  ReadFailure,
   SearchBar,
   SegmentedControl,
   SuppressibleValue,
@@ -51,6 +52,7 @@ import {
   type Suppressible,
 } from '@acme/ui';
 import { Pressable, Text, View } from '@acme/ui/primitives';
+import { readFailureCopy } from '../../core/read-failure-copy.ts';
 import { EXAMPLE_LEADS, MIN_COHORT, STAGE_TONE, type Lead } from './ops.data';
 import { useCreateLead, useLeads } from './use-leads';
 import { useViewParams } from './use-view-params';
@@ -389,7 +391,7 @@ export function LeadsScreen() {
     the table below is handed both — it never fetches and never stores.
   */
   const { view, setView } = useViewParams();
-  const { rows: serverRows, page, status, queryKey } = useLeads({ ...view, limit: 25 });
+  const { rows: serverRows, page, status, error, queryKey, refetch } = useLeads({ ...view, limit: 25 });
 
   /*
     The write path. `rows` from here — not from the query — because the
@@ -489,12 +491,31 @@ export function LeadsScreen() {
       />
     );
 
+  /*
+    `refetch`, not `setView({})`. The old handler rewrote the URL with the same
+    values, so the query key never changed and Query answered from the cache
+    inside `staleTime` — a Try-again button that provably could not try again.
+    The retry has to name the QUERY, not the view. And the sentence comes from
+    the cause, so a signed-out owner is sent to sign in instead of round a
+    retry that fails identically forever.
+  */
+  const failure = readFailureCopy(
+    error,
+    'your pipeline',
+    'No lead was lost and no stage moved — this is the table, not the records.',
+  );
   const errorNode = (
-    <EmptyState
-      icon={<Text className="text-title">!</Text>}
-      title="Could not load the pipeline"
-      description="The list is stale, not gone. Try again in a moment."
-      action={<Button title="Try again" variant="outline" onPress={() => setView({})} />}
+    <ReadFailure
+      title={failure.title}
+      description={failure.description}
+      onRetry={() => {
+        void refetch();
+      }}
+      action={
+        failure.signedOut ? (
+          <Button title="Sign in" onPress={() => router.push('/login')} />
+        ) : null
+      }
     />
   );
 
@@ -515,9 +536,18 @@ export function LeadsScreen() {
           "under 5" while the rule was 10, so the interface was
           publishing a privacy promise the code did not keep — and the
           number a reader trusts is the one on screen.
+
+          The counts speak only for a page that ARRIVED. Under a failed read
+          `page` is undefined and every number fell through `?? 0`, so the
+          footer printed "0 of 0 shown · 0 families total" directly beneath a
+          card saying the read failed — the two halves of the same footer
+          contradicting each other, and the confident half is the one people
+          read.
         */}
-        {rows.length} of {total} shown · {totalUnfiltered} families total · attendance hidden for
-        groups under {MIN_COHORT}
+        {page
+          ? `${rows.length} of ${total} shown · ${totalUnfiltered} families total · `
+          : 'Counts unavailable while the pipeline is unread · '}
+        attendance hidden for groups under {MIN_COHORT}
       </Text>
       <View className="flex-row items-center gap-element">
         <Button
@@ -558,8 +588,13 @@ export function LeadsScreen() {
             really "rows matching this view". The stats block is computed over
             the whole org regardless of the page (statsFor's contract), which
             is the only honest source for an org-wide claim.
+
+            And it renders ONLY for a page that arrived: "0 need attention" is
+            the calmest sentence on this screen, and printing it over a read
+            that failed tells an owner their pipeline is clear when nobody
+            asked the pipeline anything.
           */
-          count={`${page?.stats.needsAttention ?? 0} need attention`}
+          count={page ? `${page.stats.needsAttention} need attention` : undefined}
           accent={view.onlyAttention}
           action={
             <View className="flex-row items-center gap-element">

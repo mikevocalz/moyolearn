@@ -27,6 +27,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { StaffRosterEntry, TriageQueue, TriageRow } from './incidents.service.ts';
 import { API_URL } from '../../core/api-url.ts';
+import { ApiError, getJson, isRetryableError } from '../../core/api-fetch.ts';
 
 /** Key factory — inline queryKey arrays are a lint error (doc 11 §4). */
 export const incidentQueueKey = () => ['safety', 'incident-queue'] as const;
@@ -45,22 +46,40 @@ export interface IncidentQueueRead {
    * "something went wrong" here would be hiding a real, correct answer.
    */
   denied: boolean;
+  /**
+   * Re-runs the queue read. Handed back so the failed-read card can carry the
+   * retry its own copy offers ("open Safety again in a moment") — on a domain
+   * where the gap between "no open incidents" and "we could not check" is the
+   * whole point, closing that gap has to be one press, not a page reload.
+   * Never offered on `denied`: a refusal is a correct answer, and retrying a
+   * correct answer only asks the same question again.
+   */
+  retry: () => void;
 }
 
 class QueueDenied extends Error {}
 
 export function useIncidentQueue(): IncidentQueueRead {
-  const { data, isPending, error } = useQuery({
+  const { data, isPending, error, refetch } = useQuery({
     queryKey: incidentQueueKey(),
     queryFn: async ({ signal }): Promise<TriageQueue> => {
-      const response = await fetch(`${API_URL}/api/safety/incidents`, {
-        credentials: 'include',
-        signal,
-      });
-      if (response.status === 403) throw new QueueDenied('Not your queue');
-      if (!response.ok) throw new Error(`HTTP ${response.status}`);
-      const body = (await response.json()) as TriageQueue;
-      return { rows: body.rows, unassignedS4: body.unassignedS4 };
+      try {
+        const body = await getJson<TriageQueue>('/api/safety/incidents', signal);
+        return { rows: body.rows, unassignedS4: body.unassignedS4 };
+      } catch (cause) {
+        /*
+          403 is the role wall, and it is the one refusal this surface renders
+          as an ANSWER rather than a failure — the route flattens both of its
+          refusals to 403 on purpose, so it never arrives as an upsell. It is
+          narrowed here off `ApiError`'s status rather than off a hand-thrown
+          message, which is what lets every other status keep flowing to the
+          shared read-failure copy that tells 401 apart from a dead network.
+        */
+        if (cause instanceof ApiError && cause.status === 403) {
+          throw new QueueDenied('Not your queue');
+        }
+        throw cause;
+      }
     },
     /*
       No polling. Every row carries an SLA countdown, which tempts a refresh
@@ -68,8 +87,14 @@ export function useIncidentQueue(): IncidentQueueRead {
       Query's refetch-on-focus already covers "I came back to this screen".
       A timer would spend a staff phone's battery redrawing a clock nobody is
       reading.
+
+      The retry predicate is the CLIENT-WIDE one plus this surface's own
+      refusal: `isRetryableError` already stops on a settled 4xx (so a 401
+      renders its honest state on the first response instead of after backoff),
+      and `QueueDenied` is not an ApiError any more, so it is named explicitly.
     */
-    retry: (failureCount, cause) => !(cause instanceof QueueDenied) && failureCount < 2,
+    retry: (failureCount, cause) =>
+      !(cause instanceof QueueDenied) && failureCount < 2 && isRetryableError(cause),
   });
 
   return {
@@ -77,6 +102,9 @@ export function useIncidentQueue(): IncidentQueueRead {
     loading: isPending,
     error: error instanceof QueueDenied ? null : (error ?? null),
     denied: error instanceof QueueDenied,
+    retry: () => {
+      void refetch();
+    },
   };
 }
 

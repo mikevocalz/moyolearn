@@ -24,8 +24,9 @@
 //   AI — the queue's segments are states of one list, not separate lists).
 //   Structure only.
 import { useRouter } from 'solito/navigation';
-import { Badge, Button, EmptyState, Heading, LoadingSkeleton } from '@acme/ui';
+import { Badge, Button, EmptyState, Heading, LoadingSkeleton, ReadFailure } from '@acme/ui';
 import { Text, View } from '@acme/ui/primitives';
+import { readFailureCopy } from '../../core/read-failure-copy.ts';
 import { STAGE_TONE, type Lead, type Stage } from './ops.data';
 import { MANUAL_STAGES } from './stage-change';
 import { useLeads } from './use-leads';
@@ -74,11 +75,16 @@ function EnrollmentRow({
 
 export function EnrollmentScreen() {
   const router = useRouter();
-  const { rows: serverRows, status, queryKey } = useLeads(ENROLLMENT_VIEW);
+  const { rows: serverRows, status, error, queryKey, refetch } = useLeads(ENROLLMENT_VIEW);
   const { rows, moveStage, pending, error: writeError } = useStageAction(serverRows, queryKey);
 
   const inProgress = rows.filter((l) => PRE_ENROLLED.includes(l.stage));
   const enrolled = rows.filter((l) => l.stage === 'Enrolled');
+  const enrollmentFailure = readFailureCopy(
+    error,
+    'the enrollment queue',
+    'No conversion was lost and no family moved stage — this is the list, not the pipeline.',
+  );
 
   return (
     <View className={`gap-section ${GUTTER}`}>
@@ -100,10 +106,20 @@ export function EnrollmentScreen() {
       {status === 'pending' ? (
         <LoadingSkeleton count={4} />
       ) : status === 'error' ? (
-        <EmptyState
-          icon={<Text className="text-title">!</Text>}
-          title="Could not load the pipeline"
-          description="The list is stale, not gone. Try again in a moment."
+        /* The kit's read-failure block, not a fourth private copy of it — and
+           the sentence comes from the cause, so a signed-out staffer is sent to
+           sign in rather than round a retry that cannot succeed. */
+        <ReadFailure
+          title={enrollmentFailure.title}
+          description={enrollmentFailure.description}
+          onRetry={() => {
+            void refetch();
+          }}
+          action={
+            enrollmentFailure.signedOut ? (
+              <Button title="Sign in" onPress={() => router.push('/login')} />
+            ) : null
+          }
         />
       ) : (
         <>

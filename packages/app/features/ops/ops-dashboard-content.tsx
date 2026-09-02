@@ -20,8 +20,9 @@
 //   https://mobbin.com/screens/5ee90a6f-5d97-495c-ad2a-d3dd74ab8b7d (Rocket Money
 //   — phone card: identity left, headline figure right, labelled facts beneath)
 import { useRouter } from 'solito/navigation';
-import { Badge, Banner, Button, EmptyState, LoadingSkeleton, ScheduleCard, StatCard, TrendLine } from '@acme/ui';
+import { Badge, Banner, Button, EmptyState, Heading, LoadingSkeleton, ReadFailure, ScheduleCard, StatCard, TrendLine } from '@acme/ui';
 import { Text, View } from '@acme/ui/primitives';
+import { readFailureCopy } from '../../core/read-failure-copy.ts';
 import type { Session } from './ops.data';
 import type { TrendPoint } from '@acme/ui';
 import { useLeads } from './use-leads';
@@ -50,6 +51,14 @@ export interface OpsDashboardContentProps {
     against — "no sessions" and "we could not check" are different sentences.
   */
   sessionsStatus: 'loading' | 'error' | 'ready';
+  /**
+   * The sessions read's own error, threaded so the failed-read block can say
+   * WHICH failure this was. A 401 and a dropped connection want different
+   * sentences and different exits (core/read-failure-copy.ts).
+   */
+  sessionsError: Error | null;
+  /** Re-runs the sessions read — the retry the failed-read block offers. */
+  onRetrySessions: () => void;
   revenue: readonly TrendPoint[];
 }
 
@@ -58,6 +67,8 @@ export function OpsDashboardContent({
   operatorName,
   sessions,
   sessionsStatus,
+  sessionsError,
+  onRetrySessions,
   revenue,
 }: OpsDashboardContentProps) {
   const router = useRouter();
@@ -66,8 +77,22 @@ export function OpsDashboardContent({
     in the org regardless of the page, so `limit: 1` buys the headline numbers
     without pulling a page of rows this screen no longer renders.
   */
-  const { page } = useLeads(STATS_VIEW);
+  const { page, status: statsStatus, refetch: refetchStats } = useLeads(STATS_VIEW);
   const stats = page?.stats;
+  /*
+    The pipeline read's OWN state, threaded exactly as the sessions read's
+    already is. Every number below used to fall back through `?? 0`, so a
+    pipeline read that FAILED printed "0 families need a decision today" and a
+    big "0" under Sessions delivered — the calm-zero lie the sessions half of
+    this screen was already written against, still live on the other half.
+    `?? 0` is only honest once the read has settled successfully.
+  */
+  const statsReady = statsStatus === 'success' && stats !== undefined;
+  const sessionsFailure = readFailureCopy(
+    sessionsError,
+    'today’s sessions',
+    'No session was cancelled and nothing moved — this is the read, not the calendar.',
+  );
 
   /*
     Greeting by clock, not by hope. It said "Good morning" at every hour, which
@@ -101,9 +126,17 @@ export function OpsDashboardContent({
         <Text className="font-mono text-caption uppercase tracking-wide text-text-muted">
           {today}
         </Text>
-        <Text className="font-display text-display-sm text-text">
+        {/*
+          A real <h1>, not display type on a <span>. The greeting was styled
+          like a page title and announced like body copy, so this screen had no
+          heading at all in the accessibility tree — and, with the rail's own
+          section labels being plain text too, nothing on /ops named the page
+          to a screen reader or to an outline. `Heading` carries the same
+          display-sm rung, so the look is unchanged and the semantics arrive.
+        */}
+        <Heading level={1} size="display-sm" className="text-text">
           {greeting}, {operatorName}
-        </Text>
+        </Heading>
         <Text className="text-body-lg text-text-muted">
           {/*
             "before 5pm" was typed, and the last session in the seed starts at
@@ -111,7 +144,11 @@ export function OpsDashboardContent({
             wrong. It reads the last session now, and drops the clause entirely
             when there are none rather than claiming a deadline for an empty day.
           */}
-          {stats?.needsAttention ?? 0} families need a decision today
+          {statsReady
+            ? `${stats.needsAttention} families need a decision today`
+            : statsStatus === 'error'
+              ? 'We couldn’t read the pipeline, so we can’t say what needs a decision today'
+              : 'Counting what needs a decision today'}
           {/* The session clause only speaks when the read succeeded — a loading
               or failed read must not narrate a schedule it does not have. */}
           {sessionsStatus === 'ready' && sessions.length > 0 ? `, and ${sessions.length} ${sessions.length === 1 ? 'session runs' : 'sessions run'} before ${lastSessionEnds}.` : '.'}
@@ -132,20 +169,39 @@ export function OpsDashboardContent({
                failed or in-flight fetch is the calm-zero lie in miniature. */
             count={sessionsStatus === 'ready' ? String(sessions.length) : undefined}
           />
-          {sessionsStatus === 'error' ? (
-            /*
-              A failed read states itself. With cached rows below it the list is
-              STALE (Query keeps the last success on a refetch failure); with
-              nothing cached the banner is the whole answer — never the calm
-              empty day.
-            */
+          {/*
+            Two different failures, two different shapes, and the difference is
+            whether anything is cached. With rows the list is STALE — Query
+            keeps the last success on a refetch failure — so the rows stay
+            readable under a Banner that dates them; the reader loses nothing.
+            With nothing cached there is no list to qualify, so the region
+            itself becomes the answer and `ReadFailure` renders in its place —
+            never the calm empty day, and never a skeleton standing in for a
+            settled refusal.
+          */}
+          {sessionsStatus === 'error' && sessions.length > 0 ? (
             <Banner
               tone="warning"
-              title={sessions.length > 0 ? "Today's schedule may be stale" : "Couldn't load today's sessions"}
-              description={
-                sessions.length > 0
-                  ? 'The last read failed — these sessions are from the previous sync.'
-                  : 'The read failed, so an empty list here means unknown, not a clear day. Try again in a moment.'
+              title="Today's schedule may be stale"
+              description="The last read failed — these sessions are from the previous sync."
+              action={{ label: 'Try again', onPress: onRetrySessions }}
+            />
+          ) : null}
+          {sessionsStatus === 'error' && sessions.length === 0 ? (
+            <ReadFailure
+              title={sessionsFailure.title}
+              description={sessionsFailure.description}
+              onRetry={onRetrySessions}
+              action={
+                sessionsFailure.signedOut ? (
+                  <Button title="Sign in" onPress={() => router.push('/login')} />
+                ) : (
+                  <Button
+                    title="Open the schedule"
+                    variant="ghost"
+                    onPress={() => router.push('/schedule')}
+                  />
+                )
               }
             />
           ) : null}
@@ -239,15 +295,52 @@ export function OpsDashboardContent({
             No trend line on either: a delta needs last month's number, and the
             rollup tables that would hold it (doc 28 §7 → doc 19) do not exist.
             An honest number with no arrow beats an invented arrow.
+
+            Under an unsettled read they print an em dash, not a zero. "0
+            sessions delivered" is a business claim; "we have not read it yet"
+            is a state — and a big black 0 over a 401 is the most confident
+            lie this screen can tell.
           */}
+          {statsStatus === 'error' ? (
+            /*
+              STACKED, not a Banner. Banner lays its action out on the trailing
+              edge, and this column is a third of the canvas — the row collapsed
+              to a one-word-wide description with the button stranded beside it.
+              Same parts, same tokens, arranged for the width they are in: the
+              marker, the sentence, then the action.
+            */
+            <View className="gap-element rounded-card border-2 border-border bg-surface-raised p-inset shadow-card">
+              <View className="self-start">
+                <Badge label="Not loaded" tone="attention" />
+              </View>
+              <Text className="text-body text-text">
+                Sessions delivered and trial conversion are unknown until the pipeline read
+                succeeds — the dashes below are not zeroes.
+              </Text>
+              <View className="self-start">
+                <Button
+                  title="Try again"
+                  variant="outline"
+                  size="sm"
+                  onPress={() => {
+                    void refetchStats();
+                  }}
+                />
+              </View>
+            </View>
+          ) : null}
           <StatCard
             size="lg"
-            value={String(stats?.sessionsDelivered ?? 0)}
+            value={statsReady ? String(stats.sessionsDelivered) : '—'}
             label="Sessions delivered"
           />
           <StatCard
             size="lg"
-            value={stats?.trialConversionPct == null ? '—' : `${stats.trialConversionPct}%`}
+            value={
+              statsReady && stats.trialConversionPct !== undefined
+                ? `${stats.trialConversionPct}%`
+                : '—'
+            }
             label="Trial conversion"
           />
         </View>

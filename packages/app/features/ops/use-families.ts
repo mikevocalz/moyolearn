@@ -3,27 +3,25 @@
 // one record with its leads) and the record's one write surface. Query owns
 // the rows, exactly as the pipeline's read model does; there is no view state
 // because there are no filters on this surface yet.
-// SOT: docs/pack/28-crm-spec.md §2 · docs/decisions/adr-109-family-household-object.md
-// SOT-KEYWORDS: families hook query crm household detail contacts mutation client read
+// SOT: docs/pack/28-crm-spec.md §2 · docs/decisions/adr-109-family-household-object.md · packages/app/core/api-fetch.ts
+// SOT-KEYWORDS: families hook query crm household detail contacts mutation client read api error retry
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { FamilyGroup } from './family-groups';
 import type { FamilyContact, FamilyRecord } from './family-record';
 import type { Lead } from './ops.data';
 import { API_URL } from '../../core/api-url.ts';
+import { getJson, isNotFound } from '../../core/api-fetch.ts';
 
 export const familiesQueryKey = () => ['ops', 'families'] as const;
 
 export function useFamilies() {
   const query = useQuery({
     queryKey: familiesQueryKey(),
-    queryFn: async ({ signal }): Promise<FamilyGroup[]> => {
-      const res = await fetch(`${API_URL}/api/ops/families`, {
-        credentials: 'include',
-        signal,
-      });
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return ((await res.json()) as { families: FamilyGroup[] }).families;
-    },
+    // `getJson` — the status survives as data, so a 401 settles on the first
+    // response (no backoff spent in `pending`, i.e. no skeletons standing in
+    // for an answered refusal) and the screen can name the right way out.
+    queryFn: async ({ signal }): Promise<FamilyGroup[]> =>
+      (await getJson<{ families: FamilyGroup[] }>('/api/ops/families', signal)).families,
     placeholderData: keepPreviousData,
   });
   return { ...query, families: query.data ?? [] };
@@ -48,16 +46,19 @@ export function useFamily(familyId: string) {
   const query = useQuery({
     queryKey,
     queryFn: async ({ signal }): Promise<FamilyDetailPayload | null> => {
-      const res = await fetch(`${API_URL}/api/ops/families/${encodeURIComponent(familyId)}`, {
-        credentials: 'include',
-        signal,
-      });
-      // A miss is a STATE the screen renders (not in this org's records), not
-      // an error to retry — retrying a 404 would just re-ask for the same
-      // absence.
-      if (res.status === 404) return null;
-      if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      return (await res.json()) as FamilyDetailPayload;
+      try {
+        return await getJson<FamilyDetailPayload>(
+          `/api/ops/families/${encodeURIComponent(familyId)}`,
+          signal,
+        );
+      } catch (error) {
+        // A miss is a STATE the screen renders (not in this org's records),
+        // not an error to retry — retrying a 404 would just re-ask for the
+        // same absence. Every other status stays an error, so a failed read
+        // never renders as a household that does not exist.
+        if (isNotFound(error)) return null;
+        throw error;
+      }
     },
     enabled: familyId.length > 0,
   });

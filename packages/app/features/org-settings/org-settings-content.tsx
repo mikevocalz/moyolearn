@@ -40,18 +40,31 @@ export function OrgSettingsContent({ read }: { read: OrgSettingsRead }) {
   */
   if (read.state === 'denied') {
     return (
-      <Card className="gap-element">
-        <Badge label="Owners and finance" tone="neutral" />
-        <Text>These settings aren’t yours to read.</Text>
-        <Text variant="caption" tone="muted">
-          Organization settings are owner and finance work. Nothing is wrong with your account.
-        </Text>
-        {/* org.safety's no_data idiom: the wall carries a way out, because a
-            correct refusal with no door is still a dead end. */}
-        <View className="self-start">
-          <Button title="Back to Overview" variant="outline" onPress={() => router.push('/ops')} />
-        </View>
-      </Card>
+      /*
+        The wall keeps the PAGE HEADING. It used to be a bare card floating in
+        the content area, so on this branch /settings/org rendered no <h1> at
+        all — the one route in the org rail with no heading in its outline, and
+        the branch every member who is not owner or finance lands on. A refusal
+        is a state of this page, not a different page.
+      */
+      <View className="gap-group">
+        <Section className="gap-1">
+          <Heading level={1} size="display-sm">Organization settings</Heading>
+          <Text tone="muted">Your organization’s identity and plan.</Text>
+        </Section>
+        <Card className="gap-element">
+          <Badge label="Owners and finance" tone="neutral" />
+          <Text>These settings aren’t yours to read.</Text>
+          <Text variant="caption" tone="muted">
+            Organization settings are owner and finance work. Nothing is wrong with your account.
+          </Text>
+          {/* org.safety's no_data idiom: the wall carries a way out, because a
+              correct refusal with no door is still a dead end. */}
+          <View className="self-start">
+            <Button title="Back to Overview" variant="outline" onPress={() => router.push('/ops')} />
+          </View>
+        </Card>
+      </View>
     );
   }
 

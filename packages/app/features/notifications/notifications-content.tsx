@@ -4,12 +4,29 @@
 // item read and opens the exit where it is handled (org.inbox contract — every
 // item carries an action target; triage happens on the schedule/CRM surface,
 // never in the list).
+//
+// The items are the store's SEED until the server wiring lands (its own header
+// records the gap). Named families with timestamps and unread dots are the most
+// believable copy on any surface — "the Chen family asked to move Thursday
+// 4:00pm" is a fact an owner would act on — so the surface labels them rather
+// than letting a dev fixture pass for the day's inbound. The label is the
+// ops-overview revenue idiom and it leaves with the seed.
 // SOT: design/screens/org/org.inbox/contract.md
-// SOT-KEYWORDS: org inbox notifications content rows groups unread exit door
+// SOT-KEYWORDS: org inbox notifications content rows groups unread exit door example data seed
+// Mobbin: https://mobbin.com/screens/8551be3e-e992-4933-bde7-64f6a2c6c3c8 (Asana
+//   Inbox — date bands label runs of rows: Today, Yesterday, Past 7 days) ·
+//   https://mobbin.com/screens/2e7cf2ed-0d26-4544-93c4-4a7b6cba2e8d (GitHub
+//   Notifications — unread dot on the leading edge, relative time trailing) ·
+//   https://mobbin.com/screens/a2b51485-af81-4c80-8f06-b357e0fe5bda (Wrike —
+//   an explanatory panel rides IN the inbox list, in flow with the items it
+//   describes, rather than floating over them) ·
+//   https://mobbin.com/screens/bc218968-834c-4ea7-b237-23075dd901c0 (Steep —
+//   a standing "using demo data" notice names the source of what is on screen).
+//   Structure only.
 import { formatDistanceToNow, isToday } from 'date-fns';
 import { useRouter } from 'solito/navigation';
 import { Section, View, Text as TWText, Pressable } from '@acme/ui/tw';
-import { Heading, Text, FadeIn, EmptyState } from '@acme/ui';
+import { Badge, Heading, Text, FadeIn, EmptyState } from '@acme/ui';
 import { Bell } from '@acme/ui/icons';
 import { WELL, INK } from '../home/home.data';
 import { useNotifications, type Notification } from './notifications.store';
@@ -106,6 +123,18 @@ export function NotificationsContent({ title = 'Notifications' }: { readonly tit
         />
       ) : (
         <>
+          {/*
+            In flow above the first band (Wrike's in-list panel), not floating
+            over the rows and not a dismissible toast: the caveat has to be
+            readable at the same moment as the item it qualifies.
+          */}
+          <View className="flex-row flex-wrap items-center gap-element">
+            <Badge label="Example data" />
+            <Text variant="caption" tone="muted">
+              These are sample items shaped like real inbound work. Your org&apos;s inbox appears
+              here once the feed is wired.
+            </Text>
+          </View>
           <Group label="Today" items={today} offset={0} />
           <Group label="Earlier" items={earlier} offset={today.length} />
         </>

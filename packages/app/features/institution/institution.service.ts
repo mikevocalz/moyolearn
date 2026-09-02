@@ -6,13 +6,48 @@ import 'server-only';
 // `requiresInstitution` option. It does not touch Payload directly; it takes a
 // repository port so the same code is testable with a fixture and so the web
 // app owns the Payload adapter.
-// SOT: packages/app/core/protected-operation.ts · packages/app/features/org/org.service.ts
-// SOT-KEYWORDS: institution service overview district school protected operation org branding
+// SOT: packages/app/core/protected-operation.ts · packages/app/features/org/org.service.ts · packages/app/features/org-settings/org-settings.service.ts
+// SOT-KEYWORDS: institution service overview district school protected operation org branding read union denied unavailable
 
 import type { Auth } from '@acme/auth/server';
 import { protectedOperation } from '../../core/protected-operation.ts';
-import type { InstitutionResource } from './institution.types.ts';
+import { MembershipDenied } from '../../core/membership-gate.ts';
+import { InstitutionPermissionDenied } from './institution.policy.ts';
+import type { InstitutionRead, InstitutionResource } from './institution.types.ts';
 import type { OrgBranding, LoadOrgBranding } from '../org/org.service.ts';
+
+/**
+ * Runs an institutional read and classifies its outcome instead of throwing.
+ *
+ * These reads run inside SERVER COMPONENTS, where a thrown refusal is caught by
+ * the route group's `error.tsx` — so `/schools` and `/academics` answered a
+ * correct "you may not read this" and an unconfirmable session with the same
+ * red "Something broke on our end" page, reference id and all. That page is a
+ * lie twice over: nothing broke, and it tells a stranger the route exists.
+ *
+ * Every refusal class collapses into ONE `denied`: a wrong org role
+ * (`MembershipDenied`), no role at all in the addressed tenant
+ * (`HostTenantDenied`, which extends it) and an education role without the
+ * permission (`InstitutionPermissionDenied`) are the same answer to the person
+ * asking, and telling them apart on screen would rebuild the 403 oracle the
+ * contracts ban.
+ *
+ * Everything else — including a repository failure and an unconfirmable
+ * session — is `unavailable`, so a genuine outage is never dressed as a
+ * permission decision, and a permission decision is never dressed as an outage.
+ */
+export async function institutionRead<T>(
+  run: () => Promise<T>,
+): Promise<InstitutionRead<T>> {
+  try {
+    return { state: 'ok', data: await run() };
+  } catch (error) {
+    if (error instanceof InstitutionPermissionDenied || error instanceof MembershipDenied) {
+      return { state: 'denied' };
+    }
+    return { state: 'unavailable' };
+  }
+}
 
 export interface InstitutionOverviewOptions {
   /** The permission the caller must hold in the current tenant scope. */
@@ -69,4 +104,24 @@ export function loadSchoolOverview(
   headers: Headers,
 ): Promise<OrgBranding | null> {
   return loadInstitutionOverview(loadOrgBranding, { scope: 'school', resource: 'people' }, authInstance, headers);
+}
+
+/**
+ * The classified form of `loadInstitutionOverview`, for pages that render the
+ * refusal rather than throwing it.
+ *
+ * It wraps rather than replaces: the throwing loader is what `people/page.tsx`
+ * and the tenant-slug detail pages call after they have already proved the host
+ * is a district or a school, where a throw IS the right escalation. A rail
+ * destination reached by a signed-in member has nothing to escalate to.
+ */
+export function readInstitutionOverview(
+  loadOrgBranding: LoadOrgBranding,
+  options: InstitutionOverviewOptions,
+  authInstance: Auth,
+  headers: Headers,
+): Promise<InstitutionRead<OrgBranding | null>> {
+  return institutionRead(() =>
+    loadInstitutionOverview(loadOrgBranding, options, authInstance, headers),
+  );
 }
