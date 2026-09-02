@@ -14,6 +14,7 @@
     "payload:migrate": "payload migrate",
     "payload:migrate:create": "payload migrate:create",
     "seed": "tsx scripts/seed.mts",
+    "seed:walkthrough": "tsx scripts/seed-walkthrough.mts",
     "bunny:verify:media": "tsx scripts/bunny-verify-media.mts",
     "bunny:verify:video": "tsx scripts/bunny-verify-video.mts",
     "tutor:verify": "tsx scripts/tutor-check.mts",

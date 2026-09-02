@@ -39,10 +39,13 @@ CREATE TABLE IF NOT EXISTS "payload"."handoff_codes" (
 
 -- Unique because a collision would let one code redeem against two learners,
 -- and because the redeem path looks a row up BY this column.
+-- Both handlers, as organizations_additive.sql has them: a duplicate UNIQUE
+-- constraint surfaces as 42P07 `duplicate_table` (the backing index), not
+-- `duplicate_object` — with only the latter this file failed its second run.
 DO $$ BEGIN
   ALTER TABLE "payload"."handoff_codes"
     ADD CONSTRAINT "handoff_codes_code_hash_unique" UNIQUE ("code_hash");
-EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+EXCEPTION WHEN duplicate_table THEN NULL; WHEN duplicate_object THEN NULL; END $$;
 
 CREATE INDEX IF NOT EXISTS "handoff_codes_code_hash_idx"
   ON "payload"."handoff_codes" ("code_hash");
@@ -55,6 +58,25 @@ CREATE INDEX IF NOT EXISTS "handoff_codes_guardian_auth_id_idx"
 -- reads them by expiry, so it should not scan the whole table to find them.
 CREATE INDEX IF NOT EXISTS "handoff_codes_expires_at_idx"
   ON "payload"."handoff_codes" ("expires_at");
+
+-- The locked-documents column every registered collection carries. This file
+-- originally shipped without it — the one sibling to do so — and the gap was
+-- invisible until the first UPDATE on any other collection: Payload's
+-- `checkDocumentLockStatus` selects every collection's rels column in one
+-- query, so a single missing column fails updates for ALL collections. Found
+-- by the walkthrough seed's idempotency re-run (create passed, update died).
+ALTER TABLE "payload"."payload_locked_documents_rels"
+  ADD COLUMN IF NOT EXISTS "handoff_codes_id" integer;
+
+DO $$ BEGIN
+  ALTER TABLE "payload"."payload_locked_documents_rels"
+    ADD CONSTRAINT "payload_locked_documents_rels_handoff_codes_fk"
+    FOREIGN KEY ("handoff_codes_id") REFERENCES "payload"."handoff_codes"("id")
+    ON DELETE cascade ON UPDATE no action;
+EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+
+CREATE INDEX IF NOT EXISTS "payload_locked_documents_rels_handoff_codes_id_idx"
+  ON "payload"."payload_locked_documents_rels" USING btree ("handoff_codes_id");
 
 -- Privileges, mirroring `payload_schema_deny_anon`. The schema-level REVOKE
 -- already covers this table through DEFAULT PRIVILEGES, but it is pinned here
