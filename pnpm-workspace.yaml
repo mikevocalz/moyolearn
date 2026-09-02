@@ -55,7 +55,7 @@ catalog:
   "@gorhom/bottom-sheet": 5.2.14
   react-native-keyboard-controller: 1.22.4
   react-native-mmkv: 4.3.2
-  react-native-nitro-modules: 0.36.5
+  react-native-nitro-modules: 0.37.0
   react-native-enriched-html: 1.1.1
   react-native-gesture-handler: ~2.32.0
   react-native-reanimated: 4.5.1

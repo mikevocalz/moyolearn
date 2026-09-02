@@ -1,0 +1,13 @@
+diff --git a/android/build.gradle b/android/build.gradle
+index 8f83cbe363689159484e2a4659e873e7d2057852..f5f0c720ca028f1bbc53d968287acf749d4b0249 100644
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -140,7 +140,7 @@ dependencies {
+   // For < 0.71, this will be from the local maven repo
+   // For > 0.71, this will be replaced by `com.facebook.react:react-android:$version` by react gradle plugin
+   //noinspection GradleDynamicVersion
+-  implementation "com.facebook.react:react-native:+"
++  compileOnly "com.facebook.react:react-native:+"
+ 
+   // Add a dependency on NitroModules
+   implementation project(":react-native-nitro-modules")

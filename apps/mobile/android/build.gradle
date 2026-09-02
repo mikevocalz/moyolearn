@@ -18,6 +18,15 @@ allprojects {
     mavenCentral()
     maven { url 'https://www.jitpack.io' }
   }
+  afterEvaluate { project ->
+    if (project.plugins.hasPlugin("com.android.library")) {
+      project.android {
+        packagingOptions {
+          excludes += ["com/facebook/react/**", "com/facebook/fbreact/**"]
+        }
+      }
+    }
+  }
 }
 
 apply plugin: "expo-root-project"
