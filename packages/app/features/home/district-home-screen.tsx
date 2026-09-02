@@ -2,7 +2,7 @@
 // District Home — the district-admin shell's landing tab.
 // Honest empty state: this slice does not wire schools or district programs yet,
 // but it makes the district shell reachable and fail-closed.
-// SOT: docs/pack/36-role-navigation-flows.md §3.4
+// SOT: docs/pack/36-role-navigation-flows.md §3.5 · docs/decisions/adr-104-district-mobile-retirement.md
 // SOT-KEYWORDS: district home screen admin shell landing empty
 
 import { ScrollView, View, Text as TWText } from '@acme/ui/tw';
@@ -22,8 +22,8 @@ export function DistrictHomeScreen({ org }: { org?: OrgBranding | null }) {
               District overview will list schools, campuses, and programs.
             </TWText>
             <TWText className="text-body text-text-muted">
-              For now, this is the district-admin shell&apos;s landing screen. The planned tabs are
-              Overview, Schools, Programs, Calendar, and More.
+              For now, this is the district-admin shell&apos;s landing screen. District lives on the
+              web rail — Outcomes, Schools, Educators, Settings — with no mobile tabs (ADR-104).
             </TWText>
           </View>
         </Container>

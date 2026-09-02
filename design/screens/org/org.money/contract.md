@@ -1,4 +1,4 @@
-# Flow Contract — org.money
+# Flow Contract — org.money (DISPOSITION: STRUCK 2026-09-02 — its own condition failed; nothing exists to design against)
 
 ```yaml
 screen_id: org.money
@@ -43,7 +43,7 @@ max_interactions_to_primary: 2 (open payout run → approve)
 state_owner: "[add] money queries (payout-run + invoice projections over Stripe Connect objects joined to sessions/approved summaries) — nothing exists (J6: 'zero earnings/payroll surfaces'; no invoice object). Chrome via existing useOpsChrome; list prefs via createOpsPrefsStore. Stripe stays the ledger — client stores never own money state."
 ```
 
-**Status:** PARTIAL, mostly MISSING in depth (D: `org.money` PARTIAL — `/ops` billing section exists; D's action "verify payouts/invoices depth vs doc 36"; J6 marks invoice [M], payment [M], payroll [M]). This contract covers the whole Money group — Payouts (= J6 payroll) and Invoices (= J6 invoice→payment) — as one screen with two rail items; no separate inventory rows exist and none are needed.
+**Status:** STRUCK 2026-09-02, on this contract's own condition (`state_owner` above): it says "nothing exists," and it is right — no money collection anywhere in Payload (no invoice object, no payout object), the `@better-auth/stripe` plugin mounts only when `STRIPE_SECRET_KEY`/`STRIPE_WEBHOOK_SECRET` are configured and neither appears in `.env.example`, Stripe Connect is absent entirely, and all three stages of this contract's own `no_data` pipeline (sessions → approved reports → payable work) are unbuilt. The rail item is not rendered (`apps/web/components/site/nav.ts` records the strike beside the org rail); striking beats shipping a designed dead end (the `/academics` lesson, C §Web). The contract text stays as the record — do not design against it. Money returns to the rail when the Stripe Connect foundation lands, as a build against this contract, not a rewrite. (Was: PARTIAL, mostly MISSING in depth — D: `org.money` PARTIAL, `/ops` billing section exists; D's action "verify payouts/invoices depth vs doc 36"; J6 marks invoice [M], payment [M], payroll [M]. This contract covers the whole Money group — Payouts (= J6 payroll) and Invoices (= J6 invoice→payment) — as one screen with two rail items; no separate inventory rows exist and none are needed.)
 
 **Notes:**
 - This is J6's missing money half and J5's org-side counterpart: approved reports (tutor.notes) become payable work here, and payout execution feeds tutor.earnings (PROPOSED-NEW). Without this screen both journeys terminate.

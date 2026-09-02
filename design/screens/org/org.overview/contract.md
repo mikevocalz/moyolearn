@@ -26,8 +26,8 @@ exits:
   safety_exception: org.safety         # an unassigned-S4 surfaces here as the ONLY interrupt (doc 31 §5.3)
   inbox: org.inbox
   crm: org.crm
-  money: org.money
-  settings: sys.settings               # rail Settings group; plan rows are PW-05/PW-08 (contracts live in doc 38, not here)
+  money: org.money                     # STRUCK 2026-09-02 — org.money's contract carries the disposition; the rail renders no Money group (nav.ts records the strike). The exit stays as the record of doc 36 §3.4's grouping and goes live with the Stripe Connect build; do not design against it.
+  settings: sys.settings               # rail Settings group — now the built org surface at /settings/org (org.settings contract: identity + plan, owner/finance only); plan ACTION rows stay PW-05/PW-08 (doc 38) and land there when Stripe mounts
 completion_returns_to: self (hub — handled exceptions clear from the list and the next one surfaces)
 back_behavior: "Shell root: system back leaves the app (Android); web follows browser history. The S4 interrupt is dismissible only into org.safety — acknowledged, never ignored."
 failure_paths:

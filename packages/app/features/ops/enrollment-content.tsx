@@ -7,9 +7,12 @@
 // The J6 dead end this surface closes: the pipeline must not END at
 // 'Enrolled', so enrolled families carry the "Book sessions" exit to
 // /schedule (live — the route exists on both platforms).
-// pending: org.money (contract exit `enrolled_invoice`) — the invoicing exit
-// stays a comment because no org.money route exists, and a button that leads
-// nowhere is a designed dead end (the nav flow law, held on-surface).
+// struck: org.money (contract exit `enrolled_invoice`) — org.money was STRUCK
+// 2026-09-02 on its own contract's failed condition (no money collection,
+// Stripe unmounted, Connect absent; disposition in
+// design/screens/org/org.money/contract.md). The invoicing exit stays a
+// comment — a button that leads nowhere is a designed dead end (the nav flow
+// law, held on-surface) — and goes live with the Stripe Connect build.
 // SOT: design/screens/org/org.crm/contract.md (exits) · docs/pack/28-crm-spec.md §3 · docs/pack/36-role-navigation-flows.md §3.4
 // SOT-KEYWORDS: enrollment crm stage complete enrolled book sessions schedule j6
 // Mobbin: https://mobbin.com/screens/f0e0352c-2bfb-46ff-b23c-eb56b2fdd9c0 (Xero —

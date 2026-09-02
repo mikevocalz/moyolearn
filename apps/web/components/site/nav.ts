@@ -122,7 +122,13 @@ const ORG_RAIL: NavGroup[] = [
     ],
   },
   { title: 'Scheduling', items: [{ label: 'Calendar', href: '/schedule' }] },
-  // pending: org.money (contract exists) — Payouts · Invoices (doc 36 §3.4).
+  // struck: org.money — STRUCK 2026-09-02 per its own contract's failed
+  // condition: state_owner says "nothing exists," and nothing does — no money
+  // collection in Payload, the Stripe plugin unmounted (no STRIPE_* keys in
+  // .env.example), Connect absent, and all three stages of the contract's own
+  // no_data pipeline (sessions → approved reports → payable work) unbuilt. An
+  // empty rail destination is a designed dead end (the /academics lesson). The
+  // contract stays in design/screens/org as the record.
   // Doc 36 §3.4's Safety group (G §3.2 marked it ✱; built now): the incident
   // queue at /safety, on the safety side of the doc 23/31 wall — and carrying
   // NO count badge, ever: counts-as-pressure is the failure mode doc 31 §5.3
@@ -213,7 +219,14 @@ export const RAIL_BY_ROLE: Record<RailKind, NavGroup[]> = {
         { label: 'Schools', href: '/schools' },
         { label: 'Educators', href: '/people' },
         // pending: district.compliance (contract exists) — counts, never
-        // contents; sits between Educators and Settings when built.
+        // contents; sits between Educators and Settings when built. DEFERRED
+        // with the blocker named: IncidentReports and Consents carry no
+        // orgId/districtId (the doc 31 channel is platform-scoped), and the
+        // only bridge — Enrollments (learnerAuthId → districtId) — is
+        // temporally wrong for occurredAt-in-period counting (it reattributes
+        // history to wherever the learner sits today) and ambiguous for
+        // multi-district/exited learners. Attribution needs a schema ADR, not
+        // a query; Phase 3 per doc 36 §3.5 / ADR-104.
         { label: 'Settings', href: '/settings' },
       ],
     },
