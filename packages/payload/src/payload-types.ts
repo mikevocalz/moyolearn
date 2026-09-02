@@ -85,6 +85,7 @@ export interface Config {
     enrollments: Enrollment;
     classes: Class;
     assignments: Assignment;
+    'assignment-completions': AssignmentCompletion;
     leads: Lead;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -111,6 +112,7 @@ export interface Config {
     enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
     classes: ClassesSelect<false> | ClassesSelect<true>;
     assignments: AssignmentsSelect<false> | AssignmentsSelect<true>;
+    'assignment-completions': AssignmentCompletionsSelect<false> | AssignmentCompletionsSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -706,6 +708,31 @@ export interface Assignment {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "assignment-completions".
+ */
+export interface AssignmentCompletion {
+  id: number;
+  /**
+   * The completed assignment — an `assignments` document id.
+   */
+  assignmentId: string;
+  /**
+   * The Better Auth user id of the learner who marked it done.
+   */
+  learnerAuthId: string;
+  /**
+   * The assignment’s class at the moment of completion, denormalized for teacher counts.
+   */
+  classId: string;
+  /**
+   * When the learner marked it done. Written once; never edited.
+   */
+  completedAt: string;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "leads".
  */
 export interface Lead {
@@ -822,6 +849,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'assignments';
         value: number | Assignment;
+      } | null)
+    | ({
+        relationTo: 'assignment-completions';
+        value: number | AssignmentCompletion;
       } | null)
     | ({
         relationTo: 'leads';
@@ -1197,6 +1228,18 @@ export interface AssignmentsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "assignment-completions_select".
+ */
+export interface AssignmentCompletionsSelect<T extends boolean = true> {
+  assignmentId?: T;
+  learnerAuthId?: T;
+  classId?: T;
+  completedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "leads_select".
  */
 export interface LeadsSelect<T extends boolean = true> {
@@ -1293,6 +1336,7 @@ export interface CollectionQueryWidget {
       | 'enrollments'
       | 'classes'
       | 'assignments'
+      | 'assignment-completions'
       | 'leads';
     where?:
       | {
@@ -1335,6 +1379,7 @@ export interface ActivityWidget {
           | 'enrollments'
           | 'classes'
           | 'assignments'
+          | 'assignment-completions'
           | 'leads'
         )[]
       | null;

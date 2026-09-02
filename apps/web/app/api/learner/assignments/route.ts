@@ -1,5 +1,6 @@
 // GET /api/learner/assignments — the J1 arrival signal, pull side: everything
-// published to the classes this learner is enrolled in, soonest due first.
+// published to the classes this learner is enrolled in, soonest due first,
+// each row carrying the learner's OWN done state (`doneAt`).
 //
 // A LEARNER SURFACE beside the profile route, and deliberately not the teacher
 // assignments route with a flag: identity is `ctx.learnerId` and nothing else
@@ -13,6 +14,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { learnerAssignments } from '@acme/app/server';
 import { loadEnrollmentsByLearner } from '@/lib/enrollment.repository';
 import { loadPublishedAssignmentsForClasses } from '@/lib/assignments.repository';
+import { loadCompletionsForLearnerAssignments } from '@/lib/assignment-completions.repository';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
 
@@ -26,6 +28,7 @@ export async function GET(request: NextRequest) {
       {
         loadEnrollmentsByLearner,
         loadPublishedAssignments: loadPublishedAssignmentsForClasses,
+        loadCompletionsForAssignments: loadCompletionsForLearnerAssignments,
       },
       auth,
       request.headers,

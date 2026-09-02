@@ -6,11 +6,15 @@
 // SOT-KEYWORDS: student plan week strip agenda timeline join practice
 
 import { useMemo } from 'react';
+import { Check } from '@acme/ui/icons';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, Heading, PressScale, Text, FadeIn } from '@acme/ui';
 import { useRouter } from 'solito/navigation';
 import { usePlanStore } from './plan.store';
-import { useLearnerAssignments } from '../assignments/use-learner-assignments';
+import {
+  useLearnerAssignments,
+  useMarkAssignmentDone,
+} from '../assignments/use-learner-assignments';
 import { mergeAssignmentsIntoWeek, PLAN_WEEK, type PlanTimelineItem } from './plan.data';
 
 export function PlanContent() {
@@ -21,6 +25,7 @@ export function PlanContent() {
   // Real published assignments, bucketed by dueAt into the week's mixed
   // timeline; sessions/practice are still the fixture scaffold (see plan.data).
   const { assignments } = useLearnerAssignments();
+  const markDone = useMarkAssignmentDone();
   const week = useMemo(() => mergeAssignmentsIntoWeek(PLAN_WEEK, assignments), [assignments]);
 
   const activeId = selectedDayId ?? week[0]!.id;
@@ -73,6 +78,8 @@ export function PlanContent() {
                   key={item.id}
                   item={item}
                   onOpen={() => router.push(item.kind === 'practice' ? '/practice' : '/tutor')}
+                  onMarkDone={(assignmentId) => markDone.mutate(assignmentId)}
+                  markPending={markDone.isPending}
                 />
               ))}
             </View>
@@ -87,16 +94,21 @@ export function PlanContent() {
   );
 }
 
-function PlanRow({ item, onOpen }: { item: PlanTimelineItem; onOpen: () => void }) {
-  return (
-    <PressScale
-      className="w-full flex-row items-center gap-stack rounded-card border-2 border-border bg-surface-raised p-3 shadow-card"
-      outerClassName="w-full"
-      aria-label={`${item.title}, ${item.dueLabel}`}
-      onPress={onOpen}
-    >
-      {/* The child always knows who is on the other side: a human tutor's
-          avatar, or the presence mark for AI practice. */}
+function PlanRow({
+  item,
+  onOpen,
+  onMarkDone,
+  markPending,
+}: {
+  item: PlanTimelineItem;
+  onOpen: () => void;
+  onMarkDone: (assignmentId: string) => void;
+  markPending: boolean;
+}) {
+  /* The child always knows who is on the other side: a human tutor's
+     avatar, or the presence mark for AI practice. */
+  const face = (
+    <>
       {item.tutorName ? (
         <Avatar name={item.tutorName} size="sm" />
       ) : (
@@ -105,14 +117,66 @@ function PlanRow({ item, onOpen }: { item: PlanTimelineItem; onOpen: () => void 
         </View>
       )}
       <View className="flex-1 gap-0.5">
-        <TWText className={`text-base ${item.done ? 'text-text-muted line-through' : 'text-text'}`}>
-          {item.title}
-        </TWText>
-        <TWText className="text-sm text-text-muted">{item.dueLabel}</TWText>
+        {/* Done keeps the title's normal face — no strikethrough, no fading
+            the child's own work out. The supporting line simply says so. */}
+        <TWText className="text-base text-text">{item.title}</TWText>
+        <TWText className="text-sm text-text-muted">{item.done ? 'Done' : item.dueLabel}</TWText>
       </View>
-      <TWText className="text-sm font-semibold text-text">
-        {item.joinable ? 'Join session' : item.kind === 'practice' ? 'Start practice' : 'Open'}
-      </TWText>
-    </PressScale>
+    </>
+  );
+
+  if (item.kind !== 'assignment' || item.assignmentId === undefined) {
+    return (
+      <PressScale
+        className="w-full flex-row items-center gap-stack rounded-card border-2 border-border bg-surface-raised p-3 shadow-card"
+        outerClassName="w-full"
+        aria-label={`${item.title}, ${item.dueLabel}`}
+        onPress={onOpen}
+      >
+        {face}
+        <TWText className="text-sm font-semibold text-text">
+          {item.joinable ? 'Join session' : item.kind === 'practice' ? 'Start practice' : 'Open'}
+        </TWText>
+      </PressScale>
+    );
+  }
+
+  /*
+    Assignment rows carry their own trailing action, so open and mark-done are
+    SIBLING pressables inside a plain row — on web PressScale renders a real
+    <button>, and a button inside a button is invalid, not just awkward.
+    The done state is a quiet checkmark: a state change, never a celebration —
+    no confetti, no streak, nothing that turns "I did my homework" into a
+    mechanic (children's-surfaces law).
+  */
+  return (
+    <View className="w-full flex-row items-center gap-stack rounded-card border-2 border-border bg-surface-raised p-3 shadow-card">
+      <PressScale
+        className="flex-1 flex-row items-center gap-stack"
+        outerClassName="flex-1"
+        aria-label={`${item.title}, ${item.done ? 'done' : item.dueLabel}`}
+        onPress={onOpen}
+      >
+        {face}
+      </PressScale>
+      {item.done ? (
+        <View
+          className="h-6 w-6 items-center justify-center rounded-full border-2 border-grade bg-grade"
+          aria-label="Done"
+        >
+          <Check size={14} className="text-on-primary" />
+        </View>
+      ) : (
+        <PressScale
+          className="rounded-md border-2 border-border px-3 py-1.5"
+          outerClassName="self-center"
+          aria-label={`Mark ${item.title} done`}
+          disabled={markPending}
+          onPress={() => onMarkDone(item.assignmentId!)}
+        >
+          <TWText className="text-sm font-semibold text-text">Mark done</TWText>
+        </PressScale>
+      )}
+    </View>
   );
 }

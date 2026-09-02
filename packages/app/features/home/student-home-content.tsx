@@ -27,8 +27,11 @@ export function StudentHomeContent() {
   */
   const showsDueWork = activeContext.gradeBand === 'teen' || activeContext.gradeBand === 'adult';
   const { assignments } = useLearnerAssignments(showsDueWork);
+  // Done work leaves the due-soon strip entirely: this strip answers "what do
+  // I still owe?", and a finished item is no longer due work. Its calm done
+  // state lives on the plan, where the whole week stays visible.
   const dueWork = useMemo(
-    () => (showsDueWork ? assignments.filter((a) => isDueSoon(a.dueAt)) : []),
+    () => (showsDueWork ? assignments.filter((a) => a.doneAt === null && isDueSoon(a.dueAt)) : []),
     [assignments, showsDueWork],
   );
 

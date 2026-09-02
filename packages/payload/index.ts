@@ -18,6 +18,7 @@ export type {
   Enrollment,
   Class,
   Assignment,
+  AssignmentCompletion,
 } from './src/payload-types';
 
 // The Loop A row shapes, named so the repositories that decode them do not have

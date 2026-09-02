@@ -1,16 +1,18 @@
 'use client';
-// useLearnerAssignments — the client read model for the J1 arrival signal, on
-// the use-reports.ts pattern: exported key factory, server data in Query only.
-// There is no mutation half — the learner never writes an assignment; item
-// completion travels through the tutor session loop, not this surface.
+// useLearnerAssignments / useMarkAssignmentDone — the client models for the J1
+// arrival signal, on the use-reports.ts pattern: exported key factory,
+// exact-key invalidation, server data in Query only. The one mutation is the
+// learner's self-report — "mark done" — which never edits the assignment
+// itself; the server is idempotent about it, so a retry of a tap that already
+// landed simply returns the same done state.
 //
 // `enabled` exists because the caller decides BY BAND whether this read runs
 // at all: K–2 and 3–5 surfaces never fetch due work (learner.home contract's
 // band variants), and a hook that fetched anyway would be the due-work strip
 // arriving through the network tab.
 // SOT: design/screens/learner/learner.plan/contract.md · packages/app/features/summary/use-reports.ts
-// SOT-KEYWORDS: learner assignments hook client query arrival due work published keys enabled band
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+// SOT-KEYWORDS: learner assignments hook client query arrival due work published keys enabled band mark done mutation
+import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { LearnerAssignment } from './learner-assignments.service.ts';
 
 const API_URL =
@@ -34,4 +36,26 @@ export function useLearnerAssignments(enabled = true) {
     enabled,
   });
   return { assignments: data ?? [], loading: isPending, error };
+}
+
+/**
+ * The self-report: POSTs "done" for one of the learner's own assignments.
+ * Exact-key invalidation over the single learner list — home's due strip and
+ * the plan both read it, so one refetch settles every surface.
+ */
+export function useMarkAssignmentDone() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (assignmentId: string): Promise<LearnerAssignment> => {
+      const res = await fetch(
+        `${API_URL}/api/learner/assignments/${encodeURIComponent(assignmentId)}/done`,
+        { method: 'POST', credentials: 'include' },
+      );
+      if (!res.ok) throw new Error(`HTTP ${String(res.status)}`);
+      return ((await res.json()) as { assignment: LearnerAssignment }).assignment;
+    },
+    onSuccess: () => {
+      void client.invalidateQueries({ queryKey: learnerAssignmentsQueryKey() });
+    },
+  });
 }

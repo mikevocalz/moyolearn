@@ -13,15 +13,16 @@ import 'server-only';
 // so "never half-published" holds at the row level; a failed publish leaves a
 // draft (contract's publish_failed path) because nothing was written at all.
 // SOT: design/screens/teacher/teacher.assign/contract.md · packages/payload/src/collections/Assignments.ts
-// SOT-KEYWORDS: assignments service teacher publish close extend edit draft own scope not-found
+// SOT-KEYWORDS: assignments service teacher publish close extend edit draft own scope not-found completion counts done roster
 
 import { MEMBERSHIP_ROLES } from '@acme/auth/membership';
 import type { Auth } from '@acme/auth/server';
-import { protectedOperation } from '../../core/protected-operation.ts';
-import type { LoadTeacherClass } from '../classes/classes.service.ts';
+import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation.ts';
+import type { LoadClassRoster, LoadTeacherClass } from '../classes/classes.service.ts';
 import type {
   Assignment,
   AssignmentStatus,
+  AssignmentWithCounts,
   CreateAssignmentInput,
   EditAssignmentInput,
 } from './assignments.types.ts';
@@ -54,9 +55,30 @@ export type UpdateAssignmentFields = (
   patch: EditAssignmentInput,
 ) => Promise<Assignment>;
 
+/**
+ * Completion COUNTS per assignment id — a number, never rows. The port shape
+ * is the privacy decision made structural: no per-student done/not-done list
+ * can cross this boundary because nothing here can carry one.
+ */
+export type CountCompletionsByAssignment = (
+  assignmentIds: string[],
+) => Promise<Record<string, number>>;
+
 export interface CreateAssignmentPorts {
   loadTeacherClass: LoadTeacherClass;
   createAssignment: CreateAssignment;
+}
+
+export interface TeacherAssignmentListPorts {
+  loadTeacherAssignments: LoadTeacherAssignments;
+  countCompletionsByAssignment: CountCompletionsByAssignment;
+  loadClassRoster: LoadClassRoster;
+}
+
+export interface TeacherAssignmentDetailPorts {
+  loadTeacherAssignment: LoadTeacherAssignment;
+  countCompletionsByAssignment: CountCompletionsByAssignment;
+  loadClassRoster: LoadClassRoster;
 }
 
 export interface AssignmentLifecyclePorts {
@@ -75,17 +97,54 @@ export interface EditAssignmentPorts {
 const READ_GATE = { requires: 'practise', requiresMembership: MEMBERSHIP_ROLES } as const;
 const WRITE_GATE = { requires: 'write', requiresMembership: MEMBERSHIP_ROLES } as const;
 
+/*
+  Decision: completion visibility is COUNTS-ONLY — "X of Y done", nothing
+  finer. A per-student done/not-done roster is a surveillance surface over
+  children's self-reports, and the product's no-shame register applies to what
+  a teacher is shown about a child as much as to what a child is shown; that
+  view waits for a contract row that says so, and until one exists this
+  service cannot produce it (see `CountCompletionsByAssignment`).
+
+  `rosterCount` is ACTIVE enrollments in the assignment's class — the same
+  "current roster" the class detail shows — so the denominator is who owes the
+  work now, not everyone who ever passed through.
+*/
+async function attachCounts(
+  ports: Pick<TeacherAssignmentListPorts, 'countCompletionsByAssignment' | 'loadClassRoster'>,
+  ctx: ProtectedCtx,
+  rows: Assignment[],
+): Promise<AssignmentWithCounts[]> {
+  if (rows.length === 0) return [];
+  const doneByAssignment = await ports.countCompletionsByAssignment(rows.map((row) => row.id));
+  // One roster read per distinct class, not per row — a filtered list is one
+  // class, the unfiltered list a handful.
+  const classIds = [...new Set(rows.map((row) => row.classId))];
+  const rosterByClass = new Map<string, number>();
+  for (const classId of classIds) {
+    const roster = await ports.loadClassRoster(classId, ctx.orgId ?? '');
+    rosterByClass.set(classId, roster.filter((e) => e.status === 'active').length);
+  }
+  return rows.map((row) => ({
+    ...row,
+    doneCount: doneByAssignment[row.id] ?? 0,
+    rosterCount: rosterByClass.get(row.classId) ?? 0,
+  }));
+}
+
 /** The tracking list — all of the teacher's assignments, optionally one class's. */
 export async function teacherAssignments(
-  loadTeacherAssignments: LoadTeacherAssignments,
+  ports: TeacherAssignmentListPorts,
   authInstance: Auth,
   headers: Headers,
   filter?: { classId?: string },
-): Promise<Assignment[]> {
+): Promise<AssignmentWithCounts[]> {
   return protectedOperation(
     authInstance,
     headers,
-    async (ctx) => loadTeacherAssignments(ctx.learnerId, ctx.orgId ?? '', filter?.classId),
+    async (ctx) => {
+      const rows = await ports.loadTeacherAssignments(ctx.learnerId, ctx.orgId ?? '', filter?.classId);
+      return attachCounts(ports, ctx, rows);
+    },
     {
       ...READ_GATE,
       telemetry: { op: 'teacher.assignments.list', resource: 'assignments', action: 'read' },
@@ -95,15 +154,20 @@ export async function teacherAssignments(
 
 /** One assignment, or null when it is not the caller's to see. */
 export async function teacherAssignmentDetail(
-  loadTeacherAssignment: LoadTeacherAssignment,
+  ports: TeacherAssignmentDetailPorts,
   authInstance: Auth,
   headers: Headers,
   assignmentId: string,
-): Promise<Assignment | null> {
+): Promise<AssignmentWithCounts | null> {
   return protectedOperation(
     authInstance,
     headers,
-    async (ctx) => loadTeacherAssignment(assignmentId, ctx.learnerId, ctx.orgId ?? ''),
+    async (ctx) => {
+      const owned = await ports.loadTeacherAssignment(assignmentId, ctx.learnerId, ctx.orgId ?? '');
+      if (owned === null) return null;
+      const [withCounts] = await attachCounts(ports, ctx, [owned]);
+      return withCounts ?? null;
+    },
     {
       ...READ_GATE,
       telemetry: { op: 'teacher.assignments.detail', resource: 'assignments', action: 'read' },

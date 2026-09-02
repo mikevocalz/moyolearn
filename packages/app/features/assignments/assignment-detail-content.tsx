@@ -7,10 +7,10 @@
 // the service refuses to rewrite them. A null read is the
 // service's silent-drop wall, worded exactly like the class detail's: a
 // foreign assignment and a missing one must be indistinguishable (contract
-// permission path, doc 36 §4.4). Completion-per-student is teacher.classes'
-// aggregate (contract ≤5-destination note) — this screen states the
-// assignment's own facts and the jump lives on the tracking list's class
-// filter, so nothing here fakes a roster read that does not exist yet.
+// permission path, doc 36 §4.4). Completion shows as "X of Y done" — a
+// count, stated calmly beside the due date; the per-student done/not-done
+// roster is deliberately NOT here (the service's counts-only decision), and
+// this screen could not render one even if it wanted to.
 //
 // Mobbin: https://mobbin.com/screens/d9dd215f-8a48-4fb6-8c27-6345695241d7 (ShopBack —
 //   item detail: work steps as a checklist card, the window's dates in an
@@ -123,6 +123,15 @@ export function AssignmentDetailScreen({ assignmentId }: { assignmentId: string 
         <Text variant="body" className="text-text">
           {dueLabel(assignment.dueAt)}
         </Text>
+        {/* Counts-only, in the same muted voice as the class line — never a
+            red number for a low count (no-shame register, teacher side), and
+            never a per-student list (that waits for a contract row; see
+            assignments.service.ts). A draft has no audience yet, so no count. */}
+        {assignment.status !== 'draft' ? (
+          <Text variant="body" tone="muted">
+            {assignment.doneCount} of {assignment.rosterCount} done
+          </Text>
+        ) : null}
       </View>
 
       <View className="gap-group">

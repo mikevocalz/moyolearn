@@ -25,6 +25,8 @@ import {
   updateAssignment,
   updateAssignmentFields,
 } from '@/lib/assignments.repository';
+import { countCompletionsByAssignment } from '@/lib/assignment-completions.repository';
+import { loadEnrollmentsByClass } from '@/lib/enrollment.repository';
 import { loadTeacherClass } from '@/lib/classes.repository';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
@@ -44,8 +46,14 @@ export async function GET(
   if (!assignmentId) return NextResponse.json({ error: 'Not found' }, { status: 404 });
 
   try {
+    // The detail carries counts-only completion state, same as the list —
+    // never a per-student roster of who is done (the service's decision).
     const assignment = await teacherAssignmentDetail(
-      loadTeacherAssignment,
+      {
+        loadTeacherAssignment,
+        countCompletionsByAssignment,
+        loadClassRoster: loadEnrollmentsByClass,
+      },
       auth,
       request.headers,
       assignmentId,

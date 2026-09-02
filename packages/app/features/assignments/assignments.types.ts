@@ -5,7 +5,7 @@
 // ladder the contract requires: a row is a draft until `publishedAt` exists,
 // and "never half-published" is a fact of the row.
 // SOT: packages/payload/src/collections/Assignments.ts · design/screens/teacher/teacher.assign/contract.md
-// SOT-KEYWORDS: assignments types teacher work items status draft published closed due date
+// SOT-KEYWORDS: assignments types teacher work items status draft published closed due date completion counts roster
 
 export type AssignmentStatus = 'draft' | 'published' | 'closed';
 
@@ -34,6 +34,18 @@ export interface Assignment {
   status: AssignmentStatus;
   /** ISO date string, set exactly once at publish. A draft has none. */
   publishedAt?: string | null;
+}
+
+/**
+ * An assignment as the teacher's READ surfaces receive it: the row plus its
+ * completion counts. Counts-only is deliberate — "X of Y done" is the whole
+ * completion story a teacher gets; a per-student done/not-done list waits for
+ * a contract row that says so (assignments.service.ts owns the decision).
+ * `rosterCount` is the class's ACTIVE enrollments — who owes the work now.
+ */
+export interface AssignmentWithCounts extends Assignment {
+  doneCount: number;
+  rosterCount: number;
 }
 
 /**

@@ -19,6 +19,8 @@ export type PlanItemKind = 'session' | 'assignment' | 'practice';
 export interface PlanTimelineItem {
   id: string;
   kind: PlanItemKind;
+  /** The server row id, present only on `kind: 'assignment'` — what mark-done posts. */
+  assignmentId?: string;
   title: string;
   /** Plain speech, never a raw date — "Due tomorrow", not "2026-08-21". */
   dueLabel: string;
@@ -135,10 +137,13 @@ function toPlanItem(assignment: LearnerAssignment, now: Date): PlanTimelineItem 
   return {
     id: `assignment-${assignment.id}`,
     kind: 'assignment',
+    assignmentId: assignment.id,
     title: assignment.title,
     dueLabel: dueLabelFor(assignment.dueAt, now),
     joinable: false,
-    done: false,
+    // Done rows stay on the plan with a calm done treatment — finished work
+    // does not vanish from the week, it just stops asking for anything.
+    done: assignment.doneAt !== null,
   };
 }
 

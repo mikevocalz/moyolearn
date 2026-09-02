@@ -132,16 +132,19 @@ export {
 export type {
   Assignment,
   AssignmentStatus,
+  AssignmentWithCounts,
   AssignmentWorkItem,
   CreateAssignmentInput,
   EditAssignmentInput,
 } from './features/assignments/assignments.types';
-// The learner's read of the same domain — the J1 arrival signal. The shape is
-// type-only from the server file (erased at build; the use-reports precedent),
-// so the client names what arrived without touching the service wall.
+// The learner's read of the same domain — the J1 arrival signal — plus the
+// one write back: the self-reported "mark done". The shape is type-only from
+// the server file (erased at build; the use-reports precedent), so the client
+// names what arrived without touching the service wall.
 export {
   learnerAssignmentsQueryKey,
   useLearnerAssignments,
+  useMarkAssignmentDone,
 } from './features/assignments/use-learner-assignments';
 export type { LearnerAssignment } from './features/assignments/learner-assignments.service';
 export { PracticeScreen } from './features/practice/screen';

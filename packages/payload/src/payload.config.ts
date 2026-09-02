@@ -25,6 +25,7 @@ import { Organizations } from './collections/Organizations';
 import { Enrollments } from './collections/Enrollments';
 import { Classes } from './collections/Classes';
 import { Assignments } from './collections/Assignments';
+import { AssignmentCompletions } from './collections/AssignmentCompletions';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverURL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -146,6 +147,10 @@ export default buildConfig({
     // into, and an assignment is what a class receives.
     Classes,
     Assignments,
+    // The learner's answer to an assignment — kept beside it because a
+    // completion is a fact ABOUT an assignment, keyed by pointer like every
+    // other cross-collection reference here.
+    AssignmentCompletions,
     Leads,
   ],
   db: postgresAdapter({

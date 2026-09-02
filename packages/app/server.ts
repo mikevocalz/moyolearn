@@ -94,17 +94,21 @@ export {
   teacherAssignmentDetail,
   teacherAssignments,
   type AssignmentLifecyclePorts,
+  type CountCompletionsByAssignment,
   type CreateAssignment,
   type CreateAssignmentPorts,
   type EditAssignmentPorts,
   type LoadTeacherAssignment,
   type LoadTeacherAssignments,
+  type TeacherAssignmentDetailPorts,
+  type TeacherAssignmentListPorts,
   type UpdateAssignment,
   type UpdateAssignmentFields,
 } from './features/assignments/assignments.service';
 export type {
   Assignment,
   AssignmentStatus,
+  AssignmentWithCounts,
   AssignmentWorkItem,
   CreateAssignmentInput,
   EditAssignmentInput,
@@ -117,10 +121,15 @@ export type {
 */
 export {
   learnerAssignments,
+  markAssignmentDone,
+  type AssignmentCompletionRecord,
+  type CreateAssignmentCompletion,
   type LearnerAssignment,
   type LearnerAssignmentPorts,
+  type LoadCompletionsForAssignments,
   type LoadLearnerEnrollments,
   type LoadPublishedAssignments,
+  type MarkAssignmentDonePorts,
 } from './features/assignments/learner-assignments.service';
 export type {
   DerivedFact,

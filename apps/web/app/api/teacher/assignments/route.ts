@@ -17,6 +17,8 @@ import {
 } from '@acme/app/server';
 import { asWorkItem } from '@/lib/assignments.body';
 import { createAssignment, loadTeacherAssignments } from '@/lib/assignments.repository';
+import { countCompletionsByAssignment } from '@/lib/assignment-completions.repository';
+import { loadEnrollmentsByClass } from '@/lib/enrollment.repository';
 import { loadTeacherClass } from '@/lib/classes.repository';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
@@ -33,8 +35,14 @@ function routeStatus(error: unknown, message: string): number {
 export async function GET(request: NextRequest) {
   const classId = request.nextUrl.searchParams.get('classId') ?? undefined;
   try {
+    // Rows arrive with counts-only completion state ("X of Y done") — the
+    // service refuses to produce a per-student list (its counts-only decision).
     const assignments = await teacherAssignments(
-      loadTeacherAssignments,
+      {
+        loadTeacherAssignments,
+        countCompletionsByAssignment,
+        loadClassRoster: loadEnrollmentsByClass,
+      },
       auth,
       request.headers,
       classId ? { classId } : undefined,

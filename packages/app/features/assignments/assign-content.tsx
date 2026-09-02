@@ -179,9 +179,19 @@ export function AssignScreen() {
                   onPress={() => {
                     router.push(assignmentDetailPath(assignment.id));
                   }}
+                  /* Completion is counts-only supporting text — "3 of 24
+                     done" in the same muted register as the due date, never a
+                     red number or a warning tone for low counts: the no-shame
+                     register holds on teacher surfaces too, and the server
+                     never sends a per-student list anyway. Drafts have no
+                     audience yet, so they carry no count. */
                   supportingText={`${dueLabel(assignment.dueAt)} · ${
                     classNames.get(assignment.classId) ?? 'Class'
-                  }${assignment.subject ? ` · ${assignment.subject}` : ''}`}
+                  }${assignment.subject ? ` · ${assignment.subject}` : ''}${
+                    assignment.status !== 'draft'
+                      ? ` · ${assignment.doneCount} of ${assignment.rosterCount} done`
+                      : ''
+                  }`}
                   trailing={
                     <Badge
                       label={STATUS_BADGE[assignment.status].label}

@@ -11,6 +11,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   Assignment,
+  AssignmentWithCounts,
   CreateAssignmentInput,
   EditAssignmentInput,
 } from './assignments.types.ts';
@@ -36,7 +37,9 @@ export function useTeacherAssignments(classId?: string) {
     queryKey: teacherAssignmentsQueryKey(classId),
     queryFn: async ({ signal }) =>
       (
-        await getJson<{ assignments: Assignment[] }>(
+        // Reads carry the completion counts ("X of Y done"); writes below
+        // still traffic in the plain Assignment the server returns.
+        await getJson<{ assignments: AssignmentWithCounts[] }>(
           `/api/teacher/assignments${classId ? `?classId=${encodeURIComponent(classId)}` : ''}`,
           signal,
         )
@@ -51,7 +54,7 @@ export function useAssignment(assignmentId: string) {
     queryKey: assignmentQueryKey(assignmentId),
     queryFn: async ({ signal }) =>
       (
-        await getJson<{ assignment: Assignment }>(
+        await getJson<{ assignment: AssignmentWithCounts }>(
           `/api/teacher/assignments/${encodeURIComponent(assignmentId)}`,
           signal,
         )
