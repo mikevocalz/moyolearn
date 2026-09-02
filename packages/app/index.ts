@@ -442,6 +442,20 @@ export {
   type TutorIncidentsRead,
   type TutorIncidentStatusFilter,
 } from './features/safety';
+/*
+  …and doc 36 §3.2's guardian surface over the same domain: guardian.alerts,
+  the §5.2 four-section incident view with the acknowledgment write — a
+  client surface over `GET/POST /api/guardian/incidents`, wards-scoped
+  server-side. Both the mobile Alerts tab and web `/alerts` render it.
+*/
+export {
+  GuardianAlertsScreen,
+  GuardianAlertsContent,
+  useGuardianIncidents,
+  useAcknowledgeIncident,
+  guardianIncidentsKey,
+  type GuardianIncidentsRead,
+} from './features/safety';
 export {
   tusUrlStorage,
   useBunnyUpload,

@@ -15,16 +15,21 @@ import { Section, View } from '@acme/ui/tw';
 import { Avatar, FadeIn, Heading, MessageBubble, PressScale, Text } from '@acme/ui';
 import { useRouter } from 'solito/navigation';
 import { useAppSession } from '../../providers/session';
+import { stuffPath } from './learner-paths';
 
 /**
  * The hub's three spokes mirror the K–2 tab bar on purpose: NN/g says mis-taps
  * must be recoverable, and two obvious doors to the same room beats one clever
  * one. `Snap` is the single primary (highlighter treatment); the others stay on
  * paper so the screen answers "what do I do" in one glance (doc 08 §3.2).
+ * Hrefs are the routes that actually exist: `/capture` (the mobile capture tab
+ * and web `(site)/capture`) and `/tutor` resolve on both platforms; "My Stuff"
+ * is the one platform-forked path (learner-paths — mobile `/stuff`, web
+ * `/practice`). The old `/snap`/`/stuff` literals 404'd on web.
  */
 const TILES = [
   {
-    href: '/snap',
+    href: '/capture',
     label: 'Snap your homework',
     hint: 'Take a picture and we do it together',
     Icon: Camera,
@@ -38,7 +43,7 @@ const TILES = [
     primary: false,
   },
   {
-    href: '/stuff',
+    href: stuffPath(),
     label: 'My Stuff',
     hint: 'Things you made',
     Icon: Star,

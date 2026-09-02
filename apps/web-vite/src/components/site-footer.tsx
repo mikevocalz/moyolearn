@@ -127,8 +127,8 @@ export function SiteFooter() {
         <View className="flex-col gap-section lg:flex-row lg:gap-section">
           {/* Brand and direct contact form one clear starting point. */}
           <View className="gap-group lg:flex-1">
-            <View className="w-full max-w-content-form">
-              <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
+            <View className="w-fit">
+              <MoyoLearnLogo height={72} accessibilityLabel="Moyo Learn" />
             </View>
             <Text className="font-moyo-display text-site-quote md:text-site-quote text-moyo-ink">
               Learn it by heart.

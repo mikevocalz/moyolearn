@@ -15,15 +15,25 @@ import { useAppSession } from '../../providers/session';
 import { LearnerHubContent } from './learner-hub-content';
 import { StudentHomeContent } from './student-home-content';
 
-export function LearnerTodayScreen() {
+/**
+ * The band fork WITHOUT the scroll chrome — exported so hosts that already
+ * own a scroll container (HomeContent inside the web dispatcher's
+ * HomeScreen) render the same fork instead of re-deriving it. One fork, two
+ * wrappers; duplicating the `gradeBand === 'young'` branch is how K–2
+ * disappears from one platform (the exact defect this fixed on web).
+ */
+export function LearnerTodayContent() {
   const { activeContext } = useAppSession();
   const isYoung = activeContext.gradeBand === 'young';
+  return isYoung ? <LearnerHubContent /> : <StudentHomeContent />;
+}
 
+export function LearnerTodayScreen() {
   return (
     <SafeArea edges={['top']} className="flex-1 bg-surface">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <Container width="detail" className="py-4 pb-48">
-          {isYoung ? <LearnerHubContent /> : <StudentHomeContent />}
+          <LearnerTodayContent />
         </Container>
       </ScrollView>
     </SafeArea>

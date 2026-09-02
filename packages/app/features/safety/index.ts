@@ -59,6 +59,19 @@ export {
 // screen reads projections, never the service.
 export { TutorIncidentsScreen } from './tutor-incidents-screen';
 export { TutorIncidentsContent } from './tutor-incidents-content';
+
+// guardian.alerts (doc 36 §3.2) — the guardian half of the incident channel:
+// §5.2's four-section view over `GET /api/guardian/incidents` with the
+// acknowledgment write. The J8 fix — this barrel's old note that "the
+// guardian view has no screen here" is retired by these exports.
+export { GuardianAlertsScreen } from './guardian-alerts-screen';
+export { GuardianAlertsContent } from './guardian-alerts-content';
+export {
+  useGuardianIncidents,
+  useAcknowledgeIncident,
+  guardianIncidentsKey,
+  type GuardianIncidentsRead,
+} from './use-guardian-incidents.ts';
 export {
   useTutorIncidents,
   useAppendIncidentNote,

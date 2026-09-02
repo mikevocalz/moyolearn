@@ -7,7 +7,7 @@ import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Card, Heading, PressScale, Text, FadeIn, ScaleIn } from '@acme/ui';
 import { useRouter } from 'solito/navigation';
 import { useAppSession } from '../../providers/session';
-import { StudentHomeContent } from './student-home-content';
+import { LearnerTodayContent } from './learner-today-screen';
 import { TutorTodayContent } from './tutor-today-content';
 import { ParentHomeContent } from './parent-home-content';
 import { STATS, QUICK_ACTIONS, PROJECTS, WELL, INK, BAR } from './home.data';
@@ -37,7 +37,10 @@ export function HomeContent() {
   const greeting = greetingFor(useNow());
 
   if (isLearner) {
-    return <StudentHomeContent />;
+    // The BAND fork, not StudentHomeContent directly — rendering the older
+    // bands' home here unconditionally made the K–2 hub unreachable on web
+    // (the dispatcher `/` is the learner's only web landing).
+    return <LearnerTodayContent />;
   }
 
   if (isTutor) {

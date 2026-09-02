@@ -5,17 +5,35 @@ import { getLogoFill, type LogoVariant } from "./logo-fill";
 const VIEWBOX_WIDTH = 596.51;
 const VIEWBOX_HEIGHT = 157.71;
 const ASPECT_RATIO = VIEWBOX_WIDTH / VIEWBOX_HEIGHT;
+// Header-box height — kept in lockstep with the web fork so one wordmark
+// renders the same size on both platforms by default.
+const DEFAULT_HEIGHT = 36;
 
-export interface MoyoLearnLogoProps extends SvgProps {
+// Explicit dimensions rather than `width: "100%"` — mirrors the web fork,
+// where parent-relative sizing made the logo flash at intrinsic (viewport)
+// size before styles landed. Pass `height` (or `width`); the other dimension
+// derives from the wordmark's aspect ratio.
+const resolveBox = (width?: number, height?: number) => {
+  if (height != null) return { width: width ?? height * ASPECT_RATIO, height };
+  if (width != null) return { width, height: width / ASPECT_RATIO };
+  return { width: DEFAULT_HEIGHT * ASPECT_RATIO, height: DEFAULT_HEIGHT };
+};
+
+export interface MoyoLearnLogoProps extends Omit<SvgProps, "width" | "height"> {
   variant?: LogoVariant;
+  /** Rendered height in px; width derives from the wordmark's aspect ratio. */
+  height?: number;
+  /** Rendered width in px; height derives from the wordmark's aspect ratio. */
+  width?: number;
 }
 
-const MoyoLearnLogo = ({ variant = "default", style, ...props }: MoyoLearnLogoProps) => (
+const MoyoLearnLogo = ({ variant = "default", style, width, height, ...props }: MoyoLearnLogoProps) => (
   <Svg
     {...props}
+    {...resolveBox(width, height)}
     viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
     preserveAspectRatio="xMidYMid meet"
-    style={[{ width: "100%", aspectRatio: ASPECT_RATIO }, style]}
+    style={style}
     accessibilityRole="image"
   >
     <Path fill={getLogoFill('#3C2357', variant)} d="M276.83,72.5c0-.98-.14-1.66-.72-1.96l-12.23,15.75c-1.44,1.86-2.82,4.13-5.36,4.47-2.95.39-6.01.29-8.98.03-1.57-.14-2.82-1.4-3.75-2.58l-14.2-18.04-.23,31.86c-.02,3.46-2.49,7.35-6.18,7.35h-18.6c-3.19,0-6.3-3.64-6.3-7.08l.09-78.64c0-4.58,3.63-7.98,7.88-7.99l14.57-.02c2.97,0,5.5,1.47,7.3,3.79l24.24,31.08,23.61-30.22c2.43-3.11,5.52-5.06,9.6-4.71l13.12.07c3.32.02,7.39,2.81,7.39,6.78l.06,79.86c0,3.47-3.03,7.1-6.27,7.1h-18.67c-4.09,0-6.49-4.37-6.48-8.17l.1-28.74Z" />

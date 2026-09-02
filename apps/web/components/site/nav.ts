@@ -95,11 +95,17 @@ export const HOT_NAV_LEARNER_BY_BAND: Record<AgeBand, NavItem[]> = {
 export const HOT_NAV_BY_ROLE: Record<'guardian', NavItem[]> = {
   guardian: [
     { label: 'Home', href: '/' },
+    // /reports serves ReportsPaneScreen on apex hosts (app/reports/page.tsx
+    // dispatches by tenant host) — same path the mobile Reports tab answers.
     { label: 'Reports', href: '/reports' },
-    // Alerts keeps its own item, never a bell (doc 36 §3.2).
-    { label: 'Alerts', href: '/notifications' },
-    // G §3.1 href fix: Family points at the real family surface, not /settings.
-    { label: 'Family', href: '/family' },
+    // Alerts keeps its own item, never a bell (doc 36 §3.2) — and it points
+    // at the INCIDENT surface (guardian.alerts), not general notifications:
+    // the contract's law is incidents + acknowledgments only. `/alerts` is
+    // also the mobile Alerts tab's path.
+    { label: 'Alerts', href: '/alerts' },
+    // Family points at the child-management hub (FamilyScreen at /children);
+    // `(guardian)/family` is the home FEED, which the Home item already owns.
+    { label: 'Family', href: '/children' },
   ],
 };
 

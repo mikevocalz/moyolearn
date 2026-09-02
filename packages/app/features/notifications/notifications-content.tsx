@@ -1,8 +1,10 @@
 'use client';
 // Notifications — mirrors the liquid-glass template (unread header + mark-all,
 // Today/Earlier groups, icon-well rows, tap to read) with Legend Motion.
+import { formatDistanceToNow, isToday } from 'date-fns';
 import { Section, View, Text as TWText, Pressable } from '@acme/ui/tw';
-import { Heading, Text, FadeIn } from '@acme/ui';
+import { Heading, Text, FadeIn, EmptyState } from '@acme/ui';
+import { Bell } from '@acme/ui/icons';
 import { WELL, INK } from '../home/home.data';
 import { useNotifications, type Notification } from './notifications.store';
 
@@ -28,7 +30,9 @@ function NotificationRow({ item, index }: { item: Notification; index: number })
             {!item.read ? <View className="h-2 w-2 rounded-full bg-primary" /> : null}
           </View>
           <Text variant="caption" tone="muted">{item.body}</Text>
-          <Text variant="caption" tone="muted" className="text-[11px]">{item.time}</Text>
+          <Text variant="caption" tone="muted" className="text-[11px]">
+            {formatDistanceToNow(item.at, { addSuffix: true })}
+          </Text>
         </View>
       </Pressable>
     </FadeIn>
@@ -55,8 +59,11 @@ export function NotificationsContent({ title = 'Notifications' }: { readonly tit
   const items = useNotifications((s) => s.items);
   const markAllRead = useNotifications((s) => s.markAllRead);
   const unread = items.filter((n) => !n.read).length;
-  const today = items.slice(0, 3);
-  const earlier = items.slice(3);
+  // Real date groups — the old slice(0, 3) split was a lie that happened to
+  // match the seed's shape; anything that arrived yesterday-but-early-in-the-
+  // array would have been labelled "Today".
+  const today = items.filter((n) => isToday(n.at));
+  const earlier = items.filter((n) => !isToday(n.at));
 
   return (
     <View className="gap-group md:gap-10 lg:gap-12">
@@ -79,8 +86,20 @@ export function NotificationsContent({ title = 'Notifications' }: { readonly tit
         </Section>
       </FadeIn>
 
-      <Group label="Today" items={today} offset={0} />
-      <Group label="Earlier" items={earlier} offset={3} />
+      {items.length === 0 ? (
+        // The heading used to sit over pure whitespace when the list was
+        // empty — an unnamed state. Name it, calmly.
+        <EmptyState
+          icon={<Bell size={28} className="text-text-muted" />}
+          title="You're all caught up"
+          description="Nothing new right now. New activity shows up here as it happens."
+        />
+      ) : (
+        <>
+          <Group label="Today" items={today} offset={0} />
+          <Group label="Earlier" items={earlier} offset={today.length} />
+        </>
+      )}
     </View>
   );
 }

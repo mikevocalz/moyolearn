@@ -87,6 +87,11 @@ export function FamilyScreen() {
           <Text variant="label" tone="muted">
             Family tools
           </Text>
+          {/* Every pushed path below resolves on BOTH platforms: /calendar is
+              the mobile guardian stack route and web's `(site)/calendar`
+              (renamed from family-calendar to unify), /reports is the mobile
+              Reports tab and web's apex /reports (ReportsPaneScreen), and
+              /ai-activity exists on both. */}
           <View className="gap-element">
             <ToolRow
               label="Calendar"

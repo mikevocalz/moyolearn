@@ -4,23 +4,46 @@ import { getLogoFill, type LogoVariant } from "./logo-fill";
 const VIEWBOX_WIDTH = 596.51;
 const VIEWBOX_HEIGHT = 157.71;
 const ASPECT_RATIO = VIEWBOX_WIDTH / VIEWBOX_HEIGHT;
+// Header-box height (the h-9 chrome slot) — the default render everywhere a
+// caller doesn't size it explicitly.
+const DEFAULT_HEIGHT = 36;
 
-export interface MoyoLearnLogoProps extends React.SVGProps<SVGSVGElement> {
+// EXPLICIT DIMENSION ATTRIBUTES, not just CSS: the old `width: "100%"` style
+// meant first paint sized the svg off its PARENT, and before the stylesheet
+// lands the parent's Tailwind box (`h-9 w-34`, …) doesn't exist yet — so the
+// wordmark flashed at full viewport width. Width/height attributes constrain
+// the pre-hydration/pre-CSS paint in every host; pass `height` (or `width`)
+// to size it, and the other dimension derives from the wordmark's ratio.
+const resolveBox = (width?: number, height?: number) => {
+  if (height != null) return { width: width ?? height * ASPECT_RATIO, height };
+  if (width != null) return { width, height: width / ASPECT_RATIO };
+  return { width: DEFAULT_HEIGHT * ASPECT_RATIO, height: DEFAULT_HEIGHT };
+};
+
+export interface MoyoLearnLogoProps
+  extends Omit<React.SVGProps<SVGSVGElement>, "width" | "height"> {
   accessibilityLabel?: string;
   variant?: LogoVariant;
+  /** Rendered height in px; width derives from the wordmark's aspect ratio. */
+  height?: number;
+  /** Rendered width in px; height derives from the wordmark's aspect ratio. */
+  width?: number;
 }
 
 const MoyoLearnLogo = ({
   variant = "default",
   style,
   accessibilityLabel,
+  width,
+  height,
   ...props
 }: MoyoLearnLogoProps) => (
   <svg
     {...props}
+    {...resolveBox(width, height)}
     viewBox={`0 0 ${VIEWBOX_WIDTH} ${VIEWBOX_HEIGHT}`}
     preserveAspectRatio="xMidYMid meet"
-    style={{ width: "100%", aspectRatio: ASPECT_RATIO, ...style }}
+    style={style}
     role="img"
     aria-label={accessibilityLabel}
   >

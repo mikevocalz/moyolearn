@@ -327,7 +327,11 @@ function HotShell({
             <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
           </Link>
 
-          <Nav aria-label="Primary" className="relative hidden flex-1 flex-row items-center justify-center gap-1 rounded-full border border-tenant-header-border bg-tenant-surface-subtle p-1 md:flex">
+          {/* The pill group hugs its tabs (w-fit + the row's justify-between
+              centering it) instead of stretching flex-1 across the whole
+              max-w-screen-2xl header — a three-tab learner nav in a
+              viewport-wide pill read as a broken layout. */}
+          <Nav aria-label="Primary" className="relative mx-auto hidden w-fit flex-row items-center gap-1 rounded-full border border-tenant-header-border bg-tenant-surface-subtle p-1 md:flex">
             {navItems.map((item) => (
               <HotNavLink key={item.href} {...item} active={isActive(pathname, item.href)} />
             ))}
@@ -431,7 +435,9 @@ function BrandMark({ orgBranding }: { orgBranding?: OrgBranding | null }) {
   if (!orgBranding) {
     return (
       <View className="h-8 w-8 overflow-hidden rounded-md">
-        <MoyoLearnLogo accessibilityLabel="Moyo" />
+        {/* Width-sized: the logo attribute-sizes itself now, and the old
+            fill-the-parent behavior here meant "as wide as the 32px box". */}
+        <MoyoLearnLogo width={32} accessibilityLabel="Moyo" />
       </View>
     );
   }

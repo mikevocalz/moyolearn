@@ -160,9 +160,11 @@ export function SiteNav() {
         <Link
           href="/"
           aria-label="Moyo Learn — home"
-          className="flex w-48 items-center rounded-moyo-card transition duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
+          className="flex w-fit items-center rounded-moyo-card transition duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50"
         >
-          <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
+          {/* 72px front-door mark, attribute-sized so the pre-CSS paint can
+              never flash at intrinsic (viewport) width. */}
+          <MoyoLearnLogo height={72} accessibilityLabel="Moyo Learn" />
         </Link>
 
         <Nav aria-label="Primary" className="hidden lg:flex lg:flex-row lg:items-center lg:gap-group">
@@ -221,8 +223,8 @@ export function SiteNav() {
           className="site-nav-takeover fixed inset-0 z-50 gap-section overflow-y-auto bg-moyo-paper p-inset-roomy"
         >
           <View className="flex-row items-center justify-between gap-group">
-            <View className="w-48">
-              <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
+            <View className="w-fit">
+              <MoyoLearnLogo height={72} accessibilityLabel="Moyo Learn" />
             </View>
             <Button
               className={`site-nav-close site-nav-cta ${CONTROL} aspect-square rounded-moyo-card bg-moyo-paper-raised p-0 shadow-moyo-1`}
