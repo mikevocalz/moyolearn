@@ -89,6 +89,7 @@ export {
   Mic,
   Camera,
   Image,
+  Keyboard,
   Plus,
   Send,
   Square,

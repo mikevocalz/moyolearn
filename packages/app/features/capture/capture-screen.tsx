@@ -14,6 +14,9 @@
 //   5. Add context (subject, assignment, due date, stuck — all skippable)
 //   6. Upload / process (Preparing, Uploading, Processing, Ready)
 //   7. Success (thumbnails, title, privacy summary, one clear action)
+// Mobbin: mobbin.com/screens/f64fa10a-926f-49d0-a36d-d3a300b9daf6 (Binance — heading + one-line prompt copy above the capture-source options, camera path first) ·
+// mobbin.com/screens/79bc88c8-16d5-4d07-b2ff-3df2811fb272 (Cleo AI — "how would you like to upload?" step: title block, support sentence, then the source chooser as the whole body) ·
+// mobbin.com/screens/9c8e39a1-23fe-4f31-8d45-cda3c44e3ccc (Google Lens homework mode — one instruction line pointing at the photo action as the way in). Structure only.
 // SOT: docs/pack/24-homework-capture-spec.md §1
 // SOT-KEYWORDS: capture screen choose capture review verify context upload success age band
 
@@ -24,6 +27,7 @@ import { pickNoteImage } from '../schedule/pick-note-image';
 import {
   Button,
   Container,
+  Heading,
   IconButton,
   Image,
   SafeArea,
@@ -588,14 +592,27 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
 
   const stepBody = () => {
     if (step === 'choose') {
+      /*
+        flex-grow + justify-center: the choose body is short by design, and
+        top-anchoring it stranded the options over a half-screen of dead
+        whitespace on desktop. Centering the composed block spends the surplus
+        symmetrically; when the content is taller than the viewport the
+        ScrollView scrolls exactly as before.
+      */
+      const young = ageBand === 'young' || ageBand === 'child';
       return (
-        <ScrollView className="flex-1" contentContainerClassName="p-inset gap-stack">
+        <ScrollView className="flex-1" contentContainerClassName="flex-grow justify-center p-inset gap-group">
           {isExample ? (
             <Text variant="caption" tone="muted" className="rounded-control bg-surface-raised p-2 text-center">
               Example — practice worksheet
             </Text>
           ) : null}
-          <Text className="font-sans text-title font-bold text-text">{labels.prompt}</Text>
+          <View className="gap-element">
+            <Heading level={1} size={young ? 'display-md' : 'display-sm'}>
+              {labels.heading}
+            </Heading>
+            <Text className="font-sans text-body text-text-muted">{labels.prompt}</Text>
+          </View>
           <CaptureEntryRow ageBand={ageBand} onSelect={(m) => void chooseMode(m)} />
         </ScrollView>
       );

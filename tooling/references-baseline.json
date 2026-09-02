@@ -1,8 +1,6 @@
 [
   "packages/app/features/ai-activity/ai-activity-content.tsx",
-  "packages/app/features/capture/capture-screen.tsx",
   "packages/app/features/capture/digitized-text-review.tsx",
-  "packages/app/features/capture/entry-row.tsx",
   "packages/app/features/capture/guided-frame.tsx",
   "packages/app/features/capture/ocr-review.tsx",
   "packages/app/features/capture/privacy-process.tsx",

@@ -31,6 +31,10 @@ export function buttonSizeForBand(ageBand: AgeBand): 'sm' | 'md' | 'lg' | 'xl' {
  * The five choices on the "Choose how to share work" hub.
  * The build prompt asks for these exact learner-facing labels:
  * Take photo, Choose photos, Upload PDF/file, Type/paste, Describe by voice.
+ *
+ * `heading`/`prompt` are the step's title block; `photoHint` is the one
+ * supporting line on the primary Snap card; `moreWays` labels the secondary
+ * group. All four scale with the band — K–2 hears shorter words in bigger type.
  */
 export interface CaptureLabels {
   takePhoto: string;
@@ -38,7 +42,10 @@ export interface CaptureLabels {
   uploadFile: string;
   typePaste: string;
   describeVoice: string;
+  heading: string;
   prompt: string;
+  photoHint: string;
+  moreWays: string;
 }
 
 export type RealtimeHintKey = 'closer' | 'steady' | 'one' | 'light' | 'glare';
@@ -88,7 +95,10 @@ export function captureLabelsForBand(ageBand: AgeBand): CaptureLabels {
         uploadFile: 'Upload PDF/file',
         typePaste: 'Type or paste',
         describeVoice: 'Describe by voice',
-        prompt: 'How do you want to share your work?',
+        heading: 'Show Natalie your work',
+        prompt: 'Snap a picture and we will look at it together.',
+        photoHint: 'Point the camera at your page',
+        moreWays: 'Other ways',
       };
     case 'child':
       return {
@@ -97,7 +107,10 @@ export function captureLabelsForBand(ageBand: AgeBand): CaptureLabels {
         uploadFile: 'Upload PDF/file',
         typePaste: 'Type or paste',
         describeVoice: 'Describe by voice',
-        prompt: 'How do you want to share your work?',
+        heading: 'Show Natalie your work',
+        prompt: 'Take a picture of your homework, or share it another way.',
+        photoHint: 'Point the camera at the page',
+        moreWays: 'Other ways to share',
       };
     case 'adult':
       return {
@@ -106,7 +119,10 @@ export function captureLabelsForBand(ageBand: AgeBand): CaptureLabels {
         uploadFile: 'Upload PDF/file',
         typePaste: 'Type or paste',
         describeVoice: 'Describe by voice',
-        prompt: 'Choose how to share your work',
+        heading: 'Share your work',
+        prompt: 'Take a photo of the problem, or add it another way.',
+        photoHint: 'Photograph the page or problem',
+        moreWays: 'More ways to share',
       };
     case 'teen':
     default:
@@ -116,7 +132,10 @@ export function captureLabelsForBand(ageBand: AgeBand): CaptureLabels {
         uploadFile: 'Upload PDF/file',
         typePaste: 'Type or paste',
         describeVoice: 'Describe by voice',
-        prompt: 'How do you want to share your work?',
+        heading: 'Share your work',
+        prompt: 'Snap your homework to get started, or add it another way.',
+        photoHint: 'Point your camera at the problem',
+        moreWays: 'More ways to share',
       };
   }
 }

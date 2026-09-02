@@ -100,6 +100,7 @@ export const FileSpreadsheet = icon(L.FileSpreadsheet as React.ComponentType<obj
 export const Mic = icon(L.Mic as React.ComponentType<object>, 'Mic');
 export const Camera = icon(L.Camera as React.ComponentType<object>, 'Camera');
 export const Image = icon(L.Image as React.ComponentType<object>, 'Image');
+export const Keyboard = icon(L.Keyboard as React.ComponentType<object>, 'Keyboard');
 export const Plus = icon(L.Plus as React.ComponentType<object>, 'Plus');
 export const Send = icon(L.Send as React.ComponentType<object>, 'Send');
 export const Square = icon(L.Square as React.ComponentType<object>, 'Square');
