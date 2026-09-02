@@ -85,9 +85,14 @@ export function ScopeSwitcher() {
         const membership = scopes.find((m) => m.id === id);
         if (!membership) return;
         setLastShellRole(membership.role);
+        // E §3: spread-then-override so a switch never erases session context;
+        // scopes are institutional-only, so no learnerId/gradeBand rides along.
         setContext({
+          ...activeContext,
           kind: membership.role,
           orgId: membership.orgId,
+          learnerId: undefined,
+          gradeBand: undefined,
         });
       }}
     >

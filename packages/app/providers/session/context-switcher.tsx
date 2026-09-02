@@ -66,9 +66,15 @@ export function ContextSwitcher() {
                 // at the moment of choice, so the next cold start opens the
                 // door this person walked through last.
                 setLastShellRole(membership.role);
+                // E §3: rebuilding the context from scratch erased gradeBand/
+                // learnerId — spread-then-override keeps them, and only a
+                // learner hat carries them (no stale band on other hats).
                 setContext({
+                  ...activeContext,
                   kind: membership.role as ActiveContextKind,
                   orgId: membership.orgId,
+                  learnerId: membership.role === 'learner' ? activeContext.learnerId : undefined,
+                  gradeBand: membership.role === 'learner' ? activeContext.gradeBand : undefined,
                 });
               }}
               className={`min-h-11 flex-row items-center gap-stack rounded-md border-2 px-3 py-2.5 ${
