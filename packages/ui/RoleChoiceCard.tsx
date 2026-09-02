@@ -11,6 +11,9 @@
 // explicit `accent` prop), and only ever as bg-/ring- fills, never text/border.
 // Min height is 72dp per §8 — numerically the young target token, which keeps
 // the hot-dial sizing a token, not a hardcode.
+// Mobbin: mobbin.com/screens/2c9d91ca-7d27-4a1e-b30e-039e88b9ef99 (Duolingo ABC — "Who's learning to read?": icon + title + one-line description per audience card, exactly FD-03's parent/teacher fork) ·
+// mobbin.com/screens/48b99dc6-9509-4ca2-b775-a1039e4e2890 (CapCut — role radiogroup where the selected card carries accent ring AND a filled corner check, never colour alone) ·
+// mobbin.com/screens/48261957-4520-4048-9b13-d14a95600c2f (Canva — "What will you be using this for?" persona cards: leading icon tile, label, generous tap area). Structure only.
 // SOT: docs/38-front-door-and-flow.md §8 · docs/design/overhaul-v2/J-component-plan.md §2 row 9
 // SOT-KEYWORDS: role choice card radio signup who's this for accent onboarding fd-03
 import type { ReactNode } from 'react';

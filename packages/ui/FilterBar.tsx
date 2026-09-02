@@ -23,6 +23,9 @@ import { Button } from './Button';
  * bar; a filter row needs variable height (wrap), a scroll region, and no
  * title semantics. It borrows Toolbar's chrome tokens instead so the two read
  * as one family.
+ * Mobbin: mobbin.com/screens/ec4931ac-c3ca-46cd-8d07-39ffd02e22a9 (Navattic — list header: search leading, Filter-with-count / Sort / date controls trailing, applied chips + Clear on their own wrappable row) ·
+ * mobbin.com/screens/b403408e-b983-4cd2-898c-708a2e962ad2 (Twenty — applied filter chips with x-dismiss and "+ Add filter" inline, Sort/Options pinned to the trailing edge above the table) ·
+ * mobbin.com/screens/3f5f36f6-11c4-4efc-8995-b05498492386 (Xero — search field grows across the bar but stops short of the edge, Filter trailing, active chips + reset-filters emitting to the list owner). Structure only.
  * SOT: docs/design/overhaul-v2/J-component-plan.md §4 · docs/pack/36 §3.1
  * SOT-KEYWORDS: filter bar toolbar controls segmented select search chips clear-all ops cool
  */

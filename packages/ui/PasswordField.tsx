@@ -8,6 +8,9 @@
 // STYLED as error after blur or submit (§8): a red wall while someone is still
 // typing their third character is scolding, not helping.
 // Field chrome mirrors TextField deliberately; the two must read as one family.
+// Mobbin: mobbin.com/screens/c0ba7943-75bb-4fa4-842e-f1f92193a2c0 (Rocket Money — rules checklist under the field flips to satisfied checks as you type; visibility toggle lives inside the field's trailing edge) ·
+// mobbin.com/screens/8b0dc4dd-5651-42f0-883e-90f5aa20c9c3 (Binance — met rules render calm/neutral rather than shouting; toggle + clear share the field's trailing slot) ·
+// mobbin.com/screens/095f3830-331d-454f-89fd-e94566be0641 (Origin — rules as one compact line row directly beneath the input, evaluated live before submit). Structure only.
 // SOT: docs/38-front-door-and-flow.md §8 · docs/design/overhaul-v2/J-component-plan.md §2 row 7
 // SOT-KEYWORDS: password field show hide toggle rules line new-password autofill login signup
 import { tv } from './tv';

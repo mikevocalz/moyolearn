@@ -11,6 +11,10 @@
  * exists), so there is no temperature axis here — the lane simply reads the
  * cool chrome tokens it inherits.
  *
+ * Mobbin: mobbin.com/screens/f5036961-b128-458f-a143-ac2f6abc8d0d (HoneyBook — column header carries the stage name plus a count pill; cards below show compact meta rows) ·
+ * mobbin.com/screens/0a9f2bf5-409a-4af8-9493-531dd6868124 (Asana — header row with title + count on one line and the lane body as a plain scroll region under it) ·
+ * mobbin.com/screens/69990ffa-9153-4bf1-bb53-87317f9e040f (Plane — the lane itself hosts inline add and reads as the drop target, so "where it lands" is the column, not a card). Structure only.
+ *
  * SOT: docs/design/overhaul-v2/J-component-plan.md §4 · ./types.ts
  * SOT-KEYWORDS: stage board column header tone badge count lane drop target chrome
  */

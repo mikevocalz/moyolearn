@@ -25,6 +25,9 @@ import { Info, OctagonAlert, TriangleAlert, WifiOff, X } from './icons';
  * voice is content, not a component axis. Dismissal is CONTROLLED: passing
  * `onDismiss` shows the close affordance, and the owner unmounts the banner —
  * it never hides itself.
+ * Mobbin: mobbin.com/screens/2b00c4b9-d2a6-4a6a-9d95-2aba49348be1 (Alta — "Network offline" notice sits inline above the content: leading status icon, title + one supporting line, flow continues below it) ·
+ * mobbin.com/screens/ea5d92c2-73fc-4fc7-9fb6-a6d32d332097 (Kit — in-flow announcement card at the top of the overview with an explicit Close affordance; content, not chrome, decides when it goes) ·
+ * mobbin.com/screens/e775e577-e5f3-4bd0-a864-e7881c29c77a (Finch — warning notice anatomy: dismiss X, bold title, supporting body, single action — severity carried by the icon, not a flooded frame). Structure only.
  * SOT: docs/design/overhaul-v2/J-component-plan.md §3 · docs/pack/31 §5.2 · docs/pack/38 §5B
  * SOT-KEYWORDS: banner inline notice tone incident offline entitlement staleness non-blocking status
  */

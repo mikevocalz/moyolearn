@@ -17,6 +17,9 @@
 // This is the content component + store the FD-24 route (`account/switch`)
 // mounts inside `BottomSheet`; the chrome stays at the route so the content can
 // also render inline (Storybook, web).
+// Mobbin: mobbin.com/screens/65474c7d-3f9e-4cce-8dc4-57afeedeadb0 (Kit — "Who's there?": kid profiles switch freely while the padlocked adult "Boss" profile gates guardian surfaces) ·
+// mobbin.com/screens/f44beff7-45cf-4a89-b1b3-0fbeb8a2a6e1 (HBO Max — who's-watching picker where the lock badge rides the adult profile and a PIN stands between child and grown-up shell) ·
+// mobbin.com/screens/fbcb9fd4-1d7c-4aaf-9680-a1f7b671b47e (Disney+ — family profile grid: avatar + name per row, per-profile lock affordance, add-profile as the terminal item). Structure only.
 // SOT: docs/38-front-door-and-flow.md §FD-24 · docs/decisions/adr-106-account-sheet-is-profile-you.md · docs/design/overhaul-v2/J-component-plan.md §2 row 8
 // SOT-KEYWORDS: profile switcher fd-24 family device who's here grown-ups locked pin biometric switch profile continuity
 

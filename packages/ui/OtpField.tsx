@@ -9,6 +9,9 @@
 // Sanitisation is the maxLength: uppercase, strip non-members, slice to length
 // — so a paste of "ABC-123" lands as ABC123 and mode `alnum` can never hold
 // the confusable I/O/1/0 (FD-08's code alphabet, matched to FD-14's generator).
+// Mobbin: mobbin.com/screens/bdea0a9d-7fec-4abf-8465-c0e17c0ec63e (Rivian — six equal cells filling left-to-right, resend/change-method links below, one Verify commit) ·
+// mobbin.com/screens/409e02bc-e630-4cb6-8c32-3bcb8ab7fc1d (American Airlines — the active cell carries the caret ring, so one logical input reads as six boxes) ·
+// mobbin.com/screens/9c73c3af-30b0-4255-b2d3-c22b3938f9be (Waymo — insertion caret sits in the first empty cell; the row, not a cell, is the focus target). Structure only.
 // SOT: docs/38-front-door-and-flow.md §8 · docs/design/overhaul-v2/J-component-plan.md §2 row 5
 // SOT-KEYWORDS: otp field one-time-code verification cells autofill paste auto-submit learner
 import { Fragment } from 'react';

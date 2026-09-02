@@ -11,6 +11,9 @@
 // One child renders nothing: a picker with no alternative is noise — the same
 // rule ContextSwitcher applies to a single membership. Overflow scrolls
 // horizontally rather than wrapping so the row stays one visual line of chips.
+// Mobbin: mobbin.com/screens/6491097a-3861-4c87-ac75-caed6336b83b (Greenlight — parent home leads with a horizontal avatar+name chip row; the selected child scopes the whole dashboard below) ·
+// mobbin.com/screens/96c15ebb-251f-4261-b474-b4cf3c74d36a (Acorns — You/Kid switcher pinned at the top of home re-scopes every section; one login, never per-child accounts) ·
+// mobbin.com/screens/ea5d92c2-73fc-4fc7-9fb6-a6d32d332097 (Kit — single guardian overview switches per-child via one header control, so all child surfaces read one selection seam). Structure only.
 // SOT: docs/design/overhaul-v2/J-component-plan.md §2 row 10 · docs/pack/36-role-navigation-flows.md §3.2 · design/screens/guardian/guardian.home/contract.md
 // SOT-KEYWORDS: child switcher chips guardian family store active child g-8 avatar press scale
 

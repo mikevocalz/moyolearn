@@ -12,6 +12,9 @@
 // role-accent underlay + ring from the enclosing RoleScope, check chip, weight
 // — never colour alone. Sanctioned role-accent consumer (check-role-accent).
 // The badge is text via Badge, not just colour (doc 38 §5 FD-13 a11y).
+// Mobbin: mobbin.com/screens/413876ac-478b-4788-a6e6-d6950029cf14 (Duolingo — stacked tier cards with text badges ("MOST POPULAR", member count), trial line above price, selected card gains ring + check chip) ·
+// mobbin.com/screens/02aabc3f-7148-44d7-95e3-2b3126583b0d (Acorns — name / description / price-per-period anatomy per card; radio flips to a filled check plus border emphasis on selection) ·
+// mobbin.com/screens/2913d96b-f3bc-4491-ba77-06871c3c6469 (Klarna — plan rows with a text "Recommended" badge and trailing-aligned price; one radio group, one commit button below). Structure only.
 // SOT: docs/38-front-door-and-flow.md §8 · docs/design/overhaul-v2/J-component-plan.md §2 row 6
 // SOT-KEYWORDS: plan card pricing tier family business trial badge paywall fd-13 pw-05
 import { tv } from './tv';

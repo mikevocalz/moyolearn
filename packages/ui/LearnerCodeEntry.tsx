@@ -10,6 +10,9 @@
 // and the visual dash after cell 3 (`AAA-000`, FD-14's code format).
 // `scanSlot` is the voice-free affordance seat: the screen drops its camera/QR
 // trigger in; the kit stays presentational and camera-free.
+// Mobbin: mobbin.com/screens/49b5df24-69a6-4239-8fd4-399d6d810d64 (Quizlet — join code as grouped cells with a visual dash split, explicit Continue commits, "Scan QR code instead" as the typing-free alternative) ·
+// mobbin.com/screens/91bbae12-fb5b-448e-9d0f-2bcd05a4861e (Duolingo — Join a Classroom: six large boxes and an explicit Submit button; entry never auto-fires) ·
+// mobbin.com/screens/c9044a6e-4b2c-4a94-b198-44933abb06ea (Xbox — oversized code boxes with a separate connect button — the cells display, the button commits). Structure only.
 // SOT: docs/38-front-door-and-flow.md §5 FD-08 · §8 `LearnerCodeEntry` · docs/design/overhaul-v2/J-component-plan.md §2 row 5
 // SOT-KEYWORDS: learner code entry fd-08 handoff redeem young band alnum scan slot
 import type { ReactNode } from 'react';
