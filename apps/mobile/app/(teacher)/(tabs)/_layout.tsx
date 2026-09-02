@@ -1,5 +1,5 @@
 import { Tabs } from 'expo-router';
-import { Home } from '@acme/ui/icons';
+import { Home, User } from '@acme/ui/icons';
 import { ShellHeader } from '../../../components/ShellHeader';
 import { ShellTabBar, type ShellTabItem } from '../../../components/ShellTabBar';
 
@@ -19,12 +19,12 @@ const ITEMS: ShellTabItem[] = [
   // pending: teacher.classes (contract exists) — Classes (list→detail; Students
   // folds in per ADR-102).
   // pending: teacher.assign (contract exists) — Assign.
-  // pending: teacher.you (contract exists) — You (role switcher + ADR-106
-  // account-sheet anchor).
+  { name: 'you', label: 'You', Icon: User },
 ];
 
 const TITLES: Record<string, string> = {
   '/teacher-home': 'Home',
+  '/you': 'You',
 };
 
 export default function TeacherTabs() {
@@ -36,6 +36,7 @@ export default function TeacherTabs() {
       tabBar={(props) => <ShellTabBar {...props} items={ITEMS} />}
     >
       <Tabs.Screen name="teacher-home" options={{ title: 'Home' }} />
+      <Tabs.Screen name="you" options={{ title: 'You' }} />
     </Tabs>
   );
 }
