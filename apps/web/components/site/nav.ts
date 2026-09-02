@@ -129,9 +129,12 @@ export const RAIL_BY_ROLE: Record<RailKind, NavGroup[]> = {
         { label: 'Session notes', href: '/report-queue', railLabel: 'Notes' },
       ],
     },
-    // Second group per ADR-105, unrendered until the routes exist:
-    // pending: tutor.incidents (contract exists) — Incidents, mine + my sessions.
+    // Second group per ADR-105 (doc 36 §3.3). Incidents renders: `/incidents`
+    // exists (tutor.incidents, reporter-scoped lifecycle view). Scope is
+    // "mine" only until TutorSessions carries a tutor link (schema ADR —
+    // see incident.repository.ts).
     // pending: tutor.resources (contract exists) — Resources.
+    { items: [{ label: 'Incidents', href: '/incidents' }] },
   ],
   // ADR-102: teacher stops impersonating the tutor; its set is Home · Classes ·
   // Assign · You. Home is the real teacher landing (`/teachers/me`,

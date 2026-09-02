@@ -19,11 +19,12 @@
 // `tooling/check-crm-wall.mjs` fails the build if `features/ops`, the lead
 // repository or the ops routes acquire an import path to it.
 // SOT: docs/pack/31-grade-voice-safety-incidents.md §4.2 §4.3 §5.2 §5.3 · docs/pack/23-crm-spec.md §2 · docs/pack/19-learning-outcomes-spec.md §S27
-// SOT-KEYWORDS: incident service guardian access own learner guardian visible triage queue sla breach conversation starter acknowledge submit fan out crm wall
+// SOT-KEYWORDS: incident service guardian access own learner guardian visible triage queue sla breach conversation starter acknowledge submit fan out crm wall tutor reporter filed append note
 import 'server-only';
 import type { Auth } from '@acme/auth/server';
 import {
   acknowledgeIncident,
+  appendTimeline,
   incidentFromSubmission,
   slaBreached,
   tierAtLeast,
@@ -323,6 +324,172 @@ export async function submitIncident(
     await ports.saveIncident(report);
     await ports.fanOutIncident(report);
     return { incidentId: report.incidentId };
+  });
+}
+
+/**
+ * Every incident the acting user FILED — doc 36 §3.3's tutor list.
+ *
+ * The repository scopes its query to `reporterAuthId = ctx.learnerId` and
+ * returns the acting id alongside the rows, exactly as `LoadGuardianIncidents`
+ * returns the wards: the projection filters AGAIN on the same fact, so no
+ * single refactor removes both checks (this file's own two-layer law).
+ *
+ * SCOPE IS "MINE" ONLY IN v1, and the narrowing is a deferral, not a design.
+ * Doc 36 §3.3 names the surface "Incidents (mine + my sessions)", but "my
+ * sessions" needs an org→tutor→session edge and `tutorSessions` carries only
+ * `learnerAuthId` — adding a `tutorAuthId` is a schema ADR of its own (the
+ * same class of gap doc 31 §4.2's LearnerRef wall names for org scoping).
+ * Widening the filter without the edge would mean guessing whose sessions are
+ * whose, on a safety surface.
+ */
+export type LoadTutorIncidents = (
+  ctx: ProtectedCtx,
+) => Promise<{ readonly reporter: string; readonly reports: readonly IncidentReport[] }>;
+
+/**
+ * One line of the trail, as a tutor may read it.
+ *
+ * `actor` is COARSENED to "you or not-you" on purpose: the stored entries hold
+ * staff auth ids, and a reporter's lifecycle view has no business displaying
+ * which member of staff moved their case — that is org information, shown on
+ * the org surface. Doc 31 §4.2 scopes what a reader is shown, not just which
+ * rows.
+ */
+export interface TutorIncidentTimelineLine {
+  at: string;
+  actor: 'you' | 'moyo';
+  action: string;
+  note: string | null;
+}
+
+/**
+ * What the reporter of an incident is shown about it.
+ *
+ * NO SEVERITY, deliberately. Doc 31 §5.1 keeps the tier off the intake form
+ * because "severity is the system's judgment at triage"; showing the reporter
+ * the rung afterwards would turn this list into a triage mirror and put S4's
+ * redpen on a surface whose contract bans red framing. Status is the
+ * lifecycle answer the contract's five-second questions actually ask for.
+ */
+export interface TutorIncidentView {
+  incidentId: string;
+  category: IncidentCategory;
+  status: IncidentStatus;
+  occurredAt: string;
+  summary: string;
+  immediateActionTaken: string | null;
+  /** Triage's closing text, once there is one — "did anything come of it". */
+  resolution: string | null;
+  timeline: readonly TutorIncidentTimelineLine[];
+  /**
+   * A REFERENCE and never the words: the row stores `{sessionId, messageIds}`
+   * and no permission-gated resolver exists for a tutor read today, so the
+   * view carries the pointer's existence and size for the screen to state
+   * honestly — fabricating content from ids is the one thing it must not do.
+   */
+  excerptSessionId: string | null;
+  excerptMessageCount: number;
+  /** Ids only in the row (doc 29's token-auth class); no presigned read path
+   * exists for a tutor, so the screen renders a count, never a link. */
+  attachmentCount: number;
+}
+
+/**
+ * The tutor read, as a pure projection — the second of the two filters.
+ *
+ * `reporterId !== null` is not a null-guard, it is the anonymity promise held
+ * against the FILER TOO: an anonymous submission drops the reporter id in the
+ * row (`incidentFromSubmission`), so the row cannot match any actor and the
+ * filing is invisible to the person who made it. Re-attaching it here by any
+ * other join would rebuild the link the null exists to sever.
+ */
+export function tutorIncidentsFrom(
+  reports: readonly IncidentReport[],
+  actorId: string,
+): readonly TutorIncidentView[] {
+  return reports
+    .filter((report) => report.reporterId !== null && report.reporterId === actorId)
+    .map((report) => ({
+      incidentId: report.incidentId,
+      category: report.category,
+      status: report.status,
+      occurredAt: report.occurredAt,
+      summary: report.summary,
+      immediateActionTaken: report.immediateActionTaken,
+      resolution: report.resolution,
+      timeline: report.timeline.map((entry) => ({
+        at: entry.at,
+        actor: entry.actor === actorId ? ('you' as const) : ('moyo' as const),
+        action: entry.action,
+        note: entry.note,
+      })),
+      excerptSessionId: report.transcriptExcerpt?.sessionId ?? null,
+      excerptMessageCount: report.transcriptExcerpt?.messageIds.length ?? 0,
+      attachmentCount: report.attachmentIds.length,
+    }));
+}
+
+export interface TutorIncidentPorts {
+  loadTutorIncidents: LoadTutorIncidents;
+  loadIncident: LoadIncident;
+  saveIncident: SaveIncident;
+}
+
+/**
+ * The tutor's filed-incident list, behind the boundary.
+ *
+ * NO MEMBERSHIP WALL, and the absence is the decision: tutors are not org
+ * staff, so `requiresMembership` would lock every tutor out of their own
+ * filings, and `requires` stays at the free floor for the same reason
+ * `guardianIncidents` above runs there — a lapsed plan must never stand
+ * between a person and the record of a safety report they made. What scopes
+ * the read is the reporter identity, enforced twice.
+ */
+export async function tutorIncidents(
+  auth: Auth,
+  headers: Headers,
+  ports: Pick<TutorIncidentPorts, 'loadTutorIncidents'>,
+): Promise<readonly TutorIncidentView[]> {
+  return protectedOperation(auth, headers, async (ctx) => {
+    const { reports } = await ports.loadTutorIncidents(ctx);
+    return tutorIncidentsFrom(reports, ctx.learnerId);
+  });
+}
+
+/**
+ * The contract's append-note secondary action, through the append-only door.
+ *
+ * Buildable HONESTLY in this slice because it needs nothing org-gated:
+ * `appendTimeline` grows the trail and `saveIncident` refuses any write that
+ * would shorten or rewrite it, so a reporter adding a line cannot damage the
+ * record. The identity check runs HERE for `acknowledgeGuardianIncident`'s
+ * reason one section up: an incident id is a claim, and a caller who posted
+ * somebody else's id would otherwise write their note — and their user id —
+ * into another case's audit trail. Not-theirs and not-found are the same
+ * `null`, so the answer cannot be used as an existence oracle.
+ */
+export async function appendTutorIncidentNote(
+  auth: Auth,
+  headers: Headers,
+  incidentId: string,
+  note: string,
+  ports: Pick<TutorIncidentPorts, 'loadIncident' | 'saveIncident'>,
+  now: Date = new Date(),
+): Promise<TutorIncidentView | null> {
+  return protectedOperation(auth, headers, async (ctx) => {
+    const report = await ports.loadIncident(incidentId);
+    if (report === null) return null;
+    if (report.reporterId === null || report.reporterId !== ctx.learnerId) return null;
+
+    const annotated = appendTimeline(report, {
+      at: now.toISOString(),
+      actor: ctx.learnerId,
+      action: 'noted',
+      note,
+    });
+    await ports.saveIncident(annotated);
+    return tutorIncidentsFrom([annotated], ctx.learnerId)[0] ?? null;
   });
 }
 

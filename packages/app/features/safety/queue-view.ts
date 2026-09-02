@@ -51,8 +51,12 @@ const SEVERITY_TONE = {
 /**
  * Doc 31 §4.1's categories in sentence case. No euphemisms: a queue that said
  * "wellbeing" instead of "self-harm" would be a queue somebody skims past.
+ *
+ * Exported (with STATUS_LABEL below) for the tutor filed-incident list, which
+ * speaks the same vocabulary — a second label map would be the "second,
+ * softer taxonomy" this file's header bans, one layer up.
  */
-const CATEGORY_LABEL = {
+export const CATEGORY_LABEL = {
   profanity: 'Profanity',
   'sexual-content': 'Sexual content',
   bullying: 'Bullying',
@@ -66,7 +70,7 @@ const CATEGORY_LABEL = {
   other: 'Other',
 } as const satisfies Record<IncidentCategory, string>;
 
-const STATUS_LABEL = {
+export const STATUS_LABEL = {
   new: 'New',
   triaged: 'Triaged',
   'in-review': 'In review',

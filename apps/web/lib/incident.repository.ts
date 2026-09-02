@@ -21,7 +21,7 @@
 // guardian has not finished doc 06 §2's ladder and a `revoked` one is a household
 // that has changed. Neither is somebody to hand a child's safety file to.
 // SOT: docs/pack/31-grade-voice-safety-incidents.md §4 · packages/payload/src/collections/IncidentReports.ts · docs/pack/12-systems-design-prompt.md §4
-// SOT-KEYWORDS: incident repository payload guardian scope guardianship ward append only timeline legal hold triage queue org
+// SOT-KEYWORDS: incident repository payload guardian scope guardianship ward append only timeline legal hold triage queue org tutor reporter filed
 import 'server-only';
 import { getPayload } from 'payload';
 import config from '@payload-config';
@@ -32,6 +32,7 @@ import type {
   LoadGuardianIncidents,
   LoadIncident,
   LoadIncidentQueue,
+  LoadTutorIncidents,
   SaveIncident,
 } from '@acme/app/server';
 
@@ -265,6 +266,38 @@ export const loadGuardianIncidents: LoadGuardianIncidents = async (ctx) =>
     });
 
     return { wards: learnerIds, reports: docs.map(incidentFromDoc) };
+  });
+
+/**
+ * Every incident the acting user filed, newest first.
+ *
+ * `reporterAuthId = ctx.learnerId` and NOTHING WIDER — "mine" only in v1.
+ * Doc 36 §3.3 names the tutor surface "Incidents (mine + my sessions)", but
+ * the "my sessions" half is DEFERRED: `tutorSessions` carries only a
+ * `learnerAuthId`, so there is no tutor→session edge this codebase can query,
+ * and adding a `tutorAuthId` to that collection is a schema ADR of its own —
+ * the same shape of gap `loadIncidentQueue` below names for org scoping under
+ * doc 31 §4.2's pointer model. Until the edge exists, a session-scoped read
+ * would be a guess, and a safety surface does not guess.
+ *
+ * The acting id is echoed alongside the rows for the reason `wards` is above:
+ * `tutorIncidentsFrom` filters again on the same fact, and the `where` here
+ * and the filter there fail in different ways.
+ *
+ * An ANONYMOUS filing has `reporterAuthId: null` in the row (the NIJ promise,
+ * see `IncidentReports.ts`), so it can never match this query — the filer's
+ * own anonymous report is invisible to them, and that is the promise working,
+ * not a bug to route around.
+ */
+export const loadTutorIncidents: LoadTutorIncidents = async (ctx) =>
+  withPayload(async (payload) => {
+    const { docs } = await payload.find({
+      collection: 'incidentReports',
+      where: { reporterAuthId: { equals: ctx.learnerId } },
+      sort: '-occurredAt',
+      limit: FEED_LIMIT,
+    });
+    return { reporter: ctx.learnerId, reports: docs.map(incidentFromDoc) };
   });
 
 /**

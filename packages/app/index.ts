@@ -376,7 +376,7 @@ export {
   renders and never the function that fetches it. The server half is exported
   from `./server.ts` beside the safety-status service it belongs with.
 */
-export type { GuardianIncidentView, TriageQueue, TriageRow } from './features/safety';
+export type { GuardianIncidentView, TriageQueue, TriageRow, TutorIncidentView } from './features/safety';
 /*
   …plus the one screen that renders them. `SafetyQueueScreen` is doc 36 §3.4's
   org Safety tab: a client surface over `GET /api/safety/incidents`, which keeps
@@ -394,6 +394,22 @@ export {
   type IncidentQueueItem,
   type IncidentQueueRead,
   type QueueTone,
+} from './features/safety';
+/*
+  …and doc 36 §3.3's tutor surface over the same domain: the reporter's own
+  filed-incident lifecycle view, a client surface over `GET
+  /api/tutor/incidents`. No membership wall travels with it — the scoping is
+  reporter identity, enforced server-side twice (repository + projection).
+*/
+export {
+  TutorIncidentsScreen,
+  TutorIncidentsContent,
+  useTutorIncidents,
+  useAppendIncidentNote,
+  tutorIncidentsKey,
+  useTutorIncidentsStore,
+  type TutorIncidentsRead,
+  type TutorIncidentStatusFilter,
 } from './features/safety';
 export {
   tusUrlStorage,

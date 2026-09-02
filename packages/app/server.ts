@@ -312,12 +312,15 @@ export {
 */
 export {
   acknowledgeGuardianIncident,
+  appendTutorIncidentNote,
   guardianIncidents,
   guardianIncidentsFrom,
   incidentTriageQueue,
   submitIncident,
   triageIncident,
   triageQueueFrom,
+  tutorIncidents,
+  tutorIncidentsFrom,
   CONVERSATION_STARTERS,
   type FanOutIncident,
   type GuardianIncidentPorts,
@@ -325,12 +328,15 @@ export {
   type LoadGuardianIncidents,
   type LoadIncident,
   type LoadIncidentQueue,
+  type LoadTutorIncidents,
   type SaveIncident,
   type SubmitIncidentInput,
   type SubmitIncidentPorts,
   type TriagePorts,
   type TriageQueue,
   type TriageRow,
+  type TutorIncidentPorts,
+  type TutorIncidentView,
 } from './features/safety/incidents.service';
 export type {
   IncidentCategory,

@@ -30,6 +30,7 @@ import {
   guardianIncidentsFrom,
   incidentTriageQueue,
   triageQueueFrom,
+  tutorIncidentsFrom,
   CONVERSATION_STARTERS,
 } from './incidents.service.ts';
 
@@ -117,6 +118,53 @@ describe('doc 31 §4.2 — the guardian access model', () => {
     );
     const view = guardianIncidentsFrom([resolved], ['learner_1'])[0];
     assert.equal(view?.whatHappensNext, 'Spoke with both families.');
+  });
+});
+
+describe('doc 36 §3.3 — the tutor reporter access model', () => {
+  const filed = (reporterId: string, anonymous = false): IncidentReport =>
+    incidentFromSubmission(
+      {
+        reporterRole: 'tutor',
+        anonymous,
+        subjectLearnerId: 'learner_1',
+        relatedSessionId: 'sess_1',
+        category: 'safety-concern',
+        occurredAt: NOW.toISOString(),
+        summary: 'Observed during a tutoring session.',
+        immediateActionTaken: 'Paused the session.',
+        attachmentIds: [],
+      },
+      reporterId,
+      NOW,
+    );
+
+  it('shows a reporter the incident they filed, with its whole trail', () => {
+    const views = tutorIncidentsFrom([filed('tutor_1')], 'tutor_1');
+    assert.equal(views.length, 1);
+    assert.equal(views[0]?.status, 'new');
+    assert.equal(views[0]?.timeline.length, 1);
+  });
+
+  it('shows NOTHING filed by somebody else, however the row arrived', () => {
+    const views = tutorIncidentsFrom([filed('tutor_1'), filed('tutor_99')], 'tutor_1');
+    assert.equal(views.length, 1);
+  });
+
+  it('hides an anonymous filing from its own filer — the null is the promise', () => {
+    assert.deepEqual(tutorIncidentsFrom([filed('tutor_1', true)], 'tutor_1'), []);
+  });
+
+  it('coarsens timeline actors and carries no severity or raw ids', () => {
+    const moved = transitionIncident(filed('tutor_1'), { status: 'triaged' }, 'staff_7', NOW);
+    const view = tutorIncidentsFrom([moved], 'tutor_1')[0];
+    assert.ok(view);
+    assert.deepEqual(
+      view.timeline.map((line) => line.actor),
+      ['you', 'moyo'],
+      'a staff auth id must never reach a reporter’s screen',
+    );
+    assert.equal(Object.hasOwn(view, 'severity'), false);
   });
 });
 

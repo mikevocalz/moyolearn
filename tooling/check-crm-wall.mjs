@@ -69,6 +69,7 @@ const INCIDENT_MODULES = [
   /apps\/web\/lib\/incident\.(repository|service)\.ts$/,
   /packages\/payload\/src\/collections\/IncidentReports\.ts$/,
   /apps\/web\/app\/api\/safety\/incidents\//,
+  /apps\/web\/app\/api\/tutor\/incidents\//,
   /*
     Doc 34 §3 extends the same wall to session summaries: "CRM sales surfaces
     never read summaries." A safety incident in a sales funnel is a family's
@@ -106,6 +107,11 @@ const INCIDENT_NAMES = [
   'loadIncident',
   'loadIncidentQueue',
   'loadGuardianIncidents',
+  'loadTutorIncidents',
+  'tutorIncidents',
+  'tutorIncidentsFrom',
+  'appendTutorIncidentNote',
+  'TutorIncidentView',
   'saveIncident',
   'incidentFromSafetyEvent',
   'incidentFromSubmission',

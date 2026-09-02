@@ -18,6 +18,7 @@ export type {
   GuardianIncidentView,
   TriageQueue,
   TriageRow,
+  TutorIncidentView,
 } from './incidents.service';
 
 export { SafetyQueueScreen } from './screen';
@@ -27,6 +28,24 @@ export {
   incidentQueueItemsFrom,
   slaClock,
   unassignedS4Line,
+  CATEGORY_LABEL,
+  STATUS_LABEL,
   type IncidentQueueItem,
   type QueueTone,
 } from './queue-view.ts';
+
+// tutor.incidents (doc 36 §3.3) — the reporter's own lifecycle view, over
+// `GET /api/tutor/incidents`. Same rule as the queue exports above: the
+// screen reads projections, never the service.
+export { TutorIncidentsScreen } from './tutor-incidents-screen';
+export { TutorIncidentsContent } from './tutor-incidents-content';
+export {
+  useTutorIncidents,
+  useAppendIncidentNote,
+  tutorIncidentsKey,
+  type TutorIncidentsRead,
+} from './use-tutor-incidents.ts';
+export {
+  useTutorIncidentsStore,
+  type TutorIncidentStatusFilter,
+} from './tutor-incidents.store.ts';
