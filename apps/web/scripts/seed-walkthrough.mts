@@ -278,6 +278,29 @@ const LEADS: Record<string, readonly WtLead[]> = {
   }),
 };
 
+/**
+ * Tutor↔learner engagements (ADR-108's roster edge). No creation UI exists
+ * yet — org/scheduling work — so the walkthrough cast's rows enter here, which
+ * is exactly the "ops/seed for now" path the ADR's consequences record. The
+ * pairs mirror the LEADS owners above, so the CRM story and the roster tell
+ * the same story: Rosa works her whole solo roster; Brightpath's learners
+ * split between its two tutors.
+ */
+interface WtEngagement {
+  tutorCell: string;
+  learnerUsername: string;
+  orgSlug: string;
+}
+
+const ENGAGEMENTS: readonly WtEngagement[] = [
+  { tutorCell: 'solo-tutor', learnerUsername: 'wt_ivy_solo', orgSlug: 'wt-solo-tutoring' },
+  { tutorCell: 'solo-tutor', learnerUsername: 'wt_noel_solo', orgSlug: 'wt-solo-tutoring' },
+  { tutorCell: 'solo-tutor', learnerUsername: 'wt_kofi_solo', orgSlug: 'wt-solo-tutoring' },
+  { tutorCell: 'biz-tutor-1', learnerUsername: 'wt_luca_bp', orgSlug: 'wt-brightpath' },
+  { tutorCell: 'biz-tutor-2', learnerUsername: 'wt_hana_bp', orgSlug: 'wt-brightpath' },
+  { tutorCell: 'biz-tutor-2', learnerUsername: 'wt_deniz_bp', orgSlug: 'wt-brightpath' },
+];
+
 const ENROLLED_AT = '2026-08-24T09:00:00.000Z';
 const CONSENT = {
   method: 'email-plus' as const,
@@ -302,6 +325,9 @@ if (DRY_RUN) {
     console.log(`sub       ${sub.id.padEnd(48)} ${sub.plan}/${sub.status} → ${ref}`);
   }
   for (const [slug, rows] of Object.entries(LEADS)) console.log(`leads     ${slug} (${rows.length})`);
+  for (const engagement of ENGAGEMENTS) {
+    console.log(`engage    ${engagement.tutorCell} ↔ ${engagement.learnerUsername} @ ${engagement.orgSlug}`);
+  }
   console.log(`admin     ${email('platform-admin')} (Payload users collection)`);
   process.exit(0);
 }
@@ -345,6 +371,8 @@ for (const file of [
   // For its locked-documents rels column — without it, Payload's lock check
   // fails every UPDATE on every collection (see the file's own comment).
   'handoff_codes_additive.sql',
+  // ADR-108's roster edge — the engagements block below writes into it.
+  'tutor_engagements_additive.sql',
 ]) {
   await pool.query(await readFile(resolve(migrationsDir, file), 'utf8'));
   console.log(`migrate  ~ ${file}`);
@@ -524,6 +552,39 @@ for (const learner of LEARNERS) {
       },
     });
     console.log(`enroll   + ${learner.username} → ${learner.enrollOrgSlug}`);
+  }
+}
+
+/* ── Tutor engagements — ADR-108's roster edge ─────────────────────────── */
+
+// Find-first like the guardianship/enrollment guards above; the table's own
+// (tutor, learner, org) UNIQUE makes a race a collision rather than a twin.
+for (const engagement of ENGAGEMENTS) {
+  const tutorAuthId = adultIds.get(engagement.tutorCell)!;
+  const learnerAuthId = learnerIds.get(engagement.learnerUsername)!;
+  const existing = await payload.find({
+    collection: 'tutorEngagements',
+    where: {
+      and: [
+        { tutorAuthId: { equals: tutorAuthId } },
+        { learnerAuthId: { equals: learnerAuthId } },
+        { orgId: { equals: engagement.orgSlug } },
+      ],
+    },
+    limit: 1,
+  });
+  if (existing.docs.length === 0) {
+    await payload.create({
+      collection: 'tutorEngagements',
+      data: {
+        tutorAuthId,
+        learnerAuthId,
+        orgId: engagement.orgSlug,
+        status: 'active',
+        startedAt: ENROLLED_AT,
+      },
+    });
+    console.log(`engage   + ${engagement.tutorCell} ↔ ${engagement.learnerUsername} @ ${engagement.orgSlug}`);
   }
 }
 

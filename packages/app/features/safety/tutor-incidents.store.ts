@@ -17,14 +17,26 @@ interface TutorIncidentsState {
   statusFilter: TutorIncidentStatusFilter;
   /** The row whose detail (timeline + note composer) is open; one at a time. */
   openIncidentId: string | null;
+  /**
+   * Whether the intake dialog is over the list. View state only — the FORM's
+   * fields live in the form component so they survive a failed post
+   * (contract: "a safety report must never be silently lost"), and closing
+   * here is the one way they are discarded.
+   */
+  intakeOpen: boolean;
   setStatusFilter: (statusFilter: TutorIncidentStatusFilter) => void;
   toggleIncident: (incidentId: string) => void;
+  openIntake: () => void;
+  closeIntake: () => void;
 }
 
 export const useTutorIncidentsStore = create<TutorIncidentsState>((set) => ({
   statusFilter: 'all',
   openIncidentId: null,
+  intakeOpen: false,
   setStatusFilter: (statusFilter) => set({ statusFilter }),
   toggleIncident: (incidentId) =>
     set((s) => ({ openIncidentId: s.openIncidentId === incidentId ? null : incidentId })),
+  openIntake: () => set({ intakeOpen: true }),
+  closeIntake: () => set({ intakeOpen: false }),
 }));

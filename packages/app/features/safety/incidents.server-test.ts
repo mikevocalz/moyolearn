@@ -29,11 +29,15 @@ import { setOperationSink } from '../../core/telemetry.ts';
 import {
   guardianIncidentsFrom,
   incidentTriageQueue,
+  submitTutorIncident,
   triageIncident,
   triageQueueFrom,
   tutorIncidentsFrom,
   CONVERSATION_STARTERS,
+  TUTOR_REPORTABLE,
+  type EngagedLearner,
   type IncidentStaffMember,
+  type SubmitTutorIncidentInput,
 } from './incidents.service.ts';
 
 const NOW = new Date('2026-08-27T16:00:00.000Z');
@@ -171,6 +175,123 @@ describe('doc 36 §3.3 — the tutor reporter access model', () => {
       'a staff auth id must never reach a reporter’s screen',
     );
     assert.equal(Object.hasOwn(view, 'severity'), false);
+  });
+});
+
+describe('ADR-108 — tutor intake verifies its subject against the engagement edge', () => {
+  /*
+    A tutor-shaped session at the free floor, faked at the same seams the
+    staff fake below uses: the session read and the subscription read both go
+    through the `Auth` instance, so the REAL `protectedOperation` runs — and
+    `submitTutorIncident` sets no membership wall and no capability above
+    `practise`, which every subscription status satisfies, including none.
+    Empty adapter answers are therefore the honest fixture, not a shortcut.
+  */
+  const tutorAuth = (): Auth => {
+    const value: object = {
+      api: {
+        getSession: () =>
+          Promise.resolve({ user: { id: 'tutor_1', guardianManaged: false, orgId: 'org_1' } }),
+      },
+      $context: Promise.resolve({
+        adapter: { findMany: () => Promise.resolve([]) },
+      }),
+    };
+    return value as Auth;
+  };
+
+  const roster: readonly EngagedLearner[] = [
+    { learnerId: 'learner_1', name: 'Ivy Ito' },
+    { learnerId: 'learner_2', name: 'Noel Boateng' },
+  ];
+
+  const submission = (
+    subjectLearnerId: string,
+    category: SubmitTutorIncidentInput['category'] = 'safety-concern',
+  ): SubmitTutorIncidentInput => ({
+    anonymous: false,
+    subjectLearnerId,
+    relatedSessionId: 'sess_1',
+    category,
+    occurredAt: NOW.toISOString(),
+    summary: 'Observed during a tutoring session.',
+    immediateActionTaken: 'Paused the session.',
+    attachmentIds: [],
+  });
+
+  const drive = async (input: SubmitTutorIncidentInput, engaged: readonly EngagedLearner[]) => {
+    const saved: IncidentReport[] = [];
+    let fannedOut = 0;
+    setOperationSink(() => {});
+    try {
+      const result = await submitTutorIncident(
+        tutorAuth(),
+        new Headers(),
+        input,
+        {
+          loadTutorEngagements: async () => engaged,
+          saveIncident: async (report) => {
+            saved.push(report);
+          },
+          fanOutIncident: async () => {
+            fannedOut += 1;
+          },
+        },
+        NOW,
+      );
+      return { result, saved, fannedOut };
+    } finally {
+      setOperationSink(null);
+    }
+  };
+
+  it('refuses a subject the caller holds no active engagement with, and never writes', async () => {
+    const { result, saved, fannedOut } = await drive(submission('learner_99'), roster);
+    // The same null as a refused category — no oracle over which wall refused.
+    assert.equal(result, null);
+    assert.equal(saved.length, 0, 'a refused subject must not touch the store');
+    assert.equal(fannedOut, 0);
+  });
+
+  it('refuses the legal-hold categories however the input arrived, and never writes', async () => {
+    for (const category of ['self-harm', 'abuse-disclosure'] as const) {
+      const { result, saved } = await drive(submission('learner_1', category), roster);
+      assert.equal(result, null, `${category} must never be reporter-selectable`);
+      assert.equal(saved.length, 0);
+    }
+    // The allow-list itself holds the exclusion, so the route's parse and this
+    // check can only drift by editing the same constant.
+    assert.ok(!TUTOR_REPORTABLE.includes('self-harm'));
+    assert.ok(!TUTOR_REPORTABLE.includes('abuse-disclosure'));
+  });
+
+  it('accepts an engaged subject: tutor role, opens at S3, fans out after the save', async () => {
+    const { result, saved, fannedOut } = await drive(submission('learner_1'), roster);
+    assert.ok(result);
+    assert.equal(saved.length, 1);
+    assert.equal(fannedOut, 1);
+
+    const report = saved[0];
+    assert.ok(report);
+    assert.equal(report.incidentId, result.incidentId);
+    assert.equal(report.reporterRole, 'tutor');
+    assert.equal(report.reporterId, 'tutor_1');
+    assert.equal(report.subjectLearnerId, 'learner_1');
+    // §5.1: severity is triage's judgment — every submission opens at S3.
+    assert.equal(report.severity, 'S3');
+    assert.equal(report.status, 'new');
+  });
+
+  it('drops the reporter id from an anonymous filing — the stored promise, at this door too', async () => {
+    const { saved } = await drive({ ...submission('learner_1'), anonymous: true }, roster);
+    assert.equal(saved[0]?.reporterId, null);
+    assert.equal(saved[0]?.anonymous, true);
+  });
+
+  it('refuses everything when the caller has no engagements at all', async () => {
+    const { result, saved } = await drive(submission('learner_1'), []);
+    assert.equal(result, null);
+    assert.equal(saved.length, 0);
   });
 });
 

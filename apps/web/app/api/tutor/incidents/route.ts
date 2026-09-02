@@ -10,10 +10,11 @@
 // NO MEMBERSHIP WALL, unlike `/api/safety/incidents` — the gate is set inside
 // `tutorIncidents` (none) rather than here, and its absence is the decision:
 // tutors are not org staff, and the read is scoped by reporter identity,
-// enforced twice (repository `where` + service projection). There is no
-// intake POST here: filing needs a verifiable subject learner, no
-// tutor→learner edge exists to verify one against, and `subjectLearnerAuthId`
-// is required on the collection — see the empty state's own record of that.
+// enforced twice (repository `where` + service projection). The intake POST
+// lives at `./report`, the same subroute split the guardian wing makes:
+// filing verifies its subject against the caller's active engagements
+// (ADR-108's roster edge), while the POST here appends a note to a case the
+// caller already filed.
 // SOT: docs/pack/31-grade-voice-safety-incidents.md §4.2 · docs/pack/36-role-navigation-flows.md §3.3 · packages/app/features/safety/incidents.service.ts
 // SOT-KEYWORDS: tutor incidents api route filed lifecycle append note reporter scope crm wall
 import { NextRequest, NextResponse } from 'next/server';

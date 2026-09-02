@@ -19,7 +19,7 @@
 // `tooling/check-crm-wall.mjs` fails the build if `features/ops`, the lead
 // repository or the ops routes acquire an import path to it.
 // SOT: docs/pack/31-grade-voice-safety-incidents.md §4.2 §4.3 §5.2 §5.3 · docs/pack/23-crm-spec.md §2 · docs/pack/19-learning-outcomes-spec.md §S27
-// SOT-KEYWORDS: incident service guardian access own learner guardian visible triage queue sla breach conversation starter acknowledge submit fan out crm wall tutor reporter filed append note staff roster assignee verification timeline
+// SOT-KEYWORDS: incident service guardian access own learner guardian visible triage queue sla breach conversation starter acknowledge submit fan out crm wall tutor reporter filed append note staff roster assignee verification timeline engagement intake subject engaged learner
 import 'server-only';
 import type { MembershipRole } from '@acme/auth/membership';
 import type { Auth } from '@acme/auth/server';
@@ -448,9 +448,9 @@ export async function submitIncident(
  *
  * SCOPE IS "MINE" ONLY IN v1, and the narrowing is a deferral, not a design.
  * Doc 36 §3.3 names the surface "Incidents (mine + my sessions)", but "my
- * sessions" needs an org→tutor→session edge and `tutorSessions` carries only
- * `learnerAuthId` — adding a `tutorAuthId` is a schema ADR of its own (the
- * same class of gap doc 31 §4.2's LearnerRef wall names for org scoping).
+ * sessions" needs a SESSION→TUTOR edge, and ADR-108 records that gap as still
+ * open: the tutor→LEARNER edge it built (`tutorEngagements`) is a roster fact,
+ * not a session fact, and `tutorSessions` still carries only `learnerAuthId`.
  * Widening the filter without the edge would mean guessing whose sessions are
  * whose, on a safety surface.
  */
@@ -601,6 +601,131 @@ export async function appendTutorIncidentNote(
     });
     await ports.saveIncident(annotated);
     return tutorIncidentsFrom([annotated], ctx.learnerId)[0] ?? null;
+  });
+}
+
+/**
+ * One learner the acting tutor is ENGAGED with — what the intake's subject
+ * picker needs, and NOTHING more of the child. Id and display name only, the
+ * same projection discipline `IncidentStaffMember` holds one scope down: no
+ * username, no band, no guardian, and nowhere to put any of them.
+ */
+export interface EngagedLearner {
+  readonly learnerId: string;
+  readonly name: string;
+}
+
+/**
+ * The acting tutor's ACTIVE engagements — ADR-108's roster edge, read by a
+ * repository. Active only, decided at the port: an ended engagement is history
+ * that explains old records, not a relationship to file new ones through, and
+ * a service that had to re-filter would be one deletion away from not doing so.
+ */
+export type LoadTutorEngagements = (ctx: ProtectedCtx) => Promise<readonly EngagedLearner[]>;
+
+/**
+ * The categories a TUTOR may pick, which is not the whole list — the same
+ * exclusions as the guardian intake door, for the same reason:
+ *
+ * `self-harm` and `abuse-disclosure` are absent on purpose. Both carry a legal
+ * hold and, in the second case, obligations counsel has not signed off
+ * (`LEGAL_HOLD_REASON`), and neither is a box a worried reporter should be
+ * able to tick from a form — a mis-tick would put a permanent hold on a record
+ * about a child who is fine. A human narrows a report into either of them at
+ * triage, which is also where the hold is applied.
+ *
+ * Held HERE rather than only in the route, because the route's parse is one
+ * refactor away from being a check nobody notices is gone — the two fail in
+ * different ways, this file's own two-layer law.
+ */
+export const TUTOR_REPORTABLE: readonly IncidentCategory[] = [
+  'profanity',
+  'sexual-content',
+  'bullying',
+  'pii-shared',
+  'violence',
+  'substances',
+  'tutor-behavior',
+  'safety-concern',
+  'other',
+];
+
+export interface TutorEngagementPorts {
+  loadTutorEngagements: LoadTutorEngagements;
+}
+
+/**
+ * The subject picker's read, behind the boundary. Same floor as
+ * `tutorIncidents` above and for the same reason: this feeds the filing of a
+ * safety report, and a lapsed plan must never stand between a person and
+ * making one. What scopes it is `ctx` — the repository queries by the acting
+ * id, never by input.
+ */
+export async function tutorEngagedLearners(
+  auth: Auth,
+  headers: Headers,
+  ports: TutorEngagementPorts,
+): Promise<readonly EngagedLearner[]> {
+  return protectedOperation(auth, headers, async (ctx) => ports.loadTutorEngagements(ctx));
+}
+
+/**
+ * What a tutor's submission carries. The subject is NOT free-form, and the
+ * role is not carried at all — `submitTutorIncident` is the tutor door, so
+ * `reporterRole` is a fact of the door rather than a field a client could set.
+ */
+export type SubmitTutorIncidentInput = Omit<SubmittedIncident, 'subjectLearnerId' | 'reporterRole'> & {
+  /** Which of the caller's engaged learners this is about. Checked, not trusted. */
+  readonly subjectLearnerId: string;
+};
+
+export interface SubmitTutorIncidentPorts {
+  loadTutorEngagements: LoadTutorEngagements;
+  saveIncident: SaveIncident;
+  fanOutIncident: FanOutIncident;
+}
+
+/**
+ * §4's human intake door, one relationship over — `submitIncident`'s exact
+ * shape with the wards-intersection run against ADR-108's roster edge instead:
+ * `subjectLearnerId` arrives from the form and is CHECKED against the caller's
+ * own ACTIVE engagements, because a report filed about a child the caller has
+ * no relationship with is not a report, it is a write into somebody else's
+ * record. The severity is not on the form at all (§5.1), so there is nothing
+ * to check there: `incidentFromSubmission` opens every submission at S3.
+ *
+ * The category check runs HERE as well as in the route (`TUTOR_REPORTABLE`'s
+ * own comment), and a refused category gets the same `null` as a refused
+ * subject — the answer is no oracle over which refusal happened.
+ *
+ * Fan-out happens after the save and its failure does NOT fail the submission,
+ * for `submitIncident`'s recorded reason: a reporter who got an error would
+ * file again, and the second copy is worse than a late notification.
+ */
+export async function submitTutorIncident(
+  auth: Auth,
+  headers: Headers,
+  input: SubmitTutorIncidentInput,
+  ports: SubmitTutorIncidentPorts,
+  now: Date = new Date(),
+): Promise<{ incidentId: string } | null> {
+  return protectedOperation(auth, headers, async (ctx) => {
+    if (!TUTOR_REPORTABLE.includes(input.category)) return null;
+
+    const engaged = await ports.loadTutorEngagements(ctx);
+    const subject = engaged.some((learner) => learner.learnerId === input.subjectLearnerId)
+      ? input.subjectLearnerId
+      : null;
+    if (subject === null) return null;
+
+    const report = incidentFromSubmission(
+      { ...input, reporterRole: 'tutor', subjectLearnerId: subject },
+      ctx.learnerId,
+      now,
+    );
+    await ports.saveIncident(report);
+    await ports.fanOutIncident(report);
+    return { incidentId: report.incidentId };
   });
 }
 

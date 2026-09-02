@@ -273,12 +273,12 @@ export const loadGuardianIncidents: LoadGuardianIncidents = async (ctx) =>
  *
  * `reporterAuthId = ctx.learnerId` and NOTHING WIDER — "mine" only in v1.
  * Doc 36 §3.3 names the tutor surface "Incidents (mine + my sessions)", but
- * the "my sessions" half is DEFERRED: `tutorSessions` carries only a
- * `learnerAuthId`, so there is no tutor→session edge this codebase can query,
- * and adding a `tutorAuthId` to that collection is a schema ADR of its own —
- * the same shape of gap `loadIncidentQueue` below names for org scoping under
- * doc 31 §4.2's pointer model. Until the edge exists, a session-scoped read
- * would be a guess, and a safety surface does not guess.
+ * the "my sessions" half is DEFERRED, and ADR-108 records the gap: the
+ * tutor→LEARNER edge it built (`tutorEngagements`) is a roster fact, while
+ * "my sessions" needs a SESSION→tutor edge that `tutorSessions` — which
+ * carries only a `learnerAuthId` — still does not hold. Until that edge is
+ * its own decision, a session-scoped read would be a guess, and a safety
+ * surface does not guess.
  *
  * The acting id is echoed alongside the rows for the reason `wards` is above:
  * `tutorIncidentsFrom` filters again on the same fact, and the `where` here
