@@ -8,10 +8,9 @@ import { ShellTabBar, type ShellTabItem } from '../../../components/ShellTabBar'
  * ADR-101 (docs/decisions/adr-101-guardian-tab-set.md). Alerts is its own tab
  * so serious things never hide under a bell icon; Family holds children +
  * controls including plan/billing. Calendar is a stack route pushed from
- * Home/Family, not a tab. Messages and Account left ITEMS with ADR-101 (no
+ * Home/Family, not a tab. Messages and Account are retired per ADR-101 (no
  * messaging surface exists; account content moves to the ADR-106 sheet) —
- * their route files remain URL-reachable until the shell build phase retires
- * them.
+ * their route files and screen entries are removed.
  */
 const ITEMS: ShellTabItem[] = [
   { name: 'family-home', label: 'Home', Icon: Home },
@@ -25,8 +24,6 @@ const TITLES: Record<string, string> = {
   '/reports': 'Reports',
   '/alerts': 'Alerts',
   '/family': 'Family',
-  '/messages': 'Messages',
-  '/account': 'Account',
 };
 
 export default function GuardianTabs() {
@@ -41,8 +38,6 @@ export default function GuardianTabs() {
       <Tabs.Screen name="reports" options={{ title: 'Reports' }} />
       <Tabs.Screen name="alerts" options={{ title: 'Alerts' }} />
       <Tabs.Screen name="family" options={{ title: 'Family' }} />
-      <Tabs.Screen name="messages" options={{ title: 'Messages' }} />
-      <Tabs.Screen name="account" options={{ title: 'Account' }} />
     </Tabs>
   );
 }
