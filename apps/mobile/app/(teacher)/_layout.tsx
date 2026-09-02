@@ -32,6 +32,10 @@ export default function TeacherShell() {
               tab set (it does not outrank FD-23's class/assignment loop);
               reachable from Home, keeps its screen. */}
           <Stack.Screen name="conference" options={{ title: 'Conferences' }} />
+          {/* teacher.classes details — the Classes tab's collapsed-width drill
+              routes; on expanded widths the pane host renders them in place. */}
+          <Stack.Screen name="classes/[classId]" options={{ title: 'Class' }} />
+          <Stack.Screen name="students/[studentId]" options={{ title: 'Student' }} />
         </Stack.Protected>
       </Stack>
     </RoleScope>

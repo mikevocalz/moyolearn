@@ -86,6 +86,38 @@ export {
   useSummaryQueue,
   useTeacherShare,
 } from './features/summary/use-reports';
+// teacher.classes — ADR-102's Classes tab: the list (pane host on expanded
+// widths), the class detail with its roster, and the folded teacher.students
+// detail. Screens and their read/write hooks only — the service and its ports
+// live in `server.ts`.
+export { ClassesScreen, bandLabel } from './features/classes/classes-content';
+export { ClassDetailScreen } from './features/classes/class-detail-content';
+export { StudentDetailScreen } from './features/classes/student-detail-content';
+export { ClassesPaneScreen } from './features/classes/classes-pane-content';
+export {
+  classRosterQueryKey,
+  teacherClassesQueryKey,
+  useClassRoster,
+  useCreateClass,
+  useTeacherClasses,
+} from './features/classes/use-classes';
+export type {
+  CreateClassInput,
+  TeacherClass,
+  TeacherClassDetail,
+} from './features/classes/classes.types';
+// teacher.assign's read/write hooks — exported with the classes hooks they
+// pair with (the barrel-completeness rule: an unexported hook is invisible to
+// search and gets rebuilt); the assign SCREENS stay pending until their
+// contract's slice lands.
+export {
+  assignmentQueryKey,
+  teacherAssignmentsQueryKey,
+  useAssignment,
+  useAssignmentAction,
+  useCreateAssignment,
+  useTeacherAssignments,
+} from './features/assignments/use-assignments';
 export { PracticeScreen } from './features/practice/screen';
 export { AiActivityScreen } from './features/ai-activity/screen';
 export { MemoryScreen } from './features/memory/screen';

@@ -137,8 +137,12 @@ export const RAIL_BY_ROLE: Record<RailKind, NavGroup[]> = {
   // Assign · You. Home is the real teacher landing (`/teachers/me`,
   // TeacherHomeScreen) — `/` renders the role-blind template dashboard.
   teacher: [
-    { items: [{ label: 'Home', href: '/teachers/me' }] },
-    // pending: teacher.classes (contract exists) — Classes (list→detail).
+    {
+      items: [
+        { label: 'Home', href: '/teachers/me' },
+        { label: 'Classes', href: '/teachers/classes' },
+      ],
+    },
     // pending: teacher.assign (contract exists) — Assign.
     // pending: teacher.you (contract exists) — on web the You anchor is the
     // utility-bar avatar menu (G §4 no-duplication law: a rail You would
