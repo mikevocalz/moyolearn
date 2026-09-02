@@ -24,6 +24,7 @@ import { useRouter } from 'solito/navigation';
 import {
   Badge,
   Banner,
+  Button,
   Card,
   EmptyState,
   Heading,
@@ -37,6 +38,7 @@ import {
 } from '@acme/ui';
 import { Users } from '@acme/ui/icons';
 import { View } from '@acme/ui/primitives';
+import { newAssignmentPath } from '../assignments/assign-paths';
 import { joinOptions } from '../onboarding/teacher/steps.ts';
 import { bandLabel } from './classes-content.tsx';
 import { studentDetailPath } from './classes-paths';
@@ -101,12 +103,17 @@ export function ClassDetailScreen({ classId }: { classId: string }) {
         ) : null}
       </View>
 
-      {/*
-        pending: teacher.assign (contract exit `assign_to_class`) — "Assign work
-        to this class" pushes toward the assign surface once its routes exist.
-        The flow law (an exit must never 404) keeps the affordance out until
-        then: a comment, not a dead button.
-      */}
+      {/* The contract's assign_to_class exit: the class rides along as a query
+          param so the form's picker arrives pre-filled (teacher.assign
+          entry_points). */}
+      <Button
+        title="Assign work to this class"
+        variant="outline"
+        className="self-start"
+        onPress={() => {
+          router.push(newAssignmentPath(classId));
+        }}
+      />
 
       <Card className="gap-group">
         <Heading level={2} size="title" className="text-text">

@@ -6,6 +6,9 @@
 // SOT: apps/web/components/site/nav.ts (RAIL_BY_ROLE.teacher) · design/screens/teacher/teacher.classes/contract.md
 // SOT-KEYWORDS: classes paths routes web teachers detail student href fork
 
+/** `/teachers/classes` — the list; teacher.assign's "Set up a class first" exit lands here. */
+export const classesRootPath = () => '/teachers/classes';
+
 /** `/teachers/classes/[classId]` — the class detail page. */
 export const classDetailPath = (classId: string) =>
   `/teachers/classes/${encodeURIComponent(classId)}`;

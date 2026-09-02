@@ -80,27 +80,34 @@ export function useCreateAssignment() {
   });
 }
 
-/** The lifecycle mutation: publish, close, or extend (extend carries dueAt). */
-export function useAssignmentAction(assignmentId: string) {
+/**
+ * The lifecycle mutation: publish, close, or extend (extend carries dueAt).
+ * `assignmentId` arrives at MUTATE time, not hook time: the create form's
+ * publish targets an id that exists only after the create call resolves, so a
+ * hook-time id would always be one render stale there.
+ */
+export function useAssignmentAction() {
   const client = useQueryClient();
   return useMutation({
     mutationFn: async (input: {
+      assignmentId: string;
       action: 'publish' | 'close' | 'extend';
       dueAt?: string;
     }): Promise<Assignment> => {
+      const { assignmentId, ...body } = input;
       const res = await fetch(
         `${API_URL}/api/teacher/assignments/${encodeURIComponent(assignmentId)}`,
         {
           method: 'PATCH',
           credentials: 'include',
           headers: { 'content-type': 'application/json' },
-          body: JSON.stringify(input),
+          body: JSON.stringify(body),
         },
       );
       if (!res.ok) throw new Error(`HTTP ${String(res.status)}`);
       return ((await res.json()) as { assignment: Assignment }).assignment;
     },
-    onSuccess: () => {
+    onSuccess: (_updated, { assignmentId }) => {
       void client.invalidateQueries({ queryKey: assignmentQueryKey(assignmentId) });
       void client.invalidateQueries({ queryKey: teacherAssignmentsQueryKey() });
     },

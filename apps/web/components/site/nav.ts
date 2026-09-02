@@ -141,9 +141,9 @@ export const RAIL_BY_ROLE: Record<RailKind, NavGroup[]> = {
       items: [
         { label: 'Home', href: '/teachers/me' },
         { label: 'Classes', href: '/teachers/classes' },
+        { label: 'Assign', href: '/teachers/assign' },
       ],
     },
-    // pending: teacher.assign (contract exists) — Assign.
     // pending: teacher.you (contract exists) — on web the You anchor is the
     // utility-bar avatar menu (G §4 no-duplication law: a rail You would
     // duplicate the account menu's Profile & settings entry).

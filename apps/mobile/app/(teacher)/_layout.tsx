@@ -36,6 +36,11 @@ export default function TeacherShell() {
               routes; on expanded widths the pane host renders them in place. */}
           <Stack.Screen name="classes/[classId]" options={{ title: 'Class' }} />
           <Stack.Screen name="students/[studentId]" options={{ title: 'Student' }} />
+          {/* teacher.assign — the Assign tab's stack routes: create form (the
+              classes drill idiom; drafts persist in assign.store, so backing
+              out keeps them) and one assignment's status + lifecycle. */}
+          <Stack.Screen name="assign/new" options={{ title: 'New assignment' }} />
+          <Stack.Screen name="assign/[assignmentId]" options={{ title: 'Assignment' }} />
         </Stack.Protected>
       </Stack>
     </RoleScope>

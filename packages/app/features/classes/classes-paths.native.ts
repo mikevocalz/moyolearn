@@ -5,6 +5,9 @@
 // SOT: apps/mobile/app/(teacher)/_layout.tsx · design/screens/teacher/teacher.classes/contract.md
 // SOT-KEYWORDS: classes paths routes native mobile detail student href fork
 
+/** The Classes tab root — teacher.assign's "Set up a class first" exit lands here. */
+export const classesRootPath = () => '/classes';
+
 export const classDetailPath = (classId: string) => `/classes/${encodeURIComponent(classId)}`;
 
 export const studentDetailPath = (enrollmentId: string, classId: string) =>
