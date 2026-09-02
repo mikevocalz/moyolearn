@@ -2,6 +2,7 @@ package com.moyolearn.app
 import com.facebook.react.common.assets.ReactFontManager
 
 import android.app.Application
+import com.margelo.nitro.nitrofetch.AutoPrefetcher
 import android.content.res.Configuration
 
 import com.facebook.react.PackageList
@@ -30,6 +31,7 @@ class MainApplication : Application(), ReactApplication {
 
   override fun onCreate() {
     super.onCreate()
+    try { AutoPrefetcher.prefetchOnStart(this) } catch (_: Throwable) {}
     // @generated begin xml-fonts-init - expo prebuild (DO NOT MODIFY) sync-da39a3ee5e6b4b0d3255bfef95601890afd80709
 
     // @generated end xml-fonts-init
