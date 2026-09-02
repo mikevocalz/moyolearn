@@ -3,11 +3,30 @@
 // Doc 02 §7.2: "automated WCAG contrast check over every fg/bg token pair;
 // failing pair fails the build." A palette that only looks accessible is a
 // child-outcome problem, so this runs in `pnpm lint`, not in review.
+//
+// Pairs are DERIVED wherever the token system can name them (on-* carried
+// foregrounds, accentRoles, resourceAccents × the classes the schedule really
+// renders) and declared only where no naming convention exists to derive from.
+// The declared-only design shipped a live AA failure (white on the schedule's
+// selected accents) and silently skipped two of the seven role accents when
+// roles grew — a pairing nobody adds is a pairing nobody checks, so nothing a
+// list can derive is allowed to be a list any more.
 // SOT: docs/pack/02-adaptive-screens-design-spec.md §7.2 · packages/theme/tokens.ts
-// SOT-KEYWORDS: contrast wcag accessibility a11y tokens colour check gate
+// SOT-KEYWORDS: contrast wcag accessibility a11y tokens colour check gate derived
 // ponytail: the maths is eight lines of sRGB — a colour library would be a
-// dependency to avoid writing them.
-import { palette, semantic, siteColors } from '../packages/theme/tokens.ts';
+// dependency to avoid writing them. (packages/theme/tenant.ts carries the same
+// luminance maths for runtime brand resolution; this stays dependency-free
+// because tenant.ts is TS-typed for the app while this must run bare in lint.)
+import {
+  palette,
+  semantic,
+  siteColors,
+  accentRoles,
+  resourceAccents,
+} from '../packages/theme/tokens.ts';
+// Safe to import from a feature: its only dependency is a type-only import,
+// which Node's type stripping erases, so no app code actually loads.
+import { ACCENT_CLASSES } from '../packages/app/features/schedule/accent-classes.ts';
 
 /** WCAG 2.1 relative luminance. Accepts #rgb, #rrggbb, and rgba() over a known backdrop. */
 const channels = (colour) => {
@@ -46,16 +65,15 @@ const ratio = (fg, bg) => {
 };
 
 /**
- * Declared pairs. `min` is the bar this pair must clear:
+ * Declared pairs — ONLY those no convention can derive. `min` is the bar this
+ * pair must clear:
  *   4.5 — WCAG AA body text
  *   3.0 — AA large text (>=18.66px bold / 24px) and UI component boundaries (1.4.11)
- *   14  — doc 36 §5 role-accent parity: ink-on-accent must be the SAME class in
- *         every shell (ink on the learner brand yellow measures 14.36:1), so the
- *         role bar is parity with the highlighter, not mere AA. A hue tweak that
- *         drops under it breaks "one product, five doors" long before WCAG.
- * Pairs are declared rather than derived from a cartesian product: most token
- * combinations are never rendered together, and a check that reports impossible
- * failures gets muted, which is worse than no check.
+ * Body text lands on surfaces, marks are drawn on paper, boundaries carry
+ * meaning — none of those relationships is encoded in a token NAME, so they
+ * stay declared. Everything a name does encode (`on-X` rides `X`,
+ * `on-role-accent` rides every `role-*`) is derived below and must never be
+ * re-added here by hand.
  */
 const PAIRS = [
   // body text on every surface it can land on
@@ -66,13 +84,6 @@ const PAIRS = [
   ['text-muted', 'surface-raised', 4.5],
   ['text-muted', 'surface-sunken', 4.5],
   ['text-inverse', 'text', 4.5],
-  // filled controls carry their own foreground
-  ['on-primary', 'primary', 4.5],
-  ['on-primary', 'primary-pressed', 4.5],
-  ['on-accent', 'accent', 4.5],
-  ['on-accent', 'accent-pressed', 4.5],
-  ['on-danger', 'danger', 4.5],
-  ['on-highlighter', 'highlighter', 4.5],
   // schoolhouse marks are drawn ON paper, so each must survive both surfaces
   ['ballpoint', 'surface', 4.5],
   ['ballpoint', 'surface-raised', 4.5],
@@ -80,14 +91,6 @@ const PAIRS = [
   ['redpen', 'surface-raised', 4.5],
   ['grade', 'surface', 4.5],
   ['grade', 'surface-raised', 4.5],
-  // role accents (doc 36 §5): ink rides every door's accent identically. The
-  // generic `role-accent` is checked too so its learner default cannot drift.
-  ['on-role-accent', 'role-accent', 14],
-  ['on-role-accent', 'role-learner', 14],
-  ['on-role-accent', 'role-guardian', 14],
-  ['on-role-accent', 'role-tutor', 14],
-  ['on-role-accent', 'role-org', 14],
-  ['on-role-accent', 'role-district', 14],
   // non-text boundaries: WCAG 1.4.11 asks 3:1 of anything carrying meaning
   ['border', 'surface', 3],
   ['border-strong', 'surface', 3],
@@ -97,9 +100,42 @@ const PAIRS = [
 ];
 
 /**
+ * Derived pairs, from the semantic token names themselves.
+ *
+ * 1. Carried foregrounds: every `on-<base>` token rides `<base>` (and
+ *    `<base>-pressed` where one exists) at the 4.5 body bar. Mint a new fill
+ *    with its `on-*` and the pair is checked before any component renders it.
+ * 2. Role accents (doc 36 §5): ink rides every door's accent identically, and
+ *    the bar is 14 — parity with ink-on-highlighter (learner measures 14.36:1,
+ *    which IS the bar), not mere AA. A hue tweak that drops under it breaks
+ *    "one product, five doors" long before WCAG. Derived from `accentRoles`,
+ *    the same list that drives the `.role-*` scopes, so an eighth role cannot
+ *    reach a shell unchecked — the old hand-list missed teacher and school for
+ *    exactly as long as they existed (teacher measured 13.09:1, unnoticed).
+ */
+const DERIVED_PAIRS = [];
+for (const name of Object.keys(semantic)) {
+  const m = name.match(/^on-(.+)$/);
+  if (!m || m[1].startsWith('role-')) continue; // role pairs carry the 14 bar below
+  const base = m[1];
+  if (!semantic[base]) {
+    console.error(`token ${name} has no ${base} to ride — carried foreground without a fill`);
+    process.exitCode = 1;
+  }
+  DERIVED_PAIRS.push([name, base, 4.5]);
+  if (semantic[`${base}-pressed`]) DERIVED_PAIRS.push([name, `${base}-pressed`, 4.5]);
+}
+DERIVED_PAIRS.push(['on-role-accent', 'role-accent', 14]);
+for (const role of accentRoles) DERIVED_PAIRS.push(['on-role-accent', `role-${role}`, 14]);
+
+/**
  * Tenant shell tokens are overridable at runtime, so the DEFAULT values in
  * tokens.ts must clear contrast for the build. Admins can pick from the curated
  * palette only, which is what guarantees real documents stay accessible.
+ * Declared: the `tenant-*-foreground` suffix convention is close to derivable,
+ * but half these pairs (success/warning/danger on tenant-surface, border and
+ * ring bars) are not, and a half-derived layer would invite hand additions
+ * back into the derived half.
  */
 const TENANT_PAIRS = [
   ['tenant-header-foreground', 'tenant-header', 4.5],
@@ -125,27 +161,6 @@ const TENANT_PAIRS = [
  * exemption is a decision on the record rather than an oversight.
  */
 const EXEMPT = new Set(['border-faint']);
-
-/**
- * Resource accents, checked separately because they are palette steps rather
- * than semantic tokens and so cannot be expressed as a `PAIRS` entry.
- *
- * These exist because the declared-pairs design has one cost, and this is where
- * it landed: a pairing nobody adds is a pairing nobody checks. White on
- * `accent-500` shipped below AA on three of the five accents — ember 3.44, sky
- * 4.32, gold 4.46 — for as long as the schedule has had a selected state,
- * because no line here described it.
- *
- * White, not `text-inverse`: the block underneath is a saturated accent that
- * does not change with the theme, so its foreground must not either. That also
- * makes this the one check with no per-theme dimension — the same two colours
- * meet in both.
- *
- * 4.5, not 3.0: `EventBlock` draws the title at 14px semibold and the time at
- * 12px. Both are body text; the large-text allowance needs 18.66px bold.
- */
-const RESOURCE_ACCENTS = ['ember', 'gold', 'forest', 'sky', 'rose'];
-const SELECTED_STEP = 600;
 
 /**
  * The marketing site layer (tokens.ts `siteColors`). One dimension, not two:
@@ -202,8 +217,8 @@ const SITE_PAIRS = [
   /*
     Cobalt display type on a sun block is 4.38:1 — the one pairing in the layer
     that is LARGE-TEXT ONLY. Checked at 3.0 rather than dropped, because a
-    pairing nobody declares is a pairing nobody measures (the lesson recorded in
-    RESOURCE_ACCENTS below), and docs/site/tokens.md marks it as restricted.
+    pairing nobody declares is a pairing nobody measures, and
+    docs/site/tokens.md marks it as restricted.
   */
   ['moyoPrimary', 'moyoSun', 3],
   /*
@@ -224,13 +239,59 @@ const SITE_PAIRS = [
  */
 const SITE_FILL_ONLY = new Set(['moyoSun']);
 
+// ---- schedule resource accents ----------------------------------------------
+// Derived from the CLASS STRINGS the schedule actually renders, not from a
+// step constant transcribed here: `resourceAccents` (tokens.ts) names every
+// family, ACCENT_CLASSES (the feature) names every colour placed on screen,
+// and this resolves those Tailwind utilities back to token values and measures
+// them. Reintroduce `text-white` over a 500 fill and this fails at 3.44:1;
+// add a sixth family to tokens.ts and this fails until the schedule ships
+// classes for it. 4.5, not 3.0: EventBlock draws the title at 14px semibold
+// and the time at 12px — body text, so the large-text allowance never applies.
+
+/** `bg-ember-500/10` → rgba string; `text-on-accent` → semantic value; `text-white` → #FFFFFF. */
+const resolveUtility = (cls, theme) => {
+  const body = cls.replace(/^(bg|text)-/, '');
+  const [name, alphaPct] = body.split('/');
+  let base = null;
+  if (name === 'white') base = palette.white;
+  else if (semantic[name]) base = semantic[name][theme];
+  else {
+    const m = name.match(/^([a-z-]+)-(\d+)$/);
+    if (m && palette[m[1]]?.[m[2]]) base = palette[m[1]][m[2]];
+  }
+  if (!base) return null;
+  if (!alphaPct) return base;
+  const c = channels(base);
+  if (!c) return null;
+  return `rgba(${c[0] * 255}, ${c[1] * 255}, ${c[2] * 255}, ${Number(alphaPct) / 100})`;
+};
+
+/** The bg-/text- utility active under `theme`: last `dark:` class wins in dark, else the base class. */
+const activeUtility = (className, theme, kind) => {
+  const parts = className.split(/\s+/).filter(Boolean);
+  const pick = (list) => list.filter((c) => c.startsWith(`${kind}-`)).at(-1);
+  const dark = pick(parts.filter((c) => c.startsWith('dark:')).map((c) => c.slice(5)));
+  const light = pick(parts.filter((c) => !c.includes(':')));
+  return (theme === 'dark' ? (dark ?? light) : light) ?? null;
+};
+
+/** Tinted blocks sit on the app surface, so flatten translucent fills before measuring. */
+const groundedBg = (colour, theme) => {
+  const c = channels(colour);
+  if (!c) return null;
+  if (c[3] === 1) return colour;
+  const merged = flatten(colour, semantic.surface[theme]);
+  return merged ? `rgb(${merged.map((v) => v * 255).join(', ')})` : null;
+};
+
 const THEMES = ['light', 'dark'];
 let failures = 0;
 let checked = 0;
 
 for (const theme of THEMES) {
   const rows = [];
-  for (const [fgName, bgName, min] of PAIRS) {
+  for (const [fgName, bgName, min] of [...PAIRS, ...DERIVED_PAIRS]) {
     if (EXEMPT.has(fgName) || EXEMPT.has(bgName)) continue;
     const fg = semantic[fgName]?.[theme];
     const bg = semantic[bgName]?.[theme];
@@ -282,6 +343,51 @@ for (const theme of THEMES) {
     console.error(`\n${theme} tenant:`);
     tenantRows.forEach((r) => console.error(r));
   }
+
+  // schedule event tones — selected block and resting tint, from the real classes
+  const scheduleRows = [];
+  for (const accent of resourceAccents) {
+    const entry = ACCENT_CLASSES[accent];
+    if (!entry) {
+      console.error(
+        `resource accent "${accent}" is in tokens.ts but has no ACCENT_CLASSES entry — ` +
+          'the schedule cannot render it and this gate cannot measure it.',
+      );
+      failures++;
+      continue;
+    }
+    const cases = [
+      ['selected title', entry.selectedTitle, entry.selectedSurface],
+      ['resting title', entry.title, entry.surface],
+    ];
+    for (const [label, titleClass, surfaceClass] of cases) {
+      const fgCls = activeUtility(titleClass, theme, 'text');
+      const bgCls = activeUtility(surfaceClass, theme, 'bg');
+      const fg = fgCls && resolveUtility(fgCls, theme);
+      const bgRaw = bgCls && resolveUtility(bgCls, theme);
+      const bg = bgRaw && groundedBg(bgRaw, theme);
+      if (!fg || !bg) {
+        console.error(
+          `could not resolve schedule ${label} for ${accent} (${titleClass} on ${surfaceClass})`,
+        );
+        failures++;
+        continue;
+      }
+      const r = ratio(fg, bg);
+      checked++;
+      if (r === null || r < 4.5) {
+        failures++;
+        scheduleRows.push(
+          `  FAIL  ${accent} ${label}  ${fgCls} on ${bgCls}  ${r === null ? '?' : r.toFixed(2)}:1  (needs 4.5:1)` +
+            '\n        This is the schedule event block. Move the step or the foreground token, not the threshold.',
+        );
+      }
+    }
+  }
+  if (scheduleRows.length) {
+    console.error(`\n${theme} schedule accents:`);
+    scheduleRows.forEach((r) => console.error(r));
+  }
 }
 
 const siteRows = [];
@@ -314,29 +420,13 @@ if (siteRows.length) {
   siteRows.forEach((r) => console.error(r));
 }
 
-for (const accent of RESOURCE_ACCENTS) {
-  const bg = palette[accent]?.[SELECTED_STEP];
-  if (!bg) {
-    console.error(`unknown resource accent step: ${accent}-${SELECTED_STEP}`);
-    failures++;
-    continue;
-  }
-  const r = ratio(palette.white ?? '#ffffff', bg);
-  checked++;
-  if (r === null || r < 4.5) {
-    failures++;
-    console.error(
-      `\n  FAIL  white on ${accent}-${SELECTED_STEP}  ${r === null ? '?' : r.toFixed(2)}:1  (needs 4.5:1)` +
-        '\n        This is the schedule\'s selected event block. Move the step, not the threshold.',
-    );
-  }
-}
-
-if (failures) {
+if (failures || process.exitCode === 1) {
   console.error(
     `\n${failures} contrast failure(s). Fix the value in packages/theme/tokens.ts — ` +
       'not the threshold, and not by hoping the surface underneath is lighter in practice.',
   );
   process.exit(1);
 }
-console.log(`contrast OK — ${checked} token pairs across ${THEMES.join(' + ')} meet WCAG AA`);
+console.log(
+  `contrast OK — ${checked} token pairs (${DERIVED_PAIRS.length} derived + schedule accents) across ${THEMES.join(' + ')} meet WCAG AA`,
+);

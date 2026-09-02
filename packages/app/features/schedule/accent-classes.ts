@@ -10,8 +10,10 @@ import type { ResourceAccent } from './model';
  *
  * Shape follows the target: a thick saturated bar on the leading edge, the
  * block tinted to ~10% of that accent, and the title in the accent hue. The
- * selected state is the same accent at full saturation with inverse text, so it
- * reads as one system rather than a one-off style.
+ * selected state is a solid accent block carrying ink — the same
+ * carried-foreground rule as every other fill in this design (`on-primary`,
+ * `on-highlighter`, `on-role-accent` all resolve to ink) — so it reads as one
+ * system rather than a one-off style.
  *
  * Each entry carries a `dark:` counterpart. A single fixed shade cannot serve
  * both themes: the 700 title that reads well on a light 10% tint disappears
@@ -30,20 +32,25 @@ export interface AccentClasses {
   /**
    * Title colour on the solid block.
    *
-   * `text-white`, deliberately, and NOT `text-text-inverse`: the block beneath
-   * it is a saturated accent that does not change between light and dark, so a
-   * foreground that flips with the theme would be wrong half the time.
+   * `text-on-accent` — the semantic carried-foreground for accent fills, which
+   * resolves to ink[950] in BOTH themes. The block beneath it is a saturated
+   * accent that does not change between light and dark, so its foreground must
+   * not either: `text-text-inverse` would flip with the theme and be wrong half
+   * the time, and raw `text-white` (which this replaces) is banned by CLAUDE.md
+   * and shipped under AA on three accents — white on the 500 step measured
+   * ember 3.44, sky 4.32, gold 4.46 against the 4.5 body-text bar.
    *
-   * The block is the 600 step rather than the 500 used by the bar and the dot.
-   * At 500 white cleared 4.5 on only two of the five accents — ember 3.44, sky
-   * 4.32, gold 4.46 — and the title renders at 14px semibold with a 12px time
-   * line beneath it, both body text, so 4.5 is the bar and the 3.0 large-text
-   * allowance does not apply. Every accent passes at 600.
+   * The block is the 400 step rather than the 500 used by the bar and the dot:
+   * ink-on-accent is the system, and 400 is the deepest step where ink clears
+   * AA on all five accents (ember 7.38, sky 6.71, gold 6.08, rose 5.83, forest
+   * 5.80). The title renders at 14px semibold with a 12px time line beneath it,
+   * both body text, so 4.5 is the bar and the 3.0 large-text allowance does not
+   * apply. One step, applied uniformly, rather than per-accent tuning: these
+   * five are peers in a legend, and an accent that had to sit on a different
+   * step than the rest would read as a different weight of thing.
    *
-   * One step, applied uniformly, rather than per-accent tuning: these five are
-   * peers in a legend, and an ember that had to travel two steps while the rest
-   * moved one would read as a different weight of thing. A selected block that
-   * sits deeper than its own bar also reads correctly as selected.
+   * tooling/check-contrast.mjs parses these exact class strings and gates the
+   * pairing, so a colour or step change here cannot ship unmeasured.
    */
   selectedTitle: string;
   /** Resource header dot. */
@@ -55,40 +62,40 @@ export const ACCENT_CLASSES: Record<ResourceAccent, AccentClasses> = {
     bar: 'bg-ember-500',
     surface: 'bg-ember-500/10 dark:bg-ember-500/20',
     title: 'text-ember-700 dark:text-ember-200',
-    selectedSurface: 'bg-ember-600',
-    selectedTitle: 'text-white',
+    selectedSurface: 'bg-ember-400',
+    selectedTitle: 'text-on-accent',
     dot: 'bg-ember-500',
   },
   gold: {
     bar: 'bg-gold-500',
     surface: 'bg-gold-500/10 dark:bg-gold-500/20',
     title: 'text-gold-700 dark:text-gold-200',
-    selectedSurface: 'bg-gold-600',
-    selectedTitle: 'text-white',
+    selectedSurface: 'bg-gold-400',
+    selectedTitle: 'text-on-accent',
     dot: 'bg-gold-500',
   },
   forest: {
     bar: 'bg-forest-500',
     surface: 'bg-forest-500/10 dark:bg-forest-500/20',
     title: 'text-forest-700 dark:text-forest-200',
-    selectedSurface: 'bg-forest-600',
-    selectedTitle: 'text-white',
+    selectedSurface: 'bg-forest-400',
+    selectedTitle: 'text-on-accent',
     dot: 'bg-forest-500',
   },
   sky: {
     bar: 'bg-sky-500',
     surface: 'bg-sky-500/10 dark:bg-sky-500/20',
     title: 'text-sky-700 dark:text-sky-200',
-    selectedSurface: 'bg-sky-600',
-    selectedTitle: 'text-white',
+    selectedSurface: 'bg-sky-400',
+    selectedTitle: 'text-on-accent',
     dot: 'bg-sky-500',
   },
   rose: {
     bar: 'bg-rose-500',
     surface: 'bg-rose-500/10 dark:bg-rose-500/20',
     title: 'text-rose-700 dark:text-rose-200',
-    selectedSurface: 'bg-rose-600',
-    selectedTitle: 'text-white',
+    selectedSurface: 'bg-rose-400',
+    selectedTitle: 'text-on-accent',
     dot: 'bg-rose-500',
   },
 };

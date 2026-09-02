@@ -48,6 +48,25 @@ export const AtBothDials: Story = {
   ),
 };
 
+/**
+ * Band-aware sizing (doc 08 §2.4): the band comes from the signed-in learner's
+ * profile. With `onPress` the whole bar is a practice shortcut, so the root
+ * clears the band's target token — a K–2 shortcut clears 72px, not just a
+ * thicker track. No band keeps today's md default.
+ */
+export const AtEveryBand: Story = {
+  args: { value: 58, label: 'Skip counting' },
+  render: () => (
+    <View className="gap-group bg-surface p-6">
+      <MasteryBar value={58} label="Skip counting" band="young" onPress={() => {}} />
+      <MasteryBar value={64} label="Fractions" band="child" onPress={() => {}} />
+      <MasteryBar value={71} label="Linear equations" band="teen" />
+      <MasteryBar value={77} label="Course progress" band="adult" />
+      <MasteryBar value={82} label="No band — md default" />
+    </View>
+  ),
+};
+
 /** Clamped: a projection that briefly exceeds its bounds is a bug, not a UI state. */
 export const OutOfRangeIsClamped: Story = {
   args: { value: 140, label: 'Clamped to 100' },

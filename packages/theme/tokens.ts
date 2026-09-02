@@ -209,10 +209,13 @@ export const semantic = {
   // least WCAG luminance at fixed OKLab L, so .88 read 12.27:1; .95 gives 14.44:1.
   'role-org': { light: '#FFD7A5', dark: '#FFD7A5' },
   'role-org-underlay': { light: 'rgba(255, 215, 165, 0.24)', dark: 'rgba(255, 215, 165, 0.24)' },
-  // oklch(0.93 0.11 30) coral — sits between tangerine and rose, distinct for the
-  // classroom-teacher shell without drifting into danger red.
-  'role-teacher': { light: '#FFC7B2', dark: '#FFC7B2' },
-  'role-teacher-underlay': { light: 'rgba(255, 199, 178, 0.24)', dark: 'rgba(255, 199, 178, 0.24)' },
+  // oklch(0.955 0.11 30) coral — sits between tangerine and rose, distinct for
+  // the classroom-teacher shell without drifting into danger red. The warm-hue
+  // penalty again: the original L .93 mint (#FFC7B2) measured 13.09:1 under ink,
+  // below the parity bar, and shipped unchecked because the old declared pair
+  // list stopped at five roles. Raised like the other hues: .955 gives 14.45:1.
+  'role-teacher': { light: '#FFD5C4', dark: '#FFD5C4' },
+  'role-teacher-underlay': { light: 'rgba(255, 213, 196, 0.24)', dark: 'rgba(255, 213, 196, 0.24)' },
   // oklch(0.92 0.10 150) mint — the campus-operating shell, different from tutor
   // violet and district teal but still light enough for ink at >= 14:1.
   'role-school': { light: '#BFF5C8', dark: '#BFF5C8' },
@@ -275,6 +278,17 @@ export const semantic = {
  */
 export const accentRoles = ['learner', 'guardian', 'tutor', 'teacher', 'org', 'school', 'district'] as const;
 export type AccentRole = (typeof accentRoles)[number];
+
+/**
+ * Palette families a schedule resource column may claim (EventBlock,
+ * ScheduleGrid). Declared HERE rather than in the feature so the list is a
+ * token-system fact: tooling/check-contrast.mjs derives a WCAG gate for every
+ * family on this list, and the schedule's ACCENT_CLASSES record is keyed on
+ * this type — so an accent added here cannot ship without classes, and cannot
+ * ship classes without a contrast check.
+ */
+export const resourceAccents = ['ember', 'gold', 'forest', 'sky', 'rose'] as const satisfies readonly (keyof typeof palette)[];
+export type ResourceAccentName = (typeof resourceAccents)[number];
 
 /**
  * Per-role Moyo shell surfaces. Every shell re-points the same semantic slots

@@ -40,3 +40,21 @@ export const Failed: Story = {
     </View>
   ),
 };
+
+/**
+ * Band-aware sizing (doc 08 §2.4): the band comes from the signed-in learner,
+ * so a K–2 upload row sits at the 72px target with a track thick enough to
+ * read, while a call site with no band keeps today's compact default.
+ */
+export const AtEveryBand: Story = {
+  args: { ratio: 0.42, label: 'Uploading homework photo', valueText: '42%' },
+  render: () => (
+    <View className="w-96 gap-group bg-surface p-inset">
+      <ProgressBar ratio={0.42} label="Uploading homework photo" valueText="42%" band="young" />
+      <ProgressBar ratio={0.42} label="Uploading homework photo" valueText="42%" band="child" />
+      <ProgressBar ratio={0.42} label="Uploading homework photo" valueText="42%" band="teen" />
+      <ProgressBar ratio={0.42} label="Uploading homework photo" valueText="42%" band="adult" />
+      <ProgressBar ratio={0.42} label="No band — compact default" valueText="42%" />
+    </View>
+  ),
+};

@@ -7,15 +7,18 @@
  * resources rather than days.
  */
 
+import { resourceAccents } from '@acme/theme';
+
 /**
  * Accent families available to a resource column.
  *
- * These are palette family names from packages/theme/tokens.ts. They exist so
- * every column gets a visually distinct hue while still resolving to design
- * tokens — see accent-classes.ts for why the class strings are spelled out
- * rather than built from this value.
+ * Re-exported from `resourceAccents` in packages/theme/tokens.ts rather than
+ * declared here: the theme copy is what tooling/check-contrast.mjs derives its
+ * WCAG gates from, so a locally-declared list could grow an accent the checker
+ * never measures. See accent-classes.ts for why the class strings are still
+ * spelled out rather than built from this value.
  */
-export const RESOURCE_ACCENTS = ['ember', 'gold', 'forest', 'sky', 'rose'] as const;
+export const RESOURCE_ACCENTS = resourceAccents;
 
 export type ResourceAccent = (typeof RESOURCE_ACCENTS)[number];
 

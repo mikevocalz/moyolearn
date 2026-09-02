@@ -7,6 +7,7 @@ import { Pressable, Text, View } from './primitives';
 
 const bar = tv({
   slots: {
+    root: 'gap-element',
     track: 'w-full overflow-hidden rounded-full bg-ink-950/12 dark:bg-ink-50/12',
     fill: 'h-full rounded-full',
     value: 'font-mono text-data text-text',
@@ -29,6 +30,21 @@ const bar = tv({
       sm: { track: 'h-2' },
       md: { track: 'h-3' },
     },
+    /*
+      Band-aware sizing (doc 08 §2.4 — token doc "Open token work" item 3).
+      The band comes from the signed-in learner's profile — the same source the
+      learner tab bar's BAND_TARGET map reads — and, being declared after
+      `size`, its track height wins the merge when both are set. The root
+      consumes the band's target token because with `onPress` the whole bar is
+      a practice shortcut: a K–2 shortcut must CLEAR the 72px target, not just
+      look chunky. Optional with no default, so existing call sites keep md.
+    */
+    band: {
+      young: { root: 'min-h-target-young justify-center', track: 'h-5' },
+      child: { root: 'min-h-target-child justify-center', track: 'h-4' },
+      teen: { root: 'min-h-target-teen justify-center', track: 'h-3' },
+      adult: { root: 'min-h-target-adult justify-center', track: 'h-2' },
+    },
   },
   defaultVariants: { state: 'steady', size: 'md' },
 });
@@ -44,15 +60,15 @@ export interface MasteryBarProps extends VariantProps<typeof bar> {
   onPress?: () => void;
 }
 
-export function MasteryBar({ value, label, state, size, showValue = true, className, onPress }: MasteryBarProps) {
+export function MasteryBar({ value, label, state, size, band, showValue = true, className, onPress }: MasteryBarProps) {
   const pct = Math.max(0, Math.min(100, Math.round(value)));
-  const { track, fill, value: valueText } = bar({ state, size });
+  const { root, track, fill, value: valueText } = bar({ state, size, band });
   const Root = onPress ? Pressable : View;
 
   return (
     <Root
       onPress={onPress}
-      className={`gap-element${className ? ` ${className}` : ''}`}
+      className={root({ className })}
       accessibilityRole={onPress ? 'button' : 'progressbar'}
       accessibilityLabel={label}
       accessibilityValue={onPress ? undefined : { min: 0, max: 100, now: pct }}

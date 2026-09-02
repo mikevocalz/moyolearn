@@ -23,6 +23,23 @@ const bar = tv({
       steady: { fill: 'bg-grade' },
       failed: { fill: 'bg-redpen' },
     },
+    /*
+      Band-aware sizing (doc 08 §2.4 — token doc "Open token work" item 3).
+      The band comes from the signed-in learner's profile — the same source the
+      learner tab bar's BAND_TARGET map reads — never from the component. The
+      root consumes the band's target token so the row sits at the band's height
+      in a learner list (a child watching their homework photo upload), and the
+      track thickens to stay legible at that scale. `adult` maps to
+      target-adult (44), not the tab bar's teen bump: that bump is an Android
+      tab preference, and this is a row height. Optional with no default, so
+      every existing call site keeps today's compact h-2.
+    */
+    band: {
+      young: { root: 'min-h-target-young', track: 'h-5' },
+      child: { root: 'min-h-target-child', track: 'h-4' },
+      teen: { root: 'min-h-target-teen', track: 'h-3' },
+      adult: { root: 'min-h-target-adult', track: 'h-2' },
+    },
   },
   defaultVariants: { tone: 'steady' },
 });
@@ -41,8 +58,8 @@ export interface ProgressBarProps extends VariantProps<typeof bar> {
   className?: string;
 }
 
-export function ProgressBar({ ratio, label, valueText, tone, className }: ProgressBarProps) {
-  const s = bar({ tone });
+export function ProgressBar({ ratio, label, valueText, tone, band, className }: ProgressBarProps) {
+  const s = bar({ tone, band });
   const clamped = ratio === null ? null : Math.max(0, Math.min(1, ratio));
   return (
     <View

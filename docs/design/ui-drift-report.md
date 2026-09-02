@@ -247,6 +247,20 @@ past the large-text threshold. Each changes how the schedule looks. The pairs
 should be added to `check-contrast.mjs` at the same time, since adding them
 first turns `pnpm lint` red until the colours move.
 
+**Resolved (2026-09-01, overhaul v2).** The design call went a fourth way,
+system-consistent with the token layer instead of any of the three above:
+`selectedTitle` is now `text-on-accent` (ink in both themes — the same
+carried-foreground every other fill in the system uses) on `bg-{accent}-400`,
+the deepest step where ink clears 4.5 on all five accents (ember 7.38, sky
+6.71, gold 6.08, rose 5.83, forest 5.80). White text on saturated mids was the
+contradiction: the token system's whole parity design is ink-on-accent.
+`check-contrast.mjs` now derives the schedule pairs from `resourceAccents`
+(tokens.ts) × the class strings in `accent-classes.ts`, so reintroducing
+`text-white` over a 500 fill fails lint at 3.44:1, and a sixth accent family
+cannot ship unmeasured. Deriving the role pairs from `accentRoles` also caught
+`role-teacher` at 13.09:1 under ink (below the 14:1 parity bar, never in the
+hand list) — re-minted at oklch(0.955 0.11 30) → `#FFD5C4`, 14.45:1.
+
 ## Addendum 2 — the Text finding was mostly wrong
 
 Phase 3 rewired `Text`'s variants to the ramp, and doing so exposed an error in

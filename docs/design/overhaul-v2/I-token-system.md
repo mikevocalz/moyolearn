@@ -7,9 +7,9 @@ SOT-KEYWORDS: overhaul, tokens, role-accent, tenant-accent, spacing-tiers, age-b
 
 ## Ownership and pipeline
 
-- All raw values live in `packages/theme/tokens.ts` (939 lines; "no hex outside this file"). One genuine leak exists: `packages/ui/TrendLine.native.tsx:54` `#2952D9` (= `palette.gold[600]`) — fix queued.
+- All raw values live in `packages/theme/tokens.ts` (939 lines; "no hex outside this file"). One genuine leak existed (`packages/ui/TrendLine.native.tsx:54` `#2952D9`) — fixed 2026-09-01 to `semantic.ballpoint` (dark-adapts).
 - `build-css.mjs` emits `theme.css` (Tailwind v4 `@theme`, `light-dark()`) and `theme-native.css` (Uniwind `@variant`). TS consumers (Skia, charts, color math) import tokens directly.
-- Enforcement tooling: `tooling/check-role-accent.mjs` (accent slot allowlist), `tooling/check-controls.mjs` (single control radius), `tooling/check-contrast.mjs` (**known structural gap: PAIRS are declared, not derived — missed the live schedule-accent AA failure; derivation fix queued**), `pnpm ui:sweep` drift reports.
+- Enforcement tooling: `tooling/check-role-accent.mjs` (accent slot allowlist), `tooling/check-controls.mjs` (single control radius), `tooling/check-contrast.mjs` (pairs now DERIVED where a convention names them — `on-*` carried foregrounds, `accentRoles` × ink at the 14:1 parity bar, `resourceAccents` × the schedule's real class strings; only convention-less pairs stay declared. Fixed 2026-09-01 after the declared-only design missed the live schedule-accent AA failure and never checked teacher/school role accents), `pnpm ui:sweep` drift reports.
 
 ## Primitive trap
 
@@ -31,7 +31,7 @@ Derived in OKLCH (fixed L≈0.88–0.95, C≈0.10–0.13, rotated hue), shipped 
 | learner | `#FFDB33` (brand, hue 95°) | 14.36:1 — the bar |
 | guardian | `#95EBFF` | oklch(0.90 0.10 230) |
 | tutor | `#EDD4FF` | oklch(0.915 0.10 300) |
-| teacher | `#FFC7B2` | oklch(0.93 0.11 30) |
+| teacher | `#FFD5C4` | oklch(0.955 0.11 30) — re-minted 2026-09-01: the 0.93 mint measured 13.09:1 under ink, below the bar, unchecked until pairs were derived |
 | org | `#FFD7A5` | oklch(0.95 0.12 50) |
 | school | `#BFF5C8` | oklch(0.92 0.10 150) |
 | district | `#83EFF5` | oklch(0.89 0.10 200) |
@@ -68,7 +68,7 @@ Families: Archivo Black (display) · Space Grotesk (sans) · Chivo Mono (data; v
 
 ## Open token work (queued)
 
-1. Fix `TrendLine.native.tsx` hex leak.
-2. Derive `check-contrast.mjs` pairs from `accentRoles` × text tokens instead of a declared list; add the schedule selected-event pairs (ember 3.44 / sky 4.32 / gold 4.46 currently failing AA).
-3. Band-variant consumption: `ProgressBar`/`MasteryBar` don't consume `targets`/dial — band variants required by the component plan.
+1. ~~Fix `TrendLine.native.tsx` hex leak~~ DONE 2026-09-01 (`semantic.ballpoint[scheme]`).
+2. ~~Derive `check-contrast.mjs` pairs~~ DONE 2026-09-01: pairs derived from `accentRoles`, `on-*` naming, and `resourceAccents` × `accent-classes.ts`; schedule selected events fixed to ink-on-accent-400 (all ≥5.80:1, were ember 3.44 / sky 4.32 / gold 4.46 white-on-500); `role-teacher` re-minted `#FFD5C4`.
+3. ~~Band-variant consumption for `ProgressBar`/`MasteryBar`~~ DONE 2026-09-01 (optional `band` tv variant consuming `min-h-target-*`; defaults byte-identical). Wider retrofit list lives in J-component-plan §7.
 4. Chart palette tokens (TrendLine et al.) — charts currently have no named token set.

@@ -291,8 +291,8 @@
   --color-role-tutor-underlay: light-dark(rgba(237, 212, 255, 0.24), rgba(237, 212, 255, 0.24));
   --color-role-org: light-dark(#FFD7A5, #FFD7A5);
   --color-role-org-underlay: light-dark(rgba(255, 215, 165, 0.24), rgba(255, 215, 165, 0.24));
-  --color-role-teacher: light-dark(#FFC7B2, #FFC7B2);
-  --color-role-teacher-underlay: light-dark(rgba(255, 199, 178, 0.24), rgba(255, 199, 178, 0.24));
+  --color-role-teacher: light-dark(#FFD5C4, #FFD5C4);
+  --color-role-teacher-underlay: light-dark(rgba(255, 213, 196, 0.24), rgba(255, 213, 196, 0.24));
   --color-role-school: light-dark(#BFF5C8, #BFF5C8);
   --color-role-school-underlay: light-dark(rgba(191, 245, 200, 0.24), rgba(191, 245, 200, 0.24));
   --color-role-district: light-dark(#83EFF5, #83EFF5);

@@ -18,6 +18,9 @@ const config: StorybookConfig = {
     // is why the audio components were invisible in Storybook despite shipping.
     '../../../packages/ui/audio/*.stories.@(ts|tsx)',
     '../../../packages/ui/html/*.stories.@(ts|tsx)',
+    // Same non-recursive-glob bug class as audio above: layout/ shipped with
+    // Container.stories.tsx and no pattern here, so it never loaded.
+    '../../../packages/ui/layout/*.stories.@(ts|tsx)',
     // PR-146 moved the split-view module into the kit as adaptive-panes; its
     // stories (the AdaptivePanes host + pane chrome + SwipeableRow) moved with
     // it, so the old mobile-src glob is gone.

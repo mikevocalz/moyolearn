@@ -48,7 +48,7 @@ SOT-KEYWORDS: overhaul, deliverable-status, reconciliation, do-not-redo, stalene
 
 ## Highest-value unclaimed work (Phase-1/2 queue)
 
-1. **Live WCAG failure, open**: selected schedule events white-on-accent — ember 3.44, sky 4.32, gold 4.46, all fail 4.5:1 on a children's product; `tooling/check-contrast.mjs` structurally can't catch it (declared PAIRS, not derived). Fix + derive the pairs.
+1. ~~Live WCAG failure~~ **FIXED (2026-09-01)**: selected schedule events now ink-on-accent (`text-on-accent` on `bg-{accent}-400`; worst pair forest 5.80:1, was ember 3.44 white-on-500). `check-contrast.mjs` now derives its pairs (`on-*` × fills, `accentRoles` × ink at 14:1, `resourceAccents` × the schedule's real classes) — derivation also caught and fixed `role-teacher` at 13.09:1 (re-minted `#FFD5C4`, 14.45:1; the old hand list stopped at five roles).
 2. Unified screen inventory with one ID scheme (extend FD-*/PW-* convention product-wide).
 3. Tenant axis → full tenant×role×band matrix.
 4. Journey maps beyond the front door (chained contracts, §4.4 of the overhaul prompt).
