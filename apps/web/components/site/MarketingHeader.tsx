@@ -181,7 +181,10 @@ export function MarketingHeader() {
             initial={hydrated ? { scale: 0.6 } : undefined}
             animate={hydrated ? { scale: 1 } : undefined}
             transition={{ type: 'spring', damping: 15, stiffness: 320, delay: 60 }}
-            className="h-9 w-[136px]"
+            // `w-fit`: the mark sizes itself, and the scale-in animates around
+            // its own centre only if the box hugs it — a wider box puts the
+            // transform origin in empty space and the logo swings on entry.
+            className="h-9 w-fit"
           >
             <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
           </MotionView>

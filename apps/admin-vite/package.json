@@ -14,6 +14,7 @@
   "dependencies": {
     "@acme/payload": "workspace:*",
     "@acme/theme": "workspace:*",
+    "@acme/ui": "workspace:*",
     "@payloadcms/tanstack-start": "catalog:",
     "@payloadcms/ui": "catalog:",
     "@tanstack/react-router": "catalog:",

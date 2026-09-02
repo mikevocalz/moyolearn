@@ -56,7 +56,11 @@ export function SiteHeader({ orgBranding }: SiteHeaderProps) {
   return (
     <Header className="sticky top-0 z-50 border-b-2 border-tenant-header-border bg-tenant-header text-tenant-header-foreground">
       <View className="mx-auto w-full max-w-screen-2xl flex-row items-center justify-between gap-4 px-4 py-3 sm:px-6">
-        <Link href="/" onClick={close} aria-label="Home" className="h-9 w-34 rounded-lg">
+        {/* `w-fit`, not a fixed width: the logo attribute-sizes itself from its
+            own aspect ratio, so any width pinned here is a number that has to be
+            re-derived every time the mark changes — and the 136px it used to be
+            was the OLD ratio, leaving 36px of dead click target past the mark. */}
+        <Link href="/" onClick={close} aria-label="Home" className="h-9 w-fit rounded-lg">
           <MoyoLearnLogo accessibilityLabel={orgBranding?.name ?? 'Moyo Learn'} />
         </Link>
 

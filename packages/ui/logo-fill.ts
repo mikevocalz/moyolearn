@@ -9,6 +9,11 @@ import { palette } from '@acme/theme';
 
 export type LogoVariant = 'default' | 'dark' | 'light' | 'soft';
 
+// Both marks resolve through this one map. #E55545 and #ED6646 are two coral
+// values from the source art that land on the same token — the wordmark uses
+// the first, the mark's book pages the second — and #FEFEFE is the mark's
+// page-edge highlight, which must stay a real off-white rather than becoming
+// the surface behind it.
 const DEFAULT_MAP: Record<string, keyof typeof palette> = {
   '#3C2357': 'moyo-purple',
   '#0A9FA6': 'moyo-teal',

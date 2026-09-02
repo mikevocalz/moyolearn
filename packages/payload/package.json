@@ -25,6 +25,7 @@
   "devDependencies": {
     "@acme/config": "workspace:*",
     "@acme/theme": "workspace:*",
+    "@acme/ui": "workspace:*",
     "@payloadcms/ui": "catalog:",
     "@types/pg": "catalog:",
     "eslint": "catalog:",

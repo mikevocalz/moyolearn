@@ -20,7 +20,9 @@ export function SiteFooter() {
       <View className="mx-auto w-full max-w-screen-2xl gap-10 px-4 py-12 sm:px-6 md:flex-row md:justify-between">
         {/* Brand */}
         <View className="max-w-xs gap-stack">
-          <View className="h-9 w-[136px]">
+          {/* `w-fit` over a pinned px width: the mark carries its own width and
+              height attributes, so the box only needs to stop stretching. */}
+          <View className="h-9 w-fit">
             <MoyoLearnLogo accessibilityLabel="Moyo Learn" />
           </View>
           <P className="text-sm leading-relaxed text-tenant-sidebar-foreground/80">

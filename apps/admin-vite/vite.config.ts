@@ -18,12 +18,20 @@
  *
  * What is NOT here is the point of the file. No `vite-plugin-react-native-web`,
  * no `@tailwindcss/vite`, no `ssr.noExternal` list, no `optimizeDeps` CJS
- * shims — the panel is Payload's own React, and the only Moyo components it
- * renders (`packages/payload/src/components/{Logo,Icon}.tsx`) are plain `<span>`
- * markup with no `@acme/ui` import. Dropping RNW also removes the
+ * shims — the panel is Payload's own React. Dropping RNW also removes the
  * `define: { global: 'self' }` hazard ADR-003 had to counter with an
  * `enforce: 'post'` plugin: nothing here redefines `global`, so
  * `@payloadcms/ui`'s `global._payload_clientConfigs` reads what it means to.
+ *
+ * THE RULE IS "NO RNW", NOT "NO `@acme/ui`". The two Moyo components the panel
+ * renders (`packages/payload/src/components/{Logo,Icon}.tsx`) import
+ * `@acme/ui/brand`, whose export map resolves to the `.web` fork under every
+ * condition this build sets: plain `<svg>` and React, importing nothing but
+ * `@acme/theme`'s palette. They were hand-written `<span>`s precisely to avoid
+ * that import, and the spans hung on `.moyo-lockup*` classes no stylesheet in
+ * the repo defines, so the admin's brand rendered as the raw letters "M" and
+ * "Moyo". Anything reaching deeper into `@acme/ui` than `/brand` does drag RNW
+ * in and must stay out.
  *
  * SOT: node_modules/@payloadcms/tanstack-start/dist/withPayload/index.d.ts:withPayload,
  *        WithPayloadBuilderContext, payloadTanstackStartOptions

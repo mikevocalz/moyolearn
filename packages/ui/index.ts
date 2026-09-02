@@ -27,6 +27,7 @@ export { Avatar, type AvatarProps } from './Avatar';
 export { Image, type ImageProps } from './Image';
 export { BrandLockup, type BrandLockupProps } from './BrandLockup';
 export { default as MoyoLearnLogo, type MoyoLearnLogoProps } from './MoyoLearnLogo';
+export { default as MoyoMark, type MoyoMarkProps } from './MoyoMark';
 export { TutorStage, type TutorStageProps, type TutorStageState } from './TutorStage';
 export type { TutorPresencePreference } from './tutor-view';
 export { LearningCanvas, type LearningCanvasProps } from './LearningCanvas';

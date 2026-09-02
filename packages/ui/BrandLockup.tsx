@@ -1,6 +1,7 @@
 import { tv, type VariantProps } from './tv';
 import { View, Text } from './primitives';
 import { Image } from './Image';
+import MoyoMark from './MoyoMark';
 
 /*
   The Moyo mark, optionally locked up with a partner's.
@@ -8,6 +9,15 @@ import { Image } from './Image';
   The `M` tile was hand-inlined in six places before this — the Payload admin
   logo, the site header, the site footer, the ops sidebar, a Storybook duplicate
   — which is five chances for the brand to drift a border width at a time.
+
+  THE TILE IS THE REAL MARK NOW. It used to be a purple square with the letter
+  "M" set in the display face — a stand-in nobody replaced, so every surface
+  that reached for "the Moyo logo" got a monogram the brand does not own. The
+  actual compact mark ships at apps/mobile/assets/images/favicon.png and is
+  drawn by `MoyoMark`. The square around it survives because the partner's logo
+  gets one too, and two marks in matching boxes is what reads as a pairing; its
+  fill went from `bg-primary` to a paper surface because the mark's own stem is
+  that same purple and it disappeared into the tile.
 
   CO-BRANDING RULE: the two marks carry the SAME VISUAL WEIGHT. A district that
   has put this product in front of its families is a partner, and a partner's
@@ -28,8 +38,7 @@ import { Image } from './Image';
 const lockup = tv({
   slots: {
     root: 'flex-row items-center gap-element',
-    tile: 'items-center justify-center rounded-control border-2 border-border-strong bg-primary',
-    letter: 'font-display text-on-primary',
+    tile: 'items-center justify-center rounded-control border-2 border-border-strong bg-surface',
     partner: 'rounded-control border-2 border-border-strong',
     word: 'font-display text-text',
     org: 'text-caption text-text-muted',
@@ -50,14 +59,12 @@ const lockup = tv({
       */
       sm: {
         tile: 'h-9 w-9',
-        letter: 'text-label',
         partner: 'h-9 w-9',
         word: 'text-title',
         times: 'text-caption',
       },
       lg: {
         tile: 'h-12 w-12',
-        letter: 'text-title',
         partner: 'h-12 w-12',
         word: 'text-display-sm',
         times: 'text-label',
@@ -72,6 +79,14 @@ const lockup = tv({
   ],
   defaultVariants: { size: 'sm' },
 });
+
+/*
+  The mark is a hair wider than it is tall (171×158), so it is sized by WIDTH
+  inside the square tile — sizing by height would push it out past the left and
+  right borders. 30 and 40 sit inside the 36 and 48 tiles once the 2px border
+  pair is taken off both, with a pixel of air left over.
+*/
+const MARK_WIDTH = { sm: 30, lg: 40 } as const;
 
 export interface BrandLockupProps extends Omit<VariantProps<typeof lockup>, 'wide'> {
   /** The partner district's name. Omit for Moyo's own surfaces. */
@@ -101,6 +116,7 @@ export function BrandLockup({
 }: BrandLockupProps) {
   const s = lockup({ size, wide: orgLogoAspect === 'wide' });
   const partnered = Boolean(orgName && orgLogoUrl);
+  const markWidth = MARK_WIDTH[size ?? 'sm'];
 
   // Falls back to Moyo's own mark when there is no partner, so the rail is never
   // empty on an unbranded org.
@@ -115,14 +131,21 @@ export function BrandLockup({
       />
     ) : (
       <View className={s.tile({ className })}>
-        <Text className={s.letter()}>M</Text>
+        <MoyoMark width={markWidth} accessibilityLabel="Moyo" />
       </View>
     );
   }
   return (
     <View className={s.root({ className })}>
       <View className={s.tile()}>
-        <Text className={s.letter()}>M</Text>
+        {/* `marks` drops the "Moyo" wordmark below, so there the mark is the
+            only thing naming the brand; with the wordmark present it is
+            decorative, and labelling both says the name twice. */}
+        <MoyoMark
+          width={markWidth}
+          aria-hidden={variant !== 'marks'}
+          accessibilityLabel={variant === 'marks' ? 'Moyo' : undefined}
+        />
       </View>
       {partnered ? (
         <>

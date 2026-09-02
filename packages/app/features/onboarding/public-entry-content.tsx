@@ -8,7 +8,7 @@
 
 import { useRouter } from 'solito/navigation';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
-import { Button, Heading, PressScale } from '@acme/ui';
+import { Button, Heading, MoyoLearnLogo, PressScale } from '@acme/ui';
 import { onboardingPath } from './flow/flow';
 import { DevPersonaSwitch } from './dev-persona-switch';
 
@@ -17,6 +17,18 @@ export function PublicEntryContent() {
 
   return (
     <Section className="gap-group p-inset-roomy">
+      {/*
+        The app's front door showed the product's name only as words. A first
+        launch is the one moment the brand has to be a picture — nothing here is
+        familiar yet, and the mark is what the icon on the home screen was.
+
+        Decorative on purpose: the h1 below already reads "Welcome to Moyo", so
+        a labelled mark makes a screen reader announce the name twice before the
+        first sentence.
+      */}
+      <View className="w-fit">
+        <MoyoLearnLogo height={48} aria-hidden />
+      </View>
       <View className="gap-stack">
         <Heading level={1} size="title">
           Welcome to Moyo

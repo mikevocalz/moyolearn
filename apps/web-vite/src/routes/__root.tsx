@@ -67,6 +67,19 @@ export const Route = createRootRoute({
         crossOrigin: 'anonymous',
       },
       { rel: 'stylesheet', href: appCss },
+      /*
+       * The tab icon, which this app shipped without — no file and no link, so
+       * every marketing page rendered under the browser's blank-page glyph.
+       *
+       * It is the compact MARK and not the wordmark: at 16px "MOYO LEARN" is
+       * four illegible smudges, and a favicon is always a 16px slot somewhere.
+       * The `.ico` carries 16/32/48 so the browser picks rather than downscales.
+       * Literal public/ paths for the same reason as the font above — these are
+       * requested by the browser and by crawlers that never run the module graph.
+       */
+      { rel: 'icon', href: '/favicon.ico', sizes: '16x16 32x32 48x48' },
+      { rel: 'icon', type: 'image/png', href: '/icon.png', sizes: '256x256' },
+      { rel: 'apple-touch-icon', href: '/apple-touch-icon.png', sizes: '180x180' },
     ],
   }),
   /*
