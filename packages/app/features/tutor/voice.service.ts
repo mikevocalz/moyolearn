@@ -12,10 +12,13 @@
 // reaches the TTS payload" STRUCTURAL: the session's stored turns are
 // client-appendable and are deliberately not the trust anchor.
 //
-// This package never imports `@acme/voice` — the egress arrives as the
-// `SpeakSentence`/`ResolveBakedClip` ports, injected by the route, exactly as
-// the coach service takes its stores. `tooling/check-voice-egress.mjs` fails
-// the build the day a feature imports the egress directly.
+// This package never imports `@acme/voice` at runtime — the egress arrives as
+// the `SpeakSentence`/`ResolveBakedClip` ports, injected by the route, exactly
+// as the coach service takes its stores. `tooling/check-voice-egress.mjs` fails
+// the build the day a feature imports the egress directly; the `BakedAlignment`
+// SHAPE travels as a type-only import, which the check exempts because a type
+// is erased at build time and CLAUDE.md (§The block) routes cross-boundary
+// shapes exactly that way.
 //
 // Every degraded outcome is `text-only` and the route answers it 204: no
 // error surface, no substitute voice, the child keeps the words (doc 32 §2).

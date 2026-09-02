@@ -106,8 +106,14 @@ const ORG_RAIL: NavGroup[] = [
   // so the CRM content stays reachable meanwhile.
   { title: 'Scheduling', items: [{ label: 'Calendar', href: '/schedule' }] },
   // pending: org.money (contract exists) — Payouts · Invoices (doc 36 §3.4).
-  // pending: org.safety (contract exists) — Incident queue (doc 31 §5.3); web
-  // sidebar view missing (D-inventory: mobile complete, web MISSING).
+  // Doc 36 §3.4's Safety group (G §3.2 marked it ✱; built now): the incident
+  // queue at /safety, on the safety side of the doc 23/31 wall — and carrying
+  // NO count badge, ever: counts-as-pressure is the failure mode doc 31 §5.3
+  // names, and unassigned-S4 interrupts on the surface itself, not the nav.
+  {
+    title: 'Safety',
+    items: [{ label: 'Incident queue', href: '/safety', railLabel: 'Incidents' }],
+  },
   // pending: org.settings — Org settings · Plan (PW-05/PW-08); no org-scoped
   // settings routes exist yet (G §2: `(org)/settings/plan` unbuilt, doc 38 §3).
 ];

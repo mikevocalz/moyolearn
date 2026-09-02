@@ -12,10 +12,12 @@
 // interrupt — unassigned S4 — which is a count, not a filter.
 //
 // NOTHING HERE IS ACTIONABLE, and that is a decision rather than an omission.
-// The route's PATCH assigns a named person; picking one needs a roster the web
-// ops surface has and a phone does not, and "assign to me" would mean posting
-// the caller's own identity from a client. So this is the day's exceptions,
-// legible at arm's length, and triage stays where the roster is.
+// Lifecycle moves live on the web Safety view (`org-safety-content.tsx`, the
+// org rail's Incident queue), where org.safety's contract puts triage. The
+// route's PATCH also accepts an assignee, but picking one needs a staff roster
+// no surface has a read for yet, and "assign to me" would mean posting the
+// caller's own identity from a client. So this is the day's exceptions,
+// legible at arm's length, and the moves stay on the web view.
 //
 // Mobbin: https://mobbin.com/screens/cf05d193-c232-4bd5-87f6-3f1d21db6603 (Matter
 // "Queue" — one flat sorted run under a title and a single summary chip; no
@@ -96,8 +98,8 @@ export function IncidentQueueContent() {
             <Badge label="Needs a person now" tone="danger" />
             <Text>{interrupt}</Text>
             <Text variant="caption" tone="muted">
-              An S4 stops the child’s session until a person clears it. Assign it from the ops
-              dashboard.
+              An S4 stops the child’s session until a person clears it. Triage it from the web
+              Safety view.
             </Text>
           </Card>
         ) : null}

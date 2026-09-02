@@ -1,5 +1,6 @@
 'use client';
-// The org triage queue, read from `GET /api/safety/incidents`.
+// The org triage queue, read from `GET /api/safety/incidents` — and, on the web
+// surface only, moved through its PATCH.
 //
 // ONE ROUTE, NO NEW ONE. The web route already returns exactly `TriageQueue`
 // (`{ ok, rows, unassignedS4 }`) behind `incidentTriageQueue`, which sets its
@@ -7,16 +8,24 @@
 // A mobile-shaped endpoint would have been a second door onto the same table
 // with its own copy of that gate.
 //
-// READ-ONLY, deliberately. The route's PATCH takes an `assigneeId`, which is a
-// resource ("who is on this"), not the caller — so a phone offering "assign to
-// me" would have to send the acting user's own id up from the client, and
-// identity is never client input (CLAUDE.md §The block). Triage moves stay on
-// the web ops surface where the assignee is picked from a roster.
-// SOT: apps/web/app/api/safety/incidents/route.ts · docs/pack/31-grade-voice-safety-incidents.md §5.3
-// SOT-KEYWORDS: safety incident queue hook tanstack query triage org mobile read only sla
+// THE READ IS SHARED; THE WRITE IS THE WEB VIEW'S. Mobile stays read-only
+// (`incident-queue-content.tsx` records why), and org.safety's contract puts
+// triage on the web rail view — `useTriageIncident` below is that view's
+// mutation. It posts only what the PATCH validates (`incidentId` plus the
+// lifecycle fields) and NEVER the actor: identity is not client input
+// (CLAUDE.md §The block), the audit line's actor comes from `ctx` server-side.
+//
+// NO OPTIMISTIC UPDATE, deliberately — the same rule as the tutor note append:
+// a triage move is an audit-trail write, and a row shown moved before the
+// server accepted it is a record the trail might not hold. The contract's
+// `triage_write_failed` path ("rolls back visibly with retry") is therefore
+// trivially true: nothing renders moved until it IS moved, and a failure
+// surfaces beside the control with the input intact.
+// SOT: apps/web/app/api/safety/incidents/route.ts · design/screens/org/org.safety/contract.md · docs/pack/31-grade-voice-safety-incidents.md §5.3
+// SOT-KEYWORDS: safety incident queue hook tanstack query triage org mobile web mutation patch lifecycle sla
 
-import { useQuery } from '@tanstack/react-query';
-import type { TriageQueue } from './incidents.service.ts';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import type { TriageQueue, TriageRow } from './incidents.service.ts';
 
 const API_URL =
   process.env.NEXT_PUBLIC_APP_URL ??
@@ -72,4 +81,43 @@ export function useIncidentQueue(): IncidentQueueRead {
     error: error instanceof QueueDenied ? null : (error ?? null),
     denied: error instanceof QueueDenied,
   };
+}
+
+/**
+ * One lifecycle move, as the PATCH accepts it. `assigneeId` is deliberately
+ * absent: no staff-roster read exists to pick a person from, and posting the
+ * caller's own id would make identity client input — the deferral is recorded
+ * in `org-safety-content.tsx`'s header. `resolution` travels with the closing
+ * moves because the guardian's "What happens next" reads it (doc 31 §5.2).
+ */
+export interface TriageMove {
+  incidentId: string;
+  status?: TriageRow['status'];
+  severity?: TriageRow['severity'];
+  resolution?: string;
+}
+
+export function useTriageIncident() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (move: TriageMove): Promise<TriageRow> => {
+      const response = await fetch(`${API_URL}/api/safety/incidents`, {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(move),
+      });
+      if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
+      const body = (await response.json()) as { incident: TriageRow };
+      return body.incident;
+    },
+    onSuccess: () => {
+      /*
+        Exact, because the `['safety', …]` prefix is shared: a fuzzy match
+        would also refetch the tutor filed-incident list on every queue move,
+        and that list belongs to a different role's session entirely.
+      */
+      void client.invalidateQueries({ queryKey: incidentQueueKey(), exact: true });
+    },
+  });
 }

@@ -60,9 +60,17 @@ function walk(dir, out = []) {
 */
 const isHeadless = (file) => {
   const src = readFileSync(file, 'utf8');
-  if (!/return null;?\s*\n?\}/.test(src)) return false;
-  // A file that returns null on one branch and renders on another is a surface.
-  return !/<[A-Z][A-Za-z]*[\s/>]/.test(src.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, ''));
+  const code = src.replace(/\/\*[\s\S]*?\*\/|\/\/[^\n]*/g, '');
+  /*
+    No JSX anywhere means the file draws nothing, whatever it is called. This is
+    the SKIP list's `screen.tsx` anchor rule, held behaviourally: a feature
+    folder with two screens names its second anchor `foo-screen.tsx`, and a
+    name-based skip missed it — demanding a citation from a pure re-export puts
+    it on the one file nobody reads when they change how the screen looks.
+  */
+  // A file that returns null on one branch and renders JSX on another is
+  // still a surface — only a file with no JSX at all escapes.
+  return !/<[A-Z][A-Za-z]*[\s/>]/.test(code);
 };
 
 const BASELINE = join(ROOT, 'tooling/references-baseline.json');

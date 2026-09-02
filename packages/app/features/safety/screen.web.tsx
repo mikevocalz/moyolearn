@@ -1,22 +1,23 @@
 'use client';
-// Safety queue screen — Web fork.
-//
-// NO WEB ROUTE POINTS HERE, and that is correct rather than unfinished: doc 28's
-// ops shell is already the web home for staff triage, and adding a second URL
-// for the same queue would fork where a breach gets worked. The fork exists
-// because a `packages/app` screen is universal by construction — the anchor
-// resolves to this file everywhere that is not Metro, including Storybook and
-// the Next type-check — so it renders the real thing rather than a stub.
-// SOT: ./incident-queue-content.tsx · docs/pack/28-crm-spec.md
-// SOT-KEYWORDS: safety queue screen web org incident triage container
+// Safety queue screen — Web fork. A WEB ROUTE POINTS HERE NOW: `/safety` under
+// `(business)` renders this inside the org Cool shell (RoleShell, owner/staff),
+// off the rail's Safety group — the surface D-inventory recorded as MISSING.
+// The earlier claim that the ops shell was the web home for triage retired with
+// it: `/ops` remains the CRM/overview blob, and this route is where a breach
+// gets worked, on the safety side of the doc 23/31 wall.
+// SOT: ./org-safety-content.tsx · design/screens/org/org.safety/contract.md · docs/pack/36-role-navigation-flows.md §3.4
+// SOT-KEYWORDS: safety queue screen web org incident triage container rail
 
+import { Main } from '@acme/ui/tw';
 import { Container } from '@acme/ui';
-import { IncidentQueueContent } from './incident-queue-content';
+import { OrgSafetyContent } from './org-safety-content';
 
 export function SafetyQueueScreen() {
   return (
-    <Container width="detail" className="flex-1 py-4">
-      <IncidentQueueContent />
-    </Container>
+    <Main className="mx-auto min-h-screen w-full max-w-screen-2xl flex-1 bg-surface py-6 pb-48 sm:py-8 sm:pb-48">
+      <Container width="detail">
+        <OrgSafetyContent />
+      </Container>
+    </Main>
   );
 }

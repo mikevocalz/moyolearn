@@ -45,6 +45,7 @@ import {
   GraduationCap,
   CircleDot,
   Settings,
+  Shield,
   Star,
   Menu as MenuIcon,
 } from '@acme/ui/icons';
@@ -140,6 +141,9 @@ function iconFor(label: string, className: string): ReactNode {
       return <Calendar className={className} />;
     case 'Settings':
       return <Settings className={className} />;
+    // Shield matches the mobile org Safety tab's glyph — one glyph per surface.
+    case 'Incident queue':
+      return <Shield className={className} />;
     case 'Overview':
     case 'Outcomes':
       return <LayoutGrid className={className} />;

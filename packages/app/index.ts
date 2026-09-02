@@ -378,21 +378,29 @@ export {
 */
 export type { GuardianIncidentView, TriageQueue, TriageRow, TutorIncidentView } from './features/safety';
 /*
-  …plus the one screen that renders them. `SafetyQueueScreen` is doc 36 §3.4's
-  org Safety tab: a client surface over `GET /api/safety/incidents`, which keeps
+  …plus the screen that renders them on both platforms. `SafetyQueueScreen` is
+  doc 36 §3.4's org Safety tab on mobile (read-only) and §3.4's web rail
+  Safety view (`OrgSafetyContent`, where triage lives per org.safety's
+  contract) — client surfaces over `/api/safety/incidents`, which keeps
   `protectedOperation`'s owner/manager wall on the server where no route can
-  lower it. It reads the barrel's projections and never the service.
+  lower it. They read the barrel's projections and never the service.
 */
 export {
   SafetyQueueScreen,
   IncidentQueueContent,
+  OrgSafetyContent,
   useIncidentQueue,
+  useTriageIncident,
+  useOrgSafetyStore,
   incidentQueueKey,
   incidentQueueItemsFrom,
   slaClock,
   unassignedS4Line,
   type IncidentQueueItem,
   type IncidentQueueRead,
+  type TriageMove,
+  type QueueSeverityFilter,
+  type QueueStatusFilter,
   type QueueTone,
 } from './features/safety';
 /*
