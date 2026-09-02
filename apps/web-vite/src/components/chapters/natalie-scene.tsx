@@ -152,7 +152,32 @@ const BONE_NAMES = {
   shoulderR: 'DEF-shoulder.R',
   eyeL: 'eye.L',
   eyeR: 'eye.R',
+  // The GLB is a Rigify export with constraints baked away, so the DEF chain
+  // (upper_arm → forearm → hand, all skin joints) is the safe thing to pose.
+  jaw: 'jaw_master',
+  upperArmL: 'DEF-upper_arm.L',
+  upperArmR: 'DEF-upper_arm.R',
+  foreArmL: 'DEF-forearm.L',
+  foreArmR: 'DEF-forearm.R',
+  handL: 'DEF-hand.L',
+  handR: 'DEF-hand.R',
 } as const;
+
+/** One co-speech beat gesture: a forearm/hand lift with a bell envelope.
+ * Procedural stand-in until the bake pipeline emits EMAGE gesture tracks the
+ * shared speech driver could sample (packages/avatar/src/speech/driver.ts). */
+interface BeatState {
+  /** Seconds until the next beat may fire (while speaking). */
+  countdown: number;
+  /** Time into the current beat; >= dur means idle. */
+  t: number;
+  dur: number;
+  /** 1 = left arm leads, -1 = right. */
+  side: 1 | -1;
+  /** Whether the off arm echoes this beat at reduced amplitude. */
+  both: boolean;
+  amp: number;
+}
 
 function setMorph(mesh: THREE.SkinnedMesh, name: string, value: number) {
   const dict = mesh.morphTargetDictionary;
@@ -211,6 +236,12 @@ interface LipShape {
   mouthSmileRight: number;
   mouthFunnel: number;
   mouthPucker: number;
+  mouthLowerDownLeft: number;
+  mouthLowerDownRight: number;
+  mouthUpperUpLeft: number;
+  mouthUpperUpRight: number;
+  mouthStretchLeft: number;
+  mouthStretchRight: number;
 }
 
 const LIP_ZERO: LipShape = {
@@ -220,28 +251,62 @@ const LIP_ZERO: LipShape = {
   mouthSmileRight: 0,
   mouthFunnel: 0,
   mouthPucker: 0,
+  mouthLowerDownLeft: 0,
+  mouthLowerDownRight: 0,
+  mouthUpperUpLeft: 0,
+  mouthUpperUpRight: 0,
+  mouthStretchLeft: 0,
+  mouthStretchRight: 0,
 };
 
 /** Target mouth pose for one aligned character. Word gaps return LIP_ZERO so
  * the mouth relaxes between words; quick characters articulate less than held
- * ones so fast speech doesn't flap the jaw full-range. */
+ * ones so fast speech doesn't flap the jaw full-range. jawOpen alone reads as
+ * a ventriloquist dummy — the lip morphs (lowerDown/upperUp/stretch) are what
+ * expose teeth and make the shapes legible. */
 function lipShapeForChar(c: string, span: number): LipShape {
   if (!/[a-zA-Z]/.test(c)) return LIP_ZERO;
-  const isVowel = /^[aeiouAEIOU]$/.test(c);
-  const isRounded = /^[oOuUwW]$/.test(c);
-  const isSmile = /^[eEiI]$/.test(c);
-  const isClosed = /^[bmpBMP]$/.test(c);
-  const isNarrow = /^[szSZfFvV]$/.test(c);
   const held = Math.max(0.55, Math.min(1, span / 0.09));
-  const jaw = isClosed ? 0 : isNarrow ? 0.05 : isVowel ? 0.42 * held : 0.16;
-  return {
-    jawOpen: jaw,
-    mouthClose: isClosed ? 0.5 : 0,
-    mouthSmileLeft: isSmile ? 0.3 : 0,
-    mouthSmileRight: isSmile ? 0.3 : 0,
-    mouthFunnel: isRounded ? 0.55 * held : 0,
-    mouthPucker: isRounded ? 0.35 * held : 0,
-  };
+  const shape = { ...LIP_ZERO };
+  if (/^[aA]$/.test(c)) {
+    // Wide open vowel — the big visible one.
+    shape.jawOpen = 0.68 * held;
+    shape.mouthLowerDownLeft = 0.42 * held;
+    shape.mouthLowerDownRight = 0.42 * held;
+    shape.mouthUpperUpLeft = 0.25 * held;
+    shape.mouthUpperUpRight = 0.25 * held;
+    shape.mouthStretchLeft = 0.18;
+    shape.mouthStretchRight = 0.18;
+  } else if (/^[eEiI]$/.test(c)) {
+    // Spread vowel — corners wide, teeth showing.
+    shape.jawOpen = 0.34 * held;
+    shape.mouthSmileLeft = 0.38;
+    shape.mouthSmileRight = 0.38;
+    shape.mouthUpperUpLeft = 0.22 * held;
+    shape.mouthUpperUpRight = 0.22 * held;
+    shape.mouthLowerDownLeft = 0.2 * held;
+    shape.mouthLowerDownRight = 0.2 * held;
+  } else if (/^[oOuUwW]$/.test(c)) {
+    // Rounded vowel.
+    shape.jawOpen = 0.45 * held;
+    shape.mouthFunnel = 0.6 * held;
+    shape.mouthPucker = 0.4 * held;
+  } else if (/^[bmpBMP]$/.test(c)) {
+    // Bilabial press.
+    shape.mouthClose = 0.55;
+    shape.mouthPucker = 0.1;
+  } else if (/^[szSZfFvV]$/.test(c)) {
+    // Narrow fricative — teeth together.
+    shape.jawOpen = 0.08;
+    shape.mouthUpperUpLeft = 0.12;
+    shape.mouthUpperUpRight = 0.12;
+  } else {
+    // Everything else articulates as a mid consonant.
+    shape.jawOpen = 0.22 * held;
+    shape.mouthLowerDownLeft = 0.14 * held;
+    shape.mouthLowerDownRight = 0.14 * held;
+  }
+  return shape;
 }
 
 interface NatalieModelProps {
@@ -283,7 +348,12 @@ function NatalieModel({
   useEffect(() => {
     const map: Record<string, THREE.Bone | null> = {};
     for (const [key, name] of Object.entries(BONE_NAMES)) {
-      map[key] = (scene.getObjectByName(name) as THREE.Bone) ?? null;
+      // GLTFLoader runs node names through PropertyBinding.sanitizeNodeName,
+      // which strips dots — 'DEF-upper_arm.L' loads as 'DEF-upper_armL'.
+      map[key] =
+        (scene.getObjectByName(name) as THREE.Bone) ??
+        (scene.getObjectByName(name.replace(/[.:[\]/]/g, '')) as THREE.Bone) ??
+        null;
     }
     bonesRef.current = map;
 
@@ -304,6 +374,14 @@ function NatalieModel({
   const actionRef = useRef<string | null>(null);
   const actionTimeRef = useRef(0);
   const lipStateRef = useRef<LipShape>({ ...LIP_ZERO });
+  const beatRef = useRef<BeatState>({
+    countdown: 0.35,
+    t: 99,
+    dur: 0.7,
+    side: 1,
+    both: false,
+    amp: 0,
+  });
 
   useEffect(() => {
     // Start from a clean ARKit neutral pose.
@@ -325,6 +403,9 @@ function NatalieModel({
     if (next === actionRef.current) return;
     actionRef.current = next;
     actionTimeRef.current = 0;
+    // First beat lands shortly after speech starts.
+    beatRef.current.countdown = 0.35;
+    beatRef.current.t = 99;
     onCaptionChange(next ? PRESENCE_ACTIONS[next]!.caption : '');
   }, [action, onCaptionChange]);
 
@@ -423,6 +504,25 @@ function NatalieModel({
       lip[key] += (target - lip[key]) * (target > lip[key] ? rise : fall);
     }
 
+    // --- co-speech beat gestures: schedule while she speaks ---
+    const beat = beatRef.current;
+    if (active && !reducedMotion) {
+      beat.countdown -= delta;
+      if (beat.countdown <= 0 && beat.t >= beat.dur) {
+        beat.t = 0;
+        beat.dur = 0.75 + Math.random() * 0.5;
+        beat.side = Math.random() < 0.5 ? 1 : -1;
+        beat.both = Math.random() < 0.35;
+        // Hands sit just below the waist-up crop at rest; a beat needs
+        // lift ≳ 0.8 rad of total elbow bend before a hand enters frame —
+        // a beat nobody can see isn't a gesture.
+        beat.amp = 0.55 + Math.random() * 0.4;
+        beat.countdown = beat.dur + 0.4 + Math.random() * 1.0;
+      }
+    }
+    if (beat.t < beat.dur) beat.t += delta;
+    const beatEnv = beat.t < beat.dur ? Math.sin(Math.PI * (beat.t / beat.dur)) : 0;
+
     // --- morph targets ---
     for (const mesh of meshes) {
       const targets = mesh.morphTargetInfluences;
@@ -442,7 +542,6 @@ function NatalieModel({
       // Speech shapes are added on top of the gesture pose, not written over it
       // — the old overwrite erased the action's smile whenever she spoke.
       setMorph(mesh, 'jawOpen', lip.jawOpen + (active?.morphs.jawOpen ?? 0) * 0.5 * env);
-      setMorph(mesh, 'mouthClose', lip.mouthClose);
       setMorph(
         mesh,
         'mouthSmileLeft',
@@ -453,8 +552,21 @@ function NatalieModel({
         'mouthSmileRight',
         lip.mouthSmileRight + (active?.morphs.mouthSmileRight ?? 0) * env
       );
+      setMorph(mesh, 'mouthClose', lip.mouthClose);
       setMorph(mesh, 'mouthFunnel', lip.mouthFunnel);
       setMorph(mesh, 'mouthPucker', lip.mouthPucker);
+      setMorph(mesh, 'mouthLowerDownLeft', lip.mouthLowerDownLeft);
+      setMorph(mesh, 'mouthLowerDownRight', lip.mouthLowerDownRight);
+      setMorph(mesh, 'mouthUpperUpLeft', lip.mouthUpperUpLeft);
+      setMorph(mesh, 'mouthUpperUpRight', lip.mouthUpperUpRight);
+      setMorph(mesh, 'mouthStretchLeft', lip.mouthStretchLeft);
+      setMorph(mesh, 'mouthStretchRight', lip.mouthStretchRight);
+      // Beats carry a small brow accent — gesture and prosody move together.
+      setMorph(
+        mesh,
+        'browInnerUp',
+        (active?.morphs.browInnerUp ?? 0) * env + 0.2 * beatEnv
+      );
     }
 
     // --- eye contact: bias the gaze at the viewer's camera, saccades on top ---
@@ -538,6 +650,53 @@ function NatalieModel({
         head.rotation.x += (active.head.x ?? 0) * env;
         head.rotation.y += (active.head.y ?? 0) * env;
         head.rotation.z += (active.head.z ?? 0) * env;
+      }
+    }
+
+    // --- jaw bone assist: real chin drop under the jawOpen morph ---
+    const jawBone = bones.jaw;
+    if (jawBone && restPose.has(jawBone)) {
+      const rest = restPose.get(jawBone)!;
+      jawBone.position.copy(rest.position);
+      jawBone.rotation.copy(rest.rotation);
+      jawBone.scale.copy(rest.scale);
+      jawBone.rotation.x = rest.rotation.x + lip.jawOpen * 0.14;
+    }
+
+    // --- co-speech arm gestures: a resting talk-lift plus beat accents ---
+    // The arms rise slightly for the whole line (env) and punctuate with beats;
+    // idle keeps them at the modeled rest pose.
+    const speechLift = reducedMotion ? 0 : 0.18 * env;
+    for (const side of ['L', 'R'] as const) {
+      const upperArm = side === 'L' ? bones.upperArmL : bones.upperArmR;
+      const foreArm = side === 'L' ? bones.foreArmL : bones.foreArmR;
+      const hand = side === 'L' ? bones.handL : bones.handR;
+      const leads = beat.side === (side === 'L' ? 1 : -1);
+      const beatAmp =
+        reducedMotion ? 0 : beat.amp * beatEnv * (leads ? 1 : beat.both ? 0.55 : 0);
+      const lift = speechLift + beatAmp;
+      const zSign = side === 'L' ? 1 : -1;
+      if (upperArm && restPose.has(upperArm)) {
+        const rest = restPose.get(upperArm)!;
+        upperArm.position.copy(rest.position);
+        upperArm.rotation.copy(rest.rotation);
+        upperArm.scale.copy(rest.scale);
+        upperArm.rotation.x = rest.rotation.x + lift * 0.45;
+        upperArm.rotation.z = rest.rotation.z + zSign * lift * 0.15;
+      }
+      if (foreArm && restPose.has(foreArm)) {
+        const rest = restPose.get(foreArm)!;
+        foreArm.position.copy(rest.position);
+        foreArm.rotation.copy(rest.rotation);
+        foreArm.scale.copy(rest.scale);
+        foreArm.rotation.x = rest.rotation.x + lift * 1.3;
+      }
+      if (hand && restPose.has(hand)) {
+        const rest = restPose.get(hand)!;
+        hand.position.copy(rest.position);
+        hand.rotation.copy(rest.rotation);
+        hand.scale.copy(rest.scale);
+        hand.rotation.x = rest.rotation.x + lift * 0.45;
       }
     }
 
