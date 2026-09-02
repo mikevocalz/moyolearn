@@ -56,7 +56,7 @@ const loadMembershipRole = async (c: ProtectedCtx): Promise<MembershipRole | nul
     : null;
 
 const loadSubscriptions: LoadSubscriptions = async () => [
-  { plan: 'ops-studio', status: 'active', referenceId: null, periodEnd: null },
+  { plan: 'ops-studio', status: 'active', referenceId: null, periodEnd: null, seats: null },
 ];
 
 const loadTenantOrgId = async (slug: string): Promise<string | null> =>

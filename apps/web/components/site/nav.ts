@@ -29,6 +29,16 @@ export interface NavItem {
 export interface NavGroup {
   /** Small-caps section label. Omit for an unlabelled group. */
   title?: string;
+  /**
+   * Render only for members who may spend the org's money: the owner kind, or
+   * a staff hat whose organizationRole passes `isBillingRole` (billing-plans'
+   * owner/finance pair — org.overview's contract: "Money and Settings rail
+   * items render for owner/finance only"). RoleShell applies the predicate;
+   * the page behind the item enforces the same wall server-side
+   * (`requiresMembership: BILLING_ROLES`), so hiding here is courtesy, not
+   * security.
+   */
+  billingOnly?: true;
   items: NavItem[];
 }
 
@@ -121,8 +131,17 @@ const ORG_RAIL: NavGroup[] = [
     title: 'Safety',
     items: [{ label: 'Incident queue', href: '/safety', railLabel: 'Incidents' }],
   },
-  // pending: org.settings — Org settings · Plan (PW-05/PW-08); no org-scoped
-  // settings routes exist yet (G §2: `(org)/settings/plan` unbuilt, doc 38 §3).
+  // Doc 36 §3.4's Settings group (org.settings contract). One page — identity
+  // + plan, read-only — rather than PW-05's two rows; the action rows land on
+  // the same surface when Stripe mounts. Href is /settings/org because
+  // (site)/settings already serves the shared device-prefs page at /settings
+  // and two route groups must not resolve one path — the flow law is
+  // "rendered href resolves", and it resolves.
+  {
+    title: 'Settings',
+    billingOnly: true,
+    items: [{ label: 'Org settings', href: '/settings/org', railLabel: 'Settings' }],
+  },
 ];
 
 /**

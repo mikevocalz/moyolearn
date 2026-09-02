@@ -27,6 +27,7 @@ import {
   tenantCssVariables,
 } from '@acme/app';
 import type { ActiveContextKind, Membership, AppUser, OrgBranding } from '@acme/app';
+import { isBillingRole } from '@acme/auth';
 import { DashboardShell, LoadingSkeleton, Menu, MoyoLearnLogo, RoleScope, TenantScope } from '@acme/ui';
 import type { MenuAction, NavGroup } from '@acme/ui';
 import { Header, Main, Nav, Pressable, View, Text as TWText } from '@acme/ui/tw';
@@ -146,6 +147,7 @@ function iconFor(label: string, className: string): ReactNode {
     case 'Calendar':
       return <Calendar className={className} />;
     case 'Settings':
+    case 'Org settings':
       return <Settings className={className} />;
     // Shield matches the mobile org Safety tab's glyph — one glyph per surface.
     case 'Incident queue':
@@ -539,6 +541,25 @@ export function RoleShell({ children, allowedKinds, orgBranding }: RoleShellProp
     }
   }, [allowedKinds, activeContext, memberships, status, user, setContext, router]);
 
+  const kind = activeContext.kind;
+  /*
+    The nav.ts `billingOnly` gate, applied against the live session: the owner
+    kind always passes (an owner IS a billing role by the role mapping), and a
+    staff hat passes only when its membership's organizationRole is one
+    `isBillingRole` admits (finance). Mock personas carry no organizationRole,
+    which is why the owner kind short-circuits rather than reading the field —
+    hiding Settings from every dev owner would develop the surface unseen.
+    Courtesy only: the page behind the item holds the server wall.
+  */
+  const activeMembership = memberships.find((m) => m.orgId === activeContext.orgId);
+  const mayBill = kind === 'owner' || isBillingRole(activeMembership?.organizationRole);
+  // Memoised (and above the guard returns — hooks are unconditional) so
+  // CoolShell's own group memo keeps a stable array between renders.
+  const railGroups = useMemo(
+    () => (hotFor(kind) ? [] : RAIL_BY_ROLE[kind].filter((group) => !group.billingOnly || mayBill)),
+    [kind, mayBill],
+  );
+
   const misguarded = status === 'authed' && allowedKinds && !allowedKinds.includes(activeContext.kind);
   if (status === 'loading' || misguarded) {
     return (
@@ -554,7 +575,6 @@ export function RoleShell({ children, allowedKinds, orgBranding }: RoleShellProp
     return <View className="flex-1">{children}</View>;
   }
 
-  const kind = activeContext.kind;
   const accent = accentFor(kind);
   const tenantBrand = orgBranding ?? { name: 'Moyo' };
   const tenantTheme = resolveTenantTheme(tenantBrand, accent);
@@ -572,7 +592,7 @@ export function RoleShell({ children, allowedKinds, orgBranding }: RoleShellProp
       {children}
     </HotShell>
   ) : (
-    <CoolShell railGroups={RAIL_BY_ROLE[kind]} orgBranding={orgBranding}>
+    <CoolShell railGroups={railGroups} orgBranding={orgBranding}>
       {children}
     </CoolShell>
   );

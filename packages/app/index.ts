@@ -33,6 +33,7 @@ export { NotificationsScreen } from './features/notifications/screen';
 export { InboxScreen } from './features/notifications/inbox-screen';
 export { ProfileScreen } from './features/profile/screen';
 export { SettingsScreen } from './features/settings/screen';
+export { OrgSettingsScreen } from './features/org-settings/screen';
 export { useProfile, AVATAR_URI, type ThemePreference } from './features/profile/profile.store';
 // ADR-106: the AvatarSheet's app-side content + the store its per-shell
 // trigger (ShellHeader's avatar) writes. Root-mounted like every sheet.

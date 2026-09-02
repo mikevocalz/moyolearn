@@ -33,6 +33,8 @@ export interface SubscriptionState {
   referenceId: string | null;
   /** ISO. Drives the trial chip and the "your trial ends Friday" line. */
   periodEnd: string | null;
+  /** Purchased seats from the plugin's own row (team plans); null when the row carries none. */
+  seats: number | null;
 }
 
 export const NO_SUBSCRIPTION: SubscriptionState = {
@@ -40,6 +42,7 @@ export const NO_SUBSCRIPTION: SubscriptionState = {
   status: 'none',
   referenceId: null,
   periodEnd: null,
+  seats: null,
 };
 
 export interface Entitlements {

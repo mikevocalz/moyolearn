@@ -164,8 +164,8 @@ const MOCK_CTX: ProtectedCtx = {
   mode it is developed in.
 */
 const MOCK_SUBSCRIPTIONS: SubscriptionState[] = [
-  { plan: 'family', status: 'active', referenceId: MOCK_CTX.learnerId, periodEnd: null },
-  { plan: 'ops-studio', status: 'active', referenceId: MOCK_CTX.orgId ?? null, periodEnd: null },
+  { plan: 'family', status: 'active', referenceId: MOCK_CTX.learnerId, periodEnd: null, seats: null },
+  { plan: 'ops-studio', status: 'active', referenceId: MOCK_CTX.orgId ?? null, periodEnd: null, seats: null },
 ];
 
 /*

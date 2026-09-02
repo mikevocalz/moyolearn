@@ -46,6 +46,10 @@ export {
   type InstitutionOverviewOptions,
 } from './features/institution/institution.service';
 export {
+  loadOrgSettings,
+  type OrgSettingsRead,
+} from './features/org-settings/org-settings.service';
+export {
   loadDistrictSchools,
   type LoadSchools,
 } from './features/institution/schools.service';

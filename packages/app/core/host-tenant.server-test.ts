@@ -71,7 +71,7 @@ const loadMembershipRole = async (c: ProtectedCtx): Promise<MembershipRole | nul
 
 /** Every plan says yes, so nothing below is a capability refusal in disguise. */
 const loadSubscriptions: LoadSubscriptions = async () => [
-  { plan: 'ops-studio', status: 'active', referenceId: null, periodEnd: null },
+  { plan: 'ops-studio', status: 'active', referenceId: null, periodEnd: null, seats: null },
 ];
 
 /** The `organizations` read, with a call log so "no unscoped read" is provable. */

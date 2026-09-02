@@ -28,12 +28,16 @@ export function mockSubscriptionsFor(persona: Persona): SubscriptionState[] {
       status: persona.id === LAPSED_PERSONA_ID ? 'canceled' : 'active',
       referenceId: persona.id,
       periodEnd: null,
+      seats: null,
     },
+    // Seats mirror the walkthrough org (`ops-studio` holds 6, ACCOUNTS.md) so
+    // the org Settings summary shows a real number in dev, not a blank row.
     ...persona.memberships.map((membership): SubscriptionState => ({
       plan: membership.role === 'owner' ? 'ops-studio' : 'ops-solo',
       status: 'active',
       referenceId: membership.orgId,
       periodEnd: null,
+      seats: membership.role === 'owner' ? 6 : 1,
     })),
   ];
 }
