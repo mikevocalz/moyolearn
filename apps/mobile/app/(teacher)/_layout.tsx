@@ -4,11 +4,17 @@ import { RoleScope } from '@acme/ui';
 import { ShellHeader } from '../../components/ShellHeader';
 
 /**
- * The teacher shell (doc 36 §3.3). It is now a separate tree from the tutor
- * shell because the classroom-teacher IA needs its own tabs and guards. The
- * whole tree is wrapped in `RoleScope` so the accent underlay is the teacher
- * door hue.
+ * The teacher shell. Doc 36 §3.3 gives teachers only a tokened read-only share
+ * page; this shell's authority is doc 37 §2's PR-145 amendment plus ADR-102
+ * (docs/decisions/adr-102-teacher-shell-ia.md). It is a separate tree from the
+ * tutor shell because the classroom-teacher IA needs its own tabs and guards,
+ * and the whole tree is wrapped in `RoleScope` so the accent underlay is the
+ * teacher door hue.
  */
+const TITLES: Record<string, string> = {
+  '/conference': 'Conferences',
+};
+
 export default function TeacherShell() {
   const { activeContext } = useAppSession();
   const isTeacher = activeContext.kind === 'teacher';
@@ -17,11 +23,15 @@ export default function TeacherShell() {
     <RoleScope role="teacher" className="flex-1">
       <Stack
         screenOptions={{
-          header: () => <ShellHeader titles={{}} fallback="Moyo" />,
+          header: () => <ShellHeader titles={TITLES} fallback="Moyo" />,
         }}
       >
         <Stack.Protected guard={isTeacher}>
           <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          {/* A stack route, not a tab — ADR-102 demotes Conferences out of the
+              tab set (it does not outrank FD-23's class/assignment loop);
+              reachable from Home, keeps its screen. */}
+          <Stack.Screen name="conference" options={{ title: 'Conferences' }} />
         </Stack.Protected>
       </Stack>
     </RoleScope>
