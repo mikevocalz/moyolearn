@@ -1,10 +1,12 @@
 import { create } from 'zustand';
-import type { ActiveContextKind } from '@acme/app';
+import type { ActiveContext, ActiveContextKind } from '@acme/app';
 
 // Role-scoped nav (doc 36 §3): one nav for everyone fails every role, so the
 // chrome renders the ACTIVE role's IA. Hot roles (learner, guardian) keep flat
-// top-nav lists — doc 36 §3.1/§3.2 "identical IA as top-nav", no sidebar. Cool
-// roles get grouped rails rendered through DashboardShell's NavGroup API.
+// top-nav lists — doc 36 §3.1/§3.2 "identical IA as top-nav", no sidebar. The
+// learner list is keyed by grade band (doc 36 §3.1 / G §3.1); mobile's Me/You
+// tabs collapse into the avatar slot on web (avatar-as-You law). Cool roles
+// get grouped rails rendered through DashboardShell's NavGroup API.
 // URLs stay put — deep links and notification links predate this split — only
 // what the chrome shows changes. Anon keeps the marketing set.
 //
@@ -39,18 +41,48 @@ export const MARKETING_ITEMS: NavItem[] = [
 export type HotNavKind = 'learner' | 'guardian';
 export type RailKind = Exclude<ActiveContextKind, HotNavKind>;
 
+/** Derived from the session contract — `@acme/app`'s barrel does not export
+ * the capture AgeBand type, and deriving keeps the band axis single-sourced. */
+export type AgeBand = NonNullable<ActiveContext['gradeBand']>;
+
+/** 6–8 and 9–12 share one resume-first list (doc 36 §3.1) — one array by
+ * reference so the shell treats the two bands identically. */
+const OLDER_LEARNER_NAV: NavItem[] = [
+  { label: 'Home', href: '/' },
+  { label: 'Subjects', href: '/subjects' },
+  { label: 'Snap', href: '/capture' },
+  { label: 'Progress', href: '/progress' },
+];
+
 /**
- * Hot top-nav (doc 36 §3.1/§3.2): same IA as the mobile tabs, flat, no rail.
- * Learner stays band-blind here — the band-adaptive web nav is a separate
- * Phase-2 item (G §3.1 ⚠), not part of the rail regrouping.
+ * Band-adaptive learner top-nav — doc 36 §3.1's table reconciled for web by
+ * G §3.1: mobile's Me (3–5) and You (6–8/9–12) tabs collapse into the avatar
+ * slot (PROFILE), per the avatar-as-You law. Younger bands read "Today"
+ * (routine-first); 6–8/9–12 read "Home" (resume-first).
  */
-export const HOT_NAV_BY_ROLE: Record<HotNavKind, NavItem[]> = {
-  learner: [
+export const HOT_NAV_LEARNER_BY_BAND: Record<AgeBand, NavItem[]> = {
+  // K–2 hub-and-spoke. My Stuff points at /practice: mobile's `stuff` tab
+  // renders PracticeScreen, and (site)/practice is where that screen already
+  // lives on web — the item renders because the surface exists (flow law).
+  young: [
+    { label: 'Today', href: '/' },
+    { label: 'Snap', href: '/capture' },
+    { label: 'My Stuff', href: '/practice' },
+  ],
+  child: [
     { label: 'Today', href: '/' },
     { label: 'Subjects', href: '/subjects' },
     { label: 'Snap', href: '/capture' },
-    { label: 'Progress', href: '/progress' },
   ],
+  teen: OLDER_LEARNER_NAV,
+  adult: OLDER_LEARNER_NAV,
+};
+
+/**
+ * Hot top-nav (doc 36 §3.2): same IA as the mobile tabs, flat, no rail.
+ * Guardian only — the learner set is band-keyed in HOT_NAV_LEARNER_BY_BAND.
+ */
+export const HOT_NAV_BY_ROLE: Record<'guardian', NavItem[]> = {
   guardian: [
     { label: 'Home', href: '/' },
     { label: 'Reports', href: '/reports' },

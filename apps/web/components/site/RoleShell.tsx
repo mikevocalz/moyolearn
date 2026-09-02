@@ -45,9 +45,10 @@ import {
   GraduationCap,
   CircleDot,
   Settings,
+  Star,
   Menu as MenuIcon,
 } from '@acme/ui/icons';
-import { HOT_NAV_BY_ROLE, RAIL_BY_ROLE, PROFILE, useMobileMenu } from './nav';
+import { HOT_NAV_BY_ROLE, HOT_NAV_LEARNER_BY_BAND, RAIL_BY_ROLE, PROFILE, useMobileMenu } from './nav';
 import type { HotNavKind, NavItem as NavItemSpec, NavGroup as NavGroupSpec } from './nav';
 
 const isActive = (pathname: string, href: string) =>
@@ -114,6 +115,9 @@ function iconFor(label: string, className: string): ReactNode {
       return <Compass className={className} />;
     case 'Snap':
       return <Camera className={className} />;
+    // Star matches the mobile K–2 stuff tab's icon — one glyph per surface.
+    case 'My Stuff':
+      return <Star className={className} />;
     case 'Progress':
       return <TrendingUp className={className} />;
     case 'Reports':
@@ -546,7 +550,14 @@ export function RoleShell({ children, allowedKinds, orgBranding }: RoleShellProp
   const tenantVars = tenantCssVariables(tenantTheme);
 
   const shell = hotFor(kind) ? (
-    <HotShell navItems={HOT_NAV_BY_ROLE[kind]}>
+    <HotShell
+      navItems={
+        kind === 'learner'
+          ? // Band fallback mirrors the mobile tab layout: no band reads as teen.
+            HOT_NAV_LEARNER_BY_BAND[activeContext.gradeBand ?? 'teen']
+          : HOT_NAV_BY_ROLE.guardian
+      }
+    >
       {children}
     </HotShell>
   ) : (
