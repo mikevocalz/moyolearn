@@ -36,6 +36,15 @@ const ALLOWLIST = new Map([
   // PR-138/139/140 shell chrome, joining as the gate's header anticipates.
   ['apps/mobile/components/ShellTabBar.tsx', 'active tab/nav indicator underlay (focused-slab pip)'],
   ['apps/mobile/components/ShellHeader.tsx', 'shell header underline'],
+  // Front-door selection surfaces (doc 38 §8 · J-component-plan §2 rows 6/9):
+  // the FD-03/FD-13 selection ring + underlay use the role tokens by spec —
+  // bg-/ring- fills only; the text/border ban above still applies to them.
+  ['packages/ui/RoleChoiceCard.tsx', 'login/onboarding role-choice selection (FD-03 — J §2 row 9)'],
+  // ADR-106 account sheet: the identity header's avatar ring is doc 36 §5's
+  // one allowlisted accent moment on the sheet — a bg- fill behind the Avatar.
+  ['packages/app/features/profile/account-sheet-content.tsx', 'avatar ring (AccountSheet identity header — ADR-106)'],
+  ['packages/ui/AvatarSheet.stories.tsx', 'avatar ring — kit review surface for the sheet chrome'],
+  ['packages/ui/PlanCard.tsx', 'plan chooser selection, shared RoleChoiceCard pattern (FD-13 — J §2 row 6)'],
 ]);
 
 /**

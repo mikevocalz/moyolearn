@@ -25,6 +25,10 @@ const config: StorybookConfig = {
     // stories (the AdaptivePanes host + pane chrome + SwipeableRow) moved with
     // it, so the old mobile-src glob is gone.
     '../../../packages/ui/adaptive-panes/*.stories.@(ts|tsx)',
+    // Same non-recursive-glob bug class as audio/layout/adaptive-panes above:
+    // stage-board/ ships its stories with the directory (J §4 makes the glob
+    // part of the build, not a follow-up).
+    '../../../packages/ui/stage-board/*.stories.@(ts|tsx)',
     // Features live at packages/app/features/<name>/, so the glob needs the
     // feature-name level (the old `app/*/components/*` pattern resolved to
     // packages/app/features/components/ and never matched).

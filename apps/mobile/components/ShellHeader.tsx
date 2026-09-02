@@ -6,28 +6,42 @@
 // header documented: a tab layout's options carry the group's name, never the
 // focused tab's. Each shell passes its own title map.
 //
+// The avatar opens the root-mounted AccountSheet (ADR-106: Profile/You as
+// chrome, never a route push) — the former `profileHref` branch was dead code
+// with zero call sites (C-orphans), which is how the account surface stayed
+// absent.
+//
 // Mobbin: Quizlet titled bar (mobbin.com/screens/d8bb66b8-7bae-4cc3-8241-7aab8e04be5a) ·
 // Headway home header (mobbin.com/screens/b7fa7b42-bea8-4d9d-b89f-1042779ffb17)
-// SOT: docs/pack/36-role-navigation-flows.md §3 §5
-// SOT-KEYWORDS: shell header app bar title role accent avatar cool chrome
+// SOT: docs/pack/36-role-navigation-flows.md §3 §5 ·
+//      docs/decisions/adr-106-account-sheet-is-profile-you.md
+// SOT-KEYWORDS: shell header app bar title role accent avatar cool chrome account sheet
 
-import { usePathname, useRouter, type Href } from 'expo-router';
+import { usePathname } from 'expo-router';
 import { SafeArea, Avatar } from '@acme/ui';
 import { Header } from '@acme/ui/primitives';
 import { Pressable, Text, View } from '@acme/ui/tw';
-import { AVATAR_URI, useProfile } from '@acme/app';
+import { AVATAR_URI, useAccountSheet, useAppSession, useProfile } from '@acme/app';
 
 export interface ShellHeaderProps {
   titles: Record<string, string>;
   fallback: string;
-  /** Where the avatar leads — each shell's You/Profile surface. Omit to hide it. */
-  profileHref?: Href;
 }
 
-export function ShellHeader({ titles, fallback, profileHref }: ShellHeaderProps) {
+export function ShellHeader({ titles, fallback }: ShellHeaderProps) {
   const pathname = usePathname() ?? '/';
-  const router = useRouter();
   const profileName = useProfile((state) => state.name);
+  const { activeContext } = useAppSession();
+  const openSheet = useAccountSheet((state) => state.openSheet);
+
+  // ADR-106 band law: every shell gets the avatar EXCEPT K–2/3–5 learners,
+  // whose settings stay guardian-side (doc 36 §3.1). Same band read + teen
+  // fallback as the learner tabs layout, so header and tab bar can never
+  // disagree about the band.
+  const band = activeContext.gradeBand ?? 'teen';
+  const showAvatar =
+    activeContext.kind !== 'anon' &&
+    !(activeContext.kind === 'learner' && (band === 'young' || band === 'child'));
 
   return (
     <SafeArea edges={['top']} className="bg-surface-header">
@@ -36,11 +50,11 @@ export function ShellHeader({ titles, fallback, profileHref }: ShellHeaderProps)
         <Text className="flex-1 text-center text-title text-on-header">
           {titles[pathname] ?? fallback}
         </Text>
-        {profileHref ? (
+        {showAvatar ? (
           <Pressable
             aria-label="Your profile"
             className="min-h-target-adult min-w-11 items-center justify-center active:opacity-80"
-            onPress={() => router.push(profileHref)}
+            onPress={openSheet}
           >
             <Avatar name={profileName} imageUri={AVATAR_URI} size="sm" />
           </Pressable>

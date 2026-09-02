@@ -123,3 +123,27 @@ export {
   type TwoPaneBrandOrg,
   type TwoPaneBrandImage,
 } from './TwoPaneShell';
+
+// front-door field set (doc 38 §8, J-component-plan §2) — signup/login/handoff inputs.
+export { OtpField, type OtpFieldProps, type OtpMode } from './OtpField';
+export { LearnerCodeEntry, type LearnerCodeEntryProps } from './LearnerCodeEntry';
+export { PasswordField, PasswordRules, type PasswordFieldProps, type PasswordRulesProps } from './PasswordField';
+export { RoleChoiceCard, type RoleChoiceCardProps } from './RoleChoiceCard';
+export { PlanCard, type PlanCardProps, type PlanTier } from './PlanCard';
+
+// cool-shell toolbelt (J-component-plan) — presentational; state stays with the owning screen.
+export { FilterBar, type FilterBarProps } from './FilterBar';
+export { Banner, type BannerProps } from './Banner';
+
+// account sheet chrome (ADR-106, J §3) — content mounts app-side (features/profile).
+export {
+  AvatarSheet,
+  AvatarSheetSurface,
+  type AvatarSheetProps,
+  type AvatarSheetSurfaceProps,
+  type AvatarSheetRow,
+  type AvatarSheetSection,
+} from './AvatarSheet';
+
+// stage board — the CRM kanban (J-component-plan §4). Sub-barrel owns the surface.
+export * from './stage-board';

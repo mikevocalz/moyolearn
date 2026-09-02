@@ -9,6 +9,21 @@ export { LearnerTodayScreen } from './features/home/learner-today-screen';
 export { LearnerHubContent } from './features/home/learner-hub-content';
 export { GuardianHomeScreen } from './features/home/guardian-home-screen';
 export { FamilyScreen } from './features/home/family-screen';
+// Family seam (G-8 fix): the store every per-child guardian surface reads, and
+// the chip row that writes it (J §2 row 10).
+export { ChildSwitcher } from './features/family/child-switcher';
+export {
+  useFamilyStore,
+  useActiveLearnerId,
+  type ChildSummary,
+} from './features/family/family.store';
+// FD-24 family-device switch — ADR-106: a different mechanism from the
+// AvatarSheet, never conflated (J §2 row 8).
+export { ProfileSwitcher, type ProfileSwitcherProps } from './features/switch-profile/profile-switcher';
+export {
+  useProfileSwitcherStore,
+  type GrownUpsGate,
+} from './features/switch-profile/profile-switcher.store';
 export { TutorTodayScreen } from './features/home/tutor-today-screen';
 export { TeacherHomeScreen } from './features/home/teacher-home-screen';
 export { SchoolHomeScreen } from './features/home/school-home-screen';
@@ -19,6 +34,10 @@ export { InboxScreen } from './features/notifications/inbox-screen';
 export { ProfileScreen } from './features/profile/screen';
 export { SettingsScreen } from './features/settings/screen';
 export { useProfile, AVATAR_URI, type ThemePreference } from './features/profile/profile.store';
+// ADR-106: the AvatarSheet's app-side content + the store its per-shell
+// trigger (ShellHeader's avatar) writes. Root-mounted like every sheet.
+export { AccountSheet } from './features/profile/account-sheet-content';
+export { useAccountSheet } from './features/profile/account-sheet.store';
 export { ScheduleScreen } from './features/schedule/screen';
 export { MenuButton } from './features/home/menu-button';
 export {

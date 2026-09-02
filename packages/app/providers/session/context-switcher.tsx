@@ -20,7 +20,8 @@ function labelFor(membership: Membership) {
   return `${membership.orgName} · ${roleNoun(membership.role)}`;
 }
 
-function roleNoun(role: Membership['role']) {
+/** Exported for the AccountSheet's identity header (ADR-106) — one noun table, not two. */
+export function roleNoun(role: Membership['role']) {
   switch (role) {
     case 'tutor':
       return 'Tutor';

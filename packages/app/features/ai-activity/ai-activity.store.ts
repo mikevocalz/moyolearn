@@ -10,7 +10,12 @@
 // distinct resting positions — not-yet-asked, could-not-ask, and an answer — and
 // a boolean pair in a component is how "could not ask" ends up drawn as "all
 // clear". `kind` makes the third one unrepresentable as the second.
-// SOT: docs/pack/04-screen-briefs.md §S12 · docs/pack/12-systems-design-prompt.md §5
+//
+// Scoped to consents + safety status ONLY. Child selection lived here once
+// (G-8, E §5 — the wrong home: one consent screen owned "which child") and now
+// belongs to `family.store` in features/family, the seam every per-child
+// guardian surface shares.
+// SOT: docs/pack/04-screen-briefs.md §S12 · docs/pack/12-systems-design-prompt.md §5 · design/screens/guardian/guardian.ai-activity/contract.md
 // SOT-KEYWORDS: ai activity consent store toggle locked zustand safety status paused alerts guardian
 
 import { create } from 'zustand';
@@ -47,25 +52,19 @@ export type SafetyStatusState =
 
 interface AiActivityState {
   values: Record<string, boolean>;
-  /** The child whose activity is on screen; null before a selection. */
-  selectedChildId: string | null;
   safety: SafetyStatusState;
 
   setConsent: (id: string, value: boolean) => void;
-  selectChild: (childId: string) => void;
   /** Reads doc 12 §5's status. Idempotent; the screen calls it on mount. */
   loadSafety: () => Promise<void>;
 }
 
 export const useAiActivityStore = create<AiActivityState>((set) => ({
   values: Object.fromEntries(CONSENTS.map((c) => [c.id, c.value])),
-  selectedChildId: null,
   safety: { kind: 'idle' },
 
   setConsent: (id, value) =>
     set((state) => (LOCKED.has(id) ? state : { values: { ...state.values, [id]: value } })),
-
-  selectChild: (selectedChildId) => set({ selectedChildId }),
 
   loadSafety: async () => {
     set({ safety: { kind: 'loading' } });

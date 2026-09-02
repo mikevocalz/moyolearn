@@ -25,7 +25,7 @@
   "scripts": {
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test 'audio/**/*.test.ts' 'adaptive-panes/*.test.ts'"
+    "test": "node --test 'audio/**/*.test.ts' 'adaptive-panes/*.test.ts' 'stage-board/*.test.ts'"
   },
   "dependencies": {
     "@acme/theme": "workspace:*",

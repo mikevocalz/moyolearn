@@ -10,7 +10,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { withUniwind } from "uniwind";
-import { AppQueryProvider, SafeAreaProvider, SessionProvider , AttachSheet, AudioRecorderSheet, UrlSheet, VideoNoteSheet, UploadQueueProvider } from "@acme/app";
+import { AppQueryProvider, SafeAreaProvider, SessionProvider , AccountSheet, AttachSheet, AudioRecorderSheet, UrlSheet, VideoNoteSheet, UploadQueueProvider } from "@acme/app";
 import { BookingSheet } from "../components/BookingSheet";
 import { Toaster } from "@acme/ui";
 import "../global.css";
@@ -64,6 +64,9 @@ export default function RootLayout() {
             <VideoNoteSheet />
             <UploadQueueProvider />
             <UrlSheet />
+            {/* ADR-106: Profile/You as chrome — opened from every shell
+                header's avatar via useAccountSheet. */}
+            <AccountSheet />
             {/* Last, so a toast paints above the sheets it reports on. */}
             <Toaster />
           </AppQueryProvider>

@@ -27,7 +27,9 @@ import { useEffect } from 'react';
 import { useRouter } from 'solito/navigation';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Button, Card, Dial, Heading, PressScale, Switch, Text, FadeIn } from '@acme/ui';
-import { CHILDREN } from '../home/parent-home.data';
+// Child selection rides family.store (G-8 fix) — this screen no longer owns
+// "which child"; it reads the same seam home, reports, and calendar read.
+import { useActiveLearnerId, useFamilyStore } from '../family/family.store';
 import { CONSENTS, OBSERVATIONS, RAW_ARTEFACTS } from './ai-activity.data';
 import { useAiActivityStore } from './ai-activity.store';
 import { SafetySection } from './safety-section';
@@ -36,8 +38,9 @@ export function AiActivityContent() {
   const router = useRouter();
   const values = useAiActivityStore((s) => s.values);
   const setConsent = useAiActivityStore((s) => s.setConsent);
-  const selectedChildId = useAiActivityStore((s) => s.selectedChildId);
-  const selectChild = useAiActivityStore((s) => s.selectChild);
+  const children = useFamilyStore((s) => s.children);
+  const selectLearner = useFamilyStore((s) => s.selectLearner);
+  const activeChildId = useActiveLearnerId();
   const safety = useAiActivityStore((s) => s.safety);
   const loadSafety = useAiActivityStore((s) => s.loadSafety);
 
@@ -47,8 +50,6 @@ export function AiActivityContent() {
   useEffect(() => {
     void loadSafety();
   }, [loadSafety]);
-
-  const activeChildId = selectedChildId ?? CHILDREN[0]?.id;
 
   return (
     <Dial temperature="cool" className="gap-7">
@@ -61,10 +62,10 @@ export function AiActivityContent() {
         </Section>
       </FadeIn>
 
-      {CHILDREN.length > 1 ? (
+      {children.length > 1 ? (
         <FadeIn delay={80}>
           <View className="flex-row gap-element">
-            {CHILDREN.map((child) => {
+            {children.map((child) => {
               const active = child.id === activeChildId;
               return (
                 <PressScale
@@ -75,7 +76,7 @@ export function AiActivityContent() {
                   outerClassName="flex-1"
                   aria-label={child.name}
                   aria-selected={active}
-                  onPress={() => selectChild(child.id)}
+                  onPress={() => selectLearner(child.id)}
                 >
                   <TWText className={active ? 'font-semibold text-on-primary' : 'text-text'}>
                     {child.name}

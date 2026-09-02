@@ -11,12 +11,17 @@
 import { useRouter } from 'solito/navigation';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, Button, Card, FadeIn, Heading, PressScale, Text } from '@acme/ui';
-import { ArrowRight, Calendar, FileText, Plus, SquareCode } from '@acme/ui/icons';
+import { ArrowRight, Calendar, FileText, SquareCode } from '@acme/ui/icons';
 import { useAppSession } from '../../providers/session';
-import { CHILDREN } from './parent-home.data';
+// Children come from family.store, not the fixture directly — guardian.family's
+// contract makes this screen a writer of the shared activeChild seam (G-8 fix),
+// so tapping a child scopes ai-activity (and every per-child surface) to them.
+import { useFamilyStore } from '../family/family.store';
 
 export function FamilyScreen() {
   const { user } = useAppSession();
+  const children = useFamilyStore((s) => s.children);
+  const selectLearner = useFamilyStore((s) => s.selectLearner);
   const router = useRouter();
   const name = user?.name?.split(' ')[0] ?? 'there';
 
@@ -44,10 +49,13 @@ export function FamilyScreen() {
             </Text>
           </View>
           <View className="gap-element">
-            {CHILDREN.map((child) => (
+            {children.map((child) => (
               <PressScale
                 key={child.id}
-                onPress={() => router.push('/ai-activity')}
+                onPress={() => {
+                  selectLearner(child.id);
+                  router.push('/ai-activity');
+                }}
                 className="w-full rounded-card border-2 border-border bg-surface-raised p-4"
                 outerClassName="w-full"
                 aria-label={`${child.name}, ${child.gradeBand}, ${child.status}`}
