@@ -63,6 +63,48 @@ export {
   type LoadEnrollments,
 } from './features/enrollment/enrollment.service';
 export type { Enrollment } from './features/enrollment/enrollment.types';
+/*
+  The teacher's two daily loops (teacher.classes · teacher.assign), exported
+  the way enrollment is: values and port types together, so the repositories
+  name row shapes through this barrel and never a deep path. Roster reads
+  travel through `LoadClassRoster` because a roster IS enrollments by classId
+  — the class dimension, not a second roster collection.
+*/
+export {
+  createTeacherClass,
+  teacherClasses,
+  teacherClassDetail,
+  type ClassDetailPorts,
+  type CreateClass,
+  type LoadClassRoster,
+  type LoadTeacherClass,
+  type LoadTeacherClasses,
+} from './features/classes/classes.service';
+export type {
+  CreateClassInput,
+  TeacherClass,
+  TeacherClassDetail,
+} from './features/classes/classes.types';
+export {
+  closeAssignment,
+  createAssignmentDraft,
+  extendAssignment,
+  publishAssignment,
+  teacherAssignmentDetail,
+  teacherAssignments,
+  type AssignmentLifecyclePorts,
+  type CreateAssignment,
+  type CreateAssignmentPorts,
+  type LoadTeacherAssignment,
+  type LoadTeacherAssignments,
+  type UpdateAssignment,
+} from './features/assignments/assignments.service';
+export type {
+  Assignment,
+  AssignmentStatus,
+  AssignmentWorkItem,
+  CreateAssignmentInput,
+} from './features/assignments/assignments.types';
 export type {
   DerivedFact,
   MasteryFact,

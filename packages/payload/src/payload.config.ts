@@ -23,6 +23,8 @@ import { StudentModelFacts } from './collections/StudentModelFacts';
 import { Leads } from './collections/Leads';
 import { Organizations } from './collections/Organizations';
 import { Enrollments } from './collections/Enrollments';
+import { Classes } from './collections/Classes';
+import { Assignments } from './collections/Assignments';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverURL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -139,6 +141,11 @@ export default buildConfig({
     // lets institutional reports scope tutor sessions and learning data to a
     // school or district without adding orgId to those learner-only tables.
     Enrollments,
+    // The teacher's two daily loops (ADR-b tabs 2 and 3), beside the roster
+    // they scope to: a class is the container enrollments' `classId` points
+    // into, and an assignment is what a class receives.
+    Classes,
+    Assignments,
     Leads,
   ],
   db: postgresAdapter({

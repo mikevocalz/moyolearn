@@ -16,6 +16,8 @@ export interface Enrollment {
   districtId?: string | null;
   /** Optional program or cohort name. */
   program?: string | null;
+  /** The class this enrollment belongs to — a `classes` document id. */
+  classId?: string | null;
   status: 'active' | 'inactive';
   /** ISO date string when the learner began enrollment. */
   enrolledAt: string;

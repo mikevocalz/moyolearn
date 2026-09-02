@@ -47,6 +47,15 @@ export const Enrollments: CollectionConfig = {
       admin: { description: 'Optional program or cohort name.' },
     },
     {
+      // The class dimension. A dimension on the roster row rather than a second
+      // roster collection: one student, one row, and teacher.classes reads its
+      // roster by this index instead of joining a parallel table.
+      name: 'classId',
+      type: 'text',
+      index: true,
+      admin: { description: 'The class this enrollment belongs to — a `classes` document id.' },
+    },
+    {
       name: 'status',
       type: 'select',
       required: true,

@@ -83,6 +83,8 @@ export interface Config {
     sessionSummaries: SessionSummary;
     organizations: Organization;
     enrollments: Enrollment;
+    classes: Class;
+    assignments: Assignment;
     leads: Lead;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
@@ -107,6 +109,8 @@ export interface Config {
     sessionSummaries: SessionSummariesSelect<false> | SessionSummariesSelect<true>;
     organizations: OrganizationsSelect<false> | OrganizationsSelect<true>;
     enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
+    classes: ClassesSelect<false> | ClassesSelect<true>;
+    assignments: AssignmentsSelect<false> | AssignmentsSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
@@ -606,6 +610,10 @@ export interface Enrollment {
    * Optional program or cohort name.
    */
   program?: string | null;
+  /**
+   * The class this enrollment belongs to — a `classes` document id.
+   */
+  classId?: string | null;
   status: 'active' | 'inactive';
   /**
    * When the learner began enrollment.
@@ -615,6 +623,84 @@ export interface Enrollment {
    * When the learner left the program, if applicable.
    */
   exitedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "classes".
+ */
+export interface Class {
+  id: number;
+  /**
+   * The class name a teacher gave it in FD-23 or teacher.classes.
+   */
+  name: string;
+  gradeBand: 'k-5' | '6-8' | '9-12' | 'mixed';
+  /**
+   * Join code minted with FD-23 classCode() — the readable alphabet.
+   */
+  code: string;
+  /**
+   * The Better Auth user id of the owning teacher.
+   */
+  teacherAuthId: string;
+  /**
+   * The school slug the class belongs to.
+   */
+  orgId: string;
+  /**
+   * Optional subject label.
+   */
+  subject?: string | null;
+  status: 'active' | 'archived';
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "assignments".
+ */
+export interface Assignment {
+  id: number;
+  /**
+   * The class this assignment targets — a `classes` document id.
+   */
+  classId: string;
+  /**
+   * The Better Auth user id of the authoring teacher.
+   */
+  teacherAuthId: string;
+  /**
+   * The school slug, denormalized from the class for tenant scoping.
+   */
+  orgId: string;
+  title: string;
+  /**
+   * Optional subject label.
+   */
+  subject?: string | null;
+  /**
+   * When the work is due. Indexed for "due this week" reads.
+   */
+  dueAt: string;
+  workItems?:
+    | {
+        /**
+         * ASSIGNMENT_TEMPLATES id this item was seeded from, if any.
+         */
+        templateId?: string | null;
+        title: string;
+        description: string;
+        minutes: number;
+        id?: string | null;
+      }[]
+    | null;
+  status: 'draft' | 'published' | 'closed';
+  /**
+   * Set exactly once, at publish. A draft has none.
+   */
+  publishedAt?: string | null;
   updatedAt: string;
   createdAt: string;
 }
@@ -728,6 +814,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'enrollments';
         value: number | Enrollment;
+      } | null)
+    | ({
+        relationTo: 'classes';
+        value: number | Class;
+      } | null)
+    | ({
+        relationTo: 'assignments';
+        value: number | Assignment;
       } | null)
     | ({
         relationTo: 'leads';
@@ -1054,9 +1148,50 @@ export interface EnrollmentsSelect<T extends boolean = true> {
   orgId?: T;
   districtId?: T;
   program?: T;
+  classId?: T;
   status?: T;
   enrolledAt?: T;
   exitedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "classes_select".
+ */
+export interface ClassesSelect<T extends boolean = true> {
+  name?: T;
+  gradeBand?: T;
+  code?: T;
+  teacherAuthId?: T;
+  orgId?: T;
+  subject?: T;
+  status?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "assignments_select".
+ */
+export interface AssignmentsSelect<T extends boolean = true> {
+  classId?: T;
+  teacherAuthId?: T;
+  orgId?: T;
+  title?: T;
+  subject?: T;
+  dueAt?: T;
+  workItems?:
+    | T
+    | {
+        templateId?: T;
+        title?: T;
+        description?: T;
+        minutes?: T;
+        id?: T;
+      };
+  status?: T;
+  publishedAt?: T;
   updatedAt?: T;
   createdAt?: T;
 }
@@ -1156,6 +1291,8 @@ export interface CollectionQueryWidget {
       | 'sessionSummaries'
       | 'organizations'
       | 'enrollments'
+      | 'classes'
+      | 'assignments'
       | 'leads';
     where?:
       | {
@@ -1196,6 +1333,8 @@ export interface ActivityWidget {
           | 'sessionSummaries'
           | 'organizations'
           | 'enrollments'
+          | 'classes'
+          | 'assignments'
           | 'leads'
         )[]
       | null;
