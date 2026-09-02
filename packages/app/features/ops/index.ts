@@ -45,8 +45,8 @@ export {
   familyDetailPath,
   enrollmentRootPath,
 } from './ops-paths';
+export { useSessions, sessionsQueryKey, type SessionsRead } from './use-sessions';
 export {
-  SESSIONS_BY_ORG,
   REVENUE_BY_ORG,
   STAGE_TONE,
   MIN_COHORT,

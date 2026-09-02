@@ -14,7 +14,8 @@
 import { OpsDashboardContent } from './ops-dashboard-content';
 import { useAppSession } from '../../providers/session';
 import { MOCK_ORGS, MOCK_STAFF, orgBySlug } from '../../fixtures/cast.ts';
-import { REVENUE_BY_ORG, SESSIONS_BY_ORG } from './ops.data';
+import { REVENUE_BY_ORG } from './ops.data';
+import { useSessions } from './use-sessions';
 
 export function OpsScreen() {
   /*
@@ -33,6 +34,16 @@ export function OpsScreen() {
   const operator = MOCK_STAFF.find((m) => m.orgSlug === org.slug && m.role === 'owner');
 
   /*
+    ADR-110's real read: today's rows off the `sessions` collection, scoped to
+    the session's org behind `protectedOperation`. While the query is in
+    flight the hero renders an empty day rather than a skeleton — the same
+    posture as the stats read below it, whose numbers count up when they land.
+    Revenue stays the honest fixture ops.data.ts documents (doc 19 §5's
+    rollups do not exist yet).
+  */
+  const { sessions } = useSessions();
+
+  /*
     Computed, not typed. `today` was the string "Tuesday, 26 August", which was
     correct on exactly one day. `OpsDashboardContentProps` already documents this
     as "computed by the caller so this stays pure" — the caller just wasn't.
@@ -47,7 +58,7 @@ export function OpsScreen() {
     <OpsDashboardContent
       today={today}
       operatorName={operator?.name.split(' ')[0] ?? 'there'}
-      sessions={SESSIONS_BY_ORG[org.slug] ?? []}
+      sessions={sessions}
       revenue={REVENUE_BY_ORG[org.slug] ?? []}
     />
   );

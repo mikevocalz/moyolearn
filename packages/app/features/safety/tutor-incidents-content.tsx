@@ -31,8 +31,9 @@
 //     the edge existed; the decision became this description.) The subject
 //     picker is fed names only, severity appears nowhere on the form (§5.1),
 //     the legal-hold categories are never pickable, and the form's state
-//     survives a failed post. "My sessions" incident scope stays deferred per
-//     ADR-108's recorded gap — there is still no session→tutor edge.
+//     survives a failed post. "My sessions" incident scope is LIVE per
+//     ADR-110: the sessions collection carries the session→tutor edge, so the
+//     list shows what I filed plus incidents on sessions I run.
 //
 // Mobbin: https://mobbin.com/screens/869bdacb-44bf-40a7-9437-3fc11985bf50
 // (Aboard — a filed report read back by its reporter: status pill leading,

@@ -150,24 +150,35 @@ describe('doc 36 §3.3 — the tutor reporter access model', () => {
     );
 
   it('shows a reporter the incident they filed, with its whole trail', () => {
-    const views = tutorIncidentsFrom([filed('tutor_1')], 'tutor_1');
+    const views = tutorIncidentsFrom([filed('tutor_1')], 'tutor_1', []);
     assert.equal(views.length, 1);
     assert.equal(views[0]?.status, 'new');
     assert.equal(views[0]?.timeline.length, 1);
   });
 
   it('shows NOTHING filed by somebody else, however the row arrived', () => {
-    const views = tutorIncidentsFrom([filed('tutor_1'), filed('tutor_99')], 'tutor_1');
+    const views = tutorIncidentsFrom([filed('tutor_1'), filed('tutor_99')], 'tutor_1', []);
     assert.equal(views.length, 1);
   });
 
   it('hides an anonymous filing from its own filer — the null is the promise', () => {
-    assert.deepEqual(tutorIncidentsFrom([filed('tutor_1', true)], 'tutor_1'), []);
+    assert.deepEqual(tutorIncidentsFrom([filed('tutor_1', true)], 'tutor_1', []), []);
+  });
+
+  it('shows an incident ON my session whoever filed it — ADR-110 closes doc 36 §3.3', () => {
+    // Filed by someone else, but its relatedSessionId is a session I run.
+    const views = tutorIncidentsFrom([filed('guardian_9')], 'tutor_1', ['sess_1']);
+    assert.equal(views.length, 1);
+  });
+
+  it("shows NOTHING for a session that is not mine — the id set is the edge", () => {
+    const views = tutorIncidentsFrom([filed('guardian_9')], 'tutor_1', ['sess_other']);
+    assert.equal(views.length, 0);
   });
 
   it('coarsens timeline actors and carries no severity or raw ids', () => {
     const moved = transitionIncident(filed('tutor_1'), { status: 'triaged' }, 'staff_7', NOW);
-    const view = tutorIncidentsFrom([moved], 'tutor_1')[0];
+    const view = tutorIncidentsFrom([moved], 'tutor_1', [])[0];
     assert.ok(view);
     assert.deepEqual(
       view.timeline.map((line) => line.actor),

@@ -1,14 +1,14 @@
 // The ops dashboard's shared shapes and read-time disclosure policy.
 //
-// Leads are NO LONGER a fixture: they come from the `leads` collection through
-// `leads.repository`. What stays here is what both sides of that boundary need —
-// the row shape, the stage tone map, and the k-anonymity rule — plus the two
-// panels (today's sessions, revenue by month) whose collections do not exist
-// yet.
-// SOT: docs/pack/28-crm-spec.md §2 (object model) · §3 (pipeline) · docs/pack/19-learning-outcomes-spec.md §3–§4 · docs/pack/27-reporting-charts-spec.md §4
+// Leads and sessions are NO LONGER fixtures: leads come from the `leads`
+// collection through `leads.repository`, and today's sessions come from
+// ADR-110's `sessions` collection through `sessions.repository`. What stays
+// here is what both sides of those boundaries need — the row shapes, the stage
+// tone map, and the k-anonymity rule — plus the one panel (revenue by month)
+// whose rollup tables do not exist yet.
+// SOT: docs/pack/28-crm-spec.md §2 (object model) · §3 (pipeline) · docs/pack/19-learning-outcomes-spec.md §3–§4 · docs/pack/27-reporting-charts-spec.md §4 · docs/decisions/adr-110-sessions-object.md
 // SOT-KEYWORDS: ops dashboard crm leads sessions pipeline stage suppression k-anonymity cohort
 import type { Suppressible, TrendPoint } from '@acme/ui';
-import { MOCK_LEARNERS, MOCK_STAFF } from '../../fixtures/cast.ts';
 
 /** Doc 28 §3 — the trial is a first-class stage, not a note. */
 export type Stage =
@@ -119,6 +119,14 @@ export const EXAMPLE_LEADS: readonly Lead[] = [
   },
 ];
 
+/**
+ * The ops hero's VIEW of one scheduled human session — display strings, never
+ * the row. ADR-110's `sessions` collection is the row (numeric id, ISO
+ * timestamps, doc 10 §2.3's lowercase `mode` literals with their
+ * `joinUrl`/`room` carriers); `sessions.repository.ts` owns the translation to
+ * this shape, the Leads money/clock idiom. `SESSIONS_BY_ORG` died when that
+ * read landed — the fixture's own comment promised exactly this retirement.
+ */
 export interface Session {
   id: string;
   time: string;
@@ -128,33 +136,6 @@ export interface Session {
   mode: 'Virtual' | 'In person';
   needsAttention?: boolean;
 }
-
-/*
-  Sessions and revenue are still fixtures, and honestly so: doc 01 §7.1 plans a
-  `sessions` collection and doc 28 §7 routes revenue through doc 19's rollup
-  tables, but neither exists. What changed is that they are no longer a cast of
-  strangers — the names are READ from the roster, so a person renamed in one
-  place cannot survive in the other, and each district has its own.
-
-  Doc 10 §2.3 specs session mode as a discriminated union
-  (`{mode:'virtual'; joinUrl} | {mode:'in-person'; room}`) with lowercase
-  literals. This shape predates that and carries neither `joinUrl` nor `room`;
-  aligning it belongs with the `sessions` collection, not with a fixture swap.
-*/
-const named = (id: string) =>
-  [...MOCK_LEARNERS, ...MOCK_STAFF].find((p) => p.id === id)?.name ?? id;
-
-export const SESSIONS_BY_ORG: Readonly<Record<string, readonly Session[]>> = {
-  'riverside-unified': [
-    { id: 'rs1', time: '09:00\u201309:45', learner: named('learner-maya'), subject: 'Algebra II', tutor: named('staff-priya'), mode: 'Virtual' },
-    { id: 'rs2', time: '10:00\u201310:45', learner: named('learner-daniel'), subject: 'Trial \u00b7 Fractions', tutor: named('staff-priya'), mode: 'In person', needsAttention: true },
-    { id: 'rs3', time: '14:30\u201315:15', learner: named('learner-maya'), subject: 'Reading', tutor: named('staff-priya'), mode: 'Virtual' },
-  ],
-  'lincoln-public': [
-    { id: 'lp1', time: '13:00\u201313:45', learner: named('learner-sofia'), subject: 'Reading', tutor: named('staff-kenji'), mode: 'Virtual' },
-    { id: 'lp2', time: '15:00\u201315:45', learner: named('learner-tomi'), subject: 'Chemistry', tutor: named('staff-kenji'), mode: 'In person', needsAttention: true },
-  ],
-};
 
 export const STAGE_TONE = {
   Inquiry: 'neutral',
@@ -175,7 +156,12 @@ export const STAGE_TONE = {
 export const STAGES = Object.keys(STAGE_TONE) as readonly Stage[];
 
 /**
- * Invoiced revenue by month, per district.
+ * Invoiced revenue by month, per district — STILL A FIXTURE, and honestly so.
+ *
+ * Not an oversight ADR-110 missed but its recorded non-goal: doc 28 §7 routes
+ * revenue through doc 19 §5's rollup tables into the doc 27 chart layer, and
+ * no rollup exists — so this stays copy until that slice lands, rather than a
+ * number derived from a table that cannot answer for it.
  *
  * Riverside hides ONE month and Lincoln hides TWO ADJACENT ones, deliberately.
  * A single hole and a run of holes take different paths through the chart —

@@ -9,7 +9,7 @@ import 'server-only';
 // SOT: docs/pack/28-crm-spec.md §2–§3
 // SOT-KEYWORDS: ops service leads cursor pagination filter sort server-only crm repository
 import type { ProtectedCtx } from '../../core/protected-operation.ts';
-import type { Lead, Stage } from './ops.data.ts';
+import type { Lead, Session, Stage } from './ops.data.ts';
 import { clearsAttention, type StageChange } from './stage-change.ts';
 // Pure and therefore testable — see the headers of those files.
 import { statsFor, type LeadStats } from './lead-stats.ts';
@@ -105,6 +105,20 @@ export interface LeadStagePatch {
    */
   needsAttention?: false;
 }
+
+/** A half-open window over `scheduledAt`, ISO at both ends: `from ≤ t < to`. */
+export interface SessionWindow {
+  from: string;
+  to: string;
+}
+
+/**
+ * The org's scheduled human sessions inside a window, in start order —
+ * ADR-110's read. The repository applies the tenant predicate AND owns the
+ * display translation (row → "09:00–09:45"), the Leads money/clock idiom;
+ * this port's `Session` is already the view the hero renders.
+ */
+export type LoadSessions = (ctx: ProtectedCtx, window: SessionWindow) => Promise<readonly Session[]>;
 
 export type LeadSortField = 'family' | 'stage' | 'owner' | 'sessions' | 'value';
 
@@ -226,6 +240,28 @@ export async function getLead(
 ): Promise<Lead | null> {
   if (!ctx.orgId) return null;
   return loadLead(ctx, leadId);
+}
+
+/**
+ * Today's sessions — the ops hero's read, off ADR-110's real rows.
+ *
+ * The service owns WHAT "today" means (the server-local calendar day, the same
+ * zone the Leads clock renders in — a multi-region org needs a per-org zone on
+ * the collection, and this is the function that would read it); the repository
+ * owns the tenant predicate and the query. Identity is never a parameter: a
+ * session with no org resolves to an empty day rather than an unscoped read.
+ */
+export async function listSessions(
+  ctx: ProtectedCtx,
+  loadSessions: LoadSessions,
+  now: Date = new Date(),
+): Promise<readonly Session[]> {
+  if (!ctx.orgId) return [];
+  const from = new Date(now);
+  from.setHours(0, 0, 0, 0);
+  const to = new Date(from);
+  to.setDate(to.getDate() + 1);
+  return loadSessions(ctx, { from: from.toISOString(), to: to.toISOString() });
 }
 
 /**

@@ -38,7 +38,7 @@ SOT-KEYWORDS: adr tutor learner engagement edge roster subject verification
 
 This is the roster edge tutor.incidents intake verifies subjects against — `submitTutorIncident` intersects the posted subject with the caller's ACTIVE engagements, the exact shape `submitIncident` runs against wards — and the de-fixturing path for "My learners."
 
-**What this deliberately does NOT solve:** the "my sessions" half of doc 36 §3.3's incident scope still needs a **session→tutor edge**, and this collection is not one. An AI `tutorSessions` row must not be conflated with a human engagement — that is precisely why this is a new collection and not a column on `tutorSessions` — so a session-scoped incident read remains deferred until that edge is its own decision. The tutor incidents list stays reporter-scoped ("mine") with the gap recorded, not papered over.
+**What this deliberately does NOT solve:** the "my sessions" half of doc 36 §3.3's incident scope still needs a **session→tutor edge**, and this collection is not one. An AI `tutorSessions` row must not be conflated with a human engagement — that is precisely why this is a new collection and not a column on `tutorSessions` — so a session-scoped incident read remains deferred until that edge is its own decision. The tutor incidents list stays reporter-scoped ("mine") with the gap recorded, not papered over. *(Closed 2026-09-02: ADR-110's `sessions` collection carries `tutorAuthId` — the session→tutor edge — and the incidents read now covers "mine + my sessions" in full.)*
 
 ## Consequences
 

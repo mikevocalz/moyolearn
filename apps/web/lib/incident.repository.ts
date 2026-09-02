@@ -271,18 +271,16 @@ export const loadGuardianIncidents: LoadGuardianIncidents = async (ctx) =>
 /**
  * Every incident the acting user filed, newest first.
  *
- * `reporterAuthId = ctx.learnerId` and NOTHING WIDER — "mine" only in v1.
- * Doc 36 §3.3 names the tutor surface "Incidents (mine + my sessions)", but
- * the "my sessions" half is DEFERRED, and ADR-108 records the gap: the
- * tutor→LEARNER edge it built (`tutorEngagements`) is a roster fact, while
- * "my sessions" needs a SESSION→tutor edge that `tutorSessions` — which
- * carries only a `learnerAuthId` — still does not hold. Until that edge is
- * its own decision, a session-scoped read would be a guess, and a safety
- * surface does not guess.
+ * "Mine + my sessions" in full (doc 36 §3.3), the second half closed by
+ * ADR-110: the `sessions` collection carries the SESSION→tutor edge ADR-108
+ * recorded as missing, so "my sessions" is a real query — the ids of sessions
+ * the actor runs, matched against `relatedSessionId` — never a guess over the
+ * AI `tutorSessions` rows, which carry only a `learnerAuthId` and stay out of
+ * this read entirely.
  *
- * The acting id is echoed alongside the rows for the reason `wards` is above:
- * `tutorIncidentsFrom` filters again on the same fact, and the `where` here
- * and the filter there fail in different ways.
+ * The acting id AND the session-id set are echoed alongside the rows for the
+ * reason `wards` is above: `tutorIncidentsFrom` filters again on the same two
+ * facts, and the `where` here and the filter there fail in different ways.
  *
  * An ANONYMOUS filing has `reporterAuthId: null` in the row (the NIJ promise,
  * see `IncidentReports.ts`), so it can never match this query — the filer's
@@ -291,13 +289,31 @@ export const loadGuardianIncidents: LoadGuardianIncidents = async (ctx) =>
  */
 export const loadTutorIncidents: LoadTutorIncidents = async (ctx) =>
   withPayload(async (payload) => {
+    // The actor's sessions first — a bounded id read, not an export. 500 is
+    // generous for one tutor's whole calendar; past it, "my sessions" wants a
+    // windowed read, not a bigger number.
+    const owned = await payload.find({
+      collection: 'sessions',
+      where: { tutorAuthId: { equals: ctx.learnerId } },
+      limit: 500,
+    });
+    const sessionIds = owned.docs.map((doc) => String(doc.id));
+
     const { docs } = await payload.find({
       collection: 'incidentReports',
-      where: { reporterAuthId: { equals: ctx.learnerId } },
+      where:
+        sessionIds.length > 0
+          ? {
+              or: [
+                { reporterAuthId: { equals: ctx.learnerId } },
+                { relatedSessionId: { in: sessionIds } },
+              ],
+            }
+          : { reporterAuthId: { equals: ctx.learnerId } },
       sort: '-occurredAt',
       limit: FEED_LIMIT,
     });
-    return { reporter: ctx.learnerId, reports: docs.map(incidentFromDoc) };
+    return { reporter: ctx.learnerId, sessionIds, reports: docs.map(incidentFromDoc) };
   });
 
 /**

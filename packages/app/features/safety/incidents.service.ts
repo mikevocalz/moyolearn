@@ -446,17 +446,22 @@ export async function submitIncident(
  * returns the wards: the projection filters AGAIN on the same fact, so no
  * single refactor removes both checks (this file's own two-layer law).
  *
- * SCOPE IS "MINE" ONLY IN v1, and the narrowing is a deferral, not a design.
- * Doc 36 §3.3 names the surface "Incidents (mine + my sessions)", but "my
- * sessions" needs a SESSION→TUTOR edge, and ADR-108 records that gap as still
- * open: the tutor→LEARNER edge it built (`tutorEngagements`) is a roster fact,
- * not a session fact, and `tutorSessions` still carries only `learnerAuthId`.
- * Widening the filter without the edge would mean guessing whose sessions are
- * whose, on a safety surface.
+ * SCOPE IS "MINE + MY SESSIONS" — doc 36 §3.3 in full, closed by ADR-110.
+ * "My sessions" reads the `sessions` collection's tutorAuthId edge (the
+ * SESSION→tutor fact ADR-108 recorded as missing; AI `tutorSessions` still
+ * carry only a learnerAuthId and are never consulted). The repository returns
+ * the session-id set alongside the rows for the same reason it returns the
+ * reporter id: the projection filters AGAIN on both facts, so no single
+ * refactor removes both checks (this file's own two-layer law).
  */
 export type LoadTutorIncidents = (
   ctx: ProtectedCtx,
-) => Promise<{ readonly reporter: string; readonly reports: readonly IncidentReport[] }>;
+) => Promise<{
+  readonly reporter: string;
+  /** Ids of sessions the acting tutor runs — the "my sessions" half's fact. */
+  readonly sessionIds: readonly string[];
+  readonly reports: readonly IncidentReport[];
+}>;
 
 /**
  * One line of the trail, as a tutor may read it.
@@ -518,9 +523,18 @@ export interface TutorIncidentView {
 export function tutorIncidentsFrom(
   reports: readonly IncidentReport[],
   actorId: string,
+  sessionIds: readonly string[],
 ): readonly TutorIncidentView[] {
   return reports
-    .filter((report) => report.reporterId !== null && report.reporterId === actorId)
+    .filter(
+      (report) =>
+        (report.reporterId !== null && report.reporterId === actorId) ||
+        // The "my sessions" half (doc 31 §4.2): an incident ON a session the
+        // actor runs, whoever filed it. Session ids are globally unique mints
+        // (Payload serials here, the plane's own ids on AI rows), so a match
+        // is the edge, never a namespace accident.
+        (report.relatedSessionId !== null && sessionIds.includes(report.relatedSessionId)),
+    )
     .map((report) => ({
       incidentId: report.incidentId,
       category: report.category,
@@ -563,8 +577,8 @@ export async function tutorIncidents(
   ports: Pick<TutorIncidentPorts, 'loadTutorIncidents'>,
 ): Promise<readonly TutorIncidentView[]> {
   return protectedOperation(auth, headers, async (ctx) => {
-    const { reports } = await ports.loadTutorIncidents(ctx);
-    return tutorIncidentsFrom(reports, ctx.learnerId);
+    const { reports, sessionIds } = await ports.loadTutorIncidents(ctx);
+    return tutorIncidentsFrom(reports, ctx.learnerId, sessionIds);
   });
 }
 
@@ -600,7 +614,12 @@ export async function appendTutorIncidentNote(
       note,
     });
     await ports.saveIncident(annotated);
-    return tutorIncidentsFrom([annotated], ctx.learnerId)[0] ?? null;
+    // Empty session set on purpose: append rights stay REPORTER-ONLY (the
+    // identity check above), so the row being re-projected is always the
+    // actor's own filing and needs no session fact to pass the filter.
+    // Whether a tutor may annotate an incident on their session that someone
+    // else filed is a contract question, not a widening to slip in here.
+    return tutorIncidentsFrom([annotated], ctx.learnerId, [])[0] ?? null;
   });
 }
 
