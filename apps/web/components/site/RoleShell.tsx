@@ -264,7 +264,7 @@ function HotNavLink({
     <Link
       href={href}
       aria-current={active ? 'page' : undefined}
-      className={`flex items-center gap-2 rounded-full px-4 py-1.5 text-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring/50 ${
+      className={`flex items-center gap-2 rounded-control px-5 py-1.5 text-sm font-medium transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring/50 ${
         active
           ? 'bg-tenant-header text-tenant-header-foreground shadow-sm'
           : 'text-tenant-header-muted hover:bg-tenant-surface-subtle hover:text-tenant-header-foreground'
@@ -331,7 +331,7 @@ function HotShell({
               centering it) instead of stretching flex-1 across the whole
               max-w-screen-2xl header — a three-tab learner nav in a
               viewport-wide pill read as a broken layout. */}
-          <Nav aria-label="Primary" className="relative mx-auto hidden w-fit flex-row items-center gap-1 rounded-full border border-tenant-header-border bg-tenant-surface-subtle p-1 md:flex">
+          <Nav aria-label="Primary" className="relative mx-auto hidden w-fit flex-row items-center gap-1 rounded-control border border-tenant-header-border bg-tenant-surface-subtle px-2 py-1 md:flex">
             {navItems.map((item) => (
               <HotNavLink key={item.href} {...item} active={isActive(pathname, item.href)} />
             ))}
