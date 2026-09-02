@@ -137,6 +137,11 @@ export default defineConfig({
       // except the cross-app paths above, which this app does not own.
       prerender: {
         enabled: true,
+        // TanStack Start otherwise uses os.cpus().length. Vercel's 2-core
+        // runner can see the host CPU count, so it starts too many concurrent
+        // renders of the Three-heavy SSR graph and exhausts the 8 GB build
+        // machine. Keep the route set identical while bounding peak memory.
+        concurrency: 1,
         crawlLinks: true,
         failOnError: true,
         filter: (page) => !isCrossAppPath(page.path),
