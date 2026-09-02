@@ -1,0 +1,47 @@
+# Flow Contract — org.crm
+
+```yaml
+screen_id: org.crm
+role: owner, staff
+tenant: [org]
+band: n/a
+shell: org (web-first by design — CRM rail group `Leads · Families · Enrollment` per doc 36 §3.4; NO mobile tab: the mobile companion is Overview·Schedule·Inbox·Safety only)
+entry_points:
+  - "rail: CRM group (web — Leads / Families / Enrollment items, split from the current one-blob /ops per G §3.2)"
+  - "push: from org.overview 'crm' rail jump"
+  - "deep_link: shared/bookmarked view URL (filters, sort, saved view live in search params — shareable by design)"
+answers_within_5s:
+  - "Where is each lead in the pipeline?"
+  - "Which leads are stalling (trial-centric stages)?"
+  - "Which families are enrolled and which are mid-conversion?"
+primary_action: "Move a lead through stages (drag on the board view / stage action on the table view)"
+secondary_actions:
+  - "Open a lead/family record (contact, notes, stage history — business data only)"
+  - "Switch view: board ⇄ table (doc 28 §3 'kanban by stage'; board component MISSING — build seam = ReorderRow + EventDrag per A-repo-audit)"
+  - "Complete an enrollment (Enrollment section of the same group)"
+exits:
+  stage_change: org.crm            # optimistic write via use-stage-action + applyStageChange reducer; stays on the pipeline
+  enrolled_book_sessions: org.schedule   # the J6 arrow: pipeline must not end at 'Enrolled' — enrollment hands off to scheduling
+  enrolled_invoice: org.money      # billing setup for the newly enrolled family
+  back_overview: org.overview
+completion_returns_to: self (pipeline — a moved lead lands in its new stage in view)
+back_behavior: "Record detail → pipeline view → previous rail destination (browser history; view state survives via URL params)."
+failure_paths:
+  offline: "board/table render last-synced; stage changes disabled (no offline queue for CRM writes)"
+  no_data: "empty pipeline → 'Add your first lead' live from the empty state"
+  permission: "org-scoped (ctx.orgId); staff and owner see the same CRM (no organizationRole distinction on screen today — E matrix)"
+  stage_write_failed: "optimistic move rolls back visibly with inline error + retry (use-stage-action semantics)"
+cross_role_propagation:
+  - "enrollment completion → org.schedule (family becomes bookable) and org.money (family becomes invoiceable)"
+  - "NOTHING propagates to or from learner/guardian surfaces — see wall below"
+cross_device_continuity: "Pipeline is server truth. View mode + density/columns are durable per-device prefs (ops.prefs.store); filters/sort/saved-view travel in the URL, so a shared link reproduces the exact view on any device."
+max_interactions_to_primary: 1 (drag a card / stage action on a row)
+state_owner: "Existing, and BINDING — the board and the table are two views over the SAME store, never two stores: server truth via /api/ops/leads(+[id]/stage) with applyStageChange + use-stage-action (optimistic writes); useOpsChrome (ops.store.ts) owns section/sidebar chrome; createOpsPrefsStore (ops.prefs.store.*) owns durable density/columns — [add] a viewMode ('table' | 'board') key HERE, not a new store; URL search params own filters/sort/saved views (ops store header comment + doc 28 §3)."
+```
+
+**Status:** PARTIAL (D: `org.crm` — table view exists on `/ops`; the doc 28 §3 kanban board has **no component anywhere**; build seam documented in A-repo-audit: `ReorderRow` + `ops.data.ts`/`stage-change.ts`).
+
+**Notes:**
+- **The wall (doc 23 / doc 31 / PRD principle 9, lint-enforced):** the CRM never reads learner data and never reads incidents. This contract therefore declares **no exits** into learner content, reports, or org.safety, and no CRM record may render learner session data, mastery, transcripts, or incident existence. Family records here are business objects (contacts, stage, billing linkage via LearnerRef only — FR-13.2). Any future exit proposal from a CRM screen into learner content is a contract violation, not a design choice.
+- Board-view law: the board is a *view*, not a screen — same store, same URL-param filter state, same stage-change reducer. Switching views must never lose filters or selection.
+- The J6 dead end this contract closes: `Enrolled` now exits to org.schedule (booking) and org.money (invoicing) instead of terminating. Doc 28 §4's stage automations remain unbuilt and out of this contract's scope.

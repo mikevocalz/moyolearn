@@ -106,6 +106,8 @@ Shell-level conflict: the shipped tab set (Home · Children · Calendar · Messa
 | tutor.you | tutor | app, org | n/a | `/(tutor)/(tabs)/tutor-profile` | `/profile` | Profile, credentials, role switch | Manage profile | You tab | COMPLETE | Keep |
 | tutor.incidents | tutor | app, org | n/a | n/a (web sidebar item) | MISSING | Incidents — mine + my sessions (doc 36 §3.3 web sidebar) | Review my incidents | web sidebar | MISSING | Build web view scoped to own sessions (doc 31 lifecycle) |
 | tutor.resources | tutor | app, org | n/a | n/a (web sidebar item) | MISSING | Resources (doc 36 §3.3 web sidebar) | Open a resource | web sidebar | MISSING | Build or strike from IA with contract note |
+| tutor.session | tutor | app, org | n/a | MISSING | `/(session)/tutor` (web exists; role-shared surface) | Tutor-side live session room (J5 Tutor Room) | Run the session | tutor.today `start_session` / tutor.learners `start_prepped_session` | PARTIAL | Contracted at `design/screens/tutor/tutor.session`; ground the two exits that referenced it |
+| tutor.earnings | tutor | app, org | n/a | MISSING (You/sheet entry) | MISSING | Earnings — J5's payoff terminal; approval chain must land somewhere | See what I earned | tutor.you → Earnings | MISSING | PROPOSED-NEW per contract; blocked on org Money model (E §5 gap) |
 
 ## Teacher (Cool dial)
 
@@ -119,6 +121,7 @@ The mobile `(teacher)` shell declares 6 tabs; 4 have no route file, so `ShellTab
 | teacher.students | teacher | school | n/a | MISSING (tab declared) | MISSING | Student roster → trail | Open a student | Students tab | MISSING | Build route per reconciled tab map |
 | teacher.calendar | teacher | school | n/a | MISSING (tab declared) | MISSING | Class calendar | See schedule | Calendar tab | MISSING | Build route per reconciled tab map |
 | teacher.conference | teacher | school | n/a | `/(teacher)/(tabs)/conference` | MISSING | Conference hub (guardian conferences) | Run a conference | Conferences tab | PARTIAL | Real UI on demo data (`conference/hub-screen.tsx`); wire collections; add web surface or justify mobile-only |
+| teacher.you | teacher | school | n/a | MISSING | MISSING | Profile/You — role switcher home per doc 36 §4.3; required by ADR-102 4-tab set | Manage profile / switch role | You tab (ADR-102) | MISSING | PROPOSED-NEW per contract; build with the teacher shell reconciliation |
 
 ## Org — tutoring business (Cool dial, web-first; owner + staff share the shell)
 
