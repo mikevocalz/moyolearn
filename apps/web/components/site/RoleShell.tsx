@@ -44,9 +44,11 @@ import {
   LayoutGrid,
   GraduationCap,
   CircleDot,
+  Settings,
   Menu as MenuIcon,
 } from '@acme/ui/icons';
-import { NAV_BY_ROLE, PROFILE, useMobileMenu } from './nav';
+import { HOT_NAV_BY_ROLE, RAIL_BY_ROLE, PROFILE, useMobileMenu } from './nav';
+import type { HotNavKind, NavItem as NavItemSpec, NavGroup as NavGroupSpec } from './nav';
 
 const isActive = (pathname: string, href: string) =>
   href === '/' ? pathname === '/' : pathname.startsWith(href);
@@ -99,7 +101,7 @@ function accentFor(kind: ActiveContextKind): AccentRole {
   }
 }
 
-function hotFor(kind: ActiveContextKind): boolean {
+function hotFor(kind: ActiveContextKind): kind is HotNavKind {
   return kind === 'learner' || kind === 'guardian';
 }
 
@@ -121,13 +123,19 @@ function iconFor(label: string, className: string): ReactNode {
       return <Bell className={className} />;
     case 'Family':
     case 'Learners':
+    case 'My learners':
     case 'Clients':
     case 'People':
+    case 'Educators':
       return <Users className={className} />;
     case 'Notes':
+    case 'Session notes':
       return <FileText className={className} />;
     case 'Schedule':
+    case 'Calendar':
       return <Calendar className={className} />;
+    case 'Settings':
+      return <Settings className={className} />;
     case 'Overview':
     case 'Outcomes':
       return <LayoutGrid className={className} />;
@@ -139,6 +147,16 @@ function iconFor(label: string, className: string): ReactNode {
   }
 }
 
+// Roles whose Cool shell renders the ScopeSwitcher in the utility bar's start
+// slot (mirrors scope-switcher.tsx's INSTITUTIONAL_ROLES — its own comment
+// says tutors/teachers "use the avatar menu for any other hats").
+const SCOPE_SWITCHER_KINDS: readonly ActiveContextKind[] = [
+  'owner',
+  'staff',
+  'school_admin',
+  'district_admin',
+];
+
 function MembershipMenu({ user }: { user: AppUser | null }) {
   const { activeContext, memberships } = useAppSession();
   const setContext = useSetContext();
@@ -147,13 +165,23 @@ function MembershipMenu({ user }: { user: AppUser | null }) {
 
   const actions: MenuAction[] = useMemo(() => {
     const out: MenuAction[] = [{ id: 'profile', title: 'Profile & settings' }];
+    // G §4 no-duplication law: an item lives in the rail or utility bar's start
+    // slot XOR the avatar menu. In institutional shells the ScopeSwitcher owns
+    // org/role switching, so the avatar menu keeps only account actions plus
+    // the non-institutional hats the switcher deliberately excludes (e.g. the
+    // owner-who-is-also-a-guardian). Elsewhere (hot shells, tutor/teacher) no
+    // ScopeSwitcher renders and the avatar menu remains the switcher.
+    const scopeSwitcherOwns = SCOPE_SWITCHER_KINDS.includes(activeContext.kind);
+    const switchable = scopeSwitcherOwns
+      ? memberships.filter((m) => !SCOPE_SWITCHER_KINDS.includes(m.role))
+      : memberships;
     if (memberships.length > 1) {
-      for (const m of memberships) {
+      for (const m of switchable) {
         out.push({ id: m.id, title: labelForMembership(m) });
       }
     }
     return out;
-  }, [memberships]);
+  }, [memberships, activeContext.kind]);
 
   if (!user) {
     return (
@@ -261,7 +289,7 @@ function HotShell({
   navItems,
 }: {
   children: ReactNode;
-  navItems: typeof NAV_BY_ROLE.learner;
+  navItems: NavItemSpec[];
 }) {
   const pathname = usePathname() ?? '/';
   const { open, toggle, close } = useMobileMenu();
@@ -404,11 +432,11 @@ function BrandMark({ orgBranding }: { orgBranding?: OrgBranding | null }) {
 
 function CoolShell({
   children,
-  navItems,
+  railGroups,
   orgBranding,
 }: {
   children: ReactNode;
-  navItems: typeof NAV_BY_ROLE.learner;
+  railGroups: NavGroupSpec[];
   orgBranding?: OrgBranding | null;
 }) {
   const pathname = usePathname() ?? '/';
@@ -417,19 +445,23 @@ function CoolShell({
   const [mode, setMode] = useState<'auto' | 'rail' | 'menu'>('auto');
   const [menuOpen, setMenuOpen] = useState(false);
 
+  // nav.ts owns the grouped shape (doc 36 §3 sets); this maps data → handlers
+  // and passes it straight to DashboardShell's NavGroup API. Active matching
+  // stays caller-side (J §6 item 4).
   const groups: NavGroup[] = useMemo(
-    () => [
-      {
-        items: navItems.map((item) => ({
+    () =>
+      railGroups.map((group) => ({
+        title: group.title,
+        items: group.items.map((item) => ({
           id: item.href,
           label: item.label,
+          railLabel: item.railLabel,
           icon: iconFor(item.label, 'h-4 w-4'),
           active: isActive(pathname, item.href),
           onPress: () => router.push(item.href),
         })),
-      },
-    ],
-    [navItems, pathname, router],
+      })),
+    [railGroups, pathname, router],
   );
 
   return (
@@ -507,18 +539,18 @@ export function RoleShell({ children, allowedKinds, orgBranding }: RoleShellProp
     return <View className="flex-1">{children}</View>;
   }
 
-  const accent = accentFor(activeContext.kind);
-  const navItems = NAV_BY_ROLE[activeContext.kind] ?? [];
+  const kind = activeContext.kind;
+  const accent = accentFor(kind);
   const tenantBrand = orgBranding ?? { name: 'Moyo' };
   const tenantTheme = resolveTenantTheme(tenantBrand, accent);
   const tenantVars = tenantCssVariables(tenantTheme);
 
-  const shell = hotFor(activeContext.kind) ? (
-    <HotShell navItems={navItems}>
+  const shell = hotFor(kind) ? (
+    <HotShell navItems={HOT_NAV_BY_ROLE[kind]}>
       {children}
     </HotShell>
   ) : (
-    <CoolShell navItems={navItems} orgBranding={orgBranding}>
+    <CoolShell railGroups={RAIL_BY_ROLE[kind]} orgBranding={orgBranding}>
       {children}
     </CoolShell>
   );
