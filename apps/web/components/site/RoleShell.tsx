@@ -8,7 +8,7 @@
 // SOT: apps/web/components/site/nav.ts · packages/app/providers/session/shell.ts
 // SOT-KEYWORDS: role shell sidebar rail nav guard switcher hot cool
 
-import { useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 import Image from 'next/image';
 import { useRouter, usePathname } from 'solito/navigation';
@@ -504,6 +504,14 @@ function CoolShell({
   );
 }
 
+/*
+  The root layout's SiteChrome already wraps every authed page in a RoleShell;
+  a group layout's `allowedKinds` RoleShell nests inside it. The inner instance
+  must still run the guard effects (context switch / login redirect) but must
+  NOT render a second header — so it detects nesting and yields bare children.
+*/
+const InsideRoleShell = createContext(false);
+
 export interface RoleShellProps {
   children: ReactNode;
   /** Restrict this shell to one or more roles. Mismatched authed users are
@@ -516,6 +524,7 @@ export interface RoleShellProps {
 }
 
 export function RoleShell({ children, allowedKinds, orgBranding }: RoleShellProps) {
+  const nested = useContext(InsideRoleShell);
   const { user, activeContext, memberships, status } = useAppSession();
   const setContext = useSetContext();
   const router = useRouter();
@@ -581,6 +590,9 @@ export function RoleShell({ children, allowedKinds, orgBranding }: RoleShellProp
     return <View className="flex-1">{children}</View>;
   }
 
+  // Nested guard: the wall above has run; the outer shell owns the chrome.
+  if (nested) return children;
+
   const accent = accentFor(kind);
   const tenantBrand = orgBranding ?? { name: 'Moyo' };
   const tenantTheme = resolveTenantTheme(tenantBrand, accent);
@@ -604,8 +616,10 @@ export function RoleShell({ children, allowedKinds, orgBranding }: RoleShellProp
   );
 
   return (
-    <TenantScope variables={tenantVars} className="flex min-h-dvh flex-1">
-      <RoleScope role={accent}>{shell}</RoleScope>
-    </TenantScope>
+    <InsideRoleShell.Provider value={true}>
+      <TenantScope variables={tenantVars} className="flex min-h-dvh flex-1">
+        <RoleScope role={accent}>{shell}</RoleScope>
+      </TenantScope>
+    </InsideRoleShell.Provider>
   );
 }

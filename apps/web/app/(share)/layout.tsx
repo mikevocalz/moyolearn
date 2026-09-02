@@ -1,7 +1,4 @@
 import type { Metadata } from 'next';
-import { Document } from '../Document';
-import '../rn-globals';
-import '../globals.css';
 
 export const metadata: Metadata = {
   title: 'Session report — Moyo',
@@ -12,11 +9,11 @@ export const metadata: Metadata = {
 };
 
 /**
- * The share group's own root layout, with NO providers on purpose: the reader
- * is a teacher with no Moyo session, the page is server-rendered from a
- * verified token, and mounting SessionProvider here would put an auth
- * handshake in front of a person who cannot pass one.
+ * The document comes from the root layout. The reader is a teacher with no
+ * Moyo session and the page is server-rendered from a verified token, so
+ * SiteChrome's CHROMELESS_PREFIXES covers `/share` — the content renders
+ * immediately, never waiting on an auth handshake it cannot pass.
  */
 export default function ShareLayout({ children }: Readonly<{ children: React.ReactNode }>) {
-  return <Document>{children}</Document>;
+  return children;
 }
