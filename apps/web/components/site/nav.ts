@@ -133,7 +133,12 @@ export const RAIL_BY_ROLE: Record<RailKind, NavGroup[]> = {
     // exists (tutor.incidents, reporter-scoped lifecycle view). Scope is
     // "mine" only until TutorSessions carries a tutor link (schema ADR —
     // see incident.repository.ts).
-    // pending: tutor.resources (contract exists) — Resources.
+    // struck: tutor.resources — STRUCK 2026-09-02 per its own contract's
+    // Notes: the item was conditional on a resource content pipeline
+    // existing, and none does (no collection, no catalog; Media is upload
+    // transport). ADR-105's consequences already marked it conditional, and
+    // an empty rail destination is a designed dead end (the /academics
+    // lesson). The contract stays in design/screens/tutor as the record.
     { items: [{ label: 'Incidents', href: '/incidents' }] },
   ],
   // ADR-102: teacher stops impersonating the tutor; its set is Home · Classes ·

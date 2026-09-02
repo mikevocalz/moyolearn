@@ -1,4 +1,4 @@
-# Flow Contract — tutor.resources
+# Flow Contract — tutor.resources (DISPOSITION: STRUCK 2026-09-02 — its own condition failed; no content pipeline exists)
 
 ```yaml
 screen_id: tutor.resources
@@ -32,7 +32,7 @@ max_interactions_to_primary: 1
 state_owner: "[add] resources catalog query (React Query, server truth) + [add] favorites as a server-persisted preference. No existing store fits (nothing resource-shaped exists in features/)."
 ```
 
-**Status:** CONTRACTED over MISSING screen (D: `tutor.resources` MISSING — "Build or strike from IA with contract note").
+**Status:** STRUCK 2026-09-02, on this contract's own condition (Notes below): the item was conditional on a resource content pipeline existing, and none does — no collection, no catalog, `Media` is upload transport. The rail item is not rendered (`apps/web/components/site/nav.ts` records the strike beside the tutor group); striking beats shipping a designed dead end (the `/academics` lesson, C §Web; ADR-105's consequences noted the item as conditional). The contract text below stays as the record — do not design against it. (Was: CONTRACTED over MISSING screen — D: "Build or strike from IA with contract note".)
 
 **Notes:**
 - Contract note per D's proposed action: **strike is acceptable.** If no resource content pipeline exists by Phase-3 IA freeze, remove the rail item entirely rather than shipping the empty state — an empty rail destination is a designed dead end (the `/academics` lesson, C §Web). This contract is conditional on content existing.
