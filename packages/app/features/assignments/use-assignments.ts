@@ -15,9 +15,7 @@ import type {
   CreateAssignmentInput,
   EditAssignmentInput,
 } from './assignments.types.ts';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
+import { API_URL } from '../../core/api-url.ts';
 
 export const teacherAssignmentsQueryKey = (classId?: string) =>
   classId === undefined

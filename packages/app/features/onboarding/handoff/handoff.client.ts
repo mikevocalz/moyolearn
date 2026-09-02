@@ -12,9 +12,7 @@
 // SOT-KEYWORDS: handoff client fetch mint redeem code mock learner create
 
 import { getAuthMode } from '../../../providers/session/auth-mode';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
+import { API_URL } from '../../../core/api-url.ts';
 
 /** The 15-minute promise, mirrored client-side for the mock path's expiry copy. */
 const MOCK_TTL_MS = 15 * 60 * 1000;

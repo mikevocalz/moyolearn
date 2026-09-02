@@ -22,8 +22,19 @@ const ANON: AppSession = {
   status: 'anon',
 };
 
+/*
+  The store opens as `loading`, never `anon`.
+
+  Both providers resolve the session from an effect, and React runs a CHILD's
+  effect before its parent's — so a route guard mounted under SessionProvider
+  read `anon` a full tick before the provider could write the session, and
+  redirected every authed visitor to /login. `loading` is the honest opening
+  state: nobody has checked yet. `anon` is now only ever a resolved answer
+  (live: no session; the mock provider always resolves to a persona).
+*/
 export const useSessionStore = create<SessionState>((set) => ({
   ...ANON,
+  status: 'loading',
   setPersona: (persona) =>
     set({
       user: { id: persona.id, name: persona.name, kind: persona.kind },

@@ -13,9 +13,7 @@ import type {
   SummaryQueueRow,
   TeacherShareGrant,
 } from './summary.service.ts';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
+import { API_URL } from '../../core/api-url.ts';
 
 export const reportsQueryKey = () => ['guardian-reports'] as const;
 export const reportQueryKey = (sessionId: string) => ['guardian-reports', sessionId] as const;

@@ -19,10 +19,13 @@ import type { PresignResult } from './media.types.ts';
 import type { CompletedUpload, QueuedUpload } from './upload-queue.shared.ts';
 import { kindForMime } from './upload-surfaces.shared.ts';
 import { useTransferTray } from './transfer-tray.store';
+import { API_URL } from '../../core/api-url.ts';
 
-const API_URL =
-  (typeof process !== 'undefined' ? process.env.EXPO_PUBLIC_API_URL : undefined) ??
-  'http://localhost:3001';
+// EXPO_PUBLIC_API_URL first: the queue predates the shared base and native
+// builds may still point it at a tunnel. Everything else resolves through the
+// one base, so the browser gets same origin instead of a dead port.
+const UPLOAD_API_URL =
+  (typeof process !== 'undefined' ? process.env.EXPO_PUBLIC_API_URL : undefined) ?? API_URL;
 
 /*
   MediaKind mapping moved to `upload-surfaces.shared.ts` (`kindForMime`) so the
@@ -63,7 +66,7 @@ export async function uploadQueued(item: QueuedUpload): Promise<CompletedUpload>
 
 async function uploadQueuedBytes(item: QueuedUpload): Promise<CompletedUpload> {
   const size = await fileSize(item.uri);
-  const res = await fetch(`${API_URL}/api/media/presign`, {
+  const res = await fetch(`${UPLOAD_API_URL}/api/media/presign`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'content-type': 'application/json' },

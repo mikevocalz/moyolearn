@@ -26,11 +26,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { StaffRosterEntry, TriageQueue, TriageRow } from './incidents.service.ts';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ??
-  process.env.EXPO_PUBLIC_APP_URL ??
-  'http://localhost:3001';
+import { API_URL } from '../../core/api-url.ts';
 
 /** Key factory — inline queryKey arrays are a lint error (doc 11 §4). */
 export const incidentQueueKey = () => ['safety', 'incident-queue'] as const;

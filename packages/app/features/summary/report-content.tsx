@@ -23,9 +23,7 @@ import { Button, Card, EmptyState, Heading, LoadingSkeleton, Text } from '@acme/
 import { View } from '@acme/ui/primitives';
 import { ReportBody } from './report-blocks.tsx';
 import { useGuardianReport, useTeacherShare } from './use-reports.ts';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
+import { API_URL } from '../../core/api-url.ts';
 
 /** The authenticated signing door (doc 29 §5) — never a bare CDN URL. */
 const cropSrc = (url: string) => `/api/media/view?url=${encodeURIComponent(url)}`;

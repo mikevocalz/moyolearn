@@ -3,11 +3,7 @@
 // SOT: docs/pack/22-reporting-charts-spec.md §2
 // SOT-KEYWORDS: progress mastery hook client fetch review scaffolding query
 import { useQuery, keepPreviousData } from '@tanstack/react-query';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ??
-  process.env.EXPO_PUBLIC_APP_URL ??
-  'http://localhost:3001';
+import { API_URL } from '../../core/api-url.ts';
 
 export interface ProgressData {
   masteryBySkill: Record<string, number>;

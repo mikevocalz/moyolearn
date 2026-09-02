@@ -14,9 +14,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import { useDebouncedValue } from '@tanstack/react-pacer';
 import type { Lead, Stage } from './ops.data';
 import type { LeadSortField, LeadStats, NewLeadInput } from './ops.service';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
+import { API_URL } from '../../core/api-url.ts';
 
 export interface LeadsView {
   q: string;

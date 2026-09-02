@@ -22,6 +22,7 @@
 import { create } from 'zustand';
 import { cascadePreview, eraseFact, eraseTranscript, type DerivedFact } from '@acme/student-model/pure';
 import { MEMORY_FACTS, MEMORY_TRANSCRIPTS, type TranscriptLine } from './memory.data.ts';
+import { API_URL } from '../../core/api-url.ts';
 
 /**
  * The same three-way env read every client module in this tree does, copied for
@@ -29,10 +30,6 @@ import { MEMORY_FACTS, MEMORY_TRANSCRIPTS, type TranscriptLine } from './memory.
  * feature's store to borrow a base URL mounts that feature's state on this
  * screen.
  */
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ??
-  process.env.EXPO_PUBLIC_APP_URL ??
-  'http://localhost:3001';
 
 /**
  * Puts a fact back where it was after a failed erasure.

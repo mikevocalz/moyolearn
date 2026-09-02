@@ -23,6 +23,7 @@ import { create } from 'zustand';
 // `tutor.store.ts` uses to name `CoachEvent` (CLAUDE.md §The block).
 import type { GuardianSafetyStatus } from './safety-status.service';
 import { CONSENTS } from './ai-activity.data';
+import { API_URL } from '../../core/api-url.ts';
 
 const LOCKED = new Set(CONSENTS.filter((c) => c.locked).map((c) => c.id));
 
@@ -32,10 +33,6 @@ const LOCKED = new Set(CONSENTS.filter((c) => c.locked).map((c) => c.id));
  * pulling in the tutor's zustand store to read a base URL would mount the
  * child's conversation state on a parent's screen.
  */
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ??
-  process.env.EXPO_PUBLIC_APP_URL ??
-  'http://localhost:3001';
 
 /**
  * Never-asked, asked-and-failed, and answered — three states, not two flags.

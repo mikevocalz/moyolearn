@@ -13,14 +13,12 @@ import { useActionState, useOptimistic } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { applyStageChange, type StageChange } from './stage-change';
 import type { Lead } from './ops.data';
+import { API_URL } from '../../core/api-url.ts';
 
 export interface StageActionState {
   /** Set when the last attempt failed. Cleared on the next attempt. */
   error?: string;
 }
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
 
 /**
  * @param rows      the server rows, straight from the read hook

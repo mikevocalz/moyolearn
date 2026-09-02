@@ -9,9 +9,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { Enrollment } from '../enrollment/enrollment.types.ts';
 import type { CreateClassInput, TeacherClass } from './classes.types.ts';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
+import { API_URL } from '../../core/api-url.ts';
 
 export const teacherClassesQueryKey = () => ['teacher-classes'] as const;
 export const classRosterQueryKey = (classId: string) => ['teacher-classes', classId] as const;

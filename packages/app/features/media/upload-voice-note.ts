@@ -15,13 +15,11 @@ import { uploadTransport } from './transport';
 import { renderWaveform } from './render-waveform';
 import { fileSize } from './file-size';
 import type { PresignResult } from './media.types.ts';
+import { API_URL } from '../../core/api-url.ts';
 
 /** 16:5 — wide and short, so a waveform reads as audio rather than a photo. */
 const WAVEFORM_WIDTH = 320;
 const WAVEFORM_HEIGHT = 100;
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
 
 export interface UploadedVoiceNote {
   audioUrl: string;

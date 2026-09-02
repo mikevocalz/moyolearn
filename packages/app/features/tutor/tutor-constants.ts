@@ -8,11 +8,8 @@
 import type { AgeBand } from '../capture/age-band.ts';
 import type { TutorPresencePreference } from '@acme/ui';
 
-/** The tutor API base for the current platform. */
-export const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ??
-  process.env.EXPO_PUBLIC_APP_URL ??
-  'http://localhost:3001';
+/** Re-exported so the tutor feature's existing importers keep one import site. */
+export { API_URL } from '../../core/api-url.ts';
 
 /**
  * The baseline presentation for the learner's age band when no explicit

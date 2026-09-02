@@ -9,9 +9,7 @@
 // SOT-KEYWORDS: ops sessions hook tanstack query today hero schedule calendar
 import { useQuery } from '@tanstack/react-query';
 import type { Session } from './ops.data.ts';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
+import { API_URL } from '../../core/api-url.ts';
 
 /** Key factory — inline queryKey arrays are a lint error (doc 11 §4). */
 export const sessionsQueryKey = () => ['ops', 'sessions'] as const;

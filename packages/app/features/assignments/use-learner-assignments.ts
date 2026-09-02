@@ -15,9 +15,7 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { LearnerAssignment } from './learner-assignments.service.ts';
 import { assignmentQueryKey, teacherAssignmentsQueryKey } from './use-assignments.ts';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
+import { API_URL } from '../../core/api-url.ts';
 
 export const learnerAssignmentsQueryKey = () => ['learner-assignments'] as const;
 

@@ -16,9 +16,7 @@ import * as tus from 'tus-js-client';
 import { useInstanceStore, useStore } from '@acme/ui';
 import { tusUrlStorage } from './tus-url-storage';
 import { useTransferTray } from './transfer-tray.store';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
+import { API_URL } from '../../core/api-url.ts';
 
 export type VideoPhase = 'idle' | 'preparing' | 'uploading' | 'processing' | 'ready' | 'error';
 

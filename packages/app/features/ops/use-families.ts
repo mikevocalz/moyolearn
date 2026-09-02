@@ -9,9 +9,7 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { FamilyGroup } from './family-groups';
 import type { FamilyContact, FamilyRecord } from './family-record';
 import type { Lead } from './ops.data';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
+import { API_URL } from '../../core/api-url.ts';
 
 export const familiesQueryKey = () => ['ops', 'families'] as const;
 

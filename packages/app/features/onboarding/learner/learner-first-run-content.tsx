@@ -47,9 +47,7 @@ import {
   MAX_SUBJECTS,
   SUBJECT_TILES,
 } from './steps';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
+import { API_URL } from '../../../core/api-url.ts';
 
 type GreetingAudio = { phase: 'idle' } | { phase: 'loading' } | { phase: 'ready'; uri: string } | { phase: 'silent' };
 

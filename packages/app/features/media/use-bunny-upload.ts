@@ -17,9 +17,7 @@
 import { useInstanceStore, useStore } from '@acme/ui';
 import { uploadTransport } from './transport';
 import { MAX_BYTES, type MediaKind, type PresignResult } from './media.types.ts';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ?? process.env.EXPO_PUBLIC_APP_URL ?? 'http://localhost:3001';
+import { API_URL } from '../../core/api-url.ts';
 
 /**
  * `validating` and `uploading` are separate states because they fail for

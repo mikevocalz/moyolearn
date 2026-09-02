@@ -8,11 +8,7 @@
 // SOT-KEYWORDS: entitlements client fetch subscriptions api response type store
 
 import type { SubscriptionState } from '@acme/auth';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ??
-  process.env.EXPO_PUBLIC_APP_URL ??
-  'http://localhost:3001';
+import { API_URL } from '../../core/api-url.ts';
 
 export interface EntitlementsResponse {
   /** Every reference the caller can hold a plan under: themselves, plus their orgs. */

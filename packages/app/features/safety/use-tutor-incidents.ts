@@ -22,11 +22,7 @@
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { EngagedLearner, TutorIncidentView } from './incidents.service.ts';
-
-const API_URL =
-  process.env.NEXT_PUBLIC_APP_URL ??
-  process.env.EXPO_PUBLIC_APP_URL ??
-  'http://localhost:3001';
+import { API_URL } from '../../core/api-url.ts';
 
 /** Key factory — inline queryKey arrays are a lint error (doc 11 §4). */
 export const tutorIncidentsKey = () => ['safety', 'tutor-incidents'] as const;
