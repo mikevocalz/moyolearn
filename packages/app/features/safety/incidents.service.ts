@@ -19,8 +19,9 @@
 // `tooling/check-crm-wall.mjs` fails the build if `features/ops`, the lead
 // repository or the ops routes acquire an import path to it.
 // SOT: docs/pack/31-grade-voice-safety-incidents.md §4.2 §4.3 §5.2 §5.3 · docs/pack/23-crm-spec.md §2 · docs/pack/19-learning-outcomes-spec.md §S27
-// SOT-KEYWORDS: incident service guardian access own learner guardian visible triage queue sla breach conversation starter acknowledge submit fan out crm wall tutor reporter filed append note
+// SOT-KEYWORDS: incident service guardian access own learner guardian visible triage queue sla breach conversation starter acknowledge submit fan out crm wall tutor reporter filed append note staff roster assignee verification timeline
 import 'server-only';
+import type { MembershipRole } from '@acme/auth/membership';
 import type { Auth } from '@acme/auth/server';
 import {
   acknowledgeIncident,
@@ -176,6 +177,67 @@ export function guardianIncidentsFrom(
     }));
 }
 
+/**
+ * One assignable member of the org's safety staff — what the assignment
+ * control needs, and NOTHING more of the account.
+ *
+ * OWNER AND MANAGER ONLY, the same pair `requiresMembership` seats at this
+ * queue: §4.2's "org staff see org-scoped queues by role" gives scheduler and
+ * finance no seat at an incident, so neither can be made the owner of one — a
+ * roster that offered them would let the picker assign a case to somebody the
+ * wall refuses to show it to. `id` is the Better Auth user id because it is
+ * the value the PATCH's `assigneeId` writes back; the name is for the picker
+ * and the row, and no email, avatar, or wider profile travels.
+ */
+export interface IncidentStaffMember {
+  readonly id: string;
+  readonly name: string;
+  readonly role: Extract<MembershipRole, 'owner' | 'manager'>;
+}
+
+/**
+ * The org's assignable staff, read from the Better Auth member table by a
+ * repository. `orgId` comes from `ctx` at the call site — never from input.
+ */
+export type LoadIncidentStaff = (orgId: string) => Promise<readonly IncidentStaffMember[]>;
+
+/**
+ * A roster row on the wire. `me` is decided by the SERVER against `ctx`, so
+ * "assign to me" on a client is picking a server-marked row from a
+ * server-verified roster — not posting its own identity, which is the move
+ * CLAUDE.md §The block bans and the reason assignment was deferred until this
+ * read existed.
+ */
+export interface StaffRosterEntry extends IncidentStaffMember {
+  readonly me: boolean;
+}
+
+/**
+ * What a timeline line's `actor` coarsens to for an ORG STAFF reader.
+ *
+ * Doc 31 §4.2 scopes what a reader is SHOWN, not just which rows: staff read
+ * org-scoped queues by role, and the role is the fact triage needs ("has a
+ * manager already moved this"). So a staff auth id resolves to the member's
+ * roster role, the caller's own lines read as `you`, a reporter's lines read
+ * as the `reporterRole` the row already stores, and anything else — the
+ * system, an anonymous filer, an actor no longer on the roster — is `moyo`.
+ * Raw auth ids stay server-side here exactly as they do for the reporter's
+ * own view (`TutorIncidentTimelineLine`), which coarsens harder.
+ */
+export type StaffTimelineActor =
+  | 'you'
+  | IncidentStaffMember['role']
+  | Exclude<IncidentReport['reporterRole'], 'system'>
+  | 'moyo';
+
+/** One line of the append-only trail, as the org queue's reader may see it. */
+export interface StaffTimelineLine {
+  at: string;
+  actor: StaffTimelineActor;
+  action: string;
+  note: string | null;
+}
+
 /** §5.3's row. The queue sorts on `dueAt`; `breached` is what turns it redpen. */
 export interface TriageRow {
   incidentId: string;
@@ -186,6 +248,19 @@ export interface TriageRow {
   dueAt: string | null;
   breached: boolean;
   assigned: boolean;
+  /**
+   * The owner as the ROSTER names them, resolved at read time — never stored
+   * on the row, because a timeline actor "is an id or the literal 'system',
+   * never a display name" (`incidents.ts`) and the same staleness rule holds
+   * here. `null` while unassigned, and `null` when the assignee has since
+   * left the roster: the row then reads plain "Assigned" off the boolean
+   * rather than reviving a name the org no longer holds.
+   */
+  assigneeName: string | null;
+  /** The contract's five-second answer — "what is waiting on ME". */
+  assignedToMe: boolean;
+  /** The append-only trail, actors coarsened per `StaffTimelineActor`. */
+  timeline: readonly StaffTimelineLine[];
 }
 
 export interface TriageQueue {
@@ -198,14 +273,41 @@ export interface TriageQueue {
   unassignedS4: number;
 }
 
+/** The `StaffTimelineActor` coarsening, one entry at a time. */
+const staffActorFrom = (
+  actor: string,
+  viewerId: string,
+  staffById: ReadonlyMap<string, IncidentStaffMember>,
+  report: IncidentReport,
+): StaffTimelineActor => {
+  if (actor === viewerId) return 'you';
+  const member = staffById.get(actor);
+  if (member !== undefined) return member.role;
+  if (report.reporterId !== null && actor === report.reporterId && report.reporterRole !== 'system') {
+    return report.reporterRole;
+  }
+  return 'moyo';
+};
+
 /**
  * §5.3's queue, sorted soonest-deadline-first.
  *
  * Rows with no clock sort LAST rather than first. An S1/S2 report in the queue
  * owes nobody an answer by a time, and a null sorting to the top would bury the
  * two-hour S4 underneath a week of fence-tests.
+ *
+ * `viewerId` and `staff` come from `ctx` and the roster read behind the same
+ * wall — the projection resolves assignee names and coarsens timeline actors
+ * HERE, server-side, so no id-to-person mapping ever has to happen on a
+ * client that would need the ids to do it.
  */
-export function triageQueueFrom(reports: readonly IncidentReport[], now: Date): TriageQueue {
+export function triageQueueFrom(
+  reports: readonly IncidentReport[],
+  now: Date,
+  viewerId: string,
+  staff: readonly IncidentStaffMember[],
+): TriageQueue {
+  const staffById = new Map(staff.map((member) => [member.id, member]));
   const rows = reports
     .map((report) => ({
       incidentId: report.incidentId,
@@ -216,6 +318,15 @@ export function triageQueueFrom(reports: readonly IncidentReport[], now: Date): 
       dueAt: report.slaDueAt,
       breached: slaBreached(report, now),
       assigned: report.assigneeId !== null,
+      assigneeName:
+        report.assigneeId === null ? null : (staffById.get(report.assigneeId)?.name ?? null),
+      assignedToMe: report.assigneeId !== null && report.assigneeId === viewerId,
+      timeline: report.timeline.map((entry) => ({
+        at: entry.at,
+        actor: staffActorFrom(entry.actor, viewerId, staffById, report),
+        action: entry.action,
+        note: entry.note,
+      })),
     }))
     .sort((left, right) => {
       if (left.dueAt === null && right.dueAt === null) return 0;
@@ -496,21 +607,57 @@ export async function appendTutorIncidentNote(
 export interface TriagePorts {
   loadIncidentQueue: LoadIncidentQueue;
   loadIncident: LoadIncident;
+  loadIncidentStaff: LoadIncidentStaff;
   saveIncident: SaveIncident;
   fanOutIncident: FanOutIncident;
+}
+
+/**
+ * The staff roster behind the assignment control — the read whose absence
+ * deferred assignment on both Safety surfaces.
+ *
+ * Same wall as the queue itself, set HERE so no route can lower it: the
+ * roster exists to feed a triage control, and a caller the queue refuses has
+ * no business enumerating who works incidents. Past that wall `ctx.orgId` is
+ * always set (a held role needs an org to be held in); the empty roster is
+ * the fail-closed answer for a ctx that somehow is not.
+ */
+export async function incidentStaffRoster(
+  auth: Auth,
+  headers: Headers,
+  ports: Pick<TriagePorts, 'loadIncidentStaff'>,
+): Promise<readonly StaffRosterEntry[]> {
+  return protectedOperation(
+    auth,
+    headers,
+    async (ctx) => {
+      if (ctx.orgId === undefined) return [];
+      const staff = await ports.loadIncidentStaff(ctx.orgId);
+      return staff.map((member) => ({ ...member, me: member.id === ctx.learnerId }));
+    },
+    { requires: 'write', requiresMembership: ['owner', 'manager'] },
+  );
 }
 
 /** §5.3's queue, behind the boundary. Org scoping is the repository's. */
 export async function incidentTriageQueue(
   auth: Auth,
   headers: Headers,
-  ports: Pick<TriagePorts, 'loadIncidentQueue'>,
+  ports: Pick<TriagePorts, 'loadIncidentQueue' | 'loadIncidentStaff'>,
   now: Date = new Date(),
 ): Promise<TriageQueue> {
   return protectedOperation(
     auth,
     headers,
-    async (ctx) => triageQueueFrom(await ports.loadIncidentQueue(ctx), now),
+    async (ctx) => {
+      const [reports, staff] = await Promise.all([
+        ports.loadIncidentQueue(ctx),
+        ctx.orgId === undefined
+          ? Promise.resolve<readonly IncidentStaffMember[]>([])
+          : ports.loadIncidentStaff(ctx.orgId),
+      ]);
+      return triageQueueFrom(reports, now, ctx.learnerId, staff);
+    },
     /*
       Staff work, gated on WHO the caller is before what they pay: doc 31 §5.3's
       triage is owner/manager work ("org staff see org-scoped queues by role",
@@ -554,6 +701,24 @@ export async function triageIncident(
       const report = await ports.loadIncident(incidentId);
       if (report === null) return null;
 
+      const staff = ctx.orgId === undefined ? [] : await ports.loadIncidentStaff(ctx.orgId);
+
+      /*
+        A posted `assigneeId` is a CLAIM until the roster says otherwise — the
+        check that made client-posted identity unsafe, run against the server's
+        own member read before anything writes. A foreign id gets the same
+        `null` as a swept record, so the answer is no oracle over who is staff
+        where. Explicit `null` (unassign) passes untouched: clearing an owner
+        needs no roster, and refusing it would strand a case on somebody who
+        left.
+      */
+      if (
+        typeof change.assigneeId === 'string' &&
+        !staff.some((member) => member.id === change.assigneeId)
+      ) {
+        return null;
+      }
+
       const moved = transitionIncident(report, change, ctx.learnerId, now);
       await ports.saveIncident(moved);
 
@@ -572,10 +737,51 @@ export async function triageIncident(
         await ports.fanOutIncident(moved);
       }
 
-      return triageQueueFrom([moved], now).rows[0] ?? null;
+      return triageQueueFrom([moved], now, ctx.learnerId, staff).rows[0] ?? null;
     },
     // Same wall as the queue read: a lifecycle move is MORE staff-shaped than a
     // read, and it writes the audit trail — never a family session's to write.
+    { requires: 'write', requiresMembership: ['owner', 'manager'] },
+  );
+}
+
+/**
+ * The org queue's note-append — the contract's secondary action, through the
+ * same append-only door as `appendTutorIncidentNote` one scope up.
+ *
+ * The identity check the tutor variant runs against `reporterId` has no
+ * analogue here because the WALL is different: this is staff work behind
+ * `requiresMembership`, the same gate as the queue read and the triage move,
+ * set here so no route can lower it. The actor on the line is `ctx`'s, never
+ * input, and `saveIncident` still refuses any write that would shorten or
+ * rewrite what came before — a note can only grow the trail.
+ */
+export async function appendStaffIncidentNote(
+  auth: Auth,
+  headers: Headers,
+  incidentId: string,
+  note: string,
+  ports: Pick<TriagePorts, 'loadIncident' | 'saveIncident' | 'loadIncidentStaff'>,
+  now: Date = new Date(),
+): Promise<TriageRow | null> {
+  return protectedOperation(
+    auth,
+    headers,
+    async (ctx) => {
+      const report = await ports.loadIncident(incidentId);
+      if (report === null) return null;
+
+      const annotated = appendTimeline(report, {
+        at: now.toISOString(),
+        actor: ctx.learnerId,
+        action: 'noted',
+        note,
+      });
+      await ports.saveIncident(annotated);
+
+      const staff = ctx.orgId === undefined ? [] : await ports.loadIncidentStaff(ctx.orgId);
+      return triageQueueFrom([annotated], now, ctx.learnerId, staff).rows[0] ?? null;
+    },
     { requires: 'write', requiresMembership: ['owner', 'manager'] },
   );
 }

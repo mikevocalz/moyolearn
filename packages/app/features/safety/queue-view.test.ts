@@ -20,6 +20,9 @@ const row = (over: Partial<TriageRow> = {}): TriageRow => ({
   dueAt: '2026-08-29T09:00:00.000Z',
   breached: false,
   assigned: false,
+  assigneeName: null,
+  assignedToMe: false,
+  timeline: [],
   ...over,
 });
 
@@ -77,7 +80,16 @@ test('every category and status has a label — no raw slug reaches a screen', (
 
 test('an unowned row is named as unowned, which is the queue’s one action', () => {
   assert.equal(incidentQueueItemsFrom([row({ assigned: false })], NOW)[0]?.assignment, 'Nobody yet');
+  // An owner off today's roster reads as the plain fact, never a revived name.
   assert.equal(incidentQueueItemsFrom([row({ assigned: true })], NOW)[0]?.assignment, 'Assigned');
+});
+
+test('an owned row answers "whose is it" — you, or the roster name', () => {
+  const mine = row({ assigned: true, assigneeName: 'Sam Vega', assignedToMe: true });
+  assert.equal(incidentQueueItemsFrom([mine], NOW)[0]?.assignment, 'Yours');
+
+  const theirs = row({ assigned: true, assigneeName: 'Sam Vega' });
+  assert.equal(incidentQueueItemsFrom([theirs], NOW)[0]?.assignment, 'Sam Vega');
 });
 
 test('the interrupt banner is absent at zero and counts correctly above it', () => {

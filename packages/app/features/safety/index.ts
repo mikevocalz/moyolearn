@@ -17,6 +17,9 @@
 // SOT-KEYWORDS: safety index barrel domain public-api incident guardian triage queue screen org mobile
 export type {
   GuardianIncidentView,
+  StaffRosterEntry,
+  StaffTimelineActor,
+  StaffTimelineLine,
   TriageQueue,
   TriageRow,
   TutorIncidentView,
@@ -26,10 +29,14 @@ export { SafetyQueueScreen } from './screen';
 export { IncidentQueueContent } from './incident-queue-content';
 export { OrgSafetyContent } from './org-safety-content';
 export {
+  useAppendStaffNote,
   useIncidentQueue,
+  useStaffRoster,
   useTriageIncident,
   incidentQueueKey,
+  staffRosterKey,
   type IncidentQueueRead,
+  type StaffRosterRead,
   type TriageMove,
 } from './use-incident-queue.ts';
 export {

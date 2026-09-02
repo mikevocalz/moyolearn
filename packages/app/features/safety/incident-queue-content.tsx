@@ -12,12 +12,15 @@
 // interrupt — unassigned S4 — which is a count, not a filter.
 //
 // NOTHING HERE IS ACTIONABLE, and that is a decision rather than an omission.
-// Lifecycle moves live on the web Safety view (`org-safety-content.tsx`, the
-// org rail's Incident queue), where org.safety's contract puts triage. The
-// route's PATCH also accepts an assignee, but picking one needs a staff roster
-// no surface has a read for yet, and "assign to me" would mean posting the
-// caller's own identity from a client. So this is the day's exceptions,
-// legible at arm's length, and the moves stay on the web view.
+// Lifecycle moves, assignment and the note composer live on the web Safety
+// view (`org-safety-content.tsx`, the org rail's Incident queue), where
+// org.safety's contract puts triage — assignment stays web per its D note. A
+// staff roster read now exists (`GET /api/safety/staff`, fed by the same
+// member table the wall checks) and the service verifies every posted
+// assignee against it, so the deferral this comment used to record is closed
+// on the surface that owns the move. This stays the day's exceptions, legible
+// at arm's length: rows name their owner ("Yours", a roster name, or "Nobody
+// yet") and the moves stay on the web view.
 //
 // Mobbin: https://mobbin.com/screens/cf05d193-c232-4bd5-87f6-3f1d21db6603 (Matter
 // "Queue" — one flat sorted run under a title and a single summary chip; no

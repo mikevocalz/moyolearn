@@ -114,10 +114,26 @@ export interface IncidentQueueItem {
   clock: string;
   /** Drives the late marker, read from the server's verdict. */
   breached: boolean;
-  /** The queue's only call to action: a row nobody owns. */
+  /**
+   * Who owns the row — "Yours", the roster name, or the call to action
+   * ("Nobody yet"). Names arrive already resolved by the server projection;
+   * this file never maps an id to a person.
+   */
   assignment: string;
   /** ISO, formatted by the screen against the reader's locale. */
   occurredAt: string;
+}
+
+/**
+ * The contract's five-second "what is waiting on ME", answered in the row.
+ * "Yours" beats the viewer's own name because the queue is read by the person
+ * it addresses; a name with no roster entry behind it (the assignee left)
+ * falls back to the plain fact rather than a revived identity.
+ */
+function assignmentLine(row: TriageRow): string {
+  if (row.assignedToMe) return 'Yours';
+  if (row.assigneeName !== null) return row.assigneeName;
+  return row.assigned ? 'Assigned' : 'Nobody yet';
 }
 
 export function incidentQueueItemsFrom(
@@ -134,7 +150,7 @@ export function incidentQueueItemsFrom(
     status: STATUS_LABEL[row.status],
     clock: slaClock(row, now),
     breached: row.breached,
-    assignment: row.assigned ? 'Assigned' : 'Nobody yet',
+    assignment: assignmentLine(row),
     occurredAt: row.occurredAt,
   }));
 }

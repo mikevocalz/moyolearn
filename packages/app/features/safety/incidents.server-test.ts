@@ -14,7 +14,7 @@
 //
 // `.server-test.ts` because the service opens with `import 'server-only'`.
 // SOT: docs/pack/31-grade-voice-safety-incidents.md §4.2 §5.2 §5.3
-// SOT-KEYWORDS: incident access test guardian own learner guardian visible ward wall triage queue sla breach unassigned s4
+// SOT-KEYWORDS: incident access test guardian own learner guardian visible ward wall triage queue sla breach unassigned s4 assignee roster staff timeline
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
@@ -29,12 +29,18 @@ import { setOperationSink } from '../../core/telemetry.ts';
 import {
   guardianIncidentsFrom,
   incidentTriageQueue,
+  triageIncident,
   triageQueueFrom,
   tutorIncidentsFrom,
   CONVERSATION_STARTERS,
+  type IncidentStaffMember,
 } from './incidents.service.ts';
 
 const NOW = new Date('2026-08-27T16:00:00.000Z');
+
+/** The projection's viewer/roster arguments where neither matters to a test. */
+const NOBODY = 'viewer_0';
+const NO_STAFF: readonly IncidentStaffMember[] = [];
 
 const report = (
   subjectLearnerId: string,
@@ -174,7 +180,7 @@ describe('doc 31 §5.3 — the triage queue', () => {
     const later = report('learner_2', 'bullying');
     const noClock = transitionIncident(report('learner_3', 'profanity'), { severity: 'S1' }, 's', NOW);
 
-    const queue = triageQueueFrom([noClock, later, soon], NOW);
+    const queue = triageQueueFrom([noClock, later, soon], NOW, NOBODY, NO_STAFF);
     assert.deepEqual(
       queue.rows.map((row) => row.severity),
       ['S4', 'S3', 'S1'],
@@ -187,18 +193,161 @@ describe('doc 31 §5.3 — the triage queue', () => {
     const assigned = transitionIncident(open, { assigneeId: 'staff_7' }, 'staff_7', NOW);
     const closed = transitionIncident(open, { status: 'closed' }, 'staff_7', NOW);
 
-    assert.equal(triageQueueFrom([open], NOW).unassignedS4, 1);
-    assert.equal(triageQueueFrom([assigned], NOW).unassignedS4, 0);
-    assert.equal(triageQueueFrom([closed], NOW).unassignedS4, 0);
+    assert.equal(triageQueueFrom([open], NOW, NOBODY, NO_STAFF).unassignedS4, 1);
+    assert.equal(triageQueueFrom([assigned], NOW, NOBODY, NO_STAFF).unassignedS4, 0);
+    assert.equal(triageQueueFrom([closed], NOW, NOBODY, NO_STAFF).unassignedS4, 0);
   });
 
   it('marks a breach only while somebody still owes an answer', () => {
     const late = new Date(NOW.getTime() + 49 * 3_600_000);
     const open = report('learner_1', 'bullying');
-    assert.equal(triageQueueFrom([open], late).rows[0]?.breached, true);
+    assert.equal(triageQueueFrom([open], late, NOBODY, NO_STAFF).rows[0]?.breached, true);
 
     const done = transitionIncident(open, { status: 'resolved' }, 'staff_7', NOW);
-    assert.equal(triageQueueFrom([done], late).rows[0]?.breached, false);
+    assert.equal(triageQueueFrom([done], late, NOBODY, NO_STAFF).rows[0]?.breached, false);
+  });
+
+  it('names the assignee off the roster, and answers "assigned to me" for the viewer', () => {
+    const roster: readonly IncidentStaffMember[] = [
+      { id: 'staff_7', name: 'Sam Vega', role: 'manager' },
+    ];
+    const assigned = transitionIncident(
+      report('learner_1', 'bullying'),
+      { assigneeId: 'staff_7' },
+      'staff_7',
+      NOW,
+    );
+
+    const theirs = triageQueueFrom([assigned], NOW, 'owner_1', roster).rows[0];
+    assert.equal(theirs?.assigneeName, 'Sam Vega');
+    assert.equal(theirs?.assignedToMe, false);
+
+    const mine = triageQueueFrom([assigned], NOW, 'staff_7', roster).rows[0];
+    assert.equal(mine?.assignedToMe, true);
+
+    // An assignee the roster no longer holds keeps the boolean, drops the name.
+    const departed = triageQueueFrom([assigned], NOW, 'owner_1', NO_STAFF).rows[0];
+    assert.equal(departed?.assigned, true);
+    assert.equal(departed?.assigneeName, null);
+  });
+
+  it('coarsens staff timeline actors to roles — no auth id reaches the queue', () => {
+    const roster: readonly IncidentStaffMember[] = [
+      { id: 'staff_7', name: 'Sam Vega', role: 'manager' },
+    ];
+    const moved = transitionIncident(
+      report('learner_1', 'bullying'),
+      { status: 'triaged' },
+      'staff_7',
+      NOW,
+    );
+
+    const row = triageQueueFrom([moved], NOW, 'owner_1', roster).rows[0];
+    assert.ok(row);
+    assert.deepEqual(
+      row.timeline.map((line) => line.actor),
+      // The filing guardian coarsens to the reporterRole the row stores; the
+      // triaging manager to their roster role. Neither line carries an id.
+      ['guardian', 'manager'],
+    );
+
+    const own = triageQueueFrom([moved], NOW, 'staff_7', roster).rows[0];
+    assert.equal(own?.timeline[1]?.actor, 'you');
+  });
+});
+
+describe('doc 31 §5.3 — the assignee is server truth, never a client claim', () => {
+  /*
+    A staff-shaped session, faked at the same seams production uses: the
+    session read, the member-table role read and the subscription read all go
+    through the `Auth` instance, so this one object drives the REAL
+    `protectedOperation` — host step, membership wall, plan gate — without a
+    database. `object as Auth` because the three touched paths are the ones
+    production touches and `Auth`'s full surface is Better Auth's.
+  */
+  const staffAuth = (): Auth => {
+    const value: object = {
+      api: {
+        getSession: () =>
+          Promise.resolve({ user: { id: 'staff_7', guardianManaged: false, orgId: 'org_1' } }),
+      },
+      $context: Promise.resolve({
+        adapter: {
+          findMany: ({ model }: { model: string }) => {
+            if (model === 'member') return Promise.resolve([{ role: 'manager' }]);
+            if (model === 'subscription') {
+              return Promise.resolve([
+                { plan: 'ops-studio', status: 'active', referenceId: 'org_1', periodEnd: null },
+              ]);
+            }
+            return Promise.resolve([]);
+          },
+        },
+      }),
+    };
+    return value as Auth;
+  };
+
+  const roster: readonly IncidentStaffMember[] = [
+    { id: 'staff_7', name: 'Sam Vega', role: 'manager' },
+    { id: 'owner_1', name: 'Ada Okafor', role: 'owner' },
+  ];
+
+  it('refuses an assignee who is not current staff of the caller’s org, and never writes', async () => {
+    setOperationSink(() => {});
+    try {
+      let saves = 0;
+      const row = await triageIncident(
+        staffAuth(),
+        new Headers(),
+        report('learner_1', 'bullying').incidentId,
+        { assigneeId: 'intruder_9' },
+        {
+          loadIncidentQueue: async () => [],
+          loadIncident: async () => report('learner_1', 'bullying'),
+          loadIncidentStaff: async () => roster,
+          saveIncident: async () => {
+            saves += 1;
+          },
+          fanOutIncident: async () => {},
+        },
+        NOW,
+      );
+      // The same null as a swept record — no oracle over who is staff where.
+      assert.equal(row, null);
+      assert.equal(saves, 0, 'a refused assignment must not touch the record');
+    } finally {
+      setOperationSink(null);
+    }
+  });
+
+  it('accepts an assignee picked from the roster — including the caller themselves', async () => {
+    setOperationSink(() => {});
+    try {
+      let saves = 0;
+      const row = await triageIncident(
+        staffAuth(),
+        new Headers(),
+        report('learner_1', 'bullying').incidentId,
+        { assigneeId: 'staff_7' },
+        {
+          loadIncidentQueue: async () => [],
+          loadIncident: async () => report('learner_1', 'bullying'),
+          loadIncidentStaff: async () => roster,
+          saveIncident: async () => {
+            saves += 1;
+          },
+          fanOutIncident: async () => {},
+        },
+        NOW,
+      );
+      assert.ok(row);
+      assert.equal(saves, 1);
+      assert.equal(row.assignedToMe, true, '"assign to me" is the caller picking themselves');
+      assert.equal(row.assigneeName, 'Sam Vega');
+    } finally {
+      setOperationSink(null);
+    }
   });
 });
 
@@ -221,10 +370,14 @@ describe('doc 31 §5.3 — the queue is staff-only, and a paying family is not s
               reads += 1;
               return [report('learner_1', 'bullying')];
             },
+            loadIncidentStaff: async () => {
+              reads += 1;
+              return [];
+            },
           }),
         MembershipDenied,
       );
-      assert.equal(reads, 0, 'a refused caller must not cause a queue read');
+      assert.equal(reads, 0, 'a refused caller must not cause a queue or roster read');
     } finally {
       delete process.env.NEXT_PUBLIC_AUTH_MODE;
       setOperationSink(null);

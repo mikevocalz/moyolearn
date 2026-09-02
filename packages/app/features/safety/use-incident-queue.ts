@@ -25,7 +25,7 @@
 // SOT-KEYWORDS: safety incident queue hook tanstack query triage org mobile web mutation patch lifecycle sla
 
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { TriageQueue, TriageRow } from './incidents.service.ts';
+import type { StaffRosterEntry, TriageQueue, TriageRow } from './incidents.service.ts';
 
 const API_URL =
   process.env.NEXT_PUBLIC_APP_URL ??
@@ -34,6 +34,7 @@ const API_URL =
 
 /** Key factory — inline queryKey arrays are a lint error (doc 11 §4). */
 export const incidentQueueKey = () => ['safety', 'incident-queue'] as const;
+export const staffRosterKey = () => ['safety', 'staff-roster'] as const;
 
 const EMPTY: TriageQueue = { rows: [], unassignedS4: 0 };
 
@@ -84,17 +85,50 @@ export function useIncidentQueue(): IncidentQueueRead {
 }
 
 /**
- * One lifecycle move, as the PATCH accepts it. `assigneeId` is deliberately
- * absent: no staff-roster read exists to pick a person from, and posting the
- * caller's own id would make identity client input — the deferral is recorded
- * in `org-safety-content.tsx`'s header. `resolution` travels with the closing
+ * One lifecycle move, as the PATCH accepts it. `assigneeId` carries only a
+ * value picked off `useStaffRoster`'s server-verified list (or `null` to
+ * unassign) — and the service re-checks it against the same member read
+ * before writing, so a fabricated id gets a 404, never an owner. "Assign to
+ * me" is picking the roster row the SERVER marked `me`, not posting the
+ * caller's identity from a client. `resolution` travels with the closing
  * moves because the guardian's "What happens next" reads it (doc 31 §5.2).
  */
 export interface TriageMove {
   incidentId: string;
   status?: TriageRow['status'];
   severity?: TriageRow['severity'];
+  assigneeId?: string | null;
   resolution?: string;
+}
+
+export interface StaffRosterRead {
+  staff: readonly StaffRosterEntry[];
+  loading: boolean;
+  error: Error | null;
+}
+
+/**
+ * The assignment control's roster, from `GET /api/safety/staff` — id, name,
+ * role and the server-marked `me` for each owner/manager. Read by the triage
+ * panel only, which renders solely for callers the queue itself admitted, so
+ * a 403 here is the same role wall the queue already told; it surfaces as an
+ * error and the picker states the roster is unavailable rather than guessing.
+ */
+export function useStaffRoster(): StaffRosterRead {
+  const { data, isPending, error } = useQuery({
+    queryKey: staffRosterKey(),
+    queryFn: async ({ signal }): Promise<readonly StaffRosterEntry[]> => {
+      const response = await fetch(`${API_URL}/api/safety/staff`, {
+        credentials: 'include',
+        signal,
+      });
+      if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
+      const body = (await response.json()) as { staff: readonly StaffRosterEntry[] };
+      return body.staff;
+    },
+  });
+
+  return { staff: data ?? [], loading: isPending, error: error ?? null };
 }
 
 export function useTriageIncident() {
@@ -117,6 +151,33 @@ export function useTriageIncident() {
         would also refetch the tutor filed-incident list on every queue move,
         and that list belongs to a different role's session entirely.
       */
+      void client.invalidateQueries({ queryKey: incidentQueueKey(), exact: true });
+    },
+  });
+}
+
+/**
+ * The staff note-append, to the incidents route's POST — the tutor append's
+ * wire shape (`{incidentId, note}`, nothing identifying) behind the staff
+ * wall. Same no-optimistic-update rule as every audit-trail write here, and
+ * the composer's text survives a failure in the screen's own state.
+ */
+export function useAppendStaffNote() {
+  const client = useQueryClient();
+  return useMutation({
+    mutationFn: async (input: { incidentId: string; note: string }): Promise<TriageRow> => {
+      const response = await fetch(`${API_URL}/api/safety/incidents`, {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(input),
+      });
+      if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
+      const body = (await response.json()) as { incident: TriageRow };
+      return body.incident;
+    },
+    onSuccess: () => {
+      // Exact for the reason the triage mutation records.
       void client.invalidateQueries({ queryKey: incidentQueueKey(), exact: true });
     },
   });
