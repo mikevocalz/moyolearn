@@ -1,5 +1,6 @@
 # ADR 105: Tutor web drops the Schedule nav item — Today is the sessions timeline
-Status: proposed · Date: 2026-09-01
+Status: accepted · Date: 2026-09-01
+Accepted: 2026-09-02 — implemented in code.
 
 <!--
 What it is: ADR-e of the G-navigation-maps §6 register — whether the tutor web

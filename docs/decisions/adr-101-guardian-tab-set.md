@@ -1,5 +1,6 @@
 # ADR 101: Guardian mobile keeps doc 36's four tabs — Home · Reports · Alerts · Family
-Status: proposed · Date: 2026-09-01
+Status: accepted · Date: 2026-09-01
+Accepted: 2026-09-02 — implemented in code (`4dcdbdb`: guardian ITEMS reconciled to doc 36 §3.2's four tabs; calendar demoted to stack route; messages/account tabs retired).
 
 <!--
 What it is: ADR-a of the G-navigation-maps §6 register — whether guardian mobile

@@ -1,5 +1,6 @@
 # ADR 106: The account sheet is the mobile chrome form of Profile/You — not a sixth destination
-Status: proposed · Date: 2026-09-01
+Status: accepted · Date: 2026-09-01
+Accepted: 2026-09-02 — implemented in code.
 
 <!--
 What it is: ADR-f of the G-navigation-maps §6 register — record-keeping ADR

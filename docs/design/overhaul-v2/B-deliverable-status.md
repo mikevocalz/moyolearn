@@ -19,7 +19,7 @@ SOT-KEYWORDS: overhaul, deliverable-status, reconciliation, do-not-redo, stalene
 | I/J Web rail + utility bar map | **PARTIAL** | `docs/design/mobbin/web-role-shells.md` (rail decision record); no utility-bar map; DashboardShell slots are the seam |
 | K Tablet/AdaptivePanes map | **DONE (doc-level)** | doc 37 §3.3 + `pane-audit-37.md` (§B historical — subject dir deleted, module promoted). Adoption gap: 2 consumers, no app mounts |
 | L Journey maps | **PARTIAL** | Front door only (doc 38 §1). The five `seq-*.md` files are service sequences, not user journeys. Core learner loop / guardian weekly / tutor day / org ops absent |
-| M Flow Contracts per screen | **PARTIAL** | Term unused in repo (grep: 0). Doc 38 §5 per-screen specs are de-facto contracts for 34 front-door screens — adopt as the format seed, don't re-author |
+| M Flow Contracts per screen | **DONE (fresh)** | `design/screens/` — 63 contracts: 61 covering every D-inventory product row (commits c2d470b + 0ec080f) + the 2 marketing disposition rows (2026-09-02). FD-*/PW-* screens have no directory by design — doc 38 §5's per-screen specs are their contracts (design/screens/README.md line 16; 00-binding-decisions "reuse, don't re-author") |
 | N Mobbin research matrix | **PARTIAL** | DONE adopt/refuse for 3 app surfaces (`docs/design/mobbin/`: capture-flow, ocr-review, web-role-shells) + 9 marketing passes (`docs/site/mobbin/`). Front door is link-level only. **8 flows explicitly deferred** (never inspected — plugin was down): Khan ×2, Duolingo ×2, Google homework, Quizlet scan, ChatGPT Voice ×2 (`tutor-session-research.md` §4) |
 | O Competitor mobile-vs-web summary | **ABSENT** | — |
 | P Design-system audit | **DONE — authoritative** | `ui-inventory.md`, `ui-drift-report.md` (+addenda), `ui-migration-plan.md`, `ui-promotions.md`; regenerable via `pnpm ui:sweep`. Headline numbers superseded by addenda |
@@ -53,4 +53,4 @@ SOT-KEYWORDS: overhaul, deliverable-status, reconciliation, do-not-redo, stalene
 3. Tenant axis → full tenant×role×band matrix.
 4. Journey maps beyond the front door (chained contracts, §4.4 of the overhaul prompt).
 5. The 8 deferred Mobbin flow inspections.
-6. Band population fix (live auth never sets `gradeBand`) — blocks every band-adaptive feature in production.
+6. ~~Band population fix~~ **FIXED (2026-09-01/02)**: `4dcdbdb` — live auth now reads `users.gradeBand` via `GET /api/learner/profile` in `providers/session/live.tsx` and passes it to `setPersona`; mobile capture route wraps `CaptureScreen` with the session band. `8fb2b78` — web capture reads the session band; context/scope switchers preserve `gradeBand` across switches. (A-repo-audit "Band handling" defects (a)+(b), both closed — resolution note appended there.)

@@ -1,5 +1,6 @@
 # ADR 102: The teacher shell exists, with four tabs — Home · Classes · Assign · You
-Status: proposed · Date: 2026-09-01
+Status: accepted · Date: 2026-09-01
+Accepted: 2026-09-02 — implemented on web; the mobile exists-only re-cut lands in the same push.
 
 <!--
 What it is: ADR-b of the G-navigation-maps §6 register — whether a teacher

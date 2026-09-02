@@ -1,5 +1,6 @@
 # ADR 104: The district mobile tab bar retires — district is web-only, per doc 36 §3.5
-Status: proposed · Date: 2026-09-01
+Status: accepted · Date: 2026-09-01
+Accepted: 2026-09-02 — implemented in code (`4dcdbdb`: district mobile tab bar retired, guarded minimal stack).
 
 <!--
 What it is: ADR-d of the G-navigation-maps §6 register — whether a district

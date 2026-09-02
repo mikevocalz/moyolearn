@@ -96,6 +96,8 @@ Band type `AgeBand = 'young'|'child'|'teen'|'adult'` (exported from `packages/ap
 
 The band-adaptive learner tab layout itself (`(learner)/(tabs)/_layout.tsx`) is the most complete layout: 3/4/5 tabs by band, raised center `capture` with `raised: true` on every band, `min-h-target-*` per band, off-band routes `href: null` (deep-link-proof).
 
+> **Resolution (2026-09-02) — both defects fixed post-audit; findings above kept as the point-in-time snapshot.** (a) fixed in `4dcdbdb`: `providers/session/live.tsx` now fetches the band via `GET /api/learner/profile` (protectedOperation, VoiceBand→AgeBand inverse mapping) and passes `gradeBand` to `setPersona`. (b) fixed in `4dcdbdb` (mobile: `(learner)/(tabs)/capture.tsx` wraps `CaptureScreen` with the session band) + `8fb2b78` (web: `apps/web/app/(site)/capture/page.tsx` reads the session band; context/scope switchers preserve `gradeBand` across switches).
+
 ### Header/chrome gaps
 - `ShellHeader` avatar is **dead code** — rendered only when `profileHref` passed; zero call sites pass it.
 - No notifications affordance in any mobile header. No tenant identity/switcher in mobile chrome (`ScopeSwitcher` is web-only). Titles come from a `TITLES` path map; teacher/school/district/tutor Stack layouts pass `titles={{}}` so headers show bare fallback.

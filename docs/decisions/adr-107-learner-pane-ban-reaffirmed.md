@@ -1,5 +1,6 @@
 # ADR 107: The learner pane ban holds — no split learner UI, any band, any width
-Status: proposed · Date: 2026-09-01
+Status: accepted · Date: 2026-09-01
+Accepted: 2026-09-02 — the ban is the decision and it holds; nothing to build, this file is the citation target.
 
 <!--
 What it is: ADR-g of the G-navigation-maps §6 register — the standing decision

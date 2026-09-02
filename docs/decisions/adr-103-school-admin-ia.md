@@ -1,5 +1,6 @@
 # ADR 103: School admin is web-first; mobile parks at Overview-only; no More tab, ever
-Status: proposed · Date: 2026-09-01
+Status: accepted · Date: 2026-09-01
+Accepted: 2026-09-02 — implemented on web; the mobile exists-only re-cut lands in the same push.
 
 <!--
 What it is: ADR-c of the G-navigation-maps §6 register — the school-admin IA
