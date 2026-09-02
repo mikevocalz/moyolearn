@@ -2,7 +2,7 @@
   "name": "moyo",
   "version": "0.1.0",
   "private": true,
-  "description": "Moyo — AI tutoring that helps children learn it by heart. Universal Expo + Next.js (Payload) monorepo.",
+  "description": "Moyo \u2014 AI tutoring that helps children learn it by heart. Universal Expo + Next.js (Payload) monorepo.",
   "license": "MIT",
   "packageManager": "pnpm@10.32.1",
   "engines": {
@@ -41,7 +41,8 @@
   "pnpm": {
     "overrides": {
       "@payloadcms/plugin-cloud-storage": "4.0.0-canary.29",
-      "@payloadcms/translations": "4.0.0-canary.29"
+      "@payloadcms/translations": "4.0.0-canary.29",
+      "expo-modules-core": "57.0.12"
     },
     "patchedDependencies": {
       "@seshuk/payload-storage-bunny@3.0.0": "patches/@seshuk__payload-storage-bunny@3.0.0.patch",
