@@ -21,6 +21,7 @@ import { TutorMessages } from './collections/TutorMessages';
 import { TutorSessions } from './collections/TutorSessions';
 import { StudentModelFacts } from './collections/StudentModelFacts';
 import { Leads } from './collections/Leads';
+import { Sessions } from './collections/Sessions';
 import { Families } from './collections/Families';
 import { Organizations } from './collections/Organizations';
 import { Enrollments } from './collections/Enrollments';
@@ -164,6 +165,12 @@ export default buildConfig({
     // never relationships, so the wall above stays structural.
     Families,
     Leads,
+    // Doc 01 §7.1's calendar-engine core event (ADR-110): the scheduled HUMAN
+    // tutoring session, carrying the session→tutor edge ADR-108 deferred.
+    // Beside Leads because doc 28 §2 places Session on the CRM side of the
+    // wall — scheduling context, never learning content; the AI conversation
+    // stays `tutorSessions` above, joined by nothing.
+    Sessions,
   ],
   db: postgresAdapter({
     pool: {

@@ -301,6 +301,50 @@ const ENGAGEMENTS: readonly WtEngagement[] = [
   { tutorCell: 'biz-tutor-2', learnerUsername: 'wt_deniz_bp', orgSlug: 'wt-brightpath' },
 ];
 
+/**
+ * Human-tutoring sessions (ADR-110's calendar rows). No creation UI exists yet
+ * — the booking write path is the ADR's recorded non-goal — so the walkthrough
+ * cast's rows enter here, the same "ops/seed for now" posture as the
+ * engagements above. Every pair MIRRORS an engagement row so the roster, the
+ * pipeline and the calendar tell one story: Rosa sessions her solo roster,
+ * Brightpath's learners session with their own tutors. Day offsets are
+ * relative to the run so the ops hero's "today" and the this-week window both
+ * hold rows on any day a walkthrough happens.
+ */
+interface WtSession {
+  tutorCell: string;
+  learnerUsername: string;
+  orgSlug: string;
+  subject: string;
+  /** 0 = today; positive = later this week. */
+  dayOffset: number;
+  startHour: number;
+  startMinute: number;
+  durationMin: number;
+  mode: 'virtual' | 'in-person';
+  room?: string;
+  needsAttention?: boolean;
+}
+
+const SESSIONS: readonly WtSession[] = [
+  { tutorCell: 'solo-tutor', learnerUsername: 'wt_ivy_solo', orgSlug: 'wt-solo-tutoring', subject: 'Fractions', dayOffset: 0, startHour: 9, startMinute: 0, durationMin: 45, mode: 'virtual' },
+  { tutorCell: 'solo-tutor', learnerUsername: 'wt_noel_solo', orgSlug: 'wt-solo-tutoring', subject: 'Algebra I', dayOffset: 0, startHour: 10, startMinute: 0, durationMin: 45, mode: 'in-person', room: 'Studio A', needsAttention: true },
+  { tutorCell: 'solo-tutor', learnerUsername: 'wt_kofi_solo', orgSlug: 'wt-solo-tutoring', subject: 'Pre-Calculus', dayOffset: 0, startHour: 14, startMinute: 30, durationMin: 45, mode: 'virtual' },
+  { tutorCell: 'solo-tutor', learnerUsername: 'wt_ivy_solo', orgSlug: 'wt-solo-tutoring', subject: 'Fractions', dayOffset: 2, startHour: 16, startMinute: 0, durationMin: 45, mode: 'virtual' },
+  { tutorCell: 'biz-tutor-1', learnerUsername: 'wt_luca_bp', orgSlug: 'wt-brightpath', subject: 'Reading', dayOffset: 0, startHour: 13, startMinute: 0, durationMin: 45, mode: 'virtual' },
+  // Deniz is the pipeline's At-risk row; the flag here is the same doc 28 §6
+  // business signal, so the hero's attention branch renders from real data.
+  { tutorCell: 'biz-tutor-2', learnerUsername: 'wt_deniz_bp', orgSlug: 'wt-brightpath', subject: 'Chemistry', dayOffset: 0, startHour: 15, startMinute: 0, durationMin: 45, mode: 'in-person', room: 'Room 2', needsAttention: true },
+  { tutorCell: 'biz-tutor-2', learnerUsername: 'wt_hana_bp', orgSlug: 'wt-brightpath', subject: 'Geometry', dayOffset: 2, startHour: 11, startMinute: 0, durationMin: 45, mode: 'virtual' },
+];
+
+/** Display name off the LEARNERS cast — the row stores text, never a join. */
+const learnerNameOf = (username: string): string => {
+  const learner = LEARNERS.find((row) => row.username === username);
+  if (!learner) throw new Error(`SESSIONS names an unknown learner: ${username}`);
+  return learner.name;
+};
+
 const ENROLLED_AT = '2026-08-24T09:00:00.000Z';
 const CONSENT = {
   method: 'email-plus' as const,
@@ -327,6 +371,12 @@ if (DRY_RUN) {
   for (const [slug, rows] of Object.entries(LEADS)) console.log(`leads     ${slug} (${rows.length})`);
   for (const engagement of ENGAGEMENTS) {
     console.log(`engage    ${engagement.tutorCell} ↔ ${engagement.learnerUsername} @ ${engagement.orgSlug}`);
+  }
+  for (const session of SESSIONS) {
+    const when = session.dayOffset === 0 ? 'today' : `+${session.dayOffset}d`;
+    console.log(
+      `session   ${session.tutorCell} → ${learnerNameOf(session.learnerUsername).padEnd(14)} ${session.subject.padEnd(14)} ${when} ${String(session.startHour).padStart(2, '0')}:${String(session.startMinute).padStart(2, '0')} (${session.mode}) @ ${session.orgSlug}`,
+    );
   }
   console.log(`admin     ${email('platform-admin')} (Payload users collection)`);
   process.exit(0);
@@ -373,6 +423,8 @@ for (const file of [
   'handoff_codes_additive.sql',
   // ADR-108's roster edge — the engagements block below writes into it.
   'tutor_engagements_additive.sql',
+  // ADR-110's calendar rows — the sessions block below writes into it.
+  'sessions_additive.sql',
 ]) {
   await pool.query(await readFile(resolve(migrationsDir, file), 'utf8'));
   console.log(`migrate  ~ ${file}`);
@@ -586,6 +638,51 @@ for (const engagement of ENGAGEMENTS) {
     });
     console.log(`engage   + ${engagement.tutorCell} ↔ ${engagement.learnerUsername} @ ${engagement.orgSlug}`);
   }
+}
+
+/* ── Sessions — ADR-110's calendar rows ────────────────────────────────── */
+
+// Guarded per ORG like the leads block, not per row: times are relative to the
+// run day, so a row-level find-first would append a fresh "today" on every
+// re-run and the calendar would silt up. An org that already has sessions is
+// left alone — reseeding a moved walkthrough day is a manual truncate, the
+// same trade the leads guard makes.
+for (const orgSlug of new Set(SESSIONS.map((session) => session.orgSlug))) {
+  const existing = await payload.find({
+    collection: 'sessions',
+    where: { orgId: { equals: orgSlug } },
+    limit: 1,
+  });
+  if (existing.docs.length > 0) {
+    console.log(`session  = ${orgSlug} (already has a calendar, left alone)`);
+    continue;
+  }
+  for (const session of SESSIONS.filter((row) => row.orgSlug === orgSlug)) {
+    const start = new Date();
+    start.setDate(start.getDate() + session.dayOffset);
+    start.setHours(session.startHour, session.startMinute, 0, 0);
+    const end = new Date(start.getTime() + session.durationMin * 60_000);
+    await payload.create({
+      collection: 'sessions',
+      data: {
+        orgId: session.orgSlug,
+        // The session→tutor edge (ADR-108's recorded gap): the tutor's REAL
+        // Better Auth id, so the "my sessions" incident scope and any future
+        // My-schedule read exercise the live join, not a fixture.
+        tutorAuthId: adultIds.get(session.tutorCell)!,
+        learner: learnerNameOf(session.learnerUsername),
+        learnerRef: learnerIds.get(session.learnerUsername) ?? null,
+        subject: session.subject,
+        scheduledAt: start.toISOString(),
+        endsAt: end.toISOString(),
+        status: 'scheduled',
+        mode: session.mode,
+        room: session.room ?? null,
+        needsAttention: session.needsAttention ?? false,
+      },
+    });
+  }
+  console.log(`session  + ${orgSlug} (${SESSIONS.filter((row) => row.orgSlug === orgSlug).length})`);
 }
 
 /* ── Subscriptions — the entitlement variants ──────────────────────────── */

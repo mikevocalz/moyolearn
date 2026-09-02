@@ -89,6 +89,7 @@ export interface Config {
     'assignment-completions': AssignmentCompletion;
     families: Family;
     leads: Lead;
+    sessions: Session;
     'payload-kv': PayloadKv;
     'payload-locked-documents': PayloadLockedDocument;
     'payload-preferences': PayloadPreference;
@@ -118,6 +119,7 @@ export interface Config {
     'assignment-completions': AssignmentCompletionsSelect<false> | AssignmentCompletionsSelect<true>;
     families: FamiliesSelect<false> | FamiliesSelect<true>;
     leads: LeadsSelect<false> | LeadsSelect<true>;
+    sessions: SessionsSelect<false> | SessionsSelect<true>;
     'payload-kv': PayloadKvSelect<false> | PayloadKvSelect<true>;
     'payload-locked-documents': PayloadLockedDocumentsSelect<false> | PayloadLockedDocumentsSelect<true>;
     'payload-preferences': PayloadPreferencesSelect<false> | PayloadPreferencesSelect<true>;
@@ -820,6 +822,27 @@ export interface Lead {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sessions".
+ */
+export interface Session {
+  id: number;
+  orgId: string;
+  tutorAuthId: string;
+  learner: string;
+  learnerRef?: string | null;
+  subject?: string | null;
+  scheduledAt: string;
+  endsAt: string;
+  status: 'scheduled' | 'completed' | 'canceled' | 'missed';
+  mode: 'virtual' | 'in-person';
+  joinUrl?: string | null;
+  room?: string | null;
+  needsAttention?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv".
  */
 export interface PayloadKv {
@@ -929,6 +952,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'leads';
         value: number | Lead;
+      } | null)
+    | ({
+        relationTo: 'sessions';
+        value: number | Session;
       } | null);
   globalSlug?: string | null;
   user: {
@@ -1374,6 +1401,26 @@ export interface LeadsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "sessions_select".
+ */
+export interface SessionsSelect<T extends boolean = true> {
+  orgId?: T;
+  tutorAuthId?: T;
+  learner?: T;
+  learnerRef?: T;
+  subject?: T;
+  scheduledAt?: T;
+  endsAt?: T;
+  status?: T;
+  mode?: T;
+  joinUrl?: T;
+  room?: T;
+  needsAttention?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "payload-kv_select".
  */
 export interface PayloadKvSelect<T extends boolean = true> {
@@ -1451,7 +1498,8 @@ export interface CollectionQueryWidget {
       | 'assignments'
       | 'assignment-completions'
       | 'families'
-      | 'leads';
+      | 'leads'
+      | 'sessions';
     where?:
       | {
           [k: string]: unknown;
@@ -1497,6 +1545,7 @@ export interface ActivityWidget {
           | 'assignment-completions'
           | 'families'
           | 'leads'
+          | 'sessions'
         )[]
       | null;
   };

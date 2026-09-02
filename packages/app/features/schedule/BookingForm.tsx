@@ -56,9 +56,15 @@ export function BookingForm({ onDone, onOpenEditorSettings }: BookingFormProps) 
       notes: '',
     },
     onSubmit: async ({ value }) => {
-      // Booking creation is not backed by a collection yet, so the new slot is
-      // recorded as an override and selected — the same path the grid and the
-      // slot list already read. Swap for a mutation when Payload lands.
+      // Persistence stays DEFERRED, now by decision rather than by absence:
+      // ADR-110 landed the `sessions` collection this submit would write, but
+      // recorded this form's write path as a non-goal — the instructor chips
+      // and slot list below run entirely on DEMO_RESOURCES/DEMO_DAY, so a real
+      // create would post demo resource ids into a real calendar, and the
+      // write path is where doc 28 §5's zero-double-booking invariant must
+      // land. Until a scheduling surface reads real org tutors and
+      // availability, the new slot is recorded as an override and selected —
+      // the same path the grid and the slot list already read.
       if (value.slot) {
         const start = new Date(value.slot);
         moveEvent(`booking-${start.toISOString()}`, {

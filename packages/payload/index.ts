@@ -30,6 +30,16 @@ export type {
 // `tutor-engagement.repository.ts` is the one place that reads it.
 export type { TutorEngagement } from './src/payload-types';
 
+/*
+  ADR-110's human-tutoring session ROW, and the `SessionTranscript` collision
+  shape again: `@acme/app` exports a `Session` too, and that one is the ops
+  hero's VIEW ("09:00–09:45", display names, 'Virtual'). The row carries a
+  numeric Payload id, ISO timestamps and doc 10 §2.3's lowercase mode
+  literals; `sessions.repository.ts` aliases this one and owns the
+  translation.
+*/
+export type { Session } from './src/payload-types';
+
 // The Loop A row shapes, named so the repositories that decode them do not have
 // to reach through a deep path into the generated file. `SessionTranscript` is
 // the ROW; `@acme/student-model`'s type of the same name is the DOMAIN object
