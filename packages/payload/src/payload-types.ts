@@ -83,6 +83,7 @@ export interface Config {
     sessionSummaries: SessionSummary;
     organizations: Organization;
     enrollments: Enrollment;
+    tutorEngagements: TutorEngagement;
     classes: Class;
     assignments: Assignment;
     'assignment-completions': AssignmentCompletion;
@@ -110,6 +111,7 @@ export interface Config {
     sessionSummaries: SessionSummariesSelect<false> | SessionSummariesSelect<true>;
     organizations: OrganizationsSelect<false> | OrganizationsSelect<true>;
     enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
+    tutorEngagements: TutorEngagementsSelect<false> | TutorEngagementsSelect<true>;
     classes: ClassesSelect<false> | ClassesSelect<true>;
     assignments: AssignmentsSelect<false> | AssignmentsSelect<true>;
     'assignment-completions': AssignmentCompletionsSelect<false> | AssignmentCompletionsSelect<true>;
@@ -630,6 +632,36 @@ export interface Enrollment {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tutorEngagements".
+ */
+export interface TutorEngagement {
+  id: number;
+  /**
+   * The Better Auth user id of the tutor.
+   */
+  tutorAuthId: string;
+  /**
+   * The Better Auth user id of the learner.
+   */
+  learnerAuthId: string;
+  /**
+   * The org slug the engagement is held in.
+   */
+  orgId: string;
+  status: 'active' | 'ended';
+  /**
+   * When the engagement began (or last resumed).
+   */
+  startedAt: string;
+  /**
+   * When the engagement ended, if it has.
+   */
+  endedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "classes".
  */
 export interface Class {
@@ -841,6 +873,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'enrollments';
         value: number | Enrollment;
+      } | null)
+    | ({
+        relationTo: 'tutorEngagements';
+        value: number | TutorEngagement;
       } | null)
     | ({
         relationTo: 'classes';
@@ -1188,6 +1224,20 @@ export interface EnrollmentsSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "tutorEngagements_select".
+ */
+export interface TutorEngagementsSelect<T extends boolean = true> {
+  tutorAuthId?: T;
+  learnerAuthId?: T;
+  orgId?: T;
+  status?: T;
+  startedAt?: T;
+  endedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "classes_select".
  */
 export interface ClassesSelect<T extends boolean = true> {
@@ -1334,6 +1384,7 @@ export interface CollectionQueryWidget {
       | 'sessionSummaries'
       | 'organizations'
       | 'enrollments'
+      | 'tutorEngagements'
       | 'classes'
       | 'assignments'
       | 'assignment-completions'
@@ -1377,6 +1428,7 @@ export interface ActivityWidget {
           | 'sessionSummaries'
           | 'organizations'
           | 'enrollments'
+          | 'tutorEngagements'
           | 'classes'
           | 'assignments'
           | 'assignment-completions'

@@ -23,6 +23,7 @@ import { StudentModelFacts } from './collections/StudentModelFacts';
 import { Leads } from './collections/Leads';
 import { Organizations } from './collections/Organizations';
 import { Enrollments } from './collections/Enrollments';
+import { TutorEngagements } from './collections/TutorEngagements';
 import { Classes } from './collections/Classes';
 import { Assignments } from './collections/Assignments';
 import { AssignmentCompletions } from './collections/AssignmentCompletions';
@@ -142,6 +143,11 @@ export default buildConfig({
     // lets institutional reports scope tutor sessions and learning data to a
     // school or district without adding orgId to those learner-only tables.
     Enrollments,
+    // The other person-edge beside the learner→org roster: tutor↔learner, per
+    // ADR-108. A first-class row rather than a column on tutorSessions (which
+    // models AI sessions) — this is what tutor incident intake verifies a
+    // filing subject against, and what "My learners" will read.
+    TutorEngagements,
     // The teacher's two daily loops (ADR-b tabs 2 and 3), beside the roster
     // they scope to: a class is the container enrollments' `classId` points
     // into, and an assignment is what a class receives.

@@ -21,6 +21,11 @@ export type {
   AssignmentCompletion,
 } from './src/payload-types';
 
+// ADR-108's roster edge. No domain-object collision — the intake service
+// speaks in `EngagedLearner` projections, so the row keeps the generated name;
+// `tutor-engagement.repository.ts` is the one place that reads it.
+export type { TutorEngagement } from './src/payload-types';
+
 // The Loop A row shapes, named so the repositories that decode them do not have
 // to reach through a deep path into the generated file. `SessionTranscript` is
 // the ROW; `@acme/student-model`'s type of the same name is the DOMAIN object
