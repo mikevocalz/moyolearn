@@ -19,12 +19,15 @@ export interface SiteChromeProps {
 }
 
 /*
-  Immersive and tokened surfaces own the whole screen: a live session carries
-  its own toolbar (doc 07 — a lesson is a bounded place), and a /share report
-  is read by a tokened outsider who must never wait on an auth handshake. Both
-  bypass the chrome AND the session-status gate below.
+  Surfaces that own the whole screen AND must never wait on the session gate
+  below: a live session carries its own toolbar (doc 07 — a lesson is a bounded
+  place); a /share report is read by a tokened outsider who cannot pass an auth
+  handshake; and the auth doorway itself must not depend on the answer it
+  exists to obtain. Gating /login on the session left it rendering the loading
+  skeleton forever whenever the session never resolved — a sign-in page that
+  cannot be reached until you are signed in.
 */
-const CHROMELESS_PREFIXES = ['/tutor', '/share'];
+const CHROMELESS_PREFIXES = ['/tutor', '/share', '/login', '/onboarding', '/handoff'];
 
 export function SiteChrome({ children, orgBranding }: SiteChromeProps) {
   const { status } = useAppSession();

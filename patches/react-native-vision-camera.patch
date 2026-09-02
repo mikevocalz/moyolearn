@@ -1,13 +1,25 @@
 diff --git a/android/build.gradle b/android/build.gradle
-index bfcb0e018f575ff0865e5fe363d95cd818f19ab5..54bf37c23e0a9ac623e5ae4ad71b8b4e3d3da9f6 100644
+index bfcb0e018f575ff0865e5fe363d95cd818f19ab5..8c7ed78c6fc8d6ec8104aea203665b8b2fff802a 100644
 --- a/android/build.gradle
 +++ b/android/build.gradle
-@@ -140,7 +140,7 @@ dependencies {
+@@ -140,7 +140,19 @@ dependencies {
    // For < 0.71, this will be from the local maven repo
    // For > 0.71, this will be replaced by `com.facebook.react:react-android:$version` by react gradle plugin
    //noinspection GradleDynamicVersion
 -  implementation "com.facebook.react:react-native:+"
 +  compileOnly "com.facebook.react:react-native:+"
++
++  // Declared explicitly because the line above is compileOnly here (it is
++  // `implementation` upstream, which duplicated React classes in this app).
++  // compileOnly drops React's TRANSITIVE androidx from the compile classpath,
++  // and this module's Kotlin needs two of them by name: core-ktx supplies the
++  // `SharedPreferences.edit { }` extension in HybridCameraDeviceFactory, and
++  // lifecycle-common 2.6+ declares `LifecycleOwner.lifecycle` as a val, which
++  // is what CustomLifecycle overrides. Without these the module fails to
++  // compile with "Unresolved reference 'edit'" and "'lifecycle' overrides
++  // nothing".
++  implementation "androidx.core:core-ktx:1.15.0"
++  implementation "androidx.lifecycle:lifecycle-common:2.8.7"
  
    // CameraX dependency
    def camerax_version = "1.7.0-alpha03"
