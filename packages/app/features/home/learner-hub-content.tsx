@@ -73,8 +73,17 @@ export function LearnerHubContent() {
           <Heading level={1} size={scale.title}>
             Hi {firstName}
           </Heading>
-          <View className="flex-row items-end gap-element">
-            <Avatar name="Moyo" size="lg" />
+          {/* CENTRED against the bubble, and it is NATALIE.
+
+              It was `items-end`, which bottom-aligned a square avatar beside a
+              one-line bubble and read as a misalignment rather than a choice.
+              And it was `name="Moyo"` — the company — so the fallback initial
+              drew a stray "M" beside her sentence while she is "N" everywhere
+              else in the product, including the session rail. A child meeting
+              their tutor for the first time on this screen should meet the same
+              person they meet inside the lesson. */}
+          <View className="flex-row items-center gap-element">
+            <Avatar name="Natalie" size="lg" />
             <MessageBubble from="tutor" className="flex-1">
               What do you want to do today?
             </MessageBubble>
