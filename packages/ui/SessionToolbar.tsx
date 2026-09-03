@@ -4,6 +4,7 @@
 // SOT-KEYWORDS: sessiontoolbar header tutor back captions tutor view
 
 import { View, Text } from './primitives';
+import { SafeArea } from './SafeArea';
 import { IconButton } from './IconButton';
 import { Button } from './Button';
 import { ChevronLeft } from './icons';
@@ -39,43 +40,53 @@ export function SessionToolbar({
 }: SessionToolbarProps) {
   const hasRightAction = onToggleCaptions !== undefined || onTutorPresenceChange !== undefined;
 
+  /*
+    The top inset lives HERE, not in each caller. This is the first row of an
+    immersive surface — the session hides the shell's own header — so without it
+    the toolbar renders under the status bar and the whole screen reads as
+    shifted up. `ShellHeader` already takes the same inset for the tabbed
+    shells; a session must not be the one place chrome forgets. `SafeArea` is a
+    plain passthrough on web, so this costs the web fork nothing.
+  */
   return (
-    <View
-      className={`flex-row items-center justify-between border-b-2 border-strong p-inset-tight ${className ?? ''}`}>
-      <IconButton
-        icon={<ChevronLeft className="h-5 w-5" />}
-        aria-label="Back"
-        onPress={onBack}
-        variant="ghost"
-        size="md"
-      />
-      <Text className="max-w-content-prose truncate font-sans text-title font-bold text-text">
-        {title}
-      </Text>
-      {hasRightAction ? (
-        <View className="flex-row items-center gap-1">
-          {onToggleCaptions ? (
-            <Button
-              title="CC"
-              variant={captionsEnabled ? 'primary' : 'ghost'}
-              size="sm"
-              onPress={onToggleCaptions}
-              aria-label="Toggle captions"
-            />
-          ) : null}
-          {onTutorPresenceChange && tutorPresence !== 'auto' ? (
-            <Button
-              title={PRESENCE_ACTION[tutorPresence].label}
-              variant="ghost"
-              size="sm"
-              onPress={() => onTutorPresenceChange(PRESENCE_ACTION[tutorPresence].next)}
-              aria-label={PRESENCE_ACTION[tutorPresence].label}
-            />
-          ) : null}
-        </View>
-      ) : (
-        <View className="h-10 w-10" />
-      )}
-    </View>
+    <SafeArea edges={['top']} className="bg-surface">
+      <View
+        className={`flex-row items-center justify-between border-b-2 border-strong p-inset-tight ${className ?? ''}`}>
+        <IconButton
+          icon={<ChevronLeft className="h-5 w-5" />}
+          aria-label="Back"
+          onPress={onBack}
+          variant="ghost"
+          size="md"
+        />
+        <Text className="max-w-content-prose truncate font-sans text-title font-bold text-text">
+          {title}
+        </Text>
+        {hasRightAction ? (
+          <View className="flex-row items-center gap-1">
+            {onToggleCaptions ? (
+              <Button
+                title="CC"
+                variant={captionsEnabled ? 'primary' : 'ghost'}
+                size="sm"
+                onPress={onToggleCaptions}
+                aria-label="Toggle captions"
+              />
+            ) : null}
+            {onTutorPresenceChange && tutorPresence !== 'auto' ? (
+              <Button
+                title={PRESENCE_ACTION[tutorPresence].label}
+                variant="ghost"
+                size="sm"
+                onPress={() => onTutorPresenceChange(PRESENCE_ACTION[tutorPresence].next)}
+                aria-label={PRESENCE_ACTION[tutorPresence].label}
+              />
+            ) : null}
+          </View>
+        ) : (
+          <View className="h-10 w-10" />
+        )}
+      </View>
+    </SafeArea>
   );
 }
