@@ -2,6 +2,10 @@
 import { useEffect } from 'react';
 import { View as RNView } from 'react-native';
 import { Host, TextInput as BaseExpoTextInput, useNativeState } from '@expo/ui';
+import { targets } from '@acme/theme';
+
+/** The adult touch target (44), read from the scale rather than written here. */
+const HOST_MIN_HEIGHT = Number.parseInt(targets.adult, 10);
 import { css } from './css';
 
 /**
@@ -114,7 +118,22 @@ export function NativeInput({
       the width the wrapper gives it.
     */
     <RNView style={containerStyle}>
-      <Host matchContents={{ vertical: true, horizontal: false }}>
+      {/*
+        A FLOOR ON THE HOST, not just on the wrapper above.
+
+        `matchContents.vertical` makes the Host measure the native text — and
+        when Compose returns zero for that measurement the Host is zero-tall.
+        The accessibility tree showed it exactly: `ComposeView (…, 0.000)`
+        wrapping a TextField that still painted its placeholder, so the field
+        looked correct and could not be focused or typed into at all. A
+        min-height on the wrapper does not help, because the wrapper is not the
+        thing receiving touches. 44 is the adult target, the same floor every
+        other control in a composer row uses.
+      */}
+      <Host
+        style={{ minHeight: HOST_MIN_HEIGHT }}
+        matchContents={{ vertical: true, horizontal: false }}
+      >
         <ExpoTextInput
           value={state}
           onChangeText={onChangeText}

@@ -408,8 +408,8 @@ export const semantic = {
     are on, the tab you are on, and the action you can take. M3 calls this the
     secondary container; the yellow is spent on the primary ACTION instead.
   */
-  'nav-selected': { light: palette.plum[400], dark: palette.plum[400] },
-  'on-nav-selected': { light: palette.plum[950], dark: palette.plum[950] },
+  'nav-selected': { light: palette.plum[600], dark: palette.plum[600] },
+  'on-nav-selected': { light: palette['moyo-mango'], dark: palette['moyo-mango'] },
   // ONE chrome family, top and bottom. M3 puts the navigation bar and the top
   // app bar on the same `surface-container` and reserves colour for the active
   // indicator; the shell used to paint a lavender header against a mint tab bar
