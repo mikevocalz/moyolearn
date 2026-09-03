@@ -1,14 +1,32 @@
 'use client';
 // OcrReview — on-device OCR using react-native-executorch, then review/correct.
-// SOT: docs/pack/24-homework-capture-spec.md §5
-// SOT-KEYWORDS: ocr review native executorch useOCR age band
+//
+// The phase machine mirrors the web fork exactly (./ocr-review.tsx), because the
+// two forks owe the learner the same contract: nothing editable appears until
+// there is something to edit, an unreadable photo offers typing rather than a
+// dead end, and an empty read still lands in the box the child can type into.
+//
+// WHY A PHASE AND NOT `ocr.isReady`: `isReady` means the MODELS are loaded, not
+// that this photo has been read. Mounting `DigitizedTextReview` on `isReady`
+// handed it `initialText=""`, and that component seeds its `useState` once — so
+// the real text, which arrives from `forward()` a few seconds later, was
+// rendered into a prop nobody read again. On device the reader worked and the
+// box stayed permanently empty.
+//
+// WHY `forward` AND `isReady` RATHER THAN `ocr`: `useOCR` returns a fresh object
+// literal every render, so an effect depending on `ocr` re-ran on every render
+// and fired `forward()` again each time — against a controller that is already
+// busy, with no catch to absorb the rejection. `forward` is `useCallback`d on
+// the controller, so it is stable and the read happens once per photo.
+// SOT: docs/pack/24-homework-capture-spec.md §5 · ./ocr-review.tsx
+// SOT-KEYWORDS: ocr review native executorch useOCR age band phase
 
 import { useEffect, useState } from 'react';
-import { useOCR, OCR_ENGLISH } from 'react-native-executorch';
-import { Text } from '@acme/ui';
+import { useOCR, OCR_ENGLISH, type OCRDetection } from 'react-native-executorch';
+import { Button, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { DigitizedTextReview } from './digitized-text-review';
-import { type AgeBand } from './age-band';
+import { buttonSizeForBand, type AgeBand } from './age-band';
 
 export interface OcrReviewProps {
   ageBand?: AgeBand;
@@ -17,29 +35,52 @@ export interface OcrReviewProps {
   onCancel: () => void;
 }
 
+interface Read {
+  text: string;
+  /** 0–100, matching `DigitizedTextReview`; undefined when nothing was found. */
+  confidence: number | undefined;
+}
+
+type Phase = 'loading' | 'ready' | 'error' | 'manual';
+
+function summarise(detections: OCRDetection[]): Read {
+  if (detections.length === 0) return { text: '', confidence: undefined };
+
+  const total = detections.reduce((sum, detection) => sum + detection.score, 0);
+  return {
+    text: detections.map((detection) => detection.text).join('\n'),
+    confidence: Math.round((total / detections.length) * 100),
+  };
+}
+
 export function OcrReview({ ageBand = 'teen', source, onConfirm, onCancel }: OcrReviewProps) {
-  const ocr = useOCR({ model: OCR_ENGLISH });
-  const [text, setText] = useState('');
-  const [confidence, setConfidence] = useState<number | undefined>();
+  const { isReady, forward, error } = useOCR({ model: OCR_ENGLISH });
+  const [phase, setPhase] = useState<Phase>('loading');
+  const [read, setRead] = useState<Read | null>(null);
 
   useEffect(() => {
-    if (ocr.isReady && source) {
-      void ocr.forward(source).then((detections) => {
-        const joined = detections.map((detection) => detection.text).join('\n');
-        const avg =
-          detections.length > 0
-            ? Math.round(
-                (detections.reduce((sum, d) => sum + (d.score ?? 0), 0) / detections.length) * 100,
-              )
-            : undefined;
-        setText(joined);
-        setConfidence(avg);
-      });
-    }
-  }, [ocr.isReady, source, ocr]);
+    if (!isReady || !source) return;
+    let cancelled = false;
 
-  if (!ocr.isReady) {
-    const copy = ageBand === 'young' ? 'Getting the word reader ready...' : 'Loading text reader...';
+    void forward(source)
+      .then((detections) => {
+        if (cancelled) return;
+        setRead(summarise(detections));
+        setPhase('ready');
+      })
+      .catch(() => {
+        if (!cancelled) setPhase('error');
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isReady, forward, source]);
+
+  if (phase === 'loading') {
+    // Two waits, one message: the models downloading on first run, and this
+    // photo being read. A child does not care which one they are in.
+    const copy = ageBand === 'young' ? 'Getting the word reader ready...' : 'Reading the text...';
     return (
       <View className="flex-1 items-center justify-center p-inset">
         <Text className="font-sans text-body text-text text-center">{copy}</Text>
@@ -47,23 +88,42 @@ export function OcrReview({ ageBand = 'teen', source, onConfirm, onCancel }: Ocr
     );
   }
 
-  if (ocr.error) {
+  if (phase === 'error' || error !== null) {
     const copy =
       ageBand === 'young'
-        ? "I couldn't read the words. Try again or use your voice."
-        : `Could not read text: ${ocr.error.message}`;
+        ? "I couldn't read the words. You can type them instead."
+        : 'Could not read the text. You can type it instead.';
     return (
-      <View className="flex-1 items-center justify-center p-inset gap-stack">
+      <View className="flex-1 items-center justify-center gap-stack p-inset">
         <Text className="font-sans text-body text-text text-center">{copy}</Text>
+        <Button
+          title={ageBand === 'young' ? 'Type the words' : 'Type it instead'}
+          variant="highlighter"
+          size={buttonSizeForBand(ageBand)}
+          fullWidth
+          onPress={() => setPhase('manual')}
+          aria-label="Type the problem yourself"
+        />
       </View>
     );
   }
 
+  if (phase === 'manual') {
+    return (
+      <DigitizedTextReview ageBand={ageBand} initialText="" onConfirm={onConfirm} onCancel={onCancel} />
+    );
+  }
+
+  /*
+    Straight to review even when the read came back empty. An empty box a child
+    can type into beats an error telling them the picture failed — they know
+    what the problem says; the app is the one that could not read it.
+  */
   return (
     <DigitizedTextReview
       ageBand={ageBand}
-      initialText={text}
-      confidence={confidence}
+      initialText={read?.text ?? ''}
+      confidence={read?.confidence}
       onConfirm={onConfirm}
       onCancel={onCancel}
     />

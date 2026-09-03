@@ -69,6 +69,15 @@ catalog:
   react-native-worklets: 0.10.1
   react-native-vision-camera: 5.2.3
   react-native-executorch: 0.9.3
+  # 0.9 moved resource fetching behind a pluggable adapter that the HOST APP must
+  # register via `initExecutorch` — the core package ships no default, so without
+  # this every model load fails with "ResourceFetcher adapter is not initialized"
+  # (code 186) and both the OCR and Whisper paths die. The adapter is pure JS
+  # (lib/*.js only, no android/ios/podspec), so it adds no native surface; it
+  # reads through expo-file-system + expo-asset, which `expo` already depends on
+  # and autolinks. Latest published adapter is 0.9.1 against core 0.9.3 — its
+  # peer on the core is "*", and the two ship on independent release trains.
+  react-native-executorch-expo-resource-fetcher: 0.9.1
   "@shopify/react-native-skia": 2.11.1
   "@react-navigation/native": 7.3.13
   solito: 5.0.0

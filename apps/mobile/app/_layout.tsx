@@ -2,6 +2,13 @@
 // is a side-effect import because the SDK has to be initialised, not rendered —
 // see src/telemetry.ts for what is and is not enabled, and why.
 import "../src/telemetry";
+// Registers the ExecuTorch resource-fetcher adapter. Side-effect import, and it
+// has to sit up here with telemetry rather than inside the capture feature: the
+// adapter is module-level state in react-native-executorch and `useOCR` /
+// `useSpeechToText` start fetching in their mount effect, so anything that runs
+// during the capture screen's render is already too late. See
+// src/executorch.native.ts for the failure this fixes (error code 186).
+import "../src/executorch";
 
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
