@@ -228,8 +228,8 @@ export const semantic = {
     can carry the brand's actual yellow instead of a drab stand-in, and the
     primary action reads the same on both.
   */
-  primary: { light: palette.burgundy[400], dark: palette.burgundy[400] },
-  'primary-pressed': { light: palette.burgundy[500], dark: palette.burgundy[500] },
+  primary: { light: palette['moyo-mango'], dark: palette['moyo-mango'] },
+  'primary-pressed': { light: palette.sun[500], dark: palette.sun[500] },
   'on-primary': { light: palette.ink[950], dark: palette.ink[950] },
   accent: { light: palette.ember[500], dark: palette.ember[400] },
   // Not palette.ember[600] (#DB2777): black ink on it is 4.25:1, under AA, and
@@ -273,7 +273,14 @@ export const semantic = {
   // Dimmed in the dark for the same reason as `primary`: a marker laid over a
   // lamp-lit page is warm gold, not a lit lemon. Hue holds so a highlighted row
   // is recognisably the same gesture in both schemes.
-  highlighter: { light: palette.burgundy[300], dark: palette.burgundy[500] },
+  /*
+    SELECTION is teal. It was the brand yellow, which is also the action's
+    colour — two different languages wearing one paint, and on the learner home
+    the "you are here" marker and the primary action read as the same object.
+    The action keeps the mango (it is the mark's own accent and the louder job);
+    the marker takes the teal from the same mark.
+  */
+  highlighter: { light: palette.lagoon[400], dark: palette.lagoon[500] },
   'on-highlighter': { light: palette.ink[950], dark: palette.ink[950] },
   // Highlighter at 24% — the selected DataTable row (doc 08 §4.6) and the
   // selected InkTile. Pre-resolved rather than `bg-highlighter/24`, for the same
@@ -382,6 +389,16 @@ export const semantic = {
   // door can never inherit the previous door's ink on its own surface.
   'surface-header': { light: palette.plum[100], dark: palette.plum[200] },
   'on-surface-header': { light: palette.plum[700], dark: palette.plum[700] },
+  /*
+    The chrome's own CTA — the raised Snap slab in the bar and the rail. It is
+    deep plum from the SAME family the bars are tinted with, so the loudest
+    control in the chrome still belongs to the chrome; the mango action colour
+    stays for actions in CONTENT, where it has the neutral ground to carry it.
+    Deep enough (plum 700, the mark's own purple) to read as a raised button on
+    a plum 200/300 bar rather than as another tinted panel.
+  */
+  'nav-cta': { light: palette.plum[700], dark: palette.plum[700] },
+  'on-nav-cta': { light: palette.plum[100], dark: palette.plum[100] },
   // ONE chrome family, top and bottom. M3 puts the navigation bar and the top
   // app bar on the same `surface-container` and reserves colour for the active
   // indicator; the shell used to paint a lavender header against a mint tab bar
@@ -434,7 +451,16 @@ export const semantic = {
     what puts it inside check-contrast's derived pairs instead of outside every
     gate.
   */
-  'action-primary': { light: palette.lagoon[500], dark: palette.lagoon[500] },
+  /*
+    The action is the LOGO'S YELLOW, in both schemes. It went teal for a round
+    to break a clash with the selection marker; the clash was real but the
+    resolution was backwards — the mark's mango is the product's action colour
+    and the marker is what had to move. Selection is teal now (see
+    `highlighter`), so Snap still owns one colour everywhere it appears — the
+    tile, the capture card, and the raised camera slab — and nothing else on a
+    learner screen is yellow.
+  */
+  'action-primary': { light: palette['moyo-mango'], dark: palette['moyo-mango'] },
   'on-action-primary': { light: palette.ink[950], dark: palette.ink[950] },
   // The coral hairline strip. Identity, not a scheme value, so it holds — but its
   // ink is INK, never white: white on coral is 3.47:1 and has never passed AA.
@@ -850,6 +876,13 @@ export const targets = {
 export const navChrome = {
   rail: '96px',
   raised: '64px',
+  /*
+    How far the raised slab breaks ABOVE the bar's top edge. 28 of a 64 slab
+    leaves 36 seated in the bar, which is what keeps it reading as part of the
+    bar rather than as a floating button — and puts more than a third of the
+    control outside the chrome, which is the whole point of the raise.
+  */
+  raise: '28px',
 } as const;
 
 // ---- reading comfort (doc 08 §3.3) ------------------------------------------

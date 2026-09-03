@@ -37,8 +37,18 @@ const BAND_ITEMS: Record<Band, ShellTabItem[]> = {
   adult: [ITEMS.today('Home'), ITEMS.subjects(), ITEMS.capture(), ITEMS.progress(), ITEMS.you('You')],
 };
 
+/*
+  NAVIGATION targets, which are not the band's PRIMARY-ACTION target. The token
+  scale calls 72 "K–2 primary actions" (doc 08 §2.4) and this applied it to every
+  tab, so the K–2 bar stood ~100dp tall against Material's 80 — the whole bar
+  wearing the size meant for one control. A tab is a destination, not the
+  screen's action: K–2 and 3–5 land on 56, which still clears Apple's 44 and
+  Material's 48 with room, and the RAISED Snap slab keeps the full 72 through
+  `BAND_RAISED_TARGET` — so the child's biggest touch target is still the
+  signature action, which is what the finding was about.
+*/
 const BAND_TARGET: Record<Band, string> = {
-  young: 'min-h-target-young',
+  young: 'min-h-target-child',
   child: 'min-h-target-child',
   teen: 'min-h-target-teen',
   adult: 'min-h-target-teen',

@@ -26,8 +26,25 @@ const ALIGN: Record<MessageFrom, string> = {
   child. `title` on the hot dial is 20px against body's 18.
 */
 const TEXT: Record<MessageFrom, string> = {
-  tutor: 'font-sans text-title text-text',
+  tutor: 'font-sans text-title text-on-chrome-lavender',
   child: 'font-sans text-body-lg text-text',
+};
+
+/*
+  The tutor's bubble is a TINTED surface with no input-weight border; the
+  child's keeps the bordered card.
+
+  Natalie's turn used the same recipe as `TextField`'s input — `rounded-md` /
+  `rounded-control` are the same value, both carried `border-2` on
+  `bg-surface-raised` — so her opening line on the learner home was, pixel for
+  pixel, a text field. A child (and an adult tester) tapped it and tried to
+  type into a sentence. `surface-ai` is the palette's existing "this is the AI
+  speaking" tint, which makes her voice recognisably hers and structurally
+  unlike anywhere you can type.
+*/
+const SURFACE: Record<MessageFrom, string> = {
+  tutor: 'rounded-card bg-surface-ai p-inset-tight',
+  child: 'rounded-control border-2 border-strong bg-surface-raised p-inset-tight',
 };
 
 export function MessageBubble({ from, children, className }: MessageBubbleProps) {
@@ -49,7 +66,7 @@ export function MessageBubble({ from, children, className }: MessageBubbleProps)
         moved `TutorThread`'s bubbles; this is the live-turn bubble, which I
         missed because it lives in a different component.
       */
-      className={`${ALIGN[from]} max-w-content-prose rounded-control border-2 border-strong bg-surface-raised p-inset-tight gap-stack ${className ?? ''}`}>
+      className={`${ALIGN[from]} max-w-content-prose gap-stack ${SURFACE[from]} ${className ?? ''}`}>
       <Text className={TEXT[from]}>{children}</Text>
     </View>
   );

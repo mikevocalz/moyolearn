@@ -304,14 +304,15 @@
   --spacing-target-young: 72px;
   --spacing-nav-rail: 96px;
   --spacing-nav-raised: 64px;
+  --spacing-nav-raise: 28px;
   --color-surface: light-dark(#FFFDF7, #171614);
   --color-surface-raised: light-dark(#FFFFFF, #262420);
   --color-surface-sunken: light-dark(#F6F3E8, #0D0C0B);
   --color-text: light-dark(#0D0C0B, #F6F3E8);
   --color-text-muted: light-dark(#55524A, #C4C0B0);
   --color-text-inverse: light-dark(#FFFDF7, #0D0C0B);
-  --color-primary: light-dark(#FFDB33, #FFDB33);
-  --color-primary-pressed: light-dark(#F2C700, #F2C700);
+  --color-primary: light-dark(#FFB21D, #FFB21D);
+  --color-primary-pressed: light-dark(#E09310, #E09310);
   --color-on-primary: light-dark(#0D0C0B, #0D0C0B);
   --color-accent: light-dark(#F7418F, #FF69B4);
   --color-accent-pressed: light-dark(#E3307E, #F7418F);
@@ -323,7 +324,7 @@
   --color-focus: light-dark(#3B6DF6, #5C8AFF);
   --color-danger: light-dark(#D31F2B, #FF7A85);
   --color-on-danger: light-dark(#FFFFFF, #3D0508);
-  --color-highlighter: light-dark(#FFE14D, #F2C700);
+  --color-highlighter: light-dark(#34B2AD, #12A7A3);
   --color-on-highlighter: light-dark(#0D0C0B, #0D0C0B);
   --color-highlighter-underlay: light-dark(rgba(255, 225, 77, 0.24), rgba(242, 199, 0, 0.24));
   --color-ballpoint: light-dark(#2952D9, #5C8AFF);
@@ -356,6 +357,8 @@
   --color-on-chrome-mango: light-dark(#43216B, #43216B);
   --color-surface-header: light-dark(#E9DDF5, #D5C1EC);
   --color-on-surface-header: light-dark(#43216B, #43216B);
+  --color-nav-cta: light-dark(#43216B, #43216B);
+  --color-on-nav-cta: light-dark(#E9DDF5, #E9DDF5);
   --color-surface-footer: light-dark(#D5C1EC, #B99BDE);
   --color-on-surface-footer: light-dark(#14091F, #14091F);
   --color-surface-muted: light-dark(#FADBD5, #F7BDB2);
@@ -364,7 +367,7 @@
   --color-surface-family: light-dark(#FADBD5, #F7BDB2);
   --color-surface-learning: light-dark(#CFEDEA, #A5DEDA);
   --color-surface-achievement: light-dark(#FFE8A8, #FFD777);
-  --color-action-primary: light-dark(#12A7A3, #12A7A3);
+  --color-action-primary: light-dark(#FFB21D, #FFB21D);
   --color-on-action-primary: light-dark(#0D0C0B, #0D0C0B);
   --color-surface-accent: light-dark(#F0543F, #F0543F);
   --color-on-surface-accent: light-dark(#0D0C0B, #0D0C0B);
