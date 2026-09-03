@@ -857,9 +857,15 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
     at the step switch ends that. px-0 because each step owns its p-inset
     gutter — on phones max-w-content-form exceeds the viewport, so mobile
     renders exactly as before.
+
+    `bg-surface` is not decoration. Without a ground of its own this screen
+    rendered on the NAVIGATOR's default scene background, which is light in both
+    schemes: in dark mode that put cream `text-text` type on a white scene — the
+    display heading was invisible — while the cards below it painted correct dark
+    tokens. Every screen root owns its ground, as the other learner screens do.
   */
   return (
-    <SafeArea className="flex-1" edges={['top']}>
+    <SafeArea className="flex-1 bg-surface" edges={['top']}>
       <Container width="form" className="flex-1 px-0">
         {showCancel ? (
           <View className="flex-row justify-end px-inset pt-2">

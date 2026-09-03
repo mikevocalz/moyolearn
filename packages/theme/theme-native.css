@@ -141,21 +141,9 @@
   --color-moyo-guava: #FADBD5;
   --color-moyo-mint: #CFEDEA;
   --color-moyo-mango-pastel: #FFE8A8;
-  /*
-    NATIVE font families are the embedded FILE names, not the CSS family names
-    the web fork uses. expo-font registers each ttf under its file basename, and
-    a React Native fontFamily that does not match a registered name silently
-    falls back to the system face — which is why the app shipped in Roboto/SF
-    while the site rendered the brand faces. The internal family names do not
-    help either: SpaceGrotesk-Variable.ttf calls itself "Space Grotesk Light"
-    and ChivoMono-Variable.ttf calls itself "Chivo Mono Medium". There is also
-    no font-family fallback list on native — the first name is the only one
-    tried — so each of these must be exactly one registered face.
-    SOT: apps/mobile/app.config.ts (expo-font plugin) · packages/assets/fonts
-  */
-  --font-display: 'ArchivoBlack-Regular';
-  --font-sans: 'SpaceGrotesk-Variable';
-  --font-mono: 'ChivoMono-Variable';
+  --font-display: 'Archivo Black', 'Arial Black', sans-serif;
+  --font-sans: 'Space Grotesk', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Chivo Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
   --text-display-2xl: 4.5rem;
   --text-display-2xl--line-height: 1.05;
   --text-display-2xl--letter-spacing: -0.02em;
@@ -479,12 +467,12 @@
       --color-tenant-primary: #43216B;
       --color-tenant-primary-hover: #43216B;
       --color-tenant-primary-foreground: #FFFFFF;
-      --color-tenant-header: #E9DDF5;
-      --color-tenant-header-foreground: #43216B;
-      --color-tenant-header-muted: #43216BB3;
-      --color-tenant-header-border: #43216B26;
-      --color-tenant-sidebar: #211F1B;
-      --color-tenant-sidebar-foreground: #FFFDF7;
+      --color-tenant-header: #43216B;
+      --color-tenant-header-foreground: #E9DDF5;
+      --color-tenant-header-muted: #E9DDF5B3;
+      --color-tenant-header-border: #E9DDF526;
+      --color-tenant-sidebar: #32184F;
+      --color-tenant-sidebar-foreground: #F6F3E8;
       --color-tenant-sidebar-muted: #C4C0B0;
       --color-tenant-sidebar-active: #F0543F;
       --color-tenant-sidebar-active-foreground: #0D0C0B;
@@ -492,9 +480,9 @@
       --color-tenant-accent: #F0543F;
       --color-tenant-accent-hover: #F0543F;
       --color-tenant-accent-foreground: #0D0C0B;
-      --color-tenant-surface: #161411;
-      --color-tenant-surface-subtle: #0F0E0C;
-      --color-tenant-border: #FFFDF7;
+      --color-tenant-surface: #221034;
+      --color-tenant-surface-subtle: #14091F;
+      --color-tenant-border: #C4C0B0;
       --color-tenant-focus-ring: #F0543F;
       --color-tenant-success: #7DB98B;
       --color-tenant-warning: #FFB21D;

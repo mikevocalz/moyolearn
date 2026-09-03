@@ -21,6 +21,45 @@
 
 // ---- primitive palettes -----------------------------------------------------
 
+/**
+ * The four Moyo brand hues, as full ramps.
+ *
+ * They were four flat identity values plus four unrelated pastels. The pastels
+ * ARE these hues — `moyo-lavender` is plum 100, `moyo-mint` is lagoon 100 — and
+ * writing them as steps of one ramp is what lets a scheme be derived instead of
+ * invented: a dark header is plum 700 (the logo's own M), its ink is plum 100,
+ * and both are provably the same hue as the mark rather than a hex that looked
+ * close. Every other family in this file is already a ramp; these are now too.
+ *
+ * The named steps are FIXED POINTS from the brand art and must not move:
+ *   plum 100/700     moyo-lavender / moyo-purple (logo M, #3C2357 in the source)
+ *   lagoon 100/500   moyo-mint / moyo-teal (#0A9FA6)
+ *   flame 100/400    moyo-guava / moyo-coral (#E55545 · #ED6646)
+ *   sun 100/400      moyo-mango-pastel / moyo-mango (#F4A629)
+ */
+const brandScales = {
+  plum: {
+    50: '#F6F1FB', 100: '#E9DDF5', 200: '#D5C1EC', 300: '#B99BDE',
+    400: '#9B77CC', 500: '#7C55B0', 600: '#5D3A8B', 700: '#43216B',
+    800: '#32184F', 900: '#221034', 950: '#14091F',
+  },
+  lagoon: {
+    50: '#EFFAF9', 100: '#CFEDEA', 200: '#A5DEDA', 300: '#6FCAC5',
+    400: '#34B2AD', 500: '#12A7A3', 600: '#0E8785', 700: '#0C6A68',
+    800: '#0A5150', 900: '#073836', 950: '#042322',
+  },
+  flame: {
+    50: '#FEF3F1', 100: '#FADBD5', 200: '#F7BDB2', 300: '#F58E7B',
+    400: '#F0543F', 500: '#D8412F', 600: '#B33325', 700: '#8D281D',
+    800: '#661D15', 900: '#42130E', 950: '#280B08',
+  },
+  sun: {
+    50: '#FFF9EC', 100: '#FFE8A8', 200: '#FFD777', 300: '#FFC547',
+    400: '#FFB21D', 500: '#E09310', 600: '#B6760B', 700: '#8D5B08',
+    800: '#654005', 900: '#402803', 950: '#261802',
+  },
+} as const;
+
 export const palette = {
   // RETRO primary — electric yellow (scale name kept for class compatibility)
   burgundy: {
@@ -93,31 +132,78 @@ export const palette = {
     400: '#71717A', 500: '#52525B', 600: '#3F3F46', 700: '#27272A',
     800: '#18181B', 900: '#121215', 950: '#09090B',
   },
-  // Moyo brand primitives — saturated identities + pastel surfaces.
-  // These are the raw building blocks; feature code uses the semantic aliases below.
-  'moyo-purple': '#43216B',
-  'moyo-coral': '#F0543F',
-  'moyo-teal': '#12A7A3',
-  'moyo-mango': '#FFB21D',
-  'moyo-lavender': '#E9DDF5',
-  'moyo-guava': '#FADBD5',
-  'moyo-mint': '#CFEDEA',
-  'moyo-mango-pastel': '#FFE8A8',
+  ...brandScales,
+  /*
+    The brand identities, as ALIASES of the scales above — the logo's own inks
+    (packages/ui/logo-fill.ts maps #3C2357 -> moyo-purple, #0A9FA6 -> moyo-teal,
+    #E55545 -> moyo-coral, #F4A629 -> moyo-mango) and the four pastels that used
+    to be unrelated one-off values.
+
+    Aliases, not literals, because the dark scheme has to be BUILT from these
+    hues and a flat value has no darker step to build from. The first dark pass
+    invented `#D8B33C`, `#F76BB0`, `#C9C3B1` and warm-brown grounds — none of
+    them in the palette, none of them related to the mark, and the result could
+    not sit next to the logo. A scheme is only a scheme if every value in it
+    comes off a brand ramp.
+  */
+  'moyo-purple': brandScales.plum[700],
+  'moyo-coral': brandScales.flame[400],
+  'moyo-teal': brandScales.lagoon[500],
+  'moyo-mango': brandScales.sun[400],
+  'moyo-lavender': brandScales.plum[100],
+  'moyo-guava': brandScales.flame[100],
+  'moyo-mint': brandScales.lagoon[100],
+  'moyo-mango-pastel': brandScales.sun[100],
 } as const;
 
 // ---- semantic colors (light / dark) ----------------------------------------
 // Emitted as `light-dark(...)` so system-following is zero-code on every platform.
 
+/*
+  DARK IS THE BRAND AT NIGHT, not a second palette.
+
+  Every dark value below is a STEP OF A RAMP that already carries the identity —
+  `plum` for ground and chrome, `ink` for paper and its line, `burgundy` for the
+  marker, `ember` for the accent. Nothing here is a hex chosen because it looked
+  right next to something else. Two rules produced the whole scheme:
+
+    1. Same hue, different step. A colour never changes family between schemes,
+       so a card, a marker and a header are recognisably the same object at
+       night. `primary` steps 400 -> 600 rather than becoming a gold.
+    2. The ground is plum, not black and not brown. The mark sits on this ground
+       on every screen; a neutral ground made the logo look pasted on, and a
+       near-black one turned every 2px border into a lit grid.
+
+  The RATIOS are what tooling/check-contrast.mjs protects. The RAMPS are what
+  keeps the result looking like Moyo — and both have to hold, because a scheme
+  that only passes contrast is how the first dark build shipped.
+*/
 export const semantic = {
-  surface: { light: palette.ink[50], dark: '#161411' },
-  'surface-raised': { light: palette.white, dark: '#211F1B' },
-  'surface-sunken': { light: palette.ink[100], dark: '#0F0E0C' },
-  text: { light: palette.ink[950], dark: palette.ink[50] },
+  /*
+    The dark ground is the BRAND's own deep plum (plum 900/950), not a neutral
+    and not the warm brown an earlier pass invented. Two reasons it has to be a
+    brand hue: the mark sits on this ground on every screen, and a near-black
+    ground turned every 2px border into a lit grid. Steps are one ramp apart so
+    elevation is legible without a shadow, which the flat design language bans.
+  */
+  surface: { light: palette.ink[50], dark: palette.plum[900] },
+  'surface-raised': { light: palette.white, dark: palette.plum[800] },
+  'surface-sunken': { light: palette.ink[100], dark: palette.plum[950] },
+  // ink[50] (#FFFDF7) as dark body text is brighter than the paper it imitates;
+  // ink[100] is the same cream one step down and reads as chalk, not headlight.
+  // The neutral family stays `ink` in both schemes: paper and its ink are the
+  // product's other identity, and inverting them is what dark mode IS here.
+  text: { light: palette.ink[950], dark: palette.ink[100] },
   'text-muted': { light: palette.ink[600], dark: palette.ink[400] },
   'text-inverse': { light: palette.ink[50], dark: palette.ink[950] },
-  // RETRO: flat electric yellow, black ink on top
-  primary: { light: palette.burgundy[400], dark: palette.burgundy[400] },
-  'primary-pressed': { light: palette.burgundy[500], dark: palette.burgundy[500] },
+  /*
+    RETRO: flat electric yellow, black ink on top. The dark cut steps DOWN the
+    same ramp (400 -> 600) rather than moving to a new colour: a full-bleed
+    `bg-primary` card is the loudest object on a learner screen and at the light
+    cut's value it out-glows everything on a dark ground. Same hue, less light.
+  */
+  primary: { light: palette.burgundy[400], dark: palette.burgundy[600] },
+  'primary-pressed': { light: palette.burgundy[500], dark: palette.burgundy[700] },
   'on-primary': { light: palette.ink[950], dark: palette.ink[950] },
   accent: { light: palette.ember[500], dark: palette.ember[400] },
   // Not palette.ember[600] (#DB2777): black ink on it is 4.25:1, under AA, and
@@ -127,17 +213,21 @@ export const semantic = {
   // still holds. The scale step is left alone — nothing else consumes it.
   'accent-pressed': { light: '#E3307E', dark: palette.ember[500] },
   'on-accent': { light: palette.ink[950], dark: palette.ink[950] },
-  // RETRO: borders are ink, not grey — the outline IS the design
-  border: { light: palette.ink[950], dark: palette.ink[50] },
-  'border-strong': { light: '#000000', dark: '#FFFDF7' },
+  // RETRO: borders are ink, not grey — the outline IS the design.
+  // In the dark the ink becomes CHALK, not white: at 2px, a #FFFDF7 frame around
+  // every card is a grid of light on a dark ground and the cards read as cages.
+  // ink[300] keeps the drawn-line character at 9.7:1 — far above the 3:1 the
+  // structural bar asks for — while letting the content inside be the bright thing.
+  border: { light: palette.ink[950], dark: palette.ink[300] },
+  'border-strong': { light: '#000000', dark: palette.ink[100] },
   // Ink at 80% — the Cool dial's hairline (doc 02 §5.3). Still an AA text colour
   // against surface, so remapping --color-border inside .dial-cool is safe.
-  'border-soft': { light: 'rgba(13, 12, 11, 0.80)', dark: 'rgba(255, 253, 247, 0.80)' },
+  'border-soft': { light: 'rgba(13, 12, 11, 0.80)', dark: 'rgba(196, 192, 176, 0.80)' },
   // Ink at 10% — the Cool dial's whisper of an offset shadow (doc 02 §5.3).
   // Pre-resolved rgba rather than color-mix(): React Native cannot evaluate
   // color-mix, so a shared token has to be a value both engines can read.
   // Never a text or border colour — it fails contrast by design.
-  'border-faint': { light: 'rgba(13, 12, 11, 0.10)', dark: 'rgba(255, 253, 247, 0.10)' },
+  'border-faint': { light: 'rgba(13, 12, 11, 0.10)', dark: 'rgba(246, 243, 232, 0.10)' },
   focus: { light: palette.gold[500], dark: palette.gold[400] },
   danger: { light: '#D31F2B', dark: '#FF7A85' },
   'on-danger': { light: palette.white, dark: '#3D0508' },
@@ -154,7 +244,10 @@ export const semantic = {
   // `redpen` is teacher feedback, deliberately NOT `danger`: a correction is not
   // an error state, and a child seeing alarm-red for ordinary marking is a
   // child-outcome problem, not a palette one.
-  highlighter: { light: palette.burgundy[300], dark: palette.burgundy[300] },
+  // Dimmed in the dark for the same reason as `primary`: a marker laid over a
+  // lamp-lit page is warm gold, not a lit lemon. Hue holds so a highlighted row
+  // is recognisably the same gesture in both schemes.
+  highlighter: { light: palette.burgundy[300], dark: palette.burgundy[500] },
   'on-highlighter': { light: palette.ink[950], dark: palette.ink[950] },
   // Highlighter at 24% — the selected DataTable row (doc 08 §4.6) and the
   // selected InkTile. Pre-resolved rather than `bg-highlighter/24`, for the same
@@ -163,7 +256,7 @@ export const semantic = {
   // is never a text or border colour.
   'highlighter-underlay': {
     light: 'rgba(255, 225, 77, 0.24)',
-    dark: 'rgba(255, 225, 77, 0.24)',
+    dark: 'rgba(242, 199, 0, 0.24)',
   },
   ballpoint: { light: palette.gold[600], dark: palette.gold[400] },
   redpen: { light: palette.rose[600], dark: palette.rose[300] },
@@ -224,36 +317,90 @@ export const semantic = {
   'role-district': { light: '#83EFF5', dark: '#83EFF5' },
   'role-district-underlay': { light: 'rgba(131, 239, 245, 0.24)', dark: 'rgba(131, 239, 245, 0.24)' },
 
-  // ---- Moyo tenant shell surface tokens ---------------------------------------
-  // These are the semantic slots shells consume, not raw tenant hexes.
-  // Role scopes re-point surface-header / surface-footer per door.
-  'surface-header': { light: palette['moyo-lavender'], dark: palette['moyo-lavender'] },
-  'surface-footer': { light: palette['moyo-mint'], dark: palette['moyo-mint'] },
-  'surface-muted': { light: palette['moyo-guava'], dark: palette['moyo-guava'] },
-  'surface-ai': { light: palette['moyo-lavender'], dark: palette['moyo-lavender'] },
-  'surface-family': { light: palette['moyo-guava'], dark: palette['moyo-guava'] },
-  'surface-learning': { light: palette['moyo-mint'], dark: palette['moyo-mint'] },
-  'surface-achievement': { light: palette['moyo-mango-pastel'], dark: palette['moyo-mango-pastel'] },
-  'action-primary': { light: palette['moyo-purple'], dark: palette['moyo-purple'] },
-  'action-primary-foreground': { light: palette.white, dark: palette.white },
-  'text-on-header': { light: palette['moyo-purple'], dark: palette['moyo-purple'] },
-  'text-on-footer': { light: palette['moyo-purple'], dark: palette['moyo-purple'] },
-  'text-on-action': { light: palette.white, dark: palette.white },
-  'surface-accent': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
-  'text-on-accent': { light: palette.white, dark: palette.white },
+  // ---- chrome tints: the brand pastels, per scheme -----------------------------
+  /*
+    The four Moyo pastels are LIGHT-SCHEME values. A shell that paints chrome
+    straight from `palette['moyo-*']` therefore paints a light bar in dark mode —
+    which is exactly how the app shipped a lavender header with dark-mode body
+    text on it, illegible on a night-mode phone. The pastel is not the token; the
+    PAIR is. Each hue gets a scheme-aware surface and the ink that rides it:
+
+      light  pastel ground, plum ink        (the printed page)
+      dark   deep ground of the SAME hue, the pastel itself as the ink
+
+    The inversion is what keeps a door recognisable at night — a guardian's guava
+    header is still warm, a learner's lavender still cool — where a neutral dark
+    bar would make all seven doors identical. Dark grounds sit 1.4–1.9:1 above
+    `surface` so chrome reads as chrome; the 2px border does the rest, which is
+    what WCAG 1.4.11 actually asks for. Foregrounds clear 7:1 in both schemes.
+
+    `chromeTint` below is the ONE map from a pastel primitive to its pair — role
+    scopes go through it, so a door cannot pick a hue and miss its dark half.
+  */
+  'chrome-lavender': { light: palette.plum[100], dark: palette.plum[700] },
+  'on-chrome-lavender': { light: palette.plum[700], dark: palette.plum[100] },
+  'chrome-guava': { light: palette.flame[100], dark: palette.flame[800] },
+  'on-chrome-guava': { light: palette.plum[700], dark: palette.flame[100] },
+  'chrome-mint': { light: palette.lagoon[100], dark: palette.lagoon[800] },
+  'on-chrome-mint': { light: palette.plum[700], dark: palette.lagoon[100] },
+  'chrome-mango': { light: palette.sun[100], dark: palette.sun[800] },
+  'on-chrome-mango': { light: palette.plum[700], dark: palette.sun[100] },
+
+  // ---- Moyo shell surface slots -----------------------------------------------
+  // The semantic slots shells consume. Defaults are the LEARNER door; the
+  // `.role-*` scopes re-point each slot AND its carried foreground together, so a
+  // door can never inherit the previous door's ink on its own surface.
+  'surface-header': { light: palette.plum[100], dark: palette.plum[700] },
+  'on-surface-header': { light: palette.plum[700], dark: palette.plum[100] },
+  // ONE chrome family, top and bottom. M3 puts the navigation bar and the top
+  // app bar on the same `surface-container` and reserves colour for the active
+  // indicator; the shell used to paint a lavender header against a mint tab bar
+  // and rail, which read as three unrelated products in one window. The DOOR is
+  // carried by which pastel that one family is, and selection is carried by the
+  // marker — never by giving the bottom bar its own hue.
+  'surface-footer': { light: palette.plum[100], dark: palette.plum[700] },
+  'on-surface-footer': { light: palette.plum[700], dark: palette.plum[100] },
+  'surface-muted': { light: palette.flame[100], dark: palette.flame[800] },
+  'on-surface-muted': { light: palette.plum[700], dark: palette.flame[100] },
+  // Content-meaning tints. Same values as the chrome pair of the same hue; text
+  // placed on one takes that hue's `on-chrome-*` as its foreground.
+  'surface-ai': { light: palette.plum[100], dark: palette.plum[700] },
+  'surface-family': { light: palette.flame[100], dark: palette.flame[800] },
+  'surface-learning': { light: palette.lagoon[100], dark: palette.lagoon[800] },
+  'surface-achievement': { light: palette.sun[100], dark: palette.sun[800] },
+  /*
+    The signature-action fill (the raised camera slot). Deep plum on the light
+    pastels; on the dark chrome a deep plum would sit ON a deep ground and vanish
+    into it, so the dark cut lifts to the same hue's tint and flips its ink. The
+    foreground is `on-action-primary` — named for the fill it rides, which is what
+    puts it inside check-contrast's derived pairs instead of outside every gate.
+  */
+  'action-primary': { light: palette.plum[700], dark: palette.plum[300] },
+  'on-action-primary': { light: palette.plum[50], dark: palette.plum[900] },
+  // The coral hairline strip. Identity, not a scheme value, so it holds — but its
+  // ink is INK, never white: white on coral is 3.47:1 and has never passed AA.
+  'surface-accent': { light: palette.flame[400], dark: palette.flame[400] },
+  'on-surface-accent': { light: palette.ink[950], dark: palette.ink[950] },
 
   // ---- tenant shell tokens ----------------------------------------------------
   // Defaults mirror Moyo brand values. The web `TenantScope` overrides these per
   // active tenant; declaring them in @theme makes `bg-tenant-*` utilities real.
+  //
+  // Their DARK cuts mirror the product scheme step for step (`tenant-surface` is
+  // `surface`, `tenant-header` is `surface-header`, …). They used to hold the
+  // pre-brand near-blacks and a light-only lavender header, so an admin shell in
+  // dark mode drifted away from the app it administers — and a tenant that never
+  // overrides anything is the common case, which is exactly when the default has
+  // to already be right.
   'tenant-primary': { light: palette['moyo-purple'], dark: palette['moyo-purple'] },
   'tenant-primary-hover': { light: palette['moyo-purple'], dark: palette['moyo-purple'] },
   'tenant-primary-foreground': { light: palette.white, dark: palette.white },
-  'tenant-header': { light: palette['moyo-lavender'], dark: palette['moyo-lavender'] },
-  'tenant-header-foreground': { light: palette['moyo-purple'], dark: palette['moyo-purple'] },
-  'tenant-header-muted': { light: `${palette['moyo-purple']}B3`, dark: `${palette['moyo-purple']}B3` },
-  'tenant-header-border': { light: `${palette['moyo-purple']}26`, dark: `${palette['moyo-purple']}26` },
-  'tenant-sidebar': { light: palette.ink[50], dark: '#211F1B' },
-  'tenant-sidebar-foreground': { light: palette.ink[950], dark: palette.ink[50] },
+  'tenant-header': { light: palette.plum[100], dark: palette.plum[700] },
+  'tenant-header-foreground': { light: palette.plum[700], dark: palette.plum[100] },
+  'tenant-header-muted': { light: `${palette.plum[700]}B3`, dark: `${palette.plum[100]}B3` },
+  'tenant-header-border': { light: `${palette.plum[700]}26`, dark: `${palette.plum[100]}26` },
+  'tenant-sidebar': { light: palette.ink[50], dark: palette.plum[800] },
+  'tenant-sidebar-foreground': { light: palette.ink[950], dark: palette.ink[100] },
   'tenant-sidebar-muted': { light: palette.ink[600], dark: palette.ink[300] },
   'tenant-sidebar-active': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
   'tenant-sidebar-active-foreground': { light: palette.ink[950], dark: palette.ink[950] },
@@ -261,9 +408,9 @@ export const semantic = {
   'tenant-accent': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
   'tenant-accent-hover': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
   'tenant-accent-foreground': { light: palette.ink[950], dark: palette.ink[950] },
-  'tenant-surface': { light: palette.ink[50], dark: '#161411' },
-  'tenant-surface-subtle': { light: palette.ink[100], dark: '#0F0E0C' },
-  'tenant-border': { light: palette.ink[950], dark: palette.ink[50] },
+  'tenant-surface': { light: palette.ink[50], dark: palette.plum[900] },
+  'tenant-surface-subtle': { light: palette.ink[100], dark: palette.plum[950] },
+  'tenant-border': { light: palette.ink[950], dark: palette.ink[300] },
   'tenant-focus-ring': { light: palette['moyo-coral'], dark: palette['moyo-coral'] },
   'tenant-success': { light: palette.forest[600], dark: palette.forest[300] },
   'tenant-warning': { light: palette.rose[500], dark: palette['moyo-mango'] },
@@ -291,76 +438,72 @@ export const resourceAccents = ['ember', 'gold', 'forest', 'sky', 'rose'] as con
 export type ResourceAccentName = (typeof resourceAccents)[number];
 
 /**
- * Per-role Moyo shell surfaces. Every shell re-points the same semantic slots
- * (surface-header, surface-footer, surface-muted, action-primary, ...) so a
- * component writes `bg-surface-header` once and the role wrapper picks the hue.
- * Tenant brand overrides live one layer above, at the theme-provider boundary.
+ * Brand pastel -> the scheme-aware chrome pair that carries it. The ONE crossing
+ * from a primitive hue name to a themed token, so a surface can never be painted
+ * from the raw pastel (which only exists in the light scheme) and a foreground
+ * can never be chosen independently of the surface it sits on.
+ */
+export const chromeTint = {
+  'moyo-lavender': 'chrome-lavender',
+  'moyo-guava': 'chrome-guava',
+  'moyo-mint': 'chrome-mint',
+  'moyo-mango-pastel': 'chrome-mango',
+} as const satisfies Record<string, keyof typeof semantic>;
+export type ChromePastel = keyof typeof chromeTint;
+
+/**
+ * Per-role Moyo shell surfaces: WHICH PASTEL each door claims, and nothing else.
+ * build-css.mjs resolves each hue through `chromeTint` and emits both the surface
+ * and its carried ink into the `.role-*` scope, so a component writes
+ * `bg-surface-header text-on-surface-header` once and the wrapper picks the door.
+ *
+ * `actionPrimary`, `surfaceAccent` and the two `textOn*` slots used to live here
+ * with the same value in all seven doors. They are gone on purpose: a slot every
+ * door agrees on is not a per-door decision, and re-pointing it at a raw
+ * primitive is precisely what pinned the chrome to the light scheme. Those slots
+ * now inherit their scheme-aware defaults from `semantic` above.
+ *
+ * Tenant brand overrides live one layer above, at the theme-provider boundary —
+ * `packages/app/core/tenant-brand.ts` reads `surfaceHeader` as a pastel NAME,
+ * which is why the values here stay primitive names rather than token names.
  */
 export const roleTheme = {
   learner: {
     surfaceHeader: 'moyo-lavender',
-    surfaceFooter: 'moyo-mint',
+    surfaceFooter: 'moyo-lavender',
     surfaceMuted: 'moyo-guava',
-    actionPrimary: 'moyo-purple',
-    textOnHeader: 'moyo-purple',
-    textOnFooter: 'moyo-purple',
-    surfaceAccent: 'moyo-coral',
   },
   guardian: {
     surfaceHeader: 'moyo-guava',
-    surfaceFooter: 'moyo-mint',
+    surfaceFooter: 'moyo-guava',
     surfaceMuted: 'moyo-lavender',
-    actionPrimary: 'moyo-purple',
-    textOnHeader: 'moyo-purple',
-    textOnFooter: 'moyo-purple',
-    surfaceAccent: 'moyo-coral',
   },
   tutor: {
     surfaceHeader: 'moyo-mango-pastel',
-    surfaceFooter: 'moyo-mint',
+    surfaceFooter: 'moyo-mango-pastel',
     surfaceMuted: 'moyo-guava',
-    actionPrimary: 'moyo-purple',
-    textOnHeader: 'moyo-purple',
-    textOnFooter: 'moyo-purple',
-    surfaceAccent: 'moyo-coral',
   },
   teacher: {
     surfaceHeader: 'moyo-mint',
     surfaceFooter: 'moyo-mint',
     surfaceMuted: 'moyo-guava',
-    actionPrimary: 'moyo-purple',
-    textOnHeader: 'moyo-purple',
-    textOnFooter: 'moyo-purple',
-    surfaceAccent: 'moyo-coral',
   },
   org: {
     surfaceHeader: 'moyo-mint',
     surfaceFooter: 'moyo-mint',
     surfaceMuted: 'moyo-guava',
-    actionPrimary: 'moyo-purple',
-    textOnHeader: 'moyo-purple',
-    textOnFooter: 'moyo-purple',
-    surfaceAccent: 'moyo-coral',
   },
   school: {
     surfaceHeader: 'moyo-mint',
     surfaceFooter: 'moyo-mint',
     surfaceMuted: 'moyo-guava',
-    actionPrimary: 'moyo-purple',
-    textOnHeader: 'moyo-purple',
-    textOnFooter: 'moyo-purple',
-    surfaceAccent: 'moyo-coral',
   },
   district: {
     surfaceHeader: 'moyo-lavender',
-    surfaceFooter: 'moyo-mint',
+    surfaceFooter: 'moyo-lavender',
     surfaceMuted: 'moyo-guava',
-    actionPrimary: 'moyo-purple',
-    textOnHeader: 'moyo-purple',
-    textOnFooter: 'moyo-purple',
-    surfaceAccent: 'moyo-coral',
   },
-} as const;
+} as const satisfies Record<AccentRole, Record<string, ChromePastel>>;
 export type RoleTheme = (typeof roleTheme)[AccentRole];
 
 // ---- typography -------------------------------------------------------------
@@ -394,7 +537,23 @@ export const typeScale = {
 export const contentWidths = {
   'content-form': '28rem',
   'content-feed': '38rem',
-  'content-prose': '65ch',
+  /*
+    The 45–75-character measure doc 08 §1 calls law, expressed in rem instead of
+    the `65ch` it used to be. `ch` is not a unit the native styling pipeline can
+    resolve, and neither library FAILS on it — they degrade differently and both
+    degrade wrong. react-native-css drops the declaration (`ch` falls into the
+    unsupported-unit arm of compiler/declarations.js and returns undefined), so
+    the cap silently does not exist; Uniwind's Units.processLength has a
+    `default:` arm that warns and then returns `length.value` UNCHANGED, so on
+    mobile `max-w-content-prose` compiled to `maxWidth: 65` — sixty-five DP.
+    Every prose surface on the phone was capped at the width of four letters,
+    which is why the K–2 hub's greeting bubble rendered one character per line.
+
+    36rem ≈ 65 characters of Schibsted Grotesk at the 16px base (≈0.55em per
+    glyph), so web is unchanged to within a few pixels and native gets a cap
+    that exists. The measure is the law; `ch` was only ever the notation.
+  */
+  'content-prose': '36rem',
   'content-detail': '48rem',
   'content-screen': '56rem',  // Tailwind 4xl — the default screen cap
   'content-wide': '72rem',
@@ -539,13 +698,68 @@ export const spacingTiers = {
  * comes from the learner profile, so a K–2 primary action is 72 (~2cm, the NN/g
  * 4× finding) while the same component on an ops screen is 44.
  * `floor` is the absolute CI minimum (WCAG 2.2 AA) — never a design target.
+ *
+ * PX, NOT REM, and this is the one scale where that is not a style preference.
+ * A target requirement is an ABSOLUTE physical size — WCAG 2.2 SC 2.5.8 says 24
+ * CSS px, Apple says 44pt, Material says 48dp — so a target expressed relative
+ * to a root font size is the wrong shape of number, and it bit us: the mobile
+ * bundler sets `polyfills.rem = 14` (apps/mobile/metro.config.js, kept from the
+ * NativeWind migration so spacing would not shift), and every rem token is
+ * therefore multiplied by 14 on device instead of 16. The bands were shipping
+ * at 21 / 38.5 / 42 / 49 / 63 — the ADULT band landed 5.5 under Apple's 44 and
+ * 9.5 under Material's 48, and the K–2 "2cm" band was 63, not 72. It was
+ * invisible because `tooling/check-targets.mjs` computes rem at 16, so CI
+ * asserted the sizes the DESIGN intends rather than the ones the device gets.
+ *
+ * In px, both platforms land on the same number and the rem base cannot move
+ * it. Web is unchanged: it already resolved these at 16.
  */
 export const targets = {
-  floor: '1.5rem',   // 24
-  adult: '2.75rem',  // 44 (48 preferred on Android)
-  teen: '3rem',      // 48 — Hot, grades 6–12
-  child: '3.5rem',   // 56 — Hot, grades 3–5
-  young: '4.5rem',   // 72 — Hot, K–2 primary actions
+  floor: '24px',   // WCAG 2.2 SC 2.5.8 AA floor
+  adult: '44px',   // Apple HIG 44pt; Material prefers 48
+  teen: '48px',    // Material's 48dp — Hot, grades 6–12
+  child: '56px',   // Hot, grades 3–5
+  young: '72px',   // ~2cm, NN/g's 4× finding — Hot, K–2 primary actions
+} as const;
+
+// ---- navigation chrome geometry (doc 02 §2.1) -------------------------------
+
+/**
+ * The nav shell's fixed dimensions, in px for the same reason `targets` is:
+ * these are platform-spec numbers, and a rem base of 14 silently shrank them.
+ *
+ * `rail` is Material 3's OWN collapsed navigation-rail width. The current
+ * androidx token is `NavigationRailCollapsedTokens.ContainerWidth = 96.dp`,
+ * with `NarrowContainerWidth = 80.dp` as the narrow variant and 220–360dp for
+ * the expanded rail — so 96 is the standard, not a deviation, and 80 is the
+ * floor we are choosing not to sit on. 96 is also what this product needs
+ * independently: the rail carries a label under every icon (DashboardShell's
+ * ratified rail rejected icon-only, and doc 36 §4.1 requires visible labels),
+ * and it must fit the K–2 `young` 72px emphasis slab with padding, which 80
+ * cannot do. iPadOS has no rail primitive to defend against — Apple's nearest
+ * equivalents are the sidebar and the floating tab bar — so Material's number
+ * is the one that applies.
+ *
+ * `raised` is the learner Snap slab. iOS has no raised-tab convention at all
+ * (it is a custom pattern), so the reference is Material's FAB: 56 standard,
+ * 96 large. 64 sits deliberately between them — larger than a standard FAB
+ * because it is the product's signature action and must out-weigh every other
+ * item on the bar, smaller than a large FAB because it shares the bar rather
+ * than floating over content. The age band raises it further and never lowers
+ * it (K–2 → 72).
+ *
+ * `indicator` is the height of the selected-item marker, matching Material's
+ * `ActiveIndicatorHeight = 32.dp` (`NavigationBarVerticalItemTokens` /
+ * `NavigationRailVerticalItemTokens`, whose paired `ActiveIndicatorWidth` is
+ * 56). We keep Material's height and let the width hug the item's content
+ * instead of pinning it to 56, because our labels are words rather than
+ * Material's single glyph — but it must NOT stretch to fill the tab, which is
+ * what made selection read as a button instead of a marker.
+ */
+export const navChrome = {
+  rail: '96px',
+  raised: '64px',
+  indicator: '32px',
 } as const;
 
 // ---- reading comfort (doc 08 §3.3) ------------------------------------------

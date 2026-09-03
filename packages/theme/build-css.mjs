@@ -21,10 +21,10 @@ import { writeFileSync } from 'node:fs';
 import {
   palette, semantic, fontFamilies, typeScale, contentWidths,
   radius, shadows, zIndex, motion, breakpoints, dial,
-  uiRamp, spacingTiers, targets, readingComfort, accentRoles,
+  uiRamp, spacingTiers, targets, navChrome, readingComfort, accentRoles,
   siteColors, siteFontFamilies, siteTypeScale,
   moyoShadowOffset, moyoBorderW, moyoRadius, moyoTexture, siteMotion,
-  roleTheme,
+  roleTheme, chromeTint,
 } from './tokens.ts';
 
 const HEADER = '/* GENERATED from tokens.ts — do not edit by hand. `node build-css.mjs` */';
@@ -128,6 +128,12 @@ const sharedThemeTokens = () => {
   // profile, so a screen picks min-h-target-child explicitly (doc 08 §2.4).
   for (const [name, value] of Object.entries(targets)) {
     out.push(`  --spacing-target-${name}: ${value};`);
+  }
+
+  // Nav shell geometry, in the spacing namespace so one token drives both axes
+  // (`w-nav-rail`, `h-nav-raised`/`w-nav-raised`, `min-h-nav-indicator`).
+  for (const [name, value] of Object.entries(navChrome)) {
+    out.push(`  --spacing-nav-${name}: ${value};`);
   }
   return out;
 };
@@ -436,14 +442,23 @@ const DIAL_SCOPES = ['@layer base {', ...dialScope('hot'), ...dialScope('cool'),
  * Generated from `accentRoles` so a new role cannot mint tokens and silently
  * miss its scope. No `.role-admin` exists: the back office has no accent, and
  * an unscoped tree resolves to the learner default declared in @theme.
+ *
+ * Every re-point goes through a THEMED token, never a `--color-moyo-*` primitive:
+ * the primitives are single values, so a scope that named one pinned that slot to
+ * the light scheme in both schemes — which is how the app rendered a lavender
+ * header bar with dark-mode ink on it. `chromeTint` maps the door's pastel to its
+ * pair and the foreground is emitted alongside its own surface, so ink and ground
+ * cannot be re-pointed independently.
  */
 const roleScope = (role) => {
   const t = roleTheme[role];
   const out = [`  .role-${role} {`];
   out.push(`    --color-role-accent: var(--color-role-${role});`);
   out.push(`    --color-role-accent-underlay: var(--color-role-${role}-underlay);`);
-  for (const [slot, token] of Object.entries(t)) {
-    out.push(`    --color-${kebab(slot)}: var(--color-${token});`);
+  for (const [slot, pastel] of Object.entries(t)) {
+    const tint = chromeTint[pastel];
+    out.push(`    --color-${kebab(slot)}: var(--color-${tint});`);
+    out.push(`    --color-on-${kebab(slot)}: var(--color-on-${tint});`);
   }
   out.push('  }');
   return out;

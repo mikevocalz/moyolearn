@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { Camera, Compass, Home, Star, TrendingUp, User } from '@acme/ui/icons';
 import { useAppSession } from '@acme/app';
 import { ShellHeader } from '../../../components/ShellHeader';
-import { ShellTabBar, type ShellTabItem } from '../../../components/ShellTabBar';
+import { ShellTabBar, useShellTabBarPosition, type ShellTabItem } from '../../../components/ShellTabBar';
 
 /**
  * The band-adaptive learner tab bar — doc 36 §3.1's exact table. The band comes
@@ -44,6 +44,20 @@ const BAND_TARGET: Record<Band, string> = {
   adult: 'min-h-target-teen',
 };
 
+/**
+ * The raised Snap slab's FLOOR per band, as a min-h/min-w pair. Only K–2
+ * actually moves the slab (72 > its 64 base) — which is the band the NN/g 2cm
+ * finding is about. The rest are declared anyway so the slab can never be
+ * shipped without a band floor, and so raising a band token later takes effect
+ * here instead of silently not applying.
+ */
+const BAND_RAISED_TARGET: Record<Band, string> = {
+  young: 'min-h-target-young min-w-target-young',
+  child: 'min-h-target-child min-w-target-child',
+  teen: 'min-h-target-teen min-w-target-teen',
+  adult: 'min-h-target-teen min-w-target-teen',
+};
+
 const TITLES: Record<string, string> = {
   '/today': 'Today',
   '/subjects': 'Subjects',
@@ -56,6 +70,7 @@ const TITLES: Record<string, string> = {
 export default function LearnerTabs() {
   const { activeContext } = useAppSession();
   const band: Band = activeContext.gradeBand ?? 'teen';
+  const tabBarPosition = useShellTabBarPosition();
   const items = BAND_ITEMS[band];
   const visible = new Set(items.map((item) => item.name));
 
@@ -63,9 +78,18 @@ export default function LearnerTabs() {
     <Tabs
       screenOptions={{
         header: () => <ShellHeader titles={TITLES} fallback="Today" />,
+        // Doc 02 §2.1: bottom nav under 600dp, rail from 600 up. The navigator
+        // turns its own container to `flexDirection: 'row'` for `right`, so the
+        // rail is a real flex sibling of the scene — no overlay, no scene inset.
+        tabBarPosition,
       }}
       tabBar={(props) => (
-        <ShellTabBar {...props} items={items} targetClass={BAND_TARGET[band]} fillActive />
+        <ShellTabBar
+          {...props}
+          items={items}
+          targetClass={BAND_TARGET[band]}
+          raisedTargetClass={BAND_RAISED_TARGET[band]}
+        />
       )}
     >
       {/* Off-band destinations lose their deep link too (`href: null`), so a

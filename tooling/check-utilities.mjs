@@ -20,6 +20,7 @@ import { join } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..');
 const css = readFileSync(join(ROOT, 'packages/theme/theme.css'), 'utf8');
+const nativeCss = readFileSync(join(ROOT, 'packages/theme/theme-native.css'), 'utf8');
 
 /**
  * Only @theme counts. A variable declared solely in a .dial-* scope re-points a
@@ -74,6 +75,34 @@ const CONTRACT = [
   // The generic name must exist in @theme or every slot class is inert.
   ['bg-role-accent', 'color-role-accent'],
   ['bg-role-accent-underlay', 'color-role-accent-underlay'],
+  /*
+    Moyo shell chrome. Every one of these shipped INERT: the tokens were named
+    `text-on-header` / `text-on-action`, which emit `--color-text-on-*`, so the
+    classes written against them (`text-on-header`, `text-on-action`) needed a
+    `--color-on-*` that did not exist. The type fell through to the tw wrapper's
+    `text-body-default` and every shell bar painted its title in the CONTENT
+    ink — invisible white-on-lavender in dark mode. Asserted as pairs so a
+    foreground can never be listed without the fill it rides.
+  */
+  ['bg-surface-header', 'color-surface-header'],
+  ['text-on-surface-header', 'color-on-surface-header'],
+  ['bg-surface-footer', 'color-surface-footer'],
+  ['text-on-surface-footer', 'color-on-surface-footer'],
+  ['bg-surface-muted', 'color-surface-muted'],
+  ['text-on-surface-muted', 'color-on-surface-muted'],
+  ['bg-action-primary', 'color-action-primary'],
+  ['text-on-action-primary', 'color-on-action-primary'],
+  ['bg-surface-accent', 'color-surface-accent'],
+  ['text-on-surface-accent', 'color-on-surface-accent'],
+  // The per-hue chrome pairs the .role-* scopes resolve through (`chromeTint`).
+  ['bg-chrome-lavender', 'color-chrome-lavender'],
+  ['text-on-chrome-lavender', 'color-on-chrome-lavender'],
+  ['bg-chrome-guava', 'color-chrome-guava'],
+  ['text-on-chrome-guava', 'color-on-chrome-guava'],
+  ['bg-chrome-mint', 'color-chrome-mint'],
+  ['text-on-chrome-mint', 'color-on-chrome-mint'],
+  ['bg-chrome-mango', 'color-chrome-mango'],
+  ['text-on-chrome-mango', 'color-on-chrome-mango'],
   // PR-0 — schoolhouse aliases
   ['bg-highlighter', 'color-highlighter'],
   ['text-on-highlighter', 'color-on-highlighter'],
@@ -146,6 +175,46 @@ for (const name of declared) {
     console.error(
       `--${name} generates \`${doubled[1]}-${name.replace('spacing-', '')}\` — the property ` +
         `prefix is inside the token name. Name tiers for the ROLE and let the property add it.`,
+    );
+    failures++;
+  }
+}
+
+/*
+  A unit the native styling pipeline cannot resolve is WORSE than an inert
+  class, because the two libraries degrade differently and neither one throws.
+
+  `--container-content-prose: 65ch` shipped for months. On web `ch` is real. In
+  react-native-css the `ch` arm of the compiler returns undefined, so the cap
+  vanished. In Uniwind — which is what the mobile app actually runs —
+  `Units.processLength` warns on an unknown unit and then returns
+  `length.value` UNCHANGED, so `max-w-content-prose` compiled to
+  `maxWidth: 65`. Sixty-five DP. The K–2 hub's greeting bubble rendered one
+  character per line on the device while reviewing identically on web.
+
+  So: every length token emitted into the NATIVE theme must use a unit Uniwind
+  resolves. That list is exhaustive and short — it is the `switch` in
+  uniwind/bundler/css-processor/units.js, plus percentages and bare numbers.
+  Anything else silently becomes a raw number in DP.
+*/
+const NATIVE_SAFE_LENGTH =
+  /^(-?0|-?[0-9.]+(px|rem|em|vw|vh|%|deg|ms|s)?|calc\(.*\)|var\(.*\)|[a-z-]+\(.*\))$/;
+/* Namespaces whose values Tailwind feeds to a LENGTH property. Colours, font
+   stacks and easing curves are not lengths and are not checked here. */
+const LENGTH_NAMESPACE = /^--(container|spacing|text|radius|breakpoint)-/;
+
+const nativeThemeBlocks = [...nativeCss.matchAll(/@theme[^{]*\{([\s\S]*?)\n\}/g)].map((m) => m[1]);
+for (const block of nativeThemeBlocks) {
+  for (const [, name, rawValue] of block.matchAll(/(--[a-z0-9-]+):\s*([^;]+);/g)) {
+    if (!LENGTH_NAMESPACE.test(name)) continue;
+    const value = rawValue.trim();
+    // Multi-part values (font shorthand, comma lists) are not single lengths.
+    if (/[, ]/.test(value)) continue;
+    if (NATIVE_SAFE_LENGTH.test(value)) continue;
+    console.error(
+      `${name}: ${value} — Uniwind cannot resolve that unit. Its unsupported-unit ` +
+        'arm returns the NUMBER, so this ships as a raw DP value on device while ' +
+        'looking correct on web. Use px/rem/em/vw/vh/% in packages/theme/tokens.ts.',
     );
     failures++;
   }
