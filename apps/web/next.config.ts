@@ -7,6 +7,24 @@ import { withSentryConfig } from '@sentry/nextjs'
 // forest. RN globals (__DEV__) come from a runtime shim imported in the root
 // layout instead of DefinePlugin.
 const nextConfig: NextConfig = {
+  /*
+    ADR-111's 3D stage is ON for the web build unless the deployment says
+    otherwise, and that is not a change to the ADR's default — it is the ADR's
+    reason applied to a platform where the hazard does not exist.
+
+    The flag exists because a native binary prebuilt without
+    `react-native-webgpu` would CRASH on reaching the renderer module, so the
+    default had to protect a build that cannot be fixed from JS. A browser has
+    no such build: `tutor-avatar-3d.web.tsx` is an ordinary lazy chunk, and its
+    failure path is `onUnavailable` -> the 2D mark, which is the same thing the
+    flag being off produces. Off by default on web meant only "never her".
+
+    Set `NEXT_PUBLIC_NATIVE_3D=0` in the environment to turn her back off; the
+    env value wins.
+  */
+  env: {
+    NEXT_PUBLIC_NATIVE_3D: process.env.NEXT_PUBLIC_NATIVE_3D ?? '1',
+  },
   // Next 16.3 writes `AGENTS.md` and `CLAUDE.md` into apps/web on every `dev`
   // boot. This repo keeps one hand-written CLAUDE.md at the root, and generated
   // agent files landing next to it are both noise and a thing that gets
