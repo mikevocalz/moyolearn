@@ -24,7 +24,6 @@ import {
   LoadingSkeleton,
   PressScale,
   ReadFailure,
-  SafeArea,
   Text,
 } from '@acme/ui';
 import { ArrowRight, GraduationCap, Video } from '@acme/ui/icons';
@@ -64,7 +63,7 @@ export function TeacherHomeScreen() {
     (assignmentsError !== null && assignments.length > 0);
 
   return (
-    <SafeArea edges={['top']} className="flex-1 bg-surface">
+    <View className="flex-1 bg-surface">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <Container width="detail" className="py-4 pb-48">
           <View className="gap-section">
@@ -220,6 +219,6 @@ export function TeacherHomeScreen() {
           </View>
         </Container>
       </ScrollView>
-    </SafeArea>
+    </View>
   );
 }

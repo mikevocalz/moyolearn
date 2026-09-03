@@ -20,6 +20,15 @@ import type { ListProps, ListItemProps } from './List.types';
  * virtualises long, uniform React Native lists. Use this where the platform's
  * own list behaviour — pull to refresh, native separators and selection — is
  * what matters.
+ *
+ * NEVER NEST IT IN A SCROLLER. On Android this is a Compose LazyColumn, and a
+ * LazyColumn measured with an unbounded height throws
+ * `IllegalStateException: Vertically scrollable component was measured with an
+ * infinity maximum height constraints` — a native crash, not a layout glitch.
+ * Any RN `ScrollView` ancestor gives it exactly that, which rules out every
+ * `BottomSheet` (its `SheetSurface` always wraps children in one). Inside a
+ * scroller, lay rows out with kit primitives instead; this component belongs at
+ * the top of a screen that scrolls itself.
  */
 export function List({ children, onRefresh }: ListProps) {
   return (

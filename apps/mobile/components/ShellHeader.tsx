@@ -51,12 +51,13 @@
 //               back button switch profile band young child
 
 import { usePathname } from 'expo-router';
-import { SafeArea, Avatar, MoyoLearnLogo } from '@acme/ui';
+import { SafeArea, Avatar, MoyoLearnLogo, RoleScope } from '@acme/ui';
 import { ChevronLeft } from '@acme/ui/icons';
 import { Header } from '@acme/ui/primitives';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import {
   AVATAR_URI,
+  shellForRole,
   useAccountSheet,
   useAppSession,
   useProfile,
@@ -102,7 +103,31 @@ export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: She
   const onAvatarPress = isYoungLearner ? openSwitchSheet : openAccountSheet;
   const avatarLabel = isYoungLearner ? "You — who's here?" : 'Your profile';
 
+  /*
+    THE DOOR, scoped HERE rather than inherited from the shell.
+
+    Every shell layout already wraps its navigator in `<RoleScope>`, and the
+    `.role-*` scope is what re-points `--color-surface-header` and its ink to
+    that door's pastel (doc 36 §5). It never reached this bar: a native-stack
+    `header` is hoisted into react-native-screens' own header host, OUTSIDE the
+    React Native subtree the RoleScope View wraps, so the custom properties did
+    not cascade into it and every bar in the product resolved the UNSCOPED
+    default — which happens to be the learner lavender. That is why a guardian
+    and a teacher were both looking at the learner's bar while their tab bars,
+    which are ordinary children of the navigator, carried the right hue: one
+    product, one door, two colours on screen at once.
+
+    Reading the role from the session rather than taking it as a prop is safe
+    and is the point: each shell is behind a `Stack.Protected` guard on exactly
+    this value, so shell and session can never disagree — and the root-level
+    routes (/settings, /editor-settings, the dev hatch), which have no shell
+    above them at all, get their door from the same line instead of needing a
+    second header component.
+  */
+  const role = shellForRole(activeContext.kind) ?? 'learner';
+
   return (
+    <RoleScope role={role}>
     <SafeArea edges={['top']} className="bg-surface-header">
       <Header className="min-h-14 flex-row items-center gap-stack border-b-2 border-on-surface-header bg-surface-header px-4 py-1">
         {canGoBack ? (
@@ -166,5 +191,6 @@ export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: She
         )}
       </Header>
     </SafeArea>
+    </RoleScope>
   );
 }

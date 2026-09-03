@@ -10,7 +10,7 @@
 // SOT-KEYWORDS: progress screen mastery chart learner persisted live review scaffolding
 
 import { useRouter } from 'solito/navigation';
-import { MasteryBar, Heading, Text, SafeArea, Container } from '@acme/ui';
+import { MasteryBar, Heading, Text, Container } from '@acme/ui';
 import { ScrollView } from '@acme/ui/tw';
 import { View } from '@acme/ui/primitives';
 import { useTutorStore, useCaptureStore } from '@acme/app';
@@ -91,7 +91,7 @@ export function ProgressScreen() {
   }));
 
   return (
-    <SafeArea edges={['top']} className="flex-1 bg-surface">
+    <View className="flex-1 bg-surface">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <Container width="detail" className="py-4 pb-48 gap-section">
           <View className="gap-stack">
@@ -173,6 +173,6 @@ export function ProgressScreen() {
           </View>
         </Container>
       </ScrollView>
-    </SafeArea>
+    </View>
   );
 }

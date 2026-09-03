@@ -1,4 +1,5 @@
 'use client';
+import { useWindowDimensions } from 'react-native';
 import { tv } from './tv';
 import { BottomSheet as ExpoBottomSheet } from '@expo/ui';
 import { Pressable, ScrollView, Text, View } from './primitives';
@@ -10,11 +11,6 @@ const SNAP_POINTS = [{ fraction: 0.55 }, { fraction: 0.85 }];
 
 const sheet = tv({
   slots: {
-    // `w-full` is load-bearing, not belt-and-braces: the native host measures
-    // this view with an UNBOUNDED width, so without it the surface collapses to
-    // its intrinsic size and the sheet renders as a narrow column pinned to the
-    // left edge with the title wrapped one character per line. `h-full flex-1`
-    // does the same job on the cross axis.
     content: 'h-full w-full flex-1 rounded-t-sheet bg-surface-raised px-4 pb-6',
     header: 'mb-3 flex-row items-center justify-between gap-stack',
     title: 'flex-1 font-display text-xl font-semibold text-text',
@@ -62,9 +58,30 @@ export interface BottomSheetProps extends SheetSurfaceProps {
 }
 
 export function BottomSheet({ open, onClose, ...surfaceProps }: BottomSheetProps) {
+  /*
+    The sheet's own width, in pixels, applied to the hosted subtree.
+
+    Not a style preference — a measurement fix. Expo UI's sheet is a native
+    container (Compose on Android, SwiftUI on iOS) and it measures the React
+    Native subtree it hosts with UNBOUNDED width, so yoga falls back to the
+    content's intrinsic size: every sheet in the app rendered as a ~70pt column
+    pinned to the left edge, with the title wrapped one character per line and
+    rows clipped. `w-full` cannot fix it — a percentage resolves against a
+    parent width that does not exist — so the width has to arrive as a real
+    number. `useWindowDimensions` (not a cached `Dimensions.get`) because it
+    re-renders on rotation and on Android multi-window resize, which a sheet
+    open across a fold or a rotation will do.
+
+    It sits here rather than on `SheetSurface` deliberately: hosts that render
+    the surface inline (stories, pane hosts) are inside a normal RN tree that
+    already has a definite width, and must NOT be forced to the whole window.
+  */
+  const { width } = useWindowDimensions();
   return (
     <ExpoBottomSheet isPresented={open} onDismiss={onClose} snapPoints={SNAP_POINTS}>
-      <SheetSurface {...surfaceProps} onClose={onClose} />
+      <View style={{ width }} className="flex-1">
+        <SheetSurface {...surfaceProps} onClose={onClose} />
+      </View>
     </ExpoBottomSheet>
   );
 }

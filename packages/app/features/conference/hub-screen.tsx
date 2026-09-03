@@ -31,7 +31,7 @@
 
 import { useRouter } from 'solito/navigation';
 import { ScrollView, View, Text as TWText } from '@acme/ui/tw';
-import { Banner, Button, Card, Container, Heading, SafeArea, Text } from '@acme/ui';
+import { Banner, Button, Card, Container, Heading, Text } from '@acme/ui';
 import { Video } from '@acme/ui/icons';
 import { classesRootPath } from '../classes/classes-paths';
 import { DEMO_DAY, formatTimeRange } from '../schedule/index.ts';
@@ -80,7 +80,7 @@ export function ConferenceHubScreen() {
   const [next, ...later] = conferences;
 
   return (
-    <SafeArea edges={['top']} className="flex-1 bg-surface">
+    <View className="flex-1 bg-surface">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <Container width="detail" className="py-4 pb-48">
           <View className="gap-section">
@@ -170,6 +170,6 @@ export function ConferenceHubScreen() {
           </View>
         </Container>
       </ScrollView>
-    </SafeArea>
+    </View>
   );
 }

@@ -28,6 +28,10 @@ export {
   useProfileSwitcherStore,
   type GrownUpsGate,
 } from './features/switch-profile/profile-switcher.store';
+// The root-mounted host for the same switcher, plus the store its trigger
+// (ShellHeader's avatar, on the K–2/3–5 bands) writes.
+export { SwitchProfileSheet } from './features/switch-profile/switch-profile-sheet';
+export { useSwitchProfileSheet } from './features/switch-profile/switch-profile-sheet.store';
 export { TutorTodayScreen } from './features/home/tutor-today-screen';
 export { TeacherHomeScreen } from './features/home/teacher-home-screen';
 export { SchoolHomeScreen } from './features/home/school-home-screen';

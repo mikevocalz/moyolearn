@@ -6,12 +6,12 @@
 // SOT-KEYWORDS: district home screen admin shell landing empty
 
 import { ScrollView, View, Text as TWText } from '@acme/ui/tw';
-import { Container, Heading, SafeArea } from '@acme/ui';
+import { Container, Heading } from '@acme/ui';
 import type { OrgBranding } from '@acme/app';
 
 export function DistrictHomeScreen({ org }: { org?: OrgBranding | null }) {
   return (
-    <SafeArea edges={['top']} className="flex-1 bg-surface">
+    <View className="flex-1 bg-surface">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <Container width="detail" className="py-4 pb-48">
           <View className="gap-stack">
@@ -28,6 +28,6 @@ export function DistrictHomeScreen({ org }: { org?: OrgBranding | null }) {
           </View>
         </Container>
       </ScrollView>
-    </SafeArea>
+    </View>
   );
 }

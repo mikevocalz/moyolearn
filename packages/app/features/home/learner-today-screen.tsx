@@ -9,8 +9,8 @@
 // SOT: docs/pack/36-role-navigation-flows.md §3.1
 // SOT-KEYWORDS: learner today screen band adaptive hub resume-first shell landing
 
-import { ScrollView } from '@acme/ui/tw';
-import { Container, SafeArea } from '@acme/ui';
+import { ScrollView, View } from '@acme/ui/tw';
+import { Container } from '@acme/ui';
 import { useAppSession } from '../../providers/session';
 import { LearnerHubContent } from './learner-hub-content';
 import { StudentHomeContent } from './student-home-content';
@@ -30,12 +30,12 @@ export function LearnerTodayContent() {
 
 export function LearnerTodayScreen() {
   return (
-    <SafeArea edges={['top']} className="flex-1 bg-surface">
+    <View className="flex-1 bg-surface">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <Container width="detail" className="py-4 pb-48">
           <LearnerTodayContent />
         </Container>
       </ScrollView>
-    </SafeArea>
+    </View>
   );
 }

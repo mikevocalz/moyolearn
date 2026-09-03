@@ -12,7 +12,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { withUniwind } from "uniwind";
 import { AppQueryProvider, SafeAreaProvider, SessionProvider , AccountSheet, AttachSheet, AudioRecorderSheet, SwitchProfileSheet, UrlSheet, VideoNoteSheet, UploadQueueProvider } from "@acme/app";
 import { BookingSheet } from "../components/BookingSheet";
-import { RootHeader } from "../components/RootHeader";
+import { ShellHeader } from "../components/ShellHeader";
 import { Toaster } from "@acme/ui";
 import "../global.css";
 
@@ -77,7 +77,7 @@ export default function RootLayout() {
                 screenOptions={{
                   headerShown: false,
                   header: ({ navigation, back }) => (
-                    <RootHeader
+                    <ShellHeader
                       titles={ROOT_TITLES}
                       fallback="Moyo"
                       /* `back` is defined only when this route can pop — the

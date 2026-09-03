@@ -49,6 +49,42 @@ SOT-KEYWORDS: adr account-sheet avatar-sheet profile you chrome shell-header
 - No code-comment corrections required by this ADR (the fabricated citations belong to ADRs 101–103); the guardian layout comment's phantom "drawer/secondary surface" claim dies with the ADR-101 correction.
 - Follow-ups: build `AvatarSheet` in packages/ui + content in packages/app; wire `onAvatarPress` in all shell layouts; wire Sign out to the live AuthPort; land PW-05 plan routes it deep-links to.
 
+## Amendment — 2026-09-02: the avatar is the anchor on every band
+
+The decision above says "the learner sheet exists for 6–8/9–12 only", and the
+first implementation read that as a rule about the ANCHOR: `ShellHeader` rendered
+a blank spacer in the right slot for `young` and `child`. That conflated two
+different questions — *who may see the account sheet* and *whether the bar has a
+right-hand control*. Doc 36 §3.1's constraint ("no settings — guardian-side
+only") is about the sheet's CONTENTS.
+
+**Amended:** the avatar renders for every authed band, and the band picks what it
+opens.
+
+| Band / role | Avatar opens |
+|---|---|
+| K–2 (`young`), 3–5 (`child`) learners | FD-24 `SwitchProfileSheet` — "Who's here?" |
+| 6–8 / 9–12 learners, and every adult role | `AccountSheet` (unchanged) |
+| `anon` | nothing — no identity to anchor, no device to hand over |
+
+Every guarantee in the Decision section survives: no setting, plan, billing or
+sign-out row becomes reachable by a young learner, because the switcher carries
+none of them. It is the family-device hand-off this ADR's §Mechanics already
+names as a *separate mechanism with a separate threat model* — the point of that
+sentence was that the two must not be merged, not that a child may never reach
+the switcher, and the learner You screen already offers it to `young`
+unconditionally (`profile-content.tsx`). Grown-ups stays behind `grownUps:
+'absent'` there, exactly as on the You screen: a shell header owns no biometric
+or family-PIN surface, so the padlocked row is omitted rather than shown dead.
+
+What the old reading cost: a K–2 shell was the only chrome in the product with a
+dead corner, and "this is me / how do I hand the tablet to my sister" — the one
+account-shaped question a six-year-old actually has — was answerable only from a
+You tab that the K–2 IA does not contain.
+
+Recorded in code at `apps/mobile/components/ShellHeader.tsx` (file header) ·
+sheet at `packages/app/features/switch-profile/switch-profile-sheet.tsx`.
+
 ## Default replaced
 
 Register ADR-f's no-ADR default was "build the sheet." This ADR **adopts the default** and supplies what the default lacked: the recorded identity claim (sheet ≡ Profile/You chrome, never a destination) and the binding content/mechanics rules that keep it from becoming shadow navigation.

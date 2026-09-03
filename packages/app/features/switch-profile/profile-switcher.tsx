@@ -25,9 +25,9 @@
 // SOT: docs/38-front-door-and-flow.md §FD-24 · docs/decisions/adr-106-account-sheet-is-profile-you.md · docs/design/overhaul-v2/J-component-plan.md §2 row 8
 // SOT-KEYWORDS: profile switcher fd-24 family device who's here grown-ups locked pin biometric switch profile continuity
 
-import { Avatar, List, ListItem } from '@acme/ui';
+import { Avatar } from '@acme/ui';
 import { Lock, LoaderCircle } from '@acme/ui/icons';
-import { View } from '@acme/ui/tw';
+import { Pressable, Text, View } from '@acme/ui/tw';
 import {
   membershipForRole,
   setLastShellRole,
@@ -105,38 +105,53 @@ export function ProfileSwitcher({ grownUps, onSwitched }: ProfileSwitcherProps) 
     `BottomSheet`/`SheetSurface` already renders it as the dialog's accessible
     name, so a heading inside the content printed the same sentence twice, once
     as the sheet header and once as an h2 under it. The content is the list.
+
+    Rows are kit primitives, NOT `@acme/ui`'s `List`/`ListItem`. That component
+    is the platform list — a Compose LazyColumn behind an Expo `Host` — and a
+    LazyColumn measured with an unbounded height throws
+    `IllegalStateException: Vertically scrollable component was measured with an
+    infinity maximum height constraints` and takes the process with it. Every
+    host this component has is a sheet, and `SheetSurface` always wraps its
+    children in a ScrollView, so `List` here was a hard native crash on a
+    child's surface — reproduced from both the learner You tab and the shell
+    header. The row shape is `AvatarSheetSurface`'s row slot, which is the
+    sheet-row dialect this repo already has; the hot row height is the one
+    family surfaces use.
   */
+  const row =
+    'min-h-row-hot flex-row items-center gap-stack rounded-md px-3 active:bg-surface-sunken';
+
   return (
-    <View className="gap-stack">
-      <List>
-        {learners.map((child) => (
-          <ListItem
-            key={child.id}
-            leading={<Avatar name={child.name} size="md" />}
-            onPress={() => switchToLearner(child)}
-          >
-            {child.name}
-          </ListItem>
-        ))}
-        {grownUps.kind === 'present' ? (
-          <ListItem
-            leading={
-              <View className="h-11 w-11 items-center justify-center rounded-md border-2 border-border bg-surface-sunken">
-                <Lock size={18} className="text-text" />
-              </View>
-            }
-            trailing={
-              gate.kind === 'verifying' ? (
-                <LoaderCircle size={16} className="text-text-muted" />
-              ) : undefined
-            }
-            supportingText={GATE_COPY[gate.kind]}
-            onPress={onGrownUpsPress}
-          >
-            Grown-ups
-          </ListItem>
-        ) : null}
-      </List>
+    <View className="gap-element">
+      {learners.map((child) => (
+        <Pressable
+          key={child.id}
+          role="button"
+          aria-label={child.name}
+          className={row}
+          onPress={() => switchToLearner(child)}
+        >
+          <Avatar name={child.name} size="md" />
+          <Text className="flex-1 text-body text-text">{child.name}</Text>
+        </Pressable>
+      ))}
+      {grownUps.kind === 'present' ? (
+        <Pressable role="button" aria-label="Grown-ups" className={row} onPress={onGrownUpsPress}>
+          <View className="h-11 w-11 items-center justify-center rounded-md border-2 border-border bg-surface-sunken">
+            <Lock size={18} className="text-text" />
+          </View>
+          <View className="flex-1 gap-0.5">
+            <Text className="text-body text-text">Grown-ups</Text>
+            {/* The gate's three resting positions each carry their own line —
+                a failed check must not read as "locked" and invite a silent
+                retry loop (see the store). */}
+            <Text className="text-caption text-text-muted">{GATE_COPY[gate.kind]}</Text>
+          </View>
+          {gate.kind === 'verifying' ? (
+            <LoaderCircle size={16} className="text-text-muted" />
+          ) : null}
+        </Pressable>
+      ) : null}
     </View>
   );
 }

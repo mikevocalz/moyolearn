@@ -8,18 +8,18 @@
 // SOT: docs/pack/36-role-navigation-flows.md §3.3
 // SOT-KEYWORDS: tutor today screen sessions timeline shell landing
 
-import { ScrollView } from '@acme/ui/tw';
-import { Container, SafeArea } from '@acme/ui';
+import { ScrollView, View } from '@acme/ui/tw';
+import { Container } from '@acme/ui';
 import { TutorTodayContent } from './tutor-today-content';
 
 export function TutorTodayScreen() {
   return (
-    <SafeArea edges={['top']} className="flex-1 bg-surface">
+    <View className="flex-1 bg-surface">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <Container width="detail" className="py-4 pb-48">
           <TutorTodayContent />
         </Container>
       </ScrollView>
-    </SafeArea>
+    </View>
   );
 }

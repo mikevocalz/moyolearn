@@ -14,21 +14,21 @@
 // SOT: docs/pack/36-role-navigation-flows.md §3.2 · docs/pack/34-session-summary-reports.md · docs/pack/37-onboarding-dual-pane.md §2
 // SOT-KEYWORDS: guardian home screen family feed shell landing children cards whats next
 
-import { ScrollView, Text as TWText } from '@acme/ui/tw';
-import { Button, Card, Container, FadeIn, SafeArea } from '@acme/ui';
+import { ScrollView, Text as TWText, View } from '@acme/ui/tw';
+import { Button, Card, Container, FadeIn } from '@acme/ui';
 import { useGuardianWhatsNext } from '../onboarding/guardian/whats-next.store';
 import { ParentHomeContent } from './parent-home-content';
 
 export function GuardianHomeScreen() {
   return (
-    <SafeArea edges={['top']} className="flex-1 bg-surface">
+    <View className="flex-1 bg-surface">
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <Container width="detail" className="py-4 pb-48">
           <WhatsNextCard />
           <ParentHomeContent />
         </Container>
       </ScrollView>
-    </SafeArea>
+    </View>
   );
 }
 
