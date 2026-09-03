@@ -25,6 +25,7 @@ import {
 import { ScrollView, View } from '@acme/ui/primitives';
 import { ReportsScreen } from './reports-content.tsx';
 import { SessionReportScreen } from './report-content.tsx';
+import { useGuardianReports } from './use-reports.ts';
 
 /**
  * The detail pane: the full session report for the selected card, or an
@@ -33,14 +34,28 @@ import { SessionReportScreen } from './report-content.tsx';
  */
 function SelectedReportPane() {
   const { selectedId, select } = useAdaptivePaneSelection();
+  /*
+    Reads the SAME query the list pane does — one cache entry, no second
+    request — because the idle instruction is only true if there is a list to
+    obey it. "Choose a session from the list" printed beside a list that failed
+    to load sends the reader to look for rows that are not there and reads as
+    the app not knowing its own state. The list pane owns the failure and its
+    retry; this pane just stops giving an impossible instruction.
+  */
+  const { reports, loading, error } = useGuardianReports();
 
   if (selectedId === null) {
+    const listUnavailable = !loading && error !== null && reports.length === 0;
     return (
       <View className="flex-1 items-center justify-center p-inset">
         <EmptyState
           icon={<Text className="text-title">✎</Text>}
-          title="Pick a report"
-          description="Choose a session from the list to read it here."
+          title={listUnavailable ? 'Nothing to read yet' : 'Pick a report'}
+          description={
+            listUnavailable
+              ? 'Your reports haven’t loaded, so there’s nothing to open here. The list beside this pane can try again.'
+              : 'Choose a session from the list to read it here.'
+          }
         />
       </View>
     );

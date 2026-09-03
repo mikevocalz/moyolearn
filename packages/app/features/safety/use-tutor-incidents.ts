@@ -23,6 +23,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { EngagedLearner, TutorIncidentView } from './incidents.service.ts';
 import { API_URL } from '../../core/api-url.ts';
+import { getJson } from '../../core/api-fetch.ts';
 
 /** Key factory — inline queryKey arrays are a lint error (doc 11 §4). */
 export const tutorIncidentsKey = () => ['safety', 'tutor-incidents'] as const;
@@ -38,15 +39,16 @@ export interface TutorIncidentsRead {
 export function useTutorIncidents(): TutorIncidentsRead {
   const { data, isPending, error, refetch } = useQuery({
     queryKey: tutorIncidentsKey(),
-    queryFn: async ({ signal }): Promise<readonly TutorIncidentView[]> => {
-      const response = await fetch(`${API_URL}/api/tutor/incidents`, {
-        credentials: 'include',
-        signal,
-      });
-      if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
-      const body = (await response.json()) as { incidents: readonly TutorIncidentView[] };
-      return body.incidents;
-    },
+    /*
+      `getJson`'s `ApiError` carries the status, so the QueryClient stops
+      retrying the refusals a retry cannot fix. Reaching this list without the
+      tutor hat answers 401/403 immediately and permanently; retrying it only
+      held the screen in `pending` — which draws as skeleton rows, so a settled
+      "not your list" looked like a slow load for the length of the backoff.
+    */
+    queryFn: async ({ signal }): Promise<readonly TutorIncidentView[]> =>
+      (await getJson<{ incidents: readonly TutorIncidentView[] }>('/api/tutor/incidents', signal))
+        .incidents,
   });
 
   return {
@@ -92,15 +94,9 @@ export interface EngagedLearnersRead {
 export function useEngagedLearners(): EngagedLearnersRead {
   const { data, isPending, error } = useQuery({
     queryKey: engagedLearnersKey(),
-    queryFn: async ({ signal }): Promise<readonly EngagedLearner[]> => {
-      const response = await fetch(`${API_URL}/api/tutor/engagements`, {
-        credentials: 'include',
-        signal,
-      });
-      if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
-      const body = (await response.json()) as { learners: readonly EngagedLearner[] };
-      return body.learners;
-    },
+    queryFn: async ({ signal }): Promise<readonly EngagedLearner[]> =>
+      (await getJson<{ learners: readonly EngagedLearner[] }>('/api/tutor/engagements', signal))
+        .learners,
   });
 
   return { learners: data ?? [], loading: isPending, error: error ?? null };

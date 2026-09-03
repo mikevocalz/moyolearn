@@ -60,6 +60,7 @@
 // SOT-KEYWORDS: tutor incidents content filed lifecycle status filter timeline append note excerpt placeholder attachments count intake form subject picker engagement anonymous
 
 import { useState } from 'react';
+import { useRouter } from 'solito/navigation';
 import { Section, View } from '@acme/ui/tw';
 import {
   Badge,
@@ -72,6 +73,7 @@ import {
   FilterBar,
   Heading,
   LoadingSkeleton,
+  ReadFailure,
   SegmentedControl,
   Text,
   Textarea,
@@ -92,6 +94,7 @@ import {
   useTutorIncidents,
   type SubmitTutorIncidentBody,
 } from './use-tutor-incidents.ts';
+import { readFailureCopy } from '../../core/read-failure-copy.ts';
 
 type IncidentStatus = TutorIncidentView['status'];
 
@@ -563,6 +566,8 @@ function Body({
   toggleIncident,
   openIntake,
 }: BodyProps) {
+  const router = useRouter();
+
   if (loading) {
     return (
       <View className="gap-element px-4">
@@ -577,15 +582,36 @@ function Body({
     calm empty state.
   */
   if (error !== null) {
+    const copy = readFailureCopy(
+      error,
+      'your reports',
+      'Nothing has changed — every report you filed is still on file, and none was withdrawn.',
+    );
     return (
-      <Card className="mx-4 gap-element">
-        <Badge label="Not loaded" tone="attention" />
-        <Text>We couldn’t load your reports.</Text>
-        <Text variant="caption" tone="muted">
-          Nothing has changed on your incidents — this screen just needs a connection.
-        </Text>
-        <Button title="Try again" variant="outline" className="self-start" onPress={retry} />
-      </Card>
+      <ReadFailure
+        className="flex-1"
+        title={copy.title}
+        description={copy.description}
+        onRetry={retry}
+        /*
+          Signed out, filing cannot work either — the intake POST fails on the
+          same session — so the only honest action is signing in. Otherwise
+          filing SURVIVES a failed read: intake is a different door, and a
+          concern worth reporting must not wait on a list that will not load.
+        */
+        action={
+          copy.signedOut ? (
+            <Button
+              title="Sign in"
+              onPress={() => {
+                router.push('/login');
+              }}
+            />
+          ) : (
+            <Button title="File a report" variant="ghost" onPress={openIntake} />
+          )
+        }
+      />
     );
   }
 

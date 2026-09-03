@@ -19,17 +19,28 @@
 //   generated-document states listed plainly while pending). Structure only.
 // SOT: docs/pack/34-session-summary-reports.md §2 §3 §5 · docs/pack/29-bunny-media-spec.md §5
 // SOT-KEYWORDS: session report screen guardian eight blocks share teacher mint revoke crop media view door
-import { Button, Card, EmptyState, Heading, LoadingSkeleton, Text } from '@acme/ui';
+import {
+  Button,
+  Card,
+  EmptyState,
+  Heading,
+  LoadingSkeleton,
+  ReadFailure,
+  Text,
+} from '@acme/ui';
+import { useRouter } from 'solito/navigation';
 import { View } from '@acme/ui/primitives';
 import { ReportBody } from './report-blocks.tsx';
 import { useGuardianReport, useTeacherShare } from './use-reports.ts';
 import { API_URL } from '../../core/api-url.ts';
+import { readFailureCopy } from '../../core/read-failure-copy.ts';
 
 /** The authenticated signing door (doc 29 §5) — never a bare CDN URL. */
 const cropSrc = (url: string) => `/api/media/view?url=${encodeURIComponent(url)}`;
 
 export function SessionReportScreen({ sessionId }: { sessionId: string }) {
-  const { report, loading } = useGuardianReport(sessionId);
+  const router = useRouter();
+  const { report, loading, error, notFound, retry } = useGuardianReport(sessionId);
   const { share, revoke } = useTeacherShare(sessionId);
 
   if (loading) {
@@ -40,7 +51,40 @@ export function SessionReportScreen({ sessionId }: { sessionId: string }) {
     );
   }
 
-  if (report === null) {
+  /*
+    A failed read is not a missing report. Both used to land on "Report not
+    available" — so a signed-out or broken read told a parent their child's
+    report was gone, which is the worse of the two sentences and the wrong one.
+    The honest failure goes first; not-found is what remains.
+  */
+  if (error !== null) {
+    const copy = readFailureCopy(
+      error,
+      'this report',
+      'The report itself is fine — it’s still on file, and nothing about it changed.',
+    );
+    return (
+      <View className="mx-auto w-full max-w-2xl px-inset py-section">
+        <ReadFailure
+          title={copy.title}
+          description={copy.description}
+          onRetry={retry}
+          action={
+            copy.signedOut ? (
+              <Button
+                title="Sign in"
+                onPress={() => {
+                  router.push('/login');
+                }}
+              />
+            ) : undefined
+          }
+        />
+      </View>
+    );
+  }
+
+  if (notFound || report === null) {
     return (
       <View className="mx-auto w-full max-w-2xl px-inset py-section">
         <EmptyState

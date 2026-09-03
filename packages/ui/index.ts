@@ -29,7 +29,9 @@ export { BrandLockup, type BrandLockupProps } from './BrandLockup';
 export { default as MoyoLearnLogo, type MoyoLearnLogoProps } from './MoyoLearnLogo';
 export { default as MoyoMark, type MoyoMarkProps } from './MoyoMark';
 export { TutorStage, type TutorStageProps, type TutorStageState } from './TutorStage';
-export type { TutorPresencePreference } from './tutor-view';
+export { TutorPresence, type TutorPresenceProps } from './TutorPresence';
+export { isTutorRevealed } from './tutor-view';
+export type { TutorPresencePreference, ResolvedTutorPresence } from './tutor-view';
 export { LearningCanvas, type LearningCanvasProps } from './LearningCanvas';
 export { SessionToolbar, type SessionToolbarProps } from './SessionToolbar';
 export { MessageBubble, type MessageBubbleProps } from './MessageBubble';
@@ -51,6 +53,9 @@ export { PasteWrapper } from './paste-wrapper';
 
 // feedback
 export { EmptyState, type EmptyStateProps } from './EmptyState';
+// The other half of EmptyState: an answered zero is calm, an unanswered read is
+// not, and the two must not share a component.
+export { ReadFailure, type ReadFailureProps } from './ReadFailure';
 export { LoadingSkeleton, type LoadingSkeletonProps } from './LoadingSkeleton';
 export { Toast, type ToastProps } from './Toast';
 export { ToastCard, type ToastCardProps } from './ToastCard';

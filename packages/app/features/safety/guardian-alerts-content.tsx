@@ -35,6 +35,7 @@
 // SOT-KEYWORDS: guardian alerts content incidents acknowledge needs attention empty dated
 
 import { format } from 'date-fns';
+import { useRouter } from 'solito/navigation';
 import { Section, View } from '@acme/ui/tw';
 import {
   Badge,
@@ -45,12 +46,14 @@ import {
   FadeIn,
   Heading,
   LoadingSkeleton,
+  ReadFailure,
   Text,
 } from '@acme/ui';
 import { ShieldCheck } from '@acme/ui/icons';
 import type { GuardianIncidentView } from './incidents.service.ts';
 import { CATEGORY_LABEL } from './queue-view.ts';
 import { useAcknowledgeIncident, useGuardianIncidents } from './use-guardian-incidents.ts';
+import { readFailureCopy } from '../../core/read-failure-copy.ts';
 
 const dateLine = (iso: string) => format(new Date(iso), 'EEEE, MMMM d');
 
@@ -67,6 +70,7 @@ function IncidentSection({ label, body }: { label: string; body: string }) {
 }
 
 function IncidentCard({ incident }: { incident: GuardianIncidentView }) {
+  const router = useRouter();
   const ack = useAcknowledgeIncident();
   const acknowledged = incident.acknowledgedAt !== null;
 
@@ -89,24 +93,40 @@ function IncidentCard({ incident }: { incident: GuardianIncidentView }) {
         <ErrorMessage message="Your acknowledgment wasn’t sent — nothing was lost. Try again in a moment." />
       ) : null}
 
-      {acknowledged ? (
-        <Text variant="caption" tone="muted">
-          Acknowledged {dateLine(incident.acknowledgedAt ?? incident.occurredAt)}
-        </Text>
-      ) : (
+      {/*
+        The contract's `adjust_controls` exit, on the card rather than in a
+        toolbar: "what do I do now" is asked about ONE incident, and the answer
+        is that child's settings. Ghost weight keeps Acknowledge the primary act
+        — reading and acknowledging come first, changing settings is optional
+        and afterwards.
+      */}
+      <View className="flex-row flex-wrap items-center gap-stack">
+        {acknowledged ? (
+          <Text variant="caption" tone="muted">
+            Acknowledged {dateLine(incident.acknowledgedAt ?? incident.occurredAt)}
+          </Text>
+        ) : (
+          <Button
+            title="Acknowledge"
+            variant="outline"
+            loading={ack.isPending}
+            onPress={() => ack.mutate({ incidentId: incident.incidentId })}
+          />
+        )}
         <Button
-          title="Acknowledge"
-          variant="outline"
-          className="self-start"
-          loading={ack.isPending}
-          onPress={() => ack.mutate({ incidentId: incident.incidentId })}
+          title="Adjust settings"
+          variant="ghost"
+          onPress={() => {
+            router.push('/children');
+          }}
         />
-      )}
+      </View>
     </Card>
   );
 }
 
 export function GuardianAlertsContent() {
+  const router = useRouter();
   const { incidents, loading, error, retry } = useGuardianIncidents();
   const open = incidents.filter((i) => i.acknowledgedAt === null);
   const acknowledged = incidents.filter((i) => i.acknowledgedAt !== null);
@@ -120,19 +140,46 @@ export function GuardianAlertsContent() {
     );
   }
 
+  /*
+    Error before empty, and on this surface it is the load-bearing rule: the
+    calm state below says "nothing needs your attention", which on a SAFETY
+    screen is the single most consequential sentence in the product. It may only
+    be said about an answered read. A failed one says so, keeps the retry one
+    press away, and points at the surface that still answers questions about a
+    child (Family reads a different endpoint), so the screen is never a wall.
+  */
   if (error !== null) {
-    // Safety visibility degrades last (contract offline path): the failure is
-    // named, nothing pretends to be fine, and retry is one press.
+    const copy = readFailureCopy(
+      error,
+      'your alerts',
+      'This is a problem with the screen, not with your child: nothing on their record changed, and no alert was missed or cleared.',
+    );
     return (
       <View className="gap-group">
         <Heading level={1} size="display-sm">Alerts</Heading>
-        <Card className="items-start gap-stack">
-          <Text>We couldn’t load your alerts.</Text>
-          <Text variant="caption" tone="muted">
-            Nothing has changed on your child’s record — this screen just needs a connection.
-          </Text>
-          <Button title="Try again" variant="outline" onPress={retry} />
-        </Card>
+        <ReadFailure
+          title={copy.title}
+          description={copy.description}
+          onRetry={retry}
+          action={
+            copy.signedOut ? (
+              <Button
+                title="Sign in"
+                onPress={() => {
+                  router.push('/login');
+                }}
+              />
+            ) : (
+              <Button
+                title="Go to Family"
+                variant="ghost"
+                onPress={() => {
+                  router.push('/children');
+                }}
+              />
+            )
+          }
+        />
       </View>
     );
   }
@@ -147,6 +194,18 @@ export function GuardianAlertsContent() {
           icon={<ShieldCheck size={28} className="text-text-muted" />}
           title="Nothing needs your attention"
           description={`As of ${dateLine(new Date().toISOString())}, there are no incidents on your children’s records. If something serious ever happens in a session, it appears here first.`}
+          /* An empty safety screen still owes somewhere to go — the settings
+             that decide what a session may do are the useful next step when
+             there is nothing to read. */
+          action={
+            <Button
+              title="Review your children’s settings"
+              variant="outline"
+              onPress={() => {
+                router.push('/children');
+              }}
+            />
+          }
         />
       </View>
     );

@@ -16,11 +16,14 @@
 import { useRouter } from 'solito/navigation';
 import {
   Badge,
+  Banner,
+  Button,
   Card,
   EmptyState,
   Heading,
   LoadingSkeleton,
   MasteryBar,
+  ReadFailure,
   Text,
   isCollapsed,
   useAdaptivePaneSelection,
@@ -29,10 +32,11 @@ import {
 import { Pressable, View } from '@acme/ui/primitives';
 import { LEVEL_LABEL } from './report-blocks.tsx';
 import { useGuardianReports } from './use-reports.ts';
+import { readFailureCopy } from '../../core/read-failure-copy.ts';
 
 export function ReportsScreen() {
   const router = useRouter();
-  const { reports, loading } = useGuardianReports();
+  const { reports, loading, error, retry } = useGuardianReports();
 
   /*
     Pane-aware, route-safe (doc 37 §3.2/§3.3). Inside an AdaptivePanes host at
@@ -46,6 +50,26 @@ export function ReportsScreen() {
   const sizeClass = useWindowSizeClass();
   const paneOpen = select !== null && !isCollapsed(sizeClass);
 
+  /*
+    Error before empty (the law this screen was breaking). "No reports yet" is a
+    claim about a child's tutoring history — the calmest sentence on the
+    surface — and it was rendering whenever `reports` was empty, INCLUDING when
+    the read had failed and the list was empty only because nothing arrived. A
+    parent whose session ran yesterday was being told it never happened.
+
+    `keepPreviousData` splits the failure in two, and they need different
+    answers: a refetch that fails while a cached list is on screen is the
+    contract's offline path (cached reports stay readable) and gets a label, not
+    a wall. A cold failure has nothing to keep, so it takes the whole region.
+  */
+  const stale = error !== null && reports.length > 0;
+  const coldFailure = error !== null && reports.length === 0;
+  const failure = readFailureCopy(
+    error,
+    'your reports',
+    'Nothing has changed — every report your family has is still on file.',
+  );
+
   return (
     <View className="mx-auto w-full max-w-2xl gap-section px-inset py-section">
       <View className="gap-element">
@@ -57,9 +81,52 @@ export function ReportsScreen() {
         </Text>
       </View>
 
+      {/* The offline label, never a blocking state — it may only say "the list
+          you are looking at" when a list is actually on screen. */}
+      {stale ? (
+        <Banner
+          tone="offline"
+          title="Showing your last saved reports"
+          description="We couldn’t reach the server just now, so this list may be missing the newest session."
+          action={{ label: 'Try again', onPress: retry }}
+        />
+      ) : null}
+
       {loading ? (
         <LoadingSkeleton count={3} />
+      ) : coldFailure ? (
+        <ReadFailure
+          /* This list is a narrow pane inside AdaptivePanes at expanded widths;
+             the centred block's default breathing room turns into ragged
+             three-word lines there. */
+          className="px-0 py-section"
+          title={failure.title}
+          description={failure.description}
+          onRetry={retry}
+          /* Signed out, the only action that can work is signing in. Otherwise
+             the exit reads from a different endpoint, so it may well work when
+             this one does not — never a dead end while a read is down. */
+          action={
+            failure.signedOut ? (
+              <Button
+                title="Sign in"
+                onPress={() => {
+                  router.push('/login');
+                }}
+              />
+            ) : (
+              <Button
+                title="Go to Family"
+                variant="ghost"
+                onPress={() => {
+                  router.push('/children');
+                }}
+              />
+            )
+          }
+        />
       ) : reports.length === 0 ? (
+        /* Only an ANSWERED zero reaches this branch — see the split above. */
         <EmptyState
           icon={<Text className="text-title">✎</Text>}
           title="No reports yet"

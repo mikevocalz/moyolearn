@@ -14,29 +14,51 @@ import type {
   TeacherShareGrant,
 } from './summary.service.ts';
 import { API_URL } from '../../core/api-url.ts';
+import { getJson, isNotFound } from '../../core/api-fetch.ts';
 
 export const reportsQueryKey = () => ['guardian-reports'] as const;
 export const reportQueryKey = (sessionId: string) => ['guardian-reports', sessionId] as const;
 export const summaryQueueQueryKey = () => ['summary-queue'] as const;
 
-async function getJson<T>(path: string, signal: AbortSignal | undefined): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { credentials: 'include', signal });
-  if (!res.ok) throw new Error(`HTTP ${String(res.status)}`);
-  return (await res.json()) as T;
-}
-
+/**
+ * The family feed read. `retry` is part of the contract, not a convenience:
+ * this list's consumer used to destructure `{reports, loading}` and drop the
+ * error, so a failed read fell through to `reports.length === 0` and drew the
+ * calm "No reports yet" state — telling a parent their child has had no
+ * sessions because we could not reach the server. An error a screen cannot see
+ * is an error a screen will render as good news, so the failure and its way out
+ * both leave this hook.
+ *
+ * `keepPreviousData` means a refetch that fails still holds the last good list;
+ * that is the contract's offline path (cached reports stay readable) and it is
+ * why the consumer must decide between "stale, labelled" and "nothing to show".
+ */
 export function useGuardianReports() {
-  const { data, isPending, error } = useQuery({
+  const { data, isPending, error, refetch } = useQuery({
     queryKey: reportsQueryKey(),
     queryFn: async ({ signal }) =>
       (await getJson<{ reports: GuardianSummaryCard[] }>('/api/guardian/reports', signal)).reports,
     placeholderData: keepPreviousData,
   });
-  return { reports: data ?? [], loading: isPending, error };
+  return {
+    reports: data ?? [],
+    loading: isPending,
+    error: error ?? null,
+    retry: () => {
+      void refetch();
+    },
+  };
 }
 
+/**
+ * One report. `notFound` is told apart from `error` on purpose: a 404 is the
+ * silent-drop wall a stale or foreign link must hit ("Report not available"),
+ * while a 401/500 owes an honest failure and a retry. Both used to arrive as
+ * `report === null`, so a broken read wore the not-found sentence and the
+ * reader was told their report was gone.
+ */
 export function useGuardianReport(sessionId: string) {
-  const { data, isPending, error } = useQuery({
+  const { data, isPending, error, refetch } = useQuery({
     queryKey: reportQueryKey(sessionId),
     queryFn: async ({ signal }) =>
       (
@@ -46,7 +68,15 @@ export function useGuardianReport(sessionId: string) {
         )
       ).report,
   });
-  return { report: data ?? null, loading: isPending, error };
+  return {
+    report: data ?? null,
+    loading: isPending,
+    notFound: isNotFound(error),
+    error: isNotFound(error) ? null : (error ?? null),
+    retry: () => {
+      void refetch();
+    },
+  };
 }
 
 /**

@@ -1,17 +1,34 @@
 'use client';
-// Family/Children hub — the guardian shell's child-management tab.
+// Family/Children hub — the guardian shell's child-management tab
+// (guardian.family). It lists the guardian's children, and each child is the
+// contract's primary action: one press opens what is set for them.
 //
-// The prompt's guardian phone primary nav names this `Children` (doc 36 §3.2
-// table). It lists the guardian's children, links to safety/permissions and
-// scheduling surfaces, and offers the add-child path. Example children are
-// clearly labeled so they are not confused with real data.
-// SOT: docs/pack/04-screen-briefs.md §S11 · docs/pack/36-role-navigation-flows.md §3.2
-// SOT-KEYWORDS: guardian family children child management hub permissions calendar
+// WHAT A CHILD ROW HONESTLY OPENS. The contract's primary_action names four
+// controls — voice default, session budget, readsAt, data & erasure — and asks
+// for them in-screen. Two of the four have a surface today (AI permissions at
+// /ai-activity, and the memory/erasure entry the contract exits to); the budget
+// and voice-register writes have no endpoint, so this screen does not draw
+// them. Drawing a disabled budget slider "for completeness" would advertise a
+// control that has never existed. The row opens what IS set, and the tools
+// below reach the rest; the missing halves arrive with their endpoints.
+//
+// Example children are clearly labeled so they are not confused with real data.
+// Mobbin: https://mobbin.com/screens/6491097a-3861-4c87-ac75-caed6336b83b
+// (Greenlight — a family hub listing each child as one tappable row leading to
+// that child's settings) ·
+// https://mobbin.com/screens/96c15ebb-251f-4261-b474-b4cf3c74d36a
+// (Acorns — children grouped in one card with the add-another action closing
+// the group, tools listed separately beneath) ·
+// https://mobbin.com/screens/ea5d92c2-73fc-4fc7-9fb6-a6d32d332097
+// (Kit — a single guardian overview with a labelled secondary list of
+// per-family tools under the people). Structure only.
+// SOT: design/screens/guardian/guardian.family/contract.md · docs/pack/36-role-navigation-flows.md §3.2
+// SOT-KEYWORDS: guardian family children child management hub permissions calendar primary action
 
 import { useRouter } from 'solito/navigation';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, Button, Card, FadeIn, Heading, PressScale, Text } from '@acme/ui';
-import { ArrowRight, Calendar, FileText, SquareCode } from '@acme/ui/icons';
+import { ArrowRight, Calendar, FileText, ShieldCheck, SquareCode } from '@acme/ui/icons';
 import { useAppSession } from '../../providers/session';
 // Children come from family.store, not the fixture directly — guardian.family's
 // contract makes this screen a writer of the shared activeChild seam (G-8 fix),
@@ -110,6 +127,15 @@ export function FamilyScreen() {
               hint="Session summaries and evidence"
               onPress={() => router.push('/reports')}
               Icon={FileText}
+            />
+            {/* The safety surface reached from the hub the alerts screen exits
+                TO — the pair was one-way, so a parent who adjusted a setting
+                after an incident had no route back to the incident. */}
+            <ToolRow
+              label="Alerts"
+              hint="Anything serious from a session"
+              onPress={() => router.push('/alerts')}
+              Icon={ShieldCheck}
             />
           </View>
         </Card>

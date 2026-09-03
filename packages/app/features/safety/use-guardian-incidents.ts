@@ -18,6 +18,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { GuardianIncidentView } from './incidents.service.ts';
 import { API_URL } from '../../core/api-url.ts';
+import { getJson } from '../../core/api-fetch.ts';
 
 /** Key factory — inline queryKey arrays are a lint error (doc 11 §4). */
 export const guardianIncidentsKey = () => ['safety', 'guardian-incidents'] as const;
@@ -33,15 +34,20 @@ export interface GuardianIncidentsRead {
 export function useGuardianIncidents(): GuardianIncidentsRead {
   const { data, isPending, error, refetch } = useQuery({
     queryKey: guardianIncidentsKey(),
-    queryFn: async ({ signal }): Promise<readonly GuardianIncidentView[]> => {
-      const response = await fetch(`${API_URL}/api/guardian/incidents`, {
-        credentials: 'include',
-        signal,
-      });
-      if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
-      const body = (await response.json()) as { incidents: readonly GuardianIncidentView[] };
-      return body.incidents;
-    },
+    /*
+      `getJson` throws `ApiError` with the status kept as data, which is what
+      lets the QueryClient skip retrying a 401/403 here. That matters more on
+      this screen than anywhere: the pending branch is a skeleton, so a retried
+      settled refusal rendered Alerts as a BLANK PAGE for the whole backoff —
+      the one thing a safety surface may never look like.
+    */
+    queryFn: async ({ signal }): Promise<readonly GuardianIncidentView[]> =>
+      (
+        await getJson<{ incidents: readonly GuardianIncidentView[] }>(
+          '/api/guardian/incidents',
+          signal,
+        )
+      ).incidents,
   });
 
   return {
