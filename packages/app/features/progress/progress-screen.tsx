@@ -45,7 +45,7 @@ export function ProgressScreen() {
   const router = useRouter();
   const { setProblem } = useCaptureStore();
   const { skillTitle, mastery, attempts } = useTutorStore();
-  const { masteryBySkill, reviewBySkill, scaffoldingBySkill, loading } = useProgress(attempts);
+  const { masteryBySkill, reviewBySkill, scaffoldingBySkill, loading, error } = useProgress(attempts);
 
   const handlePractice = (subject: string) => {
     const problem = generatePracticeProblem(subject);
@@ -96,8 +96,25 @@ export function ProgressScreen() {
         <Container width="detail" className="py-4 pb-48 gap-section">
           <View className="gap-stack">
             <Heading level={1} size="display-lg">Your progress</Heading>
+            {/*
+              THREE ANSWERS, NOT TWO.
+
+              `useProgress` has always returned `error` and this line has always
+              ignored it, so a failed mastery load fell through to "The bars show
+              what you have mastered so far" — a sentence pointing at numbers
+              that had not arrived. On a screen whose whole subject is what a
+              child has actually learned, describing stale or absent data as
+              their mastery is the one thing it must not do.
+
+              No redpen and no apology theatre: doc 08 keeps redpen off a
+              struggling learner, and the failure is ours to state plainly.
+            */}
             <Text className="font-sans text-body text-text-muted">
-              {loading ? 'Loading your mastery...' : 'The bars show what you have mastered so far.'}
+              {loading
+                ? 'Loading your mastery...'
+                : error
+                  ? "Your latest mastery didn't load just now. What's below may be out of date."
+                  : 'The bars show what you have mastered so far.'}
             </Text>
           </View>
           <View className="gap-stack">

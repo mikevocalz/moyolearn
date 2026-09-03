@@ -29,6 +29,26 @@ export const PERSONAS: Persona[] = [
     memberships: [],
   },
   {
+    /*
+      The 6–12 learner, and the reason this row exists: the fixture set stopped
+      at `child`, so the entire older band was unreachable in mock QA — and the
+      older band is the ONLY one that carries a Progress destination (doc 36
+      §3.1 gives Progress to 6–8/9–12 alone, which nav.ts and BandGate both
+      derive from). With no teen persona, `/progress` bounced to `/` for every
+      persona that existed, and a contract-correct band guard was
+      indistinguishable from a broken route.
+
+      `teen` rather than `adult` because 6–8 is the band whose shell differs most
+      from the two below it: five tabs, resume-first Home, and the Subjects +
+      Progress pair that no younger band renders.
+    */
+    id: 'sam',
+    name: 'Sam',
+    kind: 'learner',
+    gradeBand: 'teen',
+    memberships: [],
+  },
+  {
     // Dana wears two hats — the S15 switcher only proves itself against a
     // persona with more than one membership.
     id: 'dana',

@@ -29,6 +29,7 @@
 // SOT: docs/pack/07-security-child-ai-safety-spec.md §4 §S27
 // SOT-KEYWORDS: memory s27 transparency erasure cascade guardian knowledge graph delete
 
+import { useShallow } from 'zustand/react/shallow';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Button, Card, Dial, Dialog, EmptyState, FadeIn, Heading, IconButton, Text } from '@acme/ui';
 import { Eye, Trash2 } from '@acme/ui/icons';
@@ -47,7 +48,19 @@ export function MemoryContent() {
   const pendingTranscriptId = useMemoryStore((s) => s.pendingTranscriptId);
   const forgetAllOpen = useMemoryStore((s) => s.forgetAllOpen);
   const eraseError = useMemoryStore((s) => s.eraseError);
-  const cascade = useMemoryStore(pendingCascade);
+  /*
+    `useShallow`, for the reason `providers/session/session.tsx` gives about its
+    own selector: zustand v5 compares snapshots with `Object.is`, and
+    `pendingCascade` DERIVES its value — it filters, so it hands back a fresh
+    array on every call even when the same facts are in it. React saw a new
+    snapshot each read and warned "the result of getServerSnapshot should be
+    cached to avoid an infinite loop" on every render of this screen.
+
+    Shallow is sound rather than merely quieter here: `cascadePreview` filters
+    `state.facts` and returns the ORIGINAL fact objects, so element-wise
+    identity is exactly the comparison that says whether the cascade changed.
+  */
+  const cascade = useMemoryStore(useShallow(pendingCascade));
 
   const pending = transcripts.find((t) => t.id === pendingTranscriptId);
   const survivors = facts.length - cascade.length;

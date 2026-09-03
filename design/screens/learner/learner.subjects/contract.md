@@ -36,7 +36,7 @@ state_owner: "explore.store (existing — features/explore; currently a fixture 
 **Status:** Route EXISTS — `/(learner)/(tabs)/subjects` + web `/subjects`, classified COMPLETE.
 
 **Notes:**
-- **Web band hole:** `/subjects` is reachable by K–2 by URL with no fallback (C §Web; D row action) — `href:null` has no web equivalent. Contract requires a band guard + silent fallback to learner.home.
+- **Web band hole: CLOSED 2026-09-02.** `/subjects` was reachable by K–2 by URL with no fallback (C §Web; D row action) — `href:null` has no web equivalent. `(site)/subjects/layout.tsx` now wraps the route in `BandGate`, which derives in-band-ness from `HOT_NAV_LEARNER_BY_BAND` so nav and guard cannot drift, and `replace`s an off-band learner to `/` (the silent fallback this contract asked for; `replace`, so the off-band URL leaves no history for Back to resurface). VERIFIED: `?persona=maya` (young) lands on `/`; `?persona=jordan` (child) renders the catalog. K–2 links to this surface from nowhere — the young band's nav list carries Today · Snap · My Stuff and no Subjects row — so the guard only ever answers a typed URL, never a rendered nav item.
 - `explore.store` is the fixture catalog (generic "Design/Dev/Business" categories, `FEATURED` fixtures) — replace with the real subject catalog; the store is the right owner, its contents are not.
 - No search affordance on any band at this screen size-class; K–2 excluded entirely (doc 36 §3.1 bans learner search below 3–5 and the shell ships none).
 - Learner surface: no prices ever; the only limit surface is PW-03b.

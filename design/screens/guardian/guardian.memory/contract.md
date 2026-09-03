@@ -34,6 +34,7 @@ state_owner: "memory.store (existing — features/memory, test-covered)"
 **Status:** Route EXISTS — `/(guardian)/memory` + web `/memory`, classified COMPLETE — but web has **no nav entry** (D row).
 
 **Notes:**
+- **Unstable snapshot fixed 2026-09-02.** `pendingCascade` is a DERIVED selector — it filters `state.facts`, so it returned a fresh array on every read and React logged "the result of getServerSnapshot should be cached to avoid an infinite loop" on every render of this screen. The call site now wraps it in `useShallow`, matching `providers/session/session.tsx`. Sound rather than merely quieter: `cascadePreview` returns the ORIGINAL fact objects, so element-wise identity is exactly the comparison that says whether the cascade changed.
 - Single-entry surface by design (deliberately buried one level behind ai-activity — erasure is a considered act, not a daily loop); this contract accepts that and requires no second entry. The no-dead-end law is satisfied by the two forward exits + completion return.
 - `max_interactions_to_primary: 2` — select line(s) + confirm; the confirm step is contractual (irreversibility), not friction to remove.
 - Web reachability rides guardian.ai-activity's web-entry fix; no independent web nav entry is wanted.

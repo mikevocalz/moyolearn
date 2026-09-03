@@ -41,6 +41,7 @@ state_owner: "tutor.store (existing — features/tutor)"
 **Status:** Route EXISTS — `/(learner)/tutor` + web `/tutor` (`(session)` group, chrome-free), classified COMPLETE.
 
 **Notes:**
+- **`no_data` honoured 2026-09-02.** The surface rendered "No problem selected." centred on a blank page — no heading, no chrome, no exit, zero controls — which is precisely the "blank chat" this contract's `failure_paths.no_data` row forbids. `tutor-opening.tsx` now renders the pre-session surface in three separated states (loading · empty · failed), band-voiced, carrying the contract's two exits: a primary Snap → learner.capture (`snap_next`) and a persistent Back plus a named exit → learner.home (`end_session`). An unauthenticated `/api/tutor/next` answer resolves to the EMPTY state, not the failure one — there is nothing open to resume, and a retry cannot change that.
 - **Safety classifier depth (J1 finding 7 / J8):** the live adapter (`tutor-safety.ts`) classifies arithmetic on/off-task only — far narrower than the doc-31 S1–S4 taxonomy. The cross_role_propagation rows to guardian.alerts are contractually required but not producible at doc-31 fidelity today.
 - **Architecture defect:** `coach.service.ts` imports `@acme/payload` directly, violating the repository rule (A-audit) — contract-relevant because the Safety Plane law requires all learner-facing AI to traverse the sanctioned path.
 - Voice register per band is binding (doc 31: K–2 ≤8-word sentences FK≈1 … 9–12 no artificial simplification) with the post-generation readability gate.

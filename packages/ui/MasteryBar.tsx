@@ -65,13 +65,30 @@ export function MasteryBar({ value, label, state, size, band, showValue = true, 
   const { root, track, fill, value: valueText } = bar({ state, size, band });
   const Root = onPress ? Pressable : View;
 
+  /*
+    `role` + `aria-*`, not the legacy `accessibility*` pair.
+
+    `View` and `Pressable` here are the tw/html forks — a real <div>/<button> on
+    web — so `accessibilityRole` and `accessibilityValue` reached the DOM as
+    unknown attributes and React logged two warnings on every render of
+    /progress. React Native has read `role` and `aria-*` since 0.71, and the
+    rest of the kit (Banner, BottomSheet, Avatar, Composer) already writes them,
+    so one set now serves both platforms.
+
+    A pressable bar keeps its value in the LABEL: the bar is a practice
+    shortcut, `role="button"` cannot carry `aria-valuenow`, and a screen reader
+    that announced the button without its number would be hiding the one fact
+    the row exists to state.
+  */
   return (
     <Root
       onPress={onPress}
       className={root({ className })}
-      accessibilityRole={onPress ? 'button' : 'progressbar'}
-      accessibilityLabel={label}
-      accessibilityValue={onPress ? undefined : { min: 0, max: 100, now: pct }}
+      role={onPress ? 'button' : 'progressbar'}
+      aria-label={onPress ? `${label}, ${pct}%` : label}
+      aria-valuemin={onPress ? undefined : 0}
+      aria-valuemax={onPress ? undefined : 100}
+      aria-valuenow={onPress ? undefined : pct}
     >
       <View className="flex-row items-center justify-between gap-element">
         <Text className="text-label text-text">{label}</Text>
