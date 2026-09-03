@@ -21,6 +21,7 @@
 // SOT-KEYWORDS: composer chat input tutor send message learner
 
 import { useCallback } from 'react';
+import { targets } from '@acme/theme';
 import { View, Text, Pressable, Textarea } from './primitives';
 import { useAutoGrow } from './use-autogrow';
 import { Button } from './Button';
@@ -427,12 +428,27 @@ export function Composer({
           placeholder={placeholder}
           editable={!disabled}
           /*
-            No minimum height. That floor existed when the field sat BESIDE the
-            buttons and had to match their touch target; now the actions have
-            their own row and the container carries the height, so a floor here
-            just opens a band of dead space under a one-line answer.
+            THE FLOOR IS LOAD-BEARING ON ANDROID — do not remove it again.
+
+            It was taken out as visual dead space, on the reasoning that the
+            container now carries the height. On web that is true. On Android
+            the field is a hosted Compose view, and the host measured its RN
+            subtree at HEIGHT ZERO: the accessibility tree showed
+            `ComposeView (…, 0.000)` wrapping a TextField that still painted its
+            placeholder. So the composer LOOKED right and could not be focused —
+            typing into the tutor was impossible, which is the product's core
+            interaction. `min-h-target-adult` is the same 44 the send button
+            beside it uses, so the row is level either way.
           */
-          className="w-full resize-none border-0 bg-transparent font-sans text-body text-text placeholder:text-text-muted" 
+          /* The token as a NUMBER, not a class: on Android the field is a
+             hosted Compose view and the host measured its RN subtree at height
+             ZERO — `ComposeView (…, 0.000)` around a TextField that still drew
+             its placeholder — so the composer looked right and could not be
+             focused. A className min-height does not reach the host; an
+             explicit style on the RN wrapper does. Same 44 as the send button
+             beside it, read from the target scale rather than written twice. */
+          style={{ minHeight: Number.parseInt(targets.adult, 10) }}
+          className="w-full resize-none border-0 bg-transparent font-sans text-body text-text placeholder:text-text-muted"
           numberOfLines={1}
           aria-label="Message composer"
         />

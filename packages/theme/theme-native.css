@@ -368,6 +368,8 @@
       --color-on-surface-header: #43216B;
       --color-nav-cta: #43216B;
       --color-on-nav-cta: #E9DDF5;
+      --color-nav-selected: #9B77CC;
+      --color-on-nav-selected: #14091F;
       --color-surface-footer: #D5C1EC;
       --color-on-surface-footer: #14091F;
       --color-surface-muted: #FADBD5;
@@ -459,6 +461,8 @@
       --color-on-surface-header: #43216B;
       --color-nav-cta: #43216B;
       --color-on-nav-cta: #E9DDF5;
+      --color-nav-selected: #9B77CC;
+      --color-on-nav-selected: #14091F;
       --color-surface-footer: #B99BDE;
       --color-on-surface-footer: #14091F;
       --color-surface-muted: #F7BDB2;

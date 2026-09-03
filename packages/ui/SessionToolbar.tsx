@@ -49,9 +49,19 @@ export function SessionToolbar({
     plain passthrough on web, so this costs the web fork nothing.
   */
   return (
-    <SafeArea edges={['top']} className="bg-surface">
+    <SafeArea edges={['top']} className="bg-surface-header">
       <View
-        className={`flex-row items-center justify-between border-b-2 border-strong p-inset-tight ${className ?? ''}`}>
+        /*
+          THE SHELL'S CHROME DIALECT, not a bespoke one. This bar carried
+          `border-strong` on the content ground while every other bar in the
+          product is `bg-surface-header` with `on-surface-header` ink and a
+          `min-h-14` row — so walking from a tab into the tutor session looked
+          like leaving the app. A session is immersive in what it OMITS (the tab
+          bar, the wordmark) and in nothing else; its bar is still the product's
+          bar. `RoleScope` re-points the pair per door, so this follows the
+          learner's colour without naming it.
+        */
+        className={`min-h-14 flex-row items-center justify-between border-b-2 border-on-surface-header bg-surface-header px-4 py-1 ${className ?? ''}`}>
         <IconButton
           icon={<ChevronLeft className="h-5 w-5" />}
           aria-label="Back"
@@ -59,7 +69,7 @@ export function SessionToolbar({
           variant="ghost"
           size="md"
         />
-        <Text className="max-w-content-prose truncate font-sans text-title font-bold text-text">
+        <Text className="max-w-content-prose truncate font-sans text-title font-bold text-on-surface-header">
           {title}
         </Text>
         {hasRightAction ? (

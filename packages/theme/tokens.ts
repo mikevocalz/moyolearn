@@ -399,6 +399,17 @@ export const semantic = {
   */
   'nav-cta': { light: palette.plum[700], dark: palette.plum[700] },
   'on-nav-cta': { light: palette.plum[100], dark: palette.plum[100] },
+  /*
+    SELECTED nav item — a tonal step of the CHROME's own family, not a foreign
+    accent. It was the teal highlighter, which read as discordant sitting on a
+    plum bar: selection is a state of the chrome, so it belongs to the chrome's
+    hue, one clear step darker than the bar and one clear step lighter than the
+    CTA. That ordering is what keeps three things legible at once — the bar you
+    are on, the tab you are on, and the action you can take. M3 calls this the
+    secondary container; the yellow is spent on the primary ACTION instead.
+  */
+  'nav-selected': { light: palette.plum[400], dark: palette.plum[400] },
+  'on-nav-selected': { light: palette.plum[950], dark: palette.plum[950] },
   // ONE chrome family, top and bottom. M3 puts the navigation bar and the top
   // app bar on the same `surface-container` and reserves colour for the active
   // indicator; the shell used to paint a lavender header against a mint tab bar

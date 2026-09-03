@@ -48,9 +48,12 @@
 // Role accent: doc 36 §5's allowlist names "active tab/nav indicator underlay"
 // as one of the five slots the accent may occupy, and this indicator is that
 // slot — so when PR-141 lands its token, it replaces the indicator's fill here
-// and nowhere else. Until then the indicator carries `bg-highlighter`, the
-// product's own selection colour (doc 08 §4.6), and label weight is the second,
-// non-colour cue that keeps selection legible without it.
+// and nowhere else. Until then the indicator carries `bg-nav-selected` — a
+// tonal step of the CHROME's own family, one darker than the bar and one
+// lighter than the raised CTA, so the bar, the selected tab and the action stay
+// legible as three things. It was the teal `highlighter`, which read as a
+// foreign hue dropped on a plum bar; selection is a state OF the chrome, so it
+// takes the chrome's hue. Label weight is the second, non-colour cue.
 //
 // DEFERRED — doc 02 §2.3 hinge awareness. Moving nav to a VERTICAL edge is the
 // part of §2.3 that lands today: a bottom bar spanning a Surface Duo would
@@ -375,10 +378,10 @@ export function ShellTabBar({
           */}
           <View
             className={`items-center justify-center rounded-control px-inset-tight py-1 ${
-              focused ? 'bg-highlighter' : 'hover:bg-surface-sunken'
+              focused ? 'bg-nav-selected' : 'hover:bg-surface-sunken'
             }`}
           >
-            <item.Icon size={24} className={focused ? 'text-on-highlighter' : 'text-on-surface-footer'} />
+            <item.Icon size={24} className={focused ? 'text-on-nav-selected' : 'text-on-surface-footer'} />
           </View>
           {/*
             Both labels take the footer's ink and only the WEIGHT moves. Material
