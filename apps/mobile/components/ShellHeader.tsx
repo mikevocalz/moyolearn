@@ -17,6 +17,7 @@
 //      docs/decisions/adr-106-account-sheet-is-profile-you.md
 // SOT-KEYWORDS: shell header app bar title role accent avatar cool chrome account sheet
 
+import { useColorScheme } from 'react-native';
 import { usePathname } from 'expo-router';
 import { SafeArea, Avatar, MoyoLearnLogo } from '@acme/ui';
 import { Header } from '@acme/ui/primitives';
@@ -42,6 +43,17 @@ export function ShellHeader({ titles, fallback }: ShellHeaderProps) {
   const { activeContext } = useAppSession();
   const openSheet = useAccountSheet((state) => state.openSheet);
 
+  /*
+    The one place the shell reads the scheme in JS rather than through a token.
+    The wordmark is an SVG whose eleven path fills are resolved in `logo-fill.ts`
+    — they cannot be re-pointed by a className, so the REVERSED lockup has to be
+    chosen here. It is needed: the mark's "MOYO" M and its "LEARN" rule are
+    `moyo-purple`, and the dark chrome bar IS `moyo-purple` (plum 700), so the
+    full-colour mark loses two of its four inks into the bar it sits on.
+    Every brand has a reversed mark for exactly this surface.
+  */
+  const reversedMark = useColorScheme() === 'dark';
+
   // ADR-106 band law: every shell gets the avatar EXCEPT K–2/3–5 learners,
   // whose settings stay guardian-side (doc 36 §3.1). Same band read + teen
   // fallback as the learner tabs layout, so header and tab bar can never
@@ -60,8 +72,23 @@ export function ShellHeader({ titles, fallback }: ShellHeaderProps) {
           never drift between them. It replaces a blank spacer that existed only
           to keep the title optically centred.
         */}
-        <MoyoLearnLogo height={LOGO_HEIGHT} accessibilityLabel="Moyo Learn" />
-        <Text className="flex-1 text-center text-title text-on-header" numberOfLines={1}>
+        <MoyoLearnLogo
+          height={LOGO_HEIGHT}
+          variant={reversedMark ? 'light' : 'default'}
+          accessibilityLabel="Moyo Learn"
+        />
+        {/*
+          `text-on-surface-header`, not `text-on-header`: the token is named for
+          the fill it rides, so the class exists, the scheme flips with the bar,
+          and check-contrast measures the pair. The old spelling had no
+          `--color-on-header` behind it, fell through to the tw wrapper's
+          `text-body-default` (= `--color-text`), and painted the title in the
+          BODY colour — white on a lavender bar on any night-mode phone.
+        */}
+        {/* Left-aligned beside the mark, not centred: the logo now anchors the
+            bar's left edge, and a centred title between it and the avatar reads
+            as a third, competing element. */}
+        <Text className="flex-1 text-title text-on-surface-header" numberOfLines={1}>
           {titles[pathname] ?? fallback}
         </Text>
         {showAvatar ? (
