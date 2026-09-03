@@ -115,9 +115,14 @@ export function createInferenceGateway(options: GatewayOptions): InferenceGatewa
       // The nudge is appended to the SYSTEM half so it reaches the coach as
       // policy rather than as something the student said, and so it arrives to
       // the child as coaching text through `chunk` instead of as a wall.
+      //
+      // A spread rather than the two fields restated: this branch rebuilds the
+      // payload, and a restatement silently drops anything the payload grows.
+      // It grew `image`, and a photographed turn that happened to land on the
+      // break nudge would have lost its photograph and nothing would have said so.
       const nudged: InferencePayload =
         state.kind === 'break-nudge'
-          ? { system: `${payload.system}\n\n${BREAK_NUDGE}`, message: payload.message }
+          ? { ...payload, system: `${payload.system}\n\n${BREAK_NUDGE}` }
           : payload;
 
       const request = requestFor('tutor-turn', nudged, signal);

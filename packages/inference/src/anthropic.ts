@@ -34,6 +34,7 @@ import type {
   DeclineCategory,
   InferenceCompletion,
   InferenceOutcome,
+  InferencePayload,
   InferenceRequest,
   InferenceStream,
   InferenceStop,
@@ -144,8 +145,34 @@ export function paramsFor(request: InferenceRequest): BetaMessageCreateParamsStr
         ...(request.cacheSystem ? { cache_control: { type: 'ephemeral' as const } } : {}),
       },
     ],
-    messages: [{ role: 'user' as const, content: payload.message }],
+    messages: [{ role: 'user' as const, content: contentFor(payload) }],
   };
+}
+
+/**
+ * The user turn: a bare string, or the photograph followed by the text.
+ *
+ * Image FIRST, which is the vendor's own guidance and not a style choice —
+ * a model asked to read notation off a page answers better when the page
+ * precedes the question about it.
+ *
+ * The text block is kept even when there is an image, because the text is not a
+ * caption: it is the OCR reading plus whatever the child said, and the reading
+ * is what the Safety Plane's input layers actually classified.
+ */
+function contentFor(payload: InferencePayload): BetaMessageCreateParamsStreaming['messages'][number]['content'] {
+  if (!payload.image) return payload.message;
+  return [
+    {
+      type: 'image' as const,
+      source: {
+        type: 'base64' as const,
+        media_type: payload.image.mediaType,
+        data: payload.image.data,
+      },
+    },
+    { type: 'text' as const, text: payload.message },
+  ];
 }
 
 /** The same params, for the one-shot classifier call. */

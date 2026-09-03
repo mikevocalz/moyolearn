@@ -1,10 +1,12 @@
 // The provider adapter interface — what a model vendor is allowed to look like
 // from inside this system (doc 12 §9.3).
 //
-// Every shape here is either two strings going out or a number coming back.
-// There is no metadata bag, no `Record<string, string>` of extras, and no field
-// that accepts an identity: a payload with an open-ended extras field is the
-// field a learner's name eventually arrives in, so there isn't one (ADR-005 §1).
+// Every shape here is two strings and at most one photograph going out, or a
+// number coming back. There is no metadata bag, no `Record<string, string>` of
+// extras, and no field that accepts an identity: a payload with an open-ended
+// extras field is the field a learner's name eventually arrives in, so there
+// isn't one (ADR-005 §1). `TurnImage` is named and closed for the same reason —
+// see its own note for what a photograph costs that a string does not.
 //
 // The response types are DERIVED from the vendor SDK rather than restated, so a
 // stop reason the vendor adds is a compile error here rather than a value that
@@ -36,15 +38,52 @@ export type InferenceRole =
 export type ClassifierRole = Exclude<InferenceRole, 'tutor-turn'>;
 
 /**
+ * A photograph of the work the turn is about.
+ *
+ * The one non-string thing that may leave, and it is a NAMED shape rather than
+ * an attachment bag for the reason ADR-005 §1 gives about extras fields: a bag
+ * is where an identity eventually arrives. Two fields, both of them about
+ * pixels, neither of them nameable by a caller with something else to send.
+ *
+ * WHY PIXELS AT ALL, when the reading already travels as text: the on-device
+ * recogniser's charset has no `÷` and no `×` (`OCR_ENGLISH`), so a division
+ * problem reaches the model as `12 : 4`, `12 + 4`, or nothing. The operator is
+ * unrecoverable at the character level and a repair pass would corrupt real
+ * arithmetic — `+`, `-` and `:` are all legitimate. So the model reads the
+ * notation itself.
+ *
+ * WHAT THIS COSTS, stated because the scrubber cannot state it: `scrubText`
+ * redacts `Name: Ada Lovelace` out of an OCR'd worksheet header, and it cannot
+ * see into a JPEG. A photograph of a page with a child's name written at the
+ * top sends that name. It is bounded — the image rides only the turn it was
+ * attached to, never the session — but it is real, and it is the reason this
+ * type does not grow a general `attachments` field.
+ */
+export interface TurnImage {
+  /** The vendor's accepted set, validated at the trust boundary (the route). */
+  readonly mediaType: 'image/jpeg' | 'image/png' | 'image/webp' | 'image/gif';
+  /** Base64, with no `data:` prefix — what the vendor's source block takes. */
+  readonly data: string;
+}
+
+/**
  * The entire egress payload. Structurally `TutorPrompt`
- * (`packages/student-model/src/inference.ts`) plus nothing: two strings, no
- * identity, no session handle, no free-form metadata.
+ * (`packages/student-model/src/inference.ts`) plus, on a photographed turn, the
+ * photograph: two strings and optionally one image. No identity, no session
+ * handle, no free-form metadata.
  */
 export interface InferencePayload {
   /** Policy half. Stable within a session, so it carries the cache breakpoint. */
   readonly system: string;
   /** The turn being reasoned about or classified. */
   readonly message: string;
+  /**
+   * Present only on the turn a photograph was attached to, and only on
+   * `tutor-turn` — a classifier reasons over text and would pay image tokens
+   * for nothing. Optional rather than nullable: absent and "no photo" are the
+   * same state, and there is no third one to tell apart.
+   */
+  readonly image?: TurnImage;
 }
 
 /**

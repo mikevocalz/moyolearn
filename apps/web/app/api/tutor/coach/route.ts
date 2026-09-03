@@ -9,6 +9,7 @@
 // SOT-KEYWORDS: tutor coach api route sse stream protected operation safety plane
 import { NextRequest, NextResponse } from 'next/server';
 import { coachTutorTurn, type CoachEvent } from '@acme/app/server';
+import type { TurnImage } from '@acme/inference';
 /*
   Two stores, named separately because they ARE separate (doc 12 §4). The model
   the coaching turn reasons over is educational data and comes from `edu`; the
@@ -51,13 +52,60 @@ import { reportRouteError } from '@/lib/report-error';
 // rendered route cannot do.
 export const dynamic = 'force-dynamic';
 
+/**
+ * The vendor's set, restated here rather than imported, because this is the
+ * TRUST boundary: what the client may name has to be checked against a literal
+ * list in the file doing the checking, not against a type that erases at
+ * compile time.
+ */
+const IMAGE_MEDIA_TYPES: readonly TurnImage['mediaType'][] = [
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+];
+
+/**
+ * A ceiling on the photograph, in base64 characters.
+ *
+ * The client sends a page downscaled to the vendor's own 1568px ceiling and
+ * re-encoded as JPEG, which lands around 200–400 KB — so this is roughly four
+ * times the expected size and nowhere near the vendor's 5 MB limit. It is not a
+ * quality knob: it is what stops an authenticated client from posting a 40 MB
+ * string into a handler that would otherwise buffer all of it before deciding
+ * anything, and from spending a child's whole daily token budget in one turn.
+ */
+const MAX_IMAGE_BASE64 = 1_500_000;
+
+/** Base64 with no `data:` prefix — the shape the vendor's source block takes. */
+const BASE64 = /^[A-Za-z0-9+/]+={0,2}$/;
+
+function isTurnImage(value: unknown): value is TurnImage {
+  if (typeof value !== 'object' || value === null) return false;
+  const image = value as Record<string, unknown>;
+  if (typeof image.data !== 'string') return false;
+  if (image.data.length === 0 || image.data.length > MAX_IMAGE_BASE64) return false;
+  if (!BASE64.test(image.data)) return false;
+  return IMAGE_MEDIA_TYPES.some((type) => type === image.mediaType);
+}
+
 function isCoachBody(
   body: unknown,
-): body is { problem: string; message?: string; sessionId?: string } {
+): body is {
+  problem: string;
+  message?: string;
+  sessionId?: string;
+  problemIsReading?: boolean;
+  image?: TurnImage;
+} {
   if (typeof body !== 'object' || body === null) return false;
   const record = body as Record<string, unknown>;
   if (typeof record.problem !== 'string' || record.problem.trim().length === 0) return false;
   if (record.message !== undefined && typeof record.message !== 'string') return false;
+  if (record.problemIsReading !== undefined && typeof record.problemIsReading !== 'boolean') {
+    return false;
+  }
+  if (record.image !== undefined && !isTurnImage(record.image)) return false;
   // A conversation handle, not an identity — see `CoachTurnInput.sessionId`. It
   // is optional because a turn can legitimately run before the session resolves.
   return record.sessionId === undefined || typeof record.sessionId === 'string';
@@ -80,7 +128,13 @@ export async function POST(request: NextRequest) {
     events = await coachTutorTurn(
       auth,
       request.headers,
-      { problem: body.problem, message: body.message ?? '', sessionId: body.sessionId },
+      {
+        problem: body.problem,
+        message: body.message ?? '',
+        sessionId: body.sessionId,
+        problemIsReading: body.problemIsReading,
+        image: body.image,
+      },
       {
         loadPriorFacts: loadEduPriorFacts,
         loadGradeBand,

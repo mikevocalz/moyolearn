@@ -68,4 +68,5 @@ export type {
   InferenceStream,
   InferenceUsage,
   ProviderAdapter,
+  TurnImage,
 } from './src/types.ts';

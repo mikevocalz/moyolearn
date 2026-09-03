@@ -19,6 +19,7 @@ import {
 import { audioQueue } from './tutor-audio.ts';
 import { isToneKey, type ToneKey } from './tutor-tone';
 import type { CoachEvent } from './coach.service';
+import type { TurnImage } from '@acme/inference';
 
 interface TutorState {
   state: TutorStageState;
@@ -77,11 +78,30 @@ interface TutorState {
   hintDepth: number;
   masteryBySkill: Record<string, number>;
   attemptsBySkill: Record<string, number>;
-  start: (problem: string | null) => void;
+  /**
+   * `problem` is a machine reading of a photograph or a document.
+   *
+   * Mirrored from the capture store by the same effect that mirrors the text,
+   * because `coach` builds the request body and this has to be in it. It
+   * OUTLIVES the photograph on purpose: every coaching turn is a fresh call
+   * carrying one system half and one message — there is no conversation history
+   * in the payload — so a model that saw the page on turn one has forgotten it
+   * by turn two and still needs telling that `12 : 4` may not be a colon.
+   */
+  problemIsReading: boolean;
+  start: (problem: string | null, isReading?: boolean) => void;
   /** Records the attempt against the student model. Says nothing — `coach` does. */
   respond: (isCorrect: boolean) => void;
-  /** Streams a coaching turn. Owns everything the learner sees. */
-  coach: (message: string) => Promise<void>;
+  /**
+   * Streams a coaching turn. Owns everything the learner sees.
+   *
+   * `image` rides THIS turn and is not kept: the photograph is how the model
+   * reads the operators the recogniser could not encode, and re-sending it on
+   * every later turn would bill a child's daily budget for a page the model has
+   * already read. What persists instead is `problemIsReading`, which is the
+   * cheap half.
+   */
+  coach: (message: string, image?: TurnImage) => Promise<void>;
   /** Natalie's display presentation. Does not affect the model, voice, or captions. */
   tutorPresence: TutorPresencePreference;
   /** Override the recommended default (e.g. the learner chose Voice only). */
@@ -144,6 +164,7 @@ async function* readCoachEvents(response: Response): AsyncGenerator<CoachEvent> 
 export const useTutorStore = create<TutorState>((set) => ({
   state: { kind: 'presence' },
   problem: '',
+  problemIsReading: false,
   attachments: [],
   messages: [],
   /*
@@ -276,7 +297,7 @@ export const useTutorStore = create<TutorState>((set) => ({
     }));
   },
 
-  start: (problem) => {
+  start: (problem, isReading = false) => {
     const p = problem ?? '';
     const skillTitle = inferSkillTitle(p);
     set((s) => {
@@ -290,6 +311,7 @@ export const useTutorStore = create<TutorState>((set) => ({
         // way to do one thing.
         state: { kind: 'thinking' },
         problem: p,
+        problemIsReading: isReading,
         /*
           The problem is the FIRST message, not just live state.
 
@@ -384,8 +406,8 @@ export const useTutorStore = create<TutorState>((set) => ({
       ),
     })),
 
-  coach: async (message) => {
-    const { problem, state, sessionId } = useTutorStore.getState();
+  coach: async (message, image) => {
+    const { problem, problemIsReading, state, sessionId } = useTutorStore.getState();
 
     /*
       The floor under the closed composer.
@@ -471,7 +493,22 @@ export const useTutorStore = create<TutorState>((set) => ({
           row. `null` before the session resolves, which is a real case on the
           opening turn.
         */
-        body: JSON.stringify({ problem, message, sessionId: sessionId ?? undefined }),
+        body: JSON.stringify({
+          problem,
+          message,
+          sessionId: sessionId ?? undefined,
+          /*
+            Both halves of "this text was read off a page". The flag is what lets
+            the coach reason about a `÷` the recogniser could not write; the
+            photograph, on the turn it was taken, is what lets it just look. Sent
+            only when true and only when present — an absent field is the same
+            state as false to the route's validator, and a body that named them
+            on every turn would put `image: null` on the wire for a session that
+            never took a photo.
+          */
+          ...(problemIsReading ? { problemIsReading: true } : {}),
+          ...(image ? { image } : {}),
+        }),
       });
       if (!response.ok) throw new Error(`Server returned ${response.status}`);
       armStall(COACH_STALL_TIMEOUT_MS);

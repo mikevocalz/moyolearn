@@ -115,5 +115,24 @@ export function scrubText(text: string): string {
  * assertion in the test suite as well.
  */
 export function scrubOutbound(payload: InferencePayload): InferencePayload {
-  return { system: scrubText(payload.system), message: scrubText(payload.message) };
+  return {
+    system: scrubText(payload.system),
+    message: scrubText(payload.message),
+    /*
+      CARRIED, NOT SCRUBBED, AND THAT IS A LIMIT RATHER THAN AN OVERSIGHT.
+
+      Every rule in this file is a regex over text. A photograph of a worksheet
+      with `Name: Ada` written across the top defeats all of them, and there is
+      no cheap redaction of pixels — an OCR-and-blank pass would be a second
+      recogniser at the egress boundary, run on the server, over exactly the
+      image this system is trying not to think too hard about.
+
+      So the field is spread explicitly rather than by `...payload`: a reader of
+      this function sees that the image goes out untouched, and a future field
+      that needs scrubbing cannot ride along by accident. What bounds the
+      exposure is upstream — one image, only on the turn it was attached to,
+      only on `tutor-turn` (see `TurnImage`).
+    */
+    ...(payload.image ? { image: payload.image } : {}),
+  };
 }

@@ -18,10 +18,18 @@
 // the BUDGET key and nothing else: it is read from `ProtectedCtx` at the
 // service boundary per CLAUDE.md, it is closed over rather than passed on, and
 // `TutorPrompt` still has no field it could travel in.
+//
+// The photograph is closed over for the same reason, and it is why nothing
+// between here and the Safety Plane changed shape. `TutorPrompt` is two strings
+// because that split is what a provider caches; `StreamingGenerator.generateStream`
+// takes the student's turn as `string` because the plane buffers it into
+// sentences. Widening either to carry an image would have widened the plane's
+// own signature for a value the plane does not screen. The image is per-turn and
+// this call is BUILT per turn, so a closure says exactly that and costs nothing.
 // SOT: docs/design/inference-gateway.md §2 §7 · docs/pack/18-tutor-ai-stack.md §1 §2 · docs/pack/12-systems-design-prompt.md §3 §7
 // SOT-KEYWORDS: tutor model claude gateway stream model call adapter vendor budget session complete
 import 'server-only';
-import { inferenceGateway, type InferenceGateway } from '@acme/inference';
+import { inferenceGateway, type InferenceGateway, type TurnImage } from '@acme/inference';
 import type { ModelStreamCall } from '@acme/student-model';
 
 /**
@@ -36,10 +44,17 @@ import type { ModelStreamCall } from '@acme/student-model';
  * and does exactly that; this branch is the floor under it, and it is silent on
  * purpose.
  */
-export function tutorTurnFor(learnerId: string, gateway: InferenceGateway = inferenceGateway()): ModelStreamCall {
+export function tutorTurnFor(
+  learnerId: string,
+  image?: TurnImage,
+  gateway: InferenceGateway = inferenceGateway(),
+): ModelStreamCall {
   return ({ system, message }) => ({
     async *[Symbol.asyncIterator]() {
-      const turn = await gateway.tutorTurn({ learnerId, payload: { system, message } });
+      const turn = await gateway.tutorTurn({
+        learnerId,
+        payload: { system, message, ...(image ? { image } : {}) },
+      });
       if (turn.kind === 'session-complete') return;
 
       yield* turn.stream.text;

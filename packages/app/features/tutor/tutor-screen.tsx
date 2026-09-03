@@ -32,6 +32,7 @@ import { TutorWorkCanvas, hasWorkToShow } from './tutor-work-canvas';
 import { pickFile } from '../editor/pick-file';
 import { useAudioStore } from '../editor/audio.store.ts';
 import { readAttachment } from '../capture/read-attachment';
+import { photographForModel } from '../capture/photograph-for-model';
 import { readDocumentAt } from '../capture/read-document-at';
 import { transcribe } from '../capture/transcribe';
 import { useUploadQueue, setUploadReporter } from '../media';
@@ -67,6 +68,9 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   const router = useRouter();
   const problem = useCaptureStore((s) => s.problem);
   const setProblem = useCaptureStore((s) => s.setProblem);
+  // Mirrored alongside the text, not derived from it: by the time the tutor has
+  // the string, a photographed problem and a served one look the same.
+  const problemIsReading = useCaptureStore((s) => s.problemIsReading);
   const {
     state,
     start,
@@ -91,8 +95,8 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
-    start(problem);
-  }, [problem, start]);
+    start(problem, problemIsReading);
+  }, [problem, problemIsReading, start]);
 
   /*
     THE AUTO RESOLUTION, WHICH UNTIL NOW NEVER RAN.
@@ -392,7 +396,10 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       */
       const readWork = fromImages[0] ?? fromDocuments[0];
       if (readWork !== undefined) {
-        setProblem(readWork);
+        // `true`: this came out of a recogniser. It rides to the coach so the
+        // turn can say so — see `CoachTurnInput.problemIsReading` for why the
+        // caveat cannot simply be written into the problem string.
+        setProblem(readWork, true);
       }
 
       const parts = [
@@ -499,7 +506,27 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       staged.forEach((a) => removeAttachment(a.id));
 
       const turn = parts.join('\n\n');
-      void coach(turn);
+      /*
+        THE PAGE ITSELF, ON THE TURN THAT PHOTOGRAPHED IT.
+
+        The reading above is the best the on-device recogniser can do, and its
+        charset has no `÷` and no `×` — so the one thing a maths worksheet most
+        needs to say is the one thing that cannot survive the trip as text.
+        Sending the photograph lets the coach read the operators off the page.
+
+        The FIRST image only, matching `readWork`: the problem being coached is
+        one problem, and four pages of a workbook would be four images of which
+        three are about something else. Awaited before `coach` rather than
+        raced, because a turn that arrived without its photo would coach from the
+        mangled text — the exact failure this is here to fix — and the encode is
+        a resize, not a network call.
+
+        Documents get no equivalent. A PDF is not an image block, and its text
+        extraction is not charset-limited in the way the recogniser is.
+      */
+      const photographed = images[0];
+      const photograph = photographed ? await photographForModel(photographed.uri) : null;
+      void coach(turn, photograph ?? undefined);
       void recordAttempt(
         // The freshly-read work FIRST. `problem` is the value captured when this
         // render began, so it is by definition the previous question — putting

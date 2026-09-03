@@ -28,6 +28,7 @@ import {
   profileFor,
   requestFor,
   ROUTING,
+  scrubOutbound,
   scrubText,
   REDACTED,
   BREAK_NUDGE,
@@ -220,6 +221,54 @@ describe('model capability, as data', () => {
 
     assert.equal(systemBlock(short).cache_control, undefined);
     assert.deepEqual(systemBlock(long).cache_control, { type: 'ephemeral' });
+  });
+
+  it('sends a photographed turn as an image block ahead of the text', () => {
+    /*
+      The whole reason the payload grew a third field: the on-device recogniser
+      cannot encode `÷`, so the page has to reach the model as pixels. This
+      asserts on what actually goes on the socket, because every hop between the
+      capture screen and here rebuilds the payload at least once, and a rebuild
+      that restates two fields drops the third silently.
+    */
+    const photographed = paramsFor(
+      requestFor('tutor-turn', {
+        ...payload('contract', 'twelve divided by four'),
+        image: { mediaType: 'image/jpeg', data: 'QUJD' },
+      }),
+    );
+
+    const content = photographed.messages[0]?.content;
+    assert.ok(Array.isArray(content), 'a photographed turn is content blocks, not a bare string');
+    assert.deepEqual(content[0], {
+      type: 'image',
+      source: { type: 'base64', media_type: 'image/jpeg', data: 'QUJD' },
+    });
+    // The text survives beside it. It is the OCR reading plus whatever the child
+    // said — the half the Safety Plane's input layers actually classified — not
+    // a caption the image could replace.
+    assert.deepEqual(content[1], { type: 'text', text: 'twelve divided by four' });
+  });
+
+  it('leaves an unphotographed turn as a bare string', () => {
+    const content = paramsFor(requestFor('tutor-turn', payload('contract', 'hi'))).messages[0]?.content;
+    assert.equal(content, 'hi');
+  });
+
+  it('carries the image through the scrubber, and scrubs the text around it', () => {
+    // `scrubText` is a regex over text and cannot see into a JPEG. What this
+    // pins is that it does not DROP the image while scrubbing what it can — the
+    // failure would be a silently text-only turn, which looks exactly like a
+    // working one until a division problem is coached as an addition.
+    const scrubbed = scrubOutbound({
+      system: 'contract',
+      message: 'Name: Ada Lovelace\ntwelve divided by four',
+      image: { mediaType: 'image/png', data: 'QUJD' },
+    });
+
+    assert.deepEqual(scrubbed.image, { mediaType: 'image/png', data: 'QUJD' });
+    assert.ok(!scrubbed.message.includes('Ada Lovelace'));
+    assert.ok(scrubbed.message.includes('twelve divided by four'));
   });
 
   it('refuses to build a request for a model with no capability row', () => {

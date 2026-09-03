@@ -519,7 +519,13 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
     const fullProblem = [context.subject, context.assignment, context.stuck, verifiedText]
       .filter(Boolean)
       .join('\n\n');
-    setProblem(fullProblem.trim() || verifiedText);
+    /*
+      A reading, even though the child has just reviewed it on the way here.
+      The review screen can only offer them what the recogniser produced, and
+      the recogniser's charset has no `÷` or `×` — so the operator a child would
+      most want to correct is the one they were never shown to correct.
+    */
+    setProblem(fullProblem.trim() || verifiedText, true);
     router.push('/tutor');
   };
 

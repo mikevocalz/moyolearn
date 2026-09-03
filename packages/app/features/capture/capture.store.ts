@@ -8,11 +8,30 @@ import { create } from 'zustand';
   storage; the pure helpers come from the shared file directly.
 */
 import { problemStorage } from './problem-storage';
-import { readProblem, writeProblem } from './problem-storage.shared.ts';
+import {
+  readProblem,
+  readProblemIsReading,
+  writeProblem,
+  writeProblemIsReading,
+} from './problem-storage.shared.ts';
 
 interface CaptureState {
   problem: string | null;
-  setProblem: (problem: string | null) => void;
+  /**
+   * `problem` came out of a recogniser, not out of a person.
+   *
+   * It travels with the text because the coaching turn needs it and nothing
+   * downstream can infer it: by the time the tutor has the string, a photograph
+   * and a served practice problem look identical. See `CoachTurnInput
+   * .problemIsReading` for what the model does with it.
+   */
+  problemIsReading: boolean;
+  /**
+   * `isReading` defaults to false so the two SERVED call sites — the next-problem
+   * fetch and the progress screen's re-open — keep reading as what they are
+   * without naming it. Only the two capture paths pass true.
+   */
+  setProblem: (problem: string | null, isReading?: boolean) => void;
   clearProblem: () => void;
 }
 
@@ -27,14 +46,17 @@ export const useCaptureStore = create<CaptureState>((set) => ({
     problem is ever painted over theirs.
   */
   problem: readProblem(problemStorage),
+  problemIsReading: readProblemIsReading(problemStorage),
 
-  setProblem: (problem) => {
+  setProblem: (problem, isReading = false) => {
     writeProblem(problemStorage, problem);
-    set({ problem });
+    writeProblemIsReading(problemStorage, isReading);
+    set({ problem, problemIsReading: isReading });
   },
 
   clearProblem: () => {
     writeProblem(problemStorage, null);
-    set({ problem: null });
+    writeProblemIsReading(problemStorage, false);
+    set({ problem: null, problemIsReading: false });
   },
 }));

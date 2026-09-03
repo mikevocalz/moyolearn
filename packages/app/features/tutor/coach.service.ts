@@ -15,7 +15,7 @@
 // SOT-KEYWORDS: coach service tutor turn stream protected operation safety plane pedagogy contract fail closed unavailable paused refusal safety event guardian visible learner flags
 import 'server-only';
 import type { Auth, LearnerFlags } from '@acme/auth/server';
-import { ModelDeclined } from '@acme/inference';
+import { ModelDeclined, type TurnImage } from '@acme/inference';
 import { runSafetyPlaneStream, safetyLayer, SafetyLayerUnavailable } from '@acme/safety';
 import {
   compileLearnerBrief,
@@ -36,6 +36,31 @@ export interface CoachTurnInput {
   problem: string;
   /** What the student just said. Empty on the opening turn. */
   message: string;
+  /**
+   * `problem` came out of a recogniser rather than a keyboard — a photograph or
+   * a document, read on device.
+   *
+   * It matters because the reading is lossy in a way the model can work around
+   * once it is told: the on-device recogniser's charset (`OCR_ENGLISH`) has no
+   * `÷` and no `×`, so `12 ÷ 4` arrives as `12 : 4`, `12 + 4`, or a gap. A
+   * tutor that believes the text coaches confidently on the wrong operation.
+   *
+   * A flag rather than an annotation baked into the string, and that is the
+   * whole reason it exists as a field: `problem` is BOTH the model's input and
+   * the bubble the child re-reads on their own screen. Writing "(read from a
+   * photo, may contain errors)" into it would put the app's hedge inside the
+   * child's homework.
+   */
+  problemIsReading?: boolean;
+  /**
+   * The photograph itself, on the turn it was attached to.
+   *
+   * The reading tells the model what the page probably says; this lets it read
+   * the notation the recogniser could not encode. Optional and per-turn: it is
+   * never stored on the session and never resent, so a later turn about the
+   * same problem has the text and not the pixels.
+   */
+  image?: TurnImage;
   /**
    * The conversation this turn belongs to, so a safety event can be traced back
    * to the exchange doc 07 §S26 offers a guardian an excerpt of.
@@ -140,6 +165,37 @@ export async function coachTutorTurn(
 }
 
 /**
+ * What the model is told about where `problem` came from.
+ *
+ * Exported for the same reason `briefPreamble` is: this is a PROMPT, and the
+ * only honest test of a prompt is one that reads the words that reach the
+ * model. A private helper would leave the two branches asserted through a
+ * vendor call nothing in CI can make.
+ *
+ * Two different sentences because the model can do two different things about
+ * it. With the photograph in the same message it can just LOOK — the reading is
+ * a hint and the page is the evidence, and saying so is what stops a model
+ * splitting the difference between a text that says `12 : 4` and an image that
+ * plainly says `12 ÷ 4`. Without it there is nothing to look at, so the only
+ * honest instruction is to ask the child, and asking is a coaching move a tutor
+ * makes anyway.
+ *
+ * The examples are named rather than left general on purpose: "may contain
+ * errors" invites a model to doubt the digits, which are the part the
+ * recogniser is good at. The operators are the part it cannot encode.
+ */
+export function readingCaveat(input: CoachTurnInput): string {
+  if (!input.problemIsReading) return '';
+  const lossy =
+    '\n(That text came from an automatic reading of the page.' +
+    ' The reader cannot produce ÷ or ×, so a multiplication or division sign may' +
+    ' arrive as +, -, :, x, or be missing entirely.';
+  return input.image
+    ? `${lossy} The photograph is attached — read the operators off it and trust it over the text.)`
+    : `${lossy} If which operation is being asked matters for this turn, ask the student what the sign is rather than assuming.)`;
+}
+
+/**
  * The fail-closed boundary, and the reason it is exported.
  *
  * Everything that touches a safety layer on the coaching path happens inside
@@ -190,7 +246,7 @@ export async function* coachStream(
       be a turn a client could spend someone else's day on.
     */
     const generator = withLearnerBriefStream(
-      tutorTurnFor(ctx.learnerId),
+      tutorTurnFor(ctx.learnerId, input.image),
       async () => compileLearnerBrief(await ports.loadPriorFacts(ctx), voiceBand, new Date()),
       PEDAGOGY_CONTRACT,
     );
@@ -198,9 +254,10 @@ export async function* coachStream(
     // The problem travels in the student's turn rather than the brief because
     // the brief is what the system knows about the child, and today's worksheet
     // is not that. It also keeps the cached system prefix stable across turns.
+    const problem = `Problem we are working on: ${input.problem}${readingCaveat(input)}`;
     const turn = input.message
-      ? `Problem we are working on: ${input.problem}\n\n${LEARNER_TURN_LABEL} ${input.message}`
-      : `Problem we are working on: ${input.problem}\n\nThe student has just shown you this and said nothing yet. Open the coaching.`;
+      ? `${problem}\n\n${LEARNER_TURN_LABEL} ${input.message}`
+      : `${problem}\n\nThe student has just shown you this and said nothing yet. Open the coaching.`;
 
     for await (const event of runSafetyPlaneStream(turn, identity, {
       classifier: coachClassifier,
