@@ -18,10 +18,18 @@
 // SOT-KEYWORDS: shell header app bar title role accent avatar cool chrome account sheet
 
 import { usePathname } from 'expo-router';
-import { SafeArea, Avatar } from '@acme/ui';
+import { SafeArea, Avatar, MoyoLearnLogo } from '@acme/ui';
 import { Header } from '@acme/ui/primitives';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import { AVATAR_URI, useAccountSheet, useAppSession, useProfile } from '@acme/app';
+
+/**
+ * The wordmark sets the bar's height rather than sitting inside it: at 40pt tall
+ * (~111pt wide at the mark's 2.77:1) plus the row's 8pt padding, the app bar
+ * lands on the standard 56pt. Padding is deliberately tight for that reason —
+ * loosen it and the mark stops reading as the header's full height.
+ */
+const LOGO_HEIGHT = 40;
 
 export interface ShellHeaderProps {
   titles: Record<string, string>;
@@ -45,9 +53,15 @@ export function ShellHeader({ titles, fallback }: ShellHeaderProps) {
 
   return (
     <SafeArea edges={['top']} className="bg-surface-header">
-      <Header className="dial-cool flex-row items-center gap-stack border-b border-border bg-surface-header px-4 py-3">
-        <View className="min-w-11" />
-        <Text className="flex-1 text-center text-title text-on-header">
+      <Header className="dial-cool flex-row items-center gap-stack border-b border-border bg-surface-header px-4 py-2">
+        {/*
+          The brand sits at the left edge, the same `MoyoLearnLogo` the web site
+          header uses — one logo component across both platforms, so the mark can
+          never drift between them. It replaces a blank spacer that existed only
+          to keep the title optically centred.
+        */}
+        <MoyoLearnLogo height={LOGO_HEIGHT} accessibilityLabel="Moyo Learn" />
+        <Text className="flex-1 text-center text-title text-on-header" numberOfLines={1}>
           {titles[pathname] ?? fallback}
         </Text>
         {showAvatar ? (
