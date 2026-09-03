@@ -266,6 +266,11 @@ function CubeProbe({ onResult }: { onResult: (line: string) => void }) {
       // listeners have to be cleared or they root the disposed backend.
       disposed = true;
       renderer.setAnimationLoop(null);
+      // Before the dispose: destroying the device first leaves the native
+      // view's later surface release walking a dead one, which is a SIGSEGV
+      // rather than an error. Same fix, same reasoning as the avatar stage —
+      // see `tutor-avatar-3d.native.tsx`'s teardown.
+      context.unconfigure();
       renderer.dispose();
       const quad = new THREE.QuadMesh();
       clearStaleListeners(quad.geometry);

@@ -35,7 +35,7 @@
  */
 import { useEffect, useRef } from 'react';
 import { Image, PixelRatio, View } from 'react-native';
-import { Canvas, type CanvasRef, type NativeCanvas } from 'react-native-webgpu';
+import { Canvas, type CanvasRef, type NativeCanvas, type RNCanvasContext } from 'react-native-webgpu';
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createHumanoPresence, frameBody, type HumanoPresence } from '@acme/avatar/body';
@@ -308,6 +308,13 @@ export function TutorAvatar3D({
   useEffect(() => {
     let disposed = false;
     let renderer: THREE.WebGPURenderer | null = null;
+    /*
+      The cleanup's handle on the canvas context — see the teardown below. It
+      is a second name for what the async body calls `context` because that one
+      is a `const` inside a closure the cleanup cannot reach, and the teardown
+      needs it after everything that body owns has gone.
+    */
+    let surfaceContext: RNCanvasContext | null = null;
 
     const fail = (reason: string) => {
       if (!disposed) onUnavailableRef.current?.(reason);
@@ -318,6 +325,7 @@ export function TutorAvatar3D({
       if (!canvas) return fail('canvas ref was empty after mount');
       const context = canvas.getContext('webgpu');
       if (!context) return fail('getContext("webgpu") returned null');
+      surfaceContext = context;
 
       // The surface comes up at layout size; the drawing buffer has to be
       // scaled to physical pixels or she renders soft on every modern phone.
@@ -465,6 +473,22 @@ export function TutorAvatar3D({
       presenceRef.current = null;
       if (!renderer) return;
       renderer.setAnimationLoop(null);
+      /*
+        UNCONFIGURE BEFORE DISPOSE, OR ANDROID KILLS THE PROCESS.
+
+        `renderer.dispose()` destroys the Dawn device. The native TextureView
+        is dropped by Fabric a frame or two LATER, and its detach releases the
+        `wgpu::Surface` — whose swapchain still points at the device that is
+        now gone. Dawn walks it anyway: `~Surface` → `DetachFromSurface` →
+        `FencedDeleter::DeleteWhenUnused` → `pthread_mutex_lock(nullptr+0x20)`
+        → SIGSEGV, with no JS frame anywhere in the tombstone.
+
+        `unconfigure()` detaches that swapchain while the device is still
+        alive, so the later release has nothing left to walk. It is the whole
+        fix, and it has to be here rather than in the async body: the surface
+        outlives everything that body owns.
+      */
+      surfaceContext?.unconfigure();
       renderer.dispose();
       const quad = new THREE.QuadMesh();
       clearStaleListeners(quad.geometry);
