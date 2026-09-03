@@ -893,14 +893,15 @@ export const targets = {
  */
 export const navChrome = {
   /*
-    72, the product owner's call. Material 2's navigation rail was 72dp and
-    Material 3's collapsed rail is 96 (`NavigationRailCollapsedTokens
-    .ContainerWidth`; 80 is its narrow variant) — so this is a deliberate step
-    BELOW the current spec, taken on the device. It still clears every touch
-    target it carries: the widest item is the 64 raised slab, which fits with
-    4 a side.
+    80 — Material 3's NARROW navigation-rail variant
+    (`NavigationRailCollapsedTokens.NarrowContainerWidth`; its standard
+    collapsed width is 96, and Material 2's rail was 72). 72 was tried first and
+    reverted: the item LABELS clipped at that width, and a rail whose labels are
+    cut is worse than a slightly wider rail — Material's own fallback rule keeps
+    the label precisely because our icon set has no filled/outlined pair to
+    carry selection on its own.
   */
-  rail: '72px',
+  rail: '80px',
   raised: '64px',
   /*
     How far the raised slab breaks ABOVE the bar's top edge. 38 of a 64 slab
