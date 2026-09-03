@@ -28,13 +28,52 @@ const WCAG_AA_FLOOR = 24;
  */
 const COMPONENTS = [{ file: 'packages/ui/Button.tsx', variant: 'size' }];
 
+/**
+ * Platform minima for a PRIMARY control, to catch a band being set to a number
+ * that clears WCAG's absolute floor but sits under what the platforms ask for.
+ * The adult band is the one that matters here — it is the ops/Cool default and
+ * the value every non-learner surface inherits.
+ * Apple HIG: 44pt. Material 3: 48dp.
+ */
+const APPLE_MIN = 44;
+
 let failures = 0;
 
-// 1. Every declared band clears the WCAG floor.
+/*
+  0. Bands must be declared in PX.
+
+  This is not pedantry about notation — it is the check for a bug that shipped.
+  `targets` used to be rem, and apps/mobile/metro.config.js sets Uniwind's
+  `polyfills.rem = 14` (kept from the NativeWind migration). So every band was
+  multiplied by 14 on device while THIS GATE multiplied by 16, and CI asserted
+  44/48/56/72 while the phone rendered 38.5/42/49/63 — the adult band under
+  Apple's minimum, the K–2 band 9px under its "2cm" rationale. A target is an
+  absolute physical requirement; expressing it relative to a root font size lets
+  a bundler setting move it, and nothing downstream can notice.
+*/
+for (const [band, value] of Object.entries(targets)) {
+  if (!value.endsWith('px')) {
+    console.error(
+      `target-${band} is "${value}" — targets must be declared in px. A rem target is ` +
+        'rescaled by the mobile bundler\'s rem polyfill (currently 14), so the device ' +
+        'ships a different size than this gate verifies.',
+    );
+    failures++;
+  }
+}
+
+// 1. Every declared band clears the WCAG floor, and `adult` clears Apple's.
 for (const [band, value] of Object.entries(targets)) {
   const size = px(value);
   if (size < WCAG_AA_FLOOR) {
     console.error(`target-${band} is ${size}px — below the WCAG 2.2 AA floor of ${WCAG_AA_FLOOR}px`);
+    failures++;
+  }
+  if (band !== 'floor' && size < APPLE_MIN) {
+    console.error(
+      `target-${band} is ${size}px — below Apple's 44pt minimum for a control. ` +
+        '`floor` is the only band allowed under it, and it is a CI floor, not a design target.',
+    );
     failures++;
   }
 }
