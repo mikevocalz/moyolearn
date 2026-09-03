@@ -145,7 +145,8 @@ describe('createHumanoPresence', () => {
       presence.step(1 / 60, { ...QUIET, speaking: true, mouth: 1, emotion: { mouthSmileLeft: 0.5, browInnerUp: 0.1 } });
     }
     assert.ok(weight(mesh, 'mouthSmileLeft') >= 0.5, 'the tone smile lost to the viseme smile');
-    assert.equal(weight(mesh, 'browInnerUp'), 0.1);
+    // A beat may add its brow accent on top; the baseline is a floor, not a value.
+    assert.ok(weight(mesh, 'browInnerUp') >= 0.1);
   });
 
   it('never produces a forbidden read: lean and reach stay inside the firewall over ten minutes', () => {

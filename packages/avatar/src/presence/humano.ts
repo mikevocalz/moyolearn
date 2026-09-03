@@ -633,11 +633,14 @@ export function createHumanoPresence(
       beat.countdown -= delta;
       if (beat.countdown <= 0 && beat.t >= beat.dur) {
         beat.t = 0;
-        beat.dur = 0.75 + rng() * 0.5;
+        beat.dur = 0.6 + rng() * 0.5;
         beat.side = rng() < 0.5 ? 1 : -1;
-        beat.both = rng() < 0.35;
-        beat.amp = 0.55 + rng() * 0.4;
-        beat.countdown = beat.dur + 0.4 + rng() * 1.0;
+        beat.both = rng() < 0.2;
+        beat.amp = 0.35 + rng() * 0.45;
+        // Seen on the Duo: beats every ~1.5 s read as pumping. A person
+        // gestures on a phrase, not a syllable — one beat every 2-4 s, and a
+        // run of small ones is rarer than one clear one.
+        beat.countdown = beat.dur + 1.2 + rng() * 2.2;
       }
     }
     if (beat.t < beat.dur) beat.t += delta;
@@ -742,28 +745,45 @@ export function createHumanoPresence(
       the hand FOLLOWS it through a spring so it lags, overshoots and settles —
       overlap and follow-through, the two principles a mechanical arm lacks.
     */
-    const speechLift = 0.18 * speechEnv;
+    /*
+      THE ARMS WHILE SPEAKING. What was here read as a bicep curl on the Duo:
+      the whole forearm rose ~50° on every beat, both sides, every second and a
+      half — "hands moving up and down like a robot". A person talking with
+      their hands at their sides barely moves the elbow: the beat lives in the
+      WRIST and the hand, with a little forearm rotation and a few degrees of
+      shoulder, and the two sides never do the same thing. So the elbow now
+      carries a fraction of the beat, the wrist most of it, the hand follower
+      supplies the overlap, and the speech swell is a small lift, not a pose.
+    */
+    const speechLift = 0.07 * speechEnv;
     let maxFlexion = 0;
     for (const side of ['L', 'R'] as const) {
       const zSign = side === 'L' ? 1 : -1;
       const leads = beat.side === (side === 'L' ? 1 : -1);
-      const beatAmp = rm ? 0 : beat.amp * beatEnv * (leads ? 1 : beat.both ? 0.55 : 0);
+      const beatAmp = rm ? 0 : beat.amp * beatEnv * (leads ? 1 : beat.both ? 0.4 : 0);
       const lift = speechLift + beatAmp;
       const followed = handFollow[side].step(lift, rawDelta);
 
       const rise = (side === 'L' ? frame.shoulderL : frame.shoulderR) + frame.breathY * 0.5 - STANCE.shoulderDrop;
-      pose(side === 'L' ? bones.shoulderL : bones.shoulderR, rise, 0, 0);
+      pose(side === 'L' ? bones.shoulderL : bones.shoulderR, rise + lift * 0.06, 0, 0);
 
       // The firewall's reach cap, applied where the reach is made: however
       // large a beat, the hand never comes at the viewer (doc 22 §7).
-      const forward = clamp(STANCE.armForward + lift * 0.45, 0, DEFAULT_GESTURE_LIMITS.maxShoulderFlexionRad);
-      pose(side === 'L' ? bones.upperArmL : bones.upperArmR, forward, 0, zSign * (STANCE.armAbduct + lift * 0.15));
+      const forward = clamp(STANCE.armForward + lift * 0.18, 0, DEFAULT_GESTURE_LIMITS.maxShoulderFlexionRad);
+      pose(
+        side === 'L' ? bones.upperArmL : bones.upperArmR,
+        forward,
+        // A touch of rotation about the arm: the palm turns as the hand talks.
+        zSign * lift * 0.12,
+        zSign * (STANCE.armAbduct + lift * 0.08)
+      );
       maxFlexion = Math.max(maxFlexion, forward);
 
-      pose(side === 'L' ? bones.foreArmL : bones.foreArmR, STANCE.elbowBend + lift * 1.0 + followed * 0.3, 0, 0);
+      pose(side === 'L' ? bones.foreArmL : bones.foreArmR, STANCE.elbowBend + lift * 0.3 + followed * 0.12, 0, 0);
 
       const wrist = side === 'L' ? frame.wristL : frame.wristR;
-      pose(side === 'L' ? bones.handL : bones.handR, followed * 0.45 + wrist, 0, 0);
+      // The wrist is where the beat lives; the follower puts it a beat late.
+      pose(side === 'L' ? bones.handL : bones.handR, followed * 0.55 + wrist, 0, zSign * followed * 0.25);
     }
 
     /*
