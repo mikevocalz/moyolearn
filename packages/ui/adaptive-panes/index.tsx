@@ -17,6 +17,7 @@
  *
  * SOT: docs/pack/37-onboarding-dual-pane.md §3.2 · ./README.md
  * SOT-KEYWORDS: adaptive panes split view navigator list detail column inspector host
+ *               pane toggle collapse expand controls
  */
 import { Children, isValidElement, useImperativeHandle, useRef, type ReactNode } from 'react';
 import { useStore } from 'zustand';
@@ -27,6 +28,7 @@ import { MotionView } from '../motion';
 import { isCollapsed, PANE_WIDTH_CLASS } from './constants';
 import { resolvePaneVisibility } from './pane-overrides';
 import { CollapsiblePane } from './CollapsiblePane';
+import { PaneToggle } from './PaneToggle';
 import { PANE_WIDTH_DP } from './pane-widths';
 import { usePaneOverrideStore } from './pane-overrides.store';
 import { useWindowSizeClass } from './use-window-size-class';
@@ -219,7 +221,40 @@ function AdaptivePanesNavigator({
             </CollapsiblePane>
           ) : null}
 
-          <Main className="flex-1">{detailPane}</Main>
+          <Main className="flex-1">
+            {/*
+              THE PANE CONTROLS, FINALLY ON SCREEN.
+
+              `PaneToggle` has existed since this layout was promoted out of
+              `apps/mobile` — doc 37 §3.2 names "explicit expand/collapse
+              controls" as part of what was being promoted, and `pane-overrides`
+              has carried their whole precedence policy (with tests) the entire
+              time. Nothing ever rendered one. The panes could be collapsed by
+              resizing the window and by no other means, which is why they read
+              as missing: they were built, exported, tested, and never mounted.
+
+              They belong to the HOST, not to a screen's detail content. The
+              first attempt put them in `DetailNavbar`, which every pane host
+              already draws — but that bar only exists once a row is selected,
+              so the controls vanished exactly when a user most wants to widen
+              an empty detail pane. Here they are part of the layout itself and
+              are present whenever a pane can be collapsed at all.
+
+              No fill, no border, no divider: this is a control row, not a
+              second bar, and the panes' own surfaces are untouched. Each toggle
+              renders `null` in any size class that cannot show its pane, so at
+              `medium` this is one button and at `compact` (which returns
+              earlier) it does not exist.
+            */}
+            <View className="flex-row items-center gap-element px-inset py-1">
+              <PaneToggle pane="primary" columnCount={columnCount} />
+              {columnCount === 2 ? (
+                <PaneToggle pane="supplementary" columnCount={columnCount} />
+              ) : null}
+              {inspectorPane ? <PaneToggle pane="inspector" columnCount={columnCount} /> : null}
+            </View>
+            {detailPane}
+          </Main>
         </View>
 
         {/*
