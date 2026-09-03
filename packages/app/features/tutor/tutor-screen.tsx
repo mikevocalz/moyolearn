@@ -517,11 +517,21 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     server in the first place, which is doc 07's data-minimisation rule applied
     to the commonest mistake in the flow.
   */
+  /** Monotonic within a session; only has to break a same-millisecond tie. */
+  const stagedSeq = useRef(0);
+
   const stage = useCallback(
     (picked: { uri: string; name: string } | null, kind: 'image' | 'document', mimeType: string) => {
       if (!picked) return;
       addAttachment({
-        id: `${Date.now()}-${picked.name}`,
+        /*
+          A counter, not just the clock. Every camera shot is named
+          `camera.jpg`, so two taken inside the same millisecond — which the
+          in-session sheet makes easy, since it returns straight to the
+          viewfinder — collided on `${Date.now()}-camera.jpg`. React logged
+          "two children with the same key" and the tray dropped one of them.
+        */
+        id: `${Date.now()}-${(stagedSeq.current += 1)}-${picked.name}`,
         kind,
         uri: picked.uri,
         name: picked.name,
