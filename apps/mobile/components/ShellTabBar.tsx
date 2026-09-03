@@ -18,10 +18,10 @@
 // GEOMETRY IS PLATFORM-SPEC, from `navChrome` in packages/theme/tokens.ts:
 // rail 96 (Material 3 `NavigationRailCollapsedTokens.ContainerWidth`; 80 is its
 // narrow variant), raised slab 64 (between Material's 56 standard FAB and 96
-// large FAB — iOS has no raised-tab convention to defend against), selection
-// marker 32 tall (Material's `ActiveIndicatorHeight`, whose paired width of 56
-// we let content drive because our labels are words, not one glyph). Every one
-// is px: they used to be rem-derived Tailwind steps, and the mobile bundler
+// large FAB — iOS has no raised-tab convention to defend against). The selection
+// marker takes Material's SHAPE rule (hug the content, never fill the cell) but
+// its height from the age band, because our smallest band already exceeds
+// Material's 32. Both are px: they used to be rem-derived Tailwind steps, and the mobile bundler
 // resolves rem at 14 (apps/mobile/metro.config.js), so the whole nav shell was
 // shipping at 87.5% of the size the code claimed.
 //
@@ -197,7 +197,7 @@ export function ShellTabBar({
                 number is the number on both platforms. `raisedTarget` still only
                 ever raises it (K–2 → 72).
               */
-              className={`h-nav-raised w-nav-raised ${raisedTarget} items-center justify-center rounded-md border-2 border-border bg-action-primary shadow-card ${
+              className={`h-nav-raised w-nav-raised ${raisedTarget} items-center justify-center rounded-md border-2 border-on-surface-footer bg-action-primary shadow-card ${
                 focused ? '' : 'active:opacity-80'
               }`}
             >
@@ -244,7 +244,7 @@ export function ShellTabBar({
       family per door), which is what M3 means by keeping the bars on one surface
       and spending colour only on the indicator.
     */
-    const focusedSlab = 'border-border bg-highlighter shadow-card';
+    const focusedSlab = 'border-on-surface-footer bg-highlighter shadow-card';
     const focusedText = 'text-on-highlighter';
 
     return (
@@ -278,12 +278,20 @@ export function ShellTabBar({
           sidebar after pulling six shipped products), and we keep Material's
           shape discipline: the marker hugs its content instead of spanning the
           slot. Width is content-driven rather than Material's fixed 56 because
-          our labels are words, not a single glyph. `min-h` still comes from the
-          age band, so the TOUCH target stays the full cell — only the painted
-          marker shrank.
+          our labels are words, not a single glyph.
+
+          The height stays the AGE BAND's target and nothing else. Material's
+          `ActiveIndicatorHeight` is 32, and a first pass put that on here beside
+          the band class — two `min-height` declarations on one element, where
+          the later class simply wins. It measured 54.7dp on a K–2 device that is
+          required to be 72: a rule meant to document Material's floor silently
+          overrode a child's touch target. The two never needed to coexist —
+          our SMALLEST band (adult, 44) is already above Material's 32, so the
+          band is always the binding constraint and the indicator height has
+          nothing left to say.
         */}
         <View
-          className={`${minTarget} min-h-nav-indicator self-center items-center justify-center gap-0.5 rounded-md border-2 px-inset-tight py-1.5 ${
+          className={`${minTarget} self-center items-center justify-center gap-0.5 rounded-md border-2 px-inset-tight py-1.5 ${
             focused ? focusedSlab : 'border-transparent hover:bg-surface-sunken'
           }`}
         >
@@ -297,7 +305,7 @@ export function ShellTabBar({
           <item.Icon size={24} className={focused ? focusedText : 'text-on-surface-footer'} />
           <Text
             numberOfLines={1}
-            className={`text-xs ${focused ? `font-bold ${focusedText}` : 'font-semibold text-on-surface-footer'}`}
+            className={`text-label ${focused ? `font-bold ${focusedText}` : 'font-semibold text-on-surface-footer'}`}
           >
             {item.label}
           </Text>
@@ -341,7 +349,7 @@ export function ShellTabBar({
         role="tablist"
         aria-label="Main navigation"
         style={{ paddingTop: insets.top, paddingBottom: insets.bottom, paddingRight: insets.right }}
-        className="w-nav-rail flex-col items-stretch justify-center gap-1 border-l-2 border-border bg-surface-footer px-1 py-2"
+        className="w-nav-rail flex-col items-stretch justify-center gap-1 border-l-2 border-on-surface-footer bg-surface-footer px-1 py-2"
       >
         {rendered}
       </View>
@@ -351,7 +359,7 @@ export function ShellTabBar({
   return (
     <View
       style={{ paddingBottom: insets.bottom }}
-      className="flex-row items-end gap-1 border-t-2 border-border bg-surface-footer px-2 pt-1"
+      className="flex-row items-end gap-1 border-t-2 border-on-surface-footer bg-surface-footer px-2 pt-1"
     >
       {rendered}
     </View>

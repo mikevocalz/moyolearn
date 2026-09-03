@@ -197,14 +197,19 @@ export const semantic = {
   'text-muted': { light: palette.ink[600], dark: palette.ink[400] },
   'text-inverse': { light: palette.ink[50], dark: palette.ink[950] },
   /*
-    RETRO: flat electric yellow, black ink on top. The dark cut steps DOWN the
-    same ramp (400 -> 600) rather than moving to a new colour: a full-bleed
-    `bg-primary` card is the loudest object on a learner screen and at the light
-    cut's value it out-glows everything on a dark ground. Same hue, less light.
+    RETRO: flat electric yellow, black ink on top.
+
+    The dark cut INVERTS the pair rather than dimming the fill. A mid-value
+    saturated gold on a dark ground is a complementary clash — it vibrates, and
+    at card size it is most of the screen. Material's dark themes answer this
+    with the container pattern: the fill drops to a deep tone of the hue and the
+    type becomes the light one. So `bg-primary` at night is a deep gold panel
+    with cream on it — same ramp, same identity, a fraction of the chroma-area.
+    Dimming the fill was tried first and still vibrated; the tone had to invert.
   */
-  primary: { light: palette.burgundy[400], dark: palette.burgundy[600] },
-  'primary-pressed': { light: palette.burgundy[500], dark: palette.burgundy[700] },
-  'on-primary': { light: palette.ink[950], dark: palette.ink[950] },
+  primary: { light: palette.burgundy[400], dark: palette.burgundy[800] },
+  'primary-pressed': { light: palette.burgundy[500], dark: palette.burgundy[900] },
+  'on-primary': { light: palette.ink[950], dark: palette.burgundy[100] },
   accent: { light: palette.ember[500], dark: palette.ember[400] },
   // Not palette.ember[600] (#DB2777): black ink on it is 4.25:1, under AA, and
   // this is a hover/press BACKGROUND that carries the button label. Nudged just
@@ -319,64 +324,73 @@ export const semantic = {
 
   // ---- chrome tints: the brand pastels, per scheme -----------------------------
   /*
-    The four Moyo pastels are LIGHT-SCHEME values. A shell that paints chrome
-    straight from `palette['moyo-*']` therefore paints a light bar in dark mode —
-    which is exactly how the app shipped a lavender header with dark-mode body
-    text on it, illegible on a night-mode phone. The pastel is not the token; the
-    PAIR is. Each hue gets a scheme-aware surface and the ink that rides it:
+    Chrome is a PASTEL IN BOTH SCHEMES, and the logo is the reason.
 
-      light  pastel ground, plum ink        (the printed page)
-      dark   deep ground of the SAME hue, the pastel itself as the ink
+    The wordmark's eleven fills are fixed brand property — moyo-purple for the M
+    and the LEARN rule, then teal, coral and mango. Those inks are drawn to sit
+    on a light ground: measured against any dark bar the purple M falls under
+    1.5:1 and simply disappears. So the bar cannot go dark without either losing
+    the mark or recolouring it, and recolouring the mark is not on the table.
+    If the mark does not read on a bar, the BAR is wrong.
 
-    The inversion is what keeps a door recognisable at night — a guardian's guava
-    header is still warm, a learner's lavender still cool — where a neutral dark
-    bar would make all seven doors identical. Dark grounds sit 1.4–1.9:1 above
-    `surface` so chrome reads as chrome; the 2px border does the rest, which is
-    what WCAG 1.4.11 actually asks for. Foregrounds clear 7:1 in both schemes.
+    That is also why the scheme difference here is one step, not an inversion:
+    light takes the 100, dark the 200, so the bar settles slightly at night while
+    the mark keeps the same relationship to it (M at 9.7:1 light, 7.6:1 dark).
+    The ink is `plum[700]` in both — the mark's own purple drawing the title, the
+    tab labels and the bar's own edge, so the chrome and the logo are literally
+    the same colour rather than two purples that nearly agree.
+
+    The DOOR is the hue of that one pastel. Nothing else in the chrome carries
+    it, which is what keeps a saturated colour off the majority of the screen.
 
     `chromeTint` below is the ONE map from a pastel primitive to its pair — role
     scopes go through it, so a door cannot pick a hue and miss its dark half.
   */
-  'chrome-lavender': { light: palette.plum[100], dark: palette.plum[700] },
-  'on-chrome-lavender': { light: palette.plum[700], dark: palette.plum[100] },
-  'chrome-guava': { light: palette.flame[100], dark: palette.flame[800] },
-  'on-chrome-guava': { light: palette.plum[700], dark: palette.flame[100] },
-  'chrome-mint': { light: palette.lagoon[100], dark: palette.lagoon[800] },
-  'on-chrome-mint': { light: palette.plum[700], dark: palette.lagoon[100] },
-  'chrome-mango': { light: palette.sun[100], dark: palette.sun[800] },
-  'on-chrome-mango': { light: palette.plum[700], dark: palette.sun[100] },
+  'chrome-lavender': { light: palette.plum[100], dark: palette.plum[200] },
+  'on-chrome-lavender': { light: palette.plum[700], dark: palette.plum[700] },
+  'chrome-guava': { light: palette.flame[100], dark: palette.flame[200] },
+  'on-chrome-guava': { light: palette.plum[700], dark: palette.plum[700] },
+  'chrome-mint': { light: palette.lagoon[100], dark: palette.lagoon[200] },
+  'on-chrome-mint': { light: palette.plum[700], dark: palette.plum[700] },
+  'chrome-mango': { light: palette.sun[100], dark: palette.sun[200] },
+  'on-chrome-mango': { light: palette.plum[700], dark: palette.plum[700] },
 
   // ---- Moyo shell surface slots -----------------------------------------------
   // The semantic slots shells consume. Defaults are the LEARNER door; the
   // `.role-*` scopes re-point each slot AND its carried foreground together, so a
   // door can never inherit the previous door's ink on its own surface.
-  'surface-header': { light: palette.plum[100], dark: palette.plum[700] },
-  'on-surface-header': { light: palette.plum[700], dark: palette.plum[100] },
+  'surface-header': { light: palette.plum[100], dark: palette.plum[200] },
+  'on-surface-header': { light: palette.plum[700], dark: palette.plum[700] },
   // ONE chrome family, top and bottom. M3 puts the navigation bar and the top
   // app bar on the same `surface-container` and reserves colour for the active
   // indicator; the shell used to paint a lavender header against a mint tab bar
   // and rail, which read as three unrelated products in one window. The DOOR is
   // carried by which pastel that one family is, and selection is carried by the
   // marker — never by giving the bottom bar its own hue.
-  'surface-footer': { light: palette.plum[100], dark: palette.plum[700] },
-  'on-surface-footer': { light: palette.plum[700], dark: palette.plum[100] },
-  'surface-muted': { light: palette.flame[100], dark: palette.flame[800] },
-  'on-surface-muted': { light: palette.plum[700], dark: palette.flame[100] },
+  'surface-footer': { light: palette.plum[100], dark: palette.plum[200] },
+  'on-surface-footer': { light: palette.plum[700], dark: palette.plum[700] },
+  'surface-muted': { light: palette.flame[100], dark: palette.flame[200] },
+  'on-surface-muted': { light: palette.plum[700], dark: palette.plum[700] },
   // Content-meaning tints. Same values as the chrome pair of the same hue; text
   // placed on one takes that hue's `on-chrome-*` as its foreground.
-  'surface-ai': { light: palette.plum[100], dark: palette.plum[700] },
-  'surface-family': { light: palette.flame[100], dark: palette.flame[800] },
-  'surface-learning': { light: palette.lagoon[100], dark: palette.lagoon[800] },
-  'surface-achievement': { light: palette.sun[100], dark: palette.sun[800] },
+  'surface-ai': { light: palette.plum[100], dark: palette.plum[200] },
+  'surface-family': { light: palette.flame[100], dark: palette.flame[200] },
+  'surface-learning': { light: palette.lagoon[100], dark: palette.lagoon[200] },
+  'surface-achievement': { light: palette.sun[100], dark: palette.sun[200] },
   /*
-    The signature-action fill (the raised camera slot). Deep plum on the light
-    pastels; on the dark chrome a deep plum would sit ON a deep ground and vanish
-    into it, so the dark cut lifts to the same hue's tint and flips its ink. The
-    foreground is `on-action-primary` — named for the fill it rides, which is what
-    puts it inside check-contrast's derived pairs instead of outside every gate.
+    The signature-action fill (the raised camera slot). `plum[700]` — the SAME
+    value as the mark's M and as the chrome's ink, in both schemes, because it
+    always rides a pastel bar. One purple in the chrome, used three ways: the
+    logo's letter, the bar's type, the primary button's fill. An earlier cut
+    lifted it to plum[300] for dark and produced a pale slab that read as a
+    second selected tab next to the marker.
+
+    The foreground is `on-action-primary` — named for the fill it rides, which is
+    what puts it inside check-contrast's derived pairs instead of outside every
+    gate.
   */
-  'action-primary': { light: palette.plum[700], dark: palette.plum[300] },
-  'on-action-primary': { light: palette.plum[50], dark: palette.plum[900] },
+  'action-primary': { light: palette.plum[700], dark: palette.plum[700] },
+  'on-action-primary': { light: palette.plum[50], dark: palette.plum[50] },
   // The coral hairline strip. Identity, not a scheme value, so it holds — but its
   // ink is INK, never white: white on coral is 3.47:1 and has never passed AA.
   'surface-accent': { light: palette.flame[400], dark: palette.flame[400] },
@@ -769,18 +783,20 @@ export const targets = {
  * than floating over content. The age band raises it further and never lowers
  * it (K–2 → 72).
  *
- * `indicator` is the height of the selected-item marker, matching Material's
- * `ActiveIndicatorHeight = 32.dp` (`NavigationBarVerticalItemTokens` /
- * `NavigationRailVerticalItemTokens`, whose paired `ActiveIndicatorWidth` is
- * 56). We keep Material's height and let the width hug the item's content
- * instead of pinning it to 56, because our labels are words rather than
- * Material's single glyph — but it must NOT stretch to fill the tab, which is
- * what made selection read as a button instead of a marker.
+ * There is deliberately NO `indicator` token. Material sizes its active
+ * indicator 56×32 (`NavigationBarVerticalItemTokens.ActiveIndicator*`), and we
+ * take its SHAPE discipline — the marker hugs its content instead of filling
+ * the tab cell, which is what made selection read as a button — but not its
+ * height: our smallest age-band target is 44, already above Material's 32, so
+ * the band is always the binding constraint. Shipping a 32 token anyway put a
+ * second `min-height` on the same element, and the later class won: the K–2
+ * band measured 54.7dp on device where it is required to be 72. A token whose
+ * only possible effect is to undercut a child's touch target does not belong
+ * in the scale.
  */
 export const navChrome = {
   rail: '96px',
   raised: '64px',
-  indicator: '32px',
 } as const;
 
 // ---- reading comfort (doc 08 §3.3) ------------------------------------------

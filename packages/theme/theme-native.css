@@ -301,7 +301,6 @@
   --spacing-target-young: 72px;
   --spacing-nav-rail: 96px;
   --spacing-nav-raised: 64px;
-  --spacing-nav-indicator: 32px;
 }
 
 /* Semantic colors. Uniwind resolves themes from these @variant blocks and
@@ -406,9 +405,9 @@
       --color-text: #F6F3E8;
       --color-text-muted: #94917F;
       --color-text-inverse: #0D0C0B;
-      --color-primary: #D1A800;
-      --color-primary-pressed: #A98700;
-      --color-on-primary: #0D0C0B;
+      --color-primary: #806400;
+      --color-primary-pressed: #574400;
+      --color-on-primary: #FFF7C7;
       --color-accent: #FF69B4;
       --color-accent-pressed: #F7418F;
       --color-on-accent: #0D0C0B;
@@ -442,26 +441,26 @@
       --color-role-school-underlay: rgba(191, 245, 200, 0.24);
       --color-role-district: #83EFF5;
       --color-role-district-underlay: rgba(131, 239, 245, 0.24);
-      --color-chrome-lavender: #43216B;
-      --color-on-chrome-lavender: #E9DDF5;
-      --color-chrome-guava: #661D15;
-      --color-on-chrome-guava: #FADBD5;
-      --color-chrome-mint: #0A5150;
-      --color-on-chrome-mint: #CFEDEA;
-      --color-chrome-mango: #654005;
-      --color-on-chrome-mango: #FFE8A8;
-      --color-surface-header: #43216B;
-      --color-on-surface-header: #E9DDF5;
-      --color-surface-footer: #43216B;
-      --color-on-surface-footer: #E9DDF5;
-      --color-surface-muted: #661D15;
-      --color-on-surface-muted: #FADBD5;
-      --color-surface-ai: #43216B;
-      --color-surface-family: #661D15;
-      --color-surface-learning: #0A5150;
-      --color-surface-achievement: #654005;
-      --color-action-primary: #B99BDE;
-      --color-on-action-primary: #221034;
+      --color-chrome-lavender: #D5C1EC;
+      --color-on-chrome-lavender: #43216B;
+      --color-chrome-guava: #F7BDB2;
+      --color-on-chrome-guava: #43216B;
+      --color-chrome-mint: #A5DEDA;
+      --color-on-chrome-mint: #43216B;
+      --color-chrome-mango: #FFD777;
+      --color-on-chrome-mango: #43216B;
+      --color-surface-header: #D5C1EC;
+      --color-on-surface-header: #43216B;
+      --color-surface-footer: #D5C1EC;
+      --color-on-surface-footer: #43216B;
+      --color-surface-muted: #F7BDB2;
+      --color-on-surface-muted: #43216B;
+      --color-surface-ai: #D5C1EC;
+      --color-surface-family: #F7BDB2;
+      --color-surface-learning: #A5DEDA;
+      --color-surface-achievement: #FFD777;
+      --color-action-primary: #43216B;
+      --color-on-action-primary: #F6F1FB;
       --color-surface-accent: #F0543F;
       --color-on-surface-accent: #0D0C0B;
       --color-tenant-primary: #43216B;

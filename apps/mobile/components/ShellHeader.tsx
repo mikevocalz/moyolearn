@@ -53,7 +53,7 @@ export function ShellHeader({ titles, fallback }: ShellHeaderProps) {
 
   return (
     <SafeArea edges={['top']} className="bg-surface-header">
-      <Header className="dial-cool flex-row items-center gap-stack border-b border-border bg-surface-header px-4 py-2">
+      <Header className="flex-row items-center gap-stack border-b-2 border-on-surface-header bg-surface-header px-4 py-2">
         {/*
           The brand sits at the left edge, the same `MoyoLearnLogo` the web site
           header uses — one logo component across both platforms, so the mark can

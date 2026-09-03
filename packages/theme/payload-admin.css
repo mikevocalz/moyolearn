@@ -126,16 +126,16 @@ html[data-theme='dark'], [data-theme='dark'] {
   --color-border-strong: #F6F3E8;
   --color-border-disabled: rgba(246, 243, 232, 0.10);
   /* brand — the single accent */
-  --color-bg-brand: #D1A800;
-  --color-bg-brand-hover: #A98700;
-  --color-bg-brand-pressed: #A98700;
-  --color-bg-brand-secondary: #A98700;
+  --color-bg-brand: #806400;
+  --color-bg-brand-hover: #574400;
+  --color-bg-brand-pressed: #574400;
+  --color-bg-brand-secondary: #574400;
   --color-bg-brand-tertiary: #14091F;
   --color-bg-brand-tertiary-hover: #14091F;
-  --color-text-onbrand: #0D0C0B;
-  --color-text-onbrand-secondary: #0D0C0B;
-  --color-icon-onbrand: #0D0C0B;
-  --color-icon-onbrand-secondary: #0D0C0B;
+  --color-text-onbrand: #FFF7C7;
+  --color-text-onbrand-secondary: #FFF7C7;
+  --color-icon-onbrand: #FFF7C7;
+  --color-icon-onbrand-secondary: #FFF7C7;
   --color-border-brand-strong: #F6F3E8;
   --color-text-brand: #5C8AFF;
   --color-text-brand-secondary: #5C8AFF;
