@@ -12,6 +12,7 @@ import "../src/executorch";
 
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
+import * as SplashScreen from "expo-splash-screen";
 
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { KeyboardProvider } from "react-native-keyboard-controller";
@@ -21,7 +22,18 @@ import { AppQueryProvider, SafeAreaProvider, SessionProvider , AccountSheet, Att
 import { BookingSheet } from "../components/BookingSheet";
 import { ShellHeader } from "../components/ShellHeader";
 import { Toaster } from "@acme/ui";
+import { MoyoSplash } from "../components/splash/MoyoSplash";
 import "../global.css";
+
+// Module scope, before any component evaluates: autohide fires on the first
+// rendered frame, and a hook is already too late to stop it — which is why the
+// app booted with no splash at all, native or otherwise. `MoyoSplash` hides it
+// by hand once it has painted the same mark on the same ground.
+SplashScreen.preventAutoHideAsync().catch(() => {
+  // Rejects only if the splash is already gone, which is not worth a crash.
+});
+// The native splash cross-fades into the animated one instead of cutting.
+SplashScreen.setOptions({ fade: true, duration: 220 });
 
 // The root-level routes that are real destinations rather than front door, and
 // the title each one's bar carries. Every other root child is either a shell
@@ -127,6 +139,10 @@ export default function RootLayout() {
             <SwitchProfileSheet />
             {/* Last, so a toast paints above the sheets it reports on. */}
             <Toaster />
+            {/* After the toaster: the splash covers everything, including a
+                toast raised by something restoring during boot. It unmounts
+                itself and costs nothing for the rest of the session. */}
+            <MoyoSplash />
           </AppQueryProvider>
         </BottomSheetModalProvider>
       </SafeAreaProvider>
