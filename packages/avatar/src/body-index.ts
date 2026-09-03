@@ -26,6 +26,22 @@ export {
   type NeckAlign,
 } from './neck-align.ts';
 export { parseSkirtConform, validateSkirtConformRig } from './skirt-conform.ts';
+
+// The Humano presence driver — the per-frame writer for the shipped marketing
+// body. Three-dependent (it poses bones), so it lives on this side of the line.
+export {
+  GAZE_RANGE_DEG,
+  HUMANO_BONES,
+  LIP_ZERO,
+  createHumanoPresence,
+  gazeMorphs,
+  lipFromOpenness,
+  sanitizeNodeName,
+  type HumanoBoneKey,
+  type HumanoInput,
+  type HumanoPresence,
+  type LipShape,
+} from './presence/humano.ts';
 export type { SkirtConformData, SkirtConformMeta } from './conform/types.ts';
 export {
   createSkirtConformDriver,

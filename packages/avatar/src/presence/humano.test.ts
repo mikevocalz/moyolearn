@@ -1,0 +1,165 @@
+/**
+ * The presence driver's decisions, on a synthetic rig.
+ *
+ * The reason this is testable at all is that the module takes an openness
+ * scalar and a scene, and produces bone rotations and morph weights — no
+ * renderer, no audio clock, no frame source. So the checks worth having are the
+ * ones that broke the web scene while it was being written: a mouth that is
+ * only a jaw hinge, morphs that never decay, a gaze that ignores the camera,
+ * and a bone lookup that misses every dotted Rigify name.
+ *
+ * SOT: ./humano.ts
+ * SOT-KEYWORDS: humano presence test morph bone gaze lip idle reduced-motion
+ */
+import assert from 'node:assert/strict';
+import { describe, it } from 'node:test';
+import * as THREE from 'three';
+import {
+  HUMANO_BONES,
+  createHumanoPresence,
+  gazeMorphs,
+  lipFromOpenness,
+  sanitizeNodeName,
+} from './humano.ts';
+
+const MORPHS = [
+  'jawOpen',
+  'mouthClose',
+  'mouthSmileLeft',
+  'mouthSmileRight',
+  'mouthFunnel',
+  'mouthLowerDownLeft',
+  'mouthLowerDownRight',
+  'mouthUpperUpLeft',
+  'mouthUpperUpRight',
+  'eyeBlinkLeft',
+  'eyeBlinkRight',
+  'eyeWideLeft',
+  'eyeWideRight',
+  'eyeLookUpLeft',
+  'eyeLookUpRight',
+  'eyeLookDownLeft',
+  'eyeLookDownRight',
+  'eyeLookInLeft',
+  'eyeLookOutLeft',
+  'eyeLookInRight',
+  'eyeLookOutRight',
+  'browInnerUp',
+];
+
+/** A rig with the Rigify names as the LOADER leaves them: dots stripped. */
+function makeScene(): { scene: THREE.Group; mesh: THREE.SkinnedMesh } {
+  const scene = new THREE.Group();
+  const bones: THREE.Bone[] = [];
+  for (const name of Object.values(HUMANO_BONES)) {
+    const bone = new THREE.Bone();
+    bone.name = sanitizeNodeName(name);
+    bone.position.set(0, 1.5, 0);
+    scene.add(bone);
+    bones.push(bone);
+  }
+
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute(
+    'position',
+    new THREE.Float32BufferAttribute([0, 0, 0, 1, 0, 0, 0, 1, 0], 3)
+  );
+  const mesh = new THREE.SkinnedMesh(geometry, new THREE.MeshBasicMaterial());
+  mesh.bind(new THREE.Skeleton(bones));
+  mesh.morphTargetDictionary = Object.fromEntries(MORPHS.map((n, i) => [n, i]));
+  mesh.morphTargetInfluences = new Array(MORPHS.length).fill(0);
+  scene.add(mesh);
+  scene.updateMatrixWorld(true);
+  return { scene, mesh };
+}
+
+const weight = (mesh: THREE.SkinnedMesh, name: string): number =>
+  mesh.morphTargetInfluences![mesh.morphTargetDictionary![name]!]!;
+
+const QUIET = { speaking: false, mouth: 0, reducedMotion: false } as const;
+
+describe('lipFromOpenness', () => {
+  it('opens the lips, not just the jaw — a hinge alone reads as a mask', () => {
+    const open = lipFromOpenness(1);
+    assert.ok(open.jawOpen > 0.5);
+    assert.ok(open.mouthLowerDownLeft > 0);
+    assert.ok(open.mouthUpperUpLeft > 0);
+  });
+
+  it('is silent at zero and clamps past one', () => {
+    assert.equal(lipFromOpenness(0).jawOpen, 0);
+    assert.deepEqual(lipFromOpenness(4), lipFromOpenness(1));
+    assert.deepEqual(lipFromOpenness(-1), lipFromOpenness(0));
+  });
+});
+
+describe('gazeMorphs', () => {
+  it('splits a direction into the one-sided ARKit pairs', () => {
+    const right = gazeMorphs(1, 0);
+    assert.equal(right.eyeLookInLeft, 0);
+    assert.ok(right.eyeLookOutLeft! > 0);
+    assert.equal(right.eyeLookUpLeft, 0);
+    assert.equal(right.eyeLookDownLeft, 0);
+  });
+
+  it('saturates rather than overshooting a full weight', () => {
+    assert.equal(gazeMorphs(Math.PI, 0).eyeLookOutLeft, 1);
+    assert.equal(gazeMorphs(0, -Math.PI).eyeLookDownLeft, 1);
+  });
+});
+
+describe('createHumanoPresence', () => {
+  it('finds the dotted Rigify bones under the loader-sanitised names', () => {
+    const { scene, mesh } = makeScene();
+    const presence = createHumanoPresence(scene);
+    const jaw = scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.jaw))!;
+    presence.step(1 / 60, { ...QUIET, speaking: true, mouth: 1 });
+    // 30 frames is past the mouth's rise constant, so the chin has to be down.
+    for (let i = 0; i < 30; i++) presence.step(1 / 60, { ...QUIET, speaking: true, mouth: 1 });
+    assert.ok(jaw.rotation.x > 0.05, `jaw did not drop: ${jaw.rotation.x}`);
+    assert.ok(weight(mesh, 'jawOpen') > 0.3);
+  });
+
+  it('decays the mouth back to silence when the voice stops', () => {
+    const { scene, mesh } = makeScene();
+    const presence = createHumanoPresence(scene);
+    for (let i = 0; i < 30; i++) presence.step(1 / 60, { ...QUIET, speaking: true, mouth: 1 });
+    for (let i = 0; i < 120; i++) presence.step(1 / 60, QUIET);
+    assert.ok(weight(mesh, 'jawOpen') < 0.02, `mouth hung open: ${weight(mesh, 'jawOpen')}`);
+  });
+
+  it('reduced motion writes no mouth and no arm lift', () => {
+    const { scene, mesh } = makeScene();
+    const presence = createHumanoPresence(scene);
+    const arm = scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.foreArmL))!;
+    for (let i = 0; i < 60; i++) {
+      presence.step(1 / 60, { speaking: true, mouth: 1, reducedMotion: true });
+    }
+    assert.equal(weight(mesh, 'jawOpen'), 0);
+    assert.equal(arm.rotation.x, 0);
+  });
+
+  it('aims the eyes at the camera rather than past it', () => {
+    const { scene, mesh } = makeScene();
+    const presence = createHumanoPresence(scene);
+    presence.step(1 / 60, {
+      ...QUIET,
+      cameraPosition: new THREE.Vector3(5, 1.5, 0.001),
+    });
+    // She faces +Z, so a camera at +X is off her LEFT shoulder: the left eye
+    // rotates temporally (OUT) and the right eye nasally (IN).
+    assert.ok(weight(mesh, 'eyeLookOutLeft') > 0.5);
+    assert.ok(weight(mesh, 'eyeLookInRight') > 0.5);
+    assert.equal(weight(mesh, 'eyeLookInLeft'), 0);
+  });
+
+  it('rest() puts every bone back and clears every morph', () => {
+    const { scene, mesh } = makeScene();
+    const presence = createHumanoPresence(scene);
+    const head = scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.head))!;
+    for (let i = 0; i < 60; i++) presence.step(1 / 60, { ...QUIET, speaking: true, mouth: 0.8 });
+    presence.rest();
+    assert.equal(head.rotation.x, 0);
+    assert.ok(mesh.morphTargetInfluences!.every((v) => v === 0));
+  });
+});

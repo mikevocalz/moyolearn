@@ -16,7 +16,8 @@
     "./gnm": {
       "types": "./.types/gnm/model.d.ts",
       "default": "./src/gnm/model.ts"
-    }
+    },
+    "./assets/*": "./assets/*"
   },
   "scripts": {
     "lint": "eslint",
@@ -28,7 +29,8 @@
     "manifest:build": "node tools/build_asset_manifest.mjs",
     "probe:rebake": "node tools/shader-probe/run.mjs --only rebake",
     "verify:doc": "node tools/verify_doc_claims.mjs ../../docs/pack/22-embodied-tutor-avatar-spec.md --strict",
-    "verify:deps": "node tools/verify_deps.mjs"
+    "verify:deps": "node tools/verify_deps.mjs",
+    "verify:native-gltf": "node tools/verify_native_gltf.mjs assets/natalie-phone/natalie.gltf"
   },
   "dependencies": {
     "three": "catalog:",

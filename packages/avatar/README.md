@@ -53,6 +53,8 @@ The shared, platform-agnostic core. Nothing here imports three.js, a renderer, o
 | `src/testing/offscreen-target.ts` | **New.** The `GoldenTarget` that actually renders: render target, pinned pixel ratio, bottom-up readback flipped. |
 | `src/testing/gnm-container.ts` | **New.** Synthesises a valid `GNMW` container in memory, so the head is testable without the shipped binary. |
 | `src/testing/close-to.ts` | The one assertion `node:assert` is missing. |
+| `src/presence/humano.ts` | **New.** The per-frame writer for the shipped marketing body — idle channels, gaze-at-camera, breath, neck/head drift, jaw, co-speech beats, and a mouth from one openness scalar. Renderer-free and frame-source-free, so the web scene (`useFrame`) and the native stage (`setAnimationLoop`) drive the same maths. |
+| `tools/verify_native_gltf.mjs` | **New.** The device-loadability gate for `assets/natalie-phone/`: external images (Hermes cannot decode embedded ones), sibling `.bin`, no Draco, one skin, the named morphs, and every Rigify bone the writer poses. |
 
 241 tests, converted from vitest to `node --test` + `node:assert/strict` — the runner `@acme/ui` already uses. Thresholds are unchanged from the reference suite.
 

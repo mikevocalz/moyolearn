@@ -50,3 +50,31 @@ change the 2D path's behaviour when the flag is off.
 (appended as the work runs)
 
 - 01:59 — gate written. Cutoff 06:00 EDT on assumed 09:00 doors.
+
+## Step 3 — the real body on the native stage (built, NOT yet run on a device)
+
+What landed after the cube passed:
+
+| Piece | Where |
+|---|---|
+| The phone body | `packages/avatar/assets/natalie-phone/` — `humano-marketing-source.glb` at 1024px, deduped, pruned, copied out to `.gltf` + `.bin` + 8 external images (13.9 MB). Embedded images cannot decode in Hermes, hence the split. |
+| The asset gate | `pnpm --filter @acme/avatar verify:native-gltf` — external images, sibling `.bin`, no Draco, 1 skin, 52 named morphs, and all 14 Rigify bones the presence writer poses. **PASSES.** |
+| The per-frame writer | `packages/avatar/src/presence/humano.ts` (+ 9 tests). Idle, gaze-at-camera, breath, neck/head drift, jaw, co-speech beats, mouth from one openness scalar. No renderer, no audio clock, no DOM — which is why it is tested in Node. |
+| The stage | `packages/app/features/tutor/tutor-avatar-3d.native.tsx`. Same three rules the cube proved: awaited `init()`, `present()` every frame, dispose on genuine unmount only. Adds the loop's own `active` gate — a freeze does not stop a render loop. |
+| The mount | `packages/app/features/tutor/tutor-avatar.tsx`. Flag `EXPO_PUBLIC_NATIVE_3D=1`, default OFF. The flag only chooses the TIER (`phone` vs `presence-2d`); `createTutorStage` still owns 2D-first, swap-on-first-real-frame, never-mid-utterance, and settle-to-2D-forever on any failure. |
+| The evidence route | `moyo://natalie-3d` — the stage alone, deep-linked, with a Speak toggle driving a synthetic mouth. Deliberately not the session, so a black frame is attributable. |
+
+**Still unverified, and it is the whole of the remaining gate:** no frame has been
+rendered on hardware. Typecheck, lint and 249/250 package tests are green (the
+one failure is the pre-existing lash-bake sha, untouched by this work), but that
+proves the code composes, not that Dawn compiles these materials. The go/no-go
+above is unchanged: the flag ships OFF, and it flips only after the ladder —
+adapter → triangle → cube → `moyo://natalie-3d` → a tutor session — passes three
+times on the phone.
+
+**Two things to expect on first light**, recorded now so they are not diagnosed
+from scratch: the `KHR_materials_anisotropy` / `KHR_materials_specular` /
+`KHR_materials_ior` extensions on this body are unproven under Dawn (the ADR's
+"strip that extension only" rule applies), and the rig here is the web scene's
+simple light rig, NOT `createStage()` — moving to the RectAreaLight + GTAO +
+bloom stage is a look change with its own golden capture, not a first-light task.
