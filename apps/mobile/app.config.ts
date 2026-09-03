@@ -62,6 +62,21 @@ const config: ExpoConfig = {
       nothing to run before JS starts, which is the whole reason it is here.
     */
     'react-native-nitro-fetch',
+    /*
+      The native WebGPU surface (ADR-111). Registering the plugin is what makes
+      `expo prebuild` link Dawn and the WebGPU view; the JS side imports fine
+      without it and then fails at first render, which reads as a broken avatar
+      rather than a missing native build.
+
+      Presence here does NOT turn 3D on. The runtime gate is the avatar tier
+      store, which ships OFF: `packages/avatar/src/tutor-stage.ts` keeps the 2D
+      mark up from frame one and promotes only on a real first rendered frame.
+      This plugin only makes promotion possible.
+    */
+    'react-native-webgpu',
+    // Must follow the line above: it is the same requirement, and Dawn's use of
+    // AHardwareBuffer will not compile below API 26. See the plugin's header.
+    './plugins/with-webgpu-min-sdk',
     [
       'expo-splash-screen',
       {
