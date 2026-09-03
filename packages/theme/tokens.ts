@@ -522,6 +522,27 @@ export const fontFamilies = {
   mono: "'Chivo Mono', ui-monospace, SFMono-Regular, Menlo, monospace",
 } as const;
 
+/**
+ * The same three faces, named the way NATIVE resolves them.
+ *
+ * expo-font registers each embedded ttf under its FILE basename, and React
+ * Native has no font-family fallback list — the first name is the only one
+ * tried, and an unmatched name silently drops to the system face. So the CSS
+ * names above never resolved on device: the app shipped in Roboto/SF while the
+ * site rendered the brand faces, and nothing failed loudly enough to notice.
+ *
+ * The files' own internal family names are no help either — SpaceGrotesk-
+ * Variable.ttf calls itself "Space Grotesk Light" and ChivoMono-Variable.ttf
+ * "Chivo Mono Medium" — which is why these are the basenames, not the families.
+ * Keep this map in step with the `expo-font` plugin list in app.config.ts.
+ * SOT: apps/mobile/app.config.ts · packages/assets/fonts
+ */
+export const nativeFontFamilies = {
+  display: "'ArchivoBlack-Regular'",
+  sans: "'SpaceGrotesk-Variable'",
+  mono: "'ChivoMono-Variable'",
+} as const satisfies Record<keyof typeof fontFamilies, string>;
+
 /** Display scale for hero/masthead moments; body text uses the Tailwind defaults. */
 export const typeScale = {
   'display-2xl': { size: '4.5rem', lineHeight: '1.05', tracking: '-0.02em' },

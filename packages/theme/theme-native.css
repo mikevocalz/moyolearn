@@ -141,9 +141,9 @@
   --color-moyo-guava: #FADBD5;
   --color-moyo-mint: #CFEDEA;
   --color-moyo-mango-pastel: #FFE8A8;
-  --font-display: 'Archivo Black', 'Arial Black', sans-serif;
-  --font-sans: 'Space Grotesk', system-ui, -apple-system, sans-serif;
-  --font-mono: 'Chivo Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: 'ArchivoBlack-Regular';
+  --font-sans: 'SpaceGrotesk-Variable';
+  --font-mono: 'ChivoMono-Variable';
   --text-display-2xl: 4.5rem;
   --text-display-2xl--line-height: 1.05;
   --text-display-2xl--letter-spacing: -0.02em;

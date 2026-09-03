@@ -19,7 +19,7 @@
 // free, whereas cross-file @import resolution inside a package is not.
 import { writeFileSync } from 'node:fs';
 import {
-  palette, semantic, fontFamilies, typeScale, contentWidths,
+  palette, semantic, fontFamilies, nativeFontFamilies, typeScale, contentWidths,
   radius, shadows, zIndex, motion, breakpoints, dial,
   uiRamp, spacingTiers, targets, navChrome, readingComfort, accentRoles,
   siteColors, siteFontFamilies, siteTypeScale,
@@ -38,7 +38,7 @@ const HEADER = '/* GENERATED from tokens.ts — do not edit by hand. `node build
 const kebab = (name) => name.replace(/([a-z0-9])([A-Z])/g, '$1-$2').toLowerCase();
 
 // Everything that is theme-independent: identical in both outputs.
-const sharedThemeTokens = () => {
+const sharedThemeTokens = (fonts = fontFamilies) => {
   const out = [];
 
   // primitive palettes
@@ -54,7 +54,7 @@ const sharedThemeTokens = () => {
 
   // typography — iterated, so adding a family to tokens.ts emits it here too
   // instead of silently doing nothing until someone notices the missing variable.
-  for (const [name, stack] of Object.entries(fontFamilies)) {
+  for (const [name, stack] of Object.entries(fonts)) {
     out.push(`  --font-${name}: ${stack};`);
   }
   for (const [name, t] of Object.entries(typeScale)) {
@@ -529,7 +529,10 @@ writeFileSync(new URL('./theme.css', import.meta.url), web.join('\n'));
 // -------------------------------------------------------------- native -----
 
 const native = [HEADER, '@theme {'];
-native.push(...sharedThemeTokens());
+// Native takes the file-basename font names: expo-font registers by filename
+// and RN has no fallback list, so the web's CSS family names resolve to nothing
+// and the app silently renders in the system face.
+native.push(...sharedThemeTokens(nativeFontFamilies));
 native.push('}');
 native.push('');
 native.push(`/* Semantic colors. Uniwind resolves themes from these @variant blocks and
