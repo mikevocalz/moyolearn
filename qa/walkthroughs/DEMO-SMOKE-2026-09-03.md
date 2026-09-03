@@ -189,4 +189,118 @@ update edu.inference_budget
 
 ## Appendix A — audio pipelining timings (owned by the D1 agent)
 
-_Not yet filled in._
+**What changed:** `packages/app/features/tutor/tutor-audio.ts` used to fetch
+sentence N, await its whole body, decode it, play it, and only start N+1 once
+`onEnded` fired. Every sentence boundary therefore cost a full ElevenLabs round
+trip of silence. The queue now renders two sentences ahead of the one playing.
+
+### Where the numbers come from
+
+The queue emits one `[voice-timing]` line per spoken sentence under `__DEV__`
+(`tutor-audio.ts:markPlayed`). Read them off the Metro terminal — **not**
+`adb logcat`; on the New Architecture `console.log` is forwarded to Metro and
+never reaches the `ReactNativeJS` logcat tag.
+
+| Field | Meaning |
+|---|---|
+| `firstWord` | last `audioQueue.stop()` (which `tutor.store.ts:coach` calls immediately before opening the coach stream, i.e. end of the child's turn) → `source.start(0)` of sentence 1 |
+| `gap` | previous sentence's `onEnded` → this sentence's `source.start(0)` — **the audible silence** |
+| `render` | fetch + decode for this sentence |
+| `lead` | how long the decoded buffer sat ready before it was needed. `lead ≈ 0` means playback waited on the network; `lead ≫ 0` means the pipeline paid off |
+
+Same device, same session, same problem (`What is 2 + 3 * 4 - 1?`), same
+2-sentence coaching turns, back to back within ~12 minutes. The "before" arm is
+the pre-D1 serial queue with the identical ruler compiled in, swapped in over
+Fast Refresh so nothing else differed.
+
+| Device | Surface Duo, Android 14, serial `913949703467`, `com.moyolearn.app`, Expo dev client on Metro |
+|---|---|
+| Network | phone → Mac over `adb reverse` (USB); Mac → Anthropic/ElevenLabs over the personal hotspot |
+| Audio backend | `react-native-audio-api@0.13.3`, Android/Oboe |
+
+### Raw runs
+
+| Arm | Run | s1 `firstWord` | s1 `render` | s1 `lead` | **s2 `gap`** | s2 `render` | s2 `lead` |
+|---|---|---|---|---|---|---|---|
+| before | 1 | 2923 ms | 621 ms | 51 ms | **485 ms** | 479 ms | 6 ms |
+| before | 2 | 3715 ms | 893 ms | 1 ms | **668 ms** | 664 ms | 4 ms |
+| after | 1 | 4236 ms | 1179 ms | 58 ms | **7 ms** | 1127 ms | 1212 ms |
+| after | 2 | 4882 ms | 1350 ms | 71 ms | **12 ms** | 1198 ms | 5119 ms |
+
+### Inter-sentence gap — the thing D1 fixes
+
+| Arm | p50 | max | n |
+|---|---|---|---|
+| before | 577 ms | 668 ms | 2 |
+| after | **10 ms** | **12 ms** | 2 |
+
+**n = 2 per arm, so no p95 is quoted.** Quoting one off two samples would be
+arithmetic, not evidence. Two things capped the sample count on demo eve: the
+opening coaching turn fires only once per session (`tutor-screen.tsx` opens only
+when `messages` is empty), and the tree is shared with other agents whose saves
+reloaded the bundle mid-run.
+
+The mechanism is visible in the raw table without needing more runs: in the
+before arm `gap ≈ render` (485≈479, 668≈664) and `lead ≈ 0` — the silence *is*
+the round trip. In the after arm `gap` collapses to ~10 ms while `lead` runs to
+1.2–5.1 s, i.e. the buffer was decoded and waiting long before it was needed.
+Note the after runs were served by a **slower** ElevenLabs (`render` 1127–1198 ms
+vs 479–664 ms; `POST /api/tutor/voice` 1097/1166 ms vs 403/407 ms in the Next
+log) and still produced a smaller gap — the pipeline absorbed a worse provider,
+which is the property that matters in a room on a hotspot.
+
+**Verdict against the runbook: sentence-to-sentence gaps are inaudible.** 10 ms
+is below the threshold at which a listener hears a seam at all.
+
+### First word — target NOT met, and D1 is not what would fix it
+
+Measured 2923 / 3715 / 4236 / 4882 ms against the runbook's ≤ 1.5 s.
+
+`firstWord` = coach TTFT + sentence 1's render. **D1 cannot improve it**: nothing
+precedes sentence 1, so there is nothing to prefetch it behind, and the
+before/after difference above is provider variance, not a regression. The
+dominant term is the model: `POST /api/tutor/coach 200 in 2.5s` and `3.1s` in
+the same runs. Closing that means touching the prompt or the model routing,
+which §8 freezes for the demo — so **plan the stage patter around ~3–5 s to the
+first spoken word** rather than expecting 1.5 s. Step 4's "short client timeout
+with a graceful line" is the mitigation that is actually in scope.
+
+### Barge-in — no orphan audio
+
+The pre-D1 guard read `isPlaying`, which is true again the moment the *next*
+turn starts, so a sentence whose fetch landed after a barge-in could seize the
+active source and speak over the reply that replaced it. `stop()` now bumps a
+generation counter, aborts every in-flight render through its `AbortController`,
+and drops the decoded-but-unplayed buffers with the queue.
+
+Proven by `packages/app/features/tutor/tutor-audio.test.ts` (`node --test`, no
+device): renders in flight are aborted; a sentence whose render resolves after
+`stop()` never starts; and `stop()` → `enqueue()` → both resolve plays only the
+new turn. Run it with `cd packages/app && pnpm test`.
+
+### Chunked playback on Android — not available in 0.13.3
+
+Checked against the installed package, not the docs:
+
+- `core/AudioDecoder:decodeAudioData` takes `types.ts:DecodeDataInput`
+  (`number | string | ArrayBuffer`) and resolves one complete `AudioBuffer`.
+  There is no partial-body decode, so a sentence is the smallest unit that can
+  be made audible.
+- `core/StreamerNode` is the only incremental source. In 0.13.3 it is marked
+  `@deprecated`, is HLS-only, and needs an FFmpeg-enabled build
+  (`utils/flags:isFfmpegEnabled`). The voice route returns a chunked
+  `audio/mpeg` body, which it cannot consume.
+- `core/AudioBufferQueueSourceNode` (`enqueueBuffer` / `clearBuffers` /
+  `onBufferEnded`) **does** exist and would give gapless playback of
+  already-decoded buffers — but it is mobile-only (absent from `src/web-core/`),
+  and adopting it means re-cutting the per-sentence viseme seam
+  (`activeTrack` / `playbackStartAt`) that drives `tutor-avatar.tsx`. Not a
+  demo-eve change, and at a 10 ms measured gap it would buy nothing audible.
+
+So D1 stops at prefetch + decode. No streaming decode was invented.
+
+### Not verified tonight
+
+No iPhone attached, so nothing here is claimed for iOS. `react-native-audio-api`
+runs on Oboe on Android and AVFoundation on iOS; the queue itself is
+platform-neutral, but the numbers above are Android-only.
