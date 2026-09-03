@@ -38,15 +38,28 @@ export async function proxy(request: NextRequest) {
   );
   if (isPublic) return NextResponse.next();
 
+  /*
+    AN API ROUTE ANSWERS WITH A STATUS, NOT WITH A LOGIN PAGE.
+
+    Redirecting `/api/*` to `/login` is invisible to `fetch`, which follows the
+    307 and hands the caller a 200 full of HTML. The tutor stream then reads
+    zero SSE frames and lands in `retry` — "I couldn't reach Natalie just then"
+    — so a signed-out child is told the tutor is broken and offered a button
+    that cannot ever work. 401 is the difference between "we are down" and
+    "sign in", and only the client can draw that distinction.
+  */
+  const unauthenticated = () =>
+    request.nextUrl.pathname.startsWith('/api/')
+      ? NextResponse.json({ error: 'unauthenticated' }, { status: 401 })
+      : NextResponse.redirect(new URL('/login', request.url));
+
   try {
     const { auth } = await import('@/lib/auth');
     const session = await auth.api.getSession({ headers: request.headers });
-    if (!session) {
-      return NextResponse.redirect(new URL('/login', request.url));
-    }
+    if (!session) return unauthenticated();
   } catch {
-    // Fail closed: if the session check errors, send to login.
-    return NextResponse.redirect(new URL('/login', request.url));
+    // Fail closed: if the session check errors, treat it as no session.
+    return unauthenticated();
   }
 
   return NextResponse.next();

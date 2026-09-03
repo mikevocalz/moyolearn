@@ -99,6 +99,7 @@ export type TutorStageState =
   | { kind: 'paused'; since: number }           // §3.6 fail-closed, safe
   | { kind: 'ended'; summary: SessionSummary }  // §3.7 session end
   | { kind: 'retry' }                           // §3.8 inline retry, not drawn
+  | { kind: 'signed-out' }                      // the session expired; not a fault
   | { kind: 'crisis' };                         // §3.9 terminal, not drawn
 
 export interface TutorStageProps {
@@ -170,6 +171,8 @@ export interface TutorStageProps {
   onBackToPlan?: () => void;
   /** Re-attempt a turn that never reached the tutor. */
   onRetry?: () => void;
+  /** Where a learner whose session expired goes. */
+  onSignIn?: () => void;
   /**
    * The work this session is about — the problem, and the photo the learner
    * took of it. It renders INSIDE the conversation, as the most recent thing
@@ -195,6 +198,7 @@ function statusFor(state: TutorStageState): string {
     case 'paused': return 'Taking a break';
     case 'ended': return 'Session done';
     case 'retry': return 'Retry';
+    case 'signed-out': return 'Signed out';
     case 'crisis': return 'Crisis';
   }
 }
@@ -238,6 +242,8 @@ interface StateBodyProps {
   onPracticeOnOwn?: () => void;
   onBackToPlan?: () => void;
   onRetry?: () => void;
+  /** Where a learner whose session expired goes. */
+  onSignIn?: () => void;
 }
 
 function StateBody({
@@ -251,6 +257,7 @@ function StateBody({
   onPracticeOnOwn,
   onBackToPlan,
   onRetry,
+  onSignIn,
 }: StateBodyProps) {
   /*
     The work as a turn of its own, for the states with no bubble to ride in.
@@ -399,6 +406,28 @@ function StateBody({
           />
         </View>
       );
+    case 'signed-out':
+      /*
+        NOT A FAULT, AND NOT `retry`. This turn failed because the session
+        expired, so "I couldn't reach Natalie" would blame the tutor for
+        something a sign-in fixes — and its button retries a call that will 401
+        again. Same reassurance about the work, a control that leads somewhere.
+      */
+      return (
+        <View className="w-full gap-stack">
+          <Text className="font-sans text-body text-text">
+            You&apos;re signed out. Sign in and we&apos;ll pick up where you left off — your work
+            is saved.
+          </Text>
+          <Button
+            title="Sign in"
+            variant="highlighter"
+            size={buttonSize}
+            onPress={onSignIn}
+            aria-label="Sign in to keep going"
+          />
+        </View>
+      );
     case 'retry':
       return (
         <View className="w-full gap-stack">
@@ -457,6 +486,7 @@ export function TutorStage({
   onPracticeOnOwn,
   onBackToPlan,
   onRetry,
+  onSignIn,
   canvas,
   className,
 }: TutorStageProps) {
@@ -662,6 +692,7 @@ export function TutorStage({
             onPracticeOnOwn={onPracticeOnOwn}
             onBackToPlan={onBackToPlan}
             onRetry={onRetry}
+            onSignIn={onSignIn}
           />
         }
       />

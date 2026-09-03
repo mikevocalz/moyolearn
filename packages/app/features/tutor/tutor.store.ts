@@ -510,6 +510,18 @@ export const useTutorStore = create<TutorState>((set) => ({
           ...(image ? { image } : {}),
         }),
       });
+      /*
+        401 IS "SIGN IN", NOT "TRY AGAIN". The proxy answers an expired session
+        with a status rather than a redirect to the login page (apps/web/
+        proxy.ts), so this is the one failure the client can name — and naming
+        it is the difference between a child pressing a button that 401s again
+        and one that takes them somewhere.
+      */
+      if (response.status === 401) {
+        audioQueue.stop();
+        set({ state: { kind: 'signed-out' } });
+        return;
+      }
       if (!response.ok) throw new Error(`Server returned ${response.status}`);
       armStall(COACH_STALL_TIMEOUT_MS);
 

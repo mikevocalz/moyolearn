@@ -771,6 +771,12 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       }}
       onDraftChange={() => noteKeystroke()}
       onRetry={() => void coach('')}
+      /*
+        `replace`, not `push`: the expired session is not a place to come back
+        to with the back button — signing in lands the learner on their own
+        surface and the store resumes the conversation from the server.
+      */
+      onSignIn={() => router.replace('/login')}
       messages={messages}
       attachments={attachments}
       onRemoveAttachment={removeAttachment}
