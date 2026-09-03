@@ -523,7 +523,10 @@ export function Composer({
             onChangeText={onChangeText}
             placeholder={placeholder}
             editable={!disabled}
-            className="flex-1 resize-none border-0 bg-transparent font-sans text-body text-text placeholder:text-text-muted"
+            /* `text-body-lg`, not `text-body`: this is the field a CHILD types their
+             answer into, and it was the smallest text on a screen built for one.
+             The hot dial carries it to 18. */
+          className="flex-1 resize-none border-0 bg-transparent font-sans text-body-lg text-text placeholder:text-text-muted"
             aria-label="Message composer"
           />
 
@@ -573,11 +576,16 @@ export function Composer({
               onPress={handleSubmit}
               disabled={!canSend}
               aria-label="Send message"
-              className={`${iconTarget} items-center justify-center rounded-control ${
-                canSend ? 'bg-primary' : 'bg-surface-sunken'
+              /* Send is ALWAYS the brand yellow — it is the row's one primary
+                 action and should be findable before there is anything to send.
+                 Unavailable is carried by opacity, not by turning it grey: a
+                 grey square reads as a different control rather than as the
+                 same one waiting. */
+              className={`${iconTarget} items-center justify-center rounded-control bg-primary ${
+                canSend ? '' : 'opacity-40'
               }`}
             >
-              <Send size={20} className={canSend ? 'text-on-primary' : 'text-text-muted'} />
+              <Send size={20} className="text-on-primary" />
             </Pressable>
           </SlideIn>
         </View>
