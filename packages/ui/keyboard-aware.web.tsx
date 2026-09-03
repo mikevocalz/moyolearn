@@ -23,3 +23,16 @@ export function KeyboardAwareScroll({
 }: KeyboardAwareScrollProps) {
   return <ScrollView {...props} />;
 }
+
+export interface KeyboardStickyProps {
+  children?: React.ReactNode;
+}
+
+/**
+ * Nothing to avoid on web — a browser has no software keyboard overlaying the
+ * page — so this renders its children and adds no wrapper element, keeping the
+ * host's flex layout exactly as it was written.
+ */
+export function KeyboardSticky({ children }: KeyboardStickyProps) {
+  return <>{children}</>;
+}

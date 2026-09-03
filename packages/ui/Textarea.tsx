@@ -39,6 +39,12 @@ export function Textarea({
       aria-label={label}
       aria-invalid={!!error}
       editable={!disabled}
+      /* A form field is a FIXED box, unlike the composer: `numberOfLines` pins
+         Compose's min and max lines together on Android, which is the wrong
+         behaviour for an input that grows and the right one for a labelled
+         field whose height a form layout is counting on. Before the spread, so
+         a caller that wants a different size still wins. */
+      numberOfLines={4}
       className={s.input({ className: onPaste ? `pr-12 ${className ?? ''}` : className })}
       {...inputProps}
     />

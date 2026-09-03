@@ -8,21 +8,15 @@
 // than the current height, so without the reset the field could only ever grow
 // and would never shrink back when text is deleted.
 //
-// It grows to MAX_LINES and then scrolls. Unbounded growth pushed the whole
-// conversation off the top of the screen — a child pasting a word problem lost
-// sight of the question they were answering. Four lines is where a typed answer
-// stops being a sentence and starts being an essay; past that, the field
-// scrolls and the thread stays visible.
+// It grows to MAX_LINES and then scrolls — see `use-autogrow.types` for why
+// there is a cap at all.
 // SOT: docs/pack/23-tutorstage-handoff.md §3.5
 // SOT-KEYWORDS: autogrow composer textarea height web scrollheight
 
 import { useLayoutEffect, useRef } from 'react';
-import type { AutoGrowProps } from './use-autogrow.types';
+import { MAX_LINES, type AutoGrowProps } from './use-autogrow.types';
 
-/** Lines of text the field grows to before it starts scrolling. */
-export const MAX_LINES = 4;
-
-export function useAutoGrow(value: string): AutoGrowProps {
+export function useAutoGrow(value: string, floor: number): AutoGrowProps {
   const ref = useRef<HTMLTextAreaElement | null>(null);
 
   useLayoutEffect(() => {
@@ -37,24 +31,25 @@ export function useAutoGrow(value: string): AutoGrowProps {
       15px in ops chrome and 17px in front of a child, so a hardcoded max would
       be four lines for one and three for the other.
     */
-    const lineHeight = Number.parseFloat(globalThis.getComputedStyle(field).lineHeight);
     const style = globalThis.getComputedStyle(field);
+    const lineHeight = Number.parseFloat(style.lineHeight);
     const padding = Number.parseFloat(style.paddingTop) + Number.parseFloat(style.paddingBottom);
     const max = Number.isNaN(lineHeight) ? Infinity : lineHeight * MAX_LINES + padding;
 
-    /*
-      Floored by the element's own `min-height`, so the measured content height
-      can never write the field shorter than the row's touch target. Reading it
-      from computed style rather than passing a number keeps the floor in the
-      stylesheet, where the age band already sets it.
-    */
-    const floor = Number.parseFloat(style.minHeight);
-    const next = Math.max(Number.isNaN(floor) ? 0 : floor, Math.min(field.scrollHeight, max));
+    // Floored by the row's resting height, so the measured content height can
+    // never write the field shorter than the keys standing beside it.
+    const next = Math.max(floor, Math.min(field.scrollHeight, max));
     field.style.height = `${next}px`;
     // Only scroll once it is actually capped, so a one-line answer never shows
     // a scrollbar track.
     field.style.overflowY = field.scrollHeight > max ? 'auto' : 'hidden';
-  }, [value]);
+  }, [value, floor]);
 
-  return { ref };
+  /*
+    The floor is returned as well as read, because the element the effect writes
+    to only exists after the first paint — without it the field would render one
+    frame shorter than the keys beside it before settling onto the row. No cap
+    here: the effect above computes a truer one from the element's own metrics.
+  */
+  return { ref, style: { minHeight: floor } };
 }

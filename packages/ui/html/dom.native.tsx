@@ -94,12 +94,16 @@ export const InputBase = ({ style, ...props }: InputBaseProps) => (
   <NativeInput {...toNativeInputProps(props, style)} />
 );
 
+/*
+  NO DEFAULT LINE COUNT. On Android `numberOfLines` sets Compose's `minLines`
+  AND `maxLines` to the same value (see @expo/ui's universal TextInput), so a
+  default of 4 was not "up to four lines" — it was a field frozen at exactly
+  four, which could neither rest at one line nor grow past four. Height belongs
+  to the field's style bounds, which the Host can actually act on; a caller that
+  genuinely wants a fixed box still passes `numberOfLines` and gets one.
+*/
 export const TextareaBase = ({ style, ...props }: InputBaseProps) => (
-  <NativeInput
-    {...toNativeInputProps(props, style)}
-    multiline
-    numberOfLines={props.numberOfLines ?? 4}
-  />
+  <NativeInput {...toNativeInputProps(props, style)} multiline numberOfLines={props.numberOfLines} />
 );
 
 /**
@@ -116,12 +120,13 @@ function toNativeInputProps(
   style: InputBaseProps['style'],
 ): NativeInputProps {
   const flat = StyleSheet.flatten(style) ?? {};
-  // Text properties go to the native field; everything else (flex, width,
-  // alignment) describes the box and belongs on the Host.
+  // Text properties go to the native field and the floor goes to the Host that
+  // measures it; everything else (flex, width, alignment) describes the box.
   const { color: _c, fontSize: _f, ...containerStyle } = flat as Record<string, unknown>;
   return {
     color: typeof flat.color === 'string' ? flat.color : undefined,
     fontSize: typeof flat.fontSize === 'number' ? flat.fontSize : undefined,
+    minHeight: typeof flat.minHeight === 'number' ? flat.minHeight : undefined,
     containerStyle,
     value: typeof props.value === 'string' ? props.value : undefined,
     onChangeText: props.onChangeText,

@@ -1,6 +1,6 @@
 'use client';
 import Animated from 'react-native-reanimated';
-import { KeyboardAwareScrollView } from 'react-native-keyboard-controller';
+import { KeyboardAwareScrollView, KeyboardStickyView } from 'react-native-keyboard-controller';
 import { css } from './html/css';
 
 /**
@@ -23,3 +23,21 @@ export const KeyboardAwareScroll = css(
   Animated.createAnimatedComponent(KeyboardAwareScrollView),
   'KeyboardAwareScroll',
 );
+
+/**
+ * A footer that rides the keyboard instead of being buried by it.
+ *
+ * The scroll view above is the answer for a FORM — it scrolls the focused field
+ * into view. A composer is not in a scroll view: it is pinned to the bottom of
+ * the screen, so there is nothing to scroll and the keyboard simply covers it.
+ * On this app that was literal — the activity declares `adjustResize`, but under
+ * edge-to-edge the window is not resized and the app has to consume the IME
+ * inset itself, so a child typing an answer could not see what they were typing.
+ *
+ * It translates ONE element rather than recomputing the whole screen's flex
+ * layout, which is also why the scroll view above is the wrong tool here: that
+ * one exists to scroll a focused field into view inside a form, and a pinned
+ * footer has nothing to scroll. Left at its default zero `offset`, so the bar
+ * sits ON the keyboard the way every chat composer does.
+ */
+export const KeyboardSticky = KeyboardStickyView;

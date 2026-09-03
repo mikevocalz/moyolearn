@@ -3,10 +3,10 @@ import { useEffect } from 'react';
 import { View as RNView } from 'react-native';
 import { Host, TextInput as BaseExpoTextInput, useNativeState } from '@expo/ui';
 import { targets } from '@acme/theme';
+import { css } from './css';
 
 /** The adult touch target (44), read from the scale rather than written here. */
 const HOST_MIN_HEIGHT = Number.parseInt(targets.adult, 10);
-import { css } from './css';
 
 /**
  * `css` is Uniwind's `withUniwind`. Wrapping the native field in it is what
@@ -41,6 +41,16 @@ export interface NativeInputProps {
   /** Resolved text values, lifted from the wrapper's already-resolved style. */
   color?: string;
   fontSize?: number;
+  /**
+   * Resolved floor, lifted for the same reason `color` is: it has to reach the
+   * HOST, and everything else in the resolved style describes the box around
+   * it. See the Host below for why a floor on the wrapper is not enough.
+   *
+   * There is deliberately no `maxHeight` counterpart: a ceiling on the Host
+   * clamps its measured box without clamping the Compose content inside, so the
+   * text draws outside its own border. `use-autogrow.native` has the evidence.
+   */
+  minHeight?: number;
   /**
    * The rest of the resolved className style, applied to the Host. Without it
    * the Host sizes to its content, so a field with `flex-1` does not fill its
@@ -83,6 +93,7 @@ export function NativeInput({
   'aria-label': ariaLabel,
   color,
   fontSize,
+  minHeight,
   containerStyle,
 }: NativeInputProps) {
   const state = useNativeState(value ?? '');
@@ -119,7 +130,7 @@ export function NativeInput({
     */
     <RNView style={containerStyle}>
       {/*
-        A FLOOR ON THE HOST, not just on the wrapper above.
+        THE HEIGHT BOUNDS GO ON THE HOST, not just on the wrapper above.
 
         `matchContents.vertical` makes the Host measure the native text — and
         when Compose returns zero for that measurement the Host is zero-tall.
@@ -127,11 +138,14 @@ export function NativeInput({
         wrapping a TextField that still painted its placeholder, so the field
         looked correct and could not be focused or typed into at all. A
         min-height on the wrapper does not help, because the wrapper is not the
-        thing receiving touches. 44 is the adult target, the same floor every
-        other control in a composer row uses.
+        thing receiving touches.
+
+        `HOST_MIN_HEIGHT` is the last word rather than a default: a caller may
+        raise the floor for a bigger age band, and must not be able to lower it
+        below the adult target and reintroduce that bug.
       */}
       <Host
-        style={{ minHeight: HOST_MIN_HEIGHT }}
+        style={{ minHeight: Math.max(HOST_MIN_HEIGHT, minHeight ?? 0) }}
         matchContents={{ vertical: true, horizontal: false }}
       >
         <ExpoTextInput

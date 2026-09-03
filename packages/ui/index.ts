@@ -95,6 +95,7 @@ export { useAppForm, withForm, useFieldContext, useFormContext, useFormStore } f
 
 export { SafeArea, type SafeAreaProps } from './SafeArea';
 export { KeyboardAwareScroll, type KeyboardAwareScrollProps } from './keyboard-aware';
+export { KeyboardSticky, type KeyboardStickyProps } from './keyboard-aware';
 export { SegmentedControl, type SegmentedControlProps, type SegmentedOption } from './SegmentedControl';
 export { FieldGroup, type FieldGroupProps, type FieldSectionProps } from './FieldGroup';
 export { Slider, type SliderProps } from './Slider';

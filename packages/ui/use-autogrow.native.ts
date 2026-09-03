@@ -1,40 +1,56 @@
 // Grow-with-content height for the composer field — native.
 //
-// An earlier version of this file was a no-op on the claim that RN's multiline
-// TextInput grows by itself. It does not: without an explicit height it settles
-// at its default line count and scrolls, exactly like an unmanaged `<textarea>`.
-// The mechanism RN gives you is `onContentSizeChange`, which reports the height
-// the content actually needs; you store it and hand it back as a style.
+// This used to run RN's `onContentSizeChange` loop: measure the content, store
+// the height, hand it back as a style. None of it ever reached the device. The
+// field is `@expo/ui`'s universal TextInput (`html/native-input.native.tsx`),
+// whose prop surface has no `onContentSizeChange`, and the height it returned
+// was overwritten by the floor the composer set afterwards. It was a mechanism
+// for a field that had stopped existing.
 //
-// Two things this has to get right, both of which are why it is not two lines:
-//
-// 1. Only commit a height that CHANGED. Writing height on every callback feeds
-//    the new frame back into the next measurement, and on Android that is a
-//    render loop rather than a wobble.
-// 2. Never go below one line. Android reports a content height of 0 on the first
-//    pass before layout settles, which would collapse the field to nothing.
+// The host already does the measuring: `matchContents.vertical` sizes the
+// Compose/SwiftUI view to its own text, which is a native measurement per frame
+// rather than a JS round-trip per keystroke. So the hook's whole job on native
+// is to supply the two bounds that measurement happens between — a floor so an
+// empty field is one level row, and a ceiling so it stops.
 // SOT: docs/pack/23-tutorstage-handoff.md §3.5
-// SOT-KEYWORDS: autogrow composer textinput height native oncontentsizechange android
+// SOT-KEYWORDS: autogrow composer textinput height native matchcontents android
 
-import { useCallback, useState } from 'react';
-import type { AutoGrowProps, ContentSizeChangeEvent } from './use-autogrow.types';
+import type { AutoGrowProps } from './use-autogrow.types';
+
+/*
+  NO CEILING HERE, and that is a measured result rather than an omission.
+
+  `MAX_LINES` is enforced on web, where the effect can read the element's real
+  line-height. The native equivalent — a `maxHeight` on the Host — was tried on
+  device and does the wrong thing: it clamps the host's MEASURED BOX without
+  clamping the Compose content inside it. The accessibility tree caught it
+  exactly, `ComposeView (…, 0.078)` (the 56 floor) wrapping
+  `TextField (…, 0.182)` (131), so a long answer painted straight out of its own
+  bordered box and under the keyboard. A `maxHeight` on the RN wrapper is inert
+  for the same reason — the hosted view is not laid out by Yoga.
+
+  What Compose does honour is `maxLines`, and @expo/ui's universal TextInput
+  ties `numberOfLines` to minLines AND maxLines together, so asking for a
+  four-line ceiling also asks for a four-line FLOOR — the tall empty bar this
+  work exists to remove. Capping it properly needs the field's content height
+  fed back through `onContentSizeChange`, which is a per-keystroke state machine
+  and not something to land untested on demo day. Filed in the handoff.
+*/
 
 /**
- * One line of `text-body` (17px) at the composer's line height, plus the
- * field's vertical padding and border. Matches the web fork's resting height so
- * the composer is the same size on both platforms.
+ * @param floor The composer row's resting height — the age band's touch target,
+ * so the field and the keys either side of it start level.
  */
-const MIN_HEIGHT = 46;
+export function useAutoGrow(_value: string, floor: number): AutoGrowProps {
+  /*
+    The floor is what keeps the field FOCUSABLE on Android, not just level.
 
-export function useAutoGrow(_value: string): AutoGrowProps {
-  const [height, setHeight] = useState(MIN_HEIGHT);
-
-  const onContentSizeChange = useCallback((event: ContentSizeChangeEvent) => {
-    const measured = Math.max(MIN_HEIGHT, Math.round(event.nativeEvent.contentSize.height));
-    // Sub-pixel jitter between frames is normal; only a real change is worth a
-    // re-render, and re-rendering on noise is what starts the Android loop.
-    setHeight((current) => (Math.abs(current - measured) > 1 ? measured : current));
-  }, []);
-
-  return { onContentSizeChange, style: { height } };
+    `matchContents.vertical` makes the host measure the native text, and Compose
+    returned zero for that measurement on first layout: the accessibility tree
+    showed `ComposeView (…, 0.000)` around a TextField that still painted its
+    placeholder, so the composer looked correct and could not be typed into at
+    all. Anything that removes this bound takes the tutor's core interaction
+    with it.
+  */
+  return { style: { minHeight: floor } };
 }

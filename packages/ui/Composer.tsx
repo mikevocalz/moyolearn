@@ -1,7 +1,7 @@
 'use client';
 // Composer — the learner message input for the S9 tutor session.
 //
-// Mobbin: https://mobbin.com/screens/9c13ada9-0c95-45c8-9932-d20010b96e14 (ChatGPT — field and trailing action share one row height) · https://mobbin.com/screens/5def00a9-6228-4ccc-81a3-25cdb2fe20bd (Pi — full-width field, single trailing send) · https://mobbin.com/screens/236da9c6-8b17-4989-ad40-7e0da07ef603 (Noom — Camera / Photo library / Files, one flat list, no submenus) · https://mobbin.com/screens/db352f6d-4d7d-41f1-a678-e66ee043da83 (BFF — the same list including "Record audio message") · https://mobbin.com/screens/1d54bc84-03b2-4f46-8bca-3c6574ac07e1 (Instagram — recording REPLACES the field: live waveform, discard left, send right) · https://mobbin.com/screens/66e343b2-3334-4d2b-9494-bc22ce3cf386 (Beside — same shape, timer beside the waveform) · https://mobbin.com/screens/c827a5e4-3507-4bf7-a570-63bf1224752d (Alan — a sent voice note carries "See transcript"). Structure only.
+// Mobbin: https://mobbin.com/screens/8cebeed2-fe06-43a2-b4c4-66b6d13a71fd (ChatGPT — ONE row: attach leading, field taking the middle, mic then send trailing) · https://mobbin.com/screens/793f47cc-ae07-4cfa-b36a-831db8d6d397 (Google Gemini — the same row with the field grown to two lines; the keys stay bottom-aligned rather than re-centring) · https://mobbin.com/screens/7708c12a-439a-4d1a-a2a7-488b8c2ecdb8 (Notion — the reduced case, field plus one trailing key) · https://mobbin.com/screens/9c13ada9-0c95-45c8-9932-d20010b96e14 (ChatGPT — field and trailing action share one row height) · https://mobbin.com/screens/5def00a9-6228-4ccc-81a3-25cdb2fe20bd (Pi — full-width field, single trailing send) · https://mobbin.com/screens/236da9c6-8b17-4989-ad40-7e0da07ef603 (Noom — Camera / Photo library / Files, one flat list, no submenus) · https://mobbin.com/screens/db352f6d-4d7d-41f1-a678-e66ee043da83 (BFF — the same list including "Record audio message") · https://mobbin.com/screens/1d54bc84-03b2-4f46-8bca-3c6574ac07e1 (Instagram — recording REPLACES the field: live waveform, discard left, send right) · https://mobbin.com/screens/66e343b2-3334-4d2b-9494-bc22ce3cf386 (Beside — same shape, timer beside the waveform) · https://mobbin.com/screens/c827a5e4-3507-4bf7-a570-63bf1224752d (Alan — a sent voice note carries "See transcript"). Structure only.
 //
 // A child stuck on homework points a camera at it rather than describing it, so
 // the composer takes pictures, documents and speech, not only typing.
@@ -9,9 +9,24 @@
 // Three structural decisions, all taken from the references rather than
 // invented:
 //
-//  - ONE flat attachment list. Every app above offers Camera / Photos / Files
-//    at the top level. A child hunting through a submenu for "the photo one"
-//    has already lost the thread of the problem they were stuck on.
+//  - ONE flat attachment list, and it is FLAT IN THE BAR. Every app above
+//    offers Camera / Photos / Files at the top level. A child hunting through a
+//    submenu for "the photo one" has already lost the thread of the problem
+//    they were stuck on. This file argued that and then did the opposite: one
+//    key whose handler was `onPickCamera ?? onPickImage ?? onPickDocument`, so
+//    on a host supplying all three — which the tutor screen does — camera
+//    always won and the photo library and the file picker were unreachable.
+//    Three capabilities, one button, two of them dead. Pictures and files are
+//    now separate keys, and a key exists only where its handler does.
+//  - TWO keys, not three: taking a NEW photo belongs to the Snap tab, which is
+//    the shell's raised centre action, so the composer offers the library and
+//    the file picker and does not repeat the camera beside them.
+//  - ONE row, and it is the screen's footer: attach at the leading edge, the
+//    field taking whatever width is left, mic and send at the trailing edge.
+//    Splitting the actions onto a second row under the field cost the composer
+//    a whole row of height it did not earn — a bar standing two rows tall over
+//    an empty one-line field, permanently, on the screen where the conversation
+//    is the subject.
 //  - Recording REPLACES the field rather than sitting beside it. While speaking
 //    there is nothing to type, and a live waveform where the text was is what
 //    tells a child the microphone is actually hearing them.
@@ -24,13 +39,13 @@ import { useCallback } from 'react';
 import { targets } from '@acme/theme';
 import { View, Text, Pressable, Textarea } from './primitives';
 import { useAutoGrow } from './use-autogrow';
-import { Button } from './Button';
 import { SolitoImage } from 'solito/image';
-import { Camera, FileUp, Image, Mic, Plus, Send, Square, Trash2, X } from './icons';
+import { Camera, FileUp, Image, Mic, Paperclip, Send, Square, Trash2, X } from './icons';
 // Through the barrel, not the file. `waveform.ts` (the pure bar maths) and
 // `Waveform.tsx` (the component) differ only in case, so a direct path import
 // resolves ambiguously on a case-insensitive filesystem and TS refuses it.
 import { AudioPlayer, Waveform } from './audio';
+import { KeyboardSticky } from './keyboard-aware';
 import { Lightbox } from './Lightbox';
 import { SlideIn } from './motion';
 import { useInstanceStore, useStore } from './use-instance-store';
@@ -106,8 +121,27 @@ export function Composer({
   */
   const imageCount = countImages(attachments ?? []);
   const atImageCap = imageCount >= MAX_TUTOR_IMAGES;
-  const canAttach =
-    !disabled && !atImageCap && (onPickCamera ?? onPickImage ?? onPickDocument) !== undefined;
+  /*
+    The cap counts PICTURES, so it retires the picture key and leaves the file
+    key standing. Folding documents into the same test meant a child who had
+    attached three photos could no longer attach the worksheet PDF either — a
+    limit on one kind of thing quietly enforced against another.
+  */
+  /*
+    ONE way to a picture, not two.
+
+    Camera and library were briefly two keys side by side, and to a child they
+    are one thought — "put my homework in here" — wearing two icons. The shell
+    already owns taking a NEW photo: Snap is the raised centre tab and the
+    product's signature action, so a second camera button inside the composer
+    duplicates the one control the whole app is built around. The composer's
+    picture key therefore reaches for the LIBRARY, and falls back to the camera
+    only on a host that has no library picker to offer.
+  */
+  const pickPicture = onPickImage ?? onPickCamera;
+  const showPicture = !disabled && !atImageCap && pickPicture !== undefined;
+  const showDocument = !disabled && onPickDocument !== undefined;
+  const canAttach = showPicture || showDocument;
 
   /*
     Icon buttons carry the age band's touch target, same as every other control.
@@ -156,40 +190,27 @@ export function Composer({
   }[size];
 
   /*
-    Height only, shared by BOTH actions.
+    The row's resting height, as a NUMBER — the same age-band target the keys
+    beside the field take, so an empty composer is one level row.
 
-    Attach and Send sized from different systems — attach from the age-band
-    target, Send from Button's own scale — so they disagreed by a few pixels and
-    the row looked misaligned. They now take the same height token, and only the
-    field grows: the two buttons are fixed anchors at either end of a row whose
-    middle stretches.
+    A number rather than a class because it has to reach the native field's
+    HOST, which a className never does; that distinction is the difference
+    between a composer that can be typed into on Android and one that cannot
+    (see `use-autogrow.native`). `targets` is keyed by band, not by the size
+    scale, so this map is `buttonSizeForBand` read backwards.
   */
-  const actionHeight = {
-    sm: 'h-target-adult',
-    md: 'h-target-adult',
-    lg: 'h-target-teen',
-    xl: 'h-target-child',
-  }[size];
+  const rowHeight = Number.parseInt(
+    { sm: targets.adult, md: targets.adult, lg: targets.teen, xl: targets.child }[size],
+    10,
+  );
 
   /*
-    The field's FLOOR is the same token, so an empty composer is one level row.
-
-    Autogrow sizes the field to its content — about 40px for a single line of
-    body text plus padding — which is under the 44px touch target the buttons
-    take. The row then read as a short field between two taller keys. A minimum
-    equal to the action height makes them start level; growth happens upward
-    from there, and only the field grows.
+    Grows with what is typed, and only then — one line at rest, up to a cap,
+    scrolling inside itself after that. The two platforms measure differently
+    (`scrollHeight` on web, the Compose/SwiftUI host's own measurement on
+    native), so the hook returns props to spread rather than a single ref.
   */
-  const fieldFloor = {
-    sm: 'min-h-target-adult',
-    md: 'min-h-target-adult',
-    lg: 'min-h-target-teen',
-    xl: 'min-h-target-child',
-  }[size];
-  // Grows with what is typed. The two platforms use different mechanisms —
-  // `scrollHeight` on web, `onContentSizeChange` on native — so the hook returns
-  // props to spread rather than a single ref.
-  const autoGrow = useAutoGrow(value);
+  const autoGrow = useAutoGrow(value, rowHeight);
 
   const handleSubmit = useCallback(() => {
     if (canSend) onSend();
@@ -291,70 +312,100 @@ export function Composer({
   }
 
   return (
-    <View key="idle" className={`gap-stack ${className ?? ''}`}>
-      {/* Staged attachments, above the field.
-          An image shows the IMAGE. A filename is not a photo — a child who
-          attached the wrong page of homework cannot tell from "photo.jpg", and
-          checking costs them the send. Every reference does the same thing:
-          a square thumbnail with a small dismiss badge on its corner, and the
-          badge sits ON the picture rather than beside it so the tray stays one
-          row of pictures instead of a list of rows. */}
-      {attachments && attachments.length > 0 ? (
-        <View className="flex-row flex-wrap gap-element">
-          {attachments.map((attachment) =>
-            attachment.kind === 'image' ? (
-              <View key={attachment.id} className="relative">
-                <Pressable
-                  onPress={() => openLightbox(imageIndexById.get(attachment.id) ?? 0)}
-                  aria-label={`Open ${attachment.name}`}
-                  className="h-16 w-16 overflow-hidden rounded-control border-2 border-border bg-surface-raised"
-                >
-                  <SolitoImage
-                    src={attachment.previewUri ?? attachment.uri}
-                    alt={attachment.name}
-                    fill
-                    unoptimized
-                    contentFit="contain"
-                    sizes="64px"
-                  />
-                </Pressable>
-                {/* Offset onto the corner. Its hit area is the WCAG floor even
-                    though the badge is drawn small — a 16px target on a
-                    children's surface is a target only an adult can hit. */}
-                <Pressable
-                  onPress={() => onRemoveAttachment?.(attachment.id)}
-                  aria-label={`Remove ${attachment.name}`}
-                  className="absolute -right-2 -top-2 min-h-target-adult min-w-target-adult items-center justify-center"
-                >
-                  {/* Square too. Every reference draws this badge as a circle;
-                      this kit has one radius and a dismiss badge is still a
-                      button. Consistency inside the product beats matching a
-                      screenshot from another one. */}
-                  <View className="h-6 w-6 items-center justify-center rounded-control border-2 border-border bg-surface">
-                    <X size={12} className="text-text" />
-                  </View>
-                </Pressable>
-              </View>
-            ) : (
-              /* A document has no picture, so it keeps a labelled chip — the
-                 name IS the only identifying thing about it.
+    /*
+      The bar rides the keyboard, and it does so from HERE rather than from the
+      screen around it.
 
-                 A voice note is NOT in that category and used to be treated as
-                 if it were: a mic glyph and "Voice note (2s)". A filename is not
-                 a recording. The child had just spoken into the microphone and
-                 the only thing offered back was a word for what they had done,
-                 so stopping a take bought them nothing they could act on. It
-                 gets the kit's player, the same one the thread uses. */
-              attachment.kind === 'audio' ? (
+      The activity asks for `adjustResize`, but under edge-to-edge Android stops
+      resizing the window and hands the app an IME inset to consume instead — so
+      the keyboard opened straight over the composer and a child could not see
+      the answer they were typing. Keeping that fix inside the component means it
+      holds wherever the composer is placed, including in Storybook, instead of
+      being a rule every host has to remember. `KeyboardSticky` is the kit's
+      wrapper over `react-native-keyboard-controller`; on web it is a fragment.
+    */
+    <KeyboardSticky>
+      <View key="idle" className={`gap-stack ${className ?? ''}`}>
+        {/* Staged attachments, above the field.
+            An image shows the IMAGE. A filename is not a photo — a child who
+            attached the wrong page of homework cannot tell from "photo.jpg", and
+            checking costs them the send. Every reference does the same thing:
+            a square thumbnail with a small dismiss badge on its corner, and the
+            badge sits ON the picture rather than beside it so the tray stays one
+            row of pictures instead of a list of rows. */}
+        {attachments && attachments.length > 0 ? (
+          <View className="flex-row flex-wrap gap-element">
+            {attachments.map((attachment) =>
+              attachment.kind === 'image' ? (
+                <View key={attachment.id} className="relative">
+                  <Pressable
+                    onPress={() => openLightbox(imageIndexById.get(attachment.id) ?? 0)}
+                    aria-label={`Open ${attachment.name}`}
+                    className="h-16 w-16 overflow-hidden rounded-control border-2 border-border bg-surface-raised"
+                  >
+                    <SolitoImage
+                      src={attachment.previewUri ?? attachment.uri}
+                      alt={attachment.name}
+                      fill
+                      unoptimized
+                      contentFit="contain"
+                      sizes="64px"
+                    />
+                  </Pressable>
+                  {/* Offset onto the corner. Its hit area is the WCAG floor even
+                      though the badge is drawn small — a 16px target on a
+                      children's surface is a target only an adult can hit. */}
+                  <Pressable
+                    onPress={() => onRemoveAttachment?.(attachment.id)}
+                    aria-label={`Remove ${attachment.name}`}
+                    className="absolute -right-2 -top-2 min-h-target-adult min-w-target-adult items-center justify-center"
+                  >
+                    {/* Square too. Every reference draws this badge as a circle;
+                        this kit has one radius and a dismiss badge is still a
+                        button. Consistency inside the product beats matching a
+                        screenshot from another one. */}
+                    <View className="h-6 w-6 items-center justify-center rounded-control border-2 border-border bg-surface">
+                      <X size={12} className="text-text" />
+                    </View>
+                  </Pressable>
+                </View>
+              ) : (
+                /* A document has no picture, so it keeps a labelled chip — the
+                   name IS the only identifying thing about it.
+
+                   A voice note is NOT in that category and used to be treated as
+                   if it were: a mic glyph and "Voice note (2s)". A filename is not
+                   a recording. The child had just spoken into the microphone and
+                   the only thing offered back was a word for what they had done,
+                   so stopping a take bought them nothing they could act on. It
+                   gets the kit's player, the same one the thread uses. */
+                attachment.kind === 'audio' ? (
+                  <View
+                    key={attachment.id}
+                    className="flex-row items-center gap-element rounded-control border-2 border-border bg-surface-raised p-inset-tight"
+                  >
+                    <AudioPlayer
+                      uri={attachment.uri}
+                      duration={attachment.durationSec}
+                      className="w-56"
+                    />
+                    <Pressable
+                      onPress={() => onRemoveAttachment?.(attachment.id)}
+                      aria-label={`Remove ${attachment.name}`}
+                      className="min-h-target-adult min-w-target-adult items-center justify-center rounded-control"
+                    >
+                      <X size={14} className="text-text-muted" />
+                    </Pressable>
+                  </View>
+                ) : (
                 <View
                   key={attachment.id}
-                  className="flex-row items-center gap-element rounded-control border-2 border-border bg-surface-raised p-inset-tight"
+                  className="flex-row items-center gap-element rounded-control border-2 border-border bg-surface-raised py-1 pl-inset-tight pr-1"
                 >
-                  <AudioPlayer
-                    uri={attachment.uri}
-                    duration={attachment.durationSec}
-                    className="w-56"
-                  />
+                  {attachment.kind === 'document' ? <FileUp size={16} className="text-text-muted" /> : null}
+                  <Text numberOfLines={1} className="max-w-40 font-sans text-caption text-text">
+                    {attachment.name}
+                  </Text>
                   <Pressable
                     onPress={() => onRemoveAttachment?.(attachment.id)}
                     aria-label={`Remove ${attachment.name}`}
@@ -363,116 +414,118 @@ export function Composer({
                     <X size={14} className="text-text-muted" />
                   </Pressable>
                 </View>
-              ) : (
-              <View
-                key={attachment.id}
-                className="flex-row items-center gap-element rounded-control border-2 border-border bg-surface-raised py-1 pl-inset-tight pr-1"
-              >
-                {attachment.kind === 'document' ? <FileUp size={16} className="text-text-muted" /> : null}
-                <Text numberOfLines={1} className="max-w-40 font-sans text-caption text-text">
-                  {attachment.name}
-                </Text>
-                <Pressable
-                  onPress={() => onRemoveAttachment?.(attachment.id)}
-                  aria-label={`Remove ${attachment.name}`}
-                  className="min-h-target-adult min-w-target-adult items-center justify-center rounded-control"
-                >
-                  <X size={14} className="text-text-muted" />
-                </Pressable>
-              </View>
-              )
-            ),
-          )}
-        </View>
-      ) : null}
+                )
+              ),
+            )}
+          </View>
+        ) : null}
 
-      {atImageCap ? (
-        <Text className="font-sans text-caption text-text-muted">
-          That&apos;s {MAX_TUTOR_IMAGES} pictures — enough to work with. Remove one to swap it.
-        </Text>
-      ) : null}
+        {atImageCap ? (
+          <Text className="font-sans text-caption text-text-muted">
+            That&apos;s {MAX_TUTOR_IMAGES} pictures — enough to work with. Remove one to swap it.
+          </Text>
+        ) : null}
 
-      {/* Tap a thumbnail to check it full-size before sending. The kit already
-          had this component and nothing used it. */}
-      <Lightbox
-        images={imageUris}
-        initialIndex={lightbox.index}
-        open={lightbox.open}
-        onClose={closeLightbox}
-      />
-
-      {/*
-        ONE surface, two rows inside it.
-
-        This was three separately bordered boxes in a row — attach, field, send —
-        which reads as a form, not a composer. Every shipped AI chat surveyed
-        (Meta AI, ChatGPT, Claude, Grok, Copilot) does the same thing instead:
-        a single container with the text on its own full-width line and the
-        actions on a row beneath it, inside.
-
-        It is not only nicer. It fixes the layout problem underneath: with the
-        actions on their own row nothing competes with the field for height, so
-        the field grows and the keys sit still without either being told to.
-        Text also gets the full width, which matters for a long answer.
-      */}
-      <View
-        className={`gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field ${
-          disabled ? 'opacity-60' : ''
-        }`}
-      >
-        {/* No border of its own — the container is the field now. */}
-        <Textarea
-          {...autoGrow}
-          value={value}
-          onChangeText={onChangeText}
-          placeholder={placeholder}
-          editable={!disabled}
-          /*
-            THE FLOOR IS LOAD-BEARING ON ANDROID — do not remove it again.
-
-            It was taken out as visual dead space, on the reasoning that the
-            container now carries the height. On web that is true. On Android
-            the field is a hosted Compose view, and the host measured its RN
-            subtree at HEIGHT ZERO: the accessibility tree showed
-            `ComposeView (…, 0.000)` wrapping a TextField that still painted its
-            placeholder. So the composer LOOKED right and could not be focused —
-            typing into the tutor was impossible, which is the product's core
-            interaction. `min-h-target-adult` is the same 44 the send button
-            beside it uses, so the row is level either way.
-          */
-          /* The token as a NUMBER, not a class: on Android the field is a
-             hosted Compose view and the host measured its RN subtree at height
-             ZERO — `ComposeView (…, 0.000)` around a TextField that still drew
-             its placeholder — so the composer looked right and could not be
-             focused. A className min-height does not reach the host; an
-             explicit style on the RN wrapper does. Same 44 as the send button
-             beside it, read from the target scale rather than written twice. */
-          style={{ minHeight: Number.parseInt(targets.adult, 10) }}
-          className="w-full resize-none border-0 bg-transparent font-sans text-body text-text placeholder:text-text-muted"
-          numberOfLines={1}
-          aria-label="Message composer"
+        {/* Tap a thumbnail to check it full-size before sending. The kit already
+            had this component and nothing used it. */}
+        <Lightbox
+          images={imageUris}
+          initialIndex={lightbox.index}
+          open={lightbox.open}
+          onClose={closeLightbox}
         />
 
-        <View className="flex-row items-center justify-between">
-          {/* Attach leads, as it does in every reference. Hidden — not disabled —
-              when there is no picker or the image cap is reached. */}
+        {/*
+          ONE surface, ONE row: attach · field · mic · send.
+
+          It was a single container with the text on its own full-width line and
+          the actions on a row beneath it, inside. That is a real pattern — but it
+          spends a whole row of chrome to buy the field a width it does not need,
+          and the composer is a FOOTER: the conversation is the subject of this
+          screen and every pixel the bar keeps is a pixel of the question a child
+          is answering. Two rows over a one-line field read as a panel that had
+          been left open.
+
+          ChatGPT's own bar is the reference for the row (see the header), and
+          Gemini's for what happens when it grows: `items-end`, so the keys stay
+          on the bottom line as the field gets taller instead of drifting to the
+          middle of a growing box. Only the field grows; the keys are fixed
+          anchors at either end.
+        */}
+        <View
+          className={`flex-row items-end gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field ${
+            disabled ? 'opacity-60' : ''
+          }`}
+        >
+          {/* Attach leads, as it does in every reference — one key per way in,
+              each present only where its handler is. Hidden rather than disabled:
+              a greyed key a child keeps pressing teaches nothing. */}
           {canAttach ? (
             /* Leading group, arriving from the left and settling rightward —
                the later half of the convergence described on `SlideIn`. */
-            <SlideIn from="left" distance={40} duration={160} delay={100}>
-              <Pressable
-                onPress={onPickCamera ?? onPickImage ?? onPickDocument}
-                aria-label={onPickCamera ? 'Take a photo' : 'Add a photo or file'}
-                className={`${iconTarget} items-center justify-center rounded-control`}
-              >
-                {onPickCamera ? <Camera size={20} className="text-text" /> : <Plus size={20} className="text-text" />}
-              </Pressable>
+            <SlideIn
+              from="left"
+              distance={40}
+              duration={160}
+              delay={100}
+              className="flex-row items-center gap-element"
+            >
+              {showPicture ? (
+                <Pressable
+                  onPress={pickPicture}
+                  aria-label={onPickImage ? 'Add a photo' : 'Take a photo'}
+                  className={`${iconTarget} items-center justify-center rounded-control`}
+                >
+                  {onPickImage ? (
+                    <Image size={20} className="text-text" />
+                  ) : (
+                    <Camera size={20} className="text-text" />
+                  )}
+                </Pressable>
+              ) : null}
+              {/* The paperclip, and it is a paperclip on purpose: `FileUp` is the
+                  badge the tray puts on a document already attached, and the same
+                  glyph doing both jobs would say "this file" where the bar means
+                  "add a file". */}
+              {showDocument ? (
+                <Pressable
+                  onPress={onPickDocument}
+                  aria-label="Add a file"
+                  className={`${iconTarget} items-center justify-center rounded-control`}
+                >
+                  <Paperclip size={20} className="text-text" />
+                </Pressable>
+              ) : null}
             </SlideIn>
           ) : (
-            // Holds the row's shape so the trailing action does not slide left
-            // when attach is unavailable.
+            // Holds the row's shape so the field does not slide to the leading
+            // edge when attach is unavailable.
             <View className={iconTarget} />
           )}
+
+          {/* The middle, and the only part of the row that stretches. No border of
+              its own — the container is the field now. `flex-1` resolves onto the
+              native wrapper, which is what gives the hosted control a width to
+              fill rather than sizing it to its own text. */}
+          <Textarea
+            /*
+              THE HEIGHT BOUNDS ARE LOAD-BEARING ON ANDROID — spread, not styled
+              over. `autoGrow` carries `minHeight`, and the floor was once removed
+              as visual dead space: the field is a hosted Compose view, the host
+              measured its subtree at HEIGHT ZERO — `ComposeView (…, 0.000)` around
+              a TextField that still painted its placeholder — and the composer
+              looked correct while being impossible to focus or type into, which is
+              this product's core interaction. A className min-height never reaches
+              the host; only a style does. Nothing may set `style` after this.
+            */
+            {...autoGrow}
+            value={value}
+            onChangeText={onChangeText}
+            placeholder={placeholder}
+            editable={!disabled}
+            className="flex-1 resize-none border-0 bg-transparent font-sans text-body text-text placeholder:text-text-muted"
+            aria-label="Message composer"
+          />
 
           {/* Trailing group, arriving from the right edge and settling
               leftward. It starts FIRST — the counter-motion against the attach
@@ -509,12 +562,13 @@ export function Composer({
             ) : null}
 
             {/* The one piece of colour in the bar, so the eye finds it without
-                a label — and a rounded SQUARE, not a circle. The references draw
-                circular send keys; this design system does not. `radius.control`
-                is the one shape every interactive thing takes, and a pill in the
-                middle of a squared-off kit reads as an import from somewhere
-                else. Borrowing structure from a reference does not mean
-                borrowing its shape language. */}
+                a label — the brand mango, the same fill the primary action wears
+                everywhere else — and a rounded SQUARE, not a circle. The
+                references draw circular send keys; this design system does not.
+                `radius.control` is the one shape every interactive thing takes,
+                and a pill in the middle of a squared-off kit reads as an import
+                from somewhere else. Borrowing structure from a reference does not
+                mean borrowing its shape language. */}
             <Pressable
               onPress={handleSubmit}
               disabled={!canSend}
@@ -528,6 +582,6 @@ export function Composer({
           </SlideIn>
         </View>
       </View>
-    </View>
+    </KeyboardSticky>
   );
 }
