@@ -6,8 +6,13 @@
 // K–2 hub's giant Snap tile and this step read as the same door.
 //
 // Hierarchy is size/weight/space, not colour alone: the primary card carries
-// the bg-primary fill, the icon well, a hint line, and a taller target; the
-// alternates are compact icon rows under a muted "more ways" caption.
+// the bg-action-primary fill, the icon well, a hint line, and a taller target;
+// the alternates are compact icon rows under a muted "more ways" caption. That
+// fill is the SIGNATURE-ACTION token rather than the generic `primary` for the
+// reason the hub tile moved to it: the tab bar marks the selected tab in the
+// brand yellow, so a Snap surface painted yellow spends the same colour on the
+// primary action and on selection. Take photo is teal on every surface it
+// appears — this card, the hub tile, the rail's raised slab.
 // Targets come from the age-band tokens (doc 08 §2.4) — the primary sits one
 // tier above the band's row tier so it dominates on every band.
 // Mobbin: mobbin.com/screens/f91c4f65-bc27-4169-a247-c0bddaa4a3fa (Hims — one dominant "Take photo" primary with the alternate sources grouped apart from it) ·
@@ -58,7 +63,7 @@ export function CaptureEntryRow({ ageBand = 'teen', onSelect }: CaptureEntryRowP
     <View className="w-full gap-group">
       <PressScale
         outerClassName="w-full"
-        className={`${PRIMARY_TARGET[ageBand]} w-full flex-row items-center gap-element rounded-card border-2 border-border bg-primary p-inset-roomy shadow-card`}
+        className={`${PRIMARY_TARGET[ageBand]} w-full flex-row items-center gap-element rounded-card border-2 border-border bg-action-primary p-inset-roomy shadow-card`}
         aria-label="Take a photo of your work"
         onPress={() => onSelect('camera')}
       >
@@ -66,10 +71,10 @@ export function CaptureEntryRow({ ageBand = 'teen', onSelect }: CaptureEntryRowP
           <Camera size={28} className="text-text" />
         </View>
         <View className="flex-1 gap-1">
-          <Heading level={2} size="title" className="text-on-primary">
+          <Heading level={2} size="title" className="text-on-action-primary">
             {labels.takePhoto}
           </Heading>
-          <Text className="text-on-primary/80">{labels.photoHint}</Text>
+          <Text className="text-on-action-primary/80">{labels.photoHint}</Text>
         </View>
       </PressScale>
 

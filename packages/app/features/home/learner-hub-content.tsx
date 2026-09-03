@@ -20,8 +20,8 @@ import { stuffPath } from './learner-paths';
 /**
  * The hub's three spokes mirror the K–2 tab bar on purpose: NN/g says mis-taps
  * must be recoverable, and two obvious doors to the same room beats one clever
- * one. `Snap` is the single primary (highlighter treatment); the others stay on
- * paper so the screen answers "what do I do" in one glance (doc 08 §3.2).
+ * one. `Snap` is the single primary; the others stay on paper so the screen
+ * answers "what do I do" in one glance (doc 08 §3.2).
  * Hrefs are the routes that actually exist: `/capture` (the mobile capture tab
  * and web `(site)/capture`) and `/tutor` resolve on both platforms; "My Stuff"
  * is the one platform-forked path (learner-paths — mobile `/stuff`, web
@@ -74,14 +74,24 @@ export function LearnerHubContent() {
           <FadeIn key={tile.href} delay={80 + index * 60}>
             <PressScale
               outerClassName="w-full"
+              /*
+                `bg-action-primary` (teal), NOT `bg-primary` (yellow). The rail
+                beside this screen paints its SELECTED tab in the highlighter
+                yellow, and a hero card in the same hue made the primary action
+                and the current-location marker the same colour — the one thing
+                a K–2 screen cannot afford, since neither is learnable while
+                they look alike. Teal also ties the tile to the raised camera
+                slab in the rail, which is the same destination: one action,
+                one colour, both planes.
+              */
               className={`min-h-target-young w-full flex-row items-center gap-element rounded-card border-2 border-border p-inset-roomy shadow-card ${
-                tile.primary ? 'bg-primary' : 'bg-surface'
+                tile.primary ? 'bg-action-primary' : 'bg-surface'
               }`}
               aria-label={tile.label}
               onPress={() => router.push(tile.href)}
             >
-              {/* One highlighter moment per screen (doc 08 §3.2): only the Snap
-                  tile carries the accent; the other icon wells stay neutral. */}
+              {/* One accent moment per screen (doc 08 §3.2): only the Snap tile
+                  carries the fill; the other icon wells stay neutral. */}
               <View
                 className={`h-14 w-14 items-center justify-center rounded-full border-2 border-border ${
                   tile.primary ? 'bg-surface' : 'bg-surface-sunken'
@@ -90,10 +100,10 @@ export function LearnerHubContent() {
                 <tile.Icon size={28} className="text-text" />
               </View>
               <View className="flex-1 gap-1">
-                <Heading level={2} size="title" className={tile.primary ? 'text-on-primary' : 'text-text'}>
+                <Heading level={2} size="title" className={tile.primary ? 'text-on-action-primary' : 'text-text'}>
                   {tile.label}
                 </Heading>
-                <Text className={tile.primary ? 'text-on-primary/80' : 'text-text-muted'}>{tile.hint}</Text>
+                <Text className={tile.primary ? 'text-on-action-primary/80' : 'text-text-muted'}>{tile.hint}</Text>
               </View>
             </PressScale>
           </FadeIn>

@@ -405,19 +405,37 @@ export const semantic = {
   'surface-learning': { light: palette.lagoon[100], dark: palette.lagoon[200] },
   'surface-achievement': { light: palette.sun[100], dark: palette.sun[200] },
   /*
-    The signature-action fill (the raised camera slot). `plum[700]` — the SAME
-    value as the mark's M and as the chrome's ink, in both schemes, because it
-    always rides a pastel bar. One purple in the chrome, used three ways: the
-    logo's letter, the bar's type, the primary button's fill. An earlier cut
-    lifted it to plum[300] for dark and produced a pale slab that read as a
-    second selected tab next to the marker.
+    THE SIGNATURE ACTION — Snap — wherever it appears: the raised camera slot in
+    the rail/tab bar, the K–2 hub's giant Snap tile, and the capture step's
+    "Take photo" card. One action, one fill, in both planes.
+
+    It is `moyo-teal` (lagoon 500), and the swap off plum is the fix for a real
+    collision. The tile used to be `bg-primary` — the brand yellow — and so does
+    the tab bar's selected marker (`highlighter`), which put the PRIMARY ACTION
+    and SELECTION in one colour on the same screen: two different languages
+    wearing one hue, which is exactly what a child cannot learn. Yellow keeps
+    selection (a highlighter is yellow by definition and doc 08 §4.6 already
+    makes marker-with-ink the selection language product-wide), so the action is
+    what had to move, and it moves to the third brand ink rather than to a new
+    one. Plum stays what it was before this token existed: the CHROME's colour —
+    the mark's M, the bar's type, the rail's own edge. It could not stay the
+    action fill either way: on the neutral reading ground plum 700 is barely
+    two stops off the dark surface, so the hub's hero read as a hole rather than
+    as the loudest thing on the screen.
+
+    Bright fill, dark ink — the house pattern (`primary`, `highlighter`), not a
+    deep container with light type: lagoon 600/700 are the only teal steps that
+    carry a light foreground at AA, and both are too quiet to be a hero on the
+    near-black ground. Ink on lagoon 500 is 6.6:1. Same value in both schemes,
+    for the reason `primary` now is: the ground is neutral, so the action does
+    not need a night cut to stop vibrating.
 
     The foreground is `on-action-primary` — named for the fill it rides, which is
     what puts it inside check-contrast's derived pairs instead of outside every
     gate.
   */
-  'action-primary': { light: palette.plum[700], dark: palette.plum[700] },
-  'on-action-primary': { light: palette.plum[50], dark: palette.plum[50] },
+  'action-primary': { light: palette.lagoon[500], dark: palette.lagoon[500] },
+  'on-action-primary': { light: palette.ink[950], dark: palette.ink[950] },
   // The coral hairline strip. Identity, not a scheme value, so it holds — but its
   // ink is INK, never white: white on coral is 3.47:1 and has never passed AA.
   'surface-accent': { light: palette.flame[400], dark: palette.flame[400] },
