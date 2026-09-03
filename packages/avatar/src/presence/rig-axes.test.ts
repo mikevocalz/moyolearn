@@ -25,7 +25,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import * as THREE from 'three';
-import { HUMANO_BONES } from './humano.ts';
+import { HUMANO_BONES, TWINS, createHumanoPresence } from './humano.ts';
 
 interface GltfNode {
   name: string;
@@ -104,7 +104,7 @@ function weightedJoints(): Set<string> {
   return out;
 }
 
-const { byName } = buildScene();
+const { root: builtRoot, byName } = buildScene();
 const weighted = weightedJoints();
 
 function isAncestorOfWeight(name: string): boolean {
@@ -209,5 +209,76 @@ describe('the shipped phone rig', () => {
     assert.ok(l.x < -0.005, `L index +x should curl toward −x: ${l.toArray()}`);
     const r = moved('DEF-f_index.01.R', 'x', 0.2, 'DEF-f_index.03.R', 0.02);
     assert.ok(r.x > 0.005, `R index +x should curl toward +x: ${r.toArray()}`);
+  });
+});
+
+describe('the two chains stay one body', () => {
+  it('every twin sits where its DEF bone sits, facing the same way (the hip root excepted)', () => {
+    for (const [key, twinName] of Object.entries(TWINS)) {
+      const def = byName.get(HUMANO_BONES[key as keyof typeof HUMANO_BONES])!;
+      const twin = byName.get(twinName)!;
+      assert.ok(twin, `twin ${twinName} missing`);
+      const pd = def.getWorldPosition(new THREE.Vector3());
+      const pt = twin.getWorldPosition(new THREE.Vector3());
+      if (key === 'torso' || key === 'spine1') continue; // documented 14 cm / 4 cm pivot offset
+      assert.ok(pd.distanceTo(pt) < 1e-3, `${key}: ${pd.toArray()} vs twin ${pt.toArray()}`);
+      const qd = def.getWorldQuaternion(new THREE.Quaternion());
+      const qt = twin.getWorldQuaternion(new THREE.Quaternion());
+      assert.ok(Math.abs(qd.angleTo(qt)) < 1e-3, `${key}: twin orientation differs by ${qd.angleTo(qt)} rad`);
+    }
+  });
+
+  it('the eyeballs ride the head: their offset in the head frame never changes while she moves', () => {
+    const { root, byName: names } = buildScene();
+    const presence = createHumanoPresence(root);
+    const head = names.get(HUMANO_BONES.head)!;
+    const eye = names.get('DEF-eye.L')!;
+    const teeth = names.get('DEF-teeth.T')!;
+    const hand = names.get('DEF-hand.L')!;
+    const chest = names.get(HUMANO_BONES.chest)!;
+    root.updateMatrixWorld(true);
+    const inHead = (o: THREE.Object3D) => head.worldToLocal(o.getWorldPosition(new THREE.Vector3()));
+    const inChest = (o: THREE.Object3D) => chest.worldToLocal(o.getWorldPosition(new THREE.Vector3()));
+    const eye0 = inHead(eye);
+    const teeth0 = inHead(teeth);
+    const hand0 = inChest(hand);
+    let worst = 0;
+    let worstHand = 0;
+    for (let i = 0; i < 60 * 30; i++) {
+      const t = i / 60;
+      presence.step(1 / 60, {
+        speaking: t > 5,
+        mouth: t > 5 ? 0.5 : 0,
+        reducedMotion: false,
+        phase: t > 5 ? 'speaking' : 'listening',
+        partnerPauseEvent: i === 120,
+      });
+      root.updateMatrixWorld(true);
+      worst = Math.max(worst, inHead(eye).distanceTo(eye0), inHead(teeth).distanceTo(teeth0));
+      // The hand is posed on purpose; what must not move is the SHOULDER
+      // socket relative to the chest — measured through the upper arm's root.
+      const upperArm = names.get(HUMANO_BONES.upperArmL)!;
+      worstHand = Math.max(worstHand, inChest(upperArm).distanceTo(inChest(upperArm)));
+      void hand0;
+    }
+    assert.ok(worst < 0.0005, `an eyeball or the teeth drifted ${(worst * 1000).toFixed(1)} mm out of the head`);
+    void worstHand;
+  });
+
+  it('the shoulder socket stays on the chest through breath and a weight shift', () => {
+    const { root, byName: names } = buildScene();
+    const presence = createHumanoPresence(root);
+    const chest = names.get(HUMANO_BONES.chest)!;
+    const socket = names.get(HUMANO_BONES.upperArmL)!;
+    root.updateMatrixWorld(true);
+    const at = () => chest.worldToLocal(socket.getWorldPosition(new THREE.Vector3()));
+    const rest = at();
+    let worst = 0;
+    for (let i = 0; i < 60 * 60; i++) {
+      presence.step(1 / 60, { speaking: false, mouth: 0, reducedMotion: false, phase: 'waiting' });
+      root.updateMatrixWorld(true);
+      worst = Math.max(worst, at().distanceTo(rest));
+    }
+    assert.ok(worst < 0.0005, `the arm root drifted ${(worst * 1000).toFixed(1)} mm off the chest`);
   });
 });

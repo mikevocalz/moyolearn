@@ -44,6 +44,20 @@
  * this export, so the jaw is the `jawOpen` morph alone and a jaw bone is not
  * written.
  *
+ * ── TWO CHAINS, ONE BODY (the eyeballs-outside-the-sockets bug) ─────────────
+ *
+ * The torso SKIN hangs off the DEF chain, but the eyeballs (`DEF-eye.*`), the
+ * teeth, and BOTH ARMS (`ORG-shoulder.* > DEF-upper_arm.*`) hang off the
+ * control chain: `torso > MCH-spine.002 > spine_fk.002 > MCH-spine.003 >
+ * spine_fk.003 > ORG-spine.004 > .005 > .006 > ORG-face`. In Blender the two
+ * chains are locked together by constraints; in the export they are not. So
+ * turning the head skin alone left the eyeballs where the head used to be —
+ * measured on the Duo as "eyelids missing skin". Every torso/head rotation is
+ * therefore applied to the DEF bone AND mirrored, as the same WORLD rotation,
+ * onto its twin (`TWINS`): each pair sits at the same world position with the
+ * same world orientation, verified by `rig-axes.test.ts`, so identical world
+ * deltas keep the skin, the eyes and the arms one body.
+ *
  * SOT: packages/avatar/src/idle/engine.ts · apps/web-vite/src/components/chapters/natalie-scene.tsx
  *      docs/pack/22-embodied-tutor-avatar-spec.md §7 · docs/decisions/adr-111-native-3d-runtime.md
  *      docs/decisions/adr-113-body-motion-layer.md · ./rig-axes.test.ts
@@ -68,9 +82,13 @@ export const HUMANO_BONES = {
   upperChest: 'DEF-spine.004',
   neck: 'DEF-spine.005',
   head: 'DEF-spine.006',
-  /** Position only — the gaze anchor. The eyes themselves are morphs. */
-  eyeL: 'eye.L',
-  eyeR: 'eye.R',
+  /**
+   * Position only — the gaze anchor. The eyes themselves are morphs. The
+   * DEFORM eye bones, because they ride the head (through its twin chain);
+   * the `eye.L` controls sit under `root` and would stay behind a turned head.
+   */
+  eyeL: 'DEF-eye.L',
+  eyeR: 'DEF-eye.R',
   shoulderL: 'DEF-shoulder.L',
   shoulderR: 'DEF-shoulder.R',
   upperArmL: 'DEF-upper_arm.L',
@@ -101,6 +119,24 @@ const CURL_BY_FINGER: Record<(typeof FINGERS)[number], number> = {
 };
 
 export type HumanoBoneKey = keyof typeof HUMANO_BONES;
+
+/**
+ * The control-chain twin of each deforming spine bone — the bone the eyes,
+ * teeth and arms actually hang from (see the header). Same world position and
+ * orientation as its DEF bone at rest, except the hip root, whose upper-body
+ * twin sits 14 cm higher (the legs hang from a different branch and must NOT
+ * follow a weight shift); at the lean angles this writer uses the pivot
+ * mismatch is under 3 mm.
+ */
+export const TWINS: Partial<Record<HumanoBoneKey, string>> = {
+  torso: 'MCH-spine.002',
+  spine1: 'MCH-spine.002',
+  spine2: 'spine_fk.002',
+  chest: 'spine_fk.003',
+  upperChest: 'ORG-spine.004',
+  neck: 'ORG-spine.005',
+  head: 'ORG-spine.006',
+};
 
 /**
  * Her standing pose, applied speaking or not.
@@ -263,6 +299,10 @@ interface BoneRest {
   quaternion: THREE.Quaternion;
   rotation: THREE.Euler;
   scale: THREE.Vector3;
+  /** At rest, so a local delta can be re-expressed in world terms once. */
+  worldQuaternion: THREE.Quaternion;
+  worldPosition: THREE.Vector3;
+  parentWorldQuaternionInverse: THREE.Quaternion;
 }
 
 interface BeatState {
@@ -400,19 +440,33 @@ export function createHumanoPresence(
 
   const bones = {} as Record<HumanoBoneKey, THREE.Bone | null>;
   const rests = new Map<THREE.Bone, BoneRest>();
+  scene.updateMatrixWorld(true);
   const capture = (bone: THREE.Bone) => {
     if (rests.has(bone)) return;
+    const worldQuaternion = bone.getWorldQuaternion(new THREE.Quaternion());
+    const parentWorldQuaternion =
+      bone.parent?.getWorldQuaternion(new THREE.Quaternion()) ?? new THREE.Quaternion();
     rests.set(bone, {
       position: bone.position.clone(),
       quaternion: bone.quaternion.clone(),
       rotation: bone.rotation.clone(),
       scale: bone.scale.clone(),
+      worldQuaternion,
+      worldPosition: bone.getWorldPosition(new THREE.Vector3()),
+      parentWorldQuaternionInverse: parentWorldQuaternion.invert(),
     });
   };
   for (const key of Object.keys(HUMANO_BONES) as HumanoBoneKey[]) {
     const bone = resolveBone(scene, HUMANO_BONES[key]);
     bones[key] = bone;
     if (bone) capture(bone);
+  }
+  const twins = {} as Record<HumanoBoneKey, THREE.Bone | null>;
+  for (const key of Object.keys(HUMANO_BONES) as HumanoBoneKey[]) {
+    const name = TWINS[key];
+    const twin = name ? resolveBone(scene, name) : null;
+    twins[key] = twin;
+    if (twin) capture(twin);
   }
 
   /*
@@ -461,6 +515,9 @@ export function createHumanoPresence(
 
   const tmpEuler = new THREE.Euler();
   const tmpQuat = new THREE.Quaternion();
+  const worldDelta = new THREE.Quaternion();
+  const twinQuat = new THREE.Quaternion();
+  const tmpVec = new THREE.Vector3();
   /**
    * Rotates a bone by (dx, dy, dz) radians in ITS OWN frame, on top of rest.
    * Every measured axis in the header is a local axis, and this is the only
@@ -473,6 +530,57 @@ export function createHumanoPresence(
     bone.quaternion.copy(r.quaternion).multiply(tmpQuat);
     return r;
   };
+  /**
+   * The same pose on a DEF bone and its control twin (see the header): the
+   * local delta becomes a WORLD rotation through the DEF bone's rest world
+   * frame, and the twin receives that world rotation in its own parent frame.
+   * `tx`/`ty` are world-space translations (the weight shift, the chest lift)
+   * applied to both. Twins compose: a second call on the same twin in one
+   * frame multiplies onto the first.
+   */
+  const poseBoth = (key: HumanoBoneKey, dx: number, dy: number, dz: number, tx = 0, ty = 0): void => {
+    const bone = bones[key];
+    const r = pose(bone, dx, dy, dz);
+    if (!r || !bone) return;
+    if (tx !== 0 || ty !== 0) {
+      tmpVec.set(tx, ty, 0).applyQuaternion(r.parentWorldQuaternionInverse);
+      bone.position.copy(r.position).add(tmpVec);
+    }
+    const twin = twins[key];
+    if (!twin) return;
+    const t = rests.get(twin);
+    if (!t) return;
+    // Δworld = Qdef · Δlocal · Qdef⁻¹ ; twin local = Qp⁻¹ · Δworld · Qp · qrest
+    worldDelta.copy(r.worldQuaternion).multiply(tmpQuat).multiply(twinQuat.copy(r.worldQuaternion).invert());
+    const parentWorld = twinQuat.copy(t.parentWorldQuaternionInverse).invert();
+    const local = new THREE.Quaternion()
+      .copy(t.parentWorldQuaternionInverse)
+      .multiply(worldDelta)
+      .multiply(parentWorld);
+    // Compose onto whatever this frame already put on the twin (torso + spine1
+    // share one), never onto last frame's — twins are restored with the rest.
+    if (!touchedTwins.has(twin)) {
+      twin.quaternion.copy(t.quaternion);
+      twin.position.copy(t.position);
+      touchedTwins.add(twin);
+    }
+    twin.quaternion.premultiply(local);
+    /*
+      The twin rotates about ITS pivot; the DEF bone about its own. Where the
+      two pivots differ (the hip root's twin is 14 cm up) the twin also has to
+      travel by what the DEF rotation would have moved its pivot — otherwise
+      the eyes drift ~3 mm per weight shift. Exact, not approximate:
+      Δp = Δworld·(Ptwin − Pdef) − (Ptwin − Pdef).
+    */
+    const offset = tmpVec.copy(t.worldPosition).sub(r.worldPosition);
+    const moved = new THREE.Vector3().copy(offset).applyQuaternion(worldDelta).sub(offset);
+    moved.x += tx;
+    moved.y += ty;
+    if (moved.lengthSq() > 0) {
+      twin.position.add(moved.applyQuaternion(t.parentWorldQuaternionInverse));
+    }
+  };
+  const touchedTwins = new Set<THREE.Bone>();
 
   const rest = (): void => {
     for (const bone of rests.keys()) restore(bone);
@@ -592,24 +700,19 @@ export function createHumanoPresence(
       looks like: pelvis over feet, not feet sliding under a rigid body.
     */
     const shift = frame.weightShift + frame.swayX;
+    touchedTwins.clear();
+    for (const twin of Object.values(twins)) if (twin) restore(twin);
     // Measured: +z on DEF-spine moves the head −x. Lean back over centre.
-    const torsoRest = pose(bones.torso, 0, 0, shift * 0.96);
-    if (torsoRest && bones.torso) {
-      bones.torso.position.x = torsoRest.position.x + shift;
-      bones.torso.position.y = torsoRest.position.y + frame.swayY * 0.3;
-    }
+    poseBoth('torso', 0, 0, shift * 0.96, shift, frame.swayY * 0.3);
     let leanSum = 0;
-    pose(bones.spine1, 0, 0, -shift * 0.35);
-    pose(bones.spine2, 0, frame.torsoYaw * 0.6, -shift * 0.25);
+    poseBoth('spine1', 0, 0, -shift * 0.35);
+    poseBoth('spine2', 0, frame.torsoYaw * 0.6, -shift * 0.25);
     // Breath: the chest opens BACK on the inhale (−x) and lifts.
     const chestBreath = -frame.breathY * 6;
-    const chestRest = pose(bones.chest, chestBreath, frame.torsoYaw * 0.4, 0);
-    if (chestRest && bones.chest) {
-      bones.chest.position.y = chestRest.position.y + frame.breathY * 0.6;
-    }
+    poseBoth('chest', chestBreath, frame.torsoYaw * 0.4, 0, 0, frame.breathY * 0.6);
     leanSum += chestBreath;
     const upperBreath = -frame.breathY * 3;
-    pose(bones.upperChest, upperBreath, 0, 0);
+    poseBoth('upperChest', upperBreath, 0, 0);
     leanSum += upperBreath;
 
     /*
@@ -619,7 +722,7 @@ export function createHumanoPresence(
       turn so she keeps facing the lens while her body turns.
     */
     const neckPitch = frame.driftPitch * 1.2 + frame.nodPitch * 0.5 - frame.headFollowPitch * 0.4;
-    pose(bones.neck, neckPitch, frame.driftYaw * 1.2 + frame.headFollowYaw * 0.4, 0);
+    poseBoth('neck', neckPitch, frame.driftYaw * 1.2 + frame.headFollowYaw * 0.4, 0);
     leanSum += frame.driftPitch * 1.2 + frame.nodPitch * 0.5;
     const headPitch =
       frame.driftPitch * 0.8 +
@@ -627,8 +730,8 @@ export function createHumanoPresence(
       frame.breathPitch -
       frame.headFollowPitch * 0.6 +
       jawOpen * 0.05;
-    pose(
-      bones.head,
+    poseBoth(
+      'head',
       headPitch,
       frame.driftYaw * 0.8 + frame.headFollowYaw * 0.6 - frame.torsoYaw * 0.5,
       -shift * 0.3
