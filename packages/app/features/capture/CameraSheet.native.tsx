@@ -21,6 +21,7 @@ import { useCallback, useState } from 'react';
 import { Image, Modal } from 'react-native';
 import { View } from '@acme/ui/primitives';
 import { GuidedFrame } from './guided-frame';
+import { stripExif } from './privacy-process';
 import { CropPreview } from './crop-preview';
 import { useCameraStore } from './camera.store.ts';
 import type { AgeBand } from './age-band';
@@ -72,7 +73,21 @@ export function CameraSheet({ ageBand = 'teen' }: { ageBand?: AgeBand }) {
         {shot === null ? (
           <GuidedFrame
             ageBand={ageBand}
-            onCapture={(photo) => setShot(photo.filePath)}
+            /*
+              EXIF OFF BEFORE ANYTHING ELSE SEES IT, exactly as `CaptureScreen`
+              does (doc 24 §3). A phone photograph carries GPS, and a child's
+              homework must not arrive at the crop screen — let alone at an
+              upload — still carrying where they live. The downscale that comes
+              with it is also what keeps a 12 MP capture out of the OCR.
+            */
+            onCapture={(photo) => {
+              void stripExif(photo.filePath).then(
+                (processed) => setShot(processed.uri),
+                // A failed strip is a failed capture, not a photo that ships
+                // with its metadata: the child retakes it.
+                () => close(null),
+              );
+            }}
             onBack={() => close(null)}
           />
         ) : (

@@ -65,7 +65,23 @@ export function GuidedFrame({ ageBand = 'teen', onCapture }: GuidedFrameProps) {
 
   const handleCapture = async () => {
     const photo = await photoOutput.capturePhotoToFile({}, {});
-    onCapture(photo);
+    /*
+      A URI, NOT A BARE PATH. VisionCamera returns a filesystem path
+      (`/data/user/0/.../VisionCamera_123.jpg`) and anything that treats its
+      argument as a URI reads a leading `/` as a RELATIVE one — `SolitoImage`
+      throws "add the nextJsURL prop to your SolitoProvider" on exactly that,
+      which is what the in-session camera hit the first time it was opened.
+
+      `CaptureScreen` never saw it only because `stripExif` normalises the path
+      as a side effect of re-encoding. Normalising here instead means every
+      consumer gets a usable value rather than the one that happened to run an
+      image manipulator first. expo-image-manipulator accepts `file://`, so the
+      EXIF strip is unaffected.
+    */
+    onCapture({
+      ...photo,
+      filePath: photo.filePath.startsWith('file://') ? photo.filePath : `file://${photo.filePath}`,
+    });
   };
 
   const buttonSize = buttonSizeForBand(ageBand);
