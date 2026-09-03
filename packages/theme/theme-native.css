@@ -302,9 +302,10 @@
   --spacing-target-teen: 48px;
   --spacing-target-child: 56px;
   --spacing-target-young: 72px;
-  --spacing-nav-rail: 96px;
+  --spacing-nav-rail: 72px;
   --spacing-nav-raised: 64px;
-  --spacing-nav-raise: 38px;
+  --spacing-nav-raise: 48px;
+  --spacing-nav-indicator: 40px;
 }
 
 /* Semantic colors. Uniwind resolves themes from these @variant blocks and

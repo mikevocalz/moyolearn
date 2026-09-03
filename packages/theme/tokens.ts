@@ -885,7 +885,15 @@ export const targets = {
  * in the scale.
  */
 export const navChrome = {
-  rail: '96px',
+  /*
+    72, the product owner's call. Material 2's navigation rail was 72dp and
+    Material 3's collapsed rail is 96 (`NavigationRailCollapsedTokens
+    .ContainerWidth`; 80 is its narrow variant) — so this is a deliberate step
+    BELOW the current spec, taken on the device. It still clears every touch
+    target it carries: the widest item is the 64 raised slab, which fits with
+    4 a side.
+  */
+  rail: '72px',
   raised: '64px',
   /*
     How far the raised slab breaks ABOVE the bar's top edge. 38 of a 64 slab
@@ -900,7 +908,14 @@ export const navChrome = {
     either sits in the bar or floats free of it — so this is the product's own
     call, taken on the device at both widths.
   */
-  raise: '38px',
+  raise: '48px',
+  /*
+    The selected-tab indicator, SQUARE (aspect-ratio 1) in both the bar and the
+    rail — the product owner's call, and consistent with the radius law that
+    already bans pill-ifying the language. 40 comfortably contains the 24dp
+    glyph and stays inside the 72 rail with room either side.
+  */
+  indicator: '40px',
 } as const;
 
 // ---- reading comfort (doc 08 §3.3) ------------------------------------------

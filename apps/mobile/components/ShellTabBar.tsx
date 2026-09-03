@@ -377,7 +377,7 @@ export function ShellTabBar({
             96 rail and overhang a three-tab K–2 bottom bar.
           */}
           <View
-            className={`items-center justify-center rounded-control px-inset-tight py-1 ${
+            className={`aspect-square h-nav-indicator items-center justify-center rounded-control ${
               focused ? 'bg-nav-selected' : 'hover:bg-surface-sunken'
             }`}
           >
