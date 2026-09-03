@@ -209,77 +209,88 @@ export function TutorPresence({
 
   const rail = (
     /*
-      TWO ROWS, not one, and the second one is why.
+      ONE ROW, and the assurance is stacked WITH the identity rather than under
+      the whole card. That is the alignment fix, and the previous shape is why
+      it was needed.
 
-      Everything first sat on a single row — mark, name, status, assurance,
-      action. In the two-pane layout the conversation column is 380px (doc 23
-      §5), and at that width the assurance wrapped INSIDE the middle column and
-      shoved the action against the edge: the reassurance and the control were
-      fighting each other for the same 120px. The assurance is a sentence, so it
-      gets the full width underneath, and the identity row keeps its shape at
-      every size the session is drawn at.
+      The card used to be two stacked children: an identity row (mark · name ·
+      status · action) and then the assurance sentence full-width beneath it. The
+      action therefore centred against the identity row only, while the card grew
+      taller underneath it — so on any band that gets the assurance line, the
+      "Show Natalie" control sat visibly above the middle of the row it belongs
+      to. Nesting the sentence inside the identity COLUMN puts the mark, the
+      words and the control in one `items-center` row, so the control is level
+      with the name beside it whether or not the sentence is there.
+
+      The sentence still gets its own line (it is a sentence, and at the 380px
+      conversation width doc 23 §5 specifies it would otherwise fight the control
+      for the same 120px) — it just no longer sits outside the row that has to
+      centre against it.
     */
     <View
-      className={`w-full gap-element rounded-card border-2 border-border bg-surface-sunken px-4 py-2 ${RAIL_TARGET[size]} justify-center`}>
-      <View className="w-full flex-row items-center gap-element">
-        {/*
-          Her mark survives the collapse — doc 01 §6.1's "one continuous identity
-          from tab-bar icon → session stage". It is a STATIC mark, not the
-          renderer: `audio-only` is defined as no 2D or 3D avatar at all (spec §1),
-          and a revealed Natalie already has a face two rows up, so drawing it
-          again here would be the same person twice.
-        */}
-        {!revealed && tutorPresence !== 'audio-only' ? <Avatar name={name} size="sm" /> : null}
-        {/*
-          One live region for the status. Announced politely, because "Speaking"
-          arriving over the top of her own speech is the announcement
-          interrupting the thing it announces.
-        */}
-        <View className="flex-1 flex-row flex-wrap items-center gap-element" aria-live="polite">
+      className={`w-full flex-row items-center gap-element rounded-card border-2 border-border bg-surface-sunken px-4 py-2 ${RAIL_TARGET[size]}`}>
+      {/*
+        Her mark survives the collapse — doc 01 §6.1's "one continuous identity
+        from tab-bar icon → session stage". It is a STATIC mark, not the
+        renderer: `audio-only` is defined as no 2D or 3D avatar at all (spec §1),
+        and a revealed Natalie already has a face two rows up, so drawing it
+        again here would be the same person twice.
+      */}
+      {!revealed && tutorPresence !== 'audio-only' ? <Avatar name={name} size="sm" /> : null}
+      {/*
+        One live region for the status. Announced politely, because "Speaking"
+        arriving over the top of her own speech is the announcement interrupting
+        the thing it announces.
+      */}
+      <View className="flex-1 gap-element" aria-live="polite">
+        <View className="flex-row flex-wrap items-center gap-element">
           <Text className="font-sans text-label font-semibold text-text">{name}</Text>
           <Badge label={status} tone={tone} />
         </View>
-        {onToggleReveal ? (
-          /* `shrink-0`: the action is the one thing on this row that must never
-             be squeezed — it is the way back to her. */
-          <View className="shrink-0 flex-row items-center gap-element">
-            <Text className="font-sans text-label text-text-muted">{actionLabel}</Text>
-            <Chevron className="h-5 w-5 text-text-muted" />
-          </View>
+        {assurance ? (
+          <Text className="w-full font-sans text-caption text-text-muted">{assurance}</Text>
         ) : null}
       </View>
-      {assurance ? (
-        <Text className="w-full font-sans text-caption text-text-muted">{assurance}</Text>
+      {onToggleReveal ? (
+        /* `shrink-0`: the action is the one thing on this row that must never
+           be squeezed — it is the way back to her. */
+        <View className="shrink-0 flex-row items-center gap-element">
+          <Text className="font-sans text-label text-text-muted">{actionLabel}</Text>
+          <Chevron className="h-5 w-5 text-text-muted" />
+        </View>
       ) : null}
     </View>
   );
 
+  const body = (
+    /*
+      SHE IS ALWAYS MOUNTED, and always in this one place. Moving her between
+      two slots would remount the renderer on every toggle — the stage
+      controller, the face bus and the viseme cursor are all held in refs, and a
+      remount throws them away mid-sentence. Frozen, the subtree renders nothing
+      and takes no height, so a collapsed session pays no layout for her either.
+    */
+    <MotionView
+      className="w-full items-center"
+      initial={{
+        opacity: mountedRevealed ? 1 : 0,
+        scale: mountedRevealed ? 1 : REST_SCALE,
+        y: mountedRevealed ? 0 : REST_Y,
+      }}
+      animate={{
+        opacity: revealed ? 1 : 0,
+        scale: revealed ? 1 : REST_SCALE,
+        y: revealed ? 0 : REST_Y,
+      }}
+      transition={transition}
+      aria-hidden={!revealed}>
+      <Freeze freeze={frozen}>{avatar}</Freeze>
+    </MotionView>
+  );
+
   return (
     <View className={`w-full gap-element ${className ?? ''}`}>
-      {/*
-        SHE IS ALWAYS MOUNTED, and always in this one place. Moving her between
-        two slots would remount the renderer on every toggle — the stage
-        controller, the face bus and the viseme cursor are all held in refs, and
-        a remount throws them away mid-sentence. Frozen, the subtree renders
-        nothing and takes no height, so a collapsed session pays no layout for
-        her either.
-      */}
-      <MotionView
-        className="w-full items-center"
-        initial={{
-          opacity: mountedRevealed ? 1 : 0,
-          scale: mountedRevealed ? 1 : REST_SCALE,
-          y: mountedRevealed ? 0 : REST_Y,
-        }}
-        animate={{
-          opacity: revealed ? 1 : 0,
-          scale: revealed ? 1 : REST_SCALE,
-          y: revealed ? 0 : REST_Y,
-        }}
-        transition={transition}
-        aria-hidden={!revealed}>
-        <Freeze freeze={frozen}>{avatar}</Freeze>
-      </MotionView>
+      {body}
 
       {onToggleReveal ? (
         /*

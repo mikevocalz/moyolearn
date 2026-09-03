@@ -14,6 +14,8 @@ export interface VirtualListProps<T> {
   /** Container classes — must size the container (e.g. "h-96" or "flex-1"). */
   className?: string;
   onEndReached?: () => void;
+  /** Default true, matching the platform. */
+  showsVerticalScrollIndicator?: boolean;
 }
 
 export function VirtualList<T>({
@@ -23,6 +25,7 @@ export function VirtualList<T>({
   estimatedItemSize = 56,
   className,
   onEndReached,
+  showsVerticalScrollIndicator = true,
 }: VirtualListProps<T>) {
   return (
     <View className={className}>
@@ -32,6 +35,7 @@ export function VirtualList<T>({
         keyExtractor={keyExtractor}
         estimatedItemSize={estimatedItemSize}
         onEndReached={onEndReached}
+        showsVerticalScrollIndicator={showsVerticalScrollIndicator}
         recycleItems
         style={{ flex: 1 }}
       />

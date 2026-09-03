@@ -10,7 +10,19 @@ export type MessageFrom = 'tutor' | 'child';
 
 export interface MessageBubbleProps {
   from: MessageFrom;
-  children: ReactNode;
+  /**
+   * Non-text content carried BY this turn — the problem being worked, the
+   * photo the learner snapped. It renders above the words, inside the same
+   * bubble, because the work is part of the conversation rather than a board
+   * beside it: a child reading down the thread meets the thing they are stuck
+   * on where it was raised, not in a second place they have to look across to.
+   *
+   * A separate slot rather than richer `children` because the bubble sets its
+   * turn's typography on one `Text`; a `View` nested inside that `Text` is not
+   * a legal tree on native.
+   */
+  media?: ReactNode;
+  children?: ReactNode;
   className?: string;
 }
 
@@ -47,7 +59,7 @@ const SURFACE: Record<MessageFrom, string> = {
   child: 'rounded-control border-2 border-strong bg-surface-raised p-inset-tight',
 };
 
-export function MessageBubble({ from, children, className }: MessageBubbleProps) {
+export function MessageBubble({ from, media, children, className }: MessageBubbleProps) {
   return (
     <View
       /*
@@ -67,7 +79,11 @@ export function MessageBubble({ from, children, className }: MessageBubbleProps)
         missed because it lives in a different component.
       */
       className={`${ALIGN[from]} max-w-content-prose gap-stack ${SURFACE[from]} ${className ?? ''}`}>
-      <Text className={TEXT[from]}>{children}</Text>
+      {media}
+      {/* No empty `Text` when a turn is carrying only work: an empty text node
+          still takes a line box and its own `gap-stack`, which reads as the
+          bubble having lost its message. */}
+      {children === undefined ? null : <Text className={TEXT[from]}>{children}</Text>}
     </View>
   );
 }

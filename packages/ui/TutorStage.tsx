@@ -6,16 +6,28 @@
 // (Pi — secondary affordances are small icon rows under the message, never a filled button beside the
 // composer) · https://mobbin.com/screens/9c13ada9-0c95-45c8-9932-d20010b96e14 (ChatGPT — one minimal
 // header, actions as icons) · https://mobbin.com/screens/76e16697-0e20-4bfc-8162-e93d6f1fc8ff
-// (Mistral Le Chat — conversation column, work canvas beside it, trailing panel dismissible from its
-// own chrome) · https://mobbin.com/screens/e1f475cd-9340-4b6d-98c3-9ad852993175 (Fibery — the third
-// column is the assistant and it closes from a control in the bar). Structure only: the reading
-// measure, the composer position, and the rule that nothing sits beside the conversation unless it
-// has content.
-// SOT: docs/pack/23-tutorstage-handoff.md §3 · §5 · docs/design/tutor-stage-third-column.md
-// SOT-KEYWORDS: tutorstage s9 tutor session state union hot dial learner three column stage pane
+// (Mistral Le Chat — the material under discussion rides INSIDE the turn that raised it, in the
+// thread, not on a board beside it) · https://mobbin.com/screens/6a3715d2-6cda-4f77-ad80-99787a5fde37
+// (WhatsApp web — attachments are messages; the bar carries who you are talking to and their live
+// status). Structure only: the reading measure, the composer position, and the rule that nothing
+// sits beside the conversation unless it has content.
+//
+// THREAD-FIRST (2026-09-03). Two things moved into the conversation and the second pane went away.
+//   · The work — the problem, the photo — was a second pane. It is now content of a TURN
+//     (`MessageBubble`'s `media` slot), so the session reads as one conversation instead of a
+//     conversation plus a board. Doc 23 §5's second column existed to hold the work; with the work
+//     in the thread it has nothing to hold, so it is gone rather than left standing empty.
+//   · The LIVE turn was a fixed band between the thread and the composer — permanent height, and the
+//     newest words on screen were the one thing a child could not scroll to. It is now the last row
+//     of the same list (`TutorThread`'s `live` footer), scroll indicator off, list pinned to the end.
+//   · Natalie stays exactly where she was, at the head of the spine, drawn by `TutorPresence`.
+//   Width therefore buys ONE thing: a centred, measure-capped conversation. There is no second
+//   column and no third, because there is no longer a second thing to put in one.
+//   See docs/design/tutor-session-thread-first.md.
+// SOT: docs/pack/23-tutorstage-handoff.md §3 · §5 · docs/design/tutor-session-thread-first.md
+// SOT-KEYWORDS: tutorstage s9 tutor session state union hot dial learner thread first live turn work in turn
 
 import { useCallback, useState } from 'react';
-import { useWindowSizeClass } from './adaptive-panes/use-window-size-class';
 import { Dial } from './Dial';
 import { View, Text } from './primitives';
 import { MessageBubble } from './MessageBubble';
@@ -28,8 +40,6 @@ import { SessionToolbar } from './SessionToolbar';
 import { Badge } from './Badge';
 import { Button } from './Button';
 import { TutorPresence } from './TutorPresence';
-import { LearningCanvas } from './LearningCanvas';
-import { useSizeClass } from './use-size-class';
 import type { ResolvedTutorPresence, TutorPresencePreference } from './tutor-view';
 
 /** A spoken or written turn from the tutor. */
@@ -137,9 +147,14 @@ export interface TutorStageProps {
   /** Re-attempt a turn that never reached the tutor. */
   onRetry?: () => void;
   /**
-   * Worked-out content for the side canvas (doc 23 §5). Omit it and the
-   * conversation takes the whole screen — an empty workspace is not a
-   * workspace, it is a large empty box competing with the thing that matters.
+   * The work this session is about — the problem, and the photo the learner
+   * took of it. It renders INSIDE the conversation, as the most recent thing
+   * put on the table, rather than on a board beside it.
+   *
+   * The prop keeps its name because the screen already passes it and the
+   * content is unchanged (`TutorWorkCanvas`); what changed is where the stage
+   * puts it. Omit it and nothing is drawn — an absent problem is not an empty
+   * card, it is simply a turn that has no work attached yet.
    */
   canvas?: React.ReactNode;
   className?: string;
@@ -180,6 +195,17 @@ function statusTone(state: TutorStageState): React.ComponentProps<typeof Badge>[
 
 interface StateBodyProps {
   state: TutorStageState;
+  /**
+   * The work, riding inside the live turn.
+   *
+   * Every state that speaks carries it in its own bubble, so the problem sits
+   * with the sentence about the problem. States that do not speak — the
+   * greeting, the break, the ending — get it as a turn of its own directly
+   * above, because the work is still what the session is about even when
+   * nobody is mid-sentence, and a child scrolling back must find it in the
+   * thread rather than in a place the thread does not go.
+   */
+  work?: React.ReactNode;
   childName?: string;
   questionNumber?: number;
   buttonSize?: 'sm' | 'md' | 'lg' | 'xl';
@@ -192,6 +218,7 @@ interface StateBodyProps {
 
 function StateBody({
   state,
+  work,
   childName,
   questionNumber,
   buttonSize = 'md',
@@ -201,16 +228,25 @@ function StateBody({
   onBackToPlan,
   onRetry,
 }: StateBodyProps) {
+  /*
+    The work as a turn of its own, for the states with no bubble to ride in.
+    A media-only `MessageBubble` — Natalie's surface, her side of the thread,
+    no words — which is exactly what "here is what we're working on" is when
+    nobody is speaking.
+  */
+  const workTurn = work === undefined ? null : <MessageBubble from="tutor" media={work} />;
+
   switch (state.kind) {
     case 'presence':
       return (
         <View className="w-full items-center gap-stack">
+          {workTurn}
           {/*
               NO AVATAR HERE ANY MORE. She used to be drawn in this branch and
               only this branch, so the opening turn — which fires on arrival —
               took her off the screen for the rest of the session. Presence is
-              not one state of the conversation; `TutorPresence` above the
-              thread draws her in every state, including this one.
+              not one state of the conversation; `TutorPresence` draws her in
+              every state, including this one, at the head of the spine.
           */}
           <Text className="max-w-content-prose text-center font-sans text-body text-text">
             {/*
@@ -233,16 +269,23 @@ function StateBody({
       );
     case 'speaking':
       return (
-        <MessageBubble from="tutor">
+        /* The work rides INSIDE her turn: she is talking about this problem,
+           so it is in the bubble with the sentence rather than beside it. */
+        <MessageBubble from="tutor" media={work}>
           <StreamedText instant={state.utterance.restored}>{state.utterance.text}</StreamedText>
         </MessageBubble>
       );
     case 'thinking':
-      return <Text className="font-sans text-body text-text-muted">Natalie is thinking</Text>;
+      return (
+        <View className="w-full gap-stack">
+          {workTurn}
+          <Text className="font-sans text-body text-text-muted">Natalie is thinking</Text>
+        </View>
+      );
     case 'hint':
       return (
         <View className="w-full gap-stack">
-          <MessageBubble from="tutor">
+          <MessageBubble from="tutor" media={work}>
             <StreamedText>{state.step.message}</StreamedText>
           </MessageBubble>
           <Text className="font-mono text-data text-text-muted">
@@ -269,7 +312,7 @@ function StateBody({
     case 'diagnosis':
       return (
         <View className="w-full gap-stack">
-          <MessageBubble from="tutor">
+          <MessageBubble from="tutor" media={work}>
             <StreamedText>{state.message}</StreamedText>
           </MessageBubble>
           <Badge label={state.name} tone="accent" />
@@ -285,14 +328,18 @@ function StateBody({
       );
     case 'listening':
       return (
-        <View className="flex-row items-center gap-element">
-          <View className="h-3 w-3 rounded-full bg-danger" />
-          <Text className="font-sans text-body text-text-muted">Listening</Text>
+        <View className="w-full gap-stack">
+          {workTurn}
+          <View className="flex-row items-center gap-element">
+            <View className="h-3 w-3 rounded-full bg-danger" />
+            <Text className="font-sans text-body text-text-muted">Listening</Text>
+          </View>
         </View>
       );
     case 'paused':
       return (
         <View className="w-full gap-stack">
+          {workTurn}
           <Text className="font-sans text-body text-text">
             Natalie is taking a break. Nothing you did — she&apos;ll be back in a moment.
           </Text>
@@ -389,29 +436,6 @@ export function TutorStage({
   className,
 }: TutorStageProps) {
   const [draft, setDraft] = useState('');
-  const sizeClass = useSizeClass();
-  /*
-    THE SECOND WIDTH SYSTEM, read here on purpose.
-
-    `useSizeClass()` is the binary 768 line this screen has always held: one
-    column or two. The four M3 bands (`packages/ui/adaptive-panes/constants.ts`)
-    answer a different question — how many panes TILE — and the third column
-    below is a tiling decision, so it takes the band. The two are documented as
-    deliberately separate in that file and are not merged here; this screen just
-    happens to be the first that needs both answers.
-  */
-  const windowClass = useWindowSizeClass();
-  /*
-    The workspace is COLLAPSIBLE, and its control is in the header (see
-    `SessionToolbar`). Local state rather than a store: which panes a learner
-    has open right now is layout, not session data — nothing about it should
-    survive a session or reach the tutor. It resets with the screen, which is
-    the correct lifetime for "I pushed the work aside for a second".
-  */
-  const [workspaceHidden, setWorkspaceHidden] = useState(false);
-  const toggleWorkspace = useCallback(() => {
-    setWorkspaceHidden((hidden) => !hidden);
-  }, []);
 
   /*
     `auto` is a request, not a presentation. It is normally answered at the
@@ -454,60 +478,6 @@ export function TutorStage({
   // question, and `canSend` already answers it.
   const inputDisabled = state.kind === 'ended' || state.kind === 'crisis';
 
-  // Doc 23 §5's two-pane rule, with the header's collapse control folded in:
-  // the split needs a regular-width window AND real work to put in the second
-  // pane AND the learner not having pushed that pane away.
-  const workspacePane = sizeClass === 'regular' && canvas !== undefined && !workspaceHidden;
-
-  /*
-    THE THIRD COLUMN — Natalie's own pane, and the narrowest gate in this file.
-
-    It requires ALL of: the `large` band (≥1200dp — doc 02 §2.1's own 3-pane
-    class), a workspace already earning the second pane, and the learner
-    actually having her revealed. Anything less and she stays where she has
-    always been: the top of the conversation spine.
-
-    Why so narrow, in one line: doc 37 §3.3 and ADR-107 ban split compositions
-    on learner surfaces, and doc 23 §5 specifies two columns for this screen.
-    A third column is a SPEC DELTA, filed in
-    `docs/design/tutor-stage-third-column.md`, and it is gated at a width no
-    phone and no foldable in the current device matrix reports — an unfolded
-    Surface Duo measures ~1080dp, which is `expanded`, so the demo device runs
-    exactly the two-pane layout it ran before this existed.
-
-    Known constraint, written down rather than discovered later: moving her
-    between the spine and this column is a REMOUNT, because it is a different
-    branch of the tree. That costs nothing today (`TutorAvatar` renders a static
-    mark), but a live 3D renderer must not be remounted mid-session — see
-    `audit/realtime/ADR-avatar-identity.md`, which makes a single mount site a
-    precondition of the 3D swap rather than a later clean-up.
-  */
-  const stagePane = workspacePane && windowClass === 'large' && presence === 'visible';
-
-  const presenceBlock = (
-    /*
-      NATALIE, IN EVERY STATE, AND ONLY EVER IN ONE PLACE ON SCREEN.
-
-      The status chip used to float in the spine on its own while she was drawn
-      — or not drawn — somewhere below by one branch of the state switch. Status
-      belongs to the person whose status it is: one element carries her mark,
-      her name and what she is doing, so a child who has collapsed her still has
-      a visible owner for the voice they can hear. That element is rendered once
-      and placed either at the head of the spine or in the stage column, never
-      both.
-    */
-    <TutorPresence
-      name={tutorName}
-      status={statusFor(state)}
-      tone={statusTone(state)}
-      tutorPresence={presence}
-      avatar={avatar}
-      onToggleReveal={handleToggleReveal}
-      assurance={presenceAssurance}
-      size={buttonSize}
-    />
-  );
-
   const stageBody = (
     /*
       Extra room BELOW the composer, not just the container's inset.
@@ -529,28 +499,54 @@ export function TutorStage({
       */
       className="w-full flex-1 gap-stack px-inset py-1"
     >
-      {/* Her place in the spine — unless the stage column has taken her. */}
-      {stagePane ? null : presenceBlock}
-      {/* Top-aligned, not centred. A turn grows downward as it streams, and a
-          vertically centred block re-centres on every arriving sentence — the
-          text slides under the reader while they are reading it. */}
-      {/* History above, live turn below. A sent photo stays where the child
-          put it instead of vanishing when Natalie replies. */}
-      {messages && messages.length > 0 ? <TutorThread messages={messages} /> : null}
+      {/*
+        NATALIE, IN EVERY STATE, AT THE TOP OF THE SPINE.
 
-      <View className={messages && messages.length > 0 ? undefined : 'flex-1'}>
-        <StateBody
-          state={state}
-          childName={childName}
-          questionNumber={questionNumber}
-          buttonSize={buttonSize}
-          onTryIt={onTryIt}
-          onNextHint={onNextHint}
-          onPracticeOnOwn={onPracticeOnOwn}
-          onBackToPlan={onBackToPlan}
-          onRetry={onRetry}
-        />
-      </View>
+        The status chip used to float here on its own while she was drawn — or
+        not drawn — somewhere below by one branch of the state switch. Status
+        belongs to the person whose status it is: one element carries her mark,
+        her name and what she is doing, so a child who has collapsed her still
+        has a visible owner for the voice they can hear.
+      */}
+      <TutorPresence
+        name={tutorName}
+        status={statusFor(state)}
+        tone={statusTone(state)}
+        tutorPresence={presence}
+        avatar={avatar}
+        onToggleReveal={handleToggleReveal}
+        assurance={presenceAssurance}
+        size={buttonSize}
+      />
+      {/*
+        ONE LIST. History and the live turn used to be two siblings — a
+        virtualised thread, then a fixed band holding whatever Natalie was
+        saying this second. That band cost the conversation a permanent strip of
+        height and, worse, put the newest words on screen outside the scroll, so
+        a child could scroll every sentence except the one they were reading.
+
+        The live turn is now the list's last row: a message that happens to be
+        animating. The thread renders even with no history behind it, because a
+        session that has only just opened still has a turn to show and it
+        belongs in the same place every later turn will appear.
+      */}
+      <TutorThread
+        messages={messages ?? []}
+        live={
+          <StateBody
+            work={canvas}
+            state={state}
+            childName={childName}
+            questionNumber={questionNumber}
+            buttonSize={buttonSize}
+            onTryIt={onTryIt}
+            onNextHint={onNextHint}
+            onPracticeOnOwn={onPracticeOnOwn}
+            onBackToPlan={onBackToPlan}
+            onRetry={onRetry}
+          />
+        }
+      />
       <Composer
         value={draft}
         onChangeText={setDraft}
@@ -571,20 +567,14 @@ export function TutorStage({
     </View>
   );
 
-  // Doc 23 §5 sizes the tutor pane at 380px for the case it describes: a
-  // conversation running BESIDE a worked canvas. With no canvas that split put a
-  // 380px column of content next to a ~1000px empty bordered box, which read as
-  // the empty box being the subject of the screen. So the canvas is opt-in, and
-  // without one the conversation gets the screen and a readable measure cap.
-  //
-  // For a long time NOTHING passed `canvas`, so this was permanently false and
-  // the split view doc 23 §5 specifies never rendered — a tablet or an unfolded
-  // foldable ran the session as one narrow column with the rest of the window
-  // empty. The condition was right; the second pane had no content. It has one
-  // now: `TutorWorkCanvas` puts the learner's OWN problem and the photo they
-  // snapped in the right-hand pane, which is what §5 means by "equation /
-  // whiteboard" and the only thing that earns the width on a child's surface.
-  // (`workspacePane` and `stagePane` above are the resolved answers.)
+  // Doc 23 §5's second column held the worked canvas. The work is a turn now,
+  // so that column has nothing to hold and is gone rather than left standing
+  // empty — the same reasoning that kept it opt-in before (an empty bordered
+  // box beside a 380pt thread reads as the box being the subject of the screen)
+  // applied once the box had no contents at all. Width therefore buys the
+  // conversation a centred, measure-capped column and nothing else; see
+  // docs/design/tutor-session-thread-first.md for why there is no second pane
+  // and no third.
 
   return (
     /*
@@ -596,42 +586,13 @@ export function TutorStage({
     */
     <Dial temperature="hot" className="flex-1">
       <View className={`flex-1 bg-surface gap-stack ${className ?? ''}`}>
-        {/* No presence control here any more — it moved onto the rail under
-            Natalie, where the thing it controls actually is. */}
         <SessionToolbar
           title={title}
           captionsEnabled={captionsEnabled}
           onBack={onBack}
           onToggleCaptions={onToggleCaptions}
-          workspaceVisible={workspacePane}
-          /* The control exists only where a pane exists to collapse: regular
-             width with real work in it. At phone width there is no second pane,
-             so there is nothing for the button to mean. */
-          onToggleWorkspace={
-            sizeClass === 'regular' && canvas !== undefined ? toggleWorkspace : undefined
-          }
         />
-        {workspacePane ? (
-          <View className="flex-1 flex-row gap-group p-inset">
-            <View className="w-pane-tutor">{stageBody}</View>
-            <LearningCanvas className="flex-1">{canvas}</LearningCanvas>
-            {stagePane ? (
-              /*
-                THE STAGE COLUMN. She is centred in it rather than pinned to the
-                top: this pane holds one person and her status, and a figure
-                hugging the ceiling of a 900px column reads as a leftover
-                element rather than a placed one. `justify-center` is the whole
-                treatment — no border, no card. Doc 23 §3.1: the mark carries
-                the ink border and no slab shadow, because border + shadow +
-                yellow is the primary-button treatment and the one thing here
-                that is not a control must not wear it.
-              */
-              <View className="w-pane-tutor-stage justify-center">{presenceBlock}</View>
-            ) : null}
-          </View>
-        ) : (
-          <View className="mx-auto w-full max-w-content-prose flex-1">{stageBody}</View>
-        )}
+        <View className="mx-auto w-full max-w-content-prose flex-1">{stageBody}</View>
       </View>
     </Dial>
   );

@@ -32,6 +32,20 @@ import type { TutorAttachment } from './tutor-attachment.ts';
 const isExpired = (a: TutorAttachment): boolean =>
   a.expiresAt !== undefined && Date.parse(a.expiresAt) <= Date.now();
 
+/**
+ * One row of the thread: a stored turn, or the turn currently arriving.
+ *
+ * A union rather than a `TutorMessage` with an `isLive` flag — the live turn
+ * has no id, no role and no attachments, and doc 10 §2's rule is that an
+ * impossible combination should not be representable.
+ */
+type ThreadRow =
+  | { kind: 'message'; message: TutorMessage }
+  | { kind: 'live'; node: React.ReactNode };
+
+/** Stable key for the single live row. It is never more than one. */
+const LIVE_ROW_KEY = 'live-turn';
+
 export interface TutorThreadProps {
   messages: readonly TutorMessage[];
   /**
@@ -45,6 +59,28 @@ export interface TutorThreadProps {
   /** Fetch the previous page. The thread shows a spinner-free label while it runs. */
   onLoadOlder?: () => void;
   loadingOlder?: boolean;
+  /**
+   * The turn currently arriving — the newest row of this list, not a band
+   * beneath it.
+   *
+   * It used to render outside the scroll view, between the thread and the
+   * composer, which cost the conversation a permanent strip of height and made
+   * the one thing a child most wants to re-read the one thing they could not
+   * scroll to. A live turn is a message that happens to be animating; history
+   * and live turn get one place and one treatment.
+   *
+   * It is a real ROW, not `ListFooterComponent`. The footer was the obvious
+   * shape and it was measured wrong on device: LegendList clamped the list's
+   * scrollable range to the rows it knew about, so with a tall live turn in the
+   * footer the conversation could not be scrolled back at all — the history was
+   * on screen and unreachable. A row the list owns is a row the list can size.
+   *
+   * It does not become a `TutorMessage` to get there: the live turn is a state
+   * of the session (a hint with its ladder, a diagnosis with its badge, an
+   * ending with its summary), so the list's data is a small union and the live
+   * row carries no invented id.
+   */
+  live?: React.ReactNode;
   className?: string;
 }
 
@@ -53,6 +89,7 @@ export function TutorThread({
   hasOlder,
   onLoadOlder,
   loadingOlder,
+  live,
   className,
 }: TutorThreadProps) {
   /*
@@ -60,12 +97,29 @@ export function TutorThread({
     across turns — a child comparing problem 1 with problem 3 should not have to
     close and reopen. Scoped per instance, not module-level.
   */
+  const rows: ThreadRow[] = [
+    ...messages.map((message) => ({ kind: 'message' as const, message })),
+    ...(live === undefined ? [] : [{ kind: 'live' as const, node: live }]),
+  ];
+
   const images = messages.flatMap((m) => (m.attachments ?? []).filter((a) => a.kind === 'image'));
   const imageUris = images.map((a) => a.previewUri ?? a.uri);
   const indexById = new Map(images.map((a, i) => [a.id, i]));
 
   return (
-    <View className={`flex-1 ${className ?? ''}`}>
+    /*
+      `overflow-hidden`, and it is load-bearing in two ways — both measured on
+      device (Surface Duo, 1080dp), neither obvious from the web build.
+
+      An Android `View` does not clip, so without it the virtualised list paints
+      past the box flex gave it: before the live turn moved into the list, that
+      spill drew straight over the turn below, two messages on the same pixels.
+      Removing the clip to see whether that was still true also removed the
+      thread's scroll entirely — the conversation rendered at full content
+      height with no viewport to move within, so history was on screen and
+      unreachable. Clipping is what gives this list a viewport on this screen.
+    */
+    <View className={`flex-1 overflow-hidden ${className ?? ''}`}>
       {/*
         Pagination at the TOP, where older turns are, and as an explicit control
         rather than an invisible scroll trigger.
@@ -90,15 +144,37 @@ export function TutorThread({
       ) : null}
 
       <VirtualList
-        data={messages as TutorMessage[]}
-        keyExtractor={(message) => message.id}
+        data={rows}
+        keyExtractor={(row) => (row.kind === 'live' ? LIVE_ROW_KEY : row.message.id)}
         estimatedItemSize={96}
         className="flex-1"
+        /*
+          No scrollbar. A chat's own bubbles already say how far through it you
+          are, and on a learner surface a rail that appears and fades on every
+          arriving token is motion nobody asked for (doc 02 A.5 bans ambient
+          motion on a child's screen).
+        */
+        showsVerticalScrollIndicator={false}
+        /*
+          NO auto-follow, and it is a decision rather than an omission. Pinning
+          the list to its tail was tried and taken back out: `rows` is rebuilt
+          on every render (the live row carries a fresh element by definition),
+          so LegendList saw a data change on every frame of a streaming turn and
+          scrolled to the bottom on each one — the conversation could not be
+          scrolled back at all while she was speaking, which is exactly when a
+          child wants to re-read it. Being able to scroll wins over landing at
+          the end; the list keeps its own position, and the newest turn is where
+          the reader already is.
+        */
         renderItem={({ item }) => (
           // Spacing per row rather than a container gap: VirtualList recycles,
           // so a gap on the container would not survive a recycled row.
           <View className="pb-stack">
-            <Bubble message={item} urls={imageUris} indexById={indexById} />
+            {item.kind === 'live' ? (
+              item.node
+            ) : (
+              <Bubble message={item.message} urls={imageUris} indexById={indexById} />
+            )}
           </View>
         )}
       />

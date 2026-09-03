@@ -75,7 +75,6 @@
   "packages/ui/SearchBar.tsx",
   "packages/ui/SegmentedControl.tsx",
   "packages/ui/Select.tsx",
-  "packages/ui/SessionToolbar.tsx",
   "packages/ui/Slider.tsx",
   "packages/ui/StatCard.tsx",
   "packages/ui/Switch.tsx",

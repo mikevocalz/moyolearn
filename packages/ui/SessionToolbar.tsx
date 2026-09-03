@@ -1,7 +1,33 @@
 'use client';
 // SessionToolbar — header for the S9 tutor session surface.
-// SOT: docs/pack/23-tutorstage-handoff.md §4.1 · §8
-// SOT-KEYWORDS: sessiontoolbar header tutor back captions tutor view
+//
+// ONE HEADER DIALECT: back chevron at the leading edge, title LEFT-ALIGNED
+// beside it, actions trailing. `ShellHeader` (apps/mobile) already reads that
+// way — brand or chevron leading, title left, avatar trailing — and a session
+// bar that centred its title was the one bar in the product with a different
+// grammar, so walking from a tab into the session moved the screen's name.
+// Left-alignment is also the only arrangement that survives a long session
+// title: a centred title is squeezed from both sides by whatever the two edges
+// happen to hold, while a left title truncates predictably at the actions.
+//
+// THE PRESENCE CONTROL IS STILL NOT HERE, and that is deliberate — it lives on
+// the rail directly under Natalie (`TutorPresence`), which is both where the
+// thing it controls is and where the status it reports belongs. This bar names
+// the SESSION; she names herself.
+//
+// Mobbin: https://mobbin.com/screens/76e16697-0e20-4bfc-8162-e93d6f1fc8ff (Mistral
+//   Le Chat — session title left in the bar, controls trailing, nothing centred) ·
+//   https://mobbin.com/screens/6a3715d2-6cda-4f77-ad80-99787a5fde37 (WhatsApp web
+//   — leading control, left-aligned title, actions trailing) ·
+//   https://mobbin.com/screens/cb2fa17e-fa25-4f3f-8d39-3a6ed37ac492 (Lindy —
+//   left-aligned title with its controls in the same row) ·
+//   https://mobbin.com/screens/e1f475cd-9340-4b6d-98c3-9ad852993175 (Fibery — a
+//   working header that never centres its title) ·
+//   https://mobbin.com/screens/0ee68b98-add3-4ba5-bd3f-9e357f19bdf1 (Customer.io
+//   — title and controls share one bar). Structure only.
+// SOT: docs/pack/23-tutorstage-handoff.md §4.1 · §8 ·
+//      docs/design/tutor-session-thread-first.md
+// SOT-KEYWORDS: sessiontoolbar header tutor back captions tutor view left title
 
 import { View, Text } from './primitives';
 import { SafeArea } from './SafeArea';
@@ -61,7 +87,7 @@ export function SessionToolbar({
           bar. `RoleScope` re-points the pair per door, so this follows the
           learner's colour without naming it.
         */
-        className={`min-h-14 flex-row items-center justify-between border-b-2 border-on-surface-header bg-surface-header px-4 py-1 ${className ?? ''}`}>
+        className={`min-h-14 flex-row items-center gap-stack border-b-2 border-on-surface-header bg-surface-header px-4 py-1 ${className ?? ''}`}>
         <IconButton
           icon={<ChevronLeft className="h-5 w-5" />}
           aria-label="Back"
@@ -69,22 +95,27 @@ export function SessionToolbar({
           variant="ghost"
           size="md"
         />
-        <Text className="max-w-content-prose truncate font-sans text-title font-bold text-on-surface-header">
+        {/* `flex-1`, not `justify-between`: the title takes the space between
+            the chevron and the actions and reads from the leading edge, so it
+            sits where every other bar in the product puts it. */}
+        <Text
+          numberOfLines={1}
+          className="flex-1 truncate font-sans text-title font-bold text-on-surface-header">
           {title}
         </Text>
         {hasRightAction ? (
-          <View className="flex-row items-center gap-1">
-            <Button
-              title="CC"
-              variant={captionsEnabled ? 'primary' : 'ghost'}
-              size="sm"
-              onPress={onToggleCaptions}
-              aria-label="Toggle captions"
-            />
+          <View className="shrink-0 flex-row items-center gap-1">
+            {onToggleCaptions ? (
+              <Button
+                title="CC"
+                variant={captionsEnabled ? 'primary' : 'ghost'}
+                size="sm"
+                onPress={onToggleCaptions}
+                aria-label="Toggle captions"
+              />
+            ) : null}
           </View>
-        ) : (
-          <View className="h-10 w-10" />
-        )}
+        ) : null}
       </View>
     </SafeArea>
   );

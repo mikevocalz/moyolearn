@@ -67,7 +67,16 @@ export function TutorWorkCanvas({ problem, messages }: TutorWorkCanvasProps) {
   const uris = images.map((a) => a.previewUri ?? a.uri);
 
   return (
-    <View className="flex-1 gap-group">
+    /*
+      `w-full`, not `flex-1`. This was written to fill a pane, and there is no
+      pane any more — the work rides inside the turn that raised it
+      (`TutorStage`, `MessageBubble`'s `media` slot). Left as `flex-1` it grew to
+      the height of the whole conversation column on device, so the problem sat
+      alone at the top of a lavender field with Natalie's sentence colliding
+      with the bottom edge. Content height is the honest measurement for
+      something inside a message.
+    */
+    <View className="w-full gap-group">
       <Text className="font-sans text-caption text-text-muted">What we&apos;re working on</Text>
       {text.length > 0 ? (
         /*

@@ -16,6 +16,8 @@ export interface VirtualListProps<T> {
   /** Scroll container classes — must size the container (e.g. "h-96"). */
   className?: string;
   onEndReached?: () => void;
+  /** Default true, matching the platform. */
+  showsVerticalScrollIndicator?: boolean;
 }
 
 export function VirtualList<T>({
@@ -25,6 +27,7 @@ export function VirtualList<T>({
   estimatedItemSize = 56,
   className,
   onEndReached,
+  showsVerticalScrollIndicator = true,
 }: VirtualListProps<T>) {
   const parentRef = useRef<HTMLDivElement>(null);
   const endFiredAt = useRef(-1);
@@ -69,7 +72,18 @@ export function VirtualList<T>({
   }, [lastVisible, data.length, onEndReached]);
 
   return (
-    <div ref={parentRef} className={`overflow-y-auto ${className ?? ''}`}>
+    <div
+      ref={parentRef}
+      className={`overflow-y-auto ${className ?? ''}`}
+      /*
+        Geometry and platform affordance, not appearance — the same exception
+        the transforms below take. There is no token for a scrollbar's presence
+        and inventing a utility class for one would put a raw value in the
+        theme; `scrollbarWidth` is the standard property and Firefox/Chromium
+        both honour it.
+      */
+      style={showsVerticalScrollIndicator ? undefined : { scrollbarWidth: 'none' }}
+    >
       <div style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
         {items.map((vi) => {
           const item = data[vi.index] as T;
