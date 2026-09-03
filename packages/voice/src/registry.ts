@@ -17,12 +17,27 @@
 import 'server-only';
 
 /**
- * Doc 32 §3's two render paths. Flash v2.5 (~75ms TTFB) streams every live
- * turn; v3 (audio tags, explicitly NOT realtime per ElevenLabs' own guidance)
- * renders the baked set pieces. These are pinned per path, not per call —
- * a caller cannot pick a model any more than it can pick a voice.
+ * ONE MODEL, EVERY PATH, EVERY PLATFORM: v3, live and baked, web and mobile.
+ *
+ * Doc 32 §3 splits these — Flash v2.5 (~75ms TTFB) for live turns, v3 for the
+ * baked set pieces — and that split is why Natalie's voice AUDIBLY CHANGED
+ * mid-session: the same voice id rendered by two models is not the same voice,
+ * so a baked greeting or filler landing inside a live turn swapped her identity
+ * in the middle of a conversation. Doc 32's own binding rule is one voice
+ * everywhere, and one voice means one renderer.
+ *
+ * The cost is honest and must be measured, not assumed: v3 is explicitly NOT a
+ * realtime model in ElevenLabs' own guidance, so first-word latency will be
+ * worse than Flash's. Identity beats latency — a tutor who changes voice
+ * mid-sentence is a different person to a child, while a slower first word is
+ * the same person arriving late. The latency budget absorbs it through
+ * prefetching, not through a second model.
+ *
+ * SPEC-002 to file against doc 32 §3: the two-path model split is retired.
+ * Product decision, Mike, 2026-09-02: "v3 was one and should be the same across
+ * web and mobile."
  */
-export const LIVE_MODEL_ID = 'eleven_flash_v2_5';
+export const LIVE_MODEL_ID = 'eleven_v3';
 export const BAKED_MODEL_ID = 'eleven_v3';
 
 export interface VoiceRegistry {
