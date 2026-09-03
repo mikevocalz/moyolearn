@@ -160,7 +160,6 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase }: TutorAva
   }, [embodied]);
 
   useEffect(() => {
-    stageRef.current?.setSpeaking(isSpeaking);
     faceBusRef.current?.setConversationCues({ partnerSpeaking: isSpeaking });
     if (tone) {
       const { emotion, intensity } = toneRenderFor(tone);
@@ -180,6 +179,30 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase }: TutorAva
     if (!stage || !faceBus) return;
     let raf: number;
     const tick = () => {
+      /*
+        THE QUEUE SAYS WHETHER SHE IS TALKING, NOT THE STORE — and this line is
+        why she stayed a 2D mark for a whole session.
+
+        `setSpeaking` used to be driven from the `isSpeaking` prop, which is
+        `state.kind === 'speaking'`. On a RESUMED session `hydrate` restores the
+        last tutor turn as `{ kind: 'speaking', utterance: { restored: true } }`
+        so the child picks up where they left off — but a restored turn is TEXT.
+        No audio is ever enqueued for it, and `audioQueue.onDrained` is the only
+        thing that leaves that state, so `speaking` was true for the rest of the
+        session.
+
+        `trySwap`'s rule 1 is "never mid-utterance", and it only retries on the
+        speaking true→false edge (`tutor-stage.ts`). An edge that never comes is
+        a stage that sits in `pending-swap` forever: warming, rendering, drawing
+        every frame into a canvas held at opacity 0 behind the 2D mark. Nothing
+        failed, so nothing was logged — she simply never arrived.
+
+        Asked per frame for the same reason `sampleSpeaking` below already asks
+        per frame: a draining queue triggers no re-render, so a prop cannot
+        carry this. It also self-heals — whatever leaves the store's state
+        wrong, the swap is retried the moment the sound actually stops.
+      */
+      stage.setSpeaking(audioQueue.isSpeaking());
       stage.tick(performance.now());
       faceBus.step(0.016);
       raf = requestAnimationFrame(tick);
