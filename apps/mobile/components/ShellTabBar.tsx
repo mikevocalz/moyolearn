@@ -18,8 +18,10 @@
 // GEOMETRY IS PLATFORM-SPEC, from `navChrome` in packages/theme/tokens.ts:
 // rail 96 (Material 3 `NavigationRailCollapsedTokens.ContainerWidth`; 80 is its
 // narrow variant), raised slab 64 (between Material's 56 standard FAB and 96
-// large FAB — iOS has no raised-tab convention to defend against), raise 38
-// (how far that slab breaks the bar's top edge). All px: they used to be
+// large FAB — iOS has no raised-tab convention to defend against), raise 58
+// (how far that slab breaks the bar's top edge, and equally how much taller the
+// bar's BOX is than its painted chrome — see the bottom-bar container). All px:
+// they used to be
 // rem-derived Tailwind steps, and the mobile bundler resolves rem at 14
 // (apps/mobile/metro.config.js), so the whole nav shell was shipping at 87.5%
 // of the size the code claimed.
@@ -227,20 +229,40 @@ export function ShellTabBar({
           aria-label={item.label}
           aria-selected={focused}
           onPress={onPress}
-          className={rail ? 'items-center active:opacity-80' : 'flex-1 items-center active:opacity-80'}
+          /*
+            THE RAISE LIVES HERE, ON THE PRESSABLE, AND IT NEEDS `self-start`.
+
+            Both halves of that are load-bearing, and getting either wrong is
+            why this slot rendered flush with the bar through four different
+            values of `nav-raise` (28 → 38 → 48 → 58) without moving a pixel.
+
+            `self-start`, because the bar row is `items-end`. Under
+            `align-items: flex-end` Yoga aligns a child's MARGIN box to the
+            line's bottom edge, so a negative top margin shrinks the margin box
+            by exactly the amount it then offsets the border box — the two
+            cancel, algebraically, for every value. The child's painted position
+            is `lineEnd - height` no matter what the margin says. That is not a
+            near-miss that a bigger number fixes; the number was never read.
+
+            On the Pressable rather than on the inner View, because Android does
+            not deliver touches to a child outside its parent's bounds. Draw and
+            hit-test are separate: a slab that overflows its Pressable is still
+            painted (which is what made this look almost right) but only the
+            part inside the Pressable's box can be tapped. Moving the margin up
+            one level keeps the Pressable's box wrapped around the whole 64px
+            slab, so the raised CTA has a raised CTA's touch target and not a
+            6px sliver of one.
+
+            The bar's own `pt-nav-raise` is the other half — see the container.
+            A rail has no top edge to break, so it keeps neither.
+          */
+          className={
+            rail
+              ? 'items-center active:opacity-80'
+              : 'flex-1 self-start -mt-nav-raise items-center active:opacity-80'
+          }
         >
-          {/*
-            On the bottom bar the slot breaks the bar's top edge by
-            `-mt-nav-raise` (38) — the signature action is physically the
-            biggest, highest thing on the bar on every band. 38 of a 64 slab
-            leaves 26 seated in the chrome: it was 28/36, which read as a tile
-            embedded in the bar rather than as a control standing proud of it.
-            A vertical rail has no top edge to break, so there the emphasis is
-            carried by size and by the slot's position in the middle of the
-            column, and the negative margin is dropped rather than reinterpreted
-            as a sideways overhang into the content.
-          */}
-          <View className={rail ? 'items-stretch gap-0.5 py-stack' : '-mt-nav-raise items-center gap-0.5'}>
+          <View className={rail ? 'items-stretch gap-0.5 py-stack' : 'items-center gap-0.5'}>
             <View
               /*
                 ROUNDED SQUARE, not a circle. The kit's own emphasis slot
@@ -450,13 +472,56 @@ export function ShellTabBar({
     anonymous group of buttons on a phone — the form of the bar is a layout
     decision and must not change what assistive tech is told about it.
   */
+  /*
+    THE BAR'S BOX IS TALLER THAN THE BAR'S CHROME, BY EXACTLY THE RAISE.
+
+    `pt-nav-raise` opens a band above the items, and the painted chrome — the
+    fill and the 2px top rule — moves off this container onto an absolutely
+    positioned layer that starts where that band ends. So the container is the
+    full height of the bar PLUS the raise, and the thing the eye reads as "the
+    bar" is only its lower part. The raised slot then sits inside the container
+    (see its `-mt-nav-raise` + `self-start`) while sitting ABOVE the chrome.
+
+    WHY NOT JUST LET IT OVERFLOW. Android draws an out-of-bounds child but does
+    not hit-test one, so a slab hanging over the top of a normal-height bar is
+    visible and dead to the touch above the bar's edge. Making the container
+    contain it is what keeps the CTA tappable, and it also means nothing here
+    depends on a clip setting in react-navigation's own container.
+
+    THE COST, STATED: the tab bar now measures 58px taller, and BottomTabView
+    pads the scene by the bar's measured height, so a phone scene loses 58px.
+    That is the honest price of a control that stands proud of the chrome
+    rather than one that merely claims to — the alternative (absolutely
+    positioning the bar over the scene) buys the pixels back and re-introduces
+    exactly the hit-testing hole above.
+
+    `pt-1` is gone with the chrome: it gave 4px between the top rule and the
+    icons, and that gap is now carried by the item cell's own `min-h-target-*`
+    with `justify-center`, which is where the age band already governs it.
+
+    `bg-surface` ON THE CONTAINER IS NOT DECORATION. The raise band is outside
+    the painted chrome, so whatever sits behind the tab bar shows through it —
+    and what sits behind it is react-navigation's own container, which is
+    opaque WHITE and not theme-aware. Measured on the Duo in dark mode: a white
+    stripe the width of the screen between the content and the bar. Painting
+    the container with the content ground makes the band read as a continuation
+    of the scene, which is what a raised control is supposed to stand on, and
+    it tracks the scheme because it is a token.
+  */
   return (
     <View
       role="tablist"
       aria-label="Main navigation"
       style={{ paddingBottom: insets.bottom }}
-      className="flex-row items-end gap-1 border-t-2 border-on-surface-footer bg-surface-footer px-2 pt-1"
+      className="flex-row items-end gap-1 bg-surface px-2 pt-nav-raise"
     >
+      {/*
+        First child, so it paints behind every item without needing a z-index.
+        `top-nav-raise` is the same token the slot is raised by, which is what
+        makes "how far the slab breaks the bar's top edge" one number rather
+        than two that have to be kept equal by hand.
+      */}
+      <View className="absolute inset-x-0 bottom-0 top-nav-raise border-t-2 border-on-surface-footer bg-surface-footer" />
       {rendered}
     </View>
   );
