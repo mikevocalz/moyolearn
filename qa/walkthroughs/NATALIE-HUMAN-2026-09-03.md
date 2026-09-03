@@ -27,7 +27,21 @@ Branch: `feat/natalie-human` (worktree `/Users/mikevocalz/MoyoLearn-natalie`), o
 | reduced motion | `humano.test.ts`, `reduced-motion.test.ts` |
 | frame budget | **to measure** — expect +30 `pose()` and one spring per frame |
 
-## After — device gate (NOT yet run; the phone belonged to the peer session)
+## After — first device runs (16:13–16:35 EDT), what they found, what they fixed
+
+Run from the main tree checked out at the branch's commits, on Metro 8081 (the dev launcher ignored the 8082 deep link).
+
+| Time | Build | Seen on the Duo | Cause | Fix (commit) |
+|---|---|---|---|---|
+| 16:13 | 742074d | preload parsed 2474 ms; first frame 5283 ms after mount (one remount in between); she turns her head — and her **eyeballs sit outside the sockets** ("eyelids missing skin") | the eyeballs, teeth and both arms hang off the CONTROL chain (`MCH-spine.002 > spine_fk.* > ORG-spine.004-6 > ORG-face`), not the DEF chain the skin follows; turning the head skin alone left them behind | every torso/head delta mirrored as the same world rotation onto its twin, hip-root pivot offset compensated exactly; `rig-axes.test.ts` holds eyes/teeth/arm root to < 0.5 mm over 30 s (fabeb1f) |
+| 16:20 | fabeb1f | eyes back in the sockets; loader line "Natalie's getting ready…" under the mark while warming; preload 2661 ms | — | — |
+| 16:24 | fabeb1f | **mouth never moves while she speaks** (12-frame burst during sentence 3, all closed); head/eyes/blink alive | `analyseSpeech` emits `{open, spread}`; the 2D encoder and the 3D writer read `jawOpen`. Pre-existing on the base build, not a regression | mapped to ARKit names at the queue; real-PCM regression test (ef19517) |
+| 16:24 | fabeb1f | **hands pump up and down while talking** | the beat raised the whole forearm ~50° on both sides every ~1.5 s | beats live in the wrist; one every 2–4 s; both hands rarely (c3b4655) |
+| 16:25 | 4933bf9 | stage still black after the `surface-stage` token | Metro's uniwind pass had not re-processed the theme (its generated types lacked the token); needs a fresh cache | Metro restarted with a fresh cache; renderer clear made transparent (ef19517) |
+
+Voice timing off the same runs (logcat `[voice-timing]`): first word 6.1 s after send (model-bound, unchanged), inter-sentence gaps 14–43 ms, renders 500–1300 ms, prefetch lead 9–20 s.
+
+## After — device gate (to finish once the fresh-cache build is up)
 
 Run from this worktree so the peer's Metro is untouched:
 
