@@ -41,6 +41,40 @@ import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { createHumanoPresence, type HumanoPresence } from '@acme/avatar/body';
 
 /*
+  ONE MISSING DOM GLOBAL, AND IT IS NOT OPTIONAL.
+
+  three's `FileLoader` wraps every fetch whose body is a `ReadableStream` in a
+  progress-reporting stream, and constructs `new ProgressEvent('progress', …)`
+  on EVERY chunk — unguarded, whether or not anyone passed an `onProgress`.
+  Hermes has no `ProgressEvent`, so the read loop throws on the first chunk,
+  the stream yields a non-ArrayBuffer, and `GLTFLoader` reports it as
+  `JSON Parse error: Unexpected character: o` — the 'o' of "[object …]".
+  Measured on the Duo; it is the first thing this stage hit on real hardware.
+
+  three only ever uses the object as a data carrier, so a plain class with the
+  four fields is a complete substitute. Installed at module scope, which this
+  module already owns: it is lazy-imported behind the flag, so nothing on the
+  2D path gains a global it did not have.
+*/
+if (typeof (globalThis as { ProgressEvent?: unknown }).ProgressEvent === 'undefined') {
+  (globalThis as { ProgressEvent?: unknown }).ProgressEvent = class {
+    readonly type: string;
+    readonly lengthComputable: boolean;
+    readonly loaded: number;
+    readonly total: number;
+    constructor(
+      type: string,
+      init: { lengthComputable?: boolean; loaded?: number; total?: number } = {}
+    ) {
+      this.type = type;
+      this.lengthComputable = init.lengthComputable ?? false;
+      this.loaded = init.loaded ?? 0;
+      this.total = init.total ?? 0;
+    }
+  };
+}
+
+/*
   THE ASSET IS A SPLIT `.gltf`, AND IT HAS TO BE.
 
   Hermes has no `new Blob([ArrayBuffer])`, which is how `GLTFLoader` hands an
@@ -123,6 +157,97 @@ function addRig(scene: THREE.Scene): void {
   scene.add(bounce);
 }
 
+/**
+ * Fetches the glTF and its `.bin` ourselves and hands them to three through its
+ * own cache, because three's `FileLoader` cannot fetch on React Native.
+ *
+ * THE BUG, measured on the Duo rather than reasoned about. `FileLoader` wraps
+ * any response whose `body` is a `ReadableStream` in a progress-reporting
+ * stream and re-wraps that in `new Response(stream, …)`. React Native's
+ * `Response` is the whatwg-fetch polyfill, which has no stream body support:
+ * it stringifies whatever it is given, so `.arrayBuffer()` comes back as the 23
+ * bytes of `"[object ReadableStream]"` and `GLTFLoader` reports
+ * `JSON Parse error: Unexpected character: o`. Plain `fetch(...).arrayBuffer()`
+ * on the same URL returns all 218,678 bytes — the transport is fine, only
+ * three's wrapper is not.
+ *
+ * `Cache.get('file:' + url)` is checked before any request is made, so seeding
+ * it is the whole fix: no patched dependency, no deleted global, and the code
+ * that runs is three's. Textures need no help — `createImageBitmap` exists here
+ * (react-native-webgpu installs it), so `GLTFLoader` routes images through
+ * `ImageBitmapLoader`, which uses plain `fetch` + `blob()` and never wraps.
+ *
+ * Only the `.bin` is seeded alongside the glTF: it is the one other file that
+ * goes through `FileLoader`. Its URL is composed exactly the way `GLTFLoader`
+ * composes it, so the two keys cannot drift.
+ */
+async function primeLoaderCache(gltfUrl: string): Promise<void> {
+  THREE.Cache.enabled = true;
+
+  const fetchBuffer = async (url: string): Promise<ArrayBuffer> => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`${response.status} for ${url}`);
+    return response.arrayBuffer();
+  };
+
+  const gltfBytes = await fetchBuffer(gltfUrl);
+  THREE.Cache.add(`file:${gltfUrl}`, gltfBytes);
+
+  const base = THREE.LoaderUtils.extractUrlBase(gltfUrl);
+  const json = JSON.parse(new TextDecoder().decode(gltfBytes)) as {
+    buffers?: { uri?: string }[];
+  };
+  for (const buffer of json.buffers ?? []) {
+    if (!buffer.uri || buffer.uri.startsWith('data:')) continue;
+    const url = THREE.LoaderUtils.resolveURL(buffer.uri, base);
+    THREE.Cache.add(`file:${url}`, await fetchBuffer(url));
+  }
+}
+
+/**
+ * Rebuilds every skinned material as a plain `MeshStandardMaterial`, keeping
+ * the authored colour, normal and roughness maps and dropping everything else.
+ *
+ * WHY, measured on the Duo rather than assumed. This body is authored with
+ * `KHR_materials_specular`, `KHR_materials_anisotropy` and `KHR_materials_ior`,
+ * so `GLTFLoader` builds a `MeshPhysicalMaterial` — and three's WebGPU node
+ * graph for that material makes Dawn throw on the first
+ * `renderer.render(...)`: `Exception in HostFunction: <unknown>`, every frame,
+ * with a black surface behind it. The bisect that found it is worth keeping:
+ * `MeshNormalMaterial` rendered her perfectly (so geometry, skin and framing
+ * were never the problem), colour-map-only rendered her in skin, and colour +
+ * normal + roughness renders her as she is meant to look. Only the extension
+ * path fails.
+ *
+ * This is ADR-111's "strip that extension only" rule, applied at load rather
+ * than by re-exporting the body — the same asset then keeps working on the web
+ * scene, which drives WebGL and has no such problem.
+ *
+ * THE CEILING, stated so it is not rediscovered as a surprise: specular tint,
+ * anisotropic hair sheen and IOR are gone, so the hair reads flatter here than
+ * it does on the web. The fix is not to put the extensions back — it is
+ * `@acme/avatar/body`'s own hair and skin materials (doc 22 §4 rows 1-5), which
+ * are written in TSL for exactly this renderer and are the next piece of work.
+ */
+function simplifyMaterialsForDawn(scene: THREE.Object3D): void {
+  scene.traverse((child) => {
+    const mesh = child as THREE.SkinnedMesh;
+    if (!mesh.isSkinnedMesh) return;
+    const authored = mesh.material as THREE.MeshPhysicalMaterial;
+    mesh.material = new THREE.MeshStandardMaterial({
+      map: authored.map ?? null,
+      normalMap: authored.normalMap ?? null,
+      roughnessMap: authored.roughnessMap ?? null,
+      roughness: authored.roughness,
+      metalness: 0,
+      // The body is authored alphaMode MASK — the hair cards depend on it.
+      alphaTest: authored.alphaTest,
+      side: authored.side,
+    });
+    authored.dispose();
+  });
+}
+
 export function TutorAvatar3D({
   active,
   isSpeaking,
@@ -192,9 +317,19 @@ export function TutorAvatar3D({
       if (!uri) return fail('the bundled natalie-phone glTF did not resolve');
       let gltf: { scene: THREE.Group };
       try {
-        gltf = await new GLTFLoader().loadAsync(uri);
+        await primeLoaderCache(uri);
+        gltf = await new Promise((resolve, reject) => {
+          new GLTFLoader().load(
+            uri,
+            (loaded) => resolve(loaded as unknown as { scene: THREE.Group }),
+            undefined,
+            (error) => reject(error instanceof Error ? error : new Error(String(error)))
+          );
+        });
       } catch (error) {
-        return fail(`glTF load failed: ${error instanceof Error ? error.message : String(error)}`);
+        return fail(
+          `glTF load failed: ${error instanceof Error ? error.message : String(error)} [${uri}]`
+        );
       }
       if (disposed) return;
 
@@ -206,6 +341,8 @@ export function TutorAvatar3D({
       const camera = new THREE.PerspectiveCamera(CAMERA_FOV, width / height, 0.1, 10);
       camera.position.set(...CAMERA_POSITION);
       camera.lookAt(LOOK_AT);
+
+      simplifyMaterialsForDawn(gltf.scene);
 
       const presence = createHumanoPresence(gltf.scene);
       presenceRef.current = presence;
@@ -246,10 +383,25 @@ export function TutorAvatar3D({
           cameraPosition: camera.position,
         });
 
-        renderer?.render(scene, camera);
-        // Three draws into the surface; the surface is not shown until it is
-        // presented. Omitting this is a black view behind a healthy loop.
-        context.present();
+        /*
+          A THROWING FRAME STOPS THE LOOP.
+
+          Anything Dawn refuses — a shader it will not compile, a destroyed
+          device, a surface that went away — surfaces here as an exception, and
+          it surfaces EVERY frame. Without this the app burns 60 identical
+          errors a second behind a black view, which is both a battery fire and
+          a log nobody can read. One report, loop off, demote to 2D.
+        */
+        try {
+          renderer?.render(scene, camera);
+          // Three draws into the surface; the surface is not shown until it is
+          // presented. Omitting this is a black view behind a healthy loop.
+          context.present();
+        } catch (error) {
+          renderer?.setAnimationLoop(null);
+          fail(`render failed: ${error instanceof Error ? error.message : String(error)}`);
+          return;
+        }
 
         if (!announced) {
           announced = true;

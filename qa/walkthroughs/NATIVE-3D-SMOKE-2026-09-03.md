@@ -78,3 +78,50 @@ from scratch: the `KHR_materials_anisotropy` / `KHR_materials_specular` /
 "strip that extension only" rule applies), and the rig here is the web scene's
 simple light rig, NOT `createStage()` — moving to the RectAreaLight + GTAO +
 bloom stage is a look change with its own golden capture, not a first-light task.
+
+## Step 3 RUN — 2026-09-03 11:39 EDT, Surface Duo 913949703467
+
+**She renders.** Textured, skinned, framed waist-up, breathing, gaze on the lens,
+mouth driven by the route's synthetic oscillator. `first frame presented`.
+
+Three device-only failures stood between the build and that frame. None of them
+were visible anywhere but on hardware, and each is now fixed in
+`tutor-avatar-3d.native.tsx` with the measurement in a comment:
+
+| # | Symptom on device | Cause | Fix |
+|---|---|---|---|
+| 1 | `ReferenceError: Property 'ProgressEvent' doesn't exist` | three's `FileLoader` constructs `new ProgressEvent(...)` per chunk, unguarded. Hermes has no such global. | A four-field class installed at module scope. |
+| 2 | `glTF load failed: JSON Parse error: Unexpected character: o` | `FileLoader` re-wraps the stream in `new Response(stream, …)`. RN's whatwg-fetch `Response` has no stream body, so `.arrayBuffer()` returns the 23 bytes of `"[object ReadableStream]"`. Plain `fetch(...).arrayBuffer()` on the same URL returns all 218,678. | Fetch the `.gltf` and `.bin` ourselves and seed `THREE.Cache` under `file:${url}`; three then never requests them. Textures are unaffected — `createImageBitmap` exists, so images go through `ImageBitmapLoader`'s plain fetch. |
+| 3 | `Exception in HostFunction: <unknown>` on every `renderer.render()`, black surface | The body's `KHR_materials_specular` / `_anisotropy` / `_ior` make `GLTFLoader` build a `MeshPhysicalMaterial`, and Dawn throws on three's node graph for it. Bisect: `MeshNormalMaterial` → renders; colour map only → renders; colour + normal + roughness → renders. | `simplifyMaterialsForDawn()` rebuilds each skinned material as `MeshStandardMaterial` with the authored colour/normal/roughness maps and the MASK `alphaTest`. ADR-111's "strip that extension only", applied at load so the web scene keeps the authored asset. |
+
+A throwing frame now stops the loop and demotes once, instead of reporting 60
+identical errors a second behind a black view.
+
+**Known and accepted for now:** specular tint, anisotropic hair sheen and IOR are
+gone with the extensions, so the hair reads flatter than on web. The answer is
+`@acme/avatar/body`'s own TSL hair/skin materials (doc 22 §4 rows 1-5), not
+putting the extensions back. Also seen on hot reload:
+`CreateAndroidSurfaceKHR failed with VK_ERROR_NATIVE_WINDOW_IN_USE_KHR` — two
+live surfaces during a JS reload, the condition ADR-111's one-surface rule
+already forbids. A cold start is clean.
+
+**Not yet run:** the three consecutive passes the gate requires, and the stage
+inside a real tutor session (blocked on the voice/coach finding below).
+
+## Voice — measured the same session, and it is NOT the avatar
+
+`/api/tutor/voice` is never called, because no sentence is ever emitted. The
+coach turn fails upstream, on the server, before voice is reached:
+
+```
+curl -X POST localhost:3000/api/tutor/coach -d '{"problem":"…","answer":"…","history":[]}'
+→ data: {"kind":"unavailable"}
+```
+
+`coach.service.ts`'s `unavailable` branch is, in its own words, "no API key,
+vendor outage, a dropped socket" — the model, not a safety layer. The app maps
+it to `retry`, which is exactly the badge on the device. Everything downstream
+of it is healthy and was verified: `libreact-native-audio-api.so` is in the
+installed binary, the phone reaches the Next app over `adb reverse tcp:3000`,
+and `/api/tutor/voice` answers `403 utterance is not server-emitted` to a forged
+tag — the route is alive and its tag gate works.
