@@ -11,8 +11,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'solito/navigation';
-import { TutorStage, Text, useSizeClass, useReducedMotion, type TutorPresencePreference } from '@acme/ui';
-import { View } from '@acme/ui/primitives';
+import { TutorStage, useSizeClass, useReducedMotion, type ResolvedTutorPresence } from '@acme/ui';
 import { useCaptureStore } from '../capture';
 import { buttonSizeForBand, type AgeBand } from '../capture';
 import { useAppSession } from '../../providers/session';
@@ -21,6 +20,8 @@ import { API_URL, recommendedTutorPresenceFor } from './tutor-constants.ts';
 import { TutorAvatar } from './tutor-avatar';
 import { pickNoteImage } from '../schedule/pick-note-image';
 import { pickCamera } from './pick-camera';
+import { TutorOpening } from './tutor-opening';
+import { TutorWorkCanvas, hasWorkToShow } from './tutor-work-canvas';
 import { pickFile } from '../editor/pick-file';
 import { useAudioStore } from '../editor/audio.store.ts';
 import { readAttachment } from '../capture/read-attachment';
@@ -32,6 +33,22 @@ import { evaluateArithmetic } from '@acme/student-model/pure';
 export interface TutorScreenProps {
   ageBand?: AgeBand;
 }
+
+/**
+ * What the "give me something to work on" request has told us so far.
+ *
+ * Four states rather than a boolean, because the three ways of having no
+ * problem are not the same thing to a child: still fetching, fetched and there
+ * is nothing open, and could not fetch. The old boolean collapsed all three
+ * into one sentence, so a network failure and an empty account looked
+ * identical — and neither offered a way out.
+ *
+ * An unauthenticated answer (401) resolves to `empty`, not to `error`:
+ * no session means there is nothing open to resume, and offering "try again"
+ * for a state that retrying cannot change is a loop dressed as a fix. The way
+ * forward is the same one the contract names — snap something.
+ */
+type NextProblem = 'idle' | 'loading' | 'empty' | 'error';
 
 export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   const { activeContext } = useAppSession();
@@ -55,11 +72,12 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     say,
     hydrate,
     sessionId,
+    skillTitle,
     tutorPresence,
     setTutorPresence,
     currentTone,
   } = useTutorStore();
-  const [loading, setLoading] = useState(false);
+  const [nextProblem, setNextProblem] = useState<NextProblem>('idle');
   const sizeClass = useSizeClass();
   const reducedMotion = useReducedMotion();
 
@@ -67,8 +85,26 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     start(problem);
   }, [problem, start]);
 
+  /*
+    THE AUTO RESOLUTION, WHICH UNTIL NOW NEVER RAN.
+
+    The store seeded a concrete `compact`, so this whole expression was dead:
+    every learner got the 6–12 register regardless of band, and Reduce Motion
+    never demoted anyone. The store now seeds `auto` (see the note there) and
+    the priority order below is the spec's, §1:
+
+      1. an explicit learner choice — anything that is not `auto` — wins outright
+      2. reduced motion → `audio-only`, never `visible`
+      3. screen size — a phone-width window keeps the face small
+      4. grade band — K–2 and 3–5 open with her revealed, 6–12 workspace-forward
+
+    A K–2 learner on a phone lands on `compact`, not `visible`: she is not
+    hidden, she is on the rail with her mark and her status, one press from
+    filling the top of the screen. That is the difference the whole reveal
+    design exists to make honest.
+  */
   const base = recommendedTutorPresenceFor(ageBand);
-  const resolvedTutorPresence: TutorPresencePreference =
+  const resolvedTutorPresence: ResolvedTutorPresence =
     tutorPresence === 'auto'
       ? reducedMotion
         ? 'audio-only'
@@ -76,6 +112,22 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
           ? 'compact'
           : base
       : tutorPresence;
+
+  /*
+    The reassurance line, and it is only for the bands that need it.
+
+    A six-year-old who collapses Natalie and then hears her keep talking has to
+    be told, in words, that this is on purpose and she can still hear them. A
+    9–12 learner reading "Listening" already knows, and a redundant line on a
+    workspace-forward surface is noise. This is the age-band difference on this
+    screen: density, not a different screen.
+  */
+  const presenceAssurance =
+    ageBand === 'young' || ageBand === 'child'
+      ? resolvedTutorPresence === 'visible'
+        ? undefined
+        : 'She can still hear you and you can still hear her.'
+      : undefined;
 
   /*
     RESUME BEFORE ANYTHING ELSE.
@@ -116,22 +168,41 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     });
   }, []);
 
-  useEffect(() => {
-    if (problem) return;
-    setLoading(true);
+  const requestNextProblem = useCallback(() => {
+    setNextProblem('loading');
     fetch(`${API_URL}/api/tutor/next`, { credentials: 'include' })
       .then(async (res) => {
+        // No session is not a breakage. 401/403 means there is nothing open to
+        // resume, which is exactly the state the empty surface describes, and
+        // "try again" against it would retry the same answer forever.
+        if (res.status === 401 || res.status === 403) {
+          setNextProblem('empty');
+          return;
+        }
         if (!res.ok) throw new Error(`Server returned ${res.status}`);
         const data = (await res.json()) as { problem: string; skillTitle: string };
         setProblem(data.problem);
+        setNextProblem('idle');
       })
       .catch(() => {
-        // Leave the empty state if the server is unreachable.
-      })
-      .finally(() => {
-        setLoading(false);
+        setNextProblem('error');
       });
-  }, [problem, setProblem]);
+  }, [setProblem]);
+
+  /*
+    Asked ONCE, then it is the learner's move.
+
+    Keyed on a ref rather than on `nextProblem`, because an effect that re-runs
+    on the state its own request sets is a retry loop: a server that is down
+    would be hit on every render, and a child would watch the screen flicker
+    between "loading" and "that didn't load". The retry is a button they press.
+  */
+  const askedForProblem = useRef(false);
+  useEffect(() => {
+    if (problem || askedForProblem.current) return;
+    askedForProblem.current = true;
+    requestNextProblem();
+  }, [problem, requestNextProblem]);
 
   // The opening turn. Doc 29 §8's demo arc turns on the first thing a child sees
   // being a question rather than a solution, so the coaching starts on arrival
@@ -441,24 +512,69 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     void pickFile().then((picked) => stage(picked, 'document', 'application/octet-stream'));
   }, [stage]);
 
+  /*
+    NO PROBLEM IS STILL A PLACE.
+
+    This was a centred sentence — "No problem selected." — on an otherwise blank
+    page with no heading, no chrome and nothing to press, on the one surface in
+    the product that belongs to a child. learner.tutor's contract calls that
+    shape out directly: "never a blank chat", with snap_next → learner.capture
+    and end_session → learner.home as the two ways on. `TutorOpening` renders
+    those, and separates the three reasons there is nothing here.
+  */
   if (problem == null) {
-    return (
-      <View className="flex-1 items-center justify-center p-inset">
-        <Text className="font-sans text-body text-text">
-          {loading ? 'Finding your next problem...' : 'No problem selected.'}
-        </Text>
-      </View>
-    );
+    const onHome = () => router.replace('/');
+    const onSnap = () => router.push('/capture');
+    if (nextProblem === 'error') {
+      return (
+        <TutorOpening
+          phase="error"
+          ageBand={ageBand}
+          onHome={onHome}
+          onSnap={onSnap}
+          onRetry={requestNextProblem}
+        />
+      );
+    }
+    if (nextProblem === 'loading' || nextProblem === 'idle') {
+      return <TutorOpening phase="loading" ageBand={ageBand} onHome={onHome} />;
+    }
+    return <TutorOpening phase="empty" ageBand={ageBand} onHome={onHome} onSnap={onSnap} />;
   }
 
   return (
     <TutorStage
       state={state}
-      title="Natalie"
+      /*
+        The header names the SESSION now that the rail names the tutor (doc 23
+        §2). It carried "Natalie" only because the avatar was missing and
+        something had to say who this was; with her drawn in every state that
+        left the session itself unnamed on every screen. `skillTitle` is
+        inferred from the problem, so it is empty until the first turn lands.
+      */
+      title={skillTitle.length > 0 ? skillTitle : 'Your session'}
+      tutorName="Natalie"
       childName="there"
       tutorPresence={resolvedTutorPresence}
       onTutorPresenceChange={setTutorPresence}
+      /*
+        Hiding her returns a Reduce Motion learner to her VOICE, not to a small
+        animated face — spec §1 rule 2 says that band never gets `visible`, and
+        it must not get one back through the reveal control either.
+      */
+      collapsedPresence={reducedMotion ? 'audio-only' : 'compact'}
+      presenceAssurance={presenceAssurance}
       avatar={<TutorAvatar tutorPresence={resolvedTutorPresence} isSpeaking={state.kind === 'speaking'} tone={currentTone} />}
+      /*
+        THE SECOND PANE, finally supplied. `TutorStage` only splits when a
+        canvas exists, so this is deliberately undefined until the learner has a
+        problem or a photo — an empty right-hand pane is worse than no split.
+      */
+      canvas={
+        hasWorkToShow(problem, messages) ? (
+          <TutorWorkCanvas problem={problem} messages={messages} />
+        ) : undefined
+      }
       captionsEnabled
       buttonSize={buttonSizeForBand(ageBand)}
       onBack={router.back}

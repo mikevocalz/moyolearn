@@ -42,6 +42,7 @@
     "expo-paste-input": "catalog:",
     "lucide-react": "catalog:",
     "lucide-react-native": "catalog:",
+    "react-freeze": "catalog:",
     "react-native-css": "catalog:",
     "react-native-gesture-handler": "catalog:",
     "react-native-graph": "1.4.0",

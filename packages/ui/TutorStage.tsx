@@ -22,10 +22,10 @@ import { TutorThread } from './TutorThread';
 import { SessionToolbar } from './SessionToolbar';
 import { Badge } from './Badge';
 import { Button } from './Button';
-import { Avatar } from './Avatar';
+import { TutorPresence } from './TutorPresence';
 import { LearningCanvas } from './LearningCanvas';
 import { useSizeClass } from './use-size-class';
-import type { TutorPresencePreference } from './tutor-view';
+import type { ResolvedTutorPresence, TutorPresencePreference } from './tutor-view';
 
 /** A spoken or written turn from the tutor. */
 export interface Utterance {
@@ -70,11 +70,37 @@ export type TutorStageState =
 
 export interface TutorStageProps {
   state: TutorStageState;
+  /**
+   * What this session is — "Long division", not "Natalie".
+   *
+   * Doc 23 §2: the header answers "what is this screen" precisely BECAUSE the
+   * avatar already answers "who am I talking to". While the avatar was missing
+   * the header had been carrying her name instead, which left the session
+   * itself unnamed on every screen.
+   */
   title: string;
+  /** Who the learner is talking to. Drawn by `TutorPresence`, not by the header. */
+  tutorName?: string;
   childName?: string;
   questionNumber?: number;
   tutorPresence?: TutorPresencePreference;
   onTutorPresenceChange?: (presence: TutorPresencePreference) => void;
+  /**
+   * Where "hide Natalie" puts her.
+   *
+   * A prop rather than a remembered previous value: the screen is the only
+   * place that knows whether this learner's collapsed register is a small face
+   * or her voice alone (Reduce Motion resolves to `audio-only`, spec §1 rule 2),
+   * and a stage that guessed would hand a vestibular-sensitive learner an
+   * avatar it had just been told not to draw.
+   */
+  collapsedPresence?: Exclude<ResolvedTutorPresence, 'visible'>;
+  /**
+   * The younger bands' reassurance line under her status — "She can still hear
+   * you." Supplied by the screen, which knows the grade band; K–2 needs telling
+   * that a hidden tutor is still listening, and 9–12 does not.
+   */
+  presenceAssurance?: string;
   /** Optional embodied presence. When absent the stage draws its own 2D mark. */
   avatar?: React.ReactNode;
   captionsEnabled?: boolean;
@@ -151,8 +177,6 @@ interface StateBodyProps {
   state: TutorStageState;
   childName?: string;
   questionNumber?: number;
-  tutorPresence?: TutorPresencePreference;
-  avatar?: React.ReactNode;
   buttonSize?: 'sm' | 'md' | 'lg' | 'xl';
   onTryIt?: () => void;
   onNextHint?: () => void;
@@ -165,8 +189,6 @@ function StateBody({
   state,
   childName,
   questionNumber,
-  tutorPresence = 'compact',
-  avatar,
   buttonSize = 'md',
   onTryIt,
   onNextHint,
@@ -174,15 +196,17 @@ function StateBody({
   onBackToPlan,
   onRetry,
 }: StateBodyProps) {
-  const avatarSize =
-    tutorPresence === 'visible' ? 'xl' : tutorPresence === 'compact' || tutorPresence === 'auto' ? 'md' : undefined;
   switch (state.kind) {
     case 'presence':
       return (
         <View className="w-full items-center gap-stack">
-          {tutorPresence === 'audio-only' ? (
-            <Badge label="Natalie — voice only" tone="neutral" />
-          ) : avatar ?? (avatarSize ? <Avatar name="Natalie" size={avatarSize} /> : null)}
+          {/*
+              NO AVATAR HERE ANY MORE. She used to be drawn in this branch and
+              only this branch, so the opening turn — which fires on arrival —
+              took her off the screen for the rest of the session. Presence is
+              not one state of the conversation; `TutorPresence` above the
+              thread draws her in every state, including this one.
+          */}
           <Text className="max-w-content-prose text-center font-sans text-body text-text">
             {/*
                 NO PLACEHOLDER. This read "We were on question ..." — literally
@@ -327,10 +351,13 @@ function StateBody({
 export function TutorStage({
   state,
   title,
+  tutorName = 'Natalie',
   childName,
   questionNumber,
   tutorPresence = 'compact',
   onTutorPresenceChange,
+  collapsedPresence = 'compact',
+  presenceAssurance,
   avatar,
   captionsEnabled,
   buttonSize,
@@ -358,6 +385,26 @@ export function TutorStage({
 }: TutorStageProps) {
   const [draft, setDraft] = useState('');
   const sizeClass = useSizeClass();
+
+  /*
+    `auto` is a request, not a presentation. It is normally answered at the
+    screen (grade band → size class → reduced motion), but the prop's type still
+    admits it and the default is a literal, so it is answered here too rather
+    than leaving three branches below that cannot be drawn.
+  */
+  const presence: ResolvedTutorPresence = tutorPresence === 'auto' ? 'compact' : tutorPresence;
+
+  /*
+    ONE control for Natalie's presence, and it lives with her.
+
+    The toolbar used to carry a text button that cycled
+    visible → compact → audio-only, so "bring her back" was two presses from
+    voice-only and every label named a transition instead of a state. The rail
+    under her says what she is doing and toggles her in one press, both ways.
+  */
+  const handleToggleReveal = onTutorPresenceChange
+    ? () => onTutorPresenceChange(presence === 'visible' ? collapsedPresence : 'visible')
+    : undefined;
 
   const handleSend = useCallback(() => {
     const message = draft.trim();
@@ -391,7 +438,25 @@ export function TutorStage({
       fold.
     */
     <View className="w-full flex-1 gap-stack p-inset pb-group">
-      <Badge label={statusFor(state)} tone={statusTone(state)} />
+      {/*
+        NATALIE, IN EVERY STATE, AT THE TOP OF THE SPINE.
+
+        The status chip used to float here on its own while she was drawn — or
+        not drawn — somewhere below by one branch of the state switch. Status
+        belongs to the person whose status it is: one element carries her mark,
+        her name and what she is doing, so a child who has collapsed her still
+        has a visible owner for the voice they can hear.
+      */}
+      <TutorPresence
+        name={tutorName}
+        status={statusFor(state)}
+        tone={statusTone(state)}
+        tutorPresence={presence}
+        avatar={avatar}
+        onToggleReveal={handleToggleReveal}
+        assurance={presenceAssurance}
+        size={buttonSize}
+      />
       {/* Top-aligned, not centred. A turn grows downward as it streams, and a
           vertically centred block re-centres on every arriving sentence — the
           text slides under the reader while they are reading it. */}
@@ -404,8 +469,6 @@ export function TutorStage({
           state={state}
           childName={childName}
           questionNumber={questionNumber}
-          tutorPresence={tutorPresence}
-          avatar={avatar}
           buttonSize={buttonSize}
           onTryIt={onTryIt}
           onNextHint={onNextHint}
@@ -439,6 +502,14 @@ export function TutorStage({
   // 380px column of content next to a ~1000px empty bordered box, which read as
   // the empty box being the subject of the screen. So the canvas is opt-in, and
   // without one the conversation gets the screen and a readable measure cap.
+  //
+  // For a long time NOTHING passed `canvas`, so this was permanently false and
+  // the split view doc 23 §5 specifies never rendered — a tablet or an unfolded
+  // foldable ran the session as one narrow column with the rest of the window
+  // empty. The condition was right; the second pane had no content. It has one
+  // now: `TutorWorkCanvas` puts the learner's OWN problem and the photo they
+  // snapped in the right-hand pane, which is what §5 means by "equation /
+  // whiteboard" and the only thing that earns the width on a child's surface.
   const twoPane = sizeClass === 'regular' && canvas !== undefined;
 
   return (
@@ -451,13 +522,13 @@ export function TutorStage({
     */
     <Dial temperature="hot" className="flex-1">
       <View className={`flex-1 bg-surface gap-stack ${className ?? ''}`}>
+        {/* No presence control here any more — it moved onto the rail under
+            Natalie, where the thing it controls actually is. */}
         <SessionToolbar
           title={title}
           captionsEnabled={captionsEnabled}
-          tutorPresence={tutorPresence}
           onBack={onBack}
           onToggleCaptions={onToggleCaptions}
-          onTutorPresenceChange={onTutorPresenceChange}
         />
         {twoPane ? (
           <View className="flex-1 flex-row gap-group p-inset">

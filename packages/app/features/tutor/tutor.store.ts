@@ -142,7 +142,22 @@ export const useTutorStore = create<TutorState>((set) => ({
   problem: '',
   attachments: [],
   messages: [],
-  tutorPresence: 'compact' as TutorPresencePreference,
+  /*
+    `auto`, NOT `compact`, and the difference is everything downstream.
+
+    `tutor-screen` resolves presence from the grade band, the size class and the
+    reduced-motion setting — but only when the stored value is `auto`. Seeding
+    a concrete `compact` here meant that resolution never ran once: a K–2
+    learner, whose band the responsive spec puts at `visible` precisely because
+    voice-first children need a face, silently got the 6–12 register, and a
+    learner with Reduce Motion on was never demoted to `audio-only`. The whole
+    of `recommendedTutorPresenceFor` was unreachable code.
+
+    `auto` means "nobody has chosen yet". The first time the learner presses the
+    reveal rail this becomes a concrete value and stays one — an explicit
+    preference outranks auto (spec §1, resolution order 1).
+  */
+  tutorPresence: 'auto' as TutorPresencePreference,
   currentTone: null,
   sessionId: null,
   skillTitle: '',

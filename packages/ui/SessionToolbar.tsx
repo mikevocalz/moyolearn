@@ -8,37 +8,37 @@ import { SafeArea } from './SafeArea';
 import { IconButton } from './IconButton';
 import { Button } from './Button';
 import { ChevronLeft } from './icons';
-import type { TutorPresencePreference } from './tutor-view';
 
 export interface SessionToolbarProps {
+  /** The session, not the tutor — `TutorPresence` names her (doc 23 §2). */
   title: string;
   captionsEnabled?: boolean;
-  tutorPresence?: TutorPresencePreference;
   onBack?: () => void;
   onToggleCaptions?: () => void;
-  onTutorPresenceChange?: (presence: TutorPresencePreference) => void;
   className?: string;
 }
 
-const PRESENCE_ACTION: Record<
-  Exclude<TutorPresencePreference, 'auto'>,
-  { next: Exclude<TutorPresencePreference, 'auto'>; label: string }
-> = {
-  visible: { next: 'compact', label: 'Make Natalie smaller' },
-  compact: { next: 'audio-only', label: 'Voice only' },
-  'audio-only': { next: 'visible', label: 'Show Natalie' },
-};
+/*
+  THE PRESENCE CONTROL IS NOT HERE.
 
+  It used to be: a text button cycling visible → compact → audio-only, wedged
+  between the back chevron and the title. Three problems, all of them worse at
+  phone width. Its label named a transition ("Make Natalie smaller") rather than
+  a state, so it never told the child where she currently was; the cycle meant
+  returning from voice-only cost two presses; and a long label in a three-slot
+  header squeezed the session title out on a narrow screen.
+
+  It now lives on the rail directly under Natalie (`TutorPresence`), which is
+  both where the thing it controls is and where the status it reports belongs.
+*/
 export function SessionToolbar({
   title,
   captionsEnabled,
-  tutorPresence = 'compact',
   onBack,
   onToggleCaptions,
-  onTutorPresenceChange,
   className,
 }: SessionToolbarProps) {
-  const hasRightAction = onToggleCaptions !== undefined || onTutorPresenceChange !== undefined;
+  const hasRightAction = onToggleCaptions !== undefined;
 
   /*
     The top inset lives HERE, not in each caller. This is the first row of an
@@ -64,24 +64,13 @@ export function SessionToolbar({
         </Text>
         {hasRightAction ? (
           <View className="flex-row items-center gap-1">
-            {onToggleCaptions ? (
-              <Button
-                title="CC"
-                variant={captionsEnabled ? 'primary' : 'ghost'}
-                size="sm"
-                onPress={onToggleCaptions}
-                aria-label="Toggle captions"
-              />
-            ) : null}
-            {onTutorPresenceChange && tutorPresence !== 'auto' ? (
-              <Button
-                title={PRESENCE_ACTION[tutorPresence].label}
-                variant="ghost"
-                size="sm"
-                onPress={() => onTutorPresenceChange(PRESENCE_ACTION[tutorPresence].next)}
-                aria-label={PRESENCE_ACTION[tutorPresence].label}
-              />
-            ) : null}
+            <Button
+              title="CC"
+              variant={captionsEnabled ? 'primary' : 'ghost'}
+              size="sm"
+              onPress={onToggleCaptions}
+              aria-label="Toggle captions"
+            />
           </View>
         ) : (
           <View className="h-10 w-10" />

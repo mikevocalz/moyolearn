@@ -61,6 +61,11 @@ catalog:
   react-native-reanimated: 4.5.1
   react-native-safe-area-context: ~5.7.0
   react-native-screens: ~4.26.0
+  # Declared explicitly even though react-native-screens already pulls it in:
+  # `TutorPresence` imports `Freeze` directly, and a hoisted transitive is a
+  # phantom dependency that disappears the day screens changes its own tree.
+  # The version is the one screens resolves, so nothing new is installed.
+  react-freeze: 1.0.4
   react-native-worklets: 0.10.1
   react-native-vision-camera: 5.2.3
   react-native-executorch: 0.9.3
