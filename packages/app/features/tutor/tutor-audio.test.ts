@@ -223,6 +223,37 @@ describe('the face rides the audio clock (ADR-112)', () => {
     assert.equal(h.queue.isSpeaking(), true);
   });
 
+  it('the analysis mouth arrives as ARKit names — jawOpen opens on a voiced burst', async () => {
+    // Regression: analyseSpeech emits {open, spread}; the consumers read jawOpen.
+    const sr = 24000;
+    const pcm = new Float32Array(sr * 2);
+    for (let i = 0; i < pcm.length; i++) {
+      const t = i / sr;
+      pcm[i] = (t % 0.5 < 0.25 ? 0.6 : 0) * Math.sin(2 * Math.PI * 180 * t);
+    }
+    const clock = { now: 1 };
+    const queue = new TutorAudioQueue({
+      audio: {
+        resume: () => undefined,
+        currentTime: () => clock.now,
+        decode: async () => ({ duration: 2, sampleRate: sr, getChannelData: () => pcm }),
+        createSource: () => ({ start: () => undefined, stop: () => undefined }),
+        onEnded: () => undefined,
+      },
+      transport: async () => audioReply('Hello there.'),
+    });
+    live.push(queue);
+    queue.enqueue('Hello there.', VOICE);
+    await settle();
+    clock.now += 0.3;
+    let widest = 0;
+    for (let k = 0; k < 40; k++) {
+      clock.now += 0.05;
+      widest = Math.max(widest, queue.sampleSpeech(0).shape.jawOpen ?? 0);
+    }
+    assert.ok(widest > 0.3, `jawOpen peaked at ${widest} over a two-second voiced burst`);
+  });
+
   it('only the first sentence of a turn pays the onset lead', async () => {
     const h = harness();
     h.queue.enqueue('One.', VOICE);

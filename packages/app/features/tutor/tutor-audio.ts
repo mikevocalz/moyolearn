@@ -361,7 +361,7 @@ export class TutorAudioQueue {
     const sampled = sampleTrack(this.activeTrack, t, this.activeTrackIdx);
     this.activeTrackIdx = sampled.idx;
     const active = t < this.activeDuration;
-    return { shape: sampled.shape, active, gap: false };
+    return { shape: lipsFromAnalysis(sampled.shape), active, gap: false };
   }
 
   /**
@@ -593,6 +593,25 @@ export class TutorAudioQueue {
         : `gap=${this.lastEndedAt === 0 ? -1 : at - this.lastEndedAt}ms`;
     console.log(`[voice-timing] s${this.turnSentenceIdx} ${boundary} render=${render}ms lead=${lead}ms`);
   }
+}
+
+/**
+ * `analyseSpeech` speaks in its own two words — `open` (how wide) and
+ * `spread` (how sibilant) — and every consumer of this queue speaks ARKit:
+ * the 2D face bus encodes `jawOpen`, the 3D writer reads `jawOpen`. Nothing
+ * translated between them, so the mouth read zero for the whole sentence
+ * while the voice played (Duo, 2026-09-03: "her mouth isn't even moving").
+ * A spread mouth is a narrower one with the corners pulled back.
+ */
+function lipsFromAnalysis(shape: Shape): Shape {
+  const open = shape.open ?? shape.jawOpen ?? 0;
+  const spread = shape.spread ?? 0;
+  if (open <= 0 && spread <= 0) return {};
+  return {
+    jawOpen: open * (1 - 0.35 * spread),
+    mouthStretchLeft: spread * 0.5,
+    mouthStretchRight: spread * 0.5,
+  };
 }
 
 function isFaceFrames(value: unknown): value is FaceFrames {

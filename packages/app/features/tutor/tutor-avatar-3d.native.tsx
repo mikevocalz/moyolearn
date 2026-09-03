@@ -460,7 +460,10 @@ export function TutorAvatar3D({
       const presence = createHumanoPresence(gltf.scene);
       presenceRef.current = presence;
 
-      renderer = new THREE.WebGPURenderer({ antialias: true, canvas: context.canvas, context });
+      renderer = new THREE.WebGPURenderer({ antialias: true, alpha: true, canvas: context.canvas, context });
+      // A transparent clear, so the stage's own ground (`bg-surface-stage` on
+      // the wrapper) shows behind her instead of the renderer's black.
+      renderer.setClearColor(0x000000, 0);
       try {
         // Awaited. Fire-and-forget lets the first render race device creation,
         // and on a cold pipeline cache that race is lost often enough to look
