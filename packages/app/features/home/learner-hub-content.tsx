@@ -82,12 +82,13 @@ export function LearnerHubContent() {
               else in the product, including the session rail. A child meeting
               their tutor for the first time on this screen should meet the same
               person they meet inside the lesson. */}
-          <View className="flex-row items-center justify-center gap-element">
+          <View className="flex-row items-center gap-element">
             <Avatar name="Natalie" size="lg" />
-            {/* `self-center` overrides the bubble's own `self-start`, and the
-                bubble hugs its text instead of taking `flex-1`: the pair is
-                centred as ONE row, so the mark and her line read as a single
-                greeting rather than an avatar with a banner stretched off it. */}
+            {/* Left, with the bubble hugging its text rather than taking
+                `flex-1`: the mark and her line read as one greeting sitting at
+                the leading edge, in the same rhythm as the cards below it.
+                `self-center` overrides the bubble's own `self-start` so the two
+                sit level with each other. */}
             <MessageBubble from="tutor" className="self-center">
               What do you want to do today?
             </MessageBubble>
