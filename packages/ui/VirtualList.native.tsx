@@ -25,7 +25,11 @@ export function VirtualList<T>({
   estimatedItemSize = 56,
   className,
   onEndReached,
-  showsVerticalScrollIndicator = true,
+  /* Off by DEFAULT across the product. The bar is a desktop affordance: on
+     touch it appears mid-scroll, overlays content at the trailing edge, and
+     tells a child nothing they did not already learn from the content moving.
+     A caller can still opt in where position genuinely needs reporting. */
+  showsVerticalScrollIndicator = false,
 }: VirtualListProps<T>) {
   return (
     <View className={className}>

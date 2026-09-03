@@ -27,7 +27,10 @@ export function VirtualList<T>({
   estimatedItemSize = 56,
   className,
   onEndReached,
-  showsVerticalScrollIndicator = true,
+  /* Off by default, matching the native fork: the scrollbar is chrome the
+     content already implies, and a list that shows one on web but not on the
+     phone is two products. Opt in where position genuinely needs reporting. */
+  showsVerticalScrollIndicator = false,
 }: VirtualListProps<T>) {
   const parentRef = useRef<HTMLDivElement>(null);
   const endFiredAt = useRef(-1);
