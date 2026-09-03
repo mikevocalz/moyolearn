@@ -37,16 +37,21 @@ import { StyleSheet } from 'react-native';
 import { Canvas, type CanvasRef } from 'react-native-webgpu';
 import { tgpu, d, std } from 'typegpu';
 
-import { INK } from './moyo-splash-scene';
+import { INK, SPARK_INK } from './moyo-splash-scene';
 
 /** Enough to read as a field, few enough to stay in one dispatch. */
 const HEARTS = 180;
 
-/** The brand's warm half. Plum is the ink of the lockup, not of the hearts. */
-const PALETTE = [INK.coral, INK.amber, INK.teal].map((hex) => {
+const rgba = (hex: string) => {
   const n = Number.parseInt(hex.slice(1), 16);
   return d.vec4f(((n >> 16) & 255) / 255, ((n >> 8) & 255) / 255, (n & 255) / 255, 1);
-});
+};
+
+/** The brand's warm half. Plum is the ink of the lockup, not of the hearts. */
+const PALETTE = [INK.coral, INK.amber, INK.teal].map(rgba);
+
+/** Yellow, ember red, ash — see `SPARK_INK`. */
+const SPARK_PALETTE = SPARK_INK.map(rgba);
 
 const HeartGeometry = d.struct({
   /** Half-width in clip space; the heart is drawn about its own centre. */
@@ -245,8 +250,12 @@ const sparkFragment = (input: { uv: d.v2f; fade: number; color: d.v4f }) => {
   if (alpha <= 0.004) {
     std.discard();
   }
-  // Sparks read warmer than their source: pushed toward white at the core.
-  const hot = std.mix(input.color.xyz, d.vec3f(1, 1, 1), core * 0.65);
+  /*
+    Saturated at the core rather than blown to white. Pushing a spark toward
+    white is how you make it look hot on a dark ground; on paper it is how you
+    make it vanish, so the core goes the other way — deeper into its own hue.
+  */
+  const hot = std.mix(input.color.xyz, std.mul(input.color.xyz, 0.75), core * 0.6);
   return d.vec4f(std.mul(hot, alpha), alpha);
 };
 
@@ -419,9 +428,13 @@ export function HeartField({ levelsRef }: HeartFieldProps) {
         .createBuffer(
           d.arrayOf(HeartGeometry, SPARKS),
           Array.from({ length: SPARKS }, () => ({
-            size: 0.012 + Math.random() * 0.014,
+            // Bigger than the first pass: at 0.012 of clip space a spark was
+            // three device pixels on the Duo, which is a fleck, not a spark.
+            size: 0.02 + Math.random() * 0.022,
             tilt: 0,
-            color: PALETTE[Math.floor(Math.random() * PALETTE.length)] ?? PALETTE[0],
+            color:
+              SPARK_PALETTE[Math.floor(Math.random() * SPARK_PALETTE.length)] ??
+              SPARK_PALETTE[0],
           })),
         )
         .$usage('vertex');
@@ -458,11 +471,17 @@ export function HeartField({ levelsRef }: HeartFieldProps) {
         targets: {
           format,
           blend: {
-            // ADDITIVE for the sparks — they are light, so two overlapping
-            // sparks are brighter rather than one occluding the other. The
-            // hearts stay source-over; they are ink.
-            color: { srcFactor: 'one', dstFactor: 'one' },
-            alpha: { srcFactor: 'one', dstFactor: 'one' },
+            /*
+              SOURCE-OVER, NOT ADDITIVE — and that is why they were invisible.
+
+              Additive is how you draw light, and it is right on a dark scene:
+              two overlapping sparks get brighter. This splash's ground is
+              PAPER (#FFFDF7). Adding light to something already at the top of
+              the range changes nothing, so every spark landed on cream and
+              disappeared. On paper a spark has to be drawn as pigment.
+            */
+            color: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha' },
+            alpha: { srcFactor: 'one', dstFactor: 'one-minus-src-alpha' },
           },
         },
       });

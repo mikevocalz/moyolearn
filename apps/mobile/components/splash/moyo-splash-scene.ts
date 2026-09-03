@@ -24,6 +24,17 @@ export const INK: Record<MarkInk, string> = {
 };
 
 /**
+ * The sparks struck off the mark's ornaments: yellow, ember red, and ash.
+ *
+ * A different set from the hearts on purpose. The hearts are the brand's own
+ * three hues because they are the brand's own shape; a spark is FIRE, so it
+ * runs yellow through red with a grey for the ones that have cooled. Ash is
+ * `ink[400]` — the mid neutral, dark enough to read on paper and light enough
+ * not to look like a hole in it.
+ */
+export const SPARK_INK = [palette.sun[300], palette.flame[400], palette.ink[400]] as const;
+
+/**
  * The wordmark's four letters, in the order they are written.
  *
  * The traced wordmark carries no colour — only the mark's ornaments do — so the
