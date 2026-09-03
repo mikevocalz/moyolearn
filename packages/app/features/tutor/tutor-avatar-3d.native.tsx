@@ -38,7 +38,7 @@ import { Image, PixelRatio, View } from 'react-native';
 import { Canvas, type CanvasRef, type NativeCanvas } from 'react-native-webgpu';
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { createHumanoPresence, type HumanoPresence } from '@acme/avatar/body';
+import { createHumanoPresence, frameBody, type HumanoPresence } from '@acme/avatar/body';
 
 /*
   ONE MISSING DOM GLOBAL, AND IT IS NOT OPTIONAL.
@@ -95,10 +95,13 @@ if (typeof (globalThis as { ProgressEvent?: unknown }).ProgressEvent === 'undefi
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const BUNDLED_MODEL = require('@acme/avatar/assets/natalie-phone/natalie.gltf');
 
-/** Framing, carried over from the web scene so the two Natalies are one person. */
+/**
+ * The camera is FITTED, not authored — `frameBody` in `@acme/avatar/body` owns
+ * the maths and the argument for it. The short version: the numbers this stage
+ * inherited from the web scene put the lens at her face, which cropped her at
+ * the collarbone in a pane meant to hold a person standing in it.
+ */
 const CAMERA_FOV = 38;
-const CAMERA_POSITION: readonly [number, number, number] = [0, 1.45, 1.15];
-const LOOK_AT = new THREE.Vector3(0, 1.5, 0);
 
 export interface TutorAvatar3DProps {
   /**
@@ -337,10 +340,28 @@ export function TutorAvatar3D({
       addRig(scene);
       scene.add(gltf.scene);
 
-      const { width, height } = context.canvas;
-      const camera = new THREE.PerspectiveCamera(CAMERA_FOV, width / height, 0.1, 10);
-      camera.position.set(...CAMERA_POSITION);
-      camera.lookAt(LOOK_AT);
+      const camera = new THREE.PerspectiveCamera(CAMERA_FOV, 1, 0.1, 10);
+      let framedWidth = 0;
+      let framedHeight = 0;
+      /*
+        Re-fit on a size change, and this is not speculative: her pane is
+        COLLAPSIBLE. `CollapsiblePane` animates the column's width, the loop
+        keeps running through it (`active` only goes false when she is off
+        screen entirely), and a camera whose aspect was fixed at mount renders
+        a stretched body for every frame of that animation and every frame
+        after it. Read from the surface each frame — it is two integer
+        compares — rather than plumbing an onLayout through a ref.
+      */
+      const refit = () => {
+        const { width, height } = context.canvas;
+        if (width === framedWidth && height === framedHeight) return;
+        if (width === 0 || height === 0) return;
+        framedWidth = width;
+        framedHeight = height;
+        renderer?.setSize(width, height, false);
+        camera.aspect = width / height;
+        frameBody(camera, gltf.scene);
+      };
 
       simplifyMaterialsForDawn(gltf.scene);
 
@@ -373,6 +394,8 @@ export function TutorAvatar3D({
           thing — no draw, no present, no morph write.
         */
         if (!activeRef.current) return;
+
+        refit();
 
         const speaking = speakingRef.current;
         const mouth = speaking ? (sampleMouthRef.current?.(timeMs) ?? 0) : 0;

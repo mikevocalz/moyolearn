@@ -125,3 +125,44 @@ of it is healthy and was verified: `libreact-native-audio-api.so` is in the
 installed binary, the phone reaches the Next app over `adb reverse tcp:3000`,
 and `/api/tutor/voice` answers `403 utterance is not server-emitted` to a forged
 tag — the route is alive and its tag gate works.
+
+## First light on the Duo — what the frame actually showed
+
+She renders: textured, skinned, breathing, gaze on the lens, mouth moving. Two
+things were reported off that frame, and they are not the same kind of problem.
+
+**"Missing full body" — the camera, not the asset.** `natalie.gltf` carries one
+skinned mesh with all 470 joints, toes included, and POSITION bounds of
+x ±0.62, y 0..1.65, z ±0.2. Nothing was pruned away. The stage had inherited
+the web scene's authored shot — camera at `(0, 1.45, 1.15)` looking at
+`(0, 1.5, 0)` — which is her face at arm's length, so she was cropped at the
+collarbone in a pane `TutorStage.tsx` describes as "an alcove she stands in".
+
+Fixed by measuring the shot instead of writing it down:
+`frameBody()` in `packages/avatar/src/presence/framing.ts` contains the whole
+bounding box in whatever aspect the surface came up at, and the loop re-fits on
+a size change — her pane is COLLAPSIBLE, and a camera whose aspect was fixed at
+mount renders a stretched body through every frame of that animation. Five Node
+tests project all eight corners of her bounds through the fitted camera in the
+tall pane, the spine band and square; the check fails on a corner leaving the
+frustum, not on a retuned margin.
+
+Contain, not cover, and that is a decision: a tall narrow pane leaves air above
+and below her. Filling the width would take her hands off at the wrist.
+
+**"No voice" — never the avatar and never the audio stack.** No sentence was
+emitted at all: `/api/tutor/coach` was answering `{"kind":"unavailable"}` from
+the Mac with the phone not involved — the model, not a safety layer. It streams
+normally now (verified by curl, two chunks with signed voice tags), and the
+ElevenLabs key predates the running dev server, so the egress is configured.
+The remaining verification is a real session on the phone.
+
+Note for anyone testing from `moyo://natalie-3d`: that route has no audio by
+design. Its mouth is a synthetic oscillator, because it exists to isolate the
+renderer. Silence there is correct.
+
+**Unrelated, found while running the gate:** `check-barrels.mjs` followed only
+static relative edges, so `tutor-avatar-3d` was reported orphaned. The only way
+to satisfy it would have been a static re-export from the package index — which
+is precisely what the lazy import exists to prevent. `import('./x')` is now an
+edge.
