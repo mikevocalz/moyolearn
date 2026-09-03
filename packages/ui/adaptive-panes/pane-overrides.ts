@@ -9,7 +9,7 @@ import {
  * the primary pane's rail step is a consequence of width, not a separate
  * user-facing switch.
  */
-export type TogglablePane = 'primary' | 'supplementary' | 'inspector';
+export type TogglablePane = 'primary' | 'supplementary' | 'inspector' | 'detail';
 
 /**
  * A manual override is scoped to ONE size class. The same override map covers
@@ -34,6 +34,11 @@ export type PaneOverrides = {
  * column.
  */
 function canShow(sizeClass: WindowSizeClass, pane: TogglablePane): boolean {
+  // The detail pane is the flexible one: it takes whatever is left rather than
+  // a fixed token width, so there is no class that cannot fit it. Compact
+  // included — at compact the navigator shows exactly one pane and the detail
+  // is the one it falls back to.
+  if (pane === 'detail') return true;
   if (sizeClass === 'compact') return false;
   if (sizeClass === 'medium') return pane === 'primary';
   return true;
@@ -74,10 +79,20 @@ export function resolvePaneVisibility(
   };
 
   const primary = apply('primary');
+  const supplementary = apply('supplementary');
+  const inspector = apply('inspector');
   return {
     primary,
-    supplementary: apply('supplementary'),
-    inspector: apply('inspector'),
+    supplementary,
+    inspector,
+    /*
+      Rule 6: the detail pane may be hidden, but never into an EMPTY SCREEN.
+      It is the fallback pane — the one every other pane collapses towards — so
+      an override that hides it while nothing else is up would leave a learner
+      or an operator staring at the background colour with no control left to
+      undo it. Hiding is honoured only while some other pane is still drawn.
+    */
+    detail: apply('detail') || !(primary || supplementary || inspector),
     primaryNarrow: primary && auto.primaryNarrow,
   };
 }

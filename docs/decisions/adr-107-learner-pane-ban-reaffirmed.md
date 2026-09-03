@@ -75,3 +75,91 @@ Zustand-only (pane selection stores stay adult-shell-scoped, doc 37 §3.2) · to
 
 **Contradicting doc, named:** doc 37 §3.3's "**Learner: never**" is now "learner: never, except the S9 tutor session." Doc 37 should carry that sentence; until it does, this amendment is the source of truth and doc 37 §3.3 is stale on that one word.
 
+
+---
+
+## Amendment 2 (2026-09-03, 01:40) — three panes, and the work takes the middle one
+
+**Decided by:** Mike, product owner, in session on 2026-09-03, a few hours after
+Amendment 1 and after seeing the two-pane form on the Duo.
+**Scope:** unchanged. Still the S9 tutor session (`TutorStage`) and nothing else.
+Amendment 1's five conditions still bind except where this file replaces one of
+them, and it replaces exactly one.
+
+**What he asked for, in his words:** *"left paned chat, middle work like you had
+priod and 3rd natalie pane (make sure her view has high z-index"* — and, on the
+controls, *"i dont see the pane buttons on the header! rembers the two controls
+for the two panes other panes (home work an nataly)!"*
+
+**What changed.** Amendment 1's exempted composition was **presence +
+conversation**, two panes, with the work riding inside the turn that raised it
+(`docs/design/tutor-session-thread-first.md`). The exempted composition is now
+**conversation · work · presence**, three panes, left to right, at `expanded`
+(840dp) and above.
+
+**Condition 1 of Amendment 1 is REPLACED, not quietly stretched.** It read: *"One
+work surface. The tutor session's panes are presence + conversation. The moment a
+second pane holds anything a child has to do, this exemption no longer covers
+it."* That sentence would forbid the middle pane, so it is retired and this is
+what stands in its place:
+
+> **1'. One work surface, and the middle pane is not a second one.** The middle
+> pane holds `TutorWorkCanvas`: the problem the child typed or photographed, and
+> the photo they took of it, at a size readable across a desk. It is a
+> **display** of the thing the conversation is already about. Nothing is
+> authored, chosen, navigated or submitted there; it has no controls, no second
+> reading order, and nothing reachable from it that is not reachable without it.
+> The child still does all of their work in one place — the composer, in the
+> conversation pane. If anything a child has to *do* is ever added to the middle
+> pane, this exemption stops covering the screen and the §Decision ban applies
+> again.
+
+**Why the attention-arbitrage concern still does not bite.** §Decision's stated
+reason is a child made to divide attention between two places where work
+happens. There is still one. What the middle pane removes is a *scroll*: at
+1080dp the problem was inside a message bubble in a 380dp column, so a child
+checking "what was the question again" had to leave the sentence they were
+reading. Putting the question where it stays visible is the opposite of dividing
+their attention.
+
+**Amendment 1's other conditions, restated with what enforces them.**
+- **2. Collapsible, and collapsed is a first-class state.** Now literally the
+  thing Mike asked for: two labelled `PaneToggle`s in `SessionToolbar` —
+  "Homework" and "Natalie" — one per collapsible pane. The conversation has no
+  control on purpose; it is the session, and `resolvePaneVisibility` refuses to
+  hide the last pane standing in any case. Verified on the Duo at 1080dp: each
+  toggle collapses its pane, the remaining panes take the width, and the state
+  survives a process restart (MMKV, `pane-overrides`, scoped to the size class).
+- **3. Compact is unchanged.** Below 600dp the session is the single spine it has
+  always been and the work rides inside the turn. Below 840dp there is no middle
+  pane either, because a third column has nowhere to go — so the work rides in
+  the turn there too. This is width-dependent behaviour by design, in one place
+  (`TutorStage`'s `workPane`), and neither half is a bug to be "fixed" into the
+  other.
+- **4. Doc 08's Hot dial still applies** — ≥40% canvas measured with the panes
+  open. At 1080dp: conversation 380 + work 294 + Natalie ~390. The conversation
+  and the work are both learner canvas; the chrome is one 56dp bar.
+- **5. It does not generalise.** Unchanged, and now more pointed: three panes on
+  a learner surface is this route or nothing.
+
+**On the z-index he asked for.** Recorded here because the reason matters more
+than the value: **nothing sets a z-index.** Her pane is the detail pane, the last
+child of the row, so on Android it already paints after its neighbours; and the
+neighbours are inside `CollapsiblePane`, which clips (`overflow-hidden`). React
+Native does not clip children by default, and a pane painting over another is a
+missing clip, not a missing z-index — a number here would have hidden that class
+of bug rather than fixed it. If she is ever painted over, the clip on the
+offender is the fix.
+
+**Bug found and fixed while doing this, worth naming:** the `PaneToggle` controls
+mounted by commit `18f5ff5` were **inert on device from the day they landed**.
+`PaneToggle` imported `./pane-overrides.store.ts` — the TypeScript *resolution
+anchor*, which re-exports the web fork — so on native it wrote to a
+localStorage-backed store that nothing rendered from, while `AdaptivePanes` read
+the MMKV one. Only the extensionless specifier lets Metro pick `.native`.
+Condition 2 was therefore not actually satisfied by Amendment 1; it is now.
+
+**Contradicting doc, named:** doc 23 §5's second column is back, and
+`docs/design/tutor-session-thread-first.md` is now correct only for `compact` and
+`medium`. Both should carry the width qualifier; until they do, this amendment is
+the source of truth.

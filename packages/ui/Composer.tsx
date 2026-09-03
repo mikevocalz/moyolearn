@@ -35,12 +35,14 @@
 // SOT: docs/pack/23-tutorstage-handoff.md §3.5 · doc 15 §1
 // SOT-KEYWORDS: composer chat input tutor send message learner
 
-import { useCallback } from 'react';
+import { useCallback, useState } from 'react';
+import type { LayoutChangeEvent } from 'react-native';
 import { targets } from '@acme/theme';
+import { Menu } from './Menu';
 import { View, Text, Pressable, Textarea } from './primitives';
 import { useAutoGrow } from './use-autogrow';
 import { SolitoImage } from 'solito/image';
-import { Camera, FileUp, Image, Mic, Paperclip, Send, Square, Trash2, X } from './icons';
+import { Camera, FileUp, Image, Mic, Paperclip, Plus, Send, Square, Trash2, X } from './icons';
 // Through the barrel, not the file. `waveform.ts` (the pure bar maths) and
 // `Waveform.tsx` (the component) differ only in case, so a direct path import
 // resolves ambiguously on a case-insensitive filesystem and TS refuses it.
@@ -142,6 +144,64 @@ export function Composer({
   const showPicture = !disabled && !atImageCap && pickPicture !== undefined;
   const showDocument = !disabled && onPickDocument !== undefined;
   const canAttach = showPicture || showDocument;
+
+  /*
+    THE ROW MEASURES ITSELF, NOT THE WINDOW.
+
+    `useSizeClass` and `useWindowSizeClass` both answer questions about the
+    WINDOW, and the window is the wrong ruler for this control: the same screen
+    at the same width hosts this composer full-width on a phone and inside a
+    380dp conversation pane in the three-pane session. Asked about the window,
+    the row draws its phone form in a third of the space — four 44dp keys and a
+    64dp field, measured on the Duo, which is a field that fits three
+    characters.
+
+    `onLayout` rather than a new hook: nothing in the kit measures a container
+    (every size helper here reads `useWindowDimensions`), and one screen's
+    footer does not justify a second measurement mechanism. `null` until the
+    first layout, and the fully-expanded row is what renders in the meantime —
+    the wide form is the safe first paint, because it is the one that never
+    hides a capability.
+  */
+  const [rowWidth, setRowWidth] = useState<number | null>(null);
+  const measureRow = useCallback((event: LayoutChangeEvent) => {
+    setRowWidth(event.nativeEvent.layout.width);
+  }, []);
+
+  /*
+    Below this the two attach keys become one.
+
+    The number is the field width, worked backwards. Four keys at the adult
+    band's 44dp target, three gaps, the field's own gaps, the border and the
+    row's padding come to ~228dp of chrome. A child's answer is set at
+    `text-body-lg` (18px), where a readable line is around 18 characters ≈
+    160dp — below that the field wraps one word per line, which is the failure
+    the `65ch` bug already taught us to measure rather than eyeball. 160 + 228
+    rounds to 400. Collapsing one key returns ~52dp, so the narrow row holds its
+    160dp field down to ~348 — the conversation pane's usable width.
+
+    NOTHING IS LOST at the narrow width and no target shrinks. The band token
+    still sets the size (a K-2 child gets 72dp, not 44), and both ways in are
+    still one press away, in a FLAT list — the Noom/BFF rule this file already
+    argues for. What changes is that the list is behind a `+` instead of spread
+    across the bar.
+  */
+  const COMPACT_ROW_DP = 400;
+  const compactAttach =
+    rowWidth !== null && rowWidth < COMPACT_ROW_DP && showPicture && showDocument;
+
+  const attachActions = [
+    { id: 'picture', title: onPickImage ? 'Photo' : 'Take a photo' },
+    { id: 'document', title: 'File' },
+  ] as const;
+
+  const onAttachAction = useCallback(
+    (id: string) => {
+      if (id === 'picture') pickPicture?.();
+      else onPickDocument?.();
+    },
+    [pickPicture, onPickDocument],
+  );
 
   /*
     Icon buttons carry the age band's touch target, same as every other control.
@@ -453,6 +513,7 @@ export function Composer({
           anchors at either end.
         */}
         <View
+          onLayout={measureRow}
           className={`flex-row items-end gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field ${
             disabled ? 'opacity-60' : ''
           }`}
@@ -460,7 +521,23 @@ export function Composer({
           {/* Attach leads, as it does in every reference — one key per way in,
               each present only where its handler is. Hidden rather than disabled:
               a greyed key a child keeps pressing teaches nothing. */}
-          {canAttach ? (
+          {compactAttach ? (
+            /*
+              ONE KEY, ONE FLAT LIST — not a submenu. `Menu` draws both ways in
+              at the same level with no nesting, which is the Noom/BFF rule this
+              file's header already commits to; the `+` is only where the list
+              hangs from when the bar has no room to spread it out.
+            */
+            <Menu actions={attachActions} onAction={onAttachAction} title="Add to your answer">
+              <View
+                role="button"
+                aria-label="Add a photo or file"
+                className={`${iconTarget} items-center justify-center rounded-control`}
+              >
+                <Plus size={20} className="text-text" />
+              </View>
+            </Menu>
+          ) : canAttach ? (
             /* Leading group, arriving from the left and settling rightward —
                the later half of the convergence described on `SlideIn`. */
             <SlideIn

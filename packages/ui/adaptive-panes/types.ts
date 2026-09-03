@@ -42,5 +42,32 @@ export interface AdaptivePanesProps {
    * host without `detail` renders an empty detail pane.
    */
   detail?: ReactNode;
+  /**
+   * Explicit width for the primary pane, in dp, replacing the `w-pane-primary`
+   * token — and, with it, the narrow RAIL STEP the automatic policy takes at
+   * `medium`/`expanded`.
+   *
+   * The rail step is a LIST affordance: a sidebar of icons with its labels
+   * truncated away is still navigable, which is why the policy prefers it to
+   * dropping the pane. A pane holding a conversation has no rail form — at
+   * 224dp a composer and a message bubble are unusable rather than
+   * abbreviated — so a host whose leading pane is not a list states its width
+   * here and opts out of the step. It still seeds only the DEFAULT: the
+   * divider's resize (and `PRIMARY_WIDTH_MIN`/`MAX`) continue to govern.
+   *
+   * Omitted — which is every adult pane surface — nothing changes.
+   */
+  primaryWidthDp?: number;
+  /**
+   * Whether the host draws its OWN row of `PaneToggle`s above the detail pane.
+   * Defaults to true, which is where every pane surface gets its controls.
+   *
+   * A host sets it false only when the controls are mounted somewhere better
+   * for that screen — the tutor session puts them in `SessionToolbar`, because
+   * an immersive session has one bar and a second control row underneath it
+   * would be a second bar. Two mount sites for one control would be a second
+   * mechanism; this is the same `PaneToggle` reading the same overrides, moved.
+   */
+  paneControls?: boolean;
   ref?: Ref<AdaptivePanesCommands>;
 }

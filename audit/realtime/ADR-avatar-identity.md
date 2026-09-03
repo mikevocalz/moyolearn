@@ -1,5 +1,5 @@
 # ADR — Avatar identity: what Natalie is allowed to be, and what must be true before 3D mounts
-Status: **PROPOSED — not approved. 3D must not mount in the app until Mike accepts this file.**
+Status: **ACCEPTED 2026-09-03 by Mike, scope widened to native — see the Amendment at the foot of this file.** The renderer still ships behind a flag defaulting OFF; acceptance authorises the work, not the switch.
 **Update 2026-09-03:** Mike asked for the realistic Natalie in a pane on the tutor session and amended ADR-107 to allow the panes (see `docs/decisions/adr-107-learner-pane-ban-reaffirmed.md` §Amendment). The pane and its slot are built. **The renderer is not mounted**, and the reason is in §Context: there is no native 3D runtime in this workspace, so it cannot run on the Duo at all. Option B below is now the v1 answer and the asset is named: the **Humano GLB**, purchased 2026-09-02, already driven by `apps/web-vite/src/components/chapters/natalie-scene.tsx`. That supersedes doc 22's GNM+SMPL-X path for v1 — not on merit, on licensing: the SMPL-X commercial licence is NOT cleared and Humano's is.
 Date: 2026-09-03 · Author: layout/tutor-stage pass · Decider: Mike
 
@@ -138,3 +138,64 @@ reason.
   `apps/web` only; (3) move the GLB + Draco decoder behind the capability
   manager; (4) golden set for the web tier; (5) wire the gesture gate to the
   live track.
+
+---
+
+## Amendment (2026-09-03, 02:00) — ACCEPTED, and the scope is widened to native
+
+**Decided by:** Mike, product owner, in session on 2026-09-03, overriding his own
+earlier "not a today decision" note on option C.
+**Status change:** PROPOSED → **ACCEPTED**. The §Decision above stands unaltered;
+what changes is §Options, which had ruled option C unavailable on a fact that is
+no longer true.
+
+**What changed under §Context's "hard constraint".** It said, correctly at the
+time, that no native 3D runtime existed in this workspace. `react-native-webgpu`
+is now a dependency of `apps/mobile` at **0.9.0** (latest published; pinned
+exactly, installed 2026-09-03) together with `three` at the catalog's `0.185.1`,
+so the phone bundle resolves the SAME three copy `packages/avatar` imports. The
+constraint is retired by installation, not by argument.
+
+**The chosen option is now C, not B.** The demo runs on the Surface Duo, so a
+web-only Natalie would be a Natalie nobody at the demo can see. B is not
+withdrawn — `apps/web-vite` keeps its scene — it is simply no longer the v1
+answer for the product surface.
+
+**Preconditions are unchanged and still all binding.** In particular
+precondition 3 (a SINGLE MOUNT SITE at every width) is now load-bearing rather
+than prospective, because the layout it warned about has shipped: the tutor
+session is a three-pane composition at `expanded` and up. Two things were done
+about it and they are complementary, not alternatives:
+
+- **`react-freeze` on every pane, in the host** (`AdaptivePanes`' `PaneContent`).
+  A hidden pane is FROZEN, never unmounted, so collapsing Natalie's pane leaves
+  the renderer, the loaded model and the animation state alive and a re-expand
+  resumes them. This is what preserves the mount.
+- **The loop stops itself.** Freeze suspends React renders only — measured on
+  this repo, a frozen face bus went on sampling the audio clock ~130×/s — so the
+  render loop, any `requestAnimationFrame`, and (for 3D)
+  `renderer.setAnimationLoop(null)` must be driven off the same visibility flag.
+  This is what saves the battery. Neither covers the other; deleting one
+  because "the other handles it" reintroduces the bug it was written for.
+- **`disposeWebGPURenderer` runs on genuine UNMOUNT only** — leaving the session
+  — never on a pane toggle. Disposal on hide is the symptom that the Freeze is
+  in the wrong place.
+
+**Still true, and it is the whole safety of doing this today:** nothing here
+authorises the renderer to be ON. The 3D path ships behind a flag whose
+committed default is OFF, `tutor-stage.ts` still owns the handoff (2D from frame
+1, promote only on a real first rendered frame with the head evaluated, demote
+immediately and permanently, download failure is not an error), and the go/no-go
+gate in `docs/decisions/adr-111-native-3d-runtime.md` decides whether the flag is
+ever flipped for the demo. If it is not, the 2D path runs exactly as it does
+today and no apology is owed for that.
+
+**Known open item, recorded rather than hidden:** precondition 3 is closed for
+pane toggling and for crossings between `medium`/`expanded`/`large` (her body
+sits in the detail pane in all of them, and the panes freeze rather than
+unmount). It is NOT closed for the `compact` ↔ pane crossing: `TutorStage`
+renders a different subtree below 600dp, so folding the Duo remounts her. On
+Android that crossing is also a configuration change the activity may be
+recreated by, so it is a demote-to-2D transition rather than a preservable one —
+which `tutor-stage.ts` already supports (`context-lost`). Fighting it with a
+portal is a post-demo change, not a tonight change.

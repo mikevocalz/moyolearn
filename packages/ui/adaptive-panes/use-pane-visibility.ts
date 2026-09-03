@@ -2,7 +2,9 @@
 import { useWindowDimensions } from 'react-native';
 import { windowSizeClassForWidth, type PaneVisibility } from './constants.ts';
 import { resolvePaneVisibility } from './pane-overrides.ts';
-import { usePaneOverrideStore } from './pane-overrides.store.ts';
+// Extensionless on purpose — see the note in PaneToggle.tsx. The `.ts` file is
+// a resolution anchor for the web fork; only this specifier reaches `.native`.
+import { usePaneOverrideStore } from './pane-overrides.store';
 
 /**
  * The resolved visibility a pane's CONTENT can read.

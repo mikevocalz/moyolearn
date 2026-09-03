@@ -82,24 +82,36 @@ export interface PaneVisibility {
   readonly primary: boolean;
   readonly supplementary: boolean;
   readonly inspector: boolean;
+  /**
+   * The trailing, flexible pane — `detail` in the host's props, `Main` in its
+   * markup, `secondary` in `SplitNavigableColumn`'s navigation vocabulary.
+   *
+   * It is `true` in every automatic policy below and always will be: the
+   * detail pane is what a list-detail layout is FOR, so no size class hides it
+   * on its own. It appears here only so that a user can, on a host that offers
+   * the control — the tutor session hides Natalie this way, and she lives in
+   * this pane. Without it that screen would have needed a second visibility
+   * mechanism running beside this one.
+   */
+  readonly detail: boolean;
   /** Primary uses the narrow token — the "rail" step before it disappears. */
   readonly primaryNarrow: boolean;
 }
 
 const VISIBILITY_TWO_COLUMN: Record<WindowSizeClass, PaneVisibility> = {
-  large: { primary: true, supplementary: false, inspector: true, primaryNarrow: false },
-  expanded: { primary: true, supplementary: false, inspector: true, primaryNarrow: false },
-  medium: { primary: true, supplementary: false, inspector: false, primaryNarrow: true },
-  compact: { primary: false, supplementary: false, inspector: false, primaryNarrow: false },
+  large: { primary: true, supplementary: false, inspector: true, detail: true, primaryNarrow: false },
+  expanded: { primary: true, supplementary: false, inspector: true, detail: true, primaryNarrow: false },
+  medium: { primary: true, supplementary: false, inspector: false, detail: true, primaryNarrow: true },
+  compact: { primary: false, supplementary: false, inspector: false, detail: true, primaryNarrow: false },
 };
 
 const VISIBILITY_THREE_COLUMN: Record<WindowSizeClass, PaneVisibility> = {
-  large: { primary: true, supplementary: true, inspector: true, primaryNarrow: false },
+  large: { primary: true, supplementary: true, inspector: true, detail: true, primaryNarrow: false },
   // Sidebar collapses to the narrow rail first, supplementary is kept because
   // it is the pane that actually drives the detail route.
-  expanded: { primary: true, supplementary: true, inspector: false, primaryNarrow: true },
-  medium: { primary: false, supplementary: true, inspector: false, primaryNarrow: false },
-  compact: { primary: false, supplementary: false, inspector: false, primaryNarrow: false },
+  expanded: { primary: true, supplementary: true, inspector: false, detail: true, primaryNarrow: true },
+  medium: { primary: false, supplementary: true, inspector: false, detail: true, primaryNarrow: false },
+  compact: { primary: false, supplementary: false, inspector: false, detail: true, primaryNarrow: false },
 };
 
 export function paneVisibility(

@@ -30,6 +30,7 @@
 import { useCallback, useState } from 'react';
 import { AdaptivePanes } from './adaptive-panes';
 import { isCollapsed } from './adaptive-panes/constants';
+import { PaneToggle } from './adaptive-panes/PaneToggle';
 import { useWindowSizeClass } from './adaptive-panes/use-window-size-class';
 import { Dial } from './Dial';
 import { View, Text } from './primitives';
@@ -44,6 +45,18 @@ import { Badge } from './Badge';
 import { Button } from './Button';
 import { TutorPresence } from './TutorPresence';
 import type { ResolvedTutorPresence, TutorPresencePreference } from './tutor-view';
+
+/**
+ * Width of the conversation pane, in dp.
+ *
+ * Not the `w-pane-primary` token (280) and not the `expanded` rail step (224):
+ * both are list widths. This is the narrowest width at which the three things
+ * the leading pane has to hold — her status rail as ONE row, a message bubble
+ * with a readable measure, and the composer's single-row footer — all still
+ * work, measured on the Duo's unfolded 1080dp window. It is a default: the
+ * pane divider resizes it within `PRIMARY_WIDTH_MIN`/`MAX` (200-420).
+ */
+const CONVERSATION_PANE_DP = 380;
 
 /** A spoken or written turn from the tutor. */
 export interface Utterance {
@@ -459,6 +472,58 @@ export function TutorStage({
   const presence: ResolvedTutorPresence = tutorPresence === 'auto' ? 'compact' : tutorPresence;
 
   /*
+    PANES ON THE TUTOR SESSION — a signed exception, not a drift.
+
+    Doc 37 §3.3 and ADR-107 ban split compositions on learner surfaces. Mike
+    amended ADR-107 twice on 2026-09-03: first to exempt THIS screen and only
+    this screen, then to widen the exempted composition from two panes to
+    three — conversation, work, Natalie — after seeing the two-pane form. Both
+    amendments name him, the date, and the conditions they carry, and the first
+    condition is the one this code has to honour: nothing is reachable in a pane
+    that is not reachable without it, which is why this is not the attention
+    arbitrage the ban exists to prevent.
+
+    Gated at `medium` (600dp) — `AdaptivePanes`' own first pane-capable class —
+    so a phone keeps the single spine it has always had. Condition 3.
+  */
+  const panes = !isCollapsed(windowClass);
+
+  /*
+    THE WORK IS WIDTH-DEPENDENT, and deliberately so. Do not "fix" either half
+    of this back to match the other.
+
+    · ON A PHONE (and at `medium`, where a third column has nowhere to go) the
+      work rides INSIDE the turn that raised it — `MessageBubble`'s `media`
+      slot. That is `docs/design/tutor-session-thread-first.md`, it is the right
+      answer at 540dp, and it is verified on the Duo's single screen.
+    · AT THREE-COLUMN WIDTH the work takes the middle pane again, which is what
+      doc 23 §5 always specified and what an unfolded 1080dp window has the room
+      for. A homework photo and a line of arithmetic inside a 380dp message
+      bubble is not the same artefact as the same photo across 300dp of pane.
+
+    And it still only earns the pane when there IS work: `canvas` is undefined
+    until the learner has a problem or a photo, and an empty middle column is
+    the empty-box problem doc 23 §5 already ruled on.
+  */
+  const workPane = panes && windowClass !== 'medium' && canvas !== undefined;
+
+  /*
+    HER PANE IS THE REVEAL.
+
+    `compact` presence means "keep the face small because the window is" — rule
+    3 of the responsive spec, written when the only place she could go was the
+    top of the conversation. A window wide enough to give her a column of her
+    own has answered that question differently, and leaving her at `compact`
+    there drew her pane EMPTY: `TutorAvatar` renders nothing when she is not
+    revealed, so the exemption bought a blank column.
+
+    `audio-only` is untouched on purpose. Reduce Motion resolves to it (spec §1
+    rule 2) and that band never gets `visible`, by width or by anything else.
+  */
+  const panePresence: ResolvedTutorPresence =
+    panes && presence === 'compact' ? 'visible' : presence;
+
+  /*
     ONE control for Natalie's presence, and it lives with her.
 
     The toolbar used to carry a text button that cycled
@@ -469,6 +534,18 @@ export function TutorStage({
   const handleToggleReveal = onTutorPresenceChange
     ? () => onTutorPresenceChange(presence === 'visible' ? collapsedPresence : 'visible')
     : undefined;
+
+  /*
+    AT WIDTH THE RAIL STOPS BEING A CONTROL, and that is the fix for having two
+    of them rather than a second control for the same job.
+
+    In the spine the rail is the one way to hide her. In the pane composition
+    the HEADER's "Natalie" toggle hides her pane, which is the same intent
+    expressed on the thing it acts on — so the rail keeps her name and her live
+    status and drops its press target. `TutorPresence` already draws exactly
+    that when `onToggleReveal` is omitted; nothing new is written here.
+  */
+  const railToggle = panes ? undefined : handleToggleReveal;
 
   const handleSend = useCallback(() => {
     const message = draft.trim();
@@ -492,22 +569,6 @@ export function TutorStage({
   const inputDisabled = state.kind === 'ended' || state.kind === 'crisis';
 
   /*
-    PANES ON THE TUTOR SESSION — and this is a signed exception, not a drift.
-
-    Doc 37 §3.3 and ADR-107 ban split compositions on learner surfaces. Mike
-    amended ADR-107 on 2026-09-03 to exempt THIS screen and only this screen;
-    the amendment names him, the date, and the five conditions it carries, and
-    the first of them is the one this code has to honour: the leading pane holds
-    a PRESENCE, never work. Nothing is reachable there that is not reachable
-    without it, which is why it is not the attention arbitrage the ban exists to
-    prevent.
-
-    Gated at `medium` (600dp) — `AdaptivePanes`' own first pane-capable class —
-    so a phone keeps the single spine it has always had. Condition 3.
-  */
-  const panes = !isCollapsed(windowClass);
-
-  /*
     NATALIE, IN EVERY STATE, AND ONLY ONCE ON SCREEN.
 
     Status belongs to the person whose status it is: one element carries her
@@ -522,8 +583,8 @@ export function TutorStage({
     name: tutorName,
     status: statusFor(state),
     tone: statusTone(state),
-    tutorPresence: presence,
-    onToggleReveal: handleToggleReveal,
+    tutorPresence: panePresence,
+    onToggleReveal: railToggle,
     assurance: presenceAssurance,
     size: buttonSize,
   } as const;
@@ -573,7 +634,9 @@ export function TutorStage({
         messages={messages ?? []}
         live={
           <StateBody
-            work={canvas}
+            /* Only when the work has no pane of its own — never in both places
+               at once, which would put the same photo on screen twice. */
+            work={workPane ? undefined : canvas}
             state={state}
             childName={childName}
             questionNumber={questionNumber}
@@ -606,14 +669,29 @@ export function TutorStage({
     </View>
   );
 
-  // Doc 23 §5's second column held the worked canvas. The work is a turn now,
-  // so that column has nothing to hold and is gone rather than left standing
-  // empty — the same reasoning that kept it opt-in before (an empty bordered
-  // box beside a 380pt thread reads as the box being the subject of the screen)
-  // applied once the box had no contents at all. Width therefore buys the
-  // conversation a centred, measure-capped column and nothing else; see
-  // docs/design/tutor-session-thread-first.md for why there is no second pane
-  // and no third.
+  /*
+    THE TWO CONTROLS, IN THE HEADER, ONE PER TOGGLABLE PANE.
+
+    They are `PaneToggle` reading `pane-overrides` — the same component and the
+    same precedence policy every adult pane surface uses, mounted somewhere
+    else. `AdaptivePanes` is told `paneControls={false}` so there is exactly one
+    row of them on screen, not two.
+
+    Each renders itself away in any size class that cannot show its pane, so at
+    `medium` this is the Natalie control alone (no third column fits, so no work
+    pane exists to toggle) and at `compact` the header is not given them at all.
+
+    NO CONTROL FOR THE CONVERSATION. It is the session; a screen whose only
+    remaining pane could be dismissed is a screen a child can empty by accident.
+    `resolvePaneVisibility` would refuse the last one anyway, and a control that
+    cannot act is worse than no control.
+  */
+  const paneControls = panes ? (
+    <>
+      {workPane ? <PaneToggle pane="supplementary" columnCount={2} label="Homework" /> : null}
+      <PaneToggle pane="detail" columnCount={workPane ? 2 : 1} label={tutorName} />
+    </>
+  ) : undefined;
 
   return (
     /*
@@ -630,32 +708,71 @@ export function TutorStage({
           captionsEnabled={captionsEnabled}
           onBack={onBack}
           onToggleCaptions={onToggleCaptions}
+          paneControls={paneControls}
         />
         {panes ? (
           /*
-            The host, with its collapse controls — the same `AdaptivePanes` and
-            the same `PaneToggle` every adult pane surface uses, so a learner's
-            split view is not a second implementation of one. `topColumnForCollapsing`
-            is deliberately absent: this host never collapses, because `panes`
-            is false below the class where it would.
+            THE HOST, LEFT TO RIGHT: conversation · work · Natalie.
+
+            The same `AdaptivePanes` every adult pane surface uses, so a
+            learner's split view is not a second implementation of one.
+            `topColumnForCollapsing` is deliberately absent: this host never
+            collapses, because `panes` is false below the class where it would.
+
+            `primaryWidthDp` because the leading pane holds a CONVERSATION. The
+            automatic policy steps the primary pane down to a 224dp rail at
+            `expanded` before dropping it, which is right for a list of icons
+            and wrong for a thread with a composer in it — 380dp is the width at
+            which her status rail still reads as one row (measured: at 280dp
+            "Speaking" broke across three lines, which is what the first
+            amendment's §render split was working around). The divider still
+            resizes it.
+
+            SHE IS THE DETAIL PANE, and that is what answers "make sure her view
+            has high z-index" — structurally rather than with a number. The
+            detail pane is the LAST child of the row, so on Android it paints
+            after both panes before it, and both of those are inside
+            `CollapsiblePane`, which clips. Nothing can paint over her without
+            first overflowing a clip, and if something ever does, the clip on
+            the offender is the fix. A z-index would only have hidden it.
+
+            Her pane is also the only one here that never animates its width,
+            which is what the 3D upgrade needs: a canvas that is resized every
+            frame of a collapse would rebuild its swapchain on each one.
           */
           <AdaptivePanes
+            paneControls={false}
+            primaryWidthDp={CONVERSATION_PANE_DP}
             detail={
-              <View className="mx-auto w-full max-w-content-prose flex-1">{stageBody}</View>
-            }>
-            <AdaptivePanes.Column>
-              {/*
+              /*
                 SHE IS THE WHOLE PANE, centred in it. A figure hugging the
                 ceiling of a tall column reads as a leftover element rather than
                 a placed one, and doc 23 §3.1's rule holds: the mark carries the
                 ink border and no slab shadow, because border + shadow + yellow
                 is the primary-button treatment and the one thing here that is
                 not a control must not wear it.
-              */}
+              */
               <View className="flex-1 items-center justify-center p-inset">
                 <TutorPresence {...presenceProps} avatar={avatar} render="body" />
               </View>
+            }>
+            <AdaptivePanes.Column>
+              <View className="mx-auto w-full max-w-content-prose flex-1">{stageBody}</View>
             </AdaptivePanes.Column>
+            {workPane ? (
+              <AdaptivePanes.Column>
+                {/*
+                  Top-aligned, not `flex-1`-stretched. `TutorWorkCanvas` sizes
+                  to its content (`w-full`) since it was inlined into a turn,
+                  and that is still the honest measurement here: a one-line
+                  problem stretched to the height of the column is a lavender
+                  field with an equation floating in it, which is the exact
+                  defect that change fixed. The PANE is full height; the work
+                  sits at the top of it.
+                */}
+                <View className="flex-1 gap-stack p-inset">{canvas}</View>
+              </AdaptivePanes.Column>
+            ) : null}
           </AdaptivePanes>
         ) : (
           <View className="mx-auto w-full max-w-content-prose flex-1">{stageBody}</View>

@@ -49,6 +49,9 @@ describe('paneVisibility', () => {
       primary: true,
       supplementary: true,
       inspector: true,
+      // The detail pane is never hidden by the automatic policy — it is what a
+      // list-detail layout is for. Only an explicit override takes it away.
+      detail: true,
       primaryNarrow: false,
     });
   });

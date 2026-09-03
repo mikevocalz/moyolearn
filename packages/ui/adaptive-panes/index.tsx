@@ -20,6 +20,7 @@
  *               pane toggle collapse expand controls
  */
 import { Children, isValidElement, useImperativeHandle, useRef, type ReactNode } from 'react';
+import { Freeze } from 'react-freeze';
 import { useStore } from 'zustand';
 import { View } from '../tw';
 import { Aside, Main, Section } from '../primitives';
@@ -71,11 +72,37 @@ const PANE_TRAVEL = 24;
  */
 const INSPECTOR_TRAVEL = 300;
 
+/**
+ * A pane that is on screen renders; a pane that is not stays MOUNTED and stops
+ * rendering.
+ *
+ * `react-freeze` suspends the subtree instead of unmounting it, which is the
+ * difference between a collapse and a teardown. Unmounting a hidden pane would
+ * throw away its scroll position, its local state, and — on the tutor session —
+ * a live WebGPU renderer with a 12MB model resident in it, so re-expanding
+ * would rebuild all of it mid-session. Freezing keeps every one of those alive
+ * and simply stops React re-rendering them while nobody can see them.
+ *
+ * WHAT THIS DOES NOT DO, and the two requirements are complementary rather than
+ * redundant: it suspends RENDERS ONLY. Effects are not torn down, so a
+ * `requestAnimationFrame` loop, an interval, or a poll inside a frozen subtree
+ * keeps running — measured on this repo, a frozen face bus went on sampling the
+ * audio clock ~130×/s. Freeze preserves the mount; stopping the loop saves the
+ * battery. Anything with an imperative loop in it must ALSO be told it is
+ * hidden and stop itself (see `TutorAvatar`), and anything that owns audio must
+ * live outside the frozen subtree entirely.
+ */
+function PaneContent({ open, children }: { open: boolean; children: ReactNode }) {
+  return <Freeze freeze={!open}>{children}</Freeze>;
+}
+
 function AdaptivePanesNavigator({
   children,
   topColumnForCollapsing,
   showInspector,
   detail,
+  primaryWidthDp,
+  paneControls = true,
   ref,
 }: AdaptivePanesProps) {
   const sizeClass = useWindowSizeClass();
@@ -146,10 +173,19 @@ function AdaptivePanesNavigator({
   // THIS size class. Precedence and the "never show what cannot fit" guard both
   // live in the reducer, so this stays a lookup.
   const visible = resolvePaneVisibility(sizeClass, columnCount, paneOverrides);
-  // Mounted whenever the size class allows one; `showInspector` only decides
-  // whether it is slid open. Unmounting it was what made closing unreliable.
-  const inspectorPane = visible.inspector ? inspectors[0] : null;
-  const inspectorOpen = Boolean(showInspector && inspectorPane);
+  /*
+    MOUNTED WHENEVER THERE IS ONE TO MOUNT — not "whenever the size class allows
+    it", which is what this used to say.
+
+    `visible.inspector` was gating the MOUNT, so toggling the inspector off
+    destroyed its subtree and toggling it back on built a new one. That is fine
+    for a filter panel and fatal for anything holding a renderer or a stream.
+    The drawer now always exists once an `Inspector` child is authored; the size
+    class and the override decide whether it is slid OPEN, and `PaneContent`
+    freezes it while it is not.
+  */
+  const inspectorPane = inspectors[0] ?? null;
+  const inspectorOpen = Boolean(showInspector && inspectorPane && visible.inspector);
 
   if (collapsed) {
     // Keyed on the column so each pane change remounts and replays the entrance.
@@ -178,9 +214,34 @@ function AdaptivePanesNavigator({
     );
   }
 
+  /*
+    An explicit `primaryWidthDp` REPLACES the rail step, it does not compete
+    with it: a host that states a width has told us its leading pane has no
+    abbreviated form, so `primaryNarrow` is simply not honoured for it. See the
+    prop's own note in types.ts for why that is a property of the CONTENT and
+    not of the width.
+  */
+  const railStep = visible.primaryNarrow && primaryWidthDp === undefined;
   // The narrow rail is a fixed step, not a resizable pane, so a stored width
   // only applies at the full-width steps.
-  const resizedWidth = visible.primaryNarrow ? null : primaryWidth;
+  const resizedWidth = railStep ? null : primaryWidth;
+  const openPrimaryWidth = railStep
+    ? PANE_WIDTH_DP.primaryNarrow
+    : resizedWidth ?? primaryWidthDp ?? PANE_WIDTH_DP.primary;
+
+  /*
+    WHICH PANE ABSORBS THE WINDOW. Normally the detail pane, which is why the
+    leading panes are all a fixed token width. Hide the detail — the tutor
+    session's "Natalie" control does exactly that — and something else has to,
+    or the panes sit at their widths with a band of empty background beside
+    them. Trailing-most visible pane wins, so the content stays where the reader
+    left it and only the last column grows.
+  */
+  const fillPane: 'detail' | 'supplementary' | 'primary' = visible.detail
+    ? 'detail'
+    : visible.supplementary && columns[1]
+      ? 'supplementary'
+      : 'primary';
 
   return (
     <AdaptivePanesContext value={store}>
@@ -197,16 +258,15 @@ function AdaptivePanesNavigator({
             <>
               <CollapsiblePane
                 open={visible.primary}
-                width={
-                  visible.primaryNarrow
-                    ? PANE_WIDTH_DP.primaryNarrow
-                    : resizedWidth ?? PANE_WIDTH_DP.primary
-                }
+                width={openPrimaryWidth}
+                fill={fillPane === 'primary'}
               >
-                <Aside className="flex-1">{columns[0]}</Aside>
+                <Aside className="flex-1">
+                  <PaneContent open={visible.primary}>{columns[0]}</PaneContent>
+                </Aside>
               </CollapsiblePane>
               {visible.primary ? (
-                <PaneDivider width={resizedWidth ?? DEFAULT_PRIMARY_WIDTH} />
+                <PaneDivider width={resizedWidth ?? primaryWidthDp ?? DEFAULT_PRIMARY_WIDTH} />
               ) : null}
             </>
           ) : null}
@@ -215,13 +275,33 @@ function AdaptivePanesNavigator({
             <CollapsiblePane
               open={visible.supplementary}
               width={PANE_WIDTH_DP.supplementary}
+              fill={fillPane === 'supplementary'}
               className={visible.supplementary ? `border-r ${PANE_DIVIDER}` : undefined}
             >
-              <Section className="flex-1">{columns[1]}</Section>
+              <Section className="flex-1">
+                <PaneContent open={visible.supplementary}>{columns[1]}</PaneContent>
+              </Section>
             </CollapsiblePane>
           ) : null}
 
-          <Main className="flex-1">
+          {/*
+            THE DETAIL PANE IS LAST IN THE ROW, AND THAT IS ITS STACKING.
+
+            Nothing here sets a z-index. On Android a sibling paints in tree
+            order, so the last child of the row is already above the panes
+            before it — and the panes before it are inside `CollapsiblePane`,
+            which clips (`overflow-hidden`), so a tall or overflowing child in a
+            leading pane cannot paint across this one. React Native does not
+            clip children by default, and a pane that overflowed its neighbour
+            is exactly the bug a z-index would have papered over instead of
+            fixed. If something ever does paint over this pane, the clip on the
+            offender is the fix, not a number here.
+
+            `flex-1` only while it is visible: a hidden detail must contribute
+            no width, and `w-0` beside a `flex-1` sibling is what makes the
+            neighbours take the space back.
+          */}
+          <Main className={visible.detail ? 'flex-1' : 'w-0'}>
             {/*
               THE PANE CONTROLS, FINALLY ON SCREEN.
 
@@ -246,14 +326,16 @@ function AdaptivePanesNavigator({
               `medium` this is one button and at `compact` (which returns
               earlier) it does not exist.
             */}
-            <View className="flex-row items-center gap-element px-inset py-1">
-              <PaneToggle pane="primary" columnCount={columnCount} />
-              {columnCount === 2 ? (
-                <PaneToggle pane="supplementary" columnCount={columnCount} />
-              ) : null}
-              {inspectorPane ? <PaneToggle pane="inspector" columnCount={columnCount} /> : null}
-            </View>
-            {detailPane}
+            {paneControls ? (
+              <View className="flex-row items-center gap-element px-inset py-1">
+                <PaneToggle pane="primary" columnCount={columnCount} />
+                {columnCount === 2 ? (
+                  <PaneToggle pane="supplementary" columnCount={columnCount} />
+                ) : null}
+                {inspectorPane ? <PaneToggle pane="inspector" columnCount={columnCount} /> : null}
+              </View>
+            ) : null}
+            <PaneContent open={visible.detail}>{detailPane}</PaneContent>
           </Main>
         </View>
 
@@ -277,11 +359,14 @@ function AdaptivePanesNavigator({
         {inspectorPane ? (
           <MotionView
             pointerEvents={inspectorOpen ? 'auto' : 'none'}
+            aria-hidden={!inspectorOpen}
             className={`absolute bottom-0 right-0 top-0 ${PANE_WIDTH_CLASS.inspector} border-l ${PANE_DIVIDER} bg-surface shadow-overlay`}
             animate={{ x: inspectorOpen ? 0 : INSPECTOR_TRAVEL }}
             transition={{ type: 'spring', damping: 32, stiffness: 140, mass: 1.1 }}
           >
-            <Aside className="flex-1">{inspectorPane}</Aside>
+            <Aside className="flex-1">
+              <PaneContent open={inspectorOpen}>{inspectorPane}</PaneContent>
+            </Aside>
           </MotionView>
         ) : null}
       </SafeArea>

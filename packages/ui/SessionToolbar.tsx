@@ -41,6 +41,24 @@ export interface SessionToolbarProps {
   captionsEnabled?: boolean;
   onBack?: () => void;
   onToggleCaptions?: () => void;
+  /**
+   * The pane show/hide controls, when this session is drawn as a split view.
+   *
+   * A SLOT, not a set of booleans: what the panes are and what they are called
+   * is the stage's business (`TutorStage` mounts `PaneToggle`s here), and a
+   * header that knew the names of the tutor session's panes could not be the
+   * one header dialect any more. Omitted — a phone, where the session is a
+   * single spine — nothing is drawn and the title keeps the whole bar.
+   *
+   * WHY THE HEADER AND NOT THE PANE SEAM. `AdaptivePanes` draws its own control
+   * row above the detail pane, which is right for an adult pane surface with a
+   * navbar of its own. The session is immersive — it hides the shell header and
+   * has exactly one bar — so a second control strip under that bar reads as a
+   * second bar, and it sat above only ONE of the two panes it governs. In the
+   * header both controls are equidistant from both panes and present from first
+   * paint, which is where the learner looked for them.
+   */
+  paneControls?: React.ReactNode;
   className?: string;
 }
 
@@ -62,9 +80,10 @@ export function SessionToolbar({
   captionsEnabled,
   onBack,
   onToggleCaptions,
+  paneControls,
   className,
 }: SessionToolbarProps) {
-  const hasRightAction = onToggleCaptions !== undefined;
+  const hasRightAction = onToggleCaptions !== undefined || paneControls !== undefined;
 
   /*
     The top inset lives HERE, not in each caller. This is the first row of an
@@ -104,7 +123,11 @@ export function SessionToolbar({
           {title}
         </Text>
         {hasRightAction ? (
-          <View className="shrink-0 flex-row items-center gap-1">
+          <View className="shrink-0 flex-row items-center gap-element">
+            {/* Layout controls lead the action group and captions trail it: the
+                pane toggles change the SHAPE of the screen and CC changes what
+                is written on it, so the two kinds do not interleave. */}
+            {paneControls}
             {onToggleCaptions ? (
               <Button
                 title="CC"

@@ -14,6 +14,21 @@ export interface CollapsiblePaneProps {
   /** Width in dp when open. */
   width: number;
   open: boolean;
+  /**
+   * Take the leftover width as well as the fixed one.
+   *
+   * The trailing detail pane is normally the flexible one, so the leading panes
+   * are all fixed. Hide the detail and nothing is left to absorb the window:
+   * the panes sit at their token widths and the rest of the screen is a band of
+   * background. Whichever pane is LAST STANDING gets this, so "hide Natalie" on
+   * the tutor session gives the conversation the window rather than leaving a
+   * hole where she was.
+   *
+   * `grow`, not `flex-1`: `flex-1` sets `flex-basis: 0%`, which would discard
+   * the animated width this pane collapses along. Growing FROM the width keeps
+   * the collapse animation intact and simply lets the pane expand past it.
+   */
+  fill?: boolean;
   children: React.ReactNode;
   className?: string;
 }
@@ -38,12 +53,12 @@ export interface CollapsiblePaneProps {
  * does not re-wrap on every frame of the collapse — the pane is clipped rather
  * than reflowed internally.
  */
-export function CollapsiblePane({ width, open, children, className }: CollapsiblePaneProps) {
+export function CollapsiblePane({ width, open, fill, children, className }: CollapsiblePaneProps) {
   return (
     <MotionView
       animate={{ width: open ? width : 0 }}
       transition={TRANSITIONS.paneWidth}
-      className={`overflow-hidden ${className ?? ''}`}
+      className={`overflow-hidden ${fill && open ? 'grow' : ''} ${className ?? ''}`}
     >
       {/*
         Clipping only hides a collapsed pane from SIGHT. Its children keep their
@@ -55,7 +70,9 @@ export function CollapsiblePane({ width, open, children, className }: Collapsibl
         survive the collapse.
       */}
       <View
-        style={{ width }}
+        /* No fixed inner width while filling — the whole point is that the
+           content follows the pane rather than being clipped to a token. */
+        style={fill && open ? undefined : { width }}
         className="flex-1"
         aria-hidden={!open}
         pointerEvents={open ? 'auto' : 'none'}

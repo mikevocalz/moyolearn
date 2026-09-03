@@ -105,6 +105,50 @@ describe('resolvePaneVisibility — showing is gated by what fits', () => {
   });
 });
 
+describe('resolvePaneVisibility — the detail pane', () => {
+  it('is on by default in every size class and shape', () => {
+    for (const sizeClass of CLASSES) {
+      for (const columnCount of SHAPES) {
+        assert.equal(
+          resolvePaneVisibility(sizeClass, columnCount).detail,
+          true,
+          `${sizeClass}/${columnCount}`,
+        );
+      }
+    }
+  });
+
+  it('can be hidden wherever another pane is still up', () => {
+    // The tutor session's "Natalie" control: she lives in the detail pane, the
+    // conversation is the primary one, and hiding her must leave the
+    // conversation on screen rather than emptying the window.
+    const overrides: PaneOverrides = { large: { detail: false } };
+    const resolved = resolvePaneVisibility('large', 2, overrides);
+    assert.equal(resolved.detail, false);
+    assert.equal(resolved.primary, true);
+  });
+
+  it('refuses to hide when it is the last pane on screen', () => {
+    // Compact shows one pane and the detail is the one it falls back to; an
+    // override that emptied it would leave nothing, and no control to undo it.
+    assert.equal(
+      resolvePaneVisibility('compact', 1, { compact: { detail: false } }).detail,
+      true,
+    );
+    assert.equal(
+      resolvePaneVisibility('large', 2, {
+        large: { detail: false, primary: false, supplementary: false, inspector: false },
+      }).detail,
+      true,
+    );
+  });
+
+  it('stays scoped to its own size class like every other pane', () => {
+    const overrides: PaneOverrides = { large: { detail: false } };
+    assert.equal(resolvePaneVisibility('expanded', 2, overrides).detail, true);
+  });
+});
+
 describe('resolvePaneVisibility — overrides are scoped to one size class', () => {
   it("ignores another class's override", () => {
     for (const owner of CLASSES) {
