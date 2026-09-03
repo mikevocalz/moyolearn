@@ -61,7 +61,7 @@ export {
   type ScheduleEvent,
   type Resource,
 } from './features/schedule';
-export { CaptureScreen, useCaptureStore } from './features/capture';
+export { CaptureScreen, useCaptureStore, CameraSheet, useCameraStore } from './features/capture';
 export { TutorScreen } from './features/tutor/screen';
 export { useTutorStore } from './features/tutor/tutor.store';
 export type {

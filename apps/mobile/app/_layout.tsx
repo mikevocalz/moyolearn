@@ -18,7 +18,7 @@ import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { withUniwind } from "uniwind";
-import { AppQueryProvider, SafeAreaProvider, SessionProvider , AccountSheet, AttachSheet, AudioRecorderSheet, SwitchProfileSheet, UrlSheet, VideoNoteSheet, UploadQueueProvider } from "@acme/app";
+import { AppQueryProvider, SafeAreaProvider, SessionProvider , AccountSheet, AttachSheet, AudioRecorderSheet, CameraSheet, SwitchProfileSheet, UrlSheet, VideoNoteSheet, UploadQueueProvider } from "@acme/app";
 import { BookingSheet } from "../components/BookingSheet";
 import { ShellHeader } from "../components/ShellHeader";
 import { Toaster } from "@acme/ui";
@@ -127,6 +127,10 @@ export default function RootLayout() {
             <BookingSheet />
             <AttachSheet />
             <AudioRecorderSheet />
+            {/* The homework camera, at the ROOT for the same reason the
+                recorder is: the tutor composer can sit inside a bottom sheet,
+                and a Modal mounted in there does not present. */}
+            <CameraSheet />
             <VideoNoteSheet />
             <UploadQueueProvider />
             <UrlSheet />

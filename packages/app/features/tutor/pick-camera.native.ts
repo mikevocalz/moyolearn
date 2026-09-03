@@ -1,25 +1,21 @@
-import * as ImagePicker from 'expo-image-picker';
 import type { PickCamera } from './pick-camera.types.ts';
+import { useCameraStore } from '../capture/camera.store.ts';
 
 /**
- * Native in-session camera capture using expo-image-picker.
+ * In-session capture through the SAME camera the homework scanner uses —
+ * `GuidedFrame` then `CropPreview`, presented by `CameraSheet`.
  *
- * `cameraType` is `back` because the child is photographing a worksheet or
- * their written work. A front-facing selfie has no tutoring purpose and is
- * deliberately not offered.
+ * This was `expo-image-picker`'s `launchCameraAsync`: the OS camera app, with
+ * no edge overlay, no framing hints, no age-band shutter and no crop. That made
+ * it a second camera (CLAUDE.md, "never invent a second way") and the worse one
+ * — a child pointing the raw OS camera at a worksheet hands the on-device OCR
+ * exactly the picture it reads worst.
+ *
+ * The `PickCamera` signature is unchanged, so every caller — the composer, the
+ * staging path, the send path — is untouched by the swap.
+ *
+ * `cameraType` no longer appears here because `GuidedFrame` owns the device
+ * choice; the back camera and its permission ask live there (doc 37 §1.5), in
+ * one place rather than two.
  */
-export const pickCamera: PickCamera = async () => {
-  const permission = await ImagePicker.requestCameraPermissionsAsync();
-  if (!permission.granted) return null;
-
-  const result = await ImagePicker.launchCameraAsync({
-    mediaTypes: ['images'],
-    quality: 0.8,
-    cameraType: ImagePicker.CameraType.back,
-  });
-
-  const asset = result.canceled ? undefined : result.assets[0];
-  if (asset === undefined) return null;
-
-  return { uri: asset.uri, width: asset.width, height: asset.height };
-};
+export const pickCamera: PickCamera = () => useCameraStore.getState().request();
