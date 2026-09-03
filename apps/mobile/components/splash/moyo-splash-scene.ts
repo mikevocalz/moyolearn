@@ -67,6 +67,10 @@ export const SPLASH_GROUND = palette.ink[50];
  * lengthening it.
  */
 export const BEAT = {
+  /** The heart field rises with the book and is gone before the hand-off. */
+  heartFieldIn: 1400,
+  heartFieldOut: 4200,
+  heartFieldFade: 900,
   /** The two page halves swing open about the spine. Coral leads, amber follows. */
   page: 900,
   pageStagger: 140,

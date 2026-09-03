@@ -42,14 +42,6 @@ const config: ExpoConfig = {
     favicon: './assets/images/favicon.png',
   },
   plugins: [
-    /*
-      FIRST, and that is load-bearing. It strips the splash-screen ICON item
-      that expo-splash-screen writes into styles.xml unconditionally — see the
-      plugin's header for the aapt failure it prevents. Mods touching one file
-      compose as WRAPPERS: the earliest registration is the outermost, so it is
-      the one that gets the last word after the inner mods have written.
-    */
-    './plugins/with-splash-no-icon',
     'expo-router',
     /*
       react-native-video 7 is a Nitro module, so it needs native config — it is
@@ -89,22 +81,31 @@ const config: ExpoConfig = {
       'expo-splash-screen',
       {
         /*
-          NO IMAGE, AND THAT IS THE WHOLE POINT.
+          A TRANSPARENT ICON, WHICH IS THE ONLY WAY TO HAVE NONE.
 
           The native splash used to draw the wordmark, so boot was: wordmark,
           then the animated splash drawing its own mark — the logo twice, the
           second one arriving as if the first had not happened. The animated
-          mark is DRAWN IN FROM NOTHING; a static copy of the finished thing
+          mark is ASSEMBLED FROM NOTHING; a static copy of the finished thing
           flashing first spoils the reveal it is the beginning of.
 
-          So the native splash is now the PAPER ALONE, which is the animation's
-          first frame, and the cut from native splash to canvas has nothing in
-          it to see. `MoyoSplash` hides it once it has painted that same ground.
+          Dropping `image` does not remove it. Android 12+ draws the system
+          splash itself and falls back to the LAUNCHER ICON when no animated
+          icon is named — and this app's launcher icon is the wordmark, so the
+          logo came back by a different route, with no config left to point at.
+          An 8x8 fully transparent PNG is the icon instead: the platform gets
+          its drawable, and the drawable is nothing.
+
+          So the native splash is the PAPER ALONE, which is the animation's
+          first frame, and the cut from it to the canvas has nothing in it to
+          see. `MoyoSplash` hides it once it has painted that same ground.
 
           Same value both schemes: this ground is paper in either, and a splash
           that flips to near-black in dark mode would be a different brand for
           half the users.
         */
+        image: './assets/images/splash-blank.png',
+        imageWidth: 8,
         backgroundColor: palette.ink[50],
         dark: { backgroundColor: palette.ink[50] },
       },

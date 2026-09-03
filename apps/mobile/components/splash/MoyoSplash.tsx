@@ -32,12 +32,13 @@
 // SOT: apps/mobile/app/_layout.tsx (mount + preventAutoHide) · ./redraw/
 // SOT-KEYWORDS: splash animated boot logomark wordmark cold start redraw
 
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import Animated, { FadeOut, useReducedMotion } from 'react-native-reanimated';
 import * as SplashScreen from 'expo-splash-screen';
 
+import { HeartField, type HeartFieldLevels } from './hearts-gpu';
 import { MARK, MARK_HEART, MARK_SIZE, WORDMARK, WORDMARK_SIZE } from './moyo-paths';
 import {
   BEAT,
@@ -62,24 +63,29 @@ const WORDMARK_MAX = 300;
 // its own (Reanimated 4 CSS animations). No shared values, no JS↔UI crossings,
 // no per-frame React renders.
 /*
-  THE BOOK OPENS. Each half swings about the spine, which is the mark's own
-  centre line — so a full-box layer holding one page rotates about exactly the
-  right axis with no transform-origin arithmetic.
+  THE BOOK OPENS — as a horizontal unfold about the spine.
 
-  `rotateY` needs a perspective in the same transform list or Android renders
-  it as a flat horizontal squash. 900 is far enough back that the near edge
-  does not bow.
+  The first version swung each half in 3D (`rotateY` behind a `perspective`),
+  which is the truer gesture and did not animate at all: the layers stayed at
+  their `from` opacity of 0, so the mark's whole top half was missing on device
+  while the wordmark beneath it animated correctly. Reanimated's CSS keyframes
+  did not take that transform pair here, and a mark that does not draw is worse
+  than a mark that unfolds flat.
+
+  `scaleX` on a layer whose box is the whole mark scales about the box's centre
+  — which IS the spine — so each half opens outward from it. Both halves use
+  the same keyframes and differ only in when they start.
 */
 const PAGE_LEFT_OPEN = {
-  from: { opacity: 0, transform: [{ perspective: 900 }, { rotateY: '-78deg' }] },
-  '70%': { opacity: 1, transform: [{ perspective: 900 }, { rotateY: '6deg' }] },
-  to: { opacity: 1, transform: [{ perspective: 900 }, { rotateY: '0deg' }] },
+  from: { opacity: 0, transform: [{ scaleX: 0.05 }] },
+  '72%': { opacity: 1, transform: [{ scaleX: 1.04 }] },
+  to: { opacity: 1, transform: [{ scaleX: 1 }] },
 };
 
 const PAGE_RIGHT_OPEN = {
-  from: { opacity: 0, transform: [{ perspective: 900 }, { rotateY: '78deg' }] },
-  '70%': { opacity: 1, transform: [{ perspective: 900 }, { rotateY: '-6deg' }] },
-  to: { opacity: 1, transform: [{ perspective: 900 }, { rotateY: '0deg' }] },
+  from: { opacity: 0, transform: [{ scaleX: 0.05 }] },
+  '72%': { opacity: 1, transform: [{ scaleX: 1.04 }] },
+  to: { opacity: 1, transform: [{ scaleX: 1 }] },
 };
 
 /** The M rises into the open book, from under it, with a little overshoot. */
@@ -217,6 +223,13 @@ function WordmarkLayer({
 
 export function MoyoSplash() {
   const [gone, setGone] = useState(false);
+  /*
+    The heart field's own level, on the splash's clock rather than a clock of
+    its own. A ref, not state: it is read inside a GPU frame loop, and a state
+    write per frame would re-render this component 60 times a second to move a
+    number the renderer already has a pointer to.
+  */
+  const gpuLevels = useRef<HeartFieldLevels>({ hearts: 0, sparks: 0 });
   // Reduced motion keeps the splash — a cold start still needs to be covered —
   // and drops only the movement: the lockup is simply present, then fades. The
   // authored scene does the same by rendering its settled frame.
@@ -229,15 +242,67 @@ export function MoyoSplash() {
   const wordWidth = Math.min(width * WORDMARK_WIDTH_RATIO, WORDMARK_MAX);
   const wordHeight = (wordWidth * WORDMARK_SIZE.height) / WORDMARK_SIZE.width;
 
+  /*
+    Reduced motion decides how things MOVE, not how long the splash lives. Read
+    through a ref inside the effect below, because the hook resolves the OS
+    setting after mount: as a dependency it re-ran the effect, which cleared the
+    hand-off timer and set a new one — and a splash whose timer keeps being
+    replaced never ends. Measured on device: it sat there indefinitely.
+  */
+  const reducedRef = useRef(reduced);
+  reducedRef.current = reduced;
+
   useEffect(() => {
     // Mounted means painted, so the native splash can go: it is holding the
     // same paper, and hiding it any earlier is the flash of an unbuilt app.
     SplashScreen.hideAsync().catch(() => {
       // Already hidden (Fast Refresh, or a second mount). Nothing to do.
     });
-    const timer = setTimeout(() => setGone(true), reduced ? 900 : SPLASH_TOTAL);
-    return () => clearTimeout(timer);
-  }, [reduced]);
+    const timer = setTimeout(() => setGone(true), SPLASH_TOTAL);
+
+    /*
+      THE HEARTS SWELL AND THEN GIVE WAY. They come up with the book, hold
+      under the lockup, and are gone before the hand-off — a field still
+      rising as the app appears reads as the app inheriting someone else's
+      animation. Reduced motion gets a still field at a low level rather than
+      no field: it is texture, not movement, at that setting.
+
+      Stepped on an interval rather than per frame, because the value only has
+      to be right to the eye and the GPU loop reads whatever is current.
+    */
+    if (reducedRef.current) {
+      gpuLevels.current = { hearts: 0.35, sparks: 0 };
+      return () => clearTimeout(timer);
+    }
+    const started = Date.now();
+    const level = setInterval(() => {
+      const t = Date.now() - started;
+      const rise = Math.min(1, t / BEAT.heartFieldIn);
+      const fall = Math.max(0, 1 - Math.max(0, t - BEAT.heartFieldOut) / BEAT.heartFieldFade);
+      /*
+        The sparks belong to the ORNAMENT CASCADE, not to the whole splash:
+        they climb while it runs, hold through the last bucket, and are out
+        before the lift takes the mark to its lockup position. Same clock as
+        the cascade above, so the burst and the pops cannot drift.
+      */
+      const cascade = BEAT.ornamentDelay;
+      const cascadeEnd =
+        BEAT.ornamentDelay + BEAT.ornament + BEAT.ornamentStagger * ORNAMENT_BUCKETS;
+      const sparks =
+        t < cascade
+          ? 0
+          : t < cascadeEnd
+            ? Math.min(1, (t - cascade) / 260)
+            : Math.max(0, 1 - (t - cascadeEnd) / 420);
+      gpuLevels.current = { hearts: rise * fall, sparks };
+    }, 50);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(level);
+    };
+    // Mount-scoped on purpose: see `reducedRef` above.
+  }, []);
 
   if (gone) return null;
 
@@ -257,11 +322,30 @@ export function MoyoSplash() {
       exiting={FadeOut.duration(BEAT.out)}
       accessibilityRole="image"
       accessibilityLabel={`Moyo Learn. ${TAGLINE}`}
-      // Absolute fill, last child of the root — it covers every provider's
-      // output, and it swallows taps while it is up, which is correct: there is
-      // nothing behind it a person means to press yet.
-      style={[StyleSheet.absoluteFill, styles.ground]}
+      /*
+        SIZED IN PIXELS, not just `absoluteFill` — and that is the difference
+        between this drawing and not drawing at all.
+
+        It is mounted as the last child of the root's provider stack, and those
+        providers pass children through without a flex container of their own.
+        An absolutely-positioned child resolves `top/left/right/bottom: 0`
+        against its PARENT's box, and that box was 0x0: the overlay was
+        mounted, laid out, and had no area to paint, so the native splash faded
+        away to reveal the app rather than this. Stating the window's size makes
+        the layer independent of whatever the parent's box turns out to be.
+
+        It swallows taps while it is up, which is correct: there is nothing
+        behind it a person means to press yet.
+      */
+      style={[StyleSheet.absoluteFill, { width, height }, styles.ground]}
     >
+      {/*
+        THE HEARTS, UNDER EVERYTHING. A GPU field rising from the bottom edge
+        and spreading across the paper in the mark's own colours — coral, amber,
+        teal — while the lockup assembles over it. It renders nothing at all if
+        WebGPU is unavailable, so the splash never depends on it.
+      */}
+      <HeartField levelsRef={gpuLevels} />
       {/*
         THE MARK ASSEMBLES, IN FIVE LAYERS ON ONE VIEWBOX.
 
@@ -423,7 +507,25 @@ const styles = StyleSheet.create({
   ground: {
     alignItems: 'center',
     backgroundColor: SPLASH_GROUND,
+    /*
+      ELEVATION, NOT JUST TREE ORDER — this is why it did not cover the app.
+
+      On Android the view hierarchy is composited by ELEVATION FIRST and draw
+      order second, and react-navigation's screen containers carry an elevation
+      of their own. So a later sibling at elevation 0 — which is what this
+      overlay was, mounted last in the provider stack — paints UNDERNEATH the
+      navigator, and the native splash faded away to reveal the app with the
+      splash sitting behind it, laid out and painting into nothing visible.
+      `zIndex` alone does not fix it: on Android zIndex only orders siblings
+      that share an elevation.
+
+      A number this large is deliberate: the splash outranks everything for the
+      few seconds it exists, including any sheet or toast that a boot-time
+      restore raises behind it.
+    */
+    elevation: 1000,
     justifyContent: 'center',
+    zIndex: 1000,
   },
   /*
     The heartbeat bloom. A rounded coral block behind the pages rather than the

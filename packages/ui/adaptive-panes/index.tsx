@@ -321,31 +321,33 @@ function AdaptivePanesNavigator({
             no width, and `w-0` beside a `flex-1` sibling is what makes the
             neighbours take the space back.
           */}
-          <Main className={visible.detail ? 'flex-1' : 'w-0'}>
-            {/*
-              THE PANE CONTROLS, FINALLY ON SCREEN.
+          {/*
+            IT COLLAPSES LIKE THE OTHERS, because it is the same component.
 
-              `PaneToggle` has existed since this layout was promoted out of
-              `apps/mobile` — doc 37 §3.2 names "explicit expand/collapse
-              controls" as part of what was being promoted, and `pane-overrides`
-              has carried their whole precedence policy (with tests) the entire
-              time. Nothing ever rendered one. The panes could be collapsed by
-              resizing the window and by no other means, which is why they read
-              as missing: they were built, exported, tested, and never mounted.
+            This was `flex-1` / `w-0` — a class swap, so the trailing pane
+            appeared and vanished in one frame while every other pane animated
+            its width. On the tutor session that is the pane holding Natalie,
+            and "Show Natalie" snapping open next to a Homework toggle that
+            slides was the tell.
 
-              They belong to the HOST, not to a screen's detail content. The
-              first attempt put them in `DetailNavbar`, which every pane host
-              already draws — but that bar only exists once a row is selected,
-              so the controls vanished exactly when a user most wants to widen
-              an empty detail pane. Here they are part of the layout itself and
-              are present whenever a pane can be collapsed at all.
+            `CollapsiblePane` is what the leading panes already use: an animated
+            width, on its own node, with the neighbours reflowing frame by frame
+            as it moves. `fill` keeps it absorbing the window while open —
+            growing from the token rather than `flex-1`, which would discard the
+            width it collapses along.
 
-              No fill, no border, no divider: this is a control row, not a
-              second bar, and the panes' own surfaces are untouched. Each toggle
-              renders `null` in any size class that cannot show its pane, so at
-              `medium` this is one button and at `compact` (which returns
-              earlier) it does not exist.
-            */}
+            THE 3D NOTE, kept because it will come up: a canvas in this pane is
+            resized across the 220ms collapse. That is bounded and it only
+            happens on a toggle — and the subtree is frozen while shut
+            (`PaneContent`), so a hidden renderer is not drawing into a
+            shrinking surface.
+          */}
+          <CollapsiblePane
+            open={visible.detail}
+            width={PANE_WIDTH_DP.detail}
+            fill={fillPane === 'detail'}
+          >
+            <Main className="flex-1">
             {paneControls ? (
               <View className="flex-row items-center gap-element px-inset py-1">
                 <PaneToggle pane="primary" columnCount={columnCount} />
@@ -356,7 +358,8 @@ function AdaptivePanesNavigator({
               </View>
             ) : null}
             <PaneContent open={visible.detail}>{detailPane}</PaneContent>
-          </Main>
+            </Main>
+          </CollapsiblePane>
         </View>
 
         {/*

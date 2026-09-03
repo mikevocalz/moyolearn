@@ -798,13 +798,18 @@ export function TutorStage({
               */
               <MotionView
                 className="flex-1 items-center justify-center gap-stack bg-surface-sunken p-inset"
-                initial={{ opacity: 0, scale: 0.94, y: 12 }}
-                animate={{
-                  opacity: detailOpen ? 1 : 0,
-                  scale: detailOpen ? 1 : 0.94,
-                  y: detailOpen ? 0 : 12,
-                }}
-                transition={TRANSITIONS.disclosure}>
+                /*
+                  ONE MOTION INSIDE, and it is a fade — the PANE's own width
+                  animation (`CollapsiblePane`) is what carries the movement
+                  now, so a scaling, sliding child on top of it was two motions
+                  disagreeing about the same 220ms. `paneContent` is the token
+                  for content settling inside a pane; it is native-driven and
+                  shorter than the collapse, so she is present as soon as there
+                  is room for her.
+                */
+                initial={{ opacity: 0 }}
+                animate={{ opacity: detailOpen ? 1 : 0 }}
+                transition={TRANSITIONS.paneContent}>
                 <TutorPresence {...presenceProps} avatar={avatar} />
               </MotionView>
             }>
