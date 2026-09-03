@@ -14,11 +14,18 @@
  * SOT: ./tutor-avatar-3d.native.tsx · docs/decisions/adr-111-native-3d-runtime.md
  * SOT-KEYWORDS: tutor avatar 3d web stub platform split no renderer
  */
+import type { EmotionCategory, Shape } from '@acme/avatar';
+import type { TutorCues } from './tutor-cues';
+
 export interface TutorAvatar3DProps {
   active: boolean;
   isSpeaking: boolean;
   sampleMouth?: (nowMs: number) => number;
   sampleSpeaking?: () => boolean;
+  sampleFace?: () => Shape | null;
+  sampleOnset?: () => number | null;
+  sampleCues?: () => TutorCues;
+  emotion?: { category: EmotionCategory; intensity: number } | null;
   /** Session phase where there is no sound to derive it from. */
   phase?: 'thinking' | 'listening';
   reducedMotion?: boolean;
@@ -29,6 +36,11 @@ export interface TutorAvatar3DProps {
 
 export function TutorAvatar3D(_props: TutorAvatar3DProps) {
   return null;
+}
+
+/** No renderer off-device, so nothing to preload. Resolves so callers need no branch. */
+export function preloadNatalie(_modelUri?: string): Promise<null> {
+  return Promise.resolve(null);
 }
 
 export default TutorAvatar3D;

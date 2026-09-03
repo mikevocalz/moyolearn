@@ -25,6 +25,21 @@ import { useAppSession } from '../../providers/session';
 import { useTutorStore } from './tutor.store';
 import { API_URL, recommendedTutorPresenceFor } from './tutor-constants.ts';
 import { TutorAvatar } from './tutor-avatar';
+import { markTurnSent, noteKeystroke, setRecording } from './tutor-cues';
+import { audioQueue } from './tutor-audio';
+
+/**
+ * The breath between her sentences, per band, milliseconds. A six-year-old
+ * needs the full stop to land before the next sentence starts; a teen hears
+ * the same pause as slow. Voice RATE is the server's (doc 32 band modulation);
+ * this is the silence between rates.
+ */
+const SENTENCE_PAUSE_MS: Record<AgeBand, number> = {
+  young: 750,
+  child: 600,
+  teen: 450,
+  adult: 350,
+};
 import { pickNoteImage } from '../schedule/pick-note-image';
 import { pickCamera } from './pick-camera';
 import { TutorOpening } from './tutor-opening';
@@ -97,6 +112,10 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   useEffect(() => {
     start(problem, problemIsReading);
   }, [problem, problemIsReading, start]);
+
+  useEffect(() => {
+    audioQueue.setSentencePause(SENTENCE_PAUSE_MS[ageBand]);
+  }, [ageBand]);
 
   /*
     THE AUTO RESOLUTION, WHICH UNTIL NOW NEVER RAN.
@@ -611,6 +630,17 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   const sendOnStop = useRef(false);
   const sendWhenStaged = useRef<string | null>(null);
 
+  /*
+    An open recorder is the learner talking — the cue the backchannel nods
+    hang off (ADR-113). Derived from the store's live take rather than from
+    the buttons, so cancel, stop and send all clear it the same way.
+  */
+  const isRecording = live !== null && live !== undefined;
+  useEffect(() => {
+    setRecording(isRecording);
+    return () => setRecording(false);
+  }, [isRecording]);
+
   const handleStartRecording = useCallback(() => {
     void requestRecording().then((recording) => {
       if (!recording) return;
@@ -718,6 +748,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
           isSpeaking={state.kind === 'speaking'}
           phase={state.kind === 'thinking' ? 'thinking' : state.kind === 'listening' ? 'listening' : undefined}
           tone={currentTone}
+          ageBand={ageBand}
         />
       }
       /*
@@ -733,7 +764,12 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       captionsEnabled
       buttonSize={buttonSizeForBand(ageBand)}
       onBack={router.back}
-      onSend={handleSend}
+      onSend={(message) => {
+        // The learner's turn just ended: the cue the body turns on (ADR-113).
+        markTurnSent();
+        handleSend(message);
+      }}
+      onDraftChange={() => noteKeystroke()}
       onRetry={() => void coach('')}
       messages={messages}
       attachments={attachments}

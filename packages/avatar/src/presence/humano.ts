@@ -15,25 +15,80 @@
  * module fetches. That is what keeps it free of an audio clock, a `fetch`, and
  * a DOM, and it is why it can be tested in Node.
  *
+ * ── THE BONES THAT ACTUALLY MOVE HER (2026-09-03, measured, ADR-113) ────────
+ *
+ * The glTF export carries the whole Rigify hierarchy, but the SKIN is bound to
+ * the `DEF-*` bones only, and in this export the control bones `head`, `neck`
+ * and `chest` are NOT ancestors of any DEF bone — Blender drove the DEF chain
+ * from them with constraints, and constraints do not export. So every write
+ * this file used to make to `head`/`neck`/`chest` moved nothing on the phone:
+ * her head never turned, never nodded, and her chest never rose. That, more
+ * than any missing channel, was "she moves like a robot".
+ *
+ * The deforming chain is `DEF-spine` (hips) → `.001` → `.002` → `.003` (chest)
+ * → `.004` → `.005` (neck) → `.006` (head). `DEF-pelvis` carries no weight at
+ * all. The axes were measured from the export, not assumed (see
+ * `rig-axes.test.ts`, which fails if a re-export changes them):
+ *
+ *   spine chain   +x pitches the head TOWARD the camera · +y yaws · +z tilts
+ *   upper arm     +x swings the hand forward · +z abducts (L +, R −)
+ *   forearm/hand  +x flexes
+ *   shoulder      +x raises the shoulder tip
+ *   finger        +x curls into the palm (z, which this used to write, splays)
+ *
+ * Those are LOCAL axes, and the writer applies every rotation in the bone's
+ * own frame (`rest × Δ`, see `pose`). It used to add to `rotation.x/y/z`,
+ * which for three's XYZ Euler is a rotation in the PARENT's frame — the same
+ * thing only while the rest rotation is small, which the spine's is and the
+ * arm's is not. `DEF-jaw`, `DEF-teeth.*` and `DEF-tongue.*` carry no weight in
+ * this export, so the jaw is the `jawOpen` morph alone and a jaw bone is not
+ * written.
+ *
+ * ── TWO CHAINS, ONE BODY (the eyeballs-outside-the-sockets bug) ─────────────
+ *
+ * The torso SKIN hangs off the DEF chain, but the eyeballs (`DEF-eye.*`), the
+ * teeth, and BOTH ARMS (`ORG-shoulder.* > DEF-upper_arm.*`) hang off the
+ * control chain: `torso > MCH-spine.002 > spine_fk.002 > MCH-spine.003 >
+ * spine_fk.003 > ORG-spine.004 > .005 > .006 > ORG-face`. In Blender the two
+ * chains are locked together by constraints; in the export they are not. So
+ * turning the head skin alone left the eyeballs where the head used to be —
+ * measured on the Duo as "eyelids missing skin". Every torso/head rotation is
+ * therefore applied to the DEF bone AND mirrored, as the same WORLD rotation,
+ * onto its twin (`TWINS`): each pair sits at the same world position with the
+ * same world orientation, verified by `rig-axes.test.ts`, so identical world
+ * deltas keep the skin, the eyes and the arms one body.
+ *
  * SOT: packages/avatar/src/idle/engine.ts · apps/web-vite/src/components/chapters/natalie-scene.tsx
  *      docs/pack/22-embodied-tutor-avatar-spec.md §7 · docs/decisions/adr-111-native-3d-runtime.md
- * SOT-KEYWORDS: humano presence natalie idle morph bones gaze breath beat native web shared
+ *      docs/decisions/adr-113-body-motion-layer.md · ./rig-axes.test.ts
+ * SOT-KEYWORDS: humano presence natalie idle morph bones gaze breath beat native web shared def spine weight shift fingers firewall a2f face emotion
  */
 import * as THREE from 'three';
-import { IdleEngine, mulberry32, type IdleInputs } from '../idle/engine.ts';
+import { FINGER_CHANNELS, IdleEngine, mulberry32, type IdleFrame, type IdleInputs } from '../idle/engine.ts';
+import { DEFAULT_GESTURE_LIMITS } from '../safety/gesture-gate.ts';
+import type { Shape } from '../speech/track.ts';
 
 /**
- * Rigify names as authored. `GLTFLoader` runs every node name through
- * `PropertyBinding.sanitizeNodeName`, which strips dots, so each is looked up
- * under both spellings — see `resolveBone`.
+ * Rigify names as authored, DEFORMING bones only (see the header). `GLTFLoader`
+ * runs every node name through `PropertyBinding.sanitizeNodeName`, which strips
+ * dots, so each is looked up under both spellings — see `resolveBone`.
  */
 export const HUMANO_BONES = {
-  chest: 'chest',
-  neck: 'neck',
-  head: 'head',
-  jaw: 'jaw_master',
-  eyeL: 'eye.L',
-  eyeR: 'eye.R',
+  /** The torso root. Translating it is the weight shift. */
+  torso: 'DEF-spine',
+  spine1: 'DEF-spine.001',
+  spine2: 'DEF-spine.002',
+  chest: 'DEF-spine.003',
+  upperChest: 'DEF-spine.004',
+  neck: 'DEF-spine.005',
+  head: 'DEF-spine.006',
+  /**
+   * Position only — the gaze anchor. The eyes themselves are morphs. The
+   * DEFORM eye bones, because they ride the head (through its twin chain);
+   * the `eye.L` controls sit under `root` and would stay behind a turned head.
+   */
+  eyeL: 'DEF-eye.L',
+  eyeR: 'DEF-eye.R',
   shoulderL: 'DEF-shoulder.L',
   shoulderR: 'DEF-shoulder.R',
   upperArmL: 'DEF-upper_arm.L',
@@ -42,20 +97,10 @@ export const HUMANO_BONES = {
   foreArmR: 'DEF-forearm.R',
   handL: 'DEF-hand.L',
   handR: 'DEF-hand.R',
-  // The stack that makes a standing body read as weight on legs rather than a
-  // plank on a stick. `swayX`/`swayY` were computed by the idle engine every
-  // frame and thrown away because nothing here claimed a bone for them.
-  hips: 'DEF-pelvis',
-  spine: 'DEF-spine',
-  spine1: 'DEF-spine.001',
 } as const;
 
-/**
- * The finger deform bones, per side. 100+ joints are rigged and NONE were
- * driven, which is most of why she read as a mannequin: a straight, splayed
- * hand is a shop-window hand. Three phalanges each, thumb included.
- */
-const FINGERS = ['f_index', 'f_middle', 'f_ring', 'f_pinky', 'thumb'] as const;
+/** The finger deform bones, per side, in `FINGER_CHANNELS` order. */
+const FINGERS = ['thumb', 'f_index', 'f_middle', 'f_ring', 'f_pinky'] as const;
 const PHALANGES = ['01', '02', '03'] as const;
 
 /**
@@ -66,14 +111,32 @@ const PHALANGES = ['01', '02', '03'] as const;
  */
 const CURL = { '01': 0.16, '02': 0.28, '03': 0.24 } as const;
 const CURL_BY_FINGER: Record<(typeof FINGERS)[number], number> = {
+  thumb: 0.45,
   f_index: 0.8,
   f_middle: 0.95,
   f_ring: 1.1,
   f_pinky: 1.25,
-  thumb: 0.45,
 };
 
 export type HumanoBoneKey = keyof typeof HUMANO_BONES;
+
+/**
+ * The control-chain twin of each deforming spine bone — the bone the eyes,
+ * teeth and arms actually hang from (see the header). Same world position and
+ * orientation as its DEF bone at rest, except the hip root, whose upper-body
+ * twin sits 14 cm higher (the legs hang from a different branch and must NOT
+ * follow a weight shift); at the lean angles this writer uses the pivot
+ * mismatch is under 3 mm.
+ */
+export const TWINS: Partial<Record<HumanoBoneKey, string>> = {
+  torso: 'MCH-spine.002',
+  spine1: 'MCH-spine.002',
+  spine2: 'spine_fk.002',
+  chest: 'spine_fk.003',
+  upperChest: 'ORG-spine.004',
+  neck: 'ORG-spine.005',
+  head: 'ORG-spine.006',
+};
 
 /**
  * Her standing pose, applied speaking or not.
@@ -99,7 +162,6 @@ export const STANCE = {
   shoulderDrop: 0.035,
 } as const;
 
-
 /** three's own sanitiser, reproduced so a lookup can try both spellings. */
 export function sanitizeNodeName(name: string): string {
   return name.replace(/[.:[\]/]/g, '');
@@ -116,6 +178,7 @@ const smoothstep = (f: number) => {
   const t = f < 0 ? 0 : f > 1 ? 1 : f;
   return t * t * (3 - 2 * t);
 };
+const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 
 /** The twelve mouth morphs this driver writes. */
 export interface LipShape {
@@ -168,13 +231,10 @@ export function lipFromOpenness(openness: number): LipShape {
 }
 
 /** The eight ARKit eye-look weights for a gaze direction, in radians. */
-export function gazeMorphs(
-  yaw: number,
-  pitch: number
-): Record<string, number> {
-  const clamp = (v: number) => Math.max(-1, Math.min(1, v / (GAZE_RANGE_DEG * DEG)));
-  const y = clamp(yaw);
-  const p = clamp(pitch);
+export function gazeMorphs(yaw: number, pitch: number): Record<string, number> {
+  const c = (v: number) => Math.max(-1, Math.min(1, v / (GAZE_RANGE_DEG * DEG)));
+  const y = c(yaw);
+  const p = c(pitch);
   const up = Math.max(0, p);
   const down = Math.max(0, -p);
   return {
@@ -199,6 +259,24 @@ export interface HumanoInput {
   phase?: ConversationPhase;
   /** Mouth openness 0..1 for THIS frame, from the viseme sampler. */
   mouth: number;
+  /**
+   * A full audio-driven face for THIS frame (ADR-112): named ARKit weights
+   * from Audio2Face, sampled on the audio clock. When present it replaces the
+   * openness-derived mouth entirely — brows, lids, cheeks and corners included.
+   * Blink and gaze still come from the idle engine (A2F does not animate eyes).
+   */
+  face?: Shape | null;
+  /**
+   * The tone's emotion baseline (BEAT categories → ARKit weights, already
+   * eased by `EmotionState`). Merged UNDER speech by per-channel max — the
+   * same rule the 2D face bus uses. Tone comes from lesson state, never from
+   * the child (doc 32 §4).
+   */
+  emotion?: Shape | null;
+  /** The learner's turn just ended — fires for one frame. */
+  partnerPauseEvent?: boolean;
+  /** Seconds until the scheduled onset of her next sentence; omit for none. */
+  timeUntilOnset?: number;
   /** Doc 22 §7: a render mode, not a preference. No travel, no beats. */
   reducedMotion: boolean;
   /** Where the learner's eye is, so her gaze lands on it and not past it. */
@@ -209,6 +287,11 @@ export interface HumanoPresence {
   step(deltaSeconds: number, input: HumanoInput): void;
   /** Rest pose restored and morphs zeroed — the state a freeze should hold. */
   rest(): void;
+  /**
+   * The last frame's firewall readings, for the test that proves the body
+   * layer cannot produce a forbidden read (doc 22 §7) by construction.
+   */
+  readonly firewall: { torsoLeanRad: number; shoulderFlexionRad: number };
 }
 
 interface BoneRest {
@@ -216,6 +299,10 @@ interface BoneRest {
   quaternion: THREE.Quaternion;
   rotation: THREE.Euler;
   scale: THREE.Vector3;
+  /** At rest, so a local delta can be re-expressed in world terms once. */
+  worldQuaternion: THREE.Quaternion;
+  worldPosition: THREE.Vector3;
+  parentWorldQuaternionInverse: THREE.Quaternion;
 }
 
 interface BeatState {
@@ -242,14 +329,6 @@ const IDLE_SPEAKING: IdleInputs = { ...IDLE_QUIET, speechActive: true, timeUntil
 /**
  * The conversation, as the idle engine already knew how to hear it.
  *
- * `IdleInputs` has carried `partnerSpeaking`, `processing`, `speechGap` and
- * `timeUntilOnset` since the port, and every one of them was pinned to a
- * constant — so the backchannel nods, the thinking gaze and the pre-speech
- * anticipation the engine implements have never once fired. She had two modes,
- * talking and not.
- *
- * Now the caller says which phase she is in and the engine gets its inputs:
- *
  *   speaking  — sound is coming out. Beats, mouth, the speech swell.
  *   thinking  — the model is composing. `processing` drives the gaze away and
  *               the small stilling that reads as "working on it".
@@ -259,20 +338,29 @@ const IDLE_SPEAKING: IdleInputs = { ...IDLE_QUIET, speechActive: true, timeUntil
  */
 export type ConversationPhase = 'speaking' | 'thinking' | 'listening' | 'waiting';
 
-function idleInputsFor(phase: ConversationPhase): IdleInputs {
-  switch (phase) {
-    case 'speaking':
-      return IDLE_SPEAKING;
-    case 'thinking':
-      // A turn is being composed, so speech IS coming — the engine's
-      // anticipation window is what makes the first word land on a face that
-      // was already on its way there rather than one that snaps into it.
-      return { ...IDLE_QUIET, processing: true, timeUntilOnset: 1.2 };
-    case 'listening':
-      return { ...IDLE_QUIET, partnerSpeaking: true };
-    case 'waiting':
-      return { ...IDLE_QUIET, speechGap: true };
-  }
+function idleInputsFor(phase: ConversationPhase, input: HumanoInput): IdleInputs {
+  const base: IdleInputs = (() => {
+    switch (phase) {
+      case 'speaking':
+        return IDLE_SPEAKING;
+      case 'thinking':
+        // A turn is being composed, so speech IS coming. The queue's real
+        // scheduled onset overrides the estimate when it has one.
+        return { ...IDLE_QUIET, processing: true, timeUntilOnset: 1.2 };
+      case 'listening':
+        return { ...IDLE_QUIET, partnerSpeaking: true };
+      case 'waiting':
+        return { ...IDLE_QUIET, speechGap: true };
+    }
+  })();
+  return {
+    ...base,
+    partnerPauseEvent: input.partnerPauseEvent === true,
+    timeUntilOnset:
+      input.timeUntilOnset !== undefined && Number.isFinite(input.timeUntilOnset)
+        ? input.timeUntilOnset
+        : base.timeUntilOnset,
+  };
 }
 
 function setMorph(mesh: THREE.SkinnedMesh, name: string, value: number): void {
@@ -284,11 +372,50 @@ function setMorph(mesh: THREE.SkinnedMesh, name: string, value: number): void {
   influences[index] = value;
 }
 
+function maxMorph(mesh: THREE.SkinnedMesh, name: string, value: number): void {
+  const dict = mesh.morphTargetDictionary;
+  const influences = mesh.morphTargetInfluences;
+  if (!dict || !influences) return;
+  const index = dict[name];
+  if (index === undefined) return;
+  const current = influences[index] ?? 0;
+  if (value > current) influences[index] = value;
+}
+
 function resolveBone(scene: THREE.Object3D, name: string): THREE.Bone | null {
   const direct = scene.getObjectByName(name);
   if (direct) return direct as THREE.Bone;
   const sanitized = scene.getObjectByName(sanitizeNodeName(name));
   return sanitized ? (sanitized as THREE.Bone) : null;
+}
+
+/**
+ * A lightly underdamped spring. The hands ride one of these behind the arms,
+ * which is what gives a gesture its overlap and its settle: the arm stops, the
+ * hand arrives a beat later and sits down past rest before it comes back.
+ * Critically damped would land clean and read mechanical.
+ */
+class Follower {
+  x = 0;
+  v = 0;
+  // Explicit fields: this package is typechecked with `erasableSyntaxOnly`
+  // because `node --test` strips the types and cannot emit a parameter property.
+  private readonly k: number;
+  private readonly zeta: number;
+  constructor(k: number, zeta: number) {
+    this.k = k;
+    this.zeta = zeta;
+  }
+  step(target: number, dt: number): number {
+    const c = 2 * Math.sqrt(this.k) * this.zeta;
+    this.v += (this.k * (target - this.x) - c * this.v) * dt;
+    this.x += this.v * dt;
+    return this.x;
+  }
+  reset(): void {
+    this.x = 0;
+    this.v = 0;
+  }
 }
 
 /**
@@ -313,55 +440,63 @@ export function createHumanoPresence(
 
   const bones = {} as Record<HumanoBoneKey, THREE.Bone | null>;
   const rests = new Map<THREE.Bone, BoneRest>();
+  scene.updateMatrixWorld(true);
+  const capture = (bone: THREE.Bone) => {
+    if (rests.has(bone)) return;
+    const worldQuaternion = bone.getWorldQuaternion(new THREE.Quaternion());
+    const parentWorldQuaternion =
+      bone.parent?.getWorldQuaternion(new THREE.Quaternion()) ?? new THREE.Quaternion();
+    rests.set(bone, {
+      position: bone.position.clone(),
+      quaternion: bone.quaternion.clone(),
+      rotation: bone.rotation.clone(),
+      scale: bone.scale.clone(),
+      worldQuaternion,
+      worldPosition: bone.getWorldPosition(new THREE.Vector3()),
+      parentWorldQuaternionInverse: parentWorldQuaternion.invert(),
+    });
+  };
   for (const key of Object.keys(HUMANO_BONES) as HumanoBoneKey[]) {
     const bone = resolveBone(scene, HUMANO_BONES[key]);
     bones[key] = bone;
-    if (bone && !rests.has(bone)) {
-      rests.set(bone, {
-        position: bone.position.clone(),
-        quaternion: bone.quaternion.clone(),
-        rotation: bone.rotation.clone(),
-        scale: bone.scale.clone(),
-      });
-    }
+    if (bone) capture(bone);
+  }
+  const twins = {} as Record<HumanoBoneKey, THREE.Bone | null>;
+  for (const key of Object.keys(HUMANO_BONES) as HumanoBoneKey[]) {
+    const name = TWINS[key];
+    const twin = name ? resolveBone(scene, name) : null;
+    twins[key] = twin;
+    if (twin) capture(twin);
   }
 
   /*
-    The finger chains, resolved once. Same rest capture as the named bones so
-    `restore()` and `rest()` cover them without a second code path.
+    The finger chains, resolved once, per side and per finger so the engine's
+    ten noise channels land on the ten fingers rather than on a flat list.
   */
-  const fingers: { bone: THREE.Bone; curl: number }[] = [];
+  const fingers: { bone: THREE.Bone; curl: number; side: 'L' | 'R'; finger: number; phalanx: number }[] = [];
   for (const side of ['L', 'R'] as const) {
-    for (const finger of FINGERS) {
-      for (const phalanx of PHALANGES) {
+    FINGERS.forEach((finger, fi) => {
+      PHALANGES.forEach((phalanx, pi) => {
         const bone = resolveBone(scene, `DEF-${finger}.${phalanx}.${side}`);
-        if (!bone) continue;
-        if (!rests.has(bone)) {
-          rests.set(bone, {
-            position: bone.position.clone(),
-            quaternion: bone.quaternion.clone(),
-            rotation: bone.rotation.clone(),
-            scale: bone.scale.clone(),
-          });
-        }
-        fingers.push({ bone, curl: CURL[phalanx] * CURL_BY_FINGER[finger] });
-      }
-    }
+        if (!bone) return;
+        capture(bone);
+        fingers.push({ bone, curl: CURL[phalanx] * CURL_BY_FINGER[finger], side, finger: fi, phalanx: pi });
+      });
+    });
   }
 
   const engine = new IdleEngine(options.seed ?? 12345);
   /*
     Beats draw from the SEEDED stream, not `Math.random`. The idle layer's whole
     contract is "same seed, bit-identical outputs" — that is what makes the
-    golden capture (doc 22 §8) reproducible — and the beat scheduler was quietly
-    breaking it with three `Math.random()` calls per gesture.
+    golden capture (doc 22 §8) reproducible.
   */
   const rng = mulberry32((options.seed ?? 12345) ^ 0x5eed);
   const lip: LipShape = { ...LIP_ZERO };
   const beat: BeatState = { countdown: 0.35, t: 99, dur: 0.7, side: 1, both: false, amp: 0 };
   let speechEnv = 0;
-  /** Seconds since mount, for the slow non-repeating hand drift. */
-  let clock = 0;
+  const handFollow = { L: new Follower(320, 0.55), R: new Follower(320, 0.55) };
+  const firewall = { torsoLeanRad: 0, shoulderFlexionRad: 0 };
 
   const eyeMid = new THREE.Vector3();
   const eyeOther = new THREE.Vector3();
@@ -378,12 +513,83 @@ export function createHumanoPresence(
     return rest;
   };
 
+  const tmpEuler = new THREE.Euler();
+  const tmpQuat = new THREE.Quaternion();
+  const worldDelta = new THREE.Quaternion();
+  const twinQuat = new THREE.Quaternion();
+  const tmpVec = new THREE.Vector3();
+  /**
+   * Rotates a bone by (dx, dy, dz) radians in ITS OWN frame, on top of rest.
+   * Every measured axis in the header is a local axis, and this is the only
+   * way a local axis is what gets applied.
+   */
+  const pose = (bone: THREE.Bone | null, dx: number, dy: number, dz: number): BoneRest | null => {
+    const r = restore(bone);
+    if (!r || !bone) return null;
+    tmpQuat.setFromEuler(tmpEuler.set(dx, dy, dz, 'XYZ'));
+    bone.quaternion.copy(r.quaternion).multiply(tmpQuat);
+    return r;
+  };
+  /**
+   * The same pose on a DEF bone and its control twin (see the header): the
+   * local delta becomes a WORLD rotation through the DEF bone's rest world
+   * frame, and the twin receives that world rotation in its own parent frame.
+   * `tx`/`ty` are world-space translations (the weight shift, the chest lift)
+   * applied to both. Twins compose: a second call on the same twin in one
+   * frame multiplies onto the first.
+   */
+  const poseBoth = (key: HumanoBoneKey, dx: number, dy: number, dz: number, tx = 0, ty = 0): void => {
+    const bone = bones[key];
+    const r = pose(bone, dx, dy, dz);
+    if (!r || !bone) return;
+    if (tx !== 0 || ty !== 0) {
+      tmpVec.set(tx, ty, 0).applyQuaternion(r.parentWorldQuaternionInverse);
+      bone.position.copy(r.position).add(tmpVec);
+    }
+    const twin = twins[key];
+    if (!twin) return;
+    const t = rests.get(twin);
+    if (!t) return;
+    // Δworld = Qdef · Δlocal · Qdef⁻¹ ; twin local = Qp⁻¹ · Δworld · Qp · qrest
+    worldDelta.copy(r.worldQuaternion).multiply(tmpQuat).multiply(twinQuat.copy(r.worldQuaternion).invert());
+    const parentWorld = twinQuat.copy(t.parentWorldQuaternionInverse).invert();
+    const local = new THREE.Quaternion()
+      .copy(t.parentWorldQuaternionInverse)
+      .multiply(worldDelta)
+      .multiply(parentWorld);
+    // Compose onto whatever this frame already put on the twin (torso + spine1
+    // share one), never onto last frame's — twins are restored with the rest.
+    if (!touchedTwins.has(twin)) {
+      twin.quaternion.copy(t.quaternion);
+      twin.position.copy(t.position);
+      touchedTwins.add(twin);
+    }
+    twin.quaternion.premultiply(local);
+    /*
+      The twin rotates about ITS pivot; the DEF bone about its own. Where the
+      two pivots differ (the hip root's twin is 14 cm up) the twin also has to
+      travel by what the DEF rotation would have moved its pivot — otherwise
+      the eyes drift ~3 mm per weight shift. Exact, not approximate:
+      Δp = Δworld·(Ptwin − Pdef) − (Ptwin − Pdef).
+    */
+    const offset = tmpVec.copy(t.worldPosition).sub(r.worldPosition);
+    const moved = new THREE.Vector3().copy(offset).applyQuaternion(worldDelta).sub(offset);
+    moved.x += tx;
+    moved.y += ty;
+    if (moved.lengthSq() > 0) {
+      twin.position.add(moved.applyQuaternion(t.parentWorldQuaternionInverse));
+    }
+  };
+  const touchedTwins = new Set<THREE.Bone>();
+
   const rest = (): void => {
     for (const bone of rests.keys()) restore(bone);
     for (const mesh of meshes) mesh.morphTargetInfluences?.fill(0);
     for (const key of Object.keys(lip) as (keyof LipShape)[]) lip[key] = 0;
     speechEnv = 0;
     beat.t = 99;
+    handFollow.L.reset();
+    handFollow.R.reset();
   };
 
   const step = (deltaSeconds: number, input: HumanoInput): void => {
@@ -391,71 +597,65 @@ export function createHumanoPresence(
     // because the idle engine integrates and a 2s step is a lurch, not a catch-up.
     const rawDelta = Math.max(0, Math.min(deltaSeconds, 0.05));
     const delta = input.reducedMotion ? 0 : rawDelta;
-    clock += delta;
-    const phase: ConversationPhase =
-      input.phase ?? (input.speaking ? 'speaking' : 'waiting');
-    const frame = engine.step(delta, idleInputsFor(phase));
+    const phase: ConversationPhase = input.phase ?? (input.speaking ? 'speaking' : 'waiting');
+    const frame: IdleFrame = engine.step(delta, idleInputsFor(phase, input));
+    const rm = input.reducedMotion;
 
     // Speech envelope: the whole-utterance swell the arms and brow ride on.
-    // It follows the speaking flag rather than a clip duration because the
-    // device path streams and has no duration until the utterance is over.
-    const envTarget = input.speaking && !input.reducedMotion ? 1 : 0;
+    const envTarget = input.speaking && !rm ? 1 : 0;
     speechEnv += (envTarget - speechEnv) * (1 - Math.exp(-rawDelta * 6));
 
-    // Asymmetric mouth smoothing, like real articulation: snap toward a shape
-    // (~22ms), relax out of it (~60ms). A symmetric low-pass lands every shape
-    // late and mushy.
-    const target = input.reducedMotion ? LIP_ZERO : lipFromOpenness(input.mouth);
+    /*
+      THE MOUTH. Two sources, one rule: an A2F frame is the whole face and wins
+      outright; otherwise the openness scalar is shaped into lips. Both are
+      speech-driven and neither is scaled by reduced motion (doc 22 §7) — but
+      a reduced-motion frame with no sound is a closed mouth, as before.
+    */
+    const face = rm ? null : (input.face ?? null);
+    const target = rm || face ? LIP_ZERO : lipFromOpenness(input.mouth);
+    // Asymmetric smoothing, like real articulation: snap toward a shape
+    // (~22ms), relax out of it (~60ms).
     const rise = 1 - Math.exp(-rawDelta * 45);
     const fall = 1 - Math.exp(-rawDelta * 16);
     for (const key of Object.keys(LIP_ZERO) as (keyof LipShape)[]) {
       const to = target[key];
       lip[key] += (to - lip[key]) * (to > lip[key] ? rise : fall);
     }
+    const jawOpen = face ? (face.jawOpen ?? 0) : lip.jawOpen;
 
     /*
-      CO-SPEECH BEATS, WITH A RETRACTION — and the retraction is the bug fix.
-
-      A beat used to run its full bell after `speaking` went false: scheduling
-      stopped, but an in-flight gesture kept its envelope for up to 1.25s, so
-      her arms went on waving into the silence. Gesture studies call the three
-      phases preparation / stroke / retraction, and the third one was missing:
-      she prepared and struck and then just stayed there until the timer said
-      otherwise.
-
-      Now the envelope is multiplied by `speechEnv`, which decays with the
-      voice, and the phases are asymmetric — a fast stroke into the accented
-      syllable and a slower settle out of it, which is how an arm actually
-      moves. A symmetric sine reads mechanical because nothing in a body
-      accelerates and decelerates at the same rate.
+      CO-SPEECH BEATS, WITH A RETRACTION. Preparation / stroke / retraction: a
+      fast stroke into the accented syllable and a slower settle out of it,
+      gated by the speech envelope so no voice means no gesture, however far
+      through its bell it was.
     */
-    if (input.speaking && !input.reducedMotion) {
+    if (input.speaking && !rm) {
       beat.countdown -= delta;
       if (beat.countdown <= 0 && beat.t >= beat.dur) {
         beat.t = 0;
-        beat.dur = 0.75 + rng() * 0.5;
+        beat.dur = 0.6 + rng() * 0.5;
         beat.side = rng() < 0.5 ? 1 : -1;
-        beat.both = rng() < 0.35;
-        beat.amp = 0.55 + rng() * 0.4;
-        beat.countdown = beat.dur + 0.4 + rng() * 1.0;
+        beat.both = rng() < 0.2;
+        beat.amp = 0.35 + rng() * 0.45;
+        // Seen on the Duo: beats every ~1.5 s read as pumping. A person
+        // gestures on a phrase, not a syllable — one beat every 2-4 s, and a
+        // run of small ones is rarer than one clear one.
+        beat.countdown = beat.dur + 1.2 + rng() * 2.2;
       }
     }
     if (beat.t < beat.dur) beat.t += delta;
     const beatPhase = beat.t < beat.dur ? beat.t / beat.dur : 1;
-    // Stroke in the first 35%, settle over the remaining 65%.
     const rawBeat =
       beatPhase >= 1
         ? 0
         : beatPhase < 0.35
           ? smoothstep(beatPhase / 0.35)
           : 1 - smoothstep((beatPhase - 0.35) / 0.65);
-    // The gate. No voice, no gesture — however far through its bell it was.
     const beatEnv = rawBeat * speechEnv;
 
-    // --- gaze: bias at the camera, saccades on top. Without the bias the eyes
-    // saccade around the model's forward axis, which points past the lens.
-    let gazeYaw = frame.eyeYaw;
-    let gazePitch = frame.eyePitch;
+    // --- gaze: bias at the camera, saccades and the gaze breaks on top.
+    let gazeYaw = frame.eyeYaw + frame.gazeAwayYaw;
+    let gazePitch = frame.eyePitch + frame.gazeAwayPitch;
     const anchor = bones.eyeL ?? bones.head;
     if (anchor && input.cameraPosition) {
       anchor.getWorldPosition(eyeMid);
@@ -473,125 +673,138 @@ export function createHumanoPresence(
     // one from a previous expression would never decay on its own.
     for (const mesh of meshes) {
       mesh.morphTargetInfluences?.fill(0);
-      setMorph(mesh, 'eyeBlinkLeft', frame.eyeBlinkLeft);
-      setMorph(mesh, 'eyeBlinkRight', frame.eyeBlinkRight);
-      setMorph(mesh, 'eyeWideLeft', frame.eyesWide);
-      setMorph(mesh, 'eyeWideRight', frame.eyesWide);
-      for (const [name, value] of Object.entries(gaze)) setMorph(mesh, name, value);
-      for (const [name, value] of Object.entries(lip)) setMorph(mesh, name, value);
-      // Gesture and prosody move together — a beat carries a brow accent.
-      setMorph(mesh, 'browInnerUp', 0.2 * beatEnv);
-    }
-
-    // --- body. Root and pelvis stay at rest: she is anchored, never rocking.
-    /*
-      WEIGHT, which is the difference between standing and being stood up.
-
-      The idle engine has produced `swayX`/`swayY` since it was ported and
-      nothing has ever read them — she was rigid from the pelvis down while a
-      perfectly good postural signal was computed and dropped every frame.
-      A person at rest shifts their weight between their legs on a slow,
-      irregular cycle; the pelvis translates and tilts, and the spine
-      counter-rotates above it so the head stays level. That counter-rotation
-      is the part that reads as a body rather than a bobbing statue.
-    */
-    const hipsRest = restore(bones.hips);
-    if (hipsRest && bones.hips) {
-      bones.hips.position.x = hipsRest.position.x + frame.swayX;
-      bones.hips.position.y = hipsRest.position.y + frame.swayY;
-      // Tilt into the loaded leg. Small — the eye reads the direction, not the
-      // angle, and an obvious tilt looks like a limp.
-      bones.hips.rotation.z = hipsRest.rotation.z + frame.swayX * 1.6;
-    }
-    for (const [bone, share] of [
-      [bones.spine, 0.55],
-      [bones.spine1, 0.35],
-    ] as const) {
-      const spineRest = restore(bone);
-      if (spineRest && bone) {
-        bone.rotation.z = spineRest.rotation.z - frame.swayX * 1.6 * share;
-        bone.rotation.x = spineRest.rotation.x + frame.breathY * 4 * share;
+      if (face) {
+        for (const [name, value] of Object.entries(face)) setMorph(mesh, name, value);
+      } else {
+        for (const [name, value] of Object.entries(lip)) setMorph(mesh, name, value);
       }
+      // The emotion baseline sits UNDER speech by per-channel max — the same
+      // merge the 2D face bus makes, so the tone reads on both surfaces.
+      if (input.emotion) {
+        for (const [name, value] of Object.entries(input.emotion)) maxMorph(mesh, name, value);
+      }
+      // Idle owns the lids and the eyes; A2F does not animate either.
+      maxMorph(mesh, 'eyeBlinkLeft', frame.eyeBlinkLeft);
+      maxMorph(mesh, 'eyeBlinkRight', frame.eyeBlinkRight);
+      maxMorph(mesh, 'eyeWideLeft', frame.eyesWide);
+      maxMorph(mesh, 'eyeWideRight', frame.eyesWide);
+      for (const [name, value] of Object.entries(gaze)) setMorph(mesh, name, value);
+      // Gesture and prosody move together — a beat carries a brow accent.
+      maxMorph(mesh, 'browInnerUp', 0.2 * beatEnv);
+    }
+
+    // ================================ the body ================================
+    /*
+      WEIGHT. The torso root translates between the legs (the engine's discrete
+      shift plus the continuous balance sway) and the spine leans back over the
+      planted foot so the head stays near centre; the shoulders then re-level.
+      `DEF-thigh.*` are not children of `DEF-spine`, so the legs stay planted
+      and the hip blends across the split weights — which is what a real shift
+      looks like: pelvis over feet, not feet sliding under a rigid body.
+    */
+    const shift = frame.weightShift + frame.swayX;
+    touchedTwins.clear();
+    for (const twin of Object.values(twins)) if (twin) restore(twin);
+    // Measured: +z on DEF-spine moves the head −x. Lean back over centre.
+    poseBoth('torso', 0, 0, shift * 0.96, shift, frame.swayY * 0.3);
+    let leanSum = 0;
+    poseBoth('spine1', 0, 0, -shift * 0.35);
+    poseBoth('spine2', 0, frame.torsoYaw * 0.6, -shift * 0.25);
+    // Breath: the chest opens BACK on the inhale (−x) and lifts.
+    const chestBreath = -frame.breathY * 6;
+    poseBoth('chest', chestBreath, frame.torsoYaw * 0.4, 0, 0, frame.breathY * 0.6);
+    leanSum += chestBreath;
+    const upperBreath = -frame.breathY * 3;
+    poseBoth('upperChest', upperBreath, 0, 0);
+    leanSum += upperBreath;
+
+    /*
+      HEAD AND NECK — finally on the bones that carry the head's skin. Pitch
+      (+x = toward the camera) carries the nod and the breath; yaw carries the
+      drift, the head-follow behind the eyes, and half a counter to the torso
+      turn so she keeps facing the lens while her body turns.
+    */
+    const neckPitch = frame.driftPitch * 1.2 + frame.nodPitch * 0.5 - frame.headFollowPitch * 0.4;
+    poseBoth('neck', neckPitch, frame.driftYaw * 1.2 + frame.headFollowYaw * 0.4, 0);
+    leanSum += frame.driftPitch * 1.2 + frame.nodPitch * 0.5;
+    const headPitch =
+      frame.driftPitch * 0.8 +
+      frame.nodPitch * 0.5 +
+      frame.breathPitch -
+      frame.headFollowPitch * 0.6 +
+      jawOpen * 0.05;
+    poseBoth(
+      'head',
+      headPitch,
+      frame.driftYaw * 0.8 + frame.headFollowYaw * 0.6 - frame.torsoYaw * 0.5,
+      -shift * 0.3
+    );
+
+    /*
+      SHOULDERS, ARMS, HANDS. The arm lift is the speech swell plus the beat;
+      the hand FOLLOWS it through a spring so it lags, overshoots and settles —
+      overlap and follow-through, the two principles a mechanical arm lacks.
+    */
+    /*
+      THE ARMS WHILE SPEAKING. What was here read as a bicep curl on the Duo:
+      the whole forearm rose ~50° on every beat, both sides, every second and a
+      half — "hands moving up and down like a robot". A person talking with
+      their hands at their sides barely moves the elbow: the beat lives in the
+      WRIST and the hand, with a little forearm rotation and a few degrees of
+      shoulder, and the two sides never do the same thing. So the elbow now
+      carries a fraction of the beat, the wrist most of it, the hand follower
+      supplies the overlap, and the speech swell is a small lift, not a pose.
+    */
+    const speechLift = 0.07 * speechEnv;
+    let maxFlexion = 0;
+    for (const side of ['L', 'R'] as const) {
+      const zSign = side === 'L' ? 1 : -1;
+      const leads = beat.side === (side === 'L' ? 1 : -1);
+      const beatAmp = rm ? 0 : beat.amp * beatEnv * (leads ? 1 : beat.both ? 0.4 : 0);
+      const lift = speechLift + beatAmp;
+      const followed = handFollow[side].step(lift, rawDelta);
+
+      const rise = (side === 'L' ? frame.shoulderL : frame.shoulderR) + frame.breathY * 0.5 - STANCE.shoulderDrop;
+      pose(side === 'L' ? bones.shoulderL : bones.shoulderR, rise + lift * 0.06, 0, 0);
+
+      // The firewall's reach cap, applied where the reach is made: however
+      // large a beat, the hand never comes at the viewer (doc 22 §7).
+      const forward = clamp(STANCE.armForward + lift * 0.18, 0, DEFAULT_GESTURE_LIMITS.maxShoulderFlexionRad);
+      pose(
+        side === 'L' ? bones.upperArmL : bones.upperArmR,
+        forward,
+        // A touch of rotation about the arm: the palm turns as the hand talks.
+        zSign * lift * 0.12,
+        zSign * (STANCE.armAbduct + lift * 0.08)
+      );
+      maxFlexion = Math.max(maxFlexion, forward);
+
+      pose(side === 'L' ? bones.foreArmL : bones.foreArmR, STANCE.elbowBend + lift * 0.3 + followed * 0.12, 0, 0);
+
+      const wrist = side === 'L' ? frame.wristL : frame.wristR;
+      // The wrist is where the beat lives; the follower puts it a beat late.
+      pose(side === 'L' ? bones.handL : bones.handR, followed * 0.55 + wrist, 0, zSign * followed * 0.25);
     }
 
     /*
-      HANDS. A relaxed arc, tightening toward the tip and toward the little
-      finger, plus a slow per-bone drift so the two hands are never the same
-      hand. They open a little into a gesture — a beat with a clenched hand
-      reads as a threat, not a point.
+      FINGERS. A relaxed arc, tightening toward the tip and toward the little
+      finger, plus the engine's per-finger noise so the two hands are never the
+      same hand and no two fingers move together. They open a little into a
+      gesture — a beat with a clenched hand reads as a threat, not a point.
+      Curl is local +x (measured); z, which this used to write, splays.
     */
     const openness = 1 - 0.45 * beatEnv;
-    for (let i = 0; i < fingers.length; i++) {
-      const { bone, curl } = fingers[i] as { bone: THREE.Bone; curl: number };
-      const fingerRest = restore(bone);
-      if (!fingerRest) continue;
-      // Phase-offset per bone: a hand whose fingers move in lockstep is a glove.
-      const drift = input.reducedMotion ? 0 : Math.sin(clock * 0.7 + i * 1.7) * 0.012;
-      bone.rotation.z = fingerRest.rotation.z + curl * openness + drift;
+    for (const f of fingers) {
+      const channel = FINGER_CHANNELS[f.side][f.finger];
+      const noise = channel === undefined ? 0 : frame[channel];
+      // The noise is spread down the chain: most at the knuckle, least at the tip.
+      const share = f.phalanx === 0 ? 0.5 : f.phalanx === 1 ? 0.3 : 0.2;
+      pose(f.bone, f.curl * openness + noise * share, 0, 0);
     }
 
-    const chestRest = restore(bones.chest);
-    if (chestRest && bones.chest) {
-      bones.chest.rotation.x = chestRest.rotation.x + frame.breathY * 10;
-      bones.chest.position.y = chestRest.position.y + frame.breathY * 0.08;
-    }
-
-    for (const side of ['L', 'R'] as const) {
-      const zSign = side === 'L' ? 1 : -1;
-      const shoulder = side === 'L' ? bones.shoulderL : bones.shoulderR;
-      const shoulderRest = restore(shoulder);
-      if (shoulderRest && shoulder) {
-        shoulder.rotation.z =
-          shoulderRest.rotation.z + (frame.breathY * 0.5 - STANCE.shoulderDrop) * zSign;
-      }
-    }
-
-    const neckRest = restore(bones.neck);
-    if (neckRest && bones.neck) {
-      bones.neck.rotation.y = neckRest.rotation.y + frame.driftYaw * 1.2;
-      bones.neck.rotation.x = neckRest.rotation.x + frame.driftPitch * 1.2 + frame.nodPitch * 0.5;
-    }
-
-    const headRest = restore(bones.head);
-    if (headRest && bones.head) {
-      bones.head.rotation.y = headRest.rotation.y + frame.driftYaw * 0.8;
-      bones.head.rotation.x =
-        headRest.rotation.x + frame.driftPitch * 0.8 + frame.nodPitch * 0.5 + lip.jawOpen * 0.05;
-    }
-
-    // A real chin drop under the jawOpen morph — the morph alone moves lips,
-    // not the jaw, and the mismatch is the "talking mask" read.
-    const jawRest = restore(bones.jaw);
-    if (jawRest && bones.jaw) {
-      bones.jaw.rotation.x = jawRest.rotation.x + lip.jawOpen * 0.14;
-    }
-
-    const speechLift = 0.18 * speechEnv;
-    for (const side of ['L', 'R'] as const) {
-      const leads = beat.side === (side === 'L' ? 1 : -1);
-      const beatAmp = input.reducedMotion
-        ? 0
-        : beat.amp * beatEnv * (leads ? 1 : beat.both ? 0.55 : 0);
-      const lift = speechLift + beatAmp;
-      const zSign = side === 'L' ? 1 : -1;
-
-      const upperArm = side === 'L' ? bones.upperArmL : bones.upperArmR;
-      const upperRest = restore(upperArm);
-      if (upperRest && upperArm) {
-        upperArm.rotation.x = upperRest.rotation.x + STANCE.armForward + lift * 0.45;
-        upperArm.rotation.z = upperRest.rotation.z + zSign * (STANCE.armAbduct + lift * 0.15);
-      }
-      const foreArm = side === 'L' ? bones.foreArmL : bones.foreArmR;
-      const foreRest = restore(foreArm);
-      if (foreRest && foreArm) {
-        foreArm.rotation.x = foreRest.rotation.x + STANCE.elbowBend + lift * 1.3;
-      }
-
-      const hand = side === 'L' ? bones.handL : bones.handR;
-      const handRest = restore(hand);
-      if (handRest && hand) hand.rotation.x = handRest.rotation.x + lift * 0.45;
-    }
+    firewall.torsoLeanRad = leanSum;
+    firewall.shoulderFlexionRad = maxFlexion;
   };
 
-  return { step, rest };
+  return { step, rest, firewall };
 }

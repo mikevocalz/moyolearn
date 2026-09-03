@@ -396,6 +396,15 @@ export const semantic = {
   'surface-header': { light: palette.plum[100], dark: palette.plum[200] },
   'on-surface-header': { light: palette.plum[700], dark: palette.plum[700] },
   /*
+    NATALIE'S STAGE — the ground her body stands on (Mike, 2026-09-03: "makes
+    me better see her"). Light: the header's own lavender, so the stage and
+    the chrome are one family. Dark: the mark's own plum — deep enough that a
+    dark-skinned, dark-haired figure separates from it, where the neutral
+    ink-900 surface swallowed her hair and her outline.
+  */
+  'surface-stage': { light: palette.plum[100], dark: palette.plum[700] },
+  'on-surface-stage': { light: palette.plum[700], dark: palette.plum[100] },
+  /*
     The chrome's own CTA — the raised Snap slab in the bar and the rail. It is
     deep plum from the SAME family the bars are tinted with, so the loudest
     control in the chrome still belongs to the chrome; the mango action colour

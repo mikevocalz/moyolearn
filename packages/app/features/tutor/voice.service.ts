@@ -29,7 +29,7 @@
 import 'server-only';
 import type { Auth } from '@acme/auth/server';
 import type { VoiceBand } from '@acme/student-model';
-import type { BakedAlignment } from '@acme/voice';
+import type { BakedAlignment, FacePerformance } from '@acme/voice';
 import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation.ts';
 import type { LoadGradeBand } from './coach.service.ts';
 
@@ -53,6 +53,8 @@ export type VerifyUtterance = (
 /** What the live egress hands back through its port. */
 export type SpeakResult =
   | { kind: 'audio'; contentType: string; stream: ReadableStream<Uint8Array> }
+  /** Audio plus its Audio2Face frames (ADR-112). The route ships both as JSON. */
+  | { kind: 'performance'; contentType: string; audio: Uint8Array; face: FacePerformance }
   | { kind: 'text-only' };
 
 /**

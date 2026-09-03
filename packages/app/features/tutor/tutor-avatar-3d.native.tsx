@@ -38,7 +38,9 @@ import { Image, PixelRatio, View } from 'react-native';
 import { Canvas, type CanvasRef, type NativeCanvas, type RNCanvasContext } from 'react-native-webgpu';
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EmotionState, type EmotionCategory, type Shape } from '@acme/avatar';
 import { createHumanoPresence, frameBody, type HumanoPresence } from '@acme/avatar/body';
+import type { TutorCues } from './tutor-cues';
 
 /*
   ONE MISSING DOM GLOBAL, AND IT IS NOT OPTIONAL.
@@ -98,6 +100,45 @@ const BUNDLED_MODEL = require('@acme/avatar/assets/natalie-phone/natalie.gltf');
 /** The lens. The DISTANCE is fitted — see `frameBody` in `@acme/avatar/body`. */
 const CAMERA_FOV = 38;
 
+/**
+ * THE PRELOAD (ADR-114). The glTF fetch, the JSON parse, the `.bin`, the eight
+ * texture decodes and the material rebuild are the JS-thread cost of the first
+ * frame, and none of it needs a canvas. So it is one memoised promise, started
+ * by whoever gets there first — the learner shell on entry, long before the
+ * tutor screen — and awaited by the stage. The stage adopts the SAME scene
+ * graph; there is never a second parse. What this cannot pay ahead is Dawn's
+ * pipeline creation, which needs a live surface: that is the remaining cost
+ * between mount and first frame, and it is measured, not assumed.
+ */
+let preloaded: { uri: string; scene: Promise<THREE.Group> } | null = null;
+
+export function preloadNatalie(modelUri?: string): Promise<THREE.Group> {
+  const uri = modelUri ?? Image.resolveAssetSource(BUNDLED_MODEL)?.uri;
+  if (!uri) return Promise.reject(new Error('the bundled natalie-phone glTF did not resolve'));
+  if (preloaded && preloaded.uri === uri) return preloaded.scene;
+  const startedAt = Date.now();
+  const scene = (async () => {
+    await primeLoaderCache(uri);
+    const gltf = await new Promise<{ scene: THREE.Group }>((resolve, reject) => {
+      new GLTFLoader().load(
+        uri,
+        (loaded) => resolve(loaded as unknown as { scene: THREE.Group }),
+        undefined,
+        (error) => reject(error instanceof Error ? error : new Error(String(error)))
+      );
+    });
+    simplifyMaterialsForDawn(gltf.scene);
+    if (__DEV__) console.log(`[natalie-preload] parsed in ${Date.now() - startedAt}ms`);
+    return gltf.scene;
+  })();
+  // A failed preload is forgotten, so the stage's own attempt is a real retry.
+  scene.catch(() => {
+    if (preloaded?.scene === scene) preloaded = null;
+  });
+  preloaded = { uri, scene };
+  return scene;
+}
+
 export interface TutorAvatar3DProps {
   /**
    * False whenever she is not on screen — collapsed, a hidden pane, a
@@ -109,6 +150,17 @@ export interface TutorAvatar3DProps {
   sampleMouth?: (nowMs: number) => number;
   /** Whether sound is coming out THIS FRAME. Preferred over `isSpeaking`. */
   sampleSpeaking?: () => boolean;
+  /**
+   * The Audio2Face frame for this instant (ADR-112), or null when the playing
+   * sentence has no face. Read-only, like `sampleMouth`.
+   */
+  sampleFace?: () => Shape | null;
+  /** Seconds until the next scheduled onset, or null. Feeds anticipation. */
+  sampleOnset?: () => number | null;
+  /** The learner's side of the turn — typing, recording, just sent. */
+  sampleCues?: () => TutorCues;
+  /** The tone's emotion, from lesson state (doc 32 §4). Eased on this side. */
+  emotion?: { category: EmotionCategory; intensity: number } | null;
   /** Session phase where there is no sound to derive it from. */
   phase?: 'thinking' | 'listening';
   reducedMotion?: boolean;
@@ -258,6 +310,10 @@ export function TutorAvatar3D({
   isSpeaking,
   sampleMouth,
   sampleSpeaking,
+  sampleFace,
+  sampleOnset,
+  sampleCues,
+  emotion,
   phase,
   reducedMotion = false,
   onUnavailable,
@@ -276,6 +332,15 @@ export function TutorAvatar3D({
   const reducedMotionRef = useRef(reducedMotion);
   const sampleMouthRef = useRef(sampleMouth);
   const sampleSpeakingRef = useRef(sampleSpeaking);
+  const sampleFaceRef = useRef(sampleFace);
+  const sampleOnsetRef = useRef(sampleOnset);
+  const sampleCuesRef = useRef(sampleCues);
+  /*
+    The emotion is EASED here, on the frame loop, by the same `EmotionState`
+    the 2D face bus uses (0.4 s smoothstep — an instant baseline change reads
+    as a glitch on a face). The prop only sets the target.
+  */
+  const emotionStateRef = useRef(new EmotionState());
   const phaseRef = useRef(phase);
   const activeRef = useRef(active);
   const onFirstFrameRef = useRef(onFirstFrame);
@@ -293,6 +358,9 @@ export function TutorAvatar3D({
     reducedMotionRef.current = reducedMotion;
     sampleMouthRef.current = sampleMouth;
     sampleSpeakingRef.current = sampleSpeaking;
+    sampleFaceRef.current = sampleFace;
+    sampleOnsetRef.current = sampleOnset;
+    sampleCuesRef.current = sampleCues;
     phaseRef.current = phase;
     activeRef.current = active;
     onFirstFrameRef.current = onFirstFrame;
@@ -300,6 +368,11 @@ export function TutorAvatar3D({
   });
 
   const presenceRef = useRef<HumanoPresence | null>(null);
+
+  useEffect(() => {
+    if (emotion) emotionStateRef.current.set(emotion.category, emotion.intensity);
+    else emotionStateRef.current.set('neutral');
+  }, [emotion?.category, emotion?.intensity]);
 
   // A ref, not state: a pane animating open fires `onLayout` every frame, and
   // this component owns a renderer built once per mount.
@@ -333,28 +406,18 @@ export function TutorAvatar3D({
       surface.width = surface.clientWidth * PixelRatio.get();
       surface.height = surface.clientHeight * PixelRatio.get();
 
-      // `resolveAssetSource` returns null for an asset the packager did not
-      // register — a real state on a stale binary, so it is a demote-to-2D
-      // rather than a crash.
-      const uri = modelUri ?? Image.resolveAssetSource(BUNDLED_MODEL)?.uri;
-      if (!uri) return fail('the bundled natalie-phone glTF did not resolve');
-      let gltf: { scene: THREE.Group };
+      // The preloaded body, or a load started now. `resolveAssetSource`
+      // returns null for an asset the packager did not register — a real
+      // state on a stale binary, so it is a demote-to-2D rather than a crash.
+      const mountedAt = Date.now();
+      let body: THREE.Group;
       try {
-        await primeLoaderCache(uri);
-        gltf = await new Promise((resolve, reject) => {
-          new GLTFLoader().load(
-            uri,
-            (loaded) => resolve(loaded as unknown as { scene: THREE.Group }),
-            undefined,
-            (error) => reject(error instanceof Error ? error : new Error(String(error)))
-          );
-        });
+        body = await preloadNatalie(modelUri);
       } catch (error) {
-        return fail(
-          `glTF load failed: ${error instanceof Error ? error.message : String(error)} [${uri}]`
-        );
+        return fail(`glTF load failed: ${error instanceof Error ? error.message : String(error)}`);
       }
       if (disposed) return;
+      const gltf = { scene: body };
 
       const scene = new THREE.Scene();
       addRig(scene);
@@ -394,12 +457,13 @@ export function TutorAvatar3D({
         frameBody(camera, gltf.scene);
       };
 
-      simplifyMaterialsForDawn(gltf.scene);
-
       const presence = createHumanoPresence(gltf.scene);
       presenceRef.current = presence;
 
-      renderer = new THREE.WebGPURenderer({ antialias: true, canvas: context.canvas, context });
+      renderer = new THREE.WebGPURenderer({ antialias: true, alpha: true, canvas: context.canvas, context });
+      // A transparent clear, so the stage's own ground (`bg-surface-stage` on
+      // the wrapper) shows behind her instead of the renderer's black.
+      renderer.setClearColor(0x000000, 0);
       try {
         // Awaited. Fire-and-forget lets the first render race device creation,
         // and on a cold pipeline cache that race is lost often enough to look
@@ -430,12 +494,28 @@ export function TutorAvatar3D({
 
         const speaking = sampleSpeakingRef.current?.() ?? speakingRef.current;
         const mouth = speaking ? (sampleMouthRef.current?.(timeMs) ?? 0) : 0;
+        const face = speaking ? (sampleFaceRef.current?.() ?? null) : null;
+        const cues = sampleCuesRef.current?.();
+        const onset = sampleOnsetRef.current?.() ?? null;
+        /*
+          Listening is half of human. The learner typing or talking is
+          `listening` whatever the store says — that is what the backchannel
+          nods hang off — and their send is the pause event the torso turns
+          on. Speech still wins: sound coming out is the phase.
+        */
+        const phase = speaking
+          ? 'speaking'
+          : cues?.partnerSpeaking
+            ? 'listening'
+            : (phaseRef.current ?? 'waiting');
         presence.step(delta, {
           speaking,
-          // Speech wins: sound coming out is the phase, whatever the session
-          // last said. Otherwise the session's own word, else waiting.
-          phase: speaking ? 'speaking' : (phaseRef.current ?? 'waiting'),
+          phase,
           mouth,
+          face,
+          emotion: emotionStateRef.current.step(delta),
+          partnerPauseEvent: cues?.partnerPauseEvent ?? false,
+          timeUntilOnset: onset ?? undefined,
           reducedMotion: reducedMotionRef.current,
           cameraPosition: camera.position,
         });
@@ -462,6 +542,10 @@ export function TutorAvatar3D({
 
         if (!announced) {
           announced = true;
+          // The number ADR-114 budgets: mount → first presented frame, with
+          // the body already parsed. What is left in it is the renderer init
+          // and Dawn's first-draw pipeline creation.
+          if (__DEV__) console.log(`[natalie-stage] first frame ${Date.now() - mountedAt}ms after mount`);
           onFirstFrameRef.current?.();
         }
       });

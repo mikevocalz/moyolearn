@@ -30,5 +30,8 @@ installVoiceBudgetLedger(durableVoiceBudgetLedger());
 export const speakSentenceViaEgress: SpeakSentence = async (input) => {
   const spoken = await voiceEgress().speakSentence(input);
   if (spoken.kind === 'text-only') return { kind: 'text-only' };
+  if (spoken.kind === 'performance') {
+    return { kind: 'performance', contentType: spoken.contentType, audio: spoken.audio, face: spoken.face };
+  }
   return { kind: 'audio', contentType: spoken.contentType, stream: spoken.stream };
 };

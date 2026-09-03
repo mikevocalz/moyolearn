@@ -33,6 +33,8 @@ Chunking on Path A rides the **same sentence window** doc 07 uses for safety and
 
 **Flagged, not decided:** NVIDIA's Sept-2025 open-sourcing includes a **real-time C++ SDK** (~2.2GB VRAM/stream on a 4090). That's new since the pre-bake-only decision was made. The decision stands — but re-evaluate live A2F at Phase 3, because the cost that justified "baked only" has changed.
 
+> **SPEC-002 (2026-09-03, Mike's direction, ADR-112):** re-evaluated. **Live A2F/A2E is IN SCOPE on Moyo's own GPU host.** Path A's "Face" row above becomes: *A2F-3D + Audio2Emotion computed server-side from the same Flash bytes the client plays, shipped beside the audio as one performance and scheduled on the client's audio clock; the audio-analysis mouth is the fallback when no face host is configured or the face fails.* The rule that A2E reads **Natalie's** audio only is unchanged and is now also a licence term. The hosted `build.nvidia.com` endpoint was deprecated in April 2026, so the SDK is self-hosted; the host is not yet stood up — see ADR-112 §Blocked for the cost line that goes in doc 12 §7.
+
 ## §4 · The tone palette — enumerated, because tone is where two failure modes hide
 The tutor LLM emits `tone: <key>` as **structured metadata beside the reply — never inline in the text** (Flash would read tags aloud; v2 speaks descriptive text). The palette is closed and versioned; each entry defines both paths' recipes plus the face emotion:
 

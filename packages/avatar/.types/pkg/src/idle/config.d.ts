@@ -6,8 +6,13 @@
  *
  * Ported verbatim from the gnm-avatar reference renderer (`src/idle/config.ts`).
  *
- * SOT: docs/pack/22-embodied-tutor-avatar-spec.md §2
- * SOT-KEYWORDS: idle config breath sway drift saccade blink nod anticipation constants
+ * The `body` block (2026-09-03, Prompt 6 / ADR-113) is the procedural
+ * micro-motion layer below the neck: weight shifts, torso turns, shoulders,
+ * wrists, fingers, gaze breaks and head-follow. Its numbers come from
+ * `audit/motion/behaviour-taxonomy.md`, which cites the source for each range.
+ *
+ * SOT: docs/pack/22-embodied-tutor-avatar-spec.md §2 · docs/decisions/adr-113-body-motion-layer.md
+ * SOT-KEYWORDS: idle config breath sway drift saccade blink nod anticipation constants body weight shift fingers gaze away
  */
 /** Every idle-layer interval/amplitude lives here — no magic numbers at call sites. */
 export interface Range {
@@ -88,6 +93,93 @@ export declare const idleConfig: {
         readonly eyesWide: 0.15;
         readonly attackS: 0.1;
         readonly decayS: 0.6;
+    };
+    readonly body: {
+        /**
+         * A discrete transfer of weight between the legs. Not the continuous sway
+         * above (that is the balance tremor) — this is the thing a person does
+         * every quarter-minute or so, and its absence is most of "mannequin".
+         */
+        readonly weightShift: {
+            readonly intervalS: {
+                readonly min: 8;
+                readonly max: 20;
+            };
+            readonly moveS: {
+                readonly min: 1.2;
+                readonly max: 2.2;
+            };
+            /** Lateral travel of the hip, metres. */
+            readonly amplitudeM: 0.022;
+            /** Follow-through past the new stance before it settles, as a fraction. */
+            readonly overshoot: 0.08;
+        };
+        /** A slight turn of the torso: slow wander, plus a held turn on a turn end. */
+        readonly torsoTurn: {
+            readonly hz: 0.05;
+            readonly driftDeg: 1.5;
+            readonly eventIntervalS: {
+                readonly min: 12;
+                readonly max: 30;
+            };
+            readonly eventDeg: {
+                readonly min: 2;
+                readonly max: 4;
+            };
+            readonly holdS: {
+                readonly min: 3;
+                readonly max: 6;
+            };
+            readonly easeS: 0.8;
+        };
+        readonly shoulder: {
+            readonly hz: 0.12;
+            readonly maxDeg: 1.5;
+        };
+        readonly wrist: {
+            readonly hz: 0.18;
+            readonly maxDeg: 3;
+        };
+        /** Per finger: its own rate and its own amplitude, so no two are in phase. */
+        readonly finger: {
+            readonly hz: {
+                readonly min: 0.2;
+                readonly max: 0.35;
+            };
+            readonly deg: {
+                readonly min: 2;
+                readonly max: 5;
+            };
+        };
+        /**
+         * Gaze leaves the lens for a moment and comes back. The upper interval is
+         * the companionship firewall's stare ceiling (doc 22 §7; gesture-gate.ts
+         * `maxGazeHoldMs`), so a held stare cannot happen by construction.
+         */
+        readonly gazeAway: {
+            readonly intervalS: {
+                readonly min: 3;
+                readonly max: 4;
+            };
+            readonly holdS: {
+                readonly min: 0.3;
+                readonly max: 1.2;
+            };
+            readonly yawDeg: {
+                readonly min: 4;
+                readonly max: 8;
+            };
+            readonly pitchDeg: {
+                readonly min: -3;
+                readonly max: 1;
+            };
+            readonly easeS: 0.15;
+        };
+        /** The head trails the eyes: a fraction of the gaze, a beat late. */
+        readonly headFollow: {
+            readonly gain: 0.35;
+            readonly tauS: 0.35;
+        };
     };
     readonly speech: {
         readonly gapWeightSum: 0.05;

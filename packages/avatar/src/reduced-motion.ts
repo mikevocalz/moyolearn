@@ -160,6 +160,14 @@ export const ANIMATED_SURFACES: readonly AnimatedSurface[] = Object.freeze([
   { id: 'saccade', moves: 'eye yaw and pitch', governedBy: 'gazeScale', consumer: 'face-bus pinFrame' },
   { id: 'hair-sway', moves: '250 braids, the largest moving silhouette', governedBy: 'hairSwayScale', consumer: 'createHairMaterial().update(t, scale)' },
   { id: 'camera-float', moves: 'the whole world, relative to the viewer', governedBy: 'cameraFloatScale', consumer: 'the stage camera rig' },
+  // The body layer (ADR-113). All governed by idleBodyScale: the presence
+  // writer takes `reducedMotion` and holds every one of these at rest.
+  { id: 'weight-shift', moves: 'hip travel between the legs, spine counter-tilt', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
+  { id: 'torso-turn', moves: 'a few degrees of yaw through the spine', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
+  { id: 'shoulder-wrist', moves: 'shoulder rise and wrist flex, per side', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
+  { id: 'finger-noise', moves: 'ten finger chains, 2-5 degrees, never in phase', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
+  { id: 'gaze-away', moves: 'eyes leave the lens for under a second, head follows', governedBy: 'gazeScale', consumer: 'presence/humano.ts reducedMotion' },
+  { id: 'a2f-face', moves: 'brows, lids, cheeks and mouth from the audio', governedBy: 'mouthScale', consumer: 'presence/humano.ts face input — speech-driven, never scaled' },
   { id: 'viseme', moves: 'the mouth, from speech', governedBy: 'mouthScale', consumer: 'speech driver — never scaled' },
   { id: 'blink', moves: 'eyelids at the engine rate', governedBy: 'blinkScale', consumer: 'idle engine — never disabled' },
 ]);

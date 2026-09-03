@@ -63,6 +63,7 @@ export {
 } from './features/schedule';
 export { CaptureScreen, useCaptureStore, CameraSheet, useCameraStore } from './features/capture';
 export { TutorScreen } from './features/tutor/screen';
+export { preloadNatalie } from './features/tutor/natalie-preload';
 export { useTutorStore } from './features/tutor/tutor.store';
 export type {
   StoredAttachment,

@@ -48,6 +48,8 @@ export {
 } from './src/baked.ts';
 export type { BakedPiece, BakedPieceId, BakedServePlan } from './src/baked.ts';
 export { createVoiceEgress, voiceEgress } from './src/eleven.ts';
+export { A2F_TIMEOUT_MS, liveFaceConfigured, renderFace } from './src/a2f.ts';
+export type { A2fTransport, A2fTransportInput, FacePerformance } from './src/a2f.ts';
 export type {
   BakedAlignment,
   BakedClip,

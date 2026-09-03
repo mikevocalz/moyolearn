@@ -14,6 +14,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import * as THREE from 'three';
+import { DEFAULT_GESTURE_LIMITS } from '../safety/gesture-gate.ts';
 import {
   HUMANO_BONES,
   STANCE,
@@ -113,12 +114,60 @@ describe('createHumanoPresence', () => {
   it('finds the dotted Rigify bones under the loader-sanitised names', () => {
     const { scene, mesh } = makeScene();
     const presence = createHumanoPresence(scene);
-    const jaw = scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.jaw))!;
+    const head = scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.head))!;
     presence.step(1 / 60, { ...QUIET, speaking: true, mouth: 1 });
-    // 30 frames is past the mouth's rise constant, so the chin has to be down.
+    // 30 frames is past the mouth's rise constant, so the mouth is open and
+    // the head has dipped with it (there is no weighted jaw bone on this rig).
     for (let i = 0; i < 30; i++) presence.step(1 / 60, { ...QUIET, speaking: true, mouth: 1 });
-    assert.ok(jaw.rotation.x > 0.05, `jaw did not drop: ${jaw.rotation.x}`);
+    assert.ok(head.rotation.x > 0.015, `head did not dip with the open mouth: ${head.rotation.x}`);
     assert.ok(weight(mesh, 'jawOpen') > 0.3);
+  });
+
+  it('writes the A2F face when one is given, and keeps the blink from the engine', () => {
+    const { scene, mesh } = makeScene();
+    const presence = createHumanoPresence(scene);
+    presence.step(1 / 60, {
+      ...QUIET,
+      speaking: true,
+      mouth: 1,
+      face: { browInnerUp: 0.7, jawOpen: 0.2, mouthSmileLeft: 0.4 },
+    });
+    assert.equal(weight(mesh, 'browInnerUp'), 0.7);
+    assert.equal(weight(mesh, 'jawOpen'), 0.2);
+    // The openness-derived lips are NOT layered on top of a real face.
+    assert.equal(weight(mesh, 'mouthFunnel'), 0);
+  });
+
+  it('holds the emotion baseline under speech by per-channel max', () => {
+    const { scene, mesh } = makeScene();
+    const presence = createHumanoPresence(scene);
+    for (let i = 0; i < 30; i++) {
+      presence.step(1 / 60, { ...QUIET, speaking: true, mouth: 1, emotion: { mouthSmileLeft: 0.5, browInnerUp: 0.1 } });
+    }
+    assert.ok(weight(mesh, 'mouthSmileLeft') >= 0.5, 'the tone smile lost to the viseme smile');
+    // A beat may add its brow accent on top; the baseline is a floor, not a value.
+    assert.ok(weight(mesh, 'browInnerUp') >= 0.1);
+  });
+
+  it('never produces a forbidden read: lean and reach stay inside the firewall over ten minutes', () => {
+    const { scene } = makeScene();
+    const presence = createHumanoPresence(scene);
+    let maxLean = 0;
+    let maxReach = 0;
+    for (let i = 0; i < 600 * 60; i++) {
+      const t = i / 60;
+      presence.step(1 / 60, {
+        ...QUIET,
+        speaking: t % 30 > 12,
+        mouth: t % 30 > 12 ? 0.5 + 0.5 * Math.sin(t * 9) : 0,
+        phase: t % 30 > 12 ? 'speaking' : t % 30 > 8 ? 'thinking' : 'listening',
+        partnerPauseEvent: Math.abs((t % 30) - 8) < 1 / 120,
+      });
+      maxLean = Math.max(maxLean, presence.firewall.torsoLeanRad);
+      maxReach = Math.max(maxReach, presence.firewall.shoulderFlexionRad);
+    }
+    assert.ok(maxLean <= DEFAULT_GESTURE_LIMITS.maxTorsoLeanRad, `torso leaned ${maxLean} rad`);
+    assert.ok(maxReach <= DEFAULT_GESTURE_LIMITS.maxShoulderFlexionRad, `reached ${maxReach} rad`);
   });
 
   it('decays the mouth back to silence when the voice stops', () => {
@@ -140,7 +189,7 @@ describe('createHumanoPresence', () => {
     // The STANCE stays — a pose is not motion, and reduced motion should not
     // put her back to the asset's arms-flat-to-the-thighs mannequin. What it
     // suppresses is the LIFT on top of it, which is the travel.
-    assert.equal(arm.rotation.x, STANCE.elbowBend);
+    assert.ok(Math.abs(arm.rotation.x - STANCE.elbowBend) < 1e-9, `${arm.rotation.x}`);
   });
 
   it('aims the eyes at the camera rather than past it', () => {
