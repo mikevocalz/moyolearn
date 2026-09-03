@@ -11,4 +11,6 @@ export type { CaptureMode, CapturePhoto, CaptureStep } from './types';
 export { problemStorage } from './problem-storage';
 export { readProblem, writeProblem, PROBLEM_KEY } from './problem-storage.shared.ts';
 export { readAttachment } from './read-attachment';
+export { readDocumentAt } from './read-document-at.ts';
+export { readDocument, extractPdfText, extractDocxText, type DocumentReading } from './read-document.ts';
 export { readHomework, readPrinted, readHandwriting, MIN_USABLE_CHARS, type OcrResult } from './ocr-web.ts';

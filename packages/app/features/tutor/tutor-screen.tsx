@@ -32,6 +32,7 @@ import { TutorWorkCanvas, hasWorkToShow } from './tutor-work-canvas';
 import { pickFile } from '../editor/pick-file';
 import { useAudioStore } from '../editor/audio.store.ts';
 import { readAttachment } from '../capture/read-attachment';
+import { readDocumentAt } from '../capture/read-document-at';
 import { transcribe } from '../capture/transcribe';
 import { useUploadQueue, setUploadReporter } from '../media';
 import { patchAttachment, postMessage } from './session.client.ts';
@@ -346,7 +347,29 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       );
       const fromAudio = spoken.filter((t) => t.trim().length > 0);
 
+      /*
+        DOCUMENTS ARE HOMEWORK TOO.
+
+        A pdf or a Word file was staged, carried and shown, and nothing ever
+        read it — `handleSend` filtered `kind === 'image'`, so a child who
+        attached the worksheet their teacher emailed got a generic reply. Same
+        contract as the photos: read on device, first legible one becomes the
+        session's problem, an unreadable one costs the reading and not the turn.
+      */
+      const documents = staged.filter((a) => a.kind === 'document');
+      const readDocuments = await Promise.all(documents.map((d) => readDocumentAt(d.uri, d.mimeType)));
+      const fromDocuments = readDocuments.filter((r) => r.length > 0);
+
+      // Same rule as the photos, one step down the order: a legible worksheet
+      // becomes the session's problem when no photo already claimed it.
+      if (fromImages[0] === undefined && fromDocuments[0] !== undefined && !problem) {
+        setProblem(fromDocuments[0]);
+      }
+
       const parts = [
+        ...fromDocuments.map((text, i) =>
+          fromDocuments.length > 1 ? `Worksheet ${i + 1}:\n${text}` : text,
+        ),
         ...fromImages.map((text, i) =>
           fromImages.length > 1 ? `Problem ${i + 1}:\n${text}` : text,
         ),
@@ -448,7 +471,11 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
 
       const turn = parts.join('\n\n');
       void coach(turn);
-      void recordAttempt(problem ?? fromImages[0] ?? '', trimmed || fromAudio.join(' '), hintDepth);
+      void recordAttempt(
+        problem ?? fromImages[0] ?? fromDocuments[0] ?? '',
+        trimmed || fromAudio.join(' '),
+        hintDepth,
+      );
     })();
   };
 
