@@ -13,7 +13,17 @@ import { useRouter } from 'solito/navigation';
 import { MasteryBar, Heading, Text, Container } from '@acme/ui';
 import { ScrollView } from '@acme/ui/tw';
 import { View } from '@acme/ui/primitives';
-import { useTutorStore, useCaptureStore } from '@acme/app';
+/*
+  The STORES, not the app barrel. This was `from '@acme/app'`, and the barrel
+  re-exports this very file (`index.ts` -> `features/progress/screen.native.tsx`
+  -> here), so the import closed a require cycle that Metro warns about on every
+  single launch: "Require cycles are allowed, but can result in uninitialized
+  values." A screen reaching back through the root barrel for something two
+  directories away is the cycle; importing the module that owns each store is
+  the same value with no loop.
+*/
+import { useTutorStore } from '../tutor/tutor.store.ts';
+import { useCaptureStore } from '../capture/capture.store.ts';
 import { generatePracticeProblem } from '@acme/student-model/pure';
 import { useProgress } from './use-progress';
 
