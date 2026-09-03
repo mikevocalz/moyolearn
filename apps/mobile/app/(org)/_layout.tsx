@@ -17,7 +17,17 @@ export default function OrgShell() {
     <RoleScope role="org" className="flex-1">
       <Stack
         screenOptions={{
-          header: () => <ShellHeader titles={{}} fallback="Moyo Ops" />,
+          header: ({ navigation, back }) => (
+            <ShellHeader
+              titles={{}}
+              fallback="Moyo Ops"
+              /* `back` is defined only on a pushed route, so the wordmark
+                 yields to the chevron exactly where the platform expects an
+                 exit — never on a tab root. */
+              canGoBack={back !== undefined}
+              onBack={navigation.goBack}
+            />
+          ),
         }}
       >
         <Stack.Protected guard={isOrg}>

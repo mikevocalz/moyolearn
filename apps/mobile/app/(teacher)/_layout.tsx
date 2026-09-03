@@ -23,7 +23,17 @@ export default function TeacherShell() {
     <RoleScope role="teacher" className="flex-1">
       <Stack
         screenOptions={{
-          header: () => <ShellHeader titles={TITLES} fallback="Moyo" />,
+          header: ({ navigation, back }) => (
+            <ShellHeader
+              titles={TITLES}
+              fallback="Moyo"
+              /* `back` is defined only on a pushed route, so the wordmark
+                 yields to the chevron exactly where the platform expects an
+                 exit — never on a tab root. */
+              canGoBack={back !== undefined}
+              onBack={navigation.goBack}
+            />
+          ),
         }}
       >
         <Stack.Protected guard={isTeacher}>

@@ -18,12 +18,25 @@
 // GEOMETRY IS PLATFORM-SPEC, from `navChrome` in packages/theme/tokens.ts:
 // rail 96 (Material 3 `NavigationRailCollapsedTokens.ContainerWidth`; 80 is its
 // narrow variant), raised slab 64 (between Material's 56 standard FAB and 96
-// large FAB — iOS has no raised-tab convention to defend against). The selection
-// marker takes Material's SHAPE rule (hug the content, never fill the cell) but
-// its height from the age band, because our smallest band already exceeds
-// Material's 32. Both are px: they used to be rem-derived Tailwind steps, and the mobile bundler
-// resolves rem at 14 (apps/mobile/metro.config.js), so the whole nav shell was
-// shipping at 87.5% of the size the code claimed.
+// large FAB — iOS has no raised-tab convention to defend against), raise 38
+// (how far that slab breaks the bar's top edge). All px: they used to be
+// rem-derived Tailwind steps, and the mobile bundler resolves rem at 14
+// (apps/mobile/metro.config.js), so the whole nav shell was shipping at 87.5%
+// of the size the code claimed.
+//
+// SELECTION IS THE PLATFORM'S, NOT THE HOUSE'S. The bar wore the neubrutalist
+// slab — 2px ink border, hard offset shadow, full-strength fill across the
+// whole tab cell — and it read as a BUTTON sitting inside the bar rather than
+// as "you are here"; the product owner's words were "too much". Both platforms
+// solve this with the lightest possible mark: Apple tints the selected item and
+// draws no container at all, and Material 3 puts a pill-shaped ACTIVE INDICATOR
+// behind the selected ICON ONLY, with the label outside it on the bare surface
+// (m3.material.io/components/navigation-bar/guidelines). What is left here is
+// exactly that indicator — no border, no shadow, hugging a 24dp glyph — plus
+// the label stepping to bold. Material's fallback rule is also why the label
+// stays: it asks for "other cues such as showing the destination label" when an
+// icon set has no filled/outlined pair to switch between, and ours (Lucide)
+// does not.
 //
 // The raised center slot (learner Snap) follows Speechify's raised
 // primary-action tab. It is a rounded SQUARE slab, never a circle — the kit's
@@ -32,10 +45,12 @@
 // age-band target token, so a K–2 thumb gets the NN/g 2cm target and no other
 // band shrinks.
 //
-// Role accent: the focused underlay consumes `bg-role-accent-underlay` BY NAME
-// (doc 36 §5 allowlist: "active tab/nav indicator underlay"). PR-141 owns the
-// token; until it lands the class is inert and the ink border + label weight
-// carry selection alone — which is also the doc 08 §4.9 fallback.
+// Role accent: doc 36 §5's allowlist names "active tab/nav indicator underlay"
+// as one of the five slots the accent may occupy, and this indicator is that
+// slot — so when PR-141 lands its token, it replaces the indicator's fill here
+// and nowhere else. Until then the indicator carries `bg-highlighter`, the
+// product's own selection colour (doc 08 §4.6), and label weight is the second,
+// non-colour cue that keeps selection legible without it.
 //
 // DEFERRED — doc 02 §2.3 hinge awareness. Moving nav to a VERTICAL edge is the
 // part of §2.3 that lands today: a bottom bar spanning a Surface Duo would
@@ -48,21 +63,31 @@
 // packages/ui/adaptive-panes/PHASE-8-FOLDING-FEATURE.md. Until it exists this
 // component classes the window it is given and makes no hinge claim.
 //
-// Mobbin: Speechify raised center tab (mobbin.com/screens/6fd8ade9-3090-4143-9141-a1c4051a81e2) ·
-// Quizlet 4-tab bar (mobbin.com/screens/d8bb66b8-7bae-4cc3-8241-7aab8e04be5a) ·
-// Headway 4-tab bar (mobbin.com/screens/b7fa7b42-bea8-4d9d-b89f-1042779ffb17) ·
-// Gmail tablet navigation rail (mobbin.com/screens/0b7b3e8f-2a4d-4f1e-9c33-6a5f1f0b7c21) ·
-// Asana tablet navigation rail (mobbin.com/screens/3c9d1a52-77b8-4e0a-9b6d-2f4a8e51d0c9)
+// Mobbin (structure only — pulled again for the native-selection pass):
+// BeReal raised centre camera, selection by tint with no container
+//   (mobbin.com/screens/b83a2290-0e42-457c-b7c1-8768a1cb1bef) ·
+// Vivino raised centre camera, active item in a hugging pill
+//   (mobbin.com/screens/5ba0521b-9501-478b-bba5-f481bb311878) ·
+// Snapchat 5-tab bar, raised centre camera, label under every tab
+//   (mobbin.com/screens/9aeab467-10aa-4960-82ef-e4b6533d1196) ·
+// Weverse 4-tab bar, selection carried by tint + weight alone
+//   (mobbin.com/screens/154967f0-87a8-4fa4-9bcd-24cb43b2477c) ·
+// Quicken vertical rail, selected row as a soft tint rather than a bordered slab
+//   (mobbin.com/screens/0f4f02a0-2616-4ad9-ada9-05fee5ceea78)
+// Platform specs: Material 3 navigation bar (active indicator behind the icon,
+// m3.material.io/components/navigation-bar/guidelines) · Material 3 navigation
+// rail (m3.material.io/components/navigation-rail/specs) · Apple HIG Tab bars
+// (developer.apple.com/design/human-interface-guidelines/tab-bars).
 // SOT: docs/pack/36-role-navigation-flows.md §3 §5 · docs/pack/08-visual-hierarchy-spacing-spec.md §4.9 ·
 //      docs/pack/02-adaptive-screens-design-spec.md §2.1 §2.3
-// SOT-KEYWORDS: shell tab bar role raised center camera band target slab rail size class foldable hinge
+// SOT-KEYWORDS: shell tab bar role raised center camera band target indicator rail size class foldable hinge haptics
 
 // expo-router's `react-navigation` entry does not re-export the bottom-tabs
 // types, so this reaches the module that declares them.
 import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
 import type { ComponentType } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useWindowSizeClass } from '@acme/ui';
+import { useReducedMotion, useWindowSizeClass } from '@acme/ui';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import { haptics } from '@acme/ui/haptics';
 
@@ -139,6 +164,20 @@ export function ShellTabBar({
   const rail = sizeClass !== 'compact';
   const minTarget = targetClass ?? 'min-h-target-adult';
   const raisedTarget = raisedTargetClass ?? '';
+  /*
+    The kit's OWN reduce-motion reader (packages/ui/motion.tsx, already consumed
+    by CoachMark and StageBoard) — not a second subscription, and not a per-press
+    `AccessibilityInfo` call, which is async and would land after the press it
+    was meant to gate.
+
+    A haptic is not motion, and neither platform exposes a "reduce haptics"
+    query: iOS keeps system haptics under Settings › Sounds & Haptics with no
+    public API, Android's is a vibration intensity the app cannot read. Reduce
+    Motion is the only sensory-load preference either OS will tell us about, so
+    it is the one this honours — a reader who asked the device to calm down does
+    not get buzzed for navigating.
+  */
+  const reducedMotion = useReducedMotion();
 
   const rendered = items.map((item) => {
     const index = state.routes.findIndex((route) => route.name === item.name);
@@ -156,10 +195,23 @@ export function ShellTabBar({
     const route = state.routes[index]!;
     const focused = state.index === index;
 
+    /*
+      The tick fires on a CHANGE of tab, never on the tab you are already on.
+      It used to fire on every press, so holding a thumb on the open tab
+      buzzed the device with nothing happening on screen — a haptic that does
+      not correspond to a state change is noise, and iOS/Android both reserve
+      the selection tick for the moment the selection actually moves.
+
+      `haptics.selection` (react-native-pulsar's `Presets.System.selection`, via
+      the kit's semantic vocabulary — components never call Pulsar directly) and
+      not `tap`: it is the lightest tick we have, which is what a navigation
+      change gets. `@acme/ui/haptics` already no-ops when the native TurboModule
+      is missing from the binary, so a JS-only reload cannot crash the bar here.
+    */
     const onPress = () => {
-      haptics.selection();
       const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
       if (!focused && !event.defaultPrevented) {
+        if (!reducedMotion) haptics.selection();
         navigation.navigate(route.name);
       }
     };
@@ -168,18 +220,22 @@ export function ShellTabBar({
       return (
         <Pressable
           key={route.key}
+          role="tab"
           aria-label={item.label}
           aria-selected={focused}
           onPress={onPress}
-          className={rail ? 'items-center' : 'flex-1 items-center'}
+          className={rail ? 'items-center active:opacity-80' : 'flex-1 items-center active:opacity-80'}
         >
           {/*
-            On the bottom bar the slot breaks the bar's top edge (`-mt-8`) — the
-            signature action is physically the biggest, highest thing on the bar
-            on every band. A vertical rail has no top edge to break, so there the
-            emphasis is carried by size and by the slot's position in the middle
-            of the column, and the negative margin is dropped rather than
-            reinterpreted as a sideways overhang into the content.
+            On the bottom bar the slot breaks the bar's top edge by
+            `-mt-nav-raise` (38) — the signature action is physically the
+            biggest, highest thing on the bar on every band. 38 of a 64 slab
+            leaves 26 seated in the chrome: it was 28/36, which read as a tile
+            embedded in the bar rather than as a control standing proud of it.
+            A vertical rail has no top edge to break, so there the emphasis is
+            carried by size and by the slot's position in the middle of the
+            column, and the negative margin is dropped rather than reinterpreted
+            as a sideways overhang into the content.
           */}
           <View className={rail ? 'items-stretch gap-0.5 py-stack' : '-mt-nav-raise items-center gap-0.5'}>
             <View
@@ -196,10 +252,19 @@ export function ShellTabBar({
                 while the code and every review read 64. The token is px, so the
                 number is the number on both platforms. `raisedTarget` still only
                 ever raises it (K–2 → 72).
+
+                NO LIGHT FILL. This slab used to be a near-white/action-yellow
+                block with a border round it, and against a pale chrome bar that
+                read as a hole in the bar rather than as the product's signature
+                control. `bg-nav-cta` is the chrome's own deep CTA — the fill is
+                what separates it now — and the 2px ink border stays as
+                STRUCTURE (the doc 08 rule: borders are structure, never
+                emphasis), the same edge every other raised object in the product
+                carries. This is the one place the house's raised language is
+                allowed to stay loud, because it is the one control on the bar
+                that is an ACTION rather than a destination.
               */
-              className={`${rail ? 'w-full' : 'w-nav-raised'} h-nav-raised ${raisedTarget} items-center justify-center rounded-md border-2 border-on-surface-footer bg-nav-cta shadow-card ${
-                focused ? '' : 'active:opacity-80'
-              }`}
+              className={`${rail ? 'w-full' : 'w-nav-raised'} h-nav-raised ${raisedTarget} items-center justify-center rounded-md border-2 border-on-surface-footer bg-nav-cta shadow-card`}
             >
               <item.Icon size={30} className="text-on-nav-cta" />
             </View>
@@ -223,33 +288,48 @@ export function ShellTabBar({
     }
 
     /*
-      ONE selected-state treatment, in every shell and in both forms of the bar.
+      ONE selected-state treatment, in every shell and in both forms of the bar —
+      and it is the PLATFORM'S, not the house's.
 
-      Material 3 gives the navigation bar a single active indicator — a
-      `secondary-container` pill behind the icon with `on-secondary-container`
-      type on it, and `on-surface-variant` for everything unselected — and Apple's
-      tab bars do the same job with one tint. The shell had THREE looks in one
-      rail (a filled marker slab, a plum slab, and bare text) because selection
-      was forked per role and per band, and no user could learn what "selected"
-      looked like.
+      What stood here was a highlighter slab with a 2px ink border and a hard
+      offset shadow, filling the whole tab cell. That is the language CONTENT
+      uses for buttons, so the selected tab read as a button somebody had left
+      pressed — the product owner's report, in his words, was that it was "too
+      much". Neither platform marks a tab that way. Apple tints the selected item
+      and draws no container at all (HIG, Tab bars). Material 3 draws exactly one
+      small ACTIVE INDICATOR: a pill behind the selected ICON, with the label
+      outside it on the bare bar, `on-secondary-container` ink inside it and
+      `on-surface-variant` everywhere else.
 
-      The Moyo dialect of that indicator is the MARKER: doc 08 §4.6 already makes
-      highlighter-with-ink the product's selection language, and the house's 2px
-      ink border keeps the neubrutalist frame the rest of the chrome carries. It
-      is deliberately NOT `action-primary` — the raised camera slab owns that
-      fill, and reusing it made selection read as a second button.
+      We take Material's, because the item is icon-over-label and Android is
+      where the rail actually ships — but only what Material specifies: no
+      border, no shadow, hugging a 24dp glyph, never touching the label. The fill
+      is `highlighter` (doc 08 §4.6's selection language, and `on-highlighter` is
+      already a ratified contrast pair) and deliberately NOT `action-primary` or
+      `nav-cta`, which the raised camera slab owns — selection and action cannot
+      wear one paint or the bar has two buttons and no state.
+
+      Selection is never carried by colour alone (WCAG 1.4.1): the label steps
+      from semibold to bold. Material asks for that second cue in as many words
+      when an icon set has no filled/outlined pair to swap between — Lucide,
+      which is ours, has none.
 
       Door identity is not carried here at all. It is carried by the chrome
       surface the whole bar sits on (`surface-header`/`surface-footer`, one
       family per door), which is what M3 means by keeping the bars on one surface
       and spending colour only on the indicator.
     */
-    const focusedSlab = 'border-on-surface-footer bg-highlighter shadow-card';
-    const focusedText = 'text-on-highlighter';
-
     return (
       <Pressable
         key={route.key}
+        /*
+          `role="tab"` matches the kit's own TabBar and the `role="tablist"` on
+          both containers below: TalkBack and VoiceOver then announce "tab, 2 of
+          4, selected" instead of reading a bare button, which is the difference
+          between a native-feeling bar and a row of buttons that happen to
+          navigate.
+        */
+        role="tab"
         aria-label={item.label}
         aria-selected={focused}
         onPress={onPress}
@@ -258,54 +338,59 @@ export function ShellTabBar({
           the rail the items must not divide its HEIGHT — four tabs stretched
           over 800dp would put 200dp of slab behind each icon — so the rail item
           sizes to its content and the column distributes the slack instead.
+
+          The press dim sits on the PRESSABLE, not on a child: react-native-css
+          turns any component carrying an `active:` variant into its own press
+          target, and a View that steals the touch from the Pressable wrapping it
+          is a dead tab.
         */
-        className={rail ? undefined : 'flex-1'}
+        className={rail ? 'active:opacity-70' : 'flex-1 active:opacity-70'}
       >
         {/*
-          Unselected keeps a transparent border so selection never shifts layout
-          by the border's width.
-
-          `self-center` + `px-inset-tight`, NOT a stretched block. Material's
-          active indicator is a 56×32dp marker sitting behind the ICON with the
-          label below it (`NavigationBarVerticalItemTokens.ActiveIndicatorWidth`
-          / `ActiveIndicatorHeight`); iOS marks selection with tint alone and no
-          shape at all. Ours was neither: it filled the entire tab cell edge to
-          edge and full height, which is why the selected tab read as a BUTTON
-          rather than as state — the thing the user actually reported.
-
-          We keep the house fill (doc 08 §4.9 reserves solid fills for the
-          child's world, and DashboardShell settled on a filled rect for the
-          sidebar after pulling six shipped products), and we keep Material's
-          shape discipline: the marker hugs its content instead of spanning the
-          slot. Width is content-driven rather than Material's fixed 56 because
-          our labels are words, not a single glyph.
-
-          The height stays the AGE BAND's target and nothing else. Material's
-          `ActiveIndicatorHeight` is 32, and a first pass put that on here beside
-          the band class — two `min-height` declarations on one element, where
-          the later class simply wins. It measured 54.7dp on a K–2 device that is
-          required to be 72: a rule meant to document Material's floor silently
-          overrode a child's touch target. The two never needed to coexist —
-          our SMALLEST band (adult, 44) is already above Material's 32, so the
-          band is always the binding constraint and the indicator height has
-          nothing left to say.
+          The cell keeps the AGE BAND's target as its min-height and nothing
+          else. Material's `ActiveIndicatorHeight` is 32, and a first pass put
+          that here beside the band class — two `min-height` declarations on one
+          element, where the later class simply wins. It measured 54.7dp on a K–2
+          device required to be 72. Our SMALLEST band (adult, 44) is already above
+          Material's 32, so the band is always the binding constraint.
         */}
-        <View
-          className={`${minTarget} self-center items-center justify-center gap-0.5 rounded-md border-2 px-inset-tight py-1.5 ${
-            focused ? focusedSlab : 'border-transparent hover:bg-surface-sunken'
-          }`}
-        >
+        <View className={`${minTarget} self-center items-center justify-center gap-0.5 px-inset-tight py-1`}>
           {/*
-            Resting items carry the footer's ink at semibold, selected steps to
-            bold on the marker — weight and fill do the work. `text-text-muted`
-            was the CONTENT ground's muted ink and measured 3.42:1 on the dark
-            footer, so the resting labels failed AA in exactly the scheme where
-            they were hardest to read.
+            The indicator — the only thing that changes shape between states, and
+            the padding is on BOTH states so selecting a tab cannot shift the
+            layout by the size of its own container; the resting item simply
+            draws no fill.
+
+            `rounded-control` — the same radius every button in the system uses,
+            NOT Material's pill. Material's indicator is a pill by spec, but this
+            product's radius language is squared (doc 02 §A.5 bans pill-ifying
+            it) and a lone pill in the chrome read as borrowed from another
+            product. Selection is still carried by fill and ink, which is the
+            part of the indicator pattern that matters.
+
+            Both axes are content-driven: a 24dp glyph plus `py-1` lands ~31
+            against Material's 32, and the width comes from `px-inset-tight`
+            rather than Material's fixed 64, which would leave 16 a side inside a
+            96 rail and overhang a three-tab K–2 bottom bar.
           */}
-          <item.Icon size={24} className={focused ? focusedText : 'text-on-surface-footer'} />
+          <View
+            className={`items-center justify-center rounded-control px-inset-tight py-1 ${
+              focused ? 'bg-highlighter' : 'hover:bg-surface-sunken'
+            }`}
+          >
+            <item.Icon size={24} className={focused ? 'text-on-highlighter' : 'text-on-surface-footer'} />
+          </View>
+          {/*
+            Both labels take the footer's ink and only the WEIGHT moves. Material
+            varies the ink instead (on-surface vs on-surface-variant) and we
+            cannot: `text-text-muted` is the CONTENT ground's muted ink and
+            measured 3.42:1 on this chrome, so the resting labels failed AA in
+            exactly the scheme where they were hardest to read. Weight is the cue
+            that survives the contrast floor.
+          */}
           <Text
             numberOfLines={1}
-            className={`text-label ${focused ? `font-bold ${focusedText}` : 'font-semibold text-on-surface-footer'}`}
+            className={`text-label ${focused ? 'font-bold' : 'font-semibold'} text-on-surface-footer`}
           >
             {item.label}
           </Text>
@@ -349,15 +434,23 @@ export function ShellTabBar({
         role="tablist"
         aria-label="Main navigation"
         style={{ paddingTop: insets.top, paddingBottom: insets.bottom, paddingRight: insets.right }}
-        className="w-nav-rail flex-col items-stretch justify-center gap-1 border-l-2 border-on-surface-footer bg-surface-footer px-1 py-2"
+        className="w-nav-rail flex-col items-stretch justify-center gap-1 border-l-2 border-on-surface-footer bg-surface-footer"
       >
         {rendered}
       </View>
     );
   }
 
+  /*
+    Same `role="tablist"` + name the rail carries. It was on the rail only, so
+    the identical bar announced itself as a tab list on a tablet and as an
+    anonymous group of buttons on a phone — the form of the bar is a layout
+    decision and must not change what assistive tech is told about it.
+  */
   return (
     <View
+      role="tablist"
+      aria-label="Main navigation"
       style={{ paddingBottom: insets.bottom }}
       className="flex-row items-end gap-1 border-t-2 border-on-surface-footer bg-surface-footer px-2 pt-1"
     >

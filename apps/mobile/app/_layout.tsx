@@ -3,17 +3,33 @@
 // see src/telemetry.ts for what is and is not enabled, and why.
 import "../src/telemetry";
 
-import { Slot } from "expo-router";
+import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { withUniwind } from "uniwind";
-import { AppQueryProvider, SafeAreaProvider, SessionProvider , AccountSheet, AttachSheet, AudioRecorderSheet, UrlSheet, VideoNoteSheet, UploadQueueProvider } from "@acme/app";
+import { AppQueryProvider, SafeAreaProvider, SessionProvider , AccountSheet, AttachSheet, AudioRecorderSheet, SwitchProfileSheet, UrlSheet, VideoNoteSheet, UploadQueueProvider } from "@acme/app";
 import { BookingSheet } from "../components/BookingSheet";
+import { RootHeader } from "../components/RootHeader";
 import { Toaster } from "@acme/ui";
 import "../global.css";
+
+// The root-level routes that are real destinations rather than front door, and
+// the title each one's bar carries. Every other root child is either a shell
+// group (which draws its own chrome), the dispatcher, or a pre-auth screen that
+// owns its full-bleed hero — those keep `headerShown: false`.
+//
+// `/settings` and `/editor-settings` sit here rather than in a shell because
+// more than one shell pushes them and expo-router forbids one path living in
+// two sibling groups; the dev hatch sits here because it must be reachable
+// before any shell exists. All three used to render with no bar at all.
+const ROOT_TITLES: Record<string, string> = {
+  "/settings": "Settings",
+  "/editor-settings": "Editor",
+  "/onboarding/dev": "Personas",
+};
 
 // className-capable gesture root (third-party component → withUniwind).
 // Module scope, not render scope — withUniwind builds the wrapper eagerly.
@@ -47,7 +63,38 @@ export default function RootLayout() {
         <BottomSheetModalProvider>
           <AppQueryProvider>
             <SessionProvider>
-              <Slot />
+              {/*
+                A Stack, not a `<Slot>`. Slot renders the focused child and
+                nothing else, which is why every root-level route — Settings,
+                Editor settings, the dev hatch — arrived with no app bar and no
+                back affordance while the shells all had one. Chrome is OFF by
+                default here (the shell groups draw their own, the dispatcher is
+                a redirect, and the front door owns its full-bleed hero); the
+                three real destinations opt in below and get the same
+                `ShellHeader` every shell route gets.
+              */}
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  header: ({ navigation, back }) => (
+                    <RootHeader
+                      titles={ROOT_TITLES}
+                      fallback="Moyo"
+                      /* `back` is defined only when this route can pop — the
+                         same signal the shell layouts read, so the wordmark
+                         yields to the chevron on exactly the pushed screens. */
+                      canGoBack={back !== undefined}
+                      onBack={navigation.goBack}
+                    />
+                  ),
+                }}
+              >
+                <Stack.Screen name="settings" options={{ headerShown: true }} />
+                <Stack.Screen name="editor-settings/index" options={{ headerShown: true }} />
+                {/* The QA hatch is a screen people actually navigate; leaving it
+                    barless is how it stayed the one surface with no way out. */}
+                <Stack.Screen name="onboarding/dev" options={{ headerShown: true }} />
+              </Stack>
             </SessionProvider>
             {/*
               Mounted at the ROOT, directly under the provider. A Gorhom modal
@@ -67,6 +114,10 @@ export default function RootLayout() {
             {/* ADR-106: Profile/You as chrome — opened from every shell
                 header's avatar via useAccountSheet. */}
             <AccountSheet />
+            {/* FD-24's "Who's here?" — the same avatar anchor, for the K–2/3–5
+                bands whose settings stay guardian-side (ADR-106 amendment,
+                recorded in components/ShellHeader.tsx). */}
+            <SwitchProfileSheet />
             {/* Last, so a toast paints above the sheets it reports on. */}
             <Toaster />
           </AppQueryProvider>

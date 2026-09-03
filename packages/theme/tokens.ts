@@ -877,12 +877,19 @@ export const navChrome = {
   rail: '96px',
   raised: '64px',
   /*
-    How far the raised slab breaks ABOVE the bar's top edge. 28 of a 64 slab
-    leaves 36 seated in the bar, which is what keeps it reading as part of the
-    bar rather than as a floating button — and puts more than a third of the
-    control outside the chrome, which is the whole point of the raise.
+    How far the raised slab breaks ABOVE the bar's top edge. 38 of a 64 slab
+    leaves 26 seated in the chrome — the majority of the control stands proud of
+    the bar, which is the whole point of the raise, while the quarter still
+    docked is what keeps it a TAB rather than a floating action button parked
+    over the content.
+
+    It was 28 (36 seated), and at that depth the slab read as a tile embedded in
+    the bar instead of a control rising out of it. There is no platform number to
+    defer to here — iOS has no raised-tab convention at all and Material's FAB
+    either sits in the bar or floats free of it — so this is the product's own
+    call, taken on the device at both widths.
   */
-  raise: '28px',
+  raise: '38px',
 } as const;
 
 // ---- reading comfort (doc 08 §3.3) ------------------------------------------
