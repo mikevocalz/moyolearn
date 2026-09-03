@@ -42,6 +42,14 @@ const config: ExpoConfig = {
     favicon: './assets/images/favicon.png',
   },
   plugins: [
+    /*
+      FIRST, and that is load-bearing. It strips the splash-screen ICON item
+      that expo-splash-screen writes into styles.xml unconditionally — see the
+      plugin's header for the aapt failure it prevents. Mods touching one file
+      compose as WRAPPERS: the earliest registration is the outermost, so it is
+      the one that gets the last word after the inner mods have written.
+    */
+    './plugins/with-splash-no-icon',
     'expo-router',
     /*
       react-native-video 7 is a Nitro module, so it needs native config — it is
@@ -80,9 +88,23 @@ const config: ExpoConfig = {
     [
       'expo-splash-screen',
       {
-        image: './assets/images/splash-icon.png',
-        imageWidth: 200,
-        resizeMode: 'contain',
+        /*
+          NO IMAGE, AND THAT IS THE WHOLE POINT.
+
+          The native splash used to draw the wordmark, so boot was: wordmark,
+          then the animated splash drawing its own mark — the logo twice, the
+          second one arriving as if the first had not happened. The animated
+          mark is DRAWN IN FROM NOTHING; a static copy of the finished thing
+          flashing first spoils the reveal it is the beginning of.
+
+          So the native splash is now the PAPER ALONE, which is the animation's
+          first frame, and the cut from native splash to canvas has nothing in
+          it to see. `MoyoSplash` hides it once it has painted that same ground.
+
+          Same value both schemes: this ground is paper in either, and a splash
+          that flips to near-black in dark mode would be a different brand for
+          half the users.
+        */
         backgroundColor: palette.ink[50],
         dark: { backgroundColor: palette.ink[50] },
       },

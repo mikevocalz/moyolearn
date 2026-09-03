@@ -58,6 +58,7 @@
     "react-native-worklets": "catalog:",
     "solito": "catalog:",
     "three": "catalog:",
+    "typegpu": "0.12.4",
     "uniwind": "catalog:",
     "zustand": "catalog:"
   },
@@ -69,7 +70,8 @@
     "eslint": "catalog:",
     "eslint-config-expo": "catalog:",
     "tailwindcss": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "unplugin-typegpu": "0.12.3"
   },
   "private": true,
   "expo": {

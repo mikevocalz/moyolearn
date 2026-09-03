@@ -2,25 +2,29 @@ packages:
   - apps/*
   - packages/*
 
-# uniwind + @expo/metro-config both drive lightningcss; 1.31+ changed the serde
-# structs ("expected an object-like struct named Specifier") so the native CSS
-# pipeline needs 1.30.1 exactly. uniwind itself depends on 1.30.1 exactly, so
-# this override now just holds @expo/metro-config to the same copy.
-overrides:
-  lightningcss: 1.30.1
-  # react/react-dom are ALSO declared in `catalog:` below (the two entries every
-  # package.json resolves through). An override silently outranks the catalog,
-  # so a bump here without the matching catalog bump — or vice versa — produces
-  # a workspace whose declared version is not the installed one. Bump both, or
-  # neither.
-  react: 19.2.8
-  react-dom: 19.2.8
-
-  # expo declares @expo/dom-webview as an OPTIONAL peer with range "*", so a
-  # stale 55.0.3 kept satisfying it while @expo/log-box@57 requires ^57.0.1.
-  # Pin it to the version expo's own dependencies block asks for (~57.0.1).
-  "@expo/dom-webview": 57.0.1
-
+# OVERRIDES LIVE IN package.json (`pnpm.overrides`), NOT HERE.
+#
+# pnpm reads one of the two, and package.json wins when both exist — so the
+# block that used to sit here held four pins that were never applied to a
+# single install, with no warning. They have moved; JSON cannot carry a
+# comment, so the reasoning stays here:
+#
+#   lightningcss 1.30.1 — uniwind and @expo/metro-config both drive it, and
+#     1.31 changed the serde structs ("expected an object-like struct named
+#     Specifier"). uniwind pins 1.30.1 exactly; this holds metro-config to the
+#     same copy.
+#   react / react-dom 19.2.8 — ALSO in `catalog:` below. An override outranks
+#     the catalog silently, so a bump in one place without the other gives a
+#     workspace whose declared version is not its installed one. Bump both.
+#   @expo/dom-webview 57.0.1 — expo declares it an optional peer at "*", so a
+#     stale 55.0.3 kept satisfying it while @expo/log-box@57 wants ^57.0.1.
+#   expo-asset 57.0.13 — react-native-executorch-expo-resource-fetcher asks for
+#     `>=12.0.0` as a peer and pnpm answered with an SDK 58 canary, which
+#     imports `expo/internal/bundle-origin`. That module does not exist in the
+#     57 runtime, and Metro failed the whole Android bundle on it.
+#   expo-file-system 57.0.5 — same package, same open peer range, same canary.
+#     It did not break the bundle, but expo-file-system is a native module and
+#     two JS copies against one native side is the next bug, not a safe state.
 
 onlyBuiltDependencies:
   - sharp

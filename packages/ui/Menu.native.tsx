@@ -11,6 +11,20 @@ import type { MenuProps } from './Menu.types';
 const PANEL_WIDTH = 220;
 const SCREEN_MARGIN = 8;
 const TRIGGER_GAP = 4;
+/*
+  The panel's own height, derived rather than measured.
+
+  These mirror the classes below — `p-1` all round, `gap-1` between children,
+  `min-h-11` on each item, and the title's `text-xs` plus `py-1.5`. Deriving it
+  means the open/flip decision is made in the SAME pass that positions the
+  panel; measuring would mean drawing it in the wrong place first and moving it
+  on the next frame, which is a visible jump on a control that opens under a
+  thumb. If the item classes change, change these with them.
+*/
+const PANEL_PADDING = 8;
+const PANEL_GAP = 4;
+const ITEM_HEIGHT = 44;
+const TITLE_HEIGHT = 28;
 
 interface Anchor {
   x: number;
@@ -83,7 +97,38 @@ export function Menu({ children, actions, onAction, title, className }: MenuProp
         screenWidth - PANEL_WIDTH - SCREEN_MARGIN,
       )
     : SCREEN_MARGIN;
-  const top = anchor ? Math.min(anchor.y + anchor.height + TRIGGER_GAP, screenHeight - 80) : 0;
+  /*
+    IT OPENS UPWARD WHEN THERE IS NO ROOM BELOW, which is the whole reason the
+    composer's attach menu was unusable.
+
+    This used to always drop below the trigger and clamp the panel's TOP to
+    `screenHeight - 80`. The composer is the screen's footer, so the trigger is
+    already at the bottom: the top edge was clamped, the panel still ran off
+    the bottom, and everything below the first row — the second attachment
+    choice — was drawn past the edge of the screen. A clamp on the top of a box
+    says nothing about where its bottom lands.
+
+    So the panel's height is derived (see the constants) and the decision is the
+    ordinary menu one: below if it fits, above the trigger if it does not, and
+    pinned inside the margins either way. `maxHeight` is the backstop for a list
+    long enough that neither side fits.
+  */
+  const panelHeight =
+    PANEL_PADDING +
+    (title ? TITLE_HEIGHT + PANEL_GAP : 0) +
+    actions.length * ITEM_HEIGHT +
+    Math.max(0, actions.length - 1) * PANEL_GAP;
+
+  const maxHeight = screenHeight - SCREEN_MARGIN * 2;
+  const below = anchor ? anchor.y + anchor.height + TRIGGER_GAP : SCREEN_MARGIN;
+  const fitsBelow = below + panelHeight <= screenHeight - SCREEN_MARGIN;
+  const above = anchor ? anchor.y - TRIGGER_GAP - panelHeight : SCREEN_MARGIN;
+  const top = anchor
+    ? Math.max(
+        SCREEN_MARGIN,
+        Math.min(fitsBelow ? below : above, screenHeight - SCREEN_MARGIN - panelHeight),
+      )
+    : 0;
 
   return (
     <>
@@ -109,7 +154,7 @@ export function Menu({ children, actions, onAction, title, className }: MenuProp
           className="flex-1"
         >
           <View
-            style={{ left, top, width: PANEL_WIDTH }}
+            style={{ left, top, width: PANEL_WIDTH, maxHeight }}
             className="absolute gap-1 rounded-md border-2 border-border bg-surface-raised p-1 shadow-overlay"
           >
             {title ? (

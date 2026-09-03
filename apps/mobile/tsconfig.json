@@ -21,5 +21,9 @@
     "babel.config.js",
     "uniwind-types.d.ts",
     "css.d.ts"
+  ],
+  "//": "components/splash/redraw is the authored Redraw scene. It imports `redraw` and `react-native-redraw`, which are subscriber tarballs and are not in vendors/ yet (see that folder's README) \u2014 so typechecking it would fail on a missing module rather than on anything wrong with the code that ships. DELETE THIS EXCLUDE the moment the tarballs land: from then on those files must typecheck like everything else.",
+  "exclude": [
+    "components/splash/redraw"
   ]
 }

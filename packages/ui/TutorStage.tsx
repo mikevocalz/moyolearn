@@ -788,16 +788,22 @@ export function TutorStage({
                 inside it. One movement, on the container, so the pane and its
                 occupant arrive together.
 
-                `key={String(detailOpen)}` is what replays it: `initial` is only
-                honoured on mount, and this subtree stays mounted (the pane
-                collapses by width and freezes) so without a key the entrance
-                would run exactly once per session.
+                ANIMATED, NOT REMOUNTED. Keying this on the open state replayed
+                `initial` on every toggle, which also tore down and rebuilt the
+                presence subtree underneath — a remount in the middle of the
+                pane's own open/close, which is what cost that transition its
+                smoothness. Driving `animate` from the same flag keeps the
+                subtree mounted (and frozen while shut), and it animates both
+                ways instead of only in.
               */
               <MotionView
-                key={String(detailOpen)}
                 className="flex-1 items-center justify-center gap-stack bg-surface-sunken p-inset"
                 initial={{ opacity: 0, scale: 0.94, y: 12 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
+                animate={{
+                  opacity: detailOpen ? 1 : 0,
+                  scale: detailOpen ? 1 : 0.94,
+                  y: detailOpen ? 0 : 12,
+                }}
                 transition={TRANSITIONS.disclosure}>
                 <TutorPresence {...presenceProps} avatar={avatar} />
               </MotionView>

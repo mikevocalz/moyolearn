@@ -47,25 +47,63 @@ export const WORDMARK_INK = {
 export const SPLASH_GROUND = palette.ink[50];
 
 /**
- * One place for the beats, in ms. Total is what the whole thing costs a cold
- * start, so it is spelled out rather than left to be added up by hand.
+ * The beats, in ms — slower than the authored Redraw timeline, and reordered.
+ *
+ * Two departures from that scene's `TIMELINE`, both deliberate:
+ *
+ *  1. THE BOOK COMES IN FIRST. Redraw draws the plum M as ink from its
+ *     bottom-left foot and brings the pages in over it. Without a pen there is
+ *     no writing to watch, so the two halves OPEN instead — the gesture the
+ *     mark is a picture of — and the M rises into them once they are apart.
+ *     The mark assembles rather than fading up.
+ *  2. IT IS SLOWER. Every beat is longer and they overlap less, because the
+ *     first pass at 1.1s and the second at 3.9s both ended before the eye had
+ *     finished reading the frame it was on.
  *
  * ponytail: fixed duration, not "ready when the app is". Nothing here blocks —
  * fonts are embedded by the expo-font plugin and the session restores behind
  * the overlay — so there is no readiness signal worth waiting on yet. If one
- * appears (a first paint that needs data), gate `hold` on it rather than
+ * appears (a first paint that needs data), gate `settled` on it rather than
  * lengthening it.
  */
 export const BEAT = {
-  /** The mark rises and settles. */
-  mark: 460,
-  /** The wordmark follows, starting while the mark is still moving. */
-  wordDelay: 300,
-  word: 380,
-  /** Time the finished lockup is simply held. */
-  hold: 420,
+  /** The two page halves swing open about the spine. Coral leads, amber follows. */
+  page: 900,
+  pageStagger: 140,
+  /** The plum M rises into the open book. */
+  markDelay: 620,
+  mark: 820,
+  /** One lub-dub in the heart's negative space, on the beat the halves meet. */
+  heartDelay: 1500,
+  heart: 760,
+  /** The leg ornaments cascade down the mark, top to bottom, in rhythm. */
+  ornamentDelay: 1900,
+  ornament: 340,
+  /** Between buckets — six of them, so the cascade reads as one movement. */
+  ornamentStagger: 110,
+  /** The mark eases from hero size down into its lockup position. */
+  liftDelay: 2500,
+  lift: 900,
+  /** MOYO's four glyphs rise, one after another. */
+  wordDelay: 2900,
+  word: 560,
+  wordStagger: 170,
+  /** LEARN settles under them. */
+  learnDelay: 3700,
+  learn: 560,
+  /** The rules follow the word rather than arriving with it. */
+  dashDelay: 180,
+  /** The tagline lands last, and is the reason the hold is not dead air. */
+  taglineDelay: 4150,
+  tagline: 620,
+  /** Everything is on screen; the composition is simply held. */
+  settled: 5000,
   /** The overlay fades and unmounts, revealing the app already built behind. */
-  out: 320,
+  out: 560,
 } as const;
 
-export const SPLASH_TOTAL = BEAT.wordDelay + BEAT.word + BEAT.hold;
+/** Hand-off. Long enough to read the finished lockup, not long enough to wait. */
+export const SPLASH_TOTAL = 5600;
+
+/** The tagline, drawn as real text so a screen reader gets it. */
+export const TAGLINE = 'Learn it by heart.';
