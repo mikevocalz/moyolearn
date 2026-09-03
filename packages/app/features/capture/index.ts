@@ -16,4 +16,25 @@ export { CameraSheet } from './CameraSheet';
 export { useCameraStore } from './camera.store.ts';
 export { readDocumentAt } from './read-document-at.ts';
 export { readDocument, extractPdfText, extractDocxText, type DocumentReading } from './read-document.ts';
-export { readHomework, readPrinted, readHandwriting, MIN_USABLE_CHARS, type OcrResult } from './ocr-web.ts';
+/*
+  `ocr-web` is NOT re-exported here, and the deep-path rule does not apply to it.
+
+  It is the WEB recogniser: Tesseract with a TrOCR escalation, reached through
+  `@huggingface/transformers`, which pulls in `onnxruntime-web`. That package
+  ships `import(/*webpackIgnore:true* / a)` — a dynamic import with a computed
+  specifier — and Metro's production transform rejects it outright:
+
+    ../../node_modules/onnxruntime-web/dist/ort.webgpu.bundle.min.mjs:
+    Invalid call at line 8
+
+  A barrel export is a STATIC edge, so naming it here put that module in the
+  iOS and Android graphs whether or not a native screen ever called it, and
+  `expo run:ios --configuration Release` failed to bundle at all. Dev never
+  caught it; only the production transform is strict enough.
+
+  Nothing outside this folder imported these symbols, so the line bought
+  nothing. The two files that need them — `read-attachment.web` and
+  `ocr-review.tsx` — are themselves web forks and import it directly, which is
+  how the rest of this folder already keeps a platform-only module out of the
+  other platform's bundle.
+*/
