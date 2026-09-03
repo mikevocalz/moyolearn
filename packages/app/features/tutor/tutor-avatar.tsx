@@ -2,8 +2,8 @@
 // TutorAvatar — the embodied Natalie presence.
 //
 // This is the 2D->3D handoff point, and BOTH sides of it are now real: the 2D
-// mark from frame 1, and — on native, behind ADR-111's flag — the WebGPU stage
-// that replaces it once it has drawn a face of its own.
+// mark from frame 1, and — behind ADR-111's flag, on native AND in the browser
+// — the WebGPU stage that replaces it once it has drawn a face of its own.
 //
 // The promotion is not this component's judgement. `createTutorStage` owns it
 // (doc 22 §10.8): 2D is up immediately, the upgrade begins in the background,
@@ -21,7 +21,6 @@
 // SOT-KEYWORDS: tutor avatar presence 2d 3d handoff face bus speech driver viseme webgpu flag
 
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Platform } from 'react-native';
 import { Avatar, MotionView, Text, isTutorRevealed } from '@acme/ui';
 import { View } from '@acme/ui/tw';
 import type { ResolvedTutorPresence } from '@acme/ui';
@@ -38,6 +37,7 @@ import {
   type TutorStage,
 } from '@acme/avatar';
 import { audioQueue } from './tutor-audio';
+import { NATIVE_3D_ENABLED } from './natalie-preload';
 import { toneRenderFor, type ToneKey } from './tutor-tone';
 
 export interface TutorAvatarProps {
@@ -83,14 +83,18 @@ const speechDriver: SpeechDriver = {
 };
 
 /**
- * ADR-111's committed default is OFF, and this is the whole switch.
+ * ADR-111's committed default is OFF, and `natalie-preload.ts` owns the switch —
+ * imported rather than re-read, so the preload and the stage cannot disagree
+ * about whether there is going to be a body.
  *
- * `Platform.OS` is checked as well as the env var because the env var is a
- * build input shared with the web bundle, and the renderer only exists on a
- * native binary that was prebuilt with `react-native-webgpu` in it.
+ * It used to check `Platform.OS` as well, because the renderer existed only on
+ * a native binary prebuilt with `react-native-webgpu` in it. Both halves are
+ * real now — `tutor-avatar-3d.web.tsx` is a browser `WebGPURenderer` with a
+ * WebGL2 fallback — so the platform check would only mean "she is a monogram on
+ * the family laptop", which is the thing this work removed. Which surface loads
+ * is the bundler's decision, not a runtime branch.
  */
-const NATIVE_3D =
-  Platform.OS !== 'web' && process.env.EXPO_PUBLIC_NATIVE_3D === '1';
+const NATIVE_3D = NATIVE_3D_ENABLED;
 
 /**
  * Lazy, and that is load-bearing rather than tidy: importing the module

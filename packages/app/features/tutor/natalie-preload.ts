@@ -10,11 +10,21 @@
 // must never reach it. The dynamic import is the whole guard.
 // SOT: ./tutor-avatar-3d.native.tsx (`preloadNatalie`) · docs/decisions/adr-114-preload-and-loader.md
 // SOT-KEYWORDS: natalie preload learner shell warm start frame one flag lazy import parse ahead
-import { Platform } from 'react-native';
 
-/** The one switch, mirrored from `tutor-avatar.tsx` so the two cannot disagree. */
+/**
+ * The one switch, and it is now genuinely one — `tutor-avatar.tsx` imports this
+ * rather than keeping a mirrored copy that could drift.
+ *
+ * BOTH PREFIXES, for the reason `providers/session/auth-mode.ts` already
+ * documents: the same code runs under Expo and Next, and each strips the
+ * other's variables. `EXPO_PUBLIC_NATIVE_3D` alone silently reads `undefined`
+ * in a Next client bundle no matter what the deployment sets, which is a flag
+ * that cannot be turned on rather than a flag that is off.
+ */
 export const NATIVE_3D_ENABLED =
-  Platform.OS !== 'web' && process.env.EXPO_PUBLIC_NATIVE_3D === '1';
+  (typeof process !== 'undefined'
+    ? process.env.EXPO_PUBLIC_NATIVE_3D ?? process.env.NEXT_PUBLIC_NATIVE_3D
+    : undefined) === '1';
 
 /**
  * Starts the body's fetch, parse and texture decode ahead of the tutor screen.

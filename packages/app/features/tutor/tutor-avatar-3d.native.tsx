@@ -40,6 +40,8 @@ import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EmotionState, type EmotionCategory, type Shape } from '@acme/avatar';
 import { createHumanoPresence, frameBody, type HumanoPresence } from '@acme/avatar/body';
+// The lens and the light are shared with the web stage — see `natalie-rig.ts`.
+import { CAMERA_FOV, addRig } from './natalie-rig';
 import type { TutorCues } from './tutor-cues';
 
 /*
@@ -96,9 +98,6 @@ if (typeof (globalThis as { ProgressEvent?: unknown }).ProgressEvent === 'undefi
 // non-code asset resolves to nothing the packager can register.
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const BUNDLED_MODEL = require('@acme/avatar/assets/natalie-phone/natalie.gltf');
-
-/** The lens. The DISTANCE is fitted — see `frameBody` in `@acme/avatar/body`. */
-const CAMERA_FOV = 38;
 
 /**
  * THE PRELOAD (ADR-114). The glTF fetch, the JSON parse, the `.bin`, the eight
@@ -187,28 +186,6 @@ function clearStaleListeners(target: ListenerHolder | null | undefined): void {
   if (!target) return;
   const holder = target as { _listeners?: object };
   if (holder._listeners) holder._listeners = {};
-}
-
-/**
- * The rig the web scene proves on this body: warm key, cool fill, a low warm
- * bounce so the jaw underside stays alive, and ambient that never becomes the
- * key. Deliberately NOT `createStage()` from `@acme/avatar/body` yet — that rig
- * is RectAreaLight + GTAO + bloom on `RenderPipeline`, verified so far only in
- * headless Chromium on WebGL2 (doc 22 §4 rows 8-12). Moving to it is a look
- * change with its own golden capture, not a thing to fold into first light.
- */
-function addRig(scene: THREE.Scene): void {
-  scene.add(new THREE.HemisphereLight(0xfff8f2, 0x4a3b36, 1.0));
-  scene.add(new THREE.AmbientLight(0xfff6ed, 0.6));
-  const key = new THREE.DirectionalLight(0xfff0e0, 1.2);
-  key.position.set(1.2, 2.5, 1.8);
-  scene.add(key);
-  const fill = new THREE.DirectionalLight(0xe0f0ff, 0.5);
-  fill.position.set(-1.2, 1.2, 1.5);
-  scene.add(fill);
-  const bounce = new THREE.DirectionalLight(0xffe8d6, 0.4);
-  bounce.position.set(0, -1.0, 1.0);
-  scene.add(bounce);
 }
 
 /**

@@ -35,3 +35,6 @@ storybook-static
 # from the Pexels ids recorded in public/images/MANIFEST.md. Committing a 2400px
 # colour original per photograph would be repo weight nothing reads.
 apps/web-vite/data/photography/
+
+# Natalie's body, copied out of @acme/avatar by apps/web/scripts/copy-avatar-assets.mjs.
+apps/web/public/natalie/

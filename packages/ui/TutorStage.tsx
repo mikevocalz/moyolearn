@@ -812,7 +812,14 @@ export function TutorStage({
                 ways instead of only in.
               */
               <MotionView
-                className="flex-1 items-center justify-center gap-stack bg-surface-sunken p-inset"
+                /*
+                  NO TOP INSET. The alcove is hers top to bottom: the pane's own
+                  edge is the top of her stage, so an inset above it read as a
+                  band of empty sunken ground between the header and her head
+                  while the two panes beside it started at the header. Sides and
+                  bottom keep the inset — those edges are against other panes.
+                */
+                className="flex-1 items-center justify-center gap-stack bg-surface-sunken px-inset pb-inset"
                 /*
                   ONE MOTION INSIDE, and it is a fade — the PANE's own width
                   animation (`CollapsiblePane`) is what carries the movement

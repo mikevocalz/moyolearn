@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node scripts/next.mjs dev",
-    "build": "node scripts/next.mjs build",
+    "dev": "node scripts/copy-avatar-assets.mjs && node scripts/next.mjs dev",
+    "build": "node scripts/copy-avatar-assets.mjs && node scripts/next.mjs build",
     "start": "node scripts/next.mjs start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
@@ -19,7 +19,8 @@
     "bunny:verify:video": "tsx scripts/bunny-verify-video.mts",
     "tutor:verify": "tsx scripts/tutor-check.mts",
     "sweep:verify": "tsx scripts/sweep-verify.mts",
-    "voice:bake": "NODE_OPTIONS=--conditions=react-server tsx scripts/voice-bake.mts"
+    "voice:bake": "NODE_OPTIONS=--conditions=react-server tsx scripts/voice-bake.mts",
+    "avatar:assets": "node scripts/copy-avatar-assets.mjs"
   },
   "dependencies": {
     "@acme/app": "workspace:*",

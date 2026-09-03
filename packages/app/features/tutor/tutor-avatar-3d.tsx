@@ -1,46 +1,15 @@
-/**
- * The non-native half of the 3D stage: nothing at all.
- *
- * `tutor-avatar-3d.native.tsx` imports `react-native-webgpu`, which does not
- * exist off-device, and three's WebGPU build, which is megabytes. Metro picks
- * the `.native` file; every other bundler picks this one, so the web build of
- * `@acme/app` carries no renderer even though `tutor-avatar.tsx` names the
- * module. That is the whole job.
- *
- * It is a real component rather than a thrown error because the caller's flag
- * is an env var, and a misconfigured web build should quietly stay 2D rather
- * than white-screen a child.
- *
- * SOT: ./tutor-avatar-3d.native.tsx · docs/decisions/adr-111-native-3d-runtime.md
- * SOT-KEYWORDS: tutor avatar 3d web stub platform split no renderer
- */
-import type { EmotionCategory, Shape } from '@acme/avatar';
-import type { TutorCues } from './tutor-cues';
+// Tutor 3D stage — TS resolution anchor; bundlers load the .native/.web forks.
+// A bare .ts/.tsx anchor beats .native.tsx in Metro resolution, so it must
+// re-export. Metro takes `./tutor-avatar-3d.native`, everything else lands here
+// and gets the browser stage.
+//
+// This file used to BE the web half, and the whole of it was `return null`:
+// there was no renderer off-device, so `tutor-avatar.tsx` named a module that
+// drew nothing and web sessions stayed on the 2D monogram permanently. The web
+// stage replaced that; the platform split it documented is unchanged, only the
+// browser side is now real.
+// SOT: ./tutor-avatar-3d.web.tsx · ./tutor-avatar-3d.native.tsx
+// SOT-KEYWORDS: tutor avatar 3d anchor fork resolution web native
 
-export interface TutorAvatar3DProps {
-  active: boolean;
-  isSpeaking: boolean;
-  sampleMouth?: (nowMs: number) => number;
-  sampleSpeaking?: () => boolean;
-  sampleFace?: () => Shape | null;
-  sampleOnset?: () => number | null;
-  sampleCues?: () => TutorCues;
-  emotion?: { category: EmotionCategory; intensity: number } | null;
-  /** Session phase where there is no sound to derive it from. */
-  phase?: 'thinking' | 'listening';
-  reducedMotion?: boolean;
-  onUnavailable?: (reason: string) => void;
-  onFirstFrame?: () => void;
-  modelUri?: string;
-}
-
-export function TutorAvatar3D(_props: TutorAvatar3DProps) {
-  return null;
-}
-
-/** No renderer off-device, so nothing to preload. Resolves so callers need no branch. */
-export function preloadNatalie(_modelUri?: string): Promise<null> {
-  return Promise.resolve(null);
-}
-
-export default TutorAvatar3D;
+export { TutorAvatar3D, preloadNatalie, type TutorAvatar3DProps } from './tutor-avatar-3d.web';
+export { TutorAvatar3D as default } from './tutor-avatar-3d.web';
