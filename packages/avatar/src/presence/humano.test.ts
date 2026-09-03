@@ -16,6 +16,7 @@ import { describe, it } from 'node:test';
 import * as THREE from 'three';
 import {
   HUMANO_BONES,
+  STANCE,
   createHumanoPresence,
   gazeMorphs,
   lipFromOpenness,
@@ -136,7 +137,10 @@ describe('createHumanoPresence', () => {
       presence.step(1 / 60, { speaking: true, mouth: 1, reducedMotion: true });
     }
     assert.equal(weight(mesh, 'jawOpen'), 0);
-    assert.equal(arm.rotation.x, 0);
+    // The STANCE stays — a pose is not motion, and reduced motion should not
+    // put her back to the asset's arms-flat-to-the-thighs mannequin. What it
+    // suppresses is the LIFT on top of it, which is the travel.
+    assert.equal(arm.rotation.x, STANCE.elbowBend);
   });
 
   it('aims the eyes at the camera rather than past it', () => {

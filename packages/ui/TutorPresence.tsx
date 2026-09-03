@@ -154,6 +154,13 @@ export interface TutorPresenceProps {
    * identity is spelled.
    */
   render?: 'full' | 'body' | 'rail';
+  /**
+   * Let her body take the height it is given rather than its own. Opt-in
+   * because in the single spine she shares a column with the thread; in the
+   * pane composition the column is hers, and without this she drew into a
+   * 260dp band at the top of a full-height alcove.
+   */
+  fill?: boolean;
   className?: string;
 }
 
@@ -167,6 +174,7 @@ export function TutorPresence({
   assurance,
   size = 'md',
   render = 'full',
+  fill = false,
   className,
 }: TutorPresenceProps) {
   const revealed = isTutorRevealed(tutorPresence);
@@ -292,7 +300,7 @@ export function TutorPresence({
       and takes no height, so a collapsed session pays no layout for her either.
     */
     <MotionView
-      className="w-full items-center"
+      className={`w-full items-center ${fill ? 'flex-1' : ''}`}
       initial={{
         opacity: mountedRevealed ? 1 : 0,
         scale: mountedRevealed ? 1 : REST_SCALE,
@@ -310,7 +318,7 @@ export function TutorPresence({
   );
 
   if (render === 'body') {
-    return <View className={`w-full ${className ?? ''}`}>{body}</View>;
+    return <View className={`w-full ${fill ? 'flex-1' : ''} ${className ?? ''}`}>{body}</View>;
   }
 
   if (render === 'rail') {
@@ -329,7 +337,7 @@ export function TutorPresence({
   }
 
   return (
-    <View className={`w-full gap-element ${className ?? ''}`}>
+    <View className={`w-full gap-element ${fill ? 'flex-1' : ''} ${className ?? ''}`}>
       {body}
 
       {onToggleReveal ? (

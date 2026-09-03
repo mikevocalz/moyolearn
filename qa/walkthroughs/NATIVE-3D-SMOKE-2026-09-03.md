@@ -126,43 +126,41 @@ installed binary, the phone reaches the Next app over `adb reverse tcp:3000`,
 and `/api/tutor/voice` answers `403 utterance is not server-emitted` to a forged
 tag — the route is alive and its tag gate works.
 
-## First light on the Duo — what the frame actually showed
+## First light on the Duo — the ladder, and what the frame showed
 
-She renders: textured, skinned, breathing, gaze on the lens, mouth moving. Two
-things were reported off that frame, and they are not the same kind of problem.
+Ladder passed on serial `913949703467`: adapter (`qualcomm adreno-6xx`, Vulkan,
+not a fallback) → triangle (`submitted and presented at 2700x957`) → cube
+(`renderer.init() resolved`) → `moyo://natalie-3d` → a live tutor session.
 
-**"Missing full body" — the camera, not the asset.** `natalie.gltf` carries one
-skinned mesh with all 470 joints, toes included, and POSITION bounds of
-x ±0.62, y 0..1.65, z ±0.2. Nothing was pruned away. The stage had inherited
-the web scene's authored shot — camera at `(0, 1.45, 1.15)` looking at
-`(0, 1.5, 0)` — which is her face at arm's length, so she was cropped at the
-collarbone in a pane `TutorStage.tsx` describes as "an alcove she stands in".
+Five defects were visible only once a frame existed. All five are fixed and
+re-verified on the phone.
 
-Fixed by measuring the shot instead of writing it down:
-`frameBody()` in `packages/avatar/src/presence/framing.ts` contains the whole
-bounding box in whatever aspect the surface came up at, and the loop re-fits on
-a size change — her pane is COLLAPSIBLE, and a camera whose aspect was fixed at
-mount renders a stretched body through every frame of that animation. Five Node
-tests project all eight corners of her bounds through the fitted camera in the
-tall pane, the spine band and square; the check fails on a corner leaving the
-frustum, not on a retuned margin.
+| Reported | Cause | Fix |
+|---|---|---|
+| No full body | Stage inherited the web scene's hero camera — her face at 1.15m, cropped at the collarbone. The asset has all 470 joints down to the toes. | `frameBody()` in `presence/framing.ts` |
+| Squashed when a pane opens/closes | The drawing buffer does not follow the view. `SurfaceInfo::resize` updates the native view only — "does not resize the drawing buffer: that tracks canvas.width/height". | Refit from `onLayout`. `canvas.clientWidth` was tried first and never moved through a toggle. |
+| Size changed with pane width | A contain fit is aspect-dependent. It also budgeted for the BIND pose's A-pose arm span (x ±0.52) that is not on screen. | Fit the height only — the pane's height is what does not move. |
+| A thumbnail in a full-height pane | `STAGE_HEIGHT` drew a fixed 260dp band at the top of the column. | `flex: 1` + `minHeight`, and `TutorPresence fill` |
+| Behind a "Show Natalie" button | `auto` demoted `visible` → `compact` at pane width. | Demote on a phone only |
+| Arms swallowed by the shirt | The mesh is BOUND in an A-pose (`DEF-hand.L` x 0.516) but the scene ships her arms flat to the thighs (x 0.158, thigh 0.102). Linear blend skinning drags the sleeve down until the silhouette closes over the forearms. | `STANCE` in `presence/humano.ts` — a standing pose applied speaking or not, a few degrees back towards bind |
 
-Contain, not cover, and that is a decision: a tall narrow pane leaves air above
-and below her. Filling the width would take her hands off at the wrist.
+`side: FrontSide` was tried for the shirt and changed nothing; the authored
+`doubleSided` stands.
 
-**"No voice" — never the avatar and never the audio stack.** No sentence was
-emitted at all: `/api/tutor/coach` was answering `{"kind":"unavailable"}` from
-the Mac with the phone not involved — the model, not a safety layer. It streams
-normally now (verified by curl, two chunks with signed voice tags), and the
-ElevenLabs key predates the running dev server, so the egress is configured.
-The remaining verification is a real session on the phone.
+**Voice works, and it never was the avatar or the audio stack.** The original
+`{"kind":"unavailable"}` was the model provider; `/api/tutor/coach` streams
+normally now. On the phone, a real turn reaches `Speaking` and `dumpsys audio`
+shows the app (pid 16918) holding an **AAudio stream in `state:started`** on the
+speaker, `STREAM_MUSIC` 25/25, unmuted.
 
 Note for anyone testing from `moyo://natalie-3d`: that route has no audio by
-design. Its mouth is a synthetic oscillator, because it exists to isolate the
-renderer. Silence there is correct.
+design — its mouth is a synthetic oscillator, because it exists to isolate the
+renderer.
 
 **Unrelated, found while running the gate:** `check-barrels.mjs` followed only
-static relative edges, so `tutor-avatar-3d` was reported orphaned. The only way
-to satisfy it would have been a static re-export from the package index — which
-is precisely what the lazy import exists to prevent. `import('./x')` is now an
-edge.
+static relative edges, so `tutor-avatar-3d` was reported orphaned and lint was
+red on main. `import('./x')` is now an edge.
+
+**Still open:** the three consecutive gate passes. And the pose above treats the
+symptom — the real fix is an asset one, applying the shipped pose as the rest
+pose in Blender so the shirt is authored around the body it is worn on.

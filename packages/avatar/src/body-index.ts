@@ -45,7 +45,7 @@ export {
 export type { SkirtConformData, SkirtConformMeta } from './conform/types.ts';
 // The shot. Pure bounds maths, but it takes a camera, so it is on this side of
 // the line with everything else that touches three.
-export { FRAMING_MARGIN, frameBody } from './presence/framing.ts';
+export { TARGET_FILL, frameBody } from './presence/framing.ts';
 
 export {
   createSkirtConformDriver,

@@ -95,12 +95,7 @@ if (typeof (globalThis as { ProgressEvent?: unknown }).ProgressEvent === 'undefi
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const BUNDLED_MODEL = require('@acme/avatar/assets/natalie-phone/natalie.gltf');
 
-/**
- * The camera is FITTED, not authored — `frameBody` in `@acme/avatar/body` owns
- * the maths and the argument for it. The short version: the numbers this stage
- * inherited from the web scene put the lens at her face, which cropped her at
- * the collarbone in a pane meant to hold a person standing in it.
- */
+/** The lens. The DISTANCE is fitted — see `frameBody` in `@acme/avatar/body`. */
 const CAMERA_FOV = 38;
 
 export interface TutorAvatar3DProps {
@@ -245,6 +240,9 @@ function simplifyMaterialsForDawn(scene: THREE.Object3D): void {
       metalness: 0,
       // The body is authored alphaMode MASK — the hair cards depend on it.
       alphaTest: authored.alphaTest,
+      // Authored doubleSided. `FrontSide` was tried on the Duo for the
+      // shirt/arm silhouette and changed nothing — that is the bind pose, not
+      // the winding (see STANCE in presence/humano.ts).
       side: authored.side,
     });
     authored.dispose();
@@ -292,6 +290,10 @@ export function TutorAvatar3D({
   });
 
   const presenceRef = useRef<HumanoPresence | null>(null);
+
+  // A ref, not state: a pane animating open fires `onLayout` every frame, and
+  // this component owns a renderer built once per mount.
+  const layoutRef = useRef({ width: 0, height: 0 });
 
   useEffect(() => {
     let disposed = false;
@@ -341,23 +343,34 @@ export function TutorAvatar3D({
       scene.add(gltf.scene);
 
       const camera = new THREE.PerspectiveCamera(CAMERA_FOV, 1, 0.1, 10);
+
+      /*
+        SHE IS NEVER STRETCHED AND NEVER CHANGES SIZE.
+
+        Size is `frameBody`'s half — it ignores aspect. Squish is this half: the
+        drawing buffer does not follow the view (`SurfaceInfo::resize`: "does
+        not resize the drawing buffer: that tracks canvas.width/height"), so
+        without this the compositor scales a stale texture into the new pane
+        width and she stays fat, or thin, for good.
+
+        From `onLayout`, not `canvas.clientWidth`. `getCurrentTexture` does
+        refresh clientWidth from the surface, but on the Duo it never moved
+        through a pane toggle and she stayed squashed.
+      */
       let framedWidth = 0;
       let framedHeight = 0;
-      /*
-        Re-fit on a size change, and this is not speculative: her pane is
-        COLLAPSIBLE. `CollapsiblePane` animates the column's width, the loop
-        keeps running through it (`active` only goes false when she is off
-        screen entirely), and a camera whose aspect was fixed at mount renders
-        a stretched body for every frame of that animation and every frame
-        after it. Read from the surface each frame — it is two integer
-        compares — rather than plumbing an onLayout through a ref.
-      */
+      const scale = PixelRatio.get();
       const refit = () => {
-        const { width, height } = context.canvas;
+        const layout = layoutRef.current;
+        const width = Math.round(layout.width * scale);
+        const height = Math.round(layout.height * scale);
         if (width === framedWidth && height === framedHeight) return;
         if (width === 0 || height === 0) return;
         framedWidth = width;
         framedHeight = height;
+        // Writes canvas.width/height, which is what getCurrentTexture
+        // reconfigures on. `false`: three would otherwise write
+        // `domElement.style`, which this canvas has not got.
         renderer?.setSize(width, height, false);
         camera.aspect = width / height;
         frameBody(camera, gltf.scene);
@@ -460,7 +473,11 @@ export function TutorAvatar3D({
   }, [active]);
 
   return (
-    <View style={{ flex: 1 }}>
+    <View
+      style={{ flex: 1 }}
+      onLayout={(event) => {
+        layoutRef.current = event.nativeEvent.layout;
+      }}>
       <Canvas ref={canvasRef} style={{ flex: 1 }} transparent />
     </View>
   );

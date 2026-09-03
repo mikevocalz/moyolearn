@@ -59,15 +59,10 @@ const resolveSpecifier = (fromFile, specifier) => {
 const RELATIVE_FROM = /(?:^|\n)\s*(?:export|import)\s[\s\S]*?from\s+['"](\.[^'"]+)['"]/g;
 const RELATIVE_SIDE_EFFECT = /(?:^|\n)\s*import\s+['"](\.[^'"]+)['"]/g;
 /**
- * `import('./x')` counts as an edge.
- *
- * A module behind `React.lazy` is reachable and findable — it is one grep from
- * the barrel, which is the whole property this check defends. Missing it said
- * the opposite: `tutor-avatar-3d` was reported orphaned, and the only way to
- * satisfy the check would have been a STATIC re-export from the package index,
- * which is exactly what the lazy import exists to prevent (it would pull
- * `react-native-webgpu` and three.js into every consumer of `@acme/app`).
- * A check that can only be passed by undoing the thing it is checking is wrong.
+ * `import('./x')` is an edge too. A `React.lazy` module is one grep from the
+ * barrel, which is the property this check defends — and the only way to
+ * satisfy it otherwise would be a STATIC re-export, which is exactly what the
+ * lazy import exists to prevent.
  */
 const DYNAMIC_IMPORT = /\bimport\s*\(\s*['"](\.[^'"]+)['"]\s*\)/g;
 

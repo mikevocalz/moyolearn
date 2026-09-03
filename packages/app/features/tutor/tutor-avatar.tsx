@@ -75,7 +75,13 @@ const TutorAvatar3D = lazy(async () => {
   return { default: module.TutorAvatar3D };
 });
 
-/** Her drawn size when 3D is on stage, in dp. Matches the `xl` 2D mark's band. */
+/**
+ * Her FLOOR height when 3D is on stage, in dp — the `xl` 2D mark's band.
+ *
+ * A floor, not a size: paired with `flex: 1` below it means "take the column if
+ * the layout gives you one, else this". The spine gives none and resolves to
+ * 260; the pane composition gives a full-height alcove and she takes it.
+ */
 const STAGE_HEIGHT = 260;
 
 export function TutorAvatar({ tutorPresence, isSpeaking, tone }: TutorAvatarProps) {
@@ -231,7 +237,7 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone }: TutorAvatarProp
   if (!render3D) return <Avatar name="Natalie" size="xl" />;
 
   return (
-    <View style={{ width: '100%', height: STAGE_HEIGHT }}>
+    <View style={{ width: '100%', flex: 1, minHeight: STAGE_HEIGHT }}>
       <View
         style={{ position: 'absolute', inset: 0, opacity: live3D ? 1 : 0 }}
         // Hidden from a screen reader until she is the one on stage; while she

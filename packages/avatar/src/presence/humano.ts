@@ -46,6 +46,31 @@ export const HUMANO_BONES = {
 
 export type HumanoBoneKey = keyof typeof HUMANO_BONES;
 
+/**
+ * Her standing pose, applied speaking or not.
+ *
+ * The asset ships a mannequin — arms straight down, flat against the thighs
+ * (`DEF-hand.L` at x 0.158, the thigh at 0.102). Nobody stands like that, and
+ * it also reads as a modelling fault: the mesh is BOUND in an A-pose (hands out
+ * at x 0.516), so the shipped pose is already a ~55° arms-down deformation of
+ * it and linear blend skinning drags the sleeve down until the shirt closes
+ * over her forearms. A few degrees back towards the bind pose fixes both.
+ *
+ * Radians, and small — a stance, not a gesture. Beats and speech add on top.
+ * Tune here rather than in the writer below.
+ */
+export const STANCE = {
+  /** Away from the ribcage, ~7°. */
+  armAbduct: 0.12,
+  /** Forward of the side seam, ~3°. */
+  armForward: 0.05,
+  /** Elbows are never locked, ~6°. */
+  elbowBend: 0.11,
+  /** Shoulders drop when nobody is bracing, ~2°. */
+  shoulderDrop: 0.035,
+} as const;
+
+
 /** three's own sanitiser, reproduced so a lookup can try both spellings. */
 export function sanitizeNodeName(name: string): string {
   return name.replace(/[.:[\]/]/g, '');
@@ -334,10 +359,12 @@ export function createHumanoPresence(
     }
 
     for (const side of ['L', 'R'] as const) {
+      const zSign = side === 'L' ? 1 : -1;
       const shoulder = side === 'L' ? bones.shoulderL : bones.shoulderR;
       const shoulderRest = restore(shoulder);
       if (shoulderRest && shoulder) {
-        shoulder.rotation.z = shoulderRest.rotation.z + frame.breathY * 0.5 * (side === 'L' ? 1 : -1);
+        shoulder.rotation.z =
+          shoulderRest.rotation.z + (frame.breathY * 0.5 - STANCE.shoulderDrop) * zSign;
       }
     }
 
@@ -373,12 +400,14 @@ export function createHumanoPresence(
       const upperArm = side === 'L' ? bones.upperArmL : bones.upperArmR;
       const upperRest = restore(upperArm);
       if (upperRest && upperArm) {
-        upperArm.rotation.x = upperRest.rotation.x + lift * 0.45;
-        upperArm.rotation.z = upperRest.rotation.z + zSign * lift * 0.15;
+        upperArm.rotation.x = upperRest.rotation.x + STANCE.armForward + lift * 0.45;
+        upperArm.rotation.z = upperRest.rotation.z + zSign * (STANCE.armAbduct + lift * 0.15);
       }
       const foreArm = side === 'L' ? bones.foreArmL : bones.foreArmR;
       const foreRest = restore(foreArm);
-      if (foreRest && foreArm) foreArm.rotation.x = foreRest.rotation.x + lift * 1.3;
+      if (foreRest && foreArm) {
+        foreArm.rotation.x = foreRest.rotation.x + STANCE.elbowBend + lift * 1.3;
+      }
 
       const hand = side === 'L' ? bones.handL : bones.handR;
       const handRest = restore(hand);

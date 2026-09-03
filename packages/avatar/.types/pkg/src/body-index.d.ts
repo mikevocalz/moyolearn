@@ -16,7 +16,7 @@ export { NECK_ALIGN_FROM, NECK_ALIGN_TO, assertNeckAlign, loadNeckAlign, type Ne
 export { parseSkirtConform, validateSkirtConformRig } from './skirt-conform.ts';
 export { GAZE_RANGE_DEG, HUMANO_BONES, LIP_ZERO, createHumanoPresence, gazeMorphs, lipFromOpenness, sanitizeNodeName, type HumanoBoneKey, type HumanoInput, type HumanoPresence, type LipShape, } from './presence/humano.ts';
 export type { SkirtConformData, SkirtConformMeta } from './conform/types.ts';
-export { FRAMING_MARGIN, frameBody } from './presence/framing.ts';
+export { TARGET_FILL, frameBody } from './presence/framing.ts';
 export { createSkirtConformDriver, type SkirtConformDriver, } from './conform/driver.ts';
 export { sha256, sha256Float32, sha256Hex } from './crypto/sha256.ts';
 export { DEFAULT_TONE_MAPPING, OUTPUT_COLOR_SPACE, RIG, TONE_MAPPING_CHOICES, applyToneMapping, chooseToneMapping, createStage, initRectAreaLights, type Stage, type StageOptions, type StageStats, type ToneMappingName, } from './stage.ts';

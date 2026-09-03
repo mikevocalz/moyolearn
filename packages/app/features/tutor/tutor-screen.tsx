@@ -114,32 +114,28 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     design exists to make honest.
   */
   /*
-    WIDTH DOES NOT CONSENT ON THE LEARNER'S BEHALF, in either direction.
+    SHE IS REVEALED WHERE THERE IS ROOM FOR HER — Mike's amendment, 2026-09-03.
 
-    Rule 3 already demotes `visible` to `compact` on a phone. The band's
-    recommendation was written for the SPINE, where `visible` means she fills
-    the top of the conversation and the thread scrolls under her — a
-    reversible, in-place reveal. At pane width the same word means a whole
-    column of the window opens for her before anyone has asked, and the header
-    control then reads "hide" for a pane the learner never opened.
+    This block used to demote `visible` to `compact` at pane width as well as on
+    a phone, on the argument that opening a whole column for her is a decision
+    the learner has not made. That argument holds for a column taken from the
+    conversation. It does not hold once the pane composition is the layout: the
+    third column exists and is hers, and demoting her there meant a learner on
+    the device this was designed for met an empty alcove and a "Show Natalie"
+    button — the one place with the most room for her was the one place she was
+    not.
 
-    So `auto` never opens the pane: only an explicit `visible` does, which is
-    rule 1 and is exactly what pressing the control records. K–2 and 3–5 still
-    get their recommendation everywhere it was meant — the phone and the
-    tablet's single spine — and on a wide window they get her rail, one press
-    from the pane.
+    The phone demotion stays, and it is the one that was actually load-bearing:
+    at that width `visible` means she fills the top of the conversation, so a
+    K–2 learner gets her mark on the rail and one press to bring her up.
   */
-  // `useSizeClass` is the app's two-value split (compact | regular) and is what
-  // rule 3's phone test reads. Panes are a four-class question — `TutorStage`
-  // mounts them at `medium` — so it is asked of the same hook the host uses,
-  // rather than approximated from the coarser one.
   const panes = !isCollapsed(windowClass);
   const base = recommendedTutorPresenceFor(ageBand);
   const resolvedTutorPresence: ResolvedTutorPresence =
     tutorPresence === 'auto'
       ? reducedMotion
         ? 'audio-only'
-        : base === 'visible' && (sizeClass === 'compact' || panes)
+        : base === 'visible' && sizeClass === 'compact' && !panes
           ? 'compact'
           : base
       : tutorPresence;

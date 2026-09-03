@@ -810,7 +810,9 @@ export function TutorStage({
                 initial={{ opacity: 0 }}
                 animate={{ opacity: detailOpen ? 1 : 0 }}
                 transition={TRANSITIONS.paneContent}>
-                <TutorPresence {...presenceProps} avatar={avatar} />
+                {/* `fill`: this column IS hers, so she takes its height rather
+                    than a fixed band at the top of it. */}
+                <TutorPresence {...presenceProps} avatar={avatar} fill />
               </MotionView>
             }>
             <AdaptivePanes.Column>
