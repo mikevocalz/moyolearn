@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+  <dict>
+    <key>EXUpdatesCheckOnLaunch</key>
+    <string>ALWAYS</string>
+    <key>EXUpdatesCodeSigningCertificate</key>
+    <string>-----BEGIN CERTIFICATE-----&#xD;
+MIIC3TCCAcWgAwIBAgIJXkV2ko/fEPGeMA0GCSqGSIb3DQEBCwUAMBgxFjAUBgNV&#xD;
+BAMTDU1veW8gTGVhcm5pbmcwHhcNMjYwODI1MTQ1MzU5WhcNMjcwODI1MTQ1MzU5&#xD;
+WjAYMRYwFAYDVQQDEw1Nb3lvIExlYXJuaW5nMIIBIjANBgkqhkiG9w0BAQEFAAOC&#xD;
+AQ8AMIIBCgKCAQEAwH5aLuyuMRG1jpF+Tqqbn3ik1bHSwYd/eHdc2HMDuI64eWJW&#xD;
+RnGuvc4B+x3iV9S1Cvjc3g3jWmTq0ka9toPWyXzQfnH2ArTGDsu05iGhZUX9+kNc&#xD;
+r/+qG60TzhImScPjbrsRHK4LIfPC/RjXWAfhJiON1VM9p6z/q/CS1bgicsR49XsE&#xD;
+Ol+2/mKqueidT/pRNhL3DUybhGMkpjAP42HkAsQVTXPdJnDvEo9KjTL2DGoV0/2b&#xD;
+xXFDFasEYRwx5jciJFwgMFXzWLGyBh7nZSvCcLziLsHs4EpKzfkU+ouO4MLGX3Ze&#xD;
+A/jVgD9ijQvnbIWj6qrXIWvmNe4zSyFHcjmGbQIDAQABoyowKDAOBgNVHQ8BAf8E&#xD;
+BAMCB4AwFgYDVR0lAQH/BAwwCgYIKwYBBQUHAwMwDQYJKoZIhvcNAQELBQADggEB&#xD;
+AIQLb6l+Kddo3dXM6UYMq93vD9pTYoDqGljTNR2pswjNSK+L68X7hBIdVIGvIFPx&#xD;
+nAFPN3Ukw2zww2pBkB6UjhveS5nFByWHAio9PquGzSTAeZWRuwx5QGoFu+i/7m66&#xD;
+DhAvguAbKbhR7FVwLbrcUSRTQ+K/JMgEYzqCSUpDJzmtX37jqDuNRNx6AKj7mOl8&#xD;
+FZEwmWK7WNkCDEaSs4tWLRzU543oineNvCtwEulRr5YZg+QT2wuP7dPy4YxBGuWq&#xD;
++XLmj80H7fg2qRCJ0fU9T+skj6WbAnnpsM1WeUQL9JuSlE/0qbuC/OrwLafGnRro&#xD;
+AerH21Mas2deVw6vd2V3X6Y=&#xD;
+-----END CERTIFICATE-----&#xD;
+</string>
+    <key>EXUpdatesCodeSigningMetadata</key>
+    <dict>
+      <key>keyid</key>
+      <string>main</string>
+      <key>alg</key>
+      <string>rsa-v1_5-sha256</string>
+    </dict>
+    <key>EXUpdatesEnableBsdiffPatchSupport</key>
+    <true/>
+    <key>EXUpdatesEnabled</key>
+    <false/>
+    <key>EXUpdatesLaunchWaitMs</key>
+    <integer>0</integer>
+    <key>EXUpdatesRuntimeVersion</key>
+    <string>1.0.0</string>
+  </dict>
+</plist>

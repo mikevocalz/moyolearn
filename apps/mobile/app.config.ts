@@ -78,6 +78,34 @@ const config: ExpoConfig = {
     // AHardwareBuffer will not compile below API 26. See the plugin's header.
     './plugins/with-webgpu-min-sdk',
     [
+      'expo-build-properties',
+      {
+        ios: {
+          /*
+            NOT A PREFERENCE — `react-native-executorch`'s podspec declares
+            `:ios => '17.0'`, and the Podfile expo generates defaults to 16.4,
+            so `pod install` fails outright on a clean prebuild:
+
+              CocoaPods could not find compatible versions for pod
+              "react-native-executorch" ... higher minimum deployment target.
+
+            It is set HERE rather than in the Podfile because the Podfile is
+            generated: `platform :ios, podfile_properties['ios.deploymentTarget']`
+            reads this value, and a number edited into `ios/` directly is gone
+            at the next `expo prebuild`. The android half is deliberately left
+            alone — `with-webgpu-min-sdk` owns that floor.
+
+            The cost is real and worth naming: iOS 16 devices are dropped. That
+            is not this line's decision, it is executorch's, and executorch is
+            what reads a child's homework on-device (`read-attachment.native`)
+            and transcribes their voice without either leaving the phone. The
+            alternative is sending both to a server.
+          */
+          deploymentTarget: '17.0',
+        },
+      },
+    ],
+    [
       'expo-splash-screen',
       {
         /*

@@ -41,6 +41,7 @@ catalog:
   react-native-web: 0.21.2
   expo: 57.0.15
   "@expo/metro-runtime": 57.0.12
+  expo-build-properties: 57.0.16
   expo-font: 57.0.1
   expo-image: 57.0.3
   expo-document-picker: 57.0.1

@@ -23,6 +23,7 @@
     "@tanstack/react-query": "catalog:",
     "expo": "catalog:",
     "expo-background-task": "57.0.14",
+    "expo-build-properties": "catalog:",
     "expo-drag-drop-content-view": "catalog:",
     "expo-font": "catalog:",
     "expo-image": "catalog:",
