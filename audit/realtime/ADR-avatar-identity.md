@@ -1,5 +1,6 @@
 # ADR — Avatar identity: what Natalie is allowed to be, and what must be true before 3D mounts
 Status: **PROPOSED — not approved. 3D must not mount in the app until Mike accepts this file.**
+**Update 2026-09-03:** Mike asked for the realistic Natalie in a pane on the tutor session and amended ADR-107 to allow the panes (see `docs/decisions/adr-107-learner-pane-ban-reaffirmed.md` §Amendment). The pane and its slot are built. **The renderer is not mounted**, and the reason is in §Context: there is no native 3D runtime in this workspace, so it cannot run on the Duo at all. Option B below is now the v1 answer and the asset is named: the **Humano GLB**, purchased 2026-09-02, already driven by `apps/web-vite/src/components/chapters/natalie-scene.tsx`. That supersedes doc 22's GNM+SMPL-X path for v1 — not on merit, on licensing: the SMPL-X commercial licence is NOT cleared and Humano's is.
 Date: 2026-09-03 · Author: layout/tutor-stage pass · Decider: Mike
 
 <!--
@@ -111,7 +112,7 @@ damped; the mouth and the blink are never scaled, in either mode.
 |---|---|---|
 | **A — 2D everywhere, now** | Ship the presence mark on mobile and web; no renderer mounts. | **What is shipped today.** Safe, honest, and the only option that is true on the Duo. |
 | **B — 3D on `apps/web` behind this ADR** | Add three + r3f + drei to `apps/web`, reuse `natalie-scene.tsx`'s driver, CDN-serve the GLB and Draco, and mount her into the existing single presence slot at `regular` width only. | **Recommended, after approval.** It is the only surface where the runtime exists. Costs: a real dependency addition, a 12.5 MB asset that must not enter the initial chunk, and precondition 3. |
-| **C — 3D on mobile** | Adopt `react-native-webgpu` + three `0.185.1`. | **Not available.** The package is not installed and doc 22 §9 budgets this as a rewrite of six shader-injection sites, not an integration. Not a demo-week decision. |
+| **C — 3D on mobile** | Adopt a native WebGPU runtime + three `0.185.1`. | **Not available.** The package is not installed and doc 22 §9 budgets this as a rewrite of six shader-injection sites, not an integration. Not a demo-week decision. |
 | **D — video/sprite loop as "3D"** | Play a rendered clip in the presence slot. | **Rejected.** It is not her — no gaze, no speech coupling, no reduced-motion mode — and doc 23 §3.1's whole point is that the 2D mark must look finished rather than like a stand-in for something better. |
 
 ## Recommendation

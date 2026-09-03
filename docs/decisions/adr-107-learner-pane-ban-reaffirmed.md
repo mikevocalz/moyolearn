@@ -1,6 +1,7 @@
 # ADR 107: The learner pane ban holds — no split learner UI, any band, any width
-Status: accepted · Date: 2026-09-01
+Status: **amended 2026-09-03** (was: accepted) · Date: 2026-09-01
 Accepted: 2026-09-02 — the ban is the decision and it holds; nothing to build, this file is the citation target.
+**Amended: 2026-09-03 by Mike (product owner) — the S9 tutor session is exempt. See §Amendment at the end of this file. The ban still holds everywhere else.**
 
 <!--
 What it is: ADR-g of the G-navigation-maps §6 register — the standing decision
@@ -49,3 +50,28 @@ Register ADR-g's no-ADR default was "ban holds" (the standing 00-binding-decisio
 
 ## Constraints honored
 Zustand-only (pane selection stores stay adult-shell-scoped, doc 37 §3.2) · tokens-only · no invented APIs · doc references (37 §3.3 · 08 Hot dial · 36 §3.1 · 38 §4 · 00-binding §Doc-37 · G §5/§6 · H #2/#3/#7, synthesis 1)
+
+---
+
+## Amendment (2026-09-03) — the tutor session is exempt
+
+**Decided by:** Mike, product owner, in session on 2026-09-03.
+**Scope of the exemption:** the S9 tutor session (`TutorStage`) **only**. Every other learner surface — Today, My Stuff, the guided path, capture, onboarding — remains single-pane at every width class on every platform, and the §Decision above still governs them unchanged.
+
+**What he asked for, in his words:** *"pu them pane buttons back!!! i need see natilie in meyahuman for on th pane!"* — i.e. the split view with its expand/collapse controls, on the tutor session, with the realistic 3D Natalie living in one of the panes.
+
+**The reasoning he gave.** The tutor session is the product's signature surface and the avatar is its signature element (doc 01 §6.1, doc 23 §2). At tablet and unfolded-foldable width the conversation is capped at a 65ch reading measure (doc 23 §4.2), so the leftover width is either empty or hers. Giving it to her is not a second place for the child to work — it is the person they are already talking to, made visible at the size the hardware allows.
+
+**Why this does not reopen the ban's actual concern.** §Decision's stated reason is **attention arbitrage**: a child made to divide attention between a list and a detail, two places where work happens. The exempted composition has one place where work happens. The leading pane holds no work, no navigation, no list, no second reading order and nothing reachable only from there — it holds a presence. Doc 02 §4.1's "a child never gets the Triptych" is untouched: this is two panes, and there is no third.
+
+**Conditions this exemption carries, all of them binding.**
+1. **One work surface.** The tutor session's panes are presence + conversation. The moment a second pane holds anything a child has to *do*, this exemption no longer covers it and the ban applies again.
+2. **Collapsible, and collapsed is a first-class state.** The `PaneToggle` controls are present, and the existing "Hide Natalie" reveal control still governs her. A learner who wants one column gets one column.
+3. **Compact is unchanged.** Below the `medium` class (600dp) the session is the single spine it has always been. The exemption buys width; it does not put panes on a phone.
+4. **Doc 08's Hot dial still applies** — ≥40% canvas on the learner surface, measured with the panes open.
+5. **It does not generalise.** No other learner route may mount `AdaptivePanes` by citing this amendment. G-navigation-maps §5's learner row keeps pointing at the §Decision above.
+
+**What did NOT change:** the fail-open band caveat in §Decision still stands — `gradeBand` is still not populated under live auth, so nothing here may be gated on band. The exemption is gated on *route and width class*, both of which are real.
+
+**Contradicting doc, named:** doc 37 §3.3's "**Learner: never**" is now "learner: never, except the S9 tutor session." Doc 37 should carry that sentence; until it does, this amendment is the source of truth and doc 37 §3.3 is stale on that one word.
+

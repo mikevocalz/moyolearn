@@ -134,6 +134,26 @@ export interface TutorPresenceProps {
   assurance?: string;
   /** Age-band size, same vocabulary as `Button`. */
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  /**
+   * Which half of her to draw, for the one layout where the two halves cannot
+   * sit together: the pane composition (ADR-107 amendment, 2026-09-03).
+   *
+   * The presence pane is 280dp. The rail is a ROW — mark, name, status badge,
+   * and the reveal control with its label — and at that width it collapses
+   * into a column of two-character fragments: measured on device, "Speaking"
+   * broke across three lines. The rail wants the conversation's full measure;
+   * the pane wants her at the biggest size the hardware allows. So they split
+   * by placement, not by duplication.
+   *
+   * - `full` — body then rail, one card. The single-spine form, unchanged.
+   * - `body` — the animated, `Freeze`-wrapped renderer only, for the pane.
+   * - `rail` — identity, status and the reveal control only, for the spine.
+   *
+   * One component either way, because every rule about drawing her lives here:
+   * one reveal control, one freeze policy, one animation, one place her
+   * identity is spelled.
+   */
+  render?: 'full' | 'body' | 'rail';
   className?: string;
 }
 
@@ -146,6 +166,7 @@ export function TutorPresence({
   onToggleReveal,
   assurance,
   size = 'md',
+  render = 'full',
   className,
 }: TutorPresenceProps) {
   const revealed = isTutorRevealed(tutorPresence);
@@ -287,6 +308,25 @@ export function TutorPresence({
       <Freeze freeze={frozen}>{avatar}</Freeze>
     </MotionView>
   );
+
+  if (render === 'body') {
+    return <View className={`w-full ${className ?? ''}`}>{body}</View>;
+  }
+
+  if (render === 'rail') {
+    return onToggleReveal ? (
+      <PressScale
+        outerClassName={`w-full ${className ?? ''}`}
+        className="w-full"
+        onPress={onToggleReveal}
+        role="button"
+        aria-label={actionLabel}>
+        {rail}
+      </PressScale>
+    ) : (
+      <View className={`w-full ${className ?? ''}`}>{rail}</View>
+    );
+  }
 
   return (
     <View className={`w-full gap-element ${className ?? ''}`}>

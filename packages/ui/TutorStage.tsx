@@ -28,6 +28,9 @@
 // SOT-KEYWORDS: tutorstage s9 tutor session state union hot dial learner thread first live turn work in turn
 
 import { useCallback, useState } from 'react';
+import { AdaptivePanes } from './adaptive-panes';
+import { isCollapsed } from './adaptive-panes/constants';
+import { useWindowSizeClass } from './adaptive-panes/use-window-size-class';
 import { Dial } from './Dial';
 import { View, Text } from './primitives';
 import { MessageBubble } from './MessageBubble';
@@ -436,6 +439,16 @@ export function TutorStage({
   className,
 }: TutorStageProps) {
   const [draft, setDraft] = useState('');
+  /*
+    THE PANE WIDTH CLASS, and it is the four-band one on purpose.
+
+    `useSizeClass()`'s binary 768 line answers "one column or two" for content.
+    This answers "may panes tile", which is `AdaptivePanes`' own question, and
+    600dp (`medium`) is where its policy says the first one can. The two systems
+    are documented as deliberately separate in `adaptive-panes/constants.ts`;
+    this screen is simply the first that asks both.
+  */
+  const windowClass = useWindowSizeClass();
 
   /*
     `auto` is a request, not a presentation. It is normally answered at the
@@ -478,6 +491,49 @@ export function TutorStage({
   // question, and `canSend` already answers it.
   const inputDisabled = state.kind === 'ended' || state.kind === 'crisis';
 
+  /*
+    PANES ON THE TUTOR SESSION — and this is a signed exception, not a drift.
+
+    Doc 37 §3.3 and ADR-107 ban split compositions on learner surfaces. Mike
+    amended ADR-107 on 2026-09-03 to exempt THIS screen and only this screen;
+    the amendment names him, the date, and the five conditions it carries, and
+    the first of them is the one this code has to honour: the leading pane holds
+    a PRESENCE, never work. Nothing is reachable there that is not reachable
+    without it, which is why it is not the attention arbitrage the ban exists to
+    prevent.
+
+    Gated at `medium` (600dp) — `AdaptivePanes`' own first pane-capable class —
+    so a phone keeps the single spine it has always had. Condition 3.
+  */
+  const panes = !isCollapsed(windowClass);
+
+  /*
+    NATALIE, IN EVERY STATE, AND ONLY ONCE ON SCREEN.
+
+    Status belongs to the person whose status it is: one element carries her
+    mark, her name and what she is doing, so a child who has collapsed her still
+    has a visible owner for the voice they can hear. In the single spine that is
+    one card. In the pane composition the two halves split by PLACEMENT — her
+    body takes the pane, her rail keeps the conversation's full measure — because
+    a 280dp pane breaks the rail into two-character fragments. Never both, never
+    twice.
+  */
+  const presenceProps = {
+    name: tutorName,
+    status: statusFor(state),
+    tone: statusTone(state),
+    tutorPresence: presence,
+    onToggleReveal: handleToggleReveal,
+    assurance: presenceAssurance,
+    size: buttonSize,
+  } as const;
+
+  const presenceBlock = panes ? (
+    <TutorPresence {...presenceProps} render="rail" />
+  ) : (
+    <TutorPresence {...presenceProps} avatar={avatar} />
+  );
+
   const stageBody = (
     /*
       Extra room BELOW the composer, not just the container's inset.
@@ -499,25 +555,8 @@ export function TutorStage({
       */
       className="w-full flex-1 gap-stack px-inset py-1"
     >
-      {/*
-        NATALIE, IN EVERY STATE, AT THE TOP OF THE SPINE.
-
-        The status chip used to float here on its own while she was drawn — or
-        not drawn — somewhere below by one branch of the state switch. Status
-        belongs to the person whose status it is: one element carries her mark,
-        her name and what she is doing, so a child who has collapsed her still
-        has a visible owner for the voice they can hear.
-      */}
-      <TutorPresence
-        name={tutorName}
-        status={statusFor(state)}
-        tone={statusTone(state)}
-        tutorPresence={presence}
-        avatar={avatar}
-        onToggleReveal={handleToggleReveal}
-        assurance={presenceAssurance}
-        size={buttonSize}
-      />
+      {/* Her rail in the pane composition, her whole card in the spine. */}
+      {presenceBlock}
       {/*
         ONE LIST. History and the live turn used to be two siblings — a
         virtualised thread, then a fixed band holding whatever Natalie was
@@ -592,7 +631,35 @@ export function TutorStage({
           onBack={onBack}
           onToggleCaptions={onToggleCaptions}
         />
-        <View className="mx-auto w-full max-w-content-prose flex-1">{stageBody}</View>
+        {panes ? (
+          /*
+            The host, with its collapse controls — the same `AdaptivePanes` and
+            the same `PaneToggle` every adult pane surface uses, so a learner's
+            split view is not a second implementation of one. `topColumnForCollapsing`
+            is deliberately absent: this host never collapses, because `panes`
+            is false below the class where it would.
+          */
+          <AdaptivePanes
+            detail={
+              <View className="mx-auto w-full max-w-content-prose flex-1">{stageBody}</View>
+            }>
+            <AdaptivePanes.Column>
+              {/*
+                SHE IS THE WHOLE PANE, centred in it. A figure hugging the
+                ceiling of a tall column reads as a leftover element rather than
+                a placed one, and doc 23 §3.1's rule holds: the mark carries the
+                ink border and no slab shadow, because border + shadow + yellow
+                is the primary-button treatment and the one thing here that is
+                not a control must not wear it.
+              */}
+              <View className="flex-1 items-center justify-center p-inset">
+                <TutorPresence {...presenceProps} avatar={avatar} render="body" />
+              </View>
+            </AdaptivePanes.Column>
+          </AdaptivePanes>
+        ) : (
+          <View className="mx-auto w-full max-w-content-prose flex-1">{stageBody}</View>
+        )}
       </View>
     </Dial>
   );
