@@ -28,7 +28,7 @@ import {
 } from '@acme/app';
 import type { ActiveContextKind, Membership, AppUser, OrgBranding } from '@acme/app';
 import { isBillingRole } from '@acme/auth';
-import { DashboardShell, LoadingSkeleton, Menu, MoyoLearnLogo, RoleScope, TenantScope } from '@acme/ui';
+import { DashboardShell, LoadingSkeleton, Menu, MoyoLearnLogo, NavDrawerButton, RoleScope, TenantScope } from '@acme/ui';
 import type { MenuAction, NavGroup } from '@acme/ui';
 import { Header, Main, Nav, Pressable, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar } from '@acme/ui';
@@ -49,7 +49,6 @@ import {
   Settings,
   Shield,
   Star,
-  Menu as MenuIcon,
 } from '@acme/ui/icons';
 import { HOT_NAV_BY_ROLE, HOT_NAV_LEARNER_BY_BAND, RAIL_BY_ROLE, PROFILE, useMobileMenu } from './nav';
 import type { HotNavKind, NavItem as NavItemSpec, NavGroup as NavGroupSpec } from './nav';
@@ -341,15 +340,36 @@ function HotShell({
             <MembershipMenu user={user} />
           </View>
 
-          <Pressable
-            onPress={toggle}
-            aria-label={open ? 'Close menu' : 'Open menu'}
-            aria-expanded={open}
-            aria-controls="mobile-menu"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full bg-tenant-surface-subtle transition-colors duration-fast hover:bg-tenant-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring active:opacity-80 md:hidden"
-          >
-            <MenuIcon className="h-5 w-5 text-tenant-header-foreground" />
-          </Pressable>
+          {/*
+            The SAME control the Cool shell's top bar carries (`NavDrawerButton`
+            in @acme/ui), where this was a 40px `rounded-full` tinted circle
+            against that shell's 44px `rounded-control` square — two shapes for
+            one job, and the circle was the kit's only pill-shaped chrome.
+
+            Hidden once the drawer is open, rather than relabelled. It used to
+            keep the hamburger glyph while its `aria-label` flipped to "Close
+            menu", so the button a sighted reader saw and the button a screen
+            reader heard were different controls. Closing belongs to the drawer
+            now (below), and this stays what it looks like: the way in.
+
+            Unmounting it also reproduces the Cool shell's contract on a shell
+            whose drawer does not reach the header — there the open drawer
+            simply covers the hamburger. Unmounting costs no focus here: both
+            shells were measured opening by keyboard and both drop focus to
+            `body` on activation regardless (the press handler's re-render, not
+            this branch), after which ONE Tab reaches the drawer's close in
+            either shell. So this changes what is on screen and nothing about
+            where the keyboard goes.
+          */}
+          {open ? null : (
+            <NavDrawerButton
+              action="open"
+              expanded={open}
+              controls="mobile-menu"
+              onPress={toggle}
+              className="md:hidden"
+            />
+          )}
         </View>
       </Header>
 
@@ -360,12 +380,37 @@ function HotShell({
             aria-label="Close menu"
             className="fixed inset-x-0 top-0 z-40 h-screen cursor-default items-start justify-start bg-ink-950/50 backdrop-blur-[2px] md:hidden"
           />
-          <View className="absolute inset-x-0 top-[70px] z-50 rounded-b-sheet border-b-2 border-tenant-border bg-tenant-surface shadow-raised md:hidden">
+          {/*
+            `bg-tenant-sidebar`, not `bg-tenant-surface`. The drawer is the
+            RAIL in overlay form and must read as the same plane, which is the
+            token DashboardShell's sidebar/rail already carries. On this ground
+            the panel was painted the same fill as the page it slides over —
+            identical in light and one step too dark in the dark scheme — so it
+            read as the page duplicating itself rather than as chrome above it.
+            Its inks are unchanged and stay AA on the new fill
+            (`tenant-header-foreground` 12.37:1 light / 11.69:1 dark,
+            `tenant-header-muted` 5.11:1 / 6.44:1); both pairs are declared in
+            tooling/check-contrast.mjs so the gate measures them from now on.
+          */}
+          <View className="absolute inset-x-0 top-[70px] z-50 rounded-b-sheet border-b-2 border-tenant-border bg-tenant-sidebar shadow-raised md:hidden">
+            {/*
+              The drawer's own exit, matching the Cool shell's: same component,
+              trailing edge of the drawer's first row, above the identity block
+              exactly as Noom and Hootsuite place it. It replaces the header
+              hamburger, which is hidden while this is open, so one visible
+              control owns one direction.
+            */}
+            <View className="flex-row justify-end px-3 pt-3">
+              <NavDrawerButton action="close" onPress={close} />
+            </View>
             <Link
               href={PROFILE.href}
               onClick={close}
               aria-current={profileActive ? 'page' : undefined}
-              className={`mx-3 mt-3 flex items-center gap-stack rounded-xl px-3 py-3 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring ${
+              // mt-1, not mt-3: the close row above already carries the
+              // drawer's top inset, and two full insets stacked left the
+              // identity block floating away from the panel's edge.
+              className={`mx-3 mt-1 flex items-center gap-stack rounded-xl px-3 py-3 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring ${
                 profileActive ? 'bg-tenant-surface-subtle' : 'hover:bg-tenant-surface-subtle'
               }`}
             >

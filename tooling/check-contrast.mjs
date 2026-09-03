@@ -142,6 +142,19 @@ const TENANT_PAIRS = [
   ['tenant-header-muted', 'tenant-header', 4.5],
   ['tenant-sidebar-foreground', 'tenant-sidebar', 4.5],
   ['tenant-sidebar-muted', 'tenant-sidebar', 4.5],
+  /*
+    HEADER ink on the SIDEBAR plane, which is a real pairing and not a typo.
+    The drawer is the rail in overlay form, so it wears `tenant-sidebar` in both
+    shells — but the controls and links that ride it come from the header
+    vocabulary: `NavDrawerButton`'s glyph is one component in two places (top
+    bar and drawer) and keeps one ink, and the Hot shell's drawer reuses
+    `HotNavLink`, which is the same component as the desktop header pill.
+    Declared rather than derived because no naming convention says a
+    `tenant-header-*` foreground may land on `tenant-sidebar` — which is exactly
+    why it needs measuring.
+  */
+  ['tenant-header-foreground', 'tenant-sidebar', 4.5],
+  ['tenant-header-muted', 'tenant-sidebar', 4.5],
   ['tenant-sidebar-active-foreground', 'tenant-sidebar-active', 4.5],
   ['tenant-primary-foreground', 'tenant-primary', 4.5],
   ['tenant-primary-foreground', 'tenant-primary-hover', 4.5],

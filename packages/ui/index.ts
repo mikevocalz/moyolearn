@@ -90,6 +90,7 @@ export {
   type NavItem,
   type SidebarMode,
 } from './DashboardShell';
+export { NavDrawerButton, type NavDrawerButtonProps } from './NavDrawerButton';
 export { useAppForm, withForm, useFieldContext, useFormContext, useFormStore } from './form';
 
 export { SafeArea, type SafeAreaProps } from './SafeArea';

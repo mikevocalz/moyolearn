@@ -20,8 +20,11 @@
 import type { ReactNode } from 'react';
 import { tv } from './tv';
 import { Pressable, Text, View } from './primitives';
-import { Menu, PanelLeftClose, PanelLeftOpen } from './icons';
+import { PanelLeftClose, PanelLeftOpen } from './icons';
 import { Nav } from './tw';
+import { NavDrawerButton } from './NavDrawerButton';
+import { useReducedMotion } from './motion';
+import { haptics } from './haptics';
 
 export interface NavItem {
   id: string;
@@ -180,6 +183,15 @@ const shell = tv({
       One source of truth now: `collapsed` decides, everywhere the sidebar is
       docked.
     */
+    /*
+      `bg-tenant-sidebar` is the RAIL's plane, and the drawer inherits it for
+      free because the drawer IS this element — the three layouts above are one
+      node that CSS re-forms, not three surfaces that have to be kept in step.
+      Nothing here may fork the fill per layout: an overlay drawer painted
+      `tenant-surface` would read as the page sliding over itself rather than as
+      the rail coming out to meet you, which is exactly the defect the Hot shell
+      had (apps/web RoleShell) before it was pointed at this same token.
+    */
     sidebar:
       'absolute inset-y-0 left-0 z-50 w-pane-primary-narrow flex-col border-r-2 border-tenant-border bg-tenant-sidebar ' +
       'md:relative md:z-auto',
@@ -302,10 +314,30 @@ export function DashboardShell({
   const railAtMd = mode === 'auto' ? true : mode === 'rail';
   const railAtLg = mode === 'auto' ? false : mode === 'rail';
 
+  /*
+    The kit's own reduce-motion reader, matching ShellTabBar's rationale
+    verbatim: a haptic is not motion, but Reduce Motion is the only sensory-load
+    preference either OS will actually report, so a reader who asked the device
+    to calm down does not get buzzed for navigating.
+  */
+  const reducedMotion = useReducedMotion();
+
   return (
     <View className={s.root()}>
-      {/* Tapping the scrim closes the menu — the affordance every overlay nav
-          has, and the reason no explicit close button is needed below lg. */}
+      {/*
+        Tapping the scrim closes the menu, and it is NOT the only way out.
+
+        This comment used to say a scrim tap was "the reason no explicit close
+        button is needed". The drawer now carries one in its brand row (see
+        below), and the reason is narrower than "the scrim is inaccessible" —
+        measured, this scrim is a labelled button and IS in the tab order, one
+        stop ahead of the drawer. What it has no version of is a VISIBLE
+        affordance: it asks a sighted first-time user to work out that the
+        dimmed page is a control, and nothing on screen says so. HIG Modality
+        wants an explicit, obvious dismissal for a modal surface. So the scrim
+        stays — it costs nothing and everyone reaches for it — and the button is
+        what makes the exit something you can see rather than infer.
+      */}
       {menuOpen ? (
         <Pressable
           aria-label="Close menu"
@@ -332,6 +364,21 @@ export function DashboardShell({
         >
           <View className={MENU_ONLY[mode]}>{brand}</View>
           <View className={RAIL_ONLY[mode]}>{brandMark}</View>
+          {/*
+            The drawer's own exit, and `md:hidden` because it is the ONLY
+            breakpoint where this element is an overlay — at md and up the
+            sidebar is in flow, nothing is covering the page, and a close button
+            would be asking to dismiss something that was never modal. The
+            width toggle in the footer is the docked form's control instead.
+
+            Trailing edge of the brand row, which is where Beli and Hootsuite
+            both put it: it sits on the drawer's own top rule opposite the
+            lockup, so the row reads brand-then-exit in one line rather than
+            floating a control over the nav list. It also lands under the
+            thumb's natural arc on the drawer's inner edge, away from the back
+            gesture on the screen's leading edge.
+          */}
+          <NavDrawerButton action="close" onPress={onToggleMenu} className="ml-auto md:hidden" />
         </View>
 
         <Nav aria-label="Sections" className={s.sidebarInner()}>
@@ -341,7 +388,26 @@ export function DashboardShell({
               {group.items.map((item) => (
                 <Pressable
                   key={item.id}
-                  onPress={item.onPress}
+                  /*
+                    Selection tick on a nav press, the same vocabulary and the
+                    same two rules ShellTabBar landed: `haptics.selection` (the
+                    lightest tick the kit has — a destination change is not an
+                    action confirmation), never on the item you are already on,
+                    because a buzz with nothing happening on screen is noise.
+
+                    `@acme/ui`'s haptics is a platform-forked trio, so this is
+                    honest rather than aspirational: the web fork is four free
+                    no-ops and the native fork no-ops again when Pulsar's
+                    TurboModule is missing from the binary. Today this shell
+                    only mounts on the web, so the call costs nothing and does
+                    nothing — it is here so a native mount inherits the tick
+                    instead of quietly shipping the one nav in the product that
+                    does not respond.
+                  */
+                  onPress={() => {
+                    if (!item.active && !reducedMotion) haptics.selection();
+                    item.onPress();
+                  }}
                   aria-current={item.active ? 'page' : undefined}
                   aria-label={item.label}
                   className={s.item({ className: item.active ? s.itemActive() : '' })}
@@ -435,14 +501,10 @@ export function DashboardShell({
 
       <View className={s.content()}>
         <View className={s.topBar()}>
-          <Pressable
-            aria-label="Open menu"
-            aria-expanded={menuOpen}
-            onPress={onToggleMenu}
-            className="min-h-target-adult min-w-target-adult items-center justify-center rounded-control border-2 border-tenant-header-border hover:bg-tenant-surface-subtle focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring md:hidden"
-          >
-            <Menu aria-hidden className="h-4 w-4 text-tenant-header-foreground" />
-          </Pressable>
+          {/* Same component as the drawer's close, so the pair cannot drift.
+              `md:hidden` for the same reason it is: above md there is no
+              overlay to open. */}
+          <NavDrawerButton action="open" expanded={menuOpen} onPress={onToggleMenu} className="md:hidden" />
           {topBarStart}
           {/* `ml-auto` rather than `justify-between`: with only one child, a
               space-between bar leaves the action stranded on the left. */}
