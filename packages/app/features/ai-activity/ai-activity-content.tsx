@@ -89,7 +89,13 @@ export function AiActivityContent() {
       ) : null}
 
       <FadeIn delay={120}>
-        <SafetySection safety={safety} />
+        <SafetySection
+          safety={safety}
+          onRetry={() => {
+            void loadSafety();
+          }}
+          onSignIn={() => router.push('/')}
+        />
       </FadeIn>
 
       <FadeIn delay={160}>

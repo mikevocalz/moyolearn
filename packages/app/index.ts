@@ -19,7 +19,11 @@ export {
 } from './features/family/family.store';
 // FD-24 family-device switch — ADR-106: a different mechanism from the
 // AvatarSheet, never conflated (J §2 row 8).
-export { ProfileSwitcher, type ProfileSwitcherProps } from './features/switch-profile/profile-switcher';
+export {
+  ProfileSwitcher,
+  type ProfileSwitcherProps,
+  type GrownUpsAuth,
+} from './features/switch-profile/profile-switcher';
 export {
   useProfileSwitcherStore,
   type GrownUpsGate,

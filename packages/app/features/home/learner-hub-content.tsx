@@ -15,6 +15,7 @@ import { Section, View } from '@acme/ui/tw';
 import { Avatar, FadeIn, Heading, MessageBubble, PressScale, Text } from '@acme/ui';
 import { useRouter } from 'solito/navigation';
 import { useAppSession } from '../../providers/session';
+import { bandScaleFor } from '../capture/age-band';
 import { stuffPath } from './learner-paths';
 
 /**
@@ -55,17 +56,29 @@ export function LearnerHubContent() {
   const { user } = useAppSession();
   const router = useRouter();
   const firstName = user?.name?.split(' ')[0] ?? 'friend';
+  // K–2 is the only band that reaches this hub, so the scale is READ rather
+  // than assumed: the tiles hardcoded the same values, which is how a token
+  // change silently stops reaching one screen.
+  const scale = bandScaleFor('young');
 
   return (
-    <View className="gap-group">
-      {/* Natalie speaks the screen: the voice prompt IS the instruction, so a
-          pre-reader hears/sees one sentence, not a menu to parse. */}
+    <View className={scale.gap}>
+      {/* The screen needs one real title before anything else: a greeting
+          bubble alone left this page with no h1 and nothing a screen reader
+          could land on. The heading is the greeting; Natalie's line under it is
+          the instruction — voice-first order, because a pre-reader does not
+          scan a menu (doc 36 §1). */}
       <FadeIn>
-        <Section className="flex-row items-end gap-element">
-          <Avatar name="Moyo" size="lg" />
-          <MessageBubble from="tutor" className="flex-1">
-            Hi {firstName}! What do you want to do today?
-          </MessageBubble>
+        <Section className="gap-stack">
+          <Heading level={1} size={scale.title}>
+            Hi {firstName}
+          </Heading>
+          <View className="flex-row items-end gap-element">
+            <Avatar name="Moyo" size="lg" />
+            <MessageBubble from="tutor" className="flex-1">
+              What do you want to do today?
+            </MessageBubble>
+          </View>
         </Section>
       </FadeIn>
 
@@ -84,7 +97,7 @@ export function LearnerHubContent() {
                 slab in the rail, which is the same destination: one action,
                 one colour, both planes.
               */
-              className={`min-h-target-young w-full flex-row items-center gap-element rounded-card border-2 border-border p-inset-roomy shadow-card ${
+              className={`w-full flex-row items-center gap-element rounded-card border-2 border-border shadow-card ${scale.target} ${scale.inset} ${
                 tile.primary ? 'bg-action-primary' : 'bg-surface'
               }`}
               aria-label={tile.label}

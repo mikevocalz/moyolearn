@@ -20,7 +20,6 @@
   "packages/app/features/home/home-content.tsx",
   "packages/app/features/home/menu-button.tsx",
   "packages/app/features/home/school-home-screen.tsx",
-  "packages/app/features/home/student-home-content.tsx",
   "packages/app/features/home/teacher-home-screen.tsx",
   "packages/app/features/home/tutor-today-content.tsx",
   "packages/app/features/institution/people-list-screen.tsx",

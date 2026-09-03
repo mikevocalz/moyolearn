@@ -1,10 +1,11 @@
 // ProfileSwitcher feature stories — J §2 row 8's required set: 1/2/3 learners,
 // the locked Grown-ups row, and the unlock flow states. Stories seed
 // family.store and the gate store directly so the rows exercise the real
-// switch/verify paths; `verifyGrownUp` stands in for the AuthPort seam.
+// switch/verify paths; `grownUps` stands in for the AuthPort seam.
 // SOT-KEYWORDS: profile switcher stories fd-24 who's here grown-ups locked verifying failed
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { useState } from 'react';
+import { SheetSurface } from '@acme/ui';
 import { Text, View } from '@acme/ui/tw';
 import { CHILDREN } from '../home/parent-home.data';
 import { useFamilyStore, type ChildSummary } from '../family/family.store';
@@ -42,7 +43,11 @@ function Seeded({
   return (
     <View className="max-w-md gap-stack bg-surface p-inset">
       <Text className="font-mono text-caption text-text-muted">gate: {liveGate.kind}</Text>
-      <ProfileSwitcher verifyGrownUp={verifyGrownUp} />
+      {/* The header is chrome, so the bare render borrows the same surface the
+          sheet uses rather than growing a second copy of the title. */}
+      <SheetSurface title="Who's here?">
+        <ProfileSwitcher grownUps={{ kind: 'present', verify: verifyGrownUp }} />
+      </SheetSurface>
     </View>
   );
 }

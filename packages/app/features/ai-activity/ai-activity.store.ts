@@ -23,7 +23,7 @@ import { create } from 'zustand';
 // `tutor.store.ts` uses to name `CoachEvent` (CLAUDE.md §The block).
 import type { GuardianSafetyStatus } from './safety-status.service';
 import { CONSENTS } from './ai-activity.data';
-import { API_URL } from '../../core/api-url.ts';
+import { ApiError, getJson } from '../../core/api-fetch.ts';
 
 const LOCKED = new Set(CONSENTS.filter((c) => c.locked).map((c) => c.id));
 
@@ -44,7 +44,13 @@ const LOCKED = new Set(CONSENTS.filter((c) => c.locked).map((c) => c.id));
 export type SafetyStatusState =
   | { kind: 'idle' }
   | { kind: 'loading' }
-  | { kind: 'unreachable' }
+  /**
+   * The failure carries its cause. An expired session and a dropped connection
+   * are the same picture to this store but different sentences on screen —
+   * "sign in again" versus "try again" — and only the status can tell them
+   * apart (`readFailureCopy`). `null` is a transport failure, which has none.
+   */
+  | { kind: 'unreachable'; error: ApiError | null }
   | { kind: 'ready'; status: GuardianSafetyStatus };
 
 interface AiActivityState {
@@ -66,19 +72,17 @@ export const useAiActivityStore = create<AiActivityState>((set) => ({
   loadSafety: async () => {
     set({ safety: { kind: 'loading' } });
     try {
-      const response = await fetch(`${API_URL}/api/guardian/safety-status`, {
-        credentials: 'include',
-      });
-      if (!response.ok) {
-        set({ safety: { kind: 'unreachable' } });
-        return;
-      }
-      const body = (await response.json()) as { ok: true; status: GuardianSafetyStatus };
+      const body = await getJson<{ ok: true; status: GuardianSafetyStatus }>(
+        '/api/guardian/safety-status',
+        undefined,
+      );
       set({ safety: { kind: 'ready', status: body.status } });
-    } catch {
-      // Offline, or the route is down. Both are "we could not check", and both
-      // must read as that rather than as a clean bill of health.
-      set({ safety: { kind: 'unreachable' } });
+    } catch (error) {
+      // Offline, signed out, or the route is down. All three are "we could not
+      // check", and all three must read as that rather than as a clean bill of
+      // health — but only the first two share a way out, which is why the cause
+      // is kept rather than collapsed to a boolean.
+      set({ safety: { kind: 'unreachable', error: error instanceof ApiError ? error : null } });
     }
   },
 }));

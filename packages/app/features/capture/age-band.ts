@@ -1,6 +1,12 @@
-// Age-band helpers for capture surfaces.
-// SOT: docs/pack/08-visual-hierarchy-spacing-spec.md §2.4
-// SOT-KEYWORDS: age band capture young child teen adult target size labels voice band
+// The age band, and everything derived from it.
+//
+// Named for capture because that is where it started, but it is the shared band
+// module now — `providers/session` types the active context off `AgeBand` here,
+// and every learner surface reads its presentation scale from `bandScaleFor`.
+// A second band table in a feature folder is how a nine-year-old ends up with
+// K–2 targets on one screen and teen targets on the next.
+// SOT: docs/pack/08-visual-hierarchy-spacing-spec.md §2.4 · packages/theme/tokens.ts `targets`
+// SOT-KEYWORDS: age band capture young child teen adult target size labels voice band scale presentation
 
 import type { VoiceBand } from '@acme/student-model';
 
@@ -11,6 +17,74 @@ const BAND_FALLBACK: AgeBand = 'teen';
 export function asAgeBand(value?: string | null): AgeBand {
   if (value === 'young' || value === 'child' || value === 'teen' || value === 'adult') return value;
   return BAND_FALLBACK;
+}
+
+/**
+ * The presentation scale for one band — target floor, type step, and rhythm.
+ *
+ * Every value is a token class, never a size: doc 08 §2.4 makes target size a
+ * function of the signed-in child, and `packages/theme/tokens.ts` already emits
+ * `target-young|child|teen|adult`. A screen that hardcodes `min-h-11` has
+ * silently opted a six-year-old into the adult floor.
+ */
+export interface BandScale {
+  /** Minimum height of anything a learner in this band has to hit. */
+  target: string;
+  /** `Heading` size for the screen title — the display moment. */
+  title: 'display-sm' | 'title';
+  /** The purpose line under the title, and any other lead prose. */
+  lead: string;
+  /** The title line inside a row or tile. */
+  rowTitle: string;
+  /** Vertical rhythm between the screen's major groups. */
+  gap: string;
+  /** Padding inside a tappable row or tile. */
+  inset: string;
+}
+
+/**
+ * Younger reads bigger and slower: K–2 gets the 72 target, the display title
+ * and roomy insets; the ramp tightens one step per band up to the adult floor.
+ * `adult` is the Cool end — an educator or a guardian on a learner-shaped
+ * screen — and is deliberately the least generous, not the most.
+ */
+export const BAND_SCALE = {
+  young: {
+    target: 'min-h-target-young',
+    title: 'display-sm',
+    lead: 'text-body-lg',
+    rowTitle: 'text-title',
+    gap: 'gap-group',
+    inset: 'p-inset-roomy',
+  },
+  child: {
+    target: 'min-h-target-child',
+    title: 'display-sm',
+    lead: 'text-body-lg',
+    rowTitle: 'text-body-lg',
+    gap: 'gap-group',
+    inset: 'p-inset',
+  },
+  teen: {
+    target: 'min-h-target-teen',
+    title: 'title',
+    lead: 'text-body',
+    rowTitle: 'text-body',
+    gap: 'gap-stack',
+    inset: 'p-inset',
+  },
+  adult: {
+    target: 'min-h-target-adult',
+    title: 'title',
+    lead: 'text-body',
+    rowTitle: 'text-body',
+    gap: 'gap-stack',
+    inset: 'p-inset-tight',
+  },
+} as const satisfies Record<AgeBand, BandScale>;
+
+export function bandScaleFor(ageBand: AgeBand): BandScale {
+  return BAND_SCALE[ageBand];
 }
 
 export function buttonSizeForBand(ageBand: AgeBand): 'sm' | 'md' | 'lg' | 'xl' {

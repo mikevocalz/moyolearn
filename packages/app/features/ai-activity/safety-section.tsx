@@ -36,7 +36,8 @@
 // SOT-KEYWORDS: safety section guardian status paused alerts crisis boundary ai activity screen
 
 import { Section, View, Text as TWText } from '@acme/ui/tw';
-import { Badge, Card, LoadingSkeleton, Text } from '@acme/ui';
+import { Badge, Button, Card, LoadingSkeleton, ReadFailure, Text } from '@acme/ui';
+import { readFailureCopy } from '../../core/read-failure-copy.ts';
 import type { SafetyAlertSummary } from './safety-status.service';
 import type { SafetyStatusState } from './ai-activity.store';
 
@@ -66,19 +67,23 @@ const day = (iso: string): string =>
 
 export interface SafetySectionProps {
   safety: SafetyStatusState;
+  /** Re-runs the status read in place. A failure without one is a dead end. */
+  onRetry: () => void;
+  /** The way out of an expired session, which no retry can fix. */
+  onSignIn: () => void;
 }
 
-export function SafetySection({ safety }: SafetySectionProps) {
+export function SafetySection({ safety, onRetry, onSignIn }: SafetySectionProps) {
   return (
     <Section className="gap-stack">
       <Text variant="label" tone="muted">Safety</Text>
-      <StatusCard safety={safety} />
+      <StatusCard safety={safety} onRetry={onRetry} onSignIn={onSignIn} />
       {safety.kind === 'ready' ? <AlertList alerts={safety.status.alerts} /> : null}
     </Section>
   );
 }
 
-function StatusCard({ safety }: SafetySectionProps) {
+function StatusCard({ safety, onRetry, onSignIn }: SafetySectionProps) {
   if (safety.kind === 'idle' || safety.kind === 'loading') {
     return <LoadingSkeleton variant="card" />;
   }
@@ -92,17 +97,29 @@ function StatusCard({ safety }: SafetySectionProps) {
     the read failed we did not know it.
   */
   if (safety.kind === 'unreachable') {
+    /*
+      The retry is the point. This card said "pull it up again in a moment" and
+      gave the reader nothing to pull with, so the honest state still ended in a
+      dead end — and when the cause was an expired session, "in a moment" was
+      advice that fails identically forever. `readFailureCopy` picks the sentence
+      from the status; `ReadFailure` supplies the marker and the retry.
+    */
+    const failure = readFailureCopy(
+      safety.error,
+      'Natalie’s status',
+      'Nothing has changed for your child.',
+    );
     return (
-      <Card className="gap-element">
-        <Badge label="Unknown" tone="neutral" />
-        <TWText className="text-base text-text">
-          We couldn’t check on Natalie just now.
-        </TWText>
-        <TWText className="text-sm text-text-muted">
-          This screen needs a connection. Nothing has changed for your child — pull it up again in a
-          moment.
-        </TWText>
-      </Card>
+      <ReadFailure
+        title={failure.title}
+        description={failure.description}
+        onRetry={onRetry}
+        action={
+          failure.signedOut ? (
+            <Button variant="primary" title="Sign in" onPress={onSignIn} />
+          ) : undefined
+        }
+      />
     );
   }
 
