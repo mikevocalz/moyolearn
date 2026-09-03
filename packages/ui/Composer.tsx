@@ -195,8 +195,17 @@ export function Composer({
     across the bar.
   */
   const COMPACT_ROW_DP = 400;
+  /*
+    THREE KEYS DO NOT FIT BESIDE A FIELD. Adding the camera as its own key gave
+    the bar four leading/trailing controls and squeezed the input to nothing.
+    So the `+` is not just the narrow-row form any more: it is the form whenever
+    there are three attach actions, which is exactly the arrangement the header
+    note above describes — one list behind a `+`, not a row of keys. Two
+    actions still sit out on the bar where there is room for them.
+  */
+  const attachCount = (showCamera ? 1 : 0) + (showPicture ? 1 : 0) + (showDocument ? 1 : 0);
   const compactAttach =
-    rowWidth !== null && rowWidth < COMPACT_ROW_DP && showPicture && showDocument;
+    attachCount > 2 || (rowWidth !== null && rowWidth < COMPACT_ROW_DP && showPicture && showDocument);
 
   /*
     Camera FIRST, then library, then files — Noom's and BFF's order in the
