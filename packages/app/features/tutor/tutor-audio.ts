@@ -18,12 +18,14 @@
 // WHY NOT CHUNKED PLAYBACK. `react-native-audio-api@0.13.3` has no way to
 // decode a partial body: `AudioDecoder:decodeAudioData` takes a
 // `types.ts:DecodeDataInput` (`number | string | ArrayBuffer`) and resolves one
-// complete `AudioBuffer`, and `core/StreamerNode` — the only incremental
-// source — is deprecated in this version, HLS-only, and gated on an
-// FFmpeg-enabled build (`utils/flags:isFfmpegEnabled`), which the chunked
-// `audio/mpeg` body the voice route returns is not. So a sentence is the
-// smallest unit that can be made audible, and the pipeline is what removes the
-// wait between sentences.
+// complete `AudioBuffer`. Its two incremental sources both want a URL they can
+// pull themselves, which this sentence is not — it is a POST carrying the
+// signed tag that proves the server emitted the text (`voice-utterance.ts`),
+// so there is no address to hand either of them. `core/StreamerNode` is also
+// deprecated here and FFmpeg-gated (`utils/flags:isFfmpegEnabled`), and the
+// `MediaElementAudioSourceNode` its deprecation note redirects to takes an
+// `<Audio>` source, not a request. So a sentence is the smallest unit that can
+// be made audible, and the pipeline is what removes the wait between them.
 //
 // The queue also doubles as the avatar's `SpeechDriver`: it computes an even
 // viseme track from the text and duration, then samples it on the audio clock.
@@ -78,6 +80,8 @@ interface QueuedSentence {
   controller: AbortController | null;
   /** Whether the render has resolved. A finished render frees a concurrency slot. */
   settled: boolean;
+  /** Armed only once playback is waiting on this sentence. Cleared when it settles. */
+  deadline: ReturnType<typeof setTimeout> | null;
   renderStartedAt: number;
   renderedAt: number;
 }
@@ -114,10 +118,12 @@ export interface TutorAudioQueueOptions {
 }
 
 /**
- * Dev-only playback timeline, read off `adb logcat -s ReactNativeJS` during the
- * demo smoke pass (`qa/walkthroughs/DEMO-SMOKE-2026-09-03.md`). It is the ruler
- * the pipelining above is measured with, so it lives beside it; `__DEV__` keeps
- * it out of every shipped bundle.
+ * Dev-only playback timeline for the demo smoke pass
+ * (`qa/walkthroughs/DEMO-SMOKE-2026-09-03.md` Appendix A). Read it off the
+ * METRO terminal, not `adb logcat`: on the New Architecture `console.log` is
+ * forwarded to Metro and never reaches the `ReactNativeJS` logcat tag. It is
+ * the ruler the pipelining above is measured with, so it lives beside it;
+ * `__DEV__` keeps it out of every shipped bundle.
  */
 const timingEnabled = (): boolean => typeof __DEV__ !== 'undefined' && __DEV__;
 
@@ -171,6 +177,7 @@ export class TutorAudioQueue {
       render: null,
       controller: null,
       settled: false,
+      deadline: null,
       renderStartedAt: 0,
       renderedAt: 0,
     });
@@ -197,9 +204,9 @@ export class TutorAudioQueue {
     this.generation += 1;
     this.activeSource?.stop();
     this.activeSource = null;
-    this.active?.controller?.abort();
+    if (this.active !== null) this.abandon(this.active);
     this.active = null;
-    for (const item of this.queue) item.controller?.abort();
+    for (const item of this.queue) this.abandon(item);
     // Dropping the queue drops the decoded-but-unplayed buffers with it.
     this.queue = [];
     this.previousText = undefined;
@@ -215,6 +222,19 @@ export class TutorAudioQueue {
     this.turnStartedAt = Date.now();
     this.turnSentenceIdx = 0;
     this.lastEndedAt = 0;
+  }
+
+  /**
+   * Drop a sentence the turn no longer wants: cancel its request and disarm its
+   * deadline. The timer is cleared here rather than left to the render's own
+   * continuation so nothing keeps a timer alive after the queue is emptied.
+   */
+  private abandon(item: QueuedSentence): void {
+    if (item.deadline !== null) {
+      clearTimeout(item.deadline);
+      item.deadline = null;
+    }
+    item.controller?.abort();
   }
 
   /** Playback position in seconds, or 0 when nothing is playing. */
@@ -262,23 +282,16 @@ export class TutorAudioQueue {
     const controller = new AbortController();
     item.controller = controller;
     item.renderStartedAt = Date.now();
-    /*
-      The deadline, not just the barge-in lever.
-
-      Without one a single hung POST left `isPlaying` true with the rest of the
-      turn queued behind it — silence for the remainder, which is the exact
-      outcome the route's 204 text-only contract exists to prevent. Firing the
-      same controller means a timeout and a barge-in take one code path, and
-      `render`'s catch already treats an abort as a text-only sentence.
-    */
-    const deadline = setTimeout(() => controller.abort(), VOICE_SENTENCE_TIMEOUT_MS);
     const render = this.render(item, controller.signal);
     item.render = render;
     // `render` never rejects, so this always runs. Refilling here rather than
     // only on enqueue/advance is what keeps the last sentences of a turn from
     // waiting on a boundary that has not arrived yet.
     void render.then(() => {
-      clearTimeout(deadline);
+      if (item.deadline !== null) {
+        clearTimeout(item.deadline);
+        item.deadline = null;
+      }
       item.settled = true;
       this.pump();
     });
@@ -330,40 +343,79 @@ export class TutorAudioQueue {
     this.active = item;
     const generation = this.generation;
 
-    this.audio.resume();
-    // Already in flight whenever an earlier sentence was speaking; only the
-    // first sentence of a turn actually starts its render here.
-    const decoded = await this.startRender(item);
+    /*
+      THE WHOLE BODY IS GUARDED, and that is not defensive padding.
 
-    if (generation !== this.generation) return;
-    // This sentence stops counting against the concurrency budget the moment
-    // it is rendered, so the one after next can start while it speaks.
-    this.active = null;
-    this.pump();
-    if (decoded === null) {
-      this.advance();
-      return;
-    }
+      Both call sites are `void this.playNext()`, so anything thrown here
+      becomes an unhandled rejection that leaves `isPlaying` true with an
+      `activeSource` that will never fire `onEnded` — `advance()` never runs
+      again and every later sentence piles into the queue for the rest of the
+      session. The realistic throw is the audio context itself: on native
+      `new AudioContext()` is a TypeError whenever the JSI module has not
+      registered (a stale dev client, a bundle loaded too early), and on web
+      wherever only `webkitAudioContext` exists. That used to cost one
+      text-only sentence; unguarded it costs the tutor's voice entirely.
+    */
+    try {
+      this.audio.resume();
+      // Already in flight whenever an earlier sentence was speaking; only the
+      // first sentence of a turn actually starts its render here.
+      const render = this.startRender(item);
 
-    // An AudioBufferSourceNode is single-use, so the node is built at playback
-    // even though the buffer behind it was decoded ahead of time.
-    const source = this.audio.createSource(decoded);
-    this.activeSource = source;
-    this.activeDuration = decoded.duration;
-    this.activeTrack = evenTrack(item.text, this.activeDuration);
-    this.activeTrackIdx = 0;
+      /*
+        The deadline starts HERE, not at prefetch.
 
-    this.audio.onEnded(source, () => {
+        `VOICE_SENTENCE_TIMEOUT_MS` budgets a sentence the child is WAITING on.
+        Armed when the render was queued instead, a sentence rendered two ahead
+        would be aborted for taking nine seconds even though fifteen seconds of
+        earlier audio still stood between it and its slot — silence bought at
+        the cost of a sentence nobody was waiting for. A prefetch that hangs is
+        bounded anyway: it holds a concurrency slot until this queue reaches it,
+        and then this timer applies.
+      */
+      if (!item.settled) {
+        item.deadline = setTimeout(() => item.controller?.abort(), VOICE_SENTENCE_TIMEOUT_MS);
+      }
+
+      const decoded = await render;
+
       if (generation !== this.generation) return;
-      this.activeSource = null;
-      this.playbackStartAt = 0;
-      this.lastEndedAt = Date.now();
-      this.advance();
-    });
+      // This sentence stops counting against the concurrency budget the moment
+      // it is rendered, so the one after next can start while it speaks.
+      this.active = null;
+      this.pump();
+      if (decoded === null) {
+        this.advance();
+        return;
+      }
 
-    source.start(0);
-    this.playbackStartAt = this.audio.currentTime();
-    this.markPlayed(item);
+      // An AudioBufferSourceNode is single-use, so the node is built at playback
+      // even though the buffer behind it was decoded ahead of time.
+      const source = this.audio.createSource(decoded);
+      this.activeSource = source;
+      this.activeDuration = decoded.duration;
+      this.activeTrack = evenTrack(item.text, this.activeDuration);
+      this.activeTrackIdx = 0;
+
+      this.audio.onEnded(source, () => {
+        if (generation !== this.generation) return;
+        this.activeSource = null;
+        this.playbackStartAt = 0;
+        this.lastEndedAt = Date.now();
+        this.advance();
+      });
+
+      source.start(0);
+      this.playbackStartAt = this.audio.currentTime();
+      this.markPlayed(item);
+    } catch {
+      // One sentence lost to text, exactly as a failed render is. The turn
+      // continues; a broken audio context degrades the garnish, not the lesson.
+      if (generation !== this.generation) return;
+      this.active = null;
+      this.activeSource = null;
+      this.advance();
+    }
   }
 
   private advance(): void {

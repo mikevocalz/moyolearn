@@ -18,10 +18,11 @@
 // SOT-KEYWORDS: tutor audio queue test prefetch pipeline barge-in abort orphan rate limit order
 
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { afterEach, describe, it } from 'node:test';
 import { registerHooks } from 'node:module';
 import { VOICE_SENTENCE_TIMEOUT_MS } from './tutor-constants.ts';
-import type { TutorAudioPort, TutorVoiceRef } from './tutor-audio.ts';
+// Aliased: the value of the same name is bound below by the dynamic import.
+import type { TutorAudioQueue as Queue, TutorAudioPort, TutorVoiceRef } from './tutor-audio.ts';
 import type { TutorAudioBuffer, TutorAudioSource } from './tutor-audio-context.ts';
 
 registerHooks({
@@ -75,6 +76,17 @@ const statusReply = (status: number): Response =>
     status,
     arrayBuffer: async () => new ArrayBuffer(0),
   }) as unknown as Response;
+
+/*
+  Most tests end with a request deliberately left unanswered, which leaves that
+  sentence's 8s deadline armed — and `node --test` will not exit while a timer
+  is pending, so the suite sat for ~16s of wall clock doing nothing. `stop()`
+  disarms them, so every queue gets stopped when its test ends.
+*/
+const live: Queue[] = [];
+afterEach(() => {
+  for (const queue of live.splice(0)) queue.stop();
+});
 
 function harness(prefetchDepth?: number) {
   const requests: PendingRequest[] = [];
@@ -142,7 +154,8 @@ function harness(prefetchDepth?: number) {
     await settle();
   };
 
-  return { queue, requests, sources, started, replyTo, speak, endPlaybackOf };
+  live.push(queue);
+  return { queue, audio, requests, sources, started, replyTo, speak, endPlaybackOf };
 }
 
 describe('the tutor voice pipeline', () => {
@@ -299,6 +312,31 @@ describe('the tutor voice pipeline', () => {
       const fresh = h.requests.find((r) => r.text === 'New.');
       assert.equal(fresh?.previousText, undefined, 'the abandoned turn leaked into the new one');
     });
+  });
+
+  it('loses one sentence, not the session, when the audio context throws', async () => {
+    // Both playNext call sites are `void`, so an unguarded throw here would be
+    // an unhandled rejection that leaves isPlaying true forever — the tutor
+    // goes mute for the rest of the session rather than for one sentence. The
+    // realistic cause is `new AudioContext()` on a runtime where the JSI module
+    // has not registered.
+    const h = harness();
+    let thrown = false;
+    h.audio.resume = () => {
+      if (thrown) return;
+      thrown = true;
+      throw new TypeError('createAudioContext is not a function');
+    };
+
+    h.queue.enqueue('One.', VOICE);
+    await settle();
+    assert.equal(thrown, true, 'the first sentence never reached the audio context');
+
+    h.queue.enqueue('Two.', VOICE);
+    await settle();
+    await h.speak('Two.');
+
+    assert.deepEqual(h.started, ['Two.'], 'the queue wedged instead of continuing');
   });
 
   it('gives up on a hung sentence instead of silencing the rest of the turn', async (t) => {

@@ -286,10 +286,13 @@ Checked against the installed package, not the docs:
   (`number | string | ArrayBuffer`) and resolves one complete `AudioBuffer`.
   There is no partial-body decode, so a sentence is the smallest unit that can
   be made audible.
-- `core/StreamerNode` is the only incremental source. In 0.13.3 it is marked
-  `@deprecated`, is HLS-only, and needs an FFmpeg-enabled build
-  (`utils/flags:isFfmpegEnabled`). The voice route returns a chunked
-  `audio/mpeg` body, which it cannot consume.
+- Both incremental sources want a URL they fetch themselves, and a sentence is
+  not one: it is a POST carrying the signed tag that proves the server emitted
+  the text (`apps/web/lib/voice-utterance.ts`), so there is no address to hand
+  them. `core/StreamerNode` is additionally `@deprecated` in 0.13.3, HLS-only
+  and FFmpeg-gated (`utils/flags:isFfmpegEnabled`); the
+  `core/MediaElementAudioSourceNode` its deprecation note redirects to takes an
+  `<Audio>` element source, not a request with a body and credentials.
 - `core/AudioBufferQueueSourceNode` (`enqueueBuffer` / `clearBuffers` /
   `onBufferEnded`) **does** exist and would give gapless playback of
   already-decoded buffers — but it is mobile-only (absent from `src/web-core/`),
