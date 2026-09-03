@@ -181,7 +181,7 @@ export function ShellTabBar({
             of the column, and the negative margin is dropped rather than
             reinterpreted as a sideways overhang into the content.
           */}
-          <View className={rail ? 'items-center gap-0.5 py-stack' : '-mt-8 items-center gap-0.5'}>
+          <View className={rail ? 'items-stretch gap-0.5 py-stack' : '-mt-8 items-center gap-0.5'}>
             <View
               /*
                 ROUNDED SQUARE, not a circle. The kit's own emphasis slot
@@ -197,7 +197,7 @@ export function ShellTabBar({
                 number is the number on both platforms. `raisedTarget` still only
                 ever raises it (K–2 → 72).
               */
-              className={`h-nav-raised w-nav-raised ${raisedTarget} items-center justify-center rounded-md border-2 border-on-surface-footer bg-action-primary shadow-card ${
+              className={`${rail ? 'w-full' : 'w-nav-raised'} h-nav-raised ${raisedTarget} items-center justify-center rounded-md border-2 border-on-surface-footer bg-action-primary shadow-card ${
                 focused ? '' : 'active:opacity-80'
               }`}
             >

@@ -294,6 +294,9 @@
   --spacing-section: 2rem;
   --spacing-section-cool: 2rem;
   --spacing-section-hot: 3rem;
+  --spacing-brand-clear: 30px;
+  --spacing-brand-clear-cool: 30px;
+  --spacing-brand-clear-hot: 30px;
   --spacing-target-floor: 24px;
   --spacing-target-adult: 44px;
   --spacing-target-teen: 48px;
@@ -301,15 +304,15 @@
   --spacing-target-young: 72px;
   --spacing-nav-rail: 96px;
   --spacing-nav-raised: 64px;
-  --color-surface: light-dark(#FFFDF7, #221034);
-  --color-surface-raised: light-dark(#FFFFFF, #32184F);
-  --color-surface-sunken: light-dark(#F6F3E8, #14091F);
+  --color-surface: light-dark(#FFFDF7, #171614);
+  --color-surface-raised: light-dark(#FFFFFF, #262420);
+  --color-surface-sunken: light-dark(#F6F3E8, #0D0C0B);
   --color-text: light-dark(#0D0C0B, #F6F3E8);
-  --color-text-muted: light-dark(#55524A, #94917F);
+  --color-text-muted: light-dark(#55524A, #C4C0B0);
   --color-text-inverse: light-dark(#FFFDF7, #0D0C0B);
-  --color-primary: light-dark(#FFDB33, #806400);
-  --color-primary-pressed: light-dark(#F2C700, #574400);
-  --color-on-primary: light-dark(#0D0C0B, #FFF7C7);
+  --color-primary: light-dark(#FFDB33, #FFDB33);
+  --color-primary-pressed: light-dark(#F2C700, #F2C700);
+  --color-on-primary: light-dark(#0D0C0B, #0D0C0B);
   --color-accent: light-dark(#F7418F, #FF69B4);
   --color-accent-pressed: light-dark(#E3307E, #F7418F);
   --color-on-accent: light-dark(#0D0C0B, #0D0C0B);
@@ -353,8 +356,8 @@
   --color-on-chrome-mango: light-dark(#43216B, #43216B);
   --color-surface-header: light-dark(#E9DDF5, #D5C1EC);
   --color-on-surface-header: light-dark(#43216B, #43216B);
-  --color-surface-footer: light-dark(#E9DDF5, #D5C1EC);
-  --color-on-surface-footer: light-dark(#43216B, #43216B);
+  --color-surface-footer: light-dark(#D5C1EC, #B99BDE);
+  --color-on-surface-footer: light-dark(#14091F, #14091F);
   --color-surface-muted: light-dark(#FADBD5, #F7BDB2);
   --color-on-surface-muted: light-dark(#43216B, #43216B);
   --color-surface-ai: light-dark(#E9DDF5, #D5C1EC);
@@ -543,6 +546,7 @@
     --spacing-stack: var(--spacing-stack-hot);
     --spacing-group: var(--spacing-group-hot);
     --spacing-section: var(--spacing-section-hot);
+    --spacing-brand-clear: var(--spacing-brand-clear-hot);
   }
   .dial-cool {
     --radius-card: var(--radius-cool);
@@ -584,6 +588,7 @@
     --spacing-stack: var(--spacing-stack-cool);
     --spacing-group: var(--spacing-group-cool);
     --spacing-section: var(--spacing-section-cool);
+    --spacing-brand-clear: var(--spacing-brand-clear-cool);
   }
 }
 

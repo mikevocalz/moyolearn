@@ -40,7 +40,10 @@ export function PracticeContent() {
       <FadeIn>
         <Section className="gap-element">
           <View className="flex-row items-center justify-between">
-            <Text variant="label" tone="muted">
+            {/* Full-strength ink, not muted: this is the child's place in the
+                set — the one number they look for — and muting it made the
+                smallest text on the screen also the faintest. */}
+            <Text variant="label">
               Question {itemIndex + 1} of {total}
             </Text>
           </View>

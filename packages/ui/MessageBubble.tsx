@@ -19,9 +19,15 @@ const ALIGN: Record<MessageFrom, string> = {
   child: 'self-end',
 };
 
+/*
+  The tutor's turn is set a step above body. On a learner surface this line IS
+  the instruction — a pre-reader is meant to be able to read (or follow along
+  with) it, and at body size it was the smallest thing on a screen built for a
+  child. `title` on the hot dial is 20px against body's 18.
+*/
 const TEXT: Record<MessageFrom, string> = {
-  tutor: 'font-sans text-body-lg text-text',
-  child: 'font-sans text-body text-text',
+  tutor: 'font-sans text-title text-text',
+  child: 'font-sans text-body-lg text-text',
 };
 
 export function MessageBubble({ from, children, className }: MessageBubbleProps) {

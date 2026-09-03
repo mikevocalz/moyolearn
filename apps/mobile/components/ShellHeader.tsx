@@ -60,9 +60,10 @@ export function ShellHeader({ titles, fallback }: ShellHeaderProps) {
           never drift between them. It replaces a blank spacer that existed only
           to keep the title optically centred.
         */}
-        {/* 20pt of air on the mark's left and right: at the bar's full height it
-            otherwise sits flush to the edge and hard against the title. */}
-        <View className="pl-1 pr-2">
+        {/* Air on the mark's left, and 30pt between it and the title: at the
+            bar's full height the wordmark otherwise sits flush to the edge and
+            hard against the title beside it. */}
+        <View className="pl-1 pr-brand-clear">
           {/* ALWAYS the full-colour mark. The logo's inks are fixed brand
               property — no scheme, surface, or contrast problem is solved by
               recolouring it. If the mark does not read on a bar, the BAR is
@@ -80,7 +81,7 @@ export function ShellHeader({ titles, fallback }: ShellHeaderProps) {
         {/* Left-aligned beside the mark, not centred: the logo now anchors the
             bar's left edge, and a centred title between it and the avatar reads
             as a third, competing element. */}
-        <Text className="flex-1 text-title text-on-surface-header" numberOfLines={1}>
+        <Text className="flex-1 text-title-lg font-bold text-on-surface-header" numberOfLines={1}>
           {titles[pathname] ?? fallback}
         </Text>
         {showAvatar ? (

@@ -186,15 +186,28 @@ export const semantic = {
     ground turned every 2px border into a lit grid. Steps are one ramp apart so
     elevation is legible without a shadow, which the flat design language bans.
   */
-  surface: { light: palette.ink[50], dark: palette.plum[900] },
-  'surface-raised': { light: palette.white, dark: palette.plum[800] },
-  'surface-sunken': { light: palette.ink[100], dark: palette.plum[950] },
+  /*
+    The reading ground is NEUTRAL in both schemes — paper by day, near-black by
+    night. It was plum 900/800/950, which tinted every screen the brand hue and
+    made long content tiring to read; the chrome carries the brand, the ground
+    does not. Neutrals carry surfaces, brand colour marks components: that is
+    both the M3 rule and the house one.
+  */
+  surface: { light: palette.ink[50], dark: palette.ink[900] },
+  'surface-raised': { light: palette.white, dark: palette.ink[800] },
+  'surface-sunken': { light: palette.ink[100], dark: palette.ink[950] },
   // ink[50] (#FFFDF7) as dark body text is brighter than the paper it imitates;
   // ink[100] is the same cream one step down and reads as chalk, not headlight.
   // The neutral family stays `ink` in both schemes: paper and its ink are the
   // product's other identity, and inverting them is what dark mode IS here.
   text: { light: palette.ink[950], dark: palette.ink[100] },
-  'text-muted': { light: palette.ink[600], dark: palette.ink[400] },
+  /*
+    Dark-scheme muted moves ink 400 → 300. At 400 on the near-black ground it
+    technically cleared AA and still read as "barely visible" on device at label
+    size — secondary text a child has to read (the question counter, card
+    subtitles) is not decoration, and AA is a floor rather than a target.
+  */
+  'text-muted': { light: palette.ink[600], dark: palette.ink[300] },
   'text-inverse': { light: palette.ink[50], dark: palette.ink[950] },
   /*
     RETRO: flat electric yellow, black ink on top.
@@ -207,9 +220,17 @@ export const semantic = {
     with cream on it — same ramp, same identity, a fraction of the chroma-area.
     Dimming the fill was tried first and still vibrated; the tone had to invert.
   */
-  primary: { light: palette.burgundy[400], dark: palette.burgundy[800] },
-  'primary-pressed': { light: palette.burgundy[500], dark: palette.burgundy[900] },
-  'on-primary': { light: palette.ink[950], dark: palette.burgundy[100] },
+  /*
+    The primary fill is the SAME bright yellow in both schemes, with dark ink on
+    it. It was dimmed to burgundy 800 in dark — a muddy olive — for a reason
+    that no longer holds: at the time the reading ground was plum, and a bright
+    gold on that ground vibrated. The ground is neutral now, so the dark scheme
+    can carry the brand's actual yellow instead of a drab stand-in, and the
+    primary action reads the same on both.
+  */
+  primary: { light: palette.burgundy[400], dark: palette.burgundy[400] },
+  'primary-pressed': { light: palette.burgundy[500], dark: palette.burgundy[500] },
+  'on-primary': { light: palette.ink[950], dark: palette.ink[950] },
   accent: { light: palette.ember[500], dark: palette.ember[400] },
   // Not palette.ember[600] (#DB2777): black ink on it is 4.25:1, under AA, and
   // this is a hover/press BACKGROUND that carries the button label. Nudged just
@@ -367,8 +388,14 @@ export const semantic = {
   // and rail, which read as three unrelated products in one window. The DOOR is
   // carried by which pastel that one family is, and selection is carried by the
   // marker — never by giving the bottom bar its own hue.
-  'surface-footer': { light: palette.plum[100], dark: palette.plum[200] },
-  'on-surface-footer': { light: palette.plum[700], dark: palette.plum[700] },
+  /*
+    Two ramp steps darker than the header, deliberately: the rail and tab bar
+    sit against a neutral ground and need to read as a distinct plane, and at
+    the header's own tint they washed out. The ink drops to plum 950 to hold
+    contrast at the darker fill.
+  */
+  'surface-footer': { light: palette.plum[200], dark: palette.plum[300] },
+  'on-surface-footer': { light: palette.plum[950], dark: palette.plum[950] },
   'surface-muted': { light: palette.flame[100], dark: palette.flame[200] },
   'on-surface-muted': { light: palette.plum[700], dark: palette.plum[700] },
   // Content-meaning tints. Same values as the chrome pair of the same hue; text
@@ -724,6 +751,14 @@ export const spacingTiers = {
   stack: { cool: '0.75rem', hot: '1rem' },
   group: { cool: '1.5rem', hot: '2rem' },
   section: { cool: '2rem', hot: '3rem' },
+  /*
+    The gap between the app bar's wordmark and the title beside it. Its own tier
+    because it is a BRAND clearance, not a layout rhythm: the mark needs air
+    proportional to itself, and at `group` the title crowded it. Fixed at 30px
+    in both dials — a logo's clear space does not shrink because the surface is
+    cool.
+  */
+  'brand-clear': { cool: '30px', hot: '30px' },
 } as const;
 
 // ---- touch targets (doc 08 §2.4) --------------------------------------------

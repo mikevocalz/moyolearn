@@ -294,6 +294,9 @@
   --spacing-section: 2rem;
   --spacing-section-cool: 2rem;
   --spacing-section-hot: 3rem;
+  --spacing-brand-clear: 30px;
+  --spacing-brand-clear-cool: 30px;
+  --spacing-brand-clear-hot: 30px;
   --spacing-target-floor: 24px;
   --spacing-target-adult: 44px;
   --spacing-target-teen: 48px;
@@ -362,8 +365,8 @@
       --color-on-chrome-mango: #43216B;
       --color-surface-header: #E9DDF5;
       --color-on-surface-header: #43216B;
-      --color-surface-footer: #E9DDF5;
-      --color-on-surface-footer: #43216B;
+      --color-surface-footer: #D5C1EC;
+      --color-on-surface-footer: #14091F;
       --color-surface-muted: #FADBD5;
       --color-on-surface-muted: #43216B;
       --color-surface-ai: #E9DDF5;
@@ -399,15 +402,15 @@
       --color-tenant-danger: #A03333;
     }
     @variant dark {
-      --color-surface: #221034;
-      --color-surface-raised: #32184F;
-      --color-surface-sunken: #14091F;
+      --color-surface: #171614;
+      --color-surface-raised: #262420;
+      --color-surface-sunken: #0D0C0B;
       --color-text: #F6F3E8;
-      --color-text-muted: #94917F;
+      --color-text-muted: #C4C0B0;
       --color-text-inverse: #0D0C0B;
-      --color-primary: #806400;
-      --color-primary-pressed: #574400;
-      --color-on-primary: #FFF7C7;
+      --color-primary: #FFDB33;
+      --color-primary-pressed: #F2C700;
+      --color-on-primary: #0D0C0B;
       --color-accent: #FF69B4;
       --color-accent-pressed: #F7418F;
       --color-on-accent: #0D0C0B;
@@ -451,8 +454,8 @@
       --color-on-chrome-mango: #43216B;
       --color-surface-header: #D5C1EC;
       --color-on-surface-header: #43216B;
-      --color-surface-footer: #D5C1EC;
-      --color-on-surface-footer: #43216B;
+      --color-surface-footer: #B99BDE;
+      --color-on-surface-footer: #14091F;
       --color-surface-muted: #F7BDB2;
       --color-on-surface-muted: #43216B;
       --color-surface-ai: #D5C1EC;
@@ -552,6 +555,7 @@
     --spacing-stack: var(--spacing-stack-hot);
     --spacing-group: var(--spacing-group-hot);
     --spacing-section: var(--spacing-section-hot);
+    --spacing-brand-clear: var(--spacing-brand-clear-hot);
   }
   .dial-cool {
     --radius-card: var(--radius-cool);
@@ -593,6 +597,7 @@
     --spacing-stack: var(--spacing-stack-cool);
     --spacing-group: var(--spacing-group-cool);
     --spacing-section: var(--spacing-section-cool);
+    --spacing-brand-clear: var(--spacing-brand-clear-cool);
   }
 }
 

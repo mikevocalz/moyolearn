@@ -49,8 +49,15 @@ module.exports = withUniwindConfig(config, {
   cssEntryFile: "./global.css",
   dtsFile: "./uniwind-types.d.ts",
   polyfills: {
-    // NativeWind's rem base was 14, Uniwind defaults to 16. Keeping 14 means
-    // no spacing/sizing shift across the migration.
-    rem: 14,
+    /*
+      16, the same root the web fork and the token scale assume.
+      This was 14 — NativeWind's old base, kept "so nothing shifts across the
+      migration" — which silently rendered the ENTIRE app at 87.5%: body 17
+      became 14.9, the K–2 target 72 became 63, and every gate that reasoned in
+      rem (check-targets among them) certified numbers the device never showed.
+      A token scale is a contract about sizes; honouring it at 0.875 is not a
+      smaller version of honouring it.
+    */
+    rem: 16,
   },
 });
