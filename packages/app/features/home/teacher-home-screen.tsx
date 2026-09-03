@@ -16,7 +16,6 @@ import {
   Badge,
   Banner,
   Button,
-  Card,
   Container,
   EmptyState,
   Heading,
@@ -24,6 +23,7 @@ import {
   ListItem,
   LoadingSkeleton,
   PressScale,
+  ReadFailure,
   SafeArea,
   Text,
 } from '@acme/ui';
@@ -47,6 +47,7 @@ export function TeacherHomeScreen() {
     assignments,
     loading: assignmentsLoading,
     error: assignmentsError,
+    retry: retryAssignments,
   } = useTeacherAssignments();
 
   const active = classes.filter((klass) => klass.status === 'active');
@@ -92,14 +93,20 @@ export function TeacherHomeScreen() {
                 "we could not check" are different sentences, so a cold failed
                 read gets the retry — never the calm create-a-class prompt.
               */
-              <Card className="gap-element">
-                <Badge label="Not loaded" tone="attention" />
-                <Text>We couldn&rsquo;t load your classes.</Text>
-                <Text variant="caption" tone="muted">
-                  Nothing has changed in your classroom — this screen just needs a connection.
-                </Text>
-                <Button title="Try again" variant="outline" className="self-start" onPress={retry} />
-              </Card>
+              <ReadFailure
+                title="We couldn't load your classes."
+                description="Nothing has changed in your classroom — this screen just needs a connection."
+                onRetry={retry}
+                action={
+                  <Button
+                    title="Go to Classes"
+                    variant="ghost"
+                    onPress={() => {
+                      router.push(classesRootPath());
+                    }}
+                  />
+                }
+              />
             ) : active.length === 0 ? (
               /* No classes is a routed exit, never a dead end — the create
                  form lives on the Classes tab (its always-rendered card). */
@@ -157,10 +164,14 @@ export function TeacherHomeScreen() {
                   </Heading>
                   {assignmentsError !== null && assignments.length === 0 ? (
                     /* Same error-before-empty rule as the classes read: a
-                       failed check must not read as a clear desk. */
-                    <Text variant="body" tone="muted">
-                      We couldn&rsquo;t check what&rsquo;s due — it refreshes when you reconnect.
-                    </Text>
+                       failed check must not read as a clear desk — and it owes
+                       the same retry, since this strip failing while the class
+                       list loaded is exactly the case a re-read fixes. */
+                    <ReadFailure
+                      title="We couldn't check what's due."
+                      description="Nothing has been published or withdrawn — only this strip is missing."
+                      onRetry={retryAssignments}
+                    />
                   ) : dueSoon.length === 0 ? (
                     <Text variant="body" tone="muted">
                       Nothing published is due soon. Assignments you publish show up here as their

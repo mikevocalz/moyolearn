@@ -9,7 +9,9 @@
 // read. The two dead-end laws both land here: no assignments → the create form
 // is the empty state's action; NO CLASSES → a routed exit to teacher.classes
 // ("Set up a class first"), because an assignment without a class cannot be
-// started honestly.
+// started honestly. Both of those empty states are claims about the server's
+// answer, so neither may render before one arrives: a failed read takes the
+// error branch with a retry, never the calm exit (error before empty).
 //
 // Mobbin: https://mobbin.com/screens/5b76071b-1098-461d-b8e4-223c41bd02b2 (Notion —
 //   to-do rows with due dates as one supporting line, filter + New controls in
@@ -34,6 +36,7 @@ import {
   ListItem,
   LoadingSkeleton,
   Menu,
+  ReadFailure,
   SegmentedControl,
   Text,
 } from '@acme/ui';
@@ -55,20 +58,42 @@ const STATUS_OPTIONS: readonly { value: AssignStatusFilter; label: string }[] = 
 
 export function AssignScreen() {
   const router = useRouter();
-  const { classes, loading: classesLoading } = useTeacherClasses();
+  const {
+    classes,
+    loading: classesLoading,
+    error: classesError,
+    retry: retryClasses,
+  } = useTeacherClasses();
   const statusFilter = useAssignStore((s) => s.statusFilter);
   const classFilter = useAssignStore((s) => s.classFilter);
   const setStatusFilter = useAssignStore((s) => s.setStatusFilter);
   const setClassFilter = useAssignStore((s) => s.setClassFilter);
-  const { assignments, loading, error } = useTeacherAssignments(classFilter ?? undefined);
+  const {
+    assignments,
+    loading,
+    error,
+    retry: retryAssignments,
+  } = useTeacherAssignments(classFilter ?? undefined);
 
   const visible =
     statusFilter === 'all' ? assignments : assignments.filter((a) => a.status === statusFilter);
   const classNames = new Map(classes.map((klass) => [klass.id, klass.name]));
   const activeFilters = (statusFilter !== 'all' ? 1 : 0) + (classFilter !== null ? 1 : 0);
-  // No classes is decided only once the classes read has answered — a slow
-  // read must not flash the "set up a class" exit at a teacher who has five.
-  const noClasses = !classesLoading && classes.length === 0;
+  /*
+    "No classes" is a claim about the roster, so only an ANSWERED read may make
+    it. A slow read must not flash the "set up a class" exit at a teacher who
+    has five — and a FAILED one must not either: `classes` is also empty when
+    the read never landed, and rendering the calm exit there tells a teacher
+    their classroom is empty because we could not reach the server.
+  */
+  const noClasses = !classesLoading && classesError === null && classes.length === 0;
+  // keepPreviousData means an errored read can still hold the last good list —
+  // that is the stale-with-label case (the classes-content offline idiom).
+  // A cold failure has nothing to label, so it takes the blocking branch.
+  const staleSomewhere =
+    (classesError !== null && classes.length > 0) || (error !== null && assignments.length > 0);
+  const coldFailure =
+    (classesError !== null && classes.length === 0) || (error !== null && assignments.length === 0);
 
   return (
     <View className="mx-auto w-full max-w-2xl gap-section px-inset py-section">
@@ -82,9 +107,10 @@ export function AssignScreen() {
       </View>
 
       {/* Contract offline path: reads keep serving the cached list, labelled
-          stale — the banner is the label, never a blocking state. Publishing
+          stale — the banner is the label, never a blocking state. It may only
+          claim "last saved list" when one is actually on screen. Publishing
           lives on the form and detail; each fails visibly there. */}
-      {error !== null ? (
+      {staleSomewhere ? (
         <Banner
           tone="offline"
           title="Out of sync"
@@ -94,6 +120,31 @@ export function AssignScreen() {
 
       {loading || classesLoading ? (
         <LoadingSkeleton count={3} />
+      ) : coldFailure ? (
+        /*
+          Error before empty: "you have assigned nothing" and "we could not
+          check what you assigned" are different sentences, and only the first
+          one is calm. Both reads retry together — either one being down is
+          enough to make this list a guess. The exit stays live because Classes
+          reads a different endpoint and may well load when this one did not.
+        */
+        <ReadFailure
+          title="We couldn't load your assignments."
+          description="Nothing has changed — none of your work was published or withdrawn. This screen just needs a connection."
+          onRetry={() => {
+            retryClasses();
+            retryAssignments();
+          }}
+          action={
+            <Button
+              title="Go to Classes"
+              variant="ghost"
+              onPress={() => {
+                router.push(classesRootPath());
+              }}
+            />
+          }
+        />
       ) : noClasses ? (
         /* Contract no_data path, class half: a routed exit, never a dead end —
            the create form cannot be offered honestly with nothing to assign to. */

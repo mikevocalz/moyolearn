@@ -16,17 +16,23 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { LearnerAssignment } from './learner-assignments.service.ts';
 import { assignmentQueryKey, teacherAssignmentsQueryKey } from './use-assignments.ts';
 import { API_URL } from '../../core/api-url.ts';
+import { getJson } from '../../core/api-fetch.ts';
 
 export const learnerAssignmentsQueryKey = () => ['learner-assignments'] as const;
 
-async function getJson<T>(path: string, signal: AbortSignal | undefined): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { credentials: 'include', signal });
-  if (!res.ok) throw new Error(`HTTP ${String(res.status)}`);
-  return (await res.json()) as T;
-}
-
+/**
+ * `retry` leaves the hook because the plan owes one. A failed read here used to
+ * arrive as an empty assignment list and merge into the fixture week as nothing
+ * at all — so "we could not reach the server" rendered as "Nothing due — nice."
+ * to a child who did in fact have homework. The error and the way out of it are
+ * both part of what this hook returns, on the use-reports pattern.
+ *
+ * `keepPreviousData` means a refetch that fails still holds the last good list:
+ * that is the contract's offline path (cached week stays readable), and it is
+ * the consumer's job to label it stale rather than pretend it is fresh.
+ */
 export function useLearnerAssignments(enabled = true) {
-  const { data, isPending, error } = useQuery({
+  const { data, isPending, error, refetch } = useQuery({
     queryKey: learnerAssignmentsQueryKey(),
     queryFn: async ({ signal }) =>
       (await getJson<{ assignments: LearnerAssignment[] }>('/api/learner/assignments', signal))
@@ -34,7 +40,14 @@ export function useLearnerAssignments(enabled = true) {
     placeholderData: keepPreviousData,
     enabled,
   });
-  return { assignments: data ?? [], loading: isPending, error };
+  return {
+    assignments: data ?? [],
+    loading: isPending,
+    error: error ?? null,
+    retry: () => {
+      void refetch();
+    },
+  };
 }
 
 /**

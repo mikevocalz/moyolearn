@@ -10,15 +10,10 @@ import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tansta
 import type { Enrollment } from '../enrollment/enrollment.types.ts';
 import type { CreateClassInput, TeacherClass } from './classes.types.ts';
 import { API_URL } from '../../core/api-url.ts';
+import { getJson } from '../../core/api-fetch.ts';
 
 export const teacherClassesQueryKey = () => ['teacher-classes'] as const;
 export const classRosterQueryKey = (classId: string) => ['teacher-classes', classId] as const;
-
-async function getJson<T>(path: string, signal: AbortSignal | undefined): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { credentials: 'include', signal });
-  if (!res.ok) throw new Error(`HTTP ${String(res.status)}`);
-  return (await res.json()) as T;
-}
 
 export function useTeacherClasses() {
   const { data, isPending, error, refetch } = useQuery({

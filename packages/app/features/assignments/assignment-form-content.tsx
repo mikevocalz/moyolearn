@@ -37,6 +37,7 @@ import {
   Heading,
   LoadingSkeleton,
   PressScale,
+  ReadFailure,
   Text,
   notify,
   useAppForm,
@@ -44,6 +45,7 @@ import {
 } from '@acme/ui';
 import { GraduationCap, ListChecks } from '@acme/ui/icons';
 import { View } from '@acme/ui/primitives';
+import { isNotFound } from '../../core/api-fetch.ts';
 import { classesRootPath } from '../classes/classes-paths';
 import { useTeacherClasses } from '../classes/use-classes.ts';
 import { bandLabel } from '../classes/classes-content.tsx';
@@ -93,7 +95,7 @@ export function AssignmentFormScreen({
  */
 function EditAssignmentGate({ assignmentId }: { assignmentId: string }) {
   const router = useRouter();
-  const { assignment, loading } = useAssignment(assignmentId);
+  const { assignment, loading, error, retry } = useAssignment(assignmentId);
   const beginEdit = useAssignStore((s) => s.beginEdit);
   const seeded = useAssignStore((s) => s.editingAssignmentId === assignmentId);
 
@@ -127,11 +129,39 @@ function EditAssignmentGate({ assignmentId }: { assignmentId: string }) {
     );
   }
 
+  if (error !== null && !isNotFound(error)) {
+    /*
+      A failed read is not a verdict on the row. Only the server's 404 may
+      speak the silent-drop wording below — anything else (signed out, 500,
+      offline) would be putting "this assignment is gone" in front of a
+      teacher whose draft is sitting safely on the server.
+    */
+    return (
+      <View className="mx-auto w-full max-w-2xl px-inset py-section">
+        <ReadFailure
+          title="We couldn't open this assignment."
+          description="It has not been changed — this screen just needs a connection."
+          onRetry={retry}
+          action={
+            <Button
+              title="Back to Assign"
+              variant="ghost"
+              onPress={() => {
+                router.push(assignRootPath());
+              }}
+            />
+          }
+        />
+      </View>
+    );
+  }
+
   if (assignment === null) {
     /*
       The service's silent-drop wall, worded like the detail screen's: a
       foreign draft and a missing one must be indistinguishable (contract
-      permission path, doc 36 §4.4).
+      permission path, doc 36 §4.4) — so this branch says nothing about which
+      it was, and is reached only on a 404, never on a failed read.
     */
     return (
       <View className="mx-auto w-full max-w-2xl px-inset py-section">
@@ -139,6 +169,15 @@ function EditAssignmentGate({ assignmentId }: { assignmentId: string }) {
           icon={<ListChecks size={28} className="text-text-muted" />}
           title="Assignment not available"
           description="It may have been removed, or the link may be out of date."
+          action={
+            <Button
+              title="Back to Assign"
+              variant="primary"
+              onPress={() => {
+                router.push(assignRootPath());
+              }}
+            />
+          }
         />
       </View>
     );
@@ -168,6 +207,27 @@ function EditAssignmentGate({ assignmentId }: { assignmentId: string }) {
   return <AssignmentFormBody editing={assignment} />;
 }
 
+/**
+ * The screen's title block, shared by the form and by the two states that
+ * replace it. A heading that lives only on the happy path leaves the failure
+ * and the no-classes exit as untitled pages — the reader cannot tell what
+ * failed, and the browser tab and back stack lose their label too.
+ */
+function FormHeading({ editing }: { editing: Assignment | null }) {
+  return (
+    <View className="gap-element">
+      <Heading level={1} size="display-sm" className="text-text">
+        {editing !== null ? 'Edit assignment' : 'New assignment'}
+      </Heading>
+      <Text variant="body" tone="muted">
+        {editing !== null
+          ? 'Still a draft — nothing reaches students until you publish it.'
+          : 'It stays a draft — and stays on this device — until you publish it.'}
+      </Text>
+    </View>
+  );
+}
+
 function AssignmentFormBody({
   classId,
   editing,
@@ -177,7 +237,12 @@ function AssignmentFormBody({
   editing: Assignment | null;
 }) {
   const router = useRouter();
-  const { classes, loading: classesLoading } = useTeacherClasses();
+  const {
+    classes,
+    loading: classesLoading,
+    error: classesError,
+    retry: retryClasses,
+  } = useTeacherClasses();
   // The ACTIVE draft — the edit slice while a session is open (this body only
   // mounts inside the gate then), the persisted create draft otherwise.
   const draft = useAssignStore((s) => (s.editingAssignmentId !== null ? s.editDraft : s.draft));
@@ -305,7 +370,41 @@ function AssignmentFormBody({
   if (classesLoading) {
     return (
       <View className="mx-auto w-full max-w-2xl gap-section px-inset py-section">
+        {/* Title first, skeleton under it — the heading is known before the
+            read lands, so holding it back only makes the page jump. */}
+        <FormHeading editing={editing} />
         <LoadingSkeleton count={3} />
+      </View>
+    );
+  }
+
+  if (classesError !== null && classes.length === 0) {
+    /*
+      Error before empty: the class picker is this form's only target list, so
+      a failed read leaves us unable to say whether there is anything to assign
+      to. "Set up a class first" would be a guess presented as a fact — and the
+      wrong one for a teacher who already has classes. Retry in place, and the
+      exit stays live.
+    */
+    return (
+      <View className="mx-auto w-full max-w-2xl gap-section px-inset py-section">
+        {/* The page keeps its title through every state — a screen whose only
+            heading lives on the happy path is an untitled page when it fails. */}
+        <FormHeading editing={editing} />
+        <ReadFailure
+          title="We couldn't load your classes."
+          description="An assignment needs a class to go to, so the form waits until this read lands. Nothing you have drafted is lost."
+          onRetry={retryClasses}
+          action={
+            <Button
+              title="Go to Classes"
+              variant="ghost"
+              onPress={() => {
+                router.push(classesRootPath());
+              }}
+            />
+          }
+        />
       </View>
     );
   }
@@ -314,7 +413,8 @@ function AssignmentFormBody({
     // The contract's routed exit — same wall as the tracking list: nothing to
     // assign to means the honest next step is Classes, never a dead form.
     return (
-      <View className="mx-auto w-full max-w-2xl px-inset py-section">
+      <View className="mx-auto w-full max-w-2xl gap-section px-inset py-section">
+        <FormHeading editing={editing} />
         <EmptyState
           icon={<GraduationCap size={28} className="text-text-muted" />}
           title="Set up a class first"
@@ -335,16 +435,7 @@ function AssignmentFormBody({
 
   return (
     <View className="mx-auto w-full max-w-2xl gap-section px-inset py-section">
-      <View className="gap-element">
-        <Heading level={1} size="display-sm" className="text-text">
-          {editing !== null ? 'Edit assignment' : 'New assignment'}
-        </Heading>
-        <Text variant="body" tone="muted">
-          {editing !== null
-            ? 'Still a draft — nothing reaches students until you publish it.'
-            : 'It stays a draft — and stays on this device — until you publish it.'}
-        </Text>
-      </View>
+      <FormHeading editing={editing} />
 
       {/* Contract failure paths: a failed save saved nothing; a failed edit
           changed nothing; a failed publish left a DRAFT (the row exists) —
