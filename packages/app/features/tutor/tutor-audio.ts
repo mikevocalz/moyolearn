@@ -574,7 +574,7 @@ export class TutorAudioQueue {
       const startAt = this.audio.currentTime() + lead;
       source.start(startAt);
       this.playbackStartAt = startAt;
-      this.markPlayed(item);
+      this.markPlayed(item, lead);
     } catch {
       // One sentence lost to text, exactly as a failed render is. The turn
       // continues; a broken audio context degrades the garnish, not the lesson.
@@ -597,10 +597,11 @@ export class TutorAudioQueue {
     }
   }
 
-  private markPlayed(item: QueuedSentence): void {
+  private markPlayed(item: QueuedSentence, leadSeconds: number): void {
     this.turnSentenceIdx += 1;
     if (!timingEnabled()) return;
-    const at = Date.now();
+    // The AUDIBLE moment, not the scheduling one: the lead is silence on purpose.
+    const at = Date.now() + Math.round(leadSeconds * 1000);
     const render = item.renderedAt - item.renderStartedAt;
     // Positive lead means the buffer was decoded and waiting when its turn
     // came — the pipeline paid off. Near zero means playback waited on it.

@@ -41,7 +41,13 @@ Run from the main tree checked out at the branch's commits, on Metro 8081 (the d
 
 Voice timing off the same runs (logcat `[voice-timing]`): first word 6.1 s after send (model-bound, unchanged), inter-sentence gaps 14–43 ms, renders 500–1300 ms, prefetch lead 9–20 s.
 
-## After — device gate (to finish once the fresh-cache build is up)
+| 16:39 | ef19517 (fresh Metro cache) | plum stage live (pixel #43216B), eyes in sockets, preload 2565 ms, first frame 5374 ms after mount | — | — |
+| 16:49 | ef19517 | **mouth opens with the voice** (16-frame burst, `after/face-burst-mouth-fixed-1649.png`); arms quiet and asymmetric; first word 5.1 s after send | — | — |
+| 16:52 | 251adf0 | Mike: "she's speaking so fast" | K–2 at 0.88× with 14–47 ms between sentences | K–2 0.76×, 3–5 0.86× (palette v2); per-band breath after each full stop, 750/600/450/350 ms; dev log now reports the audible gap |
+
+Disk filled at 16:41 (a 2700×1800 recording plus a second dependency tree); recordings and the pnpm store were pruned and the duplicate worktree removed. `~/MoyoLearn` is now ON `feat/natalie-human` (a branch, not detached); `overhaul/phase1-audit` is untouched at `c519c05`. An untracked `apps/mobile/ios/` (209 MB, a prebuild) appeared during the session and was not created by this pass.
+
+## After — device gate (remaining)
 
 Run from this worktree so the peer's Metro is untouched:
 
