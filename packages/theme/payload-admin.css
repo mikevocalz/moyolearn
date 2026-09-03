@@ -34,10 +34,10 @@
   --color-border-strong: #000000;
   --color-border-disabled: rgba(13, 12, 11, 0.10);
   /* brand — the single accent */
-  --color-bg-brand: #FFB21D;
-  --color-bg-brand-hover: #E09310;
-  --color-bg-brand-pressed: #E09310;
-  --color-bg-brand-secondary: #E09310;
+  --color-bg-brand: #FFC547;
+  --color-bg-brand-hover: #FFB21D;
+  --color-bg-brand-pressed: #FFB21D;
+  --color-bg-brand-secondary: #FFB21D;
   --color-bg-brand-tertiary: #F6F3E8;
   --color-bg-brand-tertiary-hover: #F6F3E8;
   --color-text-onbrand: #0D0C0B;
@@ -126,10 +126,10 @@ html[data-theme='dark'], [data-theme='dark'] {
   --color-border-strong: #F6F3E8;
   --color-border-disabled: rgba(246, 243, 232, 0.10);
   /* brand — the single accent */
-  --color-bg-brand: #FFB21D;
-  --color-bg-brand-hover: #E09310;
-  --color-bg-brand-pressed: #E09310;
-  --color-bg-brand-secondary: #E09310;
+  --color-bg-brand: #FFC547;
+  --color-bg-brand-hover: #FFB21D;
+  --color-bg-brand-pressed: #FFB21D;
+  --color-bg-brand-secondary: #FFB21D;
   --color-bg-brand-tertiary: #0D0C0B;
   --color-bg-brand-tertiary-hover: #0D0C0B;
   --color-text-onbrand: #0D0C0B;

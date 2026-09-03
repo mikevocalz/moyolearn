@@ -228,8 +228,14 @@ export const semantic = {
     can carry the brand's actual yellow instead of a drab stand-in, and the
     primary action reads the same on both.
   */
-  primary: { light: palette['moyo-mango'], dark: palette['moyo-mango'] },
-  'primary-pressed': { light: palette.sun[500], dark: palette.sun[500] },
+  /*
+    The LIGHTER yellow — sun 300, not the mango (sun 400). Product owner's call
+    on the device: at 400 the primary action sat heavier than it needed to
+    beside the plum chrome. Same ramp, one step up; `on-primary` stays ink 950,
+    which measures fine on the lighter fill.
+  */
+  primary: { light: palette.sun[300], dark: palette.sun[300] },
+  'primary-pressed': { light: palette.sun[400], dark: palette.sun[400] },
   'on-primary': { light: palette.ink[950], dark: palette.ink[950] },
   accent: { light: palette.ember[500], dark: palette.ember[400] },
   // Not palette.ember[600] (#DB2777): black ink on it is 4.25:1, under AA, and
