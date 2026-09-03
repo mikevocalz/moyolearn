@@ -44,7 +44,7 @@ const recordingTransport = (): { transport: VoiceTransport; calls: string[] } =>
 
 const REGISTRY = {
   voiceId: 'test-voice',
-  liveModelId: 'eleven_v3',
+  liveModelId: 'eleven_flash_v2_5',
   bakedModelId: 'eleven_v3',
   version: 1,
 } as const;

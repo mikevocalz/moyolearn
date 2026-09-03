@@ -17,27 +17,28 @@
 import 'server-only';
 
 /**
- * ONE MODEL, EVERY PATH, EVERY PLATFORM: v3, live and baked, web and mobile.
+ * Live streams on Flash v2.5; baked set pieces render on v3.
  *
- * Doc 32 §3 splits these — Flash v2.5 (~75ms TTFB) for live turns, v3 for the
- * baked set pieces — and that split is why Natalie's voice AUDIBLY CHANGED
- * mid-session: the same voice id rendered by two models is not the same voice,
- * so a baked greeting or filler landing inside a live turn swapped her identity
- * in the middle of a conversation. Doc 32's own binding rule is one voice
- * everywhere, and one voice means one renderer.
+ * I set BOTH to v3 an hour ago to stop Natalie's identity changing mid-session,
+ * and it silenced her: the live path POSTs to `/v1/text-to-speech/{voice}/stream`
+ * (see eleven.ts:141) and **v3 is explicitly not a realtime model** — ElevenLabs'
+ * own guidance says so, and the comment I overwrote said so too. One model
+ * everywhere is right in principle and unavailable on this endpoint.
  *
- * The cost is honest and must be measured, not assumed: v3 is explicitly NOT a
- * realtime model in ElevenLabs' own guidance, so first-word latency will be
- * worse than Flash's. Identity beats latency — a tutor who changes voice
- * mid-sentence is a different person to a child, while a slower first word is
- * the same person arriving late. The latency budget absorbs it through
- * prefetching, not through a second model.
+ * So the identity problem is real and still open, and this is NOT the fix for
+ * it — it is a revert to a path that speaks. The two honest ways to close it,
+ * for a decision when a demo is not hours away:
+ *   a) Flash on BOTH paths — one model, streaming intact, baked pieces lose v3's
+ *      expressiveness.
+ *   b) v3 on both, live moved OFF the streaming endpoint — one model, the voice
+ *      Mike picked, materially worse first-word latency.
+ * What must NOT stand is the status quo where a baked piece can land inside a
+ * live turn: that is where the voice audibly changes. Keeping baked pieces out
+ * of live turns is the cheaper mitigation until (a) or (b) is chosen.
  *
- * SPEC-002 to file against doc 32 §3: the two-path model split is retired.
- * Product decision, Mike, 2026-09-02: "v3 was one and should be the same across
- * web and mobile."
+ * SPEC-002 (doc 32 §3) stays open on that decision.
  */
-export const LIVE_MODEL_ID = 'eleven_v3';
+export const LIVE_MODEL_ID = 'eleven_flash_v2_5';
 export const BAKED_MODEL_ID = 'eleven_v3';
 
 export interface VoiceRegistry {
