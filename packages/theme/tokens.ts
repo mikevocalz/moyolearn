@@ -684,6 +684,13 @@ export const contentWidths = {
   'pane-supplementary': '21rem',
   'pane-inspector': '20rem',
   'pane-tutor': '23.75rem',  // doc 23 §5: 380px TutorStage primary pane
+  // The tutor STAGE column — Natalie's own pane at `large` width only, so the
+  // conversation and the workspace keep their doc 23 §5 widths and the stage
+  // takes what is left over rather than squeezing either. Narrower than
+  // `pane-tutor` on purpose: it holds one avatar and one status rail, and at
+  // 1200dp the workspace between them cannot afford a second 380.
+  // See docs/design/tutor-stage-third-column.md for why this width class only.
+  'pane-tutor-stage': '20rem',
 } as const;
 
 /**
@@ -908,7 +915,7 @@ export const navChrome = {
     either sits in the bar or floats free of it — so this is the product's own
     call, taken on the device at both widths.
   */
-  raise: '48px',
+  raise: '58px',
   /*
     The selected-tab indicator, SQUARE (aspect-ratio 1) in both the bar and the
     rail — the product owner's call, and consistent with the radius law that
