@@ -6,6 +6,7 @@
 // SOT: packages/app/features/capture/ocr-review.native.tsx
 // SOT-KEYWORDS: read attachment native ocr executorch craft crnn homework
 import { OCRModule, OCR_ENGLISH } from 'react-native-executorch';
+import { readingOrder } from './reading-order.ts';
 
 let ocr: Awaited<ReturnType<typeof OCRModule.fromModelName>> | undefined;
 
@@ -13,7 +14,14 @@ export async function readAttachment(uri: string): Promise<string> {
   try {
     ocr ??= await OCRModule.fromModelName(OCR_ENGLISH);
     const detections = await ocr.forward(uri);
-    return detections.map((d) => d.text).join('\n').trim();
+    /*
+      IN READING ORDER. This was `detections.map(d => d.text).join('\n')`, and a
+      text detector emits boxes in its own order — CRAFT's is roughly by
+      activation, not by position — so a photographed worksheet came back as its
+      own words shuffled. The model was doing its job; nothing was putting the
+      page back together afterwards.
+    */
+    return readingOrder(detections);
   } catch (error) {
     /*
       A silent catch is why "I uploaded my homework and nothing happened" had

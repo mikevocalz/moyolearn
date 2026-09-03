@@ -11,6 +11,7 @@ export type { CaptureMode, CapturePhoto, CaptureStep } from './types';
 export { problemStorage } from './problem-storage';
 export { readProblem, writeProblem, PROBLEM_KEY } from './problem-storage.shared.ts';
 export { readAttachment } from './read-attachment';
+export { readingOrder, type TextBox } from './reading-order.ts';
 export { CameraSheet } from './CameraSheet';
 export { useCameraStore } from './camera.store.ts';
 export { readDocumentAt } from './read-document-at.ts';
