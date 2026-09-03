@@ -42,6 +42,11 @@ export interface TutorAvatarProps {
   tutorPresence: ResolvedTutorPresence;
   isSpeaking: boolean;
   tone?: ToneKey | null;
+  /**
+   * What the SESSION is doing, where the audio queue cannot say. `speaking` is
+   * derived from the speaker, so only the phases with no sound are passed here.
+   */
+  phase?: 'thinking' | 'listening';
 }
 
 const speechDriver: SpeechDriver = {
@@ -84,7 +89,7 @@ const TutorAvatar3D = lazy(async () => {
  */
 const STAGE_HEIGHT = 260;
 
-export function TutorAvatar({ tutorPresence, isSpeaking, tone }: TutorAvatarProps) {
+export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase }: TutorAvatarProps) {
   const stageRef = useRef<TutorStage | null>(null);
   const faceBusRef = useRef<FaceBus | null>(null);
 
@@ -259,6 +264,7 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone }: TutorAvatarProp
             isSpeaking={isSpeaking}
             sampleMouth={sampleMouth}
             sampleSpeaking={sampleSpeaking}
+            phase={phase}
             onFirstFrame={onFirstFrame}
             onUnavailable={onUnavailable}
           />

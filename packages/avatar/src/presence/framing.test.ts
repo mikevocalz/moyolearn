@@ -74,7 +74,7 @@ describe('frameBody', () => {
     // are the ones that carry the fill. Anything at the centre plane sits a
     // few percent inside it.
     const toes = new THREE.Vector3(0, 0, 0.208).project(camera);
-    assert.ok(Math.abs(toes.y) > 0.9, `she is small in frame (${toes.y})`);
+    assert.ok(Math.abs(toes.y) > 0.95, `she is small in frame (${toes.y})`);
     assert.ok(Math.abs(toes.y) <= TARGET_FILL + 1e-3, `she overflows (${toes.y})`);
   });
 

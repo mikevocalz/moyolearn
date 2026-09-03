@@ -37,6 +37,7 @@ export {
   gazeMorphs,
   lipFromOpenness,
   sanitizeNodeName,
+  type ConversationPhase,
   type HumanoBoneKey,
   type HumanoInput,
   type HumanoPresence,

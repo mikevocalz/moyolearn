@@ -109,6 +109,8 @@ export interface TutorAvatar3DProps {
   sampleMouth?: (nowMs: number) => number;
   /** Whether sound is coming out THIS FRAME. Preferred over `isSpeaking`. */
   sampleSpeaking?: () => boolean;
+  /** Session phase where there is no sound to derive it from. */
+  phase?: 'thinking' | 'listening';
   reducedMotion?: boolean;
   /** Called once, on any failure that means there will be no frame. */
   onUnavailable?: (reason: string) => void;
@@ -256,6 +258,7 @@ export function TutorAvatar3D({
   isSpeaking,
   sampleMouth,
   sampleSpeaking,
+  phase,
   reducedMotion = false,
   onUnavailable,
   onFirstFrame,
@@ -273,6 +276,7 @@ export function TutorAvatar3D({
   const reducedMotionRef = useRef(reducedMotion);
   const sampleMouthRef = useRef(sampleMouth);
   const sampleSpeakingRef = useRef(sampleSpeaking);
+  const phaseRef = useRef(phase);
   const activeRef = useRef(active);
   const onFirstFrameRef = useRef(onFirstFrame);
   const onUnavailableRef = useRef(onUnavailable);
@@ -289,6 +293,7 @@ export function TutorAvatar3D({
     reducedMotionRef.current = reducedMotion;
     sampleMouthRef.current = sampleMouth;
     sampleSpeakingRef.current = sampleSpeaking;
+    phaseRef.current = phase;
     activeRef.current = active;
     onFirstFrameRef.current = onFirstFrame;
     onUnavailableRef.current = onUnavailable;
@@ -419,6 +424,9 @@ export function TutorAvatar3D({
         const mouth = speaking ? (sampleMouthRef.current?.(timeMs) ?? 0) : 0;
         presence.step(delta, {
           speaking,
+          // Speech wins: sound coming out is the phase, whatever the session
+          // last said. Otherwise the session's own word, else waiting.
+          phase: speaking ? 'speaking' : (phaseRef.current ?? 'waiting'),
           mouth,
           reducedMotion: reducedMotionRef.current,
           cameraPosition: camera.position,

@@ -9,7 +9,7 @@
 import * as THREE from 'three';
 
 /** Fraction of the view height her tightest feature fills. */
-export const TARGET_FILL = 0.97;
+export const TARGET_FILL = 1;
 
 /**
  * Frames the full height of `body` and points `camera` at it.

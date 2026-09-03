@@ -726,7 +726,12 @@ export function TutorStage({
       under it; the conversation is the whole screen and should own it.
     */
     <Dial temperature="hot" className="flex-1">
-      <View className={`flex-1 bg-surface gap-stack ${className ?? ''}`}>
+      {/*
+        `gap-stack` in the SPINE only. In the pane composition it drew a band of
+        page ground between the toolbar and the columns — the panes are the
+        screen there, and a gap above them reads as a seam, not as spacing.
+      */}
+      <View className={`flex-1 bg-surface ${panes ? '' : 'gap-stack'} ${className ?? ''}`}>
         <SessionToolbar
           title={title}
           captionsEnabled={captionsEnabled}

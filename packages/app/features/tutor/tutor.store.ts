@@ -551,3 +551,20 @@ export const useTutorStore = create<TutorState>((set) => ({
   }),
   setTutorPresence: (presence) => set({ tutorPresence: presence }),
 }));
+
+/*
+  SPEAKING ENDS WHEN THE SOUND DOES.
+
+  `remember(spoken)` is the normal exit from the coach loop and it sets no new
+  state, so the badge read "Speaking" until the learner sent again — minutes
+  after she had stopped. The turn's TEXT being complete and her still talking
+  are two different facts, and only the audio queue knows the second one.
+
+  `presence` ("Here"), not `listening`: listening means the mic is open (§3.5),
+  which is a different thing again.
+*/
+audioQueue.onDrained(() => {
+  const store = useTutorStore.getState();
+  if (store.state.kind === 'speaking') useTutorStore.setState({ state: { kind: 'presence' } });
+});
+

@@ -18,6 +18,10 @@ export interface VirtualListProps<T> {
   onEndReached?: () => void;
   /** Default true, matching the platform. */
   showsVerticalScrollIndicator?: boolean;
+  /** Start at the bottom and stay there — a chat, not a document. */
+  atBottom?: boolean;
+  /** Extra room under the last row, in px. */
+  bottomInset?: number;
 }
 
 export function VirtualList<T>({
@@ -31,6 +35,8 @@ export function VirtualList<T>({
      content already implies, and a list that shows one on web but not on the
      phone is two products. Opt in where position genuinely needs reporting. */
   showsVerticalScrollIndicator = false,
+  atBottom = false,
+  bottomInset = 0,
 }: VirtualListProps<T>) {
   const parentRef = useRef<HTMLDivElement>(null);
   const endFiredAt = useRef(-1);
@@ -74,10 +80,21 @@ export function VirtualList<T>({
     }
   }, [lastVisible, data.length, onEndReached]);
 
+  /*
+    Follow the tail. A streaming turn appends to the last row, so scrolling on
+    a length change alone would miss every frame of the sentence being written.
+  */
+  useEffect(() => {
+    if (!atBottom) return;
+    const element = parentRef.current;
+    if (!element) return;
+    element.scrollTop = element.scrollHeight;
+  }, [atBottom, data]);
+
   return (
     <div
       ref={parentRef}
-      className={`overflow-y-auto ${className ?? ''}`}
+      className={`overflow-y-auto ${atBottom ? 'flex flex-col justify-end' : ''} ${className ?? ''}`}
       /*
         Geometry and platform affordance, not appearance — the same exception
         the transforms below take. There is no token for a scrollbar's presence
@@ -87,7 +104,20 @@ export function VirtualList<T>({
       */
       style={showsVerticalScrollIndicator ? undefined : { scrollbarWidth: 'none' }}
     >
-      <div style={{ height: virtualizer.getTotalSize(), position: 'relative', width: '100%' }}>
+      {/*
+        A chat opens at its newest message. `justify-end` is what pins a SHORT
+        thread to the bottom — with a taller container than content, a document
+        starts at the top and a conversation does not.
+      */}
+      <div
+        style={{
+          height: virtualizer.getTotalSize(),
+          position: 'relative',
+          width: '100%',
+          paddingBottom: bottomInset || undefined,
+          marginTop: atBottom ? 'auto' : undefined,
+        }}
+      >
         {items.map((vi) => {
           const item = data[vi.index] as T;
           return (

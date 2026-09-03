@@ -616,7 +616,14 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       */
       collapsedPresence={reducedMotion ? 'audio-only' : 'compact'}
       presenceAssurance={presenceAssurance}
-      avatar={<TutorAvatar tutorPresence={resolvedTutorPresence} isSpeaking={state.kind === 'speaking'} tone={currentTone} />}
+      avatar={
+        <TutorAvatar
+          tutorPresence={resolvedTutorPresence}
+          isSpeaking={state.kind === 'speaking'}
+          phase={state.kind === 'thinking' ? 'thinking' : state.kind === 'listening' ? 'listening' : undefined}
+          tone={currentTone}
+        />
+      }
       /*
         THE SECOND PANE, finally supplied. `TutorStage` only splits when a
         canvas exists, so this is deliberately undefined until the learner has a

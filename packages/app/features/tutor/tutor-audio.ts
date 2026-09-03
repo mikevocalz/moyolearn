@@ -155,6 +155,7 @@ export class TutorAudioQueue {
   private activeTrack: Track | null = null;
   private activeTrackIdx = 0;
   private activeDuration = 0;
+  private drainedHandler: (() => void) | null = null;
   private playbackStartAt = 0;
 
   /** Wall-clock marks for the dev timeline only; never read by playback. */
@@ -252,6 +253,11 @@ export class TutorAudioQueue {
    * is the normal exit and sets no new state). The avatar read it as "she is
    * talking", so beats went on scheduling into the silence indefinitely.
    */
+  /** Called when the last queued sentence has finished playing. */
+  onDrained(handler: (() => void) | null): void {
+    this.drainedHandler = handler;
+  }
+
   isSpeaking(): boolean {
     return this.activeSource !== null && this.playbackStartAt !== 0;
   }
@@ -456,6 +462,9 @@ export class TutorAudioQueue {
       void this.playNext();
     } else {
       this.isPlaying = false;
+      // The turn is audibly over. Nothing else in the app knows this: the
+      // store's `speaking` means "the text is complete" and is never left.
+      this.drainedHandler?.();
     }
   }
 

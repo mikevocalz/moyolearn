@@ -14,7 +14,7 @@ export { loadBody, type Body, type BodyManifest } from './body.ts';
 export { createBodyRig, type BodyRig, type GNMNeckDrive, type GesturePose, } from './body-frame.ts';
 export { NECK_ALIGN_FROM, NECK_ALIGN_TO, assertNeckAlign, loadNeckAlign, type NeckAlign, } from './neck-align.ts';
 export { parseSkirtConform, validateSkirtConformRig } from './skirt-conform.ts';
-export { GAZE_RANGE_DEG, HUMANO_BONES, LIP_ZERO, createHumanoPresence, gazeMorphs, lipFromOpenness, sanitizeNodeName, type HumanoBoneKey, type HumanoInput, type HumanoPresence, type LipShape, } from './presence/humano.ts';
+export { GAZE_RANGE_DEG, HUMANO_BONES, LIP_ZERO, createHumanoPresence, gazeMorphs, lipFromOpenness, sanitizeNodeName, type ConversationPhase, type HumanoBoneKey, type HumanoInput, type HumanoPresence, type LipShape, } from './presence/humano.ts';
 export type { SkirtConformData, SkirtConformMeta } from './conform/types.ts';
 export { TARGET_FILL, frameBody } from './presence/framing.ts';
 export { createSkirtConformDriver, type SkirtConformDriver, } from './conform/driver.ts';

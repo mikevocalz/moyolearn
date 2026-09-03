@@ -192,6 +192,11 @@ export function gazeMorphs(
 export interface HumanoInput {
   /** True while she is speaking — drives beats, arm lift and the idle inputs. */
   speaking: boolean;
+  /**
+   * What is happening in the conversation. Optional so existing callers keep
+   * working; omitted, it collapses to the old two-mode behaviour.
+   */
+  phase?: ConversationPhase;
   /** Mouth openness 0..1 for THIS frame, from the viseme sampler. */
   mouth: number;
   /** Doc 22 §7: a render mode, not a preference. No travel, no beats. */
@@ -233,6 +238,42 @@ const IDLE_QUIET: IdleInputs = {
 };
 
 const IDLE_SPEAKING: IdleInputs = { ...IDLE_QUIET, speechActive: true, timeUntilOnset: 0 };
+
+/**
+ * The conversation, as the idle engine already knew how to hear it.
+ *
+ * `IdleInputs` has carried `partnerSpeaking`, `processing`, `speechGap` and
+ * `timeUntilOnset` since the port, and every one of them was pinned to a
+ * constant — so the backchannel nods, the thinking gaze and the pre-speech
+ * anticipation the engine implements have never once fired. She had two modes,
+ * talking and not.
+ *
+ * Now the caller says which phase she is in and the engine gets its inputs:
+ *
+ *   speaking  — sound is coming out. Beats, mouth, the speech swell.
+ *   thinking  — the model is composing. `processing` drives the gaze away and
+ *               the small stilling that reads as "working on it".
+ *   listening — the learner is typing or talking. `partnerSpeaking` is what
+ *               the backchannel nods hang off; without it she stares.
+ *   waiting   — a turn is finished and neither of them has moved.
+ */
+export type ConversationPhase = 'speaking' | 'thinking' | 'listening' | 'waiting';
+
+function idleInputsFor(phase: ConversationPhase): IdleInputs {
+  switch (phase) {
+    case 'speaking':
+      return IDLE_SPEAKING;
+    case 'thinking':
+      // A turn is being composed, so speech IS coming — the engine's
+      // anticipation window is what makes the first word land on a face that
+      // was already on its way there rather than one that snaps into it.
+      return { ...IDLE_QUIET, processing: true, timeUntilOnset: 1.2 };
+    case 'listening':
+      return { ...IDLE_QUIET, partnerSpeaking: true };
+    case 'waiting':
+      return { ...IDLE_QUIET, speechGap: true };
+  }
+}
 
 function setMorph(mesh: THREE.SkinnedMesh, name: string, value: number): void {
   const dict = mesh.morphTargetDictionary;
@@ -351,7 +392,9 @@ export function createHumanoPresence(
     const rawDelta = Math.max(0, Math.min(deltaSeconds, 0.05));
     const delta = input.reducedMotion ? 0 : rawDelta;
     clock += delta;
-    const frame = engine.step(delta, input.speaking ? IDLE_SPEAKING : IDLE_QUIET);
+    const phase: ConversationPhase =
+      input.phase ?? (input.speaking ? 'speaking' : 'waiting');
+    const frame = engine.step(delta, idleInputsFor(phase));
 
     // Speech envelope: the whole-utterance swell the arms and brow ride on.
     // It follows the speaking flag rather than a clip duration because the

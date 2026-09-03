@@ -16,6 +16,18 @@ export interface VirtualListProps<T> {
   onEndReached?: () => void;
   /** Default true, matching the platform. */
   showsVerticalScrollIndicator?: boolean;
+  /**
+   * Start at the BOTTOM and stay there — a chat, not a document.
+   *
+   * LegendList's `alignItemsAtEnd` also pins a short thread to the bottom, so
+   * a two-message conversation sits above the composer instead of floating at
+   * the top of an empty column. `maintainScrollAtEnd` is what keeps a streaming
+   * turn in view; `maintainVisibleContentPosition` stops older messages
+   * jumping when one above the viewport grows.
+   */
+  atBottom?: boolean;
+  /** Extra room under the last row, in px. */
+  bottomInset?: number;
 }
 
 export function VirtualList<T>({
@@ -30,6 +42,8 @@ export function VirtualList<T>({
      tells a child nothing they did not already learn from the content moving.
      A caller can still opt in where position genuinely needs reporting. */
   showsVerticalScrollIndicator = false,
+  atBottom = false,
+  bottomInset = 0,
 }: VirtualListProps<T>) {
   return (
     <View className={className}>
@@ -51,6 +65,11 @@ export function VirtualList<T>({
         */
         nestedScrollEnabled
         recycleItems
+        alignItemsAtEnd={atBottom}
+        maintainScrollAtEnd={atBottom}
+        maintainScrollAtEndThreshold={0.2}
+        maintainVisibleContentPosition={atBottom}
+        contentContainerStyle={bottomInset > 0 ? { paddingBottom: bottomInset } : undefined}
         style={{ flex: 1 }}
       />
     </View>

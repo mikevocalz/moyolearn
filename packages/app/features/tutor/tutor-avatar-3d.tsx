@@ -19,6 +19,8 @@ export interface TutorAvatar3DProps {
   isSpeaking: boolean;
   sampleMouth?: (nowMs: number) => number;
   sampleSpeaking?: () => boolean;
+  /** Session phase where there is no sound to derive it from. */
+  phase?: 'thinking' | 'listening';
   reducedMotion?: boolean;
   onUnavailable?: (reason: string) => void;
   onFirstFrame?: () => void;

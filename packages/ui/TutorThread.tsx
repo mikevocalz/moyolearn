@@ -147,6 +147,15 @@ export function TutorThread({
         data={rows}
         keyExtractor={(row) => (row.kind === 'live' ? LIVE_ROW_KEY : row.message.id)}
         estimatedItemSize={96}
+        /*
+          A CONVERSATION OPENS AT ITS NEWEST MESSAGE. This read top-down like a
+          document, so resuming a session showed the FIRST thing Natalie ever
+          said and the learner had to scroll to find where they were. It also
+          keeps a streaming turn in view as it is written.
+        */
+        atBottom
+        /* Room under the last bubble so it does not sit on the composer. */
+        bottomInset={30}
         className="flex-1"
         /*
           No scrollbar. A chat's own bubbles already say how far through it you
