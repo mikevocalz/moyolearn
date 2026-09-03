@@ -371,32 +371,28 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       const fromDocuments = readDocuments.filter((r) => r.length > 0);
 
       /*
-        THE PHOTO BECOMES THE PROBLEM — IN BOTH STORES, and the second one is
-        the bug the child actually saw.
+        THE PHOTOGRAPHED QUESTION BECOMES THE QUESTION.
 
-        `setProblem` writes to the CAPTURE store. `coach` reads
-        `useTutorStore.getState().problem` and puts it in the request body. So
-        photographing a question filed it under capture, and the tutor went on
-        coaching whatever the tutor store was still holding — the child had
-        their own worksheet on screen and was being asked about the previous
-        question. The OCR text did reach the model inside the turn's message,
-        which is why it looked like the tutor was ignoring the page rather than
-        never seeing it.
+        This was guarded by `!problem`, so it could only ever win on an EMPTY
+        session — and a session is almost never empty: it opens on a resumed
+        problem or one the plan picked. A child photographing the next question
+        was therefore coached on the previous one, with their own worksheet on
+        screen beside the wrong answer. The comment that guard carried already
+        had the right rule — "the child's own work outranks anything the app
+        would have picked" — the code did the opposite of it.
 
-        It was also guarded by `!problem`, so it only ever won on an empty
-        session — and a session is almost never empty. The comment that guard
-        carried already had the right rule ("the child's own work outranks
-        anything the app would have picked"); the code did the opposite.
+        One write, not two. `setProblem` is the CAPTURE store and `coach` reads
+        the TUTOR store, but the two are already kept in step by the
+        `start(problem)` effect above; calling `start` here as well would seed a
+        second question bubble and reset the stage to `thinking` in the middle
+        of the send that is about to call `coach`.
 
-        A photo beats a document in the same turn: pointing a camera at a
-        question is the more deliberate act.
+        A photo beats a document attached in the same turn: pointing a camera at
+        a question is the more deliberate act.
       */
       const readWork = fromImages[0] ?? fromDocuments[0];
       if (readWork !== undefined) {
         setProblem(readWork);
-        // Directly, not through the hook binding: this runs inside an async
-        // send and needs the store as it is now, not as it was at render.
-        useTutorStore.getState().start(readWork);
       }
 
       const parts = [
