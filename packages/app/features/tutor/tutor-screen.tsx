@@ -320,9 +320,19 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       const readings = await Promise.all(images.map((image) => readAttachment(image.uri)));
       const fromImages = readings.filter((r) => r.length > 0);
 
-      // The first legible photo becomes the session's problem when there isn't
-      // one — the child's own work outranks anything the app would have picked.
-      if (fromImages[0] !== undefined && !problem) setProblem(fromImages[0]);
+      /*
+        THE PHOTO REPLACES THE PROBLEM. It used to be guarded by `!problem`, so
+        it only ever won on an empty session — and a session is almost never
+        empty: it opens on a resumed problem or one the plan picked. A child
+        photographing the next question therefore got coached on the PREVIOUS
+        one, with their own worksheet on screen beside the wrong answer.
+
+        The comment that guard carried was already the right rule — "the
+        child's own work outranks anything the app would have picked" — it just
+        described the opposite of what the code did. Something they have chosen
+        to photograph, right now, is the most current statement of what they
+        are stuck on, and it outranks whatever the session was holding.
+      */
 
       /*
         SPEECH IS A TURN, and this is where it stopped being one.
@@ -360,10 +370,33 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       const readDocuments = await Promise.all(documents.map((d) => readDocumentAt(d.uri, d.mimeType)));
       const fromDocuments = readDocuments.filter((r) => r.length > 0);
 
-      // Same rule as the photos, one step down the order: a legible worksheet
-      // becomes the session's problem when no photo already claimed it.
-      if (fromImages[0] === undefined && fromDocuments[0] !== undefined && !problem) {
-        setProblem(fromDocuments[0]);
+      /*
+        THE PHOTO BECOMES THE PROBLEM — IN BOTH STORES, and the second one is
+        the bug the child actually saw.
+
+        `setProblem` writes to the CAPTURE store. `coach` reads
+        `useTutorStore.getState().problem` and puts it in the request body. So
+        photographing a question filed it under capture, and the tutor went on
+        coaching whatever the tutor store was still holding — the child had
+        their own worksheet on screen and was being asked about the previous
+        question. The OCR text did reach the model inside the turn's message,
+        which is why it looked like the tutor was ignoring the page rather than
+        never seeing it.
+
+        It was also guarded by `!problem`, so it only ever won on an empty
+        session — and a session is almost never empty. The comment that guard
+        carried already had the right rule ("the child's own work outranks
+        anything the app would have picked"); the code did the opposite.
+
+        A photo beats a document in the same turn: pointing a camera at a
+        question is the more deliberate act.
+      */
+      const readWork = fromImages[0] ?? fromDocuments[0];
+      if (readWork !== undefined) {
+        setProblem(readWork);
+        // Directly, not through the hook binding: this runs inside an async
+        // send and needs the store as it is now, not as it was at render.
+        useTutorStore.getState().start(readWork);
       }
 
       const parts = [
@@ -472,7 +505,10 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       const turn = parts.join('\n\n');
       void coach(turn);
       void recordAttempt(
-        problem ?? fromImages[0] ?? fromDocuments[0] ?? '',
+        // The freshly-read work FIRST. `problem` is the value captured when this
+        // render began, so it is by definition the previous question — putting
+        // it first graded the child's new answer against their old problem.
+        readWork ?? problem ?? '',
         trimmed || fromAudio.join(' '),
         hintDepth,
       );
