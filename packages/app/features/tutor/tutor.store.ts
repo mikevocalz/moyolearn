@@ -11,7 +11,11 @@ import {
 import { streamFetch } from './stream-fetch';
 import { fetchSession, postMessage } from './session.client.ts';
 import { traceAttempt, DEFAULT_TRACING, inferSkillTitle } from '@acme/student-model/pure';
-import { API_URL } from './tutor-constants.ts';
+import {
+  API_URL,
+  COACH_RESPONSE_TIMEOUT_MS,
+  COACH_STALL_TIMEOUT_MS,
+} from './tutor-constants.ts';
 import { audioQueue } from './tutor-audio.ts';
 import { isToneKey, type ToneKey } from './tutor-tone';
 import type { CoachEvent } from './coach.service';
@@ -430,8 +434,31 @@ export const useTutorStore = create<TutorState>((set) => ({
     audioQueue.stop();
 
     let spoken = '';
+    /*
+      The stall budget (doc 29 §8: "short client timeout with a graceful line,
+      not an infinite spinner").
+
+      `fetch` never times out on its own, so a connection that opens and dies —
+      the ordinary failure on a room's congested network — used to leave this
+      promise pending forever with the stage on "Thinking" and no exit but
+      killing the app. Aborting is what turns that into the `retry` branch
+      below, which is a sentence and a button.
+
+      Re-armed rather than a single deadline: the first window covers the wait
+      for headers, and every frame that arrives buys another window, so a long
+      healthy turn is never cut off and a silent socket never hangs.
+    */
+    const controller = new AbortController();
+    let stallTimer: ReturnType<typeof setTimeout> | undefined;
+    const armStall = (ms: number): void => {
+      if (stallTimer !== undefined) clearTimeout(stallTimer);
+      stallTimer = setTimeout(() => controller.abort(), ms);
+    };
+    armStall(COACH_RESPONSE_TIMEOUT_MS);
+
     try {
       const response = await streamFetch(`${API_URL}/api/tutor/coach`, {
+        signal: controller.signal,
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
@@ -447,8 +474,10 @@ export const useTutorStore = create<TutorState>((set) => ({
         body: JSON.stringify({ problem, message, sessionId: sessionId ?? undefined }),
       });
       if (!response.ok) throw new Error(`Server returned ${response.status}`);
+      armStall(COACH_STALL_TIMEOUT_MS);
 
       for await (const event of readCoachEvents(response)) {
+        armStall(COACH_STALL_TIMEOUT_MS);
         if (event.kind === 'chunk') {
           spoken += event.text;
           const tone = event.voice?.tone;
@@ -487,10 +516,15 @@ export const useTutorStore = create<TutorState>((set) => ({
       }
     } catch {
       audioQueue.stop();
-      // A transport failure is retryable. Only a Safety Plane decision earns the
-      // terminal paused state.
+      // A transport failure is retryable, and an aborted stall arrives here as
+      // one. Only a Safety Plane decision earns the terminal paused state.
       set({ state: { kind: 'retry' } });
       return;
+    } finally {
+      // Every exit above returns from inside the try, including the normal one,
+      // so the timer is cleared here or not at all — a live timer would abort
+      // the NEXT turn's controller-free work and, on native, hold a task alive.
+      if (stallTimer !== undefined) clearTimeout(stallTimer);
     }
 
     // The stream ended without a terminal frame — a dropped connection. The

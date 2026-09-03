@@ -17,6 +17,17 @@ const PUBLIC_PATHS = [
   '/payload-api',
   '/_next',
   '/favicon.ico',
+  /*
+    `/api/marketing` is anonymous BY DESIGN and was being 307'd to `/login` in
+    production, which is a redirect the marketing site reads as a CORS failure
+    — Natalie went silent on www.moyolearn.com with a green deploy log. The
+    surface behind it holds no learner data and takes no learner id: the
+    marketing baked pieces are the approved public clips enumerated in
+    `packages/voice/src/baked.ts`, served as signed, TTL'd CDN reads. Its own
+    route sets the CORS headers, and those headers cannot be reached from
+    behind a session gate.
+  */
+  '/api/marketing',
 ];
 
 export async function proxy(request: NextRequest) {

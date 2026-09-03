@@ -224,7 +224,32 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       meant to prevent.
     */
     opened.current = true;
-    if (useTutorStore.getState().messages.length > 0) return;
+    /*
+      "NOTHING TO RESUME" IS NOT "THE THREAD IS EMPTY".
+
+      This read `messages.length > 0`, and the thread is never empty on this
+      screen: both `start` and `hydrate` seed the PROBLEM as the first bubble so
+      a child can re-read the question mid-working. That made the guard
+      unconditionally true — the opening turn never fired on any session, and
+      because `start` sets `thinking` and only a coaching turn leaves it, the
+      stage sat on "Thinking" with the composer locked behind "Natalie is
+      thinking". Forever, silently, with no request in the server log to explain
+      it.
+
+      A resume is a prior CONVERSATION turn, and it can be in either of two
+      places. Both seeders key the question bubble `problem-…` and nothing else
+      does, so that prefix is the one thing in `messages` that is not somebody's
+      turn. The other place is `state`: `hydrate` deliberately holds a TRAILING
+      tutor turn out of the thread and restores it as the live utterance, so a
+      session whose last event was Natalie speaking has an empty-looking thread
+      and must still not be opened again — that is the duplicate-greeting the
+      original guard was written to stop.
+    */
+    const { messages, state } = useTutorStore.getState();
+    const restoredTurn = state.kind === 'speaking' && state.utterance.restored === true;
+    const hasPriorTurns =
+      restoredTurn || messages.some((message) => !message.id.startsWith('problem-'));
+    if (hasPriorTurns) return;
     void coach('');
   }, [problem, resumed, coach]);
 
