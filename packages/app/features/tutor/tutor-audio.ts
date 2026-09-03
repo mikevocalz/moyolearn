@@ -72,6 +72,9 @@ export interface TutorVoiceRef {
   tag: string;
 }
 
+/** The default breath between sentences, before the screen sets the band's. */
+export const DEFAULT_SENTENCE_PAUSE_MS = 450;
+
 /**
  * How many sentences may be rendering at once, counted from the head of the
  * queue. Two is the useful depth and the safe one: it covers N+1 and N+2 while
@@ -177,6 +180,15 @@ export class TutorAudioQueue {
   private readonly transport: TutorVoiceTransport;
   private readonly audio: TutorAudioPort;
   private readonly prefetchDepth: number;
+  /**
+   * The breath between sentences, seconds. The pipeline made sentence
+   * boundaries free — 14-47 ms measured — which is exactly what a person does
+   * NOT do: a teacher pauses at the full stop, and pauses longer for a
+   * younger child, because the pause is where the sentence lands. Set per
+   * band by the screen (`setSentencePause`); the first sentence of a turn
+   * takes the onset lead instead.
+   */
+  private sentencePauseS = DEFAULT_SENTENCE_PAUSE_MS / 1000;
 
   private queue: QueuedSentence[] = [];
   /** The sentence that has left the queue and is rendering or playing. */
@@ -207,6 +219,11 @@ export class TutorAudioQueue {
     this.transport = options.transport ?? ((url, init) => fetch(url, init));
     this.audio = options.audio ?? platformAudioPort;
     this.prefetchDepth = options.prefetchDepth ?? PREFETCH_DEPTH;
+  }
+
+  /** The band's breath between sentences, in milliseconds. */
+  setSentencePause(ms: number): void {
+    this.sentencePauseS = Math.max(0, ms) / 1000;
   }
 
   /** Enqueue a sentence the coach has emitted with its voice metadata. */
@@ -551,8 +568,9 @@ export class TutorAudioQueue {
       });
 
       // The first sentence of a turn is scheduled a lead out — the idle
-      // engine's anticipation window (see the header). The rest start now.
-      const lead = this.turnSentenceIdx === 0 ? ONSET_LEAD_MS / 1000 : 0;
+      // engine's anticipation window (see the header). The rest take the
+      // band's breath after the previous full stop.
+      const lead = this.turnSentenceIdx === 0 ? ONSET_LEAD_MS / 1000 : this.sentencePauseS;
       const startAt = this.audio.currentTime() + lead;
       source.start(startAt);
       this.playbackStartAt = startAt;

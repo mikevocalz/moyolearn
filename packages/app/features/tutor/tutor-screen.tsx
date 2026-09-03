@@ -26,6 +26,20 @@ import { useTutorStore } from './tutor.store';
 import { API_URL, recommendedTutorPresenceFor } from './tutor-constants.ts';
 import { TutorAvatar } from './tutor-avatar';
 import { markTurnSent, noteKeystroke, setRecording } from './tutor-cues';
+import { audioQueue } from './tutor-audio';
+
+/**
+ * The breath between her sentences, per band, milliseconds. A six-year-old
+ * needs the full stop to land before the next sentence starts; a teen hears
+ * the same pause as slow. Voice RATE is the server's (doc 32 band modulation);
+ * this is the silence between rates.
+ */
+const SENTENCE_PAUSE_MS: Record<AgeBand, number> = {
+  young: 750,
+  child: 600,
+  teen: 450,
+  adult: 350,
+};
 import { pickNoteImage } from '../schedule/pick-note-image';
 import { pickCamera } from './pick-camera';
 import { TutorOpening } from './tutor-opening';
@@ -98,6 +112,10 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   useEffect(() => {
     start(problem, problemIsReading);
   }, [problem, problemIsReading, start]);
+
+  useEffect(() => {
+    audioQueue.setSentencePause(SENTENCE_PAUSE_MS[ageBand]);
+  }, [ageBand]);
 
   /*
     THE AUTO RESOLUTION, WHICH UNTIL NOW NEVER RAN.

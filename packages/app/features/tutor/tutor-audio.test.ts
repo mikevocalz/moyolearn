@@ -254,8 +254,9 @@ describe('the face rides the audio clock (ADR-112)', () => {
     assert.ok(widest > 0.3, `jawOpen peaked at ${widest} over a two-second voiced burst`);
   });
 
-  it('only the first sentence of a turn pays the onset lead', async () => {
+  it('the first sentence pays the onset lead; the next takes the band\'s breath', async () => {
     const h = harness();
+    h.queue.setSentencePause(600);
     h.queue.enqueue('One.', VOICE);
     h.queue.enqueue('Two.', VOICE);
     await settle();
@@ -265,7 +266,10 @@ describe('the face rides the audio clock (ADR-112)', () => {
     h.clock.now += 0.3;
     await h.endPlaybackOf('One.');
     assert.deepEqual(h.started, ['One.', 'Two.']);
-    assert.equal(h.queue.timeUntilOnset(), null, 'the second sentence must start at once');
+    const breath = h.queue.timeUntilOnset();
+    assert.ok(breath !== null && Math.abs(breath - 0.6) < 1e-9, `expected a 600 ms breath, got ${breath}`);
+    assert.equal(h.queue.isSpeaking(), false, 'silent during the breath');
+    h.clock.now += 0.6;
     assert.equal(h.queue.isSpeaking(), true);
   });
 });

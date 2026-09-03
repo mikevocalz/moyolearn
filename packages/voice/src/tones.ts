@@ -34,7 +34,7 @@ import type { VoiceBand } from '@acme/student-model';
  * prompts — changing stability/style/speed is a voice change and goes through
  * review with an eval listen, not a config tweak.
  */
-export const TONE_PALETTE_VERSION = 1;
+export const TONE_PALETTE_VERSION = 2;
 
 /** The face's target, for the baked A2F pipeline. `neutral` carries no dial. */
 export type A2fEmotion =
@@ -169,9 +169,16 @@ export function assertTone(value: string): ToneKey {
  * because a teen hears performed enthusiasm as condescension — the same
  * failure as complexity, inverted.
  */
+/*
+  v2 (2026-09-03, Mike on the Duo: "she's speaking so fast — how can you speak
+  fast to a child"): K-2 and 3-5 pulled down hard. 0.88 x a 1.0 recipe was
+  still a newsreader to a six-year-old; a reading teacher runs nearer 0.75 of
+  adult conversational rate. The floor is the provider's 0.7, and the working
+  tone (`thinking-together`, speed 1) lands at 0.76 for K-2.
+*/
 const BAND_MODULATION: Record<VoiceBand, { readonly speed: number; readonly style: number }> = {
-  'k-2': { speed: 0.88, style: 1.25 },
-  '3-5': { speed: 0.95, style: 1.1 },
+  'k-2': { speed: 0.76, style: 1.25 },
+  '3-5': { speed: 0.86, style: 1.1 },
   '6-8': { speed: 1, style: 1 },
   '9-12': { speed: 1, style: 0.7 },
 };
