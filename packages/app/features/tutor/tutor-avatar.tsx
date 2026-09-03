@@ -191,6 +191,14 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone }: TutorAvatarProp
     stop or seek audio, which is the property that lets the renderer live
     inside a `Freeze` next to a live voice session.
   */
+  /*
+    The store never leaves `speaking`, so the prop stays true until the learner
+    sends again — which is why her arms kept beating into the silence. The
+    audio queue knows the real answer and the stage asks it per frame, because
+    a draining queue triggers no re-render.
+  */
+  const sampleSpeaking = useCallback(() => audioQueue.isSpeaking(), []);
+
   const sampleMouth = useCallback((nowMs: number) => {
     const sample = audioQueue.sampleSpeech(nowMs);
     return sample.active ? (sample.shape.jawOpen ?? 0) : 0;
@@ -250,6 +258,7 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone }: TutorAvatarProp
             active={embodied}
             isSpeaking={isSpeaking}
             sampleMouth={sampleMouth}
+            sampleSpeaking={sampleSpeaking}
             onFirstFrame={onFirstFrame}
             onUnavailable={onUnavailable}
           />

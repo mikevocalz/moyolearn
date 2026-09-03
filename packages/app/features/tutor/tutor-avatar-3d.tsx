@@ -18,6 +18,7 @@ export interface TutorAvatar3DProps {
   active: boolean;
   isSpeaking: boolean;
   sampleMouth?: (nowMs: number) => number;
+  sampleSpeaking?: () => boolean;
   reducedMotion?: boolean;
   onUnavailable?: (reason: string) => void;
   onFirstFrame?: () => void;

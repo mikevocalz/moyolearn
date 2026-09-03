@@ -20,7 +20,7 @@
  * SOT-KEYWORDS: humano presence natalie idle morph bones gaze breath beat native web shared
  */
 import * as THREE from 'three';
-import { IdleEngine, type IdleInputs } from '../idle/engine.ts';
+import { IdleEngine, mulberry32, type IdleInputs } from '../idle/engine.ts';
 
 /**
  * Rigify names as authored. `GLTFLoader` runs every node name through
@@ -42,7 +42,36 @@ export const HUMANO_BONES = {
   foreArmR: 'DEF-forearm.R',
   handL: 'DEF-hand.L',
   handR: 'DEF-hand.R',
+  // The stack that makes a standing body read as weight on legs rather than a
+  // plank on a stick. `swayX`/`swayY` were computed by the idle engine every
+  // frame and thrown away because nothing here claimed a bone for them.
+  hips: 'DEF-pelvis',
+  spine: 'DEF-spine',
+  spine1: 'DEF-spine.001',
 } as const;
+
+/**
+ * The finger deform bones, per side. 100+ joints are rigged and NONE were
+ * driven, which is most of why she read as a mannequin: a straight, splayed
+ * hand is a shop-window hand. Three phalanges each, thumb included.
+ */
+const FINGERS = ['f_index', 'f_middle', 'f_ring', 'f_pinky', 'thumb'] as const;
+const PHALANGES = ['01', '02', '03'] as const;
+
+/**
+ * Resting curl per phalanx, in radians. A hand at rest is not flat: the
+ * fingers hold a soft arc that tightens toward the tip, and the little finger
+ * curls more than the index. The thumb rotates rather than curls, so it gets
+ * its own, smaller number.
+ */
+const CURL = { '01': 0.16, '02': 0.28, '03': 0.24 } as const;
+const CURL_BY_FINGER: Record<(typeof FINGERS)[number], number> = {
+  f_index: 0.8,
+  f_middle: 0.95,
+  f_ring: 1.1,
+  f_pinky: 1.25,
+  thumb: 0.45,
+};
 
 export type HumanoBoneKey = keyof typeof HUMANO_BONES;
 
@@ -83,6 +112,10 @@ export function sanitizeNodeName(name: string): string {
  */
 export const GAZE_RANGE_DEG = 15;
 const DEG = Math.PI / 180;
+const smoothstep = (f: number) => {
+  const t = f < 0 ? 0 : f > 1 ? 1 : f;
+  return t * t * (3 - 2 * t);
+};
 
 /** The twelve mouth morphs this driver writes. */
 export interface LipShape {
@@ -252,10 +285,42 @@ export function createHumanoPresence(
     }
   }
 
+  /*
+    The finger chains, resolved once. Same rest capture as the named bones so
+    `restore()` and `rest()` cover them without a second code path.
+  */
+  const fingers: { bone: THREE.Bone; curl: number }[] = [];
+  for (const side of ['L', 'R'] as const) {
+    for (const finger of FINGERS) {
+      for (const phalanx of PHALANGES) {
+        const bone = resolveBone(scene, `DEF-${finger}.${phalanx}.${side}`);
+        if (!bone) continue;
+        if (!rests.has(bone)) {
+          rests.set(bone, {
+            position: bone.position.clone(),
+            quaternion: bone.quaternion.clone(),
+            rotation: bone.rotation.clone(),
+            scale: bone.scale.clone(),
+          });
+        }
+        fingers.push({ bone, curl: CURL[phalanx] * CURL_BY_FINGER[finger] });
+      }
+    }
+  }
+
   const engine = new IdleEngine(options.seed ?? 12345);
+  /*
+    Beats draw from the SEEDED stream, not `Math.random`. The idle layer's whole
+    contract is "same seed, bit-identical outputs" — that is what makes the
+    golden capture (doc 22 §8) reproducible — and the beat scheduler was quietly
+    breaking it with three `Math.random()` calls per gesture.
+  */
+  const rng = mulberry32((options.seed ?? 12345) ^ 0x5eed);
   const lip: LipShape = { ...LIP_ZERO };
   const beat: BeatState = { countdown: 0.35, t: 99, dur: 0.7, side: 1, both: false, amp: 0 };
   let speechEnv = 0;
+  /** Seconds since mount, for the slow non-repeating hand drift. */
+  let clock = 0;
 
   const eyeMid = new THREE.Vector3();
   const eyeOther = new THREE.Vector3();
@@ -277,6 +342,7 @@ export function createHumanoPresence(
     for (const mesh of meshes) mesh.morphTargetInfluences?.fill(0);
     for (const key of Object.keys(lip) as (keyof LipShape)[]) lip[key] = 0;
     speechEnv = 0;
+    beat.t = 99;
   };
 
   const step = (deltaSeconds: number, input: HumanoInput): void => {
@@ -284,6 +350,7 @@ export function createHumanoPresence(
     // because the idle engine integrates and a 2s step is a lurch, not a catch-up.
     const rawDelta = Math.max(0, Math.min(deltaSeconds, 0.05));
     const delta = input.reducedMotion ? 0 : rawDelta;
+    clock += delta;
     const frame = engine.step(delta, input.speaking ? IDLE_SPEAKING : IDLE_QUIET);
 
     // Speech envelope: the whole-utterance swell the arms and brow ride on.
@@ -303,22 +370,44 @@ export function createHumanoPresence(
       lip[key] += (to - lip[key]) * (to > lip[key] ? rise : fall);
     }
 
-    // Co-speech beats: scheduled while she speaks, bell envelope, one arm
-    // leading. Hands rest below a waist-up crop, so a beat needs real lift or
-    // it is a gesture nobody can see.
+    /*
+      CO-SPEECH BEATS, WITH A RETRACTION — and the retraction is the bug fix.
+
+      A beat used to run its full bell after `speaking` went false: scheduling
+      stopped, but an in-flight gesture kept its envelope for up to 1.25s, so
+      her arms went on waving into the silence. Gesture studies call the three
+      phases preparation / stroke / retraction, and the third one was missing:
+      she prepared and struck and then just stayed there until the timer said
+      otherwise.
+
+      Now the envelope is multiplied by `speechEnv`, which decays with the
+      voice, and the phases are asymmetric — a fast stroke into the accented
+      syllable and a slower settle out of it, which is how an arm actually
+      moves. A symmetric sine reads mechanical because nothing in a body
+      accelerates and decelerates at the same rate.
+    */
     if (input.speaking && !input.reducedMotion) {
       beat.countdown -= delta;
       if (beat.countdown <= 0 && beat.t >= beat.dur) {
         beat.t = 0;
-        beat.dur = 0.75 + Math.random() * 0.5;
-        beat.side = Math.random() < 0.5 ? 1 : -1;
-        beat.both = Math.random() < 0.35;
-        beat.amp = 0.55 + Math.random() * 0.4;
-        beat.countdown = beat.dur + 0.4 + Math.random() * 1.0;
+        beat.dur = 0.75 + rng() * 0.5;
+        beat.side = rng() < 0.5 ? 1 : -1;
+        beat.both = rng() < 0.35;
+        beat.amp = 0.55 + rng() * 0.4;
+        beat.countdown = beat.dur + 0.4 + rng() * 1.0;
       }
     }
     if (beat.t < beat.dur) beat.t += delta;
-    const beatEnv = beat.t < beat.dur ? Math.sin(Math.PI * (beat.t / beat.dur)) : 0;
+    const beatPhase = beat.t < beat.dur ? beat.t / beat.dur : 1;
+    // Stroke in the first 35%, settle over the remaining 65%.
+    const rawBeat =
+      beatPhase >= 1
+        ? 0
+        : beatPhase < 0.35
+          ? smoothstep(beatPhase / 0.35)
+          : 1 - smoothstep((beatPhase - 0.35) / 0.65);
+    // The gate. No voice, no gesture — however far through its bell it was.
+    const beatEnv = rawBeat * speechEnv;
 
     // --- gaze: bias at the camera, saccades on top. Without the bias the eyes
     // saccade around the model's forward axis, which points past the lens.
@@ -352,6 +441,52 @@ export function createHumanoPresence(
     }
 
     // --- body. Root and pelvis stay at rest: she is anchored, never rocking.
+    /*
+      WEIGHT, which is the difference between standing and being stood up.
+
+      The idle engine has produced `swayX`/`swayY` since it was ported and
+      nothing has ever read them — she was rigid from the pelvis down while a
+      perfectly good postural signal was computed and dropped every frame.
+      A person at rest shifts their weight between their legs on a slow,
+      irregular cycle; the pelvis translates and tilts, and the spine
+      counter-rotates above it so the head stays level. That counter-rotation
+      is the part that reads as a body rather than a bobbing statue.
+    */
+    const hipsRest = restore(bones.hips);
+    if (hipsRest && bones.hips) {
+      bones.hips.position.x = hipsRest.position.x + frame.swayX;
+      bones.hips.position.y = hipsRest.position.y + frame.swayY;
+      // Tilt into the loaded leg. Small — the eye reads the direction, not the
+      // angle, and an obvious tilt looks like a limp.
+      bones.hips.rotation.z = hipsRest.rotation.z + frame.swayX * 1.6;
+    }
+    for (const [bone, share] of [
+      [bones.spine, 0.55],
+      [bones.spine1, 0.35],
+    ] as const) {
+      const spineRest = restore(bone);
+      if (spineRest && bone) {
+        bone.rotation.z = spineRest.rotation.z - frame.swayX * 1.6 * share;
+        bone.rotation.x = spineRest.rotation.x + frame.breathY * 4 * share;
+      }
+    }
+
+    /*
+      HANDS. A relaxed arc, tightening toward the tip and toward the little
+      finger, plus a slow per-bone drift so the two hands are never the same
+      hand. They open a little into a gesture — a beat with a clenched hand
+      reads as a threat, not a point.
+    */
+    const openness = 1 - 0.45 * beatEnv;
+    for (let i = 0; i < fingers.length; i++) {
+      const { bone, curl } = fingers[i] as { bone: THREE.Bone; curl: number };
+      const fingerRest = restore(bone);
+      if (!fingerRest) continue;
+      // Phase-offset per bone: a hand whose fingers move in lockstep is a glove.
+      const drift = input.reducedMotion ? 0 : Math.sin(clock * 0.7 + i * 1.7) * 0.012;
+      bone.rotation.z = fingerRest.rotation.z + curl * openness + drift;
+    }
+
     const chestRest = restore(bones.chest);
     if (chestRest && bones.chest) {
       bones.chest.rotation.x = chestRest.rotation.x + frame.breathY * 10;

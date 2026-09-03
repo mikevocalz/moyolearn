@@ -107,6 +107,8 @@ export interface TutorAvatar3DProps {
   isSpeaking: boolean;
   /** Mouth openness 0..1 at an audio-clock instant. Read-only by contract. */
   sampleMouth?: (nowMs: number) => number;
+  /** Whether sound is coming out THIS FRAME. Preferred over `isSpeaking`. */
+  sampleSpeaking?: () => boolean;
   reducedMotion?: boolean;
   /** Called once, on any failure that means there will be no frame. */
   onUnavailable?: (reason: string) => void;
@@ -253,6 +255,7 @@ export function TutorAvatar3D({
   active,
   isSpeaking,
   sampleMouth,
+  sampleSpeaking,
   reducedMotion = false,
   onUnavailable,
   onFirstFrame,
@@ -269,6 +272,7 @@ export function TutorAvatar3D({
   const speakingRef = useRef(isSpeaking);
   const reducedMotionRef = useRef(reducedMotion);
   const sampleMouthRef = useRef(sampleMouth);
+  const sampleSpeakingRef = useRef(sampleSpeaking);
   const activeRef = useRef(active);
   const onFirstFrameRef = useRef(onFirstFrame);
   const onUnavailableRef = useRef(onUnavailable);
@@ -284,6 +288,7 @@ export function TutorAvatar3D({
     speakingRef.current = isSpeaking;
     reducedMotionRef.current = reducedMotion;
     sampleMouthRef.current = sampleMouth;
+    sampleSpeakingRef.current = sampleSpeaking;
     activeRef.current = active;
     onFirstFrameRef.current = onFirstFrame;
     onUnavailableRef.current = onUnavailable;
@@ -410,7 +415,7 @@ export function TutorAvatar3D({
 
         refit();
 
-        const speaking = speakingRef.current;
+        const speaking = sampleSpeakingRef.current?.() ?? speakingRef.current;
         const mouth = speaking ? (sampleMouthRef.current?.(timeMs) ?? 0) : 0;
         presence.step(delta, {
           speaking,

@@ -97,7 +97,15 @@ function harness(prefetchDepth?: number) {
     resume: () => undefined,
     currentTime: () => 1,
     decode: async (buffer) =>
-      ({ duration: 1, text: new TextDecoder().decode(buffer) }) satisfies TaggedBuffer,
+      ({
+        duration: 1,
+        // The queue now analyses the decoded PCM for the viseme track, so a
+        // fake buffer has to carry samples. One second of silence: these tests
+        // are about ORDER and degradation, not about her mouth.
+        sampleRate: 24000,
+        getChannelData: () => new Float32Array(24000),
+        text: new TextDecoder().decode(buffer),
+      }) satisfies TaggedBuffer,
     createSource: (decoded) => {
       const source: FakeSource = {
         text: (decoded as TaggedBuffer).text,

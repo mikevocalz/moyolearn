@@ -10,6 +10,9 @@
 export interface TutorAudioBuffer {
   /** Seconds. */
   duration: number;
+  /** For the lipsync analysis — see `@acme/avatar`'s `analyseSpeech`. */
+  sampleRate: number;
+  getChannelData(channel: number): Float32Array;
 }
 
 export interface TutorAudioSource {

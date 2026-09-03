@@ -26,6 +26,7 @@ export { idleConfig, type IdleConfig, type Range } from './src/idle/config.ts';
 export { IDLE_CHANNELS, IdleEngine, mulberry32, type IdleChannel, type IdleFrame, type IdleInputs, } from './src/idle/engine.ts';
 export { ArkitMapper, sampleTrack, type ArkitMap, type GestureTrack, type Shape, type SpeechSample, type Track, } from './src/speech/track.ts';
 export { ONSET_LEAD_MS, createSpeechDriver, evenTrack, type AudioBackend, type DecodedUtterance, type SpeechDriver, type Utterance, } from './src/speech/driver.ts';
+export { analyseSpeech } from './src/speech/audio-shapes.ts';
 export { directEncoder, encoderForContainer, matrixEncoder, type EncoderContainerMeta, type ExpressionEncoder, } from './src/speech/encoder.ts';
 export { createAudioApiBackend, type AudioBufferLike, type AudioBufferSourceLike, type WebAudioLike, } from './src/speech/backend-audio-api.ts';
 export { DEFAULT_DEMOTION, REBAKED_HEAD_BUDGET, TIERS, TIER_PROFILES, canComputeHead, createTierWatcher, selectTier, tierBelow, type AdapterFacts, type DemotionConfig, type DeviceClass, type HeadBudget, type Tier, type TierProfile, type TierWatcher, } from './src/tiers.ts';

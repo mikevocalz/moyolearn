@@ -43,7 +43,7 @@ import {
   type TutorAudioBuffer,
   type TutorAudioSource,
 } from './tutor-audio-context';
-import { evenTrack, sampleTrack, type Track, type SpeechSample } from '@acme/avatar';
+import { analyseSpeech, sampleTrack, type Track, type SpeechSample } from '@acme/avatar';
 
 export interface TutorVoiceRef {
   /** The closed tone palette key for this turn. */
@@ -244,6 +244,18 @@ export class TutorAudioQueue {
     return t;
   }
 
+  /**
+   * Is sound coming out of the speaker RIGHT NOW.
+   *
+   * Not the question the store's `state.kind === 'speaking'` answers — that one
+   * means "the turn's text is complete" and is never left (`remember(spoken)`
+   * is the normal exit and sets no new state). The avatar read it as "she is
+   * talking", so beats went on scheduling into the silence indefinitely.
+   */
+  isSpeaking(): boolean {
+    return this.activeSource !== null && this.playbackStartAt !== 0;
+  }
+
   /** Sample the active utterance's viseme track. Matches `SpeechDriver.sampleSpeech`. */
   sampleSpeech(_nowMs: number): SpeechSample {
     if (!this.activeTrack || this.playbackStartAt === 0) {
@@ -394,7 +406,27 @@ export class TutorAudioQueue {
       const source = this.audio.createSource(decoded);
       this.activeSource = source;
       this.activeDuration = decoded.duration;
-      this.activeTrack = evenTrack(item.text, this.activeDuration);
+      /*
+        THE MOUTH COMES FROM THE AUDIO, NOT THE SPELLING.
+
+        This was `evenTrack(item.text, duration)` — one keyframe per letter,
+        spaced by character index, jaw 0.5 for a vowel and 0.2 otherwise. Its
+        own docstring calls it the fallback for an aligner nobody wired, and it
+        reads exactly like what it is: an even chew with no pauses and no
+        stress. We have already decoded the whole buffer (we have to — this
+        backend cannot decode a partial body), so the samples are in hand and
+        `analyseSpeech` is one pass over them.
+      */
+      /*
+        WRAPPED, because this runs inside `playNext`'s catch-all and that catch
+        turns any throw into a text-only sentence. An analysis that cannot read
+        this buffer must cost her the LIPSYNC, never the voice.
+      */
+      try {
+        this.activeTrack = analyseSpeech(decoded.getChannelData(0), decoded.sampleRate);
+      } catch {
+        this.activeTrack = null;
+      }
       this.activeTrackIdx = 0;
 
       this.audio.onEnded(source, () => {

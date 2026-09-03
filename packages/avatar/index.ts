@@ -56,6 +56,7 @@ export {
   type SpeechDriver,
   type Utterance,
 } from './src/speech/driver.ts';
+export { analyseSpeech } from './src/speech/audio-shapes.ts';
 export {
   directEncoder,
   encoderForContainer,
