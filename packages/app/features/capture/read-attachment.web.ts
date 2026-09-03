@@ -11,7 +11,15 @@ export async function readAttachment(uri: string): Promise<string> {
   try {
     const result = await readHomework(uri);
     return result.text;
-  } catch {
+  } catch (error) {
+    /*
+      A silent catch is why "I uploaded my homework and nothing happened" had
+      no trace to follow: the reading came back empty, the turn went out with
+      no problem text in it, and the child got a generic reply. The contract
+      still holds — an unreadable photo costs the reading, not the turn — but
+      it no longer costs the DIAGNOSIS.
+    */
+    if (__DEV__) console.warn('[readAttachment] %s failed:', 'web OCR', error);
     /*
       An unreadable photo must not stop the turn. The child still sent it and
       may have typed a question alongside; returning empty lets the turn go with

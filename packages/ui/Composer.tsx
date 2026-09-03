@@ -140,6 +140,14 @@ export function Composer({
     picture key therefore reaches for the LIBRARY, and falls back to the camera
     only on a host that has no library picker to offer.
   */
+  /*
+    THE CAMERA WAS UNREACHABLE. This was `onPickImage ?? onPickCamera`, and the
+    tutor screen passes BOTH — so the library always won, `onPickCamera` was
+    dead behind a `??`, and a child could only ever attach homework they had
+    already photographed in another app. Taking the picture is the primary
+    action for this feature; the library is the fallback for one taken earlier.
+  */
+  const showCamera = onPickCamera !== undefined;
   const pickPicture = onPickImage ?? onPickCamera;
   const showPicture = !disabled && !atImageCap && pickPicture !== undefined;
   const showDocument = !disabled && onPickDocument !== undefined;
@@ -190,17 +198,24 @@ export function Composer({
   const compactAttach =
     rowWidth !== null && rowWidth < COMPACT_ROW_DP && showPicture && showDocument;
 
+  /*
+    Camera FIRST, then library, then files — Noom's and BFF's order in the
+    Mobbin refs above, and the order of likelihood here: the homework is on the
+    table in front of the child, not in their camera roll.
+  */
   const attachActions = [
-    { id: 'picture', title: onPickImage ? 'Photo' : 'Take a photo' },
+    ...(showCamera ? [{ id: 'camera', title: 'Take a photo' }] : []),
+    ...(onPickImage ? [{ id: 'picture', title: 'Photo library' }] : []),
     { id: 'document', title: 'File' },
-  ] as const;
+  ];
 
   const onAttachAction = useCallback(
     (id: string) => {
-      if (id === 'picture') pickPicture?.();
+      if (id === 'camera') onPickCamera?.();
+      else if (id === 'picture') onPickImage?.();
       else onPickDocument?.();
     },
-    [pickPicture, onPickDocument],
+    [onPickCamera, onPickImage, onPickDocument],
   );
 
   /*
@@ -547,6 +562,15 @@ export function Composer({
               delay={100}
               className="flex-row items-center gap-element"
             >
+              {showCamera ? (
+                <Pressable
+                  onPress={onPickCamera}
+                  aria-label="Take a photo"
+                  className={`${iconTarget} items-center justify-center rounded-control`}
+                >
+                  <Camera size={20} className="text-text" />
+                </Pressable>
+              ) : null}
               {showPicture ? (
                 <Pressable
                   onPress={pickPicture}
