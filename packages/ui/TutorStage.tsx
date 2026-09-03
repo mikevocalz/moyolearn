@@ -31,8 +31,10 @@ import { useCallback, useState } from 'react';
 import { AdaptivePanes } from './adaptive-panes';
 import { isCollapsed } from './adaptive-panes/constants';
 import { PaneToggle } from './adaptive-panes/PaneToggle';
+import { TRANSITIONS } from './adaptive-panes/transitions.ts';
 import { useWindowSizeClass } from './adaptive-panes/use-window-size-class';
 import { Dial } from './Dial';
+import { MotionView } from './motion';
 import { View, Text } from './primitives';
 import { MessageBubble } from './MessageBubble';
 import { StreamedText } from './StreamedText';
@@ -508,20 +510,27 @@ export function TutorStage({
   const workPane = panes && windowClass !== 'medium' && canvas !== undefined;
 
   /*
-    HER PANE IS THE REVEAL.
+    HER PANE *IS* THE REVEAL — so it starts CLOSED, and the control opens it.
 
-    `compact` presence means "keep the face small because the window is" — rule
-    3 of the responsive spec, written when the only place she could go was the
-    top of the conversation. A window wide enough to give her a column of her
-    own has answered that question differently, and leaving her at `compact`
-    there drew her pane EMPTY: `TutorAvatar` renders nothing when she is not
-    revealed, so the exemption bought a blank column.
+    This used to force `compact` up to `visible` the moment the window was wide
+    enough, on the reasoning that a column of her own answers "keep the face
+    small because the window is". That reasoning was about SIZE and the mistake
+    was about CONSENT: it meant a learner who had put her away got her back,
+    full height, by unfolding the device — and the header control then read
+    "hide" for a pane they never asked to open.
+
+    Her presence is now the pane's visibility, in both directions and at every
+    width. `compact` (the default, and what the store seeds) draws the rail in
+    the conversation and NO pane; `visible` opens the pane and animates her in.
+    One fact, one control, one persisted answer per learner — instead of a
+    layout preference in `pane-overrides` that would fork from her presence the
+    first time a learner unfolded the device. See `AdaptivePanes`' `detailOpen`.
 
     `audio-only` is untouched on purpose. Reduce Motion resolves to it (spec §1
     rule 2) and that band never gets `visible`, by width or by anything else.
   */
-  const panePresence: ResolvedTutorPresence =
-    panes && presence === 'compact' ? 'visible' : presence;
+  const panePresence: ResolvedTutorPresence = presence;
+  const detailOpen = presence === 'visible';
 
   /*
     ONE control for Natalie's presence, and it lives with her.
@@ -689,7 +698,22 @@ export function TutorStage({
   const paneControls = panes ? (
     <>
       {workPane ? <PaneToggle pane="supplementary" columnCount={2} label="Homework" /> : null}
-      <PaneToggle pane="detail" columnCount={workPane ? 2 : 1} label={tutorName} />
+      {/*
+        HERS IS CONTROLLED. The Homework toggle beside it is a layout
+        preference and belongs in `pane-overrides`; this one reports her
+        presence and asks the screen to change it, so the header, the rail in
+        the conversation and the pane itself are three views of one state
+        rather than three states. Same component, same chrome, same label.
+      */}
+      {handleToggleReveal ? (
+        <PaneToggle
+          pane="detail"
+          columnCount={workPane ? 2 : 1}
+          label={tutorName}
+          visible={detailOpen}
+          onToggle={handleToggleReveal}
+        />
+      ) : null}
     </>
   ) : undefined;
 
@@ -742,6 +766,7 @@ export function TutorStage({
           */
           <AdaptivePanes
             paneControls={false}
+            detailOpen={detailOpen}
             primaryWidthDp={CONVERSATION_PANE_DP}
             detail={
               /*
@@ -752,12 +777,54 @@ export function TutorStage({
                 is the primary-button treatment and the one thing here that is
                 not a control must not wear it.
               */
-              <View className="flex-1 items-center justify-center p-inset">
-                <TutorPresence {...presenceProps} avatar={avatar} render="body" />
-              </View>
+              /*
+                THIS IS THE VIEW THAT ANIMATES HER IN — the parent of the
+                presence, not the presence itself.
+
+                `TutorPresence`'s own `MotionView` fades the AVATAR inside a
+                pane that is already there. That is the right animation in the
+                spine, where the pane never moves; here it left the column
+                arriving as an instant empty rectangle with a face catching up
+                inside it. One movement, on the container, so the pane and its
+                occupant arrive together.
+
+                `key={String(detailOpen)}` is what replays it: `initial` is only
+                honoured on mount, and this subtree stays mounted (the pane
+                collapses by width and freezes) so without a key the entrance
+                would run exactly once per session.
+              */
+              <MotionView
+                key={String(detailOpen)}
+                className="flex-1 items-center justify-center gap-stack bg-surface-sunken p-inset"
+                initial={{ opacity: 0, scale: 0.94, y: 12 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={TRANSITIONS.disclosure}>
+                <TutorPresence {...presenceProps} avatar={avatar} />
+              </MotionView>
             }>
             <AdaptivePanes.Column>
-              <View className="mx-auto w-full max-w-content-prose flex-1">{stageBody}</View>
+              {/*
+                THREE PANES, THREE GROUNDS, ALL OF THEM THE DARK ONE.
+
+                Untinted, the columns were one field of `bg-surface` with two
+                hairlines drawn on it, so the composition read as a screen with
+                lines rather than as panes. The stories this host was promoted
+                from have always shaded them (AdaptivePanes.stories.tsx): the
+                reading surface keeps `surface`, the ones flanking it step off
+                it.
+
+                The CONVERSATION keeps `bg-surface` — plain, the same ground
+                every other screen in the app has, because it is the page here
+                and its shade is not a decision this screen gets to make. The
+                work bench is `surface-raised` (one step up: ink 800 in the
+                dark, white by day — a sheet laid on the page), and Natalie's
+                pane is `surface-sunken` (one step down: ink 950 — an alcove she
+                stands in, and the darkest of the three so her mark carries).
+                Same ramp in both schemes; nothing here is a hex.
+              */}
+              <View className="flex-1 bg-surface">
+                <View className="mx-auto w-full max-w-content-prose flex-1">{stageBody}</View>
+              </View>
             </AdaptivePanes.Column>
             {workPane ? (
               <AdaptivePanes.Column>
@@ -770,7 +837,7 @@ export function TutorStage({
                   defect that change fixed. The PANE is full height; the work
                   sits at the top of it.
                 */}
-                <View className="flex-1 gap-stack p-inset">{canvas}</View>
+                <View className="flex-1 gap-stack bg-surface-raised p-inset">{canvas}</View>
               </AdaptivePanes.Column>
             ) : null}
           </AdaptivePanes>

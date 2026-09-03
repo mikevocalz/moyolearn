@@ -11,7 +11,14 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'solito/navigation';
-import { TutorStage, useSizeClass, useReducedMotion, type ResolvedTutorPresence } from '@acme/ui';
+import {
+  TutorStage,
+  isCollapsed,
+  useSizeClass,
+  useWindowSizeClass,
+  useReducedMotion,
+  type ResolvedTutorPresence,
+} from '@acme/ui';
 import { useCaptureStore } from '../capture';
 import { buttonSizeForBand, type AgeBand } from '../capture';
 import { useAppSession } from '../../providers/session';
@@ -79,6 +86,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   } = useTutorStore();
   const [nextProblem, setNextProblem] = useState<NextProblem>('idle');
   const sizeClass = useSizeClass();
+  const windowClass = useWindowSizeClass();
   const reducedMotion = useReducedMotion();
 
   useEffect(() => {
@@ -95,7 +103,9 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
 
       1. an explicit learner choice — anything that is not `auto` — wins outright
       2. reduced motion → `audio-only`, never `visible`
-      3. screen size — a phone-width window keeps the face small
+      3. screen size — a phone-width window keeps the face small, and a
+         pane-width one keeps her pane SHUT (rule 3 read the other way; see
+         below)
       4. grade band — K–2 and 3–5 open with her revealed, 6–12 workspace-forward
 
     A K–2 learner on a phone lands on `compact`, not `visible`: she is not
@@ -103,12 +113,33 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     filling the top of the screen. That is the difference the whole reveal
     design exists to make honest.
   */
+  /*
+    WIDTH DOES NOT CONSENT ON THE LEARNER'S BEHALF, in either direction.
+
+    Rule 3 already demotes `visible` to `compact` on a phone. The band's
+    recommendation was written for the SPINE, where `visible` means she fills
+    the top of the conversation and the thread scrolls under her — a
+    reversible, in-place reveal. At pane width the same word means a whole
+    column of the window opens for her before anyone has asked, and the header
+    control then reads "hide" for a pane the learner never opened.
+
+    So `auto` never opens the pane: only an explicit `visible` does, which is
+    rule 1 and is exactly what pressing the control records. K–2 and 3–5 still
+    get their recommendation everywhere it was meant — the phone and the
+    tablet's single spine — and on a wide window they get her rail, one press
+    from the pane.
+  */
+  // `useSizeClass` is the app's two-value split (compact | regular) and is what
+  // rule 3's phone test reads. Panes are a four-class question — `TutorStage`
+  // mounts them at `medium` — so it is asked of the same hook the host uses,
+  // rather than approximated from the coarser one.
+  const panes = !isCollapsed(windowClass);
   const base = recommendedTutorPresenceFor(ageBand);
   const resolvedTutorPresence: ResolvedTutorPresence =
     tutorPresence === 'auto'
       ? reducedMotion
         ? 'audio-only'
-        : sizeClass === 'compact' && base === 'visible'
+        : base === 'visible' && (sizeClass === 'compact' || panes)
           ? 'compact'
           : base
       : tutorPresence;

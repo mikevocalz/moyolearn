@@ -43,6 +43,27 @@ export interface AdaptivePanesProps {
    */
   detail?: ReactNode;
   /**
+   * Host-owned visibility for the detail pane, overriding the resolved policy.
+   *
+   * Normally the detail pane's visibility is the size class plus whatever
+   * `PaneToggle` wrote into `pane-overrides` — a layout preference, stored per
+   * size class, shared by every pane surface. That is the right owner when the
+   * pane is a place things are shown IN.
+   *
+   * It is the wrong owner when the pane's content is itself a piece of app
+   * state a learner has already chosen. The tutor session is the case: whether
+   * Natalie is revealed is her presence (`TutorPresencePreference`), persisted
+   * per learner, defaulted to collapsed, and expressed on the phone as a rail
+   * she can open. Routed through the pane store it would have become a second,
+   * size-class-scoped copy of the same fact, and the two would disagree the
+   * first time a learner unfolded the device.
+   *
+   * Supplied, this wins outright — including over an override that says show —
+   * because the host is stating a fact about its own content, not a preference.
+   * Omitted, nothing changes.
+   */
+  detailOpen?: boolean;
+  /**
    * Explicit width for the primary pane, in dp, replacing the `w-pane-primary`
    * token — and, with it, the narrow RAIL STEP the automatic policy takes at
    * `medium`/`expanded`.

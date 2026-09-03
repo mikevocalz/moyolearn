@@ -101,6 +101,7 @@ function AdaptivePanesNavigator({
   topColumnForCollapsing,
   showInspector,
   detail,
+  detailOpen,
   primaryWidthDp,
   paneControls = true,
   ref,
@@ -172,7 +173,26 @@ function AdaptivePanesNavigator({
   // The automatic size-class policy, then any manual override the user set for
   // THIS size class. Precedence and the "never show what cannot fit" guard both
   // live in the reducer, so this stays a lookup.
-  const visible = resolvePaneVisibility(sizeClass, columnCount, paneOverrides);
+  const resolved = resolvePaneVisibility(sizeClass, columnCount, paneOverrides);
+  /*
+    A host that owns its detail content's visibility states it, and that answer
+    is final — see `detailOpen` in types.ts. It is applied here rather than
+    inside `resolvePaneVisibility` because the reducer answers "what does the
+    stored preference mean at this size", which is a question about the store;
+    this is not a preference at all.
+
+    Rule 6 still holds and is why the guard is repeated: hiding the detail is
+    honoured only while some other pane is drawn, so a one-column host cannot
+    close its way to an empty screen.
+  */
+  const visible =
+    detailOpen === undefined
+      ? resolved
+      : {
+          ...resolved,
+          detail:
+            detailOpen || !(resolved.primary || resolved.supplementary || resolved.inspector),
+        };
   /*
     MOUNTED WHENEVER THERE IS ONE TO MOUNT — not "whenever the size class allows
     it", which is what this used to say.

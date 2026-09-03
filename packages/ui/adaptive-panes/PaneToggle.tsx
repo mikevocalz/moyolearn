@@ -64,6 +64,20 @@ export interface PaneToggleProps {
    */
   label?: string;
   className?: string;
+  /**
+   * Controlled mode: what this pane's state IS, and what to do about it.
+   *
+   * Supplied together, the control stops reading and writing `pane-overrides`
+   * and reports the host's state instead. Only one surface needs this — the
+   * tutor session, where the detail pane holds Natalie and her visibility is
+   * her presence, not a layout preference (see `AdaptivePanes`' `detailOpen`).
+   * Without it that screen would have had a second control, drawn differently,
+   * for the same intent the rail already expresses.
+   *
+   * Everything else omits both and keeps the stored behaviour unchanged.
+   */
+  visible?: boolean;
+  onToggle?: () => void;
 }
 
 /**
@@ -79,16 +93,25 @@ export interface PaneToggleProps {
  * control that is visibly present but can never change anything is worse than
  * no control, and at compact the navigator owns which single pane is up.
  */
-export function PaneToggle({ pane, columnCount, label, className }: PaneToggleProps) {
+export function PaneToggle({
+  pane,
+  columnCount,
+  label,
+  className,
+  visible: visibleProp,
+  onToggle,
+}: PaneToggleProps) {
   const { width } = useWindowDimensions();
   const sizeClass = windowSizeClassForWidth(width);
   const overrides = usePaneOverrideStore((state) => state.overrides);
   const toggle = usePaneOverrideStore((state) => state.toggle);
 
-  const visible = resolvePaneVisibility(sizeClass, columnCount, overrides)[pane];
+  const controlled = visibleProp !== undefined && onToggle !== undefined;
+  const visible = controlled ? visibleProp : resolvePaneVisibility(sizeClass, columnCount, overrides)[pane];
 
   // If forcing it on changes nothing, this class cannot show the pane.
   const canToggle =
+    controlled ||
     visible ||
     resolvePaneVisibility(sizeClass, columnCount, {
       ...overrides,
@@ -129,6 +152,10 @@ export function PaneToggle({ pane, columnCount, label, className }: PaneTogglePr
       aria-expanded={visible}
       onPress={() => {
         haptics.selection();
+        if (controlled) {
+          onToggle();
+          return;
+        }
         toggle(sizeClass, pane, visible);
       }}
       // A white slab on the primary field, so the control stays legible
