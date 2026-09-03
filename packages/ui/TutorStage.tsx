@@ -5,12 +5,17 @@
 // full column, composer pinned full-width beneath it) · https://mobbin.com/screens/5def00a9-6228-4ccc-81a3-25cdb2fe20bd
 // (Pi — secondary affordances are small icon rows under the message, never a filled button beside the
 // composer) · https://mobbin.com/screens/9c13ada9-0c95-45c8-9932-d20010b96e14 (ChatGPT — one minimal
-// header, actions as icons). Structure only: the reading measure, the composer position, and the rule
-// that nothing sits beside the conversation unless it has content.
-// SOT: docs/pack/23-tutorstage-handoff.md §3 · §5
-// SOT-KEYWORDS: tutorstage s9 tutor session state union hot dial learner
+// header, actions as icons) · https://mobbin.com/screens/76e16697-0e20-4bfc-8162-e93d6f1fc8ff
+// (Mistral Le Chat — conversation column, work canvas beside it, trailing panel dismissible from its
+// own chrome) · https://mobbin.com/screens/e1f475cd-9340-4b6d-98c3-9ad852993175 (Fibery — the third
+// column is the assistant and it closes from a control in the bar). Structure only: the reading
+// measure, the composer position, and the rule that nothing sits beside the conversation unless it
+// has content.
+// SOT: docs/pack/23-tutorstage-handoff.md §3 · §5 · docs/design/tutor-stage-third-column.md
+// SOT-KEYWORDS: tutorstage s9 tutor session state union hot dial learner three column stage pane
 
 import { useCallback, useState } from 'react';
+import { useWindowSizeClass } from './adaptive-panes/use-window-size-class';
 import { Dial } from './Dial';
 import { View, Text } from './primitives';
 import { MessageBubble } from './MessageBubble';
@@ -385,6 +390,28 @@ export function TutorStage({
 }: TutorStageProps) {
   const [draft, setDraft] = useState('');
   const sizeClass = useSizeClass();
+  /*
+    THE SECOND WIDTH SYSTEM, read here on purpose.
+
+    `useSizeClass()` is the binary 768 line this screen has always held: one
+    column or two. The four M3 bands (`packages/ui/adaptive-panes/constants.ts`)
+    answer a different question — how many panes TILE — and the third column
+    below is a tiling decision, so it takes the band. The two are documented as
+    deliberately separate in that file and are not merged here; this screen just
+    happens to be the first that needs both answers.
+  */
+  const windowClass = useWindowSizeClass();
+  /*
+    The workspace is COLLAPSIBLE, and its control is in the header (see
+    `SessionToolbar`). Local state rather than a store: which panes a learner
+    has open right now is layout, not session data — nothing about it should
+    survive a session or reach the tutor. It resets with the screen, which is
+    the correct lifetime for "I pushed the work aside for a second".
+  */
+  const [workspaceHidden, setWorkspaceHidden] = useState(false);
+  const toggleWorkspace = useCallback(() => {
+    setWorkspaceHidden((hidden) => !hidden);
+  }, []);
 
   /*
     `auto` is a request, not a presentation. It is normally answered at the
@@ -427,6 +454,60 @@ export function TutorStage({
   // question, and `canSend` already answers it.
   const inputDisabled = state.kind === 'ended' || state.kind === 'crisis';
 
+  // Doc 23 §5's two-pane rule, with the header's collapse control folded in:
+  // the split needs a regular-width window AND real work to put in the second
+  // pane AND the learner not having pushed that pane away.
+  const workspacePane = sizeClass === 'regular' && canvas !== undefined && !workspaceHidden;
+
+  /*
+    THE THIRD COLUMN — Natalie's own pane, and the narrowest gate in this file.
+
+    It requires ALL of: the `large` band (≥1200dp — doc 02 §2.1's own 3-pane
+    class), a workspace already earning the second pane, and the learner
+    actually having her revealed. Anything less and she stays where she has
+    always been: the top of the conversation spine.
+
+    Why so narrow, in one line: doc 37 §3.3 and ADR-107 ban split compositions
+    on learner surfaces, and doc 23 §5 specifies two columns for this screen.
+    A third column is a SPEC DELTA, filed in
+    `docs/design/tutor-stage-third-column.md`, and it is gated at a width no
+    phone and no foldable in the current device matrix reports — an unfolded
+    Surface Duo measures ~1080dp, which is `expanded`, so the demo device runs
+    exactly the two-pane layout it ran before this existed.
+
+    Known constraint, written down rather than discovered later: moving her
+    between the spine and this column is a REMOUNT, because it is a different
+    branch of the tree. That costs nothing today (`TutorAvatar` renders a static
+    mark), but a live 3D renderer must not be remounted mid-session — see
+    `audit/realtime/ADR-avatar-identity.md`, which makes a single mount site a
+    precondition of the 3D swap rather than a later clean-up.
+  */
+  const stagePane = workspacePane && windowClass === 'large' && presence === 'visible';
+
+  const presenceBlock = (
+    /*
+      NATALIE, IN EVERY STATE, AND ONLY EVER IN ONE PLACE ON SCREEN.
+
+      The status chip used to float in the spine on its own while she was drawn
+      — or not drawn — somewhere below by one branch of the state switch. Status
+      belongs to the person whose status it is: one element carries her mark,
+      her name and what she is doing, so a child who has collapsed her still has
+      a visible owner for the voice they can hear. That element is rendered once
+      and placed either at the head of the spine or in the stage column, never
+      both.
+    */
+    <TutorPresence
+      name={tutorName}
+      status={statusFor(state)}
+      tone={statusTone(state)}
+      tutorPresence={presence}
+      avatar={avatar}
+      onToggleReveal={handleToggleReveal}
+      assurance={presenceAssurance}
+      size={buttonSize}
+    />
+  );
+
   const stageBody = (
     /*
       Extra room BELOW the composer, not just the container's inset.
@@ -437,26 +518,19 @@ export function TutorStage({
       the thread has above it, or the screen looks like it continues past the
       fold.
     */
-    <View className="w-full flex-1 gap-stack p-inset pb-group">
-      {/*
-        NATALIE, IN EVERY STATE, AT THE TOP OF THE SPINE.
-
-        The status chip used to float here on its own while she was drawn — or
-        not drawn — somewhere below by one branch of the state switch. Status
-        belongs to the person whose status it is: one element carries her mark,
-        her name and what she is doing, so a child who has collapsed her still
-        has a visible owner for the voice they can hear.
-      */}
-      <TutorPresence
-        name={tutorName}
-        status={statusFor(state)}
-        tone={statusTone(state)}
-        tutorPresence={presence}
-        avatar={avatar}
-        onToggleReveal={handleToggleReveal}
-        assurance={presenceAssurance}
-        size={buttonSize}
-      />
+    <View
+      /*
+        4pt top and bottom, not the page inset. The thread is a FOOTER LIST:
+        the composer sits against the bottom edge and Natalie's status against
+        the header, so the generous page padding that suits a document left a
+        visible band of nothing at both ends of a conversation. The horizontal
+        inset stays — that is the reading measure — but vertically the list runs
+        to its edges and lets the chrome above and below define the boundary.
+      */
+      className="w-full flex-1 gap-stack px-inset py-1"
+    >
+      {/* Her place in the spine — unless the stage column has taken her. */}
+      {stagePane ? null : presenceBlock}
       {/* Top-aligned, not centred. A turn grows downward as it streams, and a
           vertically centred block re-centres on every arriving sentence — the
           text slides under the reader while they are reading it. */}
@@ -510,7 +584,7 @@ export function TutorStage({
   // now: `TutorWorkCanvas` puts the learner's OWN problem and the photo they
   // snapped in the right-hand pane, which is what §5 means by "equation /
   // whiteboard" and the only thing that earns the width on a child's surface.
-  const twoPane = sizeClass === 'regular' && canvas !== undefined;
+  // (`workspacePane` and `stagePane` above are the resolved answers.)
 
   return (
     /*
@@ -529,11 +603,31 @@ export function TutorStage({
           captionsEnabled={captionsEnabled}
           onBack={onBack}
           onToggleCaptions={onToggleCaptions}
+          workspaceVisible={workspacePane}
+          /* The control exists only where a pane exists to collapse: regular
+             width with real work in it. At phone width there is no second pane,
+             so there is nothing for the button to mean. */
+          onToggleWorkspace={
+            sizeClass === 'regular' && canvas !== undefined ? toggleWorkspace : undefined
+          }
         />
-        {twoPane ? (
+        {workspacePane ? (
           <View className="flex-1 flex-row gap-group p-inset">
             <View className="w-pane-tutor">{stageBody}</View>
             <LearningCanvas className="flex-1">{canvas}</LearningCanvas>
+            {stagePane ? (
+              /*
+                THE STAGE COLUMN. She is centred in it rather than pinned to the
+                top: this pane holds one person and her status, and a figure
+                hugging the ceiling of a 900px column reads as a leftover
+                element rather than a placed one. `justify-center` is the whole
+                treatment — no border, no card. Doc 23 §3.1: the mark carries
+                the ink border and no slab shadow, because border + shadow +
+                yellow is the primary-button treatment and the one thing here
+                that is not a control must not wear it.
+              */
+              <View className="w-pane-tutor-stage justify-center">{presenceBlock}</View>
+            ) : null}
           </View>
         ) : (
           <View className="mx-auto w-full max-w-content-prose flex-1">{stageBody}</View>
