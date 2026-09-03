@@ -195,5 +195,27 @@ function pinFrame(frame: IdleFrame): IdleFrame {
     eyeYaw: 0,
     eyePitch: 0,
     eyesWide: 0,
+    // The body layer (ADR-113) is pinned with the rest of the vegetative
+    // motion; the engine still runs so the PRNG stream is unchanged.
+    weightShift: 0,
+    torsoYaw: 0,
+    shoulderL: 0,
+    shoulderR: 0,
+    wristL: 0,
+    wristR: 0,
+    fingerL0: 0,
+    fingerL1: 0,
+    fingerL2: 0,
+    fingerL3: 0,
+    fingerL4: 0,
+    fingerR0: 0,
+    fingerR1: 0,
+    fingerR2: 0,
+    fingerR3: 0,
+    fingerR4: 0,
+    gazeAwayYaw: 0,
+    gazeAwayPitch: 0,
+    headFollowYaw: 0,
+    headFollowPitch: 0,
   };
 }

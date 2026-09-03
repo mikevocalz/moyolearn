@@ -25,10 +25,17 @@
 import { readFileSync, existsSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 
+// The DEFORMING chain. `head`/`neck`/`chest` are control bones with no skin
+// under them in this export (see presence/rig-axes.test.ts) — checking for
+// those would pass a body the writer cannot move.
 const RIGIFY_BONES = [
-  'chest',
-  'neck',
-  'head',
+  'DEF-spine',
+  'DEF-spine.001',
+  'DEF-spine.002',
+  'DEF-spine.003',
+  'DEF-spine.004',
+  'DEF-spine.005',
+  'DEF-spine.006',
   'jaw_master',
   'eye.L',
   'eye.R',

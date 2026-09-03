@@ -155,6 +155,12 @@ export interface TutorStageProps {
   onPickDocument?: () => void;
   onStartRecording?: () => void;
   recording?: { elapsedSec: number; levels: readonly number[] };
+  /**
+   * Every composer keystroke, for the tutor's LISTENING cues — a child typing
+   * is the learner's turn in progress, and Natalie should look like she is
+   * following it (doc 22 §3: turn-taking without a microphone). Not the text.
+   */
+  onDraftChange?: (draft: string) => void;
   onCancelRecording?: () => void;
   onStopRecording?: () => void;
   onSendRecording?: () => void;
@@ -442,6 +448,7 @@ export function TutorStage({
   onPickDocument,
   onStartRecording,
   recording,
+  onDraftChange,
   onCancelRecording,
   onStopRecording,
   onSendRecording,
@@ -660,7 +667,10 @@ export function TutorStage({
       />
       <Composer
         value={draft}
-        onChangeText={setDraft}
+        onChangeText={(next) => {
+          setDraft(next);
+          onDraftChange?.(next);
+        }}
         onSend={handleSend}
         disabled={inputDisabled}
         size={buttonSize}

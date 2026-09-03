@@ -229,3 +229,70 @@ describe('degraded mode is text-only, never a substitute voice (doc 32 §2)', ()
     assert.deepEqual(spoken, { kind: 'text-only', reason: 'voice-unavailable' });
   });
 });
+
+describe('the live face rides the sentence (ADR-112)', () => {
+  const FACE = { fps: 30, names: ['jawOpen', 'browInnerUp'], frames: [[0.1, 0], [0.5, 0.2]], emotion: 'joy' };
+
+  it('with a face host, a sentence is a performance: the SAME bytes go to A2F and to the client', async () => {
+    const { transport } = recordingTransport();
+    const seen: { bytes: number[]; emotion: string; intensity: string }[] = [];
+    const egress = createVoiceEgress({
+      transport,
+      registry: REGISTRY,
+      ledger: inMemoryVoiceLedger(),
+      faceTransport: async ({ audio, emotion }) => {
+        seen.push({
+          bytes: [...audio],
+          emotion: emotion.emotion,
+          intensity: emotion.emotion === 'neutral' ? 'none' : emotion.intensity,
+        });
+        return new Response(JSON.stringify(FACE), { status: 200, headers: { 'content-type': 'application/json' } });
+      },
+    });
+    const spoken = await egress.speakSentence({ learnerId: 'L', band: '3-5', tone: 'celebrate-small', text: 'Nice.' });
+    assert.equal(spoken.kind, 'performance');
+    if (spoken.kind !== 'performance') return;
+    assert.deepEqual([...spoken.audio], [1, 2, 3]);
+    assert.deepEqual(seen, [{ bytes: [1, 2, 3], emotion: 'joy', intensity: 'med' }]);
+    assert.deepEqual(spoken.face.names, FACE.names);
+    assert.equal(spoken.face.frames.length, 2);
+  });
+
+  it('a face host that fails costs the FACE, never the voice', async () => {
+    const { transport } = recordingTransport();
+    const egress = createVoiceEgress({
+      transport,
+      registry: REGISTRY,
+      ledger: inMemoryVoiceLedger(),
+      faceTransport: async () => new Response('boom', { status: 503 }),
+    });
+    const spoken = await egress.speakSentence({ learnerId: 'L', band: '3-5', tone: 'warm-open', text: 'Hi.' });
+    assert.equal(spoken.kind, 'audio');
+    if (spoken.kind !== 'audio') return;
+    assert.deepEqual([...new Uint8Array(await new Response(spoken.stream).arrayBuffer())], [1, 2, 3]);
+  });
+
+  it('a malformed face is no face', async () => {
+    const { transport } = recordingTransport();
+    const egress = createVoiceEgress({
+      transport,
+      registry: REGISTRY,
+      ledger: inMemoryVoiceLedger(),
+      faceTransport: async () =>
+        new Response(JSON.stringify({ fps: 30, names: ['a'], frames: [[1, 2]] }), {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        }),
+    });
+    const spoken = await egress.speakSentence({ learnerId: 'L', band: '3-5', tone: 'warm-open', text: 'Hi.' });
+    assert.equal(spoken.kind, 'audio');
+  });
+
+  it('without a face host nothing changes: a stream, and no A2F call', async () => {
+    const { transport } = recordingTransport();
+    delete process.env.AUDIO2FACE_URL;
+    const egress = createVoiceEgress({ transport, registry: REGISTRY, ledger: inMemoryVoiceLedger() });
+    const spoken = await egress.speakSentence({ learnerId: 'L', band: '3-5', tone: 'warm-open', text: 'Hi.' });
+    assert.equal(spoken.kind, 'audio');
+  });
+});

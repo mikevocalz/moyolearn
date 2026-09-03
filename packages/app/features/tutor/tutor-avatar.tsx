@@ -20,10 +20,12 @@
 //      docs/decisions/adr-111-native-3d-runtime.md · ./tutor-avatar-3d.native.tsx
 // SOT-KEYWORDS: tutor avatar presence 2d 3d handoff face bus speech driver viseme webgpu flag
 
-import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
+import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, View } from 'react-native';
-import { Avatar, isTutorRevealed } from '@acme/ui';
+import { Avatar, MotionView, Text, isTutorRevealed } from '@acme/ui';
 import type { ResolvedTutorPresence } from '@acme/ui';
+import type { AgeBand } from '../capture/age-band.ts';
+import { sampleCues } from './tutor-cues';
 import {
   createFaceBus,
   createTutorStage,
@@ -47,7 +49,28 @@ export interface TutorAvatarProps {
    * derived from the speaker, so only the phases with no sound are passed here.
    */
   phase?: 'thinking' | 'listening';
+  /** For the loading line's register (doc 31 voice), nothing else. */
+  ageBand?: AgeBand;
 }
+
+/**
+ * The loading line, per band (ADR-114; `audit/motion/loader-copy.md`). Shown
+ * under the 2D mark while the 3D body is preparing or warming — a name and a
+ * verb, never "Loading assets". K–2 and 3–5 get the fuller sentence; a teen
+ * reading "getting ready…" hears a toy.
+ */
+function loaderCopyFor(band: AgeBand | undefined): string {
+  switch (band) {
+    case 'young':
+    case 'child':
+      return "Natalie's getting ready…";
+    default:
+      return "Natalie's on her way";
+  }
+}
+
+/** How long the mark dissolves into her. Under doc 23 §6's 400 ms ceiling for a reveal. */
+const REVEAL_MS = 320;
 
 const speechDriver: SpeechDriver = {
   sampleSpeech: (nowMs) => audioQueue.sampleSpeech(nowMs),
@@ -89,7 +112,7 @@ const TutorAvatar3D = lazy(async () => {
  */
 const STAGE_HEIGHT = 260;
 
-export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase }: TutorAvatarProps) {
+export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase, ageBand }: TutorAvatarProps) {
   const stageRef = useRef<TutorStage | null>(null);
   const faceBusRef = useRef<FaceBus | null>(null);
 
@@ -232,6 +255,21 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase }: TutorAva
     return sample.active ? (sample.shape.jawOpen ?? 0) : 0;
   }, []);
 
+  /*
+    The rest of her performance, read the same way: the A2F face for this
+    instant (ADR-112), the scheduled onset for the anticipation beat, and the
+    learner's cues for the listening body (ADR-113). All readers; none can
+    touch the voice.
+  */
+  const sampleFace = useCallback(() => audioQueue.sampleFace(), []);
+  const sampleOnset = useCallback(() => audioQueue.timeUntilOnset(), []);
+  const sampleTurnCues = useCallback(() => sampleCues(), []);
+  const emotion = useMemo(() => {
+    if (!tone) return null;
+    const { emotion: category, intensity } = toneRenderFor(tone);
+    return { category, intensity };
+  }, [tone]);
+
   /* The controller decides WHEN this becomes a swap; this only reports it. */
   const onFirstFrame = useCallback(() => {
     stageRef.current?.firstFrameRendered(performance.now());
@@ -269,13 +307,37 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase }: TutorAva
   */
   const render3D = NATIVE_3D && stageState !== null && shouldRender3D(stageState);
   const live3D = stageState?.surface === 'avatar-3d';
+  const preparing =
+    NATIVE_3D &&
+    stageState !== null &&
+    (stageState.phase === 'preparing' || stageState.phase === 'warming' || stageState.phase === 'pending-swap');
 
-  if (!render3D) return <Avatar name="Natalie" size="xl" />;
+  if (!render3D) {
+    return (
+      <View style={{ alignItems: 'center' }}>
+        <Avatar name="Natalie" size="xl" />
+        {preparing ? (
+          <Text variant="caption" tone="muted">
+            {loaderCopyFor(ageBand)}
+          </Text>
+        ) : null}
+      </View>
+    );
+  }
 
+  /*
+    THE REVEAL IS A DISSOLVE, NOT A CUT (ADR-114). Both surfaces are mounted
+    already — the canvas has been drawing her, idling, behind the mark since
+    `warming` — so when the controller swaps, the mark fades out over the body
+    that was already moving underneath it. She is never seen starting.
+  */
   return (
     <View style={{ width: '100%', flex: 1, minHeight: STAGE_HEIGHT }}>
-      <View
-        style={{ position: 'absolute', inset: 0, opacity: live3D ? 1 : 0 }}
+      <MotionView
+        style={{ position: 'absolute', inset: 0 }}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: live3D ? 1 : 0 }}
+        transition={{ type: 'timing', duration: REVEAL_MS }}
         // Hidden from a screen reader until she is the one on stage; while she
         // is warming the 2D mark above is the thing that is actually there.
         aria-hidden={!live3D}
@@ -287,17 +349,28 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase }: TutorAva
             isSpeaking={isSpeaking}
             sampleMouth={sampleMouth}
             sampleSpeaking={sampleSpeaking}
+            sampleFace={sampleFace}
+            sampleOnset={sampleOnset}
+            sampleCues={sampleTurnCues}
+            emotion={emotion}
             phase={phase}
             onFirstFrame={onFirstFrame}
             onUnavailable={onUnavailable}
           />
         </Suspense>
-      </View>
-      {live3D ? null : (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
-          <Avatar name="Natalie" size="xl" />
-        </View>
-      )}
+      </MotionView>
+      <MotionView
+        style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}
+        animate={{ opacity: live3D ? 0 : 1 }}
+        transition={{ type: 'timing', duration: REVEAL_MS }}
+        pointerEvents="none">
+        <Avatar name="Natalie" size="xl" />
+        {preparing ? (
+          <Text variant="caption" tone="muted">
+            {loaderCopyFor(ageBand)}
+          </Text>
+        ) : null}
+      </MotionView>
     </View>
   );
 }

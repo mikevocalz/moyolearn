@@ -28,6 +28,7 @@ import {
   voiceDayKey,
   type VoiceBudgetLedger,
 } from './budget.ts';
+import { liveFaceConfigured, renderFace, type A2fTransport, type FacePerformance } from './a2f.ts';
 import { voiceRegistry, type VoiceRegistry } from './registry.ts';
 import { TONE_PALETTE, assertTone, voiceSettingsFor } from './tones.ts';
 
@@ -48,6 +49,18 @@ const BAKED_OUTPUT_FORMAT = 'mp3_44100_128';
  */
 export type SpokenSentence =
   | { readonly kind: 'audio'; readonly contentType: string; readonly stream: ReadableStream<Uint8Array> }
+  /**
+   * The audio AND its face (ADR-112): Audio2Face frames computed on Moyo's GPU
+   * host from these exact bytes, so the client can schedule both on one clock.
+   * Only when `AUDIO2FACE_URL` is set; a face that fails to render falls back
+   * to `audio` with the same bytes, never to text.
+   */
+  | {
+      readonly kind: 'performance';
+      readonly contentType: string;
+      readonly audio: Uint8Array;
+      readonly face: FacePerformance;
+    }
   | {
       readonly kind: 'text-only';
       readonly reason: 'no-voice-configured' | 'voice-budget-spent' | 'voice-unavailable';
@@ -101,6 +114,8 @@ export type VoiceTransport = (url: string, init: RequestInit) => Promise<Respons
 
 export interface VoiceEgressOptions {
   readonly transport?: VoiceTransport;
+  /** The Audio2Face host, injectable for tests. Omitted: `AUDIO2FACE_URL` or no face. */
+  readonly faceTransport?: A2fTransport;
   readonly registry?: VoiceRegistry | null;
   readonly ledger?: VoiceBudgetLedger;
   /** Injected for tests; production reads the wall clock. */
@@ -182,11 +197,28 @@ export function createVoiceEgress(options: VoiceEgressOptions = {}): VoiceEgress
       const chars = input.text.length;
       void ledger.record(input.learnerId, day, chars, estimatedUsdFor(chars)).catch(() => undefined);
 
-      return {
-        kind: 'audio',
-        contentType: response.headers.get('content-type') ?? 'audio/mpeg',
-        stream: response.body,
-      };
+      const contentType = response.headers.get('content-type') ?? 'audio/mpeg';
+
+      /*
+        THE FACE, when a host is configured. The stream is drained to bytes —
+        a sentence is a few tens of KB — and the SAME bytes go to A2F and back
+        to the client, so the frames cannot belong to different audio than the
+        one that plays. The emotion is the tone's, specified (doc 32 §4), never
+        inferred from anyone but Natalie. Any failure is the audio alone.
+      */
+      if (options.faceTransport !== undefined || liveFaceConfigured()) {
+        const audio = new Uint8Array(await new Response(response.body).arrayBuffer());
+        const face = await renderFace(
+          audio,
+          contentType,
+          TONE_PALETTE[tone].a2f,
+          options.faceTransport !== undefined ? { transport: options.faceTransport } : {},
+        );
+        if (face !== null) return { kind: 'performance', contentType, audio, face };
+        return { kind: 'audio', contentType, stream: new Response(audio).body as ReadableStream<Uint8Array> };
+      }
+
+      return { kind: 'audio', contentType, stream: response.body };
     },
 
     async renderBakedClip(id) {

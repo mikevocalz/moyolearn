@@ -25,6 +25,7 @@ import { useAppSession } from '../../providers/session';
 import { useTutorStore } from './tutor.store';
 import { API_URL, recommendedTutorPresenceFor } from './tutor-constants.ts';
 import { TutorAvatar } from './tutor-avatar';
+import { markTurnSent, noteKeystroke, setRecording } from './tutor-cues';
 import { pickNoteImage } from '../schedule/pick-note-image';
 import { pickCamera } from './pick-camera';
 import { TutorOpening } from './tutor-opening';
@@ -611,6 +612,17 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   const sendOnStop = useRef(false);
   const sendWhenStaged = useRef<string | null>(null);
 
+  /*
+    An open recorder is the learner talking — the cue the backchannel nods
+    hang off (ADR-113). Derived from the store's live take rather than from
+    the buttons, so cancel, stop and send all clear it the same way.
+  */
+  const isRecording = live !== null && live !== undefined;
+  useEffect(() => {
+    setRecording(isRecording);
+    return () => setRecording(false);
+  }, [isRecording]);
+
   const handleStartRecording = useCallback(() => {
     void requestRecording().then((recording) => {
       if (!recording) return;
@@ -718,6 +730,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
           isSpeaking={state.kind === 'speaking'}
           phase={state.kind === 'thinking' ? 'thinking' : state.kind === 'listening' ? 'listening' : undefined}
           tone={currentTone}
+          ageBand={ageBand}
         />
       }
       /*
@@ -733,7 +746,12 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       captionsEnabled
       buttonSize={buttonSizeForBand(ageBand)}
       onBack={router.back}
-      onSend={handleSend}
+      onSend={(message) => {
+        // The learner's turn just ended: the cue the body turns on (ADR-113).
+        markTurnSent();
+        handleSend(message);
+      }}
+      onDraftChange={() => noteKeystroke()}
       onRetry={() => void coach('')}
       messages={messages}
       attachments={attachments}

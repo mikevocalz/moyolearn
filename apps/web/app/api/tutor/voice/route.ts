@@ -11,6 +11,10 @@
 //
 // The status codes ARE the contract:
 //   200 audio/mpeg stream — play it;
+//   200 application/json — a PERFORMANCE (ADR-112): `{ audio: base64,
+//         audioContentType, face: { fps, names, frames } }`, the audio and the
+//         Audio2Face frames computed from it, so the client schedules both on
+//         one clock. Only when a face host is configured;
 //   204 — text-only. Budget spent, voice unconfigured, vendor down: all the
 //         same silence, because a child keeps reading either way and none of
 //         those states is theirs to see (doc 32 §2, CLAUDE.md §Children's
@@ -80,6 +84,16 @@ export async function POST(request: NextRequest) {
   }
   if (outcome.kind === 'text-only') {
     return new Response(null, { status: 204 });
+  }
+  if (outcome.kind === 'performance') {
+    return NextResponse.json(
+      {
+        audio: Buffer.from(outcome.audio).toString('base64'),
+        audioContentType: outcome.contentType,
+        face: { fps: outcome.face.fps, names: outcome.face.names, frames: outcome.face.frames },
+      },
+      { headers: { 'Cache-Control': 'private, max-age=300' } },
+    );
   }
 
   return new Response(outcome.stream, {

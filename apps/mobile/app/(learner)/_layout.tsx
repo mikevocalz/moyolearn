@@ -1,5 +1,6 @@
+import { useEffect } from 'react';
 import { Stack } from 'expo-router';
-import { useAppSession } from '@acme/app';
+import { preloadNatalie, useAppSession } from '@acme/app';
 import { Dial, RoleScope } from '@acme/ui';
 import { ShellHeader } from '../../components/ShellHeader';
 
@@ -19,6 +20,17 @@ const TITLES: Record<string, string> = {
 export default function LearnerShell() {
   const { activeContext } = useAppSession();
   const isLearner = activeContext.kind === 'learner';
+
+  /*
+    SHE IS PARSED BEFORE SHE IS ASKED FOR (ADR-114). The tutor screen is one
+    tap from every learner tab, and the body's fetch + parse + texture decode
+    is the JS-thread cost that used to sit between that tap and her first
+    frame. Started here, once, the moment a learner enters the shell; a no-op
+    with the 3D flag off.
+  */
+  useEffect(() => {
+    if (isLearner) preloadNatalie();
+  }, [isLearner]);
 
   /*
     THE HOT DIAL, which this shell had never switched on.

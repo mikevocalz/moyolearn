@@ -6,8 +6,13 @@
  *
  * Ported verbatim from the gnm-avatar reference renderer (`src/idle/config.ts`).
  *
- * SOT: docs/pack/22-embodied-tutor-avatar-spec.md §2
- * SOT-KEYWORDS: idle config breath sway drift saccade blink nod anticipation constants
+ * The `body` block (2026-09-03, Prompt 6 / ADR-113) is the procedural
+ * micro-motion layer below the neck: weight shifts, torso turns, shoulders,
+ * wrists, fingers, gaze breaks and head-follow. Its numbers come from
+ * `audit/motion/behaviour-taxonomy.md`, which cites the source for each range.
+ *
+ * SOT: docs/pack/22-embodied-tutor-avatar-spec.md §2 · docs/decisions/adr-113-body-motion-layer.md
+ * SOT-KEYWORDS: idle config breath sway drift saccade blink nod anticipation constants body weight shift fingers gaze away
  */
 
 /** Every idle-layer interval/amplitude lives here — no magic numbers at call sites. */
@@ -65,6 +70,48 @@ export const idleConfig = {
     eyesWide: 0.15,
     attackS: 0.1,
     decayS: 0.6,
+  },
+  body: {
+    /**
+     * A discrete transfer of weight between the legs. Not the continuous sway
+     * above (that is the balance tremor) — this is the thing a person does
+     * every quarter-minute or so, and its absence is most of "mannequin".
+     */
+    weightShift: {
+      intervalS: { min: 8, max: 20 },
+      moveS: { min: 1.2, max: 2.2 },
+      /** Lateral travel of the hip, metres. */
+      amplitudeM: 0.022,
+      /** Follow-through past the new stance before it settles, as a fraction. */
+      overshoot: 0.08,
+    },
+    /** A slight turn of the torso: slow wander, plus a held turn on a turn end. */
+    torsoTurn: {
+      hz: 0.05,
+      driftDeg: 1.5,
+      eventIntervalS: { min: 12, max: 30 },
+      eventDeg: { min: 2, max: 4 },
+      holdS: { min: 3, max: 6 },
+      easeS: 0.8,
+    },
+    shoulder: { hz: 0.12, maxDeg: 1.5 },
+    wrist: { hz: 0.18, maxDeg: 3 },
+    /** Per finger: its own rate and its own amplitude, so no two are in phase. */
+    finger: { hz: { min: 0.2, max: 0.35 }, deg: { min: 2, max: 5 } },
+    /**
+     * Gaze leaves the lens for a moment and comes back. The upper interval is
+     * the companionship firewall's stare ceiling (doc 22 §7; gesture-gate.ts
+     * `maxGazeHoldMs`), so a held stare cannot happen by construction.
+     */
+    gazeAway: {
+      intervalS: { min: 3, max: 4 },
+      holdS: { min: 0.3, max: 1.2 },
+      yawDeg: { min: 4, max: 8 },
+      pitchDeg: { min: -3, max: 1 },
+      easeS: 0.15,
+    },
+    /** The head trails the eyes: a fraction of the gaze, a beat late. */
+    headFollow: { gain: 0.35, tauS: 0.35 },
   },
   speech: { gapWeightSum: 0.05, releaseMs: 250 },
   listening: {

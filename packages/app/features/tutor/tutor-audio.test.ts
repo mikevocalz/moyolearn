@@ -67,7 +67,21 @@ const audioReply = (text: string): Response =>
   ({
     ok: true,
     status: 200,
+    headers: { get: () => 'audio/mpeg' },
     arrayBuffer: async () => new TextEncoder().encode(text).buffer,
+  }) as unknown as Response;
+
+/** The route's JSON envelope: the audio plus its Audio2Face frames (ADR-112). */
+const performanceReply = (text: string, frames: number[][], names: string[], fps = 30): Response =>
+  ({
+    ok: true,
+    status: 200,
+    headers: { get: () => 'application/json' },
+    json: async () => ({
+      audio: btoa(text),
+      audioContentType: 'audio/mpeg',
+      face: { fps, names, frames },
+    }),
   }) as unknown as Response;
 
 const statusReply = (status: number): Response =>
@@ -93,9 +107,11 @@ function harness(prefetchDepth?: number) {
   const sources: FakeSource[] = [];
   const started: string[] = [];
 
+  /** The fake audio clock, in seconds. Tests that need time advance it. */
+  const clock = { now: 1 };
   const audio: TutorAudioPort = {
     resume: () => undefined,
-    currentTime: () => 1,
+    currentTime: () => clock.now,
     decode: async (buffer) =>
       ({
         duration: 1,
@@ -163,8 +179,65 @@ function harness(prefetchDepth?: number) {
   };
 
   live.push(queue);
-  return { queue, audio, requests, sources, started, replyTo, speak, endPlaybackOf };
+  return { queue, audio, clock, requests, sources, started, replyTo, speak, endPlaybackOf };
 }
+
+describe('the face rides the audio clock (ADR-112)', () => {
+  it('a JSON performance decodes its audio and samples its frames by name', async () => {
+    const h = harness();
+    h.queue.enqueue('One.', VOICE);
+    await settle();
+    const pending = h.requests.find((r) => r.text === 'One.');
+    assert.ok(pending);
+    // Two frames a second apart at 1 fps: brow up at t=0, jaw open at t=1.
+    pending.reply(performanceReply('One.', [[1, 0], [0, 1]], ['browInnerUp', 'jawOpen'], 1));
+    await settle();
+    assert.deepEqual(h.started, ['One.'], 'the performance audio did not play');
+
+    // Scheduled a lead out: during the lead nothing is audible and no face.
+    assert.equal(h.queue.isSpeaking(), false);
+    assert.equal(h.queue.sampleFace(), null);
+    const until = h.queue.timeUntilOnset();
+    assert.ok(until !== null && until > 0.2 && until <= 0.3 + 1e-9, `lead was ${until}`);
+
+    h.clock.now += 0.3;
+    assert.equal(h.queue.isSpeaking(), true);
+    assert.equal(h.queue.timeUntilOnset(), null);
+    assert.deepEqual(h.queue.sampleFace(), { browInnerUp: 1 });
+    const speech = h.queue.sampleSpeech(0);
+    assert.equal(speech.active, true);
+    assert.deepEqual(speech.shape, { browInnerUp: 1 });
+
+    h.clock.now += 0.5;
+    const mid = h.queue.sampleFace();
+    assert.ok(mid && Math.abs(mid.browInnerUp! - 0.5) < 1e-9 && Math.abs(mid.jawOpen! - 0.5) < 1e-9, 'not interpolating');
+  });
+
+  it('plain audio still drives the mouth from the analysis track, with no face', async () => {
+    const h = harness();
+    h.queue.enqueue('One.', VOICE);
+    await settle();
+    await h.speak('One.');
+    h.clock.now += 0.3;
+    assert.equal(h.queue.sampleFace(), null);
+    assert.equal(h.queue.isSpeaking(), true);
+  });
+
+  it('only the first sentence of a turn pays the onset lead', async () => {
+    const h = harness();
+    h.queue.enqueue('One.', VOICE);
+    h.queue.enqueue('Two.', VOICE);
+    await settle();
+    await h.speak('One.');
+    await h.speak('Two.');
+    assert.ok((h.queue.timeUntilOnset() ?? 0) > 0, 'first sentence should be scheduled ahead');
+    h.clock.now += 0.3;
+    await h.endPlaybackOf('One.');
+    assert.deepEqual(h.started, ['One.', 'Two.']);
+    assert.equal(h.queue.timeUntilOnset(), null, 'the second sentence must start at once');
+    assert.equal(h.queue.isSpeaking(), true);
+  });
+});
 
 describe('the tutor voice pipeline', () => {
   it('renders the next sentences while the current one is still speaking', async () => {
