@@ -359,6 +359,8 @@
   --color-on-chrome-mango: light-dark(#43216B, #43216B);
   --color-surface-header: light-dark(#E9DDF5, #D5C1EC);
   --color-on-surface-header: light-dark(#43216B, #43216B);
+  --color-surface-stage: light-dark(#E9DDF5, #43216B);
+  --color-on-surface-stage: light-dark(#43216B, #E9DDF5);
   --color-nav-cta: light-dark(#43216B, #43216B);
   --color-on-nav-cta: light-dark(#E9DDF5, #E9DDF5);
   --color-nav-selected: light-dark(#5D3A8B, #5D3A8B);

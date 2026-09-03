@@ -368,6 +368,8 @@
       --color-on-chrome-mango: #43216B;
       --color-surface-header: #E9DDF5;
       --color-on-surface-header: #43216B;
+      --color-surface-stage: #E9DDF5;
+      --color-on-surface-stage: #43216B;
       --color-nav-cta: #43216B;
       --color-on-nav-cta: #E9DDF5;
       --color-nav-selected: #5D3A8B;
@@ -461,6 +463,8 @@
       --color-on-chrome-mango: #43216B;
       --color-surface-header: #D5C1EC;
       --color-on-surface-header: #43216B;
+      --color-surface-stage: #43216B;
+      --color-on-surface-stage: #E9DDF5;
       --color-nav-cta: #43216B;
       --color-on-nav-cta: #E9DDF5;
       --color-nav-selected: #5D3A8B;

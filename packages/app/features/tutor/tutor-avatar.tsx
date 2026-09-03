@@ -21,8 +21,9 @@
 // SOT-KEYWORDS: tutor avatar presence 2d 3d handoff face bus speech driver viseme webgpu flag
 
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Platform, View } from 'react-native';
+import { Platform } from 'react-native';
 import { Avatar, MotionView, Text, isTutorRevealed } from '@acme/ui';
+import { View } from '@acme/ui/tw';
 import type { ResolvedTutorPresence } from '@acme/ui';
 import type { AgeBand } from '../capture/age-band.ts';
 import { sampleCues } from './tutor-cues';
@@ -314,7 +315,7 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase, ageBand }:
 
   if (!render3D) {
     return (
-      <View style={{ alignItems: 'center' }}>
+      <View className="flex-1 items-center justify-center bg-surface-stage">
         <Avatar name="Natalie" size="xl" />
         {preparing ? (
           <Text variant="caption" tone="muted">
@@ -332,7 +333,7 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase, ageBand }:
     that was already moving underneath it. She is never seen starting.
   */
   return (
-    <View style={{ width: '100%', flex: 1, minHeight: STAGE_HEIGHT }}>
+    <View className="w-full flex-1 bg-surface-stage" style={{ minHeight: STAGE_HEIGHT }}>
       <MotionView
         style={{ position: 'absolute', inset: 0 }}
         initial={{ opacity: 0 }}
