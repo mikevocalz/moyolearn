@@ -234,6 +234,26 @@ export default defineConfig({
       '@react-native/normalize-colors',
       'fbjs',
       'inline-style-prefixer',
+      /*
+       * `inline-style-prefixer`'s OWN dependency, and the one gap in the list
+       * above — it was built from react-native-web's `dependencies`, which is
+       * one level too shallow. Bundling the prefixer while leaving this
+       * external left a bare `require('css-in-js-utils/lib/hyphenateProperty')`
+       * in the SSR chunk, and nitro's file tracing does not follow it out of a
+       * pnpm symlink farm, so it never shipped in the Vercel function.
+       *
+       * The failure is invisible locally — `node .output/server` resolves it
+       * from node_modules — and invisible on a green build. In production it
+       * threw MODULE_NOT_FOUND on every SSR render, i.e. every route that is
+       * not prerendered answered 500 from 2026-08-28 until this line.
+       */
+      'css-in-js-utils',
+      // …and `css-in-js-utils`'s own, for the same reason one level deeper.
+      // Bundling a CJS package converts its `require`s into `__require`s that
+      // still resolve at RUNTIME, so each one has to be pulled in behind it
+      // until the chain closes. Check with:
+      //   grep -rhoaE 'require\("[a-z@][^"]*"\)' .vercel/output/functions/__server.func/_ssr/*.mjs | sort -u
+      'hyphenate-style-name',
       'memoize-one',
       'nullthrows',
       'postcss-value-parser',
