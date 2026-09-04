@@ -9,12 +9,19 @@
  */
 import { createRouter } from '@tanstack/react-router';
 import { routeTree } from './routeTree.gen';
+import { NotFound } from './components/not-found';
 
 export function getRouter() {
   return createRouter({
     routeTree,
-    // Marketing pages are prerendered; a client-side miss should land on a real
-    // 404 from the host rather than an empty shell.
+    /*
+      Without this the router has nothing to render for an unmatched path, and
+      the miss leaves the server handler as an unhandled `HTTPError` — every
+      wrong URL on the site answered a raw `{"status":500,"unhandled":true}`
+      instead of a 404. Registering it here rather than as `notFoundComponent`
+      on `__root` covers misses thrown from inside a matched route too.
+    */
+    defaultNotFoundComponent: NotFound,
     defaultPreload: 'intent',
     scrollRestoration: true,
   });
