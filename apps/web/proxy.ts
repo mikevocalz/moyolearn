@@ -28,6 +28,14 @@ const PUBLIC_PATHS = [
     behind a session gate.
   */
   '/api/marketing',
+  /*
+    Natalie's body. Ten static files with no learner data in them, copied out of
+    `@acme/avatar` at build time — and behind the gate they 307'd to `/login`,
+    which `GLTFLoader` reads as a corrupt glTF rather than as a redirect. Gating
+    them also put a Node session check in front of 13 MB of bytes that a CDN
+    should be answering on its own.
+  */
+  '/natalie',
 ];
 
 export async function proxy(request: NextRequest) {
