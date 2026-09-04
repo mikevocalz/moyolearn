@@ -44,6 +44,7 @@ import {
   useHydrated,
 } from '@acme/ui/primitives';
 import { useLocation } from '@tanstack/react-router';
+import { APP_LOGIN } from '@/app-links';
 import { usePerfStore } from '@/stores/perf-store';
 
 /*
@@ -52,8 +53,8 @@ import { usePerfStore } from '@/stores/perf-store';
   and fails the build on a 404 (start-plugin-core/prerender.js:43, :81 —
   verified against a probe route). An absolute URL is skipped by the crawler and
   stays the right destination once the pages ship, which is what keeps the
-  compliance claims checkable instead of decorative. `/login` and `/signup` are
-  FD-02 and FD-03 in doc 38's route table, not paths invented here.
+  compliance claims checkable instead of decorative. The front door is NOT on
+  this origin — `Log in` comes from `@/app-links`.
 */
 const SITE_ORIGIN = 'https://moyolearn.com';
 
@@ -94,7 +95,7 @@ const COLUMNS = [
       { label: 'About', href: '/about' },
       { label: 'FAQ', href: '/faq' },
       { label: 'Contact', href: '/contact' },
-      { label: 'Log in', href: `${SITE_ORIGIN}/login` },
+      { label: 'Log in', href: APP_LOGIN },
     ],
   },
 ] as const;

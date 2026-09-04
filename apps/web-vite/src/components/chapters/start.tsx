@@ -32,17 +32,11 @@
  */
 import { Container, Heading, Text } from '@acme/ui/typography';
 import { Link, List, ListItem, Paragraph, Section, View } from '@acme/ui/primitives';
+import { APP_START } from '@/app-links';
 import { useMotionScene } from '@/motion';
 import type { MotionScene } from '@/motion';
 
-/*
-  Absolute, for the reason parents.tsx records: the prerender crawls every href
-  beginning with `/` and fails the build on a route that does not exist yet.
-  `/signup` is FD-03 in doc 38 §'s route table — the front door the deck says
-  this action lands on — not a path invented here.
-*/
-const SITE_ORIGIN = 'https://moyolearn.com';
-const FRONT_DOOR = `${SITE_ORIGIN}/signup`;
+const FRONT_DOOR = APP_START;
 
 const SCOPE = '.chapter-start';
 

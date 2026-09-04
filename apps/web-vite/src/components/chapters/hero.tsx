@@ -45,6 +45,7 @@
  */
 import { Container, Heading, Text } from '@acme/ui/typography';
 import { Link, Paragraph, Section, View } from '@acme/ui/primitives';
+import { APP_LEARNER, APP_LOGIN, APP_START } from '@/app-links';
 import { useMotionScene } from '@/motion';
 import type { MotionScene } from '@/motion';
 import { Photo } from '@/components/photo';
@@ -52,16 +53,6 @@ import { Photo } from '@/components/photo';
 /** The scene root. Unique per chapter, so `gsap.context` cannot cross into another. */
 const SCOPE = '.hero-chapter';
 
-/*
-  The app's real routes (apps/web/app/(auth)). Named here rather than typed into
-  three elements so the handoff is one edit if the deployment ever mounts the
-  product somewhere else — and so it is visible that these are existing screens,
-  not placeholders. `/onboarding/learner` is FD-08's door: the learner sequence,
-  which is where a kid with a code belongs.
-*/
-const APP_START = '/onboarding';
-const APP_LOGIN = '/login';
-const APP_LEARNER = '/onboarding/learner';
 
 /*
   Shared shape. `.moyo-pressable` (globals.css) supplies the resting offset

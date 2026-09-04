@@ -55,17 +55,13 @@ import { Button, Header, Link, Nav, View } from '@acme/ui/primitives';
 import { Menu, X } from '@acme/ui/icons';
 import { useLocation } from '@tanstack/react-router';
 import { create } from 'zustand';
+import { APP_LOGIN, APP_START } from '@/app-links';
 import { useMotionScene } from '@/motion';
 import type { MotionScene } from '@/motion';
 import './site-nav.css';
 
 const SCOPE = '.site-nav';
 
-const SITE_ORIGIN = 'https://moyolearn.com';
-// Front door routes from doc 38; absolute so the prerenderer does not try to
-// crawl an unfinished route and fail the build.
-const APP_START = `${SITE_ORIGIN}/signup`;
-const APP_LOGIN = `${SITE_ORIGIN}/login`;
 
 /** The four product pages, in the deck's order. */
 const LINKS = [

@@ -23,6 +23,12 @@ import { authClient } from '@/lib/auth-client';
 export interface LoginContentProps {
   /** Absent on Moyo's own sign-in; present on a district's branded URL. */
   org?: OrgBranding;
+  /**
+   * Which half of the form opens. The route reads it from `?mode=signup` so the
+   * marketing `Start learning` CTA lands on Create account rather than on a
+   * sign-in form with the real action hidden behind a ghost button.
+   */
+  initialMode?: 'signin' | 'signup';
 }
 
 /**
@@ -41,7 +47,7 @@ const supportingLine = (orgName?: string) =>
     ? `Moyo, for ${orgName}.`
     : 'AI tutoring that helps a child learn it by heart — and helps the parents, tutors, and teachers around them help better.';
 
-export function LoginContent({ org }: LoginContentProps) {
+export function LoginContent({ org, initialMode = 'signin' }: LoginContentProps) {
   const router = useRouter();
 
   /*
@@ -55,7 +61,7 @@ export function LoginContent({ org }: LoginContentProps) {
     where `loading` has flipped but `error` has not been cleared.
   */
   const store = useInstanceStore(() => ({
-    mode: 'signin' as 'signin' | 'signup',
+    mode: initialMode,
     email: '',
     name: '',
     password: '',
