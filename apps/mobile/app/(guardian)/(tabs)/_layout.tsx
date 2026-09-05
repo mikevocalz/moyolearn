@@ -11,6 +11,13 @@ import { ShellTabBar, useShellTabBarPosition, type ShellTabItem } from '../../..
  * Home/Family, not a tab. Messages and Account are retired per ADR-101 (no
  * messaging surface exists; account content moves to the ADR-106 sheet) —
  * their route files and screen entries are removed.
+ *
+ * Messages stays struck rather than deferred: the precondition failed, not a
+ * decision. There is no messaging collection, no participants model, no unread
+ * state and no route under apps/web/app/api. It returns when all four exist and
+ * the doc 31 safety review has run, and not before — a tab here without them is
+ * an empty state that can never fill. Struck 2026-09-05,
+ * docs/design/reset/03-dispositions.md S1.
  */
 const ITEMS: ShellTabItem[] = [
   { name: 'family-home', label: 'Home', Icon: Home },
