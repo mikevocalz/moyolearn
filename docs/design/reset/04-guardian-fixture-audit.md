@@ -67,6 +67,20 @@ The store's own header calls this out and says swapping the source "touches exac
 
 Verified: `pnpm typecheck` 19/19, 18 gates, both switcher stories still seed their own children.
 
+## P0 · Erasure is offered against fabricated facts
+
+Found 2026-09-05 while auditing `ai-activity`. This is the most serious item in this document and it is not a design issue.
+
+`packages/app/features/memory/memory.store.ts:108` seeds `facts: MEMORY_FACTS` from `memory.data.ts` — fixture entries with ids like `maya:mastery:fraction-addition`. The guardian's memory surface renders those as what the tutor knows about their child.
+
+The erase controls beside them are **real**. `memory.store.ts:137` posts the fixture's `factId` to `POST /api/memory/erase`; `:186` and `:226` reach `/api/memory/erase-transcript` and `/api/memory/forget-all` the same way. `apps/web/app/api/memory/erase/route.ts:39` states that `factId` is the only thing the route accepts — the learner is resolved from server context, so this is not a cross-account deletion risk.
+
+The risk is a **false success on a safety-critical promise**. The store removes the row optimistically (`:134`) and reinstates it only when the response is not ok (`:144-148`). A guardian erasing a fabricated fact is shown a deletion that deleted nothing, while whatever the model actually holds — which they were never shown — remains. Doc 07 §4 / S27 makes erasure a guarantee to a family, and this surface reports that guarantee kept without keeping it.
+
+There is no read to fix it with: `apps/web/app/api/memory/` exposes `erase`, `erase-transcript` and `forget-all` and no GET. So the honest options are to stop rendering the fact list until a read exists, or to keep only `forget-all`, which is the one action whose meaning does not depend on the list being accurate.
+
+**Not changed here, deliberately.** It is a destructive path on a child-safety surface, and the right fix is a product decision between those two options plus whatever the erasure spec says. It should not be picked at the end of a long session by whoever found it.
+
 ## Still open
 
 - **`ai-activity`** renders permissions, observations and retention rows for a child who does not exist. Needs a `children.length > 0` guard and one `EmptyState`. Its `SafetySection` is already honest — `ReadFailure` with retry plus a loading state — and is the model to copy.
