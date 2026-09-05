@@ -81,9 +81,44 @@ There is no read to fix it with: `apps/web/app/api/memory/` exposes `erase`, `er
 
 **Not changed here, deliberately.** It is a destructive path on a child-safety surface, and the right fix is a product decision between those two options plus whatever the erasure spec says. It should not be picked at the end of a long session by whoever found it.
 
+## What was done, 2026-09-05 — second pass
+
+Both remaining guardian fixtures are gone. Verified by rendering the surfaces, not by reading the diff: `pnpm exec turbo typecheck` 19/19, all 18 `tooling/check-*.mjs` gates pass, `eslint` clean on the three changed files, and each screen re-rendered at 430×932 with zero page errors.
+
+- **`ai-activity` is guarded.** Permissions, observations and retention now render only when `children.length > 0`; otherwise one `EmptyState` carrying the "Add a child" verb to `/onboarding/guardian` (nav law 6, `docs/pack/36-role-navigation-flows.md:69`). `SafetySection` stays deliberately *outside* the gate: whether the tutor is running is a property of the account, not of a child, and gating it would hide a stopped tutor behind an unrelated emptiness. Rendered: the three fixture sections are gone, the safety status and its crisis row remain.
+- A side effect worth knowing: the `See everything Natalie remembers` button lives inside the observations section, so the empty account no longer has that entry point into the P0 surface below. `/memory` is still directly reachable and still renders fixtures — **the P0 is not mitigated by this.**
+
+### `FAMILY_DAYS` — disposition: STRIKE. The surface: DEFER.
+
+`FAMILY_DAYS` is deleted rather than gated. A `children.length` guard would have hidden the invented sessions from an empty account and gone on showing them to a real one, which is the wrong half of the problem.
+
+Two things it was getting wrong, the second previously unrecorded: it named Maya and Jordan against a store with no children, **and its four hardcoded dates were not the current week** — the strip rendered Sun 17 – Wed 20 on Saturday 2026-09-05. The day strip is now `weekOf(new Date())`, a real Sunday-to-Saturday week; the agenda is empty until a projection lands.
+
+The *surface* is a defer, not a strike, and the distinction is doc 03's own: messaging was struck because no product decision and no surface existed, whereas `guardian.calendar` has a screen contract and its data exists in the tree — what is missing is one guardian-scoped projection. That is the BUILD 2 shape (`03-dispositions.md:48`), so it defers.
+
+**The absence was verified positively, per the standing rule.** All 55 routes under `apps/web/app/api` were listed: none projects a family's sessions or due work. `ops/sessions` is org-scoped; `learner/assignments` resolves its learner from ctx, so a guardian cannot ask it about their child.
+
+One copy correction fell out of it. The old empty state read "No sessions, no due work, nothing to be anywhere for" — a *verified* zero, which the screen cannot support. It now says booking is not switched on yet, which is true by construction: J2 records that the booking middle has no endpoint and no collection, so no family can have a session booked. It no longer claims there is no due work, because `learner/assignments` holds due work and this surface simply cannot ask it.
+
+**The stale `selectedChildId` is fixed by derivation, not by a store link.** `childFilter` is recomputed against the live child list each render, so an id selected before the list changed cannot outlive the child. `family-calendar.store` keeps no reference to `family.store` — the two stores stay unaware of each other, which is what `check-store-separation` wants anyway.
+
 ## Still open
 
-- **`ai-activity`** renders permissions, observations and retention rows for a child who does not exist. Needs a `children.length > 0` guard and one `EmptyState`. Its `SafetySection` is already honest — `ReadFailure` with retry plus a loading state — and is the model to copy.
-- **`family-calendar`** is the larger one and the flip did not change it: the agenda renders `FAMILY_DAYS` regardless of the store, so it showed invented sessions before and still does. `FAMILY_DAYS` needs its own disposition rather than a guard — there is no family-calendar read behind it, which makes it a strike candidate. Separately, `family-calendar.store.ts:20`'s `selectedChildId` is not cleared by `setChildren`, so a stale id can filter the agenda to empty with the chips that would reset it already hidden.
 - **`profile-content`'s** "Nobody else is set up here yet." is now reached in the ordinary case. It is true for an empty list but asserts the same sentence when a read fails, which needs a status on the store (`idle | loading | loaded | error`) rather than a third branch guessed at the call site.
 - **No zero-children story exists** for either switcher. `ProfileSwitcher.stories.tsx` covers one, two and three learners only, so the state now reachable in the app is the one state Storybook cannot show.
+
+## The render walk, 2026-09-05 — 18 commits, now seen
+
+The standing debt was that nothing had been watched render. Ten surfaces were driven at 430×932 against the dev server with the `?persona=` mock (`maya` K–2, `jordan` 3–5, `dana` guardian). All ten returned 200, none bounced, and no page threw.
+
+Three things the walk settled that reading could not:
+
+- **The learner hero is honest.** `jordan`'s home renders "You have been working on this." — the copy D1 warns must never sit over a seeded pick. It is correct here: `/api/tutor/next` returned `source: "review"`, and `use-next-skill.ts` computes `derived: data ? data.source !== 'seed' : false`, which fails closed to the seeded copy when there is no data. The guard works; it was verified against the route, not assumed from the hook.
+- **`/family` is not the Family tab.** `(guardian)/family/page.tsx` renders `GuardianHomeScreen`, byte-identical to `/`. It is a legacy duplicate that nothing points at — `nav.ts:108` sends Family to `/children`, which renders `FamilyScreen` correctly, empty state and all. Not a defect; recorded so the next reader does not re-file it.
+- **The 3–5 learner tab bar shows three destinations, not doc 36's four.** Also not a defect: `nav.ts` cites G §3.1 — on web, mobile's `Me`/`You` tab collapses into the avatar slot under ADR-106's avatar-as-You law.
+
+The first two of those were nearly filed as defects off the sweep's numbers alone. Both dissolved on opening the source, which is the rule this document exists to enforce.
+
+**The P0 was watched happening.** `/memory` renders ten live erase controls against six fabricated facts under the heading "About Maya" — a child `family.store` no longer has — over the sentence "Delete any of them and Natalie stops knowing it."
+
+One detail for whoever picks the option, which neither this document nor the store header caught: the `Forget everything` card derives its counts from the fixture, reading "Removes all 6 things Natalie remembers and all 3 sessions." Under the keep-`forget-all` option those counts are fabricated too, so that option is keeping the button *and* dropping the counts from its copy — not keeping the card as it stands.

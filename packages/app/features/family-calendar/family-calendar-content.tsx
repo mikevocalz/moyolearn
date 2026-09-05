@@ -21,9 +21,16 @@
 //     link, because there is nothing to read yet.
 //
 // Cool-warm mix: the background is the parent surface and child chips carry the
-// accent. The data is a fixture (contract Notes: "FAMILY_DAYS is a fixture —
-// wire real events"), so the surface says so rather than passing seeded days
-// off as the family's real week — the same Example marker the family hub uses.
+// accent.
+//
+//  3. THE SEEDED WEEK IS STRUCK, NOT GUARDED. `FAMILY_DAYS` named Maya and
+//     Jordan against four hardcoded dates, so it outlived `family.store` being
+//     emptied and showed tutoring to an account with no children — on a week
+//     that was not the current one. A `children.length` gate would only have
+//     hidden that from the empty account while still lying to a real one. The
+//     strip is now the real week from `weekOf()` and the agenda is empty until
+//     a guardian-scoped read exists; none of the 55 routes under
+//     `apps/web/app/api` projects one.
 //
 // Mobbin: https://mobbin.com/screens/3a21d1a0-0bec-472b-9c07-8a33dddf45cf
 // (Microsoft Outlook — a horizontal week strip above a dated agenda list;
@@ -45,6 +52,7 @@
 // SOT: design/screens/guardian/guardian.calendar/contract.md · docs/pack/04-screen-briefs.md §S13
 // SOT-KEYWORDS: family calendar child chip agenda day strip exits open child past report empty
 
+import { useMemo } from 'react';
 import { useRouter } from 'solito/navigation';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import {
@@ -59,7 +67,7 @@ import {
 } from '@acme/ui';
 import { ArrowRight, CalendarDays } from '@acme/ui/icons';
 import { useFamilyStore } from '../family/family.store';
-import { FAMILY_DAYS, type FamilyEvent } from './family-calendar.data';
+import { weekOf, type FamilyEvent } from './family-calendar.data';
 import { useFamilyCalendarStore } from './family-calendar.store';
 
 export function FamilyCalendarContent() {
@@ -72,19 +80,33 @@ export function FamilyCalendarContent() {
   // write, so "Maya" means the same child here as everywhere else.
   const children = useFamilyStore((s) => s.children);
 
+  // One week per mount. Recomputing on every render would hand `day` a new
+  // identity each pass and re-key the whole strip mid-interaction.
+  const days = useMemo(() => weekOf(new Date()), []);
+
   /*
-    Opens on TODAY, not on the first day in the strip. The week now carries a
-    past day so a finished session has somewhere to be read from, and defaulting
-    to index 0 would land a parent on yesterday — the contract's question is
-    "what's coming up", answered in zero interactions.
+    Opens on TODAY, not on the first day in the strip. The week carries its past
+    days so a finished session has somewhere to be read from, and defaulting to
+    index 0 would land a parent on Sunday — the contract's question is "what's
+    coming up", answered in zero interactions.
   */
-  const today = FAMILY_DAYS.find((d) => !d.past) ?? FAMILY_DAYS[0]!;
-  const day = FAMILY_DAYS.find((d) => d.id === selectedDayId) ?? today;
+  const today = days.find((d) => !d.past) ?? days[0]!;
+  const day = days.find((d) => d.id === selectedDayId) ?? today;
+
+  /*
+    The filter is DERIVED against the live child list, not read raw from the
+    store. `family-calendar.store` has no link to `family.store`, so a child id
+    selected before the list changed would otherwise survive it and filter the
+    agenda to empty — with the chips that would reset it already hidden by the
+    `children.length > 0` gate below. Deriving it means the stale id cannot
+    outlive the child.
+  */
+  const childFilter = children.some((c) => c.id === selectedChildId) ? selectedChildId : null;
 
   const filtered =
-    selectedChildId === null
+    childFilter === null
       ? day.events
-      : day.events.filter((event) => event.childId === selectedChildId);
+      : day.events.filter((event) => event.childId === childFilter);
 
   return (
     <View className="gap-7">
@@ -93,17 +115,9 @@ export function FamilyCalendarContent() {
           <Heading level={1} size="title">
             Family calendar
           </Heading>
-          {/* The fixture, admitted. A seeded week presented as the real one is
-              the same lie as a calm zero over a failed read. */}
-          <View className="flex-row flex-wrap items-center gap-1.5">
-            <Text variant="label" className="font-semibold text-grade">
-              Example
-            </Text>
-            <Text variant="caption" tone="muted">
-              This week is a seeded example. Your family&rsquo;s real sessions appear here once
-              they&rsquo;re booked.
-            </Text>
-          </View>
+          {/* The Example marker went with the fixture it was admitting to. The
+              dates below are the real week, so there is nothing left to disclaim
+              here; the agenda's own empty state carries why it is empty. */}
         </Section>
       </FadeIn>
 
@@ -113,19 +127,19 @@ export function FamilyCalendarContent() {
           <View className="flex-row flex-wrap gap-element">
             <PressScale
               className={`min-h-11 justify-center rounded-full border-2 px-3 py-1.5 ${
-                selectedChildId === null
+                childFilter === null
                   ? 'border-border bg-primary'
                   : 'border-border bg-surface-raised'
               }`}
-              aria-selected={selectedChildId === null}
+              aria-selected={childFilter === null}
               onPress={() => selectChild(null)}
             >
-              <TWText className={selectedChildId === null ? 'text-on-primary' : 'text-text'}>
+              <TWText className={childFilter === null ? 'text-on-primary' : 'text-text'}>
                 All
               </TWText>
             </PressScale>
             {children.map((child) => {
-              const active = selectedChildId === child.id;
+              const active = childFilter === child.id;
               return (
                 <PressScale
                   key={child.id}
@@ -146,7 +160,7 @@ export function FamilyCalendarContent() {
       {/* Day strip */}
       <FadeIn delay={160}>
         <View className="flex-row gap-element">
-          {FAMILY_DAYS.map((d) => {
+          {days.map((d) => {
             const active = d.id === day.id;
             return (
               <PressScale
@@ -205,21 +219,24 @@ export function FamilyCalendarContent() {
             </View>
           ) : (
             /*
-              A quiet day is good news on a family calendar, so the empty state
-              says so and still carries a live way on — the contract's
-              `no_data` is calm, and the booking entry it mentions stays out
-              until J2's flow exists.
+              This zero is calm because it is TRUE BY CONSTRUCTION, not because
+              a read came back empty. J2 records that the booking middle —
+              discovery → booking → confirmation — has no endpoint and no
+              collection, so no family can have a session booked and the copy
+              may say so without asserting an unverified zero. It deliberately
+              does not claim there is no due work: `learner/assignments` holds
+              that, and this surface simply cannot ask it guardian-side.
             */
             <EmptyState
               icon={<CalendarDays size={28} className="text-text-muted" />}
-              title="Nothing scheduled"
+              title="Nothing booked this week"
               description={
-                selectedChildId === null
-                  ? 'No sessions, no due work, nothing to be anywhere for. Pick another day to see the rest of the week.'
-                  : 'Nothing for this child on this day. Choose All to see the rest of the family.'
+                childFilter === null
+                  ? 'Booking is not switched on yet, so there is nothing to show here. Sessions will appear once it is.'
+                  : 'Nothing for this child. Choose All to see the rest of the family.'
               }
               action={
-                selectedChildId === null ? (
+                childFilter === null ? (
                   <Button
                     title="See your children"
                     variant="outline"

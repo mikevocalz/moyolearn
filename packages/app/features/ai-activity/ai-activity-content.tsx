@@ -26,7 +26,8 @@
 import { useEffect } from 'react';
 import { useRouter } from 'solito/navigation';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
-import { Button, Card, Dial, Heading, PressScale, Switch, Text, FadeIn } from '@acme/ui';
+import { Button, Card, Dial, EmptyState, Heading, PressScale, Switch, Text, FadeIn } from '@acme/ui';
+import { Users } from '@acme/ui/icons';
 // Child selection rides family.store (G-8 fix) — this screen no longer owns
 // "which child"; it reads the same seam home, reports, and calendar read.
 import { useActiveLearnerId, useFamilyStore } from '../family/family.store';
@@ -98,70 +99,101 @@ export function AiActivityContent() {
         />
       </FadeIn>
 
-      <FadeIn delay={160}>
-        <Section className="gap-stack">
-          <Text variant="label" tone="muted">Permissions</Text>
-          <View className="gap-element">
-            {CONSENTS.map((consent) => (
-              <Card key={consent.id} className="gap-element">
-                <Switch
-                  label={consent.label}
-                  value={values[consent.id] ?? false}
-                  disabled={consent.locked}
-                  onChange={(next) => setConsent(consent.id, next)}
-                />
-                <TWText className="text-sm text-text-muted">{consent.effect}</TWText>
-              </Card>
-            ))}
-          </View>
-        </Section>
-      </FadeIn>
+      {/*
+        Permissions, observations and retention each describe a SPECIFIC child:
+        a consent toggle, a thing Natalie learned, a transcript that expires.
+        With no children on the account there is no child for any of it to be
+        about, so rendering them states a household's arrangements with a child
+        who does not exist.
 
-      <FadeIn delay={240}>
-        <Section className="gap-stack">
-          <Text variant="label" tone="muted">What Natalie learned</Text>
-          <View className="gap-element">
-            {OBSERVATIONS.map((observation) => (
-              <View
-                key={observation.id}
-                className="gap-0.5 rounded-card border-2 border-border bg-surface-raised p-3"
-              >
-                <TWText className="text-base text-text">{observation.summary}</TWText>
-                <TWText className="text-sm text-text-muted">{observation.source}</TWText>
-              </View>
-            ))}
-          </View>
-          {/* The preview stops here. Every line is erasable, but erasing happens
-              on S27, which shows the whole model and what a delete takes with it —
-              a delete offered next to three of six rows would be a delete whose
-              reach the parent cannot see. */}
-          <Button
-            title="See everything Natalie remembers"
-            variant="outline"
-            onPress={() => router.push('/memory')}
+        `SafetySection` stays outside this gate deliberately. Whether the tutor
+        is running is a property of the account, not of a child, and it already
+        owns its own loading and `ReadFailure` states — gating it would hide a
+        stopped tutor behind an unrelated emptiness.
+      */}
+      {children.length === 0 ? (
+        <FadeIn delay={160}>
+          <EmptyState
+            icon={<Users className="h-8 w-8 text-text-muted" />}
+            title="No children on this account yet"
+            description="Permissions, what Natalie learns, and what she keeps are each about one child. Add one and they appear here."
+            action={
+              <Button
+                title="Add a child"
+                variant="outline"
+                onPress={() => router.push('/onboarding/guardian')}
+              />
+            }
           />
-        </Section>
-      </FadeIn>
-
-      <FadeIn delay={320}>
-        <Section className="gap-stack">
-          <Text variant="label" tone="muted">What Natalie keeps</Text>
-          <View className="gap-element">
-            {RAW_ARTEFACTS.map((artefact) => (
-              <View
-                key={artefact.id}
-                className="flex-row items-center justify-between rounded-card border-2 border-border bg-surface-raised p-3"
-              >
-                <TWText className="flex-1 text-base text-text">{artefact.label}</TWText>
-                <TWText className="text-sm text-text-muted">{artefact.expiresLabel}</TWText>
+        </FadeIn>
+      ) : (
+        <>
+          <FadeIn delay={160}>
+            <Section className="gap-stack">
+              <Text variant="label" tone="muted">Permissions</Text>
+              <View className="gap-element">
+                {CONSENTS.map((consent) => (
+                  <Card key={consent.id} className="gap-element">
+                    <Switch
+                      label={consent.label}
+                      value={values[consent.id] ?? false}
+                      disabled={consent.locked}
+                      onChange={(next) => setConsent(consent.id, next)}
+                    />
+                    <TWText className="text-sm text-text-muted">{consent.effect}</TWText>
+                  </Card>
+                ))}
               </View>
-            ))}
-          </View>
-          <TWText className="text-sm text-text-muted">
-            Transcripts are deleted on the date shown. What stays is the short summary above.
-          </TWText>
-        </Section>
-      </FadeIn>
+            </Section>
+          </FadeIn>
+
+          <FadeIn delay={240}>
+            <Section className="gap-stack">
+              <Text variant="label" tone="muted">What Natalie learned</Text>
+              <View className="gap-element">
+                {OBSERVATIONS.map((observation) => (
+                  <View
+                    key={observation.id}
+                    className="gap-0.5 rounded-card border-2 border-border bg-surface-raised p-3"
+                  >
+                    <TWText className="text-base text-text">{observation.summary}</TWText>
+                    <TWText className="text-sm text-text-muted">{observation.source}</TWText>
+                  </View>
+                ))}
+              </View>
+              {/* The preview stops here. Every line is erasable, but erasing happens
+                  on S27, which shows the whole model and what a delete takes with it —
+                  a delete offered next to three of six rows would be a delete whose
+                  reach the parent cannot see. */}
+              <Button
+                title="See everything Natalie remembers"
+                variant="outline"
+                onPress={() => router.push('/memory')}
+              />
+            </Section>
+          </FadeIn>
+
+          <FadeIn delay={320}>
+            <Section className="gap-stack">
+              <Text variant="label" tone="muted">What Natalie keeps</Text>
+              <View className="gap-element">
+                {RAW_ARTEFACTS.map((artefact) => (
+                  <View
+                    key={artefact.id}
+                    className="flex-row items-center justify-between rounded-card border-2 border-border bg-surface-raised p-3"
+                  >
+                    <TWText className="flex-1 text-base text-text">{artefact.label}</TWText>
+                    <TWText className="text-sm text-text-muted">{artefact.expiresLabel}</TWText>
+                  </View>
+                ))}
+              </View>
+              <TWText className="text-sm text-text-muted">
+                Transcripts are deleted on the date shown. What stays is the short summary above.
+              </TWText>
+            </Section>
+          </FadeIn>
+        </>
+      )}
     </Dial>
   );
 }

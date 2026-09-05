@@ -119,6 +119,18 @@ The unblock is a contract, not a component. `StatusHero` carries an extra condit
 
 `docs/decisions/adr-103-school-admin-ia.md` states that no additional tab ships until the role has a PRD persona and an entitlement story, and names the E-matrix gates rather than the ADR as the trigger. That is a decision blocker with an owner and a named condition, so it stays deferred where it already is. Nothing to add here.
 
+### D5 · The guardian family calendar — added 2026-09-05
+
+`FAMILY_DAYS` is **struck**; the `guardian.calendar` surface is **deferred**. The two halves are separate calls and collapsing them is what a guard would have done.
+
+The fixture is struck because gating it on `children.length` fixes the wrong half: it hides the invented sessions from an empty account and keeps showing them to a real one. It named Maya and Jordan against a store with no children, and its four hardcoded dates were not the current week either — the strip drew Sun 17 – Wed 20 on Saturday 2026-09-05. The day strip is now a real week and the agenda is empty.
+
+The surface defers rather than strikes on this document's own distinction. S1 struck messaging because the *precondition* failed — no collection, no participants model, no product decision. `guardian.calendar` fails none of those: it has a screen contract (`design/screens/guardian/guardian.calendar/contract.md`), and the sessions exist in the tree. What is missing is one guardian-scoped projection, which is exactly the BUILD 2 shape at `:48` — ordinary work with a clear outline. So it defers.
+
+Verified positively rather than inferred: all 55 routes under `apps/web/app/api` were listed and none projects a family's sessions or due work. `ops/sessions` is org-scoped, and `learner/assignments` resolves its learner from ctx, so a guardian cannot ask it about their child.
+
+The unblock is nameable and small, and it is the same projection BUILD 2 needs pointed at a different reader: a guardian-scoped read returning a child's booked sessions and due work. Until it lands the screen states that booking is not switched on, which is true by construction — J2 records the booking middle has no endpoint and no collection, so no family can have a session booked. Detail in `docs/design/reset/04-guardian-fixture-audit.md`.
+
 ## STRIKE
 
 ### S1 · Messaging, and any "Updates" tab

@@ -16,7 +16,11 @@
 // happened. A day is `past` relative to the strip, which is what "read the
 // report of a past event" means to a reader scanning a week.
 // SOT: design/screens/guardian/guardian.calendar/contract.md · docs/pack/04-screen-briefs.md §S13
-// SOT-KEYWORDS: family calendar event child agenda past report session exits fixture
+// `FAMILY_DAYS` is gone. It was the last fixture on this surface and it is
+// struck rather than guarded: a `children.length` gate would have hidden the
+// invented sessions from an empty account and kept showing them to a real one.
+// The types stay — they are the shape the projection fills when it lands.
+// SOT-KEYWORDS: family calendar event child agenda past report session exits week strike
 
 export type FamilyEventKind = 'session' | 'assignment' | 'appointment';
 
@@ -48,76 +52,44 @@ export interface FamilyDay {
   events: FamilyEvent[];
 }
 
-export const FAMILY_DAYS: FamilyDay[] = [
-  {
-    id: 'sun',
-    label: 'Yesterday',
-    weekday: 'Sun',
-    dayOfMonth: 17,
-    past: true,
-    events: [
-      {
-        id: '0',
-        childId: 'maya',
-        childName: 'Maya',
-        title: 'Tutoring · Natalie',
-        timeLabel: '4:00 PM · 50 min',
-        kind: 'session',
-        reportSessionId: 'sess-maya-0917',
-      },
-    ],
-  },
-  {
-    id: 'mon',
-    label: 'Today',
-    weekday: 'Mon',
-    dayOfMonth: 18,
-    past: false,
-    events: [
-      {
-        id: '1',
-        childId: 'maya',
-        childName: 'Maya',
-        title: 'Tutoring · Natalie',
-        timeLabel: '4:00 PM · 55 min',
-        kind: 'session',
-        reportSessionId: null,
-      },
-      {
-        id: '2',
-        childId: 'maya',
-        childName: 'Maya',
-        title: 'Math worksheet due',
-        timeLabel: 'By 8:00 PM',
-        kind: 'assignment',
-        reportSessionId: null,
-      },
-    ],
-  },
-  {
-    id: 'tue',
-    label: 'Tomorrow',
-    weekday: 'Tue',
-    dayOfMonth: 19,
-    past: false,
-    events: [
-      {
-        id: '3',
-        childId: 'jordan',
-        childName: 'Jordan',
-        title: 'Piano lesson',
-        timeLabel: '5:30 PM · 30 min',
-        kind: 'appointment',
-        reportSessionId: null,
-      },
-    ],
-  },
-  {
-    id: 'wed',
-    label: 'Wednesday',
-    weekday: 'Wed',
-    dayOfMonth: 20,
-    past: false,
-    events: [],
-  },
-];
+const DAY_MS = 86_400_000;
+
+/**
+ * The week the strip renders, Sunday through Saturday, around `today`.
+ *
+ * Every day comes back with `events: []`, and that is the disposition rather
+ * than an oversight. The seeded week this module used to export named Maya and
+ * Jordan against four hardcoded dates, so it survived `family.store` being
+ * emptied and told a guardian with no children that two of them had tutoring
+ * booked — on a week that was not the current one either. No guardian-scoped
+ * read exists to replace it: of the 55 routes under `apps/web/app/api`, none
+ * projects a family's sessions or due work. `ops/sessions` is org-scoped, and
+ * `learner/assignments` resolves its learner from ctx, so a guardian cannot
+ * ask it about their child.
+ *
+ * The dates are real because a date control may be honest on its own. The
+ * agenda stays empty until the projection lands, and the screen's `no_data`
+ * state says so.
+ */
+export function weekOf(today: Date): FamilyDay[] {
+  const midnight = new Date(today);
+  midnight.setHours(0, 0, 0, 0);
+  const sunday = new Date(midnight);
+  sunday.setDate(midnight.getDate() - midnight.getDay());
+
+  return Array.from({ length: 7 }, (_, index) => {
+    const date = new Date(sunday);
+    date.setDate(sunday.getDate() + index);
+    const offset = Math.round((date.getTime() - midnight.getTime()) / DAY_MS);
+    const named = date.toLocaleDateString(undefined, { weekday: 'long' });
+
+    return {
+      id: date.toISOString().slice(0, 10),
+      label: offset === 0 ? 'Today' : offset === -1 ? 'Yesterday' : offset === 1 ? 'Tomorrow' : named,
+      weekday: date.toLocaleDateString(undefined, { weekday: 'short' }),
+      dayOfMonth: date.getDate(),
+      past: offset < 0,
+      events: [],
+    } satisfies FamilyDay;
+  });
+}
