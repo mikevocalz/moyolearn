@@ -36,7 +36,7 @@
 // file name that thing", which is a property of the source. `pnpm lint`.
 // SOT: docs/pack/31-grade-voice-safety-incidents.md §4.2 · docs/pack/23-crm-spec.md §2 §4 · tooling/check-store-separation.mjs
 // SOT-KEYWORDS: crm wall incident reports sales signal ops leads module graph import path no read path build check doc 23
-import { existsSync, readFileSync, readdirSync, statSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync, lstatSync } from 'node:fs';
 import { dirname, join, relative, resolve, sep } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -177,7 +177,7 @@ function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
     if (SKIP_DIRS.has(entry) || entry.startsWith('.')) continue;
     const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
+    if (lstatSync(full).isDirectory()) walk(full, out);
     else if (SOURCE.test(entry)) out.push(full);
   }
   return out;
@@ -187,7 +187,7 @@ function walk(dir, out = []) {
 function filesUnder(rootRel) {
   const full = join(ROOT, rootRel);
   if (!existsSync(full)) return [];
-  return statSync(full).isDirectory() ? walk(full) : [full];
+  return lstatSync(full).isDirectory() ? walk(full) : [full];
 }
 
 /**
@@ -206,7 +206,7 @@ function resolveSpecifier(fromFile, specifier) {
 
   for (const ext of CANDIDATES) {
     const path = base + ext;
-    if (existsSync(path) && statSync(path).isFile()) return path;
+    if (existsSync(path) && lstatSync(path).isFile()) return path;
   }
   return null;
 }

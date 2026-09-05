@@ -24,7 +24,7 @@
 // reads identically to one that is working.
 // SOT: docs/pack/32-tutor-voice-tone.md §3 · tooling/check-no-training-path.mjs
 // SOT-KEYWORDS: voice egress check elevenlabs key sole importers learner authored tts payload gate
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, lstatSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -81,7 +81,7 @@ function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
     if (SKIP_DIRS.has(entry) || entry.startsWith('.')) continue;
     const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
+    if (lstatSync(full).isDirectory()) walk(full, out);
     else if (/\.(ts|tsx|mts|mjs|js)$/.test(entry)) out.push(full);
   }
   return out;

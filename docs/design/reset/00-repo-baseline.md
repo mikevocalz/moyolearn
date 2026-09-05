@@ -20,6 +20,7 @@ This document corrects `docs/design/moyo-design-reset-v2-brief.md` where the bri
 | 8 | Binding docs exist | CONFIRMED | `docs/pack/` 00–37 complete; `docs/38-front-door-and-flow.md`; `docs/design/overhaul-v2/00-binding-decisions.md`; 64 `design/screens/**/contract.md`; ADRs `adr-101` … `adr-114` in `docs/decisions/` |
 | 9 | `prompts/ROSTER.md` does not exist | WAS TRUE | Authored in this change |
 | 10 | `docs/design/art-direction.md` does not exist | CONFIRMED | Absent; it is deliverable 2 |
+| 11 | Adult surfaces carry the `4px 4px` hard-offset shadow | **REFUTED** | `packages/theme/theme.css:563` remaps `--shadow-card` to `--shadow-cool` on `.dial-cool`, and `--shadow-cool` is `2px 2px 0 0 var(--color-border-faint)` (line 199). `4px 4px 0 0 var(--color-border-strong)` is the root default (line 183) and `--shadow-hot` (line 195). Adult surfaces do not get 4px 4px without an override |
 
 Docs the brief cites as "doc 31/32/33/34/36/37" are pack docs, not root docs: `docs/pack/31-grade-voice-safety-incidents.md`, `32-tutor-voice-tone.md`, `33-moyo-learn-prd.md`, `34-session-summary-reports.md`, `36-role-navigation-flows.md`, `37-onboarding-dual-pane.md`. Derived documents should cite the full path so the reference resolves.
 
@@ -56,3 +57,10 @@ Also already present and load-bearing for the reset, so not to be re-authored: `
 2. The primitive count drops from eleven to six new plus four extensions. Rewrite brief §6 accordingly before any component work starts.
 3. `apps/web-vite` carries 43 real photographs across `public/images` and `data/photography`. The adult-photography lane starts from an existing licensed set, not from zero; the registry's first job is to record what those 43 files are and whether their licences are documented.
 4. Token and gate infrastructure needs extension, not authorship. Budget accordingly.
+5. Every Mobbin doc and every adult composition must state the Cool-dial shadow as `2px 2px` faint. The brief's blanket "hard-offset 4px 4px" is a Hot-dial value. Either the adult register accepts the quieter shadow — which is what the dial is for — or someone writes an ADR to change `--shadow-cool`. It does not get overridden per screen.
+
+## §5 Gate scripts were crashing before this change
+
+`check-role-accent.mjs`, `check-sentry-invariants.mjs`, `check-store-separation.mjs` and `check-voice-egress.mjs` all exited on `ENOENT` walking `apps/mobile/ios/Pods/sentry-xcframeworks/9.24.0/Sentry.xcframework`, a symlink into a local Sentry cache that is absent on a machine without a matching `pod install`. `statSync` follows a symlink and throws when it dangles, so four design gates had been reporting a crash rather than a result.
+
+Fixed across all ten walkers in `tooling/`: `lstatSync` where the walk only needs to know whether the entry is a directory, and `readdirSync(dir, { withFileTypes: true })` in the two that could take the fuller fix. `check-role-accent.mjs` and `check-runtime-classes.mjs` also stop descending into `ios/Pods`, `ios/DerivedData`, `.expo` and `.gradle`, none of which hold TypeScript. All eighteen node gates now pass, each in under half a second. The dangling symlink is still on disk, so the fix is verified against the real condition rather than a cleaned tree.

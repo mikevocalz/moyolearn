@@ -504,3 +504,94 @@ Layer B's numbers are fixed and testable (`docs/decisions/adr-113-body-motion-la
 **Decided:** the runtime and its pin; flag default OFF; the mount-site and dispose rules; the 2D-first frame and the dissolve reveal; the loader copy per band; the clip contract (≤6s, captioned, reduced-motion still); the A2F wire contract and the emotion-never-inferred rule; layer B's motion numbers; that the model asset is not to be altered.
 
 **Open:** see §8.7.
+
+---
+
+## 8 · THE OPEN QUESTIONS
+
+Everything the binding documents explicitly defer, leave `[decision]`/`[verify]`, or mark blocked. A reset that guesses at any of these is inventing product. Each row names the document that defers it.
+
+### 8.1 Pricing, limits and paywall mechanics
+
+| Open item | What is deferred | Deferred by |
+|---|---|---|
+| The free-tier limit | PW-03a fires on "the doc 05 limit event (the exact limit is doc 05's `[verify]`)". PW-04's copy says "{n} sessions a week" with `n` unresolved | `docs/38-front-door-and-flow.md:475`, `:479` |
+| Early-bird eligibility cap | "first N founding families or a hard date printed on the paywall" — neither N nor the date is set, and the doc requires it be "a real, stated limit … never a fake countdown" | `docs/pack/05-monetization-access-spec.md:47` |
+| RevenueCat Paywall Builder | `[decision]` — templates "are not used unless design parity can be shown". Nobody has shown or refused parity | `docs/38-front-door-and-flow.md:457` |
+| Kids Category / Designed for Families | `[decision]` — unrecorded; doc 33 non-goal 8 says "revisit with counsel post-launch" | `docs/38-front-door-and-flow.md:736`; `docs/pack/33-moyo-learn-prd.md:166` |
+| Annual plan | "annual discount test post-launch" is a risk mitigation, not a decided surface | `docs/pack/33-moyo-learn-prd.md:204` |
+| `expired` vs `incomplete` | Which name the UI reads — see conflict C-6 in §9 | unresolved between `docs/38-front-door-and-flow.md:462-469` and `packages/auth/src/entitlements.ts:21-27` |
+
+### 8.2 Roles and shells
+
+| Open item | What is deferred | Deferred by |
+|---|---|---|
+| Solo tutor = org of one | `[decision]` in the section heading itself; the tutor flow assumes an org invite otherwise | `docs/38-front-door-and-flow.md:63` |
+| School-admin mobile IA | The four-tab set is pre-committed but "no additional tab ships until the role has a PRD persona and an entitlement story (E-matrix G-10/G-3 are the gate, not this ADR)" | `docs/decisions/adr-103-school-admin-ia.md` |
+| A messaging surface | "A real messaging tab would need both a product decision and a surface; neither exists" | `docs/design/overhaul-v2/G-navigation-maps.md:38` |
+| A notifications affordance | Named in G §4's target map, but "no contract binds it"; org Safety stays unbadged per doc 31 §5.3 | `docs/design/overhaul-v2/J-component-plan.md:218` |
+| Search / ⌘K | "zero screen contracts reference a search surface; K–2 ban stands regardless" — needs a contract plus an ADR-scale decision | `docs/design/overhaul-v2/J-component-plan.md:217` |
+| District, everything | IA now, build later — Phase 3, and PRD non-goal 6 removes the v1 sales motion | `docs/pack/36-role-navigation-flows.md:58`; `docs/pack/33-moyo-learn-prd.md:164` |
+| Teacher onboarding polish | The teacher flow ships as-is; "its contextual polish (photography, Natalie beats) is deferred until the guardian/learner treatment has proven out" | `docs/pack/37-onboarding-dual-pane.md:24` |
+| The roster of record | `prompts/ROSTER.md` was absent when the digest was written; the digest's resolution was to treat the overhaul prompt §1 table as roster of record. The file now exists (`docs/design/reset/00-repo-baseline.md:21`), so the interim resolution is spent and the two should be reconciled | `docs/design/overhaul-v2/00-binding-decisions.md:9` |
+
+### 8.3 Assets — the ones that block design, not code
+
+| Open item | What is deferred | Deferred by |
+|---|---|---|
+| Onboarding photography | "**externally blocked**, not skipped: onboarding **photography** waits on the doc 08-conformant shoot (no asset exists; type-on-surface stays until it does)" | `docs/pack/37-onboarding-dual-pane.md:24` |
+| Natalie's baked greeting clips | "wait on doc 32 Path B renders — the baked *audio* path shipped and degrades gracefully, but the clip contract (≤6s, captioned, reduced-motion still-frame swap) has nothing to bind to yet" | `docs/pack/37-onboarding-dual-pane.md:24` |
+| The learner sample worksheet | "an open asset item: until it exists the snap beat honestly offers 'try it on your own homework' rather than staging a pretend one" | `docs/pack/37-onboarding-dual-pane.md:24` |
+| The mood board | PR-21 requires it "committed to `docs/design/`". No mood-board file exists in `docs/design/` (checked 2026-09-05) | `docs/pack/08-visual-hierarchy-spacing-spec.md:155` |
+| Photography licence provenance | The 43 files across `apps/web-vite/public/images` and `data/photography` need their licences recorded; the registry's first job | `docs/design/reset/00-repo-baseline.md:57` |
+| Mixamo base-idle clips | ADR-113 Layer A is "**Blocked** — see below"; retargeting assets do not exist | `docs/decisions/adr-113-body-motion-layer.md:46` |
+
+### 8.4 Tokens and the design system
+
+| Open item | What is deferred | Deferred by |
+|---|---|---|
+| Chart palette tokens | "charts currently have no named token set" — queued, undone | `docs/design/overhaul-v2/I-token-system.md:74` |
+| Token-role mapping for doc 38's specs | Doc 38 §5 names tokens by role (`space.section`, `type.display`, `target.min`) and defers the mapping to "Phase 0"; deliverable Q is still PARTIAL | `docs/38-front-door-and-flow.md:242`; `docs/design/overhaul-v2/B-deliverable-status.md:26` |
+| `TwoPaneShell` conformance | `[verify]` — whether it implements §4's width-class table and the header-band collapse; "add `variant` to `BrandPaneContent` if missing (`welcome \| photo \| accent`)" | `docs/38-front-door-and-flow.md:599` |
+| `unstable-split-view` adoption | "Adopt it behind the same `AdaptivePanes` API **only when it exits alpha and its constraints fit**… Revisit when SplitView goes beta" | `docs/pack/37-onboarding-dual-pane.md:35` |
+| Band-variant retrofit list | Started with `ProgressBar`/`MasteryBar`; the wider list "lives in J-component-plan §7" and is unbuilt | `docs/design/overhaul-v2/I-token-system.md:73` |
+| Re.Pack re-evaluation | Metro is binding; re-eval fires only on three named Phase-3 triggers (embeddable district module, separate release trains, org/tutor becoming a second app) | `docs/pack/36-role-navigation-flows.md:94` |
+
+### 8.5 Safety, incidents and reports
+
+| Open item | What is deferred | Deferred by |
+|---|---|---|
+| S4 legal-review checkpoint | "the S4 workflow must have a legal-review checkpoint before launch" — abuse disclosures carry reporting obligations "separate from and senior to guardian notification" | `docs/pack/31-grade-voice-safety-incidents.md:76` |
+| Incident collection field names | "sketch — field names settle at PR" | `docs/pack/31-grade-voice-safety-incidents.md:81` |
+| S4 retention schedule | S4 and abuse-disclosure records "follow the legal-hold schedule counsel sets" — the schedule is not in any doc here | `docs/pack/31-grade-voice-safety-incidents.md:111` |
+| Session→tutor incident scope | ADR-108 deliberately did not solve "my sessions"; closed later by ADR-110's `sessions.tutorAuthId` — verify before designing the tutor incidents list | `docs/decisions/adr-108-tutor-learner-edge.md` |
+
+### 8.6 Research and audit gaps that a designer will hit
+
+| Open item | What is deferred | Deferred by |
+|---|---|---|
+| 8 Mobbin flows never inspected | "Khan ×2, Duolingo ×2, Google homework, Quizlet scan, ChatGPT Voice ×2" — the plugin was down; these are the closest comparators to the learner loop | `docs/design/overhaul-v2/B-deliverable-status.md:23`, `:55` |
+| Journey maps beyond the front door | Deliverable L is PARTIAL; the five `seq-*.md` files "are service sequences, not user journeys" — core learner loop, guardian weekly, tutor day, org ops absent | `docs/design/overhaul-v2/B-deliverable-status.md:21` |
+| One unified screen ID scheme | FD-*/PW-* exist; product screens use provisional `role:screen` IDs that "are placeholders, not the scheme" | `docs/design/overhaul-v2/B-deliverable-status.md:13`, `:52`; `docs/design/overhaul-v2/F-journey-maps.md:11` |
+| Tenant axis | Deliverable D/E PARTIAL — "Tenant axis absent from every doc (code has it: `packages/theme/tenant.ts`)"; E later adds it, B's row is stale | `docs/design/overhaul-v2/B-deliverable-status.md:15` |
+| Implementation plan with phase gates | Deliverable S: **ABSENT** | `docs/design/overhaul-v2/B-deliverable-status.md:28` |
+| Front-door Mobbin research | "link-level only" — the 34 FD/PW screens carry reference URLs but no adopt/refuse pass | `docs/design/overhaul-v2/B-deliverable-status.md:23` |
+| Utility-bar map | Deliverable I/J PARTIAL — "no utility-bar map; DashboardShell slots are the seam" | `docs/design/overhaul-v2/B-deliverable-status.md:19` |
+
+### 8.7 Natalie
+
+| Open item | What is deferred | Deferred by |
+|---|---|---|
+| The cold-start budget number | The table says "3D within a stated budget on hotspot" and never states it; both **Measured** cells read "pending — device run blocked while the peer session owns the phone" | `docs/decisions/adr-114-preload-and-loader.md:62-68` |
+| Whether the 3D flag is on | Committed default is OFF; the flip is governed by a go/no-go gate whose doors time "is not known to me at the time of writing and must be filled in by Mike" | `docs/decisions/adr-111-native-3d-runtime.md:32`, `:70-71` |
+| The `compact` ↔ pane crossing | Remounts her; "either portalled or formally accepted as a demote" — recorded, not solved | `docs/decisions/adr-111-native-3d-runtime.md:141-143` |
+| Pre-warmed off-screen canvas | Would remove Dawn's first-draw pipeline cost "but that needs a portal across Expo Router screens… recorded here as the next step, not done" | `docs/decisions/adr-114-preload-and-loader.md:30-36` |
+| Golden images per shipping tier | Follow-up, including reduced motion (doc 22 §8) — not produced | `docs/decisions/adr-111-native-3d-runtime.md:141-142` |
+| The gesture gate on the live track | Follow-up, unwired | `docs/decisions/adr-111-native-3d-runtime.md:142` |
+| The A2F GPU host | "The host is **NOT** stood up"; `200 audio/mpeg` (no face) is what ships until it is | `docs/decisions/adr-112-live-audio2face.md:3` |
+| Memory release on shell exit | Preload holds the scene graph for a learner who may never open the tutor; "Not released on shell exit in this pass" | `docs/decisions/adr-114-preload-and-loader.md:74-75` |
+| Where Natalie appears outside S9 | Doc 37 places her in onboarding; ADR-111/114 place her in the tutor session. Placement on Today and completion is named as open work by the reset baseline, not by a binding doc | `docs/design/reset/00-repo-baseline.md:55` |
+
+### 8.8 Copy
+
+Doc 38's per-screen copy is "final unless marked `[alt]`" (`docs/38-front-door-and-flow.md:244`). Any screen the reset re-composes keeps that copy unless it is re-approved. Band-voiced learner copy is generated under doc 31's gate (§4.4), not authored per screen.

@@ -13,7 +13,7 @@
 // SOT-KEYWORDS: mobbin reference gate screens components research citation
 // ponytail: textual — the question is "did this surface cite its references",
 // which lives in the header, not in a render.
-import { existsSync, readdirSync, readFileSync, statSync, writeFileSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, lstatSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -36,7 +36,7 @@ const SKIP =
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
+    if (lstatSync(full).isDirectory()) walk(full, out);
     else if (/\.tsx$/.test(entry) && !SKIP.test(full) && !isHeadless(full)) out.push(full);
   }
   return out;

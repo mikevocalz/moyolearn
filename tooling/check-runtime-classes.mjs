@@ -23,18 +23,30 @@
 // gets muted.
 // SOT: packages/theme/tokens.ts · packages/ui/tv.ts
 // SOT-KEYWORDS: check gate inert classes runtime z-index dvh tailwind-merge ramp
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..');
-const SKIP_DIR = /node_modules|\.next|\.turbo|dist|build/;
+/*
+  Native build output is not source. `ios/Pods` alone is tens of thousands of
+  files with no `.tsx` among them, and it carries symlinks into frameworks that
+  a machine without a matching `pod install` does not have — which is how this
+  walk used to die on a `stat` of a Sentry xcframework instead of reporting a
+  clean run.
+*/
+const SKIP_DIR = /node_modules|\.next|\.turbo|\.expo|\.gradle|dist|build|ios\/Pods|ios\/DerivedData/;
 
+/*
+  `withFileTypes` answers "directory?" from the entry the OS already returned,
+  so nothing here follows a symlink. A plain `statSync` does follow one, and a
+  dangling link then throws ENOENT and takes the whole gate down.
+*/
 function walk(dir, out = []) {
-  for (const entry of readdirSync(dir)) {
-    const full = join(dir, entry);
+  for (const entry of readdirSync(dir, { withFileTypes: true })) {
+    const full = join(dir, entry.name);
     if (SKIP_DIR.test(full)) continue;
-    if (statSync(full).isDirectory()) walk(full, out);
-    else if (/\.tsx?$/.test(full)) out.push(full);
+    if (entry.isDirectory()) walk(full, out);
+    else if (entry.isFile() && /\.tsx?$/.test(full)) out.push(full);
   }
   return out;
 }

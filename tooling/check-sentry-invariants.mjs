@@ -11,7 +11,7 @@
 // not say these things", which is a property of the source. `pnpm lint`.
 // SOT: docs/pack/35-sentry-free-tier.md §7 · packages/app/core/telemetry-options.ts
 // SOT-KEYWORDS: sentry invariants check gate sendDefaultPii replay traces tag allowlist offline capture grep lint
-import { readdirSync, readFileSync, statSync } from 'node:fs';
+import { readdirSync, readFileSync, lstatSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -24,7 +24,7 @@ const walk = (dir) => {
   for (const entry of readdirSync(dir)) {
     if (SKIP_DIRS.has(entry) || entry.startsWith('.')) continue;
     const path = join(dir, entry);
-    if (statSync(path).isDirectory()) walk(path);
+    if (lstatSync(path).isDirectory()) walk(path);
     else if (SOURCE.test(entry)) files.push(path);
   }
 };

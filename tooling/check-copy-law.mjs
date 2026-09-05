@@ -25,7 +25,7 @@
 // say the word".
 // SOT: docs/pack/33-moyo-learn-prd.md §8.2 · docs/pack/05-monetization-access-spec.md §2.2 §2.3 · docs/site/copy-deck.md §12
 // SOT-KEYWORDS: copy law marketing site answers non-goal business tier parent surface voice input social gdpr build check
-import { readFileSync, readdirSync, statSync } from 'node:fs';
+import { readFileSync, readdirSync, lstatSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const ROOT = new URL('..', import.meta.url).pathname;
@@ -99,7 +99,7 @@ function walk(dir) {
   const out = [];
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
-    if (statSync(full).isDirectory()) {
+    if (lstatSync(full).isDirectory()) {
       out.push(...walk(full));
     } else if (/\.(tsx?|mdx?)$/.test(entry) && !entry.endsWith('.gen.ts')) {
       out.push(full);

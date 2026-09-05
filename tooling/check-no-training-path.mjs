@@ -12,7 +12,7 @@
 // SOT-KEYWORDS: training pipeline no read path educational store gate deposition eval
 // ponytail: a grep with a stated scope beats a dependency-graph walk here — the
 // rule is "these directories may not import those packages", which is textual.
-import { existsSync, readdirSync, readFileSync, statSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync, lstatSync } from 'node:fs';
 import { join, relative } from 'node:path';
 
 const ROOT = join(import.meta.dirname, '..');
@@ -49,7 +49,7 @@ function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
     if (entry === 'node_modules' || entry.startsWith('.')) continue;
     const full = join(dir, entry);
-    if (statSync(full).isDirectory()) walk(full, out);
+    if (lstatSync(full).isDirectory()) walk(full, out);
     else if (/\.(ts|tsx|mjs|js)$/.test(entry)) out.push(full);
   }
   return out;

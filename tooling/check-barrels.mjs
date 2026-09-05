@@ -6,7 +6,7 @@
 // SOT-KEYWORDS: barrel completeness index orphan export check duplicate-component
 // ponytail: walks relative re-export edges only — a bundler-grade resolver is not needed
 // to answer "is this file reachable from the package's public API".
-import { readFileSync, readdirSync, statSync, existsSync } from 'node:fs';
+import { readFileSync, readdirSync, lstatSync, existsSync } from 'node:fs';
 import { join, dirname, relative, resolve } from 'node:path';
 
 const ROOT = resolve(import.meta.dirname, '..');
@@ -30,7 +30,7 @@ const walk = (dir, out = []) => {
   for (const entry of readdirSync(dir)) {
     if (entry === 'node_modules' || entry.startsWith('.')) continue;
     const path = join(dir, entry);
-    if (statSync(path).isDirectory()) walk(path, out);
+    if (lstatSync(path).isDirectory()) walk(path, out);
     else if (SOURCE.test(entry) && !EXEMPT.test(entry)) out.push(path);
   }
   return out;
@@ -45,7 +45,7 @@ const resolveSpecifier = (fromFile, specifier) => {
   const hits = [];
   for (const ext of CANDIDATES) {
     const path = base + ext;
-    if (existsSync(path) && statSync(path).isFile()) hits.push(path);
+    if (existsSync(path) && lstatSync(path).isFile()) hits.push(path);
   }
   // A bare './screen' anchor also covers its .native/.web siblings — all count as reached.
   return hits;
