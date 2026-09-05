@@ -716,14 +716,15 @@ This matters to the reset because binding documents cite three of those four as 
 
 **Winner: the dial.** A blanket "4px 4px ink slab" spec is correct for Hot surfaces and wrong for every Cool one. Specify shadows as `shadow-card` under a stated dial, never as a literal offset.
 
-### C-18 · `moyoRadius.card` 0.25rem vs the single control radius — not a conflict
+### C-18 · `moyoRadius.card` 0.25rem vs the single control radius — a conflict after all
 
-`docs/site/tokens.md:102` sets `moyoRadius.card` at `0.25rem` as "the ONE soft step, for tactile cards". The app enforces one control radius, `radius.control = 0.375rem` (`packages/theme/tokens.ts:738`).
+`docs/site/tokens.md:102` sets `moyoRadius.card` to `0.25rem`, "the ONE soft step, for tactile cards". The app enforces one control radius, `radius.control` `0.375rem` (`packages/theme/tokens.ts:738`), gated by `tooling/check-controls.mjs`.
 
-**Not a collision.** They are different variables governing different things in different products: `--radius-control` versus `--radius-card`, and `moyoRadius` sits inside the marketing-site layer that is "web-vite-scoped and out of app scope" (`docs/design/overhaul-v2/I-token-system.md:67`). `tooling/check-controls.mjs` only walks `packages/ui` (`tooling/check-controls.mjs:21`), so it never sees the site value. The app's own card radius is 0.625rem (`packages/theme/tokens.ts:743`), which is also not 0.375 — one radius for *controls* was always the rule, not one radius for everything.
+**Corrected 2026-09-05.** This section previously ruled "not a collision" on the premise that `--radius-control` is not in the `.moyo-site` re-point list. It is. `packages/theme/theme.css:719` sits inside the `.moyo-site` block opened at `:687` and re-points `--radius-control` to `--radius-moyo-card`; the generator emits it at `packages/theme/build-css.mjs:317`. So a kit *control* rendered on the marketing site does not keep `0.375rem` — it takes `0.25rem`, and `check-controls.mjs` does not catch it because the gate walks `packages/ui` while the override lives in the emitted stylesheet.
 
-The real edge, worth knowing: the `.moyo-site` scope on `apps/web-vite`'s `<body>` re-points `--radius-card` and `--shadow-card` unconditionally, and does so precisely because "`react-native-css` compiles kit components to inline styles, and a `var()` survives that" (`docs/site/tokens.md:120-126`). A kit **card** rendered on the marketing site therefore takes the site radius by design. A kit **control** does not, because `--radius-control` is not in that re-point list.
+Under precedence the pack's single-radius law governs the app and the site layer governs `apps/web-vite`, which is defensible. What is not recorded anywhere is the decision that a kit control may change radius when it crosses into the site — it happens as a side effect of `--radius-card` and `--radius-sheet` being re-pointed on the same lines. Either the re-point is deliberate and belongs in `docs/site/tokens.md` next to the `moyoRadius` law, or `--radius-control` should be excluded from it.
 
+Found by cross-check while writing `docs/design/art-direction.md` §2 C1, which records the four values `--radius-card` resolves to across root, `.dial-hot`, `.dial-cool` and `.moyo-site`.
 ---
 
 ## 10 · State of `docs/design/overhaul-v2/`

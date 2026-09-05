@@ -264,6 +264,15 @@ different things about the same pair. `docs/site/tokens.md:265` records
 so the fill-only rule is unaffected. Ratios computed as WCAG 2.1 relative
 luminance in sRGB from the installed hex values.
 
+Checked before treating this as an AA defect: it is not one. Every use of
+`moyoHeart` in `apps/web-vite/src` is a fill paired with its own foreground —
+`bg-moyo-heart text-moyo-on-heart` at `components/chapters/hero.tsx:80` and
+`chapters/schools.tsx:145`, an SVG `fill` at `globe/node-layer.tsx:191`, a rule
+at `routes/motion-lab.tsx:217`. None sets it as body or caption text, which is
+what `check-contrast.mjs:202-203` says in the comment above the pair. The gate
+is right and the documentation is stale. Fix the table in
+`docs/site/tokens.md`, not the gate.
+
 **C4 · The five hues are four values.** `moyoEarth` equals `moyoHeart`
 (`#E55545`) and `moyoLeaf` equals `moyoMark` (`#0A9299`), so the site's
 six-row hue table resolves to four distinct chromatic values: `#3C2357`,
