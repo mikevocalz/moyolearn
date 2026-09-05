@@ -1,27 +1,26 @@
 'use client';
-// Parent home (guardian.home) — "are my kids okay, what's new, what's coming
-// up". The guardian shell's landing feed.
+// Parent home (guardian.home) — "are my kids okay, what's new, what's coming up".
+// The guardian shell's landing feed.
 //
-// WHAT THIS PASS CHANGED, against the contract:
+// The screen shows one thing that is true and links to the rest. The newest
+// published report is a live read (`useGuardianReports`), so it carries all its
+// states: a skeleton while it lands, an honest failure with a retry if it does
+// not, a "waiting for the first session" card only when the read answered zero,
+// and the report otherwise. That card is the contract's primary_action, one tap
+// from launch.
 //
-//  · THE CHILD SWITCHER IS MOUNTED. `ChildSwitcher` was built, exported and
-//    rendered on exactly zero surfaces, so G-8's "one seam for which child am I
-//    looking at" existed in the store and nowhere on screen. The contract names
-//    it a secondary action of THIS screen; it now leads the feed and scopes the
-//    sections under it.
-//  · THE PRIMARY ACTION EXISTS AND IS REAL. "Open the newest report" is the
-//    contract's primary_action and there was no report anywhere on this screen.
-//    It reads `useGuardianReports` — a live read, so the card carries all its
-//    states: skeleton while it lands, an honest failure with a retry if it does
-//    not, the "waiting for the first session" state ONLY when the read answered
-//    zero, and the report itself otherwise.
-//  · THE EXITS EXIST. `all_reports`, `see_upcoming`, `manage_child` and
-//    `incident_banner` are the contract's exits; the screen had none of them.
-//    Every child card and every section now leads somewhere that resolves.
-//  · THE DEAD ROWS AND THE RED ARE GONE. See parent-home.data.ts for the
-//    struck "Action needed" queue and the danger-toned "Needs attention" list,
-//    and why neither returns in that shape.
+// Everything else on this screen is an exit to a real route. It is deliberately
+// not a summary: the per-child cards, the week's counts and the upcoming list
+// were fixtures, and a parent reading invented facts about their own child is a
+// worse screen than one that says less. The comment on each removal names the
+// read it is waiting for.
 //
+// No role accent renders here. `tooling/check-role-accent.mjs` does not
+// allowlist this file, and a status band is not one of the allowlisted slots
+// (docs/design/reset/02-binding-constraints.md §2.2), so a band that wanted the
+// accent would need an ADR naming the slot. Distinction comes from ink borders,
+// the card shadow, and the doc 34 schoolhouse marks instead, which carry no
+// accent load.
 // Mobbin: https://mobbin.com/screens/6491097a-3861-4c87-ac75-caed6336b83b
 // (Greenlight — a parent home leading with a horizontal child chip row, the
 // selection scoping every section beneath it) ·
@@ -55,11 +54,8 @@ import {
 } from '@acme/ui';
 import { useRouter } from 'solito/navigation';
 import { useAppSession } from '../../providers/session';
-import { ChildSwitcher } from '../family/child-switcher';
-import { useFamilyStore } from '../family/family.store';
 import { useGuardianReports } from '../summary/use-reports';
 import { readFailureCopy } from '../../core/read-failure-copy';
-import { THIS_WEEK, UPCOMING } from './parent-home.data';
 
 export function ParentHomeContent() {
   const { user } = useAppSession();
@@ -67,8 +63,6 @@ export function ParentHomeContent() {
   const name = user?.name?.split(' ')[0] ?? 'there';
   // The children seam, not the fixture — this screen shares `family.store` with
   // the hub and the switcher, so a selection made anywhere means one child.
-  const children = useFamilyStore((s) => s.children);
-  const selectLearner = useFamilyStore((s) => s.selectLearner);
 
   return (
     <Dial temperature="cool" className="gap-7">
@@ -79,96 +73,81 @@ export function ParentHomeContent() {
             {name}
           </Heading>
         </Section>
-        <TWText className="text-label text-grade">Example family</TWText>
       </FadeIn>
 
-      {/* Doc 36 §3.2's child-switcher chips, on the screen the contract puts
-          them on. Renders nothing for a one-child family (its own rule). */}
-      <FadeIn delay={40}>
-        <ChildSwitcher />
-      </FadeIn>
+      {/*
+        The child-switcher chips are doc 36 §3.2's, and they are not rendered
+        here yet, because they would name the same fixture children the cards
+        below used to. `guardian.home/contract.md` records why: "Child switching
+        does not exist (G-8): `ActiveContext.learnerId` is never set", and
+        `family.store` is marked `[add]`. Chips that switch nothing, labelled
+        with names nobody has, are two fictions rather than one.
+
+        `ChildSwitcher` itself is fine and stays in the kit with its stories.
+        It returns here when `family.store` is fed by a real children read.
+      */}
 
       <FadeIn delay={80}>
         <NewestReport />
       </FadeIn>
 
-      {/* Child summary cards — the contract's `manage_child` exit. They used to
-          push /ai-activity, which is one permission screen rather than the
-          child's hub; the hub is where every control and every other per-child
-          surface is reachable from. */}
+      {/*
+        The children exit, without inventing the children.
+
+        This section used to render a card per child with a name, a grade band
+        and a status string, all of it from the CHILDREN fixture in
+        parent-home.data.ts — `setChildren` is never called from anywhere, so
+        nothing real ever reached it. A parent reading their own child's name
+        and "status" off a fixture is being told something about their child
+        that is not true, which is worse than a screen that says less.
+
+        Two more sections went with it for the same reason: "This week" showed
+        THIS_WEEK's session, assignment and AI-practice counts, and "Upcoming"
+        showed the UPCOMING list. Both are numbers a parent reads as their
+        child's actual week.
+
+        The exits survive because they are real routes with real screens behind
+        them. What is gone is the fabricated summary in front of them. Each
+        section returns when it has a read: per-child status needs a guardian
+        learner read (`/api/family/learners` is POST-only today), and the week
+        counts need an aggregate nobody exposes.
+      */}
       <FadeIn delay={160}>
         <Section className="gap-stack">
-          <Text variant="label" tone="muted">Your children</Text>
-          <View className="gap-element">
-            {children.map((child) => (
-              <PressScale
-                key={child.id}
-                className="w-full rounded-card border-2 border-border bg-surface-raised p-4 shadow-card"
-                outerClassName="w-full"
-                aria-label={`${child.name}, ${child.gradeBand}, ${child.status}`}
-                onPress={() => {
-                  selectLearner(child.id);
-                  router.push('/children');
-                }}
-              >
-                <View className="flex-row items-center gap-stack">
-                  <Avatar name={child.name} size="md" />
-                  <View className="flex-1 gap-0.5">
-                    <TWText className="text-base font-semibold text-text">{child.name}</TWText>
-                    <TWText className="text-sm text-text-muted">
-                      {child.gradeBand} · {child.status}
-                    </TWText>
-                  </View>
-                  <ArrowRight size={18} className="text-text-muted" />
-                </View>
-              </PressScale>
-            ))}
-          </View>
-        </Section>
-      </FadeIn>
-
-      {/* This week */}
-      <FadeIn delay={240}>
-        <Card className="gap-stack">
-          <Text variant="label" tone="muted">This week</Text>
-          <View className="flex-row gap-element">
-            <Stat value={THIS_WEEK.sessions} label="Sessions" />
-            <Stat value={THIS_WEEK.assignments} label="Assignments" />
-            <Stat value={THIS_WEEK.aiPractice} label="AI practice" />
-          </View>
-        </Card>
-      </FadeIn>
-
-      {/* Upcoming — the contract's `see_upcoming` exit, which did not exist:
-          the list was five unreachable rows with the calendar two navigations
-          away. Neutral tone throughout; nothing here is late, and a family
-          schedule is not a to-do list. */}
-      <FadeIn delay={320}>
-        <Section className="gap-stack">
-          <Text variant="label" tone="muted">Upcoming</Text>
-          <View className="gap-element">
-            {UPCOMING.map((item) => (
-              <View
-                key={item.id}
-                className="rounded-card border-2 border-border bg-surface-raised p-3"
-              >
-                <View className="flex-row items-center justify-between gap-stack">
-                  <TWText className="flex-1 text-base text-text">{item.title}</TWText>
-                  <TWText className="text-sm text-text-muted">{item.time}</TWText>
-                </View>
+          <Text variant="label" tone="muted">Your family</Text>
+          <PressScale
+            className="w-full rounded-card border-2 border-border bg-surface-raised p-4 shadow-card"
+            outerClassName="w-full"
+            aria-label="Open your children"
+            onPress={() => router.push('/children')}
+          >
+            <View className="flex-row items-center gap-stack">
+              <View className="flex-1 gap-0.5">
+                <TWText className="text-base font-semibold text-text">Your children</TWText>
+                <TWText className="text-sm text-text-muted">
+                  Settings, controls and each child&apos;s activity.
+                </TWText>
               </View>
-            ))}
-          </View>
-          <Button
-            title="See the week"
-            variant="outline"
-            className="self-start"
-            onPress={() => {
-              router.push('/calendar');
-            }}
-          />
+              <ArrowRight size={18} className="text-text-muted" />
+            </View>
+          </PressScale>
+          <PressScale
+            className="w-full rounded-card border-2 border-border bg-surface-raised p-4 shadow-card"
+            outerClassName="w-full"
+            aria-label="Open the week"
+            onPress={() => router.push('/calendar')}
+          >
+            <View className="flex-row items-center gap-stack">
+              <View className="flex-1 gap-0.5">
+                <TWText className="text-base font-semibold text-text">The week</TWText>
+                <TWText className="text-sm text-text-muted">Sessions and what is booked.</TWText>
+              </View>
+              <ArrowRight size={18} className="text-text-muted" />
+            </View>
+          </PressScale>
         </Section>
       </FadeIn>
+
 
       {/*
         The contract's `incident_banner` exit, standing rather than firing: no
@@ -300,11 +279,3 @@ function NewestReport() {
   );
 }
 
-function Stat({ value, label }: { value: number; label: string }) {
-  return (
-    <View className="min-w-24 flex-1 gap-1 rounded-card border-2 border-border bg-surface-raised p-3 text-center">
-      <TWText className="font-display text-2xl font-bold text-text">{value}</TWText>
-      <TWText className="text-sm text-text-muted">{label}</TWText>
-    </View>
-  );
-}
