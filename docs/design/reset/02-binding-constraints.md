@@ -98,9 +98,9 @@ Semantic states, body text, borders, or the primary button. The primary button s
 
 Read the script, not the doc, before assuming a class will pass.
 
-- **Detection pattern** — `ROLE_CLASS = /\b([a-z][a-z-]*?)-role-(?:accent|learner|guardian|tutor|org|district)(?:-underlay)?\b/g` (`tooling/check-role-accent.mjs:58`). It matches any utility whose color segment is a role token, capturing the property prefix.
-- **Ban list, enforced in every file, no allowlist can waive it** — `BANNED_PREFIX = /^(?:text|border|divide|outline|decoration|caret|placeholder)(?:-[a-z]+)*$/` (`tooling/check-role-accent.mjs:55`). The comment explains the widening: "`divide`/`outline`/`decoration`/`caret` are borders and text by other names" (`:54`).
-- **Allowlist, file-scoped** — every other prefix (`bg-`, `ring-`, `fill-`, …) is legal only in the files in `ALLOWLIST` (`tooling/check-role-accent.mjs:34-48`), each entry naming the §5 slot it implements:
+- **Detection pattern** — `ROLE_CLASS = /\b([a-z][a-z-]*?)-role-(?:accent|learner|guardian|tutor|org|district)(?:-underlay)?\b/g` (`tooling/check-role-accent.mjs:65`). It matches any utility whose color segment is a role token, capturing the property prefix.
+- **Ban list, enforced in every file, no allowlist can waive it** — `BANNED_PREFIX = /^(?:text|border|divide|outline|decoration|caret|placeholder)(?:-[a-z]+)*$/` (`tooling/check-role-accent.mjs:62`). The comment explains the widening: "`divide`/`outline`/`decoration`/`caret` are borders and text by other names" (`:54`).
+- **Allowlist, file-scoped** — every other prefix (`bg-`, `ring-`, `fill-`, …) is legal only in the files in `ALLOWLIST` (`tooling/check-role-accent.mjs:41-55`), each entry naming the §5 slot it implements:
   - `packages/ui/RoleScope.stories.tsx` — kit review surface
   - `apps/mobile/components/ShellTabBar.tsx` — active tab/nav indicator underlay
   - `apps/mobile/components/ShellHeader.tsx` — shell header underline
@@ -108,11 +108,11 @@ Read the script, not the doc, before assuming a class will pass.
   - `packages/app/features/profile/account-sheet-content.tsx` — avatar ring (ADR-106)
   - `packages/ui/AvatarSheet.stories.tsx` — avatar ring, kit review surface
   - `packages/ui/PlanCard.tsx` — plan chooser selection (FD-13)
-- **Scope** — walks `packages/` and `apps/`, all `.ts`/`.tsx`, skipping `node_modules|.next|.turbo|dist|build` (`tooling/check-role-accent.mjs:27`, `:72-75`). `packages/theme/` is exempt because it is the mint, not className usage (`tooling/check-role-accent.mjs:76-77`). Lines beginning `//`, `*` or `/*` are skipped (`tooling/check-role-accent.mjs:81`).
+- **Scope** — walks `packages/` and `apps/`, all `.ts`/`.tsx`, skipping `node_modules|.next|.turbo|dist|build` (`tooling/check-role-accent.mjs:34`, `:84-87`). `packages/theme/` is exempt because it is the mint, not className usage (`tooling/check-role-accent.mjs:88-89`). Lines beginning `//`, `*` or `/*` are skipped (`tooling/check-role-accent.mjs:93`).
 - **Deliberate exemption** — bare `role-<name>` scope classes are not matched; the scope paints nothing, it re-points the generic pair for a subtree (`tooling/check-role-accent.mjs:16-17`).
-- **Adding a slot is a design decision, not a lint fix.** A new consumer lands in `ALLOWLIST` with the slot named, or it fails by default (`tooling/check-role-accent.mjs:30-33`, error text at `:91-94`).
+- **Adding a slot is a design decision, not a lint fix.** A new consumer lands in `ALLOWLIST` with the slot named, or it fails by default (`tooling/check-role-accent.mjs:37-40`, error text at `:103-106`).
 
-Two regressions were used to prove the gate red before it landed: a `text-`-prefixed role class in `Heading.tsx` and a `bg-` one in `Button.tsx` (`tooling/check-role-accent.mjs:19-20`).
+Two regressions were used to prove the gate red before it landed: a `text-`-prefixed role class in `Heading.tsx` and a `bg-` one in `Button.tsx` (`tooling/check-role-accent.mjs:19-20` (header)).
 
 ### 2.5 The OKLCH mint, and what shipped
 
@@ -595,3 +595,163 @@ Everything the binding documents explicitly defer, leave `[decision]`/`[verify]`
 ### 8.8 Copy
 
 Doc 38's per-screen copy is "final unless marked `[alt]`" (`docs/38-front-door-and-flow.md:244`). Any screen the reset re-composes keeps that copy unless it is re-approved. Band-voiced learner copy is generated under doc 31's gate (§4.4), not authored per screen.
+
+---
+
+## 9 · CONFLICTS
+
+Each row states the collision and which document wins under the precedence order in §Precedence. "Wins" means: build to that one, and if you need the other, ship an ADR that names the losing line the way `docs/decisions/adr-107-learner-pane-ban-reaffirmed.md:76` does.
+
+### C-1 · The learner pane ban vs its own exemption
+
+`docs/pack/37-onboarding-dual-pane.md:40` says "**Learner: never**". `docs/decisions/adr-107-learner-pane-ban-reaffirmed.md` exempts the S9 tutor session and names the contradiction itself: "doc 37 §3.3's '**Learner: never**' is now 'learner: never, except the S9 tutor session.' Doc 37 should carry that sentence; until it does, this amendment is the source of truth and doc 37 §3.3 is stale on that one word" (`:76`). Amendment 2 does the same to two more documents: "doc 23 §5's second column is back, and `docs/design/tutor-session-thread-first.md` is now correct only for `compact` and `medium`" (`:162-164`).
+
+**Winner: ADR-107, narrowly.** A signed ADR that names the line it supersedes outranks that line. Everything the ADR does not name — every learner surface other than `TutorStage`, every width below 840dp — is still governed by doc 37 §3.3 verbatim.
+
+### C-2 · K–2 touch target: 56 or 72
+
+`docs/38-front-door-and-flow.md:61` says K–2 "targets 56dp"; `:247` says "learner surfaces ≥ 56dp". `docs/pack/08-visual-hierarchy-spacing-spec.md:53` says `target-young` is 72 for K–2 primary actions and adds "the Tutor tab's 64pt already sits between child and young — raise to 72 on K–2 profiles". The shipped token agrees with doc 08: `targets.young = '72px'` (`packages/theme/tokens.ts:869`).
+
+**Winner: doc 08.** `docs/pack/*` outranks doc 38. K–2 primary actions are **72**; doc 38's 56 is the `child` band value (3–5) and reads as a learner-surface floor, not the K–2 primary-action size. A reset that specs 56 for a K–2 primary action ships a target `tooling/check-targets.mjs` should reject.
+
+### C-3 · The teacher shell
+
+`docs/pack/36-role-navigation-flows.md:51` says the school-teacher variant "is a tokened read-only page — no shell, no login". `docs/decisions/adr-102-teacher-shell-ia.md` says the shell exists with four tabs, "doc 37 §2's amendment and doc 38 FD-23 supersede doc 36 §3.3's 'no shell' line, which predates the S25 flow".
+
+**Winner: ADR-102, and the two documents it cites.** `docs/pack/37-onboarding-dual-pane.md:24` (the PR-145 amendment) and `docs/38-front-door-and-flow.md:152` (FD-23) both postdate doc 36 and both outrank the digest. The tokened read-only share page survives for the *link-viewer* case only (`docs/pack/34-session-summary-reports.md:116`).
+
+### C-4 · District mobile
+
+`docs/pack/36-role-navigation-flows.md:58` binds district to web-only. A mobile `(district)` group shipped anyway, rendering 1 of 5 declared tabs (`docs/design/overhaul-v2/D-screen-inventory.md:152`).
+
+**Winner: doc 36.** `docs/decisions/adr-104-district-mobile-retirement.md` retires the tab bar and states that `/schools`, `/programs`, `/calendar`, `/more` "are never built".
+
+### C-5 · Guardian tab count
+
+`docs/pack/36-role-navigation-flows.md:46` binds four tabs. The repo carried seven guardian tab files, with Alerts unreachable (`docs/design/overhaul-v2/B-deliverable-status.md:46`).
+
+**Winner: doc 36.** Reconciled to four by `docs/decisions/adr-101-guardian-tab-set.md`; calendar demoted to a stack route, messages and account retired.
+
+### C-6 · Entitlement status names
+
+`docs/38-front-door-and-flow.md:462-469` drives surfaces off `expired`. `packages/auth/src/entitlements.ts:21-27` has no `expired` and has `incomplete`, which doc 38 never mentions.
+
+**Winner: doc 38 on what the UI must show; the code on what the webhook delivers.** `incomplete` is a real Stripe status the webhook sends (`packages/auth/src/entitlements.ts:17-19`); `expired` is not a Stripe status, so PW-04's "shown once after `expired`" is a derived surface state the projection does not currently expose. Nothing renders PW-04 correctly until someone decides where `expired` is computed. Open item, logged at §8.1.
+
+### C-7 · The accent allowlist has six slot kinds, the doc names five
+
+`docs/pack/36-role-navigation-flows.md:85` lists five slots. `tooling/check-role-accent.mjs:41-55` allowlists seven files covering six kinds — the five, plus "login/onboarding role-choice selection" (`RoleChoiceCard.tsx`) and "plan chooser selection" (`PlanCard.tsx`).
+
+**Winner: doc 38, which authorises the sixth.** The gate cites `docs/38-front-door-and-flow.md:559` (`icon` 32dp, role-accent) and `:562-563` (`accent` prop; "selected (accent border 3dp…)") as the source. Doc 38 outranks the digest, so the slot is legal. Two cautions: doc 38 §8's "accent border 3dp" is a **border**, which `BANNED_PREFIX` refuses in every file including allowlisted ones (`tooling/check-role-accent.mjs:62`) — the shipped implementation must express selection as a ring or underlay fill, not `border-role-*`; and doc 36 §5's five-slot list should gain the sixth in writing, or the next reader will treat `PlanCard` as drift.
+
+### C-8 · Typefaces and palette hexes: doc 02 vs doc 08 vs the code
+
+`docs/pack/02-adaptive-screens-design-spec.md:178-180` specifies Bricolage Grotesque (display), Schibsted Grotesk (UI), Spline Sans Mono (data). `docs/pack/08-visual-hierarchy-spacing-spec.md:80` keeps Spline Sans Mono. Shipped: Archivo Black, Space Grotesk, Chivo Mono (`packages/theme/tokens.ts:624-633`). The code records the supersession for the mono face — "Doc 08 §3.1 names Spline Sans Mono here — superseded by Chivo Mono, chosen and shipped in PR-0; the ramp is what the doc is specifying, not the face" (`packages/theme/tokens.ts:789-790`) — and does not record one for the other two.
+
+Same shape for color: `docs/pack/02-adaptive-screens-design-spec.md:167-173` gives literal hexes (`paper #FBFAF7`, `ink #17150F`, `ballpoint #2547E8`, `highlighter #FFE94A`, `redpen #D93A25`, `grade-green #1E7F4F`, `graphite #5F5B54`). The shipped semantics resolve through `palette` families whose names are "documented lies kept for class-name stability" (`docs/design/overhaul-v2/I-token-system.md:16`), and `light-dark()` pairs — not those flat values.
+
+**Winner in practice: the code, and this needs writing down.** Under precedence doc 02 outranks everything else here, so a strict reading says the app should be in Bricolage Grotesque on `#FBFAF7`. It is not, three faces and a whole palette have moved, and only one of those moves is documented. A reset that quotes doc 02 §5.2 will specify fonts and hexes that do not exist in the repo. **Action: an ADR that supersedes doc 02 §5.2 by name**, or doc 02 gains the amendment. Until then treat `packages/theme/tokens.ts` as operative and cite it, never doc 02's table.
+
+### C-9 · The design-language name
+
+`docs/pack/02-adaptive-screens-design-spec.md:158` names the app's language **"Neubrutalism × Swiss ('Schoolhouse')"**. `docs/site/tokens.md:37` sets the *marketing site's* ratio at "60% Editorial Neubrutalism · 25% Tactile Learning · 15% Spatial Magic". The reset brief's "Neubrutalism × Tactile Learning Modernism" matches neither, and imports a marketing-site register into the app.
+
+**Winner: doc 02 for app surfaces.** The site ratio is web-vite-scoped and explicitly out of app scope (`docs/design/overhaul-v2/I-token-system.md:67`). The reset either keeps doc 02's name for the app and reserves the Tactile Learning register for `apps/web-vite`, or ships an ADR superseding doc 02 §5 by name. Renaming the language in a brief does not do it.
+
+### C-10 · New primitives with no screen contract
+
+`docs/design/overhaul-v2/J-component-plan.md:10` makes contract demand the build trigger — "the trigger is duplication (actual or scheduled), never headcount or speculation" — and `:213` disposes of `LearningPath` specifically: "No contract references a path/map surface; learner.home is resume-first (ADR-107's Duolingo evidence is about singularity, not a path component)… **new contract first**."
+
+`MissionPath` is `LearningPath` renamed, so that disposition already covers it. `EvidenceStrip` and `StatusHero` are named by no contract either. `design/screens/**/contract.md` is rank 4 of the precedence order; a primitive with no contract has no rank-4 support at all.
+
+**Winner: the contract rule.** Each new primitive gets a screen contract naming it before it is designed, or it does not ship. The reset's own §6 primitive list is not a substitute for a contract.
+
+### C-11 · Four proposed primitives already exist
+
+`docs/design/reset/00-repo-baseline.md:32-35` records the overlaps: `NatalieDock` → `packages/ui/TutorPresence.tsx` (364 lines, **extend**); `Manipulative` → `packages/ui/LearningCanvas.tsx` (21 lines, **build inside** — it is the mount point, the new work is the renderer); `OutcomeDots` → `packages/ui/MasteryBar.tsx` (109 lines, **extend**); `StatusHero` → `packages/ui/Banner.tsx` + `StatCard.tsx` (**decide before building**).
+
+Two binding rules make this non-optional: "Check for an existing component before creating one. Extend or compose; never duplicate a near-identical component" (`CLAUDE.md:33`), and the alias table's "A PR introducing any left-column name as a new component is a defect" (`docs/design/overhaul-v2/J-component-plan.md:16`).
+
+`StatusHero` is the sharpest case. `Banner` owns the tone set `info | warning | incident | offline` (`packages/ui/Banner.tsx:15`, mapped at `:51-58`), and doc 31 forbids a second severity language — severity is a `border-left` and a pill, never a flooded frame (`docs/pack/31-grade-voice-safety-incidents.md:133`). A status hero with its own tones creates the second system.
+
+**Winner: the existing components.** `StatusHero` either composes `Banner` or it needs an ADR saying why not (`docs/design/reset/00-repo-baseline.md:35`).
+
+### C-12 · MissionPath vs resume-first and the Hot canvas rule
+
+`docs/pack/36-role-navigation-flows.md:42` makes learner Home resume-first — "the top card is always 'continue where you left off'". `design/screens/learner/learner.home/contract.md:19` makes the primary action "Resume where you left off". `docs/decisions/adr-107-learner-pane-ban-reaffirmed.md:27` cites Duolingo's path as evidence for *singularity*: "exactly one 'next' node; zero resume friction because there is no navigation decision", and "K–2 Today should be Duolingo-degree singular — one 'next' tile, not a feed". Doc 08 requires ≥40% empty canvas on Hot screens and one primary action per screen (`docs/pack/08-visual-hierarchy-spacing-spec.md:43-44`).
+
+A multi-node MissionPath on learner Home collides with all three.
+
+**Winner: doc 36 and the contract.** If MissionPath exists it renders one next node on Home; a full journey view is a different screen and needs its own contract and its own D-inventory row.
+
+### C-13 · Cut-paper art on child learning surfaces
+
+`docs/pack/08-visual-hierarchy-spacing-spec.md:138` bans photography on child learning surfaces and constrains what replaces it: "illustration there is ink-line + flat token fills only". The reset's `scene` / `object` / `figure` classes are a cut-paper register, which is neither photography nor, read literally, ink-line-plus-flat-fills.
+
+**Winner: doc 08.** The photography ban does not bite — cut paper is not stock photography — but the positive constraint does. Either the art direction stays inside ink-line plus flat token fills, or `docs/design/art-direction.md` supersedes doc 08 §6 by name. The ink-frame treatment for any in-product photograph (`border-2 border-strong`, `radius-card`, `shadow-card`, mandatory alt) is unaffected and still binding (`docs/pack/08-visual-hierarchy-spacing-spec.md:139`).
+
+### C-14 · Artwork vs the one-accent-moment budget
+
+Not a contradiction, a budget the art has to be designed inside. One display moment and one highlighter accent per screen (`docs/pack/08-visual-hierarchy-spacing-spec.md:84`; `CLAUDE.md:35`), Hot screens ≥40% empty canvas (`docs/pack/08-visual-hierarchy-spacing-spec.md:43`), and the role accent's own budget on top (`docs/pack/36-role-navigation-flows.md:85`). A saturated Scene spends the screen's attention budget before any UI does.
+
+Gap to close: `tooling/check-contrast.mjs` has no text-over-artwork pairs yet (`docs/design/reset/00-repo-baseline.md:46`). Text on art is currently ungated.
+
+### C-15 · The art-registry gating order — no conflict
+
+`packages/art/registry.ts` keeps `scene`, `object` and `figure` deliberately empty, so their narrowed name types resolve to `never` and "every call site fails until real art exists. That is the intended state before `docs/design/art-direction.md` is approved" (`packages/art/registry.ts:24-26`, empties at `:128-129`). `tooling/check-art-registry.mjs` is in the root `lint` chain and `pnpm check:art` (`package.json:14`, `:36`).
+
+**No binding document conflicts with this order, and two support it.** `docs/pack/37-onboarding-dual-pane.md:24` already treats missing art as "externally blocked, not skipped" and keeps type-on-surface until the shoot exists — the same posture, enforced by the compiler instead of by discipline. `docs/38-front-door-and-flow.md:22` applies the identical rule to data ("Every screen reachable from cold launch ships wired to the live provider, in the same PR train as the screen"). The registry's alt-carried-beside-the-file rule also discharges doc 08's "alt text mandatory" (`docs/pack/08-visual-hierarchy-spacing-spec.md:139`) structurally rather than per call site.
+
+One sequencing note: doc 08's PR-21 requires the mood board committed to `docs/design/` (`docs/pack/08-visual-hierarchy-spacing-spec.md:155`) and no such file exists. That is an input to `art-direction.md`, not a competing gate.
+
+### C-16 · Four gates were not running
+
+`check-role-accent`, `check-sentry-invariants`, `check-store-separation` and `check-voice-egress` crashed on a dangling Pods symlink and never actually ran. The walkers now use `withFileTypes` / `lstatSync` across all ten — the reasoning is recorded in the gate itself: "A plain `statSync` does follow one, and a dangling link then throws ENOENT and takes the whole gate down" (`tooling/check-role-accent.mjs:67-71`).
+
+This matters to the reset because binding documents cite three of those four as the enforcement of a rule: the accent allowlist (`docs/design/overhaul-v2/I-token-system.md:12`; `packages/theme/tokens.ts:320`), the CRM/learner store separation, and the voice-egress wall that ADR-112 leans on for "structurally, no learner audio can reach it" (`docs/decisions/adr-112-live-audio2face.md`, Decision 2). **Every claim of the form "enforced by gate X" in the binding docs was true of the script and false of the pipeline until this fix.** Treat pre-fix conformance as unverified: run the gates before trusting any surface that predates it.
+
+### C-17 · "4px 4px" is a Hot value, not the shadow
+
+`packages/theme/tokens.ts:750` defines `shadows.card` as `4px 4px 0 0 var(--color-border-strong)`, and that is the root default and `--shadow-hot`. On `.dial-cool`, `packages/theme/theme.css:563` remaps `--shadow-card` to `--shadow-cool` = `2px 2px 0 0 var(--color-border-faint)` (`packages/theme/theme.css:199`), and `--radius-card`/`--radius-sheet` to `--radius-cool` 0.5rem (`:561-562`, `:198`).
+
+**Winner: the dial.** A blanket "4px 4px ink slab" spec is correct for Hot surfaces and wrong for every Cool one. Specify shadows as `shadow-card` under a stated dial, never as a literal offset.
+
+### C-18 · `moyoRadius.card` 0.25rem vs the single control radius — not a conflict
+
+`docs/site/tokens.md:102` sets `moyoRadius.card` at `0.25rem` as "the ONE soft step, for tactile cards". The app enforces one control radius, `radius.control = 0.375rem` (`packages/theme/tokens.ts:738`).
+
+**Not a collision.** They are different variables governing different things in different products: `--radius-control` versus `--radius-card`, and `moyoRadius` sits inside the marketing-site layer that is "web-vite-scoped and out of app scope" (`docs/design/overhaul-v2/I-token-system.md:67`). `tooling/check-controls.mjs` only walks `packages/ui` (`tooling/check-controls.mjs:21`), so it never sees the site value. The app's own card radius is 0.625rem (`packages/theme/tokens.ts:743`), which is also not 0.375 — one radius for *controls* was always the rule, not one radius for everything.
+
+The real edge, worth knowing: the `.moyo-site` scope on `apps/web-vite`'s `<body>` re-points `--radius-card` and `--shadow-card` unconditionally, and does so precisely because "`react-native-css` compiles kit components to inline styles, and a `var()` survives that" (`docs/site/tokens.md:120-126`). A kit **card** rendered on the marketing site therefore takes the site radius by design. A kit **control** does not, because `--radius-control` is not in that re-point list.
+
+---
+
+## 10 · State of `docs/design/overhaul-v2/`
+
+Eleven files. There are no numbered "phases" in that directory — it is organised as lettered **deliverables** (A–J, mapping to the overhaul prompt's §17.1 deliverables A–S), and phase language appears only as a *destination* for the work each deliverable produces (Phase-2 contract wiring, Phase-3 component builds).
+
+| File | Deliverable | Status as written | Citation |
+|---|---|---|---|
+| `00-binding-decisions.md` | digest of pack 36/37/38/31/33/34/12 | no status line; defers to the pack | `docs/design/overhaul-v2/00-binding-decisions.md:4` |
+| `A-repo-audit.md` | A · Repository Audit | **IN PROGRESS** — "sections land as audited" | `docs/design/overhaul-v2/A-repo-audit.md:8` |
+| `B-deliverable-status.md` | §17.1 status + reconciliation | no status line; it *is* the status ledger | — |
+| `C-orphans-dead-ends.md` | C · Orphan/dead-end report | **DONE (fresh)** per B | `docs/design/overhaul-v2/B-deliverable-status.md:14` |
+| `D-screen-inventory.md` | D · Unified screen inventory | no status line; B lists deliverable B as PARTIAL | `docs/design/overhaul-v2/B-deliverable-status.md:13` |
+| `E-tenant-role-band-matrix.md` | D/E · Tenant × role × band | **DONE (2026-09-01)** | `docs/design/overhaul-v2/E-tenant-role-band-matrix.md:8` |
+| `F-journey-maps.md` | L · Journey maps | no status line; B lists L as PARTIAL | `docs/design/overhaul-v2/B-deliverable-status.md:21` |
+| `G-navigation-maps.md` | G/H/I/J/K · Navigation maps | **Phase-1 deliverable** | `docs/design/overhaul-v2/G-navigation-maps.md:8` |
+| `H-competitor-mobile-vs-web.md` | O · Competitor structural summary | no status line; **B still lists O as ABSENT — B is stale here, the file exists** | `docs/design/overhaul-v2/B-deliverable-status.md:24` |
+| `I-token-system.md` | Q · Token system | no status line; B lists Q as PARTIAL, and the file itself is stale in two places (see below) | `docs/design/overhaul-v2/B-deliverable-status.md:26` |
+| `J-component-plan.md` | R · Component plan | **Phase-1/2 deliverable, binding for Phase 3** | `docs/design/overhaul-v2/J-component-plan.md:8` |
+
+All are on branch `overhaul/phase1-audit` per their own status lines. Nothing in the directory is marked COMPLETE; the two that carry an explicit completion word are E (**DONE**) and C (**DONE (fresh)**, asserted by B rather than by itself).
+
+Deliverables `docs/design/overhaul-v2/B-deliverable-status.md` records as still missing: **O** (superseded — H exists) and **S · Implementation plan with phase gates: ABSENT** (`:28`). PARTIAL: B, D/E, F, I/J, N, Q, R.
+
+Staleness inside the directory, worth knowing before citing it:
+
+- `docs/design/overhaul-v2/I-token-system.md:10` calls `packages/theme/tokens.ts` "939 lines"; it is 1346 (`docs/design/reset/00-repo-baseline.md:16`).
+- `docs/design/overhaul-v2/I-token-system.md:40` cites `accentRoles` at "tokens.ts:276"; the export is at `packages/theme/tokens.ts:537`.
+- `docs/design/overhaul-v2/B-deliverable-status.md:22` counts 63 screen contracts; there are 64 (`find design/screens -name contract.md`, 2026-09-05).
+- `docs/design/overhaul-v2/B-deliverable-status.md:46` says guardian has seven tab files; ADR-101 reconciled that to four.
+- Two defects the directory treats as open are closed: the band-population defect (`docs/design/overhaul-v2/B-deliverable-status.md:56`) and the schedule-accent WCAG failure (`:51`). `docs/decisions/adr-107-learner-pane-ban-reaffirmed.md:38` still conditions any pane-ban lift on the band fix, so that condition is now satisfiable — the ban itself is unaffected.
