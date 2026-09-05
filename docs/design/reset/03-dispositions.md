@@ -69,9 +69,23 @@ The work is bringing the status band and evidence strip onto Parent Home, where 
 
 **This is now the top BUILD candidate.**
 
-### 4 · Tutor Today and school ops — re-composition
+### 4 · Tutor Today and school ops — SPLIT, 2026-09-05
 
-Deployed: `ops/sessions`, `ops/families`, `ops/families/[familyId]`, `ops/leads`, `ops/leads/[id]`, `ops/leads/[id]/stage`, `summary/queue`, `safety/staff`. The state funnel in `docs/design/mobbin/tutor-today.md` maps onto `ops/leads/[id]/stage`, which is the transition endpoint the funnel needs.
+**Ranked as a re-composition on the routes alone. The payload was opened afterwards and it does not carry the composition.** This is the BUILD 2 error repeated: the check confirmed that `ops/sessions`, `ops/families`, `ops/leads`, `ops/leads/[id]/stage`, `summary/queue` and `safety/staff` are deployed, and stopped there.
+
+`Session` (`packages/app/features/ops/ops.data.ts:130`) is the whole of what the hero can read: `id`, `time`, `learner`, `subject`, `tutor`, `mode`, `needsAttention?`. `apps/web/lib/sessions.repository.ts:66-68` confirms the translation adds nothing — `time`, `learner`, `subject`, and no more.
+
+Three of the Mobbin pass's takes have no source behind them:
+
+- **"Put learner context inside hero, not one tap away"** — what the learner is working on and what happened last time, two lines, in the hero. `Session` carries no prior-session summary and no objective. `subject` is a subject, not the objective the take asks for. Same missing projection as BUILD 2, pointed at a different reader.
+- **"One segmented control owns the whole day"** — `Completed / Active / To Go`. **`Session` has no status field at all.** `needsAttention?` is the only flag on the row, so the day cannot be segmented by tense and the "what changed after I acted" answer — the day visibly shrinking — has nothing to compute from.
+- **The school state funnel** `Invited → Provisioned → Active → Needs attention` **is mis-mapped, and this entry made the error.** It claimed the funnel maps onto `ops/leads/[id]/stage`. It does not: `Stage` (`ops.data.ts:14`) is `Inquiry | Trial scheduled | Trial completed | Proposal | Enrolled | At risk`, a sales pipeline. Invited/Provisioned/Active is a provisioning lifecycle — a different axis, not a renaming of the same one. Verified positively: `Invited` and `Provisioned` appear nowhere in `packages` or `apps` outside a `Badge` label in `packages/ui/List.stories.tsx:37`. No collection, no route, no type.
+
+**What survives as BUILD.** The hero's facts are real and deployed off ADR-110's rows — time, learner, subject, tutor, mode, plus one action. `needsAttention?` supports the pass's "Needs attention is not a separate stage, it is a row marked where it stalled" take directly. The CRM pipeline board over `STAGES` with per-stage counts is real and largely built, and the pass's refusals that bind it — counts in stage headers and never money, no drag-between-columns — cost nothing to hold.
+
+**What defers.** The hero's learner-context lines and the `Completed / Active / To Go` control, both on one projection: a session status plus a prior-session pointer. The school onboarding funnel defers further back than that — it needs the lifecycle to exist at all before a screen can show it, so it is a defer on a missing subsystem rather than a missing projection.
+
+`tutor-today-content.tsx:12` still renders `TUTOR_SESSIONS` from `tutor-today.data`, so this surface is also still fixture-backed. It is the last one outside the guardian set.
 
 ## DEFER
 
