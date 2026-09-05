@@ -7,16 +7,24 @@
 // guardian.home / guardian.family contracts name: one `selectedLearnerId`,
 // written by the ChildSwitcher and the Family hub, read everywhere.
 //
-// Children are seeded from the parent-home fixture — the known upstream defect
-// (guardian.family contract: "children are hardcoded fixtures upstream").
-// `setChildren` is the swappable seam the real guardianship query will write
-// through; consumers read this store and never import the fixture directly, so
-// swapping the source touches exactly one call site.
+// The list starts EMPTY, and that is a privacy decision rather than a tidiness
+// one. It used to seed from the parent-home `CHILDREN` fixture, and
+// `profile-switcher` is a learner-facing surface (FD-24, the family-device
+// switcher, mounted on the learner You tab and behind the K–2/3–5 shell header
+// avatar). So every child on every device was shown invented sibling names and
+// could tap one, which called `setContext({ kind: 'learner', learnerId })` with
+// a fixture id — switching into a learner identity that is not theirs. An empty
+// list removes that outright.
+//
+// `setChildren` is the seam the real guardianship query writes through.
+// It has no caller yet: `/api/family/learners` exports POST only, so no
+// guardian children read exists to wire. Until one does, surfaces render their
+// "no children yet" state, which is true, instead of a fabricated family.
 // SOT: docs/design/overhaul-v2/J-component-plan.md §2 row 10 · design/screens/guardian/guardian.family/contract.md · docs/pack/36-role-navigation-flows.md §3.2
 // SOT-KEYWORDS: family store children selected learner active child switcher guardian g-8 zustand
 
 import { create } from 'zustand';
-import { CHILDREN, type ChildSummary } from '../home/parent-home.data';
+import type { ChildSummary } from '../home/parent-home.data';
 
 export type { ChildSummary };
 
@@ -30,7 +38,7 @@ interface FamilyState {
 }
 
 export const useFamilyStore = create<FamilyState>((set) => ({
-  children: CHILDREN,
+  children: [],
   selectedLearnerId: null,
   selectLearner: (selectedLearnerId) => set({ selectedLearnerId }),
   setChildren: (children) =>

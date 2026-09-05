@@ -57,14 +57,26 @@ export function FamilyScreen() {
 
       <FadeIn delay={80}>
         <Card className="gap-stack border-2 border-grade/20 bg-grade/5">
-          <View className="flex-row items-center gap-1.5">
-            <Text variant="label" className="font-semibold text-grade">
-              Example
-            </Text>
+          {/*
+            The caption only renders when there are rows for it to describe.
+            `family.store` now starts empty and no guardian children read exists
+            to fill it, so "the children below are seeded examples" would point
+            at nothing.
+          */}
+          {children.length > 0 ? (
+            <View className="flex-row items-center gap-1.5">
+              <Text variant="label" className="font-semibold text-grade">
+                Example
+              </Text>
+              <Text variant="caption" tone="muted">
+                The children below are seeded examples. Add your own to see real data.
+              </Text>
+            </View>
+          ) : (
             <Text variant="caption" tone="muted">
-              The children below are seeded examples. Add your own to see real data.
+              No children on this account yet. Add one to see their activity here.
             </Text>
-          </View>
+          )}
           <View className="gap-element">
             {children.map((child) => (
               <PressScale

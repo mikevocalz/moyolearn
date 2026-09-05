@@ -123,6 +123,18 @@ export function ProfileSwitcher({ grownUps, onSwitched }: ProfileSwitcherProps) 
 
   return (
     <View className="gap-element">
+      {/*
+        A sheet that opens onto nothing is a dead end, which law 1 in the header
+        forbids. It is reachable now that `family.store` starts empty: with no
+        children read wired and `grownUps` absent — which is what every learner
+        mount passes — there is no row to draw. Say so instead of drawing a
+        titled sheet with an empty body.
+      */}
+      {learners.length === 0 && grownUps.kind === 'absent' ? (
+        <Text className="text-body text-text-muted">
+          Nobody else is set up on this device yet.
+        </Text>
+      ) : null}
       {learners.map((child) => (
         <Pressable
           key={child.id}
