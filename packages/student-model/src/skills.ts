@@ -4,6 +4,7 @@
 // the authoritative skill binding on the server side.
 // SOT: docs/pack/19-learning-outcomes-spec.md §3
 // SOT-KEYWORDS: student model skill inference heuristic curriculum problem hint
+import type { DerivedFact } from './facts.ts';
 
 const DEFAULT_HINTS: [string, string] = [
   'Start by identifying the operation with the highest precedence.',
@@ -74,6 +75,66 @@ export function secondHint(skillTitle: string): string {
 }
 
 /** Generate a simple auto-tutor problem for a known skill. */
+/**
+ * Which branch of the adaptive picker chose a skill.
+ *
+ * `review` and `mastery` are read off the learner's own facts. `seed` is a
+ * starting point for a learner who has none yet, and the distinction is the
+ * whole reason this type exists: inside a session a practice problem is a
+ * practice problem, but a surface that tells a child what they are working on
+ * would be inventing a claim about their learning if it rendered a seeded
+ * skill as theirs.
+ */
+export type NextProblemSource = 'review' | 'mastery' | 'seed';
+
+/** The adaptive next problem, as every reader of it sees it. */
+export interface NextProblem {
+  skillTitle: string;
+  problem: string;
+  source: NextProblemSource;
+}
+
+/**
+ * Choose the skill the learner meets next.
+ *
+ * Order: a review that is actually due, then the weakest mastery, then a seed.
+ * The order is the pedagogy — a due review is spaced repetition asking for its
+ * slot, and jumping it to practise something weaker loses the spacing.
+ *
+ * `now` is a parameter because "due" is a comparison against a clock, and a
+ * picker that read the clock itself could not be tested at a boundary.
+ *
+ * The `seed` branch is the one callers must handle rather than render blindly:
+ * it fires for a learner with no facts, so the skill it returns is an offer and
+ * not an observation.
+ */
+export function pickNextSkill(
+  facts: readonly DerivedFact[],
+  now: string,
+  seeds: readonly string[],
+  pickSeed: (count: number) => number = (count) => Math.floor(Math.random() * count),
+): { skillTitle: string; source: NextProblemSource } {
+  let dueReview: string | undefined;
+  let weakest: { skillTitle: string; p: number } | undefined;
+
+  for (const fact of facts) {
+    if (fact.kind === 'review') {
+      // First due review wins, matching the caller's previous `reviews[0]`:
+      // facts arrive in the repository's order and re-sorting here would
+      // silently change which skill a learner meets.
+      if (fact.dueAt <= now && dueReview === undefined) dueReview = fact.skillTitle;
+    } else if (fact.kind === 'mastery') {
+      if (weakest === undefined || fact.p < weakest.p) {
+        weakest = { skillTitle: fact.skillTitle, p: fact.p };
+      }
+    }
+  }
+
+  if (dueReview !== undefined) return { skillTitle: dueReview, source: 'review' };
+  if (weakest !== undefined) return { skillTitle: weakest.skillTitle, source: 'mastery' };
+  return { skillTitle: seeds[pickSeed(seeds.length)] ?? seeds[0]!, source: 'seed' };
+}
+
 export function generatePracticeProblem(skillTitle: string): string | null {
   switch (skillTitle) {
     case 'Fractions':

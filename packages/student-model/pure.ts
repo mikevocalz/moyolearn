@@ -36,4 +36,5 @@ export type {
 export { traceAttempt, decayMastery, isFrontier, DEFAULT_TRACING, FRONTIER_LOW, FRONTIER_HIGH } from './src/mastery.ts';
 export type { TracingParams } from './src/mastery.ts';
 export { evaluateArithmetic } from './src/evaluate.ts';
-export { inferSkillTitle, firstHint, secondHint, generatePracticeProblem } from './src/skills.ts';
+export { inferSkillTitle, firstHint, secondHint, generatePracticeProblem, pickNextSkill } from './src/skills.ts';
+export type { NextProblem, NextProblemSource } from './src/skills.ts';

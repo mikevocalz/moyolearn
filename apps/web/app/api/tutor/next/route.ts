@@ -8,15 +8,17 @@
 // SOT-KEYWORDS: tutor next adaptive practice problem student model review mastery edu educational store
 import { NextRequest, NextResponse } from 'next/server';
 import { protectedOperation } from '@acme/app/server';
-import { generatePracticeProblem } from '@acme/student-model/pure';
+import { generatePracticeProblem, pickNextSkill, type NextProblem } from '@acme/student-model/pure';
 import { loadEduPriorFacts } from '@/lib/edu.repository';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
 
-export interface NextProblemResponse {
-  skillTitle: string;
-  problem: string;
-}
+/**
+ * The response shape lives in `@acme/student-model/pure` beside the picker that
+ * produces it, so the surfaces reading it and the branch choosing it cannot
+ * describe the same value differently.
+ */
+export type NextProblemResponse = NextProblem;
 
 const SEED_SKILLS = [
   'Number sense',
@@ -30,27 +32,10 @@ export async function GET(request: NextRequest) {
     const next = await protectedOperation(auth, request.headers, async (ctx) => {
       const facts = await loadEduPriorFacts(ctx);
 
-      const now = new Date().toISOString();
-      const reviews: string[] = [];
-      const mastery: { skillTitle: string; p: number }[] = [];
-
-      for (const fact of facts) {
-        if (fact.kind === 'review') {
-          if (fact.dueAt <= now) reviews.push(fact.skillTitle);
-        } else if (fact.kind === 'mastery') {
-          mastery.push({ skillTitle: fact.skillTitle, p: fact.p });
-        }
-      }
-
-      // Prioritize due reviews, then lowest mastery, then seeded skills.
-      const skill =
-        reviews[0] ??
-        mastery.sort((a, b) => a.p - b.p)[0]?.skillTitle ??
-        SEED_SKILLS[Math.floor(Math.random() * SEED_SKILLS.length)];
-
-      const problem = generatePracticeProblem(skill);
+      const chosen = pickNextSkill(facts, new Date().toISOString(), SEED_SKILLS);
+      const problem = generatePracticeProblem(chosen.skillTitle);
       if (!problem) throw new Error('No practice problem for skill');
-      return { skillTitle: skill, problem };
+      return { ...chosen, problem };
     }, { telemetry: { op: 'tutor.next.problem', resource: 'studentModelFacts', action: 'read' } });
     return NextResponse.json(next satisfies NextProblemResponse);
   } catch (error) {

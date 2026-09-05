@@ -53,9 +53,19 @@ Deployed: `ops/sessions`, `ops/families`, `ops/families/[familyId]`, `ops/leads`
 
 ## DEFER
 
-### D1 · "Continue where you left off" on the learner hero
+### D1 · "Resume where you left off" on the learner hero — corrected 2026-09-05
 
-The fixture's `continueSkill.subtitle` reads "You were adding numbers last time". That is recency, and the projection does not carry it.
+**This entry originally named the wrong blocker.** It said the gap was `observedAt` being dropped from the `/api/progress` projection, and proposed choosing between projecting it and reframing the hero as "due next". Reading `design/screens/learner/learner.home/contract.md` afterwards showed the framing was never open: `primary_action` is "Resume where you left off — reopens last session at its last position", and `state_owner` marks the thing that would carry it as `home.store [add]` — not built. The contract wins over a disposition, so the choice was not mine to make.
+
+The real blocker is a missing subsystem, not a projection. No resume pointer exists anywhere: `grep` for `resumePointer`, `lastPosition` and `home.store` across `packages` and `apps` returns nothing but the contract's own note, and no route returns one. `observedAt` remains genuinely absent from the projection (`apps/web/app/api/progress/route.ts:29-31` against `packages/student-model/src/facts.ts:31`), but projecting it would give "last skill touched", which is still not "last session at its last position".
+
+**What shipped instead, and why it is not the deferred thing.** The hero renders the adaptive NEXT skill from `/api/tutor/next`, which is real, deployed and already consumed by the tutor screen. It is labelled as what is next, never as what was resumed. That leaves `primary_action` diverging from the built screen, recorded at the contract rather than hidden.
+
+One thing had to be fixed before it could ship honestly: the picker falls back to a random seeded skill for a learner with no facts, and the response could not say which branch it took. A home hero saying "you have been working on this" about a seeded pick invents a history for a child who has none. `NextProblem.source` now carries `review | mastery | seed`, `useNextSkill` exposes `derived`, and the hero's copy changes on it.
+
+### D1b · The resume pointer itself
+
+Still deferred, and now correctly named. The contract asks for a server-backed pointer to the last session and its position (`state_owner: home.store [add]`, `cross_device_continuity`). Neither the store nor a route exists. This is rung 4 — blocked on a missing subsystem — so it is not queued as a build.
 
 `/api/progress` builds three flat records at `apps/web/app/api/progress/route.ts:29-31` — `masteryBySkill` (number), `reviewBySkill` (dueAt string), `scaffoldingBySkill` (number). Every underlying fact carries `observedAt` (`packages/student-model/src/facts.ts:31`, written at `:183`), and the projection drops it.
 
