@@ -1,0 +1,21 @@
+{
+  "name": "@acme/art",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "exports": {
+    ".": "./index.ts",
+    "./provenance": "./registry.provenance.ts"
+  },
+  "scripts": {
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@acme/config": "workspace:*",
+    "eslint": "catalog:",
+    "eslint-config-expo": "catalog:",
+    "typescript": "catalog:"
+  }
+}
