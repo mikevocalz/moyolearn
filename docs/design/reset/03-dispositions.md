@@ -65,7 +65,13 @@ One thing had to be fixed before it could ship honestly: the picker falls back t
 
 ### D1b · The resume pointer itself
 
-Still deferred, and now correctly named. The contract asks for a server-backed pointer to the last session and its position (`state_owner: home.store [add]`, `cross_device_continuity`). Neither the store nor a route exists. This is rung 4 — blocked on a missing subsystem — so it is not queued as a build.
+Still deferred, and the blocker is narrower than "no subsystem exists" — which is what this entry said first, and it was wrong.
+
+The server already knows the learner's open session. `apps/web/lib/tutor-session.repository.ts:105` exports `loadOpenSession`, and `packages/app/features/tutor/tutor.store.ts:50` holds the server's id for the conversation and restores the thread to where the child left it — `:232-235` describes that restore as "the only version of 'pick up where you left off' that does not make the child reconstruct it". So a resume exists, it is server-backed, and it works inside the tutor.
+
+**What is missing is a read that does not write.** The only route exposing `loadOpenSession` is `GET /api/tutor/session`, which is resolve-or-**create** by design — `route.ts:3-6` explains why a separate start endpoint would strand a device that crashed between the two calls. A home hero calling it to ask "is there something to resume?" would manufacture a session as a side effect of rendering the screen. That is the precise blocker: not an absent subsystem, an absent non-mutating projection of one that exists.
+
+The unblock is small and nameable: a read-only route (or a `?peek` on the existing one) returning whether an open session exists and enough of its position to label a hero, with no create branch. It stays deferred rather than built here because "enough of its position" is the contract's phrase and nobody has said what it means — a skill title, a turn index, a problem string — and guessing it would ship a third framing on the same hero.
 
 `/api/progress` builds three flat records at `apps/web/app/api/progress/route.ts:29-31` — `masteryBySkill` (number), `reviewBySkill` (dueAt string), `scaffoldingBySkill` (number). Every underlying fact carries `observedAt` (`packages/student-model/src/facts.ts:31`, written at `:183`), and the projection drops it.
 

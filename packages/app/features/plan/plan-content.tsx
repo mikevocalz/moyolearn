@@ -284,7 +284,7 @@ export function PlanContent() {
                       />
                       <Button
                         variant="outline"
-                        title="Pick up where you left off"
+                        title="Start what is next"
                         onPress={() => router.push('/tutor')}
                       />
                     </View>

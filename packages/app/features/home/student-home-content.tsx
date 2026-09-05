@@ -142,7 +142,7 @@ export function StudentHomeContent() {
           <Banner
             tone="offline"
             title="No connection"
-            description="You can still pick up where you left off. New work arrives when you are back online."
+            description="What is next is still here. New work arrives when you are back online."
           />
         </FadeIn>
       ) : null}
