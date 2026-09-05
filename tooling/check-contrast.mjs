@@ -91,6 +91,24 @@ const PAIRS = [
   ['redpen', 'surface-raised', 4.5],
   ['grade', 'surface', 4.5],
   ['grade', 'surface-raised', 4.5],
+  /*
+    The learner bar, 7:1. `docs/site/tokens.md:271-274` records the override as
+    out of scope for the site precisely because no learner surface renders
+    there; every learner surface in the app is in scope, and
+    `docs/design/art-direction.md` P5.4 restates it for text set over artwork.
+    Nothing checked it until now, and it is tighter than it looks: `text-muted`
+    on `surface-sunken` measures 7.02:1 in light, so a couple of ticks on
+    ink[600] or ink[100] break the learner bar while every AA row above still
+    passes. Same tokens as the 4.5 rows, listed twice on purpose — the 4.5 row
+    is the floor every surface owes, the 7 row is what a child's screen owes on
+    top of it.
+  */
+  ['text', 'surface', 7],
+  ['text', 'surface-raised', 7],
+  ['text', 'surface-sunken', 7],
+  ['text-muted', 'surface', 7],
+  ['text-muted', 'surface-raised', 7],
+  ['text-muted', 'surface-sunken', 7],
   // non-text boundaries: WCAG 1.4.11 asks 3:1 of anything carrying meaning
   ['border', 'surface', 3],
   ['border-strong', 'surface', 3],
