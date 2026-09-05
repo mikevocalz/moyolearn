@@ -35,17 +35,39 @@ The screen exists, the routes exist, the hooks exist, and the hero renders a fix
 
 **Ship it framed as what the data honestly supports.** `reviewBySkill` is `skillId → dueAt` (`apps/web/lib/edu.repository.ts:573` writes `fact.dueAt` into that column), so "what is due next" is real. See the DEFER below for what is not.
 
-### 2 · Teacher class workspace — re-composition, no new backend
+### 2 · Teacher class workspace — RECLASSIFIED TO DEFER, 2026-09-05
+
+**This was ranked as a re-composition and it is not buildable.** The ranking checked that routes and screens existed and did not check whether the payload carried what the composition needs. It does not.
+
+`Enrollment` (`packages/app/features/enrollment/enrollment.types.ts:9-26`) is the entire roster row: `id`, `learnerAuthId`, `orgId`, `districtId`, `program`, `classId`, `status`, `enrolledAt`, `exitedAt`. **No display name. No mastery. No per-objective outcome.** The teacher API surface is four routes — `teacher/classes`, `teacher/classes/[classId]/roster`, `teacher/assignments`, `teacher/assignments/[assignmentId]` — and none of them is a progress read.
+
+So the SchoolAI-derived composition in `docs/design/mobbin/teacher-class.md` needs three things that have no source: the student's name, the headline pill, and the outcome dots. `OutcomeDots` extending `MasteryBar` was never the blocker; the data behind it is.
+
+`packages/app/features/classes/class-detail-content.tsx:191-196` already reached this conclusion and handled it correctly — rows are labelled by `learnerAuthId` because "Enrollment carries no display name and no teacher-side learner-profile read exists yet, so the id is the honest label until one lands. It is rendered as data, never dressed up as a name." The screen is already List-detail, already has an honest empty state with a live exit (the class code), and is already right for the data it has. There is nothing to re-compose.
+
+**The unblock is one projection, and it is also a privacy improvement.** A teacher-scoped learner read returning a display name and *not* the Better Auth user id fixes both at once: today the teacher's client receives a raw auth id, which is an identity token crossing a boundary in place of the humane label the surface actually wants. A second read would carry per-objective outcomes for the headline and the dots. Neither exists; both are ordinary work with a clear shape, so this is a defer on a missing subsystem rather than a strike.
+
+### 2b · What the teacher surface can have now
+
+Nothing that needs building. Recorded so the next pass does not re-rank it.
+
+### 3 · Parent Home and child detail — confirmed, and better supported than ranked
 
 Read paths deployed: `apps/web/app/api/teacher/classes/route.ts`, `.../classes/[classId]/roster/route.ts`, `.../teacher/assignments/route.ts` and `.../assignments/[assignmentId]/route.ts`. Consumers: `packages/app/features/classes/use-classes.ts:22,44` and `packages/app/features/assignments/use-assignments.ts:36,61`. Screens: `apps/mobile/app/(teacher)/(tabs)/classes.tsx`, `(teacher)/classes/[classId].tsx`, `(teacher)/students/[studentId].tsx`, `(teacher)/assign/*`.
 
 The List-detail composition and outcome-dot vocabulary are a rearrangement of working code against `docs/design/mobbin/teacher-class.md`. `OutcomeDots` extends `MasteryBar` rather than being authored.
 
-### 3 · Parent Home and child detail — re-composition
+Payload checked this time, not assumed. `GuardianSummaryCard` (`packages/app/features/summary/summary.service.ts:357-364`) carries `headline` — a written sentence, which is the status band's claim — plus `topMovement: MasteryMovement | null`. `MasteryMovement` (`summary.types.ts:104-114`) carries `parentLabel` in parent language, `before`/`after` levels, `beforeP`/`afterP`, and `gradePosition` as a **separate field**, so doc 34's movement-versus-position separation is in the type rather than left to the screen.
+
+The evidence strip has a source too: `ResolvedProblemRow.question` is `{ kind: 'crop', url }` or `{ kind: 'text', text }` (`summary.service.ts:366-371`), and `report-content.tsx:39,111` already routes crop URLs through `/api/media/view`. That is the child's actual work, already rendering on the report detail.
+
+This revises D3 for `EvidenceStrip` specifically: it lacks a screen contract, which is still the blocker, but it does not lack data.
 
 Deployed: `guardian/reports`, `guardian/reports/[sessionId]`, `guardian/reports/[sessionId]/share`, `guardian/incidents`, `guardian/safety-status`, `family/learners`. Consumer `packages/app/features/summary/use-reports.ts:40`. Screens: `(guardian)/(tabs)/family-home.tsx`, `(tabs)/reports.tsx`, `reports/[sessionId].tsx`, `(tabs)/family.tsx`.
 
-The status band and evidence strip compose over reads that exist. The multi-child accent question in `docs/design/mobbin/parent-home.md` Q2 is a composition decision, not a data one — `family/learners` returns the set.
+The work is bringing the status band and evidence strip onto Parent Home, where a `WhatsNextCard` sits today. The multi-child accent question in `docs/design/mobbin/parent-home.md` Q2 is a composition decision, not a data one — `family/learners` returns the set.
+
+**This is now the top BUILD candidate.**
 
 ### 4 · Tutor Today and school ops — re-composition
 
