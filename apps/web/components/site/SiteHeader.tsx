@@ -8,12 +8,11 @@
 import { Link } from 'solito/link';
 import { usePathname } from 'solito/navigation';
 import type { OrgBranding } from '@acme/app';
-import { useAppSession, useProfile } from '@acme/app';
+import { useIdentity } from '@acme/app';
 import { MoyoLearnLogo } from '@acme/ui/brand';
 import { Avatar } from '@acme/ui';
 import { Header, Nav, View, Pressable } from '@acme/ui/tw';
 import { Menu, X } from '@acme/ui/icons';
-import { AVATAR_URI } from '@acme/app';
 import { MARKETING_ITEMS, PROFILE, useMobileMenu } from './nav';
 
 const isActive = (pathname: string, href: string) =>
@@ -49,8 +48,7 @@ export interface SiteHeaderProps {
 
 export function SiteHeader({ orgBranding }: SiteHeaderProps) {
   const pathname = usePathname() ?? '/';
-  const { user } = useAppSession();
-  const name = useProfile((s) => s.name);
+  const { name } = useIdentity();
   const { open, toggle, close } = useMobileMenu();
 
   return (
@@ -76,7 +74,7 @@ export function SiteHeader({ orgBranding }: SiteHeaderProps) {
             aria-label="Your profile and settings"
             className="rounded-md p-1 transition-colors duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-tenant-focus-ring/50 hover:bg-tenant-surface-subtle hover:ring-2 hover:ring-tenant-header-border"
           >
-            <Avatar name={name} imageUri={AVATAR_URI} size="md" />
+            <Avatar name={name} size="md" />
           </Link>
         </View>
 

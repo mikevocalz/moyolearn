@@ -13,7 +13,7 @@ import { create } from 'zustand';
 import { Header, Nav, View, Text as TWText } from '@acme/ui/tw';
 import { Avatar, MotionView, useHydrated } from '@acme/ui';
 import { MoyoLearnLogo } from '@acme/ui/brand';
-import { AVATAR_URI, useProfile } from '@acme/app';
+import { useIdentity } from '@acme/app';
 import { MARKETING_ITEMS, PROFILE, useMobileMenu } from './nav';
 
 const isActive = (pathname: string, href: string) =>
@@ -142,8 +142,7 @@ export function MarketingHeader() {
   const { open, toggle, close } = useMobileMenu();
   const scrolled = useScrolled((s) => s.scrolled);
   const hydrated = useHydrated();
-  const name = useProfile((s) => s.name);
-  const handle = useProfile((s) => s.handle);
+  const { name } = useIdentity();
   const profileActive = isActive(pathname, PROFILE.href);
 
   useEffect(() => {
@@ -213,7 +212,7 @@ export function MarketingHeader() {
                   : 'hover:ring-2 hover:ring-border-strong'
               }`}
             >
-              <Avatar name={name} imageUri={AVATAR_URI} size="md" />
+              <Avatar name={name} size="md" />
             </Link>
           </MotionView>
 
@@ -259,10 +258,10 @@ export function MarketingHeader() {
                   profileActive ? 'bg-surface-sunken' : 'hover:bg-surface-sunken'
                 }`}
               >
-                <Avatar name={name} imageUri={AVATAR_URI} size="lg" />
+                <Avatar name={name} size="lg" />
                 <View className="flex-1 gap-0.5">
                   <TWText className="text-base font-semibold text-text">{name}</TWText>
-                  <TWText className="text-sm text-text-muted">{handle} · Profile & settings</TWText>
+                  <TWText className="text-sm text-text-muted">Profile &amp; settings</TWText>
                 </View>
                 <TWText className="text-lg text-text-muted">›</TWText>
               </Link>

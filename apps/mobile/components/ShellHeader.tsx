@@ -56,11 +56,10 @@ import { ChevronLeft } from '@acme/ui/icons';
 import { Header } from '@acme/ui/primitives';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import {
-  AVATAR_URI,
   shellForRole,
   useAccountSheet,
   useAppSession,
-  useProfile,
+  useIdentity,
   useSwitchProfileSheet,
 } from '@acme/app';
 
@@ -87,7 +86,7 @@ export interface ShellHeaderProps {
 
 export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: ShellHeaderProps) {
   const pathname = usePathname() ?? '/';
-  const profileName = useProfile((state) => state.name);
+  const { name: profileName } = useIdentity();
   const { activeContext } = useAppSession();
   const openAccountSheet = useAccountSheet((state) => state.openSheet);
   const openSwitchSheet = useSwitchProfileSheet((state) => state.openSheet);
@@ -184,7 +183,7 @@ export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: She
                 opposite, and a 32 avatar read as an afterthought beside it. 44
                 also means the mark IS the target rather than a small mark
                 floating inside a larger invisible one. */}
-            <Avatar name={profileName} imageUri={AVATAR_URI} size="md" />
+            <Avatar name={profileName} size="md" />
           </Pressable>
         ) : (
           <View className="min-w-11" />

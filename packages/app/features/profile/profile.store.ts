@@ -1,22 +1,24 @@
 import { create } from 'zustand';
 import { setThemePreference, type ThemePreference } from '@acme/theme/switch';
 
-// Profile + settings state — zustand always (repo rule).
-// Same pinned-avatar scheme as the schedule roster (see fixtures.ts).
-export const AVATAR_URI =
-  'https://api.dicebear.com/9.x/avataaars/png?size=256&eyes=default&mouth=smile&eyebrows=default' +
-  '&seed=nina&top=curly&hairColor=2c1b18&skinColor=d08b5b&clothing=blazerAndShirt';
-
+// Settings state — zustand always (repo rule).
+//
+// IDENTITY IS NOT HERE ANY MORE. This store used to own `name`, `handle`,
+// `email` and a pinned DiceBear `AVATAR_URI`, seeded to an invented
+// "Nina Alvarez". Every shell header on both platforms read them, so every
+// signed-in person was drawn as her. Identity comes from the session now
+// (`useIdentity`), which is the same rule the server side already holds:
+// identity is never a parameter, it is read from context.
+//
+// What is left is preference, which is genuinely client-owned. `theme` is the
+// only one that persists anything — `setThemePreference` writes it. The other
+// three do not reach a server, which is recorded as a defect rather than
+// hidden: see docs/design/reset/04-guardian-fixture-audit.md.
 interface ProfileState {
-  name: string;
-  handle: string;
-  email: string;
   notifications: boolean;
   digest: boolean;
   publicProfile: boolean;
   theme: ThemePreference;
-  setName: (name: string) => void;
-  setEmail: (email: string) => void;
   setNotifications: (v: boolean) => void;
   setDigest: (v: boolean) => void;
   setPublicProfile: (v: boolean) => void;
@@ -24,15 +26,10 @@ interface ProfileState {
 }
 
 export const useProfile = create<ProfileState>((set) => ({
-  name: 'Nina Alvarez',
-  handle: '@nina',
-  email: 'nina@example.com',
   notifications: true,
   digest: false,
   publicProfile: true,
   theme: 'system',
-  setName: (name) => set({ name }),
-  setEmail: (email) => set({ email }),
   setNotifications: (notifications) => set({ notifications }),
   setDigest: (digest) => set({ digest }),
   setPublicProfile: (publicProfile) => set({ publicProfile }),

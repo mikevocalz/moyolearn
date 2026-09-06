@@ -17,9 +17,8 @@ import type { AccentRole } from '@acme/theme';
 import {
   useAppSession,
   useSetContext,
-  useProfile,
+  useIdentity,
   availableRoles,
-  AVATAR_URI,
   ContextSwitcher,
   RoleSwitcher,
   ScopeSwitcher,
@@ -206,7 +205,7 @@ function MembershipMenu({ user }: { user: AppUser | null }) {
         aria-label="Your profile and settings"
         className="rounded-full transition-shadow duration-fast focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 hover:ring-2 hover:ring-border-strong"
       >
-        <Avatar name={name} imageUri={AVATAR_URI} size="md" />
+        <Avatar name={name} size="md" />
       </Link>
     );
   }
@@ -234,7 +233,7 @@ function MembershipMenu({ user }: { user: AppUser | null }) {
       }}
     >
       <View className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 hover:ring-2 hover:ring-border-strong">
-        <Avatar name={name} imageUri={AVATAR_URI} size="md" />
+        <Avatar name={name} size="md" />
       </View>
     </Menu>
   );
@@ -244,7 +243,7 @@ function useProfileName() {
   // Profile store carries the display name for the avatar; fall back to the
   // session user name when the store has not been primed yet.
   const { user } = useAppSession();
-  const name = useProfile((s) => s.name);
+  const { name } = useIdentity();
   return name || user?.name || 'Guest';
 }
 
@@ -414,7 +413,7 @@ function HotShell({
                 profileActive ? 'bg-tenant-surface-subtle' : 'hover:bg-tenant-surface-subtle'
               }`}
             >
-              <Avatar name={name} imageUri={AVATAR_URI} size="lg" />
+              <Avatar name={name} size="lg" />
               <View className="flex-1 gap-0.5">
                 <TWText className="text-base font-semibold text-tenant-header-foreground">{name}</TWText>
                 <TWText className="text-sm text-tenant-header-muted">Profile & settings</TWText>

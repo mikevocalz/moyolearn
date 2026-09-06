@@ -50,9 +50,9 @@ The store's own header calls this out and says swapping the source "touches exac
 | `home/family-screen.tsx` | NEEDS GUARD | `children.map` yields nothing, leaving an empty region *inside a card that still says* "The children below are seeded examples." A caption pointing at nothing. No `EmptyState`, no `.length` gate |
 | `family-calendar/family-calendar-content.tsx` | **BREAKS (honesty)** | The chip row is already gated and disappears cleanly, but the agenda renders `FAMILY_DAYS` with fabricated child names and avatars regardless. Zero children, a full week of invented sessions. Separately, `family-calendar.store.ts:20`'s `selectedChildId` is not cleared by `setChildren`, so a stale id filters the agenda to empty with the chips that would reset it gone |
 | `ai-activity/ai-activity-content.tsx` | NEEDS GUARD | Switcher hides on the `> 1` gate; everything else renders — permissions, "What Natalie learned" observations, retention rows — a full consent surface about a child who does not exist. `SafetySection` is the one honest part: it has `ReadFailure` with retry and a loading state |
-| `family/child-switcher.tsx` | pending audit | — |
-| `profile/profile-content.tsx` | pending audit | — |
-| `switch-profile/profile-switcher.tsx` | pending audit | — |
+| `family/child-switcher.tsx` | **CLEAN** | Returns `null` under `children.length < 2`; reads `family.store` only. Audited 2026-09-06, no change needed |
+| `profile/profile-content.tsx` | **FIXED** | Rendered the `profile.store` fixture identity as the signed-in adult. Now reads the session. See the identity finding below |
+| `switch-profile/profile-switcher.tsx` | **CLEAN** | Already fixed 2026-09-05 (says so in words with no children); no fixture of its own |
 
 ## The work, in order
 
@@ -122,3 +122,28 @@ The first two of those were nearly filed as defects off the sweep's numbers alon
 **The P0 was watched happening.** `/memory` renders ten live erase controls against six fabricated facts under the heading "About Maya" — a child `family.store` no longer has — over the sentence "Delete any of them and Natalie stops knowing it."
 
 One detail for whoever picks the option, which neither this document nor the store header caught: the `Forget everything` card derives its counts from the fixture, reading "Removes all 6 things Natalie remembers and all 3 sessions." Under the keep-`forget-all` option those counts are fabricated too, so that option is keeping the button *and* dropping the counts from its copy — not keeping the card as it stands.
+
+## The identity finding, 2026-09-06 — the last audit, and the widest fixture
+
+Auditing the three pending surfaces turned up the largest fixture in the reset, and it was not on a guardian screen. It was in the chrome.
+
+`profile.store.ts` owned the signed-in person: `name: 'Nina Alvarez'`, `handle: '@nina'`, `email: 'nina@example.com'`, and `AVATAR_URI`, a pinned DiceBear face. **Every shell header on both platforms read it** — `SiteHeader:53`, `MarketingHeader:145`, `RoleShell:247`, `ShellHeader:90` (the mobile shell, which includes the learner shell), plus the account sheet, settings, and the profile screen.
+
+So every signed-in person — guardians, tutors, and children — was drawn as the same invented adult. Verified by rendering, not by reading: `/profile?persona=dana` showed **"Nina Alvarez"** under the heading "How you appear across the app", and every surface loaded the same stand-in face.
+
+**The real read was already there and already destructured.** `SiteHeader:52` pulled `user` from `useAppSession()` and then used the fixture's name on the next line. This is BUILD 1's shape exactly — a deployed read and a screen that ignores it — and it is now fixed the same way: `useIdentity()` is the one seam, `AppUser.name` is the source, and the avatar falls back to initials, which is `Avatar`'s own documented behaviour ("a person's picture, or their initials while there isn't one") rather than a face belonging to nobody.
+
+`handle` and `email` are **deleted rather than rewired**: `AppUser` is `{ id, name, kind }`, so neither has any carrier at all.
+
+**The Account card's two TextFields are gone with them.** `Name` and `Email` were live inputs over a store that reaches no server — editing either changed a value the next reload discarded, on the card that promises "how you appear across the app". That is the dead control this repo already refused once, on the calendar's "Request new time" button, for the same stated reason. The name now renders read-only from the session and the card says plainly that editing is not wired up yet.
+
+Verified after: `turbo typecheck` 19/19, 18/18 gates, eslint clean, all 12 swept surfaces 200 with no JS exceptions and **zero identity leaks** — the fixture name matches nothing rendered anywhere.
+
+### Recorded, not fixed: three dead preference toggles
+
+`settings-content.tsx` contains no fetch of any kind. `Push notifications`, `Weekly email digest` and **`Public profile`** write to the local store and reach no server, so they present as settings and persist nothing. `Public profile` is the sharp one: a privacy control, seeded **on**, that cannot be turned off in any durable sense.
+
+`theme` is the exception and is genuinely client-owned — `setThemePreference` writes it. Sign-out is real.
+
+Left alone deliberately. The repo's own precedent says remove a control that takes a press and does nothing, but removing three rows from Settings decides that notifications are not shipping soon, which is a product call rather than a cleanup. It needs the same seat the P0 does.
+

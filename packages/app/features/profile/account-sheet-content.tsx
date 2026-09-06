@@ -36,7 +36,7 @@ import {
   useAppSession,
   type RoleKind,
 } from '../../providers/session';
-import { AVATAR_URI, useProfile } from './profile.store';
+import { useIdentity } from './use-identity';
 import { useAccountSheet } from './account-sheet.store';
 
 /**
@@ -114,7 +114,7 @@ export function AccountSheet() {
   const signingOut = useAccountSheet((s) => s.signingOut);
   const setSigningOut = useAccountSheet((s) => s.setSigningOut);
   const { user, activeContext } = useAppSession();
-  const name = useProfile((s) => s.name);
+  const { name } = useIdentity();
   const router = useRouter();
 
   if (!user || activeContext.kind === 'anon') return null;
@@ -173,7 +173,7 @@ export function AccountSheet() {
             {/* The ring is a FILL behind the avatar, never a border colour —
                 the role-accent gate's text/border ban applies everywhere. */}
             <View className="rounded-md bg-role-accent p-0.5">
-              <Avatar name={name} imageUri={AVATAR_URI} size="lg" />
+              <Avatar name={name} size="lg" />
             </View>
           </RoleScope>
           <View className="flex-1 gap-1">

@@ -50,12 +50,10 @@ import {
   ReadFailure,
   ScaleIn,
   Text,
-  TextField,
   useInstanceStore,
   useStore,
 } from '@acme/ui';
 import { Settings as SettingsIcon, ChevronRight } from '@acme/ui/icons';
-import { AVATAR_URI, useProfile } from './profile.store';
 import { authClient, ContextSwitcher, useAppSession } from '../../providers/session';
 import type { ActiveContextKind } from '../../providers/session';
 import { ProfileSwitcher } from '../switch-profile/profile-switcher';
@@ -108,7 +106,6 @@ export function ProfileContent() {
 }
 
 function LearnerProfile() {
-  const p = useProfile();
   const { user, activeContext } = useAppSession();
   // Band law idiom (account-sheet-content): a missing band fails open to teen
   // until the band-population fix lands, so header, tabs and this gate agree.
@@ -126,11 +123,13 @@ function LearnerProfile() {
   const showSettings = ageBand === 'teen' || ageBand === 'adult';
   // Everyone provisioned on this device except the child reading the screen.
   const othersHere = useFamilyStore((st) => st.children)
-    .filter((child) => child.name !== (user?.name ?? p.name))
+    .filter((child) => child.name !== user?.name)
     .map((child) => child.name);
   // The contract's `no_data` path: a learner profile always exists post-FD-16,
-  // so the floor is name + avatar rather than an empty state.
-  const name = user?.name ?? p.name;
+  // so the floor is name + avatar rather than an empty state. The avatar is
+  // initials off that name — there is no image on `AppUser`, and the pinned
+  // stand-in face this used to draw belonged to nobody.
+  const name = user?.name ?? '';
 
   return (
     <View className={scale.gap}>
@@ -141,7 +140,7 @@ function LearnerProfile() {
         <Section className="gap-stack">
           <View className="flex-row flex-wrap items-center gap-5">
             <ScaleIn delay={60}>
-              <Avatar name={name} imageUri={AVATAR_URI} size="xl" />
+              <Avatar name={name} size="xl" />
             </ScaleIn>
             <View className="min-w-40 flex-1 gap-1">
               <Heading level={1} size={scale.title}>
@@ -244,7 +243,6 @@ function LearnerProfile() {
  * push away on `/settings` rather than being duplicated into this screen.
  */
 function AccountProfile() {
-  const p = useProfile();
   const router = useRouter();
   const { user, activeContext, status } = useAppSession();
   const kind = activeContext.kind;
@@ -279,11 +277,11 @@ function AccountProfile() {
         <Section className="gap-4">
           <View className="flex-row flex-wrap items-center gap-5">
             <ScaleIn delay={60}>
-              <Avatar name={p.name} imageUri={AVATAR_URI} size="xl" />
+              <Avatar name={user.name} size="xl" />
             </ScaleIn>
             <View className="min-w-40 flex-1 gap-1">
               <Heading level={1} size="display-sm">
-                {p.name}
+                {user.name}
               </Heading>
               <Text tone="muted">{ROLE_NOUN[kind]}</Text>
             </View>
@@ -299,13 +297,27 @@ function AccountProfile() {
               How you appear across the app.
             </Text>
           </View>
-          <TextField label="Name" value={p.name} onChangeText={p.setName} />
-          <TextField
-            label="Email"
-            value={p.email}
-            onChangeText={p.setEmail}
-            hint="Used for sign-in and receipts."
-          />
+          {/*
+            READ-ONLY, and the email row is gone. These were two live TextFields
+            over `profile.store`, which reached no server — editing either one
+            changed a local value that the next reload discarded, on the card
+            that promises "how you appear across the app". That is the dead
+            control this repo already refused once, on the calendar's "Request
+            new time" button, for the same reason.
+
+            The name is the session's. There is no email on `AppUser` at all, so
+            rather than show a field with nothing behind it the card says where
+            the address lives and sends people somewhere that can actually
+            change it.
+          */}
+          <View className="gap-1">
+            <Text variant="label" tone="muted">Name</Text>
+            <Text>{user.name}</Text>
+          </View>
+          <Text variant="caption" tone="muted">
+            Your name and email come from your account, and changing them here isn&rsquo;t wired up
+            yet. Nothing on this card is editable in the meantime.
+          </Text>
         </Card>
       </FadeIn>
 
