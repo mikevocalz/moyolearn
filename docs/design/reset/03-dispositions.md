@@ -85,7 +85,19 @@ Three of the Mobbin pass's takes have no source behind them:
 
 **What defers.** The hero's learner-context lines and the `Completed / Active / To Go` control, both on one projection: a session status plus a prior-session pointer. The school onboarding funnel defers further back than that — it needs the lifecycle to exist at all before a screen can show it, so it is a defer on a missing subsystem rather than a missing projection.
 
-`tutor-today-content.tsx:12` still renders `TUTOR_SESSIONS` from `tutor-today.data`, so this surface is also still fixture-backed. It is the last one outside the guardian set.
+**Resolved 2026-09-06.**
+
+*School ops was already built.* `use-sessions.ts` is consumed at `packages/app/features/ops/screen.shared.tsx:43` with loading, error and retry threaded, and the surface was rendered to confirm it: the failed read draws its own banner — "We couldn't load today's sessions … No session was cancelled and nothing moved — this is the read, not the calendar" — with a live retry, and the revenue strip carries its `Example data` label over the `REVENUE_BY_ORG` fixture that `ops.data.ts` already declares an honest non-goal. Nothing to compose; the entry was queueing work that existed.
+
+*Tutor Today is struck, and could not have used that read anyway.* `GET /api/ops/sessions` is org-scoped by design: `listSessions` gates on `ctx.orgId` and `apps/web/lib/sessions.repository.ts:38` filters `orgId` plus the day window only, so it returns **every tutor's day**. Pointing Tutor Today at it would seat a tutor in front of colleagues' learners. That is a second payload error this entry would have shipped, caught the same way as the first.
+
+`TUTOR_SESSIONS` is deleted rather than relabelled. It invented three named learners, a travel instruction a tutor could act on ("35 min travel to Brooklyn"), and an `AI PREP` line making an AI-derived claim about a named child with no source — which `docs/design/mobbin/tutor-today.md`'s own Refuse table forbids: "Any AI-derived suggestion names its source, or it does not ship." An `Example schedule` caption does not make a fabricated instruction safe to read minutes before teaching.
+
+**The contract's `empty_day` path was deliberately not reused for it.** "No sessions today. Your availability is open" asserts a zero the screen cannot verify — the org's sessions are real rows and this tutor may well have some. That is the calm-zero-over-an-absent-read lie, and it is the distinction that separates this from D5: the family calendar's zero is true by construction because nothing can be booked, whereas a tutor's empty day would be a guess. The copy names the reason instead and keeps both of the contract's live exits.
+
+**The unblock is one predicate, and the field already exists.** `row.tutorAuthId` is on the row and read at `sessions.repository.ts:51,69` to resolve the tutor's display name. A tutor-scoped read — that predicate against ctx, behind its own route — restores the hero and the run list against `Session`, minus `travel` and `prepLine`, which have no carrier anywhere.
+
+With this the reset has no fixture-backed surface left outside the two the P0 blocks (`memory.store`) and the ones honestly labelled as non-goals (`REVENUE_BY_ORG`).
 
 ## DEFER
 
