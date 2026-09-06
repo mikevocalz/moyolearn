@@ -104,8 +104,10 @@ One copy correction fell out of it. The old empty state read "No sessions, no du
 
 ## Still open
 
-- **`profile-content`'s** "Nobody else is set up here yet." is now reached in the ordinary case. It is true for an empty list but asserts the same sentence when a read fails, which needs a status on the store (`idle | loading | loaded | error`) rather than a third branch guessed at the call site.
-- **No zero-children story exists** for either switcher. `ProfileSwitcher.stories.tsx` covers one, two and three learners only, so the state now reachable in the app is the one state Storybook cannot show.
+Both entries below are now closed; kept with their outcomes because one of them was wrong in an instructive way.
+
+- ~~**`profile-content`'s** "Nobody else is set up here yet."~~ **Closed 2026-09-06, and this entry's own prescription was wrong.** It proposed a status on the store (`idle | loading | loaded | error`). There is no read to describe the state of: `setChildren` has no call site anywhere in `packages` or `apps`, and `family/learners` exports POST only, so nothing can ever set `loading` or `error`. The status would have been machinery for a read nobody makes. The live defect was the false zero — the sentence told a child nobody else uses this device when nothing had ever asked — so the section now renders only when there are names to render, which also satisfies the switcher's law 1 against a titled, empty body. The `Switch profile` button is untouched and its sheet still answers on demand.
+- ~~**No zero-children story exists** for either switcher.~~ **Closed 2026-09-06.** `ProfileSwitcher` gains `NoLearners` and `NoLearnersNoGrownUps` — the second is the real one, since zero learners plus `grownUps: 'absent'` is what every learner mount passes, and it covers `profile-switcher.tsx:133`. `ChildSwitcher` gains `NoChildren`, pinned because "renders nothing" is the correct behaviour under its `children.length < 2` rule and a future read wiring should not change it by accident.
 
 ## The render walk, 2026-09-05 — 18 commits, now seen
 

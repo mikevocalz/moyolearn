@@ -43,6 +43,17 @@ function Seeded({
 }
 
 /** A single child renders nothing — a picker with no alternative is noise. */
+/**
+ * Zero children — the state every device is actually in. `family.store` starts
+ * empty and `setChildren` has no call site anywhere, so this renders the same
+ * nothing `OneChildHidden` does, by the same `children.length < 2` rule. Pinned
+ * because "renders nothing" is the correct behaviour here and a future read
+ * wiring should not change it by accident.
+ */
+export const NoChildren: Story = {
+  render: () => <Seeded kids={[]} />,
+};
+
 export const OneChildHidden: Story = {
   render: () => <Seeded kids={CHILDREN.slice(0, 1)} />,
 };

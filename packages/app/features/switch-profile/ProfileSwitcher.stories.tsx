@@ -11,6 +11,7 @@ import { CHILDREN } from '../home/parent-home.data';
 import { useFamilyStore, type ChildSummary } from '../family/family.store';
 import { ProfileSwitcher } from './profile-switcher';
 import { useProfileSwitcherStore, type GrownUpsGate } from './profile-switcher.store';
+import type { GrownUpsAuth } from './profile-switcher';
 
 const meta = { title: 'SwitchProfile/ProfileSwitcher' } satisfies Meta;
 export default meta;
@@ -28,10 +29,13 @@ function Seeded({
   learners,
   gate = { kind: 'locked' },
   verifyGrownUp,
+  grownUps,
 }: {
   learners: ChildSummary[];
   gate?: GrownUpsGate;
   verifyGrownUp: () => Promise<boolean>;
+  /** Defaults to a host that CAN verify; the zero-learner stories override it. */
+  grownUps?: GrownUpsAuth;
 }) {
   // Seed once per mount (useState initializer), not per render — re-seeding on
   // every render would fight the state the interaction just wrote.
@@ -46,11 +50,33 @@ function Seeded({
       {/* The header is chrome, so the bare render borrows the same surface the
           sheet uses rather than growing a second copy of the title. */}
       <SheetSurface title="Who's here?">
-        <ProfileSwitcher grownUps={{ kind: 'present', verify: verifyGrownUp }} />
+        <ProfileSwitcher grownUps={grownUps ?? { kind: 'present', verify: verifyGrownUp }} />
       </SheetSurface>
     </View>
   );
 }
+
+/*
+  The two states the app can actually reach, and the ones this file could not
+  show. `family.store` starts empty and `setChildren` has no call site anywhere,
+  so ZERO learners is not an edge case here — it is what every device renders
+  today. The set below used to start at one, which meant the only state a
+  learner ever sees was the one state Storybook could not.
+*/
+export const NoLearners: Story = {
+  render: () => <Seeded learners={[]} verifyGrownUp={NEVER_RESOLVES} />,
+};
+
+/**
+ * Zero learners AND `grownUps: 'absent'` — what every learner mount passes, so
+ * this is the real one. It covers `profile-switcher.tsx:133`, the branch that
+ * says so in words instead of rendering a titled, empty body.
+ */
+export const NoLearnersNoGrownUps: Story = {
+  render: () => (
+    <Seeded learners={[]} grownUps={{ kind: 'absent' }} verifyGrownUp={NEVER_RESOLVES} />
+  ),
+};
 
 export const OneLearner: Story = {
   render: () => <Seeded learners={CHILDREN.slice(0, 1)} verifyGrownUp={NEVER_RESOLVES} />,

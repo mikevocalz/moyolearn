@@ -171,25 +171,43 @@ function LearnerProfile() {
           and a button alone answers it only after a tap — the names answer it
           on sight. Read from `family.store`, the same seam every per-child
           surface reads, so this can never disagree with the sheet it opens. */}
-      <FadeIn delay={120}>
-        <Section className="gap-element">
-          <Text variant="label" tone="muted">
-            Also on this device
-          </Text>
-          <Text tone="muted" className={scale.lead}>
-            {othersHere.length > 0
-              ? `${othersHere.join(' and ')} ${othersHere.length === 1 ? 'uses' : 'use'} this app here too.`
-              : 'Nobody else is set up here yet.'}
-          </Text>
-          {/* Offline is a label, never a block: the contract keeps switching
-              working for profiles already provisioned on this device. */}
-          {!online ? (
-            <Text variant="caption" tone="muted">
-              You are offline — switching still works for everyone set up here.
+      {/*
+        The section renders only when there are names to render. It used to fall
+        back to "Nobody else is set up here yet.", which told a child that
+        nobody else uses this device — a zero nothing had checked. `family.store`
+        has no read behind it at all: `setChildren` has no call site anywhere,
+        and `apps/web/app/api/family/learners/route.ts` exports POST only. The
+        list is empty because nobody ever asked, not because the answer is none,
+        and the difference is the whole point of this pass.
+
+        A status on the store (`idle | loading | loaded | error`) is what doc 04
+        proposed here. It would be machinery for a read that does not exist —
+        nothing can ever set `loading` or `error` — so the honest fix is to stop
+        asserting rather than to describe the failure of a read nobody makes.
+
+        Omitting it also satisfies the switcher's own law 1, which forbids a
+        titled, empty body. The `Switch profile` button above is untouched, and
+        its sheet still answers the question on demand and honestly.
+      */}
+      {othersHere.length > 0 ? (
+        <FadeIn delay={120}>
+          <Section className="gap-element">
+            <Text variant="label" tone="muted">
+              Also on this device
             </Text>
-          ) : null}
-        </Section>
-      </FadeIn>
+            <Text tone="muted" className={scale.lead}>
+              {`${othersHere.join(' and ')} ${othersHere.length === 1 ? 'uses' : 'use'} this app here too.`}
+            </Text>
+            {/* Offline is a label, never a block: the contract keeps switching
+                working for profiles already provisioned on this device. */}
+            {!online ? (
+              <Text variant="caption" tone="muted">
+                You are offline — switching still works for everyone set up here.
+              </Text>
+            ) : null}
+          </Section>
+        </FadeIn>
+      ) : null}
 
       {/* K–2 and 3–5 keep every setting guardian-side (doc 36 §3.1). Saying so
           is the difference between a child understanding where their settings
