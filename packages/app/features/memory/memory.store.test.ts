@@ -17,7 +17,7 @@
 // SOT: docs/pack/07-security-child-ai-safety-spec.md §4 §S27 · packages/app/features/memory/memory.store.ts
 // SOT-KEYWORDS: memory s27 store test erasure fetch route wiring optimistic reinstate forget all transcript
 import assert from 'node:assert/strict';
-import { afterEach, describe, it } from 'node:test';
+import { afterEach, beforeEach, describe, it } from 'node:test';
 import { useMemoryStore } from './memory.store.ts';
 import { MEMORY_FACTS, MEMORY_TRANSCRIPTS } from './memory.data.ts';
 
@@ -67,6 +67,17 @@ const reset = () =>
     forgetAllOpen: false,
     eraseError: null,
   });
+
+/*
+  Seed BEFORE each test, not only after. These tests used to lean on the store's
+  own initial value for the first case in the file and on `afterEach` for the
+  rest, which quietly made production seeding a test fixture: when
+  `memory.store` stopped seeding itself from `MEMORY_FACTS` — it renders no
+  fixture list any more, see the P0 resolution — the first test in this file
+  started erasing a line that was not there and never reached the stub. The
+  fixtures are this file's to install.
+*/
+beforeEach(reset);
 
 afterEach(() => {
   globalThis.fetch = realFetch;

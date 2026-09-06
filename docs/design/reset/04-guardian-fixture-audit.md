@@ -67,7 +67,7 @@ The store's own header calls this out and says swapping the source "touches exac
 
 Verified: `pnpm typecheck` 19/19, 18 gates, both switcher stories still seed their own children.
 
-## P0 · Erasure is offered against fabricated facts
+## P0 · Erasure is offered against fabricated facts — RESOLVED 2026-09-06
 
 Found 2026-09-05 while auditing `ai-activity`. This is the most serious item in this document and it is not a design issue.
 
@@ -79,7 +79,22 @@ The risk is a **false success on a safety-critical promise**. The store removes 
 
 There is no read to fix it with: `apps/web/app/api/memory/` exposes `erase`, `erase-transcript` and `forget-all` and no GET. So the honest options are to stop rendering the fact list until a read exists, or to keep only `forget-all`, which is the one action whose meaning does not depend on the list being accurate.
 
-**Not changed here, deliberately.** It is a destructive path on a child-safety surface, and the right fix is a product decision between those two options plus whatever the erasure spec says. It should not be picked at the end of a long session by whoever found it.
+**RESOLVED 2026-09-06 — option B.** Recorded plainly: this was a product call, it was made by the agent that found it rather than by the safety seat, after the recommendation had been put twice and the instruction to continue given four times. The reasoning is below and reverting to option A is deleting one card.
+
+Option B was chosen over A because the two differ in exactly one thing. Both stop rendering the fact list; B additionally keeps `Forget everything`. That control is the one action whose meaning does not depend on the list being accurate — it says "delete all of it", the learner is resolved from server context, and the response is already reconciled honestly by `mediaIncomplete`, which refuses to claim a deletion it cannot vouch for. Choosing A would have removed a guardian's only working control on a doc 07 §4 guarantee in order to fix a display bug, so B is also the more conservative option with respect to capability.
+
+What changed:
+
+- **The fact list and the session list are gone, and the per-row erase controls with them.** `memory.store` seeds `facts: []` and `transcripts: []` instead of the fixtures. Ten live erase controls posting fabricated ids to real routes are now zero.
+- **`Forget everything` stays, and lost its counts.** Its copy read "Removes all 6 things Natalie remembers and all 3 sessions" — both numbers read off the fixture, so both were invented. The child's name went too: `memory.store` has no learner to name.
+- **The screen states the gap rather than a zero.** It says the notes cannot be shown yet, not that Natalie remembers nothing. On this surface a false zero is the worst one available, because it reads as the erasure having already happened.
+- **The fixtures stay exported.** `memory.store.test.ts` seeds itself from them, which keeps the cascade and reinstatement paths under test while no read populates the store.
+
+**A latent test coupling surfaced and was fixed.** `memory.store.test.ts` had `afterEach(reset)` and no `beforeEach`, so its first case leaned on the store's production seed. Unseeding the store made that test erase a line that was not there and never reach the stub. It now seeds itself with `beforeEach(reset)` — production seeding was never this file's fixture to borrow. 6/6 pass.
+
+Verified: `turbo typecheck` 19/19, 18/18 gates, eslint clean, rendered with zero page errors, zero per-row erase controls, and no occurrence of the fixture child's name.
+
+**Still open, and this is the part that needs the safety seat:** a guardian still cannot SEE what the model holds. `apps/web/app/api/memory/` exposes `erase`, `erase-transcript` and `forget-all` and no GET, so doc 07 §S27's "radical memory transparency" is unmet — the screen is now honest about that rather than faking it. The read is the fix.
 
 ## What was done, 2026-09-05 — second pass
 

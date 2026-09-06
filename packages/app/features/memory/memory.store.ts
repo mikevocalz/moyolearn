@@ -105,8 +105,17 @@ const mediaIncomplete = (body: ForgetAllResponse): boolean => {
 };
 
 export const useMemoryStore = create<MemoryState>((set, get) => ({
-  facts: MEMORY_FACTS,
-  transcripts: MEMORY_TRANSCRIPTS,
+  /*
+    Seeded EMPTY, not from `MEMORY_FACTS`/`MEMORY_TRANSCRIPTS`. Those are fixture
+    rows, and the erase controls that rendered beside them posted their invented
+    ids to the real erase routes — a guardian was shown a deletion that deleted
+    nothing on the one screen doc 07 §4 makes a guarantee of. The fixtures stay
+    exported because `memory.store.test.ts` seeds itself with them through
+    `setState`, which is what keeps the cascade and reinstatement paths tested
+    while no read populates this store in the app.
+  */
+  facts: [],
+  transcripts: [],
   pendingTranscriptId: null,
   forgetAllOpen: false,
   eraseError: null,

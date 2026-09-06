@@ -1,14 +1,5 @@
 'use client';
-// S27 · What Natalie remembers about Maya.
-//
-// Doc 07 §S27: radical memory transparency, "the only screen where the ink
-// system renders the model itself — every line is literally erasable, and the
-// eraser works." So the design job is the opposite of the usual one. Nothing
-// here persuades. There is no reassurance banner, no "your privacy matters"
-// header, no friction on the delete path — a screen that talks a parent out of
-// erasing is a screen that has decided the model matters more than they do, and
-// the brief's metric (guardians who visit and KEEP AI on afterwards) only moves
-// if the erasing is real.
+// S27 · What Natalie remembers.
 //
 // Mobbin: https://mobbin.com/screens/f5728230-f84a-40ac-aa8e-48b9238e1ae5 (Oura
 // Memories — one plain sentence per row, trash on the row itself, and a
@@ -26,44 +17,59 @@
 // delete-data — the two-panel "this will be deleted / this will not", the
 // structure the cascade needs so a guardian knows what survives). Structure
 // only; style stays on docs 02/08.
-// SOT: docs/pack/07-security-child-ai-safety-spec.md §4 §S27
-// SOT-KEYWORDS: memory s27 transparency erasure cascade guardian knowledge graph delete
+// P0 RESOLUTION, 2026-09-06 — option B of docs/design/reset/04-guardian-fixture-audit.md.
+//
+// The fact list and the per-session list are NOT rendered, and the per-row
+// erase controls are gone with them. `memory.store` seeded them from
+// `MEMORY_FACTS`/`MEMORY_TRANSCRIPTS` — fixture rows with ids like
+// `maya:mastery:fraction-addition` — and the trash icon beside each one posted
+// that fabricated id to the real `POST /api/memory/erase`. The store removed
+// the row optimistically and only put it back on a non-ok response, so a
+// guardian erasing an invented line was shown a deletion that deleted nothing,
+// while whatever the model actually holds — which they were never shown —
+// stayed. Doc 07 §4 makes erasure a guarantee to a family; that is the one
+// promise this screen exists to keep, reported kept without being kept.
+//
+// There is no read to fix it with: `apps/web/app/api/memory/` exposes `erase`,
+// `erase-transcript` and `forget-all`, and no GET. So the list waits for one.
+//
+// `Forget everything` STAYS, and it is the reason this is option B rather than
+// option A. It is the one action whose meaning does not depend on the list
+// being accurate — it says "delete all of it", the server resolves the learner
+// from context, and the response is reconciled honestly (`mediaIncomplete`
+// already refuses to claim a deletion it cannot vouch for). Removing it would
+// have taken away a guardian's only working control on a safety guarantee in
+// order to fix a display bug.
+//
+// Its copy lost the counts it used to quote — "all 6 things … and all 3
+// sessions" was read off the fixture, so the counts were fabricated too — and
+// the child's name with them, since `memory.store` has no learner to name.
+//
+// Reverting to option A is deleting the one card below.
+//
+// Doc 07 §S27: radical memory transparency, "the only screen where the ink
+// system renders the model itself — every line is literally erasable, and the
+// eraser works." So the design job is the opposite of the usual one. Nothing
+// here persuades. There is no reassurance banner, no "your privacy matters"
+// header, no friction on the delete path — a screen that talks a parent out of
+// erasing is a screen that has decided the model matters more than they do, and
+// the brief's metric (guardians who visit and KEEP AI on afterwards) only moves
+// if the erasing is real.
+//
+// SOT: docs/pack/07-security-child-ai-safety-spec.md §4 §S27 ·
+//      docs/design/reset/04-guardian-fixture-audit.md §P0
+// SOT-KEYWORDS: memory s27 transparency erasure guardian delete forget-all p0 fixture
 
-import { useShallow } from 'zustand/react/shallow';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
-import { Button, Card, Dial, Dialog, EmptyState, FadeIn, Heading, IconButton, Text } from '@acme/ui';
-import { Eye, Trash2 } from '@acme/ui/icons';
-import { GROUPS, provenanceLabel } from './memory.data';
-import { pendingCascade, useMemoryStore } from './memory.store';
+import { Button, Card, Dial, Dialog, FadeIn, Heading, Text } from '@acme/ui';
+import { useMemoryStore } from './memory.store';
 
 export function MemoryContent() {
-  const facts = useMemoryStore((s) => s.facts);
-  const transcripts = useMemoryStore((s) => s.transcripts);
-  const eraseLine = useMemoryStore((s) => s.eraseLine);
-  const askEraseTranscript = useMemoryStore((s) => s.askEraseTranscript);
-  const cancelErase = useMemoryStore((s) => s.cancelErase);
-  const confirmEraseTranscript = useMemoryStore((s) => s.confirmEraseTranscript);
   const askForgetAll = useMemoryStore((s) => s.askForgetAll);
   const confirmForgetAll = useMemoryStore((s) => s.confirmForgetAll);
-  const pendingTranscriptId = useMemoryStore((s) => s.pendingTranscriptId);
+  const cancelErase = useMemoryStore((s) => s.cancelErase);
   const forgetAllOpen = useMemoryStore((s) => s.forgetAllOpen);
   const eraseError = useMemoryStore((s) => s.eraseError);
-  /*
-    `useShallow`, for the reason `providers/session/session.tsx` gives about its
-    own selector: zustand v5 compares snapshots with `Object.is`, and
-    `pendingCascade` DERIVES its value — it filters, so it hands back a fresh
-    array on every call even when the same facts are in it. React saw a new
-    snapshot each read and warned "the result of getServerSnapshot should be
-    cached to avoid an infinite loop" on every render of this screen.
-
-    Shallow is sound rather than merely quieter here: `cascadePreview` filters
-    `state.facts` and returns the ORIGINAL fact objects, so element-wise
-    identity is exactly the comparison that says whether the cascade changed.
-  */
-  const cascade = useMemoryStore(useShallow(pendingCascade));
-
-  const pending = transcripts.find((t) => t.id === pendingTranscriptId);
-  const survivors = facts.length - cascade.length;
 
   return (
     <Dial temperature="cool" className="gap-7">
@@ -77,165 +83,55 @@ export function MemoryContent() {
             size="display-sm"
             className="text-2xl font-semibold text-text md:text-3xl"
           >
-            About Maya
+            Not shown yet
           </Heading>
+          {/*
+            States the gap rather than a zero. "Natalie remembers nothing" would
+            be a claim about the child's record that nothing here can support —
+            the same false zero the rest of this reset has been removing, and a
+            more serious one, because on this screen it reads as the erasure
+            having already happened.
+          */}
           <TWText className="text-base text-text-muted">
-            This is the whole of it — the same lines her tutor sees before a session. Delete any of
-            them and Natalie stops knowing it.
+            We can&rsquo;t show you these notes yet — reading them back isn&rsquo;t built, and this
+            screen won&rsquo;t show you a list it can&rsquo;t stand behind. Deleting everything below
+            still works, and still deletes everything.
           </TWText>
         </Section>
       </FadeIn>
 
-      {/* An erasure that did not reach the server has already put its line back
-          above; this is the sentence that stops the restoration reading as a
-          glitch. Stated rather than swallowed because the failure it describes —
-          a line shown as erased when it is not — is the one this screen exists
-          to make impossible. */}
+      {/* A forget-all that did not fully land says so here. The store reinstates
+          nothing on this path — there is no list to reinstate — so this sentence
+          is the whole of the failure report, including the 200-with-files-left
+          case `mediaIncomplete` exists to catch. */}
       {eraseError === null ? null : (
         <TWText className="text-base text-redpen" role="alert">
           {eraseError}
         </TWText>
       )}
 
-      {facts.length === 0 ? (
-        <FadeIn delay={80}>
-          <EmptyState
-            icon={<Eye className="h-8 w-8 text-text-muted" />}
-            title="Natalie remembers nothing about Maya"
-            description="She will start again from the next session, and only from what Maya works on."
-          />
-        </FadeIn>
-      ) : (
-        GROUPS.map((group, index) => {
-          const rows = facts.filter((fact) => fact.kind === group.kind);
-          if (rows.length === 0) return null;
-          return (
-            <FadeIn key={group.kind} delay={80 + index * 60}>
-              <Section className="gap-stack">
-                <Text variant="label" tone="muted">
-                  {group.heading}
-                </Text>
-                <View className="gap-element">
-                  {rows.map((fact) => (
-                    <View
-                      key={fact.id}
-                      className="flex-row items-center gap-stack rounded-card border-2 border-border bg-surface-raised p-3"
-                    >
-                      <View className="flex-1 gap-0.5">
-                        <TWText className="text-base text-text">{fact.sentence}</TWText>
-                        <TWText className="text-sm text-text-muted">
-                          {provenanceLabel(fact)}
-                        </TWText>
-                      </View>
-                      {/* No confirmation on a single line: the guardian named the
-                          row, and a dialog per line is friction pretending to be
-                          care. The cascade below is where confirmation earns its
-                          place, because there the effect is not what was clicked. */}
-                      <IconButton
-                        variant="outline"
-                        size="sm"
-                        icon={<Trash2 className="h-4 w-4 text-redpen" />}
-                        aria-label={`Forget: ${fact.sentence}`}
-                        onPress={() => {
-                          // `void`, not an async handler: `onPress` is fire-and-forget
-                          // on both platforms, and the store already owns the failure
-                          // path — returning the promise here would only give a lint
-                          // rule something to complain about.
-                          void eraseLine(fact.id);
-                        }}
-                      />
-                    </View>
-                  ))}
-                </View>
-              </Section>
-            </FadeIn>
-          );
-        })
-      )}
-
-      {transcripts.length > 0 ? (
-        <FadeIn delay={420}>
-          <Section className="gap-stack">
-            <Text variant="label" tone="muted">
-              Sessions Natalie can still read
-            </Text>
-            <View className="gap-element">
-              {transcripts.map((transcript) => (
-                <View
-                  key={transcript.id}
-                  className="flex-row items-center gap-stack rounded-card border-2 border-border bg-surface-raised p-3"
-                >
-                  <View className="flex-1 gap-0.5">
-                    <TWText className="text-base text-text">{transcript.label}</TWText>
-                    <TWText className="text-sm text-text-muted">{transcript.expiresLabel}</TWText>
-                  </View>
-                  <IconButton
-                    variant="outline"
-                    size="sm"
-                    icon={<Trash2 className="h-4 w-4 text-redpen" />}
-                    aria-label={`Delete ${transcript.label}`}
-                    onPress={() => askEraseTranscript(transcript.id)}
-                  />
-                </View>
-              ))}
-            </View>
-            <TWText className="text-sm text-text-muted">
-              Sessions delete themselves on the date shown. Deleting one early also removes anything
-              Natalie learned only from it.
-            </TWText>
-          </Section>
-        </FadeIn>
-      ) : null}
-
-      {facts.length > 0 || transcripts.length > 0 ? (
-        <FadeIn delay={480}>
-          <Card className="gap-stack">
-            <Text variant="heading">Forget everything</Text>
-            <TWText className="text-base text-text-muted">
-              Removes all {facts.length} things Natalie remembers and all {transcripts.length}{' '}
-              sessions. Maya keeps her account and her work; Natalie starts over knowing nothing.
-            </TWText>
-            <Button title="Forget everything" variant="danger" onPress={askForgetAll} />
-          </Card>
-        </FadeIn>
-      ) : null}
-
-      {/* The cascade, stated as a count before it happens — doc 07 §4's promise is
-          unactionable if a guardian only learns its reach afterwards. */}
-      <Dialog
-        open={pending !== undefined}
-        onClose={cancelErase}
-        title={pending === undefined ? '' : `Delete ${pending.label}?`}
-        description={
-          cascade.length === 0
-            ? 'Nothing Natalie remembers came only from this session, so the rest of her notes stay as they are.'
-            : `${cascade.length} of the ${facts.length} things Natalie remembers came only from this session and go with it. The other ${survivors} stay.`
-        }
-        actions={
-          <>
-            <Button title="Keep it" variant="ghost" onPress={cancelErase} />
-            {/* `void`, like the row's trash icon: `onPress` is fire-and-forget on
-                both platforms and the store owns the failure path — it reinstates
-                the session and sets `eraseError`, which renders above. */}
-            <Button
-              title="Delete session"
-              variant="danger"
-              onPress={() => {
-                void confirmEraseTranscript();
-              }}
-            />
-          </>
-        }
-      />
+      <FadeIn delay={80}>
+        <Card className="gap-stack">
+          <Text variant="heading">Forget everything</Text>
+          <TWText className="text-base text-text-muted">
+            Deletes everything Natalie remembers about your child and every session she can still
+            read. Your child keeps their account and their work; Natalie starts over knowing
+            nothing.
+          </TWText>
+          <Button title="Forget everything" variant="danger" onPress={askForgetAll} />
+        </Card>
+      </FadeIn>
 
       <Dialog
         open={forgetAllOpen}
         onClose={cancelErase}
-        title="Forget everything about Maya?"
-        description={`All ${facts.length} notes and ${transcripts.length} sessions are deleted. Her account, her plan and her past work are not touched.`}
+        title="Forget everything?"
+        description="Everything Natalie remembers and every session she can still read are deleted. Your child's account, their plan and their past work are not touched."
         actions={
           <>
             <Button title="Cancel" variant="ghost" onPress={cancelErase} />
+            {/* `void`: onPress is fire-and-forget on both platforms and the
+                store owns the failure path, which renders as `eraseError`. */}
             <Button
               title="Forget everything"
               variant="danger"
