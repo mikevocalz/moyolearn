@@ -1,0 +1,16 @@
+{
+  "evals": [
+    {
+      "prompt": "Can you make Natalie feel warmer and more encouraging when a kid gets something right?",
+      "expect": "Uses an existing key from TONE_PALETTE rather than inventing a warmth tone; reads the celebrate entries in tone-performance.json; keeps the change inside expression-owned channels and does not touch jaw or lips."
+    },
+    {
+      "prompt": "We're adding a new tone for when she has to be firm about safety.",
+      "expect": "Adds it to TONE_PALETTE in packages/voice/src/tones.ts AND to TONE_RENDER in packages/app/features/tutor/tutor-tone.ts in the same change, then runs check-tone-table.mjs — because toneRenderFor silently falls back to thinking-together for a palette key with no face recipe."
+    },
+    {
+      "prompt": "Could she pick up on when a student sounds frustrated and soften?",
+      "expect": "Declines to infer affect from the child. States that tone is an output of lesson state and intended delivery, that learner audio never reaches Audio2Emotion, and offers the explicit signals instead — help requests, corrections, repeated attempts."
+    }
+  ]
+}

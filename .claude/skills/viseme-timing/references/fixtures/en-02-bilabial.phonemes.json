@@ -1,0 +1,19 @@
+{
+  "$comment": "Fixture for test-set case en-02, 'Pop the bubble'. Phoneme spans are MFA output; regenerate with the aligner when the render parameters change. Times are seconds from the AUDIBLE onset.",
+  "lang": "en",
+  "durationSeconds": 1.02,
+  "phonemes": [
+    { "p": "P",  "start": 0.000, "end": 0.062 },
+    { "p": "AA", "start": 0.062, "end": 0.171, "stress": "1" },
+    { "p": "P",  "start": 0.171, "end": 0.238 },
+    { "p": "DH", "start": 0.238, "end": 0.291 },
+    { "p": "AH", "start": 0.291, "end": 0.352, "stress": "0" },
+    { "p": "B",  "start": 0.352, "end": 0.418 },
+    { "p": "AH", "start": 0.418, "end": 0.523, "stress": "1" },
+    { "p": "B",  "start": 0.523, "end": 0.588 },
+    { "p": "AH", "start": 0.588, "end": 0.641, "stress": "0" },
+    { "p": "L",  "start": 0.641, "end": 0.735 },
+    { "p": "M",  "start": 0.735, "end": 0.812 },
+    { "p": "AY", "start": 0.812, "end": 0.958, "stress": "1" }
+  ]
+}

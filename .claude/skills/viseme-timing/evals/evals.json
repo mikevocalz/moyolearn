@@ -1,0 +1,62 @@
+{
+  "skill": "viseme-timing",
+  "evals": [
+    {
+      "id": "lip-sync-looks-off",
+      "prompt": "Natalie's lip sync looks off on my phone — like she's a beat behind the audio. Can you fix it?",
+      "expect": {
+        "loads_skill": true,
+        "behaviour": [
+          "Reads audit/motion/realism-2026-09-10.md before proposing anything.",
+          "Establishes what is actually installed: the live path is /stream with no timestamps (packages/voice/src/eleven.ts:156), and the mouth today is analyseSpeech energy+ZCR, not phonemes.",
+          "Separates the two possible causes rather than guessing: a route/device offset the graph clock cannot see, and a schedule with no phoneme timing behind it.",
+          "For the offset, points at packages/avatar/src/speech/backend-audio-api.ts as the correct home and at scripts/measure-offset.mjs to measure it. Does NOT apply a number from the header comment's '150-300ms' as if it were a measurement.",
+          "States that references/device-calibration.md has no rows and that an unmeasured route stays at offset 0.",
+          "Names the gate (median 40 ms, p95 80 ms, visual-late 45 ms) and says which of those are Moyo's own versus the ITU-R BT.1359-1 figure."
+        ],
+        "must_not": [
+          "Adjust ONSET_LEAD_MS or any constant to 'compensate' without a measurement.",
+          "Invent a per-device latency number or copy 150-300 ms into the calibration table.",
+          "Claim the timing gate passes when MFA has not been run."
+        ]
+      }
+    },
+    {
+      "id": "spanish-launch",
+      "prompt": "We're adding Spanish to the tutor. What do we need for her mouth?",
+      "expect": {
+        "loads_skill": true,
+        "behaviour": [
+          "Says there is no language field on SpeakSentenceInput today (packages/voice/src/eleven.ts:76) and that the locale must come from the same source the Safety Plane's aiTutorLocales gate reads, not a second one.",
+          "Requires espeak-ng --ipa for Spanish G2P and states no CMUdict equivalent exists for Spanish.",
+          "Forces a dialect decision (es-ES vs es-419) pinned beside the voice ID, and explains the three splits that change visemes: c/z theta-vs-s, ll/y, syllable-final s.",
+          "Flags the beta approximant exception: /b/ between vowels does not close the lips, so it must be excluded from bilabial closure enforcement or haber and sabe read as a stutter.",
+          "Adds the Spanish rows of references/test-set.md and regenerates MFA ground truth with a Spanish acoustic model.",
+          "Notes that a working Spanish mouth is not Spanish readiness — doc 16 gates learner AI per locale."
+        ],
+        "must_not": [
+          "Extend English letter or phoneme rules to Spanish.",
+          "Reuse the English MFA model or English TextGrids.",
+          "Treat evenTrack as an acceptable Spanish fallback."
+        ]
+      }
+    },
+    {
+      "id": "voice-settings-change",
+      "prompt": "Bumping thinking-together's stability from 0.65 to 0.72 so she sounds steadier. Small change, just the one number.",
+      "expect": {
+        "loads_skill": true,
+        "behaviour": [
+          "Recognises that voice_settings feed the render, so the audio and every timestamp in it change — this is a viseme-timing event, not a config tweak.",
+          "Points at voiceSettingsFor in packages/voice/src/tones.ts and at TONE_PALETTE_VERSION, which doc 32 §2 requires bumping because settings are versioned like prompts.",
+          "Requires re-rendering the fixed test set and regenerating the MFA TextGrids — a stale TextGrid scores the new audio against the old render.",
+          "Re-runs scripts/check-timing.mjs and records the result with the render parameters."
+        ],
+        "must_not": [
+          "Change the number without re-running the gate.",
+          "Reuse existing MFA ground truth against the new render."
+        ]
+      }
+    }
+  ]
+}

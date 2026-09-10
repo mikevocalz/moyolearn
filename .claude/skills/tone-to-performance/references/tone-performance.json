@@ -1,0 +1,152 @@
+{
+  "$comment": "Tone -> performance. Structured metadata the behaviour planner imports; it is not prose to be re-read each time. Tone KEYS are the closed pedagogical palette in packages/voice/src/tones.ts (TONE_PALETTE, nine entries, TONE_PALETTE_VERSION 2), doc 32 section 4. Do not add, rename or drop a key here -- scripts/check-tone-table.mjs asserts this file's keys equal the installed palette's exactly. Channel names are contract channels from .claude/skills/face-adapter/references/contract.json; AU numbers per FACS, https://www.paulekman.com/facial-action-coding-system/. Bands are VOICE_BANDS from packages/student-model/src/voice-band.ts. INTENSITY AND TIMING VALUES ARE AUTHORED FOR MOYO -- calibrate against the blinded rater gate and record the run, per audit/motion/realism-2026-09-10.md; they are not published constants.",
+  "version": 1,
+  "paletteSource": "packages/voice/src/tones.ts",
+  "paletteVersion": 2,
+  "contractSource": ".claude/skills/face-adapter/references/contract.json",
+  "rules": {
+    "toneComesFromLessonState": "Every tone is selected from lesson state and intended delivery. Never from the child's affect, appearance, voice or face. Doc 19, doc 31 section 3.1, packages/voice/src/tones.ts header.",
+    "audio2emotionScope": "Audio2Emotion may modulate the face from Natalie's synthetic voice only. Never learner audio.",
+    "acknowledgmentIsNotApproval": "A nod or an attentive face signals 'I am following you'. It must never read as 'that answer is right'. The acknowledgment gestures are backchannel-nod and pre-speech-anticipation; approval lives only in the celebrate tones, which fire on lesson state that IS a success.",
+    "noIntimacyTones": "The palette is closed at nine and contains no companion register. A tenth key is a reviewed change to packages/voice/src/tones.ts, not an addition here.",
+    "noPermanentSmile": "Every tone has a finite apex and a release. A tone that never releases is a mask.",
+    "noRandomBrow": "Brow motion is a tone's AU set or a prosodic beat accent. There is no idle brow twitch channel."
+  },
+  "russell": {
+    "$comment": "Russell's circumplex (1980, https://doi.org/10.1037/h0077714) is an INTERNAL parameterization only -- useful for interpolating between two tones during a transition. The palette is the API. Nothing outside the planner may select a performance by valence/arousal, because a continuous space has no closed set and the closure is the safety property."
+  },
+  "bands": {
+    "k-2": { "intensityScale": 1.15, "envelopeScale": 1.3, "why": "The voice is the primary interface for a six-year-old (doc 31); the face carries proportionally more, and slower. Mirrors BAND_MODULATION k-2 speed 0.76." },
+    "3-5": { "intensityScale": 1.05, "envelopeScale": 1.15, "why": "Slightly slow, slightly larger. Mirrors speed 0.86." },
+    "6-8": { "intensityScale": 1.0, "envelopeScale": 1.0, "why": "Neutral reference." },
+    "9-12": { "intensityScale": 0.8, "envelopeScale": 1.0, "why": "A teen hears performed enthusiasm as condescension -- the same failure as complexity, inverted. Mirrors BAND_MODULATION 9-12 style 0.7: pulled DOWN, not up." }
+  },
+  "tones": {
+    "warm-open": {
+      "moment": "session start, return",
+      "aus": [
+        { "au": "AU12", "facs": "lip corner puller", "channels": ["mouthSmileLeft", "mouthSmileRight"], "min": 0.25, "max": 0.35 },
+        { "au": "AU6", "facs": "cheek raiser", "channels": ["cheekSquintLeft", "cheekSquintRight"], "min": 0.2, "max": 0.3, "why": "The Duchenne marker. AU12 without AU6 reads as polite compliance, not welcome." },
+        { "au": "AU1", "facs": "inner brow raiser", "channels": ["browInnerUp"], "min": 0.05, "max": 0.12 }
+      ],
+      "head": { "tiltDeg": [0, 2], "nod": "single-small", "stillness": "settled" },
+      "posture": "open, weight even",
+      "gestureEnergy": "low",
+      "gestures": ["pre-speech-anticipation"],
+      "gaze": "to the learner, settle and hold within the product gaze limit",
+      "envelope": { "onsetMs": 320, "apexMs": 900, "releaseMs": 600 }
+    },
+    "thinking-together": {
+      "moment": "working a step",
+      "aus": [
+        { "au": "AU4", "facs": "brow lowerer", "channels": ["browDownLeft", "browDownRight"], "min": 0.08, "max": 0.15, "why": "Concentration, not displeasure. Above ~0.2 AU4 reads as disapproval of the learner's work." },
+        { "au": "AU7", "facs": "lid tightener", "channels": ["eyeSquintLeft", "eyeSquintRight"], "min": 0.05, "max": 0.12 }
+      ],
+      "head": { "tiltDeg": [0, 3], "nod": "none", "stillness": "settled" },
+      "posture": "neutral, weight even",
+      "gestureEnergy": "low",
+      "gestures": ["beat", "indicate-board"],
+      "gaze": "alternates between the referenced work and the learner",
+      "envelope": { "onsetMs": 400, "apexMs": 0, "releaseMs": 500, "sustained": true }
+    },
+    "gentle-after-miss": {
+      "moment": "wrong answer",
+      "aus": [
+        { "au": "AU1", "facs": "inner brow raiser", "channels": ["browInnerUp"], "min": 0.2, "max": 0.32, "why": "AU1 alone is the concern marker. It carries this tone; the mouth does not." },
+        { "au": "AU4", "facs": "brow lowerer", "channels": ["browDownLeft", "browDownRight"], "min": 0.1, "max": 0.18 },
+        { "au": "AU12", "facs": "lip corner puller", "channels": ["mouthSmileLeft", "mouthSmileRight"], "min": 0.0, "max": 0.08, "why": "THE approval boundary. A smile after a wrong answer reads as 'that was right'. Capped near zero on purpose, and asserted by the gate." }
+      ],
+      "head": { "tiltDeg": [1, 4], "nod": "none", "stillness": "settled" },
+      "posture": "neutral, no lean",
+      "gestureEnergy": "low",
+      "gestures": ["thinking-pause"],
+      "gaze": "steady on the learner, soft",
+      "envelope": { "onsetMs": 380, "apexMs": 700, "releaseMs": 700, "why": "Slow onset. A fast concern reads as alarm, and alarm at a child's wrong answer is the opposite of the intent." }
+    },
+    "naming-the-mistake": {
+      "moment": "misconception named (doc 31)",
+      "aus": [
+        { "au": "AU7", "facs": "lid tightener", "channels": ["eyeSquintLeft", "eyeSquintRight"], "min": 0.06, "max": 0.12 },
+        { "au": "AU12", "facs": "lip corner puller", "channels": ["mouthSmileLeft", "mouthSmileRight"], "min": 0.0, "max": 0.05, "why": "Naming a misconception is plain declarative. Any warmth here softens the correction into ambiguity." }
+      ],
+      "head": { "tiltDeg": [0, 1], "nod": "none", "stillness": "still" },
+      "posture": "level, square",
+      "gestureEnergy": "minimal",
+      "gestures": ["indicate-board"],
+      "gaze": "direct, level",
+      "envelope": { "onsetMs": 250, "apexMs": 500, "releaseMs": 400, "why": "The flattest envelope in the palette. Doc 32: plain declarative, steady." }
+    },
+    "quiet-encourage": {
+      "moment": "frustration detected from lesson state",
+      "aus": [
+        { "au": "AU12", "facs": "lip corner puller", "channels": ["mouthSmileLeft", "mouthSmileRight"], "min": 0.15, "max": 0.25 },
+        { "au": "AU6", "facs": "cheek raiser", "channels": ["cheekSquintLeft", "cheekSquintRight"], "min": 0.12, "max": 0.2 },
+        { "au": "AU1", "facs": "inner brow raiser", "channels": ["browInnerUp"], "min": 0.1, "max": 0.18 }
+      ],
+      "head": { "tiltDeg": [1, 3], "nod": "single-small", "stillness": "settled" },
+      "posture": "open, unhurried",
+      "gestureEnergy": "low",
+      "gestures": ["open-palm-offer", "thinking-pause"],
+      "gaze": "steady and soft; do not stare",
+      "envelope": { "onsetMs": 450, "apexMs": 1100, "releaseMs": 800, "why": "The slowest warm tone. 'Frustration detected' is a LESSON state -- a third miss on the same step -- never a read of the child." }
+    },
+    "celebrate-small": {
+      "moment": "step landed",
+      "aus": [
+        { "au": "AU12", "facs": "lip corner puller", "channels": ["mouthSmileLeft", "mouthSmileRight"], "min": 0.35, "max": 0.45 },
+        { "au": "AU6", "facs": "cheek raiser", "channels": ["cheekSquintLeft", "cheekSquintRight"], "min": 0.3, "max": 0.4 },
+        { "au": "AU2", "facs": "outer brow raiser", "channels": ["browOuterUpLeft", "browOuterUpRight"], "min": 0.1, "max": 0.2 }
+      ],
+      "head": { "tiltDeg": [0, 2], "nod": "single-crisp", "stillness": "settled" },
+      "posture": "open, light",
+      "gestureEnergy": "medium",
+      "gestures": ["beat"],
+      "gaze": "to the learner",
+      "envelope": { "onsetMs": 180, "apexMs": 600, "releaseMs": 500, "why": "Fast onset. A celebration that arrives late reads as prompted." }
+    },
+    "celebrate-big": {
+      "moment": "skill mastered",
+      "aus": [
+        { "au": "AU12", "facs": "lip corner puller", "channels": ["mouthSmileLeft", "mouthSmileRight"], "min": 0.4, "max": 0.45, "why": "At the contract's expressionMax. This is the palette's ceiling for the lip corners and the case the articulation-legibility gate is tested against." },
+        { "au": "AU6", "facs": "cheek raiser", "channels": ["cheekSquintLeft", "cheekSquintRight"], "min": 0.4, "max": 0.5 },
+        { "au": "AU1", "facs": "inner brow raiser", "channels": ["browInnerUp"], "min": 0.15, "max": 0.25 },
+        { "au": "AU2", "facs": "outer brow raiser", "channels": ["browOuterUpLeft", "browOuterUpRight"], "min": 0.2, "max": 0.3 }
+      ],
+      "head": { "tiltDeg": [0, 2], "nod": "single-crisp", "stillness": "settled" },
+      "posture": "open, lifted",
+      "gestureEnergy": "medium",
+      "gestures": ["beat", "open-palm-offer"],
+      "gaze": "to the learner",
+      "envelope": { "onsetMs": 150, "apexMs": 900, "releaseMs": 700, "why": "Still releases. Mastery is a moment, not a new resting face." }
+    },
+    "calm-refocus": {
+      "moment": "off-topic / S1-S2 redirect",
+      "aus": [
+        { "au": "AU4", "facs": "brow lowerer", "channels": ["browDownLeft", "browDownRight"], "min": 0.05, "max": 0.1 },
+        { "au": "AU7", "facs": "lid tightener", "channels": ["eyeSquintLeft", "eyeSquintRight"], "min": 0.05, "max": 0.1 },
+        { "au": "AU12", "facs": "lip corner puller", "channels": ["mouthSmileLeft", "mouthSmileRight"], "min": 0.0, "max": 0.1, "why": "Flat-warm. Doc 32: no reproach in the sound, and none in the face either -- but a redirect that smiles invites the detour to continue." }
+      ],
+      "head": { "tiltDeg": [0, 1], "nod": "none", "stillness": "still" },
+      "posture": "level, settled",
+      "gestureEnergy": "minimal",
+      "gestures": ["turn-yield"],
+      "gaze": "direct, level, within the product gaze limit",
+      "envelope": { "onsetMs": 300, "apexMs": 600, "releaseMs": 500 }
+    },
+    "safety-serious": {
+      "moment": "S3 deflection; S4 handoff (fixed scripts only at S4)",
+      "aus": [
+        { "au": "AU1", "facs": "inner brow raiser", "channels": ["browInnerUp"], "min": 0.3, "max": 0.42 },
+        { "au": "AU4", "facs": "brow lowerer", "channels": ["browDownLeft", "browDownRight"], "min": 0.15, "max": 0.22 },
+        { "au": "AU7", "facs": "lid tightener", "channels": ["eyeSquintLeft", "eyeSquintRight"], "min": 0.1, "max": 0.18 },
+        { "au": "AU12", "facs": "lip corner puller", "channels": ["mouthSmileLeft", "mouthSmileRight"], "min": 0.0, "max": 0.0, "why": "Exactly zero. There is no version of an S3/S4 moment where a smile is correct." }
+      ],
+      "head": { "tiltDeg": [0, 0], "nod": "none", "stillness": "still", "why": "No tilt. A head tilt at a safety moment reads as performed sympathy, which is worse than none." },
+      "posture": "level, square, settled",
+      "gestureEnergy": "none",
+      "gestures": [],
+      "gaze": "steady and level on the learner",
+      "envelope": { "onsetMs": 500, "apexMs": 0, "releaseMs": 900, "sustained": true, "why": "Slowest onset and longest release in the palette. Nothing here should look like a reaction." }
+    }
+  }
+}

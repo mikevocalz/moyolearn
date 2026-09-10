@@ -1,0 +1,64 @@
+{
+  "skill": "face-adapter",
+  "evals": [
+    {
+      "id": "permanent-smile",
+      "prompt": "Natalie is smiling the whole time she talks, even when she's explaining a mistake. Her mouth also looks mushy while she's smiling. Fix it.",
+      "expect": {
+        "loads_skill": true,
+        "behaviour": [
+          "Identifies both symptoms as one cause: EMOTION_PRESETS.happiness writes mouthSmileLeft/Right 0.55 (packages/avatar/src/emotion.ts) and the merge is per-channel max at packages/avatar/src/face-bus.ts:143 and packages/avatar/src/presence/humano.ts:746, so every viseme corner value below 0.55 loses.",
+          "Replaces the max() with the contract's resolution: mouthSmile* is capped-additive with an expressionMax, and viseme spread moves to mouthStretchLeft/Right (AU20) so speech and expression stop sharing a channel.",
+          "Checks the two sibling conflicts in the same presets: surprise's jawOpen 0.15 floor and sadness's eyeBlink 0.15 write.",
+          "Confirms mouthStretchLeft/Right exist on both assets by reading packages/avatar/rig-manifest.json rather than assuming.",
+          "Runs scripts/impossible-face.mjs over the result and says the expressionMax value is authored and needs calibrating against the legibility gate, not cited as a constant."
+        ],
+        "must_not": [
+          "Lower the happiness preset value and call it fixed — that treats the instance, not the class.",
+          "Keep per-channel max() anywhere in the merge.",
+          "Hardcode a morph name instead of resolving it from the manifest."
+        ]
+      }
+    },
+    {
+      "id": "gnm-head-landing",
+      "prompt": "We're swapping in the GNM head. Wire up the ARKit blendshapes from Audio2Face to it.",
+      "expect": {
+        "loads_skill": true,
+        "behaviour": [
+          "Refuses the index assignment outright: GNM's 383 expression components are PCA basis directions, not named actions, and component k has nothing to do with ARKit blendshape k.",
+          "Specifies an explicit least-squares fit with temporal regularization, magnitude regularization and corrective combinations, identity held fixed and topology/UVs preserved.",
+          "Cites the model API that makes identity separable: setExpressionVector (packages/avatar/src/gnm/model.ts:422) versus setIdentityVector (:410), and the head/neck joint guard at :444.",
+          "Says the fit runs offline and produces a map, not a per-frame 383-component solve in the render loop, and notes it may collapse into the shape matrixEncoder already implements.",
+          "Requires a residual table per channel with the container hash and the identity vector, and says no residual budget exists yet because none has been measured.",
+          "States that GNM is not the visible tutor today — the stages use Humano/createHumanoPresence per the audit — so this cannot be described as shipped."
+        ],
+        "must_not": [
+          "Map ARKit weights onto GNM coefficients by index or by ordinal position.",
+          "Fit identity and expression together.",
+          "Report a residual number that was not computed."
+        ]
+      }
+    },
+    {
+      "id": "a2f-wiring",
+      "prompt": "The Audio2Face host is finally up. Wire its output into the avatar's face.",
+      "expect": {
+        "loads_skill": true,
+        "behaviour": [
+          "Maps by name from FacePerformance.names (packages/voice/src/a2f.ts:31), never by index, and explains that names travels in the payload because the SDK's mouthClose deviates from ARKit and several shapes are always zero.",
+          "Handles the mouthClose deviation explicitly rather than assuming a coefficient, and verifies against the bilabial case in viseme-timing's test set.",
+          "Keeps GAZE and BLINK with their own owners — A2F does not animate head, eyes or fully the tongue — and asserts rather than clamps if a frame carries a channel A2F should not own.",
+          "Treats FacePerformance.emotion as telemetry only: the face already carries the tone's explicit emotion, sent as x-a2f-emotion headers at packages/voice/src/a2f.ts:71, and feeding it back is a second unsynchronised writer.",
+          "Restates that A2E reads Natalie's synthetic voice only, never learner audio, citing doc 19, the A2E licence and tooling/check-voice-egress.mjs rule 3.",
+          "Preserves the fail-open shape: A2F_TIMEOUT_MS 2500, renderFace returns null on any failure, every failure is no-face and never no-voice, and logs which fallback tier ran."
+        ],
+        "must_not": [
+          "Send any learner audio or image to A2F or A2E.",
+          "Let a slow or failed face host delay or cancel the audio.",
+          "Add A2F as a fifth independent writer alongside speech, emotion, blink and gaze."
+        ]
+      }
+    }
+  ]
+}
