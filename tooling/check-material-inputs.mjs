@@ -30,6 +30,7 @@ const PRODUCERS = {
   aHairT: 'packages/avatar/src/materials/hair-aux.ts',
   aHairPhase: 'packages/avatar/src/materials/hair-aux.ts',
   aCavity: 'packages/avatar/src/materials/mouth-cavity.ts',
+  aEyeAux: 'packages/avatar/src/materials/eye-aux.ts',
 };
 
 /**
@@ -41,8 +42,6 @@ const PRODUCERS = {
 const MISSING = {
   aTip:
     'brow.ts has no producer at all — no ribbon builder exists, though the header claims the strand geometry "ports unchanged". avatar-manifest.json promises gnm/brow-strands.bin.',
-  aEyeAux:
-    'No producer and no cited tool. avatar-manifest.json carries a sha256 for gnm/eye-aux.json that nothing in the repo writes or parses.',
   garmentRestPosition:
     'denim.ts needs the SMPL-X rest position per vertex so the wear does not swim. Absent from every shipped asset; the body ships as one mesh with clothing baked in, so denim.ts has no surface to apply to either.',
 };

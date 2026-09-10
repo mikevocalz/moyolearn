@@ -99,6 +99,13 @@ export {
   type HairGeometry,
   type HairTangents,
 } from './materials/hair-aux.ts';
+export { buildMeshGrid, type MeshGrid } from './materials/mesh-grid.ts';
+export {
+  bakeMouthCavity,
+  type MouthCavityBake,
+  type MouthGeometry,
+} from './materials/mouth-cavity.ts';
+export { bakeEyeAux, type EyeAux, type EyeFit } from './materials/eye-aux.ts';
 export {
   EYE_AUX_ATTRIBUTE,
   EYE_SURFACES,

@@ -66,7 +66,13 @@ export interface MouthGeometry extends Geometry {
   readonly jawOpen: ArrayLike<number>;
 }
 
-export interface MouthCavity {
+/*
+  Named for the BAKE, not the cavity: `mouth.ts` already exports a `MouthCavity`
+  — the shape of the JSON its scatter was meant to parse, from a producer that
+  never existed. Two types with one name in one barrel is a compile error, and
+  the older one is the published API.
+*/
+export interface MouthCavityBake {
   /** 0 outside the mouth and at the lips, 1 at the deepest point found. */
   readonly depth: Float32Array;
   /** Lining vertices the walk covered. */
@@ -77,7 +83,7 @@ export interface MouthCavity {
   readonly maxDepthM: number;
 }
 
-export function bakeMouthCavity(g: MouthGeometry): MouthCavity {
+export function bakeMouthCavity(g: MouthGeometry): MouthCavityBake {
   const { position: P, normal: N } = g;
   const count = P.count;
 
