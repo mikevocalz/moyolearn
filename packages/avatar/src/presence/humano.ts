@@ -311,6 +311,24 @@ export interface HumanoPresence {
    * layer cannot produce a forbidden read (doc 22 §7) by construction.
    */
   readonly firewall: { torsoLeanRad: number; shoulderFlexionRad: number };
+  /**
+   * The speech swell's current level, 0..1 — the envelope the arms and the brow
+   * ride on, and what has to reach zero before the body has settled after a
+   * barge-in.
+   *
+   * Exposed for the reason `firewall` is: the settle time is an acceptance
+   * criterion and it cannot be read off the pose. Differencing a run that
+   * stopped speaking against one that never spoke does not work, because the
+   * two consume different draws from the shared seeded stream — speech boosts
+   * the blink hazard and shortens saccade intervals — so they never reconverge.
+   * Measured that way it gives a 0.275° divergence at the stop against a 0.120°
+   * residual floor, with the curve non-monotonic: 130% "recovered" one second
+   * in. That is the random stream wandering, not a body settling.
+   *
+   * This is the body half only. The audio stopping is `interruptVoiceStopMs`,
+   * it lives in `tutor-audio.ts`, and it needs a device.
+   */
+  readonly speechEnvelope: number;
 }
 
 interface BoneRest {
@@ -887,5 +905,12 @@ export function createHumanoPresence(
     firewall.shoulderFlexionRad = maxFlexion;
   };
 
-  return { step, rest, firewall };
+  return {
+    step,
+    rest,
+    firewall,
+    get speechEnvelope() {
+      return speechEnv;
+    },
+  };
 }

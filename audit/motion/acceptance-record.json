@@ -22,8 +22,12 @@
     },
     "torsoEnergyCorrelation": "not measured",
     "gestureStrokeOffsetMs": "not measured",
-    "interruptVoiceStopMs": "not measured",
-    "interruptSettleMs": "not measured",
+    "interruptVoiceStopMs": "blocked: needs a device — the JS path in tutor-audio.ts stop() is synchronous, so what remains to measure is the audio hardware buffer flush",
+    "interruptSettleMs": {
+      "value": 500,
+      "method": "Time for the speech swell (the envelope the arms and brow ride on) to fall below 0.05 after `speaking` goes false, at 60Hz seeded. Full decay profile: 117 ms to half, 400 ms to 0.1, 500 ms to 0.05, 783 ms to 0.01. Target 700 ms: inside it at the 0.05 threshold. Measured on the ENVELOPE, not the pose — differencing a run that stopped speaking against one that never spoke does not work, because speech boosts the blink hazard and shortens saccade intervals, so the two consume different draws from the shared seeded stream and never reconverge (0.275 deg divergence at the cut against a 0.120 deg residual floor, curve non-monotonic at 130% recovered one second in). BODY HALF ONLY: the audio stopping is interruptVoiceStopMs and needs a device.",
+      "capture": "packages/avatar/src/presence/settle.test.ts, seed 7, 6 s turn"
+    },
     "frameTimeP95Ms": {
       "value": 17.7,
       "method": "requestAnimationFrame deltas in-page over 40s of idle, 2401 frames, taken in a pass with no screenshots running: a screenshot stalls the compositor, so a series captured alongside one measures the harness. p50 16.70, p95 17.70, p99 18.30 — vsync-locked at 60Hz with no long frames. This is the web tier only.",
