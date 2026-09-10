@@ -133,6 +133,19 @@ const TARGET_DP: Record<NonNullable<WhiteboardProps['size']>, number> = {
  * target is honoured in the dimension that is free; the other is bounded by the
  * column and clears the WCAG floor.
  */
+/**
+ * The keyboard ring, one constant for the whole tray.
+ *
+ * Every control here was keyboard-reachable and invisibly so — twelve
+ * Pressables, no `focus-visible` on any of them, which is WCAG 2.1 SC 2.4.7
+ * (AA) failing on a surface a child may drive entirely by tab. Copied verbatim
+ * from `Button.tsx` rather than reinvented: a second focus treatment in the kit
+ * is a second thing to keep in sync, and the ring colour is the one
+ * `check-contrast.mjs` already gates.
+ */
+const FOCUS =
+  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/50 focus-visible:ring-offset-2';
+
 const TARGET_HEIGHT: Record<NonNullable<WhiteboardProps['size']>, string> = {
   sm: 'min-h-target-adult',
   md: 'min-h-target-adult',
@@ -411,7 +424,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
               aria-label={entry.label}
               role="radio"
               aria-checked={ink === entry.id}
-              className={`${TARGET_HEIGHT[size]} flex-1 items-center justify-center rounded-control ${
+              className={`${TARGET_HEIGHT[size]} ${FOCUS} flex-1 items-center justify-center rounded-control ${
                 ink === entry.id ? 'bg-surface-sunken' : ''
               }`}
             >
@@ -422,7 +435,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
               */}
               <View
                 className={`h-7 w-7 rounded-full ${
-                  ink === entry.id ? 'border-[3px]' : 'border-2'
+                  ink === entry.id ? 'border-4' : 'border-2'
                 } border-strong ${entry.swatch}`}
               />
             </Pressable>
@@ -498,11 +511,16 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
               thing you press to make something happen. A pressed key is the
               page's own ink turned inside out.
             */
-            className={`${key} items-center justify-center ${
+            className={`${key} ${FOCUS} items-center justify-center ${
               tool === id ? 'bg-text' : ''
             }`}
           >
-            <Icon size={20} className={tool === id ? 'text-surface' : 'text-text'} />
+            {/*
+              `text-inverse`, not `text-surface`: check-contrast.mjs gates the
+              inverse/text pair in both schemes and does not gate surface/text,
+              so the second is a contrast nobody is checking.
+            */}
+            <Icon size={20} className={tool === id ? 'text-inverse' : 'text-text'} />
           </Pressable>
         ))}
         </View>
@@ -520,7 +538,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
           colours were there and unreachable. An inline strip grows upward into
           the tray's own wrap, inside the same box, with nothing to clip it.
 
-          Swatches rather than the six colour NAMES a menu would have listed:
+          Swatches rather than the seven colour NAMES a menu would have listed:
           the user's words were "controls on whiteboard has no colors", and a
           list that says "Red" is still a list about colour rather than colour.
         */}
@@ -528,7 +546,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
           onPress={() => setPickingInk((open) => !open)}
           aria-label={`Pen colour: ${currentInk.label}`}
           aria-expanded={pickingInk}
-          className={`${key} items-center justify-center rounded-control ${
+          className={`${key} ${FOCUS} items-center justify-center rounded-control ${
             pickingInk ? 'border-2 border-strong bg-surface-sunken' : ''
           }`}
         >
@@ -563,14 +581,14 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
         <Pressable
           onPress={undo}
           aria-label="Undo"
-          className={`${key} items-center justify-center rounded-control`}
+          className={`${key} ${FOCUS} items-center justify-center rounded-control`}
         >
           <Undo2 size={20} className="text-text-muted" />
         </Pressable>
         <Pressable
           onPress={clear}
           aria-label="Clear the board"
-          className={`${key} items-center justify-center rounded-control`}
+          className={`${key} ${FOCUS} items-center justify-center rounded-control`}
         >
           <Trash2 size={20} className="text-text-muted" />
         </Pressable>
@@ -590,7 +608,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
                 width — it gives the slab the room the border already gives
                 everything flat.
               */
-              className={`${key} mr-inset-hair items-center justify-center rounded-control border-2 border-strong bg-primary shadow-card ${
+              className={`${key} ${FOCUS} mr-inset-hair items-center justify-center rounded-control border-2 border-strong bg-primary shadow-card ${
                 !hasMarks || asking ? 'opacity-50' : ''
               }`}
             >

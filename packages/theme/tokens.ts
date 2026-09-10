@@ -309,10 +309,10 @@ export const semantic = {
 
     The values are Quickdraw's own light-theme `stroke` entries
     (`@quickdrawjs/core/src/palette.js`), copied rather than imported: the
-    engine is a browser module and pulling it in for six strings would put DOM
+    engine is a browser module and pulling it in for seven strings would put DOM
     code in the native bundle. They move only when the vendor's palette does.
 
-    Six of the vendor's twelve. A child working through arithmetic needs a
+    Seven of the vendor's twelve. A child working through arithmetic needs a
     default, a correction, a "this is the bit I mean", and a couple of choices
     that feel like choices — not a paint set to browse mid-problem.
   */
