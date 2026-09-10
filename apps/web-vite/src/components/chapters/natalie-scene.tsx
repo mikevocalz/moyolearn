@@ -1,8 +1,8 @@
 'use client';
 /**
  * The real-time 3D Natalie scene for Chapter 05. Loads the waist-up Humano GLB
- * and drives a marketing-specific presence profile: anchored body, subtle chest
- * breathing, natural blink/saccade, tiny event-driven head/face gestures.
+ * and uses the same rig writer as native and web tutoring: posture, fingers,
+ * head/eye coordination and conservative speech-driven gestures.
  *
  * The visitor triggers short responses (hint / explain / encourage). There is
  * no auto-cycling, no continuous rocking, and no hard-coded audio requirement.
@@ -19,7 +19,8 @@ import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { useGLTF } from '@react-three/drei';
 import { useEffect, useMemo, useRef, type MutableRefObject } from 'react';
 import * as THREE from 'three';
-import { IdleEngine } from '@acme/avatar';
+import { createHumanoPresence } from '@acme/avatar/body';
+import { clone } from 'three/examples/jsm/utils/SkeletonUtils.js';
 
 const MODEL_URL = '/models/humano-marketing.glb';
 const DRACO_DECODER = '/draco/';
@@ -27,8 +28,6 @@ const DRACO_DECODER = '/draco/';
 const CAMERA_FOV = 38;
 const CAMERA_POS: [number, number, number] = [0, 1.45, 1.15];
 const LOOK_AT: [number, number, number] = [0, 1.5, 0];
-
-const DEG = Math.PI / 180;
 
 interface PresenceAction {
   id: string;
@@ -130,98 +129,6 @@ export const PRESENCE_ACTIONS: Record<string, PresenceAction> = {
     neck: { y: 0.015, x: 0.005 },
   },
 };
-
-const IDLE_INPUTS = {
-  speechActive: false,
-  speechGap: false,
-  processing: false,
-  partnerSpeaking: false,
-  partnerPauseEvent: false,
-  partnerF0Falling: false,
-  timeUntilOnset: Infinity,
-};
-
-const BONE_NAMES = {
-  root: 'root',
-  pelvis: 'DEF-pelvis',
-  spine: 'DEF-spine',
-  chest: 'chest',
-  neck: 'neck',
-  head: 'head',
-  shoulderL: 'DEF-shoulder.L',
-  shoulderR: 'DEF-shoulder.R',
-  eyeL: 'eye.L',
-  eyeR: 'eye.R',
-  // The GLB is a Rigify export with constraints baked away, so the DEF chain
-  // (upper_arm → forearm → hand, all skin joints) is the safe thing to pose.
-  jaw: 'jaw_master',
-  upperArmL: 'DEF-upper_arm.L',
-  upperArmR: 'DEF-upper_arm.R',
-  foreArmL: 'DEF-forearm.L',
-  foreArmR: 'DEF-forearm.R',
-  handL: 'DEF-hand.L',
-  handR: 'DEF-hand.R',
-} as const;
-
-/** One co-speech beat gesture: a forearm/hand lift with a bell envelope.
- * Procedural stand-in until the bake pipeline emits EMAGE gesture tracks the
- * shared speech driver could sample (packages/avatar/src/speech/driver.ts). */
-interface BeatState {
-  /** Seconds until the next beat may fire (while speaking). */
-  countdown: number;
-  /** Time into the current beat; >= dur means idle. */
-  t: number;
-  dur: number;
-  /** 1 = left arm leads, -1 = right. */
-  side: 1 | -1;
-  /** Whether the off arm echoes this beat at reduced amplitude. */
-  both: boolean;
-  amp: number;
-}
-
-function setMorph(mesh: THREE.SkinnedMesh, name: string, value: number) {
-  const dict = mesh.morphTargetDictionary;
-  const targets = mesh.morphTargetInfluences;
-  if (!dict || !targets) return;
-  const index = dict[name];
-  if (index === undefined) return;
-  targets[index] = value;
-}
-
-// Degrees of deflection that map to a full ARKit eye-look morph. 5° made every
-// tiny saccade a full-range eye dart; 15° keeps saccades subtle while leaving
-// room for the constant look-at-camera bias.
-const GAZE_RANGE_DEG = 15;
-
-function applyEyeGaze(meshes: THREE.SkinnedMesh[], yaw: number, pitch: number) {
-  const clamped = (v: number) => Math.max(-1, Math.min(1, v / (GAZE_RANGE_DEG * DEG)));
-  const y = clamped(yaw);
-  const p = clamped(pitch);
-  const up = Math.max(0, p);
-  const down = Math.max(0, -p);
-  const inL = Math.max(0, -y);
-  const outL = Math.max(0, y);
-  const inR = Math.max(0, y);
-  const outR = Math.max(0, -y);
-
-  for (const mesh of meshes) {
-    setMorph(mesh, 'eyeLookUpLeft', up);
-    setMorph(mesh, 'eyeLookDownLeft', down);
-    setMorph(mesh, 'eyeLookInLeft', inL);
-    setMorph(mesh, 'eyeLookOutLeft', outL);
-    setMorph(mesh, 'eyeLookUpRight', up);
-    setMorph(mesh, 'eyeLookDownRight', down);
-    setMorph(mesh, 'eyeLookInRight', inR);
-    setMorph(mesh, 'eyeLookOutRight', outR);
-  }
-}
-
-interface BoneRest {
-  position: THREE.Vector3;
-  rotation: THREE.Euler;
-  scale: THREE.Vector3;
-  quaternion: THREE.Quaternion;
-}
 
 export interface BakedAlignment {
   characters: readonly string[];
@@ -328,84 +235,23 @@ function NatalieModel({
   onCaptionChange,
   onActionComplete,
 }: NatalieModelProps) {
-  const { scene } = useGLTF(MODEL_URL, DRACO_DECODER) as {
+  const { scene: source } = useGLTF(MODEL_URL, DRACO_DECODER) as {
     scene: THREE.Group;
   };
-
-  const meshes = useMemo<THREE.SkinnedMesh[]>(() => {
-    const out: THREE.SkinnedMesh[] = [];
-    scene.traverse((child) => {
-      if ((child as THREE.SkinnedMesh).isSkinnedMesh) {
-        out.push(child as THREE.SkinnedMesh);
-      }
-    });
-    return out;
-  }, [scene]);
-
-  const bonesRef = useRef<Record<string, THREE.Bone | null>>({});
-  const restPoseRef = useRef<Map<THREE.Bone, BoneRest>>(new Map());
-
-  useEffect(() => {
-    const map: Record<string, THREE.Bone | null> = {};
-    for (const [key, name] of Object.entries(BONE_NAMES)) {
-      // GLTFLoader runs node names through PropertyBinding.sanitizeNodeName,
-      // which strips dots — 'DEF-upper_arm.L' loads as 'DEF-upper_armL'.
-      map[key] =
-        (scene.getObjectByName(name) as THREE.Bone) ??
-        (scene.getObjectByName(name.replace(/[.:[\]/]/g, '')) as THREE.Bone) ??
-        null;
-    }
-    bonesRef.current = map;
-
-    const rest = new Map<THREE.Bone, BoneRest>();
-    for (const bone of Object.values(map)) {
-      if (!bone) continue;
-      rest.set(bone, {
-        position: bone.position.clone(),
-        rotation: bone.rotation.clone(),
-        scale: bone.scale.clone(),
-        quaternion: bone.quaternion.clone(),
-      });
-    }
-    restPoseRef.current = rest;
-  }, [scene]);
-
-  const engineRef = useRef(new IdleEngine(12345));
+  // GLTF caches its scene. Clone the skeleton so two surfaces cannot animate
+  // each other's bones, and capture rest only once for this instance.
+  const scene = useMemo(() => clone(source), [source]);
+  const presence = useMemo(() => createHumanoPresence(scene), [scene]);
   const actionRef = useRef<string | null>(null);
   const actionTimeRef = useRef(0);
   const lipStateRef = useRef<LipShape>({ ...LIP_ZERO });
-  const beatRef = useRef<BeatState>({
-    countdown: 0.35,
-    t: 99,
-    dur: 0.7,
-    side: 1,
-    both: false,
-    amp: 0,
-  });
-
-  useEffect(() => {
-    // Start from a clean ARKit neutral pose.
-    for (const mesh of meshes) {
-      const targets = mesh.morphTargetInfluences;
-      if (targets) targets.fill(0);
-    }
-  }, [meshes]);
-
-  useEffect(() => {
-    scene.traverse((child) => {
-      const obj = child as THREE.Object3D & { frustumCulled?: boolean };
-      if (obj.type === 'SkinnedMesh') obj.frustumCulled = false;
-    });
-  }, [scene]);
+  useEffect(() => () => presence.rest(), [presence]);
 
   useEffect(() => {
     const next = action && PRESENCE_ACTIONS[action] ? action : null;
     if (next === actionRef.current) return;
     actionRef.current = next;
     actionTimeRef.current = 0;
-    // First beat lands shortly after speech starts.
-    beatRef.current.countdown = 0.35;
-    beatRef.current.t = 99;
     onCaptionChange(next ? PRESENCE_ACTIONS[next]!.caption : '');
   }, [action, onCaptionChange]);
 
@@ -438,6 +284,7 @@ function NatalieModel({
     // read as laggy puppet flutter once it went through the smoother.
     const tStart = starts[i] ?? 0;
     const tEnd = ends[i] ?? tStart;
+    if (t < tStart) return LIP_ZERO;
     const span = Math.max(0.02, tEnd - tStart);
     const local = Math.max(0, Math.min(1, (t - tStart) / span));
     const cur = lipShapeForChar(chars[i] ?? ' ', span);
@@ -452,255 +299,47 @@ function NatalieModel({
     return out;
   };
 
-  const tmpEyeMid = useRef(new THREE.Vector3());
-  const tmpEyeR = useRef(new THREE.Vector3());
-  const tmpToCamera = useRef(new THREE.Vector3());
-
   useFrame((state, rawDelta) => {
-    const delta = reducedMotion ? 0 : Math.min(rawDelta, 0.05);
-    const active = actionRef.current
-      ? PRESENCE_ACTIONS[actionRef.current]
-      : null;
-
-    const playDuration =
-      (active
-        ? (audioRef.current?.duration ?? audioDuration ?? active.duration)
-        : null) || active?.duration || 1;
-
-    // Follow the audio clock when it is available; otherwise fall back to frame time.
-    const now = audioRef.current ? audioRef.current.currentTime : actionTimeRef.current + delta;
-
-    if (active && now >= playDuration) {
+    const delta = Math.max(0, Math.min(rawDelta, 0.05));
+    const active = actionRef.current ? PRESENCE_ACTIONS[actionRef.current] : null;
+    const audio = audioRef.current;
+    const duration = audio?.duration ?? audioDuration;
+    const playDuration = duration && Number.isFinite(duration) && duration > 0
+      ? duration : active?.duration ?? 1;
+    // Caption-only actions still finish in reduced motion. They never pretend
+    // to speak; articulation is gated by actual playback, not the button state.
+    const now = audio ? audio.currentTime : actionTimeRef.current + delta;
+    actionTimeRef.current = now;
+    if (active && (now >= playDuration || audio?.ended)) {
       actionRef.current = null;
       actionTimeRef.current = 0;
       onActionComplete();
       onCaptionChange('');
-      return;
     }
-
-    const inputs = active ? active.inputs : IDLE_INPUTS;
-    const frame = engineRef.current.step(delta, inputs);
-
-    actionTimeRef.current = now;
-    const env =
-      active && playDuration > 0
-        ? Math.max(0, Math.sin((now / playDuration) * Math.PI))
-        : 0;
-
-    // --- lip sync from alignment (baked audio, or the caption fallback) ---
-    // Deliberately NOT scaled by `env`: that whole-clip envelope belongs to the
-    // gesture morphs. Applying it to speech kept the mouth nearly shut for the
-    // first and last third of every line.
-    const targetLip =
-      !reducedMotion && active && alignment ? targetLipFromTime(now) : LIP_ZERO;
-    // Asymmetric smoothing, like real articulation: the mouth snaps toward a
-    // shape (~22ms) and relaxes out of it more slowly (~60ms). A symmetric
-    // low-pass here made every shape land late and mushy.
-    const rise = 1 - Math.exp(-rawDelta * 45);
-    const fall = 1 - Math.exp(-rawDelta * 16);
+    const speaking = Boolean(active && audio && !audio.paused && !audio.ended && now < playDuration);
+    const env = active && now < playDuration
+      ? Math.max(0, Math.sin((now / playDuration) * Math.PI)) : 0;
+    const target = speaking && alignment ? targetLipFromTime(now) : LIP_ZERO;
+    const rise = 1 - Math.exp(-delta * 45);
+    const fall = 1 - Math.exp(-delta * 16);
     const lip = lipStateRef.current;
     for (const key of Object.keys(LIP_ZERO) as (keyof LipShape)[]) {
-      const target = targetLip[key];
-      lip[key] += (target - lip[key]) * (target > lip[key] ? rise : fall);
+      lip[key] += (target[key] - lip[key]) * (target[key] > lip[key] ? rise : fall);
     }
-
-    // --- co-speech beat gestures: schedule while she speaks ---
-    const beat = beatRef.current;
-    if (active && !reducedMotion) {
-      beat.countdown -= delta;
-      if (beat.countdown <= 0 && beat.t >= beat.dur) {
-        beat.t = 0;
-        beat.dur = 0.75 + Math.random() * 0.5;
-        beat.side = Math.random() < 0.5 ? 1 : -1;
-        beat.both = Math.random() < 0.35;
-        // Hands sit just below the waist-up crop at rest; a beat needs
-        // lift ≳ 0.8 rad of total elbow bend before a hand enters frame —
-        // a beat nobody can see isn't a gesture.
-        beat.amp = 0.55 + Math.random() * 0.4;
-        beat.countdown = beat.dur + 0.4 + Math.random() * 1.0;
-      }
+    const emotion: Record<string, number> = {};
+    for (const [name, value] of Object.entries(active?.morphs ?? {})) {
+      // An action smile can remain, but a caption cannot open the jaw.
+      if (name !== 'jawOpen') emotion[name] = value * env;
     }
-    if (beat.t < beat.dur) beat.t += delta;
-    const beatEnv = beat.t < beat.dur ? Math.sin(Math.PI * (beat.t / beat.dur)) : 0;
-
-    // --- morph targets ---
-    for (const mesh of meshes) {
-      const targets = mesh.morphTargetInfluences;
-      if (targets) targets.fill(0);
-
-      setMorph(mesh, 'eyeBlinkLeft', frame.eyeBlinkLeft);
-      setMorph(mesh, 'eyeBlinkRight', frame.eyeBlinkRight);
-      setMorph(mesh, 'eyeWideLeft', frame.eyesWide);
-      setMorph(mesh, 'eyeWideRight', frame.eyesWide);
-
-      if (active) {
-        for (const [name, value] of Object.entries(active.morphs)) {
-          setMorph(mesh, name, value * env);
-        }
-      }
-
-      // Speech shapes are added on top of the gesture pose, not written over it
-      // — the old overwrite erased the action's smile whenever she spoke.
-      setMorph(mesh, 'jawOpen', lip.jawOpen + (active?.morphs.jawOpen ?? 0) * 0.5 * env);
-      setMorph(
-        mesh,
-        'mouthSmileLeft',
-        lip.mouthSmileLeft + (active?.morphs.mouthSmileLeft ?? 0) * env
-      );
-      setMorph(
-        mesh,
-        'mouthSmileRight',
-        lip.mouthSmileRight + (active?.morphs.mouthSmileRight ?? 0) * env
-      );
-      setMorph(mesh, 'mouthClose', lip.mouthClose);
-      setMorph(mesh, 'mouthFunnel', lip.mouthFunnel);
-      setMorph(mesh, 'mouthPucker', lip.mouthPucker);
-      setMorph(mesh, 'mouthLowerDownLeft', lip.mouthLowerDownLeft);
-      setMorph(mesh, 'mouthLowerDownRight', lip.mouthLowerDownRight);
-      setMorph(mesh, 'mouthUpperUpLeft', lip.mouthUpperUpLeft);
-      setMorph(mesh, 'mouthUpperUpRight', lip.mouthUpperUpRight);
-      setMorph(mesh, 'mouthStretchLeft', lip.mouthStretchLeft);
-      setMorph(mesh, 'mouthStretchRight', lip.mouthStretchRight);
-      // Beats carry a small brow accent — gesture and prosody move together.
-      setMorph(
-        mesh,
-        'browInnerUp',
-        (active?.morphs.browInnerUp ?? 0) * env + 0.2 * beatEnv
-      );
-    }
-
-    // --- eye contact: bias the gaze at the viewer's camera, saccades on top ---
-    // Without this the eyes saccade around the model's neutral forward axis,
-    // which points past the lens — the "staring into space" look.
-    const bones = bonesRef.current;
-    let gazeYaw = frame.eyeYaw;
-    let gazePitch = frame.eyePitch;
-    const eyeAnchor = bones.eyeL ?? bones.head;
-    if (eyeAnchor) {
-      eyeAnchor.getWorldPosition(tmpEyeMid.current);
-      if (bones.eyeL && bones.eyeR) {
-        bones.eyeR.getWorldPosition(tmpEyeR.current);
-        tmpEyeMid.current.add(tmpEyeR.current).multiplyScalar(0.5);
-      }
-      const d = tmpToCamera.current.copy(state.camera.position).sub(tmpEyeMid.current);
-      // The model faces +Z toward the camera, so face space ≈ world space here.
-      gazeYaw += Math.atan2(d.x, d.z);
-      gazePitch += Math.atan2(d.y, Math.hypot(d.x, d.z));
-    }
-    applyEyeGaze(meshes, gazeYaw, gazePitch);
-
-    // --- body: stable root/pelvis, subtle chest breath, tiny neck drift ---
-    const restPose = restPoseRef.current;
-    const chest = bones.chest;
-    if (chest && restPose.has(chest)) {
-      const rest = restPose.get(chest)!;
-      chest.position.copy(rest.position);
-      chest.rotation.copy(rest.rotation);
-      chest.scale.copy(rest.scale);
-      // Breathing is barely visible: a tiny chest pitch and Y lift.
-      chest.rotation.x = rest.rotation.x + frame.breathY * 10;
-      chest.position.y = rest.position.y + frame.breathY * 0.08;
-    }
-
-    for (const side of ['L', 'R'] as const) {
-      const shoulder = side === 'L' ? bones.shoulderL : bones.shoulderR;
-      if (shoulder && restPose.has(shoulder)) {
-        const rest = restPose.get(shoulder)!;
-        shoulder.position.copy(rest.position);
-        shoulder.rotation.copy(rest.rotation);
-        shoulder.scale.copy(rest.scale);
-        const zSign = side === 'L' ? 1 : -1;
-        shoulder.rotation.z =
-          rest.rotation.z + frame.breathY * 0.5 * zSign;
-      }
-    }
-
-    const neck = bones.neck;
-    if (neck && restPose.has(neck)) {
-      const rest = restPose.get(neck)!;
-      neck.position.copy(rest.position);
-      neck.rotation.copy(rest.rotation);
-      neck.scale.copy(rest.scale);
-      // Irregular drift + backchannel nods. The engine's drift is already in
-      // radians (max ~0.3°); the old 0.03 factor scaled it to 0.009° — frozen.
-      neck.rotation.y = rest.rotation.y + frame.driftYaw * 1.2;
-      neck.rotation.x = rest.rotation.x + frame.driftPitch * 1.2 + frame.nodPitch * 0.5;
-      if (active?.neck) {
-        neck.rotation.x += (active.neck.x ?? 0) * env;
-        neck.rotation.y += (active.neck.y ?? 0) * env;
-      }
-    }
-
-    const head = bones.head;
-    if (head && restPose.has(head)) {
-      const rest = restPose.get(head)!;
-      head.position.copy(rest.position);
-      head.rotation.copy(rest.rotation);
-      head.scale.copy(rest.scale);
-      // Head stays conversationally stable: subtle drift, the rest of the nod,
-      // and a light jaw coupling so the chin dips with open vowels while she
-      // speaks — the strongest single cue that the face and voice are one.
-      head.rotation.y = rest.rotation.y + frame.driftYaw * 0.8;
-      head.rotation.x =
-        rest.rotation.x +
-        frame.driftPitch * 0.8 +
-        frame.nodPitch * 0.5 +
-        lip.jawOpen * 0.05;
-      if (active?.head) {
-        head.rotation.x += (active.head.x ?? 0) * env;
-        head.rotation.y += (active.head.y ?? 0) * env;
-        head.rotation.z += (active.head.z ?? 0) * env;
-      }
-    }
-
-    // --- jaw bone assist: real chin drop under the jawOpen morph ---
-    const jawBone = bones.jaw;
-    if (jawBone && restPose.has(jawBone)) {
-      const rest = restPose.get(jawBone)!;
-      jawBone.position.copy(rest.position);
-      jawBone.rotation.copy(rest.rotation);
-      jawBone.scale.copy(rest.scale);
-      jawBone.rotation.x = rest.rotation.x + lip.jawOpen * 0.14;
-    }
-
-    // --- co-speech arm gestures: a resting talk-lift plus beat accents ---
-    // The arms rise slightly for the whole line (env) and punctuate with beats;
-    // idle keeps them at the modeled rest pose.
-    const speechLift = reducedMotion ? 0 : 0.18 * env;
-    for (const side of ['L', 'R'] as const) {
-      const upperArm = side === 'L' ? bones.upperArmL : bones.upperArmR;
-      const foreArm = side === 'L' ? bones.foreArmL : bones.foreArmR;
-      const hand = side === 'L' ? bones.handL : bones.handR;
-      const leads = beat.side === (side === 'L' ? 1 : -1);
-      const beatAmp =
-        reducedMotion ? 0 : beat.amp * beatEnv * (leads ? 1 : beat.both ? 0.55 : 0);
-      const lift = speechLift + beatAmp;
-      const zSign = side === 'L' ? 1 : -1;
-      if (upperArm && restPose.has(upperArm)) {
-        const rest = restPose.get(upperArm)!;
-        upperArm.position.copy(rest.position);
-        upperArm.rotation.copy(rest.rotation);
-        upperArm.scale.copy(rest.scale);
-        upperArm.rotation.x = rest.rotation.x + lift * 0.45;
-        upperArm.rotation.z = rest.rotation.z + zSign * lift * 0.15;
-      }
-      if (foreArm && restPose.has(foreArm)) {
-        const rest = restPose.get(foreArm)!;
-        foreArm.position.copy(rest.position);
-        foreArm.rotation.copy(rest.rotation);
-        foreArm.scale.copy(rest.scale);
-        foreArm.rotation.x = rest.rotation.x + lift * 1.3;
-      }
-      if (hand && restPose.has(hand)) {
-        const rest = restPose.get(hand)!;
-        hand.position.copy(rest.position);
-        hand.rotation.copy(rest.rotation);
-        hand.scale.copy(rest.scale);
-        hand.rotation.x = rest.rotation.x + lift * 0.45;
-      }
-    }
-
-    // Root, pelvis and the overall group are intentionally left at rest.
+    presence.step(delta, {
+      speaking,
+      phase: speaking ? 'speaking' : 'waiting',
+      mouth: lip.jawOpen,
+      face: speaking ? { ...lip } : null,
+      emotion,
+      reducedMotion,
+      cameraPosition: state.camera.position,
+    });
   });
 
   return (

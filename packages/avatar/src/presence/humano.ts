@@ -64,7 +64,7 @@
  * SOT-KEYWORDS: humano presence natalie idle morph bones gaze breath beat native web shared def spine weight shift fingers firewall a2f face emotion
  */
 import * as THREE from 'three';
-import { FINGER_CHANNELS, IdleEngine, mulberry32, type IdleFrame, type IdleInputs } from '../idle/engine.ts';
+import { FINGER_CHANNELS, IDLE_CHANNELS, IdleEngine, mulberry32, type IdleFrame, type IdleInputs } from '../idle/engine.ts';
 import { DEFAULT_GESTURE_LIMITS } from '../safety/gesture-gate.ts';
 import type { Shape } from '../speech/track.ts';
 
@@ -306,7 +306,11 @@ interface BoneRest {
 }
 
 interface BeatState {
-  countdown: number;
+  cancelled: boolean;
+  refractory: number;
+  quietS: number;
+  voicedS: number;
+  armed: boolean;
   t: number;
   dur: number;
   side: 1 | -1;
@@ -324,7 +328,7 @@ const IDLE_QUIET: IdleInputs = {
   timeUntilOnset: Infinity,
 };
 
-const IDLE_SPEAKING: IdleInputs = { ...IDLE_QUIET, speechActive: true, timeUntilOnset: 0 };
+const IDLE_SPEAKING: IdleInputs = { ...IDLE_QUIET, speechActive: true };
 
 /**
  * The conversation, as the idle engine already knew how to hear it.
@@ -344,9 +348,8 @@ function idleInputsFor(phase: ConversationPhase, input: HumanoInput): IdleInputs
       case 'speaking':
         return IDLE_SPEAKING;
       case 'thinking':
-        // A turn is being composed, so speech IS coming. The queue's real
-        // scheduled onset overrides the estimate when it has one.
-        return { ...IDLE_QUIET, processing: true, timeUntilOnset: 1.2 };
+        // Only a scheduled audio onset can arm pre-speech anticipation.
+        return { ...IDLE_QUIET, processing: true };
       case 'listening':
         return { ...IDLE_QUIET, partnerSpeaking: true };
       case 'waiting':
@@ -408,8 +411,13 @@ class Follower {
   }
   step(target: number, dt: number): number {
     const c = 2 * Math.sqrt(this.k) * this.zeta;
-    this.v += (this.k * (target - this.x) - c * this.v) * dt;
-    this.x += this.v * dt;
+    // A 20 fps device must not turn follow-through into an unstable wrist.
+    const steps = Math.max(1, Math.ceil(dt / (1 / 120)));
+    const h = dt / steps;
+    for (let i = 0; i < steps; i++) {
+      this.v += (this.k * (target - this.x) - c * this.v) * h;
+      this.x += this.v * h;
+    }
     return this.x;
   }
   reset(): void {
@@ -516,9 +524,14 @@ export function createHumanoPresence(
   */
   const rng = mulberry32((options.seed ?? 12345) ^ 0x5eed);
   const lip: LipShape = { ...LIP_ZERO };
-  const beat: BeatState = { countdown: 0.35, t: 99, dur: 0.7, side: 1, both: false, amp: 0 };
+  const beat: BeatState = { cancelled: false, refractory: 0, quietS: 1, voicedS: 0, armed: true, t: 99, dur: 0.7, side: 1, both: false, amp: 0 };
   let speechEnv = 0;
+  // Fingers change their resting shape with a posture adjustment, then HOLD.
+  // Ten continuously independent noise signals read as constant finger fidgeting.
+  const fingerRest = new Map<THREE.Bone, { current: number; target: number }>();
+  for (const f of fingers) fingerRest.set(f.bone, { current: 0, target: 0 });
   const handFollow = { L: new Follower(320, 0.55), R: new Follower(320, 0.55) };
+  const handLift = { L: 0, R: 0 };
   const firewall = { torsoLeanRad: 0, shoulderFlexionRad: 0 };
 
   const eyeMid = new THREE.Vector3();
@@ -611,6 +624,11 @@ export function createHumanoPresence(
     for (const key of Object.keys(lip) as (keyof LipShape)[]) lip[key] = 0;
     speechEnv = 0;
     beat.t = 99;
+    beat.cancelled = true;
+    beat.refractory = 0;
+    beat.quietS = 1;
+    beat.voicedS = 0;
+    beat.armed = true;
     handFollow.L.reset();
     handFollow.R.reset();
   };
@@ -618,24 +636,32 @@ export function createHumanoPresence(
   const step = (deltaSeconds: number, input: HumanoInput): void => {
     // A tab return or a resumed freeze can hand a delta of seconds. Clamped,
     // because the idle engine integrates and a 2s step is a lurch, not a catch-up.
-    const rawDelta = Math.max(0, Math.min(deltaSeconds, 0.05));
+    const rawDelta = Number.isFinite(deltaSeconds) ? Math.max(0, Math.min(deltaSeconds, 0.05)) : 0;
     const delta = input.reducedMotion ? 0 : rawDelta;
     const phase: ConversationPhase = input.phase ?? (input.speaking ? 'speaking' : 'waiting');
-    const frame: IdleFrame = engine.step(delta, idleInputsFor(phase, input));
     const rm = input.reducedMotion;
+    const sampled = engine.step(rawDelta, idleInputsFor(phase, input));
+    const frame: IdleFrame = rm ? { ...sampled } : sampled;
+    if (rm) {
+      for (const channel of IDLE_CHANNELS) {
+        if (channel !== 'eyeBlinkLeft' && channel !== 'eyeBlinkRight') frame[channel] = 0;
+      }
+      frame.weightShifted = false;
+    }
 
     // Speech envelope: the whole-utterance swell the arms and brow ride on.
-    const envTarget = input.speaking && !rm ? 1 : 0;
+    if (!input.speaking || rm) beat.cancelled = true;
+    const envTarget = input.speaking && !rm && !beat.cancelled ? 1 : 0;
     speechEnv += (envTarget - speechEnv) * (1 - Math.exp(-rawDelta * 6));
 
     /*
       THE MOUTH. Two sources, one rule: an A2F frame is the whole face and wins
       outright; otherwise the openness scalar is shaped into lips. Both are
       speech-driven and neither is scaled by reduced motion (doc 22 §7) — but
-      a reduced-motion frame with no sound is a closed mouth, as before.
+      a frame with no sound is a closed mouth.
     */
-    const face = rm ? null : (input.face ?? null);
-    const target = rm || face ? LIP_ZERO : lipFromOpenness(input.mouth);
+    const face = input.speaking ? (input.face ?? null) : null;
+    const target = face || !input.speaking ? LIP_ZERO : lipFromOpenness(input.mouth);
     // Asymmetric smoothing, like real articulation: snap toward a shape
     // (~22ms), relax out of it (~60ms).
     const rise = 1 - Math.exp(-rawDelta * 45);
@@ -644,27 +670,40 @@ export function createHumanoPresence(
       const to = target[key];
       lip[key] += (to - lip[key]) * (to > lip[key] ? rise : fall);
     }
-    const jawOpen = face ? (face.jawOpen ?? 0) : lip.jawOpen;
-
     /*
-      CO-SPEECH BEATS, WITH A RETRACTION. Preparation / stroke / retraction: a
-      fast stroke into the accented syllable and a slower settle out of it,
-      gated by the speech envelope so no voice means no gesture, however far
-      through its bell it was.
+      Conservative phrase-onset FALLBACK, not semantic gesture generation.
+      The current input only has articulation, so a sustained return after a
+      gap is the evidence available. A timer may suppress a gesture, never
+      cause one. Continuous phonation therefore cannot pump either arm.
+      Word-aligned semantic strokes need a performance track (realism audit).
     */
-    if (input.speaking && !rm) {
-      beat.countdown -= delta;
-      if (beat.countdown <= 0 && beat.t >= beat.dur) {
-        beat.t = 0;
-        beat.dur = 0.6 + rng() * 0.5;
-        beat.side = rng() < 0.5 ? 1 : -1;
-        beat.both = rng() < 0.2;
-        beat.amp = 0.35 + rng() * 0.45;
-        // Seen on the Duo: beats every ~1.5 s read as pumping. A person
-        // gestures on a phrase, not a syllable — one beat every 2-4 s, and a
-        // run of small ones is rarer than one clear one.
-        beat.countdown = beat.dur + 1.2 + rng() * 2.2;
+    beat.refractory = Math.max(0, beat.refractory - rawDelta);
+    const articulation = face ? (face.jawOpen ?? 0) : input.mouth;
+    const voiced = input.speaking && Number.isFinite(articulation) && articulation > 0.08;
+    if (!voiced || rm) {
+      beat.quietS += rawDelta;
+      beat.voicedS = 0;
+      if (beat.quietS >= 0.28) beat.armed = true;
+    } else {
+      beat.quietS = 0;
+      beat.voicedS += rawDelta;
+      if (beat.armed && beat.voicedS >= 0.08) {
+        beat.armed = false;
+        if (beat.refractory <= 0 && beat.t >= beat.dur) {
+          beat.t = 0;
+          beat.cancelled = false;
+          beat.dur = 0.8 + rng() * 0.4;
+          beat.side = rng() < 0.5 ? 1 : -1;
+          beat.both = false;
+          beat.amp = 0.22 + rng() * 0.18;
+          beat.refractory = beat.dur + 2 + rng() * 2;
+        }
       }
+    }
+    if (rm) {
+      beat.t = beat.dur;
+      handFollow.L.reset();
+      handFollow.R.reset();
     }
     if (beat.t < beat.dur) beat.t += delta;
     const beatPhase = beat.t < beat.dur ? beat.t / beat.dur : 1;
@@ -725,7 +764,7 @@ export function createHumanoPresence(
       and the hip blends across the split weights — which is what a real shift
       looks like: pelvis over feet, not feet sliding under a rigid body.
     */
-    const shift = frame.weightShift + frame.swayX;
+    const shift = rm ? 0 : frame.weightShift + frame.swayX;
     touchedTwins.clear();
     for (const twin of Object.values(twins)) if (twin) restore(twin);
     // Measured: +z on DEF-spine moves the head −x. Lean back over centre.
@@ -754,8 +793,7 @@ export function createHumanoPresence(
       frame.driftPitch * 0.8 +
       frame.nodPitch * 0.5 +
       frame.breathPitch -
-      frame.headFollowPitch * 0.6 +
-      jawOpen * 0.05;
+      frame.headFollowPitch * 0.6;
     poseBoth(
       'head',
       headPitch,
@@ -778,14 +816,14 @@ export function createHumanoPresence(
       carries a fraction of the beat, the wrist most of it, the hand follower
       supplies the overlap, and the speech swell is a small lift, not a pose.
     */
-    const speechLift = 0.07 * speechEnv;
     let maxFlexion = 0;
     for (const side of ['L', 'R'] as const) {
       const zSign = side === 'L' ? 1 : -1;
       const leads = beat.side === (side === 'L' ? 1 : -1);
       const beatAmp = rm ? 0 : beat.amp * beatEnv * (leads ? 1 : beat.both ? 0.4 : 0);
-      const lift = speechLift + beatAmp;
+      const lift = beatAmp;
       const followed = handFollow[side].step(lift, rawDelta);
+      handLift[side] = followed;
 
       const rise = (side === 'L' ? frame.shoulderL : frame.shoulderR) + frame.breathY * 0.5 - STANCE.shoulderDrop;
       pose(side === 'L' ? bones.shoulderL : bones.shoulderR, rise + lift * 0.06, 0, 0);
@@ -804,22 +842,23 @@ export function createHumanoPresence(
 
       pose(side === 'L' ? bones.foreArmL : bones.foreArmR, STANCE.elbowBend + lift * 0.3 + followed * 0.12, 0, 0);
 
-      const wrist = side === 'L' ? frame.wristL : frame.wristR;
+      const wrist = rm ? 0 : (side === 'L' ? frame.wristL : frame.wristR) * 0.15;
       // The wrist is where the beat lives; the follower puts it a beat late.
       pose(side === 'L' ? bones.handL : bones.handR, followed * 0.55 + wrist, 0, zSign * followed * 0.25);
     }
 
     /*
-      FINGERS. A relaxed arc, tightening toward the tip and toward the little
-      finger, plus the engine's per-finger noise so the two hands are never the
-      same hand and no two fingers move together. They open a little into a
-      gesture — a beat with a clenched hand reads as a threat, not a point.
-      Curl is local +x (measured); z, which this used to write, splays.
+      FINGERS. A relaxed arc with occasional posture-linked adjustments. The
+      gesturing hand opens with its own wrist; the other hand stays settled.
+      Curl is local +x (measured); z splays.
     */
-    const openness = 1 - 0.45 * beatEnv;
     for (const f of fingers) {
+      const openness = 1 - 0.45 * clamp(handLift[f.side], 0, 1);
       const channel = FINGER_CHANNELS[f.side][f.finger];
-      const noise = channel === undefined ? 0 : frame[channel];
+      const relaxation = fingerRest.get(f.bone)!;
+      if (frame.weightShifted && channel !== undefined) relaxation.target = frame[channel] * 0.4;
+      relaxation.current += (relaxation.target - relaxation.current) * (1 - Math.exp(-rawDelta / 0.8));
+      const noise = rm ? 0 : relaxation.current;
       // The noise is spread down the chain: most at the knuckle, least at the tip.
       const share = f.phalanx === 0 ? 0.5 : f.phalanx === 1 ? 0.3 : 0.2;
       pose(f.bone, f.curl * openness + noise * share, 0, 0);

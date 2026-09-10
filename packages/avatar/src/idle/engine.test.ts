@@ -256,6 +256,17 @@ const BODY_CHANNELS: readonly IdleChannel[] = [
 ];
 
 describe('the body layer', () => {
+  it('does not nod on a timer while the learner is speaking or typing', () => {
+    const engine = new IdleEngine(7);
+    for (let i = 0; i < 60 * 60; i++) {
+      assert.equal(engine.step(DT, { ...quiet, partnerSpeaking: true }).nodPitch, 0);
+    }
+    let peak = 0;
+    for (let i = 0; i < 60; i++) {
+      peak = Math.max(peak, engine.step(DT, { ...quiet, partnerPauseEvent: i === 0 }).nodPitch);
+    }
+    assert.ok(peak > 0, 'an explicit pause cue was ignored');
+  });
   it('is never still: some joint below the neck moves > 0.5° in every 2 s window', () => {
     const engine = new IdleEngine(11);
     const window = Math.round(2 / DT);

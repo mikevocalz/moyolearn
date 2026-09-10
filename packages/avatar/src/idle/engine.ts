@@ -176,9 +176,6 @@ export class IdleEngine {
   private nodT = Infinity;
   private nodAmp = 0;
   private nodRefractory = 0;
-  private partnerSpeakT = 0;
-  private wasPartnerSpeaking = false;
-  private nodTimerAt: number;
 
   // ---- body layer state ----
   private shiftFrom = 0;
@@ -273,7 +270,8 @@ export class IdleEngine {
     ];
     this.breathPeriod = 1 / this.range(idleConfig.breath.rateHz);
     this.saccadeIn = this.range(idleConfig.saccade.intervalS);
-    this.nodTimerAt = this.range(idleConfig.nod.speechTimerS);
+    // Preserve the seeded face stream across removal of the periodic nod.
+    this.range(idleConfig.nod.speechTimerS);
 
     const B = idleConfig.body;
     this.bodyRand = mulberry32((seed ^ 0xb0d7) >>> 0);
@@ -458,22 +456,12 @@ export class IdleEngine {
 
     // -- backchannel nods --
     this.nodRefractory -= dt;
-    let timerFired = false;
-    if (inputs.partnerSpeaking) {
-      if (!this.wasPartnerSpeaking) {
-        this.partnerSpeakT = 0;
-        this.nodTimerAt = this.range(C.nod.speechTimerS);
-      }
-      this.partnerSpeakT += dt;
-      if (this.partnerSpeakT >= this.nodTimerAt) {
-        timerFired = true;
-        this.nodTimerAt = this.partnerSpeakT + this.range(C.nod.speechTimerS);
-      }
-    }
-    this.wasPartnerSpeaking = inputs.partnerSpeaking;
+    // Listening is not a metronome. Only an observed conversational cue can
+    // start an acknowledgement; typing for a long time does not imply assent.
     const nodTotal = C.nod.nodS * C.nod.count;
     if (
-      (inputs.partnerPauseEvent || inputs.partnerF0Falling || timerFired) &&
+      (inputs.partnerPauseEvent || inputs.partnerF0Falling) &&
+      !inputs.speechActive &&
       this.nodRefractory <= 0 &&
       !(this.nodT < nodTotal)
     ) {

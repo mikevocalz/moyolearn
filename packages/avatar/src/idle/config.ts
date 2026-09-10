@@ -36,7 +36,7 @@ export const idleConfig = {
       { hz: 0.15, weight: 0.65 },
       { hz: 0.15 * Math.E, weight: 0.35 },
     ],
-    amplitudeM: 0.01, // full pelvis scale (+-10 mm); applied by the body rig
+    amplitudeM: 0.003, // balance correction; held weight shifts carry the posture
   },
   drift: { hz: 0.2, maxDeg: 0.3, speechGain: 0.7 },
   blink: {

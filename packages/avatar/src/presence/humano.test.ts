@@ -116,10 +116,10 @@ describe('createHumanoPresence', () => {
     const presence = createHumanoPresence(scene);
     const head = scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.head))!;
     presence.step(1 / 60, { ...QUIET, speaking: true, mouth: 1 });
-    // 30 frames is past the mouth's rise constant, so the mouth is open and
-    // the head has dipped with it (there is no weighted jaw bone on this rig).
+    // Articulation and head pose are independent: opening the mouth must not
+    // force the skull to bob on every vowel.
     for (let i = 0; i < 30; i++) presence.step(1 / 60, { ...QUIET, speaking: true, mouth: 1 });
-    assert.ok(head.rotation.x > 0.015, `head did not dip with the open mouth: ${head.rotation.x}`);
+    assert.ok(Number.isFinite(head.rotation.x));
     assert.ok(weight(mesh, 'jawOpen') > 0.3);
   });
 
@@ -178,14 +178,14 @@ describe('createHumanoPresence', () => {
     assert.ok(weight(mesh, 'jawOpen') < 0.02, `mouth hung open: ${weight(mesh, 'jawOpen')}`);
   });
 
-  it('reduced motion writes no mouth and no arm lift', () => {
+  it('reduced motion preserves articulation while pinning the arms', () => {
     const { scene, mesh } = makeScene();
     const presence = createHumanoPresence(scene);
     const arm = scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.foreArmL))!;
     for (let i = 0; i < 60; i++) {
       presence.step(1 / 60, { speaking: true, mouth: 1, reducedMotion: true });
     }
-    assert.equal(weight(mesh, 'jawOpen'), 0);
+    assert.ok(weight(mesh, 'jawOpen') > 0.3);
     // The STANCE stays — a pose is not motion, and reduced motion should not
     // put her back to the asset's arms-flat-to-the-thighs mannequin. What it
     // suppresses is the LIFT on top of it, which is the travel.
@@ -214,5 +214,82 @@ describe('createHumanoPresence', () => {
     presence.rest();
     assert.equal(head.rotation.x, 0);
     assert.ok(mesh.morphTargetInfluences!.every((v) => v === 0));
+  });
+
+  it('does not schedule repeated arm beats during continuous phonation', () => {
+    const { scene } = makeScene();
+    const presence = createHumanoPresence(scene, { seed: 7 });
+    for (let i = 0; i < 30 * 60; i++) {
+      presence.step(1 / 60, { ...QUIET, speaking: true, mouth: 0.6 });
+      if (i < 3 * 60) continue;
+      for (const name of [HUMANO_BONES.foreArmL, HUMANO_BONES.foreArmR]) {
+        const arm = scene.getObjectByName(sanitizeNodeName(name))!;
+        assert.ok(Math.abs(arm.rotation.x - STANCE.elbowBend) < 0.002,
+          `timer-driven beat at ${i / 60}s`);
+      }
+    }
+  });
+
+  it('a new phrase can gesture after a gap, without constant two-arm lift', () => {
+    const { scene } = makeScene();
+    const presence = createHumanoPresence(scene, { seed: 7 });
+    let peak = 0;
+    for (let i = 0; i < 8 * 60; i++) {
+      const t = i / 60;
+      presence.step(1 / 60, { ...QUIET, speaking: true, mouth: t >= 6 && t < 6.5 ? 0 : 0.6 });
+      const l = scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.foreArmL))!.rotation.x - STANCE.elbowBend;
+      const r = scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.foreArmR))!.rotation.x - STANCE.elbowBend;
+      assert.ok(Math.min(Math.abs(l), Math.abs(r)) < 0.002, 'both arms lifted together');
+      if (t > 6.5) peak = Math.max(peak, l, r);
+    }
+    assert.ok(peak > 0.015, 'fresh phrase did not produce a gesture');
+  });
+
+  it('mouth opening does not rotate the head', () => {
+    const a = makeScene();
+    const b = makeScene();
+    const pa = createHumanoPresence(a.scene, { seed: 7 });
+    const pb = createHumanoPresence(b.scene, { seed: 7 });
+    for (let i = 0; i < 240; i++) {
+      pa.step(1 / 60, { ...QUIET, speaking: true, mouth: 0 });
+      pb.step(1 / 60, { ...QUIET, speaking: true, mouth: 1 });
+      const name = sanitizeNodeName(HUMANO_BONES.head);
+      assert.deepEqual(a.scene.getObjectByName(name)!.quaternion.toArray(), b.scene.getObjectByName(name)!.quaternion.toArray());
+    }
+  });
+
+  it('interruptions settle the arms and do not replay an abandoned stroke', () => {
+    const { scene } = makeScene();
+    const presence = createHumanoPresence(scene);
+    for (let i = 0; i < 24; i++) presence.step(1 / 60, { ...QUIET, speaking: true, mouth: 0.8 });
+    for (let i = 0; i < 180; i++) presence.step(1 / 60, QUIET);
+    for (const name of [HUMANO_BONES.foreArmL, HUMANO_BONES.foreArmR]) {
+      assert.ok(Math.abs(scene.getObjectByName(sanitizeNodeName(name))!.rotation.x - STANCE.elbowBend) < 0.002);
+    }
+  });
+
+  it('reduced motion keeps blinks alive and ignores a previous body pose', () => {
+    const { scene, mesh } = makeScene();
+    const presence = createHumanoPresence(scene);
+    for (let i = 0; i < 600; i++) presence.step(1 / 60, QUIET);
+    let blinks = 0;
+    for (let i = 0; i < 60 * 60; i++) {
+      presence.step(1 / 60, { ...QUIET, reducedMotion: true });
+      if (weight(mesh, 'eyeBlinkLeft') > 0.8) blinks++;
+      assert.ok(Math.abs(scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.head))!.rotation.x) < 1e-12);
+    }
+    assert.ok(blinks > 0, 'reduced motion froze the blink clock');
+  });
+
+  it('keeps wrist follow-through bounded at 20 fps and on resume', () => {
+    const { scene } = makeScene();
+    const presence = createHumanoPresence(scene);
+    for (let i = 0; i < 1200; i++) {
+      presence.step(i % 100 === 0 ? 8 : 0.05, { ...QUIET, speaking: true, mouth: i % 120 < 20 ? 0 : 0.8 });
+      for (const name of [HUMANO_BONES.handL, HUMANO_BONES.handR]) {
+        const x = scene.getObjectByName(sanitizeNodeName(name))!.rotation.x;
+        assert.ok(Number.isFinite(x) && Math.abs(x) < 0.4, `unstable wrist: ${x}`);
+      }
+    }
   });
 });
