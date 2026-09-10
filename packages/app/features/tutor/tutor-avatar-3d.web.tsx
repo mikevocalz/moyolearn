@@ -15,9 +15,10 @@
  *  1. THE MATERIAL STRIP IS SHARED, and that was a surprise. The native stage
  *     rebuilds every skinned material because Dawn throws on three's node graph
  *     for `KHR_materials_specular`/`anisotropy`/`ior`; the native file predicts
- *     the browser "has no such problem". Chrome's WebGPU has the same problem
- *     with the same asset — see `simplifySkinnedMaterials` below for the exact
- *     error — so the strip runs here too.
+ *     the browser "has no such problem". Chrome's WebGPU DOES throw on the same
+ *     asset, but not for that reason and not needing that cure — the authored
+ *     materials are fine and one inert vertex attribute is not. See
+ *     `dropInertVertexColors` below for the error and the measurement.
  *  2. NO `primeLoaderCache`. That exists because React Native's `fetch`
  *     polyfill cannot hand a `ReadableStream` body to three's `FileLoader`.
  *     A browser `Response` can, so `GLTFLoader` fetches its own `.bin` and
@@ -127,45 +128,56 @@ export interface TutorAvatar3DProps {
 }
 
 /**
- * Rebuilds every skinned material as a plain `MeshStandardMaterial`, exactly as
- * `simplifyMaterialsForDawn` does on native — and for the same reason, which is
- * NOT the reason that file predicted.
+ * Deletes the body's `COLOR_0` attribute, which is what WebGPU actually chokes
+ * on. The authored materials then render exactly as exported.
  *
- * The native comment says this asset "keeps working on the web scene, which
- * drives WebGL and has no such problem". Measured in Chrome 141 on WebGPU, it
- * does not: three's node graph for the body's authored
- * `KHR_materials_specular`/`anisotropy`/`ior` emits a vertex attribute the
- * browser rejects outright —
+ * THIS REPLACES A BLANKET MATERIAL STRIP, AND THE BISECT THAT JUSTIFIED IT WAS
+ * WRONG ABOUT THE CAUSE. The comment here used to blame three's node graph for
+ * the body's authored `KHR_materials_specular`/`anisotropy`/`ior`, and rebuilt
+ * every skinned material as a plain `MeshStandardMaterial` to avoid it. The
+ * error is real and still current — Chrome 152, three 0.185.1, verbatim:
  *
  *   Failed to read 'format' property from 'GPUVertexAttribute':
  *   provided value 'unorm32x4' not valid enum value of type GPUVertexFormat
  *
- * — thrown from `createRenderPipeline` on the first `render()`, i.e. as a
- * demote-to-2D with no visible cause. So the extension strip is a WebGPU rule
- * rather than a Dawn one, and the web scene that "had no problem" was the
- * WebGL2 one from doc 22 §4.
+ * — thrown from `createRenderPipeline` on the first `render()`, i.e. a
+ * demote-to-2D with no visible cause. But the extensions are innocent. All ten
+ * material cases, including the anisotropic hair, compile and shade on a real
+ * WebGPU backend when the shader probe renders them on plain spheres
+ * (`probe:shaders:webgpu`). What differs is the ASSET.
  *
- * THE CEILING, same as native: specular tint, anisotropic hair sheen and IOR
- * are gone. The fix is not to put the extensions back — it is
- * `@acme/avatar/body`'s own TSL hair and skin materials (doc 22 §4 rows 1-5).
+ * `unorm32x4` is a normalised 32-bit format, and WebGPU has none — normalised
+ * formats stop at 16 bits. The body's six attributes share one interleaved
+ * buffer at stride 64, and `COLOR_0` is the only normalised one among them, so
+ * it is the only attribute that can ask for a normalised format at all.
+ * Deleting it and keeping every authored material renders her correctly, first
+ * frame in 1.3 s, with no console error — tested on the running app, not
+ * inferred.
+ *
+ * IT COSTS NOTHING, which is the part that makes this the right fix rather than
+ * a trade. `COLOR_0` on this asset is 65535 in every channel of all 18,104
+ * vertices: a multiply by 1.0. The strip it replaces cost specular tint,
+ * anisotropic hair sheen and IOR on every surface.
+ *
+ * NATIVE IS NOT COVERED BY THIS. `simplifyMaterialsForDawn` fails differently
+ * — `Exception in HostFunction: <unknown>` every frame — and that path has not
+ * been retested. Do not delete it on the strength of this.
  */
-function simplifySkinnedMaterials(scene: THREE.Object3D): void {
+function dropInertVertexColors(scene: THREE.Object3D): void {
   scene.traverse((child) => {
     const mesh = child as THREE.SkinnedMesh;
     if (!mesh.isSkinnedMesh) return;
-    const authored = mesh.material as THREE.MeshPhysicalMaterial;
-    mesh.material = new THREE.MeshStandardMaterial({
-      map: authored.map ?? null,
-      normalMap: authored.normalMap ?? null,
-      roughnessMap: authored.roughnessMap ?? null,
-      roughness: authored.roughness,
-      metalness: 0,
-      alphaTest: authored.alphaTest,
-      side: authored.side,
-    });
-    authored.dispose();
+    mesh.geometry.deleteAttribute('color');
+    /*
+      GLTFLoader turned `vertexColors` on because the attribute existed. Leaving
+      it on with the attribute gone makes three look for a `color` varying that
+      no longer has a source.
+    */
+    const material = mesh.material as THREE.Material & { vertexColors?: boolean };
+    if (material.vertexColors) material.vertexColors = false;
   });
 }
+
 
 export function TutorAvatar3D({
   active,
@@ -264,7 +276,7 @@ export function TutorAvatar3D({
 
       const scene = new THREE.Scene();
       addRig(scene);
-      simplifySkinnedMaterials(body);
+      dropInertVertexColors(body);
       scene.add(body);
 
       const camera = new THREE.PerspectiveCamera(CAMERA_FOV, 1, 0.1, 10);
