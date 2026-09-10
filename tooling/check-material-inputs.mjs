@@ -27,6 +27,8 @@ const PRODUCERS = {
   aCurvature: 'packages/avatar/src/materials/skin-aux.ts',
   aThickness: 'packages/avatar/src/materials/skin-aux.ts',
   positionStorage: 'packages/avatar/src/compute/head.ts',
+  aHairT: 'packages/avatar/src/materials/hair-aux.ts',
+  aHairPhase: 'packages/avatar/src/materials/hair-aux.ts',
 };
 
 /**
@@ -36,11 +38,6 @@ const PRODUCERS = {
  * TEXCOORD_0, COLOR_0, JOINTS_0 and WEIGHTS_0.
  */
 const MISSING = {
-  aHairT:
-    'hair.ts binds it in positionNode, so the braid sway cannot run on the real body. ' +
-    'Derivable at load: V of the hair card UV runs root-to-tip, once cards are separated by connected components over the index buffer.',
-  aHairPhase:
-    'Same bind as aHairT. A per-card hash would do it; it needs the same connected-component pass.',
   aTip:
     'brow.ts has no producer at all — no ribbon builder exists, though the header claims the strand geometry "ports unchanged". avatar-manifest.json promises gnm/brow-strands.bin.',
   aCavity:
