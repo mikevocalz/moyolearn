@@ -25,7 +25,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import * as THREE from 'three';
-import { HUMANO_BONES, TWINS, createHumanoPresence } from './humano.ts';
+import { FINGER_BONES, HUMANO_BONES, TWINS, createHumanoPresence, fingerBone } from './humano.ts';
 
 interface GltfNode {
   name: string;
@@ -150,12 +150,8 @@ describe('the shipped phone rig', () => {
       if (key === 'eyeL' || key === 'eyeR') continue; // position anchors only
       assert.ok(isAncestorOfWeight(name), `${key} → '${name}' deforms nothing`);
     }
-    for (const side of ['L', 'R']) {
-      for (const finger of ['thumb', 'f_index', 'f_middle', 'f_ring', 'f_pinky']) {
-        for (const ph of ['01', '02', '03']) {
-          assert.ok(isAncestorOfWeight(`DEF-${finger}.${ph}.${side}`), `finger ${finger}.${ph}.${side}`);
-        }
-      }
+    for (const name of FINGER_BONES) {
+      assert.ok(isAncestorOfWeight(name), `finger '${name}' deforms nothing`);
     }
   });
 
@@ -205,9 +201,9 @@ describe('the shipped phone rig', () => {
 
   it('finger: +x curls the fingertip into the palm on both hands', () => {
     // The palm faces the thigh: −x for the left hand, +x for the right.
-    const l = moved('DEF-f_index.01.L', 'x', 0.2, 'DEF-f_index.03.L', 0.02);
+    const l = moved(fingerBone('f_index', '01', 'L'), 'x', 0.2, fingerBone('f_index', '03', 'L'), 0.02);
     assert.ok(l.x < -0.005, `L index +x should curl toward −x: ${l.toArray()}`);
-    const r = moved('DEF-f_index.01.R', 'x', 0.2, 'DEF-f_index.03.R', 0.02);
+    const r = moved(fingerBone('f_index', '01', 'R'), 'x', 0.2, fingerBone('f_index', '03', 'R'), 0.02);
     assert.ok(r.x > 0.005, `R index +x should curl toward +x: ${r.toArray()}`);
   });
 });
@@ -232,9 +228,9 @@ describe('the two chains stay one body', () => {
     const { root, byName: names } = buildScene();
     const presence = createHumanoPresence(root);
     const head = names.get(HUMANO_BONES.head)!;
-    const eye = names.get('DEF-eye.L')!;
+    const eye = names.get(HUMANO_BONES.eyeL)!;
     const teeth = names.get('DEF-teeth.T')!;
-    const hand = names.get('DEF-hand.L')!;
+    const hand = names.get(HUMANO_BONES.handL)!;
     const chest = names.get(HUMANO_BONES.chest)!;
     root.updateMatrixWorld(true);
     const inHead = (o: THREE.Object3D) => head.worldToLocal(o.getWorldPosition(new THREE.Vector3()));

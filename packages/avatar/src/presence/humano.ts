@@ -104,6 +104,25 @@ const FINGERS = ['thumb', 'f_index', 'f_middle', 'f_ring', 'f_pinky'] as const;
 const PHALANGES = ['01', '02', '03'] as const;
 
 /**
+ * The thirty finger bone names, built once and exported so the ownership table
+ * and the build check read the same list the writer resolves. A second copy of
+ * this loop elsewhere is a list that drifts, which on this rig means a channel
+ * that silently moves nothing.
+ */
+export const FINGER_BONES: readonly string[] = ['L', 'R'].flatMap((side) =>
+  FINGERS.flatMap((finger) => PHALANGES.map((phalanx) => fingerBone(finger, phalanx, side as 'L' | 'R'))),
+);
+
+/** One finger bone by its parts, so no caller composes the name itself. */
+export function fingerBone(
+  finger: (typeof FINGERS)[number],
+  phalanx: (typeof PHALANGES)[number],
+  side: 'L' | 'R',
+): string {
+  return `DEF-${finger}.${phalanx}.${side}`;
+}
+
+/**
  * Resting curl per phalanx, in radians. A hand at rest is not flat: the
  * fingers hold a soft arc that tightens toward the tip, and the little finger
  * curls more than the index. The thumb rotates rather than curls, so it gets
@@ -508,7 +527,7 @@ export function createHumanoPresence(
   for (const side of ['L', 'R'] as const) {
     FINGERS.forEach((finger, fi) => {
       PHALANGES.forEach((phalanx, pi) => {
-        const bone = resolveBone(scene, `DEF-${finger}.${phalanx}.${side}`);
+        const bone = resolveBone(scene, `DEF-${finger}.${phalanx}.${side}`); // in FINGER_BONES order
         if (!bone) return;
         capture(bone);
         fingers.push({ bone, curl: CURL[phalanx] * CURL_BY_FINGER[finger], side, finger: fi, phalanx: pi });
