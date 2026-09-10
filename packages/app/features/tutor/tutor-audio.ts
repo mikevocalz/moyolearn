@@ -226,6 +226,74 @@ export class TutorAudioQueue {
     this.sentencePauseS = Math.max(0, ms) / 1000;
   }
 
+  /**
+   * Play ONE pre-rendered clip, now, bypassing the render path entirely.
+   *
+   * This exists for the S4 crisis script and nothing else yet. `BAKED_PIECES`
+   * marks that piece `crisis: true` — "serve the cache or serve nothing, never
+   * render live" — so it cannot travel `enqueue`, which is a tagged POST to the
+   * TTS route by construction. It is fetched as a signed URL, decoded through
+   * the same audio port every other sentence uses, and played once.
+   *
+   * IT DOES NOT JOIN THE QUEUE, and that is the shape of the thing rather than a
+   * shortcut: a crisis ends the session (`CrisisResponse.sessionEnded`), so
+   * there is no next sentence to stitch to, no prosody to carry forward, and
+   * nothing to prefetch. What it DOES share is the generation guard and the
+   * viseme track — a child being told to stop and talk to someone should not be
+   * told it by a frozen face.
+   *
+   * Every failure is silence. The words are already on screen, and the one
+   * moment never to put an error in front of a child is this one.
+   */
+  async speakBaked(piece: string): Promise<void> {
+    const generation = this.generation;
+    try {
+      const res = await this.transport(`${API_URL}/api/tutor/voice/baked/${piece}`, {
+        credentials: 'include',
+      });
+      // 204 is the route's "no audio for this piece" and is not an error:
+      // an unrendered clip and a missing one are the same silence.
+      if (!res.ok || res.status === 204) return;
+      const { url } = (await res.json()) as { url?: string };
+      if (url === undefined) return;
+
+      const clip = await this.transport(url, {});
+      if (!clip.ok) return;
+      const bytes = await clip.arrayBuffer();
+      if (generation !== this.generation) return;
+
+      this.audio.resume();
+      const decoded = await this.audio.decode(bytes);
+      if (generation !== this.generation) return;
+
+      const source = this.audio.createSource(decoded);
+      this.activeSource = source;
+      this.activeDuration = decoded.duration;
+      this.activeFace = null;
+      try {
+        this.activeTrack = analyseSpeech(decoded.getChannelData(0), decoded.sampleRate);
+      } catch {
+        this.activeTrack = null;
+      }
+      this.activeTrackIdx = 0;
+      this.audio.onEnded(source, () => {
+        if (generation !== this.generation) return;
+        this.activeSource = null;
+        this.playbackStartAt = 0;
+      });
+      /*
+        No onset lead. The lead exists so a first sentence lands after the idle
+        engine's anticipation; this sentence is not the opening of a turn, it is
+        the end of a session, and a pause before it reads as hesitation.
+      */
+      const startAt = this.audio.currentTime();
+      source.start(startAt);
+      this.playbackStartAt = startAt;
+    } catch {
+      /* Silence. See the note above. */
+    }
+  }
+
   /** Enqueue a sentence the coach has emitted with its voice metadata. */
   enqueue(text: string, voice: TutorVoiceRef): void {
     this.queue.push({

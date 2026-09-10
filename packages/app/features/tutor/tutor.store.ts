@@ -559,6 +559,15 @@ export const useTutorStore = create<TutorState>((set) => ({
           */
           if (event.voice) {
             audioQueue.enqueue(event.text, event.voice);
+          } else if (event.piece !== undefined) {
+            /*
+              THE CRISIS SCRIPT, AND IT IS THE ONLY THING THAT TAKES THIS PATH.
+              Pre-rendered, never tagged, never live: `BAKED_PIECES` marks it
+              `crisis: true`. Until this line it was rendered as text and
+              nothing played it — the hardest sentence in the product arrived in
+              silence.
+            */
+            void audioQueue.speakBaked(event.piece);
           }
           remember(event.text);
           return;

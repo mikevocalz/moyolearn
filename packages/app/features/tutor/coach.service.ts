@@ -16,7 +16,7 @@
 import 'server-only';
 import type { Auth, LearnerFlags } from '@acme/auth/server';
 import { ModelDeclined, type TurnImage } from '@acme/inference';
-import { runSafetyPlaneStream, safetyLayer, SafetyLayerUnavailable } from '@acme/safety';
+import { runSafetyPlaneStream, S4_SCRIPTS, safetyLayer, SafetyLayerUnavailable } from '@acme/safety';
 import {
   compileLearnerBrief,
   planeRegisterFor,
@@ -103,6 +103,20 @@ export type CoachEvent =
        * server's signature over the text that carries it.
        */
       voice?: { tone: string; tag: string };
+      /**
+       * A pre-rendered clip to play instead of a live render.
+       *
+       * Only the crisis script sets it. The id is a public enumeration, not a
+       * secret (the baked route's own header says so), and naming it on the
+       * frame is what lets the client play the RIGHT register — `s4-young` and
+       * `s4-older` are two different scripts and matching on the text to tell
+       * them apart would be a paraphrase check `isFixedCrisisScript` already
+       * exists to make unnecessary.
+       *
+       * Mutually exclusive with `live` in practice and by intent: a piece marked
+       * `crisis: true` must never reach a live render.
+       */
+      piece?: string;
     }
   /**
    * A safety verdict stopped this turn. Terminal, and now three things:
@@ -322,15 +336,31 @@ export async function* coachStream(
       else if (outcome.kind === 'redirect') yield { kind: 'replace', text: outcome.text, live: true };
       else if (outcome.kind === 'refused') yield { kind: 'replace', text: outcome.reason, live: true };
       /*
-        NOT `live`. The S4 script's audio is baked (`BAKED_PIECES`,
-        `crisis: true` — serve the cache or serve nothing) and must never reach
-        a live render. It is still SILENT on the client today, which is a
-        separate and more serious defect than the one this line is part of:
-        the clip exists and nothing requests it. Left as it was rather than
-        fixed in passing, because the crisis path is not a thing to change
-        without doc 07 open.
+        NOT `live`, and NAMED instead. The S4 script's audio is baked
+        (`BAKED_PIECES`, `crisis: true` — serve the cache or serve nothing) and
+        must never reach a live render, so the frame carries the PIECE and no
+        tag. The client plays the clip; nothing about this sentence is ever
+        composed, rendered or stitched.
+
+        This was silent on the client until now — the clip existed, the route to
+        fetch it existed, and nothing asked for it — so a child who reached S4
+        read the hardest sentence in the product while Natalie said nothing.
+
+        The register is decided by comparing against `S4_SCRIPTS.young` itself,
+        which is an identity check and not a heuristic: `crisisResponse` sets
+        `message: S4_SCRIPTS[gradeBand]`, so the value here IS one of those two
+        frozen constants. Reading the band off the outcome would be better still
+        and it is not on there — `SafetyOutcome`'s crisis arm carries the
+        response, not the context — and widening the published protocol type to
+        carry an audio id is a bigger change than this defect earns.
       */
-      else if (outcome.kind === 'crisis') yield { kind: 'replace', text: outcome.response.message };
+      else if (outcome.kind === 'crisis') {
+        yield {
+          kind: 'replace',
+          text: outcome.response.message,
+          piece: outcome.response.message === S4_SCRIPTS.young ? 's4-young' : 's4-older',
+        };
+      }
       else yield { kind: 'blocked' };
       return;
     }
