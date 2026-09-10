@@ -75,6 +75,12 @@ export interface ComposerProps {
   onPickCamera?: () => void;
   onPickImage?: () => void;
   onPickDocument?: () => void;
+  /**
+   * Open the whiteboard. Sits with the attach actions because that is what it
+   * is from the composer's side: another way to put something into the turn —
+   * one the child makes rather than one they already have.
+   */
+  onPickDraw?: () => void;
   /** Starts a voice turn. Absent on web until MediaRecorder is wired. */
   onStartRecording?: () => void;
   /** Live recording state, owned by the host. */
@@ -103,6 +109,7 @@ export function Composer({
   onPickCamera,
   onPickImage,
   onPickDocument,
+  onPickDraw,
   onStartRecording,
   recording,
   onCancelRecording,
@@ -151,7 +158,15 @@ export function Composer({
   const pickPicture = onPickImage ?? onPickCamera;
   const showPicture = !disabled && !atImageCap && pickPicture !== undefined;
   const showDocument = !disabled && onPickDocument !== undefined;
-  const canAttach = showPicture || showDocument;
+  /*
+    The board is offered only where there is no pane holding one. The screen
+    decides that — it is the thing that knows its own width class — and simply
+    omits the handler at pane width, so the same rule that hides an unwired
+    affordance also stops the composer offering a second way into a surface the
+    learner is already looking at.
+  */
+  const showDraw = !disabled && onPickDraw !== undefined;
+  const canAttach = showPicture || showDocument || showDraw;
 
   /*
     THE ROW MEASURES ITSELF, NOT THE WINDOW.
@@ -203,9 +218,19 @@ export function Composer({
     note above describes — one list behind a `+`, not a row of keys. Two
     actions still sit out on the bar where there is room for them.
   */
-  const attachCount = (showCamera ? 1 : 0) + (showPicture ? 1 : 0) + (showDocument ? 1 : 0);
+  const attachCount =
+    (showCamera ? 1 : 0) + (showPicture ? 1 : 0) + (showDocument ? 1 : 0) + (showDraw ? 1 : 0);
+  /*
+    `showDraw` forces the list open, because the board has no key of its own on
+    the bar. Giving it one would put a fourth control beside the field, which is
+    the arrangement the note above records as squeezing the input to nothing —
+    and the board is the least likely of the four, so it is the one that belongs
+    behind the `+` rather than the one that pushes the others there.
+  */
   const compactAttach =
-    attachCount > 2 || (rowWidth !== null && rowWidth < COMPACT_ROW_DP && showPicture && showDocument);
+    showDraw ||
+    attachCount > 2 ||
+    (rowWidth !== null && rowWidth < COMPACT_ROW_DP && showPicture && showDocument);
 
   /*
     Camera FIRST, then library, then files — Noom's and BFF's order in the
@@ -216,15 +241,19 @@ export function Composer({
     ...(showCamera ? [{ id: 'camera', title: 'Take a photo' }] : []),
     ...(onPickImage ? [{ id: 'picture', title: 'Photo library' }] : []),
     { id: 'document', title: 'File' },
+    /* Last, and it is the only one that is not a file the child already has:
+       the other three fetch something, this one makes something. */
+    ...(showDraw ? [{ id: 'draw', title: 'Draw it' }] : []),
   ];
 
   const onAttachAction = useCallback(
     (id: string) => {
       if (id === 'camera') onPickCamera?.();
       else if (id === 'picture') onPickImage?.();
+      else if (id === 'draw') onPickDraw?.();
       else onPickDocument?.();
     },
-    [onPickCamera, onPickImage, onPickDocument],
+    [onPickCamera, onPickImage, onPickDocument, onPickDraw],
   );
 
   /*
@@ -552,7 +581,16 @@ export function Composer({
               file's header already commits to; the `+` is only where the list
               hangs from when the bar has no room to spread it out.
             */
-            <Menu actions={attachActions} onAction={onAttachAction} title="Add to your answer">
+            /*
+              `up`: the composer is the bottom row of the screen, so a panel
+              anchored under this key opens off the fold.
+            */
+            <Menu
+              actions={attachActions}
+              onAction={onAttachAction}
+              title="Add to your answer"
+              placement="up"
+            >
               <View
                 role="button"
                 aria-label="Add a photo or file"

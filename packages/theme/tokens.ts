@@ -297,6 +297,32 @@ export const semantic = {
     light: 'rgba(255, 225, 77, 0.24)',
     dark: 'rgba(242, 199, 0, 0.24)',
   },
+  /*
+    THE WHITEBOARD'S SIX PENS — and they are the only colours in this file that
+    do not change with the scheme.
+
+    A swatch is a SAMPLE, not a surface: it shows the learner what the stroke
+    will look like, and the stroke is drawn by Quickdraw on its light paper in
+    both schemes (see `packages/ui/whiteboard.types.ts` for why the board is
+    always light). A chip that darkened at night would be advertising a colour
+    the board cannot draw.
+
+    The values are Quickdraw's own light-theme `stroke` entries
+    (`@quickdrawjs/core/src/palette.js`), copied rather than imported: the
+    engine is a browser module and pulling it in for six strings would put DOM
+    code in the native bundle. They move only when the vendor's palette does.
+
+    Six of the vendor's twelve. A child working through arithmetic needs a
+    default, a correction, a "this is the bit I mean", and a couple of choices
+    that feel like choices — not a paint set to browse mid-problem.
+  */
+  'board-black': { light: '#1d1d1d', dark: '#1d1d1d' },
+  'board-blue': { light: '#4263eb', dark: '#4263eb' },
+  'board-red': { light: '#e03131', dark: '#e03131' },
+  'board-green': { light: '#099268', dark: '#099268' },
+  'board-orange': { light: '#e16919', dark: '#e16919' },
+  'board-violet': { light: '#ae3ec9', dark: '#ae3ec9' },
+
   ballpoint: { light: palette.gold[600], dark: palette.gold[400] },
   redpen: { light: palette.rose[600], dark: palette.rose[300] },
   grade: { light: palette.forest[600], dark: palette.forest[300] },

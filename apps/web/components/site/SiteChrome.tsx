@@ -29,6 +29,26 @@ export interface SiteChromeProps {
 */
 const CHROMELESS_PREFIXES = ['/tutor', '/share', '/login', '/onboarding', '/handoff'];
 
+/**
+ * Surfaces that OWN the viewport instead of growing past it.
+ *
+ * `min-h-dvh` is a floor, not a ceiling, so a column under it grows to its
+ * content — and on the tutor session the content is a conversation. The
+ * measured result before this existed: a `/tutor` document 9123px tall in a
+ * 900px window, with the whole page scrolling, the thread's own virtual
+ * scroller never bounded so it rendered every turn, the composer somewhere past
+ * the fold, and Natalie's WebGPU canvas asked for a 1124×17958 texture — which
+ * exceeds the 8192 device limit, so her renderer failed with hundreds of
+ * validation errors on every session. `TutorStage`'s own note ("the
+ * conversation is the whole screen and should own it") describes the intent
+ * that this line is what actually enforces.
+ *
+ * A separate list rather than changing the chromeless branch outright: `/login`
+ * and `/onboarding` are documents and are supposed to scroll. Only a surface
+ * whose panes do their own scrolling may be capped.
+ */
+const ONE_SCREEN_PREFIXES = ['/tutor'];
+
 export function SiteChrome({ children, orgBranding }: SiteChromeProps) {
   const { status } = useAppSession();
   const pathname = usePathname();
@@ -38,9 +58,25 @@ export function SiteChrome({ children, orgBranding }: SiteChromeProps) {
     return tenantCssVariables(resolveTenantTheme(brand, null));
   }, [orgBranding]);
 
-  if (CHROMELESS_PREFIXES.some((p) => pathname === p || pathname.startsWith(`${p}/`))) {
+  const matches = (prefixes: readonly string[]) =>
+    prefixes.some((p) => pathname === p || pathname.startsWith(`${p}/`));
+
+  if (matches(CHROMELESS_PREFIXES)) {
     return (
-      <TenantScope variables={tenantVars} className="flex min-h-dvh flex-1 flex-col">
+      <TenantScope
+        variables={tenantVars}
+        /*
+          `h-dvh` WITHOUT `flex-1`, and the omission is the load-bearing half.
+          As a growing flex item this element resolves its height from its
+          content no matter what `height` says, so `flex-1 h-dvh` measured 9123px
+          in a 900px window — the exact bug it was added to fix. Dropped from the
+          flex line it takes the viewport as an explicit box and clips, and the
+          panes inside scroll themselves.
+        */
+        className={`flex flex-col ${
+          matches(ONE_SCREEN_PREFIXES) ? 'h-dvh overflow-hidden' : 'min-h-dvh flex-1'
+        }`}
+      >
         {children}
       </TenantScope>
     );

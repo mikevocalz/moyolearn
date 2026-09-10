@@ -30,9 +30,12 @@ export { default as MoyoLearnLogo, type MoyoLearnLogoProps } from './MoyoLearnLo
 export { default as MoyoMark, type MoyoMarkProps } from './MoyoMark';
 export { TutorStage, type TutorStageProps, type TutorStageState } from './TutorStage';
 export { TutorPresence, type TutorPresenceProps } from './TutorPresence';
-export { isTutorRevealed } from './tutor-view';
+export { isTutorRevealed, hasWorkPane } from './tutor-view';
 export type { TutorPresencePreference, ResolvedTutorPresence } from './tutor-view';
 export { LearningCanvas, type LearningCanvasProps } from './LearningCanvas';
+export { Whiteboard, type WhiteboardProps } from './Whiteboard';
+export { WhiteboardSheet, type WhiteboardSheetProps } from './WhiteboardSheet';
+export type { WhiteboardHandle, WhiteboardSnapshot, WhiteboardTool } from './whiteboard.types.ts';
 export { SessionToolbar, type SessionToolbarProps } from './SessionToolbar';
 export { MessageBubble, type MessageBubbleProps } from './MessageBubble';
 export { StreamedText, type StreamedTextProps } from './StreamedText';

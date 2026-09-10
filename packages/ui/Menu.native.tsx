@@ -72,6 +72,7 @@ function createMenuStore() {
  * and clamped so it can never open off-screen.
  */
 export function Menu({ children, actions, onAction, title, className }: MenuProps) {
+  // `placement` is web-only: the system sheet decides where it appears here.
   const store = useRef<ReturnType<typeof createMenuStore> | null>(null);
   store.current ??= createMenuStore();
   const open = useStore(store.current, (state) => state.open);

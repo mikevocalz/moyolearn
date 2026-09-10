@@ -51,6 +51,12 @@ catalogs:
     '@payloadcms/ui':
       specifier: 4.0.0-canary.29
       version: 4.0.0-canary.29
+    '@quickdrawjs/react':
+      specifier: 0.2.0
+      version: 0.2.0
+    '@quickdrawjs/react-native':
+      specifier: 0.2.0
+      version: 0.2.0
     '@react-navigation/native':
       specifier: 7.3.13
       version: 7.3.13
@@ -297,6 +303,9 @@ catalogs:
     react-native-web:
       specifier: 0.21.2
       version: 0.21.2
+    react-native-webview:
+      specifier: 13.16.1
+      version: 13.16.1
     react-native-worklets:
       specifier: 0.10.1
       version: 0.10.1
@@ -601,6 +610,9 @@ importers:
       react-native-webgpu:
         specifier: 0.9.0
         version: 0.9.0(react-native-reanimated@4.5.1(react-native-worklets@0.10.1(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8))(react-native-worklets@0.10.1(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
+      react-native-webview:
+        specifier: 'catalog:'
+        version: 13.16.1(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
       react-native-worklets:
         specifier: 'catalog:'
         version: 0.10.1(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
@@ -986,6 +998,9 @@ importers:
       expo-document-picker:
         specifier: 'catalog:'
         version: 57.0.1(expo@58.0.0-canary-20260812-27f94d4)
+      expo-file-system:
+        specifier: 57.0.5
+        version: 57.0.5(expo@58.0.0-canary-20260812-27f94d4)(react-native@0.87.0(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))
       expo-image-manipulator:
         specifier: 'catalog:'
         version: 57.0.9(expo@58.0.0-canary-20260812-27f94d4)
@@ -1391,6 +1406,12 @@ importers:
       '@nandorojo/galeria':
         specifier: 3.0.3
         version: 3.0.3(expo@57.0.15)(react-dom@19.2.8(react@19.2.8))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
+      '@quickdrawjs/react':
+        specifier: 'catalog:'
+        version: 0.2.0(react@19.2.8)
+      '@quickdrawjs/react-native':
+        specifier: 'catalog:'
+        version: 0.2.0(react-native-webview@13.16.1(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
       '@tanstack/react-form':
         specifier: 'catalog:'
         version: 1.33.5(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -1445,6 +1466,9 @@ importers:
       react-native-svg:
         specifier: 'catalog:'
         version: 15.15.4(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
+      react-native-webview:
+        specifier: 'catalog:'
+        version: 13.16.1(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
       solito:
         specifier: 'catalog:'
         version: 5.0.0
@@ -4331,6 +4355,21 @@ packages:
 
   '@protobufjs/utf8@1.1.2':
     resolution: {integrity: sha512-b1UQwcEZ4yCnMCD8DAL1VlbvBJE9/IX4FTIp7BG1xYpf29SLazLSrqUkj4w7Y5y7cCVP6E5tcqqcI0xemPkHug==}
+
+  '@quickdrawjs/core@0.2.0':
+    resolution: {integrity: sha512-87v/ZvyX4KYhCWqlR/js8poD6Pf1NuR4IB9RIkNxQ6g5XTUsH5vSePZkoXufVz0PRMFJv1Tmfv7RlqY9U79wMA==}
+
+  '@quickdrawjs/react-native@0.2.0':
+    resolution: {integrity: sha512-0ehXLvGgLE/kXxIjgWFeEASTtJbdJ+r38Ylp13Z5onneLU0qu0W53CsF6QAEM7iAh/XYp9C2++yKHIqfpj5IcQ==}
+    peerDependencies:
+      react: 19.2.8
+      react-native: '>=0.70'
+      react-native-webview: '>=11'
+
+  '@quickdrawjs/react@0.2.0':
+    resolution: {integrity: sha512-VS1Y2VSJRrb7PD21Ksx0/BQhpYxn09vRvVMLlDfsEk04vf0dGmUgnAVPL+zkZh1oyTNMbV2sXgXm66KNQ5KaNA==}
+    peerDependencies:
+      react: 19.2.8
 
   '@radix-ui/primitive@1.1.3':
     resolution: {integrity: sha512-JTF99U/6XIjCBo0wqkU5sK10glYe27MRRsfwoiq5zzOEZLHU3A3KCMa5X/azekYRCJ0HlwI0crAXS/5dEHTzDg==}
@@ -15767,6 +15806,20 @@ snapshots:
 
   '@protobufjs/utf8@1.1.2': {}
 
+  '@quickdrawjs/core@0.2.0': {}
+
+  '@quickdrawjs/react-native@0.2.0(react-native-webview@13.16.1(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)':
+    dependencies:
+      '@quickdrawjs/core': 0.2.0
+      react: 19.2.8
+      react-native: 0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8)
+      react-native-webview: 13.16.1(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
+
+  '@quickdrawjs/react@0.2.0(react@19.2.8)':
+    dependencies:
+      '@quickdrawjs/core': 0.2.0
+      react: 19.2.8
+
   '@radix-ui/primitive@1.1.3': {}
 
   '@radix-ui/react-collection@1.1.7(@types/react-dom@19.2.3(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
@@ -24243,7 +24296,6 @@ snapshots:
       invariant: 2.2.4
       react: 19.2.8
       react-native: 0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8)
-    optional: true
 
   react-native-webview@13.16.1(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8):
     dependencies:
@@ -24251,7 +24303,6 @@ snapshots:
       invariant: 2.2.4
       react: 19.2.8
       react-native: 0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8)
-    optional: true
 
   react-native-webview@13.16.1(react-native@0.87.0(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8):
     dependencies:

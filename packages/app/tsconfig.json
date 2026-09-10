@@ -5,6 +5,7 @@
     "features/**/*",
     "core/**/*",
     "providers/**/*.test.ts",
-    "index.ts"
+    "index.ts",
+    "**/*.d.ts"
   ]
 }

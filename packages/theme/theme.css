@@ -329,6 +329,12 @@
   --color-highlighter: light-dark(#34B2AD, #12A7A3);
   --color-on-highlighter: light-dark(#0D0C0B, #0D0C0B);
   --color-highlighter-underlay: light-dark(rgba(255, 225, 77, 0.24), rgba(242, 199, 0, 0.24));
+  --color-board-black: light-dark(#1d1d1d, #1d1d1d);
+  --color-board-blue: light-dark(#4263eb, #4263eb);
+  --color-board-red: light-dark(#e03131, #e03131);
+  --color-board-green: light-dark(#099268, #099268);
+  --color-board-orange: light-dark(#e16919, #e16919);
+  --color-board-violet: light-dark(#ae3ec9, #ae3ec9);
   --color-ballpoint: light-dark(#2952D9, #5C8AFF);
   --color-redpen: light-dark(#A03333, #EB9C9C);
   --color-grade: light-dark(#28613A, #7DB98B);

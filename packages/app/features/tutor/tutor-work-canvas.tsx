@@ -41,6 +41,21 @@ export interface TutorWorkCanvasProps {
   problem: string | null;
   /** The conversation, read only for the pictures the learner has sent. */
   messages: readonly TutorMessage[];
+  /**
+   * Draw the QUESTION only, without the pictures under it.
+   *
+   * The workbench sets it, and the reason is that the pictures include the
+   * board's own exports: every "Ask Natalie" stages a PNG of the whiteboard as
+   * a learner image, so the strip above the board filled up with photographs of
+   * the board sitting directly beneath it. In the thread that repetition is
+   * correct — it is the turn the child sent — and above the board it is the
+   * same paper twice.
+   *
+   * The heading changes with it. "What we're working on" over a photo strip is
+   * a caption for the whole workspace; over one line of arithmetic in a column
+   * whose other half IS the working, it is just the question.
+   */
+  problemOnly?: boolean;
 }
 
 /** True when there is something worth giving half the window to. */
@@ -59,8 +74,8 @@ function learnerImages(messages: readonly TutorMessage[]): readonly TutorAttachm
     .flatMap((m) => (m.attachments ?? []).filter((a) => a.kind === 'image'));
 }
 
-export function TutorWorkCanvas({ problem, messages }: TutorWorkCanvasProps) {
-  const images = learnerImages(messages);
+export function TutorWorkCanvas({ problem, messages, problemOnly = false }: TutorWorkCanvasProps) {
+  const images = problemOnly ? [] : learnerImages(messages);
   const text = problem?.trim() ?? '';
   if (text.length === 0 && images.length === 0) return null;
 
@@ -77,7 +92,9 @@ export function TutorWorkCanvas({ problem, messages }: TutorWorkCanvasProps) {
       something inside a message.
     */
     <View className="w-full gap-group">
-      <Text className="font-sans text-caption text-text-muted">What we&apos;re working on</Text>
+      <Text className="font-sans text-caption text-text-muted">
+        {problemOnly ? 'The question' : "What we're working on"}
+      </Text>
       {text.length > 0 ? (
         /*
           Mono and tabular, because the content is arithmetic and a proportional

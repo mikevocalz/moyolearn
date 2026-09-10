@@ -130,20 +130,26 @@ inventing content to fit a shape. Two would have been a stretch; three would hav
 been a fiction. If a rendered Natalie ever earns a column of her own, that is a
 decision to make with the ADR below in hand, not a layout to pre-build.
 
+> **Width qualifier, added 2026-09-09.** Everything below describes `compact`
+> and `medium` and is still correct there. Above `medium` the composition is
+> three columns — conversation · whiteboard · Natalie — under ADR-107's two
+> signed amendments. "Thread-first" is the rule for a window with one column of
+> room, not for every window.
+
 ### The delta, stated plainly
 
 | Doc | What it says | What is built | Status |
 |---|---|---|---|
-| doc 23 §5 | medium+ is **two columns**, `380px` + `1fr`, right = `LearningCanvas` | Single spine at every width; the work is a turn. | **Delta — needs Mike.** The doc's intent (the work gets real estate at width) is met differently: the work gets the full measure of the thread instead of half the window. Recommendation: amend §5. |
-| doc 37 §3.3 / ADR-107 | "Learner: never" — no `AdaptivePanes`, no split view, no two-pane composition on a learner surface | The tutor session is now single-column at every width. | **Newly compliant.** It was in breach while doc 23 §5's split shipped; this closes it rather than widening it. |
+| doc 23 §5 | medium+ is **two columns**, `380px` + `1fr`, right = `LearningCanvas` | Single spine at `compact` and `medium`; three columns at `expanded`, the middle one a working whiteboard. | **Closed 2026-09-09.** ADR-107 amendment 2 restored the split above `medium`, and `LearningCanvas` now has the drawing surface doc 23 §5 always meant by "equation/whiteboard". Both halves of this row are true, each at its own width — see the qualifier at the top of this file. |
+| doc 37 §3.3 / ADR-107 | "Learner: never" — no `AdaptivePanes`, no split view, no two-pane composition on a learner surface | Single-column to `medium`; the signed three-column exception above it. | **Exempted, not in breach.** ADR-107's amendments name this screen, the date and their conditions. The first condition is the live one: nothing is reachable in a pane that is not reachable without it — which is why the board also opens as `WhiteboardSheet` from the composer wherever there is no column for it. |
 | doc 02 §4.1 | "a child never gets the Triptych" | Honoured, and then some. | Consistent. |
 | doc 02 §2.1 | pane budget by width class | Untouched for the tutor; `AdaptivePanes` unchanged and still within budget. | Consistent. |
 
-### Loose end, named rather than left
+### Loose end, closed
 `packages/theme/tokens.ts` gained `'pane-tutor-stage': '20rem'` while a trailing
-presence column was being explored. That column is not shipped, so the token is
-currently unused. It is left in place deliberately as the sized slot the avatar
-ADR's option B would need — if that ADR is rejected, delete the token.
+presence column was being explored, and this file recorded it as unused and
+deletable. The column shipped: Natalie is the detail pane of the three-column
+composition. The token stays, and it is no longer speculative.
 
 ## Verified
 - Web (Chrome via Playwright, `apps/web` at :3000) at 1440 / 1080 / 390: header

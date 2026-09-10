@@ -103,6 +103,7 @@ function AdaptivePanesNavigator({
   detail,
   detailOpen,
   primaryWidthDp,
+  supplementaryWidthDp,
   paneControls = true,
   ref,
 }: AdaptivePanesProps) {
@@ -294,7 +295,7 @@ function AdaptivePanesNavigator({
           {columns[1] ? (
             <CollapsiblePane
               open={visible.supplementary}
-              width={PANE_WIDTH_DP.supplementary}
+              width={supplementaryWidthDp ?? PANE_WIDTH_DP.supplementary}
               fill={fillPane === 'supplementary'}
               className={visible.supplementary ? `border-r ${PANE_DIVIDER}` : undefined}
             >

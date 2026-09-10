@@ -80,6 +80,22 @@ export interface AdaptivePanesProps {
    */
   primaryWidthDp?: number;
   /**
+   * The supplementary (middle) pane's width in dp, overriding the token.
+   *
+   * The tutor session is the reason it exists. Its middle column is a
+   * WHITEBOARD, and 21rem — a width chosen for a list of records — reads as
+   * squished for a canvas a child writes arithmetic on. Widening the token
+   * instead would have moved every three-column adult surface with it, so the
+   * host that needs a different measure states it.
+   *
+   * Letting that pane absorb the window was the other option and it overshot:
+   * at 1280dp the board took ~600 and the composition lost its balance. A
+   * canvas wants MORE room, not all of it.
+   *
+   * Omitted — which is every adult pane surface — nothing changes.
+   */
+  supplementaryWidthDp?: number;
+  /**
    * Whether the host draws its OWN row of `PaneToggle`s above the detail pane.
    * Defaults to true, which is where every pane surface gets its controls.
    *

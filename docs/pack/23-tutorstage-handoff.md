@@ -169,7 +169,10 @@ The canvas is drawn at the 3–5 default; the speaking artboard carries a live b
 | Width class | Layout |
 |---|---|
 | **compact** (<600dp) | Single spine: header · stage (flex-grow) · caption · composer. Stage takes all remaining height — it must never be given a fixed height, or the avatar clips on short devices. |
-| **medium+** (≥600dp) | Two columns, `380px` + `minmax(0, 1fr)`, `gap-group` (32). Left: presence + her turn. Right: `LearningCanvas` (equation/whiteboard) + its own input. Header spans both. |
+| **medium** (600–839dp) | Still a single spine, and the work rides inside the turn that raised it. Two panes tile at this class but the third has nowhere to go, and a conversation plus a board is three things — see `docs/design/tutor-session-thread-first.md`. |
+| **expanded+** (≥840dp) | Three columns: conversation (`380dp`, resizable) · workbench (`420dp`) · Natalie. The workbench is the question and `LearningCanvas` under it, with the drawing surface inside — `packages/ui/Whiteboard.tsx`. Header spans all three. |
+
+**The width qualifier is load-bearing** (ADR-107 amendments 1 and 2, 2026-09-03). This row said "medium+ is two columns" and shipped as a single spine at every width for months, then as three columns above `medium`; both readings were true of some window and neither was true of all of them. The exemption carries a condition: nothing may be reachable in a pane that is not reachable without one, which is why the board also opens full-screen from the composer at `compact` and `medium` (`WhiteboardSheet`).
 
 Doc 03 §2.3 M3 classes; doc 10 §3.1 — `WidthClass` is the single vocabulary and *"if CSS can express it, JS must not"*. Bento composition is explicitly **excluded** here: doc 02 A.3 keeps the child's guided path a single spine on purpose.
 

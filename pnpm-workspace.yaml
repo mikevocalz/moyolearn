@@ -97,6 +97,23 @@ catalog:
   sonner: 2.0.8
   sonner-native: 0.27.0
 
+  # whiteboard (doc 23 §5's `LearningCanvas` renderer). Quickdraw ships one
+  # engine and two bindings off it, cut from the same version — `@quickdrawjs/
+  # react` mounts it into a div, `@quickdrawjs/react-native` serves the SAME
+  # engine as an inlined HTML page inside a WebView. They must move together:
+  # the RN package's board HTML is generated from `@quickdrawjs/core` at pack
+  # time, so a version skew is two different engines drawing two different
+  # snapshot shapes, and a board saved on a phone would not open on the web.
+  #
+  # `react-native-webview` is Quickdraw's own peer on native and the version is
+  # `expo@57.0.15`'s `bundledNativeModules.json` entry, not npm's latest (16.x):
+  # it is a native module, so the SDK's pin is the compatibility statement and
+  # `expo install` would choose exactly this.
+  "@quickdrawjs/core": 0.2.0
+  "@quickdrawjs/react": 0.2.0
+  "@quickdrawjs/react-native": 0.2.0
+  react-native-webview: 13.16.1
+
   # web
   next: 16.3.3
   nextjs-toploader: 3.9.17

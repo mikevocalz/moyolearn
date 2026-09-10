@@ -50,3 +50,45 @@ export function writeProblemIsReading(storage: ProblemStorage, isReading: boolea
   if (isReading) storage.set(PROBLEM_READING_KEY, '1');
   else storage.remove(PROBLEM_READING_KEY);
 }
+
+/**
+ * The learner's whiteboard, across a reload.
+ *
+ * Same storage as the problem and for the same reason: the working a child did
+ * on their own scratch paper is their homework, and losing it to a refresh is
+ * the defect this file was written to fix, one artefact over.
+ *
+ * LOCAL ONLY, and that is a limit rather than an oversight. The conversation
+ * resumes from the SERVER (`tutor.store`'s `hydrate`), so it survives a change
+ * of device; the board does not, because there is no carrier for it — no route
+ * under `/api/tutor/` accepts one and inventing a collection to hold a child's
+ * scratch paper is not a call this change gets to make. A learner who moves
+ * from the laptop to the phone finds their conversation and an empty board.
+ *
+ * It is a Quickdraw snapshot serialised as JSON — vector records, no bitmaps.
+ * The engine embeds pasted images as data URLs, which is what would make a
+ * snapshot large enough to matter against localStorage's ~5 MB, and the tutor's
+ * board mounts with `hideUi` and no paste path, so nothing can put one in.
+ */
+export const BOARD_KEY = 'tutor-board-snapshot';
+
+export function readBoard(storage: ProblemStorage): unknown {
+  const raw = storage.getString(BOARD_KEY);
+  if (raw === undefined || raw.length === 0) return undefined;
+  try {
+    return JSON.parse(raw);
+  } catch {
+    /*
+      A snapshot written by an older engine that this one cannot parse is not an
+      error to report — it is a board that is gone. Returning `undefined` opens
+      a blank one, which is what the child would get anyway, instead of throwing
+      inside a render.
+    */
+    return undefined;
+  }
+}
+
+export function writeBoard(storage: ProblemStorage, snapshot: unknown): void {
+  if (snapshot === undefined || snapshot === null) storage.remove(BOARD_KEY);
+  else storage.set(BOARD_KEY, JSON.stringify(snapshot));
+}

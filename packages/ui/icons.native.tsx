@@ -114,3 +114,9 @@ export const CreditCard = icon(L.CreditCard as React.ComponentType<object>, 'Cre
 export const LogOut = icon(L.LogOut as React.ComponentType<object>, 'LogOut');
 export const GraduationCap = icon(L.GraduationCap as React.ComponentType<object>, 'GraduationCap');
 export const Receipt = icon(L.Receipt as React.ComponentType<object>, 'Receipt');
+
+// whiteboard tray (Whiteboard.tsx) — the three marks a child makes on their own
+// working, plus the ask.
+export const Eraser = icon(L.Eraser as React.ComponentType<object>, 'Eraser');
+export const Highlighter = icon(L.Highlighter as React.ComponentType<object>, 'Highlighter');
+export const Sparkles = icon(L.Sparkles as React.ComponentType<object>, 'Sparkles');

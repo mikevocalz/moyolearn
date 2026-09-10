@@ -46,6 +46,7 @@ import { SessionToolbar } from './SessionToolbar';
 import { Badge } from './Badge';
 import { Button } from './Button';
 import { TutorPresence } from './TutorPresence';
+import { hasWorkPane } from './tutor-view';
 import type { ResolvedTutorPresence, TutorPresencePreference } from './tutor-view';
 
 /**
@@ -59,6 +60,21 @@ import type { ResolvedTutorPresence, TutorPresencePreference } from './tutor-vie
  * pane divider resizes it within `PRIMARY_WIDTH_MIN`/`MAX` (200-420).
  */
 const CONVERSATION_PANE_DP = 380;
+
+/**
+ * The whiteboard's column, in dp.
+ *
+ * `pane-supplementary` (21rem -> 294 at the app's rem polyfill of 14) is a width
+ * chosen for a list of records, and a canvas is not one: at that measure the
+ * board's own tray wrapped onto two lines and the paper read as squished.
+ *
+ * 420 rather than "let it fill". Letting it absorb the window was tried and
+ * overshot — at a 1280dp window the board took ~600 and the three columns lost
+ * their balance. It is the conversation pane's 380 plus the tray's own inset,
+ * so a line of working and a full control row both fit without the board
+ * becoming the screen.
+ */
+const BOARD_PANE_DP = 420;
 
 /** A spoken or written turn from the tutor. */
 export interface Utterance {
@@ -154,6 +170,8 @@ export interface TutorStageProps {
   onPickCamera?: () => void;
   onPickImage?: () => void;
   onPickDocument?: () => void;
+  /** Open the whiteboard. Supplied only where no pane is holding one. */
+  onPickDraw?: () => void;
   onStartRecording?: () => void;
   recording?: { elapsedSec: number; levels: readonly number[] };
   /**
@@ -184,6 +202,18 @@ export interface TutorStageProps {
    * card, it is simply a turn that has no work attached yet.
    */
   canvas?: React.ReactNode;
+  /**
+   * The learner's whiteboard, and it is a SECOND slot rather than more
+   * `canvas` because the two have opposite rules about where they may be drawn.
+   *
+   * `canvas` is content: at pane width it takes the column, and below it rides
+   * inside the turn that raised it. A board cannot do the second thing — a
+   * drawing surface inside a message bubble is 200dp of paper a child cannot
+   * write on — so this is never folded into a turn. Where there is no column
+   * for it, the screen opens `WhiteboardSheet` instead, which is the condition
+   * ADR-107's first amendment attaches to this screen's pane exemption.
+   */
+  board?: React.ReactNode;
   className?: string;
 }
 
@@ -475,6 +505,7 @@ export function TutorStage({
   onPickCamera,
   onPickImage,
   onPickDocument,
+  onPickDraw,
   onStartRecording,
   recording,
   onDraftChange,
@@ -488,6 +519,7 @@ export function TutorStage({
   onRetry,
   onSignIn,
   canvas,
+  board,
   className,
 }: TutorStageProps) {
   const [draft, setDraft] = useState('');
@@ -544,7 +576,15 @@ export function TutorStage({
     until the learner has a problem or a photo, and an empty middle column is
     the empty-box problem doc 23 §5 already ruled on.
   */
-  const workPane = panes && windowClass !== 'medium' && canvas !== undefined;
+  /*
+    THE BOARD EARNS THE PANE ON ITS OWN, and that is the one thing this gate
+    changed. `canvas` is undefined until the learner has a problem or a photo,
+    so the column used to appear and disappear underneath them as a session
+    moved. Scratch paper is useful before anything is written on it — it is the
+    one artefact an empty state cannot be argued against — so once a board is
+    supplied the pane is stable for the length of the session.
+  */
+  const workPane = hasWorkPane(windowClass) && (canvas !== undefined || board !== undefined);
 
   /*
     HER PANE *IS* THE REVEAL — so it starts CLOSED, and the control opens it.
@@ -710,6 +750,7 @@ export function TutorStage({
         onPickCamera={onPickCamera}
         onPickImage={onPickImage}
         onPickDocument={onPickDocument}
+        onPickDraw={onPickDraw}
         onStartRecording={onStartRecording}
         recording={recording}
         onCancelRecording={onCancelRecording}
@@ -738,7 +779,16 @@ export function TutorStage({
   */
   const paneControls = panes ? (
     <>
-      {workPane ? <PaneToggle pane="supplementary" columnCount={2} label="Homework" /> : null}
+      {/* "Homework" was the label while the pane held a problem and a photo of
+          it. With a board in there it is a workspace, and a control has to name
+          what it opens. */}
+      {workPane ? (
+        <PaneToggle
+          pane="supplementary"
+          columnCount={2}
+          label={board === undefined ? 'Homework' : 'Board'}
+        />
+      ) : null}
       {/*
         HERS IS CONTROLLED. The Homework toggle beside it is a layout
         preference and belongs in `pane-overrides`; this one reports her
@@ -814,6 +864,10 @@ export function TutorStage({
             paneControls={false}
             detailOpen={detailOpen}
             primaryWidthDp={CONVERSATION_PANE_DP}
+            /* The board's column is wider than the token, and Natalie still
+               absorbs what is left — a portrait fills an alcove happily, and
+               the board is the one that needed the extra measure. */
+            supplementaryWidthDp={BOARD_PANE_DP}
             detail={
               /*
                 SHE IS THE WHOLE PANE, centred in it. A figure hugging the
@@ -903,7 +957,13 @@ export function TutorStage({
                   defect that change fixed. The PANE is full height; the work
                   sits at the top of it.
                 */}
-                <View className="flex-1 gap-stack bg-surface-raised p-inset">{canvas}</View>
+                <View className="flex-1 gap-stack bg-surface-raised p-inset">
+                  {canvas}
+                  {/* `flex-1` on the board and content height on the work above
+                      it: the question is one line, the answer is the rest of
+                      the column. */}
+                  {board ? <View className="flex-1">{board}</View> : null}
+                </View>
               </AdaptivePanes.Column>
             ) : null}
           </AdaptivePanes>

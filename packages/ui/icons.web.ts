@@ -103,5 +103,10 @@ export {
   LogOut,
   GraduationCap,
   Receipt,
+  // whiteboard tray (Whiteboard.tsx) — the three marks a child makes on
+  // their own working, plus the ask.
+  Eraser,
+  Highlighter,
+  Sparkles,
 } from 'lucide-react';
 export type { LucideProps as IconProps } from 'lucide-react';

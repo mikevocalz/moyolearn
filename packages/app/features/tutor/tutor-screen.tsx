@@ -13,6 +13,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { useRouter } from 'solito/navigation';
 import {
   TutorStage,
+  WhiteboardSheet,
+  hasWorkPane,
   isCollapsed,
   useSizeClass,
   useWindowSizeClass,
@@ -21,6 +23,7 @@ import {
 } from '@acme/ui';
 import { useCaptureStore } from '../capture';
 import { buttonSizeForBand, type AgeBand } from '../capture';
+import { countImages, MAX_TUTOR_IMAGES } from '@acme/ui';
 import { useAppSession } from '../../providers/session';
 import { useTutorStore } from './tutor.store';
 import { API_URL, recommendedTutorPresenceFor } from './tutor-constants.ts';
@@ -43,7 +46,9 @@ const SENTENCE_PAUSE_MS: Record<AgeBand, number> = {
 import { pickNoteImage } from '../schedule/pick-note-image';
 import { pickCamera } from './pick-camera';
 import { TutorOpening } from './tutor-opening';
+import { TutorWorkbench } from './tutor-workbench';
 import { TutorWorkCanvas, hasWorkToShow } from './tutor-work-canvas';
+import { boardImageUri } from './board-image';
 import { pickFile } from '../editor/pick-file';
 import { useAudioStore } from '../editor/audio.store.ts';
 import { readAttachment } from '../capture/read-attachment';
@@ -154,6 +159,12 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     K–2 learner gets her mark on the rail and one press to bring her up.
   */
   const panes = !isCollapsed(windowClass);
+  /*
+    Whether the board has a column of its own. The SAME predicate `TutorStage`
+    uses, imported rather than restated — the two have to agree, and at a width
+    where they did not the learner would get the board twice or not at all.
+  */
+  const workPane = hasWorkPane(windowClass);
   const base = recommendedTutorPresenceFor(ageBand);
   const resolvedTutorPresence: ResolvedTutorPresence =
     tutorPresence === 'auto'
@@ -323,7 +334,22 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     }
   }
 
-  const handleSend = (message: string) => {
+  /**
+   * What a turn is carrying, beyond the words and the tray.
+   *
+   * `fromBoard` is the one distinction the send path could not make on its own,
+   * and getting it wrong is not cosmetic. Every other image a child attaches is
+   * a QUESTION — they point a camera at the thing they are stuck on — so the
+   * reading replaces the session's problem. A board is the opposite: it is
+   * their WORKING on the problem the session already has. Left undistinguished,
+   * a child who wrote "6" on the board would have had `6` installed as the new
+   * problem, and Natalie would have started coaching them on the number six.
+   */
+  interface SendOptions {
+    fromBoard?: boolean;
+  }
+
+  const handleSend = (message: string, { fromBoard = false }: SendOptions = {}) => {
     const trimmed = message.trim();
     const staged = attachments;
     if (!trimmed && staged.length === 0) return;
@@ -414,7 +440,13 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
         a question is the more deliberate act.
       */
       const readWork = fromImages[0] ?? fromDocuments[0];
-      if (readWork !== undefined) {
+      /*
+        A board never becomes the problem. See `SendOptions.fromBoard` — the
+        reading here is the child's answer to the question already on screen,
+        and installing it as the question is how a session ends up coaching a
+        child on their own arithmetic.
+      */
+      if (readWork !== undefined && !fromBoard) {
         // `true`: this came out of a recogniser. It rides to the coach so the
         // turn can say so — see `CoachTurnInput.problemIsReading` for why the
         // caveat cannot simply be written into the problem string.
@@ -425,8 +457,20 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
         ...fromDocuments.map((text, i) =>
           fromDocuments.length > 1 ? `Worksheet ${i + 1}:\n${text}` : text,
         ),
+        /*
+          NAMED, because the same string means two different things depending on
+          where it came from. Off a camera it is the question; off the board it
+          is the child's working, and a coach handed unlabelled arithmetic
+          cannot tell whether it is being asked to solve it or to check it. The
+          picture rides along either way, so the model reads the operators the
+          recogniser's charset cannot carry.
+        */
         ...fromImages.map((text, i) =>
-          fromImages.length > 1 ? `Problem ${i + 1}:\n${text}` : text,
+          fromBoard
+            ? `Here's my working on the whiteboard:\n${text}`
+            : fromImages.length > 1
+              ? `Problem ${i + 1}:\n${text}`
+              : text,
         ),
         ...fromAudio,
         ...(trimmed ? [trimmed] : []),
@@ -550,8 +594,14 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
         // The freshly-read work FIRST. `problem` is the value captured when this
         // render began, so it is by definition the previous question — putting
         // it first graded the child's new answer against their old problem.
-        readWork ?? problem ?? '',
-        trimmed || fromAudio.join(' '),
+        //
+        // Except off the board, where the order inverts for the same reason:
+        // the board holds the ANSWER, so the question is the one the session
+        // already had and the reading is what gets graded against it.
+        fromBoard ? (problem ?? '') : (readWork ?? problem ?? ''),
+        fromBoard
+          ? trimmed || readWork || fromAudio.join(' ')
+          : trimmed || fromAudio.join(' '),
         hintDepth,
       );
     })();
@@ -628,7 +678,14 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     the note — and send an empty turn.
   */
   const sendOnStop = useRef(false);
-  const sendWhenStaged = useRef<string | null>(null);
+  /*
+    Carries the send OPTIONS as well as the id, because two different things now
+    stage-then-send: a voice note, which is an ordinary turn, and the board,
+    which is the learner's working and must not overwrite the problem. A bare id
+    would have made the second indistinguishable from the first at the moment
+    the effect fires.
+  */
+  const sendWhenStaged = useRef<{ id: string; fromBoard: boolean } | null>(null);
 
   /*
     An open recorder is the learner talking — the cue the backchannel nods
@@ -647,7 +704,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       const id = `${Date.now()}-voice`;
       if (sendOnStop.current) {
         sendOnStop.current = false;
-        sendWhenStaged.current = id;
+        sendWhenStaged.current = { id, fromBoard: false };
       }
       addAttachment({
         id,
@@ -679,16 +736,68 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     sendable is the note being IN it, so that is what this waits for.
   */
   useEffect(() => {
-    const id = sendWhenStaged.current;
-    if (id === null) return;
-    if (!attachments.some((a) => a.id === id)) return;
+    const pending = sendWhenStaged.current;
+    if (pending === null) return;
+    if (!attachments.some((a) => a.id === pending.id)) return;
     sendWhenStaged.current = null;
-    handleSend('');
+    handleSend('', { fromBoard: pending.fromBoard });
   });
 
   const handlePickDocument = useCallback(() => {
     void pickFile().then((picked) => stage(picked, 'document', 'application/octet-stream'));
   }, [stage]);
+
+  /*
+    THE BOARD, HANDED TO THE TUTOR.
+
+    It becomes an ATTACHMENT and takes the road a photograph already takes: the
+    reading is on-device, the picture itself rides to the model so the operators
+    survive, the turn lands in the transcript a guardian can review, and the
+    upload queue carries the file. Nothing here is a second pipeline — the whole
+    handler is "make the paper into an image and stage it", and the effect above
+    sends it once it is in the tray.
+
+    `asking` is not a spinner for the network. It covers the window between the
+    press and the attachment appearing — an export, an OCR pass and a re-encode,
+    which on a mid-range phone is long enough for a child to press again and
+    send their board twice.
+  */
+  const [asking, setAsking] = useState(false);
+  const [boardOpen, setBoardOpen] = useState(false);
+  const handleAskBoard = useCallback(
+    (png: string | null) => {
+      // `null` is an empty board. `Whiteboard` has already said so in words;
+      // saying it twice, or sending blank paper, would both be worse.
+      if (png === null || asking) return;
+      /*
+        The four-image cap is the store's, and it drops silently past it — so a
+        child who has already staged four photos would press ask, watch nothing
+        happen, and leave a pending send armed against an attachment that never
+        arrives. Checked here rather than trusted, and the tray is the way out
+        the child already has.
+      */
+      if (countImages(attachments) >= MAX_TUTOR_IMAGES) return;
+      setAsking(true);
+      void boardImageUri(png)
+        .then((uri) => {
+          if (uri === null) return;
+          const id = `${Date.now()}-${(stagedSeq.current += 1)}-board.png`;
+          sendWhenStaged.current = { id, fromBoard: true };
+          addAttachment({
+            id,
+            kind: 'image',
+            uri,
+            // Named, because this is what the tray, the bubble and a reviewing
+            // guardian all label it. "camera.jpg" would be a lie about where a
+            // child's working came from.
+            name: 'Whiteboard',
+            mimeType: 'image/png',
+          });
+        })
+        .finally(() => setAsking(false));
+    },
+    [asking, attachments, addAttachment],
+  );
 
   /*
     NO PROBLEM IS STILL A PLACE.
@@ -720,7 +829,31 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     return <TutorOpening phase="empty" ageBand={ageBand} onHome={onHome} onSnap={onSnap} />;
   }
 
+  /*
+    ONE WORKBENCH, PLACED IN ONE OF TWO WAYS. The pane and the sheet are the
+    same element, and a window cannot be both widths at once — so there is never
+    a second board mounted, never a second autosave timer, and never two
+    restores of the same snapshot racing to be written back.
+
+    The sheet is the one that closes itself. A press that produced nothing —
+    an empty board answers `null` — must leave the paper on screen, because the
+    board has just told the child to write on it.
+  */
+  const workbench = (
+    <TutorWorkbench
+      problem={problem}
+      messages={messages}
+      ageBand={ageBand}
+      onAsk={(png) => {
+        handleAskBoard(png);
+        if (png !== null) setBoardOpen(false);
+      }}
+      asking={asking}
+    />
+  );
+
   return (
+    <>
     <TutorStage
       state={state}
       /*
@@ -756,11 +889,42 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
         canvas exists, so this is deliberately undefined until the learner has a
         problem or a photo — an empty right-hand pane is worse than no split.
       */
+      /*
+        THE WORK IN THE TURN, WHERE THERE IS NO COLUMN FOR IT. Unchanged
+        behaviour at phone and `medium` width: the problem and the photos of it
+        ride inside the turn that raised them, which is
+        `docs/design/tutor-session-thread-first.md`.
+
+        Undefined at pane width because the workbench carries the question
+        itself there, and passing both would draw it twice in the same column.
+      */
       canvas={
-        hasWorkToShow(problem, messages) ? (
+        !workPane && hasWorkToShow(problem, messages) ? (
           <TutorWorkCanvas problem={problem} messages={messages} />
         ) : undefined
       }
+      /*
+        THE SECOND PANE, and it is now a workbench rather than a display. The
+        problem and the photo of it still sit at the top of it — that is
+        `TutorWorkbench`'s first half, unchanged — and under them is the paper
+        the learner works on. `TutorStage` puts this in the middle column and
+        never inside a turn, because a drawing surface in a message bubble is
+        paper nobody can write on.
+
+        `canvas` is left undefined on purpose: everything it used to carry is
+        inside the workbench now, and passing both would draw the problem twice
+        in the same column.
+      */
+      board={workPane ? workbench : undefined}
+      /*
+        AND THE SAME BOARD WHERE THERE IS NO COLUMN FOR IT. ADR-107's first
+        amendment exempts this screen from the pane ban on the condition that
+        nothing is reachable in a pane that is not reachable without one, so the
+        composer offers the board exactly where the pane does not exist. Omitted
+        at pane width rather than duplicated: two ways into a surface the
+        learner is already looking at is one way too many.
+      */
+      onPickDraw={workPane ? undefined : () => setBoardOpen(true)}
       captionsEnabled
       buttonSize={buttonSizeForBand(ageBand)}
       onBack={router.back}
@@ -805,5 +969,26 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
         stopRecording?.();
       }}
     />
+    {/*
+      MOUNTED ONLY WHERE THERE IS NO PANE. Not hidden — absent: the sheet holds
+      a live drawing engine, and keeping a second one mounted behind a pane that
+      already shows the first would run two canvases, two autosave timers and
+      two copies of the same restored snapshot racing each other to write it.
+
+      It shares nothing with the pane's board on purpose. A window cannot be
+      both widths at once, so only one of the two exists at a time and they both
+      read and write the same stored snapshot — which is what makes a learner
+      who unfolds the device mid-working find their working still there.
+    */}
+    {workPane ? null : (
+      <WhiteboardSheet
+        open={boardOpen}
+        onClose={() => setBoardOpen(false)}
+        title={skillTitle.length > 0 ? skillTitle : 'Your board'}
+      >
+        {workbench}
+      </WhiteboardSheet>
+    )}
+    </>
   );
 }
