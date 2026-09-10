@@ -77,6 +77,38 @@ export interface AssetEntry {
   declares?: { images: number; textures: number; materials: number };
   /** Sibling files a split `.gltf` needs fetched alongside it. */
   siblings?: string[];
+  /**
+   * Where the bytes came from and what may be done with them.
+   *
+   * REQUIRED at the ledger gate, optional at the type so the manifest stays
+   * readable by code that only wants to fetch — `tooling/check-asset-ledger.mjs`
+   * is what refuses an unrecorded asset, and it runs in the lint chain.
+   *
+   * A rights record is not paperwork: it is how you prove an asset is yours to
+   * ship, and the question always arrives long after whoever acquired it has
+   * forgotten the terms. The licence DOCUMENT never lives in this repository —
+   * `evidence` is a reference to it, held wherever invoices are held.
+   */
+  rights?: AssetRights;
+}
+
+export interface AssetRights {
+  /** Vendor name, commission, or `authored` for something generated in-repo. */
+  source: string;
+  /** Licence type plus a reference id — "Humano Studio Standard #12345". */
+  license: string;
+  /**
+   * What the terms actually permit, separately. Embedding an asset in a build
+   * and redistributing its source are different permissions, and a public
+   * repository is a redistribution channel whether or not it was meant as one.
+   */
+  permits: { embed: boolean; distributeSource: boolean; modify: boolean };
+  /** ISO date. */
+  acquiredOn: string;
+  /** Points at the invoice or licence document, which stays OUT of this repo. */
+  evidence: string;
+  /** Who read the terms. */
+  checkedBy: string;
 }
 
 export interface AssetManifest {

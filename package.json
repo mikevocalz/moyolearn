@@ -33,7 +33,8 @@
     "check:voice": "node tooling/check-voice-egress.mjs",
     "check:sentry": "node tooling/check-sentry-invariants.mjs",
     "check:roleaccent": "node tooling/check-role-accent.mjs",
-    "check:art": "node tooling/check-art-registry.mjs"
+    "check:art": "node tooling/check-art-registry.mjs",
+    "check:ledger": "node tooling/check-asset-ledger.mjs"
   },
   "devDependencies": {
     "pg-boss": "catalog:",

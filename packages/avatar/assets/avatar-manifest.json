@@ -130,7 +130,19 @@
       "path": "gnm/lash-strands.png",
       "bytes": 32616,
       "sha256": "3c2495f216bde11703aa638a02b2bd49182738211ed4a1a188c0cabf5a0f542e",
-      "minTier": "tablet"
+      "minTier": "tablet",
+      "rights": {
+        "source": "authored",
+        "license": "Moyo \u2014 generated in-repo",
+        "permits": {
+          "embed": true,
+          "distributeSource": true,
+          "modify": true
+        },
+        "acquiredOn": "2026-09-10",
+        "evidence": "packages/avatar/tools/bake_lash_texture.ts \u2014 deterministic bake, sha256 asserted by src/lashes.test.ts",
+        "checkedBy": "generator present in repo"
+      }
     },
     {
       "id": "brow-strands",
