@@ -188,7 +188,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     ageBand === 'young' || ageBand === 'child'
       ? resolvedTutorPresence === 'visible'
         ? undefined
-        : 'She can still hear you and you can still hear her.'
+        : 'She can still hear you. You can hear her too.'
       : undefined;
 
   /*
@@ -864,7 +864,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
         left the session itself unnamed on every screen. `skillTitle` is
         inferred from the problem, so it is empty until the first turn lands.
       */
-      title={skillTitle.length > 0 ? skillTitle : 'Your session'}
+      title={skillTitle.length > 0 ? skillTitle : 'Your homework'}
       tutorName="Natalie"
       childName="there"
       tutorPresence={resolvedTutorPresence}

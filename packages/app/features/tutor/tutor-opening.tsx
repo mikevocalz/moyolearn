@@ -76,9 +76,9 @@ const OPENING_COPY: Record<AgeBand, OpeningCopy> = {
     emptyTitle: 'Ready when you are',
     emptyBody: 'Show me your homework and we can start.',
     errorTitle: 'That did not load',
-    errorBody: 'Something went wrong here. We can try again.',
+    errorBody: 'Our fault, not yours. We can try again.',
     snap: 'Snap your homework',
-    home: 'Go to Today',
+    home: 'Back to Today',
     retry: 'Try again',
   },
   child: {
@@ -96,7 +96,7 @@ const OPENING_COPY: Record<AgeBand, OpeningCopy> = {
     emptyTitle: 'Nothing open right now',
     emptyBody: 'Snap a problem and Natalie will work through it with you.',
     errorTitle: "Couldn't load your next problem",
-    errorBody: 'Something went wrong on our end. Your work is safe.',
+    errorBody: 'Your work is saved. Try again, or snap a problem yourself.',
     snap: 'Snap your homework',
     home: 'Back to home',
     retry: 'Try again',
@@ -106,7 +106,7 @@ const OPENING_COPY: Record<AgeBand, OpeningCopy> = {
     emptyTitle: 'Nothing open right now',
     emptyBody: 'Snap a problem to start a session, or head back home.',
     errorTitle: "Couldn't load your next problem",
-    errorBody: 'Something went wrong on our end. Your work is safe.',
+    errorBody: 'Your work is saved. Try again, or snap a problem yourself.',
     snap: 'Snap your homework',
     home: 'Back to home',
     retry: 'Try again',
@@ -176,15 +176,21 @@ export function TutorOpening(props: TutorOpeningProps) {
                 </Text>
               </View>
 
-              {/* One primary. On the failure the primary is the retry — the
-                  thing the child came for is still the most likely to work —
-                  and snapping drops to the quiet row beside the exit, so the
-                  screen never offers two equally loud choices. */}
+              {/* One primary, and it wears ONE accent. On the failure the
+                  primary is the retry — the thing the child came for is still
+                  the most likely to work — and snapping drops to the quiet row
+                  beside the exit, so the screen never offers two equally loud
+                  choices. The retry used to be `primary` where the snap is
+                  `highlighter`: the role moved between phases and the accent
+                  moved with it, which reads as two different kinds of button
+                  rather than one primary in two states. Neither variant carries
+                  meaning the other lacks (`danger` is the one that does), and
+                  the highlighter is this product's act-now accent. */}
               <View className="gap-stack">
                 {props.phase === 'error' ? (
                   <Button
                     title={copy.retry}
-                    variant="primary"
+                    variant="highlighter"
                     size={size}
                     fullWidth
                     className={primaryClass}

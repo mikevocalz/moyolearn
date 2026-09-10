@@ -383,7 +383,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
         <MotionView
           key="swatches"
           role="radiogroup"
-          aria-label="Pen colour"
+          aria-label="Pen color"
           /*
             ONE ROW, AND THE CHIPS FLEX TO FILL IT. Seven fixed keys at the K–2
             target come to 464dp against a 388dp pane, so a fixed size could only
@@ -424,9 +424,11 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
               aria-label={entry.label}
               role="radio"
               aria-checked={ink === entry.id}
-              className={`${TARGET_HEIGHT[size]} ${FOCUS} flex-1 items-center justify-center rounded-control ${
-                ink === entry.id ? 'bg-surface-sunken' : ''
-              }`}
+              // No fill on selection: `bg-surface-sunken` already means
+              // "this disclosure is open" on the colour well below, and one
+              // token carrying two meanings in one tray is how a tray stops
+              // being readable. The ring is the cue, as the comment below says.
+              className={`${TARGET_HEIGHT[size]} ${FOCUS} flex-1 items-center justify-center rounded-control`}
             >
               {/*
                 The chip carries the selection, not a tick: a check mark on a
@@ -544,7 +546,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
         */}
         <Pressable
           onPress={() => setPickingInk((open) => !open)}
-          aria-label={`Pen colour: ${currentInk.label}`}
+          aria-label={`Pen color: ${currentInk.label}`}
           aria-expanded={pickingInk}
           className={`${key} ${FOCUS} items-center justify-center rounded-control ${
             pickingInk ? 'border-2 border-strong bg-surface-sunken' : ''
@@ -608,11 +610,25 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
                 width — it gives the slab the room the border already gives
                 everything flat.
               */
-              className={`${key} ${FOCUS} mr-inset-hair items-center justify-center rounded-control border-2 border-strong bg-primary shadow-card ${
-                !hasMarks || asking ? 'opacity-50' : ''
+              /*
+                THE SAME KEY AT BOTH WIDTHS. It used to be `bg-primary` with
+                `opacity-50` when disabled, while the wide form is a
+                `highlighter` Button — one action wearing two accents and two
+                disabled treatments, decided by how much room the tray had.
+                Button.tsx rejects opacity-alone by name: a 50%-opacity yellow
+                key on a white sheet still looks like a yellow key, so a
+                disabled ask invited a tap that did nothing and explained
+                nothing. Dropping the shadow is what says "not yet" in this
+                language, and the shadow is also the thing the margin above
+                exists for.
+              */
+              className={`${key} ${FOCUS} mr-inset-hair items-center justify-center rounded-control border-2 ${
+                !hasMarks || asking
+                  ? 'border-border bg-surface-sunken shadow-none'
+                  : 'border-strong bg-highlighter shadow-card'
               }`}
             >
-              <Sparkles size={20} className="text-on-primary" />
+              <Sparkles size={20} className={!hasMarks || asking ? 'text-text-muted' : 'text-on-highlighter'} />
             </Pressable>
           ) : (
             <Button
@@ -636,7 +652,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
       */}
       {emptyNotice ? (
         <Text className="font-sans text-caption text-text-muted" role="status">
-          There&apos;s nothing on the board yet — write your working and ask again.
+          Write your work on the board, then ask again.
         </Text>
       ) : null}
     </View>

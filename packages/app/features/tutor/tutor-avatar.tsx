@@ -66,7 +66,7 @@ function loaderCopyFor(band: AgeBand | undefined): string {
     case 'child':
       return "Natalie's getting ready…";
     default:
-      return "Natalie's on her way";
+      return "Natalie's on her way…";
   }
 }
 

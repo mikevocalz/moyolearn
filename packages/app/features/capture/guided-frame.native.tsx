@@ -85,7 +85,14 @@ export function GuidedFrame({ ageBand = 'teen', onCapture }: GuidedFrameProps) {
   };
 
   const buttonSize = buttonSizeForBand(ageBand);
-  const captureLabel = ageBand === 'young' ? 'Snap' : 'Capture';
+  /*
+    "Snap" for every band, not just the youngest. The flow is called Snap
+    everywhere else a child meets it — the tutor's empty state offers "Snap your
+    homework" and capture-tip titles itself "How Snap works" for all bands — so
+    a button reading "Capture" was the one place the name changed, and an action
+    that renames itself mid-flow is an action a child has to learn twice.
+  */
+  const captureLabel = 'Snap';
   const defaultHint =
     ageBand === 'young'
       ? 'Put the page inside the box!'

@@ -93,7 +93,7 @@ export function TutorWorkCanvas({ problem, messages, problemOnly = false }: Tuto
     */
     <View className="w-full gap-group">
       <Text className="font-sans text-caption text-text-muted">
-        {problemOnly ? 'The question' : "What we're working on"}
+        {problemOnly ? 'The problem' : "What we're working on"}
       </Text>
       {text.length > 0 ? (
         /*
@@ -105,7 +105,13 @@ export function TutorWorkCanvas({ problem, messages, problemOnly = false }: Tuto
           readable-across-a-desk size the doc is after, expressed as a token
           instead of the number that token happened to resolve to on the canvas.
         */
-        <Text className="font-mono text-display-md text-text" aria-label="The problem">
+        /*
+          No aria-label. It was "The problem", which REPLACES the problem text
+          as the accessible name — a screen reader announced the label and never
+          the arithmetic. It also disagreed with the visible caption above, so
+          one object had two names. The caption is the label; this is the value.
+        */
+        <Text className="font-mono text-display-md text-text">
           {text}
         </Text>
       ) : null}
