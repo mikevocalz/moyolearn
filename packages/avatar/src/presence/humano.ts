@@ -456,10 +456,33 @@ export function createHumanoPresence(
       parentWorldQuaternionInverse: parentWorldQuaternion.invert(),
     });
   };
+  const missing: string[] = [];
   for (const key of Object.keys(HUMANO_BONES) as HumanoBoneKey[]) {
     const bone = resolveBone(scene, HUMANO_BONES[key]);
     bones[key] = bone;
     if (bone) capture(bone);
+    else missing.push(`${key} (${HUMANO_BONES[key]})`);
+  }
+  /*
+    A MISSING BONE IS SILENT, AND THAT IS THE DEFECT THIS NAMES.
+
+    `pose()` no-ops on `null`, so a skeleton whose names do not match this map
+    produces a presence that resolves, steps every frame, and writes nothing —
+    the mesh renders in its BIND pose. On this asset the bind pose is an A-pose
+    with curled fingers, which is the "arms out at 45 degrees, elbows up, fists
+    clenched" a user reported and which no error anywhere explained. Every
+    individual `?.` was defensible; together they turned an asset mismatch into
+    a character who looks wrong.
+    Loud in development, silent in production: a warning cannot fix a shipped
+    binary's asset, and the fallback — she stands in her bind pose — is still
+    better than throwing a child out of a tutoring session.
+  */
+  if (missing.length > 0 && process.env.NODE_ENV !== 'production') {
+    console.warn(
+      `[humano] ${missing.length} of ${Object.keys(HUMANO_BONES).length} bones did not resolve — ` +
+        'she will render in her bind pose (arms out, hands closed). ' +
+        `Missing: ${missing.join(', ')}`,
+    );
   }
   const twins = {} as Record<HumanoBoneKey, THREE.Bone | null>;
   for (const key of Object.keys(HUMANO_BONES) as HumanoBoneKey[]) {

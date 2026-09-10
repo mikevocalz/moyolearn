@@ -32,6 +32,7 @@ import type { LayoutChangeEvent } from 'react-native';
 import { targets } from '@acme/theme';
 import { Button } from './Button';
 import { LearningCanvas } from './LearningCanvas';
+import { AnimatePresence, MotionView, useReducedMotion } from './motion';
 import { Brush, Eraser, Highlighter, Sparkles, Trash2, Undo2 } from './icons';
 import { View, Pressable, Text } from './primitives';
 import { WhiteboardBoard } from './whiteboard-board';
@@ -252,6 +253,13 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
 
   const key = TOOL_KEY[size];
   const askLabel = 'Ask Natalie';
+  /*
+    Reduce Motion is a RENDER MODE here, not a shorter duration — the same rule
+    the responsive spec §4 states for the avatar. Off, the strip appears and
+    disappears with no transform at all rather than a fast one, because a
+    vestibular-sensitive learner asked for no movement, not less of it.
+  */
+  const animated = !useReducedMotion();
   // `black` is in the roster, so this never falls through; the `??` is here
   // because an index signature cannot say so and a crash in a control row is
   // not a thing to leave to a `!`.
@@ -276,10 +284,34 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
         Six chips at the age band's target, so a K–2 learner's colours are as
         pressable as their pens.
       */}
-      {pickingInk ? (
-        <View
+      <AnimatePresence>
+        {pickingInk ? (
+        <MotionView
+          key="swatches"
           role="radiogroup"
           aria-label="Pen colour"
+          /*
+            IT COMES OUT OF THE TRAY AND GOES BACK INTO IT.
+
+            `y: 8` is the whole idea: the strip starts a few dp DOWN, behind the
+            tray it was opened from, and rises into place — so the movement says
+            where the colours came from instead of announcing a new panel. Scale
+            carries the rest; height is never animated, because a JS-driven
+            layout property would drop frames on the same device the board is
+            being drawn on.
+
+            `AnimatePresence` is what buys the EXIT. Mounted on a boolean the
+            strip vanished in one frame, which reads as the app losing it rather
+            than the child closing it — the same asymmetry `MotionView` fixes for
+            Natalie's pane in `TutorStage`.
+
+            One spring, low overshoot: this is a control surface a child is about
+            to press, and a strip still settling under a finger is a mis-tap.
+          */
+          initial={animated ? { opacity: 0, scale: 0.96, y: 8 } : undefined}
+          animate={animated ? { opacity: 1, scale: 1, y: 0 } : undefined}
+          exit={animated ? { opacity: 0, scale: 0.96, y: 8 } : undefined}
+          transition={{ type: 'spring', damping: 22, stiffness: 300 }}
           className="flex-row flex-wrap items-center justify-center gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field"
         >
           {INKS.map((entry) => (
@@ -293,18 +325,25 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
                 ink === entry.id ? 'bg-surface-sunken' : ''
               }`}
             >
-              {/* The chip carries the selection, not a tick: a check mark on a
-                  colour hides the colour it is about. Selected is the same dot
-                  with the page's own ink ringed around it. */}
-              <View
+              {/*
+                The chip carries the selection, not a tick: a check mark on a
+                colour hides the colour it is about. Selected is the same dot,
+                grown and ringed harder, and the growth is animated so the
+                choice lands as a movement the eye follows rather than a
+                repaint it has to spot.
+              */}
+              <MotionView
+                animate={animated ? { scale: ink === entry.id ? 1.15 : 1 } : undefined}
+                transition={{ type: 'spring', damping: 20, stiffness: 320 }}
                 className={`h-7 w-7 rounded-full ${
                   ink === entry.id ? 'border-[3px]' : 'border-2'
                 } border-strong ${entry.swatch}`}
               />
             </Pressable>
           ))}
-        </View>
-      ) : null}
+        </MotionView>
+        ) : null}
+      </AnimatePresence>
 
       {/*
         THE TRAY SITS UNDER THE PAPER. Craft, Freeform and Apple's own markup
@@ -397,7 +436,16 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
             pickingInk ? 'border-2 border-strong bg-surface-sunken' : ''
           }`}
         >
-          <View className={`h-7 w-7 rounded-full border-2 border-strong ${currentInk.swatch}`} />
+          {/* `key` on the ink, so the dot RE-ENTERS when the colour changes —
+              a plain style swap is a repaint the eye does not register, and
+              this control's whole job is to report which pen is in hand. */}
+          <MotionView
+            key={currentInk.id}
+            initial={animated ? { scale: 0.7 } : undefined}
+            animate={animated ? { scale: 1 } : undefined}
+            transition={{ type: 'spring', damping: 16, stiffness: 340 }}
+            className={`h-7 w-7 rounded-full border-2 border-strong ${currentInk.swatch}`}
+          />
         </Pressable>
         </View>
 
