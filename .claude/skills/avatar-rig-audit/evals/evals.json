@@ -1,0 +1,16 @@
+{
+  "evals": [
+    {
+      "prompt": "The model looks off — her head isn't moving when she talks. Can you check the rig?",
+      "expect": "Regenerates rig-manifest.json, then checks the writer's bone names against chains.deform rather than reading the writer alone. Names the DEF vs ORG/MCH distinction as the reason a control-bone write moves nothing."
+    },
+    {
+      "prompt": "We're swapping in a new Natalie export. Anything to do first?",
+      "expect": "Regenerates the manifest from the new asset in the same change, checks skeletonsAgree across both shipped assets, and treats a hash change as a release blocker until every writer name is re-verified."
+    },
+    {
+      "prompt": "What blendshapes does the face have? I want to wire Audio2Face.",
+      "expect": "Reads morphTargets from the manifest, reports 52 ARKit-named targets, and states that the A2F mapping is near-identity with gains and limits rather than a least-squares fit — the fit is the GNM problem."
+    }
+  ]
+}
