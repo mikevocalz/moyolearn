@@ -847,6 +847,15 @@ export const spacingTiers = {
   // 25.5px line pushed the composer to 64px, which read as an oversized slab
   // next to a one-line placeholder. This tier exists so the field's height is
   // governed by the age-band target token instead of by its padding.
+  /*
+    The thinnest inset in the system, and it is for a container whose CHILDREN
+    are the touch targets — a control tray, where every pixel of padding is a
+    pixel the row does not have for a key. It is a hairline of breathing room so
+    the outermost control does not sit on the border, not a spacing decision
+    about content, which is why it does not change with the dial: 4px reads the
+    same on a hot surface and a cool one because nothing is being grouped by it.
+  */
+  'inset-hair': { cool: '0.25rem', hot: '0.25rem' },
   'inset-field': { cool: '0.5625rem', hot: '0.5625rem' },
   'inset-tight': { cool: '0.75rem', hot: '1rem' },
   inset: { cool: '1rem', hot: '1.25rem' },

@@ -271,6 +271,9 @@
   --text-data-lg-hot: 1.25rem;
   --text-data-lg-hot--line-height: 1.3;
   --text-data-lg-hot--font-weight: 600;
+  --spacing-inset-hair: 0.25rem;
+  --spacing-inset-hair-cool: 0.25rem;
+  --spacing-inset-hair-hot: 0.25rem;
   --spacing-inset-field: 0.5625rem;
   --spacing-inset-field-cool: 0.5625rem;
   --spacing-inset-field-hot: 0.5625rem;
@@ -576,6 +579,7 @@
     --text-data-lg: var(--text-data-lg-hot);
     --text-data-lg--line-height: var(--text-data-lg-hot--line-height);
     --text-data-lg--font-weight: var(--text-data-lg-hot--font-weight);
+    --spacing-inset-hair: var(--spacing-inset-hair-hot);
     --spacing-inset-field: var(--spacing-inset-field-hot);
     --spacing-inset-tight: var(--spacing-inset-tight-hot);
     --spacing-inset: var(--spacing-inset-hot);
@@ -618,6 +622,7 @@
     --text-data-lg: var(--text-data-lg-cool);
     --text-data-lg--line-height: var(--text-data-lg-cool--line-height);
     --text-data-lg--font-weight: var(--text-data-lg-cool--font-weight);
+    --spacing-inset-hair: var(--spacing-inset-hair-cool);
     --spacing-inset-field: var(--spacing-inset-field-cool);
     --spacing-inset-tight: var(--spacing-inset-tight-cool);
     --spacing-inset: var(--spacing-inset-cool);

@@ -441,8 +441,15 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
           losing the control the whole surface exists for; `justify-between`
           keeps the pens and the actions apart on the line while they share one.
         */
-        className={`flex-row items-center justify-between rounded-control border-2 border-strong bg-surface-raised py-inset-field ${
-          compact ? '' : 'flex-wrap gap-element px-inset-tight'
+        /*
+          `inset-hair` when folded — 4px, all round. The row had none on the
+          sides at all, so the outermost key sat against the border; anything
+          thicker is a key's worth of width in a tray that has exactly enough
+          for seven. It does not move with the dial because nothing is being
+          grouped by it.
+        */
+        className={`flex-row items-center justify-between rounded-control border-2 border-strong bg-surface-raised ${
+          compact ? 'p-inset-hair' : 'flex-wrap gap-element px-inset-tight py-inset-field'
         }`}
       >
         {/*
@@ -567,7 +574,15 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
               disabled={!hasMarks || asking}
               aria-label={askLabel}
               aria-disabled={!hasMarks || asking}
-              className={`${key} items-center justify-center rounded-control border-2 border-strong bg-primary shadow-card ${
+              /*
+                A margin the other keys do not get, because this key carries
+                something they do not: `shadow-card` is a 4px offset slab, so
+                the shadow lands exactly ON the tray's 4px inset and the button
+                reads as jammed against the border. The margin is the shadow's
+                width — it gives the slab the room the border already gives
+                everything flat.
+              */
+              className={`${key} mr-inset-hair items-center justify-center rounded-control border-2 border-strong bg-primary shadow-card ${
                 !hasMarks || asking ? 'opacity-50' : ''
               }`}
             >
