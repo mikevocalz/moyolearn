@@ -1,0 +1,16 @@
+{
+  "evals": [
+    {
+      "prompt": "Let's wire up Audio2Face so her face moves with the voice.",
+      "expect": "Reads references/repo-anchors.md first; tees the played waveform at the audio sink rather than the network chunk; schedules on the client audio clock with the per-route offset; confirms the ARKit mapping is identity for this mesh rather than building a fit."
+    },
+    {
+      "prompt": "Can A2F handle the crisis script too?",
+      "expect": "No. The S4 pieces are BAKED_PIECES with crisis: true — serve the cache or serve nothing, never a live render — and Audio2Emotion must not run on them either, since the register is fixed by protocol."
+    },
+    {
+      "prompt": "Could we read the student's tone of voice to adjust her expression?",
+      "expect": "Refuses. Audio2Emotion reads the avatar's own synthetic voice only; a child's audio never reaches the model, and tone comes from lesson state."
+    }
+  ]
+}
