@@ -333,6 +333,7 @@
   --color-board-blue: light-dark(#4263eb, #4263eb);
   --color-board-red: light-dark(#e03131, #e03131);
   --color-board-green: light-dark(#099268, #099268);
+  --color-board-yellow: light-dark(#f1ac4b, #f1ac4b);
   --color-board-orange: light-dark(#e16919, #e16919);
   --color-board-violet: light-dark(#ae3ec9, #ae3ec9);
   --color-ballpoint: light-dark(#2952D9, #5C8AFF);

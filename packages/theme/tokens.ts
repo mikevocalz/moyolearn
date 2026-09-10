@@ -320,6 +320,13 @@ export const semantic = {
   'board-blue': { light: '#4263eb', dark: '#4263eb' },
   'board-red': { light: '#e03131', dark: '#e03131' },
   'board-green': { light: '#099268', dark: '#099268' },
+  /*
+    Amber, not a bright yellow, and it is the vendor's own value. A true yellow
+    on white paper is a stroke a child cannot see — which is why Quickdraw's
+    `yellow` is already this, and why copying it verbatim is the right move
+    rather than reaching for the brand's electric `sun`.
+  */
+  'board-yellow': { light: '#f1ac4b', dark: '#f1ac4b' },
   'board-orange': { light: '#e16919', dark: '#e16919' },
   'board-violet': { light: '#ae3ec9', dark: '#ae3ec9' },
 

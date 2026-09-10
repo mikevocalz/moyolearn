@@ -41,7 +41,14 @@ export type WhiteboardTool = 'draw' | 'highlight' | 'eraser';
  * cannot drift: `Whiteboard`'s roster is `satisfies` this, and a colour the
  * board could draw but the tray never offers is unrepresentable.
  */
-export type WhiteboardInk = 'black' | 'blue' | 'red' | 'green' | 'orange' | 'violet';
+export type WhiteboardInk =
+  | 'black'
+  | 'blue'
+  | 'red'
+  | 'green'
+  | 'yellow'
+  | 'orange'
+  | 'violet';
 
 /**
  * The document, as Quickdraw serialises it.

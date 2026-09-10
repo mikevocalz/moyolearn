@@ -126,6 +126,18 @@ const TARGET_DP: Record<NonNullable<WhiteboardProps['size']>, number> = {
   xl: Number.parseInt(targets.child, 10),
 };
 
+/**
+ * Height only, for controls that take their width from a flex row. The band's
+ * target is honoured in the dimension that is free; the other is bounded by the
+ * column and clears the WCAG floor.
+ */
+const TARGET_HEIGHT: Record<NonNullable<WhiteboardProps['size']>, string> = {
+  sm: 'min-h-target-adult',
+  md: 'min-h-target-adult',
+  lg: 'min-h-target-teen',
+  xl: 'min-h-target-child',
+};
+
 const TOOL_KEY: Record<NonNullable<WhiteboardProps['size']>, string> = {
   sm: 'min-h-target-adult min-w-target-adult',
   md: 'min-h-target-adult min-w-target-adult',
@@ -142,7 +154,7 @@ const TOOLS: readonly { id: WhiteboardTool; label: string; Icon: typeof Brush }[
 /**
  * The pens, named the way a child names them.
  *
- * Six of Quickdraw's twelve. Enough that choosing one is a choice — a default
+ * Seven of Quickdraw's twelve. Enough that choosing one is a choice — a default
  * to work in, a red to correct in, a green that reads as "this bit is right" —
  * and few enough that picking a colour is not a detour from the problem.
  *
@@ -156,6 +168,7 @@ const INKS = [
   { id: 'blue', label: 'Blue', swatch: 'bg-board-blue' },
   { id: 'red', label: 'Red', swatch: 'bg-board-red' },
   { id: 'green', label: 'Green', swatch: 'bg-board-green' },
+  { id: 'yellow', label: 'Yellow', swatch: 'bg-board-yellow' },
   { id: 'orange', label: 'Orange', swatch: 'bg-board-orange' },
   { id: 'violet', label: 'Purple', swatch: 'bg-board-violet' },
 ] as const satisfies readonly { id: WhiteboardInk; label: string; swatch: string }[];
@@ -297,17 +310,25 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
         §5 names, and this is the first thing ever mounted inside it — its own
         `flex-1` is what gives the engine a box to size its canvas against.
       */}
-      <LearningCanvas padded={false}>
-        <WhiteboardBoard ref={board} snapshot={snapshot} onChange={handleChange} />
-      </LearningCanvas>
+      {/*
+        `relative flex-1` around the sheet, so the swatch strip below can anchor
+        to the BOARD's bottom edge rather than the component's — which would put
+        it over the tray it was opened from.
+      */}
+      <View className="relative flex-1">
+        <LearningCanvas padded={false}>
+          <WhiteboardBoard ref={board} snapshot={snapshot} onChange={handleChange} />
+        </LearningCanvas>
 
       {/*
-        THE SWATCH STRIP, and it is only here while it is being used.
+        THE SWATCH STRIP FLOATS OVER THE PAPER. It used to sit in the column as
+        a sibling, so opening it PUSHED THE BOARD UP — the canvas resized, the
+        engine reflowed, and a child mid-problem watched their working jump. A
+        control that moves the thing it is about to act on is the wrong control.
 
-        Above the tray rather than below it, because the tray is already against
-        the bottom of the column — the same constraint that ruled out a dropdown.
-        Six chips at the age band's target, so a K–2 learner's colours are as
-        pressable as their pens.
+        Absolute, over the bottom of the board, above the tray it belongs to.
+        This is also where Craft, Freeform and Apple's markup put theirs: the
+        tray floats ON the canvas, it does not take a slice out of the layout.
       */}
       <AnimatePresence>
         {pickingInk ? (
@@ -316,28 +337,37 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
           role="radiogroup"
           aria-label="Pen colour"
           /*
-            IT COMES OUT OF THE TRAY AND GOES BACK INTO IT.
+            ONE ROW, AND THE CHIPS FLEX TO FILL IT. Seven fixed keys at the K–2
+            target come to 464dp against a 388dp pane, so a fixed size could only
+            have wrapped or clipped. `flex-1` divides the row instead: every chip
+            keeps the band's target as its HEIGHT and takes an equal share of the
+            width — ~45dp in the work pane, which clears WCAG 2.2's 44 floor for
+            every band. A trade made in one dimension, deliberately, to keep the
+            colours readable as one palette rather than as a grid.
 
-            `y: 8` is the whole idea: the strip starts a few dp DOWN, behind the
-            tray it was opened from, and rises into place — so the movement says
-            where the colours came from instead of announcing a new panel. Scale
-            carries the rest; height is never animated, because a JS-driven
-            layout property would drop frames on the same device the board is
-            being drawn on.
+            NO GAP AND NO SIDE PADDING between them, which is what buys the
+            width back: with `gap-element` and an inset the chips measured 34dp,
+            under the WCAG 2.2 floor. Butted together they are ~51dp each and
+            there are no dead strips between them either — a miss between two
+            colours now picks one instead of nothing. The dots do the visual
+            separating; the cells do not need to.
 
-            `AnimatePresence` is what buys the EXIT. Mounted on a boolean the
-            strip vanished in one frame, which reads as the app losing it rather
-            than the child closing it — the same asymmetry `MotionView` fixes for
-            Natalie's pane in `TutorStage`.
-
-            One spring, low overshoot: this is a control surface a child is about
-            to press, and a strip still settling under a finger is a mis-tap.
+            `isolate` so the strip's own stacking is local, and `shadow-overlay`
+            because it is a floating surface rather than a panel in the flow.
           */
-          initial={animated ? { opacity: 0, scale: 0.96, y: 8 } : undefined}
-          animate={animated ? { opacity: 1, scale: 1, y: 0 } : undefined}
-          exit={animated ? { opacity: 0, scale: 0.96, y: 8 } : undefined}
-          transition={{ type: 'spring', damping: 22, stiffness: 300 }}
-          className="flex-row flex-wrap items-center justify-center gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field"
+          className="absolute inset-x-inset-tight bottom-inset-tight isolate flex-row items-center overflow-hidden rounded-control border-2 border-strong bg-surface-raised py-inset-field shadow-overlay"
+          /*
+            A SHORTER, FLATTER MOVE than the spring it replaces. The spring
+            overshot and settled while a child was already reaching for a
+            colour, which is what made it feel wrong — and half of that
+            wrongness was the layout reflowing underneath it, which the overlay
+            above has now removed. 140ms, ease-out, opacity and one small rise:
+            entering motion decelerates and never bounces (craft R12).
+          */
+          initial={animated ? { opacity: 0, translateY: 6 } : undefined}
+          animate={animated ? { opacity: 1, translateY: 0 } : undefined}
+          exit={animated ? { opacity: 0, translateY: 6 } : undefined}
+          transition={{ type: 'timing', duration: 140, easing: 'easeOut' }}
         >
           {INKS.map((entry) => (
             <Pressable
@@ -346,20 +376,16 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
               aria-label={entry.label}
               role="radio"
               aria-checked={ink === entry.id}
-              className={`${key} items-center justify-center rounded-control ${
+              className={`${TARGET_HEIGHT[size]} flex-1 items-center justify-center rounded-control ${
                 ink === entry.id ? 'bg-surface-sunken' : ''
               }`}
             >
               {/*
                 The chip carries the selection, not a tick: a check mark on a
                 colour hides the colour it is about. Selected is the same dot,
-                grown and ringed harder, and the growth is animated so the
-                choice lands as a movement the eye follows rather than a
-                repaint it has to spot.
+                ringed harder.
               */}
-              <MotionView
-                animate={animated ? { scale: ink === entry.id ? 1.15 : 1 } : undefined}
-                transition={{ type: 'spring', damping: 20, stiffness: 320 }}
+              <View
                 className={`h-7 w-7 rounded-full ${
                   ink === entry.id ? 'border-[3px]' : 'border-2'
                 } border-strong ${entry.swatch}`}
@@ -369,6 +395,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
         </MotionView>
         ) : null}
       </AnimatePresence>
+      </View>
 
       {/*
         THE TRAY SITS UNDER THE PAPER. Craft, Freeform and Apple's own markup
