@@ -1,0 +1,16 @@
+{
+  "evals": [
+    {
+      "prompt": "Natalie looks frozen when she's not talking. Can we add some idle movement?",
+      "expect": "Reads idle/config.ts and engine.ts before proposing anything, since the layer already exists; changes a parameter rather than adding a channel; refuses to add a timer-driven movement."
+    },
+    {
+      "prompt": "Her fingers are always moving a bit, it looks nervous.",
+      "expect": "Identifies continuous per-finger noise as the cause, points at the audit's finding that perpetual uncorrelated finger activity reads as fidgeting, and moves the rest shape to change with posture then hold."
+    },
+    {
+      "prompt": "Reduce motion is on but she still blinks — is that a bug?",
+      "expect": "No. Cites reduced-motion.ts: a face that never blinks is unsettling, so reduced motion pins procedural body channels and keeps articulation and blink timing."
+    }
+  ]
+}
