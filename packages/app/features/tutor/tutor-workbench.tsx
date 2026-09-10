@@ -145,8 +145,28 @@ export function TutorWorkbench({
     draw. A restore, a server merge, and one day a peer's stroke all arrive here
     and all look the same to the engine — which is what "ready for
     collaboration" means concretely rather than as a claim.
+
+    `ready` is the load-bearing half and it was missing. Both engines mount
+    ASYNCHRONOUSLY — a canvas on web, a WebView on native — and a diff that
+    reaches a board with no editor yet is dropped with no error anywhere.
+    Measured before this: a second device fetched a 1224-byte board, merged it,
+    emitted the diff into a board that was still starting, and rendered blank
+    paper while the server row plainly held the strokes.
+
+    So the document does not push at the board. When the board says it is ready
+    it is handed the WHOLE document, and only the diffs after that stream — the
+    vendor's own late-joiner order, which is late-joiner-shaped for exactly this
+    reason: a document that arrives before its reader is the normal case, not
+    the edge one.
   */
-  useEffect(() => doc.onRemote((diff) => board.current?.applyDiff(diff)), [doc]);
+  const [ready, setReady] = useState(false);
+  const handleReady = useCallback(() => setReady(true), []);
+
+  useEffect(() => {
+    if (!ready) return;
+    board.current?.loadSnapshot(doc.snapshot());
+    return doc.onRemote((diff) => board.current?.applyDiff(diff));
+  }, [ready, doc]);
 
   const localTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const remoteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -170,7 +190,21 @@ export function TutorWorkbench({
       */
       writeLocalBoard(doc);
       if (sessionRef.current !== null) void pushRemoteBoard(sessionRef.current, doc);
-      doc.destroy();
+      /*
+        THE DOCUMENT IS NOT DESTROYED HERE, and that omission is the fix for a
+        bug this cleanup caused.
+
+        `destroy()` unobserves the map. React's development double-mount runs
+        this cleanup between the two mounts, and the doc lives in a REF — which
+        survives it — so the remount got a document whose observer was gone.
+        Merges still landed (the map filled), `snapshot()` still read them, and
+        `onRemote` never fired again: a second device fetched its board, folded
+        3613 bytes in, held nine records, and drew blank paper.
+
+        Nothing leaks by leaving it. A `Y.Doc` holds no socket, no timer and no
+        native handle; it is reclaimed with the component that referenced it.
+        The writes above are the part that had to happen on the way out.
+      */
     },
     [doc],
   );
@@ -219,6 +253,7 @@ export function TutorWorkbench({
         onAsk={onAsk}
         asking={asking}
         onChange={handleChange}
+        onReady={handleReady}
       />
     </View>
   );

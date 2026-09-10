@@ -93,6 +93,17 @@ export interface WhiteboardHandle {
   getSnapshot(): Promise<WhiteboardSnapshot | null>;
   /** Fold in a change from the document — a restore, a merge, or a peer. */
   applyDiff(diff: WhiteboardDiff): void;
+  /**
+   * Replace the whole board with a document.
+   *
+   * This is the vendor's own late-joiner move — hand the newcomer a snapshot,
+   * then stream diffs — and it is what makes an arriving document safe
+   * regardless of when it arrives. `applyDiff` alone was not: the engine mounts
+   * asynchronously on both platforms, and a diff that reaches a board with no
+   * editor yet is dropped with no error. Measured: a second device fetched a
+   * 1224-byte board, merged it, emitted the diff, and rendered blank paper.
+   */
+  loadSnapshot(snapshot: WhiteboardSnapshot): void;
   setTool(tool: WhiteboardTool): void;
   /** The colour the pen and the highlighter draw in. The eraser ignores it. */
   setInk(ink: WhiteboardInk): void;
@@ -114,4 +125,12 @@ export interface WhiteboardBoardProps {
    * peer and must not be echoed back out.
    */
   onChange?: (diff: WhiteboardDiff, source: WhiteboardDiffSource) => void;
+  /**
+   * The engine has an editor and will accept work.
+   *
+   * Everything before this is dropped, silently, on both platforms — which is
+   * why the document does not push its contents at the board, it waits to be
+   * asked. See `loadSnapshot`.
+   */
+  onReady?: () => void;
 }
