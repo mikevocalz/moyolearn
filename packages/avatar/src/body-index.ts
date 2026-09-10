@@ -92,7 +92,13 @@ export {
   type SkinAux,
   type VectorAttribute,
 } from './materials/skin-aux.ts';
-export { bakeHairAux, type HairAux, type HairGeometry } from './materials/hair-aux.ts';
+export {
+  bakeHairAux,
+  bakeHairTangents,
+  type HairAux,
+  type HairGeometry,
+  type HairTangents,
+} from './materials/hair-aux.ts';
 export {
   EYE_AUX_ATTRIBUTE,
   EYE_SURFACES,

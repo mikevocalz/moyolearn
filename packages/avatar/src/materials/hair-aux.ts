@@ -50,6 +50,9 @@ export interface HairGeometry extends Geometry {
   readonly uv: Pick<VectorAttribute, 'count' | 'getX' | 'getY'>;
 }
 
+/** A vec4 tangent per vertex: xyz direction, w the bitangent handedness. */
+export type HairTangents = Float32Array;
+
 export interface HairAux {
   /** 0 at the root, 1 at the tip. */
   readonly t: Float32Array;
@@ -117,6 +120,112 @@ function phaseFor(x: number, y: number, z: number): number {
     }
   }
   return (h / 0x100000000) * Math.PI * 2;
+}
+
+/**
+ * Per-vertex tangents, by the standard UV-gradient method (Lengyel), averaged
+ * over each vertex's triangles and Gram-Schmidt orthogonalised against the
+ * normal.
+ *
+ * `hair.ts` sets `anisotropy: 0.88`, which routes BRDF_GGX through its
+ * anisotropic branch, and its header says "the groom must keep authoring
+ * tangents". No shipped asset carries TANGENT, so three has been falling back
+ * to the screen-derivative frame the same header calls "wrong for hair".
+ *
+ * THE DIRECTION THIS PRODUCES IS ACROSS THE BRAID, NOT ALONG IT, and that is
+ * correct rather than a bug to work around. A UV tangent points along +u by
+ * definition, and on this groom u runs across the strand while v runs along it.
+ * Measured on the shipped groom rather than argued from convention: the baked
+ * tangent sits 0.6 degrees from the across-card edge and 83.5 degrees from the
+ * along-strand edge, against a folded-random baseline of 57.3.
+ *
+ * Hair is anisotropic ALONG the fibre, so the material rotates the frame a
+ * quarter turn — `hair.ts` sets `anisotropyRotation` to PI/2 for exactly this.
+ * Expressing the hair-specific fact as a rotation of a standard frame beats
+ * baking a non-standard one that every other consumer would have to know about.
+ */
+export function bakeHairTangents(g: HairGeometry): HairTangents {
+  const count = g.position.count;
+  const tan = new Float64Array(count * 3);
+  const bit = new Float64Array(count * 3);
+  const index = g.index;
+  const triangles = index ? index.count : count;
+
+  for (let t = 0; t + 2 < triangles; t += 3) {
+    const a = index ? index.getX(t) : t;
+    const b = index ? index.getX(t + 1) : t + 1;
+    const c = index ? index.getX(t + 2) : t + 2;
+    const e1x = g.position.getX(b) - g.position.getX(a);
+    const e1y = g.position.getY(b) - g.position.getY(a);
+    const e1z = g.position.getZ(b) - g.position.getZ(a);
+    const e2x = g.position.getX(c) - g.position.getX(a);
+    const e2y = g.position.getY(c) - g.position.getY(a);
+    const e2z = g.position.getZ(c) - g.position.getZ(a);
+    const du1 = g.uv.getX(b) - g.uv.getX(a);
+    const dv1 = g.uv.getY(b) - g.uv.getY(a);
+    const du2 = g.uv.getX(c) - g.uv.getX(a);
+    const dv2 = g.uv.getY(c) - g.uv.getY(a);
+    const det = du1 * dv2 - du2 * dv1;
+    // A degenerate UV triangle has no frame to give; skipping it leaves the
+    // vertex to its other triangles rather than poisoning them with infinities.
+    if (Math.abs(det) < 1e-12) continue;
+    const r = 1 / det;
+    const tx = (e1x * dv2 - e2x * dv1) * r;
+    const ty = (e1y * dv2 - e2y * dv1) * r;
+    const tz = (e1z * dv2 - e2z * dv1) * r;
+    const bx = (e2x * du1 - e1x * du2) * r;
+    const by = (e2y * du1 - e1y * du2) * r;
+    const bz = (e2z * du1 - e1z * du2) * r;
+    for (const v of [a, b, c]) {
+      tan[v * 3] = tan[v * 3]! + tx;
+      tan[v * 3 + 1] = tan[v * 3 + 1]! + ty;
+      tan[v * 3 + 2] = tan[v * 3 + 2]! + tz;
+      bit[v * 3] = bit[v * 3]! + bx;
+      bit[v * 3 + 1] = bit[v * 3 + 1]! + by;
+      bit[v * 3 + 2] = bit[v * 3 + 2]! + bz;
+    }
+  }
+
+  const out = new Float32Array(count * 4);
+  for (let v = 0; v < count; v += 1) {
+    const nx = g.normal.getX(v);
+    const ny = g.normal.getY(v);
+    const nz = g.normal.getZ(v);
+    let tx = tan[v * 3]!;
+    let ty = tan[v * 3 + 1]!;
+    let tz = tan[v * 3 + 2]!;
+    // Gram-Schmidt: the tangent must lie in the surface, not merely near it.
+    const dot = nx * tx + ny * ty + nz * tz;
+    tx -= nx * dot;
+    ty -= ny * dot;
+    tz -= nz * dot;
+    let length = Math.sqrt(tx * tx + ty * ty + tz * tz);
+    if (!(length > 1e-9)) {
+      /*
+        No usable frame — every triangle round this vertex was UV-degenerate.
+        Any unit vector perpendicular to the normal keeps the frame valid, and a
+        wrong-but-valid tangent on a stray vertex is a highlight in the wrong
+        place, where a zero tangent is a black fragment.
+      */
+      const ax = Math.abs(nx) < 0.9 ? 1 : 0;
+      const ay = ax === 1 ? 0 : 1;
+      const along = ax * nx + ay * ny;
+      tx = ax - nx * along;
+      ty = ay - ny * along;
+      tz = -nz * along;
+      length = Math.sqrt(tx * tx + ty * ty + tz * tz) || 1;
+    }
+    out[v * 4] = tx / length;
+    out[v * 4 + 1] = ty / length;
+    out[v * 4 + 2] = tz / length;
+    // Handedness: does N x T agree with the accumulated bitangent?
+    const cx = ny * tz - nz * ty;
+    const cy = nz * tx - nx * tz;
+    const cz = nx * ty - ny * tx;
+    out[v * 4 + 3] =
+      cx * bit[v * 3]! + cy * bit[v * 3 + 1]! + cz * bit[v * 3 + 2]! < 0 ? -1 : 1;
+  }
+  return out;
 }
 
 export function bakeHairAux(g: HairGeometry): HairAux {

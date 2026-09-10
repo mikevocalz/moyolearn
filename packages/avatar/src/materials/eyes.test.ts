@@ -110,10 +110,20 @@ describe('the hair', () => {
     hair.dispose();
   });
 
-  it('enables the anisotropic BRDF and keeps a tangent direction', () => {
+  it('enables the anisotropic BRDF and turns the frame onto the fibre', () => {
     const hair = createHairMaterial();
     assert.ok(hair.material.anisotropy > 0, 'non-zero anisotropy is what flips useAnisotropy');
-    assert.equal(hair.material.anisotropyRotation, 0);
+    /*
+      A QUARTER TURN, and this assertion used to pin it at 0.
+      `bakeHairTangents` produces the standard UV frame, whose tangent points
+      along +u — measured on the shipped groom at 0.6 degrees off the
+      across-card edge and 83.5 off the along-strand one. Hair is anisotropic
+      along the fibre, so leaving the rotation at 0 draws the highlight band
+      across every braid instead of down it. The old value was only ever
+      consistent with there being no tangent attribute at all, which is what
+      the groom shipped with.
+    */
+    assert.equal(hair.material.anisotropyRotation, Math.PI / 2);
     hair.dispose();
   });
 

@@ -8,7 +8,7 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
-import { bakeHairAux, type HairGeometry } from './hair-aux.ts';
+import { bakeHairAux, bakeHairTangents, type HairGeometry } from './hair-aux.ts';
 
 const vec = (a: number[], stride: number) => ({
   count: a.length / stride,
@@ -163,6 +163,84 @@ describe('hair aux on the shipped groom', () => {
       rootY / rootN > tipY / tipN,
       `roots at ${(rootY / rootN).toFixed(3)} m sit below tips at ${(tipY / tipN).toFixed(3)} m — the braids are upside down`,
     );
+  });
+
+  /*
+    The tangent's DIRECTION is the whole claim, and it is the half a
+    "returns unit vectors" test would miss. hair.ts turns the frame a quarter
+    turn on the strength of this measurement, so if the groom's UV convention
+    ever changed the rotation would be pointing the highlight across the braid
+    and nothing else here would notice.
+  */
+  describe('tangents', () => {
+    const tangents = bakeHairTangents(g);
+
+    it('is one unit vec4 per vertex', () => {
+      assert.equal(tangents.length, g.position.count * 4);
+      for (let v = 0; v < g.position.count; v += 1) {
+        const length = Math.hypot(tangents[v * 4]!, tangents[v * 4 + 1]!, tangents[v * 4 + 2]!);
+        assert.ok(Math.abs(length - 1) < 1e-3, `vertex ${v} tangent length ${length}`);
+        assert.ok(Math.abs(tangents[v * 4 + 3]!) === 1, 'handedness must be +1 or -1');
+      }
+    });
+
+    it('lies in the surface — a tangent off the plane is not a tangent', () => {
+      let worst = 0;
+      for (let v = 0; v < g.position.count; v += 1) {
+        const dot =
+          g.normal.getX(v) * tangents[v * 4]! +
+          g.normal.getY(v) * tangents[v * 4 + 1]! +
+          g.normal.getZ(v) * tangents[v * 4 + 2]!;
+        worst = Math.max(worst, Math.abs(dot));
+      }
+      assert.ok(worst < 1e-3, `worst |dot(normal, tangent)| is ${worst}`);
+    });
+
+    it('runs ACROSS the braid, which is why hair.ts turns it a quarter turn', () => {
+      // Per triangle, the edge that is most purely along one UV axis, compared
+      // against the tangent at its start vertex.
+      const meanAngleTo = (axis: 'u' | 'v') => {
+        let sum = 0;
+        let n = 0;
+        for (let i = 0; i + 2 < g.index!.count; i += 3) {
+          const tri = [g.index!.getX(i), g.index!.getX(i + 1), g.index!.getX(i + 2)];
+          let best: [number, number] | null = null;
+          let score = 0;
+          for (const [p, q] of [
+            [tri[0]!, tri[1]!],
+            [tri[1]!, tri[2]!],
+            [tri[2]!, tri[0]!],
+          ] as [number, number][]) {
+            const du = Math.abs(g.uv.getX(q) - g.uv.getX(p));
+            const dv = Math.abs(g.uv.getY(q) - g.uv.getY(p));
+            const s = axis === 'u' ? du - dv : dv - du;
+            if (s > score) {
+              score = s;
+              best = [p, q];
+            }
+          }
+          if (!best) continue;
+          const [p, q] = best;
+          let dx = g.position.getX(q) - g.position.getX(p);
+          let dy = g.position.getY(q) - g.position.getY(p);
+          let dz = g.position.getZ(q) - g.position.getZ(p);
+          const length = Math.hypot(dx, dy, dz);
+          if (length < 1e-7) continue;
+          dx /= length;
+          dy /= length;
+          dz /= length;
+          const dot = Math.abs(dx * tangents[p * 4]! + dy * tangents[p * 4 + 1]! + dz * tangents[p * 4 + 2]!);
+          sum += (Math.acos(Math.min(1, dot)) * 180) / Math.PI;
+          n += 1;
+        }
+        return sum / n;
+      };
+      const across = meanAngleTo('u');
+      const along = meanAngleTo('v');
+      // 57.3 degrees is the folded-random baseline, so both bounds mean something.
+      assert.ok(across < 10, `tangent is ${across.toFixed(1)} deg off the across-card axis`);
+      assert.ok(along > 70, `tangent is only ${along.toFixed(1)} deg off the strand — the quarter turn would be wrong`);
+    });
   });
 
   it('the pinned root band is a band, not the whole braid', () => {

@@ -27,9 +27,20 @@
  *
  * ANISOTROPY (row 5): `anisotropy > 0` alone flips `useAnisotropy` on
  * `MeshPhysicalNodeMaterial`, which routes `BRDF_GGX` through its anisotropic
- * branch. The authored `tangent` vec4 attribute is used directly; without it
- * three falls back to a screen-derivative frame, which is fine for surfaces and
- * wrong for hair — so the groom must keep authoring tangents.
+ * branch. The `tangent` vec4 attribute is used directly; without it three falls
+ * back to a screen-derivative frame, which is fine for surfaces and wrong for
+ * hair.
+ *
+ * THE GROOM DOES NOT AUTHOR TANGENTS. This header used to say it must keep
+ * doing so; no shipped asset carries TANGENT at all, so every render so far has
+ * been on the fallback frame this paragraph calls wrong. `bakeHairTangents` in
+ * `./hair-aux.ts` computes them at load from the UV gradient.
+ *
+ * A UV tangent points along +u, and on this groom u runs ACROSS the braid —
+ * measured, the baked tangent sits 0.6 degrees off the across-card edge and
+ * 83.5 off the along-strand one. Hair is anisotropic along the fibre, so the
+ * frame turns a quarter turn: that is what `anisotropyRotation` defaults to
+ * here, and it is why the default is not 0.
  *
  * SOT: docs/pack/22-embodied-tutor-avatar-spec.md §4 rows 4-5
  * SOT-KEYWORDS: hair braids sway secondary motion positionnode anisotropy tangent debug tsl
@@ -157,7 +168,9 @@ export function createHairMaterial(options: HairMaterialOptions = {}): HairMater
     // BRDF_GGX through D_GGX_Anisotropic. The groom's authored `tangent` vec4
     // gives it a real direction to be anisotropic ALONG.
     anisotropy: options.anisotropy ?? 0.88,
-    anisotropyRotation: options.anisotropyRotation ?? 0,
+    // PI/2, not 0: the baked tangent runs across the braid (see the header),
+    // and the fibre the highlight must follow runs along it.
+    anisotropyRotation: options.anisotropyRotation ?? Math.PI / 2,
     clearcoat: options.clearcoat ?? 0.08,
     vertexColors: true,
   });
