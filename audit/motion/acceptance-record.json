@@ -10,15 +10,15 @@
     "headOnsetAlignedPct": "not measured",
     "headPitchJawOpenCorrelation": "not measured",
     "blinkRatePerMin": {
-      "value": 16.95,
+      "value": 16.85,
       "method": "IdleEngine.step at 60Hz for 20 min, seeded, counting blinkStarted. Counted at the generator because the renderer neither adds nor drops a blink; blink TIMING relative to speech is blinkNearPausePct and is not this number. Target 12-20: inside it.",
-      "capture": ".claude/skills/presence-metrics/scripts/engine-rates.mts: 339 blinks / 20 min, engine default seed"
+      "capture": ".claude/skills/presence-metrics/scripts/engine-rates.mts: 337 blinks / 20 min, engine default seed"
     },
     "blinkNearPausePct": "not measured",
     "breathRatePerMin": {
-      "value": 14.04,
-      "method": "Zero-up-crossings of breathY over the same 20 min run. Target 12-20: inside it. Period 4.28s with 7.4% cycle-to-cycle variation, against the +/-15% the audit asks for — the layer breathes more metronomically than specified. Cause is idleConfig.breath.rateHz spanning 0.2-0.27Hz, whose uniform re-randomisation yields ~8.7% by construction; reaching 15% needs a range wide enough to push the instantaneous rate below the 12/min floor, so the two targets conflict and the resolution is a design call, not an arithmetic one.",
-      "capture": ".claude/skills/presence-metrics/scripts/engine-rates.mts: 280 cycles / 20 min, engine default seed"
+      "value": 13.6,
+      "method": "Intervals between breathStarted flags over a seeded 20 min run at 60Hz. Target 12-20: inside it. Cycle-to-cycle period variation 15.0% against the +/-15% asked for. The earlier 7.4% was two faults: the engine drew a fresh RATE each cycle from the 12-16/min range, which caps variation at 0.07/sqrt(3) ~ 8.7% by construction, and the measurement counted zero-crossings of breathY, whose interval spans parts of two consecutive cycles and averages their periods (15% generated read back as 12.3%). Session mean and per-cycle jitter are now separate numbers, and the cycle boundary is observable.",
+      "capture": ".claude/skills/presence-metrics/scripts/engine-rates.mts: 271 cycles / 20 min, engine default seed"
     },
     "torsoEnergyCorrelation": "not measured",
     "gestureStrokeOffsetMs": "not measured",

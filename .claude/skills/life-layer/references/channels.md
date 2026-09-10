@@ -6,7 +6,7 @@ drifting.
 
 | Channel | Owner | Ceiling | Where the value lives | Source |
 |---|---|---|---|---|
-| Breath | idle engine | `breath.bobM`, `breath.pitchDeg` | `idle/config.ts` `breath` | rate 0.2–0.27 Hz = 12–16 /min |
+| Breath | idle engine | `breath.bobM`, `breath.pitchDeg` | `idle/config.ts` `breath` | session mean 0.2–0.27 Hz = 12–16 /min; per-cycle jitter ±26% → 15% CV |
 | Blink | idle engine | hazard-driven, refractory floor | `idle/config.ts` `blink` | close < open (Trutoiu) |
 | Saccade | idle engine | `saccade.maxDeg`, tighter while speaking | `idle/config.ts` `saccade` | Eyes Alive |
 | Gaze aversion | idle engine | `gaze.aversionYawDeg` / `aversionPitchDeg` | `idle/config.ts` `gaze` | product limit |
@@ -23,6 +23,10 @@ periodicity the autocorrelation check exists to catch.
 
 ## Not measured
 
-Blink and breath rates have not been measured against a rendered capture on this
+Blink and breath rates are measured at the GENERATOR, not against a rendered
+capture: 16.85 and 13.60 /min over a seeded 20-minute run, breath period varying
+15.0% cycle to cycle. The renderer neither adds nor drops a blink or a breath,
+so the count is the same either way; what a render capture would add is TIMING
+relative to speech, which is a different field and is not measured on this
 branch — only the configured rates are known. The distribution check operates on
 generated sequences, which validates the generator and not the renderer.

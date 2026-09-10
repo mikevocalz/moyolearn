@@ -10,13 +10,11 @@ const steps = Math.round(minutes * 60 * 60);
 const e = new IdleEngine();
 let blinks = 0;
 const breathTimes: number[] = [];
-let lastPhaseVal = 0;
 for (let i = 0; i < steps; i++) {
   const o = e.step(dt, {});
   if (o.blinkStarted) blinks++;
   // breath period: count zero-up-crossings of breathY
-  if (lastPhaseVal <= 0 && o.breathY > 0) breathTimes.push(i * dt);
-  lastPhaseVal = o.breathY;
+  if (o.breathStarted) breathTimes.push(i * dt);
 }
 const periods = breathTimes.slice(1).map((t, i) => t - breathTimes[i]);
 const mean = periods.reduce((a, b) => a + b, 0) / periods.length;

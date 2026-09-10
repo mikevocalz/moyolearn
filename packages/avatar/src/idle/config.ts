@@ -24,7 +24,26 @@ export interface Range {
 export const idleConfig = {
   seed: 1,
   breath: {
+    /**
+     * The MEAN rate for a session — 12-16/min — drawn once, not per cycle.
+     * A person has a resting rate; they do not redraw it every breath.
+     */
     rateHz: { min: 0.2, max: 0.27 },
+    /**
+     * Cycle-to-cycle variation around that mean, as a fraction of the period.
+     * Uniform ±26% gives a coefficient of variation of 0.26/√3 ≈ 15%, which is
+     * the figure resting adults measure and the one the acceptance record asks
+     * for.
+     *
+     * It has to be a separate number from `rateHz` because the two describe
+     * different things, and conflating them is what made this wrong: drawing a
+     * fresh rate per cycle from the 12-16/min range caps the variation at
+     * 0.07/√3 ≈ 8.7% by construction, and it measured 7.4%. Reaching 15% that
+     * way needs a range wide enough to put the mean outside resting rate — the
+     * range is the range of the MEAN, not a bound each cycle has to sit inside.
+     * An individual cycle may fall outside 12-16/min; a person's does.
+     */
+    periodJitter: 0.26,
     inhaleFraction: 0.4, // ~40/60 inhale/exhale
     bobM: 0.0018,
     pitchDeg: 0.3,

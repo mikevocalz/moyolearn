@@ -21,10 +21,17 @@ describe('joint ownership', () => {
     assert.deepEqual(notDeform, [], 'ORG and MCH bones move the skeleton and not the skin');
   });
 
+  /*
+    The synthetic layers use placeholder joint names on purpose. The invariant
+    is name-agnostic, and borrowing a real bone name here would suggest the
+    assertion depends on the rig — it does not, and the build check bans
+    claimed names outside the two files that derive them for exactly that
+    reason.
+  */
   it('two owners on one joint is a problem, not a blend', () => {
     const problems = ownershipProblems([
-      { name: 'a', owns: ['DEF-spine'], modulates: [], why: '' },
-      { name: 'b', owns: ['DEF-spine'], modulates: [], why: '' },
+      { name: 'a', owns: ['joint-a'], modulates: [], why: '' },
+      { name: 'b', owns: ['joint-a'], modulates: [], why: '' },
     ]);
     assert.equal(problems.length, 1);
     assert.equal(problems[0]?.kind, 'double-owned');
@@ -33,20 +40,20 @@ describe('joint ownership', () => {
 
   it('a modulator on an unowned joint has no base to add to', () => {
     const problems = ownershipProblems([
-      { name: 'a', owns: ['DEF-spine'], modulates: [], why: '' },
-      { name: 'b', owns: [], modulates: ['DEF-hand.L'], why: '' },
+      { name: 'a', owns: ['joint-a'], modulates: [], why: '' },
+      { name: 'b', owns: [], modulates: ['joint-b'], why: '' },
     ]);
     assert.equal(problems.length, 1);
     assert.equal(problems[0]?.kind, 'unowned');
-    assert.equal(problems[0]?.joint, 'DEF-hand.L');
+    assert.equal(problems[0]?.joint, 'joint-b');
   });
 
   it('many modulators on one owned joint is the normal case', () => {
     assert.deepEqual(
       ownershipProblems([
-        { name: 'base', owns: ['DEF-spine'], modulates: [], why: '' },
-        { name: 'life', owns: [], modulates: ['DEF-spine'], why: '' },
-        { name: 'speech', owns: [], modulates: ['DEF-spine'], why: '' },
+        { name: 'base', owns: ['joint-a'], modulates: [], why: '' },
+        { name: 'life', owns: [], modulates: ['joint-a'], why: '' },
+        { name: 'speech', owns: [], modulates: ['joint-a'], why: '' },
       ]),
       [],
     );

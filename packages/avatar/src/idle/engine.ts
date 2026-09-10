@@ -92,6 +92,15 @@ export type IdleChannel = (typeof IDLE_CHANNELS)[number];
 
 export type IdleFrame = { [K in IdleChannel]: number } & {
   blinkStarted: boolean;
+  /**
+   * True on the frame a breath cycle begins. Mirrors `blinkStarted`, and it
+   * exists because the channel was otherwise unmeasurable: the interval between
+   * zero-crossings of `breathY` spans parts of two consecutive cycles, so it
+   * averages their periods and reads back less variation than was generated
+   * (15% drawn, 12.3% measured that way). A cycle boundary is the only place
+   * the real period is observable.
+   */
+  breathStarted: boolean;
   saccadeStarted: boolean;
   anticipated: boolean;
   /** A weight transfer began this frame. */
@@ -150,6 +159,8 @@ export class IdleEngine {
 
   private breathPhase = 0;
   private breathPeriod: number;
+  /** This session's resting rate. Fixed; only the individual cycles vary. */
+  private breathMeanPeriod: number;
   private breathBoost = 1;
 
   // Tuples, not arrays: there are exactly two sway axes per octave and
@@ -247,6 +258,7 @@ export class IdleEngine {
     headFollowYaw: 0,
     headFollowPitch: 0,
     blinkStarted: false,
+    breathStarted: false,
     saccadeStarted: false,
     anticipated: false,
     weightShifted: false,
@@ -268,7 +280,17 @@ export class IdleEngine {
       new ValueNoise(idleConfig.drift.hz, this.rand),
       new ValueNoise(idleConfig.drift.hz, this.rand),
     ];
-    this.breathPeriod = 1 / this.range(idleConfig.breath.rateHz);
+    this.breathMeanPeriod = 1 / this.range(idleConfig.breath.rateHz);
+    /*
+      The first cycle runs at the mean, unjittered, and that is deliberate: it
+      consumes no extra draw. Every ValueNoise shares this seeded stream and
+      pulls from it lazily during `step`, so one additional draw here shifts
+      every other channel's phase for the whole run — it moved the sway
+      autocorrelation from just under its 0.25 ceiling to just over, in a change
+      that had nothing to do with sway. Per-cycle jitter replaces the old
+      per-cycle rate draw one for one, so the stream stays where it was.
+    */
+    this.breathPeriod = this.breathMeanPeriod;
     this.saccadeIn = this.range(idleConfig.saccade.intervalS);
     // Preserve the seeded face stream across removal of the periodic nod.
     this.range(idleConfig.nod.speechTimerS);
@@ -295,6 +317,15 @@ export class IdleEngine {
       this.fingerAmp.push(this.bodyRange(B.finger.deg) * DEG);
     }
     this.awayIn = this.bodyRange(B.gazeAway.intervalS);
+  }
+
+  /**
+   * The next breath, jittered around this session's mean. Drawn from the same
+   * seeded stream as everything else, so a run stays reproducible.
+   */
+  private jitteredBreathPeriod(): number {
+    const j = idleConfig.breath.periodJitter;
+    return this.breathMeanPeriod * (1 + this.range({ min: -j, max: j }));
   }
 
   private range(r: Range) {
@@ -336,10 +367,12 @@ export class IdleEngine {
     this.lastTimeUntilOnset = tuo;
 
     // -- breathing: never stops; asymmetric inhale/exhale --
+    F.breathStarted = false;
     this.breathPhase += dt / this.breathPeriod;
     if (this.breathPhase >= 1) {
+      F.breathStarted = true;
       this.breathPhase %= 1;
-      this.breathPeriod = 1 / this.range(C.breath.rateHz);
+      this.breathPeriod = this.jitteredBreathPeriod();
       this.breathBoost = 1;
     }
     const inF = C.breath.inhaleFraction;

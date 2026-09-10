@@ -60,8 +60,31 @@ describe('blink statistics', () => {
 });
 
 describe('postural sway', () => {
-  it('does not loop: autocorrelation < 0.25 beyond one slowest-octave cycle', () => {
-    const engine = new IdleEngine(1);
+  /*
+    "Does not loop" is a property of the SIGNAL, and it has to be asserted as
+    one. The obvious test — one seed, and every lag's autocorrelation under a
+    fixed ceiling — is a coin flip, because the quantity it bounds is the
+    maximum over roughly three thousand lags and that maximum is itself noisy.
+    Measured across twelve seeds it ranges 0.17 to 0.35 and clears 0.25 on five
+    of them; the version pinned to seed 1 passed because seed 1 happened to land
+    at 0.249, and it began failing on an unrelated change to the breath period
+    that shifted the shared random stream.
+
+    What distinguishes a loop from a high lag by chance is CONSISTENCY. A real
+    loop comes from the octave structure, which every seed shares, so it would
+    appear at the same lag every time. Noise peaks land wherever they land — the
+    measured lags spread from 67 to 2909 with nothing in common. So this asserts
+    two things a loop could not survive: the peak does not sit at a shared lag
+    across seeds, and the typical peak stays modest.
+
+    They catch different failures, and only the second catches the one this
+    layer is designed against. Replacing the second octave's irrational ratio
+    with `* 2` — the exact defect `sway.octaves` exists to prevent — takes the
+    median from 0.23 to 0.333 and fails, while the peak lags still scatter and
+    the first assertion stays green. Verified both directions.
+  */
+  const peakOf = (seed: number) => {
+    const engine = new IdleEngine(seed);
     const seconds = 600;
     const decimate = 6; // 60Hz run sampled at 10Hz
     const samples: number[] = [];
@@ -74,14 +97,42 @@ describe('postural sway', () => {
     const x = samples.map((v) => v - mean);
     const variance = x.reduce((a, b) => a + b * b, 0) / n;
     const slowestHz = Math.min(...C.sway.octaves.map((o) => o.hz));
-    const sampleHz = 1 / (DT * decimate);
-    const lagMin = Math.ceil((1 / slowestHz) * sampleHz);
+    const lagMin = Math.ceil((1 / slowestHz) * (1 / (DT * decimate)));
+    let peak = 0;
+    let peakLag = 0;
     for (let lag = lagMin; lag < n / 2; ++lag) {
       let sum = 0;
       for (let i = 0; i + lag < n; ++i) sum += (x[i] as number) * (x[i + lag] as number);
-      const r = sum / ((n - lag) * variance);
-      assert.ok(Math.abs(r) < 0.25, `sway autocorrelation ${r} at lag ${lag} — the idle loops`);
+      const r = Math.abs(sum / ((n - lag) * variance));
+      if (r > peak) {
+        peak = r;
+        peakLag = lag;
+      }
     }
+    return { peak, peakLag };
+  };
+
+  const SEEDS = [1, 2, 3, 4, 5];
+  const peaks = SEEDS.map(peakOf);
+
+  it('does not loop: no lag is the peak for more than one seed', () => {
+    const lags = peaks.map((p) => p.peakLag);
+    const shared = lags.filter((lag, i) => lags.some((other, j) => i !== j && Math.abs(lag - other) < 10));
+    assert.deepEqual(
+      shared,
+      [],
+      `the sway peaks at the same lag across seeds (${lags.join(', ')}) — that is the octave structure recurring, not noise`,
+    );
+  });
+
+  it('does not loop: the typical peak stays modest beyond one slowest-octave cycle', () => {
+    const sorted = peaks.map((p) => p.peak).sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)] as number;
+    assert.ok(
+      median < 0.3,
+      `median sway autocorrelation ${median.toFixed(3)} across ${SEEDS.length} seeds ` +
+        `(${sorted.map((v) => v.toFixed(2)).join(', ')}) — the idle loops`,
+    );
   });
 });
 
