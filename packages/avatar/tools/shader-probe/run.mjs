@@ -3,6 +3,7 @@
  *
  * `node tools/shader-probe/run.mjs [--out dir] [--only materials|stage|rebake]`
  *                                   [--assets <public dir>] [--runtime <rebaked .bin>]
+ *                                   [--backend webgl|webgpu]
  *
  * TWO PROBES, because they answer different questions. `materials` renders each
  * ported material on a lit sphere and asks "does this node graph compile and
@@ -48,16 +49,47 @@ const flag = (name, fallback) => {
 };
 const outDir = resolve(flag('out', join(packageRoot, '.probe')));
 
-// Playwright's bundled Chromium has no WebGPU compiled in, so the probe runs on
-// the WebGL2 backend over SwiftShader. `--enable-unsafe-swiftshader` is what
-// permits a software rasteriser for WebGL in recent Chrome.
-const CHROME_ARGS = [
-  '--no-sandbox',
-  '--use-gl=angle',
-  '--use-angle=swiftshader',
-  '--enable-unsafe-swiftshader',
-  '--ignore-gpu-blocklist',
-];
+/**
+ * WHICH BACKEND. `webgl` is the default and the portable one; `webgpu` is the
+ * backend the app actually ships on the web, and the only one that can fail on
+ * WGSL or on `createRenderPipeline`.
+ *
+ * They cannot share Chrome flags. The WebGL run forces ANGLE onto SwiftShader
+ * so it works on a machine with no usable GPU, and that same flag is what makes
+ * a WebGPU run pointless — SwiftShader answers the adapter request and nothing
+ * a real Dawn pipeline would reject gets exercised. So the WebGPU run drops
+ * `--use-angle=swiftshader` entirely and asks for a real adapter.
+ *
+ * The WebGPU run also needs a Chrome with WebGPU compiled in. Playwright's
+ * bundled Chromium does not have it, so point `CHROME_PATH` at a real one:
+ *
+ *   CHROME_PATH='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' \
+ *     node tools/shader-probe/run.mjs --backend webgpu --only materials
+ */
+const backend = flag('backend', 'webgl');
+if (backend !== 'webgl' && backend !== 'webgpu') {
+  process.stderr.write(`unknown --backend ${backend}; expected webgl or webgpu\n`);
+  process.exit(2);
+}
+
+const CHROME_ARGS =
+  backend === 'webgpu'
+    ? [
+        '--no-sandbox',
+        // `--enable-unsafe-webgpu` is what lets WebGPU run on a configuration
+        // Chrome has not blessed; on a blessed one it is a no-op.
+        '--enable-unsafe-webgpu',
+        '--ignore-gpu-blocklist',
+      ]
+    : [
+        '--no-sandbox',
+        '--use-gl=angle',
+        '--use-angle=swiftshader',
+        // `--enable-unsafe-swiftshader` is what permits a software rasteriser
+        // for WebGL in recent Chrome.
+        '--enable-unsafe-swiftshader',
+        '--ignore-gpu-blocklist',
+      ];
 
 mkdirSync(join(outDir, 'img'), { recursive: true });
 
@@ -113,9 +145,14 @@ function bundle(probe) {
     ],
     { cwd: packageRoot, stdio: 'inherit' }
   );
+  // The backend is handed to the page as a global rather than as an argument to
+  // the probe entry point, so `probe.arg` (which differs per probe) stays as it
+  // was and every entry can read the same switch.
   writeFileSync(
     join(outDir, `${probe.id}.html`),
-    `<!doctype html><html><body>${probe.body}<script src="./${probe.id}.js"></script></body></html>\n`
+    `<!doctype html><html><body>${probe.body}` +
+      `<script>window.__PROBE_BACKEND=${JSON.stringify(backend)};</script>` +
+      `<script src="./${probe.id}.js"></script></body></html>\n`
   );
 }
 
@@ -171,6 +208,47 @@ const executablePath = process.env.CHROME_PATH ?? findLocalChromium();
 const browser = await chromium.launch(
   executablePath ? { executablePath, args: CHROME_ARGS } : { args: CHROME_ARGS }
 );
+
+/**
+ * Fails loudly rather than quietly producing a WebGL-shaped result: if the
+ * browser has no WebGPU adapter, `WebGPURenderer` silently falls back to the
+ * WebGL backend and every case would come back green having proven nothing
+ * about WGSL.
+ *
+ * The check runs on a real page, not `about:blank` — Chrome does not expose
+ * `navigator.gpu` on the opaque origin, so an `about:blank` probe reports a
+ * false negative.
+ */
+if (backend === 'webgpu') {
+  writeFileSync(join(outDir, 'gpu-check.html'), '<!doctype html><html><body></body></html>\n');
+  const page = await browser.newPage();
+  await page.goto(`file://${join(outDir, 'gpu-check.html')}`);
+  const support = await page.evaluate(async () => {
+    if (!navigator.gpu) return { gpu: false, adapter: false, vendor: null, architecture: null };
+    const adapter = await navigator.gpu.requestAdapter();
+    return {
+      gpu: true,
+      adapter: Boolean(adapter),
+      vendor: adapter?.info?.vendor ?? null,
+      architecture: adapter?.info?.architecture ?? null,
+    };
+  });
+  await page.close();
+  if (!support.gpu || !support.adapter) {
+    await browser.close();
+    process.stderr.write(
+      `\nBLOCKED: --backend webgpu, but this browser has ` +
+        `${support.gpu ? 'no WebGPU adapter' : 'no navigator.gpu'}.\n` +
+        `  executable: ${executablePath ?? '(playwright bundled chromium)'}\n` +
+        "  Point CHROME_PATH at a Chrome build with WebGPU compiled in.\n"
+    );
+    process.exit(2);
+  }
+  process.stdout.write(
+    `\nWebGPU adapter: ${support.vendor ?? 'unknown'} ${support.architecture ?? ''}`.trimEnd() +
+      `\n  executable: ${executablePath ?? '(playwright bundled chromium)'}\n`
+  );
+}
 
 let failed = 0;
 let total = 0;
@@ -254,17 +332,41 @@ for (const probe of PROBES) {
     }
     // A single distinct luminance means the draw produced a flat fill — the
     // graph did not shade, whatever it reported.
-    const ok = probe.ok(result);
+    // A WebGPU run that silently became a WebGL run is worse than a red one:
+    // it looks like new evidence and is not.
+    const wrongBackend = backend === 'webgpu' && result.backendId === 'webgl2';
+    const ok = probe.ok(result) && !wrongBackend;
+    if (wrongBackend) {
+      process.stdout.write('       asked for webgpu, three built the WebGL backend\n');
+    }
     total += 1;
     if (!ok) failed += 1;
+    // Written out because "it compiled WGSL" is a claim, and this is the thing
+    // that backs it. Not a golden either — nothing here is.
+    if (result.fragmentShader) {
+      mkdirSync(join(outDir, 'shaders', probe.id), { recursive: true });
+      writeFileSync(
+        join(outDir, 'shaders', probe.id, `${label}.${result.shaderLanguage}`),
+        result.fragmentShader
+      );
+    }
     const detail =
       probe.id === 'rebake'
         ? diffLine(join(outDir, 'img', probe.id), label)
-        : `luma ${String(result.meanLuma).padStart(6)}  distinct ${String(result.distinctLuma).padStart(4)}`;
+        : `luma ${String(result.meanLuma).padStart(6)}  distinct ${String(result.distinctLuma).padStart(4)}` +
+          (result.backendId ? `  ${result.backendId}/${result.shaderLanguage}` : '');
     process.stdout.write(
       `  ${ok ? 'ok  ' : 'FAIL'} ${probe.id}/${String(label).padEnd(14)} ${detail}` +
-        `${result.error ? `\n       ${String(result.error).split('\n')[0]}` : ''}\n`
+        `${result.error ? `\n       throw: ${String(result.error).split('\n')[0]}` : ''}\n`
     );
+    // Verbatim, un-truncated: on the WebGPU backend these ARE the failure, and
+    // a paraphrased pipeline error is worth nothing to whoever reads this.
+    for (const line of result.consoleErrors ?? []) {
+      process.stdout.write(`       console.error: ${line}\n`);
+    }
+    for (const line of result.deviceErrors ?? []) {
+      process.stdout.write(`       device error: ${line}\n`);
+    }
   }
 
   const interesting = logs.filter((l) => l.startsWith('[error]') || l.startsWith('[pageerror]'));
@@ -295,8 +397,12 @@ function diffLine(dir, label) {
 }
 
 process.stdout.write(
-  `\n${total - failed}/${total} cases compiled and shaded. Images in ${join(outDir, 'img')}.\n` +
-    'These are NOT goldens — SwiftShader is a software rasteriser, on the WebGL2\n' +
-    'backend. This is a compile gate; the look and the WGSL path are §10.5\'s job.\n'
+  `\n${total - failed}/${total} cases compiled and shaded on the ${backend} backend. ` +
+    `Images in ${join(outDir, 'img')}.\n` +
+    (backend === 'webgpu'
+      ? 'These are NOT goldens — the frames come off whatever GPU this host has.\n' +
+        'This run DOES cover WGSL and createRenderPipeline; the look is still §10.5.\n'
+      : 'These are NOT goldens — SwiftShader is a software rasteriser, on the WebGL2\n' +
+        "backend. This is a compile gate; the look and the WGSL path are §10.5's job.\n")
 );
 process.exit(failed ? 1 : 0);

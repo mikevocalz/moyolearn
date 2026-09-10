@@ -23,6 +23,9 @@ export { DEFAULT_TONE_MAPPING, OUTPUT_COLOR_SPACE, RIG, TONE_MAPPING_CHOICES, ap
 export { SKIN_CURVATURE_ATTRIBUTE, SKIN_DEFAULTS, SKIN_THICKNESS_ATTRIBUTE, SkinLightingModel, SkinNodeMaterial, createSkinUniforms, skinEmissiveNode, type SkinMaterialOptions, type SkinParams, type SkinUniforms, } from './materials/skin.ts';
 export { CURVATURE_REFERENCE, THICKNESS_REFERENCE, bakeSkinAux, type Geometry as SkinAuxGeometry, type SkinAux, type VectorAttribute, } from './materials/skin-aux.ts';
 export { bakeHairAux, bakeHairTangents, type HairAux, type HairGeometry, type HairTangents, } from './materials/hair-aux.ts';
+export { buildMeshGrid, type MeshGrid } from './materials/mesh-grid.ts';
+export { bakeMouthCavity, type MouthCavityBake, type MouthGeometry, } from './materials/mouth-cavity.ts';
+export { bakeEyeAux, type EyeAux, type EyeFit } from './materials/eye-aux.ts';
 export { EYE_AUX_ATTRIBUTE, EYE_SURFACES, createEyeUniforms, makeEyeMaterials, type EyeAuxMeta, type EyeMaterials, type EyeSurface, type EyeUniforms, } from './materials/eyes.ts';
 export { HAIR_PHASE_ATTRIBUTE, HAIR_T_ATTRIBUTE, createHairMaterial, createHairUniforms, hairSwayNode, type HairDebugMode, type HairMaterial, type HairMaterialOptions, type HairUniforms, } from './materials/hair.ts';
 export { DENIM_PHASE_CHANNEL, GARMENT_REST_ATTRIBUTE, createDenimMaterial, createDenimUniforms, denimColorNode, denimRoughnessNode, seedPhase, type DenimMaterial, type DenimMaterialOptions, type DenimRegion, type DenimUniforms, } from './materials/denim.ts';

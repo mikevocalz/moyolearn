@@ -74,40 +74,46 @@ export function buildMeshGrid(g: Geometry): MeshGrid {
     misses every cell a triangle crosses without landing in, and a missed cell
     is a ray that passes through a surface as if it were not there.
   */
+  /*
+    EVERY CELL THE TRIANGLE'S BOUNDING BOX COVERS, enumerated — not sampled.
+    A barycentric raster only VISITS cells, so a triangle can sit in a cell no
+    sample landed in, and a ray stepping through that cell passes through the
+    surface as if it were not there. Measured against brute-force
+    Möller-Trumbore over all 33,136 body triangles, sampling lost 2.16% of hits
+    with a worst error of 95 mm — a thin vertex reading fully opaque, which is
+    speckled subsurface scattering over the ears and eyelids.
+
+    A bounding box over-includes where an exact triangle-box overlap would not,
+    and that is the right trade here: these triangles are millimetres against a
+    13 mm cell, so a box is one to eight cells, while the 3x3x3 dilation that
+    also fixes it puts 27x the triangles in every cell and made the eye bake
+    take 1.4 seconds. Over-inclusion costs an intersection test that returns no
+    hit; under-inclusion costs a wrong render.
+  */
   const visit = (t: number, mark: (c: number) => void): void => {
     const a = corner(t, 0);
     const b = corner(t, 1);
     const c = corner(t, 2);
-    const ax = P.getX(a);
-    const ay = P.getY(a);
-    const az = P.getZ(a);
-    const bx = P.getX(b);
-    const by = P.getY(b);
-    const bz = P.getZ(b);
-    const cx = P.getX(c);
-    const cy = P.getY(c);
-    const cz = P.getZ(c);
-    const edge = Math.max(
-      Math.abs(bx - ax) + Math.abs(by - ay) + Math.abs(bz - az),
-      Math.abs(cx - ax) + Math.abs(cy - ay) + Math.abs(cz - az),
-    );
-    const steps = Math.max(1, Math.ceil(edge / cell));
-    let last = -1;
-    for (let i = 0; i <= steps; i += 1) {
-      for (let j = 0; i + j <= steps; j += 1) {
-        const u = i / steps;
-        const w = j / steps;
-        const q = 1 - u - w;
-        const marked = cellOf(ax * q + bx * u + cx * w, ay * q + by * u + cy * w, az * q + bz * u + cz * w);
-        if (marked !== last) {
-          mark(marked);
-          last = marked;
-        }
+    const lo = (v: number, min: number, n: number): number =>
+      Math.min(n - 1, Math.max(0, Math.floor((v - min) / cell)));
+    const hi = (v: number, min: number, n: number): number =>
+      Math.min(n - 1, Math.max(0, Math.ceil((v - min) / cell)));
+    const x0 = lo(Math.min(P.getX(a), P.getX(b), P.getX(c)), minX, nx);
+    const x1 = hi(Math.max(P.getX(a), P.getX(b), P.getX(c)), minX, nx);
+    const y0 = lo(Math.min(P.getY(a), P.getY(b), P.getY(c)), minY, ny);
+    const y1 = hi(Math.max(P.getY(a), P.getY(b), P.getY(c)), minY, ny);
+    const z0 = lo(Math.min(P.getZ(a), P.getZ(b), P.getZ(c)), minZ, nz);
+    const z1 = hi(Math.max(P.getZ(a), P.getZ(b), P.getZ(c)), minZ, nz);
+    for (let k = z0; k <= z1; k += 1) {
+      for (let j = y0; j <= y1; j += 1) {
+        const row = (k * ny + j) * nx;
+        for (let i = x0; i <= x1; i += 1) mark(row + i);
       }
     }
   };
 
-  // Two passes so the storage is one flat array rather than millions of arrays.
+  // Two passes so the storage is one flat array rather than millions of them:
+  // count per cell, prefix-sum, then fill.
   const starts = new Uint32Array(nx * ny * nz + 1);
   for (let t = 0; t < triangleCount; t += 1) {
     visit(t, (c) => {
@@ -172,26 +178,68 @@ export function buildMeshGrid(g: Geometry): MeshGrid {
       const [dx, dy, dz] = direction;
       let nearest = Infinity;
       query += 1;
-      // Half-cell steps so no cell is skipped on a diagonal. Each candidate
-      // triangle is tested once per query, not once per cell it spans.
-      const steps = Math.ceil((reach / cell) * 2) + 1;
-      for (let step = 0; step <= steps; step += 1) {
-        const d = (step * cell) / 2;
-        if (d > reach) break;
-        const x = ox + dx * d;
-        const y = oy + dy * d;
-        const z = oz + dz * d;
-        if (x < minX - cell || y < minY - cell || z < minZ - cell) break;
-        if (x > maxX + cell || y > maxY + cell || z > maxZ + cell) break;
-        const c = cellOf(x, y, z);
+      /*
+        Amanatides & Woo: step from cell to cell along the ray, crossing one
+        boundary at a time, so every cell it passes through is visited exactly
+        once. The half-cell sampling this replaces could step over a cell on a
+        diagonal, which is the other half of the same 2.16% — enumerating the
+        triangles is no use if the traversal skips the cell holding them.
+      */
+      const step = (d: number): number => (d > 0 ? 1 : d < 0 ? -1 : 0);
+      const sx = step(dx);
+      const sy = step(dy);
+      const sz = step(dz);
+      let ix = Math.min(nx - 1, Math.max(0, Math.floor((ox - minX) / cell)));
+      let iy = Math.min(ny - 1, Math.max(0, Math.floor((oy - minY) / cell)));
+      let iz = Math.min(nz - 1, Math.max(0, Math.floor((oz - minZ) / cell)));
+      // Distance along the ray to the next boundary on each axis, and the
+      // distance between successive boundaries. Infinity for a flat axis.
+      const boundary = (o: number, min: number, i: number, s2: number): number => {
+        if (s2 === 0) return Infinity;
+        const edge = min + (s2 > 0 ? i + 1 : i) * cell;
+        return edge - o;
+      };
+      let tMaxX = sx === 0 ? Infinity : boundary(ox, minX, ix, sx) / dx;
+      let tMaxY = sy === 0 ? Infinity : boundary(oy, minY, iy, sy) / dy;
+      let tMaxZ = sz === 0 ? Infinity : boundary(oz, minZ, iz, sz) / dz;
+      const tDeltaX = sx === 0 ? Infinity : Math.abs(cell / dx);
+      const tDeltaY = sy === 0 ? Infinity : Math.abs(cell / dy);
+      const tDeltaZ = sz === 0 ? Infinity : Math.abs(cell / dz);
+
+      let travelled = 0;
+      for (;;) {
+        const c = (iz * ny + iy) * nx + ix;
         for (let i = starts[c]!; i < starts[c + 1]!; i += 1) {
           const t = buckets[i]!;
           if (seen[t] === query) continue;
           seen[t] = query;
           const hit = hitDistance(ox, oy, oz, dx, dy, dz, t);
-          if (hit > epsilon && hit < nearest) nearest = hit;
+          /*
+            `hit <= reach` is not optional. Without it a triangle that happens
+            to lie in a visited cell is accepted at any distance: 53 of 3932
+            finite hits came back beyond a 0.06 m reach, up to 0.072 m.
+            Thickness clamps afterwards and did not care; the cavity reads
+            `isFinite(hit)` as "blocked within reach" and misclassified all 53.
+          */
+          if (hit > epsilon && hit <= reach && hit < nearest) nearest = hit;
         }
-        if (nearest < d) break; // nothing further along can be nearer
+        // Nothing in a cell further along can beat a hit already inside this one.
+        if (nearest <= travelled) break;
+        if (tMaxX < tMaxY && tMaxX < tMaxZ) {
+          travelled = tMaxX;
+          ix += sx;
+          tMaxX += tDeltaX;
+        } else if (tMaxY < tMaxZ) {
+          travelled = tMaxY;
+          iy += sy;
+          tMaxY += tDeltaY;
+        } else {
+          travelled = tMaxZ;
+          iz += sz;
+          tMaxZ += tDeltaZ;
+        }
+        if (travelled > reach) break;
+        if (ix < 0 || iy < 0 || iz < 0 || ix >= nx || iy >= ny || iz >= nz) break;
       }
       return nearest;
     },

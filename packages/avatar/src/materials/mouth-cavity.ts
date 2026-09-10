@@ -22,17 +22,21 @@
  *      other enclosed pocket on a body — an armpit is occluded too, and does
  *      not care whether the jaw is open.
  *
- * Neither alone is enough and the pair is: measured on the shipped body, 2616
- * vertices are occluded, 1470 move with the jaw, and 522 do both. That 522 is
+ * Neither alone is enough and the pair is: measured on the shipped body, 3939
+ * vertices are occluded, 1470 move with the jaw, and 657 do both. That 657 is
  * larger than the cavity lining proper because it also catches the lip seam,
  * and that costs nothing — depth is measured FROM the aperture, so a vertex
  * wrongly included at the lip line gets a depth near zero, which is what it
  * would have been given anyway.
  *
- * POSITIONS ARE WELDED BEFORE THE WALK. UV seams split this mesh into 34 index
- * components where there are only 14 real shells, and a geodesic that stops at
- * a texture seam is a dark band across the palate. Welding at a tenth of a
- * millimetre merges 18,104 vertices into 16,855.
+ * POSITIONS ARE WELDED BEFORE THE WALK. UV seams split this mesh into far more
+ * index components than it has surfaces, and a geodesic that stops at a texture
+ * seam is a dark band across the palate. Welding at a tenth of a millimetre
+ * merges 18,104 vertices into 16,833.
+ *
+ * Measured on the shipped head: 608 welded lining points, a 62-vertex aperture,
+ * 69.5 mm deep, 196 distinct depths, 309 more adopted by the teeth and tongue,
+ * 209 ms.
  *
  * SOT: ./mouth.ts · docs/pack/22-embodied-tutor-avatar-spec.md §4 row 7
  * SOT-KEYWORDS: mouth cavity aCavity bake depth geodesic jawOpen occlusion weld shell aperture
@@ -75,8 +79,10 @@ export interface MouthGeometry extends Geometry {
 export interface MouthCavityBake {
   /** 0 outside the mouth and at the lips, 1 at the deepest point found. */
   readonly depth: Float32Array;
-  /** Lining vertices the walk covered. */
+  /** Distinct surface points the walk covered. Welded, so a UV seam is one. */
   readonly liningCount: number;
+  /** Vertices that took a depth from a neighbour instead — teeth and tongue. */
+  readonly adoptedCount: number;
   /** Vertices on the aperture ring the walk started from. */
   readonly apertureCount: number;
   /** The deepest geodesic distance found, in metres. */
@@ -115,7 +121,10 @@ export function bakeMouthCavity(g: MouthGeometry): MouthCavityBake {
       OUTWARD_REACH,
       SELF_HIT_EPSILON,
     );
-    if (Number.isFinite(hit)) {
+    // Counted on the WELDED representative: a vertex split across a UV seam is
+    // one surface point, and counting it twice made this disagree with the
+    // number of points the walk actually visits.
+    if (Number.isFinite(hit) && lining[welded[v]!] !== 1) {
       lining[welded[v]!] = 1;
       liningCount += 1;
     }
@@ -123,7 +132,7 @@ export function bakeMouthCavity(g: MouthGeometry): MouthCavityBake {
 
   const depth = new Float32Array(count);
   if (liningCount === 0) {
-    return { depth, liningCount: 0, apertureCount: 0, maxDepthM: 0 };
+    return { depth, liningCount: 0, adoptedCount: 0, apertureCount: 0, maxDepthM: 0 };
   }
 
   // -- adjacency, on welded vertices ---------------------------------------
@@ -174,7 +183,7 @@ export function bakeMouthCavity(g: MouthGeometry): MouthCavityBake {
     than seeding somewhere arbitrary and producing a plausible gradient.
   */
   if (apertureCount === 0) {
-    return { depth, liningCount, apertureCount: 0, maxDepthM: 0 };
+    return { depth, liningCount, adoptedCount: 0, apertureCount: 0, maxDepthM: 0 };
   }
 
   // Dijkstra over Euclidean edge lengths. The frontier is small — hundreds of
@@ -222,6 +231,7 @@ export function bakeMouthCavity(g: MouthGeometry): MouthCavityBake {
   */
   const liningVertices: number[] = [];
   for (let v = 0; v < count; v += 1) if (lining[welded[v]!] === 1 && depth[v]! > 0) liningVertices.push(v);
+  let adoptedCount = 0;
   for (let v = 0; v < count; v += 1) {
     if (lining[welded[v]!] === 1) continue;
     const hit = grid.nearestHit(
@@ -241,7 +251,8 @@ export function bakeMouthCavity(g: MouthGeometry): MouthCavityBake {
       }
     }
     depth[v] = adopted;
+    if (adopted > 0) adoptedCount += 1;
   }
 
-  return { depth, liningCount, apertureCount, maxDepthM };
+  return { depth, liningCount, adoptedCount, apertureCount, maxDepthM };
 }

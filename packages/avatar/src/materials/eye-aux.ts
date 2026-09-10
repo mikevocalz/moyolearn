@@ -43,6 +43,10 @@
  * backward ray exits through the shell. Measured: it returned a forward of
  * (0.025, 0.034, -0.988) where the anterior pole is at +Z.
  *
+ * Cost, measured on the shipped head rather than estimated: 618 ms, once, at
+ * load. Most of it is the contact shadow — 24 rays for each of 1028 eyeball
+ * vertices — and it is the slowest of the three bakes for that reason.
+ *
  * SOT: ./eyes.ts · docs/pack/22-embodied-tutor-avatar-spec.md §4 row 3
  * SOT-KEYWORDS: eye aux bake iris plane parallax lid margin wet line contact shadow sphere pole
  */

@@ -59,7 +59,7 @@ describe('mouth cavity bake', () => {
   it('finds the aperture where the lining ends, without being told where it is', () => {
     const g = slot();
     const { apertureCount, liningCount } = bakeMouthCavity(g);
-    // 15 lining rungs x 2 sides x 2 plates.
+    // 15 lining rungs x 2 sides x 2 plates, welded (nothing coincides here).
     assert.equal(liningCount, 60);
     // The boundary rung of each plate: 2 vertices x 2 plates.
     assert.equal(apertureCount, 4);
@@ -220,9 +220,7 @@ describe('mouth cavity on the shipped head', () => {
   it('reaches the teeth and tongue, which the walk cannot cross to', () => {
     // They are separate shells, so every one of them is adopted rather than
     // walked. Zero adopted would mean the teeth light like a cheek.
-    const lining = cavity.liningCount;
-    const nonZero = cavity.depth.filter((v) => v > 0).length;
-    assert.ok(nonZero > lining, `${nonZero} darkened vertices against ${lining} lining — nothing was adopted`);
+    assert.ok(cavity.adoptedCount > 20, `only ${cavity.adoptedCount} vertices adopted a depth`);
   });
 
   it('leaves the face alone — only the mouth is darkened', () => {

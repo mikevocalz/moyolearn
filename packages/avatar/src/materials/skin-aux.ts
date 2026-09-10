@@ -16,15 +16,18 @@
  * re-export every time the asset moves plus a fourth copy of the mesh to keep
  * in sync.
  *
- * The cost, measured on the shipped phone body rather than estimated: 78 ms for
- * the 18k-vertex body primitive on an M-series Mac, once, at load. Only the
+ * The cost, measured on the shipped phone body rather than estimated: 193 ms
+ * for the 18k-vertex body primitive on an M-series Mac, once, at load. Only the
  * body is baked — `hair.ts` reads its own attributes. Budget for a phone CPU
  * being several times slower and keep it off the first frame.
  *
- * It was 22 ms when the thickness march reported cell indices instead of
- * distances. That version was 3.5x faster and wrong: it produced seven distinct
- * thicknesses across the whole mesh. The extra 56 ms buys 4744 of them and a
- * floor of 0.2 mm instead of 25.9 mm.
+ * It was 22 ms when the thickness march reported cell INDICES instead of
+ * distances, and 78 ms once it reported distances but sampled the grid instead
+ * of enumerating it. Both were faster and wrong: the first produced seven
+ * distinct thicknesses across the whole mesh, the second lost 2.16% of hits
+ * with a worst error of 95 mm. What the time buys is 4751 distinct values, a
+ * floor of 0.21 mm rather than 25.9 mm, and agreement with brute force on every
+ * ray tested.
  *
  * IT TAKES THREE'S ATTRIBUTE ACCESSORS, NOT RAW ARRAYS, and that is the whole
  * reason the interface is shaped this way. Both shipped primitives are
@@ -141,10 +144,11 @@ function bakeCurvature(g: Geometry, count: number): Float32Array {
  * skinned shell with a separate hair primitive and open boundaries at the
  * wrists and neck. Marching from one surface to the next needs neither.
  *
- * The march starts two cells in so it does not immediately re-hit the vertex's
- * own surface, and a ray that leaves the bounds without meeting anything is
- * opaque rather than infinitely thin — an unmet ray means the geometry did not
- * close, not that the flesh is translucent.
+ * Its own faces are skipped by DISTANCE, not by starting the march a couple of
+ * cells along — `SELF_HIT_EPSILON` is what rejects them, and this comment used
+ * to claim the other thing. A ray that leaves the bounds without meeting
+ * anything is opaque rather than infinitely thin: an unmet ray means the
+ * geometry did not close, not that the flesh is translucent.
  */
 function bakeThickness(g: Geometry, count: number): Float32Array {
   const { position: P, normal: N } = g;
