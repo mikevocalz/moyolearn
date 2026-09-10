@@ -138,6 +138,28 @@ const TARGET_HEIGHT: Record<NonNullable<WhiteboardProps['size']>, string> = {
   xl: 'min-h-target-child',
 };
 
+/**
+ * The folded row's cell: the band's height, the WCAG floor's width.
+ *
+ * SEVEN CONTROLS DO NOT FIT AT THE BAND'S WIDTH, and no arrangement of them
+ * makes them. Three pens, a colour, undo, clear and the ask at the 3–5 band's
+ * 56dp are 392dp of keys against a tray that measures 356 in the work pane, so
+ * the row wrapped onto a second line — and a second line of chrome under a
+ * canvas is paid for in board.
+ *
+ * So the WIDTH gives and the height does not. 44dp is WCAG 2.2 SC 2.5.8's AA
+ * floor and every band clears it; the finger still lands on 44×56, or 44×72 at
+ * K–2, which is a larger target than the phone keyboard these children already
+ * use. The same trade the swatch strip makes, for the same reason, stated in
+ * the same place.
+ */
+const TARGET_FOLDED: Record<NonNullable<WhiteboardProps['size']>, string> = {
+  sm: 'min-h-target-adult min-w-target-adult',
+  md: 'min-h-target-adult min-w-target-adult',
+  lg: 'min-h-target-teen min-w-target-adult',
+  xl: 'min-h-target-child min-w-target-adult',
+};
+
 const TOOL_KEY: Record<NonNullable<WhiteboardProps['size']>, string> = {
   sm: 'min-h-target-adult min-w-target-adult',
   md: 'min-h-target-adult min-w-target-adult',
@@ -289,7 +311,12 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
     [onChange],
   );
 
-  const key = TOOL_KEY[size];
+  /*
+    The full row keeps square, band-sized keys; the folded one narrows them to
+    the floor so all seven stay on one line. `compact` is the same measurement
+    that drops the ask's label — one decision, read twice.
+  */
+  const key = compact ? TARGET_FOLDED[size] : TOOL_KEY[size];
   const askLabel = 'Ask Natalie';
   /*
     Reduce Motion is a RENDER MODE here, not a shorter duration — the same rule
@@ -414,7 +441,9 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
           losing the control the whole surface exists for; `justify-between`
           keeps the pens and the actions apart on the line while they share one.
         */
-        className="flex-row flex-wrap items-center justify-between gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field"
+        className={`flex-row items-center justify-between rounded-control border-2 border-strong bg-surface-raised py-inset-field ${
+          compact ? '' : 'flex-wrap gap-element px-inset-tight'
+        }`}
       >
         {/*
           THREE GROUPS, THREE WEIGHTS — not one row of identical squares.
@@ -430,7 +459,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
           drawing tools are behind a menu is a menu, not a board. What folds is
           the pair that only matter after something has gone wrong.
         */}
-        <View className="flex-row items-center gap-element">
+        <View className={`flex-row items-center ${compact ? '' : 'gap-element'}`}>
         {/* One segmented block, three positions — a single control with a
             selected state, not three buttons that happen to be adjacent. */}
         <View
@@ -504,15 +533,14 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
         {/* Fix-it and ask travel together: they are the two things you reach
             for when you have STOPPED drawing, so they wrap as one group rather
             than leaving the ask stranded on a line of its own. */}
-        <View className="flex-row items-center gap-element">
+        <View className={`flex-row items-center ${compact ? '' : 'gap-element'}`}>
         {/*
           DIRECT KEYS AT EVERY WIDTH. They used to fold into a `⋯` menu in the
           pane, and the pane is where the board actually lives — so the two
           controls a child reaches for after a mistake were the two that were
           hardest to reach, behind a dropdown that opened off the bottom of the
-          column. Two keys wrap onto the tray's second line instead, which the
-          row is already built to do, and every control on this surface is one
-          press.
+          column. They are two more cells on the one row instead, and every
+          control on this surface is one press.
 
           Quieter ink than the pens: they are what you press when you have
           STOPPED drawing, and a tray where everything shouts has no hierarchy.
