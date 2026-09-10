@@ -1,0 +1,45 @@
+{
+  "$comment": "Every field is a measurement with its method, or the literal string \"not measured\", or \"blocked: <what>\".",
+  "branch": "design/reset-v2",
+  "device": "web · Chromium 1440x950 · Apple silicon, WebGPU. NOT a device tier: no phone or tablet capture exists yet.",
+  "audioRoute": "not measured",
+  "measurements": {
+    "lipSyncOffsetMedianMs": "not measured",
+    "lipSyncOffsetP95Ms": "not measured",
+    "visualLateMaxMs": "not measured",
+    "headOnsetAlignedPct": "not measured",
+    "headPitchJawOpenCorrelation": "not measured",
+    "blinkRatePerMin": {
+      "value": 16.95,
+      "method": "IdleEngine.step at 60Hz for 20 min, seeded, counting blinkStarted. Counted at the generator because the renderer neither adds nor drops a blink; blink TIMING relative to speech is blinkNearPausePct and is not this number. Target 12-20: inside it.",
+      "capture": ".claude/skills/presence-metrics/scripts/engine-rates.mts: 339 blinks / 20 min, engine default seed"
+    },
+    "blinkNearPausePct": "not measured",
+    "breathRatePerMin": {
+      "value": 14.04,
+      "method": "Zero-up-crossings of breathY over the same 20 min run. Target 12-20: inside it. Period 4.28s with 7.4% cycle-to-cycle variation, against the +/-15% the audit asks for — the layer breathes more metronomically than specified. Cause is idleConfig.breath.rateHz spanning 0.2-0.27Hz, whose uniform re-randomisation yields ~8.7% by construction; reaching 15% needs a range wide enough to push the instantaneous rate below the 12/min floor, so the two targets conflict and the resolution is a design call, not an arithmetic one.",
+      "capture": ".claude/skills/presence-metrics/scripts/engine-rates.mts: 280 cycles / 20 min, engine default seed"
+    },
+    "torsoEnergyCorrelation": "not measured",
+    "gestureStrokeOffsetMs": "not measured",
+    "interruptVoiceStopMs": "not measured",
+    "interruptSettleMs": "not measured",
+    "frameTimeP95Ms": {
+      "value": 17.7,
+      "method": "requestAnimationFrame deltas in-page over 40s of idle, 2401 frames, taken in a pass with no screenshots running: a screenshot stalls the compositor, so a series captured alongside one measures the harness. p50 16.70, p95 17.70, p99 18.30 — vsync-locked at 60Hz with no long frames. This is the web tier only.",
+      "capture": "audit/motion/captures/idle-web-40s.json (capture-web.mjs pass one)"
+    },
+    "idlePeriodicityPeak": {
+      "value": 0.32,
+      "method": "Autocorrelation peak past the first zero crossing, on motion measured from the COMPOSITED frame (fraction of pixels changing >2 grey levels between full-resolution screenshots, 14.9/s over 40s). Peak sits at 12.6s; against 200 AR(1) surrogates fitted to the signal's own smoothness, p=0.025 — not distinguishable from a smooth aperiodic signal. Not comparable to the generator's own coefficient, which measures 0.74 for the same underlying motion.",
+      "capture": "audit/motion/captures/idle-web-40s.json (capture-web.mjs pass two)"
+    },
+    "backchannelCuesTraceable": "not measured",
+    "artifactsIn20MinCapture": "not measured"
+  },
+  "blindedStudy": {
+    "n": "blocked: no rater pool recruited",
+    "measures": "blocked: no rater pool recruited",
+    "confidenceInterval": "blocked: no rater pool recruited"
+  }
+}

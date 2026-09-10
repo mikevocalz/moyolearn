@@ -21,6 +21,7 @@ const arg = (name, fallback) => {
 };
 const windowS = arg('--window-s', 300);
 const peakLimit = arg('--peak', 0.9);
+const SURROGATES = 200;
 
 const frames = JSON.parse(readFileSync(path, 'utf8'));
 if (!Array.isArray(frames) || frames.length < 2) {
@@ -72,22 +73,85 @@ function periodicity(series, dt) {
   return { peak, lagS };
 }
 
+/*
+  A p-value for the peak: how often an aperiodic signal of the same length,
+  smoothness and variance reaches it. Seeded per call so a run is reproducible
+  — an acceptance number that moves between runs is not a measurement.
+*/
+function surrogateP(series, peak, dt) {
+  const n = series.length;
+  const mean = series.reduce((a, b) => a + b, 0) / n;
+  const centred = series.map((v) => v - mean);
+  const energy = centred.reduce((a, b) => a + b * b, 0);
+  if (energy === 0) return { p: 1, nullP95: 0 };
+  const sd = Math.sqrt(energy / n);
+  let lag1 = 0;
+  for (let i = 0; i + 1 < n; i += 1) lag1 += centred[i] * centred[i + 1];
+  const phi = Math.max(-0.999, Math.min(0.999, lag1 / energy));
+  const drive = sd * Math.sqrt(1 - phi * phi);
+
+  let seed = 0x2f6e2b1;
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return (seed + 1) / 4294967297;
+  };
+
+  const peaks = [];
+  for (let s = 0; s < SURROGATES; s += 1) {
+    const y = new Array(n);
+    y[0] = 0;
+    for (let i = 1; i < n; i += 1) {
+      const gauss = Math.sqrt(-2 * Math.log(random())) * Math.cos(2 * Math.PI * random());
+      y[i] = phi * y[i - 1] + drive * gauss;
+    }
+    peaks.push(periodicity(y, dt).peak);
+  }
+  peaks.sort((a, b) => a - b);
+  return {
+    p: peaks.filter((v) => v >= peak).length / peaks.length,
+    nullP95: peaks[Math.floor(peaks.length * 0.95)],
+  };
+}
+
 const dt = duration / (frames.length - 1);
 for (const name of names) {
   const series = frames.map((f) => f.channels?.[name] ?? 0);
   const { peak, lagS } = periodicity(series, dt);
-  observed.push(`${name} r=${peak.toFixed(2)}@${lagS.toFixed(1)}s`);
+  const { p, nullP95 } = surrogateP(series, peak, dt);
+  observed.push(`${name} r=${peak.toFixed(2)}@${lagS.toFixed(1)}s p=${p.toFixed(3)}`);
   /*
-    0.9, not a low threshold, and the reason is that this layer is DESIGNED
-    quasi-periodic: the sway is two octaves at an irrational ratio, so it comes
-    close to repeating over and over without ever doing so. Measured on the real
-    config it sits at 0.79 — a strict threshold would fail the one channel the
-    design is proudest of. Near-exact recurrence is what a viewer locks onto, so
-    that is what fails here; the coefficient below that is reported for a human
-    to read, not judged.
+    THE GATE IS THE COEFFICIENT; the p-value beside it is context, not a
+    verdict. They answer different questions and only the first is the one this
+    layer needs asked.
+
+    The gate asks whether the channel recurs NEAR-EXACTLY, which is what a
+    viewer locks onto. 0.9 is deliberately high because this layer is designed
+    quasi-periodic — the sway is two octaves at an irrational ratio, so it
+    approaches its earlier shape forever without reaching it, and measures 0.74
+    over this window against 0.93 for a true 3s loop. That separation is the
+    whole calibration.
+
+    The p-value asks whether ANY periodic structure is present, and the sway
+    answers yes at p=0.000 — correctly, since it is built from two sinusoids.
+    Gating on it fails the channel the design is proudest of. It was tried;
+    that is how the distinction above got measured.
+
+    So p is printed for signals where the coefficient's scale is not
+    established. A generator channel and a render-derived pixel channel of the
+    same scene measure 0.74 and 0.32 for the same underlying motion, and the
+    second number passing a threshold calibrated on the first means nothing.
+    On those, read p and treat the gate as uncalibrated rather than as a pass.
+
+    One earlier form of this check was also wrong and is worth naming: comparing
+    the peak against the 99th percentile of its OWN lags scores a hit on noise,
+    because the maximum of ~280 lags exceeds their p99 by construction
+    (measured: peak 0.321, p99-of-the-same-set 0.318).
   */
   if (peak > peakLimit) {
-    failures.push(`${name}: autocorrelation ${peak.toFixed(2)} at ${lagS.toFixed(2)}s — near-exact loop`);
+    failures.push(
+      `${name}: autocorrelation ${peak.toFixed(2)} at ${lagS.toFixed(2)}s — near-exact loop ` +
+        `(p=${p.toFixed(3)} vs aperiodic surrogates, p95 ${nullP95.toFixed(2)})`,
+    );
   }
 }
 

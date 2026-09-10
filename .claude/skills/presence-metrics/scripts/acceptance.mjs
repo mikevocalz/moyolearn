@@ -9,6 +9,13 @@
 import { existsSync, readFileSync, writeFileSync } from 'node:fs';
 
 const NOT_MEASURED = 'not measured';
+/*
+  A third accepted answer: "blocked: <what>". It is strictly better than
+  "not measured" because it names what would unblock it, and it must stay just
+  as cheap to write as a number is — the moment naming a blocker costs more
+  than inventing a plausible value, the record fills with plausible values.
+*/
+const BLOCKED = /^blocked: \S/;
 
 // Every field the primary prompt's §8 record requires, with its unit.
 const FIELDS = [
@@ -61,6 +68,11 @@ if (cmd === '--check') {
       continue;
     }
     if (v === NOT_MEASURED) continue;
+    if (typeof v === 'string' && BLOCKED.test(v)) continue;
+    if (typeof v === 'string') {
+      problems.push(`${key}: "${v}" is neither a measurement, "${NOT_MEASURED}", nor "blocked: <what>"`);
+      continue;
+    }
     /*
       A measurement carries HOW it was taken. A bare number is the failure this
       validator exists for: it is indistinguishable from a guess the moment the
@@ -74,12 +86,17 @@ if (cmd === '--check') {
       if (v[req] === undefined || v[req] === '') problems.push(`${key}: missing ${req}`);
     }
   }
-  const measured = FIELDS.filter(([k]) => record.measurements?.[k] !== NOT_MEASURED).length;
+  const value = (k) => record.measurements?.[k];
+  const blocked = FIELDS.filter(([k]) => typeof value(k) === 'string' && BLOCKED.test(value(k))).length;
+  const measured = FIELDS.filter(([k]) => typeof value(k) === 'object' && value(k) !== null).length;
   if (problems.length > 0) {
     for (const p of problems) console.error(`  FAIL ${p}`);
     process.exit(1);
   }
-  console.log(`record valid: ${measured}/${FIELDS.length} measured, ${FIELDS.length - measured} "${NOT_MEASURED}"`);
+  console.log(
+    `record valid: ${measured}/${FIELDS.length} measured · ${blocked} blocked · ` +
+      `${FIELDS.length - measured - blocked} "${NOT_MEASURED}"`,
+  );
   if (measured === 0) console.log('  nothing has been measured — no realism claim may be made from this record');
   process.exit(0);
 }
