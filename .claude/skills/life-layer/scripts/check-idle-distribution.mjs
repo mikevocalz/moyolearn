@@ -48,7 +48,7 @@ function periodicity(series, dt) {
   const mean = series.reduce((a, b) => a + b, 0) / series.length;
   const centred = series.map((v) => v - mean);
   const energy = centred.reduce((a, b) => a + b * b, 0);
-  if (energy === 0) return { peak: 0, lagS: 0 };
+  if (energy === 0) return { peak: 0, lagS: 0, crossed: true };
 
   const maxLag = Math.floor(centred.length / 3);
   const at = (lag) => {
@@ -59,7 +59,17 @@ function periodicity(series, dt) {
 
   let lag = 1;
   while (lag < maxLag && at(lag) > 0) lag += 1;
-  if (lag >= maxLag) return { peak: 0, lagS: 0 }; // never crosses: slow, not periodic
+  /*
+    Never crosses zero inside the window: the channel is dominated by something
+    slower than the capture, so no period is DETECTABLE here. `crossed` is
+    carried out because the two readers need opposite things from that. For the
+    observed channel it is "nothing found", peak 0. For a surrogate it is the
+    most self-similar draw the null can produce, and scoring it as the MINIMUM
+    is what made the p-value anti-conservative — 6 of 200 surrogates on the real
+    capture took this path and every one of them was counted as evidence
+    against periodicity.
+  */
+  if (lag >= maxLag) return { peak: 0, lagS: 0, crossed: false };
 
   let peak = 0;
   let lagS = 0;
@@ -70,7 +80,7 @@ function periodicity(series, dt) {
       lagS = lag * dt;
     }
   }
-  return { peak, lagS };
+  return { peak, lagS, crossed: true };
 }
 
 /*
@@ -96,28 +106,44 @@ function surrogateP(series, peak, dt) {
     return (seed + 1) / 4294967297;
   };
 
+  /*
+    Discarded before the series starts. An AR(1) seeded at y[0] = 0 begins with
+    no variance and takes about 1/(1-phi) samples to reach its stationary
+    spread; at the phi this channel measures that is ~49 of 596 samples, and the
+    surrogates came out under-dispersed — sd 0.893 of the observed, lag-1 0.970
+    against 0.980. A null that is quieter than the signal makes the signal look
+    more significant than it is.
+  */
+  const BURN_IN = 500;
   const peaks = [];
+  let nonCrossing = 0;
   for (let s = 0; s < SURROGATES; s += 1) {
     const y = new Array(n);
-    y[0] = 0;
-    for (let i = 1; i < n; i += 1) {
-      const gauss = Math.sqrt(-2 * Math.log(random())) * Math.cos(2 * Math.PI * random());
-      y[i] = phi * y[i - 1] + drive * gauss;
+    let previous = 0;
+    for (let i = 0; i < BURN_IN; i += 1) {
+      previous = phi * previous + drive * Math.sqrt(-2 * Math.log(random())) * Math.cos(2 * Math.PI * random());
     }
-    peaks.push(periodicity(y, dt).peak);
+    for (let i = 0; i < n; i += 1) {
+      previous = phi * previous + drive * Math.sqrt(-2 * Math.log(random())) * Math.cos(2 * Math.PI * random());
+      y[i] = previous;
+    }
+    const result = periodicity(y, dt);
+    // A surrogate that never crosses is maximally self-similar; count it as at
+    // least as extreme as anything observed rather than as the minimum.
+    if (result.crossed) peaks.push(result.peak);
+    else nonCrossing += 1;
   }
   peaks.sort((a, b) => a - b);
-  return {
-    p: peaks.filter((v) => v >= peak).length / peaks.length,
-    nullP95: peaks[Math.floor(peaks.length * 0.95)],
-  };
+  const atLeast = peaks.filter((v) => v >= peak).length + nonCrossing;
+  const pct = (f) => peaks[Math.min(peaks.length - 1, Math.ceil(peaks.length * f) - 1)] ?? 0;
+  return { p: atLeast / SURROGATES, nullP95: pct(0.95), nonCrossing };
 }
 
 const dt = duration / (frames.length - 1);
 for (const name of names) {
   const series = frames.map((f) => f.channels?.[name] ?? 0);
   const { peak, lagS } = periodicity(series, dt);
-  const { p, nullP95 } = surrogateP(series, peak, dt);
+  const { p, nullP95, nonCrossing } = surrogateP(series, peak, dt);
   observed.push(`${name} r=${peak.toFixed(2)}@${lagS.toFixed(1)}s p=${p.toFixed(3)}`);
   /*
     THE GATE IS THE COEFFICIENT; the p-value beside it is context, not a

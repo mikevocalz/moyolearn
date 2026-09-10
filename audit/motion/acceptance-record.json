@@ -35,7 +35,7 @@
     },
     "idlePeriodicityPeak": {
       "value": 0.32,
-      "method": "Autocorrelation peak past the first zero crossing, on motion measured from the COMPOSITED frame (fraction of pixels changing >2 grey levels between full-resolution screenshots, 14.9/s over 40s). Peak sits at 12.6s; against 200 AR(1) surrogates fitted to the signal's own smoothness, p=0.025 — not distinguishable from a smooth aperiodic signal. Not comparable to the generator's own coefficient, which measures 0.74 for the same underlying motion.",
+      "method": "Autocorrelation peak past the first zero crossing, on motion measured from the COMPOSITED frame (fraction of pixels changing >2 grey levels between full-resolution screenshots, 14.9/s over 40s). Peak sits at 12.6s; against 200 AR(1) surrogates fitted to the signal's own smoothness, p=0.070 — not distinguishable from a smooth aperiodic signal. The surrogates carry a 500-sample burn-in so they reach stationary variance before the series starts, and a surrogate whose autocorrelation never crosses zero is counted as at least as extreme as the observation rather than as the minimum; without those two the same capture reads p=0.025, which is anti-conservative. Not comparable to the generator's own coefficient, which measures 0.74 for the same underlying motion.",
       "capture": "audit/motion/captures/idle-web-40s.json (capture-web.mjs pass two)"
     },
     "backchannelCuesTraceable": "not measured",

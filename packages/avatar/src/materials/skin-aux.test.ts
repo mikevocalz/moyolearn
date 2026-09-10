@@ -194,6 +194,20 @@ describe('skin aux on the shipped body', () => {
     assert.ok(opaque > 0.05, `${(opaque * 100).toFixed(0)}% opaque — a torso is thicker than 10 cm`);
   });
 
+  /*
+    The regression this guards is a silent one. A march that reports the cell
+    index of the first occupied cell rather than an exact ray-triangle distance
+    quantises the whole body onto SEVEN values with a 25.9 mm floor, and every
+    thin feature — ears, eyelids, lips, nostril wings, fingers — reads the same
+    number. Nothing in the earlier assertions moved when that was true.
+  */
+  it('resolves thin features — cell quantisation gives seven values, not thousands', () => {
+    const distinct = new Set(Array.from(aux.thickness).map((v) => v.toFixed(4)));
+    assert.ok(distinct.size > 1000, `only ${distinct.size} distinct thicknesses — the march is quantised`);
+    const thinnest = Math.min(...aux.thickness) * 100; // metres -> cm
+    assert.ok(thinnest < 0.5, `thinnest vertex is ${thinnest.toFixed(2)} cm — an eyelid is thinner than that`);
+  });
+
   it('stays in 0..1, which is the range the shader assumes', () => {
     for (const a of [aux.curvature, aux.thickness]) {
       assert.ok(Math.min(...a) >= 0 && Math.max(...a) <= 1);
