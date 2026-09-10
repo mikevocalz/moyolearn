@@ -103,7 +103,7 @@ describe('the tuned constants', () => {
   });
 
   it('names the aux attributes the bake writes', () => {
-    // These are the names tools/bake_skin_aux.py emits; a rename here is a
+    // These are the names bakeSkinAux emits (./skin-aux.ts); a rename here is a
     // silently unlit face, so the strings are asserted rather than trusted.
     assert.equal(SKIN_CURVATURE_ATTRIBUTE, 'aCurvature');
     assert.equal(SKIN_THICKNESS_ATTRIBUTE, 'aThickness');

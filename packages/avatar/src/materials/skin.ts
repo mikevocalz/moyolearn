@@ -87,7 +87,7 @@ export const SKIN_DEFAULTS: Readonly<SkinParams> = Object.freeze({
 });
 
 /**
- * Per-vertex aux baked by `tools/bake_skin_aux.py`.
+ * Per-vertex aux computed at load by `bakeSkinAux` in `./skin-aux.ts`.
  *
  * BOTH MUST BE `Float32Array`. three r185 cannot bind an `itemSize === 1`
  * attribute backed by an 8-bit array — `WebGPUAttributeUtils` has no entry for

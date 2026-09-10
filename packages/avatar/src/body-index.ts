@@ -85,6 +85,14 @@ export {
   type SkinUniforms,
 } from './materials/skin.ts';
 export {
+  CURVATURE_REFERENCE,
+  THICKNESS_REFERENCE,
+  bakeSkinAux,
+  type Geometry as SkinAuxGeometry,
+  type SkinAux,
+  type VectorAttribute,
+} from './materials/skin-aux.ts';
+export {
   EYE_AUX_ATTRIBUTE,
   EYE_SURFACES,
   createEyeUniforms,
