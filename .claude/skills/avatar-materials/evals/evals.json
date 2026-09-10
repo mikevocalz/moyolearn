@@ -1,0 +1,16 @@
+{
+  "evals": [
+    {
+      "prompt": "Her hair looks flat and plasticky on the phone but fine on the web.",
+      "expect": "Identifies the anisotropy loss from simplifyMaterialsForDawn, cites the measured reason Dawn throws on MeshPhysicalMaterial, and routes to the TSL hair material rather than re-enabling KHR_materials_anisotropy."
+    },
+    {
+      "prompt": "Can we turn the specular extension back on for native? The asset already has it.",
+      "expect": "No — not without inspecting the generated shader on Dawn. Cites the bisect showing only the extension path fails, and that a typecheck says nothing about the node graph."
+    },
+    {
+      "prompt": "This phone is dropping frames, can we scale the avatar down?",
+      "expect": "Drops a feature at the tier — texture size, facial detail, secondary motion — rather than scaling everything down, and requires a measured frame-time p95 rather than an impression."
+    }
+  ]
+}

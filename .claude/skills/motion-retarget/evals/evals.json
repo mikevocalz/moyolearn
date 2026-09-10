@@ -1,0 +1,16 @@
+{
+  "evals": [
+    {
+      "prompt": "I found a nice idle animation on a marketplace, can we drop it in?",
+      "expect": "Records a ledger entry first — source, licence, redistribution scope — then retargets offline against rig-manifest.json. Notes that several retarget inputs are unmeasured and must be measured before retargeting."
+    },
+    {
+      "prompt": "Let's use SEED for gesture clips.",
+      "expect": "Names the restrictions (revenue eligibility, no raw-data redistribution), requires a ledger entry before anything enters the repo, and notes that SOMA BVH needs retargeting to this rig rather than being usable as-is."
+    },
+    {
+      "prompt": "Can we commit the source FBX so designers can tweak it?",
+      "expect": "Checks the clip's redistribution field. If it is not source-and-built, the editable file stays out of git and ships from the CDN the asset manifest points at."
+    }
+  ]
+}

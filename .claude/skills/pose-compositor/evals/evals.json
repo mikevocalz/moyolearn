@@ -1,0 +1,16 @@
+{
+  "evals": [
+    {
+      "prompt": "Can we play a wave animation on top of the idle?",
+      "expect": "Refuses to add an AnimationMixer beside the presence writer, since both write bones directly and whichever runs second wins silently. Notes there are no clips in either shipped asset and that the compositor must own the joints first."
+    },
+    {
+      "prompt": "Her shoulder shrugs every time she breathes.",
+      "expect": "Treats it as a double-driving problem rather than tuning the breath amplitude — two layers claiming the shoulder — and resolves it in the ownership table."
+    },
+    {
+      "prompt": "The gesture ends and she snaps back to standing.",
+      "expect": "Identifies an absolute write above layer one, or the per-frame rest-restore erasing the blend, and requires additive deltas with velocity preserved across the boundary."
+    }
+  ]
+}
