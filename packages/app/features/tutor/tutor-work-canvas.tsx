@@ -92,7 +92,7 @@ export function TutorWorkCanvas({ problem, messages, problemOnly = false }: Tuto
       something inside a message.
     */
     <View className="w-full gap-group">
-      <Text className="font-sans text-caption text-text-muted">
+      <Text variant="caption" tone="muted">
         {problemOnly ? 'The problem' : "What we're working on"}
       </Text>
       {text.length > 0 ? (

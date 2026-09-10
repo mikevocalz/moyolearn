@@ -54,7 +54,7 @@ const asVec3 = (n: unknown): Vec3 => n as Vec3;
  */
 const asFloat = (n: unknown): Float => n as Float;
 
-/** Parsed `gnm/mouth-cavity.json` (`tools/bake_mouth_cavity.py`). */
+/** Computed at load by `bakeMouthCavity` in `./mouth-cavity.ts`. */
 export interface MouthCavity {
   identitySha256: string;
   apertureZ: number;

@@ -29,6 +29,7 @@ const PRODUCERS = {
   positionStorage: 'packages/avatar/src/compute/head.ts',
   aHairT: 'packages/avatar/src/materials/hair-aux.ts',
   aHairPhase: 'packages/avatar/src/materials/hair-aux.ts',
+  aCavity: 'packages/avatar/src/materials/mouth-cavity.ts',
 };
 
 /**
@@ -40,8 +41,6 @@ const PRODUCERS = {
 const MISSING = {
   aTip:
     'brow.ts has no producer at all — no ribbon builder exists, though the header claims the strand geometry "ports unchanged". avatar-manifest.json promises gnm/brow-strands.bin.',
-  aCavity:
-    'buildCavityAttribute in mouth.ts is real and correct; its MouthCavity input is not. That comes from gnm/mouth-cavity.json, cited to a tool that does not exist.',
   aEyeAux:
     'No producer and no cited tool. avatar-manifest.json carries a sha256 for gnm/eye-aux.json that nothing in the repo writes or parses.',
   garmentRestPosition:
@@ -55,7 +54,6 @@ const MISSING = {
 const ABSENT_TOOLS = {
   'tools/bake_skin_aux.py': 'Cited by skin-aux.ts as the thing it REPLACES. The reference is deliberate and historical.',
   'tools/bake_lash_lines.py': 'lashes.ts needs per-eye lid-margin polylines. No producer.',
-  'tools/bake_mouth_cavity.py': 'Produces the gnm/mouth-cavity.json that aCavity needs.',
   'tools/bake_identity.py': 'Identity bake, referenced by the GNM path.',
   'tools/bake_neck_align.py': 'Neck alignment bake.',
   'tools/bake_runtime_container.py': 'Runtime container bake.',

@@ -28,13 +28,14 @@
 // SOT-KEYWORDS: whiteboard learning canvas drawing board controls responsive pane compact expanded age band
 
 import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
-import type { LayoutChangeEvent } from 'react-native';
+import { ActivityIndicator, type LayoutChangeEvent } from 'react-native';
 import { targets } from '@acme/theme';
 import { Button } from './Button';
 import { LearningCanvas } from './LearningCanvas';
+import { Text } from './Text';
 import { AnimatePresence, MotionView, useReducedMotion } from './motion';
 import { Brush, Eraser, Highlighter, Sparkles, Trash2, Undo2 } from './icons';
-import { View, Pressable, Text } from './primitives';
+import { View, Pressable } from './primitives';
 import { WhiteboardBoard } from './whiteboard-board';
 import type {
   WhiteboardDiff,
@@ -628,14 +629,33 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
                   : 'border-strong bg-highlighter shadow-card'
               }`}
             >
-              <Sparkles size={20} className={!hasMarks || asking ? 'text-text-muted' : 'text-on-highlighter'} />
+              {/*
+                IN-FLIGHT IS THE SAME SIGNAL AT BOTH WIDTHS. The wide form says
+                so with `Button`'s spinner, so the key does too rather than
+                inventing a second vocabulary for one action — there is no room
+                here for the word the wide form does not need either. The icon
+                is what gives way because it is the only thing in the cell; a
+                spinner beside it would be a second mark in a 44dp square.
+              */}
+              {asking ? (
+                <ActivityIndicator size="small" />
+              ) : (
+                <Sparkles size={20} className={!hasMarks ? 'text-text-muted' : 'text-on-highlighter'} />
+              )}
             </Pressable>
           ) : (
+            /*
+              `loading` rather than a swapped title: the label is also the
+              accessible name here, and swapping it moved the button's width
+              mid-press while a screen reader still read the `aria-label` that
+              never changed. The spinner is the kit's own in-flight mark.
+            */
             <Button
-              title={asking ? 'Asking…' : askLabel}
+              title={askLabel}
               variant="highlighter"
               size={size}
-              disabled={!hasMarks || asking}
+              disabled={!hasMarks}
+              loading={asking}
               onPress={handleAsk}
               aria-label={askLabel}
             />
@@ -651,7 +671,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
         went. Cleared by the next mark.
       */}
       {emptyNotice ? (
-        <Text className="font-sans text-caption text-text-muted" role="status">
+        <Text variant="caption" tone="muted" role="status">
           Write your work on the board, then ask again.
         </Text>
       ) : null}

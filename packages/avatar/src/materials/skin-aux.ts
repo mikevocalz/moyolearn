@@ -45,6 +45,8 @@
  * SOT-KEYWORDS: skin aux bake curvature thickness attribute float32 sss preintegrated voxel
  */
 
+import { buildMeshGrid } from './mesh-grid.ts';
+
 /**
  * The curvature that maps to 1.0, in inverse metres — a radius of 2.5 cm.
  *
@@ -58,22 +60,6 @@ export const CURVATURE_REFERENCE = 40;
 
 /** Thickness at or beyond this, in metres, is opaque. A torso, not an ear. */
 export const THICKNESS_REFERENCE = 0.1;
-
-/**
- * Grid resolution along the longest axis. This is a BROAD-PHASE structure only
- * — it narrows which triangles a ray might hit and never decides the distance,
- * so its resolution costs accuracy nowhere.
- *
- * It used to decide the distance, and that was wrong in a way the synthetic
- * fixtures could not show. Marching cell by cell and reporting the cell index
- * of the first occupied cell quantises thickness to the cell size: on the
- * 1.657 m body that is 12.95 mm, the shortest measurable thickness is two cells
- * (25.9 mm), and the whole mesh collapses onto SEVEN distinct values with 82%
- * of vertices on the two end bins. Ears, eyelids, lips, nostril wings and
- * fingers are all thinner than 25.9 mm — they are the vertices subsurface
- * scattering exists for — and every one of them read the identical 0.2589.
- */
-const GRID = 128;
 
 /** Ignore a hit nearer than this; below skin thickness, above float noise. */
 const SELF_HIT_EPSILON = 0.0002;
@@ -162,165 +148,22 @@ function bakeCurvature(g: Geometry, count: number): Float32Array {
  */
 function bakeThickness(g: Geometry, count: number): Float32Array {
   const { position: P, normal: N } = g;
-  let minX = Infinity;
-  let minY = Infinity;
-  let minZ = Infinity;
-  let maxX = -Infinity;
-  let maxY = -Infinity;
-  let maxZ = -Infinity;
-  for (let v = 0; v < count; v += 1) {
-    minX = Math.min(minX, P.getX(v));
-    maxX = Math.max(maxX, P.getX(v));
-    minY = Math.min(minY, P.getY(v));
-    maxY = Math.max(maxY, P.getY(v));
-    minZ = Math.min(minZ, P.getZ(v));
-    maxZ = Math.max(maxZ, P.getZ(v));
-  }
-  const span = Math.max(maxX - minX, maxY - minY, maxZ - minZ);
-  if (!Number.isFinite(span) || span <= 0) return new Float32Array(count).fill(1);
-  const cell = span / GRID;
-  const nx = Math.max(1, Math.ceil((maxX - minX) / cell) + 1);
-  const ny = Math.max(1, Math.ceil((maxY - minY) / cell) + 1);
-  const nz = Math.max(1, Math.ceil((maxZ - minZ) / cell) + 1);
-  const at = (ix: number, iy: number, iz: number): number => (iz * ny + iy) * nx + ix;
-
-  const index = g.index;
-  const triangleCount = index ? Math.floor(index.count / 3) : Math.floor(count / 3);
-  const corner = (t: number, k: number): number => (index ? index.getX(t * 3 + k) : t * 3 + k);
-
-  /*
-    Triangles bucketed per cell, in two passes so the storage is one flat array
-    rather than 2 million sub-arrays: pass one counts, pass two fills. Bucketed
-    from a barycentric raster rather than from vertices, because a vertex-only
-    bucket misses every cell a triangle crosses without landing in.
-  */
-  const cellOf = (x: number, y: number, z: number): number =>
-    at(
-      Math.min(nx - 1, Math.max(0, Math.round((x - minX) / cell))),
-      Math.min(ny - 1, Math.max(0, Math.round((y - minY) / cell))),
-      Math.min(nz - 1, Math.max(0, Math.round((z - minZ) / cell))),
-    );
-
-  const visit = (t: number, mark: (c: number) => void): void => {
-    const a = corner(t, 0);
-    const b = corner(t, 1);
-    const c = corner(t, 2);
-    const ax = P.getX(a);
-    const ay = P.getY(a);
-    const az = P.getZ(a);
-    const bx = P.getX(b);
-    const by = P.getY(b);
-    const bz = P.getZ(b);
-    const cx = P.getX(c);
-    const cy = P.getY(c);
-    const cz = P.getZ(c);
-    const edge = Math.max(
-      Math.abs(bx - ax) + Math.abs(by - ay) + Math.abs(bz - az),
-      Math.abs(cx - ax) + Math.abs(cy - ay) + Math.abs(cz - az),
-    );
-    const steps = Math.max(1, Math.ceil(edge / cell));
-    let last = -1;
-    for (let i = 0; i <= steps; i += 1) {
-      for (let j = 0; i + j <= steps; j += 1) {
-        const u = i / steps;
-        const w = j / steps;
-        const q = 1 - u - w;
-        const marked = cellOf(ax * q + bx * u + cx * w, ay * q + by * u + cy * w, az * q + bz * u + cz * w);
-        if (marked !== last) {
-          mark(marked);
-          last = marked;
-        }
-      }
-    }
-  };
-
-  const counts = new Uint32Array(nx * ny * nz + 1);
-  for (let t = 0; t < triangleCount; t += 1) visit(t, (c) => { counts[c + 1] = counts[c + 1]! + 1; });
-  for (let i = 1; i < counts.length; i += 1) counts[i] = counts[i]! + counts[i - 1]!;
-  const cursor = counts.slice(0, -1);
-  const buckets = new Uint32Array(counts[counts.length - 1]!);
-  for (let t = 0; t < triangleCount; t += 1) {
-    visit(t, (c) => {
-      buckets[cursor[c]!] = t;
-      cursor[c] = cursor[c]! + 1;
-    });
-  }
-
-  /** Möller-Trumbore, two-sided: an inward ray meets the far surface from behind. */
-  const hitDistance = (
-    ox: number, oy: number, oz: number,
-    dx: number, dy: number, dz: number,
-    t: number,
-  ): number => {
-    const a = corner(t, 0);
-    const b = corner(t, 1);
-    const c = corner(t, 2);
-    const ax = P.getX(a);
-    const ay = P.getY(a);
-    const az = P.getZ(a);
-    const e1x = P.getX(b) - ax;
-    const e1y = P.getY(b) - ay;
-    const e1z = P.getZ(b) - az;
-    const e2x = P.getX(c) - ax;
-    const e2y = P.getY(c) - ay;
-    const e2z = P.getZ(c) - az;
-    const px = dy * e2z - dz * e2y;
-    const py = dz * e2x - dx * e2z;
-    const pz = dx * e2y - dy * e2x;
-    const det = e1x * px + e1y * py + e1z * pz;
-    if (Math.abs(det) < 1e-12) return -1;
-    const inv = 1 / det;
-    const tx = ox - ax;
-    const ty = oy - ay;
-    const tz = oz - az;
-    const u = (tx * px + ty * py + tz * pz) * inv;
-    if (u < 0 || u > 1) return -1;
-    const qx = ty * e1z - tz * e1y;
-    const qy = tz * e1x - tx * e1z;
-    const qz = tx * e1y - ty * e1x;
-    const v = (dx * qx + dy * qy + dz * qz) * inv;
-    if (v < 0 || u + v > 1) return -1;
-    return (e2x * qx + e2y * qy + e2z * qz) * inv;
-  };
-
+  const grid = buildMeshGrid(g);
   const out = new Float32Array(count);
-  const reach = THICKNESS_REFERENCE;
-  const maxCells = Math.ceil(reach / cell) + 1;
-  const seenTriangle = new Int32Array(triangleCount).fill(-1);
   for (let v = 0; v < count; v += 1) {
-    const ox = P.getX(v);
-    const oy = P.getY(v);
-    const oz = P.getZ(v);
-    const dx = -N.getX(v);
-    const dy = -N.getY(v);
-    const dz = -N.getZ(v);
-    let nearest = Infinity;
+    const hit = grid.nearestHit(
+      [P.getX(v), P.getY(v), P.getZ(v)],
+      [-N.getX(v), -N.getY(v), -N.getZ(v)],
+      THICKNESS_REFERENCE,
+      SELF_HIT_EPSILON,
+    );
     /*
-      The cells the ray passes through, sampled at half a cell so none is
-      skipped diagonally. Every candidate triangle is tested exactly once —
-      a triangle spans several cells, and testing it per cell is the same
-      answer computed repeatedly.
+      An unmet ray is opaque, not infinitely thin. It means the geometry did
+      not close in that direction — this body is a shell with open boundaries
+      at the wrists and neck — and "no far surface" must not read as "light
+      passes straight through".
     */
-    for (let step = 0; step <= maxCells * 2; step += 1) {
-      const d = (step * cell) / 2;
-      if (d > reach) break;
-      const x = ox + dx * d;
-      const y = oy + dy * d;
-      const z = oz + dz * d;
-      if (x < minX - cell || y < minY - cell || z < minZ - cell) break;
-      if (x > maxX + cell || y > maxY + cell || z > maxZ + cell) break;
-      const c = cellOf(x, y, z);
-      for (let i = counts[c]!; i < counts[c + 1]!; i += 1) {
-        const t = buckets[i]!;
-        if (seenTriangle[t] === v) continue;
-        seenTriangle[t] = v;
-        const hit = hitDistance(ox, oy, oz, dx, dy, dz, t);
-        // Its own faces sit at ~0; the far surface is the first real distance.
-        if (hit > SELF_HIT_EPSILON && hit < nearest) nearest = hit;
-      }
-      if (nearest < d) break; // nothing further along can be nearer
-    }
-    out[v] = nearest === Infinity ? 1 : Math.min(1, nearest / THICKNESS_REFERENCE);
+    out[v] = Number.isFinite(hit) ? Math.min(1, hit / THICKNESS_REFERENCE) : 1;
   }
   return out;
 }

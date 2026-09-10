@@ -40,7 +40,7 @@ export declare const CAVITY_ATTRIBUTE = "aCavity";
 /** Full darkening at the back of the throat. 0.10 = one and a bit stops. */
 export declare const CAVITY_FLOOR = 0.1;
 type Vec3 = Node<'vec3'>;
-/** Parsed `gnm/mouth-cavity.json` (`tools/bake_mouth_cavity.py`). */
+/** Computed at load by `bakeMouthCavity` in `./mouth-cavity.ts`. */
 export interface MouthCavity {
     identitySha256: string;
     apertureZ: number;
