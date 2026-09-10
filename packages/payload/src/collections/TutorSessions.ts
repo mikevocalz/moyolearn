@@ -85,6 +85,27 @@ export const TutorSessions: CollectionConfig = {
       defaultValue: [],
     },
     {
+      /*
+        The whiteboard, as one base64 Yjs update — the child's own working.
+        See `packages/app/features/tutor/board-doc.ts`.
+
+        A TEXT COLUMN AND NOT `json`, because the value is opaque bytes rather
+        than a document anyone here reads. Nothing on the server interprets it,
+        which is deliberate: the board is a child's scratch paper, so the fewer
+        places that can look at it the better, and the retention sweep can drop
+        it with the rest of the row without understanding it.
+
+        Written by MERGE rather than by replace: Yjs updates commute, so folding
+        two together keeps both devices' strokes. The write itself is still a
+        read-modify-write and can still lose a race — what makes that survivable
+        is that a device pushes its whole document every time, so a lost merge
+        is repaired by the next push and nothing is ever destroyed. An append
+        that lost a race dropped a turn for good.
+      */
+      name: 'board',
+      type: 'text',
+    },
+    {
       // NULL means open, and there is at most one open session per learner.
       // Modelled as a nullable timestamp rather than an `isOpen` boolean because
       // "when did this end" is the question the ops and retention views ask, and

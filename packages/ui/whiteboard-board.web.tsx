@@ -26,7 +26,7 @@ import '@quickdrawjs/core/quickdraw.css';
 import type { WhiteboardBoardProps, WhiteboardHandle } from './whiteboard.types.ts';
 
 export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps>(
-  function WhiteboardBoard({ snapshot, onLearnerEdit }, ref) {
+  function WhiteboardBoard({ snapshot, onChange }, ref) {
     const board = useRef<QuickdrawRef>(null);
 
     /*
@@ -65,6 +65,7 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
       () => ({
         exportPng,
         getSnapshot: async () => board.current?.editor?.store.getSnapshot() ?? null,
+        applyDiff: (diff) => board.current?.editor?.store.applyDiff(diff as never, 'remote'),
         setTool: (tool) => board.current?.editor?.setTool(tool),
         setInk: (colour) => board.current?.editor?.setStyle('color', colour),
         undo: () => board.current?.editor?.store.undo(),
@@ -87,12 +88,10 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         hideUi
         watermark={false}
         snapshot={snapshot as Snapshot | undefined}
-        /* Only the learner's own marks count as work. A restored snapshot
-           arrives as `remote` and must not make an untouched board look drawn
-           on — that flag is what enables "Ask Natalie". */
-        onChange={(_diff, source) => {
-          if (source === 'user') onLearnerEdit?.();
-        }}
+        /* Both sources go up. The document needs every change; the CALLER
+           decides what "the learner has started" means, because a restored
+           board is drawn on and is nobody's work this session. */
+        onChange={(diff, source) => onChange?.(diff, source)}
         style={{ width: '100%', height: '100%' }}
       />
     );

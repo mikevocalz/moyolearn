@@ -73,6 +73,22 @@ export type AppendMessage = (
   sessionId: string,
   message: StoredMessage,
 ) => Promise<boolean>;
+export type ReadBoard = (ctx: ProtectedCtx, sessionId: string) => Promise<string | null>;
+/**
+ * MERGES an update into the stored board and returns false when the row is not
+ * this learner's.
+ *
+ * "Merge", not "set", and the word is the contract: two devices writing in the
+ * same instant must both keep their strokes. A Yjs update commutes, so the
+ * adapter folds rather than replaces — which is the one thing `AppendMessage`
+ * above cannot promise (see the repository header: read-modify-write, a turn
+ * can be lost).
+ */
+export type MergeBoard = (
+  ctx: ProtectedCtx,
+  sessionId: string,
+  update: string,
+) => Promise<boolean>;
 export type PatchAttachment = (
   ctx: ProtectedCtx,
   sessionId: string,
@@ -220,6 +236,50 @@ export async function addMessage(
     const appended = await appendMessage(ctx, input.sessionId, message);
     if (!appended) throw new SessionNotFound('No such session');
     return message;
+  });
+}
+
+/**
+ * The learner's whiteboard, read back for another device.
+ *
+ * No shape check and no size check on the way out: the value is opaque bytes
+ * this layer never interprets, and the only question it can honestly answer is
+ * whose row it came from — which `protectedOperation` and the repository's
+ * `ctx.learnerId` scoping already settle.
+ */
+export async function readBoardUpdate(
+  auth: Auth,
+  headers: Headers,
+  sessionId: string,
+  readBoard: ReadBoard,
+): Promise<string | null> {
+  return protectedOperation(auth, headers, (ctx) => readBoard(ctx, sessionId));
+}
+
+/**
+ * Folds a device's board into the stored one.
+ *
+ * A ceiling on the update, because this column takes bytes from a client and a
+ * whiteboard is a surface a child can keep drawing on for an hour. The number is
+ * chosen against what the board can actually contain: strokes are vector
+ * records and the tutor's board has no image import (`hideUi`, no paste path),
+ * so a megabyte is far past a full page of working and far short of anything
+ * that threatens the row. It is a guard rail, not a quota to show anyone.
+ */
+export const MAX_BOARD_UPDATE_BYTES = 1_000_000;
+
+export async function saveBoardUpdate(
+  auth: Auth,
+  headers: Headers,
+  input: { sessionId: string; update: string },
+  mergeBoard: MergeBoard,
+): Promise<void> {
+  return protectedOperation(auth, headers, async (ctx) => {
+    if (input.update.length > MAX_BOARD_UPDATE_BYTES) {
+      throw new Error('Board update too large');
+    }
+    const merged = await mergeBoard(ctx, input.sessionId, input.update);
+    if (!merged) throw new SessionNotFound('No such session');
   });
 }
 

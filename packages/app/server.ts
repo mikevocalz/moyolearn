@@ -399,6 +399,11 @@ export {
   type CreateSession,
   type AppendMessage,
   type PatchAttachment,
+  readBoardUpdate,
+  saveBoardUpdate,
+  MAX_BOARD_UPDATE_BYTES,
+  type ReadBoard,
+  type MergeBoard,
 } from './features/tutor/session.service';
 /*
   The stored shapes travel with the ports that move them. The repository has to

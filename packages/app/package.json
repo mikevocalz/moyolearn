@@ -57,6 +57,7 @@
     "solito": "catalog:",
     "tesseract.js": "^7.0.0",
     "tus-js-client": "4.3.1",
+    "yjs": "catalog:",
     "zustand": "catalog:"
   },
   "devDependencies": {

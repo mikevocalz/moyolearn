@@ -29,7 +29,7 @@ import type { Snapshot } from '@quickdrawjs/core';
 import type { WhiteboardBoardProps, WhiteboardHandle } from './whiteboard.types.ts';
 
 export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps>(
-  function WhiteboardBoard({ snapshot, onLearnerEdit }, ref) {
+  function WhiteboardBoard({ snapshot, onChange }, ref) {
     const board = useRef<QuickdrawRef>(null);
 
     useImperativeHandle(ref, () => ({
@@ -42,6 +42,7 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
       exportPng: async () =>
         (await board.current?.exportPng({ background: true, scale: 2 })) ?? null,
       getSnapshot: async () => (await board.current?.getSnapshot()) ?? null,
+      applyDiff: (diff) => board.current?.applyDiff(diff as never),
       setTool: (tool) => board.current?.setTool(tool),
       setInk: (colour) => board.current?.setStyle('color', colour),
       undo: () => board.current?.undo(),
@@ -57,9 +58,7 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         hideUi
         watermark={false}
         snapshot={snapshot as Snapshot | undefined}
-        onChange={(_diff, source) => {
-          if (source === 'user') onLearnerEdit?.();
-        }}
+        onChange={(diff, source) => onChange?.(diff, source)}
         style={{ flex: 1 }}
         webviewProps={{
           /*

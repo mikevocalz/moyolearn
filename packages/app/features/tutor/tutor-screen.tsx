@@ -844,6 +844,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       problem={problem}
       messages={messages}
       ageBand={ageBand}
+      sessionId={sessionId}
       onAsk={(png) => {
         handleAskBoard(png);
         if (png !== null) setBoardOpen(false);

@@ -37,13 +37,22 @@ import { Brush, Eraser, Highlighter, Sparkles, Trash2, Undo2 } from './icons';
 import { View, Pressable, Text } from './primitives';
 import { WhiteboardBoard } from './whiteboard-board';
 import type {
+  WhiteboardDiff,
+  WhiteboardDiffSource,
   WhiteboardHandle,
   WhiteboardInk,
   WhiteboardSnapshot,
   WhiteboardTool,
 } from './whiteboard.types.ts';
 
-export type { WhiteboardHandle, WhiteboardInk, WhiteboardSnapshot, WhiteboardTool };
+export type {
+  WhiteboardDiff,
+  WhiteboardDiffSource,
+  WhiteboardHandle,
+  WhiteboardInk,
+  WhiteboardSnapshot,
+  WhiteboardTool,
+};
 
 export interface WhiteboardProps {
   /** A board the learner already started. Read once, at mount. */
@@ -66,8 +75,11 @@ export interface WhiteboardProps {
   onAsk?: (png: string | null) => void;
   /** True while the tutor is being asked, so the action can say so. */
   asking?: boolean;
-  /** Fires on the learner's first mark, and on every one after it. */
-  onLearnerEdit?: () => void;
+  /**
+   * Every change, with its source. The screen folds these into the board's
+   * document; the board itself keeps no history of its own.
+   */
+  onChange?: (diff: WhiteboardDiff, source: WhiteboardDiffSource) => void;
   className?: string;
 }
 
@@ -149,7 +161,7 @@ const INKS = [
 ] as const satisfies readonly { id: WhiteboardInk; label: string; swatch: string }[];
 
 export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function Whiteboard(
-  { snapshot, size = 'md', onAsk, asking = false, onLearnerEdit, className },
+  { snapshot, size = 'md', onAsk, asking = false, onChange, className },
   ref,
 ) {
   const board = useRef<WhiteboardHandle>(null);
@@ -173,6 +185,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
 
   useImperativeHandle(ref, () => ({
     exportPng: async () => (await board.current?.exportPng()) ?? null,
+    applyDiff: (diff) => board.current?.applyDiff(diff),
     getSnapshot: async () => (await board.current?.getSnapshot()) ?? null,
     setTool: (next) => {
       setTool(next);
@@ -245,11 +258,23 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
     onAsk?.(png);
   }, [onAsk]);
 
-  const handleEdit = useCallback(() => {
-    setHasMarks(true);
-    setEmptyNotice(false);
-    onLearnerEdit?.();
-  }, [onLearnerEdit]);
+  /*
+    `hasMarks` turns on for the LEARNER's hand only. A restored board and a
+    collaborator's stroke both arrive as `remote`, and neither is this child
+    having started — "Ask Natalie" asks about YOUR working, and a board that
+    enabled it because a document loaded would be offering to send someone
+    else's.
+  */
+  const handleChange = useCallback(
+    (diff: WhiteboardDiff, source: WhiteboardDiffSource) => {
+      if (source === 'user') {
+        setHasMarks(true);
+        setEmptyNotice(false);
+      }
+      onChange?.(diff, source);
+    },
+    [onChange],
+  );
 
   const key = TOOL_KEY[size];
   const askLabel = 'Ask Natalie';
@@ -273,7 +298,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
         `flex-1` is what gives the engine a box to size its canvas against.
       */}
       <LearningCanvas padded={false}>
-        <WhiteboardBoard ref={board} snapshot={snapshot} onLearnerEdit={handleEdit} />
+        <WhiteboardBoard ref={board} snapshot={snapshot} onChange={handleChange} />
       </LearningCanvas>
 
       {/*

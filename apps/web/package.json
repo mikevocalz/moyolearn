@@ -49,6 +49,7 @@
     "react-native-web": "catalog:",
     "sharp": "catalog:",
     "solito": "catalog:",
+    "yjs": "catalog:",
     "zod": "catalog:",
     "zustand": "catalog:"
   },

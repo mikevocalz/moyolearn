@@ -58,17 +58,18 @@ export function writeProblemIsReading(storage: ProblemStorage, isReading: boolea
  * on their own scratch paper is their homework, and losing it to a refresh is
  * the defect this file was written to fix, one artefact over.
  *
- * LOCAL ONLY, and that is a limit rather than an oversight. The conversation
- * resumes from the SERVER (`tutor.store`'s `hydrate`), so it survives a change
- * of device; the board does not, because there is no carrier for it — no route
- * under `/api/tutor/` accepts one and inventing a collection to hold a child's
- * scratch paper is not a call this change gets to make. A learner who moves
- * from the laptop to the phone finds their conversation and an empty board.
+ * THIS IS THE DEVICE'S COPY, not the only one. `PUT /api/tutor/session/board`
+ * holds the same document for the learner's other devices; this key is what
+ * makes a RELOAD instant, because `problemStorage` is synchronous and a network
+ * read would paint blank paper first.
  *
- * It is a Quickdraw snapshot serialised as JSON — vector records, no bitmaps.
- * The engine embeds pasted images as data URLs, which is what would make a
- * snapshot large enough to matter against localStorage's ~5 MB, and the tutor's
- * board mounts with `hideUi` and no paste path, so nothing can put one in.
+ * The value is a base64 Yjs update, not a Quickdraw snapshot — the document is
+ * a CRDT so that the server copy can MERGE rather than overwrite, and so that a
+ * second author is a transport away rather than a rewrite
+ * (`packages/app/features/tutor/board-doc.ts`). Vector records only: the engine
+ * embeds pasted images as data URLs, which is what would make this large enough
+ * to matter against localStorage's ~5 MB, and the tutor's board mounts with
+ * `hideUi` and no paste path, so nothing can put one in.
  */
 export const BOARD_KEY = 'tutor-board-snapshot';
 

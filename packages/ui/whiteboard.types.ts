@@ -54,6 +54,25 @@ export type WhiteboardInk = 'black' | 'blue' | 'red' | 'green' | 'orange' | 'vio
  */
 export type WhiteboardSnapshot = unknown;
 
+/**
+ * One change to the board, in Quickdraw's own shape.
+ *
+ * Mirrored rather than imported for the reason `WhiteboardSnapshot` gives — the
+ * vendor's types live in a browser module — and every field is optional here
+ * because the engine reads them as `diff.added || {}`. The asymmetry is the
+ * vendor's and is worth stating: `removed` is keyed by id like the others (the
+ * engine only ever reads its KEYS), while `updated` holds a `[before, after]`
+ * pair, so a consumer that wants the new record has to take the second element.
+ */
+export interface WhiteboardDiff {
+  added?: Record<string, unknown>;
+  removed?: Record<string, unknown>;
+  updated?: Record<string, [unknown, unknown]>;
+}
+
+/** Who made a change. `remote` never enters the local undo stack. */
+export type WhiteboardDiffSource = 'user' | 'remote';
+
 export interface WhiteboardHandle {
   /**
    * The board as a PNG data URL, or `null` when there is nothing drawn.
@@ -65,6 +84,8 @@ export interface WhiteboardHandle {
   exportPng(): Promise<string | null>;
   /** The document, for the session to keep. Cheap, but not free — debounce it. */
   getSnapshot(): Promise<WhiteboardSnapshot | null>;
+  /** Fold in a change from the document — a restore, a merge, or a peer. */
+  applyDiff(diff: WhiteboardDiff): void;
   setTool(tool: WhiteboardTool): void;
   /** The colour the pen and the highlighter draw in. The eraser ignores it. */
   setInk(ink: WhiteboardInk): void;
@@ -77,8 +98,13 @@ export interface WhiteboardBoardProps {
   /** A document to restore at mount. Read once; later changes are ignored. */
   snapshot?: WhiteboardSnapshot;
   /**
-   * The learner drew, erased or moved something. Fires for their edits only —
-   * a restored snapshot is loaded as `remote` and does not count as work.
+   * Every change the board makes, with who made it.
+   *
+   * Carries the DIFF rather than just firing, because the document upstream
+   * (`board-doc.ts`) is a CRDT that has to be told what changed, not that
+   * something did. `source` is the vendor's and is the same distinction the
+   * document draws: `user` is this learner's hand, `remote` is a restore or a
+   * peer and must not be echoed back out.
    */
-  onLearnerEdit?: () => void;
+  onChange?: (diff: WhiteboardDiff, source: WhiteboardDiffSource) => void;
 }

@@ -51,6 +51,9 @@ catalogs:
     '@payloadcms/ui':
       specifier: 4.0.0-canary.29
       version: 4.0.0-canary.29
+    '@quickdrawjs/core':
+      specifier: 0.2.0
+      version: 0.2.0
     '@quickdrawjs/react':
       specifier: 0.2.0
       version: 0.2.0
@@ -363,6 +366,9 @@ catalogs:
     vite-plugin-react-native-web:
       specifier: 2.5.0
       version: 2.5.0
+    yjs:
+      specifier: 13.6.32
+      version: 13.6.32
     zod:
       specifier: 4.4.3
       version: 4.4.3
@@ -801,6 +807,9 @@ importers:
       solito:
         specifier: 'catalog:'
         version: 5.0.0
+      yjs:
+        specifier: 'catalog:'
+        version: 13.6.32
       zod:
         specifier: 'catalog:'
         version: 4.4.3
@@ -1070,6 +1079,9 @@ importers:
       tus-js-client:
         specifier: 4.3.1
         version: 4.3.1
+      yjs:
+        specifier: 'catalog:'
+        version: 13.6.32
       zustand:
         specifier: 'catalog:'
         version: 5.0.15(@types/react@19.2.18)(react@19.2.8)(use-sync-external-store@1.6.0(react@19.2.8))
@@ -1406,6 +1418,9 @@ importers:
       '@nandorojo/galeria':
         specifier: 3.0.3
         version: 3.0.3(expo@57.0.15)(react-dom@19.2.8(react@19.2.8))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
+      '@quickdrawjs/core':
+        specifier: 'catalog:'
+        version: 0.2.0
       '@quickdrawjs/react':
         specifier: 'catalog:'
         version: 0.2.0(react@19.2.8)
@@ -9014,6 +9029,9 @@ packages:
   isexe@2.0.0:
     resolution: {integrity: sha512-RHxMLp9lnKHGHRng9QFhRCMbYAcVpn69smSGcq3f36xjgVVWThj4qqLbTLlq7Ssj8B+fIQ1EuCEGI2lKsyQeIw==}
 
+  isomorphic.js@0.2.5:
+    resolution: {integrity: sha512-PIeMbHqMt4DnUP3MA/Flc0HElYjMXArsw1qwJZcm9sqR8mq3l8NYizFMty0pWwE/tzIGH3EKK5+jes5mAr85yw==}
+
   istanbul-lib-coverage@3.2.2:
     resolution: {integrity: sha512-O8dpsF+r0WV/8MNRKfnmrtCWhuKjxrq2w+jpzBL5UZKTi2LeVWnWOmWRxFlesJONmc+wLAGvKQZEOanko0LFTg==}
     engines: {node: '>=8'}
@@ -9207,6 +9225,11 @@ packages:
   levn@0.4.1:
     resolution: {integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==}
     engines: {node: '>= 0.8.0'}
+
+  lib0@0.2.117:
+    resolution: {integrity: sha512-DeXj9X5xDCjgKLU/7RR+/HQEVzuuEUiwldwOGsHK/sfAfELGWEyTcf0x+uOvCvK3O2zPmZePXWL85vtia6GyZw==}
+    engines: {node: '>=16'}
+    hasBin: true
 
   lie@3.1.1:
     resolution: {integrity: sha512-RiNhHysUjhrDQntfYSfY4MU24coXXdEOgw9WGcKHNeEwffDYbF//u87M1EWaMGzuFoSbqW0C9C6lEEhDOAswfw==}
@@ -12173,6 +12196,10 @@ packages:
   yargs@17.7.2:
     resolution: {integrity: sha512-7dSzzRQ++CKnNI/krKnYRV7JKKPUXMEh61soaHKg9mrWEhzFWhFnxPxGl+69cD1Ou63C13NUPCnmIcrvqCuM6w==}
     engines: {node: '>=12'}
+
+  yjs@13.6.32:
+    resolution: {integrity: sha512-lfiJIIC4Xayt5ItynE407ehlE03pCjeOc4hkR4yxxvvNJ4kuiN25B0g+Qp8XagYz361LLL7DCzR5bvFJ81QKtQ==}
+    engines: {node: '>=16.0.0', npm: '>=8.0.0'}
 
   yocto-queue@0.1.0:
     resolution: {integrity: sha512-rVksvsnNCdJ/ohGc6xgPwyN8eheCxsiLM8mxuE/t/mOVqJewPuO1miLpTHQiRgTKCLexL4MeAFVagts7HmNZ2Q==}
@@ -22126,6 +22153,8 @@ snapshots:
 
   isexe@2.0.0: {}
 
+  isomorphic.js@0.2.5: {}
+
   istanbul-lib-coverage@3.2.2:
     optional: true
 
@@ -22343,6 +22372,10 @@ snapshots:
     dependencies:
       prelude-ls: 1.2.1
       type-check: 0.4.0
+
+  lib0@0.2.117:
+    dependencies:
+      isomorphic.js: 0.2.5
 
   lie@3.1.1:
     dependencies:
@@ -26369,6 +26402,10 @@ snapshots:
       string-width: 4.2.3
       y18n: 5.0.8
       yargs-parser: 21.1.1
+
+  yjs@13.6.32:
+    dependencies:
+      lib0: 0.2.117
 
   yocto-queue@0.1.0: {}
 

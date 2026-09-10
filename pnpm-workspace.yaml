@@ -109,6 +109,17 @@ catalog:
   # `expo@57.0.15`'s `bundledNativeModules.json` entry, not npm's latest (16.x):
   # it is a native module, so the SDK's pin is the compatibility statement and
   # `expo install` would choose exactly this.
+  # The board's document, and the reason it is a CRDT rather than a JSON blob:
+  # Quickdraw's own sync page settles contention per record, last writer wins,
+  # and a `Y.Map` keyed by record id is exactly that rule with merge, offline
+  # reconnect and an origin-scoped undo stack already solved. It is also the
+  # transport-agnostic shape — a provider is a constructor call, not a rewrite.
+  #
+  # No `y-websocket`/`y-indexeddb` here on purpose. This workspace has no
+  # WebSocket service, and IndexedDB does not exist on React Native, so both
+  # would be a dependency for a path nothing takes. Persistence is one encoded
+  # update through the storage this feature already has.
+  yjs: 13.6.32
   "@quickdrawjs/core": 0.2.0
   "@quickdrawjs/react": 0.2.0
   "@quickdrawjs/react-native": 0.2.0

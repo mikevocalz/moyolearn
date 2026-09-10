@@ -35,7 +35,14 @@ export type { TutorPresencePreference, ResolvedTutorPresence } from './tutor-vie
 export { LearningCanvas, type LearningCanvasProps } from './LearningCanvas';
 export { Whiteboard, type WhiteboardProps } from './Whiteboard';
 export { WhiteboardSheet, type WhiteboardSheetProps } from './WhiteboardSheet';
-export type { WhiteboardHandle, WhiteboardSnapshot, WhiteboardTool } from './whiteboard.types.ts';
+export type {
+  WhiteboardDiff,
+  WhiteboardDiffSource,
+  WhiteboardHandle,
+  WhiteboardInk,
+  WhiteboardSnapshot,
+  WhiteboardTool,
+} from './whiteboard.types.ts';
 export { SessionToolbar, type SessionToolbarProps } from './SessionToolbar';
 export { MessageBubble, type MessageBubbleProps } from './MessageBubble';
 export { StreamedText, type StreamedTextProps } from './StreamedText';

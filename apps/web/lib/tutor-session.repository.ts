@@ -16,13 +16,25 @@
 // SOT-KEYWORDS: tutor session repository payload messages append attachment patch cross-device
 import 'server-only';
 import { getPayload } from 'payload';
+import * as Y from 'yjs';
 import config from '@payload-config';
+
+/*
+  Base64 both ways, matching the client's `board-doc` exactly — the column holds
+  one encoding, so a board written by a phone reads back byte-identical on a
+  laptop. `Buffer` here rather than `btoa`: this file is server-only and Node's
+  encoder does not walk the array a character at a time.
+*/
+const decodeBoardBase64 = (value: string): Uint8Array => new Uint8Array(Buffer.from(value, 'base64'));
+const encodeBoardBase64 = (bytes: Uint8Array): string => Buffer.from(bytes).toString('base64');
 import type {
   AppendMessage,
   CloseTutorSession,
   CreateSession,
   LoadOpenSession,
+  MergeBoard,
   PatchAttachment,
+  ReadBoard,
   StoredAttachment,
   StoredMessage,
 } from '@acme/app/server';
@@ -220,6 +232,45 @@ export const appendMessage: AppendMessage = async (ctx, sessionId, message) =>
         expiresAt: doc.expiresAt,
       },
     });
+    return true;
+  });
+
+/** The board, read back for another device. Opaque bytes; nothing here decodes them. */
+export const readBoard: ReadBoard = async (ctx, sessionId) =>
+  withPayload(async (payload) => {
+    const doc = await findOwned(payload, ctx.learnerId, sessionId);
+    return typeof doc?.board === 'string' && doc.board.length > 0 ? doc.board : null;
+  });
+
+/**
+ * Folds a device's board into the stored one.
+ *
+ * `Y.mergeUpdates` is the whole operation: two updates combine into one that
+ * contains both, in either order, with no document instantiated and nothing on
+ * this side understanding what a stroke is.
+ *
+ * IT IS STILL A READ-MODIFY-WRITE, and pretending otherwise would be the exact
+ * mistake `appendMessage` above was rewritten to avoid. Two devices merging in
+ * the same instant can still have one write land on a row the other has already
+ * moved. The difference — and it is why this is acceptable where the old
+ * `messages` array was not — is that a device pushes its ENTIRE document every
+ * time rather than a delta: a merge that loses the race is restored by that
+ * device's next push, and until then its copy is intact on its own screen.
+ * Nothing is destroyed, only briefly unshared. A turn dropped from an append
+ * was gone.
+ */
+export const mergeBoard: MergeBoard = async (ctx, sessionId, update) =>
+  withPayload(async (payload) => {
+    const doc = await findOwned(payload, ctx.learnerId, sessionId);
+    if (!doc) return false;
+    const existing = typeof doc.board === 'string' && doc.board.length > 0 ? doc.board : null;
+    const merged =
+      existing === null
+        ? update
+        : encodeBoardBase64(
+            Y.mergeUpdates([decodeBoardBase64(existing), decodeBoardBase64(update)]),
+          );
+    await payload.update({ collection: 'tutorSessions', id: doc.id, data: { board: merged } });
     return true;
   });
 

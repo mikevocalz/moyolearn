@@ -323,6 +323,7 @@ export interface TutorSession {
     | number
     | boolean
     | null;
+  board?: string | null;
   closedAt?: string | null;
   expiresAt: string;
   updatedAt: string;
@@ -1131,6 +1132,7 @@ export interface TutorSessionsSelect<T extends boolean = true> {
   learnerAuthId?: T;
   problem?: T;
   messages?: T;
+  board?: T;
   closedAt?: T;
   expiresAt?: T;
   updatedAt?: T;
