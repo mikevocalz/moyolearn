@@ -81,7 +81,29 @@ export interface CoachTurnInput {
  */
 export type CoachEvent =
   | { kind: 'chunk'; text: string; voice?: { tone: string; tag: string } }
-  | { kind: 'replace'; text: string }
+  /**
+   * A retraction: the plane or the pedagogy check withdrew what came before it.
+   *
+   * `live` is opt-IN, and the default is silence on purpose. These texts are
+   * server-authored, so most of them are safe to render live — but the CRISIS
+   * script is not: `BAKED_PIECES` marks it `crisis: true`, meaning serve the
+   * cache or serve nothing, never a live render. A flag that had to be set to
+   * SUPPRESS voice would mean a future crisis path that forgot it sent a child
+   * in distress through ElevenLabs; this way, forgetting it costs a sentence
+   * its audio and nothing else.
+   */
+  | {
+      kind: 'replace';
+      text: string;
+      live?: boolean;
+      /**
+       * Minted by the route for a `live` frame, exactly as on a chunk. Present
+       * on the wire, never set by the service — which is why it is here and not
+       * in the `live` flag: the flag is the service's intent, the tag is the
+       * server's signature over the text that carries it.
+       */
+      voice?: { tone: string; tag: string };
+    }
   /**
    * A safety verdict stopped this turn. Terminal, and now three things:
    *
@@ -268,7 +290,7 @@ export async function* coachStream(
         // before the sentence is rendered. Catching a revealed answer after the
         // child has read it is not catching it.
         if (revealsAnswer(input.problem, event.text)) {
-          yield { kind: 'replace', text: REVEAL_WITHHELD };
+          yield { kind: 'replace', text: REVEAL_WITHHELD, live: true };
           return;
         }
         yield event;
@@ -291,8 +313,23 @@ export async function* coachStream(
       recordPlaneOutcome(ports.recordSafetyEvent, ctx, outcome, trace, scope);
 
       if (outcome.kind === 'reply') yield { kind: 'end' };
-      else if (outcome.kind === 'redirect') yield { kind: 'replace', text: outcome.text };
-      else if (outcome.kind === 'refused') yield { kind: 'replace', text: outcome.reason };
+      /*
+        A redirect and a refusal are Natalie speaking — server-authored
+        sentences a child is meant to HEAR, in the same voice as the rest of the
+        turn. They had no voice at all until now, which meant the one kind of
+        sentence most likely to confuse a child was the one she went quiet for.
+      */
+      else if (outcome.kind === 'redirect') yield { kind: 'replace', text: outcome.text, live: true };
+      else if (outcome.kind === 'refused') yield { kind: 'replace', text: outcome.reason, live: true };
+      /*
+        NOT `live`. The S4 script's audio is baked (`BAKED_PIECES`,
+        `crisis: true` — serve the cache or serve nothing) and must never reach
+        a live render. It is still SILENT on the client today, which is a
+        separate and more serious defect than the one this line is part of:
+        the clip exists and nothing requests it. Left as it was rather than
+        fixed in passing, because the crisis path is not a thing to change
+        without doc 07 open.
+      */
       else if (outcome.kind === 'crisis') yield { kind: 'replace', text: outcome.response.message };
       else yield { kind: 'blocked' };
       return;

@@ -540,9 +540,26 @@ export const useTutorStore = create<TutorState>((set) => ({
           continue;
         }
         if (event.kind === 'replace') {
+          /*
+            STOP FIRST, THEN SPEAK THE RETRACTION. `stop()` drops whatever was
+            still queued from the withdrawn turn — a child must not hear the
+            sentence the plane just took off their screen — and the new one is
+            enqueued after it, into an empty queue.
+          */
           audioQueue.stop();
           // A retraction, not an append: the plane withdrew what came before it.
           set({ state: { kind: 'speaking', utterance: { text: event.text } } });
+          /*
+            AND SHE SAYS IT. Until this, every retraction was silent: the
+            pedagogy withhold, the redirects and the refusals all appeared as
+            text while Natalie went quiet — which is the moment a child is most
+            likely to wonder what just happened. `event.voice` is absent for the
+            crisis script by design (its audio is baked, never live-rendered),
+            so that one stays silent here and needs its own fix.
+          */
+          if (event.voice) {
+            audioQueue.enqueue(event.text, event.voice);
+          }
           remember(event.text);
           return;
         }

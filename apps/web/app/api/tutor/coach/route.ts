@@ -158,16 +158,33 @@ export async function POST(request: NextRequest) {
     seam — see `toneForTurn`), and `previousText` threaded chunk-to-chunk so
     the voice route can hand ElevenLabs its `previous_text` prosody stitching
     without trusting the client for either value: both ride inside the MAC.
-    Chunk frames only — `replace` carries redirects and the crisis scripts,
-    whose audio is the BAKED path (`/api/tutor/voice/baked/*`), never a live
-    Flash render.
+    Chunk frames AND the `live` replace frames — a pedagogy withhold, a
+    redirect and a refusal are Natalie speaking and are tagged like any other
+    sentence. The crisis script is the one that is not: its audio is the BAKED
+    path (`/api/tutor/voice/baked/*`), never a live Flash render.
   */
   const tone = toneForTurn((body.message ?? '') === '');
   let previousText: string | null = null;
   const framed = (event: CoachEvent): string => {
-    if (event.kind !== 'chunk') return JSON.stringify(event);
+    /*
+      Replace frames are tagged too now, when the service marks them `live`.
+      They are server-authored sentences — a pedagogy withhold, a redirect, a
+      refusal — and the tag scheme exists to certify exactly that. Until this,
+      every one of them arrived on a child's screen in silence: the sentence
+      most likely to need explaining was the one Natalie did not say.
+
+      The crisis script is NOT marked `live` and is not tagged here. Its audio
+      is baked and must never be rendered live (`BAKED_PIECES`, `crisis: true`).
+    */
+    const speakable = event.kind === 'chunk' || (event.kind === 'replace' && event.live === true);
+    if (!speakable) return JSON.stringify(event);
     const tag = mintUtteranceTag({ text: event.text, previousText, tone });
     const frame = tag === null ? event : { ...event, voice: { tone, tag } };
+    /*
+      A replace RETRACTS what came before it, so it must not inherit that text
+      as its prosody stitch — `previous_text` would be a sentence the child is
+      no longer looking at. It becomes the stitch for whatever follows.
+    */
     previousText = event.text;
     return JSON.stringify(frame);
   };
