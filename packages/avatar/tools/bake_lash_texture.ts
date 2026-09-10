@@ -16,7 +16,7 @@
  * WHY THIS FILE HAS ITS OWN RASTERISER. Baking through `node-canvas` would just
  * move the same problem to CI: the output would then depend on the Cairo build
  * on the machine that ran the bake. The rasteriser below is ~100 lines of
- * dependency-free arithmetic, so `node tools/bake_lash_texture.mjs` produces the
+ * dependency-free arithmetic, so `node tools/bake_lash_texture.ts` produces the
  * same bytes on a laptop, in CI, and on a colleague's machine five years from
  * now. That is the whole point — the checked-in `sha256` in the manifest is only
  * meaningful if the bake is reproducible.

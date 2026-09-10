@@ -33,6 +33,15 @@ export type IdleFrame = {
     [K in IdleChannel]: number;
 } & {
     blinkStarted: boolean;
+    /**
+     * True on the frame a breath cycle begins. Mirrors `blinkStarted`, and it
+     * exists because the channel was otherwise unmeasurable: the interval between
+     * zero-crossings of `breathY` spans parts of two consecutive cycles, so it
+     * averages their periods and reads back less variation than was generated
+     * (15% drawn, 12.3% measured that way). A cycle boundary is the only place
+     * the real period is observable.
+     */
+    breathStarted: boolean;
     saccadeStarted: boolean;
     anticipated: boolean;
     /** A weight transfer began this frame. */
@@ -55,6 +64,8 @@ export declare class IdleEngine {
     private rand;
     private breathPhase;
     private breathPeriod;
+    /** This session's resting rate. Fixed; only the individual cycles vary. */
+    private breathMeanPeriod;
     private breathBoost;
     private swayNoise;
     private driftNoise;
@@ -74,9 +85,6 @@ export declare class IdleEngine {
     private nodT;
     private nodAmp;
     private nodRefractory;
-    private partnerSpeakT;
-    private wasPartnerSpeaking;
-    private nodTimerAt;
     private shiftFrom;
     private shiftTo;
     private shiftT;
@@ -112,6 +120,11 @@ export declare class IdleEngine {
     private wideT;
     private frame;
     constructor(seed?: number);
+    /**
+     * The next breath, jittered around this session's mean. Drawn from the same
+     * seeded stream as everything else, so a run stays reproducible.
+     */
+    private jitteredBreathPeriod;
     private range;
     private bodyRange;
     step(dt: number, inputs: IdleInputs): IdleFrame;

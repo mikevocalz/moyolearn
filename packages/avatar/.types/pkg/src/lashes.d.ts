@@ -18,7 +18,7 @@
  * so it ports unchanged. The ONE blocker was the texture: the reference painted
  * it at startup with `document.createElement('canvas')` and 120 strokes, and
  * React Native has no DOM canvas. That paint is now baked offline by
- * `tools/bake_lash_texture.mjs` and shipped as a PNG on the CDN — see that
+ * `tools/bake_lash_texture.ts` and shipped as a PNG on the CDN — see that
  * file's header for why baking beats a canvas polyfill. `createLashes` takes
  * the loaded texture; it no longer knows how the texture was made.
  *

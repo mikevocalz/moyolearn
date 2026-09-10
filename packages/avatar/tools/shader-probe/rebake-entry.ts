@@ -1,11 +1,19 @@
 /**
  * The rebake shading A/B — doc 22 §6.3, §10.6.
  *
- * `tools/verify_runtime_bake.ts` proved the rebaked container reproduces the
- * authoring container's VERTICES: bit-exact at neutral, under 0.06 mm on
- * realistic poses, 0.33 mm with all nineteen channels at once, on a 341 mm
- * head. That proof is necessary and it is explicitly not sufficient, and the
- * spec says so: **shading reads normals.**
+ * `tools/verify_runtime_bake.ts` is cited by the spec as having proved the
+ * rebaked container reproduces the authoring container's VERTICES — bit-exact
+ * at neutral, under 0.06 mm on realistic poses, 0.33 mm with all nineteen
+ * channels at once, on a 341 mm head. THOSE NUMBERS ARE INHERITED, NOT
+ * REPRODUCED HERE: the tool is not in this repo (`check-material-inputs.mjs`
+ * records it), so nothing on this branch can re-run the comparison that
+ * produced them. Treat them as a claim carried over from the reference, not as
+ * a measurement this codebase can stand behind.
+ *
+ * The reasoning below does not depend on the exact figures, only on the
+ * displacement being small and non-zero, and it is the half that matters: that
+ * proof would be necessary and explicitly not sufficient, because **shading
+ * reads normals.**
  *
  * A normal is a difference of neighbouring vertices divided by a small number.
  * A 0.06 mm displacement across a 2 mm triangle is a 0.03 radian tilt, and a
