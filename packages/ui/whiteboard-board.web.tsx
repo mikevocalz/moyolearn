@@ -26,7 +26,7 @@ import '@quickdrawjs/core/quickdraw.css';
 import type { WhiteboardBoardProps, WhiteboardHandle } from './whiteboard.types.ts';
 
 export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps>(
-  function WhiteboardBoard({ snapshot, onChange }, ref) {
+  function WhiteboardBoard({ snapshot, onChange, onReady }, ref) {
     const board = useRef<QuickdrawRef>(null);
 
     /*
@@ -66,6 +66,10 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         exportPng,
         getSnapshot: async () => board.current?.editor?.store.getSnapshot() ?? null,
         applyDiff: (diff) => board.current?.editor?.store.applyDiff(diff as never, 'remote'),
+        /* `'remote'` keeps the load out of the learner's undo history — a
+           restore is not something they should be able to undo their way out
+           of, which is the vendor's own note on this call. */
+        loadSnapshot: (next) => board.current?.editor?.store.loadSnapshot(next as never, 'remote'),
         setTool: (tool) => board.current?.editor?.setTool(tool),
         setInk: (colour) => board.current?.editor?.setStyle('color', colour),
         undo: () => board.current?.editor?.store.undo(),
@@ -92,6 +96,7 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
            decides what "the learner has started" means, because a restored
            board is drawn on and is nobody's work this session. */
         onChange={(diff, source) => onChange?.(diff, source)}
+        onMount={() => onReady?.()}
         style={{ width: '100%', height: '100%' }}
       />
     );

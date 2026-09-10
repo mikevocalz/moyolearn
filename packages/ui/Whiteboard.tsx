@@ -80,6 +80,8 @@ export interface WhiteboardProps {
    * document; the board itself keeps no history of its own.
    */
   onChange?: (diff: WhiteboardDiff, source: WhiteboardDiffSource) => void;
+  /** The engine will accept work. Nothing sent before this arrives lands. */
+  onReady?: () => void;
   className?: string;
 }
 
@@ -196,7 +198,7 @@ const INKS = [
 ] as const satisfies readonly { id: WhiteboardInk; label: string; swatch: string }[];
 
 export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function Whiteboard(
-  { snapshot, size = 'md', onAsk, asking = false, onChange, className },
+  { snapshot, size = 'md', onAsk, asking = false, onChange, onReady, className },
   ref,
 ) {
   const board = useRef<WhiteboardHandle>(null);
@@ -221,6 +223,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
   useImperativeHandle(ref, () => ({
     exportPng: async () => (await board.current?.exportPng()) ?? null,
     applyDiff: (diff) => board.current?.applyDiff(diff),
+    loadSnapshot: (next) => board.current?.loadSnapshot(next),
     getSnapshot: async () => (await board.current?.getSnapshot()) ?? null,
     setTool: (next) => {
       setTool(next);
@@ -344,7 +347,12 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
       */}
       <View className="relative flex-1">
         <LearningCanvas padded={false}>
-          <WhiteboardBoard ref={board} snapshot={snapshot} onChange={handleChange} />
+          <WhiteboardBoard
+            ref={board}
+            snapshot={snapshot}
+            onChange={handleChange}
+            onReady={onReady}
+          />
         </LearningCanvas>
 
       {/*

@@ -29,7 +29,7 @@ import type { Snapshot } from '@quickdrawjs/core';
 import type { WhiteboardBoardProps, WhiteboardHandle } from './whiteboard.types.ts';
 
 export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps>(
-  function WhiteboardBoard({ snapshot, onChange }, ref) {
+  function WhiteboardBoard({ snapshot, onChange, onReady }, ref) {
     const board = useRef<QuickdrawRef>(null);
 
     useImperativeHandle(ref, () => ({
@@ -43,6 +43,10 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         (await board.current?.exportPng({ background: true, scale: 2 })) ?? null,
       getSnapshot: async () => (await board.current?.getSnapshot()) ?? null,
       applyDiff: (diff) => board.current?.applyDiff(diff as never),
+      /* `false`: do not re-frame the camera. The board is not panned or zoomed
+         on this surface, and a fit on restore would move a child's paper under
+         them for no reason they asked for. */
+      loadSnapshot: (next) => board.current?.loadSnapshot(next as never, false),
       setTool: (tool) => board.current?.setTool(tool),
       setInk: (colour) => board.current?.setStyle('color', colour),
       undo: () => board.current?.undo(),
@@ -59,6 +63,7 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         watermark={false}
         snapshot={snapshot as Snapshot | undefined}
         onChange={(diff, source) => onChange?.(diff, source)}
+        onReady={() => onReady?.()}
         style={{ flex: 1 }}
         webviewProps={{
           /*
