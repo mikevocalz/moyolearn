@@ -123,11 +123,27 @@ function toNativeInputProps(
   // Text properties go to the native field and the floor goes to the Host that
   // measures it; everything else (flex, width, alignment) describes the box.
   const { color: _c, fontSize: _f, ...containerStyle } = flat as Record<string, unknown>;
+  /*
+    THE TEXT SITS IN THE MIDDLE OF THE FLOOR, NOT ON TOP OF IT.
+
+    The floor exists to keep the hosted Compose field measurable and focusable
+    (see `use-autogrow.native`), and it makes the field's BOX as tall as the
+    composer row. The text inside does not fill that box — measured on device,
+    a 56dp `ComposeView` wrapping a 17dp `TextField` pinned to its top edge — so
+    the placeholder rode high above the keys beside it while every other control
+    in the row was centred. A field whose text starts at the ceiling reads as a
+    multi-line note box, not as the one-line answer field it is at rest.
+
+    Centring the container is the fix rather than dropping the floor: the floor
+    is load-bearing for focus on Android, and `justifyContent` costs it nothing.
+  */
+  const centred =
+    typeof flat.minHeight === 'number' ? { justifyContent: 'center', ...containerStyle } : containerStyle;
   return {
     color: typeof flat.color === 'string' ? flat.color : undefined,
     fontSize: typeof flat.fontSize === 'number' ? flat.fontSize : undefined,
     minHeight: typeof flat.minHeight === 'number' ? flat.minHeight : undefined,
-    containerStyle,
+    containerStyle: centred,
     value: typeof props.value === 'string' ? props.value : undefined,
     onChangeText: props.onChangeText,
     onFocus: props.onFocus ? () => props.onFocus?.(undefined as never) : undefined,

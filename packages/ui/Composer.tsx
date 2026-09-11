@@ -320,11 +320,28 @@ export function Composer({
     child's screen is a key a child misses.
   */
   const secondaryIconTarget = {
-    sm: 'min-h-target-adult min-w-target-adult',
-    md: 'min-h-target-adult min-w-target-adult',
-    lg: 'min-h-target-teen min-w-target-adult',
-    xl: 'min-h-target-child min-w-target-adult',
+    sm: 'min-h-target-adult min-w-target-floor',
+    md: 'min-h-target-adult min-w-target-floor',
+    lg: 'min-h-target-teen min-w-target-floor',
+    xl: 'min-h-target-child min-w-target-floor',
   }[size];
+
+  /*
+    The width the box gave up, handed back as touch area.
+
+    `target-floor` is 24px — the WCAG 2.2 AA minimum (2.5.8) and about half the
+    band, which is the width asked for. Shrinking the BOX that far would shrink
+    the press target with it, so the difference is restored as horizontal
+    `hitSlop`: the key draws at 24px and still answers across the full band.
+    That is the whole reason the visual can be halved without costing a child
+    the target — a narrower drawing is not a narrower button.
+  */
+  const bandPx = Number.parseInt(
+    { sm: targets.adult, md: targets.adult, lg: targets.teen, xl: targets.child }[size],
+    10,
+  );
+  const secondarySlop = Math.max(0, (bandPx - Number.parseInt(targets.floor, 10)) / 2);
+  const secondaryHitSlop = { left: secondarySlop, right: secondarySlop };
 
   /*
     The row's resting height, as a NUMBER — the same age-band target the keys
@@ -347,7 +364,24 @@ export function Composer({
     (`scrollHeight` on web, the Compose/SwiftUI host's own measurement on
     native), so the hook returns props to spread rather than a single ref.
   */
-  const autoGrow = useAutoGrow(value, rowHeight);
+  /*
+    THE FIELD'S FLOOR IS THE TEXT'S, NOT THE ROW'S.
+
+    It used to be `rowHeight` — the age band's full target — which made the
+    hosted field's BOX as tall as the row while Compose kept the text pinned to
+    that box's top edge. Measured: a 0.078-tall `ComposeView` wrapping a
+    0.023-tall `TextField` at the same y. So the placeholder rode at the
+    ceiling of the bar while every key beside it was centred, and no amount of
+    container alignment moved it — Compose lays the inner field out itself.
+
+    `targets.floor` (24px, WCAG 2.2 AA) is small enough that the box hugs one
+    line of text and large enough to keep the host measurable, which is the
+    property the floor actually exists for. The ROW still stands at
+    `rowHeight`, because the keys carry the band's target; the field is now
+    centred against them by `self-center` at the call site rather than by being
+    stretched to match.
+  */
+  const autoGrow = useAutoGrow(value, Number.parseInt(targets.floor, 10));
 
   const handleSubmit = useCallback(() => {
     if (canSend) onSend();
@@ -620,6 +654,7 @@ export function Composer({
                 role="button"
                 aria-label="Add a photo or file"
                 className={`${secondaryIconTarget} items-center justify-center rounded-control`}
+                hitSlop={secondaryHitSlop}
               >
                 <Plus size={20} className="text-text" />
               </View>
@@ -639,6 +674,7 @@ export function Composer({
                   onPress={onPickCamera}
                   aria-label="Take a photo"
                   className={`${secondaryIconTarget} items-center justify-center rounded-control`}
+                  hitSlop={secondaryHitSlop}
                 >
                   <Camera size={20} className="text-text" />
                 </Pressable>
@@ -648,6 +684,7 @@ export function Composer({
                   onPress={pickPicture}
                   aria-label={onPickImage ? 'Add a photo' : 'Take a photo'}
                   className={`${secondaryIconTarget} items-center justify-center rounded-control`}
+                  hitSlop={secondaryHitSlop}
                 >
                   {onPickImage ? (
                     <Image size={20} className="text-text" />
@@ -665,6 +702,7 @@ export function Composer({
                   onPress={onPickDocument}
                   aria-label="Add a file"
                   className={`${secondaryIconTarget} items-center justify-center rounded-control`}
+                  hitSlop={secondaryHitSlop}
                 >
                   <Paperclip size={20} className="text-text" />
                 </Pressable>
@@ -707,7 +745,7 @@ export function Composer({
             /* `text-body-lg`, not `text-body`: this is the field a CHILD types their
              answer into, and it was the smallest text on a screen built for one.
              The hot dial carries it to 18. */
-          className="flex-1 resize-none border-0 bg-transparent font-sans text-body-lg text-text placeholder:text-text-muted"
+          className="flex-1 self-center resize-none border-0 bg-transparent font-sans text-body-lg text-text placeholder:text-text-muted"
             aria-label="Message composer"
           />
 
@@ -719,7 +757,15 @@ export function Composer({
             from="right"
             distance={20}
             duration={200}
-            className="flex-row items-center gap-element"
+            /*
+              `gap-group`, not `gap-element`: the mic and send are two DIFFERENT
+              intentions (speak it / send it), not two steps of one, and at the
+              element gap they read as a single two-part control with send
+              crowding the talk key. A mis-tap here costs the whole message, so
+              the tier that separates groups is the honest one — the same reason
+              discard sits on the far side from send in the recording row.
+            */
+            className="flex-row items-center gap-group pr-element"
           >
             {/*
               BOTH, always. This swapped — microphone on an empty field, send
@@ -740,6 +786,7 @@ export function Composer({
                 disabled={disabled}
                 aria-label="Record a voice message"
                 className={`${secondaryIconTarget} items-center justify-center rounded-control`}
+                hitSlop={secondaryHitSlop}
               >
                 <Mic size={20} className="text-text" />
               </Pressable>

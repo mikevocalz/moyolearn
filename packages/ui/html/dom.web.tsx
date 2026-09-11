@@ -95,12 +95,43 @@ export interface PressBaseProps extends P {
     selected?: boolean;
     expanded?: boolean;
   };
+  /**
+   * Press area that extends BEYOND the drawn box, so a control can be drawn
+   * small without being tapped small. React Native's own prop, honoured here so
+   * one JSX tree keeps serving both forks — the native fork already takes it
+   * through `ComponentProps<typeof Pressable>`, and before this the web fork
+   * refused the prop outright, which is what forced callers to choose between
+   * a narrow drawing and a reachable target.
+   *
+   * Implemented as padding out plus an equal negative margin back: the hit box
+   * grows, the LAID-OUT box does not, so a slopped control still occupies the
+   * width its row budgeted for it.
+   */
+  hitSlop?: number | { left?: number; right?: number; top?: number; bottom?: number };
+}
+
+/**
+ * `hitSlop` as style. Padding grows the button's own box (a `<button>` is its
+ * own hit area) and the matching negative margin takes the growth back out of
+ * the layout, so neighbours do not move.
+ */
+function hitSlopStyle(slop: PressBaseProps['hitSlop']): React.CSSProperties | undefined {
+  if (slop === undefined) return undefined;
+  const s = typeof slop === 'number' ? { left: slop, right: slop, top: slop, bottom: slop } : slop;
+  const side = (n: number | undefined) => (n === undefined || n <= 0 ? undefined : n);
+  const [l, r, t, b] = [side(s.left), side(s.right), side(s.top), side(s.bottom)];
+  return {
+    ...(l === undefined ? {} : { paddingLeft: l, marginLeft: -l }),
+    ...(r === undefined ? {} : { paddingRight: r, marginRight: -r }),
+    ...(t === undefined ? {} : { paddingTop: t, marginTop: -t }),
+    ...(b === undefined ? {} : { paddingBottom: b, marginBottom: -b }),
+  };
 }
 
 // RN views default to display:flex — raw DOM elements don't, so seed it
 // (callers' flex-row / items-* classes expect a flex container).
 export const ButtonBase = ({
-  onPress, accessibilityLabel, accessibilityState, role, className, style, ...props
+  onPress, accessibilityLabel, accessibilityState, role, className, style, hitSlop, ...props
 }: PressBaseProps) => (
   <button
     type="button"
@@ -113,7 +144,7 @@ export const ButtonBase = ({
     // RN spells it accessibilityState.expanded; the DOM wants aria-expanded.
     // Mapped here so a caller writes one prop and both platforms announce it.
     aria-expanded={props['aria-expanded'] ?? accessibilityState?.expanded}
-    {...toDom(`inline-flex flex-col ${className ?? ''}`, style)}
+    {...toDom(`inline-flex flex-col ${className ?? ''}`, { ...hitSlopStyle(hitSlop), ...style })}
     {...props}
   />
 );

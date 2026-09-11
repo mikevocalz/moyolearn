@@ -43,8 +43,36 @@ export function getTutorAudioContextTime(): number {
   return (ensureTutorAudioContext() as { currentTime: number }).currentTime;
 }
 
+/**
+ * DECODE AT THE CONTEXT'S RATE, NOT THE FILE'S — this argument is the whole
+ * fix for a lip-sync drift that got worse the longer Natalie spoke.
+ *
+ * The web fork gets this invariant for free: `BaseAudioContext.decodeAudioData`
+ * is specified to resample to `ctx.sampleRate`, so a decoded buffer always
+ * matches the graph that will play it. This fork used the module-level
+ * `decodeAudioData`, which takes an OPTIONAL rate and turns its absence into
+ * `0` — miniaudio's "keep the file's rate". Nothing downstream corrects it:
+ * the buffer source's playback rate is `playbackRate * detune` with no
+ * `buffer.sampleRate / context.sampleRate` factor, so the read cursor advances
+ * one file-frame per output-frame.
+ *
+ * The TTS is `mp3_44100_64` (`@acme/voice`'s LIVE_OUTPUT_FORMAT) and an
+ * Android `AudioContext` takes the device rate, which is 48000 on essentially
+ * every modern handset. 48000/44100 = 1.0884, so the voice played 8.84% fast
+ * and sharp while the viseme cursor — `context.currentTime - playbackStartAt`,
+ * in real seconds — indexed a timeline in clip seconds. The mouth trailed the
+ * voice by 0.0884*t: ~88ms at 1s, ~265ms at 3s, ~440ms at 5s, resetting each
+ * sentence. It also made the mouth run ~8% past the end of every sentence,
+ * because `activeDuration` is in clip seconds and `onEnded` fired early.
+ *
+ * `analyseSpeech` needs no change: it reads `decoded.sampleRate`, which is now
+ * the context's.
+ * SOT: docs/pack/22-embodied-tutor-avatar-spec.md §3 (turn-taking)
+ * SOT-KEYWORDS: audio decode sample rate resample lipsync viseme drift native android
+ */
 export async function decodeTutorAudioBuffer(buffer: ArrayBuffer): Promise<TutorAudioBuffer> {
-  return decodeAudioData(buffer) as unknown as TutorAudioBuffer;
+  const ctx = ensureTutorAudioContext() as { sampleRate: number };
+  return decodeAudioData(buffer, ctx.sampleRate) as unknown as TutorAudioBuffer;
 }
 
 export function createTutorBufferSource(decoded: TutorAudioBuffer): TutorAudioSource {

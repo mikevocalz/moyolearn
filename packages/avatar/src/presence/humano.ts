@@ -1421,7 +1421,27 @@ export function createHumanoPresence(
       overlap, which is the same pair of principles the beat layer already uses.
     */
     const stance = idleConfig.body.stance;
-    const load = rm ? 0 : clamp((frame.weightShift * stanceScale) / idleConfig.body.weightShift.amplitudeM, -1, 1);
+    /*
+      THE SWAY IS PART OF THE LOAD, and leaving it out was the reason she read
+      as a mannequin between shifts.
+
+      `shift` (above) is the pelvis, and it is the SUM of two signals: the
+      discrete weight shift, which fires every 2-19 s, and `frame.swayX`, the
+      continuous 0.15 Hz balance channel that never stops. `load` used to be
+      built from the weight shift ALONE, so the two disagreed: 15 mm of pelvis
+      swayed constantly over knees that were rigid against it, and the legs
+      were bit-static in 85% of frames — measured, 2,728 of 18,000. A real
+      standing human has no such split; balance sway IS the weight moving
+      between the feet, at small amplitude, all the time.
+
+      Dividing the same `shift` the pelvis uses means the legs now answer every
+      pelvis motion by construction, and the two can no longer drift apart.
+      The denominator gains the sway's amplitude so a full weight shift still
+      normalises to roughly ±1 rather than being squashed by the wider range.
+    */
+    const loadSpan =
+      idleConfig.body.weightShift.amplitudeM + idleConfig.sway.amplitudeM;
+    const load = rm ? 0 : clamp(shift / loadSpan, -1, 1);
     loadLead.step(load, rawDelta, stance.kneeLeadS);
     loadLag.step(load, rawDelta, stance.shoulderLagS);
     const kneeLoad = loadLead.value;
@@ -1570,8 +1590,28 @@ export function createHumanoPresence(
       const followed = handFollow[side].step(lift, rawDelta);
       handLift[side] = followed;
 
+      /*
+        CONTRAPPOSTO'S OTHER HALF, and it was dead config until now.
+
+        `shoulderLoad` (the lagged weight, `loadLag` above) was computed every
+        frame and read by nothing — `shoulderCounterDeg: 5` and the lag that
+        feeds it were both declared and inert, which `reduced-motion.ts` already
+        confessed to. So the stance was knees-only: the pelvis moved, the knees
+        answered, and the shoulder line stayed dead level above them. A level
+        shoulder line over a shifting pelvis is the mannequin read — in a real
+        stand the shoulders tilt AGAINST the hips, which is what makes the S
+        curve legible at all.
+
+        Counter, hence the minus: the loaded hip rides high, so the shoulder on
+        that side drops. `sideBias` is +1 left / -1 right, so one shoulder
+        rises as the other falls. It rides on the LAGGED load, so the shoulder
+        arrives after the pelvis it answers — overlap, the same principle the
+        knee's lead supplies from the other end.
+      */
+      const shoulderTilt =
+        rm ? 0 : -shoulderLoad * (side === 'L' ? 1 : -1) * stance.shoulderCounterDeg * DEG;
       const rise = (side === 'L' ? frame.shoulderL : frame.shoulderR) + frame.breathY * 0.5 - STANCE.shoulderDrop;
-      pose(side === 'L' ? bones.shoulderL : bones.shoulderR, rise + lift * 0.06, 0, 0);
+      pose(side === 'L' ? bones.shoulderL : bones.shoulderR, rise + lift * 0.06, 0, shoulderTilt);
 
       // The firewall's reach cap, applied where the reach is made: however
       // large a beat, the hand never comes at the viewer (doc 22 §7).

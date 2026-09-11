@@ -251,6 +251,18 @@ function applyTslHair(body: THREE.Object3D): HairMaterial | null {
   return handle;
 }
 
+/**
+ * How far she angles toward the board while the learner works, in radians.
+ *
+ * The board pane sits to her viewer-left in the three-pane composition, so a
+ * small negative yaw points her at the work rather than at the middle
+ * distance. Deliberately well under `TURN_TOWARD.maxRad` (15 degrees): past
+ * that the honest move is a step-turn, which this layer does not have, and a
+ * command that saturates the clamp every time would read as a held pose rather
+ * than as attention.
+ */
+const TOWARD_BOARD_RAD = -8 * (Math.PI / 180);
+
 export function TutorAvatar3D({
   active,
   isSpeaking,
@@ -482,6 +494,30 @@ export function TutorAvatar3D({
           timeUntilOnset: onset ?? undefined,
           reducedMotion: reducedMotionRef.current,
           cameraPosition: camera.position,
+          /*
+            THE VOICE REACHES THE BODY. `speechEnergy` was an input the writer
+            has always accepted and NOTHING has ever passed — so `energyWired`
+            stayed false, `energyScale` pinned at 1 and `energyMix` at 0, and
+            the quiet-scale reduction plus the 4 Hz second octave on torso yaw
+            and both shoulders were disengaged on every device. Her body was
+            exactly as animated mid-sentence as in silence.
+
+            `mouth` is the jaw opening the queue already samples this frame,
+            which tracks vocal amplitude closely enough to drive amplitude (it
+            is not being used as a viseme here — the mouth gets that value in
+            its own right above). The engine smooths it on `speechEnergy.tauS`,
+            so no extra filtering belongs at this call site.
+          */
+          speechEnergy: mouth,
+          /*
+            AND SHE TURNS TOWARD THE WORK. Also never passed before, so both
+            turn followers pinned at zero and the 15 degree command clamped
+            below it was unreachable. While the learner is working she angles
+            toward the board; while she is talking she comes back to square.
+            `TURN_TOWARD` clamps and eases this, and by its own contract it
+            moves neck, chest and spine2 only — never the hips or legs.
+          */
+          faceYawRad: speaking ? 0 : TOWARD_BOARD_RAD,
         });
 
         /*
