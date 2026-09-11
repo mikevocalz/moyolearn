@@ -29,6 +29,9 @@ import { sanitizeNodeName } from './humano.ts';
 export interface RetargetedClip {
   readonly fps: number;
   readonly frames: number;
+  /** `false` for one-shot takes (turns): the take ends facing elsewhere, so
+   *  wrapping to frame 0 would snap the body back. Absent means looping. */
+  readonly loop?: boolean;
   readonly source: string;
   readonly joints: Record<string, readonly [number, number, number, number][]>;
   readonly root: { readonly translation: readonly [number, number, number][] };
@@ -36,7 +39,8 @@ export interface RetargetedClip {
 }
 
 export interface ClipPlayer {
-  /** Writes the pose for `timeS` onto the bones. Loops past the end. */
+  /** Writes the pose for `timeS` onto the bones. Loops past the end, or
+   *  holds the last frame when the clip says `loop: false`. */
   apply(timeS: number): void;
   /** Puts every touched bone back exactly where the clip found it. */
   release(): void;
@@ -68,10 +72,15 @@ export function createClipPlayer(scene: THREE.Object3D, clip: RetargetedClip): C
   const a = new THREE.Quaternion();
   const b = new THREE.Quaternion();
 
+  const loops = clip.loop !== false;
   const sample = (timeS: number): { i0: number; i1: number; t: number } => {
-    const frame = ((timeS * clip.fps) % clip.frames + clip.frames) % clip.frames;
+    // One-shot clips clamp instead of wrapping: past the end they hold the
+    // final frame (a turn ends facing elsewhere; wrapping would snap back).
+    const frame = loops
+      ? ((timeS * clip.fps) % clip.frames + clip.frames) % clip.frames
+      : Math.min(Math.max(timeS * clip.fps, 0), clip.frames - 1);
     const i0 = Math.floor(frame);
-    return { i0, i1: (i0 + 1) % clip.frames, t: frame - i0 };
+    return { i0, i1: loops ? (i0 + 1) % clip.frames : Math.min(i0 + 1, clip.frames - 1), t: frame - i0 };
   };
 
   return {

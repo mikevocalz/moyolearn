@@ -53,6 +53,17 @@ describe('clip player on the shipped rig', { skip: !existsSync(CLIP_PATH) && 'ru
     ? (JSON.parse(readFileSync(CLIP_PATH, 'utf8')) as RetargetedClip)
     : null;
 
+  /*
+    One-shot clips (loop: false — the turn takes) end facing elsewhere, so
+    the loop seam is not a thing they have: the player clamps and holds the
+    last frame instead of wrapping to frame 0. The half-frame sweeps below
+    therefore stop at the last REAL sample, (frames−1)/fps, for those clips —
+    only the samples that interpolate across the wrap are skipped. The
+    mid-clip consistency bounds apply unweakened everywhere the sweep runs,
+    and looping clips sweep the seam exactly as before.
+  */
+  const halfFrameSweep = clip ? (clip.loop !== false ? clip.frames * 2 : (clip.frames - 1) * 2 + 1) : 0;
+
   it('resolves every joint the clip names', () => {
     const { root } = buildRealScene();
     const player = createClipPlayer(root, clip!);
@@ -106,7 +117,7 @@ describe('clip player on the shipped rig', { skip: !existsSync(CLIP_PATH) && 'ru
     let maxX = -Infinity;
     let previous: number | null = null;
     let worstStep = 0;
-    for (let f = 0; f < clip!.frames * 2; f += 1) {
+    for (let f = 0; f < halfFrameSweep; f += 1) {
       player.apply(f / (clip!.fps * 2));
       root.updateMatrixWorld(true);
       const x = hip.getWorldPosition(new THREE.Vector3()).x;
@@ -177,7 +188,7 @@ describe('clip player on the shipped rig', { skip: !existsSync(CLIP_PATH) && 'ru
       let previous: THREE.Vector3 | null = null;
       let previousStep: number | null = null;
       let worstBreak = 0;
-      for (let f = 0; f < clip!.frames * 2; f += 1) {
+      for (let f = 0; f < halfFrameSweep; f += 1) {
         player.apply(f / (clip!.fps * 2));
         const p = world(toe);
         if (previous !== null) {

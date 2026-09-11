@@ -2,7 +2,7 @@
 /*
   Retarget StayStill LaFAN clips onto the shipped Rigify rig.
 
-    node tools/retarget_staystill.mjs [--all-curated] [zipPath] [gltfPath]
+    node tools/retarget_staystill.mjs [--all-curated] [--turns] [zipPath] [gltfPath]
 
   Default (no flag): the original single-clip behaviour — pick the
   `lafan/actions/wei_lr_*` take with the largest horizontal hip travel
@@ -24,7 +24,31 @@
       path length (calm subjects suit a tutor), same two return criteria.
   Curated takes may start mid-motion, so the source reference frame is not
   frame 0: it is the frame of lowest hip speed inside the calmest 1 s window
-  (printed per clip). Per-clip SOURCE ankle horizontal travel is printed so
+  (printed per clip).
+
+  --turns: retarget 5 ONE-SHOT turn segments from `lafan/actions/lb_lef_*`
+  and `lb_rig_*` (the turn-to-look sequences), each to
+  /tmp/staystill_<take>.clip.json with `loop: false` — a turn ends facing
+  elsewhere, so the loop-closure return criteria above are exactly wrong
+  for it and are NOT applied. The raw takes are turn-AND-RETURN (measured:
+  only 2 of 144 end ≥ 30° from where they started, both with moving feet),
+  so each take is TRIMMED at the held look — frame 0 through the end of a
+  clean-stance window on the yaw plateau — and the segment is what gets
+  curated and retargeted:
+    · clean stance at BOTH ends — over the segment's first and last 0.5 s
+      every ankle's smoothed horizontal speed stays under CONTACT_SPEED_CMS
+      (the contact detector's own threshold and 5-frame smoothing, so
+      "clean stance" means "the contact lock will hold both ends");
+    · a real yaw change — hip-line FK yaw (the retarget's own forward
+      formula) start-to-end of the segment, ranked nearest 30–90°
+      (TURN_MIN/MAX_DEG: below is turn-toward's procedural range, past a
+      right angle is a spin, not a look);
+    · printed per take: yaw delta, duration, and foot re-plant count
+      (source contact windows per foot minus one).
+  The source reference frame IS frame 0 for turns: the clean-stance filter
+  guarantees the segment starts standing, and the yaw alignment must map
+  the START facing onto the rig's rest facing (rest-detection could pick
+  the turned END stance and align the wrong heading). Per-clip SOURCE ankle horizontal travel is printed so
   foot skating risk stays visible even with the contact lock below.
   Verification numbers (knee flexion range, hip travel, quaternion norms,
   contact coverage) print for every clip.
@@ -149,7 +173,8 @@ import path from 'node:path';
 const here = path.dirname(fileURLToPath(import.meta.url));
 const argv = process.argv.slice(2);
 const ALL_CURATED = argv.includes('--all-curated');
-const positional = argv.filter((a) => a !== '--all-curated');
+const TURNS = argv.includes('--turns');
+const positional = argv.filter((a) => a !== '--all-curated' && a !== '--turns');
 const ZIP = positional[0] ?? path.join(here, '../assets/motion/staystill/staystill.zip');
 const GLTF = positional[1] ?? path.join(here, '../assets/natalie-phone/natalie.gltf');
 
@@ -496,8 +521,106 @@ const smoothstep = (x) => {
   return c * c * (3 - 2 * c);
 };
 
+/* ── turn-take pre-scan (full-take FK: stance windows + hip-line yaw) ────── */
+const STANCE_S = 0.5;
+const TURN_MIN_DEG = 30; // below is turn-toward's procedural range (15° clamp + margin)
+const TURN_MAX_DEG = 90; // past a right angle is a spin, not a look
+/*
+  The lb corpus is turn-AND-RETURN: measured over all 144 takes, only two
+  end with |start-to-end yaw| ≥ 30° (and both have moving feet at an end),
+  while mid-take yaw excursions reach 40–112°. The subject turns to look,
+  HOLDS the look standing, then turns back — so the one-shot turn clip is
+  the take TRIMMED at the held look: from frame 0 (curation requires the
+  first 0.5 s to be a clean stance) to the end of a clean-stance window on
+  the yaw plateau. The emitted clip then genuinely ends facing elsewhere,
+  with a stance the contact lock can hold at both ends.
+*/
+const turnScan = (text) => {
+  const bvh = parseBvh(text);
+  const jIdx = new Map(bvh.joints.map((j, idx) => [j.name, idx]));
+  const worlds = bvh.frames.map((row) => bvhWorld(bvh, row));
+  const n = worlds.length;
+  const K = Math.max(2, Math.round(STANCE_S / bvh.frameTime));
+  if (n < 3 * K) return null; // no room for two stances and a turn between
+
+  // Smoothed horizontal ankle speed per frame (5-sample centered mean, the
+  // contact detector's smoothing); stance[f] = BOTH feet below threshold.
+  const smoothedSpeed = (idx) => {
+    const raw = new Float64Array(n);
+    for (let f = 1; f < n; f++) {
+      const a = worlds[f - 1].pos[idx];
+      const b = worlds[f].pos[idx];
+      raw[f] = Math.hypot(b[0] - a[0], b[2] - a[2]) / bvh.frameTime;
+    }
+    if (n > 1) raw[0] = raw[1];
+    const out = new Float64Array(n);
+    for (let f = 0; f < n; f++) {
+      let acc = 0;
+      let count = 0;
+      for (let k = -2; k <= 2; k++) {
+        const g = f + k;
+        if (g >= 0 && g < n) {
+          acc += raw[g];
+          count++;
+        }
+      }
+      out[f] = acc / count;
+    }
+    return out;
+  };
+  const spL = smoothedSpeed(jIdx.get('LeftFoot'));
+  const spR = smoothedSpeed(jIdx.get('RightFoot'));
+  const stance = new Array(n);
+  for (let f = 0; f < n; f++) stance[f] = spL[f] < CONTACT_SPEED_CMS && spR[f] < CONTACT_SPEED_CMS;
+  for (let f = 0; f < K; f++) if (!stance[f]) return null; // start not clean
+
+  // Unwrapped hip-line yaw relative to frame 0 (the retarget's own forward:
+  // up × (P_right − P_left) on the thigh heads).
+  const yawOf = (w) => {
+    const r = vsub(w.pos[jIdx.get('RightUpLeg')], w.pos[jIdx.get('LeftUpLeg')]);
+    return Math.atan2(-r[0], r[2]);
+  };
+  const yaw = new Float64Array(n);
+  let prev = yawOf(worlds[0]);
+  for (let f = 1; f < n; f++) {
+    const y = yawOf(worlds[f]);
+    let d = y - prev;
+    while (d > Math.PI) d -= 2 * Math.PI;
+    while (d < -Math.PI) d += 2 * Math.PI;
+    yaw[f] = yaw[f - 1] + d;
+    prev = y;
+  }
+
+  // Cut candidates: every frame e closing a full clean-stance window that
+  // does not overlap the start stance. Pick the one whose |yaw| lands
+  // nearest the 30–90° band (ties → earliest, the turn-out not the return).
+  let best = null;
+  for (let e = 2 * K; e < n; e++) {
+    let clean = true;
+    for (let f = e - K + 1; f <= e; f++)
+      if (!stance[f]) {
+        clean = false;
+        break;
+      }
+    if (!clean) continue;
+    const deg = Math.abs(yaw[e]) * (180 / Math.PI);
+    const dist = deg < TURN_MIN_DEG ? TURN_MIN_DEG - deg : deg > TURN_MAX_DEG ? deg - TURN_MAX_DEG : 0;
+    if (!best || dist < best.dist) best = { cutEnd: e, dist, yawDeg: (yaw[e] * 180) / Math.PI };
+  }
+  if (!best) return null;
+  return { ...best, totalFrames: n, frameTime: bvh.frameTime, durationS: (best.cutEnd + 1) * bvh.frameTime };
+};
+
+/** The take's text with only MOTION rows [0, cutEnd] — the one-shot segment. */
+const trimTake = (text, cutEnd) => {
+  const m = text.indexOf('MOTION');
+  const lines = text.slice(m).split('\n');
+  const rows = lines.slice(3).filter((l) => l.trim());
+  return `${text.slice(0, m)}MOTION\nFrames: ${cutEnd + 1}\n${lines[2]}\n${rows.slice(0, cutEnd + 1).join('\n')}\n`;
+};
+
 /* ── retarget one take ───────────────────────────────────────────────────── */
-function retargetClip({ name, text, srcTravel, out, detectRest }) {
+function retargetClip({ name, text, srcTravel, out, detectRest, loop = true }) {
   const bvh = parseBvh(text);
   const jIdx = new Map(bvh.joints.map((j, idx) => [j.name, idx]));
   const fps = Math.round(1 / bvh.frameTime);
@@ -828,13 +951,58 @@ function retargetClip({ name, text, srcTravel, out, detectRest }) {
     );
   }
 
-  const clip = { fps, frames: bvh.frames.length, source: name, joints: outJoints, root: { translation: rootTrans }, translations: outTrans, contacts };
+  if (!loop) {
+    // Re-plant count: source contact windows per foot minus one — a turn's
+    // step count, printed so curation stays visible per take.
+    console.log(
+      `foot re-plants (one-shot): L ${contactWindows.L.length - 1}, R ${contactWindows.R.length - 1}`,
+    );
+  }
+  const clip = { fps, frames: bvh.frames.length, ...(loop ? {} : { loop: false }), source: name, joints: outJoints, root: { translation: rootTrans }, translations: outTrans, contacts };
   writeFileSync(out, JSON.stringify(clip));
   console.log(`wrote ${out}: ${bvh.frames.length} frames @ ${fps} fps, ${Object.keys(outJoints).length} joints (${Object.keys(TWIN_OF).length} control twins), ${Object.keys(outTrans).length} twin translation tracks`);
 }
 
 /* ── entry points ────────────────────────────────────────────────────────── */
-if (!ALL_CURATED) {
+if (TURNS) {
+  /*
+    One-shot turn takes. The loop-closure criteria (--all-curated) are the
+    WRONG filter here — a turn's whole point is ending somewhere else. And
+    the raw takes cannot satisfy "ends facing elsewhere": the lb corpus is
+    turn-and-return (see turnScan's header for the measurement), so each
+    selected take is TRIMMED at the held look — the clip runs from the
+    clean start stance to the end of a clean-stance window on the yaw
+    plateau, and THAT segment is curated on: clean stance at both ends,
+    start-to-end hip-line yaw nearest the 30–90° band.
+  */
+  const takes = listTakes(/^lafan\/actions\/lb_(lef|rig)_\d+_\d+\.bvh$/);
+  if (takes.length === 0) throw new Error('no lafan/actions/lb_(lef|rig)_*.bvh in zip');
+  const scanned = takes
+    .map((name) => {
+      const text = readTake(name);
+      const scan = turnScan(text);
+      return scan ? { name, text, ...scan } : null;
+    })
+    .filter(Boolean);
+  const turns = scanned.sort((a, b) => a.dist - b.dist).slice(0, 5);
+  console.log(
+    `curated turns (${takes.length} lb takes, ${scanned.length} with a clean start stance and a cuttable stance on the yaw plateau; 5 nearest ${TURN_MIN_DEG}–${TURN_MAX_DEG}° start-to-end hip-line yaw after trimming):`,
+  );
+  for (const t of turns)
+    console.log(
+      `  ${t.name}  yaw ${t.yawDeg >= 0 ? '+' : ''}${t.yawDeg.toFixed(1)}°, ${t.durationS.toFixed(2)} s (trimmed to ${t.cutEnd + 1} of ${t.totalFrames} frames)`,
+    );
+  for (const t of turns) {
+    const base = path.basename(t.name, '.bvh');
+    const text = trimTake(t.text, t.cutEnd);
+    console.log(`\n── ${t.name} [0..${t.cutEnd}] ──`);
+    // detectRest stays OFF: frame 0 is a clean stance by curation, and the
+    // yaw alignment must map the START facing onto the rig's rest facing
+    // (rest-detection could pick the turned END stance and align the wrong
+    // heading).
+    retargetClip({ name: t.name, text, srcTravel: hipScan(text).extent, out: `/tmp/staystill_${base}.clip.json`, detectRest: false, loop: false });
+  }
+} else if (!ALL_CURATED) {
   // Original single-clip behaviour: byte-identical /tmp/staystill_wei_lr.clip.json.
   const names = listTakes(/^lafan\/actions\/wei_lr_\d+\.bvh$/);
   if (names.length === 0) throw new Error('no lafan/actions/wei_lr_*.bvh in zip');
