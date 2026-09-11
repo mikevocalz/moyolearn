@@ -187,6 +187,20 @@ export declare const idleConfig: {
             readonly hz: 0.12;
             readonly maxDeg: 1.5;
         };
+        readonly speechEnergy: {
+            /** Eased follower on the envelope, so an energy step never pops. */
+            readonly tauS: 0.3;
+            /** Amplitude share left at zero energy while the input is wired. */
+            readonly quietScale: 0.15;
+            /**
+             * The energy octave's rate — stress-group rate, where the speed the
+             * verifier measures actually lives (amplitude is capped, so rate is the
+             * only axis energy may spend). Jittered spans — it cannot loop.
+             */
+            readonly fastHz: 4;
+            /** The fast octave's convex weight at FULL energy (m = fastMix·ê²). */
+            readonly fastMix: 1;
+        };
         readonly wrist: {
             readonly hz: 0.18;
             readonly maxDeg: 3;
@@ -244,8 +258,8 @@ export declare const idleConfig: {
                 readonly max: 4;
             };
             readonly holdS: {
-                readonly min: 0.3;
-                readonly max: 1.2;
+                readonly min: 0.5;
+                readonly max: 1.6;
             };
             readonly yawDeg: {
                 readonly min: 4;

@@ -24,6 +24,7 @@ export { SKIN_CURVATURE_ATTRIBUTE, SKIN_DEFAULTS, SKIN_THICKNESS_ATTRIBUTE, Skin
 export { CURVATURE_REFERENCE, THICKNESS_REFERENCE, bakeSkinAux, type Geometry as SkinAuxGeometry, type SkinAux, type VectorAttribute, } from './materials/skin-aux.ts';
 export { bakeHairAux, bakeHairTangents, type HairAux, type HairGeometry, type HairTangents, } from './materials/hair-aux.ts';
 export { buildMeshGrid, type MeshGrid } from './materials/mesh-grid.ts';
+export { dropInertVertexColors } from './materials/inert-vertex-colors.ts';
 export { bakeMouthCavity, type MouthCavityBake, type MouthGeometry, } from './materials/mouth-cavity.ts';
 export { bakeEyeAux, type EyeAux, type EyeFit } from './materials/eye-aux.ts';
 export { EYE_AUX_ATTRIBUTE, EYE_SURFACES, createEyeUniforms, makeEyeMaterials, type EyeAuxMeta, type EyeMaterials, type EyeSurface, type EyeUniforms, } from './materials/eyes.ts';

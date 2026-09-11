@@ -55,6 +55,7 @@ import {
   bakeHairTangents,
   createHairMaterial,
   createHumanoPresence,
+  dropInertVertexColors,
   frameBody,
   type HumanoPresence,
 } from '@acme/avatar/body';
@@ -249,22 +250,6 @@ function applyTslHair(body: THREE.Object3D): HairMaterial | null {
   });
   return handle;
 }
-
-function dropInertVertexColors(scene: THREE.Object3D): void {
-  scene.traverse((child) => {
-    const mesh = child as THREE.SkinnedMesh;
-    if (!mesh.isSkinnedMesh) return;
-    mesh.geometry.deleteAttribute('color');
-    /*
-      GLTFLoader turned `vertexColors` on because the attribute existed. Leaving
-      it on with the attribute gone makes three look for a `color` varying that
-      no longer has a source.
-    */
-    const material = mesh.material as THREE.Material & { vertexColors?: boolean };
-    if (material.vertexColors) material.vertexColors = false;
-  });
-}
-
 
 export function TutorAvatar3D({
   active,

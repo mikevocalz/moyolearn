@@ -87,6 +87,11 @@ function resolveThree(moduleName) {
   return null;
 }
 
+const LIB0_WEBCRYPTO_NATIVE = path.resolve(
+  __dirname,
+  "src/lib0-webcrypto.native.js",
+);
+
 const upstreamResolveRequest = config.resolver.resolveRequest;
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
@@ -97,6 +102,13 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName === "three" || moduleName.startsWith("three/")) {
     const threeFile = resolveThree(moduleName);
     if (threeFile) return { type: "sourceFile", filePath: threeFile };
+  }
+  // lib0's `react-native` export condition wants `isomorphic-webcrypto`, which
+  // this repo does not install, so yjs could not bundle for the board at all.
+  // Web is left alone deliberately: there the browser build's `crypto` global
+  // is real, and better than anything shimmed over it.
+  if (moduleName === "lib0/webcrypto" && platform !== "web") {
+    return { type: "sourceFile", filePath: LIB0_WEBCRYPTO_NATIVE };
   }
   return upstreamResolveRequest
     ? upstreamResolveRequest(context, moduleName, platform)

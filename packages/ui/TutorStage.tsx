@@ -918,8 +918,19 @@ export function TutorStage({
                 animate={{ opacity: detailOpen ? 1 : 0 }}
                 transition={TRANSITIONS.paneContent}>
                 {/* `fill`: this column IS hers, so she takes its height rather
-                    than a fixed band at the top of it. */}
-                <TutorPresence {...presenceProps} avatar={avatar} fill />
+                    than a fixed band at the top of it.
+
+                    `render="body"` is not optional here, and its absence was a
+                    visible bug: the default branch draws body THEN rail, so the
+                    pane composition put a second rail under her while
+                    `presenceBlock` was already drawing one in the conversation
+                    column. Two of her identity on one screen, and the copy in
+                    the pane was clipped at the right edge — the rail is a row
+                    sized for the conversation's full measure, which is the
+                    exact reason this prop exists (see `TutorPresence`'s
+                    `render` contract: the halves split by placement, never by
+                    duplication). */}
+                <TutorPresence {...presenceProps} render="body" avatar={avatar} fill />
               </MotionView>
             }>
             <AdaptivePanes.Column>

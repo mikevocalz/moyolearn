@@ -26,6 +26,16 @@ export interface IdleInputs {
     partnerF0Falling: boolean;
     /** Seconds until scheduled TTS onset; Infinity when none scheduled. */
     timeUntilOnset: number;
+    /**
+     * The utterance's amplitude envelope, 0..1 — the energy of HER OWN synthetic
+     * voice, never the child's audio (life-layer: every motion has a cause, and
+     * this cause is hers). Continuous where `speechActive` is binary: the torso
+     * and shoulder ambient amplitudes ride it, never above their config
+     * ceilings. Omitted, the modulation is fully disengaged and every channel
+     * is bit-identical to the pre-energy engine (torsoEnergyCorrelation
+     * finding, 8e62c1b).
+     */
+    speechEnergy?: number;
 }
 export declare const IDLE_CHANNELS: readonly ["breathY", "breathPitch", "swayX", "swayY", "driftYaw", "driftPitch", "nodPitch", "eyeYaw", "eyePitch", "eyeBlinkLeft", "eyeBlinkRight", "eyesWide", "weightShift", "torsoYaw", "shoulderL", "shoulderR", "wristL", "wristR", "handRelaxL", "handRelaxR", "gazeAwayYaw", "gazeAwayPitch", "headFollowYaw", "headFollowPitch"];
 export type IdleChannel = (typeof IDLE_CHANNELS)[number];
@@ -102,6 +112,12 @@ export declare class IdleEngine {
     private turnT;
     private turnHoldS;
     private shoulderNoise;
+    /** The energy octaves: [torso, shoulderL, shoulderR]. Own stream (below). */
+    private energyFastNoise;
+    /** Eased `speechEnergy` (config tauS) — steps in the envelope never pop. */
+    private energyEased;
+    /** Eased 0/1 for "the input is wired" — so wiring it mid-run cannot pop either. */
+    private energyEngage;
     private wristNoise;
     private handNoise;
     /** Where each hand is settling FROM, TO, and how far through it is. */
@@ -138,6 +154,8 @@ export declare class IdleEngine {
      * the same span would put the TYPICAL gap near 11 s where people measure 5.9.
      */
     private sampleShiftInterval;
+    /** Two-piece draw matching a skewed measured distribution's p10/p50/p90. */
+    private samplePercentiles;
     /**
      * The next breath, jittered around this session's mean. Drawn from the same
      * seeded stream as everything else, so a run stays reproducible.

@@ -303,6 +303,30 @@ export function Composer({
   }[size];
 
   /*
+    THE TWO SECONDARY KEYS GIVE THEIR SPARE WIDTH TO THE FIELD.
+
+    In the three-pane composition the conversation column is ~445dp, and attach
+    + mic + send at the child band took 168dp of it before gaps — measured on
+    the Duo, the field was left 160dp, narrower than the keys flanking it. The
+    field is where the child actually works, so it should not be the part that
+    loses.
+
+    Only the WIDTH moves, and only for attach and mic. Height stays on the age
+    band, so the press target keeps its full vertical reach, and `send` is not
+    in here at all — it is the row's primary action and keeps the band's square.
+    The floor is `target-adult` (44px, Apple HIG) rather than a true half of the
+    band: half of `child` is 28px, which is under every touch minimum there is
+    and is what `tooling/check-targets.mjs` exists to catch. A narrower key on a
+    child's screen is a key a child misses.
+  */
+  const secondaryIconTarget = {
+    sm: 'min-h-target-adult min-w-target-adult',
+    md: 'min-h-target-adult min-w-target-adult',
+    lg: 'min-h-target-teen min-w-target-adult',
+    xl: 'min-h-target-child min-w-target-adult',
+  }[size];
+
+  /*
     The row's resting height, as a NUMBER — the same age-band target the keys
     beside the field take, so an empty composer is one level row.
 
@@ -595,7 +619,7 @@ export function Composer({
               <View
                 role="button"
                 aria-label="Add a photo or file"
-                className={`${iconTarget} items-center justify-center rounded-control`}
+                className={`${secondaryIconTarget} items-center justify-center rounded-control`}
               >
                 <Plus size={20} className="text-text" />
               </View>
@@ -614,7 +638,7 @@ export function Composer({
                 <Pressable
                   onPress={onPickCamera}
                   aria-label="Take a photo"
-                  className={`${iconTarget} items-center justify-center rounded-control`}
+                  className={`${secondaryIconTarget} items-center justify-center rounded-control`}
                 >
                   <Camera size={20} className="text-text" />
                 </Pressable>
@@ -623,7 +647,7 @@ export function Composer({
                 <Pressable
                   onPress={pickPicture}
                   aria-label={onPickImage ? 'Add a photo' : 'Take a photo'}
-                  className={`${iconTarget} items-center justify-center rounded-control`}
+                  className={`${secondaryIconTarget} items-center justify-center rounded-control`}
                 >
                   {onPickImage ? (
                     <Image size={20} className="text-text" />
@@ -640,7 +664,7 @@ export function Composer({
                 <Pressable
                   onPress={onPickDocument}
                   aria-label="Add a file"
-                  className={`${iconTarget} items-center justify-center rounded-control`}
+                  className={`${secondaryIconTarget} items-center justify-center rounded-control`}
                 >
                   <Paperclip size={20} className="text-text" />
                 </Pressable>
@@ -649,7 +673,7 @@ export function Composer({
           ) : (
             // Holds the row's shape so the field does not slide to the leading
             // edge when attach is unavailable.
-            <View className={iconTarget} />
+            <View className={secondaryIconTarget} />
           )}
 
           {/* The middle, and the only part of the row that stretches. No border of
@@ -715,7 +739,7 @@ export function Composer({
                 onPress={onStartRecording}
                 disabled={disabled}
                 aria-label="Record a voice message"
-                className={`${iconTarget} items-center justify-center rounded-control`}
+                className={`${secondaryIconTarget} items-center justify-center rounded-control`}
               >
                 <Mic size={20} className="text-text" />
               </Pressable>

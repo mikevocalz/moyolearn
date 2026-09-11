@@ -39,7 +39,12 @@ import { Canvas, type CanvasRef, type NativeCanvas, type RNCanvasContext } from 
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EmotionState, type EmotionCategory, type Shape } from '@acme/avatar';
-import { createHumanoPresence, frameBody, type HumanoPresence } from '@acme/avatar/body';
+import {
+  createHumanoPresence,
+  dropInertVertexColors,
+  frameBody,
+  type HumanoPresence,
+} from '@acme/avatar/body';
 // The lens and the light are shared with the web stage — see `natalie-rig.ts`.
 import { CAMERA_FOV, addRig } from './natalie-rig';
 import type { TutorCues } from './tutor-cues';
@@ -126,7 +131,7 @@ export function preloadNatalie(modelUri?: string): Promise<THREE.Group> {
         (error) => reject(error instanceof Error ? error : new Error(String(error)))
       );
     });
-    simplifyMaterialsForDawn(gltf.scene);
+    dropInertVertexColors(gltf.scene);
     if (__DEV__) console.log(`[natalie-preload] parsed in ${Date.now() - startedAt}ms`);
     return gltf.scene;
   })();
@@ -233,53 +238,6 @@ async function primeLoaderCache(gltfUrl: string): Promise<void> {
     const url = THREE.LoaderUtils.resolveURL(buffer.uri, base);
     THREE.Cache.add(`file:${url}`, await fetchBuffer(url));
   }
-}
-
-/**
- * Rebuilds every skinned material as a plain `MeshStandardMaterial`, keeping
- * the authored colour, normal and roughness maps and dropping everything else.
- *
- * WHY, measured on the Duo rather than assumed. This body is authored with
- * `KHR_materials_specular`, `KHR_materials_anisotropy` and `KHR_materials_ior`,
- * so `GLTFLoader` builds a `MeshPhysicalMaterial` — and three's WebGPU node
- * graph for that material makes Dawn throw on the first
- * `renderer.render(...)`: `Exception in HostFunction: <unknown>`, every frame,
- * with a black surface behind it. The bisect that found it is worth keeping:
- * `MeshNormalMaterial` rendered her perfectly (so geometry, skin and framing
- * were never the problem), colour-map-only rendered her in skin, and colour +
- * normal + roughness renders her as she is meant to look. Only the extension
- * path fails.
- *
- * This is ADR-111's "strip that extension only" rule, applied at load rather
- * than by re-exporting the body — the same asset then keeps working on the web
- * scene, which drives WebGL and has no such problem.
- *
- * THE CEILING, stated so it is not rediscovered as a surprise: specular tint,
- * anisotropic hair sheen and IOR are gone, so the hair reads flatter here than
- * it does on the web. The fix is not to put the extensions back — it is
- * `@acme/avatar/body`'s own hair and skin materials (doc 22 §4 rows 1-5), which
- * are written in TSL for exactly this renderer and are the next piece of work.
- */
-function simplifyMaterialsForDawn(scene: THREE.Object3D): void {
-  scene.traverse((child) => {
-    const mesh = child as THREE.SkinnedMesh;
-    if (!mesh.isSkinnedMesh) return;
-    const authored = mesh.material as THREE.MeshPhysicalMaterial;
-    mesh.material = new THREE.MeshStandardMaterial({
-      map: authored.map ?? null,
-      normalMap: authored.normalMap ?? null,
-      roughnessMap: authored.roughnessMap ?? null,
-      roughness: authored.roughness,
-      metalness: 0,
-      // The body is authored alphaMode MASK — the hair cards depend on it.
-      alphaTest: authored.alphaTest,
-      // Authored doubleSided. `FrontSide` was tried on the Duo for the
-      // shirt/arm silhouette and changed nothing — that is the bind pose, not
-      // the winding (see STANCE in presence/humano.ts).
-      side: authored.side,
-    });
-    authored.dispose();
-  });
 }
 
 export function TutorAvatar3D({

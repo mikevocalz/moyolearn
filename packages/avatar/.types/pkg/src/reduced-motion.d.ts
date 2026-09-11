@@ -117,6 +117,14 @@ export interface MotionPolicy {
      * header; `idleBodyScale` is what governs the travel between two stances.
      */
     stanceAsymmetryScale: 1;
+    /**
+     * The held facing of a turn-toward (`humano.ts` faceYawRad) — where she
+     * faces once the turn has settled. NEVER scaled: reduced motion pins the
+     * turn's TRAVEL (that is `idleBodyScale`'s side of it), but the settled
+     * direction is a pose, and pinning a pose removes no vestibular load.
+     * Pin the transition, not the pose — the stance rule, one joint up.
+     */
+    heldFacingScale: 1;
     /** Speech-driven mouth. NEVER scaled — see the header. */
     mouthScale: 1;
     /** Blink. NEVER disabled — a face that never blinks is unsettling, not calm. */

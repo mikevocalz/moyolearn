@@ -100,6 +100,7 @@ export {
   type HairTangents,
 } from './materials/hair-aux.ts';
 export { buildMeshGrid, type MeshGrid } from './materials/mesh-grid.ts';
+export { dropInertVertexColors } from './materials/inert-vertex-colors.ts';
 export {
   bakeMouthCavity,
   type MouthCavityBake,
