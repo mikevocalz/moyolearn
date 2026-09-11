@@ -284,6 +284,27 @@ const smoothstep = (f: number) => {
 };
 const clamp = (v: number, lo: number, hi: number) => (v < lo ? lo : v > hi ? hi : v);
 
+/**
+ * Turn-toward (§3.3), the SMALL-ANGLE half only: below `maxRad` a person
+ * turns to face something by twisting over planted feet — the head leads,
+ * the shoulders follow at a fraction, the hips stay. Past it the real
+ * mechanism is a step-turn: a foot un-plants, re-plants, and the pelvis
+ * comes around over the new base. That is footwork this layer does not have,
+ * so a larger command CLAMPS here rather than faking the step with a hip
+ * spin over planted feet — the mannequin-on-a-turntable write the stance
+ * layer exists to remove. The step-turn is explicitly out of scope.
+ *
+ * `shares` is the fraction of the commanded yaw each joint carries at
+ * settle. They sum to 1 so the head's WORLD yaw lands on the command; the
+ * chest carries only `spine2 + chest` of it, which is what "shoulders
+ * follow at a fraction" means, and the hips carry none, so the feet gates
+ * hold by construction.
+ */
+export const TURN_TOWARD = {
+  maxRad: 15 * DEG,
+  shares: { spine2: 0.15, chest: 0.15, neck: 0.35, head: 0.35 },
+} as const;
+
 /** The twelve mouth morphs this driver writes. */
 export interface LipShape {
   jawOpen: number;
@@ -385,6 +406,14 @@ export interface HumanoInput {
   reducedMotion: boolean;
   /** Where the learner's eye is, so her gaze lands on it and not past it. */
   cameraPosition?: THREE.Vector3 | null;
+  /**
+   * Where she should FACE, in radians of yaw relative to camera-forward —
+   * positive is the spine chain's +y. Small angles only: the command is
+   * clamped to `TURN_TOWARD.maxRad` (see that constant for why), the torso
+   * twists over planted feet, and the hips and legs never move. Omitted, she
+   * faces forward and this path is bit-inert.
+   */
+  faceYawRad?: number;
 }
 
 export interface HumanoPresence {
@@ -923,6 +952,16 @@ export function createHumanoPresence(
   // Lead and lag on the load signal — see `LoadFollower`.
   const loadLead = new LoadFollower();
   const loadLag = new LoadFollower();
+  /*
+    TURN-TOWARD, the same two-follower pattern as the load: the head chain
+    runs on the head's own cadence (`headFollow.tauS`, the constant that
+    already times how the head trails the eyes) and the torso follows on the
+    torso-turn ease (`torsoTurn.easeS`), so the head crosses any fraction of
+    its travel before the chest crosses the same fraction of its own — lead
+    and follow, never a rigid turntable.
+  */
+  const turnHead = new LoadFollower();
+  const turnTorso = new LoadFollower();
 
   const rest = (): void => {
     for (const bone of rests.keys()) restoreToRest(bone);
@@ -1164,6 +1203,22 @@ export function createHumanoPresence(
     const kneeLoad = loadLead.value;
     const shoulderLoad = loadLag.value;
     /*
+      TURN-TOWARD. Clamp FIRST: past `maxRad` the honest move is a step-turn
+      (see the constant), so the command saturates rather than driving the
+      hips. Reduced motion pins the transition and keeps the held direction —
+      the followers sit AT the target, so she faces where she is asked
+      without travelling. The stance rule, one layer up: pin the transition,
+      not the pose (`heldFacingScale` in reduced-motion.ts).
+    */
+    const faceTarget = clamp(input.faceYawRad ?? 0, -TURN_TOWARD.maxRad, TURN_TOWARD.maxRad);
+    if (rm) {
+      turnHead.value = faceTarget;
+      turnTorso.value = faceTarget;
+    } else {
+      turnHead.step(faceTarget, rawDelta, idleConfig.body.headFollow.tauS);
+      turnTorso.step(faceTarget, rawDelta, idleConfig.body.torsoTurn.easeS);
+    }
+    /*
       Positive load leans toward +x. The measured spine axis puts the head at
       -x for +z, so +x is the side the LEFT bones sit on; the left knee
       straightens as the load goes positive and the right takes the flexion.
@@ -1237,10 +1292,10 @@ export function createHumanoPresence(
     poseBoth('torso', 0, 0, shift * 0.96, shift, frame.swayY * 0.3);
     let leanSum = 0;
     poseBoth('spine1', 0, 0, -shift * 0.35);
-    poseBoth('spine2', 0, frame.torsoYaw * 0.6, -shift * 0.25);
+    poseBoth('spine2', 0, frame.torsoYaw * 0.6 + turnTorso.value * TURN_TOWARD.shares.spine2, -shift * 0.25);
     // Breath: the chest opens BACK on the inhale (−x) and lifts.
     const chestBreath = -frame.breathY * 6;
-    poseBoth('chest', chestBreath, frame.torsoYaw * 0.4, 0, 0, frame.breathY * 0.6);
+    poseBoth('chest', chestBreath, frame.torsoYaw * 0.4 + turnTorso.value * TURN_TOWARD.shares.chest, 0, 0, frame.breathY * 0.6);
     leanSum += chestBreath;
     const upperBreath = -frame.breathY * 3;
     poseBoth('upperChest', upperBreath, 0, 0);
@@ -1253,7 +1308,7 @@ export function createHumanoPresence(
       turn so she keeps facing the lens while her body turns.
     */
     const neckPitch = frame.driftPitch * 1.2 + frame.nodPitch * 0.5 - frame.headFollowPitch * 0.4;
-    poseBoth('neck', neckPitch, frame.driftYaw * 1.2 + frame.headFollowYaw * 0.4, 0);
+    poseBoth('neck', neckPitch, frame.driftYaw * 1.2 + frame.headFollowYaw * 0.4 + turnHead.value * TURN_TOWARD.shares.neck, 0);
     leanSum += frame.driftPitch * 1.2 + frame.nodPitch * 0.5;
     const headPitch =
       frame.driftPitch * 0.8 +
@@ -1263,7 +1318,7 @@ export function createHumanoPresence(
     poseBoth(
       'head',
       headPitch,
-      frame.driftYaw * 0.8 + frame.headFollowYaw * 0.6 - frame.torsoYaw * 0.5,
+      frame.driftYaw * 0.8 + frame.headFollowYaw * 0.6 - frame.torsoYaw * 0.5 + turnHead.value * TURN_TOWARD.shares.head,
       -shift * 0.3
     );
 

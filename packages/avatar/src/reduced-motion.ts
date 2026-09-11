@@ -134,6 +134,14 @@ export interface MotionPolicy {
    * header; `idleBodyScale` is what governs the travel between two stances.
    */
   stanceAsymmetryScale: 1;
+  /**
+   * The held facing of a turn-toward (`humano.ts` faceYawRad) — where she
+   * faces once the turn has settled. NEVER scaled: reduced motion pins the
+   * turn's TRAVEL (that is `idleBodyScale`'s side of it), but the settled
+   * direction is a pose, and pinning a pose removes no vestibular load.
+   * Pin the transition, not the pose — the stance rule, one joint up.
+   */
+  heldFacingScale: 1;
   /** Speech-driven mouth. NEVER scaled — see the header. */
   mouthScale: 1;
   /** Blink. NEVER disabled — a face that never blinks is unsettling, not calm. */
@@ -148,6 +156,7 @@ export const MOTION_POLICIES: Readonly<Record<MotionMode, MotionPolicy>> = Objec
     hairSwayScale: 1,
     cameraFloatScale: 1,
     stanceAsymmetryScale: 1,
+    heldFacingScale: 1,
     mouthScale: 1,
     blinkScale: 1,
   }),
@@ -163,6 +172,9 @@ export const MOTION_POLICIES: Readonly<Record<MotionMode, MotionPolicy>> = Objec
     // 1, deliberately, in the mode named "reduced". The knees stop travelling;
     // they do not level up. Pin the transition, not the pose.
     stanceAsymmetryScale: 1,
+    // Same rule as the stance asymmetry: the direction she has settled
+    // facing is a pose, not motion. The TRAVEL toward it rides idleBodyScale.
+    heldFacingScale: 1,
     mouthScale: 1,
     blinkScale: 1,
   }),
@@ -232,6 +244,14 @@ export const ANIMATED_SURFACES: readonly AnimatedSurface[] = Object.freeze([
   { id: 'foot-reposition', moves: 'the free heel unweighting as the weight arrives on the other leg', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion — plantarflexion rides the same load', stanceChannels: ['freeFootPlantarDeg'] },
   // NOT pinned, and the reason this field exists. See the header.
   { id: 'stance-asymmetry', moves: 'nothing, while it is held — the knees a degree either side of base, and the elbow and shoulder splits', governedBy: 'stanceAsymmetryScale', consumer: 'presence/humano.ts stance.kneeBaseSplitDeg and STANCE.asymmetry — outside the reducedMotion gate on purpose; pelvisRollDeg and shoulderCounterDeg are declared but not yet read', stanceChannels: ['kneeBaseDeg', 'kneeBaseSplitDeg', 'pelvisRollDeg', 'shoulderCounterDeg'] },
+  /*
+    TURN-TOWARD (§3.3, small-angle half). Two entries for the same reason the
+    stance has two: the travel and the held result take OPPOSITE answers
+    under reduced motion, and one entry would agree with whichever reading
+    the next author arrived with.
+  */
+  { id: 'turn-toward-travel', moves: 'head-led yaw through neck, chest and spine2 toward a commanded facing, under 15 degrees; hips and legs never', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts faceYawRad — reducedMotion pins the followers AT the target, so nothing travels' },
+  { id: 'turn-toward-held', moves: 'nothing, while it is held — the settled facing direction itself; a step-turn past 15 degrees is out of scope and the command clamps', governedBy: 'heldFacingScale', consumer: 'presence/humano.ts faceYawRad — the held direction survives reduced motion by construction' },
   { id: 'gaze-away', moves: 'eyes leave the lens for under a second, head follows', governedBy: 'gazeScale', consumer: 'presence/humano.ts reducedMotion' },
   { id: 'a2f-face', moves: 'brows, lids, cheeks and mouth from the audio', governedBy: 'mouthScale', consumer: 'presence/humano.ts face input — speech-driven, never scaled' },
   { id: 'viseme', moves: 'the mouth, from speech', governedBy: 'mouthScale', consumer: 'speech driver — never scaled' },
@@ -303,7 +323,7 @@ export function assertMotionPolicyComplete(
   // presence/stance.test.ts holds the same line from the consumer's side.
   for (const mode of ['full', 'reduced'] as const) {
     const held = MOTION_POLICIES[mode] as unknown as Record<string, unknown>;
-    for (const field of ['stanceAsymmetryScale', 'mouthScale', 'blinkScale']) {
+    for (const field of ['stanceAsymmetryScale', 'heldFacingScale', 'mouthScale', 'blinkScale']) {
       if (held[field] !== 1) {
         problems.push(
           `${mode}.${field} is ${String(held[field])} — a held pose is not motion, and is never scaled`
