@@ -48,6 +48,16 @@ export interface IdleInputs {
   partnerF0Falling: boolean;
   /** Seconds until scheduled TTS onset; Infinity when none scheduled. */
   timeUntilOnset: number;
+  /**
+   * The utterance's amplitude envelope, 0..1 — the energy of HER OWN synthetic
+   * voice, never the child's audio (life-layer: every motion has a cause, and
+   * this cause is hers). Continuous where `speechActive` is binary: the torso
+   * and shoulder ambient amplitudes ride it, never above their config
+   * ceilings. Omitted, the modulation is fully disengaged and every channel
+   * is bit-identical to the pre-energy engine (torsoEnergyCorrelation
+   * finding, 8e62c1b).
+   */
+  speechEnergy?: number;
 }
 
 export const IDLE_CHANNELS = [
@@ -198,6 +208,12 @@ export class IdleEngine {
   private turnT = Infinity;
   private turnHoldS = 0;
   private shoulderNoise: [ValueNoise, ValueNoise];
+  /** The energy octaves: [torso, shoulderL, shoulderR]. Own stream (below). */
+  private energyFastNoise: [ValueNoise, ValueNoise, ValueNoise];
+  /** Eased `speechEnergy` (config tauS) — steps in the envelope never pop. */
+  private energyEased = 0;
+  /** Eased 0/1 for "the input is wired" — so wiring it mid-run cannot pop either. */
+  private energyEngage = 0;
   private wristNoise: [ValueNoise, ValueNoise];
   // Two octaves per hand: [L-slow, L-fast, R-slow, R-fast].
   private handNoise: [ValueNoise, ValueNoise, ValueNoise, ValueNoise];
@@ -298,6 +314,20 @@ export class IdleEngine {
     this.shoulderNoise = [
       new ValueNoise(B.shoulder.hz, this.bodyRand),
       new ValueNoise(B.shoulder.hz, this.bodyRand),
+    ];
+    /*
+      torsoEnergyCorrelation (8e62c1b): the fast octaves the speech-energy
+      modulation mixes in. Their OWN derived stream, consuming nothing from
+      `rand` or `bodyRand`: constructing them on either existing stream would
+      shift every later draw and re-roll every golden — the same isolation
+      argument that created `bodyRand`. They are stepped every frame whether
+      or not `speechEnergy` is wired, so time advances identically either way.
+    */
+    const energyRand = mulberry32((seed ^ 0xe4e6) >>> 0);
+    this.energyFastNoise = [
+      new ValueNoise(B.speechEnergy.fastHz, energyRand),
+      new ValueNoise(B.speechEnergy.fastHz, energyRand),
+      new ValueNoise(B.speechEnergy.fastHz, energyRand),
     ];
     this.wristNoise = [
       new ValueNoise(B.wrist.hz, this.bodyRand),
@@ -545,6 +575,39 @@ export class IdleEngine {
     // ================= the body layer (ADR-113) =================
     const B = C.body;
 
+    /*
+      -- speech energy (torsoEnergyCorrelation, 8e62c1b) --
+      Two eased followers: the envelope itself (ê), and an engage 0/1 (g) for
+      whether the input is wired at all. They drive the torso/shoulder noise:
+
+        value = amp · ((1 − m) · scale · slow  +  m · fast)
+        scale = 1 − (1 − quietScale) · g · (1 − ê)      — quiet speech sits lower
+        m     = fastMix · g · ê²                        — the energy octave, loud only
+
+      BOUNDS PROOF, so the channel-envelope test holds without touching its
+      numbers: |slow| ≤ 1, |fast| ≤ 1, scale ∈ (0, 1], m ∈ [0, 1], so
+      |(1 − m)·scale·slow + m·fast| ≤ (1 − m) + m = 1 and the channel never
+      exceeds the amp the config already declares. ê² rather than ê so the
+      residual envelope in a short inter-phrase gap buys almost no fast
+      motion — the gaps are what make the correlation readable.
+
+      Unwired, g stays 0: scale is exactly 1, m exactly 0, and the fast
+      noises are stepped regardless — so the output is bit-identical to the
+      pre-energy engine, draw for draw.
+    */
+    const E = B.speechEnergy;
+    const kEnergy = 1 - Math.exp(-dt / E.tauS);
+    const energyWired = inputs.speechEnergy !== undefined;
+    this.energyEngage += ((energyWired ? 1 : 0) - this.energyEngage) * kEnergy;
+    this.energyEased +=
+      ((energyWired ? clamp(inputs.speechEnergy as number, 0, 1) : 0) - this.energyEased) * kEnergy;
+    const energyScale = 1 - (1 - E.quietScale) * this.energyEngage * (1 - this.energyEased);
+    const energyMix = E.fastMix * this.energyEngage * this.energyEased * this.energyEased;
+    const [energyFastTorso, energyFastShL, energyFastShR] = this.energyFastNoise;
+    const fastTorso = energyFastTorso.step(dt);
+    const fastShL = energyFastShL.step(dt);
+    const fastShR = energyFastShR.step(dt);
+
     // -- weight shift: a discrete transfer, eased, with follow-through --
     this.shiftIn -= dt;
     if (this.shiftIn <= 0 && !(this.shiftT < this.shiftMoveS)) {
@@ -591,12 +654,24 @@ export class IdleEngine {
       turn = this.turnAmp * env;
       this.turnT += dt;
     }
-    F.torsoYaw = this.torsoNoise.step(dt) * B.torsoTurn.driftDeg * DEG + turn;
+    /*
+      The DRIFT rides the energy; the held event turn does not. Scaling `turn`
+      would make a held posture wobble with the voice — two systems fighting
+      over one joint. The convex-mix bound above keeps the noise part inside
+      the driftDeg the envelope test asserts.
+    */
+    F.torsoYaw =
+      ((1 - energyMix) * energyScale * this.torsoNoise.step(dt) + energyMix * fastTorso) *
+        B.torsoTurn.driftDeg *
+        DEG +
+      turn;
 
     // -- shoulders, wrists, fingers: independent band-limited noise --
     const [shL, shR] = this.shoulderNoise;
-    F.shoulderL = shL.step(dt) * B.shoulder.maxDeg * DEG;
-    F.shoulderR = shR.step(dt) * B.shoulder.maxDeg * DEG;
+    F.shoulderL =
+      ((1 - energyMix) * energyScale * shL.step(dt) + energyMix * fastShL) * B.shoulder.maxDeg * DEG;
+    F.shoulderR =
+      ((1 - energyMix) * energyScale * shR.step(dt) + energyMix * fastShR) * B.shoulder.maxDeg * DEG;
     const [wrL, wrR] = this.wristNoise;
     F.wristL = wrL.step(dt) * B.wrist.maxDeg * DEG;
     F.wristR = wrR.step(dt) * B.wrist.maxDeg * DEG;

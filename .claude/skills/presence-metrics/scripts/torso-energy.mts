@@ -160,7 +160,10 @@ for (let i = 0; i < STEPS; i += 1) {
   env += (target - env) * (1 - Math.exp(-DT / tau));
   const mouth = Math.min(1, Math.max(0, viseme(DT) * env));
 
-  presence.step(DT, { speaking: inPhrase, mouth, reducedMotion: false });
+  // The scripted envelope IS the speech energy — the engine-side stand-in for
+  // the audio path's RMS. Handing it in is the input under test; the recorded
+  // series, the smoothing, r, and the null are untouched.
+  presence.step(DT, { speaking: inPhrase, mouth, speechEnergy: env, reducedMotion: false });
   root.updateMatrixWorld(true);
 
   let omega = 0;

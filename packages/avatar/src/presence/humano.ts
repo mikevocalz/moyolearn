@@ -419,6 +419,17 @@ export interface HumanoInput {
    * the child (doc 32 §4).
    */
   emotion?: Shape | null;
+  /**
+   * The utterance's amplitude envelope, 0..1 — the energy of HER OWN synthetic
+   * voice (life-layer: every motion has a cause, and this cause is hers;
+   * never derived from the child's audio). Continuous where `speaking` is
+   * binary: the idle engine scales its torso and shoulder ambient amplitudes
+   * with it, always inside their config ceilings, so a loud phrase carries
+   * more body than a murmur (torsoEnergyCorrelation finding, 8e62c1b).
+   * Omitted, the modulation is disengaged and the body is bit-identical to
+   * before this input existed.
+   */
+  speechEnergy?: number;
   /** The learner's turn just ended — fires for one frame. */
   partnerPauseEvent?: boolean;
   /** Seconds until the scheduled onset of her next sentence; omit for none. */
@@ -589,6 +600,9 @@ function idleInputsFor(phase: ConversationPhase, input: HumanoInput): IdleInputs
   })();
   return {
     ...base,
+    // Her own voice's envelope, straight through: the engine owns the easing
+    // and the ceiling, and undefined must STAY undefined (bit-exact disengage).
+    speechEnergy: input.speechEnergy,
     partnerPauseEvent: input.partnerPauseEvent === true,
     timeUntilOnset:
       input.timeUntilOnset !== undefined && Number.isFinite(input.timeUntilOnset)

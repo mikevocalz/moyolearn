@@ -189,6 +189,38 @@ export const idleConfig = {
       shoulderLagS: 0.15,
     },
     shoulder: { hz: 0.12, maxDeg: 1.5 },
+    /*
+      SPEECH ENERGY → TORSO/SHOULDER AMPLITUDE (the torsoEnergyCorrelation
+      finding, 8e62c1b: r = 0.028 against a ≥ 0.5 target, because speechEnv
+      was binary and no torso/shoulder channel was scaled by speech at all).
+
+      The cause is the utterance's own amplitude envelope — HER synthetic
+      voice, never the child's — handed in as `speechEnergy` 0..1. While it is
+      wired, the torsoYaw drift and the two shoulder noises become
+      amp · ((1−m)·scale·slow + m·fast): the slow noise is scaled by
+      quietScale..1 (quiet speech and inter-phrase gaps sit LOWER), and at
+      high energy a faster value-noise octave is mixed in with convex weight
+      m = fastMix·ê². The whole expression is bounded by 1 in noise units —
+      |(1−m)·scale·slow + m·fast| ≤ (1−m) + m — so the existing config
+      amplitude stays the ceiling and the channel-envelope test's bounds hold
+      unchanged: the extra rotational ENERGY comes from rate, not from
+      amplitude the bounds would have to grow for. Left unwired, every term
+      collapses to exactly the pre-energy arithmetic, bit for bit.
+    */
+    speechEnergy: {
+      /** Eased follower on the envelope, so an energy step never pops. */
+      tauS: 0.3,
+      /** Amplitude share left at zero energy while the input is wired. */
+      quietScale: 0.15,
+      /**
+       * The energy octave's rate — stress-group rate, where the speed the
+       * verifier measures actually lives (amplitude is capped, so rate is the
+       * only axis energy may spend). Jittered spans — it cannot loop.
+       */
+      fastHz: 4.0,
+      /** The fast octave's convex weight at FULL energy (m = fastMix·ê²). */
+      fastMix: 1.0,
+    },
     wrist: { hz: 0.18, maxDeg: 3 },
     /**
      * ONE RELAXATION SCALAR PER HAND, not ten independent finger channels.
