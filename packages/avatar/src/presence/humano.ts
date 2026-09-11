@@ -61,13 +61,14 @@
  * SOT: packages/avatar/src/idle/engine.ts · apps/web-vite/src/components/chapters/natalie-scene.tsx
  *      docs/pack/22-embodied-tutor-avatar-spec.md §7 · docs/decisions/adr-111-native-3d-runtime.md
  *      docs/decisions/adr-113-body-motion-layer.md · ./rig-axes.test.ts
- * SOT-KEYWORDS: humano presence natalie idle morph bones gaze breath beat native web shared def spine weight shift fingers firewall a2f face emotion
+ * SOT-KEYWORDS: humano presence natalie idle morph bones gaze breath beat native web shared def spine weight shift fingers firewall a2f face emotion clip base blend layer one cross fade
  */
 import * as THREE from 'three';
 import { idleConfig } from '../idle/config.ts';
 import { HAND_CHANNELS, IDLE_CHANNELS, IdleEngine, mulberry32, type IdleFrame, type IdleInputs } from '../idle/engine.ts';
 import { DEFAULT_GESTURE_LIMITS } from '../safety/gesture-gate.ts';
 import type { Shape } from '../speech/track.ts';
+import type { RetargetedClip } from './clip-player.ts';
 
 /**
  * Rigify names as authored, DEFORMING bones only (see the header). `GLTFLoader`
@@ -413,6 +414,19 @@ export interface HumanoPresence {
    * it lives in `tutor-audio.ts`, and it needs a device.
    */
   readonly speechEnvelope: number;
+  /**
+   * Layer one, swappable at runtime: a retargeted clip becomes the BASE the
+   * per-frame restore returns to, for the joints the clip covers (twins
+   * included) — life, stance and beat deltas compose on top exactly as they do
+   * over the static rest. Joints the clip does not cover keep the static rest.
+   * Entering and leaving eases over `CLIP_FADE_S` with smoothstep — never a
+   * snap. `setBaseClip(null)` begins the fade back to the static rest;
+   * `timeS` is the clip time the base starts sampling from, advanced by the
+   * presence's own clock each `step`.
+   */
+  setBaseClip(clip: RetargetedClip | null, timeS?: number): void;
+  /** The base blend this frame: 0 = static rest, 1 = the clip. Smoothstepped. */
+  readonly clipBlend: number;
 }
 
 interface BoneRest {
@@ -425,6 +439,28 @@ interface BoneRest {
   worldPosition: THREE.Vector3;
   parentWorldQuaternionInverse: THREE.Quaternion;
 }
+
+/**
+ * The per-bone base the restore step returns to while a clip drives. `q`/`p`
+ * are OWNED, preallocated at `setBaseClip` and rewritten in place every frame
+ * — the compositor's no-per-frame-allocation rule.
+ */
+interface ClipBaseOverride {
+  q: THREE.Quaternion;
+  p: THREE.Vector3;
+  hasQ: boolean;
+  hasP: boolean;
+}
+
+interface ClipTrack<F> {
+  bone: THREE.Bone;
+  frames: readonly F[];
+  o: ClipBaseOverride;
+  rest: BoneRest;
+}
+
+/** Entering or leaving a clip base eases over this long. Smoothstep, no snap. */
+export const CLIP_FADE_S = 0.4;
 
 interface BeatState {
   cancelled: boolean;
@@ -700,15 +736,52 @@ export function createHumanoPresence(
   const eyeOther = new THREE.Vector3();
   const toCamera = new THREE.Vector3();
 
-  /** Restores one bone to rest and returns the rest it was restored to. */
+  /*
+    ── LAYER ONE: the clip base (pose-compositor SKILL) ──────────────────────
+    The presence stays THE writer. A clip never writes a bone itself: it is
+    sampled into `baseOverride`, and the restore step below restores to THAT
+    pose instead of the static rest for the joints the clip covers — twins
+    included, because the retargeted data carries them (clip-player.ts header).
+    Everything above layer one is still an additive delta, so life, stance and
+    beats compose over a moving base exactly as they composed over rest.
+    The blend factor cross-fades base = slerp(rest, clip, w) on entry and exit.
+  */
+  const baseOverride = new Map<THREE.Bone, ClipBaseOverride>();
+  let clipState: {
+    fps: number;
+    frames: number;
+    rot: ClipTrack<readonly [number, number, number, number]>[];
+    pos: ClipTrack<readonly [number, number, number]>[];
+    root: ClipTrack<readonly [number, number, number]> | null;
+  } | null = null;
+  let clipTime = 0;
+  let clipFade = 0;
+  let clipFadeTarget = 0;
+  const clipQa = new THREE.Quaternion();
+  const clipQb = new THREE.Quaternion();
+
+  /**
+   * Restores one bone to the BASE — the clip's pose while one drives, the
+   * static rest otherwise — and returns the rest it was measured against.
+   */
   const restore = (bone: THREE.Bone | null): BoneRest | null => {
     if (!bone) return null;
     const rest = rests.get(bone);
     if (!rest) return null;
+    const o = clipState ? baseOverride.get(bone) : undefined;
+    bone.position.copy(o?.hasP ? o.p : rest.position);
+    if (o?.hasQ) bone.quaternion.copy(o.q);
+    else bone.rotation.copy(rest.rotation);
+    bone.scale.copy(rest.scale);
+    return rest;
+  };
+  /** The unconditional rest restore — the freeze state `rest()` holds. */
+  const restoreToRest = (bone: THREE.Bone): void => {
+    const rest = rests.get(bone);
+    if (!rest) return;
     bone.position.copy(rest.position);
     bone.rotation.copy(rest.rotation);
     bone.scale.copy(rest.scale);
-    return rest;
   };
 
   const tmpEuler = new THREE.Euler();
@@ -725,7 +798,9 @@ export function createHumanoPresence(
     const r = restore(bone);
     if (!r || !bone) return null;
     tmpQuat.setFromEuler(tmpEuler.set(dx, dy, dz, 'XYZ'));
-    bone.quaternion.copy(r.quaternion).multiply(tmpQuat);
+    const o = clipState ? baseOverride.get(bone) : undefined;
+    // Restore-then-delta, with the CLIP as what is restored to when one drives.
+    bone.quaternion.copy(o?.hasQ ? o.q : r.quaternion).multiply(tmpQuat);
     return r;
   };
   /**
@@ -742,7 +817,8 @@ export function createHumanoPresence(
     if (!r || !bone) return;
     if (tx !== 0 || ty !== 0) {
       tmpVec.set(tx, ty, 0).applyQuaternion(r.parentWorldQuaternionInverse);
-      bone.position.copy(r.position).add(tmpVec);
+      const ob = clipState ? baseOverride.get(bone) : undefined;
+      bone.position.copy(ob?.hasP ? ob.p : r.position).add(tmpVec);
     }
     const twin = twins[key];
     if (!twin) return;
@@ -758,8 +834,9 @@ export function createHumanoPresence(
     // Compose onto whatever this frame already put on the twin (torso + spine1
     // share one), never onto last frame's — twins are restored with the rest.
     if (!touchedTwins.has(twin)) {
-      twin.quaternion.copy(t.quaternion);
-      twin.position.copy(t.position);
+      const ot = clipState ? baseOverride.get(twin) : undefined;
+      twin.quaternion.copy(ot?.hasQ ? ot.q : t.quaternion);
+      twin.position.copy(ot?.hasP ? ot.p : t.position);
       touchedTwins.add(twin);
     }
     twin.quaternion.premultiply(local);
@@ -780,12 +857,75 @@ export function createHumanoPresence(
   };
   const touchedTwins = new Set<THREE.Bone>();
 
+  /**
+   * Register (or begin leaving) the clip base. Allocation happens HERE, at the
+   * transition — the per-frame path only rewrites the preallocated overrides.
+   * Joints the scene cannot resolve are skipped the same way the presence's
+   * own bone map skips them: silently at runtime, loudly in the clip tests.
+   */
+  const setBaseClip = (clip: RetargetedClip | null, timeS = 0): void => {
+    if (!clip) {
+      clipFadeTarget = 0;
+      return;
+    }
+    baseOverride.clear();
+    const overrideFor = (bone: THREE.Bone): ClipBaseOverride => {
+      let o = baseOverride.get(bone);
+      if (!o) {
+        o = { q: new THREE.Quaternion(), p: new THREE.Vector3(), hasQ: false, hasP: false };
+        baseOverride.set(bone, o);
+      }
+      return o;
+    };
+    const rot: ClipTrack<readonly [number, number, number, number]>[] = [];
+    for (const [name, frames] of Object.entries(clip.joints)) {
+      const bone = resolveBone(scene, name);
+      if (!bone) continue;
+      capture(bone);
+      const boneRest = rests.get(bone);
+      if (!boneRest) continue;
+      const o = overrideFor(bone);
+      o.hasQ = true;
+      o.q.copy(boneRest.quaternion);
+      rot.push({ bone, frames, o, rest: boneRest });
+    }
+    const pos: ClipTrack<readonly [number, number, number]>[] = [];
+    for (const [name, frames] of Object.entries(clip.translations)) {
+      const bone = resolveBone(scene, name);
+      if (!bone) continue;
+      capture(bone);
+      const boneRest = rests.get(bone);
+      if (!boneRest) continue;
+      const o = overrideFor(bone);
+      o.hasP = true;
+      o.p.copy(boneRest.position);
+      pos.push({ bone, frames, o, rest: boneRest });
+    }
+    // The root track is a DELTA from rest (clip-player.ts), unlike the
+    // absolute translation tracks above — blended it stays rest + Δ·w.
+    const rootBone = resolveBone(scene, HUMANO_BONES.torso);
+    let root: ClipTrack<readonly [number, number, number]> | null = null;
+    if (rootBone) {
+      capture(rootBone);
+      const boneRest = rests.get(rootBone);
+      if (boneRest) {
+        const o = overrideFor(rootBone);
+        o.hasP = true;
+        o.p.copy(boneRest.position);
+        root = { bone: rootBone, frames: clip.root.translation, o, rest: boneRest };
+      }
+    }
+    clipState = { fps: clip.fps, frames: clip.frames, rot, pos, root };
+    clipTime = timeS;
+    clipFadeTarget = 1;
+  };
+
   // Lead and lag on the load signal — see `LoadFollower`.
   const loadLead = new LoadFollower();
   const loadLag = new LoadFollower();
 
   const rest = (): void => {
-    for (const bone of rests.keys()) restore(bone);
+    for (const bone of rests.keys()) restoreToRest(bone);
     for (const mesh of meshes) mesh.morphTargetInfluences?.fill(0);
     for (const key of Object.keys(lip) as (keyof LipShape)[]) lip[key] = 0;
     speechEnv = 0;
@@ -923,6 +1063,73 @@ export function createHumanoPresence(
 
     // ================================ the body ================================
     /*
+      LAYER ONE THIS FRAME. Advance the clip clock, ease the blend, sample the
+      clip into the preallocated overrides as base = slerp(rest, clip, w), and
+      write that base onto EVERY covered bone — including ones no layer above
+      modulates, which would otherwise hold last frame's pose. The pose() calls
+      below then restore to this base and add their deltas, so entering and
+      leaving a clip moves every bone along the smoothstep, never in a snap.
+    */
+    if (clipState) {
+      clipFade = clamp(clipFade + (clipFadeTarget > 0 ? rawDelta : -rawDelta) / CLIP_FADE_S, 0, 1);
+      clipTime += rawDelta;
+      if (clipFade === 0 && clipFadeTarget === 0) {
+        // Faded fully back to rest: drop the clip. The overrides all equal
+        // rest at w = 0, so nothing jumps when the map empties.
+        clipState = null;
+        baseOverride.clear();
+      }
+    }
+    const clipW = clipState ? smoothstep(clipFade) : 0;
+    if (clipState) {
+      const clipFrame =
+        (((clipTime * clipState.fps) % clipState.frames) + clipState.frames) % clipState.frames;
+      const i0 = Math.floor(clipFrame);
+      const i1 = (i0 + 1) % clipState.frames;
+      const ft = clipFrame - i0;
+      for (const track of clipState.rot) {
+        clipQa.fromArray(track.frames[i0]!);
+        clipQb.fromArray(track.frames[i1]!);
+        track.o.q.copy(track.rest.quaternion).slerp(clipQa.slerp(clipQb, ft), clipW);
+      }
+      for (const track of clipState.pos) {
+        const p0 = track.frames[i0]!;
+        const p1 = track.frames[i1]!;
+        const r = track.rest.position;
+        track.o.p.set(
+          r.x + (p0[0] + (p1[0] - p0[0]) * ft - r.x) * clipW,
+          r.y + (p0[1] + (p1[1] - p0[1]) * ft - r.y) * clipW,
+          r.z + (p0[2] + (p1[2] - p0[2]) * ft - r.z) * clipW,
+        );
+      }
+      if (clipState.root) {
+        const p0 = clipState.root.frames[i0]!;
+        const p1 = clipState.root.frames[i1]!;
+        const r = clipState.root.rest.position;
+        clipState.root.o.p.set(
+          r.x + (p0[0] + (p1[0] - p0[0]) * ft) * clipW,
+          r.y + (p0[1] + (p1[1] - p0[1]) * ft) * clipW,
+          r.z + (p0[2] + (p1[2] - p0[2]) * ft) * clipW,
+        );
+      }
+      for (const [clipBone, o] of baseOverride) {
+        if (o.hasQ) clipBone.quaternion.copy(o.q);
+        if (o.hasP) clipBone.position.copy(o.p);
+      }
+    }
+    /*
+      THE STANCE YIELDS TO THE CLIP. The ownership table's stance layer
+      modulates the same knees and hips a wei clip drives through the base, and
+      double-driving one joint from two systems is the artifact list's first
+      entry — the knee flexing against the clip's own weight shift. So while a
+      clip owns the base, the stance/load writes (weight-shift translation,
+      knee split, base knee flexion, free-heel unweight) are scaled by
+      1 − clipW: full at rest, zero at full clip, eased through the
+      cross-fade. With no clip the scale is exactly 1 and the maths below is
+      bit-identical to the clipless writer.
+    */
+    const stanceScale = 1 - clipW;
+    /*
       WEIGHT. The torso root translates between the legs (the engine's discrete
       shift plus the continuous balance sway) and the spine leans back over the
       planted foot so the head stays near centre; the shoulders then re-level.
@@ -930,7 +1137,7 @@ export function createHumanoPresence(
       and the hip blends across the split weights — which is what a real shift
       looks like: pelvis over feet, not feet sliding under a rigid body.
     */
-    const shift = rm ? 0 : frame.weightShift + frame.swayX;
+    const shift = rm ? 0 : frame.weightShift * stanceScale + frame.swayX;
     /*
       THE LEGS ANSWER THE PELVIS.
 
@@ -951,7 +1158,7 @@ export function createHumanoPresence(
       overlap, which is the same pair of principles the beat layer already uses.
     */
     const stance = idleConfig.body.stance;
-    const load = rm ? 0 : clamp(frame.weightShift / idleConfig.body.weightShift.amplitudeM, -1, 1);
+    const load = rm ? 0 : clamp((frame.weightShift * stanceScale) / idleConfig.body.weightShift.amplitudeM, -1, 1);
     loadLead.step(load, rawDelta, stance.kneeLeadS);
     loadLag.step(load, rawDelta, stance.shoulderLagS);
     const kneeLoad = loadLead.value;
@@ -984,7 +1191,8 @@ export function createHumanoPresence(
       const sideSign = side === 'L' ? -1 : 1;
       const unweight = Math.max(0, (side === 'L' ? -1 : 1) * kneeLoad) * stance.freeFootPlantarDeg;
       const flexDeg =
-        stance.kneeBaseDeg + sideSign * stance.kneeBaseSplitDeg + sideSign * kneeLoad * stance.kneeSplitDeg + unweight;
+        (stance.kneeBaseDeg + sideSign * stance.kneeBaseSplitDeg + sideSign * kneeLoad * stance.kneeSplitDeg + unweight) *
+        stanceScale;
       const phi = flexDeg * DEG;
       const chain = legChain[side];
       // Rotation about +x: y' = y cosθ − z sinθ, z' = y sinθ + z cosθ.
@@ -1170,6 +1378,10 @@ export function createHumanoPresence(
     firewall,
     get speechEnvelope() {
       return speechEnv;
+    },
+    setBaseClip,
+    get clipBlend() {
+      return clipState ? smoothstep(clipFade) : 0;
     },
   };
 }

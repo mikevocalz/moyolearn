@@ -4,10 +4,12 @@
  * EXCLUSIVE MEANS EXCLUSIVE. The pose-compositor rule is one writer per
  * joint, and `HumanoPresence` restores-and-writes every frame; a player
  * running beside it would be the whichever-runs-second-wins bug the skill
- * names. Until the blend layer exists, a stage runs the presence OR a clip,
- * never both — the ownership table makes a violation a build error, and this
- * module refuses to be constructed over bones a live presence owns by taking
- * the scene, not the presence.
+ * names. A stage runs the presence OR a standalone player, never both — and
+ * when a clip should live UNDER the presence, the clip goes in as DATA via
+ * `HumanoPresence.setBaseClip`, where the presence's own restore step samples
+ * it as the base. One writer either way; this module refuses to be
+ * constructed over bones a live presence owns by taking the scene, not the
+ * presence.
  *
  * The clip format is the retargeter's: ABSOLUTE local quaternions per joint
  * per frame, plus translation tracks for the control twins whose pivots ride
