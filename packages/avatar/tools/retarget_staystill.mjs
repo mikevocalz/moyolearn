@@ -73,7 +73,7 @@
     {
       fps, frames, source,
       joints:       { name: [[x,y,z,w] per frame] }   // ABSOLUTE local quats
-      root:         { translation: [[x,y,z] per frame] } // DEF-spine local, m
+      root:         { translation: [[x,y,z] per frame] } // DEF-spine local DELTA from rest, m
       translations: { name: [[x,y,z] per frame] }     // twins' local pos, m
     }
   A player sets node.quaternion / node.position from these directly — no
@@ -484,7 +484,11 @@ for (const row of bvh.frames) {
       frames.push(lq.map(round));
       if (desiredPos.has(idx)) {
         const name = nodes[idx].name;
-        if (idx === spineChain[0]) rootTrans.push(lp.map(round));
+        // Root track is a DELTA from rest local: the player adds it to the
+        // bone's rest position (rootRest + p), unlike the twin tracks which
+        // it sets absolutely. Emitting the absolute local here shifted the
+        // whole DEF chain up by the hip's rest height on playback.
+        if (idx === spineChain[0]) rootTrans.push(vsub(lp, localPos[idx]).map(round));
         else (outTrans[name] ??= []).push(lp.map(round));
       }
     }

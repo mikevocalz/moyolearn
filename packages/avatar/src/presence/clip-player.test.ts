@@ -57,17 +57,9 @@ describe('clip player on the shipped rig', { skip: !existsSync(CLIP_PATH) && 'ru
     assert.deepEqual(player.unresolved, []);
   });
 
-  /*
-    KNOWN RED, and the redness is the finding. The retargeter verified its
-    twin emission by FK over its own joint set and reported 0.003 mm; on the
-    REAL hierarchy the eye drifts 913 mm, because the twins are NESTED —
-    ORG-spine.004 < spine_fk.003 < MCH-spine.003 < spine_fk.002 <
-    MCH-spine.002 — with unemitted intermediates between them, so absolute
-    local quaternions must be composed down that chain top-down, parent's
-    resolved world first. tools/retarget_staystill.mjs owns the fix; this
-    test is the gate that caught it and stays exactly as strict.
-  */
-  it('keeps the eyes in the head and the arms on the chest through the whole take', { todo: 'retargeter twin emission: compose nested twins down the real chain' }, () => {
+  // Green since the retargeter composes each emitted local top-down against
+  // its real glTF parent chain and emits the root track as a delta from rest.
+  it('keeps the eyes in the head and the arms on the chest through the whole take', () => {
     const { root, byName } = buildRealScene();
     const player = createClipPlayer(root, clip!);
     const head = byName.get('DEF-spine.006')!;
