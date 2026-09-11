@@ -4,11 +4,13 @@
 
     node tools/retarget_staystill.mjs [--all-curated] [zipPath] [gltfPath]
 
-  Default (no flag): exactly the original single-clip behaviour — pick the
+  Default (no flag): the original single-clip behaviour — pick the
   `lafan/actions/wei_lr_*` take with the largest horizontal hip travel
   (printed), retarget with frame 0 as the source reference, write
-  /tmp/staystill_wei_lr.clip.json. Output is byte-identical to the
-  pre-curation version of this tool.
+  /tmp/staystill_wei_lr.clip.json. Take selection and reference-frame policy
+  are unchanged from the original tool; the output now also carries the
+  foot-contact lock and its `contacts` windows (below), so it is no longer
+  byte-identical to the pre-curation version.
 
   --all-curated: retarget a curated set of ten takes, each to
   /tmp/staystill_<take>.clip.json:
@@ -21,9 +23,45 @@
   Curated takes may start mid-motion, so the source reference frame is not
   frame 0: it is the frame of lowest hip speed inside the calmest 1 s window
   (printed per clip). Per-clip SOURCE ankle horizontal travel is printed so
-  foot skating risk is visible — foot IK is NOT solved by this tool.
-  Verification numbers (knee flexion range, hip travel, quaternion norms)
-  print for every clip.
+  foot skating risk stays visible even with the contact lock below.
+  Verification numbers (knee flexion range, hip travel, quaternion norms,
+  contact coverage) print for every clip.
+
+  ── FOOT-CONTACT LOCKING (planted phases must not skate) ────────────────────
+  Source foot REPOSITIONS are real motion and survive untouched; skate is
+  the movement this retarget ADDS (segment proportions differ, so exact
+  world rotations land the toe elsewhere) plus drift during phases where the
+  SOURCE foot was stationary. So:
+
+  DETECT in the SOURCE: per foot, horizontal ankle speed (5-frame centered
+  mean) below 3 cm/s sustained ≥ 0.25 s is a contact window. The threshold
+  is calibrated on the ten curated takes, whose speed distribution is
+  bimodal: planted-phase wobble sits at p95 ≤ 4 cm/s on the idles and the
+  wei planted phases, repositioning swings at ≥ 15 cm/s — 3 cm/s sits in
+  the valley, and at that speed a "stationary" foot moves under 7.5 mm over
+  the 0.25 s minimum window.
+
+  PIN on the TARGET: during a window, the TOE's world horizontal position
+  is held at its window-entry position by the three-link Newton proven in
+  src/presence/humano.ts (planted-feet block), adapted to the clip's
+  per-frame world FK: with the knee given, hip→ankle is one rigid link
+  (Rigify's twist segments ride inside it) measured from the frame's own
+  world positions; the two unknowns are chain rotations about the two
+  horizontal axes (the humano error plane's (thigh, ankle) pair is
+  singular at full knee extension — see the solve comment for the
+  measured blow-up); the ankle takes the exact counter-rotation so the
+  foot's world orientation is preserved and the correction cannot arc the
+  toe; the knee's LOCAL rotation is untouched (so the knee-range gate is
+  unaffected); same Newton discipline — rotated-vector derivatives, exact
+  residual, 3 iterations. The toe's vertical rides the rigid leg length
+  (second-order small, micrometres at these error magnitudes).
+
+  EASE at the edges: the lock weight smoothsteps 0→1 over 0.15 s inside
+  each window's start and 1→0 over its last 0.15 s, so entry/exit cannot
+  pop. Only the fully-locked interior frames are emitted as `contacts` —
+  those are the frames the clip GUARANTEES planted (clip-player.test.ts
+  gates them at < 5 mm horizontal drift); windows shorter than twice the
+  ramp still get a partial, pop-free correction but emit nothing.
 
   ── MAPPING TABLE (LaFAN joint → Rigify DEF bone → control twin) ────────────
   World-delta transfer: for every frame the SOURCE joint's world rotation
@@ -92,6 +130,7 @@
       joints:       { name: [[x,y,z,w] per frame] }   // ABSOLUTE local quats
       root:         { translation: [[x,y,z] per frame] } // DEF-spine local DELTA from rest, m
       translations: { name: [[x,y,z] per frame] }     // twins' local pos, m
+      contacts:     { L: [[startFrame, endFrame], …], R: … } // fully-locked frames, inclusive
     }
   A player sets node.quaternion / node.position from these directly — no
   deltas to compose, no rest capture needed at play time.
@@ -386,6 +425,55 @@ function findRestFrame(bvh) {
   return { frame, windowStart: bestStart, meanSpeedCmPerS: bestMean / bvh.frameTime };
 }
 
+/* ── foot-contact detection (SOURCE space — see header) ──────────────────── */
+const CONTACT_SPEED_CMS = 3; // calibrated on the ten curated takes (header)
+const CONTACT_MIN_S = 0.25;
+const LOCK_EASE_S = 0.15;
+
+/** Windows (inclusive frame ranges) where one source ankle's horizontal speed
+ *  stays below CONTACT_SPEED_CMS for at least CONTACT_MIN_S. */
+function detectContactWindows(worlds, ankleIdx, frameTime) {
+  const n = worlds.length;
+  const raw = new Float64Array(n);
+  for (let f = 1; f < n; f++) {
+    const a = worlds[f - 1].pos[ankleIdx];
+    const b = worlds[f].pos[ankleIdx];
+    raw[f] = Math.hypot(b[0] - a[0], b[2] - a[2]) / frameTime; // cm/s
+  }
+  if (n > 1) raw[0] = raw[1];
+  const minFrames = Math.max(1, Math.round(CONTACT_MIN_S / frameTime));
+  const windows = [];
+  let runStart = -1;
+  for (let f = 0; f <= n; f++) {
+    let below = false;
+    if (f < n) {
+      // 5-frame centered mean: a single noisy sample must not split a window.
+      let acc = 0;
+      let count = 0;
+      for (let k = -2; k <= 2; k++) {
+        const g = f + k;
+        if (g >= 0 && g < n) {
+          acc += raw[g];
+          count++;
+        }
+      }
+      below = acc / count < CONTACT_SPEED_CMS;
+    }
+    if (below) {
+      if (runStart < 0) runStart = f;
+    } else if (runStart >= 0) {
+      if (f - runStart >= minFrames) windows.push({ start: runStart, end: f - 1, pin: null });
+      runStart = -1;
+    }
+  }
+  return windows;
+}
+
+const smoothstep = (x) => {
+  const c = Math.min(1, Math.max(0, x));
+  return c * c * (3 - 2 * c);
+};
+
 /* ── retarget one take ───────────────────────────────────────────────────── */
 function retargetClip({ name, text, srcTravel, out, detectRest }) {
   const bvh = parseBvh(text);
@@ -504,8 +592,90 @@ function retargetClip({ name, text, srcTravel, out, detectRest }) {
 
   const hipsWorldOut = []; // target DEF-spine world positions, for the travel print
   const ankleSrc = { L: [], R: [] }; // SOURCE ankle world positions (skate-risk report)
-  for (const row of bvh.frames) {
-    const fw = bvhWorld(bvh, row);
+
+  // Source world FK for every frame, up front: contact detection needs the
+  // ankle trajectory before the per-frame solve starts consuming it.
+  const worlds = bvh.frames.map((row) => bvhWorld(bvh, row));
+  const contactWindows = {
+    L: detectContactWindows(worlds, S('LeftFoot'), bvh.frameTime),
+    R: detectContactWindows(worlds, S('RightFoot'), bvh.frameTime),
+  };
+  const RAMP = Math.max(1, Math.round(LOCK_EASE_S / bvh.frameTime));
+  const lockWeight = (win, f) =>
+    f < win.start || f > win.end ? 0 : smoothstep((f - win.start) / RAMP) * smoothstep((win.end - f) / RAMP);
+  const legIdx = {
+    L: { thigh: N('DEF-thigh.L'), shin: N('DEF-shin.L'), foot: N('DEF-foot.L'), toe: N('DEF-toe.L') },
+    R: { thigh: N('DEF-thigh.R'), shin: N('DEF-shin.R'), foot: N('DEF-foot.R'), toe: N('DEF-toe.R') },
+  };
+
+  /*
+    The humano.ts planted-feet Newton, on the clip's per-frame world FK.
+
+    Two adaptations, both forced by measurement:
+
+    LINK VECTORS from the pass-1 world POSITIONS, not from local offsets:
+    Rigify's twist segments (DEF-thigh.*.001, DEF-shin.*.001) sit inside
+    the chain as rest-local children, so per-bone local offsets are not
+    the hip→toe geometry (measured: 684 mm of "drift" from a solve whose
+    maths was internally exact — the humano header's own lesson). With
+    the knee given, everything from hip to ankle is one rigid lump.
+
+    UNKNOWNS on the chain's two horizontal axes, not (thigh, ankle) in the
+    error plane. The literal transliteration — humano's (a, t) planar pair
+    with the plane spanned by the toe error and world up — is SINGULAR at
+    full knee extension: in that plane both link derivatives go horizontal
+    and parallel (humano is conditioned by the foot's forward component,
+    which the error plane of a lateral drift does not contain), and Newton
+    blew up to a = −7374° on idle_19 frame 1188. So the two unknowns are
+    chain rotations about u (horizontal error direction) and ŷ × u, the
+    constraints are the toe's two horizontal coordinates, and the ankle
+    takes the exact counter-rotation — the foot's world orientation is
+    preserved, so the ankle correction cannot arc the toe (humano's toe
+    lesson, applied by making the toe itself the constraint). Same Newton
+    discipline: rotated-vector derivatives (∂(Qv)/∂θ = axis × Qv), exact
+    residual, 3 iterations. The toe's vertical rides the rigid leg length
+    — second-order in the solved angles (θ ≈ error/leg ≈ 0.01 rad, so
+    micrometres) — which is also the direction a straight leg cannot
+    control, the same geometry that made the planar pair singular.
+
+    The knee's LOCAL rotation is untouched (thigh and shin premultiply by
+    the same delta), so the knee-range gate is unaffected.
+  */
+  const lockToe = (side, weight, pin, fk, desiredRot) => {
+    const leg = legIdx[side];
+    const hip = fk.curWPos[leg.thigh];
+    const toe = fk.curWPos[leg.toe];
+    const goal = [toe[0] + (pin[0] - toe[0]) * weight, toe[2] + (pin[2] - toe[2]) * weight];
+    const errH = Math.hypot(goal[0] - toe[0], goal[1] - toe[2]);
+    if (errH < 1e-7) return;
+    const u = [(goal[0] - toe[0]) / errH, 0, (goal[1] - toe[2]) / errH];
+    const w1 = [u[2], 0, -u[0]]; // ŷ × u
+    const vA = vsub(fk.curWPos[leg.foot], hip); // hip→ankle rigid lump
+    const v3 = vsub(toe, fk.curWPos[leg.foot]); // ankle→toe, orientation preserved
+    const cross = (a, b) => [a[1] * b[2] - a[2] * b[1], a[2] * b[0] - a[0] * b[2], a[0] * b[1] - a[1] * b[0]];
+    let q = QID;
+    for (let iteration = 0; iteration < 3; iteration += 1) {
+      const r = qrot(q, vA);
+      const fx = hip[0] + r[0] + v3[0] - goal[0];
+      const fz = hip[2] + r[2] + v3[2] - goal[1];
+      const d1 = cross(u, r);
+      const d2 = cross(w1, r);
+      const det = d1[0] * d2[2] - d2[0] * d1[2];
+      if (Math.abs(det) < 1e-9) break;
+      const da1 = -(fx * d2[2] - fz * d2[0]) / det;
+      const da2 = -(d1[0] * fz - d1[2] * fx) / det;
+      q = qmul(qaxis(u, (da1 * 180) / Math.PI), qmul(qaxis(w1, (da2 * 180) / Math.PI), q));
+    }
+    desiredRot.set(leg.thigh, qnorm(qmul(q, fk.curWRot[leg.thigh])));
+    desiredRot.set(leg.shin, qnorm(qmul(q, fk.curWRot[leg.shin])));
+    // DEF-foot is intentionally NOT premultiplied: keeping its world
+    // orientation is the ankle's counter-rotation, resolved by the FK local
+    // recompute against the rotated shin.
+  };
+
+  const contactPtr = { L: 0, R: 0 };
+  for (let fIdx = 0; fIdx < bvh.frames.length; fIdx += 1) {
+    const fw = worlds[fIdx];
     ankleSrc.L.push(fw.pos[S('LeftFoot')]);
     ankleSrc.R.push(fw.pos[S('RightFoot')]);
 
@@ -534,35 +704,66 @@ function retargetClip({ name, text, srcTravel, out, detectRest }) {
     }
 
     // full-tree FK: mapped nodes take their desired world, everything else rest
-    const curWRot = new Array(nodes.length);
-    const curWPos = new Array(nodes.length);
-    for (const idx of order) {
-      const p = nParent[idx];
-      const pRot = p === -1 ? QID : curWRot[p];
-      const pPos = p === -1 ? [0, 0, 0] : curWPos[p];
-      let lq = localRot[idx];
-      let lp = localPos[idx];
-      if (desiredRot.has(idx)) {
-        lq = qnorm(qmul(qconj(pRot), desiredRot.get(idx)));
-        if (desiredPos.has(idx)) lp = qrot(qconj(pRot), vsub(desiredPos.get(idx), pPos));
-        const frames = emitFor(idx);
-        const prev = frames[frames.length - 1];
-        if (prev && prev[0] * lq[0] + prev[1] * lq[1] + prev[2] * lq[2] + prev[3] * lq[3] < 0)
-          lq = [-lq[0], -lq[1], -lq[2], -lq[3]];
-        maxNormDev = Math.max(maxNormDev, Math.abs(1 - Math.hypot(...lq)));
-        frames.push(lq.map(round));
-        if (desiredPos.has(idx)) {
-          const name = nodes[idx].name;
-          // Root track is a DELTA from rest local: the player adds it to the
-          // bone's rest position (rootRest + p), unlike the twin tracks which
-          // it sets absolutely. Emitting the absolute local here shifted the
-          // whole DEF chain up by the hip's rest height on playback.
-          if (idx === spineChain[0]) rootTrans.push(vsub(lp, localPos[idx]).map(round));
-          else (outTrans[name] ??= []).push(lp.map(round));
+    const runFk = (emit) => {
+      const curWRot = new Array(nodes.length);
+      const curWPos = new Array(nodes.length);
+      for (const idx of order) {
+        const p = nParent[idx];
+        const pRot = p === -1 ? QID : curWRot[p];
+        const pPos = p === -1 ? [0, 0, 0] : curWPos[p];
+        let lq = localRot[idx];
+        let lp = localPos[idx];
+        if (desiredRot.has(idx)) {
+          lq = qnorm(qmul(qconj(pRot), desiredRot.get(idx)));
+          if (desiredPos.has(idx)) lp = qrot(qconj(pRot), vsub(desiredPos.get(idx), pPos));
+          if (emit) {
+            const frames = emitFor(idx);
+            const prev = frames[frames.length - 1];
+            if (prev && prev[0] * lq[0] + prev[1] * lq[1] + prev[2] * lq[2] + prev[3] * lq[3] < 0)
+              lq = [-lq[0], -lq[1], -lq[2], -lq[3]];
+            maxNormDev = Math.max(maxNormDev, Math.abs(1 - Math.hypot(...lq)));
+            frames.push(lq.map(round));
+            if (desiredPos.has(idx)) {
+              const name = nodes[idx].name;
+              // Root track is a DELTA from rest local: the player adds it to the
+              // bone's rest position (rootRest + p), unlike the twin tracks which
+              // it sets absolutely. Emitting the absolute local here shifted the
+              // whole DEF chain up by the hip's rest height on playback.
+              if (idx === spineChain[0]) rootTrans.push(vsub(lp, localPos[idx]).map(round));
+              else (outTrans[name] ??= []).push(lp.map(round));
+            }
+          }
         }
+        curWRot[idx] = qmul(pRot, lq);
+        curWPos[idx] = vadd(pPos, qrot(pRot, lp));
       }
-      curWRot[idx] = qmul(pRot, lq);
-      curWPos[idx] = vadd(pPos, qrot(pRot, lp));
+      return { curWRot, curWPos };
+    };
+
+    // Pass 1 (no emission) gives the unlocked hip and toe world positions the
+    // lock solves against; pass 2 emits with the locked leg rotations in place.
+    const pass1 = runFk(false);
+    for (const side of ['L', 'R']) {
+      const wins = contactWindows[side];
+      while (contactPtr[side] < wins.length && fIdx > wins[contactPtr[side]].end) contactPtr[side] += 1;
+      const win = wins[contactPtr[side]];
+      if (!win || fIdx < win.start) continue;
+      // Window-entry pin: the UNLOCKED toe position at the window's first
+      // frame (lock weight is 0 there, so entry is seamless by definition).
+      if (win.pin === null) win.pin = [...pass1.curWPos[legIdx[side].toe]];
+      const weight = lockWeight(win, fIdx);
+      if (weight > 0) lockToe(side, weight, win.pin, pass1, desiredRot);
+    }
+    runFk(true);
+  }
+
+  /* contacts: only the fully-locked interior frames — the planted guarantee */
+  const contacts = { L: [], R: [] };
+  for (const side of ['L', 'R']) {
+    for (const win of contactWindows[side]) {
+      const s = win.start + RAMP;
+      const e = win.end - RAMP;
+      if (e >= s) contacts[side].push([s, e]);
     }
   }
 
@@ -588,17 +789,24 @@ function retargetClip({ name, text, srcTravel, out, detectRest }) {
     );
   }
   {
-    // Source-space skate risk: how far each ankle travels horizontally.
-    // Foot IK is NOT solved this round — a large number here means the clip
-    // repositions its feet and will skate on the target.
+    // Source-space repositioning: how far each ankle travels horizontally.
+    // Repositions are real motion and pass through unlocked; only the drift
+    // inside detected contact windows is pinned away.
     const ext = (pts) => pcaExtent(pts.map((p) => p[0]), pts.map((p) => p[2]));
     console.log(
-      `source ankle travel (horizontal extent): L ${ext(ankleSrc.L).toFixed(2)} cm, R ${ext(ankleSrc.R).toFixed(2)} cm  (foot IK not solved — nonzero = skate risk)`,
+      `source ankle travel (horizontal extent): L ${ext(ankleSrc.L).toFixed(2)} cm, R ${ext(ankleSrc.R).toFixed(2)} cm  (repositions survive; in-contact drift is pinned)`,
     );
   }
   console.log(`max quaternion norm deviation: ${maxNormDev.toExponential(2)}  (${maxNormDev <= 1e-3 ? 'OK' : 'FAIL'} vs 1e-3)`);
+  for (const side of ['L', 'R']) {
+    const covered = contacts[side].reduce((acc, [s, e]) => acc + (e - s + 1), 0);
+    console.log(
+      `foot contacts ${side}: ${contactWindows[side].length} source windows (< ${CONTACT_SPEED_CMS} cm/s sustained ≥ ${CONTACT_MIN_S} s), ` +
+        `${contacts[side].length} locked interiors → ${((100 * covered) / bvh.frames.length).toFixed(1)}% of frames pinned`,
+    );
+  }
 
-  const clip = { fps, frames: bvh.frames.length, source: name, joints: outJoints, root: { translation: rootTrans }, translations: outTrans };
+  const clip = { fps, frames: bvh.frames.length, source: name, joints: outJoints, root: { translation: rootTrans }, translations: outTrans, contacts };
   writeFileSync(out, JSON.stringify(clip));
   console.log(`wrote ${out}: ${bvh.frames.length} frames @ ${fps} fps, ${Object.keys(outJoints).length} joints (${Object.keys(TWIN_OF).length} control twins), ${Object.keys(outTrans).length} twin translation tracks`);
 }

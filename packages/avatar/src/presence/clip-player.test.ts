@@ -123,6 +123,56 @@ describe('clip player on the shipped rig', { skip: !existsSync(CLIP_PATH) && 'ru
     assert.ok(worstStep < 0.05, `hip jumped ${(worstStep * 100).toFixed(1)} cm in one half-frame`);
   });
 
+  /*
+    THE FOOT-CONTACT GATE. The retargeter marks the frames it GUARANTEES
+    planted (`contacts`: per-foot inclusive frame windows, the fully-locked
+    interiors of the source-stationary phases — see the FOOT-CONTACT LOCKING
+    header in tools/retarget_staystill.mjs). The player needs no change:
+    contacts are data this test reads back through the real player. Two
+    claims: inside a marked window the toe's world horizontal position holds
+    its window-entry position to under 5 mm (skate is what the retarget ADDS
+    — a pinned toe that still wanders means the lock solve and the player
+    disagree about FK, the same class as the 913 mm root bug); and nowhere —
+    locked, unlocked, ease ramps, or the loop seam — does a toe move 3 cm in
+    a half frame (a lock that pops at its edges would fail exactly here).
+  */
+  it('keeps marked planted toes pinned and never pops a foot', () => {
+    type Contacts = Record<'L' | 'R', readonly [number, number][]>;
+    const contacts = (clip as RetargetedClip & { contacts?: Contacts }).contacts;
+    assert.ok(contacts, 'clip carries no contact windows — regenerate with tools/retarget_staystill.mjs');
+    const { root, byName } = buildRealScene();
+    const player = createClipPlayer(root, clip!);
+    const world = (bone: THREE.Bone) => {
+      root.updateMatrixWorld(true);
+      return bone.getWorldPosition(new THREE.Vector3());
+    };
+    for (const side of ['L', 'R'] as const) {
+      const toe = byName.get(`DEF-toe.${side}`)!;
+      for (const [start, end] of contacts[side]) {
+        player.apply(start / clip!.fps);
+        const entry = world(toe);
+        for (let f = start; f <= end; f += 1) {
+          player.apply(f / clip!.fps);
+          const p = world(toe);
+          const drift = Math.hypot(p.x - entry.x, p.z - entry.z);
+          assert.ok(
+            drift < 0.005,
+            `${side} toe drifted ${(drift * 1000).toFixed(2)} mm at frame ${f} of contact window [${start}, ${end}]`,
+          );
+        }
+      }
+      let previous: THREE.Vector3 | null = null;
+      let worstStep = 0;
+      for (let f = 0; f < clip!.frames * 2; f += 1) {
+        player.apply(f / (clip!.fps * 2));
+        const p = world(toe);
+        if (previous) worstStep = Math.max(worstStep, p.distanceTo(previous));
+        previous = p;
+      }
+      assert.ok(worstStep < 0.03, `${side} toe stepped ${(worstStep * 100).toFixed(1)} cm in one half-frame`);
+    }
+  });
+
   it('release puts every bone back exactly', () => {
     const { root, byName } = buildRealScene();
     const before = new Map(
