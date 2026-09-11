@@ -175,11 +175,49 @@ export const STANCE = {
   armAbduct: 0.12,
   /** Forward of the side seam, ~3°. */
   armForward: 0.05,
-  /** Elbows are never locked, ~6°. */
-  elbowBend: 0.11,
+  /**
+   * Elbows at rest, ~10°, which the asymmetry below splits into roughly 8° and
+   * 13°.
+   *
+   * It was 0.11 (~6°) and read as straight arms hanging at the sides. A relaxed
+   * standing arm carries more flexion than that, and at the distance she is
+   * rendered 6° is indistinguishable from locked.
+   */
+  elbowBend: 0.18,
   /** Shoulders drop when nobody is bracing, ~2°. */
   shoulderDrop: 0.035,
+  /**
+   * HOW MUCH THE TWO SIDES DIFFER. Added on the left, subtracted on the right,
+   * so no joint holds the same angle as its opposite.
+   *
+   * Everything above was applied mirror-symmetrically. A person standing with
+   * both elbows at exactly the same angle is the strongest robot cue a still
+   * pose has, and it is one no amount of micro-motion can undo — the idle layer
+   * moves fractions of a degree on top of whatever base pose it is handed.
+   * `audit/motion/what-reads-robotic.md` names symmetry as item 11; this is its
+   * postural half.
+   */
+  asymmetry: {
+    /** ~1.7° — one arm hangs a little further from the ribcage. */
+    abduct: 0.03,
+    /** ~2.6° — and one elbow is more bent than the other. */
+    elbow: 0.045,
+    /** ~1.1° — one shoulder sits a little further forward. */
+    forward: 0.02,
+  },
 } as const;
+
+/**
+ * The resting elbow angle for one side, stance plus that side's asymmetry.
+ *
+ * Exported so the writer and the tests read ONE definition. Three assertions
+ * used the bare `STANCE.elbowBend` as the arms-at-rest baseline, which was
+ * correct only while both elbows held the same angle — the thing that made her
+ * read as a mannequin. A helper is how the baseline moves in one place.
+ */
+export function stanceElbow(side: 'L' | 'R'): number {
+  return STANCE.elbowBend + (side === 'L' ? 1 : -1) * STANCE.asymmetry.elbow;
+}
 
 /** three's own sanitiser, reproduced so a lookup can try both spellings. */
 export function sanitizeNodeName(name: string): string {
@@ -867,17 +905,29 @@ export function createHumanoPresence(
 
       // The firewall's reach cap, applied where the reach is made: however
       // large a beat, the hand never comes at the viewer (doc 22 §7).
-      const forward = clamp(STANCE.armForward + lift * 0.18, 0, DEFAULT_GESTURE_LIMITS.maxShoulderFlexionRad);
+      // `sideBias` is +1 on the left and -1 on the right, so every stance angle
+      // below lands on a different value per arm.
+      const sideBias = side === 'L' ? 1 : -1;
+      const forward = clamp(
+        STANCE.armForward + sideBias * STANCE.asymmetry.forward + lift * 0.18,
+        0,
+        DEFAULT_GESTURE_LIMITS.maxShoulderFlexionRad,
+      );
       pose(
         side === 'L' ? bones.upperArmL : bones.upperArmR,
         forward,
         // A touch of rotation about the arm: the palm turns as the hand talks.
         zSign * lift * 0.12,
-        zSign * (STANCE.armAbduct + lift * 0.08)
+        zSign * (STANCE.armAbduct + sideBias * STANCE.asymmetry.abduct + lift * 0.08)
       );
       maxFlexion = Math.max(maxFlexion, forward);
 
-      pose(side === 'L' ? bones.foreArmL : bones.foreArmR, STANCE.elbowBend + lift * 0.3 + followed * 0.12, 0, 0);
+      pose(
+        side === 'L' ? bones.foreArmL : bones.foreArmR,
+        STANCE.elbowBend + sideBias * STANCE.asymmetry.elbow + lift * 0.3 + followed * 0.12,
+        0,
+        0,
+      );
 
       const wrist = rm ? 0 : (side === 'L' ? frame.wristL : frame.wristR) * 0.15;
       // The wrist is where the beat lives; the follower puts it a beat late.
@@ -893,9 +943,24 @@ export function createHumanoPresence(
       const openness = 1 - 0.45 * clamp(handLift[f.side], 0, 1);
       const channel = FINGER_CHANNELS[f.side][f.finger];
       const relaxation = fingerRest.get(f.bone)!;
+      /*
+        TWO COMPONENTS, AND ONLY ONE OF THEM USED TO EXIST.
+
+        `relaxation` is a POSTURE: the hand resettles when the weight moves, and
+        it holds that shape until the weight moves again. On its own that is a
+        hand which is completely still for the 8 to 20 seconds between shifts,
+        eases over about two, and then freezes again — which is what was
+        shipping, and it is the reason the fingers read as carved.
+
+        The engine has been generating a continuous per-finger channel the whole
+        time (`idleConfig.body.finger`, each finger its own rate and amplitude so
+        no two are in phase). It was only ever SAMPLED, at the instant of a
+        weight shift, and thrown away in between. It is read every frame now.
+      */
+      const live = rm || channel === undefined ? 0 : frame[channel];
       if (frame.weightShifted && channel !== undefined) relaxation.target = frame[channel] * 0.4;
       relaxation.current += (relaxation.target - relaxation.current) * (1 - Math.exp(-rawDelta / 0.8));
-      const noise = rm ? 0 : relaxation.current;
+      const noise = rm ? 0 : relaxation.current * 0.5 + live;
       // The noise is spread down the chain: most at the knuckle, least at the tip.
       const share = f.phalanx === 0 ? 0.5 : f.phalanx === 1 ? 0.3 : 0.2;
       pose(f.bone, f.curl * openness + noise * share, 0, 0);

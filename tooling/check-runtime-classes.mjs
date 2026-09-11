@@ -65,6 +65,54 @@ const Z_TOKENISH = /\bz-(?!auto\b|\[)([a-z][a-z-]*)\b/g;
 // renders, because those go through react-native-css.
 const VIEWPORT_UNIT = /\b(?:min-|max-)?[whwb]-(?:d|s|l)v(?:h|w)\b/g;
 
+// ---- 2b. a colour utility naming a token that is never emitted -------------
+/*
+  `text-inverse` shipped and rendered NOTHING. The token is called
+  `text-inverse`, so Tailwind's colour prefix stacks on top of it and the
+  utility is `text-text-inverse`; written short it names a colour `inverse`,
+  which no `--color-*` variable defines, so no declaration is emitted at all.
+  The icon on the whiteboard's selected key went invisible on its own pale fill.
+
+  Nothing caught it. This gate only knew about `z-*` and viewport units, and
+  the utilities check reads a fixed spec list rather than every class in the
+  source. A colour that resolves to no variable is the same defect class as an
+  inert `z-nav` — it type-checks, it lints, and it draws nothing.
+*/
+/*
+  `text-` and `bg-` ONLY, and that restraint is the point. The first version
+  included `shadow-`, `ring-`, `border-` and the rest, and reported 33 failures
+  of which the `shadow-*` ones were wrong: Tailwind gives box-shadow its own
+  `--shadow-*` namespace, so `shadow-raised` resolves to `--shadow-raised` and
+  is perfectly live. A gate that cries wolf on a third of its output is a gate
+  someone turns off. These two prefixes read `--color-*` and nothing else.
+*/
+// The lookbehind is load bearing: `\b` alone matches the `text-muted` INSIDE
+// `border-text-muted`, which is a perfectly good utility, and the gate reported
+// it as inert. A hyphen before the prefix means this is the tail of a longer
+// class, not the start of one.
+const COLOUR_UTILITY = /(?<![\w-])(?:text|bg)-(?!\[)([a-z][a-z0-9-]*)\b/g;
+const emittedColours = new Set();
+for (const css of ['packages/theme/theme.css', 'packages/theme/theme-native.css']) {
+  const text = readFileSync(join(ROOT, css), 'utf8');
+  for (const m of text.matchAll(/--color-([a-z0-9-]+)\s*:/g)) emittedColours.add(m[1]);
+}
+if (emittedColours.size === 0) {
+  failures.push('parsed zero --color-* variables — the theme CSS moved and this check is blind');
+}
+/*
+  Tailwind's own scale words and the utilities that share these prefixes without
+  naming a colour. Listed rather than inferred: a bare allowlist is auditable,
+  where a clever regex that tries to tell `border-2` from `border-strong` is the
+  thing that breaks silently on the next utility someone adds.
+*/
+const NOT_A_COLOUR = new Set([
+  'transparent', 'current', 'inherit', 'black', 'white', 'none', 'auto',
+  'solid', 'dashed', 'dotted', 'double', 'hidden', 'clip', 'ellipsis', 'wrap',
+  'nowrap', 'balance', 'pretty', 'left', 'center', 'right', 'justify', 'start', 'end',
+  'top', 'bottom', 'middle', 'baseline', 'sub', 'super', 'x', 'y', 'b', 't', 'l', 'r', 'e', 's',
+  'sm', 'md', 'lg', 'xl', 'full', 'card', 'control', 'inset', 'offset',
+]);
+
 for (const dir of ['packages/ui', 'packages/app']) {
   for (const file of walk(join(ROOT, dir))) {
     const src = readFileSync(file, 'utf8');
@@ -104,6 +152,22 @@ for (const dir of ['packages/ui', 'packages/app']) {
           file,
           i + 1,
           `\`z-${m[1]}\` generates no CSS — Tailwind builds z-index from bare numbers. Use z-40 / z-50.`,
+        );
+      }
+      for (const m of text.matchAll(COLOUR_UTILITY)) {
+        const name = m[1];
+        if (NOT_A_COLOUR.has(name) || /^\d/.test(name) || emittedColours.has(name)) continue;
+        // Only flag a name that LOOKS like one of ours — a token we define
+        // under another prefix. Anything else is a utility this list does not
+        // model, and guessing about it would make the gate noise.
+        const looksLikeOurs = [...emittedColours].some(
+          (c) => c.endsWith(`-${name}`) || c === `text-${name}` || c === `surface-${name}`,
+        );
+        if (!looksLikeOurs) continue;
+        report(
+          file,
+          i + 1,
+          `\`${m[0]}\` resolves to no --color-${name}, so it emits nothing. Did you mean \`${m[0].split('-')[0]}-${[...emittedColours].find((c) => c.endsWith(`-${name}`))}\`?`,
         );
       }
       for (const m of text.matchAll(VIEWPORT_UNIT)) {

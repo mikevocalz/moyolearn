@@ -108,7 +108,14 @@ export function SessionToolbar({
         */
         className={`min-h-14 flex-row items-center gap-stack border-b-2 border-on-surface-header bg-surface-header px-4 py-1 ${className ?? ''}`}>
         <IconButton
-          icon={<ChevronLeft className="h-5 w-5" />}
+          /*
+            `text-on-surface-header`, the same ink the title beside it uses.
+            Ghost's default label colour is `text-text`, which is paired with
+            the CONTENT ground rather than this bar's, so on the header's
+            lavender the chevron sat pale and nearly vanished — reported as a
+            white back button that could barely be seen.
+          */
+          icon={<ChevronLeft className="h-5 w-5 text-on-surface-header" />}
           aria-label="Back"
           onPress={onBack}
           variant="ghost"

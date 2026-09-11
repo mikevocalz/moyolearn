@@ -18,6 +18,7 @@ import { DEFAULT_GESTURE_LIMITS } from '../safety/gesture-gate.ts';
 import {
   HUMANO_BONES,
   STANCE,
+  stanceElbow,
   createHumanoPresence,
   gazeMorphs,
   lipFromOpenness,
@@ -186,10 +187,24 @@ describe('createHumanoPresence', () => {
       presence.step(1 / 60, { speaking: true, mouth: 1, reducedMotion: true });
     }
     assert.ok(weight(mesh, 'jawOpen') > 0.3);
-    // The STANCE stays — a pose is not motion, and reduced motion should not
-    // put her back to the asset's arms-flat-to-the-thighs mannequin. What it
-    // suppresses is the LIFT on top of it, which is the travel.
-    assert.ok(Math.abs(arm.rotation.x - STANCE.elbowBend) < 1e-9, `${arm.rotation.x}`);
+    /*
+      The STANCE stays — a pose is not motion, and reduced motion should not put
+      her back to the asset's arms-flat-to-the-thighs mannequin. What it
+      suppresses is the LIFT on top of it, which is the travel.
+
+      Per SIDE, because the stance is no longer mirror-symmetric: the left arm
+      carries `+asymmetry.elbow` and the right `-`. Asserting the bare
+      `elbowBend` here would pass only while both elbows held the same angle,
+      which is the thing that read as robotic.
+    */
+    const left = stanceElbow('L');
+    assert.ok(Math.abs(arm.rotation.x - left) < 1e-9, `${arm.rotation.x} vs ${left}`);
+    const right = scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.foreArmR))!;
+    assert.ok(
+      Math.abs(right.rotation.x - stanceElbow('R')) < 1e-9,
+      `right forearm ${right.rotation.x}`,
+    );
+    assert.notEqual(arm.rotation.x, right.rotation.x, 'both elbows at one angle is the mannequin');
   });
 
   it('aims the eyes at the camera rather than past it', () => {
@@ -222,9 +237,11 @@ describe('createHumanoPresence', () => {
     for (let i = 0; i < 30 * 60; i++) {
       presence.step(1 / 60, { ...QUIET, speaking: true, mouth: 0.6 });
       if (i < 3 * 60) continue;
-      for (const name of [HUMANO_BONES.foreArmL, HUMANO_BONES.foreArmR]) {
-        const arm = scene.getObjectByName(sanitizeNodeName(name))!;
-        assert.ok(Math.abs(arm.rotation.x - STANCE.elbowBend) < 0.002,
+      for (const side of ['L', 'R'] as const) {
+        const arm = scene.getObjectByName(
+          sanitizeNodeName(side === 'L' ? HUMANO_BONES.foreArmL : HUMANO_BONES.foreArmR),
+        )!;
+        assert.ok(Math.abs(arm.rotation.x - stanceElbow(side)) < 0.002,
           `timer-driven beat at ${i / 60}s`);
       }
     }
@@ -237,8 +254,8 @@ describe('createHumanoPresence', () => {
     for (let i = 0; i < 8 * 60; i++) {
       const t = i / 60;
       presence.step(1 / 60, { ...QUIET, speaking: true, mouth: t >= 6 && t < 6.5 ? 0 : 0.6 });
-      const l = scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.foreArmL))!.rotation.x - STANCE.elbowBend;
-      const r = scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.foreArmR))!.rotation.x - STANCE.elbowBend;
+      const l = scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.foreArmL))!.rotation.x - stanceElbow('L');
+      const r = scene.getObjectByName(sanitizeNodeName(HUMANO_BONES.foreArmR))!.rotation.x - stanceElbow('R');
       assert.ok(Math.min(Math.abs(l), Math.abs(r)) < 0.002, 'both arms lifted together');
       if (t > 6.5) peak = Math.max(peak, l, r);
     }
@@ -263,8 +280,11 @@ describe('createHumanoPresence', () => {
     const presence = createHumanoPresence(scene);
     for (let i = 0; i < 24; i++) presence.step(1 / 60, { ...QUIET, speaking: true, mouth: 0.8 });
     for (let i = 0; i < 180; i++) presence.step(1 / 60, QUIET);
-    for (const name of [HUMANO_BONES.foreArmL, HUMANO_BONES.foreArmR]) {
-      assert.ok(Math.abs(scene.getObjectByName(sanitizeNodeName(name))!.rotation.x - STANCE.elbowBend) < 0.002);
+    for (const side of ['L', 'R'] as const) {
+      const name = side === 'L' ? HUMANO_BONES.foreArmL : HUMANO_BONES.foreArmR;
+      assert.ok(
+        Math.abs(scene.getObjectByName(sanitizeNodeName(name))!.rotation.x - stanceElbow(side)) < 0.002,
+      );
     }
   });
 

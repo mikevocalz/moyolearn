@@ -519,11 +519,19 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
             }`}
           >
             {/*
-              `text-inverse`, not `text-surface`: check-contrast.mjs gates the
-              inverse/text pair in both schemes and does not gate surface/text,
-              so the second is a contrast nobody is checking.
+              `text-text-inverse`, not `text-surface`: check-contrast.mjs gates
+              the inverse/text pair in both schemes and does not gate
+              surface/text, so the second is a contrast nobody is checking.
+
+              The utility is `text-text-inverse` and not `text-inverse` — the
+              TOKEN is named `text-inverse`, so Tailwind's colour prefix stacks
+              on top of it. Written the short way it names a colour called
+              `inverse`, which does not exist, so no colour is emitted at all
+              and the icon renders invisible on the selected key's pale fill.
+              Shipped that way for one build; every other call site in the kit
+              spells it in full.
             */}
-            <Icon size={20} className={tool === id ? 'text-inverse' : 'text-text'} />
+            <Icon size={20} className={tool === id ? 'text-text-inverse' : 'text-text'} />
           </Pressable>
         ))}
         </View>
