@@ -229,8 +229,36 @@ export const idleConfig = {
      * `maxGazeHoldMs`), so a held stare cannot happen by construction.
      */
     gazeAway: {
+      /*
+        NOT the measured human number, and the override is deliberate.
+
+        The StayStill idles measure ~3.2 looks a minute — median gap 7.9 s,
+        p90 31 s (307 intervals, FK head yaw against a running median; the
+        detector validated on labelled clips: look-arounds sweep 122-144
+        degrees, look-at-phone stays inside 13). Real adults break gaze a
+        QUARTER as often as this config does.
+
+        It stays 3-4 s anyway, because this interval is load-bearing for a
+        safety property, not a realism one: the companionship firewall caps a
+        held stare at a child at 3 s (doc 22 §7, gesture-gate `maxGazeHoldMs`
+        3000), and the gaze break is what discharges it by construction. A
+        tutor is not an idling adult in a lab. If the ceiling is ever
+        revisited, the measured distribution above is what the interval
+        should become — that is a product-safety decision, not a config edit.
+      */
       intervalS: { min: 3, max: 4 },
-      holdS: { min: 0.3, max: 1.2 },
+      /*
+        MEASURED: above-threshold look duration p50 1.93 s including both
+        sweeps; the dwell is that minus the eases (labelled judgement on top
+        of the measurement). The old 1.2 s max was a guess.
+      */
+      holdS: { min: 0.5, max: 1.6 },
+      /*
+        DELIBERATELY NOT the measured 77-degree excursion. l_aro is a person
+        scanning a room; this channel is a conversational gaze aversion, a
+        few degrees off the lens. Adopting the corpus number would have her
+        turning away from the child mid-sentence.
+      */
       yawDeg: { min: 4, max: 8 },
       pitchDeg: { min: -3, max: 1 },
       easeS: 0.15,

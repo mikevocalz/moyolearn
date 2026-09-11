@@ -467,7 +467,7 @@ describe('the body layer', () => {
     assert.deepEqual(perFinger, [], 'a per-finger channel is back; the hand is not ten independent digits');
   });
 
-  it('breaks gaze every 3-4 s for 0.3-1.2 s, so a stare never exceeds the firewall ceiling', () => {
+  it('breaks gaze every 3-4 s, so a stare never exceeds the firewall ceiling', () => {
     const engine = new IdleEngine(4);
     let t = 0;
     let lastBreak = 0;
@@ -488,7 +488,8 @@ describe('the body layer', () => {
       }
     }
     assert.ok(longestHold <= 4 + DT, `gaze held ${longestHold}s — past the 4 s ceiling`);
-    assert.ok(longestAway <= 1.2 + 2 * C.body.gazeAway.easeS + DT, `looked away for ${longestAway}s`);
+    // Derived from config, not restated: the hold moved to a measured value once.
+    assert.ok(longestAway <= C.body.gazeAway.holdS.max + 2 * C.body.gazeAway.easeS + DT, `looked away for ${longestAway}s`);
   });
 
   it('turns the torso on a turn end, within 0.8 s, and holds a few seconds', () => {

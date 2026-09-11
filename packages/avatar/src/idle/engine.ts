@@ -199,7 +199,8 @@ export class IdleEngine {
   private turnHoldS = 0;
   private shoulderNoise: [ValueNoise, ValueNoise];
   private wristNoise: [ValueNoise, ValueNoise];
-  private handNoise: [ValueNoise, ValueNoise];
+  // Two octaves per hand: [L-slow, L-fast, R-slow, R-fast].
+  private handNoise: [ValueNoise, ValueNoise, ValueNoise, ValueNoise];
   /** Where each hand is settling FROM, TO, and how far through it is. */
   private handFrom: [number, number] = [0, 0];
   private handTo: [number, number];
@@ -304,9 +305,17 @@ export class IdleEngine {
     ];
     // Two hands, two rates. They differ so the pair never settles into unison,
     // which is the same reason the sway octaves sit at an irrational ratio.
+    /*
+      TWO octaves per hand, at the sway's irrational ratio. One slow noise can
+      sit near a flat cell for ten straight seconds — measured: 0.004 of travel
+      in a 10 s window, which is a frozen hand wearing a moving channel's name.
+      A second octave at e times the rate cannot flatline with the first.
+    */
     this.handNoise = [
       new ValueNoise(this.bodyRange(B.hand.hz), this.bodyRand),
+      new ValueNoise(this.bodyRange(B.hand.hz) * Math.E, this.bodyRand),
       new ValueNoise(this.bodyRange(B.hand.hz), this.bodyRand),
+      new ValueNoise(this.bodyRange(B.hand.hz) * Math.E, this.bodyRand),
     ];
     this.handTo = [this.bodyRange(B.hand.settle), this.bodyRange(B.hand.settle)];
     this.handFrom = [this.handTo[0] as number, this.handTo[1] as number];
@@ -321,7 +330,11 @@ export class IdleEngine {
    * the same span would put the TYPICAL gap near 11 s where people measure 5.9.
    */
   private sampleShiftInterval(): number {
-    const p = idleConfig.body.weightShift.intervalPercentilesS;
+    return this.samplePercentiles(idleConfig.body.weightShift.intervalPercentilesS);
+  }
+
+  /** Two-piece draw matching a skewed measured distribution's p10/p50/p90. */
+  private samplePercentiles(p: { p10: number; p50: number; p90: number }): number {
     const u = this.bodyRand();
     return u < 0.5 ? p.p10 + (u * 2) * (p.p50 - p.p10) : p.p50 + (u - 0.5) * 2 * (p.p90 - p.p50);
   }
@@ -612,7 +625,11 @@ export class IdleEngine {
       const eased = e * e * (3 - 2 * e);
       const from = this.handFrom[i] as number;
       const settled = from + ((this.handTo[i] as number) - from) * eased;
-      const drifted = settled + (this.handNoise[i] as ValueNoise).step(dt) * B.hand.drift;
+      const drifted =
+        settled +
+        ((this.handNoise[i * 2] as ValueNoise).step(dt) * 0.65 +
+          (this.handNoise[i * 2 + 1] as ValueNoise).step(dt) * 0.35) *
+          B.hand.drift;
       const value = Math.min(1, Math.max(0, drifted));
       if (i === 0) F.handRelaxL = value;
       else F.handRelaxR = value;
