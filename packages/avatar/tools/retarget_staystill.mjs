@@ -12,16 +12,21 @@
   foot-contact lock and its `contacts` windows (below), so it is no longer
   byte-identical to the pre-curation version.
 
-  --all-curated: retarget a curated set of ten takes, each to
+  --all-curated: retarget a curated set of looping takes, each to
   /tmp/staystill_<take>.clip.json:
     · 5 balance shifts — wei_lr and wei_rl takes ranked by horizontal hip
       extent
       (the wei_lr_45 selection logic), kept only if the hips end within
       5 cm of where they started (in-place, no walk-off) AND each ankle
       ends within 3 cm of where it started (loop-closed feet — see
-      FOOT_RETURN_MAX_CM below for the calibration).
-    · 5 idles — lafan/idle/idle_*.bvh with the LEAST total horizontal hip
-      path length (calm subjects suit a tutor), same two return criteria.
+      FOOT_RETURN_MAX_CM below for the calibration) AND every arm-chain
+      joint's end-vs-start LOCAL rotation gap is ≤ 20° (loop-closed arms —
+      see ARM_RETURN_MAX_DEG below).
+    · up to 5 idles — lafan/idle/idle_*.bvh with the LEAST total horizontal
+      hip path length (calm subjects suit a tutor), same three return
+      criteria. The idle pool only carries TWO takes that close their arm
+      loops (idle_21, idle_25); the set ships at that honest size rather
+      than padding with takes whose forearm jumps 12–30° on every wrap.
   Curated takes may start mid-motion, so the source reference frame is not
   frame 0: it is the frame of lowest hip speed inside the calmest 1 s window
   (printed per clip).
@@ -372,10 +377,18 @@ const hipScan = (text) => {
   };
 };
 
-/** Per-ankle end-vs-start horizontal gap (cm), FK'd from a reduced BVH that
+/** The six source arm-chain joints whose loop seam lands on the DEF arm bones. */
+const ARM_JOINTS = ['LeftArm', 'RightArm', 'LeftForeArm', 'RightForeArm', 'LeftHand', 'RightHand'];
+
+/** Per-ankle end-vs-start horizontal gap (cm) plus the worst arm-chain
+ *  end-vs-start LOCAL rotation gap (deg), FK'd from a reduced BVH that
  *  keeps only the hierarchy plus the first and last MOTION rows — the hip
- *  scan's cheapness, but with the full skeleton so the feet are measurable. */
-const footReturnScan = (text) => {
+ *  scan's cheapness, but with the full skeleton so the limbs are measurable.
+ *  The arm gap is measured on the LOCAL quats because that is exactly what
+ *  survives the retarget: the world-delta transfer preserves each joint's
+ *  relative gap onto its DEF bone (verified on eleven clips — source armMax
+ *  equals the emitted DEF-forearm/upper_arm wrap gap to 0.1°). */
+const returnScan = (text) => {
   const m = text.indexOf('MOTION');
   const lines = text.slice(m).split('\n');
   const rows = lines.slice(3).filter((l) => l.trim());
@@ -389,7 +402,12 @@ const footReturnScan = (text) => {
     const b = w1.pos[jIdx.get(name)];
     return Math.hypot(b[0] - a[0], b[2] - a[2]);
   };
-  return { footL: gap('LeftFoot'), footR: gap('RightFoot') };
+  let armDeg = 0;
+  for (const name of ARM_JOINTS) {
+    const j = bvh.joints[jIdx.get(name)];
+    armDeg = Math.max(armDeg, qangleDeg(bvhLocalQuat(j, bvh.frames[0]), bvhLocalQuat(j, bvh.frames[1])));
+  }
+  return { footL: gap('LeftFoot'), footR: gap('RightFoot'), armDeg };
 };
 
 /* ── glTF rest pose (clip-independent) ───────────────────────────────────── */
@@ -1033,13 +1051,33 @@ if (TURNS) {
     keeps catching.
   */
   const FOOT_RETURN_MAX_CM = 3; // per-ankle end-vs-start horizontal gap
+  /*
+    Arms need their own return criterion too — the idle_47 lesson a third
+    time, one limb further out: hip return caught the hips, ankle return
+    caught the feet, and the 20-minute capture (artifacts-20min.mts) then
+    found the FOREARM jumping 12–26° on every wrap of clips both filters had
+    blessed. Measured over both pools: end-vs-start arm-chain local gap maps
+    1:1 onto the emitted DEF arm bones (idle_19 source 24.1° → DEF-forearm.L
+    wrap gap 24.1°), and the 60 Hz player crosses the 30 fps wrap in two
+    slerp steps, so the pose-reset detector sees gap × fps/60 = gap/2 per
+    frame. Its 10°/frame bound therefore requires gap < 20°. The survivor
+    distribution is NOT bimodal — it walks up 1.6…8.0° (27 of 35 takes),
+    then 10.2, 15.6, then jumps to 23.4…75.9 — so 20° is not a valley pick;
+    it is the detector's own arithmetic, and it happens to land inside the
+    empty 15.6–23.4° band: every measured seam red sits at ≥ 23.4° and every
+    measured green at ≤ 15.6°.
+  */
+  const ARM_RETURN_MAX_DEG = 20; // worst arm-chain end-vs-start local gap
   const scanned = (re) =>
     listTakes(re).map((name) => {
       const text = readTake(name);
-      return { name, text, ...hipScan(text), ...footReturnScan(text) };
+      return { name, text, ...hipScan(text), ...returnScan(text) };
     });
   const loopClosed = (t) =>
-    t.returnDist <= RETURN_MAX_CM && t.footL <= FOOT_RETURN_MAX_CM && t.footR <= FOOT_RETURN_MAX_CM;
+    t.returnDist <= RETURN_MAX_CM &&
+    t.footL <= FOOT_RETURN_MAX_CM &&
+    t.footR <= FOOT_RETURN_MAX_CM &&
+    t.armDeg <= ARM_RETURN_MAX_DEG;
 
   const balance = scanned(/^lafan\/actions\/wei_(lr|rl)_\d+\.bvh$/)
     .filter(loopClosed)
@@ -1058,12 +1096,12 @@ if (TURNS) {
     .slice(0, 5);
 
   const returns = (t) =>
-    `return hip ${t.returnDist.toFixed(2)} cm, ankles ${t.footL.toFixed(2)} / ${t.footR.toFixed(2)} cm`;
+    `return hip ${t.returnDist.toFixed(2)} cm, ankles ${t.footL.toFixed(2)} / ${t.footR.toFixed(2)} cm, arm ${t.armDeg.toFixed(1)}°`;
   console.log(
-    `curated balance shifts (largest hip extent, hips ending ≤ ${RETURN_MAX_CM} cm and each ankle ≤ ${FOOT_RETURN_MAX_CM} cm from start):`,
+    `curated balance shifts (largest hip extent, hips ending ≤ ${RETURN_MAX_CM} cm, each ankle ≤ ${FOOT_RETURN_MAX_CM} cm and arm chain ≤ ${ARM_RETURN_MAX_DEG}° from start):`,
   );
   for (const t of balance) console.log(`  ${t.name}  extent ${t.extent.toFixed(2)} cm, ${returns(t)}`);
-  console.log('curated idles (least total horizontal hip path, same return criteria):');
+  console.log(`curated idles (least total horizontal hip path, same return criteria; the pool supplies ${idles.length} of 5):`);
   for (const t of idles) console.log(`  ${t.name}  path ${t.pathLen.toFixed(0)} cm, extent ${t.extent.toFixed(2)} cm, ${returns(t)}`);
 
   for (const t of [...balance, ...idles]) {

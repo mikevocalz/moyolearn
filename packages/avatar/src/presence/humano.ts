@@ -188,6 +188,27 @@ export const TWINS: Partial<Record<HumanoBoneKey, string>> = {
 };
 
 /**
+ * The retargeted-clip twin pairing: each control twin the clip data names →
+ * the DEF bone whose WORLD delta it mirrors. This is the retargeter's own
+ * `TWIN_OF` table (tools/retarget_staystill.mjs), duplicated because the clip
+ * format does not carry it and the blend path below needs it: a twin's pose
+ * at PARTIAL blend cannot be interpolated per component — it must be
+ * REBUILT from the DEF bone's blended world delta (see the layer-one block).
+ * Note it is not the same pairing as `TWINS` above: the writer mirrors
+ * `torso` onto MCH-spine.002 because it never rotates ORG-spine, but the
+ * clip data drives ORG-spine directly (the legs hang from it).
+ */
+const CLIP_TWIN_OF: Readonly<Record<string, string>> = {
+  'ORG-spine': 'DEF-spine',
+  'MCH-spine.002': 'DEF-spine.001',
+  'spine_fk.002': 'DEF-spine.002',
+  'spine_fk.003': 'DEF-spine.003',
+  'ORG-spine.004': 'DEF-spine.004',
+  'ORG-spine.005': 'DEF-spine.005',
+  'ORG-spine.006': 'DEF-spine.006',
+};
+
+/**
  * Her standing pose, applied speaking or not.
  *
  * The asset ships a mannequin — arms straight down, flat against the thighs
@@ -488,6 +509,30 @@ interface ClipTrack<F> {
   rest: BoneRest;
 }
 
+/**
+ * One node of the tiny per-frame FK the clip base runs over the spine chain
+ * and its control twins (see the layer-one block). `wq`/`wp` are this
+ * frame's world rotation/position at the CURRENT blend; `pwq`/`pwp` the
+ * parent's. All four are OWNED and rewritten in place — no per-frame
+ * allocation. A node is one of three kinds: a DEF track (`o` set, `def`
+ * null), a control twin (`def` set — its pose is DERIVED, never sampled),
+ * or an unwritten pass-through riding at rest local (both null).
+ */
+interface ClipFkNode {
+  bone: THREE.Bone;
+  rest: BoneRest;
+  o: ClipBaseOverride | null;
+  def: ClipFkNode | null;
+  parent: ClipFkNode | null;
+  /** Static parent world, for chain tops whose ancestors nothing writes. */
+  anchorQ: THREE.Quaternion | null;
+  anchorP: THREE.Vector3 | null;
+  wq: THREE.Quaternion;
+  wp: THREE.Vector3;
+  pwq: THREE.Quaternion;
+  pwp: THREE.Vector3;
+}
+
 /** Entering or leaving a clip base eases over this long. Smoothstep, no snap. */
 export const CLIP_FADE_S = 0.4;
 
@@ -782,12 +827,18 @@ export function createHumanoPresence(
     rot: ClipTrack<readonly [number, number, number, number]>[];
     pos: ClipTrack<readonly [number, number, number]>[];
     root: ClipTrack<readonly [number, number, number]> | null;
+    /** FK order: parents before children, DEF bones before their twins. */
+    fk: ClipFkNode[];
+    /** The same nodes by bone, for `poseBoth`'s base-frame lookups. */
+    fkByBone: Map<THREE.Bone, ClipFkNode>;
   } | null = null;
   let clipTime = 0;
   let clipFade = 0;
   let clipFadeTarget = 0;
   const clipQa = new THREE.Quaternion();
   const clipQb = new THREE.Quaternion();
+  const clipDelta = new THREE.Quaternion();
+  const clipScratchQ = new THREE.Quaternion();
 
   /**
    * Restores one bone to the BASE — the clip's pose while one drives, the
@@ -817,6 +868,7 @@ export function createHumanoPresence(
   const tmpQuat = new THREE.Quaternion();
   const worldDelta = new THREE.Quaternion();
   const twinQuat = new THREE.Quaternion();
+  const basePInv = new THREE.Quaternion();
   const tmpVec = new THREE.Vector3();
   /**
    * Rotates a bone by (dx, dy, dz) radians in ITS OWN frame, on top of rest.
@@ -844,8 +896,21 @@ export function createHumanoPresence(
     const bone = bones[key];
     const r = pose(bone, dx, dy, dz);
     if (!r || !bone) return;
+    /*
+      WHICH FRAMES THE MIRROR USES. With no clip these are the REST world
+      frames, exactly as before. While a clip drives, the DEF bone's world
+      orientation, both pivots and the twin's parent frame are the CLIP
+      BASE's at this blend (the FK above computed them): mirroring a life
+      delta about the rest axes when the spine is 10–20° into a clip pose
+      sends the twin a rotation about the wrong axis and a Δp about the
+      wrong pivot — measured 2.53 mm of eye drift at FULL blend on
+      wei_rl_28, where the twin tracks themselves are exact and only this
+      mirror was still rest-anchored.
+    */
+    const bw = clipState ? clipState.fkByBone.get(bone) : undefined;
     if (tx !== 0 || ty !== 0) {
-      tmpVec.set(tx, ty, 0).applyQuaternion(r.parentWorldQuaternionInverse);
+      if (bw) tmpVec.set(tx, ty, 0).applyQuaternion(basePInv.copy(bw.pwq).invert());
+      else tmpVec.set(tx, ty, 0).applyQuaternion(r.parentWorldQuaternionInverse);
       const ob = clipState ? baseOverride.get(bone) : undefined;
       bone.position.copy(ob?.hasP ? ob.p : r.position).add(tmpVec);
     }
@@ -853,13 +918,14 @@ export function createHumanoPresence(
     if (!twin) return;
     const t = rests.get(twin);
     if (!t) return;
+    const tw = clipState ? clipState.fkByBone.get(twin) : undefined;
     // Δworld = Qdef · Δlocal · Qdef⁻¹ ; twin local = Qp⁻¹ · Δworld · Qp · qrest
-    worldDelta.copy(r.worldQuaternion).multiply(tmpQuat).multiply(twinQuat.copy(r.worldQuaternion).invert());
-    const parentWorld = twinQuat.copy(t.parentWorldQuaternionInverse).invert();
-    const local = new THREE.Quaternion()
-      .copy(t.parentWorldQuaternionInverse)
-      .multiply(worldDelta)
-      .multiply(parentWorld);
+    const defWorldQ = bw ? bw.wq : r.worldQuaternion;
+    worldDelta.copy(defWorldQ).multiply(tmpQuat).multiply(twinQuat.copy(defWorldQ).invert());
+    if (tw) basePInv.copy(tw.pwq).invert();
+    else basePInv.copy(t.parentWorldQuaternionInverse);
+    const parentWorld = twinQuat.copy(basePInv).invert();
+    const local = new THREE.Quaternion().copy(basePInv).multiply(worldDelta).multiply(parentWorld);
     // Compose onto whatever this frame already put on the twin (torso + spine1
     // share one), never onto last frame's — twins are restored with the rest.
     if (!touchedTwins.has(twin)) {
@@ -876,12 +942,13 @@ export function createHumanoPresence(
       the eyes drift ~3 mm per weight shift. Exact, not approximate:
       Δp = Δworld·(Ptwin − Pdef) − (Ptwin − Pdef).
     */
-    const offset = tmpVec.copy(t.worldPosition).sub(r.worldPosition);
+    const offset =
+      bw && tw ? tmpVec.copy(tw.wp).sub(bw.wp) : tmpVec.copy(t.worldPosition).sub(r.worldPosition);
     const moved = new THREE.Vector3().copy(offset).applyQuaternion(worldDelta).sub(offset);
     moved.x += tx;
     moved.y += ty;
     if (moved.lengthSq() > 0) {
-      twin.position.add(moved.applyQuaternion(t.parentWorldQuaternionInverse));
+      twin.position.add(moved.applyQuaternion(basePInv));
     }
   };
   const touchedTwins = new Set<THREE.Bone>();
@@ -906,6 +973,30 @@ export function createHumanoPresence(
       }
       return o;
     };
+    /*
+      TWIN TRACKS ARE NOT SAMPLED — they are REBUILT. The retargeter emits a
+      control twin's local pose from the exact pivot-riding construction
+      (Δworld about the DEF bone plus Δp = Δworld·(Ptwin−Pdef)−(Ptwin−Pdef)),
+      and that construction does not survive per-component interpolation: a
+      slerp of two local rotations with a lerp of two local translations is
+      NOT the compensated pair at partial weight — the lerp draws the chord
+      of the arc the pivot compensation actually travels, and the eyes
+      drifted up to 1.83 mm at blend 0.5 from exactly that (worse with the
+      life layer on top). So each twin named by CLIP_TWIN_OF is derived per
+      frame from its DEF bone's blended WORLD delta by the FK below, which
+      reproduces the retargeter's own maths at every blend weight: exact at
+      w = 1 by construction, exactly rest at w = 0, and pivot-true between.
+      A twin whose DEF counterpart is missing from the clip falls back to
+      direct sampling — the old path, kept for malformed data.
+    */
+    const twinDefBones = new Map<THREE.Bone, THREE.Bone>(); // twin → DEF
+    for (const twinName of Object.keys(CLIP_TWIN_OF)) {
+      if (!(twinName in clip.joints) && !(sanitizeNodeName(twinName) in clip.joints)) continue;
+      const twin = resolveBone(scene, twinName);
+      const def = resolveBone(scene, CLIP_TWIN_OF[twinName]!);
+      if (twin && def && (CLIP_TWIN_OF[twinName]! in clip.joints || sanitizeNodeName(CLIP_TWIN_OF[twinName]!) in clip.joints))
+        twinDefBones.set(twin, def);
+    }
     const rot: ClipTrack<readonly [number, number, number, number]>[] = [];
     for (const [name, frames] of Object.entries(clip.joints)) {
       const bone = resolveBone(scene, name);
@@ -916,12 +1007,18 @@ export function createHumanoPresence(
       const o = overrideFor(bone);
       o.hasQ = true;
       o.q.copy(boneRest.quaternion);
+      if (twinDefBones.has(bone)) {
+        o.hasP = true; // the FK writes both halves of a twin's pose
+        o.p.copy(boneRest.position);
+        continue; // derived, not sampled
+      }
       rot.push({ bone, frames, o, rest: boneRest });
     }
     const pos: ClipTrack<readonly [number, number, number]>[] = [];
     for (const [name, frames] of Object.entries(clip.translations)) {
       const bone = resolveBone(scene, name);
       if (!bone) continue;
+      if (twinDefBones.has(bone)) continue; // derived, not sampled
       capture(bone);
       const boneRest = rests.get(bone);
       if (!boneRest) continue;
@@ -944,7 +1041,80 @@ export function createHumanoPresence(
         root = { bone: rootBone, frames: clip.root.translation, o, rest: boneRest };
       }
     }
-    clipState = { fps: clip.fps, frames: clip.frames, rot, pos, root };
+    /*
+      The FK node set: every twin, every DEF counterpart, and the unwritten
+      pass-through nodes that connect a twin to its nearest tracked ancestor
+      (MCH-spine.003 sits between spine_fk.002 and spine_fk.003 and nothing
+      writes it). A chain top with no tracked ancestor anchors on its rest
+      parent world — everything above it is static. Built once here; the
+      per-frame path only rewrites the preallocated transforms.
+    */
+    const fkByBone = new Map<THREE.Bone, ClipFkNode>();
+    const fkNodeFor = (fkBone: THREE.Bone): ClipFkNode => {
+      let node = fkByBone.get(fkBone);
+      if (!node) {
+        capture(fkBone);
+        node = {
+          bone: fkBone,
+          rest: rests.get(fkBone)!,
+          o: baseOverride.get(fkBone) ?? null,
+          def: null,
+          parent: null,
+          anchorQ: null,
+          anchorP: null,
+          wq: new THREE.Quaternion(),
+          wp: new THREE.Vector3(),
+          pwq: new THREE.Quaternion(),
+          pwp: new THREE.Vector3(),
+        };
+        fkByBone.set(fkBone, node);
+      }
+      return node;
+    };
+    for (const [twin, def] of twinDefBones) {
+      fkNodeFor(def);
+      fkNodeFor(twin).def = fkNodeFor(def);
+    }
+    for (const node of [...fkByBone.values()]) {
+      let ancestor = node.bone.parent;
+      const trail: THREE.Object3D[] = [];
+      while (ancestor && ancestor !== scene && !fkByBone.has(ancestor as THREE.Bone)) {
+        trail.push(ancestor);
+        ancestor = ancestor.parent;
+      }
+      if (ancestor && ancestor !== scene && fkByBone.has(ancestor as THREE.Bone)) {
+        let parentNode = fkByBone.get(ancestor as THREE.Bone)!;
+        for (let k = trail.length - 1; k >= 0; k -= 1) {
+          const through = fkNodeFor(trail[k] as THREE.Bone);
+          through.parent = parentNode;
+          parentNode = through;
+        }
+        node.parent = parentNode;
+      } else {
+        node.anchorQ = node.rest.parentWorldQuaternionInverse.clone().invert();
+        node.anchorP = node.rest.worldPosition
+          .clone()
+          .sub(node.rest.position.clone().applyQuaternion(node.anchorQ));
+      }
+    }
+    // Order by dependency: a node needs its parent's world, a twin also its
+    // DEF bone's. The hierarchy is a tree, so this always terminates.
+    const fk: ClipFkNode[] = [];
+    const placed = new Set<ClipFkNode>();
+    const pending = [...fkByBone.values()];
+    while (fk.length < pending.length) {
+      let advanced = false;
+      for (const node of pending) {
+        if (placed.has(node)) continue;
+        if (node.parent && !placed.has(node.parent)) continue;
+        if (node.def && !placed.has(node.def)) continue;
+        fk.push(node);
+        placed.add(node);
+        advanced = true;
+      }
+      if (!advanced) break;
+    }
+    clipState = { fps: clip.fps, frames: clip.frames, rot, pos, root, fk, fkByBone };
     clipTime = timeS;
     clipFadeTarget = 1;
   };
@@ -1150,6 +1320,46 @@ export function createHumanoPresence(
           r.y + (p0[1] + (p1[1] - p0[1]) * ft) * clipW,
           r.z + (p0[2] + (p1[2] - p0[2]) * ft) * clipW,
         );
+      }
+      /*
+        THE TWINS, AT THIS BLEND. Sampled DEF locals are on the overrides;
+        run the mini-FK top-down: each DEF/pass-through node composes its
+        world from its parent, and each twin then receives its DEF bone's
+        world delta Δ(w) = W(def)·Wrest(def)⁻¹ about the CURRENT pivot —
+        Wtwin = Δ·Wrest(twin), Ptwin = P(def) + Δ·(Prest(twin)−Prest(def)) —
+        which is the retargeter's own twin construction evaluated at blend w
+        instead of only at 1. The slerp of the DEF locals IS Δ raised to w
+        (slerp(q0, D·q0, w) = D^w·q0), so deriving the twin from it keeps
+        rotation and pivot translation consistent at every weight; sampling
+        the twin's own tracks and lerping the translation does not, and
+        measured 1.83 mm of eye drift at blend 0.5 (Finding 2, 3d18ae8).
+      */
+      for (const node of clipState.fk) {
+        if (node.parent) {
+          node.pwq.copy(node.parent.wq);
+          node.pwp.copy(node.parent.wp);
+        } else {
+          node.pwq.copy(node.anchorQ!);
+          node.pwp.copy(node.anchorP!);
+        }
+        if (node.def) {
+          clipDelta.copy(node.def.wq).multiply(clipScratchQ.copy(node.def.rest.worldQuaternion).invert());
+          node.wq.copy(clipDelta).multiply(node.rest.worldQuaternion);
+          node.wp
+            .copy(node.rest.worldPosition)
+            .sub(node.def.rest.worldPosition)
+            .applyQuaternion(clipDelta)
+            .add(node.def.wp);
+          const o = node.o!;
+          clipScratchQ.copy(node.pwq).invert();
+          o.q.copy(clipScratchQ).multiply(node.wq);
+          o.p.copy(node.wp).sub(node.pwp).applyQuaternion(clipScratchQ);
+        } else {
+          const lq = node.o?.hasQ ? node.o.q : node.rest.quaternion;
+          const lp = node.o?.hasP ? node.o.p : node.rest.position;
+          node.wq.copy(node.pwq).multiply(lq);
+          node.wp.copy(lp).applyQuaternion(node.pwq).add(node.pwp);
+        }
       }
       for (const [clipBone, o] of baseOverride) {
         if (o.hasQ) clipBone.quaternion.copy(o.q);

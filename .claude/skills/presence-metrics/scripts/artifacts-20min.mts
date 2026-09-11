@@ -4,10 +4,14 @@
 //
 // Two passes:
 //   A) no clip base — the presence alone.
-//   B) a clip base cycling idle_19 → (5 s rest) → idle_21 → (5 s rest) →
-//      wei_rl_45 → …, clips from `node tools/retarget_staystill.mjs
+//   B) a clip base cycling idle_21 → (5 s rest) → idle_25 → (5 s rest) →
+//      wei_rl_28 → …, clips from `node tools/retarget_staystill.mjs
 //      --all-curated` (/tmp/staystill_<take>.clip.json), so the CLIP_FADE_S
-//      cross-fades and clip playback are covered.
+//      cross-fades and clip playback are covered. The trio is the curated
+//      set's two idles plus its largest balance shift — an earlier revision
+//      cycled idle_19 and wei_rl_45, both of which curation now rejects
+//      (arm-chain loop gaps 24.1° and 52.2°; wei_rl_45 also fails the 3 cm
+//      ankle return).
 //
 // Detectors, per frame:
 //   pose reset      any bone's LOCAL rotation jumping > 10° in one frame
@@ -245,5 +249,5 @@ const load = (name: string): ClipWithContacts =>
 
 console.log(`20 simulated minutes, 60 Hz, seed 7, quiet input, real natalie.gltf hierarchy`);
 if (process.env.PASS !== 'B') report('pass A: no clip base', run(null));
-if (process.env.PASS !== 'A') report('pass B: clip base cycling idle_19 → idle_21 → wei_rl_45 (5 s rests)', run([load('idle_19'), load('idle_21'), load('wei_rl_45')]));
+if (process.env.PASS !== 'A') report('pass B: clip base cycling idle_21 → idle_25 → wei_rl_28 (5 s rests)', run([load('idle_21'), load('idle_25'), load('wei_rl_28')]));
 console.log('self-intersection: not measured — no mesh/collision representation in this harness (bones only)');
