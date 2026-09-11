@@ -64,6 +64,7 @@
  * SOT-KEYWORDS: humano presence natalie idle morph bones gaze breath beat native web shared def spine weight shift fingers firewall a2f face emotion
  */
 import * as THREE from 'three';
+import { idleConfig } from '../idle/config.ts';
 import { HAND_CHANNELS, IDLE_CHANNELS, IdleEngine, mulberry32, type IdleFrame, type IdleInputs } from '../idle/engine.ts';
 import { DEFAULT_GESTURE_LIMITS } from '../safety/gesture-gate.ts';
 import type { Shape } from '../speech/track.ts';
@@ -97,6 +98,27 @@ export const HUMANO_BONES = {
   foreArmR: 'DEF-forearm.R',
   handL: 'DEF-hand.L',
   handR: 'DEF-hand.R',
+  /*
+    THE LEGS, which this map did not have and the asset always did.
+
+    Axes measured from the shipped rig the same way the arm and spine axes
+    were, not assumed from the others:
+
+      DEF-thigh   +x extends the hip (foot travels -0.223 z), +z abducts
+      DEF-shin    +x FLEXES the knee (foot -0.106 z and +0.020 y — the heel
+                  rises toward the buttock), +z abducts, +y is twist
+      DEF-foot    +x plantarflexes (toe -0.037 y)
+
+    The knee and the forearm therefore share a convention: +x flexes. That is
+    worth knowing and not worth relying on — `rig-axes.test.ts` asserts it, so
+    a re-export that changes it turns red instead of bending her sideways.
+  */
+  thighL: 'DEF-thigh.L',
+  thighR: 'DEF-thigh.R',
+  shinL: 'DEF-shin.L',
+  shinR: 'DEF-shin.R',
+  footL: 'DEF-foot.L',
+  footR: 'DEF-foot.R',
 } as const;
 
 /** The finger deform bones, per side, in `FINGER_CHANNELS` order. */
@@ -224,6 +246,23 @@ export const STANCE = {
  */
 export function stanceElbow(side: 'L' | 'R'): number {
   return STANCE.elbowBend + (side === 'L' ? 1 : -1) * STANCE.asymmetry.elbow;
+}
+
+/**
+ * A first-order follower with a settable time constant. Two of these carry the
+ * load signal: one with a short constant so the knee arrives ahead of the
+ * pelvis, one with a longer one so the shoulder counter-tilt arrives behind it.
+ *
+ * Named for what it follows rather than `Follower`, which this file already has
+ * for the hand — that one takes a fixed constant and two arguments, and two
+ * classes called the same thing in one file is the kind of collision that
+ * type-checks in the wrong direction.
+ */
+class LoadFollower {
+  value = 0;
+  step(target: number, dt: number, tauS: number): void {
+    this.value += (target - this.value) * (1 - Math.exp(-dt / Math.max(1e-4, tauS)));
+  }
 }
 
 /** three's own sanitiser, reproduced so a lookup can try both spellings. */
@@ -700,6 +739,10 @@ export function createHumanoPresence(
   };
   const touchedTwins = new Set<THREE.Bone>();
 
+  // Lead and lag on the load signal — see `LoadFollower`.
+  const loadLead = new LoadFollower();
+  const loadLag = new LoadFollower();
+
   const rest = (): void => {
     for (const bone of rests.keys()) restore(bone);
     for (const mesh of meshes) mesh.morphTargetInfluences?.fill(0);
@@ -847,6 +890,54 @@ export function createHumanoPresence(
       looks like: pelvis over feet, not feet sliding under a rigid body.
     */
     const shift = rm ? 0 : frame.weightShift + frame.swayX;
+    /*
+      THE LEGS ANSWER THE PELVIS.
+
+      `frame.weightShift` is a lateral hip offset in metres; normalised against
+      its own configured amplitude it becomes a LOAD: -1 fully on one leg, +1
+      fully on the other. Everything below is driven from that one number, so
+      the knees cannot disagree with where the weight actually is.
+
+      Before this, the pelvis translated and the legs did not move at all. The
+      comment here used to call that correct — `DEF-thigh.*` are not children of
+      `DEF-spine`, so the legs "stay planted" — and planted they were, but a hip
+      that travels 22 mm over a rigid pair of legs is the mannequin-on-a-turntable
+      signal, not a weight shift. A real shift is a change of SUPPORT.
+
+      The knee leads and the shoulder lags, by the seconds in the config. A
+      pelvis, knee and shoulder that all start on the same frame is the seventh
+      item on the reads-robotic list; the lead is anticipation and the lag is
+      overlap, which is the same pair of principles the beat layer already uses.
+    */
+    const stance = idleConfig.body.stance;
+    const load = rm ? 0 : clamp(frame.weightShift / idleConfig.body.weightShift.amplitudeM, -1, 1);
+    loadLead.step(load, rawDelta, stance.kneeLeadS);
+    loadLag.step(load, rawDelta, stance.shoulderLagS);
+    const kneeLoad = loadLead.value;
+    const shoulderLoad = loadLag.value;
+    /*
+      Positive load leans toward +x. The measured spine axis puts the head at
+      -x for +z, so +x is the side the LEFT bones sit on; the left knee
+      straightens as the load goes positive and the right takes the flexion.
+      Never the same angle on both: `kneeSplitDeg` is added on one and taken off
+      the other, which is the asymmetry the whole stance rests on.
+    */
+    pose(
+      bones.shinL,
+      (stance.kneeBaseDeg - stance.kneeBaseSplitDeg - kneeLoad * stance.kneeSplitDeg) * DEG,
+      0,
+      0,
+    );
+    pose(
+      bones.shinR,
+      (stance.kneeBaseDeg + stance.kneeBaseSplitDeg + kneeLoad * stance.kneeSplitDeg) * DEG,
+      0,
+      0,
+    );
+    // The free heel unweights. Only the unloaded foot, hence the one-sided max.
+    pose(bones.footL, Math.max(0, -kneeLoad) * stance.freeFootPlantarDeg * DEG, 0, 0);
+    pose(bones.footR, Math.max(0, kneeLoad) * stance.freeFootPlantarDeg * DEG, 0, 0);
+
     touchedTwins.clear();
     for (const twin of Object.values(twins)) if (twin) restore(twin);
     // Measured: +z on DEF-spine moves the head −x. Lean back over centre.

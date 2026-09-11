@@ -113,6 +113,56 @@ export const idleConfig = {
       holdS: { min: 3, max: 6 },
       easeS: 0.8,
     },
+    /*
+      CONTRAPPOSTO. The legs' answer to a weight shift, and the reason the
+      pelvis is not floating over a pair of posts.
+
+      A person standing at rest puts most of their weight on one leg. That leg
+      is near-straight and its hip rides high; the free leg's knee carries the
+      flexion. The shoulders counter-tilt against the pelvis, which is the whole
+      geometry of contrapposto and the thing that separates a standing person
+      from a figure at attention.
+
+      Degrees, and asymmetric by construction: `split` is added on one side and
+      subtracted on the other, so the two knees are never at one angle. A
+      perfectly mirrored pose is a test failure, not a resting state.
+
+      Values from the stance spec (design-handoff, this turn): loaded knee ~2
+      degrees, free knee ~13, which `base` 7.5 and `split` 5.5 reproduce at full
+      load. The clinical range for an unloaded knee in relaxed stance is 10-20
+      degrees, so 13 sits low in it — she is standing and listening, not lounging.
+    */
+    stance: {
+      /** Knee flexion at zero load, before either split. */
+      kneeBaseDeg: 7.5,
+      /**
+       * A CONSTANT left-right difference that the load split rides on top of,
+       * so the two knees are never at one angle — not even for the instant the
+       * weight passes through centre.
+       *
+       * Measured without it: 873 frames out of 7200 had both knees identical,
+       * every time the load crossed zero. A mirrored pose is a test failure and
+       * not a resting state, and "only for a moment" is exactly when a viewer's
+       * eye is on the transition. The spec's near-symmetric stance is 5 and 7
+       * degrees, which is this 1 degree either side of the base.
+       */
+      kneeBaseSplitDeg: 1,
+      /** Added to the free knee and taken off the loaded one at full load. */
+      kneeSplitDeg: 5.5,
+      /** The free heel unweights: plantarflexion on the unloaded foot. */
+      freeFootPlantarDeg: 2,
+      /** The loaded hip rides high — pelvis roll toward the free side. */
+      pelvisRollDeg: 4,
+      /** Shoulders tilt AGAINST the pelvis. Same sign convention, applied up-chain. */
+      shoulderCounterDeg: 5,
+      /**
+       * The knee leads the pelvis and the shoulder lags it, in seconds.
+       * Anticipation and overlap: everything starting on one frame is the
+       * seventh item on the reads-robotic list.
+       */
+      kneeLeadS: 0.12,
+      shoulderLagS: 0.15,
+    },
     shoulder: { hz: 0.12, maxDeg: 1.5 },
     wrist: { hz: 0.18, maxDeg: 3 },
     /**
