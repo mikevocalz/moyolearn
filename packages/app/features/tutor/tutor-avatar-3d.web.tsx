@@ -49,7 +49,15 @@ import { useEffect, useRef } from 'react';
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EmotionState, type EmotionCategory, type Shape } from '@acme/avatar';
-import { createHumanoPresence, frameBody, type HumanoPresence } from '@acme/avatar/body';
+import {
+  type HairMaterial,
+  bakeHairAux,
+  bakeHairTangents,
+  createHairMaterial,
+  createHumanoPresence,
+  frameBody,
+  type HumanoPresence,
+} from '@acme/avatar/body';
 import { CAMERA_FOV, addRig } from './natalie-rig';
 import type { TutorCues } from './tutor-cues';
 
@@ -163,6 +171,67 @@ export interface TutorAvatar3DProps {
  * — `Exception in HostFunction: <unknown>` every frame — and that path has not
  * been retested. Do not delete it on the strength of this.
  */
+/**
+ * Gives the hair its own TSL material, with the strand parameters and tangents
+ * baked from the geometry. Opt-in behind `?tsl=1` while the look is judged: the
+ * authored materials render correctly now, so this is a quality change, not a
+ * fix.
+ *
+ * HAIR ONLY, AND THE BODY IS THE REASON. `SkinNodeMaterial` was tried here and
+ * cannot be applied to this asset at all. It adds subsurface scattering with a
+ * single `scatterColor` across every surface the material covers — and this
+ * body is ONE primitive with ONE material covering skin, t-shirt, leggings and
+ * shoes together. The result is a uniformly flesh-toned figure with the
+ * clothing scattering light like skin; rendered and looked at, not predicted.
+ * Doc 22 presumes a separate GNM head mesh, which `avatar-manifest.json`
+ * lists and this repo does not contain. Until skin is its own surface there is
+ * nothing to apply a skin shader TO, so `bakeSkinAux` stays exported and
+ * tested with no caller, which is the honest state rather than a swap that
+ * makes her worse.
+ *
+ * The textures carry over. `createHairMaterial` builds a
+ * `MeshPhysicalNodeMaterial`, so the authored maps are assigned onto it — what
+ * the TSL material adds is the braid sway and a real anisotropic tangent
+ * frame, not a replacement for the groom's colour.
+ */
+function applyTslHair(body: THREE.Object3D): HairMaterial | null {
+  let handle: HairMaterial | null = null;
+  body.traverse((child) => {
+    const mesh = child as THREE.SkinnedMesh;
+    if (!mesh.isSkinnedMesh) return;
+    const authored = mesh.material as THREE.MeshPhysicalMaterial;
+    // Told apart by MATERIAL NAME, not primitive order: the name comes from the
+    // asset, the order is a loader detail.
+    if (!/_Hair_/.test(authored.name)) return;
+    const geometry = mesh.geometry;
+    const position = geometry.getAttribute('position');
+    const normal = geometry.getAttribute('normal');
+    const uv = geometry.getAttribute('uv');
+    const index = geometry.getIndex();
+    if (!position || !normal || !uv || !index) return;
+    const accessors = {
+      position,
+      normal,
+      uv,
+      index: { count: index.count, getX: (i: number) => index.getX(i) },
+    };
+
+    const aux = bakeHairAux(accessors);
+    geometry.setAttribute('aHairT', new THREE.BufferAttribute(aux.t, 1));
+    geometry.setAttribute('aHairPhase', new THREE.BufferAttribute(aux.phase, 1));
+    geometry.setAttribute('tangent', new THREE.BufferAttribute(bakeHairTangents(accessors), 4));
+
+    const hair = createHairMaterial({ hairColor: authored.color.clone() });
+    hair.material.map = authored.map ?? null;
+    hair.material.normalMap = authored.normalMap ?? null;
+    hair.material.alphaTest = authored.alphaTest;
+    hair.material.side = authored.side;
+    mesh.material = hair.material;
+    handle = hair;
+  });
+  return handle;
+}
+
 function dropInertVertexColors(scene: THREE.Object3D): void {
   scene.traverse((child) => {
     const mesh = child as THREE.SkinnedMesh;
@@ -277,6 +346,9 @@ export function TutorAvatar3D({
       const scene = new THREE.Scene();
       addRig(scene);
       dropInertVertexColors(body);
+      const hairHandle = new URLSearchParams(window.location.search).has('tsl')
+        ? applyTslHair(body)
+        : null;
       scene.add(body);
 
       const camera = new THREE.PerspectiveCamera(CAMERA_FOV, 1, 0.1, 10);
@@ -366,6 +438,14 @@ export function TutorAvatar3D({
           : cues?.partnerSpeaking
             ? 'listening'
             : (phaseRef.current ?? 'waiting');
+        /*
+          The sway is the whole reason `aHairT` and `aHairPhase` are baked: the
+          material reads them in `positionNode` and moves the braid tips while
+          pinning the roots. `update` writes two uniforms and does no geometry
+          work, so this is cheap — but without it the attributes are inert and
+          the groom is as still as it was before any of this.
+        */
+        hairHandle?.update(timeMs / 1000);
         presence.step(delta, {
           speaking,
           phase: nextPhase,
