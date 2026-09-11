@@ -12,7 +12,9 @@ import { describe, it } from 'node:test';
 import * as THREE from 'three';
 import { createClipPlayer, type RetargetedClip } from './clip-player.ts';
 
-const CLIP_PATH = '/tmp/staystill_wei_lr.clip.json';
+// CLIP_PATH env var points the suite at another retargeted clip (the curated
+// set from `--all-curated`); unset, it is the original wei_lr gate unchanged.
+const CLIP_PATH = process.env.CLIP_PATH ?? '/tmp/staystill_wei_lr.clip.json';
 
 function buildRealScene(): { root: THREE.Group; byName: Map<string, THREE.Bone> } {
   const gltf = JSON.parse(
@@ -84,16 +86,27 @@ describe('clip player on the shipped rig', { skip: !existsSync(CLIP_PATH) && 'ru
     assert.ok(worstArm < 0.001, `arm root drifted ${(worstArm * 1000).toFixed(2)} mm in the chest frame`);
   });
 
-  it('moves the hips the take distance without teleporting between frames', () => {
+  /*
+    NON-VACUOUS WITHOUT BEING WEI-SPECIFIC. This asserted hip travel > 0.3 m,
+    "the take is 41.5" — true of the balance shifts and impossible for any
+    calm idle, so all five curated idles were correctly excluded by a floor
+    that was really about one clip. The principled check is internal
+    consistency: the SCENE's hip travel must match the extent of the clip's
+    own root track. That is the exact class the 913 mm bug was — player and
+    data disagreeing about the root convention — and it is equally strict for
+    a 42 cm shift and a 5 cm idle, while a zeroed or offset root still fails.
+  */
+  it('moves the hips exactly the clip distance without teleporting between frames', () => {
     const { root, byName } = buildRealScene();
     const player = createClipPlayer(root, clip!);
     const hip = byName.get('DEF-spine')!;
+    const xs = clip!.root.translation.map((p) => p[0]);
+    const expected = Math.max(...xs) - Math.min(...xs);
     let minX = Infinity;
     let maxX = -Infinity;
     let previous: number | null = null;
     let worstStep = 0;
     for (let f = 0; f < clip!.frames * 2; f += 1) {
-      // Half-frame steps exercise the slerp, not just the keyframes.
       player.apply(f / (clip!.fps * 2));
       root.updateMatrixWorld(true);
       const x = hip.getWorldPosition(new THREE.Vector3()).x;
@@ -102,7 +115,11 @@ describe('clip player on the shipped rig', { skip: !existsSync(CLIP_PATH) && 'ru
       if (previous !== null) worstStep = Math.max(worstStep, Math.abs(x - previous));
       previous = x;
     }
-    assert.ok(maxX - minX > 0.3, `hip travelled ${((maxX - minX) * 100).toFixed(1)} cm — the take is 41.5`);
+    const measured = maxX - minX;
+    assert.ok(
+      Math.abs(measured - expected) < 0.002,
+      `scene hip travelled ${(measured * 100).toFixed(1)} cm, the clip's root track says ${(expected * 100).toFixed(1)} cm`,
+    );
     assert.ok(worstStep < 0.05, `hip jumped ${(worstStep * 100).toFixed(1)} cm in one half-frame`);
   });
 

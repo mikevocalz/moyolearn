@@ -1,22 +1,38 @@
 #!/usr/bin/env node
 /*
-  Retarget ONE StayStill LaFAN balance-shift clip onto the shipped Rigify rig.
+  Retarget StayStill LaFAN clips onto the shipped Rigify rig.
 
-    node tools/retarget_staystill.mjs [zipPath] [gltfPath]
+    node tools/retarget_staystill.mjs [--all-curated] [zipPath] [gltfPath]
 
-  Picks the `lafan/actions/wei_lr_*` take with the largest horizontal hip
-  travel (printed), maps it onto the DEF bones of
-  `assets/natalie-phone/natalie.gltf`, and writes a JSON clip to
-  /tmp/staystill_wei_lr.clip.json. Verification numbers (knee flexion range,
-  hip lateral travel, quaternion norms) print on every run.
+  Default (no flag): exactly the original single-clip behaviour — pick the
+  `lafan/actions/wei_lr_*` take with the largest horizontal hip travel
+  (printed), retarget with frame 0 as the source reference, write
+  /tmp/staystill_wei_lr.clip.json. Output is byte-identical to the
+  pre-curation version of this tool.
+
+  --all-curated: retarget a curated set of ten takes, each to
+  /tmp/staystill_<take>.clip.json:
+    · 5 balance shifts — wei_lr and wei_rl takes ranked by horizontal hip
+      extent
+      (the wei_lr_45 selection logic), kept only if the hips end within
+      5 cm of where they started (in-place, no walk-off).
+    · 5 idles — lafan/idle/idle_*.bvh with the LEAST total horizontal hip
+      path length (calm subjects suit a tutor).
+  Curated takes may start mid-motion, so the source reference frame is not
+  frame 0: it is the frame of lowest hip speed inside the calmest 1 s window
+  (printed per clip). Per-clip SOURCE ankle horizontal travel is printed so
+  foot skating risk is visible — foot IK is NOT solved by this tool.
+  Verification numbers (knee flexion range, hip travel, quaternion norms)
+  print for every clip.
 
   ── MAPPING TABLE (LaFAN joint → Rigify DEF bone → control twin) ────────────
   World-delta transfer: for every frame the SOURCE joint's world rotation
-  delta from the clip's frame 0 (the actor standing neutral) is applied about
-  the TARGET bone's own rest world orientation, after a yaw that aligns the
-  two skeletons' facing. A raw Euler copy is wrong twice over: the LaFAN zero
-  pose lies with every bone along local +X (not standing), and the Rigify
-  rest locals are nowhere near identity. Frame 0 is the source's "own rest".
+  delta from the clip's reference frame (the actor standing neutral) is
+  applied about the TARGET bone's own rest world orientation, after a yaw
+  that aligns the two skeletons' facing. A raw Euler copy is wrong twice
+  over: the LaFAN zero pose lies with every bone along local +X (not
+  standing), and the Rigify rest locals are nowhere near identity. The
+  reference frame is the source's "own rest".
 
     Hips        → DEF-spine       (+ root translation × height ratio) → ORG-spine
     Spine       → DEF-spine.001                                       → MCH-spine.002
@@ -39,9 +55,10 @@
   head's equals Neck exactly — the fractions only shape the curve in between.
 
   UNMAPPED source joints, and why:
-    Head — FROZEN in this retarget (constant to ~1e-6°; StayStill baked head
-      motion into Neck — see tools/staystill_stats.mjs). DEF-spine.006 and
-      ORG-spine.006 therefore carry Neck's delta so the head rides the neck.
+    Head — FROZEN in the StayStill corpus (checked and printed per clip;
+      StayStill baked head motion into Neck — see tools/staystill_stats.mjs).
+      DEF-spine.006 and ORG-spine.006 therefore carry Neck's delta so the
+      head rides the neck.
     LeftToe / RightToe — DEF-toe.L/R exist, but toe articulation in a balance
       shift is noise-level and an unwritten toe keeps the soles flat.
     LeftShoulder / RightShoulder — the clavicles. DEF-shoulder.* deforms the
@@ -81,7 +98,7 @@
 
   SOT: packages/avatar/src/presence/humano.ts (TWO CHAINS, ONE BODY) ·
        tools/staystill_stats.mjs · docs/decisions/adr-113-body-motion-layer.md
-  SOT-KEYWORDS: retarget staystill lafan rigify def twin wei balance shift bvh clip
+  SOT-KEYWORDS: retarget staystill lafan rigify def twin wei balance shift idle curated bvh clip
 */
 import { execFileSync } from 'node:child_process';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -89,9 +106,11 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
 const here = path.dirname(fileURLToPath(import.meta.url));
-const ZIP = process.argv[2] ?? path.join(here, '../assets/motion/staystill/staystill.zip');
-const GLTF = process.argv[3] ?? path.join(here, '../assets/natalie-phone/natalie.gltf');
-const OUT = '/tmp/staystill_wei_lr.clip.json';
+const argv = process.argv.slice(2);
+const ALL_CURATED = argv.includes('--all-curated');
+const positional = argv.filter((a) => a !== '--all-curated');
+const ZIP = positional[0] ?? path.join(here, '../assets/motion/staystill/staystill.zip');
+const GLTF = positional[1] ?? path.join(here, '../assets/natalie-phone/natalie.gltf');
 
 /* ── quaternion / vector helpers ([x,y,z,w], column-vector convention) ───── */
 const qmul = (a, b) => [
@@ -231,13 +250,14 @@ function bvhWorld(bvh, row) {
   return { rot, pos };
 }
 
-/* ── pick the wei_lr take with the largest horizontal hip travel ─────────── */
-const names = execFileSync('unzip', ['-l', ZIP], { maxBuffer: 1 << 26 })
-  .toString('utf8')
-  .split('\n')
-  .map((l) => l.trim().split(/\s+/).pop())
-  .filter((n) => n && /^lafan\/actions\/wei_lr_\d+\.bvh$/.test(n));
-if (names.length === 0) throw new Error('no lafan/actions/wei_lr_*.bvh in zip');
+/* ── take listing + cheap hip pre-scan (root channels only) ──────────────── */
+const listTakes = (re) =>
+  execFileSync('unzip', ['-l', ZIP], { maxBuffer: 1 << 26 })
+    .toString('utf8')
+    .split('\n')
+    .map((l) => l.trim().split(/\s+/).pop())
+    .filter((n) => n && re.test(n));
+const readTake = (name) => execFileSync('unzip', ['-p', ZIP, name], { maxBuffer: 1 << 26 }).toString('utf8');
 
 const pcaExtent = (xs, zs) => {
   const n = xs.length;
@@ -265,9 +285,8 @@ const pcaExtent = (xs, zs) => {
   return hi - lo;
 };
 
-let best = null;
-for (const name of names) {
-  const text = execFileSync('unzip', ['-p', ZIP, name], { maxBuffer: 1 << 26 }).toString('utf8');
+/** Hip XZ stats from the raw MOTION rows: extent, end-vs-start distance, path length (cm). */
+const hipScan = (text) => {
   const m = text.indexOf('MOTION');
   const lines = text.slice(m).split('\n').slice(3).filter((l) => l.trim());
   const xs = [];
@@ -277,33 +296,17 @@ for (const name of names) {
     xs.push(+s[0]);
     zs.push(+s[2]);
   }
-  const travel = pcaExtent(xs, zs);
-  if (!best || travel > best.travel) best = { name, travel, text };
-}
-console.log(`clip: ${best.name}  (largest horizontal hip travel of ${names.length} wei_lr takes: ${best.travel.toFixed(2)} cm)`);
+  const n = xs.length;
+  let pathLen = 0;
+  for (let k = 1; k < n; k++) pathLen += Math.hypot(xs[k] - xs[k - 1], zs[k] - zs[k - 1]);
+  return {
+    extent: pcaExtent(xs, zs),
+    returnDist: Math.hypot(xs[n - 1] - xs[0], zs[n - 1] - zs[0]),
+    pathLen,
+  };
+};
 
-const bvh = parseBvh(best.text);
-const jIdx = new Map(bvh.joints.map((j, idx) => [j.name, idx]));
-const fps = Math.round(1 / bvh.frameTime);
-
-// Confirm the Head freeze this mapping relies on.
-{
-  const h = bvh.joints[jIdx.get('Head')];
-  let spread = 0;
-  for (const ch of [0, 1, 2]) {
-    let lo = Infinity;
-    let hi = -Infinity;
-    for (const row of bvh.frames) {
-      const v = row[h.chBase + ch];
-      if (v < lo) lo = v;
-      if (v > hi) hi = v;
-    }
-    spread = Math.max(spread, hi - lo);
-  }
-  console.log(`head channel spread: ${spread.toExponential(2)} deg (frozen — baked into Neck, as documented)`);
-}
-
-/* ── glTF rest pose ──────────────────────────────────────────────────────── */
+/* ── glTF rest pose (clip-independent) ───────────────────────────────────── */
 const gltf = JSON.parse(readFileSync(GLTF, 'utf8'));
 const nodes = gltf.nodes;
 const nParent = new Array(nodes.length).fill(-1);
@@ -311,7 +314,7 @@ nodes.forEach((n, idx) => (n.children ?? []).forEach((c) => (nParent[c] = idx)))
 const nByName = new Map(nodes.map((n, idx) => [n.name, idx]));
 const localPos = nodes.map((n) => n.translation ?? [0, 0, 0]);
 const localRot = nodes.map((n) => (n.rotation ? qnorm(n.rotation) : QID));
-nodes.forEach((n, idx) => {
+nodes.forEach((n) => {
   if (n.matrix) throw new Error(`node ${n.name} uses a matrix — decompose first`);
   if (n.scale && n.scale.some((s) => Math.abs(s - 1) > 1e-4)) throw new Error(`node ${n.name} has non-unit scale`);
 });
@@ -345,68 +348,6 @@ const N = (name) => {
   return idx;
 };
 
-/* ── world alignment (yaw) and scale ─────────────────────────────────────── */
-const ref = bvhWorld(bvh, bvh.frames[0]);
-const horiz = (v) => {
-  const h = [v[0], 0, v[2]];
-  const n = Math.hypot(h[0], h[2]);
-  return [h[0] / n, 0, h[2] / n];
-};
-// forward = up × (P_right − P_left), same formula on both skeletons
-const fwdSrc = horiz(
-  ((r) => [r[2] * 1 - 0, 0, -r[0]])(vsub(ref.pos[jIdx.get('RightUpLeg')], ref.pos[jIdx.get('LeftUpLeg')])),
-);
-const fwdTgt = horiz(
-  ((r) => [r[2] * 1 - 0, 0, -r[0]])(vsub(restWPos[N('DEF-thigh.R')], restWPos[N('DEF-thigh.L')])),
-);
-const yaw = Math.atan2(
-  fwdSrc[0] * fwdTgt[2] - fwdSrc[2] * fwdTgt[0],
-  fwdSrc[0] * fwdTgt[0] + fwdSrc[2] * fwdTgt[2],
-);
-// rotation about +Y (sign resolved by the check below) maps src forward onto tgt forward
-const alignErr = (g) => {
-  const c = qrot(g, fwdSrc);
-  return Math.hypot(c[0] - fwdTgt[0], c[2] - fwdTgt[2]);
-};
-let G = qaxis([0, 1, 0], (-yaw * 180) / Math.PI);
-if (alignErr(G) > 1e-6) G = qaxis([0, 1, 0], (yaw * 180) / Math.PI);
-if (alignErr(G) > 1e-6) throw new Error(`yaw alignment failed (err ${alignErr(G)})`);
-const Ginv = qconj(G);
-const srcHipY = ref.pos[jIdx.get('Hips')][1]; // cm
-const tgtHipY = restWPos[N('DEF-spine')][1]; // m
-const ratio = tgtHipY / (srcHipY / 100);
-console.log(`hip heights: source ${srcHipY.toFixed(1)} cm, target ${(tgtHipY * 100).toFixed(1)} cm → height ratio ${ratio.toFixed(3)}`);
-
-/* ── per-frame source world deltas, conjugated into the target world ─────── */
-const S = (name) => jIdx.get(name); // source joint index
-const deltaOf = (frameWorld, srcIdx) => qmul(G, qmul(qmul(frameWorld.rot[srcIdx], qconj(ref.rot[srcIdx])), Ginv));
-
-// target bone → function(frameWorld) → world rotation delta in target space
-const assign = new Map();
-const direct = (tgt, src) => assign.set(N(tgt), (fw) => deltaOf(fw, S(src)));
-direct('DEF-spine', 'Hips');
-direct('DEF-spine.001', 'Spine');
-direct('DEF-spine.002', 'Spine1');
-direct('DEF-spine.003', 'Spine2');
-assign.set(N('DEF-spine.004'), (fw) => qslerp(deltaOf(fw, S('Spine2')), deltaOf(fw, S('Neck')), 0.5));
-direct('DEF-spine.005', 'Neck');
-direct('DEF-spine.006', 'Neck'); // Head frozen in source — baked into Neck
-for (const [l, r] of [
-  ['LeftUpLeg', 'DEF-thigh.L'],
-  ['RightUpLeg', 'DEF-thigh.R'],
-  ['LeftLeg', 'DEF-shin.L'],
-  ['RightLeg', 'DEF-shin.R'],
-  ['LeftFoot', 'DEF-foot.L'],
-  ['RightFoot', 'DEF-foot.R'],
-  ['LeftArm', 'DEF-upper_arm.L'],
-  ['RightArm', 'DEF-upper_arm.R'],
-  ['LeftForeArm', 'DEF-forearm.L'],
-  ['RightForeArm', 'DEF-forearm.R'],
-  ['LeftHand', 'DEF-hand.L'],
-  ['RightHand', 'DEF-hand.R'],
-])
-  direct(r, l);
-
 // control twin → its DEF counterpart (same world delta + pivot-riding translation)
 const TWIN_OF = {
   'ORG-spine': 'DEF-spine',
@@ -420,106 +361,286 @@ const TWIN_OF = {
 const twinIdx = new Map(Object.entries(TWIN_OF).map(([t, d]) => [N(t), N(d)]));
 const spineChain = ['DEF-spine', 'DEF-spine.001', 'DEF-spine.002', 'DEF-spine.003', 'DEF-spine.004', 'DEF-spine.005', 'DEF-spine.006'].map(N);
 
-/* ── per-frame solve ─────────────────────────────────────────────────────── */
-const outJoints = {};
-const outTrans = {};
-const rootTrans = [];
-const emitQ = new Map(); // node idx → frames array (for hemisphere continuity)
-const emitFor = (idx) => {
-  const name = nodes[idx].name;
-  if (!emitQ.has(idx)) {
-    emitQ.set(idx, []);
-    outJoints[name] = emitQ.get(idx);
-  }
-  return emitQ.get(idx);
-};
-let maxNormDev = 0;
-const round = (v) => Math.round(v * 1e6) / 1e6;
-
-const hipsWorldOut = []; // target DEF-spine world positions, for the travel print
-for (const row of bvh.frames) {
-  const fw = bvhWorld(bvh, row);
-
-  // desired world ROTATION per assigned DEF bone
-  const desiredRot = new Map();
-  for (const [idx, fn] of assign) desiredRot.set(idx, qnorm(qmul(fn(fw), restWRot[idx])));
-
-  // DEF spine chain world POSITIONS: root translation, then FK down the chain
-  const dHip = vsub(fw.pos[S('Hips')], ref.pos[S('Hips')]); // cm
-  const dHipT = qrot(G, dHip).map((v) => (v / 100) * ratio); // m, aligned, scaled
-  const desiredPos = new Map();
-  desiredPos.set(spineChain[0], vadd(restWPos[spineChain[0]], dHipT));
-  for (let k = 1; k < spineChain.length; k++) {
-    const c = spineChain[k];
-    const p = spineChain[k - 1];
-    desiredPos.set(c, vadd(desiredPos.get(p), qrot(desiredRot.get(p), localPos[c])));
-  }
-  hipsWorldOut.push(desiredPos.get(spineChain[0]));
-
-  // twins: same world delta, pivot rides the DEF counterpart
-  for (const [tw, def] of twinIdx) {
-    const delta = qmul(desiredRot.get(def), qconj(restWRot[def]));
-    desiredRot.set(tw, qnorm(qmul(delta, restWRot[tw])));
-    const offset = vsub(restWPos[tw], restWPos[def]);
-    desiredPos.set(tw, vadd(desiredPos.get(def), qrot(delta, offset)));
-  }
-
-  // full-tree FK: mapped nodes take their desired world, everything else rest
-  const curWRot = new Array(nodes.length);
-  const curWPos = new Array(nodes.length);
-  for (const idx of order) {
-    const p = nParent[idx];
-    const pRot = p === -1 ? QID : curWRot[p];
-    const pPos = p === -1 ? [0, 0, 0] : curWPos[p];
-    let lq = localRot[idx];
-    let lp = localPos[idx];
-    if (desiredRot.has(idx)) {
-      lq = qnorm(qmul(qconj(pRot), desiredRot.get(idx)));
-      if (desiredPos.has(idx)) lp = qrot(qconj(pRot), vsub(desiredPos.get(idx), pPos));
-      const frames = emitFor(idx);
-      const prev = frames[frames.length - 1];
-      if (prev && prev[0] * lq[0] + prev[1] * lq[1] + prev[2] * lq[2] + prev[3] * lq[3] < 0)
-        lq = [-lq[0], -lq[1], -lq[2], -lq[3]];
-      maxNormDev = Math.max(maxNormDev, Math.abs(1 - Math.hypot(...lq)));
-      frames.push(lq.map(round));
-      if (desiredPos.has(idx)) {
-        const name = nodes[idx].name;
-        // Root track is a DELTA from rest local: the player adds it to the
-        // bone's rest position (rootRest + p), unlike the twin tracks which
-        // it sets absolutely. Emitting the absolute local here shifted the
-        // whole DEF chain up by the hip's rest height on playback.
-        if (idx === spineChain[0]) rootTrans.push(vsub(lp, localPos[idx]).map(round));
-        else (outTrans[name] ??= []).push(lp.map(round));
-      }
+/* ── neutral rest frame: lowest hip speed inside the calmest 1 s window ──── */
+function findRestFrame(bvh) {
+  const root = bvh.joints[0];
+  const pos = bvh.frames.map((row) => bvhRootPos(root, row));
+  const n = pos.length;
+  const speed = new Float64Array(n); // cm per frame
+  for (let f = 1; f < n; f++) speed[f] = Math.hypot(...vsub(pos[f], pos[f - 1]));
+  speed[0] = n > 1 ? speed[1] : 0;
+  const W = Math.min(n, Math.max(1, Math.round(1 / bvh.frameTime)));
+  let acc = 0;
+  for (let f = 0; f < W; f++) acc += speed[f];
+  let bestStart = 0;
+  let bestMean = acc / W;
+  for (let s = 1; s + W <= n; s++) {
+    acc += speed[s + W - 1] - speed[s - 1];
+    if (acc / W < bestMean) {
+      bestMean = acc / W;
+      bestStart = s;
     }
-    curWRot[idx] = qmul(pRot, lq);
-    curWPos[idx] = vadd(pPos, qrot(pRot, lp));
   }
+  let frame = bestStart;
+  for (let f = bestStart; f < bestStart + W; f++) if (speed[f] < speed[frame]) frame = f;
+  return { frame, windowStart: bestStart, meanSpeedCmPerS: bestMean / bvh.frameTime };
 }
 
-/* ── sanity numbers ──────────────────────────────────────────────────────── */
-for (const side of ['L', 'R']) {
-  const idx = N(`DEF-shin.${side}`);
-  const rest = localRot[idx];
-  let lo = Infinity;
-  let hi = -Infinity;
-  for (const q of outJoints[`DEF-shin.${side}`]) {
-    const a = qangleDeg(q, rest);
-    if (a < lo) lo = a;
-    if (a > hi) hi = a;
+/* ── retarget one take ───────────────────────────────────────────────────── */
+function retargetClip({ name, text, srcTravel, out, detectRest }) {
+  const bvh = parseBvh(text);
+  const jIdx = new Map(bvh.joints.map((j, idx) => [j.name, idx]));
+  const fps = Math.round(1 / bvh.frameTime);
+
+  // Confirm the Head freeze this mapping relies on.
+  {
+    const h = bvh.joints[jIdx.get('Head')];
+    let spread = 0;
+    for (const ch of [0, 1, 2]) {
+      let lo = Infinity;
+      let hi = -Infinity;
+      for (const row of bvh.frames) {
+        const v = row[h.chBase + ch];
+        if (v < lo) lo = v;
+        if (v > hi) hi = v;
+      }
+      spread = Math.max(spread, hi - lo);
+    }
+    console.log(
+      spread < 1e-3
+        ? `head channel spread: ${spread.toExponential(2)} deg (frozen — baked into Neck, as documented)`
+        : `head channel spread: ${spread.toExponential(2)} deg (NOT frozen — this take carries head motion the Neck mapping will drop)`,
+    );
   }
-  console.log(`knee flexion delta, DEF-shin.${side}: ${lo.toFixed(2)}° … ${hi.toFixed(2)}°  (range ${(hi - lo).toFixed(2)}°)`);
-}
-{
-  const xs = hipsWorldOut.map((p) => p[0]);
-  const zs = hipsWorldOut.map((p) => p[2]);
-  const travel = pcaExtent(xs, zs) * 100;
-  console.log(
-    `hip lateral travel (output): ${travel.toFixed(2)} cm  (source ${best.travel.toFixed(2)} cm × ratio ${ratio.toFixed(3)} = ${(best.travel * ratio).toFixed(2)} cm)`,
+
+  // Reference frame = the source's "own rest". Curated takes may start
+  // mid-motion, so detect the calmest moment instead of trusting frame 0.
+  let refFrame = 0;
+  if (detectRest) {
+    const rest = findRestFrame(bvh);
+    refFrame = rest.frame;
+    console.log(
+      `rest frame: ${refFrame} of ${bvh.frames.length} (lowest hip speed in the calmest 1 s window @${rest.windowStart}, mean ${rest.meanSpeedCmPerS.toFixed(2)} cm/s) — used instead of frame 0`,
+    );
+  }
+
+  /* world alignment (yaw) and scale */
+  const ref = bvhWorld(bvh, bvh.frames[refFrame]);
+  const horiz = (v) => {
+    const h = [v[0], 0, v[2]];
+    const n = Math.hypot(h[0], h[2]);
+    return [h[0] / n, 0, h[2] / n];
+  };
+  // forward = up × (P_right − P_left), same formula on both skeletons
+  const fwdSrc = horiz(
+    ((r) => [r[2] * 1 - 0, 0, -r[0]])(vsub(ref.pos[jIdx.get('RightUpLeg')], ref.pos[jIdx.get('LeftUpLeg')])),
   );
-}
-console.log(`max quaternion norm deviation: ${maxNormDev.toExponential(2)}  (${maxNormDev <= 1e-3 ? 'OK' : 'FAIL'} vs 1e-3)`);
+  const fwdTgt = horiz(
+    ((r) => [r[2] * 1 - 0, 0, -r[0]])(vsub(restWPos[N('DEF-thigh.R')], restWPos[N('DEF-thigh.L')])),
+  );
+  const yaw = Math.atan2(
+    fwdSrc[0] * fwdTgt[2] - fwdSrc[2] * fwdTgt[0],
+    fwdSrc[0] * fwdTgt[0] + fwdSrc[2] * fwdTgt[2],
+  );
+  // rotation about +Y (sign resolved by the check below) maps src forward onto tgt forward
+  const alignErr = (g) => {
+    const c = qrot(g, fwdSrc);
+    return Math.hypot(c[0] - fwdTgt[0], c[2] - fwdTgt[2]);
+  };
+  let G = qaxis([0, 1, 0], (-yaw * 180) / Math.PI);
+  if (alignErr(G) > 1e-6) G = qaxis([0, 1, 0], (yaw * 180) / Math.PI);
+  if (alignErr(G) > 1e-6) throw new Error(`yaw alignment failed (err ${alignErr(G)})`);
+  const Ginv = qconj(G);
+  const srcHipY = ref.pos[jIdx.get('Hips')][1]; // cm
+  const tgtHipY = restWPos[N('DEF-spine')][1]; // m
+  const ratio = tgtHipY / (srcHipY / 100);
+  console.log(`hip heights: source ${srcHipY.toFixed(1)} cm, target ${(tgtHipY * 100).toFixed(1)} cm → height ratio ${ratio.toFixed(3)}`);
 
-const clip = { fps, frames: bvh.frames.length, source: best.name, joints: outJoints, root: { translation: rootTrans }, translations: outTrans };
-writeFileSync(OUT, JSON.stringify(clip));
-console.log(`wrote ${OUT}: ${bvh.frames.length} frames @ ${fps} fps, ${Object.keys(outJoints).length} joints (${Object.keys(TWIN_OF).length} control twins), ${Object.keys(outTrans).length} twin translation tracks`);
+  /* per-frame source world deltas, conjugated into the target world */
+  const S = (n) => jIdx.get(n); // source joint index
+  const deltaOf = (frameWorld, srcIdx) => qmul(G, qmul(qmul(frameWorld.rot[srcIdx], qconj(ref.rot[srcIdx])), Ginv));
+
+  // target bone → function(frameWorld) → world rotation delta in target space
+  const assign = new Map();
+  const direct = (tgt, src) => assign.set(N(tgt), (fw) => deltaOf(fw, S(src)));
+  direct('DEF-spine', 'Hips');
+  direct('DEF-spine.001', 'Spine');
+  direct('DEF-spine.002', 'Spine1');
+  direct('DEF-spine.003', 'Spine2');
+  assign.set(N('DEF-spine.004'), (fw) => qslerp(deltaOf(fw, S('Spine2')), deltaOf(fw, S('Neck')), 0.5));
+  direct('DEF-spine.005', 'Neck');
+  direct('DEF-spine.006', 'Neck'); // Head frozen in source — baked into Neck
+  for (const [l, r] of [
+    ['LeftUpLeg', 'DEF-thigh.L'],
+    ['RightUpLeg', 'DEF-thigh.R'],
+    ['LeftLeg', 'DEF-shin.L'],
+    ['RightLeg', 'DEF-shin.R'],
+    ['LeftFoot', 'DEF-foot.L'],
+    ['RightFoot', 'DEF-foot.R'],
+    ['LeftArm', 'DEF-upper_arm.L'],
+    ['RightArm', 'DEF-upper_arm.R'],
+    ['LeftForeArm', 'DEF-forearm.L'],
+    ['RightForeArm', 'DEF-forearm.R'],
+    ['LeftHand', 'DEF-hand.L'],
+    ['RightHand', 'DEF-hand.R'],
+  ])
+    direct(r, l);
+
+  /* per-frame solve */
+  const outJoints = {};
+  const outTrans = {};
+  const rootTrans = [];
+  const emitQ = new Map(); // node idx → frames array (for hemisphere continuity)
+  const emitFor = (idx) => {
+    const name = nodes[idx].name;
+    if (!emitQ.has(idx)) {
+      emitQ.set(idx, []);
+      outJoints[name] = emitQ.get(idx);
+    }
+    return emitQ.get(idx);
+  };
+  let maxNormDev = 0;
+  const round = (v) => Math.round(v * 1e6) / 1e6;
+
+  const hipsWorldOut = []; // target DEF-spine world positions, for the travel print
+  const ankleSrc = { L: [], R: [] }; // SOURCE ankle world positions (skate-risk report)
+  for (const row of bvh.frames) {
+    const fw = bvhWorld(bvh, row);
+    ankleSrc.L.push(fw.pos[S('LeftFoot')]);
+    ankleSrc.R.push(fw.pos[S('RightFoot')]);
+
+    // desired world ROTATION per assigned DEF bone
+    const desiredRot = new Map();
+    for (const [idx, fn] of assign) desiredRot.set(idx, qnorm(qmul(fn(fw), restWRot[idx])));
+
+    // DEF spine chain world POSITIONS: root translation, then FK down the chain
+    const dHip = vsub(fw.pos[S('Hips')], ref.pos[S('Hips')]); // cm
+    const dHipT = qrot(G, dHip).map((v) => (v / 100) * ratio); // m, aligned, scaled
+    const desiredPos = new Map();
+    desiredPos.set(spineChain[0], vadd(restWPos[spineChain[0]], dHipT));
+    for (let k = 1; k < spineChain.length; k++) {
+      const c = spineChain[k];
+      const p = spineChain[k - 1];
+      desiredPos.set(c, vadd(desiredPos.get(p), qrot(desiredRot.get(p), localPos[c])));
+    }
+    hipsWorldOut.push(desiredPos.get(spineChain[0]));
+
+    // twins: same world delta, pivot rides the DEF counterpart
+    for (const [tw, def] of twinIdx) {
+      const delta = qmul(desiredRot.get(def), qconj(restWRot[def]));
+      desiredRot.set(tw, qnorm(qmul(delta, restWRot[tw])));
+      const offset = vsub(restWPos[tw], restWPos[def]);
+      desiredPos.set(tw, vadd(desiredPos.get(def), qrot(delta, offset)));
+    }
+
+    // full-tree FK: mapped nodes take their desired world, everything else rest
+    const curWRot = new Array(nodes.length);
+    const curWPos = new Array(nodes.length);
+    for (const idx of order) {
+      const p = nParent[idx];
+      const pRot = p === -1 ? QID : curWRot[p];
+      const pPos = p === -1 ? [0, 0, 0] : curWPos[p];
+      let lq = localRot[idx];
+      let lp = localPos[idx];
+      if (desiredRot.has(idx)) {
+        lq = qnorm(qmul(qconj(pRot), desiredRot.get(idx)));
+        if (desiredPos.has(idx)) lp = qrot(qconj(pRot), vsub(desiredPos.get(idx), pPos));
+        const frames = emitFor(idx);
+        const prev = frames[frames.length - 1];
+        if (prev && prev[0] * lq[0] + prev[1] * lq[1] + prev[2] * lq[2] + prev[3] * lq[3] < 0)
+          lq = [-lq[0], -lq[1], -lq[2], -lq[3]];
+        maxNormDev = Math.max(maxNormDev, Math.abs(1 - Math.hypot(...lq)));
+        frames.push(lq.map(round));
+        if (desiredPos.has(idx)) {
+          const name = nodes[idx].name;
+          // Root track is a DELTA from rest local: the player adds it to the
+          // bone's rest position (rootRest + p), unlike the twin tracks which
+          // it sets absolutely. Emitting the absolute local here shifted the
+          // whole DEF chain up by the hip's rest height on playback.
+          if (idx === spineChain[0]) rootTrans.push(vsub(lp, localPos[idx]).map(round));
+          else (outTrans[name] ??= []).push(lp.map(round));
+        }
+      }
+      curWRot[idx] = qmul(pRot, lq);
+      curWPos[idx] = vadd(pPos, qrot(pRot, lp));
+    }
+  }
+
+  /* sanity numbers */
+  for (const side of ['L', 'R']) {
+    const idx = N(`DEF-shin.${side}`);
+    const rest = localRot[idx];
+    let lo = Infinity;
+    let hi = -Infinity;
+    for (const q of outJoints[`DEF-shin.${side}`]) {
+      const a = qangleDeg(q, rest);
+      if (a < lo) lo = a;
+      if (a > hi) hi = a;
+    }
+    console.log(`knee flexion delta, DEF-shin.${side}: ${lo.toFixed(2)}° … ${hi.toFixed(2)}°  (range ${(hi - lo).toFixed(2)}°)`);
+  }
+  {
+    const xs = hipsWorldOut.map((p) => p[0]);
+    const zs = hipsWorldOut.map((p) => p[2]);
+    const travel = pcaExtent(xs, zs) * 100;
+    console.log(
+      `hip lateral travel (output): ${travel.toFixed(2)} cm  (source ${srcTravel.toFixed(2)} cm × ratio ${ratio.toFixed(3)} = ${(srcTravel * ratio).toFixed(2)} cm)`,
+    );
+  }
+  {
+    // Source-space skate risk: how far each ankle travels horizontally.
+    // Foot IK is NOT solved this round — a large number here means the clip
+    // repositions its feet and will skate on the target.
+    const ext = (pts) => pcaExtent(pts.map((p) => p[0]), pts.map((p) => p[2]));
+    console.log(
+      `source ankle travel (horizontal extent): L ${ext(ankleSrc.L).toFixed(2)} cm, R ${ext(ankleSrc.R).toFixed(2)} cm  (foot IK not solved — nonzero = skate risk)`,
+    );
+  }
+  console.log(`max quaternion norm deviation: ${maxNormDev.toExponential(2)}  (${maxNormDev <= 1e-3 ? 'OK' : 'FAIL'} vs 1e-3)`);
+
+  const clip = { fps, frames: bvh.frames.length, source: name, joints: outJoints, root: { translation: rootTrans }, translations: outTrans };
+  writeFileSync(out, JSON.stringify(clip));
+  console.log(`wrote ${out}: ${bvh.frames.length} frames @ ${fps} fps, ${Object.keys(outJoints).length} joints (${Object.keys(TWIN_OF).length} control twins), ${Object.keys(outTrans).length} twin translation tracks`);
+}
+
+/* ── entry points ────────────────────────────────────────────────────────── */
+if (!ALL_CURATED) {
+  // Original single-clip behaviour: byte-identical /tmp/staystill_wei_lr.clip.json.
+  const names = listTakes(/^lafan\/actions\/wei_lr_\d+\.bvh$/);
+  if (names.length === 0) throw new Error('no lafan/actions/wei_lr_*.bvh in zip');
+  let best = null;
+  for (const name of names) {
+    const text = readTake(name);
+    const travel = hipScan(text).extent;
+    if (!best || travel > best.travel) best = { name, travel, text };
+  }
+  console.log(`clip: ${best.name}  (largest horizontal hip travel of ${names.length} wei_lr takes: ${best.travel.toFixed(2)} cm)`);
+  retargetClip({ name: best.name, text: best.text, srcTravel: best.travel, out: '/tmp/staystill_wei_lr.clip.json', detectRest: false });
+} else {
+  // Curated ten: 5 balance shifts + 5 calm idles.
+  const RETURN_MAX_CM = 5; // "hips returning near start" — end-vs-start hip distance
+  const scanned = (re) =>
+    listTakes(re).map((name) => {
+      const text = readTake(name);
+      return { name, text, ...hipScan(text) };
+    });
+
+  const balance = scanned(/^lafan\/actions\/wei_(lr|rl)_\d+\.bvh$/)
+    .filter((t) => t.returnDist <= RETURN_MAX_CM)
+    .sort((a, b) => b.extent - a.extent)
+    .slice(0, 5);
+  const idles = scanned(/^lafan\/idle\/idle_\d+\.bvh$/)
+    .sort((a, b) => a.pathLen - b.pathLen)
+    .slice(0, 5);
+
+  console.log(`curated balance shifts (largest hip extent, hips ending ≤ ${RETURN_MAX_CM} cm from start):`);
+  for (const t of balance) console.log(`  ${t.name}  extent ${t.extent.toFixed(2)} cm, return ${t.returnDist.toFixed(2)} cm`);
+  console.log('curated idles (least total horizontal hip path):');
+  for (const t of idles) console.log(`  ${t.name}  path ${t.pathLen.toFixed(0)} cm, extent ${t.extent.toFixed(2)} cm, return ${t.returnDist.toFixed(2)} cm`);
+
+  for (const t of [...balance, ...idles]) {
+    const base = path.basename(t.name, '.bvh');
+    console.log(`\n── ${t.name} ──`);
+    retargetClip({ name: t.name, text: t.text, srcTravel: t.extent, out: `/tmp/staystill_${base}.clip.json`, detectRest: true });
+  }
+}
