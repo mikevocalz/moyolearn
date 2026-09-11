@@ -61,6 +61,67 @@ function inverseBindBytes(gltf, bin, accessorIndex) {
 
 const digest = (value) => createHash('sha256').update(JSON.stringify(value)).digest('hex').slice(0, 16);
 
+/*
+  QUANTIZE LEGITIMATELY REWRITES THE INVERSE-BIND MATRICES, and the gate has to
+  know the difference between that and corruption rather than choosing between
+  failing on every quantized derivative and waving every IBM change through.
+
+  KHR_mesh_quantization folds the dequantization transform into the IBMs: every
+  new matrix equals the old one composed with ONE shared affine M. So when the
+  hashes differ, M is fitted from the first joint and checked against all of
+  them. Measured on the shipped body: uniform scale 0.8739, translation of the
+  bbox offset, worst error 5.2e-8 over 470 joints — float noise. A real break
+  cannot satisfy that: it changes matrices inconsistently, or only some.
+*/
+const mul = (x, y) => {
+  const out = new Float64Array(16);
+  for (let c = 0; c < 4; c += 1)
+    for (let r = 0; r < 4; r += 1) {
+      let sum = 0;
+      for (let k = 0; k < 4; k += 1) sum += x[k * 4 + r] * y[c * 4 + k];
+      out[c * 4 + r] = sum;
+    }
+  return out;
+};
+
+const invert = (matrix) => {
+  const m = [...matrix];
+  const r = [1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
+  const at = (a, row, col) => a[col * 4 + row];
+  const put = (a, row, col, v) => { a[col * 4 + row] = v; };
+  for (let col = 0; col < 4; col += 1) {
+    let pivot = col;
+    for (let row = col + 1; row < 4; row += 1) if (Math.abs(at(m, row, col)) > Math.abs(at(m, pivot, col))) pivot = row;
+    for (let c = 0; c < 4; c += 1) {
+      let t = at(m, col, c); put(m, col, c, at(m, pivot, c)); put(m, pivot, c, t);
+      t = at(r, col, c); put(r, col, c, at(r, pivot, c)); put(r, pivot, c, t);
+    }
+    const d = at(m, col, col);
+    for (let c = 0; c < 4; c += 1) { put(m, col, c, at(m, col, c) / d); put(r, col, c, at(r, col, c) / d); }
+    for (let row = 0; row < 4; row += 1) {
+      if (row === col) continue;
+      const f = at(m, row, col);
+      for (let c = 0; c < 4; c += 1) {
+        put(m, row, c, at(m, row, c) - f * at(m, col, c));
+        put(r, row, c, at(r, row, c) - f * at(r, col, c));
+      }
+    }
+  }
+  return r;
+};
+
+/** Null when consistent (with the fitted M); the worst error when not. */
+function quantizeRewriteError(before, after) {
+  if (before.length !== after.length || before.length < 16) return { error: Infinity, fit: null };
+  const fit = mul(invert(before.slice(0, 16)), after.slice(0, 16));
+  let worst = 0;
+  for (let j = 0; j * 16 < before.length; j += 1) {
+    const predicted = mul(before.slice(j * 16, j * 16 + 16), fit);
+    for (let k = 0; k < 16; k += 1) worst = Math.max(worst, Math.abs(predicted[k] - after[j * 16 + k]));
+  }
+  return { error: worst, fit };
+}
+
 export function fingerprint(path) {
   const { gltf, bin } = readGltf(path);
   const nodes = gltf.nodes ?? [];
@@ -94,6 +155,12 @@ export function fingerprint(path) {
       const bytes = inverseBindBytes(gltf, bin, s.inverseBindMatrices);
       return bytes ? createHash('sha256').update(bytes).digest('hex').slice(0, 16) : null;
     }),
+    // Kept for the equivalence check when the hashes differ. Float32Array does
+    // not survive JSON, so it is materialised as a plain array on demand only.
+    _ibmBytes: skins.map((s) => {
+      const bytes = inverseBindBytes(gltf, bin, s.inverseBindMatrices);
+      return bytes ? Array.from(new Float32Array(bytes.buffer, bytes.byteOffset, bytes.length / 4)) : null;
+    }),
     morphTargetCount: targetNames.length,
     morphTargetNames: targetNames,
     morphNamesHash: digest(targetNames),
@@ -107,12 +174,26 @@ export function fingerprint(path) {
 
 /** Fields that may not move. Everything else is optimisation doing its job. */
 const RIGID = [
-  'jointCount', 'jointsHash', 'skinCount', 'inverseBindHash',
+  'jointCount', 'jointsHash', 'skinCount',
   'morphTargetCount', 'morphNamesHash', 'nodeNamesHash', 'animationCount',
 ];
 
 export function diff(before, after) {
   const problems = [];
+  // IBMs: identical, or exactly one shared affine rewrite (quantization).
+  if (JSON.stringify(before.inverseBindHash) !== JSON.stringify(after.inverseBindHash)) {
+    const a = before._ibmBytes?.[0];
+    const b = after._ibmBytes?.[0];
+    const { error, fit } = a && b ? quantizeRewriteError(a, b) : { error: Infinity, fit: null };
+    if (error < 1e-4 && fit) {
+      console.log(
+        `  note: inverse-bind matrices rewritten by one shared transform ` +
+          `(scale ${fit[0].toFixed(4)}, worst error ${error.toExponential(1)}) — the quantize mechanism, accepted`,
+      );
+    } else {
+      problems.push(`inverseBindMatrices: inconsistent rewrite, worst error ${error.toExponential(2)} — this is damage, not quantization`);
+    }
+  }
   for (const key of RIGID) {
     if (JSON.stringify(before[key]) !== JSON.stringify(after[key])) {
       problems.push(`${key}: ${JSON.stringify(before[key])} -> ${JSON.stringify(after[key])}`);
