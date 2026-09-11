@@ -55,7 +55,13 @@ export const idleConfig = {
       { hz: 0.15, weight: 0.65 },
       { hz: 0.15 * Math.E, weight: 0.35 },
     ],
-    amplitudeM: 0.003, // balance correction; held weight shifts carry the posture
+    /*
+      MEASURED: the StayStill idles carry a fast-band sway sd of p50 0.8 cm
+      once slow repositioning drift is separated out. For this two-octave sum
+      the sd is 0.522x the amplitude, so matching it needs A = 0.0153 — five
+      times the old guess of 3 mm, which was quiet to the point of mannequin.
+    */
+    amplitudeM: 0.0153,
   },
   drift: { hz: 0.2, maxDeg: 0.3, speechGain: 0.7 },
   blink: {
@@ -97,10 +103,29 @@ export const idleConfig = {
      * every quarter-minute or so, and its absence is most of "mannequin".
      */
     weightShift: {
-      intervalS: { min: 8, max: 20 },
-      moveS: { min: 1.2, max: 2.2 },
-      /** Lateral travel of the hip, metres. */
-      amplitudeM: 0.022,
+      /*
+        MEASURED, not guessed — from the StayStill idle corpus (MIT, in the
+        asset ledger), 541 inter-shift gaps detected across the 50 two-minute
+        general idles with a detector calibrated on the 95 labelled balance
+        shifts. `tools/staystill_stats.mjs` regenerates every number here.
+
+        The gaps are heavily skewed — p10 2.3 s, p50 5.9 s, p90 19.1 s — so a
+        uniform min/max cannot represent them: uniform over [2.3, 19.1] makes
+        the typical gap ~11 s when the measured median is 5.9. The engine
+        samples piecewise around the median instead. The old guess of 8-20 s
+        made her shift half as often as the people in the data.
+      */
+      intervalPercentilesS: { p10: 2.3, p50: 5.9, p90: 19.1 },
+      /*
+        Full transition time. The corpus measures a 10-90% rise of p50 0.43 s
+        on the labelled shifts; a smoothstep spends 61% of its span between
+        those marks, so the equivalent full move is ~0.7 s. The upper end stays
+        judgement (labelled: the measured p90 of 3.4 s is settle-contaminated
+        and would read as wandering on a tutor).
+      */
+      moveS: { min: 0.7, max: 1.9 },
+      /** Lateral hip travel, metres. Measured p50 3.9 cm; the guess was 2.2. */
+      amplitudeM: 0.039,
       /** Follow-through past the new stance before it settles, as a fraction. */
       overshoot: 0.08,
     },

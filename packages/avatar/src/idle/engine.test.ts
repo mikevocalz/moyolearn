@@ -155,10 +155,24 @@ describe('channel envelopes', () => {
       eyeBlinkLeft: [0, 1],
       eyeBlinkRight: [0, 1],
       eyesWide: [0, 1],
-      weightShift: [
-        -C.body.weightShift.amplitudeM * (1 + C.body.weightShift.overshoot),
-        C.body.weightShift.amplitudeM * (1 + C.body.weightShift.overshoot),
-      ],
+      /*
+        The worst case is a FULL-RANGE swing, -A to +A, where the overshoot
+        applies to a travel of 2A: peak = A * (2 * easeMax - 1), not the
+        A * (1 + overshoot) this bound used to claim. That version was wrong
+        from the start and survived because 8-20 s gaps produce ~40 shifts in
+        a ten-minute run; the measured 5.9 s median doubles the draw count and
+        found the tail within one seed. The max is computed from the same ease
+        the engine runs, so the two cannot drift apart again.
+      */
+      weightShift: (() => {
+        let easeMax = 0;
+        for (let u = 0; u <= 1; u += 0.001) {
+          const smoothU = u * u * (3 - 2 * u);
+          easeMax = Math.max(easeMax, smoothU + 4 * C.body.weightShift.overshoot * Math.sin(Math.PI * u) * u ** 3);
+        }
+        const peak = C.body.weightShift.amplitudeM * (2 * easeMax - 1);
+        return [-peak, peak];
+      })(),
       torsoYaw: [
         -(C.body.torsoTurn.driftDeg + C.body.torsoTurn.eventDeg.max) * DEG,
         (C.body.torsoTurn.driftDeg + C.body.torsoTurn.eventDeg.max) * DEG,
@@ -336,23 +350,36 @@ describe('the body layer', () => {
     assert.ok(longestStill < 2, `longest still interval ${longestStill}s; the bar is < 2 s`);
   });
 
-  it('shifts weight every 8-20 s, on an irregular clock', () => {
-    const engine = new IdleEngine(5);
-    const at: number[] = [];
-    let t = 0;
-    for (let i = 0, n = Math.round(1200 / DT); i < n; ++i) {
-      const frame = engine.step(DT, quiet);
-      t += DT;
-      if (frame.weightShifted) at.push(t);
+  it('shifts weight on the measured clock — skewed, irregular, never metronomic', () => {
+    /*
+      The 8-20 s this replaces was a guess, and the corpus disagreed with it
+      twice over: people shift more often (median 5.9 s against the guess's
+      ~14) and the gaps are skewed, which a uniform range cannot produce. The
+      engine samples piecewise around the measured median; this asserts the
+      draws stay inside the measured p10..p90 envelope and keep a skew — a
+      median well below the midpoint — rather than pinning exact constants
+      that would turn every re-measurement into a test edit.
+    */
+    const engine = new IdleEngine(4);
+    const onsets: number[] = [];
+    for (let i = 0, n = Math.round(600 / DT); i < n; ++i) {
+      const f = engine.step(DT, quiet);
+      if (f.weightShifted) onsets.push(i * DT);
     }
-    const gaps = at.slice(1).map((v, i) => v - (at[i] as number));
-    assert.ok(gaps.length > 40, `only ${gaps.length} shifts in 20 min`);
-    for (const g of gaps) {
-      assert.ok(g >= 8 - DT && g <= 20 + 2.2 + DT, `weight-shift gap ${g}s outside 8-20 s (+move)`);
+    const gaps = onsets.slice(1).map((t, i) => t - (onsets[i] as number));
+    assert.ok(gaps.length >= 30, `${gaps.length} shifts in 10 min — too few to say anything`);
+    const p = C.body.weightShift.intervalPercentilesS;
+    const move = C.body.weightShift.moveS.max;
+    for (const gap of gaps) {
+      assert.ok(gap >= p.p10 - DT && gap <= p.p90 + move + DT, `gap ${gap.toFixed(2)}s outside measured envelope`);
     }
-    const mean = gaps.reduce((a, b) => a + b, 0) / gaps.length;
-    const cv = Math.sqrt(gaps.reduce((a, b) => a + (b - mean) ** 2, 0) / gaps.length) / mean;
-    assert.ok(cv > 0.15, `weight-shift cadence is periodic (CV ${cv})`);
+    const sorted = [...gaps].sort((a, b) => a - b);
+    const median = sorted[Math.floor(sorted.length / 2)] as number;
+    const midpoint = (p.p10 + p.p90) / 2;
+    assert.ok(median < midpoint, `median gap ${median.toFixed(1)}s at or above the midpoint — the skew is gone`);
+    // Irregular: no two consecutive gaps equal, which is what a clock would do.
+    const cv = Math.sqrt(gaps.reduce((a, g) => a + (g - median) ** 2, 0) / gaps.length) / median;
+    assert.ok(cv > 0.25, `gap CV ${cv.toFixed(2)} — reads as a metronome`);
   });
 
   it('lands each weight shift on its target with visible follow-through', () => {

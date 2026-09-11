@@ -131,6 +131,14 @@ export declare class IdleEngine {
     private frame;
     constructor(seed?: number);
     /**
+     * The next inter-shift gap, drawn to match the measured distribution's
+     * shape rather than a uniform band. Half the draws land between p10 and the
+     * median, half between the median and p90 — a two-piece approximation of a
+     * skewed distribution that a uniform range cannot represent: uniform over
+     * the same span would put the TYPICAL gap near 11 s where people measure 5.9.
+     */
+    private sampleShiftInterval;
+    /**
      * The next breath, jittered around this session's mean. Drawn from the same
      * seeded stream as everything else, so a run stays reproducible.
      */

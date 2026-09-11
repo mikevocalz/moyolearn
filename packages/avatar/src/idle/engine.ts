@@ -291,7 +291,7 @@ export class IdleEngine {
 
     const B = idleConfig.body;
     this.bodyRand = mulberry32((seed ^ 0xb0d7) >>> 0);
-    this.shiftIn = this.bodyRange(B.weightShift.intervalS);
+    this.shiftIn = this.sampleShiftInterval();
     this.torsoNoise = new ValueNoise(B.torsoTurn.hz, this.bodyRand);
     this.turnIn = this.bodyRange(B.torsoTurn.eventIntervalS);
     this.shoulderNoise = [
@@ -311,6 +311,19 @@ export class IdleEngine {
     this.handTo = [this.bodyRange(B.hand.settle), this.bodyRange(B.hand.settle)];
     this.handFrom = [this.handTo[0] as number, this.handTo[1] as number];
     this.awayIn = this.bodyRange(B.gazeAway.intervalS);
+  }
+
+  /**
+   * The next inter-shift gap, drawn to match the measured distribution's
+   * shape rather than a uniform band. Half the draws land between p10 and the
+   * median, half between the median and p90 — a two-piece approximation of a
+   * skewed distribution that a uniform range cannot represent: uniform over
+   * the same span would put the TYPICAL gap near 11 s where people measure 5.9.
+   */
+  private sampleShiftInterval(): number {
+    const p = idleConfig.body.weightShift.intervalPercentilesS;
+    const u = this.bodyRand();
+    return u < 0.5 ? p.p10 + (u * 2) * (p.p50 - p.p10) : p.p50 + (u - 0.5) * 2 * (p.p90 - p.p50);
   }
 
   /**
@@ -533,7 +546,7 @@ export class IdleEngine {
       this.shiftTo = to;
       this.shiftT = 0;
       this.shiftMoveS = this.bodyRange(B.weightShift.moveS);
-      this.shiftIn = this.bodyRange(B.weightShift.intervalS);
+      this.shiftIn = this.sampleShiftInterval();
       F.weightShifted = true;
     }
     if (this.shiftT < this.shiftMoveS) {

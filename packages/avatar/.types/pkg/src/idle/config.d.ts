@@ -58,7 +58,7 @@ export declare const idleConfig: {
             readonly hz: number;
             readonly weight: 0.35;
         }];
-        readonly amplitudeM: 0.003;
+        readonly amplitudeM: 0.0153;
     };
     readonly drift: {
         readonly hz: 0.2;
@@ -120,16 +120,17 @@ export declare const idleConfig: {
          * every quarter-minute or so, and its absence is most of "mannequin".
          */
         readonly weightShift: {
-            readonly intervalS: {
-                readonly min: 8;
-                readonly max: 20;
+            readonly intervalPercentilesS: {
+                readonly p10: 2.3;
+                readonly p50: 5.9;
+                readonly p90: 19.1;
             };
             readonly moveS: {
-                readonly min: 1.2;
-                readonly max: 2.2;
+                readonly min: 0.7;
+                readonly max: 1.9;
             };
-            /** Lateral travel of the hip, metres. */
-            readonly amplitudeM: 0.022;
+            /** Lateral hip travel, metres. Measured p50 3.9 cm; the guess was 2.2. */
+            readonly amplitudeM: 0.039;
             /** Follow-through past the new stance before it settles, as a fraction. */
             readonly overshoot: 0.08;
         };
