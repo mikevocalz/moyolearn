@@ -95,6 +95,10 @@ function inspectGlb(buffer) {
 
 const entries = [];
 let missing = 0;
+// Read early: the walk below needs to know which absences are recorded.
+const ledgerEntriesEarly = existsSync(resolve(flag('ledger', 'assets/asset-ledger.json')))
+  ? (JSON.parse(readFileSync(resolve(flag('ledger', 'assets/asset-ledger.json')), 'utf8')).entries ?? {})
+  : {};
 
 for (const asset of ASSETS) {
   // `file` null means the artefact is produced by one of our own bake tools
@@ -109,8 +113,15 @@ for (const asset of ASSETS) {
       : join(srcDir, asset.file);
 
   if (!source || !existsSync(source)) {
-    process.stderr.write(`  missing: ${asset.id} (${source ?? 'no source given'})\n`);
-    missing += 1;
+    /*
+      An asset the ledger marks `pending` is absent on purpose and already
+      recorded as such, so it is not a build failure — it is the state of the
+      repo, stated. Anything else absent still is one.
+    */
+    if (!ledgerEntriesEarly[asset.id]?.pending) {
+      process.stderr.write(`  missing: ${asset.id} (${source ?? 'no source given'})\n`);
+      missing += 1;
+    }
     continue;
   }
 
@@ -128,32 +139,116 @@ for (const asset of ASSETS) {
 }
 
 /*
-  RIGHTS RECORDS SURVIVE A REBUILD.
+  AUTHORED DATA LIVES IN A LEDGER; THIS SCRIPT MERGES IT AND NEVER WRITES IT.
 
-  A `rights` block is written by the human who read the terms, not by this
-  script, and a generator that overwrites the manifest wholesale silently
-  deletes every one of them — turning `check:ledger` green-to-red with no diff
-  that explains why, or worse, dropping the proof that an asset is ours to ship.
-  So the previous manifest is read back and two things are carried forward:
-  `rights` blocks by asset id, and whole entries marked `runtime: false`, which
-  are ledger records for build-machine sources (motion corpora) that this
-  script never walks because no client downloads them.
+  A rights record is written by the human who read the terms. A generator cannot
+  derive one and must not be trusted to preserve one — and the previous version
+  of this file tried to, by reading its own output back and carrying rights
+  forward by id. That works right up until someone builds into a fresh path, or
+  the output is deleted, or a rename drops an id: the record is gone with no
+  diff that explains why.
+
+  So the two halves are separated. `asset-ledger.json` is authored and holds
+  `delivery`, `rights` and `supersededBy`. This script derives paths, sizes and
+  hashes and merges the ledger on top. The generated file says so at the top.
+
+  It fails rather than guesses in three directions, because each of them is a
+  silent data loss in a different disguise: an asset with no ledger entry would
+  ship unclassified, a ledger entry with no asset is a record of something that
+  no longer exists, and a rebuild that drops a field previously present is the
+  original bug wearing a new hat.
 */
-let carried = [];
-const priorRights = new Map();
+const ledgerPath = resolve(flag('ledger', 'assets/asset-ledger.json'));
+if (!existsSync(ledgerPath)) {
+  process.stderr.write(`\nledger not found at ${ledgerPath} — authored rights live there, refusing to build without it\n`);
+  process.exit(1);
+}
+const ledger = JSON.parse(readFileSync(ledgerPath, 'utf8'));
+const ledgerEntries = ledger.entries ?? {};
+const retiredFields = ledger.retiredFields ?? {};
+
+/** `delivery` decides whether an asset counts against a client budget at all. */
+const DELIVERY = new Set(['bundle', 'ondemand', 'pipeline-source', 'server']);
+
+const ledgerProblems = [];
+for (const entry of entries) {
+  const record = ledgerEntries[entry.id];
+  if (!record) {
+    ledgerProblems.push(`${entry.id}: no ledger entry — add one to ${flag('ledger', 'assets/asset-ledger.json')} with a delivery class`);
+    continue;
+  }
+  if (!DELIVERY.has(record.delivery)) {
+    ledgerProblems.push(`${entry.id}: delivery "${record.delivery}" is not one of ${[...DELIVERY].join(', ')}`);
+  }
+  Object.assign(entry, record);
+}
+/*
+  A pipeline source is an offline input — a motion corpus, a purchased master —
+  and this script never walks it, because no client downloads it. It comes
+  through from the ledger with whatever the human recorded, including its hash
+  and size, and it must carry those or the record proves nothing.
+*/
+const walked = new Set(entries.map((e) => e.id));
+const pending = [];
+const carried = [];
+for (const [id, record] of Object.entries(ledgerEntries)) {
+  if (walked.has(id)) continue;
+  if (record.delivery === 'pipeline-source' || record.delivery === 'server') {
+    carried.push({ id, ...record });
+    continue;
+  }
+  /*
+    `pending` is an asset the manifest promises and the repo does not contain.
+    Nineteen of the twenty are in that state — the GNM and body pipeline that
+    would emit them is not here — and a build that simply refuses is a wall
+    rather than a gate. Recording it keeps the check meaningful for a NEWLY
+    missing file while stating the known gap out loud.
+  */
+  if (record.pending) {
+    pending.push(id);
+    carried.push({ id, ...record });
+    continue;
+  }
+  ledgerProblems.push(`${id}: in the ledger but no such asset was found — remove the entry, or mark it pending with a reason`);
+}
+
+/*
+  THE DROP CHECK. Whatever the previous manifest recorded, this one must still
+  record. It is the one guard that catches a class of loss the ledger cannot:
+  a field the builder used to emit and silently stopped emitting.
+*/
 if (existsSync(outPath)) {
   const prior = JSON.parse(readFileSync(outPath, 'utf8'));
-  for (const asset of prior.assets ?? []) {
-    if (asset.runtime === false) carried.push(asset);
-    else if (asset.rights) priorRights.set(asset.id, asset.rights);
-  }
-  for (const entry of entries) {
-    const rights = priorRights.get(entry.id);
-    if (rights) entry.rights = rights;
+  const next = new Map([...entries, ...carried].map((e) => [e.id, e]));
+  for (const before of prior.assets ?? []) {
+    const after = next.get(before.id);
+    if (!after) {
+      ledgerProblems.push(`${before.id}: present in the previous manifest and absent from this build`);
+      continue;
+    }
+    for (const key of Object.keys(before)) {
+      // A field retired on purpose is declared in the ledger. Without that the
+      // check cannot tell a deliberate removal from the loss it exists to catch,
+      // and a gate that cannot be satisfied honestly gets satisfied dishonestly.
+      if (retiredFields[key]) continue;
+      if (after[key] === undefined) {
+        ledgerProblems.push(`${before.id}.${key}: recorded before and dropped by this build`);
+      }
+    }
   }
 }
 
-const manifest = { version: 1, baseUrl, assets: [...entries, ...carried] };
+if (ledgerProblems.length > 0) {
+  for (const problem of ledgerProblems) process.stderr.write(`  FAIL ${problem}\n`);
+  process.exit(1);
+}
+
+const manifest = {
+  $generated: `DO NOT EDIT — generated by tools/build_asset_manifest.mjs from ${flag('ledger', 'assets/asset-ledger.json')}`,
+  version: 1,
+  baseUrl,
+  assets: [...entries, ...carried],
+};
 
 // The generator must produce something its own consumer accepts. This throws on
 // a duplicate id, a malformed hash, or a `.glb` that declares embedded images.
@@ -164,6 +259,9 @@ writeFileSync(outPath, `${JSON.stringify(manifest, null, 2)}\n`);
 
 const mb = (n) => `${(n / 1024 / 1024).toFixed(2)} MB`;
 process.stdout.write(`\n${entries.length} assets -> ${outPath}\n`);
+if (pending.length > 0) {
+  process.stdout.write(`  ${pending.length} pending (promised by the manifest, absent from the repo)\n`);
+}
 for (const tier of ['phone', 'tablet', 'studio']) {
   const count = assetsForTier(manifest, tier).length;
   process.stdout.write(

@@ -103,8 +103,19 @@ export interface AssetEntry {
    * forgotten the terms. The licence DOCUMENT never lives in this repository —
    * `evidence` is a reference to it, held wherever invoices are held.
    */
-  rights?: AssetRights;
+  rights?: AssetRights;  /** What this asset is, and therefore which budget applies. */
+  delivery?: AssetDelivery;
+  /** Recorded but not produced in this repo, with the reason. */
+  pending?: string;
 }
+
+/**
+ * What an asset IS, which decides whether any client budget applies to it.
+ * Required on every entry: an unclassified asset is one nobody has decided
+ * about, and the default that hid a 352 MB corpus inside a phone budget was
+ * exactly that decision going unmade.
+ */
+export type AssetDelivery = 'bundle' | 'ondemand' | 'pipeline-source' | 'server';
 
 export interface AssetRights {
   /** Vendor name, commission, or `authored` for something generated in-repo. */
@@ -177,15 +188,44 @@ export function validateManifest(manifest: AssetManifest): void {
 }
 
 /** Everything a given tier must have on disk before the stage can be built. */
+/**
+ * WHAT A CLIENT ACTUALLY FETCHES, which is not every row in the manifest.
+ *
+ * `delivery` says what an asset IS. `bundle` ships inside the app, `ondemand`
+ * is fetched at runtime and cached, `pipeline-source` is an offline input to a
+ * bake or a retarget and never leaves the build machine, `server` belongs to a
+ * GPU host.
+ *
+ * Every entry used to count as a download, and a 352 MB motion corpus therefore
+ * counted against a phone's 4 MB budget — a build failure describing a file no
+ * phone would ever ask for. Filtering by class is the fix; `runtime: false` was
+ * the stopgap and `delivery` replaces it, because "not at runtime" says what
+ * something is NOT and the four classes say what it is.
+ */
+const CLIENT_DELIVERY = new Set<AssetDelivery>(['bundle', 'ondemand']);
+
 export function assetsForTier(manifest: AssetManifest, tier: AssetTier): AssetEntry[] {
   return manifest.assets.filter(
-    (entry) => entry.runtime !== false && tierMeets(tier, entry.minTier)
+    (entry) =>
+      entry.runtime !== false &&
+      CLIENT_DELIVERY.has(entry.delivery ?? 'bundle') &&
+      tierMeets(tier, entry.minTier)
   );
 }
 
-/** Total download for a tier, so the UI can show a real number and not a spinner. */
-export function downloadBytesForTier(manifest: AssetManifest, tier: AssetTier): number {
-  return assetsForTier(manifest, tier).reduce((sum, entry) => sum + entry.bytes, 0);
+/**
+ * Total download for a tier, by class. `bundle` is what the 4 MB phone budget
+ * governs; `ondemand` has its own cap and arrives behind the loader, so summing
+ * the two would hold the first frame to a budget it does not owe.
+ */
+export function downloadBytesForTier(
+  manifest: AssetManifest,
+  tier: AssetTier,
+  delivery: AssetDelivery = 'bundle'
+): number {
+  return assetsForTier(manifest, tier)
+    .filter((entry) => (entry.delivery ?? 'bundle') === delivery)
+    .reduce((sum, entry) => sum + entry.bytes, 0);
 }
 
 /**

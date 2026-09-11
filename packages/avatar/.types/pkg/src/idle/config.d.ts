@@ -151,6 +151,37 @@ export declare const idleConfig: {
             };
             readonly easeS: 0.8;
         };
+        readonly stance: {
+            /** Knee flexion at zero load, before either split. */
+            readonly kneeBaseDeg: 7.5;
+            /**
+             * A CONSTANT left-right difference that the load split rides on top of,
+             * so the two knees are never at one angle — not even for the instant the
+             * weight passes through centre.
+             *
+             * Measured without it: 873 frames out of 7200 had both knees identical,
+             * every time the load crossed zero. A mirrored pose is a test failure and
+             * not a resting state, and "only for a moment" is exactly when a viewer's
+             * eye is on the transition. The spec's near-symmetric stance is 5 and 7
+             * degrees, which is this 1 degree either side of the base.
+             */
+            readonly kneeBaseSplitDeg: 1;
+            /** Added to the free knee and taken off the loaded one at full load. */
+            readonly kneeSplitDeg: 5.5;
+            /** The free heel unweights: plantarflexion on the unloaded foot. */
+            readonly freeFootPlantarDeg: 2;
+            /** The loaded hip rides high — pelvis roll toward the free side. */
+            readonly pelvisRollDeg: 4;
+            /** Shoulders tilt AGAINST the pelvis. Same sign convention, applied up-chain. */
+            readonly shoulderCounterDeg: 5;
+            /**
+             * The knee leads the pelvis and the shoulder lags it, in seconds.
+             * Anticipation and overlap: everything starting on one frame is the
+             * seventh item on the reads-robotic list.
+             */
+            readonly kneeLeadS: 0.12;
+            readonly shoulderLagS: 0.15;
+        };
         readonly shoulder: {
             readonly hz: 0.12;
             readonly maxDeg: 1.5;

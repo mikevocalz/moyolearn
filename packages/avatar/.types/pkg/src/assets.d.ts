@@ -61,8 +61,18 @@ export interface AssetEntry {
      * forgotten the terms. The licence DOCUMENT never lives in this repository —
      * `evidence` is a reference to it, held wherever invoices are held.
      */
-    rights?: AssetRights;
+    rights?: AssetRights; /** What this asset is, and therefore which budget applies. */
+    delivery?: AssetDelivery;
+    /** Recorded but not produced in this repo, with the reason. */
+    pending?: string;
 }
+/**
+ * What an asset IS, which decides whether any client budget applies to it.
+ * Required on every entry: an unclassified asset is one nobody has decided
+ * about, and the default that hid a 352 MB corpus inside a phone budget was
+ * exactly that decision going unmade.
+ */
+export type AssetDelivery = 'bundle' | 'ondemand' | 'pipeline-source' | 'server';
 export interface AssetRights {
     /** Vendor name, commission, or `authored` for something generated in-repo. */
     source: string;
@@ -99,10 +109,13 @@ export declare function tierMeets(tier: AssetTier, minTier: AssetTier | undefine
  */
 export declare function assertLoadableInReactNative(entry: AssetEntry): void;
 export declare function validateManifest(manifest: AssetManifest): void;
-/** Everything a given tier must have on disk before the stage can be built. */
 export declare function assetsForTier(manifest: AssetManifest, tier: AssetTier): AssetEntry[];
-/** Total download for a tier, so the UI can show a real number and not a spinner. */
-export declare function downloadBytesForTier(manifest: AssetManifest, tier: AssetTier): number;
+/**
+ * Total download for a tier, by class. `bundle` is what the 4 MB phone budget
+ * governs; `ondemand` has its own cap and arrives behind the loader, so summing
+ * the two would hold the first frame to a budget it does not owe.
+ */
+export declare function downloadBytesForTier(manifest: AssetManifest, tier: AssetTier, delivery?: AssetDelivery): number;
 /**
  * The host app's filesystem, injected. Keeping this an interface is what stops
  * this package depending on `expo-file-system` — the app already has a

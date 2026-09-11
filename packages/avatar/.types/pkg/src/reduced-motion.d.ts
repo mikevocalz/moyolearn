@@ -43,8 +43,35 @@
  * never blinks is not calm, it is unsettling**. Reduced motion removes the
  * vestibular load (translation, sway, drift, float), not the signs of life.
  *
+ * ── PIN THE TRANSITION, NOT THE POSE ────────────────────────────────────────
+ *
+ * The same rule one level down, and the one that is easy to get backwards now
+ * the legs are wired. She stands in contrapposto, and that stance has two
+ * halves that look identical in a still frame and are not the same thing:
+ *
+ *   - the TRAVEL — the knee split swinging across as the load moves from one
+ *     leg to the other, the free heel unweighting, the lead and lag that stagger
+ *     them. Motion, and therefore pinned.
+ *   - the ASYMMETRY she is standing in — `kneeBaseSplitDeg` holding the two
+ *     knees a degree either side of base even at zero load, and the elbow,
+ *     abduct and forward splits in `STANCE.asymmetry`. A pose, and therefore
+ *     kept, at full, in both modes.
+ *
+ * A still pose exerts no vestibular load, so there is nothing to win by
+ * symmetrising it — and something to lose. `what-reads-robotic.md` records that
+ * a teen reads symmetry as "computer" within seconds, and lists the stance
+ * under what was already right and must not be lost. Flattening the knees would
+ * hand exactly the readers who asked for less motion the mannequin everyone
+ * else is spending a frame budget to avoid, and buy them nothing for it.
+ *
+ * So `stanceAsymmetryScale` is 1 in BOTH modes, beside `mouthScale` and
+ * `blinkScale`, and `assertMotionPolicyComplete()` fails if anyone sets it to
+ * anything else. The guard is there because the mistake reads, in a diff, as
+ * making an accessibility setting stronger.
+ *
  * SOT: docs/pack/22-embodied-tutor-avatar-spec.md §7, §9; docs/pack/01
- * SOT-KEYWORDS: reduced motion accessibility vestibular xr safety idle sway hair camera float policy
+ * SOT: docs/decisions/adr-113-body-motion-layer.md · audit/motion/what-reads-robotic.md
+ * SOT-KEYWORDS: reduced motion accessibility vestibular xr safety idle sway hair camera float policy legs stance contrapposto knee ankle foot
  */
 export type MotionMode = 'full' | 'reduced';
 /** Where the avatar is being drawn. The distinction is a safety one, not a layout one. */
@@ -83,6 +110,13 @@ export interface MotionPolicy {
     hairSwayScale: number;
     /** Camera float / handheld breathing. The single biggest vection source. */
     cameraFloatScale: number;
+    /**
+     * The held asymmetry of her standing pose — the constant knee split, the
+     * elbow and shoulder splits. NEVER scaled: a pose is not motion, so pinning
+     * it costs the anti-robotic property and removes no vestibular load. See the
+     * header; `idleBodyScale` is what governs the travel between two stances.
+     */
+    stanceAsymmetryScale: 1;
     /** Speech-driven mouth. NEVER scaled — see the header. */
     mouthScale: 1;
     /** Blink. NEVER disabled — a face that never blinks is unsettling, not calm. */
@@ -98,6 +132,18 @@ export interface AnimatedSurface {
     governedBy: keyof MotionPolicy;
     /** Where the scale is consumed, so a reviewer can check the wiring exists. */
     consumer: string;
+    /**
+     * The `idleConfig.body.stance` keys this surface accounts for.
+     *
+     * The registry's original check only notices a DELETED entry. That is half a
+     * guard: the leg layer arrived as new numbers in an existing config block, not
+     * as a new module anyone would think to register, and a check that only knows
+     * the names already written down cannot see that. Claiming the keys turns it
+     * around — `assertMotionPolicyComplete()` reads the stance block at run time,
+     * so the next knee, ankle or toe parameter fails until someone has decided
+     * whether reduced motion pins it or holds it.
+     */
+    stanceChannels?: readonly string[];
 }
 /**
  * Every animated surface on the stage, and what governs it.
