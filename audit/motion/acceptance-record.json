@@ -8,19 +8,31 @@
     "lipSyncOffsetP95Ms": "not measured",
     "visualLateMaxMs": "not measured",
     "headOnsetAlignedPct": "not measured",
-    "headPitchJawOpenCorrelation": "not measured",
+    "headPitchJawOpenCorrelation": {
+      "value": 0.0398,
+      "method": "Pearson r between head world pitch and the mouth input over 10 min of speech at 60 Hz, presence seed 7, on the real natalie.gltf bone hierarchy (built the way artifacts-20min.mts builds it), first 2 s dropped (speech-swell rise-in), 35 880 frames. Mouth: band-limited value noise — random 0..1 targets held for jittered 1/6–1/2 s spans (2–6 Hz syllable rate), smoothstep interpolation, clamped 0..1, mulberry32(101) — viseme-like on purpose, NOT a sine, whose autocorrelation would make any r a coin flip between ±peak. Head pitch is the twist of (headWorldQuat · restWorldQuat⁻¹) about the head's rest world lateral axis — pitch specifically, so yaw drift cannot launder the number. 'Indistinguishable from chance' is judged against a null, not against r looking small: the mouth series block-shuffled in 1 s blocks (within-block autocorrelation kept, alignment destroyed), 200 shuffles against the same head series → null r ∈ [-0.067, 0.074], two-sided p = 0.109 (21/200 null |r| ≥ observed). Not distinguishable from chance: no puppet tell. Consistent with construction — nods cannot fire while speechActive, and the mouth input reaches lips and the beat trigger but no head channel. ENGINE-SIDE: bones in Node; a rendered path or an A2F face (which does write head-adjacent morphs) is not covered.",
+      "capture": ".claude/skills/presence-metrics/scripts/head-jaw-correlation.mts: r 0.0398, null [-0.067, 0.074], p 0.109"
+    },
     "blinkRatePerMin": {
       "value": 16.85,
       "method": "IdleEngine.step at 60Hz for 20 min, seeded, counting blinkStarted. Counted at the generator because the renderer neither adds nor drops a blink; blink TIMING relative to speech is blinkNearPausePct and is not this number. Target 12-20: inside it.",
       "capture": ".claude/skills/presence-metrics/scripts/engine-rates.mts: 337 blinks / 20 min, engine default seed"
     },
-    "blinkNearPausePct": "not measured",
+    "blinkNearPausePct": {
+      "value": 73.7,
+      "method": "Percentage of blink onsets (eyeBlinkLeft leaving 0 — the channel, not the flag; the lid starts closing one frame after blinkStarted) within ±300 ms (±18 frames) of a pause cue or a gaze-shift cue, over a 20 min scripted conversation at 60 Hz, engine default seed, schedule mulberry32(303): tutor turns of 2–4 phrases (2–6 s, speechActive) separated/ended by 0.5–1.5 s pauses (speechGap, the humano mapping for a non-speaking beat), then 3–8 s partner turns (partnerSpeaking) ending in a one-frame partnerPauseEvent. Cue classes: pause = frames where speechActive drops plus partnerPauseEvent frames (229); gaze shift = saccadeStarted plus gazeBroke, the engine's own observables (1345). 433 blink onsets (21.65/min in conversation — above the 16.85 idle rate because speechGap boosts the hazard ×4; RATE is blinkRatePerMin's number, this field is timing). 73.7% land in a cue window (gaze-class alone 69.5%, pause-class alone 15.5%). The number means nothing without the base rate: saccades arrive every 0.3–2 s, so the cue windows cover 62.8% of the timeline analytically, and 200 uniform random trains of 433 blinks score 63.1% ± 2.1% against the same windows. Real blinks sit +10.6 points above that, 5.0σ — the built-in gapBoost/postSaccadeBoost coupling is real, but most of the headline percentage is window coverage, not coupling. ENGINE-SIDE: whether the app raises speechActive/partnerPauseEvent at real pauses is not covered.",
+      "capture": ".claude/skills/presence-metrics/scripts/blink-near-pause.mts: 433 blinks, 73.7% vs random 63.1% ± 2.1%"
+    },
     "breathRatePerMin": {
       "value": 13.6,
       "method": "Intervals between breathStarted flags over a seeded 20 min run at 60Hz. Target 12-20: inside it. Cycle-to-cycle period variation 15.0% against the +/-15% asked for. The earlier 7.4% was two faults: the engine drew a fresh RATE each cycle from the 12-16/min range, which caps variation at 0.07/sqrt(3) ~ 8.7% by construction, and the measurement counted zero-crossings of breathY, whose interval spans parts of two consecutive cycles and averages their periods (15% generated read back as 12.3%). Session mean and per-cycle jitter are now separate numbers, and the cycle boundary is observable.",
       "capture": ".claude/skills/presence-metrics/scripts/engine-rates.mts: 271 cycles / 20 min, engine default seed"
     },
-    "torsoEnergyCorrelation": "not measured",
+    "torsoEnergyCorrelation": {
+      "value": 0.028,
+      "method": "FINDING — target ≥ 0.5, measured 0.028, and the null says that is zero: torso/shoulder rotational energy does not carry the voice. Pearson r between summed world rotational speed (DEF-spine.001–.004 + DEF-shoulder.L/R + DEF-upper_arm.L/R, angle between consecutive world quaternions per frame) and the scripted speech-RMS envelope, over 10 min at 60 Hz, presence seed 7, real natalie.gltf hierarchy, first 2 s dropped. Speech: phrases 2–6 s, gaps 0.5–1.5 s, per-phrase amplitude 0.6–1.0, 80 ms attack / 150 ms release (mulberry32(202)); mouth = 2–6 Hz viseme noise × envelope; the envelope IS the RMS engine-side — there is no audio in Node, and it is what the audio path would hand the body. Both series smoothed with a centered 31-frame (~0.52 s) boxcar before Pearson, so this is the envelope timescale, stated. r = 0.028 sits INSIDE the 200× 5 s-block-shuffle null of the smoothed envelope (r ∈ [-0.101, 0.074]). Where the coupling lives and dies: the beat path works — upper-arm mean angular speed nearly doubles in-phrase (0.0234 vs 0.0124 rad/s in-gap) — but the torso chain (0.0099 vs 0.0095) and shoulders (0.0388 vs 0.0371) are speech-blind idle noise, and they dominate the sum. Two compounding causes in the engine: speechEnv is binary (speaking → 1), so phrase-to-phrase amplitude cannot modulate anything; and no torso/shoulder channel is scaled by speech at all — only the beat's small arm lift rides it. Named work, not a blemish: reaching 0.5 needs an energy input to the torso/shoulder layer, not a wider detector. ENGINE-SIDE: bones in Node, no rendered capture, no real audio RMS.",
+      "capture": ".claude/skills/presence-metrics/scripts/torso-energy.mts: r 0.028, null [-0.101, 0.074]; upper-arm in-phrase 0.0234 vs 0.0124 rad/s"
+    },
     "gestureStrokeOffsetMs": "not measured",
     "interruptVoiceStopMs": "blocked: needs a device — the JS path in tutor-audio.ts stop() is synchronous, so what remains to measure is the audio hardware buffer flush",
     "interruptSettleMs": {
