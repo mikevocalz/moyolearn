@@ -247,7 +247,10 @@ export const ANIMATED_SURFACES: readonly AnimatedSurface[] = Object.freeze([
  * review-time problem rather than a user-time one.
  */
 export function assertMotionPolicyComplete(
-  surfaces: readonly AnimatedSurface[] = ANIMATED_SURFACES
+  surfaces: readonly AnimatedSurface[] = ANIMATED_SURFACES,
+  // Injectable so the test can grow the block without editing the config; the
+  // default is the real one, read at call time, not a copy that can go stale.
+  stanceChannels: readonly string[] = Object.keys(idleConfig.body.stance)
 ): void {
   const policy = MOTION_POLICIES.reduced as unknown as Record<string, unknown>;
   const problems: string[] = [];
@@ -264,6 +267,48 @@ export function assertMotionPolicyComplete(
   for (const required of ['breath', 'sway', 'drift', 'saccade', 'hair-sway', 'camera-float']) {
     if (!surfaces.some((s) => s.id === required)) {
       problems.push(`doc 22 §7 names '${required}' and the registry does not contain it`);
+    }
+  }
+  // The stanceChannels contract, made real. The name list above only notices a
+  // DELETED entry; the leg layer arrived as new numbers in an existing config
+  // block, which a list of known names cannot see. Reading the block itself
+  // turns the guard around: every stance parameter must be claimed by exactly
+  // one surface — travel and held asymmetry take opposite answers, so a
+  // channel claimed twice has two answers on record, which is no answer.
+  const claims = new Map<string, string>();
+  for (const surface of surfaces) {
+    for (const channel of surface.stanceChannels ?? []) {
+      if (!stanceChannels.includes(channel)) {
+        problems.push(
+          `'${surface.id}' claims stance channel '${channel}', which idleConfig.body.stance does not define`
+        );
+      }
+      const prior = claims.get(channel);
+      if (prior !== undefined) {
+        problems.push(`stance channel '${channel}' is claimed by both '${prior}' and '${surface.id}'`);
+      }
+      claims.set(channel, surface.id);
+    }
+  }
+  for (const channel of stanceChannels) {
+    if (!claims.has(channel)) {
+      problems.push(
+        `stance channel '${channel}' is claimed by no surface — decide whether reduced motion pins it (travel) or keeps it (held pose)`
+      );
+    }
+  }
+  // The header's promise about the pose. The literal types already say 1, but
+  // the mistake this guards against arrives as an edit to this file that
+  // reads, in a diff, as making an accessibility setting stronger — and
+  // presence/stance.test.ts holds the same line from the consumer's side.
+  for (const mode of ['full', 'reduced'] as const) {
+    const held = MOTION_POLICIES[mode] as unknown as Record<string, unknown>;
+    for (const field of ['stanceAsymmetryScale', 'mouthScale', 'blinkScale']) {
+      if (held[field] !== 1) {
+        problems.push(
+          `${mode}.${field} is ${String(held[field])} — a held pose is not motion, and is never scaled`
+        );
+      }
     }
   }
   if (problems.length) {

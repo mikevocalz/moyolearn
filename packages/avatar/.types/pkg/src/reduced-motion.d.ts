@@ -162,7 +162,7 @@ export declare const ANIMATED_SURFACES: readonly AnimatedSurface[];
  * someone adds an animation and forgets the accessibility wiring, which is a
  * review-time problem rather than a user-time one.
  */
-export declare function assertMotionPolicyComplete(surfaces?: readonly AnimatedSurface[]): void;
+export declare function assertMotionPolicyComplete(surfaces?: readonly AnimatedSurface[], stanceChannels?: readonly string[]): void;
 /** The consumers, injected. Every one is optional — a 2D surface has no hair. */
 export interface MotionConsumers {
     faceBus?: {

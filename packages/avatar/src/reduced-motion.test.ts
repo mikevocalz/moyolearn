@@ -20,6 +20,7 @@ import {
   resolveMotionMode,
 } from './reduced-motion.ts';
 import type { AnimatedSurface } from './reduced-motion.ts';
+import { idleConfig } from './idle/config.ts';
 
 describe('resolving the mode', () => {
   it('follows the system when the user has expressed no preference', () => {
@@ -94,6 +95,17 @@ describe('what reduced motion actually removes', () => {
     }
   });
 
+  it('keeps the held stance asymmetry, in BOTH modes', () => {
+    // Pin the transition, not the pose: a still pose exerts no vestibular
+    // load, and symmetrising it hands exactly the readers who asked for less
+    // motion the mannequin everyone else avoids. presence/stance.test.ts is
+    // the executable statement — knee TRAVEL pinned under 0.01 degrees while
+    // the constant base split is still standing.
+    for (const mode of ['full', 'reduced'] as const) {
+      assert.equal(motionPolicy(mode).stanceAsymmetryScale, 1, mode);
+    }
+  });
+
   it('changes nothing in full mode', () => {
     const full = motionPolicy('full');
     for (const value of Object.values(full)) {
@@ -138,6 +150,53 @@ describe('the coverage registry', () => {
       { id: 'glow-pulse', moves: 'rim brightness', governedBy: 'idleBodyScale', consumer: '' },
     ];
     assert.throws(() => assertMotionPolicyComplete(unwired), /names no consumer/);
+  });
+
+  it('fails when a leg surface is removed and its stance channels go unclaimed', () => {
+    // The doc-22 §7 name list cannot see the legs — they arrived as new
+    // numbers in an existing config block, not as a new module. The channel
+    // check is what makes deleting a leg entry fail rather than pass quietly.
+    const withoutLegs = ANIMATED_SURFACES.filter((s) => s.id !== 'stance-legs');
+    assert.throws(() => assertMotionPolicyComplete(withoutLegs), /kneeSplitDeg/);
+    const withoutHeldPose = ANIMATED_SURFACES.filter((s) => s.id !== 'stance-asymmetry');
+    assert.throws(() => assertMotionPolicyComplete(withoutHeldPose), /kneeBaseSplitDeg/);
+  });
+
+  it('fails when the stance block grows a channel no surface has claimed', () => {
+    // The next knee, ankle or toe parameter must be decided — pinned as
+    // travel or kept as held pose — before it ships.
+    const grown = [...Object.keys(idleConfig.body.stance), 'toeCurlDeg'];
+    assert.throws(() => assertMotionPolicyComplete(ANIMATED_SURFACES, grown), /toeCurlDeg/);
+  });
+
+  it('fails when a surface claims a stance channel the config does not define', () => {
+    const phantom: AnimatedSurface[] = [
+      ...ANIMATED_SURFACES,
+      {
+        id: 'tail-sway',
+        moves: 'a tail she does not have',
+        governedBy: 'idleBodyScale',
+        consumer: 'nowhere',
+        stanceChannels: ['tailSwayDeg'],
+      },
+    ];
+    assert.throws(() => assertMotionPolicyComplete(phantom), /does not define/);
+  });
+
+  it('fails when two surfaces claim one stance channel', () => {
+    // Travel and held asymmetry take OPPOSITE answers; a channel claimed
+    // twice has two answers on record, which is no answer.
+    const doubled: AnimatedSurface[] = [
+      ...ANIMATED_SURFACES,
+      {
+        id: 'stance-legs-again',
+        moves: 'the same knee split, claimed a second time',
+        governedBy: 'stanceAsymmetryScale',
+        consumer: 'nowhere',
+        stanceChannels: ['kneeSplitDeg'],
+      },
+    ];
+    assert.throws(() => assertMotionPolicyComplete(doubled), /claimed by both/);
   });
 
   it('describes what each surface moves, for the person deciding coverage', () => {
