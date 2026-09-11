@@ -364,7 +364,9 @@ export function TutorAvatar3D({
       const scene = new THREE.Scene();
       addRig(scene);
       dropInertVertexColors(body);
-      const hairHandle = new URLSearchParams(window.location.search).has('tsl')
+      // DEFAULT ON since the braid sway is measured (hair-region motion
+      // doubles) and the roughness map carries over; ?tsl=0 is the opt-out.
+      const hairHandle = new URLSearchParams(window.location.search).get('tsl') !== '0'
         ? applyTslHair(body)
         : null;
       scene.add(body);
