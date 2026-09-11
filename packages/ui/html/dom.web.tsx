@@ -192,7 +192,7 @@ export interface TextareaBaseProps extends InputBaseProps {
 }
 
 export const TextareaBase = ({
-  onChangeText, onSubmitEditing: _s, editable, secureTextEntry: _p, returnKeyType: _r,
+  onChangeText, onSubmitEditing, editable, secureTextEntry: _p, returnKeyType: _r,
   placeholderTextColor: _ptc, numberOfLines, role: _role, textContentType: _tct,
   className, style, ...props
 }: TextareaBaseProps) => (
@@ -200,6 +200,22 @@ export const TextareaBase = ({
     readOnly={editable === false}
     rows={numberOfLines}
     onChange={(e) => onChangeText?.(e.target.value)}
+    /*
+      PLAIN ENTER SUBMITS; Shift+Enter keeps the newline. This fork used to
+      DISCARD `onSubmitEditing` while `InputBase` above honoured it, so a
+      multiline field on web answered the one key every chat teaches with a
+      blank second line — a child typed an answer, pressed Enter, and nothing
+      sent. The preventDefault matters: without it the newline lands in the
+      field before the caller's send clears it. On native the prop passes to
+      TextInput, where a multiline field never fires it — that platform's send
+      button is the submit, and this fork does not get to overrule it.
+    */
+    onKeyDown={(e) => {
+      if (e.key === 'Enter' && !e.shiftKey && onSubmitEditing) {
+        e.preventDefault();
+        onSubmitEditing();
+      }
+    }}
     {...toDom(className, style)}
     {...props}
   />

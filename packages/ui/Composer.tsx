@@ -329,6 +329,7 @@ export function Composer({
     if (canSend) onSend();
   }, [canSend, onSend]);
 
+
   /*
     Recording replaces the row entirely — see the header. While a child is
     speaking there is nothing to type, and the waveform standing where the field
@@ -669,6 +670,14 @@ export function Composer({
             {...autoGrow}
             value={value}
             onChangeText={onChangeText}
+            /*
+              Enter submits on web (Shift+Enter keeps the newline) — the fork
+              decides, so this needs no Platform check: the web Textarea wires
+              Enter to `onSubmitEditing`, and a native multiline TextInput never
+              fires it, which is that platform's own convention — the send key
+              is the submit and the return key belongs to the keyboard.
+            */
+            onSubmitEditing={handleSubmit}
             placeholder={placeholder}
             editable={!disabled}
             /* `text-body-lg`, not `text-body`: this is the field a CHILD types their
