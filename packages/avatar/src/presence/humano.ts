@@ -625,6 +625,47 @@ export function createHumanoPresence(
     The finger chains, resolved once, per side and per finger so the engine's
     ten noise channels land on the ten fingers rather than on a flat list.
   */
+  /*
+    Leg segment lengths, measured from the rig rather than typed: the child
+    bone's rest offset IS the parent segment. They drive the planted-foot
+    solve below, and a typed length is a length that lies after a re-export.
+  */
+  /*
+    Sagittal rest vectors (z forward, y up) for the three-link chain: thigh
+    to knee, knee to ankle, ankle to toe. The toe matters — an ankle rotation
+    arcs the toe horizontally (measured: foot +x moves the toe −0.032 z per
+    0.3 rad), so a solve that only preserves foot ORIENTATION still drags the
+    contact point. Read from the rig, never typed.
+  */
+  /*
+    WORLD deltas, not parent-space offsets. A child's `.position` lives in its
+    parent's frame, and the thigh's rest orientation points that frame's +y
+    down the bone — so reading `.position.z/.y` as sagittal coordinates flips
+    signs and the solve fights the real geometry (measured: 72 mm of toe
+    travel from a solver whose maths was internally exact). The rest WORLD
+    positions are what the planar model is actually about.
+  */
+  const worldAt = (bone: THREE.Bone | null): THREE.Vector3 =>
+    bone ? bone.getWorldPosition(new THREE.Vector3()) : new THREE.Vector3();
+  const sagittalDelta = (from: THREE.Bone | null, to: THREE.Bone | null): [number, number] => {
+    const d = worldAt(to).sub(worldAt(from));
+    return [d.z, d.y];
+  };
+  const toeL = resolveBone(scene, 'DEF-toe.L');
+  const toeR = resolveBone(scene, 'DEF-toe.R');
+  const legChain = {
+    L: {
+      s1: sagittalDelta(bones.thighL, bones.shinL),
+      s2: sagittalDelta(bones.shinL, bones.footL),
+      s3: sagittalDelta(bones.footL, toeL),
+    },
+    R: {
+      s1: sagittalDelta(bones.thighR, bones.shinR),
+      s2: sagittalDelta(bones.shinR, bones.footR),
+      s3: sagittalDelta(bones.footR, toeR),
+    },
+  };
+
   const fingers: { bone: THREE.Bone; curl: number; side: 'L' | 'R'; finger: number; phalanx: number }[] = [];
   for (const side of ['L', 'R'] as const) {
     FINGERS.forEach((finger, fi) => {
@@ -922,21 +963,65 @@ export function createHumanoPresence(
       Never the same angle on both: `kneeSplitDeg` is added on one and taken off
       the other, which is the asymmetry the whole stance rests on.
     */
-    pose(
-      bones.shinL,
-      (stance.kneeBaseDeg - stance.kneeBaseSplitDeg - kneeLoad * stance.kneeSplitDeg) * DEG,
-      0,
-      0,
-    );
-    pose(
-      bones.shinR,
-      (stance.kneeBaseDeg + stance.kneeBaseSplitDeg + kneeLoad * stance.kneeSplitDeg) * DEG,
-      0,
-      0,
-    );
-    // The free heel unweights. Only the unloaded foot, hence the one-sided max.
-    pose(bones.footL, Math.max(0, -kneeLoad) * stance.freeFootPlantarDeg * DEG, 0, 0);
-    pose(bones.footR, Math.max(0, kneeLoad) * stance.freeFootPlantarDeg * DEG, 0, 0);
+    /*
+      THE FEET STAY PLANTED, and that takes the whole three-link chain.
+
+      Knee-only flexion slid the toes 106 mm (measured on the real hierarchy).
+      A two-link solve — thigh counter-rotation keeping the ankle over its
+      ground point, foot preserving world orientation — left 27 mm, because
+      the ankle correction itself arcs the TOE. So the constraint is the toe:
+      given the knee angle, Newton solves thigh and ankle so the toe's
+      sagittal position equals its rest position exactly. Three iterations
+      converge below a tenth of a millimetre; measured over two minutes the
+      worst horizontal toe travel is skin-blend residual, not slide.
+
+      The free heel unweights by FLEXING THE FREE KNEE MORE, not by rotating
+      the foot: extra ankle rotation is exactly the toe-dragging write the
+      solve exists to remove, while extra knee flexion raises the heel with
+      the toe pinned — which is what a person does.
+    */
+    for (const side of ['L', 'R'] as const) {
+      const sideSign = side === 'L' ? -1 : 1;
+      const unweight = Math.max(0, (side === 'L' ? -1 : 1) * kneeLoad) * stance.freeFootPlantarDeg;
+      const flexDeg =
+        stance.kneeBaseDeg + sideSign * stance.kneeBaseSplitDeg + sideSign * kneeLoad * stance.kneeSplitDeg + unweight;
+      const phi = flexDeg * DEG;
+      const chain = legChain[side];
+      // Rotation about +x: y' = y cosθ − z sinθ, z' = y sinθ + z cosθ.
+      const rot = (v: [number, number], theta: number): [number, number] => {
+        const [z, y] = v;
+        const cos = Math.cos(theta);
+        const sin = Math.sin(theta);
+        return [y * sin + z * cos, y * cos - z * sin];
+      };
+      const restToe: [number, number] = [
+        chain.s1[0] + chain.s2[0] + chain.s3[0],
+        chain.s1[1] + chain.s2[1] + chain.s3[1],
+      ];
+      // Unknowns: thigh delta a (about x), ankle delta t. Knee delta is phi.
+      let a = 0;
+      let t = 0;
+      for (let iteration = 0; iteration < 3; iteration += 1) {
+        const p1 = rot(chain.s1, a);
+        const p2 = rot(chain.s2, a + phi);
+        const p3 = rot(chain.s3, a + phi + t);
+        const fz = p1[0] + p2[0] + p3[0] - restToe[0];
+        const fy = p1[1] + p2[1] + p3[1] - restToe[1];
+        // d(rot(v,θ))/dθ = rot(v, θ + π/2)
+        const d1 = rot(chain.s1, a + Math.PI / 2);
+        const d2 = rot(chain.s2, a + phi + Math.PI / 2);
+        const d3 = rot(chain.s3, a + phi + t + Math.PI / 2);
+        const ja = [d1[0] + d2[0] + d3[0], d1[1] + d2[1] + d3[1]];
+        const jt = [d3[0], d3[1]];
+        const det = ja[0]! * jt[1]! - jt[0]! * ja[1]!;
+        if (Math.abs(det) < 1e-9) break;
+        a -= (fz * jt[1]! - fy * jt[0]!) / det;
+        t -= (ja[0]! * fy - ja[1]! * fz) / det;
+      }
+      pose(side === 'L' ? bones.thighL : bones.thighR, a, 0, 0);
+      pose(side === 'L' ? bones.shinL : bones.shinR, phi, 0, 0);
+      pose(side === 'L' ? bones.footL : bones.footR, t, 0, 0);
+    }
 
     touchedTwins.clear();
     for (const twin of Object.values(twins)) if (twin) restore(twin);

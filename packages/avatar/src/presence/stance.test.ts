@@ -97,10 +97,16 @@ describe('contrapposto stance', () => {
     assert.ok(Math.min(...sample.kneeL) > -1, `knee hyperextended to ${Math.min(...sample.kneeL).toFixed(1)}°`);
   });
 
-  it('the free heel unweights — the feet are not decorative', () => {
-    const fraction = sample.footFlexed / sample.kneeL.length;
-    assert.ok(fraction > 0.5, `a foot was plantarflexed in only ${(fraction * 100).toFixed(0)}% of frames`);
-  });
+  /*
+    Heel unweighting is asserted in feet.test.ts on the REAL hierarchy, not
+    here. It used to be checked as `foot.rotation.x != 0`, which broke twice
+    over: this synthetic scene puts every bone at one point, so the planted-
+    foot solve has zero-length segments and writes nothing — and the rotation
+    itself became an implementation detail once unweight moved into knee
+    flexion (extra ankle rotation is exactly the toe-dragging write the solve
+    removes; a person raises a heel by bending the knee over a pinned toe).
+    The observable is the heel RISING, which needs real bone offsets.
+  */
 
   it('the pose is never a mirror of itself', () => {
     const worst = Math.min(...sample.symmetry);
