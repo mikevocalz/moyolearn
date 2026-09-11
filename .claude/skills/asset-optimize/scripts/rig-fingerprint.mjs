@@ -22,7 +22,7 @@
 */
 import { createHash } from 'node:crypto';
 import { readFileSync } from 'node:fs';
-import { dirname, join } from 'node:path';
+import { dirname, join, resolve } from 'node:path';
 
 function readGltf(path) {
   const buffer = readFileSync(path);
@@ -211,17 +211,25 @@ export function diff(before, after) {
   return problems;
 }
 
-const [, , a, b] = process.argv;
-if (a && !b) console.log(JSON.stringify(fingerprint(a), null, 2));
-else if (a && b) {
-  const problems = diff(fingerprint(a), fingerprint(b));
-  if (problems.length === 0) {
-    console.log('rig intact — every protected field identical');
+/*
+  MAIN-ONLY. This block executed on IMPORT, so the first script to reuse the
+  library half read its own argv through this one and tried to fingerprint an
+  output directory. An import must be inert.
+*/
+const isMain = process.argv[1] && import.meta.url === new URL(`file://${resolve(process.argv[1])}`).href;
+if (isMain) {
+  const [, , a, b] = process.argv;
+  if (a && !b) console.log(JSON.stringify(fingerprint(a), null, 2));
+  else if (a && b) {
+    const problems = diff(fingerprint(a), fingerprint(b));
+    if (problems.length === 0) {
+      console.log('rig intact — every protected field identical');
+    } else {
+      for (const p of problems) console.error(`  BROKEN ${p}`);
+      process.exit(1);
+    }
   } else {
-    for (const p of problems) console.error(`  BROKEN ${p}`);
+    console.error('usage: rig-fingerprint.mjs <asset> [<asset-to-compare>]');
     process.exit(1);
   }
-} else {
-  console.error('usage: rig-fingerprint.mjs <asset> [<asset-to-compare>]');
-  process.exit(1);
 }
