@@ -173,10 +173,20 @@ describe('channel envelopes', () => {
         const peak = C.body.weightShift.amplitudeM * (2 * easeMax - 1);
         return [-peak, peak];
       })(),
-      torsoYaw: [
-        -(C.body.torsoTurn.driftDeg + C.body.torsoTurn.eventDeg.max) * DEG,
-        (C.body.torsoTurn.driftDeg + C.body.torsoTurn.eventDeg.max) * DEG,
-      ],
+      // Drift alone now: the held turn moved to `turnYaw` so the writer can
+      // stagger the one without staggering the other.
+      torsoYaw: [-C.body.torsoTurn.driftDeg * DEG, C.body.torsoTurn.driftDeg * DEG],
+      // The event turn, with its follow-through: sin(πu)·u³ peaks inside the
+      // travel, so the bound is the same shape the weight shift's is.
+      turnYaw: (() => {
+        let easeMax = 0;
+        for (let u = 0; u <= 1; u += 0.001) {
+          const smoothU = u * u * (3 - 2 * u);
+          easeMax = Math.max(easeMax, smoothU + 4 * C.body.torsoTurn.overshoot * Math.sin(Math.PI * u) * u ** 3);
+        }
+        const peak = C.body.torsoTurn.eventDeg.max * DEG * easeMax;
+        return [-peak, peak];
+      })(),
       shoulderL: [-C.body.shoulder.maxDeg * DEG, C.body.shoulder.maxDeg * DEG],
       shoulderR: [-C.body.shoulder.maxDeg * DEG, C.body.shoulder.maxDeg * DEG],
       wristL: [-C.body.wrist.maxDeg * DEG, C.body.wrist.maxDeg * DEG],
@@ -184,6 +194,26 @@ describe('channel envelopes', () => {
       // A fraction, not an angle: the writer turns it into ten angles.
       handRelaxL: [0, 1],
       handRelaxR: [0, 1],
+      // The expression layer. Weights, not angles — the writer turns them into
+      // morph influences and (for the yawn) a head pitch.
+      smileL: [0, 1],
+      smileR: [0, 1],
+      mouthPart: [0, C.expression.mouthPart.open.max],
+      yawn: [0, 1],
+      // Signed: the magnitude is the envelope as a fraction of the configured
+      // heel lift, and the sign is which way the event was drawn.
+      footAdjustL: [-1, 1],
+      footAdjustR: [-1, 1],
+      fold: [0, 1],
+      // The step: plants are metres from where each foot started, leashed to
+      // `maxOffsetM` plus one step's length (the leash is checked on the base
+      // BEFORE the step, so a single step may cross it and is then re-aimed).
+      plantXL: [-(C.body.step.maxOffsetM + C.body.step.lengthM.max), C.body.step.maxOffsetM + C.body.step.lengthM.max],
+      plantZL: [-(C.body.step.maxOffsetM + C.body.step.lengthM.max), C.body.step.maxOffsetM + C.body.step.lengthM.max],
+      plantXR: [-(C.body.step.maxOffsetM + C.body.step.lengthM.max), C.body.step.maxOffsetM + C.body.step.lengthM.max],
+      plantZR: [-(C.body.step.maxOffsetM + C.body.step.lengthM.max), C.body.step.maxOffsetM + C.body.step.lengthM.max],
+      swingL: [0, 1],
+      swingR: [0, 1],
       gazeAwayYaw: [-C.body.gazeAway.yawDeg.max * DEG, C.body.gazeAway.yawDeg.max * DEG],
       gazeAwayPitch: [C.body.gazeAway.pitchDeg.min * DEG, C.body.gazeAway.pitchDeg.max * DEG],
       headFollowYaw: [
@@ -496,11 +526,14 @@ describe('the body layer', () => {
     const engine = new IdleEngine(6);
     // Burn the idle timer so the event below is the pause, not the clock.
     for (let i = 0; i < 60; ++i) engine.step(DT, quiet);
-    const before = engine.step(DT, quiet).torsoYaw;
-    let first = engine.step(DT, { ...quiet, partnerPauseEvent: true }).torsoYaw;
+    // Both channels: the held turn moved to `turnYaw` so the writer can stagger
+    // it up the spine, and what this test asserts is the TOTAL the torso yaws.
+    const yaw = (f: { torsoYaw: number; turnYaw: number }) => f.torsoYaw + f.turnYaw;
+    const before = yaw(engine.step(DT, quiet));
+    let first = yaw(engine.step(DT, { ...quiet, partnerPauseEvent: true }));
     let peak = 0;
     for (let i = 0; i < Math.round(1.0 / DT); ++i) {
-      first = engine.step(DT, quiet).torsoYaw;
+      first = yaw(engine.step(DT, quiet));
       peak = Math.max(peak, Math.abs(first - before));
     }
     assert.ok(peak >= 1.5 * DEG, `torso turned only ${peak / DEG}° after a pause event`);

@@ -1,0 +1,94 @@
+--- a/build/fork/NavigationContainer.js
++++ b/build/fork/NavigationContainer.js
+@@ -41,11 +41,43 @@
+     (0, useDocumentTitle_1.useDocumentTitle)(refContainer, documentTitle);
+     (0, imperative_api_1.useImperativeApiEmitter)(refContainer);
+     const [lastUnhandledLink, setLastUnhandledLink] = react_1.default.useState();
++    /*
++      PATCHED — the not-yet-mounted state update.
++
++      `useLinking`'s getInitialState() runs during THIS component's first
++      render, and the getInitialURL() promise it returns calls the setter below
++      when it resolves. On a cold boot that resolve can land before this fiber
++      commits, and React logs "Can't perform a React state update on a
++      component that hasn't mounted yet". It is a race, so it reproduced on
++      roughly one boot in three.
++
++      Deferring by a macrotask was not enough — React's own work is scheduled
++      on a macrotask too, so setTimeout(0) sometimes still lost. This gates on
++      the actual mount instead: before it, the value is held; the mount effect
++      flushes whatever arrived. No behaviour changes — the container renders
++      `fallback` until that promise resolves, so nothing reads the value in
++      between — and the write can no longer land on an uncommitted fiber.
++    */
++    const mountedRef = react_1.default.useRef(false);
++    const pendingLinkRef = react_1.default.useRef(undefined);
++    react_1.default.useEffect(() => {
++      mountedRef.current = true;
++      if (pendingLinkRef.current !== undefined) {
++        const pending = pendingLinkRef.current;
++        pendingLinkRef.current = undefined;
++        setLastUnhandledLink(pending);
++      }
++      return () => { mountedRef.current = false; };
++    }, []);
++    const setLastUnhandledLinkSafely = react_1.default.useCallback((value) => {
++      if (mountedRef.current) setLastUnhandledLink(value);
++      else pendingLinkRef.current = value;
++    }, []);
+     const { getInitialState } = (0, useLinking_1.useLinking)(refContainer, {
+         enabled: isLinkingEnabled,
+         prefixes: [],
+         ...linking,
+-    }, setLastUnhandledLink);
++    }, setLastUnhandledLinkSafely);
+     const linkingContext = react_1.default.useMemo(() => ({ options: linking }), [linking]);
+     const unhandledLinkingContext = react_1.default.useMemo(() => ({ lastUnhandledLink, setLastUnhandledLink }), [lastUnhandledLink, setLastUnhandledLink]);
+     const onReadyForLinkingHandling = (0, useLatestCallback_1.default)(() => {
+--- a/build/react-navigation/native/NavigationContainer.js
++++ b/build/react-navigation/native/NavigationContainer.js
+@@ -62,11 +62,43 @@
+     (0, useBackButton_1.useBackButton)(refContainer);
+     (0, useDocumentTitle_1.useDocumentTitle)(refContainer, documentTitle);
+     const [lastUnhandledLink, setLastUnhandledLink] = React.useState();
++    /*
++      PATCHED — the not-yet-mounted state update.
++
++      `useLinking`'s getInitialState() runs during THIS component's first
++      render, and the getInitialURL() promise it returns calls the setter below
++      when it resolves. On a cold boot that resolve can land before this fiber
++      commits, and React logs "Can't perform a React state update on a
++      component that hasn't mounted yet". It is a race, so it reproduced on
++      roughly one boot in three.
++
++      Deferring by a macrotask was not enough — React's own work is scheduled
++      on a macrotask too, so setTimeout(0) sometimes still lost. This gates on
++      the actual mount instead: before it, the value is held; the mount effect
++      flushes whatever arrived. No behaviour changes — the container renders
++      `fallback` until that promise resolves, so nothing reads the value in
++      between — and the write can no longer land on an uncommitted fiber.
++    */
++    const mountedRef = React.useRef(false);
++    const pendingLinkRef = React.useRef(undefined);
++    React.useEffect(() => {
++      mountedRef.current = true;
++      if (pendingLinkRef.current !== undefined) {
++        const pending = pendingLinkRef.current;
++        pendingLinkRef.current = undefined;
++        setLastUnhandledLink(pending);
++      }
++      return () => { mountedRef.current = false; };
++    }, []);
++    const setLastUnhandledLinkSafely = React.useCallback((value) => {
++      if (mountedRef.current) setLastUnhandledLink(value);
++      else pendingLinkRef.current = value;
++    }, []);
+     const { getInitialState } = (0, useLinking_1.useLinking)(refContainer, {
+         enabled: isLinkingEnabled,
+         prefixes: [],
+         ...linking,
+-    }, setLastUnhandledLink);
++    }, setLastUnhandledLinkSafely);
+     const linkingContext = React.useMemo(() => ({ options: linking }), [linking]);
+     const unhandledLinkingContext = React.useMemo(() => ({ lastUnhandledLink, setLastUnhandledLink }), [lastUnhandledLink, setLastUnhandledLink]);
+     const onReadyForLinkingHandling = (0, useLatestCallback_1.default)(() => {

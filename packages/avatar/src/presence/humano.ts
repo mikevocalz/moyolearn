@@ -65,7 +65,7 @@
  */
 import * as THREE from 'three';
 import { idleConfig } from '../idle/config.ts';
-import { HAND_CHANNELS, IDLE_CHANNELS, IdleEngine, mulberry32, type IdleFrame, type IdleInputs } from '../idle/engine.ts';
+import { HAND_CHANNELS, IDLE_CHANNELS, IdleEngine, ValueNoise, mulberry32, type IdleFrame, type IdleInputs } from '../idle/engine.ts';
 import { DEFAULT_GESTURE_LIMITS } from '../safety/gesture-gate.ts';
 import type { Shape } from '../speech/track.ts';
 import type { RetargetedClip } from './clip-player.ts';
@@ -259,6 +259,55 @@ export const STANCE = {
 } as const;
 
 /**
+ * ARMS FOLDED, in radians, per side, on the axes the arm writer already uses.
+ *
+ * SOLVED AGAINST THE SHIPPED RIG AND HER ACTUAL SKIN, not authored by eye.
+ *
+ * Authoring it by eye failed twice, visibly, on the device. First attempt —
+ * 33 degrees of shoulder flexion, 103 degree elbow — put both hands up beside
+ * her head, because flexion ACCUMULATES down the chain: 33 at the shoulder
+ * plus 103 at the elbow is a forearm 46 degrees above horizontal, which is a
+ * surrender, not a fold. Second attempt hit the crossed-arms position and put
+ * the forearms INSIDE the shirt, because a joint-space target says nothing
+ * about where the body is.
+ *
+ * So the solve reads the mesh. `tools/fold-solve.mjs` walks the POSITION
+ * accessor of `natalie.gltf`, builds a max-z grid of the torso's front surface
+ * in bind pose, and then searches the four joint angles per side under a cost
+ * that (1) keeps every point along BOTH forearms 2.8 cm clear of that surface
+ * and no more than 4 cm off it, (2) puts each wrist across the midline at
+ * chest height, (3) keeps the elbows out at the sides, and (4) stacks one
+ * forearm above the other. Achieved clearance: 2.8-4.5 cm along the forearms,
+ * so the sleeves pass in front of the shirt rather than through it.
+ *
+ * What makes the pose work at all is `rot`, the rotation about the humerus:
+ * with the elbow flexed, internal rotation is what sweeps the forearm ACROSS
+ * the body. No amount of flexion does that, which is why the first version
+ * could not have been fixed by turning its numbers down.
+ *
+ * Per-side rather than a mirrored base plus an offset: the solve wanted
+ * genuinely different angles either side (the right arm rides under the left,
+ * with more rotation and less elbow), and that asymmetry is the same property
+ * item 11 of `what-reads-robotic.md` asks for — no joint at its opposite's
+ * angle, in a held pose most of all.
+ *
+ * `forward` stays under `DEFAULT_GESTURE_LIMITS.maxShoulderFlexionRad` (0.79),
+ * so the firewall's reach cap never clamps a held posture — a clamp landing on
+ * a pose would read as a flinch.
+ */
+export const FOLD = {
+  L: { forward: 0.65, rot: 1.206, abduct: 0.15, elbow: 0.986, hand: 0.027 },
+  R: { forward: 0.622, rot: 1.289, abduct: 0.15, elbow: 0.862, hand: 0.29 },
+  /**
+   * How far the fingers close while folded. A folded arm's hands are not
+   * hanging open with the fingers splayed — they tuck, and the tucked hand is
+   * softly closed. The relaxation scalar already means "how curled", so the
+   * fold just drives it up rather than adding a second finger system.
+   */
+  handCurl: 0.85,
+} as const;
+
+/**
  * The resting elbow angle for one side, stance plus that side's asymmetry.
  *
  * Exported so the writer and the tests read ONE definition. Three assertions
@@ -299,6 +348,12 @@ export function sanitizeNodeName(name: string): string {
  */
 export const GAZE_RANGE_DEG = 15;
 const DEG = Math.PI / 180;
+/**
+ * Hip to toe on the shipped rig, in metres: `DEF-thigh.L` sits at y 0.850 and
+ * `DEF-toe.L` at y 0.028. The lateral half of a step divides by it, so it is
+ * measured here rather than guessed at the call site.
+ */
+const LEG_LENGTH_M = 0.822;
 const smoothstep = (f: number) => {
   const t = f < 0 ? 0 : f > 1 ? 1 : f;
   return t * t * (3 - 2 * t);
@@ -816,6 +871,24 @@ export function createHumanoPresence(
   // Ten continuously independent noise signals read as constant finger fidgeting.
   const fingerRest = new Map<THREE.Bone, { current: number; target: number }>();
   for (const f of fingers) fingerRest.set(f.bone, { current: 0, target: 0 });
+  /*
+    THE WIGGLE — one slow noise per DIGIT, and its amplitude is the whole
+    reason this is not the mistake PR #31 removed. The shared relaxation
+    scalar still carries the hand's SHAPE; this adds under two degrees of
+    independent drift on top of it, which is the residual a real hand has and
+    a perfectly coupled one does not. Häger-Ross & Schieber measured that the
+    digits are not independently CONTROLLED — not that they move identically,
+    which is what one scalar alone produces, and what read as carved.
+  */
+  const wiggleNoise = new Map<string, ValueNoise>();
+  for (const side of ['L', 'R'] as const) {
+    for (const finger of FINGERS) {
+      const hz = idleConfig.body.hand.wiggle.hz;
+      wiggleNoise.set(`${side}${finger}`, new ValueNoise(hz.min + (hz.max - hz.min) * rng(), rng));
+    }
+  }
+  /** This frame's wiggle per digit, sampled at the knuckle and shared down it. */
+  const wiggleValue = new Map<string, number>();
   const handFollow = { L: new Follower(320, 0.55), R: new Follower(320, 0.55) };
   const handLift = { L: 0, R: 0 };
   const firewall = { torsoLeanRad: 0, shoulderFlexionRad: 0 };
@@ -906,7 +979,15 @@ export function createHumanoPresence(
    * applied to both. Twins compose: a second call on the same twin in one
    * frame multiplies onto the first.
    */
-  const poseBoth = (key: HumanoBoneKey, dx: number, dy: number, dz: number, tx = 0, ty = 0): void => {
+  const poseBoth = (
+    key: HumanoBoneKey,
+    dx: number,
+    dy: number,
+    dz: number,
+    tx = 0,
+    ty = 0,
+    tz = 0
+  ): void => {
     const bone = bones[key];
     const r = pose(bone, dx, dy, dz);
     if (!r || !bone) return;
@@ -922,9 +1003,9 @@ export function createHumanoPresence(
       mirror was still rest-anchored.
     */
     const bw = clipState ? clipState.fkByBone.get(bone) : undefined;
-    if (tx !== 0 || ty !== 0) {
-      if (bw) tmpVec.set(tx, ty, 0).applyQuaternion(basePInv.copy(bw.pwq).invert());
-      else tmpVec.set(tx, ty, 0).applyQuaternion(r.parentWorldQuaternionInverse);
+    if (tx !== 0 || ty !== 0 || tz !== 0) {
+      if (bw) tmpVec.set(tx, ty, tz).applyQuaternion(basePInv.copy(bw.pwq).invert());
+      else tmpVec.set(tx, ty, tz).applyQuaternion(r.parentWorldQuaternionInverse);
       const ob = clipState ? baseOverride.get(bone) : undefined;
       bone.position.copy(ob?.hasP ? ob.p : r.position).add(tmpVec);
     }
@@ -961,6 +1042,7 @@ export function createHumanoPresence(
     const moved = new THREE.Vector3().copy(offset).applyQuaternion(worldDelta).sub(offset);
     moved.x += tx;
     moved.y += ty;
+    moved.z += tz;
     if (moved.lengthSq() > 0) {
       twin.position.add(moved.applyQuaternion(basePInv));
     }
@@ -1146,6 +1228,29 @@ export function createHumanoPresence(
   */
   const turnHead = new LoadFollower();
   const turnTorso = new LoadFollower();
+  /*
+    THE SPINE CASCADE. One follower per level above the pelvis, each on its own
+    time constant, so the lateral weight signal ARRIVES at the lumbar, the chest
+    and the head at different times instead of all of them on the frame the
+    pelvis moved. Without these the upper body translated as one rigid block —
+    the "the upper half is shifting" read, and overlapping action missing.
+  */
+  /*
+    THE TURN ARRIVES IN SEQUENCE TOO. Same cascade as the weight, different
+    order: the head leads a turn (it goes where the attention goes), the chest
+    follows, the lumbar is last. Applying one envelope to every level on the
+    same frame is what made a turn read as a turntable.
+  */
+  /** The body arrives over the new base behind the feet, never ahead of them. */
+  const baseXLag = new LoadFollower();
+  const baseZLag = new LoadFollower();
+  const turnHeadLag = new LoadFollower();
+  const turnChestLag = new LoadFollower();
+  const turnSpineLag = new LoadFollower();
+  const shiftSpine1 = new LoadFollower();
+  const shiftSpine2 = new LoadFollower();
+  const shiftChest = new LoadFollower();
+  const shiftHead = new LoadFollower();
 
   const rest = (): void => {
     for (const bone of rests.keys()) restoreToRest(bone);
@@ -1175,7 +1280,19 @@ export function createHumanoPresence(
       for (const channel of IDLE_CHANNELS) {
         if (channel !== 'eyeBlinkLeft' && channel !== 'eyeBlinkRight') frame[channel] = 0;
       }
+      /*
+        EXCEPT THE SMILE, which is a pose and not motion — the same rule the
+        knees' held asymmetry and the settled facing already take. Zeroing it
+        removes no vestibular load and hands the reader who asked for less
+        motion a blank face for their trouble, which is the mannequin everyone
+        else is spending a frame budget to avoid. Pin the transition (the
+        lifts, the drift, the corner lag: all gone with the channel above),
+        keep the pose.
+      */
+      frame.smileL = idleConfig.expression.smile.heldReduced;
+      frame.smileR = idleConfig.expression.smile.heldReduced * 0.88;
       frame.weightShifted = false;
+      frame.yawnStarted = false;
     }
 
     // Speech envelope: the whole-utterance swell the arms and brow ride on.
@@ -1282,6 +1399,63 @@ export function createHumanoPresence(
       for (const [name, value] of Object.entries(gaze)) setMorph(mesh, name, value);
       // Gesture and prosody move together — a beat carries a brow accent.
       maxMorph(mesh, 'browInnerUp', 0.2 * beatEnv);
+      /*
+        THE IDLE FACE. Under speech, over nothing — every write here is a
+        `maxMorph`, so a viseme or an A2F frame always wins the channels it
+        touches and this layer only fills what speech is not using.
+
+        Tell 9 was answered for the case where the lesson carries a MOOD; this
+        is the case where it does not, which is most of a lesson. Between
+        utterances she held one shape: mouth closed, brows flat, for as long as
+        the child took to answer.
+      */
+      const EX = idleConfig.expression;
+      maxMorph(mesh, 'mouthSmileLeft', frame.smileL);
+      maxMorph(mesh, 'mouthSmileRight', frame.smileR);
+      // A smile that stops at the mouth is the uncanny one: the cheeks rise
+      // and the eyes narrow, or the corners are just stretching a flat face.
+      maxMorph(mesh, 'cheekSquintLeft', frame.smileL * EX.smile.cheek);
+      maxMorph(mesh, 'cheekSquintRight', frame.smileR * EX.smile.cheek);
+      maxMorph(mesh, 'eyeSquintLeft', frame.smileL * EX.smile.duchenne);
+      maxMorph(mesh, 'eyeSquintRight', frame.smileR * EX.smile.duchenne);
+      maxMorph(mesh, 'mouthDimpleLeft', frame.smileL * 0.35);
+      maxMorph(mesh, 'mouthDimpleRight', frame.smileR * 0.35);
+      if (!input.speaking) {
+        /*
+          THE TEETH. A closed-mouth smile at 0.4 reads as a smirk; the lips
+          have to part for it to read as warm, and the upper lip has to lift
+          off the teeth or the parting is just a gap. Speaking is excluded
+          because the jaw is the viseme's while she talks — two systems on one
+          joint is the artifact list's first entry.
+        */
+        const smileMean = (frame.smileL + frame.smileR) * 0.5;
+        const teeth = smileMean * EX.smile.teeth;
+        maxMorph(mesh, 'jawOpen', Math.max(frame.mouthPart, teeth));
+        maxMorph(mesh, 'mouthUpperUpLeft', teeth * 0.8);
+        maxMorph(mesh, 'mouthUpperUpRight', teeth * 0.7);
+      }
+      /*
+        THE YAWN. Four minutes of nothing, then the one signal in the whole
+        layer that says she has a state the child is not driving. The eyes
+        squeeze rather than blink — a yawn closes them harder and slower than
+        a blink does, and a yawn with open eyes reads as a scream.
+      */
+      if (frame.yawn > 0) {
+        const y = frame.yawn;
+        maxMorph(mesh, 'jawOpen', y * EX.yawn.jaw);
+        maxMorph(mesh, 'mouthFunnel', y * 0.25);
+        maxMorph(mesh, 'mouthLowerDownLeft', y * 0.3);
+        maxMorph(mesh, 'mouthLowerDownRight', y * 0.3);
+        maxMorph(mesh, 'browInnerUp', y * EX.yawn.brow);
+        maxMorph(mesh, 'browOuterUpLeft', y * EX.yawn.brow * 0.6);
+        maxMorph(mesh, 'browOuterUpRight', y * EX.yawn.brow * 0.6);
+        maxMorph(mesh, 'eyeBlinkLeft', y * EX.yawn.eyesShut);
+        maxMorph(mesh, 'eyeBlinkRight', y * EX.yawn.eyesShut);
+        maxMorph(mesh, 'eyeSquintLeft', y * 0.6);
+        maxMorph(mesh, 'eyeSquintRight', y * 0.6);
+        maxMorph(mesh, 'noseSneerLeft', y * 0.25);
+        maxMorph(mesh, 'noseSneerRight', y * 0.25);
+      }
     }
 
     // ================================ the body ================================
@@ -1488,9 +1662,48 @@ export function createHumanoPresence(
     */
     for (const side of ['L', 'R'] as const) {
       const sideSign = side === 'L' ? -1 : 1;
-      const unweight = Math.max(0, (side === 'L' ? -1 : 1) * kneeLoad) * stance.freeFootPlantarDeg;
+      const freeness = Math.max(0, (side === 'L' ? -1 : 1) * kneeLoad);
+      const unweight = freeness * stance.freeFootPlantarDeg;
+      /*
+        AND THE FREE FOOT ADJUSTS, every ten seconds or so, because feet that
+        never move are the "she never moves her feet" read and the load alone
+        will not produce it — between shifts the legs only answer the pelvis.
+
+        It goes through the KNEE, not the ankle, and that is not a detail: the
+        comment above spells out why. Extra ankle rotation is exactly the
+        toe-dragging write the Newton solve exists to remove — 5.7 mm of toe
+        travel, measured, against the 2 mm `feet.test.ts` allows. Extra knee
+        flexion raises the heel with the toe pinned by construction, because
+        the solve re-derives the thigh and ankle for whatever knee angle it is
+        handed. A person lifts their heel; they do not rotate their foot in
+        the air.
+
+        Scaled by how unloaded the foot is, so she never lifts the heel she is
+        standing on, and there is no toe pivot: pivoting the foot about the
+        ankle slides the toe, and pivoting it about the toe is a STEP, which
+        stays out of scope.
+      */
+      const adjust = rm ? 0 : Math.abs(side === 'L' ? frame.footAdjustL : frame.footAdjustR);
+      const heelLift = adjust * idleConfig.body.foot.heelDeg.max * (0.35 + 0.65 * freeness);
+      /*
+        AND SHE TAKES A STEP.
+
+        `swing` is how far through the air this foot is; it flexes the knee,
+        which — through the same toe-pinning solve — is what raises the heel.
+        The plant offsets below are where the foot has actually got to, and the
+        engine only moves them while that foot's own swing is live, so a
+        planted foot still cannot slide.
+      */
+      const swing = rm ? 0 : side === 'L' ? frame.swingL : frame.swingR;
+      const plantX = rm ? 0 : side === 'L' ? frame.plantXL : frame.plantXR;
+      const plantZ = rm ? 0 : side === 'L' ? frame.plantZL : frame.plantZR;
       const flexDeg =
-        (stance.kneeBaseDeg + sideSign * stance.kneeBaseSplitDeg + sideSign * kneeLoad * stance.kneeSplitDeg + unweight) *
+        (stance.kneeBaseDeg +
+          sideSign * stance.kneeBaseSplitDeg +
+          sideSign * kneeLoad * stance.kneeSplitDeg +
+          unweight +
+          heelLift +
+          swing * idleConfig.body.step.liftDeg) *
         stanceScale;
       const phi = flexDeg * DEG;
       const chain = legChain[side];
@@ -1502,7 +1715,7 @@ export function createHumanoPresence(
         return [y * sin + z * cos, y * cos - z * sin];
       };
       const restToe: [number, number] = [
-        chain.s1[0] + chain.s2[0] + chain.s3[0],
+        chain.s1[0] + chain.s2[0] + chain.s3[0] + plantZ,
         chain.s1[1] + chain.s2[1] + chain.s3[1],
       ];
       // Unknowns: thigh delta a (about x), ankle delta t. Knee delta is phi.
@@ -1525,21 +1738,115 @@ export function createHumanoPresence(
         a -= (fz * jt[1]! - fy * jt[0]!) / det;
         t -= (ja[0]! * fy - ja[1]! * fz) / det;
       }
-      pose(side === 'L' ? bones.thighL : bones.thighR, a, 0, 0);
+      /*
+        AND THE FREE FOOT ADJUSTS. The solve above pins the toe so the load can
+        never slide the foot, which is right — and leaves both feet bit-static
+        for the whole session, which is the "she never moves her feet" read.
+
+        This is the one write that is ALLOWED past the pin, and only on the
+        foot that is not carrying her: extra plantarflexion about the ankle
+        with the toe on the ground is a heel lift, which is the thing a person
+        does every ten seconds without noticing. `freeness` scales it by how
+        unloaded that foot actually is, so she can never lift the heel she is
+        standing on. The toe does not travel and the pelvis does not come over
+        a new base: still not a step, still not a step-turn.
+      */
+      /*
+        LATERAL is not something the sagittal solve can express, so it is a
+        closed form instead: swinging the whole leg about the hip by
+        asin(dx / legLength) puts the foot dx to the side, and the ankle rolls
+        back by the same angle so the sole stays flat on the floor rather than
+        standing on its edge. Measured axis: +z abducts, and it is +z for a
+        +x foot on BOTH sides (the header's "L +, R −" is about abduction, and
+        moving the right foot to +x is adduction).
+      */
+      const lean = Math.asin(clamp(plantX / LEG_LENGTH_M, -0.35, 0.35));
+      pose(side === 'L' ? bones.thighL : bones.thighR, a, 0, lean);
       pose(side === 'L' ? bones.shinL : bones.shinR, phi, 0, 0);
-      pose(side === 'L' ? bones.footL : bones.footR, t, 0, 0);
+      pose(side === 'L' ? bones.footL : bones.footR, t, 0, -lean);
     }
 
     touchedTwins.clear();
     for (const twin of Object.values(twins)) if (twin) restore(twin);
+    /*
+      THE WEIGHT ARRIVES UP THE SPINE IN SEQUENCE, not all at once.
+
+      Every line below used to read the SAME `shift` on the same frame: the
+      pelvis translated, and the lumbar, chest and head counter-leaned in
+      lockstep with it. That is a rigid block sliding sideways, which is
+      exactly what "the upper half is shifting" describes, and it is
+      overlapping action — the twelfth principle — simply absent.
+
+      Each level now reads a follower one lag further behind the pelvis. The
+      constants are tenths of a second (`spineLagS`): enough that the chest is
+      visibly still arriving when the hips have stopped, not so much that she
+      wobbles. Reduced motion pins `shift` to zero, so the whole cascade
+      collapses to rest with no special case.
+    */
+    const turnLag = idleConfig.body.torsoTurn.lagS;
+    const heldTurn = rm ? 0 : frame.turnYaw;
+    turnHeadLag.step(heldTurn, rawDelta, turnLag.head);
+    turnChestLag.step(heldTurn, rawDelta, turnLag.chest);
+    turnSpineLag.step(heldTurn, rawDelta, turnLag.spine);
+    /*
+      What the torso ACTUALLY carries this frame, summed from the two levels
+      that carry it. The head counter below reads this rather than the command,
+      so the face stays on the child through the whole travel instead of
+      counter-rotating against an angle the body has not reached yet.
+    */
+    const torsoTurned = turnSpineLag.value * 0.55 + turnChestLag.value * 0.45;
+    const lagS = idleConfig.body.spineLagS;
+    shiftSpine1.step(shift, rawDelta, lagS.spine1);
+    shiftSpine2.step(shift, rawDelta, lagS.spine2);
+    shiftChest.step(shift, rawDelta, lagS.chest);
+    shiftHead.step(shift, rawDelta, lagS.head);
+    /*
+      THE BODY GOES WHERE THE FEET WENT. Her base is the mean of the two plant
+      points — not a number of its own — so the torso cannot end up anywhere
+      the feet have not already been, and it arrives on a lag, which is what
+      makes the feet read as the cause and the body as the consequence.
+    */
+    baseXLag.step(
+      rm ? 0 : (frame.plantXL + frame.plantXR) / 2,
+      rawDelta,
+      idleConfig.body.step.bodyLagS
+    );
+    baseZLag.step(
+      rm ? 0 : (frame.plantZL + frame.plantZR) / 2,
+      rawDelta,
+      idleConfig.body.step.bodyLagS
+    );
     // Measured: +z on DEF-spine moves the head −x. Lean back over centre.
-    poseBoth('torso', 0, 0, shift * 0.96, shift, frame.swayY * 0.3);
+    poseBoth(
+      'torso',
+      0,
+      0,
+      shift * 0.96,
+      shift + baseXLag.value,
+      frame.swayY * 0.3,
+      baseZLag.value
+    );
     let leanSum = 0;
-    poseBoth('spine1', 0, 0, -shift * 0.35);
-    poseBoth('spine2', 0, frame.torsoYaw * 0.6 + turnTorso.value * TURN_TOWARD.shares.spine2, -shift * 0.25);
+    poseBoth('spine1', 0, 0, -shiftSpine1.value * 0.35);
+    poseBoth(
+      'spine2',
+      0,
+      frame.torsoYaw * 0.6 + turnSpineLag.value * 0.55 + turnTorso.value * TURN_TOWARD.shares.spine2,
+      -shiftSpine2.value * 0.25
+    );
     // Breath: the chest opens BACK on the inhale (−x) and lifts.
-    const chestBreath = -frame.breathY * 6;
-    poseBoth('chest', chestBreath, frame.torsoYaw * 0.4 + turnTorso.value * TURN_TOWARD.shares.chest, 0, 0, frame.breathY * 0.6);
+    const yawn = rm ? 0 : frame.yawn;
+    // A yawn is a breath first: the chest takes one before the jaw does
+    // anything, which is the anticipation that makes the jaw read as caused.
+    const chestBreath = -frame.breathY * 6 * (1 + yawn * (idleConfig.expression.yawn.chest - 1));
+    poseBoth(
+      'chest',
+      chestBreath,
+      frame.torsoYaw * 0.4 + turnChestLag.value * 0.45 + turnTorso.value * TURN_TOWARD.shares.chest,
+      -shiftChest.value * 0.12,
+      0,
+      frame.breathY * 0.6 + yawn * 0.004
+    );
     leanSum += chestBreath;
     const upperBreath = -frame.breathY * 3;
     poseBoth('upperChest', upperBreath, 0, 0);
@@ -1551,7 +1858,11 @@ export function createHumanoPresence(
       drift, the head-follow behind the eyes, and half a counter to the torso
       turn so she keeps facing the lens while her body turns.
     */
-    const neckPitch = frame.driftPitch * 1.2 + frame.nodPitch * 0.5 - frame.headFollowPitch * 0.4;
+    const neckPitch =
+      frame.driftPitch * 1.2 +
+      frame.nodPitch * 0.5 -
+      frame.headFollowPitch * 0.4 -
+      (rm ? 0 : frame.yawn) * idleConfig.expression.yawn.headPitchDeg * DEG * 0.4;
     poseBoth('neck', neckPitch, frame.driftYaw * 1.2 + frame.headFollowYaw * 0.4 + turnHead.value * TURN_TOWARD.shares.neck, 0);
     leanSum += frame.driftPitch * 1.2 + frame.nodPitch * 0.5;
     const headPitch =
@@ -1561,9 +1872,21 @@ export function createHumanoPresence(
       frame.headFollowPitch * 0.6;
     poseBoth(
       'head',
-      headPitch,
-      frame.driftYaw * 0.8 + frame.headFollowYaw * 0.6 - frame.torsoYaw * 0.5 + turnHead.value * TURN_TOWARD.shares.head,
-      -shift * 0.3
+      // Back, not down: a yawn tips the head away from the camera, and the
+      // sign convention here is +x toward it.
+      headPitch - yawn * idleConfig.expression.yawn.headPitchDeg * DEG,
+      frame.driftYaw * 0.8 +
+        frame.headFollowYaw * 0.6 -
+        frame.torsoYaw * 0.5 +
+        // The head LEADS the turn and then gives most of it back: it reaches
+        // the new direction before the chest does (`turnHeadLag`, the shortest
+        // constant) and then counters what the torso has actually delivered,
+        // so her face holds the child through the travel rather than swinging
+        // with the body and snapping back at the end.
+        turnHeadLag.value * 0.22 -
+        torsoTurned * 0.72 +
+        turnHead.value * TURN_TOWARD.shares.head,
+      -shiftHead.value * 0.3
     );
 
     /*
@@ -1585,7 +1908,10 @@ export function createHumanoPresence(
     for (const side of ['L', 'R'] as const) {
       const zSign = side === 'L' ? 1 : -1;
       const leads = beat.side === (side === 'L' ? 1 : -1);
-      const beatAmp = rm ? 0 : beat.amp * beatEnv * (leads ? 1 : beat.both ? 0.4 : 0);
+      // A folded arm does not gesture — the beat fades out with the posture
+      // and comes back as she unfolds, which is why the unfold has to lead.
+      const beatAmp =
+        rm ? 0 : beat.amp * beatEnv * (leads ? 1 : beat.both ? 0.4 : 0) * (1 - frame.fold);
       const lift = beatAmp;
       const followed = handFollow[side].step(lift, rawDelta);
       handLift[side] = followed;
@@ -1610,7 +1936,13 @@ export function createHumanoPresence(
       */
       const shoulderTilt =
         rm ? 0 : -shoulderLoad * (side === 'L' ? 1 : -1) * stance.shoulderCounterDeg * DEG;
-      const rise = (side === 'L' ? frame.shoulderL : frame.shoulderR) + frame.breathY * 0.5 - STANCE.shoulderDrop;
+      const rise =
+        (side === 'L' ? frame.shoulderL : frame.shoulderR) +
+        frame.breathY * 0.5 -
+        STANCE.shoulderDrop +
+        // The shoulders ride up with a yawn and settle after it — the
+        // follow-through that makes the yawn a body event and not a jaw one.
+        yawn * idleConfig.expression.yawn.shoulderDeg * DEG;
       pose(side === 'L' ? bones.shoulderL : bones.shoulderR, rise + lift * 0.06, 0, shoulderTilt);
 
       // The firewall's reach cap, applied where the reach is made: however
@@ -1618,30 +1950,62 @@ export function createHumanoPresence(
       // `sideBias` is +1 on the left and -1 on the right, so every stance angle
       // below lands on a different value per arm.
       const sideBias = side === 'L' ? 1 : -1;
+      /*
+        ARMS FOLDED — the second posture, and until now there was exactly one.
+
+        Micro-motion cannot fix a body that holds one shape for a whole lesson:
+        the idle layer moves fractions of a degree on top of whatever base pose
+        it is handed, and arms-at-sides was the only pose there has ever been.
+        A listener folds their arms, holds it for half a minute and drops it
+        when they start to talk — which the engine does by dropping `fold` on
+        speech, so the unfold LEADS her first word instead of coinciding with it.
+
+        Blended, never switched: `fold` is an eased 0..1 and every angle below
+        is a lerp toward its folded value, so entering and leaving the posture
+        is a movement rather than a pop. The two sides do not fold identically
+        — one forearm crosses above the other, which is what `sideBias` buys
+        here, and a symmetric fold would read as a mannequin with its arms on.
+      */
+      const fold = rm ? 0 : frame.fold;
+      const mix = (rest: number, folded: number) => rest + (folded - rest) * fold;
+      const folded = FOLD[side];
       const forward = clamp(
-        STANCE.armForward + sideBias * STANCE.asymmetry.forward + lift * 0.18,
+        mix(STANCE.armForward + sideBias * STANCE.asymmetry.forward + lift * 0.18, folded.forward),
         0,
         DEFAULT_GESTURE_LIMITS.maxShoulderFlexionRad,
       );
       pose(
         side === 'L' ? bones.upperArmL : bones.upperArmR,
         forward,
-        // A touch of rotation about the arm: the palm turns as the hand talks.
-        zSign * lift * 0.12,
-        zSign * (STANCE.armAbduct + sideBias * STANCE.asymmetry.abduct + lift * 0.08)
+        // A touch of rotation about the arm: the palm turns as the hand talks
+        // — and, folded, the rotation that sweeps the forearm across the body.
+        zSign * mix(lift * 0.12, folded.rot),
+        zSign * mix(STANCE.armAbduct + sideBias * STANCE.asymmetry.abduct + lift * 0.08, folded.abduct)
       );
       maxFlexion = Math.max(maxFlexion, forward);
 
       pose(
         side === 'L' ? bones.foreArmL : bones.foreArmR,
-        STANCE.elbowBend + sideBias * STANCE.asymmetry.elbow + lift * 0.3 + followed * 0.12,
+        mix(
+          STANCE.elbowBend + sideBias * STANCE.asymmetry.elbow + lift * 0.3 + followed * 0.12,
+          folded.elbow
+        ),
         0,
         0,
       );
 
-      const wrist = rm ? 0 : (side === 'L' ? frame.wristL : frame.wristR) * 0.15;
+      // 0.6, not 0.15. At 15% of a 3-degree range this was 0.45 degrees of
+      // wrist — below anything visible at her render size, which is most of
+      // why the hands read as carved onto the ends of the arms.
+      const wrist = rm ? 0 : (side === 'L' ? frame.wristL : frame.wristR) * 0.6;
       // The wrist is where the beat lives; the follower puts it a beat late.
-      pose(side === 'L' ? bones.handL : bones.handR, followed * 0.55 + wrist, 0, zSign * followed * 0.25);
+      // Folded, the hand tucks under the opposite arm rather than hanging.
+      pose(
+        side === 'L' ? bones.handL : bones.handR,
+        mix(followed * 0.55 + wrist, folded.hand + wrist * 0.4),
+        0,
+        zSign * mix(followed * 0.25, 0)
+      );
     }
 
     /*
@@ -1672,7 +2036,13 @@ export function createHumanoPresence(
     */
     for (const f of fingers) {
       const openness = 1 - 0.45 * clamp(handLift[f.side], 0, 1);
-      const relax = rm ? 0 : clamp(frame[HAND_CHANNELS[f.side]], 0, 1);
+      /*
+        Folded, the hands close. Splayed fingers on a folded arm is the detail
+        that keeps the posture reading as "hands held in front of her" rather
+        than as arms folded — it is the same tell as an open hand on a hip.
+      */
+      const relaxIdle = clamp(frame[HAND_CHANNELS[f.side]], 0, 1);
+      const relax = rm ? 0 : relaxIdle + (FOLD.handCurl - relaxIdle) * frame.fold;
       /*
         The spread down the chain is the same shape the rest curl uses: most at
         the knuckle, least at the tip. A finger that flexed uniformly along its
@@ -1680,11 +2050,25 @@ export function createHumanoPresence(
       */
       const share = f.phalanx === 0 ? 0.5 : f.phalanx === 1 ? 0.3 : 0.2;
       /*
+        Stepped ONCE per digit — at the knuckle — and shared down the chain
+        through the same `share` gradient the curl uses. A finger whose three
+        joints drew independent noise would bend against itself, which reads
+        as a broken finger rather than a live one.
+      */
+      const key = `${f.side}${f.finger}`;
+      if (f.phalanx === 0) {
+        const noise = wiggleNoise.get(`${f.side}${FINGERS[f.finger]}`);
+        wiggleValue.set(key, noise ? noise.step(rawDelta) : 0);
+      }
+      const wiggle = rm
+        ? 0
+        : (wiggleValue.get(key) ?? 0) * idleConfig.body.hand.wiggle.deg * DEG * share * 2;
+      /*
         RELAX_RANGE is how far the scalar may bend a finger beyond its rest
         curl — about 9 degrees at the knuckle at full relaxation. Small on
         purpose: this is a hand settling, not a fist closing.
       */
-      pose(f.bone, f.curl * openness + relax * f.curl * RELAX_RANGE * share, 0, 0);
+      pose(f.bone, f.curl * openness + relax * f.curl * RELAX_RANGE * share + wiggle, 0, 0);
     }
 
     firewall.torsoLeanRad = leanSum;

@@ -129,6 +129,13 @@ export interface MotionPolicy {
     mouthScale: 1;
     /** Blink. NEVER disabled — a face that never blinks is unsettling, not calm. */
     blinkScale: 1;
+    /**
+     * The resting warmth her face holds — the smile baseline, not its lifts.
+     * NEVER scaled, for the same reason as the stance asymmetry and the held
+     * facing: it is a pose. The TRAVEL on top of it (the lifts, the corner lag,
+     * the drift) rides `idleBodyScale` and is pinned with everything else.
+     */
+    expressionHoldScale: 1;
 }
 export declare const MOTION_POLICIES: Readonly<Record<MotionMode, MotionPolicy>>;
 export declare function motionPolicy(mode: MotionMode): MotionPolicy;

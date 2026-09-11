@@ -34,3 +34,23 @@ zone root, and `payload.delete()` cascading to Bunny.
 
 **Remove this when** the adapter ships a Payload 4 build. Upstream issue:
 `docs/decisions/payload-storage-bunny-payload4-report.md`.
+
+## `expo-router@57.0.15`
+
+**Why:** cold boots logged `Can't perform a React state update on a component
+that hasn't mounted yet`, on roughly one boot in three. Symbolicated to
+`build/fork/useLinking.native.js` — `getInitialState()` runs during
+`NavigationContainerInner`'s FIRST render, and the `getInitialURL()` promise it
+returns calls `setLastUnhandledLink` (a `useState` setter on that same
+not-yet-committed fiber) when it resolves. Upstream still has it: the code at
+`expo-router@latest` is identical, so this is not an upgrade away.
+
+**What the patch does:** gates the setter on the actual mount, in BOTH
+`NavigationContainer` copies (`build/fork` and `build/react-navigation/native`,
+which take turns depending on the entry). Before the container commits the
+value is held in a ref; the mount effect flushes it. Deferring with
+`setTimeout(0)` was tried first and is NOT enough — React schedules its own
+work on a macrotask too, so the deferred write still sometimes beat the commit,
+which is exactly the intermittency that made it look fixed. Nothing reads
+`lastUnhandledLink` before the commit (the container renders `fallback` until
+that promise resolves), so deep-link handling is unchanged.

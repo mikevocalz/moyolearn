@@ -37,7 +37,7 @@ export interface IdleInputs {
      */
     speechEnergy?: number;
 }
-export declare const IDLE_CHANNELS: readonly ["breathY", "breathPitch", "swayX", "swayY", "driftYaw", "driftPitch", "nodPitch", "eyeYaw", "eyePitch", "eyeBlinkLeft", "eyeBlinkRight", "eyesWide", "weightShift", "torsoYaw", "shoulderL", "shoulderR", "wristL", "wristR", "handRelaxL", "handRelaxR", "gazeAwayYaw", "gazeAwayPitch", "headFollowYaw", "headFollowPitch"];
+export declare const IDLE_CHANNELS: readonly ["breathY", "breathPitch", "swayX", "swayY", "driftYaw", "driftPitch", "nodPitch", "eyeYaw", "eyePitch", "eyeBlinkLeft", "eyeBlinkRight", "eyesWide", "weightShift", "torsoYaw", "turnYaw", "shoulderL", "shoulderR", "wristL", "wristR", "handRelaxL", "handRelaxR", "smileL", "smileR", "mouthPart", "yawn", "footAdjustL", "footAdjustR", "fold", "plantXL", "plantZL", "plantXR", "plantZR", "swingL", "swingR", "gazeAwayYaw", "gazeAwayPitch", "headFollowYaw", "headFollowPitch"];
 export type IdleChannel = (typeof IDLE_CHANNELS)[number];
 export type IdleFrame = {
     [K in IdleChannel]: number;
@@ -58,6 +58,8 @@ export type IdleFrame = {
     weightShifted: boolean;
     /** Gaze left the lens this frame. */
     gazeBroke: boolean;
+    /** A yawn began this frame. */
+    yawnStarted: boolean;
     gains: {
         breath: number;
         sway: number;
@@ -75,6 +77,18 @@ export declare const HAND_CHANNELS: {
     readonly L: "handRelaxL";
     readonly R: "handRelaxR";
 };
+/** Band-limited value noise with jittered cell spans (never loops). */
+export declare class ValueNoise {
+    private t;
+    private span;
+    private v0;
+    private v1;
+    private hz;
+    private rand;
+    constructor(hz: number, rand: () => number);
+    private draw;
+    step(dt: number): number;
+}
 export declare class IdleEngine {
     readonly seed: number;
     private rand;
@@ -125,6 +139,10 @@ export declare class IdleEngine {
     private handTo;
     private handT;
     private handMoveS;
+    /** The settled value this frame, so an interrupted settle starts from it. */
+    private handCurrent;
+    /** Seconds until the hands re-settle for no external reason at all. */
+    private handSettleIn;
     private awayIn;
     private awayT;
     private awayHoldS;
@@ -139,6 +157,52 @@ export declare class IdleEngine {
      * one after it — every head golden would need re-approval for adding a body.
      */
     private bodyRand;
+    /**
+     * THE THIRD STREAM. The expression, foot and fold layers draw from their own
+     * `mulberry32` for the same reason the body layer got one: every ValueNoise
+     * pulls from a shared stream lazily during `step`, so one extra draw here
+     * would shift the phase of every existing channel and re-open every approved
+     * golden. A new layer must be addable without re-approving the old ones.
+     */
+    private exprRand;
+    private smileBase;
+    private smileNoise;
+    private smileIn;
+    private smileT;
+    private smileHoldS;
+    private smilePeak;
+    private smileTrail;
+    private partIn;
+    private partT;
+    private partHoldS;
+    private partOpen;
+    /** Seconds since anything happened — her speech, the child's, or processing. */
+    private quietS;
+    private yawnT;
+    private yawnCooldown;
+    private footIn;
+    private footT;
+    private footMoveS;
+    private footSide;
+    private footDir;
+    private footAmp;
+    private foldIn;
+    private foldT;
+    private foldHoldS;
+    private foldValue;
+    private stepIn;
+    private baseX;
+    private baseZ;
+    private plant;
+    private swingFrom;
+    private swingTo;
+    private swingSide;
+    private swingT;
+    private swingS;
+    /** The second foot's wait, then its turn. Negative means nothing is queued. */
+    private secondIn;
+    /** 0 = standing, 1 = first foot moving, 2 = second. A step is two swings. */
+    private stepPhase;
     private anticipationArmed;
     private anticipationFired;
     private anticipationLead;
@@ -163,5 +227,6 @@ export declare class IdleEngine {
     private jitteredBreathPeriod;
     private range;
     private bodyRange;
+    private exprRange;
     step(dt: number, inputs: IdleInputs): IdleFrame;
 }

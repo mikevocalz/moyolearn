@@ -57,7 +57,8 @@
     "patchedDependencies": {
       "@seshuk/payload-storage-bunny@3.0.0": "patches/@seshuk__payload-storage-bunny@3.0.0.patch",
       "react-native-nitro-image": "patches/react-native-nitro-image.patch",
-      "react-native-vision-camera": "patches/react-native-vision-camera.patch"
+      "react-native-vision-camera": "patches/react-native-vision-camera.patch",
+      "expo-router@57.0.15": "patches/expo-router@57.0.15.patch"
     },
     "supportedArchitectures": {
       "cpu": [

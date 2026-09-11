@@ -79,6 +79,13 @@ export interface TutorScreenProps {
  */
 type NextProblem = 'idle' | 'loading' | 'empty' | 'error';
 
+/**
+ * The neutral surface the stage falls back to while she is still arriving —
+ * see `stageState` below. Module scope so it is one object rather than a new
+ * one per render, which would re-render the stage on every frame of a lesson.
+ */
+const PRESENCE_STATE = { kind: 'presence' } as const;
+
 export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   const { activeContext } = useAppSession();
   // Resolve the learner's presentation band from the session before rendering.
@@ -103,6 +110,8 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     messages,
     say,
     hydrate,
+    clearStaleFailure,
+    presenceLive,
     sessionId,
     skillTitle,
     tutorPresence,
@@ -205,8 +214,23 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   */
   const [resumed, setResumed] = useState(false);
   useEffect(() => {
+    /*
+      A FAILURE FROM A PREVIOUS VISIT IS NOT THIS VISIT'S STATE.
+
+      The store outlives the screen, so `{ kind: 'retry' }` — "I couldn't reach
+      Natalie just then" plus a Try again button — came back the instant the
+      screen re-mounted, on the FIRST frame, while the stage beside it still
+      read "Natalie's getting ready…". Two panes telling the child opposite
+      things, and the error was about a request nobody had made yet.
+
+      Cleared on the way in, before the hydrate that may or may not answer.
+      Nothing is lost: the turn it referred to is already in the thread, the
+      composer is open either way, and if this visit's request fails too, the
+      same retry comes back in a second and a half — earned this time.
+    */
+    clearStaleFailure();
     void hydrate(problem ?? '').finally(() => setResumed(true));
-  }, [problem, hydrate]);
+  }, [problem, hydrate, clearStaleFailure]);
 
   /*
     Points a stored attachment at its bytes the moment the queue lands them.
@@ -853,10 +877,26 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     />
   );
 
+  /*
+    A FAILURE IS NEVER DRAWN BESIDE A TUTOR WHO HAS NOT ARRIVED.
+
+    `retry` draws "I couldn't reach Natalie just then" and a Try again button.
+    On a cold entry the first turn can fail while the stage beside it is still
+    drawing "Natalie's getting ready…" — two panes telling the child opposite
+    things about the same person, and asking them to retry something before
+    anything has visibly happened.
+
+    So the failure waits for her: until the stage reports `live` or
+    `settled-2d` (`presenceLive`), the surface stays on `presence`. Nothing is
+    lost or suppressed — the moment she lands, the retry appears with the
+    button, and the state itself was never changed.
+  */
+  const stageState = state.kind === 'retry' && !presenceLive ? PRESENCE_STATE : state;
+
   return (
     <>
     <TutorStage
-      state={state}
+      state={stageState}
       /*
         The header names the SESSION now that the rail names the tutor (doc 23
         §2). It carried "Natalie" only because the avatar was missing and

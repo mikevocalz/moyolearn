@@ -89,6 +89,22 @@ interface TutorState {
    * by turn two and still needs telling that `12 : 4` may not be a colon.
    */
   problemIsReading: boolean;
+  /**
+   * Drops a terminal failure state left over from an earlier visit.
+   *
+   * The screen calls it on mount. `retry` and `signed-out` are the two states
+   * that describe a REQUEST rather than the conversation, so re-entering the
+   * screen must not inherit them — everything else here is a fact about where
+   * the lesson is and survives.
+   */
+  /**
+   * True once the tutor surface has actually presented — 3D live, or 2D
+   * settled. Written by `tutor-avatar`, read by the screen so a failure is
+   * never drawn beside a pane that still says "Natalie's getting ready…".
+   */
+  presenceLive: boolean;
+  setPresenceLive: (live: boolean) => void;
+  clearStaleFailure: () => void;
   start: (problem: string | null, isReading?: boolean) => void;
   /** Records the attempt against the student model. Says nothing — `coach` does. */
   respond: (isCorrect: boolean) => void;
@@ -161,7 +177,7 @@ async function* readCoachEvents(response: Response): AsyncGenerator<CoachEvent> 
   }
 }
 
-export const useTutorStore = create<TutorState>((set) => ({
+export const useTutorStore = create<TutorState>((set, get) => ({
   state: { kind: 'presence' },
   problem: '',
   problemIsReading: false,
@@ -182,6 +198,7 @@ export const useTutorStore = create<TutorState>((set) => ({
     reveal rail this becomes a concrete value and stays one — an explicit
     preference outranks auto (spec §1, resolution order 1).
   */
+  presenceLive: false,
   tutorPresence: 'auto' as TutorPresencePreference,
   currentTone: null,
   sessionId: null,
@@ -244,11 +261,29 @@ export const useTutorStore = create<TutorState>((set) => ({
         today" summary, which is doc 07's break-nudge and the cost ceiling being
         the same control. A child is never shown a limit, a count, or a price.
       */
+      /*
+        A STALE FAILURE DOES NOT SURVIVE A SUCCESSFUL HYDRATE.
+
+        `s.state` carried whatever the last turn ended on, and the store is
+        module-level, so a `retry` from a request that timed out ten minutes
+        ago came straight back the next time the screen mounted: the child
+        walked in to "I couldn't reach Natalie just then" and a Try again
+        button, on the FIRST frame, while the stage beside it still read
+        "Natalie's getting ready…". Two panes contradicting each other, and the
+        error was the one that had already been disproved — this code is
+        running because the server just answered.
+
+        So `retry` and `signed-out` are dropped here. They are the two states
+        the snapshot itself refutes; every other state is a real description of
+        where the conversation is and is kept.
+      */
       state: sessionComplete
         ? DONE_FOR_TODAY
         : lastTutorTurn !== undefined
           ? { kind: 'speaking' as const, utterance: { text: lastTutorTurn.text, restored: true } }
-          : s.state,
+          : s.state.kind === 'retry' || s.state.kind === 'signed-out'
+            ? { kind: 'presence' as const }
+            : s.state,
       /*
         REPLACED, not merged.
 
@@ -297,6 +332,13 @@ export const useTutorStore = create<TutorState>((set) => ({
     }));
   },
 
+  setPresenceLive: (live) => {
+    if (get().presenceLive !== live) set({ presenceLive: live });
+  },
+  clearStaleFailure: () => {
+    const { kind } = get().state;
+    if (kind === 'retry' || kind === 'signed-out') set({ state: { kind: 'presence' } });
+  },
   start: (problem, isReading = false) => {
     const p = problem ?? '';
     const skillTitle = inferSkillTitle(p);

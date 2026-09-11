@@ -39,6 +39,7 @@ import {
 import { audioQueue } from './tutor-audio';
 import { NATIVE_3D_ENABLED } from './natalie-preload';
 import { toneRenderFor, type ToneKey } from './tutor-tone';
+import { useTutorStore } from './tutor.store';
 
 export interface TutorAvatarProps {
   /** Already resolved by the screen — `auto` has no avatar size to draw. */
@@ -119,6 +120,7 @@ const STAGE_HEIGHT = 260;
 
 export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase, ageBand }: TutorAvatarProps) {
   const stageRef = useRef<TutorStage | null>(null);
+  const setPresenceLive = useTutorStore((s) => s.setPresenceLive);
   const faceBusRef = useRef<FaceBus | null>(null);
 
   /*
@@ -167,7 +169,19 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase, ageBand }:
     if (!embodied || stageRef.current !== null) return;
     const stage = createTutorStage({
       tier: NATIVE_3D ? 'phone' : 'presence-2d',
-      onChange: (next) => setStageState(next),
+      onChange: (next) => {
+        setStageState(next);
+        /*
+          AND THE SCREEN IS TOLD SHE HAS ARRIVED.
+
+          `live` is 3D on screen and `settled-2d` is the 2D face, permanently —
+          both are her, present. The screen holds the inline failure surface
+          until one of them has happened, so a child can never be shown
+          "I couldn't reach Natalie just then" beside a pane that is still
+          saying she is getting ready.
+        */
+        if (next.phase === 'live' || next.phase === 'settled-2d') setPresenceLive(true);
+      },
     });
     stageRef.current = stage;
     faceBusRef.current = createFaceBus({

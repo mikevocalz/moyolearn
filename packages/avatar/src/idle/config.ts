@@ -133,10 +133,154 @@ export const idleConfig = {
     torsoTurn: {
       hz: 0.05,
       driftDeg: 1.5,
-      eventIntervalS: { min: 12, max: 30 },
-      eventDeg: { min: 2, max: 4 },
+      eventIntervalS: { min: 10, max: 24 },
+      /*
+        9-15 DEGREES, and it was 2-4.
+
+        Two to four degrees is inside the noise: the drift channel alone is
+        1.5, so a "turn" at 2 degrees was a slightly larger wobble and read as
+        one. A person listening does not hold square to you — they angle,
+        settle there for a few seconds, and come back, and the head counters
+        so the face stays on you while the body is off-axis. That head counter
+        (`-frame.torsoYaw * 0.5` in the writer) is what makes a real angle
+        readable as attention rather than as turning away.
+
+        15 is the ceiling on purpose and it is the same ceiling as
+        `TURN_TOWARD.maxRad`: past it the honest move is a step-turn, which is
+        footwork this layer does not have. The cap is the scope boundary, not
+        a taste call.
+      */
+      eventDeg: { min: 9, max: 15 },
       holdS: { min: 3, max: 6 },
       easeS: 0.8,
+      /*
+        THE TURN SETTLES; it does not arrive and stop dead.
+
+        A smoothstep in and a smoothstep out is symmetric, lands with zero
+        velocity and reads mechanical — the body gets to the angle and freezes
+        there, which is the tell. Real turning overshoots slightly and comes
+        back, the same follow-through the weight shift already rides
+        (`weightShift.overshoot`), and for the same reason: mass does not stop
+        where the muscle stops.
+      */
+      overshoot: 0.12,
+      /*
+        AND IT ARRIVES IN SEQUENCE. Head first, chest behind it, lumbar last:
+        seconds of lag per level, the same cascade the lateral weight uses.
+        Everything starting on one frame is item 7 on the reads-robotic list,
+        and a turn where the whole torso rotates as one piece is the clearest
+        case of it — that IS what a mannequin on a turntable does.
+      */
+      lagS: { head: 0.04, chest: 0.15, spine: 0.27 },
+    },
+    /*
+      THE SPINE IS NOT A BROOM HANDLE.
+
+      The pelvis translation and every counter-lean above it used to be written
+      from ONE value of `shift` on the same frame, so the whole upper body slid
+      sideways as a rigid block — the tell that reads as "the upper half is
+      shifting", and the twelfth principle's overlapping action, missing.
+
+      A real torso arrives in sequence: the pelvis goes, the lumbar answers, the
+      chest is later still, and the head is last and smallest. These are the
+      time constants of that cascade, in seconds, each stage lagging the one
+      below it. Small numbers — a tenth of a second reads as weight, half a
+      second would read as drunk.
+    */
+    spineLagS: { spine1: 0.09, spine2: 0.17, chest: 0.26, head: 0.34 },
+    /*
+      THE FEET ARE NOT GLUED DOWN.
+
+      The stance solve pins the toe so knee flexion cannot slide the foot, which
+      is right for the continuous load but leaves the feet bit-static forever.
+      People adjust: the free heel lifts and comes down a few centimetres round,
+      the toe pivots a degree or two, and it happens every ten seconds or so
+      without them noticing.
+
+      This is the free foot only, and only while it IS free — the event is
+      scaled by how unloaded that foot is, so she never lifts the heel she is
+      standing on. It is not a step: the toe stays where it is and the pelvis
+      does not travel over a new base. That is still out of scope.
+    */
+    foot: {
+      intervalS: { min: 6, max: 16 },
+      /**
+       * Heel lift on the free foot, as extra KNEE flexion — never ankle.
+       * The toe-pinning solve takes any knee angle and re-derives the thigh
+       * and ankle around it, so flexing the knee raises the heel with the toe
+       * planted; rotating the ankle instead drags the toe (measured: 5.7 mm,
+       * against the 2 mm `feet.test.ts` allows). A person lifts their heel.
+       *
+       * There is no toe pivot here and there cannot be one: pivoting about
+       * the ankle slides the toe, and pivoting about the toe is a step.
+       */
+      heelDeg: { min: 3, max: 6 },
+      moveS: { min: 0.5, max: 1.0 },
+    },
+    /*
+      A STEP. The thing the stance layer has always refused to do.
+
+      `presence/humano.ts` put footwork out of scope on purpose and said so in
+      three places: past 15 degrees a turn "CLAMPS here rather than faking the
+      step", and the toe-pin solve exists precisely so the load can never slide
+      a foot. That was the right call while the alternative was faking one with
+      a hip spin over planted feet. It is the wrong call as a permanent answer,
+      because a person standing and listening for twenty minutes DOES move
+      their feet — they take half a step back to give you room, they shift
+      sideways, and then they come back.
+
+      This is a real step and not a fake one: the swinging foot un-plants, its
+      plant point moves, it comes down, THEN the other foot follows, and the
+      body's base is the mean of where the two feet actually are. Nothing here
+      slides a planted foot — `swingS` is when a foot is off the ground, and
+      the writer only moves a foot's plant while its own swing is live.
+
+      `maxOffsetM` is a leash, not a taste call: she is framed in a pane about
+      a metre wide and a tutor who wanders out of frame is a bug, so the base
+      may never be more than 12 cm from where she started, and a step that
+      would break that is re-aimed back toward centre instead.
+    */
+    step: {
+      intervalS: { min: 22, max: 70 },
+      /** How far the base moves. A shift of weight and a re-plant, not a walk. */
+      lengthM: { min: 0.045, max: 0.095 },
+      /** Time one foot spends in the air. */
+      swingS: { min: 0.34, max: 0.5 },
+      /** The gap between the first foot landing and the second leaving. */
+      betweenS: { min: 0.12, max: 0.3 },
+      /** How high the heel comes up mid-swing, as extra knee flexion, degrees. */
+      liftDeg: 9,
+      /** The torso arrives over the new base behind the feet. */
+      bodyLagS: 0.22,
+      /** Never further than this from where she started, in metres. */
+      maxOffsetM: 0.12,
+      /**
+       * How the direction is drawn. Back is the commonest thing a listener
+       * does with their feet — giving the other person room — and forward only
+       * ever happens as the return from a back step, which the leash produces
+       * on its own by re-aiming toward centre.
+       */
+      backWeight: 0.45,
+    },
+    /*
+      ARMS FOLDED. A posture, not a gesture.
+
+      A person who has been listening for a while folds their arms, holds it
+      for half a minute, and drops it when they start to talk. Without it she
+      has exactly one upper-body posture for the whole lesson, which no amount
+      of micro-motion fixes — the idle layer moves fractions of a degree on top
+      of whatever base pose it is handed, and there was only ever one.
+
+      `afterIdleS` keeps it off the front of a session (she does not greet a
+      child with folded arms) and speech drops it: the unfold leads her first
+      word, which is anticipation rather than a pose change that happens to
+      coincide with one.
+    */
+    fold: {
+      afterIdleS: 40,
+      intervalS: { min: 55, max: 140 },
+      holdS: { min: 16, max: 42 },
+      easeS: 1.1,
     },
     /*
       CONTRAPPOSTO. The legs' answer to a weight shift, and the reason the
@@ -221,7 +365,14 @@ export const idleConfig = {
       /** The fast octave's convex weight at FULL energy (m = fastMix·ê²). */
       fastMix: 1.0,
     },
-    wrist: { hz: 0.18, maxDeg: 3 },
+    /*
+      THE WRIST. 3 degrees, of which the writer was passing 15% — 0.45 degrees,
+      which is nothing at the size she renders, and is why the hands read as
+      carved onto the ends of the arms. The wrist is the joint with the most
+      idle travel on a standing body: it is unloaded, it carries the hand's
+      weight alone, and it never stops adjusting.
+    */
+    wrist: { hz: 0.18, maxDeg: 7 },
     /**
      * ONE RELAXATION SCALAR PER HAND, not ten independent finger channels.
      *
@@ -244,10 +395,42 @@ export const idleConfig = {
     hand: {
       /** Rate of the slow drift that keeps the hand from ever being still. */
       hz: { min: 0.05, max: 0.15 },
-      /** Drift amplitude, as a fraction of the relaxation range. */
-      drift: 0.12,
+      /**
+       * Drift amplitude, as a fraction of the relaxation range.
+       *
+       * 0.12 of a 0.35 range is about one degree at the knuckle, measured on
+       * the rig — below the threshold where anything is visible at the size
+       * she renders on a phone, which is why the hand read as carved. 0.3 is
+       * ~2.5 degrees of slow open-and-settle: still a hand at rest, now a
+       * hand you can see is alive.
+       */
+      drift: 0.3,
+      /**
+       * A SMALL PER-FINGER OFFSET ON TOP OF THE SHARED SCALAR — the wiggle.
+       *
+       * This does not reopen the ten-independent-channels mistake (PR #31).
+       * The digits still move together, because the shared relaxation scalar
+       * is still what carries the shape; this adds under two degrees of
+       * independent drift per finger on top, which is the residual a real hand
+       * has and a perfectly coupled one does not. Häger-Ross & Schieber's
+       * finding is that the digits are not INDEPENDENT, not that they are
+       * identical — the enslavement they measured is partial.
+       *
+       * Keep it under `drift`. If the independent part ever exceeds the shared
+       * part, this is fidgeting again.
+       */
+      wiggle: { hz: { min: 0.3, max: 0.75 }, deg: 3 },
       /** Where the scalar is re-seeded on a posture change. */
-      settle: { min: 0.2, max: 0.55 },
+      settle: { min: 0.15, max: 0.75 },
+      /**
+       * A posture change is not the only reason a hand changes shape.
+       *
+       * The re-settle used to fire ONLY on a weight shift, so between shifts
+       * the hand held one curl for 6-19 seconds with a drift on top. Hands
+       * do not do that — they open, close a little, and re-settle on their own
+       * clock, several times a minute, for no external reason at all.
+       */
+      settleIntervalS: { min: 4, max: 13 },
       /**
        * How long the hand takes to re-settle, in seconds. Matched to the weight
        * shift's own 1.2-2.2 s: the hand resettles BECAUSE the weight moved, so
@@ -297,6 +480,98 @@ export const idleConfig = {
     },
     /** The head trails the eyes: a fraction of the gaze, a beat late. */
     headFollow: { gain: 0.35, tauS: 0.35 },
+  },
+  /*
+    THE FACE WHEN NOBODY IS DRIVING IT.
+
+    Tell 9 of `what-reads-robotic.md` — "the face never emotes on the 3D path"
+    — was answered by wiring the tone's emotion baseline through `input.emotion`,
+    and that fixed the case where the LESSON has a mood. It left the ordinary
+    case untouched: a neutral tone is an empty preset, so between utterances her
+    face held exactly one shape, the mouth closed and the brows flat, for as long
+    as the child took to answer. A face that holds one shape is a mask.
+
+    These are the three things a face does with nobody driving it: it carries a
+    resting warmth that wanders, it parts the lips now and then, and after long
+    enough with nothing happening it yawns. All three sit UNDER speech by
+    per-channel max, the same merge the emotion baseline uses, so the mouth
+    keeps articulating over the top of them and nothing here can fight a viseme.
+  */
+  expression: {
+    smile: {
+      /** The resting warmth, drawn once per session — a person has a face. */
+      base: { min: 0.05, max: 0.11 },
+      /** ...which never quite holds still. */
+      driftHz: { min: 0.03, max: 0.08 },
+      driftAmp: 0.05,
+      /** And lifts, now and then, the way a listener's face does. */
+      event: {
+        intervalS: { min: 8, max: 24 },
+        peak: { min: 0.24, max: 0.46 },
+        riseS: 0.42,
+        holdS: { min: 0.7, max: 2.2 },
+        fallS: 1.1,
+      },
+      /**
+       * The two corners are never at one angle, and never arrive together.
+       * A symmetric smile is the single most synthetic thing a face can do —
+       * item 11's facial half.
+       */
+      asymmetry: 0.16,
+      lagS: 0.08,
+      /**
+       * A little jaw at full smile, so the teeth show. A closed-mouth smile at
+       * 0.45 reads as a smirk; the lips have to part for it to read as warm.
+       */
+      teeth: 0.22,
+      /**
+       * The eye squint share. A smile that stops at the mouth is the uncanny
+       * one — Duchenne's whole point is that the orbicularis is what makes it
+       * read as felt rather than performed.
+       */
+      duchenne: 0.42,
+      /** Cheeks rise with it; without this the mouth corners stretch a flat face. */
+      cheek: 0.55,
+      /**
+       * What reduced motion HOLDS. A smile is a pose: pinning it removes no
+       * vestibular load and hands the reader a blank face for their trouble.
+       * Pin the transition, not the pose — the stance rule, on the face.
+       */
+      heldReduced: 0.07,
+    },
+    /** The lips part between phrases. Breath, not speech. */
+    mouthPart: {
+      intervalS: { min: 6, max: 19 },
+      open: { min: 0.05, max: 0.13 },
+      riseS: 0.5,
+      holdS: { min: 0.5, max: 1.8 },
+      fallS: 0.8,
+    },
+    /*
+      A YAWN, after four minutes with nothing to do.
+
+      Not decoration and not a joke: it is the strongest available signal that
+      the thing on screen has an internal state that the child is not driving.
+      It only fires in genuine quiet — she has not spoken, the child has not
+      spoken, nothing is processing — so it can never land on top of a lesson
+      beat, and the refractory keeps it rare enough to stay a surprise.
+    */
+    yawn: {
+      afterIdleS: 240,
+      refractoryS: 200,
+      riseS: 1.25,
+      holdS: 0.5,
+      fallS: 1.7,
+      /** Peak weights and angles at the top of the yawn. */
+      jaw: 0.95,
+      brow: 0.5,
+      eyesShut: 0.85,
+      headPitchDeg: 8,
+      /** The chest takes a breath with it, as a multiplier on the breath bob. */
+      chest: 1.6,
+      /** And the shoulders come up and settle. */
+      shoulderDeg: 3.5,
+    },
   },
   speech: { gapWeightSum: 0.05, releaseMs: 250 },
   listening: {

@@ -146,6 +146,13 @@ export interface MotionPolicy {
   mouthScale: 1;
   /** Blink. NEVER disabled — a face that never blinks is unsettling, not calm. */
   blinkScale: 1;
+  /**
+   * The resting warmth her face holds — the smile baseline, not its lifts.
+   * NEVER scaled, for the same reason as the stance asymmetry and the held
+   * facing: it is a pose. The TRAVEL on top of it (the lifts, the corner lag,
+   * the drift) rides `idleBodyScale` and is pinned with everything else.
+   */
+  expressionHoldScale: 1;
 }
 
 export const MOTION_POLICIES: Readonly<Record<MotionMode, MotionPolicy>> = Object.freeze({
@@ -159,6 +166,7 @@ export const MOTION_POLICIES: Readonly<Record<MotionMode, MotionPolicy>> = Objec
     heldFacingScale: 1,
     mouthScale: 1,
     blinkScale: 1,
+    expressionHoldScale: 1,
   }),
   reduced: Object.freeze({
     mode: 'reduced',
@@ -177,6 +185,8 @@ export const MOTION_POLICIES: Readonly<Record<MotionMode, MotionPolicy>> = Objec
     heldFacingScale: 1,
     mouthScale: 1,
     blinkScale: 1,
+    // A blank face is not restful. Same answer as the knees: keep the pose.
+    expressionHoldScale: 1,
   }),
 });
 
@@ -252,6 +262,21 @@ export const ANIMATED_SURFACES: readonly AnimatedSurface[] = Object.freeze([
   */
   { id: 'turn-toward-travel', moves: 'head-led yaw through neck, chest and spine2 toward a commanded facing, under 15 degrees; hips and legs never', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts faceYawRad — reducedMotion pins the followers AT the target, so nothing travels' },
   { id: 'turn-toward-held', moves: 'nothing, while it is held — the settled facing direction itself; a step-turn past 15 degrees is out of scope and the command clamps', governedBy: 'heldFacingScale', consumer: 'presence/humano.ts faceYawRad — the held direction survives reduced motion by construction' },
+  /*
+    THE EXPRESSION LAYER. Tell 9's other half: the emotion baseline covers a
+    lesson that HAS a mood, and these cover the ordinary case where it does
+    not — which is most of a lesson, and where her face used to hold one shape
+    for as long as the child took to answer.
+  */
+  { id: 'idle-smile-held', moves: 'nothing, while it is held — the resting warmth of her face', governedBy: 'expressionHoldScale', consumer: 'presence/humano.ts reducedMotion — held at expression.smile.heldReduced rather than zeroed' },
+  { id: 'idle-smile-travel', moves: 'the smile lifting and falling, the two corners arriving apart', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion — the channel is zeroed, the held pose is re-applied after' },
+  { id: 'mouth-part', moves: 'the lips parting between phrases, a tenth of a jaw', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
+  { id: 'yawn', moves: 'jaw, brows, lids, head pitch, chest and shoulders, after four minutes of quiet', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
+  { id: 'spine-cascade', moves: 'the lateral weight arriving at lumbar, chest and head on their own lags rather than as a rigid block', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion — shift is zero, so every follower collapses to rest' },
+  { id: 'foot-adjust', moves: 'the free heel lifting and the toe pivoting a degree or two, every ten seconds or so', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
+  { id: 'arms-folded', moves: 'the whole upper-arm posture, blended in over a second and held for tens of them', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion — fold is zeroed, so the arms stay at her sides' },
+  { id: 'finger-wiggle', moves: 'under two degrees of independent drift per digit, on top of the shared relaxation scalar', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
+  { id: 'step', moves: 'a foot un-plants, its plant point moves 4-9 cm, it lands, the other follows, and the body arrives over the new base', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion — plants and swings are zeroed, so both feet stay where they started' },
   { id: 'gaze-away', moves: 'eyes leave the lens for under a second, head follows', governedBy: 'gazeScale', consumer: 'presence/humano.ts reducedMotion' },
   { id: 'a2f-face', moves: 'brows, lids, cheeks and mouth from the audio', governedBy: 'mouthScale', consumer: 'presence/humano.ts face input — speech-driven, never scaled' },
   { id: 'viseme', moves: 'the mouth, from speech', governedBy: 'mouthScale', consumer: 'speech driver — never scaled' },
@@ -323,7 +348,7 @@ export function assertMotionPolicyComplete(
   // presence/stance.test.ts holds the same line from the consumer's side.
   for (const mode of ['full', 'reduced'] as const) {
     const held = MOTION_POLICIES[mode] as unknown as Record<string, unknown>;
-    for (const field of ['stanceAsymmetryScale', 'heldFacingScale', 'mouthScale', 'blinkScale']) {
+    for (const field of ['stanceAsymmetryScale', 'heldFacingScale', 'mouthScale', 'blinkScale', 'expressionHoldScale']) {
       if (held[field] !== 1) {
         problems.push(
           `${mode}.${field} is ${String(held[field])} — a held pose is not motion, and is never scaled`

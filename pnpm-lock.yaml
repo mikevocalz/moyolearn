@@ -391,6 +391,9 @@ patchedDependencies:
   '@seshuk/payload-storage-bunny@3.0.0':
     hash: 41c645cbfcf05153ce0ba0f8f326033d40e9e1b37cfac8f289b90763d4cbc1c5
     path: patches/@seshuk__payload-storage-bunny@3.0.0.patch
+  expo-router@57.0.15:
+    hash: ff66019f9f6a629493ace94ff9b1dd29211dfce7b2cd26da19004fcbc576e52d
+    path: patches/expo-router@57.0.15.patch
   react-native-nitro-image:
     hash: 474820bf1e72aa5e1339fc2f0f5aa22df5f5645481a6f690dd3764c8f8c0723e
     path: patches/react-native-nitro-image.patch
@@ -537,7 +540,7 @@ importers:
         version: 0.2.2(expo@57.0.15)(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
       expo-router:
         specifier: 'catalog:'
-        version: 57.0.15(be095a95692f1773bcfc3877b75c24a6)
+        version: 57.0.15(patch_hash=ff66019f9f6a629493ace94ff9b1dd29211dfce7b2cd26da19004fcbc576e52d)(be095a95692f1773bcfc3877b75c24a6)
       expo-screen-capture:
         specifier: 'catalog:'
         version: 57.0.2(expo@57.0.15)(react@19.2.8)
@@ -1447,7 +1450,7 @@ importers:
         version: 0.2.2(expo@57.0.15)(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
       expo-router:
         specifier: '*'
-        version: 57.0.15(e96a0ee1619d89dc202d383a0ff8fa47)
+        version: 57.0.15(patch_hash=ff66019f9f6a629493ace94ff9b1dd29211dfce7b2cd26da19004fcbc576e52d)(e96a0ee1619d89dc202d383a0ff8fa47)
       lucide-react:
         specifier: 'catalog:'
         version: 1.31.0(react@19.2.8)
@@ -13580,7 +13583,7 @@ snapshots:
       ws: 8.21.3
       zod: 3.25.76
     optionalDependencies:
-      expo-router: 57.0.15(be095a95692f1773bcfc3877b75c24a6)
+      expo-router: 57.0.15(patch_hash=ff66019f9f6a629493ace94ff9b1dd29211dfce7b2cd26da19004fcbc576e52d)(be095a95692f1773bcfc3877b75c24a6)
       react-native: 0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8)
     transitivePeerDependencies:
       - '@expo/dom-webview'
@@ -13658,7 +13661,7 @@ snapshots:
       ws: 8.21.3
       zod: 3.25.76
     optionalDependencies:
-      expo-router: 57.0.15(e96a0ee1619d89dc202d383a0ff8fa47)
+      expo-router: 57.0.15(patch_hash=ff66019f9f6a629493ace94ff9b1dd29211dfce7b2cd26da19004fcbc576e52d)(e96a0ee1619d89dc202d383a0ff8fa47)
       react-native: 0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8)
     transitivePeerDependencies:
       - '@expo/dom-webview'
@@ -14684,7 +14687,7 @@ snapshots:
       react: 19.2.8
     optionalDependencies:
       '@expo/metro-runtime': 57.0.12(@expo/log-box@58.0.0-canary-20260812-27f94d4)(expo@57.0.15)(react-dom@19.2.8(react@19.2.8))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
-      expo-router: 57.0.15(be095a95692f1773bcfc3877b75c24a6)
+      expo-router: 57.0.15(patch_hash=ff66019f9f6a629493ace94ff9b1dd29211dfce7b2cd26da19004fcbc576e52d)(be095a95692f1773bcfc3877b75c24a6)
       react-dom: 19.2.8(react@19.2.8)
       react-server-dom-webpack: 19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.2))
     transitivePeerDependencies:
@@ -14700,7 +14703,7 @@ snapshots:
       react: 19.2.8
     optionalDependencies:
       '@expo/metro-runtime': 58.0.0-canary-20260812-27f94d4(@expo/log-box@58.0.0-canary-20260812-27f94d4)(expo@57.0.15)(react-dom@19.2.8(react@19.2.8))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
-      expo-router: 57.0.15(e96a0ee1619d89dc202d383a0ff8fa47)
+      expo-router: 57.0.15(patch_hash=ff66019f9f6a629493ace94ff9b1dd29211dfce7b2cd26da19004fcbc576e52d)(e96a0ee1619d89dc202d383a0ff8fa47)
       react-dom: 19.2.8(react@19.2.8)
       react-server-dom-webpack: 19.2.8(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(webpack@5.108.4(esbuild@0.28.2)(lightningcss@1.30.1))
     transitivePeerDependencies:
@@ -20733,7 +20736,7 @@ snapshots:
       react: 19.2.8
       react-native: 0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8)
 
-  expo-router@57.0.15(be095a95692f1773bcfc3877b75c24a6):
+  expo-router@57.0.15(patch_hash=ff66019f9f6a629493ace94ff9b1dd29211dfce7b2cd26da19004fcbc576e52d)(be095a95692f1773bcfc3877b75c24a6):
     dependencies:
       '@expo/log-box': 58.0.0-canary-20260812-27f94d4(@expo/dom-webview@57.0.1)(expo@57.0.15)(react-native-worklets@0.10.1(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
       '@expo/metro-runtime': 57.0.12(@expo/log-box@58.0.0-canary-20260812-27f94d4)(expo@57.0.15)(react-dom@19.2.8(react@19.2.8))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.86.2(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
@@ -20782,7 +20785,7 @@ snapshots:
       - react-native-worklets
       - supports-color
 
-  expo-router@57.0.15(e96a0ee1619d89dc202d383a0ff8fa47):
+  expo-router@57.0.15(patch_hash=ff66019f9f6a629493ace94ff9b1dd29211dfce7b2cd26da19004fcbc576e52d)(e96a0ee1619d89dc202d383a0ff8fa47):
     dependencies:
       '@expo/log-box': 58.0.0-canary-20260812-27f94d4(@expo/dom-webview@57.0.1)(expo@57.0.15)(react-native-worklets@0.12.0(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)
       '@expo/metro-runtime': 58.0.0-canary-20260812-27f94d4(@expo/log-box@58.0.0-canary-20260812-27f94d4)(expo@57.0.15)(react-dom@19.2.8(react@19.2.8))(react-native@0.86.2(@babel/core@7.29.7)(@react-native/metro-config@0.87.0(@babel/core@7.29.7))(@types/react@19.2.18)(react@19.2.8))(react@19.2.8)

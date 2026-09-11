@@ -77,12 +77,56 @@ export const IDLE_CHANNELS = [
   /** Lateral hip travel, metres. Positive = weight on the character's left. */
   'weightShift',
   'torsoYaw',
+  /**
+   * The HELD turn, separate from `torsoYaw`'s drift noise.
+   *
+   * They used to be summed into one channel, which forced the writer to apply
+   * both to the same joints on the same frame. The drift is ambient and wants
+   * to land everywhere at once; the turn is an event and wants to arrive head
+   * first, chest behind it, lumbar last. One channel cannot carry both.
+   */
+  'turnYaw',
   'shoulderL',
   'shoulderR',
   'wristL',
   'wristR',
   'handRelaxL',
   'handRelaxR',
+  // ---- the expression layer. Weights 0..1 unless named otherwise. ----
+  /**
+   * The resting warmth, per corner. TWO channels and not one: a smile whose
+   * corners agree exactly is the facial half of tell 11, and the only place
+   * that asymmetry can live is in the signal, not in the writer.
+   */
+  'smileL',
+  'smileR',
+  /** The lips parting between phrases — breath, not speech. */
+  'mouthPart',
+  /** A yawn envelope, 0..1, after long enough with nothing happening. */
+  'yawn',
+  /**
+   * The free foot adjusting. Magnitude is the envelope; the SIGN is the
+   * direction of the toe pivot, so one channel carries a heel lift and its
+   * pivot without a second one that could disagree with it.
+   */
+  'footAdjustL',
+  'footAdjustR',
+  /** Arms folded, 0..1, eased. A posture, held for tens of seconds. */
+  'fold',
+  /*
+    A STEP. Where each foot is PLANTED, in metres from where it started —
+    lateral and sagittal, per side — plus how far through the air that foot is
+    right now. The writer turns a plant into a toe target and an abduction, and
+    a swing into a heel that leaves the ground; the body's base is the mean of
+    the two plants, so it cannot disagree with where the feet are.
+  */
+  'plantXL',
+  'plantZL',
+  'plantXR',
+  'plantZR',
+  /** 0..1 while that foot is off the ground, 0 when it is carrying her. */
+  'swingL',
+  'swingR',
   /** A momentary look away from the lens, added on top of the saccade. */
   'gazeAwayYaw',
   'gazeAwayPitch',
@@ -109,6 +153,8 @@ export type IdleFrame = { [K in IdleChannel]: number } & {
   weightShifted: boolean;
   /** Gaze left the lens this frame. */
   gazeBroke: boolean;
+  /** A yawn began this frame. */
+  yawnStarted: boolean;
   gains: { breath: number; sway: number; drift: number };
 };
 
@@ -125,7 +171,7 @@ export const HAND_CHANNELS = {
 } as const satisfies Record<'L' | 'R', IdleChannel>;
 
 /** Band-limited value noise with jittered cell spans (never loops). */
-class ValueNoise {
+export class ValueNoise {
   private t = 0;
   private span: number;
   private v0: number;
@@ -222,6 +268,10 @@ export class IdleEngine {
   private handTo: [number, number];
   private handT: [number, number] = [1, 1];
   private handMoveS: [number, number] = [1, 1];
+  /** The settled value this frame, so an interrupted settle starts from it. */
+  private handCurrent: [number, number] = [0, 0];
+  /** Seconds until the hands re-settle for no external reason at all. */
+  private handSettleIn = 0;
   private awayIn: number;
   private awayT = Infinity;
   private awayHoldS = 0;
@@ -236,6 +286,61 @@ export class IdleEngine {
    * one after it — every head golden would need re-approval for adding a body.
    */
   private bodyRand: () => number;
+
+  /**
+   * THE THIRD STREAM. The expression, foot and fold layers draw from their own
+   * `mulberry32` for the same reason the body layer got one: every ValueNoise
+   * pulls from a shared stream lazily during `step`, so one extra draw here
+   * would shift the phase of every existing channel and re-open every approved
+   * golden. A new layer must be addable without re-approving the old ones.
+   */
+  private exprRand: () => number;
+  private smileBase = 0;
+  private smileNoise: ValueNoise;
+  private smileIn = 0;
+  private smileT = Infinity;
+  private smileHoldS = 0;
+  private smilePeak = 0;
+  private smileTrail = 0;
+  private partIn = 0;
+  private partT = Infinity;
+  private partHoldS = 0;
+  private partOpen = 0;
+  /** Seconds since anything happened — her speech, the child's, or processing. */
+  private quietS = 0;
+  private yawnT = Infinity;
+  private yawnCooldown = 0;
+  private footIn = 0;
+  private footT = Infinity;
+  private footMoveS = 1;
+  private footSide: 0 | 1 = 0;
+  private footDir = 1;
+  private footAmp = 1;
+  private foldIn = 0;
+  private foldT = Infinity;
+  private foldHoldS = 0;
+  private foldValue = 0;
+  /*
+    THE STEP MACHINE. `base` is where she is standing now; `plant` is where
+    each foot actually is. A step moves the base, then walks each foot to it in
+    turn — the feet are never both off the ground and never both moving.
+  */
+  private stepIn = 0;
+  private baseX = 0;
+  private baseZ = 0;
+  private plant: [{ x: number; z: number }, { x: number; z: number }] = [
+    { x: 0, z: 0 },
+    { x: 0, z: 0 },
+  ];
+  private swingFrom = { x: 0, z: 0 };
+  private swingTo = { x: 0, z: 0 };
+  private swingSide: 0 | 1 = 0;
+  private swingT = Infinity;
+  private swingS = 0.4;
+  /** The second foot's wait, then its turn. Negative means nothing is queued. */
+  private secondIn = -1;
+  /** 0 = standing, 1 = first foot moving, 2 = second. A step is two swings. */
+  private stepPhase: 0 | 1 | 2 = 0;
 
   private anticipationArmed = false;
   private anticipationFired = false;
@@ -258,12 +363,26 @@ export class IdleEngine {
     eyesWide: 0,
     weightShift: 0,
     torsoYaw: 0,
+    turnYaw: 0,
     shoulderL: 0,
     shoulderR: 0,
     wristL: 0,
     wristR: 0,
     handRelaxL: 0,
     handRelaxR: 0,
+    smileL: 0,
+    smileR: 0,
+    mouthPart: 0,
+    yawn: 0,
+    footAdjustL: 0,
+    footAdjustR: 0,
+    fold: 0,
+    plantXL: 0,
+    plantZL: 0,
+    plantXR: 0,
+    plantZR: 0,
+    swingL: 0,
+    swingR: 0,
     gazeAwayYaw: 0,
     gazeAwayPitch: 0,
     headFollowYaw: 0,
@@ -274,6 +393,7 @@ export class IdleEngine {
     anticipated: false,
     weightShifted: false,
     gazeBroke: false,
+    yawnStarted: false,
     gains: { breath: 1, sway: 1, drift: 1 },
   };
 
@@ -291,6 +411,18 @@ export class IdleEngine {
       new ValueNoise(idleConfig.drift.hz, this.rand),
       new ValueNoise(idleConfig.drift.hz, this.rand),
     ];
+    this.exprRand = mulberry32((seed ^ 0x5a1e) >>> 0);
+    const X = idleConfig.expression;
+    this.smileBase = X.smile.base.min + (X.smile.base.max - X.smile.base.min) * this.exprRand();
+    this.smileNoise = new ValueNoise(
+      X.smile.driftHz.min + (X.smile.driftHz.max - X.smile.driftHz.min) * this.exprRand(),
+      this.exprRand
+    );
+    this.smileIn = this.exprRange(X.smile.event.intervalS);
+    this.partIn = this.exprRange(X.mouthPart.intervalS);
+    this.footIn = this.exprRange(idleConfig.body.foot.intervalS);
+    this.foldIn = this.exprRange(idleConfig.body.fold.intervalS);
+    this.stepIn = this.exprRange(idleConfig.body.step.intervalS);
     this.breathMeanPeriod = 1 / this.range(idleConfig.breath.rateHz);
     /*
       The first cycle runs at the mean, unjittered, and that is deliberate: it
@@ -347,8 +479,10 @@ export class IdleEngine {
       new ValueNoise(this.bodyRange(B.hand.hz), this.bodyRand),
       new ValueNoise(this.bodyRange(B.hand.hz) * Math.E, this.bodyRand),
     ];
+    this.handSettleIn = this.bodyRange(B.hand.settleIntervalS);
     this.handTo = [this.bodyRange(B.hand.settle), this.bodyRange(B.hand.settle)];
     this.handFrom = [this.handTo[0] as number, this.handTo[1] as number];
+    this.handCurrent = [this.handTo[0] as number, this.handTo[1] as number];
     this.awayIn = this.bodyRange(B.gazeAway.intervalS);
   }
 
@@ -386,6 +520,10 @@ export class IdleEngine {
     return r.min + (r.max - r.min) * this.bodyRand();
   }
 
+  private exprRange(r: Range) {
+    return r.min + (r.max - r.min) * this.exprRand();
+  }
+
   step(dt: number, inputs: IdleInputs): IdleFrame {
     const C = idleConfig;
     const F = this.frame;
@@ -394,6 +532,7 @@ export class IdleEngine {
     F.anticipated = false;
     F.weightShifted = false;
     F.gazeBroke = false;
+    F.yawnStarted = false;
 
     // -- anticipation: fire at onset − U(leadS) --
     const tuo = inputs.timeUntilOnset;
@@ -650,7 +789,16 @@ export class IdleEngine {
     if (this.turnT < this.turnHoldS + 2 * B.torsoTurn.easeS) {
       const e = B.torsoTurn.easeS;
       const t = this.turnT;
-      const env = t < e ? smooth(t / e) : t < e + this.turnHoldS ? 1 : 1 - smooth((t - e - this.turnHoldS) / e);
+      /*
+        Follow-through on the way in AND on the way back: mass does not stop
+        where the muscle stops. `sin(πu)·u³` is zero at both ends, so the hold
+        still sits exactly at the commanded angle and the return still lands
+        exactly at square — the overshoot lives strictly inside the travel.
+      */
+      const settle = (u: number) =>
+        smooth(u) + 4 * B.torsoTurn.overshoot * Math.sin(Math.PI * u) * u * u * u;
+      const env =
+        t < e ? settle(t / e) : t < e + this.turnHoldS ? 1 : 1 - settle((t - e - this.turnHoldS) / e);
       turn = this.turnAmp * env;
       this.turnT += dt;
     }
@@ -662,9 +810,9 @@ export class IdleEngine {
     */
     F.torsoYaw =
       ((1 - energyMix) * energyScale * this.torsoNoise.step(dt) + energyMix * fastTorso) *
-        B.torsoTurn.driftDeg *
-        DEG +
-      turn;
+      B.torsoTurn.driftDeg *
+      DEG;
+    F.turnYaw = turn;
 
     // -- shoulders, wrists, fingers: independent band-limited noise --
     const [shL, shR] = this.shoulderNoise;
@@ -686,9 +834,23 @@ export class IdleEngine {
       linear one, which the easing rule forbids on its own. Smoothstep has zero
       velocity at both ends, so the hand arrives and leaves at rest.
     */
-    if (F.weightShifted) {
+    this.handSettleIn -= dt;
+    const handSettleDue = this.handSettleIn <= 0;
+    if (handSettleDue) this.handSettleIn = this.bodyRange(B.hand.settleIntervalS);
+    if (F.weightShifted || handSettleDue) {
       for (const i of [0, 1] as const) {
-        this.handFrom[i] = this.handTo[i] as number;
+        /*
+          FROM WHERE IT IS, not from where it was going.
+
+          This used to re-seed `handFrom` with the previous TARGET, which is
+          only the same thing when the last settle had finished. It always had
+          finished, because the only trigger was a weight shift 6-19 s apart
+          and a settle takes 2 — so the bug sat here inert. Adding the hand's
+          own 4-13 s clock made the two overlap, and a settle interrupted
+          mid-travel snapped the scalar to the old target: measured 23 units a
+          second, against a flutter ceiling of 1.
+        */
+        this.handFrom[i] = this.handCurrent[i] as number;
         this.handTo[i] = this.bodyRange(B.hand.settle);
         this.handT[i] = 0;
         this.handMoveS[i] = this.bodyRange(B.hand.moveS);
@@ -700,6 +862,7 @@ export class IdleEngine {
       const eased = e * e * (3 - 2 * e);
       const from = this.handFrom[i] as number;
       const settled = from + ((this.handTo[i] as number) - from) * eased;
+      this.handCurrent[i] = settled;
       const drifted =
         settled +
         ((this.handNoise[i * 2] as ValueNoise).step(dt) * 0.65 +
@@ -709,6 +872,232 @@ export class IdleEngine {
       if (i === 0) F.handRelaxL = value;
       else F.handRelaxR = value;
     }
+
+    /* --------------------------- the expression layer --------------------- */
+    /*
+      Quiet is the clock every event here hangs off: nothing she is saying,
+      nothing the child is saying, nothing being thought about. It resets on
+      any of the three, so none of these can land on top of a lesson beat.
+    */
+    const X = C.expression;
+    const busy = inputs.speechActive || inputs.processing;
+    this.quietS = busy ? 0 : this.quietS + dt;
+
+    /*
+      THE SMILE. A drawn-once resting warmth, a slow wander on top of it, and
+      lifts every ten seconds or so — plus the two things that keep it off the
+      uncanny line: the corners differ, and the trailing one arrives late.
+    */
+    const smileSpan = X.smile.event.riseS + this.smileHoldS + X.smile.event.fallS;
+    this.smileIn -= dt;
+    if (this.smileIn <= 0 && !(this.smileT < smileSpan)) {
+      this.smilePeak = this.exprRange(X.smile.event.peak);
+      this.smileHoldS = this.exprRange(X.smile.event.holdS);
+      this.smileT = 0;
+      this.smileIn = this.exprRange(X.smile.event.intervalS);
+    }
+    let smileLift = 0;
+    if (this.smileT < X.smile.event.riseS + this.smileHoldS + X.smile.event.fallS) {
+      const r = X.smile.event.riseS;
+      const t = this.smileT;
+      smileLift =
+        this.smilePeak *
+        (t < r
+          ? smooth(t / r)
+          : t < r + this.smileHoldS
+            ? 1
+            : 1 - smooth((t - r - this.smileHoldS) / X.smile.event.fallS));
+      this.smileT += dt;
+    }
+    const warmth = clamp(
+      this.smileBase + this.smileNoise.step(dt) * X.smile.driftAmp + smileLift,
+      0,
+      1
+    );
+    // The trailing corner is the same signal one lag behind. A single-pole
+    // follower, not a second noise: the two corners of a mouth are one muscle
+    // pair arriving at slightly different times, not two independent smiles.
+    this.smileTrail += (warmth - this.smileTrail) * (1 - Math.exp(-dt / X.smile.lagS));
+    F.smileL = clamp(warmth * (1 + X.smile.asymmetry), 0, 1);
+    F.smileR = clamp(this.smileTrail * (1 - X.smile.asymmetry), 0, 1);
+
+    // -- the lips part, between phrases. Never while she is talking: that is
+    // the viseme's jaw, and two systems on one joint is the artifact list.
+    const partSpan = X.mouthPart.riseS + this.partHoldS + X.mouthPart.fallS;
+    this.partIn -= dt;
+    if (!busy && this.partIn <= 0 && !(this.partT < partSpan)) {
+      this.partOpen = this.exprRange(X.mouthPart.open);
+      this.partHoldS = this.exprRange(X.mouthPart.holdS);
+      this.partT = 0;
+      this.partIn = this.exprRange(X.mouthPart.intervalS);
+    }
+    F.mouthPart = 0;
+    if (this.partT < X.mouthPart.riseS + this.partHoldS + X.mouthPart.fallS) {
+      const r = X.mouthPart.riseS;
+      const t = this.partT;
+      F.mouthPart =
+        this.partOpen *
+        (t < r
+          ? smooth(t / r)
+          : t < r + this.partHoldS
+            ? 1
+            : 1 - smooth((t - r - this.partHoldS) / X.mouthPart.fallS));
+      this.partT += dt;
+      // Speech takes the jaw back immediately — she closes her mouth to talk.
+      if (busy) this.partT = Math.max(this.partT, r + this.partHoldS);
+    }
+
+    // -- the yawn. Only out of genuine quiet, and rare by refractory.
+    const yawnSpan = X.yawn.riseS + X.yawn.holdS + X.yawn.fallS;
+    this.yawnCooldown = Math.max(0, this.yawnCooldown - dt);
+    if (
+      !busy &&
+      this.yawnCooldown <= 0 &&
+      this.quietS >= X.yawn.afterIdleS &&
+      !(this.yawnT < yawnSpan)
+    ) {
+      this.yawnT = 0;
+      this.yawnCooldown = X.yawn.refractoryS;
+      this.quietS = 0;
+      F.yawnStarted = true;
+    }
+    F.yawn = 0;
+    if (this.yawnT < yawnSpan) {
+      const r = X.yawn.riseS;
+      const t = this.yawnT;
+      F.yawn =
+        t < r ? smooth(t / r) : t < r + X.yawn.holdS ? 1 : 1 - smooth((t - r - X.yawn.holdS) / X.yawn.fallS);
+      this.yawnT += dt;
+      // Something to say swallows it: skip to the release rather than cut.
+      if (busy) this.yawnT = Math.max(this.yawnT, r + X.yawn.holdS);
+    }
+
+    // -- the free foot adjusts. sin(πu) is zero-ended, so the heel leaves the
+    // ground and comes back to exactly where it was; the writer scales the
+    // whole thing by how UNLOADED that foot is, so the stance is never broken.
+    this.footIn -= dt;
+    if (this.footIn <= 0 && !(this.footT < this.footMoveS)) {
+      this.footSide = this.exprRand() < 0.5 ? 0 : 1;
+      this.footDir = this.exprRand() < 0.5 ? -1 : 1;
+      /*
+        The channel carries the envelope as a FRACTION of the configured
+        maximum, not an angle: the writer owns degrees, because only the writer
+        knows how unloaded that foot is this frame and a heel lift on a loaded
+        foot is not a smaller lift, it is a wrong one.
+      */
+      this.footAmp = this.exprRange(B.foot.heelDeg) / B.foot.heelDeg.max;
+      this.footT = 0;
+      this.footMoveS = this.exprRange(B.foot.moveS);
+      this.footIn = this.exprRange(B.foot.intervalS);
+    }
+    let footEnv = 0;
+    if (this.footT < this.footMoveS) {
+      footEnv = this.footAmp * Math.sin(Math.PI * clamp(this.footT / this.footMoveS, 0, 1));
+      this.footT += dt;
+    }
+    F.footAdjustL = this.footSide === 0 ? footEnv * this.footDir : 0;
+    F.footAdjustR = this.footSide === 1 ? footEnv * this.footDir : 0;
+
+    // -- arms folded. A posture: minutes between, tens of seconds held, and
+    // speech drops it — the unfold LEADS her first word rather than coinciding.
+    this.foldIn -= dt;
+    if (!busy && this.quietS >= B.fold.afterIdleS && this.foldIn <= 0 && !(this.foldT < this.foldHoldS)) {
+      this.foldT = 0;
+      this.foldHoldS = this.exprRange(B.fold.holdS);
+      this.foldIn = this.exprRange(B.fold.intervalS);
+    }
+    const folding = !busy && this.foldT < this.foldHoldS;
+    if (this.foldT < this.foldHoldS) this.foldT += dt;
+    this.foldValue += ((folding ? 1 : 0) - this.foldValue) * (1 - Math.exp(-dt / B.fold.easeS));
+    F.fold = this.foldValue;
+
+    /*
+      THE STEP. One foot at a time, and the body follows the feet.
+
+      Order is the whole thing: pick a new base, walk the foot that is FURTHER
+      from it first (that is the one a person moves — the trailing foot), land
+      it, wait a beat, then bring the other. While a foot is in the air its
+      plant interpolates; while it is down its plant does not move at all, so
+      nothing here can slide a planted foot, which is the invariant the
+      toe-pin solve and `feet.test.ts` exist to protect.
+    */
+    const P = B.step;
+    const busyFeet = this.stepPhase !== 0;
+    this.stepIn -= dt;
+    if (!busyFeet && this.stepIn <= 0 && !busy) {
+      const r = this.exprRand();
+      const length = this.exprRange(P.lengthM);
+      let dx = 0;
+      let dz = 0;
+      if (r < P.backWeight) dz = -length;
+      else if (r < P.backWeight + (1 - P.backWeight) / 2) dx = length;
+      else dx = -length;
+      /*
+        THE LEASH. Past `maxOffsetM` the step is re-aimed back toward centre
+        rather than clamped flat: a clamped step is a step that visibly does
+        not happen, and she has to be able to come back from wherever she has
+        drifted to or the first few steps are one-way.
+      */
+      if (Math.hypot(this.baseX + dx, this.baseZ + dz) > P.maxOffsetM) {
+        const back = Math.hypot(this.baseX, this.baseZ) || 1;
+        dx = (-this.baseX / back) * length;
+        dz = (-this.baseZ / back) * length;
+      }
+      this.baseX += dx;
+      this.baseZ += dz;
+      // The trailing foot goes first: the one further from the new base.
+      const d0 = Math.hypot(this.plant[0].x - this.baseX, this.plant[0].z - this.baseZ);
+      const d1 = Math.hypot(this.plant[1].x - this.baseX, this.plant[1].z - this.baseZ);
+      this.swingSide = d0 >= d1 ? 0 : 1;
+      this.swingFrom = { ...this.plant[this.swingSide] };
+      this.swingTo = { x: this.baseX, z: this.baseZ };
+      this.swingT = 0;
+      this.swingS = this.exprRange(P.swingS);
+      this.secondIn = -1;
+      this.stepPhase = 1;
+      this.stepIn = this.exprRange(P.intervalS);
+    }
+    if (this.swingT < this.swingS) {
+      this.swingT += dt;
+      const u = clamp(this.swingT / this.swingS, 0, 1);
+      const eased = smooth(u);
+      const foot = this.plant[this.swingSide];
+      foot.x = this.swingFrom.x + (this.swingTo.x - this.swingFrom.x) * eased;
+      foot.z = this.swingFrom.z + (this.swingTo.z - this.swingFrom.z) * eased;
+      const env = Math.sin(Math.PI * u);
+      if (this.swingSide === 0) { F.swingL = env; F.swingR = 0; }
+      else { F.swingR = env; F.swingL = 0; }
+      if (this.swingT >= this.swingS) {
+        /*
+          It landed. The FIRST foot hands over to the second after a beat; the
+          second ends the step. Without that distinction the two feet hand over
+          to each other forever — measured as exactly one step in five minutes,
+          because `busyFeet` then never goes false again and no later step can
+          ever start.
+        */
+        if (this.stepPhase === 1) this.secondIn = this.exprRange(P.betweenS);
+        else this.stepPhase = 0;
+      }
+    } else {
+      F.swingL = 0;
+      F.swingR = 0;
+      if (this.secondIn >= 0) {
+        this.secondIn -= dt;
+        if (this.secondIn <= 0) {
+          this.secondIn = -1;
+          this.stepPhase = 2;
+          this.swingSide = this.swingSide === 0 ? 1 : 0;
+          this.swingFrom = { ...this.plant[this.swingSide] };
+          this.swingTo = { x: this.baseX, z: this.baseZ };
+          this.swingT = 0;
+          this.swingS = this.exprRange(P.swingS);
+        }
+      }
+    }
+    F.plantXL = this.plant[0].x;
+    F.plantZL = this.plant[0].z;
+    F.plantXR = this.plant[1].x;
+    F.plantZR = this.plant[1].z;
 
     // -- gaze break: leave the lens, hold, return --
     this.awayIn -= dt;
