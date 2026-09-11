@@ -14,7 +14,7 @@ import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import { idleConfig as C } from './config.ts';
 import {
-  FINGER_CHANNELS,
+  HAND_CHANNELS,
   IDLE_CHANNELS,
   IdleEngine,
   type IdleChannel,
@@ -167,16 +167,9 @@ describe('channel envelopes', () => {
       shoulderR: [-C.body.shoulder.maxDeg * DEG, C.body.shoulder.maxDeg * DEG],
       wristL: [-C.body.wrist.maxDeg * DEG, C.body.wrist.maxDeg * DEG],
       wristR: [-C.body.wrist.maxDeg * DEG, C.body.wrist.maxDeg * DEG],
-      fingerL0: [-C.body.finger.deg.max * DEG, C.body.finger.deg.max * DEG],
-      fingerL1: [-C.body.finger.deg.max * DEG, C.body.finger.deg.max * DEG],
-      fingerL2: [-C.body.finger.deg.max * DEG, C.body.finger.deg.max * DEG],
-      fingerL3: [-C.body.finger.deg.max * DEG, C.body.finger.deg.max * DEG],
-      fingerL4: [-C.body.finger.deg.max * DEG, C.body.finger.deg.max * DEG],
-      fingerR0: [-C.body.finger.deg.max * DEG, C.body.finger.deg.max * DEG],
-      fingerR1: [-C.body.finger.deg.max * DEG, C.body.finger.deg.max * DEG],
-      fingerR2: [-C.body.finger.deg.max * DEG, C.body.finger.deg.max * DEG],
-      fingerR3: [-C.body.finger.deg.max * DEG, C.body.finger.deg.max * DEG],
-      fingerR4: [-C.body.finger.deg.max * DEG, C.body.finger.deg.max * DEG],
+      // A fraction, not an angle: the writer turns it into ten angles.
+      handRelaxL: [0, 1],
+      handRelaxR: [0, 1],
       gazeAwayYaw: [-C.body.gazeAway.yawDeg.max * DEG, C.body.gazeAway.yawDeg.max * DEG],
       gazeAwayPitch: [C.body.gazeAway.pitchDeg.min * DEG, C.body.gazeAway.pitchDeg.max * DEG],
       headFollowYaw: [
@@ -302,8 +295,8 @@ const BODY_CHANNELS: readonly IdleChannel[] = [
   'shoulderR',
   'wristL',
   'wristR',
-  ...FINGER_CHANNELS.L,
-  ...FINGER_CHANNELS.R,
+  HAND_CHANNELS.L,
+  HAND_CHANNELS.R,
 ];
 
 describe('the body layer', () => {
@@ -389,36 +382,62 @@ describe('the body layer', () => {
     assert.ok(overshoots > 0, 'no shift overshot its target — there is no follow-through');
   });
 
-  it('fingers: 2-5° each, and no two channels in phase', () => {
+  /*
+    THE GATE IS "NEVER STILL AND NEVER BUSY", not "ten channels out of phase".
+
+    The test this replaces asserted 2-5 degrees on each of ten independent
+    finger channels and that no two were in phase — it was passing while the
+    hand read as fidgeting, which is what PR #31 removed. The opposite failure
+    came next: the writer sampled its input only at a weight shift, so the hand
+    held one shape for the 8-20 s between them and no test objected to that
+    either, because the engine's channels were still moving.
+
+    So both bounds are asserted, on the one scalar that now exists.
+  */
+  it('the hand relaxation scalar is never still over any 10 s window', () => {
     const engine = new IdleEngine(2);
-    const rows: number[][] = [];
+    const samples: { L: number[]; R: number[] } = { L: [], R: [] };
     for (let i = 0, n = Math.round(600 / DT); i < n; ++i) {
       const f = engine.step(DT, quiet);
-      if (i % 6 === 0) rows.push([...FINGER_CHANNELS.L, ...FINGER_CHANNELS.R].map((c) => f[c]));
+      samples.L.push(f[HAND_CHANNELS.L]);
+      samples.R.push(f[HAND_CHANNELS.R]);
     }
-    const cols = rows[0]!.length;
-    for (let a = 0; a < cols; ++a) {
-      const va = rows.map((r) => r[a] as number);
-      const amp = Math.max(...va.map(Math.abs));
-      assert.ok(amp >= 1.5 * DEG && amp <= 5 * DEG, `finger ${a} amplitude ${amp / DEG}°`);
-      for (let b = a + 1; b < cols; ++b) {
-        const vb = rows.map((r) => r[b] as number);
-        const ma = va.reduce((x, y) => x + y, 0) / va.length;
-        const mb = vb.reduce((x, y) => x + y, 0) / vb.length;
-        let num = 0;
-        let da = 0;
-        let db = 0;
-        for (let i = 0; i < va.length; ++i) {
-          const xa = (va[i] as number) - ma;
-          const xb = (vb[i] as number) - mb;
-          num += xa * xb;
-          da += xa * xa;
-          db += xb * xb;
-        }
-        const r = num / Math.sqrt(da * db);
-        assert.ok(Math.abs(r) < 0.5, `fingers ${a} and ${b} correlate at ${r} — a glove`);
+    const perWindow = Math.round(10 / DT);
+    for (const side of ['L', 'R'] as const) {
+      const series = samples[side];
+      for (let start = 0; start + perWindow <= series.length; start += perWindow) {
+        const window = series.slice(start, start + perWindow);
+        const travel = Math.max(...window) - Math.min(...window);
+        assert.ok(
+          travel > 0.005,
+          `${side} hand moved ${travel.toFixed(4)} over the 10 s at ${(start * DT).toFixed(0)}s — that is a frozen hand`,
+        );
       }
     }
+  });
+
+  it('and never busy — it stays a settle, not a flutter', () => {
+    const engine = new IdleEngine(2);
+    let previous = 0;
+    let worstRate = 0;
+    for (let i = 0, n = Math.round(600 / DT); i < n; ++i) {
+      const value = engine.step(DT, quiet)[HAND_CHANNELS.L];
+      if (i > 0) worstRate = Math.max(worstRate, Math.abs(value - previous) / DT);
+      previous = value;
+      assert.ok(value >= 0 && value <= 1, `scalar left 0..1: ${value}`);
+    }
+    /*
+      The fidget threshold. The per-finger noise this replaces ran at 0.2-0.35 Hz
+      over a 5 degree amplitude, so a knuckle could sweep its whole range in
+      under two seconds. A settling hand does not. Full range in under a second
+      would be a flutter.
+    */
+    assert.ok(worstRate < 1, `relaxation changed at ${worstRate.toFixed(2)}/s — that is a flutter, not a settle`);
+  });
+
+  it('no per-finger channel exists — the coupling is not optional', () => {
+    const perFinger = IDLE_CHANNELS.filter((c) => /^finger/i.test(c));
+    assert.deepEqual(perFinger, [], 'a per-finger channel is back; the hand is not ten independent digits');
   });
 
   it('breaks gaze every 3-4 s for 0.3-1.2 s, so a stare never exceeds the firewall ceiling', () => {

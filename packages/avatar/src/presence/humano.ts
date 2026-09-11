@@ -64,7 +64,7 @@
  * SOT-KEYWORDS: humano presence natalie idle morph bones gaze breath beat native web shared def spine weight shift fingers firewall a2f face emotion
  */
 import * as THREE from 'three';
-import { FINGER_CHANNELS, IDLE_CHANNELS, IdleEngine, mulberry32, type IdleFrame, type IdleInputs } from '../idle/engine.ts';
+import { HAND_CHANNELS, IDLE_CHANNELS, IdleEngine, mulberry32, type IdleFrame, type IdleInputs } from '../idle/engine.ts';
 import { DEFAULT_GESTURE_LIMITS } from '../safety/gesture-gate.ts';
 import type { Shape } from '../speech/track.ts';
 
@@ -129,6 +129,13 @@ export function fingerBone(
  * its own, smaller number.
  */
 const CURL = { '01': 0.16, '02': 0.28, '03': 0.24 } as const;
+/**
+ * How far the hand relaxation scalar may bend a finger past its rest curl, as a
+ * fraction of that curl. At 0.35 a middle finger travels about 9 degrees at the
+ * knuckle between an open hand and a fully settled one.
+ */
+const RELAX_RANGE = 0.35;
+
 const CURL_BY_FINGER: Record<(typeof FINGERS)[number], number> = {
   thumb: 0.45,
   f_index: 0.8,
@@ -939,31 +946,42 @@ export function createHumanoPresence(
       gesturing hand opens with its own wrist; the other hand stays settled.
       Curl is local +x (measured); z splays.
     */
+    /*
+      FINGERS MOVE AS A HAND, NOT AS TEN FINGERS.
+
+      Every digit's angle is one relaxation scalar times a FIXED gradient, so
+      they flex together and keep their relative shape. That is what a hand
+      does: Häger-Ross & Schieber (2000) measured that even an instructed
+      single-finger movement carries the neighbouring digits, and the middle and
+      ring have almost no independent control at all.
+
+      Both previous versions were wrong in opposite directions. Ten independent
+      noise channels read as fidgeting and came out in PR #31; the writer that
+      replaced them sampled its input only at a weight shift, so the hand eased
+      for about two seconds and then held still for the 8-20 s until the next
+      one. Neither frozen nor fidgeting — one slow scalar that never quite stops
+      and never runs away.
+
+      `CURL_BY_FINGER` is the gradient and it already encodes the ordering a
+      relaxed hand has: index least, little most. The scalar scales the whole
+      set rather than adding to each finger separately, which is what makes this
+      coupling rather than ten things that happen to agree.
+    */
     for (const f of fingers) {
       const openness = 1 - 0.45 * clamp(handLift[f.side], 0, 1);
-      const channel = FINGER_CHANNELS[f.side][f.finger];
-      const relaxation = fingerRest.get(f.bone)!;
+      const relax = rm ? 0 : clamp(frame[HAND_CHANNELS[f.side]], 0, 1);
       /*
-        TWO COMPONENTS, AND ONLY ONE OF THEM USED TO EXIST.
-
-        `relaxation` is a POSTURE: the hand resettles when the weight moves, and
-        it holds that shape until the weight moves again. On its own that is a
-        hand which is completely still for the 8 to 20 seconds between shifts,
-        eases over about two, and then freezes again — which is what was
-        shipping, and it is the reason the fingers read as carved.
-
-        The engine has been generating a continuous per-finger channel the whole
-        time (`idleConfig.body.finger`, each finger its own rate and amplitude so
-        no two are in phase). It was only ever SAMPLED, at the instant of a
-        weight shift, and thrown away in between. It is read every frame now.
+        The spread down the chain is the same shape the rest curl uses: most at
+        the knuckle, least at the tip. A finger that flexed uniformly along its
+        length would read as a hinge.
       */
-      const live = rm || channel === undefined ? 0 : frame[channel];
-      if (frame.weightShifted && channel !== undefined) relaxation.target = frame[channel] * 0.4;
-      relaxation.current += (relaxation.target - relaxation.current) * (1 - Math.exp(-rawDelta / 0.8));
-      const noise = rm ? 0 : relaxation.current * 0.5 + live;
-      // The noise is spread down the chain: most at the knuckle, least at the tip.
       const share = f.phalanx === 0 ? 0.5 : f.phalanx === 1 ? 0.3 : 0.2;
-      pose(f.bone, f.curl * openness + noise * share, 0, 0);
+      /*
+        RELAX_RANGE is how far the scalar may bend a finger beyond its rest
+        curl — about 9 degrees at the knuckle at full relaxation. Small on
+        purpose: this is a hand settling, not a fist closing.
+      */
+      pose(f.bone, f.curl * openness + relax * f.curl * RELAX_RANGE * share, 0, 0);
     }
 
     firewall.torsoLeanRad = leanSum;

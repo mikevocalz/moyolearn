@@ -9,7 +9,7 @@
  *
  * Ported verbatim from the gnm-avatar reference renderer (`src/idle/engine.ts`),
  * then extended below the neck (ADR-113): weight shifts, torso turns,
- * shoulders, wrists, ten finger channels, gaze breaks and head-follow. Every
+ * shoulders, wrists, a per-hand relaxation scalar, gaze breaks and head-follow. Every
  * new channel draws from the SAME seeded stream, in a fixed construction order,
  * so the golden harness keeps its "same seed → bit-identical" contract.
  *
@@ -71,16 +71,8 @@ export const IDLE_CHANNELS = [
   'shoulderR',
   'wristL',
   'wristR',
-  'fingerL0',
-  'fingerL1',
-  'fingerL2',
-  'fingerL3',
-  'fingerL4',
-  'fingerR0',
-  'fingerR1',
-  'fingerR2',
-  'fingerR3',
-  'fingerR4',
+  'handRelaxL',
+  'handRelaxR',
   /** A momentary look away from the lens, added on top of the saccade. */
   'gazeAwayYaw',
   'gazeAwayPitch',
@@ -111,10 +103,16 @@ export type IdleFrame = { [K in IdleChannel]: number } & {
 };
 
 /** Finger channels in hand order: thumb, index, middle, ring, pinky. */
-export const FINGER_CHANNELS = {
-  L: ['fingerL0', 'fingerL1', 'fingerL2', 'fingerL3', 'fingerL4'],
-  R: ['fingerR0', 'fingerR1', 'fingerR2', 'fingerR3', 'fingerR4'],
-} as const satisfies Record<'L' | 'R', readonly IdleChannel[]>;
+/**
+ * One channel per HAND. There is no per-finger channel and there must not be:
+ * ten independent noises read as fidgeting (PR #31) and a hand's digits are not
+ * independently controlled anyway. The writer turns this scalar into ten angles
+ * through a fixed gradient.
+ */
+export const HAND_CHANNELS = {
+  L: 'handRelaxL',
+  R: 'handRelaxR',
+} as const satisfies Record<'L' | 'R', IdleChannel>;
 
 /** Band-limited value noise with jittered cell spans (never loops). */
 class ValueNoise {
@@ -201,8 +199,12 @@ export class IdleEngine {
   private turnHoldS = 0;
   private shoulderNoise: [ValueNoise, ValueNoise];
   private wristNoise: [ValueNoise, ValueNoise];
-  private fingerNoise: ValueNoise[];
-  private fingerAmp: number[];
+  private handNoise: [ValueNoise, ValueNoise];
+  /** Where each hand is settling FROM, TO, and how far through it is. */
+  private handFrom: [number, number] = [0, 0];
+  private handTo: [number, number];
+  private handT: [number, number] = [1, 1];
+  private handMoveS: [number, number] = [1, 1];
   private awayIn: number;
   private awayT = Infinity;
   private awayHoldS = 0;
@@ -243,16 +245,8 @@ export class IdleEngine {
     shoulderR: 0,
     wristL: 0,
     wristR: 0,
-    fingerL0: 0,
-    fingerL1: 0,
-    fingerL2: 0,
-    fingerL3: 0,
-    fingerL4: 0,
-    fingerR0: 0,
-    fingerR1: 0,
-    fingerR2: 0,
-    fingerR3: 0,
-    fingerR4: 0,
+    handRelaxL: 0,
+    handRelaxR: 0,
     gazeAwayYaw: 0,
     gazeAwayPitch: 0,
     headFollowYaw: 0,
@@ -308,14 +302,14 @@ export class IdleEngine {
       new ValueNoise(B.wrist.hz, this.bodyRand),
       new ValueNoise(B.wrist.hz, this.bodyRand),
     ];
-    this.fingerNoise = [];
-    this.fingerAmp = [];
-    for (let i = 0; i < 10; ++i) {
-      // Its own rate AND its own amplitude per finger: two fingers sharing a
-      // rate would drift into phase, which is the glove look this exists to kill.
-      this.fingerNoise.push(new ValueNoise(this.bodyRange(B.finger.hz), this.bodyRand));
-      this.fingerAmp.push(this.bodyRange(B.finger.deg) * DEG);
-    }
+    // Two hands, two rates. They differ so the pair never settles into unison,
+    // which is the same reason the sway octaves sit at an irrational ratio.
+    this.handNoise = [
+      new ValueNoise(this.bodyRange(B.hand.hz), this.bodyRand),
+      new ValueNoise(this.bodyRange(B.hand.hz), this.bodyRand),
+    ];
+    this.handTo = [this.bodyRange(B.hand.settle), this.bodyRange(B.hand.settle)];
+    this.handFrom = [this.handTo[0] as number, this.handTo[1] as number];
     this.awayIn = this.bodyRange(B.gazeAway.intervalS);
   }
 
@@ -580,11 +574,35 @@ export class IdleEngine {
     const [wrL, wrR] = this.wristNoise;
     F.wristL = wrL.step(dt) * B.wrist.maxDeg * DEG;
     F.wristR = wrR.step(dt) * B.wrist.maxDeg * DEG;
-    for (let i = 0; i < 5; ++i) {
-      const nl = this.fingerNoise[i] as ValueNoise;
-      const nr = this.fingerNoise[i + 5] as ValueNoise;
-      F[FINGER_CHANNELS.L[i] as IdleChannel] = nl.step(dt) * (this.fingerAmp[i] as number);
-      F[FINGER_CHANNELS.R[i] as IdleChannel] = nr.step(dt) * (this.fingerAmp[i + 5] as number);
+    /*
+      The hand relaxation scalar: a held settle value that steps on a posture
+      change, plus a slow drift so it is never actually still. Clamped to 0..1
+      because the writer reads it as a fraction of a curl range.
+    */
+    /*
+      A posture change RE-SETTLES the hand; it does not teleport it. Swapping
+      the value outright moved the scalar at 17.9 per second — a pop, and a
+      linear one, which the easing rule forbids on its own. Smoothstep has zero
+      velocity at both ends, so the hand arrives and leaves at rest.
+    */
+    if (F.weightShifted) {
+      for (const i of [0, 1] as const) {
+        this.handFrom[i] = this.handTo[i] as number;
+        this.handTo[i] = this.bodyRange(B.hand.settle);
+        this.handT[i] = 0;
+        this.handMoveS[i] = this.bodyRange(B.hand.moveS);
+      }
+    }
+    for (const i of [0, 1] as const) {
+      this.handT[i] = Math.min(1, (this.handT[i] as number) + dt / (this.handMoveS[i] as number));
+      const e = this.handT[i] as number;
+      const eased = e * e * (3 - 2 * e);
+      const from = this.handFrom[i] as number;
+      const settled = from + ((this.handTo[i] as number) - from) * eased;
+      const drifted = settled + (this.handNoise[i] as ValueNoise).step(dt) * B.hand.drift;
+      const value = Math.min(1, Math.max(0, drifted));
+      if (i === 0) F.handRelaxL = value;
+      else F.handRelaxR = value;
     }
 
     // -- gaze break: leave the lens, hold, return --
