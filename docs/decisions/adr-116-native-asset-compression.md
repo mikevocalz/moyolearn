@@ -62,14 +62,35 @@ natively. No transcoder on the device.
 ## Consequences
 
 The native bundle is larger than the web one for the same content, and the 4 MB
-phone budget is therefore tighter than the tooling defaults assume. Quantization
-alone roughly halves float32 target deltas; whether that is sufficient against
-8 MB of morph data is **not yet measured** — the derivative has not been built.
+phone budget is therefore tighter than the tooling defaults assume.
 
-If it is not sufficient, the next lever is fewer morph targets on the phone tier
-rather than a decoder: 52 ARKit targets is a full face, and a phone at that
-framing may not need all of them. That is an authored decision, not a pipeline
-one, and it would need its own ADR.
+**Measured 2026-09-11, and the estimate above this paragraph was wrong.** The
+first draft predicted quantization would roughly halve the target deltas to
+~4 MB. Building the derivative (`quantize` then `sparse` — that order, see
+below) measured:
+
+| | master | quantized+sparse |
+|---|---|---|
+| morph targets | 8043 KB | **754 KB** |
+| geometry | 2134 KB | 2063 KB |
+| skinning | 1099 KB | **29 KB** |
+| bin total | 11,276 KB | **2846 KB** |
+
+The estimate missed that re-sparsification compounds with quantization: int16
+deltas are half the bytes, and deltas that quantize to zero leave the sparse
+set entirely. Rig fingerprint clean; the IBM rewrite is the verified shared
+transform.
+
+Bundle today: bin 2846 + JSON ~200 + untouched textures 2109 = **5.03 MB**.
+The remaining gap closes in the texture step (KTX2/ASTC, which the phone GPU
+decodes natively), so **no morph-target reduction is needed** — the 52-target
+question raised in the first draft is answered by measurement, not by an
+authored cut.
+
+**Order matters and the tool's own report cannot be trusted for rig truth:**
+`quantize` alone densified all 156 sparse accessors and TRIPLED the file to
+42.48 MB while logging "Removed Skin (1)" about a skin that survived. `sparse`
+afterwards landed at 5.28 MB. The fingerprint, not the tool log, is the gate.
 
 GPU-native KTX2 means one texture set per format family, so the phone tier
 carries ASTC and ETC2 variants rather than one Basis file. Budget accordingly.
