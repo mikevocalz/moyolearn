@@ -36,6 +36,20 @@ export interface AssetEntry {
     /** Sibling files a split `.gltf` needs fetched alongside it. */
     siblings?: string[];
     /**
+     * False for an asset that is RECORDED here but never downloaded by a client.
+     *
+     * The rights gate reads this manifest and nothing else, so anything whose
+     * provenance has to be provable must appear in it — including the motion
+     * corpora we mine for timing statistics, which are hundreds of megabytes and
+     * belong to the build machine, not to a child's data plan. Without this flag
+     * the only way to record such a source is to put it on a download tier, and
+     * `assetsForTier` would then hand it to `resolveAssets`.
+     *
+     * For these entries `path` is relative to `packages/avatar/assets/`, not to
+     * `baseUrl` — there is no CDN object behind them.
+     */
+    runtime?: boolean;
+    /**
      * Where the bytes came from and what may be done with them.
      *
      * REQUIRED at the ledger gate, optional at the type so the manifest stays

@@ -159,15 +159,46 @@ export declare const idleConfig: {
             readonly hz: 0.18;
             readonly maxDeg: 3;
         };
-        /** Per finger: its own rate and its own amplitude, so no two are in phase. */
-        readonly finger: {
+        /**
+         * ONE RELAXATION SCALAR PER HAND, not ten independent finger channels.
+         *
+         * 0 is an open relaxed hand, 1 a soft curl. Every finger's angle is this
+         * scalar times a fixed gradient, so the digits move together — which is
+         * what a hand does. Häger-Ross & Schieber (2000) measured that even an
+         * instructed single-finger movement carries the neighbouring digits with
+         * it; the middle and ring have almost no independent control at all.
+         *
+         * TEN CHANNELS WAS TRIED TWICE AND IS WRONG BOTH WAYS ROUND. Ten
+         * independent noises read as fidgeting and were removed in PR #31. The
+         * writer then sampled what remained only at weight shifts, which left the
+         * hand frozen for the 8-20 s between them. Neither frozen nor fidgeting:
+         * one slow scalar that never quite stops.
+         *
+         * 0.05-0.15 Hz is deliberately slower than the 0.2-0.35 the per-finger
+         * noise used. A hand at rest changes shape over seconds, not fractions of
+         * one.
+         */
+        readonly hand: {
+            /** Rate of the slow drift that keeps the hand from ever being still. */
             readonly hz: {
-                readonly min: 0.2;
-                readonly max: 0.35;
+                readonly min: 0.05;
+                readonly max: 0.15;
             };
-            readonly deg: {
-                readonly min: 2;
-                readonly max: 5;
+            /** Drift amplitude, as a fraction of the relaxation range. */
+            readonly drift: 0.12;
+            /** Where the scalar is re-seeded on a posture change. */
+            readonly settle: {
+                readonly min: 0.2;
+                readonly max: 0.55;
+            };
+            /**
+             * How long the hand takes to re-settle, in seconds. Matched to the weight
+             * shift's own 1.2-2.2 s: the hand resettles BECAUSE the weight moved, so
+             * it should finish alongside it rather than snap ahead of it.
+             */
+            readonly moveS: {
+                readonly min: 1.2;
+                readonly max: 2.2;
             };
         };
         /**

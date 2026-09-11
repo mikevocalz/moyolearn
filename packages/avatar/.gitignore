@@ -7,3 +7,9 @@
 # The shader probe writes bundles and PNGs here. Never committed — SwiftShader
 # output is not a golden and must not be mistaken for one.
 .probe/
+
+# Downloaded motion corpora. StayStill alone is 352 MB of BVH; it is MIT
+# licensed and therefore legal to redistribute, but it is a re-acquirable
+# research download, not a repository artefact. Re-fetch it from the DOI in the
+# `staystill-idle-corpus` rights record in assets/avatar-manifest.json.
+assets/motion/

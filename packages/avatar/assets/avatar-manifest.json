@@ -159,6 +159,27 @@
       "bytes": 152,
       "sha256": "9866b3525929f2976e7cc229c1eb14deaf79d8885faef139c607bbacd45adba6",
       "minTier": "tablet"
+    },
+    {
+      "id": "staystill-idle-corpus",
+      "kind": "binary",
+      "path": "motion/staystill/staystill.zip",
+      "bytes": 368632171,
+      "sha256": "3d387d9535096b9ba0abaca9f08acd1365922bdd565770237645c03927765f6e",
+      "runtime": false,
+      "rights": {
+        "source": "StayStill: a large-scale 3D idle animation dataset — Eneko Atxa Landa, Igor Rodriguez, Elena Lazkano, Taras Kucherenko (Computer Graphics Forum / SCA 2026). Zenodo record 18741736, published 2026-02-23.",
+        "license": "MIT — LICENSE.txt opens \"MIT License\" / \"Copyright (c) [2026] [Eneko Atxa landa]\". The archive's own README repeats it: \"The provided dataset is released under the MIT License.\"",
+        "permits": {
+          "embed": true,
+          "distributeSource": true,
+          "modify": true
+        },
+        "committed": false,
+        "acquiredOn": "2026-09-10",
+        "evidence": "doi:10.5281/zenodo.18741736 · LICENSE.txt md5 a3377a4a54ebd377fdd2782f2ec502db, byte-identical to LICENSE.txt on github.com/Enekoassets/StayStill@master (GitHub reports spdx_id MIT) · staystill.zip md5 5e07aef93361ea61edcfef66abf82006 matches the checksum the record publishes · paper arXiv:2605.13693",
+        "checkedBy": "licence text fetched from both the Zenodo record and the upstream repository and byte-compared; the MIT notice is reproduced beside the data at assets/motion/staystill/LICENSE.txt"
+      }
     }
   ]
 }

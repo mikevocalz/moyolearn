@@ -9,7 +9,7 @@
  *
  * Ported verbatim from the gnm-avatar reference renderer (`src/idle/engine.ts`),
  * then extended below the neck (ADR-113): weight shifts, torso turns,
- * shoulders, wrists, ten finger channels, gaze breaks and head-follow. Every
+ * shoulders, wrists, a per-hand relaxation scalar, gaze breaks and head-follow. Every
  * new channel draws from the SAME seeded stream, in a fixed construction order,
  * so the golden harness keeps its "same seed → bit-identical" contract.
  *
@@ -27,7 +27,7 @@ export interface IdleInputs {
     /** Seconds until scheduled TTS onset; Infinity when none scheduled. */
     timeUntilOnset: number;
 }
-export declare const IDLE_CHANNELS: readonly ["breathY", "breathPitch", "swayX", "swayY", "driftYaw", "driftPitch", "nodPitch", "eyeYaw", "eyePitch", "eyeBlinkLeft", "eyeBlinkRight", "eyesWide", "weightShift", "torsoYaw", "shoulderL", "shoulderR", "wristL", "wristR", "fingerL0", "fingerL1", "fingerL2", "fingerL3", "fingerL4", "fingerR0", "fingerR1", "fingerR2", "fingerR3", "fingerR4", "gazeAwayYaw", "gazeAwayPitch", "headFollowYaw", "headFollowPitch"];
+export declare const IDLE_CHANNELS: readonly ["breathY", "breathPitch", "swayX", "swayY", "driftYaw", "driftPitch", "nodPitch", "eyeYaw", "eyePitch", "eyeBlinkLeft", "eyeBlinkRight", "eyesWide", "weightShift", "torsoYaw", "shoulderL", "shoulderR", "wristL", "wristR", "handRelaxL", "handRelaxR", "gazeAwayYaw", "gazeAwayPitch", "headFollowYaw", "headFollowPitch"];
 export type IdleChannel = (typeof IDLE_CHANNELS)[number];
 export type IdleFrame = {
     [K in IdleChannel]: number;
@@ -55,9 +55,15 @@ export type IdleFrame = {
     };
 };
 /** Finger channels in hand order: thumb, index, middle, ring, pinky. */
-export declare const FINGER_CHANNELS: {
-    readonly L: readonly ["fingerL0", "fingerL1", "fingerL2", "fingerL3", "fingerL4"];
-    readonly R: readonly ["fingerR0", "fingerR1", "fingerR2", "fingerR3", "fingerR4"];
+/**
+ * One channel per HAND. There is no per-finger channel and there must not be:
+ * ten independent noises read as fidgeting (PR #31) and a hand's digits are not
+ * independently controlled anyway. The writer turns this scalar into ten angles
+ * through a fixed gradient.
+ */
+export declare const HAND_CHANNELS: {
+    readonly L: "handRelaxL";
+    readonly R: "handRelaxR";
 };
 export declare class IdleEngine {
     readonly seed: number;
@@ -97,8 +103,12 @@ export declare class IdleEngine {
     private turnHoldS;
     private shoulderNoise;
     private wristNoise;
-    private fingerNoise;
-    private fingerAmp;
+    private handNoise;
+    /** Where each hand is settling FROM, TO, and how far through it is. */
+    private handFrom;
+    private handTo;
+    private handT;
+    private handMoveS;
     private awayIn;
     private awayT;
     private awayHoldS;

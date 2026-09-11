@@ -127,7 +127,33 @@ for (const asset of ASSETS) {
   entries.push(entry);
 }
 
-const manifest = { version: 1, baseUrl, assets: entries };
+/*
+  RIGHTS RECORDS SURVIVE A REBUILD.
+
+  A `rights` block is written by the human who read the terms, not by this
+  script, and a generator that overwrites the manifest wholesale silently
+  deletes every one of them — turning `check:ledger` green-to-red with no diff
+  that explains why, or worse, dropping the proof that an asset is ours to ship.
+  So the previous manifest is read back and two things are carried forward:
+  `rights` blocks by asset id, and whole entries marked `runtime: false`, which
+  are ledger records for build-machine sources (motion corpora) that this
+  script never walks because no client downloads them.
+*/
+let carried = [];
+const priorRights = new Map();
+if (existsSync(outPath)) {
+  const prior = JSON.parse(readFileSync(outPath, 'utf8'));
+  for (const asset of prior.assets ?? []) {
+    if (asset.runtime === false) carried.push(asset);
+    else if (asset.rights) priorRights.set(asset.id, asset.rights);
+  }
+  for (const entry of entries) {
+    const rights = priorRights.get(entry.id);
+    if (rights) entry.rights = rights;
+  }
+}
+
+const manifest = { version: 1, baseUrl, assets: [...entries, ...carried] };
 
 // The generator must produce something its own consumer accepts. This throws on
 // a duplicate id, a malformed hash, or a `.glb` that declares embedded images.
