@@ -17,9 +17,11 @@
     · 5 balance shifts — wei_lr and wei_rl takes ranked by horizontal hip
       extent
       (the wei_lr_45 selection logic), kept only if the hips end within
-      5 cm of where they started (in-place, no walk-off).
+      5 cm of where they started (in-place, no walk-off) AND each ankle
+      ends within 3 cm of where it started (loop-closed feet — see
+      FOOT_RETURN_MAX_CM below for the calibration).
     · 5 idles — lafan/idle/idle_*.bvh with the LEAST total horizontal hip
-      path length (calm subjects suit a tutor).
+      path length (calm subjects suit a tutor), same two return criteria.
   Curated takes may start mid-motion, so the source reference frame is not
   frame 0: it is the frame of lowest hip speed inside the calmest 1 s window
   (printed per clip). Per-clip SOURCE ankle horizontal travel is printed so
@@ -343,6 +345,26 @@ const hipScan = (text) => {
     returnDist: Math.hypot(xs[n - 1] - xs[0], zs[n - 1] - zs[0]),
     pathLen,
   };
+};
+
+/** Per-ankle end-vs-start horizontal gap (cm), FK'd from a reduced BVH that
+ *  keeps only the hierarchy plus the first and last MOTION rows — the hip
+ *  scan's cheapness, but with the full skeleton so the feet are measurable. */
+const footReturnScan = (text) => {
+  const m = text.indexOf('MOTION');
+  const lines = text.slice(m).split('\n');
+  const rows = lines.slice(3).filter((l) => l.trim());
+  const reduced = `${text.slice(0, m)}MOTION\nFrames: 2\n${lines[2]}\n${rows[0]}\n${rows[rows.length - 1]}\n`;
+  const bvh = parseBvh(reduced);
+  const jIdx = new Map(bvh.joints.map((j, idx) => [j.name, idx]));
+  const w0 = bvhWorld(bvh, bvh.frames[0]);
+  const w1 = bvhWorld(bvh, bvh.frames[1]);
+  const gap = (name) => {
+    const a = w0.pos[jIdx.get(name)];
+    const b = w1.pos[jIdx.get(name)];
+    return Math.hypot(b[0] - a[0], b[2] - a[2]);
+  };
+  return { footL: gap('LeftFoot'), footR: gap('RightFoot') };
 };
 
 /* ── glTF rest pose (clip-independent) ───────────────────────────────────── */
@@ -827,32 +849,54 @@ if (!ALL_CURATED) {
 } else {
   // Curated ten: 5 balance shifts + 5 calm idles.
   const RETURN_MAX_CM = 5; // "hips returning near start" — end-vs-start hip distance
+  /*
+    Feet need their OWN return criterion — the hip one cannot see them.
+    idle_06 (ankle gaps 3.23 / 2.60 cm) and wei_lr_07 (9.31 cm right ankle)
+    both returned their hips inside 5 cm and still shipped a loop-seam TOE
+    gap the step gate caught after this curation had blessed them — the
+    idle_47 lesson one level down the skeleton. Calibration over both pools
+    (hip-return survivors, per-ankle end-vs-start horizontal gap): every
+    take measured at ≤ 2.96 cm passes the full five-gate suite; the two
+    named seam reds sit at 3.23 and 9.31 cm. 3 cm sits under the smallest
+    known-bad gap with the whole known-good population beneath it. Ankle
+    return is a proxy for the toe (the toe adds foot orientation on top —
+    wei_lr_28's 2.16 cm ankle gap still costs a 29.6 mm toe seam step), so
+    the step gate stays the backstop; this filter removes the class it
+    keeps catching.
+  */
+  const FOOT_RETURN_MAX_CM = 3; // per-ankle end-vs-start horizontal gap
   const scanned = (re) =>
     listTakes(re).map((name) => {
       const text = readTake(name);
-      return { name, text, ...hipScan(text) };
+      return { name, text, ...hipScan(text), ...footReturnScan(text) };
     });
+  const loopClosed = (t) =>
+    t.returnDist <= RETURN_MAX_CM && t.footL <= FOOT_RETURN_MAX_CM && t.footR <= FOOT_RETURN_MAX_CM;
 
   const balance = scanned(/^lafan\/actions\/wei_(lr|rl)_\d+\.bvh$/)
-    .filter((t) => t.returnDist <= RETURN_MAX_CM)
+    .filter(loopClosed)
     .sort((a, b) => b.extent - a.extent)
     .slice(0, 5);
   /*
-    Idles need the RETURN criterion too — the player loops, so a take that
+    Idles need the RETURN criteria too — the player loops, so a take that
     ends away from its start teleports on the wrap. idle_47 measured a 9.1 cm
     half-frame jump exactly there, caught by the gate after this curation had
     already blessed it: least-total-path selects a calm subject, but calm and
     loop-closed are different properties and only one of them was filtered.
   */
   const idles = scanned(/^lafan\/idle\/idle_\d+\.bvh$/)
-    .filter((t) => t.returnDist <= RETURN_MAX_CM)
+    .filter(loopClosed)
     .sort((a, b) => a.pathLen - b.pathLen)
     .slice(0, 5);
 
-  console.log(`curated balance shifts (largest hip extent, hips ending ≤ ${RETURN_MAX_CM} cm from start):`);
-  for (const t of balance) console.log(`  ${t.name}  extent ${t.extent.toFixed(2)} cm, return ${t.returnDist.toFixed(2)} cm`);
-  console.log('curated idles (least total horizontal hip path):');
-  for (const t of idles) console.log(`  ${t.name}  path ${t.pathLen.toFixed(0)} cm, extent ${t.extent.toFixed(2)} cm, return ${t.returnDist.toFixed(2)} cm`);
+  const returns = (t) =>
+    `return hip ${t.returnDist.toFixed(2)} cm, ankles ${t.footL.toFixed(2)} / ${t.footR.toFixed(2)} cm`;
+  console.log(
+    `curated balance shifts (largest hip extent, hips ending ≤ ${RETURN_MAX_CM} cm and each ankle ≤ ${FOOT_RETURN_MAX_CM} cm from start):`,
+  );
+  for (const t of balance) console.log(`  ${t.name}  extent ${t.extent.toFixed(2)} cm, ${returns(t)}`);
+  console.log('curated idles (least total horizontal hip path, same return criteria):');
+  for (const t of idles) console.log(`  ${t.name}  path ${t.pathLen.toFixed(0)} cm, extent ${t.extent.toFixed(2)} cm, ${returns(t)}`);
 
   for (const t of [...balance, ...idles]) {
     const base = path.basename(t.name, '.bvh');

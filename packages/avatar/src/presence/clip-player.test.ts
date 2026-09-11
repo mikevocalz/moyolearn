@@ -133,8 +133,21 @@ describe('clip player on the shipped rig', { skip: !existsSync(CLIP_PATH) && 'ru
     its window-entry position to under 5 mm (skate is what the retarget ADDS
     — a pinned toe that still wanders means the lock solve and the player
     disagree about FK, the same class as the 913 mm root bug); and nowhere —
-    locked, unlocked, ease ramps, or the loop seam — does a toe move 3 cm in
-    a half frame (a lock that pops at its edges would fail exactly here).
+    locked, unlocked, ease ramps, or the loop seam — do a toe's neighbouring
+    half-frame steps disagree by 3 cm (a lock that pops at its edges would
+    fail exactly here).
+
+    WHY THE BOUND IS ON THE STEP CHANGE, NOT THE STEP. A flat step bound
+    cannot tell fast motion from broken motion: wei_rl_45 carries a genuine
+    2 m/s mid-clip swing (32.8 mm half-frame steps) that a 3 cm step bound
+    called a teleport. Real motion is continuous — neighbouring half-frame
+    steps agree — so the bound moves to their disagreement. Calibrated
+    through this player over the corpus: genuine motion peaks at 27.7 mm
+    step-to-step change (wei_rl_45; its swing itself reads 26.2 mm), the
+    loop-seam gaps curation now excludes read 33.4 mm (idle_06) and 38.0 mm
+    (wei_lr_07), and a single frame displaced by d reads ≈ d/2 (the
+    interpolated velocity jumps from ~0 to d/2 at the glitch's edges).
+    30 mm passes every genuine clip and stays red on all of those.
   */
   it('keeps marked planted toes pinned and never pops a foot', () => {
     type Contacts = Record<'L' | 'R', readonly [number, number][]>;
@@ -162,14 +175,22 @@ describe('clip player on the shipped rig', { skip: !existsSync(CLIP_PATH) && 'ru
         }
       }
       let previous: THREE.Vector3 | null = null;
-      let worstStep = 0;
+      let previousStep: number | null = null;
+      let worstBreak = 0;
       for (let f = 0; f < clip!.frames * 2; f += 1) {
         player.apply(f / (clip!.fps * 2));
         const p = world(toe);
-        if (previous) worstStep = Math.max(worstStep, p.distanceTo(previous));
+        if (previous !== null) {
+          const step = p.distanceTo(previous);
+          if (previousStep !== null) worstBreak = Math.max(worstBreak, Math.abs(step - previousStep));
+          previousStep = step;
+        }
         previous = p;
       }
-      assert.ok(worstStep < 0.03, `${side} toe stepped ${(worstStep * 100).toFixed(1)} cm in one half-frame`);
+      assert.ok(
+        worstBreak < 0.03,
+        `${side} toe's neighbouring half-frame steps disagree by ${(worstBreak * 1000).toFixed(1)} mm — a break, not motion`,
+      );
     }
   });
 
