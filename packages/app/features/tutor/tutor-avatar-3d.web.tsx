@@ -224,6 +224,15 @@ function applyTslHair(body: THREE.Object3D): HairMaterial | null {
     const hair = createHairMaterial({ hairColor: authored.color.clone() });
     hair.material.map = authored.map ?? null;
     hair.material.normalMap = authored.normalMap ?? null;
+    /*
+      THE ROUGHNESS MAP HAS TO COME ACROSS. `createHairMaterial` sets a flat
+      roughness of 0.36 — the groom's variation lives in its
+      metallicRoughness texture, and dropping it renders the braids as one
+      matte black mass with no strand definition. Seen side by side against
+      the authored material before this line existed, not reasoned about: the
+      TSL hair was visibly flatter than the material it replaced.
+    */
+    hair.material.roughnessMap = authored.roughnessMap ?? null;
     hair.material.alphaTest = authored.alphaTest;
     hair.material.side = authored.side;
     mesh.material = hair.material;
