@@ -44,6 +44,22 @@ const { CLAIMED_JOINTS, LAYERS, ownershipProblems } = await import(
   '../packages/avatar/src/presence/ownership.ts'
 );
 
+// 2 — ownership, against EVERY deform joint the manifest lists.
+/*
+  The manifest is the authority on what joints exist. Checking the table
+  against itself is how it stayed at 47 of 96 — the twenty-five joints below
+  the pelvis were absent from both sides of the comparison, so nothing
+  disagreed. `skeletonsAgree` is asserted first because the check is only
+  meaningful if both shipped assets are the same rig.
+*/
+const manifest = JSON.parse(readFileSync('packages/avatar/rig-manifest.json', 'utf8'));
+if (!manifest.skeletonsAgree) {
+  failures.push('rig-manifest reports the shipped skeletons disagree — ownership cannot be checked against one list');
+}
+const deformJoints = manifest.assets?.[0]?.chains?.deform ?? [];
+if (deformJoints.length === 0) {
+  failures.push('parsed zero deform joints from rig-manifest.json — the shape changed and this check is blind');
+}
 // 1 — the names resolve, in every shipped copy.
 for (const path of ASSETS) {
   let text;
@@ -65,22 +81,23 @@ for (const path of ASSETS) {
     failures.push(`${path}: parsed zero node names — the check cannot see this asset, treat as unverified`);
     continue;
   }
-  const absent = CLAIMED_JOINTS.filter((j) => !present.has(j));
+  const absent = [...new Set([...CLAIMED_JOINTS, ...deformJoints])].filter((j) => !present.has(j));
   if (absent.length > 0) {
     failures.push(
-      `${path}: ${absent.length}/${CLAIMED_JOINTS.length} claimed joints absent — she will render in her ` +
+      `${path}: ${absent.length} claimed joints absent — she will render in her ` +
         `bind pose (arms out, hands closed). Missing: ${absent.slice(0, 6).join(', ')}` +
         (absent.length > 6 ? ` +${absent.length - 6} more` : ''),
     );
   }
 }
 
-// 2 — ownership.
-for (const p of ownershipProblems(LAYERS)) {
+for (const p of ownershipProblems(LAYERS, deformJoints)) {
   failures.push(
     p.kind === 'double-owned'
       ? `${p.joint}: owned by ${p.layers.join(' and ')} — decide which, do not blend`
-      : `${p.joint}: modulated by ${p.layers[0]} but owned by nobody — the delta has no base`,
+      : p.layers.length === 0
+        ? `${p.joint}: a deform joint no layer owns — add it to a layer, or to the remainder owner if nothing writes it`
+        : `${p.joint}: modulated by ${p.layers[0]} but owned by nobody — the delta has no base`,
   );
 }
 
@@ -110,6 +127,8 @@ if (failures.length > 0) {
   process.exit(1);
 }
 console.log(
-  `joint ownership clean: ${CLAIMED_JOINTS.length} joints, ${LAYERS.length} layers, ` +
+  `joint ownership clean: ${deformJoints.length}/${deformJoints.length} deform joints owned ` +
+    `(${CLAIMED_JOINTS.length} written, ${deformJoints.length - CLAIMED_JOINTS.length} held at base pose), ` +
+    `${LAYERS.length} layers, ` +
     `verified against ${ASSETS.length} shipped assets`,
 );

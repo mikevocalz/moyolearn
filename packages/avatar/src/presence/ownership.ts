@@ -51,8 +51,54 @@ const ARMS = [
 ] as const;
 const EYES = ['eyeL', 'eyeR'] as const;
 
+/**
+ * The leg chain, named from the shipped rig rather than assumed.
+ *
+ * THESE WERE NOT MISSING FROM THE ASSET. The writer's bone map had no legs and
+ * this table claimed 47 of 96 deform joints, which got reported as "the rig has
+ * no leg bones" — a statement about the code read back as a statement about the
+ * purchase. `rig-manifest.json` lists all 25 joints below the pelvis in both
+ * shipped assets, and `skeletonsAgree` is true.
+ *
+ * `knee_share` and the `.001` twists are Rigify's distribution bones: in Blender
+ * a constraint drives each from its parent, and constraints do not export. They
+ * still deform skin, so they still need an owner — one that holds the base pose
+ * rather than one that writes.
+ */
+const LEG = {
+  thighL: 'DEF-thigh.L',
+  thighR: 'DEF-thigh.R',
+  thighTwistL: 'DEF-thigh.L.001',
+  thighTwistR: 'DEF-thigh.R.001',
+  shinL: 'DEF-shin.L',
+  shinR: 'DEF-shin.R',
+  shinTwistL: 'DEF-shin.L.001',
+  shinTwistR: 'DEF-shin.R.001',
+  kneeShareL: 'DEF-knee_share.L',
+  kneeShareR: 'DEF-knee_share.R',
+  footL: 'DEF-foot.L',
+  footR: 'DEF-foot.R',
+  pelvis: 'DEF-pelvis',
+} as const;
+
+/** The driven leg joints — what stance and a weight shift actually rotate. */
+export const LEG_DRIVEN: readonly string[] = [
+  LEG.thighL, LEG.thighR, LEG.shinL, LEG.shinR, LEG.footL, LEG.footR,
+];
+/** Deform joints below the pelvis that follow their parent and are never written. */
+export const LEG_PASSIVE: readonly string[] = [
+  LEG.thighTwistL, LEG.thighTwistR, LEG.shinTwistL, LEG.shinTwistR,
+  LEG.kneeShareL, LEG.kneeShareR, LEG.pelvis,
+];
+
 export interface Layer {
   readonly name: string;
+  /**
+   * Set on exactly one layer. That layer owns every deform joint no other layer
+   * owns — including joints nothing ever writes, which still need a decision
+   * recorded against them.
+   */
+  readonly ownsRemainder?: boolean;
   /** Joints whose absolute value this layer writes. Exactly one layer per joint. */
   readonly owns: readonly string[];
   /** Joints this layer adds a bounded delta to. Must be owned by some layer. */
@@ -71,13 +117,20 @@ export const LAYERS: readonly Layer[] = [
       ...FINGER_BONES,
     ],
     modulates: [],
-    why: 'Layer one. The rest pose plus the fingers’ resting arc — the state every delta above is measured against. It is a base POSE, not a clip: neither shipped asset contains an animation, so nothing here waits on a clip library.',
+    why: 'Layer one. The rest pose plus the fingers’ resting arc — the state every delta above is measured against. It is a base POSE, not a clip: neither shipped asset contains an animation, so nothing here waits on a clip library. It owns EVERY deform joint the manifest lists, including the ones nothing writes: a joint with no owner is a joint nobody has decided about, which is how twenty-five leg bones went unnoticed.',
+    ownsRemainder: true,
+  },
+  {
+    name: 'stance',
+    owns: [],
+    modulates: [...LEG_DRIVEN, bone('torso'), bone('spine1'), bone('spine2')],
+    why: 'Contrapposto: which leg carries the weight, and the pelvis roll, knee flexion and spinal compensation that follow from it. A posture, held, not a motion — the weight-shift layer is what moves between two of these.',
   },
   {
     name: 'life',
     owns: [],
-    modulates: [...SPINE.map(bone), ...ARMS.map(bone), ...FINGER_BONES],
-    why: 'Breath, sway, weight shift, torso turn, shoulder and wrist drift, per-finger noise. Bounded by idleConfig; it may not reach the head chain, which belongs to cadence.',
+    modulates: [...SPINE.map(bone), ...ARMS.map(bone), ...FINGER_BONES, ...LEG_DRIVEN],
+    why: 'Breath, sway, weight shift, torso turn, shoulder and wrist drift, and the hand relaxation scalar. It reaches the legs because a weight shift that does not is a pelvis floating over static feet. It may not reach the head chain, which belongs to cadence.',
   },
   {
     name: 'head-cadence',
@@ -108,12 +161,43 @@ export interface OwnershipProblem {
  * The invariant, as a pure function so the build check and a unit test assert
  * the same thing rather than two similar things.
  */
-export function ownershipProblems(layers: readonly Layer[] = LAYERS): OwnershipProblem[] {
+export function ownershipProblems(
+  layers: readonly Layer[] = LAYERS,
+  /**
+   * Every deform joint in the rig. Passed in rather than imported so this stays
+   * a pure function the unit test can drive with synthetic layers — and so the
+   * list comes from the generated manifest rather than a second copy here.
+   */
+  deformJoints: readonly string[] = [],
+): OwnershipProblem[] {
   const owners = new Map<string, string[]>();
   for (const layer of layers) {
     for (const joint of layer.owns) owners.set(joint, [...(owners.get(joint) ?? []), layer.name]);
   }
+
   const problems: OwnershipProblem[] = [];
+  const remainderLayers = layers.filter((l) => l.ownsRemainder);
+  if (remainderLayers.length > 1) {
+    problems.push({
+      kind: 'double-owned',
+      joint: '(remainder)',
+      layers: remainderLayers.map((l) => l.name),
+    });
+  }
+  /*
+    The remainder layer sweeps up whatever nothing else owns. That is what makes
+    "every joint has an owner" achievable without listing ninety-six names in
+    this file — and it is deliberately not silent: a joint nobody writes still
+    resolves to a layer whose job is to hold it at the base pose, which is a
+    decision, where absence from the table was an oversight.
+  */
+  const remainder = remainderLayers[0];
+  if (remainder) {
+    for (const joint of deformJoints) {
+      if (!owners.has(joint)) owners.set(joint, [remainder.name]);
+    }
+  }
+
   for (const [joint, names] of owners) {
     if (names.length > 1) problems.push({ kind: 'double-owned', joint, layers: names });
   }
@@ -121,6 +205,10 @@ export function ownershipProblems(layers: readonly Layer[] = LAYERS): OwnershipP
     for (const joint of layer.modulates) {
       if (!owners.has(joint)) problems.push({ kind: 'unowned', joint, layers: [layer.name] });
     }
+  }
+  // A deform joint the table never reaches at all.
+  for (const joint of deformJoints) {
+    if (!owners.has(joint)) problems.push({ kind: 'unowned', joint, layers: [] });
   }
   return problems;
 }
