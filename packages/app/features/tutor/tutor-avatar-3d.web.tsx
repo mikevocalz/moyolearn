@@ -84,7 +84,16 @@ const MAX_PIXEL_RATIO = 2;
 let preloaded: { uri: string; scene: Promise<THREE.Group> } | null = null;
 
 export function preloadNatalie(modelUri?: string): Promise<THREE.Group> {
-  const uri = modelUri ?? BUNDLED_MODEL_URL;
+  /*
+    `?tier=phone` loads the optimized derivative instead of the master — the
+    side-by-side lever for judging what the pipeline cost her, on the same
+    stage with the same seed. The derivative is quantized (KHR_mesh_quantization
+    — three reads it natively, no decoder) with WebP textures, 3.55 MB against
+    the master's 13.07.
+  */
+  const tier =
+    typeof window !== 'undefined' ? new URLSearchParams(window.location.search).get('tier') : null;
+  const uri = modelUri ?? (tier === 'phone' ? '/natalie-q/natalie.gltf' : BUNDLED_MODEL_URL);
   if (preloaded && preloaded.uri === uri) return preloaded.scene;
   const scene = (async () => {
     const gltf = await new Promise<{ scene: THREE.Group }>((resolve, reject) => {

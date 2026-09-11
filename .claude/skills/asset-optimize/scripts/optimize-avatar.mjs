@@ -54,7 +54,18 @@ const before = fingerprint(master);
 const mid = join(outDir, '_quantized.gltf');
 const geometry = join(outDir, basename(master));
 cli(['quantize', master, mid]);
-cli(['sparse', mid, geometry]);
+/*
+  `--vertex-layout separate` IS A RENDER-CORRECTNESS FLAG HERE, not a
+  preference. The default interleaved write puts non-normalized JOINTS_0 (u16)
+  in the same buffer as the normalized quantized attributes, and three's WebGPU
+  backend widens a non-normalized u16 backing to u32 FOR THE WHOLE BUFFER — so
+  the normalized TEXCOORD sharing it asks the GPU for `unorm32x2`, a format
+  that does not exist, and createRenderPipeline rejects the character at first
+  render. Separate views give every attribute its own backing, so nothing is
+  widened by a neighbour. This is the third appearance of the same widening
+  bug on this asset; the first two were the master's authored COLOR_0.
+*/
+cli(['sparse', '--vertex-layout', 'separate', mid, geometry]);
 
 // Textures: the two alpha-carrying PNGs become WebP; JPEGs pass through.
 const sourceDir = dirname(master);
