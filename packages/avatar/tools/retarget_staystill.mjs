@@ -629,7 +629,15 @@ if (!ALL_CURATED) {
     .filter((t) => t.returnDist <= RETURN_MAX_CM)
     .sort((a, b) => b.extent - a.extent)
     .slice(0, 5);
+  /*
+    Idles need the RETURN criterion too — the player loops, so a take that
+    ends away from its start teleports on the wrap. idle_47 measured a 9.1 cm
+    half-frame jump exactly there, caught by the gate after this curation had
+    already blessed it: least-total-path selects a calm subject, but calm and
+    loop-closed are different properties and only one of them was filtered.
+  */
   const idles = scanned(/^lafan\/idle\/idle_\d+\.bvh$/)
+    .filter((t) => t.returnDist <= RETURN_MAX_CM)
     .sort((a, b) => a.pathLen - b.pathLen)
     .slice(0, 5);
 
