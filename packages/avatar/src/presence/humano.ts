@@ -298,22 +298,29 @@ export const STANCE = {
  * clasped is the attentive-teacher stance.
  */
 export const FOLD = {
-  L: { forward: 0.518, rot: 1.2, abduct: 0.1, elbow: 0.345, hand: 0.009 },
-  R: { forward: 0.471, rot: 1.2, abduct: 0.099, elbow: 0.334, hand: 0.034 },
-  /**
-   * Clasped fingers are softly curled — a half-curl, not the near-fist the
-   * folded pose used, because these hands rest against each other, not
-   * tucked under an arm.
-   */
+  /*
+    STACKED, solved: the right hand settles against the body and the LEFT
+    rests on its back — wrists (0.039, 1.022, 0.292) over (−0.037, 0.991,
+    0.250), a diagonal one-hand-depth apart. The first clasp met both wrists
+    at ONE depth, and the moment the fingers learned to wrap they wrapped
+    into each other's volume — rendered as the two hands merged through one
+    another. Stacking separates the volumes; `wrapScale` finishes the job:
+    the covered hand barely curls (it is a shelf), the covering hand drapes.
+  */
+  L: { forward: 0.6, rot: 1.262, abduct: 0.1, elbow: 0.306, hand: -0.125, handYaw: 0.8, wrapScale: 1 },
+  R: { forward: 0.473, rot: 1.248, abduct: 0.1, elbow: 0.301, hand: -0.047, handYaw: -0.5, wrapScale: 0.4 },
+  /** Clasped fingers are softly curled against the other hand, not fisted. */
   handCurl: 0.7,
   /**
-   * The WRAP, radians per phalanx at full clasp. `handCurl` rides the idle
-   * relaxation pathway, whose whole range is ~2-3 degrees — drift, not grip.
-   * Clasped fingers curl around the other hand's mass at ~25-30 degrees per
-   * joint, and without this they hung off the crossed wrists as two straight
-   * combs — the spider-hands read the close-ups kept showing.
+   * The covering hand's drape, radians per phalanx at full clasp.
+   *
+   * SHALLOW. The reference pose is a presenter's clasp: the top palm lies
+   * FLAT on the back of the bottom hand, fingers together, pointing down
+   * toward the far side. 0.3/0.36 per joint was a grip — it rendered as a
+   * claw seizing the other wrist. A hand lying on a surface curls barely
+   * past its resting arc.
    */
-  wrap: { '01': 0.42, '02': 0.5, '03': 0.32 } as Record<'01' | '02' | '03', number>,
+  wrap: { '01': 0.13, '02': 0.17, '03': 0.1 } as Record<'01' | '02' | '03', number>,
 } as const;
 
 /**
@@ -2156,7 +2163,14 @@ export function createHumanoPresence(
       pose(
         side === 'L' ? bones.handL : bones.handR,
         mix(followed * 0.55 + wrist, folded.hand + wrist * 0.4),
-        0,
+        /*
+          Clasped, the top hand YAWS so its fingers lie ALONG the hand under
+          it. Hanging straight down they were silhouetted against the stage
+          between the two hands, and a backlit gap between fingers reads as
+          splay no matter how adducted they are — pointing them across the
+          other hand's back puts skin behind them instead.
+        */
+        mix(0, folded.handYaw),
         zSign * mix(followed * 0.25, 0) + deviation
       );
     }
@@ -2243,7 +2257,17 @@ export function createHumanoPresence(
       */
       const adduct =
         f.phalanx === 0
-          ? -(f.side === 'L' ? 1 : -1) * ADDUCT[FINGERS[f.finger]!] * (1 + (rm ? 0 : frame.fold) * 1.3)
+          ? -(f.side === 'L' ? 1 : -1) *
+            ADDUCT[FINGERS[f.finger]!] *
+            /*
+              Fingers close A LITTLE more in the clasp — but never the thumb.
+              The thumb's base adduction is already large (0.32 rad), and the
+              clasp multiplier drove it to ~59 degrees: the thumb stood
+              straight up off the clasped hands like a peg. A clasped thumb
+              lies ALONG the other hand, which is the resting adduction it
+              already has.
+            */
+            (FINGERS[f.finger] === 'thumb' ? 1 : 1 + (rm ? 0 : frame.fold) * 1.2)
           : 0;
       const clasp = rm ? 0 : frame.fold;
       pose(
@@ -2252,7 +2276,7 @@ export function createHumanoPresence(
           relax * f.curl * RELAX_RANGE * share +
           wiggle +
           ripple +
-          clasp * FOLD.wrap[PHALANGES[f.phalanx]!],
+          clasp * FOLD.wrap[PHALANGES[f.phalanx]!] * FOLD[f.side].wrapScale,
         0,
         adduct
       );

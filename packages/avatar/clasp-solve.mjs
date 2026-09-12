@@ -56,21 +56,31 @@ function cost(p) {
       const pt = elbow.clone().lerp(wrist, t);
       const sz = surface(pt.x, pt.y);
       if (sz > -Infinity) {
-        const gap = pt.z - (sz + ARM_R);
+        const clearBy = side === 'L' ? ARM_R + 0.038 : ARM_R;
+        const gap = pt.z - (sz + clearBy);
         if (gap < 0) c += 120 * gap * gap;
         if (gap > 0.05) c += 20 * (gap - 0.05) ** 2;
       }
     }
-    // hands meet just in front of the lower belly
-    const want = side === 'L' ? 0.035 : -0.035;
-    c += 8 * (wrist.x - want) ** 2 + 8 * (wrist.y - 0.995) ** 2;
+    // STACKED, not meeting: the right hand sits against the body and the
+    // left rests ON ITS BACK — same x, same height, one hand-depth apart.
+    // Interleaved wrists put both sets of wrapped fingers in the same volume,
+    // which rendered as the two hands merged through each other.
+    // The top wrist sits DIRECTLY over the bottom hand: draped fingers must
+    // land on its back, not dangle beside it against the background — a
+    // backlit gap between fingers reads as splay however adducted they are.
+    const wantX = side === 'L' ? -0.012 : 0.0;
+    const wantY = side === 'L' ? 1.005 : 0.995;
+    const wantZ = side === 'L' ? 0.253 : 0.207;
+    c += 24 * (wrist.x - wantX) ** 2 + 10 * (wrist.y - wantY) ** 2 + 14 * (wrist.z - wantZ) ** 2;
   }
-  // the two wrists actually MEET (fingers overlap between them)
-  c += 10 * Math.max(0, wr.L.distanceTo(wr.R) - 0.075) ** 2;
+  void wr;
   return c;
 }
-let best = { L: { fwd: 0.3, rot: 0.5, abd: -0.05, elbow: 0.55, hand: 0.1 },
-             R: { fwd: 0.3, rot: 0.5, abd: -0.05, elbow: 0.55, hand: 0.1 } };
+// Start both arms at the known crossing configuration — from a hanging start
+// the walk never finds the humerus rotation that carries a hand across.
+let best = { L: { fwd: 0.52, rot: 1.2, abd: 0.1, elbow: 0.35, hand: 0.01 },
+             R: { fwd: 0.47, rot: 1.2, abd: 0.1, elbow: 0.33, hand: 0.03 } };
 let bc = cost(best);
 const rnd = (a)=> (Math.random()*2-1)*a;
 for (let iter=0, step=0.4; iter<80000; iter++) {
@@ -81,7 +91,7 @@ for (let iter=0, step=0.4; iter<80000; iter++) {
     c2.fwd += rnd(step*0.4); c2.rot += rnd(step*0.6); c2.abd += rnd(step*0.3);
     c2.elbow += rnd(step*0.6); c2.hand += rnd(step*0.3);
     c2.fwd = Math.min(0.6, Math.max(0.05, c2.fwd));
-    c2.rot = Math.min(1.2, Math.max(0, c2.rot));
+    c2.rot = Math.min(side === 'L' ? 1.5 : 1.25, Math.max(0, c2.rot));
     c2.abd = Math.min(0.1, Math.max(-0.3, c2.abd));
     c2.elbow = Math.min(1.3, Math.max(0.3, c2.elbow));
     c2.hand = Math.min(0.45, Math.max(-0.2, c2.hand));
