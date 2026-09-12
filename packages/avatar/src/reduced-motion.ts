@@ -253,7 +253,7 @@ export const ANIMATED_SURFACES: readonly AnimatedSurface[] = Object.freeze([
   { id: 'stance-legs', moves: 'the knee split swinging across as the load moves between the legs', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion — zeroes the load, so the split collapses to base', stanceChannels: ['kneeSplitDeg', 'kneeLeadS', 'shoulderLagS'] },
   { id: 'foot-reposition', moves: 'the free heel unweighting as the weight arrives on the other leg', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion — plantarflexion rides the same load', stanceChannels: ['freeFootPlantarDeg'] },
   // NOT pinned, and the reason this field exists. See the header.
-  { id: 'stance-asymmetry', moves: 'nothing, while it is held — the knees a degree either side of base, and the elbow and shoulder splits', governedBy: 'stanceAsymmetryScale', consumer: 'presence/humano.ts stance.kneeBaseSplitDeg and STANCE.asymmetry — outside the reducedMotion gate on purpose; pelvisRollDeg and shoulderCounterDeg are declared but not yet read', stanceChannels: ['kneeBaseDeg', 'kneeBaseSplitDeg', 'pelvisRollDeg', 'shoulderCounterDeg'] },
+  { id: 'stance-asymmetry', moves: 'nothing, while it is held — the knees a degree either side of base, and the elbow and shoulder splits', governedBy: 'stanceAsymmetryScale', consumer: 'presence/humano.ts stance.kneeBaseSplitDeg and STANCE.asymmetry — outside the reducedMotion gate on purpose; pelvisRollDeg is declared but not yet read', stanceChannels: ['kneeBaseDeg', 'kneeBaseSplitDeg', 'pelvisRollDeg', 'shoulderCounterDeg'] },
   /*
     TURN-TOWARD (§3.3, small-angle half). Two entries for the same reason the
     stance has two: the travel and the held result take OPPOSITE answers

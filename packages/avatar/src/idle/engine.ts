@@ -1033,15 +1033,22 @@ export class IdleEngine {
       else if (r < P.backWeight + (1 - P.backWeight) / 2) dx = length;
       else dx = -length;
       /*
-        THE LEASH. Past `maxOffsetM` the step is re-aimed back toward centre
-        rather than clamped flat: a clamped step is a step that visibly does
-        not happen, and she has to be able to come back from wherever she has
-        drifted to or the first few steps are one-way.
+        THE LEASH, in two stages. Past half of it (`homewardPast`) every step
+        aims home — the boundary re-aim alone was not enough, because sitting
+        just INSIDE the boundary is stable for as long as the draws keep
+        pointing outward, and the 2026-09-11 recording showed exactly that:
+        parked at the edge for the last ten seconds of the take. Aiming home
+        is also what actually produces the return half of "she stepped back to
+        give you room": home is a real place, not a direction she may wander.
       */
-      if (Math.hypot(this.baseX + dx, this.baseZ + dz) > P.maxOffsetM) {
-        const back = Math.hypot(this.baseX, this.baseZ) || 1;
-        dx = (-this.baseX / back) * length;
-        dz = (-this.baseZ / back) * length;
+      const offset = Math.hypot(this.baseX, this.baseZ);
+      if (
+        offset > P.maxOffsetM * P.homewardPast ||
+        Math.hypot(this.baseX + dx, this.baseZ + dz) > P.maxOffsetM
+      ) {
+        const toward = Math.min(length, offset);
+        dx = (-this.baseX / (offset || 1)) * toward;
+        dz = (-this.baseZ / (offset || 1)) * toward;
       }
       this.baseX += dx;
       this.baseZ += dz;

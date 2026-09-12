@@ -348,12 +348,6 @@ export function sanitizeNodeName(name: string): string {
  */
 export const GAZE_RANGE_DEG = 15;
 const DEG = Math.PI / 180;
-/**
- * Hip to toe on the shipped rig, in metres: `DEF-thigh.L` sits at y 0.850 and
- * `DEF-toe.L` at y 0.028. The lateral half of a step divides by it, so it is
- * measured here rather than guessed at the call site.
- */
-const LEG_LENGTH_M = 0.822;
 const smoothstep = (f: number) => {
   const t = f < 0 ? 0 : f > 1 ? 1 : f;
   return t * t * (3 - 2 * t);
@@ -747,6 +741,22 @@ export function createHumanoPresence(
   });
 
   const bones = {} as Record<HumanoBoneKey, THREE.Bone | null>;
+  /*
+    THE LEGS' BRANCH ROOT — the missing half of every lateral translation.
+
+    Hip skin is 67% `DEF-spine` and 21% the two thigh tops (measured from the
+    shipped mesh's JOINTS_0/WEIGHTS_0 over the y 0.78-1.02 band). `DEF-spine`
+    hangs from `root`; the thighs hang from `ORG-spine`, a different branch.
+    The weight shift translated ONE of those roots — so at the extremes the
+    torso slid up to ~10 cm off the legs and the hip skin sheared between the
+    two branches, which is the "her body is distorted at the sides" defect,
+    verified frame-by-frame on the Duo recording of 2026-09-11.
+
+    Every lateral the torso root receives is now applied here too, and the
+    thighs counter-lean so the feet stay planted — the pelvis moves OVER the
+    feet, ankle-strategy, which is also what replaces the rails-slide read.
+  */
+  const legsRoot = resolveBone(scene, 'ORG-spine');
   const rests = new Map<THREE.Bone, BoneRest>();
   scene.updateMatrixWorld(true);
   const capture = (bone: THREE.Bone) => {
@@ -770,6 +780,69 @@ export function createHumanoPresence(
     bones[key] = bone;
     if (bone) capture(bone);
     else missing.push(`${key} (${HUMANO_BONES[key]})`);
+  }
+  if (legsRoot) capture(legsRoot);
+  /*
+    THE LATERAL LEG RESPONSE, MEASURED — not assumed.
+
+    The first lateral lean was `asin(offset / legLength)` about local +z with
+    ONE sign for both sides, on the strength of a comment that said "+z is a
+    +x foot on BOTH sides". The rig disagreed: "+z abducts" means away from
+    the midline, which is opposite WORLD directions per side, so the right
+    foot compensated the wrong way — measured as a 71 mm toe slide and a
+    22.7 mm drift in the turn test the moment the pelvis translation landed.
+
+    So the response is read off the hierarchy itself, once, at creation. The
+    ankle is COUPLED to the thigh — φ = −θ, which is what keeps the sole flat
+    — and the coupled pair is probed at ±0.08 rad to get the toe's lateral
+    response as a secant slope `k` plus a curvature `q`. The frame loop then
+    inverts x(θ) = kθ + qθ² analytically: θ = dx/k, minus one quadratic
+    correction. Measured on this rig that lands the toe within 0.12 mm of its
+    plant across the whole ±9 cm range, with no per-frame matrix updates.
+
+    An unconstrained 2x2 over (θ, φ) was tried first and is WRONG here: the
+    left leg's pair of axes is near-parallel in the constraint plane
+    (det −0.0012), so the solve dumped 26 degrees into the ankle and dragged
+    the toe 13 mm sagittally. Coupling the ankle removes the degenerate
+    degree of freedom instead of inverting it. No guessed sign survives a
+    re-export: a flipped axis flips the measured slope with it.
+  */
+  const lateralResponse = { L: { k: 0, q: 0 }, R: { k: 0, q: 0 } };
+  {
+    const probeQ = new THREE.Quaternion();
+    const probeE = new THREE.Euler();
+    const rest = new THREE.Vector3();
+    const probed = new THREE.Vector3();
+    /*
+      Secant + curvature over the OPERATING range, not a tangent at zero: the
+      lean runs to ~0.13 rad, and the probe angle matching it is what keeps
+      the inversion below a millimetre across the whole span.
+    */
+    const PROBE_RAD = 0.08;
+    for (const side of ['L', 'R'] as const) {
+      const toe = resolveBone(scene, `DEF-toe.${side}`);
+      const thigh = side === 'L' ? bones.thighL : bones.thighR;
+      const foot = side === 'L' ? bones.footL : bones.footR;
+      const thighRest = thigh ? rests.get(thigh) : undefined;
+      const footRest = foot ? rests.get(foot) : undefined;
+      if (!toe || !thigh || !foot || !thighRest || !footRest) continue;
+      toe.getWorldPosition(rest);
+      const sample = (theta: number): number => {
+        probeQ.setFromEuler(probeE.set(0, 0, theta, 'XYZ'));
+        thigh.quaternion.copy(thighRest.quaternion).multiply(probeQ);
+        probeQ.setFromEuler(probeE.set(0, 0, -theta, 'XYZ'));
+        foot.quaternion.copy(footRest.quaternion).multiply(probeQ);
+        scene.updateMatrixWorld(true);
+        return toe.getWorldPosition(probed).x - rest.x;
+      };
+      const xPlus = sample(PROBE_RAD);
+      const xMinus = sample(-PROBE_RAD);
+      lateralResponse[side].k = (xPlus - xMinus) / (2 * PROBE_RAD);
+      lateralResponse[side].q = (xPlus + xMinus) / (2 * PROBE_RAD * PROBE_RAD);
+      thigh.quaternion.copy(thighRest.quaternion);
+      foot.quaternion.copy(footRest.quaternion);
+      scene.updateMatrixWorld(true);
+    }
   }
   /*
     A MISSING BONE IS SILENT, AND THAT IS THE DEFECT THIS NAMES.
@@ -1613,6 +1686,41 @@ export function createHumanoPresence(
       The denominator gains the sway's amplitude so a full weight shift still
       normalises to roughly ±1 rather than being squashed by the wider range.
     */
+    baseXLag.step(
+      rm ? 0 : (frame.plantXL + frame.plantXR) / 2,
+      rawDelta,
+      idleConfig.body.step.bodyLagS
+    );
+    baseZLag.step(
+      rm ? 0 : (frame.plantZL + frame.plantZR) / 2,
+      rawDelta,
+      idleConfig.body.step.bodyLagS
+    );
+    /*
+      ONE PELVIS, TWO BRANCHES, THE SAME NUMBERS.
+
+      `pelvisX`/`pelvisZ` are the whole of where her base is this frame — the
+      weight shift, the balance sway, and the step base. The torso root reads
+      them in its translation below, and `legsRoot` receives exactly the same
+      world vector here, which is the invariant that kills the hip shear: the
+      two skin branches can no longer disagree about where the pelvis is.
+
+      The legs' answer is a LEAN, not a slide — each thigh below rotates by
+      asin((plant − pelvis)/L), so the feet hold their plants while the pelvis
+      travels over them. That is the ankle strategy of real standing sway, and
+      it is what replaces the mannequin-on-rails read: the body no longer
+      translates as a rigid block, it pivots over its feet.
+    */
+    const pelvisX = shift + baseXLag.value;
+    const pelvisZ = baseZLag.value;
+    if (legsRoot) {
+      const lr = rests.get(legsRoot);
+      if (lr) {
+        const o = clipState ? baseOverride.get(legsRoot) : undefined;
+        tmpVec.set(pelvisX, 0, pelvisZ).applyQuaternion(lr.parentWorldQuaternionInverse);
+        legsRoot.position.copy(o?.hasP ? o.p : lr.position).add(tmpVec);
+      }
+    }
     const loadSpan =
       idleConfig.body.weightShift.amplitudeM + idleConfig.sway.amplitudeM;
     const load = rm ? 0 : clamp(shift / loadSpan, -1, 1);
@@ -1714,8 +1822,10 @@ export function createHumanoPresence(
         const sin = Math.sin(theta);
         return [y * sin + z * cos, y * cos - z * sin];
       };
+      // The chain's parent now carries `pelvisZ`, so pinning the toe at its
+      // world plant means solving for plant MINUS pelvis in the parent frame.
       const restToe: [number, number] = [
-        chain.s1[0] + chain.s2[0] + chain.s3[0] + plantZ,
+        chain.s1[0] + chain.s2[0] + chain.s3[0] + plantZ - pelvisZ,
         chain.s1[1] + chain.s2[1] + chain.s3[1],
       ];
       // Unknowns: thigh delta a (about x), ankle delta t. Knee delta is phi.
@@ -1760,10 +1870,21 @@ export function createHumanoPresence(
         +x foot on BOTH sides (the header's "L +, R −" is about abduction, and
         moving the right foot to +x is adduction).
       */
-      const lean = Math.asin(clamp(plantX / LEG_LENGTH_M, -0.35, 0.35));
+      /*
+        Relative to the PELVIS: the hip heads travel with it, so a foot that
+        must hold its plant leans back by exactly the offset between them —
+        through the measured response curve (see `lateralResponse`), never a
+        guessed sign or length. The ankle counter-rolls by the same angle,
+        which is both the sole-flatness answer and part of the measured pair.
+      */
+      const lat = lateralResponse[side];
+      const latDx = clamp(plantX - pelvisX, -0.15, 0.15);
+      let lean = Math.abs(lat.k) > 1e-6 ? latDx / lat.k : 0;
+      lean -= (lat.q * lean * lean) / (Math.abs(lat.k) > 1e-6 ? lat.k : 1);
+      const ankleRoll = -lean;
       pose(side === 'L' ? bones.thighL : bones.thighR, a, 0, lean);
       pose(side === 'L' ? bones.shinL : bones.shinR, phi, 0, 0);
-      pose(side === 'L' ? bones.footL : bones.footR, t, 0, -lean);
+      pose(side === 'L' ? bones.footL : bones.footR, t, 0, ankleRoll);
     }
 
     touchedTwins.clear();
@@ -1806,26 +1927,8 @@ export function createHumanoPresence(
       the feet have not already been, and it arrives on a lag, which is what
       makes the feet read as the cause and the body as the consequence.
     */
-    baseXLag.step(
-      rm ? 0 : (frame.plantXL + frame.plantXR) / 2,
-      rawDelta,
-      idleConfig.body.step.bodyLagS
-    );
-    baseZLag.step(
-      rm ? 0 : (frame.plantZL + frame.plantZR) / 2,
-      rawDelta,
-      idleConfig.body.step.bodyLagS
-    );
     // Measured: +z on DEF-spine moves the head −x. Lean back over centre.
-    poseBoth(
-      'torso',
-      0,
-      0,
-      shift * 0.96,
-      shift + baseXLag.value,
-      frame.swayY * 0.3,
-      baseZLag.value
-    );
+    poseBoth('torso', 0, 0, shift * 0.96, pelvisX, frame.swayY * 0.3, pelvisZ);
     let leanSum = 0;
     poseBoth('spine1', 0, 0, -shiftSpine1.value * 0.35);
     poseBoth(

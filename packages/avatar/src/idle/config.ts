@@ -242,8 +242,16 @@ export const idleConfig = {
     */
     step: {
       intervalS: { min: 22, max: 70 },
-      /** How far the base moves. A shift of weight and a re-plant, not a walk. */
-      lengthM: { min: 0.045, max: 0.095 },
+      /**
+       * How far the base moves. A shift of weight and a re-plant, not a walk.
+       *
+       * Was 4.5-9.5 cm with a 12 cm leash, and the recording of 2026-09-11
+       * showed what that sums to: 118 px of torso wander across a 540 px pane
+       * — a fifth of the frame — with her parked at the leash edge for the
+       * last ten seconds. A step reads at half this size; past it she is
+       * pacing, not adjusting.
+       */
+      lengthM: { min: 0.03, max: 0.055 },
       /** Time one foot spends in the air. */
       swingS: { min: 0.34, max: 0.5 },
       /** The gap between the first foot landing and the second leaving. */
@@ -253,7 +261,14 @@ export const idleConfig = {
       /** The torso arrives over the new base behind the feet. */
       bodyLagS: 0.22,
       /** Never further than this from where she started, in metres. */
-      maxOffsetM: 0.12,
+      maxOffsetM: 0.06,
+      /**
+       * Past this fraction of the leash a step always aims home. Without it
+       * she walks to the leash and stays there — the re-aim only fires on a
+       * step that would CROSS the boundary, so sitting just inside it was
+       * stable for as long as the draws kept pointing outward.
+       */
+      homewardPast: 0.5,
       /**
        * How the direction is drawn. Back is the commonest thing a listener
        * does with their feet — giving the other person room — and forward only
