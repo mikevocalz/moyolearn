@@ -309,7 +309,7 @@ export const FOLD = {
     it and the ulnar fingers overhang into open space, which no amount of
     curl or adduction fixes — measured 31-47 mm of unreachable gap.
   */
-  L: { forward: 0.58, rot: 1.262, abduct: 0.1, elbow: 0.226, hand: -0.275, handYaw: 0.8, pron: -0.9 },
+  L: { forward: 0.64, rot: 1.262, abduct: 0.1, elbow: 0.226, hand: -0.425, handYaw: 0.8, pron: -1.2 },
   R: { forward: 0.473, rot: 1.248, abduct: 0.1, elbow: 0.301, hand: -0.047, handYaw: -0.5, pron: 0 },
   /**
    * Solved knuckle curl per finger at full clasp, radians; phalanges 02/03
@@ -317,9 +317,24 @@ export const FOLD = {
    * arc at fold = 1 (blended, not added — the rest arc alone already
    * overshoots the solved middle finger).
    */
+  /*
+   * Re-solved against the PALM-BACK only (forearm + hand + first phalanges):
+   * letting the fingertips land on the bottom hand's fingers put two finger
+   * rows at one visual level — the ten-finger interleave. Ring solved to
+   * 1.03 (it found a crevice between knuckles) and is capped at 0.65; the
+   * thumb cannot reach the back at all and rests beside it at 0.6.
+   */
   fingerCurl: {
-    L: { thumb: 0.7, f_index: 0.275, f_middle: 0.2, f_ring: 0.3, f_pinky: 0.475 },
-    R: { thumb: 0.25, f_index: 0.35, f_middle: 0.35, f_ring: 0.35, f_pinky: 0.35 },
+    L: { thumb: 0.55, f_index: 0.5, f_middle: 0.48, f_ring: 0.55, f_pinky: 0.38 },
+    /*
+     * The BOTTOM hand's fingers tuck — a soft fist, not a rest. At 0.35 they
+     * stuck out beneath the top hand as a second visible finger row, which
+     * is the interleave from the front no matter what the top hand does. In
+     * a real clasp the underneath fingers are simply not visible; curled to
+     * ~0.65 they fold under the palm, and the camera sees one hand draped
+     * over a knuckle curve.
+     */
+    R: { thumb: 0.3, f_index: 0.7, f_middle: 0.73, f_ring: 0.76, f_pinky: 0.78 },
   } as Record<'L' | 'R', Record<(typeof FINGERS)[number], number>>,
   /** The solver's phalanx follow ratios. */
   phalanxRatio: { '01': 1, '02': 0.8, '03': 0.5 } as Record<'01' | '02' | '03', number>,
@@ -2172,11 +2187,11 @@ export function createHumanoPresence(
       // Radial/ulnar drift — the wrist's cross axis. Damped while clasped:
       // resting hands still breathe, but against each other, not freely.
       const deviation =
-        (rm ? 0 : (side === 'L' ? frame.wristDevL : frame.wristDevR)) * (1 - 0.6 * fold);
+        (rm ? 0 : (side === 'L' ? frame.wristDevL : frame.wristDevR)) * (1 - 0.95 * fold);
       // The wrist is where the beat lives; the follower puts it a beat late.
       pose(
         side === 'L' ? bones.handL : bones.handR,
-        mix(followed * 0.55 + wrist, folded.hand + wrist * 0.4),
+        mix(followed * 0.55 + wrist, folded.hand + wrist * 0.15),
         /*
           Clasped, the top hand YAWS so its fingers lie ALONG the hand under
           it. Hanging straight down they were silhouetted against the stage
@@ -2294,7 +2309,7 @@ export function createHumanoPresence(
       const solvedX = FOLD.fingerCurl[f.side][FINGERS[f.finger]!] * FOLD.phalanxRatio[PHALANGES[f.phalanx]!];
       pose(
         f.bone,
-        restingX + (solvedX - restingX) * clasp + (wiggle + ripple) * (1 - 0.7 * clasp),
+        restingX + (solvedX - restingX) * clasp + (wiggle + ripple) * (1 - 0.92 * clasp),
         0,
         adduct
       );

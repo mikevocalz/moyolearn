@@ -138,9 +138,18 @@ const addSegsOf = (nm, radius) => {
     }
   }
 };
+/*
+  PALM-BACK ONLY. Letting the top fingertips land on the bottom hand's
+  FINGERS put two finger rows at the same visual level — a ten-finger
+  interleave, which is exactly the "fingers look bad when crossed" defect.
+  The classic pose has the top fingertips on the bottom hand's metacarpal
+  back, near its wrist, with the bottom fingers extending past as the one
+  visible row. So the contact surface is the forearm, the hand, and the
+  first phalanges only — the top hand cannot reach past the knuckle line.
+*/
 addSegsOf('DEF-forearm.R', 0.036);
 addSegsOf('DEF-hand.R', 0.014);
-for (const f of FINGERS) for (const p2 of ['01', '02', '03']) addSegsOf(`DEF-${f}.${p2}.R`, 0.008);
+for (const f of FINGERS) addSegsOf(`DEF-${f}.01.R`, 0.009);
 const CONTACT = 0.003; // margin above the segment's own skin radius
 const distToHand = (p) => {
   let best = Infinity;
@@ -162,21 +171,25 @@ const distToHand = (p) => {
   the shirt; then solve each finger inside that pose.
 */
 console.log('twist bone exists:', by.has('DEF-forearm.L.001'));
-let bestAdj = { dF: 0, dE: 0, dH: 0, dP: 0, score: Infinity };
-for (let dF = -0.14; dF <= 0.04; dF += 0.02) {
-  for (let dE = -0.16; dE <= 0.12; dE += 0.04) {
-    for (const dH of [-0.15, 0, 0.15]) {
-      for (const dP of [-0.9, -0.6, -0.3, 0, 0.3, 0.6, 0.9]) {
+let bestAdj = { dF: 0, dE: 0, dH: 0, dP: 0, dY: 0, score: Infinity };
+for (let dF = -0.2; dF <= 0.08; dF += 0.02) {
+  for (let dE = -0.24; dE <= 0.16; dE += 0.04) {
+    for (const dH of [-0.3, -0.15, 0, 0.15]) {
+      for (const dP of [-1.2, -0.9, -0.6, -0.3, 0]) {
+      for (const dY of [-0.3, 0, 0.3]) {
       pose('DEF-upper_arm.L', FOLD.L.forward + dF, FOLD.L.rot, FOLD.L.abduct);
       pose('DEF-forearm.L', FOLD.L.elbow + dE, 0, 0);
       // PRONATION: the forearm twist bone rotates the hand about the arm's
       // long axis — the DOF that turns the palm to FACE the hand below it,
       // without which the ulnar fingers overhang into open space.
       pose('DEF-forearm.L.001', 0, dP, 0);
-      pose('DEF-hand.L', FOLD.L.hand + dH, FOLD.L.handYaw, 0);
-      setCurl('L', 'f_index', 0.3);
-      setCurl('L', 'f_middle', 0.3);
-      setCurl('L', 'f_ring', 0.35);
+      pose('DEF-hand.L', FOLD.L.hand + dH, FOLD.L.handYaw + dY, 0);
+      // SHALLOW target curls: the goal pose is a resting drape onto the
+      // palm-back, so the wrist must come to the hand — a pose that only
+      // reaches contact at fist-deep curls is the wrong wrist position.
+      setCurl('L', 'f_index', 0.25);
+      setCurl('L', 'f_middle', 0.25);
+      setCurl('L', 'f_ring', 0.28);
       const dI = distToHand(W('DEF-f_index.03.L')) - CONTACT;
       const dM = distToHand(W('DEF-f_middle.03.L')) - CONTACT;
       const dR = distToHand(W('DEF-f_ring.03.L')) - CONTACT;
@@ -190,7 +203,8 @@ for (let dF = -0.14; dF <= 0.04; dF += 0.02) {
       }
       if (minGap < 0.03) continue;
       const score = Math.abs(dI) + Math.abs(dM) + Math.abs(dR);
-      if (score < bestAdj.score) bestAdj = { dF, dE, dH, dP, score };
+      if (score < bestAdj.score) bestAdj = { dF, dE, dH, dP, dY, score };
+      }
       }
     }
   }
@@ -199,6 +213,7 @@ console.log('arm adjust:', JSON.stringify(bestAdj));
 FOLD.L.forward += bestAdj.dF;
 FOLD.L.elbow += bestAdj.dE;
 FOLD.L.hand += bestAdj.dH;
+FOLD.L.handYaw += bestAdj.dY;
 FOLD.L.pron = bestAdj.dP;
 pose('DEF-upper_arm.L', FOLD.L.forward, FOLD.L.rot, FOLD.L.abduct);
 pose('DEF-forearm.L', FOLD.L.elbow, 0, 0);
@@ -226,5 +241,5 @@ for (const f of FINGERS) {
   out.L[f] = +bestK.toFixed(3);
   console.log(`L ${f.padEnd(9)} k ${bestK.toFixed(3)}  clearance ${(bestD * 1000).toFixed(1)}mm`);
 }
-console.log('\nadjusted L arm:', JSON.stringify({ forward: +FOLD.L.forward.toFixed(3), elbow: +FOLD.L.elbow.toFixed(3), hand: +FOLD.L.hand.toFixed(3), pron: +(FOLD.L.pron ?? 0).toFixed(3) }));
+console.log('\nadjusted L arm:', JSON.stringify({ forward: +FOLD.L.forward.toFixed(3), elbow: +FOLD.L.elbow.toFixed(3), hand: +FOLD.L.hand.toFixed(3), handYaw: +FOLD.L.handYaw.toFixed(3), pron: +(FOLD.L.pron ?? 0).toFixed(3) }));
 console.log('fingerCurl:', JSON.stringify(out));
