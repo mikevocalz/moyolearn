@@ -299,28 +299,30 @@ export const STANCE = {
  */
 export const FOLD = {
   /*
-    STACKED, solved: the right hand settles against the body and the LEFT
-    rests on its back — wrists (0.039, 1.022, 0.292) over (−0.037, 0.991,
-    0.250), a diagonal one-hand-depth apart. The first clasp met both wrists
-    at ONE depth, and the moment the fingers learned to wrap they wrapped
-    into each other's volume — rendered as the two hands merged through one
-    another. Stacking separates the volumes; `wrapScale` finishes the job:
-    the covered hand barely curls (it is a shelf), the covering hand drapes.
+    STACKED AND SOLVED PER FINGER. `tools/clasp-fingers-solve.mjs` poses the
+    clasp on the real hierarchy, models the bottom hand and right forearm as
+    radius-carrying bone segments, and solves each TOP finger's curl so its
+    tip rests on that surface — smallest curl at closest approach, because a
+    resting finger is nearly straight and a millimetre of air does not
+    render. The unlock was PRONATION (`pron`, on the forearm twist bone
+    DEF-forearm.L.001): without it the top palm cannot face the hand below
+    it and the ulnar fingers overhang into open space, which no amount of
+    curl or adduction fixes — measured 31-47 mm of unreachable gap.
   */
-  L: { forward: 0.6, rot: 1.262, abduct: 0.1, elbow: 0.306, hand: -0.125, handYaw: 0.8, wrapScale: 1 },
-  R: { forward: 0.473, rot: 1.248, abduct: 0.1, elbow: 0.301, hand: -0.047, handYaw: -0.5, wrapScale: 0.4 },
-  /** Clasped fingers are softly curled against the other hand, not fisted. */
-  handCurl: 0.7,
+  L: { forward: 0.58, rot: 1.262, abduct: 0.1, elbow: 0.226, hand: -0.275, handYaw: 0.8, pron: -0.9 },
+  R: { forward: 0.473, rot: 1.248, abduct: 0.1, elbow: 0.301, hand: -0.047, handYaw: -0.5, pron: 0 },
   /**
-   * The covering hand's drape, radians per phalanx at full clasp.
-   *
-   * SHALLOW. The reference pose is a presenter's clasp: the top palm lies
-   * FLAT on the back of the bottom hand, fingers together, pointing down
-   * toward the far side. 0.3/0.36 per joint was a grip — it rendered as a
-   * claw seizing the other wrist. A hand lying on a surface curls barely
-   * past its resting arc.
+   * Solved knuckle curl per finger at full clasp, radians; phalanges 02/03
+   * follow at the 0.8/0.5 ratios the solver used. These REPLACE the resting
+   * arc at fold = 1 (blended, not added — the rest arc alone already
+   * overshoots the solved middle finger).
    */
-  wrap: { '01': 0.13, '02': 0.17, '03': 0.1 } as Record<'01' | '02' | '03', number>,
+  fingerCurl: {
+    L: { thumb: 0.7, f_index: 0.275, f_middle: 0.2, f_ring: 0.3, f_pinky: 0.475 },
+    R: { thumb: 0.25, f_index: 0.35, f_middle: 0.35, f_ring: 0.35, f_pinky: 0.35 },
+  } as Record<'L' | 'R', Record<(typeof FINGERS)[number], number>>,
+  /** The solver's phalanx follow ratios. */
+  phalanxRatio: { '01': 1, '02': 0.8, '03': 0.5 } as Record<'01' | '02' | '03', number>,
 } as const;
 
 /**
@@ -773,6 +775,14 @@ export function createHumanoPresence(
     feet, ankle-strategy, which is also what replaces the rails-slide read.
   */
   const legsRoot = resolveBone(scene, 'ORG-spine');
+  /*
+    The forearm TWIST bones — pronation/supination, the axis the clasp's
+    per-finger solve depends on. Captured like any other posed bone.
+  */
+  const foreArmTwist = {
+    L: resolveBone(scene, 'DEF-forearm.L.001'),
+    R: resolveBone(scene, 'DEF-forearm.R.001'),
+  };
   const rests = new Map<THREE.Bone, BoneRest>();
   scene.updateMatrixWorld(true);
   const capture = (bone: THREE.Bone) => {
@@ -798,6 +808,8 @@ export function createHumanoPresence(
     else missing.push(`${key} (${HUMANO_BONES[key]})`);
   }
   if (legsRoot) capture(legsRoot);
+  if (foreArmTwist.L) capture(foreArmTwist.L);
+  if (foreArmTwist.R) capture(foreArmTwist.R);
   /*
     THE LATERAL LEG RESPONSE, MEASURED — not assumed.
 
@@ -2150,6 +2162,8 @@ export function createHumanoPresence(
         0,
         0,
       );
+      // Pronation rides the clasp: the top palm turns to face the hand below.
+      pose(foreArmTwist[side], 0, mix(0, folded.pron), 0);
 
       // 0.6, not 0.15. At 15% of a 3-degree range this was 0.45 degrees of
       // wrist — below anything visible at her render size, which is most of
@@ -2208,8 +2222,7 @@ export function createHumanoPresence(
         that keeps the posture reading as "hands held in front of her" rather
         than as arms folded — it is the same tell as an open hand on a hip.
       */
-      const relaxIdle = clamp(frame[HAND_CHANNELS[f.side]], 0, 1);
-      const relax = rm ? 0 : relaxIdle + (FOLD.handCurl - relaxIdle) * frame.fold;
+      const relax = rm ? 0 : clamp(frame[HAND_CHANNELS[f.side]], 0, 1);
       /*
         The spread down the chain is the same shape the rest curl uses: most at
         the knuckle, least at the tip. A finger that flexed uniformly along its
@@ -2270,13 +2283,18 @@ export function createHumanoPresence(
             (FINGERS[f.finger] === 'thumb' ? 1 : 1 + (rm ? 0 : frame.fold) * 1.2)
           : 0;
       const clasp = rm ? 0 : frame.fold;
+      /*
+        The clasp REPLACES the resting arc rather than adding to it — the
+        solved per-finger pose is absolute, and the rest arc plus a delta
+        already overshoots it on the middle finger. Wiggle and ripple ride
+        through at reduced amplitude so clasped fingers stay alive without
+        drifting off their contact.
+      */
+      const restingX = f.curl * openness + relax * f.curl * RELAX_RANGE * share;
+      const solvedX = FOLD.fingerCurl[f.side][FINGERS[f.finger]!] * FOLD.phalanxRatio[PHALANGES[f.phalanx]!];
       pose(
         f.bone,
-        f.curl * openness +
-          relax * f.curl * RELAX_RANGE * share +
-          wiggle +
-          ripple +
-          clasp * FOLD.wrap[PHALANGES[f.phalanx]!] * FOLD[f.side].wrapScale,
+        restingX + (solvedX - restingX) * clasp + (wiggle + ripple) * (1 - 0.7 * clasp),
         0,
         adduct
       );
