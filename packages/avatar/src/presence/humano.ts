@@ -306,6 +306,14 @@ export const FOLD = {
    * tucked under an arm.
    */
   handCurl: 0.7,
+  /**
+   * The WRAP, radians per phalanx at full clasp. `handCurl` rides the idle
+   * relaxation pathway, whose whole range is ~2-3 degrees — drift, not grip.
+   * Clasped fingers curl around the other hand's mass at ~25-30 degrees per
+   * joint, and without this they hung off the crossed wrists as two straight
+   * combs — the spider-hands read the close-ups kept showing.
+   */
+  wrap: { '01': 0.42, '02': 0.5, '03': 0.32 } as Record<'01' | '02' | '03', number>,
 } as const;
 
 /**
@@ -2226,12 +2234,25 @@ export function createHumanoPresence(
         curl — about 9 degrees at the knuckle at full relaxation. Small on
         purpose: this is a hand settling, not a fist closing.
       */
-      // Adduction at the knuckle only — the distal joints do not splay.
+      /*
+        Adduction at the knuckle only — the distal joints do not splay. Scaled
+        UP with the clasp: each finger's curl axis points along the splayed
+        fan, so flexing diverges the tips further — the clasped hands read as
+        two combs without the extra closure. Verified at rest and clasped on
+        the Duo; rest keeps the base value.
+      */
       const adduct =
-        f.phalanx === 0 ? -(f.side === 'L' ? 1 : -1) * ADDUCT[FINGERS[f.finger]!] : 0;
+        f.phalanx === 0
+          ? -(f.side === 'L' ? 1 : -1) * ADDUCT[FINGERS[f.finger]!] * (1 + (rm ? 0 : frame.fold) * 1.3)
+          : 0;
+      const clasp = rm ? 0 : frame.fold;
       pose(
         f.bone,
-        f.curl * openness + relax * f.curl * RELAX_RANGE * share + wiggle + ripple,
+        f.curl * openness +
+          relax * f.curl * RELAX_RANGE * share +
+          wiggle +
+          ripple +
+          clasp * FOLD.wrap[PHALANGES[f.phalanx]!],
         0,
         adduct
       );
