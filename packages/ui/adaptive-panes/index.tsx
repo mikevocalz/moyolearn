@@ -337,11 +337,11 @@ function AdaptivePanesNavigator({
             growing from the token rather than `flex-1`, which would discard the
             width it collapses along.
 
-            THE 3D NOTE, kept because it will come up: a canvas in this pane is
-            resized across the 220ms collapse. That is bounded and it only
-            happens on a toggle — and the subtree is frozen while shut
-            (`PaneContent`), so a hidden renderer is not drawing into a
-            shrinking surface.
+            THE 3D NOTE, kept because it will come up: the canvas in this pane
+            is NOT resized across the collapse — `CollapsiblePane` clips over
+            an inner view that holds the measured width, so the surface keeps
+            its size while the clip moves. The subtree is also frozen while
+            shut (`PaneContent`), so a hidden renderer is not drawing at all.
           */}
           <CollapsiblePane
             open={visible.detail}

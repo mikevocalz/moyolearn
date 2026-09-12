@@ -238,7 +238,7 @@ export const ANIMATED_SURFACES: readonly AnimatedSurface[] = Object.freeze([
   // writer takes `reducedMotion` and holds every one of these at rest.
   { id: 'weight-shift', moves: 'hip travel between the legs, spine counter-tilt', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
   { id: 'torso-turn', moves: 'a few degrees of yaw through the spine', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
-  { id: 'shoulder-wrist', moves: 'shoulder rise and wrist flex, per side', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
+  { id: 'shoulder-wrist', moves: 'shoulder rise, wrist flex and radial/ulnar drift, per side', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
   { id: 'finger-noise', moves: 'ten finger chains, 2-5 degrees, never in phase', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
   /*
     THE LEGS (ADR-113 stance block). `weight-shift` above is the pelvis; these
@@ -274,8 +274,8 @@ export const ANIMATED_SURFACES: readonly AnimatedSurface[] = Object.freeze([
   { id: 'yawn', moves: 'jaw, brows, lids, head pitch, chest and shoulders, after four minutes of quiet', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
   { id: 'spine-cascade', moves: 'the lateral weight arriving at lumbar, chest and head on their own lags rather than as a rigid block', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion — shift is zero, so every follower collapses to rest' },
   { id: 'foot-adjust', moves: 'the free heel lifting and the toe pivoting a degree or two, every ten seconds or so', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
-  { id: 'arms-folded', moves: 'the whole upper-arm posture, blended in over a second and held for tens of them', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion — fold is zeroed, so the arms stay at her sides' },
-  { id: 'finger-wiggle', moves: 'under two degrees of independent drift per digit, on top of the shared relaxation scalar', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
+  { id: 'arms-folded', moves: 'the hands-clasped rest posture, blended in over a second and held for tens of them', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion — fold is zeroed, so the arms stay at her sides' },
+  { id: 'finger-wiggle', moves: 'independent slow drift per digit, plus a soft ripple across the five every ten seconds or so', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion' },
   { id: 'step', moves: 'a foot un-plants, its plant point moves 4-9 cm, it lands, the other follows, and the body arrives over the new base', governedBy: 'idleBodyScale', consumer: 'presence/humano.ts reducedMotion — plants and swings are zeroed, so both feet stay where they started' },
   { id: 'gaze-away', moves: 'eyes leave the lens for under a second, head follows', governedBy: 'gazeScale', consumer: 'presence/humano.ts reducedMotion' },
   { id: 'a2f-face', moves: 'brows, lids, cheeks and mouth from the audio', governedBy: 'mouthScale', consumer: 'presence/humano.ts face input — speech-driven, never scaled' },

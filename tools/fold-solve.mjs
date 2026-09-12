@@ -50,7 +50,16 @@ const pose = (nm, dx, dy, dz) => { const b = by.get(nm); q.setFromEuler(e.set(dx
   b.quaternion.copy(rest.get(nm)).multiply(q); };
 const W = (nm) => by.get(nm).getWorldPosition(new THREE.Vector3());
 
-const CLEAR = 0.028;          // shirt + arm radius: how far off the skin the bones must sit
+/*
+  A FOLD IS LAYERED — that is what makes it solvable at all. Both wrists
+  crossing the midline at ONE depth cannot clear the chest: the optimizer
+  proved it by accepting penetration rather than the targets. So the left
+  forearm is the INNER layer, riding just off the shirt, and the right is the
+  OUTER, stacked a forearm's diameter further out, passing OVER the left.
+  Per-side clearance encodes the stack; the band keeps each arm ON its layer
+  rather than floating in front of it.
+*/
+const CLEAR = { L: 0.03, R: 0.064 };
 function apply(p) {
   for (const side of ['L', 'R']) {
     const s = side === 'L' ? 1 : -1;
@@ -67,22 +76,23 @@ function cost(p) {
   for (const side of ['L', 'R']) {
     const elbow = W(`DEF-forearm.${side}`), wrist = W(`DEF-hand.${side}`);
     arms[side] = [elbow, wrist];
-    // 1. the forearm must clear the skin along its whole length
-    for (let t = 0; t <= 1.0001; t += 0.1) {
+    // 1. the forearm AND THE HAND must clear the skin along their whole
+    //    length. t runs past the wrist by ~17 cm of hand — the first solve
+    //    stopped at the wrist and the fingers were what actually clipped.
+    for (let t = 0; t <= 1.75; t += 0.125) {
       const pt = elbow.clone().lerp(wrist, t);
       const sz = surface(pt.x, pt.y);
       if (sz > -Infinity) {
-        const gap = pt.z - (sz + CLEAR);
-        if (gap < 0) c += 60 * gap * gap;          // inside the shirt: heavily penalised
-        if (gap > 0.02) c += 90 * (gap - 0.02) ** 2; // floating in front of her: also wrong
+        const gap = pt.z - (sz + CLEAR[side]);
+        if (gap < 0) c += 80 * gap * gap;          // inside its layer: heavily penalised
+        if (gap > 0.02) c += 60 * (gap - 0.02) ** 2; // floating off its layer: also wrong
       }
     }
-    // 2. folded arms sit ACROSS THE CHEST, not resting on the belly
-    c += 6 * (wrist.y - (side === 'L' ? 1.165 : 1.125)) ** 2;
-    // 3. each hand ends UNDER THE OPPOSITE ARM — that is what folded means.
-    //    Crossing all the way past the midline leaves the hands dangling in
-    //    front of her, which is what the first surface-aware solve produced.
-    const want = side === 'L' ? -0.105 : 0.105;
+    // 2. folded arms sit ACROSS THE CHEST, not resting on the belly. The
+    //    inner (L) rides a little lower, the outer (R) crosses above it.
+    c += 6 * (wrist.y - (side === 'L' ? 1.115 : 1.16)) ** 2;
+    // 3. each hand reaches toward the opposite elbow — a grip, not a dangle.
+    const want = side === 'L' ? -0.1 : 0.09;
     c += 6 * (wrist.x - want) ** 2;
     // 4. elbows stay out at the sides rather than tucking behind the ribs
     c += 1.2 * (elbow.x - (side === 'L' ? 0.19 : -0.19)) ** 2;
@@ -93,7 +103,7 @@ function cost(p) {
   return c;
 }
 let best = { L: { fwd: 0.5, rot: 0.9, abd: -0.2, elbow: 0.8, hand: 0 },
-             R: { fwd: 0.5, rot: 0.9, abd: -0.2, elbow: 0.8, hand: 0 } };
+             R: { fwd: 0.5, rot: 1.2, abd: -0.1, elbow: 0.9, hand: 0.1 } };
 let bc = cost(best);
 const rnd = (a) => (Math.random() * 2 - 1) * a;
 for (let iter = 0, step = 0.6; iter < 120000; iter++) {
@@ -104,7 +114,7 @@ for (let iter = 0, step = 0.6; iter < 120000; iter++) {
     c2.fwd += rnd(step * 0.5); c2.rot += rnd(step); c2.abd += rnd(step * 0.4);
     c2.elbow += rnd(step); c2.hand += rnd(step * 0.3);
     c2.fwd = Math.min(0.70, Math.max(-0.1, c2.fwd));
-    c2.rot = Math.min(1.6, Math.max(0, c2.rot));
+    c2.rot = Math.min(1.75, Math.max(0, c2.rot));
     c2.abd = Math.min(0.15, Math.max(-0.5, c2.abd));
     c2.elbow = Math.min(2.2, Math.max(0.3, c2.elbow));
     c2.hand = Math.min(0.35, Math.max(-0.25, c2.hand));

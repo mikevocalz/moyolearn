@@ -151,7 +151,27 @@ export function fingerBone(
  * curls more than the index. The thumb rotates rather than curls, so it gets
  * its own, smaller number.
  */
-const CURL = { '01': 0.16, '02': 0.28, '03': 0.24 } as const;
+/*
+ * Deepened from { .16, .28, .24 }: on device the resting hand read as WIDE
+ * OPEN — fingers nearly straight, palm presented — which no hand at rest
+ * does. A relaxed hand carries ~30-40 degrees of cascade flexion; these are
+ * radians per phalanx BEFORE the per-finger gradient scales them.
+ */
+const CURL = { '01': 0.26, '02': 0.42, '03': 0.3 } as const;
+/*
+ * The fan, closed. The asset's rest pose splays the digits and nothing ever
+ * wrote the adduction axis, so every hand shipped with the fingers spread —
+ * "fingers look weird being so wide". Probed on the hierarchy: −z adducts on
+ * L and +z on R (uniformly, all four fingers and the thumb), so the writer
+ * applies −zSign·these at the knuckle only. Radians.
+ */
+const ADDUCT: Record<(typeof FINGERS)[number], number> = {
+  thumb: 0.32,
+  f_index: 0.14,
+  f_middle: 0.05,
+  f_ring: 0.17,
+  f_pinky: 0.28,
+};
 /**
  * How far the hand relaxation scalar may bend a finger past its rest curl, as a
  * fraction of that curl. At 0.35 a middle finger travels about 9 degrees at the
@@ -259,52 +279,33 @@ export const STANCE = {
 } as const;
 
 /**
- * ARMS FOLDED, in radians, per side, on the axes the arm writer already uses.
+ * HANDS CLASPED LOW IN FRONT — the resting posture, in radians, per side.
  *
- * SOLVED AGAINST THE SHIPPED RIG AND HER ACTUAL SKIN, not authored by eye.
+ * It was arms-folded, twice, and the mesh said no both times. A stacked fold
+ * needs each wrist across the midline at chest height, and on this rig — the
+ * shirt is baked into the body primitive, so the max-z grid IS the shirt —
+ * that put the forearm bones 11-14 mm off the cloth where the arm's own
+ * radius is ~30 mm: flesh through fabric, visible on device. Clearing it
+ * needs scapular protraction, and this skeleton's writer does not drive the
+ * scapula. The pose was anatomically out of reach, not mistuned.
  *
- * Authoring it by eye failed twice, visibly, on the device. First attempt —
- * 33 degrees of shoulder flexion, 103 degree elbow — put both hands up beside
- * her head, because flexion ACCUMULATES down the chain: 33 at the shoulder
- * plus 103 at the elbow is a forearm 46 degrees above horizontal, which is a
- * surrender, not a fold. Second attempt hit the crossed-arms position and put
- * the forearms INSIDE the shirt, because a joint-space target says nothing
- * about where the body is.
- *
- * So the solve reads the mesh. `tools/fold-solve.mjs` walks the POSITION
- * accessor of `natalie.gltf`, builds a max-z grid of the torso's front surface
- * in bind pose, and then searches the four joint angles per side under a cost
- * that (1) keeps every point along BOTH forearms 2.8 cm clear of that surface
- * and no more than 4 cm off it, (2) puts each wrist across the midline at
- * chest height, (3) keeps the elbows out at the sides, and (4) stacks one
- * forearm above the other. Achieved clearance: 2.8-4.5 cm along the forearms,
- * so the sleeves pass in front of the shirt rather than through it.
- *
- * What makes the pose work at all is `rot`, the rotation about the humerus:
- * with the elbow flexed, internal rotation is what sweeps the forearm ACROSS
- * the body. No amount of flexion does that, which is why the first version
- * could not have been fixed by turning its numbers down.
- *
- * Per-side rather than a mirrored base plus an offset: the solve wanted
- * genuinely different angles either side (the right arm rides under the left,
- * with more rotation and less elbow), and that asymmetry is the same property
- * item 11 of `what-reads-robotic.md` asks for — no joint at its opposite's
- * angle, in a held pose most of all.
- *
- * `forward` stays under `DEFAULT_GESTURE_LIMITS.maxShoulderFlexionRad` (0.79),
- * so the firewall's reach cap never clamps a held posture — a clamp landing on
- * a pose would read as a flinch.
+ * The clasp fits. Forearms angle down-forward, hands meet just in front of
+ * the lower belly (wrists ~7 cm apart, fingers overlapping between them),
+ * and `tools/fold-solve.mjs`'s surface grid verifies 19-25 mm of clearance
+ * along arm AND hand — the tight points are fingers, whose radius is
+ * ~10 mm, so nothing touches the cloth. It also reads better for this
+ * product: folded arms are closed-off body language for a child's tutor;
+ * clasped is the attentive-teacher stance.
  */
 export const FOLD = {
-  L: { forward: 0.65, rot: 1.206, abduct: 0.15, elbow: 0.986, hand: 0.027 },
-  R: { forward: 0.622, rot: 1.289, abduct: 0.15, elbow: 0.862, hand: 0.29 },
+  L: { forward: 0.518, rot: 1.2, abduct: 0.1, elbow: 0.345, hand: 0.009 },
+  R: { forward: 0.471, rot: 1.2, abduct: 0.099, elbow: 0.334, hand: 0.034 },
   /**
-   * How far the fingers close while folded. A folded arm's hands are not
-   * hanging open with the fingers splayed — they tuck, and the tucked hand is
-   * softly closed. The relaxation scalar already means "how curled", so the
-   * fold just drives it up rather than adding a second finger system.
+   * Clasped fingers are softly curled — a half-curl, not the near-fist the
+   * folded pose used, because these hands rest against each other, not
+   * tucked under an arm.
    */
-  handCurl: 0.85,
+  handCurl: 0.7,
 } as const;
 
 /**
@@ -963,6 +964,20 @@ export function createHumanoPresence(
   /** This frame's wiggle per digit, sampled at the knuckle and shared down it. */
   const wiggleValue = new Map<string, number>();
   const handFollow = { L: new Follower(320, 0.55), R: new Follower(320, 0.55) };
+  /*
+    THE DROP INTO THE CLASP, made a movement instead of an interpolation.
+
+    `frame.fold` is one eased scalar, and driving both arms straight from it
+    read as two levers on one motor: synchronized onset, uniform velocity, a
+    dead stop. Three things fix it, all standard principles: the leading arm
+    moves first and the other follows (offset onset — `foldLagL` delays the
+    left), both ride a lightly underdamped spring so the arms drop PAST the
+    clasp and settle back up (follow-through — arms have weight), and the
+    smoothstep on the input turns the engine's exponential into an S-curve
+    (slow-out, slow-in).
+  */
+  const foldLagL = new LoadFollower();
+  const foldSpring = { L: new Follower(38, 0.72), R: new Follower(38, 0.72) };
   const handLift = { L: 0, R: 0 };
   const firewall = { torsoLeanRad: 0, shoulderFlexionRad: 0 };
 
@@ -1802,7 +1817,18 @@ export function createHumanoPresence(
         engine only moves them while that foot's own swing is live, so a
         planted foot still cannot slide.
       */
-      const swing = rm ? 0 : side === 'L' ? frame.swingL : frame.swingR;
+      /*
+        `swing` is the PHASE of this foot's flight, 0..1. The lift is
+        sin(π·u); the pitch is sin(2π·u) — plantar as it pushes off, back
+        through neutral, slightly dorsal into the landing, so the foot leads
+        with its heel the way a stepping foot does instead of gliding flat.
+      */
+      const swingPhase = rm ? 0 : side === 'L' ? frame.swingL : frame.swingR;
+      const swing = Math.sin(Math.PI * swingPhase);
+      const stepPitch =
+        swingPhase > 0
+          ? Math.sin(2 * Math.PI * swingPhase) * idleConfig.body.step.pitchDeg * DEG
+          : 0;
       const plantX = rm ? 0 : side === 'L' ? frame.plantXL : frame.plantXR;
       const plantZ = rm ? 0 : side === 'L' ? frame.plantZL : frame.plantZR;
       const flexDeg =
@@ -1884,7 +1910,7 @@ export function createHumanoPresence(
       const ankleRoll = -lean;
       pose(side === 'L' ? bones.thighL : bones.thighR, a, 0, lean);
       pose(side === 'L' ? bones.shinL : bones.shinR, phi, 0, 0);
-      pose(side === 'L' ? bones.footL : bones.footR, t, 0, ankleRoll);
+      pose(side === 'L' ? bones.footL : bones.footR, t + stepPitch, 0, ankleRoll);
     }
 
     touchedTwins.clear();
@@ -1987,9 +2013,14 @@ export function createHumanoPresence(
         // so her face holds the child through the travel rather than swinging
         // with the body and snapping back at the end.
         turnHeadLag.value * 0.22 -
-        torsoTurned * 0.72 +
+        // 0.5, down from 0.72: countering nearly three-quarters of the turn
+        // pinned her face to the lens while the body rotated under it — the
+        // owl-on-a-lazy-susan read. Half keeps her attention clearly on the
+        // child while the head visibly participates in its own turn.
+        torsoTurned * 0.5 +
         turnHead.value * TURN_TOWARD.shares.head,
-      -shiftHead.value * 0.3
+      // A turn carries a whisper of tilt — heads do not yaw about a plumb line.
+      -shiftHead.value * 0.3 + turnHeadLag.value * 0.12
     );
 
     /*
@@ -2069,7 +2100,15 @@ export function createHumanoPresence(
         — one forearm crosses above the other, which is what `sideBias` buys
         here, and a symmetric fold would read as a mannequin with its arms on.
       */
-      const fold = rm ? 0 : frame.fold;
+      const foldTarget = rm ? 0 : smoothstep(frame.fold);
+      let fold: number;
+      if (side === 'L') {
+        foldLagL.step(foldTarget, rawDelta, 0.16);
+        fold = clamp(foldSpring.L.step(foldLagL.value, rawDelta), 0, 1.15);
+      } else {
+        fold = clamp(foldSpring.R.step(foldTarget, rawDelta), 0, 1.15);
+      }
+      if (rm) fold = 0;
       const mix = (rest: number, folded: number) => rest + (folded - rest) * fold;
       const folded = FOLD[side];
       const forward = clamp(
@@ -2100,14 +2139,17 @@ export function createHumanoPresence(
       // 0.6, not 0.15. At 15% of a 3-degree range this was 0.45 degrees of
       // wrist — below anything visible at her render size, which is most of
       // why the hands read as carved onto the ends of the arms.
-      const wrist = rm ? 0 : (side === 'L' ? frame.wristL : frame.wristR) * 0.6;
+      const wrist = rm ? 0 : (side === 'L' ? frame.wristL : frame.wristR) * 0.8;
+      // Radial/ulnar drift — the wrist's cross axis. Damped while clasped:
+      // resting hands still breathe, but against each other, not freely.
+      const deviation =
+        (rm ? 0 : (side === 'L' ? frame.wristDevL : frame.wristDevR)) * (1 - 0.6 * fold);
       // The wrist is where the beat lives; the follower puts it a beat late.
-      // Folded, the hand tucks under the opposite arm rather than hanging.
       pose(
         side === 'L' ? bones.handL : bones.handR,
         mix(followed * 0.55 + wrist, folded.hand + wrist * 0.4),
         0,
-        zSign * mix(followed * 0.25, 0)
+        zSign * mix(followed * 0.25, 0) + deviation
       );
     }
 
@@ -2153,6 +2195,19 @@ export function createHumanoPresence(
       */
       const share = f.phalanx === 0 ? 0.5 : f.phalanx === 1 ? 0.3 : 0.2;
       /*
+        THE RIPPLE. One soft wave every ten seconds or so: each digit flexes a
+        beat after its neighbour and settles. The phase runs 0..1 over the
+        event; digit `fi` sees its own window of it, thumb first. This is a
+        DISCRETE event on top of the continuous drift — the thing that makes a
+        watcher say the hand did something, rather than that it is vibrating.
+      */
+      const ripplePhase = rm ? 0 : frame.handRipple;
+      const rippleLocal = clamp(ripplePhase * 1.8 - f.finger * 0.2, 0, 1);
+      const ripple =
+        ripplePhase > 0
+          ? Math.sin(Math.PI * rippleLocal) * idleConfig.body.hand.ripple.deg * DEG * share
+          : 0;
+      /*
         Stepped ONCE per digit — at the knuckle — and shared down the chain
         through the same `share` gradient the curl uses. A finger whose three
         joints drew independent noise would bend against itself, which reads
@@ -2171,7 +2226,15 @@ export function createHumanoPresence(
         curl — about 9 degrees at the knuckle at full relaxation. Small on
         purpose: this is a hand settling, not a fist closing.
       */
-      pose(f.bone, f.curl * openness + relax * f.curl * RELAX_RANGE * share + wiggle, 0, 0);
+      // Adduction at the knuckle only — the distal joints do not splay.
+      const adduct =
+        f.phalanx === 0 ? -(f.side === 'L' ? 1 : -1) * ADDUCT[FINGERS[f.finger]!] : 0;
+      pose(
+        f.bone,
+        f.curl * openness + relax * f.curl * RELAX_RANGE * share + wiggle + ripple,
+        0,
+        adduct
+      );
     }
 
     firewall.torsoLeanRad = leanSum;

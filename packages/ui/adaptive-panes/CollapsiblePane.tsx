@@ -6,6 +6,7 @@
 //   Structure only.
 // SOT: docs/pack/37-onboarding-dual-pane.md §3.2 · ./README.md
 // SOT-KEYWORDS: collapsible pane width animate reflow leading column
+import { useEffect, useState } from 'react';
 import { MotionView } from '../motion';
 import { View } from '../tw';
 import { TRANSITIONS } from './transitions.ts';
@@ -54,11 +55,52 @@ export interface CollapsiblePaneProps {
  * than reflowed internally.
  */
 export function CollapsiblePane({ width, open, fill, children, className }: CollapsiblePaneProps) {
+  /*
+    THE FILL PANE'S SNAP, and why a filling pane needs a measured width.
+
+    `grow` was a class swap: the frame `open` flipped false the pane fell from
+    its GROWN width (the window's leftover — often two or three times the
+    token) to the token, and only then animated token → 0. Two of the three
+    tutor panes never fill, so they always animated smoothly; the third —
+    Natalie's — was the fill pane, and it was the one that snapped.
+
+    So the pane records the width it actually grew to, and animates from THAT.
+    The sequence: opening animates 0 → (last measured, or the token on a
+    first-ever open); `onAnimationComplete` then applies `grow`, at which
+    point the explicit width is the flex BASIS and grow absorbs any remainder
+    — a seamless handoff when the window has not changed, a short animated
+    catch-up when it has (onLayout keeps the measurement current while
+    grown). Closing drops `grow` but the animated width IS the measured value
+    it was displaying, so the collapse starts from the exact width on screen.
+
+    The inner child holds the measured width too, which is what keeps a 3D
+    canvas in a fill pane from being resized during the animation at all: the
+    clip moves, the content does not.
+  */
+  const [measured, setMeasured] = useState<number | null>(null);
+  const [grown, setGrown] = useState(false);
+  useEffect(() => {
+    if (!(open && fill)) setGrown(false);
+  }, [open, fill]);
+  const contentWidth = fill ? (measured ?? width) : width;
   return (
     <MotionView
-      animate={{ width: open ? width : 0 }}
+      animate={{ width: open ? contentWidth : 0 }}
       transition={TRANSITIONS.paneWidth}
-      className={`overflow-hidden ${fill && open ? 'grow' : ''} ${className ?? ''}`}
+      onAnimationComplete={(key: string) => {
+        if (key === 'width' && open && fill) setGrown(true);
+      }}
+      onLayout={
+        fill
+          ? (event: { nativeEvent: { layout: { width: number } } }) => {
+              const laid = event.nativeEvent.layout.width;
+              // Only while grown: mid-animation the layout IS the animation,
+              // and recording it would re-target the tween to its own frames.
+              if (grown && Math.abs(laid - (measured ?? 0)) > 1) setMeasured(laid);
+            }
+          : undefined
+      }
+      className={`overflow-hidden ${grown ? 'grow' : ''} ${className ?? ''}`}
     >
       {/*
         Clipping only hides a collapsed pane from SIGHT. Its children keep their
@@ -70,9 +112,10 @@ export function CollapsiblePane({ width, open, fill, children, className }: Coll
         survive the collapse.
       */}
       <View
-        /* No fixed inner width while filling — the whole point is that the
-           content follows the pane rather than being clipped to a token. */
-        style={fill && open ? undefined : { width }}
+        /* Grown, the content follows the pane. Every other moment — closed,
+           closing, or opening — it holds the last real width, so nothing
+           inside re-wraps or resizes while the clip moves over it. */
+        style={grown ? undefined : { width: contentWidth }}
         className="flex-1"
         aria-hidden={!open}
         pointerEvents={open ? 'auto' : 'none'}

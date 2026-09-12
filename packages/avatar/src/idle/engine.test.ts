@@ -214,6 +214,9 @@ describe('channel envelopes', () => {
       plantZR: [-(C.body.step.maxOffsetM + C.body.step.lengthM.max), C.body.step.maxOffsetM + C.body.step.lengthM.max],
       swingL: [0, 1],
       swingR: [0, 1],
+      wristDevL: [-C.body.wristDev.maxDeg * DEG, C.body.wristDev.maxDeg * DEG],
+      wristDevR: [-C.body.wristDev.maxDeg * DEG, C.body.wristDev.maxDeg * DEG],
+      handRipple: [0, 1],
       gazeAwayYaw: [-C.body.gazeAway.yawDeg.max * DEG, C.body.gazeAway.yawDeg.max * DEG],
       gazeAwayPitch: [C.body.gazeAway.pitchDeg.min * DEG, C.body.gazeAway.pitchDeg.max * DEG],
       headFollowYaw: [

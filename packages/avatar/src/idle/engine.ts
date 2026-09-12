@@ -124,9 +124,24 @@ export const IDLE_CHANNELS = [
   'plantZL',
   'plantXR',
   'plantZR',
-  /** 0..1 while that foot is off the ground, 0 when it is carrying her. */
+  /**
+   * The swing PHASE, 0..1 while that foot is off the ground, 0 when it is
+   * carrying her. Phase and not an envelope, because the writer needs both
+   * halves of the swing — sin(π·u) for the lift AND sin(2π·u) for toe-off /
+   * heel-strike pitch — and an envelope is symmetric, so the phase cannot be
+   * recovered from it.
+   */
   'swingL',
   'swingR',
+  /** Radial/ulnar wrist drift, radians, per side. */
+  'wristDevL',
+  'wristDevR',
+  /**
+   * The hand ripple's phase: 0 idle, 0..1 across one soft wave. ONE channel —
+   * the writer phases it across the digits; it is not a per-finger channel,
+   * and the `/^finger/` guard in the tests is why the name says hand.
+   */
+  'handRipple',
   /** A momentary look away from the lens, added on top of the saccade. */
   'gazeAwayYaw',
   'gazeAwayPitch',
@@ -341,6 +356,10 @@ export class IdleEngine {
   private secondIn = -1;
   /** 0 = standing, 1 = first foot moving, 2 = second. A step is two swings. */
   private stepPhase: 0 | 1 | 2 = 0;
+  private wristDevNoise: [ValueNoise, ValueNoise];
+  private rippleIn = 0;
+  private rippleT = Infinity;
+  private rippleS = 1.2;
 
   private anticipationArmed = false;
   private anticipationFired = false;
@@ -383,6 +402,9 @@ export class IdleEngine {
     plantZR: 0,
     swingL: 0,
     swingR: 0,
+    wristDevL: 0,
+    wristDevR: 0,
+    handRipple: 0,
     gazeAwayYaw: 0,
     gazeAwayPitch: 0,
     headFollowYaw: 0,
@@ -423,6 +445,13 @@ export class IdleEngine {
     this.footIn = this.exprRange(idleConfig.body.foot.intervalS);
     this.foldIn = this.exprRange(idleConfig.body.fold.intervalS);
     this.stepIn = this.exprRange(idleConfig.body.step.intervalS);
+    // From the expression stream, NOT bodyRand: a new draw from the body
+    // stream shifts every existing body channel's phase (the golden trap).
+    this.wristDevNoise = [
+      new ValueNoise(idleConfig.body.wristDev.hz, this.exprRand),
+      new ValueNoise(idleConfig.body.wristDev.hz * Math.E, this.exprRand),
+    ];
+    this.rippleIn = this.exprRange(idleConfig.body.hand.ripple.intervalS);
     this.breathMeanPeriod = 1 / this.range(idleConfig.breath.rateHz);
     /*
       The first cycle runs at the mean, unjittered, and that is deliberate: it
@@ -747,6 +776,29 @@ export class IdleEngine {
     const fastShL = energyFastShL.step(dt);
     const fastShR = energyFastShR.step(dt);
 
+    /*
+      COMMANDED SHIFTS. A step must unweight the foot about to move, and a
+      turn carries a small shift into its own direction — both are the SAME
+      mechanism as the spontaneous shift, driven through the same eased state,
+      so the knees, shoulders and hands answer a commanded transfer exactly
+      the way they answer a scheduled one. `commandShift` also pushes the
+      spontaneous scheduler out, so a random shift cannot fire mid-manoeuvre.
+    */
+    const commandShift = (target: number, moveS: number, holdOffS: number) => {
+      this.shiftFrom = F.weightShift;
+      this.shiftTo = clamp(target, -B.weightShift.amplitudeM, B.weightShift.amplitudeM);
+      this.shiftT = 0;
+      this.shiftMoveS = moveS;
+      this.shiftIn = Math.max(this.shiftIn, holdOffS);
+      /*
+        Deliberately NOT flagged as `weightShifted`: that flag is the
+        spontaneous scheduler's event, and its inter-event gaps are asserted
+        against the measured StayStill distribution — a commanded transfer
+        rides a step or a turn's clock, not the shift's. The hands re-settle
+        on their own interval now, so nothing depended on the flag here.
+      */
+    };
+
     // -- weight shift: a discrete transfer, eased, with follow-through --
     this.shiftIn -= dt;
     if (this.shiftIn <= 0 && !(this.shiftT < this.shiftMoveS)) {
@@ -782,7 +834,25 @@ export class IdleEngine {
     ) {
       this.turnAmp = (this.bodyRand() < 0.5 ? -1 : 1) * this.bodyRange(B.torsoTurn.eventDeg) * DEG;
       this.turnHoldS = this.bodyRange(B.torsoTurn.holdS);
-      this.turnT = 0;
+      /*
+        TOP-DOWN, LIKE A PERSON: the eyes go first, the body follows.
+
+        The turn used to begin at every joint on its event frame, and however
+        well the spine staggered afterwards, the ONSET was simultaneous —
+        which is the robotic half of item 7. Now the event fires a gaze break
+        toward the turn's own direction immediately, the torso waits a beat
+        (negative time, same trick as the step's preload), and a small weight
+        shift rolls into the turn — nobody rotates their trunk without their
+        weight going with it.
+      */
+      this.turnT = -0.22;
+      this.awayYaw = Math.sign(this.turnAmp) * this.bodyRange(B.gazeAway.yawDeg) * DEG;
+      this.awayPitch = this.bodyRange(B.gazeAway.pitchDeg) * DEG * 0.5;
+      this.awayHoldS = 0.6;
+      this.awayT = 0;
+      this.awayIn = Math.max(this.awayIn, 2);
+      F.gazeBroke = true;
+      commandShift(Math.sign(this.turnAmp) * B.weightShift.amplitudeM * 0.5, 0.9, 2.5);
       this.turnIn = this.bodyRange(B.torsoTurn.eventIntervalS);
     }
     let turn = 0;
@@ -798,7 +868,7 @@ export class IdleEngine {
       const settle = (u: number) =>
         smooth(u) + 4 * B.torsoTurn.overshoot * Math.sin(Math.PI * u) * u * u * u;
       const env =
-        t < e ? settle(t / e) : t < e + this.turnHoldS ? 1 : 1 - settle((t - e - this.turnHoldS) / e);
+        t < 0 ? 0 : t < e ? settle(t / e) : t < e + this.turnHoldS ? 1 : 1 - settle((t - e - this.turnHoldS) / e);
       turn = this.turnAmp * env;
       this.turnT += dt;
     }
@@ -823,6 +893,21 @@ export class IdleEngine {
     const [wrL, wrR] = this.wristNoise;
     F.wristL = wrL.step(dt) * B.wrist.maxDeg * DEG;
     F.wristR = wrR.step(dt) * B.wrist.maxDeg * DEG;
+    const [devL, devR] = this.wristDevNoise;
+    F.wristDevL = devL.step(dt) * B.wristDev.maxDeg * DEG;
+    F.wristDevR = devR.step(dt) * B.wristDev.maxDeg * DEG;
+    // -- the finger ripple: one soft wave, phased across the digits --
+    this.rippleIn -= dt;
+    if (this.rippleIn <= 0 && !(this.rippleT < this.rippleS)) {
+      this.rippleT = 0;
+      this.rippleS = this.exprRange(B.hand.ripple.durS);
+      this.rippleIn = this.exprRange(B.hand.ripple.intervalS);
+    }
+    F.handRipple = 0;
+    if (this.rippleT < this.rippleS) {
+      F.handRipple = clamp(this.rippleT / this.rippleS, 0, 1);
+      this.rippleT += dt;
+    }
     /*
       The hand relaxation scalar: a held settle value that steps on a posture
       change, plus a slow drift so it is never actually still. Clamped to 0..1
@@ -1071,9 +1156,9 @@ export class IdleEngine {
       const foot = this.plant[this.swingSide];
       foot.x = this.swingFrom.x + (this.swingTo.x - this.swingFrom.x) * eased;
       foot.z = this.swingFrom.z + (this.swingTo.z - this.swingFrom.z) * eased;
-      const env = Math.sin(Math.PI * u);
-      if (this.swingSide === 0) { F.swingL = env; F.swingR = 0; }
-      else { F.swingR = env; F.swingL = 0; }
+      // The PHASE, not an envelope — the writer derives lift and pitch from it.
+      if (this.swingSide === 0) { F.swingL = u; F.swingR = 0; }
+      else { F.swingR = u; F.swingL = 0; }
       if (this.swingT >= this.swingS) {
         /*
           It landed. The FIRST foot hands over to the second after a beat; the

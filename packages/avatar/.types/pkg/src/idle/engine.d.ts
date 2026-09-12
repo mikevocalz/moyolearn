@@ -37,7 +37,7 @@ export interface IdleInputs {
      */
     speechEnergy?: number;
 }
-export declare const IDLE_CHANNELS: readonly ["breathY", "breathPitch", "swayX", "swayY", "driftYaw", "driftPitch", "nodPitch", "eyeYaw", "eyePitch", "eyeBlinkLeft", "eyeBlinkRight", "eyesWide", "weightShift", "torsoYaw", "turnYaw", "shoulderL", "shoulderR", "wristL", "wristR", "handRelaxL", "handRelaxR", "smileL", "smileR", "mouthPart", "yawn", "footAdjustL", "footAdjustR", "fold", "plantXL", "plantZL", "plantXR", "plantZR", "swingL", "swingR", "gazeAwayYaw", "gazeAwayPitch", "headFollowYaw", "headFollowPitch"];
+export declare const IDLE_CHANNELS: readonly ["breathY", "breathPitch", "swayX", "swayY", "driftYaw", "driftPitch", "nodPitch", "eyeYaw", "eyePitch", "eyeBlinkLeft", "eyeBlinkRight", "eyesWide", "weightShift", "torsoYaw", "turnYaw", "shoulderL", "shoulderR", "wristL", "wristR", "handRelaxL", "handRelaxR", "smileL", "smileR", "mouthPart", "yawn", "footAdjustL", "footAdjustR", "fold", "plantXL", "plantZL", "plantXR", "plantZR", "swingL", "swingR", "wristDevL", "wristDevR", "handRipple", "gazeAwayYaw", "gazeAwayPitch", "headFollowYaw", "headFollowPitch"];
 export type IdleChannel = (typeof IDLE_CHANNELS)[number];
 export type IdleFrame = {
     [K in IdleChannel]: number;
@@ -203,6 +203,10 @@ export declare class IdleEngine {
     private secondIn;
     /** 0 = standing, 1 = first foot moving, 2 = second. A step is two swings. */
     private stepPhase;
+    private wristDevNoise;
+    private rippleIn;
+    private rippleT;
+    private rippleS;
     private anticipationArmed;
     private anticipationFired;
     private anticipationLead;

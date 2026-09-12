@@ -258,6 +258,24 @@ export const idleConfig = {
       betweenS: { min: 0.12, max: 0.3 },
       /** How high the heel comes up mid-swing, as extra knee flexion, degrees. */
       liftDeg: 9,
+      /*
+        THE WEIGHT LEAVES A FOOT BEFORE THE FOOT LEAVES THE GROUND.
+
+        Without this the swing lifted a heel that was still carrying her —
+        physically impossible, and the single biggest reason the step read as
+        floating rather than stepping. Each swing is preceded by this many
+        seconds of weight shift AWAY from the foot about to move; the shift
+        machinery itself does the moving, so the knees and shoulders answer it
+        the way they answer any other shift.
+      */
+      preloadS: 0.26,
+      /*
+        Toe-off and heel-strike. The foot pitches plantar as it leaves
+        (pushing off) and comes back through neutral to land heel-first —
+        sin(2πu) gives exactly that shape for free: positive through the first
+        half of the swing, negative into the landing.
+      */
+      pitchDeg: 7,
       /** The torso arrives over the new base behind the feet. */
       bodyLagS: 0.22,
       /** Never further than this from where she started, in metres. */
@@ -348,6 +366,13 @@ export const idleConfig = {
       shoulderLagS: 0.15,
     },
     shoulder: { hz: 0.12, maxDeg: 1.5 },
+    /**
+     * Radial/ulnar deviation — the wrist's OTHER axis. Flexion alone reads as
+     * a hinge; a resting hand also drifts side to side a few degrees, and that
+     * cross-axis motion is most of what "the hand looks alive" means at a
+     * glance.
+     */
+    wristDev: { hz: 0.14, maxDeg: 6 },
     /*
       SPEECH ENERGY → TORSO/SHOULDER AMPLITUDE (the torsoEnergyCorrelation
       finding, 8e62c1b: r = 0.028 against a ≥ 0.5 target, because speechEnv
@@ -434,7 +459,25 @@ export const idleConfig = {
        * Keep it under `drift`. If the independent part ever exceeds the shared
        * part, this is fidgeting again.
        */
-      wiggle: { hz: { min: 0.3, max: 0.75 }, deg: 3 },
+      /*
+        Sized to be SEEN. 3 degrees at a knuckle is ~3 px in the pane she
+        renders in — motion that exists in the numbers and not in the eye,
+        which is the recurring failure of this whole layer. 5 keeps it under
+        the fidget line while actually reading.
+      */
+      wiggle: { hz: { min: 0.3, max: 0.75 }, deg: 5 },
+      /*
+        A RIPPLE — the one discrete thing idle fingers do. Continuous noise
+        reads as trembling once it is large enough to see; what people
+        actually do every ten seconds or so is a single soft wave, each digit
+        flexing a beat after its neighbour. One event, phased across the five
+        fingers by the writer.
+      */
+      ripple: {
+        intervalS: { min: 9, max: 22 },
+        durS: { min: 1.0, max: 1.5 },
+        deg: 8,
+      },
       /** Where the scalar is re-seeded on a posture change. */
       settle: { min: 0.15, max: 0.75 },
       /**

@@ -218,6 +218,8 @@ export declare const idleConfig: {
             };
             /** How high the heel comes up mid-swing, as extra knee flexion, degrees. */
             readonly liftDeg: 9;
+            readonly preloadS: 0.26;
+            readonly pitchDeg: 7;
             /** The torso arrives over the new base behind the feet. */
             readonly bodyLagS: 0.22;
             /** Never further than this from where she started, in metres. */
@@ -283,6 +285,16 @@ export declare const idleConfig: {
         readonly shoulder: {
             readonly hz: 0.12;
             readonly maxDeg: 1.5;
+        };
+        /**
+         * Radial/ulnar deviation — the wrist's OTHER axis. Flexion alone reads as
+         * a hinge; a resting hand also drifts side to side a few degrees, and that
+         * cross-axis motion is most of what "the hand looks alive" means at a
+         * glance.
+         */
+        readonly wristDev: {
+            readonly hz: 0.14;
+            readonly maxDeg: 6;
         };
         readonly speechEnergy: {
             /** Eased follower on the envelope, so an energy step never pops. */
@@ -356,7 +368,18 @@ export declare const idleConfig: {
                     readonly min: 0.3;
                     readonly max: 0.75;
                 };
-                readonly deg: 3;
+                readonly deg: 5;
+            };
+            readonly ripple: {
+                readonly intervalS: {
+                    readonly min: 9;
+                    readonly max: 22;
+                };
+                readonly durS: {
+                    readonly min: 1;
+                    readonly max: 1.5;
+                };
+                readonly deg: 8;
             };
             /** Where the scalar is re-seeded on a posture change. */
             readonly settle: {
