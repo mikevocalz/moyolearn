@@ -24,12 +24,22 @@ export interface BoardLayoutInput {
   /** Chat panel width and the board-to-chat gap. Omit when chat is not in this budget. */
   C?: number;
   GC?: number;
-  /** Rail width floor, derived from the age band's hit-target token. */
+  /**
+   * The narrowest rail that can hold a reachable key, in the caller's unit.
+   *
+   * In metres this is `railWidthFor(distanceM, handsPrimary, band)` and NOTHING
+   * ELSE. It used to arrive as `Math.min(railWidth, minHitSize(…))`, which is
+   * `minRail <= R` by construction — a floor that can never be crossed is not a
+   * floor, and it is why the guard below had never run.
+   */
   minRail: number;
 }
 
+/** Why a space could not hold the composition, so the caller can say which. */
+export type BoardLayoutMiss = 'no-room' | 'rail-below-target';
+
 export type BoardLayout =
-  | { fits: false }
+  | { fits: false; miss: BoardLayoutMiss }
   | {
       fits: true;
       boardWidth: number;
@@ -52,11 +62,16 @@ export function layoutBoard(input: BoardLayoutInput): BoardLayout {
     throw new RangeError('layoutBoard: non-finite layout input');
   }
   // A rail squeezed under its target floor is an unreachable rail. The caller
-  // renders the constrained state instead of shrinking a child's controls.
-  if (R < minRail) throw new RangeError('layoutBoard: rail below usable width');
+  // renders the constrained state instead of shrinking a child's controls —
+  // which is what the comment always said and what the code never did: this
+  // threw, so the only thing a constrained composition could produce was a
+  // crash inside a child's session. It is an ANSWER now, in the same shape as
+  // the width miss, because "this room cannot hold a reachable rail" is a state
+  // to draw and not a programming error.
+  if (R < minRail) return { fits: false, miss: 'rail-below-target' };
 
   const widthBudget = W - R - G - (C > 0 ? C + GC : 0);
-  if (widthBudget <= 0 || H <= 0) return { fits: false };
+  if (widthBudget <= 0 || H <= 0) return { fits: false, miss: 'no-room' };
 
   // Height is the binding constraint on a portrait surface far more often than
   // width, so the board takes whichever of the two allows the full ratio.

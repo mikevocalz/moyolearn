@@ -44,12 +44,21 @@ export {
   boardComposition,
   boardSurfacePixels,
   minHitSize,
+  railWidthFor,
   spatialDistance,
+  spatialFontSize,
   spatialSpacing,
   spatialTarget,
+  spatialTextHeight,
   spatialType,
+  type SpatialBand,
 } from './spatial-tokens.ts';
-export { BOARD_ASPECT, layoutBoard, type BoardLayout } from './board-layout.ts';
+export {
+  BOARD_ASPECT,
+  layoutBoard,
+  type BoardLayout,
+  type BoardLayoutMiss,
+} from './board-layout.ts';
 /* Pure, so web gets it too — it is a parser, not a renderer. */
 export { strokeOf, type StrokeGeometry } from './stroke-of.ts';
 export type {

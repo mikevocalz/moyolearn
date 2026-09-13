@@ -31,7 +31,12 @@ import {
   ViroSpinner,
   ViroText,
 } from '@reactvision/react-viro';
-import { boardComposition, spatialSpacing } from './spatial-tokens.ts';
+import {
+  boardComposition,
+  spatialFontSize,
+  spatialSpacing,
+  spatialTextHeight,
+} from './spatial-tokens.ts';
 import { XR_MATERIAL } from './spatial-materials.native.ts';
 import { xrDragHit, xrDragPlane } from './surface-drag.ts';
 import { XR_COLOR } from './xr-colors.ts';
@@ -388,10 +393,12 @@ export function XrPanel({
             text={state === 'checking' ? 'Getting your board ready' : 'Bringing your working over'}
             position={[0, -0.06, 0]}
             width={width * 0.8}
-            height={0.12}
+            /* Two lines of body type, so the box is the size of what goes in
+               it. It was 0.12 m holding a 22 pt glyph, which is 0.22 m. */
+            height={spatialTextHeight.body * 2}
             /* Light ink: this sits on the frame quad's near-black while the
                paper is not drawn yet, and the dark ink measured 1.08:1. */
-            style={{ fontSize: 22, color: XR_COLOR.onPanel, textAlign: 'center' }}
+            style={{ fontSize: spatialFontSize.body, color: XR_COLOR.onPanel, textAlign: 'center' }}
             textLineBreakMode="WordWrap"
           />
         </ViroNode>
@@ -407,7 +414,7 @@ export function XrPanel({
         >
           <ViroText
             text="This headset can't open the spatial whiteboard yet. Your board is waiting on the normal screen — nothing is lost."
-            style={{ fontSize: 24, color: XR_COLOR.onPanel }}
+            style={{ fontSize: spatialFontSize.body, color: XR_COLOR.onPanel }}
             textLineBreakMode="WordWrap"
           />
         </ViroFlexView>

@@ -8,6 +8,8 @@
 // SOT: packages/ui/xr/XrOrnaments.native.tsx · packages/app/features/tutor/tutor-xr-screen.types.ts
 // SOT-KEYWORDS: xr ornaments props types question line placement controls platform neutral no viro
 
+import type { SpatialBand } from './spatial-tokens.ts';
+
 export interface XrQuestionLineProps {
   text: string;
   width: number;
@@ -17,6 +19,8 @@ export interface XrPlacementControlsProps {
   width: number;
   distanceM: number;
   handsPrimary: boolean;
+  /** Sizes both keys. Required and undefaulted — see `XrRailProps.band`. */
+  band: SpatialBand;
   onRecenter: () => void;
   onExit: () => void;
 }

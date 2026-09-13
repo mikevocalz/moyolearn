@@ -13,7 +13,7 @@ import { useState } from 'react';
 import { ViroClickStateTypes, ViroFlexView, ViroText } from '@reactvision/react-viro';
 import { XR_MATERIAL } from './spatial-materials.native.ts';
 import { XR_COLOR } from './xr-colors.ts';
-import { minHitSize, spatialSpacing } from './spatial-tokens.ts';
+import { boardComposition, minHitSize, spatialFontSize, spatialSpacing } from './spatial-tokens.ts';
 /* Props live outside this file so the web fork can name them without naming
    Viro — the `XrPanel.types.ts` arrangement, for the same reason. */
 import type { XrPlacementControlsProps, XrQuestionLineProps } from './XrOrnaments.types.ts';
@@ -30,13 +30,18 @@ export function XrQuestionLine({ text, width }: XrQuestionLineProps) {
   return (
     <ViroFlexView
       width={width}
-      height={0.06}
+      /* The token, not a second copy of it. The literal here and the
+         `topOrnamentHeight` token were two writings of one number, and the
+         caller places this node at the TOKEN's extent — so the day they
+         disagreed, the bar would have been drawn outside the space reserved
+         for it. The token is also what the type step is sized against now. */
+      height={boardComposition.topOrnamentHeight}
       materials={[XR_MATERIAL.card]}
-      style={{ padding: 0.01, flexDirection: 'column', justifyContent: 'center' }}
+      style={{ padding: spatialSpacing.xs, flexDirection: 'column', justifyContent: 'center' }}
     >
       <ViroText
         text={text}
-        style={{ fontSize: 20, color: XR_COLOR.onPanel }}
+        style={{ fontSize: spatialFontSize.body, color: XR_COLOR.onPanel }}
         textLineBreakMode="WordWrap"
         maxLines={2}
       />
@@ -57,8 +62,14 @@ function ControlKey({
   const [pressed, setPressed] = useState(false);
   return (
     <ViroFlexView
+      /*
+        Wider than the floor because it carries a word; never SHORTER than it.
+        The height was `size × 0.6`, which cleared 4° across and missed it by
+        40% down the other axis — a target is the smaller of its two edges, so
+        one of them being generous does not buy the other one anything.
+      */
       width={size * 1.6}
-      height={size * 0.6}
+      height={size}
       materials={[pressed ? XR_MATERIAL.keyPressed : XR_MATERIAL.key]}
       style={{
         padding: 0.008,
@@ -76,7 +87,10 @@ function ControlKey({
         }
       }}
     >
-      <ViroText text={label} style={{ fontSize: 15, color: XR_COLOR.onKey, textAlign: 'center' }} />
+      <ViroText
+        text={label}
+        style={{ fontSize: spatialFontSize.body, color: XR_COLOR.onKey, textAlign: 'center' }}
+      />
     </ViroFlexView>
   );
 }
@@ -96,14 +110,18 @@ export function XrPlacementControls({
   width,
   distanceM,
   handsPrimary,
+  band,
   onRecenter,
   onExit,
 }: XrPlacementControlsProps) {
-  const size = minHitSize(distanceM, handsPrimary);
+  const size = minHitSize(distanceM, handsPrimary, band);
   return (
     <ViroFlexView
       width={width}
-      height={0.08}
+      /* The token, for the same reason `XrQuestionLine` uses its own: the
+         caller reserves `bottomOrnamentHeight` for this node, so a literal
+         here is a second number free to disagree with the reservation. */
+      height={boardComposition.bottomOrnamentHeight}
       materials={[]}
       style={{
         flexDirection: 'row',

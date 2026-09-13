@@ -13,4 +13,14 @@ export interface XrBoardInkProps {
   /** The paper's size in metres. Page pixels are mapped onto this. */
   width: number;
   height: number;
+  /**
+   * How many records this renderer had no primitive for, after every change.
+   *
+   * Required, and a callback rather than a return value, because the number has
+   * to reach a surface a child reads — the companion panel's `skippedCount`.
+   * `skippedRecords`/`setSkipped` have been in `xr-session.store` since the
+   * feature was written and nothing ever called them, which is exactly how a
+   * silently incomplete board survives review.
+   */
+  onSkippedCount: (count: number) => void;
 }

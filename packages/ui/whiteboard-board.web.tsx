@@ -96,8 +96,20 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
               : sample.phase === 'end'
                 ? 'pointerup'
                 : 'pointercancel';
-        const target = sample.phase === 'begin' ? host : window;
-        target.dispatchEvent(
+        /*
+          EVERY PHASE AT THE CONTAINER, INCLUDING THE ONES AFTER `begin`. The
+          engine binds `pointerdown`, `pointermove`, `pointerup` and
+          `pointercancel` in one place — `Editor._bind`, all four onto
+          `this.container` — and registers nothing on `window` or `document`. An
+          event dispatched at `window` is delivered to `window`: propagation
+          descends to a node's ancestors, never from `window` down into the
+          document, so a move sent there reached no listener and the stroke
+          froze at its first point. The native fork had the same bug and was
+          fixed the same way. The engine subtracts the container's own rect
+          itself, so a point past the edge stays a coordinate rather than
+          becoming a lost event.
+        */
+        host.dispatchEvent(
           new PointerEvent(type, {
             pointerId: 1,
             pointerType: 'pen',

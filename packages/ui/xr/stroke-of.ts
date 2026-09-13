@@ -14,12 +14,55 @@
 // at, so the failure mode is a missing stroke a reviewer can see instead of a
 // crash in a child's session.
 //
-// `props.size` resolves through the vendor's own exported `SIZES` map so a
-// spatial stroke is the weight its 2D twin is by construction.
-// SOT: node_modules/@quickdrawjs/core/types/index.d.ts
-// SOT-KEYWORDS: quickdraw stroke record parse defensive pts freehand highlight geometry vendor internal
+// A STROKE'S WEIGHT IS FOUR VENDOR CONSTANTS AND ONLY ONE IS PUBLIC.
+// `@quickdrawjs/core` exports `SIZES` from its index. `INK_SIZES`,
+// `HIGHLIGHT_SCALE` and `HIGHLIGHT_ALPHA` live in `src/palette.js` and are NOT
+// re-exported by `src/index.js`, and the package's `exports` map publishes only
+// `.`, `./quickdraw.css` and `./package.json`, so there is no specifier that
+// reaches them. They are mirrored below and `stroke-of.test.ts` reads
+// `palette.js` as text and asserts the mirror still matches — a vendor bump
+// that moves a number fails the test instead of silently re-weighting a child's
+// handwriting.
+//
+// Resolving everything through `SIZES` was wrong in both directions and both
+// are visible on the paper. The engine's pressure-ink path fills an outline
+// built from `INK_SIZES` (`shapes.js:305`), which is a step heavier than
+// `SIZES` at `s` and `m` on purpose — the pencil thins below its nominal size
+// and the table compensates — so a default `m` pen came out at 4 page px where
+// the 2D board draws 5.2, about 23% thin. And the highlighter draws at
+// `SIZES[size] × HIGHLIGHT_SCALE` with `globalAlpha = HIGHLIGHT_ALPHA`
+// (`shapes.js:351-356`): an `m` band is 18 page px at 0.55 opacity, not a 4 px
+// line at 0.4.
+// SOT: node_modules/@quickdrawjs/core/src/palette.js · node_modules/@quickdrawjs/core/src/shapes.js
+// SOT-KEYWORDS: quickdraw stroke record parse defensive pts freehand highlight geometry vendor internal ink sizes alpha
 
 import { SIZES } from '@quickdrawjs/core';
+
+/**
+ * `@quickdrawjs/core/src/palette.js`, mirrored because it is unreachable.
+ *
+ * Not a preference and not a tuning: these are the numbers the 2D board is
+ * already drawing with, and the whole point of the spatial ink layer is that it
+ * is the same document in a second presentation.
+ */
+const INK_SIZES = { s: 3.4, m: 5.2, l: 6.5, xl: 10 } as const satisfies Record<
+  keyof typeof SIZES,
+  number
+>;
+/** Highlighter band width = `SIZES[size] × HIGHLIGHT_SCALE`. */
+const HIGHLIGHT_SCALE = 4.5;
+/** The alpha the engine multiplies a highlighter band by. */
+const HIGHLIGHT_ALPHA = 0.55;
+
+/**
+ * The dash ids the engine treats as pressure ink rather than an even width.
+ *
+ * `shapes.js:333` branches on `p.dash && p.dash !== 'draw'`: anything else —
+ * `'draw'`, or a record with no `dash` at all — takes `drawPath`, which is the
+ * `INK_SIZES` outline. `'solid'`, `'dashed'` and `'dotted'` take the even
+ * `SIZES` centreline. Both are reachable from the 2D tray, so both are read.
+ */
+const isPressureInk = (dash: unknown): boolean => dash === undefined || dash === 'draw';
 
 /** What this renderer needs from a record, and nothing more. */
 export interface StrokeGeometry {
@@ -28,8 +71,14 @@ export interface StrokeGeometry {
   points: readonly { x: number; y: number }[];
   /** The vendor's colour id, which names the registered ink material. */
   colourId: string;
-  /** Page-space stroke width. */
+  /** Page-space stroke width, as the engine's own 2D path would draw it. */
   width: number;
+  /**
+   * What the engine draws this stroke at — `HIGHLIGHT_ALPHA` for a band, 1 for
+   * ink. Resolved here rather than at the renderer so the vendor's numbers all
+   * live in one asserted file.
+   */
+  opacity: number;
   highlight: boolean;
 }
 
@@ -52,7 +101,12 @@ export function strokeOf(id: string, record: unknown): StrokeGeometry | null {
   if (typeof shape.x !== 'number' || typeof shape.y !== 'number') return null;
   if (typeof shape.props !== 'object' || shape.props === null) return null;
 
-  const props = shape.props as { pts?: unknown; color?: unknown; size?: unknown };
+  const props = shape.props as {
+    pts?: unknown;
+    color?: unknown;
+    size?: unknown;
+    dash?: unknown;
+  };
   if (!Array.isArray(props.pts) || props.pts.length === 0) return null;
 
   const points: { x: number; y: number }[] = [];
@@ -64,8 +118,28 @@ export function strokeOf(id: string, record: unknown): StrokeGeometry | null {
 
   const colourId = typeof props.color === 'string' ? props.color : 'black';
   const sizeId = typeof props.size === 'string' ? props.size : 'm';
-  const width = SIZES[sizeId as keyof typeof SIZES] ?? SIZES.m;
+  const key = (sizeId in SIZES ? sizeId : 'm') as keyof typeof SIZES;
+  const highlight = shape.type === 'highlight';
 
-  return { id, points, colourId, width, highlight: shape.type === 'highlight' };
+  /*
+    THREE WIDTHS, BECAUSE THE ENGINE HAS THREE. A highlighter is a wide band, a
+    pressure-ink stroke is the compensated `INK_SIZES` outline, and a styled
+    line is the flat `SIZES` centreline. Collapsing them onto `SIZES` is what
+    made the headset's ink thin and its highlighter a pencil line.
+  */
+  const width = highlight
+    ? SIZES[key] * HIGHLIGHT_SCALE
+    : isPressureInk(props.dash)
+      ? INK_SIZES[key]
+      : SIZES[key];
+
+  return {
+    id,
+    points,
+    colourId,
+    width,
+    opacity: highlight ? HIGHLIGHT_ALPHA : 1,
+    highlight,
+  };
 }
 

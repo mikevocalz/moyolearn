@@ -18,13 +18,21 @@
 // vendor bump can change this and the failure must be a missing stroke in a
 // review, not a crash in a child's session.
 //
-// `props.size` resolves through the vendor's own exported `SIZES` map, and
 // `props.color` names a material generated from the vendor's light theme in
-// `spatial-materials` — so spatial ink is the same colour and weight as 2D ink
-// by construction rather than by a table copied into this repo.
-// SOT: packages/ui/xr/spatial-tokens.ts · node_modules/@quickdrawjs/core/types/index.d.ts
-// SOT-KEYWORDS: xr board ink polyline viro stroke record quickdraw page space surface metres renderer
+// `spatial-materials`, and `props.size`/`props.dash` resolve to a page-space
+// width and an opacity in `stroke-of` through the engine's own four constants —
+// so spatial ink is the same colour and weight as 2D ink by construction rather
+// than by a table copied into this repo.
+//
+// WHAT IT CANNOT DRAW, IT COUNTS. `strokeOf` answers `null` for text, notes,
+// arrows and images, which the web app's fuller tray can produce and this
+// renderer has no primitive for. Dropping them silently made the board look
+// complete when it was not, so the count goes back up to the caller and the
+// companion panel says it (`04-copy.md` §5.2).
+// SOT: packages/ui/xr/stroke-of.ts · packages/ui/xr/spatial-tokens.ts
+// SOT-KEYWORDS: xr board ink polyline viro stroke record quickdraw page space surface metres renderer skipped
 
+import { useEffect, useMemo } from 'react';
 import { ViroPolyline } from '@reactvision/react-viro';
 import { inkMaterial } from './spatial-materials.native.ts';
 import { strokeOf, type StrokeGeometry } from './stroke-of.ts';
@@ -54,12 +62,36 @@ function pageToSurface(x: number, y: number, width: number, height: number): [nu
   ];
 }
 
-export function XrBoardInk({ store, width, height }: XrBoardInkProps) {
-  const strokes: StrokeGeometry[] = [];
-  for (const [id, record] of Object.entries(store)) {
-    const stroke = strokeOf(id, record);
-    if (stroke !== null) strokes.push(stroke);
-  }
+export function XrBoardInk({ store, width, height, onSkippedCount }: XrBoardInkProps) {
+  /*
+    Counted in the same pass that draws, because the two answers have to come
+    from one reading of the document — a second walk is a second chance for the
+    count and the paper to disagree about the same board.
+
+    `skipped` is every record this renderer had no primitive for. Asset records
+    are included: an image a child placed on the web app is missing from the
+    spatial paper exactly as a typed note is, and the child cannot tell the two
+    absences apart either.
+  */
+  const { strokes, skipped } = useMemo(() => {
+    const drawn: StrokeGeometry[] = [];
+    let missed = 0;
+    for (const [id, record] of Object.entries(store)) {
+      const stroke = strokeOf(id, record);
+      if (stroke === null) missed += 1;
+      else drawn.push(stroke);
+    }
+    return { strokes: drawn, skipped: missed };
+  }, [store]);
+
+  /*
+    Reported from an effect rather than during the render that computed it: the
+    caller's handler writes to a store, and a store write inside a render is a
+    second render of whatever else subscribes to it, mid-commit.
+  */
+  useEffect(() => {
+    onSkippedCount(skipped);
+  }, [onSkippedCount, skipped]);
 
   return (
     <>
@@ -73,13 +105,16 @@ export function XrBoardInk({ store, width, height }: XrBoardInkProps) {
             paper as it is in 2D rather than a fixed spatial width that looks
             like a marker on a small board and a hair on a large one.
 
-            `highlight` is drawn at the engine's own width with reduced opacity
-            rather than as a wide translucent quad: a highlighter that is a
-            different primitive is a highlighter that stops matching the 2D
-            board the moment either changes.
+            `highlight` is a WIDE band and not a thin line at reduced opacity.
+            The engine strokes it at `SIZES[size] × HIGHLIGHT_SCALE` with
+            `globalAlpha = HIGHLIGHT_ALPHA`, and this drew it at `SIZES[size]`
+            with 0.4 — a quarter of the width, at an alpha nobody had taken from
+            the vendor. Both numbers now come from `stroke-of` with the rest of
+            the engine's constants, so the band is the same mark in both
+            presentations rather than two guesses that happen to be close.
           */
           thickness={(stroke.width / boardSurfacePixels.width) * width}
-          opacity={stroke.highlight ? 0.4 : 1}
+          opacity={stroke.opacity}
           materials={[inkMaterial(stroke.colourId)]}
         />
       ))}

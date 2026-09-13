@@ -8,6 +8,8 @@
 // SOT: packages/ui/xr/XrChatPanel.native.tsx · packages/app/features/tutor/tutor-xr-screen.types.ts
 // SOT-KEYWORDS: xr chat panel props types rows actions platform neutral no viro
 
+import type { SpatialBand } from './spatial-tokens.ts';
+
 /** A turn, reduced to what a spatial row can honestly show. */
 export interface XrChatRow {
   id: string;
@@ -29,6 +31,8 @@ export interface XrChatPanelProps {
   height: number;
   distanceM: number;
   handsPrimary: boolean;
+  /** Sizes the live turn's action keys. Required — see `XrRailProps.band`. */
+  band: SpatialBand;
   tutorName: string;
   /** Here / Speaking / Thinking / Listening — `statusFor(state)`'s answer. */
   status: string;
@@ -38,6 +42,15 @@ export interface XrChatPanelProps {
   rows: readonly XrChatRow[];
   /** How many turns are above the window, so "earlier" is honest. */
   earlierCount: number;
+  /**
+   * How many board records the headset could not draw — `XrBoardInk`'s count.
+   *
+   * Required for the same reason `band` is. An optional count defaults to
+   * silence, and silence is precisely the failure: the child's typed note is
+   * missing from the paper and nothing on the screen says so. Zero renders
+   * nothing, so an honest board costs no pixels.
+   */
+  skippedCount: number;
   actions?: readonly XrChatAction[];
   /** True in `ended` and `crisis`, when the 2D composer locks too. */
   inputLocked: boolean;

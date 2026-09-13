@@ -9,7 +9,8 @@ that costs. Also records the local-checkout Viro dependency and everything this
 change has NOT been able to measure.
 SOT: packages/ui/whiteboard-board.native.tsx · packages/app/features/tutor/board-session.ts
      packages/app/features/tutor/tutor-xr-screen.native.tsx · packages/ui/xr/
-SOT-KEYWORDS: adr spatial whiteboard xr viro quickdraw bridge polyline pointer injection board session camera local link unverified
+     packages/app/features/tutor/xr-session.store.ts · packages/app/features/tutor/xr-capability.ts
+SOT-KEYWORDS: adr spatial whiteboard xr viro quickdraw bridge polyline pointer injection board session camera local link unverified engine ownership router push permission primer lifecycle tracking onhover drag yaw sign
 -->
 
 ## Context
@@ -107,9 +108,94 @@ which was correct while one component was the only thing that ever showed a
 board. A second route breaks it. `packages/app/features/tutor/board-session.ts`
 now owns the document, the restore, the server merge, the late-joiner order and
 the two debounce windows, keyed by session — and deliberately survives reaching
-zero holders, because the 2D tree unmounts before the XR tree mounts and a
-document thrown away in that gap is a child arriving in the headset to blank
-paper.
+zero holders.
+
+## Who owns the engine while both routes exist
+
+An earlier draft of this ADR justified that survival with "the 2D tree unmounts
+before the XR tree mounts". **That is false**, and correcting it is the point of
+this section.
+
+**The verb is `router.push`** (`tutor-screen.tsx`, `handleOpenXr`), chosen so the
+2D workspace keeps its pane state, its composer draft and its session and coming
+back is a pop rather than a restore. A pushed native-stack route detaches the
+screen below from the view hierarchy; it does **not** unmount the React tree. So
+`TutorWorkbench` keeps running, keeps its `session.attach` subscription, and
+`releaseBoardSession` is never called on the way in — holders goes 1 → 2, not
+1 → 0 → 1.
+
+**So how many engines are live is a function of width, and at the width a
+headset actually reports it is two.** `tutor-screen` mounts the workbench as
+`board={workPane ? workbench : undefined}`, and `hasWorkPane` is true for
+`expanded` and above (≥840 dp) and false for `compact`/`medium`. Below that the
+workbench lives inside `WhiteboardSheet`, which is a React Native `Modal` —
+`Modal.render` returns `null` when it is not visible, so the workbench and its
+`Whiteboard` are genuinely unmounted while the sheet is closed, and pressing the
+spatial door does not open the sheet. Two engines at pane widths, one below.
+
+**Decision: both hosts stay attached.** Not because two WebViews are free, but
+because the document is safe for N presentations by construction and the
+alternatives cost more than the thing they avoid:
+
+- `board-session.change()` ignores every diff whose source is not `'user'`, and
+  the engine page tags an applied diff `'remote'`
+  (`@quickdrawjs/react-native/src/webview-entry.js`:
+  `applyDiff(m) { board.editor.store.applyDiff(m.diff, 'remote') }`). The
+  fan-out in `change()` therefore terminates in exactly one hop; two live
+  `onChange` sources cannot loop.
+- Undo reaches both engines. `board-doc`'s observer runs
+  `if (!isLocal) for (const listener of listeners) listener(diff)`, and a Yjs
+  `UndoManager` step carries the manager as its transaction origin rather than
+  the string `'local'` — so `onRemote`, which is what `attach` subscribes with,
+  fires for an undo and every attached engine is corrected.
+- Suspending the 2D engine needs a verb `board-session` does not have, and the
+  cheap version of it — unmounting the workbench — costs a full page reload of
+  the engine on return, which is a visibly blank board at the moment a child
+  comes back from the headset. That is worse than an idle WebView.
+- Hoisting a single session-scoped host above both routes remains the clean
+  answer if the cost is ever measured to matter. The seam is exactly one thing:
+  `board-session` would have to expose the attached presentation's handle so the
+  spatial screen could drive the engine the 2D tree already mounted instead of
+  mounting its own. That is a change to `board-session.ts` and is not in this
+  change's ownership.
+
+**The cost is unmeasured and is stated as unmeasured.** Statically: the second
+engine is one `react-native-webview` laid out at `boardSurfacePixels`
+(1400 × 1960), created fresh on every entry, running alongside the first one and
+the XR renderer. Nothing in this workspace has run on a headset, so its memory,
+its effect on frame pacing and the page-load time it adds to entry are all
+unknown. They belong to the acceptance test in the feature brief's §7, not here.
+
+**The restore rule, per presentation.** Both are handed the whole document when
+their engine reports `mounted` and stream diffs after — `attach()` does
+`loadSnapshot(doc.snapshot())` and then subscribes `onRemote`, which is the
+vendor's late-joiner order and the reason a diff never reaches an engine with no
+editor. They differ in one deliberate way before that point:
+
+- **`tutor-workbench`** also passes `snapshot={session.initialSnapshot}` to
+  `Whiteboard`, so the pane paints the child's working on its first frame rather
+  than flashing blank paper. That routes through the page's `init`, which calls
+  `fitContent()` — harmless here, because the child looks at the engine's own
+  canvas and the camera is what they see.
+- **`tutor-xr`** deliberately passes **no** `snapshot` prop. Its engine is parked
+  off-screen at zero opacity, so a blank first frame is invisible, and skipping
+  `init`-with-snapshot is what guarantees `fitContent()` never runs on it. The
+  spatial paper renders document page coordinates while the injected pointer is
+  in client coordinates; a fitted camera makes those two disagree, which is the
+  bug the pinned-camera section above exists to prevent. Only `attach`'s
+  `loadSnapshot(fit: false)` ever loads this engine.
+
+Two further things this correction fixed in the spatial screen:
+
+- It held `acquireBoardSession(key)` from its first render and never re-acquired.
+  A child who presses Ask in the headset creates the server session, `sessionId`
+  goes from `null` to an id, and `boardSessionKey` changes — the 2D workbench
+  re-acquires on that, the spatial screen did not, and the two presentations
+  would have been writing into two different documents. It now runs the same
+  `heldKey` re-acquire the workbench does.
+- The hold was released from an effect that listed `sessionId` as a dependency,
+  so the holder count fell on a change that was not a departure, and reaching
+  zero writes.
 
 **The scene cannot close over state.** `ViroARSceneNavigator` captures
 `initialScene` in its constructor (`state.sceneDictionary[tag].sceneClass`) and
@@ -153,6 +239,73 @@ Every Viro component and prop used here was verified against that checkout's
   arrows and images — which the web app's fuller tray can produce — are skipped.
 - There is no XR on web, enforced by platform forks (`packages/ui/xr/index.web.ts`,
   `tutor-xr-entry.tsx`) rather than by convention.
+- **The lifecycle is driven, and the camera is asked for before it is taken.**
+  `xr-session.store`'s phases were declared and only two of them were ever set.
+  They now run as a table of legal transitions —
+  checking → permission-required → preparing → ready → interrupted → exiting,
+  plus unsupported — and every move is made by a fact: `spatialEligibility`
+  reading this binary and this device, the runtime's own `checkPermissions` /
+  `requestRequiredPermissions` result, the engine reporting it has an editor, and
+  `ViroARScene.onTrackingUpdated`. Nothing advances on a timer or a render.
+  Consequences worth stating:
+  - The permission primer is a **flat 2D panel**, not an in-scene card, and the
+    renderer is not mounted until it has been answered. A consent question asked
+    from inside the immersive scene it grants consent for is already answered.
+    Its "Not now" raises no system dialog, records no refusal, and pops back to
+    the 2D board; pressing the door again shows the primer again.
+  - `unsupported` therefore also renders in 2D, for all three reasons. The
+    in-scene unsupported card in `XrPanel` is reachable only from a transition to
+    `unsupported` *after* the scene is mounted, which nothing produces today —
+    every way of reaching it is a way in which the scene must not be mounted.
+  - `interrupted` keeps the board drawn and speaks through the companion panel's
+    assurance line, which is the only slot in the composition that can carry it:
+    the panel's own wait card belongs to `checking` and `preparing`, and a card
+    over an interrupted board would cover the work it is reassuring the child
+    about.
+  - Tracking returning to normal promotes `interrupted` back to `ready` and
+    nothing else. `preparing → ready` is the engine's move, because a board is
+    drawable when there is an engine behind it, not when the room is in focus.
+- **The route is guarded by being declared.** `Stack.Protected` collects the
+  `Stack.Screen` *names* beneath a falsy guard and removes those from the
+  navigator (`useSortedScreens`); it does not guard a directory. `tutor-xr.tsx`
+  sat in `(learner)/` undeclared, so it was protected by nothing — a child's
+  board reachable by deep link under any role and left in history when the role
+  flipped. `(learner)/_layout.tsx` now declares it.
+
+## Answered since this ADR was written
+
+**`onHover` is not a move stream. Answered in the negative, from source.** This
+was listed below as unverified; it is now closed, and closed the wrong way for
+the design that depended on it. `onHover` is an enter/exit event carrying a
+boolean, and the renderer emits it only when the hovered node *changes* — while a
+ray rests on one node `VROInputControllerBase` returns without firing. A stroke
+built on it got its `begin`, then silence, then an `end` at the same point: the
+child drew and no line appeared. The belief could not be repaired either, because
+the renderer freezes the hit result for the whole of a drag, which is the only
+other thing a pointer-down does.
+
+What replaced it (commit `6e5707b`) is a transparent quad over the paper with
+`dragType="FixedToPlane"` and `dragPlane` set to the paper's own plane: the
+renderer slides it under the ray and reports every step through `onDrag`. It is a
+**sampled** stream, not a continuous one — the renderer drops a move shorter than
+`ON_DRAG_DISTANCE_THRESHOLD`, one centimetre of world travel, roughly fifty
+samples across a 0.55 m board — and that floor lives in the native renderer with
+no prop to raise it. So a stroke arrives resampled rather than pixel-exact. It is
+a separate quad because a drag moves what it drags; run on the paper, a child's
+homework would slide across the room while they wrote on it.
+
+**A dormant sign error in `toSurfaceLocal` (`packages/ui/xr/XrPanel.native.tsx`).**
+Recorded because it is invisible today and will not be invisible the moment the
+composition is allowed to yaw. The function sets `yaw = -yawDeg` and then
+computes `x = dx·cos(yaw) − dz·sin(yaw)`, which expands to
+**`dx·cosθ + dz·sinθ`**. The inverse of ViroCore's yaw about Y is
+**`dx·cosθ − dz·sinθ`**; the negation is applied twice. It is harmless only
+because every placement this feature produces has `rotation: [0, 0, 0]`, so
+`sinθ` is zero and both expressions agree — `recenter` restores that same
+rotation and nothing else writes one. The failure it is waiting for is the worst
+shape there is in a headset: ink that lands somewhere plausible and slightly
+wrong, reading as a tracking fault. Anything that gives the board a yaw must fix
+the sign and pin it with a test in the same change.
 
 ## Not verified
 
@@ -160,12 +313,20 @@ Nothing in this change has run on a headset. The following are reasoned from
 source and are **unmeasured**:
 
 - Whether `ViroPolyline` renders legible handwriting at 1.5 m.
-- Input→ink latency.
+- Input→ink latency, and whether the `onDrag` sampling floor above is coarse
+  enough to be visible in a child's handwriting.
 - That the pinned camera makes injected pointer coordinates and rendered ink
   coincide.
-- That `onHover` is a usable continuous move stream for a drawing gesture on a
-  Quest controller ray.
 - Frame pacing, memory across repeated entry and exit, and the 2D screen's TTI.
+- The cost of two live engines at pane widths — see the engine-ownership section.
+- The permission sequence end to end. `requestRequiredPermissions` and
+  `checkPermissions` are called against the installed fork's signatures rather
+  than against documentation, and the lifecycle they drive is unit-reachable, but
+  no headset has actually shown the primer or returned a result.
+- That `hasOpenXRSupport && isQuest` is the right eligibility pair. It is the
+  fail-closed one available from the package root — `isPico` and `isXRHeadset`
+  are exported from `ViroPlatform` but not re-exported from the root entry, so a
+  PICO headset currently reads as `device-not-eligible`.
 
 None of these should be reported as working until they have been recorded on
 device. The acceptance test that closes them is in the feature brief's §7.

@@ -41,11 +41,28 @@ export interface XrBoardButtonProps {
   onPress: () => void;
 }
 
-const PADDING = {
-  sm: 'px-element py-element',
-  md: 'px-element py-element',
-  lg: 'px-group py-element',
-  xl: 'px-group py-group',
+/**
+ * Padding AND the band's target, because padding alone was not one.
+ *
+ * Every size here declared only padding, and the sum did not reach the band it
+ * was chosen for: at `lg` — the teen band, whose target token is 48 — the pill
+ * computed to about 41px. `py-element` is 0.75rem hot on each side, the caption
+ * ramp is 0.8125rem at 1.4, the border is 2px on each side, and the mobile
+ * bundler resolves rem at 14 (`apps/mobile/metro.config.js`), so 21 + 15.9 + 4
+ * is the whole height. `sm` and `md` landed in the same place against 44.
+ *
+ * This is the exact failure `tooling/check-targets.mjs` prints when a size ships
+ * without one — "Padding is not a target — a tightened type ramp shrinks it
+ * silently" — and it was invisible here because that gate only inspects
+ * `Button.tsx`. The band-to-token mapping is `Button`'s, unchanged, so the door
+ * into the spatial board is the same size as every other control the same child
+ * presses.
+ */
+const SIZING = {
+  sm: 'min-h-target-adult px-element py-element',
+  md: 'min-h-target-adult px-element py-element',
+  lg: 'min-h-target-teen px-group py-element',
+  xl: 'min-h-target-child px-group py-group',
 } as const;
 
 const GLYPH = { sm: 16, md: 18, lg: 20, xl: 24 } as const;
@@ -61,7 +78,7 @@ export function XrBoardButton({
 
   return (
     <PressScale
-      className={`flex-row items-center gap-element rounded-control bg-surface-raised border-2 border-border-strong ${PADDING[size]}`}
+      className={`flex-row items-center justify-center gap-element rounded-control bg-surface-raised border-2 border-border-strong ${SIZING[size]}`}
       onPress={entering ? undefined : onPress}
       role="button"
       /*

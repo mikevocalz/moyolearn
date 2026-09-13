@@ -116,8 +116,17 @@ export interface XrPanelProps {
    * division and a child repositioning their paper are doing different things,
    * and a surface that does both means every downstroke risks dragging the
    * homework across the room.
+   *
+   * TWO VALUES, BECAUSE THERE ARE TWO BEHAVIOURS. `'bottomOrnament'` was also
+   * writable and `XrPanel` branches on `'frame'` alone, so it behaved exactly
+   * as `'none'`: a caller who asked for the placement row to be the grab handle
+   * got a board that could not be moved at all, with no error anywhere. The
+   * value is gone rather than implemented, because the row below the paper is
+   * two keys with their own click handlers and making the strip between them
+   * draggable is a drag that starts wherever a child misses a key. The frame is
+   * the affordance; `'none'` is a board the caller pins.
    */
-  moveHandle?: 'frame' | 'bottomOrnament' | 'none';
+  moveHandle?: 'frame' | 'none';
   onPlacementChange?: (next: XrPlacement) => void;
   onSurfaceInput?: (sample: XrSurfaceInput) => void;
   state: XrPanelState;

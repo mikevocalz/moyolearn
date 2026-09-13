@@ -26,7 +26,7 @@
 import { ViroClickStateTypes, ViroFlexView, ViroText } from '@reactvision/react-viro';
 import { XR_MATERIAL } from './spatial-materials.native.ts';
 import { XR_COLOR } from './xr-colors.ts';
-import { minHitSize, spatialSpacing } from './spatial-tokens.ts';
+import { minHitSize, spatialFontSize, spatialSpacing } from './spatial-tokens.ts';
 /* Props live outside this file so the web fork can name them without naming
    Viro — the `XrPanel.types.ts` arrangement, for the same reason. */
 import type { XrChatPanelProps } from './XrChatPanel.types.ts';
@@ -36,15 +36,17 @@ export function XrChatPanel({
   height,
   distanceM,
   handsPrimary,
+  band,
   tutorName,
   status,
   assurance,
   rows,
   earlierCount,
+  skippedCount,
   actions,
   inputLocked,
 }: XrChatPanelProps) {
-  const action = minHitSize(distanceM, handsPrimary);
+  const action = minHitSize(distanceM, handsPrimary, band);
 
   return (
     <ViroFlexView
@@ -56,12 +58,12 @@ export function XrChatPanel({
       {/* Her name and what she is doing, which is the whole header. */}
       <ViroText
         text={`${tutorName} · ${status}`}
-        style={{ fontSize: 20, color: XR_COLOR.onPanel }}
+        style={{ fontSize: spatialFontSize.title, color: XR_COLOR.onPanel }}
         textLineBreakMode="WordWrap"
       />
       <ViroText
         text={assurance}
-        style={{ fontSize: 14, color: XR_COLOR.onPanelMuted }}
+        style={{ fontSize: spatialFontSize.caption, color: XR_COLOR.onPanelMuted }}
         textLineBreakMode="WordWrap"
         maxLines={2}
       />
@@ -69,8 +71,41 @@ export function XrChatPanel({
       {earlierCount > 0 ? (
         <ViroText
           text={`${earlierCount} earlier ${earlierCount === 1 ? 'message' : 'messages'} on the normal screen`}
-          style={{ fontSize: 13, color: XR_COLOR.onPanelMuted }}
+          style={{ fontSize: spatialFontSize.caption, color: XR_COLOR.onPanelMuted }}
           textLineBreakMode="WordWrap"
+        />
+      ) : null}
+
+      {/*
+        WHAT THE HEADSET COULD NOT DRAW, SAID OUT LOUD.
+
+        The spatial board renders freehand and highlighter and nothing else, so
+        a typed note or an arrow made on the web app is simply absent here.
+        Until this line, nothing marked the gap and nothing counted it: the
+        board looked complete and was not, which is a child concluding their
+        work was deleted.
+
+        The wording is `04-copy.md` §5.2 verbatim and both of its constraints
+        are load-bearing. It says the work is STILL THERE, because the fear is
+        deletion and not display. And it does not name the tools — "text, notes,
+        arrows and images" is a list a K–2 reader will not finish, and knowing
+        which primitive failed to render helps nobody.
+
+        Under the earlier-messages line and in the muted ink, per §5.2's
+        placement note: not on the paper, which is the working surface, and not
+        as a dialog, which would block a child from their board over something
+        they cannot act on.
+      */}
+      {skippedCount > 0 ? (
+        <ViroText
+          text={
+            skippedCount === 1
+              ? "1 thing you added on the computer isn't shown here. It's still on your board."
+              : `${skippedCount} things you added on the computer aren't shown here. They're still on your board.`
+          }
+          style={{ fontSize: spatialFontSize.caption, color: XR_COLOR.onPanelMuted }}
+          textLineBreakMode="WordWrap"
+          maxLines={3}
         />
       ) : null}
 
@@ -89,7 +124,7 @@ export function XrChatPanel({
               : `${row.role === 'tutor' ? tutorName : 'You'}: ${row.text}`
           }
           style={{
-            fontSize: 18,
+            fontSize: spatialFontSize.body,
             color: row.role === 'tutor' ? XR_COLOR.onPanel : XR_COLOR.onPanelMuted,
           }}
           textLineBreakMode="WordWrap"
@@ -107,8 +142,11 @@ export function XrChatPanel({
         : actions.map((entry) => (
             <ViroFlexView
               key={entry.id}
+              /* Wider than the floor for the label, and never shorter than it:
+                 `action × 0.6` was 2.40°, the same one-axis miss the placement
+                 keys made. A target is the smaller of its two edges. */
               width={Math.min(width - spatialSpacing.sm, action * 2.4)}
-              height={action * 0.6}
+              height={action}
               materials={[XR_MATERIAL.key]}
               style={{ padding: 0.008, flexDirection: 'column', justifyContent: 'center' }}
               onClickState={(clickState) => {
@@ -117,7 +155,10 @@ export function XrChatPanel({
             >
               <ViroText
                 text={entry.label}
-                style={{ fontSize: 16, color: XR_COLOR.onPanel, textAlign: 'center' }}
+                /* `onKey`, not `onPanel`: this label sits on `XR_MATERIAL.key`,
+                   which is a LIGHT surface. The panel's light ink on it was the
+                   same 1.09:1 the rail's keys already had corrected. */
+                style={{ fontSize: spatialFontSize.body, color: XR_COLOR.onKey, textAlign: 'center' }}
               />
             </ViroFlexView>
           ))}

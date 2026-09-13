@@ -20,7 +20,13 @@ import { useState } from 'react';
 import { ViroClickStateTypes, ViroFlexView, ViroText } from '@reactvision/react-viro';
 import { XR_MATERIAL, inkMaterial } from './spatial-materials.native.ts';
 import { XR_COLOR } from './xr-colors.ts';
-import { minHitSize, spatialSpacing } from './spatial-tokens.ts';
+import {
+  boardComposition,
+  minHitSize,
+  railWidthFor,
+  spatialFontSize,
+  spatialSpacing,
+} from './spatial-tokens.ts';
 import type { WhiteboardInk, WhiteboardTool } from '../whiteboard.types.ts';
 /* Props live outside this file so the web fork can name them without naming
    Viro — the `XrPanel.types.ts` arrangement, for the same reason. */
@@ -102,7 +108,7 @@ function RailKey({ label, size, material, selected, disabled, onPress }: KeyProp
       <ViroText
         text={label}
         style={{
-          fontSize: 16,
+          fontSize: spatialFontSize.body,
           /* Both key states are LIGHT surfaces — the resting key and the
              selected one — so the label is the dark ink in both. It was the
              panel's light ink on an unselected key: 1.09:1. */
@@ -119,6 +125,7 @@ export function XrRail({
   height,
   distanceM,
   handsPrimary,
+  band,
   tool,
   ink,
   canUndo,
@@ -134,16 +141,33 @@ export function XrRail({
   const [pickingInk, setPickingInk] = useState(false);
 
   /*
-    The key size is the angular floor at this distance, never a chosen number —
-    the spatial counterpart of reading a target from the age-band token. The
-    rail's own width is the ceiling: a key wider than its rail is a key whose
-    hitbox overlaps the paper.
+    The key size is the angular floor at this distance and for this band, never
+    a chosen number — the spatial counterpart of reading a target from the
+    age-band token.
+
+    IT IS NOT CLAMPED TO THE RAIL, and that clamp is the bug this file shipped
+    with. `Math.min(width, minHitSize(…))` reads as "never wider than the rail"
+    and behaves as "never LARGER THAN THE FLOOR either", because `railWidth` was
+    0.1 m against a floor of 0.105 m: every key in the feature was 3.82° or
+    less, and the ink swatches and Clear multiplied down from there. A floor a
+    caller can take the minimum of is not a floor.
+
+    So the key holds and the RAIL gives. The rail draws itself wide enough to
+    hold the key inside its own padding, capped at one gap on each side so the
+    widening can never reach across `railGap` and cover the paper. Past that cap
+    the rail genuinely cannot hold a reachable key at this distance, and
+    `layoutBoard` says so (`miss: 'rail-below-target'`) rather than this file
+    quietly shrinking a six-year-old's controls to fit.
   */
-  const key = Math.min(width, minHitSize(distanceM, handsPrimary));
+  const key = minHitSize(distanceM, handsPrimary, band);
+  const railWidth = Math.min(
+    Math.max(width, railWidthFor(distanceM, handsPrimary, band)),
+    width + boardComposition.railGap * 2,
+  );
 
   return (
     <ViroFlexView
-      width={width}
+      width={railWidth}
       height={height}
       materials={[XR_MATERIAL.rail]}
       style={{
@@ -179,12 +203,15 @@ export function XrRail({
         disabled={false}
         onPress={() => setPickingInk(!pickingInk)}
       />
+      {/* Full size, not 70% of it: a swatch is the one key on the rail a child
+          picks by aiming at a colour, and it was the smallest thing in the
+          scene at 2.67°. */}
       {pickingInk
         ? INKS.map((id) => (
             <RailKey
               key={id}
               label=""
-              size={key * 0.7}
+              size={key}
               material={inkMaterial(id)}
               selected={ink === id}
               disabled={false}
@@ -226,11 +253,17 @@ export function XrRail({
         stops at Undo. No confirmation dialog, deliberately and for the same
         reason the 2D tray has none: the engine clears in ONE undoable step and
         undo is on the rail directly above.
+
+        HARDER TO HIT BY ACCIDENT IS SEPARATION, NOT A SMALLER TARGET. It was
+        `key × 0.8` — 3.06° — which makes the most destructive control on the
+        rail the hardest one to hit ON PURPOSE too, and a child who misses Clear
+        twice hits it on the third try anyway. The distance does that job
+        instead, at one `md` rather than one `sm`.
       */}
-      <ViroFlexView width={width} height={spatialSpacing.sm} materials={[]} />
+      <ViroFlexView width={railWidth} height={spatialSpacing.md} materials={[]} />
       <RailKey
         label="Clear"
-        size={key * 0.8}
+        size={key}
         material={XR_MATERIAL.key}
         selected={false}
         disabled={false}

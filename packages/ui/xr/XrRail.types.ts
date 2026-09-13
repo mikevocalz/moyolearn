@@ -11,6 +11,7 @@
 // SOT-KEYWORDS: xr rail props types platform neutral no viro ornament toolbar
 
 import type { WhiteboardInk, WhiteboardTool } from '../whiteboard.types.ts';
+import type { SpatialBand } from './spatial-tokens.ts';
 
 export interface XrRailProps {
   width: number;
@@ -19,6 +20,15 @@ export interface XrRailProps {
   /** How far the rail is from the child, for hit sizing. */
   distanceM: number;
   handsPrimary: boolean;
+  /**
+   * The signed-in learner's age band, which sizes every key on the rail.
+   *
+   * Required, and deliberately without a default. A band that can be omitted is
+   * a band that gets omitted, and the omission is invisible: the rail still
+   * renders, the keys are just an adult's. It is the same rule the 2D side
+   * already keeps — `targets` is keyed by band and nothing hardcodes a size.
+   */
+  band: SpatialBand;
   tool: WhiteboardTool;
   ink: WhiteboardInk;
   canUndo: boolean;
