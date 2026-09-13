@@ -33,6 +33,9 @@ export type {
   XrQuestionLineProps,
   XrPlacementControlsProps,
 } from './XrOrnaments.native.tsx';
+/* Colour constants are plain strings off the token file — no renderer in them,
+   so the web fork answers with the same values rather than with nothing. */
+export { XR_COLOR } from './xr-colors.ts';
 export {
   boardComposition,
   boardSurfacePixels,

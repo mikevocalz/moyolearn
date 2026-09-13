@@ -25,6 +25,7 @@
 
 import { ViroClickStateTypes, ViroFlexView, ViroText } from '@reactvision/react-viro';
 import { XR_MATERIAL } from './spatial-materials.native.ts';
+import { XR_COLOR } from './xr-colors.ts';
 import { minHitSize, spatialSpacing } from './spatial-tokens.ts';
 
 /** A turn, reduced to what a spatial row can honestly show. */
@@ -87,12 +88,12 @@ export function XrChatPanel({
       {/* Her name and what she is doing, which is the whole header. */}
       <ViroText
         text={`${tutorName} · ${status}`}
-        style={{ fontSize: 20, color: '#f8fafc' }}
+        style={{ fontSize: 20, color: XR_COLOR.onPanel }}
         textLineBreakMode="WordWrap"
       />
       <ViroText
         text={assurance}
-        style={{ fontSize: 14, color: '#94a3b8' }}
+        style={{ fontSize: 14, color: XR_COLOR.onPanelMuted }}
         textLineBreakMode="WordWrap"
         maxLines={2}
       />
@@ -100,7 +101,7 @@ export function XrChatPanel({
       {earlierCount > 0 ? (
         <ViroText
           text={`${earlierCount} earlier ${earlierCount === 1 ? 'message' : 'messages'} on the normal screen`}
-          style={{ fontSize: 13, color: '#94a3b8' }}
+          style={{ fontSize: 13, color: XR_COLOR.onPanelMuted }}
           textLineBreakMode="WordWrap"
         />
       ) : null}
@@ -121,7 +122,7 @@ export function XrChatPanel({
           }
           style={{
             fontSize: 18,
-            color: row.role === 'tutor' ? '#f8fafc' : '#cbd5f5',
+            color: row.role === 'tutor' ? XR_COLOR.onPanel : XR_COLOR.onPanelMuted,
           }}
           textLineBreakMode="WordWrap"
           maxLines={6}
@@ -148,7 +149,7 @@ export function XrChatPanel({
             >
               <ViroText
                 text={entry.label}
-                style={{ fontSize: 16, color: '#f8fafc', textAlign: 'center' }}
+                style={{ fontSize: 16, color: XR_COLOR.onPanel, textAlign: 'center' }}
               />
             </ViroFlexView>
           ))}

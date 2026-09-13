@@ -58,6 +58,7 @@ import {
   XrPlacementControls,
   XrQuestionLine,
   XrRail,
+  XR_COLOR,
   boardComposition,
   boardSurfacePixels,
   layoutBoard,
@@ -418,7 +419,7 @@ function statusLabel(kind: string): string {
 }
 
 const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: '#000000' },
+  root: { flex: 1, backgroundColor: XR_COLOR.void },
   engine: {
     position: 'absolute',
     /*

@@ -25,6 +25,7 @@ export {
   type XrChatAction,
 } from './XrChatPanel.native.tsx';
 export { XR_MATERIAL, inkMaterial } from './spatial-materials.native.ts';
+export { XR_COLOR } from './xr-colors.ts';
 export {
   boardComposition,
   boardSurfacePixels,

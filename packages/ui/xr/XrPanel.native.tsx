@@ -33,6 +33,7 @@ import {
 } from '@reactvision/react-viro';
 import { boardComposition, spatialSpacing } from './spatial-tokens.ts';
 import { XR_MATERIAL } from './spatial-materials.native.ts';
+import { XR_COLOR } from './xr-colors.ts';
 import type { XrPanelProps, XrSurfaceInput, XrVector3 } from './XrPanel.types.ts';
 
 /**
@@ -209,7 +210,7 @@ export function XrPanel({
             position={[0, -0.06, 0]}
             width={width * 0.8}
             height={0.12}
-            style={{ fontSize: 22, color: '#1a1d24', textAlign: 'center' }}
+            style={{ fontSize: 22, color: XR_COLOR.onKey, textAlign: 'center' }}
             textLineBreakMode="WordWrap"
           />
         </ViroNode>
@@ -225,7 +226,7 @@ export function XrPanel({
         >
           <ViroText
             text="This headset can't open the spatial whiteboard yet. Your board is waiting on the normal screen — nothing is lost."
-            style={{ fontSize: 24, color: '#f8fafc' }}
+            style={{ fontSize: 24, color: XR_COLOR.onPanel }}
             textLineBreakMode="WordWrap"
           />
         </ViroFlexView>

@@ -16,6 +16,30 @@
 
 import { ViroMaterials } from '@reactvision/react-viro';
 import { COLOR_IDS, THEMES } from '@quickdrawjs/core';
+import { semantic } from '@acme/theme';
+
+/*
+  THE COLOURS COME FROM THE TOKEN FILE, not from this one. `CLAUDE.md` §UI: no
+  hex literals, and if a token does not exist it gets added to
+  `packages/theme/tokens.ts`. The first pass here carried the spatial design
+  system's stock palette (`#1a1d24`, `#7dd3fc`, `#22262f`) — generic headset-demo
+  colours that had never met Moyo's, which is exactly the drift a spatial
+  surface is prone to because nobody puts it side by side with the 2D product.
+
+  `dark` in both cases, deliberately, for everything EXCEPT the paper. A headset
+  scene is a dark room with panels floating in it; the light scheme's cream
+  chrome would glow. The paper is the exception and keeps its light value,
+  because the board is always light paper (`whiteboard.types.ts`).
+*/
+const chrome = {
+  rail: semantic['surface-raised'].dark,
+  card: semantic['surface-raised'].dark,
+  key: semantic['surface-sunken'].light,
+  frame: semantic['surface-sunken'].dark,
+  paper: semantic['surface-raised'].light,
+  onDark: semantic.surface.light,
+  focus: semantic['border-strong'].dark,
+} as const;
 
 /** Names, so nothing string-literals a material at a call site. */
 export const XR_MATERIAL = {
@@ -49,37 +73,39 @@ ViroMaterials.createMaterials({
     working darker than the other.
   */
   [XR_MATERIAL.paper]: {
-    diffuseColor: '#fdfdfb',
+    diffuseColor: chrome.paper,
     lightingModel: 'Constant',
   },
   /* The frame reads as the edge of a sheet of paper, not as a window chrome. */
   [XR_MATERIAL.frame]: {
-    diffuseColor: '#d7dae1',
+    diffuseColor: chrome.frame,
     lightingModel: 'PBR',
     roughness: 0.7,
     metalness: 0,
   },
   [XR_MATERIAL.rail]: {
-    diffuseColor: '#1a1d24e6',
+    /* `e6` is 90% alpha — the rail is a panel in a room, not a cut-out. */
+    diffuseColor: `${chrome.rail}e6`,
     lightingModel: 'PBR',
     roughness: 0.6,
     metalness: 0,
     blendMode: 'Alpha',
   },
   [XR_MATERIAL.card]: {
-    diffuseColor: '#22262f',
+    diffuseColor: chrome.card,
     lightingModel: 'PBR',
     roughness: 0.75,
     metalness: 0,
   },
   [XR_MATERIAL.key]: {
-    diffuseColor: '#2f3441',
+    diffuseColor: chrome.frame,
     lightingModel: 'PBR',
     roughness: 0.55,
     metalness: 0,
   },
   [XR_MATERIAL.keyPressed]: {
-    diffuseColor: '#ffffff33',
+    /* A 20% white wash, the spatial equivalent of the 2D pressed state. */
+    diffuseColor: `${chrome.onDark}33`,
     lightingModel: 'Constant',
     blendMode: 'Alpha',
   },
@@ -88,16 +114,16 @@ ViroMaterials.createMaterials({
     picked out by colour alone is a tool a colour-blind child cannot find.
   */
   [XR_MATERIAL.keySelected]: {
-    diffuseColor: '#7dd3fc',
+    diffuseColor: chrome.focus,
     lightingModel: 'Constant',
   },
   [XR_MATERIAL.keyDisabled]: {
-    diffuseColor: '#4b525e80',
+    diffuseColor: `${semantic['surface-sunken'].dark}80`,
     lightingModel: 'Constant',
     blendMode: 'Alpha',
   },
   [XR_MATERIAL.focusRing]: {
-    diffuseColor: '#7dd3fc',
+    diffuseColor: chrome.focus,
     lightingModel: 'Constant',
   },
 });

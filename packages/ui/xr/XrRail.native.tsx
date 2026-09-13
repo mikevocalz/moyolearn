@@ -19,6 +19,7 @@
 import { useState } from 'react';
 import { ViroClickStateTypes, ViroFlexView, ViroText } from '@reactvision/react-viro';
 import { XR_MATERIAL, inkMaterial } from './spatial-materials.native.ts';
+import { XR_COLOR } from './xr-colors.ts';
 import { minHitSize, spatialSpacing } from './spatial-tokens.ts';
 import type { WhiteboardInk, WhiteboardTool } from '../whiteboard.types.ts';
 
@@ -101,7 +102,7 @@ function RailKey({ label, size, material, selected, disabled, onPress }: KeyProp
         flexDirection: 'column',
         justifyContent: 'center',
         borderWidth: hovered && !disabled ? 0.004 : 0,
-        borderColor: '#7dd3fc',
+        borderColor: XR_COLOR.focus,
       }}
       onHover={disabled ? undefined : (isHovering) => setHovered(isHovering)}
       onClickState={
@@ -120,7 +121,7 @@ function RailKey({ label, size, material, selected, disabled, onPress }: KeyProp
         text={label}
         style={{
           fontSize: 16,
-          color: disabled ? '#94a3b8' : selected ? '#0b1220' : '#f8fafc',
+          color: disabled ? XR_COLOR.onPanelMuted : selected ? XR_COLOR.onKey : XR_COLOR.onPanel,
           textAlign: 'center',
         }}
       />

@@ -12,6 +12,7 @@
 import { useState } from 'react';
 import { ViroClickStateTypes, ViroFlexView, ViroText } from '@reactvision/react-viro';
 import { XR_MATERIAL } from './spatial-materials.native.ts';
+import { XR_COLOR } from './xr-colors.ts';
 import { minHitSize, spatialSpacing } from './spatial-tokens.ts';
 
 export interface XrQuestionLineProps {
@@ -37,7 +38,7 @@ export function XrQuestionLine({ text, width }: XrQuestionLineProps) {
     >
       <ViroText
         text={text}
-        style={{ fontSize: 20, color: '#f8fafc' }}
+        style={{ fontSize: 20, color: XR_COLOR.onPanel }}
         textLineBreakMode="WordWrap"
         maxLines={2}
       />
@@ -74,7 +75,7 @@ function ControlKey({
         flexDirection: 'column',
         justifyContent: 'center',
         borderWidth: hovered ? 0.004 : 0,
-        borderColor: '#7dd3fc',
+        borderColor: XR_COLOR.focus,
       }}
       onHover={(isHovering) => setHovered(isHovering)}
       onClickState={(clickState) => {
@@ -85,7 +86,7 @@ function ControlKey({
         }
       }}
     >
-      <ViroText text={label} style={{ fontSize: 15, color: '#f8fafc', textAlign: 'center' }} />
+      <ViroText text={label} style={{ fontSize: 15, color: XR_COLOR.onPanel, textAlign: 'center' }} />
     </ViroFlexView>
   );
 }
