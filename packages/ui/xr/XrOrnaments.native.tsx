@@ -14,11 +14,9 @@ import { ViroClickStateTypes, ViroFlexView, ViroText } from '@reactvision/react-
 import { XR_MATERIAL } from './spatial-materials.native.ts';
 import { XR_COLOR } from './xr-colors.ts';
 import { minHitSize, spatialSpacing } from './spatial-tokens.ts';
-
-export interface XrQuestionLineProps {
-  text: string;
-  width: number;
-}
+/* Props live outside this file so the web fork can name them without naming
+   Viro — the `XrPanel.types.ts` arrangement, for the same reason. */
+import type { XrPlacementControlsProps, XrQuestionLineProps } from './XrOrnaments.types.ts';
 
 /**
  * The question, above the paper, at content height.
@@ -44,14 +42,6 @@ export function XrQuestionLine({ text, width }: XrQuestionLineProps) {
       />
     </ViroFlexView>
   );
-}
-
-export interface XrPlacementControlsProps {
-  width: number;
-  distanceM: number;
-  handsPrimary: boolean;
-  onRecenter: () => void;
-  onExit: () => void;
 }
 
 function ControlKey({

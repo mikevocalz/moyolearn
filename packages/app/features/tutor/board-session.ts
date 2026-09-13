@@ -255,7 +255,13 @@ export function releaseBoardSession(key: string): void {
  * NOTE ON LEARNER SCOPE. The local copy this restores from is a single device
  * slot (`problemStorage`), not a per-learner one, so isolating two learners on
  * one device needs that storage key scoped as well. That is pre-existing and
- * outside this change; disposing here is the half that is in it.
+ * outside this change; disposing here is the half that is in it. The other half
+ * is two decisions, not an edit: `capture-problem` shares the slot and is
+ * equally unscoped, so scoping `tutor-board-snapshot` alone splits a pair that
+ * is written together; and a device upgrading mid-homework has working under
+ * the unscoped key, which a scoped read has to fall through to. The leak is
+ * demonstrated as behaviour in `board-session.test.ts`, so it cannot be
+ * forgotten and cannot be mistaken for fixed.
  */
 export function disposeBoardSession(key: string): void {
   const found = registry.get(key);

@@ -29,14 +29,9 @@ import { ViroPolyline } from '@reactvision/react-viro';
 import { inkMaterial } from './spatial-materials.native.ts';
 import { strokeOf, type StrokeGeometry } from './stroke-of.ts';
 import { boardSurfacePixels } from './spatial-tokens.ts';
-
-export interface XrBoardInkProps {
-  /** The document's store, as `snapshot().document.store`. */
-  store: Readonly<Record<string, unknown>>;
-  /** The paper's size in metres. Page pixels are mapped onto this. */
-  width: number;
-  height: number;
-}
+/* Props live outside this file so the web fork can name them without naming
+   Viro — the `XrPanel.types.ts` arrangement, for the same reason. */
+import type { XrBoardInkProps } from './XrBoardInk.types.ts';
 
 /**
  * PAGE PIXELS TO SURFACE METRES, once.

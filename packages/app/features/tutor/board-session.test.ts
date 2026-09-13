@@ -5,7 +5,7 @@
 // surfaces, and finds either an empty board or their working written twice.
 // None of them is visible in a screenshot of a board that looks fine.
 // SOT: packages/app/features/tutor/board-session.ts
-// SOT-KEYWORDS: board session test one document presentation echo late joiner debounce dispose
+// SOT-KEYWORDS: board session test one document presentation echo late joiner debounce dispose learner isolation
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -16,6 +16,7 @@ import {
   disposeBoardSession,
   releaseBoardSession,
   type BoardPersistence,
+  type BoardSession,
 } from './board-session.ts';
 
 /** A board that is kept nowhere, and says what it was asked to do. */
@@ -135,6 +136,81 @@ test('a stroke is not echoed back into the engine that drew it', () => {
 
   detach();
   disposeBoardSession(key);
+});
+
+/** The record ids on a board, which is the only thing "whose work is this" means here. */
+function records(session: BoardSession): string[] {
+  return Object.keys((session.doc.snapshot() as { document: { store: object } }).document.store);
+}
+
+test('one learner`s strokes cannot reach the next one through the registry', () => {
+  /*
+    A SHARED CLASSROOM DEVICE, which is the case `board-session`'s header names
+    as the reason the registry is keyed rather than global.
+
+    WHAT THIS PINS is the registry's half, and that half holds: two keys are two
+    documents with no disposal involved at all, disposal drops the document
+    rather than parking it, and a re-acquire after one opens clean.
+
+    WHAT IT DOES NOT PIN — because it is not true yet — is full isolation. The
+    LOCAL copy every new session restores from (`readLocalBoard` →
+    `problemStorage`'s `tutor-board-snapshot`) is ONE DEVICE SLOT, not one per
+    learner. So an empty registry is not an empty board, and the last section
+    below DEMONSTRATES that leak rather than asserting it away.
+
+    Scoping that key is not a one-liner, which is why it is recorded here
+    instead of done: the same slot holds an equally unscoped `capture-problem`,
+    so scoping the board alone splits a pair that is written together and leaves
+    the bigger half leaking; and a device that upgrades mid-homework must still
+    find the working stored under the old key, which needs a read-through no
+    scoped key has yet. When both land, the last assertion here inverts and this
+    paragraph goes with it.
+  */
+  const alice = boardSessionKey('session-alice');
+  const bob = boardSessionKey('session-bob');
+
+  const hers = acquireBoardSession(alice, fakeStore().store);
+  hers.doc.applyDiff({ added: { 'shape:alice': shape('shape:alice') } }, 'local');
+
+  // TWO KEYS, TWO DOCUMENTS — no disposal involved. This is the guarantee that
+  // makes the key worth having; a global singleton would fail it outright.
+  const his = acquireBoardSession(bob, fakeStore().store);
+  assert.notEqual(his, hers, 'two learners were handed one session');
+  assert.notEqual(his.doc, hers.doc, 'two learners were handed one document');
+  assert.deepEqual(records(his), [], 'a second learner opened onto the first one`s work');
+
+  // And they stay apart while both are live, which is what a strokes-cross bug
+  // would look like: she keeps drawing, his board does not change.
+  hers.doc.applyDiff({ added: { 'shape:alice-2': shape('shape:alice-2') } }, 'local');
+  assert.deepEqual(records(his), [], 'a live stroke crossed between two learners');
+  disposeBoardSession(bob);
+
+  // The bytes the device slot would be holding at the moment she walks away.
+  // Read BEFORE disposal, because disposal destroys the document.
+  const deviceSlot = hers.doc.encode();
+
+  // DISPOSAL DROPS IT. Not "clears it" — the registry entry is gone, so the
+  // next ask builds a new document rather than handing back a wiped one.
+  disposeBoardSession(alice);
+  const afterDispose = acquireBoardSession(alice, fakeStore().store);
+  assert.notEqual(afterDispose, hers, 'a disposed session was handed out again');
+  assert.deepEqual(records(afterDispose), [], 'her strokes survived the disposal');
+  disposeBoardSession(alice);
+
+  /*
+    THE GAP, STATED AS BEHAVIOUR. `fakeStore` reads nothing, which is why every
+    assertion above is clean. A real device reads the single slot — so this is
+    the same registry, correctly disposed, with the storage a real device has.
+    His board comes up with her working on it.
+  */
+  const sharedSlot: BoardPersistence = { ...fakeStore().store, readLocal: () => deviceSlot };
+  const next = acquireBoardSession(boardSessionKey('session-carol'), sharedSlot);
+  assert.deepEqual(
+    records(next).sort(),
+    ['shape:alice', 'shape:alice-2'],
+    'the device slot is scoped now — invert this assertion and delete the note above',
+  );
+  disposeBoardSession(boardSessionKey('session-carol'));
 });
 
 test('a change the engine calls remote never re-enters the document', () => {

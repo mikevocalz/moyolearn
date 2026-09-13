@@ -22,6 +22,9 @@ import { XR_MATERIAL, inkMaterial } from './spatial-materials.native.ts';
 import { XR_COLOR } from './xr-colors.ts';
 import { minHitSize, spatialSpacing } from './spatial-tokens.ts';
 import type { WhiteboardInk, WhiteboardTool } from '../whiteboard.types.ts';
+/* Props live outside this file so the web fork can name them without naming
+   Viro — the `XrPanel.types.ts` arrangement, for the same reason. */
+import type { XrRailProps } from './XrRail.types.ts';
 
 /** The three tools `WhiteboardTool` permits — no shapes, text, lasso or notes. */
 const TOOLS = [
@@ -40,27 +43,6 @@ const INKS = [
   'orange',
   'violet',
 ] as const satisfies readonly WhiteboardInk[];
-
-export interface XrRailProps {
-  width: number;
-  /** The paper's height — the rail is never taller than what it belongs to. */
-  height: number;
-  /** How far the rail is from the child, for hit sizing. */
-  distanceM: number;
-  handsPrimary: boolean;
-  tool: WhiteboardTool;
-  ink: WhiteboardInk;
-  canUndo: boolean;
-  canRedo: boolean;
-  /** True while a board is being sent to the tutor; the ask key says so. */
-  asking: boolean;
-  onTool: (tool: WhiteboardTool) => void;
-  onInk: (ink: WhiteboardInk) => void;
-  onUndo: () => void;
-  onRedo: () => void;
-  onAsk: () => void;
-  onClear: () => void;
-}
 
 interface KeyProps {
   label: string;

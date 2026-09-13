@@ -22,17 +22,21 @@ export {
   XrQuestionLine,
   XrPlacementControls,
 } from './unsupported.web.tsx';
-export type { XrRailProps } from './XrRail.native.tsx';
-export type { XrBoardInkProps } from './XrBoardInk.native.tsx';
+/* The prop types come from `.types.ts` files, never from the `.native` files
+   that implement them. A type-only re-export is erased at build, but the
+   specifier is still RESOLVED by a bundler — naming `XrRail.native.tsx` here
+   would put Viro on the web resolver's path. See `web-condition.test.ts`. */
+export type { XrRailProps } from './XrRail.types.ts';
+export type { XrBoardInkProps } from './XrBoardInk.types.ts';
 export type {
   XrChatPanelProps,
   XrChatRow,
   XrChatAction,
-} from './XrChatPanel.native.tsx';
+} from './XrChatPanel.types.ts';
 export type {
   XrQuestionLineProps,
   XrPlacementControlsProps,
-} from './XrOrnaments.native.tsx';
+} from './XrOrnaments.types.ts';
 /* Colour constants are plain strings off the token file — no renderer in them,
    so the web fork answers with the same values rather than with nothing. */
 export { XR_COLOR } from './xr-colors.ts';

@@ -27,41 +27,9 @@ import { ViroClickStateTypes, ViroFlexView, ViroText } from '@reactvision/react-
 import { XR_MATERIAL } from './spatial-materials.native.ts';
 import { XR_COLOR } from './xr-colors.ts';
 import { minHitSize, spatialSpacing } from './spatial-tokens.ts';
-
-/** A turn, reduced to what a spatial row can honestly show. */
-export interface XrChatRow {
-  id: string;
-  role: 'learner' | 'tutor';
-  text: string;
-  /** How many attachments the turn carried, named rather than rendered. */
-  attachments?: number;
-}
-
-/** An action the live turn offers — Try it, Next hint, Back to plan. */
-export interface XrChatAction {
-  id: string;
-  label: string;
-  onPress: () => void;
-}
-
-export interface XrChatPanelProps {
-  width: number;
-  height: number;
-  distanceM: number;
-  handsPrimary: boolean;
-  tutorName: string;
-  /** Here / Speaking / Thinking / Listening — `statusFor(state)`'s answer. */
-  status: string;
-  /** The band's assurance line, unchanged from the 2D presence rail. */
-  assurance: string;
-  /** Oldest first. The caller windows this; the panel does not scroll. */
-  rows: readonly XrChatRow[];
-  /** How many turns are above the window, so "earlier" is honest. */
-  earlierCount: number;
-  actions?: readonly XrChatAction[];
-  /** True in `ended` and `crisis`, when the 2D composer locks too. */
-  inputLocked: boolean;
-}
+/* Props live outside this file so the web fork can name them without naming
+   Viro — the `XrPanel.types.ts` arrangement, for the same reason. */
+import type { XrChatPanelProps } from './XrChatPanel.types.ts';
 
 export function XrChatPanel({
   width,

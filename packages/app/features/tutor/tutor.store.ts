@@ -17,6 +17,7 @@ import {
   COACH_STALL_TIMEOUT_MS,
 } from './tutor-constants.ts';
 import { audioQueue } from './tutor-audio.ts';
+import { boardSessionKey, disposeBoardSession, DRAFT_BOARD_KEY } from './board-session.ts';
 import { isToneKey, type ToneKey } from './tutor-tone';
 import type { CoachEvent } from './coach.service';
 import type { TurnImage } from '@acme/inference';
@@ -683,5 +684,47 @@ export const useTutorStore = create<TutorState>((set, get) => ({
 audioQueue.onDrained(() => {
   const store = useTutorStore.getState();
   if (store.state.kind === 'speaking') useTutorStore.setState({ state: { kind: 'presence' } });
+});
+
+/**
+ * The two kinds that END a session rather than describe a moment in one.
+ *
+ * `retry` and `signed-out` are deliberately absent: both describe a REQUEST,
+ * `hydrate` drops them on the next successful load, and a child who reconnects
+ * must find their working where they left it. `paused` is absent for the same
+ * reason from the other side — the plane's hold is a state the session comes
+ * back from.
+ */
+const SESSION_OVER: ReadonlySet<TutorStageState['kind']> = new Set(['ended', 'crisis']);
+
+/*
+  AND THE BOARD ENDS WITH IT.
+
+  `board-session`'s registry is module-level so that the 2D screen and the
+  spatial screen can share one document across a route change that unmounts one
+  tree before mounting the other — which means no React cleanup may destroy it
+  and no React cleanup does. Something outside the trees has to say when the
+  board is over, and the only thing that knows is the store holding the state
+  that says the session is.
+
+  Written as a subscription for the same reason the drained-audio rule above is:
+  the transition is what matters, not the caller. `ended` is entered from
+  `hydrate` today and `crisis` from nowhere yet (the plane's crisis script
+  arrives as a `replace` frame and leaves the stage speaking) — wiring this to
+  the one call site that exists today would leave the terminal state that does
+  not exist yet holding a child's board open forever, and nobody would find it.
+
+  THE DRAFT KEY GOES TOO. A board opened before the server row existed lives
+  under `DRAFT_BOARD_KEY`, and `tutor-workbench` RELEASES that hold when the id
+  arrives without disposing it — correctly, since release must survive a route
+  gap. It is the same child's working under a second key, and this is the only
+  place that ever ends it. When `sessionId` is null the two keys are the same
+  string and the second call finds nothing, which is the intended no-op.
+*/
+useTutorStore.subscribe((state, previous) => {
+  if (state.state.kind === previous.state.kind) return;
+  if (!SESSION_OVER.has(state.state.kind)) return;
+  disposeBoardSession(boardSessionKey(state.sessionId));
+  disposeBoardSession(DRAFT_BOARD_KEY);
 });
 
