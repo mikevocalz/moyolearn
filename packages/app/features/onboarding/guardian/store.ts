@@ -15,7 +15,14 @@
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 import { onboardingStateStorage } from '../onboarding-storage';
-import { EMPTY_DRAFT, type ChildDraft, type GuardianDraft, type GuardianStep } from './steps';
+import {
+  EMPTY_DRAFT,
+  GUARDIAN_STEPS,
+  LAST_GUARDIAN_STEP,
+  type ChildDraft,
+  type GuardianDraft,
+  type GuardianStep,
+} from './steps';
 
 interface GuardianOnboardingState {
   step: GuardianStep;
@@ -71,6 +78,18 @@ export const useGuardianOnboarding = create<GuardianOnboardingState>()(
           children: s.draft.children.map((child) => ({ ...child, password: '' })),
         },
       }),
+      /**
+       * A persisted step this build does not have is not a step. `plan` exists
+       * on web and not on native (plan-step.native.ts), so a draft written by a
+       * build that had the paywall — or synced from one — would otherwise
+       * rehydrate onto it: `indexOf` returns -1, `nextStep` walks back to
+       * `welcome`, and the paywall renders on the one platform it must not.
+       * Clamping to this platform's last step is the truthful landing, because
+       * `plan` was always the terminal step — everything before it is done.
+       */
+      onRehydrateStorage: () => (state) => {
+        if (state && !GUARDIAN_STEPS.includes(state.step)) state.setStep(LAST_GUARDIAN_STEP);
+      },
     },
   ),
 );

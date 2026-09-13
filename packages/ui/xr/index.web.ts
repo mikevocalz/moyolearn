@@ -39,11 +39,13 @@ export type {
 } from './XrOrnaments.types.ts';
 /* Colour constants are plain strings off the token file — no renderer in them,
    so the web fork answers with the same values rather than with nothing. */
-export { XR_COLOR } from './xr-colors.ts';
+export { XR_COLOR, XR_SURFACE } from './xr-colors.ts';
 export {
   boardComposition,
   boardSurfacePixels,
   minHitSize,
+  railContentHeight,
+  railGrid,
   railWidthFor,
   spatialDistance,
   spatialFontSize,

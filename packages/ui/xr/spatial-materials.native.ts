@@ -17,6 +17,7 @@
 import { ViroMaterials } from '@reactvision/react-viro';
 import { COLOR_IDS, THEMES } from '@quickdrawjs/core';
 import { semantic } from '@acme/theme';
+import { XR_SURFACE as chrome } from './xr-colors.ts';
 
 /*
   THE COLOURS COME FROM THE TOKEN FILE, not from this one. `CLAUDE.md` §UI: no
@@ -26,20 +27,14 @@ import { semantic } from '@acme/theme';
   colours that had never met Moyo's, which is exactly the drift a spatial
   surface is prone to because nobody puts it side by side with the 2D product.
 
-  `dark` in both cases, deliberately, for everything EXCEPT the paper. A headset
-  scene is a dark room with panels floating in it; the light scheme's cream
-  chrome would glow. The paper is the exception and keeps its light value,
-  because the board is always light paper (`whiteboard.types.ts`).
+  THEY ARRIVE FROM `xr-colors.ts` rather than being declared here, and the move
+  is the point: this module imports the renderer, so nothing in the package
+  could read the values it was registering. `key`, `keySelected` and the focus
+  ring all resolved to `palette.ink[100]` — 1.00:1 between every pair — through
+  a whole release, with the ratios asserted nowhere. They are asserted now
+  (`xr-colors.test.ts`), which is only possible with the colours in a file that
+  has no Viro import.
 */
-const chrome = {
-  rail: semantic['surface-raised'].dark,
-  card: semantic['surface-raised'].dark,
-  key: semantic['surface-sunken'].light,
-  frame: semantic['surface-sunken'].dark,
-  paper: semantic['surface-raised'].light,
-  onDark: semantic.surface.light,
-  focus: semantic['border-strong'].dark,
-} as const;
 
 /** Names, so nothing string-literals a material at a call site. */
 export const XR_MATERIAL = {
@@ -110,17 +105,27 @@ ViroMaterials.createMaterials({
     metalness: 0,
   },
   [XR_MATERIAL.keyPressed]: {
-    /* A 20% white wash, the spatial equivalent of the 2D pressed state. */
+    /*
+      A 20% white wash, the spatial equivalent of the 2D pressed state. Setting
+      it as a `ViroFlexView`'s material REPLACES the resting one, so it
+      composites over the rail (`#262420`) rather than over the key it
+      succeeds: `#514F4B`. `RailKey` reads that and takes the light label there,
+      which is 8.03:1 — the dark label it used to keep was 2.21:1.
+    */
     diffuseColor: `${chrome.onDark}33`,
     lightingModel: 'Constant',
     blendMode: 'Alpha',
   },
   /*
-    Selection is carried by position and a ring as well as this fill — a tool
+    THE SELECTED FILL IS THE RESTING ONE INVERTED, at 17.59:1, and it is carried
+    by an inset outline and an inverted label as well as by the colour — a tool
     picked out by colour alone is a tool a colour-blind child cannot find.
+
+    It was `chrome.focus`, which was the same `ink[100]` as `chrome.key`, so
+    `selected` swapped a key's fill from `#F6F3E8` to `#F6F3E8`.
   */
   [XR_MATERIAL.keySelected]: {
-    diffuseColor: chrome.focus,
+    diffuseColor: chrome.keySelected,
     lightingModel: 'Constant',
   },
   [XR_MATERIAL.keyDisabled]: {

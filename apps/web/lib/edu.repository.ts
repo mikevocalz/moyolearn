@@ -39,7 +39,9 @@ import {
   type SessionTranscript,
 } from '@acme/student-model';
 import type {
+  EduErasure,
   EraseFactAndBlockTag,
+  EraseSubjectEdu,
   EraseTranscriptCascade,
   EvidencedTurn,
   ForgetLearnerRecord,
@@ -454,21 +456,21 @@ export const eraseEduTranscriptCascade: EraseTranscriptCascade = async (ctx, tra
  * the transcripts go, and the test asserts it so a relaxed constraint goes red
  * here instead of leaving a child's embeddings behind quietly.
  */
-export const forgetEduLearnerRecord: ForgetLearnerRecord = async (ctx) =>
+const forgetEduRecordFor = async (learnerId: string): Promise<EduErasure> =>
   withEdu(async (client: EduClient) => {
     await client.query('begin');
     try {
       const tags = await client.query('delete from edu.blocked_tags where learner_id = $1', [
-        ctx.learnerId,
+        learnerId,
       ]);
       const facts = await client.query('delete from edu.knowledge_graph where learner_id = $1', [
-        ctx.learnerId,
+        learnerId,
       ]);
       // Facts before transcripts, the order the sweep route argues for: both can
       // be interrupted, and only this one is interrupted in the direction the
       // retention promise was made.
       const transcripts = await client.query('delete from edu.transcripts where learner_id = $1', [
-        ctx.learnerId,
+        learnerId,
       ]);
 
       await client.query('commit');
@@ -482,6 +484,22 @@ export const forgetEduLearnerRecord: ForgetLearnerRecord = async (ctx) =>
       throw error;
     }
   });
+
+export const forgetEduLearnerRecord: ForgetLearnerRecord = async (ctx) =>
+  forgetEduRecordFor(ctx.learnerId);
+
+/**
+ * FD-26's educational-store leg — the same transaction, for one subject of an
+ * account deletion.
+ *
+ * The subject is the branded `DeletionSubject` rather than an id, so the only
+ * value that can reach that `$1` is one `planAccountDeletion` minted from the
+ * guardianship rows the session resolved. The paragraph above about blast
+ * radius is the reason the brand exists: this predicate is the one in the
+ * product whose failure mode is other people's children.
+ */
+export const eraseEduSubject: EraseSubjectEdu = async (_ctx, subject) =>
+  forgetEduRecordFor(subject.authId);
 
 /**
  * One session transcript, landed in the educational store.

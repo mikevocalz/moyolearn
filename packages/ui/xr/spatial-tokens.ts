@@ -150,17 +150,65 @@ export function minHitSize(distanceM: number, hands: boolean, band: SpatialBand)
 }
 
 /**
- * The rail width that can actually hold a floor-sized key, in metres.
+ * How the rail's controls are arranged, and the one number that decides it.
  *
- * A key is laid out INSIDE the rail's flex box, so the rail has to carry the
- * key plus its own padding on both sides. The two numbers were separate — a
- * `railWidth` token picked by eye and a key clamped to it — and the clamp is
- * what silently shrank the key. One function now answers both: the token below
- * is this function at the design case, and `board-layout` takes this function's
- * answer as the floor it checks the allocated rail against.
+ * A KEY'S HEIGHT IS THE BINDING CONSTRAINT AND THE RAIL IS AS TALL AS THE
+ * PAPER. At the `young` band a floor-sized key is 0.17143 m and the rail's
+ * content box is 0.72 m, so a single column holds FOUR controls and no
+ * argument about layout can produce a fifth. The rail declares eight — the
+ * three pens, the ink well, undo, redo, ask and clear — which is why its
+ * content measured 1.4714 m in a 0.72 m box, 2.0× closed and 3.7× with the ink
+ * picker stacked below it (`05-handoff.md` §2.6, `07-critique.md` §5). Yoga's
+ * default `flexShrink` is 0, so Undo and Clear were simply drawn outside the
+ * slab — which is what makes Clear unsafe, because its whole defence is that
+ * Undo is on the rail directly above it.
+ *
+ * Two columns of four is the arrangement that fits, and it is the only one: a
+ * third column is 0.61 m of slab beside a 0.55 m board, and paginating hides
+ * Undo while a child is picking a colour. `rows` counts the tallest column, not
+ * the keys — one xs separator sits above Clear and is counted by
+ * `railContentHeight`.
  */
-export function railWidthFor(distanceM: number, hands: boolean, band: SpatialBand): number {
-  return minHitSize(distanceM, hands, band) + spatialSpacing.xs * 2;
+export const railGrid = { columns: 2, rows: 4, separators: 1 } as const;
+
+/**
+ * The rail width that can actually hold `columns` floor-sized keys, in metres.
+ *
+ * A key is laid out INSIDE the rail's flex box, so the rail has to carry its
+ * keys plus one `xs` of padding at each edge and between each pair. The two
+ * numbers were separate — a `railWidth` token picked by eye and a key clamped
+ * to it — and the clamp is what silently shrank the key. One function now
+ * answers both: the token below is this function at the design case, and
+ * `board-layout` takes this function's answer as the floor it checks the
+ * allocated rail against.
+ *
+ * `columns` defaults to the grid the rail actually draws, so a caller that
+ * wants "the narrowest rail that can hold a reachable key" gets the answer for
+ * the rail that exists rather than for a one-column rail nobody renders. Pass
+ * `1` for anything that boxes a single key — the placement row does.
+ */
+export function railWidthFor(
+  distanceM: number,
+  hands: boolean,
+  band: SpatialBand,
+  columns: number = railGrid.columns,
+): number {
+  return minHitSize(distanceM, hands, band) * columns + spatialSpacing.xs * (columns + 1);
+}
+
+/**
+ * What the rail's tallest column comes to, in metres, excluding its padding.
+ *
+ * Exported so the fit is a red test rather than a paragraph: a ninth key or a
+ * wider separator has to move this past the box the rail is given, and
+ * `spatial-tokens.test.ts` measures it against the paper's own height. The
+ * separator above Clear is `xs` because `xs` is the largest tier that fits —
+ * four keys leave 0.0344 m of the 0.72 m box, and `sm` needs 0.05.
+ */
+export function railContentHeight(distanceM: number, hands: boolean, band: SpatialBand): number {
+  return (
+    minHitSize(distanceM, hands, band) * railGrid.rows + spatialSpacing.xs * railGrid.separators
+  );
 }
 
 /**
@@ -174,7 +222,7 @@ export function railWidthFor(distanceM: number, hands: boolean, band: SpatialBan
  * genuinely cannot hold their key — and `layoutBoard` reports that rather than
  * shrinking the key to fit.
  */
-const DESIGN_KEY_BOX = railWidthFor(spatialDistance.board, false, 'young');
+const DESIGN_KEY_BOX = railWidthFor(spatialDistance.board, false, 'young', 1);
 
 /**
  * The whiteboard composition, in metres.
@@ -193,8 +241,17 @@ export const boardComposition = {
    * Derived, never picked. It was 0.1 — 3.82° at the board's distance, under
    * the 4° floor before a band multiplier was even applied — and `XrRail` then
    * clamped its keys down to it.
+   *
+   * Two columns now (`railGrid`), which is what makes the rail's eight controls
+   * fit its own height. It widens the slab from 0.22143 m to 0.41786 m — 15.9°
+   * at the board's distance, putting the rail's outer edge 26.3° off centre:
+   * inside the ±30° cone, and nearer it than the chat panel already sits on the
+   * other side. The paper does not move: `layoutBoard` takes the rail out of the
+   * width budget before it sizes the board, and the rail is placed by its own
+   * extent, so the extra width goes AWAY from the paper and never across
+   * `railGap`.
    */
-  railWidth: DESIGN_KEY_BOX,
+  railWidth: railWidthFor(spatialDistance.board, false, 'young'),
   railGap: spatialSpacing.sm,
   chatWidth: 0.45,
   chatGap: spatialSpacing.md,

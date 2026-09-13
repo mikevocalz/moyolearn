@@ -42,6 +42,27 @@ export { InboxScreen } from './features/notifications/inbox-screen';
 export { ProfileScreen } from './features/profile/screen';
 export { SettingsScreen } from './features/settings/screen';
 export { OrgSettingsScreen } from './features/org-settings/screen';
+/*
+  FD-26 · Delete account. Beside Settings because Settings is its only entry
+  point: the row there pushes `/account/delete`, and doc 38 puts `account/*`
+  inside every authed guard rather than in a role shell, so one screen serves
+  every role that can sign in — including the guardian-managed learner, who is
+  shown the reason and the destination instead of a control.
+*/
+export { DeleteAccountScreen } from './features/account/screen';
+export { DeleteAccountContent } from './features/account/delete-account-content';
+export {
+  confirmArmed,
+  useAccountDeletionStore,
+  type LearnerRow,
+} from './features/account/account-deletion.store';
+export {
+  ACCOUNT_DELETION_COPY,
+  DELETE_CONFIRM_WORD,
+  DELETION_OUTCOME_COPY,
+  DELETION_REFUSAL_COPY,
+  LEARNER_DELETION_COPY,
+} from './features/account/account-deletion.copy';
 export { useProfile, type ThemePreference } from './features/profile/profile.store';
 export { useIdentity, type Identity } from './features/profile/use-identity';
 // ADR-106: the AvatarSheet's app-side content + the store its per-shell

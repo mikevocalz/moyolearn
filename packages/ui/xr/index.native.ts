@@ -21,11 +21,13 @@ export type { XrBoardInkProps } from './XrBoardInk.types.ts';
 export type { XrChatPanelProps, XrChatRow, XrChatAction } from './XrChatPanel.types.ts';
 export type { XrQuestionLineProps, XrPlacementControlsProps } from './XrOrnaments.types.ts';
 export { XR_MATERIAL, inkMaterial } from './spatial-materials.native.ts';
-export { XR_COLOR } from './xr-colors.ts';
+export { XR_COLOR, XR_SURFACE } from './xr-colors.ts';
 export {
   boardComposition,
   boardSurfacePixels,
   minHitSize,
+  railContentHeight,
+  railGrid,
   railWidthFor,
   spatialDistance,
   spatialFontSize,

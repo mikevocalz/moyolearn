@@ -1,11 +1,14 @@
 # App Store submission audit — Moyo
 
-Audited 2026-09-13 · branch `feat/spatial-whiteboard-xr` @ `6e5707b` · **2 HARD BLOCK · 7 LIKELY REJECTION · 8 RISK FLAG**
+Audited 2026-09-13 · branch `feat/spatial-whiteboard-xr` @ `6e5707b`
+Re-audited 2026-09-13 @ `0075ee7` · **1 HARD BLOCK · 5 LIKELY REJECTION · 8 RISK FLAG · 3 RESOLVED**
 
 Guidelines verified against the June 8, 2026 App Review Guidelines. Re-verify at
 <https://developer.apple.com/app-store/review/guidelines/> before submitting.
 
-**The gate does not pass.** It passes only at zero HARD BLOCKs.
+**The gate still does not pass.** It passes only at zero HARD BLOCKs, and one remains:
+5.1.1(v), in-app account deletion. 3.1.1 is closed, so the submission is no longer blocked
+on a payment decision — it is blocked on shipping FD-26.
 
 ## How this was produced
 
@@ -31,10 +34,131 @@ Two scan results were corrected after reading the evidence:
   on disk to find. React Native 0.86 does ship manifests (`node_modules/react-native/React/Resources/PrivacyInfo.xcprivacy`,
   `ReactCommon/cxxreact/PrivacyInfo.xcprivacy`) and `apple.privacyManifestAggregationEnabled: "true"`
   is set in the generated `Podfile.properties.json`. Dropped as unsupported. The vendored Viro fork
-  is a different matter — see LIKELY REJECTION 7.
+  is a different matter — see RESOLVED 7.
 - The scan reported `no third-party AI endpoints detected` and `no account-creation flow detected`.
   It scanned only `apps/mobile/`; the AI egress and the auth stack live in `packages/inference`,
   `packages/voice` and `packages/auth`. Both are findings, raised by hand below.
+
+### Re-audit, 2026-09-13 @ `0075ee7`
+
+Findings 2, 7 and 8 were fixed and are recorded under RESOLVED below. The re-audit ran the same
+scratch-worktree prebuild twice — once at `0075ee7` unmodified as a control, once with the fix — so
+each claim below rests on a diff between two generated trees rather than on reading the config.
+
+Two facts the original audit recorded have since changed on their own, and both are corrected in
+place: `@reactvision/react-viro` IS now in the plugins array (RISK FLAG 10), and the camera purpose
+string in the prebuild output changed wording (LIKELY REJECTION 4).
+
+The working tree at re-audit time carried uncommitted account-deletion work from another agent
+(`packages/app/features/account/`, `apps/web/app/api/account/`, `apps/web/lib/account-deletion.repository.ts`,
+and edits to `settings-content.tsx`). **None of it is audited here.** HARD BLOCK 1 is still open
+against committed code; re-run this audit when that lands.
+
+---
+
+## RESOLVED
+
+### 2. 3.1.1 / 2.1 — subscription prices and a trial CTA on iOS · **FIXED**
+
+**Was:** `packages/app/features/paywall/paywall.data.ts:32,41` put `$11/month` and `$15.99/month` on
+the `plan` step of guardian onboarding, and `Start 30-day free trial` was the screen's one primary
+action — with no StoreKit, no `react-native-iap`, no `expo-in-app-purchases` and no RevenueCat
+anywhere in the repo (grep confirmed again at `0075ee7`: zero matches outside `node_modules`).
+Billing is Stripe, server-side. The CTA was also inert: `guardian-onboarding-content.tsx` passed
+`onStartTrial={complete}`, so the tap advanced a step and created no subscription.
+
+**Fix shipped:** the paywall step no longer exists in the native guardian flow.
+`packages/app/features/onboarding/guardian/plan-step.native.ts` exports `GUARDIAN_PLAN_STEP = false`
+and `plan-step.web.ts` exports `true`; `steps.ts` builds `GUARDIAN_STEPS` from that constant, so the
+native sequence ends at `handoff` (six steps) and the web sequence keeps `plan` (seven, unchanged).
+`guardian-onboarding-content.tsx` renders a `Finish setup` button on whichever step is terminal,
+which is what completes the flow on native — web still completes through the paywall's own two
+buttons, so nothing on that path moved.
+
+The step was removed rather than stripped of its prices. A plan step with no price and no purchase
+is a heading, one line of prose and no control, which is the same faked surface the `grants` step
+was deleted for (`steps.ts`) — and it would have left the 2.1 half of this finding standing. Nothing
+was added that steers a guardian to the web to pay, because 3.1.3 forbids advertising or linking to
+another purchase method; the native flow says nothing about buying at all.
+
+**Verified:** Metro's own resolver (`metro-resolver`, project config, origin `steps.ts`) answers
+`./plan-step` with `plan-step.native.ts` for `ios` and `android`, and `plan-step.web.ts` for `web`.
+`tsc --noEmit` is green across all 19 workspace targets. A persisted native draft that still carries
+`step: 'plan'` is clamped to this platform's last step on rehydration (`store.ts`,
+`onRehydrateStorage`) — without that, `indexOf` would return -1 and the paywall would render on the
+one platform it must not.
+
+**Still true, and deliberately unchanged:** no learner surface imports the paywall on any platform.
+`packages/app/features/paywall/` is imported from exactly one place, guardian onboarding.
+
+**What this does not do:** it does not make the family subscription purchasable on iOS. That remains
+a product and finance decision — ship in-app purchase, or accept that iOS guardians subscribe
+outside the app and never hear about it from the app. If IAP is chosen later, flip
+`plan-step.native.ts` and give the paywall the seven elements 3.1.2 requires (title, duration, full
+renewal price as the most prominent price, what it provides, Terms, Privacy, Restore); it carries
+duration, price and cancellation copy today and is missing the last three.
+
+### 7. ITMS-91061 / ITMS-91053 — the vendored Viro fork's required-reason APIs · **DECLARED**
+
+**Was:** `vendors/reactvision-react-viro-3.0.0-moyo.1.tgz` ships no `PrivacyInfo.xcprivacy`, and it
+is a fork we build, so its required-reason APIs are ours to account for.
+
+**What it actually uses.** Measured on the tarball's two binaries with `nm -u` plus a selector scan
+of `__objc_methname`; the 634 `.h/.m/.mm/.swift/.cpp` sources reference none of these at all, which
+is why a text grep alone would have reported a clean fork:
+
+| Binary | Symbol | Category | Reason |
+|---|---|---|---|
+| `ios/dist/ViroRenderer/ViroKit.framework/ViroKit` | `stat`, `fstat` | `FileTimestamp` | `C617.1` — app-container assets (shaders, textures, `.mlmodelc`) |
+| same | `mach_absolute_time` | `SystemBootTime` | `35F9.1` — frame clock |
+| `ios/dist/lib/libViroReact.a` | none | — | — |
+
+No `statfs`/`statvfs`/volume-capacity key, so no `DiskSpace`. No `NSUserDefaults`/`CFPreferences`, so
+no `UserDefaults`. No `activeInputModes`. Both categories Viro does need were already declared for
+`@sentry/react-native` and `expo-file-system`, so **the fork adds no new category** — the honest
+change is that the app manifest now has a source, and that source names Viro as a reason each entry
+exists.
+
+**Fix shipped:** declared in `apps/mobile/app.config.ts` under `ios.privacyManifests`, with the
+attribution written into the comments, and recorded in `vendors/README.md` with the command to
+re-measure if the tarball is recut. Not added to the tarball's podspec: aggregating a vendored
+framework's reasons into the app manifest is what the app manifest is for, and it avoids cutting a
+52 MB `3.0.0-moyo.2` to carry two strings.
+
+**One thing to watch.** `ViroKit.podspec` documents opt-in ARCore pods (`ARCore/CloudAnchors`,
+`Geospatial`, `Semantics`) that are weak-linked and currently absent from the Podfile. Several
+Firebase and GoogleUtilities pods they pull in ARE on Apple's list of SDKs that must ship a signed
+privacy manifest. Enabling Cloud Anchors is a privacy-manifest decision, not only a product one.
+
+### 8. ITMS-91053 — the app's privacy manifest now has a generated source · **FIXED**
+
+**Was:** `apps/mobile/ios/Moyo/PrivacyInfo.xcprivacy` was committed and correct, but nothing in
+source produced it, so `expo prebuild --clean` deleted it and the next upload would have failed
+ITMS-91053 — an upload-time rejection, which nothing reaches review from.
+
+**Fix shipped:** `ios.privacyManifests` in `apps/mobile/app.config.ts`. No new plugin file was
+needed and none was added: `@expo/prebuild-config` already runs
+`IOSConfig.PrivacyInfo.withPrivacyInfo` in its default plugin set, which writes the plist *and*
+registers it in the Xcode target's Resources build phase — a hand-rolled `withDangerousMod` would
+have had to redo the second half. `expo-build-properties` does not cover this; its
+`privacyManifestAggregationEnabled` flag only merges manifests that CocoaPods dependencies ship for
+themselves, and it was already `true` in the generated `Podfile.properties.json`.
+
+**Verified by running it, twice, in a scratch worktree outside the repo:**
+
+- Control — `0075ee7` unmodified, `npx expo prebuild --platform ios --clean --no-install`, exit 0:
+  `ios/Moyo/PrivacyInfo.xcprivacy` does not exist. The deletion is real.
+- With the fix — same command, exit 0: the file is regenerated. Parsed with `plistlib` against the
+  committed copy, `NSPrivacyAccessedAPITypes`, `NSPrivacyTracking` and `NSPrivacyCollectedDataTypes`
+  are equal; the generated file adds an empty `NSPrivacyTrackingDomains`, which is inert and correct
+  beside `NSPrivacyTracking = false`. `project.pbxproj` carries the `PBXBuildFile`, the
+  `PBXFileReference` and the `PrivacyInfo.xcprivacy in Resources` phase entry.
+
+Nothing under `apps/mobile/ios/` was edited or committed — `git status apps/mobile/ios` is empty.
+
+The drift this finding also named is unchanged and still worth settling: the committed `Info.plist`
+carries `RCTNewArchEnabled` and the regenerated one does not. Decide whether `ios/` stays committed
+at all. Either answer is defensible; the hybrid means nobody can tell which file wins.
 
 ---
 
@@ -53,25 +177,6 @@ Two scan results were corrected after reading the evidence:
 **Fix:** Build FD-26. One entry point per role that can sign in — guardian, teacher, tutor, school admin, district, and the guardian-initiated path for each managed learner. Route it through `protectedOperation` with `requires: 'write'`, cascade to Payload collections (`Consents`, `SessionTranscripts`, `StudentModelFacts`, `TutorSessions`, `SafetyEvents`, `Guardianships`) and to Better Auth's user/session/account rows, and confirm the erasure sweep reaches the versions tables. `packages/payload/src/collections/Consents.ts:29` already documents why `versions: false` matters here: a shadow row survives its own deletion. Surface the control in `settings-content.tsx` beside Sign out, and on the family screen for each child.
 
 **Source:** <https://developer.apple.com/support/offering-account-deletion-in-your-app/>
-
-### 2. 3.1.1 — subscription prices and a trial CTA ship on iOS with no in-app purchase anywhere
-
-**Evidence:**
-- `packages/app/features/paywall/paywall.data.ts:32` `monthly: '$11/month'`, `:41` `monthly: '$15.99/month'`.
-- `packages/app/features/paywall/paywall-content.tsx:64-66` renders the price; `:84-89` renders `Start {n}-day free trial` as the screen's one primary action.
-- `packages/app/features/onboarding/guardian/guardian-onboarding-content.tsx:163` mounts `PaywallContent` as the `plan` step of guardian onboarding, which is step 7 of `GUARDIAN_STEPS` (`packages/app/features/onboarding/guardian/steps.ts:26`) and runs in the mobile binary via `apps/mobile/app/onboarding/[flow].tsx`.
-- A repo-wide grep for `StoreKit|react-native-iap|expo-in-app-purchases|react-native-purchases|requestSubscription` returns zero matches outside `node_modules`.
-- Billing is Stripe, server-side: `packages/auth/src/server.ts:279` (`stripePlugin`), gated on `STRIPE_SECRET_KEY`.
-- The trial CTA is also inert on device. `guardian-onboarding-content.tsx:163-166` passes `onStartTrial={complete}` and `onContinueFree={complete}` — both buttons advance the same step. No subscription is created by the tap.
-- `packages/app/features/settings/settings-content.tsx:114-130` hides the "Manage plan" row on native because `managePlanHref` is web-only, so there is no billing surface in the app either.
-
-**Why:** Two separate rejections in one screen. 3.1.1 requires that unlockable app features be purchased through in-app purchase; displaying subscription pricing and a purchase-shaped CTA while collection happens on the web is the pattern Apple rejects most often in this section, and the paywall's own entitlements (`packages/auth/src/entitlements.ts:80`) gate `write` and `practise` on that subscription. Separately, 2.1 covers controls that do nothing: a button reading "Start 30-day free trial" that only advances an onboarding step is an incomplete feature in a submitted build.
-
-**Fix:** Pick one and make it true in the binary.
-- Ship IAP: add StoreKit 2 (or `expo-iap`), create the matching auto-renewable subscriptions in App Store Connect, wire the receipt to the entitlement reader in `packages/auth/src/subscription-reader.ts`, and add Restore Purchases — 3.1.2 requires it. The paywall also needs the seven required elements (title, duration, full renewal price as the most prominent price, what the subscription provides, Terms, Privacy, Restore); today it carries duration, price and cancellation copy, and is missing Terms, Privacy and Restore.
-- Or remove prices and the trial CTA from the iOS build entirely and let the guardian subscribe on the web. Sign-up must not link out to the purchase; 3.1.3(b) multiplatform allows the app to honour a subscription bought elsewhere, but not to advertise or link to it.
-
-**Source:** <https://developer.apple.com/app-store/review/guidelines/#in-app-purchase>
 
 ---
 
@@ -97,6 +202,22 @@ Two scan results were corrected after reading the evidence:
 - The prebuild output carries `NSCameraUsageDescription = "Allow $(PRODUCT_NAME) to access your camera"`, `NSMicrophoneUsageDescription = "Allow $(PRODUCT_NAME) to access your microphone"`, `NSPhotoLibraryUsageDescription = "Allow $(PRODUCT_NAME) to access your photos"`. Those exact strings come from `expo-image-picker`'s auto-applied config plugin (`node_modules/expo-image-picker/plugin/src/withImagePicker.ts`), which `packages/app/package.json:41` pulls in. They are defaults nobody chose.
 - The camera is used for two distinct things and names neither: homework capture through `react-native-vision-camera` at `packages/app/features/capture/guided-frame.native.tsx:11`, and — on this branch — ARKit world sensing to place the board in the room, through `packages/app/features/tutor/tutor-xr-screen.native.tsx`.
 - The microphone records a child's voice note (`packages/ui/audio/VoiceRecorder.native.tsx:5`, `react-native-audio-api`'s `AudioRecorder`).
+- **One authored string exists and is silently discarded. Found in the re-audit at `0075ee7`, cause
+  traced.** The Viro plugin is now registered and `app.config.ts:75-77` passes it
+  `cameraUsagePermission: 'Moyo uses the camera so you can photograph your homework, and to place
+  your whiteboard in the room.'` — at the **top level of the plugin's props**. The plugin reads it
+  from `props.ios.cameraUsagePermission` (`node_modules/@reactvision/react-viro/plugins/withViroIos.ts:231-232`),
+  so the option never matches and `DEFAULTS.ios.cameraUsagePermission` wins (`withViro.ts:5,201`).
+  The re-audit prebuild confirms it: `NSCameraUsageDescription = "Allow $(PRODUCT_NAME) to use your
+  camera"` and `NSMicrophoneUsageDescription = "Allow $(PRODUCT_NAME) to use your microphone"` —
+  Viro's defaults, not `expo-image-picker`'s `"…to access your camera"` that the first audit saw.
+  A prop nobody reads is worse than no prop: it reads as done.
+- That also settles the precedence question this finding's fix depends on. `withViroIos.ts:257`
+  resolves the string as `config.ios.infoPlist.NSCameraUsageDescription || cameraUsagePermission`,
+  and `expo-image-picker` uses the same `||` shape, so **authoring in `ios.infoPlist` beats every
+  plugin default** and makes the mis-nested Viro prop moot rather than needing a second fix.
+  Deliberately not patched here: nesting the prop correctly would be a second way to set the same
+  string, and this finding's fix removes the need for either.
 
 **Why:** 5.1.1 requires the string to name the feature and why the data is needed. Generic template strings are among the most common metadata rejections, and on a children's app the reviewer reads them as the parent would. `$(PRODUCT_NAME)` also renders as the literal target name rather than the display name in some contexts.
 
@@ -152,34 +273,6 @@ The containment tooling is worth keeping and worth not over-reading. `tooling/ch
 
 **Source:** <https://developer.apple.com/app-store/review/guidelines/#data-collection-and-storage>
 
-### 7. ITMS-91061 — the vendored Viro fork ships no privacy manifest, and it is ours to ship
-
-**Evidence:**
-- `apps/mobile/package.json:22` depends on `"@reactvision/react-viro": "3.0.0-moyo.1"`, resolved from `vendors/reactvision-react-viro-3.0.0-moyo.1.tgz` (52 MB).
-- `find node_modules/@reactvision/react-viro -name 'PrivacyInfo.xcprivacy'` returns nothing. The package ships two podspecs (`ios/ViroReact.podspec`, `ios/ViroReactUI.podspec`) and no manifest in either.
-
-**Why:** ITMS-91061 rejects an upload when a listed SDK is embedded without a bundled, signed privacy manifest. The published `@reactvision/react-viro` is not currently on Apple's 86-SDK list, so this is not automatic — but a fork we build and vendor ourselves is our responsibility regardless. ViroCore touches ARKit, the camera and the file system, and the aggregated app manifest has to account for it.
-
-**Fix:** Add `PrivacyInfo.xcprivacy` to the fork's `ios/` directory and list it in the podspec's `resource_bundles`, declaring at minimum `NSPrivacyAccessedAPICategoryFileTimestamp` and `NSPrivacyAccessedAPICategoryDiskSpace` if the renderer reads either, with `NSPrivacyCollectedDataTypes` empty and `NSPrivacyTracking` false. Cut a new `3.0.0-moyo.2` tarball into `vendors/` and record the change in `vendors/README.md`. This is not urgent until the XR route is actually shippable (see RISK FLAG 10), but it blocks that route when it is.
-
-**Source:** <https://developer.apple.com/support/third-party-SDK-requirements/>
-
-### 8. ITMS-91053 — the app's privacy manifest has no source, and `expo prebuild --clean` deletes it
-
-**Evidence:**
-- `apps/mobile/ios/Moyo/PrivacyInfo.xcprivacy` is committed (`git ls-files apps/mobile/ios` lists 23 files including this one) and correctly declares UserDefaults `CA92.1`, FileTimestamp `0A2A.1/3B52.1/C617.1`, DiskSpace `E174.1/85F4.1` and SystemBootTime `35F9.1`.
-- Those declarations match what the binary uses: `react-native-mmkv` (`apps/mobile/package.json:49`) writes through `NSUserDefaults`; `expo-file-system` reads timestamps and free space on the upload path (`packages/app/features/media/transport.native.ts:16`); `@sentry/react-native` (`apps/mobile/package.json:23`, initialised at `apps/mobile/src/telemetry.ts:58`) reads system boot time.
-- Nothing in source regenerates it. `apps/mobile/app.config.ts:44-168` registers ten plugins and none writes a privacy manifest; `apps/mobile/plugins/` contains only `with-webgpu-min-sdk.js`.
-- Proved by running the prebuild: after `expo prebuild --platform ios --clean`, `ios/Moyo/PrivacyInfo.xcprivacy` does not exist in the generated tree. The committed copy is the only copy.
-
-**Why:** ITMS-91053 is an upload-time rejection — nothing reaches review. It does not fire today, because `ios/` is tracked in git and EAS Build uses the committed directory as-is. It fires the moment anyone runs a clean prebuild, and the diff that would show it is one deleted file in a directory people skim.
-
-Two smaller symptoms of the same root cause: the committed `Info.plist:64` carries `RCTNewArchEnabled` and the regenerated one does not, and `Moyo.entitlements` is an empty dict in both. The committed `ios/` and the config have already drifted.
-
-**Fix:** Write a config plugin at `apps/mobile/plugins/with-privacy-manifest.js` using `withInfoPlist`/`withDangerousMod` to emit `PrivacyInfo.xcprivacy` and register it in `app.config.ts` plugins, so a clean prebuild reproduces it. Then decide whether `ios/` stays committed at all — either is defensible, but the current hybrid means the config is not the source of truth and nobody can tell which file wins.
-
-**Source:** <https://developer.apple.com/documentation/bundleresources/privacy-manifest-files/describing-use-of-required-reason-api>
-
 ### 9. 2.1 — two engineering harness routes ship in the release bundle
 
 **Evidence:**
@@ -197,7 +290,21 @@ Two smaller symptoms of the same root cause: the committed `Info.plist:64` carri
 
 ## RISK FLAG
 
-### 10. The XR entry is correctly hidden, and the Viro plugin is not registered
+### 10. The XR entry is hidden by a gate that no longer has a broken build behind it
+
+**Corrected 2026-09-13 @ `0075ee7`.** This finding originally rested on the Viro plugin being absent
+from `apps/mobile/app.config.ts`. It is there now — `['@reactvision/react-viro', { xRMode: ['AR'], cameraUsagePermission: … }]`
+at `app.config.ts:71-78` — and the re-audit prebuild proves the linkage it produces: the generated
+Podfile carries `pod 'ViroReact'` and `pod 'ViroKit'` (lines 62-63) and `project.pbxproj` carries two
+`EXCLUDED_ARCHS` entries. So `VRTSceneNavigatorModule` will register on a real build,
+`canOpenSpatialBoard()` will return true, and **the XR button will appear**. The paragraph below
+about the renderer not linking is kept for the record and is no longer true.
+
+That removes the accident that was doing the hiding, and leaves the rule doing it alone. The rule
+still binds: the entry ships only when the device acceptance test is green, and `qa/walkthroughs/`
+still has nothing for the spatial board. Finding 7 is now fixed, so of the four preconditions below
+two remain — the walkthrough, and confirming `UIRequiredDeviceCapabilities` still excludes `arkit`
+(it does, `[arm64]` only, re-verified in the re-audit prebuild).
 
 The rule for this branch is that the spatial whiteboard ships only when the device acceptance test is green, and until then the capability check removes the button — a switch that reveals a half-working mode is a 2.3.1 hidden feature. Both halves currently hold, for reasons worth writing down.
 
@@ -207,7 +314,10 @@ The acceptance test is not green — it does not exist. `qa/walkthroughs/` holds
 
 And the feature cannot build on iOS today. `@reactvision/react-viro` is in `apps/mobile/package.json:22` but is **not** in the `plugins` array of `apps/mobile/app.config.ts:44-168`. Its plugin is what appends `pod 'ViroReact'` and `pod 'ViroKit'` to the Podfile (`node_modules/@reactvision/react-viro/plugins/withViroIos.ts:50-51`) and sets `EXCLUDED_ARCHS` for the simulator. The generated Podfile contains zero `Viro` lines and the generated `project.pbxproj` contains zero `EXCLUDED_ARCHS` entries. So the renderer is not linked, `VRTSceneNavigatorModule` does not exist, and the gate hides the button — the right outcome by accident rather than by design.
 
-**Before the XR entry ships:** register the plugin with authored purpose strings, produce a device acceptance walkthrough under `qa/walkthroughs/`, fix finding 7, and confirm `UIRequiredDeviceCapabilities` still does not list `arkit` (see RISK FLAG 14).
+**Before the XR entry ships:** ~~register the plugin~~ (done), author the purpose strings that plugin
+is trying and failing to set (finding 4), produce a device acceptance walkthrough under
+`qa/walkthroughs/`, ~~fix finding 7~~ (done), and confirm `UIRequiredDeviceCapabilities` still does
+not list `arkit` (see RISK FLAG 14).
 
 ### 11. 1.3 Kids — the Kids Category is the wrong home for this binary, and 1.3 still applies
 
@@ -268,9 +378,10 @@ so every row is recorded as unverified.
 |---|---|
 | Demo credentials in App Review Information | **Roster exists (`qa/walkthroughs/ACCOUNTS.md`) but targets a seeded dev DB — unverified against production (2.1)** |
 | In-app account deletion | **MISSING — HARD BLOCK 1 (5.1.1(v))** |
-| In-app purchase for the family subscription | **MISSING — HARD BLOCK 2 (3.1.1)** |
+| In-app purchase for the family subscription | **Not shipping, and no longer advertised.** The iOS build has no paywall step and no price (RESOLVED 2). Nothing to create in App Store Connect unless IAP is chosen later |
+| `PrivacyInfo.xcprivacy` reproduces from source | Yes — `ios.privacyManifests` in `app.config.ts`, verified against a clean prebuild (RESOLVED 8) |
 | Privacy policy URL live and linked in-app | Pages exist at `apps/web-vite/src/routes/privacy.tsx` and `childrens-privacy.tsx`; **not linked in the app** — LIKELY REJECTION 6 |
-| Terms of Use (EULA) link in the App Store Description | Unverified — required once a subscription ships (3.1.2) |
+| Terms of Use (EULA) link in the App Store Description | Not required by 3.1.2 while the iOS build sells nothing; still owed by 5.1.1(i) as an in-app link — LIKELY REJECTION 6 |
 | Support URL with a working contact method | Unverified |
 | Export compliance (`ITSAppUsesNonExemptEncryption`) | Declared `false` in source (`apps/mobile/app.config.ts:29`) |
 | App Privacy labels | Unverified — must declare photos, audio, user content and diagnostics, and match `PrivacyInfo.xcprivacy` |
@@ -292,10 +403,10 @@ so every row is recorded as unverified.
 - [ ] Terms of Use (EULA) link is in the App Store **Description** field (3.1.2)
 - [ ] Built with the iOS 26 SDK / Xcode 26+, including on CI (ITMS-90725)
 - [ ] Purpose strings name the feature, the benefit, and the data type (5.1.1)
-- [ ] The paywall shows title, duration, full renewal price as the most prominent price, what is provided, Terms, Privacy, and Restore (3.1.2)
+- [x] No subscription price and no purchase CTA render in the iOS build (3.1.1) — the paywall step is web-only. The seven required 3.1.2 paywall elements (title, duration, full renewal price as the most prominent price, what is provided, Terms, Privacy, Restore) become owed only if in-app purchase is ever shipped
 - [ ] Icon and app name use no other developer's brand (4.1(c))
 - [ ] Export compliance answered — TestFlight is not stuck on "Missing Compliance"
-- [ ] Every IAP has a review screenshot and description
+- [ ] Every IAP has a review screenshot and description — n/a today; there are no in-app purchases
 - [ ] Tested on a physical device, cold install, in Airplane Mode too
 
 ---

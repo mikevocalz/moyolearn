@@ -19,6 +19,8 @@ import { targets } from '@acme/theme';
 import {
   boardComposition,
   minHitSize,
+  railContentHeight,
+  railGrid,
   railWidthFor,
   spatialDistance,
   spatialFontSize,
@@ -75,10 +77,47 @@ test('a K-2 learner gets a bigger spatial target than an adult, at the same dist
 
 test('the rail token is wide enough to hold a floor-sized key inside its padding', () => {
   // `XrRail` lays its keys out inside a `spatialSpacing.xs` padding on each
-  // side, so a rail exactly one key wide is a rail that squeezes every key.
+  // side and between each pair, so a rail exactly one key wide is a rail that
+  // squeezes every key.
   const key = minHitSize(spatialDistance.board, false, 'young');
-  assert.ok(boardComposition.railWidth >= key + spatialSpacing.xs * 2 - 1e-12);
+  assert.ok(
+    boardComposition.railWidth >=
+      key * railGrid.columns + spatialSpacing.xs * (railGrid.columns + 1) - 1e-12,
+  );
   assert.equal(boardComposition.railWidth, railWidthFor(spatialDistance.board, false, 'young'));
+});
+
+test('the rail fits its own controls inside the paper it hangs beside', () => {
+  /*
+    THE DEFECT THIS REPLACES IS ARITHMETIC AND WAS TRUE FOR EVERY SESSION. The
+    rail drew eight keys and a separator in one column — 1.4714 m of content in
+    a 0.72 m box at the `young` band, 2.0× — and Yoga's default `flexShrink` is
+    0, so Undo and Clear were drawn outside the slab rather than compressed. The
+    ink picker stacked seven more below them: 2.6714 m, 3.7×.
+
+    The acceptance condition `07-critique.md` §5 sets is that Undo and Clear are
+    both inside the slab at the `young` band with the picker open. That is what
+    this asserts: the tallest column fits the box, and the grid is wide enough
+    to hold all eight controls at `rows` per column.
+  */
+  const boardHeight = (boardComposition.boardWidth * 7) / 5;
+  const box = boardHeight - spatialSpacing.xs * 2;
+  const CONTROLS = 8; // pen, mark, erase, ink, ask, redo, undo, clear
+
+  for (const band of BANDS) {
+    const content = railContentHeight(spatialDistance.board, false, band);
+    assert.ok(
+      content <= box + 1e-12,
+      `${band}: the rail's tallest column is ${content.toFixed(4)} m in a ${box.toFixed(4)} m box`,
+    );
+  }
+  assert.ok(
+    railGrid.columns * railGrid.rows >= CONTROLS,
+    'the grid has fewer cells than the rail has controls',
+  );
+  // And the picker is a sibling slab of the same grid, so the seven swatches
+  // fit it too — they are the reason `rows` is 4 rather than 3.
+  assert.ok(railGrid.columns * railGrid.rows >= 7, 'the palette cannot hold seven swatches');
 });
 
 test('the ornament heights can hold what their components draw in them', () => {

@@ -28,6 +28,72 @@ const config: ExpoConfig = {
       // question with an answer someone has to remember.
       usesNonExemptEncryption: false,
     },
+    /*
+      THE SOURCE OF `ios/Moyo/PrivacyInfo.xcprivacy`. Until this block existed
+      there wasn't one: the manifest was committed under `ios/` and nothing
+      regenerated it, so `expo prebuild --clean` deleted it and the next upload
+      would have failed ITMS-91053 — an upload-time rejection, which nothing
+      reaches review from. The diff that hid it was one deleted file in a
+      directory people skim.
+
+      This is `ios.privacyManifests`, which `@expo/prebuild-config` runs as part
+      of its default plugin set (IOSConfig.PrivacyInfo.withPrivacyInfo). It
+      writes the plist AND adds it to the Xcode target as a resource, which a
+      hand-written `withDangerousMod` would have to redo by hand. No plugin file
+      under `plugins/` is needed, and `expo-build-properties` does NOT cover it —
+      its `privacyManifestAggregationEnabled` flag only merges the manifests that
+      CocoaPods dependencies ship for themselves.
+
+      Every reason below is traced to code that actually calls the API. An
+      undeclared reason is a rejection; a declared one nothing uses is a
+      misdeclaration a reviewer can hold against the App Privacy labels.
+    */
+    privacyManifests: {
+      NSPrivacyAccessedAPITypes: [
+        {
+          // react-native-mmkv writes through NSUserDefaults, as does React
+          // Native's own settings manager. CA92.1 = data readable only by this
+          // app, which is what both do.
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryUserDefaults',
+          NSPrivacyAccessedAPITypeReasons: ['CA92.1'],
+        },
+        {
+          /*
+            C617.1 — files inside the app container: expo-file-system on the
+            upload path (features/media/transport.native.ts) and on the board
+            export (features/tutor/board-image.native.ts), AND the vendored Viro
+            renderer, whose ViroKit.framework binary imports `stat` and `fstat`
+            to read its own bundled shaders, textures and .mlmodelc assets.
+            That fork ships no PrivacyInfo.xcprivacy of its own — it is a
+            framework we vendor, so its required-reason APIs are ours to declare
+            here (see vendors/README.md).
+            3B52.1 — files the guardian picks explicitly (expo-image-picker).
+            0A2A.1 — third-party file-management on the app's behalf.
+          */
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryFileTimestamp',
+          NSPrivacyAccessedAPITypeReasons: ['0A2A.1', '3B52.1', 'C617.1'],
+        },
+        {
+          // The upload path checks for room before it writes a 40 MB voice note
+          // (E174.1) and reports space in diagnostics (85F4.1). Viro needs
+          // neither: its binary references no statfs/statvfs/volume-capacity key.
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategoryDiskSpace',
+          NSPrivacyAccessedAPITypeReasons: ['E174.1', '85F4.1'],
+        },
+        {
+          // 35F9.1 = elapsed time between in-app events and timers.
+          // @sentry/react-native reads boot time to order events, and ViroKit
+          // calls `mach_absolute_time` as its frame clock.
+          NSPrivacyAccessedAPIType: 'NSPrivacyAccessedAPICategorySystemBootTime',
+          NSPrivacyAccessedAPITypeReasons: ['35F9.1'],
+        },
+      ],
+      // No SDK on a learner's device tracks anyone: there is no ad SDK, no
+      // attribution SDK, no expo-tracking-transparency and no
+      // NSUserTrackingUsageDescription. Sentry runs with `attachScreenshot:
+      // false` and every event through `scrubTelemetryEvent`.
+      NSPrivacyTracking: false,
+    },
   },
   android: {
     package: 'com.moyolearn.app',

@@ -137,13 +137,40 @@ export function SettingsContent({ managePlanHref }: { managePlanHref?: string })
           </View>
           <View className="flex-row gap-stack">
             <Button title="Sign out" variant="outline" onPress={() => { void signOut(); }} />
-            {/*
-              DECISION — no "Delete account" button: it was a dead control
-              (onPress={() => {}}), and FD-26 — the deletion flow this
-              contract's exit is declared against — is MISSING (sys.settings
-              Status). Absence over a ghost: the row returns WITH FD-26, wired
-              to a real flow, not before.
-            */}
+          </View>
+        </Card>
+      </FadeIn>
+
+      {/*
+        FD-26, wired. The row was removed once as a dead control
+        (`onPress={() => {}}`) with the decision recorded here — absence over a
+        ghost, returning WITH the flow. The flow now exists
+        (`features/account/account-deletion.service.ts`), so the row is back.
+
+        IT IS NOT ROLE-GATED, and that is the opposite treatment from the plan
+        row above. Plan is hidden from anyone who cannot bill, because a
+        surface that cannot act is noise. Deletion is different in both
+        directions: App Review guideline 5.1.1(v) requires every account that
+        can be created to be deletable from inside the app, and a
+        guardian-managed learner who arrives here is owed the reason and the
+        destination rather than a missing row they would read as their own
+        fault. `DeleteAccountContent` renders the child's version; this row
+        only opens the door.
+      */}
+      <FadeIn delay={320}>
+        <Card className="gap-stack">
+          <View className="gap-1">
+            <Text variant="heading">Account</Text>
+            <Text variant="caption" tone="muted">
+              Delete your account and everything Moyo holds for it.
+            </Text>
+          </View>
+          <View className="flex-row gap-stack">
+            <Button
+              title="Delete account"
+              variant="outline"
+              onPress={() => router.push('/account/delete')}
+            />
           </View>
         </Card>
       </FadeIn>
