@@ -19,10 +19,10 @@
 //
 // NO WEB FORK RENDERS THIS. `XrPanel.web.tsx` is a deliberate non-renderer; see
 // its header.
-// SOT: packages/ui/xr/XrPanel.types.ts · packages/ui/xr/spatial-tokens.ts
+// SOT: packages/ui/xr/XrPanel.types.ts · packages/ui/xr/spatial-tokens.ts · packages/ui/xr/surface-drag.ts
 // SOT-KEYWORDS: xr panel viro native spatial ornament companion quad pointer mapping placement drag
 
-import { useCallback, useRef } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import {
   ViroClickStateTypes,
   ViroFlexView,
@@ -33,6 +33,7 @@ import {
 } from '@reactvision/react-viro';
 import { boardComposition, spatialSpacing } from './spatial-tokens.ts';
 import { XR_MATERIAL } from './spatial-materials.native.ts';
+import { xrDragHit, xrDragPlane } from './surface-drag.ts';
 import { XR_COLOR } from './xr-colors.ts';
 import type { XrPanelProps, XrSurfaceInput, XrVector3 } from './XrPanel.types.ts';
 
@@ -67,6 +68,37 @@ function toSurfaceLocal(
   };
 }
 
+/**
+ * How far the pointer quad stands off the paper, in metres.
+ *
+ * In front of the ink — `XrBoardInk` draws its strokes at 0.001 — so a ray
+ * meets the pointer surface before it meets a line the child already drew. It
+ * stays inside the 0.01 the waiting and unsupported panels stand at, which the
+ * state union already keeps off the board, so that ordering survives a future
+ * state that does share it.
+ */
+const POINTER_STANDOFF = 0.002;
+
+/**
+ * How far past the paper's edge a stroke may stray before it is abandoned.
+ *
+ * One `xs` of slack, not zero: a fast stroke that overshoots the edge by a
+ * fingertip is a child still writing, and the sample is clamped back onto the
+ * paper. Beyond it the aim has genuinely left the board.
+ */
+const POINTER_SLACK = spatialSpacing.xs;
+
+/**
+ * Which input device a sample came from, as the contract's number.
+ *
+ * The installed package types every event's `source` as an image source, which
+ * it is not — the renderer sends the numeric input-source id. Narrowed in one
+ * place rather than at four call sites.
+ */
+function sourceId(source: unknown): number {
+  return typeof source === 'number' ? source : 0;
+}
+
 export function XrPanel({
   width,
   aspect,
@@ -87,85 +119,232 @@ export function XrPanel({
   const frameMaterial = materials?.frame ?? XR_MATERIAL.frame;
 
   /*
-    A stroke in progress, in a ref rather than state. A pointer arrives at
+    A stroke in progress, in refs rather than state. A pointer arrives at
     display rate; a `setState` per sample would re-render the scene graph
     between every two points of a child's handwriting.
+
+    `downHit` and `downNode` are the two world points the drag arithmetic needs,
+    snapshotted at CLICK_DOWN. `lastSample` is the most recent surface sample,
+    which is where a stroke's `end` and `cancel` are reported — never at the
+    position the ending event itself carries, for the reason below.
   */
   const drawing = useRef(false);
+  const downHit = useRef<XrVector3>([0, 0, 0]);
+  const downNode = useRef<XrVector3>([0, 0, 0]);
+  const lastSample = useRef({ u: 0, v: 0, source: 0 });
+  const pointer = useRef<ViroQuad | null>(null);
 
-  const emit = useCallback(
-    (phase: XrSurfaceInput['phase'], world: readonly [number, number, number], source: unknown) => {
-      if (!onSurfaceInput) return;
-      const local = toSurfaceLocal(world, placement.position, placement.rotation[1], placement.scale);
-      /*
-        Clamped, not rejected. A ray a millimetre past the edge during a fast
-        stroke is a child still drawing, and dropping that sample leaves a gap
-        in the line; a ray that has genuinely left the paper arrives as
-        `cancel` from `onHover` instead.
-      */
-      const u = Math.min(1, Math.max(0, local.x / width + 0.5));
-      const v = Math.min(1, Math.max(0, 0.5 - local.y / height));
-      onSurfaceInput({ phase, u, v, source: typeof source === 'number' ? source : 0 });
-    },
-    [height, onSurfaceInput, placement, width],
+  /* The paper's plane, in the world frame the renderer reads it in. */
+  const plane = useMemo(
+    () =>
+      xrDragPlane({
+        position: placement.position,
+        yawDeg: placement.rotation[1],
+        scale: placement.scale,
+        offset: POINTER_STANDOFF,
+        width,
+        height,
+      }),
+    [height, placement, width],
   );
 
-  const onClickState = useCallback(
-    (clickState: number, position: readonly [number, number, number], source: unknown) => {
-      if (clickState === ViroClickStateTypes.CLICK_DOWN) {
-        drawing.current = true;
-        emit('begin', position, source);
-      } else if (clickState === ViroClickStateTypes.CLICK_UP && drawing.current) {
-        drawing.current = false;
-        emit('end', position, source);
-      }
+  /**
+   * A world hit as the caller's `(u, v)`, plus how far outside the paper it fell.
+   *
+   * Clamped, not rejected: a ray a millimetre past the edge during a fast
+   * stroke is a child still drawing, and dropping that sample leaves a gap in
+   * the line. The overshoot comes back with it because it is the only thing
+   * that can tell a live stroke the aim has left the board — a drag reports no
+   * hit node, so nothing else in the stream knows.
+   */
+  const sampleOf = useCallback(
+    (world: XrVector3) => {
+      const local = toSurfaceLocal(world, placement.position, placement.rotation[1], placement.scale);
+      return {
+        u: Math.min(1, Math.max(0, local.x / width + 0.5)),
+        v: Math.min(1, Math.max(0, 0.5 - local.y / height)),
+        overshoot: Math.max(Math.abs(local.x) - width / 2, Math.abs(local.y) - height / 2),
+      };
     },
-    [emit],
+    [height, placement, width],
+  );
+
+  const send = useCallback(
+    (phase: XrSurfaceInput['phase'], u: number, v: number, source: number) => {
+      onSurfaceInput?.({ phase, u, v, source });
+    },
+    [onSurfaceInput],
   );
 
   /*
-    HOVER IS THE MOVE STREAM. It fires continuously while a ray rests on the
-    node, which is the only continuous positional signal the installed
-    component exposes for a surface that is not being dragged — `onDrag` reports
-    where a NODE was dragged to, which is a different question, and `onTouch` is
-    a screen-touch path rather than a ray one.
+    WHY DRAWING IS A DRAG, AND WHAT `onHover` GOT WRONG.
 
-    `isHovering === false` mid-stroke is the ray leaving the paper: the stroke is
-    cancelled rather than ended, so the engine does not commit a line to
-    wherever the child happened to look.
+    This surface used to run a stroke off `onHover`, on the stated belief that
+    it was the only continuous positional signal the component exposes. It is
+    not a stream at all. `onHover` is an enter/exit event carrying a boolean,
+    and the renderer emits it only when the hovered node CHANGES: while a ray
+    rests on the same node `VROInputControllerBase` returns without firing
+    anything. So a stroke got its `begin`, then silence, then an `end` at the
+    same point — the child drew and no line appeared. The belief could not even
+    be repaired, because the renderer freezes the hit result for the whole of a
+    drag, which is the only other thing a pointer-down does.
+
+    The move stream is that drag. A transparent quad over the paper takes
+    `dragType="FixedToPlane"` with `dragPlane` set to the paper's own plane, so
+    the renderer slides it under the ray and reports every step through
+    `onDrag` — one callback per sampled move, which is what the surface needed
+    all along. It is a sampled stream and not a continuous one: the renderer
+    drops a move of less than `ON_DRAG_DISTANCE_THRESHOLD`, one centimetre of
+    world travel — about fifty samples across the width of a 0.55 m board. That
+    floor lives in the installed native renderer and no prop here raises it, so
+    a stroke arrives resampled rather than pixel-exact.
+
+    IT IS A SEPARATE QUAD BECAUSE A DRAG MOVES WHAT IT DRAGS. The renderer sets
+    the dragged node's world transform on every sample. Run this on the paper
+    and a child's homework slides across the room while they write on it; run it
+    on a quad nobody can see and nothing visibly moves, as long as the transform
+    is put back on release so the displacement cannot accumulate over a session.
   */
-  const onHover = useCallback(
-    (isHovering: boolean, position: readonly [number, number, number], source: unknown) => {
-      if (!drawing.current) return;
-      if (isHovering) emit('move', position, source);
-      else {
-        drawing.current = false;
-        emit('cancel', position, source);
+  const restPointer = useCallback(() => {
+    /*
+      Straight at the native node, not through React. React still believes the
+      quad is where it last rendered it — the renderer moved it behind React's
+      back — so a re-render would not put it back, and a state round trip would
+      land a frame into the next stroke.
+    */
+    pointer.current?.setNativeProps({ position: [0, 0, POINTER_STANDOFF] });
+  }, []);
+
+  const onPointerClickState = useCallback(
+    (clickState: number, position: XrVector3, source: unknown) => {
+      if (clickState === ViroClickStateTypes.CLICK_DOWN) {
+        /*
+          A press that carries no hit position. The renderer sends an EMPTY
+          payload when a click is re-routed onto a node the ray has just left —
+          its click grace — or when it lands on the scene background; each
+          coordinate then reads as `undefined`, and NaN from here on. A stroke
+          begun there would be drawn nowhere AND would carry the bad origin
+          through every move that followed, so the press is dropped instead.
+          Checked coordinate by coordinate because `[].every()` is true.
+        */
+        if (
+          !Number.isFinite(position[0]) ||
+          !Number.isFinite(position[1]) ||
+          !Number.isFinite(position[2])
+        ) {
+          return;
+        }
+        /* A second press with a stroke still open is a release that was lost. */
+        if (drawing.current) {
+          send('cancel', lastSample.current.u, lastSample.current.v, lastSample.current.source);
+        }
+        const sample = sampleOf(position);
+        const id = sourceId(source);
+        drawing.current = true;
+        downHit.current = position;
+        /*
+          The quad is at rest when the press lands — every release puts it back
+          — so its world centre is exactly the plane point it was given.
+        */
+        downNode.current = plane.planePoint;
+        lastSample.current = { u: sample.u, v: sample.v, source: id };
+        send('begin', sample.u, sample.v, id);
+        return;
       }
+      if (clickState !== ViroClickStateTypes.CLICK_UP) return;
+      /* Every release rests the quad, including one ending a cancelled stroke. */
+      restPointer();
+      if (!drawing.current) return;
+      drawing.current = false;
+      /*
+        Ended at the last MOVE, never at this event's own position. The renderer
+        freezes the hit result for the duration of a drag, so the position that
+        arrives with CLICK_UP is still the one from CLICK_DOWN: ending a stroke
+        there would snap its final point back to where the child began it.
+      */
+      send('end', lastSample.current.u, lastSample.current.v, lastSample.current.source);
     },
-    [emit],
+    [plane, restPointer, sampleOf, send],
   );
 
-  const surface =
-    state === 'ready' || state === 'interrupted' ? (
-      <ViroNode position={[0, 0, 0]}>
-        {/*
-          The paper. Opaque and light in both schemes — the measured rule in
-          `whiteboard.types.ts` — so it is never a translucent panel a child is
-          asked to read their own pencil work through.
-        */}
-        <ViroQuad
-          width={width}
-          height={height}
-          materials={[surfaceMaterial]}
-          onClickState={onClickState}
-          onHover={onHover}
-          /* The paper does not move; the frame does. */
-          dragType={undefined}
-        />
-        {children}
-      </ViroNode>
-    ) : null;
+  const onPointerDrag = useCallback(
+    (dragToPos: XrVector3, source: unknown) => {
+      if (!drawing.current) return;
+      /* `dragToPos` is where the QUAD went; `xrDragHit` turns it back into the ray's hit. */
+      const sample = sampleOf(xrDragHit(dragToPos, downHit.current, downNode.current));
+      const id = sourceId(source);
+      /*
+        Off the paper cancels the stroke and never ends it. A child whose aim has
+        run onto the wall is not finishing a line there, and committing one
+        leaves them a stroke whose end they never chose.
+      */
+      if (sample.overshoot > POINTER_SLACK) {
+        drawing.current = false;
+        send('cancel', sample.u, sample.v, id);
+        return;
+      }
+      lastSample.current = { u: sample.u, v: sample.v, source: id };
+      send('move', sample.u, sample.v, id);
+    },
+    [sampleOf, send],
+  );
+
+  const drawable = state === 'ready' || state === 'interrupted';
+
+  useEffect(() => {
+    if (drawable || !drawing.current) return;
+    /*
+      The board left mid-stroke: tracking dropped, or the session is on its way
+      out. The stroke is abandoned rather than committed, for the same reason a
+      ray leaving the paper abandons one.
+    */
+    drawing.current = false;
+    send('cancel', lastSample.current.u, lastSample.current.v, lastSample.current.source);
+  }, [drawable, send]);
+
+  const surface = drawable ? (
+    <ViroNode position={[0, 0, 0]}>
+      {/*
+        The paper. Opaque and light in both schemes — the measured rule in
+        `whiteboard.types.ts` — so it is never a translucent panel a child is
+        asked to read their own pencil work through.
+      */}
+      <ViroQuad
+        width={width}
+        height={height}
+        materials={[surfaceMaterial]}
+        /*
+          The paper neither moves nor handles events: the frame carries the move
+          gesture and the pointer quad in front carries every ray. The renderer
+          takes the nearest hit that is not ignoring events, so this flag is what
+          hands a ray past the paper to the quad that knows what to do with it.
+        */
+        ignoreEventHandling
+      />
+      {/*
+        The ink is out of the ray's way for the same reason, and one flag does
+        it: `ignoreEventHandling` recurses into a node's children, so every
+        stroke is covered without `XrBoardInk` knowing this surface is drawable.
+        It also stops a polyline from becoming the thing a drag picks up.
+      */}
+      <ViroNode ignoreEventHandling>{children}</ViroNode>
+      {/*
+        The pointer surface. Invisible, in front of everything drawable, and the
+        only node on the board that answers a ray.
+      */}
+      <ViroQuad
+        ref={pointer}
+        position={[0, 0, POINTER_STANDOFF]}
+        width={width}
+        height={height}
+        materials={[XR_MATERIAL.pointer]}
+        dragType="FixedToPlane"
+        dragPlane={plane}
+        onClickState={onPointerClickState}
+        onDrag={onPointerDrag}
+      />
+    </ViroNode>
+  ) : null;
 
   return (
     <ViroNode
@@ -210,7 +389,9 @@ export function XrPanel({
             position={[0, -0.06, 0]}
             width={width * 0.8}
             height={0.12}
-            style={{ fontSize: 22, color: XR_COLOR.onKey, textAlign: 'center' }}
+            /* Light ink: this sits on the frame quad's near-black while the
+               paper is not drawn yet, and the dark ink measured 1.08:1. */
+            style={{ fontSize: 22, color: XR_COLOR.onPanel, textAlign: 'center' }}
             textLineBreakMode="WordWrap"
           />
         </ViroNode>

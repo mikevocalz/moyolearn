@@ -76,7 +76,7 @@ function ControlKey({
         }
       }}
     >
-      <ViroText text={label} style={{ fontSize: 15, color: XR_COLOR.onPanel, textAlign: 'center' }} />
+      <ViroText text={label} style={{ fontSize: 15, color: XR_COLOR.onKey, textAlign: 'center' }} />
     </ViroFlexView>
   );
 }

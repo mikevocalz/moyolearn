@@ -295,7 +295,14 @@ function BoardScene() {
               handsPrimary={handsPrimary}
               tutorName="Natalie"
               status={statusLabel(stageKind)}
-              assurance="She can see what you write on the board."
+              /*
+                WHAT SHE CAN ACTUALLY SEE. The board does not stream to her —
+                `onAsk` exports a PNG and the tutor screen stages it as an
+                attachment, which is the only moment any of this reaches her.
+                The line said she could see the board, which told a child their
+                working was being watched and was not true either way.
+              */
+              assurance="Press Ask and she'll see your board."
               rows={chatRows}
               earlierCount={Math.max(0, messages.length - CHAT_WINDOW)}
               inputLocked={stageKind === 'ended' || stageKind === 'crisis'}

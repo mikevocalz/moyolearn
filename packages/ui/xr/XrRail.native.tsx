@@ -103,7 +103,10 @@ function RailKey({ label, size, material, selected, disabled, onPress }: KeyProp
         text={label}
         style={{
           fontSize: 16,
-          color: disabled ? XR_COLOR.onPanelMuted : selected ? XR_COLOR.onKey : XR_COLOR.onPanel,
+          /* Both key states are LIGHT surfaces — the resting key and the
+             selected one — so the label is the dark ink in both. It was the
+             panel's light ink on an unselected key: 1.09:1. */
+          color: disabled ? XR_COLOR.onPanelMuted : XR_COLOR.onKey,
           textAlign: 'center',
         }}
       />

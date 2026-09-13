@@ -52,6 +52,7 @@ export const XR_MATERIAL = {
   keySelected: 'moyoKeySelected',
   keyDisabled: 'moyoKeyDisabled',
   focusRing: 'moyoFocusRing',
+  pointer: 'moyoPointer',
 } as const;
 
 /**
@@ -97,8 +98,13 @@ ViroMaterials.createMaterials({
     roughness: 0.75,
     metalness: 0,
   },
+  /*
+    `chrome.key`, not `chrome.frame`. It was the frame's near-black, which put a
+    key at 1.26:1 against the rail it sits on — a control with no visible body,
+    its label floating on the panel. The declared token measures 13.94:1.
+  */
   [XR_MATERIAL.key]: {
-    diffuseColor: chrome.frame,
+    diffuseColor: chrome.key,
     lightingModel: 'PBR',
     roughness: 0.55,
     metalness: 0,
@@ -125,6 +131,24 @@ ViroMaterials.createMaterials({
   [XR_MATERIAL.focusRing]: {
     diffuseColor: chrome.focus,
     lightingModel: 'Constant',
+  },
+  /*
+    THE ONE MATERIAL NOBODY EVER SEES. `XrPanel` puts a quad over the paper to
+    catch the pointer (see its pointer block); it must be invisible without
+    being hidden, because ViroCore skips hit testing on anything whose node
+    opacity is at or below 0.02 — `opacity={0}` would make the board
+    undrawable rather than making the quad transparent.
+
+    So the node stays fully opaque and the MATERIAL carries the alpha: `00` on
+    the paper's own colour, which blends to exactly the pixels already there.
+    It writes no depth either, or a surface in front of the ink would cull the
+    child's strokes.
+  */
+  [XR_MATERIAL.pointer]: {
+    diffuseColor: `${chrome.paper}00`,
+    lightingModel: 'Constant',
+    blendMode: 'Alpha',
+    writesToDepthBuffer: false,
   },
 });
 
