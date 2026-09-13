@@ -46,11 +46,30 @@
 // page, plus a WebView reference this side owns.
 //
 // The input itself goes in as real `PointerEvent`s on the page's `#board`
-// element. `src/board-html.generated.js` binds `pointerdown` on its container,
-// carries `pointerId`/`setPointerCapture`, and never reads `isTrusted` — so a
-// synthesised gesture is indistinguishable to it from a finger, and the engine
-// does its own client-to-page mapping, which is the only place that mapping
-// should happen.
+// element — ALL FOUR of them, and that is read out of the engine rather than
+// assumed. `src/board-html.generated.js` binds its entire pointer set in one
+// place, `Editor._bind()`, which opens `let t = this.container` and then binds
+// `pointerdown`, `pointermove`, `pointerup` and `pointercancel` to that same
+// `t`. There is no second target: the page registers ZERO `window` and ZERO
+// `document` listeners, so an event dispatched at `window` is delivered to
+// `window` and reaches nothing — propagation descends to a node's ancestors,
+// never from `window` down into the document.
+//
+// `container` is the `#board` div itself, not a wrapper the engine makes:
+// `webview-entry.js` passes `document.getElementById('board')` into
+// `createQuickdraw`, the editor stores that node unchanged and PREPENDS its two
+// canvases into it. `_pointerDown` screens `event.target` and accepts exactly
+// those three nodes (container, canvas, overlay), it rejects `button === 2`,
+// and nothing in the page reads `isTrusted` — so an event dispatched at
+// `#board` is indistinguishable to it from a finger.
+//
+// Dispatching every phase at `#board` is also what a ray drifting off the paper
+// needs. The engine takes the offset itself (`_evPoint` subtracts the
+// container's own rect), so a point past the edge arrives as a negative or
+// overflowing coordinate rather than as a lost event — a stroke stays a stroke.
+// One asymmetry of the engine's is worth knowing at this seam: `pointercancel`
+// is bound to `_onUp`, the same handler as `pointerup`, so a cancel COMMITS the
+// stroke in progress instead of discarding it.
 // SOT: packages/ui/whiteboard.types.ts · https://tryquickdraw.com/docs/react-native/
 // SOT-KEYWORDS: whiteboard board native quickdraw webview canvas fork drawing surface stylus pointer injection xr
 
@@ -79,44 +98,76 @@ const INIT = {
 } as const;
 
 /**
- * One pointer sample as script the page can run.
+ * The phase codes a pointer crosses the bridge as.
+ *
+ * The wire carries the INDEX, not the event name, and the shim turns it back
+ * into a literal from a table it owns. That is the whole reason a batch cannot
+ * carry script: with the type name resolved page-side, every field of every
+ * packet is a number or `null`, so the serialised batch is digits, signs,
+ * commas, brackets and the token `null` — there is no string in it to escape
+ * out of and no quote, backslash or angle bracket to escape with.
+ */
+const PHASE_CODE = {
+  begin: 0,
+  move: 1,
+  end: 2,
+  cancel: 3,
+} as const satisfies Record<WhiteboardPointerSample['phase'], number>;
+
+type PhaseCode = (typeof PHASE_CODE)[keyof typeof PHASE_CODE];
+
+/**
+ * One sample, reduced to the four numbers the page needs.
+ *
+ * A tuple rather than an object because this shape is written once per input
+ * sample and read once per frame: at display rate the difference between
+ * `[1,240.5,331,null]` and the same thing with four keys is most of the
+ * payload. `null` pressure means the device reported none — see
+ * `WhiteboardPointerSample`, where not faking one is the point.
+ */
+type PointerPacket = readonly [
+  phase: PhaseCode,
+  x: number,
+  y: number,
+  pressure: number | null,
+];
+
+/**
+ * The page-side half of the pointer path, installed once when the page reports
+ * `ready`.
+ *
+ * WHY A SHIM AND NOT A SCRIPT PER SAMPLE. `injectJavaScript` is a crossing into
+ * the WebView plus a full parse-and-evaluate of a fresh program on the other
+ * side, and a child drawing produces one sample per display frame per stroke.
+ * Sending the events instead of the code that makes them turns that into one
+ * crossing per FRAME carrying however many samples the frame produced, and the
+ * event construction — the part that never varies — is parsed once for the life
+ * of the page.
  *
  * `pointerId` is constant across a gesture because that is what the engine's
  * capture logic keys on; a fresh id per sample reads as a new finger each frame
  * and produces a board covered in single-point dots. `buttons` is 1 while the
- * pen is down and 0 when it lifts, which is how a real pointer stream reports
- * it and what the engine's `pointerup` path expects.
+ * pen is down and 0 once it lifts or cancels, which is how a real pointer
+ * stream reports it and what the engine's `pointerup` path expects. `pressure`
+ * is set only when one was reported, so the engine falls back to its own
+ * default rather than being handed an invented taper.
+ *
+ * The element is resolved per batch, not captured at install: `#board` is in
+ * the page's static HTML and the engine keeps that same node, but a lookup once
+ * a frame costs nothing and cannot go stale.
  */
-function pointerScript(sample: WhiteboardPointerSample): string {
-  const type =
-    sample.phase === 'begin'
-      ? 'pointerdown'
-      : sample.phase === 'move'
-        ? 'pointermove'
-        : sample.phase === 'end'
-          ? 'pointerup'
-          : 'pointercancel';
-  const init = JSON.stringify({
-    pointerId: 1,
-    pointerType: 'pen',
-    isPrimary: true,
-    bubbles: true,
-    cancelable: true,
-    composed: true,
-    clientX: sample.x,
-    clientY: sample.y,
-    buttons: sample.phase === 'begin' || sample.phase === 'move' ? 1 : 0,
-    ...(sample.pressure === undefined ? {} : { pressure: sample.pressure }),
-  });
-  /*
-    Dispatched at `#board`, the element the engine binds `pointerdown` on, and
-    at `window` for the rest of the gesture — a move or an up that lands outside
-    the container still belongs to the stroke in progress, which is exactly the
-    case a ray drifting off the paper produces.
-  */
-  const target = type === 'pointerdown' ? "document.getElementById('board')" : 'window';
-  return `(function(){try{var t=${target};if(t)t.dispatchEvent(new PointerEvent(${JSON.stringify(type)},${init}));}catch(e){}})();true;`;
+const POINTER_SHIM = `window.__moyo={inject:function(b){
+var el=document.getElementById('board');
+if(!el)return;
+var T=['pointerdown','pointermove','pointerup','pointercancel'];
+for(var i=0;i<b.length;i++){
+var s=b[i],t=T[s[0]];
+if(!t)continue;
+var d={pointerId:1,pointerType:'pen',isPrimary:true,bubbles:true,cancelable:true,composed:true,clientX:s[1],clientY:s[2],buttons:s[0]<2?1:0};
+if(s[3]!==null)d.pressure=s[3];
+try{el.dispatchEvent(new PointerEvent(t,d));}catch(e){}
 }
+}};true;`;
 
 export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps>(
   function WhiteboardBoard({ onChange, onReady }, ref) {
@@ -156,6 +207,47 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
       };
     }, [send]);
 
+    /*
+      THE POINTER BUFFER, AND WHY ORDER IS THE WHOLE CONTRACT.
+
+      Samples are appended in the order they were produced and the flush hands
+      the array over whole, so the page dispatches them in that same order — a
+      stroke's `end` is always dispatched before the next stroke's `begin`, even
+      when both were produced inside one frame and travel in one batch. That is
+      the ordering the engine needs: `_pointerUp` clears its session, then
+      `_pointerDown` opens the next one. A per-sample send had this property for
+      free; a buffer only keeps it if nothing ever reorders or splits the array,
+      which is why the flush swaps the whole buffer out rather than draining it.
+    */
+    const pending = useRef<PointerPacket[]>([]);
+    const frame = useRef<number | null>(null);
+    const flushPointers = useCallback(() => {
+      frame.current = null;
+      if (pending.current.length === 0) return;
+      const batch = pending.current;
+      /* A fresh array before the injection, not after: the send is the last
+         thing that happens to this batch, and a sample that arrives during it
+         belongs to the next frame rather than to a batch already gone. */
+      pending.current = [];
+      web.current?.injectJavaScript(`window.__moyo.inject(${JSON.stringify(batch)});true;`);
+    }, []);
+    /*
+      A scheduled frame must not outlive the mount — it would fire against a
+      released WebView ref — and the buffer it was going to carry must not be
+      dropped on the floor either. Unmounting mid-stroke is a real case here:
+      the spatial screen tears this pane down when the session ends, which can
+      land between a `begin` and its `end`. Flushing gives the engine the
+      terminal sample it needs to close the stroke while the page is still
+      alive; cancelling first stops the frame from doing it twice.
+    */
+    useEffect(
+      () => () => {
+        if (frame.current !== null) cancelAnimationFrame(frame.current);
+        flushPointers();
+      },
+      [flushPointers],
+    );
+
     /* Callbacks read through a ref so a re-render cannot re-wire the page. */
     const callbacks = useRef({ onChange, onReady });
     useEffect(() => {
@@ -172,6 +264,14 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
       switch (message.type) {
         case 'ready': {
           pageReady.current = true;
+          /*
+            The shim goes in first and only here. It depends on nothing the
+            board sets up — `#board` is in the page's static HTML, and the shim
+            resolves it per call anyway — so installing it ahead of `init` means
+            there is no window in which the page is up and the pointer path is
+            not. A reload would replay `ready` and simply reassign it.
+          */
+          web.current?.injectJavaScript(POINTER_SHIM);
           /*
             NO SNAPSHOT IN `init`, AND THAT IS A CAMERA DECISION, not a
             simplification. The page's `init` handler calls `fitContent()`
@@ -240,10 +340,22 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         the same queue behind one. It is also dropped rather than queued when the
         page is not up — a stroke replayed a second late would land under a hand
         that has already moved on.
+
+        This appends and schedules; it never sends. The frame is booked only
+        when none is outstanding, so an arbitrary number of samples costs at
+        most one crossing per frame no matter how fast the device produces them.
       */
       injectPointer: (sample) => {
         if (!pageReady.current) return;
-        web.current?.injectJavaScript(pointerScript(sample));
+        pending.current.push([
+          PHASE_CODE[sample.phase],
+          sample.x,
+          sample.y,
+          /* `?? null` and not `|| null`: a reported pressure of 0 is a reading,
+             not a missing value, and must reach the engine as one. */
+          sample.pressure ?? null,
+        ]);
+        if (frame.current === null) frame.current = requestAnimationFrame(flushPointers);
       },
       clear: () => bridgeRef.current?.post({ type: 'clear' }),
     }));
