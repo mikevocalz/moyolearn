@@ -105,6 +105,32 @@ catalog:
   # time, so a version skew is two different engines drawing two different
   # snapshot shapes, and a board saved on a phone would not open on the web.
   #
+  # THE THREE PINS BELOW ARE EXACT — no caret, no tilde — and that is a
+  # correctness requirement rather than caution, because two seams in this repo
+  # read parts of these packages that are not in their public contract:
+  #
+  #   packages/ui/xr/stroke-of.ts reads the INTERNAL shape of a stroke record.
+  #     `ShapeRecord.props` is typed `Record<string, any>` in `@quickdrawjs/
+  #     core`, so `props.pts` — `[[dx, dy, pressure], …]`, with `x`/`y` on the
+  #     record as the origin — is a layout the package never promises. It was
+  #     read out of `board-html.generated.js` and is what the headset draws its
+  #     `ViroPolyline`s from. A patch release may change it and be within its
+  #     rights; a caret would take that change silently.
+  #
+  #   packages/ui/whiteboard-board.native.tsx hosts the page itself, from
+  #     `BOARD_HTML` + `createBridge` rather than from the `<Quickdraw>`
+  #     component, because the component cannot be given a pointer (its
+  #     `handlers` map has no input verb, and passing a ref through
+  #     `webviewProps` REPLACES the vendor's own and kills the bridge). It also
+  #     dispatches real `PointerEvent`s at `#board`, which is where
+  #     `Editor._bind()` binds its whole pointer set — again, read from the
+  #     generated page, not from a documented API.
+  #
+  # `stroke-of.ts` is defensive and skips a record it does not recognise, so the
+  # failure mode of a silent bump is a child's strokes missing from the headset
+  # with nothing thrown — which is why the version is held still and the bump is
+  # made deliberately, against `stroke-of.test.ts` and the pointer path.
+  #
   # `react-native-webview` is Quickdraw's own peer on native and the version is
   # `expo@57.0.15`'s `bundledNativeModules.json` entry, not npm's latest (16.x):
   # it is a native module, so the SDK's pin is the compatibility statement and

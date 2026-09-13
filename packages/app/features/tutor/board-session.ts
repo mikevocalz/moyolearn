@@ -238,7 +238,22 @@ export function acquireBoardSession(key: string, store: BoardPersistence): Board
  */
 export function releaseBoardSession(key: string): void {
   const found = registry.get(key);
-  if (!found) return;
+  if (!found) {
+    /*
+      The holder is letting go of a board whose session already ended. Finish
+      the disposal that was deferred above, once the last one is gone.
+    */
+    for (const [session, entry] of retired) {
+      if (session.key !== key) continue;
+      entry.holders = Math.max(0, entry.holders - 1);
+      if (entry.holders === 0) {
+        retired.delete(session);
+        session.doc.destroy();
+      }
+      return;
+    }
+    return;
+  }
   found.holders = Math.max(0, found.holders - 1);
   if (found.holders === 0) found.session.flush();
 }
@@ -266,10 +281,38 @@ export function releaseBoardSession(key: string): void {
 export function disposeBoardSession(key: string): void {
   const found = registry.get(key);
   if (!found) return;
+  /*
+    A SESSION SOMETHING IS STILL SHOWING IS NOT DESTROYED, it is retired.
+
+    `tutor.store` disposes on `ended` and `crisis`, and nothing pops the spatial
+    route when that happens — the XR screen is still mounted and plainly expects
+    to be, since it passes `inputLocked` for exactly those two states. Destroying
+    the document under it unobserves the records map, so `onRecords` stops
+    firing, the spatial ink stops redrawing, and the child keeps drawing onto a
+    board that has silently stopped recording while `change()` writes into a
+    destroyed `Y.Doc`. No error, no blank screen — the paper just quietly stops
+    being theirs.
+
+    So the registry entry goes (nothing new can acquire it) and the last write
+    happens now, but the document itself outlives the disposal until whoever is
+    holding it lets go. `releaseBoardSession` finishes the job.
+  */
   registry.delete(key);
   found.session.flush();
+  if (found.holders > 0) {
+    retired.set(found.session, found);
+    return;
+  }
   found.session.doc.destroy();
 }
+
+/**
+ * Sessions disposed while something was still showing them.
+ *
+ * Keyed by the session rather than by its key, because the key has already been
+ * handed back to the registry and a new board may legitimately be using it.
+ */
+const retired = new Map<BoardSession, Registered>();
 
 /** Every board on the device, for a learner switch or a sign-out. */
 export function disposeAllBoardSessions(): void {

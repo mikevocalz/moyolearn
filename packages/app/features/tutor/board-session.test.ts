@@ -221,3 +221,30 @@ test('a change the engine calls remote never re-enters the document', () => {
   assert.deepEqual(Object.keys(store), [], 'an echo was written back as this hand`s work');
   disposeBoardSession(key);
 });
+
+test('a lesson ending under a mounted spatial screen does not pull the board out from under it', () => {
+  /*
+    `tutor.store` disposes on `ended` and `crisis`, and nothing pops the XR
+    route when that happens. Destroying the document there unobserves the
+    records map: the spatial ink stops redrawing and the child keeps drawing
+    onto a board that has stopped recording, with nothing thrown anywhere.
+  */
+  const key = boardSessionKey('session-f');
+  const session = acquireBoardSession(key, fakeStore().store); // the XR screen holds it
+  const seen: string[] = [];
+  session.doc.onRecords((diff) => seen.push(...Object.keys(diff.added ?? {})));
+
+  disposeBoardSession(key); // the lesson ends while the headset is still on
+
+  session.doc.applyDiff({ added: { 'shape:after': shape('shape:after') } }, 'local');
+  assert.deepEqual(seen, ['shape:after'], 'the document stopped reporting while someone was drawing on it');
+
+  // A new acquire must not get the retired one — that session is over.
+  const next = acquireBoardSession(key, fakeStore().store);
+  assert.notEqual(next, session);
+  const store = (next.doc.snapshot() as { document: { store: object } }).document.store;
+  assert.deepEqual(Object.keys(store), [], 'the ended lesson`s strokes reached the next board');
+
+  releaseBoardSession(key); // the headset finally leaves
+  disposeBoardSession(key);
+});
