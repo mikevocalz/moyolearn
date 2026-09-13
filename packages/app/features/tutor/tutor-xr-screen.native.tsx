@@ -48,6 +48,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
+import { isPico } from '@reactvision/react-viro/dist/components/Utilities/ViroPlatform';
 import {
   ViroAmbientLight,
   ViroARScene,
@@ -731,7 +732,22 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
 
     const eligibility = spatialEligibility({
       hasOpenXrModule: hasOpenXRSupport,
-      isHeadset: isQuest,
+      /*
+        QUEST OR PICO. The fork supports both — its `ViroPlatform` exports
+        `isQuest` AND `isPico`, and it carries a PICO xRMode — but only
+        `isQuest` and `hasOpenXRSupport` reach the package root, so an
+        `isQuest`-only gate reported `device-not-eligible` on a PICO 4 Ultra
+        that can run this scene. Verified against a cabled one: manufacturer
+        `Pico`, model `A9210`, device `sparrow`, Android 14.
+
+        `isPico` is imported from its module path rather than the root because
+        that is where the fork exports it; the package publishes no `exports`
+        map, so the subpath is resolvable and is the honest way to reach a
+        symbol the root omits. Re-exporting it from the fork would be cleaner
+        and means re-cutting the vendored tarball — worth doing on the next
+        bump, noted in ADR-117.
+      */
+      isHeadset: isQuest || isPico,
     });
     if (eligibility !== 'eligible') {
       advance({ kind: 'unsupported', reason: eligibility });
