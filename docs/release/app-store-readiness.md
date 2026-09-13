@@ -24,9 +24,11 @@ Also closed in the same pass, both from §5: the app's privacy manifest now rege
 `ios.privacyManifests` in `apps/mobile/app.config.ts` instead of surviving only because `ios/` is
 committed, and the vendored Viro fork's required-reason APIs are measured and declared.
 
-Uncommitted account-deletion work from another agent was present in the working tree during the
-re-audit (`packages/app/features/account/`, `apps/web/app/api/account/`). None of it is assessed
-here — HARD BLOCK 1 stands against committed code.
+Account-deletion work from another agent landed in `6eaca59` during this re-audit
+(`packages/app/features/account/`, `apps/web/app/api/account/`). **None of it is assessed here.**
+The block stays at 1 because 5.1.1(v) is not satisfied by a deletion screen existing — it is
+satisfied by a deletion that reaches the server and cascades through §3's collection list, including
+the versions tables. That has to be read against the code before the count drops.
 
 ---
 

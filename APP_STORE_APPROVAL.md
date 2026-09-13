@@ -49,10 +49,14 @@ Two facts the original audit recorded have since changed on their own, and both 
 place: `@reactvision/react-viro` IS now in the plugins array (RISK FLAG 10), and the camera purpose
 string in the prebuild output changed wording (LIKELY REJECTION 4).
 
-The working tree at re-audit time carried uncommitted account-deletion work from another agent
-(`packages/app/features/account/`, `apps/web/app/api/account/`, `apps/web/lib/account-deletion.repository.ts`,
-and edits to `settings-content.tsx`). **None of it is audited here.** HARD BLOCK 1 is still open
-against committed code; re-run this audit when that lands.
+**HARD BLOCK 1 is recorded as open, and that is a statement about this audit, not about the
+repository.** Account-deletion work from another agent landed in `6eaca59` while this re-audit was
+being written — `packages/app/features/account/`, `apps/web/app/api/account/`,
+`apps/web/lib/account-deletion.repository.ts`, and edits to `settings-content.tsx`. **None of it has
+been audited.** 5.1.1(v) is not satisfied by a deletion screen existing; it is satisfied by a
+deletion that reaches the server, cascades to every collection and to Better Auth's user, session
+and account rows, and clears the versions tables the `Consents` collection documents. Someone has to
+check that against the code before the count drops. Until then the honest number is 1.
 
 ---
 

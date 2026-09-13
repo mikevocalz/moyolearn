@@ -21,6 +21,18 @@ const config: ExpoConfig = {
   ios: {
     bundleIdentifier: 'com.moyolearn.app',
     supportsTablet: true,
+    /*
+      ONE STRING PER PERMISSION, covering every use a reviewer will meet. iOS
+      shows a purpose string once, whatever asks for the camera — the homework
+      photograph and placing the spatial whiteboard in the room are both the
+      camera to the system — so it names both rather than describing whichever
+      feature happened to ask first. Set here rather than on a plugin because
+      `ios.infoPlist` is what the Viro plugin itself falls back FROM.
+    */
+    infoPlist: {
+      NSCameraUsageDescription:
+        'Moyo uses the camera so you can photograph your homework, and to place your whiteboard in the room.',
+    },
     config: {
       // Doc 07 §2.1: the documented setting when the app's only use of
       // encryption is SecureStore/the platform keychain. Declaring it here keeps
@@ -136,11 +148,7 @@ const config: ExpoConfig = {
     */
     [
       '@reactvision/react-viro',
-      {
-        xRMode: ['AR'],
-        cameraUsagePermission:
-          'Moyo uses the camera so you can photograph your homework, and to place your whiteboard in the room.',
-      },
+      { xRMode: ['AR'] },
     ],
     'react-native-video',
     /*
