@@ -44,7 +44,7 @@
 // child put it and the strokes stay in the document.
 // SOT: packages/app/features/tutor/board-session.ts · packages/app/features/tutor/xr-capability.ts
 //      packages/ui/xr/XrPanel.types.ts · docs/decisions/adr-117-spatial-whiteboard-bridge.md
-// SOT-KEYWORDS: tutor xr screen spatial whiteboard viro quest scene rail chat board session native permission primer tracking lifecycle
+// SOT-KEYWORDS: tutor xr screen spatial whiteboard viro quest scene rail chat board session native permission primer tracking lifecycle calibration constrained layout fits miss
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -64,6 +64,7 @@ import {
   Button,
   Text,
   Whiteboard,
+  type WhiteboardCalibration,
   type WhiteboardDiff,
   type WhiteboardDiffSource,
   type WhiteboardHandle,
@@ -82,7 +83,9 @@ import {
   layoutBoard,
   railWidthFor,
   spatialSpacing,
+  type BoardLayoutMiss,
   type XrChatRow,
+  type XrPanelState,
   type XrSurfaceInput,
 } from '@acme/ui/xr';
 import { buttonSizeForBand } from '../capture';
@@ -126,12 +129,44 @@ const active: {
   session: BoardSession | null;
   onExit: () => void;
   onAsk: (png: string | null) => void;
+  /**
+   * THE LAST CALIBRATION VERDICT, and it is here rather than in the store
+   * because it is never rendered from — the phase is.
+   *
+   * It exists because two other things promote the board to `ready` and neither
+   * of them knows anything about the engine's mapping: the engine reporting an
+   * editor, and the renderer reporting that tracking came back. A calibration
+   * failure that lands while the phase is still `checking` is DROPPED by the
+   * transition table, and a tracking blink after one would otherwise clear it —
+   * either way a child ends up on a board whose ink lands somewhere they did
+   * not point, with the screen saying it is ready. So both promotions read this
+   * first and re-assert the interruption instead.
+   *
+   * It starts `true` — the board is trusted until it says otherwise — which is
+   * the same direction the engine itself starts in: nothing is injected before
+   * `mounted`, and `mounted` is what runs the first probe.
+   */
+  inkAligned: boolean;
 } = {
   engine: null,
   session: null,
   onExit: () => undefined,
   onAsk: () => undefined,
+  inkAligned: true,
 };
+
+/** Where a board goes when the engine's mapping is the thing that is wrong. */
+const INK_INTERRUPTED = { kind: 'interrupted', reason: 'calibration-failed' } as const;
+
+/**
+ * The phase a board that has an engine and a scene should be in — `ready`,
+ * unless the last thing the engine said about its own mapping was that it is
+ * wrong. One expression, because both promotion sites have to make the same
+ * call and a second copy is a second answer.
+ */
+function readyOrInterrupted(): XrPhase {
+  return active.inkAligned ? { kind: 'ready' } : INK_INTERRUPTED;
+}
 
 /** The paper's height, from the one aspect the board is allowed to have. */
 const BOARD_HEIGHT = (boardComposition.boardWidth * 7) / 5;
@@ -159,7 +194,14 @@ const BOARD_HEIGHT = (boardComposition.boardWidth * 7) / 5;
 function handleTrackingUpdated(state: ViroTrackingState): void {
   const { advance, phase } = useXrSession.getState();
   if (state === ViroTrackingStateConstants.TRACKING_NORMAL) {
-    if (phase.kind === 'interrupted') advance({ kind: 'ready' });
+    /*
+      THE ROOM COMING BACK DOES NOT VOUCH FOR THE ENGINE. This used to promote
+      any interruption at all, so a tracking blink over a board whose mapping
+      had already failed handed the child a `ready` board that still put ink in
+      the wrong place — and it cleared the one sentence telling them why. The
+      renderer only gets to end the interruption it caused.
+    */
+    if (phase.kind === 'interrupted') advance(readyOrInterrupted());
     return;
   }
   advance({
@@ -172,19 +214,73 @@ function handleTrackingUpdated(state: ViroTrackingState): void {
 }
 
 /**
- * The line under Natalie's name — hers normally, the interruption's while the
- * headset is looking for the room.
+ * What a composition that does not fit says to the child, per miss.
  *
- * Both are assurances and that is why they share the slot: neither asks the
- * child to do anything, and the interrupted one exists to stop a board that has
- * stopped taking ink from reading as a board that has lost the work on it.
+ * A CONSTRAINED BOARD IS A STATE, NOT AN ERROR, and the two misses are
+ * different sentences because they have different next moves — which is the
+ * whole reason `BoardLayoutMiss` is a union rather than a boolean
+ * (`05-handoff.md` §6).
+ *
+ * `rail-below-target` is the one a child can fix, and it is the one they will
+ * actually meet: the rail is sized for a K–2 learner at the board's own
+ * distance, so dragging the paper further out is all it takes to put every key
+ * under the 4° floor. The answer is in the sentence — pull it back, or press
+ * the key that puts it back — and both are affordances already on screen.
+ *
+ * `no-room` cannot be reached from this caller today: the width budget is
+ * `boardWidth + railWidth + railGap` less the rail and the gap, which is
+ * `boardWidth`, and the chat is not in this budget at all. It is answered
+ * anyway because the day the companion joins the budget it becomes reachable,
+ * and an unhandled miss renders as a full-size board a child cannot use.
+ *
+ * Neither line names a screen a child in a headset cannot see; both say where
+ * the work is, which is the only thing every dead end in this feature owes
+ * them.
+ *
+ * `Recenter` is quoted because it is the key's own visible label
+ * (`XrOrnaments.native.tsx`) — a sentence that tells a child to press something
+ * has to use the word written on it. `04-copy.md` §3.6 proposes renaming that
+ * key; this line moves with it.
  */
-function assuranceFor(phase: XrPhase): string {
-  if (phase.kind !== 'interrupted') return "Press Ask and she'll see your board.";
-  if (phase.reason === 'tracking-lost') {
-    return 'The headset is finding your room again. Your work is safe — it comes back on its own.';
+const MISS_ASSURANCE: Record<BoardLayoutMiss, string> = {
+  'rail-below-target':
+    'Your board is too far away to reach the pens. Pull it closer by its edge, or press Recenter to put it back.',
+  'no-room':
+    'There is not enough room here for your board and its pens. Take the headset off and your board is there, with everything you wrote.',
+};
+
+/**
+ * The line under Natalie's name — hers normally, and the reason the board is
+ * not taking ink whenever it is not.
+ *
+ * All of them are assurances and that is why they share the slot: every one
+ * says the work is safe, and they exist to stop a board that has stopped taking
+ * ink from reading as a board that has lost what is on it.
+ *
+ * THE ORDER IS THE POINT. A phase interruption comes first because it is the
+ * one that resolves itself — a child told to drag their paper closer while the
+ * headset is still finding the room would be moving a board that is about to
+ * come back on its own. The layout miss speaks once the board is otherwise
+ * fine, which is exactly when its instruction is worth following.
+ */
+function assuranceFor(phase: XrPhase, miss: BoardLayoutMiss | null): string {
+  if (phase.kind === 'interrupted') {
+    if (phase.reason === 'tracking-lost') {
+      return 'The headset is finding your room again. Your work is safe — it comes back on its own.';
+    }
+    if (phase.reason === 'tracking-limited') {
+      return 'The headset is having trouble seeing your room. Move gently; your work is safe.';
+    }
+    /*
+      The mapping between the ray and the engine is wrong, so the board is not
+      taking marks — see `active.inkAligned`. The cause is inside the engine and
+      there is nothing in the room to adjust, so the line asks for nothing: it
+      says what is happening, and that the work is safe.
+    */
+    return 'Your board is lining itself up, so it cannot take new marks yet. Everything you wrote is safe.';
   }
-  return 'The headset is having trouble seeing your room. Move gently; your work is safe.';
+  if (miss !== null) return MISS_ASSURANCE[miss];
+  return "Press Ask and she'll see your board.";
 }
 
 /**
@@ -220,6 +316,14 @@ function BoardScene() {
   const problem = useTutorStore((s) => s.problem);
 
   const session = active.session;
+
+  /*
+    Whether a stroke this scene opened is still open, mirrored from what was
+    handed to the engine rather than asked for back. A ref and not state: it
+    changes at pointer rate and nothing renders from it — it exists so a stroke
+    can be closed if the board stops accepting ink half way through one.
+  */
+  const drawing = useRef(false);
 
   /*
     The records, re-read when the document moves. Not memoised on `session`
@@ -264,6 +368,45 @@ function BoardScene() {
   });
   const boardWidth = geometry.fits ? geometry.boardWidth : boardComposition.boardWidth;
   const boardHeight = geometry.fits ? geometry.boardHeight : BOARD_HEIGHT;
+  /*
+    THE MISS, KEPT RATHER THAN DISCARDED. The two lines above read the same as
+    they did when this was `geometry.fits ? … : …` and nothing else — the paper
+    is still drawn at its design size, because the paper is not what the miss is
+    about and shrinking it would make a child's writing smaller to punish them
+    for a rail that does not fit. What changed is that the miss now reaches the
+    panel and the assurance line instead of being thrown away, which is what
+    turned an unreachable rail into a board that says nothing.
+
+    IT IS NOT A PHASE TRANSITION, and that is deliberate. `fits` is derived from
+    `placement` and is recomputed every render: a child dragging the board out
+    and back would drive `ready → interrupted → ready` at drag-sample rate
+    through a machine whose whole contract is that nothing advances on a render.
+    The lifecycle answers "what is this screen doing"; the composition answers
+    "does what it is doing fit here", and only the second one changes while a
+    child's hand is moving. So the miss narrows the state the PANEL is given —
+    its own union, its own `interrupted` treatment, board stays drawn — and the
+    store's phase is left to the four things that actually happen to it.
+  */
+  const miss: BoardLayoutMiss | null = geometry.fits ? null : geometry.miss;
+
+  /*
+    A board that cannot hold a reachable rail is not a ready board. Only `ready`
+    is overridden: `checking` and `preparing` still owe the child their wait
+    card, `unsupported` and `exiting` are already the stronger statement, and an
+    interruption already says something truer about why the board is not taking
+    ink.
+  */
+  const panelState: XrPanelState = panelStateOf(phase);
+  const composedState: XrPanelState =
+    miss !== null && panelState === 'ready' ? 'interrupted' : panelState;
+
+  /*
+    WHETHER INK WOULD LAND WHERE THE CHILD POINTED. The engine measures this
+    itself and reports it (`WhiteboardHandle.calibrate`); the screen turns a
+    failure into this phase, and this is where that verdict stops being a
+    sentence and starts being enforced.
+  */
+  const inkLands = !(phase.kind === 'interrupted' && phase.reason === 'calibration-failed');
 
   const chatRows: readonly XrChatRow[] = messages.slice(-CHAT_WINDOW).map((message) => ({
     id: message.id,
@@ -285,6 +428,32 @@ function BoardScene() {
     the document moves at stroke rate, when the engine reports the change.
   */
   const handleSurfaceInput = (sample: XrSurfaceInput) => {
+    /*
+      A MEASURED-WRONG MAPPING STOPS THE INK AT THE SEAM, and it has to stop
+      here rather than in the panel: `XrPanel` draws in `interrupted` on purpose
+      — a tracking blink must not take the paper away mid-thought — so the rays
+      keep arriving and something has to decline them. Ink under the wrong
+      finger is the outcome the whole calibration path exists to prevent, and it
+      is worse than a stroke that does not appear while the panel says why.
+
+      A stroke already open is CANCELLED rather than left hanging. The engine
+      would otherwise keep a half-line whose end the child never chose, and the
+      abort is the one the fork implements for exactly this (`'cancel'` removes
+      the record and closes the batch empty). Everything after that is dropped
+      until the engine says the mapping is good again.
+    */
+    if (!inkLands) {
+      if (!drawing.current) return;
+      drawing.current = false;
+      active.engine?.injectPointer({
+        phase: 'cancel',
+        x: sample.u * boardSurfacePixels.width,
+        y: sample.v * boardSurfacePixels.height,
+      });
+      return;
+    }
+    if (sample.phase === 'begin') drawing.current = true;
+    else if (sample.phase !== 'move') drawing.current = false;
     active.engine?.injectPointer({
       phase: sample.phase,
       x: sample.u * boardSurfacePixels.width,
@@ -308,7 +477,7 @@ function BoardScene() {
         placement={placement}
         onPlacementChange={setPlacement}
         onSurfaceInput={handleSurfaceInput}
-        state={panelStateOf(phase)}
+        state={composedState}
         moveHandle="frame"
         ornaments={{
           leading: {
@@ -403,8 +572,18 @@ function BoardScene() {
                 DRAWN — the whole point of the state. So the assurance line is
                 what tells a child their homework is safe while the headset
                 finds the room again, rather than a card covering the work.
+
+                A CONSTRAINED COMPOSITION SPEAKS HERE TOO, which is where this
+                caller parts company with `05-handoff.md` §6's "drop the
+                companion", and the reason is arithmetic. That bullet frees
+                width for the paper — but the chat is not in this caller's
+                budget (`layoutBoard` is given no `C`), so dropping it frees
+                nothing, and `rail-below-target` is an angular floor that no
+                width anywhere can satisfy. Dropping the panel would only take
+                away the one surface in the scene that can tell a child what to
+                do about it.
               */
-              assurance={assuranceFor(phase)}
+              assurance={assuranceFor(phase, miss)}
               rows={chatRows}
               earlierCount={Math.max(0, messages.length - CHAT_WINDOW)}
               skippedCount={skippedRecords}
@@ -664,7 +843,16 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
     when there is an engine behind it, not when the room is in focus.
   */
   useEffect(() => {
-    if (ready && phase.kind === 'preparing') advance({ kind: 'ready' });
+    /*
+      `readyOrInterrupted`, not a bare `ready`. The engine runs its first
+      calibration the moment it reports an editor, which is routinely BEFORE
+      the permission promise has resolved — and a failure that lands while the
+      phase is still `checking` is dropped by the table, because `checking` has
+      no move to `interrupted`. Promoting blind here would then hand the child a
+      board the engine has already said it cannot map, with no sentence anywhere
+      saying so. The verdict is read at the moment of the promotion instead.
+    */
+    if (ready && phase.kind === 'preparing') advance(readyOrInterrupted());
   }, [advance, phase.kind, ready]);
 
   const handleChange = useCallback(
@@ -672,6 +860,48 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
       session.change(PRESENTATION_ID, diff, source);
     },
     [session],
+  );
+
+  /*
+    THE ENGINE'S OWN VERDICT ON WHETHER INK LANDS WHERE THE RAY POINTED.
+
+    `injectPointer`'s whole contract rests on one runtime fact this screen
+    cannot see — the engine's camera is at its default, so the client space the
+    pointer is written in and the page space the ink is stored in are the same
+    space. The board measures it rather than assuming it: it draws a fixture,
+    reads back what the engine recorded, and reports the drift. Every failure
+    reason means the same thing here — `not-ready`, `no-surface`, `no-record`,
+    `timeout` and `drift` all say the mapping is unproven — so they share one
+    answer rather than five sentences a child would read the same way.
+
+    A PUSH, NOT A PULL, AND THAT IS WHY THE PROMISE IS NOT AWAITED ANYWHERE.
+    The runs that matter have no caller: the board calibrates itself when the
+    engine mounts, and again after anything that could have moved the camera.
+    A screen that only ever awaited `calibrate()` would learn about a broken
+    mapping one stroke too late.
+
+    INTERRUPTED, NEVER `unsupported`. The board is drawn, the document is
+    intact, the child's work is where they left it, and the next probe can
+    pass — so this is the state that keeps the paper on screen and says why it
+    is not taking marks. `active.inkAligned` carries the same verdict to the two
+    promotions that would otherwise clear it behind this handler's back.
+  */
+  const handleCalibration = useCallback(
+    (result: WhiteboardCalibration) => {
+      active.inkAligned = result.ok;
+      if (!result.ok) {
+        advance(INK_INTERRUPTED);
+        return;
+      }
+      /* A pass only ends the interruption it caused. Tracking is the renderer's
+         to clear: a board waiting for the room to come back does not become
+         drawable because the engine measured its own mapping correctly. */
+      const current = useXrSession.getState().phase;
+      if (current.kind === 'interrupted' && current.reason === 'calibration-failed') {
+        advance({ kind: 'ready' });
+      }
+    },
+    [advance],
   );
 
   /*
@@ -730,6 +960,7 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
           asking={asking}
           onChange={handleChange}
           onReady={handleReady}
+          onCalibration={handleCalibration}
         />
       </View>
     </View>

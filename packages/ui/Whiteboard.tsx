@@ -38,6 +38,7 @@ import { Brush, Eraser, Highlighter, Sparkles, Trash2, Undo2 } from './icons';
 import { View, Pressable } from './primitives';
 import { WhiteboardBoard } from './whiteboard-board';
 import type {
+  WhiteboardCalibration,
   WhiteboardDiff,
   WhiteboardDiffSource,
   WhiteboardHandle,
@@ -47,12 +48,30 @@ import type {
 } from './whiteboard.types.ts';
 
 export type {
+  WhiteboardCalibration,
   WhiteboardDiff,
   WhiteboardDiffSource,
   WhiteboardHandle,
   WhiteboardInk,
   WhiteboardSnapshot,
   WhiteboardTool,
+};
+
+/**
+ * The answer when there is no engine on the other side of this wrapper to ask.
+ *
+ * `not-ready` is the union's own word for exactly this — "there is no engine to
+ * ask" — and it covers both ways it happens here: the inner board's ref is not
+ * attached yet, and the web fork, which implements no `calibrate` at all
+ * because nothing injects a pointer into it. Neither case may answer `ok`: a
+ * pass that was never measured is the one outcome the whole calibration path
+ * exists to prevent.
+ */
+const NO_ENGINE_TO_ASK: WhiteboardCalibration = {
+  ok: false,
+  reason: 'not-ready',
+  worst: null,
+  points: [],
 };
 
 export interface WhiteboardProps {
@@ -83,6 +102,16 @@ export interface WhiteboardProps {
   onChange?: (diff: WhiteboardDiff, source: WhiteboardDiffSource) => void;
   /** The engine will accept work. Nothing sent before this arrives lands. */
   onReady?: () => void;
+  /**
+   * Every calibration run's answer, from the board underneath.
+   *
+   * FORWARDED RATHER THAN HANDLED HERE, because this component has nothing to
+   * do with the result: a failed mapping is a fact about the SESSION — the
+   * caller holds it open in a recoverable state and tells the child — and a
+   * tray that quietly disabled its own pens would be a board that stopped
+   * working for no stated reason. See `WhiteboardBoardProps.onCalibration`.
+   */
+  onCalibration?: (result: WhiteboardCalibration) => void;
   className?: string;
 }
 
@@ -212,7 +241,7 @@ const INKS = [
 ] as const satisfies readonly { id: WhiteboardInk; label: string; swatch: string }[];
 
 export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function Whiteboard(
-  { snapshot, size = 'md', onAsk, asking = false, onChange, onReady, className },
+  { snapshot, size = 'md', onAsk, asking = false, onChange, onReady, onCalibration, className },
   ref,
 ) {
   const board = useRef<WhiteboardHandle>(null);
@@ -256,6 +285,20 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
     redo: () => board.current?.redo(),
     injectPointer: (sample) => board.current?.injectPointer(sample),
     clear: () => board.current?.clear(),
+    /*
+      Forwarded for the same reason `redo` is: the handle is one contract, and
+      the spatial screen reaches the engine through this component. Without it
+      the board underneath implemented a self-test nothing could reach — the
+      probe ran, the mapping was measured, and the one caller that injects a
+      pointer had no way to ask.
+
+      ALWAYS DEFINED HERE, EVEN THOUGH THE HANDLE'S IS OPTIONAL. The optionality
+      exists so a fork with nothing to calibrate can say so; a wrapper cannot,
+      because the fork underneath it is chosen by the bundler and the ref is
+      attached after the first render. So it answers instead of disappearing,
+      and `NO_ENGINE_TO_ASK` is what it answers with.
+    */
+    calibrate: async () => (await board.current?.calibrate?.()) ?? NO_ENGINE_TO_ASK,
   }));
 
   const [rowWidth, setRowWidth] = useState<number | null>(null);
@@ -373,6 +416,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
             snapshot={snapshot}
             onChange={handleChange}
             onReady={onReady}
+            onCalibration={onCalibration}
           />
         </LearningCanvas>
 

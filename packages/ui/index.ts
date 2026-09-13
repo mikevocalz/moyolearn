@@ -36,6 +36,8 @@ export { LearningCanvas, type LearningCanvasProps } from './LearningCanvas';
 export { Whiteboard, type WhiteboardProps } from './Whiteboard';
 export { WhiteboardSheet, type WhiteboardSheetProps } from './WhiteboardSheet';
 export type {
+  WhiteboardCalibration,
+  WhiteboardCalibrationFailure,
   WhiteboardDiff,
   WhiteboardDiffSource,
   WhiteboardHandle,

@@ -58,7 +58,23 @@ export type XrUnsupportedReason =
  * child's move is to wait. Collapsing the two would put "go back to the normal
  * screen" in front of a child whose board is about to return.
  */
-export type XrInterruptionReason = 'tracking-lost' | 'tracking-limited';
+export type XrInterruptionReason =
+  | 'tracking-lost'
+  | 'tracking-limited'
+  /**
+   * The engine proved its own pointer mapping wrong, so ink would not land
+   * under the ray (`WhiteboardHandle.calibrate`).
+   *
+   * AN INTERRUPTION AND NOT AN `unsupported`, for the reason this union is
+   * separate at all: the board is drawn, the document is intact, and the board
+   * re-measures itself after anything that could have moved the engine's
+   * camera — so the state can end, and the child's move is to wait rather than
+   * to leave. It is the one interruption the renderer knows nothing about,
+   * which is why it cannot be folded into either tracking reason: a child told
+   * the headset is looking for their room would move their head at a fault
+   * that lives entirely inside the engine.
+   */
+  | 'calibration-failed';
 
 /**
  * WHAT THE SPATIAL SCREEN IS DOING — the whole lifecycle, as one value.
