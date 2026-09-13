@@ -82,8 +82,8 @@ export interface StrokeGeometry {
   highlight: boolean;
 }
 
-const isPointTriple = (value: unknown): value is [number, number, number?] =>
-  Array.isArray(value) && typeof value[0] === 'number' && typeof value[1] === 'number';
+/** Three numbers per point: dx, dy, pressure. See `POINT_STRIDE`. */
+const POINT_STRIDE = 3;
 
 /**
  * A document record as stroke geometry, or `null` when it is not a stroke.
@@ -109,10 +109,30 @@ export function strokeOf(id: string, record: unknown): StrokeGeometry | null {
   };
   if (!Array.isArray(props.pts) || props.pts.length === 0) return null;
 
+  /*
+    `pts` IS FLAT, NOT A LIST OF TRIPLES, and reading it as triples is why the
+    spatial board rendered nothing at all.
+
+    The engine seeds `pts: [0, 0, pressure]` and extends it with
+    `.push(h.x - o.x, h.y - o.y, pressure)` — one array of numbers, three per
+    point — and every reader inside it strides by three
+    (`for (let l = 0; l < o.pts.length; l += 3)`). A previous version here
+    iterated the array and asked `Array.isArray(point)` of each element, which
+    is false for a number, so every point was skipped, `points` came out empty,
+    and `strokeOf` returned `null` for every stroke on the board. Nothing threw
+    and nothing logged: the headset simply showed blank paper.
+
+    The tests missed it because their fixture was built from the same wrong
+    assumption. `stroke-of.test.ts` now asserts the flat shape against the
+    vendor's own source rather than against what this file expected to find.
+  */
+  const flat = props.pts;
   const points: { x: number; y: number }[] = [];
-  for (const point of props.pts) {
-    if (!isPointTriple(point)) continue;
-    points.push({ x: shape.x + point[0], y: shape.y + point[1] });
+  for (let i = 0; i + 1 < flat.length; i += POINT_STRIDE) {
+    const dx = flat[i];
+    const dy = flat[i + 1];
+    if (typeof dx !== 'number' || typeof dy !== 'number') continue;
+    points.push({ x: shape.x + dx, y: shape.y + dy });
   }
   if (points.length === 0) return null;
 

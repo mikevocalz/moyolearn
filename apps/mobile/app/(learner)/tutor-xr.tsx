@@ -15,7 +15,7 @@
 // SOT: packages/app/features/tutor/tutor-xr-entry.native.tsx
 // SOT-KEYWORDS: tutor xr route learner stack protected native lazy spatial whiteboard
 
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { TutorXrEntry, useAppSession, useXrSession } from '@acme/app';
 
@@ -48,6 +48,14 @@ export default function TutorXrRoute() {
     return exit;
   }, [arrive, exit]);
 
+  /*
+    Stable, not an inline arrow. The screen keeps the way out in a module-level
+    holder the captured scene reads, and it re-runs that wiring whenever the
+    callback changes identity — so a callback rebuilt on every render of this
+    route is a holder rewritten on every render of this route.
+  */
+  const handleExit = useCallback(() => router.back(), [router]);
+
   return (
     <>
       <Stack.Screen options={{ headerShown: false }} />
@@ -59,7 +67,7 @@ export default function TutorXrRoute() {
           session; replacing it would restore none of those and would read to a
           child as their lesson starting again.
         */
-        onExit={() => router.back()}
+        onExit={handleExit}
         /*
           Handed back rather than sent from here: staging a board as an
           attachment is the tutor screen's one path, and a second copy of it

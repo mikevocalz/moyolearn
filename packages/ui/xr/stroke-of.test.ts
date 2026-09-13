@@ -23,7 +23,7 @@ const freehand = (over: Record<string, unknown> = {}) => ({
   y: 200,
   rot: 0,
   z: 0,
-  props: { pts: [[0, 0, 0.5], [10, 4, 0.6]], color: 'blue', size: 'm', dash: 'solid' },
+  props: { pts: [0, 0, 0.5, 10, 4, 0.6], color: 'blue', size: 'm', dash: 'solid' },
   ...over,
 });
 
@@ -63,7 +63,7 @@ test('records the spatial board cannot draw are skipped, not guessed at', () => 
 });
 
 test('a malformed point inside a good stroke drops that point, not the stroke', () => {
-  const stroke = strokeOf('shape:a', freehand({ props: { pts: [[0, 0], 'nope', [5, 5]], color: 'red', size: 'm' } }));
+  const stroke = strokeOf('shape:a', freehand({ props: { pts: [0, 0, 0.5, 'nope', 4, 0.5, 5, 5, 0.5], color: 'red', size: 'm' } }));
   assert.deepEqual(stroke?.points, [
     { x: 100, y: 200 },
     { x: 105, y: 205 },
@@ -71,7 +71,7 @@ test('a malformed point inside a good stroke drops that point, not the stroke', 
 });
 
 test('missing colour and size fall back rather than throwing', () => {
-  const stroke = strokeOf('shape:a', freehand({ props: { pts: [[0, 0]] } }));
+  const stroke = strokeOf('shape:a', freehand({ props: { pts: [0, 0, 0.5] } }));
   assert.equal(stroke?.colourId, 'black');
   assert.ok((stroke?.width ?? 0) > 0);
 });
@@ -106,16 +106,16 @@ test('a pressure-ink stroke is the INK_SIZES weight, not the SIZES one', () => {
     5.2 — 23% thin, and invisible in a screenshot because a thin line still
     looks like a line.
   */
-  assert.equal(strokeOf('shape:a', freehand({ props: { pts: [[0, 0]], size: 'm', dash: 'draw' } }))?.width, 5.2);
-  assert.equal(strokeOf('shape:a', freehand({ props: { pts: [[0, 0]], size: 's' } }))?.width, 3.4);
+  assert.equal(strokeOf('shape:a', freehand({ props: { pts: [0, 0, 0.5], size: 'm', dash: 'draw' } }))?.width, 5.2);
+  assert.equal(strokeOf('shape:a', freehand({ props: { pts: [0, 0, 0.5], size: 's' } }))?.width, 3.4);
   // `l` and `xl` are the same in both tables, which is why this was survivable.
-  assert.equal(strokeOf('shape:a', freehand({ props: { pts: [[0, 0]], size: 'l' } }))?.width, 6.5);
+  assert.equal(strokeOf('shape:a', freehand({ props: { pts: [0, 0, 0.5], size: 'l' } }))?.width, 6.5);
 });
 
 test('a styled line is the flat SIZES centreline, because the engine draws it that way', () => {
   for (const dash of ['solid', 'dashed', 'dotted'] as const) {
     assert.equal(
-      strokeOf('shape:a', freehand({ props: { pts: [[0, 0]], size: 'm', dash } }))?.width,
+      strokeOf('shape:a', freehand({ props: { pts: [0, 0, 0.5], size: 'm', dash } }))?.width,
       SIZES.m,
       `dash=${dash} did not take the even-width path`,
     );
@@ -123,7 +123,7 @@ test('a styled line is the flat SIZES centreline, because the engine draws it th
 });
 
 test('a highlighter is a band at the vendor alpha, not a pencil line at 0.4', () => {
-  const stroke = strokeOf('shape:h', freehand({ type: 'highlight', props: { pts: [[0, 0]], size: 'm' } }));
+  const stroke = strokeOf('shape:h', freehand({ type: 'highlight', props: { pts: [0, 0, 0.5], size: 'm' } }));
   // SIZES.m × HIGHLIGHT_SCALE — 18 page px, where this used to draw 4.
   assert.equal(stroke?.width, 18);
   assert.equal(stroke?.opacity, 0.55);
@@ -131,5 +131,5 @@ test('a highlighter is a band at the vendor alpha, not a pencil line at 0.4', ()
 
 test('ink is fully opaque, and an unknown size id is the m default in every path', () => {
   assert.equal(strokeOf('shape:a', freehand())?.opacity, 1);
-  assert.equal(strokeOf('shape:a', freehand({ props: { pts: [[0, 0]], size: 'xxl' } }))?.width, 5.2);
+  assert.equal(strokeOf('shape:a', freehand({ props: { pts: [0, 0, 0.5], size: 'xxl' } }))?.width, 5.2);
 });

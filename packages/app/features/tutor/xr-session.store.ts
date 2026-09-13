@@ -136,7 +136,16 @@ interface XrSessionState {
    * owners, and a child hearing Natalie twice.
    */
   entering: boolean;
-  /** How many strokes the renderer could not draw, for the report — not the UI. */
+  /**
+   * How many records this renderer had no primitive for — text, notes, arrows,
+   * images — reported by `XrBoardInk` after every change.
+   *
+   * IT IS ON A SURFACE A CHILD READS, and the comment here used to say the
+   * opposite ("for the report — not the UI"). Nothing called `setSkipped` and
+   * nothing rendered the number, which is exactly how a board silently missing
+   * a child's typed working looked identical to a complete one. The companion
+   * panel says it now; zero says nothing.
+   */
   skippedRecords: number;
   /**
    * The rail's tool and ink, and whether a board is in flight.

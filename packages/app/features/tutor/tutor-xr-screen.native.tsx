@@ -487,14 +487,23 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
     onExit();
   }, [advance, onExit]);
 
-  /* The scene reads these rather than receiving them — see `active`. */
+  /*
+    The scene reads these rather than receiving them — see `active`.
+
+    `engine` IS DELIBERATELY NOT CLEARED HERE, and that is the whole reason this
+    effect and the attach effect below are separate. They have different
+    dependencies: this one re-runs whenever the callbacks change identity, the
+    attach one only when the engine or the session does. Clearing the handle
+    from this cleanup therefore nulled it on an ordinary re-render and nothing
+    ever put it back — the ray kept hitting the paper and no ink appeared, with
+    no error anywhere. Whoever sets a slot clears it.
+  */
   useEffect(() => {
     active.session = session;
     active.onExit = handleExit;
     active.onAsk = onAsk;
     return () => {
       active.session = null;
-      active.engine = null;
       active.onExit = () => undefined;
       active.onAsk = () => undefined;
     };
@@ -614,9 +623,10 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
     `attach` does the vendor's late-joiner order; a diff that reaches an engine
     with no editor is dropped with no error on either platform.
 
-    This is also the ONLY move to `ready`. The renderer reporting good tracking
-    is not readiness — see `handleTrackingUpdated` — because a board is drawable
-    when there is an engine behind it, not when the room is in focus.
+    Attaching does NOT depend on the lifecycle. The engine is mounted through
+    every phase, including while the primer is up, so it may report `mounted`
+    long before there is a scene — and the document should be in it by then
+    rather than loaded at the moment the child starts looking.
   */
   const [ready, setReady] = useState(false);
   const handleReady = useCallback(() => setReady(true), []);
@@ -625,9 +635,37 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
     const handle = engine.current;
     if (handle === null) return;
     active.engine = handle;
-    advance({ kind: 'ready' });
-    return session.attach({ id: PRESENTATION_ID, board: handle });
-  }, [advance, ready, session]);
+    const detach = session.attach({ id: PRESENTATION_ID, board: handle });
+    return () => {
+      active.engine = null;
+      detach();
+    };
+  }, [ready, session]);
+
+  /*
+    THE BOARD BECOMES DRAWABLE WHEN THE ENGINE AND THE SCENE ARE BOTH THERE,
+    AND THIS WATCHES FOR EITHER ARRIVING LAST.
+
+    It is a second effect, not a line in the one above, because the two orders
+    are both real and only one of them was survivable as a single effect. The
+    engine is a WebView that starts loading on mount, and the permission promise
+    is a round trip through the runtime — so `mounted` routinely lands while the
+    phase is still `checking`, where `ready` is not a legal move and the table
+    correctly drops it. With the promotion welded to the attach effect, nothing
+    would have re-run when permission finally resolved: the child would have got
+    a board stuck on "Bringing your working over", with an engine behind it, for
+    the rest of the session.
+
+    Watching the phase as well as the engine is what makes both orders converge
+    on the same state.
+
+    This is also the ONLY move to `ready`. The renderer reporting good tracking
+    is not readiness — see `handleTrackingUpdated` — because a board is drawable
+    when there is an engine behind it, not when the room is in focus.
+  */
+  useEffect(() => {
+    if (ready && phase.kind === 'preparing') advance({ kind: 'ready' });
+  }, [advance, phase.kind, ready]);
 
   const handleChange = useCallback(
     (diff: WhiteboardDiff, source: WhiteboardDiffSource) => {
