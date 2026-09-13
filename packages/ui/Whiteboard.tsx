@@ -248,6 +248,13 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
       board.current?.setInk(next);
     },
     undo: () => board.current?.undo(),
+    /*
+      Forwarded, not surfaced. The tray deliberately has no redo key — see
+      `WhiteboardHandle.redo` — but the handle is one contract, and the spatial
+      rail reaches the engine through this component.
+    */
+    redo: () => board.current?.redo(),
+    injectPointer: (sample) => board.current?.injectPointer(sample),
     clear: () => board.current?.clear(),
   }));
 

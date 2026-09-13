@@ -66,6 +66,24 @@ export { CaptureScreen, useCaptureStore, CameraSheet, useCameraStore } from './f
 export { TutorScreen } from './features/tutor/screen';
 export { preloadNatalie } from './features/tutor/natalie-preload';
 export { useTutorStore } from './features/tutor/tutor.store';
+// The spatial whiteboard (ADR-117). The SCREEN is deliberately absent from this
+// barrel: it is native-only and lazily imported by its route, so that no web
+// bundle and no cold start pays for `@reactvision/react-viro`. What is exported
+// is the state the 2D screen needs to open it and the board's shared session.
+export { TutorXrEntry } from './features/tutor/tutor-xr-entry';
+export type { TutorXrScreenProps } from './features/tutor/tutor-xr-screen.types';
+export { useXrSession, type XrUnsupportedReason } from './features/tutor/xr-session.store';
+export {
+  acquireBoardSession,
+  boardSessionKey,
+  disposeAllBoardSessions,
+  disposeBoardSession,
+  releaseBoardSession,
+  DRAFT_BOARD_KEY,
+  type BoardPersistence,
+  type BoardPresentation,
+  type BoardSession,
+} from './features/tutor/board-session';
 export type {
   StoredAttachment,
   StoredMessage,

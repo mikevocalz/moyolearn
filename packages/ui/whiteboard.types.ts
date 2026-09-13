@@ -108,8 +108,51 @@ export interface WhiteboardHandle {
   /** The colour the pen and the highlighter draw in. The eraser ignores it. */
   setInk(ink: WhiteboardInk): void;
   undo(): void;
+  /**
+   * Put back what `undo` just took.
+   *
+   * The engine has always had it — Quickdraw's store exposes `undo` and `redo`
+   * as a pair — and the 2D tray deliberately does not show it: a tap is a cheap
+   * thing to aim, and a tray with one fewer key is a tray a seven-year-old can
+   * read. A ray pointed across a room is not cheap to aim, so the spatial rail
+   * does show it, and this is the verb it needs.
+   */
+  redo(): void;
+  /**
+   * Drive the engine's own input with a pointer it did not receive from a
+   * finger — the seam the spatial board draws through.
+   *
+   * COORDINATES ARE THE ENGINE'S CLIENT SPACE, in CSS pixels relative to the
+   * board's own surface, NOT page space and NOT normalised. That is deliberate:
+   * the engine maps client to page itself (`editor.screenToPage`), and the one
+   * failure mode worth designing against here is transforming a coordinate
+   * twice. The spatial caller converts a world hit to `(u, v)` on the 5:7
+   * surface once, multiplies by the surface's pixel size, and stops.
+   *
+   * `phase` is a full gesture, not a click: `'begin'`, then any number of
+   * `'move'`, then exactly one of `'end'` or `'cancel'`. A caller that stops
+   * sending without one of those leaves the engine mid-stroke — which is what
+   * `'cancel'` is for when tracking is lost or the ray leaves the paper.
+   */
+  injectPointer(sample: WhiteboardPointerSample): void;
   /** Empties the board in one undoable step. */
   clear(): void;
+}
+
+/** One sample of a synthesised pointer. See `WhiteboardHandle.injectPointer`. */
+export interface WhiteboardPointerSample {
+  phase: 'begin' | 'move' | 'end' | 'cancel';
+  /** CSS pixels in the board surface's own client space. */
+  x: number;
+  y: number;
+  /**
+   * 0–1 where the input device reports it, omitted where it does not.
+   *
+   * Not faked. A controller ray and a gaze have no pressure, and inventing one
+   * gives a child's line a taper that responds to nothing they did — so the
+   * engine is left to apply its own default rather than handed a lie.
+   */
+  pressure?: number;
 }
 
 export interface WhiteboardBoardProps {

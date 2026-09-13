@@ -121,6 +121,18 @@ export type TutorStageState =
 export interface TutorStageProps {
   state: TutorStageState;
   /**
+   * One action that belongs to the tutor's own alcove — today, the way into the
+   * spatial whiteboard.
+   *
+   * It is drawn in exactly ONE place at a time. Her pane starts closed
+   * (`compact` is the seed), so when it is shut the action rides on her rail in
+   * the conversation column, and when it is open it moves into the pane beside
+   * her. Never both: two doors into the same room is the bug this slot is
+   * shaped to prevent, and it is why the caller passes one node rather than
+   * rendering it twice.
+   */
+  detailActions?: React.ReactNode;
+  /**
    * What this session is — "Long division", not "Natalie".
    *
    * Doc 23 §2: the header answers "what is this screen" precisely BECAUSE the
@@ -484,6 +496,7 @@ function StateBody({
  * compact/regular layout split.
  */
 export function TutorStage({
+  detailActions,
   state,
   title,
   tutorName = 'Natalie',
@@ -676,7 +689,7 @@ export function TutorStage({
   } as const;
 
   const presenceBlock = panes ? (
-    <TutorPresence {...presenceProps} render="rail" />
+    <TutorPresence {...presenceProps} render="rail" railActions={detailOpen ? undefined : detailActions} />
   ) : (
     <TutorPresence {...presenceProps} avatar={avatar} />
   );
@@ -931,6 +944,13 @@ export function TutorStage({
                     `render` contract: the halves split by placement, never by
                     duplication). */}
                 <TutorPresence {...presenceProps} render="body" avatar={avatar} fill />
+                {/*
+                  Her pane is open, so the action lives here — upper-trailing,
+                  above her body and never over her face or her captions.
+                */}
+                {detailOpen && detailActions ? (
+                  <View className="absolute right-group top-group">{detailActions}</View>
+                ) : null}
               </MotionView>
             }>
             <AdaptivePanes.Column>

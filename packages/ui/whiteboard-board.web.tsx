@@ -73,6 +73,45 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         setTool: (tool) => board.current?.editor?.setTool(tool),
         setInk: (colour) => board.current?.editor?.setStyle('color', colour),
         undo: () => board.current?.editor?.store.undo(),
+      redo: () => board.current?.editor?.store.redo(),
+      /*
+        THE SAME VERB, AND ON THIS SIDE IT IS A REAL DOM EVENT rather than a
+        string of script. The engine is in this document, so the board's own
+        canvas is reachable and a synthesised `PointerEvent` goes straight at
+        it — no bridge, no queue, the same client-space contract.
+
+        It exists on web because the contract has to be ONE shape: the spatial
+        screen is native-only today, and a handle whose verb set changes per
+        platform is a handle every caller has to branch on. A web caller that
+        drives it gets the same behaviour rather than a silent no-op.
+      */
+      injectPointer: (sample) => {
+        const host = board.current?.editor?.container;
+        if (!host) return;
+        const type =
+          sample.phase === 'begin'
+            ? 'pointerdown'
+            : sample.phase === 'move'
+              ? 'pointermove'
+              : sample.phase === 'end'
+                ? 'pointerup'
+                : 'pointercancel';
+        const target = sample.phase === 'begin' ? host : window;
+        target.dispatchEvent(
+          new PointerEvent(type, {
+            pointerId: 1,
+            pointerType: 'pen',
+            isPrimary: true,
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            clientX: sample.x,
+            clientY: sample.y,
+            buttons: sample.phase === 'begin' || sample.phase === 'move' ? 1 : 0,
+            ...(sample.pressure === undefined ? {} : { pressure: sample.pressure }),
+          }),
+        );
+      },
         clear: () => board.current?.editor?.clearBoard(),
       }),
       [exportPng],

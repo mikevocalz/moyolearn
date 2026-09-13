@@ -120,6 +120,7 @@ export {
   type MotionViewProps, type MotionTextProps, type MotionPresetProps, type SlideInProps,
 } from './motion';
 export { PressScale, type PressScaleProps } from './press-scale';
+export { XrBoardButton, type XrBoardButtonProps } from './XrBoardButton';
 export { useInstanceStore, useStore } from './use-instance-store';
 export * from './audio';
 export type { TutorAttachment, TutorAttachmentKind } from './tutor-attachment.ts';

@@ -14,6 +14,7 @@ import { useRouter } from 'solito/navigation';
 import {
   TutorStage,
   WhiteboardSheet,
+  XrBoardButton,
   hasWorkPane,
   isCollapsed,
   useSizeClass,
@@ -58,6 +59,8 @@ import { transcribe } from '../capture/transcribe';
 import { useUploadQueue, setUploadReporter } from '../media';
 import { patchAttachment, postMessage } from './session.client.ts';
 import { evaluateArithmetic } from '@acme/student-model/pure';
+import { useXrSession } from './xr-session.store.ts';
+import { canOpenSpatialBoard } from './xr-capability.ts';
 
 export interface TutorScreenProps {
   ageBand?: AgeBand;
@@ -787,6 +790,26 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     send their board twice.
   */
   const [asking, setAsking] = useState(false);
+
+  /*
+    THE DOOR INTO THE SPATIAL BOARD.
+
+    `push`, not `replace`: this screen stays mounted underneath with its pane
+    state, its composer draft and its session, so coming back is a pop rather
+    than a restore. `beginEntry` is what stops a second press opening a second
+    scene while the first one is still loading its renderer.
+  */
+  const xrEntering = useXrSession((s) => s.entering);
+  const beginXrEntry = useXrSession((s) => s.beginEntry);
+  const pendingXrAsk = useXrSession((s) => s.pendingAsk);
+  const takeXrAsk = useXrSession((s) => s.takeAsk);
+
+  const handleOpenXr = useCallback(() => {
+    if (xrEntering) return;
+    beginXrEntry();
+    router.push('/tutor-xr');
+  }, [beginXrEntry, router, xrEntering]);
+
   const [boardOpen, setBoardOpen] = useState(false);
   const handleAskBoard = useCallback(
     (png: string | null) => {
@@ -822,6 +845,20 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     },
     [asking, attachments, addAttachment],
   );
+
+  /*
+    A BOARD ASKED FOR IN THE HEADSET TAKES THIS SCREEN'S ONE PATH.
+
+    The spatial rail can export a PNG but must not stage it: the cap on images,
+    the attachment id and the armed send all live in `handleAskBoard`, and a
+    second copy of them would be a second rule about what a child may send.
+    Claiming it clears it, so a re-render cannot send the same board twice.
+  */
+  useEffect(() => {
+    if (pendingXrAsk === null) return;
+    const png = takeXrAsk();
+    if (png !== null) handleAskBoard(png);
+  }, [handleAskBoard, pendingXrAsk, takeXrAsk]);
 
   /*
     NO PROBLEM IS STILL A PLACE.
@@ -897,6 +934,19 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     <>
     <TutorStage
       state={stageState}
+      /*
+        THE DOOR INTO THE SPATIAL BOARD, drawn in her alcove — the stage decides
+        whether that means her rail or her pane, because only it knows whether
+        the pane is open. It is absent entirely on a device that cannot open one.
+      */
+      detailActions={
+        <XrBoardButton
+          size={buttonSizeForBand(ageBand)}
+          entering={xrEntering}
+          available={canOpenSpatialBoard()}
+          onPress={handleOpenXr}
+        />
+      }
       /*
         The header names the SESSION now that the rail names the tutor (doc 23
         §2). It carried "Natalie" only because the avatar was missing and
