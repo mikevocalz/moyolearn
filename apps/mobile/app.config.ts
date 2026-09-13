@@ -53,6 +53,29 @@ const config: ExpoConfig = {
       It plays Bunny Stream's HLS output. `expo-video`/`expo-av` are deliberately
       absent — one video stack, not two.
     */
+    /*
+      VIRO HAS TO BE REGISTERED OR THE SPATIAL WHITEBOARD CANNOT EXIST.
+      The fork ships `app.plugin.js`, and without it in this array `prebuild`
+      writes no pods and no Gradle linkage, so `VRTSceneNavigatorModule` never
+      registers. `xr-capability.ts` checks for exactly that module and fails
+      closed, `XrBoardButton` returns null, and the whole feature is invisible
+      on a device while every test on the branch stays green — the failure has
+      no symptom short of a build.
+
+      `AR` because the board is placed in the room: `ViroXRSceneNavigator` with
+      a `ViroARScene` is the passthrough path on Quest and the ARKit/ARCore path
+      on a phone. The camera string covers BOTH uses a reviewer will see — the
+      homework photograph and placing the paper — because iOS shows one string
+      per permission, not one per feature.
+    */
+    [
+      '@reactvision/react-viro',
+      {
+        xRMode: ['AR'],
+        cameraUsagePermission:
+          'Moyo uses the camera so you can photograph your homework, and to place your whiteboard in the room.',
+      },
+    ],
     'react-native-video',
     /*
       Nitro-backed fetch: Cronet on Android, URLSession on iOS, so HTTP/2 and
