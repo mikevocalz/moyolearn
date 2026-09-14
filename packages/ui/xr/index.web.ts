@@ -52,11 +52,15 @@ export {
   railWidthFor,
   spatialDistance,
   spatialFontSize,
+  spatialLabelFontSize,
+  spatialLabelScale,
+  spatialLayer,
   spatialSpacing,
   spatialTarget,
   spatialTextHeight,
   spatialType,
   type SpatialBand,
+  type SpatialTypeStep,
 } from './spatial-tokens.ts';
 export {
   BOARD_ASPECT,

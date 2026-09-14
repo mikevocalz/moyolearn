@@ -84,6 +84,56 @@ export const spatialFontSize = {
   title: Math.round((spatialType.title.min + spatialType.title.max) / 2 / TEXT_POINT_M),
 } as const satisfies Record<keyof typeof spatialType, number>;
 
+/**
+ * The factor a label's node is scaled down by, and the reason it exists.
+ *
+ * A `ViroText`'s point size is POINT-LIKE: the renderer rasterises glyphs at
+ * that size and then maps them onto the world through `kTextPointToWorldScale`.
+ * Asking for the metre height directly — which is what `spatialFontSize` is —
+ * therefore asks for a 3, 5 or 9 pt face, and a 3 pt face is a handful of
+ * texels per glyph however close a child leans in.
+ *
+ * So a label is laid out in a box `1 / spatialLabelScale` times too large, at
+ * `1 / spatialLabelScale` times the point size, and the NODE is scaled back
+ * down. The rendered glyph height is identical — `spatialTextHeight` below is
+ * still what a step occupies — and the raster is four times finer.
+ *
+ * 0.25 is the Danger Room conference scene's own factor, which is the only
+ * version of this idiom proven on headset hardware in this codebase.
+ */
+export const spatialLabelScale = 0.25;
+
+/**
+ * The point size a label is actually laid out at, before its node is scaled.
+ *
+ * Whole numbers at every step, which is not luck: `spatialLabelScale` is a
+ * reciprocal power of two, so dividing an integer point size by it cannot
+ * produce a fraction for iOS's `int` truncation to lose.
+ */
+export const spatialLabelFontSize = {
+  caption: spatialFontSize.caption / spatialLabelScale,
+  body: spatialFontSize.body / spatialLabelScale,
+  title: spatialFontSize.title / spatialLabelScale,
+} as const satisfies Record<keyof typeof spatialType, number>;
+
+/** The three type steps, named once so a label can take one as a prop. */
+export type SpatialTypeStep = keyof typeof spatialType;
+
+/**
+ * How far one layer of a plate stands off the one behind it, in metres.
+ *
+ * A plate is stacked quads, not a flex box, so "in front of" is a Z offset and
+ * nothing else decides it. Both steps are the Danger Room conference scene's,
+ * which is the composition proven to draw on headset hardware: an inset face at
+ * 0.004 over its frame, and content at 0.012 over that. They are far enough
+ * apart that no two quads z-fight at the board's distance and close enough that
+ * the stack still reads as one object.
+ *
+ * Nested plates compose these rather than needing deeper steps — a chip inside
+ * a key sits on the key's own content layer and carries its two from there.
+ */
+export const spatialLayer = { surface: 0.004, content: 0.012 } as const;
+
 /** What `spatialFontSize` actually occupies, for anything that must box it. */
 export const spatialTextHeight = {
   caption: spatialFontSize.caption * TEXT_POINT_M,

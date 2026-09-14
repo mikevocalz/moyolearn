@@ -2,14 +2,14 @@
 // The spatial panel: one anchor carrying the 5:7 paper, the controls beside it,
 // and the conversation turned back toward the child.
 //
-// WHY THE RAIL IS A SIBLING AND NOT A CHILD. The installed ViroReact's flexbox
-// docs are explicit that only `ViroText`, `ViroImage`, `ViroVideo`,
-// `ViroButton`, `ViroSpinner` and nested `ViroFlexView`s may go inside a
-// `ViroFlexView`, and that `position`/`rotation`/`scale` are respected on the
-// OUTERMOST one only. So a rail nested in the board's flex tree could not carry
-// its own transform, and a board nested in a rail's could not either. Both hang
-// off one `ViroNode` instead, which is also what makes them move together: the
-// anchor is the thing that gets recentred, and neither knows it happened.
+// WHY THE RAIL IS A SIBLING AND NOT A CHILD. It began as a constraint: the
+// panels were `ViroFlexView`s, and the installed renderer respects
+// `position`/`rotation`/`scale` on the OUTERMOST flex view only, so a rail
+// nested in the board's tree could not carry its own transform. The flex views
+// are gone — every panel is stacked quads now (`XrPlate.native.tsx`) — and the
+// arrangement stays, on its own merit: both hang off one `ViroNode`, which is
+// what makes them move together. The anchor is the thing that gets recentred,
+// and neither the board nor the rail knows it happened.
 //
 // WHY THE POINTER MATH IS HERE. The panel is the only thing that knows its own
 // world transform, so it is the only thing that may convert a world hit into a
@@ -23,21 +23,10 @@
 // SOT-KEYWORDS: xr panel viro native spatial ornament companion quad pointer mapping placement drag
 
 import { useCallback, useEffect, useMemo, useRef } from 'react';
-import {
-  ViroClickStateTypes,
-  ViroFlexView,
-  ViroNode,
-  ViroQuad,
-  ViroSpinner,
-  ViroText,
-} from '@reactvision/react-viro';
-import {
-  boardComposition,
-  spatialFontSize,
-  spatialSpacing,
-  spatialTextHeight,
-} from './spatial-tokens.ts';
+import { ViroClickStateTypes, ViroNode, ViroQuad, ViroSpinner } from '@reactvision/react-viro';
+import { boardComposition, spatialSpacing, spatialTextHeight } from './spatial-tokens.ts';
 import { XR_MATERIAL } from './spatial-materials.native.ts';
+import { XrLabel, XrPlate } from './XrPlate.native.tsx';
 import { xrDragHit, xrDragPlane } from './surface-drag.ts';
 import { XR_COLOR } from './xr-colors.ts';
 import type { XrPanelProps, XrSurfaceInput, XrVector3 } from './XrPanel.types.ts';
@@ -397,35 +386,43 @@ export function XrPanel({
         */
         <ViroNode position={[0, 0, 0.01]}>
           <ViroSpinner type="dark" position={[0, 0.08, 0]} scale={[0.14, 0.14, 0.14]} />
-          <ViroText
+          <XrLabel
             text={state === 'checking' ? 'Getting your board ready' : 'Bringing your working over'}
             position={[0, -0.06, 0]}
             width={width * 0.8}
             /* Two lines of body type, so the box is the size of what goes in
                it. It was 0.12 m holding a 22 pt glyph, which is 0.22 m. */
             height={spatialTextHeight.body * 2}
+            step="body"
             /* Light ink: this sits on the frame quad's near-black while the
                paper is not drawn yet, and the dark ink measured 1.08:1. */
-            style={{ fontSize: spatialFontSize.body, color: XR_COLOR.onPanel, textAlign: 'center' }}
-            textLineBreakMode="WordWrap"
+            color={XR_COLOR.onPanel}
+            align="center"
+            maxLines={2}
           />
         </ViroNode>
       ) : null}
 
       {state === 'unsupported' ? (
-        <ViroFlexView
+        /*
+          A card, not a flex view. The padding was `0.04` — the last raw length
+          in this file — and it is `xs` now, which is what every other panel in
+          the feature insets its content by.
+        */
+        <XrPlate
           position={[0, 0, 0.01]}
           width={width}
           height={height * 0.5}
-          materials={[XR_MATERIAL.card]}
-          style={{ padding: 0.04, flexDirection: 'column', justifyContent: 'center' }}
+          material={XR_MATERIAL.card}
         >
-          <ViroText
+          <XrLabel
             text="This headset can't open the spatial whiteboard yet. Your board is waiting on the normal screen — nothing is lost."
-            style={{ fontSize: spatialFontSize.body, color: XR_COLOR.onPanel }}
-            textLineBreakMode="WordWrap"
+            width={width - spatialSpacing.xs * 2}
+            height={height * 0.5 - spatialSpacing.xs * 2}
+            step="body"
+            color={XR_COLOR.onPanel}
           />
-        </ViroFlexView>
+        </XrPlate>
       ) : null}
 
       {ornaments?.leading ? (

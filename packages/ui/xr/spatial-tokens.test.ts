@@ -24,6 +24,9 @@ import {
   railWidthFor,
   spatialDistance,
   spatialFontSize,
+  spatialLabelFontSize,
+  spatialLabelScale,
+  spatialLayer,
   spatialSpacing,
   spatialTarget,
   spatialTextHeight,
@@ -157,4 +160,41 @@ test('every point size lands inside the metre range its type step declares', () 
   }
   assert.ok(spatialFontSize.title > spatialFontSize.body);
   assert.ok(spatialFontSize.body > spatialFontSize.caption);
+});
+
+test('a label laid out large and scaled down renders at exactly its metre height', () => {
+  /*
+    The whole of the `XrLabel` trick, as arithmetic. A step's point size is its
+    metre height, which is a 3–9 pt face — a glyph made of a handful of texels
+    however close a child leans in. So a label is laid out at
+    `spatialLabelFontSize` and its NODE is scaled by `spatialLabelScale`, and
+    the product has to come back to the same metres: a raster improvement that
+    also changed the type size would be a redesign wearing a performance note.
+  */
+  for (const step of ['caption', 'body', 'title'] as const) {
+    assert.equal(
+      spatialLabelFontSize[step] * spatialLabelScale,
+      spatialFontSize[step],
+      `${step} does not scale back to its declared height`,
+    );
+    // iOS truncates a point size to an `int` (`VRTText.mm`), so a fractional
+    // logical size would quietly round the glyph — and with it the height.
+    assert.ok(Number.isInteger(spatialLabelFontSize[step]), `${step} is not a whole point size`);
+    // And the raster has to actually be finer, which is the point of the trick.
+    assert.ok(spatialLabelFontSize[step] > spatialFontSize[step]);
+  }
+});
+
+test('a plate layers its quads front to back without sharing a plane', () => {
+  /*
+    Two quads at one Z z-fight, and a z-fight in a headset is a surface that
+    flickers between two colours as the child's head moves. The steps are also
+    ORDERED: content in front of the inset face, which is in front of the frame
+    at 0.
+  */
+  assert.ok(spatialLayer.surface > 0);
+  assert.ok(spatialLayer.content > spatialLayer.surface);
+  // Small enough that the stack still reads as one object at the board's
+  // distance — under a millidegree of parallax across the whole plate.
+  assert.ok(spatialLayer.content < spatialSpacing.xs);
 });

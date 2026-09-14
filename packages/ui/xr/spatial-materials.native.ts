@@ -90,11 +90,11 @@ const SURFACE_MATERIALS = {
   },
   [XR_MATERIAL.keyPressed]: {
     /*
-      A 20% white wash, the spatial equivalent of the 2D pressed state. Setting
-      it as a `ViroFlexView`'s material REPLACES the resting one, so it
-      composites over the rail (`#262420`) rather than over the key it
-      succeeds: `#514F4B`. `RailKey` reads that and takes the light label there,
-      which is 8.03:1 — the dark label it used to keep was 2.21:1.
+      A 20% white wash, the spatial equivalent of the 2D pressed state. A key
+      is ONE quad and this material REPLACES the resting one on it, so the wash
+      composites over the rail (`#262420`) rather than over the key it succeeds:
+      `#514F4B`. `XrKey` reads that and takes the light label there, which is
+      8.03:1 — the dark label it used to keep was 2.21:1.
     */
     diffuseColor: `${chrome.onDark}33`,
     lightingModel: 'Constant',
@@ -119,6 +119,23 @@ const SURFACE_MATERIALS = {
   },
   [XR_MATERIAL.focusRing]: {
     diffuseColor: chrome.focus,
+    lightingModel: 'Constant',
+  },
+  /*
+    `Constant` for the outlines too: a ring's whole job is to be a flat edge
+    whose contrast against its neighbour was measured, and a lighting model
+    would shade one side of it out of the ratio it was chosen for.
+  */
+  [XR_MATERIAL.ringKey]: {
+    diffuseColor: chrome.ringKey,
+    lightingModel: 'Constant',
+  },
+  [XR_MATERIAL.ringKeySelected]: {
+    diffuseColor: chrome.ringKeySelected,
+    lightingModel: 'Constant',
+  },
+  [XR_MATERIAL.ringMuted]: {
+    diffuseColor: chrome.ringMuted,
     lightingModel: 'Constant',
   },
   /*

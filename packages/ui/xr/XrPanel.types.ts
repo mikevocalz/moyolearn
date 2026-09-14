@@ -36,9 +36,8 @@ export interface XrPlacement {
  * outside its bounds, keeping their relationship to it when it moves. Viro has
  * no ornament API, so this is a layout relationship the panel enforces — the
  * rail is a SIBLING of the paper under one anchor, never a child of it, because
- * a nested `ViroFlexView` cannot carry its own transform (only the outermost
- * one's `position`/`rotation`/`scale` is respected) and because a control drawn
- * on the paper is a control covering the homework.
+ * one anchor is what makes them move together and because a control drawn on
+ * the paper is a control covering the homework.
  */
 export interface XrOrnament {
   node: ReactNode;

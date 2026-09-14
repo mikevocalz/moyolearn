@@ -74,6 +74,21 @@ export const XR_SURFACE = {
     fill, which is the only value in the pair that clears both.
   */
   focus: semantic.focus.light,
+  /*
+    THE LABEL INKS AGAIN, AS SURFACES. Every outline in the scene used to be a
+    `ViroFlexView`'s `borderColor`; the panels are stacked quads now and a quad
+    has no border, so an outline is geometry and geometry needs a registered
+    material to draw with.
+
+    These are the same three values `XR_COLOR` names for the label each outline
+    belongs to, which is what keeps the rule the rail was written with — "the
+    chip keeps its outline in the label's colour, so it has a boundary whatever
+    the hue" — true after the move. `xr-colors.test.ts` asserts each pair
+    rather than trusting two files to be edited together.
+  */
+  ringKey: semantic.surface.dark,
+  ringKeySelected: semantic['text-inverse'].light,
+  ringMuted: palette.ink[300],
 } as const;
 
 /**

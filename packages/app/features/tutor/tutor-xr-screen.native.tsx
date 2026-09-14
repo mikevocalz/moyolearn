@@ -10,9 +10,9 @@
 // opening is replayed, and no audio stream is opened.
 //
 // THE ENGINE IS STILL QUICKDRAW, AND IT IS STILL ON SCREEN — just not visibly.
-// ViroReact cannot host a React Native view inside a scene (the installed
-// flexbox docs permit only Viro primitives inside `ViroFlexView`), so the board
-// cannot be put on the paper. It does not need to be: the engine remains the
+// ViroReact cannot host a React Native view inside a scene — a scene graph
+// takes Viro primitives and nothing else — so the board cannot be put on the
+// paper. It does not need to be: the engine remains the
 // only authority for strokes, tools, the eraser and export, the spatial paper
 // renders that engine's document, and a ray on the paper becomes a pointer in
 // the engine. One engine, one document, two renderers — which is what keeps a

@@ -81,6 +81,20 @@ test('the selection outline reads on the fill it outlines', () => {
   atLeast(NON_TEXT, XR_COLOR.onKeySelected, XR_SURFACE.keySelected, 'selection outline');
 });
 
+test('every outline is the colour of the label it belongs to', () => {
+  /*
+    An outline used to be a `ViroFlexView`'s `borderColor` and could take
+    `XR_COLOR` directly. A stacked-quad key draws it as geometry, so the same
+    value has to exist a second time as a registered surface — and two writings
+    of one colour are two colours waiting to disagree. The ring that says "this
+    key is selected" drifting off the label that says which key it is would be
+    the exact failure this file was written for.
+  */
+  assert.equal(XR_SURFACE.ringKey, XR_COLOR.onKey);
+  assert.equal(XR_SURFACE.ringKeySelected, XR_COLOR.onKeySelected);
+  assert.equal(XR_SURFACE.ringMuted, XR_COLOR.onPanelMuted);
+});
+
 test('an ink chip has a boundary on both key fills, whatever the hue', () => {
   /*
     A chip is bounded either by its own contrast with the key or by the outline

@@ -17,25 +17,31 @@
 // outside the slab entirely. `railGrid` in `spatial-tokens.ts` carries the
 // arithmetic and `spatial-tokens.test.ts` holds it.
 //
+// IT IS STACKED QUADS, NOT A FLEX BOX. The slab is an `XrPlate` and every key
+// is placed by `runOffsets` in metres — the construction from the Danger Room
+// conference scene. Yoga is what let the overflow above happen silently in the
+// first place (`flexShrink` is 0, so the last children were simply drawn off
+// the slab), and a nested flex view could never have carried its own transform
+// anyway. See `XrPlate.native.tsx`.
+//
 // Ornament, not chrome: it hangs beside the paper and never over it, and it is
 // placed by `XrPanel` rather than positioning itself. Apple's ornaments are the
 // reference — controls related to a window, outside its bounds, keeping their
 // relationship to it when it moves.
-// SOT: packages/ui/Whiteboard.tsx · packages/ui/xr/spatial-tokens.ts
+// SOT: packages/ui/Whiteboard.tsx · packages/ui/xr/spatial-tokens.ts · packages/ui/xr/XrPlate.native.tsx
 // SOT-KEYWORDS: xr rail ornament toolbar tools ink undo redo ask clear viro spatial controls
 
-import { Fragment, useState, type ReactNode } from 'react';
-import { ViroClickStateTypes, ViroFlexView, ViroNode, ViroText } from '@reactvision/react-viro';
+import { useState } from 'react';
+import { ViroNode } from '@reactvision/react-viro';
 import { XR_MATERIAL, inkMaterial } from './spatial-materials.native.ts';
-import { XR_COLOR } from './xr-colors.ts';
+import { XrKey, XrPlate } from './XrPlate.native.tsx';
+import { runOffsets } from './run-layout.ts';
 import {
   boardComposition,
   minHitSize,
   railGrid,
   railWidthFor,
-  spatialFontSize,
   spatialSpacing,
-  spatialTextHeight,
 } from './spatial-tokens.ts';
 import type { WhiteboardInk, WhiteboardTool } from '../whiteboard.types.ts';
 /* Props live outside this file so the web fork can name them without naming
@@ -61,8 +67,8 @@ const TOOLS = [
  * They were not here at all — the swatches rendered `label=""`, seven controls
  * whose only difference was their fill. That is SC 1.4.1 Use of Colour at Level
  * A (`06-a11y.md` F3) and it is not repairable with an accessibility label,
- * because `ViroText` and `ViroFlexView` expose none: in this scene the only
- * accessible name a control can have is the one it draws.
+ * because `ViroText` exposes none: in this scene the only accessible name a
+ * control can have is the one it draws.
  */
 const INKS = [
   { id: 'black', label: 'Black' },
@@ -78,150 +84,43 @@ const INKS = [
 const inkLabel = (id: WhiteboardInk): string =>
   INKS.find((entry) => entry.id === id)?.label ?? INKS[0].label;
 
-/**
- * The inset a key's content sits in, and the width of its outline.
- *
- * Both derived from the smallest spacing tier rather than written as metres:
- * they were `0.008` and `0.004`, which are the only two raw lengths the file
- * had left. A third and a sixth of `xs` reproduce them to within a hair.
- */
-const KEY_INSET = spatialSpacing.xs / 3;
-const KEY_RING = spatialSpacing.xs / 6;
-
-interface KeyProps {
+/** One key in a rail column, plus any gap that must precede it. */
+interface RailEntry {
+  id: string;
   label: string;
-  size: number;
-  material: string;
-  /**
-   * A colour sample drawn above the label — the ink well and the swatches.
-   *
-   * The sample is a CHIP INSIDE a normal key rather than the key's own fill,
-   * and the reason is measurable: a swatch painted in its ink cannot carry its
-   * own name (`#e03131` holds neither label colour above 4.44:1) and cannot
-   * show a focus ring (the ring is 1.01–1.33:1 against five of the seven
-   * inks). On the key's own fill the name is 16.28:1 and the ring is 4.02:1,
-   * for every colour. The chip keeps its outline in the label's colour so it
-   * has a boundary whatever the hue — `#f1ac4b` is 1.85:1 against the key.
-   */
   chip?: string;
-  selected: boolean;
-  disabled: boolean;
+  selected?: boolean;
+  disabled?: boolean;
   onPress: () => void;
+  /** Metres of empty run above this key. */
+  lead?: number;
 }
 
 /**
- * One rail key, with every state the spatial rules require wired.
+ * A column's keys, each with the Y its centre sits at.
  *
- * SELECTION IS THREE SIGNALS AND ONLY ONE OF THEM IS COLOUR: the fill inverts,
- * the label inverts with it, and a permanent outline is drawn inside the key's
- * own edge. The outline is what satisfies SC 1.4.1 — a child who cannot
- * separate the two fills still sees a key that is ringed and six that are not —
- * and it is the same device the 2D tray uses on its swatches ("Selected is the
- * same dot, ringed harder"). This comment used to claim the key grew, which it
- * never did, while all three colour states resolved to `palette.ink[100]`.
+ * The gaps go into the RUN rather than being rendered, so `extentOf` measures
+ * what the column actually occupies and `spatial-tokens.test.ts`'s fit check
+ * stays true of the thing that draws. The column runs top-down, which is why
+ * the offset is subtracted from the top edge.
  */
-function RailKey({ label, size, material, chip, selected, disabled, onPress }: KeyProps) {
-  const [hovered, setHovered] = useState(false);
-  const [pressed, setPressed] = useState(false);
-
-  const surface = disabled
-    ? XR_MATERIAL.keyDisabled
-    : pressed
-      ? XR_MATERIAL.keyPressed
-      : selected
-        ? XR_MATERIAL.keySelected
-        : material;
-
-  /*
-    THE LABEL FOLLOWS THE FILL. A resting key is the paper's cream and takes the
-    dark ink at 16.28:1; a selected key is that ink inverted and takes the light
-    one at 19.21:1. A pressed key is a 20% white wash that REPLACES the resting
-    material rather than sitting on it, so it composites over the rail to
-    `#514F4B` — the dark label was 2.21:1 there and the light one is 8.03:1.
-    The rule was written in this file and was a no-op, because both fills were
-    the same colour.
-  */
-  const onFill = disabled
-    ? XR_COLOR.onPanelMuted
-    : selected || pressed
-      ? XR_COLOR.onKeySelected
-      : XR_COLOR.onKey;
-
-  return (
-    <ViroFlexView
-      width={size}
-      height={size}
-      materials={[surface]}
-      /*
-        One border does two jobs and the thickness separates them: a hover ring
-        in the focus colour while a ray is on the key, and a thinner selection
-        outline in the label's own ink the rest of the time. Hover wins when
-        both are true, which is correct — the ray's position is the more urgent
-        of the two facts and the fill still says which tool is chosen.
-      */
-      style={{
-        padding: KEY_INSET,
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        borderWidth: hovered && !disabled ? KEY_RING * 2 : selected ? KEY_RING : 0,
-        borderColor: hovered && !disabled ? XR_COLOR.focus : XR_COLOR.onKeySelected,
-      }}
-      onHover={disabled ? undefined : (isHovering) => setHovered(isHovering)}
-      onClickState={
-        disabled
-          ? undefined
-          : (clickState) => {
-              if (clickState === ViroClickStateTypes.CLICK_DOWN) setPressed(true);
-              else if (clickState === ViroClickStateTypes.CLICK_UP) {
-                setPressed(false);
-                onPress();
-              }
-            }
-      }
-    >
-      {chip ? (
-        <ViroFlexView
-          width={size - KEY_INSET * 2}
-          height={spatialTextHeight.caption}
-          materials={[chip]}
-          style={{ borderWidth: KEY_RING, borderColor: onFill }}
-        />
-      ) : null}
-      <ViroText
-        text={label}
-        style={{
-          /* A chipped key carries a colour name under its sample, so it takes
-             the caption step — `body` at this width would clip "Purple". */
-          fontSize: chip ? spatialFontSize.caption : spatialFontSize.body,
-          color: onFill,
-          textAlign: 'center',
-        }}
-      />
-    </ViroFlexView>
-  );
-}
-
-/** One column of the rail's grid, or of the palette's. */
-function KeyColumn({
-  width,
-  height,
-  children,
-}: {
-  width: number;
-  height: number;
-  children: ReactNode;
-}) {
-  return (
-    <ViroFlexView
-      width={width}
-      height={height}
-      materials={[]}
-      style={{ flexDirection: 'column', justifyContent: 'flex-start', alignItems: 'center' }}
-    >
-      {children}
-    </ViroFlexView>
-  );
+function columnOf(
+  entries: readonly RailEntry[],
+  size: number,
+  box: number,
+): { entry: RailEntry; y: number }[] {
+  const run: number[] = [];
+  const at: number[] = [];
+  for (const entry of entries) {
+    if (entry.lead !== undefined) run.push(entry.lead);
+    at.push(run.length);
+    run.push(size);
+  }
+  const offsets = runOffsets(run, box, 0, 'start');
+  return entries.map((entry, index) => ({
+    entry,
+    y: box / 2 - (offsets[at[index] ?? 0] ?? 0),
+  }));
 }
 
 export function XrRail({
@@ -272,6 +171,67 @@ export function XrRail({
   const box = height - spatialSpacing.xs * 2;
 
   /*
+    THE OUTER COLUMN IS THE ONE THAT CAN COST SOMETHING. A ray that slips off
+    the left edge of the paper crosses the inner column first, so the inner
+    column is the pens — pressing one of those by accident costs a child
+    nothing. Undo, Redo, Ask and Clear are out here, away from the overshoot,
+    and the rail hangs to the LEFT of the paper, so the outer column is the one
+    at lower X.
+
+    Clear is last, after a gap wide enough that a ray sliding down the column
+    stops at Undo — WHICH IS STILL DIRECTLY ABOVE IT, deliberately, because that
+    adjacency is the entire argument for Clear having no confirmation dialog:
+    the engine clears in one undoable step and the undo is the next key up. The
+    gap is `xs` rather than the `md` it was, for the reason the grid exists —
+    four keys leave 0.0344 m of the box and `sm` needs 0.05. What replaced the
+    lost separation is distance of a different kind: Clear is now the furthest
+    control in the rail from the paper a child is drawing on.
+
+    HARDER TO HIT BY ACCIDENT IS SEPARATION, NOT A SMALLER TARGET. It was
+    `key × 0.8` — 3.06° — which makes the most destructive control on the rail
+    the hardest one to hit ON PURPOSE too, and a child who misses Clear twice
+    hits it on the third try anyway.
+  */
+  const outerColumn: RailEntry[] = [
+    { id: 'ask', label: asking ? 'Sending' : 'Ask', disabled: asking, onPress: onAsk },
+    { id: 'redo', label: 'Redo', disabled: !canRedo, onPress: onRedo },
+    { id: 'undo', label: 'Undo', disabled: !canUndo, onPress: onUndo },
+    /* The separator above Clear is a LENGTH IN THE RUN, never an invisible
+       sibling view: a spacer drawn between the keys is a spacer that can take
+       a ray, and the gap exists precisely so a slipping ray lands on nothing. */
+    { id: 'clear', label: 'Clear', disabled: false, onPress: onClear, lead: spatialSpacing.xs },
+  ];
+
+  const innerColumn: RailEntry[] = [
+    ...TOOLS.map((entry) => ({
+      id: entry.id,
+      label: entry.glyph,
+      selected: tool === entry.id,
+      onPress: () => onTool(entry.id),
+    })),
+    /*
+      The colour well says which colour it is holding, in the word the 2D tray
+      uses for it — the `aria-label="Pen color: Blue"` the child on a laptop
+      gets, drawn, because drawn is the only form of it this renderer has. It
+      was a key labelled "Ink" whose fill was the current colour, so the one
+      fact it carried was the one a colour-blind child could not read.
+    */
+    {
+      id: 'ink',
+      label: inkLabel(ink),
+      chip: inkMaterial(ink),
+      selected: pickingInk,
+      onPress: () => setPickingInk(!pickingInk),
+    },
+  ];
+
+  const outer = columnOf(outerColumn, key, box);
+  const inner = columnOf(innerColumn, key, box);
+
+  /* Two columns of floor-sized keys, centred in whatever width the rail took. */
+  const columnX = runOffsets([key, key], railWidth, spatialSpacing.xs, 'center');
+
+  /*
     The palette is a SIBLING SLAB, not seven more keys in the column, and that
     is the whole of the overflow fix on the open side: the rail's own height is
     the same whether it is open or shut. Seven full-size swatches stacked below
@@ -290,157 +250,80 @@ export function XrRail({
   const paletteColumns = Math.ceil(INKS.length / railGrid.rows);
   const paletteWidth = key * paletteColumns + spatialSpacing.xs * (paletteColumns + 1);
   const paletteHeight = key * railGrid.rows + spatialSpacing.xs * 2;
+  const paletteBox = paletteHeight - spatialSpacing.xs * 2;
+  const paletteX = runOffsets(
+    Array.from({ length: paletteColumns }, () => key),
+    paletteWidth,
+    spatialSpacing.xs,
+    'center',
+  );
+  const paletteY = runOffsets(
+    Array.from({ length: railGrid.rows }, () => key),
+    paletteBox,
+    0,
+    'start',
+  );
 
   return (
     <ViroNode>
-      <ViroFlexView
-        width={railWidth}
-        height={height}
-        materials={[XR_MATERIAL.rail]}
-        style={{
-          padding: spatialSpacing.xs,
-          flexDirection: 'row',
-          justifyContent: 'center',
-          alignItems: 'flex-start',
-        }}
-      >
-        {/*
-          THE OUTER COLUMN IS THE ONE THAT CAN COST SOMETHING. A ray that slips
-          off the left edge of the paper crosses the inner column first, so the
-          inner column is the pens — pressing one of those by accident costs a
-          child nothing. Undo, Redo, Ask and Clear are out here, away from the
-          overshoot.
+      <XrPlate width={railWidth} height={height} material={XR_MATERIAL.rail}>
+        {outer.map(({ entry, y }) => (
+          <XrKey
+            key={entry.id}
+            label={entry.label}
+            width={key}
+            height={key}
+            chip={entry.chip}
+            selected={entry.selected ?? false}
+            disabled={entry.disabled ?? false}
+            onPress={entry.onPress}
+            position={[-railWidth / 2 + (columnX[0] ?? 0), y, 0]}
+          />
+        ))}
 
-          Clear is last, after a gap wide enough that a ray sliding down the
-          column stops at Undo — WHICH IS STILL DIRECTLY ABOVE IT, deliberately,
-          because that adjacency is the entire argument for Clear having no
-          confirmation dialog: the engine clears in one undoable step and the
-          undo is the next key up. The gap is `xs` rather than the `md` it was,
-          for the reason the grid exists — four keys leave 0.0344 m of the box
-          and `sm` needs 0.05. What replaced the lost separation is distance of
-          a different kind: Clear is now the furthest control in the rail from
-          the paper a child is drawing on.
-
-          HARDER TO HIT BY ACCIDENT IS SEPARATION, NOT A SMALLER TARGET. It was
-          `key × 0.8` — 3.06° — which makes the most destructive control on the
-          rail the hardest one to hit ON PURPOSE too, and a child who misses
-          Clear twice hits it on the third try anyway.
-        */}
-        <KeyColumn width={key} height={box}>
-          <RailKey
-            label={asking ? 'Sending' : 'Ask'}
-            size={key}
-            material={XR_MATERIAL.key}
-            selected={false}
-            disabled={asking}
-            onPress={onAsk}
+        {inner.map(({ entry, y }) => (
+          <XrKey
+            key={entry.id}
+            label={entry.label}
+            width={key}
+            height={key}
+            chip={entry.chip}
+            selected={entry.selected ?? false}
+            disabled={entry.disabled ?? false}
+            onPress={entry.onPress}
+            position={[-railWidth / 2 + (columnX[1] ?? 0), y, 0]}
           />
-          <RailKey
-            label="Redo"
-            size={key}
-            material={XR_MATERIAL.key}
-            selected={false}
-            disabled={!canRedo}
-            onPress={onRedo}
-          />
-          <RailKey
-            label="Undo"
-            size={key}
-            material={XR_MATERIAL.key}
-            selected={false}
-            disabled={!canUndo}
-            onPress={onUndo}
-          />
-          <ViroFlexView width={key} height={spatialSpacing.xs} materials={[]} />
-          <RailKey
-            label="Clear"
-            size={key}
-            material={XR_MATERIAL.key}
-            selected={false}
-            disabled={false}
-            onPress={onClear}
-          />
-        </KeyColumn>
-
-        <ViroFlexView width={spatialSpacing.xs} height={box} materials={[]} />
-
-        <KeyColumn width={key} height={box}>
-          {TOOLS.map((entry) => (
-            <RailKey
-              key={entry.id}
-              label={entry.glyph}
-              size={key}
-              material={XR_MATERIAL.key}
-              selected={tool === entry.id}
-              disabled={false}
-              onPress={() => onTool(entry.id)}
-            />
-          ))}
-          {/*
-            The colour well says which colour it is holding, in the word the 2D
-            tray uses for it — the `aria-label="Pen color: Blue"` the child on a
-            laptop gets, drawn, because drawn is the only form of it this
-            renderer has. It was a key labelled "Ink" whose fill was the current
-            colour, so the one fact it carried was the one a colour-blind child
-            could not read.
-          */}
-          <RailKey
-            label={inkLabel(ink)}
-            size={key}
-            material={XR_MATERIAL.key}
-            chip={inkMaterial(ink)}
-            selected={pickingInk}
-            disabled={false}
-            onPress={() => setPickingInk(!pickingInk)}
-          />
-        </KeyColumn>
-      </ViroFlexView>
+        ))}
+      </XrPlate>
 
       {pickingInk ? (
-        <ViroFlexView
+        <XrPlate
           position={[-(railWidth / 2 + boardComposition.railGap + paletteWidth / 2), 0, 0]}
           width={paletteWidth}
           height={paletteHeight}
-          materials={[XR_MATERIAL.rail]}
-          style={{
-            padding: spatialSpacing.xs,
-            flexDirection: 'row',
-            justifyContent: 'center',
-            alignItems: 'flex-start',
-          }}
+          material={XR_MATERIAL.rail}
         >
-          {Array.from({ length: paletteColumns }, (_, column) => (
-            /* The spacer rides with the column rather than being interleaved by
-               index, so the gap count can never come apart from the column
-               count — the same reason the rail draws its own between the two. */
-            <Fragment key={column}>
-              {column > 0 ? (
-                <ViroFlexView
-                  width={spatialSpacing.xs}
-                  height={paletteHeight - spatialSpacing.xs * 2}
-                  materials={[]}
-                />
-              ) : null}
-              <KeyColumn width={key} height={paletteHeight - spatialSpacing.xs * 2}>
-                {INKS.slice(column * railGrid.rows, (column + 1) * railGrid.rows).map((entry) => (
-                  <RailKey
-                    key={entry.id}
-                    label={entry.label}
-                    size={key}
-                    material={XR_MATERIAL.key}
-                    chip={inkMaterial(entry.id)}
-                    selected={ink === entry.id}
-                    disabled={false}
-                    onPress={() => {
-                      onInk(entry.id);
-                      setPickingInk(false);
-                    }}
-                  />
-                ))}
-              </KeyColumn>
-            </Fragment>
+          {INKS.map((entry, index) => (
+            <XrKey
+              key={entry.id}
+              label={entry.label}
+              width={key}
+              height={key}
+              chip={inkMaterial(entry.id)}
+              selected={ink === entry.id}
+              disabled={false}
+              onPress={() => {
+                onInk(entry.id);
+                setPickingInk(false);
+              }}
+              position={[
+                -paletteWidth / 2 + (paletteX[Math.floor(index / railGrid.rows)] ?? 0),
+                paletteBox / 2 - (paletteY[index % railGrid.rows] ?? 0),
+                0,
+              ]}
+            />
           ))}
-        </ViroFlexView>
+        </XrPlate>
       ) : null}
     </ViroNode>
   );

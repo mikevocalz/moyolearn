@@ -23,6 +23,14 @@ export const XR_MATERIAL = {
   keySelected: 'moyoKeySelected',
   keyDisabled: 'moyoKeyDisabled',
   focusRing: 'moyoFocusRing',
+  /*
+    The three outline fills, one per label ink. A stacked-quad key draws its
+    outline as a quad one ring-width larger than its face, so the colour that
+    used to be a `borderColor` prop has to be a material name.
+  */
+  ringKey: 'moyoRingKey',
+  ringKeySelected: 'moyoRingKeySelected',
+  ringMuted: 'moyoRingMuted',
   pointer: 'moyoPointer',
 } as const;
 
