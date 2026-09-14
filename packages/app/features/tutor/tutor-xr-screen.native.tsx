@@ -56,7 +56,6 @@ import {
   ViroDirectionalLight,
   ViroQuad,
   ViroSphere,
-  ViroText,
   ViroTrackingStateConstants,
   ViroXRSceneNavigator,
   checkPermissions,
@@ -84,7 +83,6 @@ import {
   XrRail,
   XR_COLOR,
   XR_MATERIAL,
-  registerXrMaterials,
   boardComposition,
   boardSurfacePixels,
   layoutBoard,
@@ -310,24 +308,13 @@ function BoardScene() {
   const immersive = useXrSession((s) => s.immersive);
   const setImmersive = useXrSession((s) => s.setImmersive);
   /*
-    ONCE PER SCENE MOUNT, INSIDE THE RENDERER THAT IS ABOUT TO DRAW.
-
-    The materials are registered at module load too, and on a phone that is the
-    end of it. In a headset this scene runs inside `VRActivity`, a second
-    Activity with its own `ViroViewOpenXR`, and the module was evaluated before
-    that renderer existed — so every `materials={['moyo…']}` in this tree
-    resolved against an empty registry and the whole scene drew nothing while the
-    renderer's own reticle drew fine.
-
-    `useState` with an initialiser rather than an effect: an effect runs AFTER
-    the first commit, which is one frame of unmaterialised geometry, and the
-    header on the materials module is explicit that this must not land in a
-    render body that re-runs.
+    NO `registerXrMaterials()` CALL SITS HERE ANY MORE. It was added on the
+    theory that `VRActivity`'s renderer had its own material registry this
+    scene was missing; the renderer has no such thing, and the blank headset
+    that suggested it was a `ReferenceError` on this component's first render.
+    The argument in full, with the source that settles it, is on the function
+    itself — `packages/ui/xr/spatial-materials.native.ts`.
   */
-  useState(() => {
-    registerXrMaterials();
-    return null;
-  });
   /*
     THE COUNT OF WHAT THIS RENDERER COULD NOT DRAW, finally on a surface a child
     reads. `skippedRecords` and `setSkipped` were written with the store and
@@ -491,23 +478,10 @@ function BoardScene() {
   };
 
   /*
-    THE ROOT IS THE MODE, AND THE WRONG ONE RENDERS NOTHING.
-
-    `ViroARScene` is the MIXED-REALITY root: it is the one that carries
-    `onAnchorFound`, `ViroARPlane` and passthrough, and on a headset every bit of
-    that is backed by Meta's `XR_FB_scene` room model. A PICO has no
-    `XR_FB_scene`. So the scene asked for an AR session the runtime could not
-    give it and drew nothing at all — the OpenXR instance was created,
-    `VRActivity` owned the display, the controller reticle drew, and the room,
-    the board and the rail were simply absent. The package's own guide says it in
-    one line: a fully-virtual scene uses `ViroScene` as its root, and
-    `ViroARScene` is for when you want the real room and anchors in it.
-
-    So the root follows the mode the child is actually in. Drawing our own room
-    means there is nothing to anchor to and nothing to see through, which is
-    `ViroScene`; passthrough means the real room IS the backdrop, which is what
-    `ViroARScene` is for. `onTrackingUpdated` goes with that branch alone —
-    it reports tracking of a room only that branch is looking at.
+    The scene's contents, held apart from the root that wraps them. The root is
+    still an open question — see the return below — and keeping the two
+    separate is what makes changing it a one-line move rather than a re-indent
+    of the whole tree.
   */
   const content = (
     <>
@@ -552,48 +526,6 @@ function BoardScene() {
         materials={[XR_MATERIAL.environmentFloor]}
         visible={immersive}
       />
-      {/*
-        A DANGER-ROOM PLATE, PLACED WHERE THE BOARD IS, AS A PROBE.
-
-        Raw `ViroQuad` layers at explicit z-offsets and a `ViroText` scaled down
-        from a large logical box — the exact construction of `Plate`/`Label` in
-        `danger-room/src/scenes/ConferenceScene.tsx`, which is the one scene in
-        these repos that renders on this renderer on headset hardware. It shares
-        no code with `XrPanel`: no `ViroFlexView`, no conditional subtrees, no
-        state-driven mounting.
-
-        It is here to answer one question with the device rather than with
-        reasoning — if this draws and the board beside it does not, the
-        difference is in how `XrPanel` is built, not in the scene, the root, the
-        navigator flags or the material registry. It comes straight back out
-        either way.
-      */}
-      <ViroNode position={[0, -0.1, -1.5]}>
-        <ViroQuad width={0.9} height={0.6} materials={[XR_MATERIAL.frame]} />
-        <ViroQuad
-          width={0.84}
-          height={0.5}
-          position={[0, -0.03, 0.006]}
-          materials={[XR_MATERIAL.paper]}
-        />
-        <ViroText
-          text="PROBE"
-          position={[0, 0.22, 0.012]}
-          scale={[0.25, 0.25, 0.25]}
-          width={0.8 / 0.25}
-          height={0.16 / 0.25}
-          textClipMode="ClipToBounds"
-          textLineBreakMode="None"
-          style={{
-            fontFamily: 'Arial',
-            fontSize: 40,
-            color: '#16294d',
-            fontWeight: '900',
-            textAlign: 'center',
-            textAlignVertical: 'center',
-          }}
-        />
-      </ViroNode>
       <ViroAmbientLight color="#ffffff" intensity={600} />
       <ViroDirectionalLight color="#ffffff" direction={[0, -1, -0.5]} intensity={800} />
       <XrPanel
@@ -730,18 +662,29 @@ function BoardScene() {
   );
 
   /*
-    ONE ROOT, AND IT IS THE ONE THAT IS KNOWN TO DRAW.
+    THE ROOT STAYS `ViroARScene`, AND THE CASE AGAINST IT WAS NEVER ACTUALLY RUN.
 
-    Splitting the root by mode was reasoning from the guide; the Danger Room
-    scene is evidence. That scene renders on this renderer, on headset hardware,
-    from a `ViroARScene` root with `passthroughEnabled` and hdr/bloom/pbr all off
-    on the navigator — and when this scene first drew nothing it had the AR root
-    with only ONE of those four flags set. Changing the root was a guess layered
-    on an incomplete match.
+    For a run of builds this scene drew nothing in the headset and the root was
+    the leading suspect. `ViroARScene` is the MIXED-REALITY root — anchors,
+    `ViroARPlane`, passthrough — and the package's guide does say a
+    fully-virtual scene is rooted in `ViroScene` (`QUEST_SETUP` §4, and the
+    "pure VR vs mixed-reality root" pitfall in §Common pitfalls).
 
-    So the match is completed instead: same root, same four flags, and the drawn
-    room is a sphere inside it exactly as the Danger Room's skybox is, toggled by
-    `visible` rather than by swapping the scene out from under the renderer.
+    None of that is why nothing drew. Every one of those builds threw
+    `ReferenceError: Property 'ViroNode' doesn't exist` on the first render of
+    this component — a probe block used `ViroNode` without importing it — so
+    the tree never mounted and the only thing left drawing was the reticle the
+    renderer draws for itself. The root, the backdrop sphere, the floor and the
+    material re-registration were all diagnosed against a scene that was
+    throwing, so none of them is evidence for anything.
+
+    It stays on the evidence there is: the Danger Room scene renders on this
+    renderer, on headset hardware, from a `ViroARScene` root with
+    `passthroughEnabled` and hdr/bloom/pbr all off — which is the navigator
+    config below. If the board is still absent now the tree mounts, the root is
+    the next thing to move: `ViroScene`, passed as `vrInitialScene`. That swap
+    takes `onTrackingUpdated` with it, because it reports tracking of a room
+    only the AR root is looking at.
   */
   return <ViroARScene onTrackingUpdated={handleTrackingUpdated}>{content}</ViroARScene>;
 }

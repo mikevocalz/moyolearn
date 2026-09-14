@@ -196,25 +196,35 @@ const INK_MATERIALS = Object.fromEntries(
 );
 
 /**
- * Registers every spatial material, and can be called again.
+ * Registers every spatial material. Called once, from this module's own body.
  *
- * WHY THIS IS A FUNCTION NOW, AND WHY THE SCENE CALLS IT.
+ * WHY IT IS A FUNCTION, AND WHY THAT REASON DID NOT SURVIVE CONTACT.
  *
- * These used to run at module load, which is correct on a phone and wrong on a
- * headset. `VRActivity` is a SECOND Activity with its own `ViroViewOpenXR`
- * renderer, sharing one JS context with `MainActivity` — so by the time the
- * immersive renderer exists, this module was long since evaluated and its
- * `createMaterials` calls went to a renderer that is not the one drawing.
+ * It was split out of the module body on a hypothesis: that `VRActivity` — a
+ * SECOND Activity with its own `ViroViewOpenXR`, sharing one JS context with
+ * `MainActivity` — came up long after this module was evaluated, so the
+ * module-load `createMaterials` calls had gone to a renderer that is not the
+ * one drawing, and the spatial scene resolved every `materials={['moyo…']}`
+ * against an empty registry.
  *
- * The symptom is total and silent: in the headset the controller reticle draws
- * (the renderer draws that itself, with no material) and NOTHING else does —
- * not the board's frame, not the rail, not a 30m backdrop sphere. Every one of
- * those resolves `materials={['moyo…']}` against a registry that, in that
- * renderer, is empty.
+ * The renderer's own source says there is no such registry to miss.
+ * `ViroMaterials.createMaterials` ends in
+ * `MaterialManager.setJSMaterials(result)` on the single `VRTMaterialManager`
+ * native module — no view tag, no renderer handle in the call at all — and
+ * that module reference is resolved ONCE, when `ViroMaterials` itself is
+ * evaluated. A second call from inside a scene reaches exactly where the first
+ * one did.
  *
- * `createMaterials` is idempotent by name, so calling it again from the scene
- * costs a re-register and nothing else. It must NOT be called from a render
- * body on every frame — see the header — so the scene calls it once per mount.
+ * The headset symptom that motivated the split — reticle drawing, nothing else
+ * — turned out to be a `ReferenceError` thrown on the scene's first render,
+ * which meant no geometry was ever submitted to ask for a material in the
+ * first place.
+ *
+ * So it is back to being a module-load side effect with a name. Every
+ * `Xr*.native.tsx` component imports this module directly for `XR_MATERIAL`,
+ * which is what guarantees the registration has run before anything can name a
+ * material — no scene has to remember to do it, and `index.native.ts` no
+ * longer offers a way to.
  */
 export function registerXrMaterials(): void {
   ViroMaterials.createMaterials(SURFACE_MATERIALS);

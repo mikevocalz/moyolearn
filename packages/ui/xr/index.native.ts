@@ -21,7 +21,11 @@ export type { XrBoardInkProps } from './XrBoardInk.types.ts';
 export type { XrChatPanelProps, XrChatRow, XrChatAction } from './XrChatPanel.types.ts';
 export type { XrQuestionLineProps, XrPlacementControlsProps } from './XrOrnaments.types.ts';
 export { XR_MATERIAL, inkMaterial } from './material-names.ts';
-export { registerXrMaterials } from './spatial-materials.native.ts';
+/* `registerXrMaterials` is deliberately NOT re-exported. It registers at module
+   load and every `Xr*.native.tsx` in this barrel imports that module directly,
+   so the materials exist before any of them can name one. Exporting it invited
+   a scene to call it again — which cost a red typecheck here, because the web
+   barrel has no such name to answer with, and could not have helped anyway. */
 export { XR_COLOR, XR_SURFACE } from './xr-colors.ts';
 export {
   boardComposition,
