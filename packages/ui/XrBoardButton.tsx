@@ -23,7 +23,6 @@
 import { Box } from './icons';
 import { PressScale } from './press-scale';
 import { Text } from './Text';
-import { View } from './primitives';
 
 export interface XrBoardButtonProps {
   /** The age band's control size, from `buttonSizeForBand`. */
@@ -89,9 +88,22 @@ export function XrBoardButton({
       aria-disabled={entering}>
       <Box size={GLYPH[size]} />
       {showLabel ? (
-        <View>
-          <Text variant="caption">{entering ? 'Opening…' : 'XR'}</Text>
-        </View>
+        /*
+          ONE LINE, ALWAYS — the label is allowed to be clipped, never to grow
+          the control.
+
+          The word swaps to "Opening…" on press, which is four times the width
+          of "XR". Inside a narrow slot — her pane's upper-trailing corner is the
+          tightest one it is drawn in — that wrapped, and a pill sized by the
+          band's 72dp floor became a two-line block roughly half the pane tall,
+          for one press's worth of state.
+
+          The wrapping `View` went with it: it sized to content and had no other
+          job, so all it could do was give the text a box to wrap inside of.
+        */
+        <Text variant="caption" numberOfLines={1}>
+          {entering ? 'Opening…' : 'XR'}
+        </Text>
       ) : null}
     </PressScale>
   );

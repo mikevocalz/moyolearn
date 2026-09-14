@@ -52,7 +52,9 @@ import { isPico } from '@reactvision/react-viro/dist/components/Utilities/ViroPl
 import {
   ViroAmbientLight,
   ViroARScene,
+  ViroController,
   ViroDirectionalLight,
+  ViroSphere,
   ViroTrackingStateConstants,
   ViroXRSceneNavigator,
   checkPermissions,
@@ -79,6 +81,7 @@ import {
   XrQuestionLine,
   XrRail,
   XR_COLOR,
+  XR_MATERIAL,
   boardComposition,
   boardSurfacePixels,
   layoutBoard,
@@ -301,6 +304,8 @@ function BoardScene() {
   const ink = useXrSession((s) => s.ink);
   const asking = useXrSession((s) => s.asking);
   const band = useXrSession((s) => s.band);
+  const immersive = useXrSession((s) => s.immersive);
+  const setImmersive = useXrSession((s) => s.setImmersive);
   /*
     THE COUNT OF WHAT THIS RENDERER COULD NOT DRAW, finally on a surface a child
     reads. `skippedRecords` and `setSkipped` were written with the store and
@@ -470,6 +475,34 @@ function BoardScene() {
       navigator, which is the vendor's own requirement there.
     */
     <ViroARScene onTrackingUpdated={handleTrackingUpdated}>
+      {/*
+        THE POINTER, WITHOUT WHICH NOTHING IN THIS SCENE CAN BE DRAWN ON.
+
+        `onDrag` and `onClick` on a `ViroNode` never fire on an OpenXR headset
+        unless a `ViroController` is mounted in the scene — it is what raycasts
+        the controller and delivers the hit. The board rendered, the rail
+        rendered, and a child drawing on the paper produced nothing at all: the
+        engine had no pointer to hit-test with, so `XrPanel`'s input quad was
+        never touched and `injectPointer` was never called.
+
+        This is the same fix, for the same symptom, as the Danger Room scene's
+        passthrough toggle that "did nothing" until the controller was added.
+      */}
+      <ViroController controllerVisibility reticleVisibility />
+      {/*
+        The room, when the real one will not do — see the material's own note.
+        A sphere rather than `Viro360Image`: a sphere is a node, so `visible`
+        toggles it, and unmounting a `Viro360Image` SIGSEGVs the renderer.
+        `facesOutward={false}` turns it inside out so the viewer is within it.
+      */}
+      <ViroSphere
+        radius={30}
+        widthSegmentCount={24}
+        heightSegmentCount={24}
+        facesOutward={false}
+        materials={[XR_MATERIAL.environment]}
+        visible={immersive}
+      />
       <ViroAmbientLight color="#ffffff" intensity={600} />
       <ViroDirectionalLight color="#ffffff" direction={[0, -1, -0.5]} intensity={800} />
       <XrPanel
@@ -540,6 +573,8 @@ function BoardScene() {
                 handsPrimary={handsPrimary}
                 band={band}
                 onRecenter={recenter}
+                immersive={immersive}
+                onToggleImmersive={() => setImmersive(!immersive)}
                 onExit={() => active.onExit()}
               />
             ),

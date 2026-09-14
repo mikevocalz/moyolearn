@@ -19,8 +19,11 @@ export interface XrPlacementControlsProps {
   width: number;
   distanceM: number;
   handsPrimary: boolean;
-  /** Sizes both keys. Required and undefaulted — see `XrRailProps.band`. */
+  /** Sizes every key. Required and undefaulted — see `XrRailProps.band`. */
   band: SpatialBand;
   onRecenter: () => void;
+  /** Whether the scene is currently drawing its own room. Labels the key. */
+  immersive: boolean;
+  onToggleImmersive: () => void;
   onExit: () => void;
 }

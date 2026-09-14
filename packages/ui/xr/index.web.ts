@@ -26,6 +26,9 @@ export {
    that implement them. A type-only re-export is erased at build, but the
    specifier is still RESOLVED by a bundler — naming `XrRail.native.tsx` here
    would put Viro on the web resolver's path. See `web-condition.test.ts`. */
+/* Names, not renderers — see `material-names.ts`. */
+export { XR_MATERIAL, inkMaterial } from './material-names.ts';
+
 export type { XrRailProps } from './XrRail.types.ts';
 export type { XrBoardInkProps } from './XrBoardInk.types.ts';
 export type {

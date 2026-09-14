@@ -18,6 +18,7 @@ import { ViroMaterials } from '@reactvision/react-viro';
 import { COLOR_IDS, THEMES } from '@quickdrawjs/core';
 import { semantic } from '@acme/theme';
 import { XR_SURFACE as chrome } from './xr-colors.ts';
+import { XR_MATERIAL, inkMaterial } from './material-names.ts';
 
 /*
   THE COLOURS COME FROM THE TOKEN FILE, not from this one. `CLAUDE.md` §UI: no
@@ -36,30 +37,13 @@ import { XR_SURFACE as chrome } from './xr-colors.ts';
   has no Viro import.
 */
 
-/** Names, so nothing string-literals a material at a call site. */
-export const XR_MATERIAL = {
-  paper: 'moyoPaper',
-  frame: 'moyoFrame',
-  rail: 'moyoRail',
-  card: 'moyoCard',
-  key: 'moyoKey',
-  keyPressed: 'moyoKeyPressed',
-  keySelected: 'moyoKeySelected',
-  keyDisabled: 'moyoKeyDisabled',
-  focusRing: 'moyoFocusRing',
-  pointer: 'moyoPointer',
-} as const;
 
-/**
- * The ink materials, one per colour the board can draw in.
- *
- * ViroCore resolves materials by NAME from a global registry, so a stroke's
- * colour cannot be a prop — it has to be a registered material. They are
- * generated from the vendor's own `COLOR_IDS` and light theme rather than a
- * table copied here, which is what keeps spatial ink the same colour as 2D ink
- * when either changes.
- */
-export const inkMaterial = (colourId: string): string => `moyoInk_${colourId}`;
+/*
+  The ink names and the material table are generated from the vendor's own
+  `COLOR_IDS` and light theme rather than from a table copied here, which is what
+  keeps spatial ink the same colour as 2D ink when either changes.
+*/
+export { XR_MATERIAL, inkMaterial } from './material-names.ts';
 
 ViroMaterials.createMaterials({
   /*
@@ -154,6 +138,24 @@ ViroMaterials.createMaterials({
     lightingModel: 'Constant',
     blendMode: 'Alpha',
     writesToDepthBuffer: false,
+  },
+  /*
+    THE ROOM THE BOARD IS IN, when it is not the child's own room.
+
+    Passthrough puts the board in the real room, which is the placement ADR-117
+    argued for and is still what `immersive={false}` gives. What it does not
+    survive is a dark one: on the headset this was first run on, the room read
+    as black, the panels floated in nothing, and the honest reaction to it was
+    "why am I not in an XR space?".
+
+    So the fallback is a surface rather than an absence — `Constant`, because a
+    backdrop that takes the scene's key light gains a bright pole exactly where
+    a child is asked to look past it, and unlit is also the cheapest possible
+    fragment on a tiled mobile GPU covering the whole field of view.
+  */
+  [XR_MATERIAL.environment]: {
+    diffuseColor: semantic['surface-sunken'].dark,
+    lightingModel: 'Constant',
   },
 });
 

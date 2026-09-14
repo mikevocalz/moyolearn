@@ -10,6 +10,7 @@ import "../src/telemetry";
 // src/executorch.native.ts for the failure this fixes (error code 186).
 import "../src/executorch";
 
+import { LogBox } from "react-native";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
@@ -24,6 +25,30 @@ import { ShellHeader } from "../components/ShellHeader";
 import { Toaster } from "@acme/ui";
 import { MoyoSplash } from "../components/splash/MoyoSplash";
 import "../global.css";
+
+/*
+  A HEADSET HAS NO CAMERAS, AND react-native-vision-camera SAYS SO IN RED.
+
+  `CameraDevices.ts` calls `VisionCamera.createDeviceFactory()` at module scope,
+  and the module is reached at boot through the `media` barrel — `UploadQueueProvider`
+  is mounted at the root, and the barrel re-exports `use-video-recorder`, which
+  imports the camera. On the PICO 4 Ultra CameraX answers `Available cameras: 0`
+  (the headset cameras are not app-readable), so the factory rejects, the library
+  logs `console.error('Failed to load Camera Devices!')` and a second copy arrives
+  as an unhandled rejection.
+
+  Neither breaks anything: `GuidedFrame` and `VideoNoteBody` both already render
+  "no camera" states off `device == null`, and the tutor session runs normally. But
+  in dev each one raises a LogBox banner, and on the headset those banners sit
+  across the bottom of the panel — over the composer, which is where a child types
+  their answer.
+
+  So the two messages are silenced BY THEIR EXACT TEXT rather than the camera being
+  deferred or the barrel split: nothing is actually wrong to fix, and a `lazy()`
+  chain through four modules would be real complexity bought for a dev-only banner.
+  Any other camera failure — a phone whose camera genuinely broke — still shows.
+*/
+LogBox.ignoreLogs([/Failed to load Camera Devices/, /CameraUnavailableException/]);
 
 // Module scope, before any component evaluates: autohide fires on the first
 // rendered frame, and a hook is already too late to stop it — which is why the

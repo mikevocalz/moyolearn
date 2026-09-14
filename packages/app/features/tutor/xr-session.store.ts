@@ -196,6 +196,26 @@ interface XrSessionState {
    */
   band: AgeBand;
   /**
+   * Whether the scene draws its own room, or leaves the child's showing through.
+   *
+   * ADR-117 chose passthrough — the board is placed in the real room, on a real
+   * wall or desk, which is why the root is a `ViroARScene` rather than a
+   * `ViroScene`. That choice holds and this does not undo it; it adds the case
+   * the ADR did not consider, which is a room too dark to be a backdrop. The
+   * first headset run happened in one: the panels hung in black and the scene
+   * read as broken rather than as placed.
+   *
+   * HERE RATHER THAN IN `useState` for the constructor-capture reason recorded
+   * on `tool` above — the navigator renders `BoardScene` as a component type
+   * once, so a toggle the scene cannot subscribe to is a toggle that never
+   * moves.
+   *
+   * Starts ON, because a backdrop that turns out to be unwanted costs one press
+   * of a labelled key, while a child who cannot see the board has nothing to
+   * press.
+   */
+  immersive: boolean;
+  /**
    * Bumped whenever the board document changes.
    *
    * The document is not React state and must not become it — a Yjs doc in a
@@ -244,6 +264,8 @@ interface XrSessionState {
   setTool(tool: WhiteboardTool): void;
   setInk(ink: WhiteboardInk): void;
   setAsking(asking: boolean): void;
+  /** Swap between the drawn room and the child's own. */
+  setImmersive(immersive: boolean): void;
   bumpRevision(): void;
   /** The spatial rail exported a board. `null` is an empty board and is dropped. */
   queueAsk(png: string | null): void;
@@ -263,6 +285,7 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
   tool: 'draw',
   ink: 'black',
   asking: false,
+  immersive: true,
   revision: 0,
 
   beginEntry: () => set({ entering: true }),
@@ -293,6 +316,7 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
   setTool: (tool) => set({ tool }),
   setInk: (ink) => set({ ink }),
   setAsking: (asking) => set({ asking }),
+  setImmersive: (immersive) => set({ immersive }),
   bumpRevision: () => set((state) => ({ revision: state.revision + 1 })),
   queueAsk: (png) => set({ pendingAsk: png }),
   takeAsk: () => {
