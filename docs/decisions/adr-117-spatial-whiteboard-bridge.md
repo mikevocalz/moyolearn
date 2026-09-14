@@ -10,7 +10,8 @@ change has NOT been able to measure.
 SOT: packages/ui/whiteboard-board.native.tsx · packages/app/features/tutor/board-session.ts
      packages/app/features/tutor/tutor-xr-screen.native.tsx · packages/ui/xr/
      packages/app/features/tutor/xr-session.store.ts · packages/app/features/tutor/xr-capability.ts
-SOT-KEYWORDS: adr spatial whiteboard xr viro quickdraw bridge polyline pointer injection board session camera local link unverified engine ownership router push permission primer lifecycle tracking onhover drag yaw sign
+     packages/app/features/tutor/xr-eligibility.native.ts
+SOT-KEYWORDS: adr spatial whiteboard xr viro quickdraw bridge polyline pointer injection board session camera local link unverified engine ownership router push permission primer lifecycle tracking onhover drag yaw sign direct entry opening phase eligibility fork
 -->
 
 ## Context
@@ -248,11 +249,15 @@ Every Viro component and prop used here was verified against that checkout's
   `requestRequiredPermissions` result, the engine reporting it has an editor, and
   `ViroARScene.onTrackingUpdated`. Nothing advances on a timer or a render.
   Consequences worth stating:
-  - The permission primer is a **flat 2D panel**, not an in-scene card, and the
-    renderer is not mounted until it has been answered. A consent question asked
-    from inside the immersive scene it grants consent for is already answered.
-    Its "Not now" raises no system dialog, records no refusal, and pops back to
-    the 2D board; pressing the door again shows the primer again.
+  - The permission primer is a **flat 2D panel**, not an in-scene card. A
+    consent question asked from inside the immersive scene it grants consent for
+    is already answered. Its "Not now" raises no system dialog, records no
+    refusal, and pops back to the 2D board; pressing the door again shows the
+    primer again.
+  - **The renderer is no longer withheld until the primer has been answered** —
+    see "The door opens onto the board" below. It is mounted before the
+    permission round trip lands, and an ungranted camera demotes the lifecycle
+    back out to the primer.
   - `unsupported` therefore also renders in 2D, for all three reasons. The
     in-scene unsupported card in `XrPanel` is reachable only from a transition to
     `unsupported` *after* the scene is mounted, which nothing produces today —
@@ -294,6 +299,31 @@ no prop to raise it. So a stroke arrives resampled rather than pixel-exact. It i
 a separate quad because a drag moves what it drags; run on the paper, a child's
 homework would slide across the room while they wrote on it.
 
+**The door opens onto the board, not onto a screen about the board.** The
+lifecycle used to start at `checking` on every device, run `spatialEligibility`
+in an effect, and only then mount the navigator — so the first frame of the
+spatial route was always flat, on hardware that had already qualified. Nothing
+in that check is asynchronous: `hasOpenXRSupport`, `isQuest` and `isPico` are
+module-level constants over `NativeModules` and `Platform.constants`. So the
+opening phase is now COMPUTED (`openingPhase` in `xr-session.store`): eligible
+opens at `preparing`, which is the phase that mounts `ViroXRSceneNavigator`, and
+the scene is up on the first render.
+
+The read lives in a platform fork (`xr-eligibility.ts` / `.native.ts`) rather
+than in the store, because the store is imported by the 2D tutor screen on every
+device — including web. The `.native` fork imports `ViroPlatform` by module path
+rather than the package root for the same reason in the other direction: that
+module pulls in `react-native` and nothing else, so a phone's bundle does not
+gain the renderer at homework time.
+
+What it costs is the one fact that cannot be had synchronously. `checkPermissions`
+is a round trip, so it now resolves under a mounted scene: granted is a no-op
+(`preparing → preparing` is not a move), and not-granted demotes
+`preparing → permission-required`, the one backwards edge in the transition
+table. An ineligible device still opens at `checking` — `unsupported` carries a
+reason a child reads and leads nowhere but `exiting`, so it stays the screen's to
+set rather than a module's at import time.
+
 **A dormant sign error in `toSurfaceLocal` (`packages/ui/xr/XrPanel.native.tsx`).**
 Recorded because it is invisible today and will not be invisible the moment the
 composition is allowed to yaw. The function sets `yaw = -yawDeg` and then
@@ -323,10 +353,15 @@ source and are **unmeasured**:
   `checkPermissions` are called against the installed fork's signatures rather
   than against documentation, and the lifecycle they drive is unit-reachable, but
   no headset has actually shown the primer or returned a result.
-- That `hasOpenXRSupport && isQuest` is the right eligibility pair. It is the
-  fail-closed one available from the package root — `isPico` and `isXRHeadset`
-  are exported from `ViroPlatform` but not re-exported from the root entry, so a
-  PICO headset currently reads as `device-not-eligible`.
+- That the `preparing → permission-required` demotion tears `ViroXRSceneNavigator`
+  down cleanly. It is the only path that unmounts the navigator while the route
+  stays on screen — `exiting` deliberately keeps it mounted for the pop — and it
+  is reached only by a headset whose camera is not already granted.
+- That `hasOpenXRSupport && (isQuest || isPico)` is the right eligibility pair.
+  All three are read from `ViroPlatform` directly
+  (`packages/app/features/tutor/xr-eligibility.native.ts`), because the package
+  root re-exports only the first two — an `isQuest`-only gate read a PICO 4
+  Ultra as `device-not-eligible`.
 
 None of these should be reported as working until they have been recorded on
 device. The acceptance test that closes them is in the feature brief's §7.

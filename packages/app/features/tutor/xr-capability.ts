@@ -12,12 +12,14 @@
 //
 // THE SECOND HALF OF THE QUESTION IS ANSWERED HERE TOO, AND STILL WITHOUT VIRO.
 // `canOpenSpatialBoard` is the cheap check the 2D screen runs on every device.
-// `spatialEligibility` is the full one the spatial screen runs once, and it
-// takes the runtime's own flags as ARGUMENTS rather than importing them — which
-// is what keeps this file free of `@reactvision/react-viro` while still being
-// the one place the rule is written down, and what makes the rule testable
-// without a headset.
-// SOT: packages/app/features/tutor/tutor-xr-entry.native.tsx
+// `spatialEligibility` is the full one, and it takes the runtime's own flags as
+// ARGUMENTS rather than importing them — which is what keeps this file free of
+// `@reactvision/react-viro` while still being the one place the rule is written
+// down, and what makes the rule testable without a headset. Reading those flags
+// is `xr-eligibility`'s job, because the store calls it before the first frame
+// and the store is loaded on every device.
+// SOT: packages/app/features/tutor/xr-eligibility.native.ts
+//      packages/app/features/tutor/tutor-xr-entry.native.tsx
 //      packages/app/features/tutor/tutor-xr-screen.native.tsx
 // SOT-KEYWORDS: xr capability check platform native module headset availability fail closed eligibility permission primer
 

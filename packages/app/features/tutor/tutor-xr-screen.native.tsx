@@ -33,22 +33,30 @@
 // `useTutorStore`, and everything it merely needs a handle on arrives through
 // the `active` holder below.
 //
-// NOTHING IMMERSIVE STARTS UNTIL THE ANSWER IS YES. This screen is the driver
-// of `xr-session.store`'s lifecycle, and the order is the point: eligibility is
-// decided from this binary and this device, then the primer explains the camera
-// and is answered, then the renderer is mounted, then the engine says it has an
-// editor, and only then is the board drawable. The primer renders as a flat 2D
-// panel because it has to — a consent question asked from inside the immersive
-// scene it grants consent for is a question already answered. Tracking loss
-// after that is an INTERRUPTION, never an ending: the board stays where the
-// child put it and the strokes stay in the document.
+// THE HEADSET IS WHERE THE CHILD ASKED TO BE, SO IT IS THE FIRST THING THEY
+// GET. This screen is the driver of `xr-session.store`'s lifecycle, and the
+// order is what changed: eligibility is answered from constants — this binary's
+// native modules and this device's build strings — while the store is being
+// created, so an eligible headset opens at `preparing` and the navigator mounts
+// on the FIRST render. A child who pressed a key marked with a headset used to
+// read a flat card telling them the app was thinking about it; the wait is the
+// same length either way, and the panel's own wait card serves it in the medium
+// they asked for.
+//
+// PERMISSION IS THE ONE ANSWER THAT CANNOT BE HAD IN TIME, and it is the one
+// thing the flat panel is still for. `checkPermissions` is a round trip, so the
+// scene is already up when it lands; a no demotes the lifecycle back out to the
+// primer, which renders flat because it has to — a consent question asked from
+// inside the immersive scene it grants consent for is a question already
+// answered. Tracking loss after that is an INTERRUPTION, never an ending: the
+// board stays where the child put it and the strokes stay in the document.
 // SOT: packages/app/features/tutor/board-session.ts · packages/app/features/tutor/xr-capability.ts
-//      packages/ui/xr/XrPanel.types.ts · docs/decisions/adr-117-spatial-whiteboard-bridge.md
-// SOT-KEYWORDS: tutor xr screen spatial whiteboard viro quest scene rail chat board session native permission primer tracking lifecycle calibration constrained layout fits miss
+//      packages/app/features/tutor/xr-eligibility.ts · packages/ui/xr/XrPanel.types.ts
+//      docs/decisions/adr-117-spatial-whiteboard-bridge.md
+// SOT-KEYWORDS: tutor xr screen spatial whiteboard viro quest scene rail chat board session native permission primer tracking lifecycle calibration constrained layout fits miss direct entry
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
-import { isPico } from '@reactvision/react-viro/dist/components/Utilities/ViroPlatform';
 import {
   ViroAmbientLight,
   ViroARScene,
@@ -59,8 +67,6 @@ import {
   ViroTrackingStateConstants,
   ViroXRSceneNavigator,
   checkPermissions,
-  hasOpenXRSupport,
-  isQuest,
   requestRequiredPermissions,
   type ViroTrackingState,
 } from '@reactvision/react-viro';
@@ -103,11 +109,10 @@ import {
 import { boardPersistence } from './board-storage.ts';
 import { useTutorStore } from './tutor.store.ts';
 import type { TutorXrScreenProps } from './tutor-xr-screen.types.ts';
-import {
-  SPATIAL_PERMISSIONS,
-  spatialEligibility,
-  spatialPermissionsGranted,
-} from './xr-capability.ts';
+import { SPATIAL_PERMISSIONS, spatialPermissionsGranted } from './xr-capability.ts';
+/* Bare specifier, so the `.native` fork is what a native bundle resolves and
+   nothing on a web resolver's path ever names the renderer. */
+import { currentXrEligibility } from './xr-eligibility';
 import { panelStateOf, useXrSession, type XrPhase } from './xr-session.store.ts';
 
 /** This presentation's id, so its own strokes are not echoed back at it. */
@@ -782,10 +787,23 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
     THE BAND REACHES THE SCENE THE ONLY WAY IT CAN. `minHitSize` takes it, the
     rail, the chat panel's action row and the placement keys all size from it,
     and none of them can be handed it as a prop through a scene the navigator
-    captured in its constructor. Set before the navigator mounts — the lifecycle
-    has to leave `checking` first — so no frame is ever drawn at the store's
-    conservative start value.
+    captured in its constructor.
+
+    SEEDED DURING THIS RENDER RATHER THAN IN AN EFFECT, and the direct entry is
+    what forces that. An effect runs after the commit, and the commit now
+    CONTAINS the navigator — so the scene's constructor would capture a board
+    laid out at the store's conservative start value and the first frame in the
+    headset would be an adult's rail for a six-year-old. A `useState`
+    initialiser runs once, in the body, before this component returns the tree
+    the navigator is built from.
+
+    The effect stays for the other case: `ageBand` changing under a mounted
+    screen, which the initialiser cannot see.
   */
+  useState(() => {
+    useXrSession.getState().setBand(ageBand);
+    return null;
+  });
   useEffect(() => {
     useXrSession.getState().setBand(ageBand);
   }, [ageBand]);
@@ -799,13 +817,16 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
   useEffect(() => session.doc.onRecords(() => bumpRevision()), [bumpRevision, session]);
 
   /*
-    STEP ONE: CAN THIS BINARY, ON THIS DEVICE, OPEN A BOARD IN SPACE.
+    STEP ONE: WHY THIS BINARY ON THIS DEVICE COULD NOT OPEN A BOARD IN SPACE.
 
-    Answered before anything immersive is mounted and before any permission is
-    asked for, because both of the other two are worse when the answer is no: a
-    scene mounted on a runtime that is not there is a black room a child cannot
-    get out of, and a camera prompt on a phone that could never have shown a
-    spatial board is a request for access the app has no use for.
+    The store has already asked WHETHER — `openingPhase` calls the same
+    `currentXrEligibility`, synchronously, to decide between opening at
+    `preparing` and opening at `checking`. What it deliberately does not do is
+    name the reason: `unsupported` is a phase with no way out but `exiting`, and
+    a module evaluating at import time should not be able to put a child in one
+    before anything has been asked to open. So the verdict is re-read here,
+    where there is a screen to render it on, and the two answers cannot disagree
+    because they are one function over module-level constants.
 
     Runs once. `phase` is deliberately NOT a dependency — this is the entry
     check, and re-running it when the phase moves is how a screen ends up asking
@@ -813,27 +834,16 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
   */
   useEffect(() => {
     let live = true;
-    if (useXrSession.getState().phase.kind !== 'checking') return;
+    /*
+      Either opening phase is a screen that has not run this yet. `preparing` is
+      an eligible headset with the scene already up, `checking` is everything
+      else on its way to `unsupported` — and anything further along is a
+      lifecycle already in motion, which this must not restart.
+    */
+    const opening = useXrSession.getState().phase.kind;
+    if (opening !== 'checking' && opening !== 'preparing') return;
 
-    const eligibility = spatialEligibility({
-      hasOpenXrModule: hasOpenXRSupport,
-      /*
-        QUEST OR PICO. The fork supports both — its `ViroPlatform` exports
-        `isQuest` AND `isPico`, and it carries a PICO xRMode — but only
-        `isQuest` and `hasOpenXRSupport` reach the package root, so an
-        `isQuest`-only gate reported `device-not-eligible` on a PICO 4 Ultra
-        that can run this scene. Verified against a cabled one: manufacturer
-        `Pico`, model `A9210`, device `sparrow`, Android 14.
-
-        `isPico` is imported from its module path rather than the root because
-        that is where the fork exports it; the package publishes no `exports`
-        map, so the subpath is resolvable and is the honest way to reach a
-        symbol the root omits. Re-exporting it from the fork would be cleaner
-        and means re-cutting the vendored tarball — worth doing on the next
-        bump, noted in ADR-117.
-      */
-      isHeadset: isQuest || isPico,
-    });
+    const eligibility = currentXrEligibility();
     if (eligibility !== 'eligible') {
       advance({ kind: 'unsupported', reason: eligibility });
       return;
@@ -846,6 +856,16 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
       makes the primer possible at all: a child who has already granted the
       camera on a previous lesson goes straight to their board, and one who has
       not reads why before the system dialog appears in front of them.
+
+      IT NOW RUNS UNDER A SCENE THAT IS ALREADY MOUNTED, and that is the cost of
+      opening directly. Granted — the overwhelmingly common case, because the
+      camera is granted once and a lesson is not the first thing a headset is
+      used for — is a no-op: `preparing → preparing` is not a move and `advance`
+      drops it without a render. Not granted pulls the lifecycle back out to the
+      primer, which unmounts the navigator; the child sees the scene for the
+      fraction of a second the round trip takes, then the question. That is the
+      wrong order for an ANSWER but the right one for a WAIT, and it is the only
+      shape available: the runtime cannot be asked synchronously.
 
       A rejected check is treated as "not granted" rather than as an error.
       Fail closed, and the closed direction here is the primer — the one screen
@@ -1009,10 +1029,15 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
     WHAT IS ON SCREEN IS THE PHASE, AND THE RENDERER IS NOT ALWAYS PART OF IT.
 
     `preparing` onward mounts `ViroXRSceneNavigator`, which is the moment the
-    headset goes immersive. Everything before it — the availability check and
-    the primer — and `unsupported` after it stay on the flat panel, because
-    those are all questions asked ABOUT immersion and none of them can honestly
-    be asked from inside it.
+    headset goes immersive — and on an eligible headset `preparing` is where
+    the store already is, so this branch is taken on the first render and there
+    is no "before it" to sit through.
+
+    The flat panel is what the screen falls BACK to rather than what it opens
+    with: the primer when the runtime says the camera is not granted, and
+    `unsupported` on a device that was never going to manage this. Both are
+    questions asked ABOUT immersion and neither can honestly be asked from
+    inside it, which is why answering one is worth unmounting a scene for.
 
     `exiting` keeps the navigator mounted for the frame between the press and
     the pop. Tearing the scene down first would black the headset out while the

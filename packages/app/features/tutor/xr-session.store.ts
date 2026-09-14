@@ -18,14 +18,25 @@
 // has an editor, and `ViroARScene`'s tracking events. Nothing here advances on
 // a timer or on a render, because a board that says it is ready before it is
 // hands a child a surface their pencil falls through.
+//
+// AND THE START IS A FACT TOO — see `openingPhase`. Whether a board can open in
+// space is decided by module-level constants, so it is already known when this
+// store is created: an eligible headset opens at `preparing`, which is the
+// phase that mounts the renderer, and the spatial route's first frame is the
+// scene rather than a flat card explaining that a check is running.
 // SOT: packages/ui/xr/XrPanel.types.ts · packages/app/features/tutor/xr-capability.ts
+//      packages/app/features/tutor/xr-eligibility.ts
 //      docs/decisions/adr-117-spatial-whiteboard-bridge.md
-// SOT-KEYWORDS: xr session store zustand placement lifecycle recenter entering state machine spatial permission primer tracking
+// SOT-KEYWORDS: xr session store zustand placement lifecycle recenter entering state machine spatial permission primer tracking opening phase direct entry
 
 import { create } from 'zustand';
 import { boardComposition, type XrPanelState, type XrPlacement } from '@acme/ui/xr';
 import type { WhiteboardInk, WhiteboardTool } from '@acme/ui';
 import type { AgeBand } from '../capture/age-band.ts';
+/* Bare specifier on purpose: Metro takes the `.native` fork, which reads the
+   renderer's platform constants, and every web resolver takes the anchor, which
+   names no renderer at all. */
+import { currentXrEligibility } from './xr-eligibility';
 
 /**
  * Where the composition starts: dropped below the eye line at the near end of
@@ -112,11 +123,19 @@ export type XrPhase =
  * `exiting` is reachable from everywhere and leads nowhere: leaving is always
  * allowed and is always the last thing that happens on this screen. Re-entry
  * goes through `exit()`, which resets rather than transitions.
+ *
+ * `preparing → permission-required` IS THE ONE MOVE THAT GOES BACKWARDS, and it
+ * is what pays for opening directly into the scene. Eligibility is synchronous;
+ * permission is not, so the renderer is mounted while `checkPermissions` is
+ * still in flight — and a no coming back has to be able to reach the primer
+ * from the phase the child is already in. Nothing is taken away by it: no
+ * permission was granted, no scene was drawn on, and the alternative is a
+ * headset showing a board it has no camera to place.
  */
 const TRANSITIONS: Record<XrPhase['kind'], readonly XrPhase['kind'][]> = {
   checking: ['permission-required', 'preparing', 'unsupported', 'exiting'],
   'permission-required': ['preparing', 'unsupported', 'exiting'],
-  preparing: ['ready', 'interrupted', 'unsupported', 'exiting'],
+  preparing: ['ready', 'interrupted', 'permission-required', 'unsupported', 'exiting'],
   ready: ['interrupted', 'exiting'],
   interrupted: ['ready', 'exiting'],
   unsupported: ['exiting'],
@@ -139,6 +158,36 @@ export function panelStateOf(phase: XrPhase): XrPanelState {
 function samePhase(a: XrPhase, b: XrPhase): boolean {
   if (a.kind !== b.kind) return false;
   return ('reason' in a ? a.reason : null) === ('reason' in b ? b.reason : null);
+}
+
+/**
+ * WHERE THE LIFECYCLE STARTS, COMPUTED RATHER THAN FIXED.
+ *
+ * Every device used to open at `checking`, which cost an eligible headset a
+ * flat card it never needed. The availability question is answered by constants
+ * — the native modules in this binary, the build strings on this device — so it
+ * is already answered by the time this store is created, and spending a render
+ * on it meant a child who pressed a key marked with a headset got a 2D screen
+ * telling them the app was thinking about it.
+ *
+ * So an eligible device opens at `preparing`: the phase that mounts the
+ * navigator, reached before the first frame rather than after it. The wait that
+ * remains is the engine loading the child's board, and the panel's own wait
+ * card serves that one from inside the scene.
+ *
+ * AN INELIGIBLE DEVICE STILL OPENS AT `checking`, and that is the deliberate
+ * half. `unsupported` carries a REASON a child reads and leads nowhere but
+ * `exiting` — so it is the spatial screen's to set, once there is a screen to
+ * read it on, not a module evaluating at import time. The screen re-reads the
+ * same function and the two cannot disagree.
+ *
+ * `currentXrEligibility` is a platform fork rather than a call into the
+ * renderer: this store is imported by the 2D tutor screen on every device, and
+ * a web bundle that resolved `@reactvision/react-viro` from here would be a
+ * headset renderer inside `app.moyolearn.com`.
+ */
+function openingPhase(): XrPhase {
+  return currentXrEligibility() === 'eligible' ? { kind: 'preparing' } : { kind: 'checking' };
 }
 
 interface XrSessionState {
@@ -187,12 +236,11 @@ interface XrSessionState {
    * a subscription.
    *
    * `young` is the start value, which is the LARGEST multiplier and therefore
-   * the only safe guess. The screen sets the real band before the navigator can
-   * mount — the lifecycle has to leave `checking` first, and that takes an
-   * async tick — so this is never what a child sees; it is what the wrong
-   * ordering would degrade to, and being wrong towards bigger keys costs an
-   * adult nothing while being wrong the other way costs a six-year-old their
-   * eraser.
+   * the only safe guess. The screen seeds the real band in its render body
+   * rather than in an effect, which is what keeps this off the first frame now
+   * that the navigator mounts on it. This is what the wrong ordering would
+   * degrade to, and being wrong towards bigger keys costs an adult nothing
+   * while being wrong the other way costs a six-year-old their eraser.
    */
   band: AgeBand;
   /**
@@ -276,7 +324,7 @@ interface XrSessionState {
 }
 
 export const useXrSession = create<XrSessionState>((set, get) => ({
-  phase: { kind: 'checking' },
+  phase: openingPhase(),
   placement: INITIAL_PLACEMENT,
   entering: false,
   skippedRecords: 0,
@@ -328,15 +376,19 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
   },
   /*
     A RESET, NOT A TRANSITION — which is why it does not go through `advance`.
-    Back to `checking`, so re-entering re-runs the capability and permission
-    path: the answer can have changed while the child was away, and a permission
-    revoked in system settings is the common one.
+    Back to the OPENING phase rather than to a hardcoded `checking`, so the
+    second entry costs exactly what the first did: a headset returns to
+    `preparing` and opens straight back into the scene.
+
+    Re-entering still re-runs the permission path — the screen's entry effect
+    treats both opening phases as work not yet done — because the answer can
+    have changed while the child was away, and a permission revoked in system
+    settings is the common one.
 
     `entering` is cleared here as well as in `arrive`, and that is the guard
     against the dead door. A child who presses Go back while the renderer is
     still being fetched never reaches `arrive`, and a flag left standing would
     disable the only way into the spatial board for the rest of the session.
   */
-  exit: () =>
-    set({ phase: { kind: 'checking' }, entering: false, pendingAsk: null, asking: false }),
+  exit: () => set({ phase: openingPhase(), entering: false, pendingAsk: null, asking: false }),
 }));
