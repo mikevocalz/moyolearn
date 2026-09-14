@@ -156,6 +156,26 @@ const SURFACE_MATERIALS = {
     blendMode: 'Alpha',
     writesToDepthBuffer: false,
   },
+  /*
+    THE LIVE PAGE'S MATERIAL, filled from Kotlin (`board-texture`) with the
+    WebView's own texture rather than from here.
+
+    WHITE, NOT CLEAR, and the difference is not cosmetic: ViroCore's diffuse
+    colour MODULATES the diffuse texture, so a transparent placeholder would
+    multiply the board to nothing the moment the texture landed. White is the
+    identity for that multiply — the page arrives at the colours it drew.
+
+    `Constant` for the reason the paper and the ink are: this surface is a
+    picture of a light board, and a lighting model would shade one side of a
+    child's homework out of the contrast it was measured at. `Alpha`, because
+    the page's own background is transparent and the paper quad behind it is
+    what the board is written on.
+  */
+  [XR_MATERIAL.boardLive]: {
+    diffuseColor: '#FFFFFFFF',
+    lightingModel: 'Constant',
+    blendMode: 'Alpha',
+  },
 } as const;
 
 /*

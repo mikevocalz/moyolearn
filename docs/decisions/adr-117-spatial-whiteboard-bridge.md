@@ -412,3 +412,71 @@ Two new unverified items for the list above:
 - Whether changing `source` on a mounted `ViroImage` re-textures it, or whether
   the node has to be re-keyed. `XrBoardRaster` deliberately does not re-key,
   because a new node is a frame of blank paper between two rasters.
+
+## Amendment — A exists after all, and it is not a Nitro module
+
+**Date:** 2026-09-14. **Status:** accepted, unverified on device.
+
+Every version of this ADR above says ViroReact cannot host a React Native view
+and prices option A — the surface→texture bridge — as new native code on two
+platforms. The first half is true of ViroReact's **component set**. The second
+half was wrong about the renderer underneath it, and the check that would have
+found it is one `unzip` of a file already in this repo.
+
+`viro_renderer-release.aar` ships `com.viro.core.AndroidViewTexture` and
+`com.viro.core.AndroidViewSink`, and `libviro_renderer.so` ships their JNI
+symbols (`Java_com_viro_core_AndroidViewTexture_nativeCreateAndroidViewTexture`).
+What they do is exactly A's first half: `attachView(View)` parents an Android
+view into a sink **inside the `ViroView`**, the sink's `dispatchDraw` locks the
+texture's surface and draws its children into that instead of onto the screen,
+and the texture is a `Texture` — so `Material.setDiffuseTexture` puts it on a
+quad. No `SurfaceTexture` plumbing, no virtual display, no JSI.
+
+Nothing in `react_viro` exposes it to React, which is why it reads as absent
+from JavaScript. `apps/mobile/modules/board-texture` is that exposure and is the
+whole of the new native code: one Expo view whose child is the page and whose
+`live` prop performs the bind.
+
+**So D is no longer the ceiling.** `XrBoardLive` draws the engine's own surface —
+text, notes, arrows, images, and the stroke under the child's hand at the
+renderer's frame rate rather than a 500 ms settle behind it. `XrBoardRaster` and
+`XrBoardInk` stay, unchanged, as what the scene draws when the bind does not
+happen: iOS, a binary older than the module, no renderer in this window, a
+material that was never registered. One flag selects between them
+(`boardTextureBound`), and the two are never drawn together — they share
+`boardLayer.raster` and would z-fight.
+
+**What this bought that D could not.** A's escalation trigger was narrowed to
+"a live change the local child did not make" — a peer's cursor, a tutor
+annotating. That is now simply true of the paper, because the paper is the page:
+anything applied to the engine is on the board the moment the engine draws it.
+
+**Three things it cost, stated so they are not rediscovered:**
+
+- **The XR route mounts `WhiteboardBoard`, not `Whiteboard`.** The texture is
+  whatever the child view draws, so a tray inside it would be drawn on the
+  child's paper and would push every page coordinate a tray's height from the
+  ray that made it. The controls in here are the rail; the tray belongs to the
+  2D pane.
+- **The draw is a SOFTWARE canvas.** `AndroidViewSink` locks one with
+  `Surface.lockCanvas`, so a frame costs `boardSurfacePixels × density` pixels of
+  CPU work. The knob, if it is too slow on device, is `boardSurfacePixels` —
+  it is the page's CSS size, and the host box, the pointer scale and the ink
+  mapping all read it, so lowering it moves them together.
+- **One renderer per window.** `findViroView` walks the window for the first
+  `ViroView`. This route mounts exactly one; a second would make it a coin toss,
+  and the answer then is a `navigatorTag` prop plus
+  `VRT3DSceneNavigator.getViroView()` — the view-tag resolution the splat-pass
+  module already uses — not a cleverer walk.
+
+**Added to "Not verified", and nothing here should be reported as working:**
+
+- Whether a Chromium `WebView` draws correctly into that software canvas at all,
+  and at what cost per frame.
+- Whether `Material.setDiffuseTexture` re-textures a quad already being drawn
+  with that material, or whether the material must be bound before the quad
+  mounts.
+- Whether the page survives the re-parent visibly intact — same editor, same
+  camera, same stroke — which is the property the whole hand-off is built on.
+- Whether the `ViroView` and the host are ever in different activities on PICO
+  (the VR-activity hop), which is the one shape `findViroView` cannot see past.

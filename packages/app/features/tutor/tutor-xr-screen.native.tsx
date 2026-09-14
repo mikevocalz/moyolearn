@@ -74,7 +74,7 @@ import {
 import {
   Button,
   Text,
-  Whiteboard,
+  WhiteboardBoard,
   type WhiteboardCalibration,
   type WhiteboardDiff,
   type WhiteboardDiffSource,
@@ -82,7 +82,9 @@ import {
 } from '@acme/ui';
 import { View as UiView } from '@acme/ui/primitives';
 import {
+  BoardTextureHost,
   XrBoardInk,
+  XrBoardLive,
   XrBoardRaster,
   XrChatPanel,
   XrPanel,
@@ -90,6 +92,7 @@ import {
   XrQuestionLine,
   XrRail,
   XR_COLOR,
+  XR_MATERIAL,
   boardComposition,
   boardSurfacePixels,
   layoutBoard,
@@ -97,6 +100,7 @@ import {
   spatialSpacing,
   uncoveredRecords,
   type BoardLayoutMiss,
+  type BoardTextureBinding,
   type XrChatRow,
   type XrPanelState,
   type XrSurfaceInput,
@@ -374,8 +378,33 @@ function BoardScene() {
     which those are and why the overlap between the two layers is the safe
     direction to be wrong in.
   */
-  const raster = useBoardRaster(readEngine, store, session !== null, strokeOpen);
+  /*
+    AND WHETHER THE PAGE ITSELF IS ON THE PAPER, which decides whether any of
+    that runs at all. `boardTextureBound` is the host's answer to one bind
+    attempt (`BoardTextureHost`): bound, the child looks at the engine's own
+    surface and a raster would be a second, older copy of it drawn underneath;
+    not bound, this pair IS the board and nothing about it changes.
+  */
+  const boardTextureBound = useXrSession((s) => s.boardTextureBound);
+  const raster = useBoardRaster(
+    readEngine,
+    store,
+    session !== null && !boardTextureBound,
+    strokeOpen,
+  );
   const liveStore = useMemo(() => uncoveredRecords(store, raster.covered), [raster.covered, store]);
+
+  /*
+    Nothing is skipped when the page is what is drawn: `strokeOf`'s gaps — text,
+    notes, arrows, images — are the polyline renderer's, and the engine has no
+    such gaps in its own picture of itself. The count is cleared rather than
+    left at whatever `XrBoardInk` last reported before it unmounted, or the
+    companion panel would keep telling a child something is missing from a board
+    that is showing them everything.
+  */
+  useEffect(() => {
+    if (boardTextureBound) setSkipped(0);
+  }, [boardTextureBound, setSkipped]);
 
   const distanceM = Math.abs(placement.position[2]);
   /*
@@ -648,19 +677,36 @@ function BoardScene() {
           ),
         }}
       >
-        <XrBoardRaster uri={raster.uri} width={boardWidth} height={boardHeight} />
         {/*
-          The live layer, and only the live layer. `liveStore` is the records the
-          picture behind it does not already show, so a settled board draws no
-          polylines at all and the count below reports what is missing NOW —
-          which is what it always claimed to be.
+          TWO PRESENTATIONS OF ONE DOCUMENT, and which one is drawn is not a
+          preference — it is whether the renderer is holding the engine's own
+          surface. `XrBoardLive` is the page: everything the child made, as they
+          make it. The pair below it is what a board looked like before that was
+          possible, and it stays because every way the binding can fail has to
+          land somewhere that still shows a child their homework.
+
+          NEVER BOTH. They occupy the same layer (`boardLayer.raster`) and would
+          z-fight at a distance a headset renders in millimetres.
         */}
-        <XrBoardInk
-          store={liveStore}
-          width={boardWidth}
-          height={boardHeight}
-          onSkippedCount={setSkipped}
-        />
+        {boardTextureBound ? (
+          <XrBoardLive width={boardWidth} height={boardHeight} />
+        ) : (
+          <>
+            <XrBoardRaster uri={raster.uri} width={boardWidth} height={boardHeight} />
+            {/*
+              The live layer, and only the live layer. `liveStore` is the records
+              the picture behind it does not already show, so a settled board
+              draws no polylines at all and the count below reports what is
+              missing NOW — which is what it always claimed to be.
+            */}
+            <XrBoardInk
+              store={liveStore}
+              width={boardWidth}
+              height={boardHeight}
+              onSkippedCount={setSkipped}
+            />
+          </>
+        )}
       </XrPanel>
     </>
   );
@@ -929,6 +975,21 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
   */
   const [ready, setReady] = useState(false);
   const handleReady = useCallback(() => setReady(true), []);
+
+  /*
+    ONE BIND ATTEMPT'S ANSWER, into the one place the scene can read it from.
+    A refusal is not an error a child hears about — it selects the raster
+    presentation, which is a board — so `reason` goes to the log for the next
+    person and nowhere else.
+  */
+  const handleBound = useCallback((binding: BoardTextureBinding) => {
+    useXrSession.getState().setBoardTextureBound(binding.bound);
+    if (!binding.bound && __DEV__) {
+      console.warn(
+        `[tutor-xr] the live board did not bind (${binding.reason ?? 'no reason'}) — drawing the raster instead`,
+      );
+    }
+  }, []);
   useEffect(() => {
     if (!ready) return;
     const handle = engine.current;
@@ -1098,17 +1159,40 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
         needed. Started after the answer instead, it would be spent staring at
         blank paper in space.
       */}
-      <View style={styles.engine} pointerEvents="none">
-        <Whiteboard
+      {/*
+        THE HOST IS WHERE THE RENDERER REACHES THE ENGINE. It is a plain `View`
+        until `MoyoBoardTexture` binds; bound, the same WebView is re-parented
+        into the sink `AndroidViewTexture` draws from, without reloading the
+        page or dropping the stroke in progress. Unbound — iOS, a binary without
+        the module, no renderer in this window — it stays exactly the parked
+        box the raster presentation has always used.
+
+        `live` WAITS FOR `ready`, and that is the engine's own event rather than
+        a delay: `preparing → ready` is the board reporting it has an editor, so
+        the navigator has been mounted for at least that long and the page it
+        hands over is a loaded one.
+
+        THE BOARD ONLY, NOT `Whiteboard`. The tray belongs to the 2D pane; in
+        here the controls are the rail in the scene. Textured, a tray would be
+        drawn ON the child's paper and would push every page coordinate a tray's
+        height away from the ray that produced it — the pointer scale is
+        `boardSurfacePixels`, and that has to be the page and nothing else.
+      */}
+      <BoardTextureHost
+        style={styles.engine}
+        material={XR_MATERIAL.boardLive}
+        pageWidth={boardSurfacePixels.width}
+        pageHeight={boardSurfacePixels.height}
+        live={phase.kind === 'ready'}
+        onBound={handleBound}
+      >
+        <WhiteboardBoard
           ref={engine}
-          size={buttonSizeForBand(ageBand)}
-          onAsk={onAsk}
-          asking={asking}
           onChange={handleChange}
           onReady={handleReady}
           onCalibration={handleCalibration}
         />
-      </View>
+      </BoardTextureHost>
     </View>
   );
 }

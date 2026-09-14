@@ -213,6 +213,20 @@ interface XrSessionState {
    */
   skippedRecords: number;
   /**
+   * Whether the live page is on the spatial paper.
+   *
+   * WHAT IT SELECTS IS A PRESENTATION, not a capability: true draws the
+   * engine's own surface (`XrBoardLive`), false draws the picture-and-polylines
+   * pair that worked before the texture existed. Every way the binding can fail
+   * — an iOS build, a binary without the module, no renderer in this window,
+   * a material that was not registered — arrives here as false, so there is one
+   * thing to read rather than four.
+   *
+   * IN THE STORE FOR THE REASON EVERYTHING ELSE THE SCENE READS IS: the scene
+   * is captured by the navigator's constructor and cannot close over state.
+   */
+  boardTextureBound: boolean;
+  /**
    * The rail's tool and ink, and whether a board is in flight.
    *
    * IN THE STORE RATHER THAN IN THE SCREEN'S STATE, and that is forced by how
@@ -288,6 +302,8 @@ interface XrSessionState {
   /** Put the board back where it started, relative to where the child is now. */
   recenter(): void;
   setSkipped(count: number): void;
+  /** The host reporting one bind attempt. Called once per mounted scene. */
+  setBoardTextureBound(bound: boolean): void;
   setBand(band: AgeBand): void;
   setTool(tool: WhiteboardTool): void;
   setInk(ink: WhiteboardInk): void;
@@ -306,6 +322,7 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
   placement: INITIAL_PLACEMENT,
   entering: false,
   skippedRecords: 0,
+  boardTextureBound: false,
   pendingAsk: null,
   band: 'young',
   tool: 'draw',
@@ -337,6 +354,7 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
   setPlacement: (next) => set({ placement: next }),
   recenter: () => set({ placement: INITIAL_PLACEMENT }),
   setSkipped: (count) => set({ skippedRecords: count }),
+  setBoardTextureBound: (bound) => set({ boardTextureBound: bound }),
   setBand: (band) => set({ band }),
   setTool: (tool) => set({ tool }),
   setInk: (ink) => set({ ink }),
@@ -366,5 +384,19 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
     still being fetched never reaches `arrive`, and a flag left standing would
     disable the only way into the spatial board for the rest of the session.
   */
-  exit: () => set({ phase: openingPhase(), entering: false, pendingAsk: null, asking: false }),
+  /*
+    `boardTextureBound` goes back to false on the way out, with the rest of the
+    per-entry state: the texture belongs to the `ViroView` the navigator is
+    about to take down, and the next entry binds its own. Left true, the next
+    scene would draw a live quad over a texture that no longer exists — a blank
+    board where a child's homework was.
+  */
+  exit: () =>
+    set({
+      phase: openingPhase(),
+      entering: false,
+      pendingAsk: null,
+      asking: false,
+      boardTextureBound: false,
+    }),
 }));

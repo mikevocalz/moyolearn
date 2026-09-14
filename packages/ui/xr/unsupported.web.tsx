@@ -23,6 +23,8 @@ import type { XrPanelProps } from './XrPanel.types.ts';
 import type { XrRailProps } from './XrRail.types.ts';
 import type { XrBoardInkProps } from './XrBoardInk.types.ts';
 import type { XrBoardRasterProps } from './XrBoardRaster.types.ts';
+import type { XrBoardLiveProps } from './XrBoardLive.types.ts';
+import type { BoardTextureHostProps } from './BoardTextureHost.types.ts';
 import type { XrChatPanelProps } from './XrChatPanel.types.ts';
 import type { XrQuestionLineProps, XrPlacementControlsProps } from './XrOrnaments.types.ts';
 
@@ -37,6 +39,20 @@ export function XrBoardInk(_props: XrBoardInkProps) {
 }
 export function XrBoardRaster(_props: XrBoardRasterProps) {
   return null;
+}
+export function XrBoardLive(_props: XrBoardLiveProps) {
+  return null;
+}
+/*
+  THE HOST STILL RENDERS ITS CHILD, on the one platform where there is no
+  renderer to hand it to. Everything else in this file answers `null` because a
+  spatial surface has nothing to say in a browser tab; this one wraps an
+  ENGINE, and dropping the child would unmount a board rather than fail to draw
+  a quad. Nothing on web reaches it today — `tutor-xr-entry.tsx` stops first —
+  and if something ever does, a parked whiteboard is the honest shape.
+*/
+export function BoardTextureHost({ children }: BoardTextureHostProps) {
+  return <>{children}</>;
 }
 export function XrChatPanel(_props: XrChatPanelProps) {
   return null;

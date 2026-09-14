@@ -32,6 +32,13 @@ export const XR_MATERIAL = {
   ringKeySelected: 'moyoRingKeySelected',
   ringMuted: 'moyoRingMuted',
   pointer: 'moyoPointer',
+  /*
+    THE ONE MATERIAL NOTHING IN JAVASCRIPT EVER FILLS. `board-texture` binds the
+    live page to this name's diffuse channel from Kotlin, so the registered
+    entry is only a placeholder that keeps the name resolvable — see
+    `spatial-materials.native.ts` for why it is white and not clear.
+  */
+  boardLive: 'moyoBoardLive',
 } as const;
 
 /**
