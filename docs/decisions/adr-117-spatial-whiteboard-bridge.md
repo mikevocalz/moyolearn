@@ -365,3 +365,50 @@ source and are **unmeasured**:
 
 None of these should be reported as working until they have been recorded on
 device. The acceptance test that closes them is in the feature brief's §7.
+
+## Amendment — B is now B plus a raster, not B alone
+
+**Date:** 2026-09-14. **Status:** accepted, unverified on device.
+
+B shipped and was honest about its hole: `strokeOf` has no primitive for text,
+notes, arrows or images, so the spatial paper showed a subset of the document
+and the companion panel counted the rest. A child who typed a note on a laptop
+and then put a headset on was told a number instead of shown their work.
+
+A — the native surface→texture bridge — is what fixes that, and it is still not
+built: it is a Nitro/JSI module, an Android `SurfaceTexture`/virtual-display
+path, an iOS `WKWebView` frame path and a ViroCore texture seam, none of which
+exist here. But A's *escalation trigger* was written as though the choice were
+between polylines and a live texture, and it is not. There is a third option
+that was never weighed:
+
+**D — Engine-rastered, Viro-composited.** The engine rasters its own document
+on demand — `WhiteboardHandle.exportPng`, which already existed for the tutor
+path — and the paper is textured with that PNG (`XrBoardRaster`, a `ViroImage`).
+The strokes the picture is too old to contain are drawn in front as polylines,
+exactly as B drew them. Fidelity is A's for everything that has settled, with
+B's latency for the stroke under the child's hand, and it needs no native code
+on either platform.
+
+**D is adopted.** The cost is a seam, stated once so it is not rediscovered: the
+picture is a settle window (500 ms) behind the document, so an erased mark is
+still in it for that long, and a mark drawn while a raster was in flight can be
+in both layers. The overlap is deliberate — `packages/ui/xr/raster-coverage.ts`
+chooses it, and `raster-coverage.test.ts` pins the direction. Ink drawn twice at
+one place in one colour is invisible; ink drawn in neither layer is a board that
+appears broken.
+
+A remains the escalation path and its trigger narrows to what D cannot do: a
+board that must show a *live* change the local child did not make — a peer's
+cursor, a tutor annotating in real time — because D only refreshes on settle and
+a remote stroke has no local pointer to draw it live.
+
+Two new unverified items for the list above:
+
+- Whether ViroCore resolves a `data:` URL image source on PICO. Both forks of
+  `exportPng` return a data URL, and `ImageDownloader` hands the source to
+  Fresco, which has a data-URI fetcher — reasoned from the decompiled bridge
+  class, not run.
+- Whether changing `source` on a mounted `ViroImage` re-textures it, or whether
+  the node has to be re-keyed. `XrBoardRaster` deliberately does not re-key,
+  because a new node is a frame of blank paper between two rasters.
