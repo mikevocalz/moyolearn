@@ -56,15 +56,37 @@ them. What it needs is:
 and Khronos `org.khronos.openxr.intent.category.IMMERSIVE_HMD`, added by
 `plugins/with-viro-android-linkage.js`.
 
-**They must not reach `MainActivity`.** That is the whole reason this app sets
-`appType: '2d'` against the expo-pico README's own example: `appType: 'vr'` puts
-those categories on the LAUNCHER activity, and an app whose launcher is immersive
-starts in XR. This app never may — a learner opens a tutoring app, reads a
-problem, and enters the board when they choose to.
+**They must not reach `MainActivity`.** An app whose launcher activity is
+immersive starts in XR, and this one never may — a learner opens a tutoring app,
+reads a problem, and enters the board when they choose to.
 
-`pvr.app.type` still reads `vr`. It is a runtime check, not a launch mode, and
-the two are independent. `withPicoOpenXrLoader` is ordered to run last so its
-`vr` wins over the `2d` the main plugin leaves.
+### `pvr.app.type` is SCOPED, which is the whole mechanism
+
+This took two wrong turns to see. The plugin writes it twice, at two levels, and
+that is not a duplicate:
+
+```xml
+<application>                     <meta-data name="pvr.app.type" value="mr"/>
+  <activity android:name=".VRActivity">
+                                  <meta-data name="pvr.app.type" value="vr"/>
+```
+
+- `withPicoLauncherActivity.js` writes the APPLICATION-scope value from
+  `appType`, and dedupes it. It declares what the app IS.
+- `withPicoVRActivity.js` upserts `vr` scoped to `.VRActivity` alone. It declares
+  what that one activity is.
+
+So `appType: 'mr'` with an immersive `.VRActivity` is exactly "a flat panel that
+can enter XR", and no override is needed or wanted. Both wrong turns came from
+reading the value without its scope:
+
+- `appType: '2d'` opts out of the launcher contract entirely. On device that is a
+  black window with the JS runtime up and `Running "main"` in the log — an app
+  rendering nowhere. `mr` is what makes PICO composite a panel: the camera feed
+  is the background and the app draws on top.
+- Forcing application-scope `vr` via `withPicoOpenXrLoader` told PICO the WHOLE
+  app was immersive, which is the opposite of a 2D start. That plugin is not used
+  here; `@expo-pico/core` owns the loader linkage, as in the example app.
 
 ## Plugin order, which is inverted and load-bearing
 

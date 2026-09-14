@@ -38,7 +38,6 @@ class MainApplication : Application(), ReactApplication {
             add(PicoCorePackage(PicoXRPlatform.PICO_OS5))
             add(ReactViroPackage(ReactViroPackage.ViroPlatform.AR))
             add(ReactViroPackage(ReactViroPackage.ViroPlatform.QUEST))
-            add(ReactViroPackage(ReactViroPackage.ViroPlatform.PICO))
 
         }
     )

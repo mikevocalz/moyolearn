@@ -293,11 +293,18 @@ const config: ExpoConfig = {
     [
       '@reactvision/react-viro',
       /*
-        `PICO` IS A VALID VALUE, and the note above claiming the AAR enum lacks
-        it was read off an older build. The expo-pico example ships
-        `xRMode: ['QUEST', 'PICO']` against this fork on this headset.
+        `PICO` IS NOT A VALUE THIS FORK ACCEPTS, and the compiler is the proof:
+        adding it emitted a `MainApplication.kt` with
+        `ReactViroPackage.ViroPlatform.PICO` and `:app:compilePicoDebugKotlin`
+        failed with "Unresolved reference 'PICO'". The expo-pico example does
+        ship `xRMode: ['QUEST', 'PICO']`, but against a different Viro build than
+        the fork vendored here — copying a value across versions is not the same
+        as copying a configuration.
+
+        QUEST is the OpenXR path and a PICO is an OpenXR headset; the fork's own
+        `ViroXRSceneNavigator` routes `isQuest || isPico` down it.
       */
-      { android: { xRMode: ['AR', 'QUEST', 'PICO'] } },
+      { android: { xRMode: ['AR', 'QUEST'] } },
     ],
     'react-native-video',
     /*
