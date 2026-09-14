@@ -37,3 +37,18 @@ expoAutolinking.useExpoVersionCatalog()
 
 include ':app'
 includeBuild(expoAutolinking.reactNativeGradlePlugin)
+
+include ':react_viro', ':arcore_client', ':gvr_common', ':viro_renderer'
+
+def viroPackageRoot = new File(
+  providers.exec {
+    workingDir(rootDir)
+    commandLine("node", "--print", "require.resolve('@reactvision/react-viro/package.json')")
+  }.standardOutput.asText.get().trim()
+).getParentFile()
+
+project(':arcore_client').projectDir = new File(viroPackageRoot, 'android/arcore_client')
+project(':gvr_common').projectDir = new File(viroPackageRoot, 'android/gvr_common')
+project(':viro_renderer').projectDir = new File(viroPackageRoot, 'android/viro_renderer')
+project(':react_viro').projectDir = new File(viroPackageRoot, 'android/react_viro')
+    

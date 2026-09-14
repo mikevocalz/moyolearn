@@ -1,5 +1,6 @@
 package com.moyolearn.app
 import com.facebook.react.common.assets.ReactFontManager
+import com.viromedia.bridge.ReactViroPackage
 
 import android.app.Application
 import com.margelo.nitro.nitrofetch.AutoPrefetcher
@@ -25,6 +26,9 @@ class MainApplication : Application(), ReactApplication {
         PackageList(this).packages.apply {
           // Packages that cannot be autolinked yet can be added manually here, for example:
           // add(MyReactNativePackage())
+            add(ReactViroPackage(ReactViroPackage.ViroPlatform.AR))
+            add(ReactViroPackage(ReactViroPackage.ViroPlatform.QUEST))
+
         }
     )
   }
