@@ -1,4 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android" xmlns:tools="http://schemas.android.com/tools">
+  <queries>
+    <package android:name="com.pico.os.systemui"/>
+    <package android:name="com.pico.platform"/>
+  </queries>
   <uses-permission android:name="android.permission.CALL_PHONE" tools:node="remove"/>
   <uses-permission android:name="android.permission.CALL_PRIVILEGED" tools:node="remove"/>
   <uses-permission android:name="android.permission.PROCESS_OUTGOING_CALLS" tools:node="remove"/>
@@ -25,8 +29,22 @@
   <uses-feature android:name="pico.hardware.handtracking" android:required="false"/>
   <uses-feature android:name="pico.hardware.passthrough" android:required="false"/>
   <application android:allowBackup="false" tools:replace="android:allowBackup">
-    <meta-data android:name="com.pico.targetProfile" android:value="pico4"/>
+    <meta-data android:name="com.pico.supportedDevices" android:value="PICO 4|PICO 4 Ultra"/>
+    <meta-data android:name="com.pico.spatial.mode" android:value="shared-space"/>
+    <meta-data android:name="com.pico.spatial.containerMode" android:value="window-container"/>
+    <meta-data android:name="com.pico.targetProfile" android:value="pico4ultra"/>
     <meta-data android:name="com.pico.xrMode" android:value="pico-os5"/>
+    <meta-data android:name="pvr.app.type" android:value="mr"/>
+    <activity android:name=".VRActivity" tools:node="merge">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN"/>
+        <category android:name="com.pico.intent.category.VR"/>
+        <category android:name="com.picovr.intent.category.VR"/>
+        <category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD"/>
+      </intent-filter>
+      <meta-data android:name="com.pico.spatial.mode" android:value="full-space"/>
+      <meta-data android:name="pvr.app.type" android:value="vr"/>
+    </activity>
     <uses-native-library android:name="libopenxr_loader.so" android:required="false"/>
   </application>
 </manifest>

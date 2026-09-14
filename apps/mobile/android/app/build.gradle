@@ -288,15 +288,15 @@ dependencies {
 // expo-pico-core: pico sdk config
 def picoAppIdValue = "\"\""
 def picoAppKeyValue = "\"\""
-def picoSpatialModeValue = "\"2d\""
-def picoTargetProfileValue = "\"pico4\""
-def picoContainerModeValue = "\"none\""
+def picoSpatialModeValue = "\"shared-space\""
+def picoTargetProfileValue = "\"pico4ultra\""
+def picoContainerModeValue = "\"window-container\""
 def picoXrModeValue = "\"pico-os5\""
-def picoAppTypeValue = "\"2d\""
+def picoAppTypeValue = "\"mr\""
 def picoHasPlatformIdentityValue = "false"
 def picoHasIapIdentityValue = "false"
 def picoRefreshRatesValue = "\"\""
-def picoTargetDevicesValue = "\"\""
+def picoTargetDevicesValue = "\"pico-4,pico-4-ultra\""
 
 android.defaultConfig {
     buildConfigField "String", "PICO_APP_ID", picoAppIdValue

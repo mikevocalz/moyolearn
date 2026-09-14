@@ -1,4 +1,3 @@
-import { withPicoOpenXrLoader } from '@expo-pico/core/plugin/viro';
 import type { ExpoConfig } from 'expo/config';
 import { loadProjectEnv } from '@expo/env';
 import { dirname, join } from 'node:path';
@@ -266,17 +265,39 @@ const config: ExpoConfig = {
       '@expo-pico/core',
       {
         xrMode: 'pico-os5',
-        appType: '2d',
+        /*
+          `mr`, TAKEN FROM THE EXAMPLE APP THAT RUNS ON THIS HARDWARE.
+
+          Its own comment says what it buys: PICO renders the camera feed as the
+          background and the app composites on top, so the user sees the real
+          room with a 2D panel floating in front. `VRActivity` still owns any
+          explicit immersive transition.
+
+          `2d` was my wrong reading of "always start as a 2D app" — it opts out
+          of the launcher contract entirely, and on device that was a black
+          window with the JS runtime up and `Running "main"` in the log. Starting
+          flat is `mr` plus a window container, not opting out.
+        */
+        appType: 'mr',
         buildVariant: 'pico',
+        /* The two that place the panel, both in the example, neither here. */
+        spatialMode: 'shared-space',
+        defaultContainerMode: 'window-container',
+        targetProfile: 'auto',
+        targetDevices: ['pico-4', 'pico-4-ultra'],
         handTracking: true,
         passthrough: true,
       },
     ],
-    withPicoOpenXrLoader,
     './plugins/with-viro-android-linkage',
     [
       '@reactvision/react-viro',
-      { android: { xRMode: ['AR', 'QUEST'] } },
+      /*
+        `PICO` IS A VALID VALUE, and the note above claiming the AAR enum lacks
+        it was read off an older build. The expo-pico example ships
+        `xRMode: ['QUEST', 'PICO']` against this fork on this headset.
+      */
+      { android: { xRMode: ['AR', 'QUEST', 'PICO'] } },
     ],
     'react-native-video',
     /*
