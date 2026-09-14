@@ -345,6 +345,14 @@ export function XrPanel({
         materials={[XR_MATERIAL.pointer]}
         dragType="FixedToPlane"
         dragPlane={plane}
+        /*
+          Hit-test the geometry, not the bounding box. `highAccuracyEvents` is
+          the prop the component schema names for this (`highAccuracyGaze` is its
+          deprecated spelling), and it is the one thing this surface — whose only
+          job is to be hit accurately — was not asking for. Not yet confirmed on
+          device.
+        */
+        highAccuracyEvents
         onClickState={onPointerClickState}
         onDrag={onPointerDrag}
       />
