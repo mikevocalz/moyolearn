@@ -55,8 +55,8 @@ import {
   ViroController,
   ViroDirectionalLight,
   ViroQuad,
-  ViroScene,
   ViroSphere,
+  ViroText,
   ViroTrackingStateConstants,
   ViroXRSceneNavigator,
   checkPermissions,
@@ -84,6 +84,7 @@ import {
   XrRail,
   XR_COLOR,
   XR_MATERIAL,
+  registerXrMaterials,
   boardComposition,
   boardSurfacePixels,
   layoutBoard,
@@ -309,6 +310,25 @@ function BoardScene() {
   const immersive = useXrSession((s) => s.immersive);
   const setImmersive = useXrSession((s) => s.setImmersive);
   /*
+    ONCE PER SCENE MOUNT, INSIDE THE RENDERER THAT IS ABOUT TO DRAW.
+
+    The materials are registered at module load too, and on a phone that is the
+    end of it. In a headset this scene runs inside `VRActivity`, a second
+    Activity with its own `ViroViewOpenXR`, and the module was evaluated before
+    that renderer existed — so every `materials={['moyo…']}` in this tree
+    resolved against an empty registry and the whole scene drew nothing while the
+    renderer's own reticle drew fine.
+
+    `useState` with an initialiser rather than an effect: an effect runs AFTER
+    the first commit, which is one frame of unmaterialised geometry, and the
+    header on the materials module is explicit that this must not land in a
+    render body that re-runs.
+  */
+  useState(() => {
+    registerXrMaterials();
+    return null;
+  });
+  /*
     THE COUNT OF WHAT THIS RENDERER COULD NOT DRAW, finally on a surface a child
     reads. `skippedRecords` and `setSkipped` were written with the store and
     never called by anything, so a board silently missing the child's typed note
@@ -532,6 +552,48 @@ function BoardScene() {
         materials={[XR_MATERIAL.environmentFloor]}
         visible={immersive}
       />
+      {/*
+        A DANGER-ROOM PLATE, PLACED WHERE THE BOARD IS, AS A PROBE.
+
+        Raw `ViroQuad` layers at explicit z-offsets and a `ViroText` scaled down
+        from a large logical box — the exact construction of `Plate`/`Label` in
+        `danger-room/src/scenes/ConferenceScene.tsx`, which is the one scene in
+        these repos that renders on this renderer on headset hardware. It shares
+        no code with `XrPanel`: no `ViroFlexView`, no conditional subtrees, no
+        state-driven mounting.
+
+        It is here to answer one question with the device rather than with
+        reasoning — if this draws and the board beside it does not, the
+        difference is in how `XrPanel` is built, not in the scene, the root, the
+        navigator flags or the material registry. It comes straight back out
+        either way.
+      */}
+      <ViroNode position={[0, -0.1, -1.5]}>
+        <ViroQuad width={0.9} height={0.6} materials={[XR_MATERIAL.frame]} />
+        <ViroQuad
+          width={0.84}
+          height={0.5}
+          position={[0, -0.03, 0.006]}
+          materials={[XR_MATERIAL.paper]}
+        />
+        <ViroText
+          text="PROBE"
+          position={[0, 0.22, 0.012]}
+          scale={[0.25, 0.25, 0.25]}
+          width={0.8 / 0.25}
+          height={0.16 / 0.25}
+          textClipMode="ClipToBounds"
+          textLineBreakMode="None"
+          style={{
+            fontFamily: 'Arial',
+            fontSize: 40,
+            color: '#16294d',
+            fontWeight: '900',
+            textAlign: 'center',
+            textAlignVertical: 'center',
+          }}
+        />
+      </ViroNode>
       <ViroAmbientLight color="#ffffff" intensity={600} />
       <ViroDirectionalLight color="#ffffff" direction={[0, -1, -0.5]} intensity={800} />
       <XrPanel
@@ -667,11 +729,21 @@ function BoardScene() {
     </>
   );
 
-  return immersive ? (
-    <ViroScene>{content}</ViroScene>
-  ) : (
-    <ViroARScene onTrackingUpdated={handleTrackingUpdated}>{content}</ViroARScene>
-  );
+  /*
+    ONE ROOT, AND IT IS THE ONE THAT IS KNOWN TO DRAW.
+
+    Splitting the root by mode was reasoning from the guide; the Danger Room
+    scene is evidence. That scene renders on this renderer, on headset hardware,
+    from a `ViroARScene` root with `passthroughEnabled` and hdr/bloom/pbr all off
+    on the navigator — and when this scene first drew nothing it had the AR root
+    with only ONE of those four flags set. Changing the root was a guess layered
+    on an incomplete match.
+
+    So the match is completed instead: same root, same four flags, and the drawn
+    room is a sphere inside it exactly as the Danger Room's skybox is, toggled by
+    `visible` rather than by swapping the scene out from under the renderer.
+  */
+  return <ViroARScene onTrackingUpdated={handleTrackingUpdated}>{content}</ViroARScene>;
 }
 
 /** Stable, for the same constructor-capture reason. */

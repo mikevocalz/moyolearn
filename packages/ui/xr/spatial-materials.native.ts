@@ -45,7 +45,7 @@ import { XR_MATERIAL, inkMaterial } from './material-names.ts';
 */
 export { XR_MATERIAL, inkMaterial } from './material-names.ts';
 
-ViroMaterials.createMaterials({
+const SURFACE_MATERIALS = {
   /*
     `Constant` lighting, not PBR. The paper's job is to be the same white
     everywhere on its surface; a lighting model would put the room's key light
@@ -181,18 +181,46 @@ ViroMaterials.createMaterials({
     diffuseColor: semantic.surface.dark,
     lightingModel: 'Constant',
   },
-});
+} as const;
 
 /*
   Ink is `Constant` for the same reason the paper is: a stroke must be the colour
   the child chose at every point along itself, not a colour the room's key light
   shades across.
 */
-ViroMaterials.createMaterials(
-  Object.fromEntries(
+const INK_MATERIALS = Object.fromEntries(
     COLOR_IDS.map((id) => [
       inkMaterial(id),
       { diffuseColor: THEMES.light.colors[id].stroke, lightingModel: 'Constant' as const },
     ]),
-  ),
 );
+
+/**
+ * Registers every spatial material, and can be called again.
+ *
+ * WHY THIS IS A FUNCTION NOW, AND WHY THE SCENE CALLS IT.
+ *
+ * These used to run at module load, which is correct on a phone and wrong on a
+ * headset. `VRActivity` is a SECOND Activity with its own `ViroViewOpenXR`
+ * renderer, sharing one JS context with `MainActivity` — so by the time the
+ * immersive renderer exists, this module was long since evaluated and its
+ * `createMaterials` calls went to a renderer that is not the one drawing.
+ *
+ * The symptom is total and silent: in the headset the controller reticle draws
+ * (the renderer draws that itself, with no material) and NOTHING else does —
+ * not the board's frame, not the rail, not a 30m backdrop sphere. Every one of
+ * those resolves `materials={['moyo…']}` against a registry that, in that
+ * renderer, is empty.
+ *
+ * `createMaterials` is idempotent by name, so calling it again from the scene
+ * costs a re-register and nothing else. It must NOT be called from a render
+ * body on every frame — see the header — so the scene calls it once per mount.
+ */
+export function registerXrMaterials(): void {
+  ViroMaterials.createMaterials(SURFACE_MATERIALS);
+  ViroMaterials.createMaterials(INK_MATERIALS);
+}
+
+// The phone path still gets them at module load, which is where every non-XR
+// caller (and every test that imports this module) expects them to be.
+registerXrMaterials();
