@@ -123,6 +123,9 @@ import { boardPersistence } from './board-storage.ts';
    the package's native fork: the hook reaches the engine handle, and nothing on
    a web resolver's path may name it. */
 import { useBoardRaster } from './board-raster.native.ts';
+/* `.native` implicitly — this file is itself a `.native` fork, and she mounts a
+   Viro object nothing on a web resolver's path may name. */
+import { XrNatalie } from './XrNatalie.native.tsx';
 import { useTutorStore } from './tutor.store.ts';
 import type { TutorXrScreenProps } from './tutor-xr-screen.types.ts';
 import { SPATIAL_PERMISSIONS, spatialPermissionsGranted } from './xr-capability.ts';
@@ -520,6 +523,22 @@ function BoardScene() {
     is the trade: the alternative shrinks a six-year-old's keys, which is the
     one thing `railWidthFor` and `layoutBoard` both exist to refuse.
   */
+  /*
+    Where Natalie stands: the composition's right edge plus a margin, in world
+    space — the anchor's local +X turned by its yaw. Her feet are at y = 0
+    because the PICO runtime is floor-referenced (native LOCAL_FLOOR); under a
+    head-referenced fallback origin this puts her roughly floor-level too,
+    which is the degradation a dev phone can live with.
+  */
+  const natalieYawRad = (placement.rotation[1] * Math.PI) / 180;
+  const natalieRight =
+    boardWidth / 2 + boardComposition.chatGap + boardComposition.chatWidth + 0.35;
+  const nataliePosition: [number, number, number] = [
+    placement.position[0] + Math.cos(natalieYawRad) * natalieRight,
+    0,
+    placement.position[2] - Math.sin(natalieYawRad) * natalieRight,
+  ];
+
   const railHeight = Math.max(
     boardHeight,
     railContentHeight(distanceM, handsPrimary, band) + spatialSpacing.xs * 2,
@@ -622,6 +641,16 @@ function BoardScene() {
       <ViroController controllerVisibility reticleVisibility />
       <ViroAmbientLight color="#ffffff" intensity={600} />
       <ViroDirectionalLight color="#ffffff" direction={[0, -1, -0.5]} intensity={800} />
+      {/*
+        NATALIE, IN THE ROOM — to the child's right of the paper, past her own
+        chat panel, standing on the floor and turned toward them. Same voice,
+        same A2F face, same idle engine as the 2D pane (`XrNatalie`'s header).
+
+        HER FEET: on a PICO the runtime references the world to the FLOOR, so
+        y = 0 is the ground she stands on. Her yaw is the composition's own —
+        the board already faces the child, and she stands in its frame.
+      */}
+      <XrNatalie position={nataliePosition} rotationY={placement.rotation[1]} />
       <XrPanel
         width={boardWidth}
         aspect={BOARD_ASPECT}

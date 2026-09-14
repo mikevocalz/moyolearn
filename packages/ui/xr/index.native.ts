@@ -16,6 +16,8 @@ export { XrBoardRaster } from './XrBoardRaster.native.tsx';
 export { XrBoardLive } from './XrBoardLive.native.tsx';
 export { BoardTextureHost } from './BoardTextureHost.native.tsx';
 export { uncoveredRecords } from './raster-coverage.ts';
+export { natalieMorphs, MORPH_FLOOR } from './natalie-morphs.ts';
+export type { NatalieMorph, NatalieShape } from './natalie-morphs.ts';
 export { strokeOf, type StrokeGeometry } from './stroke-of.ts';
 export { XrChatPanel } from './XrChatPanel.native.tsx';
 /* Values from the `.native` files, contracts from the `.types` files — the

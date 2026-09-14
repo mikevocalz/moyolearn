@@ -480,3 +480,72 @@ anything applied to the engine is on the board the moment the engine draws it.
   camera, same stroke — which is the property the whole hand-off is built on.
 - Whether the `ViroView` and the host are ever in different activities on PICO
   (the VR-activity hop), which is the one shape `findViroView` cannot see past.
+
+## Amendment — Natalie is in the scene, and the fork grew bones for her
+
+**Date:** 2026-09-14. **Status:** accepted, unverified on device.
+
+The spatial route's promise widened: not just the board, but the tutor — the
+same Natalie the 2D pane's third panel plays, voice, face and idle body.
+
+**What was already true.** Her voice needed nothing: the audio queue lives
+outside React and outside any renderer, so the headset hears the stream the
+pane would have played, and entering the scene opens no second one. Her face
+needed only a filter: `audioQueue.sampleFace()` is the A2F frame the WebGPU
+stage reads, and `com.viro.core.Object3D` has had `setMorphTargetWeight` all
+along — the model carries the full 52 ARKit shapes.
+
+**What was missing was her body, and it was a fork gap, not a renderer gap.**
+`humano-marketing.glb` has zero baked clips; her life is `applyBodyFrame`
+writing three.js bones at frame rate. The renderer has had the seam since
+2017 — `VROSkeleton::setCurrentBoneWorldTransform(name, matrix, recurse)` —
+with no Java above it. **3.0.0-moyo.2** adds the plumbing:
+
+- `Object3D.getSkeletonBoneKeys()` / `getSkeletonBoneWorldTransform(name)` /
+  `setSkeletonBoneWorldTransforms(names, matrices16, recurse)`, and a batched
+  `setMorphTargetWeights(names, weights)` — one render-thread dispatch per
+  call instead of one per shape.
+- `VRTNodeModule` mirrors all four (`setMorphTargetWeights`,
+  `getSkeletonBoneKeys`, `getSkeletonBoneTransforms`,
+  `setSkeletonBoneTransforms`), fire-and-forget for the setters, and
+  `Viro3DObject` exposes them as instance methods. The whole performance is
+  imperative: zero React renders per frame.
+
+**Recutting the tarball forced two ports the bridge was owed.** The moyo.1
+bridge AAR was prebuilt, so javac never noticed the renderer it ships beside
+lacks `ExternalSurfaceTexture` and `Renderer.getChoreographerRef` — its
+`VRTExternalVideo` and splat/orb pass modules were compiled promises that
+would have thrown on first use. Rebuilding the bridge surfaced it. Both seams
+are now really in the pico-support renderer (ported whole from
+`backup/pre-2.58.1`, four files plus the JNI pair), so moyo.2's renderer is a
+strict superset of moyo.1's. `ViroViewOpenXR.triggerHaptic` remains a
+warn-and-return: the real chain is input-controller work this branch has not
+taken, and a logged no-op beats a `NoSuchMethodError`.
+
+**The JS half** (`XrNatalie.native.tsx` + two pure modules, both tested):
+
+- `natalie-spatial-pose.ts` drives four Rigify controls — `torso` (breath
+  lift + sway as translation), `chest` (breath pitch), `neck`/`head` (drift +
+  nod split 40/60, the 2D writer's own numbers). Rotations conjugate about
+  the bone's rest position — `T(p)·R·T(−p)` — because a world matrix rotated
+  in place pivots about her feet, and deltas always compose against rest so
+  two hundred frames of the same channel produce the same pose.
+- `natalie-morphs.ts` decides what a face is worth sending: weights under
+  1/255 are dropped, a shape that falls under the floor is released as an
+  explicit zero exactly once (the renderer holds what it was last told — a
+  dropped release is a jaw frozen mid-word), and an unchanged face returns
+  the previous array by identity so it costs nothing.
+- The loop is 30 Hz inside the scene, reading `isSpeaking` /
+  `timeUntilOnset` / `sampleFace` / `sampleSpeech` — the same four readers
+  the 2D stage samples — plus its own seeded `IdleEngine`.
+
+She stands past the chat panel on the child's right, feet at y = 0 (the PICO
+runtime is floor-referenced), turned with the composition's own yaw.
+
+**Not verified, all of it on device:** whether `setCurrentBoneWorldTransform`
+under a `Legacy`-typed GLTF skeleton deforms the mesh the way the maths says
+(the loader's own TODO VIRO-4901 hangs over this exact path); which way the
+GLB faces at identity yaw; whether four-bone recursion over a 470-joint
+Rigify graph is affordable per frame on the render thread; whether the
+12.5 MB GLB loads with its textures under `pbrEnabled=false`; and the morph
+batch's actual cost at speech rate.

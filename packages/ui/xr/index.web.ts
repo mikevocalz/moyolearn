@@ -79,6 +79,9 @@ export {
   type BoardLayoutMiss,
 } from './board-layout.ts';
 export { placeInFrontOf, type XrHeadPose, type XrPlaceInput } from './board-placement.ts';
+/* Pure — no renderer in it; the web build may name the shapes. */
+export { natalieMorphs, MORPH_FLOOR } from './natalie-morphs.ts';
+export type { NatalieMorph, NatalieShape } from './natalie-morphs.ts';
 /* Pure, so web gets it too — it is a parser, not a renderer. */
 export { strokeOf, type StrokeGeometry } from './stroke-of.ts';
 /* Likewise a set difference, not a renderer. */

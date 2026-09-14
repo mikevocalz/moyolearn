@@ -18,7 +18,7 @@
     "test": "node --test 'core/**/*.test.ts' 'features/**/*.test.ts' 'providers/**/*.test.ts' && node --test --conditions=react-server 'core/**/*.server-test.ts' 'features/**/*.server-test.ts'"
   },
   "dependencies": {
-    "@reactvision/react-viro": "3.0.0-moyo.1",
+    "@reactvision/react-viro": "3.0.0-moyo.2",
     "@acme/auth": "workspace:*",
     "@acme/avatar": "workspace:*",
     "@acme/inference": "workspace:*",
