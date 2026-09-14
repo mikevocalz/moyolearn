@@ -55,6 +55,7 @@ import {
   ViroController,
   ViroDirectionalLight,
   ViroQuad,
+  ViroScene,
   ViroSphere,
   ViroTrackingStateConstants,
   ViroXRSceneNavigator,
@@ -469,13 +470,27 @@ function BoardScene() {
     });
   };
 
-  return (
-    /*
-      `ViroARScene` inside `ViroXRSceneNavigator` is the passthrough path the
-      installed package documents for Quest. `hdrEnabled={false}` is set on the
-      navigator, which is the vendor's own requirement there.
-    */
-    <ViroARScene onTrackingUpdated={handleTrackingUpdated}>
+  /*
+    THE ROOT IS THE MODE, AND THE WRONG ONE RENDERS NOTHING.
+
+    `ViroARScene` is the MIXED-REALITY root: it is the one that carries
+    `onAnchorFound`, `ViroARPlane` and passthrough, and on a headset every bit of
+    that is backed by Meta's `XR_FB_scene` room model. A PICO has no
+    `XR_FB_scene`. So the scene asked for an AR session the runtime could not
+    give it and drew nothing at all — the OpenXR instance was created,
+    `VRActivity` owned the display, the controller reticle drew, and the room,
+    the board and the rail were simply absent. The package's own guide says it in
+    one line: a fully-virtual scene uses `ViroScene` as its root, and
+    `ViroARScene` is for when you want the real room and anchors in it.
+
+    So the root follows the mode the child is actually in. Drawing our own room
+    means there is nothing to anchor to and nothing to see through, which is
+    `ViroScene`; passthrough means the real room IS the backdrop, which is what
+    `ViroARScene` is for. `onTrackingUpdated` goes with that branch alone —
+    it reports tracking of a room only that branch is looking at.
+  */
+  const content = (
+    <>
       {/*
         THE POINTER, WITHOUT WHICH NOTHING IN THIS SCENE CAN BE DRAWN ON.
 
@@ -649,7 +664,13 @@ function BoardScene() {
           onSkippedCount={setSkipped}
         />
       </XrPanel>
-    </ViroARScene>
+    </>
+  );
+
+  return immersive ? (
+    <ViroScene>{content}</ViroScene>
+  ) : (
+    <ViroARScene onTrackingUpdated={handleTrackingUpdated}>{content}</ViroARScene>
   );
 }
 
@@ -1007,6 +1028,15 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
           hdrEnabled={false}
           bloomEnabled={false}
           pbrEnabled={false}
+          /*
+            Asked for explicitly rather than relied on. The package auto-enables
+            passthrough when an AR scene mounts ON QUEST; that is Meta-path code,
+            and this app's headset is a PICO. The Danger Room navigator passes it
+            outright for the same reason, and it is a no-op on the immersive
+            branch, which has no real room in it to show.
+          */
+          passthroughEnabled
+
           onExitViro={handleExit}
           style={StyleSheet.absoluteFill}
         />
