@@ -10,8 +10,8 @@
 //
 // The values come from the ViroReact spatial layout system's token set
 // (`spatialSpacing`, `panelSize`, `distance`, `typeScale`) rather than being
-// picked here. What IS picked here is the board's own geometry, because 5:7
-// portrait paper is not in anyone's design system — it is the shape of the
+// picked here. What IS picked here is the board's own geometry, because 6:4
+// landscape paper is not in anyone's design system — it is the shape of the
 // homework this app exists for.
 // SOT: packages/ui/xr/board-layout.ts · packages/theme/tokens.ts
 // SOT-KEYWORDS: spatial tokens metres xr whiteboard rail comfort distance type scale hit target band
@@ -277,16 +277,34 @@ const DESIGN_KEY_BOX = railWidthFor(spatialDistance.board, false, 'young', 1);
 /**
  * The whiteboard composition, in metres.
  *
- * `boardWidth` 0.55 at 1.5 m spans roughly 21° × 29° with the rail and the chat
- * beside it — inside the ±30° comfort cone in both axes, which is the whole
- * reason it is not simply as large as the room allows. A board that fills the
- * view is a board a child has to turn their head to read the bottom of, for an
- * hour, while doing arithmetic.
+ * `boardWidth` 0.6 at 1.5 m spans 22.6° × 15.2° — inside the ±30° comfort cone
+ * in both axes, which is the whole reason it is not simply as large as the room
+ * allows. A board that fills the view is a board a child has to turn their head
+ * to read the bottom of, for an hour, while doing arithmetic.
+ *
+ * THE WIDTH IS WHAT THE COMPOSITION HAS LEFT, not a round number. The rail sits
+ * at `-(w/2 + railGap + railWidth)` and Natalie at `+(w/2 + chatGap + chatWidth)`,
+ * so a 0.6 m board puts the rail's outer edge 27.1° off centre and hers 29.5° —
+ * both inside the cone, and 0.65 would put her outside it.
  */
 export const boardComposition = {
-  /** Board + rail + chat sit on this anchor, dropped below the eye line. */
-  anchor: [0, -0.1, -spatialDistance.board] as const,
-  boardWidth: 0.55,
+  /**
+   * How far below the child's eye line the anchor sits, in metres.
+   *
+   * IT IS A DROP AND NO LONGER A POSITION. `anchor` was
+   * `[0, -0.1, -spatialDistance.board]`, which reads as "in front of the child,
+   * a little below their eyes" and is only that if the scene's origin is their
+   * head. A PICO's runtime references the origin to the FLOOR, so those numbers
+   * put the whole composition 10 cm off the ground — measured on device: the
+   * board, the rail and Natalie were at the child's feet.
+   *
+   * `placeInFrontOf` builds the placement from the head pose the renderer
+   * reports instead, and this is the only part of it that was ever a design
+   * decision. See `board-placement.ts` for why a constant eye height would have
+   * been a second bug rather than a fix.
+   */
+  anchorDrop: 0.1,
+  boardWidth: 0.6,
   /**
    * Derived, never picked. It was 0.1 — 3.82° at the board's distance, under
    * the 4° floor before a band multiplier was even applied — and `XrRail` then
@@ -324,11 +342,17 @@ export const boardComposition = {
  * The pixel size of the board's own client space.
  *
  * It is a resolution, not a layout: the engine draws at this size and the
- * result is mapped onto the 5:7 surface, so it decides whether a fraction bar
- * reads at 1.5 m and nothing else. 5:7 exactly, so the mapping is a scale and
+ * result is mapped onto the 6:4 surface, so it decides whether a fraction bar
+ * reads at 1.5 m and nothing else. 6:4 exactly, so the mapping is a scale and
  * never a stretch — an anisotropic fit would make a child's handwriting lean.
+ *
+ * IT IS ALSO THE PAGE'S CSS SIZE, which is what makes it the one number to
+ * change if the live board costs too much per frame: `board-texture` sizes the
+ * texture at this × the display density and draws it through a software canvas,
+ * the pointer injection scales rays by it, and the polyline fallback maps page
+ * coordinates through it. All three move together because all three read this.
  */
-export const boardSurfacePixels = { width: 1400, height: 1960 } as const;
+export const boardSurfacePixels = { width: 1680, height: 1120 } as const;
 
 /**
  * The paper's own stack, in metres, from the surface outwards.

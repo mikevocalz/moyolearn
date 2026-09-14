@@ -7,7 +7,7 @@
 // SOT-KEYWORDS: xr board live texture props types platform neutral no viro quad
 
 export interface XrBoardLiveProps {
-  /** The paper's size in metres. The page is 5:7 and fills it exactly. */
+  /** The paper's size in metres. The page is 6:4 and fills it exactly. */
   width: number;
   height: number;
 }

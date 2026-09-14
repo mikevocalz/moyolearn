@@ -32,7 +32,7 @@ export interface XrDragPlane {
 export interface XrDragPlaneInput {
   /** The panel anchor's world position — `XrPlacement.position`. */
   position: XrVector3;
-  /** The anchor's yaw. Only Y is used, for the reason `toSurfaceLocal` states. */
+  /** The anchor's yaw. Only Y is used, for the reason `xrSurfaceLocal` states. */
   yawDeg: number;
   /** The anchor's uniform scale. */
   scale: number;
@@ -127,4 +127,50 @@ export function xrDragHit(
     dragToPos[1] + (downHit[1] - downNodePosition[1]),
     dragToPos[2] + (downHit[2] - downNodePosition[2]),
   ];
+}
+
+/**
+ * A world point, in the panel surface's own frame.
+ *
+ * IT LIVES HERE NOW, AND THE MOVE IS THE POINT. It was a private function in
+ * `XrPanel.native.tsx` carrying a sign error that ADR-117 recorded as dormant:
+ * it negated the yaw and then used the inverse formula, which applies the
+ * negation twice. Harmless only while every placement had `rotation: [0,0,0]`,
+ * where `sinθ` is zero and the two expressions agree. Placement now comes from
+ * the child's own head pose and the board is TURNED to face them, so the error
+ * is live — and the one thing it produces is ink that lands somewhere plausible
+ * and slightly wrong, which reads as tracking drift rather than as a bug.
+ *
+ * THE INVERSE, DERIVED FROM THE FORWARD TRANSFORM IN THIS SAME FILE.
+ * `xrDragPlane` takes the panel's facing normal to be `[sinθ, 0, cosθ]`, which
+ * is `R_y(θ)·(0,0,1)` — the renderer rotates a local point by
+ * `x' = x·cosθ + z·sinθ`, `z' = −x·sinθ + z·cosθ`. Inverting that gives
+ * `x = dx·cosθ − dz·sinθ`. One file now holds both directions, so they cannot
+ * drift apart again.
+ *
+ * YAW ONLY, ON PURPOSE. The board stands upright facing the child and both
+ * recenter and the initial placement turn it about Y alone, so a yaw inverse is
+ * exact for every placement this feature produces. Pitch and roll are
+ * deliberately NOT handled rather than guessed: the order ViroCore composes its
+ * Euler angles in is not stated in the installed package's types, and a wrong
+ * order does not fail — it puts the ink somewhere plausible and slightly wrong.
+ * If the composition ever needs to tilt, the order gets confirmed on a device
+ * first and this function grows a test for it.
+ */
+export function xrSurfaceLocal(
+  world: readonly [number, number, number],
+  position: XrVector3,
+  yawDeg: number,
+  scale: number,
+): { x: number; y: number } {
+  const dx = world[0] - position[0];
+  const dy = world[1] - position[1];
+  const dz = world[2] - position[2];
+  const yaw = (yawDeg * Math.PI) / 180;
+  const cos = Math.cos(yaw);
+  const sin = Math.sin(yaw);
+  return {
+    x: (dx * cos - dz * sin) / scale,
+    y: dy / scale,
+  };
 }

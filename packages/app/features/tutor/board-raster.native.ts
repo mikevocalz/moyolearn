@@ -16,7 +16,7 @@
 // mid-stroke would be thrown away by the next one a moment later.
 //
 // AT 1×, NOT THE TUTOR PATH'S 2×. That scale exists for an OCR pass; this
-// picture is for an eye, at 1.5 m, on a 5:7 surface. Two would quadruple the
+// picture is for an eye, at 1.5 m, on a 6:4 surface. Two would quadruple the
 // bytes on the bridge for pixels the headset cannot resolve.
 //
 // WHAT IT PROMISES THE INK LAYER. `covered` is the set of record ids the

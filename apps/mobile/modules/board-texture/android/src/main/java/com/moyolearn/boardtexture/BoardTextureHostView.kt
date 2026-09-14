@@ -130,7 +130,7 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
 
   /** Returns null when the board is on the material, else why it is not. */
   private fun bind(material: String): String? {
-    val viroView = findViroView() ?: return "no-viro-view"
+    val viroView = findViroView(appContext.currentActivity) ?: return "no-viro-view"
     /*
       `appContext.reactContext` is typed as a plain Android `Context` and IS the
       React one at runtime; the cast is where that stops being an assumption.

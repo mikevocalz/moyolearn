@@ -95,12 +95,18 @@ import {
   XR_MATERIAL,
   boardComposition,
   boardSurfacePixels,
+  BOARD_ASPECT,
   layoutBoard,
+  placeInFrontOf,
+  railContentHeight,
   railWidthFor,
+  spatialDistance,
   spatialSpacing,
   uncoveredRecords,
   type BoardLayoutMiss,
   type BoardTextureBinding,
+  type XrHeadPose,
+  type XrVector3,
   type XrChatRow,
   type XrPanelState,
   type XrSurfaceInput,
@@ -167,16 +173,30 @@ const active: {
    * `mounted`, and `mounted` is what runs the first probe.
    */
   inkAligned: boolean;
+  /**
+   * WHERE THE CHILD'S HEAD IS, as the renderer last reported it.
+   *
+   * Here and not in the store for the reason `inkAligned` is: it arrives on a
+   * renderer callback at frame rate and nothing renders from it. What reads it
+   * is placement — the first pose the scene sees, and every recenter after
+   * that — and both write a placement into the store, which is the thing the
+   * composition is actually drawn from.
+   */
+  head: XrHeadPose | null;
 } = {
   engine: null,
   session: null,
   onExit: () => undefined,
   onAsk: () => undefined,
   inkAligned: true,
+  head: null,
 };
 
 /** The engine handle, as a stable reader — see `strokeOpen` in `BoardScene`. */
 const readEngine = () => active.engine;
+
+/** The composition's own case, so the two callers that place it cannot disagree. */
+const BOARD_PLACE = { distanceM: spatialDistance.board, dropM: boardComposition.anchorDrop };
 
 /** Where a board goes when the engine's mapping is the thing that is wrong. */
 const INK_INTERRUPTED = { kind: 'interrupted', reason: 'calibration-failed' } as const;
@@ -192,7 +212,7 @@ function readyOrInterrupted(): XrPhase {
 }
 
 /** The paper's height, from the one aspect the board is allowed to have. */
-const BOARD_HEIGHT = (boardComposition.boardWidth * 7) / 5;
+const BOARD_HEIGHT = (boardComposition.boardWidth * BOARD_ASPECT.h) / BOARD_ASPECT.w;
 
 /**
  * THE RENDERER'S OWN VERDICT ON WHETHER IT KNOWS WHERE THE ROOM IS.
@@ -234,6 +254,34 @@ function handleTrackingUpdated(state: ViroTrackingState): void {
         ? 'tracking-lost'
         : 'tracking-limited',
   });
+}
+
+/**
+ * THE CHILD'S HEAD, EVERY FRAME, AND THE ONE FRAME IT DECIDES ANYTHING.
+ *
+ * `onCameraTransformUpdate` is how a scene that cannot close over state learns
+ * where its user is. Two things read it and both write a placement rather than
+ * rendering from the pose: the FIRST pose after the scene mounts, which is what
+ * puts the board in front of the child instead of at the scene origin, and
+ * recenter.
+ *
+ * WHY THE FIRST POSE MATTERS MORE THAN IT SOUNDS. The composition opened at a
+ * constant `[0, -0.1, -1.5]`, which is "just below the eye line, 1.5 m out"
+ * only when the scene's origin is the head. A PICO references it to the FLOOR,
+ * so on device the board, the rail and Natalie were at the child's feet with
+ * the panel above them still saying the board was in front of them. The fix is
+ * not a height to subtract — see `board-placement.ts`.
+ *
+ * It fires at frame rate and does nothing on all but the first, which is why
+ * the pose lives in the holder and the guard is a null check rather than a
+ * comparison: a placement written every frame would fight the child's own drag.
+ */
+function handleCameraTransform(transform: { position: XrVector3; forward: XrVector3 }): void {
+  const pose: XrHeadPose = { position: transform.position, forward: transform.forward };
+  const first = active.head === null;
+  active.head = pose;
+  if (!first) return;
+  useXrSession.getState().setPlacement(placeInFrontOf(pose, BOARD_PLACE));
 }
 
 /**
@@ -460,6 +508,24 @@ function BoardScene() {
   const miss: BoardLayoutMiss | null = geometry.fits ? null : geometry.miss;
 
   /*
+    THE RAIL IS AS TALL AS ITS OWN CONTENT, and stopped being as tall as the
+    paper when the paper turned landscape. It was `height={boardHeight}`, which
+    worked while the board was portrait — 0.77 m held two columns of four
+    floor-sized keys with room over. A 6:4 board is 0.4 m, which holds two rows,
+    and eight controls in two rows is four columns: a 0.81 m slab beside a 0.6 m
+    board, 38° off centre, which is not a rail a child can reach.
+
+    So the rail keeps its two-by-four grid and takes the height that grid needs.
+    It is taller than the paper now — a sidebar rather than a margin — and that
+    is the trade: the alternative shrinks a six-year-old's keys, which is the
+    one thing `railWidthFor` and `layoutBoard` both exist to refuse.
+  */
+  const railHeight = Math.max(
+    boardHeight,
+    railContentHeight(distanceM, handsPrimary, band) + spatialSpacing.xs * 2,
+  );
+
+  /*
     A board that cannot hold a reachable rail is not a ready board. Only `ready`
     is overridden: `checking` and `preparing` still owe the child their wait
     card, `unsupported` and `exiting` are already the stronger statement, and an
@@ -558,7 +624,7 @@ function BoardScene() {
       <ViroDirectionalLight color="#ffffff" direction={[0, -1, -0.5]} intensity={800} />
       <XrPanel
         width={boardWidth}
-        aspect={{ w: 5, h: 7 }}
+        aspect={BOARD_ASPECT}
         placement={placement}
         onPlacementChange={setPlacement}
         onSurfaceInput={handleSurfaceInput}
@@ -571,7 +637,7 @@ function BoardScene() {
             node: (
               <XrRail
                 width={boardComposition.railWidth}
-                height={boardHeight}
+                height={railHeight}
                 distanceM={distanceM}
                 handsPrimary={handsPrimary}
                 band={band}
@@ -623,7 +689,14 @@ function BoardScene() {
                 distanceM={distanceM}
                 handsPrimary={handsPrimary}
                 band={band}
-                onRecenter={recenter}
+                /*
+                  Recenter reads the head the renderer last reported, so the
+                  board comes back to where the CHILD is now — the point of the
+                  control. Passing nothing would send it to the pre-pose
+                  placement, which is the scene origin and, on a floor-referenced
+                  runtime, the floor.
+                */
+                onRecenter={() => recenter(active.head ? placeInFrontOf(active.head, BOARD_PLACE) : undefined)}
                 onExit={() => active.onExit()}
               />
             ),
@@ -736,7 +809,14 @@ function BoardScene() {
     takes `onTrackingUpdated` with it, because it reports tracking of a room
     only the AR root is looking at.
   */
-  return <ViroARScene onTrackingUpdated={handleTrackingUpdated}>{content}</ViroARScene>;
+  return (
+    <ViroARScene
+      onTrackingUpdated={handleTrackingUpdated}
+      onCameraTransformUpdate={handleCameraTransform}
+    >
+      {content}
+    </ViroARScene>
+  );
 }
 
 /** Stable, for the same constructor-capture reason. */

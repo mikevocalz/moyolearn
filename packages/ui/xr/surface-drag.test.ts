@@ -12,16 +12,21 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { xrDragHit, xrDragPlane, type XrDragPlaneInput } from './surface-drag.ts';
+import {
+  xrDragHit,
+  xrDragPlane,
+  xrSurfaceLocal,
+  type XrDragPlaneInput,
+} from './surface-drag.ts';
 
-/** The §9 board: 0.55 m wide, 5:7, 1.5 m out and dropped below the eye line. */
+/** The §9 board: 0.6 m wide, 6:4, 1.5 m out and dropped below the eye line. */
 const board: XrDragPlaneInput = {
   position: [0, -0.1, -1.5],
   yawDeg: 0,
   scale: 1,
   offset: 0.002,
-  width: 0.55,
-  height: 0.77,
+  width: 0.6,
+  height: 0.4,
 };
 
 const near = (a: readonly number[], b: readonly number[], what: string) => {
@@ -160,4 +165,59 @@ test('a placement that could not be drawn on throws instead of being rendered', 
   for (const [what, over] of cases) {
     assert.throws(() => xrDragPlane({ ...board, ...over }), RangeError, `${what} was accepted`);
   }
+});
+
+/*
+  THE SIGN THAT WAS WRONG FOR AS LONG AS NOTHING TURNED. ADR-117 recorded
+  `toSurfaceLocal`'s double negation as dormant — true only while every
+  placement was `rotation: [0, 0, 0]`. Placement is the child's own head pose
+  now and the board is turned to face them, so this is the test that had to
+  arrive in the same change as the yaw.
+
+  It is asserted as a ROUND TRIP against the forward transform the renderer
+  actually applies — `x' = x·cosθ + z·sinθ`, `z' = −x·sinθ + z·cosθ`, the same
+  rotation `xrDragPlane` takes the facing normal from — rather than against a
+  hand-computed number, because a hand-computed number carrying the same sign
+  error passes happily.
+*/
+test('a point on a turned board maps back to where it was drawn', () => {
+  const position: [number, number, number] = [0.4, -0.1, -1.2];
+  const scale = 1.3;
+
+  for (const yawDeg of [-140, -40, 0, 25, 90, 179]) {
+    const yaw = (yawDeg * Math.PI) / 180;
+    const cos = Math.cos(yaw);
+    const sin = Math.sin(yaw);
+
+    for (const local of [
+      [0, 0],
+      [0.25, 0.1],
+      [-0.3, -0.18],
+    ] as const) {
+      /* Local → world, exactly as the renderer composes it. */
+      const world: [number, number, number] = [
+        position[0] + (local[0] * cos) * scale,
+        position[1] + local[1] * scale,
+        position[2] + (-local[0] * sin) * scale,
+      ];
+      const back = xrSurfaceLocal(world, position, yawDeg, scale);
+      assert.ok(
+        Math.abs(back.x - local[0]) < 1e-12 && Math.abs(back.y - local[1]) < 1e-12,
+        `yaw ${yawDeg}: (${local[0]}, ${local[1]}) came back as (${back.x}, ${back.y})`,
+      );
+    }
+  }
+});
+
+/*
+  And the failure mode the old code had, stated as its own assertion: at a
+  non-zero yaw the two expressions disagree, so a test that only ever ran at
+  yaw 0 could not have caught it.
+*/
+test('the yaw term actually moves the answer', () => {
+  const position: [number, number, number] = [0, 0, -1.5];
+  const world: [number, number, number] = [0.2, 0, -1.3];
+  const straight = xrSurfaceLocal(world, position, 0, 1);
+  const turned = xrSurfaceLocal(world, position, 35, 1);
+  assert.ok(Math.abs(straight.x - turned.x) > 0.05, 'yaw made no difference to the mapping');
 });

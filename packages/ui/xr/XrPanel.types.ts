@@ -25,7 +25,7 @@ export type XrVector3 = readonly [number, number, number];
 export interface XrPlacement {
   position: XrVector3;
   rotation: XrVector3;
-  /** Uniform. One number, so a scale gesture cannot put the paper off 5:7. */
+  /** Uniform. One number, so a scale gesture cannot put the paper off 6:4. */
   scale: number;
 }
 

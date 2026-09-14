@@ -104,17 +104,60 @@ test('the rail fits its own controls inside the paper it hangs beside', () => {
     this asserts: the tallest column fits the box, and the grid is wide enough
     to hold all eight controls at `rows` per column.
   */
-  const boardHeight = (boardComposition.boardWidth * 7) / 5;
-  const box = boardHeight - spatialSpacing.xs * 2;
   const CONTROLS = 8; // pen, mark, erase, ink, ask, redo, undo, clear
 
-  for (const band of BANDS) {
-    const content = railContentHeight(spatialDistance.board, false, band);
+  /*
+    THE BOX IS THE RAIL'S OWN NOW, NOT THE PAPER'S, and that changed with the
+    paper's shape: a 6:4 board is 0.4 m tall, which holds two rows of
+    floor-sized keys, and eight controls in two rows is four columns. So the
+    screen sizes the rail from `railContentHeight` and the thing that has to
+    hold here is the reason four columns was refused — that the rail the grid
+    DOES produce still leaves the board's own width inside the comfort cone.
+
+    Measured as the angle from the child to the composition's outer edges: the
+    rail on one side of the paper, Natalie on the other. 30° is the cone this
+    whole composition is sized against; anything past it is a control a child
+    has to turn their head to reach.
+  */
+  const halfBoard = boardComposition.boardWidth / 2;
+  const railEdge = halfBoard + boardComposition.railGap + boardComposition.railWidth;
+  const chatEdge = halfBoard + boardComposition.chatGap + boardComposition.chatWidth;
+  const offAxisDeg = (extent: number) =>
+    (Math.atan2(extent, spatialDistance.board) * 180) / Math.PI;
+
+  for (const [what, extent] of [
+    ['the rail', railEdge],
+    ['Natalie', chatEdge],
+  ] as const) {
     assert.ok(
-      content <= box + 1e-12,
-      `${band}: the rail's tallest column is ${content.toFixed(4)} m in a ${box.toFixed(4)} m box`,
+      offAxisDeg(extent) <= 30,
+      `${what} sits ${offAxisDeg(extent).toFixed(1)}° off centre, outside the ±30° cone`,
     );
   }
+
+  /*
+    AND THE RAIL'S OWN HEIGHT HAS A CONE TOO, which is the constraint that
+    replaces "it fits the paper". A column of keys that clears ±30° vertically
+    is a control a child looks away from the board to reach — and the rail grows
+    with the band, so this is asserted per band rather than at the design case.
+  */
+  for (const band of BANDS) {
+    const half = (railContentHeight(spatialDistance.board, false, band) + spatialSpacing.xs * 2) / 2;
+    assert.ok(
+      offAxisDeg(half) <= 30,
+      `${band}: the rail reaches ${offAxisDeg(half).toFixed(1)}° above and below the eye line`,
+    );
+  }
+
+  /* And a four-column rail — the arrangement a paper-height box would have
+     forced — is outside it, which is why the grid stays two by four. */
+  const fourColumn = halfBoard + boardComposition.railGap + railWidthFor(
+    spatialDistance.board,
+    false,
+    'young',
+    4,
+  );
+  assert.ok(offAxisDeg(fourColumn) > 30, 'four columns would have fitted after all — re-derive the grid');
   assert.ok(
     railGrid.columns * railGrid.rows >= CONTROLS,
     'the grid has fewer cells than the rail has controls',
@@ -139,8 +182,17 @@ test('the ornament heights can hold what their components draw in them', () => {
   );
 });
 
-test('the board anchor sits at the distance every static token was sized at', () => {
-  assert.equal(Math.abs(boardComposition.anchor[2]), spatialDistance.board);
+test('the board sits at the distance every static token was sized at', () => {
+  /*
+    `anchor` was a position and is a DROP now: the board is placed from the head
+    pose the renderer reports (`board-placement.ts`), so the only part of it that
+    is still a design decision is how far below the eye line it hangs. The
+    distance every static token here was sized at is the one the placement uses.
+  */
+  assert.ok(
+    boardComposition.anchorDrop > 0 && boardComposition.anchorDrop < 0.3,
+    'the board hangs somewhere other than just below the eye line',
+  );
   assert.ok(
     spatialDistance.board >= spatialDistance.comfortableUI.min &&
       spatialDistance.board <= spatialDistance.comfortableUI.max,

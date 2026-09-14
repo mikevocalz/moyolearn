@@ -63,6 +63,7 @@ export {
   type BoardLayout,
   type BoardLayoutMiss,
 } from './board-layout.ts';
+export { placeInFrontOf, type XrHeadPose, type XrPlaceInput } from './board-placement.ts';
 export type {
   XrCompanion,
   XrOrnament,

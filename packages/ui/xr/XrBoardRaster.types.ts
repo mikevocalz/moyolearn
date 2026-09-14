@@ -16,7 +16,7 @@ export interface XrBoardRasterProps {
    * and the paper is already drawn by `XrPanel`.
    */
   uri: string | null;
-  /** The paper's size in metres. The picture is 5:7 and fills it exactly. */
+  /** The paper's size in metres. The picture is 6:4 and fills it exactly. */
   width: number;
   height: number;
 }

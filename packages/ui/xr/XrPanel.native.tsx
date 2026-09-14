@@ -1,5 +1,5 @@
 'use client';
-// The spatial panel: one anchor carrying the 5:7 paper, the controls beside it,
+// The spatial panel: one anchor carrying the 6:4 paper, the controls beside it,
 // and the conversation turned back toward the child.
 //
 // WHY THE RAIL IS A SIBLING AND NOT A CHILD. It began as a constraint: the
@@ -27,40 +27,9 @@ import { ViroClickStateTypes, ViroNode, ViroQuad, ViroSpinner } from '@reactvisi
 import { boardComposition, spatialSpacing, spatialTextHeight } from './spatial-tokens.ts';
 import { XR_MATERIAL } from './spatial-materials.native.ts';
 import { XrLabel, XrPlate } from './XrPlate.native.tsx';
-import { xrDragHit, xrDragPlane } from './surface-drag.ts';
+import { xrDragHit, xrDragPlane, xrSurfaceLocal } from './surface-drag.ts';
 import { XR_COLOR } from './xr-colors.ts';
 import type { XrPanelProps, XrSurfaceInput, XrVector3 } from './XrPanel.types.ts';
-
-/**
- * A world point, in the panel surface's own frame.
- *
- * YAW ONLY, ON PURPOSE. The board stands upright facing the child and recenter
- * turns it about Y, so a yaw inverse is exact for every placement this feature
- * produces. Pitch and roll are deliberately NOT handled rather than guessed:
- * the order ViroCore composes its Euler angles in is not stated in the
- * installed package's types, and a wrong order does not fail — it puts the ink
- * somewhere plausible and slightly wrong, which is the hardest class of bug to
- * see in a headset. If the composition ever needs to tilt, the order gets
- * confirmed on a device first and this function grows a test.
- */
-function toSurfaceLocal(
-  world: readonly [number, number, number],
-  position: XrVector3,
-  yawDeg: number,
-  scale: number,
-): { x: number; y: number } {
-  const dx = world[0] - position[0];
-  const dy = world[1] - position[1];
-  const dz = world[2] - position[2];
-  const yaw = (-yawDeg * Math.PI) / 180;
-  const cos = Math.cos(yaw);
-  const sin = Math.sin(yaw);
-  /* Inverse yaw about Y, then undo the uniform scale. */
-  return {
-    x: (dx * cos - dz * sin) / scale,
-    y: dy / scale,
-  };
-}
 
 /**
  * How far the pointer quad stands off the paper, in metres.
@@ -153,7 +122,7 @@ export function XrPanel({
    */
   const sampleOf = useCallback(
     (world: XrVector3) => {
-      const local = toSurfaceLocal(world, placement.position, placement.rotation[1], placement.scale);
+      const local = xrSurfaceLocal(world, placement.position, placement.rotation[1], placement.scale);
       return {
         u: Math.min(1, Math.max(0, local.x / width + 0.5)),
         v: Math.min(1, Math.max(0, 0.5 - local.y / height)),
@@ -380,7 +349,7 @@ export function XrPanel({
 
       {state === 'checking' || state === 'preparing' ? (
         /*
-          A branded wait, never a blank board. An empty 5:7 rectangle that looks
+          A branded wait, never a blank board. An empty 6:4 rectangle that looks
           finished is a child drawing onto a surface that is about to be
           replaced by their restored working.
         */

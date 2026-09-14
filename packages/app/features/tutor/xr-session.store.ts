@@ -30,7 +30,12 @@
 // SOT-KEYWORDS: xr session store zustand placement lifecycle recenter entering state machine spatial permission primer tracking opening phase direct entry
 
 import { create } from 'zustand';
-import { boardComposition, type XrPanelState, type XrPlacement } from '@acme/ui/xr';
+import {
+  boardComposition,
+  spatialDistance,
+  type XrPanelState,
+  type XrPlacement,
+} from '@acme/ui/xr';
 import type { WhiteboardInk, WhiteboardTool } from '@acme/ui';
 import type { AgeBand } from '../capture/age-band.ts';
 /* Bare specifier on purpose: Metro takes the `.native` fork, which reads the
@@ -39,11 +44,18 @@ import type { AgeBand } from '../capture/age-band.ts';
 import { currentXrEligibility } from './xr-eligibility';
 
 /**
- * Where the composition starts: dropped below the eye line at the near end of
- * the comfortable range, facing the child squarely.
+ * Where the composition sits for the frames before the renderer has said where
+ * the child's head is.
+ *
+ * HEAD-RELATIVE, AND KNOWINGLY ONLY RIGHT UNDER A HEAD-REFERENCED ORIGIN. The
+ * first `onCameraTransformUpdate` replaces it with `placeInFrontOf`'s answer,
+ * which is right under either origin — this is what is drawn in the meantime,
+ * and it is the composition's own tokens rather than a second set of numbers.
+ * It is NOT what recenter returns to: a board that recentred to a constant is
+ * the defect `board-placement.ts` exists to end.
  */
-const INITIAL_PLACEMENT: XrPlacement = {
-  position: boardComposition.anchor,
+const PENDING_PLACEMENT: XrPlacement = {
+  position: [0, -boardComposition.anchorDrop, -spatialDistance.board],
   rotation: [0, 0, 0],
   scale: 1,
 };
@@ -299,8 +311,18 @@ interface XrSessionState {
    */
   advance(next: XrPhase): boolean;
   setPlacement(next: XrPlacement): void;
-  /** Put the board back where it started, relative to where the child is now. */
-  recenter(): void;
+  /**
+   * Put the board back in front of the child, from the head pose the renderer
+   * just reported.
+   *
+   * THE POSE IS THE ARGUMENT because the store cannot ask for one: the scene
+   * holds the camera transform (it arrives on a renderer callback, at frame
+   * rate, outside React) and the store is imported by the 2D tutor screen on
+   * every device including web. A caller with no pose yet passes nothing and
+   * gets the pending placement — which is the only honest answer before the
+   * renderer has located the child.
+   */
+  recenter(placement?: XrPlacement): void;
   setSkipped(count: number): void;
   /** The host reporting one bind attempt. Called once per mounted scene. */
   setBoardTextureBound(bound: boolean): void;
@@ -319,7 +341,7 @@ interface XrSessionState {
 
 export const useXrSession = create<XrSessionState>((set, get) => ({
   phase: openingPhase(),
-  placement: INITIAL_PLACEMENT,
+  placement: PENDING_PLACEMENT,
   entering: false,
   skippedRecords: 0,
   boardTextureBound: false,
@@ -352,7 +374,7 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
     return true;
   },
   setPlacement: (next) => set({ placement: next }),
-  recenter: () => set({ placement: INITIAL_PLACEMENT }),
+  recenter: (placement) => set({ placement: placement ?? PENDING_PLACEMENT }),
   setSkipped: (count) => set({ skippedRecords: count }),
   setBoardTextureBound: (bound) => set({ boardTextureBound: bound }),
   setBand: (band) => set({ band }),

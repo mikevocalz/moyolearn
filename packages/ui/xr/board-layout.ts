@@ -1,7 +1,7 @@
 // Where the board, its control rail and the chat panel sit, in one unit.
 //
 // The spatial workspace has a promise the 2D panes never had to keep: the
-// writable paper is exactly 5:7, portrait, and the rail and the chat panel are
+// writable paper is exactly 6:4, landscape, and the rail and the chat panel are
 // outside that measurement. Getting it wrong is not a visual nit — a board that
 // drifts off ratio when the composition is scaled rewrites where a child's
 // handwriting lands relative to where they aimed.
@@ -11,7 +11,7 @@
 // and extents in that same unit. Nothing here knows what draws it, which is why
 // it can be asserted without a device.
 //
-// SOT-KEYWORDS: whiteboard board layout aspect ratio 5:7 rail chat spatial xr geometry
+// SOT-KEYWORDS: whiteboard board layout aspect ratio 6:4 landscape rail chat spatial xr geometry
 
 /** Every length is in the SAME unit as every other. The caller picks the unit. */
 export interface BoardLayoutInput {
@@ -49,8 +49,17 @@ export type BoardLayout =
       chatCenterX?: number;
     };
 
-/** The writable surface is portrait 5:7. Width divided by height is 5/7, always. */
-export const BOARD_ASPECT = { w: 5, h: 7 } as const;
+/**
+ * The writable surface is landscape 6:4. Width divided by height is 3/2, always.
+ *
+ * IT WAS 5:7 PORTRAIT, and the change came from a headset rather than a
+ * preference: a portrait sheet at a comfortable reading distance is tall enough
+ * that the bottom of it leaves the vertical comfort cone, while the width a
+ * child actually writes arithmetic across is the width the cone has most of.
+ * Landscape also stops the rail and Natalie from being pushed out to the
+ * horizontal extremes by a board that is using its budget on height.
+ */
+export const BOARD_ASPECT = { w: 6, h: 4 } as const;
 
 export function layoutBoard(input: BoardLayoutInput): BoardLayout {
   const { W, H, R, G, C = 0, GC = 0, minRail } = input;
@@ -73,8 +82,8 @@ export function layoutBoard(input: BoardLayoutInput): BoardLayout {
   const widthBudget = W - R - G - (C > 0 ? C + GC : 0);
   if (widthBudget <= 0 || H <= 0) return { fits: false, miss: 'no-room' };
 
-  // Height is the binding constraint on a portrait surface far more often than
-  // width, so the board takes whichever of the two allows the full ratio.
+  // Width is the binding constraint on a landscape surface far more often than
+  // height, so the board takes whichever of the two allows the full ratio.
   const boardWidth = Math.min(widthBudget, H * (BOARD_ASPECT.w / BOARD_ASPECT.h));
   const boardHeight = boardWidth * (BOARD_ASPECT.h / BOARD_ASPECT.w);
 

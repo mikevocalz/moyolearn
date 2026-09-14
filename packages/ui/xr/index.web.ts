@@ -6,7 +6,7 @@
 // reaches it pulls native-only modules into `app.moyolearn.com` — and a headset
 // whiteboard behind a browser tab would not be the feature anyway.
 //
-// What web DOES get is the pure things: the 5:7 layout function and the spatial
+// What web DOES get is the pure things: the 6:4 layout function and the spatial
 // tokens, which are arithmetic and constants. They are exported here because
 // the same numbers describe the 2D board's geometry in tests, and because a
 // shared entry point that answers "nothing" for half its names is an entry
@@ -78,6 +78,7 @@ export {
   type BoardLayout,
   type BoardLayoutMiss,
 } from './board-layout.ts';
+export { placeInFrontOf, type XrHeadPose, type XrPlaceInput } from './board-placement.ts';
 /* Pure, so web gets it too — it is a parser, not a renderer. */
 export { strokeOf, type StrokeGeometry } from './stroke-of.ts';
 /* Likewise a set difference, not a renderer. */
