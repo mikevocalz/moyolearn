@@ -112,8 +112,6 @@ export function XrPlacementControls({
   handsPrimary,
   band,
   onRecenter,
-  immersive,
-  onToggleImmersive,
   onExit,
 }: XrPlacementControlsProps) {
   const size = minHitSize(distanceM, handsPrimary, band);
@@ -133,18 +131,6 @@ export function XrPlacementControls({
       }}
     >
       <ControlKey label="Recenter" size={size} onPress={onRecenter} />
-      {/*
-        THE LABEL IS THE DESTINATION, NOT THE STATE. A key reading "Room" while
-        the room is already showing is a key that describes where the child is,
-        and every child then presses it to get there. It says where pressing it
-        goes: "Your room" leaves the drawn backdrop for passthrough, "Space"
-        brings the backdrop back.
-      */}
-      <ControlKey
-        label={immersive ? 'Your room' : 'Space'}
-        size={size}
-        onPress={onToggleImmersive}
-      />
       <ControlKey label="Leave" size={size} onPress={onExit} />
     </ViroFlexView>
   );

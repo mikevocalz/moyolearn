@@ -62,8 +62,6 @@ import {
   ViroARScene,
   ViroController,
   ViroDirectionalLight,
-  ViroQuad,
-  ViroSphere,
   ViroTrackingStateConstants,
   ViroXRSceneNavigator,
   checkPermissions,
@@ -88,7 +86,6 @@ import {
   XrQuestionLine,
   XrRail,
   XR_COLOR,
-  XR_MATERIAL,
   boardComposition,
   boardSurfacePixels,
   layoutBoard,
@@ -310,8 +307,6 @@ function BoardScene() {
   const ink = useXrSession((s) => s.ink);
   const asking = useXrSession((s) => s.asking);
   const band = useXrSession((s) => s.band);
-  const immersive = useXrSession((s) => s.immersive);
-  const setImmersive = useXrSession((s) => s.setImmersive);
   /*
     NO `registerXrMaterials()` CALL SITS HERE ANY MORE. It was added on the
     theory that `VRActivity`'s renderer had its own material registry this
@@ -504,33 +499,6 @@ function BoardScene() {
         passthrough toggle that "did nothing" until the controller was added.
       */}
       <ViroController controllerVisibility reticleVisibility />
-      {/*
-        The room, when the real one will not do — see the material's own note.
-        A sphere rather than `Viro360Image`: a sphere is a node, so `visible`
-        toggles it, and unmounting a `Viro360Image` SIGSEGVs the renderer.
-        `facesOutward={false}` turns it inside out so the viewer is within it.
-      */}
-      <ViroSphere
-        radius={30}
-        widthSegmentCount={24}
-        heightSegmentCount={24}
-        facesOutward={false}
-        materials={[XR_MATERIAL.environment]}
-        visible={immersive}
-      />
-      {/*
-        The floor of that room. `-1.6` is standing eye height in the spatial
-        layout system's frame, and the quad is laid flat by the -90° X rotation
-        rather than drawn as a box, because only its top face is ever seen.
-      */}
-      <ViroQuad
-        width={14}
-        height={14}
-        position={[0, -1.6, 0]}
-        rotation={[-90, 0, 0]}
-        materials={[XR_MATERIAL.environmentFloor]}
-        visible={immersive}
-      />
       <ViroAmbientLight color="#ffffff" intensity={600} />
       <ViroDirectionalLight color="#ffffff" direction={[0, -1, -0.5]} intensity={800} />
       <XrPanel
@@ -601,8 +569,6 @@ function BoardScene() {
                 handsPrimary={handsPrimary}
                 band={band}
                 onRecenter={recenter}
-                immersive={immersive}
-                onToggleImmersive={() => setImmersive(!immersive)}
                 onExit={() => active.onExit()}
               />
             ),

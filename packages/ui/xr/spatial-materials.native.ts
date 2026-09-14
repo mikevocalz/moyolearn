@@ -139,48 +139,6 @@ const SURFACE_MATERIALS = {
     blendMode: 'Alpha',
     writesToDepthBuffer: false,
   },
-  /*
-    THE ROOM THE BOARD IS IN, when it is not the child's own room.
-
-    Passthrough puts the board in the real room, which is the placement ADR-117
-    argued for and is still what `immersive={false}` gives. What it does not
-    survive is a dark one: on the headset this was first run on, the room read
-    as black, the panels floated in nothing, and the honest reaction to it was
-    "why am I not in an XR space?".
-
-    So the fallback is a surface rather than an absence — `Constant`, because a
-    backdrop that takes the scene's key light gains a bright pole exactly where
-    a child is asked to look past it, and unlit is also the cheapest possible
-    fragment on a tiled mobile GPU covering the whole field of view.
-  */
-  [XR_MATERIAL.environment]: {
-    /*
-      `surface-raised`, NOT `surface-sunken`. Sunken is `ink[950]`, and on a
-      headset that is not a dark room — it is the absence of one. The first pass
-      used it and the result, photographed off the device, was a black field with
-      a reticle floating in it: every depth cue gone, which is the exact thing
-      "why am I not in an XR space" was asking about.
-
-      Raised is `ink[800]`: far enough below the paper to leave the board the
-      brightest thing in the scene, far enough above black to be a surface the
-      eye can find.
-    */
-    diffuseColor: semantic['surface-raised'].dark,
-    lightingModel: 'Constant',
-  },
-  /*
-    THE FLOOR, WHICH IS WHAT MAKES THE BACKDROP A ROOM.
-
-    A single-tone sphere has no horizon, so it reads as a void however light it
-    is — nothing in it says which way is down or how far away anything is. One
-    quad at standing floor height, a step darker than the walls, is the cheapest
-    cue that fixes it, and it gives the board's shadowless paper something to sit
-    above rather than hang in.
-  */
-  [XR_MATERIAL.environmentFloor]: {
-    diffuseColor: semantic.surface.dark,
-    lightingModel: 'Constant',
-  },
 } as const;
 
 /*

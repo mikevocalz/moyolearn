@@ -24,8 +24,6 @@ export const XR_MATERIAL = {
   keyDisabled: 'moyoKeyDisabled',
   focusRing: 'moyoFocusRing',
   pointer: 'moyoPointer',
-  environment: 'moyoEnvironment',
-  environmentFloor: 'moyoEnvironmentFloor',
 } as const;
 
 /**
