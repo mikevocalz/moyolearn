@@ -29,6 +29,12 @@
 // renderer has no primitive for. Dropping them silently made the board look
 // complete when it was not, so the count goes back up to the caller and the
 // companion panel says it (`04-copy.md` §5.2).
+//
+// THE COUNT IS NOW A MOMENT, NOT A VERDICT, and that is what changed under it:
+// the caller hands this only the records `XrBoardRaster`'s picture does not
+// already show, so a typed note is missing for one settle window instead of for
+// the whole session. Everything the engine can draw reaches the paper through
+// the raster; this layer is the strokes that arrived after it was asked for.
 // SOT: packages/ui/xr/stroke-of.ts · packages/ui/xr/spatial-tokens.ts
 // SOT-KEYWORDS: xr board ink polyline viro stroke record quickdraw page space surface metres renderer skipped
 
@@ -36,7 +42,7 @@ import { useEffect, useMemo } from 'react';
 import { ViroPolyline } from '@reactvision/react-viro';
 import { inkMaterial } from './spatial-materials.native.ts';
 import { strokeOf, type StrokeGeometry } from './stroke-of.ts';
-import { boardSurfacePixels } from './spatial-tokens.ts';
+import { boardLayer, boardSurfacePixels } from './spatial-tokens.ts';
 /* Props live outside this file so the web fork can name them without naming
    Viro — the `XrPanel.types.ts` arrangement, for the same reason. */
 import type { XrBoardInkProps } from './XrBoardInk.types.ts';
@@ -57,8 +63,10 @@ function pageToSurface(x: number, y: number, width: number, height: number): [nu
   return [
     (x / boardSurfacePixels.width - 0.5) * width,
     (0.5 - y / boardSurfacePixels.height) * height,
-    /* A hair in front of the paper, so the ink is never coplanar with it. */
-    0.001,
+    /* In front of the raster, which is in front of the paper. The order is
+       stated once, in `boardLayer` — a stroke a child is still drawing must
+       never be hidden by a picture of the board taken before they drew it. */
+    boardLayer.ink,
   ];
 }
 

@@ -18,6 +18,7 @@ import { test } from 'node:test';
 import { targets } from '@acme/theme';
 import {
   boardComposition,
+  boardLayer,
   minHitSize,
   railContentHeight,
   railGrid,
@@ -197,4 +198,19 @@ test('a plate layers its quads front to back without sharing a plane', () => {
   // Small enough that the stack still reads as one object at the board's
   // distance — under a millidegree of parallax across the whole plate.
   assert.ok(spatialLayer.content < spatialSpacing.xs);
+});
+
+test('the paper shows the picture of the board behind the ink still being drawn', () => {
+  /*
+    The order IS the feature. The raster is every mark the engine can draw and
+    the live layer is the stroke under the child's hand; behind-and-in-front the
+    wrong way round hides a child's own handwriting under a picture taken before
+    they wrote it.
+
+    Both stay under `XrPanel`'s `POINTER_STANDOFF` (0.002), which is the quad
+    that answers rays — a layer in front of it would eat the ray that draws.
+  */
+  assert.ok(boardLayer.raster > 0);
+  assert.ok(boardLayer.ink > boardLayer.raster);
+  assert.ok(boardLayer.ink < 0.002);
 });

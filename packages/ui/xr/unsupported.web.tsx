@@ -22,6 +22,7 @@
 import type { XrPanelProps } from './XrPanel.types.ts';
 import type { XrRailProps } from './XrRail.types.ts';
 import type { XrBoardInkProps } from './XrBoardInk.types.ts';
+import type { XrBoardRasterProps } from './XrBoardRaster.types.ts';
 import type { XrChatPanelProps } from './XrChatPanel.types.ts';
 import type { XrQuestionLineProps, XrPlacementControlsProps } from './XrOrnaments.types.ts';
 
@@ -32,6 +33,9 @@ export function XrRail(_props: XrRailProps) {
   return null;
 }
 export function XrBoardInk(_props: XrBoardInkProps) {
+  return null;
+}
+export function XrBoardRaster(_props: XrBoardRasterProps) {
   return null;
 }
 export function XrChatPanel(_props: XrChatPanelProps) {

@@ -90,7 +90,12 @@ const VIEWPORT_UNIT = /\b(?:min-|max-)?[whwb]-(?:d|s|l)v(?:h|w)\b/g;
 // `border-text-muted`, which is a perfectly good utility, and the gate reported
 // it as inert. A hyphen before the prefix means this is the tail of a longer
 // class, not the start of one.
-const COLOUR_UTILITY = /(?<![\w-])(?:text|bg)-(?!\[)([a-z][a-z0-9-]*)\b/g;
+// The SECOND lookbehind is load bearing for the same kind of reason from the
+// other side: `semantic['text-inverse']` is a TOKEN LOOKUP, not a class, and
+// the gate reported both of `xr-colors.ts`'s uses of it as inert utilities. A
+// quoted string that is the whole of a bracket index is a property key; a class
+// is never written that way here.
+const COLOUR_UTILITY = /(?<!\[['"])(?<![\w-])(?:text|bg)-(?!\[)([a-z][a-z0-9-]*)\b/g;
 const emittedColours = new Set();
 for (const css of ['packages/theme/theme.css', 'packages/theme/theme-native.css']) {
   const text = readFileSync(join(ROOT, css), 'utf8');

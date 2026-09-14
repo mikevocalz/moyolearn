@@ -87,8 +87,15 @@ export interface WhiteboardHandle {
    * `null` is not a failure and must not be reported as one: it is the answer
    * for a board a child cleared, or opened and never touched. The caller says
    * so in words rather than sending an empty picture to the tutor.
+   *
+   * `scale` defaults to 2 — the size the tutor path has always asked for, and
+   * the reason is downstream OCR rather than an eye (see either fork). The
+   * argument exists for the one caller that is an eye: the spatial paper
+   * re-rasters the whole document every time it settles, and a 2× picture of a
+   * 1400×1960 page is megabytes of base64 across the bridge for a surface
+   * whose pixels land at 1.5 m. That caller asks for 1.
    */
-  exportPng(): Promise<string | null>;
+  exportPng(opts?: { scale?: number }): Promise<string | null>;
   /** The document, for the session to keep. Cheap, but not free — debounce it. */
   getSnapshot(): Promise<WhiteboardSnapshot | null>;
   /** Fold in a change from the document — a restore, a merge, or a peer. */

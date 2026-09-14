@@ -37,7 +37,7 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
       into an `Image`. `FileReader` is the conversion the platform already has,
       so nothing is hand-rolled for it.
     */
-    const exportPng = useCallback(async (): Promise<string | null> => {
+    const exportPng = useCallback(async (opts?: { scale?: number }): Promise<string | null> => {
       const editor = board.current?.editor;
       if (!editor) return null;
       /*
@@ -49,8 +49,11 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         1× export of a 300dp pane is roughly 300px of handwriting, which is
         under what CRAFT reliably segments. Two is the vendor's own example and
         stays well inside `photograph-for-model`'s 1568px ceiling.
+
+        It is the DEFAULT rather than the rule: a caller rendering the export
+        for a person instead of a recogniser says so (`whiteboard.types.ts`).
       */
-      const blob = await editor.exportImage({ background: true, scale: 2 });
+      const blob = await editor.exportImage({ background: true, scale: opts?.scale ?? 2 });
       if (!blob) return null;
       return await new Promise<string | null>((resolve) => {
         const reader = new FileReader();

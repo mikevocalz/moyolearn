@@ -10,13 +10,16 @@
 // opening is replayed, and no audio stream is opened.
 //
 // THE ENGINE IS STILL QUICKDRAW, AND IT IS STILL ON SCREEN — just not visibly.
-// ViroReact cannot host a React Native view inside a scene — a scene graph
-// takes Viro primitives and nothing else — so the board cannot be put on the
-// paper. It does not need to be: the engine remains the
-// only authority for strokes, tools, the eraser and export, the spatial paper
-// renders that engine's document, and a ray on the paper becomes a pointer in
+// ViroReact cannot host a React Native view inside a scene — a scene graph takes
+// Viro primitives and nothing else — so the engine is not MOUNTED on the paper.
+// Its output is. It remains the only authority for strokes, tools, the eraser
+// and export; the paper is textured with the picture it rasters of its own
+// document (`XrBoardRaster`), the strokes it has not rastered yet are drawn in
+// front as polylines (`XrBoardInk`), and a ray on the paper becomes a pointer in
 // the engine. One engine, one document, two renderers — which is what keeps a
-// stroke drawn in the headset identical to one drawn on a laptop.
+// stroke drawn in the headset identical to one drawn on a laptop, and what
+// finally puts a child's typed notes, arrows and images on the spatial board
+// instead of counting them as missing.
 //
 // The engine is laid out at `boardSurfacePixels` and parked off-screen so its
 // client space is the space the ink is rendered from. A WebView with
@@ -80,6 +83,7 @@ import {
 import { View as UiView } from '@acme/ui/primitives';
 import {
   XrBoardInk,
+  XrBoardRaster,
   XrChatPanel,
   XrPanel,
   XrPlacementControls,
@@ -91,6 +95,7 @@ import {
   layoutBoard,
   railWidthFor,
   spatialSpacing,
+  uncoveredRecords,
   type BoardLayoutMiss,
   type XrChatRow,
   type XrPanelState,
@@ -104,6 +109,10 @@ import {
   type BoardSession,
 } from './board-session.ts';
 import { boardPersistence } from './board-storage.ts';
+/* `.native` in the specifier for the same reason `Whiteboard` is imported from
+   the package's native fork: the hook reaches the engine handle, and nothing on
+   a web resolver's path may name it. */
+import { useBoardRaster } from './board-raster.native.ts';
 import { useTutorStore } from './tutor.store.ts';
 import type { TutorXrScreenProps } from './tutor-xr-screen.types.ts';
 import { SPATIAL_PERMISSIONS, spatialPermissionsGranted } from './xr-capability.ts';
@@ -161,6 +170,9 @@ const active: {
   onAsk: () => undefined,
   inkAligned: true,
 };
+
+/** The engine handle, as a stable reader — see `strokeOpen` in `BoardScene`. */
+const readEngine = () => active.engine;
 
 /** Where a board goes when the engine's mapping is the thing that is wrong. */
 const INK_INTERRUPTED = { kind: 'interrupted', reason: 'calibration-failed' } as const;
@@ -339,6 +351,10 @@ function BoardScene() {
     can be closed if the board stops accepting ink half way through one.
   */
   const drawing = useRef(false);
+  /* Read through a stable function rather than passed as a value: the hook's
+     effect must not re-run because a ref's contents moved, and `active.engine`
+     is set by an effect in the screen above rather than by a render. */
+  const strokeOpen = useCallback(() => drawing.current, []);
 
   /*
     The records, re-read when the document moves. Not memoised on `session`
@@ -350,6 +366,16 @@ function BoardScene() {
     return (session.doc.snapshot() as { document: { store: Record<string, unknown> } }).document
       .store;
   }, [revision, session]);
+
+  /*
+    THE BOARD ITSELF, AS A PICTURE, so the paper shows the whole document and
+    not just the parts this renderer has a primitive for. `XrBoardInk` draws the
+    strokes the picture is too new to contain — see `board-raster.native.ts` for
+    which those are and why the overlap between the two layers is the safe
+    direction to be wrong in.
+  */
+  const raster = useBoardRaster(readEngine, store, session !== null, strokeOpen);
+  const liveStore = useMemo(() => uncoveredRecords(store, raster.covered), [raster.covered, store]);
 
   const distanceM = Math.abs(placement.position[2]);
   /*
@@ -622,8 +648,15 @@ function BoardScene() {
           ),
         }}
       >
+        <XrBoardRaster uri={raster.uri} width={boardWidth} height={boardHeight} />
+        {/*
+          The live layer, and only the live layer. `liveStore` is the records the
+          picture behind it does not already show, so a settled board draws no
+          polylines at all and the count below reports what is missing NOW —
+          which is what it always claimed to be.
+        */}
         <XrBoardInk
-          store={store}
+          store={liveStore}
           width={boardWidth}
           height={boardHeight}
           onSkippedCount={setSkipped}

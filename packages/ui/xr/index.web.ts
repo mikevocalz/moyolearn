@@ -18,6 +18,7 @@ export {
   XrPanel,
   XrRail,
   XrBoardInk,
+  XrBoardRaster,
   XrChatPanel,
   XrQuestionLine,
   XrPlacementControls,
@@ -31,6 +32,7 @@ export { XR_MATERIAL, inkMaterial } from './material-names.ts';
 
 export type { XrRailProps } from './XrRail.types.ts';
 export type { XrBoardInkProps } from './XrBoardInk.types.ts';
+export type { XrBoardRasterProps } from './XrBoardRaster.types.ts';
 export type {
   XrChatPanelProps,
   XrChatRow,
@@ -45,6 +47,7 @@ export type {
 export { XR_COLOR, XR_SURFACE } from './xr-colors.ts';
 export {
   boardComposition,
+  boardLayer,
   boardSurfacePixels,
   minHitSize,
   railContentHeight,
@@ -70,6 +73,8 @@ export {
 } from './board-layout.ts';
 /* Pure, so web gets it too — it is a parser, not a renderer. */
 export { strokeOf, type StrokeGeometry } from './stroke-of.ts';
+/* Likewise a set difference, not a renderer. */
+export { uncoveredRecords } from './raster-coverage.ts';
 export type {
   XrCompanion,
   XrOrnament,

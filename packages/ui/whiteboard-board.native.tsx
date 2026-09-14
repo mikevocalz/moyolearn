@@ -763,10 +763,10 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         the same two reasons: keep the paper, and give the recogniser pixels it
         can segment.
       */
-      exportPng: async () =>
+      exportPng: async (opts) =>
         (await bridgeRef.current?.request<string | null>({
           type: 'exportPng',
-          opts: { background: true, scale: 2 },
+          opts: { background: true, scale: opts?.scale ?? 2 },
         })) ?? null,
       getSnapshot: async () => (await bridgeRef.current?.request<Snapshot | null>({ type: 'getSnapshot' })) ?? null,
       applyDiff: (diff) => bridgeRef.current?.post({ type: 'applyDiff', diff }),

@@ -12,12 +12,15 @@ export { XrPanel } from './XrPanel.native.tsx';
 export { XrRail } from './XrRail.native.tsx';
 export { XrQuestionLine, XrPlacementControls } from './XrOrnaments.native.tsx';
 export { XrBoardInk } from './XrBoardInk.native.tsx';
+export { XrBoardRaster } from './XrBoardRaster.native.tsx';
+export { uncoveredRecords } from './raster-coverage.ts';
 export { strokeOf, type StrokeGeometry } from './stroke-of.ts';
 export { XrChatPanel } from './XrChatPanel.native.tsx';
 /* Values from the `.native` files, contracts from the `.types` files — the
    same split the web fork reads, so both platforms name one shape. */
 export type { XrRailProps } from './XrRail.types.ts';
 export type { XrBoardInkProps } from './XrBoardInk.types.ts';
+export type { XrBoardRasterProps } from './XrBoardRaster.types.ts';
 export type { XrChatPanelProps, XrChatRow, XrChatAction } from './XrChatPanel.types.ts';
 export type { XrQuestionLineProps, XrPlacementControlsProps } from './XrOrnaments.types.ts';
 export { XR_MATERIAL, inkMaterial } from './material-names.ts';
@@ -29,6 +32,7 @@ export { XR_MATERIAL, inkMaterial } from './material-names.ts';
 export { XR_COLOR, XR_SURFACE } from './xr-colors.ts';
 export {
   boardComposition,
+  boardLayer,
   boardSurfacePixels,
   minHitSize,
   railContentHeight,

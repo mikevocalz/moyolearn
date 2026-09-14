@@ -329,3 +329,21 @@ export const boardComposition = {
  * never a stretch — an anisotropic fit would make a child's handwriting lean.
  */
 export const boardSurfacePixels = { width: 1400, height: 1960 } as const;
+
+/**
+ * The paper's own stack, in metres, from the surface outwards.
+ *
+ * Three things share the paper's plane and the order between them is the whole
+ * behaviour: the ENGINE'S RASTER is the board itself — every mark the engine
+ * can draw, including the text, notes, arrows and images this renderer has no
+ * primitive for — so it sits on the paper and covers it. LIVE INK is the
+ * polylines for strokes the raster has not caught up with yet, a hair in front
+ * so a stroke under the child's hand is never hidden by the picture behind it.
+ * The pointer quad (`XrPanel`'s `POINTER_STANDOFF`, 0.002) stands in front of
+ * both, so a ray meets the surface that answers it first.
+ *
+ * The steps are small deliberately — a tenth of `spatialLayer.surface` — because
+ * these are coplanar-by-intent layers of ONE sheet, not the stacked quads of a
+ * plate. They only have to beat Z-fighting at the board's working distance.
+ */
+export const boardLayer = { raster: 0.0005, ink: 0.001 } as const;

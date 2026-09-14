@@ -53,8 +53,25 @@ const probe = (pattern) => {
   surfaces; `.stories.tsx` is exempt, and so is this file, which spells out the
   patterns it bans.
 */
+/*
+  AND ONE SURFACE IS NOT ARTWORK AT ALL: the spatial paper.
+
+  `XrBoardRaster` textures the board with the PNG the whiteboard engine rasters
+  of the child's OWN document, so the three questions this register exists to
+  ask have no subject. There is no licence to record for a drawing made ninety
+  seconds ago, no band to clear on a child's own handwriting, and no file to
+  register — the image does not exist until they draw it, is a data URL that
+  never leaves the device, and changes every time they add a line.
+
+  Named as a file rather than as a pattern because a pattern that let a data URL
+  through would let every `source={{ uri: someString }}` through with it, and
+  the whole point of the rule is that a call site cannot be trusted to know what
+  it is loading. This one can: it is the only caller whose picture is the user's.
+*/
 const isExempt = (line) =>
-  line.includes('.stories.tsx') || line.startsWith('tooling/check-art-registry.mjs');
+  line.includes('.stories.tsx') ||
+  line.startsWith('tooling/check-art-registry.mjs') ||
+  line.startsWith('packages/ui/xr/XrBoardRaster.native.tsx');
 
 const RULES = [
   {
