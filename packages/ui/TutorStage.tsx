@@ -27,7 +27,7 @@
 // SOT: docs/pack/23-tutorstage-handoff.md §3 · §5 · docs/design/tutor-session-thread-first.md
 // SOT-KEYWORDS: tutorstage s9 tutor session state union hot dial learner thread first live turn work in turn
 
-import { useCallback, useState } from 'react';
+import { cloneElement, isValidElement, useCallback, useState } from 'react';
 import { AdaptivePanes } from './adaptive-panes';
 import { isCollapsed } from './adaptive-panes/constants';
 import { PaneToggle } from './adaptive-panes/PaneToggle';
@@ -949,7 +949,28 @@ export function TutorStage({
                   above her body and never over her face or her captions.
                 */}
                 {detailOpen && detailActions ? (
-                  <View className="absolute right-group top-group">{detailActions}</View>
+                  <View className="absolute right-group top-group">
+                    {/*
+                      THE MARK ALONE IN HERE, because this slot is a corner and the
+                      rail is a row.
+
+                      `XrBoardButton` deliberately does not know which of the two it
+                      is drawn in — a control that picks its own placement ends up in
+                      both — so the SLOT says what it can afford. Her pane sizes the
+                      control by the band's target, which is 72dp for a K–2 learner,
+                      and a labelled pill at that height in an upper corner over her
+                      body is a block of chrome on top of the tutor.
+
+                      The label is what goes, not the target: the glyph stays a full
+                      72dp press for the same six-year-old, and `aria-label` carries
+                      the words it no longer prints.
+                    */}
+                    {isValidElement(detailActions)
+                      ? cloneElement(detailActions as React.ReactElement<{ showLabel?: boolean }>, {
+                          showLabel: false,
+                        })
+                      : detailActions}
+                  </View>
                 ) : null}
               </MotionView>
             }>

@@ -1,3 +1,4 @@
+import { withPicoOpenXrLoader } from '@expo-pico/core/plugin/viro';
 import type { ExpoConfig } from 'expo/config';
 import { loadProjectEnv } from '@expo/env';
 import { dirname, join } from 'node:path';
@@ -189,6 +190,49 @@ const config: ExpoConfig = {
       assume `node_modules` sits beside the app, which `node-linker=hoisted`
       means it does not. Both in the plugin's header.
     */
+    /*
+      THE ONE LINE THAT MAKES PICO OPEN AN XR SESSION AT ALL.
+
+      `pvr.app.type` is meta-data PICO's runtime reads INSIDE `xrCreateInstance`.
+      Without it the call returns `XR_ERROR_VALIDATION_FAILURE` and nothing in
+      logcat says why; virocore's macro then discards the `XrResult`, dereferences
+      a null `XrInstance` and takes the process down — or, with the Fabric path,
+      leaves `VRActivity` showing its React root as a flat window. A 2D app
+      floating in the headset's launcher IS the symptom: the immersive session
+      never started, so what is on screen is the panel, not the scene.
+
+      The manifest this app already had was Meta's — `com.oculus.intent.category.VR`,
+      `horizonos.permission.*`, `com.oculus.supportedDevices` — written by Viro's
+      own plugin for Quest. A PICO ignores every one of them. What it needs is
+      Khronos': the `libopenxr_loader.so` native-library declaration (required once
+      `targetSdkVersion >= 31`), `org.khronos.openxr.permission.OPENXR` and
+      `OPENXR_SYSTEM` for the runtime broker, the broker's `<provider>` in
+      `<queries>` for package visibility, and that `pvr.app.type` meta-data.
+
+      `withPicoOpenXrLoader` writes exactly those four, into the MAIN manifest so
+      Viro's own `quest` flavour source set inherits them — Android source sets are
+      siblings, not parents, which is why writing them into a pico flavour would
+      not reach the flavour Viro compiles. It is idempotent, so prebuild may run
+      any number of times.
+
+      ONLY THIS PLUGIN, NOT `@expo-pico/core` ITSELF. The full plugin restructures
+      the Android build into `pico`/`mobile` product flavours and takes over the
+      launcher activity; this app already builds, installs and runs on the headset
+      through Viro's own flavour plumbing, and the failure being fixed is four
+      manifest entries. Adopting the flavour model is a separate, bigger change —
+      and the place to do it is here, in one line, when there is a reason.
+
+      LISTED BEFORE VIRO, WHICH IS WHY IT RUNS AFTER IT — the same inversion the
+      linkage plugin below documents. `withViroAndroid` does
+      `contents.manifest.queries = [...]`, an ASSIGNMENT, so whatever wrote a
+      `<queries>` entry earlier is discarded. Listed after Viro, the OpenXR
+      broker `<provider>` went in and was then thrown away — verified in the
+      generated manifest, which kept `pvr.app.type`, both permissions and the
+      native-library line but carried only ARCore in `<queries>`.
+
+      SOT: ~/expo-pico/docs/VIRO-ON-PICO.md · node_modules/@expo-pico/core/plugin/build/viro
+    */
+    withPicoOpenXrLoader,
     './plugins/with-viro-android-linkage',
     [
       '@reactvision/react-viro',

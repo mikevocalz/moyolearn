@@ -154,7 +154,31 @@ ViroMaterials.createMaterials({
     fragment on a tiled mobile GPU covering the whole field of view.
   */
   [XR_MATERIAL.environment]: {
-    diffuseColor: semantic['surface-sunken'].dark,
+    /*
+      `surface-raised`, NOT `surface-sunken`. Sunken is `ink[950]`, and on a
+      headset that is not a dark room — it is the absence of one. The first pass
+      used it and the result, photographed off the device, was a black field with
+      a reticle floating in it: every depth cue gone, which is the exact thing
+      "why am I not in an XR space" was asking about.
+
+      Raised is `ink[800]`: far enough below the paper to leave the board the
+      brightest thing in the scene, far enough above black to be a surface the
+      eye can find.
+    */
+    diffuseColor: semantic['surface-raised'].dark,
+    lightingModel: 'Constant',
+  },
+  /*
+    THE FLOOR, WHICH IS WHAT MAKES THE BACKDROP A ROOM.
+
+    A single-tone sphere has no horizon, so it reads as a void however light it
+    is — nothing in it says which way is down or how far away anything is. One
+    quad at standing floor height, a step darker than the walls, is the cheapest
+    cue that fixes it, and it gives the board's shadowless paper something to sit
+    above rather than hang in.
+  */
+  [XR_MATERIAL.environmentFloor]: {
+    diffuseColor: semantic.surface.dark,
     lightingModel: 'Constant',
   },
 });

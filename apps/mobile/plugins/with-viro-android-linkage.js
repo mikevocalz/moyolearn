@@ -70,7 +70,11 @@
  *               settings.gradle projectDir monorepo hoisted node-linker pico
  *               config-plugin prebuild react_viro viro_renderer
  */
-const { withAppBuildGradle, withSettingsGradle } = require('@expo/config-plugins');
+const {
+  withAndroidManifest,
+  withAppBuildGradle,
+  withSettingsGradle,
+} = require('@expo/config-plugins');
 
 /** The fork's dimension name, and the flavour this app asks for. See §1. */
 const FLAVOR_DIMENSION = 'device';
@@ -178,6 +182,59 @@ function withViroFlavorStrategy(config) {
   });
 }
 
+/**
+ * Tells a PICO that `VRActivity` is the immersive one.
+ *
+ * Viro's plugin writes ONE category onto the generated `VRActivity`:
+ * `com.oculus.intent.category.VR`. That is Meta's, and a PICO does not know it —
+ * the categories PICO OS and any OpenXR loader enumerate immersive activities by
+ * are `com.pico.intent.category.VR` (and the pre-namespace-migration
+ * `com.picovr.intent.category.VR`) plus Khronos'
+ * `org.khronos.openxr.intent.category.IMMERSIVE_HMD`.
+ *
+ * Additive: the Oculus category stays, so one APK is still immersive on both.
+ * Idempotent, because prebuild runs more than once.
+ *
+ * The names are taken from `@expo-pico/core`'s LAUNCHER_CATEGORIES rather than
+ * typed from memory — that package is where this platform's manifest facts live
+ * for this workspace, and `withPicoOpenXrLoader` from the same package writes
+ * the other half (see `app.config.ts`).
+ */
+const PICO_VR_CATEGORIES = [
+  'com.pico.intent.category.VR',
+  'com.picovr.intent.category.VR',
+  'org.khronos.openxr.intent.category.IMMERSIVE_HMD',
+];
+
+function withPicoVrActivityCategories(config) {
+  return withAndroidManifest(config, (manifestConfig) => {
+    const application = manifestConfig.modResults.manifest.application?.[0];
+    const vrActivity = application?.activity?.find(
+      (entry) => entry.$?.['android:name'] === '.VRActivity',
+    );
+    if (!vrActivity) {
+      throw new Error(
+        'with-viro-android-linkage: no .VRActivity in the manifest, so the PICO ' +
+          'launcher categories had nowhere to go. Check that the Viro plugin still ' +
+          "has QUEST in its android.xRMode — without it there is no VR activity at all.",
+      );
+    }
+    const filter = vrActivity['intent-filter']?.[0];
+    if (!filter) {
+      throw new Error(
+        'with-viro-android-linkage: .VRActivity has no intent-filter to add the PICO ' +
+          'categories to.',
+      );
+    }
+    const categories = (filter.category ??= []);
+    for (const name of PICO_VR_CATEGORIES) {
+      if (categories.some((entry) => entry.$?.['android:name'] === name)) continue;
+      categories.push({ $: { 'android:name': name } });
+    }
+    return manifestConfig;
+  });
+}
+
 module.exports = function withViroAndroidLinkage(config) {
-  return withViroFlavorStrategy(withViroSettingsPaths(config));
+  return withPicoVrActivityCategories(withViroFlavorStrategy(withViroSettingsPaths(config)));
 };

@@ -54,6 +54,7 @@ import {
   ViroARScene,
   ViroController,
   ViroDirectionalLight,
+  ViroQuad,
   ViroSphere,
   ViroTrackingStateConstants,
   ViroXRSceneNavigator,
@@ -501,6 +502,19 @@ function BoardScene() {
         heightSegmentCount={24}
         facesOutward={false}
         materials={[XR_MATERIAL.environment]}
+        visible={immersive}
+      />
+      {/*
+        The floor of that room. `-1.6` is standing eye height in the spatial
+        layout system's frame, and the quad is laid flat by the -90° X rotation
+        rather than drawn as a box, because only its top face is ever seen.
+      */}
+      <ViroQuad
+        width={14}
+        height={14}
+        position={[0, -1.6, 0]}
+        rotation={[-90, 0, 0]}
+        materials={[XR_MATERIAL.environmentFloor]}
         visible={immersive}
       />
       <ViroAmbientLight color="#ffffff" intensity={600} />
@@ -979,8 +993,20 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
       {immersive ? (
         <ViroXRSceneNavigator
           initialScene={INITIAL_SCENE}
-          /* The vendor's requirement for passthrough on Quest, not a preference. */
+          /*
+            ALL THREE POST-PROCESS PASSES OFF, not just HDR.
+
+            The vendor documents `hdrEnabled={false}` for passthrough because the
+            HDR path renders to an intermediate target and forces an opaque final
+            composite. Bloom and PBR sit on that same path, and the Danger Room
+            scene — the one Quest/PICO scene in these repos that is known to
+            composite correctly — turns off all three. Leaving two of them on is
+            not a smaller version of the fix; it is the same opaque composite by
+            another route.
+          */
           hdrEnabled={false}
+          bloomEnabled={false}
+          pbrEnabled={false}
           onExitViro={handleExit}
           style={StyleSheet.absoluteFill}
         />

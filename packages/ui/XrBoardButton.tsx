@@ -77,7 +77,14 @@ export function XrBoardButton({
 
   return (
     <PressScale
-      className={`flex-row items-center justify-center gap-element rounded-control bg-surface-raised border-2 border-border-strong ${SIZING[size]}`}
+      /*
+        SQUARE WITHOUT THE WORD. With the label gone the horizontal padding is all
+        the width there is, so the band's height floor turns the control into a
+        tall thin sliver — the target is met and the shape says otherwise.
+        `aspect-square` spends the height it already has on width, which is the
+        shape a glyph-only control should be and a bigger press than the sliver.
+      */
+      className={`flex-row items-center justify-center gap-element rounded-control bg-surface-raised border-2 border-border-strong ${SIZING[size]} ${showLabel ? '' : 'aspect-square'}`}
       onPress={entering ? undefined : onPress}
       role="button"
       /*
