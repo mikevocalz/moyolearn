@@ -232,6 +232,46 @@ const config: ExpoConfig = {
 
       SOT: ~/expo-pico/docs/VIRO-ON-PICO.md · node_modules/@expo-pico/core/plugin/build/viro
     */
+    /*
+      THE PICO CONFIGURATION ITS README SPECIFIES, WITH A 2D LAUNCHER.
+
+      `xrMode: 'pico-os5'` — the headset is a PICO 4 Ultra, which ships PICO OS
+      5. That value is not bookkeeping: PICO OS 5 on Android 14+ REFUSES a
+      4KB-aligned `libopenxr_loader.so`, and shipping the 16KB-aligned overlay is
+      what this plugin does about it. Nothing else in this repo supplies one.
+
+      `buildVariant: 'pico'` writes the pico product flavour, which is the
+      documented way to get PICO's Gradle and manifest wiring.
+
+      `appType: '2d'` OPTS OUT OF THE IMMERSIVE LAUNCHER, and that is deliberate
+      against the README's own example. A learner opens a tutoring app, reads a
+      problem, and enters the board when they choose to — the app must come up as
+      a flat panel every time. `appType: 'vr'` puts the immersive categories on
+      the LAUNCHER activity, which is what makes a headset start an app in XR.
+      Those categories belong on `.VRActivity` alone, and
+      `with-viro-android-linkage` puts them exactly there.
+
+      `pvr.app.type` still has to read `vr` — it is what PICO's runtime checks
+      inside `xrCreateInstance`, and it says nothing about how the app launches.
+      `withPicoOpenXrLoader` writes that value and is listed so it runs last, so
+      it wins over the `2d` this plugin would otherwise leave.
+
+      Capabilities are declared, not assumed: hand tracking and passthrough are
+      the two the board actually uses. PICO Store review flags over-declared
+      features — the plugin's README says so.
+
+      SOT: ~/expo-pico/README.md · ~/expo-pico/packages/expo-pico-core/README.md
+    */
+    [
+      '@expo-pico/core',
+      {
+        xrMode: 'pico-os5',
+        appType: '2d',
+        buildVariant: 'pico',
+        handTracking: true,
+        passthrough: true,
+      },
+    ],
     withPicoOpenXrLoader,
     './plugins/with-viro-android-linkage',
     [
