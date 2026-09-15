@@ -10,17 +10,22 @@
 //
 // WHY NOT `TutorThread` ITSELF. It is a `LegendList`, and a React Native list
 // cannot mount inside a Viro scene. So the composition is rebuilt from Viro
-// primitives and the WINDOW is deliberately small — the last few turns, because
-// a spatial transcript a child has to scroll with a ray while holding a pencil
-// is a transcript they will not read.
+// primitives.
 //
-// EVERY BLOCK DECLARES ITS OWN HEIGHT, which a flex column never made anyone
-// do. The panel is stacked quads now (`XrPlate.native.tsx`), so the run of
-// blocks is laid out in metres and the transcript's share of the panel is
-// whatever the fixed blocks leave — the rows then take as many lines as that
-// share holds, floored at one. No turn is dropped and none is reordered; the
-// only thing that gives is how much of a long message is shown, which the
-// `maxLines={6}` this file already carried was doing arbitrarily.
+// IT SCROLLS NOW — the poke-xr `PremiumXRMediaPanel` mechanism, not a squeezed
+// window. The transcript is a run of fixed-height rows; `visibleRows` of them
+// show at once and a right-edge scrollbar (a channel, up/down arrows and a
+// thumb sized by `visibleRows / rows.length`) walks through the rest. It pins
+// to the newest turn as messages arrive, the way every chat does, and only
+// holds position when the child has scrolled up to read something older. This
+// replaces the earlier "fit every turn into whatever height is left" squeeze,
+// which shrank a long conversation to one clipped line each. The window is
+// caller-supplied still for the count above it (`earlierCount`), but a turn in
+// `rows` is now reachable rather than compressed.
+//
+// EVERY FIXED BLOCK DECLARES ITS OWN HEIGHT. The header, notices and action
+// keys are laid out in metres above and below the scrolling transcript; the
+// transcript takes the band between them.
 //
 // NATALIE'S BODY IS NOT HERE. Her 3D avatar is a react-native-webgpu surface
 // (ADR-111) and it is not ported into the Viro scene by this feature; the panel
@@ -29,6 +34,8 @@
 // SOT: packages/ui/TutorThread.tsx · packages/ui/TutorPresence.tsx · packages/ui/xr/XrPlate.native.tsx
 // SOT-KEYWORDS: xr chat panel tutor thread conversation live turn status viro spatial companion
 
+import { useEffect, useRef, useState } from 'react';
+import { ViroNode, ViroQuad } from '@reactvision/react-viro';
 import { XR_MATERIAL } from './spatial-materials.native.ts';
 import { XR_COLOR } from './xr-colors.ts';
 import { XrKey, XrLabel, XrPlate } from './XrPlate.native.tsx';
@@ -55,8 +62,17 @@ import type { XrChatPanelProps } from './XrChatPanel.types.ts';
  */
 const LINES = { header: 2, assurance: 2, earlier: 2, skipped: 3 } as const;
 
-/** What `maxLines={6}` meant before the rows had a measured share to fit in. */
-const ROW_LINES_MAX = 6;
+/** Lines a single transcript row is given. A row is a turn; long turns clip. */
+const ROW_LINES = 3;
+
+/** The scrollbar's own geometry, in metres — the poke-xr rail, MoyoLearn-toned. */
+const RAIL = {
+  /** The channel's width, and the gap between it and the transcript. */
+  width: spatialSpacing.sm,
+  gap: spatialSpacing.xs,
+  /** The shortest a thumb may get, so a long transcript still leaves it grabbable. */
+  thumbMin: spatialSpacing.md,
+} as const;
 
 /** A run of text in the panel's single column. */
 interface TextBlock {
@@ -66,6 +82,8 @@ interface TextBlock {
   step: SpatialTypeStep;
   color: string;
   lines: number;
+  /** True for a scrolling transcript row — it yields width to the rail lane. */
+  inBand?: boolean;
 }
 
 /** The live turn's own action, as a key rather than as text. */
@@ -179,21 +197,51 @@ export function XrChatPanel({
     block.kind === 'key' ? action : spatialTextHeight[block.step] * block.lines;
 
   /*
-    The transcript takes what the fixed blocks leave, and nothing about that is
-    negotiable in the other direction: her status, the assurance line and the
-    two honesty notices are the things a child cannot recover by scrolling.
+    The fixed furniture sits above (header, notices) and below (action keys) the
+    scrolling band. Her status, the assurance line and the two honesty notices
+    are the things a child cannot recover by scrolling, so they never scroll.
   */
-  const fixed = [...header, ...notices, ...keys];
-  const budget = box.height - extentOf(fixed.map(heightOf), 0);
-  const rowLines =
-    rows.length === 0
-      ? 0
-      : Math.max(
-          1,
-          Math.min(ROW_LINES_MAX, Math.floor(budget / rows.length / spatialTextHeight.body)),
-        );
+  const above: TextBlock[] = [...header, ...notices];
+  const aboveH = extentOf(above.map(heightOf), 0);
+  const keysH = extentOf(keys.map(heightOf), 0);
+  /* The transcript's band: whatever the fixed furniture leaves. */
+  const rowStep = spatialTextHeight.body * ROW_LINES;
+  const bandH = Math.max(rowStep, box.height - aboveH - keysH);
+  const visibleRows = Math.max(1, Math.floor(bandH / rowStep));
+  const maxScroll = Math.max(0, rows.length - visibleRows);
 
-  const transcript: TextBlock[] = rows.map((row) => ({
+  /*
+    SCROLL POSITION, PINNED TO THE NEWEST TURN. Chat reads bottom-up: the
+    default is the end of the transcript, and it follows new turns down UNLESS
+    the child has scrolled up to read something older — the `pinned` ref is what
+    tells those two apart, so an arriving message never yanks a child off the
+    line they were reading.
+  */
+  const [scrollTop, setScrollTop] = useState(maxScroll);
+  const pinned = useRef(true);
+  const lastCount = useRef(rows.length);
+  useEffect(() => {
+    if (rows.length !== lastCount.current) {
+      lastCount.current = rows.length;
+      if (pinned.current) setScrollTop(maxScroll);
+    }
+    if (scrollTop > maxScroll) setScrollTop(maxScroll);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rows.length, maxScroll]);
+
+  const scrollBy = (delta: number) => {
+    setScrollTop((from) => {
+      const next = Math.min(maxScroll, Math.max(0, from + delta));
+      pinned.current = next >= maxScroll;
+      return next;
+    });
+  };
+
+  const clampedTop = Math.min(scrollTop, maxScroll);
+  const windowRows = rows.slice(clampedTop, clampedTop + visibleRows);
+  const scrollable = rows.length > visibleRows;
+
+  const transcript: TextBlock[] = windowRows.map((row) => ({
     kind: 'text',
     id: row.id,
     /*
@@ -207,11 +255,31 @@ export function XrChatPanel({
       : `${row.role === 'tutor' ? tutorName : 'You'}: ${row.text}`,
     step: 'body',
     color: row.role === 'tutor' ? XR_COLOR.onPanel : XR_COLOR.onPanelMuted,
-    lines: rowLines,
+    lines: ROW_LINES,
+    inBand: true,
   }));
 
-  const blocks: ChatBlock[] = [...header, ...notices, ...transcript, ...keys];
+  const blocks: ChatBlock[] = [...above, ...transcript, ...keys];
   const offsets = runOffsets(blocks.map(heightOf), box.height, 0, 'start');
+
+  /*
+    The transcript column narrows to leave the rail its lane when there is
+    something to scroll — otherwise the text runs the full width.
+  */
+  const railLane = scrollable ? RAIL.width + RAIL.gap : 0;
+  const textWidth = box.width - railLane;
+
+  /* Rail geometry, in the panel's own frame. The track spans the band; the
+     arrows cap it; the thumb is sized by how much of the transcript shows. */
+  const bandTop = box.height / 2 - aboveH;
+  const trackH = Math.max(0, bandH - action * 2);
+  const ratio = rows.length === 0 ? 1 : Math.min(1, visibleRows / rows.length);
+  const thumbH = Math.max(RAIL.thumbMin, Math.min(trackH, trackH * ratio));
+  const travel = Math.max(0, trackH - thumbH);
+  const progress = maxScroll === 0 ? 0 : clampedTop / maxScroll;
+  const railX = box.width / 2 - RAIL.width / 2;
+  const trackTop = bandTop - action;
+  const thumbY = trackTop - thumbH / 2 - progress * travel;
 
   return (
     <XrPlate width={width} height={height} material={XR_MATERIAL.card}>
@@ -235,15 +303,58 @@ export function XrChatPanel({
           <XrLabel
             key={block.id}
             text={block.text}
-            width={box.width}
+            width={block.inBand ? textWidth : box.width}
             height={spatialTextHeight[block.step] * block.lines}
             step={block.step}
             color={block.color}
             maxLines={block.lines}
-            position={[0, y, 0]}
+            position={[block.inBand ? -railLane / 2 : 0, y, 0]}
           />
         );
       })}
+
+      {/*
+        THE SCROLLBAR — the poke-xr rail, in MoyoLearn's ink. A muted channel,
+        an accent thumb, and two arrow keys that step one turn at a time.
+        Present only when there is more transcript than fits; a child holding a
+        pencil steps with the arrows rather than a precise thumb drag, which is
+        why the arrows are floor-sized keys and the thumb is an indicator.
+      */}
+      {scrollable ? (
+        <ViroNode position={[railX, bandTop - bandH / 2, spatialSpacing.xs]}>
+          <ViroQuad
+            width={RAIL.width}
+            height={trackH}
+            materials={[XR_MATERIAL.keyDisabled]}
+            ignoreEventHandling
+          />
+          <XrKey
+            label="▲"
+            width={RAIL.width}
+            height={action}
+            selected={false}
+            disabled={clampedTop <= 0}
+            onPress={() => scrollBy(-1)}
+            position={[0, bandH / 2 - action / 2, spatialSpacing.xs]}
+          />
+          <XrKey
+            label="▼"
+            width={RAIL.width}
+            height={action}
+            selected={false}
+            disabled={clampedTop >= maxScroll}
+            onPress={() => scrollBy(1)}
+            position={[0, -(bandH / 2 - action / 2), spatialSpacing.xs]}
+          />
+          <ViroQuad
+            width={RAIL.width * 0.6}
+            height={thumbH}
+            materials={[XR_MATERIAL.focusRing]}
+            ignoreEventHandling
+            position={[0, thumbY - (bandTop - bandH / 2), spatialSpacing.xs * 1.5]}
+          />
+        </ViroNode>
+      ) : null}
     </XrPlate>
   );
 }
