@@ -304,6 +304,19 @@ export const boardComposition = {
    * been a second bug rather than a fix.
    */
   anchorDrop: 0.1,
+  /**
+   * A standing child's eye height above the floor, in metres.
+   *
+   * THE ONE NUMBER THAT MAKES A FLOOR-REFERENCED RUNTIME SAFE BEFORE A HEAD
+   * POSE ARRIVES. On a PICO the world origin is the FLOOR, so a board authored
+   * at y = -anchorDrop sits BELOW the ground until the camera reports where the
+   * head actually is. This is the height the board opens at in the meantime —
+   * a K–2 child's standing eye level, deliberately low so a taller user finds
+   * the board a touch below their eyes rather than a shorter one craning up.
+   * The head pose replaces it the instant one settles; this is only the floor
+   * this composition can never fall through.
+   */
+  standingEyeHeight: 1.3,
   boardWidth: 0.6,
   /**
    * Derived, never picked. It was 0.1 — 3.82° at the board's distance, under

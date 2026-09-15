@@ -40,13 +40,17 @@ import {
 } from './natalie-spatial-pose';
 
 /*
-  The marketing-resolution GLB, whole. The 2D native stage splits it to .gltf +
-  sidecars because Dawn cannot decode embedded textures; ViroCore's loader has
-  no such wall, and a single file survives release asset flattening — the exact
-  hazard the split exists to dodge on the other renderer.
+  THE VIRO CUT OF THE MODEL, and why a third asset exists at all. The marketing
+  GLB declares `extensionsRequired: ["EXT_texture_webp"]` — every texture is
+  WebP, two of them 8K — and tinygltf refuses any file whose REQUIRED extension
+  it cannot satisfy, so ViroCore's loader failed before the first vertex
+  (measured on the PICO: `onError "Failed to load model"`). This cut is the
+  same mesh, skin and 52 morphs with the textures transcoded to PNG at 2048 and
+  the webp requirement dropped. One file, so it survives release asset
+  flattening — the hazard the 2D stage's split .gltf exists to dodge on Dawn.
 */
 // eslint-disable-next-line @typescript-eslint/no-require-imports
-const NATALIE_GLB = require('@acme/avatar/assets/humano-marketing.glb');
+const NATALIE_GLB = require('@acme/avatar/assets/natalie-viro.glb');
 
 const TICK_MS = 33;
 

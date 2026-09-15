@@ -491,6 +491,7 @@ function BoardScene() {
     can be closed if the board stops accepting ink half way through one.
   */
   const drawing = useRef(false);
+  const lastPlacementLogged = useRef('');
   /* Read through a stable function rather than passed as a value: the hook's
      effect must not re-run because a ref's contents moved, and `active.engine`
      is set by an effect in the screen above rather than by a render. */
@@ -542,6 +543,13 @@ function BoardScene() {
     if (boardTextureBound) setSkipped(0);
   }, [boardTextureBound, setSkipped]);
 
+  if (__DEV__) {
+    const key = placement.position.map((n) => n.toFixed(2)).join(',');
+    if (key !== lastPlacementLogged.current) {
+      lastPlacementLogged.current = key;
+      console.warn('[tutor-xr] RENDER placement', placement.position, 'yaw', placement.rotation[1].toFixed(1));
+    }
+  }
   const distanceM = Math.abs(placement.position[2]);
   /*
     Controllers, not hands, until the runtime says otherwise — the smaller of

@@ -55,7 +55,20 @@ import { currentXrEligibility } from './xr-eligibility';
  * the defect `board-placement.ts` exists to end.
  */
 const PENDING_PLACEMENT: XrPlacement = {
-  position: [0, -boardComposition.anchorDrop, -spatialDistance.board],
+  /*
+    FLOOR-REFERENCED, NOT HEAD-RELATIVE. This is what the board renders at
+    before — and if — a head pose ever arrives, and the PICO's world origin is
+    the FLOOR. Authored at `-anchorDrop` (just under y = 0) it opened UNDER the
+    ground every time, which is the "everything on the floor" a standing child
+    saw. Anchored at standing eye height minus the drop, the worst case is a
+    board a little below eye level, never one at the feet. `placeInFrontOf`
+    overwrites it the instant a settled head is seen.
+  */
+  position: [
+    0,
+    boardComposition.standingEyeHeight - boardComposition.anchorDrop,
+    -spatialDistance.board,
+  ],
   rotation: [0, 0, 0],
   scale: 1,
 };
