@@ -47,6 +47,8 @@ export function XrBoardLive(_props: XrBoardLiveProps) {
 export function XrTriPanel(_props: XrTriPanelProps) {
   return null;
 }
+/* The probe requires Viro-bound modules; on web there is nothing to probe. */
+export function probePremiumImports(): void {}
 /*
   THE HOST STILL RENDERS ITS CHILD, on the one platform where there is no
   renderer to hand it to. Everything else in this file answers `null` because a

@@ -16,6 +16,7 @@ export { XrBoardRaster } from './XrBoardRaster.native.tsx';
 export { XrBoardLive } from './XrBoardLive.native.tsx';
 export { BoardTextureHost } from './BoardTextureHost.native.tsx';
 export { XrTriPanel } from './XrTriPanel.native.tsx';
+export { probePremiumImports } from './premium/probe.ts';
 export type { XrTriPanelProps, XrPanelRow } from './XrTriPanel.types.ts';
 export { PremiumXRMediaPanel, SLOTS, type MediaPanelRow, type PanelSlot } from './premium/index.ts';
 export { uncoveredRecords } from './raster-coverage.ts';

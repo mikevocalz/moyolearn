@@ -17,6 +17,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { LogBox } from 'react-native';
 import { assertApiOriginConfigured } from '@acme/app/core/api-url';
 import { withUniwind } from "uniwind";
 import { AppQueryProvider, SafeAreaProvider, SessionProvider , AccountSheet, AttachSheet, AudioRecorderSheet, CameraSheet, SwitchProfileSheet, UrlSheet, VideoNoteSheet, UploadQueueProvider } from "@acme/app";
@@ -71,6 +72,23 @@ const GestureRoot = withUniwind(GestureHandlerRootView);
   for the same reason the wrapper above is: it is a build-configuration fact,
   not a render-time one.
 */
+/*
+  LOGBOX IS LETHAL IN THE IMMERSIVE ACTIVITY, and this is not a preference.
+  A JS warning while `VRActivity` is foreground makes LogBox open a Dialog on a
+  DecorView that is not attached to the window manager, and Android kills the
+  process:
+
+    FATAL EXCEPTION: main
+    java.lang.IllegalArgumentException: View=DecorView@[VRActivity] not
+      attached to window manager
+      at com.facebook.react.devsupport.LogBoxDialogSurfaceDelegate.hide
+
+  Measured on a PICO 4 Ultra, 2026-09-15: a debug `console.warn` in the spatial
+  scene took the whole app down mid-session, repeatedly. Errors still reach
+  Metro's console and logcat — only the on-device overlay is suppressed.
+*/
+LogBox.ignoreAllLogs(true);
+
 assertApiOriginConfigured();
 
 export default function RootLayout() {

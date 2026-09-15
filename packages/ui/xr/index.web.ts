@@ -21,6 +21,7 @@ export {
   XrBoardRaster,
   XrBoardLive,
   XrTriPanel,
+  probePremiumImports,
   BoardTextureHost,
   XrChatPanel,
   XrQuestionLine,

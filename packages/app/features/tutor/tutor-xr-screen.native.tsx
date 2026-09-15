@@ -83,6 +83,8 @@ import {
 import { View as UiView } from '@acme/ui/primitives';
 import {
   BoardTextureHost,
+  probePremiumImports,
+  XrTriPanel,
   XrBoardInk,
   XrBoardLive,
   XrBoardRaster,
@@ -133,6 +135,9 @@ import { SPATIAL_PERMISSIONS, spatialPermissionsGranted } from './xr-capability.
    nothing on a web resolver's path ever names the renderer. */
 import { currentXrEligibility } from './xr-eligibility';
 import { panelStateOf, useXrSession, type XrPhase } from './xr-session.store.ts';
+
+/* Temporary: names the vendored module that throws at import. See probe. */
+probePremiumImports();
 
 /** This presentation's id, so its own strokes are not echoed back at it. */
 const PRESENTATION_ID = 'tutor-xr';
@@ -337,11 +342,11 @@ async function placeFromHead(): Promise<void> {
     /* A runtime that has not located the head yet answers with the origin and
        a zero forward; placing off that would put the board back on the floor. */
     if (!isCredibleHeadPose(pose)) {
-      if (__DEV__) console.warn('[tutor-xr] camera pull: pose not credible yet', pose.position);
+      if (__DEV__) console.log('[tutor-xr] camera pull: pose not credible yet', pose.position);
       return;
     }
     active.head = pose;
-    if (__DEV__) console.warn('[tutor-xr] placing from camera pull', pose.position);
+    if (__DEV__) console.log('[tutor-xr] placing from camera pull', pose.position);
     useXrSession.getState().setPlacement(placeInFrontOf(pose, BOARD_PLACE));
   } catch {
     /* An older binary without the camera module keeps the pending placement,
@@ -558,7 +563,7 @@ function BoardScene() {
     const key = placement.position.map((n) => n.toFixed(2)).join(',');
     if (key !== lastPlacementLogged.current) {
       lastPlacementLogged.current = key;
-      console.warn('[tutor-xr] RENDER placement', placement.position, 'yaw', placement.rotation[1].toFixed(1));
+      console.log('[tutor-xr] RENDER placement', placement.position, 'yaw', placement.rotation[1].toFixed(1));
     }
   }
   const distanceM = Math.abs(placement.position[2]);
@@ -755,6 +760,37 @@ function BoardScene() {
         the board already faces the child, and she stands in its frame.
       */}
       <XrNatalie position={nataliePosition} rotationY={placement.rotation[1]} />
+      {/*
+        THE FLANKS, ON THE ARC: tools left, the conversation right — each its
+        own draggable `PremiumXRMediaPanel`, poke-xr's component vendored whole.
+        Placed in WORLD space from the child's head rather than parented to it,
+        because the board between them does world-space ray maths and two frames
+        in one scene is ink that lands slightly wrong.
+      */}
+      {active.head !== null ? (
+        <XrTriPanel
+          headPosition={active.head.position}
+          headYawDeg={placement.rotation[1]}
+          tutorName={TUTOR_NAME}
+          placeholderUri={BLANK_PNG}
+          chatRows={chatRows.map((row) => ({
+            id: row.id,
+            text: row.text,
+            label: row.role === 'tutor' ? TUTOR_NAME : 'You',
+          }))}
+          controlRows={[
+            { id: 'pen', text: 'Pen', label: tool === 'draw' ? 'on' : '' },
+            { id: 'mark', text: 'Highlighter', label: tool === 'highlight' ? 'on' : '' },
+            { id: 'erase', text: 'Eraser', label: tool === 'eraser' ? 'on' : '' },
+            { id: 'ink', text: `Colour: ${ink}` },
+            { id: 'undo', text: 'Undo' },
+            { id: 'redo', text: 'Redo' },
+            { id: 'clear', text: 'Clear' },
+            { id: 'ask', text: `Ask ${TUTOR_NAME}`, emphasis: true },
+          ]}
+        />
+      ) : null}
+
       <XrPanel
         width={boardWidth}
         aspect={BOARD_ASPECT}
@@ -1208,7 +1244,7 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
   const handleBound = useCallback((binding: BoardTextureBinding) => {
     useXrSession.getState().setBoardTextureBound(binding.bound);
     if (!binding.bound && __DEV__) {
-      console.warn(
+      console.log(
         `[tutor-xr] the live board did not bind (${binding.reason ?? 'no reason'}) — drawing the raster instead`,
       );
     }
@@ -1376,7 +1412,7 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
           previous.forward[2] * current.forward[2];
         if (travel < 0.2 && turn > 0.9) {
           placed = true;
-          if (__DEV__) console.warn('[tutor-xr] placing from settled pose', current.position);
+          if (__DEV__) console.log('[tutor-xr] placing from settled pose', current.position);
           useXrSession.getState().setPlacement(placeInFrontOf(current, BOARD_PLACE));
           clearInterval(timer);
           return;

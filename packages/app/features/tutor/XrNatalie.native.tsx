@@ -40,7 +40,7 @@ import {
 } from './natalie-spatial-pose';
 
 /*
-  THE VIRO CUT OF THE MODEL, and why a third asset exists at all. The marketing
+  THE VIRO CUT, BUILT FROM THE ASSET THE 2D STAGE ALREADY RENDERS. The marketing
   GLB declares `extensionsRequired: ["EXT_texture_webp"]` — every texture is
   WebP, two of them 8K — and tinygltf refuses any file whose REQUIRED extension
   it cannot satisfy, so ViroCore's loader failed before the first vertex
@@ -85,7 +85,7 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
   const loaded = useRef(false);
 
   useEffect(() => {
-    if (__DEV__) console.warn('[natalie-xr] mounted at', position, 'yaw', rotationY.toFixed(1));
+    if (__DEV__) console.log('[natalie-xr] mounted at', position, 'yaw', rotationY.toFixed(1));
     let timer: ReturnType<typeof setInterval> | null = null;
     let cancelled = false;
 
@@ -109,7 +109,7 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
         const { matrices } = await handle.getSkeletonBoneTransforms([...SPATIAL_POSE_BONES]);
         const settled = matrices.length === SPATIAL_POSE_BONES.length * 16;
         const legible = settled && SPATIAL_POSE_BONES.every((_, i) => matrices[i * 16] !== 0 || matrices[i * 16 + 1] !== 0 || matrices[i * 16 + 2] !== 0);
-        if (__DEV__) console.warn('[natalie-xr] rest pose read:', settled ? 'ok' : 'wrong-length', 'legible:', legible, 'first-row:', matrices.slice(0, 4));
+        if (__DEV__) console.log('[natalie-xr] rest pose read:', settled ? 'ok' : 'wrong-length', 'legible:', legible, 'first-row:', matrices.slice(0, 4));
         /*
           BONE DRIVING IS GATED OFF UNTIL THE REST POSE IS PROVEN ON DEVICE.
           A wrong bone-world matrix does not fail — it scales or shears the mesh
@@ -123,7 +123,7 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
           bonesLive = true;
         }
       } catch (e) {
-        if (__DEV__) console.warn('[natalie-xr] rest pose read FAILED', String(e));
+        if (__DEV__) console.log('[natalie-xr] rest pose read FAILED', String(e));
         bonesLive = false;
       }
       if (cancelled) return;
@@ -215,15 +215,15 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
         source={NATALIE_GLB}
         type="GLB"
         onLoadStart={() => {
-          if (__DEV__) console.warn('[natalie-xr] model load started');
+          if (__DEV__) console.log('[natalie-xr] model load started');
         }}
         onLoadEnd={() => {
           loaded.current = true;
-          if (__DEV__) console.warn('[natalie-xr] model load ENDED — she should be visible');
+          if (__DEV__) console.log('[natalie-xr] model load ENDED — she should be visible');
         }}
         onError={(event) => {
           /* Absence is the contract, but a silent absence is undebuggable. */
-          console.warn('[natalie-xr] model FAILED to load', JSON.stringify(event?.nativeEvent ?? {}));
+          console.log('[natalie-xr] model FAILED to load', JSON.stringify(event?.nativeEvent ?? {}));
         }}
         /*
           Her presence must not eat the pointer: a ray that hits her instead of
