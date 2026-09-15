@@ -544,7 +544,18 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
   const bodyH = h - HEADER_H;
   const bodyCenterY = -HEADER_H / 2; // = ((h/2 - HEADER_H) + (-h/2)) / 2
 
-  const artW = Math.min(0.6, Math.max(0.25, mediaFraction)) * w;
+/*
+    THE CLAMP OPENS AT BOTH ENDS, and MoyoLearn needs both. poke-xr always had
+    art beside a readout, so 0.25–0.6 was the honest range. Here the tool and
+    conversation panels are pure lists (0 → no art column, the plate takes the
+    full width) and the BOARD panel is pure media (1 → the child's paper fills
+    the body, no plate). Anything between still behaves exactly as before.
+  */
+  const artW = Math.min(1, Math.max(0, mediaFraction)) * w;
+  const hasArt = artW > 0.001;
+  /* At mediaFraction 1 the plate is zero-width and simply draws nothing —
+     no guard needed for it, only for the seam BETWEEN the two columns. */
+  const hasPlate = w - artW > 0.001;
   const artCenterX = -w / 2 + artW / 2;
 
   const plateW = w - artW;
@@ -1062,6 +1073,7 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
           </ViroNode>
 
           {/* ═══ ART — full bleed, header bottom to card bottom ═══════ */}
+          {hasArt ? (
           <ViroNode {...layerProps(delay.art)}>
             <ViroQuad
               width={artW}
@@ -1082,15 +1094,19 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
               ignoreEventHandling
               renderingOrder={-7}
             />
-            <ViroQuad
-              width={HAIRLINE}
-              height={bodyH}
-              position={[seamX, bodyCenterY, Z.rule]}
-              materials={['pxrmpDivider']}
-              ignoreEventHandling
-              renderingOrder={-6}
-            />
+            {/* The seam only exists where the two columns actually meet. */}
+            {hasPlate ? (
+              <ViroQuad
+                width={HAIRLINE}
+                height={bodyH}
+                position={[seamX, bodyCenterY, Z.rule]}
+                materials={['pxrmpDivider']}
+                ignoreEventHandling
+                renderingOrder={-6}
+              />
+            ) : null}
           </ViroNode>
+          ) : null}
 
           {/* ═══ READOUT PLATE — white, full bleed ════════════════════ */}
           <ViroNode position={[plateCenterX, bodyCenterY, 0]}>

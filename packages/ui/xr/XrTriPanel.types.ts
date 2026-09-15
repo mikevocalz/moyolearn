@@ -15,6 +15,10 @@ export interface XrPanelRow {
 }
 
 export interface XrTriPanelProps {
+  /** The board, as the engine's own PNG. Null until the first raster lands. */
+  boardUri: string | null;
+  /** The question, as the centre panel's title. */
+  boardTitle: string;
   /** The child's head in world metres — what the arc is measured from. */
   headPosition: readonly [number, number, number];
   /** The child's facing about Y, in degrees. The whole arc turns with them. */

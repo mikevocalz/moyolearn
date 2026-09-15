@@ -31,7 +31,7 @@ import type { XrTriPanelProps } from './XrTriPanel.types.ts';
 
 /** A head-local slot offset, turned by the child's yaw and put in world space. */
 function worldSlot(
-  slot: 'left' | 'right',
+  slot: 'left' | 'center' | 'right',
   head: XrVector3,
   yawDeg: number,
 ): { position: [number, number, number]; yaw: number } {
@@ -51,12 +51,15 @@ function worldSlot(
 export function XrTriPanel({
   headPosition,
   headYawDeg,
+  boardUri,
+  boardTitle,
   chatRows,
   controlRows,
   tutorName,
   placeholderUri,
 }: XrTriPanelProps) {
   const left = worldSlot('left', headPosition, headYawDeg);
+  const centre = worldSlot('center', headPosition, headYawDeg);
   const right = worldSlot('right', headPosition, headYawDeg);
 
   return (
@@ -70,6 +73,23 @@ export function XrTriPanel({
            the width the rows read in. */
         mediaFraction={0}
         worldPlacement={left}
+        draggable
+        snapOnRelease
+      />
+      {/*
+        THE BOARD, IN A PANEL. `mediaFraction={1}` gives the child's paper the
+        whole body — the poke-xr clamp opened at both ends for exactly this —
+        and the media source is the engine's own raster, so the panel shows the
+        real board rather than a second rendering of it. Wider than the flanks
+        because it is the thing being worked on.
+      */}
+      <PremiumXRMediaPanel
+        title={boardTitle}
+        imageSource={{ uri: boardUri ?? placeholderUri }}
+        rows={[]}
+        size="widePanel"
+        mediaFraction={1}
+        worldPlacement={centre}
         draggable
         snapOnRelease
       />

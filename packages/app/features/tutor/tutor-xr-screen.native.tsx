@@ -773,6 +773,8 @@ function BoardScene() {
           headYawDeg={placement.rotation[1]}
           tutorName={TUTOR_NAME}
           placeholderUri={BLANK_PNG}
+          boardUri={raster.uri}
+          boardTitle={problem ?? 'Your board'}
           chatRows={chatRows.map((row) => ({
             id: row.id,
             text: row.text,
