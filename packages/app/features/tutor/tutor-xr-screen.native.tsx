@@ -226,6 +226,17 @@ const TUTOR_NAME = 'Natalie';
 const BLANK_PNG =
   'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
+/**
+ * How far out Natalie stands, and how far round.
+ *
+ * 2.6 m puts her beyond the 1.9 m panel arc, so she stands BEHIND the
+ * conversation panel instead of occluding the board — measured against a frame
+ * where she was under a metre away and covering it. 52° clears the right
+ * panel's own 30° slot so the two do not overlap from the child's eye.
+ */
+const NATALIE_DISTANCE_M = 2.6;
+const NATALIE_AZIMUTH_DEG = 52;
+
 /** The composition's own case, so the two callers that place it cannot disagree. */
 const BOARD_PLACE = { distanceM: spatialDistance.board, dropM: boardComposition.anchorDrop };
 
@@ -639,13 +650,26 @@ function BoardScene() {
     head-referenced fallback origin this puts her roughly floor-level too,
     which is the degradation a dev phone can live with.
   */
-  const natalieYawRad = (placement.rotation[1] * Math.PI) / 180;
-  const natalieRight =
-    boardWidth / 2 + boardComposition.chatGap + boardComposition.chatWidth + 0.35;
+  /*
+    WHERE SHE STANDS, AND WHY IT IS BEHIND THE ARC RATHER THAN BESIDE IT.
+
+    Measured on device: placed at the composition's right edge plus a margin
+    she came out under a metre away at full 1.67 m height — head in the ceiling
+    lamp, body across the board. A tutor is someone you look ACROSS at, not
+    someone standing over your desk.
+
+    So she is put on the same arc the panels use, past the right slot and
+    further out: `NATALIE_DISTANCE` beyond the panel radius so she is behind
+    the conversation panel rather than in front of it, at `NATALIE_AZIMUTH`
+    which clears the right panel's own 30°. Scale is 1: she is a person, and a
+    shrunken person reads as a doll rather than as a tutor — the distance is
+    what makes her fit the view.
+  */
+  const natalieAngle = ((placement.rotation[1] + NATALIE_AZIMUTH_DEG) * Math.PI) / 180;
   const nataliePosition: [number, number, number] = [
-    placement.position[0] + Math.cos(natalieYawRad) * natalieRight,
+    (active.head?.position[0] ?? 0) + Math.sin(natalieAngle) * NATALIE_DISTANCE_M,
     0,
-    placement.position[2] - Math.sin(natalieYawRad) * natalieRight,
+    (active.head?.position[2] ?? 0) - Math.cos(natalieAngle) * NATALIE_DISTANCE_M,
   ];
 
   const railHeight = Math.max(
