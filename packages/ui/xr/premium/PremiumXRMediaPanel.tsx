@@ -60,6 +60,7 @@ import {
 } from '@reactvision/react-viro';
 import './materials';
 import { ViroIcon } from './ViroIcon';
+import { BUTTON_FACE, type ButtonFaceId } from './button-faces/faces';
 import { useInstanceStore, useStore } from './use-instance-store';
 import { panelSize, spatialSpacing, SLOTS, type PanelSlot } from './spatialTokens';
 
@@ -446,6 +447,17 @@ export type MediaPanelRow = {
   onPress?: () => void;
   /** Draws the row as chosen — the tool currently in the child's hand. */
   active?: boolean;
+  /**
+   * Renders the row as a real {@linkcode ViroButton} spanning the row.
+   *
+   * The face supplies the plate and the glyph for all three states; the LABEL
+   * is a {@linkcode ViroText} node drawn over it, so copy can change without a
+   * PNG rebuild. Omit `text` on a button whose face IS the content — the colour
+   * selector's swatch — and no label is drawn.
+   */
+  face?: ButtonFaceId;
+  /** A swatch drawn instead of a face — the ink colour the child is using. */
+  swatchColor?: string;
 };
 
 type ImageSource = { uri: string } | number;
@@ -1314,15 +1326,46 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
                           opacity={0.28}
                         />
                       ) : null}
-                      <ViroQuad
-                        width={textColW}
-                        height={ROW_H}
-                        position={[textColCenterX, 0, Z.rowInk + 0.006]}
-                        materials={['pxrmpHit']}
-                        onClickState={(state: number) => {
-                          if (state === 2 && !disabled) row.onPress?.();
-                        }}
-                      />
+
+                      {/*
+                        A REAL `ViroButton`, spanning the row. Its face carries
+                        the plate and the glyph for rest / hover / press; the
+                        label is the `ViroText` below, drawn over the button so
+                        the words are a node rather than pixels — the tutor's
+                        name and any localised copy change without a rebuild.
+
+                        The colour selector is the one button with no text: its
+                        face IS the swatch, and a word beside a colour would be
+                        the thing a child reads instead of the colour.
+                      */}
+                      {row.face ? (
+                        <ViroButton
+                          source={BUTTON_FACE[row.face][row.active ? 'active' : 'rest']}
+                          hoverSource={BUTTON_FACE[row.face].hover}
+                          clickSource={BUTTON_FACE[row.face].active}
+                          width={textColW}
+                          height={ROW_H}
+                          position={[textColCenterX, 0, Z.rowInk]}
+                          onClick={() => {
+                            if (!disabled) row.onPress?.();
+                          }}
+                        />
+                      ) : null}
+
+                      {row.swatchColor ? (
+                        <ViroQuad
+                          width={ROW_H * 0.62}
+                          height={ROW_H * 0.62}
+                          position={[
+                            textColCenterX - textColW / 2 + ROW_H * 0.55,
+                            0,
+                            Z.rowInk + 0.004,
+                          ]}
+                          materials={['pxrmpChipHot']}
+                          ignoreEventHandling
+                        />
+                      ) : null}
+
                     </>
                   ) : null}
                 </ViroNode>

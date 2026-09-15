@@ -812,6 +812,7 @@ function BoardScene() {
           controlRows={[
             {
               id: 'pen',
+              face: 'pen',
               text: 'Pen',
               active: tool === 'draw',
               onPress: () => {
@@ -821,6 +822,7 @@ function BoardScene() {
             },
             {
               id: 'mark',
+              face: 'highlighter',
               text: 'Highlighter',
               active: tool === 'highlight',
               onPress: () => {
@@ -830,6 +832,7 @@ function BoardScene() {
             },
             {
               id: 'erase',
+              face: 'eraser',
               text: 'Eraser',
               active: tool === 'eraser',
               onPress: () => {
@@ -837,11 +840,26 @@ function BoardScene() {
                 active.engine?.setTool('eraser');
               },
             },
-            { id: 'undo', text: 'Undo', onPress: () => session?.doc.undo() },
-            { id: 'redo', text: 'Redo', onPress: () => session?.doc.redo() },
-            { id: 'clear', text: 'Clear', onPress: () => active.engine?.clear() },
+            {
+              id: 'ink',
+              text: '',
+              swatchColor: ink,
+              onPress: () => {
+                /* Cycles the pen colour: the spatial panel has no room for a
+                   swatch grid, and a child changing colour wants one press. */
+                const order = ['black', 'blue', 'red', 'green'] as const;
+                const at = order.indexOf(ink as (typeof order)[number]);
+                const next = order[(at + 1) % order.length] ?? 'black';
+                useXrSession.getState().setInk(next);
+                active.engine?.setInk(next);
+              },
+            },
+            { id: 'undo', face: 'undo', text: 'Undo', onPress: () => session?.doc.undo() },
+            { id: 'redo', face: 'redo', text: 'Redo', onPress: () => session?.doc.redo() },
+            { id: 'clear', face: 'clear', text: 'Clear', onPress: () => active.engine?.clear() },
             {
               id: 'ask',
+              face: 'ask',
               text: `Ask ${TUTOR_NAME}`,
               emphasis: true,
               onPress: () => {

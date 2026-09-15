@@ -16,6 +16,10 @@ export interface XrPanelRow {
   onPress?: () => void;
   /** Draws the row as chosen — the tool in the child's hand. */
   active?: boolean;
+  /** Renders the row as a real ViroButton with this face. */
+  face?: 'pen' | 'highlighter' | 'eraser' | 'undo' | 'redo' | 'clear' | 'ask';
+  /** The ink swatch, on the one button whose face is its content. */
+  swatchColor?: string;
 }
 
 export interface XrTriPanelProps {
