@@ -756,6 +756,10 @@ function BoardScene() {
           leading: {
             extent: boardComposition.railWidth,
             gap: boardComposition.railGap,
+            /* On the arc, toed in to face the child — the mirror of the chat
+               wing, so controls / board / conversation read as three panels. */
+            yawDeg: boardComposition.railYawDeg,
+            zLift: boardComposition.railLift,
             node: (
               <XrRail
                 width={boardComposition.railWidth}

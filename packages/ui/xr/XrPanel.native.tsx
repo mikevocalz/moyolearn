@@ -395,12 +395,21 @@ export function XrPanel({
       ) : null}
 
       {ornaments?.leading ? (
+        /*
+          THE RAIL ON THE ARC, not on the board's plane. A leading ornament at
+          yaw 0, z 0 is coplanar with the paper and reads as one slab with it;
+          given a toe-in (`yawDeg`) and a forward lift (`zLift`) it becomes its
+          own toed-in surface facing the child — the mirror of `companion` on
+          the other wing, the poke-xr SLOTS shape. A left rail turns to its
+          RIGHT to face centre, so its yaw is positive.
+        */
         <ViroNode
           position={[
             -(width / 2 + ornaments.leading.gap + ornaments.leading.extent / 2),
             0,
-            0,
+            ornaments.leading.zLift ?? 0,
           ]}
+          rotation={[0, ornaments.leading.yawDeg ?? 0, 0]}
         >
           {ornaments.leading.node}
         </ViroNode>

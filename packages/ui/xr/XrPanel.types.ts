@@ -44,6 +44,20 @@ export interface XrOrnament {
   /** Metres across the panel's X axis for a leading rail, Y for top/bottom. */
   extent: number;
   gap: number;
+  /**
+   * How far the ornament is turned back toward the child, in degrees, and how
+   * far it is pulled off the board's plane, in metres — its place on the arc.
+   *
+   * A leading rail at yaw 0 and z 0 is COPLANAR with the paper: at 1.5 m the
+   * two surfaces read as one wide slab with a seam, which is the "controls are
+   * in the same panel" a child sees. Given a toe-in it becomes its own surface
+   * on the arc, angled to face the child the way `companion` already is — the
+   * poke-xr SLOTS composition, where every panel sits on a curve around the
+   * head. Omitted, the ornament stays coplanar (correct for top/bottom, which
+   * share the paper's plane by design).
+   */
+  yawDeg?: number;
+  zLift?: number;
 }
 
 /** A second panel sharing this one's anchor — the tutor conversation. */

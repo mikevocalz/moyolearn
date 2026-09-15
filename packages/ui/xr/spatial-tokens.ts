@@ -339,6 +339,17 @@ export const boardComposition = {
   /** How far the chat panel is turned back toward the child, in degrees. */
   chatYawDeg: -40,
   /**
+   * The control rail's toe-in and forward lift — its place on the arc.
+   *
+   * The MIRROR of `chatYawDeg`: the chat sits on the right wing turned -40°
+   * toward the child, the rail on the left wing turned +40° toward the child,
+   * so the two flank the paper as equal toed-in surfaces instead of the rail
+   * lying flat in the board's plane. `railLift` pulls it the same distance off
+   * that plane the companion uses, so no two user-facing surfaces are coplanar.
+   */
+  railYawDeg: 40,
+  railLift: spatialSpacing.md * 2,
+  /**
    * Above the paper: the question, at two lines of body type plus padding.
    * Below it: recenter and leave, at one floor-sized key plus the same padding.
    *
