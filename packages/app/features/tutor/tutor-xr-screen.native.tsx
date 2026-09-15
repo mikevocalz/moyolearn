@@ -807,14 +807,48 @@ function BoardScene() {
             label: row.role === 'tutor' ? TUTOR_NAME : 'You',
           }))}
           controlRows={[
-            { id: 'pen', text: 'Pen', label: tool === 'draw' ? 'on' : '' },
-            { id: 'mark', text: 'Highlighter', label: tool === 'highlight' ? 'on' : '' },
-            { id: 'erase', text: 'Eraser', label: tool === 'eraser' ? 'on' : '' },
-            { id: 'ink', text: `Colour: ${ink}` },
-            { id: 'undo', text: 'Undo' },
-            { id: 'redo', text: 'Redo' },
-            { id: 'clear', text: 'Clear' },
-            { id: 'ask', text: `Ask ${TUTOR_NAME}`, emphasis: true },
+            {
+              id: 'pen',
+              text: 'Pen',
+              active: tool === 'draw',
+              onPress: () => {
+                useXrSession.getState().setTool('draw');
+                active.engine?.setTool('draw');
+              },
+            },
+            {
+              id: 'mark',
+              text: 'Highlighter',
+              active: tool === 'highlight',
+              onPress: () => {
+                useXrSession.getState().setTool('highlight');
+                active.engine?.setTool('highlight');
+              },
+            },
+            {
+              id: 'erase',
+              text: 'Eraser',
+              active: tool === 'eraser',
+              onPress: () => {
+                useXrSession.getState().setTool('eraser');
+                active.engine?.setTool('eraser');
+              },
+            },
+            { id: 'undo', text: 'Undo', onPress: () => session?.doc.undo() },
+            { id: 'redo', text: 'Redo', onPress: () => session?.doc.redo() },
+            { id: 'clear', text: 'Clear', onPress: () => active.engine?.clear() },
+            {
+              id: 'ask',
+              text: `Ask ${TUTOR_NAME}`,
+              emphasis: true,
+              onPress: () => {
+                useXrSession.getState().setAsking(true);
+                void active.engine?.exportPng().then((png) => {
+                  useXrSession.getState().setAsking(false);
+                  active.onAsk(png);
+                });
+              },
+            },
           ]}
         />
       ) : null}

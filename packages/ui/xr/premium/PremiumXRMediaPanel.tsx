@@ -434,6 +434,18 @@ export type MediaPanelRow = {
   text: string;
   label?: string;
   emphasis?: boolean;
+  /**
+   * Makes the row a BUTTON rather than a readout.
+   *
+   * poke-xr's rows were pure data — a Pokedex stat has nothing to press. A tool
+   * list is the opposite: every line is an action. A row with `onPress` gets a
+   * hit quad across its width, in FRONT of the type, because this fork ignores
+   * `ignoreEventHandling` on ViroText and text over a target eats that target's
+   * clicks — the same reason the close button and chevrons carry their own.
+   */
+  onPress?: () => void;
+  /** Draws the row as chosen — the tool currently in the child's hand. */
+  active?: boolean;
 };
 
 type ImageSource = { uri: string } | number;
@@ -1189,6 +1201,9 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
               const glyph = row.emphasis ? leadGlyph : bodyGlyph;
               const banded = i % 2 === 1;
 
+              /* A row with an action is a target; one without is a readout. */
+              const pressable = typeof row.onPress === 'function';
+
               const rest = revealed || !animate;
               // Same rule as layerProps: never arm at prop opacity 0 (hit-cull
               // + stranded-translucent-text risk on this fork). Slide-in only.
@@ -1275,6 +1290,41 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
                     }}
                     ignoreEventHandling
                   />
+
+                  {/*
+                    A PRESSABLE ROW IS A BUTTON. `active` washes the row so the
+                    tool in the child's hand is visible without colour alone,
+                    and the hit quad sits IN FRONT of the type — this fork
+                    ignores `ignoreEventHandling` on ViroText, so text over a
+                    target eats that target's clicks (the same reason the close
+                    and chevrons carry their own hit quads).
+
+                    `onClickState` at CLICK_UP, not `onClick`: the convention
+                    the rail's own arrows already follow here.
+                  */}
+                  {pressable ? (
+                    <>
+                      {row.active ? (
+                        <ViroQuad
+                          width={textColW}
+                          height={ROW_H}
+                          position={[textColCenterX, 0, Z.band]}
+                          materials={['pxrmpChipHot']}
+                          ignoreEventHandling
+                          opacity={0.28}
+                        />
+                      ) : null}
+                      <ViroQuad
+                        width={textColW}
+                        height={ROW_H}
+                        position={[textColCenterX, 0, Z.rowInk + 0.006]}
+                        materials={['pxrmpHit']}
+                        onClickState={(state: number) => {
+                          if (state === 2 && !disabled) row.onPress?.();
+                        }}
+                      />
+                    </>
+                  ) : null}
                 </ViroNode>
               );
             })}

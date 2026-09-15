@@ -28,7 +28,7 @@
 //      docs/decisions/adr-117-spatial-whiteboard-bridge.md (moyo.2 amendment)
 // SOT-KEYWORDS: natalie xr viro 3d object avatar bones morph face idle spatial glb presence
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Viro3DObject, ViroNode } from '@reactvision/react-viro';
 import { IdleEngine, type IdleInputs } from '@acme/avatar';
 import { natalieMorphs, type NatalieMorph } from '@acme/ui/xr';
@@ -84,6 +84,15 @@ export interface XrNatalieProps {
 export function XrNatalie({ position, rotationY }: XrNatalieProps) {
   const model = useRef<Viro3DObject>(null);
   const loaded = useRef(false);
+  /*
+    WHERE THE CHILD PUT HER, kept apart from where the composition placed her.
+    Viro's drag MOVES THE DRAGGED NODE, and this node's position is a prop — so
+    without holding the delta, the next render of the scene would snap her back
+    to the arc mid-drag. Accumulated here and added to the placement, the way
+    the premium panels hold their own `dragOffset`.
+  */
+  const [dragOffset, setDragOffset] = useState<[number, number, number]>([0, 0, 0]);
+  const dragFrom = useRef<[number, number, number] | null>(null);
 
   useEffect(() => {
     if (__DEV__) console.log('[natalie-xr] mounted at', position, 'yaw', rotationY.toFixed(1));
@@ -218,10 +227,29 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
   */
   return (
     <ViroNode
-      position={position}
+      position={[
+        position[0] + dragOffset[0],
+        position[1] + dragOffset[1],
+        position[2] + dragOffset[2],
+      ]}
       rotation={[0, rotationY, 0]}
       dragType="FixedDistance"
-      onDrag={() => undefined}
+      onDrag={(to: [number, number, number]) => {
+        /* The renderer reports where it moved the node to; the delta from the
+           first report of a gesture is what the child actually dragged. */
+        if (dragFrom.current === null) dragFrom.current = to;
+        const from = dragFrom.current;
+        setDragOffset(([x, y, z]) => [
+          x + (to[0] - from[0]),
+          y + (to[1] - from[1]),
+          z + (to[2] - from[2]),
+        ]);
+        dragFrom.current = to;
+      }}
+      onClickState={(state: number) => {
+        /* CLICK_UP ends the gesture, so the next grab measures from scratch. */
+        if (state === 2) dragFrom.current = null;
+      }}
     >
       <Viro3DObject
         ref={model}
@@ -239,10 +267,14 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
           console.log('[natalie-xr] model FAILED to load', JSON.stringify(event?.nativeEvent ?? {}));
         }}
         /*
-          Her presence must not eat the pointer: a ray that hits her instead of
-          the drag quad is a stroke that never starts.
+          SHE IS HITTABLE, WHICH IS WHAT MAKES HER DRAGGABLE. This carried
+          `ignoreEventHandling` so a ray meant for the board could not land on
+          her — correct when she stood beside the paper, wrong now that she is
+          58 deg off the arc and a child needs to grab her. A ray only starts a
+          drag on a node it actually hits, and the parent node has no geometry
+          of its own, so the model is what has to answer.
         */
-        ignoreEventHandling
+        highAccuracyEvents={false}
       />
     </ViroNode>
   );

@@ -12,6 +12,10 @@ export interface XrPanelRow {
   text: string;
   label?: string;
   emphasis?: boolean;
+  /** Makes the row a button. Omitted, the row is a readout. */
+  onPress?: () => void;
+  /** Draws the row as chosen — the tool in the child's hand. */
+  active?: boolean;
 }
 
 export interface XrTriPanelProps {
