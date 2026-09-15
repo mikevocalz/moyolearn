@@ -85,6 +85,7 @@ import {
   BoardTextureHost,
   probePremiumImports,
   XrTriPanel,
+  XrBoardSurface,
   XrBoardInk,
   XrBoardLive,
   XrBoardRaster,
@@ -873,7 +874,29 @@ function BoardScene() {
           ]}
         />
       ) : null}
+      {/*
+        THE DRAWING SURFACE, over the centre panel and nothing else.
 
+        A sibling rather than a child of the panel, because the panel is
+        poke-xr's file vendored whole and teaching it to draw would fork the one
+        component this route most needs to keep in step with upstream. It reads
+        the same `worldSlot('center', …)` the panel is placed by and the same
+        `panelMediaArea` the panel lays its art out with, so the quad a ray hits
+        and the board a child sees are one rectangle by construction.
+
+        Gated on `panelState`, not on `inkLands`: a tracking blink must not take
+        the paper away mid-thought, so the surface keeps answering rays and
+        `handleSurfaceInput` above is what declines them when the mapping is
+        measured wrong.
+      */}
+      {active.head !== null ? (
+        <XrBoardSurface
+          headPosition={active.head.position}
+          headYawDeg={placement.rotation[1]}
+          enabled={composedState === 'ready' || composedState === 'interrupted'}
+          onSurfaceInput={handleSurfaceInput}
+        />
+      ) : null}
     </>
   );
 

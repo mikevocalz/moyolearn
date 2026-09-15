@@ -25,28 +25,11 @@
 // SOT: packages/ui/xr/premium/index.ts · packages/ui/xr/surface-drag.ts
 // SOT-KEYWORDS: xr tri panel side panels arc slots drag snap scroll eye level head relative world space
 
-import { PremiumXRMediaPanel, SLOTS } from './premium/index.ts';
-import type { XrVector3 } from './XrPanel.types.ts';
+import { PremiumXRMediaPanel } from './premium/index.ts';
+/* The same call `XrBoardSurface` places the pointer quad by — one arithmetic,
+   so the board a child sees and the plane their ray hits cannot drift apart. */
+import { worldSlot } from './world-slot.ts';
 import type { XrTriPanelProps } from './XrTriPanel.types.ts';
-
-/** A head-local slot offset, turned by the child's yaw and put in world space. */
-function worldSlot(
-  slot: 'left' | 'center' | 'right',
-  head: XrVector3,
-  yawDeg: number,
-): { position: [number, number, number]; yaw: number } {
-  const { position, yaw } = SLOTS[slot];
-  const t = (yawDeg * Math.PI) / 180;
-  const cos = Math.cos(t);
-  const sin = Math.sin(t);
-  const [x, y, z] = position;
-  /* Rotation about +Y: the same convention `xrDragPlane` builds its normal in,
-     so a panel and the ray that hits it agree about which way the child faces. */
-  return {
-    position: [head[0] + x * cos + z * sin, head[1] + y, head[2] + (-x * sin + z * cos)],
-    yaw: yaw + yawDeg,
-  };
-}
 
 export function XrTriPanel({
   headPosition,

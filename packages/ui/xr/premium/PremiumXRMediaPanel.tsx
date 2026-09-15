@@ -191,7 +191,7 @@ const TITLE_TOP_MARGIN = 0.072;
 // ═══════════════════════════════════════════════════════════════════════════
 // LAYOUT TOKENS (meters, head-relative)
 // ═══════════════════════════════════════════════════════════════════════════
-const SIZES = {
+export const SIZES = {
   /* The two side sizes are added for MoyoLearn's three-panel arc: a wide
      centre needs narrower flanks or the composition leaves the comfort cone.
      Same token source as the originals (`panelSize`), so nothing is invented. */
@@ -208,7 +208,7 @@ const SIZES = {
 
 const HAIR = spatialSpacing.xs; // 0.025
 
-const HEADER_H = 0.16;
+export const HEADER_H = 0.16;
 const HEADER_PAD = 0.04; // left inset for the title, right inset for the chip
 const CLOSE = 0.11;
 
@@ -239,6 +239,31 @@ const Z = {
   railThumb: 0.014,
   debug: 0.002,
 } as const;
+
+/**
+ * Where the media fills a panel, in the panel's own frame.
+ *
+ * THE SURFACE A CHILD DRAWS ON IS THIS RECTANGLE, and only this component knows
+ * where it is — the header steals `HEADER_H` off the top, so the body's centre
+ * is NOT the panel's centre. `XrBoardSurface` puts its pointer quad here rather
+ * than recomputing it, because a pointer plane that disagrees with the art by
+ * the header's half-height is ink that lands 8 cm above the child's aim.
+ *
+ * Only meaningful at `mediaFraction={1}` — the full-bleed board — which is the
+ * one configuration anything draws on.
+ */
+export function panelMediaArea(size: keyof typeof SIZES): {
+  width: number;
+  height: number;
+  /** Offset from the panel's centre, along its own +Y. */
+  centerY: number;
+  /** The art plane's depth along the panel's own +Z. */
+  z: number;
+} {
+  const { width, height } = SIZES[size];
+  return { width, height: height - HEADER_H, centerY: -HEADER_H / 2, z: Z.art };
+}
+
 
 // ═══════════════════════════════════════════════════════════════════════════
 // SLOT TILT — explicit, one knob to flip
