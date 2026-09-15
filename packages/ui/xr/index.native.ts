@@ -15,6 +15,8 @@ export { XrBoardInk } from './XrBoardInk.native.tsx';
 export { XrBoardRaster } from './XrBoardRaster.native.tsx';
 export { XrBoardLive } from './XrBoardLive.native.tsx';
 export { BoardTextureHost } from './BoardTextureHost.native.tsx';
+export { XrTriPanel, type XrTriPanelProps } from './XrTriPanel.native.tsx';
+export { PremiumXRMediaPanel, SLOTS, type MediaPanelRow, type PanelSlot } from './premium/index.ts';
 export { uncoveredRecords } from './raster-coverage.ts';
 export { natalieMorphs, MORPH_FLOOR } from './natalie-morphs.ts';
 export type { NatalieMorph, NatalieShape } from './natalie-morphs.ts';
