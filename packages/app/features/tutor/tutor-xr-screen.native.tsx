@@ -552,12 +552,15 @@ function BoardScene() {
     not bound, this pair IS the board and nothing about it changes.
   */
   const boardTextureBound = useXrSession((s) => s.boardTextureBound);
-  const raster = useBoardRaster(
-    readEngine,
-    store,
-    session !== null && !boardTextureBound,
-    strokeOpen,
-  );
+  /*
+    THE PICTURE DOES NOT NEED A SERVER SESSION, and gating it on one is why the
+    centre panel showed a placeholder instead of the child's board: under local
+    mock auth every learner `protectedOperation` fails, so `sessionId` stays
+    null, `session` stays null and the raster loop never ran — while the engine
+    behind it had the real board all along. `useBoardRaster` already refuses to
+    fire without an engine handle, which is the condition that actually matters.
+  */
+  const raster = useBoardRaster(readEngine, store, !boardTextureBound, strokeOpen);
   const liveStore = useMemo(() => uncoveredRecords(store, raster.covered), [raster.covered, store]);
 
   /*
@@ -1195,6 +1198,14 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
   const handleChange = useCallback(
     (diff: WhiteboardDiff, source: WhiteboardDiffSource) => {
       session.change(PRESENTATION_ID, diff, source);
+      /*
+        AND TELL THE SCENE THE DOCUMENT MOVED. `revision` is normally bumped by
+        the document's own observer, which only exists when there is a server
+        session. Without one the board still changes — the child is drawing —
+        and nothing re-took the picture, so the centre panel froze on its first
+        raster. The engine reporting a diff is the honest signal either way.
+      */
+      useXrSession.getState().bumpRevision();
     },
     [session],
   );
