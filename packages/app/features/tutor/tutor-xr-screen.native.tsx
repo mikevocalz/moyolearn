@@ -83,6 +83,7 @@ import {
 import { View as UiView } from '@acme/ui/primitives';
 import {
   BoardTextureHost,
+  XrTriPanel,
   XrBoardInk,
   XrBoardLive,
   XrBoardRaster,
@@ -209,6 +210,17 @@ const active: {
 
 /** The engine handle, as a stable reader — see `strokeOpen` in `BoardScene`. */
 const readEngine = () => active.engine;
+
+/**
+ * A 1×1 transparent PNG. The side panels are text lists, and their media column
+ * is switched off (`mediaFraction={0}`) — but the component's `imageSource` is
+ * required, so this is the honest nothing to hand it.
+ */
+/** Her name, in one place — the chat panel already hardcoded it inline. */
+const TUTOR_NAME = 'Natalie';
+
+const BLANK_PNG =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
 
 /** The composition's own case, so the two callers that place it cannot disagree. */
 const BOARD_PLACE = { distanceM: spatialDistance.board, dropM: boardComposition.anchorDrop };
@@ -744,6 +756,37 @@ function BoardScene() {
         the board already faces the child, and she stands in its frame.
       */}
       <XrNatalie position={nataliePosition} rotationY={placement.rotation[1]} />
+      {/*
+        THE FLANKS: tools left, the conversation right, each its own draggable
+        `PremiumXRMediaPanel` on the arc — the poke-xr composition. They are
+        placed in WORLD space from the child's head rather than parented to it,
+        because the board between them does world-space ray maths and two
+        frames in one scene is ink that lands slightly wrong.
+      */}
+      {active.head !== null ? (
+        <XrTriPanel
+          headPosition={active.head.position}
+          headYawDeg={placement.rotation[1]}
+          tutorName={TUTOR_NAME}
+          placeholderUri={BLANK_PNG}
+          chatRows={chatRows.map((row, index) => ({
+            id: `${index}`,
+            text: row.text,
+            label: row.role === 'tutor' ? TUTOR_NAME : 'You',
+          }))}
+          controlRows={[
+            { id: 'pen', text: 'Pen', label: tool === 'draw' ? 'on' : '' },
+            { id: 'mark', text: 'Highlighter', label: tool === 'highlight' ? 'on' : '' },
+            { id: 'erase', text: 'Eraser', label: tool === 'eraser' ? 'on' : '' },
+            { id: 'ink', text: `Colour: ${ink}` },
+            { id: 'undo', text: 'Undo' },
+            { id: 'redo', text: 'Redo' },
+            { id: 'clear', text: 'Clear' },
+            { id: 'ask', text: `Ask ${TUTOR_NAME}`, emphasis: true },
+          ]}
+        />
+      ) : null}
+
       <XrPanel
         width={boardWidth}
         aspect={BOARD_ASPECT}
@@ -843,7 +886,7 @@ function BoardScene() {
               distanceM={distanceM}
               handsPrimary={handsPrimary}
               band={band}
-              tutorName="Natalie"
+              tutorName={TUTOR_NAME}
               status={statusLabel(stageKind)}
               /*
                 WHAT SHE CAN ACTUALLY SEE. The board does not stream to her —

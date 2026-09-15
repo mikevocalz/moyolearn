@@ -1,109 +1,91 @@
 'use client';
-// The three panels, on the arc, at the child's eye level — controls left,
-// board centre, conversation right.
+// The two flanking panels, on the arc, at the child's eye level — tools to the
+// left, the conversation to the right.
 //
-// WHAT THIS REPLACES. The board used to carry its rail and the chat as
-// ornaments of ONE anchor: a rail coplanar with the paper and a companion
-// hanging off its edge, which read in the headset as a single wide slab. These
-// are three separate `PremiumXRMediaPanel`s — the poke-xr component, vendored
-// whole under `premium/` — each snapped to its own named slot, each draggable
-// on its own, each snapping back when released.
+// WHY THE CENTRE IS NOT HERE, AND THAT IS DELIBERATE. The board is `XrPanel`,
+// and it stays `XrPanel` because it is the only surface a child DRAWS on: its
+// pointer quad, its drag plane and its world→surface mapping are all computed
+// in WORLD space (`surface-drag.ts`). Parenting it under a head node would make
+// that placement head-local while the ray stayed world — ink at a plausible,
+// slightly wrong place, which is the hardest class of bug to see in a headset
+// and the one ADR-117 already paid for once. So the flanks are placed in world
+// space too, from the same head pose, and every surface keeps one frame.
 //
-// THE HEAD IS THE PARENT, AND THAT IS THE EYE-LEVEL FIX. `SLOTS` is authored
-// head-relative: a cylinder of radius 1.9 m around the ORIGIN, at `SLOT_Y`
-// just below eye level. That is only true if the origin IS the head, and on a
-// PICO the world origin is the FLOOR — which is exactly how three sessions in
-// a row opened with the composition at the child's feet. So this node is
-// placed AT the head pose and the three panels hang off it in the frame they
-// were designed for. Standing, seated, tall, small: the arc follows the head
-// rather than assuming one.
+// THE ARC IS `SLOTS`, ROTATED ONTO THE HEAD. poke-xr authors the three slots
+// head-relative — a cylinder of radius 1.9 m at `SLOT_Y`, just below eye level
+// — which is only true when the origin IS the head. On a PICO the world origin
+// is the FLOOR, and that single mismatch is what opened the composition at the
+// child's feet three sessions running. Here the slot offsets are turned by the
+// child's yaw and added to their measured head position, so "eye level" holds
+// standing or seated, for any height.
 //
-// THE BOARD IS THE CENTRE PANEL'S MEDIA. `imageSource` takes the engine's own
-// raster (`WhiteboardHandle.exportPng`), which is the picture the spatial paper
-// was already drawing — so the centre slot shows the real board rather than a
-// second rendering of it.
-// SOT: packages/ui/xr/premium/index.ts · packages/app/features/tutor/tutor-xr-screen.native.tsx
-// SOT-KEYWORDS: xr tri panel three slots arc drag snap eye level head relative board chat controls
+// THE PANELS THEMSELVES ARE poke-xr's, VENDORED WHOLE (`premium/`): slot
+// snapping, drag with snap-back, and a scrolling row rail that has been revised
+// seven times against this hardware. The conversation is what that rail is for.
+// SOT: packages/ui/xr/premium/index.ts · packages/ui/xr/surface-drag.ts
+// SOT-KEYWORDS: xr tri panel side panels arc slots drag snap scroll eye level head relative world space
 
-import { ViroNode } from '@reactvision/react-viro';
-import { PremiumXRMediaPanel, type MediaPanelRow } from './premium/index.ts';
+import { PremiumXRMediaPanel, SLOTS } from './premium/index.ts';
 import type { XrVector3 } from './XrPanel.types.ts';
+import type { XrTriPanelProps } from './XrTriPanel.types.ts';
 
-export interface XrTriPanelProps {
-  /** The child's head in world metres — the frame `SLOTS` is authored in. */
-  headPosition: XrVector3;
-  /** The child's facing, in degrees about Y. The whole arc turns with them. */
-  headYawDeg: number;
-  /** The board, as the engine's own PNG. Null until the first raster lands. */
-  boardUri: string | null;
-  /** The question above the board, as the centre panel's title. */
-  boardTitle: string;
-  /** Rows for the conversation panel — oldest first; the panel scrolls them. */
-  chatRows: readonly MediaPanelRow[];
-  /** Rows for the controls panel: what the rail offers, as readable lines. */
-  controlRows: readonly MediaPanelRow[];
-  tutorName: string;
-  /** A blank 1×1 the media column falls back to before the first raster. */
-  placeholderUri: string;
+/** A head-local slot offset, turned by the child's yaw and put in world space. */
+function worldSlot(
+  slot: 'left' | 'right',
+  head: XrVector3,
+  yawDeg: number,
+): { position: [number, number, number]; yaw: number } {
+  const { position, yaw } = SLOTS[slot];
+  const t = (yawDeg * Math.PI) / 180;
+  const cos = Math.cos(t);
+  const sin = Math.sin(t);
+  const [x, y, z] = position;
+  /* Rotation about +Y: the same convention `xrDragPlane` builds its normal in,
+     so a panel and the ray that hits it agree about which way the child faces. */
+  return {
+    position: [head[0] + x * cos + z * sin, head[1] + y, head[2] + (-x * sin + z * cos)],
+    yaw: yaw + yawDeg,
+  };
 }
 
 export function XrTriPanel({
   headPosition,
   headYawDeg,
-  boardUri,
-  boardTitle,
   chatRows,
   controlRows,
   tutorName,
   placeholderUri,
 }: XrTriPanelProps) {
+  const left = worldSlot('left', headPosition, headYawDeg);
+  const right = worldSlot('right', headPosition, headYawDeg);
+
   return (
-    <ViroNode
-      position={[headPosition[0], headPosition[1], headPosition[2]]}
-      rotation={[0, headYawDeg, 0]}
-    >
-      {/*
-        Each panel owns its slot. `draggable` and `snapOnRelease` are the
-        component's defaults and are named here because they are the behaviour
-        being asked for: a child can pull a panel toward them and let go, and it
-        returns to the arc.
-      */}
+    <>
       <PremiumXRMediaPanel
-        slot="left"
         title="Tools"
         imageSource={{ uri: placeholderUri }}
         rows={[...controlRows]}
         size="standardCard"
+        /* No art column: these panels are a list, and a media strip would take
+           the width the rows read in. */
         mediaFraction={0}
+        worldPlacement={left}
         draggable
         snapOnRelease
-        useSlotYaw
       />
       <PremiumXRMediaPanel
-        slot="center"
-        title={boardTitle}
-        imageSource={{ uri: boardUri ?? placeholderUri }}
-        rows={[]}
-        size="widePanel"
-        /* The board IS the panel: the media column takes the whole body. */
-        mediaFraction={1}
-        draggable
-        snapOnRelease
-        useSlotYaw
-      />
-      <PremiumXRMediaPanel
-        slot="right"
         title={tutorName}
         imageSource={{ uri: placeholderUri }}
         rows={[...chatRows]}
         size="standardCard"
         mediaFraction={0}
+        worldPlacement={right}
         draggable
         snapOnRelease
-        useSlotYaw
-        /* The conversation is the one surface that genuinely needs the rail. */
+        /* The conversation is the surface that genuinely needs the rail — it is
+           the only one that outgrows its panel. */
         alwaysShowRail
       />
-    </ViroNode>
+    </>
   );
 }

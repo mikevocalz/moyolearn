@@ -24,6 +24,7 @@ import type { XrRailProps } from './XrRail.types.ts';
 import type { XrBoardInkProps } from './XrBoardInk.types.ts';
 import type { XrBoardRasterProps } from './XrBoardRaster.types.ts';
 import type { XrBoardLiveProps } from './XrBoardLive.types.ts';
+import type { XrTriPanelProps } from './XrTriPanel.types.ts';
 import type { BoardTextureHostProps } from './BoardTextureHost.types.ts';
 import type { XrChatPanelProps } from './XrChatPanel.types.ts';
 import type { XrQuestionLineProps, XrPlacementControlsProps } from './XrOrnaments.types.ts';
@@ -41,6 +42,9 @@ export function XrBoardRaster(_props: XrBoardRasterProps) {
   return null;
 }
 export function XrBoardLive(_props: XrBoardLiveProps) {
+  return null;
+}
+export function XrTriPanel(_props: XrTriPanelProps) {
   return null;
 }
 /*

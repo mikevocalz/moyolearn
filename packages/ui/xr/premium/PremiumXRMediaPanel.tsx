@@ -461,6 +461,17 @@ type Props = {
   alwaysShowRail?: boolean;
   /** Use SLOTS[s].yaw instead of the TILT table. Default false. */
   useSlotYaw?: boolean;
+  /**
+   * Place the panel in WORLD space instead of at its head-relative slot.
+   *
+   * `SLOTS` is authored around an origin that IS the head. On a floor-
+   * referenced runtime (PICO) that assumption puts the whole arc at the user's
+   * feet, and re-parenting the panel under a head node is not an option for a
+   * scene whose sibling surfaces do world-space ray maths. So the caller may
+   * hand in the already-resolved world pose; drag, snap-back and the slot
+   * scale all keep working against it.
+   */
+  worldPlacement?: { position: [number, number, number]; yaw: number };
   scrollOnSwipe?: boolean;
   closeSources?: {
     source: ImageSource;
@@ -508,6 +519,7 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
   debug = false,
   alwaysShowRail = false,
   useSlotYaw = false,
+  worldPlacement,
   scrollOnSwipe = true,
   closeSources,
   onTransition,
@@ -842,11 +854,11 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
   return (
     <ViroNode
       position={[
-        mountPose.position[0] + dragOffset[0],
-        mountPose.position[1] + dragOffset[1],
-        mountPose.position[2] + dragOffset[2],
+        (worldPlacement?.position[0] ?? mountPose.position[0]) + dragOffset[0],
+        (worldPlacement?.position[1] ?? mountPose.position[1]) + dragOffset[1],
+        (worldPlacement?.position[2] ?? mountPose.position[2]) + dragOffset[2],
       ]}
-      rotation={[0, activeYaw, 0]}
+      rotation={[0, worldPlacement?.yaw ?? activeYaw, 0]}
       scale={activeScale}
       animation={{
         name: snapAnimName(activeSlot),

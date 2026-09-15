@@ -20,6 +20,7 @@ export {
   XrBoardInk,
   XrBoardRaster,
   XrBoardLive,
+  XrTriPanel,
   BoardTextureHost,
   XrChatPanel,
   XrQuestionLine,
@@ -36,6 +37,7 @@ export type { XrRailProps } from './XrRail.types.ts';
 export type { XrBoardInkProps } from './XrBoardInk.types.ts';
 export type { XrBoardRasterProps } from './XrBoardRaster.types.ts';
 export type { XrBoardLiveProps } from './XrBoardLive.types.ts';
+export type { XrTriPanelProps, XrPanelRow } from './XrTriPanel.types.ts';
 export type {
   BoardTextureBinding,
   BoardTextureHostProps,
