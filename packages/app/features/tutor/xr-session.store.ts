@@ -302,6 +302,15 @@ interface XrSessionState {
    * picks it up and takes its one path.
    */
   pendingAsk: string | null;
+  /**
+   * WHAT THE CHILD SAID, waiting for the same claim as the board.
+   *
+   * Held apart from `pendingAsk` because they are two facts and either can
+   * arrive alone: a child can talk without drawing, and the Ask button still
+   * sends a silent board when they have nothing to say. The tutor screen pairs
+   * whichever showed up into one turn.
+   */
+  pendingSay: string | null;
 
   beginEntry(): void;
   /**
@@ -348,6 +357,10 @@ interface XrSessionState {
   queueAsk(png: string | null): void;
   /** The tutor screen claims it. Reading it clears it, so it cannot send twice. */
   takeAsk(): string | null;
+  /** The spatial route transcribed a question. Empty text is dropped. */
+  queueSay(text: string): void;
+  /** Claimed exactly like the board, and for the same reason. */
+  takeSay(): string | null;
   /** Leaving the spatial screen. The session itself is untouched. */
   exit(): void;
 }
@@ -359,6 +372,7 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
   skippedRecords: 0,
   boardTextureBound: false,
   pendingAsk: null,
+  pendingSay: null,
   band: 'young',
   tool: 'draw',
   ink: 'black',
@@ -396,6 +410,15 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
   setAsking: (asking) => set({ asking }),
   bumpRevision: () => set((state) => ({ revision: state.revision + 1 })),
   queueAsk: (png) => set({ pendingAsk: png }),
+  queueSay: (text) => {
+    const trimmed = text.trim();
+    if (trimmed.length > 0) set({ pendingSay: trimmed });
+  },
+  takeSay: () => {
+    const { pendingSay } = get();
+    if (pendingSay !== null) set({ pendingSay: null });
+    return pendingSay;
+  },
   takeAsk: () => {
     /* `get`, not the hook: reading the store from inside its own initialiser
        makes its type circular and infers `any` for the whole slice. */
@@ -431,6 +454,7 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
       phase: openingPhase(),
       entering: false,
       pendingAsk: null,
+      pendingSay: null,
       asking: false,
       boardTextureBound: false,
     }),

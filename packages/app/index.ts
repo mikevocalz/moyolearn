@@ -205,6 +205,21 @@ export { useMemoryStore, pendingCascade } from './features/memory/memory.store';
 export { MEMORY_FACTS, MEMORY_TRANSCRIPTS, GROUPS as MEMORY_GROUPS, provenanceLabel } from './features/memory/memory.data';
 export type { TranscriptLine } from './features/memory/memory.data';
 export { FamilyCalendarScreen } from './features/family-calendar/screen';
+/* The permission checklist and the requester behind it. One entry point, so a
+   feature that needs a grant asks the same way the checklist does. */
+export {
+  PermissionChecklist,
+  usePermissions,
+  usePermissionRequester,
+  PERMISSION_KEYS,
+  PERMISSION_COPY,
+  canAsk,
+  allGranted,
+  type PermissionKey,
+  type PermissionState,
+  type PermissionCopy,
+  type PermissionRequester,
+} from './features/permissions';
 export { OnboardingScreen } from './features/onboarding/screen';
 export { PublicEntryContent } from './features/onboarding/public-entry-content';
 export { SignInContent } from './features/onboarding/sign-in-content';

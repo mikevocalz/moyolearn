@@ -5,6 +5,7 @@ import { useRouter } from 'solito/navigation';
 import { isBillingRole } from '@acme/auth';
 import { Section, View, Pressable } from '@acme/ui/tw';
 import { Button, Card, Heading, Switch, Text, FadeIn } from '@acme/ui';
+import { PermissionChecklist } from '../permissions';
 import { authClient, useAppSession } from '../../providers/session';
 import { useProfile, type ThemePreference } from '../profile/profile.store';
 
@@ -100,6 +101,27 @@ export function SettingsContent({ managePlanHref }: { managePlanHref?: string })
             <Text variant="caption" tone="muted">Follow the device, or pick a side.</Text>
           </View>
           <ThemeSegment />
+        </Card>
+      </FadeIn>
+
+      {/*
+        PERMISSIONS, WHERE A GUARDIAN CAN ACTUALLY REACH THEM.
+
+        Android silently ignores a permission request once it has been refused
+        twice — no dialog, no error, the feature just fails — so a checklist
+        that only appears in front of a feature has no answer for a child who
+        already said no. This is the page they can come back to, and it is the
+        only surface in the app that can send them to system settings.
+      */}
+      <FadeIn delay={170}>
+        <Card className="gap-4">
+          <View className="gap-1">
+            <Text variant="heading">Permissions</Text>
+            <Text variant="caption" tone="muted">
+              What this app asks your device for, and why.
+            </Text>
+          </View>
+          <PermissionChecklist />
         </Card>
       </FadeIn>
 

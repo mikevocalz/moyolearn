@@ -767,7 +767,14 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     if (pending === null) return;
     if (!attachments.some((a) => a.id === pending.id)) return;
     sendWhenStaged.current = null;
-    handleSend('', { fromBoard: pending.fromBoard });
+    /*
+      The spoken question rides with the board it is about. A child in the
+      headset saying "is this right?" means the thing they just drew, and a
+      transcript sent as its own turn arrives with no subject.
+    */
+    const spoken = spokenWithBoard.current;
+    spokenWithBoard.current = '';
+    handleSend(spoken, { fromBoard: pending.fromBoard });
   });
 
   const handlePickDocument = useCallback(() => {
@@ -803,6 +810,11 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   const beginXrEntry = useXrSession((s) => s.beginEntry);
   const pendingXrAsk = useXrSession((s) => s.pendingAsk);
   const takeXrAsk = useXrSession((s) => s.takeAsk);
+  const pendingXrSay = useXrSession((s) => s.pendingSay);
+  const takeXrSay = useXrSession((s) => s.takeSay);
+  /* What the child said in the headset, waiting for the board to finish
+     staging. A ref because the armed send reads it and must not re-run. */
+  const spokenWithBoard = useRef('');
 
   const handleOpenXr = useCallback(() => {
     if (xrEntering) return;
@@ -859,6 +871,28 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     const png = takeXrAsk();
     if (png !== null) handleAskBoard(png);
   }, [handleAskBoard, pendingXrAsk, takeXrAsk]);
+
+  /*
+    A SPOKEN QUESTION FROM THE HEADSET, WHICH IS THE OTHER HALF OF ASK.
+
+    Claimed before the board so the transcript is already in hand when the
+    staging effect above fires — the spatial route queues both in that order,
+    and pairing them here means the tutor gets one turn rather than a mute
+    picture followed by a subject-less sentence.
+
+    With no board in flight it sends on its own: a child can talk without
+    having drawn anything.
+  */
+  useEffect(() => {
+    if (pendingXrSay === null) return;
+    const said = takeXrSay();
+    if (said === null) return;
+    if (sendWhenStaged.current !== null || useXrSession.getState().pendingAsk !== null) {
+      spokenWithBoard.current = said;
+      return;
+    }
+    handleSend(said);
+  }, [pendingXrSay, takeXrSay]);
 
   /*
     NO PROBLEM IS STILL A PLACE.

@@ -136,6 +136,7 @@ import { SPATIAL_PERMISSIONS, spatialPermissionsGranted } from './xr-capability.
    nothing on a web resolver's path ever names the renderer. */
 import { currentXrEligibility } from './xr-eligibility';
 import { panelStateOf, useXrSession, type XrPhase } from './xr-session.store.ts';
+import { useXrVoice } from './xr-voice.native.ts';
 
 /* Temporary: names the vendored module that throws at import. See probe. */
 probePremiumImports();
@@ -695,6 +696,49 @@ function BoardScene() {
     miss !== null && panelState === 'ready' ? 'interrupted' : panelState;
 
   /*
+    THE ASK BUTTON IS A MICROPHONE NOW, not a silent screenshot.
+
+    It used to export the board and stage it as an image, which is why pressing
+    it never let a child TALK to the tutor: nothing on this route ever opened
+    the mic, and `RECORD_AUDIO` sitting in the manifest grants nothing on its
+    own. Press starts listening, press again stops; the transcript and the board
+    are queued together so the tutor answers the question about the thing the
+    child just drew.
+  */
+  const voice = useXrVoice({
+    enabled: composedState === 'ready' || composedState === 'interrupted',
+    onUtterance: (text) => {
+      useXrSession.getState().queueSay(text);
+      useXrSession.getState().setAsking(true);
+      void active.engine?.exportPng().then((png) => {
+        useXrSession.getState().setAsking(false);
+        active.onAsk(png);
+      });
+    },
+  });
+  /*
+    ONE LABEL, FIVE STATES, AND NONE OF THEM ARE JARGON. A child in a headset
+    reads this from two and a half metres away, so each is a short sentence
+    about what just happened rather than a status word. The two failures say
+    what to do next: a refused microphone is a grown-up's job, and a take that
+    came back empty is worth one more try.
+  */
+  const askLabel = ((): string => {
+    switch (voice.phase.kind) {
+      case 'listening':
+        return 'Listening — press to send';
+      case 'transcribing':
+        return 'One moment…';
+      case 'blocked':
+        if (voice.phase.reason === 'permission') return 'Microphone is off';
+        if (voice.phase.reason === 'silent') return "Didn't catch that — try again";
+        return 'Microphone unavailable';
+      case 'idle':
+        return `Ask ${TUTOR_NAME}`;
+    }
+  })();
+
+  /*
     WHETHER INK WOULD LAND WHERE THE CHILD POINTED. The engine measures this
     itself and reports it (`WhiteboardHandle.calibrate`); the screen turns a
     failure into this phase, and this is where that verdict stops being a
@@ -861,15 +905,16 @@ function BoardScene() {
             {
               id: 'ask',
               face: 'ask',
-              text: `Ask ${TUTOR_NAME}`,
+              /*
+                THE BUTTON SAYS WHAT IT IS DOING, because in a headset there is
+                no other way to know the microphone is open. A child who cannot
+                see a recording indicator and cannot hear themselves back has
+                only this label to tell them they are being listened to.
+              */
+              text: askLabel,
               emphasis: true,
-              onPress: () => {
-                useXrSession.getState().setAsking(true);
-                void active.engine?.exportPng().then((png) => {
-                  useXrSession.getState().setAsking(false);
-                  active.onAsk(png);
-                });
-              },
+              active: voice.phase.kind === 'listening',
+              onPress: voice.toggle,
             },
           ]}
         />
@@ -1049,6 +1094,14 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
     useXrSession.getState().setBand(ageBand);
     return null;
   });
+
+  /*
+    ONE LABEL, FIVE STATES, AND NONE OF THEM ARE JARGON. A child in a headset
+    reads this from two and a half metres away, so each is a short sentence
+    about what just happened rather than a status word. The two failures say
+    what to do next: a refused microphone is a grown-up's job, and a take that
+    came back empty is worth one more try.
+  */
   useEffect(() => {
     useXrSession.getState().setBand(ageBand);
   }, [ageBand]);
