@@ -80,6 +80,7 @@ export interface XrNatalieProps {
   rotationY: number;
 }
 
+
 export function XrNatalie({ position, rotationY }: XrNatalieProps) {
   const model = useRef<Viro3DObject>(null);
   const loaded = useRef(false);
@@ -208,8 +209,20 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
     };
   }, []);
 
+  /*
+    DRAGGABLE, like the panels. `FixedDistance` keeps her at the radius the ray
+    grabbed her at, so a child slides her around themselves rather than pushing
+    her into a wall — the same affordance the panels use, and the reason her
+    NODE carries it rather than the model: dragging the Viro3DObject directly
+    would move the mesh out of the node the drive loop writes to.
+  */
   return (
-    <ViroNode position={position} rotation={[0, rotationY, 0]}>
+    <ViroNode
+      position={position}
+      rotation={[0, rotationY, 0]}
+      dragType="FixedDistance"
+      onDrag={() => undefined}
+    >
       <Viro3DObject
         ref={model}
         source={NATALIE_GLB}

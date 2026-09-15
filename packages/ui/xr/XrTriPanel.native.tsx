@@ -68,7 +68,7 @@ export function XrTriPanel({
         title="Tools"
         imageSource={{ uri: placeholderUri }}
         rows={[...controlRows]}
-        size="standardCard"
+        size="portraitCard"
         /* No art column: these panels are a list, and a media strip would take
            the width the rows read in. */
         mediaFraction={0}
@@ -87,7 +87,7 @@ export function XrTriPanel({
         title={boardTitle}
         imageSource={{ uri: boardUri ?? placeholderUri }}
         rows={[]}
-        size="widePanel"
+        size="boardPanel"
         mediaFraction={1}
         worldPlacement={centre}
         draggable
@@ -97,7 +97,7 @@ export function XrTriPanel({
         title={tutorName}
         imageSource={{ uri: placeholderUri }}
         rows={[...chatRows]}
-        size="standardCard"
+        size="portraitCard"
         mediaFraction={0}
         worldPlacement={right}
         draggable

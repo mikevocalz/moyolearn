@@ -64,15 +64,28 @@ export const SLOT_ORDER: PanelSlot[] = ['left', 'center', 'right'];
 
 // Far end of distance.comfortableUI (1.25–2.0 m): pushed out because the prior
 // layout read too close. One knob — raise to move the whole arc away.
-const ARC_RADIUS = 1.9;
-const AZIMUTH_DEG = 30; // MODEL (right) turn from dead-ahead
+/*
+  2.6, not 1.9. Measured in the headset: at 1.9 m the composition read as being
+  in the user's face, and Viro's own guidance puts comfortable UI past arm's
+  reach. 2.6 also leaves the avatar room to stand BEHIND the arc rather than
+  in front of the board.
+*/
+const ARC_RADIUS = 2.6;
+const AZIMUTH_DEG = 34; // side panels, turn from dead-ahead
 // Panel (left) sits FURTHER out than the model: the wide reading panel would
 // otherwise crowd the centre buttons. Bigger azimuth = more to the left + more
 // slant, opening a clear gap for the middle zone. Spacing knob — raise to push
 // the panel further left, lower to bring it in.
-const PANEL_AZIMUTH_DEG = 44;
+/*
+  Symmetric now. The old 44 vs 30 split existed because poke-xr's left panel was
+  a wide reading surface and its right was a model; here both flanks are the
+  same 9:16 card, so they sit at the same angle either side of the board.
+  34 deg clears the 1.4 m centre panel and the 0.62 m flank with 4 deg to spare
+  at this radius.
+*/
+const PANEL_AZIMUTH_DEG = 34;
 const TOE_DEG = 3; // extra inward face so sides wrap, not slab sideways
-const SLOT_Y = -0.1; // just below eye level
+const SLOT_Y = -0.1; // just below eye level (head-relative; see XrTriPanel)
 
 const rad = (d: number) => (d * Math.PI) / 180;
 const onArc = (

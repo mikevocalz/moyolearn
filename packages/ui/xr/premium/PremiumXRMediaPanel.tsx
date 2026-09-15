@@ -196,6 +196,11 @@ const SIZES = {
      Same token source as the originals (`panelSize`), so nothing is invented. */
   compactCard: panelSize.compactCard, // 0.45 × 0.28
   standardCard: panelSize.standardCard, // 0.70 × 0.42
+  /* 9:16 portrait — the shape a tool list and a conversation actually want,
+     and what the flanks of MoyoLearn's arc are. */
+  portraitCard: { width: 0.62, height: 1.1 },
+  /* The board: wide enough to write across, at the arc's radius. */
+  boardPanel: { width: 1.4, height: 0.9 },
   widePanel: panelSize.widePanel, // 1.70 × 0.90
   theaterPanel: panelSize.theaterPanel, // 2.40 × 1.35
 } as const;

@@ -234,8 +234,10 @@ const BLANK_PNG =
  * where she was under a metre away and covering it. 52° clears the right
  * panel's own 30° slot so the two do not overlap from the child's eye.
  */
-const NATALIE_DISTANCE_M = 2.6;
-const NATALIE_AZIMUTH_DEG = 52;
+const NATALIE_DISTANCE_M = 3.0;
+/* Past the right panel's 34 deg, so she stands beside the arc rather than in
+   front of the board — and far enough out to read as across the room. */
+const NATALIE_AZIMUTH_DEG = 58;
 
 /** The composition's own case, so the two callers that place it cannot disagree. */
 const BOARD_PLACE = { distanceM: spatialDistance.board, dropM: boardComposition.anchorDrop };
