@@ -83,7 +83,6 @@ import {
 import { View as UiView } from '@acme/ui/primitives';
 import {
   BoardTextureHost,
-  XrTriPanel,
   XrBoardInk,
   XrBoardLive,
   XrBoardRaster,
@@ -756,37 +755,6 @@ function BoardScene() {
         the board already faces the child, and she stands in its frame.
       */}
       <XrNatalie position={nataliePosition} rotationY={placement.rotation[1]} />
-      {/*
-        THE FLANKS: tools left, the conversation right, each its own draggable
-        `PremiumXRMediaPanel` on the arc — the poke-xr composition. They are
-        placed in WORLD space from the child's head rather than parented to it,
-        because the board between them does world-space ray maths and two
-        frames in one scene is ink that lands slightly wrong.
-      */}
-      {active.head !== null ? (
-        <XrTriPanel
-          headPosition={active.head.position}
-          headYawDeg={placement.rotation[1]}
-          tutorName={TUTOR_NAME}
-          placeholderUri={BLANK_PNG}
-          chatRows={chatRows.map((row, index) => ({
-            id: `${index}`,
-            text: row.text,
-            label: row.role === 'tutor' ? TUTOR_NAME : 'You',
-          }))}
-          controlRows={[
-            { id: 'pen', text: 'Pen', label: tool === 'draw' ? 'on' : '' },
-            { id: 'mark', text: 'Highlighter', label: tool === 'highlight' ? 'on' : '' },
-            { id: 'erase', text: 'Eraser', label: tool === 'eraser' ? 'on' : '' },
-            { id: 'ink', text: `Colour: ${ink}` },
-            { id: 'undo', text: 'Undo' },
-            { id: 'redo', text: 'Redo' },
-            { id: 'clear', text: 'Clear' },
-            { id: 'ask', text: `Ask ${TUTOR_NAME}`, emphasis: true },
-          ]}
-        />
-      ) : null}
-
       <XrPanel
         width={boardWidth}
         aspect={BOARD_ASPECT}
