@@ -54,6 +54,14 @@ const NATALIE_GLB = require('@acme/avatar/assets/natalie-viro.glb');
 
 const TICK_MS = 33;
 
+/*
+  Off until the rest-pose read and the pose math are confirmed on device. When
+  false she stands in her loaded rest pose with a live face — which is the
+  correct thing to ship while the idle body is unverified, and the isolation
+  that tells render-correctness apart from pose-correctness.
+*/
+const BODY_DRIVE_ENABLED = false;
+
 /** Idle channels at rest, for the frames before the engine has stepped. */
 const STILL: SpatialIdleView = {
   breathY: 0,
@@ -77,6 +85,7 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
   const loaded = useRef(false);
 
   useEffect(() => {
+    if (__DEV__) console.warn('[natalie-xr] mounted at', position, 'yaw', rotationY.toFixed(1));
     let timer: ReturnType<typeof setInterval> | null = null;
     let cancelled = false;
 
@@ -99,13 +108,22 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
       try {
         const { matrices } = await handle.getSkeletonBoneTransforms([...SPATIAL_POSE_BONES]);
         const settled = matrices.length === SPATIAL_POSE_BONES.length * 16;
-        /* A missing bone reads back all zeros; a zero basis is not a rest. */
         const legible = settled && SPATIAL_POSE_BONES.every((_, i) => matrices[i * 16] !== 0 || matrices[i * 16 + 1] !== 0 || matrices[i * 16 + 2] !== 0);
-        if (legible) {
+        if (__DEV__) console.warn('[natalie-xr] rest pose read:', settled ? 'ok' : 'wrong-length', 'legible:', legible, 'first-row:', matrices.slice(0, 4));
+        /*
+          BONE DRIVING IS GATED OFF UNTIL THE REST POSE IS PROVEN ON DEVICE.
+          A wrong bone-world matrix does not fail — it scales or shears the mesh
+          into a wall of geometry ("all I can see is her eyes"). She renders in
+          her loaded rest pose first; the idle body turns on only once the rest
+          read is confirmed sane in the headset. Face morphs stay live — they
+          are clamped 0..1 and cannot deform geometry scale.
+        */
+        if (legible && BODY_DRIVE_ENABLED) {
           restPose = matrices;
           bonesLive = true;
         }
-      } catch {
+      } catch (e) {
+        if (__DEV__) console.warn('[natalie-xr] rest pose read FAILED', String(e));
         bonesLive = false;
       }
       if (cancelled) return;
