@@ -186,6 +186,17 @@ const active: {
    * composition is actually drawn from.
    */
   head: XrHeadPose | null;
+  /**
+   * The scene itself, for the one thing only it can answer: where the head is.
+   *
+   * `onCameraTransformUpdate` is SILENT ON A HEADSET — `notifyCameraTransform`
+   * is called by the AR, Cardboard, Daydream and OVR input controllers and by
+   * no one else, so the OpenXR path never emitted it (fixed in the fork for
+   * 3.0.0-moyo.3, still absent on any binary older than that). The pull
+   * `getCameraOrientationAsync` goes through `VRTCameraModule` and works on
+   * every build, which is why placement hangs off it rather than off the event.
+   */
+  scene: ViroARScene | null;
 } = {
   engine: null,
   session: null,
@@ -193,6 +204,7 @@ const active: {
   onAsk: () => undefined,
   inkAligned: true,
   head: null,
+  scene: null,
 };
 
 /** The engine handle, as a stable reader — see `strokeOpen` in `BoardScene`. */
@@ -200,6 +212,21 @@ const readEngine = () => active.engine;
 
 /** The composition's own case, so the two callers that place it cannot disagree. */
 const BOARD_PLACE = { distanceM: spatialDistance.board, dropM: boardComposition.anchorDrop };
+
+/**
+ * Whether a pose is a located head rather than the renderer's first-frame
+ * identity. Measured on the PICO: the camera reports from the ORIGIN with a
+ * zero-length forward for the opening frames, and a placement latched off one
+ * of those is the exact floor-level composition this predicate exists to end.
+ * Real tracking never lands on the mathematical origin.
+ */
+function isCredibleHeadPose(pose: XrHeadPose): boolean {
+  const [px, py, pz] = pose.position;
+  const [fx, , fz] = pose.forward;
+  if (![px, py, pz, fx, fz].every(Number.isFinite)) return false;
+  if (Math.hypot(fx, fz) < 1e-3) return false;
+  return Math.hypot(px, py, pz) > 1e-3;
+}
 
 /** Where a board goes when the engine's mapping is the thing that is wrong. */
 const INK_INTERRUPTED = { kind: 'interrupted', reason: 'calibration-failed' } as const;
@@ -247,6 +274,12 @@ function handleTrackingUpdated(state: ViroTrackingState): void {
       the wrong place — and it cleared the one sentence telling them why. The
       renderer only gets to end the interruption it caused.
     */
+    /*
+      The first normal tracking report is where the composition gets placed:
+      before it the runtime has no head pose to give, and after it the answer
+      is stable. `active.head` is the once-only latch.
+    */
+    if (active.head === null) void placeFromHead();
     if (phase.kind === 'interrupted') advance(readyOrInterrupted());
     return;
   }
@@ -257,6 +290,52 @@ function handleTrackingUpdated(state: ViroTrackingState): void {
         ? 'tracking-lost'
         : 'tracking-limited',
   });
+}
+
+/**
+ * Ask the renderer where the child is, and put the composition in front of
+ * them.
+ *
+ * THE PULL EXISTS BECAUSE THE PUSH DOES NOT. Measured on a PICO 4 Ultra: the
+ * board, the rail and Natalie all rendered at the child's feet, because a
+ * floor-referenced runtime makes `[0, -0.1, -1.5]` mean "10 cm above the
+ * carpet" and the event that was supposed to correct it never fired.
+ * `VROInputControllerOpenXR::onProcess` simply did not call
+ * `notifyCameraTransform` — every other controller in the renderer does.
+ *
+ * So the placement is driven by a FACT the scene can be asked for at a moment
+ * that means something: tracking going normal. Not a timer, not a retry loop —
+ * the runtime saying it knows where the room is is exactly when it can also
+ * say where the head is.
+ */
+async function placeFromHead(): Promise<void> {
+  const scene = active.scene;
+  if (scene === null) return;
+  try {
+    const orientation = (await scene.getCameraOrientationAsync()) as {
+      position: number[];
+      forward: number[];
+    };
+    /* The module answers with plain arrays; a short one is a runtime that has
+       not answered at all, and reading [2] off it would be a silent NaN. */
+    if (orientation.position.length < 3 || orientation.forward.length < 3) return;
+    const pose: XrHeadPose = {
+      position: [orientation.position[0]!, orientation.position[1]!, orientation.position[2]!],
+      forward: [orientation.forward[0]!, orientation.forward[1]!, orientation.forward[2]!],
+    };
+    /* A runtime that has not located the head yet answers with the origin and
+       a zero forward; placing off that would put the board back on the floor. */
+    if (!isCredibleHeadPose(pose)) {
+      if (__DEV__) console.warn('[tutor-xr] camera pull: pose not credible yet', pose.position);
+      return;
+    }
+    active.head = pose;
+    if (__DEV__) console.warn('[tutor-xr] placing from camera pull', pose.position);
+    useXrSession.getState().setPlacement(placeInFrontOf(pose, BOARD_PLACE));
+  } catch {
+    /* An older binary without the camera module keeps the pending placement,
+       which is the same board a metre and a half out, just not turned. */
+  }
 }
 
 /**
@@ -281,10 +360,16 @@ function handleTrackingUpdated(state: ViroTrackingState): void {
  */
 function handleCameraTransform(transform: { position: XrVector3; forward: XrVector3 }): void {
   const pose: XrHeadPose = { position: transform.position, forward: transform.forward };
-  const first = active.head === null;
+  /*
+    THE LATCH IS ON CREDIBILITY, NOT ON ARRIVAL. The first build of this
+    handler placed off the FIRST event — and on the PICO the first event is
+    frame one, head at the origin, before tracking has settled. The garbage
+    pose won the latch and the whole composition stayed at the floor. Now an
+    identity pose neither places nor becomes `active.head`: recenter must not
+    read it either.
+  */
+  if (!isCredibleHeadPose(pose)) return;
   active.head = pose;
-  if (!first) return;
-  useXrSession.getState().setPlacement(placeInFrontOf(pose, BOARD_PLACE));
 }
 
 /**
@@ -725,7 +810,9 @@ function BoardScene() {
                   placement, which is the scene origin and, on a floor-referenced
                   runtime, the floor.
                 */
-                onRecenter={() => recenter(active.head ? placeInFrontOf(active.head, BOARD_PLACE) : undefined)}
+                onRecenter={() => {
+                  void placeFromHead();
+                }}
                 onExit={() => active.onExit()}
               />
             ),
@@ -840,7 +927,11 @@ function BoardScene() {
   */
   return (
     <ViroARScene
+      ref={(scene) => {
+        active.scene = scene;
+      }}
       onTrackingUpdated={handleTrackingUpdated}
+      /* Fires from 3.0.0-moyo.3 onward; harmless and unused before that. */
       onCameraTransformUpdate={handleCameraTransform}
     >
       {content}
@@ -1217,6 +1308,61 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
     phase.kind === 'ready' ||
     phase.kind === 'interrupted' ||
     phase.kind === 'exiting';
+
+  /*
+    THE BOARD IS PLACED FROM A SETTLED HEAD, NOT A CREDIBLE ONE — and the
+    difference is a session that starts at the child's eyes versus one that
+    starts wherever the headset happened to be while they were putting it on.
+
+    Measured, both ways, on the PICO: the first credible pose of a session
+    arrived at y = 0.90 m while the headset was still in the child's hands, was
+    latched, and parked the whole composition at couch height — the third
+    floor-level session in a row, each from a different way of trusting one
+    early pose. A worn head is different from a handled one in exactly one
+    observable: it holds still. So the poll samples the pose the camera event
+    keeps fresh (`active.head`, via the moyo.3 renderer's
+    `notifyCameraTransform`, with `getCameraOrientationAsync` as the pull for
+    older builds), and places when two samples 400 ms apart agree — under
+    20 cm of travel and under ~25° of turn. Unbounded while the scene is up,
+    because a child can fidget for as long as they like; the interval dies
+    with the route.
+  */
+  useEffect(() => {
+    if (!immersive) return;
+    let previous: XrHeadPose | null = null;
+    let placed = false;
+    const timer = setInterval(() => {
+      if (placed) {
+        clearInterval(timer);
+        return;
+      }
+      /* Pull as well as read: on a renderer without the camera event this is
+         the only source, and on one with it this is a no-op refresh. */
+      if (active.head === null) {
+        void placeFromHead().then(() => undefined);
+        return;
+      }
+      const current = active.head;
+      if (previous !== null) {
+        const [px, py, pz] = previous.position;
+        const [cx, cy, cz] = current.position;
+        const travel = Math.hypot(cx - px, cy - py, cz - pz);
+        const turn =
+          previous.forward[0] * current.forward[0] +
+          previous.forward[1] * current.forward[1] +
+          previous.forward[2] * current.forward[2];
+        if (travel < 0.2 && turn > 0.9) {
+          placed = true;
+          if (__DEV__) console.warn('[tutor-xr] placing from settled pose', current.position);
+          useXrSession.getState().setPlacement(placeInFrontOf(current, BOARD_PLACE));
+          clearInterval(timer);
+          return;
+        }
+      }
+      previous = current;
+    }, 400);
+    return () => clearInterval(timer);
+  }, [immersive]);
 
   return (
     <View style={styles.root}>

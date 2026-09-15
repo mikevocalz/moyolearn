@@ -6,7 +6,7 @@
 // reaches it pulls native-only modules into `app.moyolearn.com` — and a headset
 // whiteboard behind a browser tab would not be the feature anyway.
 //
-// What web DOES get is the pure things: the 6:4 layout function and the spatial
+// What web DOES get is the pure things: the 16:8 layout function and the spatial
 // tokens, which are arithmetic and constants. They are exported here because
 // the same numbers describe the 2D board's geometry in tests, and because a
 // shared entry point that answers "nothing" for half its names is an entry

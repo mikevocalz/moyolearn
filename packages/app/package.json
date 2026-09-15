@@ -10,7 +10,8 @@
     "./features/*": "./features/*",
     "./telemetry": "./core/telemetry.ts",
     "./telemetry/mask": "./core/telemetry-mask.ts",
-    "./fixtures/*": "./fixtures/*"
+    "./fixtures/*": "./fixtures/*",
+    "./core/*": "./core/*.ts"
   },
   "scripts": {
     "lint": "eslint",
@@ -18,7 +19,7 @@
     "test": "node --test 'core/**/*.test.ts' 'features/**/*.test.ts' 'providers/**/*.test.ts' && node --test --conditions=react-server 'core/**/*.server-test.ts' 'features/**/*.server-test.ts'"
   },
   "dependencies": {
-    "@reactvision/react-viro": "3.0.0-moyo.2",
+    "@reactvision/react-viro": "3.0.0-moyo.3",
     "@acme/auth": "workspace:*",
     "@acme/avatar": "workspace:*",
     "@acme/inference": "workspace:*",

@@ -44,7 +44,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@reactvision/react-viro": "file:./vendors/reactvision-react-viro-3.0.0-moyo.2.tgz",
+      "@reactvision/react-viro": "file:./vendors/reactvision-react-viro-3.0.0-moyo.3.tgz",
       "@expo-pico/core": "file:./vendors/expo-pico-core-1.0.0.tgz",
       "@expo/dom-webview": "57.0.1",
       "@payloadcms/plugin-cloud-storage": "4.0.0-canary.29",

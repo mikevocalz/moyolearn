@@ -10,7 +10,7 @@
 //
 // The values come from the ViroReact spatial layout system's token set
 // (`spatialSpacing`, `panelSize`, `distance`, `typeScale`) rather than being
-// picked here. What IS picked here is the board's own geometry, because 6:4
+// picked here. What IS picked here is the board's own geometry, because 16:8
 // landscape paper is not in anyone's design system — it is the shape of the
 // homework this app exists for.
 // SOT: packages/ui/xr/board-layout.ts · packages/theme/tokens.ts
@@ -277,7 +277,7 @@ const DESIGN_KEY_BOX = railWidthFor(spatialDistance.board, false, 'young', 1);
 /**
  * The whiteboard composition, in metres.
  *
- * `boardWidth` 0.6 at 1.5 m spans 22.6° × 15.2° — inside the ±30° comfort cone
+ * `boardWidth` 0.6 at 1.5 m spans 22.6° × 11.4° — inside the ±30° comfort cone
  * in both axes, which is the whole reason it is not simply as large as the room
  * allows. A board that fills the view is a board a child has to turn their head
  * to read the bottom of, for an hour, while doing arithmetic.
@@ -342,8 +342,8 @@ export const boardComposition = {
  * The pixel size of the board's own client space.
  *
  * It is a resolution, not a layout: the engine draws at this size and the
- * result is mapped onto the 6:4 surface, so it decides whether a fraction bar
- * reads at 1.5 m and nothing else. 6:4 exactly, so the mapping is a scale and
+ * result is mapped onto the 16:8 surface, so it decides whether a fraction bar
+ * reads at 1.5 m and nothing else. 16:8 exactly, so the mapping is a scale and
  * never a stretch — an anisotropic fit would make a child's handwriting lean.
  *
  * IT IS ALSO THE PAGE'S CSS SIZE, which is what makes it the one number to
@@ -352,7 +352,7 @@ export const boardComposition = {
  * the pointer injection scales rays by it, and the polyline fallback maps page
  * coordinates through it. All three move together because all three read this.
  */
-export const boardSurfacePixels = { width: 1680, height: 1120 } as const;
+export const boardSurfacePixels = { width: 1920, height: 960 } as const;
 
 /**
  * The paper's own stack, in metres, from the surface outwards.

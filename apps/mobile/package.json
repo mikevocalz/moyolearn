@@ -21,7 +21,7 @@
     "@gorhom/bottom-sheet": "catalog:",
     "@react-navigation/native": "catalog:",
     "@expo-pico/core": "1.0.0",
-    "@reactvision/react-viro": "3.0.0-moyo.2",
+    "@reactvision/react-viro": "3.0.0-moyo.3",
     "@sentry/react-native": "catalog:",
     "@tanstack/react-query": "catalog:",
     "expo": "catalog:",

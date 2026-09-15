@@ -56,7 +56,7 @@ import type { XrBoardInkProps } from './XrBoardInk.types.ts';
  * shows. That is what makes an injected pointer at `(u·W, v·H)` and a stroke
  * drawn at the resulting page coordinate land in the same place.
  *
- * The two scales are equal by construction — `boardSurfacePixels` is 6:4 — so
+ * The two scales are equal by construction — `boardSurfacePixels` is 16:8 — so
  * this is a uniform scale and a child's handwriting can never be stretched.
  */
 function pageToSurface(x: number, y: number, width: number, height: number): [number, number, number] {

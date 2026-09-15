@@ -192,8 +192,16 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
         ref={model}
         source={NATALIE_GLB}
         type="GLB"
+        onLoadStart={() => {
+          if (__DEV__) console.warn('[natalie-xr] model load started');
+        }}
         onLoadEnd={() => {
           loaded.current = true;
+          if (__DEV__) console.warn('[natalie-xr] model load ENDED — she should be visible');
+        }}
+        onError={(event) => {
+          /* Absence is the contract, but a silent absence is undebuggable. */
+          console.warn('[natalie-xr] model FAILED to load', JSON.stringify(event?.nativeEvent ?? {}));
         }}
         /*
           Her presence must not eat the pointer: a ray that hits her instead of

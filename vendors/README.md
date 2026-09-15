@@ -4,9 +4,9 @@ Tarballs that cannot come from a registry. Committed on purpose — the `file:`
 protocol pins a path, so CI and every collaborator must resolve the same
 artefact (redraw.dev/docs/installation).
 
-## `@reactvision/react-viro` 3.0.0-moyo.2 (the spatial whiteboard + avatar bones)
+## `@reactvision/react-viro` 3.0.0-moyo.3 (the spatial whiteboard + avatar bones)
 
-`reactvision-react-viro-3.0.0-moyo.2.tgz` is our fork of ReactVision's Viro,
+`reactvision-react-viro-3.0.0-moyo.3.tgz` is our fork of ReactVision's Viro,
 pinned through `pnpm.overrides` in the root `package.json` and registered as a
 config plugin in `apps/mobile/app.config.ts`. It carries the visionOS podspec
 work and the AR path the spatial board needs.

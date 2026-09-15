@@ -17,6 +17,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { KeyboardProvider } from "react-native-keyboard-controller";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { assertApiOriginConfigured } from '@acme/app/core/api-url';
 import { withUniwind } from "uniwind";
 import { AppQueryProvider, SafeAreaProvider, SessionProvider , AccountSheet, AttachSheet, AudioRecorderSheet, CameraSheet, SwitchProfileSheet, UrlSheet, VideoNoteSheet, UploadQueueProvider } from "@acme/app";
 import { BookingSheet } from "../components/BookingSheet";
@@ -59,6 +60,18 @@ const ROOT_TITLES: Record<string, string> = {
 // repo uses them (the kit ships a SafeArea component instead). Add the listener
 // here if those classes are ever adopted — docs.uniwind.dev/migration-from-nativewind.
 const GestureRoot = withUniwind(GestureHandlerRootView);
+
+/*
+  THE API BASE URL IS CHECKED HERE, BEFORE ANY SCREEN CAN FETCH.
+
+  A release build with no `EXPO_PUBLIC_APP_URL` has nothing sensible to talk to
+  — `localhost` on a phone or a headset is the phone or the headset — so it
+  fails at startup rather than turning every screen into an error a child has
+  to interpret. A dev build warns and names the tunnel it needs. Module scope
+  for the same reason the wrapper above is: it is a build-configuration fact,
+  not a render-time one.
+*/
+assertApiOriginConfigured();
 
 export default function RootLayout() {
   return (
