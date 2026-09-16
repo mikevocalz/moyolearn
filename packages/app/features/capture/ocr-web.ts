@@ -7,6 +7,7 @@ export interface OcrResult {
   /** 0–100 as Tesseract reports it; undefined when TrOCR produced the text. */
   confidence?: number;
   engine: 'tesseract' | 'trocr';
+  regions?: { text: string; confidence: number; direction: string; bbox: { x0: number; y0: number; x1: number; y1: number } }[];
 }
 
 /** Printed-page pass. Returns text plus how sure it is. */
@@ -14,11 +15,12 @@ export async function readPrinted(source: string): Promise<OcrResult> {
   const { createWorker } = await import('tesseract.js');
   const worker = await createWorker('eng');
   try {
-    const result = await worker.recognize(source);
+    const result = await worker.recognize(source, {}, { text: true, blocks: true });
     return {
       text: result.data.text.trim(),
       confidence: result.data.confidence,
       engine: 'tesseract',
+      regions: result.data.blocks?.flatMap((block) => block.paragraphs.flatMap((paragraph) => paragraph.lines.map((line) => ({ text: line.text, confidence: line.confidence, direction: paragraph.is_ltr ? 'ltr' : 'rtl', bbox: line.bbox })))),
     };
   } finally {
     // Always — a live worker holds the WASM heap and its own thread, and a child

@@ -55,3 +55,63 @@ Follow-up checks: **657 tests passed** (552 normal + 105 server), and **19/19 co
 Evidence: [before: altered text and hidden Done](./homework-native-2026-09-16/typing-before.png), [after: preserved text and keyboard-visible review](./homework-native-2026-09-16/review-keyboard-after.png), [completed typed review](./homework-native-2026-09-16/ready-after.png). Screenshots are from a simulator with synthetic input. Physical OCR/model benchmarks, multipage camera QA, persistent region revisions and page-aware PDF parsing remain outstanding.
 
 Final source-entry layout retest: [typing with keyboard open](./homework-native-2026-09-16/typing-after.png) preserves `2 + 2 = 5` and exposes Done. Final iOS production export also passed (`/tmp/moyo-homework-keyboard-export.log`). Simulator test input was abandoned without submitting it to the tutor; temporary DOCX and runtime test globals were removed.
+
+## Browser PDF checkpoint
+
+Browser file reading now uses PDF.js 6.3.289 with a version-matched, self-hosted
+worker, CMaps, standard fonts, and WASM codecs. Assets are copied by the Next.js
+dev/build scripts. Native document reading does not load PDF.js.
+
+- Follow the actual PDF page tree, retain page numbers, text-item transforms,
+  dimensions and direction, and keep blank/failed pages in the result.
+- Render each page independently; failed text extraction can still yield a
+  preview. Preview failure does not erase successfully extracted text, and
+  cleanup failure does not discard page evidence.
+- Run the existing English Tesseract reader on pages without usable text,
+  retaining line boxes/confidence in preview-pixel coordinates. PDF text regions
+  explicitly use PDF user-space coordinates.
+- Review every PDF page separately alongside its preview. A page with no text
+  cannot be confirmed normally; a visible original allows explicit learner
+  confirmation that it has no work, recorded as a page-specific marker.
+- Page preview and editable text share one scrolling container. File labels and
+  original filenames distinguish attachments from pages within a PDF.
+- Bound inputs to the existing 32 MiB limit and 100 PDF pages; refuse oversized
+  page counts instead of truncating. Preview rasterization is capped at 1,200
+  pixels per edge, 1.44 million pixels per page, and 12 million pixels divided
+  across the document. These are workload bounds, not measured peak-RAM claims.
+
+### Verification
+
+- App tests: **559 regular + 105 server = 664 passing**. Seven new PDF tests use
+  the actual PDF.js parser: 1/2/10-page trees whose logical order differs from
+  object order, blank middle pages, failed pages, failed text extraction with
+  surviving previews, cleanup failures, and over-limit rejection.
+- Cold repository typecheck: **19/19 successful, zero cached**.
+- Chrome 152, Argent CDP, isolated Vite harness importing the production reader:
+  1/2/10-page extraction and PNG rendering passed with the self-hosted worker.
+- Actual Next.js `/capture`: two-page file reviewed in order, both previews
+  loaded, and original mistakes `2 + 2 = 5` and `4 + 4 = 9` remained unchanged.
+- Mixed three-page PDF: text page, JPEG scan, and blank page all reached review.
+  Tesseract returned `Solve2+2=5` from the scan (spaces were lost), with one line
+  region. The original preview remained visible. Explicitly confirming the blank
+  third page advanced to “Add a little info.” No tutor submission or save was
+  performed. File selection used a synthetic File/DataTransfer injected into
+  the picker; the OS file dialog itself was not tested.
+- Browser verification exposed a pre-existing ButtonBase crash: spreading a
+  style array into an object produced numeric CSS properties. Passing the array
+  through the existing recursive DOM decoder fixed the crash; capture and menu
+  buttons then rendered and worked.
+- Evidence: `homework-pdf-2026-09-16/scanned-page-review.png` and
+  `homework-pdf-2026-09-16/all-pages-reviewed.png`.
+
+### Remaining limits
+
+This is a browser PDF checkpoint, not completion of the OCR master build.
+Native PDF still needs a page renderer/parser adapter. Page evidence remains
+in-memory, not the durable server-owned provenance model. Tesseract remains
+English-only and is not a handwriting/mathematical-layout guarantee. Mixed
+content within one page with a nonempty text layer still needs region-level
+coverage detection. Cancellation ignores stale results but does not immediately
+abort all parser/OCR work. Large files and real-device RAM, thermal and latency
+budgets have not been benchmarked. Source readiness remains unresolved, so this
+recognition does not authorize assessment or mastery writes.

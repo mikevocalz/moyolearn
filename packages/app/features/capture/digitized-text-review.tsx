@@ -3,7 +3,7 @@
 // SOT: docs/pack/24-homework-capture-spec.md §4 · §5
 // SOT-KEYWORDS: digitized-text review ocr correction confirm age band
 
-import { useState } from 'react';
+import { useState, type ReactNode } from 'react';
 import { Button, ErrorMessage, KeyboardAwareScroll, Textarea } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { buttonSizeForBand, type AgeBand } from './age-band';
@@ -11,6 +11,8 @@ import { buttonSizeForBand, type AgeBand } from './age-band';
 export interface DigitizedTextReviewProps {
   ageBand?: AgeBand;
   initialText: string;
+  /** Original page and review context scroll together with the editable text. */
+  children?: ReactNode;
   /** Confidence from the OCR engine, 0–100; undefined means unknown. */
   confidence?: number;
   /** Confirm is blocked while the text still matches a low-confidence read. */
@@ -22,6 +24,7 @@ export interface DigitizedTextReviewProps {
 export function DigitizedTextReview({
   ageBand = 'teen',
   initialText,
+  children,
   confidence,
   lowConfidenceThreshold = 40,
   onConfirm,
@@ -43,6 +46,7 @@ export function DigitizedTextReview({
   return (
     <KeyboardAwareScroll className="flex-1" keyboardShouldPersistTaps="handled">
       <View className="gap-stack p-inset">
+        {children}
         {isLowConfidence ? (
           <ErrorMessage message={warningCopy} className="text-body" />
         ) : null}

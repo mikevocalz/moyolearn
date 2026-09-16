@@ -721,7 +721,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
                 ) : (
                   <View className="h-24 w-20 items-center justify-center rounded-card bg-surface-sunken">
                     <Text variant="caption" tone="muted" className="text-center">
-                      {page.uri.split('/').pop() ?? 'File'}
+                      {page.name ?? page.uri.split('/').pop() ?? 'File'}
                     </Text>
                   </View>
                 )}
@@ -795,14 +795,14 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
           setPageReadings(next);
           if (reviewIndex + 1 < pages.length) setReviewIndex(reviewIndex + 1);
           else {
-            setVerifiedText(pages.map((p, i) => `Page ${i + 1}:\n${next[p.id] ?? '[Needs review]'}`).join('\n\n'));
+            setVerifiedText(pages.map((p, i) => `${p.kind === 'file' ? `File ${i + 1}: ${p.name ?? 'Document'}` : `Page ${i + 1}`}:\n${next[p.id] ?? '[Needs review]'}`).join('\n\n'));
             setStep('add-context');
           }
         };
         const onCancel = () => setStep('review-pages');
         return (
           <View className="flex-1">
-            <Text className="p-inset font-sans text-label text-text">Page {reviewIndex + 1} of {pages.length}</Text>
+            <Text className="p-inset font-sans text-label text-text">{page.kind === 'file' ? 'File' : 'Page'} {reviewIndex + 1} of {pages.length}</Text>
             {page.kind !== 'file' ? <Image alt={`Source page ${reviewIndex + 1}`} src={page.uri} className="h-40 w-full rounded-card" /> : null}
             {page.kind === 'file'
               ? <OcrReviewBase key={page.id} ageBand={ageBand} source={page.uri} mimeType={page.mimeType} read={readFileForReview} onConfirm={onConfirm} onCancel={onCancel} />

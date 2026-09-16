@@ -44,6 +44,7 @@
     "fflate": "0.8.2",
     "lucide-react": "catalog:",
     "lucide-react-native": "catalog:",
+    "pdfjs-dist": "6.3.289",
     "qrcode": "catalog:",
     "react-native-audio-api": "catalog:",
     "react-native-enriched-html": "catalog:",

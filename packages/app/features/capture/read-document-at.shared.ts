@@ -17,10 +17,13 @@ export async function readDocumentUsing(
   uri: string,
   mimeType: string | undefined,
   load: (uri: string) => Promise<Uint8Array>,
+  pdf?: (bytes: Uint8Array) => Promise<DocumentReading>,
 ): Promise<DocumentReading> {
   try {
     const bytes = await load(uri);
     if (bytes.length > MAX_DOCUMENT_BYTES) return { text: '', reason: 'failed' };
+    const isPdf = mimeType === 'application/pdf' || String.fromCharCode(...bytes.subarray(0, 4)) === '%PDF';
+    if (isPdf && pdf) return await pdf(bytes);
     return readDocument(bytes, mimeType);
   } catch {
     return { text: '', reason: 'failed' };

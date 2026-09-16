@@ -12,10 +12,12 @@
 // SOT: ./read-attachment.ts · packages/app/features/tutor/tutor-screen.tsx
 // SOT-KEYWORDS: read document pdf docx txt text extraction fflate homework on-device
 import { inflateSync, strFromU8 } from 'fflate';
+import type { PdfPageReading } from './pdf-pages.ts';
 import { readDocx } from './read-docx.ts';
 
 export interface DocumentReading {
   text: string;
+  pages?: PdfPageReading[];
   /** `scanned` means a pdf with no text layer — the OCR path, not this one. */
   reason: 'ok' | 'empty' | 'scanned' | 'unsupported' | 'failed';
   /** OOXML equation source is retained separately from its readable projection. */
