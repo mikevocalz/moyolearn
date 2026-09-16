@@ -16,7 +16,7 @@ import React from 'react';
 import type { TextInputProps } from 'react-native';
 
 type StyleqEntry = { $$css?: boolean; [key: string]: unknown } | React.CSSProperties;
-type WebStyle = StyleqEntry | (StyleqEntry | null | undefined)[] | null | undefined;
+type WebStyle = StyleqEntry | WebStyle[] | null | undefined;
 
 // Decode a styleq `style` value into DOM className + inline style.
 const toDom = (className?: string, style?: WebStyle) => {
@@ -144,7 +144,7 @@ export const ButtonBase = ({
     // RN spells it accessibilityState.expanded; the DOM wants aria-expanded.
     // Mapped here so a caller writes one prop and both platforms announce it.
     aria-expanded={props['aria-expanded'] ?? accessibilityState?.expanded}
-    {...toDom(`inline-flex flex-col ${className ?? ''}`, { ...hitSlopStyle(hitSlop), ...style })}
+    {...toDom(`inline-flex flex-col ${className ?? ''}`, [hitSlopStyle(hitSlop), style])}
     {...props}
   />
 );
