@@ -278,19 +278,20 @@ export function ShellTabBar({
                 number is the number on both platforms. `raisedTarget` still only
                 ever raises it (K–2 → 72).
 
-                WHITE, and it is the only object on the bar that is not made of
-                the bar. `bg-nav-cta` carries that (see `tokens.ts` for why the
-                token moved off deep plum); the plum ink and the 2px border are
-                what separate it now, and the border stays STRUCTURE rather than
-                emphasis — the doc 08 rule, and the same edge every other raised
-                object in the product carries.
+                PAPER, and it is the only object on the bar that is not made of
+                the bar. `bg-nav-cta` is the avatar well's own neutral (see
+                `tokens.ts` for why the token moved off deep plum and then off
+                pure white); the ink glyph and the 2px border are what separate
+                it now, and the border stays STRUCTURE rather than emphasis —
+                the doc 08 rule, and the same edge every other raised object in
+                the product carries.
 
-                An earlier near-white slab did read as a hole punched in the bar,
-                and what is different is the elevation around it: this one is
-                raised off the bar and casts `shadow-card`, so the paper sits ON
-                the chrome instead of showing through it. This is the one place
-                the house's raised language is allowed to stay loud, because it
-                is the one control on the bar that is an ACTION rather than a
+                An earlier near-white slab did read as a hole punched in the bar.
+                What is different is the elevation around it: this one is raised
+                off the bar and casts `shadow-card`, so the paper sits ON the
+                chrome instead of showing through it. This is the one place the
+                house's raised language is allowed to stay loud, because it is
+                the one control on the bar that is an ACTION rather than a
                 destination.
               */
               className={`${rail ? 'w-full' : 'w-nav-raised'} h-nav-raised ${raisedTarget} items-center justify-center rounded-md border-2 border-on-surface-footer bg-nav-cta shadow-card`}
