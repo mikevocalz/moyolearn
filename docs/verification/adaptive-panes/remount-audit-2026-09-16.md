@@ -177,3 +177,39 @@ but then the phone keeps `TutorPresence render="body"` mounted and frozen, which
 Natalie across a fold at the cost of holding her avatar's resources on a device that will
 never show that pane. Freezing stops the draw loop; it does not release a GPU context.
 That is a product decision, not a refactor, and it is not made here.
+
+---
+
+# TutorStage: the decision, and what it bought
+
+## Decision
+
+**Keep the conversation stable; let Natalie move.** She is in the thread on a phone and in
+her own alcove on a wide screen — that is the design, not a bug, and preserving it across
+the boundary would mean either showing her inline on a 1100 dp window or keeping a second
+avatar mounted for a pane nobody can see. The conversation has no such excuse: it is the
+child's work.
+
+So `TutorStage` renders `AdaptivePanes` at every width — viable now that the host collapses
+to a single full-width pane — with `topColumnForCollapsing="primary"`, and the avatar goes
+to whichever presence is on screen (`avatar={panes ? avatar : undefined}`).
+
+## Measured, same story, same method
+
+| | before | after |
+|---|---|---|
+| nodes surviving a collapse | 1 of 4 | 2 of 4 |
+| utterance after the round trip | gone | present |
+
+What survives now: the toolbar title and **the thread, with Natalie's line still in it**.
+What is rebuilt: the presence label and status — the two nodes that move between the rail
+and the body pane by design.
+
+The thing that was lost before and is not lost now is the conversation. The composer, its
+draft, the scroll position and anything the thread holds ride in that same pane.
+
+## Not covered
+
+Web, injected width, one story. The avatar itself (`avatar` is a prop the story does not
+supply a renderer for) was not exercised, so the cost of it changing home — how long a
+real 3D avatar takes to come back when the window widens — is unmeasured.
