@@ -1,6 +1,5 @@
 import { createStore, type StoreApi } from 'zustand/vanilla';
 import { clampPrimaryWidth } from './resize.ts';
-import { COLUMN_RANK } from './constants.ts';
 import type { SplitNavigableColumn } from './types';
 
 /**
@@ -23,13 +22,11 @@ import type { SplitNavigableColumn } from './types';
  * the `topColumnForCollapsing` prop without writing to the store during render.
  *
  * SOT: docs/pack/37-onboarding-dual-pane.md §3.2
- * SOT-KEYWORDS: adaptive panes store selection column direction primary width scoped instance
+ * SOT-KEYWORDS: adaptive panes store selection column primary width scoped instance
  */
 export interface AdaptivePanesState {
   column: SplitNavigableColumn | null;
   setColumn: (column: SplitNavigableColumn) => void;
-  /** Travel direction of the last column change, for the pane transition. */
-  direction: 'forward' | 'back';
   /** User-resized primary width in dp; null keeps the token width. */
   primaryWidth: number | null;
   setPrimaryWidth: (width: number) => void;
@@ -44,13 +41,14 @@ export type AdaptivePanesStore = StoreApi<AdaptivePanesState>;
 export function createAdaptivePanesStore(): AdaptivePanesStore {
   return createStore<AdaptivePanesState>((set) => ({
     column: null,
-    direction: 'forward',
-    setColumn: (column) =>
-      set((state) => ({
-        column,
-        direction:
-          COLUMN_RANK[column] >= COLUMN_RANK[state.column ?? 'primary'] ? 'forward' : 'back',
-      })),
+    /*
+      No `direction` any more, and nothing lost with it. It existed to tell the
+      collapsed branch which way to slide a pane in, and the collapsed branch is
+      gone: every pane now sits in one row in leading-to-trailing order, so a
+      pane opening while its neighbour closes already travels the right way.
+      The rank the direction was derived from IS the row order.
+    */
+    setColumn: (column) => set({ column }),
 
     primaryWidth: null,
     setPrimaryWidth: (width) => set({ primaryWidth: clampPrimaryWidth(width) }),

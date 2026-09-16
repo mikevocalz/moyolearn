@@ -62,3 +62,67 @@ behaviour, and no device or simulator was used.
 2. Open `Interaction/AdaptivePanes → MountAudit`.
 3. Drag the window across 600 dp, or inject the width as above.
 4. Read `__paneAudit` on the story's window for the ordered mount log.
+
+---
+
+# After the fix
+
+Same story, same injected-geometry method, same day.
+
+## Result
+
+| Step | Width | source | review | tutor |
+|---|---|---|---|---|
+| 1. typed | 900 dp | draft 3 | draft 4 | draft 5 |
+| 2. collapsed | 500 dp | draft 3 | (hidden) | (hidden) |
+| 3. narrower | 360 dp | draft 3 | (hidden) | (hidden) |
+| 4. expanded | 900 dp | draft 3 | draft 4 | draft 5 |
+
+Mount log for the whole sequence: `review:mount, tutor:mount, source:mount`. Three mounts,
+no unmounts, four width changes.
+
+Re-run after the final edit, five changes (900 → 500 → 900 → 420 → 1100): drafts `[3, 4, 5]`
+at every step, same three mounts, still no unmounts.
+
+## What changed
+
+One tree. The collapsed `return` is gone; the size class now decides which panes are open
+and how wide, and every pane keeps the position it had. A collapsed host opens exactly one
+pane at the row's measured width, so `CollapsiblePane` animates straight to full width
+instead of opening at a 320 dp token and jumping.
+
+`direction` left the store with the branch that used it: the panes sit in one row in
+leading-to-trailing order, so a pane opening while its neighbour closes already travels the
+right way. `COLUMN_RANK` went with it — the row order is the rank.
+
+## The finding that cost the most to isolate
+
+The first attempt fixed two panes out of three. `source` and `review` kept their drafts;
+the detail pane still remounted and still came back at 0.
+
+The cause was not the branch. It was one line above the detail pane's content:
+
+```tsx
+{paneControls && !collapsed ? <View>…toggles…</View> : null}
+<PaneContent open={visible.detail}>{detailPane}</PaneContent>
+```
+
+Collapsing turned the first child into `null`, and somewhere in the landmark wrapper the
+children are normalised with the nulls dropped — which moves `PaneContent` from index 1 to
+index 0. A different index is a different position, and a different position is a remount.
+Keeping an empty `View` in that slot fixed it.
+
+Worth generalising: a pane host must not gain or lose siblings across a size-class change.
+Hiding a sibling's *contents* is safe; removing the sibling is not.
+
+## Also observed
+
+While collapsed, the hidden panes still read `size class: expanded` — they are frozen, so
+they do not re-render until they are shown again. That is the intended behaviour and is why
+freezing is cheap, but it means a frozen pane's rendered output lags the current geometry
+until it is revealed.
+
+## Still not verified
+
+Web only, injected width. No iOS, Android, simulator or device run. Nothing here says
+anything about iPhone Duo hardware, reserved regions, or the fold.

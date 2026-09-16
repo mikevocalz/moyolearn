@@ -378,18 +378,20 @@ export const LeadingPaneCollapsed: Story = {
 };
 
 /*
-  MOUNT AUDIT — instrumentation, not a design story.
+  MOUNT AUDIT — instrumentation, and now the regression check for it.
 
-  `AdaptivePanes` renders two different trees. Collapsed, a pane sits at
-  `SafeArea > MotionView > Aside`; expanded, the same pane sits at
-  `SafeArea > View > CollapsiblePane > Aside > PaneContent`. React keeps state
-  by tree position and type, so crossing the 600 dp collapse threshold is a
-  different position for every pane — which unmounts it and builds a new one,
-  taking its local state with it.
+  `AdaptivePanes` used to render two different trees: collapsed put a pane at
+  `SafeArea > MotionView > Aside`, expanded put the same pane at
+  `SafeArea > View > CollapsiblePane > Aside > PaneContent`. React keeps state by
+  tree position and type, so crossing 600 dp was a new position for every pane —
+  which rebuilt it and took its local state with it. Three drafts of 3, 4 and 5
+  came back from one resize as 0, 0 and 0.
 
-  This story makes that observable instead of arguable: each pane counts its own
-  mounts and holds a local draft. Resize the window across 600 dp and read the
-  numbers, or read `window.__paneAudit` for the ordered log.
+  There is one tree now. Each pane still counts its own mounts and holds a local
+  draft, so the property is checkable: resize the window across 600 dp and the
+  drafts must not move. `window.__paneAudit` holds the ordered mount log.
+
+  Evidence and method: docs/verification/adaptive-panes/.
 */
 const paneAudit: string[] = [];
 
