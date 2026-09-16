@@ -9,7 +9,12 @@ export async function readPdfPages(
 ) {
   const pages: PdfPageReading[] = [];
   // Bound parser/render work; report a document failure instead of truncating pages.
-  if (document.numPages > 100) throw new Error('PDF exceeds page limit');
+  if (
+    !Number.isInteger(document.numPages) ||
+    document.numPages < 1 ||
+    document.numPages > 100
+  )
+    throw new Error('PDF exceeds page limit or has no pages');
   for (let index = 1; index <= document.numPages; index++) {
     const result = pdfPage(index);
     let page: PDFPageProxy | undefined;
@@ -34,6 +39,15 @@ export async function readPdfPages(
           });
           result.text += item.str + (item.hasEOL ? '\n' : '');
         }
+        result.textLayer = result.text;
+        // Broken font maps can return nonempty control codes instead of words.
+        // Do not guess a substitution cipher or pass these through as homework.
+        // Keep the raw layer/regions as evidence while the browser tries OCR.
+        const brokenMapping =
+          /[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f-\u009f\ufffd]/u.test(
+            result.text,
+          );
+        if (brokenMapping) result.text = '';
         result.status = result.text.trim() ? 'text' : 'needs-ocr';
       } catch {
         // Rendering can still recover a page whose text layer is damaged.

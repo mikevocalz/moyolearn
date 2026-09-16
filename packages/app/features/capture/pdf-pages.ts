@@ -10,6 +10,8 @@ export function pdfPage(index: number) {
   return {
     index,
     text: '',
+    // Keep the original extraction even when its font mapping requires OCR.
+    textLayer: '',
     status:
       pdfPageStatus.failed as (typeof pdfPageStatus)[keyof typeof pdfPageStatus],
     preview: '',

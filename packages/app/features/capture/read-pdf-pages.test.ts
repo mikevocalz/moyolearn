@@ -141,3 +141,42 @@ it('refuses over-limit documents instead of silently truncating pages', async ()
     /page limit/,
   );
 });
+it('retains broken font evidence and requests OCR instead of accepting garbled homework', async () => {
+  const task = getDocument({ data: pdf(['2 + 2 = 5']), useSystemFonts: true });
+  try {
+    const document = await task.promise;
+    const page = await document.getPage(1);
+    const content = await page.getTextContent();
+    const item = content.items.find((entry) => 'str' in entry);
+    assert.ok(item && 'str' in item);
+    const damaged = 'Question: \u001b \u000e \u0016';
+    page.getTextContent = async () => ({
+      ...content,
+      items: [{ ...item, str: damaged }],
+    });
+    const result = await readPdfPages(
+      { numPages: 1, getPage: async () => page },
+      async () => 'source-preview',
+    );
+    assert.equal(result.pages[0]?.status, 'needs-ocr');
+    assert.equal(result.pages[0]?.text, '');
+    assert.equal(result.pages[0]?.textLayer, damaged);
+    assert.equal(result.pages[0]?.regions[0]?.text, damaged);
+    assert.equal(result.pages[0]?.preview, 'source-preview');
+  } finally {
+    await task.destroy();
+  }
+});
+for (const numPages of [0, -1, 1.5, NaN, Infinity]) {
+  it(`rejects invalid page count ${numPages} before loading pages`, async () => {
+    await assert.rejects(
+      readPdfPages({
+        numPages,
+        getPage: async () => {
+          throw new Error('Must not load');
+        },
+      }),
+      /page limit/,
+    );
+  });
+}
