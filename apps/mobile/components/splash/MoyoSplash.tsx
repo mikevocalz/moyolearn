@@ -38,8 +38,9 @@ import Svg, { Path } from 'react-native-svg';
 import Animated, { FadeOut, useReducedMotion } from 'react-native-reanimated';
 import * as SplashScreen from 'expo-splash-screen';
 
+import { HEART_BOUNDS, HEART_PATH } from './heart-path';
 import { HeartField, type HeartFieldLevels } from './hearts-gpu';
-import { MARK, MARK_HEART, MARK_SIZE, WORDMARK, WORDMARK_SIZE } from './moyo-paths';
+import { MARK, MARK_SIZE, WORDMARK, WORDMARK_SIZE } from './moyo-paths';
 import {
   BEAT,
   INK,
@@ -95,17 +96,12 @@ const M_RISE = {
   to: { opacity: 1, transform: [{ translateY: 0 }, { scale: 1 }] },
 };
 
-/*
-  The heartbeat, drawn as a soft coral bloom in the heart's negative space —
-  the scene does this with `Feather.glow` on the heart contour under a Screen
-  blend. Without vector feathering it is a blurred-edge shape whose scale and
-  opacity carry the beat: sharp rise, slow fall, twice, the second softer.
-*/
+// A complete heart pulses twice inside the book, with a softer second beat.
 const HEARTBEAT = {
   from: { opacity: 0, transform: [{ scale: 0.7 }] },
-  '18%': { opacity: 0.85, transform: [{ scale: 1.15 }] },
+  '18%': { opacity: 0.85, transform: [{ scale: 1 }] },
   '38%': { opacity: 0.28, transform: [{ scale: 0.95 }] },
-  '58%': { opacity: 0.6, transform: [{ scale: 1.08 }] },
+  '58%': { opacity: 0.6, transform: [{ scale: 0.96 }] },
   to: { opacity: 0, transform: [{ scale: 0.9 }] },
 };
 
@@ -371,24 +367,6 @@ export function MoyoSplash() {
           </MarkLayer>
         </Animated.View>
 
-        {/* The heartbeat, in the negative space between the halves. It is under
-            the pages so the bloom reads as light held inside the book. */}
-        <Animated.View
-          pointerEvents="none"
-          style={[
-            styles.heart,
-            {
-              left: (MARK_HEART.cx - MARK_HEART.halfWidth) * (markWidth / MARK_SIZE.width),
-              top: MARK_HEART.top * (markHeight / MARK_SIZE.height),
-              width: MARK_HEART.halfWidth * 2 * (markWidth / MARK_SIZE.width),
-              height:
-                (MARK_HEART.bottom - MARK_HEART.top) * (markHeight / MARK_SIZE.height),
-              borderRadius: MARK_HEART.halfWidth * (markWidth / MARK_SIZE.width),
-            },
-            anim(HEARTBEAT, BEAT.heart, BEAT.heartDelay),
-          ]}
-        />
-
         {/* The two halves of the book, opening. Coral leads by one stagger step
             — simultaneous halves read as a single shape scaling up. */}
         <Animated.View style={[StyleSheet.absoluteFill, anim(PAGE_LEFT_OPEN, BEAT.page)]}>
@@ -402,6 +380,30 @@ export function MoyoSplash() {
           <MarkLayer width={markWidth} height={markHeight}>
             <Path fill={INK.amber} d={MARK.pageRight} />
           </MarkLayer>
+        </Animated.View>
+
+        {/* Paint the complete contour above the pages so neither lobe nor tip
+            is cropped while the book halves settle. Scale about the heart itself. */}
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            {
+              position: 'absolute',
+              left: HEART_BOUNDS.x * (markWidth / MARK_SIZE.width),
+              top: HEART_BOUNDS.y * (markHeight / MARK_SIZE.height),
+              width: HEART_BOUNDS.width * (markWidth / MARK_SIZE.width),
+              height: HEART_BOUNDS.height * (markHeight / MARK_SIZE.height),
+            },
+            anim(HEARTBEAT, BEAT.heart, BEAT.heartDelay),
+          ]}
+        >
+          <Svg
+            width="100%"
+            height="100%"
+            viewBox={`${HEART_BOUNDS.x} ${HEART_BOUNDS.y} ${HEART_BOUNDS.width} ${HEART_BOUNDS.height}`}
+          >
+            <Path d={HEART_PATH} fill={INK.coral} />
+          </Svg>
         </Animated.View>
 
         {/* The ornaments, cascading top to bottom. */}
@@ -526,17 +528,6 @@ const styles = StyleSheet.create({
     elevation: 1000,
     justifyContent: 'center',
     zIndex: 1000,
-  },
-  /*
-    The heartbeat bloom. A rounded coral block behind the pages rather than the
-    heart's own contour: the traced heart is negative space (there is no heart
-    path — it is the hole the two pages leave), so what pulses is light in that
-    hole, clipped by the pages drawn over it. `MARK_HEART` is the rect the
-    geometry file publishes for exactly this.
-  */
-  heart: {
-    backgroundColor: INK.coral,
-    position: 'absolute',
   },
   tagline: {
     color: INK.plum,
