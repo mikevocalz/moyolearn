@@ -18,7 +18,7 @@
 // GEOMETRY IS PLATFORM-SPEC, from `navChrome` in packages/theme/tokens.ts:
 // rail 96 (Material 3 `NavigationRailCollapsedTokens.ContainerWidth`; 80 is its
 // narrow variant), raised slab 64 (between Material's 56 standard FAB and 96
-// large FAB — iOS has no raised-tab convention to defend against), raise 58
+// large FAB — iOS has no raised-tab convention to defend against), raise 16
 // (how far that slab breaks the bar's top edge, and equally how much taller the
 // bar's BOX is than its painted chrome — see the bottom-bar container). All px:
 // they used to be
@@ -488,12 +488,8 @@ export function ShellTabBar({
     contain it is what keeps the CTA tappable, and it also means nothing here
     depends on a clip setting in react-navigation's own container.
 
-    THE COST, STATED: the tab bar now measures 58px taller, and BottomTabView
-    pads the scene by the bar's measured height, so a phone scene loses 58px.
-    That is the honest price of a control that stands proud of the chrome
-    rather than one that merely claims to — the alternative (absolutely
-    positioning the bar over the scene) buys the pixels back and re-introduces
-    exactly the hit-testing hole above.
+    The extra 16px stays inside the navigator's measured bar so the full
+    camera button remains tappable without covering scene content.
 
     `pt-1` is gone with the chrome: it gave 4px between the top rule and the
     icons, and that gap is now carried by the item cell's own `min-h-target-*`
