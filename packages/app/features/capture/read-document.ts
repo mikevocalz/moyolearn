@@ -5,23 +5,21 @@
 // and never read. A child attaching the worksheet their teacher emailed got a
 // generic reply, which is the same dead end a photograph used to be.
 //
-// WHY NO DEPENDENCY: `fflate` is already in the tree and is the only hard part
-// — PDF content streams are FlateDecode and a .docx is a zip. Everything else
-// is string work. So this runs on native and web alike with nothing new to
-// install, nothing to download, and nothing leaving the device.
-//
 // THE CEILING, stated rather than discovered: a SCANNED pdf has no text layer,
 // only images, and this returns '' for it. That is the honest boundary between
 // this and the OCR path; `readDocument` says which happened so the caller can
 // tell the child something true.
 // SOT: ./read-attachment.ts · packages/app/features/tutor/tutor-screen.tsx
 // SOT-KEYWORDS: read document pdf docx txt text extraction fflate homework on-device
-import { inflateSync, unzipSync, strFromU8 } from 'fflate';
+import { inflateSync, strFromU8 } from 'fflate';
+import { readDocx } from './read-docx.ts';
 
 export interface DocumentReading {
   text: string;
   /** `scanned` means a pdf with no text layer — the OCR path, not this one. */
   reason: 'ok' | 'empty' | 'scanned' | 'unsupported' | 'failed';
+  /** OOXML equation source is retained separately from its readable projection. */
+  equations?: ReturnType<typeof readDocx>['equations'];
 }
 
 const decodeLatin1 = (bytes: Uint8Array): string => {
@@ -127,23 +125,7 @@ export function extractPdfText(bytes: Uint8Array): DocumentReading {
 
 export function extractDocxText(bytes: Uint8Array): DocumentReading {
   try {
-    const files = unzipSync(bytes);
-    const document = files['word/document.xml'];
-    if (!document) return { text: '', reason: 'unsupported' };
-    const xml = strFromU8(document);
-    const text = xml
-      // A paragraph is a line, and it has to become one before the tags go.
-      .replace(/<\/w:p>/g, '\n')
-      .replace(/<w:tab\b[^>]*\/>/g, '\t')
-      .replace(/<w:br\b[^>]*\/>/g, '\n')
-      .replace(/<[^>]+>/g, '')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .replace(/&apos;/g, "'");
-    const cleaned = tidy(text);
-    return cleaned.length > 0 ? { text: cleaned, reason: 'ok' } : { text: '', reason: 'empty' };
+    return readDocx(bytes);
   } catch {
     return { text: '', reason: 'failed' };
   }
@@ -172,8 +154,8 @@ export function readDocument(bytes: Uint8Array, mimeType?: string): DocumentRead
   if (isPdf) return extractPdfText(bytes);
   if (isZip) return extractDocxText(bytes);
   if (mimeType?.startsWith('text/') || mimeType === 'application/json') {
-    const cleaned = tidy(strFromU8(bytes));
-    return cleaned.length > 0 ? { text: cleaned, reason: 'ok' } : { text: '', reason: 'empty' };
+    const text = strFromU8(bytes);
+    return text.trim().length > 0 ? { text, reason: 'ok' } : { text: '', reason: 'empty' };
   }
   return { text: '', reason: 'unsupported' };
 }

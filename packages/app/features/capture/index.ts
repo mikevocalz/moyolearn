@@ -15,7 +15,7 @@ export { readAttachment } from './read-attachment';
 export { readingOrder, type TextBox } from './reading-order.ts';
 export { CameraSheet } from './CameraSheet';
 export { useCameraStore } from './camera.store.ts';
-export { readDocumentAt } from './read-document-at.ts';
+export { readDocumentAt, readDocumentEvidenceAt } from './read-document-at';
 export { readDocument, extractPdfText, extractDocxText, type DocumentReading } from './read-document.ts';
 /*
   `ocr-web` is NOT re-exported here, and the deep-path rule does not apply to it.

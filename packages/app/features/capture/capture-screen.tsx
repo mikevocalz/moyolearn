@@ -49,7 +49,7 @@ import { GuidedFrame } from './guided-frame';
 import { CaptureTip } from './capture-tip';
 import { DigitizedTextReview } from './digitized-text-review';
 import { OcrReviewBase } from './ocr-review-base';
-import { readDocumentAt } from './read-document-at';
+import { readDocumentEvidenceAt } from './read-document-at';
 import { OcrReview } from './ocr-review';
 import { CropPreview } from './crop-preview';
 import { useCaptureStore } from './capture.store';
@@ -386,7 +386,7 @@ function UploadProcessView({
   );
 }
 
-const readFileForReview = async (source: string, mimeType?: string) => ({ text: await readDocumentAt(source, mimeType) });
+const readFileForReview = readDocumentEvidenceAt;
 
 export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureScreenProps) {
   const router = useRouter();

@@ -27,3 +27,17 @@ Branch: `feat/homework-intelligence`. This is a source-preservation and assessme
 The readiness field is a transitional client declaration, not server-validated region evidence. Recognized homework remains ungraded even after the current text review, because that review does not establish verified critical-token/structural evidence. Conversational tutoring continues. A durable server-owned document/region/revision model and targeted source confirmations are still needed.
 
 The existing models remain pinned. PP-OCRv6, Bear Block camera-time OCR, Qwen semantic inference, measured camera CV, automatic polygon detection, perspective correction, proper page-aware PDF/OOXML parsing, model cache/budget enforcement, full i18n/RTL rollout, and specialist-policy routing are **not implemented or validated in this checkpoint**. The architecture and research documents describe the required direction, not completed features.
+
+## Document parser follow-up
+
+The DOCX path now uses pinned `@xmldom/xmldom` 0.9.12 rather than XML tag-stripping. It resolves the package's main document relationship, understands Word/Office Math namespaces (including alternate prefixes), preserves paragraph/table-cell order and Unicode, and projects fractions, roots, subscripts and exponents with explicit grouping. The returned reading retains each equation's XML separately. Unhandled equations, embedded content, fields, tracked changes, automatic numbering and note references produce source-review notices. External relationships are never fetched. DTDs, malformed XML, oversized XML parts and oversized documents fail closed.
+
+This is **main-body extraction**, not a Word layout engine: it does not paginate DOCX, render embedded media, resolve note/header/footer content, or reproduce all OMML layouts. Those limitations remain visible in source-review notices where referenced. The legacy PDF stream parser is unchanged and still requires replacement.
+
+Native picked documents now use Expo `File.bytes()`; browser/remote sources use fetch. The shared boundary retains failure/unsupported/empty/scanned reasons, and capture review shows specific messages. Plain text no longer collapses source indentation or blank lines. All recognized documents still remain behind the unresolved-assessment gate.
+
+Sources consulted for these changes: [xmldom parser documentation](https://github.com/xmldom/xmldom), [0.9 parser error handling](https://github.com/xmldom/xmldom/discussions/435), and [Expo File API](https://docs.expo.dev/versions/latest/sdk/filesystem/), checked against installed Expo 57 source declarations.
+
+The missing Sentry framework was a broken cache reference under `Pods/sentry-xcframeworks/9.24.0`. Running the installed SDK's `ensure_sentry_xcframework("9.24.0")` restored the checksum-verified binary without changing Sentry versions or tracked iOS configuration. The build passed the former missing-header failure; its final outcome is recorded below.
+
+Follow-up checks: **657 tests passed** (552 normal + 105 server), and **19/19 cold typecheck tasks passed with zero cache hits**. Logs: `/tmp/moyo-homework-docx-tests-final.log` and `/tmp/moyo-homework-docx-typecheck-verified.log`. Tests cover namespace-aware tables, equations and raw equation XML, package relationships, malformed XML/DTD rejection, tracked changes, native transport boundaries, Unicode, whitespace and student mistakes. These are synthetic fixtures, not a representative teacher-document accuracy benchmark.

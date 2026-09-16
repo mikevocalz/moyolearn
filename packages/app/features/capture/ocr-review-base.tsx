@@ -7,6 +7,7 @@ import { Button, Text } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { DigitizedTextReview } from './digitized-text-review';
 import { buttonSizeForBand, type AgeBand } from './age-band';
+import type { DocumentReading } from './read-document';
 
 export interface OcrReviewProps {
   ageBand?: AgeBand;
@@ -18,10 +19,13 @@ export interface OcrReviewProps {
 export interface Reading {
   text: string;
   confidence?: number;
+  reason?: DocumentReading['reason'];
 }
 type Props = OcrReviewProps & { read: (source: string, mimeType?: string) => Promise<Reading> };
 type State =
-  | { kind: 'loading' | 'failed' | 'manual' }
+  | { kind: 'loading' }
+  | { kind: 'manual' }
+  | { kind: 'failed'; reason?: DocumentReading['reason'] }
   | { kind: 'ready'; reading: Reading };
 
 export function OcrReviewBase(props: Props) {
@@ -46,7 +50,7 @@ function ReviewSource({
           setState(
             reading.text.trim()
               ? { kind: 'ready', reading }
-              : { kind: 'failed' },
+              : { kind: 'failed', reason: reading.reason },
           );
       })
       .catch(() => {
@@ -72,7 +76,13 @@ function ReviewSource({
       <Text className="font-sans text-body text-text text-center">
         {state.kind === 'loading'
           ? 'Reading your page…'
-          : 'We could not read this page. Your photo is still here.'}
+          : state.reason === 'scanned'
+            ? 'This PDF needs its pages read as images. You can type the words or go back.'
+            : state.reason === 'unsupported'
+              ? 'We cannot read this file format yet. You can type the words or choose another file.'
+              : state.reason === 'empty'
+                ? 'We found no text in this file. You can type the words or go back.'
+                : 'We could not read this source. You can type the words or go back.'}
       </Text>
       <Button
         title="Type the words"

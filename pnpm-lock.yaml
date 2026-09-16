@@ -967,6 +967,12 @@ importers:
 
   packages/app:
     dependencies:
+      '@xmldom/xmldom':
+        specifier: 0.9.12
+        version: 0.9.12
+      fflate:
+        specifier: 0.8.2
+        version: 0.8.2
       '@acme/auth':
         specifier: workspace:*
         version: link:../auth
@@ -1577,6 +1583,13 @@ importers:
         version: 6.0.3
 
 packages:
+
+  fflate@0.8.2:
+    resolution: {integrity: sha512-cPJU47OaAoCbg0pBvzsgpTPhmhqI5eJjh/JIu8tPj5q+T7iLvW/JAYUqmE7KOB4R1ZyEhzBaIQpQpardBF5z8A==}
+
+  '@xmldom/xmldom@0.9.12':
+    resolution: {integrity: sha512-5AXjrcMClTryPe9LgZrygpB1lj7s0S9E0+W+AHaVKAVyHanafK86iPSvG5xHVSp/jC+VH1UXu0TAEmY279xH7A==}
+    engines: {node: '>=14.6'}
 
   2g@0.4.4:
     resolution: {integrity: sha512-ZwH02IRQicm+92YzJZMS8imSAJaqTPI+VASb1zMnisotnWcEP4e7nb57Mr8C2dGAA5G8ZmialbMmpkGLWgAY/w==}
@@ -12313,6 +12326,10 @@ packages:
         optional: true
 
 snapshots:
+
+  fflate@0.8.2: {}
+
+  '@xmldom/xmldom@0.9.12': {}
 
   2g@0.4.4(typescript@6.0.3):
     optionalDependencies:
