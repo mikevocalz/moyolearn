@@ -13,17 +13,7 @@
 // SOT-KEYWORDS: capture problem persist storage refresh session learner homework
 export const PROBLEM_KEY = 'capture-problem';
 
-/**
- * Whether the stored problem is a MACHINE READING rather than something served
- * or typed.
- *
- * A second key rather than a JSON blob under the first, because the first key
- * already has readers in the field: a child who upgrades mid-homework must not
- * find their problem gone because it failed to parse as an object. An absent
- * flag reads as `false`, which is the safe default — it costs the model a
- * caveat it would have found useful, where the reverse would tell it to doubt
- * a problem nobody photographed.
- */
+/** Explicit origin marker. Missing provenance on a legacy problem is unresolved. */
 export const PROBLEM_READING_KEY = 'capture-problem-is-reading';
 
 export interface ProblemStorage {
@@ -43,12 +33,12 @@ export function writeProblem(storage: ProblemStorage, problem: string | null): v
 }
 
 export function readProblemIsReading(storage: ProblemStorage): boolean {
-  return storage.getString(PROBLEM_READING_KEY) === '1';
+  // Legacy/corrupt records have no explicit verification marker.
+  return readProblem(storage) !== null && storage.getString(PROBLEM_READING_KEY) !== '0';
 }
 
 export function writeProblemIsReading(storage: ProblemStorage, isReading: boolean): void {
-  if (isReading) storage.set(PROBLEM_READING_KEY, '1');
-  else storage.remove(PROBLEM_READING_KEY);
+  storage.set(PROBLEM_READING_KEY, isReading ? '1' : '0');
 }
 
 /**

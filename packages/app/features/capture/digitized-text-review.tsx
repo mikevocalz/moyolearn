@@ -34,7 +34,7 @@ export function DigitizedTextReview({
   const retryLabel = ageBand === 'young' ? 'Try again' : 'Try again';
   const isLowConfidence = confidence !== undefined && confidence < lowConfidenceThreshold;
   const isPristine = text === initialText;
-  const confirmDisabled = isLowConfidence && isPristine;
+  const confirmDisabled = text.trim().length === 0 || (isLowConfidence && isPristine);
   const warningCopy =
     ageBand === 'young'
       ? "I'm not sure I read this right. Please fix it before sending."

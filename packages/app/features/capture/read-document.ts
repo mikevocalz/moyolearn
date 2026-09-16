@@ -16,7 +16,7 @@
 // tell the child something true.
 // SOT: ./read-attachment.ts · packages/app/features/tutor/tutor-screen.tsx
 // SOT-KEYWORDS: read document pdf docx txt text extraction fflate homework on-device
-import { inflateSync, unzipSync } from 'fflate';
+import { inflateSync, unzipSync, strFromU8 } from 'fflate';
 
 export interface DocumentReading {
   text: string;
@@ -130,7 +130,7 @@ export function extractDocxText(bytes: Uint8Array): DocumentReading {
     const files = unzipSync(bytes);
     const document = files['word/document.xml'];
     if (!document) return { text: '', reason: 'unsupported' };
-    const xml = decodeLatin1(document);
+    const xml = strFromU8(document);
     const text = xml
       // A paragraph is a line, and it has to become one before the tags go.
       .replace(/<\/w:p>/g, '\n')
@@ -172,7 +172,7 @@ export function readDocument(bytes: Uint8Array, mimeType?: string): DocumentRead
   if (isPdf) return extractPdfText(bytes);
   if (isZip) return extractDocxText(bytes);
   if (mimeType?.startsWith('text/') || mimeType === 'application/json') {
-    const cleaned = tidy(decodeLatin1(bytes));
+    const cleaned = tidy(strFromU8(bytes));
     return cleaned.length > 0 ? { text: cleaned, reason: 'ok' } : { text: '', reason: 'empty' };
   }
   return { text: '', reason: 'unsupported' };

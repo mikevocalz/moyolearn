@@ -48,6 +48,8 @@ import { CaptureEntryRow } from './entry-row';
 import { GuidedFrame } from './guided-frame';
 import { CaptureTip } from './capture-tip';
 import { DigitizedTextReview } from './digitized-text-review';
+import { OcrReviewBase } from './ocr-review-base';
+import { readDocumentAt } from './read-document-at';
 import { OcrReview } from './ocr-review';
 import { CropPreview } from './crop-preview';
 import { useCaptureStore } from './capture.store';
@@ -384,6 +386,8 @@ function UploadProcessView({
   );
 }
 
+const readFileForReview = async (source: string, mimeType?: string) => ({ text: await readDocumentAt(source, mimeType) });
+
 export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureScreenProps) {
   const router = useRouter();
   const { setProblem } = useCaptureStore();
@@ -393,6 +397,8 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
   const [mode, setMode] = useState<CaptureMode | null>(null);
   const [pages, setPages] = useState<CapturePage[]>([]);
   const [verifiedText, setVerifiedText] = useState('');
+  const [reviewIndex, setReviewIndex] = useState(0);
+  const [pageReadings, setPageReadings] = useState<Record<string, string>>({});
   const [recording, setRecording] = useState<VoiceRecording | null>(null);
   const [typed, setTyped] = useState('');
   const [context, setContext] = useState<CaptureContext>({
@@ -410,6 +416,8 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
     setStep('choose');
     setMode(null);
     setPages([]);
+    setReviewIndex(0);
+    setPageReadings({});
     setVerifiedText('');
     setRecording(null);
     setTyped('');
@@ -443,7 +451,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
           const processed = await stripExif(file.uri);
           setPages([imagePage(processed.uri)]);
         } else {
-          setPages([{ ...filePage(file.uri), uri: file.uri }]);
+          setPages([{ ...filePage(file.uri), name: file.name, mimeType: mimeForFile(file.name) }]);
         }
         setStep('review-pages');
       }
@@ -487,7 +495,9 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
   };
 
   const beginReadVerify = () => {
-    if (pages.length > 0 && (pages[0]?.kind === 'photo' || pages[0]?.kind === 'image')) {
+    if (pages.length > 0) {
+      setReviewIndex(0);
+      setPageReadings({});
       setStep('read-verify');
       return;
     }
@@ -525,7 +535,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
       the recogniser's charset has no `÷` or `×` — so the operator a child would
       most want to correct is the one they were never shown to correct.
     */
-    setProblem(fullProblem.trim() || verifiedText, true);
+    setProblem(fullProblem.trim() || verifiedText, pages.length > 0 || recording !== null);
     router.push('/tutor');
   };
 
@@ -540,9 +550,9 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
       const name =
         page.kind === 'photo'
           ? `photo-${i + 1}.jpg`
-          : page.uri.split('/').pop() ?? `file-${i + 1}`;
+          : page.name ?? page.uri.split('/').pop() ?? `file-${i + 1}`;
       const mimeType =
-        page.kind === 'photo' || page.kind === 'image' ? 'image/jpeg' : mimeForFile(name);
+        page.kind === 'photo' || page.kind === 'image' ? 'image/jpeg' : page.mimeType ?? mimeForFile(name);
 
       useUploadQueue.getState().enqueue({
         id: page.id,
@@ -694,7 +704,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
         <ScrollView className="flex-1" contentContainerClassName="p-inset gap-stack">
           <Text className="font-sans text-title font-bold text-text">Review your pages</Text>
           <Text className="font-sans text-body text-text">
-            {pages.length} {pages.length === 1 ? 'page' : 'pages'} ready
+            {pages.length} {pages.length === 1 ? 'page' : 'pages'} captured
           </Text>
           <View className="gap-element">
             {pages.map((page, index) => (
@@ -774,18 +784,26 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
     }
 
     if (step === 'read-verify') {
-      const firstPage = pages[0];
-      if (firstPage && (firstPage.kind === 'photo' || firstPage.kind === 'image')) {
+      const page = pages[reviewIndex];
+      if (page) {
+        const onConfirm = (text: string) => {
+          const next = { ...pageReadings, [page.id]: text };
+          setPageReadings(next);
+          if (reviewIndex + 1 < pages.length) setReviewIndex(reviewIndex + 1);
+          else {
+            setVerifiedText(pages.map((p, i) => `Page ${i + 1}:\n${next[p.id] ?? '[Needs review]'}`).join('\n\n'));
+            setStep('add-context');
+          }
+        };
+        const onCancel = () => setStep('review-pages');
         return (
-          <OcrReview
-            ageBand={ageBand}
-            source={firstPage.uri}
-            onConfirm={(text) => {
-              setVerifiedText(text);
-              setStep('add-context');
-            }}
-            onCancel={() => setStep('review-pages')}
-          />
+          <View className="flex-1">
+            <Text className="p-inset font-sans text-label text-text">Page {reviewIndex + 1} of {pages.length}</Text>
+            {page.kind !== 'file' ? <Image alt={`Source page ${reviewIndex + 1}`} src={page.uri} className="h-40 w-full rounded-card" /> : null}
+            {page.kind === 'file'
+              ? <OcrReviewBase key={page.id} ageBand={ageBand} source={page.uri} mimeType={page.mimeType} read={readFileForReview} onConfirm={onConfirm} onCancel={onCancel} />
+              : <OcrReview key={page.id} ageBand={ageBand} source={page.uri} onConfirm={onConfirm} onCancel={onCancel} />}
+          </View>
         );
       }
 

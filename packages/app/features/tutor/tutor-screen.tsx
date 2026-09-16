@@ -53,6 +53,7 @@ import { boardImageUri } from './board-image';
 import { pickFile } from '../editor/pick-file';
 import { useAudioStore } from '../editor/audio.store.ts';
 import { readAttachment } from '../capture/read-attachment';
+import { readyForEvaluation, readinessForTurn, type AssessmentReadiness } from '../capture/assessment-readiness';
 import { photographForModel } from '../capture/photograph-for-model';
 import { readDocumentAt } from '../capture/read-document-at';
 import { transcribe } from '../capture/transcribe';
@@ -342,22 +343,23 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     void coach('');
   }, [problem, resumed, coach]);
 
-  async function recordAttempt(p: string, answer: string, depth: number): Promise<void> {
+  async function recordAttempt(p: string, answer: string, depth: number, sourceReadiness: AssessmentReadiness): Promise<void> {
+    if (!readyForEvaluation(sourceReadiness)) return;
     try {
       const res = await fetch(`${API_URL}/api/tutor/evaluate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ problem: p, answer, hintDepth: depth }),
+        body: JSON.stringify({ problem: p, answer, hintDepth: depth, sourceReadiness }),
       });
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
       const data = (await res.json()) as { isCorrect: boolean | null };
-      if (data.isCorrect !== null) useTutorStore.getState().respond(data.isCorrect);
+      if (data.isCorrect !== null && useCaptureStore.getState().problem === p) useTutorStore.getState().respond(data.isCorrect);
     } catch {
       // The Safety Plane is the source of truth; the client-side evaluator is
       // the offline fallback for demo and low-connectivity cases.
       const offline = evaluateArithmetic(p, answer);
-      if (offline !== null) useTutorStore.getState().respond(offline);
+      if (offline !== null && useCaptureStore.getState().problem === p) useTutorStore.getState().respond(offline);
     }
   }
 
@@ -394,7 +396,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     void (async () => {
       const images = staged.filter((a) => a.kind === 'image');
       const readings = await Promise.all(images.map((image) => readAttachment(image.uri)));
-      const fromImages = readings.filter((r) => r.length > 0);
+      const fromImages = readings.map((text, index) => `Source image ${index + 1} (${images[index]?.id}):\n${text || '[Unreadable — ask the learner to review or retake this page.]'}`);
 
       /*
         THE PHOTO REPLACES THE PROBLEM. It used to be guarded by `!problem`, so
@@ -444,29 +446,10 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       */
       const documents = staged.filter((a) => a.kind === 'document');
       const readDocuments = await Promise.all(documents.map((d) => readDocumentAt(d.uri, d.mimeType)));
-      const fromDocuments = readDocuments.filter((r) => r.length > 0);
+      const fromDocuments = readDocuments.map((text, index) => `Source document ${index + 1} (${documents[index]?.id}):\n${text || '[Unreadable or unsupported — ask the learner to review this document.]'}`);
 
-      /*
-        THE PHOTOGRAPHED QUESTION BECOMES THE QUESTION.
-
-        This was guarded by `!problem`, so it could only ever win on an EMPTY
-        session — and a session is almost never empty: it opens on a resumed
-        problem or one the plan picked. A child photographing the next question
-        was therefore coached on the previous one, with their own worksheet on
-        screen beside the wrong answer. The comment that guard carried already
-        had the right rule — "the child's own work outranks anything the app
-        would have picked" — the code did the opposite of it.
-
-        One write, not two. `setProblem` is the CAPTURE store and `coach` reads
-        the TUTOR store, but the two are already kept in step by the
-        `start(problem)` effect above; calling `start` here as well would seed a
-        second question bubble and reset the stage to `thinking` in the middle
-        of the send that is about to call `coach`.
-
-        A photo beats a document attached in the same turn: pointing a camera at
-        a question is the more deliberate act.
-      */
-      const readWork = fromImages[0] ?? fromDocuments[0];
+      // Every source stays represented, including pages the recognizer could not read.
+      const readWork = [...fromImages, ...fromDocuments].join('\n\n') || undefined;
       /*
         A board never becomes the problem. See `SendOptions.fromBoard` — the
         reading here is the child's answer to the question already on screen,
@@ -596,24 +579,8 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       staged.forEach((a) => removeAttachment(a.id));
 
       const turn = parts.join('\n\n');
-      /*
-        THE PAGE ITSELF, ON THE TURN THAT PHOTOGRAPHED IT.
-
-        The reading above is the best the on-device recogniser can do, and its
-        charset has no `÷` and no `×` — so the one thing a maths worksheet most
-        needs to say is the one thing that cannot survive the trip as text.
-        Sending the photograph lets the coach read the operators off the page.
-
-        The FIRST image only, matching `readWork`: the problem being coached is
-        one problem, and four pages of a workbook would be four images of which
-        three are about something else. Awaited before `coach` rather than
-        raced, because a turn that arrived without its photo would coach from the
-        mangled text — the exact failure this is here to fix — and the encode is
-        a resize, not a network call.
-
-        Documents get no equivalent. A PDF is not an image block, and its text
-        extraction is not charset-limited in the way the recogniser is.
-      */
+      // The current provider contract accepts one photograph. The complete batch
+      // remains in the text context; its source is unresolved and cannot be graded.
       const photographed = images[0];
       const photograph = photographed ? await photographForModel(photographed.uri) : null;
       void coach(turn, photograph ?? undefined);
@@ -630,6 +597,10 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
           ? trimmed || readWork || fromAudio.join(' ')
           : trimmed || fromAudio.join(' '),
         hintDepth,
+        readinessForTurn({
+          problemIsReading: useCaptureStore.getState().problemIsReading,
+          hasRecognizedInput: staged.some((a) => a.kind === 'image' || a.kind === 'document' || a.kind === 'audio'),
+        }),
       );
     })();
   };

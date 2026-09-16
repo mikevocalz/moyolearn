@@ -89,3 +89,13 @@ describe('readDocument', () => {
     assert.equal(readDocument(bytes('\x00\x01\x02\x03'), 'application/zip-bomb').reason, 'unsupported');
   });
 });
+
+// Non-ASCII bytes must survive before any tutoring or interpretation happens.
+it('preserves multilingual UTF-8 and student errors in text and DOCX', () => {
+  for (const source of ['¿Cuántos lápices? 12 ÷ 4', 'حل ٣ + ٢', 'اردو', 'Yo tieno dos hermanos.', '2 + 2 = 5', '(-3)²']) {
+    const utf8 = new TextEncoder().encode(source);
+    assert.equal(readDocument(utf8, 'text/plain').text, source);
+    const xml = new TextEncoder().encode(`<w:document><w:body><w:p><w:r><w:t>${source}</w:t></w:r></w:p></w:body></w:document>`);
+    assert.equal(readDocument(zipSync({ 'word/document.xml': xml })).text, source);
+  }
+});

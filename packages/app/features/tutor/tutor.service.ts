@@ -13,14 +13,16 @@ import {
 import { transcriptExpiry } from '@acme/student-model';
 import type { SessionTurn, SessionTranscript, DerivedFact } from '@acme/student-model';
 import { distill, withoutBlockedTags } from '@acme/student-model';
-import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation';
-import { runTutorSafetyPlane } from './tutor-safety';
+import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation.ts';
+import { runTutorSafetyPlane } from './tutor-safety.ts';
+import { readyForEvaluation, type AssessmentReadiness } from '../capture/assessment-readiness.ts';
 
 export interface TutorTurnInput {
   problem: string;
   answer: string;
   /** How far down the Socratic hint ladder the learner went before answering. */
   hintDepth: number;
+  sourceReadiness?: AssessmentReadiness;
 }
 
 export interface TutorTurnResult {
@@ -106,6 +108,8 @@ export async function evaluateTutorTurn(
   const { saveTranscript, distillation } = ports;
   return protectedOperation(auth, headers, async (ctx) => {
     const skillTitle = inferSkillTitle(input.problem);
+    // Do not record even an incorrect-answer placeholder for unresolved source.
+    if (!readyForEvaluation(input.sourceReadiness)) return { skillTitle, isCorrect: null };
     const safety = await runTutorSafetyPlane(input.problem, ctx);
 
     if (!safety.outcome.storeInStudentModel) {

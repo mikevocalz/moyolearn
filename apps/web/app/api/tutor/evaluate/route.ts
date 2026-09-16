@@ -71,11 +71,15 @@ export async function POST(request: NextRequest) {
 
   const { problem, answer, hintDepth } = body as { problem: string; answer: string; hintDepth: number };
 
+  const sourceReadiness = 'sourceReadiness' in body && body.sourceReadiness === 'verified'
+    ? 'verified' as const
+    : 'unresolved' as const;
+
   try {
     const result = await evaluateTutorTurn(
       auth,
       request.headers,
-      { problem, answer, hintDepth },
+      { problem, answer, hintDepth, sourceReadiness },
       /*
         NO `distillation` PORTS. `evaluateTutorTurn` distils only when it is
         given them, so withholding them is what takes distillation off the

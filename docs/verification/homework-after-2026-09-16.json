@@ -1,0 +1,245 @@
+{
+  "date": "2026-09-16T10:36:08.174Z",
+  "revision": "c7865f022ce4065ab3e19c8b4ed327cc9da8f165",
+  "platform": "darwin",
+  "arch": "arm64",
+  "cpu": "Apple M3 Pro",
+  "node": "v24.21.0",
+  "tesseract": "7.0.0",
+  "sharp": "0.35.3",
+  "note": "Synthetic rendered print only; Node execution of installed web OCR; each call creates a worker; not mobile or browser timings; not a handwriting or accuracy qualification corpus.",
+  "rows": [
+    {
+      "id": "english-student-error",
+      "expected": "2 + 2 = 5",
+      "imageSha256": "c916d97e50d4749a2636fecf9fbedbb12e2cb17634d0c3ea845058fbdae662f9",
+      "documents": {
+        "text": {
+          "text": "2 + 2 = 5",
+          "reason": "ok"
+        },
+        "docx": {
+          "text": "2 + 2 = 5",
+          "reason": "ok"
+        }
+      },
+      "runs": [
+        {
+          "ms": 1092,
+          "text": "2+2=5",
+          "confidence": 91,
+          "engine": "tesseract",
+          "exact": false
+        },
+        {
+          "ms": 546,
+          "text": "2+2=5",
+          "confidence": 91,
+          "engine": "tesseract",
+          "exact": false
+        },
+        {
+          "ms": 797,
+          "text": "2+2=5",
+          "confidence": 91,
+          "engine": "tesseract",
+          "exact": false
+        }
+      ]
+    },
+    {
+      "id": "spanish-student-error",
+      "expected": "Yo tieno dos hermanos.",
+      "imageSha256": "d861e09a948cf1dfe551bcb978962b6008e1b2b445dcbba9bb9d88e138edb2ac",
+      "documents": {
+        "text": {
+          "text": "Yo tieno dos hermanos.",
+          "reason": "ok"
+        },
+        "docx": {
+          "text": "Yo tieno dos hermanos.",
+          "reason": "ok"
+        }
+      },
+      "runs": [
+        {
+          "ms": 313,
+          "text": "Yo tieno dos hermanos.",
+          "confidence": 93,
+          "engine": "tesseract",
+          "exact": true
+        },
+        {
+          "ms": 269,
+          "text": "Yo tieno dos hermanos.",
+          "confidence": 93,
+          "engine": "tesseract",
+          "exact": true
+        },
+        {
+          "ms": 291,
+          "text": "Yo tieno dos hermanos.",
+          "confidence": 93,
+          "engine": "tesseract",
+          "exact": true
+        }
+      ]
+    },
+    {
+      "id": "spanish-unicode",
+      "expected": "¿Cuántos lápices?\n12 ÷ 4 = 3",
+      "imageSha256": "b2f604a1976e84865882ba32a5186f382d0704e1186bbd201c18f58d6e10de18",
+      "documents": {
+        "text": {
+          "text": "¿Cuántos lápices?\n12 ÷ 4 = 3",
+          "reason": "ok"
+        },
+        "docx": {
+          "text": "¿Cuántos lápices?\n12 ÷ 4 = 3",
+          "reason": "ok"
+        }
+      },
+      "runs": [
+        {
+          "ms": 331,
+          "text": "¢,Cuantos lapices?\n12+4=3",
+          "confidence": 62,
+          "engine": "tesseract",
+          "exact": false
+        },
+        {
+          "ms": 879,
+          "text": "¢,Cuantos lapices?\n12+4=3",
+          "confidence": 62,
+          "engine": "tesseract",
+          "exact": false
+        },
+        {
+          "ms": 915,
+          "text": "¢,Cuantos lapices?\n12+4=3",
+          "confidence": 62,
+          "engine": "tesseract",
+          "exact": false
+        }
+      ]
+    },
+    {
+      "id": "critical-math",
+      "expected": "12 ÷ 4\n12 + 4\n-3²\n(-3)²\n1/(x + 1)\n1/x + 1",
+      "imageSha256": "cbcf1b49118fd5676d4af2b673a23a8ab42f97a8ac1364f65f261a4174f4efb2",
+      "documents": {
+        "text": {
+          "text": "12 ÷ 4\n12 + 4\n-3²\n(-3)²\n1/(x + 1)\n1/x + 1",
+          "reason": "ok"
+        },
+        "docx": {
+          "text": "12 ÷ 4\n12 + 4\n-3²\n(-3)²\n1/(x + 1)\n1/x + 1",
+          "reason": "ok"
+        }
+      },
+      "runs": [
+        {
+          "ms": 886,
+          "text": "12+ 4\n12+4\n-32\n\n(-3)?\n(x + 1)\n1/x + 1",
+          "confidence": 70,
+          "engine": "tesseract",
+          "exact": false
+        },
+        {
+          "ms": 927,
+          "text": "12+ 4\n12+4\n-32\n\n(-3)?\n(x + 1)\n1/x + 1",
+          "confidence": 70,
+          "engine": "tesseract",
+          "exact": false
+        },
+        {
+          "ms": 962,
+          "text": "12+ 4\n12+4\n-32\n\n(-3)?\n(x + 1)\n1/x + 1",
+          "confidence": 70,
+          "engine": "tesseract",
+          "exact": false
+        }
+      ]
+    },
+    {
+      "id": "arabic",
+      "expected": "حل ٣ + ٢",
+      "imageSha256": "cf0eb2adf301f975075312716f6f6fd7650ea7eb9ba026c0c8bed15020669598",
+      "documents": {
+        "text": {
+          "text": "حل ٣ + ٢",
+          "reason": "ok"
+        },
+        "docx": {
+          "text": "حل ٣ + ٢",
+          "reason": "ok"
+        }
+      },
+      "runs": [
+        {
+          "ms": 806,
+          "text": "Y4+Yda",
+          "confidence": 43,
+          "engine": "tesseract",
+          "exact": false
+        },
+        {
+          "ms": 748,
+          "text": "Y4+Yda",
+          "confidence": 43,
+          "engine": "tesseract",
+          "exact": false
+        },
+        {
+          "ms": 562,
+          "text": "Y4+Yda",
+          "confidence": 43,
+          "engine": "tesseract",
+          "exact": false
+        }
+      ]
+    },
+    {
+      "id": "urdu",
+      "expected": "اردو",
+      "imageSha256": "950576dde806994df6001c4c425ae954679db8c4cbe4044bc168d9eeccd30d1b",
+      "documents": {
+        "text": {
+          "text": "اردو",
+          "reason": "ok"
+        },
+        "docx": {
+          "text": "اردو",
+          "reason": "ok"
+        }
+      },
+      "runs": [
+        {
+          "ms": 691,
+          "text": "93)",
+          "confidence": 26,
+          "engine": "tesseract",
+          "exact": false
+        },
+        {
+          "ms": 706,
+          "text": "93)",
+          "confidence": 26,
+          "engine": "tesseract",
+          "exact": false
+        },
+        {
+          "ms": 818,
+          "text": "93)",
+          "confidence": 26,
+          "engine": "tesseract",
+          "exact": false
+        }
+      ]
+    }
+  ],
+  "sourceSha256": {
+    "packages/app/features/capture/read-document.ts": "34a2e95efbe0f879e65b1ba557e92913e5e6af5bffb2e8356a7e82fa7c2e1a66",
+    "packages/app/features/capture/ocr-web.ts": "97c1b582e32366ac509344e052aa2996bb1c202f812386b7b7bc89a0f186e359"
+  }
+}
