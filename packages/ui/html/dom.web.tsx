@@ -174,6 +174,7 @@ export interface InputBaseProps extends P {
     these exact names, so the native fork gets them for free.
   */
   autoComplete?: string;
+  autoCorrect?: boolean;
   inputMode?: 'none' | 'text' | 'decimal' | 'numeric' | 'tel' | 'search' | 'email' | 'url';
   autoCapitalize?: 'none' | 'sentences' | 'words' | 'characters';
   /*
@@ -198,9 +199,11 @@ export const InputBase = ({
   onChangeText, onSubmitEditing, editable, secureTextEntry, returnKeyType,
   placeholderTextColor: _ptc, numberOfLines: _n, role: _role,
   textContentType: _tct,
-  autoCapitalize, className, style, ...props
+  autoCorrect, autoCapitalize, className, style, ...props
 }: InputBaseProps) => (
   <input
+    autoCorrect={autoCorrect === undefined ? undefined : autoCorrect ? 'on' : 'off'}
+    spellCheck={autoCorrect}
     type={secureTextEntry ? 'password' : 'text'}
     readOnly={editable === false}
     enterKeyHint={returnKeyType ? ENTER_KEY_HINT[returnKeyType] : undefined}
@@ -225,9 +228,12 @@ export interface TextareaBaseProps extends InputBaseProps {
 export const TextareaBase = ({
   onChangeText, onSubmitEditing, editable, secureTextEntry: _p, returnKeyType: _r,
   placeholderTextColor: _ptc, numberOfLines, role: _role, textContentType: _tct,
-  className, style, ...props
+  autoCorrect, autoCapitalize, className, style, ...props
 }: TextareaBaseProps) => (
   <textarea
+    autoCorrect={autoCorrect === undefined ? undefined : autoCorrect ? 'on' : 'off'}
+    spellCheck={autoCorrect}
+    autoCapitalize={autoCapitalize === 'none' ? 'off' : autoCapitalize}
     readOnly={editable === false}
     rows={numberOfLines}
     onChange={(e) => onChangeText?.(e.target.value)}

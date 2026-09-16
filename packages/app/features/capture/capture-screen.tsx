@@ -21,6 +21,7 @@
 // SOT-KEYWORDS: capture screen choose capture review verify context upload success age band
 
 import { useEffect, useMemo, useState } from 'react';
+import { KeyboardAwareScroll } from '@acme/ui';
 import { useRouter } from 'solito/navigation';
 import { pickFile } from '../editor/pick-file';
 import { pickNoteImage } from '../schedule/pick-note-image';
@@ -106,22 +107,25 @@ function TypeCapture({ ageBand, onDone }: { ageBand: AgeBand; onDone: (text: str
   const size = buttonSizeForBand(ageBand);
   const label = ageBand === 'young' ? 'Type the problem' : 'Type or paste your work';
   return (
-    <View className="flex-1 gap-stack p-inset">
-      <Textarea
-        label={label}
-        value={text}
-        onChangeText={setText}
-        containerClassName="flex-1"
-      />
-      <Button
-        title="Done"
-        variant="highlighter"
-        size={size}
-        fullWidth
-        onPress={() => onDone(text)}
-        disabled={text.trim().length === 0}
-      />
-    </View>
+    <KeyboardAwareScroll className="flex-1" keyboardShouldPersistTaps="handled">
+      <View className="gap-stack p-inset">
+        <Textarea
+          label={label}
+          autoCorrect={false}
+          autoCapitalize="none"
+          value={text}
+          onChangeText={setText}
+        />
+        <Button
+          title="Done"
+          variant="highlighter"
+          size={size}
+          fullWidth
+          onPress={() => onDone(text)}
+          disabled={text.trim().length === 0}
+        />
+      </View>
+    </KeyboardAwareScroll>
   );
 }
 

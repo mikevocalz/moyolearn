@@ -4,7 +4,7 @@
 // SOT-KEYWORDS: digitized-text review ocr correction confirm age band
 
 import { useState } from 'react';
-import { Button, ErrorMessage, Textarea } from '@acme/ui';
+import { Button, ErrorMessage, KeyboardAwareScroll, Textarea } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { buttonSizeForBand, type AgeBand } from './age-band';
 
@@ -41,26 +41,29 @@ export function DigitizedTextReview({
       : 'The reader is not confident. Please check and correct before sending.';
 
   return (
-    <View className="flex-1 gap-stack p-inset">
-      {isLowConfidence ? (
-        <ErrorMessage message={warningCopy} className="text-body" />
-      ) : null}
-      <Textarea
-        label={label}
-        value={text}
-        onChangeText={setText}
-        containerClassName="flex-1"
-      />
-      <Button
-        title={confirmDisabled ? (ageBand === 'young' ? 'Fix the words first' : 'Correct before sending') : confirmLabel}
-        variant="highlighter"
-        size={size}
-        fullWidth
-        onPress={() => onConfirm(text)}
-        disabled={confirmDisabled}
-        aria-label="Use this text"
-      />
-      <Button title={retryLabel} variant="outline" size={size} fullWidth onPress={onCancel} aria-label="Start over" />
-    </View>
+    <KeyboardAwareScroll className="flex-1" keyboardShouldPersistTaps="handled">
+      <View className="gap-stack p-inset">
+        {isLowConfidence ? (
+          <ErrorMessage message={warningCopy} className="text-body" />
+        ) : null}
+        <Textarea
+          label={label}
+          autoCorrect={false}
+          autoCapitalize="none"
+          value={text}
+          onChangeText={setText}
+        />
+        <Button
+          title={confirmDisabled ? (ageBand === 'young' ? 'Fix the words first' : 'Correct before sending') : confirmLabel}
+          variant="highlighter"
+          size={size}
+          fullWidth
+          onPress={() => onConfirm(text)}
+          disabled={confirmDisabled}
+          aria-label="Use this text"
+        />
+        <Button title={retryLabel} variant="outline" size={size} fullWidth onPress={onCancel} aria-label="Start over" />
+      </View>
+    </KeyboardAwareScroll>
   );
 }
