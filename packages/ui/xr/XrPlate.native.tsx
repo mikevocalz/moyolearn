@@ -32,19 +32,20 @@
 // SOT: packages/ui/xr/spatial-tokens.ts · packages/ui/xr/run-layout.ts
 // SOT-KEYWORDS: xr plate label key primitive quad layer stacked viro spatial hover press ring chip
 
-import type { ReactNode } from 'react';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { XrRoundedQuad } from './XrRoundedQuad.native.tsx';
 import {
   useAnySourceHover,
   useAnySourcePressed,
   ViroClickStateTypes,
   ViroNode,
-  ViroQuad,
   ViroText,
 } from '@reactvision/react-viro';
 import { XR_MATERIAL } from './spatial-materials.native.ts';
 import { XR_COLOR } from './xr-colors.ts';
 import { runOffsets } from './run-layout.ts';
 import {
+  spatialCorners,
   spatialLabelFontSize,
   spatialLabelScale,
   spatialLayer,
@@ -146,6 +147,7 @@ export interface XrPlateProps {
   ring?: XrRing;
   position?: XrPoint;
   children?: ReactNode;
+  radius?: number;
 }
 
 /** A surface, and whatever sits on it. */
@@ -156,11 +158,14 @@ export function XrPlate({
   ring,
   position = [0, 0, 0],
   children,
+  radius = spatialCorners.panel,
 }: XrPlateProps) {
   return (
     <ViroNode position={position}>
-      {ring ? <ViroQuad width={width} height={height} materials={[ring.material]} /> : null}
-      <ViroQuad
+      {ring ? <XrRoundedQuad width={width} height={height} radius={radius} materials={[ring.material]} ignoreEventHandling /> : null}
+      <XrRoundedQuad
+        radius={Math.max(0, radius - (ring?.width ?? 0))}
+        ignoreEventHandling
         position={[0, 0, ring ? spatialLayer.surface : 0]}
         width={ring ? width - ring.width * 2 : width}
         height={ring ? height - ring.width * 2 : height}
@@ -227,6 +232,8 @@ export function XrKey({
   onPress,
   position = [0, 0, 0],
 }: XrKeyProps) {
+  const presses = useRef(new Set<Parameters<ReturnType<typeof useAnySourcePressed>[1]>[2]>());
+  useEffect(() => { presses.current.clear(); }, [disabled]);
   const [hovered, onHover] = useAnySourceHover();
   const [pressed, onPressState] = useAnySourcePressed();
 
@@ -288,19 +295,23 @@ export function XrKey({
   const labelY = box.height / 2 - (chip ? (offsets[1] ?? 0) : (offsets[0] ?? 0));
 
   return (
-    <ViroNode
-      position={position}
-      onHover={disabled ? undefined : onHover}
-      onClickState={
-        disabled
-          ? undefined
-          : (clickState, hitPosition, source) => {
-              onPressState(clickState, hitPosition, source);
-              if (clickState === ViroClickStateTypes.CLICK_UP) onPress();
-            }
-      }
-    >
-      <XrPlate width={width} height={height} material={face} ring={ring}>
+    <ViroNode position={position}>
+      <XrRoundedQuad
+        width={width} height={height} radius={spatialCorners.key}
+        position={[0, 0, spatialLayer.content * 3]}
+        materials={[XR_MATERIAL.pointer]}
+        onHover={(hovered, position, source) => {
+          onHover(hovered, position, source);
+          if (!hovered) presses.current.delete(source);
+        }}
+        onClickState={(state, position, source) => {
+          onPressState(state, position, source);
+          if (disabled) { presses.current.clear(); return; }
+          if (state === ViroClickStateTypes.CLICK_DOWN) presses.current.add(source);
+          if (state === ViroClickStateTypes.CLICK_UP && presses.current.delete(source)) onPress();
+        }}
+      />
+      <XrPlate width={width} height={height} radius={spatialCorners.key} material={face} ring={ring}>
         {chip ? (
           <XrPlate
             position={[0, chipY, 0]}

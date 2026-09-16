@@ -3,6 +3,7 @@
 // global, so registering twice would warn. The `registered` guard makes it safe
 // to import from every component.
 import { ViroMaterials } from '@reactvision/react-viro';
+import { XR_SURFACE } from '../xr-colors.ts';
 
 let registered = false;
 
@@ -22,7 +23,7 @@ export function registerSpatialMaterials(): void {
     // never shows through the card (incl. behind a transparent artwork PNG).
     solidPanel: { diffuseColor: '#FFFFFF', lightingModel: 'Constant' },
     // Header grab-strip + accents — Pokédex red.
-    softCard: { diffuseColor: '#D8232A', lightingModel: 'Constant' },
+    softCard: { diffuseColor: XR_SURFACE.rail, lightingModel: 'Constant' },
     // Utility scroll-rail housing — dark steel, distinct from the red brand bar.
     steelRail: { diffuseColor: '#2B2F3A', lightingModel: 'Constant' },
     glassPanel: {

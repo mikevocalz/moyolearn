@@ -33,6 +33,7 @@ import { Viro3DObject, ViroNode } from '@reactvision/react-viro';
 import { IdleEngine, type IdleInputs } from '@acme/avatar';
 import { natalieMorphs, type NatalieMorph } from '@acme/ui/xr';
 import { audioQueue } from './tutor-audio';
+import { viroFace } from './natalie-viro-targets.ts';
 import {
   SPATIAL_POSE_BONES,
   spatialPose,
@@ -45,7 +46,7 @@ import {
   WebP, two of them 8K — and tinygltf refuses any file whose REQUIRED extension
   it cannot satisfy, so ViroCore's loader failed before the first vertex
   (measured on the PICO: `onError "Failed to load model"`). This cut is the
-  same mesh, skin and 52 morphs with the textures transcoded to PNG at 2048 and
+  same identity and skin with six XR morph channels with the textures transcoded to PNG at 2048 and
   the webp requirement dropped. One file, so it survives release asset
   flattening — the hazard the 2D stage's split .gltf exists to dodge on Dawn.
 */
@@ -62,28 +63,19 @@ const TICK_MS = 33;
 */
 const BODY_DRIVE_ENABLED = false;
 
-/** Idle channels at rest, for the frames before the engine has stepped. */
-const STILL: SpatialIdleView = {
-  breathY: 0,
-  breathPitch: 0,
-  swayX: 0,
-  swayY: 0,
-  driftYaw: 0,
-  driftPitch: 0,
-  nodPitch: 0,
-};
-
 export interface XrNatalieProps {
   /** Her feet, in world metres. The screen derives it from the child's head. */
   position: [number, number, number];
   /** Yaw only — she stands upright, turned to face the child. */
   rotationY: number;
+  onStatus?: (status: 'loading' | 'ready' | 'failed') => void;
 }
 
 
-export function XrNatalie({ position, rotationY }: XrNatalieProps) {
+export function XrNatalie({ position, rotationY, onStatus }: XrNatalieProps) {
   const model = useRef<Viro3DObject>(null);
   const loaded = useRef(false);
+  const failed = useRef(false);
   /*
     WHERE THE CHILD PUT HER, kept apart from where the composition placed her.
     Viro's drag MOVES THE DRAGGED NODE, and this node's position is a prop — so
@@ -95,7 +87,6 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
   const dragFrom = useRef<[number, number, number] | null>(null);
 
   useEffect(() => {
-    if (__DEV__) console.log('[natalie-xr] mounted at', position, 'yaw', rotationY.toFixed(1));
     let timer: ReturnType<typeof setInterval> | null = null;
     let cancelled = false;
 
@@ -116,21 +107,23 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
         which is the face-only degradation, not a failure to surface.
       */
       try {
-        const { matrices } = await handle.getSkeletonBoneTransforms([...SPATIAL_POSE_BONES]);
-        const settled = matrices.length === SPATIAL_POSE_BONES.length * 16;
-        const legible = settled && SPATIAL_POSE_BONES.every((_, i) => matrices[i * 16] !== 0 || matrices[i * 16 + 1] !== 0 || matrices[i * 16 + 2] !== 0);
-        if (__DEV__) console.log('[natalie-xr] rest pose read:', settled ? 'ok' : 'wrong-length', 'legible:', legible, 'first-row:', matrices.slice(0, 4));
-        /*
-          BONE DRIVING IS GATED OFF UNTIL THE REST POSE IS PROVEN ON DEVICE.
-          A wrong bone-world matrix does not fail — it scales or shears the mesh
-          into a wall of geometry ("all I can see is her eyes"). She renders in
-          her loaded rest pose first; the idle body turns on only once the rest
-          read is confirmed sane in the headset. Face morphs stay live — they
-          are clamped 0..1 and cannot deform geometry scale.
-        */
-        if (legible && BODY_DRIVE_ENABLED) {
-          restPose = matrices;
-          bonesLive = true;
+        if (BODY_DRIVE_ENABLED) {
+          const { matrices } = await handle.getSkeletonBoneTransforms([...SPATIAL_POSE_BONES]);
+          const settled = matrices.length === SPATIAL_POSE_BONES.length * 16;
+          const legible = settled && SPATIAL_POSE_BONES.every((_, i) => matrices[i * 16] !== 0 || matrices[i * 16 + 1] !== 0 || matrices[i * 16 + 2] !== 0);
+          if (__DEV__) console.log('[natalie-xr] rest pose read:', settled ? 'ok' : 'wrong-length', 'legible:', legible, 'first-row:', matrices.slice(0, 4));
+          /*
+            BONE DRIVING IS GATED OFF UNTIL THE REST POSE IS PROVEN ON DEVICE.
+            A wrong bone-world matrix does not fail — it scales or shears the mesh
+            into a wall of geometry ("all I can see is her eyes"). She renders in
+            her loaded rest pose first; the idle body turns on only once the rest
+            read is confirmed sane in the headset. Face morphs stay live — they
+            are clamped 0..1 and cannot deform geometry scale.
+          */
+          if (legible && BODY_DRIVE_ENABLED) {
+            restPose = matrices;
+            bonesLive = true;
+          }
         }
       } catch (e) {
         if (__DEV__) console.log('[natalie-xr] rest pose read FAILED', String(e));
@@ -165,7 +158,7 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
           expression encoder belongs to the face bus, and one filter
           (`natalieMorphs`) decides what is worth a bridge crossing.
         */
-        const face = audioQueue.sampleFace() ?? {};
+        const face = speaking ? audioQueue.sampleFace() ?? {} : {};
         const shape: Record<string, number> = {
           eyeBlinkLeft: frame.eyeBlinkLeft,
           eyeBlinkRight: frame.eyeBlinkRight,
@@ -175,7 +168,7 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
           const sample = audioQueue.sampleSpeech(now);
           if (sample.active) shape.jawOpen = sample.shape.jawOpen ?? 0;
         }
-        const morphs = natalieMorphs(shape, previousMorphs);
+        const morphs = natalieMorphs(viroFace(shape), previousMorphs);
         if (morphs !== previousMorphs) {
           previousMorphs = morphs;
           handleNow.setMorphTargetWeights(
@@ -206,6 +199,7 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
 
     /* Poll for load: onLoadEnd sets the flag; effects cannot await a prop. */
     const waitForLoad = setInterval(() => {
+      if (failed.current) { clearInterval(waitForLoad); return; }
       if (!loaded.current) return;
       clearInterval(waitForLoad);
       void start();
@@ -256,13 +250,19 @@ export function XrNatalie({ position, rotationY }: XrNatalieProps) {
         source={NATALIE_GLB}
         type="GLB"
         onLoadStart={() => {
+          loaded.current = false;
+          onStatus?.('loading');
           if (__DEV__) console.log('[natalie-xr] model load started');
         }}
         onLoadEnd={() => {
           loaded.current = true;
+          onStatus?.('ready');
           if (__DEV__) console.log('[natalie-xr] model load ENDED — she should be visible');
         }}
         onError={(event) => {
+          failed.current = true;
+          loaded.current = false;
+          onStatus?.('failed');
           /* Absence is the contract, but a silent absence is undebuggable. */
           console.log('[natalie-xr] model FAILED to load', JSON.stringify(event?.nativeEvent ?? {}));
         }}

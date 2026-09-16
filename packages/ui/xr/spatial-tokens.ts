@@ -376,7 +376,7 @@ export const boardComposition = {
  * the pointer injection scales rays by it, and the polyline fallback maps page
  * coordinates through it. All three move together because all three read this.
  */
-export const boardSurfacePixels = { width: 1920, height: 960 } as const;
+export const boardSurfacePixels = { width: 1000, height: 1400 } as const;
 
 /**
  * The paper's own stack, in metres, from the surface outwards.
@@ -395,3 +395,6 @@ export const boardSurfacePixels = { width: 1920, height: 960 } as const;
  * plate. They only have to beat Z-fighting at the board's working distance.
  */
 export const boardLayer = { raster: 0.0005, ink: 0.001 } as const;
+
+/** Restrained corner softness in world metres; keys remain rectangular. */
+export const spatialCorners = { panel: 0.022, key: 0.012 } as const;

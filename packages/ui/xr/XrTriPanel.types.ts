@@ -16,6 +16,7 @@ export interface XrPanelRow {
   onPress?: () => void;
   /** Draws the row as chosen — the tool in the child's hand. */
   active?: boolean;
+  disabled?: boolean;
   /** Renders the row as a real ViroButton with this face. */
   face?: 'pen' | 'highlighter' | 'eraser' | 'undo' | 'redo' | 'clear' | 'ask';
   /** The ink swatch, on the one button whose face is its content. */
@@ -25,6 +26,8 @@ export interface XrPanelRow {
 export interface XrTriPanelProps {
   /** The board, as the engine's own PNG. Null until the first raster lands. */
   boardUri: string | null;
+  boardLive: boolean;
+  controlSize: number;
   /** The question, as the centre panel's title. */
   boardTitle: string;
   /** The child's head in world metres — what the arc is measured from. */

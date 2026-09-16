@@ -20,5 +20,6 @@ export interface XrBoardSurfaceProps {
    * committing it — a child whose session dropped mid-line did not finish it.
    */
   enabled: boolean;
+  termination?: { source: number; cancel: boolean; revision: number };
   onSurfaceInput: (sample: XrSurfaceInput) => void;
 }

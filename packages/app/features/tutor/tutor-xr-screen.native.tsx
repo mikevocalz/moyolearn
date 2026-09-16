@@ -1,62 +1,13 @@
 'use client';
-// The spatial workspace: the same board and the same conversation, in a
-// headset.
-//
-// WHAT IS ON SCREEN, AND WHERE IT COMES FROM. Nothing here is new content. The
-// paper is the session's one `BoardDoc` (`board-session`), the strokes on it are
-// that document's records, the rail is `Whiteboard.tsx`'s toolbar model, and the
-// panel to the right is `useTutorStore`'s transcript. Entering is a second
-// PRESENTATION of one lesson — not a second lesson — so no state is seeded, no
-// opening is replayed, and no audio stream is opened.
-//
-// THE ENGINE IS STILL QUICKDRAW, AND IT IS STILL ON SCREEN — just not visibly.
-// ViroReact cannot host a React Native view inside a scene — a scene graph takes
-// Viro primitives and nothing else — so the engine is not MOUNTED on the paper.
-// Its output is. It remains the only authority for strokes, tools, the eraser
-// and export; the paper is textured with the picture it rasters of its own
-// document (`XrBoardRaster`), the strokes it has not rastered yet are drawn in
-// front as polylines (`XrBoardInk`), and a ray on the paper becomes a pointer in
-// the engine. One engine, one document, two renderers — which is what keeps a
-// stroke drawn in the headset identical to one drawn on a laptop, and what
-// finally puts a child's typed notes, arrows and images on the spatial board
-// instead of counting them as missing.
-//
-// The engine is laid out at `boardSurfacePixels` and parked off-screen so its
-// client space is the space the ink is rendered from. A WebView with
-// `display: none` would tear down its surface; moved aside, it keeps drawing.
-//
-// WHY THE SCENE READS ITS STATE INSTEAD OF RECEIVING IT. `ViroARSceneNavigator`
-// captures `initialScene` in its CONSTRUCTOR — it goes into
-// `state.sceneDictionary[tag].sceneClass` and is rendered from there as a
-// component type for the life of the navigator. A scene function rebuilt by a
-// later render is never picked up, and neither is `passProps`. So a scene
-// closed over `store`, `placement` or `tool` would draw the first render of the
-// session forever: a child would write on the board and watch nothing appear.
-// Everything the scene reacts to therefore arrives through `useXrSession` or
-// `useTutorStore`, and everything it merely needs a handle on arrives through
-// the `active` holder below.
-//
-// THE HEADSET IS WHERE THE CHILD ASKED TO BE, SO IT IS THE FIRST THING THEY
-// GET. This screen is the driver of `xr-session.store`'s lifecycle, and the
-// order is what changed: eligibility is answered from constants — this binary's
-// native modules and this device's build strings — while the store is being
-// created, so an eligible headset opens at `preparing` and the navigator mounts
-// on the FIRST render. A child who pressed a key marked with a headset used to
-// read a flat card telling them the app was thinking about it; the wait is the
-// same length either way, and the panel's own wait card serves it in the medium
-// they asked for.
-//
-// PERMISSION IS THE ONE ANSWER THAT CANNOT BE HAD IN TIME, and it is the one
-// thing the flat panel is still for. `checkPermissions` is a round trip, so the
-// scene is already up when it lands; a no demotes the lifecycle back out to the
-// primer, which renders flat because it has to — a consent question asked from
-// inside the immersive scene it grants consent for is a question already
-// answered. Tracking loss after that is an INTERRUPTION, never an ending: the
-// board stays where the child put it and the strokes stay in the document.
-// SOT: packages/app/features/tutor/board-session.ts · packages/app/features/tutor/xr-capability.ts
-//      packages/app/features/tutor/xr-eligibility.ts · packages/ui/xr/XrPanel.types.ts
-//      docs/decisions/adr-117-spatial-whiteboard-bridge.md
-// SOT-KEYWORDS: tutor xr screen spatial whiteboard viro quest scene rail chat board session native permission primer tracking lifecycle calibration constrained layout fits miss direct entry
+// The existing lesson in space: one BoardSession and one audioQueue owner.
+// Quickdraw stays in a native WebView. BoardTextureHost attaches that view to
+// Viro's live material, rendered by XrTriPanel; XrBoardSurface forwards owned
+// controller strokes into that same editor. Raster output is a visible recovery
+// preview only: handwriting waits for the live bridge and calibration.
+// The navigator captures its initial scene, so scene state comes from stores
+// and active runtime handles. Workspace placement is latched until Recenter.
+// SOT: board-session.ts · XrTriPanel.native.tsx · modules/board-texture
+// SOT-KEYWORDS: xr live whiteboard controller tutor voice session native
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
@@ -83,35 +34,20 @@ import {
 import { View as UiView } from '@acme/ui/primitives';
 import {
   BoardTextureHost,
-  probePremiumImports,
   XrTriPanel,
   XrBoardSurface,
-  XrBoardInk,
-  XrBoardLive,
-  XrBoardRaster,
-  XrChatPanel,
-  XrPanel,
-  XrPlacementControls,
-  XrQuestionLine,
-  XrRail,
   XR_COLOR,
   XR_MATERIAL,
   boardComposition,
   boardSurfacePixels,
-  BOARD_ASPECT,
-  layoutBoard,
+  minHitSize,
   placeInFrontOf,
-  railContentHeight,
-  railWidthFor,
   spatialDistance,
   spatialSpacing,
-  uncoveredRecords,
-  type BoardLayoutMiss,
   type BoardTextureBinding,
   type XrHeadPose,
   type XrVector3,
   type XrChatRow,
-  type XrPanelState,
   type XrSurfaceInput,
 } from '@acme/ui/xr';
 import { buttonSizeForBand } from '../capture';
@@ -138,8 +74,6 @@ import { currentXrEligibility } from './xr-eligibility';
 import { panelStateOf, useXrSession, type XrPhase } from './xr-session.store.ts';
 import { useXrVoice } from './xr-voice.native.ts';
 
-/* Temporary: names the vendored module that throws at import. See probe. */
-probePremiumImports();
 
 /** This presentation's id, so its own strokes are not echoed back at it. */
 const PRESENTATION_ID = 'tutor-xr';
@@ -273,7 +207,6 @@ function readyOrInterrupted(): XrPhase {
 }
 
 /** The paper's height, from the one aspect the board is allowed to have. */
-const BOARD_HEIGHT = (boardComposition.boardWidth * BOARD_ASPECT.h) / BOARD_ASPECT.w;
 
 /**
  * THE RENDERER'S OWN VERDICT ON WHETHER IT KNOWS WHERE THE ROOM IS.
@@ -403,114 +336,44 @@ function handleCameraTransform(transform: { position: XrVector3; forward: XrVect
   active.head = pose;
 }
 
-/**
- * What a composition that does not fit says to the child, per miss.
- *
- * A CONSTRAINED BOARD IS A STATE, NOT AN ERROR, and the two misses are
- * different sentences because they have different next moves — which is the
- * whole reason `BoardLayoutMiss` is a union rather than a boolean
- * (`05-handoff.md` §6).
- *
- * `rail-below-target` is the one a child can fix, and it is the one they will
- * actually meet: the rail is sized for a K–2 learner at the board's own
- * distance, so dragging the paper further out is all it takes to put every key
- * under the 4° floor. The answer is in the sentence — pull it back, or press
- * the key that puts it back — and both are affordances already on screen.
- *
- * `no-room` cannot be reached from this caller today: the width budget is
- * `boardWidth + railWidth + railGap` less the rail and the gap, which is
- * `boardWidth`, and the chat is not in this budget at all. It is answered
- * anyway because the day the companion joins the budget it becomes reachable,
- * and an unhandled miss renders as a full-size board a child cannot use.
- *
- * Neither line names a screen a child in a headset cannot see; both say where
- * the work is, which is the only thing every dead end in this feature owes
- * them.
- *
- * `Recenter` is quoted because it is the key's own visible label
- * (`XrOrnaments.native.tsx`) — a sentence that tells a child to press something
- * has to use the word written on it. `04-copy.md` §3.6 proposes renaming that
- * key; this line moves with it.
- */
-const MISS_ASSURANCE: Record<BoardLayoutMiss, string> = {
-  'rail-below-target':
-    'Your board is too far away to reach the pens. Pull it closer by its edge, or press Recenter to put it back.',
-  'no-room':
-    'There is not enough room here for your board and its pens. Take the headset off and your board is there, with everything you wrote.',
-};
-
-/**
- * The line under Natalie's name — hers normally, and the reason the board is
- * not taking ink whenever it is not.
- *
- * All of them are assurances and that is why they share the slot: every one
- * says the work is safe, and they exist to stop a board that has stopped taking
- * ink from reading as a board that has lost what is on it.
- *
- * THE ORDER IS THE POINT. A phase interruption comes first because it is the
- * one that resolves itself — a child told to drag their paper closer while the
- * headset is still finding the room would be moving a board that is about to
- * come back on its own. The layout miss speaks once the board is otherwise
- * fine, which is exactly when its instruction is worth following.
- */
-function assuranceFor(phase: XrPhase, miss: BoardLayoutMiss | null): string {
-  if (phase.kind === 'interrupted') {
-    if (phase.reason === 'tracking-lost') {
-      return 'The headset is finding your room again. Your work is safe — it comes back on its own.';
-    }
-    if (phase.reason === 'tracking-limited') {
-      return 'The headset is having trouble seeing your room. Move gently; your work is safe.';
-    }
-    /*
-      The mapping between the ray and the engine is wrong, so the board is not
-      taking marks — see `active.inkAligned`. The cause is inside the engine and
-      there is nothing in the room to adjust, so the line asks for nothing: it
-      says what is happening, and that the work is safe.
-    */
-    return 'Your board is lining itself up, so it cannot take new marks yet. Everything you wrote is safe.';
-  }
-  if (miss !== null) return MISS_ASSURANCE[miss];
-  return "Press Ask and she'll see your board.";
-}
-
-/**
- * THE SCENE, as a stable component type.
- *
- * It reads its state rather than receiving it, for the constructor-capture
- * reason above. Every hook here is a narrow selector: a scene that re-rendered
- * on every message of a streaming tutor turn would rebuild the board's polyline
- * set at token rate.
- */
 function BoardScene() {
   const phase = useXrSession((s) => s.phase);
   const placement = useXrSession((s) => s.placement);
-  const setPlacement = useXrSession((s) => s.setPlacement);
-  const recenter = useXrSession((s) => s.recenter);
+  const workspaceHead = useMemo((): [number, number, number] => {
+    const yaw = placement.rotation[1] * Math.PI / 180;
+    return [
+      placement.position[0] + Math.sin(yaw) * BOARD_PLACE.distanceM,
+      placement.position[1] + BOARD_PLACE.dropM,
+      placement.position[2] + Math.cos(yaw) * BOARD_PLACE.distanceM,
+    ];
+  }, [placement]);
+  const [avatarStatus, setAvatarStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const [avatarAttempt, setAvatarAttempt] = useState(0);
+  const [termination, setTermination] = useState<{ source: number; cancel: boolean; revision: number }>();
+  const terminatePointer = (source: number, cancel: boolean) => {
+    setTermination((last) => ({ source, cancel, revision: (last?.revision ?? 0) + 1 }));
+  };
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [askError, setAskError] = useState(false);
+  const [surfaceTimedOut, setSurfaceTimedOut] = useState(false);
+  const textureReady = useXrSession((s) => s.boardTextureBound);
+  useEffect(() => {
+    if (textureReady) return;
+    const timer = setTimeout(() => setSurfaceTimedOut(true), 10000);
+    return () => clearTimeout(timer);
+  }, [textureReady]);
+  useEffect(() => {
+    if (!confirmClear) return;
+    const timer = setTimeout(() => setConfirmClear(false), 5000);
+    return () => clearTimeout(timer);
+  }, [confirmClear]);
   const tool = useXrSession((s) => s.tool);
   const ink = useXrSession((s) => s.ink);
   const asking = useXrSession((s) => s.asking);
   const band = useXrSession((s) => s.band);
-  /*
-    NO `registerXrMaterials()` CALL SITS HERE ANY MORE. It was added on the
-    theory that `VRActivity`'s renderer had its own material registry this
-    scene was missing; the renderer has no such thing, and the blank headset
-    that suggested it was a `ReferenceError` on this component's first render.
-    The argument in full, with the source that settles it, is on the function
-    itself — `packages/ui/xr/spatial-materials.native.ts`.
-  */
-  /*
-    THE COUNT OF WHAT THIS RENDERER COULD NOT DRAW, finally on a surface a child
-    reads. `skippedRecords` and `setSkipped` were written with the store and
-    never called by anything, so a board silently missing the child's typed note
-    looked exactly like a complete one. `XrBoardInk` now reports the number and
-    the companion panel says it; zero renders nothing.
-  */
-  const skippedRecords = useXrSession((s) => s.skippedRecords);
-  const setSkipped = useXrSession((s) => s.setSkipped);
   const revision = useXrSession((s) => s.revision);
 
   const messages = useTutorStore((s) => s.messages);
-  const stageKind = useTutorStore((s) => s.state.kind);
   const problem = useTutorStore((s) => s.problem);
 
   const session = active.session;
@@ -522,7 +385,6 @@ function BoardScene() {
     can be closed if the board stops accepting ink half way through one.
   */
   const drawing = useRef(false);
-  const lastPlacementLogged = useRef('');
   /* Read through a stable function rather than passed as a value: the hook's
      effect must not re-run because a ref's contents moved, and `active.engine`
      is set by an effect in the screen above rather than by a render. */
@@ -563,137 +425,15 @@ function BoardScene() {
     fire without an engine handle, which is the condition that actually matters.
   */
   const raster = useBoardRaster(readEngine, store, !boardTextureBound, strokeOpen);
-  const liveStore = useMemo(() => uncoveredRecords(store, raster.covered), [raster.covered, store]);
 
-  /*
-    Nothing is skipped when the page is what is drawn: `strokeOf`'s gaps — text,
-    notes, arrows, images — are the polyline renderer's, and the engine has no
-    such gaps in its own picture of itself. The count is cleared rather than
-    left at whatever `XrBoardInk` last reported before it unmounted, or the
-    companion panel would keep telling a child something is missing from a board
-    that is showing them everything.
-  */
-  useEffect(() => {
-    if (boardTextureBound) setSkipped(0);
-  }, [boardTextureBound, setSkipped]);
-
-  if (__DEV__) {
-    const key = placement.position.map((n) => n.toFixed(2)).join(',');
-    if (key !== lastPlacementLogged.current) {
-      lastPlacementLogged.current = key;
-      console.log('[tutor-xr] RENDER placement', placement.position, 'yaw', placement.rotation[1].toFixed(1));
-    }
-  }
-  const distanceM = Math.abs(placement.position[2]);
-  /*
-    Controllers, not hands, until the runtime says otherwise — the smaller of
-    the two hit-target multipliers is the one that must not be assumed, so the
-    assumption here is the conservative direction only once hand tracking is
-    actually reported. Wired as a constant rather than hidden in a token so the
-    day it becomes dynamic there is one place to change.
-  */
-  const handsPrimary = false;
-
-  /*
-    The composition, from the one layout function both presentations share. A
-    space that cannot hold the rail at its angular floor reports `fits: false`
-    rather than shrinking a child's controls under a reachable size.
-  */
-  const geometry = layoutBoard({
-    W: boardComposition.boardWidth + boardComposition.railWidth + boardComposition.railGap,
-    H: BOARD_HEIGHT,
-    R: boardComposition.railWidth,
-    G: boardComposition.railGap,
-    /*
-      THE FLOOR, UNCLAMPED. It used to arrive as
-      `Math.min(railWidth, minHitSize(…))`, which is `minRail <= R` by
-      construction — a floor the allocated rail can never fall below is a guard
-      that never runs, and it is why a six-year-old's keys shrank silently
-      instead of the layout reporting `rail-below-target`. `railWidthFor` is the
-      one expression `board-layout` names for this argument.
-    */
-    minRail: railWidthFor(distanceM, handsPrimary, band),
-  });
-  const boardWidth = geometry.fits ? geometry.boardWidth : boardComposition.boardWidth;
-  const boardHeight = geometry.fits ? geometry.boardHeight : BOARD_HEIGHT;
-  /*
-    THE MISS, KEPT RATHER THAN DISCARDED. The two lines above read the same as
-    they did when this was `geometry.fits ? … : …` and nothing else — the paper
-    is still drawn at its design size, because the paper is not what the miss is
-    about and shrinking it would make a child's writing smaller to punish them
-    for a rail that does not fit. What changed is that the miss now reaches the
-    panel and the assurance line instead of being thrown away, which is what
-    turned an unreachable rail into a board that says nothing.
-
-    IT IS NOT A PHASE TRANSITION, and that is deliberate. `fits` is derived from
-    `placement` and is recomputed every render: a child dragging the board out
-    and back would drive `ready → interrupted → ready` at drag-sample rate
-    through a machine whose whole contract is that nothing advances on a render.
-    The lifecycle answers "what is this screen doing"; the composition answers
-    "does what it is doing fit here", and only the second one changes while a
-    child's hand is moving. So the miss narrows the state the PANEL is given —
-    its own union, its own `interrupted` treatment, board stays drawn — and the
-    store's phase is left to the four things that actually happen to it.
-  */
-  const miss: BoardLayoutMiss | null = geometry.fits ? null : geometry.miss;
-
-  /*
-    THE RAIL IS AS TALL AS ITS OWN CONTENT, and stopped being as tall as the
-    paper when the paper turned landscape. It was `height={boardHeight}`, which
-    worked while the board was portrait — 0.77 m held two columns of four
-    floor-sized keys with room over. A 6:4 board is 0.4 m, which holds two rows,
-    and eight controls in two rows is four columns: a 0.81 m slab beside a 0.6 m
-    board, 38° off centre, which is not a rail a child can reach.
-
-    So the rail keeps its two-by-four grid and takes the height that grid needs.
-    It is taller than the paper now — a sidebar rather than a margin — and that
-    is the trade: the alternative shrinks a six-year-old's keys, which is the
-    one thing `railWidthFor` and `layoutBoard` both exist to refuse.
-  */
-  /*
-    Where Natalie stands: the composition's right edge plus a margin, in world
-    space — the anchor's local +X turned by its yaw. Her feet are at y = 0
-    because the PICO runtime is floor-referenced (native LOCAL_FLOOR); under a
-    head-referenced fallback origin this puts her roughly floor-level too,
-    which is the degradation a dev phone can live with.
-  */
-  /*
-    WHERE SHE STANDS, AND WHY IT IS BEHIND THE ARC RATHER THAN BESIDE IT.
-
-    Measured on device: placed at the composition's right edge plus a margin
-    she came out under a metre away at full 1.67 m height — head in the ceiling
-    lamp, body across the board. A tutor is someone you look ACROSS at, not
-    someone standing over your desk.
-
-    So she is put on the same arc the panels use, past the right slot and
-    further out: `NATALIE_DISTANCE` beyond the panel radius so she is behind
-    the conversation panel rather than in front of it, at `NATALIE_AZIMUTH`
-    which clears the right panel's own 30°. Scale is 1: she is a person, and a
-    shrunken person reads as a doll rather than as a tutor — the distance is
-    what makes her fit the view.
-  */
-  const natalieAngle = ((placement.rotation[1] + NATALIE_AZIMUTH_DEG) * Math.PI) / 180;
+  const natalieAngle = ((NATALIE_AZIMUTH_DEG - placement.rotation[1]) * Math.PI) / 180;
   const nataliePosition: [number, number, number] = [
-    (active.head?.position[0] ?? 0) + Math.sin(natalieAngle) * NATALIE_DISTANCE_M,
+    (workspaceHead?.[0] ?? 0) + Math.sin(natalieAngle) * NATALIE_DISTANCE_M,
     0,
-    (active.head?.position[2] ?? 0) - Math.cos(natalieAngle) * NATALIE_DISTANCE_M,
+    (workspaceHead?.[2] ?? 0) - Math.cos(natalieAngle) * NATALIE_DISTANCE_M,
   ];
 
-  const railHeight = Math.max(
-    boardHeight,
-    railContentHeight(distanceM, handsPrimary, band) + spatialSpacing.xs * 2,
-  );
-
-  /*
-    A board that cannot hold a reachable rail is not a ready board. Only `ready`
-    is overridden: `checking` and `preparing` still owe the child their wait
-    card, `unsupported` and `exiting` are already the stronger statement, and an
-    interruption already says something truer about why the board is not taking
-    ink.
-  */
-  const panelState: XrPanelState = panelStateOf(phase);
-  const composedState: XrPanelState =
-    miss !== null && panelState === 'ready' ? 'interrupted' : panelState;
+  const composedState = panelStateOf(phase);
 
   /*
     THE ASK BUTTON IS A MICROPHONE NOW, not a silent screenshot.
@@ -706,13 +446,19 @@ function BoardScene() {
     child just drew.
   */
   const voice = useXrVoice({
-    enabled: composedState === 'ready' || composedState === 'interrupted',
+    enabled: composedState === 'ready' && boardTextureBound,
     onUtterance: (text) => {
-      useXrSession.getState().queueSay(text);
+      const engine = active.engine;
+      const owner = active.session;
+      if (!engine || useXrSession.getState().asking) return;
+      setAskError(false);
       useXrSession.getState().setAsking(true);
-      void active.engine?.exportPng().then((png) => {
-        useXrSession.getState().setAsking(false);
+      void engine.exportPng().then((png) => {
+        if (active.engine !== engine || active.session !== owner) return;
+        useXrSession.getState().queueSay(text);
         active.onAsk(png);
+      }).catch(() => setAskError(true)).finally(() => {
+        if (active.engine === engine) useXrSession.getState().setAsking(false);
       });
     },
   });
@@ -727,6 +473,8 @@ function BoardScene() {
     switch (voice.phase.kind) {
       case 'listening':
         return 'Listening — press to send';
+      case 'starting':
+        return 'Opening microphone…';
       case 'transcribing':
         return 'One moment…';
       case 'blocked':
@@ -821,7 +569,14 @@ function BoardScene() {
         This is the same fix, for the same symptom, as the Danger Room scene's
         passthrough toggle that "did nothing" until the controller was added.
       */}
-      <ViroController controllerVisibility reticleVisibility />
+      <ViroController controllerVisibility reticleVisibility
+        onClickState={(state, _position, source) => {
+          if (state === 2 && typeof source === 'number') terminatePointer(source, false);
+        }}
+        onControllerStatus={(status: number, source) => {
+          // Vendored ViroCore ControllerStatus: DISCONNECTED=4, ERROR=5.
+          if ((status === 4 || status === 5) && typeof source === 'number') terminatePointer(source, true);
+        }} />
       <ViroAmbientLight color="#ffffff" intensity={600} />
       <ViroDirectionalLight color="#ffffff" direction={[0, -1, -0.5]} intensity={800} />
       {/*
@@ -833,7 +588,7 @@ function BoardScene() {
         y = 0 is the ground she stands on. Her yaw is the composition's own —
         the board already faces the child, and she stands in its frame.
       */}
-      <XrNatalie position={nataliePosition} rotationY={placement.rotation[1]} />
+      <XrNatalie key={avatarAttempt} position={nataliePosition} rotationY={placement.rotation[1]} onStatus={setAvatarStatus} />
       {/*
         THE FLANKS, ON THE ARC: tools left, the conversation right — each its
         own draggable `PremiumXRMediaPanel`, poke-xr's component vendored whole.
@@ -843,12 +598,14 @@ function BoardScene() {
       */}
       {active.head !== null ? (
         <XrTriPanel
-          headPosition={active.head.position}
+          headPosition={workspaceHead}
           headYawDeg={placement.rotation[1]}
-          tutorName={TUTOR_NAME}
+          tutorName={avatarStatus === 'loading' ? 'Natalie · loading' : avatarStatus === 'failed' ? 'Natalie · audio & captions' : TUTOR_NAME}
           placeholderUri={BLANK_PNG}
           boardUri={raster.uri}
-          boardTitle={problem ?? 'Your board'}
+          boardLive={boardTextureBound}
+          controlSize={minHitSize(2.6, false, band)}
+          boardTitle={!boardTextureBound ? (surfaceTimedOut ? 'Board unavailable — return to lesson' : 'Connecting your board…') : problem ?? 'Your board'}
           chatRows={chatRows.map((row) => ({
             id: row.id,
             text: row.text,
@@ -856,9 +613,25 @@ function BoardScene() {
           }))}
           controlRows={[
             {
+              id: 'ask',
+              face: 'ask',
+              /*
+                THE BUTTON SAYS WHAT IT IS DOING, because in a headset there is
+                no other way to know the microphone is open. A child who cannot
+                see a recording indicator and cannot hear themselves back has
+                only this label to tell them they are being listened to.
+              */
+              text: askError ? 'Could not send — try again' : askLabel,
+              disabled: composedState !== 'ready' || asking || !boardTextureBound || voice.phase.kind === 'transcribing' || voice.phase.kind === 'starting',
+              emphasis: true,
+              active: voice.phase.kind === 'listening',
+              onPress: () => { setAskError(false); voice.toggle(); },
+            },
+            {
               id: 'pen',
               face: 'pen',
               text: 'Pen',
+              disabled: composedState !== 'ready' || !boardTextureBound,
               active: tool === 'draw',
               onPress: () => {
                 useXrSession.getState().setTool('draw');
@@ -869,6 +642,7 @@ function BoardScene() {
               id: 'mark',
               face: 'highlighter',
               text: 'Highlighter',
+              disabled: composedState !== 'ready' || !boardTextureBound,
               active: tool === 'highlight',
               onPress: () => {
                 useXrSession.getState().setTool('highlight');
@@ -879,6 +653,7 @@ function BoardScene() {
               id: 'erase',
               face: 'eraser',
               text: 'Eraser',
+              disabled: composedState !== 'ready' || !boardTextureBound,
               active: tool === 'eraser',
               onPress: () => {
                 useXrSession.getState().setTool('eraser');
@@ -887,7 +662,8 @@ function BoardScene() {
             },
             {
               id: 'ink',
-              text: '',
+              text: `Ink: ${ink}`,
+              disabled: composedState !== 'ready' || !boardTextureBound,
               swatchColor: ink,
               onPress: () => {
                 /* Cycles the pen colour: the spatial panel has no room for a
@@ -897,25 +673,24 @@ function BoardScene() {
                 const next = order[(at + 1) % order.length] ?? 'black';
                 useXrSession.getState().setInk(next);
                 active.engine?.setInk(next);
+                if (tool === 'eraser') {
+                  active.engine?.setTool('draw');
+                  useXrSession.getState().setTool('draw');
+                }
               },
             },
-            { id: 'undo', face: 'undo', text: 'Undo', onPress: () => session?.doc.undo() },
-            { id: 'redo', face: 'redo', text: 'Redo', onPress: () => session?.doc.redo() },
-            { id: 'clear', face: 'clear', text: 'Clear', onPress: () => active.engine?.clear() },
-            {
-              id: 'ask',
-              face: 'ask',
-              /*
-                THE BUTTON SAYS WHAT IT IS DOING, because in a headset there is
-                no other way to know the microphone is open. A child who cannot
-                see a recording indicator and cannot hear themselves back has
-                only this label to tell them they are being listened to.
-              */
-              text: askLabel,
-              emphasis: true,
-              active: voice.phase.kind === 'listening',
-              onPress: voice.toggle,
-            },
+            { id: 'undo', face: 'undo', text: 'Undo', disabled: composedState !== 'ready' || !boardTextureBound, onPress: () => active.engine?.undo() },
+            { id: 'clear', face: 'clear', text: confirmClear ? 'Confirm clear' : 'Clear board',
+              disabled: composedState !== 'ready' || !boardTextureBound, active: confirmClear,
+              onPress: () => {
+                if (confirmClear) active.engine?.clear();
+                setConfirmClear(!confirmClear);
+              } },
+            ...(confirmClear ? [{ id: 'cancel-clear', text: 'Keep my work', onPress: () => setConfirmClear(false) }] : []),
+            { id: 'recenter', text: 'Recenter workspace', onPress: () => { void placeFromHead(); } },
+            { id: 'exit', text: 'Back to lesson', onPress: () => active.onExit() },
+            ...(avatarStatus === 'failed' ? [{ id: 'retry-avatar', text: 'Reload Natalie', onPress: () => { setAvatarStatus('loading'); setAvatarAttempt((n) => n + 1); } }] : []),
+
           ]}
         />
       ) : null}
@@ -936,10 +711,11 @@ function BoardScene() {
       */}
       {active.head !== null ? (
         <XrBoardSurface
-          headPosition={active.head.position}
+          headPosition={workspaceHead}
           headYawDeg={placement.rotation[1]}
-          enabled={composedState === 'ready' || composedState === 'interrupted'}
+          enabled={composedState === 'ready' && boardTextureBound && inkLands}
           onSurfaceInput={handleSurfaceInput}
+          termination={termination}
         />
       ) : null}
     </>
@@ -1227,7 +1003,11 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
     rather than loaded at the moment the child starts looking.
   */
   const [ready, setReady] = useState(false);
-  const handleReady = useCallback(() => setReady(true), []);
+  const [engineGeneration, setEngineGeneration] = useState(0);
+  const handleReady = useCallback(() => {
+    setReady(true);
+    setEngineGeneration((generation) => generation + 1);
+  }, []);
 
   /*
     ONE BIND ATTEMPT'S ANSWER, into the one place the scene can read it from.
@@ -1249,11 +1029,15 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
     if (handle === null) return;
     active.engine = handle;
     const detach = session.attach({ id: PRESENTATION_ID, board: handle });
+    const selection = useXrSession.getState();
+    handle.setTool(selection.tool);
+    handle.setInk(selection.ink);
     return () => {
+      handle.injectPointer({ phase: 'cancel', x: 0, y: 0 });
       active.engine = null;
       detach();
     };
-  }, [ready, session]);
+  }, [ready, session, engineGeneration]);
 
   /*
     THE BOARD BECOMES DRAWABLE WHEN THE ENGINE AND THE SCENE ARE BOTH THERE,
@@ -1499,7 +1283,7 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
         material={XR_MATERIAL.boardLive}
         pageWidth={boardSurfacePixels.width}
         pageHeight={boardSurfacePixels.height}
-        live={phase.kind === 'ready'}
+        live={ready && immersive}
         onBound={handleBound}
       >
         <WhiteboardBoard
@@ -1643,16 +1427,6 @@ const UNSUPPORTED_COPY: Record<
     body: 'Without it the headset cannot see your room, so the board has nowhere to stand. You can turn it on in the headset settings whenever you like. Your board is on the normal screen, with everything you have written.',
   },
 };
-
-/** Her status, in the same words the 2D presence rail uses. */
-function statusLabel(kind: string): string {
-  if (kind === 'speaking') return 'Speaking';
-  if (kind === 'thinking') return 'Thinking';
-  if (kind === 'listening') return 'Listening';
-  if (kind === 'paused') return 'Paused';
-  if (kind === 'ended') return 'Finished';
-  return 'Here';
-}
 
 const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: XR_COLOR.void },

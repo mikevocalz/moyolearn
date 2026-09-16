@@ -52,6 +52,8 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
    * second answer for a decision the scene has already acted on.
    */
   private var settled = false
+  private var attempts = 0
+  private val retryBind = Runnable { bindIfReady() }
 
   // ---------------------------------------------------------------------------
   // Props
@@ -73,8 +75,16 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
   }
 
   fun setLive(value: Boolean) {
+    if (live == value) return
     live = value
-    bindIfReady()
+    if (!value) {
+      release()
+      onBound(BoardTextureBinding(bound = false, reason = "surface-detached"))
+    } else {
+      attempts = 0
+      settled = false
+      bindIfReady()
+    }
   }
 
   // ---------------------------------------------------------------------------
@@ -86,6 +96,7 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
     val boundTexture = texture
     if (boundTexture == null) {
       addView(child, index)
+      bindIfReady()
       return
     }
     /*
@@ -115,7 +126,7 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
   // ---------------------------------------------------------------------------
 
   private fun bindIfReady() {
-    if (settled || !live) {
+    if (settled || !live || !isAttachedToWindow || pages.isEmpty()) {
       return
     }
     val material = materialName ?: return
@@ -123,8 +134,15 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
       return
     }
 
-    settled = true
+    removeCallbacks(retryBind)
     val reason = bind(material)
+    // Viro creates its Activity and registers materials asynchronously. These
+    // are transient readiness failures, not proof the bridge is unavailable.
+    if (reason in setOf("no-viro-view", "no-material-manager", "material-not-registered") && ++attempts < 30) {
+      postDelayed(retryBind, 150L)
+      return
+    }
+    settled = true
     onBound(BoardTextureBinding(bound = reason == null, reason = reason))
   }
 
@@ -195,9 +213,24 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
    * page is React Native's view: left inside a detached sink, the next thing the
    * renderer does with it operates on a child of a parent that no longer draws.
    */
+  override fun onAttachedToWindow() {
+    super.onAttachedToWindow()
+    bindIfReady()
+  }
+
+  override fun onDetachedFromWindow() {
+    release()
+    onBound(BoardTextureBinding(bound = false, reason = "surface-detached"))
+    super.onDetachedFromWindow()
+  }
+
   fun release() {
+    removeCallbacks(retryBind)
+    settled = false
+    attempts = 0
     val page = pages.firstOrNull()
     texture?.detachView()
+    texture?.dispose()
     texture = null
     if (page != null && page.parent == null) {
       addView(page)

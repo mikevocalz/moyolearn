@@ -23,7 +23,7 @@
 // SOT-KEYWORDS: board texture host native view expo requireNativeView webview parent hand-off
 
 import { requireNativeView } from 'expo';
-import type { ComponentType } from 'react';
+import { useEffect, type ComponentType } from 'react';
 import { Platform, View, type NativeSyntheticEvent } from 'react-native';
 import type { BoardTextureBinding, BoardTextureHostProps } from './BoardTextureHost.types.ts';
 
@@ -56,12 +56,10 @@ export function BoardTextureHost({
   onBound,
   style,
 }: BoardTextureHostProps) {
+  useEffect(() => {
+    if (live && NativeBoardTexture === null) onBound?.({ bound: false, reason: 'native-module-unavailable' });
+  }, [live, onBound]);
   if (NativeBoardTexture === null) {
-    /*
-      Nothing to report. A caller that never hears `onBound` keeps the raster,
-      which is the same thing a failed bind means — so silence and `bound:
-      false` are deliberately the same state rather than two.
-    */
     return (
       <View style={style} pointerEvents="none">
         {children}

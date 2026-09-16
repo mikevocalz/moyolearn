@@ -59,8 +59,14 @@ import {
   ViroText,
 } from '@reactvision/react-viro';
 import './materials';
+import { XrRoundedQuad } from '../XrRoundedQuad.native.tsx';
+import { XrKey } from '../XrPlate.native.tsx';
+import { spatialCorners } from '../spatial-tokens.ts';
+import { BOARD_ASPECT } from '../board-layout.ts';
+import { inkMaterial } from '../spatial-materials.native.ts';
+import type { WhiteboardInk } from '../../whiteboard.types.ts';
 import { ViroIcon } from './ViroIcon';
-import { BUTTON_FACE, type ButtonFaceId } from './button-faces/faces';
+import { type ButtonFaceId } from './button-faces/faces';
 import { useInstanceStore, useStore } from './use-instance-store';
 import { panelSize, spatialSpacing, SLOTS, type PanelSlot } from './spatialTokens';
 
@@ -200,8 +206,9 @@ export const SIZES = {
   /* 9:16 portrait — the shape a tool list and a conversation actually want,
      and what the flanks of MoyoLearn's arc are. */
   portraitCard: { width: 0.62, height: 1.1 },
+  toolsCard: { width: 0.9, height: 1.42 },
   /* The board: wide enough to write across, at the arc's radius. */
-  boardPanel: { width: 1.4, height: 0.9 },
+  boardPanel: { width: 0.9 + spatialCorners.panel * 2, height: 0.9 * BOARD_ASPECT.h / BOARD_ASPECT.w + 0.16 + spatialCorners.panel * 2 },
   widePanel: panelSize.widePanel, // 1.70 × 0.90
   theaterPanel: panelSize.theaterPanel, // 2.40 × 1.35
 } as const;
@@ -218,8 +225,8 @@ const TEXT_INSET = 0.028;
 const ROW_H = 0.072;
 const ROW_GAP = 0.006;
 
-const RAIL_W = 0.075;
-const ARROW_H = 0.1;
+const DEFAULT_RAIL_W = 0.075;
+const DEFAULT_ARROW_H = 0.1;
 const THUMB_MIN = 0.07;
 const HAIRLINE = 0.004;
 
@@ -261,7 +268,8 @@ export function panelMediaArea(size: keyof typeof SIZES): {
   z: number;
 } {
   const { width, height } = SIZES[size];
-  return { width, height: height - HEADER_H, centerY: -HEADER_H / 2, z: Z.art };
+  const inset = size === 'boardPanel' ? spatialCorners.panel : 0;
+  return { width: width - inset * 2, height: height - HEADER_H - inset * 2, centerY: -HEADER_H / 2, z: Z.art };
 }
 
 
@@ -472,6 +480,7 @@ export type MediaPanelRow = {
   onPress?: () => void;
   /** Draws the row as chosen — the tool currently in the child's hand. */
   active?: boolean;
+  disabled?: boolean;
   /**
    * Renders the row as a real {@linkcode ViroButton} spanning the row.
    *
@@ -509,6 +518,8 @@ type Props = {
   draggable?: boolean;
   dragType?: 'FixedDistance' | 'FixedDistanceOrigin' | 'FixedToWorld';
   disabled?: boolean;
+  mediaMaterial?: string;
+  controlSize?: number;
   animate?: boolean;
   reduceMotion?: boolean;
   debug?: boolean;
@@ -568,6 +579,8 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
   draggable = true,
   dragType = 'FixedDistance',
   disabled = false,
+  mediaMaterial,
+  controlSize,
   animate = true,
   reduceMotion = false,
   debug = false,
@@ -580,6 +593,8 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
   onClose,
 }) => {
   const { width: w, height: h } = SIZES[size];
+  const RAIL_W = controlSize ?? DEFAULT_RAIL_W;
+  const ARROW_H = controlSize ?? DEFAULT_ARROW_H;
 
   // ── Header ──────────────────────────────────────────────────────────────
   const headerCenterY = h / 2 - HEADER_H / 2;
@@ -587,7 +602,7 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
 
   const titleBoxH = textBox(GLYPH.title);
   const titleGlyph = fitGlyph(GLYPH.title, titleBoxH);
-  const titleW = w - 2 * HEADER_PAD - CLOSE - HAIR;
+  const titleW = w - 2 * HEADER_PAD - (onClose ? CLOSE + HAIR : 0);
   const titleCenterX = -w / 2 + HEADER_PAD + titleW / 2;
   const closeCenterX = w / 2 - HEADER_PAD - CLOSE / 2;
   // Positioned from the BAR TOP, not centred — see TITLE_TOP_MARGIN.
@@ -605,18 +620,22 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
     full width) and the BOARD panel is pure media (1 → the child's paper fills
     the body, no plate). Anything between still behaves exactly as before.
   */
-  const artW = Math.min(1, Math.max(0, mediaFraction)) * w;
+  const paperInset = size === 'boardPanel' && mediaFraction === 1 ? spatialCorners.panel : 0;
+  const artW = Math.min(1, Math.max(0, mediaFraction)) * w - paperInset * 2;
+  const artH = bodyH - paperInset * 2;
   const hasArt = artW > 0.001;
   /* At mediaFraction 1 the plate is zero-width and simply draws nothing —
      no guard needed for it, only for the seam BETWEEN the two columns. */
-  const hasPlate = w - artW > 0.001;
-  const artCenterX = -w / 2 + artW / 2;
+  const hasPlate = mediaFraction < 1 && w - artW > 0.001;
+  const artCenterX = -w / 2 + paperInset + artW / 2;
 
   const plateW = w - artW;
   const plateCenterX = w / 2 - plateW / 2;
   const seamX = -w / 2 + artW;
 
-  const rowStep = ROW_H + ROW_GAP;
+  const hasControls = rows.some((row) => typeof row.onPress === 'function');
+  const rowHeight = controlSize ?? ROW_H;
+  const rowStep = rowHeight + ROW_GAP;
   const rowsAreaH = bodyH - 2 * TEXT_INSET;
   const visibleRows = Math.max(1, Math.floor((rowsAreaH + ROW_GAP) / rowStep));
   const scrollable = alwaysShowRail || rows.length > visibleRows;
@@ -945,7 +964,7 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
           // clicks on close/chevrons still fire — they're closer OnClick handlers,
           // and drag only starts on the grip source (dragEligible), not the trigger.
           dragType={'Gizmo' as never}
-          onDrag={onGrabDrag}
+          onDrag={draggable ? onGrabDrag : undefined}
           onClickState={(state: number) => {
             if (state === 2) {
               dragLast.current = null;
@@ -976,7 +995,7 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
               drag-on-the-root swallowed all child input. Slots don't need it.
               ponytail: re-add via a dedicated grab handle if panel drag ever
               matters. */}
-          <ViroQuad
+          <XrRoundedQuad
             width={w}
             height={h}
             position={[0, 0, Z.backing]}
@@ -1010,7 +1029,8 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
                 quad below, scoped to the title area so it never sits behind the
                 close button and eats its click (that competition was why close
                 read as dead — the full-width grab node caught the trigger). */}
-            <ViroQuad
+            <XrRoundedQuad
+              roundBottom={false}
               width={w}
               height={HEADER_H}
               position={[0, headerCenterY, Z.header]}
@@ -1024,7 +1044,7 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
                 onGrabDrag applies the delta to the panel root. */}
             <ViroNode
               dragType={'Gizmo' as never}
-              onDrag={onGrabDrag}
+              onDrag={draggable ? onGrabDrag : undefined}
               onClickState={(state: number) => {
                 if (__DEV__) console.log('[panel] grab clickState', state);
                 if (state === 2) {
@@ -1066,19 +1086,18 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
               height={titleBoxH}
               textLineBreakMode="None"
               textClipMode="None"
-              outerStroke={{ type: 'Outline', width: 1 * CRISP, color: '#000000' }}
               style={{
                 ...(TITLE_FONT ? { fontFamily: TITLE_FONT } : {}),
                 fontSize: pt(titleGlyph),
                 color: TITLE_COLOR,
-                letterSpacing: 2 * CRISP,
+                letterSpacing: 0,
                 textAlign: 'left',
                 textAlignVertical: 'center',
               }}
               ignoreEventHandling
             />
 
-            <ViroNode position={[closeCenterX, headerCenterY, Z.chip]}>
+            {onClose ? <ViroNode position={[closeCenterX, headerCenterY, Z.chip]}>
               {closeSources ? (
                 <ViroButton
                   source={closeSources.source}
@@ -1123,7 +1142,7 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
                   <ViroQuad width={CLOSE * 2.4} height={CLOSE * 2.4} position={[0, 0, 0.02]} materials={['pxrmpHit']} />
                 </ViroNode>
               )}
-            </ViroNode>
+            </ViroNode> : null}
           </ViroNode>
 
           {/* ═══ ART — full bleed, header bottom to card bottom ═══════ */}
@@ -1131,28 +1150,32 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
           <ViroNode {...layerProps(delay.art)}>
             <ViroQuad
               width={artW}
-              height={bodyH}
+              height={artH}
               position={[artCenterX, bodyCenterY, Z.plate]}
               materials={['solidPanel']}
               ignoreEventHandling
               renderingOrder={-8}
             />
-            <ViroImage
+            {mediaMaterial ? (
+              <ViroQuad width={artW} height={artH}
+                position={[artCenterX, bodyCenterY, Z.art]}
+                materials={[mediaMaterial]} ignoreEventHandling renderingOrder={-7} />
+            ) : <ViroImage
               source={imageSource}
               width={artW}
-              height={bodyH}
+              height={artH}
               position={[artCenterX, bodyCenterY, Z.art]}
               resizeMode="ScaleToFill"
               imageClipMode="ClipToBounds"
               mipmap
               ignoreEventHandling
               renderingOrder={-7}
-            />
+            />}
             {/* The seam only exists where the two columns actually meet. */}
             {hasPlate ? (
               <ViroQuad
                 width={HAIRLINE}
-                height={bodyH}
+                height={artH}
                 position={[seamX, bodyCenterY, Z.rule]}
                 materials={['pxrmpDivider']}
                 ignoreEventHandling
@@ -1163,8 +1186,8 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
           ) : null}
 
           {/* ═══ READOUT PLATE — white, full bleed ════════════════════ */}
-          <ViroNode position={[plateCenterX, bodyCenterY, 0]}>
-            {maxScroll > 0 && scrollOnSwipe && !disabled ? (
+          {hasPlate ? <ViroNode position={[plateCenterX, bodyCenterY, 0]}>
+            {maxScroll > 0 && scrollOnSwipe && !disabled && !hasControls ? (
               <ViroNode
                 onSwipe={(state: number) => {
                   if (state === 1) scrollBy(visibleRows);
@@ -1188,7 +1211,8 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
                 />
               </ViroNode>
             ) : (
-              <ViroQuad
+              <XrRoundedQuad
+                roundTop={false}
                 width={plateW}
                 height={bodyH}
                 position={[0, 0, Z.plate]}
@@ -1197,7 +1221,7 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
                 renderingOrder={-8}
               />
             )}
-          </ViroNode>
+          </ViroNode> : null}
 
           {/* ═══ ROWS — direct window (no swap carrier) ═══════════════
               Rows render at a static opacity of 1. The scroll no longer fades
@@ -1209,7 +1233,7 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
               plate BEHIND the text never fired → "scroll wheel stopped"). Sized
               to the TEXT column only, so it never covers the rail (chevrons stay
               untouched). */}
-          {maxScroll > 0 && scrollOnSwipe && !disabled ? (
+          {maxScroll > 0 && scrollOnSwipe && !disabled && !hasControls ? (
             // onScroll/onSwipe live ON the quad, not a wrapper node — this fork
             // routes thumbstick scroll only to the HIT node itself (no ancestor
             // bubbling for scroll), which is why the wrapped version was dead.
@@ -1231,7 +1255,7 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
           ) : null}
           <ViroNode position={[0, 0, 0]} opacity={1}>
             {windowRows.map((row, i) => {
-              const y = bodyCenterY + bodyH / 2 - TEXT_INSET - ROW_H / 2 - i * rowStep;
+              const y = bodyCenterY + bodyH / 2 - TEXT_INSET - rowHeight / 2 - i * rowStep;
               const hasLabel = !!row.label;
               const valueW = hasLabel ? textColW - labelW - HAIR : textColW;
               const valueCenterX = textColCenterX + textColW / 2 - valueW / 2;
@@ -1257,6 +1281,14 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
                     },
                   };
 
+              if (pressable) return (
+                <XrKey key={row.id} label={row.text}
+                  position={[textColCenterX, y, Z.rowInk]}
+                  width={textColW} height={rowHeight}
+                  selected={row.active ?? false} disabled={disabled || !!row.disabled}
+                  chip={row.swatchColor ? inkMaterial(row.swatchColor as WhiteboardInk) : undefined}
+                  onPress={() => row.onPress?.()} />
+              );
               return (
                 <ViroNode key={row.id} {...rowNodeProps}>
                   {/* Alternating band, black at 4% on white. No horizontal
@@ -1328,71 +1360,6 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
                     ignoreEventHandling
                   />
 
-                  {/*
-                    A PRESSABLE ROW IS A BUTTON. `active` washes the row so the
-                    tool in the child's hand is visible without colour alone,
-                    and the hit quad sits IN FRONT of the type — this fork
-                    ignores `ignoreEventHandling` on ViroText, so text over a
-                    target eats that target's clicks (the same reason the close
-                    and chevrons carry their own hit quads).
-
-                    `onClickState` at CLICK_UP, not `onClick`: the convention
-                    the rail's own arrows already follow here.
-                  */}
-                  {pressable ? (
-                    <>
-                      {row.active ? (
-                        <ViroQuad
-                          width={textColW}
-                          height={ROW_H}
-                          position={[textColCenterX, 0, Z.band]}
-                          materials={['pxrmpChipHot']}
-                          ignoreEventHandling
-                          opacity={0.28}
-                        />
-                      ) : null}
-
-                      {/*
-                        A REAL `ViroButton`, spanning the row. Its face carries
-                        the plate and the glyph for rest / hover / press; the
-                        label is the `ViroText` below, drawn over the button so
-                        the words are a node rather than pixels — the tutor's
-                        name and any localised copy change without a rebuild.
-
-                        The colour selector is the one button with no text: its
-                        face IS the swatch, and a word beside a colour would be
-                        the thing a child reads instead of the colour.
-                      */}
-                      {row.face ? (
-                        <ViroButton
-                          source={BUTTON_FACE[row.face][row.active ? 'active' : 'rest']}
-                          hoverSource={BUTTON_FACE[row.face].hover}
-                          clickSource={BUTTON_FACE[row.face].active}
-                          width={textColW}
-                          height={ROW_H}
-                          position={[textColCenterX, 0, Z.rowInk]}
-                          onClick={() => {
-                            if (!disabled) row.onPress?.();
-                          }}
-                        />
-                      ) : null}
-
-                      {row.swatchColor ? (
-                        <ViroQuad
-                          width={ROW_H * 0.62}
-                          height={ROW_H * 0.62}
-                          position={[
-                            textColCenterX - textColW / 2 + ROW_H * 0.55,
-                            0,
-                            Z.rowInk + 0.004,
-                          ]}
-                          materials={['pxrmpChipHot']}
-                          ignoreEventHandling
-                        />
-                      ) : null}
-
-                    </>
-                  ) : null}
                 </ViroNode>
               );
             })}

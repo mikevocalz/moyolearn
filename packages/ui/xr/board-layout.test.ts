@@ -1,11 +1,11 @@
-// The 16:8 promise, and the two ways a layout silently breaks it.
+// The 5:7 promise, and the two ways a layout silently breaks it.
 //
 // Ratio drift and overlap are both invisible in a still screenshot: the board
 // still looks like a board, and the rail still looks like a rail, right up to
 // the point where a stroke lands somewhere the child did not aim or a control
 // sits under the paper's edge. Both are pinned here instead.
 // SOT: packages/ui/xr/board-layout.ts
-// SOT-KEYWORDS: board layout test aspect ratio 16:8 landscape rail chat overlap constrained
+// SOT-KEYWORDS: board layout test aspect ratio 5:7 landscape rail chat overlap constrained
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
@@ -17,7 +17,7 @@ const spatial = { W: 1.2, H: 0.9, R: 0.1, G: 0.05, minRail: 0.105 } as const;
 
 const ratio = (l: { boardWidth: number; boardHeight: number }) => l.boardWidth / l.boardHeight;
 
-test('the writable surface is 16:8 across every space that fits it', () => {
+test('the writable surface is 5:7 across every space that fits it', () => {
   const cases = [
     { ...spatial, R: 0.12 },
     { ...spatial, R: 0.12, H: 2 }, // width-bound

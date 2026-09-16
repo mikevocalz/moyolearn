@@ -1,7 +1,7 @@
 // Where the board, its control rail and the chat panel sit, in one unit.
 //
 // The spatial workspace has a promise the 2D panes never had to keep: the
-// writable paper is exactly 16:8, landscape, and the rail and the chat panel are
+// writable paper is exactly 5:7, portrait, and the rail and the chat panel are
 // outside that measurement. Getting it wrong is not a visual nit — a board that
 // drifts off ratio when the composition is scaled rewrites where a child's
 // handwriting lands relative to where they aimed.
@@ -11,7 +11,7 @@
 // and extents in that same unit. Nothing here knows what draws it, which is why
 // it can be asserted without a device.
 //
-// SOT-KEYWORDS: whiteboard board layout aspect ratio 16:8 landscape rail chat spatial xr geometry
+// SOT-KEYWORDS: whiteboard board layout aspect ratio 5:7 portrait rail chat spatial xr geometry
 
 /** Every length is in the SAME unit as every other. The caller picks the unit. */
 export interface BoardLayoutInput {
@@ -49,18 +49,8 @@ export type BoardLayout =
       chatCenterX?: number;
     };
 
-/**
- * The writable surface is landscape 16:8 — two to one. Width divided by height
- * is 2, always.
- *
- * IT WAS 5:7 PORTRAIT, then 6:4, and both changes came from a headset rather
- * than from a preference. A portrait sheet at a comfortable reading distance is
- * tall enough that its bottom edge leaves the vertical comfort cone, while the
- * width a child actually writes arithmetic across is the axis the cone has most
- * of. 16:8 spends the remaining height on the rail and on Natalie instead of on
- * paper nobody writes at the bottom of.
- */
-export const BOARD_ASPECT = { w: 16, h: 8 } as const;
+/** The writable content is 5:7; chrome and tools are outside this rectangle. */
+export const BOARD_ASPECT = { w: 5, h: 7 } as const;
 
 export function layoutBoard(input: BoardLayoutInput): BoardLayout {
   const { W, H, R, G, C = 0, GC = 0, minRail } = input;

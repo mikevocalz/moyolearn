@@ -12,6 +12,7 @@
  */
 export type XrVoicePhase =
   | { kind: 'idle' }
+  | { kind: 'starting' }
   | { kind: 'listening' }
   | { kind: 'transcribing' }
   | { kind: 'blocked'; reason: 'permission' | 'device' | 'silent' };
