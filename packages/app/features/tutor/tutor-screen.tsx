@@ -59,7 +59,6 @@ import { readDocumentAt } from '../capture/read-document-at';
 import { transcribe } from '../capture/transcribe';
 import { useUploadQueue, setUploadReporter } from '../media';
 import { patchAttachment, postMessage } from './session.client.ts';
-import { evaluateArithmetic } from '@acme/student-model/pure';
 import { useXrSession } from './xr-session.store.ts';
 import { canOpenSpatialBoard } from './xr-capability.ts';
 
@@ -354,12 +353,9 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       });
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
       const data = (await res.json()) as { isCorrect: boolean | null };
-      if (data.isCorrect !== null && useCaptureStore.getState().problem === p) useTutorStore.getState().respond(data.isCorrect);
+      if (typeof data.isCorrect === 'boolean' && useCaptureStore.getState().problem === p) useTutorStore.getState().respond(data.isCorrect);
     } catch {
-      // The Safety Plane is the source of truth; the client-side evaluator is
-      // the offline fallback for demo and low-connectivity cases.
-      const offline = evaluateArithmetic(p, answer);
-      if (offline !== null && useCaptureStore.getState().problem === p) useTutorStore.getState().respond(offline);
+      // A network failure cannot authorize a grade or update local mastery.
     }
   }
 

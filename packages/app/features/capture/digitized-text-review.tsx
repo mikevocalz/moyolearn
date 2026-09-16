@@ -3,13 +3,15 @@
 // SOT: docs/pack/24-homework-capture-spec.md §4 · §5
 // SOT-KEYWORDS: digitized-text review ocr correction confirm age band
 
-import { useState, type ReactNode } from 'react';
+import { type ReactNode } from 'react';
 import {
   Button,
   ErrorMessage,
   KeyboardAwareScroll,
   Text,
   Textarea,
+  useInstanceStore,
+  useStore,
 } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { buttonSizeForBand, type AgeBand } from './age-band';
@@ -39,8 +41,8 @@ export function DigitizedTextReview({
   onConfirm,
   onCancel,
 }: DigitizedTextReviewProps) {
-  const [text, setText] = useState(initialText);
-  const [sourceChecked, setSourceChecked] = useState(false);
+  const store = useInstanceStore(() => ({ text: initialText, sourceChecked: false }));
+  const { text, sourceChecked } = useStore(store);
   const size = buttonSizeForBand(ageBand);
   const label = ageBand === 'young' ? 'Fix the words' : 'Review what was read';
   const confirmLabel = ageBand === 'young' ? 'Looks good' : 'Looks good';
@@ -77,8 +79,7 @@ export function DigitizedTextReview({
           autoCapitalize="none"
           value={text}
           onChangeText={(value) => {
-            setText(value);
-            setSourceChecked(false);
+            store.setState({ text: value, sourceChecked: false });
           }}
         />
         {requiresSourceCheck ? (
@@ -92,7 +93,7 @@ export function DigitizedTextReview({
             size={size}
             fullWidth
             disabled={!text.trim() || sourceChecked}
-            onPress={() => setSourceChecked(true)}
+            onPress={() => store.setState({ sourceChecked: true })}
           />
         ) : null}
         <Button

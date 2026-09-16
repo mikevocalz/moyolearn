@@ -54,6 +54,8 @@ export type { BudgetLedger, LearnerBudget, LedgerDay, SessionBudgetState } from 
 export { REDACTED, scrubOutbound, scrubText } from './src/pseudonymize.ts';
 
 export { ModelDeclined, ProviderUnavailable } from './src/errors.ts';
+export { ProviderPolicyDenied, PROVIDER_PRODUCTS, INFERENCE_SAFETY_VERSION } from './src/provider-policy.ts';
+export type { ProviderApproval, ProviderProduct, LoadProviderApprovals } from './src/provider-policy.ts';
 
 export type {
   ClassifierRole,

@@ -2,8 +2,9 @@
 // One review lifecycle for both recognition backends. Source changes invalidate reads.
 // SOT: docs/design/homework-intelligence.md
 // SOT-KEYWORDS: ocr review cancellation manual source lifecycle shared
-import { useEffect, useRef, useState } from 'react';
-import { Button, Image, Text } from '@acme/ui';
+// Mobbin: https://mobbin.com/flows/22a448fc-fb46-47d5-b1d9-b0c39d233a0d (page-first preview) · https://mobbin.com/flows/208579eb-8a5a-4c99-93a1-f81beadc76e8 (source with editable text) · https://mobbin.com/flows/575c875e-96ed-4b25-8927-c92bb2d22d64 (retain source during recognition)
+import { useEffect, useRef } from 'react';
+import { Button, Image, Text, useInstanceStore, useStore } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { DigitizedTextReview } from './digitized-text-review';
 import { buttonSizeForBand, type AgeBand } from './age-band';
@@ -19,11 +20,12 @@ export interface OcrReviewProps {
 export interface Reading {
   text: string;
   confidence?: number;
+  requiresSourceCheck?: boolean;
   reason?: DocumentReading['reason'];
   pages?: DocumentReading['pages'];
 }
 type Props = OcrReviewProps & {
-  read: (source: string, mimeType?: string) => Promise<Reading>;
+  read: (source: string, mimeType?: string, signal?: AbortSignal) => Promise<Reading>;
 };
 type State =
   | { kind: 'loading' }
@@ -44,27 +46,34 @@ function ReviewSource({
   onConfirm,
   onCancel,
 }: Props) {
-  const [state, setState] = useState<State>({ kind: 'loading' });
-  const generation = useRef(0);
+  const store = useInstanceStore<{ state: State }>(() => ({ state: { kind: 'loading' } }));
+  const state = useStore(store, (value) => value.state);
+  const setState = (state: State) => store.setState({ state });
+  const activeRead = useRef<AbortController | null>(null);
+  const cancelRead = () => {
+    activeRead.current?.abort();
+  };
+  const cancel = () => { cancelRead(); onCancel(); };
   const size = buttonSizeForBand(ageBand);
   useEffect(() => {
-    const request = ++generation.current;
-    void read(source, mimeType)
+    const controller = new AbortController();
+    activeRead.current = controller;
+    void read(source, mimeType, controller.signal)
       .then((reading) => {
-        if (request === generation.current)
-          setState(
+        if (!controller.signal.aborted)
+          store.setState({ state:
             reading.text.trim()
               ? { kind: 'ready', reading }
               : { kind: 'failed', reason: reading.reason },
-          );
+          });
       })
       .catch(() => {
-        if (request === generation.current) setState({ kind: 'failed' });
+        if (!controller.signal.aborted) store.setState({ state: { kind: 'failed' } });
       });
     return () => {
-      generation.current++;
+      controller.abort();
     };
-  }, [source, mimeType, read]);
+  }, [source, mimeType, read, store]);
 
   if (state.kind === 'ready' && state.reading.pages?.length) {
     return (
@@ -72,7 +81,7 @@ function ReviewSource({
         pages={state.reading.pages}
         ageBand={ageBand}
         onConfirm={onConfirm}
-        onCancel={onCancel}
+        onCancel={cancel}
       />
     );
   }
@@ -85,15 +94,22 @@ function ReviewSource({
           state.kind === 'ready' ? state.reading.confidence : undefined
         }
         requiresSourceCheck={
-          state.kind === 'ready' && state.reading.confidence !== undefined
+          state.kind === 'ready' && (state.reading.requiresSourceCheck === true || state.reading.confidence !== undefined)
         }
         onConfirm={onConfirm}
-        onCancel={onCancel}
-      />
+        onCancel={cancel}
+      >
+        {!mimeType || mimeType.startsWith('image/') ? (
+          <Image src={source} alt="Original homework photo" contentFit="contain" className="h-64 w-full rounded-card" />
+        ) : null}
+      </DigitizedTextReview>
     );
   }
   return (
     <View className="flex-1 items-center justify-center gap-stack p-inset">
+      {!mimeType || mimeType.startsWith('image/') ? (
+        <Image src={source} alt="Original homework photo" contentFit="contain" className="h-64 w-full rounded-card" />
+      ) : null}
       <Text className="font-sans text-body text-text text-center">
         {state.kind === 'loading'
           ? 'Reading your page…'
@@ -111,7 +127,7 @@ function ReviewSource({
         size={size}
         fullWidth
         onPress={() => {
-          generation.current++;
+          cancelRead();
           setState({ kind: 'manual' });
         }}
       />
@@ -120,7 +136,7 @@ function ReviewSource({
         variant="outline"
         size={size}
         fullWidth
-        onPress={onCancel}
+        onPress={cancel}
       />
     </View>
   );
@@ -137,17 +153,15 @@ function PdfPagesReview({
   onConfirm: (text: string) => void;
   onCancel: () => void;
 }) {
-  const [index, setIndex] = useState(0);
-  const [confirmed, setConfirmed] = useState<Record<number, string>>({});
-  const [expanded, setExpanded] = useState(false);
+  const store = useInstanceStore<{ index: number; confirmed: Record<number, string>; expanded: boolean }>(() => ({ index: 0, confirmed: {}, expanded: false }));
+  const { index, confirmed, expanded } = useStore(store);
   const page = pages[index];
   if (!page) return null;
   const confirmPage = (text: string) => {
     const next = { ...confirmed, [page.index]: text };
-    setConfirmed(next);
+    store.setState({ confirmed: next });
     if (index + 1 < pages.length) {
-      setIndex(index + 1);
-      setExpanded(false);
+      store.setState({ index: index + 1, expanded: false });
     } else
       onConfirm(
         pages.map((p) => `Page ${p.index}:\n${next[p.index]}`).join('\n\n'),
@@ -189,7 +203,7 @@ function PdfPagesReview({
           variant="outline"
           size={buttonSizeForBand(ageBand)}
           fullWidth
-          onPress={() => setExpanded(!expanded)}
+          onPress={() => store.setState({ expanded: !expanded })}
         />
       ) : null}
       {page.status !== 'text' && page.status !== 'ocr' ? (

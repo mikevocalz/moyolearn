@@ -26,6 +26,7 @@ import { describe, it } from 'node:test';
 import { ModelDeclined } from '@acme/inference';
 import { SafetyLayerUnavailable, type SafetyEvent } from '@acme/safety';
 import { coachStream, type CoachEvent, type CoachPorts } from './coach.service.ts';
+import { TUTOR_MANUAL_HELP } from './tutor-capabilities.ts';
 import type { ProtectedCtx } from '../../core/protected-operation.ts';
 
 const ctx: ProtectedCtx = { learnerId: 'learner_1', isLearner: true };
@@ -33,21 +34,7 @@ const ctx: ProtectedCtx = { learnerId: 'learner_1', isLearner: true };
 /** The turn under test is the OPENING one, so nothing depends on prior facts. */
 const noPriorFacts = async (): Promise<[]> => [];
 
-/**
- * A refusal arriving at the boundary the way a real one does.
- *
- * `ModelDeclined` is thrown by the vendor stream, which the plane deliberately
- * does NOT wrap in `safetyLayer` — "the model is not a layer". The brief
- * compiler is invoked from inside that same unwrapped generator, so a throw here
- * reaches the catch by the identical route and through the identical frames.
- * Throwing it from `loadGradeBand` instead would prove nothing: that call sits
- * inside `safetyLayer('1-identity')`, which would rename it
- * `SafetyLayerUnavailable` before the catch ever saw it — and the whole question
- * is what the catch does with a refusal it CAN see.
- *
- * The alternative was a fake vendor transport, which `inferenceGateway()`'s
- * process-wide singleton gives no seam for.
- */
+/** A bare refusal exercises the boundary independently of provider transport. */
 const declines = (): Promise<never> => {
   throw new ModelDeclined('claude-opus-5', 'general_harms');
 };
@@ -101,15 +88,13 @@ describe('the coaching turn’s fail-closed boundary', () => {
     assert.deepEqual(events, [{ kind: 'blocked' }]);
   });
 
-  it('still offers a retry when it is the model that is missing', async () => {
-    // The documented `unavailable` case, reproduced rather than mocked: no API
-    // key is exactly the unconfigured dev environment that must not read to a
-    // child as Natalie having withdrawn.
+  it('offers manual help without requesting credentials when no cell is approved', async () => {
+    // Capability denial precedes credentials and cannot offer a provider retry.
     delete process.env.ANTHROPIC_API_KEY;
 
     const events = await drain(coachStream(turn, ctx, ports()));
 
-    assert.deepEqual(events, [{ kind: 'unavailable' }]);
+    assert.deepEqual(events, [{ kind: 'replace', text: TUTOR_MANUAL_HELP }]);
   });
 
   it('pauses on a bare layer failure too, not only on a named one', async () => {
@@ -162,7 +147,7 @@ describe('a provider refusal', () => {
         turn,
         ctx,
         ports({
-          loadPriorFacts: declines,
+          loadCapabilityContext: declines,
         }),
       ),
     );
@@ -179,7 +164,7 @@ describe('a provider refusal', () => {
         ctx,
         ports({
           recordSafetyEvent: record,
-          loadPriorFacts: declines,
+          loadCapabilityContext: declines,
         }),
       ),
     );
@@ -225,15 +210,14 @@ describe('what a guardian is left with', () => {
     assert.equal(days, 90);
   });
 
-  it('says nothing about an ordinary vendor outage', async () => {
-    // Availability, not safety. A guardian's feed filled with the operations
-    // team's problems is a feed a guardian learns to skim.
+  it('does not misreport absent capability approval as a child safety incident', async () => {
+    // Missing reviewed capability is configuration, not an incident by a child.
     delete process.env.ANTHROPIC_API_KEY;
     const { record, written } = recorder();
 
     const events = await drain(coachStream(turn, ctx, ports({ recordSafetyEvent: record })));
 
-    assert.deepEqual(events, [{ kind: 'unavailable' }]);
+    assert.deepEqual(events, [{ kind: 'replace', text: TUTOR_MANUAL_HELP }]);
     assert.deepEqual(written, []);
   });
 });

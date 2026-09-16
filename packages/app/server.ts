@@ -157,6 +157,7 @@ export {
   type LoadBlockedTags,
   type DistillationPorts,
   type TutorTurnPorts,
+  type AssessmentEvidence,
 } from './features/tutor/tutor.service';
 export { tutorCellFor, TUTOR_CAPABILITIES } from './features/tutor/tutor-capabilities';
 

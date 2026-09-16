@@ -1,0 +1,52 @@
+{
+  "date": "2026-09-16",
+  "runtime": "Homebrew Node 24.21.0",
+  "baselineCommit": "ae8fdcc9baefce3b8ee4734690c3555835b66db5",
+  "rootTests": {
+    "passedTasks": 12,
+    "totalTasks": 12
+  },
+  "appFinalTests": {
+    "regular": 576,
+    "server": 110
+  },
+  "coldTypecheck": {
+    "passedTasks": 19,
+    "totalTasks": 19
+  },
+  "invariants": {
+    "passed": 16,
+    "total": 20,
+    "failing": [
+      "tooling/check-references.mjs",
+      "tooling/check-art-registry.mjs",
+      "tooling/check-joint-ownership.mjs",
+      "tooling/check-material-inputs.mjs"
+    ]
+  },
+  "packageLint": {
+    "inference": "pass",
+    "student-model": "pass",
+    "app": "two pre-existing permission SOT-header errors; warnings remain"
+  },
+  "nativeUi": {
+    "device": "iPhone 17 Pro simulator, iOS 26.4",
+    "scenario": "Stock simulator photo -> page review -> recognition failure -> manual correction",
+    "observed": [
+      "retained uncropped source displayed once",
+      "empty text confirmation disabled",
+      "manual recovery and back controls visible"
+    ],
+    "limits": [
+      "No successful OCR accuracy measured",
+      "No physical camera or handwriting benchmark",
+      "No complete V3 journey"
+    ]
+  },
+  "codeReview": {
+    "tool": "CodeRabbit CLI 0.7.6",
+    "findings": 3,
+    "addressed": 3
+  },
+  "releaseAcceptance": "incomplete"
+}

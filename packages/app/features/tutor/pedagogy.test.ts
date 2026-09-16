@@ -17,6 +17,14 @@ import { briefPreamble, compileLearnerBrief, VOICE_BANDS } from '@acme/student-m
 import { PEDAGOGY_CONTRACT, REVEAL_WITHHELD, revealsAnswer } from './pedagogy.ts';
 
 describe('the never-reveal check', () => {
+  it('withholds exact fraction and negative answers without rounding', () => {
+    for (const answer of ['5/6', '10/12', '(5)/(6)', '\\frac{5}{6}']) {
+      assert.equal(revealsAnswer('1/2+1/3', `You get ${answer}.`), true, answer);
+    }
+    assert.equal(revealsAnswer('1/2-1', 'That is -1/2.'), true);
+    assert.equal(revealsAnswer('1/2+1/3', 'Try adding the denominators of 1/2 and 1/3.'), false);
+    assert.equal(revealsAnswer('1/2+1/3', 'You wrote 2/5. What does the denominator mean?'), false);
+  });
   it('catches the answer stated outright', () => {
     assert.equal(revealsAnswer('12 + 5', 'So you end up with 17.'), true);
     assert.equal(revealsAnswer('12 + 5', 'The answer is 17'), true);

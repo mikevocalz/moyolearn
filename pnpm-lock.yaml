@@ -1388,6 +1388,9 @@ importers:
       '@acme/safety':
         specifier: workspace:*
         version: link:../safety
+      '@cortex-js/compute-engine':
+        specifier: 0.128.12
+        version: 0.128.12
     devDependencies:
       '@acme/config':
         specifier: workspace:*
@@ -1586,6 +1589,18 @@ importers:
         version: 6.0.3
 
 packages:
+
+  '@cortex-js/compute-engine@0.128.12':
+    resolution: {integrity: sha512-AxqyeFShrhjYBgEsX8HR5hMZL+vwW42S6iTkTt1yJFHA7zyMjSwVhvGbOiUtprnNbK/oeXf3HfL8xf8bLVRLzw==}
+    engines: {node: '>=22.3.0', npm: '>=10.5.0'}
+    hasBin: true
+
+  '@arnog/colors@0.7.1':
+    resolution: {integrity: sha512-uEXGib4QnvKNMv30pROfEfuE/7odwMXc66YVGbyedKNQK/gKGDZ8gcOxJ7iu824eUZVQ/ATbxr8C/G2YaDUE7A==}
+
+  complex-esm@2.1.1-esm1:
+    resolution: {integrity: sha512-IShBEWHILB9s7MnfyevqNGxV0A1cfcSnewL/4uPFiSxkcQL4Mm3FxJ0pXMtCXuWLjYz3lRRyk6OfkeDZcjD6nw==}
+    engines: {node: '>=16.14.2', npm: '>=8.5.0'}
 
   "@napi-rs/canvas-android-arm64@1.0.9":
     resolution:
@@ -12449,6 +12464,15 @@ packages:
         optional: true
 
 snapshots:
+
+  '@cortex-js/compute-engine@0.128.12':
+    dependencies:
+      '@arnog/colors': 0.7.1
+      complex-esm: 2.1.1-esm1
+
+  '@arnog/colors@0.7.1': {}
+
+  complex-esm@2.1.1-esm1: {}
 
   "@napi-rs/canvas-android-arm64@1.0.9":
     optional: true
