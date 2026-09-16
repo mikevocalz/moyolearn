@@ -438,15 +438,24 @@ export const semantic = {
   'surface-stage': { light: palette.plum[100], dark: palette.plum[700] },
   'on-surface-stage': { light: palette.plum[700], dark: palette.plum[100] },
   /*
-    The chrome's own CTA — the raised Snap slab in the bar and the rail. It is
-    deep plum from the SAME family the bars are tinted with, so the loudest
-    control in the chrome still belongs to the chrome; the mango action colour
-    stays for actions in CONTENT, where it has the neutral ground to carry it.
-    Deep enough (plum 700, the mark's own purple) to read as a raised button on
-    a plum 200/300 bar rather than as another tinted panel.
+    The chrome's own CTA — the raised Snap slab in the bar and the rail. WHITE
+    (Mike, 2026-09-16), with the mark's own plum as its ink and its border.
+    Paper against a plum 200/300 bar: the slab is the one object on the chrome
+    that is not made of the chrome, which is what makes it read as the control
+    rather than as another tinted panel.
+
+    It was deep plum 700 before, on the argument that the loudest control in the
+    chrome should belong to the chrome. That is now carried by the ink and the
+    2px border instead of by the fill, and the elevation the slab already had —
+    it is raised and it casts `shadow-card` — is what keeps white from reading
+    as a hole punched in the bar.
+
+    Same value in both schemes, like every other token in this pair: the tab bar
+    does not change family between light and dark, and a slab that went grey in
+    the dark would be the only raised control in the product that does.
   */
-  'nav-cta': { light: palette.plum[700], dark: palette.plum[700] },
-  'on-nav-cta': { light: palette.plum[100], dark: palette.plum[100] },
+  'nav-cta': { light: palette.white, dark: palette.white },
+  'on-nav-cta': { light: palette.plum[700], dark: palette.plum[700] },
   /*
     SELECTED nav item — a tonal step of the CHROME's own family, not a foreign
     accent. It was the teal highlighter, which read as discordant sitting on a

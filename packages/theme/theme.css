@@ -371,8 +371,8 @@
   --color-on-surface-header: light-dark(#43216B, #43216B);
   --color-surface-stage: light-dark(#E9DDF5, #43216B);
   --color-on-surface-stage: light-dark(#43216B, #E9DDF5);
-  --color-nav-cta: light-dark(#43216B, #43216B);
-  --color-on-nav-cta: light-dark(#E9DDF5, #E9DDF5);
+  --color-nav-cta: light-dark(#FFFFFF, #FFFFFF);
+  --color-on-nav-cta: light-dark(#43216B, #43216B);
   --color-nav-selected: light-dark(#5D3A8B, #5D3A8B);
   --color-on-nav-selected: light-dark(#FFB21D, #FFB21D);
   --color-surface-footer: light-dark(#D5C1EC, #B99BDE);
