@@ -126,3 +126,54 @@ until it is revealed.
 
 Web only, injected width. No iOS, Android, simulator or device run. Nothing here says
 anything about iPhone Duo hardware, reserved regions, or the fold.
+
+---
+
+# Sweep: the same bug class elsewhere
+
+`AdaptivePanes` was one instance. Searched every component that reads a size class
+(`useWindowSizeClass`, `useSizeClass`, `isCollapsed`) for the two shapes: a tree that
+changes ancestors with the window, and a layout-conditional sibling that becomes `null`
+beside a stateful host.
+
+## Clear: TwoPaneShell, Composer, the tab layouts
+
+- `packages/ui/TwoPaneShell.tsx` — one tree, responsive classes only. Its conditional
+  children (`supporting`, `image`) are prop-driven and sit in a different parent from
+  `children`.
+- `packages/ui/Composer.tsx` — `compactAttach` IS width-driven (`rowWidth < COMPACT_ROW_DP`),
+  and the attach slot switches between a `Menu`, a `SlideIn` of keys, and — in the last
+  branch — `<View className={secondaryIconTarget} />`, a spacer. Every branch yields an
+  element, so the `Textarea` beside it never changes index and a child's half-typed answer
+  survives the flip. The spacer is load-bearing; it is not decoration.
+- `apps/mobile/app/(*)/(tabs)/_layout.tsx` — `tabBarPosition` is passed to React Navigation
+  as a prop, not used to pick a tree. Whether the library remounts screens when that prop
+  changes is a separate question and was not measured.
+
+## Not clear: TutorStage
+
+`packages/ui/TutorStage.tsx:573` computes `const panes = !isCollapsed(windowClass);` and
+`:846` uses it to choose between two trees. `stageBody` — the whole conversation — is at
+`AdaptivePanes > Column > View > View` expanded and at `View` collapsed, and
+`TutorPresence render="body"` (Natalie, with the avatar) exists **only** in the expanded
+branch. So crossing 600 dp rebuilds the session and creates or destroys the avatar.
+
+Measured on the real component, story `UI/TutorStage → Speaking`, by marking every text
+node in `#storybook-root` and checking which DOM nodes survive:
+
+| Step | Text leaves | Original nodes still alive |
+|---|---|---|
+| 1100 dp | 4 | — |
+| 500 dp | 3 | 1 of 4 |
+| back to 1100 dp | 3 | 1 of 4 |
+
+Three of four nodes are replaced, and Natalie's utterance — present at 1100 dp — is not
+rendered again after the round trip. The cause of that last part was not isolated; the
+remount itself is not in doubt.
+
+This one is not a mechanical fix. `AdaptivePanes` can now collapse to a single full-width
+pane, so TutorStage could render it unconditionally and let the size class do the work —
+but then the phone keeps `TutorPresence render="body"` mounted and frozen, which preserves
+Natalie across a fold at the cost of holding her avatar's resources on a device that will
+never show that pane. Freezing stops the draw loop; it does not release a GPU context.
+That is a product decision, not a refactor, and it is not made here.
