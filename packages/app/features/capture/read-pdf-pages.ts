@@ -5,7 +5,7 @@ import { pdfPage, pdfPagesText } from './pdf-pages.ts';
 import type { PdfPageReading } from './pdf-pages.ts';
 export async function readPdfPages(
   document: Pick<PDFDocumentProxy, 'numPages' | 'getPage'>,
-  preview?: (page: PDFPageProxy) => Promise<string>,
+  preview?: (page: PDFPageProxy, reading: PdfPageReading) => Promise<string>,
 ) {
   const pages: PdfPageReading[] = [];
   // Bound parser/render work; report a document failure instead of truncating pages.
@@ -56,9 +56,10 @@ export async function readPdfPages(
       if (preview) {
         // A preview failure must not erase text successfully extracted from this page.
         try {
-          result.preview = await preview(page);
+          result.preview = await preview(page, result);
         } catch {
           result.preview = '';
+          result.requiresSourceCheck = true;
         }
       }
     } catch {

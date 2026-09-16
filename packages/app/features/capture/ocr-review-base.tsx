@@ -81,6 +81,12 @@ function ReviewSource({
       <DigitizedTextReview
         ageBand={ageBand}
         initialText={state.kind === 'ready' ? state.reading.text : ''}
+        confidence={
+          state.kind === 'ready' ? state.reading.confidence : undefined
+        }
+        requiresSourceCheck={
+          state.kind === 'ready' && state.reading.confidence !== undefined
+        }
         onConfirm={onConfirm}
         onCancel={onCancel}
       />
@@ -133,13 +139,16 @@ function PdfPagesReview({
 }) {
   const [index, setIndex] = useState(0);
   const [confirmed, setConfirmed] = useState<Record<number, string>>({});
+  const [expanded, setExpanded] = useState(false);
   const page = pages[index];
   if (!page) return null;
   const confirmPage = (text: string) => {
     const next = { ...confirmed, [page.index]: text };
     setConfirmed(next);
-    if (index + 1 < pages.length) setIndex(index + 1);
-    else
+    if (index + 1 < pages.length) {
+      setIndex(index + 1);
+      setExpanded(false);
+    } else
       onConfirm(
         pages.map((p) => `Page ${p.index}:\n${next[p.index]}`).join('\n\n'),
       );
@@ -149,6 +158,8 @@ function PdfPagesReview({
       key={page.index}
       ageBand={ageBand}
       initialText={page.text}
+      confidence={page.confidence}
+      requiresSourceCheck={page.requiresSourceCheck || page.status !== 'text'}
       onCancel={onCancel}
       onConfirm={confirmPage}
     >
@@ -160,7 +171,11 @@ function PdfPagesReview({
           src={page.preview}
           alt={`Original PDF page ${page.index}`}
           contentFit="contain"
-          className="h-64 w-full rounded-card"
+          className={
+            expanded
+              ? 'h-screen w-full rounded-card'
+              : 'h-64 w-full rounded-card'
+          }
         />
       ) : (
         <Text className="font-sans text-body text-text">
@@ -168,10 +183,19 @@ function PdfPagesReview({
           confirming.
         </Text>
       )}
+      {page.preview ? (
+        <Button
+          title={expanded ? 'Reduce page preview' : 'Enlarge page preview'}
+          variant="outline"
+          size={buttonSizeForBand(ageBand)}
+          fullWidth
+          onPress={() => setExpanded(!expanded)}
+        />
+      ) : null}
       {page.status !== 'text' && page.status !== 'ocr' ? (
         <Text className="font-sans text-body text-text">
           {page.status === 'needs-ocr'
-            ? 'We could not find readable words on this page. Type its words, or confirm below if it has no work.'
+            ? 'We could not read all of this page. Add any missing words or math from the original. Only mark it empty if it has no work.'
             : 'This page could not be read. Check the original before typing its words.'}
         </Text>
       ) : null}
