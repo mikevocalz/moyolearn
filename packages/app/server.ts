@@ -148,6 +148,7 @@ export type {
 } from '@acme/student-model';
 export {
   evaluateTutorTurn,
+  problemDigest,
   type TutorTurnInput,
   type TutorTurnResult,
   type TranscriptToSave,

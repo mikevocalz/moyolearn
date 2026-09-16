@@ -16,7 +16,8 @@ A search of repository docs, decisions, verification reports, prompts and local 
 - Provider product catalog and per-call approval checks at inference gateway dispatch; production approval registry empty. No refusal-triggered cross-vendor fallback. Gemini learner lanes remain disabled.
 - Exact capability lookup: unknown subject/task, missing language/model/safety evidence, unavailable tools or grounding, and unevaluated cells deny generation. Safety screening precedes fixed text-only recovery.
 - Strict exact-rational arithmetic and fraction reveal checks; see `docs/decisions/adr-homework-exact-math.md`.
-- Client readiness claims cannot authorize grades. Authenticated assessment requires a server evidence transaction port and rejects mismatched learner, organization, question, revision, source text, expiry or readiness. **No production repository is wired to that port yet, so the current evaluate endpoint is ungraded.** Tests of the port contract do not prove database locking or queued-job invalidation.
+- Client readiness claims cannot authorize grades. Authenticated assessment requires a server evidence transaction port and rejects mismatched learner, organization, question, revision, problem digest, expiry or readiness. Tests of the port contract do not prove database locking or queued-job invalidation.
+- A production repository is now wired to that port: `edu.questions` (migration `edu_questions.sql`), issued by `GET /api/tutor/next` and locked with `select … for update` by `withCurrentEduEvidence` for the transcript write. See `docs/decisions/adr-119-graded-turns-need-a-locked-revision.md`. **The migration has not been applied to any database**, so nothing is graded yet and `/api/tutor/next` will fail against a database without the table — it must be applied before this change is deployed. Server-composed practice problems are the only lane issued; a photographed page still grades nothing.
 - Removed client network-failure grading/mastery fallback.
 - Native captures retain their full-resolution re-encoded master. Native OCR preserves raw detections, geometry and score meaning, serializes calls, and suppresses cancelled results. Unsupported native PDFs explicitly request recovery instead of treating a regex extraction as a complete document.
 - Shared OCR review uses instance-scoped Zustand, displays the source photograph, requires source comparison even without an available OCR score, and aborts reads on cancellation/source replacement.
@@ -35,7 +36,7 @@ Named user-research, mobbin-pass, design-handoff and accessibility-review skills
 
 ## Outstanding V3 acceptance work
 
-- Durable immutable document/page/region/question revisions, retained source assets, server evidence repository, atomic grade/current-revision check, revision-bound queued jobs and deletion cascade.
+- Durable immutable document/page/region/question revisions for CAPTURED sources, and retained source assets. The server evidence repository, the atomic grade/current-revision check and the deletion cascade now exist for server-issued questions only (ADR-119); the same binding for a photographed page is outstanding, as is revision-bound invalidation of queued jobs.
 - Question grouping and source-to-answer association; bounded evidence bundles and retrieval/tool orchestration.
 - Native PDF rasterization, Bear Block native build/integration and geometry transforms, real crop/redaction, multilingual OCR and calibrated critical-symbol recovery.
 - Executable physics/units/graphs, ELA passages/rubrics, Spanish independent language dimensions, chemistry and sandboxed code tools.

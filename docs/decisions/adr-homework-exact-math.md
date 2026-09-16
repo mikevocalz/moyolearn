@@ -1,6 +1,6 @@
 # Exact arithmetic for homework
 
-Status: implemented checker; production assessment evidence repository still pending.
+Status: implemented checker; production assessment evidence repository added in ADR-119, migration not yet applied.
 Date: 2026-09-16
 
 ## Problem
@@ -17,7 +17,7 @@ Limits are 2,048 source characters, 128 nodes, depth 24, 64 digits per integer l
 
 ## Authorization and pedagogy
 
-A tool result is not permission to grade. The tool includes the supplied evidence revision as metadata. The authenticated assessment boundary requires owned current server evidence held through the transcript transaction. The existing HTTP composition has no evidence repository and consequently returns an ungraded result, even for a client claiming `verified`.
+A tool result is not permission to grade. The tool includes the supplied evidence revision as metadata. The authenticated assessment boundary requires owned current server evidence held through the transcript transaction. ADR-119 supplies that repository for server-issued practice problems; a photographed page still has no evidence row, so that lane returns an ungraded result even for a client claiming `verified`.
 
 The post-turn reveal check now includes fraction, negative and simple LaTeX numeric answers. This remains a narrow deterministic backstop, not a proof that arbitrary prose or symbolic solutions are safe to reveal. Subject cells remain disabled without their evaluation records.
 

@@ -269,8 +269,15 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
           return;
         }
         if (!res.ok) throw new Error(`Server returned ${res.status}`);
-        const data = (await res.json()) as { problem: string; skillTitle: string };
-        setProblem(data.problem);
+        const data = (await res.json()) as {
+          problem: string;
+          skillTitle: string;
+          evidence?: { questionId: string; revision: string };
+        };
+        // The handle travels with the text. Optional on the way in because a
+        // deployed client can outlive the server version that started issuing
+        // one, and a missing handle is an ungraded turn rather than a crash.
+        setProblem(data.problem, false, data.evidence ?? null);
         setNextProblem('idle');
       })
       .catch(() => {
@@ -349,7 +356,16 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ problem: p, answer, hintDepth: depth, sourceReadiness }),
+        body: JSON.stringify({
+          problem: p,
+          answer,
+          hintDepth: depth,
+          sourceReadiness,
+          // Read at send time, not captured when the turn started: a problem
+          // replaced mid-turn must not be answered with the previous
+          // question's handle.
+          evidence: useCaptureStore.getState().problemEvidence ?? undefined,
+        }),
       });
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
       const data = (await res.json()) as { isCorrect: boolean | null };

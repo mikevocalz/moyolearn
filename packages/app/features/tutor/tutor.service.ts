@@ -4,7 +4,7 @@
 // SOT: docs/pack/19-learning-outcomes-spec.md §3 · docs/pack/07-security-child-ai-safety-spec.md §3
 // SOT-KEYWORDS: tutor service evaluate server-only protected operation safety plane transcript distill
 import 'server-only';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { Auth } from '@acme/auth/server';
 import {
   evaluateArithmetic,
@@ -109,9 +109,32 @@ export interface AssessmentEvidence {
   readonly revision: string;
   readonly learnerId: string;
   readonly orgId: string | null;
-  readonly problem: string;
+  /**
+   * `problemDigest(problem)` of the text the server issued — not the text.
+   *
+   * The educational store may not hold raw text (doc 12 §4, enforced by the
+   * standing assertion at the foot of `edu_schema.sql`), and a question a child
+   * is graded against is exactly the kind of string that assertion exists to
+   * keep out. A digest answers the only question this service asks of it —
+   * "is this the problem you were issued" — and answers it just as strictly,
+   * because a learner who edits one character cannot produce the same 64 hex
+   * characters.
+   */
+  readonly problemDigest: string;
   readonly evaluationReady: boolean;
   readonly expiresAt: string;
+}
+
+/**
+ * The binding between an issued question and the text a turn claims to answer.
+ *
+ * SHA-256 rather than a comparison of the strings themselves so the store can
+ * hold the binding without holding the child's homework. Hex, so the value fits
+ * `edu.opaque_id` and is therefore constrained by the schema rather than by
+ * this function alone.
+ */
+export function problemDigest(problem: string): string {
+  return createHash('sha256').update(problem, 'utf8').digest('hex');
 }
 
 /**
@@ -135,7 +158,8 @@ export async function evaluateTutorTurn(
     return await ports.withCurrentEvidence(ctx, input.evidence, async (evidence, saveTranscript) => {
       if (!evidence.evaluationReady || evidence.learnerId !== ctx.learnerId ||
           evidence.orgId !== (ctx.orgId ?? null) || evidence.questionId !== input.evidence?.questionId ||
-          evidence.revision !== input.evidence.revision || evidence.problem !== input.problem ||
+          evidence.revision !== input.evidence.revision ||
+          evidence.problemDigest !== problemDigest(input.problem) ||
           !Number.isFinite(Date.parse(evidence.expiresAt)) || Date.parse(evidence.expiresAt) <= Date.now()) return unresolved;
       const safety = await runTutorSafetyPlane(input.problem, ctx);
 

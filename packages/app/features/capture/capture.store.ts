@@ -10,9 +10,12 @@ import { create } from 'zustand';
 import { problemStorage } from './problem-storage';
 import {
   readProblem,
+  readProblemEvidence,
   readProblemIsReading,
   writeProblem,
+  writeProblemEvidence,
   writeProblemIsReading,
+  type ProblemEvidence,
 } from './problem-storage.shared.ts';
 
 interface CaptureState {
@@ -27,11 +30,20 @@ interface CaptureState {
    */
   problemIsReading: boolean;
   /**
+   * The server's handle on this problem, when the server issued it.
+   *
+   * Null for a photographed page: nothing has recorded a question for it yet,
+   * and the grader refuses a turn it cannot bind to a revision it owns. That is
+   * the honest state rather than a gap — a source nobody has confirmed is not
+   * something to grade a child against.
+   */
+  problemEvidence: ProblemEvidence | null;
+  /**
    * `isReading` defaults to false so the two SERVED call sites — the next-problem
    * fetch and the progress screen's re-open — keep reading as what they are
    * without naming it. Only the two capture paths pass true.
    */
-  setProblem: (problem: string | null, isReading?: boolean) => void;
+  setProblem: (problem: string | null, isReading?: boolean, evidence?: ProblemEvidence | null) => void;
   clearProblem: () => void;
 }
 
@@ -47,16 +59,26 @@ export const useCaptureStore = create<CaptureState>((set) => ({
   */
   problem: readProblem(problemStorage),
   problemIsReading: readProblemIsReading(problemStorage),
+  problemEvidence: readProblemEvidence(problemStorage),
 
-  setProblem: (problem, isReading = false) => {
+  /*
+    The evidence defaults to NULL rather than to whatever was there, so a call
+    site that sets a new problem without one cannot leave the previous
+    question's handle attached to it. That is the only default that is safe:
+    the stale pair would name a real, owned, current row, so the grade would
+    pass every check and be a grade of the wrong question.
+  */
+  setProblem: (problem, isReading = false, evidence = null) => {
     writeProblem(problemStorage, problem);
     writeProblemIsReading(problemStorage, isReading);
-    set({ problem, problemIsReading: isReading });
+    writeProblemEvidence(problemStorage, problem === null ? null : evidence);
+    set({ problem, problemIsReading: isReading, problemEvidence: problem === null ? null : evidence });
   },
 
   clearProblem: () => {
     writeProblem(problemStorage, null);
     writeProblemIsReading(problemStorage, false);
-    set({ problem: null, problemIsReading: false });
+    writeProblemEvidence(problemStorage, null);
+    set({ problem: null, problemIsReading: false, problemEvidence: null });
   },
 }));

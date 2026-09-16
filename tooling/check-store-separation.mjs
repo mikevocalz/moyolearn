@@ -53,9 +53,10 @@ const EDU_CLIENT = /(?:from|import|require\()\s*['"`][^'"`]*\bedu\.client['"`]/;
  * being added here is unguarded — which is why it is added in the same commit as
  * the migration that creates it. `inference_budget` (doc 12 §7's daily ledger)
  * joined the list with `edu_inference_budget.sql`; `blocked_tags` (doc 07 §4's
- * re-derivation guard) with `edu_blocked_tags.sql`.
+ * re-derivation guard) with `edu_blocked_tags.sql`; `questions` (the row that
+ * authorizes a grade) with `edu_questions.sql`.
  */
-const EDU_SQL = /\b(?:from|into|update|join|table|truncate)\s+"?edu"?\s*\.\s*"?(?:transcripts|knowledge_graph|embeddings|inference_budget|blocked_tags)\b/i;
+const EDU_SQL = /\b(?:from|into|update|join|table|truncate)\s+"?edu"?\s*\.\s*"?(?:transcripts|knowledge_graph|embeddings|inference_budget|blocked_tags|questions)\b/i;
 
 /** The raw driver. A file holding one is talking to a database, whatever it calls itself. */
 const RAW_DRIVER = /(?:from|import|require\()\s*['"`]pg['"`]/;

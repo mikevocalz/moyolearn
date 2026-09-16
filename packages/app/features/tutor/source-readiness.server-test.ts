@@ -3,7 +3,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import type { Auth } from '@acme/auth/server';
-import { evaluateTutorTurn } from './tutor.service.ts';
+import { evaluateTutorTurn, problemDigest } from './tutor.service.ts';
 
 test('client source claims, including forged verified, never authorize learning writes', async () => {
   const previous = process.env.NEXT_PUBLIC_AUTH_MODE;
@@ -59,20 +59,23 @@ test('the server rejects mismatched, stale, expired and unresolved evidence insi
   process.env.NEXT_PUBLIC_AUTH_MODE = 'mock';
   process.env.NODE_ENV = 'development';
   try {
+    const problem = '1/2+1/3';
     const valid = {
       questionId: 'question-1', revision: 'revision-2', learnerId: 'dev-learner-1',
-      orgId: 'riverside-unified', problem: '1/2+1/3', evaluationReady: true,
+      orgId: 'riverside-unified', problemDigest: problemDigest(problem),
+      evaluationReady: true,
       expiresAt: new Date(Date.now() + 60_000).toISOString(),
     };
     for (const change of [
       { learnerId: 'another-learner' }, { orgId: 'another-org' },
       { questionId: 'another-question' }, { revision: 'revision-1' },
-      { problem: '1/2+1/2' }, { evaluationReady: false },
+      { problemDigest: problemDigest('1/2+1/2') }, { problemDigest: 'not-a-digest' },
+      { evaluationReady: false },
       { expiresAt: 'invalid' }, { expiresAt: '2020-01-01T00:00:00.000Z' },
     ]) {
       let writes = 0;
       const result = await evaluateTutorTurn({} as Auth, new Headers(), {
-        problem: valid.problem, answer: '5/6', hintDepth: 0,
+        problem, answer: '5/6', hintDepth: 0,
         sourceReadiness: 'verified', evidence: { questionId: valid.questionId, revision: valid.revision },
       }, {
         withCurrentEvidence: async (_ctx, _reference, assess) =>
@@ -83,7 +86,7 @@ test('the server rejects mismatched, stale, expired and unresolved evidence insi
     }
     let savedRevision = '';
     const checked = await evaluateTutorTurn({} as Auth, new Headers(), {
-      problem: valid.problem, answer: '5/6', hintDepth: 0,
+      problem, answer: '5/6', hintDepth: 0,
       evidence: { questionId: valid.questionId, revision: valid.revision },
     }, {
       withCurrentEvidence: async (_ctx, _reference, assess) => assess(valid, async (_ctx, transcript) => {
