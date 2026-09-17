@@ -13,25 +13,20 @@
     "ELEVENLABS_VOICE_ID"
   ],
   "tasks": {
+    "transit": {
+      "dependsOn": [
+        "^transit"
+      ]
+    },
     "build": {
       "dependsOn": [
-        "^build"
+        "^build",
+        "transit"
       ],
       "inputs": [
-        "$TURBO_DEFAULTS$",
+        "$TURBO_DEFAULT$",
         ".env*",
-        "../../.env*"
-      ],
-      "env": [
-        "BUNNY_STORAGE_ZONE_NAME",
-        "BUNNY_STORAGE_REGION",
-        "BUNNY_STORAGE_ACCESS_KEY",
-        "BUNNY_MEDIA_PREFIX",
-        "NEXT_PUBLIC_BUNNY_CDN_BASE_URL",
-        "BUNNY_PULL_ZONE_TOKEN_KEY",
-        "VITE_MOYO_VOICE_BASE_URL",
-        "ELEVENLABS_API_KEY",
-        "ELEVENLABS_VOICE_ID"
+        "$TURBO_ROOT$/.env*"
       ],
       "outputs": [
         ".next/**",
@@ -42,44 +37,70 @@
         "storybook-static/**"
       ]
     },
-    "@acme/theme#build": {
-      "outputs": [
-        "theme.css",
-        "theme-native.css"
+    "@acme/theme#transit": {
+      "dependsOn": [
+        "^transit"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!theme.css",
+        "!theme-native.css",
+        "!payload-admin.css"
       ]
     },
-    "@acme/avatar#typecheck": {
+    "@acme/theme#build": {
+      "dependsOn": [
+        "^build",
+        "transit"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!theme.css",
+        "!theme-native.css",
+        "!payload-admin.css"
+      ],
       "outputs": [
-        ".types/**"
+        "theme.css",
+        "theme-native.css",
+        "payload-admin.css"
       ]
     },
     "web#build": {
       "dependsOn": [
-        "^build"
+        "^build",
+        "transit"
       ],
       "inputs": [
-        "$TURBO_DEFAULTS$",
+        "$TURBO_DEFAULT$",
         ".env*",
-        "../../.env*",
-        "../../packages/ui/**",
-        "../../packages/app/**",
-        "../../packages/theme/**"
+        "$TURBO_ROOT$/.env*"
+      ],
+      "env": [
+        "NODE_ENV",
+        "SENTRY_AUTH_TOKEN",
+        "SENTRY_ORG",
+        "SENTRY_PROJECT",
+        "SENTRY_DSN",
+        "SENTRY_DSN_SERVER",
+        "SENTRY_ENVIRONMENT",
+        "VERCEL_ENV",
+        "VERCEL_GIT_COMMIT_SHA"
       ],
       "outputs": [
         ".next/**",
-        "!.next/cache/**"
+        "!.next/cache/**",
+        "public/natalie/**",
+        "public/pdfjs/**"
       ]
     },
     "storybook#build": {
       "dependsOn": [
-        "^build"
+        "^build",
+        "transit"
       ],
       "inputs": [
-        "$TURBO_DEFAULTS$",
-        "../../.env*",
-        "../../packages/ui/**",
-        "../../packages/app/**",
-        "../../packages/theme/**"
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.env*"
       ],
       "outputs": [
         "storybook-static/**"
@@ -87,13 +108,16 @@
     },
     "web-vite#build": {
       "dependsOn": [
-        "^build"
+        "^build",
+        "transit"
       ],
       "inputs": [
-        "$TURBO_DEFAULTS$",
-        "../../.env*",
-        "../../packages/ui/**",
-        "../../packages/theme/**"
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.env*"
+      ],
+      "env": [
+        "NODE_ENV",
+        "VITE_*"
       ],
       "outputs": [
         ".output/**",
@@ -103,13 +127,16 @@
     },
     "admin-vite#build": {
       "dependsOn": [
-        "^build"
+        "^build",
+        "transit"
       ],
       "inputs": [
-        "$TURBO_DEFAULTS$",
-        "../../.env*",
-        "../../packages/payload/**",
-        "../../packages/theme/**"
+        "$TURBO_DEFAULT$",
+        "$TURBO_ROOT$/.env*"
+      ],
+      "env": [
+        "NODE_ENV",
+        "VITE_*"
       ],
       "outputs": [
         "dist/**",
@@ -121,20 +148,42 @@
     "typecheck": {
       "dependsOn": [
         "^typecheck"
+      ],
+      "outputs": []
+    },
+    "web#typecheck": {
+      "dependsOn": [
+        "^typecheck"
+      ],
+      "outputs": [
+        "tsconfig.tsbuildinfo"
+      ]
+    },
+    "@acme/avatar#typecheck": {
+      "dependsOn": [
+        "^typecheck"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        "!.types/**"
+      ],
+      "outputs": [
+        ".types/**",
+        ".tsbuild/**"
       ]
     },
     "lint": {
       "dependsOn": [
-        "^lint"
-      ]
+        "transit"
+      ],
+      "outputs": []
     },
     "test": {
       "dependsOn": [
-        "^build"
+        "^build",
+        "transit"
       ],
-      "inputs": [
-        "$TURBO_DEFAULTS$"
-      ]
+      "outputs": []
     },
     "dev": {
       "persistent": true,
