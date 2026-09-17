@@ -35,7 +35,14 @@
  */
 import { useEffect, useRef } from 'react';
 import { Image, PixelRatio, View } from 'react-native';
-import { Canvas, type CanvasRef, type NativeCanvas, type RNCanvasContext } from 'react-native-webgpu';
+import {
+  Canvas,
+  GPUDeviceProvider,
+  useMainDevice,
+  type CanvasRef,
+  type NativeCanvas,
+  type RNCanvasContext,
+} from 'react-native-webgpu';
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EmotionState, type EmotionCategory, type Shape } from '@acme/avatar';
@@ -252,7 +259,33 @@ async function primeLoaderCache(gltfUrl: string): Promise<void> {
  */
 const TOWARD_BOARD_RAD = -8 * (Math.PI / 180);
 
-export function TutorAvatar3D({
+/*
+  SIX, AND THE SIXTH IS THE DEVICE. `WebGPURenderer` requests its own GPUDevice
+  when the option is omitted, and that device is then unreachable — it cannot be
+  handed to TypeGPU, shared with Skia Graphite, or torn down in concert with
+  anything else (ADR-121). `GPUDeviceProvider` requests one adapter and device
+  for its subtree and `useMainDevice` reads it, so the stage below renders on a
+  device something else can name.
+
+  The provider mounts HERE rather than above this module, and that placement is
+  rule 1 above, not a preference: importing `react-native-webgpu` assigns
+  `navigator.gpu` as a side effect, so a provider higher in the tree would charge
+  every learner on the 2D path for an import they never use. A provider cannot
+  give a value to its own parent, which is why the body is a second component
+  rather than this one.
+
+  It renders null while the request is in flight, so the stage mounts once, with
+  a device already in hand — the effect below never has to wait for one.
+*/
+export function TutorAvatar3D(props: TutorAvatar3DProps) {
+  return (
+    <GPUDeviceProvider>
+      <TutorAvatar3DStage {...props} />
+    </GPUDeviceProvider>
+  );
+}
+
+function TutorAvatar3DStage({
   active,
   isSpeaking,
   sampleMouth,
@@ -268,6 +301,7 @@ export function TutorAvatar3D({
   modelUri,
 }: TutorAvatar3DProps) {
   const canvasRef = useRef<CanvasRef>(null);
+  const { device } = useMainDevice();
 
   /*
     Every per-frame input goes through a ref, and that is not laziness about
@@ -407,7 +441,23 @@ export function TutorAvatar3D({
       const presence = createHumanoPresence(gltf.scene);
       presenceRef.current = presence;
 
-      renderer = new THREE.WebGPURenderer({ antialias: true, alpha: true, canvas: context.canvas, context });
+      /*
+        Refused, not defaulted. `useMainDevice` types the device nullable because
+        the provider requests it asynchronously — but the provider renders null
+        until it resolves, so this component does not exist without one. Passing
+        `device ?? undefined` would compile and then quietly reinstate the bug
+        the provider was added to remove: three would request a second device
+        nobody else can reach, and it would look like it worked.
+      */
+      if (!device) return fail('GPUDeviceProvider mounted the stage without a device');
+
+      renderer = new THREE.WebGPURenderer({
+        antialias: true,
+        alpha: true,
+        canvas: context.canvas,
+        context,
+        device,
+      });
       // A transparent clear, so the stage's own ground (`bg-surface-stage` on
       // the wrapper) shows behind her instead of the renderer's black.
       renderer.setClearColor(0x000000, 0);
@@ -552,9 +602,13 @@ export function TutorAvatar3D({
         clearStaleListeners(attribute);
       }
     };
-    // Built once per mount. `modelUri` is the one input that changes WHICH body
-    // is on the stage, so it is the only legitimate reason to rebuild.
-  }, [modelUri]);
+    // Built once per mount. `modelUri` changes WHICH body is on the stage;
+    // `device` changes WHICH GPU the renderer is bound to. Both are reasons to
+    // rebuild and nothing else is — a renderer left pointing at a device that
+    // has gone away renders nothing and reports nothing, which is the failure
+    // ADR-121 names. The provider resolves the device before this component
+    // mounts, so in practice this array fires once.
+  }, [modelUri, device]);
 
   /*
     Rest her when the loop stops, so the last painted frame is a calm one rather
