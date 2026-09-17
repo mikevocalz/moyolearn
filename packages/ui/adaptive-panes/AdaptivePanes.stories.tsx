@@ -439,7 +439,7 @@ function AuditPane({ name }: { name: string }) {
 export const MountAudit: Story = {
   render: function Audit() {
     return (
-      <View className="h-dvh w-full">
+      <View className="h-full w-full">
         <AdaptivePanes detail={<AuditPane name="tutor" />}>
           <AdaptivePanes.Column>
             <AuditPane name="source" />

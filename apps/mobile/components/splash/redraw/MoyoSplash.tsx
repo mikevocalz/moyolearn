@@ -84,9 +84,10 @@ function Splash({ onFinished, reduceMotion, taglineFontFamily }: MoyoSplashProps
   const [t0, t1] = TIMELINE.tagline;
   const startTagline = useCallback(() => {
     if (still) return;
-    tagline.value = withDelay(
-      t0,
-      withTiming(1, { duration: t1 - t0, easing: Easing.out(Easing.cubic) }),
+    // `.set()` rather than `.value =`: writing the field of a value that was
+    // passed to a hook is what react-hooks/immutability forbids.
+    tagline.set(
+      withDelay(t0, withTiming(1, { duration: t1 - t0, easing: Easing.out(Easing.cubic) })),
     );
   }, [still, tagline, t0, t1]);
 
