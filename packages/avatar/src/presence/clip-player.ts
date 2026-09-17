@@ -24,7 +24,7 @@
  * SOT-KEYWORDS: clip player layer one retarget staystill exclusive twins slerp loop
  */
 import * as THREE from 'three';
-import { sanitizeNodeName } from './humano.ts';
+import { HUMANO_BONES, sanitizeNodeName } from './humano.ts';
 
 export interface RetargetedClip {
   readonly fps: number;
@@ -66,7 +66,7 @@ export function createClipPlayer(scene: THREE.Object3D, clip: RetargetedClip): C
     const bone = find(name);
     return bone ? [{ bone, frames, rest: bone.position.clone() }] : [];
   });
-  const rootBone = find('DEF-spine');
+  const rootBone = find(HUMANO_BONES.torso);
   const rootRest = rootBone ? rootBone.position.clone() : null;
 
   const a = new THREE.Quaternion();

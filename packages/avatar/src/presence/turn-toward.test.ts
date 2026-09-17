@@ -18,7 +18,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import * as THREE from 'three';
-import { TURN_TOWARD, createHumanoPresence, type HumanoInput } from './humano.ts';
+import { HUMANO_BONES, TURN_TOWARD, createHumanoPresence, type HumanoInput } from './humano.ts';
 
 const DEG = Math.PI / 180;
 const QUIET: HumanoInput = { speaking: false, mouth: 0, reducedMotion: false };
@@ -72,9 +72,9 @@ function runPair(faceYawRad: number, seconds: number) {
     bone(scene, name).getWorldQuaternion(new THREE.Quaternion());
   a.root.updateMatrixWorld(true);
   b.root.updateMatrixWorld(true);
-  const heads = [restQ(a, 'DEF-spine.006'), restQ(b, 'DEF-spine.006')] as const;
-  const chests = [restQ(a, 'DEF-spine.003'), restQ(b, 'DEF-spine.003')] as const;
-  const hips = [restQ(a, 'DEF-spine'), restQ(b, 'DEF-spine')] as const;
+  const heads = [restQ(a, HUMANO_BONES.head), restQ(b, HUMANO_BONES.head)] as const;
+  const chests = [restQ(a, HUMANO_BONES.chest), restQ(b, HUMANO_BONES.chest)] as const;
+  const hips = [restQ(a, HUMANO_BONES.torso), restQ(b, HUMANO_BONES.torso)] as const;
   const toeRest = {
     L: bone(a, 'DEF-toe.L').getWorldPosition(new THREE.Vector3()),
     R: bone(a, 'DEF-toe.R').getWorldPosition(new THREE.Vector3()),
@@ -89,9 +89,9 @@ function runPair(faceYawRad: number, seconds: number) {
     pb.step(1 / 60, QUIET);
     a.root.updateMatrixWorld(true);
     b.root.updateMatrixWorld(true);
-    head.push(worldYaw(bone(a, 'DEF-spine.006'), heads[0]) - worldYaw(bone(b, 'DEF-spine.006'), heads[1]));
-    chest.push(worldYaw(bone(a, 'DEF-spine.003'), chests[0]) - worldYaw(bone(b, 'DEF-spine.003'), chests[1]));
-    hip.push(worldYaw(bone(a, 'DEF-spine'), hips[0]) - worldYaw(bone(b, 'DEF-spine'), hips[1]));
+    head.push(worldYaw(bone(a, HUMANO_BONES.head), heads[0]) - worldYaw(bone(b, HUMANO_BONES.head), heads[1]));
+    chest.push(worldYaw(bone(a, HUMANO_BONES.chest), chests[0]) - worldYaw(bone(b, HUMANO_BONES.chest), chests[1]));
+    hip.push(worldYaw(bone(a, HUMANO_BONES.torso), hips[0]) - worldYaw(bone(b, HUMANO_BONES.torso), hips[1]));
     for (const side of ['L', 'R'] as const) {
       const pA = bone(a, `DEF-toe.${side}`).getWorldPosition(new THREE.Vector3());
       const pB = bone(b, `DEF-toe.${side}`).getWorldPosition(new THREE.Vector3());
@@ -148,8 +148,8 @@ describe('turn-toward, small angles over planted feet', () => {
   it('reduced motion: no travel, direction held', () => {
     const { root, byName } = buildRealScene();
     const presence = createHumanoPresence(root, { seed: 7 });
-    const head = byName.get('DEF-spine.006')!;
-    const hip = byName.get('DEF-spine')!;
+    const head = byName.get(HUMANO_BONES.head)!;
+    const hip = byName.get(HUMANO_BONES.torso)!;
     root.updateMatrixWorld(true);
     const headRestQ = head.getWorldQuaternion(new THREE.Quaternion());
     const hipRestQ = hip.getWorldQuaternion(new THREE.Quaternion());

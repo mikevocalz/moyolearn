@@ -11,6 +11,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import * as THREE from 'three';
 import { createClipPlayer, type RetargetedClip } from './clip-player.ts';
+import { HUMANO_BONES } from './humano.ts';
 
 // CLIP_PATH env var points the suite at another retargeted clip (the curated
 // set from `--all-curated`); unset, it is the original wei_lr gate unchanged.
@@ -75,10 +76,10 @@ describe('clip player on the shipped rig', { skip: !existsSync(CLIP_PATH) && 'ru
   it('keeps the eyes in the head and the arms on the chest through the whole take', () => {
     const { root, byName } = buildRealScene();
     const player = createClipPlayer(root, clip!);
-    const head = byName.get('DEF-spine.006')!;
-    const eye = byName.get('DEF-eye.L')!;
-    const chest = byName.get('DEF-spine.003')!;
-    const arm = byName.get('DEF-upper_arm.L')!;
+    const head = byName.get(HUMANO_BONES.head)!;
+    const eye = byName.get(HUMANO_BONES.eyeL)!;
+    const chest = byName.get(HUMANO_BONES.chest)!;
+    const arm = byName.get(HUMANO_BONES.upperArmL)!;
     const inFrame = (frame: THREE.Bone, of: THREE.Bone) =>
       frame.worldToLocal(of.getWorldPosition(new THREE.Vector3()));
     root.updateMatrixWorld(true);
@@ -110,7 +111,7 @@ describe('clip player on the shipped rig', { skip: !existsSync(CLIP_PATH) && 'ru
   it('moves the hips exactly the clip distance without teleporting between frames', () => {
     const { root, byName } = buildRealScene();
     const player = createClipPlayer(root, clip!);
-    const hip = byName.get('DEF-spine')!;
+    const hip = byName.get(HUMANO_BONES.torso)!;
     const xs = clip!.root.translation.map((p) => p[0]);
     const expected = Math.max(...xs) - Math.min(...xs);
     let minX = Infinity;
