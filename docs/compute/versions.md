@@ -23,13 +23,13 @@ command's output, not a claim carried over from the brief.
 | `react-native-worklets` | `0.12.2` | `0.12.2` | `0.12.2` | agrees |
 | `react-native-reanimated` | `4.6.0` | `4.6.0` | `4.6.0` | agrees — but see the peer note below |
 | `react-native-executorch` | `0.10.x` | **`0.10.2`** | `0.9.3` | **repo is two minors behind a ground-up rewrite** |
-| `react-native-webgpu` | `>= 0.10.0` | **`0.10.2`** | absent | agrees; not installed |
+| `react-native-webgpu` | `>= 0.10.0` | **`0.10.2`** | **`0.9.0` installed** | **below the m154 floor — see Dawn** |
 | `react-native-wgpu` (old name) | renamed | `0.5.17`, stale | absent | rename confirmed |
-| `@shopify/react-native-skia` | `@next` `2.12.0-next.1` | **latest `2.12.0`; `next` tag is `2.11.2-next.1`** | absent | **brief is stale — Graphite is in stable** |
-| `typegpu` | `0.12.4` | **`0.12.5`** | absent | **brief's pin would break `runntime`** |
+| `@shopify/react-native-skia` | `@next` `2.12.0-next.1` | **latest `2.12.0`; `next` tag is `2.11.2-next.1`** | `2.12.0` | **brief is stale — Graphite is in stable, and already pinned here** |
+| `typegpu` | `0.12.4` | **`0.12.5`** | `0.12.4` installed | **must go to 0.12.5 — `runntime` peers `^0.12.5`** |
 | `@typegpu/react` | `0.12.0` | `0.12.0` | absent | agrees |
 | `unplugin-typegpu` | `0.12.3` | `0.12.3` | absent | agrees |
-| `runntime` | `0.1.0` | `0.1.0` | absent | agrees |
+| `runntime` | `0.1.0` | `0.1.0` | absent | agrees — the one genuinely new package |
 | `three` / `@types/three` | r186 | `0.186.0` / `0.186.0` | `0.185.1` | one release behind |
 | `react-native-gesture-handler` | `3.1.0` | **`3.3.0`** | `~3.2.1` | brief's number is two minors stale |
 | `@swmansion/argent` | latest | `0.25.1` | — | agrees |
@@ -68,7 +68,24 @@ resolve this by widening a range locally; it is an upstream question.
 **Gesture Handler is at 3.3.0**, not the 3.1.0 the brief names. The catalog's
 `~3.2.1` is between them.
 
-## Dawn parity — the pair exists today
+## Dawn parity — the pair exists upstream, and is broken here right now
+
+The installed tree does **not** satisfy it:
+
+    $ node -p "require('react-native-webgpu/package.json').dawn"
+    chrome-m152
+
+    $ node -p "JSON.stringify(require('@shopify/react-native-skia/package.json').graphiteDependencies)"
+    {"react-native-skia-graphite-android":"154.0.0", ...:"154.0.0", ...:"154.0.0"}
+
+**m152 against m154.** Skia was moved to the Graphite-capable 2.12.0 while
+`react-native-webgpu` stayed at 0.9.0. The brief describes a build-time guard
+that fails on exactly this, which means either no iOS dependency resolution has
+run against this tree yet or the guard is not wired — worth knowing before the
+next native build, because the failure will look like a build regression rather
+than a version skew. The fix is the version bump below, not a guard change.
+
+## The upstream pair that resolves it
 
     $ npm view react-native-webgpu@0.10.2 dawn
     "chrome-m154"
@@ -102,14 +119,34 @@ worklets runtimes is the real hazard; one copy is installed.
 
 ## What the migration actually has to move
 
+Far less is greenfield than the brief implies. Counting import sites rather than
+catalog entries, excluding `node_modules`:
+
+| Package | Files importing it |
+|---|---:|
+| `three` | 55 |
+| `three/webgpu` | 31 |
+| `@reactvision/react-viro` | 40 |
+| `react-native-webgpu` | 19 |
+| `@shopify/react-native-skia` | 4 |
+| `typegpu` | 1 |
+| `runntime` | 0 |
+
+The WebGPU path is not a plan here, it is running code — `react-native-webgpu`
+is imported across `packages/app/features/tutor`, `packages/avatar/src/presence`,
+`packages/avatar/src/materials`, `packages/ui/xr` and two places in
+`apps/mobile`. Treating this as a from-scratch integration would mean rebuilding
+something that exists.
+
 Already in place: Expo SDK 58 preview.3, RN 0.88.0-rc.0, Worklets 0.12.2,
-Reanimated 4.6.0, Gesture Handler 3.x.
+Reanimated 4.6.0, Gesture Handler 3.x, Skia 2.12.0 with Graphite.
 
-Version bumps: `react-native-executorch` 0.9.3 → 0.10.2 (a ground-up rewrite, not
-a minor), `three` 0.185.1 → 0.186.0.
+Version bumps required: `react-native-webgpu` 0.9.0 → 0.10.2 (this is what fixes
+the Dawn skew above), `react-native-executorch` 0.9.3 → 0.10.2 (a ground-up
+rewrite, not a minor), `typegpu` 0.12.4 → 0.12.5 (`runntime`'s peer), `three`
+0.185.1 → 0.186.0.
 
-Absent entirely — every one of these is new construction, not an upgrade:
-`react-native-webgpu`, `@shopify/react-native-skia`, `typegpu`, `runntime`.
+Genuinely absent: `runntime` alone.
 
 ## Re-verification
 
