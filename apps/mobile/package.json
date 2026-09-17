@@ -58,7 +58,7 @@
     "react-native-svg": "catalog:",
     "react-native-video": "7.0.0-beta.11",
     "react-native-web": "catalog:",
-    "react-native-webgpu": "0.9.0",
+    "react-native-webgpu": "0.10.2",
     "react-native-webview": "catalog:",
     "react-native-worklets": "catalog:",
     "solito": "catalog:",

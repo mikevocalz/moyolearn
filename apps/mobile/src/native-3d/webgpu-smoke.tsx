@@ -200,7 +200,7 @@ function TriangleProbe({ onResult }: { onResult: (line: string) => void }) {
   return (
     <View className="flex-1">
       <View className="flex-1 bg-primary" />
-      <Canvas ref={ref} style={{ position: 'absolute', inset: 0 }} transparent />
+      <Canvas ref={ref} style={{ position: 'absolute', inset: 0 }} opaque={false} />
     </View>
   );
 }

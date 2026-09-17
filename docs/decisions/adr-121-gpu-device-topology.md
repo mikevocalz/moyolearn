@@ -72,9 +72,17 @@ gated behind `shader-f16` and consent and are not in the near path.
   (`hearts-gpu.tsx`) becomes a third one that this ADR does not cover and should.
 - **Follow-ups:**
   1. Pass `device` into the native `WebGPURenderer` — the prerequisite above.
-  2. Bump `react-native-webgpu` 0.9.0 → 0.10.2. The installed pair is skewed:
-     `dawn: "chrome-m152"` against Skia 2.12.0's Graphite `154.0.0`
-     (`docs/compute/versions.md`). Neither option is testable on a mismatched Dawn.
+  2. ~~Bump `react-native-webgpu` 0.9.0 → 0.10.2.~~ **Done.** The pair now reads
+     `chrome-m154` against Graphite `154.0.0`. The bump also renamed `<Canvas>`'s
+     `transparent` prop to `opaque` (inverted, defaulting to `true`), which is
+     what makes follow-up 1 reachable: 0.10 ships `GPUDeviceProvider` and
+     `useMainDevice()` (`node_modules/react-native-webgpu/lib/typescript/src/GPUDeviceProvider.d.ts`),
+     a context that requests one adapter and device for its subtree. That is the
+     mechanism for handing Natalie a device — but the provider has to mount
+     *inside* `tutor-avatar-3d.native.tsx`, not above it, because that module
+     assigns `navigator.gpu` as a side effect of import and is reached only
+     through `React.lazy` behind ADR-111's flag. A provider higher in the tree
+     would make every learner on the 2D path pay for the import.
   3. Add `device.lost` and `uncapturederror` handling on the main JS runtime —
      the only runtime where they fire — since today there is none.
   4. Measure Scenario J and K for A and B and record Natalie's p50/p95/p99. This

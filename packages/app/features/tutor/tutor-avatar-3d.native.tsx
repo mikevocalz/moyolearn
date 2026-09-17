@@ -570,7 +570,7 @@ export function TutorAvatar3D({
       onLayout={(event) => {
         layoutRef.current = event.nativeEvent.layout;
       }}>
-      <Canvas ref={canvasRef} style={{ flex: 1 }} transparent />
+      <Canvas ref={canvasRef} style={{ flex: 1 }} opaque={false} />
     </View>
   );
 }
