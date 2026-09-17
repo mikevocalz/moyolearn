@@ -18,8 +18,8 @@
  * on the machine that ran the bake. The rasteriser below is ~100 lines of
  * dependency-free arithmetic, so `node tools/bake_lash_texture.ts` produces the
  * same bytes on a laptop, in CI, and on a colleague's machine five years from
- * now. That is the whole point — the checked-in `sha256` in the manifest is only
- * meaningful if the bake is reproducible.
+ * now. That is the whole point — the checked-in `rasterSha256` in the manifest
+ * is only meaningful if the bake is reproducible.
  *
  * FIDELITY. Canvas strokes a path by filling the set of points within
  * `lineWidth / 2` of it; with `lineCap: 'round'` that set is exactly the union
@@ -284,11 +284,13 @@ export interface LashTextureManifest {
   supersample: number;
   segments: number;
   colorSpace: string;
+  rasterSha256: string;
   sha256: string;
 }
 
 export function bake(): { png: Buffer; manifest: LashTextureManifest } {
-  const png = encodePng(paint(), WIDTH, HEIGHT);
+  const rgba = paint();
+  const png = encodePng(rgba, WIDTH, HEIGHT);
   return {
     png,
     manifest: {
@@ -300,9 +302,16 @@ export function bake(): { png: Buffer; manifest: LashTextureManifest } {
       supersample: SS,
       segments: SEGMENTS,
       colorSpace: 'srgb',
-      // Consumed by the CDN capability manager and asserted in CI: if a change
-      // to this file moves a single pixel, this hash moves and the golden set
-      // must be re-approved deliberately.
+      // The image, hashed before it is packed into a container. Move a single
+      // pixel — a constant, a gradient stop, the supersampling — and this hash
+      // moves, so the golden set must be re-approved deliberately. Nothing
+      // outside the rasteriser can shift it, which is what makes it the gate.
+      rasterSha256: createHash('sha256').update(rgba).digest('hex'),
+      // The file, hashed whole. Consumed by the CDN capability manager in
+      // src/assets.ts, which re-downloads once on a mismatch — so it must stay
+      // the sha256 of the bytes that land on disk. It is NOT a gate on the
+      // image: `deflateSync` emits a different stream on zlib 1.3 than on
+      // 1.2.12, so this value moves between machines with the raster identical.
       sha256: createHash('sha256').update(png).digest('hex'),
     },
   };
