@@ -33,6 +33,7 @@ export interface LashTextureManifest {
     supersample: number;
     segments: number;
     colorSpace: string;
+    rasterSha256: string;
     sha256: string;
 }
 export declare function bake(): {
