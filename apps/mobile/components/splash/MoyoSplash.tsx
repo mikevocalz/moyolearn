@@ -250,7 +250,12 @@ export function MoyoSplash() {
     replaced never ends. Measured on device: it sat there indefinitely.
   */
   const reducedRef = useRef(reduced);
-  reducedRef.current = reduced;
+  // Synced in an effect rather than in the render body: a render-phase ref write
+  // is what react-hooks/refs forbids, and this runs before the mount effect
+  // below, which is the only reader.
+  useEffect(() => {
+    reducedRef.current = reduced;
+  }, [reduced]);
 
   useEffect(() => {
     // Mounted means painted, so the native splash can go: it is holding the
