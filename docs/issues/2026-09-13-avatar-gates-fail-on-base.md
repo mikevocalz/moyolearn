@@ -13,7 +13,38 @@ SOT-KEYWORDS: issue avatar gate joint ownership material inputs humano bones
 -->
 
 Filed: 2026-09-13 · Found on: `feat/spatial-whiteboard-xr` @ `6e5707b` ·
-Base: `2c06a96` (`main`) · Status: open, unowned
+Base: `2c06a96` (`main`) · Status: **fixed 2026-09-17** on
+`upgrade/expo-sdk-58-beta`; both gates exit 0
+
+## Resolution (2026-09-17)
+
+**`check-joint-ownership`** — the five files now derive their names from
+`HUMANO_BONES`, so no exemption was needed and the judgement call below did not
+have to be made. Nine claimed literals were replaced across the five files; the
+gate's message truncates to three names per file, so it had not named
+`DEF-hand.L`, `DEF-hand.R` or `DEF-upper_arm.L`. `DEF-toe.L` / `DEF-toe.R` stay
+literal — unclaimed joints, which invariant 3 deliberately permits.
+
+Caveat on the evidence: `packages/avatar` typecheck, lint and 366 tests are
+green, but the two suites that exercise `blend.test.ts`'s and
+`clip-player.test.ts`'s clip paths self-skip without `/tmp/staystill_wei_lr.clip.json`
+(`run tools/retarget_staystill.mjs first`), a gate that predates this change. The
+substitutions in those two files are covered by typecheck and by the ownership
+check's asset verification, not by a runtime assertion.
+
+**`check-material-inputs`** — the premise below was wrong. Both solvers exist and
+are tracked; they were committed to the repo-root `tools/` in `2710bc9`, while
+`humano.ts`'s `tools/…` citations resolve against `packages/avatar` (the gate
+sets `ROOT = 'packages/avatar'`), which is also where every sibling solver lives.
+So this was the gate's first branch — fix the reference — not `ABSENT_TOOLS`.
+They now sit at `packages/avatar/tools/fold-solve.mjs` and
+`packages/avatar/tools/clasp-fingers-solve.mjs`, with their asset URL changed
+from `../packages/avatar/assets/natalie-phone/` to `../assets/natalie-phone/`.
+
+Both run from `packages/avatar` and reproduce the constants they are cited for:
+`fold-solve.mjs` prints the clearances, and `clasp-fingers-solve.mjs` prints
+`{"forward":0.64,"elbow":0.226,"hand":-0.425,"handYaw":0.8,"pron":-1.2}`, which
+is `FOLD.L` in `humano.ts` exactly.
 
 ## Reproduction
 

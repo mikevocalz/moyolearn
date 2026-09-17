@@ -15,7 +15,37 @@ SOT-KEYWORDS: issue typecheck cold install expo-env.d.ts gitignore reanimated
 -->
 
 Filed: 2026-09-13 · Found on: `feat/spatial-whiteboard-xr` @ `6e5707b` ·
-Status: open, unowned
+Status: **fixed 2026-09-17** on `upgrade/expo-sdk-58-beta`, option 3
+
+## Resolution (2026-09-17)
+
+Option 3, the one this file called probably right: `apps/mobile/expo-types.d.ts`
+is committed, carries `/// <reference types="expo/types" />` and a note saying
+why it duplicates the generated file. It is picked up by the existing
+`**/*.ts` include, so `tsconfig.json` did not change and `expo-env.d.ts` stays
+generated and ignored.
+
+Verified by removing the generated file rather than by a cold clone, which
+isolates the same condition:
+
+```
+$ mv apps/mobile/expo-env.d.ts /tmp/ && cd apps/mobile && tsc --noEmit
+TSC WITHOUT expo-env.d.ts: 0
+```
+
+and the negative control, with `expo-types.d.ts` moved away as well:
+
+```
+components/splash/MoyoSplash.tsx(366,59): error TS2769: No overload matches this call.
+    Type '{ animationName: object; … }' is not assignable to type …
+```
+
+Same file, same call sites, the TS2769 form of the TS2322 above. So the new file
+is what carries the typecheck, not a leftover artefact.
+
+Not verified: the full cold-clone reproduction from this issue's acceptance test
+(`pnpm install --frozen-lockfile && pnpm typecheck` in a fresh clone), and the
+missing `.expo/types/router.d.ts` noted below, which is untouched.
 
 ## Symptom
 
