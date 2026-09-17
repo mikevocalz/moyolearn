@@ -179,3 +179,78 @@ iOS 27 scene lifecycle (`SceneDelegate.swift`, `UIApplicationSceneManifest`), An
 the four `expo.install.exclude` entries re-validated on a device, the expo-router patch
 re-derived for 58 (it is keyed to 57.0.15), the Node floor reconciliation, OTA runtime
 version isolation, and every Argent run.
+
+---
+
+# Web verification, 2026-09-17 — and one regression it caught
+
+Three subagents, web only. Every claim below was re-run first-hand before being repeated.
+
+## better-auth 1.7.5 broke `account` inserts — reverted
+
+`apps/web` booted with, and returned 500 from `/api/entitlements` and `/api/progress` with:
+
+```
+ERROR [Better Auth]: Database schema mismatch
+  Required columns Better Auth never writes
+    account.issuer
+  Inserts into account will fail.
+```
+
+`packages/payload/migrations/better_auth_tables.sql:61` is verbatim 1.7.2 `better-auth
+generate` output — `account."issuer"` is `text not null` with no default, and line 87 puts a
+unique index on `(issuer, accountId)`. 1.7.5 stopped writing that column, so every insert
+into `account` fails, which is signup and OAuth account linking.
+
+Introduced by `8b683d9`, which took the whole better-auth group to npm latest. All four
+entries (`better-auth`, `@better-auth/expo`, `@better-auth/stripe`, `auth`) are back at
+1.7.2.
+
+Before and after, both measured on a fresh `pnpm --filter web build` plus `next start`:
+
+| | `/api/entitlements` | `/api/progress` | schema-mismatch lines in the server log |
+|---|---|---|---|
+| better-auth 1.7.5 | 500 | 500 | 4 |
+| better-auth 1.7.2 | 401 Unauthenticated | 401 Unauthenticated | 0 |
+
+The first attempt at that check was worthless and is recorded here as a caution: the server
+was restarted against the **existing** `.next`, which had 1.7.5 bundled into it, so the fix
+appeared not to work. Next bundles its server dependencies; a dependency change is not in
+effect until the app is rebuilt.
+
+Taking 1.7.5 later means regenerating the DDL with its CLI and migrating the column and
+index away per the 1.7 upgrade guide, against a disposable database.
+
+## What passed
+
+| Target | Result | Evidence |
+|---|---|---|
+| `apps/web` build | exit 0 | 117 routes emitted; TypeScript 52s; 70/70 static pages |
+| `apps/web` runtime | serves real SSR | `/login` returns the sign-in form; `/share/report/<bogus>` returns the correct expired-link state; `/nope-404-test` returns the custom 404 |
+| `apps/storybook` build | exit 0 | 251 stories across 86 titles in `index.json`; 86 story files, 86 emitted chunks |
+| Storybook rendering | 7 stories render | `body.sb-show-main` with real content, loaded in Chrome — not curl |
+
+## Findings that are not upgrade regressions
+
+- **`/admin` 404 is pre-existing.** `app/(payload)/` has no `[[...segments]]/page.tsx`;
+  commit `fde9094` "Remove the Payload admin surface from apps/web." (2026-08-31) predates
+  every upgrade commit. The Payload REST and GraphQL surfaces are alive at
+  `/payload-api/[...slug]` and `/payload-api/graphql`.
+- **`/api/health/jobs` 500 is by design** — `route.ts` returns 500 when the report is
+  unhealthy, and `retention.sweep.transcripts` has "no recorded success" locally.
+- Unauthenticated page routes render a loading skeleton at SSR because the session gate is
+  still pending. `/login` proves the pipeline emits real HTML.
+
+## Smaller things the run surfaced
+
+- `pnpm --filter web start -- -p <port>` is broken: `apps/web/scripts/next.mjs` forwards
+  `process.argv.slice(3)`, so `-p` arrives as a positional and Next reads it as a project
+  directory. Use `PORT=`.
+- `withSentryConfig` imported from `@sentry/nextjs` is deprecated and stops working in v11;
+  it moves to `@sentry/nextjs/config`.
+- `turbopackServerFastRefresh` is listed as an unsupported experiment flag.
+- `expo/tsconfig.base` no longer resolves under SDK 58's `exports` map — fixed in `e6dbe8b`.
+- `apps/storybook/.storybook/main.ts` globs `packages/ui/html/*.stories.@(ts|tsx)`, which
+  matches nothing.
+- `vite-plugin-react-native-web` uses `optimizeDeps.esbuildOptions` and
+  `transformWithEsbuild`, both deprecated by Vite 8.

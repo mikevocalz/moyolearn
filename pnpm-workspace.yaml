@@ -241,15 +241,23 @@ catalog:
   # exactly — one driver in the workspace, not two, so the queue and the
   # repositories cannot disagree about how a timestamp comes back.
   pg-boss: 12.33.0
-  better-auth: 1.7.5
-  "@better-auth/expo": 1.7.5
-  "@better-auth/stripe": 1.7.5
+  # HELD AT 1.7.2 — 1.7.5 is published and breaks this schema, not the code.
+  # `packages/payload/migrations/better_auth_tables.sql` is verbatim 1.7.2
+  # `better-auth generate` output: `account."issuer"` is `text not null` with no
+  # default, and there is a unique index on (issuer, accountId). 1.7.5 stopped
+  # writing that column, so every insert into `account` fails — signup and OAuth
+  # linking with it. Taking 1.7.5 means regenerating the DDL with its CLI and
+  # migrating the column and index away per the 1.7 upgrade guide, against a
+  # disposable database. That is a schema change, not a version bump.
+  better-auth: 1.7.2
+  "@better-auth/expo": 1.7.2
+  "@better-auth/stripe": 1.7.2
   # The Better Auth CLI, and yes it is called `auth`. `@better-auth/cli` was
   # renamed to the bare `auth` package at v1.6 and the old name stops at 1.4.22,
   # so "install the CLI matching better-auth@1.7.1" means this line and not that
   # one. Same version as `better-auth` above on purpose: it generates the DDL for
   # the adapter shipped in that exact release.
-  auth: 1.7.5
+  auth: 1.7.2
   stripe: 22.6.2
   sharp: 0.35.4
   "@types/pg": 8.23.1
