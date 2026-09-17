@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import * as THREE from 'three';
-const dir = new URL('../packages/avatar/assets/natalie-phone/', import.meta.url);
+const dir = new URL('../assets/natalie-phone/', import.meta.url);
 const gltf = JSON.parse(readFileSync(new URL('natalie.gltf', dir), 'utf8'));
 const bin = readFileSync(new URL('natalie.bin', dir));
 

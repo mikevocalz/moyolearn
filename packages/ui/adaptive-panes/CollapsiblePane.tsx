@@ -6,7 +6,7 @@
 //   Structure only.
 // SOT: docs/pack/37-onboarding-dual-pane.md §3.2 · ./README.md
 // SOT-KEYWORDS: collapsible pane width animate reflow leading column
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
 import { MotionView } from '../motion';
 import { View } from '../tw';
 import { TRANSITIONS } from './transitions.ts';
@@ -79,9 +79,12 @@ export function CollapsiblePane({ width, open, fill, children, className }: Coll
   */
   const [measured, setMeasured] = useState<number | null>(null);
   const [grown, setGrown] = useState(false);
-  useEffect(() => {
-    if (!(open && fill)) setGrown(false);
-  }, [open, fill]);
+  // Dropped DURING RENDER, not from an effect: `grow` has to be gone in the
+  // same commit that flips `open`, or the pane spends one painted frame at its
+  // grown width with the tween already running to 0 — the snap this whole
+  // measurement dance exists to avoid. A render-phase update on own state is
+  // React's answer to "a prop invalidated some state" and costs no extra paint.
+  if (grown && !(open && fill)) setGrown(false);
   const contentWidth = fill ? (measured ?? width) : width;
   return (
     <MotionView

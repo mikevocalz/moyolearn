@@ -122,6 +122,8 @@ export function baseConfig(extraBoundaryPatterns = []) {
       },
     },
     ...DOMAIN_LAYERING,
-    { ignores: ['dist/**', '.types/**', 'node_modules/**', '*.config.js', '*.config.mjs'] },
+    // `.probe/**` is a generated bundle (packages/avatar/tools/shader-probe writes it there);
+    // it is gitignored, and ESLint does not read .gitignore.
+    { ignores: ['dist/**', '.types/**', 'node_modules/**', '.probe/**', '*.config.js', '*.config.mjs'] },
   ]);
 }

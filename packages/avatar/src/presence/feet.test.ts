@@ -22,7 +22,7 @@ import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import * as THREE from 'three';
 import { idleConfig } from '../idle/config.ts';
-import { createHumanoPresence } from './humano.ts';
+import { HUMANO_BONES, createHumanoPresence } from './humano.ts';
 
 function buildRealScene(): { root: THREE.Group; byName: Map<string, THREE.Bone> } {
   const gltf = JSON.parse(
@@ -53,7 +53,7 @@ function buildRealScene(): { root: THREE.Group; byName: Map<string, THREE.Bone> 
 
 const buildRealScene2 = (() => {
   const { root, byName } = buildRealScene();
-  const ankles = [byName.get('DEF-foot.L')!, byName.get('DEF-foot.R')!];
+  const ankles = [byName.get(HUMANO_BONES.footL)!, byName.get(HUMANO_BONES.footR)!];
   root.updateMatrixWorld(true);
   return { root, ankles, rest: ankles.map((a) => a.getWorldPosition(new THREE.Vector3()).y) };
 })();
@@ -63,7 +63,7 @@ describe('planted feet on the shipped rig', () => {
     const { root, byName } = buildRealScene();
     const presence = createHumanoPresence(root, { seed: 7 });
     const toes = [byName.get('DEF-toe.L')!, byName.get('DEF-toe.R')!];
-    const hip = byName.get('DEF-spine')!;
+    const hip = byName.get(HUMANO_BONES.torso)!;
     root.updateMatrixWorld(true);
     const rest = toes.map((toe) => toe.getWorldPosition(new THREE.Vector3()));
     const hipRest = hip.getWorldPosition(new THREE.Vector3()).x;
@@ -81,7 +81,7 @@ describe('planted feet on the shipped rig', () => {
     // Heel rise: the unloaded ankle lifts while its toe stays pinned — the
     // observable that replaced asserting a foot-bone rotation.
     let heelRise = 0;
-    const ankles = [byName.get('DEF-foot.L')!, byName.get('DEF-foot.R')!];
+    const ankles = [byName.get(HUMANO_BONES.footL)!, byName.get(HUMANO_BONES.footR)!];
     const ankleRest = ankles.map((a) => a.getWorldPosition(new THREE.Vector3()).y);
     // (captured above the loop would be cleaner; a second short run keeps the
     // first loop's shape untouched)

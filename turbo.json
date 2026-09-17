@@ -96,7 +96,9 @@
         "../../packages/theme/**"
       ],
       "outputs": [
-        "dist/**"
+        ".output/**",
+        ".vercel/output/**",
+        ".tanstack/**"
       ]
     },
     "admin-vite#build": {
@@ -110,7 +112,10 @@
         "../../packages/theme/**"
       ],
       "outputs": [
-        "dist/**"
+        "dist/**",
+        ".output/**",
+        ".vercel/output/**",
+        ".tanstack/**"
       ]
     },
     "typecheck": {

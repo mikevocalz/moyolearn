@@ -7,7 +7,7 @@
  * and compares the hash is what turns that argument into a property.
  *
  * SOT: docs/pack/22-embodied-tutor-avatar-spec.md §4 row 13
- * SOT-KEYWORDS: lashes test bake deterministic png ribbon blink margin alphatest
+ * SOT-KEYWORDS: lashes test bake deterministic png raster zlib ribbon blink margin alphatest
  */
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
@@ -97,18 +97,34 @@ describe('the lash bake (row 13)', () => {
     assert.match(manifest.sha256, /^[0-9a-f]{64}$/);
   });
 
-  it('still produces the sha256 checked into assets/lash-strands.json', () => {
+  it('still produces the raster checked into assets/lash-strands.json', () => {
     // The manifest is committed; the PNG is not (doc 20 — assets ship on the
     // CDN, and a 32 KB binary in the repo would be the thin end of that wedge).
     // So THIS is the regression gate on the rasteriser: change a constant, a
     // gradient stop, or the supersampling and this hash moves, which means the
     // lash fringe changed and the golden set must be re-approved deliberately
     // rather than drifting.
+    //
+    // It gates `rasterSha256` — the pixels — and not `sha256`, which hashes the
+    // finished PNG file. The file hash cannot serve as a drift gate because it
+    // also moves when nothing about the image does: `encodePng` compresses with
+    // `deflateSync`, and zlib 1.3 emits a different stream than 1.2.12 for
+    // byte-identical input, so the same raster hashes differently on a laptop
+    // and on the ubuntu runner. That value has a job — src/assets.ts verifies a
+    // downloaded asset against it — but the job is CDN integrity, not design
+    // review, so this test only checks it is still a usable hash.
     const committed = JSON.parse(
       readFileSync(new URL('../assets/lash-strands.json', import.meta.url), 'utf8')
-    ) as { sha256: string; width: number; height: number; seed: number };
+    ) as {
+      rasterSha256: string;
+      sha256: string;
+      width: number;
+      height: number;
+      seed: number;
+    };
     const fresh = bake();
-    assert.equal(fresh.manifest.sha256, committed.sha256, 'the baked texture changed');
+    assert.equal(fresh.manifest.rasterSha256, committed.rasterSha256, 'the baked texture changed');
+    assert.match(committed.sha256, /^[0-9a-f]{64}$/, 'the CDN integrity value is still there');
     assert.equal(fresh.manifest.width, committed.width);
     assert.equal(fresh.manifest.height, committed.height);
     assert.equal(fresh.manifest.seed, committed.seed);
