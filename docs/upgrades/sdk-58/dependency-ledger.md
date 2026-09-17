@@ -254,3 +254,56 @@ index away per the 1.7 upgrade guide, against a disposable database.
   matches nothing.
 - `vite-plugin-react-native-web` uses `optimizeDeps.esbuildOptions` and
   `transformWithEsbuild`, both deprecated by Vite 8.
+
+## The two Vite apps
+
+Both verified at `fdc02b4` after a from-scratch rebuild, because two commits landed
+mid-verification and the earlier numbers would have described a different tree.
+
+| Target | Build | Serving |
+|---|---|---|
+| `apps/web-vite` | exit 0, 16 pages prerendered, output `.output` (nitro `node-server`) | `/`, `/pricing`, `/how-it-works`, `/for-schools` all 200 with real SSR — `<h1>Learning has a heart.</h1>`, 4371 chars of body text on `/`, correct per-route `<title>`. `curl /` and `.output/public/index.html` hash differently, so the server is rendering rather than serving the prerender. `/definitely-not-a-route` 404. |
+| `apps/admin-vite` | exit 0, output `.vercel/output` (nitro `vercel`, `nodejs24.x`, 5-phase RSC) | `/` → 307 `/admin` → 307 `/admin/login` → 200. Protected routes redirect with `?redirect=` intact. `/payload-api/access` returns JSON. |
+
+The admin's 200s are a client-rendered shell — one `<div>`, six `<script>`, no `<form>` in the
+HTML — which is what an RSC Flight payload looks like and is expected for the Payload panel.
+Loaded in Chrome it renders: title "Login - Payload", an actual form with `email` and
+`password`, Login and Stay-logged-in buttons, the Moyo logo overrides live, **0 console
+errors over 6 loads**.
+
+### Two traps that are not upgrade fallout
+
+- **A stale orphan `pnpm install` will not prune.** `node_modules/@tanstack/react-router/
+  node_modules/@tanstack/react-store@0.9.3` survived under the hoisted linker while
+  `@tanstack/react-router@1.170.38` requires `^0.11.0`, producing ten
+  `"useSelector" is not exported` errors. The lockfile never mentioned 0.9.3 — it pins
+  0.11.1 — so a clean clone or a wiped `node_modules` never sees this, and an incremental
+  local tree does. Deleting the directory and reinstalling fixed it; the lockfile is
+  unchanged.
+- **Root `.env` declares `DATABASE_URL` twice** (line 8 the real Supabase pooler, line 23 a
+  `localhost:5432/starter` placeholder). `apps/admin-vite`'s `dev` script does
+  `set -a; . ../../.env`, so last-wins gives `password authentication failed for user "user"`
+  and the preview process then dies with `ERR_UNHANDLED_REJECTION`. Pre-existing.
+  `admin-vite`'s `build` sources no env at all and succeeds without any; only serving needs it.
+
+`apps/web-vite`'s `/` still fires three requests at `http://localhost:3001/api/marketing/voice/
+baked/*` and gets `ERR_CONNECTION_REFUSED` — the known hardcoded-origin bug, unchanged by the
+upgrade. `/pricing` and `/globe-lab` have zero console errors.
+
+One `/admin/login` 500 appeared on the first load after the server sat idle, with a
+`Failed query: select "users"…` in the browser console and nothing server-side. It did not
+reproduce across 18 further requests. Consistent with a cold pgbouncer connection on the
+Supabase pooler; not pinned down.
+
+## Where the web scope stands
+
+| Target | Build | Serves | Renders |
+|---|---|---|---|
+| `apps/web` | PASS | PASS | PASS (`/login`, `/share/report/*`, custom 404) |
+| `apps/web-vite` | PASS | PASS | PASS (SSR text asserted per route) |
+| `apps/admin-vite` | PASS | PASS | PASS (Payload login form, in Chrome) |
+| `apps/storybook` | PASS | PASS | PASS (7 of 251 stories, in Chrome) |
+
+Not run, and not claimed: any automated test for any web app — the task graph shows none
+exists. No accessibility audit, no visual regression, no performance measurement, no
+production-shaped deployment check, and nothing native.
