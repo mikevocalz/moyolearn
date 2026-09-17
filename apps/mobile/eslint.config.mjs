@@ -23,4 +23,9 @@ export default defineConfig([
       ],
     },
   },
+  {
+    // `redraw`/`react-native-redraw` are subscriber-only tarballs that are not installed here, so the parked scene's imports cannot resolve — same reason, same scope, as the exclude in tsconfig.json; delete both when the tarballs land in vendors/.
+    files: ['components/splash/redraw/**/*.{ts,tsx}'],
+    rules: { 'import/no-unresolved': 'off' },
+  },
 ]);
