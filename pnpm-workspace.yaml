@@ -211,15 +211,15 @@ catalog:
   # leak this catches isn't server actions — it's Payload credentials and
   # inference keys ending up readable inside an app binary.
   server-only: 0.0.1
-  payload: 4.0.0-canary.29
-  "@payloadcms/db-postgres": 4.0.0-canary.29
-  "@payloadcms/next": 4.0.0-canary.29
-  "@payloadcms/plugin-mcp": 4.0.0-canary.29
-  "@payloadcms/ui": 4.0.0-canary.29
+  payload: 4.0.0-canary.33
+  "@payloadcms/db-postgres": 4.0.0-canary.33
+  "@payloadcms/next": 4.0.0-canary.33
+  "@payloadcms/plugin-mcp": 4.0.0-canary.33
+  "@payloadcms/ui": 4.0.0-canary.33
   # The super admin's mount (ADR-003). Its `payload` peer is an EXACT pin —
-  # `4.0.0-canary.29`, not a range — so this line and the `payload` line above
+  # `4.0.0-canary.33`, not a range — so this line and the `payload` line above
   # move together or install fails outright rather than drifting.
-  "@payloadcms/tanstack-start": 4.0.0-canary.29
+  "@payloadcms/tanstack-start": 4.0.0-canary.33
   graphql: 16.14.2 # payload peers ^16
   pg: 8.23.0
   # The job runner (doc 12 §6 · docs/design/jobs.md). Same Postgres, `jobs`
