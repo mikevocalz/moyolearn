@@ -6,7 +6,7 @@
 // mock mode the app still paid the cost of loading an auth stack it had already
 // decided not to use.
 // SOT: docs/pack/06-auth-onboarding-spec.md §7
-// SOT-KEYWORDS: proxy auth session redirect login protected operation
+// SOT-KEYWORDS: proxy auth session redirect login protected operation cron bearer machine route public paths
 import { NextResponse, type NextRequest } from 'next/server';
 
 const PUBLIC_PATHS = [
@@ -36,6 +36,29 @@ const PUBLIC_PATHS = [
     should be answering on its own.
   */
   '/natalie',
+  /*
+    THE MACHINE DOORS. Every path below enforces its own bearer, and a bearer is
+    not a session — so the gate above answered 401 before any of these handlers
+    ran. It had been doing that since the routes landed: `jobs-drain` has failed
+    on every scheduled run, and the daily media and retention sweeps declared in
+    `vercel.json` were never running in production either. Nothing reported it,
+    because `/api/health/jobs` — the dead-man switch over exactly this — was
+    behind the same gate and 401'd too.
+
+    Listed as exact paths rather than as `/api/media` and `/api/retention`,
+    which also hold `presign`, `video`, `view`, `voice-note` and the manual
+    sweep POSTs. Those are learner-adjacent and stay behind the session gate;
+    opening a prefix to reach one cron underneath it would take them with it.
+
+    `/api/health` is unauthenticated BY DESIGN and says so in its own header: an
+    uptime prober cannot hold a secret worth having, and the body is queue
+    names, booleans and machine reason strings — the repository behind it never
+    selects the `data` column.
+  */
+  '/api/jobs',
+  '/api/health',
+  '/api/media/sweep/cron',
+  '/api/retention/sweep/cron',
 ];
 
 export async function proxy(request: NextRequest) {
