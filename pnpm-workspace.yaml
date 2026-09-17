@@ -34,7 +34,7 @@ onlyBuiltDependencies:
 # One version per dependency, declared once. Every package.json uses `catalog:`.
 catalog:
   # runtime core (Expo SDK 57 stable — RN 0.86.2)
-  "@anthropic-ai/sdk": 0.120.0
+  "@anthropic-ai/sdk": 0.126.0
   react: 19.2.8
   react-dom: 19.2.8
   react-native: 0.86.2
@@ -47,8 +47,8 @@ catalog:
   expo-document-picker: 57.0.1
   expo-image-picker: 57.0.12
   expo-image-manipulator: 57.0.9
-  react-native-audio-api: 0.13.3
-  react-native-youtube-bridge: 2.2.2
+  react-native-audio-api: 0.13.4
+  react-native-youtube-bridge: 2.2.3
   expo-linking: 57.0.7
   expo-router: 57.0.15
   expo-screen-capture: 57.0.2
@@ -58,21 +58,29 @@ catalog:
   expo-system-ui: 57.0.2
   expo-updates: 57.0.17
   "@gorhom/bottom-sheet": 5.2.14
-  react-native-keyboard-controller: 1.22.4
+  react-native-keyboard-controller: 1.22.5
   react-native-mmkv: 4.3.2
-  react-native-nitro-modules: 0.37.0
+  react-native-nitro-modules: 0.37.1
   react-native-enriched-html: 1.1.1
   react-native-gesture-handler: ~2.32.0
-  react-native-reanimated: 4.5.1
-  react-native-safe-area-context: ~5.7.0
-  react-native-screens: ~4.26.0
+  react-native-reanimated: 4.6.0
+  react-native-safe-area-context: ~5.10.0
+  react-native-screens: ~4.28.0
   # Declared explicitly even though react-native-screens already pulls it in:
   # `TutorPresence` imports `Freeze` directly, and a hoisted transitive is a
   # phantom dependency that disappears the day screens changes its own tree.
   # The version is the one screens resolves, so nothing new is installed.
   react-freeze: 1.0.4
-  react-native-worklets: 0.10.1
+  react-native-worklets: 0.12.2
   react-native-vision-camera: 5.2.3
+  # HELD AT 0.9.3 — 0.10.2 is published and is an API break, not a bump.
+  # 0.10 splits the flat export into subpaths (`react-native-executorch/cv`,
+  # `/speech`, `/llm`, `/nlp`) and renames symbols: `OCRDetection` -> `OcrDetection`,
+  # and `OCRModule`, `isAvailable`, `OCR_ENGLISH`, `SpeechToTextModule` and
+  # `WHISPER_TINY_EN` are no longer on the root entry (a `/legacy` entry exists).
+  # `packages/app/features/capture` imports all of those, so the migration is a
+  # code change on the homework OCR path and has to be verified with a real model
+  # init and an OCR inference on a device — not a version edit.
   react-native-executorch: 0.9.3
   # 0.9 moved resource fetching behind a pluggable adapter that the HOST APP must
   # register via `initExecutorch` — the core package ships no default, so without
@@ -82,13 +90,15 @@ catalog:
   # reads through expo-file-system + expo-asset, which `expo` already depends on
   # and autolinks. Latest published adapter is 0.9.1 against core 0.9.3 — its
   # peer on the core is "*", and the two ship on independent release trains.
+  # Its own release train, which is why the numbers do not match the line above.
+  # Held with it: the fetcher registers into executorch's runtime.
   react-native-executorch-expo-resource-fetcher: 0.9.1
-  "@shopify/react-native-skia": 2.11.1
-  "@react-navigation/native": 7.3.13
+  "@shopify/react-native-skia": 2.12.0
+  "@react-navigation/native": 7.4.1
   solito: 5.0.0
-  lucide-react: 1.31.0
-  lucide-react-native: 1.31.0
-  react-native-svg: 15.15.4
+  lucide-react: 1.47.0
+  lucide-react-native: 1.47.0
+  react-native-svg: 15.15.5
   react-native-pulsar: 1.7.0
   "@expo/html-elements": 57.0.0
   "@expo/ui": ~57.0.11
@@ -152,23 +162,27 @@ catalog:
   react-native-webview: 13.16.1
 
   # web
-  next: 16.3.3
+  next: 16.3.5
   nextjs-toploader: 3.9.17
 
   # styling (Uniwind — Tailwind 4 only; uniwind pins @tailwindcss/node to the
   # exact tailwindcss version below, so bump the two together or not at all)
-  uniwind: 1.11.0
-  tailwindcss: 4.3.2
-  "@tailwindcss/postcss": 4.3.2
-  "@tailwindcss/vite": 4.3.2
+  uniwind: 1.12.0
+  tailwindcss: 4.3.3
+  "@tailwindcss/postcss": 4.3.3
+  "@tailwindcss/vite": 4.3.3
   react-native-css: 3.0.7
-  tailwind-merge: 3.6.0
+  tailwind-merge: 3.7.0
   tailwind-variants: 3.3.1
 
   # 3D / avatar renderer (doc 22). Pinned exactly, and bumped only by a
   # reviewed PR with golden diffs attached: r186 removes PCFSoftShadowMap on
   # WebGPU and changes PhysicalLightingModel.direct(), both of which move the
   # avatar's look. See docs/pack/22-embodied-tutor-avatar-spec.md §4 and §6.
+  # r186 is published; taking it needs `packages/avatar`'s probe:shaders,
+  # probe:shaders:webgpu and golden:compare run before and after, per the rule
+  # above. It is not a version edit: r186's QuadMesh constructor now requires an
+  # argument, which is a compile error in tutor-avatar-3d.native.tsx.
   three: 0.185.1
   # marketing site (apps/web-vite) — motion + globe. R3F 9 declares Expo peers
   # (expo-gl, react-native, expo-file-system) because it ships a native
@@ -179,11 +193,11 @@ catalog:
   "@react-three/drei": 10.7.8
   topojson-client: 3.1.0
   "@types/topojson-client": 3.1.5
-  "@types/three": 0.185.4
+  "@types/three": 0.185.1
 
   # state / data
-  "@tanstack/react-query": 5.101.4
-  "@tanstack/react-virtual": 3.14.9
+  "@tanstack/react-query": 5.103.1
+  "@tanstack/react-virtual": 3.14.13
   "@tanstack/react-form": 1.33.5
   "@tanstack/react-pacer": 0.23.0
   "@tanstack/react-table": 8.21.3
@@ -191,13 +205,13 @@ catalog:
   # `src/routes` + createFileRoute + routeTree.gen.ts are the same artefacts in
   # both — the SPA fallback (Lane B) is a plugin swap, not a rewrite. Start's
   # vite peer is `>=7.0.0`, which is why the `vite` entry below is 7.x.
-  "@tanstack/react-router": 1.170.32
-  "@tanstack/react-start": 1.168.49
-  "@legendapp/list": 3.3.6
+  "@tanstack/react-router": 1.170.38
+  "@tanstack/react-start": 1.168.56
+  "@legendapp/list": 3.3.11
   "@legendapp/motion": 2.5.3
-  date-fns: 4.1.0
+  date-fns: 4.4.0
   zustand: 5.0.15
-  zod: 4.4.3
+  zod: 4.6.5
   # Handoff QR (doc 36 §2 / doc 37 §2): pure-JS encoder only — `create()` gives
   # the module matrix synchronously and the panel draws it with kit Views, so
   # one universal component serves web and native with no react-native-svg on
@@ -226,19 +240,19 @@ catalog:
   # schema. Its own `pg` dependency is `^8.23.0`, which is the line above
   # exactly — one driver in the workspace, not two, so the queue and the
   # repositories cannot disagree about how a timestamp comes back.
-  pg-boss: 12.28.0
-  better-auth: 1.7.2
-  "@better-auth/expo": 1.7.2
-  "@better-auth/stripe": 1.7.2
+  pg-boss: 12.33.0
+  better-auth: 1.7.5
+  "@better-auth/expo": 1.7.5
+  "@better-auth/stripe": 1.7.5
   # The Better Auth CLI, and yes it is called `auth`. `@better-auth/cli` was
   # renamed to the bare `auth` package at v1.6 and the old name stops at 1.4.22,
   # so "install the CLI matching better-auth@1.7.1" means this line and not that
   # one. Same version as `better-auth` above on purpose: it generates the DDL for
   # the adapter shipped in that exact release.
-  auth: 1.7.2
-  stripe: 22.5.0
-  sharp: 0.35.3
-  "@types/pg": 8.23.0
+  auth: 1.7.5
+  stripe: 22.6.2
+  sharp: 0.35.4
+  "@types/pg": 8.23.1
 
   # observability (doc 12 §7 · docs/design/slo.md). Two SDKs, one release train
   # — @sentry/nextjs 10.x and @sentry/react-native 8.x are cut together and
@@ -248,8 +262,8 @@ catalog:
   #
   # Neither SDK initialises without a DSN, so a checkout with no SENTRY_DSN /
   # EXPO_PUBLIC_SENTRY_DSN runs with the reporter off rather than half on.
-  "@sentry/nextjs": 10.71.0
-  "@sentry/react-native": 8.24.0
+  "@sentry/nextjs": 10.75.0
+  "@sentry/react-native": 8.27.0
 
   # tooling
   typescript: ~6.0.3
@@ -259,25 +273,25 @@ catalog:
   # compile gate, not a runtime path — but they belong in the catalog like
   # everything else so there is still one declared version.
   esbuild: 0.28.2
-  playwright: 1.62.1
-  "@types/react": ~19.2.18
+  playwright: 1.63.0
+  "@types/react": ~19.3.0
   # Must stay on the Node major `engines.node` (>=24.15.0 <26) actually allows —
   # typing against 26 describes a runtime this repo refuses to start on.
   "@types/node": ^24.13.3
-  "@types/react-dom": ^19.2.3
+  "@types/react-dom": ^19.3.0
   eslint: ^9.39.2
-  eslint-config-expo: ~57.0.1
-  eslint-config-next: 16.3.3
-  "@eslint/eslintrc": ^3.3.6
-  storybook: 10.5.8
-  "@storybook/react-vite": 10.5.8
-  "@storybook/addon-a11y": 10.5.8
+  eslint-config-expo: ~57.0.2
+  eslint-config-next: 16.3.5
+  "@eslint/eslintrc": ^3.3.7
+  storybook: 10.6.0
+  "@storybook/react-vite": 10.6.0
+  "@storybook/addon-a11y": 10.6.0
   # Vite 8 + plugin-react 6, required by @payloadcms/tanstack-start (it peers
   # vite >=8, @vitejs/plugin-react ^6 and @vitejs/plugin-rsc ^0.5.21). The
   # earlier 7.x pin existed only because plugin-react 4.7.0 stopped at ^7;
   # bumping both together removes that ceiling. @storybook/builder-vite@10.5.8
   # peers ^5||^6||^7||^8, so Storybook rides along.
-  vite: 8.2.2
+  vite: 8.3.0
   nitro: 3.0.260610-beta
   "@vitejs/plugin-react": 6.1.1
   # The React Server Components environment the Payload admin renders in
@@ -291,7 +305,7 @@ catalog:
   # never resolves the bare specifier; adding then removing it produced a
   # byte-identical `dist/client/index.js` (md5 e5d5b495…), so it was carrying
   # nothing but install weight and an unmet `webpack` peer.
-  "@vitejs/plugin-rsc": 0.5.26
+  "@vitejs/plugin-rsc": 0.5.35
   vite-plugin-react-native-web: 2.5.0
   babel-plugin-react-compiler: 1.0.0
-  turbo: 2.10.11
+  turbo: 2.10.13
