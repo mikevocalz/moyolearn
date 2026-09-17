@@ -29,7 +29,12 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - run: pnpm exec turbo run build typecheck lint test
+      # --continue: without it turbo kills every sibling task on the first
+      # failure, and each one then prints a bare ELIFECYCLE with no output. A
+      # single missing eslint.config.mjs read as nine broken packages that way
+      # (docs/issues/2026-09-13-turbo-lint-failures.md). The run still exits
+      # non-zero, so this reports more without gating less.
+      - run: pnpm exec turbo run build typecheck lint test --continue
 
   # Per-application build + artifact + runtime coverage.
   #

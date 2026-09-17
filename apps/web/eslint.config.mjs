@@ -31,6 +31,9 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
+    // Static assets are not source. public/pdfjs and public/natalie are build
+    // outputs of this app (see web#build in turbo.json) and are gitignored.
+    'public/**',
   ]),
 ])
  
