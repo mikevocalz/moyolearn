@@ -2,6 +2,15 @@
 // ---------------------------------------------------------------------------
 // Spatial Layout System — component #11
 //
+// Mobbin indexes no XR apps, so every reference below is a 2D mobile media
+// player. They are cited for the transport / scrubber / metadata-readout
+// structure this panel carries over from 2D media players, and for nothing
+// else — no style crossed over, per docs 02/08.
+// Mobbin: https://mobbin.com/screens/7fec70c2-d269-4ae4-951b-5dd5fa127b98 (the whole vertical order: header bar with a dismiss at one end and one action at the other, media plate full-bleed directly beneath it, then title, then scrubber, then the control row) ·
+//         https://mobbin.com/screens/6cb0a8f6-977e-4b9a-b137-04bc8f4b9d24 (metadata readout block sits immediately above the scrubber, position markers at the track's two ends, primary control centred with equal-weight slots flanking it) ·
+//         https://mobbin.com/screens/b99fa29d-edb0-4ecc-ae7a-22ea84fa66ae (an unavailable control holds its slot dimmed instead of vanishing, so the control row never reflows as state changes) ·
+//         https://mobbin.com/screens/2070ec46-5424-4a50-acf2-9f5f90d39b79 (rail runs the full length of one edge with a proportional thumb as the position marker and the total at its end, controls pushed to the edges so the plate stays unobstructed)
+//
 // v7 changes, all four from direct feedback. I still can't see your render —
 // these are described as what the code DOES, not how it looks.
 //

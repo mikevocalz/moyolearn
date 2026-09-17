@@ -20,6 +20,10 @@
 // app's status surfaces follow.
 // SOT: packages/app/features/permissions/permissions.types.ts
 // SOT-KEYWORDS: permission checklist surface guardian grant blocked settings microphone camera photos
+// Mobbin: https://mobbin.com/screens/6140e55d-e900-4dc0-b7a1-44f1a4bd9b77 (reason text carried above the row, and the row states its condition in words — "Allowed" / "Not allowed" — so state never rides on colour) ·
+//         https://mobbin.com/screens/4c4618b0-43d7-4305-8698-41699d8083bd (order inside a row: icon, permission name, its one-line concrete reason, control trailing — and device permissions grouped apart from every other kind of switch) ·
+//         https://mobbin.com/flows/061f8e8e-0916-4118-b509-40f46b6fc2a1 (one trailing column carries either the state or the verb: granted rows read as inert state text, ungranted rows read as the action) ·
+//         https://mobbin.com/flows/2f0a2068-c929-428a-b0f9-9a4d26b17482 (a row with nothing left to do keeps its slot and goes inert with a check rather than disappearing, and the ask sits beside the reason it is being asked for)
 
 import { useState } from 'react';
 import { Button, Card, Text } from '@acme/ui';
