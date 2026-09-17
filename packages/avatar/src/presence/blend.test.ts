@@ -17,7 +17,7 @@ import { describe, it } from 'node:test';
 import * as THREE from 'three';
 import { IdleEngine, type IdleInputs } from '../idle/engine.ts';
 import { createClipPlayer, type RetargetedClip } from './clip-player.ts';
-import { createHumanoPresence, type HumanoInput } from './humano.ts';
+import { HUMANO_BONES, createHumanoPresence, type HumanoInput } from './humano.ts';
 
 const CLIP_PATH = process.env.CLIP_PATH ?? '/tmp/staystill_wei_lr.clip.json';
 
@@ -58,8 +58,8 @@ describe('clip base under the live presence', { skip: !existsSync(CLIP_PATH) && 
   it('keeps the eyes in the head with a clip base and quiet input', () => {
     const { root, byName } = buildRealScene();
     const presence = createHumanoPresence(root, { seed: 7 });
-    const head = byName.get('DEF-spine.006')!;
-    const eye = byName.get('DEF-eye.L')!;
+    const head = byName.get(HUMANO_BONES.head)!;
+    const eye = byName.get(HUMANO_BONES.eyeL)!;
     const inFrame = () => head.worldToLocal(eye.getWorldPosition(new THREE.Vector3()));
     root.updateMatrixWorld(true);
     const eyeRest = inFrame();
@@ -130,8 +130,8 @@ describe('clip base under the live presence', { skip: !existsSync(CLIP_PATH) && 
       partnerF0Falling: false,
       timeUntilOnset: Infinity,
     };
-    const chestA = a.byName.get('DEF-spine.003')!;
-    const chestB = b.byName.get('DEF-spine.003')!;
+    const chestA = a.byName.get(HUMANO_BONES.chest)!;
+    const chestB = b.byName.get(HUMANO_BONES.chest)!;
     presence.setBaseClip(clip!, 0);
     const residual: number[] = [];
     const breath: number[] = [];
@@ -179,11 +179,12 @@ describe('clip base under the live presence', { skip: !existsSync(CLIP_PATH) && 
   it('never steps a bone more than the smooth bound at clip entry or exit', () => {
     const { root, byName } = buildRealScene();
     const presence = createHumanoPresence(root, { seed: 7 });
-    const tracked = ['DEF-spine', 'DEF-spine.006', 'DEF-hand.L', 'DEF-hand.R', 'DEF-toe.L', 'DEF-eye.L'].map(
-      (name) => byName.get(name)!,
-    );
+    const tracked = [
+      HUMANO_BONES.torso, HUMANO_BONES.head, HUMANO_BONES.handL, HUMANO_BONES.handR,
+      'DEF-toe.L', HUMANO_BONES.eyeL,
+    ].map((name) => byName.get(name)!);
     root.updateMatrixWorld(true);
-    const hip = byName.get('DEF-spine')!;
+    const hip = byName.get(HUMANO_BONES.torso)!;
     const hipRestX = hip.getWorldPosition(new THREE.Vector3()).x;
     // Leave mid-clip where the root track is furthest from rest, so a snap
     // back to rest would be as large as this clip can make it.
