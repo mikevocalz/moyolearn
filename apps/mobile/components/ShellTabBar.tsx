@@ -87,9 +87,12 @@
 //      docs/pack/02-adaptive-screens-design-spec.md §2.1 §2.3
 // SOT-KEYWORDS: shell tab bar role raised center camera band target indicator rail size class foldable hinge haptics
 
-// expo-router's `react-navigation` entry does not re-export the bottom-tabs
-// types, so this reaches the module that declares them.
-import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
+// `expo-router/js-tabs` is the JS Tabs entry, and SDK 58 re-exports the
+// bottom-tabs types from it. This used to reach into
+// `expo-router/build/react-navigation/bottom-tabs` because the older
+// `react-navigation` entry did not carry them; 58 added an `exports` map, so
+// that deep path is no longer resolvable and the public entry is the answer.
+import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import type { ComponentType } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useReducedMotion, useWindowSizeClass } from '@acme/ui';
@@ -150,7 +153,8 @@ interface ShellTabBarProps extends BottomTabBarProps {
 
 export function ShellTabBar({
   state,
-  navigation,
+  emitter,
+  navigateToTab,
   items,
   targetClass,
   raisedTargetClass,
@@ -213,11 +217,20 @@ export function ShellTabBar({
       change gets. `@acme/ui/haptics` already no-ops when the native TurboModule
       is missing from the binary, so a JS-only reload cannot crash the bar here.
     */
+    /*
+      SDK 58's tab bar gets `emitter` and `navigateToTab`, not a `navigation`
+      object: the Router's core rework dropped most of the forked
+      react-navigation surface, and navigation is by deterministic ROUTE KEY
+      now rather than by name. The behaviour below is unchanged — emit
+      `tabPress`, honour a listener that prevents it, tick and move otherwise —
+      but the key is what identifies the destination, which is also what makes
+      two routes with the same name unambiguous.
+    */
     const onPress = () => {
-      const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+      const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
       if (!focused && !event.defaultPrevented) {
         if (!reducedMotion) haptics.selection();
-        navigation.navigate(route.name);
+        navigateToTab(route.key);
       }
     };
 

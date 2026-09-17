@@ -118,3 +118,64 @@ eslint                                     ^9.39.2                -> 10.10.0    
 nitro                                      3.0.260610-beta        -> 3.0.260903-beta        on a prerelease track; latest would downgrade
 vite-plugin-react-native-web               2.5.0                  -> 3.2.0                  major bump: needs its own migration
 ```
+
+---
+
+# SDK 58 — resolved target set
+
+Resolved 2026-09-17 from the release's own metadata, not from npm `latest`.
+
+- `expo@next` = **58.0.0-preview.3**. `engines.node`: `^22.13.0 || ^24.3.0 || ^26.0.0 || >=27.0.0`.
+- `react-native` = **0.88.0-rc.0**, from the release's `bundledNativeModules.json` (123 entries).
+  Its own peers: `react ^19.2.3`, `@types/react ^19.1.1`.
+- Everything SDK-managed came from `expo install --fix`, which rewrote 20 `catalog:`
+  references in `apps/mobile/package.json` into literals plus 2 direct pins. Each literal was
+  reconciled back into the catalog and the `catalog:` reference restored.
+
+Two of the CLI's answers were rejected, with reasons:
+
+| Package | CLI wrote | Kept | Why |
+|---|---|---|---|
+| `@sentry/react-native` | `~7.11.0` | 8.27.0 | The SDK's `bundledNativeModules` pin trails Sentry's own releases by a major. `@sentry/react-native@8.27.0` peers `react-native: ">=0.65.0"`, which admits 0.88.0-rc.0. A peer range is a weaker claim than a tested statement — this needs a runtime check before release. Cut with `@sentry/nextjs` 10.75.0. |
+| `react` / `react-dom` | untouched (in `expo.install.exclude`) | 19.2.8 | `bundledNativeModules` lists 19.2.3 as the floor and RN 0.88 peers `^19.2.3`; 19.2.8 is already inside it. Taking 19.3.0 would be an unrelated React minor in an SDK change. |
+
+`react-native-reanimated` 4.6.0 and `react-native-worklets` 0.12.2 are also excluded from
+`expo install`, so they were set by hand from the same `bundledNativeModules.json` — the pair
+the SDK states, not the pair npm calls latest.
+
+## Overrides retargeted
+
+The four Expo overrides existed to stop open peer ranges dragging another SDK's build into
+the graph. Left alone they would have pinned 57.x into a 58 runtime, which is what the two
+`unmet peer expo-constants@^58.0.3: found 57.0.13` lines were. Each moved to the newest
+release inside the range `expo@58.0.0-preview.3` declares for it:
+
+| Override | Was | Now | expo 58 range |
+|---|---|---|---|
+| `@expo/dom-webview` | 57.0.1 | 58.0.0 | `~58.0.0` |
+| `expo-asset` | 57.0.13 | 58.0.3 | `~58.0.3` |
+| `expo-file-system` | 57.0.5 | 58.0.0 | `~58.0.0` |
+| `expo-modules-core` | 57.0.12 | 58.0.3 | `~58.0.3` |
+
+## Code the upgrade forced — 5 files
+
+| File | Break | Fix |
+|---|---|---|
+| `packages/ui/Menu.native.tsx` | Strict TypeScript API: `useRef<RNView>` has no host methods, so `measureInWindow` was missing and its four callback parameters fell to implicit `any`. | `useRef<ViewInstance>` — the instance type RN 0.88 exports. |
+| `packages/ui/whiteboard-board.native.tsx` | `react-native-webview` 14 (the SDK's pin) declares the export as `React.FunctionComponent<WebViewProps>` rather than a class, so `useRef<WebView>` made every prop on the element resolve to `never`. | `useRef<ComponentRef<typeof WebView>>` — derived from the component. |
+| `packages/ui/TenantScope.web.tsx` | RN 0.88 widened `ViewStyle.backgroundImage` to `string \| readonly BackgroundImageValue[]`; react-native-web's stays `string`, so the CSS-variable cast no longer fit the web View. | Derive the style type from the component instead of importing RN's. |
+| `packages/ui/Whiteboard.tsx` | RN 0.88 dropped top-level `translateY` from `ViewStyle`, so `{ opacity, translateY }` matched neither half of Legend Motion's `TStyle \| PropsTransforms`. | `y`, which is the library's own transform key. Same movement. |
+| `apps/mobile/components/ShellTabBar.tsx` | The Router core rework: `expo-router` 58 added an `exports` map, so the deep import of `bottom-tabs` no longer resolves, and `BottomTabBarProps` lost `navigation` — it now carries `emitter` and `navigateToTab(routeKey)`. | Import the type from the public `expo-router/js-tabs` entry; emit through `emitter` and navigate by `route.key`. The custom JS tabs are otherwise untouched. |
+
+## State
+
+`pnpm typecheck` 19/19 and `pnpm test` 12/12 on expo 58.0.0-preview.3 + react-native
+0.88.0-rc.0. `@acme/payload`'s suite failed once and passed on re-run — it exercises a real
+Postgres with timing-sensitive sweeps.
+
+Not yet done, and not claimed: native iOS/Android builds, `expo-doctor`, `expo export`, the
+iOS 27 scene lifecycle (`SceneDelegate.swift`, `UIApplicationSceneManifest`), Android R8,
+`File.write` async callers, the `NODE_ENV` cascade, the `@expo/ui` `<Host>` layout change,
+the four `expo.install.exclude` entries re-validated on a device, the expo-router patch
+re-derived for 58 (it is keyed to 57.0.15), the Node floor reconciliation, OTA runtime
+version isolation, and every Argent run.

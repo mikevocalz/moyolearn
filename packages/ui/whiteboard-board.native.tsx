@@ -139,7 +139,14 @@
 // SOT: packages/ui/whiteboard.types.ts · https://tryquickdraw.com/docs/react-native/
 // SOT-KEYWORDS: whiteboard board native quickdraw webview canvas fork drawing surface stylus pointer injection xr calibration camera lock cancel abort
 
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useRef,
+  type ComponentRef,
+} from 'react';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { BOARD_HTML, createBridge } from '@quickdrawjs/react-native';
 // The RN binding declares `Snapshot` but does not re-export it. Type-only, so
@@ -434,7 +441,16 @@ function calibrationResult(
 
 export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps>(
   function WhiteboardBoard({ onChange, onReady, onCalibration }, ref) {
-    const web = useRef<WebView>(null);
+    /*
+      `ComponentRef<typeof WebView>`, not `WebView`. react-native-webview 14 —
+      the version SDK 58 pins — declares the export as
+      `React.FunctionComponent<WebViewProps>` rather than the class it was
+      through 13, so naming the component as a ref type no longer describes an
+      instance and every prop on the element collapses to `never`. Deriving the
+      handle from the component keeps `injectJavaScript` reachable and survives
+      the next shape change.
+    */
+    const web = useRef<ComponentRef<typeof WebView>>(null);
 
     /*
       The page comes up asynchronously and commands arrive before it does — a

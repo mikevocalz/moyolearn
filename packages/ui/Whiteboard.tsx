@@ -464,9 +464,17 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
             above has now removed. 140ms, ease-out, opacity and one small rise:
             entering motion decelerates and never bounces (craft R12).
           */
-          initial={animated ? { opacity: 0, translateY: 6 } : undefined}
-          animate={animated ? { opacity: 1, translateY: 0 } : undefined}
-          exit={animated ? { opacity: 0, translateY: 6 } : undefined}
+          /*
+            `y`, not `translateY`. Legend Motion's animatable transform keys are
+            `x`/`y` (`PropsTransforms`); `translateY` only ever type-checked here
+            because React Native's `ViewStyle` carried a top-level `translateY`
+            and the prop accepts a style as well. RN 0.88 dropped it from
+            `ViewStyle`, so the mixed object matched neither half of the union.
+            Same movement, named the way the library names it.
+          */
+          initial={animated ? { opacity: 0, y: 6 } : undefined}
+          animate={animated ? { opacity: 1, y: 0 } : undefined}
+          exit={animated ? { opacity: 0, y: 6 } : undefined}
           transition={{ type: 'timing', duration: 140, easing: 'easeOut' }}
         >
           {INKS.map((entry) => (
