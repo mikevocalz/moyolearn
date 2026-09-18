@@ -36,5 +36,8 @@ export type {
 export { traceAttempt, decayMastery, isFrontier, DEFAULT_TRACING, FRONTIER_LOW, FRONTIER_HIGH } from './src/mastery.ts';
 export type { TracingParams } from './src/mastery.ts';
 export { evaluateArithmetic } from './src/evaluate.ts';
+export { exactMathTool, checkMathJson } from './src/exact-math.ts';
+export type { ExactMathResult } from './src/exact-math.ts';
+export { parseMathExpression, validateMathExpression, EXACT_MATH_LIMITS } from './src/math-expression.ts';
 export { inferSkillTitle, firstHint, secondHint, generatePracticeProblem, pickNextSkill } from './src/skills.ts';
 export type { NextProblem, NextProblemSource } from './src/skills.ts';

@@ -2,7 +2,7 @@
 // compositions its chrome arranges.
 // SOT-KEYWORDS: adaptive panes splitview split view pane detail close dismiss collapsible stories
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import { AdaptivePanes, useAdaptivePaneSelection } from './index';
 import { CollapsiblePane } from './CollapsiblePane';
@@ -372,6 +372,82 @@ export const LeadingPaneCollapsed: Story = {
             </View>
           </View>
         </View>
+      </View>
+    );
+  },
+};
+
+/*
+  MOUNT AUDIT — instrumentation, and now the regression check for it.
+
+  `AdaptivePanes` used to render two different trees: collapsed put a pane at
+  `SafeArea > MotionView > Aside`, expanded put the same pane at
+  `SafeArea > View > CollapsiblePane > Aside > PaneContent`. React keeps state by
+  tree position and type, so crossing 600 dp was a new position for every pane —
+  which rebuilt it and took its local state with it. Three drafts of 3, 4 and 5
+  came back from one resize as 0, 0 and 0.
+
+  There is one tree now. Each pane still counts its own mounts and holds a local
+  draft, so the property is checkable: resize the window across 600 dp and the
+  drafts must not move. `window.__paneAudit` holds the ordered mount log.
+
+  Evidence and method: docs/verification/adaptive-panes/.
+*/
+const paneAudit: string[] = [];
+
+function recordPaneEvent(entry: string) {
+  paneAudit.push(entry);
+  if (typeof window !== 'undefined') {
+    (window as unknown as { __paneAudit: string[] }).__paneAudit = paneAudit;
+  }
+}
+
+function AuditPane({ name }: { name: string }) {
+  const mounts = useRef(0);
+  const [draft, setDraft] = useState(0);
+  const sizeClass = useWindowSizeClass();
+
+  useEffect(() => {
+    mounts.current += 1;
+    recordPaneEvent(`${name}:mount`);
+    return () => {
+      recordPaneEvent(`${name}:unmount`);
+    };
+  }, [name]);
+
+  return (
+    <View className="flex-1 gap-stack bg-surface p-inset" data-pane-audit={name}>
+      <Text className="text-label text-text">{name}</Text>
+      <Text className="text-caption text-text-muted">size class: {sizeClass}</Text>
+      {/*
+        The draft is the point. A mount counter alone shows churn; a value the
+        learner typed shows what the churn costs.
+      */}
+      <Text className="text-body text-text" data-pane-draft={name}>
+        draft: {draft}
+      </Text>
+      <Pressable
+        onPress={() => setDraft((v) => v + 1)}
+        className="min-h-target-adult self-start justify-center rounded-md border-2 border-border-strong bg-primary px-5"
+      >
+        <Text className="text-label text-on-primary">Type into {name}</Text>
+      </Pressable>
+    </View>
+  );
+}
+
+export const MountAudit: Story = {
+  render: function Audit() {
+    return (
+      <View className="h-full w-full">
+        <AdaptivePanes detail={<AuditPane name="tutor" />}>
+          <AdaptivePanes.Column>
+            <AuditPane name="source" />
+          </AdaptivePanes.Column>
+          <AdaptivePanes.Column>
+            <AuditPane name="review" />
+          </AdaptivePanes.Column>
+        </AdaptivePanes>
       </View>
     );
   },

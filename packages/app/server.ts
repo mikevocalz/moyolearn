@@ -148,6 +148,7 @@ export type {
 } from '@acme/student-model';
 export {
   evaluateTutorTurn,
+  problemDigest,
   type TutorTurnInput,
   type TutorTurnResult,
   type TranscriptToSave,
@@ -157,6 +158,7 @@ export {
   type LoadBlockedTags,
   type DistillationPorts,
   type TutorTurnPorts,
+  type AssessmentEvidence,
 } from './features/tutor/tutor.service';
 export { tutorCellFor, TUTOR_CAPABILITIES } from './features/tutor/tutor-capabilities';
 
@@ -492,3 +494,40 @@ export {
   issueHandoffCode,
   type HandoffDeps,
 } from './features/onboarding/handoff/handoff.service';
+/*
+  FD-26 — account deletion (App Review 5.1.1(v)). Exported beside the learner
+  CREATION path above because they are the two ends of one account's life:
+  `createManagedLearner` writes the user, the guardianship and the consent, and
+  this cascade is what takes all three back out.
+
+  `executeDeletionPlan` is deliberately NOT here. It takes a `ProtectedCtx`, and
+  a route reaching for it would be a route building its own identity — the one
+  move the block exists to prevent. The boundaries are `deleteOwnAccount` and
+  `deleteManagedLearner`; the executor is reachable only from inside the feature
+  and from its test.
+*/
+export {
+  AccountDeletionRefused,
+  deleteManagedLearner,
+  deleteOwnAccount,
+  managedLearners,
+  planAccountDeletion,
+  type AccountDeletionPorts,
+  type AccountHolder,
+  type AccountOwnership,
+  type DeleteAuthUser,
+  type DeletionPlan,
+  type DeletionReceipt,
+  type DeletionRefusal,
+  type DeletionRequest,
+  type DeletionSubject,
+  type DeletionSubjectKind,
+  type EduErasure,
+  type EraseSubjectEdu,
+  type EraseSubjectMedia,
+  type EraseSubjectPayload,
+  type LoadAccountOwnership,
+  type ManagedWard,
+  type PayloadErasure,
+  type SubjectReceipt,
+} from './features/account/account-deletion.service';

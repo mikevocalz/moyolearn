@@ -4,9 +4,16 @@ on:
     branches: [main]
   pull_request:
 
+permissions:
+  contents: read
+
 jobs:
+  # Whole-graph gate. This is the only job that runs typecheck/lint/test, and it
+  # is deliberately NOT the only job that builds — see `web-app` below for why.
   ci:
+    name: turbo (build / typecheck / lint / test)
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
       - name: Fail on committed .env files
@@ -23,7 +30,164 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       # --continue: without it turbo kills every sibling task on the first
-      # failure, and each one then prints a bare ELIFECYCLE with no output. One
-      # missing eslint.config.mjs read as nine broken packages that way. The run
-      # still exits non-zero, so this reports more without gating less.
+      # failure, and each one then prints a bare ELIFECYCLE with no output. A
+      # single missing eslint.config.mjs read as nine broken packages that way
+      # (docs/issues/2026-09-13-turbo-lint-failures.md). The run still exits
+      # non-zero, so this reports more without gating less.
       - run: pnpm exec turbo run build typecheck lint test --continue
+
+  # Per-application build + artifact + runtime coverage.
+  #
+  # Why this job exists on top of `ci`'s `turbo run build`:
+  #
+  #   1. A green `turbo run build` does not mean an artifact exists. At commit
+  #      4514541 `web-vite#build` and `admin-vite#build` declared `outputs: ["dist/**"]`
+  #      while the apps actually emit `.output/**` and `.vercel/output/**`, so turbo
+  #      cached both tasks as producing nothing: deleting `apps/web-vite/.output` and
+  #      re-running the build replayed a cache hit, exited 0, and left no server bundle
+  #      behind. The outputs keys have since been corrected, and the "Assert the build
+  #      produced a deployable artifact" step below is the regression guard that keeps
+  #      them correct — it fails the run instead of shipping an empty deploy.
+  #
+  #   2. No web application has a `test` task — `test` is a no-op in web, web-vite,
+  #      admin-vite, storybook, mobile, @acme/art, @acme/assets, @acme/config and
+  #      @acme/theme. Before this job, nothing in CI ever executed the built output.
+  #      Booting the server and asserting real rendered HTML is the first behavioural
+  #      check any of these apps has had.
+  web-app:
+    name: app (${{ matrix.app }})
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # Next.js. Serves with PORT=<port> — note `pnpm --filter web start -- -p <port>`
+          # does NOT work, apps/web/scripts/next.mjs forwards argv as positionals.
+          # `/` and `/login` are server-rendered with no database reachable.
+          - app: web
+            artifact: apps/web/.next/BUILD_ID
+            port: '3101'
+            start: pnpm --filter web start
+            routes: '[{"path":"/","expect":"<title>Moyo — Learn it by heart."},{"path":"/login","expect":"<input type=\"password\""}]'
+          # TanStack Start on a nitro node-server. Marketing pages are prerendered,
+          # so `/` and `/pricing` render fully without any backing service.
+          - app: web-vite
+            artifact: apps/web-vite/.output/server/index.mjs
+            port: '4173'
+            start: node apps/web-vite/.output/server/index.mjs
+            routes: '[{"path":"/","expect":"<title>Moyo — AI tutoring"},{"path":"/pricing","expect":"<title>Pricing — Moyo</title>"}]'
+          # No `routes`: admin-vite is the Payload admin and cannot boot without a
+          # reachable DATABASE_URL, which CI has no business holding. Build and
+          # artifact coverage only — deliberately, not as an oversight.
+          - app: admin-vite
+            artifact: apps/admin-vite/.vercel/output/functions/__server.func/index.mjs
+          # No `routes`: storybook is a static bundle with no server. `index.json` is
+          # the story catalogue, so requiring a `"type":"story"` entry proves the build
+          # indexed real stories rather than emitting an empty shell.
+          - app: storybook
+            artifact: apps/storybook/storybook-static/index.json
+            artifact_contains: '"type":"story"'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+
+      - name: Build ${{ matrix.app }}
+        run: pnpm exec turbo run build --filter=${{ matrix.app }}
+
+      - name: Assert the build produced a deployable artifact
+        env:
+          APP: ${{ matrix.app }}
+          ARTIFACT: ${{ matrix.artifact }}
+          CONTAINS: ${{ matrix.artifact_contains }}
+        run: |
+          set -euo pipefail
+          if [ ! -s "$ARTIFACT" ]; then
+            echo "::error::$APP build exited 0 but $ARTIFACT is missing or empty"
+            exit 1
+          fi
+          echo "ok  $ARTIFACT ($(wc -c < "$ARTIFACT" | tr -d ' ') bytes)"
+          if [ -n "${CONTAINS:-}" ]; then
+            node -e 'const fs=require("fs");const [f,s]=process.argv.slice(1);if(!fs.readFileSync(f,"utf8").includes(s)){console.log(`::error::${f} is missing the expected content ${JSON.stringify(s)}`);process.exit(1)}console.log(`ok  ${f} contains ${JSON.stringify(s)}`)' "$ARTIFACT" "$CONTAINS"
+          fi
+
+      - name: Boot the built server and assert routes
+        if: matrix.routes != ''
+        env:
+          APP: ${{ matrix.app }}
+          PORT: ${{ matrix.port }}
+          START: ${{ matrix.start }}
+          ROUTES: ${{ matrix.routes }}
+        run: |
+          set -euo pipefail
+
+          # Node, not curl+grep, does the assertions: these pages are one long line
+          # with no trailing newline, which grep classifies as binary, and a
+          # multibyte pattern (the em dash in every <title>) then fails to match even
+          # with `grep -a`. String.includes has no such trap and behaves identically
+          # on every runner.
+          cat > "$RUNNER_TEMP/smoke.mjs" <<'NODE'
+          const app = process.env.APP;
+          const base = `http://127.0.0.1:${process.env.PORT}`;
+          const routes = JSON.parse(process.env.ROUTES);
+          const serverPid = Number(process.env.SERVER_PID);
+          const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+          let up = false;
+          for (let i = 0; i < 90; i++) {
+            try {
+              process.kill(serverPid, 0);
+            } catch {
+              console.log(`::error::${app} server process exited before it accepted a connection`);
+              process.exit(1);
+            }
+            try {
+              await fetch(base + routes[0].path, { signal: AbortSignal.timeout(5000) });
+              up = true;
+              break;
+            } catch {
+              await sleep(1000);
+            }
+          }
+          if (!up) {
+            console.log(`::error::${app} never accepted a connection on ${base}`);
+            process.exit(1);
+          }
+
+          let failed = false;
+          for (const { path, expect } of routes) {
+            const res = await fetch(base + path, { signal: AbortSignal.timeout(30000) });
+            const body = await res.text();
+            if (res.status !== 200) {
+              console.log(`::error::${app} ${path} returned HTTP ${res.status}, expected 200`);
+              failed = true;
+              continue;
+            }
+            if (!body.includes(expect)) {
+              console.log(`::error::${app} ${path} returned 200 but the body is missing ${JSON.stringify(expect)}`);
+              console.log(body.slice(0, 1500));
+              failed = true;
+              continue;
+            }
+            console.log(`ok  ${app} ${path} -> 200, ${body.length} chars, contains ${JSON.stringify(expect)}`);
+          }
+          process.exit(failed ? 1 : 0);
+          NODE
+
+          log="$(mktemp)"
+          env PORT="$PORT" NODE_ENV=production sh -c "$START" > "$log" 2>&1 &
+          server_pid=$!
+          trap 'kill "$server_pid" 2>/dev/null || true' EXIT
+
+          if SERVER_PID="$server_pid" node "$RUNNER_TEMP/smoke.mjs"; then
+            echo "$APP smoke passed"
+          else
+            echo "--- $APP server output ---"
+            cat "$log"
+            exit 1
+          fi

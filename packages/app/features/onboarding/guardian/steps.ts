@@ -11,6 +11,7 @@ import {
   type ConsentMethod,
   type ConsentRecord,
 } from '@acme/auth';
+import { GUARDIAN_PLAN_STEP } from './plan-step';
 
 // Doc 37 §2's guardian sequence: value → evidence → consent → name the family
 // (the personalization moment) → add learner → handoff → plan. The paywall is a
@@ -23,8 +24,23 @@ import {
 // `grants` is GONE (pane-audit-37 §A.2): it was a heading and one prose line
 // with zero controls — a step that asked for nothing and granted nothing, so
 // keeping it was a faked surface. Tutor visibility lives on the family screen.
-export const GUARDIAN_STEPS = ['welcome', 'account', 'consent', 'family', 'children', 'handoff', 'plan'] as const;
-export type GuardianStep = (typeof GUARDIAN_STEPS)[number];
+// `plan` is the one platform-conditional step (plan-step.native.ts): iOS cannot
+// take the payment the paywall describes, so the native sequence ends at
+// `handoff` and the guardian never meets a price the binary cannot charge.
+const CORE_STEPS = ['welcome', 'account', 'consent', 'family', 'children', 'handoff'] as const;
+
+export type GuardianStep = (typeof CORE_STEPS)[number] | 'plan';
+
+// The union above stays whole on both platforms deliberately — `plan` is a step
+// this flow KNOWS about everywhere, so a persisted native draft that still
+// carries it is a value to be clamped (store.ts) rather than a type error the
+// native build never sees.
+export const GUARDIAN_STEPS: readonly GuardianStep[] = GUARDIAN_PLAN_STEP
+  ? [...CORE_STEPS, 'plan']
+  : CORE_STEPS;
+
+/** Where a flow ends on THIS platform — the step whose exit is completion. */
+export const LAST_GUARDIAN_STEP: GuardianStep = GUARDIAN_STEPS[GUARDIAN_STEPS.length - 1]!;
 
 export interface ChildDraft {
   displayName: string;

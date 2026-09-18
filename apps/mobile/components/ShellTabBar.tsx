@@ -18,7 +18,7 @@
 // GEOMETRY IS PLATFORM-SPEC, from `navChrome` in packages/theme/tokens.ts:
 // rail 96 (Material 3 `NavigationRailCollapsedTokens.ContainerWidth`; 80 is its
 // narrow variant), raised slab 64 (between Material's 56 standard FAB and 96
-// large FAB — iOS has no raised-tab convention to defend against), raise 58
+// large FAB — iOS has no raised-tab convention to defend against), raise 16
 // (how far that slab breaks the bar's top edge, and equally how much taller the
 // bar's BOX is than its painted chrome — see the bottom-bar container). All px:
 // they used to be
@@ -87,9 +87,12 @@
 //      docs/pack/02-adaptive-screens-design-spec.md §2.1 §2.3
 // SOT-KEYWORDS: shell tab bar role raised center camera band target indicator rail size class foldable hinge haptics
 
-// expo-router's `react-navigation` entry does not re-export the bottom-tabs
-// types, so this reaches the module that declares them.
-import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
+// `expo-router/js-tabs` is the JS Tabs entry, and SDK 58 re-exports the
+// bottom-tabs types from it. This used to reach into
+// `expo-router/build/react-navigation/bottom-tabs` because the older
+// `react-navigation` entry did not carry them; 58 added an `exports` map, so
+// that deep path is no longer resolvable and the public entry is the answer.
+import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import type { ComponentType } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useReducedMotion, useWindowSizeClass } from '@acme/ui';
@@ -150,7 +153,8 @@ interface ShellTabBarProps extends BottomTabBarProps {
 
 export function ShellTabBar({
   state,
-  navigation,
+  emitter,
+  navigateToTab,
   items,
   targetClass,
   raisedTargetClass,
@@ -213,11 +217,20 @@ export function ShellTabBar({
       change gets. `@acme/ui/haptics` already no-ops when the native TurboModule
       is missing from the binary, so a JS-only reload cannot crash the bar here.
     */
+    /*
+      SDK 58's tab bar gets `emitter` and `navigateToTab`, not a `navigation`
+      object: the Router's core rework dropped most of the forked
+      react-navigation surface, and navigation is by deterministic ROUTE KEY
+      now rather than by name. The behaviour below is unchanged — emit
+      `tabPress`, honour a listener that prevents it, tick and move otherwise —
+      but the key is what identifies the destination, which is also what makes
+      two routes with the same name unambiguous.
+    */
     const onPress = () => {
-      const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+      const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
       if (!focused && !event.defaultPrevented) {
         if (!reducedMotion) haptics.selection();
-        navigation.navigate(route.name);
+        navigateToTab(route.key);
       }
     };
 
@@ -278,16 +291,21 @@ export function ShellTabBar({
                 number is the number on both platforms. `raisedTarget` still only
                 ever raises it (K–2 → 72).
 
-                NO LIGHT FILL. This slab used to be a near-white/action-yellow
-                block with a border round it, and against a pale chrome bar that
-                read as a hole in the bar rather than as the product's signature
-                control. `bg-nav-cta` is the chrome's own deep CTA — the fill is
-                what separates it now — and the 2px ink border stays as
-                STRUCTURE (the doc 08 rule: borders are structure, never
-                emphasis), the same edge every other raised object in the product
-                carries. This is the one place the house's raised language is
-                allowed to stay loud, because it is the one control on the bar
-                that is an ACTION rather than a destination.
+                PAPER, and it is the only object on the bar that is not made of
+                the bar. `bg-nav-cta` is the avatar well's own neutral (see
+                `tokens.ts` for why the token moved off deep plum and then off
+                pure white); the ink glyph and the 2px border are what separate
+                it now, and the border stays STRUCTURE rather than emphasis —
+                the doc 08 rule, and the same edge every other raised object in
+                the product carries.
+
+                An earlier near-white slab did read as a hole punched in the bar.
+                What is different is the elevation around it: this one is raised
+                off the bar and casts `shadow-card`, so the paper sits ON the
+                chrome instead of showing through it. This is the one place the
+                house's raised language is allowed to stay loud, because it is
+                the one control on the bar that is an ACTION rather than a
+                destination.
               */
               className={`${rail ? 'w-full' : 'w-nav-raised'} h-nav-raised ${raisedTarget} items-center justify-center rounded-md border-2 border-on-surface-footer bg-nav-cta shadow-card`}
             >
@@ -488,12 +506,8 @@ export function ShellTabBar({
     contain it is what keeps the CTA tappable, and it also means nothing here
     depends on a clip setting in react-navigation's own container.
 
-    THE COST, STATED: the tab bar now measures 58px taller, and BottomTabView
-    pads the scene by the bar's measured height, so a phone scene loses 58px.
-    That is the honest price of a control that stands proud of the chrome
-    rather than one that merely claims to — the alternative (absolutely
-    positioning the bar over the scene) buys the pixels back and re-introduces
-    exactly the hit-testing hole above.
+    The extra 16px stays inside the navigator's measured bar so the full
+    camera button remains tappable without covering scene content.
 
     `pt-1` is gone with the chrome: it gave 4px between the top rule and the
     icons, and that gap is now carried by the item cell's own `min-h-target-*`

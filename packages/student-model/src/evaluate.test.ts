@@ -11,7 +11,7 @@ describe('evaluateArithmetic', () => {
     assert.equal(evaluateArithmetic('2+2*3', '11'), false);
   });
 
-  it('strips words and evaluates the expression', () => {
+  it('recognizes the explicit question wrapper', () => {
     assert.equal(evaluateArithmetic('What is 5 + 3?', '8'), true);
   });
 
@@ -46,9 +46,8 @@ describe('evaluateArithmetic', () => {
     assert.equal(evaluateArithmetic('-(3+1)', '-4'), true);
   });
 
-  it('answers null — never a verdict — for a shape it cannot represent', () => {
-    // A negated parenthesis after an operator has no correct binary rewrite.
-    assert.equal(evaluateArithmetic('2 * -(3+1)', '-8'), null);
+  it('preserves unary negation of a grouped expression', () => {
+    assert.equal(evaluateArithmetic('2 * -(3+1)', '-8'), true);
   });
 
   it('returns null for non-arithmetic problems', () => {

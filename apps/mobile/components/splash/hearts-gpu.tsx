@@ -574,7 +574,7 @@ export function HeartField({ levelsRef }: HeartFieldProps) {
       // overlay is what swallows taps.
       pointerEvents="none"
       style={StyleSheet.absoluteFill}
-      transparent
+      opaque={false}
     />
   );
 }

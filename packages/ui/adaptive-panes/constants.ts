@@ -123,12 +123,6 @@ export function paneVisibility(
     : VISIBILITY_TWO_COLUMN[sizeClass];
 }
 
-/**
- * Leading-to-trailing order of the columns. Used to decide which way a pane
- * transition travels, so Back and forward navigation read as opposites.
- */
-export const COLUMN_RANK = { primary: 0, supplementary: 1, secondary: 2 } as const;
-
 /** Exactly one pane is visible at compact; every other class tiles. */
 export function isCollapsed(sizeClass: WindowSizeClass): boolean {
   return sizeClass === 'compact';

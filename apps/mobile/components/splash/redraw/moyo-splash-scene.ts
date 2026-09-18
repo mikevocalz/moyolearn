@@ -28,13 +28,13 @@
  *       https://redraw.dev/docs/custom-effects/stroke
  */
 
+import { HEART_PATH } from "../heart-path";
 import type { Canvas, Path } from "redraw";
 import {
   BlendMode,
   Feather,
   Grain,
   Paint,
-  PathBuilder,
   createStrokeWidth,
   parseSVG,
   vec,
@@ -45,7 +45,6 @@ import type { FrameInfo } from "react-native-redraw";
 import {
   BRAND,
   MARK,
-  MARK_HEART,
   MARK_SIZE,
   WORDMARK,
   WORDMARK_SIZE,
@@ -170,27 +169,8 @@ const ornamentOrder = [...src.ornaments].sort(
 );
 const ornamentCount = ornamentOrder.length;
 
-/** Build the negative-space heart in mark space. */
-const buildHeart = () => {
-  const { cx, top, bottom, halfWidth } = MARK_HEART;
-  const h = bottom - top;
-  const b = new PathBuilder();
-  // Two lobes meeting at a notch ~25% down, tip at the bottom.
-  b.moveTo(vec(cx, top + h * 0.28));
-  b.cubicTo(
-    vec(cx + halfWidth * 0.45, top - h * 0.1),
-    vec(cx + halfWidth * 1.05, top + h * 0.25),
-    vec(cx, bottom),
-  );
-  b.cubicTo(
-    vec(cx - halfWidth * 1.05, top + h * 0.25),
-    vec(cx - halfWidth * 0.45, top - h * 0.1),
-    vec(cx, top + h * 0.28),
-  );
-  b.close();
-  return b.makePath();
-};
-const heartSrc = buildHeart();
+// Use the same complete lobes and pointed tip as the native splash.
+const heartSrc = parseSVG(HEART_PATH);
 
 // ---------------------------------------------------------------------------
 // Layout. Exported so the RN tagline lands exactly under the wordmark.

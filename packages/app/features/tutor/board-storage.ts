@@ -65,3 +65,21 @@ export async function pushRemoteBoard(sessionId: string, doc: BoardDoc): Promise
     /* See the note above: the board is not lost, only unsynced. */
   }
 }
+
+/**
+ * The four calls above, as one object the board's session controller can hold.
+ *
+ * It exists because of what this file imports. `problemStorage` comes from the
+ * capture domain's index, which reaches screens and components — a graph that
+ * needs a bundler, so anything importing it cannot be loaded by `node --test`.
+ * The controller is where the orderings that lose a child's working live (one
+ * document across two routes, one debounce, one last write), and those are
+ * exactly what has to be asserted rather than assumed. Handing it a port keeps
+ * it free of this graph and lets a test stand in for the device.
+ */
+export const boardPersistence = {
+  readLocal: readLocalBoard,
+  writeLocal: writeLocalBoard,
+  fetchRemote: fetchRemoteBoard,
+  pushRemote: pushRemoteBoard,
+};

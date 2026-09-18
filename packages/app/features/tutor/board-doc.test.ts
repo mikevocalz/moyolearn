@@ -10,6 +10,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { createBoardDoc, decodeBoardUpdate, encodeBoardUpdate } from './board-doc.ts';
+import type { WhiteboardDiff } from '@acme/ui';
 
 const shape = (id: string) => ({ id, typeName: 'shape', type: 'draw', x: 1, y: 2 });
 
@@ -90,4 +91,68 @@ test('removals travel as keys the engine reads', () => {
 
   assert.deepEqual(seen, ['shape:a']);
   doc.destroy();
+});
+
+test('the renderer subscription hears this hand`s own strokes and the engine one does not', () => {
+  /*
+    The spatial board draws the document rather than mirroring an engine, so a
+    local stroke it is not told about is ink the child sees in 2D and not in the
+    headset. Both subscriptions are asserted together because the value of one
+    is exactly that the other stays blind.
+  */
+  const doc = createBoardDoc();
+  const engine: string[] = [];
+  const renderer: [string, string][] = [];
+  doc.onRemote((diff) => engine.push(...Object.keys(diff.added ?? {})));
+  doc.onRecords((diff, origin) => {
+    for (const id of Object.keys(diff.added ?? {})) renderer.push([id, origin]);
+  });
+
+  doc.applyDiff({ added: { 'shape:mine': shape('shape:mine') } }, 'local');
+  assert.deepEqual(engine, [], 'the engine was told about a stroke it drew itself');
+  assert.deepEqual(renderer, [['shape:mine', 'local']]);
+
+  const peer = createBoardDoc();
+  peer.applyDiff({ added: { 'shape:theirs': shape('shape:theirs') } }, 'local');
+  doc.merge(peer.encode(), 'remote');
+  assert.deepEqual(engine, ['shape:theirs']);
+  assert.deepEqual(renderer[1], ['shape:theirs', 'remote']);
+});
+
+test('redo returns a stroke undo removed, and neither touches a collaborator`s', () => {
+  const doc = createBoardDoc();
+  doc.applyDiff({ added: { 'shape:mine': shape('shape:mine') } }, 'local');
+
+  const peer = createBoardDoc();
+  peer.applyDiff({ added: { 'shape:theirs': shape('shape:theirs') } }, 'local');
+  doc.merge(peer.encode(), 'remote');
+
+  const ids = () => Object.keys((doc.snapshot() as { document: { store: object } }).document.store).sort();
+  assert.deepEqual(ids(), ['shape:mine', 'shape:theirs']);
+
+  assert.equal(doc.canUndo(), true);
+  assert.equal(doc.canRedo(), false);
+  doc.undo();
+  assert.deepEqual(ids(), ['shape:theirs'], 'undo took the wrong author`s record');
+  assert.equal(doc.canRedo(), true);
+
+  doc.redo();
+  assert.deepEqual(ids(), ['shape:mine', 'shape:theirs']);
+
+  // Nothing of this author's is left to undo past their own first stroke.
+  doc.undo();
+  doc.undo();
+  assert.deepEqual(ids(), ['shape:theirs'], 'a second undo reached across authors');
+});
+
+test('an undone stroke reaches the renderer as a change it must redraw for', () => {
+  const doc = createBoardDoc();
+  const seen: WhiteboardDiff[] = [];
+  doc.onRecords((diff) => seen.push(diff));
+
+  doc.applyDiff({ added: { 'shape:a': shape('shape:a') } }, 'local');
+  doc.undo();
+
+  assert.equal(seen.length, 2);
+  assert.deepEqual(Object.keys(seen[1]?.removed ?? {}), ['shape:a']);
 });

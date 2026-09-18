@@ -1,0 +1,216 @@
+{
+  "checks": {
+    "hybridQuestion": true,
+    "hybridTextLayer": true,
+    "hybridReviewed": true,
+    "blurReviewed": true,
+    "fractionsReviewed": true,
+    "packetComplete": true,
+    "resolutionIndependentOfPageCount": true,
+    "allOcrReviewed": true,
+    "wrongAnswerPreserved": true,
+    "hundredPagesComplete": true
+  },
+  "results": [
+    {
+      "name": "wrong-answer",
+      "ms": 62,
+      "pages": 1,
+      "allRequireSourceCheck": false,
+      "ocrDimensions": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "blank",
+      "ms": 469,
+      "pages": 1,
+      "allRequireSourceCheck": true,
+      "ocrDimensions": [
+        1836,
+        2376
+      ]
+    },
+    {
+      "name": "rotated-90",
+      "ms": 56,
+      "pages": 1,
+      "allRequireSourceCheck": false,
+      "ocrDimensions": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "rotated-180",
+      "ms": 57,
+      "pages": 1,
+      "allRequireSourceCheck": false,
+      "ocrDimensions": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "rotated-270",
+      "ms": 59,
+      "pages": 1,
+      "allRequireSourceCheck": false,
+      "ocrDimensions": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "landscape",
+      "ms": 57,
+      "pages": 1,
+      "allRequireSourceCheck": false,
+      "ocrDimensions": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "tiny-page",
+      "ms": 54,
+      "pages": 1,
+      "allRequireSourceCheck": false,
+      "ocrDimensions": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "huge-page",
+      "ms": 66,
+      "pages": 1,
+      "allRequireSourceCheck": false,
+      "ocrDimensions": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "password-protected",
+      "ms": 34,
+      "error": "PasswordException: No password given",
+      "ocrDimensions": null
+    },
+    {
+      "name": "truncated",
+      "ms": 33,
+      "error": "InvalidPDFException: Invalid PDF structure.",
+      "ocrDimensions": null
+    },
+    {
+      "name": "not-a-pdf",
+      "ms": 35,
+      "error": "InvalidPDFException: Invalid PDF structure.",
+      "ocrDimensions": null
+    },
+    {
+      "name": "zero-pages",
+      "ms": 38,
+      "error": "Error: PDF exceeds page limit or has no pages",
+      "ocrDimensions": null
+    },
+    {
+      "name": "101-pages",
+      "ms": 35,
+      "error": "Error: PDF exceeds page limit or has no pages",
+      "ocrDimensions": null
+    },
+    {
+      "name": "100-pages",
+      "ms": 878,
+      "pages": 100,
+      "allRequireSourceCheck": false,
+      "ocrDimensions": [
+        0,
+        0
+      ]
+    },
+    {
+      "name": "scan-clear",
+      "ms": 467,
+      "pages": 1,
+      "allRequireSourceCheck": true,
+      "ocrDimensions": [
+        1836,
+        2376
+      ],
+      "text": "Solve2+2=5"
+    },
+    {
+      "name": "scan-blurred",
+      "ms": 495,
+      "pages": 1,
+      "allRequireSourceCheck": true,
+      "ocrDimensions": [
+        1836,
+        2376
+      ],
+      "text": "Solve 2+2+5"
+    },
+    {
+      "name": "scan-low-contrast",
+      "ms": 524,
+      "pages": 1,
+      "allRequireSourceCheck": true,
+      "ocrDimensions": [
+        1836,
+        2376
+      ],
+      "text": "Solve2+2=5"
+    },
+    {
+      "name": "scan-header-only-layer",
+      "ms": 501,
+      "pages": 1,
+      "allRequireSourceCheck": true,
+      "ocrDimensions": [
+        1836,
+        2376
+      ],
+      "text": "Text in the PDF:\nHomework page 1\n\nImage reading (check against original):\nSolve2+2=5"
+    },
+    {
+      "name": "broken-font-page1",
+      "ms": 1851,
+      "pages": 1,
+      "allRequireSourceCheck": true,
+      "ocrDimensions": [
+        1836,
+        2376
+      ]
+    },
+    {
+      "name": "scanned-fractions-pages65-66",
+      "ms": 76847,
+      "pages": 2,
+      "allRequireSourceCheck": true,
+      "ocrDimensions": [
+        1836,
+        2376
+      ]
+    },
+    {
+      "name": "grade5-fractions",
+      "ms": 31020,
+      "pages": 20,
+      "allRequireSourceCheck": true,
+      "ocrDimensions": [
+        1836,
+        2376
+      ]
+    },
+    {
+      "name": "handwritten-fractions",
+      "ms": 42,
+      "error": "Error: PDF exceeds page limit or has no pages",
+      "ocrDimensions": null
+    }
+  ]
+}

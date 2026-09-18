@@ -106,7 +106,9 @@ export function revealsAnswer(problem: string, turn: string): boolean {
   // The trailing guard rejects a decimal point only when a digit follows it.
   // A plain `(?![\d.])` would let "So you end up with 17." through, because the
   // full stop that ends the sentence looks exactly like the start of a decimal.
-  const STANDALONE_NUMBER = /(?<![\d.])\d+(?:\.\d+)?(?!\.?\d)/g;
+  // Fractions must be considered as one candidate: comparing just 5 and 6
+  // silently misses a revealed 5/6. Support the exact checker's numeric forms.
+  const STANDALONE_NUMBER = /(?<![\d.])(?:[-−]?\\frac\{[-−]?\d+\}\{[-−]?\d+\}|[-−]?(?:\(\s*[-−]?\d+\s*\)|\d+(?:\.\d+)?)(?:\s*[\/⁄]\s*(?:\(\s*[-−]?\d+\s*\)|[-−]?\d+(?:\.\d+)?))?)(?!\.?\d)/g;
 
   const candidates = turn.match(STANDALONE_NUMBER);
   if (!candidates) return false;
@@ -115,6 +117,8 @@ export function revealsAnswer(problem: string, turn: string): boolean {
   // back, which is exactly what a good coaching turn does.
   const givens = new Set(problem.match(STANDALONE_NUMBER) ?? []);
 
+  // Bound work on provider output; oversized responses are withheld.
+  if (turn.length > 8192 || candidates.length > 128) return true;
   return candidates.some(
     (candidate) => !givens.has(candidate) && evaluateArithmetic(problem, candidate) === true,
   );

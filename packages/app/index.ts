@@ -42,6 +42,27 @@ export { InboxScreen } from './features/notifications/inbox-screen';
 export { ProfileScreen } from './features/profile/screen';
 export { SettingsScreen } from './features/settings/screen';
 export { OrgSettingsScreen } from './features/org-settings/screen';
+/*
+  FD-26 · Delete account. Beside Settings because Settings is its only entry
+  point: the row there pushes `/account/delete`, and doc 38 puts `account/*`
+  inside every authed guard rather than in a role shell, so one screen serves
+  every role that can sign in — including the guardian-managed learner, who is
+  shown the reason and the destination instead of a control.
+*/
+export { DeleteAccountScreen } from './features/account/screen';
+export { DeleteAccountContent } from './features/account/delete-account-content';
+export {
+  confirmArmed,
+  useAccountDeletionStore,
+  type LearnerRow,
+} from './features/account/account-deletion.store';
+export {
+  ACCOUNT_DELETION_COPY,
+  DELETE_CONFIRM_WORD,
+  DELETION_OUTCOME_COPY,
+  DELETION_REFUSAL_COPY,
+  LEARNER_DELETION_COPY,
+} from './features/account/account-deletion.copy';
 export { useProfile, type ThemePreference } from './features/profile/profile.store';
 export { useIdentity, type Identity } from './features/profile/use-identity';
 // ADR-106: the AvatarSheet's app-side content + the store its per-shell
@@ -66,6 +87,24 @@ export { CaptureScreen, useCaptureStore, CameraSheet, useCameraStore } from './f
 export { TutorScreen } from './features/tutor/screen';
 export { preloadNatalie } from './features/tutor/natalie-preload';
 export { useTutorStore } from './features/tutor/tutor.store';
+// The spatial whiteboard (ADR-117). The SCREEN is deliberately absent from this
+// barrel: it is native-only and lazily imported by its route, so that no web
+// bundle and no cold start pays for `@reactvision/react-viro`. What is exported
+// is the state the 2D screen needs to open it and the board's shared session.
+export { TutorXrEntry } from './features/tutor/tutor-xr-entry';
+export type { TutorXrScreenProps } from './features/tutor/tutor-xr-screen.types';
+export { useXrSession, type XrUnsupportedReason } from './features/tutor/xr-session.store';
+export {
+  acquireBoardSession,
+  boardSessionKey,
+  disposeAllBoardSessions,
+  disposeBoardSession,
+  releaseBoardSession,
+  DRAFT_BOARD_KEY,
+  type BoardPersistence,
+  type BoardPresentation,
+  type BoardSession,
+} from './features/tutor/board-session';
 export type {
   StoredAttachment,
   StoredMessage,
@@ -166,6 +205,21 @@ export { useMemoryStore, pendingCascade } from './features/memory/memory.store';
 export { MEMORY_FACTS, MEMORY_TRANSCRIPTS, GROUPS as MEMORY_GROUPS, provenanceLabel } from './features/memory/memory.data';
 export type { TranscriptLine } from './features/memory/memory.data';
 export { FamilyCalendarScreen } from './features/family-calendar/screen';
+/* The permission checklist and the requester behind it. One entry point, so a
+   feature that needs a grant asks the same way the checklist does. */
+export {
+  PermissionChecklist,
+  usePermissions,
+  usePermissionRequester,
+  PERMISSION_KEYS,
+  PERMISSION_COPY,
+  canAsk,
+  allGranted,
+  type PermissionKey,
+  type PermissionState,
+  type PermissionCopy,
+  type PermissionRequester,
+} from './features/permissions';
 export { OnboardingScreen } from './features/onboarding/screen';
 export { PublicEntryContent } from './features/onboarding/public-entry-content';
 export { SignInContent } from './features/onboarding/sign-in-content';

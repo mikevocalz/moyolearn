@@ -1,4 +1,6 @@
 'use client';
+// Native text-input bridge: preserve explicit source-entry correction settings.
+// SOT-KEYWORDS: native input expo autocorrect capitalization homework source
 import { useEffect } from 'react';
 import { View as RNView } from 'react-native';
 import { Host, TextInput as BaseExpoTextInput, useNativeState } from '@expo/ui';
@@ -34,6 +36,8 @@ export interface NativeInputProps {
   placeholderTextColor?: string;
   secureTextEntry?: boolean;
   editable?: boolean;
+  autoCorrect?: React.ComponentProps<typeof BaseExpoTextInput>['autoCorrect'];
+  autoCapitalize?: React.ComponentProps<typeof BaseExpoTextInput>['autoCapitalize'];
   returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send';
   multiline?: boolean;
   numberOfLines?: number;
@@ -87,6 +91,8 @@ export function NativeInput({
   placeholderTextColor,
   secureTextEntry,
   editable,
+  autoCorrect,
+  autoCapitalize,
   returnKeyType,
   multiline,
   numberOfLines,
@@ -158,6 +164,8 @@ export function NativeInput({
           placeholderTextColor={placeholderTextColor}
           secureTextEntry={secureTextEntry}
           editable={editable}
+          autoCorrect={autoCorrect}
+          autoCapitalize={autoCapitalize}
           returnKeyType={returnKeyType}
           multiline={multiline}
           numberOfLines={numberOfLines}

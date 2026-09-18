@@ -40,13 +40,12 @@ import {
 } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { buttonSizeForBand, type AgeBand } from '../capture';
-import { createBoardDoc, type BoardDoc } from './board-doc.ts';
 import {
-  fetchRemoteBoard,
-  pushRemoteBoard,
-  readLocalBoard,
-  writeLocalBoard,
-} from './board-storage.ts';
+  acquireBoardSession,
+  boardSessionKey,
+  releaseBoardSession,
+} from './board-session.ts';
+import { boardPersistence } from './board-storage.ts';
 import { TutorWorkCanvas } from './tutor-work-canvas';
 
 export interface TutorWorkbenchProps {
@@ -62,24 +61,13 @@ export interface TutorWorkbenchProps {
 }
 
 /**
- * How long after the last stroke the board is written to the device.
+ * Which presentation this is, to the document.
  *
- * The vendor's guidance for snapshots: cheap but not free, so one per stroke is
- * waste and one per session is a lost afternoon. 400ms is their example and is
- * also about the length of a pause between two digits, so a child writing a
- * column of working writes once at the end of it.
+ * The 2D pane and the collapsed sheet share one instance of this component by
+ * design, so they share one id; the spatial screen has its own. It is what stops
+ * a stroke drawn here being echoed straight back into the engine that drew it.
  */
-const LOCAL_SAVE_MS = 400;
-
-/**
- * And how long before it goes to the server, which is a different question.
- *
- * The local write is a memory copy; this one is a request over a child's home
- * connection and it exists for a minute-scale event — picking the session up on
- * another device. Two seconds keeps a whole column of working to one round trip
- * without letting a closed lid lose more than the last breath of it.
- */
-const REMOTE_SAVE_MS = 2000;
+const PRESENTATION_ID = 'tutor-workbench';
 
 export function TutorWorkbench({
   problem,
@@ -90,146 +78,67 @@ export function TutorWorkbench({
   asking,
 }: TutorWorkbenchProps) {
   const board = useRef<WhiteboardHandle>(null);
-  /*
-    ONE DOCUMENT FOR THE LIFE OF THE COMPONENT, created lazily so the
-    constructor does not run on every render. Not state: nothing about it
-    re-renders this component, and holding it in state would hand React a
-    mutable object to diff.
-  */
-  const docRef = useRef<BoardDoc | null>(null);
-  docRef.current ??= createBoardDoc();
-  const doc = docRef.current;
 
   /*
-    THE LOCAL COPY IS READ BEFORE THE FIRST PAINT, synchronously, which is what
-    `problemStorage` is synchronous FOR (see its header). An async read would
-    paint blank paper and swap the child's working in a frame later — the app
-    losing their work and then finding it.
+    THE DOCUMENT IS NOT OWNED HERE ANY MORE, and every ordering decision that
+    used to live in this file moved to `board-session` with its reasoning
+    intact. What is left is the half that is genuinely this component's: which
+    engine is on screen, and when it is ready to be handed a board.
 
-    A lazy `useState` initialiser rather than a ref read: the value has to be
-    available to the first render, and a ref's `current` may not be touched
-    during one. State also keeps the object identity stable, so a re-render
-    cannot hand the board a different `snapshot` and remount the engine
-    mid-stroke.
-
-    `restore`, not `remote`: a document being loaded is nobody's edit. It must
-    not enter an undo stack and must not make an untouched board count as work.
+    Why it had to move: the spatial whiteboard is a second route. A document
+    created by this component is invisible to it, and a document created by both
+    is two boards for one piece of homework.
   */
-  const [initialSnapshot] = useState(() => {
-    const local = readLocalBoard();
-    if (local) doc.merge(local, 'restore');
-    return doc.snapshot();
-  });
+  const key = boardSessionKey(sessionId);
+  const [session, setSession] = useState(() => acquireBoardSession(key, boardPersistence));
 
   /*
-    THE SERVER COPY ARRIVES LATE AND MERGES, which is the whole reason the
-    document is a CRDT. A snapshot would have had to CHOOSE between the bytes on
-    this device and the bytes on the server; an update folds both in, so a child
-    who drew offline on the phone and then opened the laptop gets one board with
-    everything on it rather than whichever write landed second.
+    A changed key is a different board — a draft that just became a session.
+    Acquire the new one during the render that needs it, so the engine below is
+    never handed a snapshot from the board it is no longer showing.
   */
+  const [heldKey, setHeldKey] = useState(key);
+  if (heldKey !== key) {
+    releaseBoardSession(heldKey);
+    setHeldKey(key);
+    setSession(acquireBoardSession(key, boardPersistence));
+  }
+
   useEffect(() => {
-    if (sessionId === null) return;
-    let cancelled = false;
-    void fetchRemoteBoard(sessionId).then((update) => {
-      if (cancelled || update === null) return;
-      doc.merge(update, 'remote');
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [sessionId, doc]);
+    session.setSessionId(sessionId);
+  }, [session, sessionId]);
 
   /*
-    THE DOCUMENT DRIVES THE CANVAS, one way, for everything this device did not
-    draw. A restore, a server merge, and one day a peer's stroke all arrive here
-    and all look the same to the engine — which is what "ready for
-    collaboration" means concretely rather than as a claim.
+    The hold is released on the way out, which is what writes the last breath of
+    working to storage. The SESSION is not disposed here: leaving this screen for
+    the spatial one unmounts this tree before that one mounts, and a document
+    thrown away in that gap is a child arriving in the headset to blank paper.
+  */
+  useEffect(() => () => releaseBoardSession(heldKey), [heldKey]);
 
-    `ready` is the load-bearing half and it was missing. Both engines mount
-    ASYNCHRONOUSLY — a canvas on web, a WebView on native — and a diff that
-    reaches a board with no editor yet is dropped with no error anywhere.
-    Measured before this: a second device fetched a 1224-byte board, merged it,
-    emitted the diff into a board that was still starting, and rendered blank
-    paper while the server row plainly held the strokes.
-
-    So the document does not push at the board. When the board says it is ready
-    it is handed the WHOLE document, and only the diffs after that stream — the
-    vendor's own late-joiner order, which is late-joiner-shaped for exactly this
-    reason: a document that arrives before its reader is the normal case, not
-    the edge one.
+  /*
+    `ready` is the load-bearing half. Both engines mount ASYNCHRONOUSLY — a
+    canvas on web, a WebView on native — and a diff that reaches a board with no
+    editor yet is dropped with no error anywhere. So the board is handed the
+    WHOLE document when it says it is ready, and only the diffs after that
+    stream: the vendor's own late-joiner order, which is late-joiner-shaped for
+    exactly this reason.
   */
   const [ready, setReady] = useState(false);
   const handleReady = useCallback(() => setReady(true), []);
 
   useEffect(() => {
     if (!ready) return;
-    board.current?.loadSnapshot(doc.snapshot());
-    return doc.onRemote((diff) => board.current?.applyDiff(diff));
-  }, [ready, doc]);
-
-  const localTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const remoteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  /*
-    The session id as a ref as well as a prop: the debounced writes below fire
-    after their closure was created, and a board started before the session
-    existed must still reach the server once it does.
-  */
-  const sessionRef = useRef(sessionId);
-  sessionRef.current = sessionId;
-
-  useEffect(
-    () => () => {
-      if (localTimer.current !== null) clearTimeout(localTimer.current);
-      if (remoteTimer.current !== null) clearTimeout(remoteTimer.current);
-      /*
-        A last write on the way out, not a cancelled one. Unmounting is a child
-        navigating away mid-problem, which is exactly when the working matters;
-        the timers are debounces, and dropping a pending one would lose whatever
-        they wrote in the last breath before they left.
-      */
-      writeLocalBoard(doc);
-      if (sessionRef.current !== null) void pushRemoteBoard(sessionRef.current, doc);
-      /*
-        THE DOCUMENT IS NOT DESTROYED HERE, and that omission is the fix for a
-        bug this cleanup caused.
-
-        `destroy()` unobserves the map. React's development double-mount runs
-        this cleanup between the two mounts, and the doc lives in a REF — which
-        survives it — so the remount got a document whose observer was gone.
-        Merges still landed (the map filled), `snapshot()` still read them, and
-        `onRemote` never fired again: a second device fetched its board, folded
-        3613 bytes in, held nine records, and drew blank paper.
-
-        Nothing leaks by leaving it. A `Y.Doc` holds no socket, no timer and no
-        native handle; it is reclaimed with the component that referenced it.
-        The writes above are the part that had to happen on the way out.
-      */
-    },
-    [doc],
-  );
+    const handle = board.current;
+    if (handle === null) return;
+    return session.attach({ id: PRESENTATION_ID, board: handle });
+  }, [ready, session]);
 
   const handleChange = useCallback(
     (diff: WhiteboardDiff, source: WhiteboardDiffSource) => {
-      /*
-        Only this hand's strokes go INTO the document as local edits. A change
-        the engine reports as `remote` is one the document just gave it, and
-        writing it back would be the echo loop Quickdraw's sync page names
-        first.
-      */
-      if (source !== 'user') return;
-      doc.applyDiff(diff, 'local');
-
-      if (localTimer.current !== null) clearTimeout(localTimer.current);
-      localTimer.current = setTimeout(() => writeLocalBoard(doc), LOCAL_SAVE_MS);
-
-      if (remoteTimer.current !== null) clearTimeout(remoteTimer.current);
-      remoteTimer.current = setTimeout(() => {
-        const id = sessionRef.current;
-        if (id !== null) void pushRemoteBoard(id, doc);
-      }, REMOTE_SAVE_MS);
+      session.change(PRESENTATION_ID, diff, source);
     },
-    [doc],
+    [session],
   );
 
   return (
@@ -248,7 +157,7 @@ export function TutorWorkbench({
       <TutorWorkCanvas problem={problem} messages={messages} problemOnly />
       <Whiteboard
         ref={board}
-        snapshot={initialSnapshot}
+        snapshot={session.initialSnapshot}
         size={buttonSizeForBand(ageBand)}
         onAsk={onAsk}
         asking={asking}

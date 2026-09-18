@@ -156,6 +156,8 @@ function toNativeInputProps(
       typeof props.placeholderTextColor === 'string' ? props.placeholderTextColor : undefined,
     secureTextEntry: props.secureTextEntry,
     editable: props.editable,
+    autoCorrect: props.autoCorrect,
+    autoCapitalize: props.autoCapitalize,
     returnKeyType: props.returnKeyType as NativeInputProps['returnKeyType'],
     'aria-label': typeof props['aria-label'] === 'string' ? props['aria-label'] : undefined,
   };

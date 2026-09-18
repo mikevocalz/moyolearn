@@ -4,23 +4,25 @@
 // SOT: docs/pack/19-learning-outcomes-spec.md §3 · docs/pack/07-security-child-ai-safety-spec.md §3
 // SOT-KEYWORDS: tutor service evaluate server-only protected operation safety plane transcript distill
 import 'server-only';
-import { randomUUID } from 'node:crypto';
+import { createHash, randomUUID } from 'node:crypto';
 import type { Auth } from '@acme/auth/server';
 import {
   evaluateArithmetic,
   inferSkillTitle,
 } from '@acme/student-model/pure';
 import { transcriptExpiry } from '@acme/student-model';
-import type { SessionTurn, SessionTranscript, DerivedFact } from '@acme/student-model';
-import { distill, withoutBlockedTags } from '@acme/student-model';
-import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation';
-import { runTutorSafetyPlane } from './tutor-safety';
+import type { SessionTurn, DerivedFact } from '@acme/student-model';
+import { protectedOperation, type ProtectedCtx } from '../../core/protected-operation.ts';
+import { runTutorSafetyPlane } from './tutor-safety.ts';
+import type { AssessmentReadiness } from '../capture/assessment-readiness.ts';
 
 export interface TutorTurnInput {
   problem: string;
   answer: string;
   /** How far down the Socratic hint ladder the learner went before answering. */
   hintDepth: number;
+  sourceReadiness?: AssessmentReadiness;
+  evidence?: { questionId: string; revision: string };
 }
 
 export interface TutorTurnResult {
@@ -36,6 +38,7 @@ export interface TranscriptToSave {
   turns: readonly SessionTurn[];
   capturedAt: string;
   expiresAt: string;
+  evidence: { questionId: string; revision: string };
 }
 
 /** Repository ports — the caller provides the Payload adapters. */
@@ -89,13 +92,54 @@ export interface DistillationPorts {
 export interface TutorTurnPorts {
   readonly saveTranscript?: SaveTranscript;
   readonly distillation?: DistillationPorts;
+  /**
+   * Must lock the owned current revision for the entire callback and commit its
+   * transcript in that transaction. Missing/deleted/stale evidence returns null.
+   * The legacy HTTP route has no such repository yet and therefore cannot grade.
+   */
+  readonly withCurrentEvidence?: (
+    ctx: ProtectedCtx,
+    reference: NonNullable<TutorTurnInput['evidence']>,
+    assess: (evidence: AssessmentEvidence, save: SaveTranscript) => Promise<TutorTurnResult>,
+  ) => Promise<TutorTurnResult | null>;
+}
+
+export interface AssessmentEvidence {
+  readonly questionId: string;
+  readonly revision: string;
+  readonly learnerId: string;
+  readonly orgId: string | null;
+  /**
+   * `problemDigest(problem)` of the text the server issued — not the text.
+   *
+   * The educational store may not hold raw text (doc 12 §4, enforced by the
+   * standing assertion at the foot of `edu_schema.sql`), and a question a child
+   * is graded against is exactly the kind of string that assertion exists to
+   * keep out. A digest answers the only question this service asks of it —
+   * "is this the problem you were issued" — and answers it just as strictly,
+   * because a learner who edits one character cannot produce the same 64 hex
+   * characters.
+   */
+  readonly problemDigest: string;
+  readonly evaluationReady: boolean;
+  readonly expiresAt: string;
 }
 
 /**
- * Evaluates one learner answer inside the protected boundary, runs the Safety
- * Plane, persists the transcript, and — when the caller supplies the
- * distillation ports — distills the updated student model and writes the derived
- * facts back.
+ * The binding between an issued question and the text a turn claims to answer.
+ *
+ * SHA-256 rather than a comparison of the strings themselves so the store can
+ * hold the binding without holding the child's homework. Hex, so the value fits
+ * `edu.opaque_id` and is therefore constrained by the schema rather than by
+ * this function alone.
+ */
+export function problemDigest(problem: string): string {
+  return createHash('sha256').update(problem, 'utf8').digest('hex');
+}
+
+/**
+ * Evaluates only inside a repository-held current evidence revision. Inline
+ * distillation is refused: downstream jobs also need revision validation.
  */
 export async function evaluateTutorTurn(
   auth: Auth,
@@ -103,19 +147,35 @@ export async function evaluateTutorTurn(
   input: TutorTurnInput,
   ports: TutorTurnPorts = {},
 ): Promise<TutorTurnResult> {
-  const { saveTranscript, distillation } = ports;
   return protectedOperation(auth, headers, async (ctx) => {
     const skillTitle = inferSkillTitle(input.problem);
-    const safety = await runTutorSafetyPlane(input.problem, ctx);
+    const unresolved: TutorTurnResult = { skillTitle, isCorrect: null };
+    // A client saying "verified" is not authorization to grade. Only an owned,
+    // current server revision held through the write can authorize assessment.
+    if (!input.evidence || !ports.withCurrentEvidence || ports.distillation ||
+        !/^[A-Za-z0-9._:-]{1,128}$/.test(input.evidence.questionId) ||
+        !/^[A-Za-z0-9._:-]{1,128}$/.test(input.evidence.revision)) return unresolved;
+    return await ports.withCurrentEvidence(ctx, input.evidence, async (evidence, saveTranscript) => {
+      if (!evidence.evaluationReady || evidence.learnerId !== ctx.learnerId ||
+          evidence.orgId !== (ctx.orgId ?? null) || evidence.questionId !== input.evidence?.questionId ||
+          evidence.revision !== input.evidence.revision ||
+          evidence.problemDigest !== problemDigest(input.problem) ||
+          !Number.isFinite(Date.parse(evidence.expiresAt)) || Date.parse(evidence.expiresAt) <= Date.now()) return unresolved;
+      const safety = await runTutorSafetyPlane(input.problem, ctx);
 
-    if (!safety.outcome.storeInStudentModel) {
+      if (!safety.outcome.storeInStudentModel) return unresolved;
+
+      const isCorrect = evaluateArithmetic(input.problem, input.answer);
+      if (isCorrect === null) return unresolved;
+
       const turn: SessionTurn = {
         skillId: skillTitle,
         skillTitle,
-        correct: false,
+        correct: isCorrect,
         hintDepth: input.hintDepth,
-        storable: false,
+        storable: true,
       };
+
       const now = new Date();
       const sessionId = randomUUID();
       const transcriptToSave: TranscriptToSave = {
@@ -124,64 +184,12 @@ export async function evaluateTutorTurn(
         turns: [turn],
         capturedAt: now.toISOString(),
         expiresAt: transcriptExpiry(now),
+        evidence: { questionId: evidence.questionId, revision: evidence.revision },
       };
-      if (saveTranscript) {
-        await saveTranscript(ctx, transcriptToSave);
-      }
-      return { skillTitle, isCorrect: null };
-    }
 
-    const isCorrect = evaluateArithmetic(input.problem, input.answer);
-
-    const turn: SessionTurn = {
-      skillId: skillTitle,
-      skillTitle,
-      correct: isCorrect ?? false,
-      hintDepth: input.hintDepth,
-      storable: isCorrect !== null,
-    };
-
-    const now = new Date();
-    const sessionId = randomUUID();
-    const transcriptToSave: TranscriptToSave = {
-      sessionId,
-      learnerAuthId: ctx.learnerId,
-      turns: [turn],
-      capturedAt: now.toISOString(),
-      expiresAt: transcriptExpiry(now),
-    };
-
-    if (saveTranscript) {
       await saveTranscript(ctx, transcriptToSave);
-    }
 
-    if (distillation) {
-      const priorFacts = await distillation.loadPriorFacts(ctx);
-      const transcript: SessionTranscript = {
-        id: sessionId,
-        learnerId: ctx.learnerId,
-        capturedAt: transcriptToSave.capturedAt,
-        expiresAt: transcriptToSave.expiresAt,
-        turns: transcriptToSave.turns,
-      };
-      /*
-        FILTERED BEFORE DISTILLATION, not after.
-
-        Filtering the OUTPUT facts would still let a blocked tag influence what
-        else is derived from the same turn, and would re-derive it the moment
-        anyone added a second consumer. Stripping the tags from the turns means
-        the erased thing is not in the input at all, which is the only version of
-        this that stays true when the distiller changes.
-      */
-      const blockedTags = await distillation.loadBlockedTags(ctx);
-      const nextFacts = distill(
-        { ...transcript, turns: withoutBlockedTags(transcript.turns, blockedTags) },
-        priorFacts,
-        now,
-      );
-      await distillation.saveFacts(ctx, nextFacts);
-    }
-
-    return { skillTitle, isCorrect };
+      return { skillTitle, isCorrect };
+    }) ?? unresolved;
   });
 }

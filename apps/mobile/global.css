@@ -3,5 +3,6 @@
 @import '@acme/theme/theme-native.css';
 
 @source './app/**/*.{ts,tsx}';
+@source './components/**/*.{ts,tsx}';
 @source '../../packages/ui';
 @source '../../packages/app/features';

@@ -32,6 +32,7 @@ import {
   eraseEduFacts,
   updateEduFactProvenance,
   deleteEduTranscripts,
+  deleteExpiredEduQuestions,
 } from '@/lib/edu.repository';
 import { reportRouteError } from '@/lib/report-error';
 
@@ -122,6 +123,16 @@ export async function POST(request: NextRequest) {
       eduTranscripts.map((transcript) => transcript.id),
     );
 
+    /*
+      Issued questions, on their own shorter window.
+
+      `now` rather than `cutoff`: `edu.questions` carries its own `expires_at`
+      written at issue and constrained to eight days, so the row states when it
+      stops being able to authorize a grade. Sweeping it on the transcripts'
+      thirty-day cutoff would keep it for three weeks after it went inert.
+    */
+    const eduDeletedQuestions = await deleteExpiredEduQuestions(new Date());
+
     return NextResponse.json({
       ok: true,
       expiredTranscripts: transcripts.length,
@@ -136,6 +147,7 @@ export async function POST(request: NextRequest) {
       // answer the question the separation exists to make answerable.
       eduExpiredTranscripts: eduTranscripts.length,
       eduDeletedTranscripts,
+      eduDeletedQuestions,
       eduErasedFacts,
       eduUpdatedFacts,
     });

@@ -3,8 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "node scripts/copy-avatar-assets.mjs && node scripts/next.mjs dev",
-    "build": "node scripts/copy-avatar-assets.mjs && node scripts/next.mjs build",
+    "dev": "node scripts/copy-avatar-assets.mjs && node scripts/copy-pdf-assets.mjs && node scripts/next.mjs dev",
+    "build": "node scripts/copy-avatar-assets.mjs && node scripts/copy-pdf-assets.mjs && node scripts/next.mjs build",
     "start": "node scripts/next.mjs start",
     "lint": "eslint",
     "typecheck": "tsc --noEmit",

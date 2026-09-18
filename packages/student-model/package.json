@@ -15,7 +15,8 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@acme/safety": "workspace:*"
+    "@acme/safety": "workspace:*",
+    "@cortex-js/compute-engine": "0.128.12"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",

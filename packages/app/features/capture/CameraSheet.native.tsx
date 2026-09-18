@@ -77,8 +77,8 @@ export function CameraSheet({ ageBand = 'teen' }: { ageBand?: AgeBand }) {
               EXIF OFF BEFORE ANYTHING ELSE SEES IT, exactly as `CaptureScreen`
               does (doc 24 §3). A phone photograph carries GPS, and a child's
               homework must not arrive at the crop screen — let alone at an
-              upload — still carrying where they live. The downscale that comes
-              with it is also what keeps a 12 MP capture out of the OCR.
+              upload — still carrying where they live. Keep the full-resolution
+              re-encoded master so later symbol crops can retain their detail.
             */
             onCapture={(photo) => {
               void stripExif(photo.filePath).then(
