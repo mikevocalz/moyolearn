@@ -185,7 +185,7 @@ catalog:
   # probe:shaders:webgpu and golden:compare run before and after, per the rule
   # above. It is not a version edit: r186's QuadMesh constructor now requires an
   # argument, which is a compile error in tutor-avatar-3d.native.tsx.
-  three: 0.185.1
+  three: 0.186.0
   # marketing site (apps/web-vite) — motion + globe. R3F 9 declares Expo peers
   # (expo-gl, react-native, expo-file-system) because it ships a native
   # renderer; this app is web-only, so those peers are intentionally unmet.
@@ -195,7 +195,7 @@ catalog:
   "@react-three/drei": 10.7.8
   topojson-client: 3.1.0
   "@types/topojson-client": 3.1.5
-  "@types/three": 0.185.1
+  "@types/three": 0.186.0
 
   # state / data
   "@tanstack/react-query": 5.103.1

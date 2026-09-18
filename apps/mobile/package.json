@@ -63,7 +63,7 @@
     "react-native-worklets": "catalog:",
     "solito": "catalog:",
     "three": "catalog:",
-    "typegpu": "0.12.4",
+    "typegpu": "0.12.5",
     "uniwind": "catalog:",
     "zustand": "catalog:"
   },

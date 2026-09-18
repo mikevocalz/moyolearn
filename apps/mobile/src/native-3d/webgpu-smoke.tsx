@@ -70,32 +70,6 @@ fn main() -> @location(0) vec4f {
   return vec4(1.0, 0.0, 0.0, 1.0);
 }`;
 
-/**
- * Drops the event listeners three leaves on its module-level `QuadMesh`
- * geometry singleton after a renderer is disposed.
- *
- * three's `RenderObjects.dispose()` clears its chain maps without disposing the
- * individual RenderObjects, so their `dispose`/`release` listeners stay attached
- * to that shared geometry and keep the DISPOSED renderer's backend reachable —
- * wcandillon/react-native-webgpu#445. Safe only while the app has at most one
- * live renderer at a time, which the single-probe rule below guarantees.
- *
- * The parameter names the three types this is actually called with, so a typo
- * at a call site is still a type error. `_listeners` itself is three's own
- * private field and appears in no public declaration, which is why reading it
- * needs the local narrowing — the alternative is `any`, and the whole point is
- * to touch exactly one property and nothing else.
- */
-type ThreeListenerHolder =
-  | THREE.BufferGeometry
-  | THREE.BufferAttribute
-  | THREE.InterleavedBufferAttribute;
-
-function clearStaleListeners(target: ThreeListenerHolder | null | undefined): void {
-  if (!target) return;
-  const holder = target as { _listeners?: object };
-  if (holder._listeners) holder._listeners = {};
-}
 
 /**
  * A frame-rate counter that reports once a second and allocates nothing per
@@ -262,8 +236,7 @@ function CubeProbe({ onResult }: { onResult: (line: string) => void }) {
     return () => {
       // Genuine unmount. `setAnimationLoop(null)` alone leaves three's internal
       // rAF callback rooting the entire renderer graph (wcandillon#445), so the
-      // dispose has to run too — and the shared QuadMesh singleton's stale
-      // listeners have to be cleared or they root the disposed backend.
+      // dispose has to run too.
       disposed = true;
       renderer.setAnimationLoop(null);
       // Before the dispose: destroying the device first leaves the native
@@ -272,12 +245,6 @@ function CubeProbe({ onResult }: { onResult: (line: string) => void }) {
       // see `tutor-avatar-3d.native.tsx`'s teardown.
       context.unconfigure();
       renderer.dispose();
-      const quad = new THREE.QuadMesh();
-      clearStaleListeners(quad.geometry);
-      clearStaleListeners(quad.geometry.index);
-      for (const attribute of Object.values(quad.geometry.attributes)) {
-        clearStaleListeners(attribute);
-      }
       geometry.dispose();
       material.dispose();
     };

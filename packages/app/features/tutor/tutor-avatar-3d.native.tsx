@@ -183,22 +183,6 @@ export interface TutorAvatar3DProps {
   modelUri?: string;
 }
 
-/**
- * Drops the listeners three leaves on its module-level `QuadMesh` geometry
- * after a renderer is disposed (wcandillon/react-native-webgpu#445) — without
- * this the disposed backend stays reachable for the process lifetime. Safe
- * because the app has at most one live WebGPU renderer at a time.
- */
-type ListenerHolder =
-  | THREE.BufferGeometry
-  | THREE.BufferAttribute
-  | THREE.InterleavedBufferAttribute;
-
-function clearStaleListeners(target: ListenerHolder | null | undefined): void {
-  if (!target) return;
-  const holder = target as { _listeners?: object };
-  if (holder._listeners) holder._listeners = {};
-}
 
 /**
  * Fetches the glTF and its `.bin` ourselves and hands them to three through its
@@ -595,12 +579,6 @@ function TutorAvatar3DStage({
       */
       surfaceContext?.unconfigure();
       renderer.dispose();
-      const quad = new THREE.QuadMesh();
-      clearStaleListeners(quad.geometry);
-      clearStaleListeners(quad.geometry.index);
-      for (const attribute of Object.values(quad.geometry.attributes)) {
-        clearStaleListeners(attribute);
-      }
     };
     // Built once per mount. `modelUri` changes WHICH body is on the stage;
     // `device` changes WHICH GPU the renderer is bound to. Both are reasons to
