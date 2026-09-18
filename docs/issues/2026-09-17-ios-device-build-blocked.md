@@ -42,6 +42,64 @@ podspecs then need `pod update ReactNativeDependencies React-Core-prebuilt
 
 **Use `~/.rbenv/shims/pod`, not `pod`, in this repo.**
 
+## Update 2026-09-18 — four walls cleared, one left, and it is not ours
+
+Working through them in order got the build from "fails immediately" to "fails
+inside Skia's Graphite bridge". Each step below is a separate cause, not a
+retry of the last.
+
+1. **CocoaPods on Ruby 2.6** — fixed, see below. Use `~/.rbenv/shims/pod`.
+2. **`react-native-video` 7.0.0-beta.11** — removed. It does not compile against
+   RN 0.88.0-rc.0, `latest` still points at the 6.19.2 stable line so there is
+   nothing to move to, and **no file imported it**: `grep` across every
+   extension in `packages`, `apps` and `tooling` found it only in
+   `apps/mobile/package.json` and one Expo plugin entry. Every `<Video />` in the
+   app is the lucide icon from `@acme/ui/icons`; recording goes through
+   `react-native-vision-camera`. The reasoning for choosing it — Bunny Stream
+   HLS, one video stack rather than two — is preserved in `app.config.ts` where
+   the plugin entry used to be, so putting it back is a decision rather than
+   archaeology.
+3. **`react-native-enriched-html`** — this one is used, by `NotesEditor.tsx`,
+   `NoteBody.tsx`, `capabilities.ts` and a story, so it gets the header-search
+   fix rather than removal. It imports RN headers flat and the prebuilt core
+   keeps them inside `React.xcframework/ios-arm64/React.framework/Headers`.
+4. **Skia Graphite's Dawn headers** — partially fixed. With
+   `react-native-webgpu` installed, Skia stops vendoring Dawn entirely
+   ("react-native-webgpu detected, Dawn is provided by its libwebgpu_dawn", and
+   its own framework list drops `libwebgpu_dawn`), but its `HEADER_SEARCH_PATHS`
+   still points at `cpp/dawn/include` in its own package — a directory only
+   `install-skia-graphite` populates, and that script is not in the published
+   package. The link is wired and the compile is not, which is why the Dawn
+   version guard passes and the build still fails. Pointing Skia at
+   react-native-webgpu's headers resolves `webgpu/webgpu_cpp.h` and then
+   `dawn/native/DawnNative.h` — note the package's `cpp/` directory carries only
+   the first of those, so the full tree in
+   `libs/apple/libwebgpu_dawn.xcframework/ios-arm64/Headers` is the right root.
+
+### The wall that is left
+
+```
+node_modules/@shopify/react-native-skia/cpp/rnskia/RNDawnWindowContext.h:7:10:
+  fatal error: 'dawn/native/MetalBackend.h' file not found
+      7 | #include "dawn/native/MetalBackend.h"
+```
+
+What react-native-webgpu's device slice ships under `dawn/native/`:
+
+```
+dawn_native_export.h  DawnNative.h  NullBackend.h  OpenGLBackend.h  VulkanBackend.h
+```
+
+`find node_modules -name 'MetalBackend.h'` returns nothing. Skia's Graphite
+window context needs a header no package in this tree provides.
+
+Whose gap that is cannot be read off the tree. Either react-native-webgpu's
+Dawn header set is missing the Metal backend, or Skia is expected to populate
+its own `cpp/dawn/include` even when it defers linking — both fit the evidence
+equally and the answer is upstream. Worth asking in the react-native-webgpu /
+react-native-skia integration issue tracker with the two listings above, rather
+than guessed at here.
+
 ## Open — third-party pods against RN 0.88.0-rc.0's prebuilt core
 
 With the install healthy, the build fails on packages that assume React-Core was

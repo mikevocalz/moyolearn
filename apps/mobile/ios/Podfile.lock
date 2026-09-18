@@ -2260,30 +2260,6 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - ReactNativeVideo (7.0.0-beta.11):
-    - hermes-engine
-    - NitroModules
-    - RCTRequired
-    - RCTTypeSafety
-    - React-bridging
-    - React-Core
-    - React-Core-prebuilt
-    - React-cxxstableapi
-    - React-debug
-    - React-Fabric
-    - React-featureflags
-    - React-graphics
-    - React-ImageManager
-    - React-jsi
-    - React-NativeModulesApple
-    - React-RCTFabric
-    - React-renderercss
-    - React-rendererdebug
-    - React-utils
-    - ReactCodegen
-    - ReactCommon/turbomodule/core
-    - ReactNativeDependencies
-    - Yoga
   - RNAudioAPI (0.13.4):
     - hermes-engine
     - RCTRequired
@@ -2920,7 +2896,6 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../../../node_modules/react-native/ReactCommon`)
   - ReactNativeDependencies (from `../../../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - ReactNativeEnrichedHtml (from `../../../node_modules/react-native-enriched-html`)
-  - ReactNativeVideo (from `../../../node_modules/react-native-video`)
   - RNAudioAPI (from `../../../node_modules/react-native-audio-api`)
   - "RNCMaskedView (from `../../../node_modules/@react-native-masked-view/masked-view`)"
   - RNGestureHandler (from `../../../node_modules/react-native-gesture-handler`)
@@ -3206,8 +3181,6 @@ EXTERNAL SOURCES:
     :podspec: "../../../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
   ReactNativeEnrichedHtml:
     :path: "../../../node_modules/react-native-enriched-html"
-  ReactNativeVideo:
-    :path: "../../../node_modules/react-native-video"
   RNAudioAPI:
     :path: "../../../node_modules/react-native-audio-api"
   RNCMaskedView:
@@ -3369,7 +3342,6 @@ SPEC CHECKSUMS:
   ReactCommon: 41935b5a629b216f756fda6c744f675d7724f64f
   ReactNativeDependencies: 9eed48b984d739bff91ecbaeb397003188574851
   ReactNativeEnrichedHtml: fd3f1c9778d3fea40b3dad937b5d58e3f95ec237
-  ReactNativeVideo: b5406cf6fdd9fb7482083c7654a2addd3c9fe103
   RNAudioAPI: f94568a3aad3efe139f1efe0ac1dd73f92c63b87
   RNCMaskedView: 89bb912716973f9715102cfe932f3ca6793b21f9
   RNGestureHandler: a058d61dbca64a49d427d056768d9ac8815f5feb
@@ -3384,6 +3356,6 @@ SPEC CHECKSUMS:
   VisionCamera: be24451f0306c50a98d0dcd21bf46b2ca2068c39
   Yoga: d1c536142c5ff8ec8cd856ab2a7c227a1d875c8e
 
-PODFILE CHECKSUM: e1bc0da722b982e9b8c77fc94e9a6e5eebde3b8b
+PODFILE CHECKSUM: 62f57c135f2e4978edf583275df7d57b9e0bf8de
 
 COCOAPODS: 1.17.0

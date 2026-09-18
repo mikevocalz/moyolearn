@@ -122,14 +122,25 @@ const config: ExpoConfig = {
   plugins: [
     'expo-router',
     /*
-      react-native-video 7 is a Nitro module, so it needs native config — it is
-      not autolinked into a prebuilt binary by itself. Registering the plugin
-      here means `expo prebuild` writes the native bits; without it the JS
-      imports resolve and the component fails at runtime, which reads as a
-      broken player rather than a missing build step.
+      NO VIDEO STACK IS REGISTERED, AND THAT IS A PAUSE RATHER THAN A CHOICE.
 
-      It plays Bunny Stream's HLS output. `expo-video`/`expo-av` are deliberately
-      absent — one video stack, not two.
+      `react-native-video` 7 was here to play Bunny Stream's HLS output, with
+      `expo-video`/`expo-av` deliberately absent so there would be one video
+      stack rather than two. That reasoning still holds and this comment exists
+      so re-adding it is a decision rather than an archaeology exercise.
+
+      It came out because 7.0.0-beta.11 does not compile against React Native
+      0.88.0-rc.0 — `could not build Objective-C module 'ReactNativeVideo'`,
+      `declaration of 'facebook' must be imported from module
+      'ReactNativeHeaders_react'` — and there is nothing newer to move to: the
+      `latest` tag still points at the 6.19.2 stable line. Nothing imported it
+      yet, so carrying an unbuildable native dependency for a player with no JS
+      behind it was only blocking every other iOS build.
+
+      Put it back when upstream builds against 0.88; the plugin registration is
+      required, because it is a Nitro module and is not autolinked into a
+      prebuilt binary on its own.
+      See docs/issues/2026-09-17-ios-device-build-blocked.md.
     */
     /*
       VIRO HAS TO BE REGISTERED OR THE SPATIAL WHITEBOARD CANNOT EXIST.
@@ -306,7 +317,6 @@ const config: ExpoConfig = {
       */
       { android: { xRMode: ['AR', 'QUEST'] } },
     ],
-    'react-native-video',
     /*
       Nitro-backed fetch: Cronet on Android, URLSession on iOS, so HTTP/2 and
       HTTP/3-over-QUIC and connection reuse come from the platform rather than
