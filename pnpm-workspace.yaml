@@ -94,6 +94,8 @@ catalog:
   # Held with it: the fetcher registers into executorch's runtime.
   react-native-executorch-expo-resource-fetcher: 0.9.1
   "@shopify/react-native-skia": 2.12.0
+  react-native-skia-graphite-android: 154.0.0
+  react-native-skia-graphite-apple-ios: 154.0.0
   "@react-navigation/native": 7.4.1
   solito: 5.0.0
   lucide-react: 1.47.0

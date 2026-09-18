@@ -19,7 +19,6 @@
     "test": "node --test 'core/**/*.test.ts' 'features/**/*.test.ts' 'providers/**/*.test.ts' && node --test --conditions=react-server 'core/**/*.server-test.ts' 'features/**/*.server-test.ts'"
   },
   "dependencies": {
-    "@reactvision/react-viro": "3.0.0-moyo.3",
     "@acme/auth": "workspace:*",
     "@acme/avatar": "workspace:*",
     "@acme/inference": "workspace:*",
@@ -31,6 +30,7 @@
     "@acme/voice": "workspace:*",
     "@anthropic-ai/sdk": "catalog:",
     "@huggingface/transformers": "4.2.0",
+    "@reactvision/react-viro": "3.0.0-moyo.3",
     "@shopify/react-native-skia": "catalog:",
     "@tanstack/react-pacer": "catalog:",
     "@tanstack/react-query": "catalog:",
@@ -54,6 +54,8 @@
     "react-native-nitro-fetch": "1.6.2",
     "react-native-reanimated": "catalog:",
     "react-native-safe-area-context": "catalog:",
+    "react-native-skia-graphite-android": "catalog:",
+    "react-native-skia-graphite-apple-ios": "catalog:",
     "react-native-svg": "catalog:",
     "react-native-vision-camera": "catalog:",
     "react-native-worklets": "catalog:",
