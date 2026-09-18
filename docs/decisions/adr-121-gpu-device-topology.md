@@ -32,6 +32,27 @@ Nothing interoperates with Skia today either: `getNativeDevice`,
 appear in zero files outside `node_modules`. Skia and WebGPU are separate stacks
 in this repo, not a shared one.
 
+**And Skia is not on Graphite at all.** `pod install` prints
+
+    -- SK_GRAPHITE: OFF (detected via libs/.graphite marker file)
+
+The backend is chosen by a marker file that `install-skia-graphite` writes, and
+the marker is absent, so `react-native-skia.podspec` takes its other branch and
+compiles with `SK_METAL=1 SK_GANESH=1`. The Graphite binaries it would otherwise
+link — `react-native-skia-graphite-apple-ios` and
+`react-native-skia-graphite-android`, both `154.0.0` in Skia's
+`graphiteDependencies` — are not installed in this tree.
+
+That changes what Option A means. Adopting "Graphite's device" is not an
+unmeasured choice, it is a choice whose subject does not exist here yet: Skia
+renders through Ganesh on Metal and shares no Dawn instance with
+`react-native-webgpu`. The m154 agreement recorded in `docs/compute/versions.md`
+is agreement between two `package.json` files, not between two linked binaries.
+Running `install-skia-graphite` is therefore a prerequisite of Option A in the
+same way that handing Natalie a device is — and it is the step that makes the
+one-Dawn build guard meaningful, because until Graphite is installed there is no
+second Dawn for the guard to compare against.
+
 And `device.lost` is handled in **zero** files; `uncapturederror` in one. Whatever
 topology is chosen, a lost device today is an unhandled failure.
 
@@ -90,6 +111,10 @@ gated behind `shader-f16` and consent and are not in the near path.
      excluded because they fall back to a software adapter.
   5. Decide whether the splash's device folds into this topology or stays
      deliberately separate, and write the reason down either way.
+  6. Run `install-skia-graphite` and confirm `SK_GRAPHITE: ON` before either
+     option is measured. Option A cannot be evaluated against a Ganesh build,
+     and Option B's claim that a sibling device isolates Skia's queue only means
+     something once Skia is on the same Dawn.
 
 ## Constraints honored
 

@@ -98,6 +98,12 @@ than a version skew. The fix is the version bump below, not a guard change.
 m154 on both sides, on Skia **stable**. The shared-Dawn precondition is
 satisfiable with published versions — no `@next` channel needed.
 
+Satisfiable, not satisfied. This is agreement between two `package.json` files.
+`pod install` reports `SK_GRAPHITE: OFF`: the backend is selected by a marker
+file that `install-skia-graphite` writes, the marker is absent, and the
+`react-native-skia-graphite-apple-ios` / `-android` binaries are not installed —
+so Skia compiles `SK_METAL=1 SK_GANESH=1` and links no Dawn at all. See ADR-121.
+
 ## The brief's worklets CI check is wrong for this repo
 
 The brief proposes failing CI when the lockfile contains more than one
