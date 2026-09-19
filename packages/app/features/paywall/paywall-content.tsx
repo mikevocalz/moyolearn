@@ -41,8 +41,8 @@ export function PaywallContent({ onStartTrial, onContinueFree }: PaywallProps) {
             Try the whole thing free for {schedule.days} days
           </Heading>
           <TWText className="text-body-lg text-text">
-            Every child in your family, the full tutor, nothing held back. Cancel in the app in two
-            taps.
+            The full tutor for up to 3 children. Additional children are $11 each per month.
+            Cancel in the app in two taps.
           </TWText>
         </Section>
 

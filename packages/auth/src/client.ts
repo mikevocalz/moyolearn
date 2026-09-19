@@ -7,6 +7,7 @@
 // SOT-KEYWORDS: auth client better-auth expo session plugins
 
 import { createAuthClient } from 'better-auth/react';
+import { stripeClient } from '@better-auth/stripe/client';
 import type { createAuth } from './server.ts';
 import {
   multiSessionClient,
@@ -30,6 +31,7 @@ export function createMoyoAuthClient(options: {
       usernameClient(),
       organizationClient({ schema: inferOrgAdditionalFields<MoyoAuthServer>() }),
       multiSessionClient(),
+      stripeClient({ subscription: true }),
       ...expoPlugins({ storage: options.storage, scheme: options.scheme }),
     ],
   });
