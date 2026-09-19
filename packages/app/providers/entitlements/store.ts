@@ -16,6 +16,8 @@ interface EntitlementState {
   subscriptions: SubscriptionState[];
   /** Webhook truth arrives asynchronously; screens must not treat empty as "none". */
   loaded: boolean;
+  revision: number;
+  refresh: () => void;
   setSubscriptions: (subscriptions: SubscriptionState[]) => void;
   reset: () => void;
 }
@@ -23,6 +25,8 @@ interface EntitlementState {
 export const useEntitlementStore = create<EntitlementState>((set) => ({
   subscriptions: [],
   loaded: false,
+  revision: 0,
+  refresh: () => set((s) => ({ revision: s.revision + 1 })),
   setSubscriptions: (subscriptions) => set({ subscriptions, loaded: true }),
   reset: () => set({ subscriptions: [], loaded: false }),
 }));

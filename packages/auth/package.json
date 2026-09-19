@@ -23,7 +23,8 @@
     "@better-auth/stripe": "catalog:",
     "better-auth": "catalog:",
     "pg": "catalog:",
-    "stripe": "catalog:"
+    "stripe": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",

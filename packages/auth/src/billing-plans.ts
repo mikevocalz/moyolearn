@@ -9,6 +9,7 @@
 
 /** Who a subscription is bought FOR. Family plans belong to a person, ops to an org. */
 export type CustomerType = 'user' | 'organization';
+export const FAMILY_ENTITLEMENT = 'moyo_family';
 
 export type PlanName =
   | 'family-early-bird'
@@ -83,7 +84,7 @@ export const PLANS: Record<PlanName, Plan> = {
   },
 };
 
-export const isPlanName = (value: string): value is PlanName => value in PLANS;
+export const isPlanName = (value: string): value is PlanName => Object.hasOwn(PLANS, value);
 
 /** Family plans are bought by a guardian for themselves; ops plans by an org. */
 export const plansFor = (customerType: CustomerType) =>

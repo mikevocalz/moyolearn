@@ -15,23 +15,43 @@
 // SOT: docs/pack/05-monetization-access-spec.md §6 S16
 // SOT-KEYWORDS: paywall s16 trial start plan family early bird terms cancel guardian
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import { Button, Card, Dial, FadeIn, Heading, PressScale, Text } from '@acme/ui';
 import { trialSchedule, TRIAL_REMINDER_DAYS_BEFORE, type PlanName } from '@acme/auth';
 import { formatTrialDate, PAYWALL_OFFERS } from './paywall.data';
+import { confirmFamilyAccess, startFamilyCheckout } from './billing-actions';
+import { useAppSession } from '../../providers/session';
+import type { PaywallProps } from './paywall.types';
+export type { PaywallProps } from './paywall.types';
 
-export interface PaywallProps {
-  /** Starts the trial for the chosen plan. Resolves once the plugin's wrapped
-   *  success URL has settled the subscription (doc 06 §4's race hygiene). */
-  onStartTrial: (plan: PlanName) => void;
-  /** Doc 05 §6: "Continue with free practice" — the child's floor is never hostage. */
-  onContinueFree: () => void;
-}
-
-export function PaywallContent({ onStartTrial, onContinueFree }: PaywallProps) {
+export function PaywallContent({ onSubscribed, onContinueFree }: PaywallProps) {
+  const { user, status, activeContext } = useAppSession();
   const [selected, setSelected] = useState<PlanName>(PAYWALL_OFFERS[0]!.plan);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const schedule = trialSchedule(selected);
+
+  useEffect(() => {
+    if (status !== 'authed' || !new URLSearchParams(window.location.search).has('checkout')) return;
+    let canceled = false;
+    void confirmFamilyAccess().then((active) => {
+      if (canceled) return;
+      if (active) onSubscribed();
+      else setError('Your subscription is still being confirmed. Select your plan to check again.');
+    }).catch(() => { if (!canceled) setError('We could not confirm your subscription. Please try again.'); });
+    return () => { canceled = true; };
+  }, [status, onSubscribed]);
+
+  if (status !== 'authed' || user?.kind === 'learner' || activeContext.kind === 'learner') return null;
+
+  const start = async () => {
+    setBusy(true);
+    setError(null);
+    try { if (await startFamilyCheckout(selected) === 'active') onSubscribed(); }
+    catch (cause) { setError(cause instanceof Error ? cause.message : 'Checkout could not be opened.'); }
+    finally { setBusy(false); }
+  };
 
   return (
     <Dial temperature="hot">
@@ -85,8 +105,10 @@ export function PaywallContent({ onStartTrial, onContinueFree }: PaywallProps) {
             size="xl"
             fullWidth
             title={`Start ${schedule.days}-day free trial`}
-            onPress={() => onStartTrial(selected)}
+            disabled={busy}
+            onPress={() => { void start(); }}
           />
+          {error ? <Text accessibilityRole="alert">{error}</Text> : null}
           {/* KOHO gives this its own block under the CTA rather than burying it
               beside the price. It is also the ARL promise, so it is stated at
               full contrast where the commitment is made. */}

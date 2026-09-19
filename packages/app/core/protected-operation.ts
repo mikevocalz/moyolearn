@@ -309,7 +309,8 @@ export async function protectedOperation<R>(
         that lapsed, or a card that just cleared, has to take effect on the next
         call rather than whenever a process happens to recycle.
       */
-      ((c) => readSubscriptions(auth, billingReferenceFor(c)));
+      ((c) => c.isLearner ? Promise.resolve([])
+        : readSubscriptions(auth, billingReferenceFor(c), c.orgId ? 'organization' : 'user'));
 
     /*
       Both ids off `ctx`, never off input — the role is the acting user's role

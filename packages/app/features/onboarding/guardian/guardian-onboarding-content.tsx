@@ -161,7 +161,7 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
 
       {step === 'plan' ? (
         <PaywallContent
-          onStartTrial={complete}
+          onSubscribed={complete}
           onContinueFree={complete}
         />
       ) : null}

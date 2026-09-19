@@ -49,6 +49,8 @@
     "react-native-nitro-fetch": "1.6.2",
     "react-native-nitro-modules": "catalog:",
     "react-native-pulsar": "catalog:",
+    "react-native-purchases": "10.10.0",
+    "react-native-purchases-ui": "10.10.0",
     "react-native-reanimated": "catalog:",
     "react-native-safe-area-context": "catalog:",
     "react-native-screens": "catalog:",

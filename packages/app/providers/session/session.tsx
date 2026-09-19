@@ -10,6 +10,7 @@ import { getAuthMode } from './auth-mode';
 import { useSessionStore } from './store';
 import type { AppSession } from './types';
 import { EntitlementsSync } from '../entitlements/entitlements-sync';
+import { PurchaseIdentity } from '../../features/paywall/purchase-identity';
 
 export type { RoleKind, ActiveContext, ActiveContextKind, AppSession, AppUser, Membership } from './types';
 export { RoleSwitcher } from './role-switcher';
@@ -26,6 +27,7 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   return (
     <Provider>
       <EntitlementsSync />
+      <PurchaseIdentity />
       {children}
     </Provider>
   );

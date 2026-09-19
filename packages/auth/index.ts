@@ -63,6 +63,7 @@ export {
   plansFor,
   resolvePrices,
   BILLING_ROLES,
+  FAMILY_ENTITLEMENT,
   PLANS,
 } from './src/billing-plans';
 export type {

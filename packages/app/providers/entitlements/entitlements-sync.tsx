@@ -18,6 +18,7 @@
 // SOT-KEYWORDS: entitlements sync subscriptions store loaded session persona fetch webhook
 
 import { useEffect } from 'react';
+import { AppState } from 'react-native';
 import { PERSONAS } from '../../fixtures/personas';
 import { mockSubscriptionsFor } from '../../fixtures/subscriptions';
 import { getAuthMode } from '../session/auth-mode';
@@ -30,8 +31,22 @@ export function EntitlementsSync() {
   const status = useSessionStore((s) => s.status);
   const setSubscriptions = useEntitlementStore((s) => s.setSubscriptions);
   const reset = useEntitlementStore((s) => s.reset);
+  const revision = useEntitlementStore((s) => s.revision);
+  const refresh = useEntitlementStore((s) => s.refresh);
 
   useEffect(() => {
+    const listener = AppState.addEventListener('change', (state) => {
+      if (state === 'active') refresh();
+    });
+    if (typeof document !== 'undefined') window.addEventListener('focus', refresh);
+    return () => {
+      listener.remove();
+      if (typeof document !== 'undefined') window.removeEventListener('focus', refresh);
+    };
+  }, [refresh]);
+
+  useEffect(() => {
+    reset();
     // A session still resolving is the one state where nothing is known, and
     // `loaded: false` is how the gates are told so.
     if (status === 'loading') {
@@ -67,10 +82,10 @@ export function EntitlementsSync() {
       behind the feature is refused by the server, so nothing is granted here.
     */
     void fetchEntitlements(controller.signal)
-      .then(setSubscriptions)
+      .then((subscriptions) => { if (!controller.signal.aborted) setSubscriptions(subscriptions); })
       .catch(() => undefined);
     return () => controller.abort();
-  }, [userId, status, setSubscriptions, reset]);
+  }, [userId, status, revision, setSubscriptions, reset]);
 
   return null;
 }
