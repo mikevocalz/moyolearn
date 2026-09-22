@@ -320,10 +320,11 @@ precise shape of the schema mismatch that comment was written to prevent. The
    is fixed upstream, and re-cut or retire the patch — then verify a cold boot with a
    deep link. Doing it blind drops a shipped fix.
 
-2. **No build, no typecheck, no device run.** This lane changed resolution only.
-   `pnpm typecheck`, `pnpm test`, a Metro bundle, a prebuild and an on-device run are
-   all still owed before this branch means anything. RN 0.88 and `expo-modules-core`
-   58.0.3 both touch the native layer.
+2. **No build, no bundle, no device run.** `pnpm typecheck` and `pnpm test` do pass
+   on this graph, cold — see below — but a Metro bundle, a prebuild and an on-device
+   run are all still owed before this branch means anything. RN 0.88 and
+   `expo-modules-core` 58.0.3 both touch the native layer, and neither of those two
+   commands compiles a line of it.
 
 3. **Neither vendored tarball was rebuilt** — see D3. Viro owes an on-device XR
    verification; `@expo-pico/core` owes a PICO one.
@@ -334,3 +335,24 @@ precise shape of the schema mismatch that comment was written to prevent. The
 
 5. **The em-dash fix on `main` was not made** — out of scope for this branch, and
    this lane is forbidden from touching `main`. See D5.
+
+## Verification actually run
+
+Both from a cold turbo cache, on the committed graph.
+
+    $ pnpm typecheck
+     Tasks:    19 successful, 19 total
+    Cached:    0 cached, 19 total
+      Time:    22.686s
+
+    $ pnpm test
+     Tasks:    12 successful, 12 total
+    Cached:    0 cached, 12 total
+      Time:    23.658s
+
+That covers the TypeScript surface of all 19 workspaces against `expo@58.0.0-preview.5`,
+`react-native@0.88.0-rc.1` and `expo-modules-core@58.0.3` — including
+`@acme/payload` under the patched bunny adapter, whose 22 assertions pass. It says
+nothing about the native layer: no Metro bundle, no prebuild, no pod install, no
+Gradle, no device. The two vendored tarballs in D3 have type definitions that resolve
+and native code that has never been compiled against this graph.
