@@ -110,7 +110,15 @@ export async function listVideos(config: StreamConfig): Promise<StreamVideo[]> {
       `https://video.bunnycdn.com/library/${config.libraryId}/videos?page=${page}&itemsPerPage=${PAGE_SIZE}`,
       { headers: { AccessKey: config.apiKey, accept: 'application/json' } },
     );
-    if (!res.ok) throw new Error(`Bunny Stream list failed (${res.status})`);
+    if (!res.ok) {
+      // Body included for the reason `bunny-list.ts` gives: a status alone
+      // cannot tell a wrong API key from a wrong library id, and this error is
+      // what a dead letter will carry.
+      const detail = await res.text().catch(() => '');
+      throw new Error(
+        `Bunny Stream list failed (${res.status})${detail ? `: ${detail.slice(0, 300)}` : ''}`,
+      );
+    }
     const body = (await res.json()) as { items?: RawVideo[] };
     const items = body.items ?? [];
     for (const item of items) {

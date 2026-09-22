@@ -20,12 +20,22 @@
 import 'server-only';
 import { getPayload } from 'payload';
 import config from '@payload-config';
-import { liveQueues, type LiveQueueName, type QueueHealthSample } from '@acme/jobs';
+import {
+  PGBOSS_SCHEMA_VERSION,
+  liveQueues,
+  type LiveQueueName,
+  type QueueHealthSample,
+  type RunnerSample,
+} from '@acme/jobs';
 
 interface HealthRow {
   name: LiveQueueName;
   last_completed_at: Date | null;
   oldest_ready_at: Date | null;
+}
+
+interface VersionRow {
+  version: string;
 }
 
 /**
@@ -66,4 +76,38 @@ export async function readQueueHealthSamples(): Promise<QueueHealthSample[]> {
       oldestReadyAt: row?.oldest_ready_at ?? null,
     };
   });
+}
+
+/**
+ * Whether pg-boss would start, asked WITHOUT starting it.
+ *
+ * `getBoss()` is the honest question and the wrong way to ask it from a health
+ * probe: it creates queues, opens a second pool, and an unauthenticated endpoint
+ * that writes to `jobs.queue` on every poll is a worse idea than the outage it
+ * would detect. So this reads the one number pg-boss's own `Contractor.check()`
+ * reads — `jobs.version` — through the pool that is already open, and
+ * `evaluateJobsHealth` does the comparison `check()` does.
+ *
+ * A read that THROWS is not caught here. The route's `catch` already answers 500
+ * on a failed read, which is the same verdict a caught error would produce, and
+ * swallowing it here would turn "Postgres is unreachable" into a healthy-looking
+ * null further down.
+ */
+export async function readRunnerSample(): Promise<RunnerSample> {
+  const payload = await getPayload({ config });
+  const result = await payload.db.pool.query<VersionRow>('SELECT version FROM jobs.version LIMIT 1');
+
+  /*
+    `version` is `text` in pg-boss's schema and arrives as a string. An empty
+    table means the schema is half-installed, which is a dead runner, so the
+    absent row becomes `null` rather than a default — `evaluateJobsHealth` reads
+    null as unhealthy.
+  */
+  const raw = result.rows[0]?.version;
+  const parsed = raw === undefined ? Number.NaN : Number.parseInt(raw, 10);
+
+  return {
+    schemaVersion: Number.isNaN(parsed) ? null : parsed,
+    requiredSchemaVersion: PGBOSS_SCHEMA_VERSION,
+  };
 }
