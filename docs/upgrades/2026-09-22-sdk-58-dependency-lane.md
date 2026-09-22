@@ -350,6 +350,19 @@ Both from a cold turbo cache, on the committed graph.
     Cached:    0 cached, 12 total
       Time:    23.658s
 
+    $ pnpm lint
+     Tasks:    19 successful, 19 total
+    Cached:    0 cached, 19 total
+      Time:    36.321s
+
+`pnpm lint` exits 0. That is the full gate — 21 repo-specific `tooling/check-*.mjs`
+invariants (contrast, targets, copy law, fail-closed, voice egress, store separation,
+art registry, machine routes and the rest) plus `turbo run lint --continue` across all
+19 workspaces. ESLint reports 69 warnings in five workspaces and **zero errors**; the
+largest block is 38 in `@acme/app`, all `import/first` and
+`react-hooks/exhaustive-deps`. Those are pre-existing style warnings, not anything this
+lane introduced, and `--continue` means no workspace was skipped after another failed.
+
 That covers the TypeScript surface of all 19 workspaces against `expo@58.0.0-preview.5`,
 `react-native@0.88.0-rc.1` and `expo-modules-core@58.0.3` — including
 `@acme/payload` under the patched bunny adapter, whose 22 assertions pass. It says
