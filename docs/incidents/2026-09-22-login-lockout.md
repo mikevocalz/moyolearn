@@ -228,7 +228,7 @@ better-auth version: 1.7.2
   sign-in code             "EMAIL_NOT_VERIFIED"
   emails sent              1
   sent to                  "locked-out@example.test"
-  link                     http://localhost:3000/api/auth/verify-email?token=eyJhbGciOiJIUzI1NiJ9.eyJlbWFpbCI6ImxvY2tlZC1vdXRAZXhhbXBsZS50ZXN0IiwiaWF0IjoxNzkwMTE3NzA0LCJleHAiOjE3OTAxMjEzMDR9.NRzUTPhEfFoL6GC2Gj48S6ahjbWknnWCcNynCGH4YzQ&callbackURL=%2Ftutor
+  link                     http://localhost:3000/api/auth/verify-email?token=<token redacted — signed with a throwaway proof secret, not BETTER_AUTH_SECRET>&callbackURL=%2Ftutor
 
 (c) GET the link
   status                   302

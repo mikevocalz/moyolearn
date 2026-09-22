@@ -107,7 +107,10 @@ describe('the verification email', () => {
 });
 
 describe('the idempotency key', () => {
-  const token = 'eyJhbGciOiJIUzI1NiJ9.payload.signature';
+  // Three dot-separated segments, deliberately NOT a decodable JWT header.
+  // A real-looking one here trips every credential scanner in CI forever,
+  // and the function under test only ever hashes the string.
+  const token = 'header.payload.signature';
 
   it('is stable for one token, so a retry is the same send', () => {
     assert.equal(idempotencyKeyFor(token), idempotencyKeyFor(token));
