@@ -37,9 +37,41 @@ jobs:
             echo '::error::JOBS_DRAIN_URL / JOBS_DRAIN_SECRET are not configured — the retry tick is not running.'
             exit 1
           fi
-          # -f fails the step on a non-2xx, so a 500 drain pages through the
-          # workflow's failure email rather than passing silently. The body is
-          # queue names and counts only; printing it leaks nothing.
-          curl -fsS -X POST "$JOBS_DRAIN_URL" \
+          # NO -f. `-f` makes curl discard the response body on a non-2xx and
+          # exit 22, which is how seven consecutive 500s produced nothing but
+          # "The requested URL returned error: 500" — while the route was
+          # returning `{"ok":false,"error":"pg-boss database requires
+          # migrations"}` in the body it threw away. The body is queue names,
+          # counts and an operator-facing message; printing it leaks nothing,
+          # and NOT printing it cost a day (docs/incidents/2026-09-22-jobs-drain-outage.md).
+          #
+          # -o/-w splits body from status so both survive: the body goes to a
+          # file, the status to stdout. A transport failure (DNS, TLS, the
+          # --max-time ceiling) never reaches the status line, so curl's own
+          # exit code is checked first and separately — an empty status is a
+          # different failure from a 500 and must not be reported as one.
+          status=$(curl -sS -X POST "$JOBS_DRAIN_URL" \
             -H "Authorization: Bearer $JOBS_DRAIN_SECRET" \
-            --max-time 320
+            --max-time 320 \
+            -o drain-response.json \
+            -w '%{http_code}') || {
+              echo "::error::curl failed before a response arrived (exit $?). The drain was not reached."
+              exit 1
+            }
+
+          echo "HTTP $status"
+          echo '--- response body ---'
+          # `cat` and not `jq`: the body on the failure path may not be JSON at
+          # all — a platform 502 is HTML — and a parse error here would replace
+          # the evidence with a parse error, which is the bug being fixed.
+          cat drain-response.json
+          echo
+          echo '--- end response body ---'
+
+          case "$status" in
+            2??) ;;
+            *)
+              echo "::error::POST /api/jobs/drain returned $status — see the response body above."
+              exit 1
+              ;;
+          esac
