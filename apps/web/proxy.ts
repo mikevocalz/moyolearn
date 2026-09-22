@@ -88,8 +88,19 @@ export async function proxy(request: NextRequest) {
     const { auth } = await import('@/lib/auth');
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session) return unauthenticated();
-  } catch {
-    // Fail closed: if the session check errors, treat it as no session.
+  } catch (error) {
+    /*
+      Fail closed: if the session check errors, treat it as no session. That
+      part is correct and stays — a gate that opens when it cannot answer is
+      not a gate.
+
+      What was missing is the record. A broken `@/lib/auth` import, an expired
+      database credential and a genuinely signed-out visitor all produced the
+      same silent 307 to `/login`, so a total auth outage was indistinguishable
+      in production logs from ordinary traffic. Nobody would page on it; the
+      graph would just show everyone suddenly choosing to sign in again.
+    */
+    console.error('[proxy] session check failed', error);
     return unauthenticated();
   }
 
