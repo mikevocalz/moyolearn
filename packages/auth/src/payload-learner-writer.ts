@@ -25,8 +25,29 @@ export function createPayloadLearnerWriter(auth: Auth, payload: PayloadLike): Le
 
       // isMinor/guardianManaged are declared `input: false` precisely so a
       // signup payload cannot set them; they get written server-side, after.
+      //
+      // `emailVerified` rides along in the SAME call, and both the placement and
+      // the value are load-bearing.
+      //
+      // The value: a managed learner is born verified because there is nothing
+      // to verify. Doc 06 §2 gives the child no email, so the column holds
+      // `<uuid>@learners.invalid` (create-learner.ts) — RFC 2606 reserved and
+      // undeliverable. The flag is meaningless for a username credential, but
+      // better-auth@1.7.2 checks it anyway on the username path
+      // (dist/plugins/username/index.mjs:195-207), so leaving it false deadlocks
+      // every handoff sign-in against `requireEmailVerification` — and no mail
+      // can ever clear it.
+      //
+      // The placement: this runs while `guardianManaged` is still false on the
+      // stored row, so `isRestrictedLearnerUpdate` — which refuses any write
+      // carrying `emailVerified` for a managed user — does not fire. A later,
+      // separate update would be refused by that hook.
       const ctx = await auth.$context;
-      await ctx.internalAdapter.updateUser(id, { isMinor: true, guardianManaged: true });
+      await ctx.internalAdapter.updateUser(id, {
+        isMinor: true,
+        guardianManaged: true,
+        emailVerified: true,
+      });
       return { id };
     },
 
