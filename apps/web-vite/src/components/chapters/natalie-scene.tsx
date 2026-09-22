@@ -221,6 +221,12 @@ interface NatalieModelProps {
   audioDuration: number | null;
   audioRef: MutableRefObject<HTMLAudioElement | null>;
   alignment: BakedAlignment | null;
+  /**
+   * True while the surface is still awaiting a voice resolve for the current
+   * action — the window in which `audioRef.current` is legitimately null and
+   * the frame loop must not treat that as "silent, so run the fallback clock".
+   */
+  voicePending: boolean;
   reducedMotion: boolean;
   onCaptionChange: (caption: string) => void;
   onActionComplete: () => void;
@@ -231,6 +237,7 @@ function NatalieModel({
   audioDuration,
   audioRef,
   alignment,
+  voicePending,
   reducedMotion,
   onCaptionChange,
   onActionComplete,
@@ -306,11 +313,37 @@ function NatalieModel({
     const duration = audio?.duration ?? audioDuration;
     const playDuration = duration && Number.isFinite(duration) && duration > 0
       ? duration : active?.duration ?? 1;
-    // Caption-only actions still finish in reduced motion. They never pretend
-    // to speak; articulation is gated by actual playback, not the button state.
-    const now = audio ? audio.currentTime : actionTimeRef.current + delta;
+    /*
+      THE FALLBACK CLOCK ONLY RUNS ONCE THE VOICE QUESTION IS SETTLED.
+
+      `useFrame` keeps ticking at 60 Hz while the surface is still awaiting the
+      signed-URL resolve, and during that await there is no audio element to
+      read a time off. Advancing `actionTimeRef` there walks the action to its
+      SCRIPTED duration (3.5 s for `hint`) before the clip exists, completes it,
+      and the surface's `stopAudio()` then aborts the `play()` that arrives a
+      moment later — AbortError, mouth shut, no sound. So while pending: hold
+      the clock and do not complete.
+
+      Caption-only actions still finish in reduced motion, and they never
+      pretend to speak; articulation is gated by actual playback, not by the
+      button state.
+    */
+    const now = audio
+      ? audio.currentTime
+      : voicePending
+        ? actionTimeRef.current
+        : actionTimeRef.current + delta;
     actionTimeRef.current = now;
-    if (active && (now >= playDuration || audio?.ended)) {
+    /*
+      Completion has exactly three sources, and a pending resolve is none of
+      them: the audio element reaching its end (`audio.ended`, or its clock
+      passing the real duration), an audio error the surface routes into
+      `speakSilently` (which clears pending and hands back a caption
+      alignment), and the caption-only fallback's own duration — which can only
+      elapse after the resolve has settled, because the clock above is frozen
+      until then.
+    */
+    if (active && !voicePending && (now >= playDuration || audio?.ended)) {
       actionRef.current = null;
       actionTimeRef.current = 0;
       onActionComplete();
@@ -333,7 +366,13 @@ function NatalieModel({
     }
     presence.step(delta, {
       speaking,
-      phase: speaking ? 'speaking' : 'waiting',
+      /*
+        A frozen action clock must not read as a frozen person. `thinking` is
+        the phase the idle engine maps to `processing: true` — gaze drifts off
+        camera and the body stills the way it does while she composes an
+        answer, which is exactly what a pending resolve is.
+      */
+      phase: speaking ? 'speaking' : voicePending ? 'thinking' : 'waiting',
       mouth: lip.jawOpen,
       face: speaking ? { ...lip } : null,
       emotion,
@@ -362,6 +401,7 @@ interface NatalieSceneProps {
   audioDuration?: number | null;
   audioRef?: MutableRefObject<HTMLAudioElement | null>;
   alignment?: BakedAlignment | null;
+  voicePending?: boolean;
   reducedMotion?: boolean;
   onCaptionChange?: (caption: string) => void;
   onActionComplete?: () => void;
@@ -372,6 +412,7 @@ export function NatalieScene({
   audioDuration = null,
   audioRef,
   alignment = null,
+  voicePending = false,
   reducedMotion = false,
   onCaptionChange,
   onActionComplete,
@@ -416,6 +457,7 @@ export function NatalieScene({
         audioDuration={audioDuration}
         audioRef={audioRef ?? { current: null }}
         alignment={alignment ?? null}
+        voicePending={voicePending}
         reducedMotion={reducedMotion}
         onCaptionChange={onCaptionChange ?? (() => {})}
         onActionComplete={onActionComplete ?? (() => {})}
