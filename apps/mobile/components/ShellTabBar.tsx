@@ -126,7 +126,30 @@ const BAR_GUTTER = 8;
  * cannot, because it lives entirely within one half.
  */
 export function useShellTabBarPosition(): 'bottom' | 'right' {
-  return useWindowSizeClass() === 'compact' ? 'bottom' : 'right';
+  const column = useHardwareEdgeColumn();
+  const sizeClass = useWindowSizeClass();
+  if (column > 0) return 'right';
+  return sizeClass === 'compact' ? 'bottom' : 'right';
+}
+
+/**
+ * The width of a system-reserved column on the trailing edge, or 0.
+ *
+ * iPhone Duo's closed outer display reports a right safe-area inset of 84pt
+ * for the full height — the camera, clock and wifi live in that column
+ * vertically — and UIKit relocates ITS bars into that column rather than
+ * shrinking them into what is left (Settings' bottom toolbar button sits there
+ * on the simulator). A custom bar only knows "avoid the inset", which left our
+ * bottom bar crowded into 382pt with the raised Snap slab off-centre. So when
+ * the trailing inset is a column, the bar becomes the rail and lives in it.
+ *
+ * 64 as the floor: a notched iPhone in landscape reports 44–59 on the side
+ * holding the notch, and that is a cutout to avoid, not a column to occupy.
+ */
+export const HARDWARE_EDGE_COLUMN_MIN = 64;
+export function useHardwareEdgeColumn(): number {
+  const { right } = useSafeAreaInsets();
+  return right >= HARDWARE_EDGE_COLUMN_MIN ? right : 0;
 }
 
 export interface ShellTabItem {
@@ -176,7 +199,8 @@ export function ShellTabBar({
     bottom bar — the exact defect being fixed.
   */
   const sizeClass = useWindowSizeClass();
-  const rail = sizeClass !== 'compact';
+  const column = useHardwareEdgeColumn();
+  const rail = sizeClass !== 'compact' || column > 0;
   const minTarget = targetClass ?? 'min-h-target-adult';
   const raisedTarget = raisedTargetClass ?? '';
   /*
@@ -483,17 +507,27 @@ export function ShellTabBar({
       inset as padding inside a fixed 80, a Duo camera edge shrank the usable
       rail to whatever was left. Width comes from the same token as the class
       so the two cannot drift.
+
+      When the inset IS a hardware-edge column (see `useHardwareEdgeColumn`),
+      the rail is the column: exactly its width, no trailing padding, items
+      centred in it the way UIKit centres its own relocated bars. The status
+      cluster occupies the top of that column and the items are vertically
+      centred, so they do not meet.
     */
     return (
       <View
         role="tablist"
         aria-label="Main navigation"
-        style={{
-          paddingTop: insets.top,
-          paddingBottom: insets.bottom,
-          paddingRight: insets.right,
-          width: NAV_RAIL_WIDTH + insets.right,
-        }}
+        style={
+          column > 0
+            ? { paddingTop: insets.top, paddingBottom: insets.bottom, width: column }
+            : {
+                paddingTop: insets.top,
+                paddingBottom: insets.bottom,
+                paddingRight: insets.right,
+                width: NAV_RAIL_WIDTH + insets.right,
+              }
+        }
         className="flex-col items-stretch justify-center gap-1 border-l-2 border-on-surface-footer bg-surface-footer"
       >
         {rendered}

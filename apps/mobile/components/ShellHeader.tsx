@@ -54,6 +54,7 @@ import { usePathname } from 'expo-router';
 import { SafeArea, Avatar, MoyoLearnLogo, RoleScope } from '@acme/ui';
 import { ChevronLeft } from '@acme/ui/icons';
 import { Header } from '@acme/ui/primitives';
+import { useHardwareEdgeColumn } from './ShellTabBar';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import {
   shellForRole,
@@ -125,6 +126,16 @@ export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: She
   */
   const role = shellForRole(activeContext.kind) ?? 'learner';
 
+  /*
+    4pt trailing gutter, not 16, when the trailing edge is a hardware column
+    (iPhone Duo's camera column, where the tab rail now lives): the avatar
+    should sit against the camera, not a full gutter away from it. The rail
+    owns that edge, so the header must not ALSO take the `right` inset —
+    measured on the Duo, `SafeArea` still padded the full 84 inside the scene
+    and pushed the avatar to the middle of the bar.
+  */
+  const column = useHardwareEdgeColumn();
+
   return (
     <RoleScope role={role}>
     {/*
@@ -136,10 +147,14 @@ export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: She
       the controls inside stay in the usable region.
     */}
     <SafeArea
-      edges={['top', 'left', 'right']}
+      edges={column > 0 ? ['top', 'left'] : ['top', 'left', 'right']}
       className="border-b-2 border-on-surface-header bg-surface-header"
     >
-      <Header className="min-h-14 flex-row items-center gap-stack bg-surface-header px-4 py-1">
+      <Header
+        className={`min-h-14 flex-row items-center gap-stack bg-surface-header py-1 ${
+          column > 0 ? 'pl-4 pr-1' : 'px-4'
+        }`}
+      >
         {canGoBack ? (
           <Pressable
             aria-label="Back"
