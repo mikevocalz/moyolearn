@@ -57,7 +57,6 @@ export type {
 } from './src/consent-flow';
 
 export {
-  authorizeReference,
   isBillingRole,
   isPlanName,
   plansFor,
@@ -72,7 +71,6 @@ export type {
   Plan,
   PlanLimits,
   PlanName,
-  ReferenceRequest,
 } from './src/billing-plans';
 export {
   can,

@@ -143,6 +143,7 @@ export function isRestrictedLearnerPasswordChange(
 export const AUTH_SCHEMA = 'better_auth';
 
 export function createAuth(options?: { connectionString?: string; schema?: string }) {
+  const verificationRequired = process.env.NODE_ENV !== 'development';
   const schema = options?.schema ?? AUTH_SCHEMA;
   const connectionString = options?.connectionString ?? process.env.DATABASE_URL;
   const pool = new Pool({
@@ -159,7 +160,7 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
     database: pool,
     secret: process.env.BETTER_AUTH_SECRET,
     baseURL: process.env.BETTER_AUTH_URL,
-    trustedOrigins: ['moyo://', 'moyo://*'],
+    trustedOrigins: ['moyo://'],
     user: { additionalFields: learnerFields },
     hooks: { before: billingGuard },
     session: { expiresIn: ADULT_SESSION_MAX_AGE },
@@ -169,7 +170,7 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
       minPasswordLength: 12,
       // Dev can sign up and sign in without an email adapter; verification is
       // still enforced in production builds.
-      requireEmailVerification: process.env.NODE_ENV !== 'development',
+      requireEmailVerification: verificationRequired,
     },
     databaseHooks: {
       user: {
@@ -279,7 +280,7 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
       // Doc 06 §6 breached-password rejection.
       haveIBeenPwned(),
       expo(),
-      ...billingPlugin(pool),
+      ...billingPlugin(pool, verificationRequired),
     ],
   });
 }
@@ -290,7 +291,7 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
  * omitted entirely without keys: a dev machine with no Stripe account should run
  * the app, not fail to construct auth.
  */
-function billingPlugin(pool: Pool): [] | [ReturnType<typeof stripePlugin>] {
+function billingPlugin(pool: Pool, verificationRequired: boolean): [] | [ReturnType<typeof stripePlugin>] {
   const secret = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret || !webhookSecret) return [];
@@ -309,7 +310,7 @@ function billingPlugin(pool: Pool): [] | [ReturnType<typeof stripePlugin>] {
       onEvent: (event) => syncStripeEvent(event, stripeClient),
       subscription: {
         enabled: true,
-        requireEmailVerification: process.env.NODE_ENV !== 'development',
+        requireEmailVerification: verificationRequired,
         plans: priced.map(({ plan, priceId, annualPriceId }) => ({
           name: plan.name,
           priceId,
@@ -326,7 +327,7 @@ function billingPlugin(pool: Pool): [] | [ReturnType<typeof stripePlugin>] {
             ...(customerType === 'user' ? { revenuecat_app_user_id: user.id } : {}),
           };
           return { params: {
-            integration_identifier: 'moyolearn_better_auth_zpbhwffe',
+            integration_identifier: process.env.STRIPE_INTEGRATION_IDENTIFIER ?? 'moyolearn_better_auth_zpbhwffe',
             payment_method_collection: customerType === 'organization' ? 'if_required' : 'always',
             metadata,
             subscription_data: {

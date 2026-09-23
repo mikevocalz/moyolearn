@@ -35,7 +35,9 @@ export const billingGuard = createAuthMiddleware(async (ctx) => {
   if (!ctx.path?.startsWith('/subscription/') || ctx.path === '/subscription/success') return;
   const session = await getSessionFromCtx(ctx);
   if (!session) throw new APIError('UNAUTHORIZED', { message: 'Sign in to manage billing.' });
-  const user = adultSchema.parse(session.user);
+  const parsedUser = adultSchema.safeParse(session.user);
+  if (!parsedUser.success) throw new APIError('UNAUTHORIZED', { message: 'Sign in to manage billing.' });
+  const user = parsedUser.data;
   if (user.guardianManaged || user.isMinor) {
     throw new APIError('FORBIDDEN', { message: 'Billing is available to adults only.' });
   }
