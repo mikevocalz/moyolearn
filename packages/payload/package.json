@@ -28,6 +28,7 @@
     "@acme/ui": "workspace:*",
     "@payloadcms/ui": "catalog:",
     "@types/pg": "catalog:",
+    "@types/react": "catalog:",
     "eslint": "catalog:",
     "eslint-config-expo": "catalog:",
     "typescript": "catalog:"

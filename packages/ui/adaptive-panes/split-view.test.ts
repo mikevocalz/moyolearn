@@ -165,26 +165,16 @@ describe('pane resize', () => {
   });
 });
 
-describe('pane transition direction', () => {
-  it('reads forward going out and back going in, so Back reverses the motion', () => {
+describe('the scoped store', () => {
+  it('records the requested column without inventing a travel direction', () => {
     const store = createAdaptivePanesStore();
-    store.setState({ column: 'primary', direction: 'forward' });
+    store.setState({ column: 'primary' });
 
     store.getState().setColumn('secondary');
-    assert.equal(store.getState().direction, 'forward');
+    assert.equal(store.getState().column, 'secondary');
 
     store.getState().setColumn('supplementary');
-    assert.equal(store.getState().direction, 'back');
-
-    store.getState().setColumn('primary');
-    assert.equal(store.getState().direction, 'back');
-  });
-
-  it('treats re-selecting the same column as forward, not a reversal', () => {
-    const store = createAdaptivePanesStore();
-    store.setState({ column: 'supplementary', direction: 'back' });
-    store.getState().setColumn('supplementary');
-    assert.equal(store.getState().direction, 'forward');
+    assert.equal(store.getState().column, 'supplementary');
   });
 
   it('clamps a stored width through the store, not just at the call site', () => {

@@ -38,3 +38,6 @@ apps/web-vite/data/photography/
 
 # Natalie's body, copied out of @acme/avatar by apps/web/scripts/copy-avatar-assets.mjs.
 apps/web/public/natalie/
+
+# Generated from the pinned pdfjs-dist package by the web build.
+apps/web/public/pdfjs/

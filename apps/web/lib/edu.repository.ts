@@ -38,8 +38,12 @@ import {
   type Provenanced,
   type SessionTranscript,
 } from '@acme/student-model';
+import type { ProtectedCtx } from '@acme/app/server';
 import type {
+  AssessmentEvidence,
+  EduErasure,
   EraseFactAndBlockTag,
+  EraseSubjectEdu,
   EraseTranscriptCascade,
   EvidencedTurn,
   ForgetLearnerRecord,
@@ -48,6 +52,8 @@ import type {
   LoadPriorFacts,
   SaveFacts,
   SaveTranscript,
+  TranscriptToSave,
+  TutorTurnPorts,
 } from '@acme/app/server';
 import { withEdu, type EduClient } from './edu.client';
 
@@ -454,22 +460,27 @@ export const eraseEduTranscriptCascade: EraseTranscriptCascade = async (ctx, tra
  * the transcripts go, and the test asserts it so a relaxed constraint goes red
  * here instead of leaving a child's embeddings behind quietly.
  */
-export const forgetEduLearnerRecord: ForgetLearnerRecord = async (ctx) =>
+const forgetEduRecordFor = async (learnerId: string): Promise<EduErasure> =>
   withEdu(async (client: EduClient) => {
     await client.query('begin');
     try {
       const tags = await client.query('delete from edu.blocked_tags where learner_id = $1', [
-        ctx.learnerId,
+        learnerId,
       ]);
       const facts = await client.query('delete from edu.knowledge_graph where learner_id = $1', [
-        ctx.learnerId,
+        learnerId,
       ]);
       // Facts before transcripts, the order the sweep route argues for: both can
       // be interrupted, and only this one is interrupted in the direction the
       // retention promise was made.
       const transcripts = await client.query('delete from edu.transcripts where learner_id = $1', [
-        ctx.learnerId,
+        learnerId,
       ]);
+      // Issued questions too. They hold no problem text — only a digest — but
+      // they are a record that this child was asked something, and "Natalie
+      // starts over knowing nothing" cannot leave a gradable question behind
+      // for an account that no longer exists.
+      await client.query('delete from edu.questions where learner_id = $1', [learnerId]);
 
       await client.query('commit');
       return {
@@ -482,6 +493,22 @@ export const forgetEduLearnerRecord: ForgetLearnerRecord = async (ctx) =>
       throw error;
     }
   });
+
+export const forgetEduLearnerRecord: ForgetLearnerRecord = async (ctx) =>
+  forgetEduRecordFor(ctx.learnerId);
+
+/**
+ * FD-26's educational-store leg — the same transaction, for one subject of an
+ * account deletion.
+ *
+ * The subject is the branded `DeletionSubject` rather than an id, so the only
+ * value that can reach that `$1` is one `planAccountDeletion` minted from the
+ * guardianship rows the session resolved. The paragraph above about blast
+ * radius is the reason the brand exists: this predicate is the one in the
+ * product whose failure mode is other people's children.
+ */
+export const eraseEduSubject: EraseSubjectEdu = async (_ctx, subject) =>
+  forgetEduRecordFor(subject.authId);
 
 /**
  * One session transcript, landed in the educational store.
@@ -496,31 +523,175 @@ export const forgetEduLearnerRecord: ForgetLearnerRecord = async (ctx) =>
  * a turn that carried what the child SAID is rejected by the database rather
  * than by a reviewer. Nothing is stripped here on the way in — stripping would
  * make the constraint unreachable and therefore untested.
+ *
+ * Takes the CLIENT rather than checking one out, because the graded path writes
+ * it inside the transaction that holds the question's current revision (see
+ * `withCurrentEduEvidence`). A transcript committed on a second connection would
+ * be a grade that outlived the evidence for it.
  */
-export const saveEduTranscript: SaveTranscript = async (_ctx, transcript) => {
+async function insertTranscript(client: EduClient, transcript: TranscriptToSave): Promise<void> {
+  await client.query(
+    /*
+      `on conflict do nothing`, not `do update`. A transcript is a capture, not
+      a document — `SessionTranscripts.ts` says the collection is immutable for
+      the same reason — so a repeated `sessionId` is a retry of a write that
+      already succeeded, and the honest response is to leave the first one
+      alone rather than to overwrite a record of what happened.
+    */
+    `insert into edu.transcripts
+       (session_id, learner_id, captured_at, expires_at, turns, question_id, revision)
+     values ($1, $2, $3, $4, $5::jsonb, $6, $7)
+     on conflict (session_id) do nothing`,
+    [
+      transcript.sessionId,
+      transcript.learnerAuthId,
+      transcript.capturedAt,
+      transcript.expiresAt,
+      JSON.stringify(transcript.turns),
+      transcript.evidence.questionId,
+      transcript.evidence.revision,
+    ],
+  );
+}
+
+export const saveEduTranscript: SaveTranscript = async (_ctx, transcript) =>
+  withEdu((client: EduClient) => insertTranscript(client, transcript));
+
+/** What `/api/tutor/next` hands the store when it issues a question. */
+export interface QuestionToIssue {
+  readonly questionId: string;
+  readonly revision: string;
+  /** `problemDigest(problem)` — the store never sees the problem itself. */
+  readonly problemDigest: string;
+  readonly evaluationReady: boolean;
+  readonly issuedAt: string;
+  readonly expiresAt: string;
+}
+
+/**
+ * Records the question the server just asked, so the answer can be graded.
+ *
+ * Identity comes off `ctx` and never off the argument, which is CLAUDE.md
+ * §The block's rule and is load-bearing here rather than stylistic: the row
+ * written is the row `withCurrentEduEvidence` will later match a learner
+ * against, so a caller able to name the owner could issue a question in
+ * someone else's name and then grade against it.
+ *
+ * `on conflict do update` is a RE-ISSUE, and it is the mechanism by which a
+ * stale turn stops grading: the revision moves, and a client still holding the
+ * previous one now quotes a revision no row has. Scoped by `learner_id` in the
+ * `where` so the update cannot cross owners even if a caller passes an id it
+ * does not hold.
+ */
+export const issueEduQuestion = async (ctx: ProtectedCtx, question: QuestionToIssue): Promise<void> => {
   await withEdu(async (client: EduClient) => {
     await client.query(
-      /*
-        `on conflict do nothing`, not `do update`. A transcript is a capture, not
-        a document — `SessionTranscripts.ts` says the collection is immutable for
-        the same reason — so a repeated `sessionId` is a retry of a write that
-        already succeeded, and the honest response is to leave the first one
-        alone rather than to overwrite a record of what happened.
-      */
-      `insert into edu.transcripts
-         (session_id, learner_id, captured_at, expires_at, turns)
-       values ($1, $2, $3, $4, $5::jsonb)
-       on conflict (session_id) do nothing`,
+      `insert into edu.questions
+         (question_id, learner_id, org_id, revision, problem_digest, evaluation_ready, issued_at, expires_at)
+       values ($1, $2, $3, $4, $5, $6, $7, $8)
+       on conflict (question_id) do update
+         set revision = excluded.revision,
+             org_id = excluded.org_id,
+             problem_digest = excluded.problem_digest,
+             evaluation_ready = excluded.evaluation_ready,
+             issued_at = excluded.issued_at,
+             expires_at = excluded.expires_at
+       where edu.questions.learner_id = excluded.learner_id`,
       [
-        transcript.sessionId,
-        transcript.learnerAuthId,
-        transcript.capturedAt,
-        transcript.expiresAt,
-        JSON.stringify(transcript.turns),
+        question.questionId,
+        ctx.learnerId,
+        ctx.orgId ?? null,
+        question.revision,
+        question.problemDigest,
+        question.evaluationReady,
+        question.issuedAt,
+        question.expiresAt,
       ],
     );
   });
 };
+
+/** `edu.questions` as `pg` returns it. */
+interface QuestionRow {
+  question_id: string;
+  learner_id: string;
+  org_id: string | null;
+  revision: string;
+  problem_digest: string;
+  evaluation_ready: boolean;
+  expires_at: Date;
+}
+
+/**
+ * The production implementation of the assessment gate — the port
+ * `tutor.service.ts` has declared since the gate was written and that nothing
+ * implemented, which is why `/api/tutor/evaluate` could not grade at all.
+ *
+ * `for update` INSIDE the transaction that writes the transcript is the whole
+ * point. Read-then-write without the lock leaves the window the gate exists to
+ * close: a re-issue landing between the check and the insert would produce a
+ * grade against a question that is no longer the one being asked. Here the
+ * re-issue waits for this commit and then moves the revision, so the next turn
+ * quoting the old one finds nothing.
+ *
+ * A miss — no row, someone else's row, or a superseded revision — is `null`
+ * rather than a throw. The service reads `null` as "ungraded", which is the
+ * honest answer to "was this answer right" when the server cannot prove what it
+ * asked, and a 500 would instead tell a child their homework broke the app.
+ *
+ * COST, stated rather than discovered: the connection and the row lock are held
+ * for the whole callback, and that callback runs the Safety Plane. The lock is
+ * on one learner's own question so it blocks nobody else's turn, but the
+ * connection is from the shared pool — which is doc 12 §8's one-Postgres
+ * trade-off arriving on the tutoring path. If that pool becomes the ceiling,
+ * the fix is to classify before opening the transaction, not to drop the lock.
+ */
+export const withCurrentEduEvidence: NonNullable<TutorTurnPorts['withCurrentEvidence']> = async (
+  ctx,
+  reference,
+  assess,
+) =>
+  withEdu(async (client: EduClient) => {
+    await client.query('begin');
+    try {
+      const { rows } = await client.query<QuestionRow>(
+        `select question_id, learner_id, org_id, revision, problem_digest,
+                evaluation_ready, expires_at
+           from edu.questions
+          where question_id = $1 and learner_id = $2
+          for update`,
+        [reference.questionId, ctx.learnerId],
+      );
+
+      const row = rows[0];
+      // The revision is checked here as well as in the service because this is
+      // where it is held: the service re-checks what it was handed, and only
+      // this comparison is inside the lock.
+      if (row === undefined || row.revision !== reference.revision) {
+        await client.query('rollback');
+        return null;
+      }
+
+      const evidence: AssessmentEvidence = {
+        questionId: row.question_id,
+        revision: row.revision,
+        learnerId: row.learner_id,
+        orgId: row.org_id,
+        problemDigest: row.problem_digest,
+        evaluationReady: row.evaluation_ready,
+        expiresAt: row.expires_at.toISOString(),
+      };
+
+      const result = await assess(evidence, async (_ctx, transcript: TranscriptToSave) => {
+        await insertTranscript(client, transcript);
+      });
+      await client.query('commit');
+      return result;
+    } catch (error) {
+      await client.query('rollback');
+      throw error;
+    }
+  });
 
 /**
  * `skillId` → the human title, taken from whatever fact in the SAME batch has
@@ -748,6 +919,26 @@ export async function updateEduFactProvenance(facts: readonly DerivedFact[]): Pr
  * mid-sweep and be deleted without its facts, and once the row is gone nothing
  * can find those facts again.
  */
+/**
+ * Expired questions, dropped on the same sweep as everything else in `edu`.
+ *
+ * By id-less bulk delete rather than load-then-delete, unlike the transcripts
+ * above: nothing derives from a question, so there is no cascade to walk and no
+ * caller that needs to see the rows on their way out. The row is already unable
+ * to authorize a grade once `expires_at` has passed — the service checks it —
+ * so this is storage hygiene, and the CHECK constraint is what makes the
+ * promise.
+ */
+export async function deleteExpiredEduQuestions(cutoff: Date): Promise<number> {
+  return withEdu(async (client: EduClient) => {
+    const { rowCount } = await client.query(
+      'delete from edu.questions where expires_at <= $1',
+      [cutoff],
+    );
+    return rowCount ?? 0;
+  });
+}
+
 export async function deleteEduTranscripts(sessionIds: readonly string[]): Promise<number> {
   if (sessionIds.length === 0) return 0;
   return withEdu(async (client: EduClient) => {

@@ -1,0 +1,7 @@
+{
+  "name": "board-texture",
+  "version": "0.1.0",
+  "description": "Draws the Quickdraw WebView onto a ViroCore material through AndroidViewTexture.",
+  "private": true,
+  "platforms": ["android"]
+}

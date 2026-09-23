@@ -5,6 +5,7 @@ import { useRouter } from 'solito/navigation';
 import { isBillingRole } from '@acme/auth';
 import { Section, View, Pressable } from '@acme/ui/tw';
 import { Button, Card, Heading, Switch, Text, FadeIn } from '@acme/ui';
+import { PermissionChecklist } from '../permissions';
 import { authClient, useAppSession } from '../../providers/session';
 import { useProfile, type ThemePreference } from '../profile/profile.store';
 
@@ -104,6 +105,27 @@ export function SettingsContent({ managePlanHref }: { managePlanHref?: string })
       </FadeIn>
 
       {/*
+        PERMISSIONS, WHERE A GUARDIAN CAN ACTUALLY REACH THEM.
+
+        Android silently ignores a permission request once it has been refused
+        twice — no dialog, no error, the feature just fails — so a checklist
+        that only appears in front of a feature has no answer for a child who
+        already said no. This is the page they can come back to, and it is the
+        only surface in the app that can send them to system settings.
+      */}
+      <FadeIn delay={170}>
+        <Card className="gap-4">
+          <View className="gap-1">
+            <Text variant="heading">Permissions</Text>
+            <Text variant="caption" tone="muted">
+              What this app asks your device for, and why.
+            </Text>
+          </View>
+          <PermissionChecklist />
+        </Card>
+      </FadeIn>
+
+      {/*
         DECISION — the plan row is role-gated AND host-gated: it renders only
         when the session may bill (owner/finance, the RoleShell resolution
         above) and the mounting screen supplied the href — the web fork passes
@@ -137,13 +159,40 @@ export function SettingsContent({ managePlanHref }: { managePlanHref?: string })
           </View>
           <View className="flex-row gap-stack">
             <Button title="Sign out" variant="outline" onPress={() => { void signOut(); }} />
-            {/*
-              DECISION — no "Delete account" button: it was a dead control
-              (onPress={() => {}}), and FD-26 — the deletion flow this
-              contract's exit is declared against — is MISSING (sys.settings
-              Status). Absence over a ghost: the row returns WITH FD-26, wired
-              to a real flow, not before.
-            */}
+          </View>
+        </Card>
+      </FadeIn>
+
+      {/*
+        FD-26, wired. The row was removed once as a dead control
+        (`onPress={() => {}}`) with the decision recorded here — absence over a
+        ghost, returning WITH the flow. The flow now exists
+        (`features/account/account-deletion.service.ts`), so the row is back.
+
+        IT IS NOT ROLE-GATED, and that is the opposite treatment from the plan
+        row above. Plan is hidden from anyone who cannot bill, because a
+        surface that cannot act is noise. Deletion is different in both
+        directions: App Review guideline 5.1.1(v) requires every account that
+        can be created to be deletable from inside the app, and a
+        guardian-managed learner who arrives here is owed the reason and the
+        destination rather than a missing row they would read as their own
+        fault. `DeleteAccountContent` renders the child's version; this row
+        only opens the door.
+      */}
+      <FadeIn delay={320}>
+        <Card className="gap-stack">
+          <View className="gap-1">
+            <Text variant="heading">Account</Text>
+            <Text variant="caption" tone="muted">
+              Delete your account and everything Moyo holds for it.
+            </Text>
+          </View>
+          <View className="flex-row gap-stack">
+            <Button
+              title="Delete account"
+              variant="outline"
+              onPress={() => router.push('/account/delete')}
+            />
           </View>
         </Card>
       </FadeIn>

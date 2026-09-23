@@ -1,6 +1,7 @@
 'use client';
 // S21 · Guardian onboarding — account → consent → name the family → children →
-// handoff → plan. Doc 06 §5: cool structure, hot accents on the child cards.
+// handoff → plan (web; the plan step does not exist on native — plan-step.native.ts).
+// Doc 06 §5: cool structure, hot accents on the child cards.
 // Consent is real text, not a checkbox with a link, because §5 requires it be
 // screen-reader complete and readable at AA. Doc 37 §2 added the family step
 // (the personalization moment) and removed `grants`, a control-free stub.
@@ -28,6 +29,7 @@ import { PaywallContent } from '../../paywall/paywall-content';
 import { HandoffCodePanel } from '../handoff/handoff-code-panel';
 import { createLearnerOnServer } from '../handoff/handoff.client';
 import { useGuardianOnboarding } from './store';
+import { GUARDIAN_PLAN_STEP } from './plan-step';
 import {
   canAdvance,
   childProblems as problems,
@@ -60,11 +62,16 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
   const armWhatsNext = useGuardianWhatsNext((s) => s.arm);
 
   /**
-   * Exiting FROM the plan step is completion — it is the last step and both of
-   * its buttons are honest ways out — so it arms the feed's one-time "what
-   * happens next" card (doc 37 §2) and clears the persisted draft: a finished
-   * flow that rehydrated onto its own paywall would read as never finished.
-   * "Save & exit" anywhere earlier keeps the draft; that is what it is for.
+   * Exiting FROM the last step is completion, so it arms the feed's one-time
+   * "what happens next" card (doc 37 §2) and clears the persisted draft: a
+   * finished flow that rehydrated onto its own final step would read as never
+   * finished. "Save & exit" anywhere earlier keeps the draft; that is what it
+   * is for.
+   *
+   * Which step that is depends on the platform. On web it is `plan`, and the
+   * paywall's own two buttons are both honest ways out. On native there is no
+   * plan step (plan-step.native.ts), so `handoff` is terminal and the Finish
+   * button below carries the same exit.
    */
   const complete = () => {
     armWhatsNext();
@@ -159,7 +166,10 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
         </Section>
       ) : null}
 
-      {step === 'plan' ? (
+      {/* Web only, by construction — see plan-step.native.ts. The guard is the
+          constant and not just the step name so the branch reads as
+          platform-conditional at the place it renders. */}
+      {GUARDIAN_PLAN_STEP && step === 'plan' ? (
         <PaywallContent
           onStartTrial={complete}
           onContinueFree={complete}
@@ -306,7 +316,13 @@ export function GuardianOnboardingContent({ onExit }: { onExit: () => void }) {
             onPress={() => void advance()}
             disabled={!ready || committing}
           />
-        ) : null}
+        ) : step === 'plan' ? null : (
+          // The terminal step needs a way to finish that is not "Save & exit",
+          // which keeps the draft. On web the paywall owns both exits, so this
+          // would be a third completion button and is left out; on native the
+          // flow ends on handoff and this is the only exit that completes it.
+          <Button title="Finish setup" onPress={complete} />
+        )}
       </View>
     </View>
   );

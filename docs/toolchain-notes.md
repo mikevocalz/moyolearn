@@ -2,12 +2,27 @@
 
 ## Node floor
 
-Node **24.x**, range `>=24.15.0 <26`. Two walls, one narrow overlap: Payload `4.0.0-canary.28`
-raised its floor to 24.15.0, and Expo's config loader dies on Node 26 (`stripTypeScriptTypes`
-rejects `mode: 'transform'`). **24.19.0** is the pinned version. Declared in `package.json`
-`engines`, enforced by `engine-strict=true` in `.npmrc`, and pinned for CI/EAS by `.nvmrc` +
-`eas.json`'s `base` profile. Bump `.nvmrc`, `eas.json` and `engines` together — CI reads the file
-via `node-version-file`, and a mismatch fails `pnpm install` outright under `engine-strict`.
+Range `^24.15.0 || ^26.0.0`. **24.19.0** stays the pinned version for CI and EAS.
+
+The floor is Payload's: `payload` and `@payloadcms/next` both declare `>=24.15.0`, read from the
+installed manifests. The shape — two ranges rather than one `>=` — is Expo's: SDK 58 declares
+`^22.13.0 || ^24.3.0 || ^26.0.0 || >=27.0.0`, which excludes the odd majors, and RN 0.88 RC
+declares `^22.13.0 || ^24.3.0 || >= 26.0.0`. The intersection with Payload's floor is 24.15+ and
+26.x.
+
+**The Node 26 ceiling is gone, and it was tested rather than assumed.** SDK 57's config loader
+died on 26 (`stripTypeScriptTypes` rejecting `mode: 'transform'`), which is why the range read
+`<26`. On SDK 58 with Node 26.8.2, `pnpm exec expo config --type public` exits 0 and prints the
+resolved config, with no `stripTypeScriptTypes` error anywhere in the output. `expo install --fix`
+also loads the dynamic `app.config.ts` on 26. Everything else in the repo runs on 26.8.2 too:
+install, all four web builds, `pnpm typecheck` 19/19, `pnpm test` 12/12, and `next start`.
+
+`engine-strict` is **false** in `.npmrc`, not true. This section said otherwise and was wrong:
+with `engine-strict=false` a mismatch is a pnpm warning, not an install failure — which is why
+every command on this machine printed `Unsupported engine` for weeks instead of stopping. Keep
+`.nvmrc`, `eas.json`'s `base` profile and `engines` moving together anyway; CI reads `.nvmrc`
+through `node-version-file`, so a drift there changes what CI actually runs even though nothing
+fails loudly.
 
 **`.nvmrc` does not protect Gradle.** The Gradle daemon is long-lived and keeps the environment of
 whichever shell first forked it, so it will keep invoking a stale `node` indefinitely — surfacing

@@ -71,6 +71,22 @@ export default function LearnerShell() {
         {/* The live session draws its own SessionToolbar — a lesson is a
             bounded place, not a chromed page (doc 07). */}
         <Stack.Screen name="tutor" options={{ headerShown: false }} />
+        {/*
+          THE SPATIAL BOARD IS DECLARED, NOT MERELY PRESENT.
+
+          `Stack.Protected` does not guard a directory — it collects the
+          `Stack.Screen` NAMES under a falsy guard and removes those from the
+          navigator (`useSortedScreens`), leaving every other file route in the
+          group reachable. So an undeclared `tutor-xr.tsx` sat inside
+          `(learner)/` and was protected by nothing: a child's board, openable
+          by deep link under any role, and still in history after the role
+          flipped. Being in the folder is not the guard; this line is.
+
+          `headerShown: false` for the reason the route's own header gives — a
+          navigation bar floating in front of a headset is chrome from the wrong
+          medium.
+        */}
+        <Stack.Screen name="tutor-xr" options={{ headerShown: false }} />
         <Stack.Screen name="plan" />
       </Stack.Protected>
     </Stack>

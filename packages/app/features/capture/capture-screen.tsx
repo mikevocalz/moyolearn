@@ -20,12 +20,15 @@
 // SOT: docs/pack/24-homework-capture-spec.md §1
 // SOT-KEYWORDS: capture screen choose capture review verify context upload success age band
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo } from 'react';
+import { KeyboardAwareScroll } from '@acme/ui';
 import { useRouter } from 'solito/navigation';
 import { pickFile } from '../editor/pick-file';
 import { pickNoteImage } from '../schedule/pick-note-image';
 import {
   Button,
+  useInstanceStore,
+  useStore,
   Container,
   Heading,
   IconButton,
@@ -48,6 +51,8 @@ import { CaptureEntryRow } from './entry-row';
 import { GuidedFrame } from './guided-frame';
 import { CaptureTip } from './capture-tip';
 import { DigitizedTextReview } from './digitized-text-review';
+import { OcrReviewBase } from './ocr-review-base';
+import { readDocumentEvidenceAt } from './read-document-at';
 import { OcrReview } from './ocr-review';
 import { CropPreview } from './crop-preview';
 import { useCaptureStore } from './capture.store';
@@ -56,6 +61,18 @@ import { stripExif } from './privacy-process';
 import { transcribe } from './transcribe';
 import { uploadPhaseKey, type UploadPhaseKey } from './upload-phase';
 import { CaptureContext, CaptureMode, CapturePage, CaptureStep } from './types';
+
+// Each mounted capture flow owns its transient Zustand values; setter identity
+// stays stable for asynchronous capture and upload effects.
+function useCaptureValue<T>(initial: T) {
+  const store = useInstanceStore(() => ({ value: initial }));
+  const value = useStore(store, (state) => state.value);
+  const setValue = useMemo(() => (next: T | ((previous: T) => T)) => {
+    store.setState({ value: typeof next === 'function'
+      ? (next as (previous: T) => T)(store.getState().value) : next });
+  }, [store]);
+  return [value, setValue] as const;
+}
 
 function newId(): string {
   if (typeof globalThis.crypto !== 'undefined' && 'randomUUID' in globalThis.crypto) {
@@ -100,26 +117,29 @@ export interface CaptureScreenProps {
 }
 
 function TypeCapture({ ageBand, onDone }: { ageBand: AgeBand; onDone: (text: string) => void }) {
-  const [text, setText] = useState('');
+  const [text, setText] = useCaptureValue('');
   const size = buttonSizeForBand(ageBand);
   const label = ageBand === 'young' ? 'Type the problem' : 'Type or paste your work';
   return (
-    <View className="flex-1 gap-stack p-inset">
-      <Textarea
-        label={label}
-        value={text}
-        onChangeText={setText}
-        containerClassName="flex-1"
-      />
-      <Button
-        title="Done"
-        variant="highlighter"
-        size={size}
-        fullWidth
-        onPress={() => onDone(text)}
-        disabled={text.trim().length === 0}
-      />
-    </View>
+    <KeyboardAwareScroll className="flex-1" keyboardShouldPersistTaps="handled">
+      <View className="gap-stack p-inset">
+        <Textarea
+          label={label}
+          autoCorrect={false}
+          autoCapitalize="none"
+          value={text}
+          onChangeText={setText}
+        />
+        <Button
+          title="Done"
+          variant="highlighter"
+          size={size}
+          fullWidth
+          onPress={() => onDone(text)}
+          disabled={text.trim().length === 0}
+        />
+      </View>
+    </KeyboardAwareScroll>
   );
 }
 
@@ -149,8 +169,8 @@ function VoiceReadVerify({
   onConfirm: (text: string) => void;
   onCancel: () => void;
 }) {
-  const [text, setText] = useState('');
-  const [phase, setPhase] = useState<'loading' | 'ready'>('loading');
+  const [text, setText] = useCaptureValue('');
+  const [phase, setPhase] = useCaptureValue<'loading' | 'ready'>('loading');
 
   useEffect(() => {
     let cancelled = false;
@@ -170,7 +190,7 @@ function VoiceReadVerify({
         if (!cancelled) setPhase('ready');
       });
     return () => { cancelled = true; };
-  }, [recording.uri]);
+  }, [recording.uri, setPhase, setText]);
 
   if (phase === 'loading') {
     return (
@@ -384,25 +404,29 @@ function UploadProcessView({
   );
 }
 
+const readFileForReview = readDocumentEvidenceAt;
+
 export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureScreenProps) {
   const router = useRouter();
   const { setProblem } = useCaptureStore();
   const labels = captureLabelsForBand(ageBand);
 
-  const [step, setStep] = useState<CaptureStep>('choose');
-  const [mode, setMode] = useState<CaptureMode | null>(null);
-  const [pages, setPages] = useState<CapturePage[]>([]);
-  const [verifiedText, setVerifiedText] = useState('');
-  const [recording, setRecording] = useState<VoiceRecording | null>(null);
-  const [typed, setTyped] = useState('');
-  const [context, setContext] = useState<CaptureContext>({
+  const [step, setStep] = useCaptureValue<CaptureStep>('choose');
+  const [mode, setMode] = useCaptureValue<CaptureMode | null>(null);
+  const [pages, setPages] = useCaptureValue<CapturePage[]>([]);
+  const [verifiedText, setVerifiedText] = useCaptureValue('');
+  const [reviewIndex, setReviewIndex] = useCaptureValue(0);
+  const [pageReadings, setPageReadings] = useCaptureValue<Record<string, string>>({});
+  const [recording, setRecording] = useCaptureValue<VoiceRecording | null>(null);
+  const [typed, setTyped] = useCaptureValue('');
+  const [context, setContext] = useCaptureValue<CaptureContext>({
     subject: '',
     assignment: '',
     dueDate: '',
     stuck: '',
   });
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [uploadIds, setUploadIds] = useState<string[] | null>(null);
+  const [editingId, setEditingId] = useCaptureValue<string | null>(null);
+  const [uploadIds, setUploadIds] = useCaptureValue<string[] | null>(null);
   const size = buttonSizeForBand(ageBand);
   const transferRows = useTransferTray((s) => s.rows);
 
@@ -410,6 +434,8 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
     setStep('choose');
     setMode(null);
     setPages([]);
+    setReviewIndex(0);
+    setPageReadings({});
     setVerifiedText('');
     setRecording(null);
     setTyped('');
@@ -443,7 +469,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
           const processed = await stripExif(file.uri);
           setPages([imagePage(processed.uri)]);
         } else {
-          setPages([{ ...filePage(file.uri), uri: file.uri }]);
+          setPages([{ ...filePage(file.uri), name: file.name, mimeType: mimeForFile(file.name) }]);
         }
         setStep('review-pages');
       }
@@ -487,7 +513,9 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
   };
 
   const beginReadVerify = () => {
-    if (pages.length > 0 && (pages[0]?.kind === 'photo' || pages[0]?.kind === 'image')) {
+    if (pages.length > 0) {
+      setReviewIndex(0);
+      setPageReadings({});
       setStep('read-verify');
       return;
     }
@@ -525,7 +553,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
       the recogniser's charset has no `÷` or `×` — so the operator a child would
       most want to correct is the one they were never shown to correct.
     */
-    setProblem(fullProblem.trim() || verifiedText, true);
+    setProblem(fullProblem.trim() || verifiedText, pages.length > 0 || recording !== null);
     router.push('/tutor');
   };
 
@@ -540,9 +568,9 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
       const name =
         page.kind === 'photo'
           ? `photo-${i + 1}.jpg`
-          : page.uri.split('/').pop() ?? `file-${i + 1}`;
+          : page.name ?? page.uri.split('/').pop() ?? `file-${i + 1}`;
       const mimeType =
-        page.kind === 'photo' || page.kind === 'image' ? 'image/jpeg' : mimeForFile(name);
+        page.kind === 'photo' || page.kind === 'image' ? 'image/jpeg' : page.mimeType ?? mimeForFile(name);
 
       useUploadQueue.getState().enqueue({
         id: page.id,
@@ -571,7 +599,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
     // readiness, not on user input.
     queueMicrotask(() => setUploadIds(ids));
     void drainNow();
-  }, [step, pages, recording, uploadIds]);
+  }, [step, pages, recording, uploadIds, setUploadIds]);
 
   // Advance to success once every enqueued item is ready. The effect resolves
   // on done||failed: a batch with failures SETTLES on the upload step, where
@@ -589,7 +617,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
     if (settled && ours.every((r) => r.status === 'done')) {
       queueMicrotask(() => setStep('success'));
     }
-  }, [step, uploadIds, transferRows]);
+  }, [step, uploadIds, transferRows, setStep]);
 
   // Contract cancel exit: back to the learner's home surface (learner.home).
   // '/' is the role dispatcher on both apps — the same door the error screen
@@ -694,7 +722,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
         <ScrollView className="flex-1" contentContainerClassName="p-inset gap-stack">
           <Text className="font-sans text-title font-bold text-text">Review your pages</Text>
           <Text className="font-sans text-body text-text">
-            {pages.length} {pages.length === 1 ? 'page' : 'pages'} ready
+            {pages.length} {pages.length === 1 ? 'page' : 'pages'} captured
           </Text>
           <View className="gap-element">
             {pages.map((page, index) => (
@@ -707,7 +735,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
                 ) : (
                   <View className="h-24 w-20 items-center justify-center rounded-card bg-surface-sunken">
                     <Text variant="caption" tone="muted" className="text-center">
-                      {page.uri.split('/').pop() ?? 'File'}
+                      {page.name ?? page.uri.split('/').pop() ?? 'File'}
                     </Text>
                   </View>
                 )}
@@ -774,18 +802,25 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
     }
 
     if (step === 'read-verify') {
-      const firstPage = pages[0];
-      if (firstPage && (firstPage.kind === 'photo' || firstPage.kind === 'image')) {
+      const page = pages[reviewIndex];
+      if (page) {
+        const onConfirm = (text: string) => {
+          const next = { ...pageReadings, [page.id]: text };
+          setPageReadings(next);
+          if (reviewIndex + 1 < pages.length) setReviewIndex(reviewIndex + 1);
+          else {
+            setVerifiedText(pages.map((p, i) => `${p.kind === 'file' ? `File ${i + 1}: ${p.name ?? 'Document'}` : `Page ${i + 1}`}:\n${next[p.id] ?? '[Needs review]'}`).join('\n\n'));
+            setStep('add-context');
+          }
+        };
+        const onCancel = () => setStep('review-pages');
         return (
-          <OcrReview
-            ageBand={ageBand}
-            source={firstPage.uri}
-            onConfirm={(text) => {
-              setVerifiedText(text);
-              setStep('add-context');
-            }}
-            onCancel={() => setStep('review-pages')}
-          />
+          <View className="flex-1">
+            <Text className="p-inset font-sans text-label text-text">{page.kind === 'file' ? 'File' : 'Page'} {reviewIndex + 1} of {pages.length}</Text>
+            {page.kind === 'file'
+              ? <OcrReviewBase key={page.id} ageBand={ageBand} source={page.uri} mimeType={page.mimeType} read={readFileForReview} onConfirm={onConfirm} onCancel={onCancel} />
+              : <OcrReview key={page.id} ageBand={ageBand} source={page.uri} onConfirm={onConfirm} onCancel={onCancel} />}
+          </View>
         );
       }
 

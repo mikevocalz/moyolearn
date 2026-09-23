@@ -16,37 +16,55 @@
 // SOT: CLAUDE.md §The block · docs/pack/19-learning-outcomes-spec.md §3 · docs/pack/12-systems-design-prompt.md §4 §5 · docs/design/jobs.md §2.1
 // SOT-KEYWORDS: tutor evaluate api route protected operation server transcript edu educational store student model distill queue async after close
 import { NextRequest, NextResponse, after } from 'next/server';
-import { evaluateTutorTurn, type SaveTranscript } from '@acme/app/server';
-import { saveEduTranscript } from '@/lib/edu.repository';
+import { evaluateTutorTurn, type TutorTurnPorts } from '@acme/app/server';
+import { withCurrentEduEvidence } from '@/lib/edu.repository';
 import { drain, enqueueDistillation } from '@/lib/jobs';
 import { auth } from '@/lib/auth';
 import { reportRouteError } from '@/lib/report-error';
 
 /**
- * Writes the transcript, then enqueues its distillation.
+ * The evidence transaction, with one extra job: remembering what to distil once
+ * that transaction has committed.
  *
- * IN THAT ORDER, and the order is the guarantee. `edu.distill`'s payload is the
- * transcript id and nothing else (`docs/design/jobs.md` §4.1), so a job enqueued
- * before its row existed would find nothing and complete — silently losing the
- * turn from the child's model. Enqueued after, the worst case is a transcript
- * with no job, which is recoverable by re-enqueueing on the same key.
+ * THE ENQUEUE MOVED, and the move is the point. It used to run immediately
+ * after the transcript insert, which was correct while the insert was its own
+ * transaction — the insert now happens inside the lock `withCurrentEduEvidence`
+ * holds on the question's current revision, and an enqueue before that commit
+ * could hand `edu.distill` a job whose transcript id names no row if the
+ * transaction rolled back. The job would find nothing and complete, silently
+ * losing the turn from the child's model: the exact failure the original
+ * ordering was written to prevent, one layer down.
  *
- * The two writes are not yet ONE transaction, which is doc 12 §6's whole reason
- * for choosing this runner. §8.3 records why: `protectedOperation` hands an
- * operation a `ctx`, not a transaction handle. `enqueue`'s `db` option is the
- * seam that closes it the day one exists.
+ * So the wrapped save records the id and the request enqueues it after
+ * `evaluateTutorTurn` returns — after commit. The worst case is a committed
+ * transcript with no job, which is recoverable by re-enqueueing on the same key.
  *
- * A turn with no storable content enqueues nothing. `distill` filters on
+ * A turn with no storable content records nothing. `distill` filters on
  * `turn.storable` and would derive an empty set, so the job would be a round
  * trip to prove a thing the caller already knows — and the safety-blocked
  * branch, which is where unstorable turns come from, is exactly the traffic that
  * should not also cost a queue insert.
+ *
+ * Composed HERE rather than inside the repository because this is the
+ * composition root: the repository writes to the educational store and has no
+ * business knowing a queue exists.
  */
-const saveTranscriptAndQueueDistillation: SaveTranscript = async (ctx, transcript) => {
-  await saveEduTranscript(ctx, transcript);
-  if (!transcript.turns.some((turn) => turn.storable)) return;
-  await enqueueDistillation(transcript.sessionId);
-};
+function evidenceTransaction(): {
+  port: NonNullable<TutorTurnPorts['withCurrentEvidence']>;
+  distillable: () => string | null;
+} {
+  let sessionId: string | null = null;
+  return {
+    port: (ctx, reference, assess) =>
+      withCurrentEduEvidence(ctx, reference, (evidence, save) =>
+        assess(evidence, async (saveCtx, transcript) => {
+          await save(saveCtx, transcript);
+          if (transcript.turns.some((turn) => turn.storable)) sessionId = transcript.sessionId;
+        }),
+      ),
+    distillable: () => sessionId,
+  };
+}
 
 export async function POST(request: NextRequest) {
   let body: unknown;
@@ -71,11 +89,42 @@ export async function POST(request: NextRequest) {
 
   const { problem, answer, hintDepth } = body as { problem: string; answer: string; hintDepth: number };
 
+  const sourceReadiness = 'sourceReadiness' in body && body.sourceReadiness === 'verified'
+    ? 'verified' as const
+    : 'unresolved' as const;
+
+  /*
+    The pair the server issued, read back off the request — and read back
+    STRICTLY, because this is the only client-supplied value that can lead to a
+    write against a child's model. Anything that is not two well-formed ids is
+    no evidence at all, which the service turns into an ungraded turn rather
+    than a 400: a learner whose app sent a malformed handle should get coaching,
+    not an error about a field they have never heard of.
+
+    The shape is all that is checked here. Whether the pair names a row this
+    learner owns, whether that row is still the current revision, and whether it
+    has expired are questions only the locked read can answer, and they are
+    asked there.
+  */
+  const evidenceField = (body as { evidence?: unknown }).evidence;
+  const evidenceCandidate =
+    typeof evidenceField === 'object' && evidenceField !== null
+      ? (evidenceField as { questionId?: unknown; revision?: unknown })
+      : null;
+  const evidence =
+    evidenceCandidate !== null &&
+    typeof evidenceCandidate.questionId === 'string' &&
+    typeof evidenceCandidate.revision === 'string'
+      ? { questionId: evidenceCandidate.questionId, revision: evidenceCandidate.revision }
+      : undefined;
+
+  const transaction = evidenceTransaction();
+
   try {
     const result = await evaluateTutorTurn(
       auth,
       request.headers,
-      { problem, answer, hintDepth },
+      { problem, answer, hintDepth, sourceReadiness, evidence },
       /*
         NO `distillation` PORTS. `evaluateTutorTurn` distils only when it is
         given them, so withholding them is what takes distillation off the
@@ -90,8 +139,17 @@ export async function POST(request: NextRequest) {
         `lib/distill.service.ts`, behind the `edu.distill` job enqueued below,
         and it reads them on every run.
       */
-      { saveTranscript: saveTranscriptAndQueueDistillation },
+      { withCurrentEvidence: transaction.port },
     );
+
+    /*
+      ENQUEUED AFTER THE TRANSACTION, not inside it. See `evidenceTransaction`:
+      the transcript is committed by then or it does not exist, so a job here
+      always names a row. Null means the turn was never graded or carried
+      nothing storable, and neither is work for the queue.
+    */
+    const distillable = transaction.distillable();
+    if (distillable !== null) await enqueueDistillation(distillable);
 
     /*
       AFTER THE RESPONSE, and only the distillation queue.

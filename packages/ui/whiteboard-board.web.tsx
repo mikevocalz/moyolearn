@@ -37,7 +37,7 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
       into an `Image`. `FileReader` is the conversion the platform already has,
       so nothing is hand-rolled for it.
     */
-    const exportPng = useCallback(async (): Promise<string | null> => {
+    const exportPng = useCallback(async (opts?: { scale?: number }): Promise<string | null> => {
       const editor = board.current?.editor;
       if (!editor) return null;
       /*
@@ -49,8 +49,11 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         1× export of a 300dp pane is roughly 300px of handwriting, which is
         under what CRAFT reliably segments. Two is the vendor's own example and
         stays well inside `photograph-for-model`'s 1568px ceiling.
+
+        It is the DEFAULT rather than the rule: a caller rendering the export
+        for a person instead of a recogniser says so (`whiteboard.types.ts`).
       */
-      const blob = await editor.exportImage({ background: true, scale: 2 });
+      const blob = await editor.exportImage({ background: true, scale: opts?.scale ?? 2 });
       if (!blob) return null;
       return await new Promise<string | null>((resolve) => {
         const reader = new FileReader();
@@ -73,6 +76,57 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         setTool: (tool) => board.current?.editor?.setTool(tool),
         setInk: (colour) => board.current?.editor?.setStyle('color', colour),
         undo: () => board.current?.editor?.store.undo(),
+      redo: () => board.current?.editor?.store.redo(),
+      /*
+        THE SAME VERB, AND ON THIS SIDE IT IS A REAL DOM EVENT rather than a
+        string of script. The engine is in this document, so the board's own
+        canvas is reachable and a synthesised `PointerEvent` goes straight at
+        it — no bridge, no queue, the same client-space contract.
+
+        It exists on web because the contract has to be ONE shape: the spatial
+        screen is native-only today, and a handle whose verb set changes per
+        platform is a handle every caller has to branch on. A web caller that
+        drives it gets the same behaviour rather than a silent no-op.
+      */
+      injectPointer: (sample) => {
+        const host = board.current?.editor?.container;
+        if (!host) return;
+        const type =
+          sample.phase === 'begin'
+            ? 'pointerdown'
+            : sample.phase === 'move'
+              ? 'pointermove'
+              : sample.phase === 'end'
+                ? 'pointerup'
+                : 'pointercancel';
+        /*
+          EVERY PHASE AT THE CONTAINER, INCLUDING THE ONES AFTER `begin`. The
+          engine binds `pointerdown`, `pointermove`, `pointerup` and
+          `pointercancel` in one place — `Editor._bind`, all four onto
+          `this.container` — and registers nothing on `window` or `document`. An
+          event dispatched at `window` is delivered to `window`: propagation
+          descends to a node's ancestors, never from `window` down into the
+          document, so a move sent there reached no listener and the stroke
+          froze at its first point. The native fork had the same bug and was
+          fixed the same way. The engine subtracts the container's own rect
+          itself, so a point past the edge stays a coordinate rather than
+          becoming a lost event.
+        */
+        host.dispatchEvent(
+          new PointerEvent(type, {
+            pointerId: 1,
+            pointerType: 'pen',
+            isPrimary: true,
+            bubbles: true,
+            cancelable: true,
+            composed: true,
+            clientX: sample.x,
+            clientY: sample.y,
+            buttons: sample.phase === 'begin' || sample.phase === 'move' ? 1 : 0,
+            ...(sample.pressure === undefined ? {} : { pressure: sample.pressure }),
+          }),
+        );
+      },
         clear: () => board.current?.editor?.clearBoard(),
       }),
       [exportPng],

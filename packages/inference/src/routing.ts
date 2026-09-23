@@ -34,12 +34,10 @@ export type RoutingCell =
       readonly model: EffortModel;
       readonly maxTokens: number;
       readonly effort: Effort;
-      readonly serverSideFallback: boolean;
     }
   | {
       readonly model: FlatModel;
       readonly maxTokens: number;
-      readonly serverSideFallback: boolean;
     };
 
 /**
@@ -48,19 +46,14 @@ export type RoutingCell =
  * move on a problem the brief already frames — and the latency is in front of a
  * child waiting for a reply.
  *
- * `serverSideFallback` is on for the tutoring turn only. The frontier tier runs
- * safety classifiers of its own that can decline a benign homework turn; with
- * fallbacks on, a declined turn is re-run on a fallback model inside the same
- * call, and a `refusal` that survives that means the whole chain refused —
- * which is unambiguously the fail-closed case rather than a vendor mood. A
- * classifier cell keeps it off: a declined classification is a verdict worth
- * seeing rather than a turn worth rescuing.
+ * Provider refusals terminate the request. No vendor-selected fallback may
+ * evade the exact model approval and evaluation gate.
  */
 export const ROUTING = {
-  'tutor-turn': { model: 'claude-opus-5', maxTokens: 1024, effort: 'low', serverSideFallback: true },
-  'classify-input': { model: 'claude-haiku-4-5', maxTokens: 64, serverSideFallback: false },
-  'classify-output': { model: 'claude-haiku-4-5', maxTokens: 64, serverSideFallback: false },
-  'topic-fence': { model: 'claude-haiku-4-5', maxTokens: 64, serverSideFallback: false },
+  'tutor-turn': { model: 'claude-opus-5', maxTokens: 1024, effort: 'low' },
+  'classify-input': { model: 'claude-haiku-4-5', maxTokens: 64 },
+  'classify-output': { model: 'claude-haiku-4-5', maxTokens: 64 },
+  'topic-fence': { model: 'claude-haiku-4-5', maxTokens: 64 },
   /*
     Doc 34 §4 step 2 — the session-report narrative pass. The SAME small model
     as the classifier cells (the phrasing job is classifier-tier by design: the
@@ -71,7 +64,7 @@ export const ROUTING = {
     rescued by a second model, it falls back to the deterministic evidence
     copy in `packages/app/features/summary/narrative.ts`.
   */
-  'summary-narrative': { model: 'claude-haiku-4-5', maxTokens: 1024, serverSideFallback: false },
+  'summary-narrative': { model: 'claude-haiku-4-5', maxTokens: 1024 },
 } as const satisfies Record<InferenceRole, RoutingCell>;
 
 export function routeFor(role: InferenceRole): RoutingCell {
@@ -125,7 +118,6 @@ export function requestFor(
     maxTokens: cell.maxTokens,
     ...('effort' in cell ? { effort: cell.effort } : {}),
     cacheSystem: systemTokens >= profile.minCacheablePrefixTokens,
-    serverSideFallback: cell.serverSideFallback,
     ...(signal ? { signal } : {}),
   };
 }

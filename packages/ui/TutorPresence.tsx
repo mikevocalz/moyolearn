@@ -127,6 +127,15 @@ export interface TutorPresenceProps {
   /** Omit to draw the band as a read-only status strip (no reveal is offered). */
   onToggleReveal?: () => void;
   /**
+   * One action belonging to her, drawn beside the rail.
+   *
+   * It exists because her PANE starts closed: the seed presence is `compact`,
+   * so an action placed only in the pane is an action most learners never see.
+   * The caller renders it here OR in the detail pane — never both, which is the
+   * same rule `render` already enforces for her identity.
+   */
+  railActions?: React.ReactNode;
+  /**
    * The younger bands' extra line — "She can still hear you." K–2 and 3–5 need
    * telling; a 12th-grader reading "Listening" does not. Density is the band
    * difference, not a different component.
@@ -171,6 +180,7 @@ export function TutorPresence({
   tutorPresence,
   avatar,
   onToggleReveal,
+  railActions,
   assurance,
   size = 'md',
   render = 'full',
@@ -322,7 +332,21 @@ export function TutorPresence({
   }
 
   if (render === 'rail') {
-    return onToggleReveal ? (
+    /*
+      At pane widths the rail has no press target of its own — the header's
+      toggle acts on her pane — so `railActions` is the only control here and
+      it must not be wrapped in a press that would swallow its own taps.
+    */
+    const railRow = railActions ? (
+      <View className="w-full flex-row items-center gap-group">
+        <View className="flex-1">{rail}</View>
+        {railActions}
+      </View>
+    ) : (
+      rail
+    );
+
+    return onToggleReveal && !railActions ? (
       <PressScale
         outerClassName={`w-full ${className ?? ''}`}
         className="w-full"
@@ -332,7 +356,7 @@ export function TutorPresence({
         {rail}
       </PressScale>
     ) : (
-      <View className={`w-full ${className ?? ''}`}>{rail}</View>
+      <View className={`w-full ${className ?? ''}`}>{railRow}</View>
     );
   }
 

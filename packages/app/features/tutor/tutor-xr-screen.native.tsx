@@ -1,0 +1,1446 @@
+'use client';
+// The existing lesson in space: one BoardSession and one audioQueue owner.
+// Quickdraw stays in a native WebView. BoardTextureHost attaches that view to
+// Viro's live material, rendered by XrTriPanel; XrBoardSurface forwards owned
+// controller strokes into that same editor. Raster output is a visible recovery
+// preview only: handwriting waits for the live bridge and calibration.
+// The navigator captures its initial scene, so scene state comes from stores
+// and active runtime handles. Workspace placement is latched until Recenter.
+// SOT: board-session.ts · XrTriPanel.native.tsx · modules/board-texture
+// SOT-KEYWORDS: xr live whiteboard controller tutor voice session native
+
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { StyleSheet, View } from 'react-native';
+import {
+  ViroAmbientLight,
+  ViroARScene,
+  ViroController,
+  ViroDirectionalLight,
+  ViroTrackingStateConstants,
+  ViroXRSceneNavigator,
+  checkPermissions,
+  requestRequiredPermissions,
+  type ViroTrackingState,
+} from '@reactvision/react-viro';
+import {
+  Button,
+  Text,
+  WhiteboardBoard,
+  type WhiteboardCalibration,
+  type WhiteboardDiff,
+  type WhiteboardDiffSource,
+  type WhiteboardHandle,
+} from '@acme/ui';
+import { View as UiView } from '@acme/ui/primitives';
+import {
+  BoardTextureHost,
+  XrTriPanel,
+  XrBoardSurface,
+  XR_COLOR,
+  XR_MATERIAL,
+  boardComposition,
+  boardSurfacePixels,
+  minHitSize,
+  placeInFrontOf,
+  spatialDistance,
+  spatialSpacing,
+  type BoardTextureBinding,
+  type XrHeadPose,
+  type XrVector3,
+  type XrChatRow,
+  type XrSurfaceInput,
+} from '@acme/ui/xr';
+import { buttonSizeForBand } from '../capture';
+import {
+  acquireBoardSession,
+  boardSessionKey,
+  releaseBoardSession,
+  type BoardSession,
+} from './board-session.ts';
+import { boardPersistence } from './board-storage.ts';
+/* `.native` in the specifier for the same reason `Whiteboard` is imported from
+   the package's native fork: the hook reaches the engine handle, and nothing on
+   a web resolver's path may name it. */
+import { useBoardRaster } from './board-raster.native.ts';
+/* `.native` implicitly — this file is itself a `.native` fork, and she mounts a
+   Viro object nothing on a web resolver's path may name. */
+import { XrNatalie } from './XrNatalie.native.tsx';
+import { useTutorStore } from './tutor.store.ts';
+import type { TutorXrScreenProps } from './tutor-xr-screen.types.ts';
+import { SPATIAL_PERMISSIONS, spatialPermissionsGranted } from './xr-capability.ts';
+/* Bare specifier, so the `.native` fork is what a native bundle resolves and
+   nothing on a web resolver's path ever names the renderer. */
+import { currentXrEligibility } from './xr-eligibility';
+import { panelStateOf, useXrSession, type XrPhase } from './xr-session.store.ts';
+import { useXrVoice } from './xr-voice.native.ts';
+
+
+/** This presentation's id, so its own strokes are not echoed back at it. */
+const PRESENTATION_ID = 'tutor-xr';
+
+/** How many turns the spatial panel shows. See its header for why it is small. */
+const CHAT_WINDOW = 4;
+
+/**
+ * The live objects the scene needs and cannot be handed as props.
+ *
+ * `ViroARSceneNavigator` captures `initialScene` in its constructor and renders
+ * it as a component type from then on, so neither the scene function nor its
+ * `passProps` can be replaced by a later render. Anything the scene must react
+ * to therefore travels through a store (`useXrSession`); anything it merely
+ * needs a reference to — the engine handle, the session, the way out — travels
+ * through this holder, set by the screen that owns them.
+ *
+ * One entry rather than a map because there is exactly one spatial screen: it
+ * is a full-immersion route, and a second would be a second headset.
+ */
+const active: {
+  engine: WhiteboardHandle | null;
+  session: BoardSession | null;
+  onExit: () => void;
+  onAsk: (png: string | null) => void;
+  /**
+   * THE LAST CALIBRATION VERDICT, and it is here rather than in the store
+   * because it is never rendered from — the phase is.
+   *
+   * It exists because two other things promote the board to `ready` and neither
+   * of them knows anything about the engine's mapping: the engine reporting an
+   * editor, and the renderer reporting that tracking came back. A calibration
+   * failure that lands while the phase is still `checking` is DROPPED by the
+   * transition table, and a tracking blink after one would otherwise clear it —
+   * either way a child ends up on a board whose ink lands somewhere they did
+   * not point, with the screen saying it is ready. So both promotions read this
+   * first and re-assert the interruption instead.
+   *
+   * It starts `true` — the board is trusted until it says otherwise — which is
+   * the same direction the engine itself starts in: nothing is injected before
+   * `mounted`, and `mounted` is what runs the first probe.
+   */
+  inkAligned: boolean;
+  /**
+   * WHERE THE CHILD'S HEAD IS, as the renderer last reported it.
+   *
+   * Here and not in the store for the reason `inkAligned` is: it arrives on a
+   * renderer callback at frame rate and nothing renders from it. What reads it
+   * is placement — the first pose the scene sees, and every recenter after
+   * that — and both write a placement into the store, which is the thing the
+   * composition is actually drawn from.
+   */
+  head: XrHeadPose | null;
+  /**
+   * The scene itself, for the one thing only it can answer: where the head is.
+   *
+   * `onCameraTransformUpdate` is SILENT ON A HEADSET — `notifyCameraTransform`
+   * is called by the AR, Cardboard, Daydream and OVR input controllers and by
+   * no one else, so the OpenXR path never emitted it (fixed in the fork for
+   * 3.0.0-moyo.3, still absent on any binary older than that). The pull
+   * `getCameraOrientationAsync` goes through `VRTCameraModule` and works on
+   * every build, which is why placement hangs off it rather than off the event.
+   */
+  scene: ViroARScene | null;
+} = {
+  engine: null,
+  session: null,
+  onExit: () => undefined,
+  onAsk: () => undefined,
+  inkAligned: true,
+  head: null,
+  scene: null,
+};
+
+/** The engine handle, as a stable reader — see `strokeOpen` in `BoardScene`. */
+const readEngine = () => active.engine;
+
+/**
+ * A 1×1 transparent PNG. The side panels are text lists, and their media column
+ * is switched off (`mediaFraction={0}`) — but the component's `imageSource` is
+ * required, so this is the honest nothing to hand it.
+ */
+/** Her name, in one place — the chat panel already hardcoded it inline. */
+const TUTOR_NAME = 'Natalie';
+
+const BLANK_PNG =
+  'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==';
+
+/**
+ * How far out Natalie stands, and how far round.
+ *
+ * 2.6 m puts her beyond the 1.9 m panel arc, so she stands BEHIND the
+ * conversation panel instead of occluding the board — measured against a frame
+ * where she was under a metre away and covering it. 52° clears the right
+ * panel's own 30° slot so the two do not overlap from the child's eye.
+ */
+const NATALIE_DISTANCE_M = 3.0;
+/* Past the right panel's 34 deg, so she stands beside the arc rather than in
+   front of the board — and far enough out to read as across the room. */
+const NATALIE_AZIMUTH_DEG = 58;
+
+/** The composition's own case, so the two callers that place it cannot disagree. */
+const BOARD_PLACE = { distanceM: spatialDistance.board, dropM: boardComposition.anchorDrop };
+
+/**
+ * Whether a pose is a located head rather than the renderer's first-frame
+ * identity. Measured on the PICO: the camera reports from the ORIGIN with a
+ * zero-length forward for the opening frames, and a placement latched off one
+ * of those is the exact floor-level composition this predicate exists to end.
+ * Real tracking never lands on the mathematical origin.
+ */
+function isCredibleHeadPose(pose: XrHeadPose): boolean {
+  const [px, py, pz] = pose.position;
+  const [fx, , fz] = pose.forward;
+  if (![px, py, pz, fx, fz].every(Number.isFinite)) return false;
+  if (Math.hypot(fx, fz) < 1e-3) return false;
+  return Math.hypot(px, py, pz) > 1e-3;
+}
+
+/** Where a board goes when the engine's mapping is the thing that is wrong. */
+const INK_INTERRUPTED = { kind: 'interrupted', reason: 'calibration-failed' } as const;
+
+/**
+ * The phase a board that has an engine and a scene should be in — `ready`,
+ * unless the last thing the engine said about its own mapping was that it is
+ * wrong. One expression, because both promotion sites have to make the same
+ * call and a second copy is a second answer.
+ */
+function readyOrInterrupted(): XrPhase {
+  return active.inkAligned ? { kind: 'ready' } : INK_INTERRUPTED;
+}
+
+/** The paper's height, from the one aspect the board is allowed to have. */
+
+/**
+ * THE RENDERER'S OWN VERDICT ON WHETHER IT KNOWS WHERE THE ROOM IS.
+ *
+ * `ViroARScene.onTrackingUpdated` is the only signal in the installed package
+ * that reports this, and its three states are an enum, not booleans
+ * (`ViroTrackingStateConstants`). Limited and unavailable are BOTH interruptions
+ * and are kept apart only in the reason, because a child cannot act on the
+ * difference — the answer to each is the same one: wait, your work is safe.
+ *
+ * A module-level handler rather than a callback built in the scene: the scene is
+ * captured by the navigator's constructor, so a handler rebuilt on a later
+ * render would never be installed anyway, and one that closes over nothing
+ * cannot go stale. It reads the store through `getState` for the same reason.
+ *
+ * TRACKING RETURNING IS NOT READINESS. Normal tracking promotes an INTERRUPTED
+ * board back to ready and does nothing else; a scene that tracked the room
+ * before the engine had an editor would otherwise announce a drawable board a
+ * child's pencil falls straight through. The lifecycle table enforces it —
+ * `preparing → ready` is the engine's move to make, not the renderer's.
+ */
+function handleTrackingUpdated(state: ViroTrackingState): void {
+  const { advance, phase } = useXrSession.getState();
+  if (state === ViroTrackingStateConstants.TRACKING_NORMAL) {
+    /*
+      THE ROOM COMING BACK DOES NOT VOUCH FOR THE ENGINE. This used to promote
+      any interruption at all, so a tracking blink over a board whose mapping
+      had already failed handed the child a `ready` board that still put ink in
+      the wrong place — and it cleared the one sentence telling them why. The
+      renderer only gets to end the interruption it caused.
+    */
+    /*
+      The first normal tracking report is where the composition gets placed:
+      before it the runtime has no head pose to give, and after it the answer
+      is stable. `active.head` is the once-only latch.
+    */
+    if (active.head === null) void placeFromHead();
+    if (phase.kind === 'interrupted') advance(readyOrInterrupted());
+    return;
+  }
+  advance({
+    kind: 'interrupted',
+    reason:
+      state === ViroTrackingStateConstants.TRACKING_UNAVAILABLE
+        ? 'tracking-lost'
+        : 'tracking-limited',
+  });
+}
+
+/**
+ * Ask the renderer where the child is, and put the composition in front of
+ * them.
+ *
+ * THE PULL EXISTS BECAUSE THE PUSH DOES NOT. Measured on a PICO 4 Ultra: the
+ * board, the rail and Natalie all rendered at the child's feet, because a
+ * floor-referenced runtime makes `[0, -0.1, -1.5]` mean "10 cm above the
+ * carpet" and the event that was supposed to correct it never fired.
+ * `VROInputControllerOpenXR::onProcess` simply did not call
+ * `notifyCameraTransform` — every other controller in the renderer does.
+ *
+ * So the placement is driven by a FACT the scene can be asked for at a moment
+ * that means something: tracking going normal. Not a timer, not a retry loop —
+ * the runtime saying it knows where the room is is exactly when it can also
+ * say where the head is.
+ */
+async function placeFromHead(): Promise<void> {
+  const scene = active.scene;
+  if (scene === null) return;
+  try {
+    const orientation = (await scene.getCameraOrientationAsync()) as {
+      position: number[];
+      forward: number[];
+    };
+    /* The module answers with plain arrays; a short one is a runtime that has
+       not answered at all, and reading [2] off it would be a silent NaN. */
+    if (orientation.position.length < 3 || orientation.forward.length < 3) return;
+    const pose: XrHeadPose = {
+      position: [orientation.position[0]!, orientation.position[1]!, orientation.position[2]!],
+      forward: [orientation.forward[0]!, orientation.forward[1]!, orientation.forward[2]!],
+    };
+    /* A runtime that has not located the head yet answers with the origin and
+       a zero forward; placing off that would put the board back on the floor. */
+    if (!isCredibleHeadPose(pose)) {
+      if (__DEV__) console.log('[tutor-xr] camera pull: pose not credible yet', pose.position);
+      return;
+    }
+    active.head = pose;
+    if (__DEV__) console.log('[tutor-xr] placing from camera pull', pose.position);
+    useXrSession.getState().setPlacement(placeInFrontOf(pose, BOARD_PLACE));
+  } catch {
+    /* An older binary without the camera module keeps the pending placement,
+       which is the same board a metre and a half out, just not turned. */
+  }
+}
+
+/**
+ * THE CHILD'S HEAD, EVERY FRAME, AND THE ONE FRAME IT DECIDES ANYTHING.
+ *
+ * `onCameraTransformUpdate` is how a scene that cannot close over state learns
+ * where its user is. Two things read it and both write a placement rather than
+ * rendering from the pose: the FIRST pose after the scene mounts, which is what
+ * puts the board in front of the child instead of at the scene origin, and
+ * recenter.
+ *
+ * WHY THE FIRST POSE MATTERS MORE THAN IT SOUNDS. The composition opened at a
+ * constant `[0, -0.1, -1.5]`, which is "just below the eye line, 1.5 m out"
+ * only when the scene's origin is the head. A PICO references it to the FLOOR,
+ * so on device the board, the rail and Natalie were at the child's feet with
+ * the panel above them still saying the board was in front of them. The fix is
+ * not a height to subtract — see `board-placement.ts`.
+ *
+ * It fires at frame rate and does nothing on all but the first, which is why
+ * the pose lives in the holder and the guard is a null check rather than a
+ * comparison: a placement written every frame would fight the child's own drag.
+ */
+function handleCameraTransform(transform: { position: XrVector3; forward: XrVector3 }): void {
+  const pose: XrHeadPose = { position: transform.position, forward: transform.forward };
+  /*
+    THE LATCH IS ON CREDIBILITY, NOT ON ARRIVAL. The first build of this
+    handler placed off the FIRST event — and on the PICO the first event is
+    frame one, head at the origin, before tracking has settled. The garbage
+    pose won the latch and the whole composition stayed at the floor. Now an
+    identity pose neither places nor becomes `active.head`: recenter must not
+    read it either.
+  */
+  if (!isCredibleHeadPose(pose)) return;
+  active.head = pose;
+}
+
+function BoardScene() {
+  const phase = useXrSession((s) => s.phase);
+  const placement = useXrSession((s) => s.placement);
+  const workspaceHead = useMemo((): [number, number, number] => {
+    const yaw = placement.rotation[1] * Math.PI / 180;
+    return [
+      placement.position[0] + Math.sin(yaw) * BOARD_PLACE.distanceM,
+      placement.position[1] + BOARD_PLACE.dropM,
+      placement.position[2] + Math.cos(yaw) * BOARD_PLACE.distanceM,
+    ];
+  }, [placement]);
+  const [avatarStatus, setAvatarStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
+  const [avatarAttempt, setAvatarAttempt] = useState(0);
+  const [termination, setTermination] = useState<{ source: number; cancel: boolean; revision: number }>();
+  const terminatePointer = (source: number, cancel: boolean) => {
+    setTermination((last) => ({ source, cancel, revision: (last?.revision ?? 0) + 1 }));
+  };
+  const [confirmClear, setConfirmClear] = useState(false);
+  const [askError, setAskError] = useState(false);
+  const [surfaceTimedOut, setSurfaceTimedOut] = useState(false);
+  const textureReady = useXrSession((s) => s.boardTextureBound);
+  useEffect(() => {
+    if (textureReady) return;
+    const timer = setTimeout(() => setSurfaceTimedOut(true), 10000);
+    return () => clearTimeout(timer);
+  }, [textureReady]);
+  useEffect(() => {
+    if (!confirmClear) return;
+    const timer = setTimeout(() => setConfirmClear(false), 5000);
+    return () => clearTimeout(timer);
+  }, [confirmClear]);
+  const tool = useXrSession((s) => s.tool);
+  const ink = useXrSession((s) => s.ink);
+  const asking = useXrSession((s) => s.asking);
+  const band = useXrSession((s) => s.band);
+  const revision = useXrSession((s) => s.revision);
+
+  const messages = useTutorStore((s) => s.messages);
+  const problem = useTutorStore((s) => s.problem);
+
+  const session = active.session;
+
+  /*
+    Whether a stroke this scene opened is still open, mirrored from what was
+    handed to the engine rather than asked for back. A ref and not state: it
+    changes at pointer rate and nothing renders from it — it exists so a stroke
+    can be closed if the board stops accepting ink half way through one.
+  */
+  const drawing = useRef(false);
+  /* Read through a stable function rather than passed as a value: the hook's
+     effect must not re-run because a ref's contents moved, and `active.engine`
+     is set by an effect in the screen above rather than by a render. */
+  const strokeOpen = useCallback(() => drawing.current, []);
+
+  /*
+    The records, re-read when the document moves. Not memoised on `session`
+    alone: the whole point of `revision` is that the document mutates in place.
+  */
+  const store = useMemo(() => {
+    void revision;
+    if (session === null) return {};
+    return (session.doc.snapshot() as { document: { store: Record<string, unknown> } }).document
+      .store;
+  }, [revision, session]);
+
+  /*
+    THE BOARD ITSELF, AS A PICTURE, so the paper shows the whole document and
+    not just the parts this renderer has a primitive for. `XrBoardInk` draws the
+    strokes the picture is too new to contain — see `board-raster.native.ts` for
+    which those are and why the overlap between the two layers is the safe
+    direction to be wrong in.
+  */
+  /*
+    AND WHETHER THE PAGE ITSELF IS ON THE PAPER, which decides whether any of
+    that runs at all. `boardTextureBound` is the host's answer to one bind
+    attempt (`BoardTextureHost`): bound, the child looks at the engine's own
+    surface and a raster would be a second, older copy of it drawn underneath;
+    not bound, this pair IS the board and nothing about it changes.
+  */
+  const boardTextureBound = useXrSession((s) => s.boardTextureBound);
+  /*
+    THE PICTURE DOES NOT NEED A SERVER SESSION, and gating it on one is why the
+    centre panel showed a placeholder instead of the child's board: under local
+    mock auth every learner `protectedOperation` fails, so `sessionId` stays
+    null, `session` stays null and the raster loop never ran — while the engine
+    behind it had the real board all along. `useBoardRaster` already refuses to
+    fire without an engine handle, which is the condition that actually matters.
+  */
+  const raster = useBoardRaster(readEngine, store, !boardTextureBound, strokeOpen);
+
+  const natalieAngle = ((NATALIE_AZIMUTH_DEG - placement.rotation[1]) * Math.PI) / 180;
+  const nataliePosition: [number, number, number] = [
+    (workspaceHead?.[0] ?? 0) + Math.sin(natalieAngle) * NATALIE_DISTANCE_M,
+    0,
+    (workspaceHead?.[2] ?? 0) - Math.cos(natalieAngle) * NATALIE_DISTANCE_M,
+  ];
+
+  const composedState = panelStateOf(phase);
+
+  /*
+    THE ASK BUTTON IS A MICROPHONE NOW, not a silent screenshot.
+
+    It used to export the board and stage it as an image, which is why pressing
+    it never let a child TALK to the tutor: nothing on this route ever opened
+    the mic, and `RECORD_AUDIO` sitting in the manifest grants nothing on its
+    own. Press starts listening, press again stops; the transcript and the board
+    are queued together so the tutor answers the question about the thing the
+    child just drew.
+  */
+  const voice = useXrVoice({
+    enabled: composedState === 'ready' && boardTextureBound,
+    onUtterance: (text) => {
+      const engine = active.engine;
+      const owner = active.session;
+      if (!engine || useXrSession.getState().asking) return;
+      setAskError(false);
+      useXrSession.getState().setAsking(true);
+      void engine.exportPng().then((png) => {
+        if (active.engine !== engine || active.session !== owner) return;
+        useXrSession.getState().queueSay(text);
+        active.onAsk(png);
+      }).catch(() => setAskError(true)).finally(() => {
+        if (active.engine === engine) useXrSession.getState().setAsking(false);
+      });
+    },
+  });
+  /*
+    ONE LABEL, FIVE STATES, AND NONE OF THEM ARE JARGON. A child in a headset
+    reads this from two and a half metres away, so each is a short sentence
+    about what just happened rather than a status word. The two failures say
+    what to do next: a refused microphone is a grown-up's job, and a take that
+    came back empty is worth one more try.
+  */
+  const askLabel = ((): string => {
+    switch (voice.phase.kind) {
+      case 'listening':
+        return 'Listening — press to send';
+      case 'starting':
+        return 'Opening microphone…';
+      case 'transcribing':
+        return 'One moment…';
+      case 'blocked':
+        if (voice.phase.reason === 'permission') return 'Microphone is off';
+        if (voice.phase.reason === 'silent') return "Didn't catch that — try again";
+        return 'Microphone unavailable';
+      case 'idle':
+        return `Ask ${TUTOR_NAME}`;
+    }
+  })();
+
+  /*
+    WHETHER INK WOULD LAND WHERE THE CHILD POINTED. The engine measures this
+    itself and reports it (`WhiteboardHandle.calibrate`); the screen turns a
+    failure into this phase, and this is where that verdict stops being a
+    sentence and starts being enforced.
+  */
+  const inkLands = !(phase.kind === 'interrupted' && phase.reason === 'calibration-failed');
+
+  const chatRows: readonly XrChatRow[] = messages.slice(-CHAT_WINDOW).map((message) => ({
+    id: message.id,
+    role: message.role,
+    text: message.text,
+    attachments: message.attachments?.length,
+  }));
+
+  /*
+    A RAY ON THE PAPER IS A POINTER IN THE ENGINE.
+
+    The panel has already done the only coordinate transform there is — a world
+    hit to `(u, v)` on the surface — so this multiplies by the engine's pixel
+    size and stops. Transforming again here is the bug the comment exists to
+    prevent: ink that trails the ray by a fraction of the paper reads as a
+    tracking fault and is actually two matrices.
+
+    Nothing on this path touches React state. A pointer arrives at display rate;
+    the document moves at stroke rate, when the engine reports the change.
+  */
+  const handleSurfaceInput = (sample: XrSurfaceInput) => {
+    /*
+      A MEASURED-WRONG MAPPING STOPS THE INK AT THE SEAM, and it has to stop
+      here rather than in the panel: `XrPanel` draws in `interrupted` on purpose
+      — a tracking blink must not take the paper away mid-thought — so the rays
+      keep arriving and something has to decline them. Ink under the wrong
+      finger is the outcome the whole calibration path exists to prevent, and it
+      is worse than a stroke that does not appear while the panel says why.
+
+      A stroke already open is CANCELLED rather than left hanging. The engine
+      would otherwise keep a half-line whose end the child never chose, and the
+      abort is the one the fork implements for exactly this (`'cancel'` removes
+      the record and closes the batch empty). Everything after that is dropped
+      until the engine says the mapping is good again.
+    */
+    if (!inkLands) {
+      if (!drawing.current) return;
+      drawing.current = false;
+      active.engine?.injectPointer({
+        phase: 'cancel',
+        x: sample.u * boardSurfacePixels.width,
+        y: sample.v * boardSurfacePixels.height,
+      });
+      return;
+    }
+    if (sample.phase === 'begin') drawing.current = true;
+    else if (sample.phase !== 'move') drawing.current = false;
+    active.engine?.injectPointer({
+      phase: sample.phase,
+      x: sample.u * boardSurfacePixels.width,
+      y: sample.v * boardSurfacePixels.height,
+      pressure: sample.pressure,
+    });
+  };
+
+  /*
+    The scene's contents, held apart from the root that wraps them. The root is
+    still an open question — see the return below — and keeping the two
+    separate is what makes changing it a one-line move rather than a re-indent
+    of the whole tree.
+  */
+  const content = (
+    <>
+      {/*
+        THE POINTER, WITHOUT WHICH NOTHING IN THIS SCENE CAN BE DRAWN ON.
+
+        `onDrag` and `onClick` on a `ViroNode` never fire on an OpenXR headset
+        unless a `ViroController` is mounted in the scene — it is what raycasts
+        the controller and delivers the hit. The board rendered, the rail
+        rendered, and a child drawing on the paper produced nothing at all: the
+        engine had no pointer to hit-test with, so `XrPanel`'s input quad was
+        never touched and `injectPointer` was never called.
+
+        This is the same fix, for the same symptom, as the Danger Room scene's
+        passthrough toggle that "did nothing" until the controller was added.
+      */}
+      <ViroController controllerVisibility reticleVisibility
+        onClickState={(state, _position, source) => {
+          if (state === 2 && typeof source === 'number') terminatePointer(source, false);
+        }}
+        onControllerStatus={(status: number, source) => {
+          // Vendored ViroCore ControllerStatus: DISCONNECTED=4, ERROR=5.
+          if ((status === 4 || status === 5) && typeof source === 'number') terminatePointer(source, true);
+        }} />
+      <ViroAmbientLight color="#ffffff" intensity={600} />
+      <ViroDirectionalLight color="#ffffff" direction={[0, -1, -0.5]} intensity={800} />
+      {/*
+        NATALIE, IN THE ROOM — to the child's right of the paper, past her own
+        chat panel, standing on the floor and turned toward them. Same voice,
+        same A2F face, same idle engine as the 2D pane (`XrNatalie`'s header).
+
+        HER FEET: on a PICO the runtime references the world to the FLOOR, so
+        y = 0 is the ground she stands on. Her yaw is the composition's own —
+        the board already faces the child, and she stands in its frame.
+      */}
+      <XrNatalie key={avatarAttempt} position={nataliePosition} rotationY={placement.rotation[1]} onStatus={setAvatarStatus} />
+      {/*
+        THE FLANKS, ON THE ARC: tools left, the conversation right — each its
+        own draggable `PremiumXRMediaPanel`, poke-xr's component vendored whole.
+        Placed in WORLD space from the child's head rather than parented to it,
+        because the board between them does world-space ray maths and two frames
+        in one scene is ink that lands slightly wrong.
+      */}
+      {active.head !== null ? (
+        <XrTriPanel
+          headPosition={workspaceHead}
+          headYawDeg={placement.rotation[1]}
+          tutorName={avatarStatus === 'loading' ? 'Natalie · loading' : avatarStatus === 'failed' ? 'Natalie · audio & captions' : TUTOR_NAME}
+          placeholderUri={BLANK_PNG}
+          boardUri={raster.uri}
+          boardLive={boardTextureBound}
+          controlSize={minHitSize(2.6, false, band)}
+          boardTitle={!boardTextureBound ? (surfaceTimedOut ? 'Board unavailable — return to lesson' : 'Connecting your board…') : problem ?? 'Your board'}
+          chatRows={chatRows.map((row) => ({
+            id: row.id,
+            text: row.text,
+            label: row.role === 'tutor' ? TUTOR_NAME : 'You',
+          }))}
+          controlRows={[
+            {
+              id: 'ask',
+              face: 'ask',
+              /*
+                THE BUTTON SAYS WHAT IT IS DOING, because in a headset there is
+                no other way to know the microphone is open. A child who cannot
+                see a recording indicator and cannot hear themselves back has
+                only this label to tell them they are being listened to.
+              */
+              text: askError ? 'Could not send — try again' : askLabel,
+              disabled: composedState !== 'ready' || asking || !boardTextureBound || voice.phase.kind === 'transcribing' || voice.phase.kind === 'starting',
+              emphasis: true,
+              active: voice.phase.kind === 'listening',
+              onPress: () => { setAskError(false); voice.toggle(); },
+            },
+            {
+              id: 'pen',
+              face: 'pen',
+              text: 'Pen',
+              disabled: composedState !== 'ready' || !boardTextureBound,
+              active: tool === 'draw',
+              onPress: () => {
+                useXrSession.getState().setTool('draw');
+                active.engine?.setTool('draw');
+              },
+            },
+            {
+              id: 'mark',
+              face: 'highlighter',
+              text: 'Highlighter',
+              disabled: composedState !== 'ready' || !boardTextureBound,
+              active: tool === 'highlight',
+              onPress: () => {
+                useXrSession.getState().setTool('highlight');
+                active.engine?.setTool('highlight');
+              },
+            },
+            {
+              id: 'erase',
+              face: 'eraser',
+              text: 'Eraser',
+              disabled: composedState !== 'ready' || !boardTextureBound,
+              active: tool === 'eraser',
+              onPress: () => {
+                useXrSession.getState().setTool('eraser');
+                active.engine?.setTool('eraser');
+              },
+            },
+            {
+              id: 'ink',
+              text: `Ink: ${ink}`,
+              disabled: composedState !== 'ready' || !boardTextureBound,
+              swatchColor: ink,
+              onPress: () => {
+                /* Cycles the pen colour: the spatial panel has no room for a
+                   swatch grid, and a child changing colour wants one press. */
+                const order = ['black', 'blue', 'red', 'green'] as const;
+                const at = order.indexOf(ink as (typeof order)[number]);
+                const next = order[(at + 1) % order.length] ?? 'black';
+                useXrSession.getState().setInk(next);
+                active.engine?.setInk(next);
+                if (tool === 'eraser') {
+                  active.engine?.setTool('draw');
+                  useXrSession.getState().setTool('draw');
+                }
+              },
+            },
+            { id: 'undo', face: 'undo', text: 'Undo', disabled: composedState !== 'ready' || !boardTextureBound, onPress: () => active.engine?.undo() },
+            { id: 'clear', face: 'clear', text: confirmClear ? 'Confirm clear' : 'Clear board',
+              disabled: composedState !== 'ready' || !boardTextureBound, active: confirmClear,
+              onPress: () => {
+                if (confirmClear) active.engine?.clear();
+                setConfirmClear(!confirmClear);
+              } },
+            ...(confirmClear ? [{ id: 'cancel-clear', text: 'Keep my work', onPress: () => setConfirmClear(false) }] : []),
+            { id: 'recenter', text: 'Recenter workspace', onPress: () => { void placeFromHead(); } },
+            { id: 'exit', text: 'Back to lesson', onPress: () => active.onExit() },
+            ...(avatarStatus === 'failed' ? [{ id: 'retry-avatar', text: 'Reload Natalie', onPress: () => { setAvatarStatus('loading'); setAvatarAttempt((n) => n + 1); } }] : []),
+
+          ]}
+        />
+      ) : null}
+      {/*
+        THE DRAWING SURFACE, over the centre panel and nothing else.
+
+        A sibling rather than a child of the panel, because the panel is
+        poke-xr's file vendored whole and teaching it to draw would fork the one
+        component this route most needs to keep in step with upstream. It reads
+        the same `worldSlot('center', …)` the panel is placed by and the same
+        `panelMediaArea` the panel lays its art out with, so the quad a ray hits
+        and the board a child sees are one rectangle by construction.
+
+        Gated on `panelState`, not on `inkLands`: a tracking blink must not take
+        the paper away mid-thought, so the surface keeps answering rays and
+        `handleSurfaceInput` above is what declines them when the mapping is
+        measured wrong.
+      */}
+      {active.head !== null ? (
+        <XrBoardSurface
+          headPosition={workspaceHead}
+          headYawDeg={placement.rotation[1]}
+          enabled={composedState === 'ready' && boardTextureBound && inkLands}
+          onSurfaceInput={handleSurfaceInput}
+          termination={termination}
+        />
+      ) : null}
+    </>
+  );
+
+  /*
+    THE ROOT STAYS `ViroARScene`, AND THE CASE AGAINST IT WAS NEVER ACTUALLY RUN.
+
+    For a run of builds this scene drew nothing in the headset and the root was
+    the leading suspect. `ViroARScene` is the MIXED-REALITY root — anchors,
+    `ViroARPlane`, passthrough — and the package's guide does say a
+    fully-virtual scene is rooted in `ViroScene` (`QUEST_SETUP` §4, and the
+    "pure VR vs mixed-reality root" pitfall in §Common pitfalls).
+
+    None of that is why nothing drew. Every one of those builds threw
+    `ReferenceError: Property 'ViroNode' doesn't exist` on the first render of
+    this component — a probe block used `ViroNode` without importing it — so
+    the tree never mounted and the only thing left drawing was the reticle the
+    renderer draws for itself. The root, the backdrop sphere, the floor and the
+    material re-registration were all diagnosed against a scene that was
+    throwing, so none of them is evidence for anything.
+
+    It stays on the evidence there is: the Danger Room scene renders on this
+    renderer, on headset hardware, from a `ViroARScene` root with
+    `passthroughEnabled` and hdr/bloom/pbr all off — which is the navigator
+    config below. If the board is still absent now the tree mounts, the root is
+    the next thing to move: `ViroScene`, passed as `vrInitialScene`. That swap
+    takes `onTrackingUpdated` with it, because it reports tracking of a room
+    only the AR root is looking at.
+  */
+  return (
+    <ViroARScene
+      ref={(scene) => {
+        active.scene = scene;
+      }}
+      onTrackingUpdated={handleTrackingUpdated}
+      /* Fires from 3.0.0-moyo.3 onward; harmless and unused before that. */
+      onCameraTransformUpdate={handleCameraTransform}
+    >
+      {content}
+    </ViroARScene>
+  );
+}
+
+/** Stable, for the same constructor-capture reason. */
+const INITIAL_SCENE = { scene: BoardScene };
+
+export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorXrScreenProps) {
+  const sessionId = useTutorStore((s) => s.sessionId);
+  const phase = useXrSession((s) => s.phase);
+  const advance = useXrSession((s) => s.advance);
+  const bumpRevision = useXrSession((s) => s.bumpRevision);
+
+  const engine = useRef<WhiteboardHandle>(null);
+
+  /*
+    THE SAME DOCUMENT THE 2D SCREEN WAS USING. `acquireBoardSession` hands back
+    the existing one for this key — the registry outlives both routes, which is
+    the whole reason it exists — so there is no restore, no fetch and no empty
+    board on the way in.
+  */
+  const key = boardSessionKey(sessionId);
+  const [session, setSession] = useState<BoardSession>(() =>
+    acquireBoardSession(key, boardPersistence),
+  );
+
+  /*
+    A CHANGED KEY IS A DIFFERENT BOARD, AND THIS SCREEN CAN SEE ONE CHANGE.
+
+    The key was read once and the session held forever, which was wrong here in
+    a way it is not on a screen that cannot outlive the change: a child can
+    press Ask in the headset, which sends a turn, which is the moment the server
+    session is created and `sessionId` goes from null to a real id. The 2D
+    workbench re-acquires on that (its `heldKey` dance, copied here verbatim
+    because two boards must not disagree about which document they are on) —
+    while this screen kept drawing into the DRAFT document. The child would have
+    come back to a board missing everything they wrote in space.
+
+    The old code also released on every `sessionId` render, because the id was a
+    dependency of the effect that owned the hold: the hold count fell on a
+    change that was not a departure, and reaching zero writes.
+  */
+  const [heldKey, setHeldKey] = useState(key);
+  if (heldKey !== key) {
+    releaseBoardSession(heldKey);
+    setHeldKey(key);
+    setSession(acquireBoardSession(key, boardPersistence));
+  }
+
+  useEffect(() => {
+    session.setSessionId(sessionId);
+  }, [session, sessionId]);
+
+  /* The hold is released on the way out, and only there. */
+  useEffect(() => () => releaseBoardSession(heldKey), [heldKey]);
+
+  /*
+    LEAVING IS A STATE BEFORE IT IS A POP. `exiting` stops the panel handing the
+    surface any more rays — `XrPanel` only draws in `ready` and `interrupted` —
+    so a stroke in flight is abandoned rather than committed at whatever point
+    the ray happened to be when the route went away.
+  */
+  const handleExit = useCallback(() => {
+    advance({ kind: 'exiting' });
+    onExit();
+  }, [advance, onExit]);
+
+  /*
+    The scene reads these rather than receiving them — see `active`.
+
+    `engine` IS DELIBERATELY NOT CLEARED HERE, and that is the whole reason this
+    effect and the attach effect below are separate. They have different
+    dependencies: this one re-runs whenever the callbacks change identity, the
+    attach one only when the engine or the session does. Clearing the handle
+    from this cleanup therefore nulled it on an ordinary re-render and nothing
+    ever put it back — the ray kept hitting the paper and no ink appeared, with
+    no error anywhere. Whoever sets a slot clears it.
+  */
+  useEffect(() => {
+    active.session = session;
+    active.onExit = handleExit;
+    active.onAsk = onAsk;
+    return () => {
+      active.session = null;
+      active.onExit = () => undefined;
+      active.onAsk = () => undefined;
+    };
+  }, [handleExit, onAsk, session]);
+
+  useEffect(() => {
+    useXrSession.getState().setAsking(asking);
+  }, [asking]);
+
+  /*
+    THE BAND REACHES THE SCENE THE ONLY WAY IT CAN. `minHitSize` takes it, the
+    rail, the chat panel's action row and the placement keys all size from it,
+    and none of them can be handed it as a prop through a scene the navigator
+    captured in its constructor.
+
+    SEEDED DURING THIS RENDER RATHER THAN IN AN EFFECT, and the direct entry is
+    what forces that. An effect runs after the commit, and the commit now
+    CONTAINS the navigator — so the scene's constructor would capture a board
+    laid out at the store's conservative start value and the first frame in the
+    headset would be an adult's rail for a six-year-old. A `useState`
+    initialiser runs once, in the body, before this component returns the tree
+    the navigator is built from.
+
+    The effect stays for the other case: `ageBand` changing under a mounted
+    screen, which the initialiser cannot see.
+  */
+  useState(() => {
+    useXrSession.getState().setBand(ageBand);
+    return null;
+  });
+
+  /*
+    ONE LABEL, FIVE STATES, AND NONE OF THEM ARE JARGON. A child in a headset
+    reads this from two and a half metres away, so each is a short sentence
+    about what just happened rather than a status word. The two failures say
+    what to do next: a refused microphone is a grown-up's job, and a take that
+    came back empty is worth one more try.
+  */
+  useEffect(() => {
+    useXrSession.getState().setBand(ageBand);
+  }, [ageBand]);
+
+  /*
+    `onRecords` rather than `onRemote`: this renderer must see the child's OWN
+    strokes, and the engine subscription is deliberately blind to them (see
+    `board-doc`). A counter rather than the records themselves, because a Yjs
+    document mutates in place and must never become React state.
+  */
+  useEffect(() => session.doc.onRecords(() => bumpRevision()), [bumpRevision, session]);
+
+  /*
+    STEP ONE: WHY THIS BINARY ON THIS DEVICE COULD NOT OPEN A BOARD IN SPACE.
+
+    The store has already asked WHETHER — `openingPhase` calls the same
+    `currentXrEligibility`, synchronously, to decide between opening at
+    `preparing` and opening at `checking`. What it deliberately does not do is
+    name the reason: `unsupported` is a phase with no way out but `exiting`, and
+    a module evaluating at import time should not be able to put a child in one
+    before anything has been asked to open. So the verdict is re-read here,
+    where there is a screen to render it on, and the two answers cannot disagree
+    because they are one function over module-level constants.
+
+    Runs once. `phase` is deliberately NOT a dependency — this is the entry
+    check, and re-running it when the phase moves is how a screen ends up asking
+    for the camera again after the child has answered.
+  */
+  useEffect(() => {
+    let live = true;
+    /*
+      Either opening phase is a screen that has not run this yet. `preparing` is
+      an eligible headset with the scene already up, `checking` is everything
+      else on its way to `unsupported` — and anything further along is a
+      lifecycle already in motion, which this must not restart.
+    */
+    const opening = useXrSession.getState().phase.kind;
+    if (opening !== 'checking' && opening !== 'preparing') return;
+
+    const eligibility = currentXrEligibility();
+    if (eligibility !== 'eligible') {
+      advance({ kind: 'unsupported', reason: eligibility });
+      return;
+    }
+
+    /*
+      STEP TWO: ASK THE RUNTIME WHAT IT ALREADY HAS, WITHOUT PROMPTING.
+
+      `checkPermissions` is the non-prompting half of the pair, which is what
+      makes the primer possible at all: a child who has already granted the
+      camera on a previous lesson goes straight to their board, and one who has
+      not reads why before the system dialog appears in front of them.
+
+      IT NOW RUNS UNDER A SCENE THAT IS ALREADY MOUNTED, and that is the cost of
+      opening directly. Granted — the overwhelmingly common case, because the
+      camera is granted once and a lesson is not the first thing a headset is
+      used for — is a no-op: `preparing → preparing` is not a move and `advance`
+      drops it without a render. Not granted pulls the lifecycle back out to the
+      primer, which unmounts the navigator; the child sees the scene for the
+      fraction of a second the round trip takes, then the question. That is the
+      wrong order for an ANSWER but the right one for a WAIT, and it is the only
+      shape available: the runtime cannot be asked synchronously.
+
+      A rejected check is treated as "not granted" rather than as an error.
+      Fail closed, and the closed direction here is the primer — the one screen
+      that explains itself.
+    */
+    void checkPermissions([...SPATIAL_PERMISSIONS]).then(
+      (result) => {
+        if (!live) return;
+        advance(
+          spatialPermissionsGranted(result)
+            ? { kind: 'preparing' }
+            : { kind: 'permission-required' },
+        );
+      },
+      () => {
+        if (live) advance({ kind: 'permission-required' });
+      },
+    );
+
+    return () => {
+      live = false;
+    };
+  }, [advance]);
+
+  /*
+    THE CHILD SAID YES. This is the only line in the feature that can raise a
+    system permission dialog, and it is reached only from a press on the primer.
+  */
+  const handleGrant = useCallback(() => {
+    void requestRequiredPermissions([...SPATIAL_PERMISSIONS]).then(
+      (result) => {
+        advance(
+          spatialPermissionsGranted(result)
+            ? { kind: 'preparing' }
+            : { kind: 'unsupported', reason: 'permission-declined' },
+        );
+      },
+      () => advance({ kind: 'unsupported', reason: 'permission-declined' }),
+    );
+  }, [advance]);
+
+  /*
+    AND "NOT NOW" ASKS THE HEADSET NOTHING AT ALL. It is a pop, not a denial:
+    nothing is recorded as refused, no system dialog is raised, and pressing the
+    door again later shows the same primer rather than a dead control. A child
+    who is not sure is allowed to not be sure.
+  */
+  const handleDecline = useCallback(() => {
+    advance({ kind: 'exiting' });
+    onExit();
+  }, [advance, onExit]);
+
+  /*
+    THE ENGINE IS READY WHEN IT SAYS SO, and only then is it handed the board.
+    `attach` does the vendor's late-joiner order; a diff that reaches an engine
+    with no editor is dropped with no error on either platform.
+
+    Attaching does NOT depend on the lifecycle. The engine is mounted through
+    every phase, including while the primer is up, so it may report `mounted`
+    long before there is a scene — and the document should be in it by then
+    rather than loaded at the moment the child starts looking.
+  */
+  const [ready, setReady] = useState(false);
+  const [engineGeneration, setEngineGeneration] = useState(0);
+  const handleReady = useCallback(() => {
+    setReady(true);
+    setEngineGeneration((generation) => generation + 1);
+  }, []);
+
+  /*
+    ONE BIND ATTEMPT'S ANSWER, into the one place the scene can read it from.
+    A refusal is not an error a child hears about — it selects the raster
+    presentation, which is a board — so `reason` goes to the log for the next
+    person and nowhere else.
+  */
+  const handleBound = useCallback((binding: BoardTextureBinding) => {
+    useXrSession.getState().setBoardTextureBound(binding.bound);
+    if (!binding.bound && __DEV__) {
+      console.log(
+        `[tutor-xr] the live board did not bind (${binding.reason ?? 'no reason'}) — drawing the raster instead`,
+      );
+    }
+  }, []);
+  useEffect(() => {
+    if (!ready) return;
+    const handle = engine.current;
+    if (handle === null) return;
+    active.engine = handle;
+    const detach = session.attach({ id: PRESENTATION_ID, board: handle });
+    const selection = useXrSession.getState();
+    handle.setTool(selection.tool);
+    handle.setInk(selection.ink);
+    return () => {
+      handle.injectPointer({ phase: 'cancel', x: 0, y: 0 });
+      active.engine = null;
+      detach();
+    };
+  }, [ready, session, engineGeneration]);
+
+  /*
+    THE BOARD BECOMES DRAWABLE WHEN THE ENGINE AND THE SCENE ARE BOTH THERE,
+    AND THIS WATCHES FOR EITHER ARRIVING LAST.
+
+    It is a second effect, not a line in the one above, because the two orders
+    are both real and only one of them was survivable as a single effect. The
+    engine is a WebView that starts loading on mount, and the permission promise
+    is a round trip through the runtime — so `mounted` routinely lands while the
+    phase is still `checking`, where `ready` is not a legal move and the table
+    correctly drops it. With the promotion welded to the attach effect, nothing
+    would have re-run when permission finally resolved: the child would have got
+    a board stuck on "Bringing your working over", with an engine behind it, for
+    the rest of the session.
+
+    Watching the phase as well as the engine is what makes both orders converge
+    on the same state.
+
+    This is also the ONLY move to `ready`. The renderer reporting good tracking
+    is not readiness — see `handleTrackingUpdated` — because a board is drawable
+    when there is an engine behind it, not when the room is in focus.
+  */
+  useEffect(() => {
+    /*
+      `readyOrInterrupted`, not a bare `ready`. The engine runs its first
+      calibration the moment it reports an editor, which is routinely BEFORE
+      the permission promise has resolved — and a failure that lands while the
+      phase is still `checking` is dropped by the table, because `checking` has
+      no move to `interrupted`. Promoting blind here would then hand the child a
+      board the engine has already said it cannot map, with no sentence anywhere
+      saying so. The verdict is read at the moment of the promotion instead.
+    */
+    if (ready && phase.kind === 'preparing') advance(readyOrInterrupted());
+  }, [advance, phase.kind, ready]);
+
+  const handleChange = useCallback(
+    (diff: WhiteboardDiff, source: WhiteboardDiffSource) => {
+      session.change(PRESENTATION_ID, diff, source);
+      /*
+        AND TELL THE SCENE THE DOCUMENT MOVED. `revision` is normally bumped by
+        the document's own observer, which only exists when there is a server
+        session. Without one the board still changes — the child is drawing —
+        and nothing re-took the picture, so the centre panel froze on its first
+        raster. The engine reporting a diff is the honest signal either way.
+      */
+      useXrSession.getState().bumpRevision();
+    },
+    [session],
+  );
+
+  /*
+    THE ENGINE'S OWN VERDICT ON WHETHER INK LANDS WHERE THE RAY POINTED.
+
+    `injectPointer`'s whole contract rests on one runtime fact this screen
+    cannot see — the engine's camera is at its default, so the client space the
+    pointer is written in and the page space the ink is stored in are the same
+    space. The board measures it rather than assuming it: it draws a fixture,
+    reads back what the engine recorded, and reports the drift. Every failure
+    reason means the same thing here — `not-ready`, `no-surface`, `no-record`,
+    `timeout` and `drift` all say the mapping is unproven — so they share one
+    answer rather than five sentences a child would read the same way.
+
+    A PUSH, NOT A PULL, AND THAT IS WHY THE PROMISE IS NOT AWAITED ANYWHERE.
+    The runs that matter have no caller: the board calibrates itself when the
+    engine mounts, and again after anything that could have moved the camera.
+    A screen that only ever awaited `calibrate()` would learn about a broken
+    mapping one stroke too late.
+
+    INTERRUPTED, NEVER `unsupported`. The board is drawn, the document is
+    intact, the child's work is where they left it, and the next probe can
+    pass — so this is the state that keeps the paper on screen and says why it
+    is not taking marks. `active.inkAligned` carries the same verdict to the two
+    promotions that would otherwise clear it behind this handler's back.
+  */
+  const handleCalibration = useCallback(
+    (result: WhiteboardCalibration) => {
+      active.inkAligned = result.ok;
+      if (!result.ok) {
+        advance(INK_INTERRUPTED);
+        return;
+      }
+      /* A pass only ends the interruption it caused. Tracking is the renderer's
+         to clear: a board waiting for the room to come back does not become
+         drawable because the engine measured its own mapping correctly. */
+      const current = useXrSession.getState().phase;
+      if (current.kind === 'interrupted' && current.reason === 'calibration-failed') {
+        advance({ kind: 'ready' });
+      }
+    },
+    [advance],
+  );
+
+  /*
+    WHAT IS ON SCREEN IS THE PHASE, AND THE RENDERER IS NOT ALWAYS PART OF IT.
+
+    `preparing` onward mounts `ViroXRSceneNavigator`, which is the moment the
+    headset goes immersive — and on an eligible headset `preparing` is where
+    the store already is, so this branch is taken on the first render and there
+    is no "before it" to sit through.
+
+    The flat panel is what the screen falls BACK to rather than what it opens
+    with: the primer when the runtime says the camera is not granted, and
+    `unsupported` on a device that was never going to manage this. Both are
+    questions asked ABOUT immersion and neither can honestly be asked from
+    inside it, which is why answering one is worth unmounting a scene for.
+
+    `exiting` keeps the navigator mounted for the frame between the press and
+    the pop. Tearing the scene down first would black the headset out while the
+    route is still there, which reads as a crash rather than as leaving.
+  */
+  const immersive =
+    phase.kind === 'preparing' ||
+    phase.kind === 'ready' ||
+    phase.kind === 'interrupted' ||
+    phase.kind === 'exiting';
+
+  /*
+    THE BOARD IS PLACED FROM A SETTLED HEAD, NOT A CREDIBLE ONE — and the
+    difference is a session that starts at the child's eyes versus one that
+    starts wherever the headset happened to be while they were putting it on.
+
+    Measured, both ways, on the PICO: the first credible pose of a session
+    arrived at y = 0.90 m while the headset was still in the child's hands, was
+    latched, and parked the whole composition at couch height — the third
+    floor-level session in a row, each from a different way of trusting one
+    early pose. A worn head is different from a handled one in exactly one
+    observable: it holds still. So the poll samples the pose the camera event
+    keeps fresh (`active.head`, via the moyo.3 renderer's
+    `notifyCameraTransform`, with `getCameraOrientationAsync` as the pull for
+    older builds), and places when two samples 400 ms apart agree — under
+    20 cm of travel and under ~25° of turn. Unbounded while the scene is up,
+    because a child can fidget for as long as they like; the interval dies
+    with the route.
+  */
+  useEffect(() => {
+    if (!immersive) return;
+    let previous: XrHeadPose | null = null;
+    let placed = false;
+    const timer = setInterval(() => {
+      if (placed) {
+        clearInterval(timer);
+        return;
+      }
+      /* Pull as well as read: on a renderer without the camera event this is
+         the only source, and on one with it this is a no-op refresh. */
+      if (active.head === null) {
+        void placeFromHead().then(() => undefined);
+        return;
+      }
+      const current = active.head;
+      if (previous !== null) {
+        const [px, py, pz] = previous.position;
+        const [cx, cy, cz] = current.position;
+        const travel = Math.hypot(cx - px, cy - py, cz - pz);
+        const turn =
+          previous.forward[0] * current.forward[0] +
+          previous.forward[1] * current.forward[1] +
+          previous.forward[2] * current.forward[2];
+        if (travel < 0.2 && turn > 0.9) {
+          placed = true;
+          if (__DEV__) console.log('[tutor-xr] placing from settled pose', current.position);
+          useXrSession.getState().setPlacement(placeInFrontOf(current, BOARD_PLACE));
+          clearInterval(timer);
+          return;
+        }
+      }
+      previous = current;
+    }, 400);
+    return () => clearInterval(timer);
+  }, [immersive]);
+
+  return (
+    <View style={styles.root}>
+      {immersive ? (
+        <ViroXRSceneNavigator
+          initialScene={INITIAL_SCENE}
+          /*
+            ALL THREE POST-PROCESS PASSES OFF, not just HDR.
+
+            The vendor documents `hdrEnabled={false}` for passthrough because the
+            HDR path renders to an intermediate target and forces an opaque final
+            composite. Bloom and PBR sit on that same path, and the Danger Room
+            scene — the one Quest/PICO scene in these repos that is known to
+            composite correctly — turns off all three. Leaving two of them on is
+            not a smaller version of the fix; it is the same opaque composite by
+            another route.
+          */
+          hdrEnabled={false}
+          bloomEnabled={false}
+          pbrEnabled={false}
+          /*
+            Asked for explicitly rather than relied on. The package auto-enables
+            passthrough when an AR scene mounts ON QUEST; that is Meta-path code,
+            and this app's headset is a PICO. The Danger Room navigator passes it
+            outright for the same reason, and it is a no-op on the immersive
+            branch, which has no real room in it to show.
+          */
+          passthroughEnabled
+
+          onExitViro={handleExit}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : (
+        <XrGate
+          phase={phase}
+          ageBand={ageBand}
+          onGrant={handleGrant}
+          onDecline={handleDecline}
+          onExit={handleExit}
+        />
+      )}
+      {/*
+        The engine. Off-screen rather than hidden, at the pixel size the ink is
+        rendered from — see this file's header.
+
+        IT IS MOUNTED THROUGH EVERY PHASE, INCLUDING THE PRIMER. A WebView takes
+        a visible fraction of a second to load its page and report `mounted`,
+        and that fraction is free while a child is reading why the camera is
+        needed. Started after the answer instead, it would be spent staring at
+        blank paper in space.
+      */}
+      {/*
+        THE HOST IS WHERE THE RENDERER REACHES THE ENGINE. It is a plain `View`
+        until `MoyoBoardTexture` binds; bound, the same WebView is re-parented
+        into the sink `AndroidViewTexture` draws from, without reloading the
+        page or dropping the stroke in progress. Unbound — iOS, a binary without
+        the module, no renderer in this window — it stays exactly the parked
+        box the raster presentation has always used.
+
+        `live` WAITS FOR `ready`, and that is the engine's own event rather than
+        a delay: `preparing → ready` is the board reporting it has an editor, so
+        the navigator has been mounted for at least that long and the page it
+        hands over is a loaded one.
+
+        THE BOARD ONLY, NOT `Whiteboard`. The tray belongs to the 2D pane; in
+        here the controls are the rail in the scene. Textured, a tray would be
+        drawn ON the child's paper and would push every page coordinate a tray's
+        height away from the ray that produced it — the pointer scale is
+        `boardSurfacePixels`, and that has to be the page and nothing else.
+      */}
+      <BoardTextureHost
+        style={styles.engine}
+        material={XR_MATERIAL.boardLive}
+        pageWidth={boardSurfacePixels.width}
+        pageHeight={boardSurfacePixels.height}
+        live={ready && immersive}
+        onBound={handleBound}
+      >
+        <WhiteboardBoard
+          ref={engine}
+          onChange={handleChange}
+          onReady={handleReady}
+          onCalibration={handleCalibration}
+        />
+      </BoardTextureHost>
+    </View>
+  );
+}
+
+/**
+ * THE FLAT PANEL THAT COMES BEFORE THE ROOM — the check, the primer, and the
+ * three ways this cannot work.
+ *
+ * ON A HEADSET THIS IS NOT A COMPROMISE. The app runs as a 2D panel until the
+ * navigator takes the display, so every one of these renders in the place a
+ * child is already reading from, in the medium the headset itself uses for
+ * consent.
+ */
+function XrGate({
+  phase,
+  ageBand,
+  onGrant,
+  onDecline,
+  onExit,
+}: {
+  phase: XrPhase;
+  ageBand: TutorXrScreenProps['ageBand'];
+  onGrant: () => void;
+  onDecline: () => void;
+  onExit: () => void;
+}) {
+  const size = buttonSizeForBand(ageBand);
+
+  if (phase.kind === 'permission-required') {
+    return (
+      <UiView className="flex-1 justify-center bg-surface gap-stack p-inset">
+        <Text variant="heading">Your board needs the camera</Text>
+        {/* WHY, first and in one sentence. A primer that leads with the
+            permission rather than the reason is a dialog with extra steps. */}
+        <Text variant="body">
+          The headset uses its cameras to see your room, so your paper can stand in front of you
+          instead of floating in the dark.
+        </Text>
+        {/* ON-DEVICE VS OFF-DEVICE, said as two facts rather than as a
+            reassurance. A child and a guardian reading over their shoulder need
+            to know which of these two things happens to the picture. */}
+        <Text variant="body">
+          What the cameras see stays on this headset. It is not sent anywhere, and it is not saved
+          or recorded.
+        </Text>
+        <Text variant="body">
+          The only thing that leaves is a board you press Ask on. That goes to Natalie as a picture,
+          the same as sending a photo of your paper.
+        </Text>
+        {/*
+          TWO DOORS OF THE SAME WEIGHT. Same variant, same size, side by side —
+          a primer that styles the yes as the primary action and the no as a
+          text link has asked a question it already answered.
+        */}
+        <UiView className="flex-row flex-wrap gap-group">
+          <Button
+            title="Turn on the camera"
+            variant="outline"
+            size={size}
+            onPress={onGrant}
+            aria-label="Turn on the camera and open the spatial board"
+          />
+          <Button
+            title="Not now"
+            variant="outline"
+            size={size}
+            onPress={onDecline}
+            aria-label="Not now — go back to the normal board"
+          />
+        </UiView>
+        <Text variant="caption" tone="muted">
+          Not now takes you back to your normal board, with everything you have written.
+        </Text>
+      </UiView>
+    );
+  }
+
+  if (phase.kind === 'unsupported') {
+    const copy = UNSUPPORTED_COPY[phase.reason];
+    return (
+      <UiView className="flex-1 justify-center bg-surface gap-stack p-inset">
+        <Text variant="heading">{copy.heading}</Text>
+        <Text variant="body">{copy.body}</Text>
+        <Button
+          title="Back to my board"
+          variant="outline"
+          size={size}
+          onPress={onExit}
+          aria-label="Back to my board"
+        />
+      </UiView>
+    );
+  }
+
+  /*
+    `checking`. Words rather than a bare spinner, for the reason the lazy
+    loader's fallback already gives: this is the one moment a child is looking
+    at nothing and does not know whether their working survived the trip.
+  */
+  return (
+    <UiView className="flex-1 items-center justify-center bg-surface gap-stack p-inset">
+      <Text variant="body">Checking what this headset can do…</Text>
+      <Text variant="caption" tone="muted">
+        Your working is saved. Nothing is lost if you go back.
+      </Text>
+    </UiView>
+  );
+}
+
+/**
+ * The three ways a spatial board does not open, each with its own answer.
+ *
+ * Every one of them names where the work IS, because that is the only thing the
+ * child actually needs from this screen. None of them asks the child to fix
+ * anything they cannot fix: a build without the renderer and a device that is
+ * not a headset are both nobody's fault and nothing to act on.
+ */
+const UNSUPPORTED_COPY: Record<
+  Extract<XrPhase, { kind: 'unsupported' }>['reason'],
+  { heading: string; body: string }
+> = {
+  'no-xr-runtime': {
+    heading: 'This app cannot open a board in space',
+    body: 'This version was not built for a headset. Your board is on the normal tutor screen, with everything you have written.',
+  },
+  'device-not-eligible': {
+    heading: 'The spatial board needs a headset',
+    body: 'This device cannot show your paper in the room. Your board is on the normal tutor screen, with everything you have written.',
+  },
+  'permission-declined': {
+    heading: 'The camera stayed off',
+    body: 'Without it the headset cannot see your room, so the board has nowhere to stand. You can turn it on in the headset settings whenever you like. Your board is on the normal screen, with everything you have written.',
+  },
+};
+
+const styles = StyleSheet.create({
+  root: { flex: 1, backgroundColor: XR_COLOR.void },
+  engine: {
+    position: 'absolute',
+    /*
+      Parked, not hidden. `display: none` tears the WebView's surface down and
+      the engine restarts; moved aside it keeps its editor, its camera and the
+      stroke in progress.
+    */
+    left: -boardSurfacePixels.width - spatialSpacing.md,
+    top: 0,
+    width: boardSurfacePixels.width,
+    height: boardSurfacePixels.height,
+    opacity: 0,
+  },
+});

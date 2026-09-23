@@ -29,18 +29,16 @@ import type { TurnImage } from '@acme/inference';
  * the child's data plan. Going SMALLER is what would cost something — the whole
  * point of the photo is a `÷` two pixels different from a `+`.
  *
- * A source narrower than this is upscaled rather than left alone, which is a
- * few wasted kilobytes and no lost detail. Not guarded, because the capture
- * path caps every photo at 1600px (`privacy-process`) — the case needs a
- * second decode to detect and does not arise.
+ * This is an upload derivative, never the preserved master. The native capture
+ * path retains its original resolution for later crop recovery.
  */
 const MODEL_IMAGE_MAX_WIDTH = 1568;
 
 /**
  * JPEG, not the PNG `stripExif` writes. A 1568px worksheet is ~3 MB of base64
  * as PNG and ~250 KB as JPEG, over a phone connection, for a page of black ink
- * on white paper that no one will ever look at again. The compression artefacts
- * that would matter are at the stroke level and 0.7 does not reach them.
+ * on white paper. Small marks may be damaged by compression; neither this
+ * derivative nor a model's reading of it establishes source completeness.
  */
 const MODEL_IMAGE_QUALITY = 0.7;
 

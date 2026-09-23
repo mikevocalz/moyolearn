@@ -32,9 +32,11 @@ import {
 import { ModelDeclined } from './errors.ts';
 import { priceUsd, profileFor } from './models.ts';
 import { modelFor, requestFor } from './routing.ts';
+import { loadProviderApprovals, requireLearnerProviderApproval, type LoadProviderApprovals } from './provider-policy.ts';
 import type {
   ClassifierRole,
   InferenceCompletion,
+  InferenceOutcome,
   InferencePayload,
   InferenceStream,
   ProviderAdapter,
@@ -77,10 +79,17 @@ export interface GatewayOptions {
   readonly adapter: ProviderAdapter;
   readonly ledger: BudgetLedger;
   readonly budget: LearnerBudget;
+  /** Server composition only; never supplied by a request or model payload. */
+  readonly loadProviderApprovals?: LoadProviderApprovals;
 }
 
 export function createInferenceGateway(options: GatewayOptions): InferenceGateway {
   const { adapter, ledger, budget } = options;
+  const product = adapter.product;
+  const approvals = options.loadProviderApprovals ?? loadProviderApprovals;
+  const authorize = async (role: ClassifierRole | 'tutor-turn', now: Date) => {
+    requireLearnerProviderApproval(await approvals(), product, role, modelFor(role), now);
+  };
 
   const stateFor = async (learnerId: string, now: Date): Promise<SessionBudgetState> =>
     budgetStateFor(await ledger.read(learnerId, dayKey(now)), budget);
@@ -126,7 +135,27 @@ export function createInferenceGateway(options: GatewayOptions): InferenceGatewa
           : payload;
 
       const request = requestFor('tutor-turn', nudged, signal);
-      const stream = adapter.stream(request);
+      await authorize('tutor-turn', new Date());
+      const sourceStream = adapter.stream(request);
+      // The Anthropic transport starts when text is iterated. Recheck there so
+      // an approval revoked between stream creation and dispatch cannot leak.
+      let rejectDispatch: (reason: Error) => void = () => {};
+      const deniedDispatch = new Promise<InferenceOutcome>((_resolve, reject) => { rejectDispatch = reject; });
+      const stream: InferenceStream = {
+        text: {
+          async *[Symbol.asyncIterator]() {
+            try {
+              await authorize('tutor-turn', new Date());
+            } catch (error) {
+              const denied = error instanceof Error ? error : new Error('Provider dispatch denied');
+              rejectDispatch(denied);
+              throw denied;
+            }
+            yield* sourceStream.text;
+          },
+        },
+        settled: Promise.race([sourceStream.settled, deniedDispatch]),
+      };
       const profile = profileFor(modelFor('tutor-turn'));
 
       /*
@@ -139,8 +168,8 @@ export function createInferenceGateway(options: GatewayOptions): InferenceGatewa
       const settled = stream.settled.then(async (outcome) => {
         await ledger.record(learnerId, dayKey(now), priceUsd(profile, outcome.usage));
         if (outcome.stop === 'refusal') {
-          // With server-side fallbacks on for this cell, a surviving refusal
-          // means the whole chain declined. It is thrown rather than ended
+          // A refusal ends the request without another model attempt.
+          // It is thrown rather than ended
           // silently for the reason `tutor-model.ts` gave first: a stream that
           // just stops renders as Natalie trailing off mid-thought.
           throw new ModelDeclined(outcome.servedBy, outcome.declineCategory);
@@ -152,11 +181,12 @@ export function createInferenceGateway(options: GatewayOptions): InferenceGatewa
       return { kind: 'stream', stream: { text: stream.text, settled } };
     },
 
-    classify(role, payload) {
+    async classify(role, payload) {
       // No budget gate. A classification is a safety layer's own call, and a
       // learner whose day is spent must not thereby get an UNSCREENED turn —
       // doc 12 §5 pauses on a layer that cannot answer, and "we ran out of
       // budget" is exactly a layer that cannot answer.
+      await authorize(role, new Date());
       return adapter.complete(requestFor(role, payload));
     },
   };

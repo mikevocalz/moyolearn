@@ -1,0 +1,1595 @@
+{
+  "date": "2026-09-16",
+  "runtime": "Chrome 152, production readPdf via Vite, real PDF.js worker and Tesseract",
+  "state": "complete",
+  "results": [
+    {
+      "name": "wrong-answer",
+      "ms": 61,
+      "pages": [
+        {
+          "index": 1,
+          "status": "text",
+          "textLength": 26,
+          "textLayerLength": 26,
+          "previewBytes": 44130,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "Original answer: 2 + 2 = 5"
+        }
+      ]
+    },
+    {
+      "name": "blank",
+      "ms": 207,
+      "pages": [
+        {
+          "index": 1,
+          "status": "needs-ocr",
+          "textLength": 0,
+          "textLayerLength": 0,
+          "previewBytes": 34662,
+          "regions": 0,
+          "width": 612,
+          "height": 792,
+          "text": ""
+        }
+      ]
+    },
+    {
+      "name": "rotated-90",
+      "ms": 41,
+      "pages": [
+        {
+          "index": 1,
+          "status": "text",
+          "textLength": 26,
+          "textLayerLength": 26,
+          "previewBytes": 45754,
+          "regions": 1,
+          "width": 792,
+          "height": 612,
+          "text": "Original answer: 2 + 2 = 5"
+        }
+      ]
+    },
+    {
+      "name": "rotated-180",
+      "ms": 43,
+      "pages": [
+        {
+          "index": 1,
+          "status": "text",
+          "textLength": 26,
+          "textLayerLength": 26,
+          "previewBytes": 43998,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "Original answer: 2 + 2 = 5"
+        }
+      ]
+    },
+    {
+      "name": "rotated-270",
+      "ms": 41,
+      "pages": [
+        {
+          "index": 1,
+          "status": "text",
+          "textLength": 26,
+          "textLayerLength": 26,
+          "previewBytes": 45318,
+          "regions": 1,
+          "width": 792,
+          "height": 612,
+          "text": "Original answer: 2 + 2 = 5"
+        }
+      ]
+    },
+    {
+      "name": "landscape",
+      "ms": 41,
+      "pages": [
+        {
+          "index": 1,
+          "status": "text",
+          "textLength": 26,
+          "textLayerLength": 26,
+          "previewBytes": 42782,
+          "regions": 1,
+          "width": 792,
+          "height": 612,
+          "text": "Original answer: 2 + 2 = 5"
+        }
+      ]
+    },
+    {
+      "name": "tiny-page",
+      "ms": 40,
+      "pages": [
+        {
+          "index": 1,
+          "status": "text",
+          "textLength": 5,
+          "textLayerLength": 5,
+          "previewBytes": 3878,
+          "regions": 1,
+          "width": 100,
+          "height": 100,
+          "text": "2+2=5"
+        }
+      ]
+    },
+    {
+      "name": "huge-page",
+      "ms": 40,
+      "pages": [
+        {
+          "index": 1,
+          "status": "text",
+          "textLength": 5,
+          "textLayerLength": 5,
+          "previewBytes": 43974,
+          "regions": 1,
+          "width": 14400,
+          "height": 14400,
+          "text": "2+2=5"
+        }
+      ]
+    },
+    {
+      "name": "password-protected",
+      "ms": 31,
+      "error": "PasswordException: No password given"
+    },
+    {
+      "name": "truncated",
+      "ms": 28,
+      "error": "InvalidPDFException: Invalid PDF structure."
+    },
+    {
+      "name": "not-a-pdf",
+      "ms": 27,
+      "error": "InvalidPDFException: Invalid PDF structure."
+    },
+    {
+      "name": "zero-pages",
+      "ms": 29,
+      "error": "Error: PDF exceeds page limit or has no pages"
+    },
+    {
+      "name": "101-pages",
+      "ms": 30,
+      "error": "Error: PDF exceeds page limit or has no pages"
+    },
+    {
+      "name": "100-pages",
+      "ms": 866,
+      "pages": [
+        {
+          "index": 1,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 2,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 3,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 4,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 5,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 6,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 7,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 8,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 9,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 10,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 11,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 12,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 13,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 14,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 15,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 16,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 17,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 18,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 19,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 20,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 21,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 22,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 23,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 24,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 25,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 26,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 27,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 28,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 29,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 30,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 31,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 32,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 33,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 34,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 35,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 36,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 37,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 38,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 39,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 40,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 41,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 42,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 43,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 44,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 45,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 46,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 47,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 48,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 49,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 50,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 51,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 52,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 53,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 54,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 55,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 56,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 57,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 58,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 59,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 60,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 61,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 62,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 63,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 64,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 65,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 66,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 67,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 68,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 69,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 70,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 71,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 72,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 73,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 74,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 75,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 76,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 77,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 78,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 79,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 80,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 81,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 82,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 83,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 84,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 85,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 86,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 87,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 88,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 89,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 90,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 91,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 92,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 93,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 94,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 95,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 96,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 97,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 98,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 99,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        },
+        {
+          "index": 100,
+          "status": "text",
+          "textLength": 9,
+          "textLayerLength": 9,
+          "previewBytes": 6218,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "2 + 2 = 5"
+        }
+      ]
+    },
+    {
+      "name": "scan-clear",
+      "ms": 285,
+      "pages": [
+        {
+          "index": 1,
+          "status": "ocr",
+          "textLength": 10,
+          "textLayerLength": 0,
+          "previewBytes": 47762,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "Solve2+2=5"
+        }
+      ]
+    },
+    {
+      "name": "scan-blurred",
+      "ms": 263,
+      "pages": [
+        {
+          "index": 1,
+          "status": "ocr",
+          "textLength": 10,
+          "textLayerLength": 0,
+          "previewBytes": 58546,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "Solve2+2+5"
+        }
+      ]
+    },
+    {
+      "name": "scan-low-contrast",
+      "ms": 248,
+      "pages": [
+        {
+          "index": 1,
+          "status": "ocr",
+          "textLength": 10,
+          "textLayerLength": 0,
+          "previewBytes": 43962,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "Solve2+2=5"
+        }
+      ]
+    },
+    {
+      "name": "scan-header-only-layer",
+      "ms": 58,
+      "pages": [
+        {
+          "index": 1,
+          "status": "text",
+          "textLength": 15,
+          "textLayerLength": 15,
+          "previewBytes": 51406,
+          "regions": 1,
+          "width": 612,
+          "height": 792,
+          "text": "Homework page 1"
+        }
+      ]
+    },
+    {
+      "name": "broken-font-page1",
+      "ms": 1428,
+      "pages": [
+        {
+          "index": 1,
+          "status": "ocr",
+          "textLength": 867,
+          "textLayerLength": 711,
+          "previewBytes": 172302,
+          "regions": 21,
+          "width": 612,
+          "height": 792
+        }
+      ]
+    },
+    {
+      "name": "scanned-fractions-pages65-66",
+      "ms": 1949,
+      "pages": [
+        {
+          "index": 1,
+          "status": "ocr",
+          "textLength": 539,
+          "textLayerLength": 0,
+          "previewBytes": 152590,
+          "regions": 22,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 2,
+          "status": "ocr",
+          "textLength": 390,
+          "textLayerLength": 0,
+          "previewBytes": 125674,
+          "regions": 16,
+          "width": 612,
+          "height": 792
+        }
+      ]
+    },
+    {
+      "name": "grade5-fractions",
+      "ms": 16329,
+      "pages": [
+        {
+          "index": 1,
+          "status": "ocr",
+          "textLength": 617,
+          "textLayerLength": 711,
+          "previewBytes": 152402,
+          "regions": 19,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 2,
+          "status": "ocr",
+          "textLength": 433,
+          "textLayerLength": 664,
+          "previewBytes": 149150,
+          "regions": 17,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 3,
+          "status": "ocr",
+          "textLength": 254,
+          "textLayerLength": 286,
+          "previewBytes": 67622,
+          "regions": 13,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 4,
+          "status": "ocr",
+          "textLength": 619,
+          "textLayerLength": 685,
+          "previewBytes": 107670,
+          "regions": 23,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 5,
+          "status": "ocr",
+          "textLength": 874,
+          "textLayerLength": 982,
+          "previewBytes": 135686,
+          "regions": 26,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 6,
+          "status": "ocr",
+          "textLength": 1033,
+          "textLayerLength": 1102,
+          "previewBytes": 147634,
+          "regions": 29,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 7,
+          "status": "ocr",
+          "textLength": 471,
+          "textLayerLength": 498,
+          "previewBytes": 94182,
+          "regions": 14,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 8,
+          "status": "ocr",
+          "textLength": 666,
+          "textLayerLength": 686,
+          "previewBytes": 99114,
+          "regions": 16,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 9,
+          "status": "ocr",
+          "textLength": 1131,
+          "textLayerLength": 1172,
+          "previewBytes": 171958,
+          "regions": 29,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 10,
+          "status": "ocr",
+          "textLength": 301,
+          "textLayerLength": 412,
+          "previewBytes": 81166,
+          "regions": 28,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 11,
+          "status": "ocr",
+          "textLength": 593,
+          "textLayerLength": 644,
+          "previewBytes": 113730,
+          "regions": 21,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 12,
+          "status": "ocr",
+          "textLength": 298,
+          "textLayerLength": 330,
+          "previewBytes": 159554,
+          "regions": 17,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 13,
+          "status": "ocr",
+          "textLength": 471,
+          "textLayerLength": 342,
+          "previewBytes": 178450,
+          "regions": 28,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 14,
+          "status": "ocr",
+          "textLength": 443,
+          "textLayerLength": 454,
+          "previewBytes": 91818,
+          "regions": 12,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 15,
+          "status": "ocr",
+          "textLength": 622,
+          "textLayerLength": 646,
+          "previewBytes": 121402,
+          "regions": 18,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 16,
+          "status": "ocr",
+          "textLength": 421,
+          "textLayerLength": 1240,
+          "previewBytes": 161650,
+          "regions": 33,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 17,
+          "status": "ocr",
+          "textLength": 1250,
+          "textLayerLength": 1492,
+          "previewBytes": 197842,
+          "regions": 33,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 18,
+          "status": "ocr",
+          "textLength": 330,
+          "textLayerLength": 0,
+          "previewBytes": 813294,
+          "regions": 16,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 19,
+          "status": "ocr",
+          "textLength": 383,
+          "textLayerLength": 0,
+          "previewBytes": 453454,
+          "regions": 23,
+          "width": 612,
+          "height": 792
+        },
+        {
+          "index": 20,
+          "status": "ocr",
+          "textLength": 246,
+          "textLayerLength": 0,
+          "previewBytes": 939082,
+          "regions": 13,
+          "width": 612,
+          "height": 792
+        }
+      ]
+    },
+    {
+      "name": "handwritten-fractions",
+      "ms": 40,
+      "error": "Error: PDF exceeds page limit or has no pages"
+    }
+  ]
+}
