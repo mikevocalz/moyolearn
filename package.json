@@ -38,6 +38,7 @@
     "check:joints": "node tooling/check-joint-ownership.mjs",
     "check:matinputs": "node tooling/check-material-inputs.mjs",
     "check:machine": "node tooling/check-machine-routes.mjs",
+    "check:schema": "node tooling/check-schema-applied.mjs",
     "postinstall": "node tooling/enable-skia-graphite.mjs"
   },
   "devDependencies": {
