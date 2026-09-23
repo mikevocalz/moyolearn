@@ -26,6 +26,12 @@
  * `site.room.embodiment.*`, in the roadmap tense the law requires — is docked to
  * its bottom edge as real text.
  *
+ * THAT `aria-hidden` APPLIES TO THE STATIC PLATE ONLY, and the distinction is
+ * load-bearing now that a live one exists. `natalie-surface.tsx` swaps in a
+ * rendered Natalie with four controls under her; hiding *that* hides four
+ * buttons that are still in the tab order. The live plate hides only the WebGL
+ * canvas, and the sentence above is the reason the wrong half got hidden once.
+ *
  * The four `site.room.clip.*` strings ship with the asset, not before it: a
  * "Play with sound" control over a clip that does not exist would be a promise,
  * and "Muted until you tap" describes a tap this page cannot offer.
