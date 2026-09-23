@@ -46,9 +46,18 @@ and an index swap that creates the replacement `CONCURRENTLY` before dropping th
 old one. **No `DROP TABLE`, no `DROP COLUMN`, no `DELETE`, no `TRUNCATE`.** Every
 statement is `IF [NOT] EXISTS`, so a mid-way failure is recovered by re-running.
 
-Scale: the `jobs` schema is 656 kB — 12 job rows, 12 queues, 0 schedules. The
-`CONCURRENTLY` statements mean the file cannot run in a single transaction, which
-is the only real operational caveat, and idempotency is the answer to it.
+Scale: the whole `jobs` schema is well under a megabyte — 12 job rows, 12
+queues, 0 schedules, 0 `queue_stats` rows. ACCESS EXCLUSIVE is taken only on
+`version` (1 row), `queue` (12) and `schedule` (0), and none of those rewrites.
+`jobs.job` and `job_common` never take it at all; the only statements touching
+them are the two `CONCURRENTLY` operations after `COMMIT`. Sub-second, bounded
+by the file's own `lock_timeout = 30000`.
+
+The `CONCURRENTLY` statements mean the file cannot run in a single transaction.
+That has two consequences which are NOT covered by idempotency, and they are set
+out under Corrections below — the pooler cannot run them at all, and an
+interrupted index build leaves an INVALID index that `IF NOT EXISTS` will skip
+on a re-run.
 
 ## Why (b) is rejected
 
