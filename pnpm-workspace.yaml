@@ -200,7 +200,7 @@ catalog:
   # schema. Its own `pg` dependency is `^8.23.0`, which is the line above
   # exactly — one driver in the workspace, not two, so the queue and the
   # repositories cannot disagree about how a timestamp comes back.
-  pg-boss: 12.28.0
+  pg-boss: 12.33.0
   better-auth: 1.7.2
   "@better-auth/expo": 1.7.2
   "@better-auth/stripe": 1.7.2
