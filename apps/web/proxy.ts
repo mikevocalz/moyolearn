@@ -62,7 +62,35 @@ const PUBLIC_PATHS = [
 ];
 
 export async function proxy(request: NextRequest) {
-  if (process.env.NEXT_PUBLIC_AUTH_MODE !== 'live') return NextResponse.next();
+  /*
+    THE BYPASS IS OPT-IN, NOT A DEFAULT.
+
+    This read used to be `!== 'live'`, which made an UNSET variable mean "open
+    every protected route". That is the wrong way round for a gate, and on
+    2026-09-22 it was measured doing exactly what it says: a Vercel preview of
+    this app builds with no environment at all — the project has zero
+    Preview-scoped variables — and `NEXT_PUBLIC_*` is inlined at BUILD time, so
+    the check evaluated against `undefined` and the proxy waved everything
+    through. `/tutor` served 200 instead of redirecting, and
+    `/api/account/learners/delete` answered 405 rather than 401, which is the
+    route reporting a wrong method — i.e. the request had already passed the
+    gate and reached the handler. One `vercel promote` away from shipping that
+    to app.moyolearn.com.
+
+    The condition is now the same one `isMockAuth()` uses in
+    `packages/app/core/protected-operation.ts`: explicit mock AND a development
+    build. Restated here rather than imported on purpose — this file's whole
+    shape is about not loading server modules it might not need (see the
+    dynamic import below), and the definition is two env reads. If that
+    condition ever changes, it changes in both places.
+
+    On Vercel every build is NODE_ENV=production, previews included, so a
+    preview now fails CLOSED: it redirects to /login and is useless for testing
+    a signed-in flow, which is the correct trade against being unauthenticated.
+  */
+  const mockAuth =
+    process.env.NEXT_PUBLIC_AUTH_MODE === 'mock' && process.env.NODE_ENV === 'development';
+  if (mockAuth) return NextResponse.next();
 
   const isPublic = PUBLIC_PATHS.some((prefix) =>
     request.nextUrl.pathname === prefix || request.nextUrl.pathname.startsWith(`${prefix}/`),

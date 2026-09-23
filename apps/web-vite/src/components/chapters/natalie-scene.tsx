@@ -422,6 +422,17 @@ export function NatalieScene({
       camera={{ fov: CAMERA_FOV, position: CAMERA_POS, near: 0.1, far: 10 }}
       gl={{ antialias: false, alpha: true }}
       style={{ width: '100%', height: '100%', display: 'block' }}
+      /*
+        THE RENDER IS THE ONE PART OF THIS SURFACE WITH NOTHING TO SAY. Geometry,
+        lights and a WebGL canvas announce as an unlabelled graphic, so the scene
+        hides itself rather than making every caller remember to. Everything a
+        screen reader actually needs from Natalie — what she just said — is the
+        caption `onCaptionChange` feeds, and that lives outside this subtree in
+        a live region precisely because `aria-hidden` cannot be undone by a
+        descendant. R3F spreads unknown props onto its container div, so this
+        costs no wrapper and no layout.
+      */
+      aria-hidden
     >
       <CameraSetup />
       <hemisphereLight

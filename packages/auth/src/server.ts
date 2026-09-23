@@ -17,7 +17,11 @@ import {
   permitsLoginAtHost,
   tenantSlugFromHost,
 } from './host-tenant.ts';
-import { readAuthEmailConfig, sendVerificationEmailFor } from './auth-email.ts';
+import {
+  readAuthEmailConfig,
+  sendResetPasswordFor,
+  sendVerificationEmailFor,
+} from './auth-email.ts';
 
 /** Doc 06 §6: learner sessions expire sooner than adult ones. */
 const ADULT_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
@@ -193,6 +197,32 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
       // Dev can sign up and sign in without an email adapter; verification is
       // still enforced in production builds.
       requireEmailVerification: verificationRequired,
+      /*
+        Ships `false`, set here because a reset is the path someone takes when
+        they have lost control of the account — a stolen session that outlives
+        the new password defeats the point of changing it. It also matters for
+        doc 06 §2: a guardian resetting a managed learner's password expects
+        the learner's live sessions to end, not to keep running on the old one.
+      */
+      revokeSessionsOnPasswordReset: true,
+      /*
+        A conditional KEY, not a conditional block around the object. Unlike
+        `emailVerification` below, `emailAndPassword` is always present — every
+        sign-in depends on it — so there is nothing here to spread away.
+
+        Without a sender, `/request-password-reset` throws BAD_REQUEST
+        `RESET_PASSWORD_DISABLED` and names the missing option
+        (dist/api/routes/password.mjs:53-56). That is a loud refusal, which is
+        why an unconfigured environment is left to hit it rather than handed a
+        sender that cannot send.
+      */
+      ...(authEmail
+        ? {
+            sendResetPassword: async (data) => {
+              await sendResetPasswordFor(authEmail, data);
+            },
+          }
+        : {}),
     },
     ...(authEmail
       ? {
