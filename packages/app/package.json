@@ -30,7 +30,7 @@
     "@acme/voice": "workspace:*",
     "@anthropic-ai/sdk": "catalog:",
     "@huggingface/transformers": "4.2.0",
-    "@reactvision/react-viro": "3.0.0-moyo.3",
+    "@reactvision/react-viro": "3.0.0-moyo.4",
     "@shopify/react-native-skia": "catalog:",
     "@tanstack/react-pacer": "catalog:",
     "@tanstack/react-query": "catalog:",

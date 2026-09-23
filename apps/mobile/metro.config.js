@@ -110,6 +110,20 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   if (moduleName === "lib0/webcrypto" && platform !== "web") {
     return { type: "sourceFile", filePath: LIB0_WEBCRYPTO_NATIVE };
   }
+  // React Native 0.88 deleted `Libraries/Image/AssetRegistry`; the same two
+  // functions (registerAsset, getAssetByID) now live at the public
+  // `react-native/asset-registry` entry, which is also Metro's
+  // `transformer.assetRegistryPath`, so aliasing keeps ONE registry instance.
+  // Three published packages still deep-import the old path
+  // (@reactvision/react-viro, react-native-nitro-image, expo-asset at the time
+  // of writing); the other two `Libraries/Image/*` files they import still
+  // exist, so only this one is redirected.
+  if (moduleName === "react-native/Libraries/Image/AssetRegistry") {
+    return {
+      type: "sourceFile",
+      filePath: require.resolve("react-native/asset-registry"),
+    };
+  }
   return upstreamResolveRequest
     ? upstreamResolveRequest(context, moduleName, platform)
     : context.resolveRequest(context, moduleName, platform);
