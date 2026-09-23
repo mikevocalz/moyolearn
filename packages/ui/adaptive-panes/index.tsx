@@ -300,16 +300,19 @@ function AdaptivePanesNavigator({
       <SafeArea edges={['left', 'right']} className="flex-1">
         <View
           className="flex-1 flex-row"
-          onLayout={
-            collapsed
-              ? (event: { nativeEvent: { layout: { width: number } } }) => {
-                  const laid = event.nativeEvent.layout.width;
-                  setRowWidth((current) =>
-                    current !== null && Math.abs(laid - current) <= 1 ? current : laid,
-                  );
-                }
-              : undefined
-          }
+          /*
+            Measured at EVERY width, not only while collapsed. The stored width
+            is what the next collapse opens the pane to; measuring only in the
+            compact band meant a host that was resized while expanded (a Duo
+            unfold, Split View, a rail appearing) collapsed to the width it had
+            last seen when compact — stale by exactly the change that mattered.
+          */
+          onLayout={(event: { nativeEvent: { layout: { width: number } } }) => {
+            const laid = event.nativeEvent.layout.width;
+            setRowWidth((current) =>
+              current !== null && Math.abs(laid - current) <= 1 ? current : laid,
+            );
+          }}
         >
           {/*
             Panes stay MOUNTED and animate to zero width rather than unmounting.

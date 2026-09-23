@@ -92,9 +92,16 @@ export function SessionToolbar({
     shifted up. `ShellHeader` already takes the same inset for the tabbed
     shells; a session must not be the one place chrome forgets. `SafeArea` is a
     plain passthrough on web, so this costs the web fork nothing.
+
+    `left`/`right` as well, for the same reason `ShellHeader` takes them: iPhone
+    Duo's camera and system controls reserve horizontal space, asymmetrically.
+    Fill and rule sit on this wrapper so they stay full width around the padded
+    controls.
   */
   return (
-    <SafeArea edges={['top']} className="bg-surface-header">
+    <SafeArea
+      edges={['top', 'left', 'right']}
+      className="border-b-2 border-on-surface-header bg-surface-header">
       <View
         /*
           THE SHELL'S CHROME DIALECT, not a bespoke one. This bar carried
@@ -106,7 +113,7 @@ export function SessionToolbar({
           bar. `RoleScope` re-points the pair per door, so this follows the
           learner's colour without naming it.
         */
-        className={`min-h-14 flex-row items-center gap-stack border-b-2 border-on-surface-header bg-surface-header px-4 py-1 ${className ?? ''}`}>
+        className={`min-h-14 flex-row items-center gap-stack bg-surface-header px-4 py-1 ${className ?? ''}`}>
         <IconButton
           /*
             `text-on-surface-header`, the same ink the title beside it uses.
