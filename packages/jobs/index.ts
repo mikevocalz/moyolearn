@@ -63,6 +63,7 @@ export type {
 
 export {
   JOBS_SCHEMA,
+  PGBOSS_SCHEMA_VERSION,
   QUEUE_POLICY,
   ensureLiveQueues,
   getBoss,
@@ -81,6 +82,8 @@ export type {
   QueueHealth,
   QueueHealthRule,
   QueueHealthSample,
+  RunnerHealth,
+  RunnerSample,
 } from './src/health.ts';
 
 export { drainQueues } from './src/drain.ts';

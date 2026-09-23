@@ -57,7 +57,32 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  const prefix = process.env.BUNNY_MEDIA_PREFIX ?? 'moyolearn';
+  /*
+    Trimmed, because the documented value carries a trailing slash.
+    `.env.example` ships `BUNNY_MEDIA_PREFIX=moyolearn/` and `payload.config.ts`
+    strips it before use; this route read it raw, which put a `//` into every
+    recursive path the listing built. `listFolder` normalises its own argument
+    too — belt and braces on purpose, because the zone is SHARED with another
+    product and a prefix that resolves wrong here is a sweep pointed at somebody
+    else's files.
+  */
+  const prefix = (process.env.BUNNY_MEDIA_PREFIX ?? 'moyolearn').replace(/^\/+|\/+$/g, '');
+
+  /*
+    AN EMPTY PREFIX IS REFUSED, not defaulted.
+
+    `??` only catches undefined, so `BUNNY_MEDIA_PREFIX=` — or a value that is
+    nothing but slashes — would leave this empty, and an empty prefix lists the
+    ZONE ROOT. The zone is shared with sosinspires-mono (`.env.example`), so
+    that is a delete pass over another product's files by age. Failing the sweep
+    is the safe direction; deleting is not reversible.
+  */
+  if (prefix === '') {
+    return NextResponse.json(
+      { ok: false, error: 'BUNNY_MEDIA_PREFIX is empty — refusing to sweep the shared zone root.' },
+      { status: 500 },
+    );
+  }
   const cutoff = Date.now() - MEDIA_TTL_DAYS * 86_400_000;
 
   try {

@@ -91,8 +91,50 @@ async function callSweep(
   );
 
   if (!response.ok) {
-    throw new Error(`${path} returned ${response.status}`);
+    throw new Error(`${path} returned ${response.status}${await failureDetail(response)}`);
   }
+}
+
+/**
+ * The sweep's own error message, for the thrown error to carry.
+ *
+ * WITHOUT THIS, A DEAD LETTER CANNOT SAY WHY. Both sweeps answer a failure with
+ * `{ ok: false, error: message }` and a 500; this function's absence is why four
+ * consecutive `retention.sweep.media` dead letters carry the string
+ * `/api/media/sweep returned 500` and nothing else, across four days in which
+ * the real message was produced sixteen times and read zero
+ * (`docs/incidents/2026-09-22-jobs-drain-outage.md`). The throw here becomes
+ * `jobs.job.output`, which is the only durable record a replaying human gets.
+ *
+ * Returns a string rather than throwing its own error. A body that cannot be
+ * read — a platform 502 with an HTML page, a connection cut mid-response — must
+ * not replace the status we DO have with a JSON parse error, which would be the
+ * same bug one layer out.
+ *
+ * `error` only, never the whole body. The success bodies carry counts and the
+ * failure bodies carry a message; neither holds a learner id today, and reading
+ * one named field keeps that true if one ever does. Truncated because
+ * `jobs.job.output` is a queue row and not a log sink.
+ */
+async function failureDetail(response: Response): Promise<string> {
+  let body: unknown;
+  try {
+    body = await response.json();
+  } catch {
+    return '';
+  }
+
+  if (
+    typeof body !== 'object' ||
+    body === null ||
+    !('error' in body) ||
+    typeof (body as Record<string, unknown>).error !== 'string'
+  ) {
+    return '';
+  }
+
+  const message = (body as { error: string }).error;
+  return message === '' ? '' : ` — ${message.slice(0, 500)}`;
 }
 
 /**

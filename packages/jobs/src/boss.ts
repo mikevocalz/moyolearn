@@ -34,6 +34,23 @@ import type { QueueDepths } from './shed.ts';
 /** Doc 12 §3's three-store separation, applied to the queue. */
 export const JOBS_SCHEMA = 'jobs';
 
+/**
+ * The pg-boss schema version `packages/payload/migrations/` is checked in at.
+ *
+ * `migrate: false` below means pg-boss ASSERTS this number against
+ * `jobs.version` rather than upgrading to it, and the assertion is `!==` and not
+ * `>` — so a client newer OR older than the database refuses to start, and the
+ * refusal takes `enqueue` down with the drain. On 2026-09-21 production moved to
+ * a build pinning pg-boss 12.33.0 (schema 42) against a database at 38, and the
+ * whole job runner was down for a day before anyone could read the reason.
+ *
+ * `jobs.test.ts` asserts the installed pg-boss agrees with this constant, so
+ * raising the catalog pin now fails the test suite. Raising it correctly means:
+ * generate the migration, check it in beside the others, apply it, then move
+ * this number.
+ */
+export const PGBOSS_SCHEMA_VERSION = 42;
+
 const SECONDS_PER_DAY = 86_400;
 
 export interface BossOptions {
@@ -132,10 +149,44 @@ export function getBoss(options: BossOptions = {}): Promise<PgBoss> {
     })
     .catch((error: Error) => {
       started = undefined;
-      throw error;
+      throw describeStartFailure(error);
     });
 
   return started;
+}
+
+/**
+ * Replaces pg-boss's version-assertion message with one that names the numbers.
+ *
+ * `pg-boss database requires migrations` is true and unactionable: it does not
+ * say which version the client wants, which the database has, or which direction
+ * to move. It cost a day on 2026-09-21 — and it was thrown on a path where the
+ * only reader was a `curl -f` that discarded the body.
+ *
+ * Only this one message is rewritten. Every other start failure — no schema, a
+ * closed pool, bad credentials — passes through untouched, because guessing at
+ * an error we have not read is how the last one stayed unreadable.
+ */
+function describeStartFailure(error: Error): Error {
+  if (error.message !== 'pg-boss database requires migrations') return error;
+  /*
+    The two numbers are deliberately NOT interpolated. The constant records what
+    this repository's migrations are checked in at, and the whole failure mode is
+    a deployed build whose pg-boss pin has moved away from it — so a message that
+    printed the constant as "what the client wants" would confidently print the
+    wrong number in the one situation this message exists for. Naming where to
+    read each number is true in every case.
+  */
+  return new Error(
+    `pg-boss schema mismatch — the deployed client and the '${JOBS_SCHEMA}' schema disagree on ` +
+      'version. The client asserts equality, not a floor, so it refuses to start in either ' +
+      `direction, and that takes enqueue down with the drain. Read the database with "select ` +
+      `version from ${JOBS_SCHEMA}.version" and the client with "npm view pg-boss@<pinned> ` +
+      `pgboss.schema"; this repository's migrations are checked in at ${PGBOSS_SCHEMA_VERSION}. ` +
+      'Apply the matching migration in packages/payload/migrations/, or deploy a build whose ' +
+      'pg-boss pin matches the database.',
+    { cause: error },
+  );
 }
 
 /** Stops the shared instance and forgets it. Called at the end of a bounded drain. */
