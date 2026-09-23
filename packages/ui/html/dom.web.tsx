@@ -16,7 +16,11 @@ import React from 'react';
 import type { TextInputProps } from 'react-native';
 
 type StyleqEntry = { $$css?: boolean; [key: string]: unknown } | React.CSSProperties;
-type WebStyle = StyleqEntry | WebStyle[] | null | undefined;
+// Nesting is part of the shape, not an edge case: a caller that has its own
+// style to contribute hands `[mine, theirs]` to toDom, and `theirs` is already
+// the styleq array useCssElement produced. `visit` below recurses, so the type
+// only has to admit what the runtime already accepts.
+type WebStyle = StyleqEntry | readonly WebStyle[] | null | undefined;
 
 // Decode a styleq `style` value into DOM className + inline style.
 const toDom = (className?: string, style?: WebStyle) => {
@@ -128,8 +132,16 @@ function hitSlopStyle(slop: PressBaseProps['hitSlop']): React.CSSProperties | un
   };
 }
 
-// RN views default to display:flex — raw DOM elements don't, so seed it
-// (callers' flex-row / items-* classes expect a flex container).
+/*
+  RN views default to display:flex — raw DOM elements don't, so seed it
+  (callers' flex-row / items-* classes expect a flex container).
+
+  THE TWO STYLES GO TO toDom AS A LIST, never object-spread together. `style`
+  arrives from useCssElement as a styleq ARRAY; spreading an array into an
+  object literal keys it by index, React DOM then tries to assign `style[0]`
+  and throws "Indexed property setter is not supported" — which takes down the
+  hydration of every page carrying a kit control, not just this button.
+*/
 export const ButtonBase = ({
   onPress, accessibilityLabel, accessibilityState, role, className, style, hitSlop, ...props
 }: PressBaseProps) => (
