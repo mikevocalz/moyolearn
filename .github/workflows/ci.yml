@@ -69,7 +69,15 @@ jobs:
             artifact: apps/web/.next/BUILD_ID
             port: '3101'
             start: pnpm --filter web start
-            routes: '[{"path":"/","expect":"<title>Moyo — Learn it by heart."},{"path":"/login","expect":"<input type=\"password\""}]'
+            # `/` is NOT public — it is absent from PUBLIC_PATHS in apps/web/proxy.ts,
+            # so a signed-out visitor is redirected to /login and `fetch` follows it.
+            # This used to assert the marketing title and passed only because CI has
+            # no environment: the gate read `NEXT_PUBLIC_AUTH_MODE !== 'live'`, an
+            # unset value meant "wave everything through", and the smoke test was
+            # exercising a configuration that never ships. Production answers
+            # `/` with 307 -> /login. So the honest assertion is the login form,
+            # which also proves the gate and the redirect chain both work.
+            routes: '[{"path":"/","expect":"<input type=\"password\""},{"path":"/login","expect":"<input type=\"password\""}]'
           # TanStack Start on a nitro node-server. Marketing pages are prerendered,
           # so `/` and `/pricing` render fully without any backing service.
           - app: web-vite
