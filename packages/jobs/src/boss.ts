@@ -49,7 +49,7 @@ export const JOBS_SCHEMA = 'jobs';
  * generate the migration, check it in beside the others, apply it, then move
  * this number.
  */
-export const PGBOSS_SCHEMA_VERSION = 38;
+export const PGBOSS_SCHEMA_VERSION = 42;
 
 const SECONDS_PER_DAY = 86_400;
 
