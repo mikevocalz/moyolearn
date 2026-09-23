@@ -17,6 +17,7 @@ import type { Subscription } from '@better-auth/stripe';
 import { isPlanName } from './billing-plans.ts';
 import type { SubscriptionState, SubscriptionStatus } from './entitlements.ts';
 import type { Auth } from './server.ts';
+import { readRevenueCatFamily, revenueCatEnabled } from './revenuecat.ts';
 
 /** Derived from the plugin's own row type — the five columns this projection reads. */
 export type SubscriptionRow = Pick<Subscription, 'plan' | 'status' | 'referenceId' | 'periodEnd' | 'seats'>;
@@ -73,7 +74,9 @@ export function toSubscriptionState(row: SubscriptionRow): SubscriptionState {
 export async function readSubscriptions(
   auth: Auth,
   referenceId: string,
+  customerType: 'user' | 'organization' = 'user',
 ): Promise<SubscriptionState[]> {
+  if (customerType === 'user' && revenueCatEnabled()) return readRevenueCatFamily(referenceId);
   return rowsFor(auth, [referenceId]);
 }
 
@@ -91,15 +94,20 @@ export async function readSessionSubscriptions(
   auth: Auth,
   userId: string,
 ): Promise<SubscriptionState[]> {
+  // A configured RevenueCat read may fail, but it must never silently fall
+  // back to an old Stripe row after a refund or a store subscription expires.
+  const family = revenueCatEnabled() ? await readRevenueCatFamily(userId) : null;
   try {
     const context = await auth.$context;
     const memberships = await context.adapter.findMany<{ organizationId: string }>({
       model: 'member',
       where: [{ field: 'userId', value: userId }],
     });
-    return rowsFor(auth, [userId, ...memberships.map((m) => m.organizationId)]);
+    const orgIds = memberships.map((m) => m.organizationId);
+    return family === null ? rowsFor(auth, [userId, ...orgIds])
+      : [...family, ...await rowsFor(auth, orgIds)];
   } catch {
-    return [];
+    return family ?? [];
   }
 }
 

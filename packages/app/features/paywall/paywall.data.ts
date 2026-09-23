@@ -31,7 +31,7 @@ export const PAYWALL_OFFERS: PaywallOffer[] = [
     title: 'Founding family',
     monthly: '$11/month',
     billed: 'Billed monthly',
-    promise: 'The whole tutor, for every child in your family.',
+    promise: 'The whole tutor for up to 3 children. Add another child for $11/month.',
     // No countdown theater (doc 05 §6): the terms say what is true and stop.
     terms: 'Founding price, locked for as long as you stay subscribed.',
   },
@@ -40,7 +40,7 @@ export const PAYWALL_OFFERS: PaywallOffer[] = [
     title: 'Family',
     monthly: '$15.99/month',
     billed: 'Billed monthly',
-    promise: 'The whole tutor, for every child in your family.',
+    promise: 'The whole tutor for up to 3 children. Add another child for $11/month.',
   },
 ];
 

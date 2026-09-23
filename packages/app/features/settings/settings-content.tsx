@@ -2,11 +2,13 @@
 // Settings — reached from Profile. Preferences, appearance, and session
 // controls live here; identity stays on the profile screen.
 import { useRouter } from 'solito/navigation';
+import { useState } from 'react';
 import { isBillingRole } from '@acme/auth';
 import { Section, View, Pressable } from '@acme/ui/tw';
 import { Button, Card, Heading, Switch, Text, FadeIn } from '@acme/ui';
 import { authClient, useAppSession } from '../../providers/session';
 import { useProfile, type ThemePreference } from '../profile/profile.store';
+import { canRestorePurchases, manageFamilySubscription, restoreFamilyPurchases } from '../paywall/purchases';
 
 const THEME_OPTIONS: { value: ThemePreference; label: string }[] = [
   { value: 'system', label: 'System' },
@@ -45,7 +47,21 @@ function ThemeSegment() {
 export function SettingsContent({ managePlanHref }: { managePlanHref?: string }) {
   const p = useProfile();
   const router = useRouter();
-  const { activeContext, memberships } = useAppSession();
+  const { activeContext, memberships, user } = useAppSession();
+  const [billingBusy, setBillingBusy] = useState(false);
+  const [billingMessage, setBillingMessage] = useState<string | null>(null);
+  const billingAction = async (restore: boolean) => {
+    setBillingBusy(true);
+    setBillingMessage(null);
+    try {
+      if (restore) {
+        await restoreFamilyPurchases();
+        setBillingMessage('Your subscription has been restored.');
+      } else await manageFamilySubscription();
+    } catch (cause) {
+      setBillingMessage(cause instanceof Error ? cause.message : 'Please try again.');
+    } finally { setBillingBusy(false); }
+  };
 
   /*
     RoleShell's `billingOnly` gate, applied the same way here (nav.ts law, one
@@ -127,6 +143,17 @@ export function SettingsContent({ managePlanHref }: { managePlanHref?: string })
             </View>
           </Card>
         </FadeIn>
+      ) : null}
+
+      {activeContext.kind === 'guardian' && user?.kind !== 'learner' ? (
+        <Card className="gap-stack">
+          <Text variant="heading">Family subscription</Text>
+          <Button title="Manage subscription" variant="outline" disabled={billingBusy}
+            onPress={() => { void billingAction(false); }} />
+          {canRestorePurchases ? <Button title="Restore purchases" variant="ghost" disabled={billingBusy}
+            onPress={() => { void billingAction(true); }} /> : null}
+          {billingMessage ? <Text accessibilityRole="alert">{billingMessage}</Text> : null}
+        </Card>
       ) : null}
 
       <FadeIn delay={260}>

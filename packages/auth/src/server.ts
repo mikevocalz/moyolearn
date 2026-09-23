@@ -11,7 +11,9 @@ import { stripe as stripePlugin } from '@better-auth/stripe';
 import { haveIBeenPwned, multiSession, organization, username } from 'better-auth/plugins';
 import Stripe from 'stripe';
 import { Pool } from 'pg';
-import { authorizeReference, isBillingRole, isPlanName, resolvePrices } from './billing-plans.ts';
+import { isBillingRole, isPlanName, PLANS, resolvePrices } from './billing-plans.ts';
+import { billingGuard } from './billing-guard.ts';
+import { syncStripeEvent } from './revenuecat.ts';
 import {
   hostFromHeaderValues,
   permitsLoginAtHost,
@@ -141,6 +143,7 @@ export function isRestrictedLearnerPasswordChange(
 export const AUTH_SCHEMA = 'better_auth';
 
 export function createAuth(options?: { connectionString?: string; schema?: string }) {
+  const verificationRequired = process.env.NODE_ENV !== 'development';
   const schema = options?.schema ?? AUTH_SCHEMA;
   const connectionString = options?.connectionString ?? process.env.DATABASE_URL;
   const pool = new Pool({
@@ -157,7 +160,9 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
     database: pool,
     secret: process.env.BETTER_AUTH_SECRET,
     baseURL: process.env.BETTER_AUTH_URL,
+    trustedOrigins: ['moyo://'],
     user: { additionalFields: learnerFields },
+    hooks: { before: billingGuard },
     session: { expiresIn: ADULT_SESSION_MAX_AGE },
     emailAndPassword: {
       enabled: true,
@@ -165,7 +170,7 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
       minPasswordLength: 12,
       // Dev can sign up and sign in without an email adapter; verification is
       // still enforced in production builds.
-      requireEmailVerification: process.env.NODE_ENV !== 'development',
+      requireEmailVerification: verificationRequired,
     },
     databaseHooks: {
       user: {
@@ -275,7 +280,7 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
       // Doc 06 §6 breached-password rejection.
       haveIBeenPwned(),
       expo(),
-      ...billingPlugin(pool),
+      ...billingPlugin(pool, verificationRequired),
     ],
   });
 }
@@ -286,21 +291,26 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
  * omitted entirely without keys: a dev machine with no Stripe account should run
  * the app, not fail to construct auth.
  */
-function billingPlugin(pool: Pool): [] | [ReturnType<typeof stripePlugin>] {
+function billingPlugin(pool: Pool, verificationRequired: boolean): [] | [ReturnType<typeof stripePlugin>] {
   const secret = process.env.STRIPE_SECRET_KEY;
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
   if (!secret || !webhookSecret) return [];
 
   const { priced } = resolvePrices();
   if (priced.length === 0) return [];
+  const stripeClient = new Stripe(secret);
 
   return [
     stripePlugin({
-      stripeClient: new Stripe(secret),
+      stripeClient,
       stripeWebhookSecret: webhookSecret,
-      createCustomerOnSignUp: true,
+      // Customers are created lazily at checkout, never for child sign-ups.
+      createCustomerOnSignUp: false,
+      organization: { enabled: true },
+      onEvent: (event) => syncStripeEvent(event, stripeClient),
       subscription: {
         enabled: true,
+        requireEmailVerification: verificationRequired,
         plans: priced.map(({ plan, priceId, annualPriceId }) => ({
           name: plan.name,
           priceId,
@@ -308,24 +318,30 @@ function billingPlugin(pool: Pool): [] | [ReturnType<typeof stripePlugin>] {
           freeTrial: { days: plan.trialDays },
           ...(plan.limits.payoutAutomation > 0 ? { limits: { ...plan.limits } } : {}),
         })),
-        // The only thing between a member and their employer's billing page.
-        // The rule itself is in billing-plans.ts, where it is tested without a
-        // network; this is the adapter onto the plugin's callback shape.
-        authorizeReference: async ({ user, referenceId, action }) => {
-          const plan = typeof action === 'string' && isPlanName(action) ? action : null;
-          // An organisation reference is never the acting user's own id, and the
-          // role has to be READ — without it every ops purchase is refused,
-          // including the owner's, which is the failure mode this lookup exists
-          // to prevent.
+        getCheckoutSessionParams: ({ user, plan }) => {
+          const customerType = isPlanName(plan.name) ? PLANS[plan.name].customerType : null;
+          const metadata = {
+            app: 'moyolearn',
+            plan: plan.name,
+            customer_type: customerType ?? '',
+            ...(customerType === 'user' ? { revenuecat_app_user_id: user.id } : {}),
+          };
+          return { params: {
+            integration_identifier: process.env.STRIPE_INTEGRATION_IDENTIFIER ?? 'moyolearn_better_auth_zpbhwffe',
+            payment_method_collection: customerType === 'organization' ? 'if_required' : 'always',
+            metadata,
+            subscription_data: {
+              metadata,
+              ...(customerType === 'organization'
+                ? { trial_settings: { end_behavior: { missing_payment_method: 'cancel' as const } } }
+                : {}),
+            },
+          } };
+        },
+        authorizeReference: async ({ user, referenceId }) => {
           const membershipRole =
             referenceId === user.id ? undefined : await memberRole(pool, referenceId, user.id);
-
-          if (!plan) {
-            // Not a plan-scoped action (billing portal, cancel): the same two
-            // ways through, so a member cannot open their employer's portal.
-            return referenceId === user.id || isBillingRole(membershipRole);
-          }
-          return authorizeReference({ plan, referenceId, user: { id: user.id }, membershipRole }).ok;
+          return referenceId === user.id || isBillingRole(membershipRole);
         },
       },
     }),
@@ -369,6 +385,7 @@ export {
   it into a client bundle.
 */
 export { readMembershipRole } from './membership-reader.ts';
+export { revenueCatEnabled } from './revenuecat.ts';
 
 /*
   The two node:crypto modules, re-exported HERE and removed from the root

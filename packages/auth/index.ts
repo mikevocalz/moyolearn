@@ -57,12 +57,12 @@ export type {
 } from './src/consent-flow';
 
 export {
-  authorizeReference,
   isBillingRole,
   isPlanName,
   plansFor,
   resolvePrices,
   BILLING_ROLES,
+  FAMILY_ENTITLEMENT,
   PLANS,
 } from './src/billing-plans';
 export type {
@@ -71,7 +71,6 @@ export type {
   Plan,
   PlanLimits,
   PlanName,
-  ReferenceRequest,
 } from './src/billing-plans';
 export {
   can,

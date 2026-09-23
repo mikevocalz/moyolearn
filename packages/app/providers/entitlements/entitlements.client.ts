@@ -9,14 +9,20 @@
 
 import type { SubscriptionState } from '@acme/auth';
 import { API_URL } from '../../core/api-url.ts';
+import { sessionRequestOptions } from '../../core/session-request';
 
 export interface EntitlementsResponse {
   /** Every reference the caller can hold a plan under: themselves, plus their orgs. */
   subscriptions: SubscriptionState[];
+  revenueCatEnabled: boolean;
+}
+
+export async function fetchBillingState(signal?: AbortSignal): Promise<EntitlementsResponse> {
+  const res = await fetch(`${API_URL}/api/entitlements`, { ...await sessionRequestOptions(), signal });
+  if (!res.ok) throw new Error(`HTTP ${res.status}`);
+  return (await res.json()) as EntitlementsResponse;
 }
 
 export async function fetchEntitlements(signal?: AbortSignal): Promise<SubscriptionState[]> {
-  const res = await fetch(`${API_URL}/api/entitlements`, { credentials: 'include', signal });
-  if (!res.ok) throw new Error(`HTTP ${res.status}`);
-  return ((await res.json()) as EntitlementsResponse).subscriptions;
+  return (await fetchBillingState(signal)).subscriptions;
 }

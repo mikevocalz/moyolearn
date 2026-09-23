@@ -9,6 +9,7 @@
 
 /** Who a subscription is bought FOR. Family plans belong to a person, ops to an org. */
 export type CustomerType = 'user' | 'organization';
+export const FAMILY_ENTITLEMENT = 'moyo_family';
 
 export type PlanName =
   | 'family-early-bird'
@@ -83,7 +84,7 @@ export const PLANS: Record<PlanName, Plan> = {
   },
 };
 
-export const isPlanName = (value: string): value is PlanName => value in PLANS;
+export const isPlanName = (value: string): value is PlanName => Object.hasOwn(PLANS, value);
 
 /** Family plans are bought by a guardian for themselves; ops plans by an org. */
 export const plansFor = (customerType: CustomerType) =>
@@ -92,43 +93,6 @@ export const plansFor = (customerType: CustomerType) =>
 /** Roles that may spend an organisation's money. Doc 06 §4 names both. */
 export const BILLING_ROLES = ['owner', 'finance'] as const;
 export type BillingRole = (typeof BILLING_ROLES)[number];
-
-export interface ReferenceRequest {
-  plan: PlanName;
-  /** The guardian's user id, or the organisation id — never anything else. */
-  referenceId: string;
-  user: { id: string };
-  /** The acting user's role in the org named by `referenceId`, if any. */
-  membershipRole?: string;
-}
-
-/**
- * `authorizeReference` (doc 06 §4). Better Auth asks this before letting a user
- * act on a subscription that carries a referenceId, and it is the ONLY thing
- * standing between a member and their employer's billing page — so it refuses by
- * default and names the two ways through.
- */
-export function authorizeReference(request: ReferenceRequest):
-  | { ok: true }
-  | { ok: false; reason: string } {
-  const plan = PLANS[request.plan];
-  if (!plan) return { ok: false, reason: 'Unknown plan.' };
-
-  if (plan.customerType === 'user') {
-    // A family plan's reference IS the guardian. Anything else is one user
-    // operating on another's subscription, which has no legitimate form.
-    return request.referenceId === request.user.id
-      ? { ok: true }
-      : { ok: false, reason: 'A family plan can only be managed by the guardian who owns it.' };
-  }
-
-  if (request.referenceId === request.user.id) {
-    return { ok: false, reason: 'An ops plan belongs to an organisation, not a person.' };
-  }
-  return isBillingRole(request.membershipRole)
-    ? { ok: true }
-    : { ok: false, reason: 'Only an owner or finance member can change the organisation’s plan.' };
-}
 
 export const isBillingRole = (role: string | undefined): role is BillingRole =>
   role !== undefined && (BILLING_ROLES as readonly string[]).includes(role);

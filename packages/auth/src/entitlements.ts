@@ -35,6 +35,9 @@ export interface SubscriptionState {
   periodEnd: string | null;
   /** Purchased seats from the plugin's own row (team plans); null when the row carries none. */
   seats: number | null;
+  /** RevenueCat's store management link, when billing belongs to Apple or Google. */
+  managementUrl?: string;
+  billingStore?: string;
 }
 
 export const NO_SUBSCRIPTION: SubscriptionState = {
@@ -165,5 +168,9 @@ export function subscriptionFor(
   referenceId: string | null,
 ): SubscriptionState {
   if (!referenceId) return NO_SUBSCRIPTION;
-  return subscriptions.find((s) => s.referenceId === referenceId) ?? NO_SUBSCRIPTION;
+  const priority = { active: 5, trialing: 4, past_due: 3, canceled: 2, incomplete: 1, none: 0 };
+  return subscriptions.filter((s) => s.referenceId === referenceId).sort((a, b) =>
+    priority[b.status] - priority[a.status]
+      || (Date.parse(b.periodEnd ?? '') || 0) - (Date.parse(a.periodEnd ?? '') || 0),
+  )[0] ?? NO_SUBSCRIPTION;
 }

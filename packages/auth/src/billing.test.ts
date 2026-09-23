@@ -8,7 +8,6 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
-  authorizeReference,
   isBillingRole,
   plansFor,
   resolvePrices,
@@ -39,57 +38,10 @@ const sub = (over: Partial<SubscriptionState> = {}): SubscriptionState => ({
   ...over,
 });
 
-describe('who may buy what, for whom', () => {
-  it('lets a guardian buy a family plan for themselves', () => {
-    const result = authorizeReference({
-      plan: 'family',
-      referenceId: 'user_1',
-      user: { id: 'user_1' },
-    });
-    assert.deepEqual(result, { ok: true });
-  });
-
-  it('refuses a family plan referenced at anyone else', () => {
-    const result = authorizeReference({
-      plan: 'family',
-      referenceId: 'user_2',
-      user: { id: 'user_1' },
-    });
-    assert.equal(result.ok, false);
-  });
-
-  it('lets an owner or finance member buy for the organisation', () => {
-    for (const role of ['owner', 'finance']) {
-      const result = authorizeReference({
-        plan: 'ops-studio',
-        referenceId: 'org_1',
-        user: { id: 'user_1' },
-        membershipRole: role,
-      });
-      assert.deepEqual(result, { ok: true }, role);
-    }
-  });
-
-  it('refuses every other member, and refuses no membership at all', () => {
-    for (const role of ['member', 'admin', 'tutor', undefined]) {
-      const result = authorizeReference({
-        plan: 'ops-studio',
-        referenceId: 'org_1',
-        user: { id: 'user_1' },
-        membershipRole: role,
-      });
-      assert.equal(result.ok, false, String(role));
-    }
-    assert.equal(isBillingRole('admin'), false);
-  });
-
-  it('refuses an ops plan referenced at a person', () => {
-    const result = authorizeReference({
-      plan: 'ops-solo',
-      referenceId: 'user_1',
-      user: { id: 'user_1' },
-    });
-    assert.equal(result.ok, false);
+describe('organization billing roles', () => {
+  it('permits only owners and finance members', () => {
+    for (const role of ['owner', 'finance']) assert.equal(isBillingRole(role), true);
+    for (const role of ['member', 'admin', 'tutor', undefined]) assert.equal(isBillingRole(role), false);
   });
 });
 

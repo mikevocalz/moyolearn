@@ -117,7 +117,9 @@ export function LiveSessionProvider({ children }: { children: React.ReactNode })
         } satisfies Membership;
       });
 
-      const kind = primaryEducationRole(memberships);
+      const learner = ('guardianManaged' in user && user.guardianManaged === true)
+        || ('isMinor' in user && user.isMinor === true);
+      const kind = learner ? 'learner' : primaryEducationRole(memberships);
       // Learner contexts only: a guardian's users row carries the field's 9-12
       // default, and reading it would dress an account default up as a band.
       const gradeBand = kind === 'learner' ? await fetchLearnerGradeBand() : undefined;
