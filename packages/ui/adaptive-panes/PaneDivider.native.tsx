@@ -39,11 +39,13 @@ export type { PaneDividerProps };
  * arbitration written down here, because at that point they genuinely do
  * compete for the same pointer.
  *
- * API note: Gesture Handler 2.x (the version Expo SDK 57 pins), so this is the
- * builder API — `Gesture.Pan()` + `GestureDetector`, composed with
- * `Gesture.Race()`/`Gesture.Simultaneous()` if it ever needs to be. GH 3.x
- * deprecates the builder in favour of `usePanGesture` and the `use*Gestures`
- * hooks; revisit if the SDK moves forward again.
+ * API note: this branch pins Gesture Handler 3.2.1 (Expo SDK 58). The builder
+ * API used here — `Gesture.Pan()` + `GestureDetector`, composed with
+ * `Gesture.Race()`/`Gesture.Simultaneous()` if it ever needs to be — is still
+ * supported in 3.x but is the legacy surface; 3.x prefers `usePanGesture` and
+ * the `use*Gestures` hooks. Migrate this and `SwipeableRow` together, with
+ * native drag / vertical-scroll / keyboard checks: typecheck cannot tell
+ * whether gesture arbitration still holds.
  *
  * `.runOnJS(true)` because the handler writes to a Zustand store, which is not
  * worklet-safe. The resize is a low-frequency drag, so keeping it on the JS

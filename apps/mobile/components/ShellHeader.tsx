@@ -127,8 +127,19 @@ export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: She
 
   return (
     <RoleScope role={role}>
-    <SafeArea edges={['top']} className="bg-surface-header">
-      <Header className="min-h-14 flex-row items-center gap-stack border-b-2 border-on-surface-header bg-surface-header px-4 py-1">
+    {/*
+      `left` and `right` too, not only `top`. iPhone Duo reserves horizontal
+      space for the camera and system controls, and Apple documents the two
+      sides as often asymmetric — so the avatar at the trailing edge sat under
+      the camera. The insets are padding on this wrapper, which is why the fill
+      and the bottom rule live HERE: they paint the wrapper's full width while
+      the controls inside stay in the usable region.
+    */}
+    <SafeArea
+      edges={['top', 'left', 'right']}
+      className="border-b-2 border-on-surface-header bg-surface-header"
+    >
+      <Header className="min-h-14 flex-row items-center gap-stack bg-surface-header px-4 py-1">
         {canGoBack ? (
           <Pressable
             aria-label="Back"

@@ -42,8 +42,10 @@ export type { SwipeableRowProps };
  * COMMITS past 60% of the row, far enough that peeking at the actions can never
  * fire one by accident.
  *
- * The gesture is memoised because Gesture Handler v2 rebuilds the native
- * handler whenever the object identity changes, which drops an in-flight drag.
+ * The gesture is memoised because Gesture Handler rebuilds the native handler
+ * whenever the object identity changes, which drops an in-flight drag. Builder
+ * API on GH 3.2.1 — legacy but supported; see the note in PaneDivider about
+ * migrating both to `usePanGesture` together.
  */
 export function SwipeableRow({
   children,

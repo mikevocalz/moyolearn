@@ -95,9 +95,15 @@
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import type { ComponentType } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { navChrome } from '@acme/theme';
 import { useReducedMotion, useWindowSizeClass } from '@acme/ui';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import { haptics } from '@acme/ui/haptics';
+
+// `--spacing-nav-rail`, read from the token so the rail's JS width and its
+// class stay one number. `px-2` on the bottom bar, in points.
+const NAV_RAIL_WIDTH = parseInt(navChrome.rail, 10);
+const BAR_GUTTER = 8;
 
 /**
  * Where the navigator must DOCK the bar, for the same window the bar itself
@@ -471,13 +477,24 @@ export function ShellTabBar({
       its border on the right would put a rule against the screen edge and none
       at all against the content, and `insets.left` would pad the wrong side in
       landscape. `insets.right` is the real cutout/gesture inset on this edge.
+
+      The inset is ADDED to the width, not taken out of it. `w-nav-rail` is the
+      token-sized content area the labels were measured against; with the
+      inset as padding inside a fixed 80, a Duo camera edge shrank the usable
+      rail to whatever was left. Width comes from the same token as the class
+      so the two cannot drift.
     */
     return (
       <View
         role="tablist"
         aria-label="Main navigation"
-        style={{ paddingTop: insets.top, paddingBottom: insets.bottom, paddingRight: insets.right }}
-        className="w-nav-rail flex-col items-stretch justify-center gap-1 border-l-2 border-on-surface-footer bg-surface-footer"
+        style={{
+          paddingTop: insets.top,
+          paddingBottom: insets.bottom,
+          paddingRight: insets.right,
+          width: NAV_RAIL_WIDTH + insets.right,
+        }}
+        className="flex-col items-stretch justify-center gap-1 border-l-2 border-on-surface-footer bg-surface-footer"
       >
         {rendered}
       </View>
@@ -526,8 +543,19 @@ export function ShellTabBar({
     <View
       role="tablist"
       aria-label="Main navigation"
-      style={{ paddingBottom: insets.bottom }}
-      className="flex-row items-end gap-1 bg-surface px-2 pt-nav-raise"
+      /*
+        Each side takes its OWN inset on top of the bar's 8px gutter (`px-2`,
+        written out here because an inline padding replaces the class): iPhone
+        Duo's horizontal insets are asymmetric, so one value for both sides
+        would pad the wrong edge. The chrome layer below is `inset-x-0`, so the
+        fill and top rule still span the full width.
+      */
+      style={{
+        paddingBottom: insets.bottom,
+        paddingLeft: BAR_GUTTER + insets.left,
+        paddingRight: BAR_GUTTER + insets.right,
+      }}
+      className="flex-row items-end gap-1 bg-surface pt-nav-raise"
     >
       {/*
         First child, so it paints behind every item without needing a z-index.
