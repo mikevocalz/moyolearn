@@ -78,12 +78,62 @@ core 1.7.2, and because no account has been created since 2026-09-03.
 for moving production **forward** onto that branch, not back to `main`, and it is
 tracked separately.
 
+## Corrections from the statement-level analysis
+
+Three things the first reading got wrong, all recorded in
+`docs/decisions/2026-09-22-pgboss-migration-analysis.md` on the
+`fix/jobs-drain-on-deployed` branch.
+
+**There is a reverse path.** `Contractor.rollbackPlans()` (`contractor.js:39`)
+returns a populated `uninstall` chain for every migration 39 through 42, so the
+schema can be walked back newest-first. Every dependency it needs exists in
+production. That makes the decision safer than it was taken on — the argument
+above only needed the door to stop mattering, and it turns out the door opens
+both ways. Caveats on the reverse: the `job_i5` rebuild is not `CONCURRENTLY`,
+and the recreated index gets a new OID.
+
+**The partition worry was backwards.** The migration never names `queue_stats`.
+`jobs.job_now()` — which `ensureQueueStatsPartitions` and `insertQueueStats`
+both depend on — is *created by this migration* and does not exist in production
+today (verified: `MISSING`). The migration is a prerequisite for that code, not
+a consumer of it. And `persistQueueStats` is never defaulted in `attorney.js`
+and is not set in `boss.ts`, so both paths are skipped anyway. The
+`queue_stats_20260827`/`20260828` partitions came from the original install
+plan, are inert, and are **not** the cause of the separately-tracked
+`supervise()` failures.
+
+**It must not be run over the pooler.** The connection string to hand is port
+**6543** — Supabase's transaction-mode pooler — and `CREATE INDEX CONCURRENTLY`
+cannot run under one. This needs a session-mode connection (port 5432) or it
+fails at statement 20.
+
+## Runbook
+
+1. Connect **session-mode**, port 5432, not the 6543 pooler.
+2. Run the file without `-v ON_ERROR_STOP=1`. That flag looks prudent and is
+   the wrong choice here: on a re-run after an interruption between `COMMIT`
+   and the index work, it aborts at the version guard and never reaches
+   statements 20–21, so the index swap is silently skipped.
+3. Afterwards, check for an invalid index — an interrupted
+   `CREATE INDEX CONCURRENTLY` leaves one behind, and `IF NOT EXISTS` will not
+   rebuild it:
+   ```sql
+   SELECT c.relname FROM pg_index i JOIN pg_class c ON c.oid = i.indexrelid
+   JOIN pg_namespace n ON n.oid = c.relnamespace
+   WHERE n.nspname = 'jobs' AND NOT i.indisvalid;
+   ```
+4. Confirm `select version from jobs.version` reads 42, then deploy the
+   converged build.
+
 ## Consequences
 
-- The `jobs` schema goes to 42 and cannot practically be returned to 38.
+- The `jobs` schema goes to 42. It CAN be returned to 38 via pg-boss's own
+  `rollbackPlans()` uninstall chain, so this is reversible rather than one-way.
 - `main` and the deployed lineage both want 42, so neither is stranded.
 - `PGBOSS_SCHEMA_VERSION` moves in the same commit as the pin, which is the order
   `boss.ts` documents: generate, check in, apply, then move the number. The guard
   test in `jobs.test.ts` is what stops the two drifting apart again.
+- `fix/jobs-drain-retention` (PR #38) still pins 12.28.0 and needs this same
+  convergence before it can ship alongside the migration.
 - The migration must be applied **before** the converged build deploys. Deploying
   first reproduces the outage with the assertion pointing the other way.
