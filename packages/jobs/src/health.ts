@@ -89,10 +89,47 @@ export interface QueueHealth {
   readonly reasons: readonly string[];
 }
 
+/**
+ * The two version numbers that have to agree for pg-boss to start.
+ *
+ * BOTH are handed in, and neither is imported. `boss.ts` owns
+ * `PGBOSS_SCHEMA_VERSION` because that is where `migrate: false` lives, but
+ * importing it here would pull `server-only` and pg-boss itself into a module
+ * whose whole point is that it needs no database — see the file header. So this
+ * module stays a comparison of two numbers somebody else read, exactly like the
+ * timestamps above it.
+ */
+export interface RunnerSample {
+  /** `select version from jobs.version`. Null when the row could not be read. */
+  readonly schemaVersion: number | null;
+  /** `PGBOSS_SCHEMA_VERSION` — what the deployed build's pg-boss demands. */
+  readonly requiredSchemaVersion: number;
+}
+
+export interface RunnerHealth {
+  readonly healthy: boolean;
+  readonly reasons: readonly string[];
+}
+
 export interface JobsHealthReport {
   /** False the moment ANY live queue is stale — the 500 in doc 35 §5. */
   readonly healthy: boolean;
   readonly queues: readonly QueueHealth[];
+  /**
+   * Whether pg-boss could start at all, judged WITHOUT starting it.
+   *
+   * THE HOLE THIS CLOSES, and it is the hole the 2026-09-21 outage went through.
+   * Both detectors above watch the queue TABLES, and both read healthy when the
+   * tables are empty. But the failure that actually happened killed the producer
+   * and the consumer with one throw — `getBoss()` refused to start, so nothing
+   * drained AND nothing enqueued. No ready work accumulated, because nothing
+   * could become ready. Five of six queues reported healthy, and the sixth only
+   * went stale 16 hours later when the transcript sweep crossed its 26h cadence.
+   *
+   * A dead-man switch that needs the corpse to keep breathing is not one. This
+   * checks the thing the drain checks first.
+   */
+  readonly runner: RunnerHealth;
 }
 
 /**
@@ -104,10 +141,15 @@ export interface JobsHealthReport {
  * `rules` is a parameter (defaulting to the committed table) so the 500 path is
  * proven in `health.test.ts` with a tightened threshold — never by pausing a
  * real queue, which doc 35 §7 row 11 suggests only for the live UI check.
+ *
+ * `runner` is REQUIRED and has no default. A default would have to be a healthy
+ * one, and a fail-open default on the detector that exists because everything
+ * else failed open is the same bug wearing a hat. Every caller states it.
  */
 export function evaluateJobsHealth(
   samples: readonly QueueHealthSample[],
   now: Date,
+  runner: RunnerSample,
   rules: Record<LiveQueueName, QueueHealthRule> = QUEUE_HEALTH_RULES,
 ): JobsHealthReport {
   const byQueue = new Map(samples.map((sample) => [sample.queue, sample]));
@@ -138,5 +180,29 @@ export function evaluateJobsHealth(
     return { queue, healthy: reasons.length === 0, reasons };
   });
 
-  return { healthy: queues.every((queue) => queue.healthy), queues };
+  const runnerReasons: string[] = [];
+  if (runner.schemaVersion === null) {
+    runnerReasons.push('jobs schema version unreadable');
+  } else if (runner.schemaVersion !== runner.requiredSchemaVersion) {
+    /*
+      The numbers ARE named here, unlike in `boss.ts`'s rethrow, because both
+      are known at this point: one was just read off `jobs.version` and the other
+      is the constant this build was compiled against. That pair is the whole
+      diagnosis, and the body it lands in is machine-shaped strings with no
+      learner data — the same contract every other reason string here keeps.
+    */
+    runnerReasons.push(
+      `pg-boss schema is ${String(runner.schemaVersion)}, this build requires ${String(runner.requiredSchemaVersion)}`,
+    );
+  }
+  const runnerHealth: RunnerHealth = {
+    healthy: runnerReasons.length === 0,
+    reasons: runnerReasons,
+  };
+
+  return {
+    healthy: runnerHealth.healthy && queues.every((queue) => queue.healthy),
+    queues,
+    runner: runnerHealth,
+  };
 }

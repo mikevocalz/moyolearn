@@ -30,7 +30,7 @@ import {
   type QueueName,
 } from './topology.ts';
 import { distillKey, incidentFanOutKey, sweepKey, utcDay } from './keys.ts';
-import { QUEUE_POLICY, managedQueueNames } from './boss.ts';
+import { PGBOSS_SCHEMA_VERSION, QUEUE_POLICY, managedQueueNames } from './boss.ts';
 import {
   BACKLOG_SHED_DEPTH,
   REVISIT_JOBS_PER_SECOND,
@@ -278,4 +278,33 @@ test('only live queues and their dead letters are ever created in pg-boss', () =
     assert.ok(!managed.includes(name), `${name} is declared-only and must not be created`);
     assert.ok(!managed.includes(deadLetterFor(name)));
   }
+});
+
+/*
+  THE PIN AND THE MIGRATIONS, HELD TOGETHER.
+
+  `boss.ts` runs pg-boss with `migrate: false`, so the client ASSERTS the schema
+  version rather than upgrading to it — and asserts equality, not a floor. On
+  2026-09-21 production was deployed from a branch whose catalog pinned pg-boss
+  12.33.0 (schema 42) against a database at 38, and every `getBoss()` threw for a
+  day: no drain, and no enqueue either, so the daily retention sweeps did not run
+  and were never even queued.
+
+  Nothing in the build noticed, because a version number in a dependency's
+  package.json is not something a compiler checks. This is the check. Raising the
+  catalog pin now fails here, and the way past it is the way that was skipped:
+  generate the migration, check it in beside the others, apply it, then move
+  `PGBOSS_SCHEMA_VERSION`.
+*/
+test('the installed pg-boss wants the schema version our migrations are checked in at', async () => {
+  const pgBoss = await import('pg-boss/package.json', { with: { type: 'json' } });
+  const installed: unknown = pgBoss.default.pgboss.schema;
+
+  assert.equal(
+    installed,
+    PGBOSS_SCHEMA_VERSION,
+    `pg-boss requires schema ${String(installed)} but packages/payload/migrations/ is at ` +
+      `${String(PGBOSS_SCHEMA_VERSION)}. Ship the migration before the pin — see ` +
+      'docs/incidents/2026-09-22-jobs-drain-outage.md.',
+  );
 });

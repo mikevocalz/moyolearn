@@ -21,24 +21,32 @@
 // SOT-KEYWORDS: health jobs route dead man switch uptime monitor 500 stale fleet fresh queue
 import { NextResponse } from 'next/server';
 import { evaluateJobsHealth } from '@acme/jobs';
-import { readQueueHealthSamples } from '@/lib/jobs-health.repository';
+import { readQueueHealthSamples, readRunnerSample } from '@/lib/jobs-health.repository';
 import { reportRouteError } from '@/lib/report-error';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
   try {
-    const samples = await readQueueHealthSamples();
-    const report = evaluateJobsHealth(samples, new Date());
+    /*
+      The runner check is not optional and is not `Promise.allSettled`'d into a
+      shrug. It is the detector that would have caught 2026-09-21 on the first
+      poll instead of 16 hours later — see `JobsHealthReport.runner`.
+    */
+    const [samples, runner] = await Promise.all([readQueueHealthSamples(), readRunnerSample()]);
+    const report = evaluateJobsHealth(samples, new Date(), runner);
 
     return NextResponse.json(
-      { ok: report.healthy, queues: report.queues },
+      { ok: report.healthy, runner: report.runner, queues: report.queues },
       { status: report.healthy ? 200 : 500 },
     );
   } catch (error) {
     if (error instanceof Error) reportRouteError(error);
     // No error detail in the body: an unauthenticated probe gets a verdict,
     // not a stack. The detail went to the reporter above.
-    return NextResponse.json({ ok: false, queues: [] }, { status: 500 });
+    return NextResponse.json(
+      { ok: false, runner: { healthy: false, reasons: ['health read failed'] }, queues: [] },
+      { status: 500 },
+    );
   }
 }
