@@ -89,44 +89,5 @@ target 'Moyo' do
       body = body.sub(/^HEADER_SEARCH_PATHS = (.*)$/) { %(HEADER_SEARCH_PATHS = #{$1} "#{headers}") }
       File.write(xcconfig, body)
     end
-
-    # Skia's Graphite C++ includes <webgpu/webgpu_cpp.h> and its podspec looks
-    # for it under `cpp/dawn/include` in its own package — a directory that only
-    # `install-skia-graphite` populates, and that script lives in Skia's repo
-    # rather than the published package. With react-native-webgpu installed,
-    # Skia deliberately stops vendoring Dawn at all ("Dawn is provided by its
-    # libwebgpu_dawn", and the podspec drops libwebgpu_dawn from its own
-    # framework list), so nothing fills that directory and the include fails
-    # while the LINK is wired correctly — which is why the version guard passes
-    # and the compile still does not.
-    #
-    # The headers are in the package that now owns Dawn. One Dawn, one set of
-    # headers, which is the whole point of the shared-Dawn arrangement.
-    dawn_headers = nil
-    probe = installer.sandbox.root
-    8.times do
-      probe = File.expand_path(File.join(probe, '..'))
-      # The xcframework's device slice, not the package's `cpp/`: only the
-      # slice ships the full Dawn tree. `cpp/` has `webgpu/webgpu_cpp.h` and
-      # stops there, so pointing at it resolves the first include and then
-      # fails on `dawn/native/DawnNative.h`, which reads like a second, separate
-      # problem and is the same one.
-      candidate = File.join(
-        probe, 'node_modules', 'react-native-webgpu',
-        'libs', 'apple', 'libwebgpu_dawn.xcframework', 'ios-arm64', 'Headers'
-      )
-      if File.exist?(File.join(candidate, 'dawn', 'native', 'DawnNative.h'))
-        dawn_headers = candidate
-        break
-      end
-    end
-    if dawn_headers
-      Dir.glob(File.join(installer.sandbox.target_support_files_root, 'react-native-skia', '*.xcconfig')).each do |xcconfig|
-        body = File.read(xcconfig)
-        next if body.include?(dawn_headers)
-        body = body.sub(/^HEADER_SEARCH_PATHS = (.*)$/) { %(HEADER_SEARCH_PATHS = #{$1} "#{dawn_headers}") }
-        File.write(xcconfig, body)
-      end
-    end
   end
 end

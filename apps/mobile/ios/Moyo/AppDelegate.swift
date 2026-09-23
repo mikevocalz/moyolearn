@@ -3,7 +3,7 @@ import React
 import ReactAppDependencyProvider
 
 @main
-class AppDelegate: ExpoAppDelegate {
+class AppDelegate: ExpoAppDelegate, ExpoReactNativeFactoryProvider {
   var window: UIWindow?
 
   var reactNativeDelegate: ExpoReactNativeFactoryDelegate?
@@ -20,14 +20,11 @@ class AppDelegate: ExpoAppDelegate {
     reactNativeDelegate = delegate
     reactNativeFactory = factory
 
-#if os(iOS) || os(tvOS)
-    window = UIWindow(frame: UIScreen.main.bounds)
-    factory.startReactNative(
-      withModuleName: "main",
-      in: window,
-      launchOptions: launchOptions)
-#endif
-
+    // The window is created and React Native is started by `SceneDelegate` under the
+    // scene-based life cycle. iOS 27 traps at launch (SIGTRAP in
+    // __UIApplicationEvaluateRuntimeIssueForNoSceneLifecycleAdoption) unless the app
+    // adopts it; this is the shape of Expo 58's bare template, which this preview's
+    // prebuild did not yet generate.
     return super.application(application, didFinishLaunchingWithOptions: launchOptions)
   }
 
@@ -66,4 +63,11 @@ class ReactNativeDelegate: ExpoReactNativeFactoryDelegate {
     return Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif
   }
+}
+
+// Lives here rather than in its own file so the generated Xcode project needs no
+// edit; `UISceneDelegateClassName` in Info.plist names it.
+@objc(SceneDelegate)
+class SceneDelegate: ExpoAppSceneDelegate {
+  // Extension point for config plugins.
 }

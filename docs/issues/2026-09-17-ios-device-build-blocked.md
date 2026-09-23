@@ -13,7 +13,7 @@ SOT-KEYWORDS: ios build cocoapods ruby filter_map precompiled xcframework
               prebuilt react core header search paths device ipad blocked
 -->
 
-Filed: 2026-09-17 · Found on `upgrade/expo-sdk-58-beta` · Status: one fixed, two open
+Filed: 2026-09-17 · Found on `upgrade/expo-sdk-58-beta` · Status: iOS simulator app builds as of 2026-09-23; device build unverified since, Android still open
 Device: `william's iPad (2)`, iPad8,7, iPadOS 26.7, wired, developer mode on
 
 ## Fixed — CocoaPods was running on Ruby 2.6
@@ -76,29 +76,43 @@ retry of the last.
    the first of those, so the full tree in
    `libs/apple/libwebgpu_dawn.xcframework/ios-arm64/Headers` is the right root.
 
-### The wall that is left
+### The wall that was left — fixed 2026-09-23
 
 ```
 node_modules/@shopify/react-native-skia/cpp/rnskia/RNDawnWindowContext.h:7:10:
   fatal error: 'dawn/native/MetalBackend.h' file not found
-      7 | #include "dawn/native/MetalBackend.h"
 ```
 
-What react-native-webgpu's device slice ships under `dawn/native/`:
+Neither guess above was the answer. The published package is missing two
+directories that upstream's unpublished `install-skia-graphite` fills from one
+release asset, `skia-graphite-headers-skia-graphite-m154.tar.gz` on
+`Shopify/react-native-skia`: `cpp/dawn/include` (the full Dawn header set —
+`MetalBackend.h` included, ten backends where react-native-webgpu's xcframework
+ships five) and `cpp/skia/src/gpu/graphite` (`ContextOptionsPriv.h`, which
+`RNDawnContext.h` includes and which would have been the next error).
+react-native-webgpu was never going to have it: its `webgpu/webgpu_cpp.h` is a
+33-line shim over `dawn/webgpu_cpp.h`, and its header set is the public WebGPU
+surface, not Dawn's backend headers. The tarball's `dawn/dawn_version.h` is
+`3d786993…`, the commit chrome/m154 pins and the one react-native-webgpu's
+`dawn-chrome-m154` binary was built from, so compiling against it and linking
+webgpu's `libwebgpu_dawn.a` is one Dawn, not two.
 
-```
-dawn_native_export.h  DawnNative.h  NullBackend.h  OpenGLBackend.h  VulkanBackend.h
-```
+`tooling/enable-skia-graphite.mjs` now downloads that tarball (sha256 pinned)
+into both directories, and writes `libs/.dawn-version` — the podspec's one-Dawn
+guard is wrapped in `if File.exist?(dawn_marker)`, nothing in the published
+package wrote it, so the "Dawn version guard passes" line above was the guard
+never running. `pod install` now prints `Dawn versions match (dawn-chrome-m154)`.
+The Podfile block that pointed Skia at react-native-webgpu's headers is deleted;
+it resolved the first include and could never resolve this one.
 
-`find node_modules -name 'MetalBackend.h'` returns nothing. Skia's Graphite
-window context needs a header no package in this tree provides.
-
-Whose gap that is cannot be read off the tree. Either react-native-webgpu's
-Dawn header set is missing the Metal backend, or Skia is expected to populate
-its own `cpp/dawn/include` even when it defers linking — both fit the evidence
-equally and the answer is upstream. Worth asking in the react-native-webgpu /
-react-native-skia integration issue tracker with the two listings above, rather
-than guessed at here.
+Verified: `xcodebuild -scheme react-native-skia -sdk iphonesimulator` succeeds,
+compiling `RNDawnWindowContext.cpp` and `RNDawnInterop.cpp` with
+`SK_GRAPHITE=1` and no `SK_GANESH=1`, `-I…/cpp/dawn/include` on the command
+line. `SK_GRAPHITE: ON` from pod install (the "OFF" noted at the bottom of this
+doc predates `4ed6b8c`). The full `Moyo` scheme then builds for
+`generic/platform=iOS Simulator` with the enriched-html header patch still in
+place — the third-party-pod section below was written against the device SDK
+and has not been re-run there.
 
 ## Open — third-party pods against RN 0.88.0-rc.0's prebuilt core
 

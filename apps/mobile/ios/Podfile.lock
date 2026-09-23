@@ -3228,7 +3228,7 @@ SPEC CHECKSUMS:
   ExpoKeepAwake: 87abe093878722bb06cae6d3a1eee4217cb3cd65
   ExpoLinking: 370b84a772e67cf92c56ae7c881e5fc401975cc2
   ExpoLogBox: 4b6c8013f36ae1ea7c80e8e2af3230d4dd96b321
-  ExpoModulesCore: 1d741905886fc2e35b869aefdb07b6f8476deb12
+  ExpoModulesCore: 28286048801e52087c9f34d6e25bdd0b9dfd9eb4
   ExpoModulesJSI: cfe8d76b876f05ecc7ac59d50b6facacc9de058c
   ExpoModulesWorklets: 9686fddd3a4ac5c48a913c0dd252a5db58e7a294
   ExpoModulesWorkletsAdapter: 6d3173ca538f0e76e9fdaac9ccf6e8f52eccc83f
@@ -3298,7 +3298,7 @@ SPEC CHECKSUMS:
   React-Mapbuffer: c8765deb2cbfbebbeb4809e317d2f4e8213287a2
   React-microtasksnativemodule: d74e6b393826f73e2e543c5e3392216a2865814e
   React-mutationobservernativemodule: 584fc8ceb927349eeeeb20466988d75f4c1c8ffc
-  react-native-executorch: c25f7923328d9ddaee9bcf178d1b20744eb04b5a
+  react-native-executorch: 14102e937fb0161c348357cb02a2cc27e79854e7
   react-native-keyboard-controller: d5682988ef16bd7d6a3c3423768b88f1da1b3a72
   react-native-safe-area-context: 949375a80dca43886b96574e6c97a0c5b37a479c
   react-native-skia: 6263df38b4c8889092cddae5297114f0881c191c
@@ -3356,6 +3356,6 @@ SPEC CHECKSUMS:
   VisionCamera: be24451f0306c50a98d0dcd21bf46b2ca2068c39
   Yoga: d1c536142c5ff8ec8cd856ab2a7c227a1d875c8e
 
-PODFILE CHECKSUM: 62f57c135f2e4978edf583275df7d57b9e0bf8de
+PODFILE CHECKSUM: 428ee1321913311e87e87074f90f66a2577a8087
 
 COCOAPODS: 1.17.0
