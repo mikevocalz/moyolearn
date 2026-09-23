@@ -111,14 +111,23 @@ and is not set in `boss.ts`, so both paths are skipped anyway. The
 plan, are inert, and are **not** the cause of the separately-tracked
 `supervise()` failures.
 
-**It must not be run over the pooler.** The connection string to hand is port
-**6543** — Supabase's transaction-mode pooler — and `CREATE INDEX CONCURRENTLY`
-cannot run under one. This needs a session-mode connection (port 5432) or it
-fails at statement 20.
+**It must not be run over the transaction pooler.** `CREATE INDEX CONCURRENTLY`
+cannot run under one, and the URL most readily to hand is port **6543**, which
+is exactly that. This needs session mode or it fails at statement 20.
+
+The fix is already in `.env`: there are **two** Supabase URLs on
+`aws-0-us-west-2.pooler.supabase.com`, one on **6543** (transaction) and one on
+**5432** (session). The 5432 one is the right one and it connects —
+`select version from jobs.version` returns 38 over it. `tooling/apply-pgboss-42.sh`
+selects it by grepping for `:5432` rather than taking whichever URL comes first.
 
 ## Runbook
 
-1. Connect **session-mode**, port 5432, not the 6543 pooler.
+`./tooling/apply-pgboss-42.sh` from the repo root does all of the below and
+prints before/after. It needs `chmod +x` first. The steps, for anyone who would
+rather run them by hand:
+
+1. Connect **session-mode**, the `:5432` URL, not `:6543`.
 2. Run the file without `-v ON_ERROR_STOP=1`. That flag looks prudent and is
    the wrong choice here: on a re-run after an interruption between `COMMIT`
    and the index work, it aborts at the version guard and never reaches
@@ -133,6 +142,13 @@ fails at statement 20.
    ```
 4. Confirm `select version from jobs.version` reads 42, then deploy the
    converged build.
+
+**Not applied by the agent that wrote this.** The Supabase MCP is authenticated
+to one organisation ("DVNT app", projects `dvnt2` and `dvnt-social`);
+`get_project` on Moyo's `bhuvtvkvfjhcherprvod` returns "You do not have
+permission to perform this action". And the local shell blocks production DDL.
+Both are access boundaries rather than caution, so this last step needs a human
+or a connected MCP.
 
 ## Consequences
 
