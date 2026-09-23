@@ -65,13 +65,14 @@ import {
 } from '@acme/app';
 
 /**
- * The wordmark sets the bar's height rather than sitting inside it: at 40pt tall
- * (~111pt wide at the mark's 2.77:1) inside the row's 56pt minimum, the app bar
- * lands on the standard height with 8pt of air above and below. `min-h-14` is
- * what holds that height when the left slot is the 44pt back target instead —
- * change it and the bar starts jumping between a tab root and its detail.
+ * 32pt tall (~89pt wide at the mark's 2.77:1) inside the row's 56pt minimum,
+ * 12pt of air above and below. It was 40, which set the bar's height itself
+ * and read as oversized beside the title once the bar had a 44pt avatar and,
+ * on the Duo, a rail against it. `min-h-14` holds the 56 whether the left slot
+ * is the mark or the 44pt back target — change it and the bar starts jumping
+ * between a tab root and its detail.
  */
-const LOGO_HEIGHT = 40;
+const LOGO_HEIGHT = 32;
 
 export interface ShellHeaderProps {
   titles: Record<string, string>;
