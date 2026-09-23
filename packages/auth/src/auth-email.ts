@@ -1,16 +1,22 @@
 // @acme/auth/auth-email — the transactional sender behind Better Auth's
-// `emailVerification.sendVerificationEmail`.
+// `emailVerification.sendVerificationEmail` and
+// `emailAndPassword.sendResetPassword`.
 //
 // It exists because doc 06 §6 requires verification in production and
 // better-auth@1.7.2 refuses every unverified sign-in when no sender is
 // configured (dist/api/routes/sign-in.mjs:340-352). Without this module the
 // verification gate is a lock with no key cut for it.
 //
+// The reset half fails differently and loudly: with no `sendResetPassword`,
+// `/request-password-reset` logs "Reset password isn't enabled" and throws
+// BAD_REQUEST `RESET_PASSWORD_DISABLED` (dist/api/routes/password.mjs:53-56).
+// It is a refusal with a reason, not the silent no-op it was first recorded as.
+//
 // Resend's REST API over `fetch`, deliberately not the `resend` SDK: one POST
 // with three headers does not justify a dependency in a package that Metro also
 // has to resolve for the native app.
-// SOT: docs/pack/06-auth-onboarding-spec.md §6 · docs/incidents/2026-09-22-login-lockout.md
-// SOT-KEYWORDS: auth email verification resend sender transactional idempotency better-auth
+// SOT: docs/pack/06-auth-onboarding-spec.md §6 · docs/decisions/2026-09-23-reset-password-contract.md · docs/incidents/2026-09-22-login-lockout.md
+// SOT-KEYWORDS: auth email verification password reset resend sender transactional idempotency better-auth
 
 import { createHash } from 'node:crypto';
 import { isPlaceholderEmail } from './create-learner.ts';
@@ -34,7 +40,32 @@ export interface AuthEmailConfig {
   fetch?: FetchLike;
 }
 
+/**
+ * The two mails this module sends, each carrying the pair of strings that must
+ * never disagree: the idempotency-key prefix Resend sees, and the label a
+ * failure is logged under.
+ *
+ * One map rather than two constants, because the pair is the point. Both values
+ * used to be hardcoded to the verification case — `verify-` inside
+ * `idempotencyKeyFor` and "the verification email" inside the thrown error — so
+ * a second caller would have inherited both and every reset failure would have
+ * been read off a log line naming the wrong flow.
+ *
+ * The prefix is not cosmetic. Resend's idempotency keys are account-global, so
+ * two kinds sharing one prefix can collide there even though the tokens come
+ * from different generators (a signed JWT for verification, an opaque
+ * `generateId(24)` for reset).
+ */
+const AUTH_EMAIL_KINDS = {
+  verification: { keyPrefix: 'verify', label: 'verification' },
+  'password-reset': { keyPrefix: 'reset', label: 'password reset' },
+} as const satisfies Record<string, { keyPrefix: string; label: string }>;
+
+export type AuthEmailKind = keyof typeof AUTH_EMAIL_KINDS;
+
 export interface AuthEmailMessage {
+  /** Selects the idempotency prefix and the failure label. */
+  kind: AuthEmailKind;
   to: string;
   subject: string;
   text: string;
@@ -73,10 +104,10 @@ export function readAuthEmailConfig(env: AuthEmailEnv = process.env): AuthEmailC
  * HTML-escape. `&` first, or the ampersand inserted by a later replacement gets
  * escaped a second time and `&amp;` renders as literal `&amp;amp;`.
  *
- * A verification URL reliably contains `&` (it carries both `token` and
- * `callbackURL`) and can contain `"` once a callback is percent-decoded, which
- * is the character that would otherwise close the `href` attribute early and
- * truncate the link to a dead one.
+ * Both links reliably contain `&` (each carries `token` and `callbackURL`) and
+ * can contain `"` once a callback is percent-decoded, which is the character
+ * that would otherwise close the `href` attribute early and truncate the link
+ * to a dead one.
  */
 export function escapeHtml(value: string): string {
   return value
@@ -100,6 +131,7 @@ export function escapeHtml(value: string): string {
 export function verificationEmail(to: string, url: string): AuthEmailMessage {
   const safeUrl = escapeHtml(url);
   return {
+    kind: 'verification',
     to,
     subject: 'Confirm your email for Moyo',
     text: [
@@ -118,17 +150,64 @@ export function verificationEmail(to: string, url: string): AuthEmailMessage {
 }
 
 /**
- * A retry key that is stable per verification token and useless to whoever
- * holds it.
+ * The password-reset mail.
  *
- * The raw token is a signed JWT that grants the account — anyone who replays it
- * verifies that email. It must never leave this process for a third party, and
- * an `Idempotency-Key` header is exactly that: a value Resend stores, logs and
- * shows in its dashboard. The SHA-256 is one-way, and it is constant for a
- * given token, which is the whole property a retry needs.
+ * The reader did not necessarily ask for this, and the endpoint answers the
+ * same way whether the address has an account or not, so the copy opens by
+ * saying what arrived rather than congratulating anyone on a request they may
+ * not have made. Nothing here is framed as a problem: asking for a reset is a
+ * supported way to get back in, and "error"-shaped wording would make an
+ * ordinary act read as a mistake.
+ *
+ * "one hour" is measured, not guessed: better-auth@1.7.2 falls back to
+ * `resetPasswordTokenExpiresIn || 3600`
+ * (@better-auth/core/dist/types/init-options.d.mts:711) and this repo does not
+ * set it. If it is ever set, this sentence moves with it.
+ *
+ * The link text is the URL itself, matching `verificationEmail`. A screen
+ * reader reads the whole thing aloud, which is verbose, but a recipient who
+ * cannot click needs the address visible, and a recipient deciding whether to
+ * trust the mail at all needs to see where it goes before following it.
  */
-export function idempotencyKeyFor(token: string): string {
-  return `verify-${createHash('sha256').update(token).digest('hex')}`;
+export function resetPasswordEmail(to: string, url: string): AuthEmailMessage {
+  const safeUrl = escapeHtml(url);
+  const closing =
+    "The link works for one hour. If you didn't ask for it, ignore this email — your password stays as it is until the link is opened.";
+  return {
+    kind: 'password-reset',
+    to,
+    subject: 'Reset your Moyo password',
+    text: [
+      'Someone asked to reset the password on your Moyo account. If that was you, set a new one here:',
+      '',
+      url,
+      '',
+      closing,
+    ].join('\n'),
+    html: [
+      '<p>Someone asked to reset the password on your Moyo account. If that was you, set a new one here:</p>',
+      `<p><a href="${safeUrl}">${safeUrl}</a></p>`,
+      `<p>${closing}</p>`,
+    ].join('\n'),
+  };
+}
+
+/**
+ * A retry key that is stable per token and useless to whoever holds it.
+ *
+ * Both tokens are bearer credentials: the verification JWT verifies that email,
+ * and the reset id sets that account's password on its own. Neither may leave
+ * this process for a third party, and an `Idempotency-Key` header is exactly
+ * that — a value Resend stores, logs and shows in its dashboard. The SHA-256 is
+ * one-way, and it is constant for a given token, which is the whole property a
+ * retry needs.
+ *
+ * `kind` is required rather than defaulted to the older verification case. A
+ * third mail added later would otherwise mint keys in the verification
+ * namespace without anyone writing the word "verify".
+ */
+export function idempotencyKeyFor(token: string, kind: AuthEmailKind): string {
+  return `${AUTH_EMAIL_KINDS[kind].keyPrefix}-${createHash('sha256').update(token).digest('hex')}`;
 }
 
 /**
@@ -172,6 +251,10 @@ export interface SendAuthEmailOptions {
  * user table. Resend's own reason text sometimes quotes the offending address
  * back ("Invalid `to` field"), so the address is redacted out of the reason
  * rather than merely left out of the sentence around it.
+ *
+ * Which flow failed comes from `message.kind`, not from the caller. Reading it
+ * off the message is what makes the two labels impossible to swap: there is no
+ * argument to pass wrongly.
  */
 export async function sendAuthEmail(
   config: AuthEmailConfig,
@@ -199,15 +282,20 @@ export async function sendAuthEmail(
   if (response.ok) return;
 
   const reason = reasonFrom(await response.text()).replaceAll(message.to, '[recipient]');
-  throw new Error(`Resend rejected the verification email (HTTP ${response.status}): ${reason}`);
+  const { label } = AUTH_EMAIL_KINDS[message.kind];
+  throw new Error(`Resend rejected the ${label} email (HTTP ${response.status}): ${reason}`);
 }
 
 /**
  * What happened, so a caller and a test can both tell "we sent it" from "we
  * deliberately did not". A bare `void` return makes those two indistinguishable,
  * which is the shape that let the original bug hide.
+ *
+ * One union for both senders. The three outcomes are a property of the address,
+ * not of the mail, so a second copy would only ever be the same three strings
+ * under a name that could drift.
  */
-export type VerificationSendOutcome = 'sent' | 'skipped-no-address' | 'skipped-placeholder';
+export type AuthEmailSendOutcome = 'sent' | 'skipped-no-address' | 'skipped-placeholder';
 
 /**
  * The body of Better Auth's `emailVerification.sendVerificationEmail`, lifted
@@ -228,13 +316,50 @@ export async function sendVerificationEmailFor(
   config: AuthEmailConfig,
   data: { user: { email?: string | null }; url: string; token: string },
   options?: { fetch?: FetchLike },
-): Promise<VerificationSendOutcome> {
+): Promise<AuthEmailSendOutcome> {
   const to = data.user.email;
   if (!to) return 'skipped-no-address';
   if (isPlaceholderEmail(to)) return 'skipped-placeholder';
 
   await sendAuthEmail(config, verificationEmail(to, data.url), {
-    idempotencyKey: idempotencyKeyFor(data.token),
+    idempotencyKey: idempotencyKeyFor(data.token, 'verification'),
+    ...(options?.fetch ? { fetch: options.fetch } : {}),
+  });
+  return 'sent';
+}
+
+/**
+ * The body of Better Auth's `emailAndPassword.sendResetPassword`, lifted out of
+ * the options literal for the same reason as its verification twin: a callback
+ * declared inside `betterAuth({ … })` can only be exercised by booting the
+ * whole instance.
+ *
+ * Refusing a placeholder address is the only control this package has over a
+ * managed learner's reset, and it is not the control that looks like it.
+ * `isRestrictedLearnerPasswordChange` (server.ts) reads as though it covers
+ * this, but it requires `actorId === owner.id`, and `/reset-password` runs with
+ * no session — `ctx.context.session` is undefined, the guard declines, and the
+ * password change proceeds. So the block has to happen before a link exists.
+ * Doc 06 §2 routes a managed learner's recovery through the guardian and never
+ * through `<uuid>@learners.invalid`; this refusal is what holds that, and it
+ * also spares the sending domain a guaranteed hard bounce.
+ *
+ * Refusing still leaves an unused `reset-password:` verification row behind:
+ * better-auth mints it before it calls this sender, and no hook available to
+ * this package runs earlier. It expires in an hour and authorises nothing that
+ * was not already authorised, since nobody ever receives the token.
+ */
+export async function sendResetPasswordFor(
+  config: AuthEmailConfig,
+  data: { user: { email?: string | null }; url: string; token: string },
+  options?: { fetch?: FetchLike },
+): Promise<AuthEmailSendOutcome> {
+  const to = data.user.email;
+  if (!to) return 'skipped-no-address';
+  if (isPlaceholderEmail(to)) return 'skipped-placeholder';
+
+  await sendAuthEmail(config, resetPasswordEmail(to, data.url), {
+    idempotencyKey: idempotencyKeyFor(data.token, 'password-reset'),
     ...(options?.fetch ? { fetch: options.fetch } : {}),
   });
   return 'sent';
