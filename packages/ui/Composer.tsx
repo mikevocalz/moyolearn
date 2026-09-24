@@ -423,7 +423,7 @@ export function Composer({
       */
       <View
         key="recording"
-        className={`gap-element rounded-control border-2 border-strong bg-surface-raised pl-inset-tight pr-1 py-inset-field ${className ?? ''}`}
+        className={`gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field ${className ?? ''}`}
       >
         <View className="flex-row items-center gap-element">
           {/* Elapsed leads, as it does in the reference: it is the number that
@@ -642,7 +642,7 @@ export function Composer({
         */}
         <View
           onLayout={measureRow}
-          className={`flex-row items-end gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field ${
+          className={`flex-row items-end gap-element rounded-control border-2 border-strong bg-surface-raised pl-inset-tight pr-0 py-inset-field ${
             disabled ? 'opacity-60' : ''
           }`}
         >
@@ -780,9 +780,10 @@ export function Composer({
               side read as one wide key eating the field (the product owner:
               "mic button too wide"). The mis-tap risk that argued for the
               group gap is carried by the keys' hitSlop, not the gap: each
-              still answers across the full band. The field is trimmed to a
-              4 dp trailing inset for the same reason — send sits 4 dp further
-              right and the field keeps every dp it can.
+              still answers across the full band. The field has NO trailing
+              inset for the same reason — measured on the Duo, `pr-1` is 12 dp
+              in this scale, and send sat 16 dp short of the border; now it is
+              this group's own 2 dp and the border.
             */
             className="flex-row items-center gap-element pr-0.5"
           >
