@@ -376,7 +376,9 @@ function TutorAvatar3DStage({
   // else; on a phone or iPad with no column she stays centred like the web.
   const insets = useSafeAreaInsets();
   const truckRef = useRef(0);
-  truckRef.current = insets.right >= HARDWARE_COLUMN_MIN_DP ? CAMERA_TRUCK_X_M : 0;
+  useEffect(() => {
+    truckRef.current = insets.right >= HARDWARE_COLUMN_MIN_DP ? CAMERA_TRUCK_X_M : 0;
+  }, [insets.right]);
 
   useEffect(() => {
     let disposed = false;
