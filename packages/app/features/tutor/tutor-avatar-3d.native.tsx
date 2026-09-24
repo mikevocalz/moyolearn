@@ -35,6 +35,7 @@
  */
 import { useEffect, useRef } from 'react';
 import { Image, PixelRatio, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   Canvas,
   GPUDeviceProvider,
@@ -53,7 +54,7 @@ import {
   type HumanoPresence,
 } from '@acme/avatar/body';
 // The lens and the light are shared with the web stage — see `natalie-rig.ts`.
-import { CAMERA_FOV, CAMERA_TRUCK_X_M, addRig } from './natalie-rig';
+import { CAMERA_FOV, CAMERA_TRUCK_X_M, HARDWARE_COLUMN_MIN_DP, addRig } from './natalie-rig';
 import type { TutorCues } from './tutor-cues';
 
 /*
@@ -246,10 +247,16 @@ async function primeLoaderCache(gltfUrl: string): Promise<void> {
       THREE.Cache.add(`file:${url}`, await fetchBuffer(url));
     }),
     ...external(json.images).map(async (url) => {
-      const bitmap = await createImageBitmap(await fetchBuffer(url), {
-        colorSpaceConversion: 'none',
-      });
-      THREE.Cache.add(`image-bitmap:${url}`, bitmap);
+      // One bad texture must not demote her to the 2D mark for the session:
+      // skip the seed and three's own loader takes the untextured path.
+      try {
+        const bitmap = await createImageBitmap(await fetchBuffer(url), {
+          colorSpaceConversion: 'none',
+        });
+        THREE.Cache.add(`image-bitmap:${url}`, bitmap);
+      } catch (error) {
+        if (__DEV__) console.warn(`[natalie-preload] texture skipped: ${url}`, error);
+      }
     }),
   ]);
 }
@@ -365,6 +372,11 @@ function TutorAvatar3DStage({
   // A ref, not state: a pane animating open fires `onLayout` every frame, and
   // this component owns a renderer built once per mount.
   const layoutRef = useRef({ width: 0, height: 0 });
+  // The truck exists for the Duo's system column beside her pane and nothing
+  // else; on a phone or iPad with no column she stays centred like the web.
+  const insets = useSafeAreaInsets();
+  const truckRef = useRef(0);
+  truckRef.current = insets.right >= HARDWARE_COLUMN_MIN_DP ? CAMERA_TRUCK_X_M : 0;
 
   useEffect(() => {
     let disposed = false;
@@ -443,7 +455,7 @@ function TutorAvatar3DStage({
         renderer?.setSize(width, height, false);
         camera.aspect = width / height;
         frameBody(camera, gltf.scene);
-        camera.translateX(CAMERA_TRUCK_X_M);
+        camera.translateX(truckRef.current);
       };
 
       const presence = createHumanoPresence(gltf.scene);

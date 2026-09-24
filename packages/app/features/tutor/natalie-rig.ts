@@ -31,6 +31,8 @@ export const CAMERA_FOV = 38;
  * screen. Small on purpose: this is a nudge, not a re-frame.
  */
 export const CAMERA_TRUCK_X_M = 0.05;
+/** A trailing inset this wide is a system column (iPhone Duo: 84), not a notch. */
+export const HARDWARE_COLUMN_MIN_DP = 64;
 
 /**
  * Warm key, cool fill, a low warm bounce so the jaw underside stays alive, and

@@ -307,7 +307,6 @@ var el=board(),r=el?el.getBoundingClientRect():null;
 var w=r?r.width:0,h=r?r.height:0;
 if(!el||!(w>=1)||!(h>=1)){post({type:'moyo:probe',w:0,h:0});return;}
 post({type:'moyo:probe',w:w,h:h});
-lock();
 W.down=true;
 for(var i=0;i<p.length;i++){
 point(el,i===0?'pointerdown':'pointermove',r.left+p[i][0]*w,r.top+p[i][1]*h,null,1);

@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 'use client';
 // PLATFORM FORK — native: the drag gesture plus the keyboard affordance. The
 // web fork keeps only the keyboard path, so react-native-gesture-handler stays
@@ -58,10 +59,16 @@ export function PaneDivider({ width }: PaneDividerProps) {
   // Resolve from the width the drag STARTED at plus the total translation.
   // Accumulating per-frame deltas drifts once the pointer crosses a clamp
   // boundary and returns — see widthAfterDrag.
+  // `width` re-renders under the drag, so the ORIGIN is captured once at
+  // start: origin + cumulative translation, never last-frame + cumulative.
+  const origin = useRef(width);
   const pan = Gesture.Pan()
     .runOnJS(true)
+    .onStart(() => {
+      origin.current = width;
+    })
     .onUpdate((event) => {
-      setPrimaryWidth(widthAfterDrag(width, event.translationX));
+      setPrimaryWidth(widthAfterDrag(origin.current, event.translationX));
     });
 
   return (
