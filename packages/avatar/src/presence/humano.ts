@@ -152,12 +152,15 @@ export function fingerBone(
  * its own, smaller number.
  */
 /*
- * Deepened from { .16, .28, .24 }: on device the resting hand read as WIDE
- * OPEN — fingers nearly straight, palm presented — which no hand at rest
- * does. A relaxed hand carries ~30-40 degrees of cascade flexion; these are
- * radians per phalanx BEFORE the per-finger gradient scales them.
+ * Deepened from { .16, .28, .24 } to { .26, .42, .3 } because the resting hand
+ * read as WIDE OPEN on device — then brought back to { .2, .28, .2 } on
+ * 2026-09-23, when the deeper arc plus the relaxation drift closed the fingers
+ * far enough on the Duo to read as deformed. A relaxed hand carries ~30-40
+ * degrees of cascade flexion in total; these are radians per phalanx BEFORE
+ * the per-finger gradient scales them, and the gradient reaches 1.25 on the
+ * little finger, so the tip numbers matter more than they look.
  */
-const CURL = { '01': 0.26, '02': 0.42, '03': 0.3 } as const;
+const CURL = { '01': 0.2, '02': 0.28, '03': 0.2 } as const;
 /*
  * The fan, closed. The asset's rest pose splays the digits and nothing ever
  * wrote the adduction axis, so every hand shipped with the fingers spread —
@@ -174,10 +177,11 @@ const ADDUCT: Record<(typeof FINGERS)[number], number> = {
 };
 /**
  * How far the hand relaxation scalar may bend a finger past its rest curl, as a
- * fraction of that curl. At 0.35 a middle finger travels about 9 degrees at the
- * knuckle between an open hand and a fully settled one.
+ * fraction of that curl. At 0.35 a middle finger travelled about 9 degrees at
+ * the knuckle between an open hand and a fully settled one; 0.18 halves that,
+ * for the same reason the rest curl came down.
  */
-const RELAX_RANGE = 0.35;
+const RELAX_RANGE = 0.18;
 
 const CURL_BY_FINGER: Record<(typeof FINGERS)[number], number> = {
   thumb: 0.45,
