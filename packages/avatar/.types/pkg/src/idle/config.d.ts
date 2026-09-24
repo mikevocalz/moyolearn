@@ -240,6 +240,7 @@ export declare const idleConfig: {
             readonly backWeight: 0.45;
         };
         readonly fold: {
+            readonly enabled: false;
             readonly afterIdleS: 40;
             readonly intervalS: {
                 readonly min: 55;
