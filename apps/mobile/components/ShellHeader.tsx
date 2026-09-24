@@ -128,7 +128,7 @@ export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: She
   const role = shellForRole(activeContext.kind) ?? 'learner';
 
   /*
-    4pt trailing gutter, not 16, when the trailing edge is a hardware column
+    8pt trailing gutter, not 16, when the trailing edge is a hardware column
     (iPhone Duo's camera column, where the tab rail now lives): the avatar
     should sit against the camera, not a full gutter away from it. The rail
     owns that edge, so the header must not ALSO take the `right` inset —
@@ -153,7 +153,7 @@ export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: She
     >
       <Header
         className={`min-h-14 flex-row items-center gap-stack bg-surface-header py-1 ${
-          column > 0 ? 'pl-4 pr-1' : 'px-4'
+          column > 0 ? 'pl-4 pr-2' : 'px-4'
         }`}
       >
         {canGoBack ? (
