@@ -18,12 +18,15 @@ export const DEFAULT_PRIMARY_WIDTH = 280;
 export const PRIMARY_WIDTH_MIN = 200;
 export const PRIMARY_WIDTH_MAX = 420;
 /**
- * Row-share floors, product-owner numbers: the leading pane is never under 40%
- * of the measured row, the trailing fill pane never under a third. Both are
- * applied in AdaptivePanes against the measured row, not the window.
+ * Row-share floors, product-owner numbers, applied in AdaptivePanes against
+ * the measured row: the leading pane is never under 40% of it, the trailing
+ * fill pane never under 31%. The board gives between them. On the Duo's
+ * 867 dp row that is 347 / 251 / 269. The trailing share was a third, which
+ * pushed the board to its 200 dp minimum with a clipped toolbar, and as the
+ * fill pane she then took 320; "15% off her panel" is 272, hence 31%.
  */
 export const PRIMARY_ROW_SHARE_MIN = 0.4;
-export const DETAIL_ROW_SHARE_MIN = 1 / 3;
+export const DETAIL_ROW_SHARE_MIN = 0.31;
 
 /** Keyboard resize step for the divider's accessible affordance. */
 export const RESIZE_KEYBOARD_STEP = 16;
