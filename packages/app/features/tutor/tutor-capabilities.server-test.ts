@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { INFERENCE_SAFETY_VERSION } from '@acme/inference';
 import { ageBandForVoiceBand } from '../capture/age-band.ts';
-import { tutorCellFor, TUTOR_MANUAL_HELP, type TutorCell } from './tutor-capabilities.ts';
+import { OWNER_AUTHORIZED, tutorCellFor, TUTOR_MANUAL_HELP, type TutorCell } from './tutor-capabilities.ts';
 import { coachStream, type CoachPorts } from './coach.service.ts';
 
 // Synthetic cell for dependency checks only; not installed in the live registry.
@@ -17,9 +17,25 @@ const cell = {
 const available = { tools: ['arithmetic'], grounding: true, language: 'en', model: 'claude-opus-5', safetyVersion: INFERENCE_SAFETY_VERSION } as const;
 
 test('unknown, absent and unevaluated cells never become a general tutor', () => {
-  for (const subject of [undefined, 'missing', 'math', '__proto__']) {
+  // `ela` stands in for math: math's cells are owner-authorized (below), every
+  // other subject is still the unevaluated template and stays shut.
+  for (const subject of [undefined, 'missing', 'ela', '__proto__']) {
     for (const task of [undefined, 'missing', 'understand', 'constructor']) {
       assert.equal(tutorCellFor(subject, 'young', task, available), null);
+    }
+  }
+  for (const task of [undefined, 'missing', 'constructor', 'explore']) {
+    assert.equal(tutorCellFor('math', 'young', task, available), null);
+  }
+});
+
+test('the math cells are open under owner authorization, and the cell says so', () => {
+  for (const band of ['young', 'child', 'teen', 'adult'] as const) {
+    for (const task of ['understand', 'check-work', 'practice'] as const) {
+      const opened = tutorCellFor('math', band, task, available);
+      assert.ok(opened, `${band}/${task}`);
+      assert.equal(opened.evaluation?.runReference, OWNER_AUTHORIZED);
+      assert.deepEqual(opened.tools, []);
     }
   }
 });
@@ -40,8 +56,9 @@ test('enabled alone does not authorize a cell and required dependencies must mat
 
 test('high-school presentation band remains distinct from legal adult eligibility', () => {
   assert.equal(ageBandForVoiceBand('9-12'), 'adult');
-  // No provider eligibility is inferred from this UI label.
-  assert.equal(tutorCellFor('math', 'adult', 'understand', available), null);
+  // No provider eligibility is inferred from this UI label: the adult math cell
+  // is open only under the owner's authorization, with no evaluated run of its own.
+  assert.equal(tutorCellFor('math', 'adult', 'understand', available)?.evaluation?.runReference, OWNER_AUTHORIZED);
 });
 
 test('actual coach denies before loading learner facts and emits only manual recovery text', async () => {
@@ -53,7 +70,8 @@ test('actual coach denies before loading learner facts and emits only manual rec
     loadCapabilityContext: async (ctx) => {
       assert.equal(ctx.learnerId, 'synthetic-learner');
       contexts += 1;
-      return { subject: 'math', task: 'understand', available };
+      // A subject with no open cell — math is owner-authorized, ela is not.
+      return { subject: 'ela', task: 'understand', available };
     },
   };
   const events = [];

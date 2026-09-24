@@ -86,27 +86,57 @@ const UNEVALUATED_CELL: TutorCell = {
 };
 
 /** Declared tool requirements are not evidence of available or evaluated tools. */
+/*
+  OWNER-AUTHORIZED, NOT EVALUATED — and it says so in the run reference.
+
+  Every math cell was `UNEVALUATED_CELL` and the coach route supplied no
+  capability context, so since 249af25 every live coach turn on a child's
+  screen ended in TUTOR_MANUAL_HELP (measured on the Duo, 2026-09-23). There
+  is no eval harness in this repository to produce a run reference, and no
+  deterministic `arithmetic` / `fractions` / `symbolic-math` tool exists in
+  code for a cell to require. The product owner's call was to open the math
+  cells now. So: enabled, tools required NONE (a requirement nothing can
+  satisfy is a permanent deny, not a safeguard), grounding still required,
+  and `runReference` naming the authorization rather than an eval run.
+  Replace it with a real run reference when the harness exists; grep
+  OWNER_AUTHORIZED to find every cell this covers. The Safety Plane still
+  classifies every turn in and out — this registry was a second gate, not
+  the first.
+*/
+export const OWNER_AUTHORIZED = 'owner-authorized-unevaluated-2026-09-23';
+const OWNER_MATH_CELL: TutorCell = {
+  ...UNEVALUATED_CELL,
+  tools: [],
+  grounding: true,
+  enabled: true,
+  evaluation: {
+    runReference: OWNER_AUTHORIZED,
+    model: modelFor('tutor-turn'),
+    language: 'en',
+    safetyVersion: INFERENCE_SAFETY_VERSION,
+  },
+};
 export const TUTOR_CAPABILITIES: TutorCapabilities = {
   math: {
     young: {
-      understand: { ...UNEVALUATED_CELL, tools: ['arithmetic'], grounding: true },
-      'check-work': { ...UNEVALUATED_CELL, tools: ['arithmetic'], grounding: true },
-      practice: { ...UNEVALUATED_CELL, tools: ['arithmetic'], grounding: true },
+      understand: OWNER_MATH_CELL,
+      'check-work': OWNER_MATH_CELL,
+      practice: OWNER_MATH_CELL,
     },
     child: {
-      understand: { ...UNEVALUATED_CELL, tools: ['arithmetic', 'fractions'], grounding: true },
-      'check-work': { ...UNEVALUATED_CELL, tools: ['arithmetic', 'fractions'], grounding: true },
-      practice: { ...UNEVALUATED_CELL, tools: ['arithmetic', 'fractions'], grounding: true },
+      understand: OWNER_MATH_CELL,
+      'check-work': OWNER_MATH_CELL,
+      practice: OWNER_MATH_CELL,
     },
     teen: {
-      understand: { ...UNEVALUATED_CELL, tools: ['symbolic-math'], grounding: true },
-      'check-work': { ...UNEVALUATED_CELL, tools: ['symbolic-math'], grounding: true },
-      practice: { ...UNEVALUATED_CELL, tools: ['symbolic-math'], grounding: true },
+      understand: OWNER_MATH_CELL,
+      'check-work': OWNER_MATH_CELL,
+      practice: OWNER_MATH_CELL,
     },
     adult: {
-      understand: { ...UNEVALUATED_CELL, tools: ['symbolic-math', 'graphing'], grounding: true },
-      'check-work': { ...UNEVALUATED_CELL, tools: ['symbolic-math', 'graphing'], grounding: true },
-      practice: { ...UNEVALUATED_CELL, tools: ['symbolic-math', 'graphing'], grounding: true },
+      understand: OWNER_MATH_CELL,
+      'check-work': OWNER_MATH_CELL,
+      practice: OWNER_MATH_CELL,
     },
   },
   'social-studies': {
