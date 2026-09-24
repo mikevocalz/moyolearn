@@ -41,6 +41,39 @@ export type LoadProviderApprovals = () => Promise<readonly ProviderApproval[]>;
 // inferred permissions from public documentation or the presence of a key.
 const APPROVALS: readonly ProviderApproval[] = [];
 export const loadProviderApprovals: LoadProviderApprovals = async () => APPROVALS;
+
+/*
+  THE TEST ACCOUNT, AND ONLY THE TEST ACCOUNT. Mock auth is one identity
+  (`dev-learner-1`, packages/app/core/protected-operation.ts) that exists only
+  when NEXT_PUBLIC_AUTH_MODE=mock under NODE_ENV=development — never a real
+  child, never a production process. The product owner's call (2026-09-24)
+  was that this account is not gated on a provider approval. So under exactly
+  that mode, and no other, the loader answers with a record shaped to pass
+  `requireLearnerProviderApproval` whose reference says in words that it is
+  not an approval. Every other mode still sees the empty list and fails
+  closed. Grep TEST_ACCOUNT_APPROVAL to find the only place this exists.
+*/
+export const TEST_ACCOUNT_APPROVAL = 'test-account-not-an-approval-mock-auth-only';
+const isMockDev = () =>
+  process.env.NODE_ENV === 'development' && process.env.NEXT_PUBLIC_AUTH_MODE === 'mock';
+export const loadTestAccountApprovals: LoadProviderApprovals = async () =>
+  isMockDev()
+    ? [
+        {
+          ...providerApproval('anthropic-api'),
+          endpoint: PROVIDER_PRODUCTS['anthropic-api'].endpoint,
+          reference: TEST_ACCOUNT_APPROVAL,
+          effectiveAt: '2026-01-01T00:00:00.000Z',
+          reviewAt: '2099-01-01T00:00:00.000Z',
+          ageScopes: ['under-18'],
+          tasks: ['tutor-turn', 'classify-input', 'classify-output', 'topic-fence', 'summary-narrative'],
+          models: ['claude-opus-5', 'claude-haiku-4-5'],
+          regions: ['US'],
+          retention: 'zero-retention',
+          safetyVersion: INFERENCE_SAFETY_VERSION,
+        },
+      ]
+    : APPROVALS;
 export const INFERENCE_SAFETY_VERSION = 'moyo-safety-plane-v1';
 
 export class ProviderPolicyDenied extends Error {

@@ -32,7 +32,7 @@ import {
 import { ModelDeclined } from './errors.ts';
 import { priceUsd, profileFor } from './models.ts';
 import { modelFor, requestFor } from './routing.ts';
-import { loadProviderApprovals, requireLearnerProviderApproval, type LoadProviderApprovals } from './provider-policy.ts';
+import { loadProviderApprovals, requireLearnerProviderApproval, type LoadProviderApprovals, loadTestAccountApprovals } from './provider-policy.ts';
 import type {
   ClassifierRole,
   InferenceCompletion,
@@ -215,6 +215,9 @@ export function inferenceGateway(): InferenceGateway {
     adapter: anthropicAdapter(),
     ledger: sharedBudgetLedger(),
     budget: DEFAULT_LEARNER_BUDGET,
+    // Server composition: the empty list everywhere, the test-account record
+    // under mock dev auth only. See TEST_ACCOUNT_APPROVAL.
+    loadProviderApprovals: loadTestAccountApprovals,
   });
   return shared;
 }
