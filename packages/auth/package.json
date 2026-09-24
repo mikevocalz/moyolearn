@@ -16,6 +16,7 @@
   "scripts": {
     "lint": "eslint",
     "test": "node --experimental-strip-types --test src/*.test.ts",
+    "email:proof": "node --experimental-strip-types scripts/auth-email-proof.ts",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

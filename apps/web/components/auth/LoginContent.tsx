@@ -61,6 +61,8 @@ const verifyNotice = (address: string) =>
 const confirmNotice = (address: string) =>
   `Check your email. We sent a link to ${address}. Open it to confirm your account and finish setting up Moyo.`;
 
+const resendFailed = 'We could not send a new link just now. Try again in a moment.';
+
 export function LoginContent({ org, initialMode = 'signin' }: LoginContentProps) {
   const router = useRouter();
 
@@ -177,6 +179,36 @@ export function LoginContent({ org, initialMode = 'signin' }: LoginContentProps)
   }
 
   /*
+    THE MANUAL RESEND. Pressing Sign in again also re-sends, but only with the
+    password retyped; this asks for nothing but the address already on screen.
+    `/send-verification-email` answers `{ status: true }` for an unknown or
+    already-verified address on purpose (no enumeration), so the only failure
+    it can report is the sender itself — which is the one worth telling the
+    reader about, in the same calm register, with the button still there.
+  */
+  async function handleResend() {
+    const address = email.trim();
+    patch({ error: null, loading: true });
+    try {
+      const res = await authClient.sendVerificationEmail({
+        email: address,
+        callbackURL: mode === 'signin' ? '/tutor' : '/onboarding/learner',
+      });
+      patch({
+        notice: res.error
+          ? resendFailed
+          : mode === 'signin'
+            ? verifyNotice(address)
+            : confirmNotice(address),
+      });
+    } catch {
+      patch({ notice: resendFailed });
+    } finally {
+      patch({ loading: false });
+    }
+  }
+
+  /*
     The district is NAMED, not just pictured. A logo alone asks someone to
     recognise a mark at 56px; the sentence tells a parent they are in the right
     place, which is the only question this screen has to answer before the form.
@@ -281,9 +313,18 @@ export function LoginContent({ org, initialMode = 'signin' }: LoginContentProps)
           interrupts. Weight, not chrome, is what this line needs.
         */}
         {notice ? (
-          <Text role="status" aria-live="polite" className="font-semibold">
-            {notice}
-          </Text>
+          <>
+            <Text role="status" aria-live="polite" className="font-semibold">
+              {notice}
+            </Text>
+            <Button
+              fullWidth
+              variant="ghost"
+              title="Send the link again"
+              onPress={handleResend}
+              disabled={loading}
+            />
+          </>
         ) : null}
         <Button
           fullWidth

@@ -1,16 +1,22 @@
 // @acme/auth/auth-email — the transactional sender behind Better Auth's
-// `emailVerification.sendVerificationEmail`.
+// `emailVerification.sendVerificationEmail` and
+// `emailAndPassword.sendResetPassword`.
 //
 // It exists because doc 06 §6 requires verification in production and
 // better-auth@1.7.2 refuses every unverified sign-in when no sender is
 // configured (dist/api/routes/sign-in.mjs:340-352). Without this module the
-// verification gate is a lock with no key cut for it.
+// verification gate is a lock with no key cut for it — and password reset
+// (dist/api/routes/password.mjs:52) is the same lock one door over.
 //
 // Resend's REST API over `fetch`, deliberately not the `resend` SDK: one POST
 // with three headers does not justify a dependency in a package that Metro also
 // has to resolve for the native app.
+//
+// Nothing here runs at import time. `readAuthEmailConfig` is called by
+// `createAuth`, so an environment with no sender loads this module cleanly and
+// finds out at construction, where the gap is logged.
 // SOT: docs/pack/06-auth-onboarding-spec.md §6 · docs/incidents/2026-09-22-login-lockout.md
-// SOT-KEYWORDS: auth email verification resend sender transactional idempotency better-auth
+// SOT-KEYWORDS: auth email verification reset password resend sender transactional idempotency better-auth
 
 import { createHash } from 'node:crypto';
 import { isPlaceholderEmail } from './create-learner.ts';
@@ -40,6 +46,18 @@ export interface AuthEmailMessage {
   text: string;
   html: string;
 }
+
+/**
+ * The two mails this module sends. The purpose prefixes the idempotency key so
+ * a verification retry and a reset retry for the same account can never
+ * collapse into one send, and it names the mail in the log line.
+ */
+export type AuthEmailPurpose = 'verify' | 'reset';
+
+const PURPOSE_LABEL: Record<AuthEmailPurpose, string> = {
+  verify: 'verification email',
+  reset: 'password reset email',
+};
 
 /**
  * The environment shape this module reads. Typed structurally rather than as
@@ -118,17 +136,83 @@ export function verificationEmail(to: string, url: string): AuthEmailMessage {
 }
 
 /**
- * A retry key that is stable per verification token and useless to whoever
- * holds it.
+ * The password reset mail. `url` arrives from Better Auth already carrying the
+ * caller's `redirectTo` as `callbackURL`
+ * (`${baseURL}/reset-password/${token}?callbackURL=${redirectTo}`,
+ * dist/api/routes/password.mjs:81-82); opening it lands on that page with
+ * `?token=` appended, or `?error=INVALID_TOKEN` once it has expired. The mail
+ * therefore carries the URL untouched — rebuilding it here would be a second
+ * copy of that routing rule waiting to disagree with the first.
  *
- * The raw token is a signed JWT that grants the account — anyone who replays it
- * verifies that email. It must never leave this process for a third party, and
- * an `Idempotency-Key` header is exactly that: a value Resend stores, logs and
- * shows in its dashboard. The SHA-256 is one-way, and it is constant for a
- * given token, which is the whole property a retry needs.
+ * "one hour" is `resetPasswordTokenExpiresIn`'s default (3600, password.mjs:73)
+ * and this repo does not override it.
  */
-export function idempotencyKeyFor(token: string): string {
-  return `verify-${createHash('sha256').update(token).digest('hex')}`;
+export function resetPasswordEmail(to: string, url: string): AuthEmailMessage {
+  const safeUrl = escapeHtml(url);
+  return {
+    to,
+    subject: 'Reset your Moyo password',
+    text: [
+      'Choose a new password for your Moyo account:',
+      '',
+      url,
+      '',
+      "The link works for one hour. If you didn't ask for it, ignore this email — your password stays as it is.",
+    ].join('\n'),
+    html: [
+      '<p>Choose a new password for your Moyo account:</p>',
+      `<p><a href="${safeUrl}">${safeUrl}</a></p>`,
+      "<p>The link works for one hour. If you didn't ask for it, ignore this email — your password stays as it is.</p>",
+    ].join('\n'),
+  };
+}
+
+/**
+ * A retry key that is stable per (purpose, account, token) and useless to
+ * whoever holds it.
+ *
+ * The raw verification token is a signed JWT that grants the account — anyone
+ * who replays it verifies that email. It must never leave this process for a
+ * third party, and an `Idempotency-Key` header is exactly that: a value Resend
+ * stores, logs and shows in its dashboard. The SHA-256 is one-way, and it is
+ * constant for a given input, which is the whole property a retry needs.
+ *
+ * The user id is folded in so the key is scoped to the account as well as the
+ * token; the purpose is a plain prefix so a verification and a reset for the
+ * same account are two sends, never one.
+ */
+export function idempotencyKeyFor(purpose: AuthEmailPurpose, userId: string, token: string): string {
+  return `${purpose}-${createHash('sha256').update(`${userId}:${token}`).digest('hex')}`;
+}
+
+/**
+ * The one error class every failure in this module throws. `name` is fixed so
+ * a log query or an alert can match on it rather than on message text that
+ * moves with the copy. `status` is 0 when Resend could not be reached at all.
+ */
+export class AuthEmailSendError extends Error {
+  override readonly name = 'AuthEmailSendError';
+  readonly purpose: AuthEmailPurpose;
+  readonly status: number;
+
+  // Plain fields, not parameter properties: the test runner and the proof
+  // script load this file under Node's strip-only TypeScript mode, which
+  // refuses `constructor(readonly x)` outright.
+  constructor(
+    purpose: AuthEmailPurpose,
+    status: number,
+    reason: string,
+    options?: { cause?: unknown },
+  ) {
+    super(
+      status === 0
+        ? `Resend could not be reached for the ${PURPOSE_LABEL[purpose]}: ${reason}`
+        : `Resend rejected the ${PURPOSE_LABEL[purpose]} (HTTP ${status}): ${reason}`,
+      options,
+    );
+    this.purpose = purpose;
+    this.status = status;
+  }
 }
 
 /**
@@ -155,15 +239,16 @@ const reasonFrom = (body: string): string => {
 };
 
 export interface SendAuthEmailOptions {
+  purpose: AuthEmailPurpose;
   idempotencyKey: string;
   /** Overrides `config.fetch`. Test seam; unused in production. */
   fetch?: FetchLike;
 }
 
 /**
- * Send one message. Throws on a non-2xx so Better Auth's own background-task
- * handling surfaces the failure instead of a silent no-op that looks like a
- * delivered mail.
+ * Send one message. Throws `AuthEmailSendError` on a non-2xx or an unreachable
+ * API so Better Auth's own handling surfaces the failure instead of a silent
+ * no-op that looks like a delivered mail.
  *
  * The thrown message carries the status and Resend's reason but NEVER the
  * recipient. This string lands in Vercel's runtime logs, and a bounce-heavy
@@ -179,27 +264,32 @@ export async function sendAuthEmail(
   options: SendAuthEmailOptions,
 ): Promise<void> {
   const send = options.fetch ?? config.fetch ?? globalThis.fetch;
+  const redact = (text: string) => text.replaceAll(message.to, '[recipient]');
 
-  const response = await send(RESEND_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${config.apiKey}`,
-      'Content-Type': 'application/json',
-      'Idempotency-Key': options.idempotencyKey,
-    },
-    body: JSON.stringify({
-      from: config.from,
-      to: message.to,
-      subject: message.subject,
-      text: message.text,
-      html: message.html,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await send(RESEND_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': options.idempotencyKey,
+      },
+      body: JSON.stringify({
+        from: config.from,
+        to: message.to,
+        subject: message.subject,
+        text: message.text,
+        html: message.html,
+      }),
+    });
+  } catch (cause) {
+    const reason = cause instanceof Error ? redact(cause.message) : 'unknown network failure';
+    throw new AuthEmailSendError(options.purpose, 0, reason, { cause });
+  }
 
   if (response.ok) return;
-
-  const reason = reasonFrom(await response.text()).replaceAll(message.to, '[recipient]');
-  throw new Error(`Resend rejected the verification email (HTTP ${response.status}): ${reason}`);
+  throw new AuthEmailSendError(options.purpose, response.status, redact(reasonFrom(await response.text())));
 }
 
 /**
@@ -207,35 +297,86 @@ export async function sendAuthEmail(
  * deliberately did not". A bare `void` return makes those two indistinguishable,
  * which is the shape that let the original bug hide.
  */
-export type VerificationSendOutcome = 'sent' | 'skipped-no-address' | 'skipped-placeholder';
+export type SendOutcome = 'sent' | 'skipped-no-address' | 'skipped-placeholder';
 
 /**
- * The body of Better Auth's `emailVerification.sendVerificationEmail`, lifted
- * out of the options object so the policy is reachable by a test. An options
- * literal inside `betterAuth({ … })` can only be exercised by booting the whole
- * instance; this is the same code with a name.
+ * The slice of Better Auth's `User` the two callbacks read. `id` is required —
+ * it scopes the idempotency key — and `email` is optional only because the
+ * caller shape allows it; Better Auth always supplies both.
+ */
+export interface AuthEmailRecipient {
+  id: string;
+  email?: string | null;
+}
+
+export interface AuthEmailCallbackData {
+  user: AuthEmailRecipient;
+  url: string;
+  token: string;
+}
+
+/**
+ * The shared body of both Better Auth callbacks, lifted out of the options
+ * object so the policy is reachable by a test. An options literal inside
+ * `betterAuth({ … })` can only be exercised by booting the whole instance; this
+ * is the same code with a name.
  *
  * Refusing a placeholder address is the load-bearing branch. Doc 06 §2 gives a
  * managed learner no email, so `create-learner.ts` parks
  * `<uuid>@learners.invalid` in the column Better Auth makes required — an RFC
  * 2606 reserved TLD that is guaranteed never to resolve. Every send there is a
  * hard bounce charged against the sending domain's reputation, and it buys
- * nothing: a child has no inbox to confirm from, and doc 06 §2 routes that
- * account's recovery through the guardian instead. Learners are born verified
- * (payload-learner-writer.ts), so they never legitimately arrive here.
+ * nothing: a child has no inbox to confirm from, and doc 06 §2 routes both
+ * that account's verification and its password reset through the guardian.
+ *
+ * A failure is LOGGED HERE AND RETHROWN. This is the boundary Better Auth
+ * calls: sign-in awaits it (`runInBackgroundOrAwait`, no background handler
+ * is configured), so the rethrow turns a dead sender into a 500 rather than a
+ * 403 that tells the reader "we just sent a link" when nothing went out. The
+ * log line carries the stable class name and status, never the address.
  */
-export async function sendVerificationEmailFor(
+async function deliver(
   config: AuthEmailConfig,
-  data: { user: { email?: string | null }; url: string; token: string },
+  purpose: AuthEmailPurpose,
+  compose: (to: string, url: string) => AuthEmailMessage,
+  data: AuthEmailCallbackData,
   options?: { fetch?: FetchLike },
-): Promise<VerificationSendOutcome> {
+): Promise<SendOutcome> {
   const to = data.user.email;
   if (!to) return 'skipped-no-address';
   if (isPlaceholderEmail(to)) return 'skipped-placeholder';
 
-  await sendAuthEmail(config, verificationEmail(to, data.url), {
-    idempotencyKey: idempotencyKeyFor(data.token),
-    ...(options?.fetch ? { fetch: options.fetch } : {}),
-  });
+  try {
+    await sendAuthEmail(config, compose(to, data.url), {
+      purpose,
+      idempotencyKey: idempotencyKeyFor(purpose, data.user.id, data.token),
+      ...(options?.fetch ? { fetch: options.fetch } : {}),
+    });
+  } catch (error) {
+    const detail =
+      error instanceof AuthEmailSendError
+        ? { error: error.name, status: error.status }
+        : { error: error instanceof Error ? error.name : typeof error };
+    console.error(`[auth-email] ${PURPOSE_LABEL[purpose]} failed for user ${data.user.id}`, detail);
+    throw error;
+  }
   return 'sent';
+}
+
+/** Better Auth's `emailVerification.sendVerificationEmail`. */
+export function sendVerificationEmailFor(
+  config: AuthEmailConfig,
+  data: AuthEmailCallbackData,
+  options?: { fetch?: FetchLike },
+): Promise<SendOutcome> {
+  return deliver(config, 'verify', verificationEmail, data, options);
+}
+
+/** Better Auth's `emailAndPassword.sendResetPassword`. */
+export function sendResetPasswordEmailFor(
+  config: AuthEmailConfig,
+  data: AuthEmailCallbackData,
+  options?: { fetch?: FetchLike },
+): Promise<SendOutcome> {
+  return deliver(config, 'reset', resetPasswordEmail, data, options);
 }

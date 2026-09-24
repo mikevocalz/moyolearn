@@ -100,7 +100,11 @@ export async function proxy(request: NextRequest) {
       in production logs from ordinary traffic. Nobody would page on it; the
       graph would just show everyone suddenly choosing to sign in again.
     */
-    console.error('[proxy] session check failed', error);
+    const errorClass = error instanceof Error ? error.name : typeof error;
+    console.error(
+      `[proxy] session check failed on ${request.nextUrl.pathname}: ${errorClass}`,
+      error,
+    );
     return unauthenticated();
   }
 

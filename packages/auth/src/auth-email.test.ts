@@ -1,22 +1,27 @@
 // The sender's contract, asserted without a network. The expensive mistakes
 // here are quiet ones: a half-configured sender that looks wired, a raw
-// verification token handed to a third party, and a recipient address written
-// into a log line.
+// verification token handed to a third party, a recipient address written
+// into a log line, and a failed send that nobody can grep for.
 // SOT: docs/pack/06-auth-onboarding-spec.md §6 · docs/incidents/2026-09-22-login-lockout.md
-// SOT-KEYWORDS: auth email test resend verification idempotency escaping sender config
+// SOT-KEYWORDS: auth email test resend verification reset idempotency escaping sender config error class
 
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { describe, it } from 'node:test';
+import { describe, it, mock } from 'node:test';
 import {
+  AuthEmailSendError,
   escapeHtml,
   idempotencyKeyFor,
   readAuthEmailConfig,
+  resetPasswordEmail,
   sendAuthEmail,
+  sendResetPasswordEmailFor,
+  sendVerificationEmailFor,
   verificationEmail,
   type AuthEmailConfig,
   type FetchLike,
 } from './auth-email.ts';
+import { learnerPlaceholderEmail } from './create-learner.ts';
 
 const CONFIG: AuthEmailConfig = { apiKey: 're_test_key', from: 'Moyo <hello@moyolearn.com>' };
 
@@ -37,6 +42,12 @@ function stubFetch(response: Response): { fetch: FetchLike; calls: Captured[] } 
 
 const headerOf = (init: RequestInit, name: string): string | undefined =>
   (init.headers as Record<string, string> | undefined)?.[name];
+
+const callback = (email: string | null, token = 'token-abc') => ({
+  user: { id: 'user-1', email },
+  url: 'https://moyolearn.com/api/auth/verify-email?token=t&callbackURL=%2Ftutor',
+  token,
+});
 
 describe('reading the sender config', () => {
   it('is null when neither variable is set', () => {
@@ -106,34 +117,54 @@ describe('the verification email', () => {
   });
 });
 
+describe('the password reset email', () => {
+  // Better Auth's own shape: the caller's redirectTo already folded in.
+  const RESET_URL =
+    'https://moyolearn.com/api/auth/reset-password/tok24?callbackURL=%2Freset-password&x="y"';
+  const message = resetPasswordEmail('parent@example.com', RESET_URL);
+
+  it('carries the Better Auth url untouched in the text part', () => {
+    assert.equal(message.subject, 'Reset your Moyo password');
+    assert.ok(message.text.includes(RESET_URL));
+  });
+
+  it('escapes the href like the verification mail does', () => {
+    assert.ok(message.html.includes(`<a href="${escapeHtml(RESET_URL)}">`));
+    assert.ok(!message.html.includes('&x="y"'));
+  });
+});
+
 describe('the idempotency key', () => {
   // Three dot-separated segments, deliberately NOT a decodable JWT header.
   // A real-looking one here trips every credential scanner in CI forever,
   // and the function under test only ever hashes the string.
   const token = 'header.payload.signature';
 
-  it('is stable for one token, so a retry is the same send', () => {
-    assert.equal(idempotencyKeyFor(token), idempotencyKeyFor(token));
+  it('is stable for one (purpose, user, token), so a retry is the same send', () => {
+    assert.equal(idempotencyKeyFor('verify', 'user-1', token), idempotencyKeyFor('verify', 'user-1', token));
   });
 
-  it('differs between tokens', () => {
-    assert.notEqual(idempotencyKeyFor(token), idempotencyKeyFor(`${token}x`));
+  it('differs between tokens, users and purposes', () => {
+    const key = idempotencyKeyFor('verify', 'user-1', token);
+    assert.notEqual(key, idempotencyKeyFor('verify', 'user-1', `${token}x`));
+    assert.notEqual(key, idempotencyKeyFor('verify', 'user-2', token));
+    assert.notEqual(key, idempotencyKeyFor('reset', 'user-1', token));
   });
 
   it('never carries the raw token — it is a credential, and the header is third-party', () => {
-    const key = idempotencyKeyFor(token);
+    const key = idempotencyKeyFor('verify', 'user-1', token);
     assert.ok(!key.includes(token));
     assert.ok(!key.includes('signature'));
-    assert.equal(key, `verify-${createHash('sha256').update(token).digest('hex')}`);
+    assert.equal(key, `verify-${createHash('sha256').update(`user-1:${token}`).digest('hex')}`);
   });
 });
 
 describe('sending', () => {
-  it('POSTs the documented request shape to Resend', async () => {
+  it('POSTs the documented request shape to Resend, Idempotency-Key included', async () => {
     const { fetch, calls } = stubFetch(new Response('{"id":"1"}', { status: 200 }));
     const message = verificationEmail('parent@example.com', 'https://moyolearn.com/v?token=t');
 
-    await sendAuthEmail(CONFIG, message, { idempotencyKey: 'verify-abc', fetch });
+    await sendAuthEmail(CONFIG, message, { purpose: 'verify', idempotencyKey: 'verify-abc', fetch });
 
     assert.equal(calls.length, 1);
     const call = calls[0];
@@ -152,15 +183,24 @@ describe('sending', () => {
     });
   });
 
+  it('sends the derived key through the callback wrapper', async () => {
+    const { fetch, calls } = stubFetch(new Response('{"id":"1"}', { status: 200 }));
+    await sendVerificationEmailFor(CONFIG, callback('parent@example.com', 'tok'), { fetch });
+    const call = calls[0];
+    assert.ok(call);
+    assert.equal(headerOf(call.init, 'Idempotency-Key'), idempotencyKeyFor('verify', 'user-1', 'tok'));
+  });
+
   it('accepts the fetch seam on the config as well as on the call', async () => {
     const { fetch, calls } = stubFetch(new Response('', { status: 200 }));
     await sendAuthEmail({ ...CONFIG, fetch }, verificationEmail('p@example.com', 'https://x/v'), {
+      purpose: 'verify',
       idempotencyKey: 'verify-abc',
     });
     assert.equal(calls.length, 1);
   });
 
-  it('throws on a non-ok response and names the status', async () => {
+  it('throws AuthEmailSendError on a non-ok response, naming the status', async () => {
     const { fetch } = stubFetch(
       new Response('{"message":"Domain is not verified","name":"validation_error"}', {
         status: 403,
@@ -169,13 +209,38 @@ describe('sending', () => {
 
     await assert.rejects(
       sendAuthEmail(CONFIG, verificationEmail('parent@example.com', 'https://x/v'), {
+        purpose: 'verify',
         idempotencyKey: 'verify-abc',
         fetch,
       }),
       (error: unknown) => {
-        assert.ok(error instanceof Error);
+        assert.ok(error instanceof AuthEmailSendError);
+        assert.equal(error.name, 'AuthEmailSendError');
+        assert.equal(error.status, 403);
+        assert.equal(error.purpose, 'verify');
         assert.match(error.message, /HTTP 403/);
         assert.match(error.message, /Domain is not verified/);
+        return true;
+      },
+    );
+  });
+
+  it('wraps an unreachable API in the same class, with status 0', async () => {
+    const fetch = (async () => {
+      throw new TypeError('fetch failed: ENOTFOUND api.resend.com');
+    }) as FetchLike;
+
+    await assert.rejects(
+      sendAuthEmail(CONFIG, verificationEmail('p@example.com', 'https://x/v'), {
+        purpose: 'reset',
+        idempotencyKey: 'reset-abc',
+        fetch,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof AuthEmailSendError);
+        assert.equal(error.status, 0);
+        assert.match(error.message, /could not be reached for the password reset email/);
+        assert.ok(error.cause instanceof TypeError);
         return true;
       },
     );
@@ -190,6 +255,7 @@ describe('sending', () => {
 
     await assert.rejects(
       sendAuthEmail(CONFIG, verificationEmail('parent@example.com', 'https://x/v'), {
+        purpose: 'verify',
         idempotencyKey: 'verify-abc',
         fetch,
       }),
@@ -207,10 +273,50 @@ describe('sending', () => {
     const { fetch } = stubFetch(new Response('<html>502 Bad Gateway</html>', { status: 502 }));
     await assert.rejects(
       sendAuthEmail(CONFIG, verificationEmail('p@example.com', 'https://x/v'), {
+        purpose: 'verify',
         idempotencyKey: 'verify-abc',
         fetch,
       }),
       /HTTP 502/,
     );
+  });
+});
+
+describe('the callbacks Better Auth invokes', () => {
+  it('never mail a learner placeholder — verification or reset', async () => {
+    const { fetch, calls } = stubFetch(new Response('{"id":"1"}', { status: 200 }));
+    const placeholder = learnerPlaceholderEmail('3f1c-uuid');
+
+    assert.equal(await sendVerificationEmailFor(CONFIG, callback(placeholder), { fetch }), 'skipped-placeholder');
+    assert.equal(await sendResetPasswordEmailFor(CONFIG, callback(placeholder), { fetch }), 'skipped-placeholder');
+    assert.equal(calls.length, 0, 'no request may reach Resend for an @learners.invalid address');
+  });
+
+  it('send the reset mail to a real address under the reset purpose', async () => {
+    const { fetch, calls } = stubFetch(new Response('{"id":"1"}', { status: 200 }));
+    assert.equal(await sendResetPasswordEmailFor(CONFIG, callback('parent@example.com', 'tok'), { fetch }), 'sent');
+    const call = calls[0];
+    assert.ok(call);
+    assert.equal(headerOf(call.init, 'Idempotency-Key'), idempotencyKeyFor('reset', 'user-1', 'tok'));
+    assert.equal(JSON.parse(String(call.init.body)).subject, 'Reset your Moyo password');
+  });
+
+  it('log a failure under the stable class name, without the address, and rethrow', async (t) => {
+    const logged = mock.method(console, 'error', () => {});
+    t.after(() => logged.mock.restore());
+    const { fetch } = stubFetch(
+      new Response('{"message":"Invalid `to` field: parent@example.com"}', { status: 422 }),
+    );
+
+    await assert.rejects(
+      sendVerificationEmailFor(CONFIG, callback('parent@example.com'), { fetch }),
+      (error: unknown) => error instanceof AuthEmailSendError,
+    );
+
+    assert.equal(logged.mock.callCount(), 1);
+    const line = logged.mock.calls[0]?.arguments ?? [];
+    assert.match(String(line[0]), /verification email failed/);
+    assert.ok(!JSON.stringify(line).includes('parent@example.com'));
+    assert.deepEqual(line[1], { error: 'AuthEmailSendError', status: 422 });
   });
 });

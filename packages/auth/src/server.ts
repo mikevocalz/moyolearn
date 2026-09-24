@@ -17,7 +17,11 @@ import {
   permitsLoginAtHost,
   tenantSlugFromHost,
 } from './host-tenant.ts';
-import { readAuthEmailConfig, sendVerificationEmailFor } from './auth-email.ts';
+import {
+  readAuthEmailConfig,
+  sendResetPasswordEmailFor,
+  sendVerificationEmailFor,
+} from './auth-email.ts';
 
 /** Doc 06 §6: learner sessions expire sooner than adult ones. */
 const ADULT_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
@@ -155,7 +159,6 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
   });
 
   const authEmail = readAuthEmailConfig();
-  const verificationRequired = process.env.NODE_ENV !== 'development';
 
   /*
     THE LOUD FAILURE, and deliberately not a quiet downgrade.
@@ -172,11 +175,12 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
     silent removal of the control doc 06 §6 requires in production. A missing
     sender is an operations problem and has to read like one.
   */
+  const verificationRequired = process.env.NODE_ENV !== 'development';
   if (verificationRequired && !authEmail) {
     console.error(
-      '[auth] RESEND_API_KEY / AUTH_EMAIL_FROM are not set, so no verification email can be ' +
-        'sent. Email/password and username sign-in will refuse every unverified account with ' +
-        'EMAIL_NOT_VERIFIED, and there is no path to verify. Set both variables.',
+      '[auth] RESEND_API_KEY / AUTH_EMAIL_FROM are not set, so no verification or reset email ' +
+        'can be sent. Email/password and username sign-in will refuse every unverified account ' +
+        'with EMAIL_NOT_VERIFIED, and there is no path to verify. Set both variables.',
     );
   }
 
@@ -193,6 +197,22 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
       // Dev can sign up and sign in without an email adapter; verification is
       // still enforced in production builds.
       requireEmailVerification: verificationRequired,
+      ...(authEmail
+        ? {
+            /*
+              Same lock, one door over. `requestPasswordReset` logs
+              "Reset password isn't enabled" and answers 400 when this is
+              missing (dist/api/routes/password.mjs:52-56); the route itself
+              builds the link with the caller's `redirectTo` folded in as
+              `callbackURL`, and the mail carries that URL untouched. The
+              placeholder guard applies here too — a learner's reset runs
+              through the guardian (doc 06 §2), never through its address.
+            */
+            sendResetPassword: async (data) => {
+              await sendResetPasswordEmailFor(authEmail, data);
+            },
+          }
+        : {}),
     },
     ...(authEmail
       ? {

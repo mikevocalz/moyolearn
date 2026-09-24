@@ -24,7 +24,7 @@ function countingFetch(): { fetch: FetchLike; count: () => number } {
 }
 
 const data = (email: string | null) => ({
-  user: { email },
+  user: { id: 'learner-1', email },
   url: 'https://moyolearn.com/api/auth/verify-email?token=t&callbackURL=%2Ftutor',
   token: 'token-abc',
 });
@@ -64,7 +64,7 @@ describe('a managed learner is born verified', () => {
    * the entire behaviour under test.
    */
   function harness() {
-    const updates: Array<{ id: string; fields: Record<string, unknown> }> = [];
+    const updates: { id: string; fields: Record<string, unknown> }[] = [];
     const auth = {
       api: {
         signUpEmail: async () => ({ user: { id: 'learner-1' } }),
