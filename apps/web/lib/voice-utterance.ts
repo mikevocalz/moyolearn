@@ -77,7 +77,19 @@ const macFor = (key: Buffer, utterance: SpokenUtterance): Buffer =>
  * NEVER replace it is a client-supplied tone or anything read off the child's
  * affect; the palette's own header carries that rule.
  */
-export const toneForTurn = (opening: boolean): string => (opening ? OPENING_TONE : DEFAULT_TONE);
+/**
+ * One tone per turn, from what the route knows about it. Opening lines are
+ * warm; a turn after a right answer celebrates (small — the coach's next
+ * question is still coming); after a miss it is gentle; everything else is
+ * working a step. Until 2026-09-24 only the opening ever varied, and the
+ * palette's other tones were never spoken live.
+ */
+export const toneForTurn = (opening: boolean, lastOutcome: 'correct' | 'incorrect' | null): string => {
+  if (opening) return OPENING_TONE;
+  if (lastOutcome === 'correct') return 'celebrate-small';
+  if (lastOutcome === 'incorrect') return 'gentle-after-miss';
+  return DEFAULT_TONE;
+};
 
 /** Mints the tag a chunk frame carries. Null when no secret is configured. */
 export function mintUtteranceTag(utterance: SpokenUtterance): string | null {

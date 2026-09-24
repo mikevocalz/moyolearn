@@ -98,10 +98,12 @@ function isCoachBody(
   sessionId?: string;
   problemIsReading?: boolean;
   image?: TurnImage;
+  lastOutcome?: 'correct' | 'incorrect';
 } {
   if (typeof body !== 'object' || body === null) return false;
   const record = body as Record<string, unknown>;
   if (typeof record.problem !== 'string' || record.problem.trim().length === 0) return false;
+  if (record.lastOutcome !== undefined && record.lastOutcome !== 'correct' && record.lastOutcome !== 'incorrect') return false;
   if (record.message !== undefined && typeof record.message !== 'string') return false;
   if (record.problemIsReading !== undefined && typeof record.problemIsReading !== 'boolean') {
     return false;
@@ -184,7 +186,7 @@ export async function POST(request: NextRequest) {
     sentence. The crisis script is the one that is not: its audio is the BAKED
     path (`/api/tutor/voice/baked/*`), never a live Flash render.
   */
-  const tone = toneForTurn((body.message ?? '') === '');
+  const tone = toneForTurn((body.message ?? '') === '', body.lastOutcome ?? null);
   let previousText: string | null = null;
   const framed = (event: CoachEvent): string => {
     /*
