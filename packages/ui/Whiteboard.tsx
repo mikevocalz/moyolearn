@@ -205,11 +205,19 @@ const TARGET_FOLDED: Record<NonNullable<WhiteboardProps['size']>, string> = {
   xl: 'min-h-target-child min-w-target-adult',
 };
 
+/*
+  KEYS ARE BAND-TALL, ADULT-WIDE. The height is the band's target because that
+  is what a finger lands on; the width was the same number and at the child
+  band that made every key a 72 dp square, so five keys plus the ask filled a
+  294 dp board with no room to breathe (the product owner: the three tools
+  and the ask "need a smaller width"). 44 dp wide is still WCAG's target
+  minimum, and the row's own height is the band's.
+*/
 const TOOL_KEY: Record<NonNullable<WhiteboardProps['size']>, string> = {
   sm: 'min-h-target-adult min-w-target-adult',
   md: 'min-h-target-adult min-w-target-adult',
-  lg: 'min-h-target-teen min-w-target-teen',
-  xl: 'min-h-target-child min-w-target-child',
+  lg: 'min-h-target-teen min-w-target-adult',
+  xl: 'min-h-target-child min-w-target-adult',
 };
 
 const TOOLS: readonly { id: WhiteboardTool; label: string; Icon: typeof Brush }[] = [

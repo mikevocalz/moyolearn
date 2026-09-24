@@ -53,7 +53,7 @@ import {
   type HumanoPresence,
 } from '@acme/avatar/body';
 // The lens and the light are shared with the web stage — see `natalie-rig.ts`.
-import { CAMERA_FOV, addRig } from './natalie-rig';
+import { CAMERA_FOV, CAMERA_TRUCK_X_M, addRig } from './natalie-rig';
 import type { TutorCues } from './tutor-cues';
 
 /*
@@ -443,6 +443,7 @@ function TutorAvatar3DStage({
         renderer?.setSize(width, height, false);
         camera.aspect = width / height;
         frameBody(camera, gltf.scene);
+        camera.translateX(CAMERA_TRUCK_X_M);
       };
 
       const presence = createHumanoPresence(gltf.scene);
