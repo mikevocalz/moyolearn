@@ -1,0 +1,7 @@
+{
+  "name": "reserved-regions",
+  "version": "0.1.0",
+  "description": "Reads UIKit's reserved regions (fold division, camera occlusion) for the app window on iOS 27.1+.",
+  "private": true,
+  "platforms": ["ios"]
+}

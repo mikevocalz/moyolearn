@@ -200,13 +200,24 @@ export interface TutorAvatar3DProps {
  *
  * `Cache.get('file:' + url)` is checked before any request is made, so seeding
  * it is the whole fix: no patched dependency, no deleted global, and the code
- * that runs is three's. Textures need no help — `createImageBitmap` exists here
- * (react-native-webgpu installs it), so `GLTFLoader` routes images through
- * `ImageBitmapLoader`, which uses plain `fetch` + `blob()` and never wraps.
+ * that runs is three's.
  *
- * Only the `.bin` is seeded alongside the glTF: it is the one other file that
- * goes through `FileLoader`. Its URL is composed exactly the way `GLTFLoader`
- * composes it, so the two keys cannot drift.
+ * THE TEXTURES NEED THE SAME HELP SINCE REACT NATIVE 0.88. `GLTFLoader` routes
+ * images through `ImageBitmapLoader` — `fetch` + `blob()` +
+ * `createImageBitmap(blob)` — and react-native-webgpu's `createImageBitmap`
+ * reads that blob's bytes back out of RN's blob store through
+ * `[RCTBridge currentBridge]`. Bridgeless 0.88 has no current bridge, so the
+ * lookup returns nothing and every texture fails with "Couldn't retrieve blob
+ * data" — the fetch itself is fine (200, 1.2 MB, `image/png`, measured on the
+ * Duo). react-native-webgpu also accepts encoded bytes directly, and
+ * `ImageBitmapLoader` checks `Cache.get('image-bitmap:' + url)` before it
+ * fetches. So every image is fetched as an ArrayBuffer, decoded from bytes,
+ * and seeded under that key; three then never touches a blob. The seeded
+ * bitmap is decoded with the same option `GLTFLoader` sets on its loader
+ * (`colorSpaceConversion: 'none'`), so the pixels are what it would have had.
+ *
+ * URLs are composed exactly the way `GLTFLoader` composes them, so the keys
+ * cannot drift.
  */
 async function primeLoaderCache(gltfUrl: string): Promise<void> {
   THREE.Cache.enabled = true;
@@ -223,12 +234,24 @@ async function primeLoaderCache(gltfUrl: string): Promise<void> {
   const base = THREE.LoaderUtils.extractUrlBase(gltfUrl);
   const json = JSON.parse(new TextDecoder().decode(gltfBytes)) as {
     buffers?: { uri?: string }[];
+    images?: { uri?: string }[];
   };
-  for (const buffer of json.buffers ?? []) {
-    if (!buffer.uri || buffer.uri.startsWith('data:')) continue;
-    const url = THREE.LoaderUtils.resolveURL(buffer.uri, base);
-    THREE.Cache.add(`file:${url}`, await fetchBuffer(url));
-  }
+  const external = (entries: { uri?: string }[] | undefined): string[] =>
+    (entries ?? [])
+      .map((entry) => entry.uri)
+      .filter((uri): uri is string => typeof uri === 'string' && !uri.startsWith('data:'))
+      .map((uri) => THREE.LoaderUtils.resolveURL(uri, base));
+  await Promise.all([
+    ...external(json.buffers).map(async (url) => {
+      THREE.Cache.add(`file:${url}`, await fetchBuffer(url));
+    }),
+    ...external(json.images).map(async (url) => {
+      const bitmap = await createImageBitmap(await fetchBuffer(url), {
+        colorSpaceConversion: 'none',
+      });
+      THREE.Cache.add(`image-bitmap:${url}`, bitmap);
+    }),
+  ]);
 }
 
 /**

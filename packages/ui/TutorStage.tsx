@@ -835,7 +835,16 @@ export function TutorStage({
         page ground between the toolbar and the columns — the panes are the
         screen there, and a gap above them reads as a seam, not as spacing.
       */}
-      <View className={`flex-1 bg-surface ${panes ? '' : 'gap-stack'} ${className ?? ''}`}>
+      {/*
+        Three panes stand on the STAGE ground, not the content ground. What
+        shows around the pane row — the safe-area column beside her alcove and
+        the strip under the home indicator — is this view, and on the Duo it
+        read as a cream border around her purple. On a phone the row fills the
+        view and nothing of this is visible either way.
+      */}
+      <View
+        className={`flex-1 ${panes ? 'bg-surface-stage' : 'bg-surface gap-stack'} ${className ?? ''}`}
+      >
         <SessionToolbar
           title={title}
           captionsEnabled={captionsEnabled}
@@ -932,13 +941,15 @@ export function TutorStage({
               */
               <MotionView
                 /*
-                  NO TOP INSET. The alcove is hers top to bottom: the pane's own
-                  edge is the top of her stage, so an inset above it read as a
-                  band of empty sunken ground between the header and her head
-                  while the two panes beside it started at the header. Sides and
-                  bottom keep the inset — those edges are against other panes.
+                  NO INSET ON ANY EDGE, AND HER GROUND IS THE STAGE'S. The alcove
+                  is hers edge to edge: a sunken frame with side and bottom
+                  insets read as a cream border around her purple on the Duo,
+                  and the product owner asked for the purple to fill the pane.
+                  `TutorAvatar` paints `bg-surface-stage` on its own root; this
+                  wrapper carries the same ground so there is no seam while she
+                  loads or fades.
                 */
-                className="flex-1 items-center justify-center gap-stack bg-surface-sunken px-inset pb-inset"
+                className="flex-1 items-center justify-center gap-stack bg-surface-stage"
                 /*
                   ONE MOTION INSIDE, and it is a fade — the PANE's own width
                   animation (`CollapsiblePane`) is what carries the movement

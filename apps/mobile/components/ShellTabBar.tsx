@@ -93,10 +93,10 @@
 // `react-navigation` entry did not carry them; 58 added an `exports` map, so
 // that deep path is no longer resolvable and the public entry is the answer.
 import type { BottomTabBarProps } from 'expo-router/js-tabs';
-import type { ComponentType } from 'react';
+import type { ComponentType, ReactNode } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { navChrome } from '@acme/theme';
-import { useReducedMotion, useWindowSizeClass } from '@acme/ui';
+import { PaneEdgesContext, useReducedMotion, useWindowSizeClass, type PaneEdges } from '@acme/ui';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import { haptics } from '@acme/ui/haptics';
 
@@ -150,6 +150,21 @@ export const HARDWARE_EDGE_COLUMN_MIN = 64;
 export function useHardwareEdgeColumn(): number {
   const { right } = useSafeAreaInsets();
   return right >= HARDWARE_EDGE_COLUMN_MIN ? right : 0;
+}
+
+/**
+ * Tells every pane row under the shell that the rail owns the trailing edge.
+ * Wrap the shell's `<Tabs>` in it: with the rail in the hardware column, a
+ * row that also insets for that column ends a dead 84 dp short of the rail —
+ * the rail never covers a pane, and nothing may sit between them either.
+ */
+const LEADING_ONLY: PaneEdges = ['left'];
+const BOTH_EDGES: PaneEdges = ['left', 'right'];
+export function ShellPaneEdges({ children }: { children: ReactNode }) {
+  const column = useHardwareEdgeColumn();
+  return (
+    <PaneEdgesContext value={column > 0 ? LEADING_ONLY : BOTH_EDGES}>{children}</PaneEdgesContext>
+  );
 }
 
 export interface ShellTabItem {

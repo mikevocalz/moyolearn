@@ -2260,6 +2260,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
+  - ReservedRegions (0.1.0):
+    - ExpoModulesCore
   - RNAudioAPI (0.13.4):
     - hermes-engine
     - RCTRequired
@@ -2896,6 +2898,7 @@ DEPENDENCIES:
   - ReactCommon/turbomodule/core (from `../../../node_modules/react-native/ReactCommon`)
   - ReactNativeDependencies (from `../../../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec`)
   - ReactNativeEnrichedHtml (from `../../../node_modules/react-native-enriched-html`)
+  - ReservedRegions (from `../modules/reserved-regions/ios`)
   - RNAudioAPI (from `../../../node_modules/react-native-audio-api`)
   - "RNCMaskedView (from `../../../node_modules/@react-native-masked-view/masked-view`)"
   - RNGestureHandler (from `../../../node_modules/react-native-gesture-handler`)
@@ -3181,6 +3184,8 @@ EXTERNAL SOURCES:
     :podspec: "../../../node_modules/react-native/third-party-podspecs/ReactNativeDependencies.podspec"
   ReactNativeEnrichedHtml:
     :path: "../../../node_modules/react-native-enriched-html"
+  ReservedRegions:
+    :path: "../modules/reserved-regions/ios"
   RNAudioAPI:
     :path: "../../../node_modules/react-native-audio-api"
   RNCMaskedView:
@@ -3342,6 +3347,7 @@ SPEC CHECKSUMS:
   ReactCommon: 41935b5a629b216f756fda6c744f675d7724f64f
   ReactNativeDependencies: 9eed48b984d739bff91ecbaeb397003188574851
   ReactNativeEnrichedHtml: fd3f1c9778d3fea40b3dad937b5d58e3f95ec237
+  ReservedRegions: 557c9b0326270708f78ca7b8771ff93866b06648
   RNAudioAPI: f94568a3aad3efe139f1efe0ac1dd73f92c63b87
   RNCMaskedView: 89bb912716973f9715102cfe932f3ca6793b21f9
   RNGestureHandler: a058d61dbca64a49d427d056768d9ac8815f5feb

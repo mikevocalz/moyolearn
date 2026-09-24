@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Calendar, FileText, User, Users } from '@acme/ui/icons';
 import { ShellHeader } from '../../../components/ShellHeader';
-import { ShellTabBar, useShellTabBarPosition, type ShellTabItem } from '../../../components/ShellTabBar';
+import { ShellPaneEdges, ShellTabBar, useShellTabBarPosition, type ShellTabItem } from '../../../components/ShellTabBar';
 
 /**
  * Tutor tabs — doc 36 §3.3: Today (sessions timeline) · Learners (my roster →
@@ -26,6 +26,7 @@ export default function TutorTabs() {
   // Doc 02 §2.1: bottom nav under 600dp, rail from 600 up.
   const tabBarPosition = useShellTabBarPosition();
   return (
+    <ShellPaneEdges>
     <Tabs
       screenOptions={{
         header: () => <ShellHeader titles={TITLES} fallback="Today" />,
@@ -38,5 +39,6 @@ export default function TutorTabs() {
       <Tabs.Screen name="notes" options={{ title: 'Notes' }} />
       <Tabs.Screen name="tutor-profile" options={{ title: 'You' }} />
     </Tabs>
+    </ShellPaneEdges>
   );
 }

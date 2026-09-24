@@ -19,14 +19,7 @@
  * SOT-KEYWORDS: adaptive panes split view navigator list detail column inspector host
  *               pane toggle collapse expand controls
  */
-import {
-  Children,
-  isValidElement,
-  useImperativeHandle,
-  useRef,
-  useState,
-  type ReactNode,
-} from 'react';
+import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Freeze } from 'react-freeze';
 import { useWindowDimensions } from 'react-native';
 import { useStore } from 'zustand';
@@ -45,8 +38,14 @@ import { createAdaptivePanesStore, type AdaptivePanesStore } from './store';
 import { AdaptivePanesContext } from './context';
 import { useSplitViewBack } from './use-split-view-back';
 import { PaneDivider } from './PaneDivider';
+import { usePaneEdges } from './pane-edges';
 import { DetailSlot } from './detail-slot';
-import { DEFAULT_PRIMARY_WIDTH } from './resize';
+import {
+  DEFAULT_PRIMARY_WIDTH,
+  DETAIL_ROW_SHARE_MIN,
+  PRIMARY_ROW_SHARE_MIN,
+  PRIMARY_WIDTH_MIN,
+} from './resize';
 import type { AdaptivePanesProps, SplitNavigableColumn } from './types';
 
 /**
@@ -97,8 +96,39 @@ const INSPECTOR_TRAVEL = 300;
  * hidden and stop itself (see `TutorAvatar`), and anything that owns audio must
  * live outside the frozen subtree entirely.
  */
+/**
+ * Whether the pane this content sits in is open. Default true outside a pane.
+ *
+ * A GPU canvas must not draw while its pane is shut. Measured on the iPhone
+ * Duo: Natalie's stage kept calling `getCurrentTexture` through a hide — the
+ * frame counter never paused, `getNativeSurface()` read undefined mid-hide —
+ * and after the show the same Metal view (same pointer) presented nothing
+ * again. Freeze alone does not stop a render loop that three drives; the
+ * stage's `active` gate does, and this is how it learns the pane is shut.
+ */
+export const PaneOpenContext = createContext(true);
+export function usePaneOpen(): boolean {
+  return useContext(PaneOpenContext);
+}
+
 function PaneContent({ open, children }: { open: boolean; children: ReactNode }) {
-  return <Freeze freeze={!open}>{children}</Freeze>;
+  /*
+    FROZEN ONE COMMIT AFTER IT CLOSES, not in the same one. Freezing in the
+    closing commit suspends the subtree before it can render the close: the
+    stage below never received `active: false` — Metro showed no toggle line
+    while its frame counter ran straight through the hide — so it kept
+    drawing into a pane that was gone. The effect lands the closed state
+    first, then freezes what already stopped.
+  */
+  const [frozen, setFrozen] = useState(!open);
+  useEffect(() => {
+    setFrozen(!open);
+  }, [open]);
+  return (
+    <PaneOpenContext value={open}>
+      <Freeze freeze={frozen}>{children}</Freeze>
+    </PaneOpenContext>
+  );
 }
 
 function AdaptivePanesNavigator({
@@ -147,6 +177,7 @@ function AdaptivePanesNavigator({
     overflow rather than fit.
   */
   const [rowWidth, setRowWidth] = useState<number | null>(null);
+  const paneEdges = usePaneEdges();
 
   const all = Children.toArray(children);
   const columns = all.filter(
@@ -277,9 +308,59 @@ function AdaptivePanesNavigator({
   // The narrow rail is a fixed step, not a resizable pane, so a stored width
   // only applies at the full-width steps.
   const resizedWidth = railStep ? null : primaryWidth;
-  const openPrimaryWidth = railStep
+  const wantedPrimaryWidth = railStep
     ? PANE_WIDTH_DP.primaryNarrow
     : resizedWidth ?? primaryWidthDp ?? PANE_WIDTH_DP.primary;
+  const wantedSupplementaryWidth = supplementaryWidthDp ?? PANE_WIDTH_DP.supplementary;
+  /*
+    BOUNDED BY THE ROW, not only by the divider's own clamp. `PRIMARY_WIDTH_MAX`
+    is 420 whatever the window is, so on a row too narrow for three token
+    widths a dragged primary took its 420, the supplementary its 294, and the
+    fill pane got whatever was left: on the iPhone Duo's inner display (867 dp
+    inside the insets) that was ~150 dp of Natalie beside the status column.
+    The Surface Duo's wider row hid the same rule. So the primary may not push
+    the fill pane below its own collapse width; a host that has not measured
+    its row yet keeps the wanted width for that first frame. Only the trailing
+    fill pane is defended — it is the one that absorbs the difference — and
+    its floor is the larger of its collapse width and 30% of the row.
+
+    AND NEVER UNDER 40% OF THE ROW. The product owner's floor for the
+    leading column: on the Duo's inner display the defence above would have
+    squeezed the conversation to 200 dp beside two 294 dp panes, and 40% of
+    867 is 347. When the two floors disagree the third wins and the fill
+    pane gives up the difference — it is the pane built to absorb it.
+  */
+  // The trailing pane's floor is its ROW SHARE, not its token: the token is
+  // what it collapses through, the share is what it may never drop under.
+  const detailFloor = visible.detail && rowWidth !== null ? rowWidth * DETAIL_ROW_SHARE_MIN : 0;
+  const openPrimaryWidth =
+    rowWidth === null || railStep || !visible.primary
+      ? wantedPrimaryWidth
+      : Math.max(
+          PRIMARY_WIDTH_MIN,
+          rowWidth * PRIMARY_ROW_SHARE_MIN,
+          Math.min(
+            wantedPrimaryWidth,
+            rowWidth -
+              (visible.supplementary && columns[1] ? wantedSupplementaryWidth : 0) -
+              detailFloor,
+          ),
+        );
+  /*
+    THE MIDDLE PANE GIVES, not the trailing one. With the leading pane at 40%
+    and the trailing at 30% there is 30% left for the supplementary, and on
+    the Duo's 867 dp row that is 260 against a 294 token — the token loses.
+    Measured before this: 347 + 294 left Natalie 226, under her floor. It
+    keeps PRIMARY_WIDTH_MIN as its own floor so a very narrow row degrades
+    to three narrow panes rather than one that vanished.
+  */
+  const openSupplementaryWidth =
+    rowWidth === null || !visible.detail || !visible.primary
+      ? wantedSupplementaryWidth
+      : Math.max(
+          PRIMARY_WIDTH_MIN,
+          Math.min(wantedSupplementaryWidth, rowWidth - openPrimaryWidth - detailFloor),
+        );
 
   /*
     WHICH PANE ABSORBS THE WINDOW. Normally the detail pane, which is why the
@@ -297,7 +378,7 @@ function AdaptivePanesNavigator({
 
   return (
     <AdaptivePanesContext value={store}>
-      <SafeArea edges={['left', 'right']} className="flex-1">
+      <SafeArea edges={paneEdges} className="flex-1">
         <View
           className="flex-1 flex-row"
           /*
@@ -345,7 +426,7 @@ function AdaptivePanesNavigator({
             <CollapsiblePane
               open={visible.supplementary}
               width={
-                collapsed ? collapsedWidth : supplementaryWidthDp ?? PANE_WIDTH_DP.supplementary
+                collapsed ? collapsedWidth : openSupplementaryWidth
               }
               fill={fillPane === 'supplementary'}
               className={
@@ -504,6 +585,7 @@ export {
 export { CollapsiblePane, type CollapsiblePaneProps } from './CollapsiblePane';
 export { DetailNavbar, type DetailNavbarProps } from './DetailNavbar';
 export { PaneDivider, type PaneDividerProps } from './PaneDivider';
+export { PaneEdgesContext, usePaneEdges, type PaneEdges } from './pane-edges';
 export { PaneListHeader, type PaneListHeaderProps } from './PaneListHeader';
 export { PaneSearchBar, type PaneSearchBarProps } from './PaneSearchBar';
 export { PaneToggle, type PaneToggleProps } from './PaneToggle';

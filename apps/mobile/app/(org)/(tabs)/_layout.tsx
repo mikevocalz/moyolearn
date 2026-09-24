@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Bell, Calendar, LayoutGrid, Shield } from '@acme/ui/icons';
 import { ShellHeader } from '../../../components/ShellHeader';
-import { ShellTabBar, useShellTabBarPosition, type ShellTabItem } from '../../../components/ShellTabBar';
+import { ShellPaneEdges, ShellTabBar, useShellTabBarPosition, type ShellTabItem } from '../../../components/ShellTabBar';
 
 /**
  * Org companion tabs — doc 36 §3.4: Overview · Schedule · Inbox · Safety. The
@@ -31,6 +31,7 @@ export default function OrgTabs() {
   // Doc 02 §2.1: bottom nav under 600dp, rail from 600 up.
   const tabBarPosition = useShellTabBarPosition();
   return (
+    <ShellPaneEdges>
     <Tabs
       screenOptions={{
         header: () => <ShellHeader titles={TITLES} fallback="Overview" />,
@@ -44,5 +45,6 @@ export default function OrgTabs() {
       <Tabs.Screen name="inbox" options={{ title: 'Inbox' }} />
       <Tabs.Screen name="safety" options={{ title: 'Safety' }} />
     </Tabs>
+    </ShellPaneEdges>
   );
 }

@@ -166,8 +166,8 @@ export declare const idleConfig: {
         };
         readonly foot: {
             readonly intervalS: {
-                readonly min: 6;
-                readonly max: 16;
+                readonly min: 14;
+                readonly max: 40;
             };
             /**
              * Heel lift on the free foot, as extra KNEE flexion — never ankle.
@@ -180,18 +180,18 @@ export declare const idleConfig: {
              * the ankle slides the toe, and pivoting about the toe is a step.
              */
             readonly heelDeg: {
-                readonly min: 3;
-                readonly max: 6;
+                readonly min: 1.5;
+                readonly max: 3;
             };
             readonly moveS: {
-                readonly min: 0.5;
-                readonly max: 1;
+                readonly min: 0.7;
+                readonly max: 1.2;
             };
         };
         readonly step: {
             readonly intervalS: {
-                readonly min: 22;
-                readonly max: 70;
+                readonly min: 120;
+                readonly max: 300;
             };
             /**
              * How far the base moves. A shift of weight and a re-plant, not a walk.
@@ -203,8 +203,8 @@ export declare const idleConfig: {
              * pacing, not adjusting.
              */
             readonly lengthM: {
-                readonly min: 0.03;
-                readonly max: 0.055;
+                readonly min: 0.02;
+                readonly max: 0.035;
             };
             /** Time one foot spends in the air. */
             readonly swingS: {
@@ -217,7 +217,7 @@ export declare const idleConfig: {
                 readonly max: 0.3;
             };
             /** How high the heel comes up mid-swing, as extra knee flexion, degrees. */
-            readonly liftDeg: 9;
+            readonly liftDeg: 5;
             readonly preloadS: 0.26;
             readonly pitchDeg: 7;
             /** The torso arrives over the new base behind the feet. */

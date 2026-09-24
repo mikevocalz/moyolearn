@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Bell, FileText, Home, Users } from '@acme/ui/icons';
 import { ShellHeader } from '../../../components/ShellHeader';
-import { ShellTabBar, useShellTabBarPosition, type ShellTabItem } from '../../../components/ShellTabBar';
+import { ShellPaneEdges, ShellTabBar, useShellTabBarPosition, type ShellTabItem } from '../../../components/ShellTabBar';
 
 /**
  * Guardian tabs — doc 36 §3.2: Home · Reports · Alerts · Family, adopted by
@@ -37,6 +37,7 @@ export default function GuardianTabs() {
   // Doc 02 §2.1: bottom nav under 600dp, rail from 600 up.
   const tabBarPosition = useShellTabBarPosition();
   return (
+    <ShellPaneEdges>
     <Tabs
       screenOptions={{
         header: () => <ShellHeader titles={TITLES} fallback="Home" />,
@@ -49,5 +50,6 @@ export default function GuardianTabs() {
       <Tabs.Screen name="alerts" options={{ title: 'Alerts' }} />
       <Tabs.Screen name="family" options={{ title: 'Family' }} />
     </Tabs>
+    </ShellPaneEdges>
   );
 }
