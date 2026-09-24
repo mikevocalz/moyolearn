@@ -21,8 +21,13 @@
 // EVERY failure is "no face", never "no voice": the audio is already in hand
 // when this is called, and a sentence whose face could not be computed still
 // plays with the audio-analysis lipsync the client has always had.
+//
+// THE HOST'S DOOR. `AUDIO2FACE_TOKEN`, when set, rides every request as a
+// bearer — the face call and `/api/health`'s probe alike. Both the URL and
+// the token are read in this file and nowhere else, and the health route
+// reports only `configured` / `reachable`, never either value.
 // SOT: docs/decisions/adr-112-live-audio2face.md · .claude/skills/audio2face-live/SKILL.md · docs/pack/32 §3
-// SOT-KEYWORDS: audio2face a2f client blendshape frames fps names emotion gpu host egress fail open no face
+// SOT-KEYWORDS: audio2face a2f client blendshape frames fps names emotion gpu host egress fail open no face bearer token health probe
 import 'server-only';
 import type { A2fEmotion } from './tones.ts';
 
@@ -53,7 +58,28 @@ export type A2fTransport = (input: A2fTransportInput) => Promise<Response>;
  * header, answering the JSON above. Unset means "no face, ever" — the client
  * never learns the difference between unconfigured and down.
  */
-const a2fUrl = (): string | null => process.env.AUDIO2FACE_URL ?? null;
+const a2fUrl = (): string | null => {
+  // Blank counts as unset: `.env.example` ships `AUDIO2FACE_URL=` and dotenv
+  // loads that as the empty string, which must not read as "a host exists".
+  const url = (process.env.AUDIO2FACE_URL ?? '').trim();
+  return url === '' ? null : url;
+};
+
+/**
+ * The host's bearer, read here and nowhere else and never logged. Optional:
+ * a host on a private network may run open, and an unset token sends no
+ * `Authorization` header at all rather than an empty one.
+ */
+const a2fToken = (): string | null => {
+  const token = (process.env.AUDIO2FACE_TOKEN ?? '').trim();
+  return token === '' ? null : token;
+};
+
+/** Every request to the host — face and health probe alike — carries the bearer when one is configured. */
+const withHostAuth = (headers: Record<string, string>): Record<string, string> => {
+  const token = a2fToken();
+  return token === null ? headers : { ...headers, Authorization: `Bearer ${token}` };
+};
 
 /**
  * How long a face may take. A2F runs faster than real time, so a sentence's
@@ -69,11 +95,11 @@ const defaultTransport: A2fTransport = async ({ audio, contentType, emotion, sig
   const intensity = emotion.emotion === 'neutral' ? 'none' : emotion.intensity;
   return fetch(`${base.replace(/\/+$/, '')}/v1/face`, {
     method: 'POST',
-    headers: {
+    headers: withHostAuth({
       'content-type': contentType,
       'x-a2f-emotion': emotion.emotion,
       'x-a2f-emotion-intensity': intensity,
-    },
+    }),
     // A plain `Uint8Array` view is not a `BodyInit` under the current lib
     // typings; the copy also detaches the request from the egress's buffer.
     body: new Blob([audio.slice()]),
@@ -133,3 +159,50 @@ export async function renderFace(
 
 /** True when a live face is configured at all. Read once per sentence. */
 export const liveFaceConfigured = (): boolean => a2fUrl() !== null;
+
+/**
+ * What `/api/health` reports about the face host. `reachable` is `null` only
+ * when no host is configured — "not configured" and "configured but down" are
+ * different operator facts even though the client never sees the difference.
+ */
+export type FaceHostHealth =
+  | { readonly configured: false; readonly reachable: null }
+  | { readonly configured: true; readonly reachable: boolean };
+
+/** Shorter than a face: a health probe answers from a live host in milliseconds. */
+export const FACE_HOST_PROBE_TIMEOUT_MS = 1500;
+
+export interface ProbeFaceHostOptions {
+  /** Injectable for tests; production uses global fetch. */
+  readonly transport?: (url: string, init: RequestInit) => Promise<Response>;
+  readonly timeoutMs?: number;
+}
+
+/**
+ * Asks the host whether it is up. `GET {AUDIO2FACE_URL}/v1/health` first; a
+ * host that has no such path (404) is asked at its base URL instead, where any
+ * answer below 500 — a 401 from an auth wall included — proves it is running.
+ * One timeout covers both requests. Never throws: a network error or a hung
+ * host is `reachable: false`.
+ */
+export async function probeFaceHost(options: ProbeFaceHostOptions = {}): Promise<FaceHostHealth> {
+  const base = a2fUrl();
+  if (base === null) return { configured: false, reachable: null };
+  const transport = options.transport ?? ((url, init) => fetch(url, init));
+  const root = base.replace(/\/+$/, '');
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? FACE_HOST_PROBE_TIMEOUT_MS);
+  const init: RequestInit = { method: 'GET', headers: withHostAuth({}), signal: controller.signal };
+  try {
+    const health = await transport(`${root}/v1/health`, init);
+    void health.body?.cancel().catch(() => undefined);
+    if (health.status !== 404) return { configured: true, reachable: health.ok };
+    const home = await transport(root, init);
+    void home.body?.cancel().catch(() => undefined);
+    return { configured: true, reachable: home.status < 500 };
+  } catch {
+    return { configured: true, reachable: false };
+  } finally {
+    clearTimeout(timer);
+  }
+}
