@@ -318,6 +318,14 @@ export function Composer({
     band: half of `child` is 28px, which is under every touch minimum there is
     and is what `tooling/check-targets.mjs` exists to catch. A narrower key on a
     child's screen is a key a child misses.
+
+    SEND GIVES UP WIDTH TOO, AS FAR AS THE ADULT TARGET. It kept the band's
+    square as the row's primary action, and at the child band that is a 72px
+    mango block at the end of a ~347dp column on the Duo — the field was the
+    part that lost again (the product owner: send "needs to give input more
+    space"). 44px wide keeps Apple's minimum outright, the height stays on the
+    band, and the width it gives up comes back as horizontal hitSlop the same
+    way the secondary keys get theirs.
   */
   const secondaryIconTarget = {
     sm: 'min-h-target-adult min-w-target-floor',
@@ -336,12 +344,20 @@ export function Composer({
     That is the whole reason the visual can be halved without costing a child
     the target — a narrower drawing is not a narrower button.
   */
+  const sendTarget = {
+    sm: 'min-h-target-adult min-w-target-adult',
+    md: 'min-h-target-adult min-w-target-adult',
+    lg: 'min-h-target-teen min-w-target-adult',
+    xl: 'min-h-target-child min-w-target-adult',
+  }[size];
   const bandPx = Number.parseInt(
     { sm: targets.adult, md: targets.adult, lg: targets.teen, xl: targets.child }[size],
     10,
   );
   const secondarySlop = Math.max(0, (bandPx - Number.parseInt(targets.floor, 10)) / 2);
   const secondaryHitSlop = { left: secondarySlop, right: secondarySlop };
+  const sendSlop = Math.max(0, (bandPx - Number.parseInt(targets.adult, 10)) / 2);
+  const sendHitSlop = { left: sendSlop, right: sendSlop };
 
   /*
     The row's resting height, as a NUMBER — the same age-band target the keys
@@ -809,9 +825,10 @@ export function Composer({
                  Unavailable is carried by opacity, not by turning it grey: a
                  grey square reads as a different control rather than as the
                  same one waiting. */
-              className={`${iconTarget} items-center justify-center rounded-control bg-primary ${
+              className={`${sendTarget} items-center justify-center rounded-control bg-primary ${
                 canSend ? '' : 'opacity-40'
               }`}
+              hitSlop={sendHitSlop}
             >
               <Send size={20} className="text-on-primary" />
             </Pressable>
