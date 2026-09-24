@@ -14,9 +14,10 @@
 // the `SpeakSentence` port below — a feature cannot import its way to the
 // credential.
 // SOT: docs/pack/32-tutor-voice-tone.md §5 · packages/voice/src/budget.ts · tooling/check-voice-egress.mjs
-// SOT-KEYWORDS: voice composition root ledger install egress port speak sentence adapter
+// SOT-KEYWORDS: voice composition root ledger install egress port speak sentence adapter face host health probe
 import 'server-only';
-import { installVoiceBudgetLedger, voiceEgress } from '@acme/voice';
+import { installVoiceBudgetLedger, probeFaceHost, voiceEgress } from '@acme/voice';
+import type { FaceHostHealth } from '@acme/voice';
 import type { SpeakSentence } from '@acme/app/server';
 import { durableVoiceBudgetLedger } from './budget-ledger.repository';
 
@@ -35,3 +36,12 @@ export const speakSentenceViaEgress: SpeakSentence = async (input) => {
   }
   return { kind: 'audio', contentType: spoken.contentType, stream: spoken.stream };
 };
+
+/**
+ * The face host's health for `/api/health`: configured or not, and whether it
+ * answered its probe. It lives here and not in the route because the route may
+ * not import `@acme/voice` at runtime (egress check rule 2) — this file already
+ * may, and the probe reads the host's URL and bearer inside the egress, so
+ * neither value crosses into the route's module.
+ */
+export const faceHostHealth = (): Promise<FaceHostHealth> => probeFaceHost();
