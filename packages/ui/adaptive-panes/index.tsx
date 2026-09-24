@@ -46,7 +46,7 @@ import { AdaptivePanesContext } from './context';
 import { useSplitViewBack } from './use-split-view-back';
 import { PaneDivider } from './PaneDivider';
 import { DetailSlot } from './detail-slot';
-import { DEFAULT_PRIMARY_WIDTH } from './resize';
+import { DEFAULT_PRIMARY_WIDTH, PRIMARY_WIDTH_MIN } from './resize';
 import type { AdaptivePanesProps, SplitNavigableColumn } from './types';
 
 /**
@@ -277,9 +277,33 @@ function AdaptivePanesNavigator({
   // The narrow rail is a fixed step, not a resizable pane, so a stored width
   // only applies at the full-width steps.
   const resizedWidth = railStep ? null : primaryWidth;
-  const openPrimaryWidth = railStep
+  const wantedPrimaryWidth = railStep
     ? PANE_WIDTH_DP.primaryNarrow
     : resizedWidth ?? primaryWidthDp ?? PANE_WIDTH_DP.primary;
+  const openSupplementaryWidth = supplementaryWidthDp ?? PANE_WIDTH_DP.supplementary;
+  /*
+    BOUNDED BY THE ROW, not only by the divider's own clamp. `PRIMARY_WIDTH_MAX`
+    is 420 whatever the window is, so on a row too narrow for three token
+    widths a dragged primary took its 420, the supplementary its 294, and the
+    fill pane got whatever was left: on the iPhone Duo's inner display (867 dp
+    inside the insets) that was ~150 dp of Natalie beside the status column.
+    The Surface Duo's wider row hid the same rule. So the primary may not push
+    the fill pane below its own collapse width; a host that has not measured
+    its row yet keeps the wanted width for that first frame. Only the trailing
+    fill pane is defended — it is the one that absorbs the difference.
+  */
+  const openPrimaryWidth =
+    rowWidth === null || railStep || !visible.primary
+      ? wantedPrimaryWidth
+      : Math.max(
+          PRIMARY_WIDTH_MIN,
+          Math.min(
+            wantedPrimaryWidth,
+            rowWidth -
+              (visible.supplementary && columns[1] ? openSupplementaryWidth : 0) -
+              (visible.detail ? PANE_WIDTH_DP.detail : 0),
+          ),
+        );
 
   /*
     WHICH PANE ABSORBS THE WINDOW. Normally the detail pane, which is why the
@@ -345,7 +369,7 @@ function AdaptivePanesNavigator({
             <CollapsiblePane
               open={visible.supplementary}
               width={
-                collapsed ? collapsedWidth : supplementaryWidthDp ?? PANE_WIDTH_DP.supplementary
+                collapsed ? collapsedWidth : openSupplementaryWidth
               }
               fill={fillPane === 'supplementary'}
               className={
