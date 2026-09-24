@@ -57,6 +57,7 @@
     "react-native-mmkv": "catalog:",
     "react-native-pulsar": "catalog:",
     "react-native-reanimated": "catalog:",
+    "react-native-worklets": "catalog:",
     "react-native-safe-area-context": "catalog:",
     "react-native-svg": "catalog:",
     "react-native-webview": "catalog:",
