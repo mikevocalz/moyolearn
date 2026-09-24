@@ -182,6 +182,15 @@ const ADDUCT: Record<(typeof FINGERS)[number], number> = {
  * for the same reason the rest curl came down.
  */
 const RELAX_RANGE = 0.18;
+/*
+ * How far the clasp is allowed to close the fingers toward the solved contact
+ * pose. The solve lands each fingertip on the hand below, and at 1.0 that read
+ * on the Duo as fingers curling under when her arms cross — the product owner's
+ * "stop her fingers from curling when crossed". At 0.35 the hand still settles
+ * onto the other but the arc stays close to rest; a little air under the tips
+ * is the price, and it is the right one.
+ */
+const CLASP_CURL_SHARE = 0.35;
 
 const CURL_BY_FINGER: Record<(typeof FINGERS)[number], number> = {
   thumb: 0.45,
@@ -2313,7 +2322,7 @@ export function createHumanoPresence(
       const solvedX = FOLD.fingerCurl[f.side][FINGERS[f.finger]!] * FOLD.phalanxRatio[PHALANGES[f.phalanx]!];
       pose(
         f.bone,
-        restingX + (solvedX - restingX) * clasp + (wiggle + ripple) * (1 - 0.92 * clasp),
+        restingX + (solvedX - restingX) * clasp * CLASP_CURL_SHARE + (wiggle + ripple) * (1 - 0.92 * clasp),
         0,
         adduct
       );
