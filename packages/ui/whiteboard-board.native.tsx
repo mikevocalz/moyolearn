@@ -726,7 +726,17 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
             saying there is one — the same moment the contract already means by
             "the board will accept work".
           */
-          void calibrate();
+          /*
+            ONLY WHEN SOMEONE IS LISTENING. Calibration injects the pen fixture,
+            and the shim's `lock()` arms on the FIRST injected pointer: from then
+            on every finger's pointerdown is stopped at document capture and
+            reported as a camera event — which calibrates again. Measured on
+            the Duo's 2D board: touch pointerdown on the canvas, `moyo:camera`,
+            an injected pen at (56, 39), the fixture stroke added and removed,
+            and the child's own stroke never made. The XR screen is the one
+            caller that passes `onCalibration`; a finger board never should.
+          */
+          if (callbacks.current.onCalibration) void calibrate();
           break;
         case 'change': {
           const diff = message.diff as WhiteboardDiff;
@@ -761,7 +771,7 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
           replace, so the mapping is measured again rather than trusted.
         */
         case 'moyo:camera':
-          void calibrate();
+          if (callbacks.current.onCalibration) void calibrate();
           break;
         case 'snapshot':
           bridgeRef.current?.settle(message.id as string, message.snapshot);
@@ -855,7 +865,15 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
            This is a learner surface; an accidental navigation off it is an
            unsupervised web view in a child's homework session. */
         originWhitelist={['about:blank']}
-        onShouldStartLoadWithRequest={() => false}
+        /*
+          ONLY THE PAGE ITSELF. react-native-webview 14 asks this for the
+          inline HTML's own top-frame `about:blank` load — 13 did not — so a
+          flat `false` here meant the board never loaded: no load event, no
+          `ready`, a white sheet that ignored every finger (measured on the Duo
+          after the SDK 58 move). The engine has no links and no navigation,
+          so nothing else is ever allowed through.
+        */
+        onShouldStartLoadWithRequest={(request) => request.url === 'about:blank' && request.isTopFrame}
       />
     );
   },
