@@ -781,7 +781,7 @@ export function Composer({
               the tier that separates groups is the honest one — the same reason
               discard sits on the far side from send in the recording row.
             */
-            className="flex-row items-center gap-group pr-element"
+            className="flex-row items-center gap-group pr-0.5"
           >
             {/*
               BOTH, always. This swapped — microphone on an empty field, send
