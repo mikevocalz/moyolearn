@@ -143,7 +143,8 @@ export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: She
     the avatar would otherwise sit inside the empty camera column.
   */
   const column = useHardwareEdgeColumn();
-  const railOwnsEdge = column > 0 && !usePaneEdges().includes('right');
+  const paneEdges = usePaneEdges();
+  const railOwnsEdge = column > 0 && !paneEdges.includes('right');
 
   return (
     <RoleScope role={role}>
