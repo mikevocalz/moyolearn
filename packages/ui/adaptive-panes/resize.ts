@@ -17,6 +17,13 @@ export const DEFAULT_PRIMARY_WIDTH = 280;
 /** Bounds for the primary pane, in dp. Mirrors --container-pane-* tokens. */
 export const PRIMARY_WIDTH_MIN = 200;
 export const PRIMARY_WIDTH_MAX = 420;
+/**
+ * Row-share floors, product-owner numbers: the leading pane is never under a
+ * third of the measured row, the trailing fill pane never under 30%. Both are
+ * applied in AdaptivePanes against the measured row, not the window.
+ */
+export const PRIMARY_ROW_SHARE_MIN = 1 / 3;
+export const DETAIL_ROW_SHARE_MIN = 0.3;
 
 /** Keyboard resize step for the divider's accessible affordance. */
 export const RESIZE_KEYBOARD_STEP = 16;

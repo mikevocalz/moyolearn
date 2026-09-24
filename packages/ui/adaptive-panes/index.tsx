@@ -45,8 +45,14 @@ import { createAdaptivePanesStore, type AdaptivePanesStore } from './store';
 import { AdaptivePanesContext } from './context';
 import { useSplitViewBack } from './use-split-view-back';
 import { PaneDivider } from './PaneDivider';
+import { usePaneEdges } from './pane-edges';
 import { DetailSlot } from './detail-slot';
-import { DEFAULT_PRIMARY_WIDTH, PRIMARY_WIDTH_MIN } from './resize';
+import {
+  DEFAULT_PRIMARY_WIDTH,
+  DETAIL_ROW_SHARE_MIN,
+  PRIMARY_ROW_SHARE_MIN,
+  PRIMARY_WIDTH_MIN,
+} from './resize';
 import type { AdaptivePanesProps, SplitNavigableColumn } from './types';
 
 /**
@@ -147,6 +153,7 @@ function AdaptivePanesNavigator({
     overflow rather than fit.
   */
   const [rowWidth, setRowWidth] = useState<number | null>(null);
+  const paneEdges = usePaneEdges();
 
   const all = Children.toArray(children);
   const columns = all.filter(
@@ -290,18 +297,26 @@ function AdaptivePanesNavigator({
     The Surface Duo's wider row hid the same rule. So the primary may not push
     the fill pane below its own collapse width; a host that has not measured
     its row yet keeps the wanted width for that first frame. Only the trailing
-    fill pane is defended — it is the one that absorbs the difference.
+    fill pane is defended — it is the one that absorbs the difference — and
+    its floor is the larger of its collapse width and 30% of the row.
+
+    AND NEVER UNDER A THIRD OF THE ROW. The product owner's floor for the
+    leading column: on the Duo's inner display the defence above would have
+    squeezed the conversation to 200 dp beside two 294 dp panes, and a third
+    of 867 is 289. When the two floors disagree the third wins and the fill
+    pane gives up the difference — it is the pane built to absorb it.
   */
   const openPrimaryWidth =
     rowWidth === null || railStep || !visible.primary
       ? wantedPrimaryWidth
       : Math.max(
           PRIMARY_WIDTH_MIN,
+          rowWidth * PRIMARY_ROW_SHARE_MIN,
           Math.min(
             wantedPrimaryWidth,
             rowWidth -
               (visible.supplementary && columns[1] ? openSupplementaryWidth : 0) -
-              (visible.detail ? PANE_WIDTH_DP.detail : 0),
+              (visible.detail ? Math.max(PANE_WIDTH_DP.detail, rowWidth * DETAIL_ROW_SHARE_MIN) : 0),
           ),
         );
 
@@ -321,7 +336,7 @@ function AdaptivePanesNavigator({
 
   return (
     <AdaptivePanesContext value={store}>
-      <SafeArea edges={['left', 'right']} className="flex-1">
+      <SafeArea edges={paneEdges} className="flex-1">
         <View
           className="flex-1 flex-row"
           /*
@@ -528,6 +543,7 @@ export {
 export { CollapsiblePane, type CollapsiblePaneProps } from './CollapsiblePane';
 export { DetailNavbar, type DetailNavbarProps } from './DetailNavbar';
 export { PaneDivider, type PaneDividerProps } from './PaneDivider';
+export { PaneEdgesContext, usePaneEdges, type PaneEdges } from './pane-edges';
 export { PaneListHeader, type PaneListHeaderProps } from './PaneListHeader';
 export { PaneSearchBar, type PaneSearchBarProps } from './PaneSearchBar';
 export { PaneToggle, type PaneToggleProps } from './PaneToggle';

@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { Camera, Compass, Home, Star, TrendingUp, User } from '@acme/ui/icons';
 import { useAppSession } from '@acme/app';
 import { ShellHeader } from '../../../components/ShellHeader';
-import { ShellTabBar, useShellTabBarPosition, type ShellTabItem } from '../../../components/ShellTabBar';
+import { ShellPaneEdges, ShellTabBar, useShellTabBarPosition, type ShellTabItem } from '../../../components/ShellTabBar';
 
 /**
  * The band-adaptive learner tab bar — doc 36 §3.1's exact table. The band comes
@@ -85,6 +85,7 @@ export default function LearnerTabs() {
   const visible = new Set(items.map((item) => item.name));
 
   return (
+    <ShellPaneEdges>
     <Tabs
       screenOptions={{
         header: () => <ShellHeader titles={TITLES} fallback="Today" />,
@@ -111,5 +112,6 @@ export default function LearnerTabs() {
       <Tabs.Screen name="stuff" options={{ title: 'My Stuff', href: visible.has('stuff') ? undefined : null }} />
       <Tabs.Screen name="you" options={{ title: 'You', href: visible.has('you') ? undefined : null }} />
     </Tabs>
+    </ShellPaneEdges>
   );
 }
