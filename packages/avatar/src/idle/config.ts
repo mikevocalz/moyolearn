@@ -322,6 +322,14 @@ export const idleConfig = {
       coincide with one.
     */
     fold: {
+      /*
+        OFF. The clasp solve lands each fingertip on the hand below and, at any
+        closure that actually touches, the fingers read as curling under on the
+        Duo — the product owner's call on 2026-09-23 was to stop the fold
+        altogether rather than tune it further. The channel, its bounds and its
+        tests stay; `enabled` is the one switch the engine reads.
+      */
+      enabled: false,
       afterIdleS: 40,
       intervalS: { min: 55, max: 140 },
       holdS: { min: 16, max: 42 },

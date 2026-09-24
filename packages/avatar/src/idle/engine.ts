@@ -1086,7 +1086,7 @@ export class IdleEngine {
     // -- arms folded. A posture: minutes between, tens of seconds held, and
     // speech drops it — the unfold LEADS her first word rather than coinciding.
     this.foldIn -= dt;
-    if (!busy && this.quietS >= B.fold.afterIdleS && this.foldIn <= 0 && !(this.foldT < this.foldHoldS)) {
+    if (B.fold.enabled && !busy && this.quietS >= B.fold.afterIdleS && this.foldIn <= 0 && !(this.foldT < this.foldHoldS)) {
       this.foldT = 0;
       this.foldHoldS = this.exprRange(B.fold.holdS);
       this.foldIn = this.exprRange(B.fold.intervalS);
