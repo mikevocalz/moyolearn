@@ -199,25 +199,26 @@ const TARGET_HEIGHT: Record<NonNullable<WhiteboardProps['size']>, string> = {
  * the same place.
  */
 const TARGET_FOLDED: Record<NonNullable<WhiteboardProps['size']>, string> = {
-  sm: 'min-h-target-adult min-w-target-adult',
-  md: 'min-h-target-adult min-w-target-adult',
-  lg: 'min-h-target-teen min-w-target-adult',
-  xl: 'min-h-target-child min-w-target-adult',
+  sm: 'min-h-target-adult px-2',
+  md: 'min-h-target-adult px-2',
+  lg: 'min-h-target-teen px-2',
+  xl: 'min-h-target-child px-2',
 };
 
 /*
-  KEYS ARE BAND-TALL, ADULT-WIDE. The height is the band's target because that
-  is what a finger lands on; the width was the same number and at the child
-  band that made every key a 72 dp square, so five keys plus the ask filled a
-  294 dp board with no room to breathe (the product owner: the three tools
-  and the ask "need a smaller width"). 44 dp wide is still WCAG's target
-  minimum, and the row's own height is the band's.
+  KEYS ARE BAND-TALL AND ICON-WIDE. The height is the band's target because
+  that is what a finger lands on — the same rule `TARGET_HEIGHT` states for the
+  swatch: the target is honoured in the dimension that is free. The width was
+  the band's number too, which made every key a 72 dp square at the child
+  band; then the adult 44, still too wide for the product owner in a 294 dp
+  board. So no minimum width at all: the icon plus `px-2` (20 + 16 = 36 dp),
+  with the row's height as the finger's target.
 */
 const TOOL_KEY: Record<NonNullable<WhiteboardProps['size']>, string> = {
-  sm: 'min-h-target-adult min-w-target-adult',
-  md: 'min-h-target-adult min-w-target-adult',
-  lg: 'min-h-target-teen min-w-target-adult',
-  xl: 'min-h-target-child min-w-target-adult',
+  sm: 'min-h-target-adult px-2',
+  md: 'min-h-target-adult px-2',
+  lg: 'min-h-target-teen px-2',
+  xl: 'min-h-target-child px-2',
 };
 
 const TOOLS: readonly { id: WhiteboardTool; label: string; Icon: typeof Brush }[] = [
