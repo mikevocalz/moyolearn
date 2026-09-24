@@ -343,7 +343,13 @@ function Bubble({
             ),
           )}
 
-        {message.text.length > 0 ? (
+        {/*
+          A record with no text must not take the whole thread down. One got
+          into the store on 2026-09-24 (a learner turn built from a bare
+          string) and every render after it threw on `.length`; the thread is
+          the one surface a child cannot lose to a single bad row.
+        */}
+        {typeof message.text === 'string' && message.text.length > 0 ? (
           <Text className="font-sans text-body text-text">{message.text}</Text>
         ) : null}
 
