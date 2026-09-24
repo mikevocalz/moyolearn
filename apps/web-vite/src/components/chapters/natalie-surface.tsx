@@ -256,12 +256,35 @@ export function NatalieSurface() {
     setAudioDuration(null);
     setAlignment(null);
 
-    const speakSilently = () => {
-      setVoiceStatus('error');
+    /*
+      The caption drives the line on its own: same words, same length, no
+      player. Two different situations need it, and only one of them is a
+      failure, so the label is not part of it.
+    */
+    const speakFromCaption = () => {
       setAudioDuration(choice.duration);
       audioRef.current = null;
       setAlignment(captionAlignment(choice.caption, choice.duration));
     };
+
+    const speakSilently = () => {
+      setVoiceStatus('error');
+      speakFromCaption();
+    };
+
+    /*
+      Muted is the situation that is not a failure, and handing the scene a
+      muted player is how the line never ends. `startPlayer` skips `play()`
+      when muted, so `currentTime` sits at zero, the completion branch in
+      natalie-scene.tsx never sees the clock pass the duration, and the
+      controls stay disabled until the visitor unmutes. Read it off the
+      caption instead and the line runs its length in silence.
+    */
+    if (muted) {
+      setVoiceStatus('idle');
+      speakFromCaption();
+      return;
+    }
 
     const ready = await ensureClip(choice.voicePiece);
     if (!ready) {
