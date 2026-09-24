@@ -109,6 +109,8 @@ interface TutorState {
   start: (problem: string | null, isReading?: boolean) => void;
   /** Records the attempt against the student model. Says nothing — `coach` does. */
   respond: (isCorrect: boolean) => void;
+  /** The last evaluated answer, for the coach turn's tone. Null until one lands. */
+  lastOutcome: 'correct' | 'incorrect' | null;
   /**
    * Streams a coaching turn. Owns everything the learner sees.
    *
@@ -205,6 +207,7 @@ export const useTutorStore = create<TutorState>((set, get) => ({
   sessionId: null,
   skillTitle: '',
   mastery: DEFAULT_TRACING.prior,
+  lastOutcome: null,
   attempts: 0,
   hintDepth: 0,
   masteryBySkill: {},
@@ -341,6 +344,8 @@ export const useTutorStore = create<TutorState>((set, get) => ({
     if (kind === 'retry' || kind === 'signed-out') set({ state: { kind: 'presence' } });
   },
   start: (problem, isReading = false) => {
+    // A new problem starts with no verdict behind it.
+    set({ lastOutcome: null });
     const p = problem ?? '';
     const skillTitle = inferSkillTitle(p);
     set((s) => {
@@ -450,6 +455,7 @@ export const useTutorStore = create<TutorState>((set, get) => ({
     })),
 
   coach: async (message, image) => {
+    const { lastOutcome } = get();
     const { problem, problemIsReading, state, sessionId } = useTutorStore.getState();
 
     /*
@@ -551,6 +557,7 @@ export const useTutorStore = create<TutorState>((set, get) => ({
           */
           ...(problemIsReading ? { problemIsReading: true } : {}),
           ...(image ? { image } : {}),
+          ...(lastOutcome ? { lastOutcome } : {}),
         }),
       });
       /*
@@ -656,11 +663,15 @@ export const useTutorStore = create<TutorState>((set, get) => ({
   },
   respond: (isCorrect) => set((s) => {
     const nextAttempts = s.attempts + 1;
+    // Remembered for the coach turn that follows: the route picks Natalie's
+    // tone from it (celebrate after a hit, gentle after a miss).
+    const lastOutcome = isCorrect ? 'correct' : 'incorrect';
     const nextMastery = traceAttempt(s.mastery, isCorrect);
     // No `state` here on purpose. Two writers to one surface race, and the one
     // that wins is whichever network call returned last — so the coaching turn
     // is the only writer and this is bookkeeping ProgressScreen reads.
     return {
+      lastOutcome,
       mastery: nextMastery,
       attempts: nextAttempts,
       masteryBySkill: { ...s.masteryBySkill, [s.skillTitle]: nextMastery },

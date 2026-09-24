@@ -37,8 +37,17 @@ import 'server-only';
  * of live turns is the cheaper mitigation until (a) or (b) is chosen.
  *
  * SPEC-002 (doc 32 §3) stays open on that decision.
+ *
+ * DECIDED 2026-09-24: v3 on both paths (b), and the premise that v3 must
+ * leave the streaming endpoint is not true any more — measured that day,
+ * `POST /v1/text-to-speech/{voice}/stream` with `model_id: eleven_v3` and
+ * the app's own `voice_settings` answered 200 `audio/mpeg`, same as Flash.
+ * One model, one voice, the streaming path intact; first-word latency is the
+ * cost, and the product owner chose expressiveness over it ("expressive!!").
+ * The live path now also prepends the tone's audio tags, which v3 reads and
+ * Flash ignored.
  */
-export const LIVE_MODEL_ID = 'eleven_flash_v2_5';
+export const LIVE_MODEL_ID = 'eleven_v3';
 export const BAKED_MODEL_ID = 'eleven_v3';
 
 export interface VoiceRegistry {
