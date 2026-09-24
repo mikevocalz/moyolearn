@@ -423,7 +423,7 @@ export function Composer({
       */
       <View
         key="recording"
-        className={`gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field ${className ?? ''}`}
+        className={`gap-element rounded-control border-2 border-strong bg-surface-raised pl-inset-tight pr-1 py-inset-field ${className ?? ''}`}
       >
         <View className="flex-row items-center gap-element">
           {/* Elapsed leads, as it does in the reference: it is the number that
@@ -774,14 +774,17 @@ export function Composer({
             distance={20}
             duration={200}
             /*
-              `gap-group`, not `gap-element`: the mic and send are two DIFFERENT
-              intentions (speak it / send it), not two steps of one, and at the
-              element gap they read as a single two-part control with send
-              crowding the talk key. A mis-tap here costs the whole message, so
-              the tier that separates groups is the honest one — the same reason
-              discard sits on the far side from send in the recording row.
+              `gap-element` now, and the wider tier is gone on purpose. The
+              group gap was chosen so mic and send read as two intentions, but
+              on the Duo's 347 dp column the mic's 24 dp box plus 16 dp either
+              side read as one wide key eating the field (the product owner:
+              "mic button too wide"). The mis-tap risk that argued for the
+              group gap is carried by the keys' hitSlop, not the gap: each
+              still answers across the full band. The field is trimmed to a
+              4 dp trailing inset for the same reason — send sits 4 dp further
+              right and the field keeps every dp it can.
             */
-            className="flex-row items-center gap-group pr-0.5"
+            className="flex-row items-center gap-element pr-0.5"
           >
             {/*
               BOTH, always. This swapped — microphone on an empty field, send
