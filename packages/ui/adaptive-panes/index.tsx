@@ -417,7 +417,7 @@ function AdaptivePanesNavigator({
                   it to drag against, and a grab handle on the screen edge is a
                   control that cannot do anything. */}
               {!collapsed && visible.primary ? (
-                <PaneDivider width={resizedWidth ?? primaryWidthDp ?? DEFAULT_PRIMARY_WIDTH} />
+                <PaneDivider width={openPrimaryWidth} />
               ) : null}
             </>
           ) : null}

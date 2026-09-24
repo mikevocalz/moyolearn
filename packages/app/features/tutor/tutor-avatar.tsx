@@ -144,10 +144,11 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase, ageBand }:
     if freezing cannot stop a loop, it certainly cannot stop speech. Nothing
     about hiding Natalie can reach the audio queue.
   */
-  // Revealed AND in an open pane: a shut pane's canvas must not draw (see
-  // `PaneOpenContext`). On a phone she is never in a pane and this is true.
+  // A shut pane's canvas must not DRAW (see `PaneOpenContext`) — it stays
+  // mounted, so no renderer, device or body is rebuilt on show. On a phone she
+  // is never in a pane and this is true.
   const paneOpen = usePaneOpen();
-  const embodied = isTutorRevealed(tutorPresence) && paneOpen;
+  const embodied = isTutorRevealed(tutorPresence);
 
   /*
     The controller's own state, mirrored into React because it is what decides
@@ -367,7 +368,7 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase, ageBand }:
         {/* No fallback: the 2D mark below IS the fallback, and it is already up. */}
         <Suspense fallback={null}>
           <TutorAvatar3D
-            active={embodied}
+            active={embodied && paneOpen}
             isSpeaking={isSpeaking}
             sampleMouth={sampleMouth}
             sampleSpeaking={sampleSpeaking}

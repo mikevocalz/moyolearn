@@ -150,6 +150,8 @@ const ROW_PADDING_DP = 32;
   because at this width it carries a label rather than a key.
 */
 const KEYS_IN_FULL_ROW = 6;
+/** A key's drawn width: the 20 dp icon plus `px-2`. The band target is height, and hitSlop. */
+const KEY_DP = 36;
 
 const TARGET_DP: Record<NonNullable<WhiteboardProps['size']>, number> = {
   sm: Number.parseInt(targets.adult, 10),
@@ -316,8 +318,15 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
   }, []);
 
   const target = TARGET_DP[size];
+  /*
+    Keys are icon-wide now, so the row they must fit is KEY_DP each, not the
+    band square — the old formula folded a tray that fit. What the band still
+    owns is the TOUCH width: each key answers across the band through hitSlop,
+    the same trade the composer's keys make.
+  */
+  const keySlop = { left: Math.max(0, (target - KEY_DP) / 2), right: Math.max(0, (target - KEY_DP) / 2) };
   const fullRowDp =
-    KEYS_IN_FULL_ROW * target + (KEYS_IN_FULL_ROW - 1) * GAP_DP + ASK_LABEL_DP + ROW_PADDING_DP;
+    KEYS_IN_FULL_ROW * KEY_DP + (KEYS_IN_FULL_ROW - 1) * GAP_DP + ASK_LABEL_DP + ROW_PADDING_DP;
   /*
     `null` until the first layout, and the wide form is what renders in the
     meantime — the same first-paint choice `Composer` documents, because the
@@ -573,6 +582,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
             aria-label={label}
             role="radio"
             aria-checked={tool === id}
+            hitSlop={keySlop}
             /*
               SELECTED IS INVERTED INK, NOT THE ACCENT. It was `bg-highlighter`,
               which put a teal tile next to the yellow ask — two accents in one
@@ -699,6 +709,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
                 language, and the shadow is also the thing the margin above
                 exists for.
               */
+              hitSlop={keySlop}
               className={`${key} ${FOCUS} mr-inset-hair items-center justify-center rounded-control border-2 ${
                 !hasMarks || asking
                   ? 'border-border bg-surface-sunken shadow-none'

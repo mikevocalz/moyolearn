@@ -54,6 +54,7 @@ import { usePathname } from 'expo-router';
 import { SafeArea, Avatar, MoyoLearnLogo, RoleScope } from '@acme/ui';
 import { ChevronLeft } from '@acme/ui/icons';
 import { Header } from '@acme/ui/primitives';
+import { usePaneEdges } from '@acme/ui';
 import { useHardwareEdgeColumn } from './ShellTabBar';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import {
@@ -135,7 +136,14 @@ export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: She
     measured on the Duo, `SafeArea` still padded the full 84 inside the scene
     and pushed the avatar to the middle of the bar.
   */
+  /*
+    Only where the RAIL owns that edge — which `ShellPaneEdges` states by
+    dropping `right` — not wherever the inset exists. This header is also the
+    Stack header on pushed and tab-less routes, where no rail is mounted and
+    the avatar would otherwise sit inside the empty camera column.
+  */
   const column = useHardwareEdgeColumn();
+  const railOwnsEdge = column > 0 && !usePaneEdges().includes('right');
 
   return (
     <RoleScope role={role}>
@@ -148,12 +156,12 @@ export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: She
       the controls inside stay in the usable region.
     */}
     <SafeArea
-      edges={column > 0 ? ['top', 'left'] : ['top', 'left', 'right']}
+      edges={railOwnsEdge ? ['top', 'left'] : ['top', 'left', 'right']}
       className="border-b-2 border-on-surface-header bg-surface-header"
     >
       <Header
         className={`min-h-14 flex-row items-center gap-stack bg-surface-header py-1 ${
-          column > 0 ? 'pl-4 pr-2' : 'px-4'
+          railOwnsEdge ? 'pl-4 pr-2' : 'px-4'
         }`}
       >
         {canGoBack ? (
