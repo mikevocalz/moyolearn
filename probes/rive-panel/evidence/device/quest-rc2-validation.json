@@ -32,7 +32,7 @@
       "appWindow": "APK declares 1024dp \u00d7 640dp; default orientation"
     }
   ],
-  "finalApkSha256": "bc12146671e70a5dfa760ef996e624250ca41274e92167a858732e98db42532e",
+  "finalApkSha256": "b41cbf44d853ddfb3a13523081a0c09bc02832dcded64ee04630bf171be20f81",
   "finalCppRuntimeExportsRequiredSymbol": true,
   "expoAndroidBuildFromSource": [
     ".*"
@@ -56,10 +56,11 @@
     "Viewer-relative placement; scaled and clipped grip label validated with Viro MCP preview",
     "rive.6 suppresses hand events on controller-owned sides and cancels inactive float actions; renderer, host edge tests, APK build passed; installed with adb -r",
     "rive.7 extends cancellation to A/B/X/Y/menu; APK and renderer builds pass; installed with app data preserved",
-    "rive.8: non-coalescing click/hover events, geometry-accurate Rive and grip quads; bridge build, APK build, typecheck and window contract passed"
+    "rive.8: non-coalescing click/hover events, geometry-accurate Rive and grip quads; bridge build, APK build, typecheck and window contract passed",
+    "rive.9: independent per-controller cyan surface-hit dots, rendered after scene pixels, non-selectable and hidden on tracking loss/no-hit; installed with app data retained"
   ],
   "visualEvidencePath": "/Users/mikevocalz/rive-panel-device-evidence/quest-rive-before-label-fix.png",
-  "currentBlocker": "Clarify ray should end with visible dot or continue beyond panel; shared reticle is updated by both controllers.",
+  "currentBlocker": "No blocker for requested endpoint appearance. Per-controller code is installed; capture shows one aimed controller ray and dot in both eyes. Both controllers simultaneously and full lesson count acceptance have not been independently retested.",
   "horizon": {
     "isHorizonBuild": true,
     "isHorizonDevice": true,
@@ -96,5 +97,13 @@
     "owner": null,
     "assetFnv1a": 249331036,
     "userSelectionConfirmed": true
+  },
+  "rive9Runtime": {
+    "frames": 1204,
+    "grabbed": false,
+    "owner": null,
+    "status": "",
+    "visualResult": "Cyan beam reaches panel with visible endpoint dot in both eye views; amber handle says Hold to move.",
+    "privateCapturePath": "/Users/mikevocalz/rive-panel-device-evidence/quest-rive9-hit-dots.png"
   }
 }

@@ -5,8 +5,9 @@ with React/React DOM 19.3.0. Quest startup now passes after fixing duplicate
 React codegen classes, the shared C++ runtime, and Expo prebuilt ABI mismatch.
 Rive pixels were captured in both eye views and the user confirmed grip drag.
 **Latest device feedback:** the user confirms selection works in rive.8. The
-remaining concern is the ray stopping at the panel; its desired endpoint appearance
-is being clarified. Earlier Show hint/selection failure prompted the fixes below. The live rive.7 trace exposed missing ClickUp:
+user chose to keep the ray ending at the panel with a visible endpoint. Rive.9
+adds independent per-controller hit dots; the installed headset capture confirms
+a visible beam and endpoint over the panel in both eye views. Earlier Show hint/selection failure prompted the fixes below. The live rive.7 trace exposed missing ClickUp:
 normal presses delivered states 1 then 3 to JS, dropping state 2. The Android
 bridge inherited event coalescing, which merged consecutive Up/Clicked events.
 Rive.8 preserves click/hover edges and uses geometry-accurate panel hit tests.
@@ -62,7 +63,7 @@ copy that diff over this implementation. `/Users/mikevocalz/expo-pico` also has
 unrelated local changes and was not modified.
 
 Vendor packages in Moyo:
-- `vendors/reactvision-react-viro-3.0.0-moyo.5-rive.8.tgz`
+- `vendors/reactvision-react-viro-3.0.0-moyo.5-rive.9.tgz`
 - `vendors/nitro-canvas-in-Vision-0.0.2-rive.3.tgz`
 
 The Viro package contains paired, rebuilt renderer and React bridge AARs.
@@ -356,3 +357,24 @@ beyond the panel. Do not change ray behavior until this preference is resolved.
 Runtime confirms original asset FNV1a=249331036, hintVisible=true, revision=7,
 grabbed=false and owner=null. An experimental hint write-converter change was
 reverted; it was not the asset producing the user-confirmed working selection.
+
+## Visible ray endpoint
+
+User accepted the recommended ray termination with a visible pointer on the panel.
+ViroCore `f3b02ead` adds a 7 mm radius cyan dot per controller ray. Each dot tracks
+its own actual surface hit, is hidden for background hits and lost tracking, honors
+reticle visibility, and is excluded from hit tests. Beam/dot rendering order keeps
+them visible over panel pixels without depth writes. The existing legacy reticle
+is retained; the new per-ray dots no longer depend on its shared position.
+Viro `2a394ab`, package rive.9, stages the renderer. Native arm64 build and 14-library
+alignment checks passed. No Horizon width/height/orientation settings changed.
+
+Rive.9 is installed and the probe is running. Native capture confirms the cyan
+beam reaches the panel and its endpoint dot stays visible in both eye views.
+The amber handle reads Hold to move; runtime reports grabbed=false, owner=null,
+empty error status and 1204 frames. Private capture (not committed):
+`/Users/mikevocalz/rive-panel-device-evidence/quest-rive9-hit-dots.png`.
+Both controllers simultaneously were not captured; code stores separate dot nodes
+per source. The prior user confirmation covers selection; the full lesson count
+acceptance remains separate. Moyo implementation `26f1e6e`; final APK SHA256
+`b41cbf44d853ddfb3a13523081a0c09bc02832dcded64ee04630bf171be20f81`.

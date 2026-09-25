@@ -1,12 +1,12 @@
 {
   "date": "2026-09-25",
-  "status": "rive.8 installed: click/hover coalescing disabled and exact plane hits enabled; physical release/hint/post-drag acceptance pending",
+  "status": "rive.9 installed and launched; cyan ray and endpoint dot visible over panel in both-eye capture; user confirmed selection working on rive.8",
   "sources": {
     "moyo": {
       "path": "/Users/mikevocalz/moyo-rive-panel",
       "base": "5a161b3739b026b565dcf9f0eaa5545ad69bcce1",
       "branch": "codex/rive-viro-panel",
-      "implementationCommit": "41f9219bf7baa7ef5e6a5480ef95c99385d8c565"
+      "implementationCommit": "26f1e6e77f6b7254d38c0285f2d03b4073bf975d"
     },
     "nitro": {
       "path": "/Users/mikevocalz/nitro-rive-panel",
@@ -18,20 +18,20 @@
       "path": "/Users/mikevocalz/viro-rive-panel",
       "base": "2bb0b5abbc707810ae2b49221917a80c7ee50b41",
       "branch": "codex/rive-viro-panel",
-      "implementationCommit": "5dbcd55638956e9cef072f648c149b00d2eff093"
+      "implementationCommit": "2a394ab30c429a733ad77985f33d43c6f50c9f45"
     },
     "virocore": {
       "path": "/Users/mikevocalz/virocore-rive-panel",
       "base": "8e3750fed7b1c7f711baefe32a8a832df0e4672b",
       "branch": "codex/rive-viro-panel",
-      "implementationCommit": "cb0b5e741cad213c063bdf20cd29462c4fe23114"
+      "implementationCommit": "f3b02eada36f7086783d3fa3494cf103dfb93d35"
     }
   },
   "artifacts": [
     {
-      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/reactvision-react-viro-3.0.0-moyo.5-rive.8.tgz",
-      "size": 47213925,
-      "sha256": "ae16f570a6406a8f325ccd3a4245206ee3f65be092d08e64c502fd62c974fd49"
+      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/reactvision-react-viro-3.0.0-moyo.5-rive.9.tgz",
+      "size": 47215205,
+      "sha256": "3738d503d6e6c82b27210f1599d9fab586302eda82a186affa15e3225b919718"
     },
     {
       "path": "/Users/mikevocalz/moyo-rive-panel/vendors/nitro-canvas-in-Vision-0.0.2-rive.3.tgz",
@@ -40,8 +40,8 @@
     },
     {
       "path": "/Users/mikevocalz/viro-rive-panel/android/viro_renderer/viro_renderer-release.aar",
-      "size": 10089234,
-      "sha256": "9a5aaab8e2f7b5ca0a0f1d69a6a5bc94824ba36d82c718df7226171d3a9b0e29"
+      "size": 10089921,
+      "sha256": "6e0ddb1decd5aca6e97a90eefe6634c93685d3d0110f88d3f77b870d4e2738aa"
     },
     {
       "path": "/Users/mikevocalz/viro-rive-panel/android/react_viro/react_viro-release.aar",
@@ -56,7 +56,7 @@
     {
       "path": "/Users/mikevocalz/moyo-rive-panel/apps/mobile/android/app/build/outputs/apk/quest/debug/app-quest-debug.apk",
       "size": 356991597,
-      "sha256": "bc12146671e70a5dfa760ef996e624250ca41274e92167a858732e98db42532e"
+      "sha256": "b41cbf44d853ddfb3a13523081a0c09bc02832dcded64ee04630bf171be20f81"
     }
   ],
   "runtime": {
