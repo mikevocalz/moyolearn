@@ -38,7 +38,7 @@
     ".*"
   ],
   "rendering": "Rive fractions pixels present in both eye views in headset capture; comfort not independently qualified",
-  "controllerInput": "User confirms Moving panel stays displayed after all triggers/grips released; selection fails on rive.5. rive.6 cancellation/ownership fix installed; physical retest pending.",
+  "controllerInput": "User confirms selection works in rive.8; ray stops at panel, appearance remains under discussion.",
   "bothEyeComfort": "not verified",
   "nativePointerDiagnostic": {
     "action": "direct Rive down/up at first piece artboard coordinates from authored RML",
@@ -59,7 +59,7 @@
     "rive.8: non-coalescing click/hover events, geometry-accurate Rive and grip quads; bridge build, APK build, typecheck and window contract passed"
   ],
   "visualEvidencePath": "/Users/mikevocalz/rive-panel-device-evidence/quest-rive-before-label-fix.png",
-  "currentBlocker": "rive.8 installed; verify release delivery and hint/post-drag selection. rive.7 live trace proved ClickUp lost to bridge event coalescing and stale JS panel pose after native drag.",
+  "currentBlocker": "Clarify ray should end with visible dot or continue beyond panel; shared reticle is updated by both controllers.",
   "horizon": {
     "isHorizonBuild": true,
     "isHorizonDevice": true,
@@ -88,5 +88,13 @@
     "piece0": 0,
     "revision": 2,
     "result": "Direct pointer-down reaches native Rive, but click/count completion not established reliably; diagnostic is not physical controller acceptance."
+  },
+  "rive8Runtime": {
+    "hintVisible": true,
+    "revision": 7,
+    "grabbed": false,
+    "owner": null,
+    "assetFnv1a": 249331036,
+    "userSelectionConfirmed": true
   }
 }

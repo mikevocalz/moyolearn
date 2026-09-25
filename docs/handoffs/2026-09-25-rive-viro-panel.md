@@ -4,8 +4,9 @@ Updated 2026-09-25. **Latest steering:** React Native `0.88.0-rc.2`,
 with React/React DOM 19.3.0. Quest startup now passes after fixing duplicate
 React codegen classes, the shared C++ runtime, and Expo prebuilt ABI mismatch.
 Rive pixels were captured in both eye views and the user confirmed grip drag.
-**Selection remains open:** the user reports Show hint does nothing and the ray
-passes through or stops short. The live rive.7 trace exposed missing ClickUp:
+**Latest device feedback:** the user confirms selection works in rive.8. The
+remaining concern is the ray stopping at the panel; its desired endpoint appearance
+is being clarified. Earlier Show hint/selection failure prompted the fixes below. The live rive.7 trace exposed missing ClickUp:
 normal presses delivered states 1 then 3 to JS, dropping state 2. The Android
 bridge inherited event coalescing, which merged consecutive Up/Clicked events.
 Rive.8 preserves click/hover edges and uses geometry-accurate panel hit tests.
@@ -345,3 +346,13 @@ Rive frames rendered, owner=null, grabbed=false, and highAccuracyEvents=true
 on both body and grip. A temporary JS trace records click states and outgoing
 Rive pointer edges. The user was asked to toggle Show hint, move/release the
 grip, and toggle again. Await physical feedback before marking acceptance.
+
+Latest user feedback after rive.8: “selection works though”; the ray stops at
+the panel. This endpoint is the current intentional first-hit behavior. The
+OpenXR presenter has separate beams but a single reticle updated by both hands,
+so the inactive hand can displace the visible cursor from the active beam.
+Asked whether to retain surface termination with a visible dot or extend the beam
+beyond the panel. Do not change ray behavior until this preference is resolved.
+Runtime confirms original asset FNV1a=249331036, hintVisible=true, revision=7,
+grabbed=false and owner=null. An experimental hint write-converter change was
+reverted; it was not the asset producing the user-confirmed working selection.
