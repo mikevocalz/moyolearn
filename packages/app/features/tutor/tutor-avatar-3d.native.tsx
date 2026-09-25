@@ -442,22 +442,32 @@ function TutorAvatar3DStage({
       */
       let framedWidth = 0;
       let framedHeight = 0;
+      /*
+        The truck is part of the framing, so it is part of the early-out too.
+        `truckRef` is written from an effect, and a rotation can land the new
+        layout a frame before it: checked on size alone, that frame refits with
+        the old offset and every later frame returns early, leaving her framed
+        for the previous hardware edge.
+      */
+      let framedTruck = Number.NaN;
       const scale = PixelRatio.get();
       const refit = () => {
         const layout = layoutRef.current;
         const width = Math.round(layout.width * scale);
         const height = Math.round(layout.height * scale);
-        if (width === framedWidth && height === framedHeight) return;
+        const truck = truckRef.current;
+        if (width === framedWidth && height === framedHeight && truck === framedTruck) return;
         if (width === 0 || height === 0) return;
         framedWidth = width;
         framedHeight = height;
+        framedTruck = truck;
         // Writes canvas.width/height, which is what getCurrentTexture
         // reconfigures on. `false`: three would otherwise write
         // `domElement.style`, which this canvas has not got.
         renderer?.setSize(width, height, false);
         camera.aspect = width / height;
         frameBody(camera, gltf.scene);
-        camera.translateX(truckRef.current);
+        camera.translateX(truck);
       };
 
       const presence = createHumanoPresence(gltf.scene);
