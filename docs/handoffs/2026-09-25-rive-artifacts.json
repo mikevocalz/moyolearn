@@ -1,0 +1,57 @@
+{
+  "date": "2026-09-25",
+  "status": "local implementation commits; not published or headset qualified",
+  "sources": {
+    "moyo": {
+      "path": "/Users/mikevocalz/moyo-rive-panel",
+      "base": "5a161b3739b026b565dcf9f0eaa5545ad69bcce1",
+      "branch": "codex/rive-viro-panel",
+      "implementationCommit": "1449bf3032c1f4405fbaa09f67c36e286ab6994f"
+    },
+    "nitro": {
+      "path": "/Users/mikevocalz/nitro-rive-panel",
+      "base": "4d32d437aa393b5925f71397318138a33adb2bf2",
+      "branch": "codex/rive-viro-panel",
+      "implementationCommit": "fd267d908f93a9db1f54bc9890937be5f5866f28"
+    },
+    "viro": {
+      "path": "/Users/mikevocalz/viro-rive-panel",
+      "base": "2bb0b5abbc707810ae2b49221917a80c7ee50b41",
+      "branch": "codex/rive-viro-panel",
+      "implementationCommit": "67b41805fa98eeb59fe63726bf78ba57230483e2"
+    },
+    "virocore": {
+      "path": "/Users/mikevocalz/virocore-rive-panel",
+      "base": "8e3750fed7b1c7f711baefe32a8a832df0e4672b",
+      "branch": "codex/rive-viro-panel",
+      "implementationCommit": "881483d7d2b9e8937506c1c8f77599731f6b50b4"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/reactvision-react-viro-3.0.0-moyo.5-rive.2.tgz",
+      "size": 50045606,
+      "sha256": "04283d4afdc3ebf669dbe8a2aa59a3cc4f82405867964281374fb274bc95bb59"
+    },
+    {
+      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/nitro-canvas-in-Vision-0.0.2-rive.2.tgz",
+      "size": 67356,
+      "sha256": "696175d8253ddbee65f412be3a98ed190ed4d4a61439ae4e1467cfb3b04fb725"
+    },
+    {
+      "path": "/Users/mikevocalz/viro-rive-panel/android/viro_renderer/viro_renderer-release.aar",
+      "size": 12876890,
+      "sha256": "b377564e2390f739da674e4d6bfd711cbbfc356911642e8b702a581c6d260e94"
+    },
+    {
+      "path": "/Users/mikevocalz/viro-rive-panel/android/react_viro/react_viro-release.aar",
+      "size": 629787,
+      "sha256": "2af1e5d4e98a927fb640ece0e0ab5d0725ea8c0d96e42ef3fc063a57a88a4b6d"
+    },
+    {
+      "path": "/Users/mikevocalz/moyo-rive-panel/apps/mobile/assets/rive/moyo_fractions.riv",
+      "size": 142649,
+      "sha256": "bffab11fc0d4014240040c367e33773d9ad9d1654050ffd5f002227d16ca0320"
+    }
+  ]
+}

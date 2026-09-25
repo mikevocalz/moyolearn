@@ -1,120 +1,173 @@
-# Handoff: Rive panels inside Viro on Quest and PICO (in progress)
+# Rive panels inside Viro — continuation handoff
 
-What this is: the running state of the implementation brief
-`MOYO_VIRO_RIVE_QUEST_PICO_IMPLEMENTATION_PROMPT_2026-09-25.md` (uploaded
-2026-09-25; not in the repo). It is updated at each milestone so the next
-session can resume from it instead of from the transcript.
+Updated 2026-09-25. The Android Surface bridge, Nitro Rive renderer, native
+parent drag, editable fractions asset, and an isolated Moyo engineering route
+are implemented. Library builds and software checks pass as recorded below.
+The complete Tutor Room composition and Quest system-window companion from the
+original brief are not implemented. Device results have their own section;
+never infer headset acceptance from desktop screenshots or build success.
 
-Why it exists: the work spans five repositories and ends in device gates that
-cannot be run from a cloud container. This file says which step is done, which
-is written but unverified, and which has not started.
+## User scope
 
-Source of truth: the branches and commits listed below. This file points at
-them.
+The user explicitly chose **“Add references; finish current Rive work”** and
+**device validation last**. Preserve the two supplied Viro 3.0.1 documents as
+references; their proposed platform-first replacement of Moyo scope is deferred.
+Unmodified copies are in the companion Viro worktree:
 
-SOT-KEYWORDS: handoff rive viro panel quest pico canvasSource external texture
-ahardwarebuffer jni material bridge canvas input ray uv artboard nitro canvas
+- `docs/handoffs/references/Viro_Platform_Handoff_v3.0.1_2026-09-25.md`
+- `docs/handoffs/references/Viro_Platform_Modernization_v3.0.1_2026-09-25.md`
 
-## Starting revisions (2026-09-25)
+Original implementation brief was recovered from Downloads:
+`MOYO_VIRO_RIVE_QUEST_PICO_IMPLEMENTATION_PROMPT_2026-09-25.md`.
+The companion probe ZIP was not found; the fractions RML was authored locally.
+Earlier cloud findings and intermediate checkpoints are preserved in
+[history/2026-09-25-rive-viro-panel-checkpoints.md](history/2026-09-25-rive-viro-panel-checkpoints.md).
+That file is historical and includes superseded “missing implementation” notes.
 
-| Repo | Branch | SHA |
+## Workspaces and provenance
+
+All continuation work is local on `codex/rive-viro-panel`; nothing has been
+pushed or published. Original dirty checkouts were preserved.
+
+| Repository | Isolated worktree | Recovered base commit |
 |---|---|---|
-| mikevocalz/viro | `decax9-three-panel` | `93bccaed52fa9aea8a7cc003f5dc6d88784d881f` |
-| mikevocalz/nitro-canvas-in-Vision | `decax9-three-panel` | `2bd37ecb67e182c659ab637ce9d50f6766f1aff6` |
-| mikevocalz/virocore | `pico-support` | `8e3750fed7b1c7f711baefe32a8a832df0e4672b` |
-| mikevocalz/expo-pico | `main` | `9d217afc465cf58b7e50149ac1fa03b935ba5e3e` |
-| mikevocalz/moyolearn | `upgrade/expo-sdk-58-beta` | `b1e3935` |
+| Moyo | `/Users/mikevocalz/moyo-rive-panel` | `5a161b3739b026b565dcf9f0eaa5545ad69bcce1` |
+| Nitro | `/Users/mikevocalz/nitro-rive-panel` | `4d32d437aa393b5925f71397318138a33adb2bf2` |
+| Viro | `/Users/mikevocalz/viro-rive-panel` | `2bb0b5abbc707810ae2b49221917a80c7ee50b41` |
+| ViroCore | `/Users/mikevocalz/virocore-rive-panel` | `8e3750fed7b1c7f711baefe32a8a832df0e4672b` |
 
-Work branches: `claude/gifted-ptolemy-r9kv7p` in each repo.
+Local implementation commits: Nitro `fd267d9` (native implementation `dacfa3f`),
+Viro `67b4180`, ViroCore `881483d7`. Full SHAs are in the artifact manifest.
+Moyo implementation commit: `1449bf3032c1f4405fbaa09f67c36e286ab6994f`; handoff metadata follows in a separate commit.
 
-## Findings so far
+Cloud branch `claude/gifted-ptolemy-r9kv7p` was recovered in Moyo and Nitro.
+The interrupted Java changes were not on a Viro remote branch and were
+reconstructed from source. Original `/Users/mikevocalz/nitro-canvas-in-Vision`
+contains separate uncommitted work, including an incomplete Rive stub. Do not
+copy that diff over this implementation. `/Users/mikevocalz/expo-pico` also has
+unrelated local changes and was not modified.
 
-- **The app's Viro is not on GitHub.** Moyo consumes
-  `vendors/reactvision-react-viro-3.0.0-moyo.4.tgz`. Its commit message
-  (moyolearn `7e9cae6`) says it was cut from `~/viro` commit `2bb0b5a`, which
-  does not exist on `origin`. `decax9-three-panel` is still `3.0.0-moyo.3`, and
-  its canvas panels import `nitro-canvas-in-Vision` at the top level, which
-  breaks the Metro bundle for every consumer. The tarball carries moyo.4's
-  TypeScript (`components/CanvasPanel/nitroCanvas.ts`, lazy `require`), so it is
-  recoverable. The Java and C++ inside the tarball ship only as AARs.
-- **Nothing in Java calls ViroCore's external texture.** virocore
-  `pico-support` has `VROExternalSurfaceTexture` and its Android
-  AHardwareBuffer → EGLImage → `GL_TEXTURE_EXTERNAL_OES` import, but no JNI
-  entry point and no material hook use it. viro's
-  `MaterialManager.java` has no `canvasSource` branch, so
-  `{ canvasSource: id }` is dropped and the quad shows its fallback colour. This
-  matches `nitro-canvas-in-Vision/docs/MISSING-VIRO-INTEGRATION.md`.
-- **The Rive drawer is a stub.** `RiveCanvasBridge.kt` loads the file and
-  advances the state machine, but `draw()` is empty: `app.rive:rive-android`
-  removed `Artboard.drawSkia(long)`.
-- **Input maps world-space positions as if they were quad-local.**
-  `CanvasInViroInput.ts` feeds Viro's `onDrag` destination (world space)
-  straight into quad-local UV math.
-- **The render loop spins.** `useCanvasPanel` runs
-  `while (alive) { renderFrame(); await Promise.resolve(); }`, which starves the
-  JS thread and submits frames whether or not anything changed.
-- **No companion archive.** `Moyo_Rive_Viro_Panel_Probe_2026-09-25.zip` was not
-  uploaded, so the probe's RML, `panelMath.ts` and reference images are not
-  available here.
+Vendor packages in Moyo:
+- `vendors/reactvision-react-viro-3.0.0-moyo.5-rive.2.tgz`
+- `vendors/nitro-canvas-in-Vision-0.0.2-rive.2.tgz`
 
-- **The external texture would sample black even once wired.**
-  `VROExternalSurfaceTexture` declares `VROTextureType::Texture2D`, but on
-  Android its substrate is `GL_TEXTURE_EXTERNAL_OES`. ViroCore only switches a
-  diffuse material to `samplerExternalOES` for `TextureEGLImage`
-  (`VROShaderCapabilities.cpp:77`, as `VROVideoTextureAVP` does), so a plain
-  diffuse binding samples an external texture through `sampler2D`.
-- **Drag cannot move a group from a grip today.** ViroCore drags the first
-  ancestor with drag enabled and moves that node itself
-  (`VROInputControllerBase::getNodeToHandleEvent`, `processDragging`). A grip
-  can only move itself, and giving the canvas quad `onDrag` for pointer moves
-  drags the quad away. Fix in progress: a node `dragTransform` of
-  `self | parent | none`.
+The Viro package contains paired, rebuilt renderer and React bridge AARs.
+Installed renderer checksum was compared with the final source build and
+matches. Version `rive.2` includes the final targeted TypeScript emit; earlier `rive.0`/`rive.1` tarballs were intermediate and removed.
+Use the artifact manifest beside this file for checksums.
 
-## Required: update the Nitro stack to current packages
+## Implementation
 
-The user asked for this explicitly. Versions as checked on 2026-09-25:
+**Surface path:** material `{canvasSource,width,height}` → Java
+`CanvasSourceBridge` → ViroCore `ExternalSurfaceTexture` → Android Surface →
+Nitro `RiveSurfaceRenderer`. This uses Viro's existing external/OES texture
+sampling. The separate raw AHardwareBuffer importer is not used or completed.
+No JS pixel copy, bitmap screenshot, WebView, or fake Rive view is involved.
 
-| Package | Pinned / resolved in nitro-canvas-in-Vision | Latest |
-|---|---|---|
-| `react-native-nitro-modules` | `"*"`, lockfile resolves 0.35.9 | 0.37.1 |
-| `nitrogen` (codegen) | `"*"` | 0.37.1 |
-| `app.rive:rive-android` (`android/build.gradle`) | 10.1.2 | 11.12.1 |
-| `@rive-app/react-native` (Rive's Nitro runtime) | not a dependency | 0.4.20 |
-| `react-native` (devDependency) | 0.85.3 | Moyo runs 0.88 |
+Material replacement, context changes, deletion and teardown revoke the old
+Surface. Registry revocation checks identity. Nitro takes its own native Surface
+reference and releases it after the Rive worker retires. The file has a separate
+renderer lifetime lease. Reflection is optional so Viro can run without Nitro;
+R8 keep rules preserve the registry contract.
 
-What the update involves:
+**Nitro:** runtime and Nitrogen pinned to **0.37.1**; generated bindings rebuilt.
+Android Rive pinned to **11.12.1**. Native file loading, artboard rendering,
+state-machine pointers, typed default-view-model setters/getters/triggers,
+numeric observation, active/background control and disposal are implemented.
+The public low-level Rive 11 renderer API is deprecated for removal in 12;
+upgrade it deliberately, not via an unbounded dependency range.
+Native Choreographer scheduling sleeps when the scene settles; JS does not pump
+Rive frames. `RiveProducer` handles stale asynchronous attachment and disposal.
 
-- Pin `react-native-nitro-modules` and `nitrogen` to the same exact version,
-  not `"*"`. Nitro's generated code and runtime must match, and `"*"` lets two
-  installs resolve differently.
-- Regenerate `nitrogen/generated/` with `npm run specs` after the bump. Never
-  hand-edit generated files.
-- Match the Nitro runtime version to what Moyo resolves, because the app and
-  this module share one `react-native-nitro-modules`.
-- Move to `rive-android` 11.x and port `RiveCanvasBridge` to its render API.
-  10.x already removed `Artboard.drawSkia`, which is why `draw()` is empty.
-- Consider whether `@rive-app/react-native` (Rive's own Nitro runtime) can
-  supply the file, artboard and state machine, so this package only owns the
-  offscreen target. Confirm against its source that it can render offscreen
-  before relying on it.
-- Fix the pre-existing typecheck failures: `@webgpu/types` is named in
-  `tsconfig.json` but not installed, and `RiveProducer.ts` uses `performance`
-  with no lib that declares it.
+**Viro:** `ViroRivePanel` accepts file bytes, artboard/state machine, fit and input
+mapping; its optional custom `init` adapter remains supported. Shared panel
+allocation happens after React commit, registers material before the quad,
+handles source replacement and AppState, and avoids the former microtask loop.
+Controller event sources are correctly numeric rather than image-source types.
 
-## Environment limits (cloud container)
+**Input/group movement:** inverse world transform, quad UV and matching Rive fit
+are used for artboard coordinates. Input-only body uses `dragTransform="none"`;
+its hover updates provide coordinates while remaining on the same collider.
+The separate amber grip uses `dragTransform="parent"`; C++ moves the group and
+JS persists its final pose after release. Tracking loss releases capture without
+a `Clicked` activation. Disable/reset/unmount cancel body input. Parent drag is
+translation, not two-handed rotation/scaling.
 
-- No headset, so every Quest and PICO gate is **unverified**.
-- No Rive CLI, so no `.riv` is compiled or rendered.
-- Android SDK 35, NDK 27.1.12297006 and CMake 3.22.1 were installed into
-  `/home/user/android-sdk` for compile checks only.
+**Moyo probe:** `apps/mobile/app/rive-panel-probe.tsx`, deep link
+`moyo://rive-panel-probe`. It loads the local `.riv`, shows native loading/error
+fallback, observes Rive's selected count and groups the grip/reference label.
+It is separate from the existing Tutor Room; no claim of full lesson/Tutor
+composition. Metro recognizes `.riv` assets.
 
-## Status by step
+**Editable asset:** [probe README](../../probes/rive-panel/README.md) documents
+bindings, generation and font provenance. Four equal fractions toggle, two
+selected show `2 / 4 = 1 / 2`, hint toggles, hover/pressed states respond, and
+160 ms transitions have an immediate `reducedMotion` path. Rive CLI 1.1.1 source
+is `probes/rive-panel/rive/scene.rml`; app binary is
+`apps/mobile/assets/rive/moyo_fractions.riv`.
 
-| Step | State |
+## Verification
+
+| Check | Result |
 |---|---|
-| 1. Baseline and trace | done (findings above) |
-| 2. Native texture bridge | in progress: ViroCore texture type and JNI |
-| 3. Input mapping and drag | input mapping **done**, pushed as nitro-canvas-in-Vision `4d32d43` on `claude/gifted-ptolemy-r9kv7p`: `src/viroreact/panelMath.ts`, rewritten `useCanvasInViroInput`, 23 passing `node:test` cases (`node --experimental-strip-types --test test/*.test.ts`). Grip drag (`dragTransform`) in progress in ViroCore. |
-| 4. Moyo Tutor Room | not started |
-| 5. Spatial polish | not started |
-| Device gates (Quest, PICO) | unverified; needs a headset |
+| Nitro codegen and TypeScript | pass |
+| Nitro geometry, pointer capture, registry, descriptor and producer lifecycle | 27 tests pass |
+| Rive CLI verify/inspect and pointer cases | 9 cases pass; screenshots + JSON in `probes/rive-panel/evidence` |
+| ViroCore `:viroreact:assembleRelease` | pass, final cancellation/hover changes included |
+| Final renderer ARM64 ELF alignment | all 14 libraries ≥ 16 KB |
+| Nitro `:nitro-canvas:assembleDebug` | pass |
+| Viro `:viro_bridge:assembleRelease` | pass against RN 0.88.0-rc.0 |
+| Viro changed panel/hook/controller/button TypeScript | pass |
+| Moyo mobile TypeScript with final vendor packages | pass |
+| Moyo Android APK | blocked: host disk exhausted installing ExecuTorch NDK 28.2.13676358 |
+| Metro Android export | pass: 26 MB Hermes bundle and 143 KB Rive asset |
+| Frozen lockfile | pass; unrelated workspace dependency changes removed |
+| Packaged-source audit | 101 Nitro + 1,632 Viro tracked files match committed source |
+| Physical headset acceptance | Quest 3S detected by Argent, SDK 34; installation/input/rendering not tested |
+
+Whole Viro TypeScript still fails on pre-existing missing web-renderer sibling,
+missing `GpuProducer` exports and unrelated AR/web source errors. Packaging used
+`npm pack --ignore-scripts` after targeted emit; this is not a clean whole-repo
+build claim. No placeholder GPU implementation was invented to silence errors.
+
+Build logs are under `/tmp/rive-panel-check`. Persist relevant final logs with
+the device evidence before relying on that temporary directory across sessions.
+
+Reproduction:
+- Nitro: `npm ci`, `npm run specs`, `npm run typescript`,
+  `node --test test/*.test.ts test/*.test.mjs` (Node 26).
+- Rive: `python3 probes/rive-panel/verify-rive.py` from Moyo root.
+- ViroCore: JDK 17 + Android SDK, `./android/gradlew -p android :viroreact:assembleRelease`.
+- Viro targeted emit: `node scripts/build-rive-types.cjs`; uses an explicit repository root so emitted files land under `dist/components`.
+- Combined Nitro/Viro: `python3 scripts/check-android.py --gradle /path/to/gradle-9.4.1/bin/gradle --viro ../viro-rive-panel`
+  from Nitro; JDK 17, SDK 36, NDK 27.1.12297006. The generated host pins
+  AGP 9.2.1/Kotlin 2.3.21/RN 0.88.0-rc.0.
+- Moyo: `pnpm install --filter mobile... --ignore-scripts`, then
+  `pnpm --filter mobile typecheck`. Android uses the existing Expo 58 preview
+  dependency set, not a wholesale SDK upgrade. Prebuild used local
+  `expo-template-bare-minimum-58.0.7.tgz` with `--platform android --no-install`.
+  JDK 17: `./gradlew :app:assemblePicoDebug -PreactNativeArchitectures=arm64-v8a`.
+
+## Device gate and remaining work
+
+After software checks, Argent detected the attached **Quest 3S**, Android SDK 34. No app was installed, launched or interacted with in this session. The initial `assemblePicoDebug` attempt (before identification) failed because the Mac ran out of disk space installing ExecuTorch’s NDK 28.2.13676358. Only generated output/downloads created by this task were removed; roughly 2.7 GB remained at the last check. The user was asked to free another 8–10 GB.
+
+Next: after freeing space, use JDK 17 and SDK at `/Users/mikevocalz/Library/Android/sdk`, run `./gradlew :app:assembleQuestDebug -PreactNativeArchitectures=arm64-v8a` from `apps/mobile/android`. Use the Quest flavor for the attached device, inspect the resulting manifest, then install preserving existing app data and launch through Argent. Keep Metro tied to this isolated Moyo checkout. A fresh APK is required; testing the old installed app would not validate these changes.
+
+Validate
+actual Rive pixels, both-eye rendering, ray hover/press/drag/release/cancel,
+second-controller ownership, parent movement, tracking loss, background/resume,
+repeated mount/unmount, idle scheduling, native frame timing and memory. Record
+observed passes and failures individually; a mirrored screenshot cannot prove
+both-eye comfort or controller feel.
+
+Remaining original-brief work: integrate the Rive group with the Tutor Room's
+whiteboard/tool/chat layout while respecting its world-coordinate board math;
+add the separately scoped Quest windowed companion/Meta Layout SDK; qualify
+Quest and PICO independently. Broad Viro 3.0.1 modernization remains reference
+work only. iOS, WebXR, WebSpatial, raw AHB imports and other canvas producers
+were not runtime-qualified by this Android continuation.
+
+Rollback is to restore Moyo's baseline package manifests/lock and the existing
+`3.0.0-moyo.4` vendor reference, and omit the engineering route. Do not roll the
+original dirty worktrees back or discard their unrelated changes.
