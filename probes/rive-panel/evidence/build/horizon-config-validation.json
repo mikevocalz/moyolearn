@@ -1,0 +1,20 @@
+{
+  "horizonCore": "57.0.2",
+  "width": "1024dp",
+  "height": "640dp",
+  "prebuild": "passed twice; plugin order corrected to avoid duplicate device flavor dimension",
+  "dimensionCount": 1,
+  "panelPlacementIndependent": true,
+  "orientation": "default",
+  "nativeLauncherOrientation": "unspecified",
+  "dependencyPatch": "BuildConfig generation explicitly enabled for AGP 9",
+  "mergedManifest": "apps/mobile/android/app/build/intermediates/merged_manifests/questDebug/processQuestDebugManifest/AndroidManifest.xml",
+  "mergedManifestPassed": true,
+  "expoVariant": "questDebug",
+  "horizonVariant": "questDebug",
+  "regressionTests": {
+    "passed": 6,
+    "failed": 0
+  },
+  "prebuildGuard": "Validates required Meta plugin, configured platform dimensions, and default orientation"
+}

@@ -1,0 +1,17 @@
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "# Scene validation \u2014 0 errors, 0 warnings\n\n\u2705 No issues found."
+      }
+    ],
+    "structuredContent": {
+      "errors": 0,
+      "warnings": 0,
+      "issues": []
+    }
+  },
+  "jsonrpc": "2.0",
+  "id": 1
+}

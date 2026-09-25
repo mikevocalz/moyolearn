@@ -1,57 +1,79 @@
 {
   "date": "2026-09-25",
-  "status": "local implementation commits; not published or headset qualified",
+  "status": "Horizon-enabled APK built, installed and launched; Horizon runtime detection true, Rive renders and native grip text fits; physical release/selection and normal viewing pose acceptance pending",
   "sources": {
     "moyo": {
       "path": "/Users/mikevocalz/moyo-rive-panel",
       "base": "5a161b3739b026b565dcf9f0eaa5545ad69bcce1",
       "branch": "codex/rive-viro-panel",
-      "implementationCommit": "1449bf3032c1f4405fbaa09f67c36e286ab6994f"
+      "implementationCommit": "41f9219bf7baa7ef5e6a5480ef95c99385d8c565"
     },
     "nitro": {
       "path": "/Users/mikevocalz/nitro-rive-panel",
       "base": "4d32d437aa393b5925f71397318138a33adb2bf2",
       "branch": "codex/rive-viro-panel",
-      "implementationCommit": "fd267d908f93a9db1f54bc9890937be5f5866f28"
+      "implementationCommit": "731d4b5f7992c3c89b17838b7453763e7e412693"
     },
     "viro": {
       "path": "/Users/mikevocalz/viro-rive-panel",
       "base": "2bb0b5abbc707810ae2b49221917a80c7ee50b41",
       "branch": "codex/rive-viro-panel",
-      "implementationCommit": "67b41805fa98eeb59fe63726bf78ba57230483e2"
+      "implementationCommit": "d13465274a8e11ba151f65292134a3d075a245ac"
     },
     "virocore": {
       "path": "/Users/mikevocalz/virocore-rive-panel",
       "base": "8e3750fed7b1c7f711baefe32a8a832df0e4672b",
       "branch": "codex/rive-viro-panel",
-      "implementationCommit": "881483d7d2b9e8937506c1c8f77599731f6b50b4"
+      "implementationCommit": "2384976d6d857d15f99cfb1095b12d89d7bd9583"
     }
   },
   "artifacts": [
     {
-      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/reactvision-react-viro-3.0.0-moyo.5-rive.2.tgz",
-      "size": 50045606,
-      "sha256": "04283d4afdc3ebf669dbe8a2aa59a3cc4f82405867964281374fb274bc95bb59"
+      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/reactvision-react-viro-3.0.0-moyo.5-rive.5.tgz",
+      "size": 47213206,
+      "sha256": "c05d9b00e7145d5692e42bfa753b80b04e1de944bf8fc5043a7f5f36aec4e1a0"
     },
     {
-      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/nitro-canvas-in-Vision-0.0.2-rive.2.tgz",
-      "size": 67356,
-      "sha256": "696175d8253ddbee65f412be3a98ed190ed4d4a61439ae4e1467cfb3b04fb725"
+      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/nitro-canvas-in-Vision-0.0.2-rive.3.tgz",
+      "size": 67359,
+      "sha256": "f25d5983e4159e741da83ab60eac13db19430c1b0be7eb39c5a0123caf2f1b72"
     },
     {
       "path": "/Users/mikevocalz/viro-rive-panel/android/viro_renderer/viro_renderer-release.aar",
-      "size": 12876890,
-      "sha256": "b377564e2390f739da674e4d6bfd711cbbfc356911642e8b702a581c6d260e94"
+      "size": 10089037,
+      "sha256": "f26764d34c66855a8c48adbac0338fe22bf35fa78738f2cf0c8f48d4e73c2303"
     },
     {
       "path": "/Users/mikevocalz/viro-rive-panel/android/react_viro/react_viro-release.aar",
-      "size": 629787,
-      "sha256": "2af1e5d4e98a927fb640ece0e0ab5d0725ea8c0d96e42ef3fc063a57a88a4b6d"
+      "size": 569633,
+      "sha256": "1c3ac45fe4c845e9b298cc494b915128152f0f98e7027a1b58ad8fe39c433502"
     },
     {
       "path": "/Users/mikevocalz/moyo-rive-panel/apps/mobile/assets/rive/moyo_fractions.riv",
-      "size": 142649,
-      "sha256": "bffab11fc0d4014240040c367e33773d9ad9d1654050ffd5f002227d16ca0320"
+      "size": 142645,
+      "sha256": "e63b798165fe708c75e9ccda6ddcfc1f943c22fe764ffcc2f0ee23d12aa060c7"
+    },
+    {
+      "path": "/Users/mikevocalz/moyo-rive-panel/apps/mobile/android/app/build/outputs/apk/quest/debug/app-quest-debug.apk",
+      "size": 339895643,
+      "sha256": "8ffb944b02059661ff364277b42d172333ed731653c82725daf700a502d91705"
     }
-  ]
+  ],
+  "runtime": {
+    "reactNative": "0.88.0-rc.2",
+    "react": "19.3.0",
+    "reactDom": "19.3.0",
+    "nitroModules": "0.37.1",
+    "riveAndroid": "11.12.1",
+    "expoHorizonCore": "57.0.2"
+  },
+  "rendererAbis": [
+    "arm64-v8a"
+  ],
+  "window": {
+    "defaultWidth": "1024dp",
+    "defaultHeight": "640dp",
+    "orientation": "default",
+    "verifiedInApk": true
+  }
 }

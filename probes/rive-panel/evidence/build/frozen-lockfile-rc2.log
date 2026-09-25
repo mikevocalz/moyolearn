@@ -1,0 +1,7 @@
+Lockfile is up to date, resolution step is skipped
+Progress: resolved 0, reused 1, downloaded 0, added 0
+.                                        |  +15 -227 ++-----------------------
+Progress: resolved 0, reused 128, downloaded 0, added 0
+ WARN  Failed to create bin at /Users/mikevocalz/moyo-rive-panel/node_modules/@sentry/expo-upload-sourcemaps/node_modules/.bin/sentry-cli. ENOENT: no such file or directory, chmod '/Users/mikevocalz/moyo-rive-panel/node_modules/@sentry/expo-upload-sourcemaps/node_modules/@sentry/cli/bin/sentry-cli'
+Progress: resolved 0, reused 210, downloaded 0, added 15, done
+Done in 10.1s using pnpm v10.32.1

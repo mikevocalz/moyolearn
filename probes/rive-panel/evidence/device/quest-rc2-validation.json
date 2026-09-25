@@ -1,0 +1,82 @@
+{
+  "device": "Quest 3S",
+  "serial": "340YC10GC3014S",
+  "androidSdk": 34,
+  "reactNative": "0.88.0-rc.2",
+  "installMethod": "adb install -r; existing data preserved",
+  "attempts": [
+    {
+      "result": "startup failed",
+      "cause": "libnitrofetch.so requires __cxa_init_primary_exception, absent from Viro NDK 27 runtime"
+    },
+    {
+      "result": "C++ startup passed; Expo module registration failed",
+      "cause": "ImageManipulator prebuilt expects ReturnTypeKt.getIndirectConverter(Class, io.github.lukmccall.pika.PIntrospectionData); installed Core uses io.github.expo.pika"
+    },
+    {
+      "result": "final APK built; install not performed",
+      "cause": "USB device disconnected; adb reports device not found; Argent list-devices confirms absent"
+    },
+    {
+      "result": "final Expo source-build APK installed and launched after reconnection",
+      "evidence": "native process stayed alive; Metro debugger attached to isolated checkout; OpenXR FOCUSED; Rive Surface attached, frames rendered, error overlay cleared"
+    },
+    {
+      "result": "rive.5 live-ray APK installed successfully",
+      "validation": "latest launch stalled at Moyo splash; CDP connected but evaluation timed out; controller and native layout acceptance pending"
+    },
+    {
+      "result": "Horizon-enabled APK installed and JS runtime responds",
+      "horizonBuild": true,
+      "horizonDevice": true,
+      "appWindow": "APK declares 1024dp \u00d7 640dp; default orientation"
+    }
+  ],
+  "finalApkSha256": "8ffb944b02059661ff364277b42d172333ed731653c82725daf700a502d91705",
+  "finalCppRuntimeExportsRequiredSymbol": true,
+  "expoAndroidBuildFromSource": [
+    ".*"
+  ],
+  "rendering": "Rive fractions pixels present in both eye views in headset capture; comfort not independently qualified",
+  "controllerInput": "user reports drag works; ray cut off and fraction selection fails",
+  "bothEyeComfort": "not verified",
+  "nativePointerDiagnostic": {
+    "action": "direct Rive down/up at first piece artboard coordinates from authored RML",
+    "result": {
+      "piece0": 1,
+      "revision": 1,
+      "selectedCount": 0,
+      "frames": 7
+    },
+    "implication": "native pointer reaches Rive; authored count converter fails on Android despite desktop tests"
+  },
+  "candidateFixes": [
+    "Live hit testing for input-only drags; arm64 renderer built and installed",
+    "Rive count converter group: nine desktop cases pass; native count retry pending",
+    "Viewer-relative placement; scaled and clipped grip label validated with Viro MCP preview"
+  ],
+  "visualEvidencePath": "/Users/mikevocalz/rive-panel-device-evidence/quest-rive-before-label-fix.png",
+  "currentBlocker": "Controller drag remains captured (Moving panel); user must release and select to qualify input. Capture was inverted/off-axis; normal worn-view framing acceptance pending.",
+  "horizon": {
+    "isHorizonBuild": true,
+    "isHorizonDevice": true,
+    "width": "1024dp",
+    "height": "640dp",
+    "orientation": "default"
+  },
+  "latestRiveRuntime": {
+    "frames": 80,
+    "errorOverlay": "cleared",
+    "initialPosition": [
+      0.0391463273061126,
+      -0.20500807631760837,
+      -1.8012112818561676
+    ],
+    "initialYaw": -2.181411139813117,
+    "gripLabel": "contained inside amber control in native capture",
+    "grabbed": true,
+    "owner": 1,
+    "selectedCount": 0
+  },
+  "latestVisualEvidencePath": "/Users/mikevocalz/rive-panel-device-evidence/quest-rive-horizon-layout.png"
+}

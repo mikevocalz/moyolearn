@@ -1,6 +1,16 @@
 # Rive panels inside Viro — continuation handoff
 
-Updated 2026-09-25. The Android Surface bridge, Nitro Rive renderer, native
+Updated 2026-09-25. **Latest steering:** React Native `0.88.0-rc.2`,
+with React/React DOM 19.3.0. Quest startup now passes after fixing duplicate
+React codegen classes, the shared C++ runtime, and Expo prebuilt ABI mismatch.
+Rive pixels were captured in both eye views and the user confirmed grip drag.
+**Selection remains open:** the user reports a cut-off ray and no selection;
+native diagnostics toggle a piece but leave `selectedCount` at zero. Candidate
+ray/count fixes built and installed. The final Horizon-enabled app launches, renders
+Rive, and confirms Horizon runtime detection. Release/selection acceptance remains pending.
+
+
+The Android Surface bridge, Nitro Rive renderer, native
 parent drag, editable fractions asset, and an isolated Moyo engineering route
 are implemented. Library builds and software checks pass as recorded below.
 The complete Tutor Room composition and Quest system-window companion from the
@@ -36,9 +46,9 @@ pushed or published. Original dirty checkouts were preserved.
 | Viro | `/Users/mikevocalz/viro-rive-panel` | `2bb0b5abbc707810ae2b49221917a80c7ee50b41` |
 | ViroCore | `/Users/mikevocalz/virocore-rive-panel` | `8e3750fed7b1c7f711baefe32a8a832df0e4672b` |
 
-Local implementation commits: Nitro `fd267d9` (native implementation `dacfa3f`),
-Viro `67b4180`, ViroCore `881483d7`. Full SHAs are in the artifact manifest.
-Moyo implementation commit: `1449bf3032c1f4405fbaa09f67c36e286ab6994f`; handoff metadata follows in a separate commit.
+Local implementation commits: Nitro `731d4b5` (native implementation `dacfa3f`),
+Viro `f7a1623`, ViroCore `881483d7`. Full SHAs are in the artifact manifest.
+Moyo latest implementation commit: `d7a904194fe1c3e7bf841d2c81ec4fedab54fdee`; initial probe: `1449bf3`. Handoff metadata follows separately.
 
 Cloud branch `claude/gifted-ptolemy-r9kv7p` was recovered in Moyo and Nitro.
 The interrupted Java changes were not on a Viro remote branch and were
@@ -48,12 +58,12 @@ copy that diff over this implementation. `/Users/mikevocalz/expo-pico` also has
 unrelated local changes and was not modified.
 
 Vendor packages in Moyo:
-- `vendors/reactvision-react-viro-3.0.0-moyo.5-rive.2.tgz`
-- `vendors/nitro-canvas-in-Vision-0.0.2-rive.2.tgz`
+- `vendors/reactvision-react-viro-3.0.0-moyo.5-rive.5.tgz`
+- `vendors/nitro-canvas-in-Vision-0.0.2-rive.3.tgz`
 
 The Viro package contains paired, rebuilt renderer and React bridge AARs.
 Installed renderer checksum was compared with the final source build and
-matches. Version `rive.2` includes the final targeted TypeScript emit; earlier `rive.0`/`rive.1` tarballs were intermediate and removed.
+matches. Viro `rive.5` adds the arm64 live-ray renderer; `rive.4` removed generated RN core classes from its handwritten bridge AAR; Nitro `rive.3` aligns its development tooling with RN rc.2. Earlier Rive tarballs were intermediate.
 Use the artifact manifest beside this file for checksums.
 
 ## Implementation
@@ -116,14 +126,14 @@ is `probes/rive-panel/rive/scene.rml`; app binary is
 | ViroCore `:viroreact:assembleRelease` | pass, final cancellation/hover changes included |
 | Final renderer ARM64 ELF alignment | all 14 libraries ≥ 16 KB |
 | Nitro `:nitro-canvas:assembleDebug` | pass |
-| Viro `:viro_bridge:assembleRelease` | pass against RN 0.88.0-rc.0 |
+| Viro `:viro_bridge:assembleRelease` | pass against RN 0.88.0-rc.2 |
 | Viro changed panel/hook/controller/button TypeScript | pass |
 | Moyo mobile TypeScript with final vendor packages | pass |
-| Moyo Android APK | blocked: host disk exhausted installing ExecuTorch NDK 28.2.13676358 |
-| Metro Android export | pass: 26 MB Hermes bundle and 143 KB Rive asset |
+| Moyo Android APK | rc.2/rive.5 build and install pass; Horizon-enabled final build passes (1379 tasks, 5m57s); installed and launched; runtime Horizon flags true |
+| Historical rc.0 Metro Android export | pass: 26 MB Hermes bundle and 143 KB Rive asset |
 | Frozen lockfile | pass; unrelated workspace dependency changes removed |
-| Packaged-source audit | 101 Nitro + 1,632 Viro tracked files match committed source |
-| Physical headset acceptance | Quest 3S detected by Argent, SDK 34; installation/input/rendering not tested |
+| Packaged-source audit | Nitro rive.3 prior audit passes; Viro rive.5 compares 1,643 packaged files with no mismatches |
+| Physical headset acceptance | Quest 3S startup and Rive surface pass; stereo capture shows panel; user confirms drag; selection fails and candidate fixes await retry |
 
 Whole Viro TypeScript still fails on pre-existing missing web-renderer sibling,
 missing `GpuProducer` exports and unrelated AR/web source errors. Packaging used
@@ -141,18 +151,55 @@ Reproduction:
 - Viro targeted emit: `node scripts/build-rive-types.cjs`; uses an explicit repository root so emitted files land under `dist/components`.
 - Combined Nitro/Viro: `python3 scripts/check-android.py --gradle /path/to/gradle-9.4.1/bin/gradle --viro ../viro-rive-panel`
   from Nitro; JDK 17, SDK 36, NDK 27.1.12297006. The generated host pins
-  AGP 9.2.1/Kotlin 2.3.21/RN 0.88.0-rc.0.
+  AGP 9.2.1/Kotlin 2.3.21/RN 0.88.0-rc.2.
 - Moyo: `pnpm install --filter mobile... --ignore-scripts`, then
   `pnpm --filter mobile typecheck`. Android uses the existing Expo 58 preview
   dependency set, not a wholesale SDK upgrade. Prebuild used local
   `expo-template-bare-minimum-58.0.7.tgz` with `--platform android --no-install`.
-  JDK 17: `./gradlew :app:assemblePicoDebug -PreactNativeArchitectures=arm64-v8a`.
+  JDK 17: `./gradlew :app:assembleQuestDebug -PreactNativeArchitectures=arm64-v8a --max-workers=2 --no-parallel`.
 
-## Device gate and remaining work
+## Device results and remaining work
 
-After software checks, Argent detected the attached **Quest 3S**, Android SDK 34. No app was installed, launched or interacted with in this session. The initial `assemblePicoDebug` attempt (before identification) failed because the Mac ran out of disk space installing ExecuTorch’s NDK 28.2.13676358. Only generated output/downloads created by this task were removed; roughly 2.7 GB remained at the last check. The user was asked to free another 8–10 GB.
+After software checks, Argent detected the attached **Quest 3S**, Android SDK 34.
+The rc.2 Quest APK built successfully (975 tasks, 6m34s after reducing native
+build concurrency) and installed with `adb install -r`, preserving app data.
+Argent launch exposed two app startup issues before the Rive scene:
 
-Next: after freeing space, use JDK 17 and SDK at `/Users/mikevocalz/Library/Android/sdk`, run `./gradlew :app:assembleQuestDebug -PreactNativeArchitectures=arm64-v8a` from `apps/mobile/android`. Use the Quest flavor for the attached device, inspect the resulting manifest, then install preserving existing app data and launch through Argent. Keep Metro tied to this isolated Moyo checkout. A fresh APK is required; testing the old installed app would not validate these changes.
+1. Viro's bundled NDK 27 `libc++_shared.so` was selected, but Nitro Fetch needs
+   `__cxa_init_primary_exception`. The app now stages NDK 28.2.13676358's runtime
+   as its own JNI source and selects it first. The config plugin preserves this
+   through prebuild. Rebuilt APK exports the symbol; the next launch passed it.
+2. Prebuilt Expo Image Manipulator 57.0.9 expects the old `io.github.lukmccall.pika`
+   converter signature while installed Expo Core uses `io.github.expo.pika`.
+   Android Expo autolinking now uses `buildFromSource: [".*"]` to align modules
+   with installed Core. Source rebuild passed (1,359 tasks, 53s). After reconnection, installation and launch passed; no repeat startup crash.
+
+The earlier disk blocker was resolved by the user freeing space and installing
+NDK 28.2.13676358. Root RN override prevents nested RN 0.87 under Skia. Debug
+variants load development JS. Owned Metro is on 8082; the user's Metro 8081 is
+untouched. Task-owned adb reverse mappings are device 8081/8082 to host 8082.
+A rebuilt APK, not the original installed app, is used for validation.
+
+The Rive scene opened in `VRActivity`, OpenXR reached FOCUSED and reported
+valid views. Native Rive reported `surfaceAttached=true`, frames rendered,
+and no renderer error; the loading overlay cleared. A headset screencap shows
+the actual fractions panel in both eye views. Argent's screen-sharing backend
+crashed on the Quest (JNI null object); read-only `adb exec-out screencap` was
+used as the capture fallback. The room-containing capture remains outside git
+at `/Users/mikevocalz/rive-panel-device-evidence/quest-rive-before-label-fix.png`.
+Oversized Viro labels now use font 20 scaled to 0.25 with centered, clipped
+grip bounds; the Viro MCP preview confirms legibility and fit. Native capture is pending. An immersive Metro reload loses dynamic `VRQuestScene` registration;
+restart the app through MainActivity and open the probe route instead.
+
+User report: **“ray is being cut off when trying to select (which im unable to)
+but drag works.”** Direct native Rive down/up at authored artboard (150,310)
+changed `piece0=1` and `revision=1`, but `selectedCount=0`. This isolates a count
+binding failure even before qualifying controller mapping. The asset now uses
+operation converter groups instead of bound formula tokens; all nine desktop
+cases pass. ViroCore also keeps hit tests live for `dragTransform=none` instead
+of freezing the press hit. Both are candidates until retried on Android.
+The Quest reconnected and the updated APK installed successfully. The latest observed app launch
+remained at the Moyo splash; headset awake/worn state was not established; debugger evaluation timed out. Do not mark selection passed.
 
 Validate
 actual Rive pixels, both-eye rendering, ray hover/press/drag/release/cancel,
@@ -171,3 +218,66 @@ were not runtime-qualified by this Android continuation.
 Rollback is to restore Moyo's baseline package manifests/lock and the existing
 `3.0.0-moyo.4` vendor reference, and omit the engineering route. Do not roll the
 original dirty worktrees back or discard their unrelated changes.
+
+## Latest layout and configuration checkpoint
+
+User requested Viro MCP explicitly. Added and authenticated the Viro endpoint in Codex;
+called `reactviro_get_component_props` for ViroText/ARScene, `reactviro_validate_scene`
+(zero errors/warnings), and `reactviro_render_scene` for the panel/grip layout.
+The preview uses placeholder panel geometry, not the Android-only Rive producer.
+Evidence: `probes/rive-panel/evidence/build/viro-mcp-layout-{validation.json,render.png}`.
+No headset camera image was sent to the MCP server.
+
+Initial placement now derives from the camera: 1.8 m horizontally ahead, 0.2 m
+below the viewer's eyes, facing the viewer. It is set once and remains draggable
+in world space. This replaces the fixed world y=1.45 assumption that put it too high
+for the seated viewer. Grip label physical bounds remain 0.6 × 0.09 m, with font 20
+scaled to 0.25 for readable glyphs. Diagnostic text ignores ray events.
+
+The latest Quest build passed (1359 tasks, 37 seconds), install preserved app data.
+ViroCore renderer rebuild is arm64-only; all 14 ELF libraries pass 16 KB alignment.
+
+**User invariant:** use expo-horizon-core for Meta and preserve app window dimensions;
+keep device orientation `default`. The base checkout had no Horizon configuration.
+User provided the Software Mansion repository and requested integration. Added
+`expo-horizon-core@57.0.2` with documented 1024 × 640 dp dimensions, default orientation,
+supported Quest devices, and head tracking. These are app window settings, independent
+of Rive scene dimensions. The local Viro plugin now merges the Quest manifest instead
+of replacing it, preserving Horizon metadata and layout. Plugin order avoids duplicate
+Gradle device flavor declarations. An explicit BuildConfig feature patch is required
+by AGP 9; see `patches/expo-horizon-core@57.0.2.patch`.
+
+The shared Expo Android library now carries the device dimension so Horizon's Quest
+variant can propagate from the app. Same-dimension fallbacks use `matchingFallbacks`,
+not `missingDimensionStrategy` (the latter silently selected mobile in the first build).
+The no-dimension PICO fallback excludes Expo once Expo owns the dimension.
+
+A reusable `with-spatial-window-contract` prebuild guard checks declared Horizon/PICO
+window dimensions and default launcher orientation after manifest writers. Six Node
+regression checks cover preservation, overwritten manifests, changed size, immersive
+apps without declared sizes, forced landscape, and loss of the required Horizon plugin. The user also requested this
+prevention for other apps; a shared rule was saved in `~/.codex/AGENTS.md`. This is a
+future-work safeguard, not a claim that every other local app was audited or changed.
+
+Final Horizon-enabled APK: build passes; actual APK manifest inspected with aapt2 confirms 1024 × 640 dp and MainActivity screenOrientation=-1 (default). Compiled Horizon Quest Config.isHorizonBuild=true. Typecheck, frozen lockfile install and six configuration regressions pass. The APK retains the required NDK 28 C++ exception symbol. Device acceptance is tracked separately.
+
+## Latest physical-device result
+
+Horizon-enabled APK installed with `adb install -r`; app data preserved. Fresh Metro
+on owned port 8082 and app launch respond normally. Runtime reports both
+`ExpoHorizon.isHorizonBuild=true` and `isHorizonDevice=true`. Opened the engineering
+route (the cold-start deep link needed an explicit Expo Router replace after startup).
+Native Rive rendered 80 frames and cleared its error/loading overlay. Initial pose was
+[0.0391, -0.2050, -1.8012], yaw -2.1814°, derived from the initial camera pose.
+
+The native capture confirms that the scaled grip label fits inside the amber button.
+It is an inverted/off-axis capture (camera up.y=-0.73), so it cannot qualify the normal
+worn viewing position. At the latest observation, the grip remained captured by source 1
+and displayed “Moving panel”; Rive selection is intentionally disabled during a grab.
+The user was asked to wear/keep the headset awake and check release, selection and
+normal panel placement. No reply confirming those behaviors was received yet. Do not
+mark controller selection or the native count converter fix passed.
+
+Private capture: `/Users/mikevocalz/rive-panel-device-evidence/quest-rive-horizon-layout.png`.
+No room capture is committed or sent to Viro MCP. Owned Metro 8082 and device reverse
+ports 8081→8082 / 8082→8082 remain available for the user's check; preserve user Metro8081.

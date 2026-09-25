@@ -13,7 +13,7 @@
  * ── 1. THE FLAVOUR DIMENSION ─────────────────────────────────────────────────
  * `android/react_viro/build.gradle` and `android/viro_renderer/build.gradle` in
  * the fork both declare `flavorDimensions += "device"` with `mobile`, `pico` and
- * `quest`. The app module declares no flavours at all, so Gradle has three
+ * `quest`. The app originally declared no flavours, so Gradle had three
  * candidate variants and no attribute to choose between them, and configuration
  * fails before a single source file is compiled:
  *
@@ -24,8 +24,9 @@
  *         - picoDebugApiElements
  *         - questDebugApiElements
  *
- * `missingDimensionStrategy` is the documented answer: it tells a consumer with
- * no flavours which value of someone else's dimension to request.
+ * A consumer without this dimension uses `missingDimensionStrategy`. This app
+ * now declares device flavors through its platform plugins, so it instead uses
+ * `matchingFallbacks` and lets Quest select the actual Horizon Quest variant.
  *
  * WHICH VALUE, AND WHY IT DOES NOT MATTER AS MUCH AS IT LOOKS. All three
  * flavours in those two build files resolve to the same artifact — each is
