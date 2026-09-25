@@ -67,7 +67,7 @@ export function RivePanelProbe({ bytes, resetKey = 0 }: { bytes: ArrayBuffer; re
     {status !== '' && <ViroNode position={[0, 0, 0.004]}>
       <ViroQuad width={1.2} height={0.8} materials={['riveProbeFallback']} />
       <ViroText text={status + '\nUse the amber grip to move this panel.'} position={[0, 0, 0.002]}
-        width={1.08} height={0.4} style={{ fontSize: 26, color: '#ffffff', textAlign: 'center' }} />
+        width={1.08} height={0.4} style={{ fontSize: 9, color: '#ffffff', textAlign: 'center' }} />
     </ViroNode>}
     <ViroQuad position={[0, -0.48, 0.01]} width={0.65} height={0.12} materials={['riveProbeGrip']}
       dragType="FixedDistanceOrigin" dragTransform="parent" onDrag={() => {}}
@@ -79,8 +79,8 @@ export function RivePanelProbe({ bytes, resetKey = 0 }: { bytes: ArrayBuffer; re
         } else if (state === 2 && sourceId === owner.current) void finish();
       }} />
     <ViroText text={grabbed ? 'Moving panel' : 'Hold to move'} position={[0, -0.48, 0.016]}
-      width={0.6} height={0.09} ignoreEventHandling style={{ fontSize: 22, color: '#112d44', textAlign: 'center' }} />
+      width={0.6} height={0.09} ignoreEventHandling style={{ fontSize: 5, color: '#112d44', textAlign: 'center' }} />
     <ViroText text={`Selected in Rive: ${count}/4`} position={[0, -0.64, 0]}
-      width={1.2} height={0.12} style={{ fontSize: 22, color: '#ffffff', textAlign: 'center' }} />
+      width={1.2} height={0.12} style={{ fontSize: 5, color: '#ffffff', textAlign: 'center' }} />
   </ViroNode>;
 }
