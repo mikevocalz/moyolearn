@@ -48,9 +48,6 @@ import type {
 const FEED_LIMIT = 50;
 const QUEUE_LIMIT = 200;
 
-/** Two guardians per learner is normal (doc 06 §2); a whole classroom is not. */
-const WARDS_LIMIT = 50;
-
 async function withPayload<T>(
   fn: (payload: Awaited<ReturnType<typeof getPayload>>) => Promise<T>,
 ): Promise<T> {
@@ -249,7 +246,9 @@ export const loadGuardianIncidents: LoadGuardianIncidents = async (ctx) =>
         guardianAuthId: { equals: ctx.learnerId },
         status: { equals: 'active' },
       },
-      limit: WARDS_LIMIT,
+      // Every ward: this list decides which children the guardian can see,
+      // so a first page would silently shut them out of the rest.
+      pagination: false,
     });
 
     const learnerIds = wards.map((ward) => ward.learnerAuthId);

@@ -46,9 +46,15 @@ import type {
 } from '@acme/app/server';
 import { auth } from './auth';
 
-const WARDS_LIMIT = 50;
-/** A person belongs to a handful of orgs; this bounds the pathological row. */
-const MEMBERSHIP_LIMIT = 50;
+/*
+  A PAGE, NOT A CAP. Both lists below are read to the end, because a truncated
+  one is a wrong deletion plan rather than a shorter one: the holder's erasure
+  removes EVERY guardianship and consent row carrying their id, so a sole ward
+  past a capped page would be left as a live learner with no guardian, and a
+  sole-owned org past it would be left with no owner. The page size only
+  bounds each round trip.
+*/
+const MEMBERSHIP_PAGE = 50;
 
 async function withPayload<T>(
   fn: (payload: Awaited<ReturnType<typeof getPayload>>) => Promise<T>,
@@ -130,7 +136,7 @@ export const loadAccountOwnership: LoadAccountOwnership = async (ctx) => {
         guardianAuthId: { equals: ctx.learnerId },
         status: { equals: 'active' },
       },
-      limit: WARDS_LIMIT,
+      pagination: false,
     });
     return docs as GuardianshipRow[];
   });
@@ -169,11 +175,19 @@ export const loadAccountOwnership: LoadAccountOwnership = async (ctx) => {
     });
   }
 
-  const memberships = await context.adapter.findMany<MemberRow>({
-    model: 'member',
-    where: [{ field: 'userId', value: ctx.learnerId }],
-    limit: MEMBERSHIP_LIMIT,
-  });
+  const memberships: MemberRow[] = [];
+  for (let offset = 0; ; offset += MEMBERSHIP_PAGE) {
+    const page = await context.adapter.findMany<MemberRow>({
+      model: 'member',
+      where: [{ field: 'userId', value: ctx.learnerId }],
+      limit: MEMBERSHIP_PAGE,
+      offset,
+      // A stable order, or rows can slide between pages as the offset moves.
+      sortBy: { field: 'id', direction: 'asc' },
+    });
+    memberships.push(...page);
+    if (page.length < MEMBERSHIP_PAGE) break;
+  }
 
   const soleOwnedOrgs: string[] = [];
   for (const membership of memberships) {
