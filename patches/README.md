@@ -54,3 +54,10 @@ work on a macrotask too, so the deferred write still sometimes beat the commit,
 which is exactly the intermittency that made it look fixed. Nothing reads
 `lastUnhandledLink` before the commit (the container renders `fallback` until
 that promise resolves), so deep-link handling is unchanged.
+
+## `expo-horizon-core@57.0.2`
+
+Enables `android.buildFeatures.buildConfig` explicitly. The module declares
+`META_HORIZON_APP_ID` in `defaultConfig`, but AGP 9 disables BuildConfig generation
+by default and otherwise rejects the module during configuration. Remove this
+patch when the upstream module enables the feature itself.

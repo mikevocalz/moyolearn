@@ -40,11 +40,27 @@ allprojects {
   }
 }
 
+
+// Moyo: propagate device flavors through Expo to platform modules.
+project(":expo") {
+    plugins.withId("com.android.library") {
+        android {
+            flavorDimensions += "device"
+            productFlavors {
+                mobile { dimension "device" }
+                quest { dimension "device" }
+                pico { dimension "device"; matchingFallbacks = ["mobile"] }
+            }
+        }
+    }
+}
+
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"
 
 // expo-pico-core: subprojects missing-dim fallback
 subprojects { sub ->
+    if (sub.path == ":expo") return
     sub.plugins.withId("com.android.library") {
         sub.android {
             defaultConfig {

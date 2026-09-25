@@ -25,10 +25,13 @@
     "@sentry/react-native": "catalog:",
     "@tanstack/react-query": "catalog:",
     "expo": "catalog:",
+    "expo-asset": "58.0.3",
     "expo-background-task": "58.0.3",
     "expo-build-properties": "catalog:",
     "expo-drag-drop-content-view": "catalog:",
+    "expo-file-system": "58.0.0",
     "expo-font": "catalog:",
+    "expo-horizon-core": "57.0.2",
     "expo-image": "catalog:",
     "expo-linking": "catalog:",
     "expo-paste-input": "catalog:",
@@ -41,6 +44,7 @@
     "expo-task-manager": "58.0.4",
     "expo-updates": "catalog:",
     "lucide-react-native": "catalog:",
+    "nitro-canvas-in-Vision": "0.0.2-rive.3",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-native": "catalog:",
@@ -64,10 +68,7 @@
     "three": "catalog:",
     "typegpu": "0.12.5",
     "uniwind": "catalog:",
-    "zustand": "catalog:",
-    "nitro-canvas-in-Vision": "0.0.2-rive.3",
-    "expo-asset": "58.0.3",
-    "expo-file-system": "58.0.0"
+    "zustand": "catalog:"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",

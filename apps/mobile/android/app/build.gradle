@@ -99,14 +99,14 @@ android {
             minSdkVersion 32
             targetSdkVersion 34
             ndk { abiFilters 'arm64-v8a' }
-            missingDimensionStrategy 'device', 'mobile'
+            matchingFallbacks = ["mobile"]
         }
         quest {
             dimension "device"
             minSdkVersion 29
             targetSdkVersion 34
             ndk { abiFilters 'arm64-v8a' }
-            missingDimensionStrategy 'device', 'mobile'
+            matchingFallbacks = ["mobile"]
         }
     }
 
@@ -118,7 +118,6 @@ android {
     namespace 'com.moyolearn.app'
     defaultConfig {
         applicationId 'com.moyolearn.app'
-        missingDimensionStrategy 'device', 'pico'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

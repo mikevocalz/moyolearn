@@ -78,6 +78,7 @@ const {
   withAppBuildGradle,
   withDangerousMod,
   withSettingsGradle,
+  withProjectBuildGradle,
 } = require('@expo/config-plugins');
 
 /** The fork's dimension name, and the flavour this app asks for. See §1. */
@@ -164,7 +165,15 @@ function withViroFlavorStrategy(config) {
       );
     }
 
-    const contents = gradleConfig.modResults.contents;
+    let contents = gradleConfig.modResults.contents;
+    if (contents.includes('productFlavors')) {
+      // The app owns the device dimension. A missing-dimension override here
+      // forces Quest dependencies onto mobile; use same-dimension fallbacks.
+      contents = contents.replace(/missingDimensionStrategy 'device', 'mobile'/g, 'matchingFallbacks = ["mobile"]');
+      contents = contents.replace(/^[ \t]*missingDimensionStrategy 'device', 'pico'\s*$/gm, '');
+      gradleConfig.modResults.contents = contents;
+      return gradleConfig;
+    }
     const strategy = `missingDimensionStrategy '${FLAVOR_DIMENSION}', '${FLAVOR}'`;
     if (contents.includes(strategy)) return gradleConfig;
 
@@ -295,10 +304,9 @@ function withPicoVrActivityCategories(config) {
  * hide the phone build from every phone and tablet.
  *
  * The requirement is a headset fact, so it moves to the headset source sets.
- * `@expo-pico/core` already declares it in `src/pico/`. Quest has no source
- * set of its own, so this writes `src/quest/AndroidManifest.xml` with just
- * that one feature. Whole-file, because this plugin owns that file and prebuild
- * runs more than once.
+ * `@expo-pico/core` declares it in `src/pico/`; expo-horizon-core owns the
+ * Quest manifest and its app window dimensions. Merge the feature without
+ * overwriting Horizon's generated configuration.
  */
 const HEADTRACKING = 'android.hardware.vr.headtracking';
 
@@ -321,30 +329,58 @@ function withHeadtrackingOnHeadsetsOnly(config) {
         'quest',
       );
       fs.mkdirSync(questDir, { recursive: true });
-      await AndroidConfig.Manifest.writeAndroidManifestAsync(
-        path.join(questDir, 'AndroidManifest.xml'),
-        {
-          manifest: {
-            $: { 'xmlns:android': 'http://schemas.android.com/apk/res/android' },
-            'uses-feature': [
-              {
-                $: {
-                  'android:name': HEADTRACKING,
-                  'android:required': 'true',
-                  'android:version': '1',
-                },
-              },
-            ],
-          },
-        },
-      );
+      // expo-horizon-core owns Quest window dimensions and manifest metadata.
+      // Merge this feature; never replace its manifest with a feature-only file.
+      const manifestPath = path.join(questDir, 'AndroidManifest.xml');
+      const questManifest = fs.existsSync(manifestPath)
+        ? await AndroidConfig.Manifest.readAndroidManifestAsync(manifestPath)
+        : { manifest: { $: { 'xmlns:android': 'http://schemas.android.com/apk/res/android' } } };
+      const features = questManifest.manifest['uses-feature'] ?? [];
+      questManifest.manifest['uses-feature'] = [
+        ...features.filter(entry => entry.$?.['android:name'] !== HEADTRACKING),
+        { $: { 'android:name': HEADTRACKING, 'android:required': 'true', 'android:version': '1' } },
+      ];
+      await AndroidConfig.Manifest.writeAndroidManifestAsync(manifestPath, questManifest);
       return modConfig;
     },
   ]);
 }
 
+// Expo is an intermediate Android library. Carry the app device flavor through
+// it so its Horizon dependency selects quest, rather than PICO's mobile fallback.
+const EXPO_DEVICE_FLAVORS = `
+// Moyo: propagate device flavors through Expo to platform modules.
+project(":expo") {
+    plugins.withId("com.android.library") {
+        android {
+            flavorDimensions += "device"
+            productFlavors {
+                mobile { dimension "device" }
+                quest { dimension "device" }
+                pico { dimension "device"; matchingFallbacks = ["mobile"] }
+            }
+        }
+    }
+}
+`;
+function withExpoDeviceFlavors(config) {
+  return withProjectBuildGradle(config, mod => {
+    // Expo now owns this dimension; do not apply the no-dimension fallback.
+    mod.modResults.contents = mod.modResults.contents.replace(
+      'subprojects { sub ->\n    sub.plugins.withId("com.android.library")',
+      'subprojects { sub ->\n    if (sub.path == ":expo") return\n    sub.plugins.withId("com.android.library")',
+    );
+    if (!mod.modResults.contents.includes('// Moyo: propagate device flavors')) {
+      const anchor = 'apply plugin: "expo-root-project"';
+      if (!mod.modResults.contents.includes(anchor)) throw new Error('Expo root plugin anchor missing');
+      mod.modResults.contents = mod.modResults.contents.replace(anchor, EXPO_DEVICE_FLAVORS + '\n' + anchor);
+    }
+    return mod;
+  });
+}
+
 module.exports = function withViroAndroidLinkage(config) {
   return withHeadtrackingOnHeadsetsOnly(
-    withPicoVrActivityCategories(withViroCppRuntime(withViroDebugVariants(withViroFlavorStrategy(withViroSettingsPaths(config))))),
+    withExpoDeviceFlavors(withPicoVrActivityCategories(withViroCppRuntime(withViroDebugVariants(withViroFlavorStrategy(withViroSettingsPaths(config)))))),
   );
 };

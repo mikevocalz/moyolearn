@@ -120,6 +120,7 @@ const config: ExpoConfig = {
     favicon: './assets/images/favicon.png',
   },
   plugins: [
+    ['./plugins/with-spatial-window-contract', { metaTarget: true }],
     'expo-router',
     /*
       NO VIDEO STACK IS REGISTERED, AND THAT IS A PAUSE RATHER THAN A CHOICE.
@@ -272,6 +273,20 @@ const config: ExpoConfig = {
 
       SOT: ~/expo-pico/README.md · ~/expo-pico/packages/expo-pico-core/README.md
     */
+    './plugins/with-viro-android-linkage',
+    // Meta app window sizing is independent of world-space Rive panels.
+    // Keep these dimensions fixed unless explicitly changing the app window contract.
+    [
+      'expo-horizon-core',
+      {
+        horizonAppId: process.env.HORIZON_APP_ID ?? '',
+        supportedDevices: 'quest2|questpro|quest3|quest3s',
+        defaultWidth: '1024dp',
+        defaultHeight: '640dp',
+        disableVrHeadtracking: false,
+        allowBackup: false,
+      },
+    ],
     [
       '@expo-pico/core',
       {
@@ -300,7 +315,6 @@ const config: ExpoConfig = {
         passthrough: true,
       },
     ],
-    './plugins/with-viro-android-linkage',
     [
       '@reactvision/react-viro',
       /*
