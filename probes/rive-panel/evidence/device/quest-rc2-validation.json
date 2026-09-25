@@ -60,7 +60,7 @@
     "rive.9: independent per-controller cyan surface-hit dots, rendered after scene pixels, non-selectable and hidden on tracking loss/no-hit; installed with app data retained"
   ],
   "visualEvidencePath": "/Users/mikevocalz/rive-panel-device-evidence/quest-rive-before-label-fix.png",
-  "currentBlocker": "No blocker for requested endpoint appearance. Per-controller code is installed; capture shows one aimed controller ray and dot in both eyes. Both controllers simultaneously and full lesson count acceptance have not been independently retested.",
+  "currentBlocker": "New count fix lacks device acceptance because debugger inspection timed out/disconnected.",
   "horizon": {
     "isHorizonBuild": true,
     "isHorizonDevice": true,
@@ -105,5 +105,28 @@
     "status": "",
     "visualResult": "Cyan beam reaches panel with visible endpoint dot in both eye views; amber handle says Hold to move.",
     "privateCapturePath": "/Users/mikevocalz/rive-panel-device-evidence/quest-rive9-hit-dots.png"
+  },
+  "rive10Count": {
+    "before": {
+      "pieces": [
+        0,
+        1,
+        1,
+        0
+      ],
+      "selectedCount": 0,
+      "hostCount": 0,
+      "revision": 5
+    },
+    "fix": "observe piece properties, derive in Zustand, synchronize Rive aggregate",
+    "softwareChecks": {
+      "countTests": 3,
+      "windowContractTests": 6,
+      "mobileTypecheck": "pass",
+      "viroTypeEmit": "pass",
+      "installedPackageFilesMatched": 1644
+    },
+    "deviceValidation": "pending: Argent evaluation timed out; reconnect lost CDP after restart",
+    "nativeApk": "unchanged; rive.10 JS served by Metro 8082"
   }
 }

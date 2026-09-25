@@ -1,6 +1,12 @@
 # Rive panels inside Viro — continuation handoff
 
-Updated 2026-09-25. **Latest steering:** React Native `0.88.0-rc.2`,
+Updated 2026-09-25. **Latest count fix:** rive.10 derives selection from native
+`piece0..piece3` into Zustand and updates the host label and Rive aggregate.
+Local tests and typechecks pass; the new device check was blocked by Argent
+CDP timeouts/disconnection after restart. Physical count acceptance is pending.
+User requirement: always Zustand, no React `useState`.
+
+**Latest steering:** React Native `0.88.0-rc.2`,
 with React/React DOM 19.3.0. Quest startup now passes after fixing duplicate
 React codegen classes, the shared C++ runtime, and Expo prebuilt ABI mismatch.
 Rive pixels were captured in both eye views and the user confirmed grip drag.
@@ -378,3 +384,26 @@ Both controllers simultaneously were not captured; code stores separate dot node
 per source. The prior user confirmation covers selection; the full lesson count
 acceptance remains separate. Moyo implementation `26f1e6e`; final APK SHA256
 `b41cbf44d853ddfb3a13523081a0c09bc02832dcded64ee04630bf171be20f81`.
+
+## Selection count and Zustand (rive.10)
+
+The live Quest runtime showed pieces `[0,1,1,0]` and revision 5 while both
+`selectedCount` and the host label remained zero. The authored aggregate is not
+a reliable selection source on Android. The new binding observes all four piece
+properties, hydrates existing selections immediately, derives the total in a
+per-instance Zustand store, and writes the same total back to Rive. Rive still
+owns the actual selection interactions. Retired callbacks cannot mutate a
+replacement probe. Native disposal clears the observers.
+
+All state introduced in the route, probe, and shared `useCanvasPanel` hook now
+uses Zustand; imperative handles remain refs. Viro `8d7c645` packages this as
+`3.0.0-moyo.5-rive.10` with Zustand 5.0.15. Moyo consumes the local tarball.
+The existing native APK/AARs are unchanged; current JS is served from the owned
+Metro on port 8082. Horizon remains 1024dp × 640dp, default orientation.
+
+Validation: three count/lifecycle tests and six window-contract tests pass;
+mobile typecheck and targeted Viro type emit pass; all 1644 installed package
+files match the tarball. Quest is attached, but Argent inspection timed out and
+the restart/reconnect attempt lost CDP. Do not claim this new count behavior was
+verified physically. Next check: select/deselect pieces and Reset; both counters
+should agree from 0 through 4, including after moving/releasing the panel.

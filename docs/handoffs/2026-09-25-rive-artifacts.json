@@ -1,12 +1,12 @@
 {
   "date": "2026-09-25",
-  "status": "rive.9 installed and launched; cyan ray and endpoint dot visible over panel in both-eye capture; user confirmed selection working on rive.8",
+  "status": "rive.10 count binding and Zustand migration complete; software checks pass; new device count validation blocked by CDP timeout/disconnection",
   "sources": {
     "moyo": {
       "path": "/Users/mikevocalz/moyo-rive-panel",
       "base": "5a161b3739b026b565dcf9f0eaa5545ad69bcce1",
       "branch": "codex/rive-viro-panel",
-      "implementationCommit": "26f1e6e77f6b7254d38c0285f2d03b4073bf975d"
+      "implementationCommit": "4dacb385911131aacd1b8effa0776b9562a7bc26"
     },
     "nitro": {
       "path": "/Users/mikevocalz/nitro-rive-panel",
@@ -18,7 +18,7 @@
       "path": "/Users/mikevocalz/viro-rive-panel",
       "base": "2bb0b5abbc707810ae2b49221917a80c7ee50b41",
       "branch": "codex/rive-viro-panel",
-      "implementationCommit": "2a394ab30c429a733ad77985f33d43c6f50c9f45"
+      "implementationCommit": "8d7c645a17a54f8d65389e881d256fa045b39678"
     },
     "virocore": {
       "path": "/Users/mikevocalz/virocore-rive-panel",
@@ -29,9 +29,9 @@
   },
   "artifacts": [
     {
-      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/reactvision-react-viro-3.0.0-moyo.5-rive.9.tgz",
-      "size": 47215205,
-      "sha256": "3738d503d6e6c82b27210f1599d9fab586302eda82a186affa15e3225b919718"
+      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/reactvision-react-viro-3.0.0-moyo.5-rive.10.tgz",
+      "size": 47216198,
+      "sha256": "cc0e263a9e2086a486b591fb09be54e3752bdb2f71928ede2152aee530667374"
     },
     {
       "path": "/Users/mikevocalz/moyo-rive-panel/vendors/nitro-canvas-in-Vision-0.0.2-rive.3.tgz",
@@ -65,7 +65,8 @@
     "reactDom": "19.3.0",
     "nitroModules": "0.37.1",
     "riveAndroid": "11.12.1",
-    "expoHorizonCore": "57.0.2"
+    "expoHorizonCore": "57.0.2",
+    "zustand": "5.0.15"
   },
   "rendererAbis": [
     "arm64-v8a"
@@ -75,5 +76,6 @@
     "defaultHeight": "640dp",
     "orientation": "default",
     "verifiedInApk": true
-  }
+  },
+  "jsDelivery": "rive.10 via Metro 8082; existing rive.9 native APK unchanged"
 }
