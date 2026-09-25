@@ -141,7 +141,7 @@ config.resolver.resolveRequest = (context, moduleName, platform) => {
   can no longer find its `.bin` sibling.
 */
 config.resolver.assetExts = Array.from(
-  new Set([...config.resolver.assetExts, "glb", "gltf", "bin", "jpg", "hdr"]),
+  new Set([...config.resolver.assetExts, "glb", "gltf", "bin", "jpg", "hdr", "riv"]),
 );
 
 // withUniwindConfig must be the OUTERMOST wrapper — it has to see the final

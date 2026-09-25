@@ -1,0 +1,146 @@
+{
+  "schema": 1,
+  "artboard": "Fractions",
+  "stateMachine": "Lesson",
+  "viewModel": {
+    "name": "Default",
+    "viewModel": "Lesson",
+    "properties": [
+      {
+        "name": "lessonTitle",
+        "path": "lessonTitle",
+        "type": "string",
+        "value": "Make one half",
+        "changed": false
+      },
+      {
+        "name": "selectedCount",
+        "path": "selectedCount",
+        "type": "number",
+        "value": 0,
+        "changed": true
+      },
+      {
+        "name": "hintVisible",
+        "path": "hintVisible",
+        "type": "boolean",
+        "value": false,
+        "changed": false
+      },
+      {
+        "name": "grabbed",
+        "path": "grabbed",
+        "type": "boolean",
+        "value": false,
+        "changed": false
+      },
+      {
+        "name": "reducedMotion",
+        "path": "reducedMotion",
+        "type": "boolean",
+        "value": false,
+        "changed": false
+      },
+      {
+        "name": "lastAction",
+        "path": "lastAction",
+        "type": "string",
+        "value": "piece1",
+        "changed": true
+      },
+      {
+        "name": "piece0",
+        "path": "piece0",
+        "type": "number",
+        "value": 0,
+        "changed": true
+      },
+      {
+        "name": "piece1",
+        "path": "piece1",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "piece2",
+        "path": "piece2",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "piece3",
+        "path": "piece3",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hover0",
+        "path": "hover0",
+        "type": "number",
+        "value": 1,
+        "changed": true
+      },
+      {
+        "name": "hover1",
+        "path": "hover1",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hover2",
+        "path": "hover2",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hover3",
+        "path": "hover3",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "down0",
+        "path": "down0",
+        "type": "number",
+        "value": 0,
+        "changed": true
+      },
+      {
+        "name": "down1",
+        "path": "down1",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "down2",
+        "path": "down2",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "down3",
+        "path": "down3",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "revision",
+        "path": "revision",
+        "type": "number",
+        "value": 2,
+        "changed": true
+      }
+    ]
+  },
+  "globals": [],
+  "nested": []
+}

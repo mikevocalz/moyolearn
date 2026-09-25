@@ -1,0 +1,21 @@
+{
+  "nitro": {
+    "filesComparedWithCommittedSource": 101,
+    "mismatches": []
+  },
+  "viro": {
+    "filesComparedWithCommittedSource": 1632,
+    "mismatches": []
+  },
+  "vendorVersions": {
+    "viro": "3.0.0-moyo.5-rive.2",
+    "nitro": "0.0.2-rive.2"
+  },
+  "deviceDiscovery": {
+    "model": "Quest 3S",
+    "androidSdk": 34,
+    "connected": true,
+    "appInstalledByThisSession": false,
+    "headsetAcceptance": "not tested; fresh APK blocked by host disk space"
+  }
+}
