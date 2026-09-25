@@ -57,6 +57,50 @@ Work branches: `claude/gifted-ptolemy-r9kv7p` in each repo.
   uploaded, so the probe's RML, `panelMath.ts` and reference images are not
   available here.
 
+- **The external texture would sample black even once wired.**
+  `VROExternalSurfaceTexture` declares `VROTextureType::Texture2D`, but on
+  Android its substrate is `GL_TEXTURE_EXTERNAL_OES`. ViroCore only switches a
+  diffuse material to `samplerExternalOES` for `TextureEGLImage`
+  (`VROShaderCapabilities.cpp:77`, as `VROVideoTextureAVP` does), so a plain
+  diffuse binding samples an external texture through `sampler2D`.
+- **Drag cannot move a group from a grip today.** ViroCore drags the first
+  ancestor with drag enabled and moves that node itself
+  (`VROInputControllerBase::getNodeToHandleEvent`, `processDragging`). A grip
+  can only move itself, and giving the canvas quad `onDrag` for pointer moves
+  drags the quad away. Fix in progress: a node `dragTransform` of
+  `self | parent | none`.
+
+## Required: update the Nitro stack to current packages
+
+The user asked for this explicitly. Versions as checked on 2026-09-25:
+
+| Package | Pinned / resolved in nitro-canvas-in-Vision | Latest |
+|---|---|---|
+| `react-native-nitro-modules` | `"*"`, lockfile resolves 0.35.9 | 0.37.1 |
+| `nitrogen` (codegen) | `"*"` | 0.37.1 |
+| `app.rive:rive-android` (`android/build.gradle`) | 10.1.2 | 11.12.1 |
+| `@rive-app/react-native` (Rive's Nitro runtime) | not a dependency | 0.4.20 |
+| `react-native` (devDependency) | 0.85.3 | Moyo runs 0.88 |
+
+What the update involves:
+
+- Pin `react-native-nitro-modules` and `nitrogen` to the same exact version,
+  not `"*"`. Nitro's generated code and runtime must match, and `"*"` lets two
+  installs resolve differently.
+- Regenerate `nitrogen/generated/` with `npm run specs` after the bump. Never
+  hand-edit generated files.
+- Match the Nitro runtime version to what Moyo resolves, because the app and
+  this module share one `react-native-nitro-modules`.
+- Move to `rive-android` 11.x and port `RiveCanvasBridge` to its render API.
+  10.x already removed `Artboard.drawSkia`, which is why `draw()` is empty.
+- Consider whether `@rive-app/react-native` (Rive's own Nitro runtime) can
+  supply the file, artboard and state machine, so this package only owns the
+  offscreen target. Confirm against its source that it can render offscreen
+  before relying on it.
+- Fix the pre-existing typecheck failures: `@webgpu/types` is named in
+  `tsconfig.json` but not installed, and `RiveProducer.ts` uses `performance`
+  with no lib that declares it.
+
 ## Environment limits (cloud container)
 
 - No headset, so every Quest and PICO gate is **unverified**.
@@ -68,9 +112,9 @@ Work branches: `claude/gifted-ptolemy-r9kv7p` in each repo.
 
 | Step | State |
 |---|---|
-| 1. Baseline and trace | in progress |
-| 2. Native texture bridge | not started |
-| 3. Input mapping and drag | not started |
+| 1. Baseline and trace | done (findings above) |
+| 2. Native texture bridge | in progress: ViroCore texture type and JNI |
+| 3. Input mapping and drag | input mapping **done**, pushed as nitro-canvas-in-Vision `4d32d43` on `claude/gifted-ptolemy-r9kv7p`: `src/viroreact/panelMath.ts`, rewritten `useCanvasInViroInput`, 23 passing `node:test` cases (`node --experimental-strip-types --test test/*.test.ts`). Grip drag (`dragTransform`) in progress in ViroCore. |
 | 4. Moyo Tutor Room | not started |
 | 5. Spatial polish | not started |
 | Device gates (Quest, PICO) | unverified; needs a headset |
