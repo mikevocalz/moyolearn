@@ -70,9 +70,13 @@
  *               settings.gradle projectDir monorepo hoisted node-linker pico
  *               config-plugin prebuild react_viro viro_renderer
  */
+const fs = require('node:fs');
+const path = require('node:path');
 const {
+  AndroidConfig,
   withAndroidManifest,
   withAppBuildGradle,
+  withDangerousMod,
   withSettingsGradle,
 } = require('@expo/config-plugins');
 
@@ -235,6 +239,66 @@ function withPicoVrActivityCategories(config) {
   });
 }
 
+/**
+ * Keeps the phone build installable on phones.
+ *
+ * With QUEST in its `xRMode`, Viro's plugin writes
+ * `android.hardware.vr.headtracking` with `required="true"` into the MAIN
+ * manifest (the fork's `withViroAndroid.ts`, "Quest-specific features"). Every
+ * flavour inherits main, including `mobile`, so Play's device filter would
+ * hide the phone build from every phone and tablet.
+ *
+ * The requirement is a headset fact, so it moves to the headset source sets.
+ * `@expo-pico/core` already declares it in `src/pico/`. Quest has no source
+ * set of its own, so this writes `src/quest/AndroidManifest.xml` with just
+ * that one feature. Whole-file, because this plugin owns that file and prebuild
+ * runs more than once.
+ */
+const HEADTRACKING = 'android.hardware.vr.headtracking';
+
+function withHeadtrackingOnHeadsetsOnly(config) {
+  config = withAndroidManifest(config, (manifestConfig) => {
+    const manifest = manifestConfig.modResults.manifest;
+    manifest['uses-feature'] = (manifest['uses-feature'] ?? []).filter(
+      (entry) => entry.$?.['android:name'] !== HEADTRACKING,
+    );
+    return manifestConfig;
+  });
+
+  return withDangerousMod(config, [
+    'android',
+    async (modConfig) => {
+      const questDir = path.join(
+        modConfig.modRequest.platformProjectRoot,
+        'app',
+        'src',
+        'quest',
+      );
+      fs.mkdirSync(questDir, { recursive: true });
+      await AndroidConfig.Manifest.writeAndroidManifestAsync(
+        path.join(questDir, 'AndroidManifest.xml'),
+        {
+          manifest: {
+            $: { 'xmlns:android': 'http://schemas.android.com/apk/res/android' },
+            'uses-feature': [
+              {
+                $: {
+                  'android:name': HEADTRACKING,
+                  'android:required': 'true',
+                  'android:version': '1',
+                },
+              },
+            ],
+          },
+        },
+      );
+      return modConfig;
+    },
+  ]);
+}
+
 module.exports = function withViroAndroidLinkage(config) {
-  return withPicoVrActivityCategories(withViroFlavorStrategy(withViroSettingsPaths(config)));
+  return withHeadtrackingOnHeadsetsOnly(
+    withPicoVrActivityCategories(withViroFlavorStrategy(withViroSettingsPaths(config))),
+  );
 };
