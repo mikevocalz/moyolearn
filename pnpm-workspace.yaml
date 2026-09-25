@@ -13,7 +13,7 @@ packages:
 #     1.31 changed the serde structs ("expected an object-like struct named
 #     Specifier"). uniwind pins 1.30.1 exactly; this holds metro-config to the
 #     same copy.
-#   react / react-dom 19.2.8 — ALSO in `catalog:` below. An override outranks
+#   react / react-dom 19.3.0 — ALSO in `catalog:` below. An override outranks
 #     the catalog silently, so a bump in one place without the other gives a
 #     workspace whose declared version is not its installed one. Bump both.
 #   @expo/dom-webview 57.0.1 — expo declares it an optional peer at "*", so a
@@ -33,11 +33,11 @@ onlyBuiltDependencies:
 
 # One version per dependency, declared once. Every package.json uses `catalog:`.
 catalog:
-  # runtime core (Expo SDK 57 stable — RN 0.86.2)
+  # runtime core (Expo SDK 58 preview — RN 0.88.0-rc.2)
   "@anthropic-ai/sdk": 0.126.0
-  react: 19.2.8
-  react-dom: 19.2.8
-  react-native: 0.88.0-rc.0
+  react: 19.3.0
+  react-dom: 19.3.0
+  react-native: 0.88.0-rc.2
   react-native-web: 0.21.2
   expo: 58.0.0-preview.3
   "@expo/metro-runtime": ~58.0.3

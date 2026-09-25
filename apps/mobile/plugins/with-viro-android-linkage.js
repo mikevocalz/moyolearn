@@ -186,6 +186,21 @@ function withViroFlavorStrategy(config) {
   });
 }
 
+// RN defaults to a variant literally named "debug". With device flavors,
+// declare each debug variant so the headset loads development JS from Metro.
+function withViroDebugVariants(config) {
+  return withAppBuildGradle(config, (gradleConfig) => {
+    const contents = gradleConfig.modResults.contents;
+    const variants = 'debuggableVariants = ["mobileDebug", "picoDebug", "questDebug"]';
+    if (contents.includes(variants)) return gradleConfig;
+    if (!/^react\s*\{/m.test(contents)) {
+      throw new Error('with-viro-android-linkage: missing React Gradle extension');
+    }
+    gradleConfig.modResults.contents = contents.replace(/^react\s*\{/m, `react {\n    ${variants}`);
+    return gradleConfig;
+  });
+}
+
 /**
  * Tells a PICO that `VRActivity` is the immersive one.
  *
@@ -299,6 +314,6 @@ function withHeadtrackingOnHeadsetsOnly(config) {
 
 module.exports = function withViroAndroidLinkage(config) {
   return withHeadtrackingOnHeadsetsOnly(
-    withPicoVrActivityCategories(withViroFlavorStrategy(withViroSettingsPaths(config))),
+    withPicoVrActivityCategories(withViroDebugVariants(withViroFlavorStrategy(withViroSettingsPaths(config)))),
   );
 };

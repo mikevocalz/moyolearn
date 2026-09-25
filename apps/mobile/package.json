@@ -21,7 +21,7 @@
     "@expo/ui": "catalog:",
     "@gorhom/bottom-sheet": "catalog:",
     "@react-navigation/native": "catalog:",
-    "@reactvision/react-viro": "3.0.0-moyo.5-rive.2",
+    "@reactvision/react-viro": "3.0.0-moyo.5-rive.4",
     "@sentry/react-native": "catalog:",
     "@tanstack/react-query": "catalog:",
     "expo": "catalog:",
@@ -65,7 +65,7 @@
     "typegpu": "0.12.5",
     "uniwind": "catalog:",
     "zustand": "catalog:",
-    "nitro-canvas-in-Vision": "0.0.2-rive.2",
+    "nitro-canvas-in-Vision": "0.0.2-rive.3",
     "expo-asset": "58.0.3",
     "expo-file-system": "58.0.0"
   },
