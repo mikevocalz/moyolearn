@@ -1,8 +1,10 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, { useEffect, useMemo, useRef } from 'react';
 import { ViroNode, ViroQuad, ViroText, ViroMaterials, ViroRivePanel } from '@reactvision/react-viro';
 import { worldMatrix, type RivePanel, type RiveCanvasOptions } from 'nitro-canvas-in-Vision';
 
-export type PanelPose = { position: [number, number, number]; rotation: [number, number, number] };
+import { useStore } from 'zustand';
+import { bindRiveSelection, createRivePanelStore, type PanelPose } from './rive-panel-store';
+export type { PanelPose } from './rive-panel-store';
 
 
 /** Mount below a Viro scene with one ViroController. Supply compiled Fractions .riv bytes.
@@ -14,11 +16,15 @@ export function RivePanelProbe({ bytes, initialPose, resetKey = 0 }: { bytes: Ar
   const panel = useRef<RivePanel | null>(null);
   const owner = useRef<number | null>(null);
   const mounted = useRef(true);
-  const [pose, setPose] = useState<PanelPose>(initialPose);
-  const [grabbed, setGrabbed] = useState(false);
-  const [status, setStatus] = useState('Loading lesson…');
-  const [count, setCount] = useState(0);
-  const [materialsReady, setMaterialsReady] = useState(false);
+  const storeRef = useRef<ReturnType<typeof createRivePanelStore> | null>(null);
+  storeRef.current ??= createRivePanelStore(initialPose);
+  const store = storeRef.current;
+  const pose = useStore(store, state => state.pose);
+  const grabbed = useStore(store, state => state.grabbed);
+  const status = useStore(store, state => state.status);
+  const count = useStore(store, state => state.count);
+  const materialsReady = useStore(store, state => state.materialsReady);
+  const stopSelection = useRef<(() => void) | null>(null);
   const source = useMemo<RiveCanvasOptions>(() => ({ rivBytes: bytes, artboard: 'Fractions', stateMachine: 'Lesson', fit: 'contain' }), [bytes]);
   const panelWorld = useMemo(() => worldMatrix([pose]), [pose]);
   const finish = async () => {
@@ -27,18 +33,19 @@ export function RivePanelProbe({ bytes, initialPose, resetKey = 0 }: { bytes: Ar
     panel.current?.setBoolean('grabbed', false);
     try {
       const next = await group.current?.getTransformAsync();
-      if (mounted.current && next) setPose({ position: next.position, rotation: next.rotation });
+      if (mounted.current && next) store.setState({ pose: { position: next.position, rotation: next.rotation } });
     } catch (error) {
-      if (mounted.current) setStatus(`Could not save panel position: ${String(error)}`);
-    } finally { if (mounted.current) setGrabbed(false); }
+      if (mounted.current) store.setState({ status: `Could not save panel position: ${String(error)}` });
+    } finally { if (mounted.current) store.setState({ grabbed: false }); }
   };
   useEffect(() => {
     mounted.current = true;
     ViroMaterials.createMaterials({ riveProbeGrip: { diffuseColor: '#ffc168', lightingModel: 'Constant' },
       riveProbeFallback: { diffuseColor: '#112d44', lightingModel: 'Constant' } });
-    setMaterialsReady(true);
+    store.setState({ materialsReady: true });
     return () => {
       mounted.current = false;
+      stopSelection.current?.();
       // Runtime lifetime belongs to ViroRivePanel, including removal of its observers.
       panel.current = null;
       ViroMaterials.deleteMaterials(['riveProbeGrip', 'riveProbeFallback']);
@@ -49,8 +56,8 @@ export function RivePanelProbe({ bytes, initialPose, resetKey = 0 }: { bytes: Ar
     const id = setInterval(() => {
       const runtime = panel.current;
       if (!runtime) return;
-      if (runtime.error) setStatus(`Lesson unavailable: ${runtime.error}`);
-      else if (runtime.renderedFrames > 0) setStatus('');
+      if (runtime.error) store.setState({ status: `Lesson unavailable: ${runtime.error}` });
+      else if (runtime.renderedFrames > 0) store.setState({ status: '' });
     }, 500);
     return () => clearInterval(id);
   }, []);
@@ -59,10 +66,11 @@ export function RivePanelProbe({ bytes, initialPose, resetKey = 0 }: { bytes: Ar
     <ViroRivePanel source={source} width={1.2} height={0.8} position={[0, 0, 0]}
       resolution={{ width: 960, height: 640 }}
       input={{ panelWorld, enabled: !grabbed && status === '', resetKey }}
-      onError={(error) => setStatus(`Lesson unavailable: ${error.message}`)}
+      onError={(error) => store.setState({ status: `Lesson unavailable: ${error.message}` })}
       onRuntimeReady={(runtime) => {
         panel.current = runtime;
-        runtime.observeNumber('selectedCount', setCount);
+        stopSelection.current?.();
+        stopSelection.current = bindRiveSelection(runtime, store);
       }} />
     {status !== '' && <ViroNode position={[0, 0, 0.004]}>
       <ViroQuad width={1.2} height={0.8} materials={['riveProbeFallback']} />
@@ -74,7 +82,7 @@ export function RivePanelProbe({ bytes, initialPose, resetKey = 0 }: { bytes: Ar
       onClickState={(state, _position, sourceId) => {
         if (state === 1 && owner.current === null) {
           owner.current = sourceId;
-          setGrabbed(true);
+          store.setState({ grabbed: true });
           panel.current?.setBoolean('grabbed', true);
         } else if (state === 2 && sourceId === owner.current) void finish();
       }} />
