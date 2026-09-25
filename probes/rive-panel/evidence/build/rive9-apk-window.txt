@@ -1,0 +1,5 @@
+            A: http://schemas.android.com/apk/res/android:name(0x01010003)="com.moyolearn.app.MainActivity" (Raw: "com.moyolearn.app.MainActivity")
+            A: http://schemas.android.com/apk/res/android:screenOrientation(0x0101001e)=-1
+                A: http://schemas.android.com/apk/res/android:defaultWidth(0x010104f4)=1024.000000dp
+                A: http://schemas.android.com/apk/res/android:defaultHeight(0x010104f5)=640.000000dp
+            A: http://schemas.android.com/apk/res/android:screenOrientation(0x0101001e)=0
