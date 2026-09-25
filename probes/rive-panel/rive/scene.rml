@@ -803,58 +803,30 @@
       <DataBindContext sourcePathIds="0:40-0:110" propertyKey="777" />
     </FormulaTokenValue>
   </DataConverterFormula>
-  <DataConverterFormula id="0:85" name="Next count 0">
-    <FormulaTokenInput />
-    <FormulaTokenOperation />
-    <FormulaTokenValue operationValue="1" />
-    <FormulaTokenOperation operationType="1" />
-    <FormulaTokenParenthesisOpen />
-    <FormulaTokenValue operationValue="2" />
-    <FormulaTokenOperation operationType="2" />
-    <FormulaTokenValue>
-      <DataBindContext sourcePathIds="0:40-0:107" propertyKey="777" />
-    </FormulaTokenValue>
-    <FormulaTokenParenthesisClose />
-  </DataConverterFormula>
-  <DataConverterFormula id="0:86" name="Next count 1">
-    <FormulaTokenInput />
-    <FormulaTokenOperation />
-    <FormulaTokenValue operationValue="1" />
-    <FormulaTokenOperation operationType="1" />
-    <FormulaTokenParenthesisOpen />
-    <FormulaTokenValue operationValue="2" />
-    <FormulaTokenOperation operationType="2" />
-    <FormulaTokenValue>
-      <DataBindContext sourcePathIds="0:40-0:108" propertyKey="777" />
-    </FormulaTokenValue>
-    <FormulaTokenParenthesisClose />
-  </DataConverterFormula>
-  <DataConverterFormula id="0:87" name="Next count 2">
-    <FormulaTokenInput />
-    <FormulaTokenOperation />
-    <FormulaTokenValue operationValue="1" />
-    <FormulaTokenOperation operationType="1" />
-    <FormulaTokenParenthesisOpen />
-    <FormulaTokenValue operationValue="2" />
-    <FormulaTokenOperation operationType="2" />
-    <FormulaTokenValue>
-      <DataBindContext sourcePathIds="0:40-0:109" propertyKey="777" />
-    </FormulaTokenValue>
-    <FormulaTokenParenthesisClose />
-  </DataConverterFormula>
-  <DataConverterFormula id="0:88" name="Next count 3">
-    <FormulaTokenInput />
-    <FormulaTokenOperation />
-    <FormulaTokenValue operationValue="1" />
-    <FormulaTokenOperation operationType="1" />
-    <FormulaTokenParenthesisOpen />
-    <FormulaTokenValue operationValue="2" />
-    <FormulaTokenOperation operationType="2" />
-    <FormulaTokenValue>
-      <DataBindContext sourcePathIds="0:40-0:110" propertyKey="777" />
-    </FormulaTokenValue>
-    <FormulaTokenParenthesisClose />
-  </DataConverterFormula>
+  <DataConverterGroup id="0:85" name="Next count 0">
+    <DataConverterGroupItem converterId="0:82" />
+    <DataConverterGroupItem converterId="0:200" />
+    <DataConverterGroupItem converterId="0:200" />
+  </DataConverterGroup>
+  <DataConverterOperationViewModel id="0:200" name="Subtract piece 0" operationType="subtract" sourcePathIds="0:40-0:107" />
+  <DataConverterGroup id="0:86" name="Next count 1">
+    <DataConverterGroupItem converterId="0:82" />
+    <DataConverterGroupItem converterId="0:201" />
+    <DataConverterGroupItem converterId="0:201" />
+  </DataConverterGroup>
+  <DataConverterOperationViewModel id="0:201" name="Subtract piece 1" operationType="subtract" sourcePathIds="0:40-0:108" />
+  <DataConverterGroup id="0:87" name="Next count 2">
+    <DataConverterGroupItem converterId="0:82" />
+    <DataConverterGroupItem converterId="0:202" />
+    <DataConverterGroupItem converterId="0:202" />
+  </DataConverterGroup>
+  <DataConverterOperationViewModel id="0:202" name="Subtract piece 2" operationType="subtract" sourcePathIds="0:40-0:109" />
+  <DataConverterGroup id="0:88" name="Next count 3">
+    <DataConverterGroupItem converterId="0:82" />
+    <DataConverterGroupItem converterId="0:203" />
+    <DataConverterGroupItem converterId="0:203" />
+  </DataConverterGroup>
+  <DataConverterOperationViewModel id="0:203" name="Subtract piece 3" operationType="subtract" sourcePathIds="0:40-0:110" />
   <DataConverterOperationValue id="0:82" name="Next revision" operationType="0" operationValue="1" />
   <DataConverterToString id="0:83" name="Count text" decimals="0" round="true" />
   <DataConverterBooleanNegate id="0:84" name="Toggle hint" />
