@@ -186,6 +186,37 @@ function withViroFlavorStrategy(config) {
   });
 }
 
+// Keep the runtime choice reproducible through Expo prebuild.
+function withViroCppRuntime(config) {
+  return withAppBuildGradle(config, (gradleConfig) => {
+    if (!gradleConfig.modResults.contents.includes('stageMoyoCppRuntime')) {
+      gradleConfig.modResults.contents += `
+// Moyo: use one modern C++ runtime for all native modules. Viro's AAR carries
+// NDK 27 libc++, but Nitro Fetch requires __cxa_init_primary_exception (NDK 28).
+def moyoRuntimeNdk = new File(android.sdkDirectory, "ndk/28.2.13676358")
+def moyoRuntimeHost = new File(moyoRuntimeNdk, "toolchains/llvm/prebuilt").listFiles()?.find {
+    new File(it, "sysroot/usr/lib").isDirectory()
+}
+if (moyoRuntimeHost == null) {
+    throw new GradleException("Install Android NDK 28.2.13676358 for the shared C++ runtime")
+}
+def moyoRuntimeOutput = layout.buildDirectory.dir("generated/moyoCppRuntime")
+def moyoRuntimeTask = tasks.register("stageMoyoCppRuntime", Copy) {
+    into(moyoRuntimeOutput)
+    ["arm64-v8a": "aarch64-linux-android", "armeabi-v7a": "arm-linux-androideabi",
+     "x86": "i686-linux-android", "x86_64": "x86_64-linux-android"].each { abi, triple ->
+        from(new File(moyoRuntimeHost, "sysroot/usr/lib/\${triple}/libc++_shared.so")) { into(abi) }
+    }
+}
+android.sourceSets.main.jniLibs.srcDir(moyoRuntimeOutput.get().asFile)
+android.packagingOptions.jniLibs.pickFirsts.add("**/libc++_shared.so")
+tasks.named("preBuild").configure { dependsOn(moyoRuntimeTask) }
+`;
+    }
+    return gradleConfig;
+  });
+}
+
 // RN defaults to a variant literally named "debug". With device flavors,
 // declare each debug variant so the headset loads development JS from Metro.
 function withViroDebugVariants(config) {
@@ -314,6 +345,6 @@ function withHeadtrackingOnHeadsetsOnly(config) {
 
 module.exports = function withViroAndroidLinkage(config) {
   return withHeadtrackingOnHeadsetsOnly(
-    withPicoVrActivityCategories(withViroDebugVariants(withViroFlavorStrategy(withViroSettingsPaths(config)))),
+    withPicoVrActivityCategories(withViroCppRuntime(withViroDebugVariants(withViroFlavorStrategy(withViroSettingsPaths(config))))),
   );
 };
