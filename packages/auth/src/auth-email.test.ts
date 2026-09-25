@@ -7,14 +7,16 @@
 
 import assert from 'node:assert/strict';
 import { createHash } from 'node:crypto';
-import { describe, it } from 'node:test';
+import { describe, it, mock } from 'node:test';
 import {
+  AuthEmailSendError,
   escapeHtml,
   idempotencyKeyFor,
   readAuthEmailConfig,
   resetPasswordEmail,
   sendAuthEmail,
   sendResetPasswordFor,
+  sendVerificationEmailFor,
   verificationEmail,
   type AuthEmailConfig,
   type FetchLike,
@@ -245,6 +247,70 @@ describe('sending', () => {
       }),
       /HTTP 502/,
     );
+  });
+
+  it('throws AuthEmailSendError carrying the kind and status', async () => {
+    const { fetch } = stubFetch(new Response('{"message":"rate limited"}', { status: 429 }));
+    await assert.rejects(
+      sendAuthEmail(CONFIG, resetPasswordEmail('p@example.com', 'https://x/r'), {
+        idempotencyKey: 'reset-abc',
+        fetch,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof AuthEmailSendError);
+        assert.equal(error.name, 'AuthEmailSendError');
+        assert.equal(error.kind, 'password-reset');
+        assert.equal(error.status, 429);
+        return true;
+      },
+    );
+  });
+
+  /*
+    A DNS or TLS failure used to escape as a bare `TypeError: fetch failed`,
+    which names neither the flow nor the provider in a log line.
+  */
+  it('wraps an unreachable API in the same class, with status 0', async () => {
+    const fetch = (async () => {
+      throw new TypeError('fetch failed: ENOTFOUND api.resend.com');
+    }) as FetchLike;
+
+    await assert.rejects(
+      sendAuthEmail(CONFIG, verificationEmail('p@example.com', 'https://x/v'), {
+        idempotencyKey: 'verify-abc',
+        fetch,
+      }),
+      (error: unknown) => {
+        assert.ok(error instanceof AuthEmailSendError);
+        assert.equal(error.status, 0);
+        assert.match(error.message, /could not be reached for the verification email/);
+        assert.ok(error.cause instanceof TypeError);
+        return true;
+      },
+    );
+  });
+
+  it('logs a callback failure under the stable class name, without the address, and rethrows', async (t) => {
+    const logged = mock.method(console, 'error', () => {});
+    t.after(() => logged.mock.restore());
+    const { fetch } = stubFetch(
+      new Response('{"message":"Invalid `to` field: parent@example.com"}', { status: 422 }),
+    );
+
+    await assert.rejects(
+      sendVerificationEmailFor(
+        CONFIG,
+        { user: { id: 'user-1', email: 'parent@example.com' }, url: 'https://x/v', token: 'tok' },
+        { fetch },
+      ),
+      (error: unknown) => error instanceof AuthEmailSendError,
+    );
+
+    assert.equal(logged.mock.callCount(), 1);
+    const line = logged.mock.calls[0]?.arguments ?? [];
+    assert.match(String(line[0]), /verification email failed for user user-1/);
+    assert.ok(!JSON.stringify(line).includes('parent@example.com'));
+    assert.deepEqual(line[1], { error: 'AuthEmailSendError', kind: 'verification', status: 422 });
   });
 });
 
