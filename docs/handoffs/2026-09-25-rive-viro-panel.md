@@ -4,13 +4,13 @@ Updated 2026-09-25. **Latest steering:** React Native `0.88.0-rc.2`,
 with React/React DOM 19.3.0. Quest startup now passes after fixing duplicate
 React codegen classes, the shared C++ runtime, and Expo prebuilt ABI mismatch.
 Rive pixels were captured in both eye views and the user confirmed grip drag.
-**Selection remains open:** the user reports a cut-off ray and no selection;
-native diagnostics toggle a piece but leave `selectedCount` at zero. Candidate
-ray/count fixes built and installed. The final Horizon-enabled app launches, renders
-Rive, and confirms Horizon runtime detection. The user confirmed “Moving panel” stays on after releasing all controller buttons.
-Renderer rive.7 fixes controller/hand input ownership and inactive-action cancellation
-for triggers, grips, and face buttons;
-the new APK built and installed; physical release/selection validation is pending.
+**Selection remains open:** the user reports Show hint does nothing and the ray
+passes through or stops short. The live rive.7 trace exposed missing ClickUp:
+normal presses delivered states 1 then 3 to JS, dropping state 2. The Android
+bridge inherited event coalescing, which merged consecutive Up/Clicked events.
+Rive.8 preserves click/hover edges and uses geometry-accurate panel hit tests.
+The absent grip release also left JS panelWorld at the initial pose after the
+native group moved. The new APK built and installed; physical acceptance remains open.
 
 
 The Android Surface bridge, Nitro Rive renderer, native
@@ -61,7 +61,7 @@ copy that diff over this implementation. `/Users/mikevocalz/expo-pico` also has
 unrelated local changes and was not modified.
 
 Vendor packages in Moyo:
-- `vendors/reactvision-react-viro-3.0.0-moyo.5-rive.7.tgz`
+- `vendors/reactvision-react-viro-3.0.0-moyo.5-rive.8.tgz`
 - `vendors/nitro-canvas-in-Vision-0.0.2-rive.3.tgz`
 
 The Viro package contains paired, rebuilt renderer and React bridge AARs.
@@ -315,3 +315,33 @@ with Expo Router after startup if the deep link loses to initial navigation.
 A direct native pointer diagnostic showed down0=1 but did not establish reliable
 click/count completion; do not claim the count converter is fixed. No physical
 release/selection acceptance has been received yet.
+
+## Missing release identified from live events
+
+Viro `5dbcd55` (rive.8) disables coalescing for ON_CLICK and ON_HOVER in
+ViroEventEmitter. RN 0.88.0-rc.2 Event.canCoalesce defaults to true. ClickUp and
+Clicked share the same view/event name and arrive consecutively, so merging
+removed the release required by both Rive and the grip pose-persistence callback.
+Other event types retain existing coalescing behavior.
+
+Evidence: `probes/rive-panel/evidence/device/quest-rive7-missing-release.json`.
+The native group moved to approximately [0.478, 0.791, -2.201], while the
+input matrix stayed at [-0.032, -0.192, -1.813]. Subsequent body hits were rejected
+as off-plane. This is stronger evidence than the earlier inactive-action theory;
+those cancellation fixes remain useful but did not address this delivery loss.
+
+Viro MCP confirmed highAccuracyEvents on ViroQuad. It is now enabled for the
+interactive Rive quad and grip: bounding-box hits need not lie on a rotated
+panel, while the input mapper requires plane accuracy within 1 cm. The temporary
+live setting and event wrappers are diagnostics only; the committed package and
+new app launch provide the lasting fix. Bridge build, targeted Viro type emit,
+mobile typecheck, and six window-contract tests passed. Physical acceptance must
+show down/up/clicked, Show hint toggle, and selection after moving/releasing grip.
+
+Rive.8 APK SHA256: `bc12146671e70a5dfa760ef996e624250ca41274e92167a858732e98db42532e`. APK build passed in 28 seconds (1379 tasks); installation preserved app data.
+
+Rive.8 launched successfully after allowing startup to settle; Argent confirms
+Rive frames rendered, owner=null, grabbed=false, and highAccuracyEvents=true
+on both body and grip. A temporary JS trace records click states and outgoing
+Rive pointer edges. The user was asked to toggle Show hint, move/release the
+grip, and toggle again. Await physical feedback before marking acceptance.

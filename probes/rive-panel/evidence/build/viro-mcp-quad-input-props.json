@@ -1,0 +1,250 @@
+{
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "# ViroQuad \u2014 Props\n\n_Source: `ViroWorkspace/viro/components/ViroQuad.tsx`_\n\n| Prop | Type | Optional | Description |\n|------|------|:---:|-------------|\n| **arShadowReceiver** | `boolean` | \u2713 |  |\n| **uvCoordinates** | `ViroUVCoordinate[]` | \u2713 |  |\n| **target** | `string` | \u2713 |  |\n| **pauseUpdates** | `boolean` | \u2713 |  |\n| **renderingOrder** | `number` | \u2713 |  |\n| **visible** | `boolean` | \u2713 |  |\n| **opacity** | `number` | \u2713 |  |\n| **ignoreEventHandling** | `boolean` | \u2713 |  |\n| **dragType** | `\\| \"FixedDistance\" \\| \"FixedDistanceOrigin\" \\| \"FixedToWorld\" \\| \"FixedToPlane\"` | \u2713 |  |\n| **dragPlane** | `{ planePoint: Viro3DPoint; planeNormal: Viro3DPoint; maxDistance: number; }` | \u2713 |  |\n| **viroTag** | `string` | \u2713 |  |\n| **position** | `Viro3DPoint` | \u2713 |  |\n| **scale** | `ViroScale` | \u2713 |  |\n| **rotation** | `ViroRotation` | \u2713 |  |\n| **scalePivot** | `Viro3DPoint` | \u2713 |  |\n| **rotationPivot** | `Viro3DPoint` | \u2713 |  |\n| **width** | `number` | \u2713 |  |\n| **height** | `number` | \u2713 |  |\n| **length** | `number` | \u2713 |  |\n| **materials** | `ViroSource[] \\| string \\| string[]` | \u2713 |  |\n| **animation** | `ViroAnimation` | \u2713 |  |\n| **transformBehaviors** | `string \\| string[]` | \u2713 |  |\n| **lightReceivingBitMask** | `number` | \u2713 |  |\n| **shadowCastingBitMask** | `number` | \u2713 |  |\n| **shaderModifiers** | `ViroShaderModifiers` | \u2713 |  |\n| **shaderOverrides** | `string[]` | \u2713 | Apply named materials to this node and all its children as a merge rather than a\nreplacement. Unlike `materials`, which  |\n| **materialUniforms** | `{ [key: string]: any } \\| ViroShaderUniform[]` | \u2713 |  |\n| **highAccuracyEvents** | `boolean` | \u2713 | Enables high accuracy event collision checks for this object.\nThis can be useful for complex 3D objects where the defaul |\n| **highAccuracyGaze** | `boolean` | \u2713 | DEPRECATION WARNING - highAccuracyGaze has been deprecated, please use highAccuracyEvents instead |\n| **physicsBody** | `ViroPhysicsBody` | \u2713 |  |\n\n## Events (19)\n\n- **onHover** \u2014 `( isHovering: boolean, position: Viro3DPoint, source: ViroSource ) => void`\n- **onGaze** \u2014 `( isHovering: boolean, position: Viro3DPoint, source: ViroSource ) => void` \u2014 Fires when the node is hovered by the eye-gaze ray specifically (Meta Quest\nPro, via XR_EXT_eye_gaze_interaction). Same \n- **onClick** \u2014 `(position: Viro3DPoint, source: ViroSource) => void`\n- **onClickState** \u2014 `( clickState: ViroClickState, position: Viro3DPoint, source: ViroSource ) => void`\n- **onTouch** \u2014 `( touchState: any, touchPos: Viro3DPoint, source: ViroSource ) => void`\n- **onScroll** \u2014 `(scrollPos: Viro3DPoint, source: ViroSource) => void`\n- **onSwipe** \u2014 `(swipeState: any, source: ViroSource) => void`\n- **onDrag** \u2014 `(dragToPos: Viro3DPoint, source: ViroSource) => void`\n- **onPinch** \u2014 `( pinchState: ViroPinchState, scaleFactor: number, source: ViroSource ) => void`\n- **onRotate** \u2014 `( rotateState: ViroRotateState, rotationFactor: number, source: ViroSource ) => void`\n- **onFuse** \u2014 `| { callback: (source: any) => void; timeToFuse?: number } | ((source: any) => void)`\n- **onCollision** \u2014 `() => void`\n- **onAnchorFound** \u2014 `(anchorFoundMap: ViroAnchorFoundMap) => void`\n- **onAnchorUpdated** \u2014 `(anchorUpdatedMap: ViroAnchorUpdatedMap) => void`\n- **onAnchorRemoved** \u2014 `((event?: ViroAnchor) => void) | (() => void)`\n- **onError** \u2014 `(event: NativeSyntheticEvent<ViroErrorEvent>) => void`\n- **onTransformUpdate** \u2014 `(position: Viro3DPoint) => void`\n- **onAnimationStartViro** \u2014 `() => void`\n- **onAnimationFinishViro** \u2014 `() => void`"
+      }
+    ],
+    "structuredContent": {
+      "component": "ViroQuad",
+      "path": "ViroWorkspace/viro/components/ViroQuad.tsx",
+      "props": [
+        {
+          "name": "arShadowReceiver",
+          "type": "boolean",
+          "optional": true
+        },
+        {
+          "name": "uvCoordinates",
+          "type": "ViroUVCoordinate[]",
+          "optional": true
+        },
+        {
+          "name": "target",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "pauseUpdates",
+          "type": "boolean",
+          "optional": true
+        },
+        {
+          "name": "renderingOrder",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "name": "visible",
+          "type": "boolean",
+          "optional": true
+        },
+        {
+          "name": "opacity",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "name": "ignoreEventHandling",
+          "type": "boolean",
+          "optional": true
+        },
+        {
+          "name": "dragType",
+          "type": "| \"FixedDistance\" | \"FixedDistanceOrigin\" | \"FixedToWorld\" | \"FixedToPlane\"",
+          "optional": true
+        },
+        {
+          "name": "dragPlane",
+          "type": "{ planePoint: Viro3DPoint; planeNormal: Viro3DPoint; maxDistance: number; }",
+          "optional": true
+        },
+        {
+          "name": "viroTag",
+          "type": "string",
+          "optional": true
+        },
+        {
+          "name": "position",
+          "type": "Viro3DPoint",
+          "optional": true
+        },
+        {
+          "name": "scale",
+          "type": "ViroScale",
+          "optional": true
+        },
+        {
+          "name": "rotation",
+          "type": "ViroRotation",
+          "optional": true
+        },
+        {
+          "name": "scalePivot",
+          "type": "Viro3DPoint",
+          "optional": true
+        },
+        {
+          "name": "rotationPivot",
+          "type": "Viro3DPoint",
+          "optional": true
+        },
+        {
+          "name": "width",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "name": "height",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "name": "length",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "name": "materials",
+          "type": "ViroSource[] | string | string[]",
+          "optional": true
+        },
+        {
+          "name": "animation",
+          "type": "ViroAnimation",
+          "optional": true
+        },
+        {
+          "name": "transformBehaviors",
+          "type": "string | string[]",
+          "optional": true
+        },
+        {
+          "name": "lightReceivingBitMask",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "name": "shadowCastingBitMask",
+          "type": "number",
+          "optional": true
+        },
+        {
+          "name": "shaderModifiers",
+          "type": "ViroShaderModifiers",
+          "optional": true
+        },
+        {
+          "name": "shaderOverrides",
+          "type": "string[]",
+          "optional": true,
+          "description": "Apply named materials to this node and all its children as a merge rather than a\nreplacement. Unlike `materials`, which swaps the root geometry's material out and\nwith it a GLB or VRX model's embedded textures and skinning, `shaderOverrides`\ncopies the named material's shader modifiers and rendering properties onto every\nmesh in the hierarchy, along with the colours, textures and PBR values the material\nwas registered with. A property the material definition does not name is left as\nthe model authored it, so a definition carrying only `diffuseColor` recolours a\ntextured model without discarding its texture.\n\nAccepts an array of material names previously registered via `ViroMaterials.createMaterials`."
+        },
+        {
+          "name": "materialUniforms",
+          "type": "{ [key: string]: any } | ViroShaderUniform[]",
+          "optional": true
+        },
+        {
+          "name": "highAccuracyEvents",
+          "type": "boolean",
+          "optional": true,
+          "description": "Enables high accuracy event collision checks for this object.\nThis can be useful for complex 3D objects where the default\nchecking method of bounding boxes do not provide adequate\ncollision detection coverage.\n\nNOTE: Enabling high accuracy event collision checks has a high\nperformance cost and should be used sparingly / only when\nnecessary.\n\nFlag is set to false by default."
+        },
+        {
+          "name": "highAccuracyGaze",
+          "type": "boolean",
+          "optional": true,
+          "description": "DEPRECATION WARNING - highAccuracyGaze has been deprecated, please use highAccuracyEvents instead"
+        },
+        {
+          "name": "physicsBody",
+          "type": "ViroPhysicsBody",
+          "optional": true
+        }
+      ],
+      "events": [
+        {
+          "name": "onHover",
+          "signature": "( isHovering: boolean, position: Viro3DPoint, source: ViroSource ) => void"
+        },
+        {
+          "name": "onGaze",
+          "signature": "( isHovering: boolean, position: Viro3DPoint, source: ViroSource ) => void",
+          "description": "Fires when the node is hovered by the eye-gaze ray specifically (Meta Quest\nPro, via XR_EXT_eye_gaze_interaction). Same payload as onHover but limited to\nthe eye-gaze input source; onHover still fires for every source (controllers,\nhands, eye gaze). Setting onGaze alone is enough to enable hover events on the\nnode. No-op on devices without eye tracking."
+        },
+        {
+          "name": "onClick",
+          "signature": "(position: Viro3DPoint, source: ViroSource) => void"
+        },
+        {
+          "name": "onClickState",
+          "signature": "( clickState: ViroClickState, position: Viro3DPoint, source: ViroSource ) => void"
+        },
+        {
+          "name": "onTouch",
+          "signature": "( touchState: any, touchPos: Viro3DPoint, source: ViroSource ) => void"
+        },
+        {
+          "name": "onScroll",
+          "signature": "(scrollPos: Viro3DPoint, source: ViroSource) => void"
+        },
+        {
+          "name": "onSwipe",
+          "signature": "(swipeState: any, source: ViroSource) => void"
+        },
+        {
+          "name": "onDrag",
+          "signature": "(dragToPos: Viro3DPoint, source: ViroSource) => void"
+        },
+        {
+          "name": "onPinch",
+          "signature": "( pinchState: ViroPinchState, scaleFactor: number, source: ViroSource ) => void"
+        },
+        {
+          "name": "onRotate",
+          "signature": "( rotateState: ViroRotateState, rotationFactor: number, source: ViroSource ) => void"
+        },
+        {
+          "name": "onFuse",
+          "signature": "| { callback: (source: any) => void; timeToFuse?: number } | ((source: any) => void)"
+        },
+        {
+          "name": "onCollision",
+          "signature": "() => void"
+        },
+        {
+          "name": "onAnchorFound",
+          "signature": "(anchorFoundMap: ViroAnchorFoundMap) => void"
+        },
+        {
+          "name": "onAnchorUpdated",
+          "signature": "(anchorUpdatedMap: ViroAnchorUpdatedMap) => void"
+        },
+        {
+          "name": "onAnchorRemoved",
+          "signature": "((event?: ViroAnchor) => void) | (() => void)"
+        },
+        {
+          "name": "onError",
+          "signature": "(event: NativeSyntheticEvent<ViroErrorEvent>) => void"
+        },
+        {
+          "name": "onTransformUpdate",
+          "signature": "(position: Viro3DPoint) => void"
+        },
+        {
+          "name": "onAnimationStartViro",
+          "signature": "() => void"
+        },
+        {
+          "name": "onAnimationFinishViro",
+          "signature": "() => void"
+        }
+      ]
+    }
+  },
+  "jsonrpc": "2.0",
+  "id": 1
+}

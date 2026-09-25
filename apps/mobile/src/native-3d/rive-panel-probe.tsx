@@ -70,7 +70,7 @@ export function RivePanelProbe({ bytes, initialPose, resetKey = 0 }: { bytes: Ar
         width={1.08} height={0.4} style={{ fontSize: 9, color: '#ffffff', textAlign: 'center' }} />
     </ViroNode>}
     <ViroQuad position={[0, -0.48, 0.01]} width={0.65} height={0.12} materials={['riveProbeGrip']}
-      dragType="FixedDistanceOrigin" dragTransform="parent" onDrag={() => {}}
+      highAccuracyEvents dragType="FixedDistanceOrigin" dragTransform="parent" onDrag={() => {}}
       onClickState={(state, _position, sourceId) => {
         if (state === 1 && owner.current === null) {
           owner.current = sourceId;

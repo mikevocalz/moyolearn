@@ -1,6 +1,6 @@
 {
   "date": "2026-09-25",
-  "status": "rive.7 built; installed-device acceptance pending for grip release, ray and selection",
+  "status": "rive.8 installed: click/hover coalescing disabled and exact plane hits enabled; physical release/hint/post-drag acceptance pending",
   "sources": {
     "moyo": {
       "path": "/Users/mikevocalz/moyo-rive-panel",
@@ -18,7 +18,7 @@
       "path": "/Users/mikevocalz/viro-rive-panel",
       "base": "2bb0b5abbc707810ae2b49221917a80c7ee50b41",
       "branch": "codex/rive-viro-panel",
-      "implementationCommit": "4453325d8f714003a62d4da8856128d71b5178a1"
+      "implementationCommit": "5dbcd55638956e9cef072f648c149b00d2eff093"
     },
     "virocore": {
       "path": "/Users/mikevocalz/virocore-rive-panel",
@@ -29,9 +29,9 @@
   },
   "artifacts": [
     {
-      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/reactvision-react-viro-3.0.0-moyo.5-rive.7.tgz",
-      "size": 47213546,
-      "sha256": "fb6af667bd8e6da1a49a40f7f7517ea4c88ec713ac9e315c7157d17b362bd60a"
+      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/reactvision-react-viro-3.0.0-moyo.5-rive.8.tgz",
+      "size": 47213925,
+      "sha256": "ae16f570a6406a8f325ccd3a4245206ee3f65be092d08e64c502fd62c974fd49"
     },
     {
       "path": "/Users/mikevocalz/moyo-rive-panel/vendors/nitro-canvas-in-Vision-0.0.2-rive.3.tgz",
@@ -45,8 +45,8 @@
     },
     {
       "path": "/Users/mikevocalz/viro-rive-panel/android/react_viro/react_viro-release.aar",
-      "size": 569633,
-      "sha256": "1c3ac45fe4c845e9b298cc494b915128152f0f98e7027a1b58ad8fe39c433502"
+      "size": 569789,
+      "sha256": "9dbd6a4f24361234b5f3ea2112db7409f3e88e356b9cad1a1ca73e6b120cfc3b"
     },
     {
       "path": "/Users/mikevocalz/moyo-rive-panel/apps/mobile/assets/rive/moyo_fractions.riv",
@@ -55,8 +55,8 @@
     },
     {
       "path": "/Users/mikevocalz/moyo-rive-panel/apps/mobile/android/app/build/outputs/apk/quest/debug/app-quest-debug.apk",
-      "size": 347002901,
-      "sha256": "7097f413b0464f81976b8fca926a98b6ebf1ff8061b3dd9cb47e5f1aec0a263b"
+      "size": 356991597,
+      "sha256": "bc12146671e70a5dfa760ef996e624250ca41274e92167a858732e98db42532e"
     }
   ],
   "runtime": {

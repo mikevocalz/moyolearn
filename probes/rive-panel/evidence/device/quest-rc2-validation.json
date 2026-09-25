@@ -32,7 +32,7 @@
       "appWindow": "APK declares 1024dp \u00d7 640dp; default orientation"
     }
   ],
-  "finalApkSha256": "7097f413b0464f81976b8fca926a98b6ebf1ff8061b3dd9cb47e5f1aec0a263b",
+  "finalApkSha256": "bc12146671e70a5dfa760ef996e624250ca41274e92167a858732e98db42532e",
   "finalCppRuntimeExportsRequiredSymbol": true,
   "expoAndroidBuildFromSource": [
     ".*"
@@ -55,10 +55,11 @@
     "Rive count converter group: nine desktop cases pass; native count retry pending",
     "Viewer-relative placement; scaled and clipped grip label validated with Viro MCP preview",
     "rive.6 suppresses hand events on controller-owned sides and cancels inactive float actions; renderer, host edge tests, APK build passed; installed with adb -r",
-    "rive.7 extends cancellation to A/B/X/Y/menu; APK and renderer builds pass; installed with app data preserved"
+    "rive.7 extends cancellation to A/B/X/Y/menu; APK and renderer builds pass; installed with app data preserved",
+    "rive.8: non-coalescing click/hover events, geometry-accurate Rive and grip quads; bridge build, APK build, typecheck and window contract passed"
   ],
   "visualEvidencePath": "/Users/mikevocalz/rive-panel-device-evidence/quest-rive-before-label-fix.png",
-  "currentBlocker": "rive.7 installed; physical release/selection acceptance pending. rive.6 debugger recovered after foreground/deep link; captured source 5 prompted extension to face-button cancellation.",
+  "currentBlocker": "rive.8 installed; verify release delivery and hint/post-drag selection. rive.7 live trace proved ClickUp lost to bridge event coalescing and stale JS panel pose after native drag.",
   "horizon": {
     "isHorizonBuild": true,
     "isHorizonDevice": true,
