@@ -47,9 +47,6 @@ import { reportRouteError } from './report-error';
  */
 const FEED_LIMIT = 50;
 
-/** Two guardians per learner is normal (doc 06 §2); a whole classroom is not. */
-const WARDS_LIMIT = 50;
-
 /**
  * How many recent rungs the escalation reads.
  *
@@ -237,7 +234,10 @@ export const loadGuardianSafetyEvents: LoadGuardianSafetyEvents = async (ctx) =>
         guardianAuthId: { equals: ctx.learnerId },
         status: { equals: 'active' },
       },
-      limit: WARDS_LIMIT,
+      // Every ward, not a first page: a capped list silently drops the later
+      // children's safety events from their guardian's feed. FEED_LIMIT below
+      // is what bounds the read.
+      pagination: false,
     });
 
     const learnerIds = wards.map((ward) => ward.learnerAuthId);
