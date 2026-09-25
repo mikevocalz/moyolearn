@@ -30,6 +30,8 @@ type Feedback = { kind: 'error'; text: string } | { kind: 'notice'; text: string
 const verifyNotice = (address: string) =>
   `Confirm your email to sign in. We just sent a new link to ${address}. Open it and you'll be signed in.`;
 
+const resendFailed = 'We couldn’t send a new link just now. Try again in a moment.';
+
 export function SignInContent() {
   const router = useRouter();
 
@@ -115,6 +117,28 @@ export function SignInContent() {
     }
   };
 
+  /*
+    THE MANUAL RESEND — same contract as the web form. `/send-verification-email`
+    answers `{ status: true }` for an unknown or already-verified address on
+    purpose (no enumeration), so the only failure it can report is the sender,
+    and that stays in the notice register with the button still available.
+  */
+  const resend = async () => {
+    if (submitting) return;
+    const address = email.trim();
+    patch({ submitting: true });
+    try {
+      const res = await authClient.sendVerificationEmail({ email: address, callbackURL: '/' });
+      patch({
+        feedback: { kind: 'notice', text: res.error ? resendFailed : verifyNotice(address) },
+      });
+    } catch {
+      patch({ feedback: { kind: 'notice', text: resendFailed } });
+    } finally {
+      patch({ submitting: false });
+    }
+  };
+
   return (
     <Section className="gap-group p-inset-roomy">
       <View className="gap-stack">
@@ -168,6 +192,15 @@ export function SignInContent() {
           >
             {feedback.text}
           </TWText>
+        ) : null}
+        {feedback?.kind === 'notice' ? (
+          <Button
+            title="Send the link again"
+            onPress={() => void resend()}
+            variant="ghost"
+            disabled={submitting}
+            fullWidth
+          />
         ) : null}
       </View>
 

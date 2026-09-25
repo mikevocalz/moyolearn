@@ -233,6 +233,34 @@ const reasonFrom = (body: string): string => {
   return body.slice(0, 300);
 };
 
+/**
+ * The one error class every send failure in this module throws. `name` is
+ * fixed so a log query or an alert can match on it rather than on message text
+ * that moves with the copy. `status` is 0 when Resend could not be reached at
+ * all — a DNS or TLS failure used to escape as a bare `TypeError: fetch failed`
+ * that named neither the flow nor the provider.
+ */
+export class AuthEmailSendError extends Error {
+  override readonly name = 'AuthEmailSendError';
+  readonly kind: AuthEmailKind;
+  readonly status: number;
+
+  // Plain fields, not parameter properties: the test runner and the proof
+  // script load this file under Node's strip-only TypeScript mode, which
+  // refuses `constructor(readonly x)` outright.
+  constructor(kind: AuthEmailKind, status: number, reason: string, options?: { cause?: unknown }) {
+    const { label } = AUTH_EMAIL_KINDS[kind];
+    super(
+      status === 0
+        ? `Resend could not be reached for the ${label} email: ${reason}`
+        : `Resend rejected the ${label} email (HTTP ${status}): ${reason}`,
+      options,
+    );
+    this.kind = kind;
+    this.status = status;
+  }
+}
+
 export interface SendAuthEmailOptions {
   idempotencyKey: string;
   /** Overrides `config.fetch`. Test seam; unused in production. */
@@ -240,9 +268,9 @@ export interface SendAuthEmailOptions {
 }
 
 /**
- * Send one message. Throws on a non-2xx so Better Auth's own background-task
- * handling surfaces the failure instead of a silent no-op that looks like a
- * delivered mail.
+ * Send one message. Throws `AuthEmailSendError` on a non-2xx or an unreachable
+ * API so Better Auth's own handling surfaces the failure instead of a silent
+ * no-op that looks like a delivered mail.
  *
  * The thrown message carries the status and Resend's reason but NEVER the
  * recipient. This string lands in Vercel's runtime logs, and a bounce-heavy
@@ -262,28 +290,36 @@ export async function sendAuthEmail(
   options: SendAuthEmailOptions,
 ): Promise<void> {
   const send = options.fetch ?? config.fetch ?? globalThis.fetch;
+  const redact = (text: string) => text.replaceAll(message.to, '[recipient]');
 
-  const response = await send(RESEND_ENDPOINT, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${config.apiKey}`,
-      'Content-Type': 'application/json',
-      'Idempotency-Key': options.idempotencyKey,
-    },
-    body: JSON.stringify({
-      from: config.from,
-      to: message.to,
-      subject: message.subject,
-      text: message.text,
-      html: message.html,
-    }),
-  });
+  let response: Response;
+  try {
+    response = await send(RESEND_ENDPOINT, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${config.apiKey}`,
+        'Content-Type': 'application/json',
+        'Idempotency-Key': options.idempotencyKey,
+      },
+      body: JSON.stringify({
+        from: config.from,
+        to: message.to,
+        subject: message.subject,
+        text: message.text,
+        html: message.html,
+      }),
+    });
+  } catch (cause) {
+    const reason = cause instanceof Error ? redact(cause.message) : 'unknown network failure';
+    throw new AuthEmailSendError(message.kind, 0, reason, { cause });
+  }
 
   if (response.ok) return;
-
-  const reason = reasonFrom(await response.text()).replaceAll(message.to, '[recipient]');
-  const { label } = AUTH_EMAIL_KINDS[message.kind];
-  throw new Error(`Resend rejected the ${label} email (HTTP ${response.status}): ${reason}`);
+  throw new AuthEmailSendError(
+    message.kind,
+    response.status,
+    redact(reasonFrom(await response.text())),
+  );
 }
 
 /**
@@ -296,6 +332,44 @@ export async function sendAuthEmail(
  * under a name that could drift.
  */
 export type AuthEmailSendOutcome = 'sent' | 'skipped-no-address' | 'skipped-placeholder';
+
+/**
+ * The slice of Better Auth's `User` both callbacks read. `id` is optional only
+ * because the tests build bare recipients; Better Auth always supplies it.
+ */
+export interface AuthEmailCallbackData {
+  user: { id?: string; email?: string | null };
+  url: string;
+  token: string;
+}
+
+/**
+ * The boundary Better Auth calls, so the failure is LOGGED HERE AND RETHROWN.
+ * Sign-in awaits the sender (`runInBackgroundOrAwait`, no background handler is
+ * configured), so the rethrow turns a dead sender into a 500 rather than a 403
+ * telling the reader "we just sent a link" when nothing went out. The log line
+ * carries the stable class name, kind and status — never the address.
+ */
+async function sendLogged(
+  config: AuthEmailConfig,
+  message: AuthEmailMessage,
+  data: AuthEmailCallbackData,
+  options: SendAuthEmailOptions,
+): Promise<void> {
+  try {
+    await sendAuthEmail(config, message, options);
+  } catch (error) {
+    const detail =
+      error instanceof AuthEmailSendError
+        ? { error: error.name, kind: error.kind, status: error.status }
+        : { error: error instanceof Error ? error.name : typeof error, kind: message.kind };
+    console.error(
+      `[auth-email] ${AUTH_EMAIL_KINDS[message.kind].label} email failed for user ${data.user.id ?? 'unknown'}`,
+      detail,
+    );
+    throw error;
+  }
+}
 
 /**
  * The body of Better Auth's `emailVerification.sendVerificationEmail`, lifted
@@ -314,14 +388,14 @@ export type AuthEmailSendOutcome = 'sent' | 'skipped-no-address' | 'skipped-plac
  */
 export async function sendVerificationEmailFor(
   config: AuthEmailConfig,
-  data: { user: { email?: string | null }; url: string; token: string },
+  data: AuthEmailCallbackData,
   options?: { fetch?: FetchLike },
 ): Promise<AuthEmailSendOutcome> {
   const to = data.user.email;
   if (!to) return 'skipped-no-address';
   if (isPlaceholderEmail(to)) return 'skipped-placeholder';
 
-  await sendAuthEmail(config, verificationEmail(to, data.url), {
+  await sendLogged(config, verificationEmail(to, data.url), data, {
     idempotencyKey: idempotencyKeyFor(data.token, 'verification'),
     ...(options?.fetch ? { fetch: options.fetch } : {}),
   });
@@ -351,14 +425,14 @@ export async function sendVerificationEmailFor(
  */
 export async function sendResetPasswordFor(
   config: AuthEmailConfig,
-  data: { user: { email?: string | null }; url: string; token: string },
+  data: AuthEmailCallbackData,
   options?: { fetch?: FetchLike },
 ): Promise<AuthEmailSendOutcome> {
   const to = data.user.email;
   if (!to) return 'skipped-no-address';
   if (isPlaceholderEmail(to)) return 'skipped-placeholder';
 
-  await sendAuthEmail(config, resetPasswordEmail(to, data.url), {
+  await sendLogged(config, resetPasswordEmail(to, data.url), data, {
     idempotencyKey: idempotencyKeyFor(data.token, 'password-reset'),
     ...(options?.fetch ? { fetch: options.fetch } : {}),
   });
