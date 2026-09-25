@@ -2,19 +2,19 @@ import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ViroNode, ViroQuad, ViroText, ViroMaterials, ViroRivePanel } from '@reactvision/react-viro';
 import { worldMatrix, type RivePanel, type RiveCanvasOptions } from 'nitro-canvas-in-Vision';
 
-type Pose = { position: [number, number, number]; rotation: [number, number, number] };
-const INITIAL: Pose = { position: [0, 1.45, -2], rotation: [0, 0, 0] };
+export type PanelPose = { position: [number, number, number]; rotation: [number, number, number] };
+
 
 /** Mount below a Viro scene with one ViroController. Supply compiled Fractions .riv bytes.
  * Change resetKey on recenter/tracking loss. The grip moves the native parent, including
  * the reference label; React only persists its final transform after release.
  */
-export function RivePanelProbe({ bytes, resetKey = 0 }: { bytes: ArrayBuffer; resetKey?: number }) {
+export function RivePanelProbe({ bytes, initialPose, resetKey = 0 }: { bytes: ArrayBuffer; initialPose: PanelPose; resetKey?: number }) {
   const group = useRef<ViroNode>(null);
   const panel = useRef<RivePanel | null>(null);
   const owner = useRef<number | null>(null);
   const mounted = useRef(true);
-  const [pose, setPose] = useState<Pose>(INITIAL);
+  const [pose, setPose] = useState<PanelPose>(initialPose);
   const [grabbed, setGrabbed] = useState(false);
   const [status, setStatus] = useState('Loading lesson…');
   const [count, setCount] = useState(0);
@@ -79,8 +79,8 @@ export function RivePanelProbe({ bytes, resetKey = 0 }: { bytes: ArrayBuffer; re
         } else if (state === 2 && sourceId === owner.current) void finish();
       }} />
     <ViroText text={grabbed ? 'Moving panel' : 'Hold to move'} position={[0, -0.48, 0.016]}
-      width={0.6} height={0.09} ignoreEventHandling style={{ fontSize: 5, color: '#112d44', textAlign: 'center' }} />
+      width={2.4} height={0.36} scale={[0.25, 0.25, 0.25]} maxLines={1} textClipMode="ClipToBounds" ignoreEventHandling style={{ fontSize: 20, color: '#112d44', textAlign: 'center', textAlignVertical: 'center' }} />
     <ViroText text={`Selected in Rive: ${count}/4`} position={[0, -0.64, 0]}
-      width={1.2} height={0.12} style={{ fontSize: 5, color: '#ffffff', textAlign: 'center' }} />
+      width={4.8} height={0.48} scale={[0.25, 0.25, 0.25]} ignoreEventHandling style={{ fontSize: 20, color: '#ffffff', textAlign: 'center' }} />
   </ViroNode>;
 }

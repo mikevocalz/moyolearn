@@ -1,17 +1,31 @@
 /** Engineering route: moyo://rive-panel-probe. Device evidence is recorded separately. */
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Platform, Text, View } from 'react-native';
 import { Asset } from 'expo-asset';
 import { File } from 'expo-file-system';
 import { ViroARScene, ViroController, ViroXRSceneNavigator } from '@reactvision/react-viro';
-import { RivePanelProbe } from '../src/native-3d/rive-panel-probe';
+import { RivePanelProbe, type PanelPose } from '../src/native-3d/rive-panel-probe';
 
 function Scene({ bytes }: { bytes: ArrayBuffer }) {
   const [reset, setReset] = useState(0);
-  return <ViroARScene>
+  const placed = useRef(false);
+  const [initialPose, setInitialPose] = useState<PanelPose | null>(null);
+  return <ViroARScene onCameraTransformUpdate={initialPose ? undefined : camera => {
+    if (placed.current) return;
+    const [x, y, z] = camera.position;
+    const [fx, , fz] = camera.forward;
+    const length = Math.hypot(fx, fz);
+    if (![x, y, z, fx, fz].every(Number.isFinite) || length < 0.1) return;
+    placed.current = true;
+    // Place once relative to the viewer, then let the grip own world movement.
+    setInitialPose({
+      position: [x + 1.8 * fx / length, y - 0.2, z + 1.8 * fz / length],
+      rotation: [0, Math.atan2(-fx, -fz) * 180 / Math.PI, 0],
+    });
+  }}>
     <ViroController controllerVisibility reticleVisibility
       onControllerStatus={(status: number) => { if (status === 4 || status === 5) setReset(n => n + 1); }} />
-    <RivePanelProbe bytes={bytes} resetKey={reset} />
+    {initialPose && <RivePanelProbe bytes={bytes} initialPose={initialPose} resetKey={reset} />}
   </ViroARScene>;
 }
 export default function RivePanelProbeRoute() {
