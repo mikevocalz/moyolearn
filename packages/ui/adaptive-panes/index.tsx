@@ -122,6 +122,9 @@ function PaneContent({ open, children }: { open: boolean; children: ReactNode })
   */
   const [frozen, setFrozen] = useState(!open);
   useEffect(() => {
+    // The cascading render this rule warns about is the mechanism: the second
+    // commit is what freezes a subtree that has already rendered its close.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setFrozen(!open);
   }, [open]);
   return (
