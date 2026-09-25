@@ -383,7 +383,7 @@ catalogs:
       version: 5.0.15
 
 overrides:
-  '@reactvision/react-viro': file:./vendors/reactvision-react-viro-3.0.0-moyo.5-rive.5.tgz
+  '@reactvision/react-viro': file:./vendors/reactvision-react-viro-3.0.0-moyo.5-rive.7.tgz
   '@expo-pico/core': file:./vendors/expo-pico-core-1.0.0.tgz
   '@expo/dom-webview': 58.0.0
   '@payloadcms/plugin-cloud-storage': 4.0.0-canary.33
@@ -526,8 +526,8 @@ importers:
         specifier: 'catalog:'
         version: 7.4.1(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@reactvision/react-viro':
-        specifier: file:../../vendors/reactvision-react-viro-3.0.0-moyo.5-rive.5.tgz
-        version: file:vendors/reactvision-react-viro-3.0.0-moyo.5-rive.5.tgz(expo@58.0.0-preview.3)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        specifier: file:../../vendors/reactvision-react-viro-3.0.0-moyo.5-rive.7.tgz
+        version: file:vendors/reactvision-react-viro-3.0.0-moyo.5-rive.7.tgz(expo@58.0.0-preview.3)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@sentry/react-native':
         specifier: 'catalog:'
         version: 8.27.0(@expo/env@2.5.0)(dotenv@17.4.2)(expo@58.0.0-preview.3)(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(rollup@4.63.0)(webpack@5.108.4(esbuild@0.28.2))
@@ -1022,8 +1022,8 @@ importers:
         specifier: 4.2.0
         version: 4.2.0
       '@reactvision/react-viro':
-        specifier: file:../../vendors/reactvision-react-viro-3.0.0-moyo.5-rive.5.tgz
-        version: file:vendors/reactvision-react-viro-3.0.0-moyo.5-rive.5.tgz(expo@58.0.0-preview.3)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        specifier: file:../../vendors/reactvision-react-viro-3.0.0-moyo.5-rive.7.tgz
+        version: file:vendors/reactvision-react-viro-3.0.0-moyo.5-rive.7.tgz(expo@58.0.0-preview.3)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@shopify/react-native-skia':
         specifier: 'catalog:'
         version: 2.12.0(react-native-reanimated@4.6.0(react-native-worklets@0.12.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-worklets@0.12.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -1484,8 +1484,8 @@ importers:
         specifier: 'catalog:'
         version: 0.2.0(react-native-webview@14.0.1(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@reactvision/react-viro':
-        specifier: file:../../vendors/reactvision-react-viro-3.0.0-moyo.5-rive.5.tgz
-        version: file:vendors/reactvision-react-viro-3.0.0-moyo.5-rive.5.tgz(expo@58.0.0-preview.3)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        specifier: file:../../vendors/reactvision-react-viro-3.0.0-moyo.5-rive.7.tgz
+        version: file:vendors/reactvision-react-viro-3.0.0-moyo.5-rive.7.tgz(expo@58.0.0-preview.3)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@tanstack/react-form':
         specifier: 'catalog:'
         version: 1.33.5(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -4770,9 +4770,9 @@ packages:
       react-native:
         optional: true
 
-  '@reactvision/react-viro@file:vendors/reactvision-react-viro-3.0.0-moyo.5-rive.5.tgz':
-    resolution: {integrity: sha512-vvJeZNN0Wlo42cSyE4VWCU3EzKuO6U5ZEouJrtp7kPTWos+OmJecjGPr7g07xd7XNgjTZLyZFjoVpWP1Qz3vXA==, tarball: file:vendors/reactvision-react-viro-3.0.0-moyo.5-rive.5.tgz}
-    version: 3.0.0-moyo.5-rive.5
+  '@reactvision/react-viro@file:vendors/reactvision-react-viro-3.0.0-moyo.5-rive.7.tgz':
+    resolution: {integrity: sha512-ue6lgifBzg7j7SsJCaoOKR16uT6AAKv9r0lsfLzNUgeGF5DXKZsXa/rkDG/t1sIubo3elPjwPWM36MFH8joF2Q==, tarball: file:vendors/reactvision-react-viro-3.0.0-moyo.5-rive.7.tgz}
+    version: 3.0.0-moyo.5-rive.7
     engines: {react-native: '>=0.86.0 <0.87.0'}
     peerDependencies:
       '@reactvision/react-native-visionos': '>=0.86.0 <0.87.0'
@@ -15420,7 +15420,7 @@ snapshots:
       - '@types/react'
       - immer
 
-  '@reactvision/react-viro@file:vendors/reactvision-react-viro-3.0.0-moyo.5-rive.5.tgz(expo@58.0.0-preview.3)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)':
+  '@reactvision/react-viro@file:vendors/reactvision-react-viro-3.0.0-moyo.5-rive.7.tgz(expo@58.0.0-preview.3)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)':
     dependencies:
       react: 19.3.0
       react-native: 0.88.0-rc.2(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)

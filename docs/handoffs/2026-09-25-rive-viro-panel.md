@@ -7,7 +7,10 @@ Rive pixels were captured in both eye views and the user confirmed grip drag.
 **Selection remains open:** the user reports a cut-off ray and no selection;
 native diagnostics toggle a piece but leave `selectedCount` at zero. Candidate
 ray/count fixes built and installed. The final Horizon-enabled app launches, renders
-Rive, and confirms Horizon runtime detection. Release/selection acceptance remains pending.
+Rive, and confirms Horizon runtime detection. The user confirmed “Moving panel” stays on after releasing all controller buttons.
+Renderer rive.7 fixes controller/hand input ownership and inactive-action cancellation
+for triggers, grips, and face buttons;
+the new APK built and installed; physical release/selection validation is pending.
 
 
 The Android Surface bridge, Nitro Rive renderer, native
@@ -58,7 +61,7 @@ copy that diff over this implementation. `/Users/mikevocalz/expo-pico` also has
 unrelated local changes and was not modified.
 
 Vendor packages in Moyo:
-- `vendors/reactvision-react-viro-3.0.0-moyo.5-rive.5.tgz`
+- `vendors/reactvision-react-viro-3.0.0-moyo.5-rive.7.tgz`
 - `vendors/nitro-canvas-in-Vision-0.0.2-rive.3.tgz`
 
 The Viro package contains paired, rebuilt renderer and React bridge AARs.
@@ -281,3 +284,34 @@ mark controller selection or the native count converter fix passed.
 Private capture: `/Users/mikevocalz/rive-panel-device-evidence/quest-rive-horizon-layout.png`.
 No room capture is committed or sent to Viro MCP. Owned Metro 8082 and device reverse
 ports 8081→8082 / 8082→8082 remain available for the user's check; preserve user Metro8081.
+
+## Stuck drag follow-up
+
+User confirmation: both triggers and grip buttons are released, but “Moving panel”
+stays displayed. This is a failure, not a pending instruction to release a button.
+The JS probe reports captured source 1 and `grabbed=true`, which disables body input.
+ViroCore `7a366057` suppresses pinch/grab events on controller-owned sides, cancels
+held actions when inactive or aim is unavailable, and resets hand edge history on
+tracking loss. Previously hand gestures could duplicate a controller press and
+inactive float actions skipped their release. Host button-edge tests and the
+arm64 renderer build passed; all 14 native libraries passed 16 KB alignment.
+Viro rive.6 contains this renderer. Physical acceptance is still required.
+
+Rive.6 APK build: pass (1379 tasks, 37 seconds); installed with `adb install -r`.
+SHA256: `839e39a198db4f0b6cb1798e39c0e71402bda49b135e35933fa9c77938b7128e`.
+All 1643 packaged files match the installed dependency. Mobile TypeScript and
+six spatial configuration tests pass. Final APK still declares 1024dp × 640dp
+and MainActivity orientation -1 (default). Startup debugger evaluation timed out;
+Metro 8082 was restarted from this worktree, and headset foreground confirmation
+was requested. Do not report the stuck-drag fix as physically accepted yet.
+
+Latest: rive.7 (Viro `4453325`, ViroCore `cb0b5e74`) also cancels inactive face
+buttons after runtime inspection exposed captured source 5 (A button). APK build
+passed (34 seconds); `adb install -r` succeeded. All 1643 package files match, and
+all 14 renderer libraries pass alignment. SHA256:
+`7097f413b0464f81976b8fca926a98b6ebf1ff8061b3dd9cb47e5f1aec0a263b`.
+The rive.6 startup debugger recovered after foregrounding/deep-linking; navigate
+with Expo Router after startup if the deep link loses to initial navigation.
+A direct native pointer diagnostic showed down0=1 but did not establish reliable
+click/count completion; do not claim the count converter is fixed. No physical
+release/selection acceptance has been received yet.

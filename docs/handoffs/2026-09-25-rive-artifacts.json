@@ -1,6 +1,6 @@
 {
   "date": "2026-09-25",
-  "status": "Horizon-enabled APK built, installed and launched; Horizon runtime detection true, Rive renders and native grip text fits; physical release/selection and normal viewing pose acceptance pending",
+  "status": "rive.7 built; installed-device acceptance pending for grip release, ray and selection",
   "sources": {
     "moyo": {
       "path": "/Users/mikevocalz/moyo-rive-panel",
@@ -18,20 +18,20 @@
       "path": "/Users/mikevocalz/viro-rive-panel",
       "base": "2bb0b5abbc707810ae2b49221917a80c7ee50b41",
       "branch": "codex/rive-viro-panel",
-      "implementationCommit": "d13465274a8e11ba151f65292134a3d075a245ac"
+      "implementationCommit": "4453325d8f714003a62d4da8856128d71b5178a1"
     },
     "virocore": {
       "path": "/Users/mikevocalz/virocore-rive-panel",
       "base": "8e3750fed7b1c7f711baefe32a8a832df0e4672b",
       "branch": "codex/rive-viro-panel",
-      "implementationCommit": "2384976d6d857d15f99cfb1095b12d89d7bd9583"
+      "implementationCommit": "cb0b5e741cad213c063bdf20cd29462c4fe23114"
     }
   },
   "artifacts": [
     {
-      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/reactvision-react-viro-3.0.0-moyo.5-rive.5.tgz",
-      "size": 47213206,
-      "sha256": "c05d9b00e7145d5692e42bfa753b80b04e1de944bf8fc5043a7f5f36aec4e1a0"
+      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/reactvision-react-viro-3.0.0-moyo.5-rive.7.tgz",
+      "size": 47213546,
+      "sha256": "fb6af667bd8e6da1a49a40f7f7517ea4c88ec713ac9e315c7157d17b362bd60a"
     },
     {
       "path": "/Users/mikevocalz/moyo-rive-panel/vendors/nitro-canvas-in-Vision-0.0.2-rive.3.tgz",
@@ -40,8 +40,8 @@
     },
     {
       "path": "/Users/mikevocalz/viro-rive-panel/android/viro_renderer/viro_renderer-release.aar",
-      "size": 10089037,
-      "sha256": "f26764d34c66855a8c48adbac0338fe22bf35fa78738f2cf0c8f48d4e73c2303"
+      "size": 10089234,
+      "sha256": "9a5aaab8e2f7b5ca0a0f1d69a6a5bc94824ba36d82c718df7226171d3a9b0e29"
     },
     {
       "path": "/Users/mikevocalz/viro-rive-panel/android/react_viro/react_viro-release.aar",
@@ -55,8 +55,8 @@
     },
     {
       "path": "/Users/mikevocalz/moyo-rive-panel/apps/mobile/android/app/build/outputs/apk/quest/debug/app-quest-debug.apk",
-      "size": 339895643,
-      "sha256": "8ffb944b02059661ff364277b42d172333ed731653c82725daf700a502d91705"
+      "size": 347002901,
+      "sha256": "7097f413b0464f81976b8fca926a98b6ebf1ff8061b3dd9cb47e5f1aec0a263b"
     }
   ],
   "runtime": {

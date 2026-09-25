@@ -32,13 +32,13 @@
       "appWindow": "APK declares 1024dp \u00d7 640dp; default orientation"
     }
   ],
-  "finalApkSha256": "8ffb944b02059661ff364277b42d172333ed731653c82725daf700a502d91705",
+  "finalApkSha256": "7097f413b0464f81976b8fca926a98b6ebf1ff8061b3dd9cb47e5f1aec0a263b",
   "finalCppRuntimeExportsRequiredSymbol": true,
   "expoAndroidBuildFromSource": [
     ".*"
   ],
   "rendering": "Rive fractions pixels present in both eye views in headset capture; comfort not independently qualified",
-  "controllerInput": "user reports drag works; ray cut off and fraction selection fails",
+  "controllerInput": "User confirms Moving panel stays displayed after all triggers/grips released; selection fails on rive.5. rive.6 cancellation/ownership fix installed; physical retest pending.",
   "bothEyeComfort": "not verified",
   "nativePointerDiagnostic": {
     "action": "direct Rive down/up at first piece artboard coordinates from authored RML",
@@ -53,10 +53,12 @@
   "candidateFixes": [
     "Live hit testing for input-only drags; arm64 renderer built and installed",
     "Rive count converter group: nine desktop cases pass; native count retry pending",
-    "Viewer-relative placement; scaled and clipped grip label validated with Viro MCP preview"
+    "Viewer-relative placement; scaled and clipped grip label validated with Viro MCP preview",
+    "rive.6 suppresses hand events on controller-owned sides and cancels inactive float actions; renderer, host edge tests, APK build passed; installed with adb -r",
+    "rive.7 extends cancellation to A/B/X/Y/menu; APK and renderer builds pass; installed with app data preserved"
   ],
   "visualEvidencePath": "/Users/mikevocalz/rive-panel-device-evidence/quest-rive-before-label-fix.png",
-  "currentBlocker": "Controller drag remains captured (Moving panel); user must release and select to qualify input. Capture was inverted/off-axis; normal worn-view framing acceptance pending.",
+  "currentBlocker": "rive.7 installed; physical release/selection acceptance pending. rive.6 debugger recovered after foreground/deep link; captured source 5 prompted extension to face-button cancellation.",
   "horizon": {
     "isHorizonBuild": true,
     "isHorizonDevice": true,
@@ -78,5 +80,12 @@
     "owner": 1,
     "selectedCount": 0
   },
-  "latestVisualEvidencePath": "/Users/mikevocalz/rive-panel-device-evidence/quest-rive-horizon-layout.png"
+  "latestVisualEvidencePath": "/Users/mikevocalz/rive-panel-device-evidence/quest-rive-horizon-layout.png",
+  "latestNativePointerDiagnostic": {
+    "down0": 1,
+    "selectedCount": 0,
+    "piece0": 0,
+    "revision": 2,
+    "result": "Direct pointer-down reaches native Rive, but click/count completion not established reliably; diagnostic is not physical controller acceptance."
+  }
 }
