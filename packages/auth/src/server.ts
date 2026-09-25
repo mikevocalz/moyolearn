@@ -17,6 +17,11 @@ import {
   permitsLoginAtHost,
   tenantSlugFromHost,
 } from './host-tenant.ts';
+import {
+  readAuthEmailConfig,
+  sendResetPasswordEmailFor,
+  sendVerificationEmailFor,
+} from './auth-email.ts';
 
 /** Doc 06 §6: learner sessions expire sooner than adult ones. */
 const ADULT_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
@@ -153,6 +158,32 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
       : undefined,
   });
 
+  const authEmail = readAuthEmailConfig();
+
+  /*
+    THE LOUD FAILURE, and deliberately not a quiet downgrade.
+
+    better-auth@1.7.2 refuses every unverified email/password sign-in when no
+    `emailVerification.sendVerificationEmail` is configured, and it refuses the
+    username path identically (dist/api/routes/sign-in.mjs:340-352 and
+    dist/plugins/username/index.mjs:195-207). With verification required and no
+    sender, the account cannot sign in AND cannot ever be verified — a deadlock,
+    not a delay. That is the 2026-09-22 incident.
+
+    The tempting repair is to fall back to `requireEmailVerification: false`
+    when the sender is missing, which would turn a misconfigured env var into a
+    silent removal of the control doc 06 §6 requires in production. A missing
+    sender is an operations problem and has to read like one.
+  */
+  const verificationRequired = process.env.NODE_ENV !== 'development';
+  if (verificationRequired && !authEmail) {
+    console.error(
+      '[auth] RESEND_API_KEY / AUTH_EMAIL_FROM are not set, so no verification or reset email ' +
+        'can be sent. Email/password and username sign-in will refuse every unverified account ' +
+        'with EMAIL_NOT_VERIFIED, and there is no path to verify. Set both variables.',
+    );
+  }
+
   return betterAuth({
     database: pool,
     secret: process.env.BETTER_AUTH_SECRET,
@@ -165,8 +196,59 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
       minPasswordLength: 12,
       // Dev can sign up and sign in without an email adapter; verification is
       // still enforced in production builds.
-      requireEmailVerification: process.env.NODE_ENV !== 'development',
+      requireEmailVerification: verificationRequired,
+      ...(authEmail
+        ? {
+            /*
+              Same lock, one door over. `requestPasswordReset` logs
+              "Reset password isn't enabled" and answers 400 when this is
+              missing (dist/api/routes/password.mjs:52-56); the route itself
+              builds the link with the caller's `redirectTo` folded in as
+              `callbackURL`, and the mail carries that URL untouched. The
+              placeholder guard applies here too — a learner's reset runs
+              through the guardian (doc 06 §2), never through its address.
+            */
+            sendResetPassword: async (data) => {
+              await sendResetPasswordEmailFor(authEmail, data);
+            },
+          }
+        : {}),
     },
+    ...(authEmail
+      ? {
+          emailVerification: {
+            /*
+              The body lives in auth-email.ts so it is testable: a callback
+              inside this options literal can only be reached by booting the
+              whole instance. It refuses `@learners.invalid` placeholders — a
+              managed learner has no mailbox, and a send there is a guaranteed
+              hard bounce against the sending domain's reputation.
+            */
+            sendVerificationEmail: async (data) => {
+              await sendVerificationEmailFor(authEmail, data);
+            },
+            sendOnSignUp: true,
+            /*
+              LOAD-BEARING, and the difference between fixing this for new
+              accounts and fixing it for the people already locked out.
+
+              Sign-up is the only other sender, and an account stuck behind the
+              gate has by definition already signed up — it has no way back to
+              that trigger. `sendOnSignIn` is what gives an existing unverified
+              account a fresh link by doing the only thing it can still do.
+
+              It is set explicitly because 1.7.2 reads it as a plain truthy flag
+              with no default and documents it `@default false`
+              (@better-auth/core/dist/types/init-options.d.mts). Omitting it
+              leaves every already-locked account locked.
+            */
+            sendOnSignIn: true,
+            // The link is the last step; making them retype the password they
+            // just typed is a second lock on a door they have already opened.
+            autoSignInAfterVerification: true,
+          },
+        }
+      : {}),
     databaseHooks: {
       user: {
         update: {
