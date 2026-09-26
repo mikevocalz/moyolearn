@@ -4,7 +4,7 @@ The dynamic question surface for the spatial scene — one Rive-framed panel tha
 
 ## Composition
 
-```
+```text
 XrQuestionPanel (apps/mobile/src/native-3d/xr-question-panel.tsx)
   carrier ViroNode ── persists drag pose, amber grip (dragTransform="parent")
     └─ slot ViroNode ── worldSlot pose, carrier child
