@@ -1,0 +1,31 @@
+components/CanvasPanel/nitroCanvas.ts(11,35): error TS2307: Cannot find module 'nitro-canvas-in-Vision' or its corresponding type declarations.
+components/CanvasPanel/useCanvasPanel.ts(5,52): error TS2307: Cannot find module 'nitro-canvas-in-Vision' or its corresponding type declarations.
+components/ViroRivePanel.tsx(11,8): error TS2307: Cannot find module 'nitro-canvas-in-Vision' or its corresponding type declarations.
+components/ViroRivePanel.tsx(85,31): error TS7006: Parameter 'surface' implicitly has an 'any' type.
+components/ViroRivePanel.tsx(144,11): error TS7031: Binding element 'phase' implicitly has an 'any' type.
+components/ViroRivePanel.tsx(144,18): error TS7031: Binding element 'x' implicitly has an 'any' type.
+components/ViroRivePanel.tsx(144,21): error TS7031: Binding element 'y' implicitly has an 'any' type.
+node:child_process:981
+    throw err;
+    ^
+
+Error: Command failed: /opt/homebrew/Cellar/node/26.8.2/bin/node /Users/mikevocalz/viro-rive-panel/node_modules/typescript/bin/tsc -p /var/folders/37/s0s6qm2x3cx1mdsr_fv0y1pr0000gn/T/viro-rive-types-UH4Cmz/tsconfig.json
+    at genericNodeError (node:internal/errors:999:15)
+    at wrappedFn (node:internal/errors:544:14)
+    at checkExecSyncError (node:child_process:942:11)
+    at execFileSync (node:child_process:978:15)
+    at Object.<anonymous> (/Users/mikevocalz/viro-rive-panel/scripts/build-rive-types.cjs:19:3)
+    at Module._compile (node:internal/modules/cjs/loader:1934:14)
+    at Object..js (node:internal/modules/cjs/loader:2074:10)
+    at Module.load (node:internal/modules/cjs/loader:1656:32)
+    at Module._load (node:internal/modules/cjs/loader:1448:12)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:261:19) {
+  status: 2,
+  signal: null,
+  output: [ null, null, null ],
+  pid: 23283,
+  stdout: null,
+  stderr: null
+}
+
+Node.js v26.8.2

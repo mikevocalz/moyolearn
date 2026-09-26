@@ -1,0 +1,20 @@
+npm warn EBADENGINE Unsupported engine {
+npm warn EBADENGINE   package: 'release-it@17.11.0',
+npm warn EBADENGINE   required: { node: '^18.18.0 || ^20.9.0 || ^22.0.0' },
+npm warn EBADENGINE   current: { node: 'v26.8.2', npm: '11.19.1' }
+npm warn EBADENGINE }
+
+added 1 package, removed 1 package, changed 1 package, and audited 1188 packages in 3s
+
+249 packages are looking for funding
+  run `npm fund` for details
+
+41 vulnerabilities (5 low, 22 moderate, 13 high, 1 critical)
+
+To address issues that do not require attention, run:
+  npm audit fix
+
+To address all issues (including breaking changes), run:
+  npm audit fix --force
+
+Run `npm audit` for details.
