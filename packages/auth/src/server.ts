@@ -188,6 +188,16 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
     database: pool,
     secret: process.env.BETTER_AUTH_SECRET,
     baseURL: process.env.BETTER_AUTH_URL,
+    /*
+      The native app must be a trusted origin. `@better-auth/expo`'s client
+      sends `expo-origin: moyo://`, which the server plugin (below) copies into
+      `origin` — so the request is validated against `trustedOrigins`. With no
+      entry for the scheme every native sign-in was refused INVALID_ORIGIN and
+      the screen surfaced it as "Invalid callbackURL" (verified against
+      app.moyolearn.com 2026-09-25). `exp://` is added by the Expo plugin's own
+      init in development, so only the shipped scheme is listed here.
+    */
+    trustedOrigins: ['moyo://'],
     user: { additionalFields: learnerFields },
     session: { expiresIn: ADULT_SESSION_MAX_AGE },
     emailAndPassword: {

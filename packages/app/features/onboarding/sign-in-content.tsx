@@ -70,8 +70,8 @@ export function SignInContent() {
         user back here with the form blank and no message at all. Every failure
         looked like a glitch.
 
-        `callbackURL` is relative on purpose. No `trustedOrigins` are configured
-        in `createAuth` on this branch, so an absolute URL is refused with
+        `callbackURL` is relative on purpose. `createAuth` trusts only the
+        native `moyo://` scheme, so an absolute web URL is refused with
         INVALID_CALLBACKURL; a relative path resolves against whichever origin
         served the request and is correct on every host this ships to.
       */
