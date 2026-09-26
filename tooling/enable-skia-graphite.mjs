@@ -45,7 +45,7 @@
 //               MetalBackend headers tarball dawn-version
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -101,6 +101,26 @@ if (!existsSync(marker)) {
 }
 
 writeFileSync(join(skia, 'libs', '.dawn-version'), DAWN_RELEASE_TAG);
+
+/*
+  ANDROID'S HALF OF THE SWITCH. The podspec side links Graphite against the
+  vendored xcframeworks, but on Android skia's CMakeLists imports
+  `webgpu_dawn` from react-native-skia-graphite-android/libs/<abi>/ — and that
+  package ships only the static Dawn archive (libdawn_combined.a), never the
+  shared object the imported target points at. The single runtime copy lives in
+  react-native-webgpu/libs/android/<abi>/libwebgpu_dawn.so (the app is already
+  the Dawn owner — see the .dawn-version pin above). Stage it next to the
+  statics or the ninja link fails with "no known rule to make it".
+*/
+const webgpuPkg = join(root, 'node_modules', 'react-native-webgpu');
+const graphiteAndroid = join(root, 'node_modules', 'react-native-skia-graphite-android');
+for (const abi of ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64']) {
+  const src = join(webgpuPkg, 'libs', 'android', abi, 'libwebgpu_dawn.so');
+  const dst = join(graphiteAndroid, 'libs', abi, 'libwebgpu_dawn.so');
+  if (existsSync(src) && existsSync(dirname(dst)) && !existsSync(dst)) {
+    copyFileSync(src, dst);
+  }
+}
 
 const dawnInclude = join(skia, 'cpp', 'dawn', 'include');
 const graphiteSrc = join(skia, 'cpp', 'skia', 'src', 'gpu', 'graphite');
