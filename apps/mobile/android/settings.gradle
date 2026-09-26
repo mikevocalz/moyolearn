@@ -64,3 +64,14 @@ project(':react_viro').projectDir = new File(viroPackageRoot, 'android/react_vir
 // including the same directory a second time.
 include ':expo-pico-core'
 project(':expo-pico-core').projectDir = new File(rootProject.projectDir, '../../../node_modules/@expo-pico/core/android')
+
+// The vendored expo-pico-core build.gradle resolves
+// project.getProperties().get("reactNativeArchitectures") — the SUBPROJECT's
+// property map, which never sees root gradle.properties. It falls back to
+// all four ABIs, and the 32-bit/x86 links fail against Nitro's arm64-only
+// prefab. Mirror the property onto the project's ext at include time so the
+// same lookup resolves the app's real ABI set.
+gradle.rootProject {
+    project(':expo-pico-core').ext.reactNativeArchitectures =
+        getProperties().get("reactNativeArchitectures") ?: "arm64-v8a"
+}

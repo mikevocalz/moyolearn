@@ -47,8 +47,11 @@ That file is historical and includes superseded “missing implementation” not
 
 ## Workspaces and provenance
 
-All continuation work is local on `codex/rive-viro-panel`; nothing has been
-pushed or published. Original dirty checkouts were preserved.
+All continuation work was done on `codex/rive-viro-panel` branches in isolated
+worktrees. Since then: the Viro/ViroCore upgrade lines landed on the pushed
+fork `main`s (`019ec2e` / `d4e09840`), and the Moyo line merged onto `main` at
+`f428379` — **local only; `origin/main` is 215 commits behind and nothing in
+this checkout has been pushed**. Original dirty checkouts were preserved.
 
 | Repository | Isolated worktree | Recovered base commit |
 | --- | --- | --- |
@@ -158,13 +161,13 @@ build claim. No placeholder GPU implementation was invented to silence errors.
 Build logs are under `/tmp/rive-panel-check`. Persist relevant final logs with
 the device evidence before relying on that temporary directory across sessions.
 
-2026-09-26 note: `/Users/mikevocalz/moyo-rive-panel` now sits on `main`, where
-the whole `probes/` tree shows as untracked. It contains additional
-`probes/rive-panel/evidence/build/*.log` files beyond the set committed on this
-branch (for example `rive-count-typecheck.log`, `rive10-install.log`,
-`viro-zustand-*.log`, `viro-rive10-pack.log`). They were left in place,
-uncommitted — decide whether they belong on `codex/rive-viro-panel` before
-switching that checkout back.
+2026-09-26 note (updated post-merge): `/Users/mikevocalz/moyo-rive-panel` sits
+on `main`. When this note was first written the whole `probes/` tree showed as
+untracked and extra `probes/rive-panel/evidence/build/*.log` files
+(`rive-count-typecheck.log`, `rive10-install.log`, `viro-zustand-*.log`,
+`viro-rive10-pack.log`) had no home. Merge `f428379` has since committed the
+entire probes tree — all of those logs are now tracked on `main` and the
+working tree is clean.
 
 Reproduction:
 
@@ -452,7 +455,13 @@ postinstall marked Skia Graphite on but never staged the Android
 `tooling/enable-skia-graphite.mjs`), and `@expo-pico/core` linked all four ABIs
 against the arm64-only Nitro prefab — direct Gradle invocations need
 `-PreactNativeArchitectures=arm64-v8a`, which `pnpm android:xr` was masking
-with `ORG_GRADLE_PROJECT_reactNativeArchitectures`.
+with `ORG_GRADLE_PROJECT_reactNativeArchitectures`. The all-ABI fallback
+resurfaced on the merged-main build (the vendored module reads
+`project.getProperties()`, which never sees the root `gradle.properties`);
+`settings.gradle` now pins `ext.reactNativeArchitectures` at include time so
+any invocation path resolves the app's ABI set, and the upstream
+`expo-pico` repo got the real fix (`rootProject.getProperties()`, `d7952cd`)
+for the next vendored repack.
 
 ## Three-slot layout probe (moyo://xr-layout-probe)
 
@@ -542,15 +551,22 @@ client sends `expo-origin: moyo://`, which the server plugin copies into
 the credential check). The `sign-in-content.tsx` comment was updated to
 match.
 
-**Native sign-in, bug two (in-flight, uncommitted).** On device, the email
-sign-in response carries `redirect: true`, so the expo client treats it as
-an OAuth handoff and lazily imports `expo-web-browser` — not installed — and
-red-boxes `Requiring unknown module`. The fix exists only as uncommitted
-edits in the `/Users/mikevocalz/moyo-rive-panel` checkout (currently on
-`main`): `expo-web-browser: 57.0.3` in the pnpm catalog and
-`apps/mobile/package.json` — 58.x demands compileSdk 37 while that
-workspace's Expo is 57.0.15. It needs an APK rebuild and redeploy before
-native sign-in can be declared verified.
+**Native sign-in, bug two (fixed on main, device pass pending).** On device,
+the email sign-in response carries `redirect: true`, so the expo client
+treats it as an OAuth handoff and lazily imports `expo-web-browser` — not
+installed — and red-boxes `Requiring unknown module`. `3c310e7` committed the
+fix on the pre-merge main as `expo-web-browser: 57.0.3` (58.x demands
+compileSdk 37 while that workspace's Expo was 57.0.15). Merge `f428379` then
+carried the Expo 58 preview catalog onto main, so the shipped pin is now
+`expo-web-browser: ~58.0.2` in `pnpm-workspace.yaml` with `catalog:` in
+`apps/mobile/package.json` — the compileSdk-37 concern is absorbed by the SDK
+58 line the merge brought in. The merged-main `assembleQuestDebug` then went
+green once the `settings.gradle` ABI pin above landed — the APK is
+arm64-v8a-only (`app-quest-debug.apk`, `com.moyolearn.app`, minSdk 29). Still
+open: the on-device sign-in pass before native sign-in can be declared
+verified; merged-main evidence
+(`docs/handoffs/evidence/xr-layout-probe/quest-3s-merged-main.png` and `.log`)
+is being captured and was **pending** at this audit.
 
 **Quest device notes.** Serial `340YC10GC3014S`; the installed package is
 `com.moyolearn.app` (not `com.moyolearn.mobile`); this session ran Metro on
@@ -568,3 +584,19 @@ mid-session; `argent run <tool> --udid 340YC10GC3014S` works:
 `list-devices` shows the Quest as android/device, `describe` returns the
 uiautomator tree and `launch-app` works, but `gesture-tap` does not reliably
 hit volumetric windows — `adb input tap` on display 0 does.
+
+**Merge onto `main` (`f428379`).** "Merge XR/Viro quest line onto main" —
+parents `3c310e7` + `5f620f7` — brought everything above onto `main`: the
+`quest` product flavor (`apps/mobile/android/app/build.gradle`), the vendored
+`:react_viro`/`:viro_renderer` Gradle deps, the Expo SDK 58 preview catalog
+(`expo: 58.0.0-preview.3`), `expo-web-browser: ~58.0.2`, and the 8ebdf4a-era
+board work (`BOARD_ASPECT` 16:10, `XrBoardTray`, settled-pose latching,
+floor-origin Natalie). The SDK-58 line tip `b1e3935` is now an ancestor of
+`main`, so the two lines described in `2026-09-25-sdk58-line.md` have
+converged. `2550de6` then recorded the evidence logs. **Not pushed:**
+`origin/main` is 215 commits behind. The deployed production build
+(`dpl_H3T16yXzCbG2RAcv1bu4WnWsh5m6`, commit `3c628fa`) predates this merge,
+so production serves the old-main tree — it has `trustedOrigins` but none of
+the quest/SDK-58-merged app changes. Device-verified gaps remain exactly the
+three flagged above — ink through the board engine, board-drag persistence,
+Natalie speech on device — pending the merged-main capture.

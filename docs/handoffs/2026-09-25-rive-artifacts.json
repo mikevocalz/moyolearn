@@ -1,12 +1,13 @@
 {
   "date": "2026-09-25",
-  "status": "rive.10 count binding and Zustand migration complete; software checks pass; new device count validation blocked by CDP timeout/disconnection",
+  "status": "rive.10 count binding and Zustand migration complete; software checks pass; device count validation accepted on Quest 3S 2026-09-25; codex/rive-viro-panel merged onto local main at f428379 2026-09-26 (unpushed); merged-main device evidence pending",
   "sources": {
     "moyo": {
       "path": "/Users/mikevocalz/moyo-rive-panel",
       "base": "5a161b3739b026b565dcf9f0eaa5545ad69bcce1",
       "branch": "codex/rive-viro-panel",
-      "implementationCommit": "4dacb385911131aacd1b8effa0776b9562a7bc26"
+      "implementationCommit": "4dacb385911131aacd1b8effa0776b9562a7bc26",
+      "mergedToMain": "f428379 (2026-09-26, local only — origin/main is 215 commits behind)"
     },
     "nitro": {
       "path": "/Users/mikevocalz/nitro-rive-panel",
@@ -83,6 +84,6 @@
     "orientation": "default",
     "verifiedInApk": true
   },
-  "jsDelivery": "rive.10 via Metro 8082; existing rive.9 native APK unchanged",
-  "audit2026-09-26": "viro fork main pushed at 019ec2e, virocore fork main at d4e09840; tags pushed and upstream releases mirrored (viro 48/48, virocore 23/25); three-slot xr-layout-probe verified on Quest 3S (evidence/xr-layout-probe/quest-3s-three-slot.png); ink rendering, board-drag persistence and Natalie speech still unverified post-8ebdf4a rebuild"
+  "jsDelivery": "superseded — merged main consumes vendored reactvision-react-viro-3.0.1-moyo.0.tgz via pnpm override; the rive.10-Metro/rive.9-APK split no longer describes the installed stack",
+  "audit2026-09-26": "viro fork main pushed at 019ec2e, virocore fork main at d4e09840; tags pushed and upstream releases mirrored (viro 48/48, virocore 23/25); three-slot xr-layout-probe verified on Quest 3S (evidence/xr-layout-probe/quest-3s-three-slot.png); XR/quest line merged onto moyo main at f428379 (SDK 58 tip b1e3935 now ancestor of main; expo-web-browser ~58.0.2; trustedOrigins deployed via dpl_H3T16yXzCbG2RAcv1bu4WnWsh5m6 on pre-merge 3c628fa); merge NOT pushed to origin; ink rendering, board-drag persistence and Natalie speech still unverified post-8ebdf4a rebuild — merged-main evidence (quest-3s-merged-main.png/.log) pending capture"
 }
