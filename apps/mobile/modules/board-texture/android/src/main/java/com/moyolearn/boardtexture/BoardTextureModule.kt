@@ -33,7 +33,9 @@ class BoardTextureModule : Module() {
     OnCreate {
       try {
         WebView.enableSlowWholeDocumentDraw()
-      } catch (ignored: Throwable) {
+        android.util.Log.i("MoyoBoardTexture", "slow-whole-document-draw enabled")
+      } catch (error: Throwable) {
+        android.util.Log.e("MoyoBoardTexture", "slow-whole-document-draw rejected: ${error.message}")
       }
     }
 

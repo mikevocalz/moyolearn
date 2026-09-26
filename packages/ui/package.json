@@ -33,6 +33,7 @@
   },
   "dependencies": {
     "@acme/theme": "workspace:*",
+    "@cortex-js/compute-engine": "0.128.12",
     "@expo/html-elements": "catalog:",
     "@expo/ui": "catalog:",
     "@legendapp/list": "catalog:",

@@ -1,0 +1,5 @@
+name: moyo_learning_question
+main: LearningQuestion
+logs:
+  file: build/rive.log
+  problems: build/problems.log

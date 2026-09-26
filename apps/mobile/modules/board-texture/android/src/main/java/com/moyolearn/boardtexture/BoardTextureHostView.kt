@@ -202,13 +202,13 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
     /*
       The sink draws children into a SOFTWARE canvas (`Surface.lockCanvas`)
       no matter which texture mode was asked for. A WebView that stays
-      hardware-rendered draws black into that canvas on this OS — its content
-      is composited by Chromium, not drawn through `View.draw`. A software
-      layer on the page forces software rasterization of the whole subtree,
-      which is the documented path for getting real WebView pixels into a
-      canvas. Reverted on release so the parked board keeps hardware accel.
+      hardware-composited draws black into that canvas, and Chromium's
+      raster path ignores a software layer set on an ANCESTOR — the WebView
+      itself has to carry it, which is why the tree is walked rather than
+      flagging `page`. Reverted on release so the parked board keeps
+      hardware accel.
     */
-    page.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
+    forceSoftwareLayers(page)
     if (page.parent === this) {
       removeView(page)
     }
@@ -243,8 +243,17 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
     texture?.dispose()
     texture = null
     if (page != null && page.parent == null) {
-      page.setLayerType(View.LAYER_TYPE_NONE, null)
+      forceSoftwareLayers(page, View.LAYER_TYPE_NONE)
       addView(page)
+    }
+  }
+
+  private fun forceSoftwareLayers(view: View, layerType: Int = View.LAYER_TYPE_SOFTWARE) {
+    view.setLayerType(layerType, null)
+    if (view is android.view.ViewGroup) {
+      for (i in 0 until view.childCount) {
+        forceSoftwareLayers(view.getChildAt(i), layerType)
+      }
     }
   }
 }

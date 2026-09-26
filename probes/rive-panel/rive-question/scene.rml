@@ -1,0 +1,1777 @@
+<Rive version="1" kind="fragment">
+  <Artboard name="LearningQuestion" id="0:2" width="1280" height="800" clip="true" styleId="0:5" defaultStateMachineId="0:7" viewModelId="0:40" viewModelInstanceId="0:41">
+    <LayoutComponentStyle id="0:5" />
+    <Node id="0:215" opacity="0" name="Grabbed">
+      <DataBindContext sourcePathIds="0:40-0:172" propertyKey="18" converterId="0:63" />
+      <Text name="Grab status" x="540" y="18" width="200" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+        <TextStylePaint id="0:360" fontSize="11" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFFFC168" /></Fill></TextStylePaint>
+        <TextValueRun styleId="0:360" text="MOVING PANEL" />
+      </Text>
+      <Shape name="Grab corners">
+        <PointsPath>
+          <StraightVertex x="48" y="14" />
+          <StraightVertex x="14" y="14" />
+          <StraightVertex x="14" y="48" />
+        </PointsPath>
+        <PointsPath>
+          <StraightVertex x="1232" y="14" />
+          <StraightVertex x="1266" y="14" />
+          <StraightVertex x="1266" y="48" />
+        </PointsPath>
+        <PointsPath>
+          <StraightVertex x="14" y="752" />
+          <StraightVertex x="14" y="786" />
+          <StraightVertex x="48" y="786" />
+        </PointsPath>
+        <PointsPath>
+          <StraightVertex x="1266" y="752" />
+          <StraightVertex x="1266" y="786" />
+          <StraightVertex x="1232" y="786" />
+        </PointsPath>
+        <Stroke thickness="3" cap="round" join="round"><SolidColor colorValue="FFFFC168" /></Stroke>
+      </Shape>
+    </Node>
+    <Node id="0:208" opacity="0" name="Feedback">
+      <Shape name="Fb rule">
+        <Rectangle x="1030" y="640" width="420" height="1" />
+        <Fill><SolidColor colorValue="2BE9F4FA" /></Fill>
+      </Shape>
+      <Text name="Fb tag" x="820" y="650" wrapValue="noWrap">
+        <TextStylePaint id="0:361" fontSize="9.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+        <TextValueRun styleId="0:361" text="RESULT" />
+      </Text>
+      <Shape id="0:209" name="Acc correct" opacity="0">
+        <Rectangle x="822" y="682" width="4" height="44" />
+        <Fill><SolidColor colorValue="FF5EEAD4" /></Fill>
+      </Shape>
+      <Shape id="0:210" name="Acc incorrect" opacity="0">
+        <Rectangle x="822" y="682" width="4" height="44" />
+        <Fill><SolidColor colorValue="FFEC9787" /></Fill>
+      </Shape>
+      <Shape id="0:211" name="Acc ungraded" opacity="0">
+        <Rectangle x="822" y="682" width="4" height="44" />
+        <Fill><SolidColor colorValue="FFFFC168" /></Fill>
+      </Shape>
+      <Text name="Fb title" x="838" y="672" width="400" sizingValue="fixed" wrapValue="noWrap">
+        <TextStylePaint id="0:362" fontSize="16" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+        <TextValueRun styleId="0:362" text=""><DataBindContext sourcePathIds="0:40-0:121" propertyKey="268" /></TextValueRun>
+      </Text>
+      <Text name="Fb body" x="838" y="698" width="392" sizingValue="fixed" wrapValue="wrap">
+        <TextStylePaint id="0:363" fontSize="12" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
+        <TextValueRun styleId="0:363" text=""><DataBindContext sourcePathIds="0:40-0:122" propertyKey="268" /></TextValueRun>
+      </Text>
+    </Node>
+    <Node id="0:213" opacity="0" name="Hint card">
+      <DataBindContext sourcePathIds="0:40-0:164" propertyKey="18" converterId="0:63" />
+      <Shape name="Hint frame">
+        <Rectangle x="1030" y="698" width="420" height="88" cornerRadiusTL="4" />
+        <Fill><SolidColor colorValue="F20E1420" /></Fill>
+        <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="66FFC168" /></Stroke>
+      </Shape>
+      <Text name="Hint tag" x="834" y="662" wrapValue="noWrap">
+        <TextStylePaint id="0:364" fontSize="9.5" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFFFC168" /></Fill></TextStylePaint>
+        <TextValueRun styleId="0:364" text="HINT" />
+      </Text>
+      <Text name="Hint text" x="834" y="682" width="392" sizingValue="fixed" wrapValue="wrap">
+        <TextStylePaint id="0:365" fontSize="12" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
+        <TextValueRun styleId="0:365" text=""><DataBindContext sourcePathIds="0:40-0:116" propertyKey="268" /></TextValueRun>
+      </Text>
+    </Node>
+    <Node id="0:214" opacity="0" name="Answer chip">
+      <DataBindContext sourcePathIds="0:40-0:162" propertyKey="18" converterId="0:63" />
+      <Text name="Ans tag" x="820" y="630" wrapValue="noWrap">
+        <TextStylePaint id="0:366" fontSize="9.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+        <TextValueRun styleId="0:366" text="ANSWER" />
+      </Text>
+      <Text name="Ans text" x="890" y="626" width="350" sizingValue="fixed" wrapValue="noWrap">
+        <TextStylePaint id="0:367" fontSize="12" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+        <TextValueRun styleId="0:367" text=""><DataBindContext sourcePathIds="0:40-0:114" propertyKey="268" /></TextValueRun>
+      </Text>
+    </Node>
+    <Node id="0:212" opacity="0" name="Error chip">
+      <Shape name="Err frame">
+        <Rectangle x="1030" y="698" width="420" height="88" cornerRadiusTL="4" />
+        <Fill><SolidColor colorValue="F21A1210" /></Fill>
+        <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="99EC9787" /></Stroke>
+      </Shape>
+      <Text name="Err tag" x="834" y="662" wrapValue="noWrap">
+        <TextStylePaint id="0:368" fontSize="9.5" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFEC9787" /></Fill></TextStylePaint>
+        <TextValueRun styleId="0:368" text="FAULT" />
+      </Text>
+      <Text name="Err text" x="834" y="682" width="300" sizingValue="fixed" wrapValue="noWrap">
+        <TextStylePaint id="0:369" fontSize="12" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
+        <TextValueRun styleId="0:369" text=""><DataBindContext sourcePathIds="0:40-0:123" propertyKey="268" /></TextValueRun>
+      </Text>
+      <Text name="Err code" x="1140" y="682" width="86" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+        <TextStylePaint id="0:370" fontSize="12" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFEC9787" /></Fill></TextStylePaint>
+        <TextValueRun styleId="0:370" text="0"><DataBindContext sourcePathIds="0:40-0:140" propertyKey="268" converterId="0:61" /></TextValueRun>
+      </Text>
+    </Node>
+    <Node id="0:200" opacity="0" name="Loader" x="420" y="410">
+      <Shape name="Track"><Ellipse x="0" y="0" width="176" height="176" /><Stroke thickness="1.2" cap="round" join="round"><SolidColor colorValue="22E9F4FA" /></Stroke></Shape>
+      <Shape name="Track ticks">
+        <PointsPath><StraightVertex x="100.00" y="0.00" /><StraightVertex x="108.00" y="0.00" /></PointsPath>
+        <PointsPath><StraightVertex x="0.00" y="100.00" /><StraightVertex x="0.00" y="108.00" /></PointsPath>
+        <PointsPath><StraightVertex x="-100.00" y="0.00" /><StraightVertex x="-108.00" y="0.00" /></PointsPath>
+        <PointsPath><StraightVertex x="-0.00" y="-100.00" /><StraightVertex x="-0.00" y="-108.00" /></PointsPath>
+        <Stroke thickness="2" cap="round" join="round"><SolidColor colorValue="55E9F4FA" /></Stroke>
+      </Shape>
+      <Node id="0:201" name="Orbital">
+        <Node id="0:202" name="Ring A"><Shape name="Arc A">
+          <PointsPath>
+            <StraightVertex x="44.00" y="-76.21" />
+            <StraightVertex x="51.73" y="-71.19" />
+            <StraightVertex x="58.88" y="-65.40" />
+            <StraightVertex x="65.40" y="-58.88" />
+            <StraightVertex x="71.19" y="-51.73" />
+            <StraightVertex x="76.21" y="-44.00" />
+            <StraightVertex x="80.39" y="-35.79" />
+            <StraightVertex x="83.69" y="-27.19" />
+            <StraightVertex x="86.08" y="-18.30" />
+            <StraightVertex x="87.52" y="-9.20" />
+            <StraightVertex x="88.00" y="0.00" />
+            <StraightVertex x="87.52" y="9.20" />
+            <StraightVertex x="86.08" y="18.30" />
+            <StraightVertex x="83.69" y="27.19" />
+            <StraightVertex x="80.39" y="35.79" />
+            <StraightVertex x="76.21" y="44.00" />
+            <StraightVertex x="71.19" y="51.73" />
+            <StraightVertex x="65.40" y="58.88" />
+            <StraightVertex x="58.88" y="65.40" />
+            <StraightVertex x="51.73" y="71.19" />
+            <StraightVertex x="44.00" y="76.21" />
+          </PointsPath>
+          <PointsPath>
+            <StraightVertex x="-85.00" y="22.78" />
+            <StraightVertex x="-86.92" y="13.77" />
+            <StraightVertex x="-87.88" y="4.61" />
+            <StraightVertex x="-87.88" y="-4.61" />
+            <StraightVertex x="-86.92" y="-13.77" />
+            <StraightVertex x="-85.00" y="-22.78" />
+          </PointsPath>
+          <Stroke thickness="3" cap="round" join="round"><SolidColor colorValue="FFFFE14D" /></Stroke>
+        </Shape></Node>
+        <Node id="0:203" name="Ring B"><Shape name="Arc B">
+          <PointsPath>
+            <StraightVertex x="0.00" y="74.00" />
+            <StraightVertex x="-7.74" y="73.59" />
+            <StraightVertex x="-15.39" y="72.38" />
+            <StraightVertex x="-22.87" y="70.38" />
+            <StraightVertex x="-30.10" y="67.60" />
+            <StraightVertex x="-37.00" y="64.09" />
+            <StraightVertex x="-43.50" y="59.87" />
+            <StraightVertex x="-49.52" y="54.99" />
+            <StraightVertex x="-54.99" y="49.52" />
+            <StraightVertex x="-59.87" y="43.50" />
+            <StraightVertex x="-64.09" y="37.00" />
+          </PointsPath>
+          <PointsPath>
+            <StraightVertex x="-19.15" y="-71.48" />
+            <StraightVertex x="-11.58" y="-73.09" />
+            <StraightVertex x="-3.87" y="-73.90" />
+            <StraightVertex x="3.87" y="-73.90" />
+            <StraightVertex x="11.58" y="-73.09" />
+            <StraightVertex x="19.15" y="-71.48" />
+            <StraightVertex x="26.52" y="-69.08" />
+            <StraightVertex x="33.60" y="-65.93" />
+            <StraightVertex x="40.30" y="-62.06" />
+            <StraightVertex x="46.57" y="-57.51" />
+            <StraightVertex x="52.33" y="-52.33" />
+          </PointsPath>
+          <Stroke thickness="2" cap="round" join="round"><SolidColor colorValue="FFF4A629" /></Stroke>
+        </Shape></Node>
+        <Node id="0:204" name="Pulse" rotation="45"><Shape name="Pulse diamond"><Rectangle x="0" y="0" width="12" height="12" /><Fill><SolidColor colorValue="FFFFE14D" /></Fill></Shape></Node>
+      </Node>
+      <Node id="0:205" name="Triad" opacity="0">
+        <Shape name="Dot 0"><Ellipse x="34.00" y="0.00" width="8" height="8" /><Fill><SolidColor colorValue="FFFFC168" /></Fill></Shape>
+        <Shape name="Dot 120"><Ellipse x="-17.00" y="29.44" width="8" height="8" /><Fill><SolidColor colorValue="FFFFC168" /></Fill></Shape>
+        <Shape name="Dot 240"><Ellipse x="-17.00" y="-29.44" width="8" height="8" /><Fill><SolidColor colorValue="FFFFC168" /></Fill></Shape>
+        <Shape name="Triad track"><Ellipse x="0" y="0" width="68" height="68" /><Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="33FFC168" /></Stroke></Shape>
+      </Node>
+      <Node id="0:218" name="Retry ticks" opacity="0">
+        <DataBindContext sourcePathIds="0:40-0:166" propertyKey="18" converterId="0:63" />
+        <Shape name="Retry arcs">
+          <PointsPath>
+            <StraightVertex x="58.26" y="21.21" />
+            <StraightVertex x="55.73" y="27.18" />
+            <StraightVertex x="52.58" y="32.85" />
+            <StraightVertex x="48.86" y="38.17" />
+            <StraightVertex x="44.60" y="43.07" />
+            <StraightVertex x="39.85" y="47.49" />
+            <StraightVertex x="34.67" y="51.40" />
+            <StraightVertex x="29.11" y="54.74" />
+          </PointsPath>
+          <PointsPath>
+            <StraightVertex x="-58.26" y="-21.21" />
+            <StraightVertex x="-55.73" y="-27.18" />
+            <StraightVertex x="-52.58" y="-32.85" />
+            <StraightVertex x="-48.86" y="-38.17" />
+            <StraightVertex x="-44.60" y="-43.07" />
+            <StraightVertex x="-39.85" y="-47.49" />
+            <StraightVertex x="-34.67" y="-51.40" />
+            <StraightVertex x="-29.11" y="-54.74" />
+            <StraightVertex x="-23.23" y="-57.49" />
+            <StraightVertex x="-17.09" y="-59.60" />
+            <StraightVertex x="-10.77" y="-61.06" />
+          </PointsPath>
+          <Stroke thickness="2.5" cap="round" join="round"><SolidColor colorValue="FFFFC168" /></Stroke>
+        </Shape>
+        <Shape name="Red tick">
+          <PointsPath>
+            <StraightVertex x="61.40" y="-8.63" />
+            <StraightVertex x="61.85" y="-4.32" />
+            <StraightVertex x="62.00" y="0.00" />
+            <StraightVertex x="61.85" y="4.32" />
+            <StraightVertex x="61.40" y="8.63" />
+          </PointsPath>
+          <Stroke thickness="3.5" cap="round" join="round"><SolidColor colorValue="FFEC9787" /></Stroke>
+        </Shape>
+      </Node>
+      <Text name="Loader tag" x="-80" y="112" width="160" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+        <TextStylePaint id="0:371" fontSize="9.5" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+        <TextValueRun styleId="0:371" text="CONTENT // SYNC" />
+      </Text>
+    </Node>
+    <Node id="0:206" opacity="0" name="Skeleton">
+      <Shape name="Sk title">
+        <Rectangle x="320" y="162" width="480" height="24" cornerRadiusTL="3" />
+        <Fill><SolidColor colorValue="1AFFFFFF" /></Fill>
+      </Shape>
+      <Shape name="Sk line 1">
+        <Rectangle x="400" y="208" width="640" height="10" cornerRadiusTL="2" />
+        <Fill><SolidColor colorValue="14FFFFFF" /></Fill>
+      </Shape>
+      <Shape name="Sk line 2">
+        <Rectangle x="360" y="230" width="560" height="10" cornerRadiusTL="2" />
+        <Fill><SolidColor colorValue="14FFFFFF" /></Fill>
+      </Shape>
+      <Shape name="Sk line 3">
+        <Rectangle x="290" y="252" width="420" height="10" cornerRadiusTL="2" />
+        <Fill><SolidColor colorValue="14FFFFFF" /></Fill>
+      </Shape>
+      <Shape name="Sk pill 0">
+        <Rectangle x="700" y="132" width="120" height="32" cornerRadiusTL="16" />
+        <Fill><SolidColor colorValue="0FFFFFFF" /></Fill>
+      </Shape>
+      <Shape name="Sk pill 1">
+        <Rectangle x="700" y="180" width="120" height="32" cornerRadiusTL="16" />
+        <Fill><SolidColor colorValue="0FFFFFFF" /></Fill>
+      </Shape>
+      <Shape name="Sk pill 2">
+        <Rectangle x="700" y="228" width="120" height="32" cornerRadiusTL="16" />
+        <Fill><SolidColor colorValue="0FFFFFFF" /></Fill>
+      </Shape>
+    </Node>
+    <Node id="0:207" name="Choices">
+      <Text name="Interaction tag" x="820" y="64" wrapValue="noWrap">
+        <TextStylePaint id="0:372" fontSize="10" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+        <TextValueRun styleId="0:372" text=""><DataBindContext sourcePathIds="0:40-0:107" propertyKey="268" /></TextValueRun>
+      </Text>
+      <Text name="Max tag" x="1140" y="64" width="100" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+        <TextStylePaint id="0:373" fontSize="9.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+        <TextValueRun styleId="0:373" text="MAX·06" />
+      </Text>
+      <Node id="0:219" name="ChoiceVis 0">
+        <DataBindContext sourcePathIds="0:40-0:150" propertyKey="18" converterId="0:63" />
+        <Node id="0:220" name="Choice 0">
+          <Shape name="Sel 0" opacity="0">
+            <DataBindContext sourcePathIds="0:40-0:156" propertyKey="18" converterId="0:63" />
+            <Rectangle x="826" y="122" width="4" height="56" />
+            <Fill><SolidColor colorValue="FFFFC168" /></Fill>
+          </Shape>
+          <Text name="Idx 0" x="844" y="113" wrapValue="noWrap">
+            <TextStylePaint id="0:374" fontSize="11" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+            <TextValueRun styleId="0:374" text="01" />
+          </Text>
+          <Text name="Label 0" x="884" y="111" width="336" sizingValue="fixed" wrapValue="noWrap">
+            <TextStylePaint id="0:375" fontSize="15" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+            <TextValueRun styleId="0:375" text=""><DataBindContext sourcePathIds="0:40-0:108" propertyKey="268" /></TextValueRun>
+          </Text>
+          <Shape name="Cell 0">
+            <Rectangle x="1030" y="122" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="F2101820" /></Fill>
+            <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="38E9F4FA" /></Stroke>
+          </Shape>
+          <Shape id="0:221" name="Hov 0" opacity="0">
+            <Rectangle x="1030" y="122" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="12FFFFFF" /></Fill>
+          </Shape>
+          <Shape id="0:222" name="Down 0" opacity="0">
+            <Rectangle x="1030" y="122" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="26FFC168" /></Fill>
+          </Shape>
+          <Shape id="0:223" name="Hit 0">
+            <Rectangle x="1030" y="122" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
+          </Shape>
+        </Node>
+      </Node>
+      <Node id="0:224" name="ChoiceVis 1">
+        <DataBindContext sourcePathIds="0:40-0:151" propertyKey="18" converterId="0:63" />
+        <Node id="0:225" name="Choice 1">
+          <Shape name="Sel 1" opacity="0">
+            <DataBindContext sourcePathIds="0:40-0:157" propertyKey="18" converterId="0:63" />
+            <Rectangle x="826" y="214" width="4" height="56" />
+            <Fill><SolidColor colorValue="FFFFC168" /></Fill>
+          </Shape>
+          <Text name="Idx 1" x="844" y="205" wrapValue="noWrap">
+            <TextStylePaint id="0:376" fontSize="11" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+            <TextValueRun styleId="0:376" text="02" />
+          </Text>
+          <Text name="Label 1" x="884" y="203" width="336" sizingValue="fixed" wrapValue="noWrap">
+            <TextStylePaint id="0:377" fontSize="15" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+            <TextValueRun styleId="0:377" text=""><DataBindContext sourcePathIds="0:40-0:109" propertyKey="268" /></TextValueRun>
+          </Text>
+          <Shape name="Cell 1">
+            <Rectangle x="1030" y="214" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="F2101820" /></Fill>
+            <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="38E9F4FA" /></Stroke>
+          </Shape>
+          <Shape id="0:226" name="Hov 1" opacity="0">
+            <Rectangle x="1030" y="214" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="12FFFFFF" /></Fill>
+          </Shape>
+          <Shape id="0:227" name="Down 1" opacity="0">
+            <Rectangle x="1030" y="214" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="26FFC168" /></Fill>
+          </Shape>
+          <Shape id="0:228" name="Hit 1">
+            <Rectangle x="1030" y="214" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
+          </Shape>
+        </Node>
+      </Node>
+      <Node id="0:229" name="ChoiceVis 2">
+        <DataBindContext sourcePathIds="0:40-0:152" propertyKey="18" converterId="0:63" />
+        <Node id="0:230" name="Choice 2">
+          <Shape name="Sel 2" opacity="0">
+            <DataBindContext sourcePathIds="0:40-0:158" propertyKey="18" converterId="0:63" />
+            <Rectangle x="826" y="306" width="4" height="56" />
+            <Fill><SolidColor colorValue="FFFFC168" /></Fill>
+          </Shape>
+          <Text name="Idx 2" x="844" y="297" wrapValue="noWrap">
+            <TextStylePaint id="0:378" fontSize="11" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+            <TextValueRun styleId="0:378" text="03" />
+          </Text>
+          <Text name="Label 2" x="884" y="295" width="336" sizingValue="fixed" wrapValue="noWrap">
+            <TextStylePaint id="0:379" fontSize="15" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+            <TextValueRun styleId="0:379" text=""><DataBindContext sourcePathIds="0:40-0:110" propertyKey="268" /></TextValueRun>
+          </Text>
+          <Shape name="Cell 2">
+            <Rectangle x="1030" y="306" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="F2101820" /></Fill>
+            <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="38E9F4FA" /></Stroke>
+          </Shape>
+          <Shape id="0:231" name="Hov 2" opacity="0">
+            <Rectangle x="1030" y="306" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="12FFFFFF" /></Fill>
+          </Shape>
+          <Shape id="0:232" name="Down 2" opacity="0">
+            <Rectangle x="1030" y="306" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="26FFC168" /></Fill>
+          </Shape>
+          <Shape id="0:233" name="Hit 2">
+            <Rectangle x="1030" y="306" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
+          </Shape>
+        </Node>
+      </Node>
+      <Node id="0:234" name="ChoiceVis 3">
+        <DataBindContext sourcePathIds="0:40-0:153" propertyKey="18" converterId="0:63" />
+        <Node id="0:235" name="Choice 3">
+          <Shape name="Sel 3" opacity="0">
+            <DataBindContext sourcePathIds="0:40-0:159" propertyKey="18" converterId="0:63" />
+            <Rectangle x="826" y="398" width="4" height="56" />
+            <Fill><SolidColor colorValue="FFFFC168" /></Fill>
+          </Shape>
+          <Text name="Idx 3" x="844" y="389" wrapValue="noWrap">
+            <TextStylePaint id="0:380" fontSize="11" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+            <TextValueRun styleId="0:380" text="04" />
+          </Text>
+          <Text name="Label 3" x="884" y="387" width="336" sizingValue="fixed" wrapValue="noWrap">
+            <TextStylePaint id="0:381" fontSize="15" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+            <TextValueRun styleId="0:381" text=""><DataBindContext sourcePathIds="0:40-0:111" propertyKey="268" /></TextValueRun>
+          </Text>
+          <Shape name="Cell 3">
+            <Rectangle x="1030" y="398" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="F2101820" /></Fill>
+            <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="38E9F4FA" /></Stroke>
+          </Shape>
+          <Shape id="0:236" name="Hov 3" opacity="0">
+            <Rectangle x="1030" y="398" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="12FFFFFF" /></Fill>
+          </Shape>
+          <Shape id="0:237" name="Down 3" opacity="0">
+            <Rectangle x="1030" y="398" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="26FFC168" /></Fill>
+          </Shape>
+          <Shape id="0:238" name="Hit 3">
+            <Rectangle x="1030" y="398" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
+          </Shape>
+        </Node>
+      </Node>
+      <Node id="0:239" name="ChoiceVis 4">
+        <DataBindContext sourcePathIds="0:40-0:154" propertyKey="18" converterId="0:63" />
+        <Node id="0:240" name="Choice 4">
+          <Shape name="Sel 4" opacity="0">
+            <DataBindContext sourcePathIds="0:40-0:160" propertyKey="18" converterId="0:63" />
+            <Rectangle x="826" y="490" width="4" height="56" />
+            <Fill><SolidColor colorValue="FFFFC168" /></Fill>
+          </Shape>
+          <Text name="Idx 4" x="844" y="481" wrapValue="noWrap">
+            <TextStylePaint id="0:382" fontSize="11" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+            <TextValueRun styleId="0:382" text="05" />
+          </Text>
+          <Text name="Label 4" x="884" y="479" width="336" sizingValue="fixed" wrapValue="noWrap">
+            <TextStylePaint id="0:383" fontSize="15" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+            <TextValueRun styleId="0:383" text=""><DataBindContext sourcePathIds="0:40-0:112" propertyKey="268" /></TextValueRun>
+          </Text>
+          <Shape name="Cell 4">
+            <Rectangle x="1030" y="490" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="F2101820" /></Fill>
+            <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="38E9F4FA" /></Stroke>
+          </Shape>
+          <Shape id="0:241" name="Hov 4" opacity="0">
+            <Rectangle x="1030" y="490" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="12FFFFFF" /></Fill>
+          </Shape>
+          <Shape id="0:242" name="Down 4" opacity="0">
+            <Rectangle x="1030" y="490" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="26FFC168" /></Fill>
+          </Shape>
+          <Shape id="0:243" name="Hit 4">
+            <Rectangle x="1030" y="490" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
+          </Shape>
+        </Node>
+      </Node>
+      <Node id="0:244" name="ChoiceVis 5">
+        <DataBindContext sourcePathIds="0:40-0:155" propertyKey="18" converterId="0:63" />
+        <Node id="0:245" name="Choice 5">
+          <Shape name="Sel 5" opacity="0">
+            <DataBindContext sourcePathIds="0:40-0:161" propertyKey="18" converterId="0:63" />
+            <Rectangle x="826" y="582" width="4" height="56" />
+            <Fill><SolidColor colorValue="FFFFC168" /></Fill>
+          </Shape>
+          <Text name="Idx 5" x="844" y="573" wrapValue="noWrap">
+            <TextStylePaint id="0:384" fontSize="11" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+            <TextValueRun styleId="0:384" text="06" />
+          </Text>
+          <Text name="Label 5" x="884" y="571" width="336" sizingValue="fixed" wrapValue="noWrap">
+            <TextStylePaint id="0:385" fontSize="15" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+            <TextValueRun styleId="0:385" text=""><DataBindContext sourcePathIds="0:40-0:113" propertyKey="268" /></TextValueRun>
+          </Text>
+          <Shape name="Cell 5">
+            <Rectangle x="1030" y="582" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="F2101820" /></Fill>
+            <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="38E9F4FA" /></Stroke>
+          </Shape>
+          <Shape id="0:246" name="Hov 5" opacity="0">
+            <Rectangle x="1030" y="582" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="12FFFFFF" /></Fill>
+          </Shape>
+          <Shape id="0:247" name="Down 5" opacity="0">
+            <Rectangle x="1030" y="582" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="26FFC168" /></Fill>
+          </Shape>
+          <Shape id="0:248" name="Hit 5">
+            <Rectangle x="1030" y="582" width="420" height="84" cornerRadiusTL="6" />
+            <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
+          </Shape>
+        </Node>
+      </Node>
+    </Node>
+    <Node id="0:216" name="Disabled veil" opacity="0">
+      <DataBindContext sourcePathIds="0:40-0:171" propertyKey="18" converterId="0:63" />
+      <Shape name="Veil">
+        <Rectangle x="640" y="773" width="1280" height="54" />
+        <Fill><SolidColor colorValue="A60A0D12" /></Fill>
+      </Shape>
+    </Node>
+    <Text name="Panel tag" x="604" y="765" wrapValue="noWrap">
+      <TextStylePaint id="0:386" fontSize="9.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:386" text="XR PANEL // LRN-01" />
+    </Text>
+    <Text name="Btn label LISTEN" x="48" y="764" width="108" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:387" fontSize="11.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:387" text=""><DataBindContext sourcePathIds="0:40-0:120" propertyKey="268" /></TextValueRun>
+    </Text>
+    <Shape name="Btn frame LISTEN">
+      <Rectangle x="102" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="1A101820" /></Fill>
+      <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="55E9F4FA" /></Stroke>
+    </Shape>
+    <Shape id="0:249" name="Btn hov LISTEN" opacity="0">
+      <Rectangle x="102" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="12FFFFFF" /></Fill>
+    </Shape>
+    <Shape id="0:250" name="Btn down LISTEN" opacity="0">
+      <Rectangle x="102" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="2EFFC168" /></Fill>
+    </Shape>
+    <Shape id="0:251" name="Btn hit LISTEN">
+      <Rectangle x="102" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
+    </Shape>
+    <Text name="Btn label HINT" x="168" y="764" width="108" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:388" fontSize="11.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:388" text=""><DataBindContext sourcePathIds="0:40-0:115" propertyKey="268" /></TextValueRun>
+    </Text>
+    <Shape id="0:217" name="HintDim" opacity="0">
+      <DataBindContext sourcePathIds="0:40-0:163" propertyKey="18" converterId="0:64" />
+      <Rectangle x="222" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="990A0D12" /></Fill>
+    </Shape>
+    <Shape name="Btn frame HINT">
+      <Rectangle x="222" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="1A101820" /></Fill>
+      <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="55E9F4FA" /></Stroke>
+    </Shape>
+    <Shape id="0:252" name="Btn hov HINT" opacity="0">
+      <Rectangle x="222" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="12FFFFFF" /></Fill>
+    </Shape>
+    <Shape id="0:253" name="Btn down HINT" opacity="0">
+      <Rectangle x="222" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="2EFFC168" /></Fill>
+    </Shape>
+    <Shape id="0:254" name="Btn hit HINT">
+      <Rectangle x="222" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
+    </Shape>
+    <Text name="Btn label BOARD" x="288" y="764" width="108" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:389" fontSize="11.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:389" text="BOARD" />
+    </Text>
+    <Shape name="Btn frame BOARD">
+      <Rectangle x="342" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="1A101820" /></Fill>
+      <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="55E9F4FA" /></Stroke>
+    </Shape>
+    <Shape id="0:255" name="Btn hov BOARD" opacity="0">
+      <Rectangle x="342" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="12FFFFFF" /></Fill>
+    </Shape>
+    <Shape id="0:256" name="Btn down BOARD" opacity="0">
+      <Rectangle x="342" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="2EFFC168" /></Fill>
+    </Shape>
+    <Shape id="0:257" name="Btn hit BOARD">
+      <Rectangle x="342" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
+    </Shape>
+    <Text name="Btn label RETRY" x="408" y="764" width="108" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:390" fontSize="11.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:390" text="RETRY" />
+    </Text>
+    <Shape name="Btn frame RETRY">
+      <Rectangle x="462" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="1A101820" /></Fill>
+      <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="55E9F4FA" /></Stroke>
+    </Shape>
+    <Shape id="0:258" name="Btn hov RETRY" opacity="0">
+      <Rectangle x="462" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="12FFFFFF" /></Fill>
+    </Shape>
+    <Shape id="0:259" name="Btn down RETRY" opacity="0">
+      <Rectangle x="462" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="2EFFC168" /></Fill>
+    </Shape>
+    <Shape id="0:260" name="Btn hit RETRY">
+      <Rectangle x="462" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
+    </Shape>
+    <Text name="Btn label SKIP" x="818" y="764" width="108" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:391" fontSize="11.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:391" text=""><DataBindContext sourcePathIds="0:40-0:119" propertyKey="268" /></TextValueRun>
+    </Text>
+    <Shape name="Btn frame SKIP">
+      <Rectangle x="872" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="1A101820" /></Fill>
+      <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="55E9F4FA" /></Stroke>
+    </Shape>
+    <Shape id="0:261" name="Btn hov SKIP" opacity="0">
+      <Rectangle x="872" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="12FFFFFF" /></Fill>
+    </Shape>
+    <Shape id="0:262" name="Btn down SKIP" opacity="0">
+      <Rectangle x="872" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="2EFFC168" /></Fill>
+    </Shape>
+    <Shape id="0:263" name="Btn hit SKIP">
+      <Rectangle x="872" y="773" width="108" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
+    </Shape>
+    <Text name="Btn label SUBMIT" x="938" y="764" width="150" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:392" fontSize="11.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FF0A0D12" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:392" text=""><DataBindContext sourcePathIds="0:40-0:117" propertyKey="268" /></TextValueRun>
+    </Text>
+    <Shape name="Btn frame SUBMIT">
+      <Rectangle x="1013" y="773" width="150" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="FFFFC168" /></Fill>
+    </Shape>
+    <Shape id="0:264" name="Btn hov SUBMIT" opacity="0">
+      <Rectangle x="1013" y="773" width="150" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="12FFFFFF" /></Fill>
+    </Shape>
+    <Shape id="0:265" name="Btn down SUBMIT" opacity="0">
+      <Rectangle x="1013" y="773" width="150" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="2EFFC168" /></Fill>
+    </Shape>
+    <Shape id="0:266" name="Btn hit SUBMIT">
+      <Rectangle x="1013" y="773" width="150" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
+    </Shape>
+    <Text name="Btn label NEXT" x="1100" y="764" width="140" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:393" fontSize="11.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:393" text=""><DataBindContext sourcePathIds="0:40-0:118" propertyKey="268" /></TextValueRun>
+    </Text>
+    <Shape name="Btn frame NEXT">
+      <Rectangle x="1170" y="773" width="140" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="1FFFC168" /></Fill>
+      <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="99FFC168" /></Stroke>
+    </Shape>
+    <Shape id="0:267" name="Btn hov NEXT" opacity="0">
+      <Rectangle x="1170" y="773" width="140" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="12FFFFFF" /></Fill>
+    </Shape>
+    <Shape id="0:268" name="Btn down NEXT" opacity="0">
+      <Rectangle x="1170" y="773" width="140" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="2EFFC168" /></Fill>
+    </Shape>
+    <Shape id="0:269" name="Btn hit NEXT">
+      <Rectangle x="1170" y="773" width="140" height="34" cornerRadiusTL="4" />
+      <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
+    </Shape>
+    <Shape name="Subject chip">
+      <Rectangle x="118" y="34" width="140" height="32" cornerRadiusTL="3" />
+      <Fill><SolidColor colorValue="1FFFC168" /></Fill>
+      <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="66FFC168" /></Stroke>
+    </Shape>
+    <Text name="Subject" x="48" y="22" width="140" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:394" fontSize="12" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:394" text=""><DataBindContext sourcePathIds="0:40-0:101" propertyKey="268" /></TextValueRun>
+    </Text>
+    <Shape name="Subject underline">
+      <Rectangle x="118" y="52" width="56" height="2" />
+      <Fill><SolidColor colorValue="FFFFC168" /></Fill>
+    </Shape>
+    <Text name="Skill" x="200" y="31" wrapValue="noWrap">
+      <TextStylePaint id="0:395" fontSize="10" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:395" text=""><DataBindContext sourcePathIds="0:40-0:102" propertyKey="268" /></TextValueRun>
+    </Text>
+    <Text name="Zone tag" x="580" y="40" width="120" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:396" fontSize="10" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:396" text="Q-PANEL // LRN" />
+    </Text>
+    <Text name="Status tag" x="760" y="24" wrapValue="noWrap">
+      <TextStylePaint id="0:397" fontSize="9" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:397" text="STATUS" />
+    </Text>
+    <Text name="Status" x="760" y="40" wrapValue="noWrap">
+      <TextStylePaint id="0:398" fontSize="11" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:398" text=""><DataBindContext sourcePathIds="0:40-0:123" propertyKey="268" /></TextValueRun>
+    </Text>
+    <Text name="Progress" x="980" y="36" width="130" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:399" fontSize="12" letterSpacing="1" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:399" text=""><DataBindContext sourcePathIds="0:40-0:103" propertyKey="268" /></TextValueRun>
+    </Text>
+    <Shape name="Locale chip">
+      <Rectangle x="1185" y="36" width="100" height="26" cornerRadiusTL="3" />
+      <Fill><SolidColor colorValue="14101820" /></Fill>
+      <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="40E9F4FA" /></Stroke>
+    </Shape>
+    <Text name="Locale" x="1135" y="43" width="100" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:400" fontSize="10" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:400" text=""><DataBindContext sourcePathIds="0:40-0:104" propertyKey="268" /></TextValueRun>
+    </Text>
+    <Text name="Cam tag" x="48" y="66" wrapValue="noWrap">
+      <TextStylePaint id="0:401" fontSize="9.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:401" text="CAM·02 // CONTENT" />
+    </Text>
+    <Text name="Win dims" x="680" y="66" width="120" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:402" fontSize="9.5" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+      <TextValueRun styleId="0:402" text="760×660" />
+    </Text>
+    <Shape name="Window brackets">
+      <PointsPath>
+        <StraightVertex x="66" y="80" />
+        <StraightVertex x="40" y="80" />
+        <StraightVertex x="40" y="106" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="774" y="80" />
+        <StraightVertex x="800" y="80" />
+        <StraightVertex x="800" y="106" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="40" y="714" />
+        <StraightVertex x="40" y="740" />
+        <StraightVertex x="66" y="740" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="800" y="714" />
+        <StraightVertex x="800" y="740" />
+        <StraightVertex x="774" y="740" />
+      </PointsPath>
+      <Stroke thickness="2" cap="round" join="round"><SolidColor colorValue="FFFFC168" /></Stroke>
+    </Shape>
+    <Shape name="Panel brackets">
+      <PointsPath>
+        <StraightVertex x="48" y="8" />
+        <StraightVertex x="8" y="8" />
+        <StraightVertex x="8" y="48" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="1232" y="8" />
+        <StraightVertex x="1272" y="8" />
+        <StraightVertex x="1272" y="48" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="8" y="752" />
+        <StraightVertex x="8" y="792" />
+        <StraightVertex x="48" y="792" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="1272" y="752" />
+        <StraightVertex x="1272" y="792" />
+        <StraightVertex x="1232" y="792" />
+      </PointsPath>
+      <Stroke thickness="2.5" cap="round" join="round"><SolidColor colorValue="B3FFC168" /></Stroke>
+    </Shape>
+    <Text name="Spine L" x="16" y="410" rotation="-90"><TextStylePaint id="0:403" fontSize="10" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint><TextValueRun text="MOYO // LEARN" /></Text>
+    <Text name="Spine R" x="1264" y="390" rotation="90"><TextStylePaint id="0:404" fontSize="10" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint><TextValueRun text="QUESTION" /></Text>
+    <Shape name="Footer band"><PointsPath isClosed="true"><StraightVertex x="0" y="746" /><StraightVertex x="1280" y="746" /><StraightVertex x="1280" y="780" /><StraightVertex x="1260" y="800" /><StraightVertex x="20" y="800" /><StraightVertex x="0" y="780" /></PointsPath><Fill><SolidColor colorValue="F00E1420" /></Fill></Shape>
+    <Shape name="Header band"><PointsPath isClosed="true"><StraightVertex x="20" y="0" /><StraightVertex x="1260" y="0" /><StraightVertex x="1280" y="20" /><StraightVertex x="1280" y="64" /><StraightVertex x="0" y="64" /><StraightVertex x="0" y="20" /></PointsPath><Fill><SolidColor colorValue="F00E1420" /></Fill></Shape>
+    <Shape name="Header rule">
+      <Rectangle x="640" y="64" width="1280" height="1" />
+      <Fill><SolidColor colorValue="2BE9F4FA" /></Fill>
+    </Shape>
+    <Shape name="Panel edge">
+      <PointsPath isClosed="true">
+        <StraightVertex x="20" y="0" />
+        <StraightVertex x="1260" y="0" />
+        <StraightVertex x="1280" y="20" />
+        <StraightVertex x="1280" y="780" />
+        <StraightVertex x="1260" y="800" />
+        <StraightVertex x="20" y="800" />
+        <StraightVertex x="0" y="780" />
+        <StraightVertex x="0" y="20" />
+      </PointsPath>
+      <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="3DE9F4FA" /></Stroke>
+    </Shape>
+    <Shape name="Panel face">
+      <DataBindContext sourcePathIds="0:40-0:138" propertyKey="18" />
+      <PointsPath isClosed="true">
+        <StraightVertex x="20" y="0" />
+        <StraightVertex x="1260" y="0" />
+        <StraightVertex x="1280" y="20" />
+        <StraightVertex x="1280" y="780" />
+        <StraightVertex x="1260" y="800" />
+        <StraightVertex x="20" y="800" />
+        <StraightVertex x="0" y="780" />
+        <StraightVertex x="0" y="20" />
+      </PointsPath>
+      <Rectangle x="420" y="410" width="760" height="660" />
+      <Fill fillRule="evenOdd"><SolidColor colorValue="FF0A0D12" /></Fill>
+    </Shape>
+    <LinearAnimation id="0:270" name="EntranceLoading" duration="120" fps="60" loopValue="loop">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:202"><KeyedProperty propertyKey="15"><KeyFrameDouble frame="0" value="0" interpolationType="linear" /><KeyFrameDouble frame="120" value="360" interpolationType="linear" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:203"><KeyedProperty propertyKey="15"><KeyFrameDouble frame="0" value="0" interpolationType="linear" /><KeyFrameDouble frame="120" value="-540" interpolationType="linear" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:204"><KeyedProperty propertyKey="16"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /><KeyFrameDouble frame="30" value="1.25" interpolationType="cubic" /><KeyFrameDouble frame="60" value="1" interpolationType="cubic" /><KeyFrameDouble frame="90" value="1.25" interpolationType="cubic" /><KeyFrameDouble frame="120" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:204"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0.55" interpolationType="cubic" /><KeyFrameDouble frame="30" value="1" interpolationType="cubic" /><KeyFrameDouble frame="60" value="0.55" interpolationType="cubic" /><KeyFrameDouble frame="90" value="1" interpolationType="cubic" /><KeyFrameDouble frame="120" value="0.55" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:294" name="EntranceLoadingRM" duration="9" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:202"><KeyedProperty propertyKey="15"><KeyFrameDouble frame="0" value="40" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:203"><KeyedProperty propertyKey="15"><KeyFrameDouble frame="0" value="-80" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:272" name="Entering" duration="44" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="18" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="16" interpolationType="cubic" /><KeyFrameDouble frame="18" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="4" value="0" interpolationType="cubic" /><KeyFrameDouble frame="22" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="4" value="16" interpolationType="cubic" /><KeyFrameDouble frame="22" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="8" value="0" interpolationType="cubic" /><KeyFrameDouble frame="26" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="8" value="16" interpolationType="cubic" /><KeyFrameDouble frame="26" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="12" value="0" interpolationType="cubic" /><KeyFrameDouble frame="30" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="12" value="16" interpolationType="cubic" /><KeyFrameDouble frame="30" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="16" value="0" interpolationType="cubic" /><KeyFrameDouble frame="34" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="16" value="16" interpolationType="cubic" /><KeyFrameDouble frame="34" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="20" value="0" interpolationType="cubic" /><KeyFrameDouble frame="38" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="20" value="16" interpolationType="cubic" /><KeyFrameDouble frame="38" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:296" name="EnteringRM" duration="9" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="9" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="9" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="9" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="9" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="9" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="9" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:274" name="Idle" duration="1" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:276" name="Selecting" duration="1" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:278" name="Submitting" duration="72" fps="60" loopValue="loop">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0.15" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="16"><KeyFrameDouble frame="0" value="0.6" interpolationType="linear" /><KeyFrameDouble frame="72" value="0.6" interpolationType="linear" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="15"><KeyFrameDouble frame="0" value="0" interpolationType="linear" /><KeyFrameDouble frame="72" value="360" interpolationType="linear" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:298" name="SubmittingRM" duration="9" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0.15" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:280" name="FeedbackCorrect" duration="20" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="8" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="6" value="1" interpolationType="cubic" /><KeyFrameDouble frame="12" value="0.5" interpolationType="cubic" /><KeyFrameDouble frame="18" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:282" name="FeedbackIncorrect" duration="20" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="8" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="6" value="1" interpolationType="cubic" /><KeyFrameDouble frame="12" value="0.5" interpolationType="cubic" /><KeyFrameDouble frame="18" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:284" name="FeedbackUngraded" duration="20" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="8" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="6" value="1" interpolationType="cubic" /><KeyFrameDouble frame="12" value="0.5" interpolationType="cubic" /><KeyFrameDouble frame="18" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:286" name="Exiting" duration="22" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="-16" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /><KeyFrameDouble frame="22" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="22" value="-16" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:300" name="ExitingRM" duration="9" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /><KeyFrameDouble frame="9" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:288" name="LoadingNext" duration="60" fps="60" loopValue="loop">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:202"><KeyedProperty propertyKey="15"><KeyFrameDouble frame="0" value="0" interpolationType="linear" /><KeyFrameDouble frame="60" value="360" interpolationType="linear" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:203"><KeyedProperty propertyKey="15"><KeyFrameDouble frame="0" value="0" interpolationType="linear" /><KeyFrameDouble frame="60" value="-180" interpolationType="linear" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:204"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /><KeyFrameDouble frame="30" value="0.5" interpolationType="cubic" /><KeyFrameDouble frame="60" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:302" name="LoadingNextRM" duration="9" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:202"><KeyedProperty propertyKey="15"><KeyFrameDouble frame="0" value="120" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:290" name="EnteringNext" duration="44" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="18" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="16" interpolationType="cubic" /><KeyFrameDouble frame="18" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="4" value="0" interpolationType="cubic" /><KeyFrameDouble frame="22" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="4" value="16" interpolationType="cubic" /><KeyFrameDouble frame="22" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="8" value="0" interpolationType="cubic" /><KeyFrameDouble frame="26" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="8" value="16" interpolationType="cubic" /><KeyFrameDouble frame="26" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="12" value="0" interpolationType="cubic" /><KeyFrameDouble frame="30" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="12" value="16" interpolationType="cubic" /><KeyFrameDouble frame="30" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="16" value="0" interpolationType="cubic" /><KeyFrameDouble frame="34" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="16" value="16" interpolationType="cubic" /><KeyFrameDouble frame="34" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="20" value="0" interpolationType="cubic" /><KeyFrameDouble frame="38" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="20" value="16" interpolationType="cubic" /><KeyFrameDouble frame="38" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:304" name="EnteringNextRM" duration="9" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="9" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="9" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="9" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="9" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="9" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="9" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:292" name="Error" duration="16" fps="60">
+      <KeyedObject objectId="0:200"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:201"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:205"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:206"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:208"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:209"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:210"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:211"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:207"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:220"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:225"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:230"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:235"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:240"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:245"><KeyedProperty propertyKey="13"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+      <KeyedObject objectId="0:212"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="0" interpolationType="cubic" /><KeyFrameDouble frame="10" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:306" name="fxIdle" duration="1" fps="60">
+    </LinearAnimation>
+    <LinearAnimation id="0:308" name="fxHov1" duration="1" fps="60">
+      <KeyedObject objectId="0:221"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:310" name="fxHov2" duration="1" fps="60">
+      <KeyedObject objectId="0:226"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:312" name="fxHov3" duration="1" fps="60">
+      <KeyedObject objectId="0:231"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:314" name="fxHov4" duration="1" fps="60">
+      <KeyedObject objectId="0:236"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:316" name="fxHov5" duration="1" fps="60">
+      <KeyedObject objectId="0:241"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:318" name="fxHov6" duration="1" fps="60">
+      <KeyedObject objectId="0:246"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:320" name="fxHov7" duration="1" fps="60">
+      <KeyedObject objectId="0:249"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:322" name="fxHov8" duration="1" fps="60">
+      <KeyedObject objectId="0:252"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:324" name="fxHov9" duration="1" fps="60">
+      <KeyedObject objectId="0:255"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:326" name="fxHov10" duration="1" fps="60">
+      <KeyedObject objectId="0:258"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:328" name="fxHov11" duration="1" fps="60">
+      <KeyedObject objectId="0:261"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:330" name="fxHov12" duration="1" fps="60">
+      <KeyedObject objectId="0:264"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:332" name="fxHov13" duration="1" fps="60">
+      <KeyedObject objectId="0:267"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:334" name="fxDown1" duration="1" fps="60">
+      <KeyedObject objectId="0:222"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:336" name="fxDown2" duration="1" fps="60">
+      <KeyedObject objectId="0:227"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:338" name="fxDown3" duration="1" fps="60">
+      <KeyedObject objectId="0:232"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:340" name="fxDown4" duration="1" fps="60">
+      <KeyedObject objectId="0:237"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:342" name="fxDown5" duration="1" fps="60">
+      <KeyedObject objectId="0:242"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:344" name="fxDown6" duration="1" fps="60">
+      <KeyedObject objectId="0:247"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:346" name="fxDown7" duration="1" fps="60">
+      <KeyedObject objectId="0:250"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:348" name="fxDown8" duration="1" fps="60">
+      <KeyedObject objectId="0:253"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:350" name="fxDown9" duration="1" fps="60">
+      <KeyedObject objectId="0:256"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:352" name="fxDown10" duration="1" fps="60">
+      <KeyedObject objectId="0:259"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:354" name="fxDown11" duration="1" fps="60">
+      <KeyedObject objectId="0:262"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:356" name="fxDown12" duration="1" fps="60">
+      <KeyedObject objectId="0:265"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:358" name="fxDown13" duration="1" fps="60">
+      <KeyedObject objectId="0:268"><KeyedProperty propertyKey="18"><KeyFrameDouble frame="0" value="1" interpolationType="cubic" /></KeyedProperty></KeyedObject>
+    </LinearAnimation>
+    <StateMachine name="QuestionFlow" id="0:7">
+      <StateMachineNumber id="0:600" name="fx" />
+      <StateMachineLayer name="Flow">
+        <EntryState x="0" y="0"><StateTransition stateToId="0:271" /></EntryState>
+        <AnyState x="0" y="-140">
+          <StateTransition stateToId="0:295" duration="150">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="0" /></TransitionViewModelCondition>
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:173" propertyKey="634" /></BindablePropertyBoolean></TransitionPropertyViewModelComparator><TransitionValueBooleanComparator value="true" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:271" duration="150">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="0" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:297" duration="150">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="1" /></TransitionViewModelCondition>
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:173" propertyKey="634" /></BindablePropertyBoolean></TransitionPropertyViewModelComparator><TransitionValueBooleanComparator value="true" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:273" duration="300">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="1" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:275" duration="150">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="2" /></TransitionViewModelCondition>
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:173" propertyKey="634" /></BindablePropertyBoolean></TransitionPropertyViewModelComparator><TransitionValueBooleanComparator value="true" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:275" duration="200">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="2" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:277" duration="150">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="3" /></TransitionViewModelCondition>
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:173" propertyKey="634" /></BindablePropertyBoolean></TransitionPropertyViewModelComparator><TransitionValueBooleanComparator value="true" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:277" duration="200">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="3" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:299" duration="150">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="4" /></TransitionViewModelCondition>
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:173" propertyKey="634" /></BindablePropertyBoolean></TransitionPropertyViewModelComparator><TransitionValueBooleanComparator value="true" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:279" duration="200">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="4" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:281" duration="150">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="5" /></TransitionViewModelCondition>
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:173" propertyKey="634" /></BindablePropertyBoolean></TransitionPropertyViewModelComparator><TransitionValueBooleanComparator value="true" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:281" duration="220">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="5" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:283" duration="150">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="6" /></TransitionViewModelCondition>
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:173" propertyKey="634" /></BindablePropertyBoolean></TransitionPropertyViewModelComparator><TransitionValueBooleanComparator value="true" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:283" duration="220">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="6" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:285" duration="150">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="7" /></TransitionViewModelCondition>
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:173" propertyKey="634" /></BindablePropertyBoolean></TransitionPropertyViewModelComparator><TransitionValueBooleanComparator value="true" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:285" duration="220">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="7" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:301" duration="150">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="8" /></TransitionViewModelCondition>
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:173" propertyKey="634" /></BindablePropertyBoolean></TransitionPropertyViewModelComparator><TransitionValueBooleanComparator value="true" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:287" duration="380">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="8" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:303" duration="150">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="9" /></TransitionViewModelCondition>
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:173" propertyKey="634" /></BindablePropertyBoolean></TransitionPropertyViewModelComparator><TransitionValueBooleanComparator value="true" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:289" duration="150">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="9" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:305" duration="150">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="10" /></TransitionViewModelCondition>
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:173" propertyKey="634" /></BindablePropertyBoolean></TransitionPropertyViewModelComparator><TransitionValueBooleanComparator value="true" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:291" duration="300">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="10" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:293" duration="150">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="11" /></TransitionViewModelCondition>
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyBoolean><DataBindContext sourcePathIds="0:40-0:173" propertyKey="634" /></BindablePropertyBoolean></TransitionPropertyViewModelComparator><TransitionValueBooleanComparator value="true" /></TransitionViewModelCondition>
+          </StateTransition>
+          <StateTransition stateToId="0:293" duration="200">
+            <TransitionViewModelCondition opValue="equal"><TransitionPropertyViewModelComparator><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" /></BindablePropertyNumber></TransitionPropertyViewModelComparator><TransitionValueNumberComparator value="11" /></TransitionViewModelCondition>
+          </StateTransition>
+        </AnyState>
+        <ExitState x="0" y="140" />
+        <AnimationState id="0:271" animationId="0:270" x="100" y="160" />
+        <AnimationState id="0:273" animationId="0:272" x="320" y="160" />
+        <AnimationState id="0:275" animationId="0:274" x="540" y="160" />
+        <AnimationState id="0:277" animationId="0:276" x="760" y="160" />
+        <AnimationState id="0:279" animationId="0:278" x="980" y="160" />
+        <AnimationState id="0:281" animationId="0:280" x="1200" y="160" />
+        <AnimationState id="0:283" animationId="0:282" x="100" y="300" />
+        <AnimationState id="0:285" animationId="0:284" x="320" y="300" />
+        <AnimationState id="0:287" animationId="0:286" x="540" y="300" />
+        <AnimationState id="0:289" animationId="0:288" x="760" y="300" />
+        <AnimationState id="0:291" animationId="0:290" x="980" y="300" />
+        <AnimationState id="0:293" animationId="0:292" x="1200" y="300" />
+        <AnimationState id="0:295" animationId="0:294" x="100" y="440" />
+        <AnimationState id="0:297" animationId="0:296" x="320" y="440" />
+        <AnimationState id="0:299" animationId="0:298" x="540" y="440" />
+        <AnimationState id="0:301" animationId="0:300" x="760" y="440" />
+        <AnimationState id="0:303" animationId="0:302" x="980" y="440" />
+        <AnimationState id="0:305" animationId="0:304" x="1200" y="440" />
+      </StateMachineLayer>
+      <StateMachineLayer name="FX">
+        <EntryState x="0" y="0"><StateTransition stateToId="0:307" /></EntryState>
+        <AnyState x="0" y="-140">
+          <StateTransition stateToId="0:307" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="0" /></StateTransition>
+          <StateTransition stateToId="0:309" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="1" /></StateTransition>
+          <StateTransition stateToId="0:311" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="2" /></StateTransition>
+          <StateTransition stateToId="0:313" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="3" /></StateTransition>
+          <StateTransition stateToId="0:315" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="4" /></StateTransition>
+          <StateTransition stateToId="0:317" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="5" /></StateTransition>
+          <StateTransition stateToId="0:319" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="6" /></StateTransition>
+          <StateTransition stateToId="0:321" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="7" /></StateTransition>
+          <StateTransition stateToId="0:323" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="8" /></StateTransition>
+          <StateTransition stateToId="0:325" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="9" /></StateTransition>
+          <StateTransition stateToId="0:327" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="10" /></StateTransition>
+          <StateTransition stateToId="0:329" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="11" /></StateTransition>
+          <StateTransition stateToId="0:331" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="12" /></StateTransition>
+          <StateTransition stateToId="0:333" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="13" /></StateTransition>
+          <StateTransition stateToId="0:335" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="101" /></StateTransition>
+          <StateTransition stateToId="0:337" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="102" /></StateTransition>
+          <StateTransition stateToId="0:339" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="103" /></StateTransition>
+          <StateTransition stateToId="0:341" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="104" /></StateTransition>
+          <StateTransition stateToId="0:343" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="105" /></StateTransition>
+          <StateTransition stateToId="0:345" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="106" /></StateTransition>
+          <StateTransition stateToId="0:347" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="107" /></StateTransition>
+          <StateTransition stateToId="0:349" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="108" /></StateTransition>
+          <StateTransition stateToId="0:351" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="109" /></StateTransition>
+          <StateTransition stateToId="0:353" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="110" /></StateTransition>
+          <StateTransition stateToId="0:355" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="111" /></StateTransition>
+          <StateTransition stateToId="0:357" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="112" /></StateTransition>
+          <StateTransition stateToId="0:359" duration="90"><TransitionNumberCondition inputId="0:600" opValue="equal" value="113" /></StateTransition>
+        </AnyState>
+        <ExitState x="0" y="140" />
+        <AnimationState id="0:307" animationId="0:306" x="60" y="160" />
+        <AnimationState id="0:309" animationId="0:308" x="220" y="160" />
+        <AnimationState id="0:311" animationId="0:310" x="380" y="160" />
+        <AnimationState id="0:313" animationId="0:312" x="540" y="160" />
+        <AnimationState id="0:315" animationId="0:314" x="700" y="160" />
+        <AnimationState id="0:317" animationId="0:316" x="860" y="160" />
+        <AnimationState id="0:319" animationId="0:318" x="1020" y="160" />
+        <AnimationState id="0:321" animationId="0:320" x="1180" y="160" />
+        <AnimationState id="0:323" animationId="0:322" x="1340" y="160" />
+        <AnimationState id="0:325" animationId="0:324" x="60" y="280" />
+        <AnimationState id="0:327" animationId="0:326" x="220" y="280" />
+        <AnimationState id="0:329" animationId="0:328" x="380" y="280" />
+        <AnimationState id="0:331" animationId="0:330" x="540" y="280" />
+        <AnimationState id="0:333" animationId="0:332" x="700" y="280" />
+        <AnimationState id="0:335" animationId="0:334" x="860" y="280" />
+        <AnimationState id="0:337" animationId="0:336" x="1020" y="280" />
+        <AnimationState id="0:339" animationId="0:338" x="1180" y="280" />
+        <AnimationState id="0:341" animationId="0:340" x="1340" y="280" />
+        <AnimationState id="0:343" animationId="0:342" x="60" y="400" />
+        <AnimationState id="0:345" animationId="0:344" x="220" y="400" />
+        <AnimationState id="0:347" animationId="0:346" x="380" y="400" />
+        <AnimationState id="0:349" animationId="0:348" x="540" y="400" />
+        <AnimationState id="0:351" animationId="0:350" x="700" y="400" />
+        <AnimationState id="0:353" animationId="0:352" x="860" y="400" />
+        <AnimationState id="0:355" animationId="0:354" x="1020" y="400" />
+        <AnimationState id="0:357" animationId="0:356" x="1180" y="400" />
+        <AnimationState id="0:359" animationId="0:358" x="1340" y="400" />
+      </StateMachineLayer>
+        <StateMachineListenerSingle targetId="0:223" listenerTypeValue="down" name="down choice0">
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="0"><DataBindContext sourcePathIds="0:40-0:135" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="2"><DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:405"><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" id="0:405" converterId="0:60" /><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerNumberChange inputId="0:600" value="101" />
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:223" listenerTypeValue="up" name="up choice0"><ListenerNumberChange inputId="0:600" value="1" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:223" listenerTypeValue="enter" name="enter choice0"><ListenerNumberChange inputId="0:600" value="1" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:223" listenerTypeValue="exit" name="exit choice0"><ListenerNumberChange inputId="0:600" value="0" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:228" listenerTypeValue="down" name="down choice1">
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="1"><DataBindContext sourcePathIds="0:40-0:135" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="2"><DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:406"><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" id="0:406" converterId="0:60" /><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerNumberChange inputId="0:600" value="102" />
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:228" listenerTypeValue="up" name="up choice1"><ListenerNumberChange inputId="0:600" value="2" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:228" listenerTypeValue="enter" name="enter choice1"><ListenerNumberChange inputId="0:600" value="2" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:228" listenerTypeValue="exit" name="exit choice1"><ListenerNumberChange inputId="0:600" value="0" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:233" listenerTypeValue="down" name="down choice2">
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="2"><DataBindContext sourcePathIds="0:40-0:135" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="2"><DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:407"><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" id="0:407" converterId="0:60" /><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerNumberChange inputId="0:600" value="103" />
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:233" listenerTypeValue="up" name="up choice2"><ListenerNumberChange inputId="0:600" value="3" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:233" listenerTypeValue="enter" name="enter choice2"><ListenerNumberChange inputId="0:600" value="3" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:233" listenerTypeValue="exit" name="exit choice2"><ListenerNumberChange inputId="0:600" value="0" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:238" listenerTypeValue="down" name="down choice3">
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="3"><DataBindContext sourcePathIds="0:40-0:135" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="2"><DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:408"><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" id="0:408" converterId="0:60" /><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerNumberChange inputId="0:600" value="104" />
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:238" listenerTypeValue="up" name="up choice3"><ListenerNumberChange inputId="0:600" value="4" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:238" listenerTypeValue="enter" name="enter choice3"><ListenerNumberChange inputId="0:600" value="4" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:238" listenerTypeValue="exit" name="exit choice3"><ListenerNumberChange inputId="0:600" value="0" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:243" listenerTypeValue="down" name="down choice4">
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="4"><DataBindContext sourcePathIds="0:40-0:135" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="2"><DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:409"><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" id="0:409" converterId="0:60" /><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerNumberChange inputId="0:600" value="105" />
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:243" listenerTypeValue="up" name="up choice4"><ListenerNumberChange inputId="0:600" value="5" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:243" listenerTypeValue="enter" name="enter choice4"><ListenerNumberChange inputId="0:600" value="5" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:243" listenerTypeValue="exit" name="exit choice4"><ListenerNumberChange inputId="0:600" value="0" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:248" listenerTypeValue="down" name="down choice5">
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="5"><DataBindContext sourcePathIds="0:40-0:135" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="2"><DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:410"><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" id="0:410" converterId="0:60" /><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerNumberChange inputId="0:600" value="106" />
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:248" listenerTypeValue="up" name="up choice5"><ListenerNumberChange inputId="0:600" value="6" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:248" listenerTypeValue="enter" name="enter choice5"><ListenerNumberChange inputId="0:600" value="6" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:248" listenerTypeValue="exit" name="exit choice5"><ListenerNumberChange inputId="0:600" value="0" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:251" listenerTypeValue="down" name="down btn LISTEN">
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="6"><DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:411"><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" id="0:411" converterId="0:60" /><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerNumberChange inputId="0:600" value="107" />
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:251" listenerTypeValue="up" name="up btn LISTEN"><ListenerNumberChange inputId="0:600" value="7" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:251" listenerTypeValue="enter" name="enter btn LISTEN"><ListenerNumberChange inputId="0:600" value="7" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:251" listenerTypeValue="exit" name="exit btn LISTEN"><ListenerNumberChange inputId="0:600" value="0" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:254" listenerTypeValue="down" name="down btn HINT">
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="5"><DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:412"><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" id="0:412" converterId="0:60" /><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerNumberChange inputId="0:600" value="108" />
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:254" listenerTypeValue="up" name="up btn HINT"><ListenerNumberChange inputId="0:600" value="8" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:254" listenerTypeValue="enter" name="enter btn HINT"><ListenerNumberChange inputId="0:600" value="8" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:254" listenerTypeValue="exit" name="exit btn HINT"><ListenerNumberChange inputId="0:600" value="0" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:257" listenerTypeValue="down" name="down btn BOARD">
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="7"><DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:413"><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" id="0:413" converterId="0:60" /><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerNumberChange inputId="0:600" value="109" />
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:257" listenerTypeValue="up" name="up btn BOARD"><ListenerNumberChange inputId="0:600" value="9" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:257" listenerTypeValue="enter" name="enter btn BOARD"><ListenerNumberChange inputId="0:600" value="9" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:257" listenerTypeValue="exit" name="exit btn BOARD"><ListenerNumberChange inputId="0:600" value="0" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:260" listenerTypeValue="down" name="down btn RETRY">
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="8"><DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:414"><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" id="0:414" converterId="0:60" /><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerNumberChange inputId="0:600" value="110" />
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:260" listenerTypeValue="up" name="up btn RETRY"><ListenerNumberChange inputId="0:600" value="10" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:260" listenerTypeValue="enter" name="enter btn RETRY"><ListenerNumberChange inputId="0:600" value="10" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:260" listenerTypeValue="exit" name="exit btn RETRY"><ListenerNumberChange inputId="0:600" value="0" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:263" listenerTypeValue="down" name="down btn SKIP">
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="9"><DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:415"><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" id="0:415" converterId="0:60" /><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerNumberChange inputId="0:600" value="111" />
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:263" listenerTypeValue="up" name="up btn SKIP"><ListenerNumberChange inputId="0:600" value="11" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:263" listenerTypeValue="enter" name="enter btn SKIP"><ListenerNumberChange inputId="0:600" value="11" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:263" listenerTypeValue="exit" name="exit btn SKIP"><ListenerNumberChange inputId="0:600" value="0" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:266" listenerTypeValue="down" name="down btn SUBMIT">
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="3"><DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:416"><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" id="0:416" converterId="0:60" /><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerNumberChange inputId="0:600" value="112" />
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:266" listenerTypeValue="up" name="up btn SUBMIT"><ListenerNumberChange inputId="0:600" value="12" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:266" listenerTypeValue="enter" name="enter btn SUBMIT"><ListenerNumberChange inputId="0:600" value="12" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:266" listenerTypeValue="exit" name="exit btn SUBMIT"><ListenerNumberChange inputId="0:600" value="0" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:269" listenerTypeValue="down" name="down btn NEXT">
+          <ListenerViewModelChange><BindablePropertyNumber propertyValue="4"><DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:417"><BindablePropertyNumber><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" id="0:417" converterId="0:60" /><DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>
+          <ListenerNumberChange inputId="0:600" value="113" />
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:269" listenerTypeValue="up" name="up btn NEXT"><ListenerNumberChange inputId="0:600" value="13" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:269" listenerTypeValue="enter" name="enter btn NEXT"><ListenerNumberChange inputId="0:600" value="13" /></StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:269" listenerTypeValue="exit" name="exit btn NEXT"><ListenerNumberChange inputId="0:600" value="0" /></StateMachineListenerSingle>
+    </StateMachine>
+  </Artboard>
+  <FontAsset id="0:30" file="SpaceGrotesk-Variable.ttf" name="Space Grotesk" />
+  <DataConverterOperationValue id="0:60" name="Next seq" operationType="0" operationValue="1" />
+  <DataConverterToString id="0:61" name="To string" />
+  <DataConverterBooleanNegate id="0:62" name="Not" />
+  <DataConverterToNumber id="0:63" name="Bool to number" />
+  <DataConverterGroup id="0:64" name="Not to number"><DataConverterGroupItem converterId="0:62" /><DataConverterGroupItem converterId="0:63" /></DataConverterGroup>
+  <ViewModel name="Question" id="0:40" defaultInstanceId="0:41">
+    <ViewModelPropertyString name="questionId" id="0:100" />
+    <ViewModelPropertyString name="subjectLabel" id="0:101" />
+    <ViewModelPropertyString name="skillLabel" id="0:102" />
+    <ViewModelPropertyString name="progressLabel" id="0:103" />
+    <ViewModelPropertyString name="localeLabel" id="0:104" />
+    <ViewModelPropertyString name="prompt" id="0:105" />
+    <ViewModelPropertyString name="supportingText" id="0:106" />
+    <ViewModelPropertyString name="interactionLabel" id="0:107" />
+    <ViewModelPropertyString name="choice0Label" id="0:108" />
+    <ViewModelPropertyString name="choice1Label" id="0:109" />
+    <ViewModelPropertyString name="choice2Label" id="0:110" />
+    <ViewModelPropertyString name="choice3Label" id="0:111" />
+    <ViewModelPropertyString name="choice4Label" id="0:112" />
+    <ViewModelPropertyString name="choice5Label" id="0:113" />
+    <ViewModelPropertyString name="answerText" id="0:114" />
+    <ViewModelPropertyString name="hintLabel" id="0:115" />
+    <ViewModelPropertyString name="hintText" id="0:116" />
+    <ViewModelPropertyString name="submitLabel" id="0:117" />
+    <ViewModelPropertyString name="continueLabel" id="0:118" />
+    <ViewModelPropertyString name="skipLabel" id="0:119" />
+    <ViewModelPropertyString name="listenLabel" id="0:120" />
+    <ViewModelPropertyString name="feedbackTitle" id="0:121" />
+    <ViewModelPropertyString name="feedbackBody" id="0:122" />
+    <ViewModelPropertyString name="status" id="0:123" />
+    <ViewModelPropertyNumber name="interactionKind" id="0:130" />
+    <ViewModelPropertyNumber name="choiceCount" id="0:131" />
+    <ViewModelPropertyNumber name="questionNumber" id="0:132" />
+    <ViewModelPropertyNumber name="questionTotal" id="0:133" />
+    <ViewModelPropertyNumber name="command" id="0:134" />
+    <ViewModelPropertyNumber name="commandArg" id="0:135" />
+    <ViewModelPropertyNumber name="commandSeq" id="0:136" />
+    <ViewModelPropertyNumber name="revision" id="0:137" />
+    <ViewModelPropertyNumber name="uiOpacity" id="0:138" />
+    <ViewModelPropertyNumber name="phase" id="0:139" />
+    <ViewModelPropertyNumber name="errorCode" id="0:140" />
+    <ViewModelPropertyBoolean name="choice0Visible" id="0:150" />
+    <ViewModelPropertyBoolean name="choice1Visible" id="0:151" />
+    <ViewModelPropertyBoolean name="choice2Visible" id="0:152" />
+    <ViewModelPropertyBoolean name="choice3Visible" id="0:153" />
+    <ViewModelPropertyBoolean name="choice4Visible" id="0:154" />
+    <ViewModelPropertyBoolean name="choice5Visible" id="0:155" />
+    <ViewModelPropertyBoolean name="choice0Selected" id="0:156" />
+    <ViewModelPropertyBoolean name="choice1Selected" id="0:157" />
+    <ViewModelPropertyBoolean name="choice2Selected" id="0:158" />
+    <ViewModelPropertyBoolean name="choice3Selected" id="0:159" />
+    <ViewModelPropertyBoolean name="choice4Selected" id="0:160" />
+    <ViewModelPropertyBoolean name="choice5Selected" id="0:161" />
+    <ViewModelPropertyBoolean name="answerValid" id="0:162" />
+    <ViewModelPropertyBoolean name="hintAvailable" id="0:163" />
+    <ViewModelPropertyBoolean name="hintVisible" id="0:164" />
+    <ViewModelPropertyBoolean name="loading" id="0:165" />
+    <ViewModelPropertyBoolean name="submitting" id="0:166" />
+    <ViewModelPropertyBoolean name="answered" id="0:167" />
+    <ViewModelPropertyBoolean name="correct" id="0:168" />
+    <ViewModelPropertyBoolean name="incorrect" id="0:169" />
+    <ViewModelPropertyBoolean name="ungraded" id="0:170" />
+    <ViewModelPropertyBoolean name="disabled" id="0:171" />
+    <ViewModelPropertyBoolean name="grabbed" id="0:172" />
+    <ViewModelPropertyBoolean name="reducedMotion" id="0:173" />
+    <ViewModelInstance id="0:41" name="Default" exports="true">
+      <ViewModelInstanceString viewModelPropertyId="0:100" propertyValue="q-frac-01" />
+      <ViewModelInstanceString viewModelPropertyId="0:101" propertyValue="MATH" />
+      <ViewModelInstanceString viewModelPropertyId="0:102" propertyValue="FRACTIONS · VISUAL MODELS" />
+      <ViewModelInstanceString viewModelPropertyId="0:103" propertyValue="Q 03 / 10" />
+      <ViewModelInstanceString viewModelPropertyId="0:104" propertyValue="EN·US" />
+      <ViewModelInstanceString viewModelPropertyId="0:105" propertyValue="…" />
+      <ViewModelInstanceString viewModelPropertyId="0:106" propertyValue="" />
+      <ViewModelInstanceString viewModelPropertyId="0:107" propertyValue="SELECT ONE ANSWER" />
+      <ViewModelInstanceString viewModelPropertyId="0:108" propertyValue="1/2" />
+      <ViewModelInstanceString viewModelPropertyId="0:109" propertyValue="1/3" />
+      <ViewModelInstanceString viewModelPropertyId="0:110" propertyValue="2/4" />
+      <ViewModelInstanceString viewModelPropertyId="0:111" propertyValue="1/6" />
+      <ViewModelInstanceString viewModelPropertyId="0:112" propertyValue="" />
+      <ViewModelInstanceString viewModelPropertyId="0:113" propertyValue="" />
+      <ViewModelInstanceString viewModelPropertyId="0:114" propertyValue="" />
+      <ViewModelInstanceString viewModelPropertyId="0:115" propertyValue="HINT" />
+      <ViewModelInstanceString viewModelPropertyId="0:116" propertyValue="Compare the pieces, not the numbers." />
+      <ViewModelInstanceString viewModelPropertyId="0:117" propertyValue="SUBMIT" />
+      <ViewModelInstanceString viewModelPropertyId="0:118" propertyValue="NEXT" />
+      <ViewModelInstanceString viewModelPropertyId="0:119" propertyValue="SKIP" />
+      <ViewModelInstanceString viewModelPropertyId="0:120" propertyValue="LISTEN" />
+      <ViewModelInstanceString viewModelPropertyId="0:121" propertyValue="" />
+      <ViewModelInstanceString viewModelPropertyId="0:122" propertyValue="" />
+      <ViewModelInstanceString viewModelPropertyId="0:123" propertyValue="READY" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:130" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:131" propertyValue="4" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:132" propertyValue="3" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:133" propertyValue="10" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:134" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:135" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:136" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:137" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:138" propertyValue="1" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:139" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:140" propertyValue="0" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:150" propertyValue="true" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:151" propertyValue="true" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:152" propertyValue="true" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:153" propertyValue="true" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:154" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:155" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:156" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:157" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:158" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:159" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:160" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:161" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:162" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:163" propertyValue="true" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:164" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:165" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:166" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:167" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:168" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:169" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:170" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:171" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:172" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:173" propertyValue="false" />
+    </ViewModelInstance>
+  </ViewModel>
+</Rive>

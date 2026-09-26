@@ -127,3 +127,73 @@ export type {
   XrSurfaceInput,
   XrVector3,
 } from './XrPanel.types.ts';
+/* The dynamic question panel's pure surface — contracts, layout resolver,
+   command vocabulary and shared geometry carry no renderer, so web tests
+   and tooling get the same names. */
+export {
+  QUESTION_COMMAND,
+  decodeQuestionCommand,
+  phaseToRive,
+  type QuestionChromeIntent,
+} from './question-commands.ts';
+export {
+  QUESTION_ARTBOARD,
+  QUESTION_CHOICE_RAIL,
+  QUESTION_CONTENT_BAND,
+  QUESTION_CONTENT_RECT_PANEL,
+  QUESTION_FOOTER_BAND,
+  QUESTION_HEADER_BAND,
+  QUESTION_PANEL_HEIGHT_M,
+  QUESTION_PANEL_WIDTH_M,
+  QUESTION_SCALE,
+  questionArtboardCenter,
+  questionArtboardToPanel,
+  questionSurfacePixels,
+  type QuestionArtboardRect,
+  type QuestionPanelRect,
+} from './question-chrome-layout.ts';
+export {
+  resolveQuestionLayout,
+  type QuestionLayout,
+  type QuestionLayoutKind,
+  type QuestionLayoutViewport,
+} from './question-layout.ts';
+export {
+  MAX_RIVE_CHOICES,
+  type LearningSubject,
+  type QuestionChoice,
+  type QuestionEvaluation,
+  type QuestionInteraction,
+  type XrAnswerDraft,
+  type XrLearningQuestion,
+  type XrQuestionFeedback,
+  type XrQuestionOutcome,
+  type XrQuestionPhase,
+} from './question-contract.ts';
+export {
+  normalizeXrQuestion,
+  type NormalizedQuestion,
+} from './question-normalize.ts';
+export {
+  SUBJECT_CAPABILITIES,
+  interactionSupported,
+  type SubjectCapabilities,
+} from './question-capabilities.ts';
+export { criticalMediaOf, secondaryMediaOf } from './question-ready.ts';
+export {
+  XR_FIXTURE_SEQUENCE,
+  XR_QUESTION_FIXTURES,
+  fixtureById,
+} from './question-fixtures.ts';
+export {
+  type DiagramLabel,
+  type MapMarker,
+  type QuestionContentBlock,
+  type QuestionContentBlockType,
+  type QuestionMediaSource,
+  type StructuredChart,
+  type TableCell,
+  type TableColumn,
+  type TableRow,
+  type TimelineEvent,
+} from './question-content.ts';

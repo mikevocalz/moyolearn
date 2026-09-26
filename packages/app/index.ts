@@ -94,6 +94,16 @@ export { useTutorStore } from './features/tutor/tutor.store';
 export { TutorXrEntry } from './features/tutor/tutor-xr-entry';
 export type { TutorXrScreenProps } from './features/tutor/tutor-xr-screen.types';
 export { useXrSession, type XrUnsupportedReason } from './features/tutor/xr-session.store';
+/* The XR question flow — the store the spatial scene reads and the
+   evaluator seam that keeps correctness server-authoritative. */
+export {
+  answerReady,
+  QUESTION_RIVE_PHASE,
+  rivePhaseOf,
+  useXrQuestionFlow,
+  type XrQuestionFlowState,
+} from './features/tutor/xr-question.store';
+export { draftAnswerText, evaluateXrAnswer } from './features/tutor/xr-question-evaluator';
 export {
   acquireBoardSession,
   boardSessionKey,

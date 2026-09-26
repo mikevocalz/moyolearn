@@ -269,7 +269,7 @@ export function XrLayoutProbe({
 
   return (
     <>
-      <RivePanelProbe bytes={bytes} initialPose={rivePose} resetKey={resetKey} opacity={0.92} />
+      <RivePanelProbe bytes={bytes} initialPose={rivePose} resetKey={resetKey} opacity={0.8} />
       {chrome && chromeBytes ? (
         <RiveBoardPanel
           chromeBytes={chromeBytes}
@@ -277,7 +277,7 @@ export function XrLayoutProbe({
           carrier={boardOffset}
           grabbed={grabbed}
           bound={bound}
-          opacity={0.92}
+          opacity={0.8}
           resetKey={resetKey}
           onCarrierRelease={(pose) => xrLayoutProbe.setState({ boardOffset: pose })}
           onGrab={(v) => xrLayoutProbe.setState({ grabbed: v })}

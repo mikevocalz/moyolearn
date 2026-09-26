@@ -176,6 +176,17 @@ const SURFACE_MATERIALS = {
     lightingModel: 'Constant',
     blendMode: 'Alpha',
   },
+  /*
+    The question panel's hosted surface — same contract as `boardLive`:
+    Kotlin fills the diffuse channel, white is the multiply identity, Alpha
+    because the content's own background composites over the chrome's dark
+    window backing.
+  */
+  [XR_MATERIAL.questionLive]: {
+    diffuseColor: '#FFFFFFFF',
+    lightingModel: 'Constant',
+    blendMode: 'Alpha',
+  },
 } as const;
 
 /*

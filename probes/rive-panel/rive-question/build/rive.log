@@ -1,0 +1,75 @@
+[13:06:20.238] rive  verified (0 bytes, 148ms, 0 errors, 0 warnings)
+[13:07:16.114] rive  verified (0 bytes, 160ms, 0 errors, 0 warnings)
+[13:07:27.415] rive  verified (0 bytes, 161ms, 0 errors, 0 warnings)
+[13:07:34.745] rive  built build/moyo_learning_question.riv (162292 bytes, 138ms, 0 errors, 0 warnings)
+[13:07:34.747] rive  data: phase = 0
+[13:07:34.748] rive  showing LearningQuestion [1/1]
+[13:07:34.749] rive  viewport 1280x800 @1x
+[13:07:34.796] rive  wrote build/loading.png
+[13:07:35.021] rive  built build/moyo_learning_question.riv (162292 bytes, 135ms, 0 errors, 0 warnings)
+[13:07:35.022] rive  data: phase = 2
+[13:07:35.022] rive  data: choiceCount = 4
+[13:07:35.023] rive  showing LearningQuestion [1/1]
+[13:07:35.023] rive  viewport 1280x800 @1x
+[13:07:35.067] rive  wrote build/idle.png
+[13:07:35.320] rive  built build/moyo_learning_question.riv (162292 bytes, 156ms, 0 errors, 0 warnings)
+[13:07:35.322] rive  data: phase = 5
+[13:07:35.322] rive  data: feedbackTitle = Correct
+[13:07:35.322] rive  data: feedbackBody = Two quarters make a half.
+[13:07:35.322] rive  data: answered = true
+[13:07:35.322] rive  data: correct = true
+[13:07:35.323] rive  showing LearningQuestion [1/1]
+[13:07:35.323] rive  viewport 1280x800 @1x
+[13:07:35.391] rive  wrote build/correct.png
+[13:07:35.611] rive  built build/moyo_learning_question.riv (162292 bytes, 134ms, 0 errors, 0 warnings)
+[13:07:35.612] rive  data: phase = 0
+[13:07:35.612] rive  data: reducedMotion = true
+[13:07:35.613] rive  showing LearningQuestion [1/1]
+[13:07:35.613] rive  viewport 1280x800 @1x
+[13:07:35.651] rive  wrote build/rm.png
+[13:08:29.523] rive  verified (0 bytes, 155ms, 0 errors, 0 warnings)
+[13:08:29.765] rive  built build/moyo_learning_question.riv (162292 bytes, 147ms, 0 errors, 0 warnings)
+[13:08:29.767] rive  data: phase = 2
+[13:08:29.767] rive  data: choiceCount = 4
+[13:08:29.769] rive  showing LearningQuestion [1/1]
+[13:08:29.769] rive  viewport 1280x800 @1x
+[13:08:29.819] rive  wrote build/idle.png
+[13:08:46.974] rive  built build/moyo_learning_question.riv (162292 bytes, 146ms, 0 errors, 0 warnings)
+[13:08:46.975] rive  data: phase = 2
+[13:08:46.976] rive  showing LearningQuestion [1/1]
+[13:08:53.230] rive  built build/moyo_learning_question.riv (162292 bytes, 243ms, 0 errors, 0 warnings)
+[13:08:53.233] rive  data: phase = 2
+[13:08:53.235] rive  showing LearningQuestion [1/1]
+[13:09:01.084] rive  built build/moyo_learning_question.riv (162292 bytes, 191ms, 0 errors, 0 warnings)
+[13:09:01.086] rive  data: phase = 2
+[13:09:01.087] rive  showing LearningQuestion [1/1]
+[13:09:44.864] rive  verified (0 bytes, 147ms, 0 errors, 0 warnings)
+[13:09:45.103] rive  built build/moyo_learning_question.riv (162292 bytes, 142ms, 0 errors, 0 warnings)
+[13:09:45.105] rive  data: phase = 2
+[13:09:45.107] rive  showing LearningQuestion [1/1]
+[13:10:18.589] rive  verified (0 bytes, 152ms, 0 errors, 0 warnings)
+[13:10:18.817] rive  built build/moyo_learning_question.riv (165029 bytes, 141ms, 0 errors, 0 warnings)
+[13:10:18.818] rive  data: phase = 2
+[13:10:18.820] rive  showing LearningQuestion [1/1]
+[13:10:25.515] rive  built build/moyo_learning_question.riv (165029 bytes, 138ms, 0 errors, 0 warnings)
+[13:10:25.517] rive  data: phase = 2
+[13:10:25.518] rive  showing LearningQuestion [1/1]
+[13:10:25.769] rive  built build/moyo_learning_question.riv (165029 bytes, 143ms, 0 errors, 0 warnings)
+[13:10:25.771] rive  data: phase = 4
+[13:10:25.771] rive  showing LearningQuestion [1/1]
+[13:10:25.772] rive  viewport 1280x800 @1x
+[13:10:25.829] rive  wrote build/submitting.png
+[13:10:26.062] rive  built build/moyo_learning_question.riv (165029 bytes, 142ms, 0 errors, 0 warnings)
+[13:10:26.063] rive  data: phase = 0
+[13:10:26.065] rive  showing LearningQuestion [1/1]
+[13:10:26.065] rive  viewport 1280x800 @1x
+[13:10:26.104] rive  wrote build/loading2.png
+[13:10:30.844] rive  built build/moyo_learning_question.riv (165029 bytes, 134ms, 0 errors, 0 warnings)
+[13:10:30.845] rive  data: phase = 2
+[13:10:30.846] rive  showing LearningQuestion [1/1]
+[13:10:55.473] rive  built build/moyo_learning_question.riv (165029 bytes, 157ms, 0 errors, 0 warnings)
+[13:10:55.475] rive  data: phase = 2
+[13:10:55.475] rive  data: choiceCount = 4
+[13:10:55.476] rive  showing LearningQuestion [1/1]
+[13:11:07.292] rive  built build/moyo_learning_question.riv (165029 bytes, 157ms, 0 errors, 0 warnings)
+[13:38:29.597] rive  verified (0 bytes, 156ms, 0 errors, 0 warnings)

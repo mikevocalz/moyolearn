@@ -39,6 +39,12 @@ export const XR_MATERIAL = {
     `spatial-materials.native.ts` for why it is white and not clear.
   */
   boardLive: 'moyoBoardLive',
+  /*
+    THE SECOND LIVE SURFACE — the question panel's hosted content window.
+    Same Kotlin fill path as `boardLive`, a separate name because a scene
+    can carry both panels at once and two hosts cannot share one texture.
+  */
+  questionLive: 'moyoQuestionLive',
 } as const;
 
 /**
