@@ -27,6 +27,7 @@ import {
   Text,
   WhiteboardBoard,
   type WhiteboardCalibration,
+  type WhiteboardHistory,
   type WhiteboardDiff,
   type WhiteboardDiffSource,
   type WhiteboardHandle,
@@ -1131,6 +1132,17 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
   );
 
   /*
+    The engine's own undo/redo availability, into the session store for the
+    Rive chrome's disabled keys — pushed off `listenHistory`, so batch ends
+    that emit no diff still land. See `boardHistory` on the store.
+  */
+  const handleHistory = useCallback((history: WhiteboardHistory) => {
+    useXrSession
+      .getState()
+      .setBoardHistory({ canUndo: history.canUndo, canRedo: history.canRedo, hasMarks: history.marks > 0 });
+  }, []);
+
+  /*
     WHAT IS ON SCREEN IS THE PHASE, AND THE RENDERER IS NOT ALWAYS PART OF IT.
 
     `preparing` onward mounts `ViroXRSceneNavigator`, which is the moment the
@@ -1291,6 +1303,7 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
           onChange={handleChange}
           onReady={handleReady}
           onCalibration={handleCalibration}
+          onHistory={handleHistory}
         />
       </BoardTextureHost>
     </View>

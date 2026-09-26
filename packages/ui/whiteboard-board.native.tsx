@@ -313,6 +313,18 @@ point(el,i===0?'pointerdown':'pointermove',r.left+p[i][0]*w,r.top+p[i][1]*h,null
 }
 abort(el,r.left+p[p.length-1][0]*w,r.top+p[p.length-1][1]*h);
 };
+W.history=function(){
+var b=board(),ed=b&&b.editor;
+// the mounted message is the first moment an editor exists; the shim installs
+// at ready, so retry quietly until the page has one. Guarded: a second call
+// rebinds the listener rather than stacking a second post per change.
+if(!ed||!ed.store||!ed.store.listenHistory){setTimeout(W.history,250);return;}
+if(W.histStop)W.histStop();
+var report=function(){post({type:'moyo:history',canUndo:!!ed.store.canUndo,canRedo:!!ed.store.canRedo,marks:ed.store.size});};
+W.histStop=ed.store.listenHistory(report);
+report();
+};
+W.history();
 window.__moyo=W;
 })();true;`;
 
@@ -439,7 +451,7 @@ function calibrationResult(
 }
 
 export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps>(
-  function WhiteboardBoard({ onChange, onReady, onCalibration }, ref) {
+  function WhiteboardBoard({ onChange, onReady, onCalibration, onHistory }, ref) {
     /*
       `ComponentRef<typeof WebView>`, not `WebView`. react-native-webview 14 —
       the version SDK 58 pins — declares the export as
@@ -486,10 +498,10 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
     }, [send]);
 
     /* Callbacks read through a ref so a re-render cannot re-wire the page. */
-    const callbacks = useRef({ onChange, onReady, onCalibration });
+    const callbacks = useRef({ onChange, onReady, onCalibration, onHistory });
     useEffect(() => {
-      callbacks.current = { onChange, onReady, onCalibration };
-    }, [onChange, onReady, onCalibration]);
+      callbacks.current = { onChange, onReady, onCalibration, onHistory };
+    }, [onChange, onReady, onCalibration, onHistory]);
 
     /*
       CALIBRATION, AND WHY IT IS A PROBE RATHER THAN A READ.
@@ -772,6 +784,19 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         case 'moyo:camera':
           if (callbacks.current.onCalibration) void calibrate();
           break;
+        /*
+          Undo/redo availability off the engine's own `listenHistory` — pushed,
+          not polled, and it carries the batch boundaries a diff stream cannot
+          see. See `WhiteboardHistory` for why this is not folded into onChange.
+        */
+        case 'moyo:history': {
+          callbacks.current.onHistory?.({
+            canUndo: message.canUndo === true,
+            canRedo: message.canRedo === true,
+            marks: typeof message.marks === 'number' ? message.marks : 0,
+          });
+          break;
+        }
         case 'snapshot':
           bridgeRef.current?.settle(message.id as string, message.snapshot);
           break;

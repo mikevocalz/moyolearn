@@ -1,0 +1,195 @@
+      <Node name="PenIcon" id="0:700" x="64" y="88" scaleX="1.5" scaleY="1.5">
+        <Shape name="pencil" id="0:701">
+          <PointsPath id="0:702" isClosed="true">
+            <CubicDetachedVertex id="0:703" x="9.174" y="-5.188" outRotation="-0.785" outDistance="1.557" />
+            <CubicDetachedVertex id="0:704" x="9.174" y="-9.174" inRotation="0.786" inDistance="1.557" outRotation="-2.356" outDistance="1.557" />
+            <CubicDetachedVertex id="0:705" x="5.188" y="-9.175" inRotation="-0.785" inDistance="1.557" />
+            <CubicDetachedVertex id="0:706" x="-8.158" y="4.174" outRotation="2.358" outDistance="0.328" />
+            <CubicDetachedVertex id="0:707" x="-8.658" y="5.004" inRotation="-1.273" inDistance="0.328" />
+            <CubicDetachedVertex id="0:708" x="-9.979" y="9.356" outRotation="1.861" outDistance="0.184" />
+            <CubicDetachedVertex id="0:709" x="-9.853" y="9.853" inRotation="-2.357" inDistance="0.184" outRotation="0.785" outDistance="0.184" />
+            <CubicDetachedVertex id="0:710" x="-9.356" y="9.978" inRotation="2.85" inDistance="0.184" />
+            <CubicDetachedVertex id="0:711" x="-5.003" y="8.658" outRotation="-0.295" outDistance="0.327" />
+            <CubicDetachedVertex id="0:712" x="-4.173" y="8.161" inRotation="2.358" inDistance="0.327" />
+          </PointsPath>
+          <PointsPath id="0:713">
+            <StraightVertex id="0:714" x="3" y="-7" />
+            <StraightVertex id="0:715" x="7" y="-3" />
+          </PointsPath>
+          <Stroke id="0:716" thickness="2" cap="round" join="round">
+            <SolidColor id="0:717" colorValue="FFE9F4FA" />
+          </Stroke>
+        </Shape>
+      </Node>
+      <Node name="HighlighterIcon" id="0:750" x="180" y="88" scaleX="1.5" scaleY="1.5">
+        <Shape name="highlighter" id="0:751">
+          <PointsPath id="0:752">
+            <StraightVertex id="0:753" x="-3" y="-1" />
+            <StraightVertex id="0:754" x="-9" y="5" />
+            <StraightVertex id="0:755" x="-9" y="8" />
+            <StraightVertex id="0:756" x="0" y="8" />
+            <StraightVertex id="0:757" x="3" y="5" />
+          </PointsPath>
+          <PointsPath id="0:758">
+            <StraightVertex id="0:759" x="10" y="0" />
+            <CubicDetachedVertex id="0:760" x="5.4" y="4.6" outRotation="2.366" outDistance="1.089" />
+            <CubicDetachedVertex id="0:761" x="2.6" y="4.6" inRotation="0.775" inDistance="1.089" />
+            <CubicDetachedVertex id="0:762" x="-2.6" y="-0.6" outRotation="-2.346" outDistance="1.089" />
+            <CubicDetachedVertex id="0:763" x="-2.6" y="-3.4" inRotation="2.346" inDistance="1.089" />
+            <StraightVertex id="0:764" x="2" y="-8" />
+          </PointsPath>
+          <Stroke id="0:765" thickness="2" cap="round" join="round">
+            <SolidColor id="0:766" colorValue="FFE9F4FA" />
+          </Stroke>
+        </Shape>
+      </Node>
+      <Node name="EraserIcon" id="0:800" x="296" y="88" scaleX="1.5" scaleY="1.5">
+        <Shape name="eraser" id="0:801">
+          <PointsPath id="0:802">
+            <StraightVertex id="0:803" x="9" y="9" />
+            <CubicDetachedVertex id="0:804" x="-4" y="9" outRotation="3.139" outDistance="0.533" />
+            <CubicDetachedVertex id="0:805" x="-5.42" y="8.413" inRotation="0.786" inDistance="0.533" />
+            <CubicDetachedVertex id="0:806" x="-9.414" y="4.414" outRotation="-2.356" outDistance="1.104" />
+            <CubicDetachedVertex id="0:807" x="-9.414" y="1.586" inRotation="2.356" inDistance="1.104" />
+            <CubicDetachedVertex id="0:808" x="0.586" y="-8.414" outRotation="-0.786" outDistance="0.531" />
+            <CubicDetachedVertex id="0:809" x="2.001" y="-9" inRotation="3.142" inDistance="0.531" outRotation="0" outDistance="0.531" />
+            <CubicDetachedVertex id="0:810" x="3.415" y="-8.414" inRotation="-2.356" inDistance="0.531" />
+            <CubicDetachedVertex id="0:811" x="9.414" y="-2.414" outRotation="0.786" outDistance="1.104" />
+            <CubicDetachedVertex id="0:812" x="9.414" y="0.414" inRotation="-0.786" inDistance="1.104" />
+            <StraightVertex id="0:813" x="0.834" y="9" />
+          </PointsPath>
+          <PointsPath id="0:814">
+            <StraightVertex id="0:815" x="-6.918" y="-0.91" />
+            <StraightVertex id="0:816" x="1.91" y="7.918" />
+          </PointsPath>
+          <Stroke id="0:817" thickness="2" cap="round" join="round">
+            <SolidColor id="0:818" colorValue="FFE9F4FA" />
+          </Stroke>
+        </Shape>
+      </Node>
+      <Node name="UndoIcon" id="0:850" x="536" y="88" scaleX="1.5" scaleY="1.5">
+        <Shape name="undo-2" id="0:851">
+          <PointsPath id="0:852">
+            <StraightVertex id="0:853" x="-3" y="2" />
+            <StraightVertex id="0:854" x="-8" y="-3" />
+            <StraightVertex id="0:855" x="-3" y="-8" />
+          </PointsPath>
+          <PointsPath id="0:856">
+            <StraightVertex id="0:857" x="-8" y="-3" />
+            <CubicDetachedVertex id="0:858" x="2.5" y="-3" outRotation="0" outDistance="3.038" />
+            <CubicDetachedVertex id="0:859" x="8" y="2.5" inRotation="-1.571" inDistance="3.038" outRotation="1.571" outDistance="3.038" />
+            <CubicDetachedVertex id="0:860" x="2.5" y="8" inRotation="0" inDistance="3.038" />
+            <StraightVertex id="0:861" x="-1" y="8" />
+          </PointsPath>
+          <Stroke id="0:862" thickness="2" cap="round" join="round">
+            <SolidColor id="0:863" colorValue="FFE9F4FA" />
+          </Stroke>
+        </Shape>
+      </Node>
+      <Node name="RedoIcon" id="0:900" x="652" y="88" scaleX="1.5" scaleY="1.5">
+        <Shape name="redo-2" id="0:901">
+          <PointsPath id="0:902">
+            <StraightVertex id="0:903" x="3" y="2" />
+            <StraightVertex id="0:904" x="8" y="-3" />
+            <StraightVertex id="0:905" x="3" y="-8" />
+          </PointsPath>
+          <PointsPath id="0:906">
+            <StraightVertex id="0:907" x="8" y="-3" />
+            <CubicDetachedVertex id="0:908" x="-2.5" y="-3" outRotation="3.142" outDistance="3.038" />
+            <CubicDetachedVertex id="0:909" x="-8" y="2.5" inRotation="-1.571" inDistance="3.038" outRotation="1.571" outDistance="3.038" />
+            <CubicDetachedVertex id="0:910" x="-2.5" y="8" inRotation="3.142" inDistance="3.038" />
+            <StraightVertex id="0:911" x="1" y="8" />
+          </PointsPath>
+          <Stroke id="0:912" thickness="2" cap="round" join="round">
+            <SolidColor id="0:913" colorValue="FFE9F4FA" />
+          </Stroke>
+        </Shape>
+      </Node>
+      <Node name="ClearIcon" id="0:950" x="776" y="88" scaleX="1.5" scaleY="1.5">
+        <Shape name="trash" id="0:951">
+          <PointsPath id="0:952">
+            <StraightVertex id="0:953" x="-2" y="-1" />
+            <StraightVertex id="0:954" x="-2" y="5" />
+          </PointsPath>
+          <PointsPath id="0:955">
+            <StraightVertex id="0:956" x="2" y="-1" />
+            <StraightVertex id="0:957" x="2" y="5" />
+          </PointsPath>
+          <PointsPath id="0:958">
+            <StraightVertex id="0:959" x="7" y="-6" />
+            <CubicDetachedVertex id="0:960" x="7" y="8" outRotation="1.571" outDistance="1.105" />
+            <CubicDetachedVertex id="0:961" x="5" y="10" inRotation="0" inDistance="1.105" />
+            <CubicDetachedVertex id="0:962" x="-5" y="10" outRotation="3.142" outDistance="1.105" />
+            <CubicDetachedVertex id="0:963" x="-7" y="8" inRotation="1.571" inDistance="1.105" />
+            <StraightVertex id="0:964" x="-7" y="-6" />
+          </PointsPath>
+          <PointsPath id="0:965">
+            <StraightVertex id="0:966" x="-9" y="-6" />
+            <StraightVertex id="0:967" x="9" y="-6" />
+          </PointsPath>
+          <PointsPath id="0:968">
+            <StraightVertex id="0:969" x="-4" y="-6" />
+            <CubicDetachedVertex id="0:970" x="-4" y="-8" outRotation="-1.571" outDistance="1.105" />
+            <CubicDetachedVertex id="0:971" x="-2" y="-10" inRotation="3.142" inDistance="1.105" />
+            <CubicDetachedVertex id="0:972" x="2" y="-10" outRotation="0" outDistance="1.105" />
+            <CubicDetachedVertex id="0:973" x="4" y="-8" inRotation="-1.571" inDistance="1.105" />
+            <StraightVertex id="0:974" x="4" y="-6" />
+          </PointsPath>
+          <Stroke id="0:975" thickness="2" cap="round" join="round">
+            <SolidColor id="0:976" colorValue="FFE9F4FA" />
+          </Stroke>
+        </Shape>
+      </Node>
+      <Node name="AskIcon" id="0:1000" x="872" y="88" scaleX="1.2" scaleY="1.2">
+        <Shape name="sparkles" id="0:1001">
+          <PointsPath id="0:1002" isClosed="true">
+            <CubicDetachedVertex id="0:1003" x="-0.983" y="-9.186" outRotation="-1.386" outDistance="0.481" />
+            <CubicDetachedVertex id="0:1004" x="0" y="-10.002" inRotation="-3.142" inDistance="0.481" outRotation="0" outDistance="0.481" />
+            <CubicDetachedVertex id="0:1005" x="0.983" y="-9.186" inRotation="-1.755" inDistance="0.481" />
+            <CubicDetachedVertex id="0:1006" x="2.034" y="-3.628" outRotation="1.384" outDistance="0.823" />
+            <CubicDetachedVertex id="0:1007" x="3.628" y="-2.034" inRotation="-2.955" inDistance="0.823" />
+            <CubicDetachedVertex id="0:1008" x="9.186" y="-0.983" outRotation="0.185" outDistance="0.481" />
+            <CubicDetachedVertex id="0:1009" x="10.002" y="0" inRotation="-1.571" inDistance="0.481" outRotation="1.571" outDistance="0.481" />
+            <CubicDetachedVertex id="0:1010" x="9.186" y="0.983" inRotation="-0.185" inDistance="0.481" />
+            <CubicDetachedVertex id="0:1011" x="3.628" y="2.034" outRotation="2.955" outDistance="0.823" />
+            <CubicDetachedVertex id="0:1012" x="2.034" y="3.628" inRotation="-1.384" inDistance="0.823" />
+            <CubicDetachedVertex id="0:1013" x="0.983" y="9.186" outRotation="1.755" outDistance="0.481" />
+            <CubicDetachedVertex id="0:1014" x="0" y="10.002" inRotation="0" inDistance="0.481" outRotation="3.142" outDistance="0.481" />
+            <CubicDetachedVertex id="0:1015" x="-0.983" y="9.186" inRotation="1.386" inDistance="0.481" />
+            <CubicDetachedVertex id="0:1016" x="-2.034" y="3.628" outRotation="-1.758" outDistance="0.823" />
+            <CubicDetachedVertex id="0:1017" x="-3.628" y="2.034" inRotation="0.187" inDistance="0.823" />
+            <CubicDetachedVertex id="0:1018" x="-9.186" y="0.983" outRotation="-2.957" outDistance="0.481" />
+            <CubicDetachedVertex id="0:1019" x="-10.002" y="0" inRotation="1.571" inDistance="0.481" outRotation="-1.571" outDistance="0.481" />
+            <CubicDetachedVertex id="0:1020" x="-9.186" y="-0.983" inRotation="2.957" inDistance="0.481" />
+            <CubicDetachedVertex id="0:1021" x="-3.628" y="-2.034" outRotation="-0.187" outDistance="0.823" />
+            <CubicDetachedVertex id="0:1022" x="-2.034" y="-3.628" inRotation="1.758" inDistance="0.823" />
+          </PointsPath>
+          <PointsPath id="0:1023">
+            <StraightVertex id="0:1024" x="8" y="-10" />
+            <StraightVertex id="0:1025" x="8" y="-6" />
+          </PointsPath>
+          <PointsPath id="0:1026">
+            <StraightVertex id="0:1027" x="10" y="-8" />
+            <StraightVertex id="0:1028" x="6" y="-8" />
+          </PointsPath>
+          <Ellipse id="0:1029" x="-8" y="8" width="4" height="4" originX="0.5" originY="0.5" />
+          <Stroke id="0:1030" thickness="2" cap="round" join="round">
+            <SolidColor id="0:1031" colorValue="FFE9F4FA" />
+          </Stroke>
+        </Shape>
+      </Node>
+      <Node name="CloseIcon" id="0:1050" x="912" y="88" scaleX="1.2" scaleY="1.2">
+        <Shape name="x" id="0:1051">
+          <PointsPath id="0:1052">
+            <StraightVertex id="0:1053" x="6" y="-6" />
+            <StraightVertex id="0:1054" x="-6" y="6" />
+          </PointsPath>
+          <PointsPath id="0:1055">
+            <StraightVertex id="0:1056" x="-6" y="-6" />
+            <StraightVertex id="0:1057" x="6" y="6" />
+          </PointsPath>
+          <Stroke id="0:1058" thickness="2" cap="round" join="round">
+            <SolidColor id="0:1059" colorValue="FFE9F4FA" />
+          </Stroke>
+        </Shape>
+      </Node>

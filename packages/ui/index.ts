@@ -50,6 +50,7 @@ export type {
   WhiteboardDiff,
   WhiteboardDiffSource,
   WhiteboardHandle,
+  WhiteboardHistory,
   WhiteboardInk,
   WhiteboardSnapshot,
   WhiteboardTool,

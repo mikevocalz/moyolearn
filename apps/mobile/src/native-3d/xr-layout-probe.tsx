@@ -31,6 +31,7 @@ import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
 import { ViroMaterials, ViroNode, ViroQuad, ViroText } from '@reactvision/react-viro';
 import {
+  PANEL_HEIGHT_M,
   PremiumXRMediaPanel,
   SIZES,
   XR_MATERIAL,
@@ -49,6 +50,8 @@ import type { WhiteboardHandle, WhiteboardInk, WhiteboardTool } from '@acme/ui';
 import { XrNatalie } from '@acme/app/features/tutor/XrNatalie.native.tsx';
 import { useTutorStore } from '@acme/app/features/tutor/tutor.store.ts';
 import { RivePanelProbe, type PanelPose } from './rive-panel-probe';
+import { RiveBoardPanel } from './rive-board-panel';
+import type { BoardChromeHandlers } from './board-chrome-bind';
 
 /* The board slot's paper before the engine binds — a solid navy tile. */
 const BOARD_NAVY =
@@ -85,6 +88,17 @@ export const xrLayoutProbe = createStore(() => ({
   } | null,
   grabbed: false,
   natalieStatus: '' as string,
+  /* The Rive chrome's view of the board — `onHistory` reports these off the
+     engine's own `listenHistory`, the presentation half of the bind. */
+  canUndo: false,
+  canRedo: false,
+  hasMarks: false,
+  /** The chrome's inks row is showing in place of the tools row. */
+  paletteOpen: false,
+  /** Clear pressed once — the second press empties the board. */
+  clearArmed: false,
+  /** The Rive chrome failed to start — the tray is the fallback toolbar. */
+  chromeFailed: false,
 }));
 
 /* The engine handle, for the same reason `active.engine` is module scope in
@@ -100,25 +114,91 @@ const setInk = (ink: WhiteboardInk) => {
   xrLayoutEngine.current?.setInk(ink);
 };
 
+/* The probe's Ask is a greeting turn — the same signed coach stream the
+   production Ask lands on, minus the microphone. Shared by the tray and the
+   Rive chrome so both buttons do the same thing, not two similar things. */
+const askNatalie = () => {
+  xrLayoutProbe.setState({ asking: true });
+  useTutorStore
+    .getState()
+    .coach('The learner tapped Ask on the digital board. Say hello and invite them to draw something on it.')
+    .catch(() => undefined)
+    .finally(() => xrLayoutProbe.setState({ asking: false }));
+};
+
+/*
+  The verbs Rive commands reach — every one lands on the same engine/store the
+  tray drives, so a chrome press and a tray key are indistinguishable to the
+  document. Clear is two-step: first press arms, second commits — a ray is a
+  far less precise instrument than a thumb, and an empty board is not a
+  recoverable click away.
+*/
+const boardChromeHandlers: BoardChromeHandlers = {
+  onTool: (tool) => {
+    setTool(tool);
+    xrLayoutProbe.setState({ clearArmed: false });
+  },
+  onInk: (ink) => {
+    setInk(ink);
+    setTool('draw');
+    xrLayoutProbe.setState({ paletteOpen: false, clearArmed: false });
+  },
+  onPalette: (open) => xrLayoutProbe.setState({ paletteOpen: open, clearArmed: false }),
+  onUndo: () => {
+    xrLayoutEngine.current?.undo();
+    xrLayoutProbe.setState({ clearArmed: false });
+  },
+  onRedo: () => {
+    xrLayoutEngine.current?.redo();
+    xrLayoutProbe.setState({ clearArmed: false });
+  },
+  onClear: () => {
+    if (!xrLayoutProbe.getState().clearArmed) {
+      xrLayoutProbe.setState({ clearArmed: true });
+      return;
+    }
+    xrLayoutEngine.current?.clear();
+    xrLayoutProbe.setState({ clearArmed: false });
+  },
+  onAsk: () => {
+    xrLayoutProbe.setState({ clearArmed: false });
+    askNatalie();
+  },
+};
+
 export function XrLayoutProbe({
   bytes,
+  chromeBytes,
   head,
   yawDeg,
   resetKey = 0,
 }: {
   bytes: ArrayBuffer;
+  /** `moyo_board_chrome.riv` — when absent the centre slot keeps the
+      media-panel + tray composition the probe always had. */
+  chromeBytes: ArrayBuffer | null;
   head: readonly [number, number, number];
   yawDeg: number;
   /* Controller reconnect remounts the Rive panel — same latch as the probe. */
   resetKey?: number;
 }) {
   const bound = useStore(xrLayoutProbe, (s) => s.bound);
+  const boundReason = useStore(xrLayoutProbe, (s) => s.boundReason);
   const engineReady = useStore(xrLayoutProbe, (s) => s.engineReady);
   const grabbed = useStore(xrLayoutProbe, (s) => s.grabbed);
   const boardOffset = useStore(xrLayoutProbe, (s) => s.boardOffset);
   const tool = useStore(xrLayoutProbe, (s) => s.tool);
   const ink = useStore(xrLayoutProbe, (s) => s.ink);
   const asking = useStore(xrLayoutProbe, (s) => s.asking);
+  const canUndo = useStore(xrLayoutProbe, (s) => s.canUndo);
+  const canRedo = useStore(xrLayoutProbe, (s) => s.canRedo);
+  const hasMarks = useStore(xrLayoutProbe, (s) => s.hasMarks);
+  const paletteOpen = useStore(xrLayoutProbe, (s) => s.paletteOpen);
+  const clearArmed = useStore(xrLayoutProbe, (s) => s.clearArmed);
+  const chromeFailed = useStore(xrLayoutProbe, (s) => s.chromeFailed);
+  /* Chrome bytes present and the runtime hasn't reported an error → the Rive
+     frame owns the centre slot. */
+  const chrome = chromeBytes !== null && !chromeFailed;
 
   const left = worldSlot('left', head, yawDeg);
   const centre = worldSlot('center', head, yawDeg);
@@ -138,6 +218,9 @@ export function XrLayoutProbe({
   const trayHeight = boardTrayHeight(spatialDistance.board, false, 'young');
   const trayCenterY = centre.position[1] - SIZES.boardPanel.height / 2 - spatialSpacing.sm - trayHeight / 2;
   const gripCenterY = trayCenterY - trayHeight / 2 - spatialSpacing.xs - GRIP_H / 2;
+  /* The chrome panel is taller than the boardPanel media card — its grip hangs
+     the same `sm` under its own bottom edge, not the media card's. */
+  const chromeGripY = centre.position[1] - PANEL_HEIGHT_M / 2 - spatialSpacing.sm - GRIP_H / 2;
 
   const boardGroup = useRef<ViroNode>(null);
   const grabOwner = useRef<number | null>(null);
@@ -172,13 +255,50 @@ export function XrLayoutProbe({
   return (
     <>
       <RivePanelProbe bytes={bytes} initialPose={rivePose} resetKey={resetKey} />
-      {/*
+      {chrome && chromeBytes ? (
+        <RiveBoardPanel
+          chromeBytes={chromeBytes}
+          slot={{ position: [centre.position[0], centre.position[1], centre.position[2]], yaw: centre.yaw }}
+          carrier={boardOffset}
+          grabbed={grabbed}
+          bound={bound}
+          resetKey={resetKey}
+          onCarrierRelease={(pose) => xrLayoutProbe.setState({ boardOffset: pose })}
+          onGrab={(v) => xrLayoutProbe.setState({ grabbed: v })}
+          onSurfaceInput={inject}
+          handlers={boardChromeHandlers}
+          presentation={{
+            tool,
+            ink,
+            canUndo,
+            canRedo,
+            asking,
+            hasMarks,
+            paletteOpen,
+            clearArmed,
+            grabbed,
+            reducedMotion: false,
+            status: bound ? '' : boundReason ?? 'Waiting for the board…',
+          }}
+          gripWorld={{ position: [centre.position[0], chromeGripY, centre.position[2]], yawDeg: centre.yaw }}
+          onChromeError={(message) => {
+            if (__DEV__) console.warn('[xr-layout-probe]', message);
+            xrLayoutProbe.setState({ chromeFailed: true });
+          }}
+        />
+      ) : (
+      /*
         The carrier is the dragged node. It starts at identity — every child
         carries an absolute world pose — so the grip's `dragTransform="parent"`
         translates the whole board stack together, exactly like the Rive
         panel's grip moves its group. The persisted offset re-applies on
         remount so a tracking blink does not steal the child's arrangement.
-      */}
+
+        This stack is ALSO the chrome's fallback: if the BoardChrome runtime
+        fails, `chromeFailed` latches and the same board the probe always had
+        keeps working — the `boardOffset` store is shared, so a pose the grip
+        earned under one survives the swap.
+      */
       <ViroNode
         ref={boardGroup}
         position={boardOffset?.position ?? [0, 0, 0]}
@@ -215,8 +335,8 @@ export function XrLayoutProbe({
             band="young"
             tool={tool}
             ink={ink}
-            canUndo={engineReady}
-            canRedo={engineReady}
+            canUndo={canUndo}
+            canRedo={canRedo}
             asking={asking}
             onTool={setTool}
             onInk={(next) => {
@@ -225,16 +345,7 @@ export function XrLayoutProbe({
             }}
             onUndo={() => xrLayoutEngine.current?.undo()}
             onRedo={() => xrLayoutEngine.current?.redo()}
-            onAsk={() => {
-              /* The probe's Ask is a greeting turn — the same signed coach
-                 stream the production Ask lands on, minus the microphone. */
-              xrLayoutProbe.setState({ asking: true });
-              useTutorStore
-                .getState()
-                .coach('The learner tapped Ask on the digital board. Say hello and invite them to draw something on it.')
-                .catch(() => undefined)
-                .finally(() => xrLayoutProbe.setState({ asking: false }));
-            }}
+            onAsk={askNatalie}
             onClear={() => xrLayoutEngine.current?.clear()}
           />
         </ViroNode>
@@ -269,6 +380,7 @@ export function XrLayoutProbe({
           style={{ fontSize: 20, color: '#112d44', textAlign: 'center', textAlignVertical: 'center' }}
         />
       </ViroNode>
+      )}
       {/*
         Her feet sit at y = 0: on a floor-referenced runtime that IS the floor,
         which is the convention `tutor-xr-screen` already keeps — the GLB is

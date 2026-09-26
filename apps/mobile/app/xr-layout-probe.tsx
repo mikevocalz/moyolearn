@@ -56,7 +56,7 @@ const SETTLE_MS = 350;
 const SETTLE_TRAVEL_M = 0.2;
 const SETTLE_TURN_DOT = 0.9;
 
-function Scene({ bytes }: { bytes: ArrayBuffer }) {
+function Scene({ bytes, chromeBytes }: { bytes: ArrayBuffer; chromeBytes: ArrayBuffer | null }) {
   const store = useMemo(() => createStore(() => ({ placed: null as Placed | null, reset: 0 })), []);
   const samples = useRef<{ pos: [number, number, number]; fwd: [number, number, number]; t: number }[]>([]);
   const latched = useRef(false);
@@ -105,14 +105,25 @@ function Scene({ bytes }: { bytes: ArrayBuffer }) {
           if (status === 4 || status === 5) store.setState((state) => ({ reset: state.reset + 1 }));
         }}
       />
-      {placed && <XrLayoutProbe bytes={bytes} head={placed.head} yawDeg={placed.yawDeg} resetKey={reset} />}
+      {placed && (
+        <XrLayoutProbe bytes={bytes} chromeBytes={chromeBytes} head={placed.head} yawDeg={placed.yawDeg} resetKey={reset} />
+      )}
     </ViroARScene>
   );
 }
 
 export default function XrLayoutProbeRoute() {
-  const store = useMemo(() => createStore(() => ({ bytes: null as ArrayBuffer | null, error: null as string | null })), []);
+  const store = useMemo(
+    () =>
+      createStore(() => ({
+        bytes: null as ArrayBuffer | null,
+        chromeBytes: null as ArrayBuffer | null,
+        error: null as string | null,
+      })),
+    [],
+  );
   const bytes = useStore(store, (state) => state.bytes);
+  const chromeBytes = useStore(store, (state) => state.chromeBytes);
   const error = useStore(store, (state) => state.error);
   const engineReady = useStore(xrLayoutProbe, (s) => s.engineReady);
   const bound = useStore(xrLayoutProbe, (s) => s.bound);
@@ -128,6 +139,21 @@ export default function XrLayoutProbeRoute() {
       if (alive) store.setState({ bytes: data });
     })().catch((reason) => {
       if (alive) store.setState({ error: String(reason) });
+    });
+    /*
+      The chrome asset is OPTIONAL — a missing or stale build must not gate the
+      board. Its absence selects the media-panel + tray composition, which is
+      the fallback the scene already keeps.
+    */
+    void (async () => {
+      const asset = Asset.fromModule(require('../assets/rive/moyo_board_chrome.riv'));
+      await asset.downloadAsync();
+      if (!asset.localUri) throw new Error('The chrome file was not downloaded');
+      const data = await new File(asset.localUri).arrayBuffer();
+      if (alive) store.setState({ chromeBytes: data });
+    })().catch((reason) => {
+      if (__DEV__) console.warn('[xr-layout-probe] board chrome asset unavailable:', reason);
+      if (alive) xrLayoutProbe.setState({ chromeFailed: true });
     });
     return () => {
       alive = false;
@@ -152,8 +178,8 @@ export default function XrLayoutProbeRoute() {
   }, [bound]);
 
   const initialScene = useMemo(
-    () => ({ scene: () => (bytes ? <Scene bytes={bytes} /> : <ViroARScene />) }),
-    [bytes],
+    () => ({ scene: () => (bytes ? <Scene bytes={bytes} chromeBytes={chromeBytes} /> : <ViroARScene />) }),
+    [bytes, chromeBytes],
   );
 
   if (Platform.OS !== 'android' || error || !bytes) {
@@ -201,6 +227,13 @@ export default function XrLayoutProbeRoute() {
             xrLayoutEngine.current = handle;
           }}
           onReady={() => xrLayoutProbe.setState({ engineReady: true })}
+          onHistory={(history) =>
+            xrLayoutProbe.setState({
+              canUndo: history.canUndo,
+              canRedo: history.canRedo,
+              hasMarks: history.marks > 0,
+            })
+          }
           onCalibration={(result) => {
             if (__DEV__) console.log('[xr-layout-probe] calibration', result);
           }}

@@ -16,21 +16,26 @@ import type { XrBoardSurfaceProps } from './XrBoardSurface.types.ts';
 
 const POINTER_STANDOFF = 0.002;
 function sourceId(source: unknown): number { return typeof source === 'number' ? source : 0; }
-export function XrBoardSurface({ headPosition, headYawDeg, enabled, termination, onSurfaceInput }: XrBoardSurfaceProps) {
+export function XrBoardSurface({ headPosition, headYawDeg, enabled, termination, onSurfaceInput, anchor: anchorOverride, area: areaOverride }: XrBoardSurfaceProps) {
   const stroke = useRef(new BoardPointer());
   const downHit = useRef<XrVector3>([0, 0, 0]);
   const pointer = useRef<ViroQuad | null>(null);
   const emit = useRef(onSurfaceInput);
   useLayoutEffect(() => { emit.current = onSurfaceInput; }, [onSurfaceInput]);
-  const area = panelMediaArea('boardPanel');
+  const defaultArea = panelMediaArea('boardPanel');
+  const area = areaOverride ?? defaultArea;
   const anchor = useMemo(() => {
+    if (anchorOverride) {
+      const p = anchorOverride.position;
+      return { position: [p[0], p[1], p[2]] as [number, number, number], yaw: anchorOverride.yawDeg };
+    }
     const slot = worldSlot('center', headPosition, headYawDeg);
-    const offset = xrRotateY([0, area.centerY, area.z], slot.yaw);
+    const offset = xrRotateY([0, defaultArea.centerY, defaultArea.z], slot.yaw);
     return {
       position: slot.position.map((n, i) => n + offset[i]!) as [number, number, number],
       yaw: slot.yaw,
     };
-  }, [headPosition, headYawDeg, area.centerY, area.z]);
+  }, [anchorOverride, headPosition, headYawDeg, defaultArea.centerY, defaultArea.z]);
   const plane = useMemo(() => xrDragPlane({
     position: anchor.position, yawDeg: anchor.yaw, scale: 1,
     offset: POINTER_STANDOFF, width: area.width, height: area.height,
