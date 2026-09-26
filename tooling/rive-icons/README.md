@@ -12,7 +12,7 @@ Parses the `node:` arrays out of
 `Ellipse` for circle nodes). Handles M/L/H/V/C/S/Q/T/A/Z; quads are elevated to
 cubics and elliptical arcs converted to cubics (endpoint→centre, ≤90° splits).
 
-```
+```bash
 node tooling/rive-icons/convert.mjs                    # fragments → build/icons.frag.rml
 node tooling/rive-icons/convert.mjs --inject <scene.rml>
 node tooling/rive-icons/convert.mjs --list
@@ -32,7 +32,7 @@ Palette layer because opacity does not gate Rive hit-testing), state machine
 layers, pointer listeners (`command` + `commandSeq` writes), the `Is index i`
 formula converters, and the `BoardChrome` view model.
 
-```
+```bash
 node tooling/rive-icons/fill-scene.mjs          # rewrite marker regions
 node tooling/rive-icons/fill-scene.mjs --check  # diff-check only
 ```

@@ -31,7 +31,7 @@ constructor-captured, so all shared state rides `xrLayoutProbe` (probe) and
 ## Reused / modified / new
 
 | Capability | Component | Change |
-|---|---|---|
+| --- | --- | --- |
 | live board texture | `BoardTextureHost`, `XrBoardLive` | reused unchanged — `XrBoardLive` is nested under the content rect |
 | pointer → ink | `XrBoardSurface`, `BoardPointer`, `xrDragPlane/Local/Hit` | extended: optional `anchor`/`area` props for the content rect; worldSlot default unchanged |
 | panel drag | `dragTransform="parent"` + `getTransformAsync` persist | reused — carrier node + grip pattern from the Rive probe |
