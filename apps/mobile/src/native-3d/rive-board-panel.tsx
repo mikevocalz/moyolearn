@@ -142,7 +142,7 @@ export function RiveBoardPanel({
   );
 
   const source = useMemo<RiveCanvasOptions>(
-    () => ({ rivBytes: chromeBytes, artboard: 'BoardChrome', stateMachine: 'Chrome', fit: 'contain' }),
+    () => ({ rivBytes: chromeBytes, artboard: 'BoardChrome', stateMachine: 'BoardChrome', fit: 'contain' }),
     [chromeBytes],
   );
 
