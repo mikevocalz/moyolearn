@@ -108,7 +108,7 @@ test('the rail fits its own controls inside the paper it hangs beside', () => {
 
   /*
     THE BOX IS THE RAIL'S OWN NOW, NOT THE PAPER'S, and that changed with the
-    paper's shape: a 16:8 board is 0.3 m tall, which holds one row of
+    paper's shape: a 16:10 board is 0.375 m tall, which holds one row of
     floor-sized keys, and eight controls in two rows is four columns. So the
     screen sizes the rail from `railContentHeight` and the thing that has to
     hold here is the reason four columns was refused — that the rail the grid

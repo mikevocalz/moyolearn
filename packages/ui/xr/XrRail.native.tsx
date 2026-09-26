@@ -43,46 +43,15 @@ import {
   railWidthFor,
   spatialSpacing,
 } from './spatial-tokens.ts';
-import type { WhiteboardInk, WhiteboardTool } from '../whiteboard.types.ts';
+/* The tool and ink tables are shared with the tray in `board-controls.ts` —
+   one vocabulary, not two copies to drift. */
+import { BOARD_INKS, BOARD_TOOLS, inkLabel } from './board-controls.ts';
 /* Props live outside this file so the web fork can name them without naming
    Viro — the `XrPanel.types.ts` arrangement, for the same reason. */
 import type { XrRailProps } from './XrRail.types.ts';
 
-/** The three tools `WhiteboardTool` permits — no shapes, text, lasso or notes. */
-const TOOLS = [
-  { id: 'draw', glyph: 'Pen' },
-  { id: 'highlight', glyph: 'Mark' },
-  { id: 'eraser', glyph: 'Erase' },
-] as const satisfies readonly { id: WhiteboardTool; glyph: string }[];
-
-/**
- * `Whiteboard.tsx`'s `INKS` — same order, same seven, and THE SAME WORDS.
- *
- * The labels are the ones the 2D tray already puts in `aria-label`, copied
- * rather than imported because `INKS` is private to that component and this
- * package's web fork must not resolve a native file to reach it. "Purple" for
- * `violet` is the 2D copy's own choice and is kept: a child hears one name for
- * a colour in this product, not two.
- *
- * They were not here at all — the swatches rendered `label=""`, seven controls
- * whose only difference was their fill. That is SC 1.4.1 Use of Colour at Level
- * A (`06-a11y.md` F3) and it is not repairable with an accessibility label,
- * because `ViroText` exposes none: in this scene the only accessible name a
- * control can have is the one it draws.
- */
-const INKS = [
-  { id: 'black', label: 'Black' },
-  { id: 'blue', label: 'Blue' },
-  { id: 'red', label: 'Red' },
-  { id: 'green', label: 'Green' },
-  { id: 'yellow', label: 'Yellow' },
-  { id: 'orange', label: 'Orange' },
-  { id: 'violet', label: 'Purple' },
-] as const satisfies readonly { id: WhiteboardInk; label: string }[];
-
-/** The current ink's word, for the well that opens the palette. */
-const inkLabel = (id: WhiteboardInk): string =>
-  INKS.find((entry) => entry.id === id)?.label ?? INKS[0].label;
+const TOOLS = BOARD_TOOLS;
+const INKS = BOARD_INKS;
 
 /** One key in a rail column, plus any gap that must precede it. */
 interface RailEntry {

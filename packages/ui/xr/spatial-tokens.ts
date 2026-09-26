@@ -10,7 +10,7 @@
 //
 // The values come from the ViroReact spatial layout system's token set
 // (`spatialSpacing`, `panelSize`, `distance`, `typeScale`) rather than being
-// picked here. What IS picked here is the board's own geometry, because 16:8
+// picked here. What IS picked here is the board's own geometry, because 16:10
 // landscape paper is not in anyone's design system — it is the shape of the
 // homework this app exists for.
 // SOT: packages/ui/xr/board-layout.ts · packages/theme/tokens.ts
@@ -262,6 +262,31 @@ export function railContentHeight(distanceM: number, hands: boolean, band: Spati
 }
 
 /**
+ * The tray's grid: the rail's eight controls in rows along X rather than
+ * columns down Y, hung under the paper like a classroom board's ledge.
+ *
+ * Two rows of four is the arrangement that fits a landscape board, and the
+ * count rule is the rail's own: `columns` counts keys, `separators` the run
+ * lengths that are not keys — the `xs` before Clear plus the gap between the
+ * two rows.
+ */
+export const boardTrayGrid = { rows: 2, columns: 4, separators: 2 } as const;
+
+/**
+ * What the tray's two rows come to, in metres, including the gap between them.
+ *
+ * Exported for the same reason `railContentHeight` is: the caller has to know
+ * the tray's own extent to hang it below the panel rather than guess a number
+ * that silently stops holding the keys when the band changes.
+ */
+export function boardTrayHeight(distanceM: number, hands: boolean, band: SpatialBand): number {
+  return (
+    minHitSize(distanceM, hands, band) * boardTrayGrid.rows +
+    spatialSpacing.xs * (boardTrayGrid.rows + boardTrayGrid.separators - 1)
+  );
+}
+
+/**
  * The case every static token below is sized for: a K–2 learner, controllers,
  * at the board's own distance.
  *
@@ -366,8 +391,8 @@ export const boardComposition = {
  * The pixel size of the board's own client space.
  *
  * It is a resolution, not a layout: the engine draws at this size and the
- * result is mapped onto the 16:8 surface, so it decides whether a fraction bar
- * reads at 1.5 m and nothing else. 16:8 exactly, so the mapping is a scale and
+ * result is mapped onto the 16:10 surface, so it decides whether a fraction bar
+ * reads at 1.5 m and nothing else. 16:10 exactly, so the mapping is a scale and
  * never a stretch — an anisotropic fit would make a child's handwriting lean.
  *
  * IT IS ALSO THE PAGE'S CSS SIZE, which is what makes it the one number to
@@ -376,7 +401,7 @@ export const boardComposition = {
  * the pointer injection scales rays by it, and the polyline fallback maps page
  * coordinates through it. All three move together because all three read this.
  */
-export const boardSurfacePixels = { width: 1000, height: 1400 } as const;
+export const boardSurfacePixels = { width: 1400, height: 875 } as const;
 
 /**
  * The paper's own stack, in metres, from the surface outwards.

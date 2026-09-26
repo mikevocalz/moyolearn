@@ -19,14 +19,14 @@ import {
   type XrDragPlaneInput,
 } from './surface-drag.ts';
 
-/** The §9 board: 0.6 m wide, 16:8, 1.5 m out and dropped below the eye line. */
+/** The §9 board: 0.6 m wide, 16:10, 1.5 m out and dropped below the eye line. */
 const board: XrDragPlaneInput = {
   position: [0, -0.1, -1.5],
   yawDeg: 0,
   scale: 1,
   offset: 0.002,
   width: 0.6,
-  height: 0.3,
+  height: 0.375,
 };
 
 const near = (a: readonly number[], b: readonly number[], what: string) => {

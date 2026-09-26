@@ -1,17 +1,18 @@
 // Where the board, its control rail and the chat panel sit, in one unit.
 //
 // The spatial workspace has a promise the 2D panes never had to keep: the
-// writable paper is exactly 5:7, portrait, and the rail and the chat panel are
-// outside that measurement. Getting it wrong is not a visual nit — a board that
-// drifts off ratio when the composition is scaled rewrites where a child's
-// handwriting lands relative to where they aimed.
+// writable paper is exactly 16:10, landscape — the classroom whiteboard ratio —
+// and the rail and the chat panel are outside that measurement. Getting it
+// wrong is not a visual nit — a board that drifts off ratio when the
+// composition is scaled rewrites where a child's handwriting lands relative to
+// where they aimed.
 //
 // So the ratio lives in a pure function with no renderer attached. The caller
 // supplies one unit (metres in space, dp in a 2D test) and gets back centres
 // and extents in that same unit. Nothing here knows what draws it, which is why
 // it can be asserted without a device.
 //
-// SOT-KEYWORDS: whiteboard board layout aspect ratio 5:7 portrait rail chat spatial xr geometry
+// SOT-KEYWORDS: whiteboard board layout aspect ratio 16:10 landscape rail chat spatial xr geometry
 
 /** Every length is in the SAME unit as every other. The caller picks the unit. */
 export interface BoardLayoutInput {
@@ -49,8 +50,8 @@ export type BoardLayout =
       chatCenterX?: number;
     };
 
-/** The writable content is 5:7; chrome and tools are outside this rectangle. */
-export const BOARD_ASPECT = { w: 5, h: 7 } as const;
+/** The writable content is 16:10; chrome and tools are outside this rectangle. */
+export const BOARD_ASPECT = { w: 16, h: 10 } as const;
 
 export function layoutBoard(input: BoardLayoutInput): BoardLayout {
   const { W, H, R, G, C = 0, GC = 0, minRail } = input;

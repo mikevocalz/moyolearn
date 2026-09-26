@@ -52,8 +52,8 @@ export function XrBoardRaster({ uri, width, height }: XrBoardRasterProps) {
       position={[0, 0, boardLayer.raster]}
       /*
         `StretchToFill` is the honest mode HERE and nowhere else: the picture is
-        16:8 because the engine's client space is 16:8 (`boardSurfacePixels`) and
-        the paper is 16:8 because `BOARD_ASPECT` says so. Fitting would letterbox
+        16:10 because the engine's client space is 16:10 (`boardSurfacePixels`) and
+        the paper is 16:10 because `BOARD_ASPECT` says so. Fitting would letterbox
         a picture that already matches, and filling would crop a child's margin.
       */
       resizeMode="StretchToFill"

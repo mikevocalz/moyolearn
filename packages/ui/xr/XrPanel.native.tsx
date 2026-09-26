@@ -1,5 +1,5 @@
 'use client';
-// The spatial panel: one anchor carrying the 16:8 paper, the controls beside it,
+// The spatial panel: one anchor carrying the 16:10 paper, the controls beside it,
 // and the conversation turned back toward the child.
 //
 // WHY THE RAIL IS A SIBLING AND NOT A CHILD. It began as a constraint: the
@@ -349,7 +349,7 @@ export function XrPanel({
 
       {state === 'checking' || state === 'preparing' ? (
         /*
-          A branded wait, never a blank board. An empty 16:8 rectangle that looks
+          A branded wait, never a blank board. An empty 16:10 rectangle that looks
           finished is a child drawing onto a surface that is about to be
           replaced by their restored working.
         */

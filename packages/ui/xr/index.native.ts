@@ -17,11 +17,19 @@ export { XrBoardLive } from './XrBoardLive.native.tsx';
 export { BoardTextureHost } from './BoardTextureHost.native.tsx';
 export { XrTriPanel } from './XrTriPanel.native.tsx';
 export { XrBoardSurface } from './XrBoardSurface.native.tsx';
+export { XrBoardTray } from './XrBoardTray.native.tsx';
 export { worldSlot, xrRotateY, type XrWorldPose } from './world-slot.ts';
 export { probePremiumImports } from './premium/probe.ts';
 export type { XrTriPanelProps, XrPanelRow } from './XrTriPanel.types.ts';
 export type { XrBoardSurfaceProps } from './XrBoardSurface.types.ts';
-export { PremiumXRMediaPanel, SLOTS, type MediaPanelRow, type PanelSlot } from './premium/index.ts';
+export {
+  PremiumXRMediaPanel,
+  SLOTS,
+  SIZES,
+  panelMediaArea,
+  type MediaPanelRow,
+  type PanelSlot,
+} from './premium/index.ts';
 export { uncoveredRecords } from './raster-coverage.ts';
 export { natalieMorphs, MORPH_FLOOR } from './natalie-morphs.ts';
 export type { NatalieMorph, NatalieShape } from './natalie-morphs.ts';
@@ -30,6 +38,7 @@ export { XrChatPanel } from './XrChatPanel.native.tsx';
 /* Values from the `.native` files, contracts from the `.types` files — the
    same split the web fork reads, so both platforms name one shape. */
 export type { XrRailProps } from './XrRail.types.ts';
+export type { XrBoardTrayProps } from './XrBoardTray.types.ts';
 export type { XrBoardInkProps } from './XrBoardInk.types.ts';
 export type { XrBoardRasterProps } from './XrBoardRaster.types.ts';
 export type { XrBoardLiveProps } from './XrBoardLive.types.ts';
@@ -50,6 +59,8 @@ export {
   boardComposition,
   boardLayer,
   boardSurfacePixels,
+  boardTrayGrid,
+  boardTrayHeight,
   minHitSize,
   railContentHeight,
   railGrid,
