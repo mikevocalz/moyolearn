@@ -457,3 +457,26 @@ Device verification of the probe is pending: the Quest 3S (340YC10GC3014S)
 dropped off ADB before the deep link was sent. The fresh 3.0.1 APK was
 already proven on device — stereo passthrough in both eyes, JS bundle loaded,
 no native crash — via `moyo://rive-panel-probe` before disconnect.
+
+## Device evidence — three-slot layout probe (Quest 3S, 340YC10GC3014S)
+
+`moyo://xr-layout-probe` verified on device 2026-09-25:
+`docs/handoffs/evidence/xr-layout-probe/quest-3s-three-slot.png`.
+Rive lesson on the left slot ("Make one half", 0/4 selected, Hold to move
+grip), `boardPanel` on centre, Natalie lit at floor level on the right,
+controller ray live on the centre panel — all three placed by `worldSlot`
+after the first credible camera transform. Both eyes render over stereo
+passthrough on the merged 3.0.1 stack.
+
+Notes: the compositor logged `Failed to create an anchored node` at each of
+the three slot positions — draggable nodes request persistent anchors the
+Quest anchor subsystem declines; rendering is unaffected. The centre board is
+the navy stand-in; live ink still binds through `XrBoardSurface` in the tutor
+scene.
+
+Dev-lane note: a USB reconnect clears `adb reverse`, which is what produced
+the earlier blank launches — `adb reverse tcp:8081 tcp:8081` must be re-added
+after replug. The app's own API (`EXPO_PUBLIC_APP_URL`) is now pinned to
+`https://app.moyolearn.com` in all three `eas.json` profiles and in
+`apps/mobile/.env.local`, so shipped and dev builds no longer fall back to
+device-loopback and fail at startup / first fetch.
