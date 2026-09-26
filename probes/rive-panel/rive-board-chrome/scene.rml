@@ -1,0 +1,2533 @@
+<Rive version="1" kind="fragment">
+  <Artboard name="BoardChrome" id="0:2" width="1024" height="780" clip="true" styleId="0:5" defaultStateMachineId="0:7" viewModelId="0:40" viewModelInstanceId="0:41">
+    <LayoutComponentStyle id="0:5" />
+    <Node id="0:200" opacity="0" name="Grabbed">
+      <Text name="Grab status" x="440" y="10">
+        <TextStylePaint id="0:201" fontSize="16" fontAssetId="0:30">
+          <Fill>
+            <SolidColor colorValue="FF63D2D1" />
+          </Fill>
+        </TextStylePaint>
+        <TextValueRun styleId="0:201" text="Moving panel" />
+      </Text>
+      <Shape name="Grab edge" x="512" y="390">
+        <Rectangle width="1020" height="776" cornerRadiusTL="18" />
+        <Stroke thickness="3" cap="round" join="round">
+          <SolidColor colorValue="FF63D2D1" />
+        </Stroke>
+      </Shape>
+    </Node>
+    <Node id="0:260" opacity="0" name="InksRow">
+      <Node name="Close">
+        <Shape id="0:309" name="Close down" x="946" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:151" propertyKey="18" />
+          <Rectangle width="132" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:310" name="Close hover" x="946" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:150" propertyKey="18" />
+          <Rectangle width="132" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <Text name="Close label" x="938" y="77">
+          <TextStylePaint id="0:307" fontSize="18" fontAssetId="0:30">
+            <Fill>
+              <SolidColor colorValue="FFE9F4FA" />
+            </Fill>
+          </TextStylePaint>
+          <TextValueRun styleId="0:307" text="Close" />
+        </Text>
+        <!-- @icon:CloseIcon:begin -->
+        <Node name="CloseIcon" id="0:1050" x="912" y="88" scaleX="1.2" scaleY="1.2">
+          <Shape name="x" id="0:1051">
+            <PointsPath id="0:1052">
+              <StraightVertex id="0:1053" x="6" y="-6" />
+              <StraightVertex id="0:1054" x="-6" y="6" />
+            </PointsPath>
+            <PointsPath id="0:1055">
+              <StraightVertex id="0:1056" x="-6" y="-6" />
+              <StraightVertex id="0:1057" x="6" y="6" />
+            </PointsPath>
+            <Stroke id="0:1058" thickness="2" cap="round" join="round">
+              <SolidColor id="0:1059" colorValue="FFE9F4FA" />
+            </Stroke>
+          </Shape>
+        </Node>
+        <!-- @icon:CloseIcon:end -->
+      </Node>
+      <!-- @inkswatches:begin -->
+      <Node name="Ink0">
+        <Shape id="0:274" name="Ink0 down" x="64" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:143" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:273" name="Ink0 hover" x="64" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:136" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <Shape id="0:272" name="Ink0 ring" x="64" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:61" />
+          <Ellipse width="46" height="46" />
+          <Stroke thickness="3" cap="round" join="round">
+            <SolidColor colorValue="FF63D2D1" />
+          </Stroke>
+        </Shape>
+        <Shape id="0:271" name="Ink0 swatch" x="64" y="88">
+          <Ellipse width="36" height="36" />
+          <Fill>
+            <SolidColor colorValue="FF1A1A1A" />
+          </Fill>
+        </Shape>
+      </Node>
+      <Node name="Ink1">
+        <Shape id="0:279" name="Ink1 down" x="188" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:144" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:278" name="Ink1 hover" x="188" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:137" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <Shape id="0:277" name="Ink1 ring" x="188" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:62" />
+          <Ellipse width="46" height="46" />
+          <Stroke thickness="3" cap="round" join="round">
+            <SolidColor colorValue="FF63D2D1" />
+          </Stroke>
+        </Shape>
+        <Shape id="0:276" name="Ink1 swatch" x="188" y="88">
+          <Ellipse width="36" height="36" />
+          <Fill>
+            <SolidColor colorValue="FF2563EB" />
+          </Fill>
+        </Shape>
+      </Node>
+      <Node name="Ink2">
+        <Shape id="0:284" name="Ink2 down" x="312" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:145" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:283" name="Ink2 hover" x="312" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:138" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <Shape id="0:282" name="Ink2 ring" x="312" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:63" />
+          <Ellipse width="46" height="46" />
+          <Stroke thickness="3" cap="round" join="round">
+            <SolidColor colorValue="FF63D2D1" />
+          </Stroke>
+        </Shape>
+        <Shape id="0:281" name="Ink2 swatch" x="312" y="88">
+          <Ellipse width="36" height="36" />
+          <Fill>
+            <SolidColor colorValue="FFDC2626" />
+          </Fill>
+        </Shape>
+      </Node>
+      <Node name="Ink3">
+        <Shape id="0:289" name="Ink3 down" x="436" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:146" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:288" name="Ink3 hover" x="436" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:139" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <Shape id="0:287" name="Ink3 ring" x="436" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:64" />
+          <Ellipse width="46" height="46" />
+          <Stroke thickness="3" cap="round" join="round">
+            <SolidColor colorValue="FF63D2D1" />
+          </Stroke>
+        </Shape>
+        <Shape id="0:286" name="Ink3 swatch" x="436" y="88">
+          <Ellipse width="36" height="36" />
+          <Fill>
+            <SolidColor colorValue="FF16A34A" />
+          </Fill>
+        </Shape>
+      </Node>
+      <Node name="Ink4">
+        <Shape id="0:294" name="Ink4 down" x="560" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:147" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:293" name="Ink4 hover" x="560" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:140" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <Shape id="0:292" name="Ink4 ring" x="560" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:65" />
+          <Ellipse width="46" height="46" />
+          <Stroke thickness="3" cap="round" join="round">
+            <SolidColor colorValue="FF63D2D1" />
+          </Stroke>
+        </Shape>
+        <Shape id="0:291" name="Ink4 swatch" x="560" y="88">
+          <Ellipse width="36" height="36" />
+          <Fill>
+            <SolidColor colorValue="FFEAB308" />
+          </Fill>
+        </Shape>
+      </Node>
+      <Node name="Ink5">
+        <Shape id="0:299" name="Ink5 down" x="684" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:148" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:298" name="Ink5 hover" x="684" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:141" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <Shape id="0:297" name="Ink5 ring" x="684" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:66" />
+          <Ellipse width="46" height="46" />
+          <Stroke thickness="3" cap="round" join="round">
+            <SolidColor colorValue="FF63D2D1" />
+          </Stroke>
+        </Shape>
+        <Shape id="0:296" name="Ink5 swatch" x="684" y="88">
+          <Ellipse width="36" height="36" />
+          <Fill>
+            <SolidColor colorValue="FFF97316" />
+          </Fill>
+        </Shape>
+      </Node>
+      <Node name="Ink6">
+        <Shape id="0:304" name="Ink6 down" x="808" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:149" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:303" name="Ink6 hover" x="808" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:142" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <Shape id="0:302" name="Ink6 ring" x="808" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:67" />
+          <Ellipse width="46" height="46" />
+          <Stroke thickness="3" cap="round" join="round">
+            <SolidColor colorValue="FF63D2D1" />
+          </Stroke>
+        </Shape>
+        <Shape id="0:301" name="Ink6 swatch" x="808" y="88">
+          <Ellipse width="36" height="36" />
+          <Fill>
+            <SolidColor colorValue="FF7C3AED" />
+          </Fill>
+        </Shape>
+      </Node>
+      <!-- @inkswatches:end -->
+      <!-- @inkshits:begin -->
+      <Node name="InksHits" id="0:266">
+        <Shape id="0:270" name="Ink0 hit" x="64" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+        <Shape id="0:275" name="Ink1 hit" x="188" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+        <Shape id="0:280" name="Ink2 hit" x="312" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+        <Shape id="0:285" name="Ink3 hit" x="436" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+        <Shape id="0:290" name="Ink4 hit" x="560" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+        <Shape id="0:295" name="Ink5 hit" x="684" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+        <Shape id="0:300" name="Ink6 hit" x="808" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+        <Shape id="0:305" name="Close hit" x="946" y="88">
+          <Rectangle width="132" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+      </Node>
+      <!-- @inkshits:end -->
+    </Node>
+    <Node id="0:210" name="ToolsRow">
+      <Node name="AskNatalie">
+        <Shape id="0:253" name="Ask down" x="930" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:135" propertyKey="18" />
+          <Rectangle width="164" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:252" name="Ask hover" x="930" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:134" propertyKey="18" />
+          <Rectangle width="164" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <Shape id="0:251" name="Ask busy" x="930" y="88" opacity="0">
+          <Rectangle width="164" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="4063D2D1" />
+          </Fill>
+        </Shape>
+        <Node id="0:254" name="AskContent">
+          <Text name="Ask label" x="894" y="76">
+            <TextStylePaint id="0:250" fontSize="19" fontAssetId="0:30">
+              <Fill>
+                <SolidColor colorValue="FFE9F4FA" />
+              </Fill>
+            </TextStylePaint>
+            <TextValueRun id="0:249" styleId="0:250" text="Ask Natalie" />
+          </Text>
+          <!-- @icon:AskIcon:begin -->
+          <Node name="AskIcon" id="0:1000" x="872" y="88" scaleX="1.2" scaleY="1.2">
+            <Shape name="sparkles" id="0:1001">
+              <PointsPath id="0:1002" isClosed="true">
+                <CubicDetachedVertex id="0:1003" x="-0.983" y="-9.186" outRotation="-1.386" outDistance="0.481" />
+                <CubicDetachedVertex id="0:1004" x="0" y="-10.002" inRotation="-3.142" inDistance="0.481" outRotation="0" outDistance="0.481" />
+                <CubicDetachedVertex id="0:1005" x="0.983" y="-9.186" inRotation="-1.755" inDistance="0.481" />
+                <CubicDetachedVertex id="0:1006" x="2.034" y="-3.628" outRotation="1.384" outDistance="0.823" />
+                <CubicDetachedVertex id="0:1007" x="3.628" y="-2.034" inRotation="-2.955" inDistance="0.823" />
+                <CubicDetachedVertex id="0:1008" x="9.186" y="-0.983" outRotation="0.185" outDistance="0.481" />
+                <CubicDetachedVertex id="0:1009" x="10.002" y="0" inRotation="-1.571" inDistance="0.481" outRotation="1.571" outDistance="0.481" />
+                <CubicDetachedVertex id="0:1010" x="9.186" y="0.983" inRotation="-0.185" inDistance="0.481" />
+                <CubicDetachedVertex id="0:1011" x="3.628" y="2.034" outRotation="2.955" outDistance="0.823" />
+                <CubicDetachedVertex id="0:1012" x="2.034" y="3.628" inRotation="-1.384" inDistance="0.823" />
+                <CubicDetachedVertex id="0:1013" x="0.983" y="9.186" outRotation="1.755" outDistance="0.481" />
+                <CubicDetachedVertex id="0:1014" x="0" y="10.002" inRotation="0" inDistance="0.481" outRotation="3.142" outDistance="0.481" />
+                <CubicDetachedVertex id="0:1015" x="-0.983" y="9.186" inRotation="1.386" inDistance="0.481" />
+                <CubicDetachedVertex id="0:1016" x="-2.034" y="3.628" outRotation="-1.758" outDistance="0.823" />
+                <CubicDetachedVertex id="0:1017" x="-3.628" y="2.034" inRotation="0.187" inDistance="0.823" />
+                <CubicDetachedVertex id="0:1018" x="-9.186" y="0.983" outRotation="-2.957" outDistance="0.481" />
+                <CubicDetachedVertex id="0:1019" x="-10.002" y="0" inRotation="1.571" inDistance="0.481" outRotation="-1.571" outDistance="0.481" />
+                <CubicDetachedVertex id="0:1020" x="-9.186" y="-0.983" inRotation="2.957" inDistance="0.481" />
+                <CubicDetachedVertex id="0:1021" x="-3.628" y="-2.034" outRotation="-0.187" outDistance="0.823" />
+                <CubicDetachedVertex id="0:1022" x="-2.034" y="-3.628" inRotation="1.758" inDistance="0.823" />
+              </PointsPath>
+              <PointsPath id="0:1023">
+                <StraightVertex id="0:1024" x="8" y="-10" />
+                <StraightVertex id="0:1025" x="8" y="-6" />
+              </PointsPath>
+              <PointsPath id="0:1026">
+                <StraightVertex id="0:1027" x="10" y="-8" />
+                <StraightVertex id="0:1028" x="6" y="-8" />
+              </PointsPath>
+              <Ellipse id="0:1029" x="-8" y="8" width="4" height="4" originX="0.5" originY="0.5" />
+              <Stroke id="0:1030" thickness="2" cap="round" join="round">
+                <SolidColor id="0:1031" colorValue="FFE9F4FA" />
+              </Stroke>
+            </Shape>
+          </Node>
+          <!-- @icon:AskIcon:end -->
+        </Node>
+      </Node>
+      <Node name="Clear">
+        <Shape id="0:246" name="Clear down" x="776" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:133" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:245" name="Clear hover" x="776" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:132" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <Shape id="0:244" name="Clear armed" x="776" y="88" opacity="0">
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="59DC2626" />
+          </Fill>
+        </Shape>
+        <Node id="0:243" name="ClearContent" opacity="0.35">
+          <!-- @icon:ClearIcon:begin -->
+          <Node name="ClearIcon" id="0:950" x="776" y="88" scaleX="1.5" scaleY="1.5">
+            <Shape name="trash" id="0:951">
+              <PointsPath id="0:952">
+                <StraightVertex id="0:953" x="-2" y="-1" />
+                <StraightVertex id="0:954" x="-2" y="5" />
+              </PointsPath>
+              <PointsPath id="0:955">
+                <StraightVertex id="0:956" x="2" y="-1" />
+                <StraightVertex id="0:957" x="2" y="5" />
+              </PointsPath>
+              <PointsPath id="0:958">
+                <StraightVertex id="0:959" x="7" y="-6" />
+                <CubicDetachedVertex id="0:960" x="7" y="8" outRotation="1.571" outDistance="1.105" />
+                <CubicDetachedVertex id="0:961" x="5" y="10" inRotation="0" inDistance="1.105" />
+                <CubicDetachedVertex id="0:962" x="-5" y="10" outRotation="3.142" outDistance="1.105" />
+                <CubicDetachedVertex id="0:963" x="-7" y="8" inRotation="1.571" inDistance="1.105" />
+                <StraightVertex id="0:964" x="-7" y="-6" />
+              </PointsPath>
+              <PointsPath id="0:965">
+                <StraightVertex id="0:966" x="-9" y="-6" />
+                <StraightVertex id="0:967" x="9" y="-6" />
+              </PointsPath>
+              <PointsPath id="0:968">
+                <StraightVertex id="0:969" x="-4" y="-6" />
+                <CubicDetachedVertex id="0:970" x="-4" y="-8" outRotation="-1.571" outDistance="1.105" />
+                <CubicDetachedVertex id="0:971" x="-2" y="-10" inRotation="3.142" inDistance="1.105" />
+                <CubicDetachedVertex id="0:972" x="2" y="-10" outRotation="0" outDistance="1.105" />
+                <CubicDetachedVertex id="0:973" x="4" y="-8" inRotation="-1.571" inDistance="1.105" />
+                <StraightVertex id="0:974" x="4" y="-6" />
+              </PointsPath>
+              <Stroke id="0:975" thickness="2" cap="round" join="round">
+                <SolidColor id="0:976" colorValue="FFE9F4FA" />
+              </Stroke>
+            </Shape>
+          </Node>
+          <!-- @icon:ClearIcon:end -->
+        </Node>
+      </Node>
+      <Node name="Redo">
+        <Shape id="0:241" name="Redo down" x="652" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:131" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:240" name="Redo hover" x="652" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:130" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <Node id="0:239" name="RedoContent" opacity="0.35">
+          <!-- @icon:RedoIcon:begin -->
+          <Node name="RedoIcon" id="0:900" x="652" y="88" scaleX="1.5" scaleY="1.5">
+            <Shape name="redo-2" id="0:901">
+              <PointsPath id="0:902">
+                <StraightVertex id="0:903" x="3" y="2" />
+                <StraightVertex id="0:904" x="8" y="-3" />
+                <StraightVertex id="0:905" x="3" y="-8" />
+              </PointsPath>
+              <PointsPath id="0:906">
+                <StraightVertex id="0:907" x="8" y="-3" />
+                <CubicDetachedVertex id="0:908" x="-2.5" y="-3" outRotation="3.142" outDistance="3.038" />
+                <CubicDetachedVertex id="0:909" x="-8" y="2.5" inRotation="-1.571" inDistance="3.038" outRotation="1.571" outDistance="3.038" />
+                <CubicDetachedVertex id="0:910" x="-2.5" y="8" inRotation="3.142" inDistance="3.038" />
+                <StraightVertex id="0:911" x="1" y="8" />
+              </PointsPath>
+              <Stroke id="0:912" thickness="2" cap="round" join="round">
+                <SolidColor id="0:913" colorValue="FFE9F4FA" />
+              </Stroke>
+            </Shape>
+          </Node>
+          <!-- @icon:RedoIcon:end -->
+        </Node>
+      </Node>
+      <Node name="Undo">
+        <Shape id="0:237" name="Undo down" x="536" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:129" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:236" name="Undo hover" x="536" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:128" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <Node id="0:235" name="UndoContent" opacity="0.35">
+          <!-- @icon:UndoIcon:begin -->
+          <Node name="UndoIcon" id="0:850" x="536" y="88" scaleX="1.5" scaleY="1.5">
+            <Shape name="undo-2" id="0:851">
+              <PointsPath id="0:852">
+                <StraightVertex id="0:853" x="-3" y="2" />
+                <StraightVertex id="0:854" x="-8" y="-3" />
+                <StraightVertex id="0:855" x="-3" y="-8" />
+              </PointsPath>
+              <PointsPath id="0:856">
+                <StraightVertex id="0:857" x="-8" y="-3" />
+                <CubicDetachedVertex id="0:858" x="2.5" y="-3" outRotation="0" outDistance="3.038" />
+                <CubicDetachedVertex id="0:859" x="8" y="2.5" inRotation="-1.571" inDistance="3.038" outRotation="1.571" outDistance="3.038" />
+                <CubicDetachedVertex id="0:860" x="2.5" y="8" inRotation="0" inDistance="3.038" />
+                <StraightVertex id="0:861" x="-1" y="8" />
+              </PointsPath>
+              <Stroke id="0:862" thickness="2" cap="round" join="round">
+                <SolidColor id="0:863" colorValue="FFE9F4FA" />
+              </Stroke>
+            </Shape>
+          </Node>
+          <!-- @icon:UndoIcon:end -->
+        </Node>
+      </Node>
+      <Node name="InkWell">
+        <Shape id="0:233" name="InkWell down" x="416" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:127" propertyKey="18" />
+          <Rectangle width="96" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:232" name="InkWell hover" x="416" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:126" propertyKey="18" />
+          <Rectangle width="96" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <Shape name="InkWell ring" x="416" y="88">
+          <Ellipse width="42" height="42" />
+          <Stroke thickness="1.5" cap="round" join="round">
+            <SolidColor colorValue="66FFFFFF" />
+          </Stroke>
+        </Shape>
+        <Shape id="0:224" name="Well black" x="416" y="88">
+          <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:61" />
+          <Ellipse width="32" height="32" />
+          <Fill>
+            <SolidColor colorValue="FF1A1A1A" />
+          </Fill>
+        </Shape>
+        <Shape id="0:225" name="Well blue" x="416" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:62" />
+          <Ellipse width="32" height="32" />
+          <Fill>
+            <SolidColor colorValue="FF2563EB" />
+          </Fill>
+        </Shape>
+        <Shape id="0:226" name="Well red" x="416" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:63" />
+          <Ellipse width="32" height="32" />
+          <Fill>
+            <SolidColor colorValue="FFDC2626" />
+          </Fill>
+        </Shape>
+        <Shape id="0:227" name="Well green" x="416" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:64" />
+          <Ellipse width="32" height="32" />
+          <Fill>
+            <SolidColor colorValue="FF16A34A" />
+          </Fill>
+        </Shape>
+        <Shape id="0:228" name="Well yellow" x="416" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:65" />
+          <Ellipse width="32" height="32" />
+          <Fill>
+            <SolidColor colorValue="FFEAB308" />
+          </Fill>
+        </Shape>
+        <Shape id="0:229" name="Well orange" x="416" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:66" />
+          <Ellipse width="32" height="32" />
+          <Fill>
+            <SolidColor colorValue="FFF97316" />
+          </Fill>
+        </Shape>
+        <Shape id="0:230" name="Well violet" x="416" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:67" />
+          <Ellipse width="32" height="32" />
+          <Fill>
+            <SolidColor colorValue="FF7C3AED" />
+          </Fill>
+        </Shape>
+      </Node>
+      <Node name="Eraser">
+        <Shape id="0:222" name="Eraser down" x="296" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:125" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:221" name="Eraser hover" x="296" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:124" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <!-- @icon:EraserIcon:begin -->
+        <Node name="EraserIcon" id="0:800" x="296" y="88" scaleX="1.5" scaleY="1.5">
+          <Shape name="eraser" id="0:801">
+            <PointsPath id="0:802">
+              <StraightVertex id="0:803" x="9" y="9" />
+              <CubicDetachedVertex id="0:804" x="-4" y="9" outRotation="3.139" outDistance="0.533" />
+              <CubicDetachedVertex id="0:805" x="-5.42" y="8.413" inRotation="0.786" inDistance="0.533" />
+              <CubicDetachedVertex id="0:806" x="-9.414" y="4.414" outRotation="-2.356" outDistance="1.104" />
+              <CubicDetachedVertex id="0:807" x="-9.414" y="1.586" inRotation="2.356" inDistance="1.104" />
+              <CubicDetachedVertex id="0:808" x="0.586" y="-8.414" outRotation="-0.786" outDistance="0.531" />
+              <CubicDetachedVertex id="0:809" x="2.001" y="-9" inRotation="3.142" inDistance="0.531" outRotation="0" outDistance="0.531" />
+              <CubicDetachedVertex id="0:810" x="3.415" y="-8.414" inRotation="-2.356" inDistance="0.531" />
+              <CubicDetachedVertex id="0:811" x="9.414" y="-2.414" outRotation="0.786" outDistance="1.104" />
+              <CubicDetachedVertex id="0:812" x="9.414" y="0.414" inRotation="-0.786" inDistance="1.104" />
+              <StraightVertex id="0:813" x="0.834" y="9" />
+            </PointsPath>
+            <PointsPath id="0:814">
+              <StraightVertex id="0:815" x="-6.918" y="-0.91" />
+              <StraightVertex id="0:816" x="1.91" y="7.918" />
+            </PointsPath>
+            <Stroke id="0:817" thickness="2" cap="round" join="round">
+              <SolidColor id="0:818" colorValue="FFE9F4FA" />
+            </Stroke>
+          </Shape>
+        </Node>
+        <!-- @icon:EraserIcon:end -->
+        <Shape id="0:220" name="Eraser selected" x="296" y="124" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:100" propertyKey="18" converterId="0:63" />
+          <Rectangle width="72" height="5" cornerRadiusTL="2.5" />
+          <Fill>
+            <SolidColor colorValue="FF63D2D1" />
+          </Fill>
+        </Shape>
+      </Node>
+      <Node name="Highlighter">
+        <Shape id="0:218" name="Highlighter down" x="180" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:123" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:217" name="Highlighter hover" x="180" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:122" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <!-- @icon:HighlighterIcon:begin -->
+        <Node name="HighlighterIcon" id="0:750" x="180" y="88" scaleX="1.5" scaleY="1.5">
+          <Shape name="highlighter" id="0:751">
+            <PointsPath id="0:752">
+              <StraightVertex id="0:753" x="-3" y="-1" />
+              <StraightVertex id="0:754" x="-9" y="5" />
+              <StraightVertex id="0:755" x="-9" y="8" />
+              <StraightVertex id="0:756" x="0" y="8" />
+              <StraightVertex id="0:757" x="3" y="5" />
+            </PointsPath>
+            <PointsPath id="0:758">
+              <StraightVertex id="0:759" x="10" y="0" />
+              <CubicDetachedVertex id="0:760" x="5.4" y="4.6" outRotation="2.366" outDistance="1.089" />
+              <CubicDetachedVertex id="0:761" x="2.6" y="4.6" inRotation="0.775" inDistance="1.089" />
+              <CubicDetachedVertex id="0:762" x="-2.6" y="-0.6" outRotation="-2.346" outDistance="1.089" />
+              <CubicDetachedVertex id="0:763" x="-2.6" y="-3.4" inRotation="2.346" inDistance="1.089" />
+              <StraightVertex id="0:764" x="2" y="-8" />
+            </PointsPath>
+            <Stroke id="0:765" thickness="2" cap="round" join="round">
+              <SolidColor id="0:766" colorValue="FFE9F4FA" />
+            </Stroke>
+          </Shape>
+        </Node>
+        <!-- @icon:HighlighterIcon:end -->
+        <Shape id="0:216" name="Highlighter selected" x="180" y="124" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:100" propertyKey="18" converterId="0:62" />
+          <Rectangle width="72" height="5" cornerRadiusTL="2.5" />
+          <Fill>
+            <SolidColor colorValue="FF63D2D1" />
+          </Fill>
+        </Shape>
+      </Node>
+      <Node name="Pen">
+        <Shape id="0:214" name="Pen down" x="64" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:121" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="38000000" />
+          </Fill>
+        </Shape>
+        <Shape id="0:213" name="Pen hover" x="64" y="88" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:120" propertyKey="18" />
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="1FFFFFFF" />
+          </Fill>
+        </Shape>
+        <!-- @icon:PenIcon:begin -->
+        <Node name="PenIcon" id="0:700" x="64" y="88" scaleX="1.5" scaleY="1.5">
+          <Shape name="pencil" id="0:701">
+            <PointsPath id="0:702" isClosed="true">
+              <CubicDetachedVertex id="0:703" x="9.174" y="-5.188" outRotation="-0.785" outDistance="1.557" />
+              <CubicDetachedVertex id="0:704" x="9.174" y="-9.174" inRotation="0.786" inDistance="1.557" outRotation="-2.356" outDistance="1.557" />
+              <CubicDetachedVertex id="0:705" x="5.188" y="-9.175" inRotation="-0.785" inDistance="1.557" />
+              <CubicDetachedVertex id="0:706" x="-8.158" y="4.174" outRotation="2.358" outDistance="0.328" />
+              <CubicDetachedVertex id="0:707" x="-8.658" y="5.004" inRotation="-1.273" inDistance="0.328" />
+              <CubicDetachedVertex id="0:708" x="-9.979" y="9.356" outRotation="1.861" outDistance="0.184" />
+              <CubicDetachedVertex id="0:709" x="-9.853" y="9.853" inRotation="-2.357" inDistance="0.184" outRotation="0.785" outDistance="0.184" />
+              <CubicDetachedVertex id="0:710" x="-9.356" y="9.978" inRotation="2.85" inDistance="0.184" />
+              <CubicDetachedVertex id="0:711" x="-5.003" y="8.658" outRotation="-0.295" outDistance="0.327" />
+              <CubicDetachedVertex id="0:712" x="-4.173" y="8.161" inRotation="2.358" inDistance="0.327" />
+            </PointsPath>
+            <PointsPath id="0:713">
+              <StraightVertex id="0:714" x="3" y="-7" />
+              <StraightVertex id="0:715" x="7" y="-3" />
+            </PointsPath>
+            <Stroke id="0:716" thickness="2" cap="round" join="round">
+              <SolidColor id="0:717" colorValue="FFE9F4FA" />
+            </Stroke>
+          </Shape>
+        </Node>
+        <!-- @icon:PenIcon:end -->
+        <Shape id="0:212" name="Pen selected" x="64" y="124" opacity="0">
+          <DataBindContext sourcePathIds="0:40-0:100" propertyKey="18" converterId="0:61" />
+          <Rectangle width="72" height="5" cornerRadiusTL="2.5" />
+          <Fill>
+            <SolidColor colorValue="FF63D2D1" />
+          </Fill>
+        </Shape>
+      </Node>
+      <!-- @toolshits:begin -->
+      <Node name="ToolsHits" id="0:255">
+        <Shape id="0:211" name="Pen hit" x="64" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+        <Shape id="0:215" name="Highlighter hit" x="180" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+        <Shape id="0:219" name="Eraser hit" x="296" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+        <Shape id="0:223" name="InkWell hit" x="416" y="88">
+          <Rectangle width="96" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+        <Shape id="0:234" name="Undo hit" x="536" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+        <Shape id="0:238" name="Redo hit" x="652" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+        <Shape id="0:242" name="Clear hit" x="776" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF1B3A50" />
+          </Fill>
+        </Shape>
+        <Shape id="0:247" name="AskNatalie hit" x="930" y="88">
+          <Rectangle width="164" height="88" cornerRadiusTL="14" />
+          <Fill>
+            <SolidColor colorValue="FF2A5670" />
+          </Fill>
+        </Shape>
+      </Node>
+      <!-- @toolshits:end -->
+    </Node>
+    <Text name="Status" x="524" y="12" width="476" sizingValue="fixed" alignValue="right">
+      <TextStylePaint id="0:206" fontSize="15" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF91D7E4" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:206" text="Ready">
+        <DataBindContext sourcePathIds="0:40-0:110" propertyKey="268" />
+      </TextValueRun>
+    </Text>
+    <Text name="Title" x="24" y="9">
+      <TextStylePaint id="0:204" fontSize="19" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF91D7E4" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:204" text="Moyo board" />
+    </Text>
+    <Shape id="0:311" name="Band" x="512" y="70">
+      <Rectangle width="1024" height="140" linkCornerRadius="false" cornerRadiusTL="18" cornerRadiusTR="18" />
+      <Fill>
+        <SolidColor colorValue="FF112D44" />
+      </Fill>
+    </Shape>
+    <Shape id="0:312" name="Content frame" x="512" y="460">
+      <Rectangle width="1022" height="638" linkCornerRadius="false" cornerRadiusBL="18" cornerRadiusBR="18" />
+      <Stroke thickness="2" cap="round" join="round">
+        <SolidColor colorValue="2EE9F4FA" />
+      </Stroke>
+    </Shape>
+    <Shape id="0:313" name="Outer edge" x="512" y="390">
+      <Rectangle width="1023" height="779" cornerRadiusTL="18" />
+      <Stroke thickness="1.5" cap="round" join="round">
+        <SolidColor colorValue="26E9F4FA" />
+      </Stroke>
+    </Shape>
+    <LinearAnimation id="0:330" name="Palette tools" duration="1" fps="60">
+      <KeyedObject objectId="0:210">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:260">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="0" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:255">
+        <KeyedProperty propertyKey="13">
+          <KeyFrameDouble frame="0" value="0" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:266">
+        <KeyedProperty propertyKey="13">
+          <KeyFrameDouble frame="0" value="3000" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:331" name="Palette inks" duration="1" fps="60">
+      <KeyedObject objectId="0:210">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="0" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:260">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:255">
+        <KeyedProperty propertyKey="13">
+          <KeyFrameDouble frame="0" value="3000" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:266">
+        <KeyedProperty propertyKey="13">
+          <KeyFrameDouble frame="0" value="0" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:332" name="Undo off" duration="1" fps="60">
+      <KeyedObject objectId="0:235">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="0.35" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:333" name="Undo on" duration="1" fps="60">
+      <KeyedObject objectId="0:235">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:334" name="Redo off" duration="1" fps="60">
+      <KeyedObject objectId="0:239">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="0.35" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:335" name="Redo on" duration="1" fps="60">
+      <KeyedObject objectId="0:239">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:336" name="Clear off" duration="1" fps="60">
+      <KeyedObject objectId="0:243">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="0.35" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:337" name="Clear on" duration="1" fps="60">
+      <KeyedObject objectId="0:243">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:338" name="Armed off" duration="1" fps="60">
+      <KeyedObject objectId="0:244">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="0" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:339" name="Armed on" duration="1" fps="60">
+      <KeyedObject objectId="0:244">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:340" name="Ask idle" duration="1" fps="60">
+      <KeyedObject objectId="0:251">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="0" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:249">
+        <KeyedProperty propertyKey="268">
+          <KeyFrameString frame="0" value="Ask Natalie" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:341" name="Ask busy" duration="1" fps="60">
+      <KeyedObject objectId="0:251">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+      <KeyedObject objectId="0:249">
+        <KeyedProperty propertyKey="268">
+          <KeyFrameString frame="0" value="Asking…" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:342" name="Grab off" duration="1" fps="60">
+      <KeyedObject objectId="0:200">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="0" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <LinearAnimation id="0:343" name="Grab on" duration="1" fps="60">
+      <KeyedObject objectId="0:200">
+        <KeyedProperty propertyKey="18">
+          <KeyFrameDouble frame="0" value="1" />
+        </KeyedProperty>
+      </KeyedObject>
+    </LinearAnimation>
+    <StateMachine name="BoardChrome" id="0:7">
+      <!-- @layers:begin -->
+      <StateMachineLayer name="Palette">
+        <EntryState x="0" y="0">
+          <StateTransition stateToId="0:400" />
+        </EntryState>
+        <AnyState x="0" y="-160" />
+        <ExitState x="0" y="160" />
+        <AnimationState id="0:400" animationId="0:330" x="0" y="320">
+        <StateTransition stateToId="0:401" duration="120">
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:106" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        <StateTransition stateToId="0:401" duration="0">
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:106" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        </AnimationState>
+        <AnimationState id="0:401" animationId="0:331" x="0" y="480">
+        <StateTransition stateToId="0:400" duration="120">
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:106" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        <StateTransition stateToId="0:400" duration="0">
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:106" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        </AnimationState>
+      </StateMachineLayer>
+      <StateMachineLayer name="UndoEnabled">
+        <EntryState x="1" y="0">
+          <StateTransition stateToId="0:402" />
+        </EntryState>
+        <AnyState x="1" y="-160" />
+        <ExitState x="1" y="160" />
+        <AnimationState id="0:402" animationId="0:332" x="1" y="320">
+        <StateTransition stateToId="0:403" duration="120">
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:102" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        <StateTransition stateToId="0:403" duration="0">
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:102" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        </AnimationState>
+        <AnimationState id="0:403" animationId="0:333" x="1" y="480">
+        <StateTransition stateToId="0:402" duration="120">
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:102" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        <StateTransition stateToId="0:402" duration="0">
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:102" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        </AnimationState>
+      </StateMachineLayer>
+      <StateMachineLayer name="RedoEnabled">
+        <EntryState x="2" y="0">
+          <StateTransition stateToId="0:404" />
+        </EntryState>
+        <AnyState x="2" y="-160" />
+        <ExitState x="2" y="160" />
+        <AnimationState id="0:404" animationId="0:334" x="2" y="320">
+        <StateTransition stateToId="0:405" duration="120">
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:103" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        <StateTransition stateToId="0:405" duration="0">
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:103" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        </AnimationState>
+        <AnimationState id="0:405" animationId="0:335" x="2" y="480">
+        <StateTransition stateToId="0:404" duration="120">
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:103" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        <StateTransition stateToId="0:404" duration="0">
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:103" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        </AnimationState>
+      </StateMachineLayer>
+      <StateMachineLayer name="ClearEnabled">
+        <EntryState x="3" y="0">
+          <StateTransition stateToId="0:406" />
+        </EntryState>
+        <AnyState x="3" y="-160" />
+        <ExitState x="3" y="160" />
+        <AnimationState id="0:406" animationId="0:336" x="3" y="320">
+        <StateTransition stateToId="0:407" duration="120">
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:105" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        <StateTransition stateToId="0:407" duration="0">
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:105" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        </AnimationState>
+        <AnimationState id="0:407" animationId="0:337" x="3" y="480">
+        <StateTransition stateToId="0:406" duration="120">
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:105" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        <StateTransition stateToId="0:406" duration="0">
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:105" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        </AnimationState>
+      </StateMachineLayer>
+      <StateMachineLayer name="ClearArmed">
+        <EntryState x="4" y="0">
+          <StateTransition stateToId="0:408" />
+        </EntryState>
+        <AnyState x="4" y="-160" />
+        <ExitState x="4" y="160" />
+        <AnimationState id="0:408" animationId="0:338" x="4" y="320">
+        <StateTransition stateToId="0:409" duration="120">
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:107" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        <StateTransition stateToId="0:409" duration="0">
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:107" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        </AnimationState>
+        <AnimationState id="0:409" animationId="0:339" x="4" y="480">
+        <StateTransition stateToId="0:408" duration="120">
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:107" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        <StateTransition stateToId="0:408" duration="0">
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:107" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        </AnimationState>
+      </StateMachineLayer>
+      <StateMachineLayer name="AskBusy">
+        <EntryState x="5" y="0">
+          <StateTransition stateToId="0:410" />
+        </EntryState>
+        <AnyState x="5" y="-160" />
+        <ExitState x="5" y="160" />
+        <AnimationState id="0:410" animationId="0:340" x="5" y="320">
+        <StateTransition stateToId="0:411" duration="120">
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:104" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        <StateTransition stateToId="0:411" duration="0">
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:104" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        </AnimationState>
+        <AnimationState id="0:411" animationId="0:341" x="5" y="480">
+        <StateTransition stateToId="0:410" duration="120">
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:104" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        <StateTransition stateToId="0:410" duration="0">
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:104" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        </AnimationState>
+      </StateMachineLayer>
+      <StateMachineLayer name="Grabbed">
+        <EntryState x="6" y="0">
+          <StateTransition stateToId="0:412" />
+        </EntryState>
+        <AnyState x="6" y="-160" />
+        <ExitState x="6" y="160" />
+        <AnimationState id="0:412" animationId="0:342" x="6" y="320">
+        <StateTransition stateToId="0:413" duration="120">
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:108" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        <StateTransition stateToId="0:413" duration="0">
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:108" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        </AnimationState>
+        <AnimationState id="0:413" animationId="0:343" x="6" y="480">
+        <StateTransition stateToId="0:412" duration="120">
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:108" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        <StateTransition stateToId="0:412" duration="0">
+          <TransitionViewModelCondition opValue="notEqual">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:108" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+          <TransitionViewModelCondition opValue="equal">
+            <TransitionPropertyViewModelComparator>
+              <BindablePropertyBoolean>
+                <DataBindContext sourcePathIds="0:40-0:109" propertyKey="634" />
+              </BindablePropertyBoolean>
+            </TransitionPropertyViewModelComparator>
+            <TransitionValueBooleanComparator value="true" />
+          </TransitionViewModelCondition>
+        </StateTransition>
+        </AnimationState>
+      </StateMachineLayer>
+      <!-- @layers:end -->
+      <!-- @listeners:begin -->
+        <StateMachineListenerSingle targetId="0:211" listenerTypeValue="enter" name="enter pen">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:120" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:211" listenerTypeValue="exit" name="exit pen">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:120" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:121" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:211" listenerTypeValue="down" name="down pen">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:121" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:211" listenerTypeValue="up" name="up pen">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:121" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:211" listenerTypeValue="click" name="command pen">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:500">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:500" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:215" listenerTypeValue="enter" name="enter highlighter">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:122" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:215" listenerTypeValue="exit" name="exit highlighter">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:122" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:123" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:215" listenerTypeValue="down" name="down highlighter">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:123" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:215" listenerTypeValue="up" name="up highlighter">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:123" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:215" listenerTypeValue="click" name="command highlighter">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="2">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:501">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:501" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:219" listenerTypeValue="enter" name="enter eraser">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:124" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:219" listenerTypeValue="exit" name="exit eraser">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:124" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:125" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:219" listenerTypeValue="down" name="down eraser">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:125" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:219" listenerTypeValue="up" name="up eraser">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:125" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:219" listenerTypeValue="click" name="command eraser">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="3">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:502">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:502" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:223" listenerTypeValue="enter" name="enter inkWell">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:126" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:223" listenerTypeValue="exit" name="exit inkWell">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:126" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:127" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:223" listenerTypeValue="down" name="down inkWell">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:127" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:223" listenerTypeValue="up" name="up inkWell">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:127" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:223" listenerTypeValue="click" name="command inkWell">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="4">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:503">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:503" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:234" listenerTypeValue="enter" name="enter undo">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:128" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:234" listenerTypeValue="exit" name="exit undo">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:128" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:129" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:234" listenerTypeValue="down" name="down undo">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:129" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:234" listenerTypeValue="up" name="up undo">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:129" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:234" listenerTypeValue="click" name="command undo">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="5">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:504">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:504" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:238" listenerTypeValue="enter" name="enter redo">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:130" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:238" listenerTypeValue="exit" name="exit redo">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:130" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:131" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:238" listenerTypeValue="down" name="down redo">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:131" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:238" listenerTypeValue="up" name="up redo">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:131" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:238" listenerTypeValue="click" name="command redo">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="6">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:505">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:505" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:242" listenerTypeValue="enter" name="enter clear">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:132" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:242" listenerTypeValue="exit" name="exit clear">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:132" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:133" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:242" listenerTypeValue="down" name="down clear">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:133" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:242" listenerTypeValue="up" name="up clear">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:133" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:242" listenerTypeValue="click" name="command clear">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="7">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:506">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:506" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:247" listenerTypeValue="enter" name="enter askNatalie">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:247" listenerTypeValue="exit" name="exit askNatalie">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:134" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:135" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:247" listenerTypeValue="down" name="down askNatalie">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:135" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:247" listenerTypeValue="up" name="up askNatalie">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:135" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:247" listenerTypeValue="click" name="command askNatalie">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="8">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:507">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:507" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:270" listenerTypeValue="enter" name="enter ink0">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:270" listenerTypeValue="exit" name="exit ink0">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:136" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:143" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:270" listenerTypeValue="down" name="down ink0">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:143" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:270" listenerTypeValue="up" name="up ink0">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:143" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:270" listenerTypeValue="click" name="command ink0">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="10">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:508">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:508" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:275" listenerTypeValue="enter" name="enter ink1">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:137" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:275" listenerTypeValue="exit" name="exit ink1">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:137" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:144" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:275" listenerTypeValue="down" name="down ink1">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:144" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:275" listenerTypeValue="up" name="up ink1">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:144" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:275" listenerTypeValue="click" name="command ink1">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="11">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:509">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:509" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:280" listenerTypeValue="enter" name="enter ink2">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:138" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:280" listenerTypeValue="exit" name="exit ink2">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:138" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:145" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:280" listenerTypeValue="down" name="down ink2">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:145" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:280" listenerTypeValue="up" name="up ink2">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:145" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:280" listenerTypeValue="click" name="command ink2">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="12">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:510">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:510" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:285" listenerTypeValue="enter" name="enter ink3">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:285" listenerTypeValue="exit" name="exit ink3">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:139" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:146" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:285" listenerTypeValue="down" name="down ink3">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:146" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:285" listenerTypeValue="up" name="up ink3">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:146" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:285" listenerTypeValue="click" name="command ink3">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="13">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:511">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:511" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:290" listenerTypeValue="enter" name="enter ink4">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:140" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:290" listenerTypeValue="exit" name="exit ink4">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:140" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:147" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:290" listenerTypeValue="down" name="down ink4">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:147" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:290" listenerTypeValue="up" name="up ink4">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:147" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:290" listenerTypeValue="click" name="command ink4">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="14">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:512">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:512" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:295" listenerTypeValue="enter" name="enter ink5">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:141" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:295" listenerTypeValue="exit" name="exit ink5">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:141" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:148" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:295" listenerTypeValue="down" name="down ink5">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:148" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:295" listenerTypeValue="up" name="up ink5">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:148" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:295" listenerTypeValue="click" name="command ink5">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="15">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:513">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:513" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:300" listenerTypeValue="enter" name="enter ink6">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:142" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:300" listenerTypeValue="exit" name="exit ink6">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:142" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:149" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:300" listenerTypeValue="down" name="down ink6">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:149" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:300" listenerTypeValue="up" name="up ink6">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:149" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:300" listenerTypeValue="click" name="command ink6">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="16">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:514">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:514" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:305" listenerTypeValue="enter" name="enter closePalette">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:150" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:305" listenerTypeValue="exit" name="exit closePalette">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:150" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:151" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:305" listenerTypeValue="down" name="down closePalette">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="1">
+              <DataBindContext sourcePathIds="0:40-0:151" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:305" listenerTypeValue="up" name="up closePalette">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="0">
+              <DataBindContext sourcePathIds="0:40-0:151" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+        <StateMachineListenerSingle targetId="0:305" listenerTypeValue="click" name="command closePalette">
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="17">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:515">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:515" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+        </StateMachineListenerSingle>
+      <!-- @listeners:end -->
+    </StateMachine>
+  </Artboard>
+  <FontAsset id="0:30" file="SpaceGrotesk-Variable.ttf" name="Space Grotesk" />
+  <DataConverterOperationValue id="0:60" name="Next seq" operationType="0" operationValue="1" />
+  <!-- @converters:begin -->
+  <DataConverterFormula name="Is index 0" id="0:61">
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenOperation operationType="1" />
+    <FormulaTokenFunction functionType="0" />
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenArgumentSeparator />
+    <FormulaTokenFunction functionType="5" />
+    <FormulaTokenFunction functionType="6" />
+    <FormulaTokenParenthesisOpen />
+    <FormulaTokenInput />
+    <FormulaTokenOperation operationType="1" />
+    <FormulaTokenValue operationValue="0" />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenArgumentSeparator />
+    <FormulaTokenValue operationValue="2" />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenParenthesisClose />
+  </DataConverterFormula>
+  <DataConverterFormula name="Is index 1" id="0:62">
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenOperation operationType="1" />
+    <FormulaTokenFunction functionType="0" />
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenArgumentSeparator />
+    <FormulaTokenFunction functionType="5" />
+    <FormulaTokenFunction functionType="6" />
+    <FormulaTokenParenthesisOpen />
+    <FormulaTokenInput />
+    <FormulaTokenOperation operationType="1" />
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenArgumentSeparator />
+    <FormulaTokenValue operationValue="2" />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenParenthesisClose />
+  </DataConverterFormula>
+  <DataConverterFormula name="Is index 2" id="0:63">
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenOperation operationType="1" />
+    <FormulaTokenFunction functionType="0" />
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenArgumentSeparator />
+    <FormulaTokenFunction functionType="5" />
+    <FormulaTokenFunction functionType="6" />
+    <FormulaTokenParenthesisOpen />
+    <FormulaTokenInput />
+    <FormulaTokenOperation operationType="1" />
+    <FormulaTokenValue operationValue="2" />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenArgumentSeparator />
+    <FormulaTokenValue operationValue="2" />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenParenthesisClose />
+  </DataConverterFormula>
+  <DataConverterFormula name="Is index 3" id="0:64">
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenOperation operationType="1" />
+    <FormulaTokenFunction functionType="0" />
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenArgumentSeparator />
+    <FormulaTokenFunction functionType="5" />
+    <FormulaTokenFunction functionType="6" />
+    <FormulaTokenParenthesisOpen />
+    <FormulaTokenInput />
+    <FormulaTokenOperation operationType="1" />
+    <FormulaTokenValue operationValue="3" />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenArgumentSeparator />
+    <FormulaTokenValue operationValue="2" />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenParenthesisClose />
+  </DataConverterFormula>
+  <DataConverterFormula name="Is index 4" id="0:65">
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenOperation operationType="1" />
+    <FormulaTokenFunction functionType="0" />
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenArgumentSeparator />
+    <FormulaTokenFunction functionType="5" />
+    <FormulaTokenFunction functionType="6" />
+    <FormulaTokenParenthesisOpen />
+    <FormulaTokenInput />
+    <FormulaTokenOperation operationType="1" />
+    <FormulaTokenValue operationValue="4" />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenArgumentSeparator />
+    <FormulaTokenValue operationValue="2" />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenParenthesisClose />
+  </DataConverterFormula>
+  <DataConverterFormula name="Is index 5" id="0:66">
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenOperation operationType="1" />
+    <FormulaTokenFunction functionType="0" />
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenArgumentSeparator />
+    <FormulaTokenFunction functionType="5" />
+    <FormulaTokenFunction functionType="6" />
+    <FormulaTokenParenthesisOpen />
+    <FormulaTokenInput />
+    <FormulaTokenOperation operationType="1" />
+    <FormulaTokenValue operationValue="5" />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenArgumentSeparator />
+    <FormulaTokenValue operationValue="2" />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenParenthesisClose />
+  </DataConverterFormula>
+  <DataConverterFormula name="Is index 6" id="0:67">
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenOperation operationType="1" />
+    <FormulaTokenFunction functionType="0" />
+    <FormulaTokenValue operationValue="1" />
+    <FormulaTokenArgumentSeparator />
+    <FormulaTokenFunction functionType="5" />
+    <FormulaTokenFunction functionType="6" />
+    <FormulaTokenParenthesisOpen />
+    <FormulaTokenInput />
+    <FormulaTokenOperation operationType="1" />
+    <FormulaTokenValue operationValue="6" />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenArgumentSeparator />
+    <FormulaTokenValue operationValue="2" />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenParenthesisClose />
+    <FormulaTokenParenthesisClose />
+  </DataConverterFormula>
+  <!-- @converters:end -->
+  <!-- @viewmodel:begin -->
+  <ViewModel name="BoardChrome" id="0:40" defaultInstanceId="0:41">
+    <ViewModelPropertyNumber name="tool" id="0:100" />
+    <ViewModelPropertyNumber name="ink" id="0:101" />
+    <ViewModelPropertyBoolean name="canUndo" id="0:102" />
+    <ViewModelPropertyBoolean name="canRedo" id="0:103" />
+    <ViewModelPropertyBoolean name="asking" id="0:104" />
+    <ViewModelPropertyBoolean name="hasMarks" id="0:105" />
+    <ViewModelPropertyBoolean name="paletteOpen" id="0:106" />
+    <ViewModelPropertyBoolean name="clearArmed" id="0:107" />
+    <ViewModelPropertyBoolean name="grabbed" id="0:108" />
+    <ViewModelPropertyBoolean name="reducedMotion" id="0:109" />
+    <ViewModelPropertyString name="status" id="0:110" />
+    <ViewModelPropertyNumber name="revision" id="0:111" />
+    <ViewModelPropertyNumber name="command" id="0:112" />
+    <ViewModelPropertyNumber name="commandSeq" id="0:113" />
+    <ViewModelPropertyNumber name="hoverPen" id="0:120" />
+    <ViewModelPropertyNumber name="downPen" id="0:121" />
+    <ViewModelPropertyNumber name="hoverHighlighter" id="0:122" />
+    <ViewModelPropertyNumber name="downHighlighter" id="0:123" />
+    <ViewModelPropertyNumber name="hoverEraser" id="0:124" />
+    <ViewModelPropertyNumber name="downEraser" id="0:125" />
+    <ViewModelPropertyNumber name="hoverInkWell" id="0:126" />
+    <ViewModelPropertyNumber name="downInkWell" id="0:127" />
+    <ViewModelPropertyNumber name="hoverUndo" id="0:128" />
+    <ViewModelPropertyNumber name="downUndo" id="0:129" />
+    <ViewModelPropertyNumber name="hoverRedo" id="0:130" />
+    <ViewModelPropertyNumber name="downRedo" id="0:131" />
+    <ViewModelPropertyNumber name="hoverClear" id="0:132" />
+    <ViewModelPropertyNumber name="downClear" id="0:133" />
+    <ViewModelPropertyNumber name="hoverAsk" id="0:134" />
+    <ViewModelPropertyNumber name="downAsk" id="0:135" />
+    <ViewModelPropertyNumber name="hoverInk0" id="0:136" />
+    <ViewModelPropertyNumber name="hoverInk1" id="0:137" />
+    <ViewModelPropertyNumber name="hoverInk2" id="0:138" />
+    <ViewModelPropertyNumber name="hoverInk3" id="0:139" />
+    <ViewModelPropertyNumber name="hoverInk4" id="0:140" />
+    <ViewModelPropertyNumber name="hoverInk5" id="0:141" />
+    <ViewModelPropertyNumber name="hoverInk6" id="0:142" />
+    <ViewModelPropertyNumber name="downInk0" id="0:143" />
+    <ViewModelPropertyNumber name="downInk1" id="0:144" />
+    <ViewModelPropertyNumber name="downInk2" id="0:145" />
+    <ViewModelPropertyNumber name="downInk3" id="0:146" />
+    <ViewModelPropertyNumber name="downInk4" id="0:147" />
+    <ViewModelPropertyNumber name="downInk5" id="0:148" />
+    <ViewModelPropertyNumber name="downInk6" id="0:149" />
+    <ViewModelPropertyNumber name="hoverClose" id="0:150" />
+    <ViewModelPropertyNumber name="downClose" id="0:151" />
+    <ViewModelInstance id="0:41" name="Default" exports="true">
+      <ViewModelInstanceNumber viewModelPropertyId="0:100" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:101" propertyValue="0" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:102" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:103" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:104" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:105" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:106" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:107" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:108" propertyValue="false" />
+      <ViewModelInstanceBoolean viewModelPropertyId="0:109" propertyValue="false" />
+      <ViewModelInstanceString viewModelPropertyId="0:110" propertyValue="Ready" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:111" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:112" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:113" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:120" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:121" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:122" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:123" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:124" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:125" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:126" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:127" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:128" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:129" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:130" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:131" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:132" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:133" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:134" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:135" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:136" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:137" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:138" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:139" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:140" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:141" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:142" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:143" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:144" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:145" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:146" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:147" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:148" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:149" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:150" propertyValue="0" />
+      <ViewModelInstanceNumber viewModelPropertyId="0:151" propertyValue="0" />
+    </ViewModelInstance>
+  </ViewModel>
+  <!-- @viewmodel:end -->
+</Rive>

@@ -363,4 +363,25 @@ export interface WhiteboardBoardProps {
    * for what the result means and why a failure is recoverable.
    */
   onCalibration?: (result: WhiteboardCalibration) => void;
+  /**
+   * Undo/redo availability and record count, pushed when the engine's history
+   * changes — including the batch end that emits no document diff of its own,
+   * which is why `onChange` cannot answer this.
+   *
+   * The XR chrome needs it (a disabled Undo key is information), and both forks
+   * read it from the same place: the engine's own `store.listenHistory`. A
+   * caller that derives undo depth from `onChange` diffs is guessing at batch
+   * boundaries it cannot see.
+   */
+  onHistory?: (history: WhiteboardHistory) => void;
+}
+
+/** The engine's undo/redo availability and live record count. */
+export interface WhiteboardHistory {
+  /** Whether `undo()` would do anything. */
+  canUndo: boolean;
+  /** Whether `redo()` would do anything. */
+  canRedo: boolean;
+  /** Live records in the document — `marks > 0` is "the board is not empty". */
+  marks: number;
 }

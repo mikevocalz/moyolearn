@@ -1,0 +1,5 @@
+name: moyo_board_chrome
+main: BoardChrome
+logs:
+  file: build/rive.log
+  problems: build/problems.log

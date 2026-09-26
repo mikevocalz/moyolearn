@@ -1,0 +1,56 @@
+[09:15:57.440] rive  verified (0 bytes, 100ms, 0 errors, 0 warnings)
+[09:16:04.781] rive  built build/moyo_board_chrome.riv (154865 bytes, 82ms, 0 errors, 0 warnings)
+[09:16:04.783] rive  showing BoardChrome [1/1]
+[09:16:04.783] rive  viewport 1024x780 @1x
+[09:16:04.822] rive  wrote ./build/moyo_board_chrome.png
+[09:16:36.991] rive  built build/moyo_board_chrome.riv (154865 bytes, 99ms, 0 errors, 0 warnings)
+[09:16:36.994] rive  data: paletteOpen = true
+[09:16:36.996] rive  showing BoardChrome [1/1]
+[09:16:36.997] rive  viewport 1024x780 @1x
+[09:16:37.047] rive  wrote build/palette.png
+[09:16:53.403] rive  built build/moyo_board_chrome.riv (154865 bytes, 122ms, 0 errors, 0 warnings)
+[09:16:53.405] rive  data: paletteOpen = true
+[09:16:53.408] rive  showing BoardChrome [1/1]
+[09:16:53.409] rive  viewport 1024x780 @1x
+[09:16:53.480] rive  wrote build/palette.png
+[09:16:53.689] rive  built build/moyo_board_chrome.riv (154865 bytes, 113ms, 0 errors, 0 warnings)
+[09:16:53.691] rive  data: paletteOpen = true
+[09:16:53.691] rive  data: ink = 3
+[09:16:53.691] rive  showing BoardChrome [1/1]
+[09:16:53.692] rive  viewport 1024x780 @1x
+[09:16:53.763] rive  wrote build/palette-ink3.png
+[09:20:52.959] rive  verified (0 bytes, 99ms, 0 errors, 0 warnings)
+[09:21:02.748] rive  built build/moyo_board_chrome.riv (154988 bytes, 120ms, 0 errors, 0 warnings)
+[09:21:02.751] rive  showing BoardChrome [1/1]
+[09:21:02.751] rive  wrote build/t1.json
+[09:21:11.971] rive  built build/moyo_board_chrome.riv (154988 bytes, 107ms, 0 errors, 0 warnings)
+[09:21:11.972] rive  showing BoardChrome [1/1]
+[09:21:11.973] rive  wrote build/t2.json
+[09:21:12.429] rive  built build/moyo_board_chrome.riv (154988 bytes, 238ms, 0 errors, 0 warnings)
+[09:21:12.431] rive  data: paletteOpen = true
+[09:21:12.432] rive  showing BoardChrome [1/1]
+[09:21:12.433] rive  wrote build/t3.json
+[09:21:49.045] rive  built build/moyo_board_chrome.riv (154988 bytes, 97ms, 0 errors, 0 warnings)
+[09:21:49.046] rive  data: paletteOpen = true
+[09:21:49.047] rive  showing BoardChrome [1/1]
+[09:21:49.048] rive  wrote build/t3.json
+[09:21:49.251] rive  built build/moyo_board_chrome.riv (154988 bytes, 85ms, 0 errors, 0 warnings)
+[09:21:49.252] rive  data: paletteOpen = true
+[09:21:49.253] rive  showing BoardChrome [1/1]
+[09:21:49.253] rive  wrote build/t4.json
+[09:22:02.556] rive  built build/moyo_board_chrome.riv (154988 bytes, 98ms, 0 errors, 0 warnings)
+[09:22:02.559] rive  showing BoardChrome [1/1]
+[09:22:02.559] rive  wrote build/t5.json
+[09:22:02.805] rive  built build/moyo_board_chrome.riv (154988 bytes, 85ms, 0 errors, 0 warnings)
+[09:22:02.806] rive  data: canUndo = true
+[09:22:02.806] rive  data: canRedo = true
+[09:22:02.806] rive  data: hasMarks = true
+[09:22:02.806] rive  data: clearArmed = true
+[09:22:02.806] rive  data: asking = true
+[09:22:02.806] rive  data: grabbed = true
+[09:22:02.806] rive  data: status = 3 strokes
+[09:22:02.806] rive  data: ink = 4
+[09:22:02.806] rive  data: tool = 2
+[09:22:02.806] rive  showing BoardChrome [1/1]
+[09:22:02.806] rive  viewport 1024x780 @1x
+[09:22:02.875] rive  wrote build/states.png

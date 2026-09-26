@@ -311,6 +311,18 @@ interface XrSessionState {
    * whichever showed up into one turn.
    */
   pendingSay: string | null;
+  /**
+   * The engine's own undo/redo availability — `WhiteboardBoard.onHistory`,
+   * which subscribes `store.listenHistory` inside the editor. Not derivable
+   * from `revision`: a batch boundary emits history without a diff, so a count
+   * of changes is not a count of undoable steps. One object so the chrome
+   * binding subscribes once.
+   */
+  boardHistory: { canUndo: boolean; canRedo: boolean; hasMarks: boolean };
+  /** The chrome's inks row replaces the tools row while this is set. */
+  paletteOpen: boolean;
+  /** Clear was pressed once in XR — the second press empties the board. */
+  clearArmed: boolean;
 
   beginEntry(): void;
   /**
@@ -352,6 +364,9 @@ interface XrSessionState {
   setTool(tool: WhiteboardTool): void;
   setInk(ink: WhiteboardInk): void;
   setAsking(asking: boolean): void;
+  setBoardHistory(history: { canUndo: boolean; canRedo: boolean; hasMarks: boolean }): void;
+  setPaletteOpen(open: boolean): void;
+  setClearArmed(armed: boolean): void;
   bumpRevision(): void;
   /** The spatial rail exported a board. `null` is an empty board and is dropped. */
   queueAsk(png: string | null): void;
@@ -377,6 +392,9 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
   tool: 'draw',
   ink: 'black',
   asking: false,
+  boardHistory: { canUndo: false, canRedo: false, hasMarks: false },
+  paletteOpen: false,
+  clearArmed: false,
   revision: 0,
 
   beginEntry: () => set({ entering: true }),
@@ -408,6 +426,9 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
   setTool: (tool) => set({ tool }),
   setInk: (ink) => set({ ink }),
   setAsking: (asking) => set({ asking }),
+  setBoardHistory: (boardHistory) => set({ boardHistory }),
+  setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
+  setClearArmed: (clearArmed) => set({ clearArmed }),
   bumpRevision: () => set((state) => ({ revision: state.revision + 1 })),
   queueAsk: (png) => set({ pendingAsk: png }),
   queueSay: (text) => {

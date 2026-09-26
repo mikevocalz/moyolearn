@@ -20,14 +20,25 @@
 // SOT: packages/ui/whiteboard.types.ts · https://tryquickdraw.com/docs/theming/
 // SOT-KEYWORDS: whiteboard board web quickdraw editor canvas fork drawing surface
 
-import { forwardRef, useCallback, useImperativeHandle, useRef } from 'react';
+import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef } from 'react';
 import { Quickdraw, type QuickdrawRef, type Snapshot } from '@quickdrawjs/react';
 import '@quickdrawjs/core/quickdraw.css';
 import type { WhiteboardBoardProps, WhiteboardHandle } from './whiteboard.types.ts';
 
 export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps>(
-  function WhiteboardBoard({ snapshot, onChange, onReady }, ref) {
+  function WhiteboardBoard({ snapshot, onChange, onReady, onHistory }, ref) {
     const board = useRef<QuickdrawRef>(null);
+    /*
+      The engine's history listener is installed once at `onMount`, but the
+      callback prop may be a different function every render — keep the LATEST
+      one behind a ref so the engine never holds a stale closure.
+    */
+    const historyListener = useRef(onHistory);
+    const historyStop = useRef<(() => void) | null>(null);
+    useEffect(() => {
+      historyListener.current = onHistory;
+    }, [onHistory]);
+    useEffect(() => () => historyStop.current?.(), []);
 
     /*
       A blob, not a data URL. `exportImage` is the browser-side call and it
@@ -150,7 +161,25 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
            decides what "the learner has started" means, because a restored
            board is drawn on and is nobody's work this session. */
         onChange={(diff, source) => onChange?.(diff, source)}
-        onMount={() => onReady?.()}
+        onMount={(editor) => {
+          onReady?.();
+          /*
+            Undo/redo availability, same as the native fork's `moyo:history`
+            posts — except here the editor is in this document, so the
+            subscription is a function call instead of a WebView bridge. One
+            report now for the resting state, then one per history change —
+            including gesture-batch ends that emit no diff.
+          */
+          const report = () =>
+            historyListener.current?.({
+              canUndo: editor.store.canUndo,
+              canRedo: editor.store.canRedo,
+              marks: editor.store.size,
+            });
+          historyStop.current?.();
+          historyStop.current = editor.store.listenHistory(report);
+          report();
+        }}
         style={{ width: '100%', height: '100%' }}
       />
     );

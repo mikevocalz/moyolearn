@@ -84,6 +84,30 @@ export {
   type BoardLayoutMiss,
 } from './board-layout.ts';
 export { placeInFrontOf, type XrHeadPose, type XrPlaceInput } from './board-placement.ts';
+/* Pure geometry + command vocabulary for the Rive-framed board — no renderer. */
+export {
+  CHROME_ARTBOARD,
+  CONTENT_BAND,
+  CONTENT_RECT_PANEL,
+  INK_ROW,
+  PANEL_HEIGHT_M,
+  PANEL_WIDTH_M,
+  TITLE_BAND,
+  TOOLBAR_BAND,
+  TOOL_ROW,
+  artboardCenter,
+  artboardToPanel,
+  contentAnchorWorld,
+  type ArtboardRect,
+  type PanelRect,
+} from './board-chrome-layout.ts';
+export {
+  BOARD_COMMAND,
+  decodeBoardCommand,
+  inkToRive,
+  toolToRive,
+  type BoardChromeIntent,
+} from './board-chrome-commands.ts';
 export type {
   XrCompanion,
   XrOrnament,
