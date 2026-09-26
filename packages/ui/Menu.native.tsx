@@ -1,6 +1,6 @@
 'use client';
 import { useRef } from 'react';
-import { Modal, useWindowDimensions, View as RNView } from 'react-native';
+import { Modal, useWindowDimensions, View as RNView, type ViewInstance } from 'react-native';
 import { createStore, useStore } from 'zustand';
 import { Pressable, View } from './primitives';
 import { Text } from './Text';
@@ -80,7 +80,12 @@ export function Menu({ children, actions, onAction, title, className }: MenuProp
 
   // measureInWindow needs a real host view; the kit's Pressable does not
   // forward refs, so the wrapper is what gets measured.
-  const triggerRef = useRef<RNView>(null);
+  //
+  // `ViewInstance`, not `RNView`: under RN's Strict TypeScript API (0.87+,
+  // default from 0.88) `View` is the component's *props* type, so a ref typed
+  // as the component has no host methods on it — `measureInWindow` is not
+  // there, and the callback's four parameters fall back to implicit `any`.
+  const triggerRef = useRef<ViewInstance>(null);
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
 
   const openMenu = () => {

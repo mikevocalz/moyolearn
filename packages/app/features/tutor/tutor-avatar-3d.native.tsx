@@ -35,7 +35,15 @@
  */
 import { useEffect, useRef } from 'react';
 import { Image, PixelRatio, View } from 'react-native';
-import { Canvas, type CanvasRef, type NativeCanvas, type RNCanvasContext } from 'react-native-webgpu';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import {
+  Canvas,
+  GPUDeviceProvider,
+  useMainDevice,
+  type CanvasRef,
+  type NativeCanvas,
+  type RNCanvasContext,
+} from 'react-native-webgpu';
 import * as THREE from 'three/webgpu';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { EmotionState, type EmotionCategory, type Shape } from '@acme/avatar';
@@ -46,7 +54,7 @@ import {
   type HumanoPresence,
 } from '@acme/avatar/body';
 // The lens and the light are shared with the web stage — see `natalie-rig.ts`.
-import { CAMERA_FOV, addRig } from './natalie-rig';
+import { CAMERA_FOV, CAMERA_TRUCK_X_M, HARDWARE_COLUMN_MIN_DP, addRig } from './natalie-rig';
 import type { TutorCues } from './tutor-cues';
 
 /*
@@ -176,22 +184,6 @@ export interface TutorAvatar3DProps {
   modelUri?: string;
 }
 
-/**
- * Drops the listeners three leaves on its module-level `QuadMesh` geometry
- * after a renderer is disposed (wcandillon/react-native-webgpu#445) — without
- * this the disposed backend stays reachable for the process lifetime. Safe
- * because the app has at most one live WebGPU renderer at a time.
- */
-type ListenerHolder =
-  | THREE.BufferGeometry
-  | THREE.BufferAttribute
-  | THREE.InterleavedBufferAttribute;
-
-function clearStaleListeners(target: ListenerHolder | null | undefined): void {
-  if (!target) return;
-  const holder = target as { _listeners?: object };
-  if (holder._listeners) holder._listeners = {};
-}
 
 /**
  * Fetches the glTF and its `.bin` ourselves and hands them to three through its
@@ -209,13 +201,24 @@ function clearStaleListeners(target: ListenerHolder | null | undefined): void {
  *
  * `Cache.get('file:' + url)` is checked before any request is made, so seeding
  * it is the whole fix: no patched dependency, no deleted global, and the code
- * that runs is three's. Textures need no help — `createImageBitmap` exists here
- * (react-native-webgpu installs it), so `GLTFLoader` routes images through
- * `ImageBitmapLoader`, which uses plain `fetch` + `blob()` and never wraps.
+ * that runs is three's.
  *
- * Only the `.bin` is seeded alongside the glTF: it is the one other file that
- * goes through `FileLoader`. Its URL is composed exactly the way `GLTFLoader`
- * composes it, so the two keys cannot drift.
+ * THE TEXTURES NEED THE SAME HELP SINCE REACT NATIVE 0.88. `GLTFLoader` routes
+ * images through `ImageBitmapLoader` — `fetch` + `blob()` +
+ * `createImageBitmap(blob)` — and react-native-webgpu's `createImageBitmap`
+ * reads that blob's bytes back out of RN's blob store through
+ * `[RCTBridge currentBridge]`. Bridgeless 0.88 has no current bridge, so the
+ * lookup returns nothing and every texture fails with "Couldn't retrieve blob
+ * data" — the fetch itself is fine (200, 1.2 MB, `image/png`, measured on the
+ * Duo). react-native-webgpu also accepts encoded bytes directly, and
+ * `ImageBitmapLoader` checks `Cache.get('image-bitmap:' + url)` before it
+ * fetches. So every image is fetched as an ArrayBuffer, decoded from bytes,
+ * and seeded under that key; three then never touches a blob. The seeded
+ * bitmap is decoded with the same option `GLTFLoader` sets on its loader
+ * (`colorSpaceConversion: 'none'`), so the pixels are what it would have had.
+ *
+ * URLs are composed exactly the way `GLTFLoader` composes them, so the keys
+ * cannot drift.
  */
 async function primeLoaderCache(gltfUrl: string): Promise<void> {
   THREE.Cache.enabled = true;
@@ -232,12 +235,30 @@ async function primeLoaderCache(gltfUrl: string): Promise<void> {
   const base = THREE.LoaderUtils.extractUrlBase(gltfUrl);
   const json = JSON.parse(new TextDecoder().decode(gltfBytes)) as {
     buffers?: { uri?: string }[];
+    images?: { uri?: string }[];
   };
-  for (const buffer of json.buffers ?? []) {
-    if (!buffer.uri || buffer.uri.startsWith('data:')) continue;
-    const url = THREE.LoaderUtils.resolveURL(buffer.uri, base);
-    THREE.Cache.add(`file:${url}`, await fetchBuffer(url));
-  }
+  const external = (entries: { uri?: string }[] | undefined): string[] =>
+    (entries ?? [])
+      .map((entry) => entry.uri)
+      .filter((uri): uri is string => typeof uri === 'string' && !uri.startsWith('data:'))
+      .map((uri) => THREE.LoaderUtils.resolveURL(uri, base));
+  await Promise.all([
+    ...external(json.buffers).map(async (url) => {
+      THREE.Cache.add(`file:${url}`, await fetchBuffer(url));
+    }),
+    ...external(json.images).map(async (url) => {
+      // One bad texture must not demote her to the 2D mark for the session:
+      // skip the seed and three's own loader takes the untextured path.
+      try {
+        const bitmap = await createImageBitmap(await fetchBuffer(url), {
+          colorSpaceConversion: 'none',
+        });
+        THREE.Cache.add(`image-bitmap:${url}`, bitmap);
+      } catch (error) {
+        if (__DEV__) console.warn(`[natalie-preload] texture skipped: ${url}`, error);
+      }
+    }),
+  ]);
 }
 
 /**
@@ -252,7 +273,33 @@ async function primeLoaderCache(gltfUrl: string): Promise<void> {
  */
 const TOWARD_BOARD_RAD = -8 * (Math.PI / 180);
 
-export function TutorAvatar3D({
+/*
+  SIX, AND THE SIXTH IS THE DEVICE. `WebGPURenderer` requests its own GPUDevice
+  when the option is omitted, and that device is then unreachable — it cannot be
+  handed to TypeGPU, shared with Skia Graphite, or torn down in concert with
+  anything else (ADR-121). `GPUDeviceProvider` requests one adapter and device
+  for its subtree and `useMainDevice` reads it, so the stage below renders on a
+  device something else can name.
+
+  The provider mounts HERE rather than above this module, and that placement is
+  rule 1 above, not a preference: importing `react-native-webgpu` assigns
+  `navigator.gpu` as a side effect, so a provider higher in the tree would charge
+  every learner on the 2D path for an import they never use. A provider cannot
+  give a value to its own parent, which is why the body is a second component
+  rather than this one.
+
+  It renders null while the request is in flight, so the stage mounts once, with
+  a device already in hand — the effect below never has to wait for one.
+*/
+export function TutorAvatar3D(props: TutorAvatar3DProps) {
+  return (
+    <GPUDeviceProvider>
+      <TutorAvatar3DStage {...props} />
+    </GPUDeviceProvider>
+  );
+}
+
+function TutorAvatar3DStage({
   active,
   isSpeaking,
   sampleMouth,
@@ -268,6 +315,7 @@ export function TutorAvatar3D({
   modelUri,
 }: TutorAvatar3DProps) {
   const canvasRef = useRef<CanvasRef>(null);
+  const { device } = useMainDevice();
 
   /*
     Every per-frame input goes through a ref, and that is not laziness about
@@ -324,6 +372,13 @@ export function TutorAvatar3D({
   // A ref, not state: a pane animating open fires `onLayout` every frame, and
   // this component owns a renderer built once per mount.
   const layoutRef = useRef({ width: 0, height: 0 });
+  // The truck exists for the Duo's system column beside her pane and nothing
+  // else; on a phone or iPad with no column she stays centred like the web.
+  const insets = useSafeAreaInsets();
+  const truckRef = useRef(0);
+  useEffect(() => {
+    truckRef.current = insets.right >= HARDWARE_COLUMN_MIN_DP ? CAMERA_TRUCK_X_M : 0;
+  }, [insets.right]);
 
   useEffect(() => {
     let disposed = false;
@@ -387,27 +442,54 @@ export function TutorAvatar3D({
       */
       let framedWidth = 0;
       let framedHeight = 0;
+      /*
+        The truck is part of the framing, so it is part of the early-out too.
+        `truckRef` is written from an effect, and a rotation can land the new
+        layout a frame before it: checked on size alone, that frame refits with
+        the old offset and every later frame returns early, leaving her framed
+        for the previous hardware edge.
+      */
+      let framedTruck = Number.NaN;
       const scale = PixelRatio.get();
       const refit = () => {
         const layout = layoutRef.current;
         const width = Math.round(layout.width * scale);
         const height = Math.round(layout.height * scale);
-        if (width === framedWidth && height === framedHeight) return;
+        const truck = truckRef.current;
+        if (width === framedWidth && height === framedHeight && truck === framedTruck) return;
         if (width === 0 || height === 0) return;
         framedWidth = width;
         framedHeight = height;
+        framedTruck = truck;
         // Writes canvas.width/height, which is what getCurrentTexture
         // reconfigures on. `false`: three would otherwise write
         // `domElement.style`, which this canvas has not got.
         renderer?.setSize(width, height, false);
         camera.aspect = width / height;
         frameBody(camera, gltf.scene);
+        camera.translateX(truck);
       };
 
       const presence = createHumanoPresence(gltf.scene);
       presenceRef.current = presence;
 
-      renderer = new THREE.WebGPURenderer({ antialias: true, alpha: true, canvas: context.canvas, context });
+      /*
+        Refused, not defaulted. `useMainDevice` types the device nullable because
+        the provider requests it asynchronously — but the provider renders null
+        until it resolves, so this component does not exist without one. Passing
+        `device ?? undefined` would compile and then quietly reinstate the bug
+        the provider was added to remove: three would request a second device
+        nobody else can reach, and it would look like it worked.
+      */
+      if (!device) return fail('GPUDeviceProvider mounted the stage without a device');
+
+      renderer = new THREE.WebGPURenderer({
+        antialias: true,
+        alpha: true,
+        canvas: context.canvas,
+        context,
+        device,
+      });
       // A transparent clear, so the stage's own ground (`bg-surface-stage` on
       // the wrapper) shows behind her instead of the renderer's black.
       renderer.setClearColor(0x000000, 0);
@@ -545,16 +627,14 @@ export function TutorAvatar3D({
       */
       surfaceContext?.unconfigure();
       renderer.dispose();
-      const quad = new THREE.QuadMesh();
-      clearStaleListeners(quad.geometry);
-      clearStaleListeners(quad.geometry.index);
-      for (const attribute of Object.values(quad.geometry.attributes)) {
-        clearStaleListeners(attribute);
-      }
     };
-    // Built once per mount. `modelUri` is the one input that changes WHICH body
-    // is on the stage, so it is the only legitimate reason to rebuild.
-  }, [modelUri]);
+    // Built once per mount. `modelUri` changes WHICH body is on the stage;
+    // `device` changes WHICH GPU the renderer is bound to. Both are reasons to
+    // rebuild and nothing else is — a renderer left pointing at a device that
+    // has gone away renders nothing and reports nothing, which is the failure
+    // ADR-121 names. The provider resolves the device before this component
+    // mounts, so in practice this array fires once.
+  }, [modelUri, device]);
 
   /*
     Rest her when the loop stops, so the last painted frame is a calm one rather
@@ -570,7 +650,7 @@ export function TutorAvatar3D({
       onLayout={(event) => {
         layoutRef.current = event.nativeEvent.layout;
       }}>
-      <Canvas ref={canvasRef} style={{ flex: 1 }} transparent />
+      <Canvas ref={canvasRef} style={{ flex: 1 }} opaque={false} />
     </View>
   );
 }

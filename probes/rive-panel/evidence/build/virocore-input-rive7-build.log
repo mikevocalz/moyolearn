@@ -1,0 +1,81 @@
+
+> Configure project :virocore
+Preprocessor: debug, I will not run preprocessor
+
+> Task :viroar:preBuild UP-TO-DATE
+> Task :viroar:preReleaseBuild UP-TO-DATE
+> Task :viroar:configureCMakeRelWithDebInfo[arm64-v8a]
+> Task :viroar:buildCMakeRelWithDebInfo[arm64-v8a][viro_arcore]
+> Task :viroar:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :viroar:mergeReleaseNativeLibs UP-TO-DATE
+> Task :viroar:stripReleaseDebugSymbols UP-TO-DATE
+> Task :viroar:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :viroar:generateReleaseResValues UP-TO-DATE
+> Task :viroar:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :viroar:generateReleaseResources UP-TO-DATE
+> Task :viroar:packageReleaseResources UP-TO-DATE
+> Task :viroar:parseReleaseLocalResources UP-TO-DATE
+> Task :viroar:processReleaseManifest UP-TO-DATE
+> Task :viroar:generateReleaseRFile UP-TO-DATE
+> Task :viroar:extractReleaseAnnotations UP-TO-DATE
+> Task :viroar:javaPreCompileRelease UP-TO-DATE
+> Task :viroar:compileReleaseJavaWithJavac NO-SOURCE
+> Task :viroar:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :viroar:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :viroar:mergeReleaseShaders UP-TO-DATE
+> Task :viroar:compileReleaseShaders NO-SOURCE
+> Task :viroar:generateReleaseAssets UP-TO-DATE
+> Task :viroar:packageReleaseAssets UP-TO-DATE
+> Task :viroar:prepareLintJarForPublish UP-TO-DATE
+> Task :viroar:prepareReleaseArtProfile UP-TO-DATE
+> Task :viroar:processReleaseJavaRes NO-SOURCE
+> Task :viroar:mergeReleaseJavaResource UP-TO-DATE
+> Task :viroar:syncReleaseLibJars UP-TO-DATE
+> Task :viroar:writeReleaseAarMetadata UP-TO-DATE
+> Task :viroar:bundleReleaseAar UP-TO-DATE
+> Task :viroar:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :viroar:mergeReleaseResources UP-TO-DATE
+> Task :viroar:verifyReleaseResources UP-TO-DATE
+> Task :viroar:assembleRelease UP-TO-DATE
+> Task :viroar:extractNativeLibraries
+> Task :viroreact:syncShaderAssets
+> Task :viroreact:preBuild
+> Task :viroreact:preReleaseBuild
+> Task :viroreact:configureCMakeRelWithDebInfo[arm64-v8a]
+> Task :viroreact:buildCMakeRelWithDebInfo[arm64-v8a][viro_renderer]
+> Task :viroreact:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :viroreact:generateReleaseResValues UP-TO-DATE
+> Task :viroreact:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :viroreact:generateReleaseBuildConfig UP-TO-DATE
+> Task :viroreact:generateReleaseResources UP-TO-DATE
+> Task :viroreact:packageReleaseResources UP-TO-DATE
+> Task :viroreact:parseReleaseLocalResources UP-TO-DATE
+> Task :viroreact:processReleaseManifest UP-TO-DATE
+> Task :viroreact:generateReleaseRFile UP-TO-DATE
+> Task :viroreact:extractReleaseAnnotations UP-TO-DATE
+> Task :viroreact:javaPreCompileRelease UP-TO-DATE
+> Task :viroreact:compileReleaseJavaWithJavac UP-TO-DATE
+> Task :viroreact:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :viroreact:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :viroreact:mergeReleaseShaders UP-TO-DATE
+> Task :viroreact:compileReleaseShaders NO-SOURCE
+> Task :viroreact:generateReleaseAssets UP-TO-DATE
+> Task :viroreact:packageReleaseAssets UP-TO-DATE
+> Task :viroreact:prepareLintJarForPublish UP-TO-DATE
+> Task :viroreact:prepareReleaseArtProfile UP-TO-DATE
+> Task :viroreact:processReleaseJavaRes NO-SOURCE
+> Task :viroreact:mergeReleaseJavaResource UP-TO-DATE
+> Task :viroreact:syncReleaseLibJars UP-TO-DATE
+> Task :viroreact:writeReleaseAarMetadata UP-TO-DATE
+> Task :viroreact:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :viroreact:mergeReleaseResources UP-TO-DATE
+> Task :viroreact:verifyReleaseResources UP-TO-DATE
+> Task :viroreact:mergeReleaseNativeLibs
+> Task :viroreact:stripReleaseDebugSymbols
+> Task :viroreact:copyReleaseJniLibsProjectAndLocalJars
+> Task :viroreact:bundleReleaseAar
+> Task :viroreact:assembleRelease
+> Task :viroreact:copyReleaseAAR
+
+BUILD SUCCESSFUL in 9s
+59 actionable tasks: 11 executed, 48 up-to-date

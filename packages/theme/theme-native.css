@@ -308,7 +308,7 @@
   --spacing-target-young: 72px;
   --spacing-nav-rail: 80px;
   --spacing-nav-raised: 64px;
-  --spacing-nav-raise: 58px;
+  --spacing-nav-raise: 16px;
   --spacing-nav-indicator: 40px;
 }
 
@@ -380,8 +380,8 @@
       --color-on-surface-header: #43216B;
       --color-surface-stage: #E9DDF5;
       --color-on-surface-stage: #43216B;
-      --color-nav-cta: #43216B;
-      --color-on-nav-cta: #E9DDF5;
+      --color-nav-cta: #F6F3E8;
+      --color-on-nav-cta: #0D0C0B;
       --color-nav-selected: #5D3A8B;
       --color-on-nav-selected: #FFB21D;
       --color-surface-footer: #D5C1EC;
@@ -482,8 +482,8 @@
       --color-on-surface-header: #43216B;
       --color-surface-stage: #43216B;
       --color-on-surface-stage: #E9DDF5;
-      --color-nav-cta: #43216B;
-      --color-on-nav-cta: #E9DDF5;
+      --color-nav-cta: #F6F3E8;
+      --color-on-nav-cta: #0D0C0B;
       --color-nav-selected: #5D3A8B;
       --color-on-nav-selected: #FFB21D;
       --color-surface-footer: #B99BDE;

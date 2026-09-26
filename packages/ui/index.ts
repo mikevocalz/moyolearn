@@ -34,8 +34,19 @@ export { isTutorRevealed, hasWorkPane } from './tutor-view';
 export type { TutorPresencePreference, ResolvedTutorPresence } from './tutor-view';
 export { LearningCanvas, type LearningCanvasProps } from './LearningCanvas';
 export { Whiteboard, type WhiteboardProps } from './Whiteboard';
+/*
+  THE BOARD WITHOUT THE TRAY, for the one caller that has its own: the spatial
+  route draws the controls as a rail in the scene, and its engine is the surface
+  a texture is taken from — so a tray inside that surface would be drawn ON the
+  child's paper, and the pointer would land a tray's height away from the ray.
+  `Whiteboard` remains what every 2D surface mounts.
+*/
+export { WhiteboardBoard } from './whiteboard-board';
+export type { WhiteboardBoardProps } from './whiteboard.types';
 export { WhiteboardSheet, type WhiteboardSheetProps } from './WhiteboardSheet';
 export type {
+  WhiteboardCalibration,
+  WhiteboardCalibrationFailure,
   WhiteboardDiff,
   WhiteboardDiffSource,
   WhiteboardHandle,
@@ -104,6 +115,7 @@ export { NavDrawerButton, type NavDrawerButtonProps } from './NavDrawerButton';
 export { useAppForm, withForm, useFieldContext, useFormContext, useFormStore } from './form';
 
 export { SafeArea, type SafeAreaProps } from './SafeArea';
+export { useReservedRegions, type ReservedRegion } from './reserved-regions';
 export { KeyboardAwareScroll, type KeyboardAwareScrollProps } from './keyboard-aware';
 export { KeyboardSticky, type KeyboardStickyProps } from './keyboard-aware';
 export { SegmentedControl, type SegmentedControlProps, type SegmentedOption } from './SegmentedControl';
@@ -120,6 +132,7 @@ export {
   type MotionViewProps, type MotionTextProps, type MotionPresetProps, type SlideInProps,
 } from './motion';
 export { PressScale, type PressScaleProps } from './press-scale';
+export { XrBoardButton, type XrBoardButtonProps } from './XrBoardButton';
 export { useInstanceStore, useStore } from './use-instance-store';
 export * from './audio';
 export type { TutorAttachment, TutorAttachmentKind } from './tutor-attachment.ts';

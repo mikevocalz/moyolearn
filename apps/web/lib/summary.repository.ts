@@ -41,7 +41,6 @@ import type {
   SummarySessionRow,
 } from '@acme/app/server';
 
-const WARDS_LIMIT = 50;
 /** A feed, not an archive — same bound the incident feed carries. */
 const FEED_LIMIT = 50;
 const QUEUE_LIMIT = 100;
@@ -245,7 +244,9 @@ export const loadGuardianSummaries: LoadGuardianSummaries = async (ctx) =>
         guardianAuthId: { equals: ctx.learnerId },
         status: { equals: 'active' },
       },
-      limit: WARDS_LIMIT,
+      // Every ward: this list decides which children the guardian can see,
+      // so a first page would silently shut them out of the rest.
+      pagination: false,
     });
     const learnerIds = wards.map((ward) => ward.learnerAuthId);
     if (learnerIds.length === 0) return { wards: [], reports: [] };
@@ -276,7 +277,9 @@ export const loadGuardianWards: LoadGuardianWards = async (ctx) =>
         guardianAuthId: { equals: ctx.learnerId },
         status: { equals: 'active' },
       },
-      limit: WARDS_LIMIT,
+      // Every ward: this list decides which children the guardian can see,
+      // so a first page would silently shut them out of the rest.
+      pagination: false,
     });
     return docs.map((ward) => ward.learnerAuthId);
   });

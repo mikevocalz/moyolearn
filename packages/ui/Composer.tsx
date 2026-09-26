@@ -318,6 +318,14 @@ export function Composer({
     band: half of `child` is 28px, which is under every touch minimum there is
     and is what `tooling/check-targets.mjs` exists to catch. A narrower key on a
     child's screen is a key a child misses.
+
+    SEND GIVES UP WIDTH TOO, AS FAR AS THE ADULT TARGET. It kept the band's
+    square as the row's primary action, and at the child band that is a 72px
+    mango block at the end of a ~347dp column on the Duo — the field was the
+    part that lost again (the product owner: send "needs to give input more
+    space"). 44px wide keeps Apple's minimum outright, the height stays on the
+    band, and the width it gives up comes back as horizontal hitSlop the same
+    way the secondary keys get theirs.
   */
   const secondaryIconTarget = {
     sm: 'min-h-target-adult min-w-target-floor',
@@ -336,12 +344,20 @@ export function Composer({
     That is the whole reason the visual can be halved without costing a child
     the target — a narrower drawing is not a narrower button.
   */
+  const sendTarget = {
+    sm: 'min-h-target-adult min-w-target-adult',
+    md: 'min-h-target-adult min-w-target-adult',
+    lg: 'min-h-target-teen min-w-target-adult',
+    xl: 'min-h-target-child min-w-target-adult',
+  }[size];
   const bandPx = Number.parseInt(
     { sm: targets.adult, md: targets.adult, lg: targets.teen, xl: targets.child }[size],
     10,
   );
   const secondarySlop = Math.max(0, (bandPx - Number.parseInt(targets.floor, 10)) / 2);
   const secondaryHitSlop = { left: secondarySlop, right: secondarySlop };
+  const sendSlop = Math.max(0, (bandPx - Number.parseInt(targets.adult, 10)) / 2);
+  const sendHitSlop = { left: sendSlop, right: sendSlop };
 
   /*
     The row's resting height, as a NUMBER — the same age-band target the keys
@@ -626,7 +642,7 @@ export function Composer({
         */}
         <View
           onLayout={measureRow}
-          className={`flex-row items-end gap-element rounded-control border-2 border-strong bg-surface-raised px-inset-tight py-inset-field ${
+          className={`flex-row items-end gap-element rounded-control border-2 border-strong bg-surface-raised pl-inset-tight pr-0 py-inset-field ${
             disabled ? 'opacity-60' : ''
           }`}
         >
@@ -758,14 +774,18 @@ export function Composer({
             distance={20}
             duration={200}
             /*
-              `gap-group`, not `gap-element`: the mic and send are two DIFFERENT
-              intentions (speak it / send it), not two steps of one, and at the
-              element gap they read as a single two-part control with send
-              crowding the talk key. A mis-tap here costs the whole message, so
-              the tier that separates groups is the honest one — the same reason
-              discard sits on the far side from send in the recording row.
+              `gap-element` now, and the wider tier is gone on purpose. The
+              group gap was chosen so mic and send read as two intentions, but
+              on the Duo's 347 dp column the mic's 24 dp box plus 16 dp either
+              side read as one wide key eating the field (the product owner:
+              "mic button too wide"). The mis-tap risk that argued for the
+              group gap is carried by the keys' hitSlop, not the gap: each
+              still answers across the full band. The field has NO trailing
+              inset for the same reason — measured on the Duo, `pr-1` is 12 dp
+              in this scale, and send sat 16 dp short of the border; now it is
+              this group's own 2 dp and the border.
             */
-            className="flex-row items-center gap-group pr-element"
+            className="flex-row items-center gap-element pr-0.5"
           >
             {/*
               BOTH, always. This swapped — microphone on an empty field, send
@@ -809,9 +829,10 @@ export function Composer({
                  Unavailable is carried by opacity, not by turning it grey: a
                  grey square reads as a different control rather than as the
                  same one waiting. */
-              className={`${iconTarget} items-center justify-center rounded-control bg-primary ${
+              className={`${sendTarget} items-center justify-center rounded-control bg-primary ${
                 canSend ? '' : 'opacity-40'
               }`}
+              hitSlop={sendHitSlop}
             >
               <Send size={20} className="text-on-primary" />
             </Pressable>

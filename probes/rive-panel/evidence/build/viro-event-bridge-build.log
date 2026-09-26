@@ -1,0 +1,133 @@
+> Task :gradle-plugin:react-native-gradle-plugin:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:shared:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :gradle-plugin:shared:processResources NO-SOURCE
+> Task :gradle-plugin:react-native-gradle-plugin:pluginDescriptors
+> Task :gradle-plugin:react-native-gradle-plugin:processResources
+> Task :gradle-plugin:shared:compileKotlin
+> Task :gradle-plugin:shared:compileJava NO-SOURCE
+> Task :gradle-plugin:shared:classes UP-TO-DATE
+> Task :gradle-plugin:shared:jar
+> Task :gradle-plugin:react-native-gradle-plugin:compileKotlin
+> Task :gradle-plugin:react-native-gradle-plugin:compileJava NO-SOURCE
+> Task :gradle-plugin:react-native-gradle-plugin:classes
+> Task :gradle-plugin:react-native-gradle-plugin:jar
+
+> Configure project :nitro-canvas
+WARNING: The option setting 'android.builtInKotlin=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: The option setting 'android.newDsl=false' is deprecated.
+The current default is 'true'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+WARNING: API 'libraryVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling libraryVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+WARNING: API 'testVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling testVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+WARNING: API 'unitTestVariants' is obsolete and has been replaced with 'AndroidComponentsExtension'.
+It will be removed in version 10.0 of the Android Gradle plugin.
+The legacy variant API is disabled by default in AGP 9.0, but can be re-enabled by adding 
+    android.newDsl=false
+to this project's gradle.properties file.
+For more information, see http://developer.android.com/build/r/new-dsl.
+
+To determine what is calling unitTestVariants, use -Pandroid.debug.obsoleteApi=true on the command line to display more information.
+[NitroModules] 🔥 NitroCanvasInVision is boosted by nitro!
+w: ⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':nitro-canvas' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :react-native-nitro-modules
+[NitroModules] 🔥 Your app is boosted by nitro modules!
+w: ⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':react-native-nitro-modules' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Configure project :viro_bridge
+w: ⚠️ Deprecated 'org.jetbrains.kotlin.android' plugin usage
+The 'org.jetbrains.kotlin.android' plugin in project ':viro_bridge' is no longer required for Kotlin support since AGP 9.0.
+Solution: Remove both `android.builtInKotlin=true` and `android.newDsl=false` from `gradle.properties`, then migrate to built-in Kotlin.
+See https://kotl.in/gradle/agp-built-in-kotlin for more details.
+
+
+> Task :viro_bridge:preBuild UP-TO-DATE
+> Task :viro_bridge:preReleaseBuild UP-TO-DATE
+> Task :viro_renderer:preBuild UP-TO-DATE
+> Task :viro_renderer:prePicoReleaseBuild UP-TO-DATE
+> Task :viro_renderer:writePicoReleaseAarMetadata UP-TO-DATE
+> Task :viro_bridge:checkReleaseAarMetadata UP-TO-DATE
+> Task :viro_bridge:mergeReleaseJniLibFolders UP-TO-DATE
+> Task :viro_bridge:mergeReleaseNativeLibs NO-SOURCE
+> Task :viro_bridge:stripReleaseDebugSymbols NO-SOURCE
+> Task :viro_bridge:copyReleaseJniLibsProjectAndLocalJars UP-TO-DATE
+> Task :viro_bridge:extractDeepLinksForAarRelease UP-TO-DATE
+> Task :viro_bridge:checkKotlinGradlePluginConfigurationErrors SKIPPED
+> Task :viro_bridge:generateReleaseBuildConfig UP-TO-DATE
+> Task :viro_bridge:generateReleaseResources UP-TO-DATE
+> Task :viro_bridge:packageReleaseResources
+> Task :viro_bridge:processReleaseNavigationResources UP-TO-DATE
+> Task :viro_bridge:parseReleaseLocalResources UP-TO-DATE
+> Task :viro_bridge:generateReleaseRFile UP-TO-DATE
+> Task :viro_renderer:generatePicoReleaseResources UP-TO-DATE
+> Task :viro_renderer:packagePicoReleaseResources
+> Task :viro_renderer:processPicoReleaseNavigationResources UP-TO-DATE
+> Task :viro_renderer:parsePicoReleaseLocalResources UP-TO-DATE
+> Task :viro_renderer:generatePicoReleaseRFile UP-TO-DATE
+> Task :viro_renderer:javaPreCompilePicoRelease UP-TO-DATE
+> Task :viro_renderer:compilePicoReleaseJavaWithJavac NO-SOURCE
+> Task :viro_renderer:bundleLibCompileToJarPicoRelease UP-TO-DATE
+> Task :viro_bridge:compileReleaseKotlin NO-SOURCE
+> Task :viro_bridge:extractReleaseAnnotations
+> Task :viro_bridge:generateReleaseAssets UP-TO-DATE
+> Task :viro_bridge:mergeReleaseAssets UP-TO-DATE
+> Task :viro_bridge:javaPreCompileRelease UP-TO-DATE
+
+> Task :viro_bridge:compileReleaseJavaWithJavac
+Note: Some input files use or override a deprecated API.
+Note: Recompile with -Xlint:deprecation for details.
+Note: Some input files use unchecked or unsafe operations.
+Note: Recompile with -Xlint:unchecked for details.
+
+> Task :viro_bridge:mergeReleaseGeneratedProguardFiles UP-TO-DATE
+> Task :viro_bridge:mergeReleaseConsumerProguardFiles UP-TO-DATE
+> Task :viro_bridge:prepareLintJarForPublish UP-TO-DATE
+> Task :viro_bridge:prepareReleaseArtProfile UP-TO-DATE
+> Task :viro_bridge:processReleaseManifest UP-TO-DATE
+> Task :viro_bridge:processReleaseJavaRes NO-SOURCE
+> Task :viro_bridge:mergeReleaseJavaResource UP-TO-DATE
+> Task :viro_bridge:syncReleaseLibJars
+> Task :viro_bridge:writeReleaseAarMetadata UP-TO-DATE
+> Task :viro_bridge:bundleReleaseAar
+> Task :viro_bridge:mapReleaseSourceSetPaths UP-TO-DATE
+> Task :viro_bridge:mergeReleaseResources
+> Task :viro_renderer:mapPicoReleaseSourceSetPaths UP-TO-DATE
+> Task :viro_renderer:compilePicoReleaseLibraryResources UP-TO-DATE
+> Task :viro_bridge:verifyReleaseResources
+> Task :viro_bridge:assembleRelease
+
+[Incubating] Problems report is available at: file:///private/tmp/rive-panel-check/android-host/build/reports/problems/problems-report.html
+
+Deprecated Gradle features were used in this build, making it incompatible with Gradle 10.
+
+You can use '--warning-mode all' to show the individual deprecation warnings and determine if they come from your own scripts or plugins.
+
+For more on this, please refer to https://docs.gradle.org/9.4.1/userguide/command_line_interface.html#sec:command_line_warnings in the Gradle documentation.
+
+BUILD SUCCESSFUL in 10s
+42 actionable tasks: 14 executed, 28 up-to-date
+Consider enabling configuration cache to speed up this build: https://docs.gradle.org/9.4.1/userguide/configuration_cache_enabling.html

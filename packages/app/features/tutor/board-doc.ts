@@ -64,8 +64,30 @@ export interface BoardDoc {
   merge(update: Uint8Array, origin: BoardOrigin): void;
   /** Fires for changes this device did not make, with a diff to hand the engine. */
   onRemote(listener: (diff: WhiteboardDiff) => void): () => void;
+  /**
+   * Fires for EVERY change, including this hand's own strokes.
+   *
+   * `onRemote` is deliberately blind to local edits because its one consumer is
+   * a Quickdraw engine that already drew them. A renderer that is not that
+   * engine — the spatial board draws these records as `ViroPolyline`s — has
+   * drawn nothing yet, so a local stroke it never hears about is a stroke that
+   * appears in 2D and is invisible in the headset the child is wearing.
+   *
+   * Two subscriptions rather than an origin argument on one, so the existing
+   * echo rule cannot be switched off by a caller passing the wrong flag.
+   */
+  onRecords(listener: (diff: WhiteboardDiff, origin: BoardOrigin) => void): () => void;
   /** Undo the LOCAL author's last change, never a collaborator's. */
   undo(): void;
+  /**
+   * Redo what this author just undid. The spatial rail surfaces it because a
+   * ray-pointed undo is far easier to overshoot than a tapped one; the 2D tray
+   * still does not, so the two are deliberately not the same control set.
+   */
+  redo(): void;
+  /** Whether the LOCAL author's stack has anything to move through. */
+  canUndo(): boolean;
+  canRedo(): boolean;
   destroy(): void;
 }
 
@@ -95,6 +117,7 @@ export function createBoardDoc(): BoardDoc {
   const undoManager = new Y.UndoManager(records, { trackedOrigins: new Set<BoardOrigin>(['local']) });
 
   const listeners = new Set<(diff: WhiteboardDiff) => void>();
+  const recordListeners = new Set<(diff: WhiteboardDiff, origin: BoardOrigin) => void>();
 
   /*
     ONE PATH FROM DOCUMENT TO CANVAS, and local edits take it too.
@@ -108,8 +131,15 @@ export function createBoardDoc(): BoardDoc {
     no-op for records it already holds.
   */
   const observer = (event: Y.YMapEvent<unknown>, transaction: Y.Transaction) => {
-    if (transaction.origin === 'local') return;
-    if (listeners.size === 0) return;
+    const isLocal = transaction.origin === 'local';
+    /*
+      The engine's subscription keeps its origin filter; the renderer's does
+      not. A local stroke with only `onRemote` listeners still costs nothing
+      here, but it must not cost the diff either, so the early-out asks both
+      sets whether anyone is listening.
+    */
+    if (isLocal && recordListeners.size === 0) return;
+    if (listeners.size === 0 && recordListeners.size === 0) return;
     /*
       Everything that still exists goes out as `added`, never as `updated`.
       The engine's `applyDiff` does `put(record)` for an add and `put(pair[1])`
@@ -129,7 +159,16 @@ export function createBoardDoc(): BoardDoc {
     const diff: WhiteboardDiff = {};
     if (hasAdded) diff.added = added;
     if (hasRemoved) diff.removed = removed;
-    for (const listener of listeners) listener(diff);
+    if (!isLocal) for (const listener of listeners) listener(diff);
+    /*
+      `transaction.origin` is whatever the writer passed to `transact`, and the
+      only writers are this file's `applyDiff` and `merge`. Yjs's own internal
+      transactions (an `UndoManager` step) carry the manager as their origin, so
+      an undo reaches a renderer as `local` — which is correct: it is this
+      author's change, and the renderer must redraw for it.
+    */
+    const origin: BoardOrigin = isLocal || typeof transaction.origin !== 'string' ? 'local' : (transaction.origin as BoardOrigin);
+    for (const listener of recordListeners) listener(diff, origin);
   };
   records.observe(observer);
 
@@ -169,12 +208,26 @@ export function createBoardDoc(): BoardDoc {
       listeners.add(listener);
       return () => listeners.delete(listener);
     },
+    onRecords(listener) {
+      recordListeners.add(listener);
+      return () => recordListeners.delete(listener);
+    },
     undo() {
       undoManager.undo();
+    },
+    redo() {
+      undoManager.redo();
+    },
+    canUndo() {
+      return undoManager.canUndo();
+    },
+    canRedo() {
+      return undoManager.canRedo();
     },
     destroy() {
       records.unobserve(observer);
       listeners.clear();
+      recordListeners.clear();
       undoManager.destroy();
       doc.destroy();
     },

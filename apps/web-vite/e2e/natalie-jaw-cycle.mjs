@@ -123,10 +123,17 @@ async function runCase({ browserName, delayMs, fixtures, origin }) {
 
   // The line is over. Wait for the surface to clear the caption (its own signal
   // that the action completed), give the smoother time to fall, then read.
+  // Cleared means EMPTY, not absent: the caption is a live region that stays
+  // mounted between lines so the next one is announced reliably, so waiting
+  // for the element to leave the DOM would wait forever.
   let captionCleared = false;
   if (ended) {
     captionCleared = await page
-      .waitForFunction(() => !document.querySelector('.moyo-tutor-room-caption'), null, { timeout: 5_000 })
+      .waitForFunction(
+        () => (document.querySelector('.moyo-tutor-room-caption')?.textContent?.trim() ?? '') === '',
+        null,
+        { timeout: 5_000 },
+      )
       .then(() => true, () => false);
   }
   await page.waitForTimeout(JAW_SETTLE_MS);

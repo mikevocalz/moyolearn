@@ -8,13 +8,31 @@
  * interaction, and falls back to captioned silent performance if the voice
  * service is unavailable or muted.
  *
+ * THE ACCESSIBILITY CONTRACT, because this surface is half decoration and half
+ * instrument and the two halves need opposite treatment:
+ *
+ *   hidden   the WebGL canvas (hidden at its source, in natalie-scene.tsx) and
+ *            the static `PlaceholderPlate` — geometry and coloured blocks, no
+ *            claim, nothing to announce
+ *   exposed  the four controls, named by their visible labels, and the caption,
+ *            which is the OUTPUT of pressing one and therefore announced on
+ *            change through a `role="status"` live region
+ *
+ * The rule that forces the split: `aria-hidden` is inherited and a descendant
+ * cannot opt back out of it. So a control must never sit under one, and hiding
+ * decoration has to happen at the decoration, not at the container it shares
+ * with the buttons.
+ *
  * SOT: apps/web-vite/src/components/chapters/tutor-room.tsx
  *      apps/web-vite/src/components/chapters/natalie-scene.tsx
+ *      apps/web/components/auth/LoginContent.tsx (the live-region pattern)
+ *      apps/web-vite/docs/2026-09-23-tutor-room-a11y.md
  *      packages/voice/src/baked.ts · apps/web/lib/voice-baked.ts
  *      apps/web/app/api/marketing/voice/baked/[piece]/route.ts
  *      apps/web-vite/src/stores/perf-store.ts
  * SOT-KEYWORDS: natalie surface web-vite client gate tier lazy draco tutor-room
- *               voice baked audio marketing demo
+ *               voice baked audio marketing demo accessibility aria-hidden
+ *               live region role status caption focus visible keyboard wcag
  */
 import { Suspense, lazy, useCallback, useEffect, useRef, useState } from 'react';
 import { View } from '@acme/ui/primitives';
@@ -45,6 +63,25 @@ const SIGNED_URL_REFRESH_MS = 50 * 60 * 1000;
  */
 const VOICE_RESOLVE_TIMEOUT_MS = 8000;
 
+/**
+ * The name for the live plate as one instrument. A reader arriving at four
+ * buttons in the middle of a chapter needs to know what they drive; "preview"
+ * is the honest word, because chapter 05's law is that embodiment is Phase 2
+ * work and this is the part of it that runs today.
+ */
+const SURFACE_LABEL = 'Natalie preview';
+
+/**
+ * The kit's focus ring is `ring-focus/50`, and at half alpha over the site's
+ * near-white paper it measures about 2.96:1 — a hair under the 3:1 that WCAG
+ * 1.4.11 asks of a focus indicator. Same token, full alpha, which on this
+ * ground is roughly 13:1. The right home for this is `packages/ui/Button.tsx`,
+ * where it would fix every surface at once; this branch is scoped to the site,
+ * so the site pays for it here and the kit fix is filed in the note beside this
+ * change.
+ */
+const FOCUS_RING_CLASS = 'focus-visible:ring-focus';
+
 export interface VoiceClip {
   url: string;
   alignment?: BakedAlignment;
@@ -58,6 +95,18 @@ interface ReadyClip {
   readonly at: number;
 }
 
+/**
+ * The flat token composition that stands in for a render — three coloured
+ * blocks and an empty outlined aperture.
+ *
+ * ITS `aria-hidden` IS CORRECT AND STAYS. `tutor-room.tsx` gives the reason:
+ * the plate "makes no claim", and the claim it will eventually illustrate is
+ * docked beneath it as real text a screen reader already reaches. There is no
+ * control in here and no information the dock does not state better, so hiding
+ * it removes three unlabelled boxes from the reading order and loses nothing.
+ * The bug this file fixes was that same attribute being carried onto the LIVE
+ * plate, which is a different object: it has buttons in it.
+ */
 function PlaceholderPlate() {
   return (
     <View className="moyo-tutor-room-plate-art" aria-hidden>
@@ -325,7 +374,32 @@ export function NatalieSurface() {
   const isBusy = action !== null;
 
   return (
-    <View className="moyo-tutor-room-plate-body" aria-hidden>
+    /*
+      NO `aria-hidden` HERE, AND THAT IS THE WHOLE FIX. The attribute was
+      inherited from the static plate this surface replaced, where it was right:
+      a flat token composition that "makes no claim" (tutor-room.tsx) has
+      nothing to announce. What landed inside it afterwards was four buttons.
+      `aria-hidden` on their container takes the buttons out of the
+      accessibility tree while leaving them in the tab order — so a keyboard
+      screen-reader user lands on four controls the reader cannot name (WCAG
+      4.1.2), and the cheapest tell was that Playwright's `getByRole` could not
+      see them either.
+
+      The decorative half is hidden one level down instead, on the WebGL canvas
+      itself (natalie-scene.tsx). That split is deliberate: `aria-hidden` cannot
+      be reversed by a descendant, so anything a reader needs — the caption, the
+      controls — must sit OUTSIDE the hidden subtree rather than try to opt back
+      in.
+
+      `role="group"` gives the four controls and the caption one named container
+      so they are announced as one instrument rather than as loose buttons in
+      the middle of a marketing chapter.
+    */
+    <View
+      className="moyo-tutor-room-plate-body"
+      role="group"
+      aria-label={SURFACE_LABEL}
+    >
       <View className="moyo-tutor-room-plate-art moyo-tutor-room-plate-art--live">
         <Suspense fallback={<PlaceholderPlate />}>
           <NatalieScene
@@ -339,13 +413,37 @@ export function NatalieSurface() {
             onActionComplete={onActionComplete}
           />
         </Suspense>
-        {caption.length > 0 && (
-          <View className="moyo-tutor-room-caption">
+        {/*
+          THE CAPTION IS THE OUTPUT OF PRESSING A BUTTON, so it is announced on
+          change — the same `role="status"` + explicit `aria-live` pairing the
+          login notice uses (apps/web/components/auth/LoginContent.tsx), because
+          react-native-web does not always map the role to a live region on its
+          own. Without it the reader hears a button press produce nothing, which
+          is the screen-reader equivalent of Natalie mouthing the line silently.
+
+          THE REGION IS MOUNTED WHETHER OR NOT THERE IS A CAPTION. A live region
+          that arrives in the DOM at the same instant as its text is announced
+          inconsistently, and this caption cycles: the scene clears it back to
+          `''` when an action completes, so every subsequent line would be a
+          fresh insertion. An empty one costs nothing — it is absolutely
+          positioned and, until it has something to say, carries none of the
+          paper/rule chrome (see `--spoken` in chapters.css).
+        */}
+        <View
+          className={
+            caption.length > 0
+              ? 'moyo-tutor-room-caption moyo-tutor-room-caption--spoken'
+              : 'moyo-tutor-room-caption'
+          }
+          role="status"
+          aria-live="polite"
+        >
+          {caption.length > 0 ? (
             <Text variant="caption" className="text-site-label text-moyo-ink">
               {caption}
             </Text>
-          </View>
-        )}
+          ) : null}
+        </View>
       </View>
 
       <View className="moyo-tutor-room-controls gap-group p-inset-tight">
@@ -357,16 +455,30 @@ export function NatalieSurface() {
             size="sm"
             onPress={() => startAction(choice.id)}
             disabled={isBusy}
+            className={FOCUS_RING_CLASS}
           />
         ))}
+        {/*
+          The visible label IS the accessible name — `Button` renders `title` as
+          the button's text, not as a `title` attribute — so flipping the word
+          flips what a reader announces, and "Label in Name" (2.5.3) holds for
+          voice control too. It was already written this way; what it was
+          missing was an ancestor that let any of it reach the tree.
+        */}
         <Button
           title={muted ? 'Unmute Natalie' : 'Mute Natalie'}
           variant="ghost"
           size="sm"
           onPress={() => setMuted((m) => !m)}
+          className={FOCUS_RING_CLASS}
         />
         {voiceStatus === 'error' && (
-          <Text variant="caption" className="text-site-label text-moyo-danger">
+          <Text
+            variant="caption"
+            className="text-site-label text-moyo-danger"
+            role="status"
+            aria-live="polite"
+          >
             voice unavailable
           </Text>
         )}

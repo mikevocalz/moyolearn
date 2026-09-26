@@ -14,6 +14,7 @@ import { useRouter } from 'solito/navigation';
 import {
   TutorStage,
   WhiteboardSheet,
+  XrBoardButton,
   hasWorkPane,
   isCollapsed,
   useSizeClass,
@@ -52,12 +53,14 @@ import { boardImageUri } from './board-image';
 import { pickFile } from '../editor/pick-file';
 import { useAudioStore } from '../editor/audio.store.ts';
 import { readAttachment } from '../capture/read-attachment';
+import { readyForEvaluation, readinessForTurn, type AssessmentReadiness } from '../capture/assessment-readiness';
 import { photographForModel } from '../capture/photograph-for-model';
 import { readDocumentAt } from '../capture/read-document-at';
 import { transcribe } from '../capture/transcribe';
 import { useUploadQueue, setUploadReporter } from '../media';
 import { patchAttachment, postMessage } from './session.client.ts';
-import { evaluateArithmetic } from '@acme/student-model/pure';
+import { useXrSession } from './xr-session.store.ts';
+import { canOpenSpatialBoard } from './xr-capability.ts';
 
 export interface TutorScreenProps {
   ageBand?: AgeBand;
@@ -266,8 +269,15 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
           return;
         }
         if (!res.ok) throw new Error(`Server returned ${res.status}`);
-        const data = (await res.json()) as { problem: string; skillTitle: string };
-        setProblem(data.problem);
+        const data = (await res.json()) as {
+          problem: string;
+          skillTitle: string;
+          evidence?: { questionId: string; revision: string };
+        };
+        // The handle travels with the text. Optional on the way in because a
+        // deployed client can outlive the server version that started issuing
+        // one, and a missing handle is an ungraded turn rather than a crash.
+        setProblem(data.problem, false, data.evidence ?? null);
         setNextProblem('idle');
       })
       .catch(() => {
@@ -339,22 +349,29 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     void coach('');
   }, [problem, resumed, coach]);
 
-  async function recordAttempt(p: string, answer: string, depth: number): Promise<void> {
+  async function recordAttempt(p: string, answer: string, depth: number, sourceReadiness: AssessmentReadiness): Promise<void> {
+    if (!readyForEvaluation(sourceReadiness)) return;
     try {
       const res = await fetch(`${API_URL}/api/tutor/evaluate`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ problem: p, answer, hintDepth: depth }),
+        body: JSON.stringify({
+          problem: p,
+          answer,
+          hintDepth: depth,
+          sourceReadiness,
+          // Read at send time, not captured when the turn started: a problem
+          // replaced mid-turn must not be answered with the previous
+          // question's handle.
+          evidence: useCaptureStore.getState().problemEvidence ?? undefined,
+        }),
       });
       if (!res.ok) throw new Error(`Server returned ${res.status}`);
       const data = (await res.json()) as { isCorrect: boolean | null };
-      if (data.isCorrect !== null) useTutorStore.getState().respond(data.isCorrect);
+      if (typeof data.isCorrect === 'boolean' && useCaptureStore.getState().problem === p) useTutorStore.getState().respond(data.isCorrect);
     } catch {
-      // The Safety Plane is the source of truth; the client-side evaluator is
-      // the offline fallback for demo and low-connectivity cases.
-      const offline = evaluateArithmetic(p, answer);
-      if (offline !== null) useTutorStore.getState().respond(offline);
+      // A network failure cannot authorize a grade or update local mastery.
     }
   }
 
@@ -391,7 +408,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     void (async () => {
       const images = staged.filter((a) => a.kind === 'image');
       const readings = await Promise.all(images.map((image) => readAttachment(image.uri)));
-      const fromImages = readings.filter((r) => r.length > 0);
+      const fromImages = readings.map((text, index) => `Source image ${index + 1} (${images[index]?.id}):\n${text || '[Unreadable — ask the learner to review or retake this page.]'}`);
 
       /*
         THE PHOTO REPLACES THE PROBLEM. It used to be guarded by `!problem`, so
@@ -441,29 +458,10 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       */
       const documents = staged.filter((a) => a.kind === 'document');
       const readDocuments = await Promise.all(documents.map((d) => readDocumentAt(d.uri, d.mimeType)));
-      const fromDocuments = readDocuments.filter((r) => r.length > 0);
+      const fromDocuments = readDocuments.map((text, index) => `Source document ${index + 1} (${documents[index]?.id}):\n${text || '[Unreadable or unsupported — ask the learner to review this document.]'}`);
 
-      /*
-        THE PHOTOGRAPHED QUESTION BECOMES THE QUESTION.
-
-        This was guarded by `!problem`, so it could only ever win on an EMPTY
-        session — and a session is almost never empty: it opens on a resumed
-        problem or one the plan picked. A child photographing the next question
-        was therefore coached on the previous one, with their own worksheet on
-        screen beside the wrong answer. The comment that guard carried already
-        had the right rule — "the child's own work outranks anything the app
-        would have picked" — the code did the opposite of it.
-
-        One write, not two. `setProblem` is the CAPTURE store and `coach` reads
-        the TUTOR store, but the two are already kept in step by the
-        `start(problem)` effect above; calling `start` here as well would seed a
-        second question bubble and reset the stage to `thinking` in the middle
-        of the send that is about to call `coach`.
-
-        A photo beats a document attached in the same turn: pointing a camera at
-        a question is the more deliberate act.
-      */
-      const readWork = fromImages[0] ?? fromDocuments[0];
+      // Every source stays represented, including pages the recognizer could not read.
+      const readWork = [...fromImages, ...fromDocuments].join('\n\n') || undefined;
       /*
         A board never becomes the problem. See `SendOptions.fromBoard` — the
         reading here is the child's answer to the question already on screen,
@@ -593,24 +591,8 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       staged.forEach((a) => removeAttachment(a.id));
 
       const turn = parts.join('\n\n');
-      /*
-        THE PAGE ITSELF, ON THE TURN THAT PHOTOGRAPHED IT.
-
-        The reading above is the best the on-device recogniser can do, and its
-        charset has no `÷` and no `×` — so the one thing a maths worksheet most
-        needs to say is the one thing that cannot survive the trip as text.
-        Sending the photograph lets the coach read the operators off the page.
-
-        The FIRST image only, matching `readWork`: the problem being coached is
-        one problem, and four pages of a workbook would be four images of which
-        three are about something else. Awaited before `coach` rather than
-        raced, because a turn that arrived without its photo would coach from the
-        mangled text — the exact failure this is here to fix — and the encode is
-        a resize, not a network call.
-
-        Documents get no equivalent. A PDF is not an image block, and its text
-        extraction is not charset-limited in the way the recogniser is.
-      */
+      // The current provider contract accepts one photograph. The complete batch
+      // remains in the text context; its source is unresolved and cannot be graded.
       const photographed = images[0];
       const photograph = photographed ? await photographForModel(photographed.uri) : null;
       void coach(turn, photograph ?? undefined);
@@ -627,6 +609,10 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
           ? trimmed || readWork || fromAudio.join(' ')
           : trimmed || fromAudio.join(' '),
         hintDepth,
+        readinessForTurn({
+          problemIsReading: useCaptureStore.getState().problemIsReading,
+          hasRecognizedInput: staged.some((a) => a.kind === 'image' || a.kind === 'document' || a.kind === 'audio'),
+        }),
       );
     })();
   };
@@ -764,7 +750,14 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     if (pending === null) return;
     if (!attachments.some((a) => a.id === pending.id)) return;
     sendWhenStaged.current = null;
-    handleSend('', { fromBoard: pending.fromBoard });
+    /*
+      The spoken question rides with the board it is about. A child in the
+      headset saying "is this right?" means the thing they just drew, and a
+      transcript sent as its own turn arrives with no subject.
+    */
+    const spoken = spokenWithBoard.current;
+    spokenWithBoard.current = '';
+    handleSend(spoken, { fromBoard: pending.fromBoard });
   });
 
   const handlePickDocument = useCallback(() => {
@@ -787,6 +780,31 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     send their board twice.
   */
   const [asking, setAsking] = useState(false);
+
+  /*
+    THE DOOR INTO THE SPATIAL BOARD.
+
+    `push`, not `replace`: this screen stays mounted underneath with its pane
+    state, its composer draft and its session, so coming back is a pop rather
+    than a restore. `beginEntry` is what stops a second press opening a second
+    scene while the first one is still loading its renderer.
+  */
+  const xrEntering = useXrSession((s) => s.entering);
+  const beginXrEntry = useXrSession((s) => s.beginEntry);
+  const pendingXrAsk = useXrSession((s) => s.pendingAsk);
+  const takeXrAsk = useXrSession((s) => s.takeAsk);
+  const pendingXrSay = useXrSession((s) => s.pendingSay);
+  const takeXrSay = useXrSession((s) => s.takeSay);
+  /* What the child said in the headset, waiting for the board to finish
+     staging. A ref because the armed send reads it and must not re-run. */
+  const spokenWithBoard = useRef('');
+
+  const handleOpenXr = useCallback(() => {
+    if (xrEntering) return;
+    beginXrEntry();
+    router.push('/tutor-xr');
+  }, [beginXrEntry, router, xrEntering]);
+
   const [boardOpen, setBoardOpen] = useState(false);
   const handleAskBoard = useCallback(
     (png: string | null) => {
@@ -822,6 +840,42 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     },
     [asking, attachments, addAttachment],
   );
+
+  /*
+    A BOARD ASKED FOR IN THE HEADSET TAKES THIS SCREEN'S ONE PATH.
+
+    The spatial rail can export a PNG but must not stage it: the cap on images,
+    the attachment id and the armed send all live in `handleAskBoard`, and a
+    second copy of them would be a second rule about what a child may send.
+    Claiming it clears it, so a re-render cannot send the same board twice.
+  */
+  useEffect(() => {
+    if (pendingXrAsk === null) return;
+    const png = takeXrAsk();
+    if (png !== null) handleAskBoard(png);
+  }, [handleAskBoard, pendingXrAsk, takeXrAsk]);
+
+  /*
+    A SPOKEN QUESTION FROM THE HEADSET, WHICH IS THE OTHER HALF OF ASK.
+
+    Claimed before the board so the transcript is already in hand when the
+    staging effect above fires — the spatial route queues both in that order,
+    and pairing them here means the tutor gets one turn rather than a mute
+    picture followed by a subject-less sentence.
+
+    With no board in flight it sends on its own: a child can talk without
+    having drawn anything.
+  */
+  useEffect(() => {
+    if (pendingXrSay === null) return;
+    const said = takeXrSay();
+    if (said === null) return;
+    if (sendWhenStaged.current !== null || useXrSession.getState().pendingAsk !== null) {
+      spokenWithBoard.current = said;
+      return;
+    }
+    handleSend(said);
+  }, [pendingXrSay, takeXrSay]);
 
   /*
     NO PROBLEM IS STILL A PLACE.
@@ -897,6 +951,19 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     <>
     <TutorStage
       state={stageState}
+      /*
+        THE DOOR INTO THE SPATIAL BOARD, drawn in her alcove — the stage decides
+        whether that means her rail or her pane, because only it knows whether
+        the pane is open. It is absent entirely on a device that cannot open one.
+      */
+      detailActions={
+        <XrBoardButton
+          size={buttonSizeForBand(ageBand)}
+          entering={xrEntering}
+          available={canOpenSpatialBoard()}
+          onPress={handleOpenXr}
+        />
+      }
       /*
         The header names the SESSION now that the rail names the tutor (doc 23
         §2). It carried "Natalie" only because the avatar was missing and

@@ -1,0 +1,49 @@
+Compiled from "ViroEventEmitter.java"
+final class com.viromedia.bridge.utility.ViroEventEmitter$ViroBridgeEvent extends com.facebook.react.uimanager.events.Event<com.viromedia.bridge.utility.ViroEventEmitter$ViroBridgeEvent> {
+  private final java.lang.String mEventName;
+
+  private final com.facebook.react.bridge.WritableMap mPayload;
+
+  com.viromedia.bridge.utility.ViroEventEmitter$ViroBridgeEvent(int, int, java.lang.String, com.facebook.react.bridge.WritableMap);
+    Code:
+       0: aload_0
+       1: iload_1
+       2: iload_2
+       3: invokespecial #1                  // Method com/facebook/react/uimanager/events/Event."<init>":(II)V
+       6: aload_0
+       7: aload_3
+       8: putfield      #7                  // Field mEventName:Ljava/lang/String;
+      11: aload_0
+      12: aload         4
+      14: putfield      #13                 // Field mPayload:Lcom/facebook/react/bridge/WritableMap;
+      17: return
+
+  public java.lang.String getEventName();
+    Code:
+       0: aload_0
+       1: getfield      #7                  // Field mEventName:Ljava/lang/String;
+       4: areturn
+
+  public boolean canCoalesce();
+    Code:
+       0: ldc           #19                 // String onClickViro
+       2: aload_0
+       3: getfield      #7                  // Field mEventName:Ljava/lang/String;
+       6: invokevirtual #21                 // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+       9: ifne          28
+      12: ldc           #27                 // String onHoverViro
+      14: aload_0
+      15: getfield      #7                  // Field mEventName:Ljava/lang/String;
+      18: invokevirtual #21                 // Method java/lang/String.equals:(Ljava/lang/Object;)Z
+      21: ifne          28
+      24: iconst_1
+      25: goto          29
+      28: iconst_0
+      29: ireturn
+
+  protected com.facebook.react.bridge.WritableMap getEventData();
+    Code:
+       0: aload_0
+       1: getfield      #13                 // Field mPayload:Lcom/facebook/react/bridge/WritableMap;
+       4: areturn
+}

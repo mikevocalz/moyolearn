@@ -15,7 +15,12 @@
 // SOT-KEYWORDS: bunny presign repository storage upload credential env erase forget everything learner media prefix scope
 import 'server-only';
 import { learnerMediaScope } from '@acme/app/features/media/presign.rules.ts';
-import type { EraseLearnerMedia, SignUpload } from '@acme/app/server';
+import type {
+  EraseLearnerMedia,
+  EraseSubjectMedia,
+  ErasedMedia,
+  SignUpload,
+} from '@acme/app/server';
 import { encodeKey, signPutUrl } from './bunny-sign';
 import { listRecursive, type BunnyObject } from './bunny-list';
 import { deleteObjects } from './bunny-delete';
@@ -105,8 +110,8 @@ function storageZone(): { host: string; zone: string; password: string } {
  * shortest window in the product — but it is a schedule, not this request, and
  * the caller reports it as such.
  */
-export const eraseLearnerMedia: EraseLearnerMedia = async (ctx) => {
-  const scope = learnerMediaScope(ctx.learnerId, ctx.orgId);
+const eraseMediaFor = async (ownerId: string, orgId: string | undefined): Promise<ErasedMedia> => {
+  const scope = learnerMediaScope(ownerId, orgId);
   if (!scope.scoped) return { scoped: false, reason: scope.reason };
 
   const zone = storageZone();
@@ -146,3 +151,25 @@ export const eraseLearnerMedia: EraseLearnerMedia = async (ctx) => {
 
   return { scoped: true, deleted: deleted.length, failed };
 };
+
+/** S27's "forget everything" — the acting learner, from `ctx` and nothing else. */
+export const eraseLearnerMedia: EraseLearnerMedia = async (ctx) =>
+  eraseMediaFor(ctx.learnerId, ctx.orgId);
+
+/**
+ * FD-26's media leg. Same three-step scoping, a different owner: an account
+ * deletion erases the holder AND the children only they hold, and each of those
+ * has their own `<kind>/<id>` folders.
+ *
+ * The owner is a `DeletionSubject`, not a string — the branded type
+ * `planAccountDeletion` mints from the guardianship rows the session resolved.
+ * A repository that took an id here would be one request body away from
+ * deleting another family's objects, and this is the one function in the file
+ * where that mistake is unrecoverable.
+ *
+ * `ctx.orgId` still decides whether a per-child prefix exists at all, because
+ * that is a fact about the ACCOUNT the uploads were filed under, not about the
+ * subject.
+ */
+export const eraseSubjectMedia: EraseSubjectMedia = async (ctx, subject) =>
+  eraseMediaFor(subject.authId, ctx.orgId);

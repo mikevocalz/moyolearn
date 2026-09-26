@@ -105,8 +105,7 @@ export interface InferenceUsage {
  * `Message.stop_reason`, narrowed to what a tutoring or classification turn can
  * produce.
  *
- * Derived from the BETA union, because the tutoring cell runs on the beta
- * endpoint — `fallbacks` lives there and nowhere else. That union is a strict
+ * Derived from the beta SDK transport union. That union is a strict
  * superset of the stable one, so nothing is lost by deriving from it, and a
  * vendor that adds a stop reason breaks the build here instead of falling out
  * of a switch.
@@ -171,6 +170,7 @@ export interface InferenceCompletion {
  */
 export interface ProviderAdapter {
   readonly vendor: 'anthropic';
+  readonly product: 'anthropic-api';
   stream(request: InferenceRequest): InferenceStream;
   complete(request: InferenceRequest): Promise<InferenceCompletion>;
 }
@@ -193,12 +193,6 @@ export interface InferenceRequest {
   readonly effort?: Effort;
   /** Applied only when the system half clears `minCacheablePrefixTokens`. */
   readonly cacheSystem: boolean;
-  /**
-   * Opt into the vendor's server-side refusal fallback. Per-role rather than
-   * global: a declined classification is a verdict worth seeing, while a
-   * declined tutoring turn is a child watching Natalie stop mid-sentence.
-   */
-  readonly serverSideFallback: boolean;
   /** The child navigated away; tear the vendor stream down rather than bill it. */
   readonly signal?: AbortSignal;
 }

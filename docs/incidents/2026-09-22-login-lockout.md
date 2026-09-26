@@ -120,11 +120,8 @@ can move those rows.
 | Change | File |
 |---|---|
 | Resend sender over `fetch`, with config reader, HTML escaping, hashed idempotency key, recipient-safe errors | `packages/auth/src/auth-email.ts` (new) |
-| Wire `emailVerification` with `sendOnSignUp`, `sendOnSignIn`, `autoSignInAfterVerification`; wire `emailAndPassword.sendResetPassword`; log an error at boot when the sender is missing | `packages/auth/src/server.ts` |
-| Refuse to mail `@learners.invalid` placeholders, for verification and for reset | `packages/auth/src/auth-email.ts` (`sendVerificationEmailFor`, `sendResetPasswordEmailFor`) |
-| Every send failure is an `AuthEmailSendError`, logged at the Better Auth boundary with class and status (never the address) and rethrown | `packages/auth/src/auth-email.ts` |
-| Dry-run / one-shot proof of the rendered mail and headers | `packages/auth/scripts/auth-email-proof.ts` (`pnpm --filter @acme/auth email:proof`) |
-| A "Send the link again" action under the notice on both sign-in forms | `apps/web/components/auth/LoginContent.tsx`, `packages/app/features/onboarding/sign-in-content.tsx` |
+| Wire `emailVerification` with `sendOnSignUp`, `sendOnSignIn`, `autoSignInAfterVerification`; log loudly when the sender is missing | `packages/auth/src/server.ts` |
+| Refuse to mail `@learners.invalid` placeholders | `packages/auth/src/auth-email.ts` (`sendVerificationEmailFor`) |
 | Managed learners born verified, in the same write as the restricted flags | `packages/auth/src/payload-learner-writer.ts` |
 | Backfill the 14 existing learners | `packages/payload/migrations/learner_email_verified_backfill.sql` (**not run**) |
 | Surface EMAIL_NOT_VERIFIED as a notice, stop navigating on a session-less sign-up, trim the email | `apps/web/components/auth/LoginContent.tsx` |
@@ -134,7 +131,7 @@ can move those rows.
 Verification stays required when the sender is missing. Falling back to
 `requireEmailVerification: false` would turn an unset environment variable into
 a silent removal of a control doc 06 §6 requires in production, which is a
-security regression wearing the costume of a fix. A missing sender writes an
+security regression wearing the costume of a fix. A missing sender now writes an
 explicit error to the log at construction time instead.
 
 ### Deployment order
@@ -315,10 +312,12 @@ Blameless: each of these is a gap in a system, not in a person's work.
 
 | # | Item | Why it matters | Priority |
 |---|---|---|---|
-| 1 | `emailAndPassword.sendResetPassword` was unwired, exactly as `sendVerificationEmail` was. **Closed in this fix** (`sendResetPasswordEmailFor`). No web page exists yet to receive the `?token=` redirect, so a `requestPasswordReset` caller must pass a `redirectTo` it owns. | Same class of bug as this incident. | Done |
+| 1 | `emailAndPassword.sendResetPassword` was unwired, exactly as `sendVerificationEmail` was. With no sender, `/request-password-reset` logs *"Reset password isn't enabled. Please pass an emailAndPassword.sendResetPassword function in your auth config!"* and throws `BAD_REQUEST` with code `RESET_PASSWORD_DISABLED` (`node_modules/better-auth/dist/api/routes/password.mjs:53-56`). The line that stood here — "password reset silently does nothing today" — was written from the shape of this incident rather than from the route, and repeated twice before anyone opened the file. The API refuses and names the missing option. | Corrected, and the server half is **closed** by `fix/wire-password-reset`: `sendResetPasswordFor` in `packages/auth/src/auth-email.ts`, wired as a conditional key on `emailAndPassword`. Nothing calls the route yet, so #8 and #9 are what remain before a user can use it. | Done |
 | 2 | `isRestrictedLearnerUpdate` compares against `ctx.context.session.user` — the **acting** user, not the row being written (`packages/auth/src/server.ts`, `databaseHooks.user.update.before`). | Not currently exploitable, and the severity here was lowered from P0 after checking. Every route that reaches this hook with a session writes to the acting user's own id: `/update-user` at `node_modules/better-auth/dist/api/routes/update-user.mjs:57` and `/change-email` at `:471` both pass `session.user.id` as the target, so actor and target coincide and the rule fires correctly on exactly the case doc 06 §2 was written against — a learner acting on itself. Server-side `internalAdapter` writes carry no session, so `existing` is `{}` and the rule declines; that is load-bearing, because the learner writer depends on it. What is wrong is the reasoning, not today's behaviour: the hook reads as though it guards the target row, and the first plugin or route that updates a user other than the session's would silently pass. Rewrite it to read the row being written. | P2 |
 | 3 | `redeemDeviceHandoff` burns the code before the sign-in can fail (`packages/auth/src/handoff.ts:145`). | A recoverable sign-in failure still costs the family a code. Consider burning on success or on a non-retryable failure only. | P2 |
 | 4 | No alert on authentication failure rate, and no log retention reaching back far enough to reconstruct one. | This outage was invisible for three weeks. | P1 |
-| 5 | Nothing prevents `requireEmailVerification` being true while no sender exists. The `console.error` reports it; it does not stop it. | A deploy-time assertion that both variables exist in production would make this class unrepresentable. | P2 |
-| 6 | No manual "resend the link" affordance. **Closed in this fix**: both forms render "Send the link again" under the notice, calling `/send-verification-email`. | Every comparable product surveyed offers an explicit button. | Done |
+| 5 | Nothing prevents `requireEmailVerification` being true while no sender exists. The `console.error` reports it; it does not stop it. | A build-time or boot-time assertion would make this class unrepresentable. | P2 |
+| 6 | No manual "resend the link" affordance. The resend is a side effect of attempting sign-in again. | Every comparable product surveyed offers an explicit button. | P2 |
 | 7 | No Preview-scoped environment variables at all on `moyo-app`, so previews cannot exercise auth and `proxy.ts` short-circuits its own gate there. | Any auth change is unverifiable before production, which is how this one reached it. | P1 |
+| 8 | The reset UI must pass `redirectTo` **and** add that origin to `trustedOrigins` — it goes through `originCheck`. Omit `redirectTo` and the emailed link ends `?callbackURL=` empty; the GET callback's `if (!token || !callbackURL)` then redirects to `${baseURL}/error?error=INVALID_TOKEN`. zod accepts `''`, the truthiness check does not. | Every link would be dead on arrival, and it fails as INVALID_TOKEN — which reads like an expired token and sends whoever debugs it at the token lifetime instead of the missing parameter. A `packages/auth`-only change cannot close this. | P1 |
+| 9 | `/request-password-reset` takes constant-time care — a throwaway id for an unknown address, a dummy lookup, the same 200 body — and then awaits the Resend round-trip inline, so a real account answers measurably slower than an unknown one. `runInBackgroundOrAwait` backgrounds only when `advanced.backgroundTasks.handler` is set (`create-context.mjs:214-224`), and it is not. | The route's own enumeration protection is undone by the send it performs. Closing it wants `backgroundTasks: { handler: (p) => waitUntil(p) }` from `@vercel/functions`, which is not installed — a dependency decision, not an auth change. | P2 |

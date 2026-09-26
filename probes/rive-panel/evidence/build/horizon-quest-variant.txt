@@ -1,0 +1,6 @@
+Compiled from "Config.kt"
+public final class expo.modules.horizon.Config {
+  public static final expo.modules.horizon.Config INSTANCE;
+  public static final boolean isHorizonBuild = true;
+  static {};
+}

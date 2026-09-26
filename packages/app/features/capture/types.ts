@@ -27,6 +27,8 @@ export interface CapturePage {
   id: string;
   uri: string;
   kind: 'photo' | 'image' | 'file';
+  name?: string;
+  mimeType?: string;
 }
 
 /** Optional context the learner can add before sending the work on. */

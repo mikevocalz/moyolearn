@@ -1,0 +1,5 @@
+name: moyo_fractions
+main: Fractions
+logs:
+  file: build/rive.log
+  problems: build/problems.log

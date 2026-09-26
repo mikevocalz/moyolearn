@@ -54,6 +54,8 @@ import { usePathname } from 'expo-router';
 import { SafeArea, Avatar, MoyoLearnLogo, RoleScope } from '@acme/ui';
 import { ChevronLeft } from '@acme/ui/icons';
 import { Header } from '@acme/ui/primitives';
+import { usePaneEdges } from '@acme/ui';
+import { useHardwareEdgeColumn } from './ShellTabBar';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import {
   shellForRole,
@@ -64,13 +66,14 @@ import {
 } from '@acme/app';
 
 /**
- * The wordmark sets the bar's height rather than sitting inside it: at 40pt tall
- * (~111pt wide at the mark's 2.77:1) inside the row's 56pt minimum, the app bar
- * lands on the standard height with 8pt of air above and below. `min-h-14` is
- * what holds that height when the left slot is the 44pt back target instead —
- * change it and the bar starts jumping between a tab root and its detail.
+ * 32pt tall (~89pt wide at the mark's 2.77:1) inside the row's 56pt minimum,
+ * 12pt of air above and below. It was 40, which set the bar's height itself
+ * and read as oversized beside the title once the bar had a 44pt avatar and,
+ * on the Duo, a rail against it. `min-h-14` holds the 56 whether the left slot
+ * is the mark or the 44pt back target — change it and the bar starts jumping
+ * between a tab root and its detail.
  */
-const LOGO_HEIGHT = 40;
+const LOGO_HEIGHT = 32;
 
 export interface ShellHeaderProps {
   titles: Record<string, string>;
@@ -125,10 +128,43 @@ export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: She
   */
   const role = shellForRole(activeContext.kind) ?? 'learner';
 
+  /*
+    8pt trailing gutter, not 16, when the trailing edge is a hardware column
+    (iPhone Duo's camera column, where the tab rail now lives): the avatar
+    should sit against the camera, not a full gutter away from it. The rail
+    owns that edge, so the header must not ALSO take the `right` inset —
+    measured on the Duo, `SafeArea` still padded the full 84 inside the scene
+    and pushed the avatar to the middle of the bar.
+  */
+  /*
+    Only where the RAIL owns that edge — which `ShellPaneEdges` states by
+    dropping `right` — not wherever the inset exists. This header is also the
+    Stack header on pushed and tab-less routes, where no rail is mounted and
+    the avatar would otherwise sit inside the empty camera column.
+  */
+  const column = useHardwareEdgeColumn();
+  const paneEdges = usePaneEdges();
+  const railOwnsEdge = column > 0 && !paneEdges.includes('right');
+
   return (
     <RoleScope role={role}>
-    <SafeArea edges={['top']} className="bg-surface-header">
-      <Header className="min-h-14 flex-row items-center gap-stack border-b-2 border-on-surface-header bg-surface-header px-4 py-1">
+    {/*
+      `left` and `right` too, not only `top`. iPhone Duo reserves horizontal
+      space for the camera and system controls, and Apple documents the two
+      sides as often asymmetric — so the avatar at the trailing edge sat under
+      the camera. The insets are padding on this wrapper, which is why the fill
+      and the bottom rule live HERE: they paint the wrapper's full width while
+      the controls inside stay in the usable region.
+    */}
+    <SafeArea
+      edges={railOwnsEdge ? ['top', 'left'] : ['top', 'left', 'right']}
+      className="border-b-2 border-on-surface-header bg-surface-header"
+    >
+      <Header
+        className={`min-h-14 flex-row items-center gap-stack bg-surface-header py-1 ${
+          railOwnsEdge ? 'pl-4 pr-2' : 'px-4'
+        }`}
+      >
         {canGoBack ? (
           <Pressable
             aria-label="Back"

@@ -152,12 +152,15 @@ export function fingerBone(
  * its own, smaller number.
  */
 /*
- * Deepened from { .16, .28, .24 }: on device the resting hand read as WIDE
- * OPEN — fingers nearly straight, palm presented — which no hand at rest
- * does. A relaxed hand carries ~30-40 degrees of cascade flexion; these are
- * radians per phalanx BEFORE the per-finger gradient scales them.
+ * Deepened from { .16, .28, .24 } to { .26, .42, .3 } because the resting hand
+ * read as WIDE OPEN on device — then brought back to { .2, .28, .2 } on
+ * 2026-09-23, when the deeper arc plus the relaxation drift closed the fingers
+ * far enough on the Duo to read as deformed. A relaxed hand carries ~30-40
+ * degrees of cascade flexion in total; these are radians per phalanx BEFORE
+ * the per-finger gradient scales them, and the gradient reaches 1.25 on the
+ * little finger, so the tip numbers matter more than they look.
  */
-const CURL = { '01': 0.26, '02': 0.42, '03': 0.3 } as const;
+const CURL = { '01': 0.2, '02': 0.28, '03': 0.2 } as const;
 /*
  * The fan, closed. The asset's rest pose splays the digits and nothing ever
  * wrote the adduction axis, so every hand shipped with the fingers spread —
@@ -174,10 +177,20 @@ const ADDUCT: Record<(typeof FINGERS)[number], number> = {
 };
 /**
  * How far the hand relaxation scalar may bend a finger past its rest curl, as a
- * fraction of that curl. At 0.35 a middle finger travels about 9 degrees at the
- * knuckle between an open hand and a fully settled one.
+ * fraction of that curl. At 0.35 a middle finger travelled about 9 degrees at
+ * the knuckle between an open hand and a fully settled one; 0.18 halves that,
+ * for the same reason the rest curl came down.
  */
-const RELAX_RANGE = 0.35;
+const RELAX_RANGE = 0.18;
+/*
+ * How far the clasp is allowed to close the fingers toward the solved contact
+ * pose. The solve lands each fingertip on the hand below, and at 1.0 that read
+ * on the Duo as fingers curling under when her arms cross — the product owner's
+ * "stop her fingers from curling when crossed". At 0.35 the hand still settles
+ * onto the other but the arc stays close to rest; a little air under the tips
+ * is the price, and it is the right one.
+ */
+const CLASP_CURL_SHARE = 0.35;
 
 const CURL_BY_FINGER: Record<(typeof FINGERS)[number], number> = {
   thumb: 0.45,
@@ -2309,7 +2322,7 @@ export function createHumanoPresence(
       const solvedX = FOLD.fingerCurl[f.side][FINGERS[f.finger]!] * FOLD.phalanxRatio[PHALANGES[f.phalanx]!];
       pose(
         f.bone,
-        restingX + (solvedX - restingX) * clasp + (wiggle + ripple) * (1 - 0.92 * clasp),
+        restingX + (solvedX - restingX) * clasp * CLASP_CURL_SHARE + (wiggle + ripple) * (1 - 0.92 * clasp),
         0,
         adduct
       );

@@ -1,0 +1,13 @@
+diff --git a/android/build.gradle b/android/build.gradle
+--- a/android/build.gradle
++++ b/android/build.gradle
+@@ -11,6 +11,9 @@ def horizonAppIdConfigField = "\"${project.findProperty('horizonAppId') ?: ''}\""
+ 
+ android {
+   namespace "expo.modules.horizon"
++  buildFeatures {
++    buildConfig = true
++  }
+   defaultConfig {
+     versionCode 1
+     versionName "0.1.0"

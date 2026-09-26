@@ -17,7 +17,11 @@
       "react-native": "./haptics.native.ts",
       "default": "./haptics.web.ts"
     },
-    "./icons": {
+    "./xr": {
+    "react-native": "./xr/index.native.ts",
+    "default": "./xr/index.web.ts"
+  },
+  "./icons": {
       "react-native": "./icons.native.tsx",
       "default": "./icons.web.ts"
     }
@@ -25,7 +29,7 @@
   "scripts": {
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test 'audio/**/*.test.ts' 'adaptive-panes/*.test.ts' 'stage-board/*.test.ts'"
+    "test": "node --test 'audio/**/*.test.ts' 'adaptive-panes/*.test.ts' 'xr/*.test.ts' 'stage-board/*.test.ts'"
   },
   "dependencies": {
     "@acme/theme": "workspace:*",
@@ -35,6 +39,7 @@
     "@legendapp/motion": "catalog:",
     "@nandorojo/galeria": "3.0.3",
     "@quickdrawjs/core": "catalog:",
+    "@reactvision/react-viro": "3.0.0-moyo.4",
     "@quickdrawjs/react": "catalog:",
     "@quickdrawjs/react-native": "catalog:",
     "@tanstack/react-form": "catalog:",
@@ -52,6 +57,7 @@
     "react-native-mmkv": "catalog:",
     "react-native-pulsar": "catalog:",
     "react-native-reanimated": "catalog:",
+    "react-native-worklets": "catalog:",
     "react-native-safe-area-context": "catalog:",
     "react-native-svg": "catalog:",
     "react-native-webview": "catalog:",

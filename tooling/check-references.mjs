@@ -33,9 +33,15 @@ const ROOTS = ['packages/app/features', 'packages/ui'];
 const SKIP =
   /\.(test|spec|stories|types)\.tsx?$|\.(web|native|ios|android)\.tsx?$|(^|\/)(index|store|steps|keys|screen)\.tsx?$/;
 
+// Same SKIP_DIR idiom as check-role-accent: without it the walk descends into
+// packages/ui/node_modules and demands Mobbin citations from expo-router's own
+// components, which drowns this package's real surfaces in vendor noise.
+const SKIP_DIR = /node_modules|\.next|\.turbo|\.expo|\.probe|dist|build/;
+
 function walk(dir, out = []) {
   for (const entry of readdirSync(dir)) {
     const full = join(dir, entry);
+    if (SKIP_DIR.test(full)) continue;
     if (lstatSync(full).isDirectory()) walk(full, out);
     else if (/\.tsx$/.test(entry) && !SKIP.test(full) && !isHeadless(full)) out.push(full);
   }
@@ -70,7 +76,22 @@ const isHeadless = (file) => {
   */
   // A file that returns null on one branch and renders JSX on another is
   // still a surface — only a file with no JSX at all escapes.
-  return !/<[A-Z][A-Za-z]*[\s/>]/.test(code);
+  const opens = code.match(/<[A-Z][A-Za-z]*[\s/>]/g) ?? [];
+  if (opens.length === 0) return true;
+  /*
+    A leaf primitive is not a surface either. One childless element and nothing
+    else means the file draws a single thing and lays out nothing — ViroIcon is
+    a `<ViroImage>` with a baked tint picked by prop. Doc 09 §7 scopes the
+    standing rule to a SCREEN, and `icons.tsx` / `IconButton.tsx` sit in the
+    baseline uncited for the same reason. Mobbin indexes app screens, so the
+    only citation available here would be one invented for the gate.
+
+    Behavioural, like the no-JSX rule above, so it cannot be gamed by naming:
+    escaping it means actually drawing one element with no children, and a
+    component that composes anything — even `<View><Icon/></View>` — is back to
+    being a surface that owes references.
+  */
+  return opens.length === 1 && /<[A-Z][A-Za-z]*[^>]*\/>/.test(code);
 };
 
 const BASELINE = join(ROOT, 'tooling/references-baseline.json');

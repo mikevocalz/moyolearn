@@ -1,0 +1,14 @@
+{
+  "nitro": {
+    "filesComparedWithCommittedSource": 101,
+    "mismatches": []
+  },
+  "viro": {
+    "filesComparedWithCommittedSource": 1632,
+    "mismatches": []
+  },
+  "vendorVersions": {
+    "viro": "3.0.0-moyo.5-rive.4",
+    "nitro": "0.0.2-rive.3"
+  }
+}

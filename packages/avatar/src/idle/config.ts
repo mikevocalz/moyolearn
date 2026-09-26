@@ -203,7 +203,13 @@ export const idleConfig = {
       does not travel over a new base. That is still out of scope.
     */
     foot: {
-      intervalS: { min: 6, max: 16 },
+      /*
+        Was 6-16 s with 3-6 degrees, and on the Duo's inner display it read as
+        a kick every few seconds — the product owner's word for it. A heel
+        that lifts every quarter minute by a degree or two is the version a
+        viewer does not catch happening.
+      */
+      intervalS: { min: 14, max: 40 },
       /**
        * Heel lift on the free foot, as extra KNEE flexion — never ankle.
        * The toe-pinning solve takes any knee angle and re-derives the thigh
@@ -214,8 +220,8 @@ export const idleConfig = {
        * There is no toe pivot here and there cannot be one: pivoting about
        * the ankle slides the toe, and pivoting about the toe is a step.
        */
-      heelDeg: { min: 3, max: 6 },
-      moveS: { min: 0.5, max: 1.0 },
+      heelDeg: { min: 1.5, max: 3 },
+      moveS: { min: 0.7, max: 1.2 },
     },
     /*
       A STEP. The thing the stance layer has always refused to do.
@@ -241,7 +247,13 @@ export const idleConfig = {
       would break that is re-aimed back toward centre instead.
     */
     step: {
-      intervalS: { min: 22, max: 70 },
+      /*
+        Was 22-70 s. Every step is a leg leaving the ground in a pane a metre
+        wide, and at that rate it was the most frequent large motion she made
+        and read as restless ("kicking and moving so weirdly", 2026-09-23).
+        Once every few minutes is a person who has been standing a while.
+      */
+      intervalS: { min: 120, max: 300 },
       /**
        * How far the base moves. A shift of weight and a re-plant, not a walk.
        *
@@ -251,13 +263,13 @@ export const idleConfig = {
        * last ten seconds. A step reads at half this size; past it she is
        * pacing, not adjusting.
        */
-      lengthM: { min: 0.03, max: 0.055 },
+      lengthM: { min: 0.02, max: 0.035 },
       /** Time one foot spends in the air. */
       swingS: { min: 0.34, max: 0.5 },
       /** The gap between the first foot landing and the second leaving. */
       betweenS: { min: 0.12, max: 0.3 },
       /** How high the heel comes up mid-swing, as extra knee flexion, degrees. */
-      liftDeg: 9,
+      liftDeg: 5,
       /*
         THE WEIGHT LEAVES A FOOT BEFORE THE FOOT LEAVES THE GROUND.
 
@@ -310,6 +322,14 @@ export const idleConfig = {
       coincide with one.
     */
     fold: {
+      /*
+        OFF. The clasp solve lands each fingertip on the hand below and, at any
+        closure that actually touches, the fingers read as curling under on the
+        Duo — the product owner's call on 2026-09-23 was to stop the fold
+        altogether rather than tune it further. The channel, its bounds and its
+        tests stay; `enabled` is the one switch the engine reads.
+      */
+      enabled: false,
       afterIdleS: 40,
       intervalS: { min: 55, max: 140 },
       holdS: { min: 16, max: 42 },

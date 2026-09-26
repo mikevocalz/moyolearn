@@ -17,6 +17,16 @@ export const DEFAULT_PRIMARY_WIDTH = 280;
 /** Bounds for the primary pane, in dp. Mirrors --container-pane-* tokens. */
 export const PRIMARY_WIDTH_MIN = 200;
 export const PRIMARY_WIDTH_MAX = 420;
+/**
+ * Row-share floors, product-owner numbers, applied in AdaptivePanes against
+ * the measured row: the leading pane is never under 40% of it, the trailing
+ * fill pane never under 20%. The board gives between them only when it must.
+ * On the Duo's 867 dp row that is 347 / 294 / 226: the board keeps its full
+ * token and she takes what is left. She was a third (320 dp, board clipped
+ * at 200), then 31% (269) — both still read as too wide beside the board.
+ */
+export const PRIMARY_ROW_SHARE_MIN = 0.4;
+export const DETAIL_ROW_SHARE_MIN = 0.2;
 
 /** Keyboard resize step for the divider's accessible affordance. */
 export const RESIZE_KEYBOARD_STEP = 16;

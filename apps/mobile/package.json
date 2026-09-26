@@ -5,6 +5,7 @@
   "scripts": {
     "dev": "expo start",
     "android": "expo run:android",
+    "android:xr": "ORG_GRADLE_PROJECT_reactNativeArchitectures=arm64-v8a expo run:android --device",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
@@ -15,17 +16,22 @@
     "@acme/secure": "workspace:*",
     "@acme/theme": "workspace:*",
     "@acme/ui": "workspace:*",
+    "@expo-pico/core": "1.0.0",
     "@expo/metro-runtime": "catalog:",
     "@expo/ui": "catalog:",
     "@gorhom/bottom-sheet": "catalog:",
     "@react-navigation/native": "catalog:",
+    "@reactvision/react-viro": "3.0.1-moyo.0",
     "@sentry/react-native": "catalog:",
     "@tanstack/react-query": "catalog:",
     "expo": "catalog:",
-    "expo-background-task": "57.0.14",
+    "expo-asset": "58.0.3",
+    "expo-background-task": "58.0.3",
     "expo-build-properties": "catalog:",
     "expo-drag-drop-content-view": "catalog:",
+    "expo-file-system": "58.0.0",
     "expo-font": "catalog:",
+    "expo-horizon-core": "57.0.2",
     "expo-image": "catalog:",
     "expo-linking": "catalog:",
     "expo-paste-input": "catalog:",
@@ -35,10 +41,11 @@
     "expo-splash-screen": "catalog:",
     "expo-status-bar": "catalog:",
     "expo-system-ui": "catalog:",
-    "expo-task-manager": "57.0.14",
+    "expo-task-manager": "58.0.4",
     "expo-updates": "catalog:",
     "expo-web-browser": "catalog:",
     "lucide-react-native": "catalog:",
+    "nitro-canvas-in-Vision": "0.0.2-rive.3",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-native": "catalog:",
@@ -54,14 +61,13 @@
     "react-native-safe-area-context": "catalog:",
     "react-native-screens": "catalog:",
     "react-native-svg": "catalog:",
-    "react-native-video": "7.0.0-beta.11",
     "react-native-web": "catalog:",
-    "react-native-webgpu": "0.9.0",
+    "react-native-webgpu": "0.10.2",
     "react-native-webview": "catalog:",
     "react-native-worklets": "catalog:",
     "solito": "catalog:",
     "three": "catalog:",
-    "typegpu": "0.12.4",
+    "typegpu": "0.12.5",
     "uniwind": "catalog:",
     "zustand": "catalog:"
   },
@@ -85,6 +91,13 @@
         "react-native-reanimated",
         "react-native-worklets"
       ]
+    },
+    "autolinking": {
+      "android": {
+        "buildFromSource": [
+          ".*"
+        ]
+      }
     }
   }
 }

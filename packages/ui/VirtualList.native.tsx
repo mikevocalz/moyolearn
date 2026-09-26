@@ -65,6 +65,21 @@ export function VirtualList<T>({
         */
         nestedScrollEnabled
         recycleItems
+        /*
+          THE ONE THAT ACTUALLY OPENS AT THE NEWEST MESSAGE, and it was missing.
+
+          `alignItemsAtEnd` only pads a SHORT list down to the bottom of the
+          viewport, and `maintainScrollAtEnd` keeps a list that is already at the
+          end there while content grows. Neither scrolls a long thread on first
+          paint: a resumed session opened wherever `estimatedItemSize` happened
+          to land — the middle of the conversation — and the child had to scroll
+          down to find what Natalie had just said.
+
+          `initialScrollAtEnd` is the prop for it, and it overrides the estimate
+          once the data is in, so a wrong row-height guess no longer decides
+          where a conversation opens.
+        */
+        initialScrollAtEnd={atBottom}
         alignItemsAtEnd={atBottom}
         maintainScrollAtEnd={atBottom}
         maintainScrollAtEndThreshold={0.2}

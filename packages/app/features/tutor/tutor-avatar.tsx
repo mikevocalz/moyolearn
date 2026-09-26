@@ -21,7 +21,7 @@
 // SOT-KEYWORDS: tutor avatar presence 2d 3d handoff face bus speech driver viseme webgpu flag
 
 import { Suspense, lazy, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Avatar, MotionView, Text, isTutorRevealed } from '@acme/ui';
+import { Avatar, MotionView, Text, isTutorRevealed, usePaneOpen } from '@acme/ui';
 import { View } from '@acme/ui/tw';
 import type { ResolvedTutorPresence } from '@acme/ui';
 import type { AgeBand } from '../capture/age-band.ts';
@@ -144,6 +144,10 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase, ageBand }:
     if freezing cannot stop a loop, it certainly cannot stop speech. Nothing
     about hiding Natalie can reach the audio queue.
   */
+  // A shut pane's canvas must not DRAW (see `PaneOpenContext`) — it stays
+  // mounted, so no renderer, device or body is rebuilt on show. On a phone she
+  // is never in a pane and this is true.
+  const paneOpen = usePaneOpen();
   const embodied = isTutorRevealed(tutorPresence);
 
   /*
@@ -364,7 +368,7 @@ export function TutorAvatar({ tutorPresence, isSpeaking, tone, phase, ageBand }:
         {/* No fallback: the 2D mark below IS the fallback, and it is already up. */}
         <Suspense fallback={null}>
           <TutorAvatar3D
-            active={embodied}
+            active={embodied && paneOpen}
             isSpeaking={isSpeaking}
             sampleMouth={sampleMouth}
             sampleSpeaking={sampleSpeaking}

@@ -270,11 +270,13 @@ added, the divider's pan genuinely competes with the detail's scroll for the
 same pointer and must be composed with `useCompetingGestures`, with the decision
 written down here.
 
-Note the API: Expo SDK 57 pins Gesture Handler **2.x**, so the builder API
-(`Gesture.Pan()` + `GestureDetector`) is current here and composition is
-`Gesture.Race()` / `Gesture.Simultaneous()`. GH 3.x flips this — it deprecates
-the builder in favour of `usePanGesture` and the `use*Gestures` hooks. Check the
-installed version before writing gesture code.
+Note the API: this branch pins Gesture Handler **3.2.1** (Expo SDK 58). The
+divider and swipe row still use the builder API (`Gesture.Pan()` +
+`GestureDetector`, composition via `Gesture.Race()` / `Gesture.Simultaneous()`),
+which 3.x supports as its legacy surface and deprecates in favour of
+`usePanGesture` and the `use*Gestures` hooks. Migrate both together, and only
+with native drag, vertical-scroll and keyboard checks — typecheck cannot
+certify gesture arbitration.
 
 ## Styling rules
 

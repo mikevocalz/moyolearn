@@ -65,5 +65,29 @@ target 'Moyo' do
       :mac_catalyst_enabled => false,
       :ccache_enabled => ccache_enabled?(podfile_properties),
     )
+
+    # react-native-enriched-html imports RN headers flat — `#import
+    # "UIView+React.h"` — which resolves only against a React-Core built from
+    # source. This app builds React from the prebuilt core, where those headers
+    # live inside React.xcframework/<slice>/React.framework/Headers, so the
+    # include fails. Point that one pod at them rather than turning the prebuilt
+    # core off for the whole app: the source path trades this for RNSentry
+    # failing on 'Sentry/Sentry.h'. Delete when the package imports <React/...>.
+    #
+    # Edited into the generated line rather than appended as a second one: an
+    # xcconfig does not concatenate duplicate keys, the last assignment wins
+    # outright, and `$(inherited)` on it refers to the target level rather than
+    # to the earlier line — appending silently drops every path CocoaPods set.
+    # The slice is named, not globbed, because Xcode expands `**` only as a
+    # trailing component.
+    headers = File.join(
+      installer.sandbox.root, 'React-Core-prebuilt', 'React.xcframework', 'ios-arm64', 'React.framework', 'Headers'
+    )
+    Dir.glob(File.join(installer.sandbox.target_support_files_root, 'ReactNativeEnrichedHtml', '*.xcconfig')).each do |xcconfig|
+      body = File.read(xcconfig)
+      next if body.include?(headers)
+      body = body.sub(/^HEADER_SEARCH_PATHS = (.*)$/) { %(HEADER_SEARCH_PATHS = #{$1} "#{headers}") }
+      File.write(xcconfig, body)
+    end
   end
 end

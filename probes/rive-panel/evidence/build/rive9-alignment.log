@@ -1,0 +1,16 @@
+  OK     0x4000  jni/arm64-v8a/libBulletCollision.so
+  OK     0x4000  jni/arm64-v8a/libBulletDynamics.so
+  OK     0x4000  jni/arm64-v8a/libBulletSoftBody.so
+  OK     0x4000  jni/arm64-v8a/libLinearMath.so
+  OK     0x4000  jni/arm64-v8a/libarcore_sdk_c.so
+  OK     0x4000  jni/arm64-v8a/libc++_shared.so
+  OK     0x4000  jni/arm64-v8a/libfreetype.so
+  OK     0x4000  jni/arm64-v8a/libfreetyped.so
+  OK    0x10000  jni/arm64-v8a/libgvr.so
+  OK    0x10000  jni/arm64-v8a/libgvr_audio.so
+  OK     0x4000  jni/arm64-v8a/libopenxr_loader.so
+  OK     0x4000  jni/arm64-v8a/libreactvisioncca.so
+  OK     0x4000  jni/arm64-v8a/libviro_arcore.so
+  OK     0x4000  jni/arm64-v8a/libviro_renderer.so
+
+All 14 arm64-v8a libraries are >= 0x4000-aligned.

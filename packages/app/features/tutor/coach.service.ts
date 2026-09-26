@@ -15,7 +15,7 @@
 // SOT-KEYWORDS: coach service tutor turn stream protected operation safety plane pedagogy contract fail closed unavailable paused refusal safety event guardian visible learner flags
 import 'server-only';
 import type { Auth, LearnerFlags } from '@acme/auth/server';
-import { ModelDeclined, type TurnImage } from '@acme/inference';
+import { ModelDeclined, ProviderPolicyDenied, type TurnImage } from '@acme/inference';
 import { runSafetyPlaneStream, S4_SCRIPTS, safetyLayer, SafetyLayerUnavailable } from '@acme/safety';
 import {
   compileLearnerBrief,
@@ -30,6 +30,8 @@ import { recordPlaneOutcome, recordTurnFailure, type RecordSafetyEvent } from '.
 import { tutorTurnFor } from './tutor-model.ts';
 import { PEDAGOGY_CONTRACT, REVEAL_WITHHELD, revealsAnswer } from './pedagogy.ts';
 import type { LoadPriorFacts } from './tutor.service';
+import { ageBandForVoiceBand } from '../capture/age-band.ts';
+import { tutorCellFor, TutorCapabilityDenied, TUTOR_MANUAL_HELP } from './tutor-capabilities.ts';
 
 export interface CoachTurnInput {
   /** The captured or served problem the session is working on. */
@@ -185,6 +187,12 @@ export type LoadLearnerFlags = (ctx: ProtectedCtx) => Promise<LearnerFlags>;
  * than as an argument order nobody can check at the call site.
  */
 export interface CoachPorts {
+  /** Authorized source context and live dependency availability; absence denies. */
+  loadCapabilityContext?: (ctx: ProtectedCtx) => Promise<{
+    subject: string;
+    task: string;
+    available: NonNullable<Parameters<typeof tutorCellFor>[3]>;
+  } | null>;
   loadPriorFacts: LoadPriorFacts;
   loadGradeBand: LoadGradeBand;
   loadLearnerFlags: LoadLearnerFlags;
@@ -281,11 +289,26 @@ export async function* coachStream(
       path (CLAUDE.md §The block); a turn whose budget key was a parameter would
       be a turn a client could spend someone else's day on.
     */
-    const generator = withLearnerBriefStream(
+    const modelGenerator = withLearnerBriefStream(
       tutorTurnFor(ctx.learnerId, input.image),
       async () => compileLearnerBrief(await ports.loadPriorFacts(ctx), voiceBand, new Date()),
       PEDAGOGY_CONTRACT,
     );
+
+    // Run the capability gate only after input safety screening, so crisis and
+    // guardian-policy responses remain available even while tutoring is gated.
+    const generator: typeof modelGenerator = {
+      generateStream: (text, context) => ({
+        async *[Symbol.asyncIterator]() {
+          const band = ageBandForVoiceBand(voiceBand);
+          const capability = await ports.loadCapabilityContext?.(ctx);
+          if (!band || !capability || !tutorCellFor(capability.subject, band, capability.task, capability.available)) {
+            throw new TutorCapabilityDenied();
+          }
+          yield* modelGenerator.generateStream(text, context);
+        },
+      }),
+    };
 
     // The problem travels in the student's turn rather than the brief because
     // the brief is what the system knows about the child, and today's worksheet
@@ -365,6 +388,10 @@ export async function* coachStream(
       return;
     }
   } catch (error) {
+    if (error instanceof TutorCapabilityDenied || error instanceof ProviderPolicyDenied) {
+      yield { kind: 'replace', text: TUTOR_MANUAL_HELP };
+      return;
+    }
     /*
       THREE ways a turn can end without an outcome, and doc 12 §5's failure table
       puts two of them on the same side.

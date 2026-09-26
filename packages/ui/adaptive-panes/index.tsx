@@ -19,8 +19,9 @@
  * SOT-KEYWORDS: adaptive panes split view navigator list detail column inspector host
  *               pane toggle collapse expand controls
  */
-import { Children, isValidElement, useImperativeHandle, useRef, type ReactNode } from 'react';
+import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Freeze } from 'react-freeze';
+import { useWindowDimensions } from 'react-native';
 import { useStore } from 'zustand';
 import { View } from '../tw';
 import { Aside, Main, Section } from '../primitives';
@@ -37,9 +38,15 @@ import { createAdaptivePanesStore, type AdaptivePanesStore } from './store';
 import { AdaptivePanesContext } from './context';
 import { useSplitViewBack } from './use-split-view-back';
 import { PaneDivider } from './PaneDivider';
+import { usePaneEdges } from './pane-edges';
 import { DetailSlot } from './detail-slot';
-import { DEFAULT_PRIMARY_WIDTH } from './resize';
-import type { AdaptivePanesProps } from './types';
+import {
+  DEFAULT_PRIMARY_WIDTH,
+  DETAIL_ROW_SHARE_MIN,
+  PRIMARY_ROW_SHARE_MIN,
+  PRIMARY_WIDTH_MIN,
+} from './resize';
+import type { AdaptivePanesProps, SplitNavigableColumn } from './types';
 
 /**
  * Markers, not renderers. Children are matched by type identity, exactly as
@@ -61,9 +68,6 @@ function AdaptivePanesInspector({ children }: { children?: ReactNode }) {
  * hierarchy.
  */
 const PANE_DIVIDER = 'border-border/15';
-
-/** Entrance travel for a collapsed pane change, in dp. */
-const PANE_TRAVEL = 24;
 
 /**
  * Travel for the inspector drawer, in dp. Must clear the pane's own width
@@ -92,8 +96,42 @@ const INSPECTOR_TRAVEL = 300;
  * hidden and stop itself (see `TutorAvatar`), and anything that owns audio must
  * live outside the frozen subtree entirely.
  */
+/**
+ * Whether the pane this content sits in is open. Default true outside a pane.
+ *
+ * A GPU canvas must not draw while its pane is shut. Measured on the iPhone
+ * Duo: Natalie's stage kept calling `getCurrentTexture` through a hide — the
+ * frame counter never paused, `getNativeSurface()` read undefined mid-hide —
+ * and after the show the same Metal view (same pointer) presented nothing
+ * again. Freeze alone does not stop a render loop that three drives; the
+ * stage's `active` gate does, and this is how it learns the pane is shut.
+ */
+export const PaneOpenContext = createContext(true);
+export function usePaneOpen(): boolean {
+  return useContext(PaneOpenContext);
+}
+
 function PaneContent({ open, children }: { open: boolean; children: ReactNode }) {
-  return <Freeze freeze={!open}>{children}</Freeze>;
+  /*
+    FROZEN ONE COMMIT AFTER IT CLOSES, not in the same one. Freezing in the
+    closing commit suspends the subtree before it can render the close: the
+    stage below never received `active: false` — Metro showed no toggle line
+    while its frame counter ran straight through the hide — so it kept
+    drawing into a pane that was gone. The effect lands the closed state
+    first, then freezes what already stopped.
+  */
+  const [frozen, setFrozen] = useState(!open);
+  useEffect(() => {
+    // The cascading render this rule warns about is the mechanism: the second
+    // commit is what freezes a subtree that has already rendered its close.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setFrozen(!open);
+  }, [open]);
+  return (
+    <PaneOpenContext value={open}>
+      <Freeze freeze={frozen}>{children}</Freeze>
+    </PaneOpenContext>
+  );
 }
 
 function AdaptivePanesNavigator({
@@ -108,6 +146,9 @@ function AdaptivePanesNavigator({
   ref,
 }: AdaptivePanesProps) {
   const sizeClass = useWindowSizeClass();
+  // Only the first frame's fallback for a collapsed pane's width — the row's
+  // own measurement replaces it as soon as there is one. See `collapsedWidth`.
+  const { width: windowWidth } = useWindowDimensions();
 
   // PER-INSTANCE store, held in a ref (the kit's vanilla-store pattern —
   // see ../use-instance-store.ts): each mounted host scopes its own column,
@@ -120,8 +161,26 @@ function AdaptivePanesNavigator({
   const storedColumn = useStore(store, (state) => state.column);
   const setColumn = useStore(store, (state) => state.setColumn);
   const primaryWidth = useStore(store, (state) => state.primaryWidth);
-  const direction = useStore(store, (state) => state.direction);
   const paneOverrides = usePaneOverrideStore((state) => state.overrides);
+
+  /*
+    THE COLLAPSED PANE IS AS WIDE AS THE ROW, and it has to be measured rather
+    than assumed. `CollapsiblePane` animates 0 → its stated width and only then
+    hands over to `grow`, so a collapsed pane given its token width would open
+    to a 320 dp column and jump to full width a frame later. Measuring the row
+    means the animation targets the real number and the handoff is invisible.
+
+    Declared up here with the other hooks, not beside the row it measures: the
+    early returns below it are why — a hook after one of those runs in a
+    different order on the render that takes it.
+
+    The window is the fallback for the first frame only, and a fallback rather
+    than the answer: a host does not necessarily span the window — one can sit
+    beside a rail or inside a sheet — and a pane wider than its row would
+    overflow rather than fit.
+  */
+  const [rowWidth, setRowWidth] = useState<number | null>(null);
+  const paneEdges = usePaneEdges();
 
   const all = Children.toArray(children);
   const columns = all.filter(
@@ -142,8 +201,12 @@ function AdaptivePanesNavigator({
   // to write during render. `supplementary` is clamped away when the two-pane
   // shape has no such column to land on.
   const requested = storedColumn ?? topColumnForCollapsing ?? 'primary';
-  const activeColumn =
-    requested === 'supplementary' && columnCount === 1 ? 'primary' : requested;
+  const activeColumn: SplitNavigableColumn =
+    requested === 'supplementary' && columnCount === 1
+      ? 'primary'
+      : requested === 'primary' && !columns[0]
+        ? 'secondary'
+        : requested;
 
   useSplitViewBack({ collapsed, activeColumn, columnCount, store });
 
@@ -186,7 +249,7 @@ function AdaptivePanesNavigator({
     honoured only while some other pane is drawn, so a one-column host cannot
     close its way to an empty screen.
   */
-  const visible =
+  const expandedVisible =
     detailOpen === undefined
       ? resolved
       : {
@@ -194,6 +257,33 @@ function AdaptivePanesNavigator({
           detail:
             detailOpen || !(resolved.primary || resolved.supplementary || resolved.inspector),
         };
+  /*
+    COLLAPSED IS THE SAME TREE WITH DIFFERENT NUMBERS, and that is the whole
+    point of this block.
+
+    There used to be a second `return` above this one: collapsed rendered its
+    pane at `SafeArea > MotionView > Aside`, expanded renders it at
+    `SafeArea > View > CollapsiblePane > Aside > PaneContent`. React keeps state
+    by tree POSITION and type, so crossing 600 dp put every pane somewhere new
+    and rebuilt it — measured in `docs/verification/adaptive-panes/
+    remount-audit-2026-09-16.md`: three panes holding drafts of 3, 4 and 5 came
+    back from one resize holding 0, 0 and 0. The pane that was visible on BOTH
+    sides of the change lost its draft too, which is the tell that this was
+    never about panes disappearing.
+
+    So there is one tree now, and the size class only decides which panes are
+    open and how wide. A collapsed host opens exactly one — no policy, no
+    overrides: the host said which column, and the window has room for that one.
+  */
+  const visible = collapsed
+    ? {
+        primary: activeColumn === 'primary',
+        supplementary: activeColumn === 'supplementary',
+        detail: activeColumn === 'secondary',
+        inspector: false,
+        primaryNarrow: false,
+      }
+    : expandedVisible;
   /*
     MOUNTED WHENEVER THERE IS ONE TO MOUNT — not "whenever the size class allows
     it", which is what this used to say.
@@ -208,33 +298,6 @@ function AdaptivePanesNavigator({
   const inspectorPane = inspectors[0] ?? null;
   const inspectorOpen = Boolean(showInspector && inspectorPane && visible.inspector);
 
-  if (collapsed) {
-    // Keyed on the column so each pane change remounts and replays the entrance.
-    // TRANSFORM-ONLY, never opacity-from-0: if the animation stalls the pane
-    // must still be readable rather than an invisible screen.
-    return (
-      <AdaptivePanesContext value={store}>
-        <SafeArea edges={['left', 'right']} className="flex-1">
-          <MotionView
-            key={activeColumn}
-            className="flex-1"
-            initial={{ x: direction === 'forward' ? PANE_TRAVEL : -PANE_TRAVEL }}
-            animate={{ x: 0 }}
-            transition={{ type: 'spring', damping: 22, stiffness: 320 }}
-          >
-            {activeColumn === 'primary' && columns[0] ? (
-              <Aside className="flex-1">{columns[0]}</Aside>
-            ) : activeColumn === 'supplementary' && columns[1] ? (
-              <Section className="flex-1">{columns[1]}</Section>
-            ) : (
-              <Main className="flex-1">{detailPane}</Main>
-            )}
-          </MotionView>
-        </SafeArea>
-      </AdaptivePanesContext>
-    );
-  }
-
   /*
     An explicit `primaryWidthDp` REPLACES the rail step, it does not compete
     with it: a host that states a width has told us its leading pane has no
@@ -243,12 +306,64 @@ function AdaptivePanesNavigator({
     not of the width.
   */
   const railStep = visible.primaryNarrow && primaryWidthDp === undefined;
+
+  const collapsedWidth = rowWidth ?? windowWidth;
   // The narrow rail is a fixed step, not a resizable pane, so a stored width
   // only applies at the full-width steps.
   const resizedWidth = railStep ? null : primaryWidth;
-  const openPrimaryWidth = railStep
+  const wantedPrimaryWidth = railStep
     ? PANE_WIDTH_DP.primaryNarrow
     : resizedWidth ?? primaryWidthDp ?? PANE_WIDTH_DP.primary;
+  const wantedSupplementaryWidth = supplementaryWidthDp ?? PANE_WIDTH_DP.supplementary;
+  /*
+    BOUNDED BY THE ROW, not only by the divider's own clamp. `PRIMARY_WIDTH_MAX`
+    is 420 whatever the window is, so on a row too narrow for three token
+    widths a dragged primary took its 420, the supplementary its 294, and the
+    fill pane got whatever was left: on the iPhone Duo's inner display (867 dp
+    inside the insets) that was ~150 dp of Natalie beside the status column.
+    The Surface Duo's wider row hid the same rule. So the primary may not push
+    the fill pane below its own collapse width; a host that has not measured
+    its row yet keeps the wanted width for that first frame. Only the trailing
+    fill pane is defended — it is the one that absorbs the difference — and
+    its floor is the larger of its collapse width and 30% of the row.
+
+    AND NEVER UNDER 40% OF THE ROW. The product owner's floor for the
+    leading column: on the Duo's inner display the defence above would have
+    squeezed the conversation to 200 dp beside two 294 dp panes, and 40% of
+    867 is 347. When the two floors disagree the third wins and the fill
+    pane gives up the difference — it is the pane built to absorb it.
+  */
+  // The trailing pane's floor is its ROW SHARE, not its token: the token is
+  // what it collapses through, the share is what it may never drop under.
+  const detailFloor = visible.detail && rowWidth !== null ? rowWidth * DETAIL_ROW_SHARE_MIN : 0;
+  const openPrimaryWidth =
+    rowWidth === null || railStep || !visible.primary
+      ? wantedPrimaryWidth
+      : Math.max(
+          PRIMARY_WIDTH_MIN,
+          rowWidth * PRIMARY_ROW_SHARE_MIN,
+          Math.min(
+            wantedPrimaryWidth,
+            rowWidth -
+              (visible.supplementary && columns[1] ? wantedSupplementaryWidth : 0) -
+              detailFloor,
+          ),
+        );
+  /*
+    THE MIDDLE PANE GIVES, not the trailing one. With the leading pane at 40%
+    and the trailing at 30% there is 30% left for the supplementary, and on
+    the Duo's 867 dp row that is 260 against a 294 token — the token loses.
+    Measured before this: 347 + 294 left Natalie 226, under her floor. It
+    keeps PRIMARY_WIDTH_MIN as its own floor so a very narrow row degrades
+    to three narrow panes rather than one that vanished.
+  */
+  const openSupplementaryWidth =
+    rowWidth === null || !visible.detail || !visible.primary
+      ? wantedSupplementaryWidth
+      : Math.max(
+          PRIMARY_WIDTH_MIN,
+          Math.min(wantedSupplementaryWidth, rowWidth - openPrimaryWidth - detailFloor),
+        );
 
   /*
     WHICH PANE ABSORBS THE WINDOW. Normally the detail pane, which is why the
@@ -266,8 +381,23 @@ function AdaptivePanesNavigator({
 
   return (
     <AdaptivePanesContext value={store}>
-      <SafeArea edges={['left', 'right']} className="flex-1">
-        <View className="flex-1 flex-row">
+      <SafeArea edges={paneEdges} className="flex-1">
+        <View
+          className="flex-1 flex-row"
+          /*
+            Measured at EVERY width, not only while collapsed. The stored width
+            is what the next collapse opens the pane to; measuring only in the
+            compact band meant a host that was resized while expanded (a Duo
+            unfold, Split View, a rail appearing) collapsed to the width it had
+            last seen when compact — stale by exactly the change that mattered.
+          */
+          onLayout={(event: { nativeEvent: { layout: { width: number } } }) => {
+            const laid = event.nativeEvent.layout.width;
+            setRowWidth((current) =>
+              current !== null && Math.abs(laid - current) <= 1 ? current : laid,
+            );
+          }}
+        >
           {/*
             Panes stay MOUNTED and animate to zero width rather than unmounting.
             A conditional mount is a hard cut: the pane vanishes in one frame and
@@ -279,15 +409,18 @@ function AdaptivePanesNavigator({
             <>
               <CollapsiblePane
                 open={visible.primary}
-                width={openPrimaryWidth}
+                width={collapsed ? collapsedWidth : openPrimaryWidth}
                 fill={fillPane === 'primary'}
               >
                 <Aside className="flex-1">
                   <PaneContent open={visible.primary}>{columns[0]}</PaneContent>
                 </Aside>
               </CollapsiblePane>
-              {visible.primary ? (
-                <PaneDivider width={resizedWidth ?? primaryWidthDp ?? DEFAULT_PRIMARY_WIDTH} />
+              {/* No divider collapsed: there is nothing on the other side of
+                  it to drag against, and a grab handle on the screen edge is a
+                  control that cannot do anything. */}
+              {!collapsed && visible.primary ? (
+                <PaneDivider width={openPrimaryWidth} />
               ) : null}
             </>
           ) : null}
@@ -295,9 +428,13 @@ function AdaptivePanesNavigator({
           {columns[1] ? (
             <CollapsiblePane
               open={visible.supplementary}
-              width={supplementaryWidthDp ?? PANE_WIDTH_DP.supplementary}
+              width={
+                collapsed ? collapsedWidth : openSupplementaryWidth
+              }
               fill={fillPane === 'supplementary'}
-              className={visible.supplementary ? `border-r ${PANE_DIVIDER}` : undefined}
+              className={
+                !collapsed && visible.supplementary ? `border-r ${PANE_DIVIDER}` : undefined
+              }
             >
               <Section className="flex-1">
                 <PaneContent open={visible.supplementary}>{columns[1]}</PaneContent>
@@ -345,17 +482,42 @@ function AdaptivePanesNavigator({
           */}
           <CollapsiblePane
             open={visible.detail}
-            width={PANE_WIDTH_DP.detail}
+            width={collapsed ? collapsedWidth : PANE_WIDTH_DP.detail}
             fill={fillPane === 'detail'}
           >
             <Main className="flex-1">
+            {/*
+              THE ROW STAYS, ONLY ITS BUTTONS GO. Collapsed, the toggles have
+              nothing to toggle — one pane is the whole window and hiding it
+              would empty the screen — but this element cannot be the thing that
+              disappears.
+
+              Measured: with `{paneControls && !collapsed ? <View/> : null}`
+              here, the detail pane below it remounted on every collapse and
+              lost its state, while the two column panes kept theirs. A sibling
+              that becomes `null` does not reliably hold its slot — somewhere in
+              the landmark wrapper the children are normalised and the nulls
+              drop out, which shifts `PaneContent` up an index and makes it a
+              different position to React. Keeping an empty `View` here keeps
+              the index, and the detail pane's draft survives the resize.
+            */}
             {paneControls ? (
-              <View className="flex-row items-center gap-element px-inset py-1">
-                <PaneToggle pane="primary" columnCount={columnCount} />
-                {columnCount === 2 ? (
-                  <PaneToggle pane="supplementary" columnCount={columnCount} />
-                ) : null}
-                {inspectorPane ? <PaneToggle pane="inspector" columnCount={columnCount} /> : null}
+              <View
+                className={
+                  collapsed ? undefined : 'flex-row items-center gap-element px-inset py-1'
+                }
+              >
+                {collapsed ? null : (
+                  <>
+                    <PaneToggle pane="primary" columnCount={columnCount} />
+                    {columnCount === 2 ? (
+                      <PaneToggle pane="supplementary" columnCount={columnCount} />
+                    ) : null}
+                    {inspectorPane ? (
+                      <PaneToggle pane="inspector" columnCount={columnCount} />
+                    ) : null}
+                  </>
+                )}
               </View>
             ) : null}
             <PaneContent open={visible.detail}>{detailPane}</PaneContent>
@@ -426,6 +588,7 @@ export {
 export { CollapsiblePane, type CollapsiblePaneProps } from './CollapsiblePane';
 export { DetailNavbar, type DetailNavbarProps } from './DetailNavbar';
 export { PaneDivider, type PaneDividerProps } from './PaneDivider';
+export { PaneEdgesContext, usePaneEdges, type PaneEdges } from './pane-edges';
 export { PaneListHeader, type PaneListHeaderProps } from './PaneListHeader';
 export { PaneSearchBar, type PaneSearchBarProps } from './PaneSearchBar';
 export { PaneToggle, type PaneToggleProps } from './PaneToggle';

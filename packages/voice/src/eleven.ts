@@ -158,7 +158,9 @@ export function createVoiceEgress(options: VoiceEgressOptions = {}): VoiceEgress
             method: 'POST',
             headers: { 'xi-api-key': key, 'content-type': 'application/json' },
             body: JSON.stringify({
-              text: input.text,
+              // v3 reads the palette's audio tags; the MAC covers `input.text`
+              // as the client sent it, and the tags are the server's own.
+              text: `${TONE_PALETTE[tone].bakedTags.join('')} ${input.text}`,
               model_id: registry.liveModelId,
               // Flash carries emotion through the text itself (the tone's live
               // recipe is settings + the writing); tags would be spoken aloud.

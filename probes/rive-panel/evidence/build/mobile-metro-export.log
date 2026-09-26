@@ -1,0 +1,149 @@
+(node:55714) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/mikevocalz/moyo-rive-panel/packages/theme/index.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/mikevocalz/moyo-rive-panel/packages/theme/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+» android: @expo-pico/core: xrMode 'pico-os5' expects newArchEnabled: true. PicoCorePackage relies on the New Architecture package registration shape. Set 'newArchEnabled: true' in app.config.{ts,js,json} (top-level).
+» android: @expo-pico/core: xrMode 'pico-os5' is an immersive build but picoAppId is empty. Every PPS call (account, IAP, achievements, leaderboards, social) will fail at runtime with PICO error 100008 "appkey is empty". PICO_APP_ID env var is NOT set in this shell. Either: (a) export PICO_APP_ID=<your-app-id> from .env.local before prebuild, or (b) hardcode picoAppId in the plugin config (NOT recommended — secrets in source).
+» android: @expo-pico/core: xrMode 'pico-os5' expects newArchEnabled: true. PicoCorePackage relies on the New Architecture package registration shape. Set 'newArchEnabled: true' in app.config.{ts,js,json} (top-level).
+» android: @expo-pico/core: xrMode 'pico-os5' is an immersive build but picoAppId is empty. Every PPS call (account, IAP, achievements, leaderboards, social) will fail at runtime with PICO error 100008 "appkey is empty". PICO_APP_ID env var is NOT set in this shell. Either: (a) export PICO_APP_ID=<your-app-id> from .env.local before prebuild, or (b) hardcode picoAppId in the plugin config (NOT recommended — secrets in source).
+» android: @expo-pico/core: xrMode 'pico-os5' expects newArchEnabled: true. PicoCorePackage relies on the New Architecture package registration shape. Set 'newArchEnabled: true' in app.config.{ts,js,json} (top-level).
+» android: @expo-pico/core: xrMode 'pico-os5' is an immersive build but picoAppId is empty. Every PPS call (account, IAP, achievements, leaderboards, social) will fail at runtime with PICO error 100008 "appkey is empty". PICO_APP_ID env var is NOT set in this shell. Either: (a) export PICO_APP_ID=<your-app-id> from .env.local before prebuild, or (b) hardcode picoAppId in the plugin config (NOT recommended — secrets in source).
+» android: @expo-pico/core: xrMode 'pico-os5' expects newArchEnabled: true. PicoCorePackage relies on the New Architecture package registration shape. Set 'newArchEnabled: true' in app.config.{ts,js,json} (top-level).
+» android: @expo-pico/core: xrMode 'pico-os5' is an immersive build but picoAppId is empty. Every PPS call (account, IAP, achievements, leaderboards, social) will fail at runtime with PICO error 100008 "appkey is empty". PICO_APP_ID env var is NOT set in this shell. Either: (a) export PICO_APP_ID=<your-app-id> from .env.local before prebuild, or (b) hardcode picoAppId in the plugin config (NOT recommended — secrets in source).
+React Compiler enabled
+Expo Autolinking module resolution enabled
+Starting Metro Bundler
+
+| (node:55714) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+ WARN  Attempted to import the module "/Users/mikevocalz/moyo-rive-panel/node_modules/react-native/src/private/featureflags/ReactNativeFeatureFlags" which is not listed in the "exports" of "/Users/mikevocalz/moyo-rive-panel/node_modules/react-native" under the requested subpath "./src/private/featureflags/ReactNativeFeatureFlags". Falling back to hierarchical resolution for backwards compatibility.
+ WARN  Attempted to import the module "/Users/mikevocalz/moyo-rive-panel/node_modules/react-native/src/private/featureflags/ReactNativeFeatureFlags" which is not listed in the "exports" of "/Users/mikevocalz/moyo-rive-panel/node_modules/react-native" under the requested subpath "./src/private/featureflags/ReactNativeFeatureFlags". Falling back to file-based resolution. Consider updating the call site or asking the package maintainer(s) to expose this API.
+ WARN  The package /Users/mikevocalz/moyo-rive-panel/node_modules/expo-router contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
+Reason: The resolution for "/Users/mikevocalz/moyo-rive-panel/node_modules/expo-router/build/global-state/router-store" defined in "exports" is /Users/mikevocalz/moyo-rive-panel/node_modules/expo-router/build/global-state/router-store.js, however this file does not exist. Falling back to hierarchical resolution for backwards compatibility.
+ WARN  The package /Users/mikevocalz/moyo-rive-panel/node_modules/expo-router contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
+Reason: The resolution for "/Users/mikevocalz/moyo-rive-panel/node_modules/expo-router/build/global-state/router-store" defined in "exports" is /Users/mikevocalz/moyo-rive-panel/node_modules/expo-router/build/global-state/router-store.js, however this file does not exist. Falling back to file-based resolution.
+ WARN  The package /Users/mikevocalz/moyo-rive-panel/node_modules/expo-router contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
+Reason: The resolution for "/Users/mikevocalz/moyo-rive-panel/node_modules/expo-router/build/global-state/router-store" defined in "exports" is /Users/mikevocalz/moyo-rive-panel/node_modules/expo-router/build/global-state/router-store.js, however this file does not exist. Falling back to file-based resolution.
+ WARN  The package /Users/mikevocalz/moyo-rive-panel/node_modules/expo-router contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
+Reason: The resolution for "/Users/mikevocalz/moyo-rive-panel/node_modules/expo-router/build/global-state/router-store" defined in "exports" is /Users/mikevocalz/moyo-rive-panel/node_modules/expo-router/build/global-state/router-store.js, however this file does not exist. Falling back to hierarchical resolution for backwards compatibility.
+ WARN  The package /Users/mikevocalz/moyo-rive-panel/node_modules/expo-router contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
+Reason: The resolution for "/Users/mikevocalz/moyo-rive-panel/node_modules/expo-router/build/global-state/router-store" defined in "exports" is /Users/mikevocalz/moyo-rive-panel/node_modules/expo-router/build/global-state/router-store.js, however this file does not exist. Falling back to file-based resolution.
+ WARN  The package /Users/mikevocalz/moyo-rive-panel/node_modules/expo-router contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
+Reason: The resolution for "/Users/mikevocalz/moyo-rive-panel/node_modules/expo-router/build/global-state/router-store" defined in "exports" is /Users/mikevocalz/moyo-rive-panel/node_modules/expo-router/build/global-state/router-store.js, however this file does not exist. Falling back to file-based resolution.
+ WARN  The package /Users/mikevocalz/moyo-rive-panel/node_modules/expo-router contains an invalid package.json configuration. Consider raising this issue with the package maintainer(s).
+Reason: The resolution for "/Users/mikevocalz/moyo-rive-panel/node_modules/expo-router/build/global-state/router-store" defined in "exports" is /Users/mikevocalz/moyo-rive-panel/node_modules/expo-router/build/global-state/router-store.js, however this file does not exist. Falling back to file-based resolution.
+| (node:55714) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:55714) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:55714) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:55714) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+| (node:55714) Warning: The 'NO_COLOR' env is ignored due to the 'FORCE_COLOR' env being set.
+| (Use `node --trace-warnings ...` to show where the warning was created)
+Android Bundled 99327ms node_modules/expo-router/entry.js (7426 modules)
+
+› Assets (103):
+../../node_modules/@expo-google-fonts/material-symbols/400Regular/MaterialSymbols_400Regular.ttf (944KB)
+../../node_modules/@expo/ui/assets/keyboard_arrow_down.xml (378B)
+../../node_modules/@reactvision/react-viro/dist/components/Resources/viro_blank.png (1.4KB)
+../../node_modules/@reactvision/react-viro/dist/components/Resources/viro_spinner_1_w.png (2.9KB)
+../../node_modules/@reactvision/react-viro/dist/components/Resources/viro_spinner_1.png (16KB)
+../../node_modules/@reactvision/react-viro/dist/components/Resources/viro_spinner_1a_w.png (3.2KB)
+../../node_modules/@reactvision/react-viro/dist/components/Resources/viro_spinner_1a.png (16KB)
+../../node_modules/expo-router/assets/arrow_down.png (9.5KB)
+../../node_modules/expo-router/assets/arrow_right.xml (307B)
+../../node_modules/expo-router/assets/checkmark.xml (312B)
+../../node_modules/expo-router/assets/error.png (469B)
+../../node_modules/expo-router/assets/file.png (138B)
+../../node_modules/expo-router/assets/forward.png (188B)
+../../node_modules/expo-router/assets/pkg.png (364B)
+../../node_modules/expo-router/assets/react-navigation/elements/back-icon-mask.png (653B)
+../../node_modules/expo-router/assets/react-navigation/elements/back-icon.png (4 variations | 152B)
+../../node_modules/expo-router/assets/react-navigation/elements/clear-icon.png (4 variations | 425B)
+../../node_modules/expo-router/assets/react-navigation/elements/close-icon.png (4 variations | 235B)
+../../node_modules/expo-router/assets/react-navigation/elements/search-icon.png (4 variations | 599B)
+../../node_modules/expo-router/assets/sitemap.png (465B)
+../../node_modules/expo-router/assets/unmatched.png (4.8KB)
+../../node_modules/react-native-audio-api/src/Audio/controls/icons/pause.png (465B)
+../../node_modules/react-native-audio-api/src/Audio/controls/icons/play.png (658B)
+../../node_modules/react-native-audio-api/src/Audio/controls/icons/speaker-x.png (725B)
+../../node_modules/react-native-audio-api/src/Audio/controls/icons/speaker.png (565B)
+../../packages/avatar/assets/natalie-phone/natalie.gltf (219KB)
+../../packages/avatar/assets/natalie-viro.glb (31MB)
+../../packages/ui/xr/premium/icon-atlas/png/camera-amber.png (2.5KB)
+../../packages/ui/xr/premium/icon-atlas/png/camera-muted.png (2.5KB)
+../../packages/ui/xr/premium/icon-atlas/png/camera-white.png (1.9KB)
+../../packages/ui/xr/premium/icon-atlas/png/chevron-down-amber.png (593B)
+../../packages/ui/xr/premium/icon-atlas/png/chevron-down-muted.png (583B)
+../../packages/ui/xr/premium/icon-atlas/png/chevron-down-white.png (524B)
+../../packages/ui/xr/premium/icon-atlas/png/chevron-left-amber.png (566B)
+../../packages/ui/xr/premium/icon-atlas/png/chevron-left-muted.png (547B)
+../../packages/ui/xr/premium/icon-atlas/png/chevron-left-white.png (489B)
+../../packages/ui/xr/premium/icon-atlas/png/chevron-right-amber.png (558B)
+../../packages/ui/xr/premium/icon-atlas/png/chevron-right-muted.png (557B)
+../../packages/ui/xr/premium/icon-atlas/png/chevron-right-white.png (509B)
+../../packages/ui/xr/premium/icon-atlas/png/chevron-up-amber.png (577B)
+../../packages/ui/xr/premium/icon-atlas/png/chevron-up-muted.png (567B)
+../../packages/ui/xr/premium/icon-atlas/png/chevron-up-white.png (506B)
+../../packages/ui/xr/premium/icon-atlas/png/eraser-amber.png (1.7KB)
+../../packages/ui/xr/premium/icon-atlas/png/eraser-muted.png (1.7KB)
+../../packages/ui/xr/premium/icon-atlas/png/eraser-white.png (1.4KB)
+../../packages/ui/xr/premium/icon-atlas/png/footprints-amber.png (3.4KB)
+../../packages/ui/xr/premium/icon-atlas/png/footprints-muted.png (3.4KB)
+../../packages/ui/xr/premium/icon-atlas/png/footprints-white.png (2.8KB)
+../../packages/ui/xr/premium/icon-atlas/png/highlighter-amber.png (1.4KB)
+../../packages/ui/xr/premium/icon-atlas/png/highlighter-muted.png (1.4KB)
+../../packages/ui/xr/premium/icon-atlas/png/highlighter-white.png (1.2KB)
+../../packages/ui/xr/premium/icon-atlas/png/pause-amber.png (1.1KB)
+../../packages/ui/xr/premium/icon-atlas/png/pause-muted.png (1.1KB)
+../../packages/ui/xr/premium/icon-atlas/png/pause-white.png (937B)
+../../packages/ui/xr/premium/icon-atlas/png/pencil-amber.png (1.9KB)
+../../packages/ui/xr/premium/icon-atlas/png/pencil-muted.png (1.9KB)
+../../packages/ui/xr/premium/icon-atlas/png/pencil-white.png (1.6KB)
+../../packages/ui/xr/premium/icon-atlas/png/play-amber.png (1.7KB)
+../../packages/ui/xr/premium/icon-atlas/png/play-muted.png (1.7KB)
+../../packages/ui/xr/premium/icon-atlas/png/play-white.png (1.4KB)
+../../packages/ui/xr/premium/icon-atlas/png/redo-2-amber.png (1.7KB)
+../../packages/ui/xr/premium/icon-atlas/png/redo-2-muted.png (1.7KB)
+../../packages/ui/xr/premium/icon-atlas/png/redo-2-white.png (1.3KB)
+../../packages/ui/xr/premium/icon-atlas/png/rotate-ccw-amber.png (2.9KB)
+../../packages/ui/xr/premium/icon-atlas/png/rotate-ccw-muted.png (2.9KB)
+../../packages/ui/xr/premium/icon-atlas/png/rotate-ccw-white.png (2.3KB)
+../../packages/ui/xr/premium/icon-atlas/png/scan-amber.png (1.4KB)
+../../packages/ui/xr/premium/icon-atlas/png/scan-muted.png (1.4KB)
+../../packages/ui/xr/premium/icon-atlas/png/scan-white.png (1.1KB)
+../../packages/ui/xr/premium/icon-atlas/png/search-amber.png (2.7KB)
+../../packages/ui/xr/premium/icon-atlas/png/search-muted.png (2.7KB)
+../../packages/ui/xr/premium/icon-atlas/png/search-white.png (2.2KB)
+../../packages/ui/xr/premium/icon-atlas/png/sparkles-amber.png (3.5KB)
+../../packages/ui/xr/premium/icon-atlas/png/sparkles-muted.png (3.5KB)
+../../packages/ui/xr/premium/icon-atlas/png/sparkles-white.png (2.8KB)
+../../packages/ui/xr/premium/icon-atlas/png/swords-amber.png (2KB)
+../../packages/ui/xr/premium/icon-atlas/png/swords-muted.png (2KB)
+../../packages/ui/xr/premium/icon-atlas/png/swords-white.png (1.7KB)
+../../packages/ui/xr/premium/icon-atlas/png/trash-2-amber.png (1.9KB)
+../../packages/ui/xr/premium/icon-atlas/png/trash-2-muted.png (1.9KB)
+../../packages/ui/xr/premium/icon-atlas/png/trash-2-white.png (1.5KB)
+../../packages/ui/xr/premium/icon-atlas/png/undo-2-amber.png (1.6KB)
+../../packages/ui/xr/premium/icon-atlas/png/undo-2-muted.png (1.6KB)
+../../packages/ui/xr/premium/icon-atlas/png/undo-2-white.png (1.3KB)
+../../packages/ui/xr/premium/icon-atlas/png/x-amber.png (827B)
+../../packages/ui/xr/premium/icon-atlas/png/x-muted.png (814B)
+../../packages/ui/xr/premium/icon-atlas/png/x-white.png (737B)
+../../packages/ui/xr/premium/icon-atlas/png/zap-amber.png (2.1KB)
+../../packages/ui/xr/premium/icon-atlas/png/zap-muted.png (2.1KB)
+../../packages/ui/xr/premium/icon-atlas/png/zap-white.png (1.7KB)
+assets/rive/moyo_fractions.riv (143KB)
+
+› android bundles (1):
+_expo/static/js/android/entry-ef5ffe939421aa911fbc8b9bebd9d169.hbc (26MB)
+
+› web bundles (1):
+_expo/static/css/global-d41d8cd98f00b204e9800998ecf8427e.css (0B)
+
+› Files (1):
+metadata.json (6.6KB)
+
+Exported: /tmp/rive-panel-check/moyo-export

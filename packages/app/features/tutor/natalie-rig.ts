@@ -23,6 +23,18 @@ import * as THREE from 'three/webgpu';
 export const CAMERA_FOV = 38;
 
 /**
+ * Lateral truck after framing, metres along the camera's own x. `frameBody`
+ * centres her in the canvas; on the Duo the canvas is her 226 dp pane while
+ * the purple alcove runs on under the 84 dp system column beside it, so the
+ * eye centres her in a wider field than the camera does and she reads as
+ * sitting right. A positive truck moves the camera right and her left on
+ * screen. Small on purpose: this is a nudge, not a re-frame.
+ */
+export const CAMERA_TRUCK_X_M = 0.05;
+/** A trailing inset this wide is a system column (iPhone Duo: 84), not a notch. */
+export const HARDWARE_COLUMN_MIN_DP = 64;
+
+/**
  * Warm key, cool fill, a low warm bounce so the jaw underside stays alive, and
  * ambient that never becomes the key.
  */

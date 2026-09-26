@@ -6,12 +6,12 @@
   "license": "MIT",
   "packageManager": "pnpm@10.32.1",
   "engines": {
-    "node": ">=24.15.0 <26"
+    "node": "^24.15.0 || ^26.0.0"
   },
   "scripts": {
     "dev": "turbo run dev",
     "build": "turbo run build",
-    "lint": "node tooling/check-no-flatlist.mjs && node tooling/check-barrels.mjs && node tooling/check-contrast.mjs && node tooling/check-targets.mjs && node tooling/check-utilities.mjs && node tooling/check-controls.mjs && node tooling/check-references.mjs && node tooling/check-runtime-classes.mjs && node tooling/check-no-training-path.mjs && node tooling/check-voice-egress.mjs && node tooling/check-store-separation.mjs && node tooling/check-crm-wall.mjs && node tooling/check-fail-closed.mjs && node tooling/check-versions-off.mjs && node tooling/check-sentry-invariants.mjs && node tooling/check-role-accent.mjs && node tooling/check-copy-law.mjs && node tooling/check-art-registry.mjs && node tooling/check-joint-ownership.mjs && node tooling/check-material-inputs.mjs && node tooling/check-machine-routes.mjs && turbo run lint --continue",
+    "lint": "node tooling/check-no-flatlist.mjs && node tooling/check-barrels.mjs && node tooling/check-contrast.mjs && node tooling/check-targets.mjs && node tooling/check-utilities.mjs && node tooling/check-controls.mjs && node tooling/check-references.mjs && node tooling/check-runtime-classes.mjs && node tooling/check-no-training-path.mjs && node tooling/check-voice-egress.mjs && node tooling/check-store-separation.mjs && node tooling/check-crm-wall.mjs && node tooling/check-fail-closed.mjs && node tooling/check-versions-off.mjs && node tooling/check-sentry-invariants.mjs && node tooling/check-role-accent.mjs && node tooling/check-copy-law.mjs && node tooling/check-art-registry.mjs && node tooling/check-joint-ownership.mjs && node tooling/check-material-inputs.mjs && node tooling/check-machine-routes.mjs && node tooling/check-auth-bypass.mjs && turbo run lint --continue",
     "check:barrels": "node tooling/check-barrels.mjs",
     "check:contrast": "node tooling/check-contrast.mjs",
     "check:copylaw": "node tooling/check-copy-law.mjs",
@@ -37,7 +37,9 @@
     "check:ledger": "node tooling/check-asset-ledger.mjs",
     "check:joints": "node tooling/check-joint-ownership.mjs",
     "check:matinputs": "node tooling/check-material-inputs.mjs",
-    "check:machine": "node tooling/check-machine-routes.mjs"
+    "check:machine": "node tooling/check-machine-routes.mjs",
+    "check:schema": "node tooling/check-schema-applied.mjs",
+    "postinstall": "node tooling/enable-skia-graphite.mjs"
   },
   "devDependencies": {
     "pg-boss": "catalog:",
@@ -45,21 +47,27 @@
   },
   "pnpm": {
     "overrides": {
-      "@expo/dom-webview": "57.0.1",
-      "@payloadcms/plugin-cloud-storage": "4.0.0-canary.29",
-      "@payloadcms/translations": "4.0.0-canary.29",
-      "expo-asset": "57.0.13",
-      "expo-file-system": "57.0.5",
-      "expo-modules-core": "57.0.12",
+      "@reactvision/react-viro": "file:./vendors/reactvision-react-viro-3.0.1-moyo.0.tgz",
+      "@expo-pico/core": "file:./vendors/expo-pico-core-1.0.0.tgz",
+      "@expo/dom-webview": "58.0.0",
+      "@payloadcms/plugin-cloud-storage": "4.0.0-canary.33",
+      "@payloadcms/translations": "4.0.0-canary.33",
+      "expo-asset": "58.0.3",
+      "expo-file-system": "58.0.0",
+      "expo-modules-core": "58.0.3",
       "lightningcss": "1.30.1",
-      "react": "19.2.8",
-      "react-dom": "19.2.8"
+      "react": "19.3.0",
+      "react-dom": "19.3.0",
+      "nitro-canvas-in-Vision": "file:./vendors/nitro-canvas-in-Vision-0.0.2-rive.3.tgz",
+      "react-native": "0.88.0-rc.2",
+      "react-server-dom-webpack": "19.3.0"
     },
     "patchedDependencies": {
       "@seshuk/payload-storage-bunny@3.0.0": "patches/@seshuk__payload-storage-bunny@3.0.0.patch",
       "react-native-nitro-image": "patches/react-native-nitro-image.patch",
       "react-native-vision-camera": "patches/react-native-vision-camera.patch",
-      "expo-router@57.0.15": "patches/expo-router@57.0.15.patch"
+      "expo-router@57.0.15": "patches/expo-router@57.0.15.patch",
+      "expo-horizon-core@57.0.2": "patches/expo-horizon-core@57.0.2.patch"
     },
     "supportedArchitectures": {
       "cpu": [

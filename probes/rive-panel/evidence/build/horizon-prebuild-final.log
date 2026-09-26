@@ -1,0 +1,36 @@
+» android: @expo-pico/core: xrMode 'pico-os5' expects newArchEnabled: true. PicoCorePackage relies on the New Architecture package registration shape. Set 'newArchEnabled: true' in app.config.{ts,js,json} (top-level).
+» android: @expo-pico/core: xrMode 'pico-os5' is an immersive build but picoAppId is empty. Every PPS call (account, IAP, achievements, leaderboards, social) will fail at runtime with PICO error 100008 "appkey is empty". PICO_APP_ID env var is NOT set in this shell. Either: (a) export PICO_APP_ID=<your-app-id> from .env.local before prebuild, or (b) hardcode picoAppId in the plugin config (NOT recommended — secrets in source).
+(node:98046) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/mikevocalz/moyo-rive-panel/packages/theme/index.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/mikevocalz/moyo-rive-panel/packages/theme/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+- Clearing android
+✔ Cleared android code
+» android: @expo-pico/core: xrMode 'pico-os5' expects newArchEnabled: true. PicoCorePackage relies on the New Architecture package registration shape. Set 'newArchEnabled: true' in app.config.{ts,js,json} (top-level).
+» android: @expo-pico/core: xrMode 'pico-os5' is an immersive build but picoAppId is empty. Every PPS call (account, IAP, achievements, leaderboards, social) will fail at runtime with PICO error 100008 "appkey is empty". PICO_APP_ID env var is NOT set in this shell. Either: (a) export PICO_APP_ID=<your-app-id> from .env.local before prebuild, or (b) hardcode picoAppId in the plugin config (NOT recommended — secrets in source).
+» android: @expo-pico/core: xrMode 'pico-os5' expects newArchEnabled: true. PicoCorePackage relies on the New Architecture package registration shape. Set 'newArchEnabled: true' in app.config.{ts,js,json} (top-level).
+» android: @expo-pico/core: xrMode 'pico-os5' is an immersive build but picoAppId is empty. Every PPS call (account, IAP, achievements, leaderboards, social) will fail at runtime with PICO error 100008 "appkey is empty". PICO_APP_ID env var is NOT set in this shell. Either: (a) export PICO_APP_ID=<your-app-id> from .env.local before prebuild, or (b) hardcode picoAppId in the plugin config (NOT recommended — secrets in source).
+- Creating native directory (./android)
+✔ Created native directory
+- Updating package.json
+› Using expo@catalog: instead of recommended expo@~58.0.0-preview.7.
+- Updating package.json
+› Using react-native@catalog: instead of recommended react-native@0.88.0-rc.1.
+- Updating package.json
+✔ Updated package.json | no changes
+- Running prebuild
+» android: @expo-pico/core: xrMode 'pico-os5' expects newArchEnabled: true. PicoCorePackage relies on the New Architecture package registration shape. Set 'newArchEnabled: true' in app.config.{ts,js,json} (top-level).
+- Running prebuild
+» android: @expo-pico/core: xrMode 'pico-os5' is an immersive build but picoAppId is empty. Every PPS call (account, IAP, achievements, leaderboards, social) will fail at runtime with PICO error 100008 "appkey is empty". PICO_APP_ID env var is NOT set in this shell. Either: (a) export PICO_APP_ID=<your-app-id> from .env.local before prebuild, or (b) hardcode picoAppId in the plugin config (NOT recommended — secrets in source).
+- Running prebuild
+🚫 Blocked 22 prohibited permissions in PICO manifest
+- Running prebuild
+✅ Created PICO-specific AndroidManifest at: /Users/mikevocalz/moyo-rive-panel/apps/mobile/android/app/src/pico/AndroidManifest.xml
+- Running prebuild
+🚫 Blocked 117 prohibited permissions in Horizon manifest
+- Running prebuild
+✅ Created Horizon-specific AndroidManifest at: /Users/mikevocalz/moyo-rive-panel/apps/mobile/android/app/src/quest/AndroidManifest.xml
+- Running prebuild
+⚠️  Flavor dimensions already exist in build.gradle
+- Running prebuild
+✔ Finished prebuild

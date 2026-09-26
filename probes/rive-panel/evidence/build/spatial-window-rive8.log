@@ -1,0 +1,14 @@
+✔ preserves configured window dimensions (1.209417ms)
+✔ rejects a plugin replacing the platform manifest with a feature-only manifest (0.813416ms)
+✔ rejects a scene adjustment changing the app window height (0.15125ms)
+✔ does not invent a window size for an immersive-only app without declared dimensions (0.108583ms)
+✔ keeps default device orientation and rejects forced landscape (0.148584ms)
+✔ Meta target cannot silently lose its Horizon config plugin (0.116792ms)
+ℹ tests 6
+ℹ suites 0
+ℹ pass 6
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 166.928542

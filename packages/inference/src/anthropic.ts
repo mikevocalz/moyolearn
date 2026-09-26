@@ -42,15 +42,6 @@ import type {
   ProviderAdapter,
 } from './types.ts';
 
-/**
- * `fallbacks: 'default'` routes a policy decline by category to the vendor's
- * own recommended substitute, rather than pinning a model this repo would then
- * owe a migration when it is deprecated. The beta flag is the one the scalar
- * form takes; the array form takes a different, earlier one, and pairing either
- * header with the other shape is a 400.
- */
-const FALLBACK_BETA = 'server-side-fallback-2026-07-01';
-
 /** The vendor surface this adapter uses, and nothing wider. */
 export interface AnthropicTransport {
   stream(params: BetaMessageCreateParamsStreaming, options?: { signal?: AbortSignal }): VendorStream;
@@ -134,7 +125,6 @@ export function paramsFor(request: InferenceRequest): BetaMessageCreateParamsStr
     // second thing to be wrong about on a model that has no thinking mode.
     ...(profile.supportsAdaptiveThinking ? { thinking: { type: 'adaptive' as const } } : {}),
     ...(profile.supportsEffort && request.effort ? { output_config: { effort: request.effort } } : {}),
-    ...(request.serverSideFallback ? { fallbacks: 'default' as const, betas: [FALLBACK_BETA] } : {}),
     system: [
       {
         type: 'text' as const,
@@ -245,7 +235,8 @@ export function anthropicTransport(): AnthropicTransport {
     if (!process.env.ANTHROPIC_API_KEY) {
       throw new ProviderUnavailable('ANTHROPIC_API_KEY is not set');
     }
-    client ??= new Anthropic();
+    // Bind transport to the approved product, never a deployment URL override.
+    client ??= new Anthropic({ baseURL: 'https://api.anthropic.com' });
     return client;
   };
 
@@ -267,6 +258,7 @@ export function anthropicTransport(): AnthropicTransport {
 export function createAnthropicAdapter(transport: AnthropicTransport): ProviderAdapter {
   return {
     vendor: 'anthropic',
+    product: 'anthropic-api',
 
     stream(request: InferenceRequest): InferenceStream {
       const params = paramsFor(request);

@@ -1,0 +1,12 @@
+            A: http://schemas.android.com/apk/res/android:screenOrientation(0x0101001e)=-1
+            A: http://schemas.android.com/apk/res/android:configChanges(0x0101001f)=0x80000fb0
+            A: http://schemas.android.com/apk/res/android:windowSoftInputMode(0x0101022b)=0x00000010
+--
+                A: http://schemas.android.com/apk/res/android:defaultWidth(0x010104f4)=1024.000000dp
+                A: http://schemas.android.com/apk/res/android:defaultHeight(0x010104f5)=640.000000dp
+              E: intent-filter (line=186)
+                  E: action (line=187)
+--
+            A: http://schemas.android.com/apk/res/android:screenOrientation(0x0101001e)=0
+            A: http://schemas.android.com/apk/res/android:configChanges(0x0101001f)=0x000006b0
+              E: intent-filter (line=232)

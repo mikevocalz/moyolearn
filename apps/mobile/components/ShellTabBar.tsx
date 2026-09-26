@@ -18,7 +18,7 @@
 // GEOMETRY IS PLATFORM-SPEC, from `navChrome` in packages/theme/tokens.ts:
 // rail 96 (Material 3 `NavigationRailCollapsedTokens.ContainerWidth`; 80 is its
 // narrow variant), raised slab 64 (between Material's 56 standard FAB and 96
-// large FAB — iOS has no raised-tab convention to defend against), raise 58
+// large FAB — iOS has no raised-tab convention to defend against), raise 16
 // (how far that slab breaks the bar's top edge, and equally how much taller the
 // bar's BOX is than its painted chrome — see the bottom-bar container). All px:
 // they used to be
@@ -87,14 +87,23 @@
 //      docs/pack/02-adaptive-screens-design-spec.md §2.1 §2.3
 // SOT-KEYWORDS: shell tab bar role raised center camera band target indicator rail size class foldable hinge haptics
 
-// expo-router's `react-navigation` entry does not re-export the bottom-tabs
-// types, so this reaches the module that declares them.
-import type { BottomTabBarProps } from 'expo-router/build/react-navigation/bottom-tabs';
-import type { ComponentType } from 'react';
+// `expo-router/js-tabs` is the JS Tabs entry, and SDK 58 re-exports the
+// bottom-tabs types from it. This used to reach into
+// `expo-router/build/react-navigation/bottom-tabs` because the older
+// `react-navigation` entry did not carry them; 58 added an `exports` map, so
+// that deep path is no longer resolvable and the public entry is the answer.
+import type { BottomTabBarProps } from 'expo-router/js-tabs';
+import type { ComponentType, ReactNode } from 'react';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useReducedMotion, useWindowSizeClass } from '@acme/ui';
+import { navChrome } from '@acme/theme';
+import { PaneEdgesContext, useReducedMotion, useWindowSizeClass, type PaneEdges } from '@acme/ui';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import { haptics } from '@acme/ui/haptics';
+
+// `--spacing-nav-rail`, read from the token so the rail's JS width and its
+// class stay one number. `px-2` on the bottom bar, in points.
+const NAV_RAIL_WIDTH = parseInt(navChrome.rail, 10);
+const BAR_GUTTER = 8;
 
 /**
  * Where the navigator must DOCK the bar, for the same window the bar itself
@@ -117,7 +126,45 @@ import { haptics } from '@acme/ui/haptics';
  * cannot, because it lives entirely within one half.
  */
 export function useShellTabBarPosition(): 'bottom' | 'right' {
-  return useWindowSizeClass() === 'compact' ? 'bottom' : 'right';
+  const column = useHardwareEdgeColumn();
+  const sizeClass = useWindowSizeClass();
+  if (column > 0) return 'right';
+  return sizeClass === 'compact' ? 'bottom' : 'right';
+}
+
+/**
+ * The width of a system-reserved column on the trailing edge, or 0.
+ *
+ * iPhone Duo's closed outer display reports a right safe-area inset of 84pt
+ * for the full height — the camera, clock and wifi live in that column
+ * vertically — and UIKit relocates ITS bars into that column rather than
+ * shrinking them into what is left (Settings' bottom toolbar button sits there
+ * on the simulator). A custom bar only knows "avoid the inset", which left our
+ * bottom bar crowded into 382pt with the raised Snap slab off-centre. So when
+ * the trailing inset is a column, the bar becomes the rail and lives in it.
+ *
+ * 64 as the floor: a notched iPhone in landscape reports 44–59 on the side
+ * holding the notch, and that is a cutout to avoid, not a column to occupy.
+ */
+export const HARDWARE_EDGE_COLUMN_MIN = 64;
+export function useHardwareEdgeColumn(): number {
+  const { right } = useSafeAreaInsets();
+  return right >= HARDWARE_EDGE_COLUMN_MIN ? right : 0;
+}
+
+/**
+ * Tells every pane row under the shell that the rail owns the trailing edge.
+ * Wrap the shell's `<Tabs>` in it: with the rail in the hardware column, a
+ * row that also insets for that column ends a dead 84 dp short of the rail —
+ * the rail never covers a pane, and nothing may sit between them either.
+ */
+const LEADING_ONLY: PaneEdges = ['left'];
+const BOTH_EDGES: PaneEdges = ['left', 'right'];
+export function ShellPaneEdges({ children }: { children: ReactNode }) {
+  const column = useHardwareEdgeColumn();
+  return (
+    <PaneEdgesContext value={column > 0 ? LEADING_ONLY : BOTH_EDGES}>{children}</PaneEdgesContext>
+  );
 }
 
 export interface ShellTabItem {
@@ -150,7 +197,8 @@ interface ShellTabBarProps extends BottomTabBarProps {
 
 export function ShellTabBar({
   state,
-  navigation,
+  emitter,
+  navigateToTab,
   items,
   targetClass,
   raisedTargetClass,
@@ -166,7 +214,8 @@ export function ShellTabBar({
     bottom bar — the exact defect being fixed.
   */
   const sizeClass = useWindowSizeClass();
-  const rail = sizeClass !== 'compact';
+  const column = useHardwareEdgeColumn();
+  const rail = sizeClass !== 'compact' || column > 0;
   const minTarget = targetClass ?? 'min-h-target-adult';
   const raisedTarget = raisedTargetClass ?? '';
   /*
@@ -213,11 +262,20 @@ export function ShellTabBar({
       change gets. `@acme/ui/haptics` already no-ops when the native TurboModule
       is missing from the binary, so a JS-only reload cannot crash the bar here.
     */
+    /*
+      SDK 58's tab bar gets `emitter` and `navigateToTab`, not a `navigation`
+      object: the Router's core rework dropped most of the forked
+      react-navigation surface, and navigation is by deterministic ROUTE KEY
+      now rather than by name. The behaviour below is unchanged — emit
+      `tabPress`, honour a listener that prevents it, tick and move otherwise —
+      but the key is what identifies the destination, which is also what makes
+      two routes with the same name unambiguous.
+    */
     const onPress = () => {
-      const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
+      const event = emitter.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
       if (!focused && !event.defaultPrevented) {
         if (!reducedMotion) haptics.selection();
-        navigation.navigate(route.name);
+        navigateToTab(route.key);
       }
     };
 
@@ -278,16 +336,21 @@ export function ShellTabBar({
                 number is the number on both platforms. `raisedTarget` still only
                 ever raises it (K–2 → 72).
 
-                NO LIGHT FILL. This slab used to be a near-white/action-yellow
-                block with a border round it, and against a pale chrome bar that
-                read as a hole in the bar rather than as the product's signature
-                control. `bg-nav-cta` is the chrome's own deep CTA — the fill is
-                what separates it now — and the 2px ink border stays as
-                STRUCTURE (the doc 08 rule: borders are structure, never
-                emphasis), the same edge every other raised object in the product
-                carries. This is the one place the house's raised language is
-                allowed to stay loud, because it is the one control on the bar
-                that is an ACTION rather than a destination.
+                PAPER, and it is the only object on the bar that is not made of
+                the bar. `bg-nav-cta` is the avatar well's own neutral (see
+                `tokens.ts` for why the token moved off deep plum and then off
+                pure white); the ink glyph and the 2px border are what separate
+                it now, and the border stays STRUCTURE rather than emphasis —
+                the doc 08 rule, and the same edge every other raised object in
+                the product carries.
+
+                An earlier near-white slab did read as a hole punched in the bar.
+                What is different is the elevation around it: this one is raised
+                off the bar and casts `shadow-card`, so the paper sits ON the
+                chrome instead of showing through it. This is the one place the
+                house's raised language is allowed to stay loud, because it is
+                the one control on the bar that is an ACTION rather than a
+                destination.
               */
               className={`${rail ? 'w-full' : 'w-nav-raised'} h-nav-raised ${raisedTarget} items-center justify-center rounded-md border-2 border-on-surface-footer bg-nav-cta shadow-card`}
             >
@@ -453,13 +516,34 @@ export function ShellTabBar({
       its border on the right would put a rule against the screen edge and none
       at all against the content, and `insets.left` would pad the wrong side in
       landscape. `insets.right` is the real cutout/gesture inset on this edge.
+
+      The inset is ADDED to the width, not taken out of it. `w-nav-rail` is the
+      token-sized content area the labels were measured against; with the
+      inset as padding inside a fixed 80, a Duo camera edge shrank the usable
+      rail to whatever was left. Width comes from the same token as the class
+      so the two cannot drift.
+
+      When the inset IS a hardware-edge column (see `useHardwareEdgeColumn`),
+      the rail is the column: exactly its width, no trailing padding, items
+      centred in it the way UIKit centres its own relocated bars. The status
+      cluster occupies the top of that column and the items are vertically
+      centred, so they do not meet.
     */
     return (
       <View
         role="tablist"
         aria-label="Main navigation"
-        style={{ paddingTop: insets.top, paddingBottom: insets.bottom, paddingRight: insets.right }}
-        className="w-nav-rail flex-col items-stretch justify-center gap-1 border-l-2 border-on-surface-footer bg-surface-footer"
+        style={
+          column > 0
+            ? { paddingTop: insets.top, paddingBottom: insets.bottom, width: column }
+            : {
+                paddingTop: insets.top,
+                paddingBottom: insets.bottom,
+                paddingRight: insets.right,
+                width: NAV_RAIL_WIDTH + insets.right,
+              }
+        }
+        className="flex-col items-stretch justify-center gap-1 border-l-2 border-on-surface-footer bg-surface-footer"
       >
         {rendered}
       </View>
@@ -488,12 +572,8 @@ export function ShellTabBar({
     contain it is what keeps the CTA tappable, and it also means nothing here
     depends on a clip setting in react-navigation's own container.
 
-    THE COST, STATED: the tab bar now measures 58px taller, and BottomTabView
-    pads the scene by the bar's measured height, so a phone scene loses 58px.
-    That is the honest price of a control that stands proud of the chrome
-    rather than one that merely claims to — the alternative (absolutely
-    positioning the bar over the scene) buys the pixels back and re-introduces
-    exactly the hit-testing hole above.
+    The extra 16px stays inside the navigator's measured bar so the full
+    camera button remains tappable without covering scene content.
 
     `pt-1` is gone with the chrome: it gave 4px between the top rule and the
     icons, and that gap is now carried by the item cell's own `min-h-target-*`
@@ -512,8 +592,19 @@ export function ShellTabBar({
     <View
       role="tablist"
       aria-label="Main navigation"
-      style={{ paddingBottom: insets.bottom }}
-      className="flex-row items-end gap-1 bg-surface px-2 pt-nav-raise"
+      /*
+        Each side takes its OWN inset on top of the bar's 8px gutter (`px-2`,
+        written out here because an inline padding replaces the class): iPhone
+        Duo's horizontal insets are asymmetric, so one value for both sides
+        would pad the wrong edge. The chrome layer below is `inset-x-0`, so the
+        fill and top rule still span the full width.
+      */
+      style={{
+        paddingBottom: insets.bottom,
+        paddingLeft: BAR_GUTTER + insets.left,
+        paddingRight: BAR_GUTTER + insets.right,
+      }}
+      className="flex-row items-end gap-1 bg-surface pt-nav-raise"
     >
       {/*
         First child, so it paints behind every item without needing a z-index.

@@ -38,6 +38,7 @@ import { Brush, Eraser, Highlighter, Sparkles, Trash2, Undo2 } from './icons';
 import { View, Pressable } from './primitives';
 import { WhiteboardBoard } from './whiteboard-board';
 import type {
+  WhiteboardCalibration,
   WhiteboardDiff,
   WhiteboardDiffSource,
   WhiteboardHandle,
@@ -47,12 +48,30 @@ import type {
 } from './whiteboard.types.ts';
 
 export type {
+  WhiteboardCalibration,
   WhiteboardDiff,
   WhiteboardDiffSource,
   WhiteboardHandle,
   WhiteboardInk,
   WhiteboardSnapshot,
   WhiteboardTool,
+};
+
+/**
+ * The answer when there is no engine on the other side of this wrapper to ask.
+ *
+ * `not-ready` is the union's own word for exactly this — "there is no engine to
+ * ask" — and it covers both ways it happens here: the inner board's ref is not
+ * attached yet, and the web fork, which implements no `calibrate` at all
+ * because nothing injects a pointer into it. Neither case may answer `ok`: a
+ * pass that was never measured is the one outcome the whole calibration path
+ * exists to prevent.
+ */
+const NO_ENGINE_TO_ASK: WhiteboardCalibration = {
+  ok: false,
+  reason: 'not-ready',
+  worst: null,
+  points: [],
 };
 
 export interface WhiteboardProps {
@@ -83,6 +102,16 @@ export interface WhiteboardProps {
   onChange?: (diff: WhiteboardDiff, source: WhiteboardDiffSource) => void;
   /** The engine will accept work. Nothing sent before this arrives lands. */
   onReady?: () => void;
+  /**
+   * Every calibration run's answer, from the board underneath.
+   *
+   * FORWARDED RATHER THAN HANDLED HERE, because this component has nothing to
+   * do with the result: a failed mapping is a fact about the SESSION — the
+   * caller holds it open in a recoverable state and tells the child — and a
+   * tray that quietly disabled its own pens would be a board that stopped
+   * working for no stated reason. See `WhiteboardBoardProps.onCalibration`.
+   */
+  onCalibration?: (result: WhiteboardCalibration) => void;
   className?: string;
 }
 
@@ -121,6 +150,8 @@ const ROW_PADDING_DP = 32;
   because at this width it carries a label rather than a key.
 */
 const KEYS_IN_FULL_ROW = 6;
+/** A key's drawn width: the 20 dp icon plus `px-2`. The band target is height, and hitSlop. */
+const KEY_DP = 36;
 
 const TARGET_DP: Record<NonNullable<WhiteboardProps['size']>, number> = {
   sm: Number.parseInt(targets.adult, 10),
@@ -170,17 +201,26 @@ const TARGET_HEIGHT: Record<NonNullable<WhiteboardProps['size']>, string> = {
  * the same place.
  */
 const TARGET_FOLDED: Record<NonNullable<WhiteboardProps['size']>, string> = {
-  sm: 'min-h-target-adult min-w-target-adult',
-  md: 'min-h-target-adult min-w-target-adult',
-  lg: 'min-h-target-teen min-w-target-adult',
-  xl: 'min-h-target-child min-w-target-adult',
+  sm: 'min-h-target-adult px-2',
+  md: 'min-h-target-adult px-2',
+  lg: 'min-h-target-teen px-2',
+  xl: 'min-h-target-child px-2',
 };
 
+/*
+  KEYS ARE BAND-TALL AND ICON-WIDE. The height is the band's target because
+  that is what a finger lands on — the same rule `TARGET_HEIGHT` states for the
+  swatch: the target is honoured in the dimension that is free. The width was
+  the band's number too, which made every key a 72 dp square at the child
+  band; then the adult 44, still too wide for the product owner in a 294 dp
+  board. So no minimum width at all: the icon plus `px-2` (20 + 16 = 36 dp),
+  with the row's height as the finger's target.
+*/
 const TOOL_KEY: Record<NonNullable<WhiteboardProps['size']>, string> = {
-  sm: 'min-h-target-adult min-w-target-adult',
-  md: 'min-h-target-adult min-w-target-adult',
-  lg: 'min-h-target-teen min-w-target-teen',
-  xl: 'min-h-target-child min-w-target-child',
+  sm: 'min-h-target-adult px-2',
+  md: 'min-h-target-adult px-2',
+  lg: 'min-h-target-teen px-2',
+  xl: 'min-h-target-child px-2',
 };
 
 const TOOLS: readonly { id: WhiteboardTool; label: string; Icon: typeof Brush }[] = [
@@ -212,7 +252,7 @@ const INKS = [
 ] as const satisfies readonly { id: WhiteboardInk; label: string; swatch: string }[];
 
 export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function Whiteboard(
-  { snapshot, size = 'md', onAsk, asking = false, onChange, onReady, className },
+  { snapshot, size = 'md', onAsk, asking = false, onChange, onReady, onCalibration, className },
   ref,
 ) {
   const board = useRef<WhiteboardHandle>(null);
@@ -248,7 +288,28 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
       board.current?.setInk(next);
     },
     undo: () => board.current?.undo(),
+    /*
+      Forwarded, not surfaced. The tray deliberately has no redo key — see
+      `WhiteboardHandle.redo` — but the handle is one contract, and the spatial
+      rail reaches the engine through this component.
+    */
+    redo: () => board.current?.redo(),
+    injectPointer: (sample) => board.current?.injectPointer(sample),
     clear: () => board.current?.clear(),
+    /*
+      Forwarded for the same reason `redo` is: the handle is one contract, and
+      the spatial screen reaches the engine through this component. Without it
+      the board underneath implemented a self-test nothing could reach — the
+      probe ran, the mapping was measured, and the one caller that injects a
+      pointer had no way to ask.
+
+      ALWAYS DEFINED HERE, EVEN THOUGH THE HANDLE'S IS OPTIONAL. The optionality
+      exists so a fork with nothing to calibrate can say so; a wrapper cannot,
+      because the fork underneath it is chosen by the bundler and the ref is
+      attached after the first render. So it answers instead of disappearing,
+      and `NO_ENGINE_TO_ASK` is what it answers with.
+    */
+    calibrate: async () => (await board.current?.calibrate?.()) ?? NO_ENGINE_TO_ASK,
   }));
 
   const [rowWidth, setRowWidth] = useState<number | null>(null);
@@ -257,8 +318,15 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
   }, []);
 
   const target = TARGET_DP[size];
+  /*
+    Keys are icon-wide now, so the row they must fit is KEY_DP each, not the
+    band square — the old formula folded a tray that fit. What the band still
+    owns is the TOUCH width: each key answers across the band through hitSlop,
+    the same trade the composer's keys make.
+  */
+  const keySlop = { left: Math.max(0, (target - KEY_DP) / 2), right: Math.max(0, (target - KEY_DP) / 2) };
   const fullRowDp =
-    KEYS_IN_FULL_ROW * target + (KEYS_IN_FULL_ROW - 1) * GAP_DP + ASK_LABEL_DP + ROW_PADDING_DP;
+    KEYS_IN_FULL_ROW * KEY_DP + (KEYS_IN_FULL_ROW - 1) * GAP_DP + ASK_LABEL_DP + ROW_PADDING_DP;
   /*
     `null` until the first layout, and the wide form is what renders in the
     meantime — the same first-paint choice `Composer` documents, because the
@@ -366,6 +434,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
             snapshot={snapshot}
             onChange={handleChange}
             onReady={onReady}
+            onCalibration={onCalibration}
           />
         </LearningCanvas>
 
@@ -413,9 +482,17 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
             above has now removed. 140ms, ease-out, opacity and one small rise:
             entering motion decelerates and never bounces (craft R12).
           */
-          initial={animated ? { opacity: 0, translateY: 6 } : undefined}
-          animate={animated ? { opacity: 1, translateY: 0 } : undefined}
-          exit={animated ? { opacity: 0, translateY: 6 } : undefined}
+          /*
+            `y`, not `translateY`. Legend Motion's animatable transform keys are
+            `x`/`y` (`PropsTransforms`); `translateY` only ever type-checked here
+            because React Native's `ViewStyle` carried a top-level `translateY`
+            and the prop accepts a style as well. RN 0.88 dropped it from
+            `ViewStyle`, so the mixed object matched neither half of the union.
+            Same movement, named the way the library names it.
+          */
+          initial={animated ? { opacity: 0, y: 6 } : undefined}
+          animate={animated ? { opacity: 1, y: 0 } : undefined}
+          exit={animated ? { opacity: 0, y: 6 } : undefined}
           transition={{ type: 'timing', duration: 140, easing: 'easeOut' }}
         >
           {INKS.map((entry) => (
@@ -505,6 +582,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
             aria-label={label}
             role="radio"
             aria-checked={tool === id}
+            hitSlop={keySlop}
             /*
               SELECTED IS INVERTED INK, NOT THE ACCENT. It was `bg-highlighter`,
               which put a teal tile next to the yellow ask — two accents in one
@@ -631,6 +709,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
                 language, and the shadow is also the thing the margin above
                 exists for.
               */
+              hitSlop={keySlop}
               className={`${key} ${FOCUS} mr-inset-hair items-center justify-center rounded-control border-2 ${
                 !hasMarks || asking
                   ? 'border-border bg-surface-sunken shadow-none'

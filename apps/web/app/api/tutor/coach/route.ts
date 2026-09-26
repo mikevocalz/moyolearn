@@ -7,6 +7,7 @@
 // the generator it is iterating was handed over.
 // SOT: docs/pack/29-shipaton-plan.md §3 · docs/pack/15-native-ai-client-spec.md §1
 // SOT-KEYWORDS: tutor coach api route sse stream protected operation safety plane
+import { INFERENCE_SAFETY_VERSION, modelFor } from '@acme/inference';
 import { NextRequest, NextResponse } from 'next/server';
 import { coachTutorTurn, type CoachEvent } from '@acme/app/server';
 import type { TurnImage } from '@acme/inference';
@@ -97,10 +98,12 @@ function isCoachBody(
   sessionId?: string;
   problemIsReading?: boolean;
   image?: TurnImage;
+  lastOutcome?: 'correct' | 'incorrect';
 } {
   if (typeof body !== 'object' || body === null) return false;
   const record = body as Record<string, unknown>;
   if (typeof record.problem !== 'string' || record.problem.trim().length === 0) return false;
+  if (record.lastOutcome !== undefined && record.lastOutcome !== 'correct' && record.lastOutcome !== 'incorrect') return false;
   if (record.message !== undefined && typeof record.message !== 'string') return false;
   if (record.problemIsReading !== undefined && typeof record.problemIsReading !== 'boolean') {
     return false;
@@ -140,6 +143,26 @@ export async function POST(request: NextRequest) {
         loadGradeBand,
         loadLearnerFlags,
         recordSafetyEvent,
+        /*
+          The capability context the stream checks before it loads a single
+          learner fact. It was never supplied, which made the check answer
+          "no" to every turn. What is stated here is what is TRUE of this
+          route: the product is math-first and sessions carry no subject yet;
+          a turn with the learner's words or picture is them showing work,
+          an empty one is the coach opening; the brief IS the grounding; no
+          deterministic tool exists to offer. See OWNER_AUTHORIZED.
+        */
+        loadCapabilityContext: async () => ({
+          subject: 'math',
+          task: body.message || body.image ? 'check-work' : 'understand',
+          available: {
+            tools: [],
+            grounding: true,
+            language: 'en',
+            model: modelFor('tutor-turn'),
+            safetyVersion: INFERENCE_SAFETY_VERSION,
+          },
+        }),
       },
     );
   } catch (error) {
@@ -163,7 +186,7 @@ export async function POST(request: NextRequest) {
     sentence. The crisis script is the one that is not: its audio is the BAKED
     path (`/api/tutor/voice/baked/*`), never a live Flash render.
   */
-  const tone = toneForTurn((body.message ?? '') === '');
+  const tone = toneForTurn((body.message ?? '') === '', body.lastOutcome ?? null);
   let previousText: string | null = null;
   const framed = (event: CoachEvent): string => {
     /*

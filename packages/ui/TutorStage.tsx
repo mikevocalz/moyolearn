@@ -27,7 +27,7 @@
 // SOT: docs/pack/23-tutorstage-handoff.md §3 · §5 · docs/design/tutor-session-thread-first.md
 // SOT-KEYWORDS: tutorstage s9 tutor session state union hot dial learner thread first live turn work in turn
 
-import { useCallback, useState } from 'react';
+import { cloneElement, isValidElement, useCallback, useState } from 'react';
 import { AdaptivePanes } from './adaptive-panes';
 import { isCollapsed } from './adaptive-panes/constants';
 import { PaneToggle } from './adaptive-panes/PaneToggle';
@@ -120,6 +120,18 @@ export type TutorStageState =
 
 export interface TutorStageProps {
   state: TutorStageState;
+  /**
+   * One action that belongs to the tutor's own alcove — today, the way into the
+   * spatial whiteboard.
+   *
+   * It is drawn in exactly ONE place at a time. Her pane starts closed
+   * (`compact` is the seed), so when it is shut the action rides on her rail in
+   * the conversation column, and when it is open it moves into the pane beside
+   * her. Never both: two doors into the same room is the bug this slot is
+   * shaped to prevent, and it is why the caller passes one node rather than
+   * rendering it twice.
+   */
+  detailActions?: React.ReactNode;
   /**
    * What this session is — "Long division", not "Natalie".
    *
@@ -484,6 +496,7 @@ function StateBody({
  * compact/regular layout split.
  */
 export function TutorStage({
+  detailActions,
   state,
   title,
   tutorName = 'Natalie',
@@ -676,7 +689,7 @@ export function TutorStage({
   } as const;
 
   const presenceBlock = panes ? (
-    <TutorPresence {...presenceProps} render="rail" />
+    <TutorPresence {...presenceProps} render="rail" railActions={detailOpen ? undefined : detailActions} />
   ) : (
     <TutorPresence {...presenceProps} avatar={avatar} />
   );
@@ -822,7 +835,16 @@ export function TutorStage({
         page ground between the toolbar and the columns — the panes are the
         screen there, and a gap above them reads as a seam, not as spacing.
       */}
-      <View className={`flex-1 bg-surface ${panes ? '' : 'gap-stack'} ${className ?? ''}`}>
+      {/*
+        Three panes stand on the STAGE ground, not the content ground. What
+        shows around the pane row — the safe-area column beside her alcove and
+        the strip under the home indicator — is this view, and on the Duo it
+        read as a cream border around her purple. On a phone the row fills the
+        view and nothing of this is visible either way.
+      */}
+      <View
+        className={`flex-1 ${panes ? 'bg-surface-stage' : 'bg-surface gap-stack'} ${className ?? ''}`}
+      >
         <SessionToolbar
           title={title}
           captionsEnabled={captionsEnabled}
@@ -830,14 +852,14 @@ export function TutorStage({
           onToggleCaptions={onToggleCaptions}
           paneControls={paneControls}
         />
-        {panes ? (
-          /*
-            THE HOST, LEFT TO RIGHT: conversation · work · Natalie.
+        {/*
+            THE HOST, LEFT TO RIGHT: conversation · work · Natalie — at every
+            width, including the ones that show one of the three.
 
             The same `AdaptivePanes` every adult pane surface uses, so a
-            learner's split view is not a second implementation of one.
-            `topColumnForCollapsing` is deliberately absent: this host never
-            collapses, because `panes` is false below the class where it would.
+            learner's split view is not a second implementation of one. It is
+            also the only tree here now; see `topColumnForCollapsing` below for
+            what the second one was costing.
 
             `primaryWidthDp` because the leading pane holds a CONVERSATION. The
             automatic policy steps the primary pane down to a 224dp rail at
@@ -856,12 +878,33 @@ export function TutorStage({
             first overflowing a clip, and if something ever does, the clip on
             the offender is the fix. A z-index would only have hidden it.
 
-            Her pane is also the only one here that never animates its width,
-            which is what the 3D upgrade needs: a canvas that is resized every
-            frame of a collapse would rebuild its swapchain on each one.
-          */
+            Her pane animates its width now that this host collapses, and the
+            3D upgrade is not exposed to it: `CollapsiblePane` clips over an
+            inner view holding the measured width, so the surface keeps its size
+            while the clip moves, and `PaneContent` freezes the subtree while the
+            pane is shut. A canvas that is resized every frame of a collapse
+            would rebuild its swapchain on each one; nothing here resizes it.
+          */}
           <AdaptivePanes
             paneControls={false}
+            /*
+              THE CONVERSATION IS WHAT SURVIVES A COLLAPSE, and it has to be
+              named now that this host renders at every width.
+
+              There used to be a second tree under here — `panes ? <AdaptivePanes>
+              : <View>{stageBody}</View>` — and it cost the whole session. React
+              keeps state by tree position, so crossing 600 dp moved `stageBody`
+              from one set of ancestors to another and rebuilt it: measured on
+              this component, three of four text nodes replaced by one resize
+              (docs/verification/adaptive-panes/remount-audit-2026-09-16.md).
+              A child folding their phone mid-lesson was rebuilding the thread,
+              the composer and everything either was holding.
+
+              `AdaptivePanes` collapses to a single full-width pane on its own
+              now, so the phone layout is this host with one pane open rather
+              than a different host. The conversation is that pane.
+            */
+            topColumnForCollapsing="primary"
             detailOpen={detailOpen}
             primaryWidthDp={CONVERSATION_PANE_DP}
             /* The board's column is wider than the token, and Natalie still
@@ -898,13 +941,15 @@ export function TutorStage({
               */
               <MotionView
                 /*
-                  NO TOP INSET. The alcove is hers top to bottom: the pane's own
-                  edge is the top of her stage, so an inset above it read as a
-                  band of empty sunken ground between the header and her head
-                  while the two panes beside it started at the header. Sides and
-                  bottom keep the inset — those edges are against other panes.
+                  NO INSET ON ANY EDGE, AND HER GROUND IS THE STAGE'S. The alcove
+                  is hers edge to edge: a sunken frame with side and bottom
+                  insets read as a cream border around her purple on the Duo,
+                  and the product owner asked for the purple to fill the pane.
+                  `TutorAvatar` paints `bg-surface-stage` on its own root; this
+                  wrapper carries the same ground so there is no seam while she
+                  loads or fades.
                 */
-                className="flex-1 items-center justify-center gap-stack bg-surface-sunken px-inset pb-inset"
+                className="flex-1 items-center justify-center gap-stack bg-surface-stage"
                 /*
                   ONE MOTION INSIDE, and it is a fade — the PANE's own width
                   animation (`CollapsiblePane`) is what carries the movement
@@ -930,7 +975,52 @@ export function TutorStage({
                     exact reason this prop exists (see `TutorPresence`'s
                     `render` contract: the halves split by placement, never by
                     duplication). */}
-                <TutorPresence {...presenceProps} render="body" avatar={avatar} fill />
+                {/*
+                  THE AVATAR GOES TO WHICHEVER PRESENCE IS VISIBLE, and only one
+                  ever is. Collapsed, `presenceBlock` draws her inline in the
+                  conversation and holds the avatar; this pane is shut and
+                  frozen, so handing it a second avatar would mount a second
+                  renderer for a pane nobody can see. Expanded, the inline one
+                  becomes the rail (no avatar) and it belongs here.
+
+                  She still changes home at the boundary — that is the design,
+                  she is in the thread on a phone and in her own alcove on a
+                  wide screen. What no longer changes home is the conversation.
+                */}
+                <TutorPresence
+                  {...presenceProps}
+                  render="body"
+                  avatar={panes ? avatar : undefined}
+                  fill
+                />
+                {/*
+                  Her pane is open, so the action lives here — upper-trailing,
+                  above her body and never over her face or her captions.
+                */}
+                {detailOpen && detailActions ? (
+                  <View className="absolute right-group top-group">
+                    {/*
+                      THE MARK ALONE IN HERE, because this slot is a corner and the
+                      rail is a row.
+
+                      `XrBoardButton` deliberately does not know which of the two it
+                      is drawn in — a control that picks its own placement ends up in
+                      both — so the SLOT says what it can afford. Her pane sizes the
+                      control by the band's target, which is 72dp for a K–2 learner,
+                      and a labelled pill at that height in an upper corner over her
+                      body is a block of chrome on top of the tutor.
+
+                      The label is what goes, not the target: the glyph stays a full
+                      72dp press for the same six-year-old, and `aria-label` carries
+                      the words it no longer prints.
+                    */}
+                    {isValidElement(detailActions)
+                      ? cloneElement(detailActions as React.ReactElement<{ showLabel?: boolean }>, {
+                          showLabel: false,
+                        })
+                      : detailActions}
+                  </View>
+                ) : null}
               </MotionView>
             }>
             <AdaptivePanes.Column>
@@ -978,9 +1068,6 @@ export function TutorStage({
               </AdaptivePanes.Column>
             ) : null}
           </AdaptivePanes>
-        ) : (
-          <View className="mx-auto w-full max-w-content-prose flex-1">{stageBody}</View>
-        )}
       </View>
     </Dial>
   );

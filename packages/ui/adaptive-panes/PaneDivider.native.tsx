@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 'use client';
 // PLATFORM FORK — native: the drag gesture plus the keyboard affordance. The
 // web fork keeps only the keyboard path, so react-native-gesture-handler stays
@@ -39,11 +40,13 @@ export type { PaneDividerProps };
  * arbitration written down here, because at that point they genuinely do
  * compete for the same pointer.
  *
- * API note: Gesture Handler 2.x (the version Expo SDK 57 pins), so this is the
- * builder API — `Gesture.Pan()` + `GestureDetector`, composed with
- * `Gesture.Race()`/`Gesture.Simultaneous()` if it ever needs to be. GH 3.x
- * deprecates the builder in favour of `usePanGesture` and the `use*Gestures`
- * hooks; revisit if the SDK moves forward again.
+ * API note: this branch pins Gesture Handler 3.2.1 (Expo SDK 58). The builder
+ * API used here — `Gesture.Pan()` + `GestureDetector`, composed with
+ * `Gesture.Race()`/`Gesture.Simultaneous()` if it ever needs to be — is still
+ * supported in 3.x but is the legacy surface; 3.x prefers `usePanGesture` and
+ * the `use*Gestures` hooks. Migrate this and `SwipeableRow` together, with
+ * native drag / vertical-scroll / keyboard checks: typecheck cannot tell
+ * whether gesture arbitration still holds.
  *
  * `.runOnJS(true)` because the handler writes to a Zustand store, which is not
  * worklet-safe. The resize is a low-frequency drag, so keeping it on the JS
@@ -56,10 +59,16 @@ export function PaneDivider({ width }: PaneDividerProps) {
   // Resolve from the width the drag STARTED at plus the total translation.
   // Accumulating per-frame deltas drifts once the pointer crosses a clamp
   // boundary and returns — see widthAfterDrag.
+  // `width` re-renders under the drag, so the ORIGIN is captured once at
+  // start: origin + cumulative translation, never last-frame + cumulative.
+  const origin = useRef(width);
   const pan = Gesture.Pan()
     .runOnJS(true)
+    .onStart(() => {
+      origin.current = width;
+    })
     .onUpdate((event) => {
-      setPrimaryWidth(widthAfterDrag(width, event.translationX));
+      setPrimaryWidth(widthAfterDrag(origin.current, event.translationX));
     });
 
   return (

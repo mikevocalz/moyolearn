@@ -1,0 +1,39 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.moyolearn'
+version = '0.1.0'
+
+android {
+  namespace "com.moyolearn.boardtexture"
+  defaultConfig {
+    versionCode 1
+    versionName "0.1.0"
+    /*
+      The same line `with-viro-android-linkage` writes into the app, for the
+      same reason and it is NOT inherited: `react_viro` and `viro_renderer`
+      declare a `device` flavour dimension (mobile/pico/quest) that no consumer
+      here has, so every consumer has to name the variant it wants or Gradle
+      fails to resolve the project at configuration time. All three flavours are
+      `api files('<name>-release.aar')` over the same artifact — see that
+      plugin's §1 for why the choice selects a name rather than a binary.
+    */
+    missingDimensionStrategy 'device', 'pico'
+  }
+}
+
+dependencies {
+  implementation 'com.facebook.react:react-android'
+  /*
+    `compileOnly`, because the app already carries both: it links them itself
+    (`android/app/build.gradle`) and an Expo module that brought its own copy of
+    a 7 MB renderer would be a second one in the APK.
+
+    `viro_renderer` is where `AndroidViewTexture` lives; `react_viro` is where
+    `MaterialManager` does. Nothing here needs any other part of either.
+  */
+  compileOnly project(path: ':viro_renderer')
+  compileOnly project(path: ':react_viro')
+}

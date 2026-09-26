@@ -1,0 +1,88 @@
+{
+  "date": "2026-09-25",
+  "status": "rive.10 count binding and Zustand migration complete; software checks pass; new device count validation blocked by CDP timeout/disconnection",
+  "sources": {
+    "moyo": {
+      "path": "/Users/mikevocalz/moyo-rive-panel",
+      "base": "5a161b3739b026b565dcf9f0eaa5545ad69bcce1",
+      "branch": "codex/rive-viro-panel",
+      "implementationCommit": "4dacb385911131aacd1b8effa0776b9562a7bc26"
+    },
+    "nitro": {
+      "path": "/Users/mikevocalz/nitro-rive-panel",
+      "base": "4d32d437aa393b5925f71397318138a33adb2bf2",
+      "branch": "codex/rive-viro-panel",
+      "implementationCommit": "731d4b5f7992c3c89b17838b7453763e7e412693"
+    },
+    "viro": {
+      "path": "/Users/mikevocalz/viro-rive-panel",
+      "base": "2bb0b5abbc707810ae2b49221917a80c7ee50b41",
+      "branch": "codex/rive-viro-panel",
+      "implementationCommit": "8d7c645a17a54f8d65389e881d256fa045b39678"
+    },
+    "virocore": {
+      "path": "/Users/mikevocalz/virocore-rive-panel",
+      "base": "8e3750fed7b1c7f711baefe32a8a832df0e4672b",
+      "branch": "codex/rive-viro-panel",
+      "implementationCommit": "f3b02eada36f7086783d3fa3494cf103dfb93d35"
+    }
+  },
+  "artifacts": [
+    {
+      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/reactvision-react-viro-3.0.0-moyo.5-rive.10.tgz",
+      "size": 47216198,
+      "sha256": "cc0e263a9e2086a486b591fb09be54e3752bdb2f71928ede2152aee530667374"
+    },
+    {
+      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/nitro-canvas-in-Vision-0.0.2-rive.3.tgz",
+      "size": 67359,
+      "sha256": "f25d5983e4159e741da83ab60eac13db19430c1b0be7eb39c5a0123caf2f1b72"
+    },
+    {
+      "path": "/Users/mikevocalz/viro-rive-panel/android/viro_renderer/viro_renderer-release.aar",
+      "size": 10089921,
+      "sha256": "6e0ddb1decd5aca6e97a90eefe6634c93685d3d0110f88d3f77b870d4e2738aa"
+    },
+    {
+      "path": "/Users/mikevocalz/viro-rive-panel/android/react_viro/react_viro-release.aar",
+      "size": 569789,
+      "sha256": "9dbd6a4f24361234b5f3ea2112db7409f3e88e356b9cad1a1ca73e6b120cfc3b"
+    },
+    {
+      "path": "/Users/mikevocalz/moyo-rive-panel/apps/mobile/assets/rive/moyo_fractions.riv",
+      "size": 142645,
+      "sha256": "e63b798165fe708c75e9ccda6ddcfc1f943c22fe764ffcc2f0ee23d12aa060c7"
+    },
+    {
+      "path": "/Users/mikevocalz/moyo-rive-panel/apps/mobile/android/app/build/outputs/apk/quest/debug/app-quest-debug.apk",
+      "size": 356991597,
+      "sha256": "b41cbf44d853ddfb3a13523081a0c09bc02832dcded64ee04630bf171be20f81"
+    },
+    {
+      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/reactvision-react-viro-3.0.1-moyo.0.tgz",
+      "size": 49982578,
+      "sha256": "d985228ca6d93c806169f8424d65434540a6321ecbbc678a7714cee5320a9bac",
+      "note": "repacked 2026-09-25/26 carrying the post-merge viroreact-release.aar (sha256 fbbd4cb15e9fc761a9b9b5866e52cda49ef4d3e51c9ccf265ff325e4e4e30b62); installed via pnpm --filter mobile; supersedes the rive.N tarballs above"
+    }
+  ],
+  "runtime": {
+    "reactNative": "0.88.0-rc.2",
+    "react": "19.3.0",
+    "reactDom": "19.3.0",
+    "nitroModules": "0.37.1",
+    "riveAndroid": "11.12.1",
+    "expoHorizonCore": "57.0.2",
+    "zustand": "5.0.15"
+  },
+  "rendererAbis": [
+    "arm64-v8a"
+  ],
+  "window": {
+    "defaultWidth": "1024dp",
+    "defaultHeight": "640dp",
+    "orientation": "default",
+    "verifiedInApk": true
+  },
+  "jsDelivery": "rive.10 via Metro 8082; existing rive.9 native APK unchanged",
+  "audit2026-09-26": "viro fork main pushed at 019ec2e, virocore fork main at d4e09840; tags pushed and upstream releases mirrored (viro 48/48, virocore 23/25); three-slot xr-layout-probe verified on Quest 3S (evidence/xr-layout-probe/quest-3s-three-slot.png); ink rendering, board-drag persistence and Natalie speech still unverified post-8ebdf4a rebuild"
+}

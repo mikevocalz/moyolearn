@@ -8,17 +8,35 @@
       "extends": "base",
       "developmentClient": true,
       "distribution": "internal",
-      "channel": "development"
+      "channel": "development",
+      "env": {
+        "EXPO_PUBLIC_APP_URL": "https://app.moyolearn.com",
+        "EXPO_PUBLIC_AUTH_URL": "https://app.moyolearn.com",
+        "EXPO_PUBLIC_AUTH_MODE": "live",
+        "EXPO_PUBLIC_SENTRY_ENVIRONMENT": "development"
+      }
     },
     "preview": {
       "extends": "base",
       "distribution": "internal",
-      "channel": "preview"
+      "channel": "preview",
+      "env": {
+        "EXPO_PUBLIC_APP_URL": "https://app.moyolearn.com",
+        "EXPO_PUBLIC_AUTH_URL": "https://app.moyolearn.com",
+        "EXPO_PUBLIC_AUTH_MODE": "live",
+        "EXPO_PUBLIC_SENTRY_ENVIRONMENT": "preview"
+      }
     },
     "production": {
       "extends": "base",
       "autoIncrement": true,
-      "channel": "production"
+      "channel": "production",
+      "env": {
+        "EXPO_PUBLIC_APP_URL": "https://app.moyolearn.com",
+        "EXPO_PUBLIC_AUTH_URL": "https://app.moyolearn.com",
+        "EXPO_PUBLIC_AUTH_MODE": "live",
+        "EXPO_PUBLIC_SENTRY_ENVIRONMENT": "production"
+      }
     }
   },
   "submit": {

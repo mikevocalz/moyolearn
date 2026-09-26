@@ -225,6 +225,9 @@ function Bubble({
 }) {
   const learner = message.role === 'learner';
   const attachments = message.attachments ?? [];
+  // A record with no text must not take the whole thread down (see the text
+  // bubble below): every read of the text goes through this one string.
+  const text = typeof message.text === 'string' ? message.text : '';
 
   return (
     <View className={learner ? 'items-end' : 'items-start'}>
@@ -343,8 +346,14 @@ function Bubble({
             ),
           )}
 
-        {message.text.length > 0 ? (
-          <Text className="font-sans text-body text-text">{message.text}</Text>
+        {/*
+          A record with no text must not take the whole thread down. One got
+          into the store on 2026-09-24 (a learner turn built from a bare
+          string) and every render after it threw on `.length`; the thread is
+          the one surface a child cannot lose to a single bad row.
+        */}
+        {text.length > 0 ? (
+          <Text className="font-sans text-body text-text">{text}</Text>
         ) : null}
 
         {/*
@@ -358,7 +367,7 @@ function Bubble({
           the transcript IS what was said, and "Sent a voice note" above it
           would be the app narrating something the reader can see.
         */}
-        {message.text.length === 0 && attachments.length > 0 && learner ? (
+        {text.length === 0 && attachments.length > 0 && learner ? (
           <CaptionlessLabel attachments={attachments} />
         ) : null}
       </View>

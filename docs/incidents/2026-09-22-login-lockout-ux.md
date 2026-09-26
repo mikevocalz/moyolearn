@@ -67,7 +67,7 @@ only — Moyo's own visual language is unchanged.
 
 | Screen | What it does | Taken / left |
 |---|---|---|
-| [Render](https://mobbin.com/screens/a60e7f5e-e551-484c-92f4-9602f8597695) | "Almost there!" then "We've sent you an email at **samlee.mobbin+1@gmail.com**. Please follow the instructions in the email." Address in bold. Explicit **Resend Verification Email** button. | **Taken:** bolding the address, and the manual resend button (now "Send the link again" under the notice). |
+| [Render](https://mobbin.com/screens/a60e7f5e-e551-484c-92f4-9602f8597695) | "Almost there!" then "We've sent you an email at **samlee.mobbin+1@gmail.com**. Please follow the instructions in the email." Address in bold. Explicit **Resend Verification Email** button. | **Taken:** bolding the address. **Left:** a manual resend button (follow-up #6 in the postmortem). |
 | [Amplitude](https://mobbin.com/screens/f70cf7e2-85e9-4cf6-859c-8b28d458e7d9) | "We've sent a verification email to **samlee@content-mobbin.com** / Click the button in your email to activate your account." Resend Email and Return to Signup beneath. | **Taken:** address on its own line, instruction under it. **Left:** the illustration — this notice lives inside a form, not on its own screen. |
 | [Slite](https://mobbin.com/screens/8c41dee5-5ae0-4551-9487-62cdf3b65110) | "Thanks for confirming your email address, Samlee. We've just sent a verification link to alexsmith@content-mobbin.com." Past tense, named address. | **Taken:** the past tense — the mail is already gone by the time this renders. |
 | [SuperHi](https://mobbin.com/screens/5e3f1215-04bd-47f3-a609-286f33fc25ed) | "We've sent you an email!" then "We've just sent you a sign in link to your email address." | **Left:** "your email address" names nothing, so a reader who mistyped cannot tell. This is the pattern the notice deliberately avoids. |
@@ -136,12 +136,9 @@ reader has left.
 - **No navigation** in either notice state. The previous build pushed to
   `/onboarding/learner` on a session-less sign-up, and the proxy bounced the
   reader back to `/login` with nothing on screen.
-- **Retry is the resend, and so is the button.** better-auth re-sends on each
-  sign-in attempt (`sendOnSignIn`), so pressing Sign in again is a valid action
-  and the copy is written in the past tense to match. A ghost "Send the link
-  again" button sits directly under the notice for the reader who does not want
-  to retype the password; it calls `/send-verification-email`, which answers the
-  same way for any address, so it cannot be used to enumerate accounts.
+- **Retry is the resend.** better-auth re-sends on each sign-in attempt
+  (`sendOnSignIn`), so pressing Sign in again is a valid action and the copy is
+  written in the past tense to match.
 - **Email is trimmed** before submit. Autofill trailing whitespace was its own
   silent lockout.
 - The notice persists until the next submit or a mode switch. It is not
@@ -319,10 +316,10 @@ value detail on the screen and matches nine of twelve references.
 
 **Open questions.**
 
-1. **Manual resend, now present.** Render and Amplitude both offer a button;
-   this build does too — a ghost "Send the link again" beneath the notice. A
-   failed resend replaces the notice with "We could not send a new link just
-   now. Try again in a moment." and leaves the button in place.
+1. **No manual resend.** Render and Amplitude both offer a button; here the
+   resend is a side effect of pressing Sign in again. The copy covers it ("we
+   just sent a new link"), but a reader who does not want to retype their
+   password has no affordance. Postmortem follow-up #6.
 2. **The address is not bolded.** Every reference that names the address also
    emphasises it. Doing that inside a `Text` run needs either a nested `Text`
    with its own weight or a small `RichText`-style split, and the whole line is
@@ -375,11 +372,11 @@ at the call site:**
   native scheme; if that lands, this decision is worth revisiting.
 - *"`requireEmailVerification` requires `sendVerificationEmail` to be
   configured."* True, and the repair is to configure the sender, never to lower
-  the flag. A missing sender logs an error at construction and leaves the
+  the flag. A missing sender now logs an error at construction and leaves the
   control in place.
 
-`sendResetPassword` is wired in the same module, with the same placeholder
-guard; postmortem follow-up #1 is closed.
+**Not addressed, by instruction:** `sendResetPassword` is unwired in exactly the
+same way. Recorded as postmortem follow-up #1.
 
 ---
 

@@ -1,0 +1,94 @@
+import React, { useEffect, useMemo, useRef } from 'react';
+import { ViroNode, ViroQuad, ViroText, ViroMaterials, ViroRivePanel } from '@reactvision/react-viro';
+import { worldMatrix, type RivePanel, type RiveCanvasOptions } from 'nitro-canvas-in-Vision';
+
+import { useStore } from 'zustand';
+import { bindRiveSelection, createRivePanelStore, type PanelPose } from './rive-panel-store';
+export type { PanelPose } from './rive-panel-store';
+
+
+/** Mount below a Viro scene with one ViroController. Supply compiled Fractions .riv bytes.
+ * Change resetKey on recenter/tracking loss. The grip moves the native parent, including
+ * the reference label; React only persists its final transform after release.
+ */
+export function RivePanelProbe({ bytes, initialPose, resetKey = 0 }: { bytes: ArrayBuffer; initialPose: PanelPose; resetKey?: number }) {
+  const group = useRef<ViroNode>(null);
+  const panel = useRef<RivePanel | null>(null);
+  const owner = useRef<number | null>(null);
+  const mounted = useRef(true);
+  const storeRef = useRef<ReturnType<typeof createRivePanelStore> | null>(null);
+  storeRef.current ??= createRivePanelStore(initialPose);
+  const store = storeRef.current;
+  const pose = useStore(store, state => state.pose);
+  const grabbed = useStore(store, state => state.grabbed);
+  const status = useStore(store, state => state.status);
+  const count = useStore(store, state => state.count);
+  const materialsReady = useStore(store, state => state.materialsReady);
+  const stopSelection = useRef<(() => void) | null>(null);
+  const source = useMemo<RiveCanvasOptions>(() => ({ rivBytes: bytes, artboard: 'Fractions', stateMachine: 'Lesson', fit: 'contain' }), [bytes]);
+  const panelWorld = useMemo(() => worldMatrix([pose]), [pose]);
+  const finish = async () => {
+    if (owner.current === null) return;
+    owner.current = null;
+    panel.current?.setBoolean('grabbed', false);
+    try {
+      const next = await group.current?.getTransformAsync();
+      if (mounted.current && next) store.setState({ pose: { position: next.position, rotation: next.rotation } });
+    } catch (error) {
+      if (mounted.current) store.setState({ status: `Could not save panel position: ${String(error)}` });
+    } finally { if (mounted.current) store.setState({ grabbed: false }); }
+  };
+  useEffect(() => {
+    mounted.current = true;
+    ViroMaterials.createMaterials({ riveProbeGrip: { diffuseColor: '#ffc168', lightingModel: 'Constant' },
+      riveProbeFallback: { diffuseColor: '#112d44', lightingModel: 'Constant' } });
+    store.setState({ materialsReady: true });
+    return () => {
+      mounted.current = false;
+      stopSelection.current?.();
+      // Runtime lifetime belongs to ViroRivePanel, including removal of its observers.
+      panel.current = null;
+      ViroMaterials.deleteMaterials(['riveProbeGrip', 'riveProbeFallback']);
+    };
+  }, []);
+  useEffect(() => { void finish(); }, [resetKey]);
+  useEffect(() => {
+    const id = setInterval(() => {
+      const runtime = panel.current;
+      if (!runtime) return;
+      if (runtime.error) store.setState({ status: `Lesson unavailable: ${runtime.error}` });
+      else if (runtime.renderedFrames > 0) store.setState({ status: '' });
+    }, 500);
+    return () => clearInterval(id);
+  }, []);
+  if (!materialsReady) return null;
+  return <ViroNode ref={group} position={pose.position} rotation={pose.rotation}>
+    <ViroRivePanel source={source} width={1.2} height={0.8} position={[0, 0, 0]}
+      resolution={{ width: 960, height: 640 }}
+      input={{ panelWorld, enabled: !grabbed && status === '', resetKey }}
+      onError={(error) => store.setState({ status: `Lesson unavailable: ${error.message}` })}
+      onRuntimeReady={(runtime) => {
+        panel.current = runtime;
+        stopSelection.current?.();
+        stopSelection.current = bindRiveSelection(runtime, store);
+      }} />
+    {status !== '' && <ViroNode position={[0, 0, 0.004]}>
+      <ViroQuad width={1.2} height={0.8} materials={['riveProbeFallback']} />
+      <ViroText text={status + '\nUse the amber grip to move this panel.'} position={[0, 0, 0.002]}
+        width={1.08} height={0.4} style={{ fontSize: 9, color: '#ffffff', textAlign: 'center' }} />
+    </ViroNode>}
+    <ViroQuad position={[0, -0.48, 0.01]} width={0.65} height={0.12} materials={['riveProbeGrip']}
+      highAccuracyEvents dragType="FixedDistanceOrigin" dragTransform="parent" onDrag={() => {}}
+      onClickState={(state, _position, sourceId) => {
+        if (state === 1 && owner.current === null) {
+          owner.current = sourceId;
+          store.setState({ grabbed: true });
+          panel.current?.setBoolean('grabbed', true);
+        } else if (state === 2 && sourceId === owner.current) void finish();
+      }} />
+    <ViroText text={grabbed ? 'Moving panel' : 'Hold to move'} position={[0, -0.48, 0.016]}
+      width={2.4} height={0.36} scale={[0.25, 0.25, 0.25]} maxLines={1} textClipMode="ClipToBounds" ignoreEventHandling style={{ fontSize: 20, color: '#112d44', textAlign: 'center', textAlignVertical: 'center' }} />
+    <ViroText text={`Selected in Rive: ${count}/4`} position={[0, -0.64, 0]}
+      width={4.8} height={0.48} scale={[0.25, 0.25, 0.25]} ignoreEventHandling style={{ fontSize: 20, color: '#ffffff', textAlign: 'center' }} />
+  </ViroNode>;
+}

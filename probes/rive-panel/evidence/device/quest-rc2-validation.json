@@ -1,0 +1,132 @@
+{
+  "device": "Quest 3S",
+  "serial": "340YC10GC3014S",
+  "androidSdk": 34,
+  "reactNative": "0.88.0-rc.2",
+  "installMethod": "adb install -r; existing data preserved",
+  "attempts": [
+    {
+      "result": "startup failed",
+      "cause": "libnitrofetch.so requires __cxa_init_primary_exception, absent from Viro NDK 27 runtime"
+    },
+    {
+      "result": "C++ startup passed; Expo module registration failed",
+      "cause": "ImageManipulator prebuilt expects ReturnTypeKt.getIndirectConverter(Class, io.github.lukmccall.pika.PIntrospectionData); installed Core uses io.github.expo.pika"
+    },
+    {
+      "result": "final APK built; install not performed",
+      "cause": "USB device disconnected; adb reports device not found; Argent list-devices confirms absent"
+    },
+    {
+      "result": "final Expo source-build APK installed and launched after reconnection",
+      "evidence": "native process stayed alive; Metro debugger attached to isolated checkout; OpenXR FOCUSED; Rive Surface attached, frames rendered, error overlay cleared"
+    },
+    {
+      "result": "rive.5 live-ray APK installed successfully",
+      "validation": "latest launch stalled at Moyo splash; CDP connected but evaluation timed out; controller and native layout acceptance pending"
+    },
+    {
+      "result": "Horizon-enabled APK installed and JS runtime responds",
+      "horizonBuild": true,
+      "horizonDevice": true,
+      "appWindow": "APK declares 1024dp \u00d7 640dp; default orientation"
+    }
+  ],
+  "finalApkSha256": "b41cbf44d853ddfb3a13523081a0c09bc02832dcded64ee04630bf171be20f81",
+  "finalCppRuntimeExportsRequiredSymbol": true,
+  "expoAndroidBuildFromSource": [
+    ".*"
+  ],
+  "rendering": "Rive fractions pixels present in both eye views in headset capture; comfort not independently qualified",
+  "controllerInput": "User confirms selection works in rive.8; ray stops at panel, appearance remains under discussion.",
+  "bothEyeComfort": "not verified",
+  "nativePointerDiagnostic": {
+    "action": "direct Rive down/up at first piece artboard coordinates from authored RML",
+    "result": {
+      "piece0": 1,
+      "revision": 1,
+      "selectedCount": 0,
+      "frames": 7
+    },
+    "implication": "native pointer reaches Rive; authored count converter fails on Android despite desktop tests"
+  },
+  "candidateFixes": [
+    "Live hit testing for input-only drags; arm64 renderer built and installed",
+    "Rive count converter group: nine desktop cases pass; native count retry pending",
+    "Viewer-relative placement; scaled and clipped grip label validated with Viro MCP preview",
+    "rive.6 suppresses hand events on controller-owned sides and cancels inactive float actions; renderer, host edge tests, APK build passed; installed with adb -r",
+    "rive.7 extends cancellation to A/B/X/Y/menu; APK and renderer builds pass; installed with app data preserved",
+    "rive.8: non-coalescing click/hover events, geometry-accurate Rive and grip quads; bridge build, APK build, typecheck and window contract passed",
+    "rive.9: independent per-controller cyan surface-hit dots, rendered after scene pixels, non-selectable and hidden on tracking loss/no-hit; installed with app data retained"
+  ],
+  "visualEvidencePath": "/Users/mikevocalz/rive-panel-device-evidence/quest-rive-before-label-fix.png",
+  "currentBlocker": "New count fix lacks device acceptance because debugger inspection timed out/disconnected.",
+  "horizon": {
+    "isHorizonBuild": true,
+    "isHorizonDevice": true,
+    "width": "1024dp",
+    "height": "640dp",
+    "orientation": "default"
+  },
+  "latestRiveRuntime": {
+    "frames": 80,
+    "errorOverlay": "cleared",
+    "initialPosition": [
+      0.0391463273061126,
+      -0.20500807631760837,
+      -1.8012112818561676
+    ],
+    "initialYaw": -2.181411139813117,
+    "gripLabel": "contained inside amber control in native capture",
+    "grabbed": true,
+    "owner": 1,
+    "selectedCount": 0
+  },
+  "latestVisualEvidencePath": "/Users/mikevocalz/rive-panel-device-evidence/quest-rive-horizon-layout.png",
+  "latestNativePointerDiagnostic": {
+    "down0": 1,
+    "selectedCount": 0,
+    "piece0": 0,
+    "revision": 2,
+    "result": "Direct pointer-down reaches native Rive, but click/count completion not established reliably; diagnostic is not physical controller acceptance."
+  },
+  "rive8Runtime": {
+    "hintVisible": true,
+    "revision": 7,
+    "grabbed": false,
+    "owner": null,
+    "assetFnv1a": 249331036,
+    "userSelectionConfirmed": true
+  },
+  "rive9Runtime": {
+    "frames": 1204,
+    "grabbed": false,
+    "owner": null,
+    "status": "",
+    "visualResult": "Cyan beam reaches panel with visible endpoint dot in both eye views; amber handle says Hold to move.",
+    "privateCapturePath": "/Users/mikevocalz/rive-panel-device-evidence/quest-rive9-hit-dots.png"
+  },
+  "rive10Count": {
+    "before": {
+      "pieces": [
+        0,
+        1,
+        1,
+        0
+      ],
+      "selectedCount": 0,
+      "hostCount": 0,
+      "revision": 5
+    },
+    "fix": "observe piece properties, derive in Zustand, synchronize Rive aggregate",
+    "softwareChecks": {
+      "countTests": 3,
+      "windowContractTests": 6,
+      "mobileTypecheck": "pass",
+      "viroTypeEmit": "pass",
+      "installedPackageFilesMatched": 1644
+    },
+    "deviceValidation": "pending: Argent evaluation timed out; reconnect lost CDP after restart",
+    "nativeApk": "unchanged; rive.10 JS served by Metro 8082"
+  }
+}

@@ -11,7 +11,7 @@
 // SOT: docs/pack/32-tutor-voice-tone.md §2 §3 §4 §5
 // SOT-KEYWORDS: voice test palette closed band modulation s4 never live budget silent text only
 import assert from 'node:assert/strict';
-import { describe, it } from 'node:test';
+import { describe, it, mock } from 'node:test';
 import { S4_SCRIPTS } from '@acme/safety';
 import {
   BAKED_PIECES,
@@ -19,6 +19,7 @@ import {
   bakedServePlan,
 } from './baked.ts';
 import { inMemoryVoiceLedger, VOICE_BUDGETS, type VoiceBudgetLedger } from './budget.ts';
+import { liveFaceConfigured, probeFaceHost, renderFace } from './a2f.ts';
 import { createVoiceEgress, type VoiceTransport } from './eleven.ts';
 import {
   TONES,
@@ -44,7 +45,7 @@ const recordingTransport = (): { transport: VoiceTransport; calls: string[] } =>
 
 const REGISTRY = {
   voiceId: 'test-voice',
-  liveModelId: 'eleven_flash_v2_5',
+  liveModelId: 'eleven_v3',
   bakedModelId: 'eleven_v3',
   version: 1,
 } as const;
@@ -294,5 +295,185 @@ describe('the live face rides the sentence (ADR-112)', () => {
     const egress = createVoiceEgress({ transport, registry: REGISTRY, ledger: inMemoryVoiceLedger() });
     const spoken = await egress.speakSentence({ learnerId: 'L', band: '3-5', tone: 'warm-open', text: 'Hi.' });
     assert.equal(spoken.kind, 'audio');
+  });
+});
+
+describe('the face host is addressed with its bearer (ADR-112 host auth)', () => {
+  const FACE = { fps: 30, names: ['jawOpen'], frames: [[0.1], [0.5]], emotion: 'joy' };
+  const AUDIO = new Uint8Array([1, 2, 3]);
+  const JOY = { emotion: 'joy', intensity: 'med' } as const;
+  const json = (body: unknown, status = 200): Response =>
+    new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json' } });
+
+  /** Replaces global fetch for one test, recording each call's URL and headers. */
+  const stubFetch = (respond: (url: string, init: RequestInit) => Promise<Response>) => {
+    const calls: { url: string; headers: Headers }[] = [];
+    const stub = mock.method(globalThis, 'fetch', async (input: string | URL | Request, init: RequestInit = {}) => {
+      const url = String(input);
+      calls.push({ url, headers: new Headers(init.headers) });
+      return respond(url, init);
+    });
+    return { calls, restore: () => stub.mock.restore() };
+  };
+
+  /** Sets the host env for one test and puts it back afterwards, whatever happens. */
+  const withHostEnv = async (env: { url?: string; token?: string }, run: () => Promise<void>): Promise<void> => {
+    const before = { url: process.env.AUDIO2FACE_URL, token: process.env.AUDIO2FACE_TOKEN };
+    const apply = (url: string | undefined, token: string | undefined): void => {
+      if (url === undefined) delete process.env.AUDIO2FACE_URL;
+      else process.env.AUDIO2FACE_URL = url;
+      if (token === undefined) delete process.env.AUDIO2FACE_TOKEN;
+      else process.env.AUDIO2FACE_TOKEN = token;
+    };
+    apply(env.url, env.token);
+    try {
+      await run();
+    } finally {
+      apply(before.url, before.token);
+    }
+  };
+
+  it('sends `Authorization: Bearer <token>` when AUDIO2FACE_TOKEN is set, trimmed', async () => {
+    const { calls, restore } = stubFetch(async () => json(FACE));
+    try {
+      await withHostEnv({ url: 'http://face.test/', token: '  secret-token \n' }, async () => {
+        const face = await renderFace(AUDIO, 'audio/mpeg', JOY);
+        assert.notEqual(face, null);
+        assert.equal(calls.length, 1);
+        assert.equal(calls[0]?.url, 'http://face.test/v1/face');
+        assert.equal(calls[0]?.headers.get('authorization'), 'Bearer secret-token');
+        assert.equal(calls[0]?.headers.get('x-a2f-emotion'), 'joy');
+      });
+    } finally {
+      restore();
+    }
+  });
+
+  it('sends no Authorization header at all when the token is unset or blank', async () => {
+    const { calls, restore } = stubFetch(async () => json(FACE));
+    try {
+      await withHostEnv({ url: 'http://face.test' }, async () => {
+        await renderFace(AUDIO, 'audio/mpeg', JOY);
+      });
+      await withHostEnv({ url: 'http://face.test', token: '   ' }, async () => {
+        await renderFace(AUDIO, 'audio/mpeg', JOY);
+      });
+      assert.equal(calls.length, 2);
+      for (const call of calls) assert.equal(call.headers.has('authorization'), false);
+    } finally {
+      restore();
+    }
+  });
+
+  it('an unset or blank URL is audio only: no face, and no fetch, token or not', async () => {
+    const { calls, restore } = stubFetch(async () => json(FACE));
+    try {
+      await withHostEnv({ token: 'secret-token' }, async () => {
+        assert.equal(liveFaceConfigured(), false);
+        assert.equal(await renderFace(AUDIO, 'audio/mpeg', JOY), null);
+      });
+      await withHostEnv({ url: '  ', token: 'secret-token' }, async () => {
+        assert.equal(liveFaceConfigured(), false);
+        assert.equal(await renderFace(AUDIO, 'audio/mpeg', JOY), null);
+      });
+      assert.equal(calls.length, 0);
+    } finally {
+      restore();
+    }
+  });
+});
+
+describe('the health probe reports the face host without naming it (ADR-112)', () => {
+  const calls: { url: string; headers: Headers }[] = [];
+  const transport =
+    (respond: (url: string, init: RequestInit) => Promise<Response>) =>
+    async (url: string, init: RequestInit): Promise<Response> => {
+      calls.push({ url, headers: new Headers(init.headers) });
+      return respond(url, init);
+    };
+  const withHostEnv = async (env: { url?: string; token?: string }, run: () => Promise<void>): Promise<void> => {
+    const before = { url: process.env.AUDIO2FACE_URL, token: process.env.AUDIO2FACE_TOKEN };
+    const apply = (url: string | undefined, token: string | undefined): void => {
+      if (url === undefined) delete process.env.AUDIO2FACE_URL;
+      else process.env.AUDIO2FACE_URL = url;
+      if (token === undefined) delete process.env.AUDIO2FACE_TOKEN;
+      else process.env.AUDIO2FACE_TOKEN = token;
+    };
+    apply(env.url, env.token);
+    calls.length = 0;
+    try {
+      await run();
+    } finally {
+      apply(before.url, before.token);
+    }
+  };
+
+  it('no host configured: configured false, reachable null, nothing fetched', async () => {
+    await withHostEnv({}, async () => {
+      const health = await probeFaceHost({ transport: transport(async () => new Response('ok')) });
+      assert.deepEqual(health, { configured: false, reachable: null });
+      assert.equal(calls.length, 0);
+    });
+  });
+
+  it('a host answering /v1/health 2xx is reachable, and the probe carries the bearer', async () => {
+    await withHostEnv({ url: 'http://face.test/', token: 'secret-token' }, async () => {
+      const health = await probeFaceHost({
+        transport: transport(async (url) => (url.endsWith('/v1/health') ? new Response('ok') : new Response('', { status: 404 }))),
+      });
+      assert.deepEqual(health, { configured: true, reachable: true });
+      assert.equal(calls.length, 1);
+      assert.equal(calls[0]?.url, 'http://face.test/v1/health');
+      assert.equal(calls[0]?.headers.get('authorization'), 'Bearer secret-token');
+    });
+  });
+
+  it('a host without /v1/health is reachable when its base URL answers below 500 — an auth wall counts', async () => {
+    await withHostEnv({ url: 'http://face.test' }, async () => {
+      const health = await probeFaceHost({
+        transport: transport(async (url) =>
+          url.endsWith('/v1/health') ? new Response('', { status: 404 }) : new Response('', { status: 401 }),
+        ),
+      });
+      assert.deepEqual(health, { configured: true, reachable: true });
+      assert.deepEqual(
+        calls.map((c) => c.url),
+        ['http://face.test/v1/health', 'http://face.test'],
+      );
+      assert.equal(calls[0]?.headers.has('authorization'), false);
+    });
+  });
+
+  it('a host answering /v1/health with a 5xx is configured but not reachable', async () => {
+    await withHostEnv({ url: 'http://face.test' }, async () => {
+      const health = await probeFaceHost({ transport: transport(async () => new Response('', { status: 503 })) });
+      assert.deepEqual(health, { configured: true, reachable: false });
+    });
+  });
+
+  it('a network failure is configured but not reachable, never a throw', async () => {
+    await withHostEnv({ url: 'http://face.test' }, async () => {
+      const health = await probeFaceHost({
+        transport: transport(async () => {
+          throw new TypeError('fetch failed');
+        }),
+      });
+      assert.deepEqual(health, { configured: true, reachable: false });
+    });
+  });
+
+  it('a hung host is not reachable once the probe budget is spent', async () => {
+    await withHostEnv({ url: 'http://face.test' }, async () => {
+      const health = await probeFaceHost({
+        timeoutMs: 20,
+        transport: transport(
+          (_url, init) =>
+            new Promise<Response>((_resolve, reject) => {
+              init.signal?.addEventListener('abort', () => reject(new Error('aborted')));
+            }),
+        ),
+      });
+      assert.deepEqual(health, { configured: true, reachable: false });
+    });
   });
 });

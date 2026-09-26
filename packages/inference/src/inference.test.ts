@@ -12,6 +12,7 @@
 
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
+import { fixtureApprovals } from './provider-policy.fixture.ts';
 import {
   budgetLedgerInstalled,
   budgetStateFor,
@@ -154,11 +155,11 @@ describe('the routing table', () => {
     assert.equal(ROUTING['classify-input'].maxTokens, 64);
   });
 
-  it('only opts the tutoring turn into the vendor refusal fallback', () => {
-    // A declined tutoring turn is a child watching Natalie stop mid-sentence, so
-    // it is worth rescuing. A declined classification is a verdict.
-    assert.equal(ROUTING['tutor-turn'].serverSideFallback, true);
-    assert.equal(ROUTING['classify-output'].serverSideFallback, false);
+  it('cannot opt any role into vendor refusal fallback', () => {
+    for (const role of ROLES) {
+      assert.equal('serverSideFallback' in ROUTING[role], false);
+      assert.equal('fallbacks' in paramsFor(requestFor(role, payload('policy', 'text'))), false);
+    }
   });
 });
 
@@ -195,7 +196,6 @@ describe('model capability, as data', () => {
       maxTokens: 64,
       effort: 'max',
       cacheSystem: true,
-      serverSideFallback: true,
     };
 
     const params = paramsFor(smuggled);
@@ -208,7 +208,7 @@ describe('model capability, as data', () => {
 
     assert.deepEqual(params.output_config, { effort: 'low' });
     assert.deepEqual(params.thinking, { type: 'adaptive' });
-    assert.equal(params.fallbacks, 'default');
+    assert.equal('fallbacks' in params, false);
   });
 
   it('withholds the cache breakpoint below the model’s own minimum', () => {
@@ -277,7 +277,6 @@ describe('model capability, as data', () => {
       payload: payload('contract', 'hi'),
       maxTokens: 64,
       cacheSystem: false,
-      serverSideFallback: false,
     };
     assert.throws(() => paramsFor(unknown), ProviderUnavailable);
   });
@@ -439,7 +438,7 @@ describe('the gateway', () => {
     budget: LearnerBudget = DEFAULT_LEARNER_BUDGET,
   ): { gateway: ReturnType<typeof createInferenceGateway>; sent: Parameters<AnthropicTransport['stream']>[0][] } => {
     const { transport, sent } = fakeTransport();
-    return { gateway: createInferenceGateway({ adapter: createAnthropicAdapter(transport), ledger, budget }), sent };
+    return { gateway: createInferenceGateway({ adapter: createAnthropicAdapter(transport), ledger, budget, loadProviderApprovals: fixtureApprovals }), sent };
   };
 
   it('makes no provider call at all once the day is spent', async () => {

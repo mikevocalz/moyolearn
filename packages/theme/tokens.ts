@@ -439,14 +439,28 @@ export const semantic = {
   'on-surface-stage': { light: palette.plum[700], dark: palette.plum[100] },
   /*
     The chrome's own CTA — the raised Snap slab in the bar and the rail. It is
-    deep plum from the SAME family the bars are tinted with, so the loudest
-    control in the chrome still belongs to the chrome; the mango action colour
-    stays for actions in CONTENT, where it has the neutral ground to carry it.
-    Deep enough (plum 700, the mark's own purple) to read as a raised button on
-    a plum 200/300 bar rather than as another tinted panel.
+    the AVATAR'S WELL (Mike, 2026-09-16: the colour in the N under "Hi Maya"),
+    `ink-100` paper with `ink-950` ink — the same pair `Avatar` paints an
+    initial into when there is no photo yet.
+
+    Borrowed rather than invented, and borrowed from that element on purpose:
+    the avatar well is the kit's neutral recess, the one shape that is paper
+    rather than paint, and the raised slab is the one control on the bar that is
+    not made of the bar. Reaching for the same neutral is what keeps the loudest
+    thing in the chrome from being a fourth colour.
+
+    It was deep plum 700, then briefly pure white. Plum made the slab another
+    tinted panel on a tinted bar; white was a shade the product does not use
+    anywhere else, so it read as a gap rather than as an object. The warm paper
+    is already in the kit, and the elevation the slab carries — raised, with
+    `shadow-card` — is what separates it from the bar.
+
+    Same value in both schemes, like the rest of this pair: the tab bar does not
+    change family between light and dark, and a slab that went dark with the
+    scheme would be the only raised control in the product that does.
   */
-  'nav-cta': { light: palette.plum[700], dark: palette.plum[700] },
-  'on-nav-cta': { light: palette.plum[100], dark: palette.plum[100] },
+  'nav-cta': { light: palette.ink[100], dark: palette.ink[100] },
+  'on-nav-cta': { light: palette.ink[950], dark: palette.ink[950] },
   /*
     SELECTED nav item — a tonal step of the CHROME's own family, not a foreign
     accent. It was the teal highlighter, which read as discordant sitting on a
@@ -960,20 +974,8 @@ export const navChrome = {
   */
   rail: '80px',
   raised: '64px',
-  /*
-    How far the raised slab breaks ABOVE the bar's top edge. 38 of a 64 slab
-    leaves 26 seated in the chrome — the majority of the control stands proud of
-    the bar, which is the whole point of the raise, while the quarter still
-    docked is what keeps it a TAB rather than a floating action button parked
-    over the content.
-
-    It was 28 (36 seated), and at that depth the slab read as a tile embedded in
-    the bar instead of a control rising out of it. There is no platform number to
-    defer to here — iOS has no raised-tab convention at all and Material's FAB
-    either sits in the bar or floats free of it — so this is the product's own
-    call, taken on the device at both widths.
-  */
-  raise: '58px',
+  // Keep most of the camera button seated in the bar, with a small lift.
+  raise: '16px',
   /*
     The selected-tab indicator, SQUARE (aspect-ratio 1) in both the bar and the
     rail — the product owner's call, and consistent with the radius law that

@@ -215,9 +215,19 @@
   aspect-ratio: 4 / 3;
 }
 
-/* When the canvas is the only child it must span the full 4:3 plate, not just
-   the first grid cell, and should touch the plate edges. */
-.moyo-tutor-room-plate-art > :only-child {
+/*
+  The canvas (or the Suspense placeholder standing in for it) must span the full
+  4:3 plate, not just the first grid cell, and should touch the plate edges.
+
+  NAMED BY POSITION, NOT BY BEING ALONE. This was `> :only-child`, which stopped
+  matching the moment the overlay caption appeared beside it — so the stage
+  quietly changed sizing rules depending on whether Natalie was mid-line. The
+  caption node is now permanently mounted (it is a live region, and one that
+  appears with its own text announces unreliably), which would have made that
+  selector dead rather than intermittent. Addressing the stage directly is what
+  the rule always meant.
+*/
+.moyo-tutor-room-plate-art--live > :first-child {
   grid-column: 1 / -1;
   grid-row: 1 / -1;
   min-width: 0;
@@ -234,19 +244,31 @@
   grid-template-rows: minmax(0, 1fr);
 }
 
+/*
+  The caption is a live region first and an overlay second, so the element is
+  always in the DOM and only its PAINT is conditional. Placement, stacking and
+  pointer behaviour live here because they are true of an empty one too; an
+  empty one is out of flow, has no chrome and no text, and therefore draws
+  nothing.
+*/
 .moyo-tutor-room-caption {
   position: absolute;
   inset-block-end: var(--spacing-element);
   inset-inline: var(--spacing-element);
   max-inline-size: calc(100% - var(--spacing-element) * 2);
   margin-inline: auto;
+  text-align: center;
+  pointer-events: none;
+  z-index: 2;
+}
+
+/* The paper card Natalie's line sits on. Unchanged values, moved so that the
+   region can exist before there is a line to put on it. */
+.moyo-tutor-room-caption--spoken {
   padding: var(--spacing-inset-tight);
   background: var(--color-moyo-paper);
   border: var(--moyo-border-w-rule) solid var(--color-moyo-outline);
   border-radius: var(--radius-moyo-card);
-  text-align: center;
-  pointer-events: none;
-  z-index: 2;
 }
 
 @media (prefers-reduced-motion: reduce) {

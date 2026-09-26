@@ -1,9 +1,7 @@
 // Tutor capability registry — `tutorCapabilities[subject][band][task]`.
 //
-// A cell ships only when it passes the eval harness for that subject, grade
-// band, and task. Until then `enabled` is false and the caller falls back to the
-// general-tutoring lane. This keeps routing a reviewed, type-enforced table
-// instead of scattered conditionals.
+// Missing or unevaluated cells deny generation. Recovery never enters a
+// general tutor lane, and a claimed enabled flag is not evaluation evidence.
 //
 // Claude is the default tutor brain (doc 18 §1). Gemini is a paired capability
 // for vision-heavy lanes, and deterministic subject tools are required for math,
@@ -12,7 +10,7 @@
 // SOT: docs/design/tutor-model-routing.md · docs/pack/18-tutor-ai-stack.md §2-§3 · packages/inference/src/routing.ts
 // SOT-KEYWORDS: tutor capabilities subject grade band task routing claude gemini tools eval
 import 'server-only';
-import type { InferenceRole } from '@acme/inference';
+import { INFERENCE_SAFETY_VERSION, modelFor, type InferenceRole, type ModelId } from '@acme/inference';
 import type { AgeBand } from '../capture/age-band.ts';
 
 /** The subjects Moyo tutors on. */
@@ -58,6 +56,12 @@ export interface TutorCell {
   readonly costCeiling: number;
   /** False until the eval harness passes this exact cell. */
   readonly enabled: boolean;
+  readonly evaluation: null | {
+    readonly runReference: string;
+    readonly model: ModelId;
+    readonly language: string;
+    readonly safetyVersion: string;
+  };
 }
 
 /** One fully-qualified cell lookup. */
@@ -68,84 +72,133 @@ export type TutorCapabilities = Partial<
   >
 >;
 
-const DEFAULT_CELL: TutorCell = {
+const UNEVALUATED_CELL: TutorCell = {
   primary: 'tutor-turn',
   allowedFallbacks: [],
   tools: [],
   vision: false,
   grounding: false,
-  safety: 'default',
+  safety: INFERENCE_SAFETY_VERSION,
   maxLatencyMs: 5000,
   costCeiling: 0.05,
-  enabled: true,
+  enabled: false,
+  evaluation: null,
 };
 
-/**
- * The seed routing table. Every `enabled: true` cell is a commitment that the
- * eval harness already passed; `enabled: false` cells fall back to
- * `DEFAULT_CELL` at runtime.
- */
+/** Declared tool requirements are not evidence of available or evaluated tools. */
+/*
+  OWNER-AUTHORIZED, NOT EVALUATED — and it says so in the run reference.
+
+  Every math cell was `UNEVALUATED_CELL` and the coach route supplied no
+  capability context, so since 249af25 every live coach turn on a child's
+  screen ended in TUTOR_MANUAL_HELP (measured on the Duo, 2026-09-23). There
+  is no eval harness in this repository to produce a run reference, and no
+  deterministic `arithmetic` / `fractions` / `symbolic-math` tool exists in
+  code for a cell to require. The product owner's call was to open the math
+  cells now. So: enabled, tools required NONE (a requirement nothing can
+  satisfy is a permanent deny, not a safeguard), grounding still required,
+  and `runReference` naming the authorization rather than an eval run.
+  Replace it with a real run reference when the harness exists; grep
+  OWNER_AUTHORIZED to find every cell this covers. The Safety Plane still
+  classifies every turn in and out — this registry was a second gate, not
+  the first.
+*/
+export const OWNER_AUTHORIZED = 'owner-authorized-unevaluated-2026-09-23';
+const OWNER_MATH_CELL: TutorCell = {
+  ...UNEVALUATED_CELL,
+  tools: [],
+  grounding: true,
+  enabled: true,
+  evaluation: {
+    runReference: OWNER_AUTHORIZED,
+    model: modelFor('tutor-turn'),
+    language: 'en',
+    safetyVersion: INFERENCE_SAFETY_VERSION,
+  },
+};
 export const TUTOR_CAPABILITIES: TutorCapabilities = {
   math: {
     young: {
-      understand: { ...DEFAULT_CELL, tools: ['arithmetic'], grounding: true },
-      'check-work': { ...DEFAULT_CELL, tools: ['arithmetic'], grounding: true },
-      practice: { ...DEFAULT_CELL, tools: ['arithmetic'], grounding: true },
+      understand: OWNER_MATH_CELL,
+      'check-work': OWNER_MATH_CELL,
+      practice: OWNER_MATH_CELL,
     },
     child: {
-      understand: { ...DEFAULT_CELL, tools: ['arithmetic', 'fractions'], grounding: true },
-      'check-work': { ...DEFAULT_CELL, tools: ['arithmetic', 'fractions'], grounding: true },
-      practice: { ...DEFAULT_CELL, tools: ['arithmetic', 'fractions'], grounding: true },
+      understand: OWNER_MATH_CELL,
+      'check-work': OWNER_MATH_CELL,
+      practice: OWNER_MATH_CELL,
     },
     teen: {
-      understand: { ...DEFAULT_CELL, tools: ['symbolic-math'], grounding: true },
-      'check-work': { ...DEFAULT_CELL, tools: ['symbolic-math'], grounding: true },
-      practice: { ...DEFAULT_CELL, tools: ['symbolic-math'], grounding: true },
+      understand: OWNER_MATH_CELL,
+      'check-work': OWNER_MATH_CELL,
+      practice: OWNER_MATH_CELL,
     },
     adult: {
-      understand: { ...DEFAULT_CELL, tools: ['symbolic-math', 'graphing'], grounding: true },
-      'check-work': { ...DEFAULT_CELL, tools: ['symbolic-math', 'graphing'], grounding: true },
-      practice: { ...DEFAULT_CELL, tools: ['symbolic-math', 'graphing'], grounding: true },
+      understand: OWNER_MATH_CELL,
+      'check-work': OWNER_MATH_CELL,
+      practice: OWNER_MATH_CELL,
     },
   },
   'social-studies': {
     child: {
-      understand: { ...DEFAULT_CELL, grounding: true, tools: ['timeline'] },
+      understand: { ...UNEVALUATED_CELL, grounding: true, tools: ['timeline'] },
     },
     teen: {
-      understand: { ...DEFAULT_CELL, grounding: true, tools: ['timeline', 'map'] },
+      understand: { ...UNEVALUATED_CELL, grounding: true, tools: ['timeline', 'map'] },
     },
     adult: {
-      understand: { ...DEFAULT_CELL, grounding: true, tools: ['timeline', 'map', 'source-retrieval'] },
+      understand: { ...UNEVALUATED_CELL, grounding: true, tools: ['timeline', 'map', 'source-retrieval'] },
     },
   },
   cs: {
     teen: {
-      understand: { ...DEFAULT_CELL, tools: ['sandboxed-code'] },
-      'check-work': { ...DEFAULT_CELL, tools: ['sandboxed-code'] },
+      understand: { ...UNEVALUATED_CELL, tools: ['sandboxed-code'] },
+      'check-work': { ...UNEVALUATED_CELL, tools: ['sandboxed-code'] },
     },
     adult: {
-      understand: { ...DEFAULT_CELL, tools: ['sandboxed-code'] },
-      'check-work': { ...DEFAULT_CELL, tools: ['sandboxed-code'] },
+      understand: { ...UNEVALUATED_CELL, tools: ['sandboxed-code'] },
+      'check-work': { ...UNEVALUATED_CELL, tools: ['sandboxed-code'] },
     },
   },
 };
 
-/**
- * Resolve a cell, with an explicit fallback to the general-tutoring default.
- *
- * Unknown or unevaluated cells return `DEFAULT_CELL` so tutoring never crashes
- * for an unrecognised subject. `enabled: false` on an explicit cell is a
- * deliberate no-ship, not a code path.
- */
+/** Resolve only an exact, evaluated cell whose live dependencies match. */
 export function tutorCellFor(
   subject: string | undefined,
   band: AgeBand,
   task: string | undefined,
-): TutorCell {
-  if (!subject || !task) return DEFAULT_CELL;
-  const byBand = TUTOR_CAPABILITIES[subject as TutorSubject];
+  available?: {
+    readonly tools: readonly string[];
+    readonly grounding: boolean;
+    readonly language: string;
+    readonly model: ModelId;
+    readonly safetyVersion: string;
+  },
+  cells: TutorCapabilities = TUTOR_CAPABILITIES,
+): TutorCell | null {
+  if (!subject || !task || !available) return null;
+  const byBand = Object.hasOwn(cells, subject)
+    ? cells[subject as TutorSubject] : undefined;
   const byTask = byBand?.[band];
-  const cell = byTask?.[task as TutorTask];
-  return cell && cell.enabled ? cell : DEFAULT_CELL;
+  const cell = byTask && Object.hasOwn(byTask, task) ? byTask[task as TutorTask] : undefined;
+  if (!cell?.enabled || !cell.evaluation?.runReference.trim()) return null;
+  if (cell.primary !== 'tutor-turn' || cell.allowedFallbacks.length !== 0 ||
+      cell.evaluation.model !== modelFor(cell.primary) ||
+      cell.evaluation.model !== available.model ||
+      cell.evaluation.language !== available.language ||
+      cell.safety !== available.safetyVersion ||
+      cell.evaluation.safetyVersion !== available.safetyVersion ||
+      (cell.grounding && !available.grounding) ||
+      cell.tools.some((tool) => !available.tools.includes(tool))) return null;
+  return cell;
 }
+
+export class TutorCapabilityDenied extends Error {
+  constructor() {
+    super('No evaluated tutor cell covers this request');
+    this.name = 'TutorCapabilityDenied';
+  }
+}
+
+// Fixed recovery copy carries neither an inferred answer nor a model request.
+export const TUTOR_MANUAL_HELP = 'Natalie cannot help with this work yet. You can keep reviewing your work or ask a teacher or trusted adult for help.';

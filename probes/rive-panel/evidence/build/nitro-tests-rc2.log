@@ -1,0 +1,57 @@
+(node:63370) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/mikevocalz/nitro-rive-panel/test/canvasSource.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/mikevocalz/nitro-rive-panel/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ material source carries current pixel dimensions to the renderer (0.868084ms)
+✔ Surface registry handles either attachment order and ignores stale revocation (466.015541ms)
+(node:63372) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/mikevocalz/nitro-rive-panel/test/panelMath.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/mikevocalz/nitro-rive-panel/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+▶ Viro transform conventions
+  ✔ rotates +X to -Z for a +90° yaw, as ViroCore does (0.966667ms)
+  ✔ composes a parent chain as parent · child (0.17775ms)
+✔ Viro transform conventions (1.811292ms)
+▶ ray → panel
+  ✔ maps the centre and the corners of an unrotated panel (0.332833ms)
+  ✔ keeps the centre ray on the artboard centre when the parent group moves and turns (0.220292ms)
+  ✔ handles a non-uniform scaled panel (0.103709ms)
+  ✔ reports a miss outside the quad, a back-side hit, and no hit for parallel or behind (0.129667ms)
+✔ ray → panel (0.9475ms)
+▶ world hit → panel
+  ✔ maps a Viro world-space hit on a rotated, nested panel (0.165292ms)
+  ✔ rejects a stale hit recorded before the panel moved (0.0855ms)
+  ✔ recovers the live plane hit from a dragTransform:none drag report (0.114375ms)
+✔ world hit → panel (0.519875ms)
+▶ uv → Rive artboard
+  ✔ inverts contain at alignment 0,0 (0.347167ms)
+  ✔ inverts contain at alignment -1,-1 (0.067542ms)
+  ✔ inverts contain at alignment 1,0.5 (0.087833ms)
+  ✔ inverts cover at alignment 0,0 (0.07175ms)
+  ✔ inverts cover at alignment -1,-1 (0.044541ms)
+  ✔ inverts cover at alignment 1,0.5 (0.048083ms)
+  ✔ inverts fill at alignment 0,0 (0.03175ms)
+  ✔ inverts fill at alignment -1,-1 (0.028542ms)
+  ✔ inverts fill at alignment 1,0.5 (0.028083ms)
+  ✔ treats contain letterbox as off the artboard (0.05175ms)
+✔ uv → Rive artboard (0.983959ms)
+▶ pointer capture
+  ✔ gives one source the gesture and ignores the other until release (0.135459ms)
+  ✔ does not start a gesture outside the quad (0.038791ms)
+  ✔ clamps a captured move past the edge, and releases off the quad as cancel (0.045958ms)
+  ✔ cancels when the captured source loses its hit (0.060834ms)
+✔ pointer capture (0.3545ms)
+(node:63373) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///Users/mikevocalz/nitro-rive-panel/lib/producers/RiveProducer.js is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to /Users/mikevocalz/nitro-rive-panel/package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ disposing during async load retires the eventual runtime (0.555916ms)
+✔ superseded load cannot replace the newer surface runtime (1.621791ms)
+ℹ tests 27
+ℹ suites 5
+ℹ pass 27
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 541.992708

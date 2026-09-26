@@ -207,6 +207,14 @@ export function createAuth(options?: { connectionString?: string; schema?: strin
       // Dev can sign up and sign in without an email adapter; verification is
       // still enforced in production builds.
       requireEmailVerification: verificationRequired,
+      /*
+        Ships `true`, set here because a reset is the path someone takes when
+        they have lost control of the account — a stolen session that outlives
+        the new password defeats the point of changing it. It also matters for
+        doc 06 §2: a guardian resetting a managed learner's password expects
+        the learner's live sessions to end, not to keep running on the old one.
+      */
+      revokeSessionsOnPasswordReset: true,
       ...(authEmail
         ? {
             /*
