@@ -2,8 +2,8 @@
 
 Updated 2026-09-25. **Latest count fix:** rive.10 derives selection from native
 `piece0..piece3` into Zustand and updates the host label and Rive aggregate.
-Local tests and typechecks pass; the new device check was blocked by Argent
-CDP timeouts/disconnection after restart. Physical count acceptance is pending.
+Local tests and typechecks pass, and the user confirmed the count behavior
+works on the Quest — physical count acceptance received.
 User requirement: always Zustand, no React `useState`.
 
 **Latest steering:** React Native `0.88.0-rc.2`,
@@ -19,7 +19,6 @@ bridge inherited event coalescing, which merged consecutive Up/Clicked events.
 Rive.8 preserves click/hover edges and uses geometry-accurate panel hit tests.
 The absent grip release also left JS panelWorld at the initial pose after the
 native group moved. The new APK built and installed; physical acceptance remains open.
-
 
 The Android Surface bridge, Nitro Rive renderer, native
 parent drag, editable fractions asset, and an isolated Moyo engineering route
@@ -51,7 +50,7 @@ All continuation work is local on `codex/rive-viro-panel`; nothing has been
 pushed or published. Original dirty checkouts were preserved.
 
 | Repository | Isolated worktree | Recovered base commit |
-|---|---|---|
+| --- | --- | --- |
 | Moyo | `/Users/mikevocalz/moyo-rive-panel` | `5a161b3739b026b565dcf9f0eaa5545ad69bcce1` |
 | Nitro | `/Users/mikevocalz/nitro-rive-panel` | `4d32d437aa393b5925f71397318138a33adb2bf2` |
 | Viro | `/Users/mikevocalz/viro-rive-panel` | `2bb0b5abbc707810ae2b49221917a80c7ee50b41` |
@@ -69,6 +68,7 @@ copy that diff over this implementation. `/Users/mikevocalz/expo-pico` also has
 unrelated local changes and was not modified.
 
 Vendor packages in Moyo:
+
 - `vendors/reactvision-react-viro-3.0.0-moyo.5-rive.9.tgz`
 - `vendors/nitro-canvas-in-Vision-0.0.2-rive.3.tgz`
 
@@ -130,7 +130,7 @@ is `probes/rive-panel/rive/scene.rml`; app binary is
 ## Verification
 
 | Check | Result |
-|---|---|
+| --- | --- |
 | Nitro codegen and TypeScript | pass |
 | Nitro geometry, pointer capture, registry, descriptor and producer lifecycle | 27 tests pass |
 | Rive CLI verify/inspect and pointer cases | 9 cases pass; screenshots + JSON in `probes/rive-panel/evidence` |
@@ -155,6 +155,7 @@ Build logs are under `/tmp/rive-panel-check`. Persist relevant final logs with
 the device evidence before relying on that temporary directory across sessions.
 
 Reproduction:
+
 - Nitro: `npm ci`, `npm run specs`, `npm run typescript`,
   `node --test test/*.test.ts test/*.test.mjs` (Node 26).
 - Rive: `python3 probes/rive-panel/verify-rive.py` from Moyo root.
@@ -403,7 +404,56 @@ Metro on port 8082. Horizon remains 1024dp × 640dp, default orientation.
 
 Validation: three count/lifecycle tests and six window-contract tests pass;
 mobile typecheck and targeted Viro type emit pass; all 1644 installed package
-files match the tarball. Quest is attached, but Argent inspection timed out and
-the restart/reconnect attempt lost CDP. Do not claim this new count behavior was
-verified physically. Next check: select/deselect pieces and Reset; both counters
-should agree from 0 through 4, including after moving/releasing the panel.
+files match the tarball. **Physical acceptance received 2026-09-25: user
+confirmed the count behavior works on the Quest** — the Zustand-derived
+selection total and host label track piece selection on device.
+
+## Viro/ViroCore 3.0.1 merge and push (main)
+
+`mikevocalz/viro` main is `019ec2e` and `mikevocalz/virocore` main is
+`d4e09840`, both pushed to the user forks. Each is a fast-forward land of the
+upgrade branches after two merges: `codex/rive-viro-panel` (the rive.5–10
+input series: hit tests, ray renderer, input ownership, count binding) into
+`upgrade/viro-3.0.1`, then `fork/main` (OpenXR runtime info, foveation, PICO
+profiles, 16 KB page-alignment gate) into `upgrade/virocore-3.0.1`. Conflicts
+were the mechanical class plus one semantic pair: the alignment gate stays on
+minimum PT_LOAD and the AAR script keeps building `:viroreact`, which are the
+two findings Codex raised on upstream PR #332 — both verified fixed in the
+pushed tree along with the restored `initPassthrough()` signature. A duplicate
+`kPicoControllerExtensions` table from the second merge was removed in
+`d4e09840`; `VROSceneRendererOpenXR` compiles clean.
+
+Rebuilt `viroreact-release.aar` SHA-256
+`fbbd4cb15e9fc761a9b9b5866e52cda49ef4d3e51c9ccf265ff325e4e4e30b62`; the 16 KB
+gate passes all 14 arm64 libraries including `libopenxr_loader.so` at 0x4000.
+Tags are pushed on both forks and upstream GitHub releases mirrored (viro
+48/48, virocore 23/25 — upstream's two malformed `rc-*` refs return HTTP 422);
+`Latest` points at v3.0.1 on both.
+
+## Vendored 3.0.1-moyo.0 and the questDebug build fix
+
+`vendors/reactvision-react-viro-3.0.1-moyo.0.tgz` now carries the post-merge
+AAR; the pnpm override and `apps/mobile` dependency point at it. Two
+regressions surfaced on the first direct Gradle build and are fixed: the
+postinstall marked Skia Graphite on but never staged the Android
+`libwebgpu_dawn.so` its CMake imports (now copied per-ABI inside
+`tooling/enable-skia-graphite.mjs`), and `@expo-pico/core` linked all four ABIs
+against the arm64-only Nitro prefab — direct Gradle invocations need
+`-PreactNativeArchitectures=arm64-v8a`, which `pnpm android:xr` was masking
+with `ORG_GRADLE_PROJECT_reactNativeArchitectures`.
+
+## Three-slot layout probe (moyo://xr-layout-probe)
+
+`apps/mobile/src/native-3d/xr-layout-probe.tsx` composes the arc from
+`worldSlot`: `RivePanelProbe` on the left slot, `PremiumXRMediaPanel`
+`size="boardPanel"` on centre, `XrNatalie` on the right with her feet dropped
+below the eye-level slot origin. `apps/mobile/app/xr-layout-probe.tsx` latches
+the first credible `onCameraTransformUpdate` pose, derives yaw with the same
+`atan2(-fx, -fz)` convention as `placeInFrontOf`, and mounts the composition
+once — the same geometry the production `XrTriPanel`/`XrBoardSurface` pair
+uses, so panel positions cannot drift from it. Mobile typecheck is green.
+
+Device verification of the probe is pending: the Quest 3S (340YC10GC3014S)
+dropped off ADB before the deep link was sent. The fresh 3.0.1 APK was
+already proven on device — stereo passthrough in both eyes, JS bundle loaded,
+no native crash — via `moyo://rive-panel-probe` before disconnect.
