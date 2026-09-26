@@ -1,6 +1,7 @@
 # Rive panels inside Viro — continuation handoff
 
-Updated 2026-09-25. **Latest count fix:** rive.10 derives selection from native
+Updated 2026-09-25; audited and extended 2026-09-26 — see the dated audit
+section at the end. **Latest count fix:** rive.10 derives selection from native
 `piece0..piece3` into Zustand and updates the host label and Rive aggregate.
 Local tests and typechecks pass, and the user confirmed the count behavior
 works on the Quest — physical count acceptance received.
@@ -69,6 +70,9 @@ unrelated local changes and was not modified.
 
 Vendor packages in Moyo:
 
+- `vendors/reactvision-react-viro-3.0.1-moyo.0.tgz` — current; repacked with
+  the post-merge `viroreact` AAR (see the 3.0.1 merge section) and supersedes
+  the rive.N packages below, which are kept as history
 - `vendors/reactvision-react-viro-3.0.0-moyo.5-rive.9.tgz`
 - `vendors/nitro-canvas-in-Vision-0.0.2-rive.3.tgz`
 
@@ -144,7 +148,7 @@ is `probes/rive-panel/rive/scene.rml`; app binary is
 | Historical rc.0 Metro Android export | pass: 26 MB Hermes bundle and 143 KB Rive asset |
 | Frozen lockfile | pass; unrelated workspace dependency changes removed |
 | Packaged-source audit | Nitro rive.3 prior audit passes; Viro rive.5 compares 1,643 packaged files with no mismatches |
-| Physical headset acceptance | Quest 3S startup and Rive surface pass; stereo capture shows panel; user confirms drag; selection fails and candidate fixes await retry |
+| Physical headset acceptance | Quest 3S startup and Rive surface pass; stereo capture shows panel; user confirms drag, working selection and the Zustand-derived count; three-slot `xr-layout-probe` composition verified — details in the dated sections below |
 
 Whole Viro TypeScript still fails on pre-existing missing web-renderer sibling,
 missing `GpuProducer` exports and unrelated AR/web source errors. Packaging used
@@ -153,6 +157,14 @@ build claim. No placeholder GPU implementation was invented to silence errors.
 
 Build logs are under `/tmp/rive-panel-check`. Persist relevant final logs with
 the device evidence before relying on that temporary directory across sessions.
+
+2026-09-26 note: `/Users/mikevocalz/moyo-rive-panel` now sits on `main`, where
+the whole `probes/` tree shows as untracked. It contains additional
+`probes/rive-panel/evidence/build/*.log` files beyond the set committed on this
+branch (for example `rive-count-typecheck.log`, `rive10-install.log`,
+`viro-zustand-*.log`, `viro-rive10-pack.log`). They were left in place,
+uncommitted — decide whether they belong on `codex/rive-viro-panel` before
+switching that checkout back.
 
 Reproduction:
 
@@ -453,10 +465,12 @@ the first credible `onCameraTransformUpdate` pose, derives yaw with the same
 once — the same geometry the production `XrTriPanel`/`XrBoardSurface` pair
 uses, so panel positions cannot drift from it. Mobile typecheck is green.
 
-Device verification of the probe is pending: the Quest 3S (340YC10GC3014S)
-dropped off ADB before the deep link was sent. The fresh 3.0.1 APK was
-already proven on device — stereo passthrough in both eyes, JS bundle loaded,
-no native crash — via `moyo://rive-panel-probe` before disconnect.
+Device verification of the probe is no longer pending — it was verified later
+the same day; see the next section. When this paragraph was written, the
+Quest 3S (340YC10GC3014S) had dropped off ADB before the deep link was sent.
+The fresh 3.0.1 APK was already proven on device — stereo passthrough in both
+eyes, JS bundle loaded, no native crash — via `moyo://rive-panel-probe`
+before disconnect.
 
 ## Device evidence — three-slot layout probe (Quest 3S, 340YC10GC3014S)
 
@@ -470,13 +484,87 @@ passthrough on the merged 3.0.1 stack.
 
 Notes: the compositor logged `Failed to create an anchored node` at each of
 the three slot positions — draggable nodes request persistent anchors the
-Quest anchor subsystem declines; rendering is unaffected. The centre board is
-the navy stand-in; live ink still binds through `XrBoardSurface` in the tutor
-scene.
+Quest anchor subsystem declines; rendering is unaffected. At capture time the
+centre board was the navy stand-in; `8ebdf4a` later swapped in the real 16:10
+board (see the 2026-09-26 audit section). Live ink still binds through
+`XrBoardSurface` in the tutor scene.
 
 Dev-lane note: a USB reconnect clears `adb reverse`, which is what produced
-the earlier blank launches — `adb reverse tcp:8081 tcp:8081` must be re-added
-after replug. The app's own API (`EXPO_PUBLIC_APP_URL`) is now pinned to
-`https://app.moyolearn.com` in all three `eas.json` profiles and in
-`apps/mobile/.env.local`, so shipped and dev builds no longer fall back to
-device-loopback and fail at startup / first fetch.
+the earlier blank launches — `adb reverse tcp:8081 tcp:8081` (Metro over
+UsbFfs) and `adb reverse tcp:3000 tcp:3000` (API) must both be re-added after
+replug. The app's own API (`EXPO_PUBLIC_APP_URL`) is now pinned to
+`https://app.moyolearn.com` in all three `apps/mobile/eas.json` profiles and
+in `apps/mobile/.env.local` (gitignored), so shipped and dev builds no longer
+fall back to device-loopback and fail at startup / first fetch — `426b4fa`;
+the full variable set and the fail-closed startup guard are in the
+2026-09-26 audit section.
+
+## 2026-09-26 audit — real board, sign-in chain, device and tooling notes
+
+**Real board (`8ebdf4a`, 20 files).** The probe's centre slot now hosts the
+real digital board, not the navy stand-in: `BOARD_ASPECT` moved 5:7 → 16:10
+(`packages/ui/xr/board-layout.ts`), `boardSurfacePixels` is 1400 × 875, and a
+new `packages/ui/xr/XrBoardTray.native.tsx` (+ `.types.ts` +
+`board-controls.ts`, shared with `XrRail`) renders the bottom tray. The board
+sits on a draggable `ViroNode` carrier (`dragType="FixedDistanceOrigin"`,
+`dragTransform="parent"`) mirroring the Rive grip pattern. Placement latches
+on a *settled* pose — two camera samples ~350–400 ms apart, travel < 0.2 m,
+forward dot > 0.9, the same settle rule `tutor-xr-screen` uses — and
+`trackingOrigin="floor"` puts Natalie at y = 0 (the GLB is authored at
+~1.673 m, human height at scale 1; there is no scale prop). Once the board
+binds, the coach greeting posts through `useTutorStore` → the signed
+`/api/tutor/coach` SSE stream → `audioQueue.enqueue` → `XrNatalie`.
+App and `ui` typechecks are green, the 216 xr tests pass, and lint is clean
+apart from two pre-existing route warnings. **Not yet device-verified
+post-rebuild:** ink rendering, board-drag persistence and Natalie actually
+speaking — the run ended at a sign-in wall before any of these could be
+exercised. Do not mark them accepted.
+
+**API origin (`426b4fa`).** The "That did not load" failure on the tutor
+screen traced to `GET /api/tutor/session` going to `http://localhost:3000`
+because `EXPO_PUBLIC_APP_URL` was unset — on the headset, localhost is the
+Quest itself, so the fetch failed instantly. All three
+`apps/mobile/eas.json` profiles now carry
+`EXPO_PUBLIC_APP_URL=https://app.moyolearn.com`, `EXPO_PUBLIC_AUTH_URL`,
+`EXPO_PUBLIC_AUTH_MODE=live` and `EXPO_PUBLIC_SENTRY_ENVIRONMENT`;
+`apps/mobile/.env.local` (gitignored) points dev bundles at the production
+API. `assertApiOriginConfigured()` runs at startup in
+`apps/mobile/app/_layout.tsx` and throws if the variables are lost again —
+fail-closed by design.
+
+**Native sign-in, bug one (`3c628fa`, shipped).** The `@better-auth/expo`
+client sends `expo-origin: moyo://`, which the server plugin copies into
+`Origin`; `trustedOrigins` was empty, so every native sign-in failed
+`INVALID_ORIGIN` and surfaced as "Invalid callbackURL". Fixed by
+`trustedOrigins: ['moyo://']` in `packages/auth/src/server.ts`; merged to
+`main` and deployed to app.moyolearn.com (Vercel deploy
+`dpl_H3T16yXzCbG2RAcv1bu4WnWsh5m6`, curl-verified — `expo-origin` now reaches
+the credential check). The `sign-in-content.tsx` comment was updated to
+match.
+
+**Native sign-in, bug two (in-flight, uncommitted).** On device, the email
+sign-in response carries `redirect: true`, so the expo client treats it as
+an OAuth handoff and lazily imports `expo-web-browser` — not installed — and
+red-boxes `Requiring unknown module`. The fix exists only as uncommitted
+edits in the `/Users/mikevocalz/moyo-rive-panel` checkout (currently on
+`main`): `expo-web-browser: 57.0.3` in the pnpm catalog and
+`apps/mobile/package.json` — 58.x demands compileSdk 37 while that
+workspace's Expo is 57.0.15. It needs an APK rebuild and redeploy before
+native sign-in can be declared verified.
+
+**Quest device notes.** Serial `340YC10GC3014S`; the installed package is
+`com.moyolearn.app` (not `com.moyolearn.mobile`); this session ran Metro on
+8081 over UsbFfs reverse (the earlier rive.N sessions owned 8082). Screenshots that actually work: `adb exec-out screencap -p` on the
+default display, `-d` for the virtual display hosting the volumetric window
+— a plain `screencap` produced 0-byte files in an earlier attempt. The Quest
+virtual keyboard's `input text` drops characters on whole-string injection —
+send per character or commit via the keyboard's "Submit Text" key;
+uiautomator taps need display-0 pixel coordinates on the 3664 × 1920
+logical frame.
+
+**Argent.** CLI at `/opt/homebrew/bin/argent` v0.25.2 (0.26.0 is available
+but not applied — needs user consent). The MCP tool listing failed
+mid-session; `argent run <tool> --udid 340YC10GC3014S` works:
+`list-devices` shows the Quest as android/device, `describe` returns the
+uiautomator tree and `launch-app` works, but `gesture-tap` does not reliably
+hit volumetric windows — `adb input tap` on display 0 does.

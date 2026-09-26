@@ -57,6 +57,12 @@
       "path": "/Users/mikevocalz/moyo-rive-panel/apps/mobile/android/app/build/outputs/apk/quest/debug/app-quest-debug.apk",
       "size": 356991597,
       "sha256": "b41cbf44d853ddfb3a13523081a0c09bc02832dcded64ee04630bf171be20f81"
+    },
+    {
+      "path": "/Users/mikevocalz/moyo-rive-panel/vendors/reactvision-react-viro-3.0.1-moyo.0.tgz",
+      "size": 49982578,
+      "sha256": "d985228ca6d93c806169f8424d65434540a6321ecbbc678a7714cee5320a9bac",
+      "note": "repacked 2026-09-25/26 carrying the post-merge viroreact-release.aar (sha256 fbbd4cb15e9fc761a9b9b5866e52cda49ef4d3e51c9ccf265ff325e4e4e30b62); installed via pnpm --filter mobile; supersedes the rive.N tarballs above"
     }
   ],
   "runtime": {
@@ -77,5 +83,6 @@
     "orientation": "default",
     "verifiedInApk": true
   },
-  "jsDelivery": "rive.10 via Metro 8082; existing rive.9 native APK unchanged"
+  "jsDelivery": "rive.10 via Metro 8082; existing rive.9 native APK unchanged",
+  "audit2026-09-26": "viro fork main pushed at 019ec2e, virocore fork main at d4e09840; tags pushed and upstream releases mirrored (viro 48/48, virocore 23/25); three-slot xr-layout-probe verified on Quest 3S (evidence/xr-layout-probe/quest-3s-three-slot.png); ink rendering, board-drag persistence and Natalie speech still unverified post-8ebdf4a rebuild"
 }
