@@ -43,6 +43,10 @@ export interface BoardChromePresentation {
   reducedMotion: boolean;
   /** Engine/runtime status line — empty is healthy. */
   status: string;
+  /** Panel face opacity 0..1 — the chrome's own art stays full-strength;
+      only the translucent fill surfaces follow this. Optional because the
+      panel-level `opacity` prop composes it for hosts of `RiveBoardPanel`. */
+  uiOpacity?: number;
 }
 
 /** The verbs a decoded command can reach. */
@@ -104,6 +108,7 @@ export function bindBoardChrome(runtime: RivePanel, handlers: BoardChromeHandler
       runtime.setBoolean('grabbed', state.grabbed);
       runtime.setBoolean('reducedMotion', state.reducedMotion);
       runtime.setString('status', state.status);
+      runtime.setNumber('uiOpacity', state.uiOpacity ?? 1);
       runtime.setNumber('revision', runtime.getNumber('revision') + 1);
     },
     dispose() {

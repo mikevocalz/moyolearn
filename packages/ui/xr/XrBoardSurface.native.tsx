@@ -68,6 +68,10 @@ export function XrBoardSurface({ headPosition, headYawDeg, enabled, termination,
         dragType="FixedToPlane" dragPlane={plane}
         onClickState={(state, position, source) => {
           const id = sourceId(source);
+          /* Draw-path evidence: a CLICK_DOWN line here proves the ray hit the
+             input plane; silence while the board is aimed at means the quad
+             never sees the ray. Dev-only. */
+          if (__DEV__) console.log('[XrBoardSurface] clickState', state, 'pos', position, 'src', id);
           if (state === ViroClickStateTypes.CLICK_DOWN) {
             if (![position[0], position[1], position[2]].every(Number.isFinite)) return;
             const sample = stroke.current.begin(sampleOf(position, id));

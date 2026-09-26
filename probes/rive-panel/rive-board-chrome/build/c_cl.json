@@ -52,8 +52,8 @@
         "name": "paletteOpen",
         "path": "paletteOpen",
         "type": "boolean",
-        "value": false,
-        "changed": false
+        "value": true,
+        "changed": true
       },
       {
         "name": "clearArmed",
@@ -94,7 +94,7 @@
         "name": "command",
         "path": "command",
         "type": "number",
-        "value": 7,
+        "value": 17,
         "changed": true
       },
       {
@@ -192,15 +192,15 @@
         "name": "hoverClear",
         "path": "hoverClear",
         "type": "number",
-        "value": 1,
-        "changed": true
+        "value": 0,
+        "changed": false
       },
       {
         "name": "downClear",
         "path": "downClear",
         "type": "number",
         "value": 0,
-        "changed": true
+        "changed": false
       },
       {
         "name": "hoverAsk",
@@ -318,14 +318,21 @@
         "name": "hoverClose",
         "path": "hoverClose",
         "type": "number",
-        "value": 0,
-        "changed": false
+        "value": 1,
+        "changed": true
       },
       {
         "name": "downClose",
         "path": "downClose",
         "type": "number",
         "value": 0,
+        "changed": true
+      },
+      {
+        "name": "uiOpacity",
+        "path": "uiOpacity",
+        "type": "number",
+        "value": 1,
         "changed": false
       }
     ]

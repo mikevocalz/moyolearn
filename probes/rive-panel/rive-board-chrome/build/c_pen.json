@@ -221,7 +221,7 @@
         "path": "hoverInk0",
         "type": "number",
         "value": 0,
-        "changed": false
+        "changed": true
       },
       {
         "name": "hoverInk1",
@@ -326,6 +326,13 @@
         "path": "downClose",
         "type": "number",
         "value": 0,
+        "changed": false
+      },
+      {
+        "name": "uiOpacity",
+        "path": "uiOpacity",
+        "type": "number",
+        "value": 1,
         "changed": false
       }
     ]

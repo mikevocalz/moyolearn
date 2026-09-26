@@ -246,6 +246,11 @@ export function XrLayoutProbe({
   };
 
   const inject = (sample: XrSurfaceInput) => {
+    /* Draw-path evidence: `down`/`up` prove the ray reached the input plane;
+       a silent log here means the failure is hit-testing, not the engine. */
+    if (__DEV__ && sample.phase !== 'move') {
+      console.log('[xr-layout-probe] surface', sample.phase, sample.u.toFixed(3), sample.v.toFixed(3), 'engine:', !!xrLayoutEngine.current);
+    }
     xrLayoutEngine.current?.injectPointer({
       phase: sample.phase,
       x: sample.u * boardSurfacePixels.width,
@@ -256,7 +261,7 @@ export function XrLayoutProbe({
 
   return (
     <>
-      <RivePanelProbe bytes={bytes} initialPose={rivePose} resetKey={resetKey} />
+      <RivePanelProbe bytes={bytes} initialPose={rivePose} resetKey={resetKey} opacity={0.7} />
       {chrome && chromeBytes ? (
         <RiveBoardPanel
           chromeBytes={chromeBytes}
@@ -264,6 +269,7 @@ export function XrLayoutProbe({
           carrier={boardOffset}
           grabbed={grabbed}
           bound={bound}
+          opacity={0.7}
           resetKey={resetKey}
           onCarrierRelease={(pose) => xrLayoutProbe.setState({ boardOffset: pose })}
           onGrab={(v) => xrLayoutProbe.setState({ grabbed: v })}

@@ -196,3 +196,71 @@
 [10:16:27.775] rive  built build/moyo_board_chrome.riv (162233 bytes, 110ms, 0 errors, 0 warnings)
 [10:53:02.916] rive  verified (0 bytes, 193ms, 0 errors, 0 warnings)
 [10:53:03.072] rive  built build/moyo_board_chrome.riv (162233 bytes, 113ms, 0 errors, 0 warnings)
+[11:09:58.121] rive  verified (0 bytes, 165ms, 0 errors, 0 warnings)
+[11:09:58.366] rive  built build/moyo_board_chrome.riv (162311 bytes, 115ms, 0 errors, 0 warnings)
+[11:09:58.368] rive  data: uiOpacity = 0.7
+[11:09:58.370] rive  showing BoardChrome [1/1]
+[11:09:58.370] rive  viewport 1248x780 @1x
+[11:09:58.410] rive  wrote build/dim.png
+[11:11:36.527] rive  verified (0 bytes, 117ms, 0 errors, 0 warnings)
+[11:11:36.734] rive  built build/moyo_board_chrome.riv (163123 bytes, 118ms, 0 errors, 0 warnings)
+[11:11:36.739] rive  showing BoardChrome [1/1]
+[11:11:36.739] rive  viewport 1248x780 @1x
+[11:11:36.783] rive  wrote ./build/moyo_board_chrome.png
+[11:11:36.988] rive  built build/moyo_board_chrome.riv (163123 bytes, 115ms, 0 errors, 0 warnings)
+[11:11:36.989] rive  data: uiOpacity = 0.7
+[11:11:36.990] rive  showing BoardChrome [1/1]
+[11:11:36.990] rive  viewport 1248x780 @1x
+[11:11:37.029] rive  wrote build/dim.png
+[11:15:16.937] rive  verified (0 bytes, 114ms, 0 errors, 0 warnings)
+[11:15:17.198] rive  built build/moyo_board_chrome.riv (163119 bytes, 119ms, 0 errors, 0 warnings)
+[11:15:17.200] rive  showing BoardChrome [1/1]
+[11:15:17.200] rive  viewport 1248x780 @1x
+[11:15:17.240] rive  wrote ./build/moyo_board_chrome.png
+[11:15:17.447] rive  built build/moyo_board_chrome.riv (163119 bytes, 117ms, 0 errors, 0 warnings)
+[11:15:17.448] rive  data: uiOpacity = 0.7
+[11:15:17.449] rive  showing BoardChrome [1/1]
+[11:15:17.449] rive  viewport 1248x780 @1x
+[11:15:17.488] rive  wrote build/dim.png
+[11:16:09.732] rive  built build/moyo_board_chrome.riv (163119 bytes, 119ms, 0 errors, 0 warnings)
+[11:16:09.734] rive  showing BoardChrome [1/1]
+[11:16:09.735] rive  wrote build/vm.json
+[11:16:22.244] rive  built build/moyo_board_chrome.riv (163119 bytes, 122ms, 0 errors, 0 warnings)
+[11:16:36.949] rive  built build/moyo_board_chrome.riv (163119 bytes, 115ms, 0 errors, 0 warnings)
+[11:16:36.951] rive  data: paletteOpen = true
+[11:16:36.952] rive  showing BoardChrome [1/1]
+[11:16:36.954] rive  wrote build/c_i3.json
+[11:16:37.165] rive  built build/moyo_board_chrome.riv (163119 bytes, 119ms, 0 errors, 0 warnings)
+[11:16:37.167] rive  showing BoardChrome [1/1]
+[11:16:37.168] rive  wrote build/c_pen.json
+[11:16:37.374] rive  built build/moyo_board_chrome.riv (163119 bytes, 120ms, 0 errors, 0 warnings)
+[11:16:37.376] rive  showing BoardChrome [1/1]
+[11:16:37.378] rive  wrote build/c_frac.json
+[11:17:11.830] rive  built build/moyo_board_chrome.riv (163119 bytes, 114ms, 0 errors, 0 warnings)
+[11:17:11.831] rive  data: paletteOpen = true
+[11:17:11.832] rive  showing BoardChrome [1/1]
+[11:17:11.833] rive  wrote build/c_i3.json
+[11:17:33.014] rive  built build/moyo_board_chrome.riv (163119 bytes, 115ms, 0 errors, 0 warnings)
+[11:17:33.016] rive  data: paletteOpen = true
+[11:17:33.016] rive  showing BoardChrome [1/1]
+[11:17:33.018] rive  wrote build/c_hov.json
+[11:17:47.249] rive  built build/moyo_board_chrome.riv (163119 bytes, 115ms, 0 errors, 0 warnings)
+[11:17:47.250] rive  data: paletteOpen = true
+[11:17:47.251] rive  showing BoardChrome [1/1]
+[11:17:47.253] rive  wrote build/c_t.json
+[11:17:47.499] rive  built build/moyo_board_chrome.riv (163119 bytes, 117ms, 0 errors, 0 warnings)
+[11:17:47.500] rive  data: paletteOpen = true
+[11:17:47.501] rive  showing BoardChrome [1/1]
+[11:17:47.502] rive  wrote build/c_t.json
+[11:17:47.743] rive  built build/moyo_board_chrome.riv (163119 bytes, 118ms, 0 errors, 0 warnings)
+[11:17:47.745] rive  data: paletteOpen = true
+[11:17:47.746] rive  showing BoardChrome [1/1]
+[11:17:47.747] rive  wrote build/c_t.json
+[11:18:00.847] rive  built build/moyo_board_chrome.riv (163119 bytes, 115ms, 0 errors, 0 warnings)
+[11:18:00.848] rive  data: paletteOpen = true
+[11:18:00.849] rive  showing BoardChrome [1/1]
+[11:18:00.850] rive  wrote build/c_i3.json
+[11:18:01.100] rive  built build/moyo_board_chrome.riv (163119 bytes, 121ms, 0 errors, 0 warnings)
+[11:18:01.102] rive  data: paletteOpen = true
+[11:18:01.103] rive  showing BoardChrome [1/1]
+[11:18:01.104] rive  wrote build/c_cl.json

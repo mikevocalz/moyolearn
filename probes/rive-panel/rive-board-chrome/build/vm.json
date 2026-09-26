@@ -327,6 +327,13 @@
         "type": "number",
         "value": 0,
         "changed": false
+      },
+      {
+        "name": "uiOpacity",
+        "path": "uiOpacity",
+        "type": "number",
+        "value": 1,
+        "changed": false
       }
     ]
   },

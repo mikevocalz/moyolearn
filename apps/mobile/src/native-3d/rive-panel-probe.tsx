@@ -10,8 +10,9 @@ export type { PanelPose } from './rive-panel-store';
 /** Mount below a Viro scene with one ViroController. Supply compiled Fractions .riv bytes.
  * Change resetKey on recenter/tracking loss. The grip moves the native parent, including
  * the reference label; React only persists its final transform after release.
+ * `opacity` drives the view model's `uiOpacity` — face fills only; art stays full-strength.
  */
-export function RivePanelProbe({ bytes, initialPose, resetKey = 0 }: { bytes: ArrayBuffer; initialPose: PanelPose; resetKey?: number }) {
+export function RivePanelProbe({ bytes, initialPose, resetKey = 0, opacity = 1 }: { bytes: ArrayBuffer; initialPose: PanelPose; resetKey?: number; opacity?: number }) {
   const group = useRef<ViroNode>(null);
   const panel = useRef<RivePanel | null>(null);
   const owner = useRef<number | null>(null);
@@ -52,6 +53,7 @@ export function RivePanelProbe({ bytes, initialPose, resetKey = 0 }: { bytes: Ar
     };
   }, []);
   useEffect(() => { void finish(); }, [resetKey]);
+  useEffect(() => { panel.current?.setNumber('uiOpacity', opacity); }, [opacity]);
   useEffect(() => {
     const id = setInterval(() => {
       const runtime = panel.current;
@@ -70,6 +72,7 @@ export function RivePanelProbe({ bytes, initialPose, resetKey = 0 }: { bytes: Ar
       onError={(error) => store.setState({ status: `Lesson unavailable: ${error.message}` })}
       onRuntimeReady={(runtime) => {
         panel.current = runtime;
+        runtime.setNumber('uiOpacity', opacity);
         stopSelection.current?.();
         stopSelection.current = bindRiveSelection(runtime, store);
       }} />

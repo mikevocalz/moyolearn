@@ -49,6 +49,7 @@ const P = {
   hoverClear: '0:132', downClear: '0:133',
   hoverAsk: '0:134', downAsk: '0:135',
   hoverClose: '0:150', downClose: '0:151',
+  uiOpacity: '0:152',
 };
 for (let i = 0; i < 7; i++) {
   P[`hoverInk${i}`] = `0:${136 + i}`;
@@ -66,7 +67,7 @@ const CELL_FILL = '0DFFFFFF';
 const HAIRLINE = '26E9F4FA';
 const LABEL = 'FF5E7683';
 const LABEL_Y = 104;   // micro-label top inside every 44..132 cell
-const LABEL_FS = 9;
+const LABEL_FS = 10;
 const CELL_R = 6;      // chamfer-lite corner radius on cell surfaces
 const NUM_KEY = '636'; // BindablePropertyNumber.propertyValue
 const BOOL_KEY = '634'; // BindablePropertyBoolean.propertyValue
@@ -81,9 +82,13 @@ const indent = (text, pad) =>
 // A centred micro-label — Foundation-style small caps riding under a control.
 // Fixed-width box + centre align so it stays put under the cell's midpoint.
 // `sid` ids the style paint — a run without styleId renders nothing.
+// Space Grotesk ships wght 300..700, default 300 — every label needs an
+// explicit TextStyleAxis or it renders hairline in the headset.
+const WGHT = '2003265652'; // 'wght' packed big-endian
 function microLabel(text, x, w, y = LABEL_Y, fs = LABEL_FS, color = LABEL, align = 'center', sid = 0) {
   return `<Text name="label ${text}" x="${x}" y="${y}" width="${w}" sizingValue="fixed" alignValue="${align}" wrapValue="noWrap">
-  <TextStylePaint id="0:${sid}" fontSize="${fs}" letterSpacing="1.8" fontAssetId="0:30">
+  <TextStylePaint id="0:${sid}" fontSize="${fs}" letterSpacing="1.8" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold">
+    <TextStyleAxis tag="${WGHT}" axisValue="600" name="Weight" />
     <Fill>
       <SolidColor colorValue="${color}" />
     </Fill>
@@ -258,7 +263,8 @@ ${gticks.join('\n')}
 
   const leftSpine = `<Node name="Left spine" x="46" y="470" rotation="-1.570796">
   <Text x="-80" y="-7">
-    <TextStylePaint id="0:625" fontSize="12" letterSpacing="4" fontAssetId="0:30">
+    <TextStylePaint id="0:625" fontSize="13" letterSpacing="4" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold">
+      <TextStyleAxis tag="${WGHT}" axisValue="600" name="Weight" />
       <Fill>
         <SolidColor colorValue="FF4E6673" />
       </Fill>
@@ -268,7 +274,8 @@ ${gticks.join('\n')}
 </Node>
 <Node name="Right spine" x="1202" y="450" rotation="1.570796">
   <Text x="-70" y="-7">
-    <TextStylePaint id="0:626" fontSize="12" letterSpacing="4" fontAssetId="0:30">
+    <TextStylePaint id="0:626" fontSize="13" letterSpacing="4" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold">
+      <TextStyleAxis tag="${WGHT}" axisValue="600" name="Weight" />
       <Fill>
         <SolidColor colorValue="FF4E6673" />
       </Fill>
@@ -488,6 +495,7 @@ const VM_PROPS = [
   ...Array.from({ length: 7 }, (_, i) => ['ViewModelPropertyNumber', `downInk${i}`]),
   ['ViewModelPropertyNumber', 'hoverClose'],
   ['ViewModelPropertyNumber', 'downClose'],
+  ['ViewModelPropertyNumber', 'uiOpacity'],
 ];
 
 const propId = (name) => {
@@ -500,7 +508,7 @@ function viewModel() {
   const props = VM_PROPS.map(([t, n]) => `  <${t} name="${n}" id="${propId(n)}" />`).join('\n');
   const values = VM_PROPS.map(([t, n]) => {
     const inst = t.replace('ViewModelProperty', 'ViewModelInstance');
-    const v = n === 'status' ? 'Ready' : t === 'ViewModelPropertyBoolean' ? 'false' : '0';
+    const v = n === 'status' ? 'Ready' : n === 'uiOpacity' ? '1' : t === 'ViewModelPropertyBoolean' ? 'false' : '0';
     return `    <${inst} viewModelPropertyId="${propId(n)}" propertyValue="${v}" />`;
   }).join('\n');
   return `<ViewModel name="BoardChrome" id="${VM}" defaultInstanceId="0:41">

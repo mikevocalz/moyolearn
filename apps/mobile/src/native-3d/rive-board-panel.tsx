@@ -68,6 +68,9 @@ export interface RiveBoardPanelProps {
   grabbed: boolean;
   /** The live texture is bound — unbound, the window shows the navy tile. */
   bound: boolean;
+  /** Panel face opacity 0..1 — multiplies the chrome's translucent fills;
+      icons, text and accents stay full-strength. Defaults to authored. */
+  opacity?: number;
   resetKey?: number;
   /** Persisted carrier pose on release — same contract as the probe grip. */
   onCarrierRelease(pose: { position: [number, number, number]; rotation: [number, number, number] }): void;
@@ -90,6 +93,7 @@ export function RiveBoardPanel({
   carrier,
   grabbed,
   bound,
+  opacity = 1,
   resetKey = 0,
   onCarrierRelease,
   onGrab,
@@ -177,10 +181,13 @@ export function RiveBoardPanel({
      identical latch to the Rive probe's. */
   useEffect(() => { void finishGrab(); }, [resetKey]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  /* Push application state into the view model whenever it moves. */
+  /* Push application state into the view model whenever it moves. The
+    panel's `opacity` prop is the one place the face's translucency is set —
+    it composes over whatever the caller put in the presentation. */
+  const present = (state: BoardChromePresentation) => ({ ...state, uiOpacity: opacity });
   useEffect(() => {
-    binding.current?.push(presented.current);
-  }, [presentation]);
+    binding.current?.push(present(presented.current));
+  }, [presentation, opacity]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <>
@@ -208,7 +215,7 @@ export function RiveBoardPanel({
                 onClear: () => dispatch.current.onClear(),
                 onAsk: () => dispatch.current.onAsk(),
               });
-              binding.current.push(presented.current);
+              binding.current.push(present(presented.current));
             }}
           />
           {/*

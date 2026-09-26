@@ -1,0 +1,342 @@
+{
+  "schema": 1,
+  "artboard": "BoardChrome",
+  "stateMachine": "BoardChrome",
+  "viewModel": {
+    "name": "Default",
+    "viewModel": "BoardChrome",
+    "properties": [
+      {
+        "name": "tool",
+        "path": "tool",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "ink",
+        "path": "ink",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "canUndo",
+        "path": "canUndo",
+        "type": "boolean",
+        "value": false,
+        "changed": false
+      },
+      {
+        "name": "canRedo",
+        "path": "canRedo",
+        "type": "boolean",
+        "value": false,
+        "changed": false
+      },
+      {
+        "name": "asking",
+        "path": "asking",
+        "type": "boolean",
+        "value": false,
+        "changed": false
+      },
+      {
+        "name": "hasMarks",
+        "path": "hasMarks",
+        "type": "boolean",
+        "value": false,
+        "changed": false
+      },
+      {
+        "name": "paletteOpen",
+        "path": "paletteOpen",
+        "type": "boolean",
+        "value": true,
+        "changed": true
+      },
+      {
+        "name": "clearArmed",
+        "path": "clearArmed",
+        "type": "boolean",
+        "value": false,
+        "changed": false
+      },
+      {
+        "name": "grabbed",
+        "path": "grabbed",
+        "type": "boolean",
+        "value": false,
+        "changed": false
+      },
+      {
+        "name": "reducedMotion",
+        "path": "reducedMotion",
+        "type": "boolean",
+        "value": false,
+        "changed": false
+      },
+      {
+        "name": "status",
+        "path": "status",
+        "type": "string",
+        "value": "Ready",
+        "changed": false
+      },
+      {
+        "name": "revision",
+        "path": "revision",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "command",
+        "path": "command",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "commandSeq",
+        "path": "commandSeq",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverPen",
+        "path": "hoverPen",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downPen",
+        "path": "downPen",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverHighlighter",
+        "path": "hoverHighlighter",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downHighlighter",
+        "path": "downHighlighter",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverEraser",
+        "path": "hoverEraser",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downEraser",
+        "path": "downEraser",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverInkWell",
+        "path": "hoverInkWell",
+        "type": "number",
+        "value": 1,
+        "changed": true
+      },
+      {
+        "name": "downInkWell",
+        "path": "downInkWell",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverUndo",
+        "path": "hoverUndo",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downUndo",
+        "path": "downUndo",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverRedo",
+        "path": "hoverRedo",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downRedo",
+        "path": "downRedo",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverClear",
+        "path": "hoverClear",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downClear",
+        "path": "downClear",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverAsk",
+        "path": "hoverAsk",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downAsk",
+        "path": "downAsk",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverInk0",
+        "path": "hoverInk0",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverInk1",
+        "path": "hoverInk1",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverInk2",
+        "path": "hoverInk2",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverInk3",
+        "path": "hoverInk3",
+        "type": "number",
+        "value": 1,
+        "changed": true
+      },
+      {
+        "name": "hoverInk4",
+        "path": "hoverInk4",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverInk5",
+        "path": "hoverInk5",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverInk6",
+        "path": "hoverInk6",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downInk0",
+        "path": "downInk0",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downInk1",
+        "path": "downInk1",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downInk2",
+        "path": "downInk2",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downInk3",
+        "path": "downInk3",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downInk4",
+        "path": "downInk4",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downInk5",
+        "path": "downInk5",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downInk6",
+        "path": "downInk6",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "hoverClose",
+        "path": "hoverClose",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "downClose",
+        "path": "downClose",
+        "type": "number",
+        "value": 0,
+        "changed": false
+      },
+      {
+        "name": "uiOpacity",
+        "path": "uiOpacity",
+        "type": "number",
+        "value": 1,
+        "changed": false
+      }
+    ]
+  },
+  "globals": [],
+  "nested": []
+}
