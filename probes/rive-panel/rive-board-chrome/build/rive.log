@@ -194,3 +194,5 @@
 [10:16:18.158] rive  showing BoardChrome [1/1]
 [10:16:18.158] rive  wrote build/vm.json
 [10:16:27.775] rive  built build/moyo_board_chrome.riv (162233 bytes, 110ms, 0 errors, 0 warnings)
+[10:53:02.916] rive  verified (0 bytes, 193ms, 0 errors, 0 warnings)
+[10:53:03.072] rive  built build/moyo_board_chrome.riv (162233 bytes, 113ms, 0 errors, 0 warnings)

@@ -368,7 +368,7 @@
     <Shape id="0:148" name="Piece 4" x="805" y="308">
       <Rectangle width="196" height="190" cornerRadiusTL="6" />
       <Fill>
-        <SolidColor colorValue="FF101820" />
+        <SolidColor colorValue="E6101820" />
       </Fill>
       <Stroke thickness="1" cap="round" join="round">
         <SolidColor colorValue="40E9F4FA" />
@@ -511,7 +511,7 @@
     <Shape id="0:140" name="Piece 3" x="587" y="308">
       <Rectangle width="196" height="190" cornerRadiusTL="6" />
       <Fill>
-        <SolidColor colorValue="FF101820" />
+        <SolidColor colorValue="E6101820" />
       </Fill>
       <Stroke thickness="1" cap="round" join="round">
         <SolidColor colorValue="40E9F4FA" />
@@ -654,7 +654,7 @@
     <Shape id="0:132" name="Piece 2" x="369" y="308">
       <Rectangle width="196" height="190" cornerRadiusTL="6" />
       <Fill>
-        <SolidColor colorValue="FF101820" />
+        <SolidColor colorValue="E6101820" />
       </Fill>
       <Stroke thickness="1" cap="round" join="round">
         <SolidColor colorValue="40E9F4FA" />
@@ -797,7 +797,7 @@
     <Shape id="0:124" name="Piece 1" x="151" y="308">
       <Rectangle width="196" height="190" cornerRadiusTL="6" />
       <Fill>
-        <SolidColor colorValue="FF101820" />
+        <SolidColor colorValue="E6101820" />
       </Fill>
       <Stroke thickness="1" cap="round" join="round">
         <SolidColor colorValue="40E9F4FA" />
@@ -1014,7 +1014,7 @@
         <StraightVertex x="0" y="20" />
       </PointsPath>
       <Fill>
-        <SolidColor colorValue="EB0A0D12" />
+        <SolidColor colorValue="C80A0D12" />
       </Fill>
     </Shape>
     <LinearAnimation id="0:164" name="Hint visibility 0" duration="1" fps="60">

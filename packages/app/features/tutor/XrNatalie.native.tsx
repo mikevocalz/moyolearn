@@ -221,10 +221,11 @@ export function XrNatalie({ position, rotationY, onStatus }: XrNatalieProps) {
   */
   return (
     <ViroNode
-      /* The GLB measures 1.673 m (POSITION bounds, audited 2026-09-26). Scale
-         lands her at 1.70 m — 5'7", average adult height — read against the
-         real floor this scene is floor-anchored to. */
-      scale={[170 / 167.3, 170 / 167.3, 170 / 167.3]}
+      /* The GLB measures 1.673 m (POSITION bounds, audited 2026-09-26). Target
+         1.75 m on the floor-anchored scene — a true 1.70 still read short in
+         the headset (VR undersells stature at slot distance), so the rendered
+         height lands just over the ask rather than under it. */
+      scale={[175 / 167.3, 175 / 167.3, 175 / 167.3]}
       position={[
         position[0] + dragOffset[0],
         position[1] + dragOffset[1],

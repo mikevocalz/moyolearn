@@ -191,7 +191,9 @@ export function RiveBoardPanel({
             width={PANEL_WIDTH_M}
             height={PANEL_HEIGHT_M}
             position={[0, 0, 0]}
-            resolution={{ width: 1248, height: 780 }}
+            /* 2× the artboard — micro-labels stay crisp at arm's length in
+               the headset; the quad is 1.2 m wide and text lives at fs9. */
+            resolution={{ width: 2496, height: 1560 }}
             input={{ panelWorld, enabled: !grabbed, resetKey }}
             onError={(error) => onChromeError?.(`Board controls unavailable: ${error.message}`)}
             onRuntimeReady={(rt) => {

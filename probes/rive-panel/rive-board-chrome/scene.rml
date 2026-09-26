@@ -1358,7 +1358,7 @@
       </PointsPath>
       <Rectangle x="624" y="460" width="1024" height="640" />
       <Fill fillRule="evenOdd">
-        <SolidColor colorValue="EB0A0D12" />
+        <SolidColor colorValue="C80A0D12" />
       </Fill>
     </Shape>
     <LinearAnimation id="0:330" name="Palette tools" duration="1" fps="60">

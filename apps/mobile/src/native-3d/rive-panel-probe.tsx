@@ -64,7 +64,8 @@ export function RivePanelProbe({ bytes, initialPose, resetKey = 0 }: { bytes: Ar
   if (!materialsReady) return null;
   return <ViroNode ref={group} position={pose.position} rotation={pose.rotation}>
     <ViroRivePanel source={source} width={1.2} height={0.8} position={[0, 0, 0]}
-      resolution={{ width: 960, height: 640 }}
+      /* 2× the artboard so the HUD micro-labels survive the headset optics. */
+      resolution={{ width: 1920, height: 1280 }}
       input={{ panelWorld, enabled: !grabbed && status === '', resetKey }}
       onError={(error) => store.setState({ status: `Lesson unavailable: ${error.message}` })}
       onRuntimeReady={(runtime) => {
