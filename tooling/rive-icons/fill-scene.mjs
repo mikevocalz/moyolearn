@@ -57,6 +57,17 @@ for (let i = 0; i < 7; i++) {
 
 const INK_COLORS = ['FF1A1A1A', 'FF2563EB', 'FFDC2626', 'FF16A34A', 'FFEAB308', 'FFF97316', 'FF7C3AED'];
 const INK_NAMES = ['black', 'blue', 'red', 'green', 'yellow', 'orange', 'violet'];
+// HUD palette: amber is the luminous accent, Moyo teal secondary, everything
+// else hairline-on-near-black. Alpha-prefixed ARGB, no '#'.
+const ACCENT = 'FFF5B02E';
+const HOVER_FILL = '14F5B02E';
+const DOWN_FILL = '33F5B02E';
+const CELL_FILL = '0DFFFFFF';
+const HAIRLINE = '26E9F4FA';
+const LABEL = 'FF5E7683';
+const LABEL_Y = 104;   // micro-label top inside every 44..132 cell
+const LABEL_FS = 9;
+const CELL_R = 6;      // chamfer-lite corner radius on cell surfaces
 const NUM_KEY = '636'; // BindablePropertyNumber.propertyValue
 const BOOL_KEY = '634'; // BindablePropertyBoolean.propertyValue
 const NEXT_SEQ = '0:60';
@@ -67,64 +78,89 @@ const indent = (text, pad) =>
 
 // ---------- inks row swatches ----------
 
+// A centred micro-label — Foundation-style small caps riding under a control.
+// Fixed-width box + centre align so it stays put under the cell's midpoint.
+// `sid` ids the style paint — a run without styleId renders nothing.
+function microLabel(text, x, w, y = LABEL_Y, fs = LABEL_FS, color = LABEL, align = 'center', sid = 0) {
+  return `<Text name="label ${text}" x="${x}" y="${y}" width="${w}" sizingValue="fixed" alignValue="${align}" wrapValue="noWrap">
+  <TextStylePaint id="0:${sid}" fontSize="${fs}" letterSpacing="1.8" fontAssetId="0:30">
+    <Fill>
+      <SolidColor colorValue="${color}" />
+    </Fill>
+  </TextStylePaint>
+  <TextValueRun styleId="0:${sid}" text="${text}" />
+</Text>`;
+}
+// Id budget for generated micro-labels: 0:640..0:669 (hand-authored labels
+// use 0:601..0:615, spine paints 0:625..0:626, icons start at 0:700).
+let labelSid = 640;
+const label = (text, x, w, y = LABEL_Y, fs = LABEL_FS, color = LABEL, align = 'center') =>
+  microLabel(text, x, w, y, fs, color, align, labelSid++);
+
 // Swatch content only — the hit/bg rectangles live in the InksHits node so the
 // Palette layer can slide the whole row's hit area off-artboard with one key.
+// Swatch i sits at x = 124 + i*124 (w=104 h=88), centre cx = 176 + i*124.
 function swatches() {
   const out = [];
   for (let i = 0; i < 7; i++) {
-    const cx = 12 + i * 124 + 52;
+    const rx = 124 + i * 124;
+    const cx = rx + 52;
     const b = 270 + i * 5;
     out.push(`<Node name="Ink${i}">
   <Shape id="0:${b + 4}" name="Ink${i} down" x="${cx}" y="88" opacity="0">
     <DataBindContext sourcePathIds="${VM}-${P[`downInk${i}`]}" propertyKey="18" />
-    <Rectangle width="104" height="88" cornerRadiusTL="14" />
+    <Rectangle width="104" height="88" cornerRadiusTL="${CELL_R}" />
     <Fill>
-      <SolidColor colorValue="38000000" />
+      <SolidColor colorValue="${DOWN_FILL}" />
     </Fill>
   </Shape>
   <Shape id="0:${b + 3}" name="Ink${i} hover" x="${cx}" y="88" opacity="0">
     <DataBindContext sourcePathIds="${VM}-${P[`hoverInk${i}`]}" propertyKey="18" />
-    <Rectangle width="104" height="88" cornerRadiusTL="14" />
+    <Rectangle width="104" height="88" cornerRadiusTL="${CELL_R}" />
     <Fill>
-      <SolidColor colorValue="1FFFFFFF" />
+      <SolidColor colorValue="${HOVER_FILL}" />
     </Fill>
   </Shape>
-  <Shape id="0:${b + 2}" name="Ink${i} ring" x="${cx}" y="88" opacity="0">
+${indent(label(`0${i + 1}`, rx, 104), '  ')}
+  <Shape id="0:${b + 2}" name="Ink${i} ring" x="${cx}" y="72" opacity="0">
     <DataBindContext sourcePathIds="${VM}-${P.ink}" propertyKey="18" converterId="${isIndex(i)}" />
-    <Ellipse width="46" height="46" />
-    <Stroke thickness="3" cap="round" join="round">
-      <SolidColor colorValue="FF63D2D1" />
+    <Rectangle width="50" height="50" cornerRadiusTL="10" />
+    <Stroke thickness="2.5" cap="round" join="round">
+      <SolidColor colorValue="${ACCENT}" />
     </Stroke>
   </Shape>
-  <Shape id="0:${b + 1}" name="Ink${i} swatch" x="${cx}" y="88">
-    <Ellipse width="36" height="36" />
+  <Shape id="0:${b + 1}" name="Ink${i} swatch" x="${cx}" y="72">
+    <Rectangle width="36" height="36" cornerRadiusTL="7" />
     <Fill>
       <SolidColor colorValue="${INK_COLORS[i]}" />
     </Fill>
+    <Stroke thickness="1">
+      <SolidColor colorValue="40E9F4FA" />
+    </Stroke>
   </Shape>
 </Node>`);
   }
   return out.join('\n');
 }
 
-// All hit/bg rectangles for the inks row: swatch i sits at x = 12 + i*124
-// (w=104 h=88) and close at x=880 (w=132). Grouped so one keyed x moves the
+// All hit/bg rectangles for the inks row: swatch i sits at x = 124 + i*124
+// (w=104 h=88) and close at x=992 (w=132). Grouped so one keyed x moves the
 // whole row's hit areas off-artboard when the palette is closed.
 function inksHits() {
   const hits = [];
   for (let i = 0; i < 7; i++) {
-    const cx = 12 + i * 124 + 52;
+    const cx = 124 + i * 124 + 52;
     hits.push(`  <Shape id="0:${270 + i * 5}" name="Ink${i} hit" x="${cx}" y="88">
-    <Rectangle width="104" height="88" cornerRadiusTL="14" />
+    <Rectangle width="104" height="88" cornerRadiusTL="${CELL_R}" />
     <Fill>
-      <SolidColor colorValue="FF1B3A50" />
+      <SolidColor colorValue="${CELL_FILL}" />
     </Fill>
   </Shape>`);
   }
-  hits.push(`  <Shape id="0:305" name="Close hit" x="946" y="88">
-    <Rectangle width="132" height="88" cornerRadiusTL="14" />
+  hits.push(`  <Shape id="0:305" name="Close hit" x="1058" y="88">
+    <Rectangle width="132" height="88" cornerRadiusTL="${CELL_R}" />
     <Fill>
-      <SolidColor colorValue="FF1B3A50" />
+      <SolidColor colorValue="${CELL_FILL}" />
     </Fill>
   </Shape>`);
   return `<Node name="InksHits" id="0:266">\n${hits.join('\n')}\n</Node>`;
@@ -133,25 +169,145 @@ function inksHits() {
 // Tools-row hit/bg rectangles in one node for the same reason as inksHits —
 // the Palette animations slide whichever row is hidden 3000 units right so its
 // listeners cannot fire (opacity does not gate hit-testing).
+// cx/w come straight from TOOL_ROW in board-chrome-layout.ts.
 const TOOL_HITS = [
-  ['pen', '0:211', 64, 104],
-  ['highlighter', '0:215', 180, 104],
-  ['eraser', '0:219', 296, 104],
-  ['inkWell', '0:223', 416, 96],
-  ['undo', '0:234', 536, 104],
-  ['redo', '0:238', 652, 104],
-  ['clear', '0:242', 776, 104],
-  ['askNatalie', '0:247', 930, 164],
+  ['pen', '0:211', 176, 104],
+  ['highlighter', '0:215', 292, 104],
+  ['eraser', '0:219', 408, 104],
+  ['inkWell', '0:223', 528, 96],
+  ['undo', '0:234', 648, 104],
+  ['redo', '0:238', 764, 104],
+  ['clear', '0:242', 888, 104],
+  ['askNatalie', '0:247', 1042, 164],
 ];
 
 function toolsHits() {
   const hits = TOOL_HITS.map(([name, id, cx, w]) => `  <Shape id="${id}" name="${name[0].toUpperCase() + name.slice(1)} hit" x="${cx}" y="88">
-    <Rectangle width="${w}" height="88" cornerRadiusTL="14" />
+    <Rectangle width="${w}" height="88" cornerRadiusTL="${CELL_R}" />
     <Fill>
-      <SolidColor colorValue="${name === 'askNatalie' ? 'FF2A5670' : 'FF1B3A50'}" />
+      <SolidColor colorValue="${name === 'askNatalie' ? '14F5B02E' : CELL_FILL}" />
     </Fill>
   </Shape>`);
   return `<Node name="ToolsHits" id="0:255">\n${hits.join('\n')}\n</Node>`;
+}
+
+// ---------- chrome decoration ----------
+
+// The HUD texture layer: rail separators, scanlines, viewport ticks, gutter
+// furniture and the bound ink meter. All hairlines — nothing inside the
+// content window (112,140,1024,640) except ticks riding its border edge.
+function deco() {
+  const parts = [];
+
+  // Rail separators in the gaps between tool cells plus row end-caps.
+  const seps = [118, 234, 350, 470, 586, 706, 826, 950, 1130]
+    .map((x) => `    <Rectangle x="${x}" y="88" width="1" height="68" />`)
+    .join('\n');
+  parts.push(`<Shape name="Rail separators">
+${seps}
+  <Fill>
+    <SolidColor colorValue="${HAIRLINE}" />
+  </Fill>
+</Shape>`);
+
+  // Scanlines: 1px rows across the toolbar band, and in both gutters.
+  const scan = [];
+  for (let y = 46; y <= 130; y += 9.4) {
+    scan.push(`    <Rectangle x="624" y="${Math.round(y * 10) / 10}" width="1244" height="1" />`);
+  }
+  for (let y = 180; y <= 740; y += 40) {
+    scan.push(`    <Rectangle x="56" y="${y}" width="96" height="1" />`);
+    scan.push(`    <Rectangle x="1192" y="${y}" width="96" height="1" />`);
+  }
+  parts.push(`<Shape name="Scanlines">
+${scan.join('\n')}
+  <Fill>
+    <SolidColor colorValue="0AE9F4FA" />
+  </Fill>
+</Shape>`);
+
+  // Viewport ticks riding the window's border: top edge + both sides + bottom.
+  const ticks = [];
+  for (let x = 176; x <= 1088; x += 64) {
+    ticks.push(`    <Rectangle x="${x}" y="137" width="1.5" height="7" />`);
+    ticks.push(`    <Rectangle x="${x}" y="776" width="1.5" height="7" />`);
+  }
+  for (let y = 220; y <= 700; y += 80) {
+    ticks.push(`    <Rectangle x="108" y="${y}" width="7" height="1.5" />`);
+    ticks.push(`    <Rectangle x="1133" y="${y}" width="7" height="1.5" />`);
+  }
+  parts.push(`<Shape name="Viewport ticks">
+${ticks.join('\n')}
+  <Fill>
+    <SolidColor colorValue="3DE9F4FA" />
+  </Fill>
+</Shape>`);
+
+  // Left gutter: tick column on the window edge + rotated spine label +
+  // corner coordinate readouts.
+  const gticks = [];
+  for (let y = 200; y <= 740; y += 40) {
+    gticks.push(`    <Rectangle x="104" y="${y}" width="7" height="1.2" />`);
+  }
+  parts.push(`<Shape name="Gutter ticks">
+${gticks.join('\n')}
+  <Fill>
+    <SolidColor colorValue="${HAIRLINE}" />
+  </Fill>
+</Shape>`);
+
+  const leftSpine = `<Node name="Left spine" x="46" y="470" rotation="-1.570796">
+  <Text x="-80" y="-7">
+    <TextStylePaint id="0:625" fontSize="12" letterSpacing="4" fontAssetId="0:30">
+      <Fill>
+        <SolidColor colorValue="FF4E6673" />
+      </Fill>
+    </TextStylePaint>
+    <TextValueRun styleId="0:625" text="MOYO // BOARD" />
+  </Text>
+</Node>
+<Node name="Right spine" x="1202" y="450" rotation="1.570796">
+  <Text x="-70" y="-7">
+    <TextStylePaint id="0:626" fontSize="12" letterSpacing="4" fontAssetId="0:30">
+      <Fill>
+        <SolidColor colorValue="FF4E6673" />
+      </Fill>
+    </TextStylePaint>
+    <TextValueRun styleId="0:626" text="INK CHANNEL" />
+  </Text>
+</Node>`;
+  parts.push(leftSpine);
+
+  // Right-gutter ink meter: seven segments, each in its ink colour at 25%;
+  // the segment matching `ink` glows at full alpha via the Is-index binds.
+  const segs = [];
+  for (let i = 0; i < 7; i++) {
+    const y = 320 + i * 30;
+    segs.push(`  <Shape name="InkMeter${i} glow" x="1186" y="${y + 9}" opacity="0">
+    <DataBindContext sourcePathIds="${VM}-${P.ink}" propertyKey="18" converterId="${isIndex(i)}" />
+    <Rectangle width="12" height="18" cornerRadiusTL="3" />
+    <Fill>
+      <SolidColor colorValue="${INK_COLORS[i]}" />
+    </Fill>
+  </Shape>
+  <Shape name="InkMeter${i} base" x="1186" y="${y + 9}">
+    <Rectangle width="12" height="18" cornerRadiusTL="3" />
+    <Fill>
+      <SolidColor colorValue="40${INK_COLORS[i].slice(2)}" />
+    </Fill>
+  </Shape>`);
+  }
+  parts.push(`<Node name="InkMeter">\n${segs.join('\n')}\n</Node>`);
+
+  // Corner coordinate readouts — text-as-texture, deliberately faint.
+  parts.push(label('112·140', 16, 80, 148, 8, 'FF3D5560', 'left'));
+  parts.push(label('112·780', 16, 80, 758, 8, 'FF3D5560', 'left'));
+  parts.push(label('1136·140', 1150, 82, 148, 8, 'FF3D5560', 'right'));
+  parts.push(label('1136·780', 1150, 82, 758, 8, 'FF3D5560', 'right'));
+  parts.push(label('CAM·01 // LIVE', 16, 96, 170, 8.5, 'FF3D5560', 'left'));
+  parts.push(label('QDRAW · 1024×640', 1136, 96, 170, 8.5, 'FF3D5560', 'right'));
+
+  return parts.join('\n');
 }
 
 // ---------- state machine layers ----------
@@ -361,6 +517,7 @@ const BLOCKS = {
   '@inkswatches': () => indent(swatches(), '      '),
   '@inkshits': () => indent(inksHits(), '      '),
   '@toolshits': () => indent(toolsHits(), '      '),
+  '@deco': () => indent(deco(), '    '),
   '@layers': () => indent(layers(), '      '),
   '@listeners': () => indent(listeners(), '      '),
   '@converters': () => indent(converters(), '  '),

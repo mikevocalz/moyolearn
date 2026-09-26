@@ -2,59 +2,219 @@
   <Artboard name="Fractions" id="0:2" width="960" height="640" clip="true" styleId="0:5" defaultStateMachineId="0:7" viewModelId="0:40" viewModelInstanceId="0:41">
     <LayoutComponentStyle id="0:5" />
     <Node id="0:174" opacity="0" name="Grabbed">
-      <Text name="Grab status" x="640" y="32">
-        <TextStylePaint id="0:175" fontSize="25" fontAssetId="0:30">
+      <Text name="Grab status" x="420" y="15" width="120" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+        <TextStylePaint id="0:301" fontSize="10" letterSpacing="2.5" fontAssetId="0:30">
           <Fill>
-            <SolidColor colorValue="FFFFC168" />
+            <SolidColor colorValue="FFF5B02E" />
           </Fill>
         </TextStylePaint>
-        <TextValueRun styleId="0:175" text="Moving panel" />
+        <TextValueRun styleId="0:301" text="MOVING PANEL" />
       </Text>
+      <Shape name="Grab corners">
+        <PointsPath>
+          <StraightVertex x="48" y="14" />
+          <StraightVertex x="14" y="14" />
+          <StraightVertex x="14" y="48" />
+        </PointsPath>
+        <PointsPath>
+          <StraightVertex x="912" y="14" />
+          <StraightVertex x="946" y="14" />
+          <StraightVertex x="946" y="48" />
+        </PointsPath>
+        <PointsPath>
+          <StraightVertex x="14" y="592" />
+          <StraightVertex x="14" y="626" />
+          <StraightVertex x="48" y="626" />
+        </PointsPath>
+        <PointsPath>
+          <StraightVertex x="946" y="592" />
+          <StraightVertex x="946" y="626" />
+          <StraightVertex x="912" y="626" />
+        </PointsPath>
+        <Stroke thickness="3" cap="round" join="round">
+          <SolidColor colorValue="FFF5B02E" />
+        </Stroke>
+      </Shape>
     </Node>
     <Node id="0:168" opacity="0" name="One half">
-      <Text name="Equation" x="360" y="438">
-        <TextStylePaint id="0:169" fontSize="36" fontAssetId="0:30">
+      <Text name="Equation" x="330" y="438" width="300" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+        <TextStylePaint id="0:302" fontSize="34" letterSpacing="1" fontAssetId="0:30">
           <Fill>
-            <SolidColor colorValue="FF63D2D1" />
+            <SolidColor colorValue="FF5EEAD4" />
           </Fill>
         </TextStylePaint>
-        <TextValueRun styleId="0:169" text="2/4 = 1/2" />
+        <TextValueRun styleId="0:302" text="2/4 = 1/2" />
       </Text>
+      <Shape name="Equation brackets">
+        <PointsPath>
+          <StraightVertex x="344" y="432" />
+          <StraightVertex x="330" y="432" />
+          <StraightVertex x="330" y="446" />
+        </PointsPath>
+        <PointsPath>
+          <StraightVertex x="616" y="432" />
+          <StraightVertex x="630" y="432" />
+          <StraightVertex x="630" y="446" />
+        </PointsPath>
+        <PointsPath>
+          <StraightVertex x="330" y="476" />
+          <StraightVertex x="330" y="490" />
+          <StraightVertex x="344" y="490" />
+        </PointsPath>
+        <PointsPath>
+          <StraightVertex x="630" y="476" />
+          <StraightVertex x="630" y="490" />
+          <StraightVertex x="616" y="490" />
+        </PointsPath>
+        <Stroke thickness="1.5" cap="round" join="round">
+          <SolidColor colorValue="995EEAD4" />
+        </Stroke>
+      </Shape>
     </Node>
     <Node id="0:162" opacity="0" name="Hint">
-      <Text name="Hint copy" x="48" y="548">
-        <TextStylePaint id="0:163" fontSize="25" fontAssetId="0:30">
+      <Text name="Hint copy" x="72" y="549">
+        <TextStylePaint id="0:303" fontSize="13" fontAssetId="0:30">
           <Fill>
-            <SolidColor colorValue="FFE9F4FA" />
+            <SolidColor colorValue="FF9FB4BE" />
           </Fill>
         </TextStylePaint>
-        <TextValueRun styleId="0:163" text="Half leaves the same amount selected and unselected." />
+        <TextValueRun styleId="0:303" text="Half leaves the same amount selected and unselected." />
       </Text>
-    </Node>
-    <Text name="Hint label" x="675" y="451">
-      <TextStylePaint id="0:159" fontSize="27" fontAssetId="0:30">
+      <Shape name="Hint caret">
+        <Rectangle x="59" y="556" width="3" height="16" />
         <Fill>
+          <SolidColor colorValue="FFF5B02E" />
+        </Fill>
+      </Shape>
+      <Shape name="Hint frame">
+        <Rectangle x="258" y="556" width="424" height="40" cornerRadiusTL="4" />
+        <Fill>
+          <SolidColor colorValue="0AE9F4FA" />
+        </Fill>
+        <Stroke thickness="1" cap="round" join="round">
+          <SolidColor colorValue="26E9F4FA" />
+        </Stroke>
+      </Shape>
+    </Node>
+    <Node name="HintIcon" x="672" y="471" scaleX="0.8" scaleY="0.8">
+      <Shape name="sparkles">
+        <PointsPath isClosed="true">
+          <CubicDetachedVertex x="-0.983" y="-9.186" outRotation="-1.386" outDistance="0.481" />
+          <CubicDetachedVertex x="0" y="-10.002" inRotation="-3.142" inDistance="0.481" outRotation="0" outDistance="0.481" />
+          <CubicDetachedVertex x="0.983" y="-9.186" inRotation="-1.755" inDistance="0.481" />
+          <CubicDetachedVertex x="2.034" y="-3.628" outRotation="1.384" outDistance="0.823" />
+          <CubicDetachedVertex x="3.628" y="-2.034" inRotation="-2.955" inDistance="0.823" />
+          <CubicDetachedVertex x="9.186" y="-0.983" outRotation="0.185" outDistance="0.481" />
+          <CubicDetachedVertex x="10.002" y="0" inRotation="-1.571" inDistance="0.481" outRotation="1.571" outDistance="0.481" />
+          <CubicDetachedVertex x="9.186" y="0.983" inRotation="-0.185" inDistance="0.481" />
+          <CubicDetachedVertex x="3.628" y="2.034" outRotation="2.955" outDistance="0.823" />
+          <CubicDetachedVertex x="2.034" y="3.628" inRotation="-1.384" inDistance="0.823" />
+          <CubicDetachedVertex x="0.983" y="9.186" outRotation="1.755" outDistance="0.481" />
+          <CubicDetachedVertex x="0" y="10.002" inRotation="0" inDistance="0.481" outRotation="3.142" outDistance="0.481" />
+          <CubicDetachedVertex x="-0.983" y="9.186" inRotation="1.386" inDistance="0.481" />
+          <CubicDetachedVertex x="-2.034" y="3.628" outRotation="-1.758" outDistance="0.823" />
+          <CubicDetachedVertex x="-3.628" y="2.034" inRotation="0.187" inDistance="0.823" />
+          <CubicDetachedVertex x="-9.186" y="0.983" outRotation="-2.957" inDistance="0.481" />
+          <CubicDetachedVertex x="-10.002" y="0" inRotation="1.571" inDistance="0.481" outRotation="-1.571" outDistance="0.481" />
+          <CubicDetachedVertex x="-9.186" y="-0.983" inRotation="2.957" inDistance="0.481" />
+          <CubicDetachedVertex x="-3.628" y="-2.034" outRotation="-0.187" inDistance="0.823" />
+          <CubicDetachedVertex x="-2.034" y="-3.628" inRotation="1.758" inDistance="0.823" />
+        </PointsPath>
+        <PointsPath>
+          <StraightVertex x="8" y="-10" />
+          <StraightVertex x="8" y="-6" />
+        </PointsPath>
+        <PointsPath>
+          <StraightVertex x="10" y="-8" />
+          <StraightVertex x="6" y="-8" />
+        </PointsPath>
+        <Ellipse x="-8" y="8" width="4" height="4" originX="0.5" originY="0.5" />
+        <Stroke thickness="2" cap="round" join="round">
           <SolidColor colorValue="FFE9F4FA" />
+        </Stroke>
+      </Shape>
+    </Node>
+    <Text name="Hint label" x="694" y="464">
+      <TextStylePaint id="0:159" fontSize="11" letterSpacing="2.5" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF9FB4BE" />
         </Fill>
       </TextStylePaint>
-      <TextValueRun styleId="0:159" text="Show a hint" />
+      <TextValueRun styleId="0:159" text="SHOW HINT" />
     </Text>
-    <Shape id="0:158" name="Hint button" x="776" y="471">
-      <Rectangle width="272" height="72" cornerRadiusTL="18" />
+    <Text name="Hint key" x="874" y="464" width="20" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:305" fontSize="10" letterSpacing="1" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF5E7683" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:305" text="H" />
+    </Text>
+    <Shape name="Hint keycap">
+      <Rectangle x="884" y="471" width="20" height="20" cornerRadiusTL="4" />
       <Fill>
-        <SolidColor colorValue="FF3C6173" />
+        <SolidColor colorValue="0DE9F4FA" />
+      </Fill>
+      <Stroke thickness="1" cap="round" join="round">
+        <SolidColor colorValue="40E9F4FA" />
+      </Stroke>
+    </Shape>
+    <Shape id="0:158" name="Hint button" x="776" y="471">
+      <Rectangle width="272" height="72" cornerRadiusTL="4" />
+      <Fill>
+        <SolidColor colorValue="0DE9F4FA" />
+      </Fill>
+      <Stroke thickness="1" cap="round" join="round">
+        <SolidColor colorValue="40E9F4FA" />
+      </Stroke>
+    </Shape>
+    <Shape name="Sel pip 0" x="212" y="491">
+      <DataBindContext sourcePathIds="0:40-0:107" propertyKey="18" />
+      <Rectangle width="24" height="4" cornerRadiusTL="1" />
+      <Fill>
+        <SolidColor colorValue="FFF5B02E" />
       </Fill>
     </Shape>
-    <Text name="Denominator" x="84" y="440">
-      <TextStylePaint id="0:157" fontSize="36" fontAssetId="0:30">
+    <Shape name="Sel pip 1" x="246" y="491">
+      <DataBindContext sourcePathIds="0:40-0:108" propertyKey="18" />
+      <Rectangle width="24" height="4" cornerRadiusTL="1" />
+      <Fill>
+        <SolidColor colorValue="FFF5B02E" />
+      </Fill>
+    </Shape>
+    <Shape name="Sel pip 2" x="280" y="491">
+      <DataBindContext sourcePathIds="0:40-0:109" propertyKey="18" />
+      <Rectangle width="24" height="4" cornerRadiusTL="1" />
+      <Fill>
+        <SolidColor colorValue="FFF5B02E" />
+      </Fill>
+    </Shape>
+    <Shape name="Sel pip 3" x="314" y="491">
+      <DataBindContext sourcePathIds="0:40-0:110" propertyKey="18" />
+      <Rectangle width="24" height="4" cornerRadiusTL="1" />
+      <Fill>
+        <SolidColor colorValue="FFF5B02E" />
+      </Fill>
+    </Shape>
+    <Shape name="Sel pips base">
+      <Rectangle x="212" y="491" width="24" height="4" cornerRadiusTL="1" />
+      <Rectangle x="246" y="491" width="24" height="4" cornerRadiusTL="1" />
+      <Rectangle x="280" y="491" width="24" height="4" cornerRadiusTL="1" />
+      <Rectangle x="314" y="491" width="24" height="4" cornerRadiusTL="1" />
+      <Fill>
+        <SolidColor colorValue="26E9F4FA" />
+      </Fill>
+    </Shape>
+    <Text name="Denominator" x="86" y="482">
+      <TextStylePaint id="0:157" fontSize="18" fontAssetId="0:30">
         <Fill>
-          <SolidColor colorValue="FFE9F4FA" />
+          <SolidColor colorValue="FF5E7683" />
         </Fill>
       </TextStylePaint>
-      <TextValueRun styleId="0:157" text="/4 selected" />
+      <TextValueRun styleId="0:157" text="/4" />
     </Text>
-    <Text name="Count" x="48" y="440">
-      <TextStylePaint id="0:156" fontSize="44" fontAssetId="0:30">
+    <Text name="Count" x="48" y="460">
+      <TextStylePaint id="0:156" fontSize="38" fontAssetId="0:30">
         <Fill>
           <SolidColor colorValue="FFE9F4FA" />
         </Fill>
@@ -63,156 +223,612 @@
         <DataBindContext sourcePathIds="0:40-0:102" propertyKey="268" converterId="0:83" />
       </TextValueRun>
     </Text>
-    <Text name="Fraction 4" x="771" y="287">
-      <TextStylePaint id="0:152" fontSize="36" fontAssetId="0:30">
+    <Text name="Sel tag" x="48" y="446">
+      <TextStylePaint id="0:306" fontSize="8.5" letterSpacing="2" fontAssetId="0:30">
         <Fill>
-          <SolidColor colorValue="FF112D44" />
+          <SolidColor colorValue="FF3D5560" />
         </Fill>
       </TextStylePaint>
-      <TextValueRun styleId="0:152" text="1/4" />
+      <TextValueRun styleId="0:306" text="SEL" />
     </Text>
-    <Shape id="0:151" name="Pressed 4" x="805" y="389">
-      <DataBindContext sourcePathIds="0:40-0:118" propertyKey="18" />
-      <Rectangle width="160" height="6" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FF112D44" />
-      </Fill>
-    </Shape>
-    <Shape id="0:150" name="Hover 4" x="805" y="222">
-      <DataBindContext sourcePathIds="0:40-0:114" propertyKey="18" />
-      <Rectangle width="160" height="6" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FFFFFFFF" />
-      </Fill>
-    </Shape>
-    <Shape id="0:149" name="Selected 4" x="805" y="308">
+    <Text name="Fraction 4 selected" x="707" y="284" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
       <DataBindContext sourcePathIds="0:40-0:110" propertyKey="18" />
-      <Rectangle width="176" height="170" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FF63D2D1" />
-      </Fill>
-    </Shape>
-    <Shape id="0:148" name="Piece 4" x="805" y="308">
-      <Rectangle width="196" height="190" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FF94B7C5" />
-      </Fill>
-    </Shape>
-    <Text name="Fraction 3" x="553" y="287">
-      <TextStylePaint id="0:144" fontSize="36" fontAssetId="0:30">
+      <TextStylePaint id="0:323" fontSize="44" fontAssetId="0:30">
         <Fill>
-          <SolidColor colorValue="FF112D44" />
+          <SolidColor colorValue="FFF5B02E" />
         </Fill>
       </TextStylePaint>
-      <TextValueRun styleId="0:144" text="1/4" />
+      <TextValueRun styleId="0:323" text="1/4" />
     </Text>
-    <Shape id="0:143" name="Pressed 3" x="587" y="389">
-      <DataBindContext sourcePathIds="0:40-0:117" propertyKey="18" />
-      <Rectangle width="160" height="6" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FF112D44" />
-      </Fill>
-    </Shape>
-    <Shape id="0:142" name="Hover 3" x="587" y="222">
-      <DataBindContext sourcePathIds="0:40-0:113" propertyKey="18" />
-      <Rectangle width="160" height="6" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FFFFFFFF" />
-      </Fill>
-    </Shape>
-    <Shape id="0:141" name="Selected 3" x="587" y="308">
-      <DataBindContext sourcePathIds="0:40-0:109" propertyKey="18" />
-      <Rectangle width="176" height="170" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FF63D2D1" />
-      </Fill>
-    </Shape>
-    <Shape id="0:140" name="Piece 3" x="587" y="308">
-      <Rectangle width="196" height="190" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FF94B7C5" />
-      </Fill>
-    </Shape>
-    <Text name="Fraction 2" x="335" y="287">
-      <TextStylePaint id="0:136" fontSize="36" fontAssetId="0:30">
-        <Fill>
-          <SolidColor colorValue="FF112D44" />
-        </Fill>
-      </TextStylePaint>
-      <TextValueRun styleId="0:136" text="1/4" />
-    </Text>
-    <Shape id="0:135" name="Pressed 2" x="369" y="389">
-      <DataBindContext sourcePathIds="0:40-0:116" propertyKey="18" />
-      <Rectangle width="160" height="6" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FF112D44" />
-      </Fill>
-    </Shape>
-    <Shape id="0:134" name="Hover 2" x="369" y="222">
-      <DataBindContext sourcePathIds="0:40-0:112" propertyKey="18" />
-      <Rectangle width="160" height="6" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FFFFFFFF" />
-      </Fill>
-    </Shape>
-    <Shape id="0:133" name="Selected 2" x="369" y="308">
-      <DataBindContext sourcePathIds="0:40-0:108" propertyKey="18" />
-      <Rectangle width="176" height="170" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FF63D2D1" />
-      </Fill>
-    </Shape>
-    <Shape id="0:132" name="Piece 2" x="369" y="308">
-      <Rectangle width="196" height="190" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FF94B7C5" />
-      </Fill>
-    </Shape>
-    <Text name="Fraction 1" x="117" y="287">
-      <TextStylePaint id="0:128" fontSize="36" fontAssetId="0:30">
-        <Fill>
-          <SolidColor colorValue="FF112D44" />
-        </Fill>
-      </TextStylePaint>
-      <TextValueRun styleId="0:128" text="1/4" />
-    </Text>
-    <Shape id="0:127" name="Pressed 1" x="151" y="389">
-      <DataBindContext sourcePathIds="0:40-0:115" propertyKey="18" />
-      <Rectangle width="160" height="6" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FF112D44" />
-      </Fill>
-    </Shape>
-    <Shape id="0:126" name="Hover 1" x="151" y="222">
-      <DataBindContext sourcePathIds="0:40-0:111" propertyKey="18" />
-      <Rectangle width="160" height="6" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FFFFFFFF" />
-      </Fill>
-    </Shape>
-    <Shape id="0:125" name="Selected 1" x="151" y="308">
-      <DataBindContext sourcePathIds="0:40-0:107" propertyKey="18" />
-      <Rectangle width="176" height="170" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FF63D2D1" />
-      </Fill>
-    </Shape>
-    <Shape id="0:124" name="Piece 1" x="151" y="308">
-      <Rectangle width="196" height="190" cornerRadiusTL="18" />
-      <Fill>
-        <SolidColor colorValue="FF94B7C5" />
-      </Fill>
-    </Shape>
-    <Text name="Instruction" x="48" y="160">
-      <TextStylePaint id="0:123" fontSize="25" fontAssetId="0:30">
+    <Text name="Fraction 4" x="707" y="284" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:152" fontSize="44" fontAssetId="0:30">
         <Fill>
           <SolidColor colorValue="FFE9F4FA" />
         </Fill>
       </TextStylePaint>
-      <TextValueRun styleId="0:123" text="Choose pieces. Tap a piece again to put it back." />
+      <TextValueRun styleId="0:152" text="1/4" />
     </Text>
-    <Text name="Title" x="48" y="87">
-      <TextStylePaint id="0:122" fontSize="52" fontAssetId="0:30">
+    <Text name="Tag 4" x="717" y="224">
+      <TextStylePaint id="0:324" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:324" text="P·04" />
+    </Text>
+    <Text name="Val 4" x="813" y="224" width="80" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:325" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:325" text="0.25" />
+    </Text>
+    <Text name="Seg 4" x="707" y="376" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:326" fontSize="9" letterSpacing="2" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF5E7683" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:326" text="SEG·04" />
+    </Text>
+    <Shape name="Pip 4 lit">
+      <Rectangle x="838" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Fill>
+        <SolidColor colorValue="FF63D2D1" />
+      </Fill>
+    </Shape>
+    <Shape name="Pips 4">
+      <Rectangle x="772" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Rectangle x="794" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Rectangle x="816" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Rectangle x="838" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Fill>
+        <SolidColor colorValue="33E9F4FA" />
+      </Fill>
+    </Shape>
+    <Shape id="0:151" name="Pressed 4" x="805" y="308">
+      <DataBindContext sourcePathIds="0:40-0:118" propertyKey="18" />
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="33F5B02E" />
+      </Fill>
+    </Shape>
+    <Shape id="0:150" name="Hover 4" x="805" y="308">
+      <DataBindContext sourcePathIds="0:40-0:114" propertyKey="18" />
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="14E9F4FA" />
+      </Fill>
+      <Stroke thickness="1" cap="round" join="round">
+        <SolidColor colorValue="73E9F4FA" />
+      </Stroke>
+    </Shape>
+    <Shape id="0:149" name="Selected 4" x="805" y="308">
+      <DataBindContext sourcePathIds="0:40-0:110" propertyKey="18" />
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="14F5B02E" />
+      </Fill>
+      <Stroke thickness="1.5" cap="round" join="round">
+        <SolidColor colorValue="FFF5B02E" />
+      </Stroke>
+    </Shape>
+    <Shape name="Selected 4 brackets">
+      <DataBindContext sourcePathIds="0:40-0:110" propertyKey="18" />
+      <PointsPath>
+        <StraightVertex x="720" y="204" />
+        <StraightVertex x="698" y="204" />
+        <StraightVertex x="698" y="226" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="890" y="204" />
+        <StraightVertex x="912" y="204" />
+        <StraightVertex x="912" y="226" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="698" y="390" />
+        <StraightVertex x="698" y="412" />
+        <StraightVertex x="720" y="412" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="912" y="390" />
+        <StraightVertex x="912" y="412" />
+        <StraightVertex x="890" y="412" />
+      </PointsPath>
+      <Stroke thickness="2.5" cap="round" join="round">
+        <SolidColor colorValue="FFF5B02E" />
+      </Stroke>
+    </Shape>
+    <Shape name="Brackets 4">
+      <PointsPath>
+        <StraightVertex x="718" y="208" />
+        <StraightVertex x="702" y="208" />
+        <StraightVertex x="702" y="224" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="892" y="208" />
+        <StraightVertex x="908" y="208" />
+        <StraightVertex x="908" y="224" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="702" y="392" />
+        <StraightVertex x="702" y="408" />
+        <StraightVertex x="718" y="408" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="908" y="392" />
+        <StraightVertex x="908" y="408" />
+        <StraightVertex x="892" y="408" />
+      </PointsPath>
+      <Stroke thickness="1.5" cap="round" join="round">
+        <SolidColor colorValue="40E9F4FA" />
+      </Stroke>
+    </Shape>
+    <Shape id="0:148" name="Piece 4" x="805" y="308">
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="FF101820" />
+      </Fill>
+      <Stroke thickness="1" cap="round" join="round">
+        <SolidColor colorValue="40E9F4FA" />
+      </Stroke>
+    </Shape>
+    <Text name="Fraction 3 selected" x="489" y="284" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <DataBindContext sourcePathIds="0:40-0:109" propertyKey="18" />
+      <TextStylePaint id="0:322" fontSize="44" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FFF5B02E" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:322" text="1/4" />
+    </Text>
+    <Text name="Fraction 3" x="489" y="284" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:144" fontSize="44" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FFE9F4FA" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:144" text="1/4" />
+    </Text>
+    <Text name="Tag 3" x="499" y="224">
+      <TextStylePaint id="0:327" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:327" text="P·03" />
+    </Text>
+    <Text name="Val 3" x="595" y="224" width="80" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:328" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:328" text="0.25" />
+    </Text>
+    <Text name="Seg 3" x="489" y="376" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:329" fontSize="9" letterSpacing="2" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF5E7683" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:329" text="SEG·03" />
+    </Text>
+    <Shape name="Pip 3 lit">
+      <Rectangle x="598" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Fill>
+        <SolidColor colorValue="FF63D2D1" />
+      </Fill>
+    </Shape>
+    <Shape name="Pips 3">
+      <Rectangle x="554" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Rectangle x="576" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Rectangle x="598" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Rectangle x="620" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Fill>
+        <SolidColor colorValue="33E9F4FA" />
+      </Fill>
+    </Shape>
+    <Shape id="0:143" name="Pressed 3" x="587" y="308">
+      <DataBindContext sourcePathIds="0:40-0:117" propertyKey="18" />
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="33F5B02E" />
+      </Fill>
+    </Shape>
+    <Shape id="0:142" name="Hover 3" x="587" y="308">
+      <DataBindContext sourcePathIds="0:40-0:113" propertyKey="18" />
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="14E9F4FA" />
+      </Fill>
+      <Stroke thickness="1" cap="round" join="round">
+        <SolidColor colorValue="73E9F4FA" />
+      </Stroke>
+    </Shape>
+    <Shape id="0:141" name="Selected 3" x="587" y="308">
+      <DataBindContext sourcePathIds="0:40-0:109" propertyKey="18" />
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="14F5B02E" />
+      </Fill>
+      <Stroke thickness="1.5" cap="round" join="round">
+        <SolidColor colorValue="FFF5B02E" />
+      </Stroke>
+    </Shape>
+    <Shape name="Selected 3 brackets">
+      <DataBindContext sourcePathIds="0:40-0:109" propertyKey="18" />
+      <PointsPath>
+        <StraightVertex x="502" y="204" />
+        <StraightVertex x="480" y="204" />
+        <StraightVertex x="480" y="226" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="672" y="204" />
+        <StraightVertex x="694" y="204" />
+        <StraightVertex x="694" y="226" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="480" y="390" />
+        <StraightVertex x="480" y="412" />
+        <StraightVertex x="502" y="412" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="694" y="390" />
+        <StraightVertex x="694" y="412" />
+        <StraightVertex x="672" y="412" />
+      </PointsPath>
+      <Stroke thickness="2.5" cap="round" join="round">
+        <SolidColor colorValue="FFF5B02E" />
+      </Stroke>
+    </Shape>
+    <Shape name="Brackets 3">
+      <PointsPath>
+        <StraightVertex x="500" y="208" />
+        <StraightVertex x="484" y="208" />
+        <StraightVertex x="484" y="224" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="674" y="208" />
+        <StraightVertex x="690" y="208" />
+        <StraightVertex x="690" y="224" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="484" y="392" />
+        <StraightVertex x="484" y="408" />
+        <StraightVertex x="500" y="408" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="690" y="392" />
+        <StraightVertex x="690" y="408" />
+        <StraightVertex x="674" y="408" />
+      </PointsPath>
+      <Stroke thickness="1.5" cap="round" join="round">
+        <SolidColor colorValue="40E9F4FA" />
+      </Stroke>
+    </Shape>
+    <Shape id="0:140" name="Piece 3" x="587" y="308">
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="FF101820" />
+      </Fill>
+      <Stroke thickness="1" cap="round" join="round">
+        <SolidColor colorValue="40E9F4FA" />
+      </Stroke>
+    </Shape>
+    <Text name="Fraction 2 selected" x="271" y="284" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <DataBindContext sourcePathIds="0:40-0:108" propertyKey="18" />
+      <TextStylePaint id="0:321" fontSize="44" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FFF5B02E" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:321" text="1/4" />
+    </Text>
+    <Text name="Fraction 2" x="271" y="284" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:136" fontSize="44" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FFE9F4FA" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:136" text="1/4" />
+    </Text>
+    <Text name="Tag 2" x="281" y="224">
+      <TextStylePaint id="0:330" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:330" text="P·02" />
+    </Text>
+    <Text name="Val 2" x="377" y="224" width="80" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:331" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:331" text="0.25" />
+    </Text>
+    <Text name="Seg 2" x="271" y="376" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:332" fontSize="9" letterSpacing="2" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF5E7683" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:332" text="SEG·02" />
+    </Text>
+    <Shape name="Pip 2 lit">
+      <Rectangle x="358" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Fill>
+        <SolidColor colorValue="FF63D2D1" />
+      </Fill>
+    </Shape>
+    <Shape name="Pips 2">
+      <Rectangle x="336" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Rectangle x="358" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Rectangle x="380" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Rectangle x="402" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Fill>
+        <SolidColor colorValue="33E9F4FA" />
+      </Fill>
+    </Shape>
+    <Shape id="0:135" name="Pressed 2" x="369" y="308">
+      <DataBindContext sourcePathIds="0:40-0:116" propertyKey="18" />
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="33F5B02E" />
+      </Fill>
+    </Shape>
+    <Shape id="0:134" name="Hover 2" x="369" y="308">
+      <DataBindContext sourcePathIds="0:40-0:112" propertyKey="18" />
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="14E9F4FA" />
+      </Fill>
+      <Stroke thickness="1" cap="round" join="round">
+        <SolidColor colorValue="73E9F4FA" />
+      </Stroke>
+    </Shape>
+    <Shape id="0:133" name="Selected 2" x="369" y="308">
+      <DataBindContext sourcePathIds="0:40-0:108" propertyKey="18" />
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="14F5B02E" />
+      </Fill>
+      <Stroke thickness="1.5" cap="round" join="round">
+        <SolidColor colorValue="FFF5B02E" />
+      </Stroke>
+    </Shape>
+    <Shape name="Selected 2 brackets">
+      <DataBindContext sourcePathIds="0:40-0:108" propertyKey="18" />
+      <PointsPath>
+        <StraightVertex x="284" y="204" />
+        <StraightVertex x="262" y="204" />
+        <StraightVertex x="262" y="226" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="454" y="204" />
+        <StraightVertex x="476" y="204" />
+        <StraightVertex x="476" y="226" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="262" y="390" />
+        <StraightVertex x="262" y="412" />
+        <StraightVertex x="284" y="412" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="476" y="390" />
+        <StraightVertex x="476" y="412" />
+        <StraightVertex x="454" y="412" />
+      </PointsPath>
+      <Stroke thickness="2.5" cap="round" join="round">
+        <SolidColor colorValue="FFF5B02E" />
+      </Stroke>
+    </Shape>
+    <Shape name="Brackets 2">
+      <PointsPath>
+        <StraightVertex x="282" y="208" />
+        <StraightVertex x="266" y="208" />
+        <StraightVertex x="266" y="224" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="456" y="208" />
+        <StraightVertex x="472" y="208" />
+        <StraightVertex x="472" y="224" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="266" y="392" />
+        <StraightVertex x="266" y="408" />
+        <StraightVertex x="282" y="408" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="472" y="392" />
+        <StraightVertex x="472" y="408" />
+        <StraightVertex x="456" y="408" />
+      </PointsPath>
+      <Stroke thickness="1.5" cap="round" join="round">
+        <SolidColor colorValue="40E9F4FA" />
+      </Stroke>
+    </Shape>
+    <Shape id="0:132" name="Piece 2" x="369" y="308">
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="FF101820" />
+      </Fill>
+      <Stroke thickness="1" cap="round" join="round">
+        <SolidColor colorValue="40E9F4FA" />
+      </Stroke>
+    </Shape>
+    <Text name="Fraction 1 selected" x="53" y="284" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <DataBindContext sourcePathIds="0:40-0:107" propertyKey="18" />
+      <TextStylePaint id="0:320" fontSize="44" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FFF5B02E" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:320" text="1/4" />
+    </Text>
+    <Text name="Fraction 1" x="53" y="284" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:128" fontSize="44" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FFE9F4FA" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:128" text="1/4" />
+    </Text>
+    <Text name="Tag 1" x="63" y="224">
+      <TextStylePaint id="0:333" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:333" text="P·01" />
+    </Text>
+    <Text name="Val 1" x="159" y="224" width="80" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:334" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:334" text="0.25" />
+    </Text>
+    <Text name="Seg 1" x="53" y="376" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:335" fontSize="9" letterSpacing="2" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF5E7683" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:335" text="SEG·01" />
+    </Text>
+    <Shape name="Pip 1 lit">
+      <Rectangle x="118" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Fill>
+        <SolidColor colorValue="FF63D2D1" />
+      </Fill>
+    </Shape>
+    <Shape name="Pips 1">
+      <Rectangle x="118" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Rectangle x="140" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Rectangle x="162" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Rectangle x="184" y="358" width="18" height="3" cornerRadiusTL="1" />
+      <Fill>
+        <SolidColor colorValue="33E9F4FA" />
+      </Fill>
+    </Shape>
+    <Shape id="0:127" name="Pressed 1" x="151" y="308">
+      <DataBindContext sourcePathIds="0:40-0:115" propertyKey="18" />
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="33F5B02E" />
+      </Fill>
+    </Shape>
+    <Shape id="0:126" name="Hover 1" x="151" y="308">
+      <DataBindContext sourcePathIds="0:40-0:111" propertyKey="18" />
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="14E9F4FA" />
+      </Fill>
+      <Stroke thickness="1" cap="round" join="round">
+        <SolidColor colorValue="73E9F4FA" />
+      </Stroke>
+    </Shape>
+    <Shape id="0:125" name="Selected 1" x="151" y="308">
+      <DataBindContext sourcePathIds="0:40-0:107" propertyKey="18" />
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="14F5B02E" />
+      </Fill>
+      <Stroke thickness="1.5" cap="round" join="round">
+        <SolidColor colorValue="FFF5B02E" />
+      </Stroke>
+    </Shape>
+    <Shape name="Selected 1 brackets">
+      <DataBindContext sourcePathIds="0:40-0:107" propertyKey="18" />
+      <PointsPath>
+        <StraightVertex x="66" y="204" />
+        <StraightVertex x="44" y="204" />
+        <StraightVertex x="44" y="226" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="236" y="204" />
+        <StraightVertex x="258" y="204" />
+        <StraightVertex x="258" y="226" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="44" y="390" />
+        <StraightVertex x="44" y="412" />
+        <StraightVertex x="66" y="412" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="258" y="390" />
+        <StraightVertex x="258" y="412" />
+        <StraightVertex x="236" y="412" />
+      </PointsPath>
+      <Stroke thickness="2.5" cap="round" join="round">
+        <SolidColor colorValue="FFF5B02E" />
+      </Stroke>
+    </Shape>
+    <Shape name="Brackets 1">
+      <PointsPath>
+        <StraightVertex x="64" y="208" />
+        <StraightVertex x="48" y="208" />
+        <StraightVertex x="48" y="224" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="238" y="208" />
+        <StraightVertex x="254" y="208" />
+        <StraightVertex x="254" y="224" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="48" y="392" />
+        <StraightVertex x="48" y="408" />
+        <StraightVertex x="64" y="408" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="254" y="392" />
+        <StraightVertex x="254" y="408" />
+        <StraightVertex x="238" y="408" />
+      </PointsPath>
+      <Stroke thickness="1.5" cap="round" join="round">
+        <SolidColor colorValue="40E9F4FA" />
+      </Stroke>
+    </Shape>
+    <Shape id="0:124" name="Piece 1" x="151" y="308">
+      <Rectangle width="196" height="190" cornerRadiusTL="6" />
+      <Fill>
+        <SolidColor colorValue="FF101820" />
+      </Fill>
+      <Stroke thickness="1" cap="round" join="round">
+        <SolidColor colorValue="40E9F4FA" />
+      </Stroke>
+    </Shape>
+    <Text name="Array tag" x="48" y="184">
+      <TextStylePaint id="0:336" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:336" text="SEGMENT ARRAY · 4 X 1/4" />
+    </Text>
+    <Text name="Unit tag" x="712" y="184" width="200" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:337" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:337" text="UNIT 01 · QUARTERS" />
+    </Text>
+    <Text name="Instruction" x="48" y="114">
+      <TextStylePaint id="0:123" fontSize="13" letterSpacing="1" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF9FB4BE" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:123" text="CHOOSE PIECES · TAP A PIECE AGAIN TO PUT IT BACK" />
+    </Text>
+    <Text name="Title" x="48" y="62">
+      <TextStylePaint id="0:122" fontSize="38" letterSpacing="1" fontAssetId="0:30">
         <Fill>
           <SolidColor colorValue="FFE9F4FA" />
         </Fill>
@@ -221,18 +837,184 @@
         <DataBindContext sourcePathIds="0:40-0:101" propertyKey="268" />
       </TextValueRun>
     </Text>
-    <Text name="Moyo" x="48" y="32">
-      <TextStylePaint id="0:121" fontSize="28" fontAssetId="0:30">
+    <Shape name="Title bar">
+      <Rectangle x="33" y="81" width="3" height="36" />
+      <Fill>
+        <SolidColor colorValue="FFF5B02E" />
+      </Fill>
+    </Shape>
+    <Text name="Last action" x="640" y="13" width="206" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:338" fontSize="11" letterSpacing="1" fontAssetId="0:30">
         <Fill>
-          <SolidColor colorValue="FF91D7E4" />
+          <SolidColor colorValue="FF9FB4BE" />
         </Fill>
       </TextStylePaint>
-      <TextValueRun styleId="0:121" text="moyo" />
+      <TextValueRun styleId="0:338" text="ready">
+        <DataBindContext sourcePathIds="0:40-0:106" propertyKey="268" />
+      </TextValueRun>
     </Text>
-    <Shape id="0:120" name="Panel" x="480" y="320">
-      <Rectangle width="960" height="640" cornerRadiusTL="18" />
+    <Text name="Act tag" x="856" y="16" width="56" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:339" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:339" text="LAST ACT" />
+    </Text>
+    <Text name="Lesson tag" x="360" y="16" width="240" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:340" fontSize="8.5" letterSpacing="2" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:340" text="LESSON 01 // FRACTIONS" />
+    </Text>
+    <Text name="Moyo" x="34" y="13">
+      <TextStylePaint id="0:121" fontSize="12" letterSpacing="3" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF8FA5B0" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:121" text="MOYO // LESSON" />
+    </Text>
+    <Shape name="Header scanlines">
+      <Rectangle x="480" y="56" width="912" height="1" />
+      <Rectangle x="480" y="70" width="912" height="1" />
+      <Rectangle x="480" y="84" width="912" height="1" />
+      <Rectangle x="480" y="98" width="912" height="1" />
+      <Rectangle x="480" y="112" width="912" height="1" />
+      <Rectangle x="480" y="126" width="912" height="1" />
+      <Rectangle x="480" y="140" width="912" height="1" />
       <Fill>
-        <SolidColor colorValue="FF112D44" />
+        <SolidColor colorValue="0AE9F4FA" />
+      </Fill>
+    </Shape>
+    <Shape name="Sub rule">
+      <Rectangle x="480" y="148" width="912" height="1" />
+      <Fill>
+        <SolidColor colorValue="14E9F4FA" />
+      </Fill>
+    </Shape>
+    <Shape name="Title rule">
+      <Rectangle x="480" y="44" width="912" height="1" />
+      <Fill>
+        <SolidColor colorValue="1FE9F4FA" />
+      </Fill>
+    </Shape>
+    <Shape name="Edge ticks">
+      <Rectangle x="120" y="28" width="1.5" height="6" />
+      <Rectangle x="200" y="28" width="1.5" height="6" />
+      <Rectangle x="280" y="28" width="1.5" height="6" />
+      <Rectangle x="360" y="28" width="1.5" height="6" />
+      <Rectangle x="440" y="28" width="1.5" height="6" />
+      <Rectangle x="520" y="28" width="1.5" height="6" />
+      <Rectangle x="600" y="28" width="1.5" height="6" />
+      <Rectangle x="680" y="28" width="1.5" height="6" />
+      <Rectangle x="760" y="28" width="1.5" height="6" />
+      <Rectangle x="840" y="28" width="1.5" height="6" />
+      <Rectangle x="120" y="600" width="1.5" height="6" />
+      <Rectangle x="200" y="600" width="1.5" height="6" />
+      <Rectangle x="280" y="600" width="1.5" height="6" />
+      <Rectangle x="360" y="600" width="1.5" height="6" />
+      <Rectangle x="440" y="600" width="1.5" height="6" />
+      <Rectangle x="520" y="600" width="1.5" height="6" />
+      <Rectangle x="600" y="600" width="1.5" height="6" />
+      <Rectangle x="680" y="600" width="1.5" height="6" />
+      <Rectangle x="760" y="600" width="1.5" height="6" />
+      <Rectangle x="840" y="600" width="1.5" height="6" />
+      <Fill>
+        <SolidColor colorValue="3DE9F4FA" />
+      </Fill>
+    </Shape>
+    <Node name="Left spine" x="16" y="380" rotation="-1.570796">
+      <Text x="-70" y="-7">
+        <TextStylePaint id="0:341" fontSize="10" letterSpacing="4" fontAssetId="0:30">
+          <Fill>
+            <SolidColor colorValue="FF4E6673" />
+          </Fill>
+        </TextStylePaint>
+        <TextValueRun styleId="0:341" text="MOYO // LESSON" />
+      </Text>
+    </Node>
+    <Node name="Right spine" x="944" y="280" rotation="1.570796">
+      <Text x="-75" y="-7">
+        <TextStylePaint id="0:342" fontSize="10" letterSpacing="4" fontAssetId="0:30">
+          <Fill>
+            <SolidColor colorValue="FF4E6673" />
+          </Fill>
+        </TextStylePaint>
+        <TextValueRun styleId="0:342" text="FRACTION UNIT" />
+      </Text>
+    </Node>
+    <Text name="Slot tag" x="34" y="613">
+      <TextStylePaint id="0:343" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:343" text="XR PANEL // LSN-01" />
+    </Text>
+    <Text name="Size tag" x="830" y="613" width="82" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:344" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:344" text="960·640" />
+    </Text>
+    <Shape name="Corner brackets">
+      <PointsPath>
+        <StraightVertex x="36" y="10" />
+        <StraightVertex x="10" y="10" />
+        <StraightVertex x="10" y="36" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="924" y="10" />
+        <StraightVertex x="950" y="10" />
+        <StraightVertex x="950" y="36" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="10" y="604" />
+        <StraightVertex x="10" y="630" />
+        <StraightVertex x="36" y="630" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="950" y="604" />
+        <StraightVertex x="950" y="630" />
+        <StraightVertex x="924" y="630" />
+      </PointsPath>
+      <Stroke thickness="2.5" cap="round" join="round">
+        <SolidColor colorValue="99F5B02E" />
+      </Stroke>
+    </Shape>
+    <Shape name="Panel edge">
+      <PointsPath isClosed="true">
+        <StraightVertex x="20" y="0" />
+        <StraightVertex x="940" y="0" />
+        <StraightVertex x="960" y="20" />
+        <StraightVertex x="960" y="620" />
+        <StraightVertex x="940" y="640" />
+        <StraightVertex x="20" y="640" />
+        <StraightVertex x="0" y="620" />
+        <StraightVertex x="0" y="20" />
+      </PointsPath>
+      <Stroke thickness="1" cap="round" join="round">
+        <SolidColor colorValue="3DE9F4FA" />
+      </Stroke>
+    </Shape>
+    <Shape id="0:120" name="Panel face">
+      <PointsPath isClosed="true">
+        <StraightVertex x="20" y="0" />
+        <StraightVertex x="940" y="0" />
+        <StraightVertex x="960" y="20" />
+        <StraightVertex x="960" y="620" />
+        <StraightVertex x="940" y="640" />
+        <StraightVertex x="20" y="640" />
+        <StraightVertex x="0" y="620" />
+        <StraightVertex x="0" y="20" />
+      </PointsPath>
+      <Fill>
+        <SolidColor colorValue="EB0A0D12" />
       </Fill>
     </Shape>
     <LinearAnimation id="0:164" name="Hint visibility 0" duration="1" fps="60">

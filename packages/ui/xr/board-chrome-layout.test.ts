@@ -15,9 +15,10 @@ import {
 
 const near = (a: number, b: number) => assert.ok(Math.abs(a - b) < 1e-9, `${a} != ${b}`);
 
-test('the panel is 1.2 m wide and the artboard aspect survives into metres', () => {
+test('the panel is 1.2 m wide, 16:10, and the paper keeps its own 16:10', () => {
   near(PANEL_HEIGHT_M / PANEL_WIDTH_M, CHROME_ARTBOARD.height / CHROME_ARTBOARD.width);
-  near(CONTENT_RECT_PANEL.width, 1.2);
+  near(CHROME_ARTBOARD.width / CHROME_ARTBOARD.height, 16 / 10);
+  near(CONTENT_RECT_PANEL.width, (CONTENT_BAND.w * PANEL_WIDTH_M) / CHROME_ARTBOARD.width);
   near(CONTENT_RECT_PANEL.height / CONTENT_RECT_PANEL.width, 640 / 1024);
 });
 
@@ -78,10 +79,10 @@ test('the tool row covers the band without gaps the spec did not draw', () => {
   const keys = Object.keys(TOOL_ROW);
   for (const key of keys) {
     const r = TOOL_ROW[key as keyof typeof TOOL_ROW];
-    assert.ok(r.x >= 0 && r.x + r.w <= 1024, `${key} escapes the toolbar`);
+    assert.ok(r.x >= 0 && r.x + r.w <= CHROME_ARTBOARD.width, `${key} escapes the toolbar`);
     assert.ok(r.y >= 36 && r.y + r.h <= 140, `${key} escapes the band`);
   }
   /* Inks: 7 swatches at pitch, close key after them. */
-  const lastSwatchX = 12 + 6 * INK_ROW.swatchPitch;
+  const lastSwatchX = CONTENT_BAND.x + 12 + 6 * INK_ROW.swatchPitch;
   assert.ok(lastSwatchX + INK_ROW.swatch.w <= INK_ROW.close.x, 'swatches overlap the close key');
 });

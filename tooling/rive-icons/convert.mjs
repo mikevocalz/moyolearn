@@ -34,15 +34,18 @@ const OUT = resolve(REPO, 'probes/rive-panel/rive-board-chrome/build/icons.frag.
 // idBase keeps every emitted element carrying a deterministic id so `rive`
 // never has to write ids back into the generated region.
 const ICON_COLOR = 'FFE9F4FA';
+// Centres come from packages/ui/xr/board-chrome-layout.ts TOOL_ROW/INK_ROW:
+// cx = rect.x + rect.w/2, cy = 72 (icon sits in the upper half of the 44..132
+// cell so the micro-label rides underneath at y=104).
 const ICONS = [
-  { icon: 'pencil', name: 'PenIcon', cx: 64, cy: 88, scale: 1.5, idBase: 700 },
-  { icon: 'highlighter', name: 'HighlighterIcon', cx: 180, cy: 88, scale: 1.5, idBase: 750 },
-  { icon: 'eraser', name: 'EraserIcon', cx: 296, cy: 88, scale: 1.5, idBase: 800 },
-  { icon: 'undo-2', name: 'UndoIcon', cx: 536, cy: 88, scale: 1.5, idBase: 850 },
-  { icon: 'redo-2', name: 'RedoIcon', cx: 652, cy: 88, scale: 1.5, idBase: 900 },
-  { icon: 'trash', name: 'ClearIcon', cx: 776, cy: 88, scale: 1.5, idBase: 950 },
-  { icon: 'sparkles', name: 'AskIcon', cx: 872, cy: 88, scale: 1.2, idBase: 1000 },
-  { icon: 'x', name: 'CloseIcon', cx: 912, cy: 88, scale: 1.2, idBase: 1050 },
+  { icon: 'pencil', name: 'PenIcon', cx: 176, cy: 72, scale: 1.35, idBase: 700 },
+  { icon: 'highlighter', name: 'HighlighterIcon', cx: 292, cy: 72, scale: 1.35, idBase: 750 },
+  { icon: 'eraser', name: 'EraserIcon', cx: 408, cy: 72, scale: 1.35, idBase: 800 },
+  { icon: 'undo-2', name: 'UndoIcon', cx: 648, cy: 72, scale: 1.35, idBase: 850 },
+  { icon: 'redo-2', name: 'RedoIcon', cx: 764, cy: 72, scale: 1.35, idBase: 900 },
+  { icon: 'trash', name: 'ClearIcon', cx: 888, cy: 72, scale: 1.35, idBase: 950 },
+  { icon: 'sparkles', name: 'AskIcon', cx: 1042, cy: 70, scale: 1.2, idBase: 1000 },
+  { icon: 'x', name: 'CloseIcon', cx: 1058, cy: 70, scale: 1.2, idBase: 1050 },
 ];
 
 // ---------- lucide source extraction ----------

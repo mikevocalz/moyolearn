@@ -99,6 +99,11 @@ export const xrLayoutProbe = createStore(() => ({
   clearArmed: false,
   /** The Rive chrome failed to start — the tray is the fallback toolbar. */
   chromeFailed: false,
+  /* `moyo_board_chrome.riv` bytes. A store field, not a prop: the navigator
+     captures `initialScene` at construction, so bytes that finish loading
+     after the navigator mounts must arrive through the store or the captured
+     scene keeps `null` and silently renders the fallback forever. */
+  chromeBytes: null as ArrayBuffer | null,
 }));
 
 /* The engine handle, for the same reason `active.engine` is module scope in
@@ -168,15 +173,11 @@ const boardChromeHandlers: BoardChromeHandlers = {
 
 export function XrLayoutProbe({
   bytes,
-  chromeBytes,
   head,
   yawDeg,
   resetKey = 0,
 }: {
   bytes: ArrayBuffer;
-  /** `moyo_board_chrome.riv` — when absent the centre slot keeps the
-      media-panel + tray composition the probe always had. */
-  chromeBytes: ArrayBuffer | null;
   head: readonly [number, number, number];
   yawDeg: number;
   /* Controller reconnect remounts the Rive panel — same latch as the probe. */
@@ -196,6 +197,7 @@ export function XrLayoutProbe({
   const paletteOpen = useStore(xrLayoutProbe, (s) => s.paletteOpen);
   const clearArmed = useStore(xrLayoutProbe, (s) => s.clearArmed);
   const chromeFailed = useStore(xrLayoutProbe, (s) => s.chromeFailed);
+  const chromeBytes = useStore(xrLayoutProbe, (s) => s.chromeBytes);
   /* Chrome bytes present and the runtime hasn't reported an error → the Rive
      frame owns the centre slot. */
   const chrome = chromeBytes !== null && !chromeFailed;

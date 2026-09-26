@@ -1,48 +1,67 @@
 <Rive version="1" kind="fragment">
-  <Artboard name="BoardChrome" id="0:2" width="1024" height="780" clip="true" styleId="0:5" defaultStateMachineId="0:7" viewModelId="0:40" viewModelInstanceId="0:41">
+  <Artboard name="BoardChrome" id="0:2" width="1248" height="780" clip="true" styleId="0:5" defaultStateMachineId="0:7" viewModelId="0:40" viewModelInstanceId="0:41">
     <LayoutComponentStyle id="0:5" />
     <Node id="0:200" opacity="0" name="Grabbed">
-      <Text name="Grab status" x="440" y="10">
-        <TextStylePaint id="0:201" fontSize="16" fontAssetId="0:30">
+      <Text name="Grab status" x="754" y="15" width="120" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+        <TextStylePaint id="0:201" fontSize="10" letterSpacing="2.5" fontAssetId="0:30">
           <Fill>
-            <SolidColor colorValue="FF63D2D1" />
+            <SolidColor colorValue="FFF5B02E" />
           </Fill>
         </TextStylePaint>
-        <TextValueRun styleId="0:201" text="Moving panel" />
+        <TextValueRun styleId="0:201" text="MOVING PANEL" />
       </Text>
-      <Shape name="Grab edge" x="512" y="390">
-        <Rectangle width="1020" height="776" cornerRadiusTL="18" />
+      <Shape name="Grab corners">
+        <PointsPath>
+          <StraightVertex x="48" y="14" />
+          <StraightVertex x="14" y="14" />
+          <StraightVertex x="14" y="48" />
+        </PointsPath>
+        <PointsPath>
+          <StraightVertex x="1200" y="14" />
+          <StraightVertex x="1234" y="14" />
+          <StraightVertex x="1234" y="48" />
+        </PointsPath>
+        <PointsPath>
+          <StraightVertex x="14" y="732" />
+          <StraightVertex x="14" y="766" />
+          <StraightVertex x="48" y="766" />
+        </PointsPath>
+        <PointsPath>
+          <StraightVertex x="1234" y="732" />
+          <StraightVertex x="1234" y="766" />
+          <StraightVertex x="1200" y="766" />
+        </PointsPath>
         <Stroke thickness="3" cap="round" join="round">
-          <SolidColor colorValue="FF63D2D1" />
+          <SolidColor colorValue="FFF5B02E" />
         </Stroke>
       </Shape>
     </Node>
     <Node id="0:260" opacity="0" name="InksRow">
       <Node name="Close">
-        <Shape id="0:309" name="Close down" x="946" y="88" opacity="0">
+        <Shape id="0:309" name="Close down" x="1058" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:151" propertyKey="18" />
-          <Rectangle width="132" height="88" cornerRadiusTL="14" />
+          <Rectangle width="132" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:310" name="Close hover" x="946" y="88" opacity="0">
+        <Shape id="0:310" name="Close hover" x="1058" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:150" propertyKey="18" />
-          <Rectangle width="132" height="88" cornerRadiusTL="14" />
+          <Rectangle width="132" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
-        <Text name="Close label" x="938" y="77">
-          <TextStylePaint id="0:307" fontSize="18" fontAssetId="0:30">
+        <Text name="Close label" x="992" y="104" width="132" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+          <TextStylePaint id="0:307" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
             <Fill>
-              <SolidColor colorValue="FFE9F4FA" />
+              <SolidColor colorValue="FF5E7683" />
             </Fill>
           </TextStylePaint>
-          <TextValueRun styleId="0:307" text="Close" />
+          <TextValueRun styleId="0:307" text="CLOSE" />
         </Text>
         <!-- @icon:CloseIcon:begin -->
-        <Node name="CloseIcon" id="0:1050" x="912" y="88" scaleX="1.2" scaleY="1.2">
+        <Node name="CloseIcon" id="0:1050" x="1058" y="70" scaleX="1.2" scaleY="1.2">
           <Shape name="x" id="0:1051">
             <PointsPath id="0:1052">
               <StraightVertex id="0:1053" x="6" y="-6" />
@@ -61,257 +80,334 @@
       </Node>
       <!-- @inkswatches:begin -->
       <Node name="Ink0">
-        <Shape id="0:274" name="Ink0 down" x="64" y="88" opacity="0">
+        <Shape id="0:274" name="Ink0 down" x="176" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:143" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:273" name="Ink0 hover" x="64" y="88" opacity="0">
+        <Shape id="0:273" name="Ink0 hover" x="176" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:136" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:272" name="Ink0 ring" x="64" y="88" opacity="0">
+        <Text name="label 01" x="124" y="104" width="104" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+          <TextStylePaint id="0:640" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
+            <Fill>
+              <SolidColor colorValue="FF5E7683" />
+            </Fill>
+          </TextStylePaint>
+          <TextValueRun styleId="0:640" text="01" />
+        </Text>
+        <Shape id="0:272" name="Ink0 ring" x="176" y="72" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:61" />
-          <Ellipse width="46" height="46" />
-          <Stroke thickness="3" cap="round" join="round">
-            <SolidColor colorValue="FF63D2D1" />
+          <Rectangle width="50" height="50" cornerRadiusTL="10" />
+          <Stroke thickness="2.5" cap="round" join="round">
+            <SolidColor colorValue="FFF5B02E" />
           </Stroke>
         </Shape>
-        <Shape id="0:271" name="Ink0 swatch" x="64" y="88">
-          <Ellipse width="36" height="36" />
+        <Shape id="0:271" name="Ink0 swatch" x="176" y="72">
+          <Rectangle width="36" height="36" cornerRadiusTL="7" />
           <Fill>
             <SolidColor colorValue="FF1A1A1A" />
           </Fill>
+          <Stroke thickness="1">
+            <SolidColor colorValue="40E9F4FA" />
+          </Stroke>
         </Shape>
       </Node>
       <Node name="Ink1">
-        <Shape id="0:279" name="Ink1 down" x="188" y="88" opacity="0">
+        <Shape id="0:279" name="Ink1 down" x="300" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:144" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:278" name="Ink1 hover" x="188" y="88" opacity="0">
+        <Shape id="0:278" name="Ink1 hover" x="300" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:137" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:277" name="Ink1 ring" x="188" y="88" opacity="0">
+        <Text name="label 02" x="248" y="104" width="104" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+          <TextStylePaint id="0:641" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
+            <Fill>
+              <SolidColor colorValue="FF5E7683" />
+            </Fill>
+          </TextStylePaint>
+          <TextValueRun styleId="0:641" text="02" />
+        </Text>
+        <Shape id="0:277" name="Ink1 ring" x="300" y="72" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:62" />
-          <Ellipse width="46" height="46" />
-          <Stroke thickness="3" cap="round" join="round">
-            <SolidColor colorValue="FF63D2D1" />
+          <Rectangle width="50" height="50" cornerRadiusTL="10" />
+          <Stroke thickness="2.5" cap="round" join="round">
+            <SolidColor colorValue="FFF5B02E" />
           </Stroke>
         </Shape>
-        <Shape id="0:276" name="Ink1 swatch" x="188" y="88">
-          <Ellipse width="36" height="36" />
+        <Shape id="0:276" name="Ink1 swatch" x="300" y="72">
+          <Rectangle width="36" height="36" cornerRadiusTL="7" />
           <Fill>
             <SolidColor colorValue="FF2563EB" />
           </Fill>
+          <Stroke thickness="1">
+            <SolidColor colorValue="40E9F4FA" />
+          </Stroke>
         </Shape>
       </Node>
       <Node name="Ink2">
-        <Shape id="0:284" name="Ink2 down" x="312" y="88" opacity="0">
+        <Shape id="0:284" name="Ink2 down" x="424" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:145" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:283" name="Ink2 hover" x="312" y="88" opacity="0">
+        <Shape id="0:283" name="Ink2 hover" x="424" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:138" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:282" name="Ink2 ring" x="312" y="88" opacity="0">
+        <Text name="label 03" x="372" y="104" width="104" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+          <TextStylePaint id="0:642" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
+            <Fill>
+              <SolidColor colorValue="FF5E7683" />
+            </Fill>
+          </TextStylePaint>
+          <TextValueRun styleId="0:642" text="03" />
+        </Text>
+        <Shape id="0:282" name="Ink2 ring" x="424" y="72" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:63" />
-          <Ellipse width="46" height="46" />
-          <Stroke thickness="3" cap="round" join="round">
-            <SolidColor colorValue="FF63D2D1" />
+          <Rectangle width="50" height="50" cornerRadiusTL="10" />
+          <Stroke thickness="2.5" cap="round" join="round">
+            <SolidColor colorValue="FFF5B02E" />
           </Stroke>
         </Shape>
-        <Shape id="0:281" name="Ink2 swatch" x="312" y="88">
-          <Ellipse width="36" height="36" />
+        <Shape id="0:281" name="Ink2 swatch" x="424" y="72">
+          <Rectangle width="36" height="36" cornerRadiusTL="7" />
           <Fill>
             <SolidColor colorValue="FFDC2626" />
           </Fill>
+          <Stroke thickness="1">
+            <SolidColor colorValue="40E9F4FA" />
+          </Stroke>
         </Shape>
       </Node>
       <Node name="Ink3">
-        <Shape id="0:289" name="Ink3 down" x="436" y="88" opacity="0">
+        <Shape id="0:289" name="Ink3 down" x="548" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:146" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:288" name="Ink3 hover" x="436" y="88" opacity="0">
+        <Shape id="0:288" name="Ink3 hover" x="548" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:139" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:287" name="Ink3 ring" x="436" y="88" opacity="0">
+        <Text name="label 04" x="496" y="104" width="104" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+          <TextStylePaint id="0:643" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
+            <Fill>
+              <SolidColor colorValue="FF5E7683" />
+            </Fill>
+          </TextStylePaint>
+          <TextValueRun styleId="0:643" text="04" />
+        </Text>
+        <Shape id="0:287" name="Ink3 ring" x="548" y="72" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:64" />
-          <Ellipse width="46" height="46" />
-          <Stroke thickness="3" cap="round" join="round">
-            <SolidColor colorValue="FF63D2D1" />
+          <Rectangle width="50" height="50" cornerRadiusTL="10" />
+          <Stroke thickness="2.5" cap="round" join="round">
+            <SolidColor colorValue="FFF5B02E" />
           </Stroke>
         </Shape>
-        <Shape id="0:286" name="Ink3 swatch" x="436" y="88">
-          <Ellipse width="36" height="36" />
+        <Shape id="0:286" name="Ink3 swatch" x="548" y="72">
+          <Rectangle width="36" height="36" cornerRadiusTL="7" />
           <Fill>
             <SolidColor colorValue="FF16A34A" />
           </Fill>
+          <Stroke thickness="1">
+            <SolidColor colorValue="40E9F4FA" />
+          </Stroke>
         </Shape>
       </Node>
       <Node name="Ink4">
-        <Shape id="0:294" name="Ink4 down" x="560" y="88" opacity="0">
+        <Shape id="0:294" name="Ink4 down" x="672" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:147" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:293" name="Ink4 hover" x="560" y="88" opacity="0">
+        <Shape id="0:293" name="Ink4 hover" x="672" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:140" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:292" name="Ink4 ring" x="560" y="88" opacity="0">
+        <Text name="label 05" x="620" y="104" width="104" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+          <TextStylePaint id="0:644" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
+            <Fill>
+              <SolidColor colorValue="FF5E7683" />
+            </Fill>
+          </TextStylePaint>
+          <TextValueRun styleId="0:644" text="05" />
+        </Text>
+        <Shape id="0:292" name="Ink4 ring" x="672" y="72" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:65" />
-          <Ellipse width="46" height="46" />
-          <Stroke thickness="3" cap="round" join="round">
-            <SolidColor colorValue="FF63D2D1" />
+          <Rectangle width="50" height="50" cornerRadiusTL="10" />
+          <Stroke thickness="2.5" cap="round" join="round">
+            <SolidColor colorValue="FFF5B02E" />
           </Stroke>
         </Shape>
-        <Shape id="0:291" name="Ink4 swatch" x="560" y="88">
-          <Ellipse width="36" height="36" />
+        <Shape id="0:291" name="Ink4 swatch" x="672" y="72">
+          <Rectangle width="36" height="36" cornerRadiusTL="7" />
           <Fill>
             <SolidColor colorValue="FFEAB308" />
           </Fill>
+          <Stroke thickness="1">
+            <SolidColor colorValue="40E9F4FA" />
+          </Stroke>
         </Shape>
       </Node>
       <Node name="Ink5">
-        <Shape id="0:299" name="Ink5 down" x="684" y="88" opacity="0">
+        <Shape id="0:299" name="Ink5 down" x="796" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:148" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:298" name="Ink5 hover" x="684" y="88" opacity="0">
+        <Shape id="0:298" name="Ink5 hover" x="796" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:141" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:297" name="Ink5 ring" x="684" y="88" opacity="0">
+        <Text name="label 06" x="744" y="104" width="104" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+          <TextStylePaint id="0:645" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
+            <Fill>
+              <SolidColor colorValue="FF5E7683" />
+            </Fill>
+          </TextStylePaint>
+          <TextValueRun styleId="0:645" text="06" />
+        </Text>
+        <Shape id="0:297" name="Ink5 ring" x="796" y="72" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:66" />
-          <Ellipse width="46" height="46" />
-          <Stroke thickness="3" cap="round" join="round">
-            <SolidColor colorValue="FF63D2D1" />
+          <Rectangle width="50" height="50" cornerRadiusTL="10" />
+          <Stroke thickness="2.5" cap="round" join="round">
+            <SolidColor colorValue="FFF5B02E" />
           </Stroke>
         </Shape>
-        <Shape id="0:296" name="Ink5 swatch" x="684" y="88">
-          <Ellipse width="36" height="36" />
+        <Shape id="0:296" name="Ink5 swatch" x="796" y="72">
+          <Rectangle width="36" height="36" cornerRadiusTL="7" />
           <Fill>
             <SolidColor colorValue="FFF97316" />
           </Fill>
+          <Stroke thickness="1">
+            <SolidColor colorValue="40E9F4FA" />
+          </Stroke>
         </Shape>
       </Node>
       <Node name="Ink6">
-        <Shape id="0:304" name="Ink6 down" x="808" y="88" opacity="0">
+        <Shape id="0:304" name="Ink6 down" x="920" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:149" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:303" name="Ink6 hover" x="808" y="88" opacity="0">
+        <Shape id="0:303" name="Ink6 hover" x="920" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:142" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:302" name="Ink6 ring" x="808" y="88" opacity="0">
+        <Text name="label 07" x="868" y="104" width="104" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+          <TextStylePaint id="0:646" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
+            <Fill>
+              <SolidColor colorValue="FF5E7683" />
+            </Fill>
+          </TextStylePaint>
+          <TextValueRun styleId="0:646" text="07" />
+        </Text>
+        <Shape id="0:302" name="Ink6 ring" x="920" y="72" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:67" />
-          <Ellipse width="46" height="46" />
-          <Stroke thickness="3" cap="round" join="round">
-            <SolidColor colorValue="FF63D2D1" />
+          <Rectangle width="50" height="50" cornerRadiusTL="10" />
+          <Stroke thickness="2.5" cap="round" join="round">
+            <SolidColor colorValue="FFF5B02E" />
           </Stroke>
         </Shape>
-        <Shape id="0:301" name="Ink6 swatch" x="808" y="88">
-          <Ellipse width="36" height="36" />
+        <Shape id="0:301" name="Ink6 swatch" x="920" y="72">
+          <Rectangle width="36" height="36" cornerRadiusTL="7" />
           <Fill>
             <SolidColor colorValue="FF7C3AED" />
           </Fill>
+          <Stroke thickness="1">
+            <SolidColor colorValue="40E9F4FA" />
+          </Stroke>
         </Shape>
       </Node>
       <!-- @inkswatches:end -->
       <!-- @inkshits:begin -->
       <Node name="InksHits" id="0:266">
-        <Shape id="0:270" name="Ink0 hit" x="64" y="88">
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+        <Shape id="0:270" name="Ink0 hit" x="176" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
-        <Shape id="0:275" name="Ink1 hit" x="188" y="88">
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+        <Shape id="0:275" name="Ink1 hit" x="300" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
-        <Shape id="0:280" name="Ink2 hit" x="312" y="88">
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+        <Shape id="0:280" name="Ink2 hit" x="424" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
-        <Shape id="0:285" name="Ink3 hit" x="436" y="88">
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+        <Shape id="0:285" name="Ink3 hit" x="548" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
-        <Shape id="0:290" name="Ink4 hit" x="560" y="88">
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+        <Shape id="0:290" name="Ink4 hit" x="672" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
-        <Shape id="0:295" name="Ink5 hit" x="684" y="88">
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+        <Shape id="0:295" name="Ink5 hit" x="796" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
-        <Shape id="0:300" name="Ink6 hit" x="808" y="88">
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+        <Shape id="0:300" name="Ink6 hit" x="920" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
-        <Shape id="0:305" name="Close hit" x="946" y="88">
-          <Rectangle width="132" height="88" cornerRadiusTL="14" />
+        <Shape id="0:305" name="Close hit" x="1058" y="88">
+          <Rectangle width="132" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
       </Node>
@@ -319,37 +415,37 @@
     </Node>
     <Node id="0:210" name="ToolsRow">
       <Node name="AskNatalie">
-        <Shape id="0:253" name="Ask down" x="930" y="88" opacity="0">
+        <Shape id="0:253" name="Ask down" x="1042" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:135" propertyKey="18" />
-          <Rectangle width="164" height="88" cornerRadiusTL="14" />
+          <Rectangle width="164" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:252" name="Ask hover" x="930" y="88" opacity="0">
+        <Shape id="0:252" name="Ask hover" x="1042" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:134" propertyKey="18" />
-          <Rectangle width="164" height="88" cornerRadiusTL="14" />
+          <Rectangle width="164" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:251" name="Ask busy" x="930" y="88" opacity="0">
-          <Rectangle width="164" height="88" cornerRadiusTL="14" />
+        <Shape id="0:251" name="Ask busy" x="1042" y="88" opacity="0">
+          <Rectangle width="164" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="4063D2D1" />
+            <SolidColor colorValue="40F5B02E" />
           </Fill>
         </Shape>
         <Node id="0:254" name="AskContent">
-          <Text name="Ask label" x="894" y="76">
-            <TextStylePaint id="0:250" fontSize="19" fontAssetId="0:30">
+          <Text name="Ask label" x="960" y="104" width="164" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+            <TextStylePaint id="0:250" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
               <Fill>
-                <SolidColor colorValue="FFE9F4FA" />
+                <SolidColor colorValue="FFF5B02E" />
               </Fill>
             </TextStylePaint>
-            <TextValueRun id="0:249" styleId="0:250" text="Ask Natalie" />
+            <TextValueRun id="0:249" styleId="0:250" text="ASK NATALIE" />
           </Text>
           <!-- @icon:AskIcon:begin -->
-          <Node name="AskIcon" id="0:1000" x="872" y="88" scaleX="1.2" scaleY="1.2">
+          <Node name="AskIcon" id="0:1000" x="1042" y="70" scaleX="1.2" scaleY="1.2">
             <Shape name="sparkles" id="0:1001">
               <PointsPath id="0:1002" isClosed="true">
                 <CubicDetachedVertex id="0:1003" x="-0.983" y="-9.186" outRotation="-1.386" outDistance="0.481" />
@@ -391,29 +487,37 @@
         </Node>
       </Node>
       <Node name="Clear">
-        <Shape id="0:246" name="Clear down" x="776" y="88" opacity="0">
+        <Shape id="0:246" name="Clear down" x="888" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:133" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:245" name="Clear hover" x="776" y="88" opacity="0">
+        <Shape id="0:245" name="Clear hover" x="888" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:132" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:244" name="Clear armed" x="776" y="88" opacity="0">
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+        <Shape id="0:244" name="Clear armed" x="888" y="88" opacity="0">
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
             <SolidColor colorValue="59DC2626" />
           </Fill>
         </Shape>
         <Node id="0:243" name="ClearContent" opacity="0.35">
+          <Text name="Clear label" x="836" y="104" width="104" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+            <TextStylePaint id="0:608" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
+              <Fill>
+                <SolidColor colorValue="FF5E7683" />
+              </Fill>
+            </TextStylePaint>
+            <TextValueRun styleId="0:608" text="WIPE" />
+          </Text>
           <!-- @icon:ClearIcon:begin -->
-          <Node name="ClearIcon" id="0:950" x="776" y="88" scaleX="1.5" scaleY="1.5">
+          <Node name="ClearIcon" id="0:950" x="888" y="72" scaleX="1.35" scaleY="1.35">
             <Shape name="trash" id="0:951">
               <PointsPath id="0:952">
                 <StraightVertex id="0:953" x="-2" y="-1" />
@@ -452,23 +556,31 @@
         </Node>
       </Node>
       <Node name="Redo">
-        <Shape id="0:241" name="Redo down" x="652" y="88" opacity="0">
+        <Shape id="0:241" name="Redo down" x="764" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:131" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:240" name="Redo hover" x="652" y="88" opacity="0">
+        <Shape id="0:240" name="Redo hover" x="764" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:130" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
         <Node id="0:239" name="RedoContent" opacity="0.35">
+          <Text name="Redo label" x="712" y="104" width="104" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+            <TextStylePaint id="0:609" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
+              <Fill>
+                <SolidColor colorValue="FF5E7683" />
+              </Fill>
+            </TextStylePaint>
+            <TextValueRun styleId="0:609" text="REDO" />
+          </Text>
           <!-- @icon:RedoIcon:begin -->
-          <Node name="RedoIcon" id="0:900" x="652" y="88" scaleX="1.5" scaleY="1.5">
+          <Node name="RedoIcon" id="0:900" x="764" y="72" scaleX="1.35" scaleY="1.35">
             <Shape name="redo-2" id="0:901">
               <PointsPath id="0:902">
                 <StraightVertex id="0:903" x="3" y="2" />
@@ -491,23 +603,31 @@
         </Node>
       </Node>
       <Node name="Undo">
-        <Shape id="0:237" name="Undo down" x="536" y="88" opacity="0">
+        <Shape id="0:237" name="Undo down" x="648" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:129" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:236" name="Undo hover" x="536" y="88" opacity="0">
+        <Shape id="0:236" name="Undo hover" x="648" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:128" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
         <Node id="0:235" name="UndoContent" opacity="0.35">
+          <Text name="Undo label" x="596" y="104" width="104" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+            <TextStylePaint id="0:610" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
+              <Fill>
+                <SolidColor colorValue="FF5E7683" />
+              </Fill>
+            </TextStylePaint>
+            <TextValueRun styleId="0:610" text="UNDO" />
+          </Text>
           <!-- @icon:UndoIcon:begin -->
-          <Node name="UndoIcon" id="0:850" x="536" y="88" scaleX="1.5" scaleY="1.5">
+          <Node name="UndoIcon" id="0:850" x="648" y="72" scaleX="1.35" scaleY="1.35">
             <Shape name="undo-2" id="0:851">
               <PointsPath id="0:852">
                 <StraightVertex id="0:853" x="-3" y="2" />
@@ -530,93 +650,130 @@
         </Node>
       </Node>
       <Node name="InkWell">
-        <Shape id="0:233" name="InkWell down" x="416" y="88" opacity="0">
+        <Shape id="0:233" name="InkWell down" x="528" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:127" propertyKey="18" />
-          <Rectangle width="96" height="88" cornerRadiusTL="14" />
+          <Rectangle width="96" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:232" name="InkWell hover" x="416" y="88" opacity="0">
+        <Shape id="0:232" name="InkWell hover" x="528" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:126" propertyKey="18" />
-          <Rectangle width="96" height="88" cornerRadiusTL="14" />
+          <Rectangle width="96" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
-        <Shape name="InkWell ring" x="416" y="88">
-          <Ellipse width="42" height="42" />
+        <Text name="InkWell label" x="480" y="104" width="96" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+          <TextStylePaint id="0:611" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
+            <Fill>
+              <SolidColor colorValue="FF5E7683" />
+            </Fill>
+          </TextStylePaint>
+          <TextValueRun styleId="0:611" text="INK" />
+        </Text>
+        <Shape name="InkWell ring" x="528" y="72">
+          <Rectangle width="40" height="40" cornerRadiusTL="9" />
           <Stroke thickness="1.5" cap="round" join="round">
-            <SolidColor colorValue="66FFFFFF" />
+            <SolidColor colorValue="59E9F4FA" />
           </Stroke>
         </Shape>
-        <Shape id="0:224" name="Well black" x="416" y="88">
+        <Shape id="0:224" name="Well black" x="528" y="72">
           <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:61" />
-          <Ellipse width="32" height="32" />
+          <Rectangle width="30" height="30" cornerRadiusTL="6" />
           <Fill>
             <SolidColor colorValue="FF1A1A1A" />
           </Fill>
+          <Stroke thickness="1">
+            <SolidColor colorValue="40E9F4FA" />
+          </Stroke>
         </Shape>
-        <Shape id="0:225" name="Well blue" x="416" y="88" opacity="0">
+        <Shape id="0:225" name="Well blue" x="528" y="72" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:62" />
-          <Ellipse width="32" height="32" />
+          <Rectangle width="30" height="30" cornerRadiusTL="6" />
           <Fill>
             <SolidColor colorValue="FF2563EB" />
           </Fill>
+          <Stroke thickness="1">
+            <SolidColor colorValue="40E9F4FA" />
+          </Stroke>
         </Shape>
-        <Shape id="0:226" name="Well red" x="416" y="88" opacity="0">
+        <Shape id="0:226" name="Well red" x="528" y="72" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:63" />
-          <Ellipse width="32" height="32" />
+          <Rectangle width="30" height="30" cornerRadiusTL="6" />
           <Fill>
             <SolidColor colorValue="FFDC2626" />
           </Fill>
+          <Stroke thickness="1">
+            <SolidColor colorValue="40E9F4FA" />
+          </Stroke>
         </Shape>
-        <Shape id="0:227" name="Well green" x="416" y="88" opacity="0">
+        <Shape id="0:227" name="Well green" x="528" y="72" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:64" />
-          <Ellipse width="32" height="32" />
+          <Rectangle width="30" height="30" cornerRadiusTL="6" />
           <Fill>
             <SolidColor colorValue="FF16A34A" />
           </Fill>
+          <Stroke thickness="1">
+            <SolidColor colorValue="40E9F4FA" />
+          </Stroke>
         </Shape>
-        <Shape id="0:228" name="Well yellow" x="416" y="88" opacity="0">
+        <Shape id="0:228" name="Well yellow" x="528" y="72" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:65" />
-          <Ellipse width="32" height="32" />
+          <Rectangle width="30" height="30" cornerRadiusTL="6" />
           <Fill>
             <SolidColor colorValue="FFEAB308" />
           </Fill>
+          <Stroke thickness="1">
+            <SolidColor colorValue="40E9F4FA" />
+          </Stroke>
         </Shape>
-        <Shape id="0:229" name="Well orange" x="416" y="88" opacity="0">
+        <Shape id="0:229" name="Well orange" x="528" y="72" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:66" />
-          <Ellipse width="32" height="32" />
+          <Rectangle width="30" height="30" cornerRadiusTL="6" />
           <Fill>
             <SolidColor colorValue="FFF97316" />
           </Fill>
+          <Stroke thickness="1">
+            <SolidColor colorValue="40E9F4FA" />
+          </Stroke>
         </Shape>
-        <Shape id="0:230" name="Well violet" x="416" y="88" opacity="0">
+        <Shape id="0:230" name="Well violet" x="528" y="72" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:67" />
-          <Ellipse width="32" height="32" />
+          <Rectangle width="30" height="30" cornerRadiusTL="6" />
           <Fill>
             <SolidColor colorValue="FF7C3AED" />
           </Fill>
+          <Stroke thickness="1">
+            <SolidColor colorValue="40E9F4FA" />
+          </Stroke>
         </Shape>
       </Node>
       <Node name="Eraser">
-        <Shape id="0:222" name="Eraser down" x="296" y="88" opacity="0">
+        <Shape id="0:222" name="Eraser down" x="408" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:125" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:221" name="Eraser hover" x="296" y="88" opacity="0">
+        <Shape id="0:221" name="Eraser hover" x="408" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:124" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
+        <Text name="Eraser label" x="356" y="104" width="104" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+          <TextStylePaint id="0:612" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
+            <Fill>
+              <SolidColor colorValue="FF5E7683" />
+            </Fill>
+          </TextStylePaint>
+          <TextValueRun styleId="0:612" text="ERASE" />
+        </Text>
         <!-- @icon:EraserIcon:begin -->
-        <Node name="EraserIcon" id="0:800" x="296" y="88" scaleX="1.5" scaleY="1.5">
+        <Node name="EraserIcon" id="0:800" x="408" y="72" scaleX="1.35" scaleY="1.35">
           <Shape name="eraser" id="0:801">
             <PointsPath id="0:802">
               <StraightVertex id="0:803" x="9" y="9" />
@@ -641,31 +798,39 @@
           </Shape>
         </Node>
         <!-- @icon:EraserIcon:end -->
-        <Shape id="0:220" name="Eraser selected" x="296" y="124" opacity="0">
+        <Shape id="0:220" name="Eraser selected" x="408" y="127" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:100" propertyKey="18" converterId="0:63" />
-          <Rectangle width="72" height="5" cornerRadiusTL="2.5" />
+          <Rectangle width="48" height="3" cornerRadiusTL="1.5" />
           <Fill>
-            <SolidColor colorValue="FF63D2D1" />
+            <SolidColor colorValue="FFF5B02E" />
           </Fill>
         </Shape>
       </Node>
       <Node name="Highlighter">
-        <Shape id="0:218" name="Highlighter down" x="180" y="88" opacity="0">
+        <Shape id="0:218" name="Highlighter down" x="292" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:123" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:217" name="Highlighter hover" x="180" y="88" opacity="0">
+        <Shape id="0:217" name="Highlighter hover" x="292" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:122" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
+        <Text name="Highlighter label" x="240" y="104" width="104" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+          <TextStylePaint id="0:613" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
+            <Fill>
+              <SolidColor colorValue="FF5E7683" />
+            </Fill>
+          </TextStylePaint>
+          <TextValueRun styleId="0:613" text="MARK" />
+        </Text>
         <!-- @icon:HighlighterIcon:begin -->
-        <Node name="HighlighterIcon" id="0:750" x="180" y="88" scaleX="1.5" scaleY="1.5">
+        <Node name="HighlighterIcon" id="0:750" x="292" y="72" scaleX="1.35" scaleY="1.35">
           <Shape name="highlighter" id="0:751">
             <PointsPath id="0:752">
               <StraightVertex id="0:753" x="-3" y="-1" />
@@ -688,31 +853,39 @@
           </Shape>
         </Node>
         <!-- @icon:HighlighterIcon:end -->
-        <Shape id="0:216" name="Highlighter selected" x="180" y="124" opacity="0">
+        <Shape id="0:216" name="Highlighter selected" x="292" y="127" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:100" propertyKey="18" converterId="0:62" />
-          <Rectangle width="72" height="5" cornerRadiusTL="2.5" />
+          <Rectangle width="48" height="3" cornerRadiusTL="1.5" />
           <Fill>
-            <SolidColor colorValue="FF63D2D1" />
+            <SolidColor colorValue="FFF5B02E" />
           </Fill>
         </Shape>
       </Node>
       <Node name="Pen">
-        <Shape id="0:214" name="Pen down" x="64" y="88" opacity="0">
+        <Shape id="0:214" name="Pen down" x="176" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:121" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="38000000" />
+            <SolidColor colorValue="33F5B02E" />
           </Fill>
         </Shape>
-        <Shape id="0:213" name="Pen hover" x="64" y="88" opacity="0">
+        <Shape id="0:213" name="Pen hover" x="176" y="88" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:120" propertyKey="18" />
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="1FFFFFFF" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
+        <Text name="Pen label" x="124" y="104" width="104" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+          <TextStylePaint id="0:614" fontSize="9" letterSpacing="1.8" fontAssetId="0:30">
+            <Fill>
+              <SolidColor colorValue="FF5E7683" />
+            </Fill>
+          </TextStylePaint>
+          <TextValueRun styleId="0:614" text="PEN" />
+        </Text>
         <!-- @icon:PenIcon:begin -->
-        <Node name="PenIcon" id="0:700" x="64" y="88" scaleX="1.5" scaleY="1.5">
+        <Node name="PenIcon" id="0:700" x="176" y="72" scaleX="1.35" scaleY="1.35">
           <Shape name="pencil" id="0:701">
             <PointsPath id="0:702" isClosed="true">
               <CubicDetachedVertex id="0:703" x="9.174" y="-5.188" outRotation="-0.785" outDistance="1.557" />
@@ -736,102 +909,457 @@
           </Shape>
         </Node>
         <!-- @icon:PenIcon:end -->
-        <Shape id="0:212" name="Pen selected" x="64" y="124" opacity="0">
+        <Shape id="0:212" name="Pen selected" x="176" y="127" opacity="0">
           <DataBindContext sourcePathIds="0:40-0:100" propertyKey="18" converterId="0:61" />
-          <Rectangle width="72" height="5" cornerRadiusTL="2.5" />
+          <Rectangle width="48" height="3" cornerRadiusTL="1.5" />
           <Fill>
-            <SolidColor colorValue="FF63D2D1" />
+            <SolidColor colorValue="FFF5B02E" />
           </Fill>
         </Shape>
       </Node>
       <!-- @toolshits:begin -->
       <Node name="ToolsHits" id="0:255">
-        <Shape id="0:211" name="Pen hit" x="64" y="88">
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+        <Shape id="0:211" name="Pen hit" x="176" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
-        <Shape id="0:215" name="Highlighter hit" x="180" y="88">
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+        <Shape id="0:215" name="Highlighter hit" x="292" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
-        <Shape id="0:219" name="Eraser hit" x="296" y="88">
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+        <Shape id="0:219" name="Eraser hit" x="408" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
-        <Shape id="0:223" name="InkWell hit" x="416" y="88">
-          <Rectangle width="96" height="88" cornerRadiusTL="14" />
+        <Shape id="0:223" name="InkWell hit" x="528" y="88">
+          <Rectangle width="96" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
-        <Shape id="0:234" name="Undo hit" x="536" y="88">
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+        <Shape id="0:234" name="Undo hit" x="648" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
-        <Shape id="0:238" name="Redo hit" x="652" y="88">
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+        <Shape id="0:238" name="Redo hit" x="764" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
-        <Shape id="0:242" name="Clear hit" x="776" y="88">
-          <Rectangle width="104" height="88" cornerRadiusTL="14" />
+        <Shape id="0:242" name="Clear hit" x="888" y="88">
+          <Rectangle width="104" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF1B3A50" />
+            <SolidColor colorValue="0DFFFFFF" />
           </Fill>
         </Shape>
-        <Shape id="0:247" name="AskNatalie hit" x="930" y="88">
-          <Rectangle width="164" height="88" cornerRadiusTL="14" />
+        <Shape id="0:247" name="AskNatalie hit" x="1042" y="88">
+          <Rectangle width="164" height="88" cornerRadiusTL="6" />
           <Fill>
-            <SolidColor colorValue="FF2A5670" />
+            <SolidColor colorValue="14F5B02E" />
           </Fill>
         </Shape>
       </Node>
       <!-- @toolshits:end -->
     </Node>
-    <Text name="Status" x="524" y="12" width="476" sizingValue="fixed" alignValue="right">
-      <TextStylePaint id="0:206" fontSize="15" fontAssetId="0:30">
+    <Text name="Status" x="980" y="13" width="236" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:206" fontSize="11" letterSpacing="1" fontAssetId="0:30">
         <Fill>
-          <SolidColor colorValue="FF91D7E4" />
+          <SolidColor colorValue="FF9FB4BE" />
         </Fill>
       </TextStylePaint>
       <TextValueRun styleId="0:206" text="Ready">
         <DataBindContext sourcePathIds="0:40-0:110" propertyKey="268" />
       </TextValueRun>
     </Text>
-    <Text name="Title" x="24" y="9">
-      <TextStylePaint id="0:204" fontSize="19" fontAssetId="0:30">
+    <Text name="Status tag" x="880" y="15" width="90" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:207" fontSize="8.5" letterSpacing="2" fontAssetId="0:30">
         <Fill>
-          <SolidColor colorValue="FF91D7E4" />
+          <SolidColor colorValue="FF3D5560" />
         </Fill>
       </TextStylePaint>
-      <TextValueRun styleId="0:204" text="Moyo board" />
+      <TextValueRun styleId="0:207" text="STATUS" />
     </Text>
-    <Shape id="0:311" name="Band" x="512" y="70">
-      <Rectangle width="1024" height="140" linkCornerRadius="false" cornerRadiusTL="18" cornerRadiusTR="18" />
+    <Text name="Board tag" x="504" y="15" width="240" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+      <TextStylePaint id="0:615" fontSize="9" letterSpacing="2" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:615" text="XR PANEL // BRD-1248" />
+    </Text>
+    <Text name="Title" x="34" y="13">
+      <TextStylePaint id="0:204" fontSize="12" letterSpacing="3" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF8FA5B0" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:204" text="MOYO BOARD" />
+    </Text>
+    <Shape name="Title rule">
+      <Rectangle x="624" y="36" width="1244" height="1" />
       <Fill>
-        <SolidColor colorValue="FF112D44" />
+        <SolidColor colorValue="1FE9F4FA" />
       </Fill>
     </Shape>
-    <Shape id="0:312" name="Content frame" x="512" y="460">
-      <Rectangle width="1022" height="638" linkCornerRadius="false" cornerRadiusBL="18" cornerRadiusBR="18" />
-      <Stroke thickness="2" cap="round" join="round">
+    <!-- @deco:begin -->
+    <Shape name="Rail separators">
+        <Rectangle x="118" y="88" width="1" height="68" />
+        <Rectangle x="234" y="88" width="1" height="68" />
+        <Rectangle x="350" y="88" width="1" height="68" />
+        <Rectangle x="470" y="88" width="1" height="68" />
+        <Rectangle x="586" y="88" width="1" height="68" />
+        <Rectangle x="706" y="88" width="1" height="68" />
+        <Rectangle x="826" y="88" width="1" height="68" />
+        <Rectangle x="950" y="88" width="1" height="68" />
+        <Rectangle x="1130" y="88" width="1" height="68" />
+      <Fill>
+        <SolidColor colorValue="26E9F4FA" />
+      </Fill>
+    </Shape>
+    <Shape name="Scanlines">
+        <Rectangle x="624" y="46" width="1244" height="1" />
+        <Rectangle x="624" y="55.4" width="1244" height="1" />
+        <Rectangle x="624" y="64.8" width="1244" height="1" />
+        <Rectangle x="624" y="74.2" width="1244" height="1" />
+        <Rectangle x="624" y="83.6" width="1244" height="1" />
+        <Rectangle x="624" y="93" width="1244" height="1" />
+        <Rectangle x="624" y="102.4" width="1244" height="1" />
+        <Rectangle x="624" y="111.8" width="1244" height="1" />
+        <Rectangle x="624" y="121.2" width="1244" height="1" />
+        <Rectangle x="56" y="180" width="96" height="1" />
+        <Rectangle x="1192" y="180" width="96" height="1" />
+        <Rectangle x="56" y="220" width="96" height="1" />
+        <Rectangle x="1192" y="220" width="96" height="1" />
+        <Rectangle x="56" y="260" width="96" height="1" />
+        <Rectangle x="1192" y="260" width="96" height="1" />
+        <Rectangle x="56" y="300" width="96" height="1" />
+        <Rectangle x="1192" y="300" width="96" height="1" />
+        <Rectangle x="56" y="340" width="96" height="1" />
+        <Rectangle x="1192" y="340" width="96" height="1" />
+        <Rectangle x="56" y="380" width="96" height="1" />
+        <Rectangle x="1192" y="380" width="96" height="1" />
+        <Rectangle x="56" y="420" width="96" height="1" />
+        <Rectangle x="1192" y="420" width="96" height="1" />
+        <Rectangle x="56" y="460" width="96" height="1" />
+        <Rectangle x="1192" y="460" width="96" height="1" />
+        <Rectangle x="56" y="500" width="96" height="1" />
+        <Rectangle x="1192" y="500" width="96" height="1" />
+        <Rectangle x="56" y="540" width="96" height="1" />
+        <Rectangle x="1192" y="540" width="96" height="1" />
+        <Rectangle x="56" y="580" width="96" height="1" />
+        <Rectangle x="1192" y="580" width="96" height="1" />
+        <Rectangle x="56" y="620" width="96" height="1" />
+        <Rectangle x="1192" y="620" width="96" height="1" />
+        <Rectangle x="56" y="660" width="96" height="1" />
+        <Rectangle x="1192" y="660" width="96" height="1" />
+        <Rectangle x="56" y="700" width="96" height="1" />
+        <Rectangle x="1192" y="700" width="96" height="1" />
+        <Rectangle x="56" y="740" width="96" height="1" />
+        <Rectangle x="1192" y="740" width="96" height="1" />
+      <Fill>
+        <SolidColor colorValue="0AE9F4FA" />
+      </Fill>
+    </Shape>
+    <Shape name="Viewport ticks">
+        <Rectangle x="176" y="137" width="1.5" height="7" />
+        <Rectangle x="176" y="776" width="1.5" height="7" />
+        <Rectangle x="240" y="137" width="1.5" height="7" />
+        <Rectangle x="240" y="776" width="1.5" height="7" />
+        <Rectangle x="304" y="137" width="1.5" height="7" />
+        <Rectangle x="304" y="776" width="1.5" height="7" />
+        <Rectangle x="368" y="137" width="1.5" height="7" />
+        <Rectangle x="368" y="776" width="1.5" height="7" />
+        <Rectangle x="432" y="137" width="1.5" height="7" />
+        <Rectangle x="432" y="776" width="1.5" height="7" />
+        <Rectangle x="496" y="137" width="1.5" height="7" />
+        <Rectangle x="496" y="776" width="1.5" height="7" />
+        <Rectangle x="560" y="137" width="1.5" height="7" />
+        <Rectangle x="560" y="776" width="1.5" height="7" />
+        <Rectangle x="624" y="137" width="1.5" height="7" />
+        <Rectangle x="624" y="776" width="1.5" height="7" />
+        <Rectangle x="688" y="137" width="1.5" height="7" />
+        <Rectangle x="688" y="776" width="1.5" height="7" />
+        <Rectangle x="752" y="137" width="1.5" height="7" />
+        <Rectangle x="752" y="776" width="1.5" height="7" />
+        <Rectangle x="816" y="137" width="1.5" height="7" />
+        <Rectangle x="816" y="776" width="1.5" height="7" />
+        <Rectangle x="880" y="137" width="1.5" height="7" />
+        <Rectangle x="880" y="776" width="1.5" height="7" />
+        <Rectangle x="944" y="137" width="1.5" height="7" />
+        <Rectangle x="944" y="776" width="1.5" height="7" />
+        <Rectangle x="1008" y="137" width="1.5" height="7" />
+        <Rectangle x="1008" y="776" width="1.5" height="7" />
+        <Rectangle x="1072" y="137" width="1.5" height="7" />
+        <Rectangle x="1072" y="776" width="1.5" height="7" />
+        <Rectangle x="108" y="220" width="7" height="1.5" />
+        <Rectangle x="1133" y="220" width="7" height="1.5" />
+        <Rectangle x="108" y="300" width="7" height="1.5" />
+        <Rectangle x="1133" y="300" width="7" height="1.5" />
+        <Rectangle x="108" y="380" width="7" height="1.5" />
+        <Rectangle x="1133" y="380" width="7" height="1.5" />
+        <Rectangle x="108" y="460" width="7" height="1.5" />
+        <Rectangle x="1133" y="460" width="7" height="1.5" />
+        <Rectangle x="108" y="540" width="7" height="1.5" />
+        <Rectangle x="1133" y="540" width="7" height="1.5" />
+        <Rectangle x="108" y="620" width="7" height="1.5" />
+        <Rectangle x="1133" y="620" width="7" height="1.5" />
+        <Rectangle x="108" y="700" width="7" height="1.5" />
+        <Rectangle x="1133" y="700" width="7" height="1.5" />
+      <Fill>
+        <SolidColor colorValue="3DE9F4FA" />
+      </Fill>
+    </Shape>
+    <Shape name="Gutter ticks">
+        <Rectangle x="104" y="200" width="7" height="1.2" />
+        <Rectangle x="104" y="240" width="7" height="1.2" />
+        <Rectangle x="104" y="280" width="7" height="1.2" />
+        <Rectangle x="104" y="320" width="7" height="1.2" />
+        <Rectangle x="104" y="360" width="7" height="1.2" />
+        <Rectangle x="104" y="400" width="7" height="1.2" />
+        <Rectangle x="104" y="440" width="7" height="1.2" />
+        <Rectangle x="104" y="480" width="7" height="1.2" />
+        <Rectangle x="104" y="520" width="7" height="1.2" />
+        <Rectangle x="104" y="560" width="7" height="1.2" />
+        <Rectangle x="104" y="600" width="7" height="1.2" />
+        <Rectangle x="104" y="640" width="7" height="1.2" />
+        <Rectangle x="104" y="680" width="7" height="1.2" />
+        <Rectangle x="104" y="720" width="7" height="1.2" />
+      <Fill>
+        <SolidColor colorValue="26E9F4FA" />
+      </Fill>
+    </Shape>
+    <Node name="Left spine" x="46" y="470" rotation="-1.570796">
+      <Text x="-80" y="-7">
+        <TextStylePaint id="0:625" fontSize="12" letterSpacing="4" fontAssetId="0:30">
+          <Fill>
+            <SolidColor colorValue="FF4E6673" />
+          </Fill>
+        </TextStylePaint>
+        <TextValueRun styleId="0:625" text="MOYO // BOARD" />
+      </Text>
+    </Node>
+    <Node name="Right spine" x="1202" y="450" rotation="1.570796">
+      <Text x="-70" y="-7">
+        <TextStylePaint id="0:626" fontSize="12" letterSpacing="4" fontAssetId="0:30">
+          <Fill>
+            <SolidColor colorValue="FF4E6673" />
+          </Fill>
+        </TextStylePaint>
+        <TextValueRun styleId="0:626" text="INK CHANNEL" />
+      </Text>
+    </Node>
+    <Node name="InkMeter">
+      <Shape name="InkMeter0 glow" x="1186" y="329" opacity="0">
+        <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:61" />
+        <Rectangle width="12" height="18" cornerRadiusTL="3" />
+        <Fill>
+          <SolidColor colorValue="FF1A1A1A" />
+        </Fill>
+      </Shape>
+      <Shape name="InkMeter0 base" x="1186" y="329">
+        <Rectangle width="12" height="18" cornerRadiusTL="3" />
+        <Fill>
+          <SolidColor colorValue="401A1A1A" />
+        </Fill>
+      </Shape>
+      <Shape name="InkMeter1 glow" x="1186" y="359" opacity="0">
+        <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:62" />
+        <Rectangle width="12" height="18" cornerRadiusTL="3" />
+        <Fill>
+          <SolidColor colorValue="FF2563EB" />
+        </Fill>
+      </Shape>
+      <Shape name="InkMeter1 base" x="1186" y="359">
+        <Rectangle width="12" height="18" cornerRadiusTL="3" />
+        <Fill>
+          <SolidColor colorValue="402563EB" />
+        </Fill>
+      </Shape>
+      <Shape name="InkMeter2 glow" x="1186" y="389" opacity="0">
+        <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:63" />
+        <Rectangle width="12" height="18" cornerRadiusTL="3" />
+        <Fill>
+          <SolidColor colorValue="FFDC2626" />
+        </Fill>
+      </Shape>
+      <Shape name="InkMeter2 base" x="1186" y="389">
+        <Rectangle width="12" height="18" cornerRadiusTL="3" />
+        <Fill>
+          <SolidColor colorValue="40DC2626" />
+        </Fill>
+      </Shape>
+      <Shape name="InkMeter3 glow" x="1186" y="419" opacity="0">
+        <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:64" />
+        <Rectangle width="12" height="18" cornerRadiusTL="3" />
+        <Fill>
+          <SolidColor colorValue="FF16A34A" />
+        </Fill>
+      </Shape>
+      <Shape name="InkMeter3 base" x="1186" y="419">
+        <Rectangle width="12" height="18" cornerRadiusTL="3" />
+        <Fill>
+          <SolidColor colorValue="4016A34A" />
+        </Fill>
+      </Shape>
+      <Shape name="InkMeter4 glow" x="1186" y="449" opacity="0">
+        <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:65" />
+        <Rectangle width="12" height="18" cornerRadiusTL="3" />
+        <Fill>
+          <SolidColor colorValue="FFEAB308" />
+        </Fill>
+      </Shape>
+      <Shape name="InkMeter4 base" x="1186" y="449">
+        <Rectangle width="12" height="18" cornerRadiusTL="3" />
+        <Fill>
+          <SolidColor colorValue="40EAB308" />
+        </Fill>
+      </Shape>
+      <Shape name="InkMeter5 glow" x="1186" y="479" opacity="0">
+        <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:66" />
+        <Rectangle width="12" height="18" cornerRadiusTL="3" />
+        <Fill>
+          <SolidColor colorValue="FFF97316" />
+        </Fill>
+      </Shape>
+      <Shape name="InkMeter5 base" x="1186" y="479">
+        <Rectangle width="12" height="18" cornerRadiusTL="3" />
+        <Fill>
+          <SolidColor colorValue="40F97316" />
+        </Fill>
+      </Shape>
+      <Shape name="InkMeter6 glow" x="1186" y="509" opacity="0">
+        <DataBindContext sourcePathIds="0:40-0:101" propertyKey="18" converterId="0:67" />
+        <Rectangle width="12" height="18" cornerRadiusTL="3" />
+        <Fill>
+          <SolidColor colorValue="FF7C3AED" />
+        </Fill>
+      </Shape>
+      <Shape name="InkMeter6 base" x="1186" y="509">
+        <Rectangle width="12" height="18" cornerRadiusTL="3" />
+        <Fill>
+          <SolidColor colorValue="407C3AED" />
+        </Fill>
+      </Shape>
+    </Node>
+    <Text name="label 112·140" x="16" y="148" width="80" sizingValue="fixed" alignValue="left" wrapValue="noWrap">
+      <TextStylePaint id="0:647" fontSize="8" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:647" text="112·140" />
+    </Text>
+    <Text name="label 112·780" x="16" y="758" width="80" sizingValue="fixed" alignValue="left" wrapValue="noWrap">
+      <TextStylePaint id="0:648" fontSize="8" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:648" text="112·780" />
+    </Text>
+    <Text name="label 1136·140" x="1150" y="148" width="82" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:649" fontSize="8" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:649" text="1136·140" />
+    </Text>
+    <Text name="label 1136·780" x="1150" y="758" width="82" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:650" fontSize="8" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:650" text="1136·780" />
+    </Text>
+    <Text name="label CAM·01 // LIVE" x="16" y="170" width="96" sizingValue="fixed" alignValue="left" wrapValue="noWrap">
+      <TextStylePaint id="0:651" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:651" text="CAM·01 // LIVE" />
+    </Text>
+    <Text name="label QDRAW · 1024×640" x="1136" y="170" width="96" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
+      <TextStylePaint id="0:652" fontSize="8.5" letterSpacing="1.8" fontAssetId="0:30">
+        <Fill>
+          <SolidColor colorValue="FF3D5560" />
+        </Fill>
+      </TextStylePaint>
+      <TextValueRun styleId="0:652" text="QDRAW · 1024×640" />
+    </Text>
+    <!-- @deco:end -->
+    <Shape name="Window frame" x="624" y="460">
+      <Rectangle width="1024" height="640" />
+      <Stroke thickness="1" cap="round" join="round">
         <SolidColor colorValue="2EE9F4FA" />
       </Stroke>
     </Shape>
-    <Shape id="0:313" name="Outer edge" x="512" y="390">
-      <Rectangle width="1023" height="779" cornerRadiusTL="18" />
-      <Stroke thickness="1.5" cap="round" join="round">
-        <SolidColor colorValue="26E9F4FA" />
+    <Shape name="Window brackets">
+      <PointsPath>
+        <StraightVertex x="140" y="140" />
+        <StraightVertex x="112" y="140" />
+        <StraightVertex x="112" y="168" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="1108" y="140" />
+        <StraightVertex x="1136" y="140" />
+        <StraightVertex x="1136" y="168" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="112" y="752" />
+        <StraightVertex x="112" y="780" />
+        <StraightVertex x="140" y="780" />
+      </PointsPath>
+      <PointsPath>
+        <StraightVertex x="1136" y="752" />
+        <StraightVertex x="1136" y="780" />
+        <StraightVertex x="1108" y="780" />
+      </PointsPath>
+      <Stroke thickness="2.5" cap="round" join="round">
+        <SolidColor colorValue="99F5B02E" />
       </Stroke>
+    </Shape>
+    <Shape name="Panel edge">
+      <PointsPath isClosed="true">
+        <StraightVertex x="20" y="0" />
+        <StraightVertex x="1228" y="0" />
+        <StraightVertex x="1248" y="20" />
+        <StraightVertex x="1248" y="760" />
+        <StraightVertex x="1228" y="780" />
+        <StraightVertex x="20" y="780" />
+        <StraightVertex x="0" y="760" />
+        <StraightVertex x="0" y="20" />
+      </PointsPath>
+      <Stroke thickness="1" cap="round" join="round">
+        <SolidColor colorValue="3DE9F4FA" />
+      </Stroke>
+    </Shape>
+    <Shape name="Panel face">
+      <PointsPath isClosed="true">
+        <StraightVertex x="20" y="0" />
+        <StraightVertex x="1228" y="0" />
+        <StraightVertex x="1248" y="20" />
+        <StraightVertex x="1248" y="760" />
+        <StraightVertex x="1228" y="780" />
+        <StraightVertex x="20" y="780" />
+        <StraightVertex x="0" y="760" />
+        <StraightVertex x="0" y="20" />
+      </PointsPath>
+      <Rectangle x="624" y="460" width="1024" height="640" />
+      <Fill fillRule="evenOdd">
+        <SolidColor colorValue="EB0A0D12" />
+      </Fill>
     </Shape>
     <LinearAnimation id="0:330" name="Palette tools" duration="1" fps="60">
       <KeyedObject objectId="0:210">
@@ -941,7 +1469,7 @@
       </KeyedObject>
       <KeyedObject objectId="0:249">
         <KeyedProperty propertyKey="268">
-          <KeyFrameString frame="0" value="Ask Natalie" />
+          <KeyFrameString frame="0" value="ASK NATALIE" />
         </KeyedProperty>
       </KeyedObject>
     </LinearAnimation>

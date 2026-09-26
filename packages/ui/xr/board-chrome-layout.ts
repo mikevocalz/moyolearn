@@ -21,35 +21,40 @@
 // XrBoardChromePanel; the numbers exist here once.
 // SOT-KEYWORDS: xr rive board chrome layout content rect toolbar palette artboard meters shared geometry
 
-/** Artboard-space unit size of the BoardChrome artboard. */
-export const CHROME_ARTBOARD = { width: 1024, height: 780 } as const;
+/** Artboard-space unit size of the BoardChrome artboard — 1248×780 is 16:10
+    for the whole panel face; the paper below stays 16:10 on its own. */
+export const CHROME_ARTBOARD = { width: 1248, height: 780 } as const;
+
+/** Side gutters that make the panel 16:10 while the paper keeps 16:10. */
+export const CONTENT_GUTTER = 112;
 
 /** Title band: Moyo brand text left, Ask Natalie... lives in the toolbar. */
-export const TITLE_BAND = { x: 0, y: 0, w: 1024, h: 36 } as const;
+export const TITLE_BAND = { x: 0, y: 0, w: 1248, h: 36 } as const;
 
 /** Toolbar band — tools row or inks row, never both (paletteOpen swaps it). */
-export const TOOLBAR_BAND = { x: 0, y: 36, w: 1024, h: 104 } as const;
+export const TOOLBAR_BAND = { x: 0, y: 36, w: 1248, h: 104 } as const;
 
 /** The Quickdraw window — input plane and live texture cover exactly this. */
-export const CONTENT_BAND = { x: 0, y: 140, w: 1024, h: 640 } as const;
+export const CONTENT_BAND = { x: CONTENT_GUTTER, y: 140, w: 1024, h: 640 } as const;
 
-/** Tools-row hit rect per control id, in artboard units, left to right. */
+/** Tools-row hit rect per control id, in artboard units — shifted one gutter
+    so the row's left edge aligns with the paper's. */
 export const TOOL_ROW = {
-  pen: { x: 12, y: 44, w: 104, h: 88 },
-  highlighter: { x: 128, y: 44, w: 104, h: 88 },
-  eraser: { x: 244, y: 44, w: 104, h: 88 },
-  inkWell: { x: 368, y: 44, w: 96, h: 88 },
-  undo: { x: 484, y: 44, w: 104, h: 88 },
-  redo: { x: 600, y: 44, w: 104, h: 88 },
-  clear: { x: 724, y: 44, w: 104, h: 88 },
-  askNatalie: { x: 848, y: 44, w: 164, h: 88 },
+  pen: { x: 124, y: 44, w: 104, h: 88 },
+  highlighter: { x: 240, y: 44, w: 104, h: 88 },
+  eraser: { x: 356, y: 44, w: 104, h: 88 },
+  inkWell: { x: 480, y: 44, w: 96, h: 88 },
+  undo: { x: 596, y: 44, w: 104, h: 88 },
+  redo: { x: 712, y: 44, w: 104, h: 88 },
+  clear: { x: 836, y: 44, w: 104, h: 88 },
+  askNatalie: { x: 960, y: 44, w: 164, h: 88 },
 } as const;
 
-/** Inks-row (paletteOpen=true): 7 swatches + a close key, same band. */
+/** Inks-row (paletteOpen=true): 7 swatches + a close key, same band, same gutter. */
 export const INK_ROW = {
-  swatchPitch: 124, // x = 12 + i * 124
+  swatchPitch: 124, // x = 124 + i * 124
   swatch: { y: 44, w: 104, h: 88 },
-  close: { x: 880, y: 44, w: 132, h: 88 },
+  close: { x: 992, y: 44, w: 132, h: 88 },
 } as const;
 
 /** Panel width in meters — XR panels are meter-scaled; 1024u → this. */

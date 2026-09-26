@@ -191,7 +191,7 @@ export function RiveBoardPanel({
             width={PANEL_WIDTH_M}
             height={PANEL_HEIGHT_M}
             position={[0, 0, 0]}
-            resolution={{ width: 1024, height: 780 }}
+            resolution={{ width: 1248, height: 780 }}
             input={{ panelWorld, enabled: !grabbed, resetKey }}
             onError={(error) => onChromeError?.(`Board controls unavailable: ${error.message}`)}
             onRuntimeReady={(rt) => {

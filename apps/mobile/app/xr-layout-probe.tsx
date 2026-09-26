@@ -56,7 +56,7 @@ const SETTLE_MS = 350;
 const SETTLE_TRAVEL_M = 0.2;
 const SETTLE_TURN_DOT = 0.9;
 
-function Scene({ bytes, chromeBytes }: { bytes: ArrayBuffer; chromeBytes: ArrayBuffer | null }) {
+function Scene({ bytes }: { bytes: ArrayBuffer }) {
   const store = useMemo(() => createStore(() => ({ placed: null as Placed | null, reset: 0 })), []);
   const samples = useRef<{ pos: [number, number, number]; fwd: [number, number, number]; t: number }[]>([]);
   const latched = useRef(false);
@@ -106,7 +106,7 @@ function Scene({ bytes, chromeBytes }: { bytes: ArrayBuffer; chromeBytes: ArrayB
         }}
       />
       {placed && (
-        <XrLayoutProbe bytes={bytes} chromeBytes={chromeBytes} head={placed.head} yawDeg={placed.yawDeg} resetKey={reset} />
+        <XrLayoutProbe bytes={bytes} head={placed.head} yawDeg={placed.yawDeg} resetKey={reset} />
       )}
     </ViroARScene>
   );
@@ -117,13 +117,11 @@ export default function XrLayoutProbeRoute() {
     () =>
       createStore(() => ({
         bytes: null as ArrayBuffer | null,
-        chromeBytes: null as ArrayBuffer | null,
         error: null as string | null,
       })),
     [],
   );
   const bytes = useStore(store, (state) => state.bytes);
-  const chromeBytes = useStore(store, (state) => state.chromeBytes);
   const error = useStore(store, (state) => state.error);
   const engineReady = useStore(xrLayoutProbe, (s) => s.engineReady);
   const bound = useStore(xrLayoutProbe, (s) => s.bound);
@@ -150,7 +148,10 @@ export default function XrLayoutProbeRoute() {
       await asset.downloadAsync();
       if (!asset.localUri) throw new Error('The chrome file was not downloaded');
       const data = await new File(asset.localUri).arrayBuffer();
-      if (alive) store.setState({ chromeBytes: data });
+      /* `xrLayoutProbe`, not the route store — the captured scene reads it
+         live, so a download that finishes after the navigator mounts still
+         swaps the fallback for the chrome. */
+      if (alive) xrLayoutProbe.setState({ chromeBytes: data });
     })().catch((reason) => {
       if (__DEV__) console.warn('[xr-layout-probe] board chrome asset unavailable:', reason);
       if (alive) xrLayoutProbe.setState({ chromeFailed: true });
@@ -178,8 +179,8 @@ export default function XrLayoutProbeRoute() {
   }, [bound]);
 
   const initialScene = useMemo(
-    () => ({ scene: () => (bytes ? <Scene bytes={bytes} chromeBytes={chromeBytes} /> : <ViroARScene />) }),
-    [bytes, chromeBytes],
+    () => ({ scene: () => (bytes ? <Scene bytes={bytes} /> : <ViroARScene />) }),
+    [bytes],
   );
 
   if (Platform.OS !== 'android' || error || !bytes) {
@@ -218,9 +219,10 @@ export default function XrLayoutProbeRoute() {
            early `live` binds against nothing and `onBound` fires once per
            attempt. */
         live={engineReady && placed !== null}
-        onBound={(binding) =>
-          xrLayoutProbe.setState({ bound: binding.bound, boundReason: binding.reason })
-        }
+        onBound={(binding) => {
+          if (__DEV__) console.log('[xr-layout-probe] board binding', binding);
+          xrLayoutProbe.setState({ bound: binding.bound, boundReason: binding.reason });
+        }}
       >
         <WhiteboardBoard
           ref={(handle) => {
