@@ -109,6 +109,9 @@ export const xrLayoutProbe = createStore(() => ({
 /* The engine handle, for the same reason `active.engine` is module scope in
    the tutor screen: the immersive tree cannot close over a route-level ref. */
 export const xrLayoutEngine: { current: WhiteboardHandle | null } = { current: null };
+/* Dev-only move counter — module-level because the scene component remounts
+   on every store change and the throttle must survive that. */
+let surfaceMoves = 0;
 
 const setTool = (tool: WhiteboardTool) => {
   xrLayoutProbe.setState({ tool });
@@ -248,8 +251,13 @@ export function XrLayoutProbe({
   const inject = (sample: XrSurfaceInput) => {
     /* Draw-path evidence: `down`/`up` prove the ray reached the input plane;
        a silent log here means the failure is hit-testing, not the engine. */
-    if (__DEV__ && sample.phase !== 'move') {
-      console.log('[xr-layout-probe] surface', sample.phase, sample.u.toFixed(3), sample.v.toFixed(3), 'engine:', !!xrLayoutEngine.current);
+    if (__DEV__) {
+      if (sample.phase === 'move') {
+        surfaceMoves = (surfaceMoves + 1) % 20;
+        if (surfaceMoves === 0) console.log('[xr-layout-probe] surface move x20, latest', sample.u.toFixed(3), sample.v.toFixed(3));
+      } else {
+        console.log('[xr-layout-probe] surface', sample.phase, sample.u.toFixed(3), sample.v.toFixed(3), 'engine:', !!xrLayoutEngine.current);
+      }
     }
     xrLayoutEngine.current?.injectPointer({
       phase: sample.phase,
@@ -261,7 +269,7 @@ export function XrLayoutProbe({
 
   return (
     <>
-      <RivePanelProbe bytes={bytes} initialPose={rivePose} resetKey={resetKey} opacity={0.7} />
+      <RivePanelProbe bytes={bytes} initialPose={rivePose} resetKey={resetKey} opacity={0.92} />
       {chrome && chromeBytes ? (
         <RiveBoardPanel
           chromeBytes={chromeBytes}
@@ -269,7 +277,7 @@ export function XrLayoutProbe({
           carrier={boardOffset}
           grabbed={grabbed}
           bound={bound}
-          opacity={0.7}
+          opacity={0.92}
           resetKey={resetKey}
           onCarrierRelease={(pose) => xrLayoutProbe.setState({ boardOffset: pose })}
           onGrab={(v) => xrLayoutProbe.setState({ grabbed: v })}

@@ -264,3 +264,31 @@
 [11:18:01.102] rive  data: paletteOpen = true
 [11:18:01.103] rive  showing BoardChrome [1/1]
 [11:18:01.104] rive  wrote build/c_cl.json
+[11:40:55.358] rive  verified (0 bytes, 116ms, 0 errors, 0 warnings)
+[11:41:04.102] rive  built build/moyo_board_chrome.riv (163119 bytes, 114ms, 0 errors, 0 warnings)
+[11:41:04.105] rive  showing BoardChrome [1/1]
+[11:41:04.105] rive  viewport 1248x780 @1x
+[11:41:04.193] rive  wrote build/opaque.png
+[11:41:04.409] rive  built build/moyo_board_chrome.riv (163119 bytes, 120ms, 0 errors, 0 warnings)
+[11:41:04.411] rive  data: uiOpacity = 0.8
+[11:41:04.411] rive  showing BoardChrome [1/1]
+[11:41:04.411] rive  viewport 1248x780 @1x
+[11:41:04.452] rive  wrote build/dim.png
+[11:41:51.949] rive  built build/moyo_board_chrome.riv (163119 bytes, 120ms, 0 errors, 0 warnings)
+[12:04:53.956] rive  verified (0 bytes, 129ms, 0 errors, 0 warnings)
+[12:05:01.505] rive  built build/moyo_board_chrome.riv (163286 bytes, 116ms, 0 errors, 0 warnings)
+[12:05:01.507] rive  data: uiOpacity = 0.9
+[12:05:01.509] rive  showing BoardChrome [1/1]
+[12:05:01.509] rive  viewport 1248x780 @1x
+[12:05:01.567] rive  wrote build/band09.png
+[12:05:01.774] rive  built build/moyo_board_chrome.riv (163286 bytes, 118ms, 0 errors, 0 warnings)
+[12:05:01.776] rive  data: uiOpacity = 0.5
+[12:05:01.776] rive  showing BoardChrome [1/1]
+[12:05:01.776] rive  viewport 1248x780 @1x
+[12:05:01.817] rive  wrote build/band05.png
+[12:05:02.026] rive  built build/moyo_board_chrome.riv (163286 bytes, 122ms, 0 errors, 0 warnings)
+[12:05:02.028] rive  data: uiOpacity = 1
+[12:05:02.029] rive  showing BoardChrome [1/1]
+[12:05:02.029] rive  viewport 1248x780 @1x
+[12:05:02.098] rive  wrote build/band10.png
+[12:06:10.435] rive  built build/moyo_board_chrome.riv (163286 bytes, 126ms, 0 errors, 0 warnings)

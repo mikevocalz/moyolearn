@@ -388,7 +388,7 @@
       <DataBindContext sourcePathIds="0:40-0:400" propertyKey="18" />
       <Rectangle width="196" height="190" cornerRadiusTL="6" />
       <Fill>
-        <SolidColor colorValue="E6101820" />
+        <SolidColor colorValue="FF101820" />
       </Fill>
     </Shape>
     <Text name="Fraction 3 selected" x="489" y="284" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
@@ -540,7 +540,7 @@
       <DataBindContext sourcePathIds="0:40-0:400" propertyKey="18" />
       <Rectangle width="196" height="190" cornerRadiusTL="6" />
       <Fill>
-        <SolidColor colorValue="E6101820" />
+        <SolidColor colorValue="FF101820" />
       </Fill>
     </Shape>
     <Text name="Fraction 2 selected" x="271" y="284" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
@@ -692,7 +692,7 @@
       <DataBindContext sourcePathIds="0:40-0:400" propertyKey="18" />
       <Rectangle width="196" height="190" cornerRadiusTL="6" />
       <Fill>
-        <SolidColor colorValue="E6101820" />
+        <SolidColor colorValue="FF101820" />
       </Fill>
     </Shape>
     <Text name="Fraction 1 selected" x="53" y="284" width="196" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
@@ -844,7 +844,7 @@
       <DataBindContext sourcePathIds="0:40-0:400" propertyKey="18" />
       <Rectangle width="196" height="190" cornerRadiusTL="6" />
       <Fill>
-        <SolidColor colorValue="E6101820" />
+        <SolidColor colorValue="FF101820" />
       </Fill>
     </Shape>
     <Text name="Array tag" x="48" y="184">
@@ -1058,6 +1058,25 @@
         <SolidColor colorValue="3DE9F4FA" />
       </Stroke>
     </Shape>
+    <Shape name="Header band">
+      <Rectangle x="480" y="95" width="960" height="110" />
+      <Fill>
+        <SolidColor colorValue="F00E1420" />
+      </Fill>
+    </Shape>
+    <Shape name="Status band">
+      <PointsPath isClosed="true">
+        <StraightVertex x="20" y="0" />
+        <StraightVertex x="940" y="0" />
+        <StraightVertex x="960" y="20" />
+        <StraightVertex x="960" y="40" />
+        <StraightVertex x="0" y="40" />
+        <StraightVertex x="0" y="20" />
+      </PointsPath>
+      <Fill>
+        <SolidColor colorValue="F00E1420" />
+      </Fill>
+    </Shape>
     <Shape id="0:120" name="Panel face">
       <DataBindContext sourcePathIds="0:40-0:400" propertyKey="18" />
       <PointsPath isClosed="true">
@@ -1071,7 +1090,7 @@
         <StraightVertex x="0" y="20" />
       </PointsPath>
       <Fill>
-        <SolidColor colorValue="C80A0D12" />
+        <SolidColor colorValue="FF0A0D12" />
       </Fill>
     </Shape>
     <LinearAnimation id="0:164" name="Hint visibility 0" duration="1" fps="60">

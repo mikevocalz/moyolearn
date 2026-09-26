@@ -1,6 +1,7 @@
 package com.moyolearn.boardtexture
 
 import android.view.View
+import android.webkit.WebView
 import expo.modules.kotlin.modules.Module
 import expo.modules.kotlin.modules.ModuleDefinition
 
@@ -18,6 +19,23 @@ import expo.modules.kotlin.modules.ModuleDefinition
 class BoardTextureModule : Module() {
   override fun definition() = ModuleDefinition {
     Name("MoyoBoardTexture")
+
+    /*
+      `Surface.lockCanvas` hands the sink a SOFTWARE canvas, and a hardware-
+      composited Chromium WebView draws black into one unless the whole
+      document has been switched to slow software rasterization first. This
+      call is process-wide and legal only before the first WebView exists —
+      module creation runs before the page child mounts, which is the last
+      seam where that is still true. If another WebView beat us to it the
+      call throws; the board then stays a black texture rather than crashing
+      the module registry.
+    */
+    OnCreate {
+      try {
+        WebView.enableSlowWholeDocumentDraw()
+      } catch (ignored: Throwable) {
+      }
+    }
 
     View(BoardTextureHostView::class) {
       Events("onBound")

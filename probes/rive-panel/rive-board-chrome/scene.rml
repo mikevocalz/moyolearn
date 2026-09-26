@@ -1374,6 +1374,25 @@
         <SolidColor colorValue="3DE9F4FA" />
       </Stroke>
     </Shape>
+    <Shape name="Toolbar band">
+      <Rectangle x="624" y="88" width="1248" height="104" />
+      <Fill>
+        <SolidColor colorValue="F00E1420" />
+      </Fill>
+    </Shape>
+    <Shape name="Header band">
+      <PointsPath isClosed="true">
+        <StraightVertex x="20" y="0" />
+        <StraightVertex x="1228" y="0" />
+        <StraightVertex x="1248" y="20" />
+        <StraightVertex x="1248" y="36" />
+        <StraightVertex x="0" y="36" />
+        <StraightVertex x="0" y="20" />
+      </PointsPath>
+      <Fill>
+        <SolidColor colorValue="F00E1420" />
+      </Fill>
+    </Shape>
     <Shape name="Panel face">
       <DataBindContext sourcePathIds="0:40-0:152" propertyKey="18" />
       <PointsPath isClosed="true">
@@ -1388,7 +1407,7 @@
       </PointsPath>
       <Rectangle x="624" y="460" width="1024" height="640" />
       <Fill fillRule="evenOdd">
-        <SolidColor colorValue="C80A0D12" />
+        <SolidColor colorValue="FF0A0D12" />
       </Fill>
     </Shape>
     <LinearAnimation id="0:330" name="Palette tools" duration="1" fps="60">

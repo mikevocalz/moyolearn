@@ -199,6 +199,16 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
     texture = created
 
     val page = pages.firstOrNull() ?: return null
+    /*
+      The sink draws children into a SOFTWARE canvas (`Surface.lockCanvas`)
+      no matter which texture mode was asked for. A WebView that stays
+      hardware-rendered draws black into that canvas on this OS — its content
+      is composited by Chromium, not drawn through `View.draw`. A software
+      layer on the page forces software rasterization of the whole subtree,
+      which is the documented path for getting real WebView pixels into a
+      canvas. Reverted on release so the parked board keeps hardware accel.
+    */
+    page.setLayerType(View.LAYER_TYPE_SOFTWARE, null)
     if (page.parent === this) {
       removeView(page)
     }
@@ -233,6 +243,7 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
     texture?.dispose()
     texture = null
     if (page != null && page.parent == null) {
+      page.setLayerType(View.LAYER_TYPE_NONE, null)
       addView(page)
     }
   }
