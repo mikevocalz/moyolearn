@@ -37,6 +37,7 @@
     "expo-system-ui": "catalog:",
     "expo-task-manager": "57.0.14",
     "expo-updates": "catalog:",
+    "expo-web-browser": "catalog:",
     "lucide-react-native": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

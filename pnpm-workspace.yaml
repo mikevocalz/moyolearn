@@ -56,6 +56,11 @@ catalog:
   expo-splash-screen: 57.0.7
   expo-status-bar: 57.0.1
   expo-system-ui: 57.0.2
+  #   expo-web-browser 57.0.3 — @better-auth/expo's client lazily imports it to
+  #     hand the OAuth cookie back over the app scheme; missing it crashed every
+  #     native sign-in (INVALID module red-box). Pinned to the SDK-57 line: the
+  #     58.x package demands compileSdk 37 and fails checkDebugAarMetadata.
+  expo-web-browser: 57.0.3
   expo-updates: 57.0.17
   "@gorhom/bottom-sheet": 5.2.14
   react-native-keyboard-controller: 1.22.4
