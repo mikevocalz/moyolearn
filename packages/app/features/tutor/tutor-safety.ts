@@ -18,6 +18,12 @@ import {
 } from '@acme/safety';
 import type { LearnerFlags } from '@acme/auth/server';
 import type { ProtectedCtx } from '../../core/protected-operation';
+import {
+  CRISIS_PATTERNS,
+  PROHIBITED_PATTERNS,
+  classifyCoachInput,
+  matchesAny,
+} from './coach-safety-patterns.ts';
 
 function classifyProblem(problem: string, answer: string): InputClass {
   const isArithmetic = evaluateArithmetic(problem, answer) !== null;
@@ -83,60 +89,20 @@ export async function runTutorSafetyPlane(
  * (PR-50) is where a model-backed classifier lands, graded per subject×band.
  * Until then these patterns are what stands between a disclosure and a tutor
  * turn, which is why they are broad and why they fail toward stopping.
- */
-const CRISIS_PATTERNS: RegExp[] = [
-  /\b(kill|hurt|harm|cut)(ing)?\s+(my ?self|me)\b/i,
-  /\b(want|going|plan|planning|trying)\s+to\s+(die|end\s+it|not\s+be\s+here)\b/i,
-  /\b(suicid|self[\s-]?harm)/i,
-  /\bdon'?t\s+want\s+to\s+(live|be\s+alive|be\s+here)\b/i,
-  /\bwish\s+i\s+(was|were)\s+dead\b/i,
-  /\b(someone|he|she|they|my\s+\w+)\s+(is\s+)?(hurt|hurting|touch|touching|hitting|beat|beating)\s+me\b/i,
-  /\bi'?m\s+(not\s+)?safe\b/i,
-  /\bafraid\s+to\s+go\s+home\b/i,
-];
-
-const SENSITIVE_PATTERNS: RegExp[] = [
-  /\b(bull(y|ied|ying)|picked\s+on|made\s+fun\s+of)\b/i,
-  /\bno\s+(one|body)\s+likes\s+me\b/i,
-  /\bi'?m\s+(so\s+)?(sad|depressed|worthless|stupid|a\s+failure)\b/i,
-  /\bi\s+hate\s+my\s?self\b/i,
-  /\b(my\s+)?(parents|mom|dad)\s+(are\s+)?(fighting|divorc|yell)/i,
-  /\b(scared|anxious|terrified)\s+(about|of)\b/i,
-  /\bcan'?t\s+stop\s+crying\b/i,
-];
-
-const PROHIBITED_PATTERNS: RegExp[] = [
-  /\b(sex|sexual|porn|nude|naked)\b/i,
-  /\bhow\s+(do|to)\s+i?\s*(make|build)\s+a?\s*(bomb|weapon|gun|poison)\b/i,
-  /\b(buy|get|score)\s+(drugs|weed|pills|alcohol)\b/i,
-];
-
-const matches = (patterns: RegExp[], text: string): boolean =>
-  patterns.some((pattern) => pattern.test(text));
-
-/**
- * Ordered so the most serious class wins a message that reads as several. A
- * disclosure that also mentions self-harm is a crisis, not a sensitive turn.
- */
-function classifyCoachInput(message: string): InputClass {
-  if (matches(CRISIS_PATTERNS, message)) return 'crisis';
-  if (matches(PROHIBITED_PATTERNS, message)) return 'prohibited';
-  if (matches(SENSITIVE_PATTERNS, message)) return 'sensitive';
-  return 'safe';
-}
-
-/**
- * The same patterns applied to what the tutor produced. A model that echoes a
- * child's disclosure back at them has turned a handoff into a conversation,
- * which doc 07 §3 layer 3 is explicit it must never do.
+ * The patterns themselves live in `coach-safety-patterns.ts`, shared with the
+ * on-device tutor so a locally generated turn is held to the same floor.
+ *
+ * OUTPUT GETS THE SAME FLOOR. A model that echoes a child's disclosure back at
+ * them has turned a handoff into a conversation, which doc 07 §3 layer 3 is
+ * explicit it must never do.
  */
 export const coachClassifier: Classifier = {
   classifyInput: async (message: string, _context: IdentityContext): Promise<InputClass> =>
     classifyCoachInput(message),
   classifyOutput: async (text: string, _context: IdentityContext): Promise<InputClass[]> => {
     const classes: InputClass[] = [];
-    if (matches(CRISIS_PATTERNS, text)) classes.push('crisis');
-    if (matches(PROHIBITED_PATTERNS, text)) classes.push('prohibited');
+    if (matchesAny(CRISIS_PATTERNS, text)) classes.push('crisis');
+    if (matchesAny(PROHIBITED_PATTERNS, text)) classes.push('prohibited');
     return classes;
   },
 };

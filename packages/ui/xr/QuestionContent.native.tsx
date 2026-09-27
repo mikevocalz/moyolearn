@@ -30,18 +30,22 @@ import { XR_COLOR, XR_SURFACE } from './xr-colors.ts';
 import type { QuestionContentBlock, QuestionMediaSource } from './question-content.ts';
 import type { QuestionContentProps, QuestionMediaResolver } from './QuestionContent.types.ts';
 
-/* The page is 3× the artboard window (questionSurfacePixels), so one dp here
-   is ~0.38 mm on the panel face. These are headset sizes on purpose — prompt
-   text lands at ~25 mm cap height at arm's length. */
+/* The page is 1.1× the artboard window (questionSurfacePixels) — the largest
+   page Android's 4 MB software-layer ceiling allows (see `boardSurfacePixels`).
+   The numbers below were authored against the old 3× page; `px` rescales all of
+   them together so physical sizes on the panel face stay what they were. */
+const PAGE_SCALE = 1.1 / 3;
+const px = (n: number): number => Math.round(n * PAGE_SCALE * 10) / 10;
+
 const FONT = {
-  prompt: { fontSize: 72, fontWeight: '700', color: XR_COLOR.onPanel } as TextStyle,
-  body: { fontSize: 54, fontWeight: '600', color: XR_COLOR.onPanel } as TextStyle,
-  muted: { fontSize: 42, fontWeight: '600', color: XR_COLOR.onPanelMuted } as TextStyle,
-  heading: { fontSize: 64, fontWeight: '700', color: XR_COLOR.onPanel } as TextStyle,
-  mono: { fontSize: 46, fontWeight: '600', fontFamily: 'monospace', color: XR_COLOR.onPanel } as TextStyle,
+  prompt: { fontSize: px(72), fontWeight: '700', color: XR_COLOR.onPanel } as TextStyle,
+  body: { fontSize: px(54), fontWeight: '600', color: XR_COLOR.onPanel } as TextStyle,
+  muted: { fontSize: px(42), fontWeight: '600', color: XR_COLOR.onPanelMuted } as TextStyle,
+  heading: { fontSize: px(64), fontWeight: '700', color: XR_COLOR.onPanel } as TextStyle,
+  mono: { fontSize: px(46), fontWeight: '600', fontFamily: 'monospace', color: XR_COLOR.onPanel } as TextStyle,
 };
 
-const GAP = 18;
+const GAP = px(18);
 
 const writingDirection = (dir: 'ltr' | 'rtl' | 'auto'): TextStyle['writingDirection'] =>
   dir === 'auto' ? 'auto' : dir;
@@ -67,11 +71,11 @@ function MediaFrame({ source, resolved, onSettled, style }: {
   return (
     <View style={[{
       backgroundColor: XR_SURFACE.card,
-      borderRadius: 8,
+      borderRadius: px(8),
       overflow: 'hidden',
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: 144,
+      minHeight: px(144),
     }, style]}>
       {resolved ? (
         <Image
@@ -86,12 +90,12 @@ function MediaFrame({ source, resolved, onSettled, style }: {
       ) : (
         /* Unresolvable fixtures and failed loads land here — the alt text
            is the accessible representation the spec requires. */
-        <Text style={[FONT.muted, { padding: 16, textAlign: 'center' }]}>
+        <Text style={[FONT.muted, { padding: px(16), textAlign: 'center' }]}>
           {source.alt ?? source.caption ?? 'Image'}
         </Text>
       )}
       {source.caption ? (
-        <Text style={[FONT.muted, { paddingVertical: 6, paddingHorizontal: 12 }]}>
+        <Text style={[FONT.muted, { paddingVertical: px(6), paddingHorizontal: px(12) }]}>
           {source.caption}
         </Text>
       ) : null}
@@ -112,19 +116,19 @@ function MathView({ expression }: { expression: MathJsonExpression }) {
 
 function MathNode({ expr, depth }: { expr: MathJsonExpression; depth: number }) {
   if (typeof expr === 'number') {
-    return <Text style={[FONT.heading, { fontSize: 58 }]}>{String(expr)}</Text>;
+    return <Text style={[FONT.heading, { fontSize: px(58) }]}>{String(expr)}</Text>;
   }
   if (expr !== null && typeof expr === 'object' && !Array.isArray(expr) && 'num' in expr) {
     const num = (expr as { num: string }).num;
-    return <Text style={[FONT.heading, { fontSize: 58 }]}>{num}</Text>;
+    return <Text style={[FONT.heading, { fontSize: px(58) }]}>{num}</Text>;
   }
   if (Array.isArray(expr) && typeof expr[0] === 'string') {
     const [op, ...args] = expr;
     if ((op === 'Divide' || op === 'Rational') && args.length === 2) {
       return (
-        <View style={{ alignItems: 'center', marginHorizontal: 12 }}>
+        <View style={{ alignItems: 'center', marginHorizontal: px(12) }}>
           <MathNode expr={args[0]!} depth={depth + 1} />
-          <View style={{ height: 3, alignSelf: 'stretch', backgroundColor: XR_COLOR.onPanel, marginVertical: 6, minWidth: 48 }} />
+          <View style={{ height: px(3), alignSelf: 'stretch', backgroundColor: XR_COLOR.onPanel, marginVertical: px(6), minWidth: px(48) }} />
           <MathNode expr={args[1]!} depth={depth + 1} />
         </View>
       );
@@ -137,11 +141,11 @@ function MathNode({ expr, depth }: { expr: MathJsonExpression; depth: number }) 
     if (glyph && args.length >= 1) {
       return (
         <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-          {op === 'Negate' && <Text style={[FONT.heading, { fontSize: 26, marginRight: 6 }]}>−</Text>}
+          {op === 'Negate' && <Text style={[FONT.heading, { fontSize: px(26), marginRight: px(6) }]}>−</Text>}
           {args.map((a, i) => (
             <React.Fragment key={i}>
               {i > 0 && op !== 'Negate' && (
-                <Text style={[FONT.heading, { fontSize: 26, marginHorizontal: 9 }]}>{glyph}</Text>
+                <Text style={[FONT.heading, { fontSize: px(26), marginHorizontal: px(9) }]}>{glyph}</Text>
               )}
               <MathNode expr={a} depth={depth + 1} />
             </React.Fragment>
@@ -170,7 +174,7 @@ function BlockView({ block, index, question, resolveMedia, onMediaSettled }: {
       return (
         <Text style={[block.emphasis === 'strong' ? FONT.heading : FONT.body, textStyle,
           block.emphasis === 'callout' && {
-            backgroundColor: XR_SURFACE.frame, borderRadius: 10, padding: 15,
+            backgroundColor: XR_SURFACE.frame, borderRadius: px(10), padding: px(15),
           }]}>
           {block.text}
         </Text>
@@ -179,10 +183,10 @@ function BlockView({ block, index, question, resolveMedia, onMediaSettled }: {
       return <Text style={[FONT.prompt, textStyle]}>{block.text}</Text>;
     case 'list':
       return (
-        <View style={{ gap: 12, direction: rtl ? 'rtl' : 'ltr' }}>
+        <View style={{ gap: px(12), direction: rtl ? 'rtl' : 'ltr' }}>
           {block.items.map((item, i) => (
-            <View key={i} style={{ flexDirection: 'row', gap: 15, alignItems: 'flex-start' }}>
-              <Text style={[FONT.body, { minWidth: 36, color: XR_COLOR.onPanelMuted }]}>
+            <View key={i} style={{ flexDirection: 'row', gap: px(15), alignItems: 'flex-start' }}>
+              <Text style={[FONT.body, { minWidth: px(36), color: XR_COLOR.onPanelMuted }]}>
                 {/* Semantic markers — localized numerals, not literal glyphs. */}
                 {block.style === 'numbered' ? `${numeral(i + 1, question.questionLocale)}.` : '▪'}
               </Text>
@@ -212,12 +216,12 @@ function BlockView({ block, index, question, resolveMedia, onMediaSettled }: {
     }
     case 'diagram':
       return (
-        <View style={{ gap: 8 }}>
+        <View style={{ gap: px(8) }}>
           <MediaFrame source={block.source} resolved={resolveMedia?.(block.source) ?? null} onSettled={settle} />
           {block.labels ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: px(8) }}>
               {block.labels.map((l) => (
-                <View key={l.id} style={{ backgroundColor: XR_SURFACE.key, borderRadius: 8, paddingHorizontal: 15, paddingVertical: 9 }}>
+                <View key={l.id} style={{ backgroundColor: XR_SURFACE.key, borderRadius: px(8), paddingHorizontal: px(15), paddingVertical: px(9) }}>
                   <Text style={[FONT.muted, { color: XR_COLOR.onKey }]}>{l.text}</Text>
                 </View>
               ))}
@@ -227,16 +231,16 @@ function BlockView({ block, index, question, resolveMedia, onMediaSettled }: {
       );
     case 'equation':
       return (
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: 12 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingVertical: px(12) }}>
           <MathView expression={block.expression} />
         </View>
       );
     case 'table':
       return (
-        <View style={{ borderRadius: 8, overflow: 'hidden', backgroundColor: XR_SURFACE.card }}>
+        <View style={{ borderRadius: px(8), overflow: 'hidden', backgroundColor: XR_SURFACE.card }}>
           <View style={{ flexDirection: 'row', backgroundColor: XR_SURFACE.frame }}>
             {block.columns.map((c) => (
-              <Text key={c.key} style={[FONT.muted, { flex: 1, padding: 12, fontWeight: '700' }]}>
+              <Text key={c.key} style={[FONT.muted, { flex: 1, padding: px(12), fontWeight: '700' }]}>
                 {c.header ?? c.key}{c.unit ? ` (${c.unit})` : ''}
               </Text>
             ))}
@@ -244,7 +248,7 @@ function BlockView({ block, index, question, resolveMedia, onMediaSettled }: {
           {block.rows.map((row, ri) => (
             <View key={ri} style={{ flexDirection: 'row' }}>
               {row.map((cell, ci) => (
-                <Text key={ci} style={[FONT.body, { flex: 1, padding: 12 }]}>{cell.text}</Text>
+                <Text key={ci} style={[FONT.body, { flex: 1, padding: px(12) }]}>{cell.text}</Text>
               ))}
             </View>
           ))}
@@ -252,31 +256,31 @@ function BlockView({ block, index, question, resolveMedia, onMediaSettled }: {
       );
     case 'code':
       return (
-        <View style={{ backgroundColor: XR_SURFACE.frame, borderRadius: 8, padding: 18 }}>
+        <View style={{ backgroundColor: XR_SURFACE.frame, borderRadius: px(8), padding: px(18) }}>
           {/* Indentation is data — the pre string is rendered verbatim. */}
           <Text style={[FONT.mono, { writingDirection: 'ltr', textAlign: 'left' }]}>{block.code}</Text>
         </View>
       );
     case 'quote':
       return (
-        <View style={{ borderStartWidth: 4, borderStartColor: XR_COLOR.focus, paddingStart: 18, gap: 6 }}>
+        <View style={{ borderStartWidth: px(4), borderStartColor: XR_COLOR.focus, paddingStart: px(18), gap: px(6) }}>
           <Text style={[FONT.body, textStyle, { fontStyle: 'italic' }]}>{block.text}</Text>
           {block.attribution ? <Text style={FONT.muted}>— {block.attribution}</Text> : null}
         </View>
       );
     case 'passage':
       return (
-        <View style={{ backgroundColor: XR_SURFACE.card, borderRadius: 8, padding: 20, gap: 12 }}>
+        <View style={{ backgroundColor: XR_SURFACE.card, borderRadius: px(8), padding: px(20), gap: px(12) }}>
           {block.title ? <Text style={[FONT.heading, textStyle]}>{block.title}</Text> : null}
-          <Text style={[FONT.body, textStyle, { lineHeight: 66 }]}>{block.text}</Text>
+          <Text style={[FONT.body, textStyle, { lineHeight: px(66) }]}>{block.text}</Text>
         </View>
       );
     case 'timeline':
       return (
-        <View style={{ gap: 15 }}>
+        <View style={{ gap: px(15) }}>
           {block.events.map((e) => (
-            <View key={e.id} style={{ flexDirection: 'row', gap: 15, alignItems: 'baseline', direction: rtl ? 'rtl' : 'ltr' }}>
-              <Text style={[FONT.body, { fontWeight: '700', color: XR_COLOR.focus, minWidth: 84 }]}>{e.label}</Text>
+            <View key={e.id} style={{ flexDirection: 'row', gap: px(15), alignItems: 'baseline', direction: rtl ? 'rtl' : 'ltr' }}>
+              <Text style={[FONT.body, { fontWeight: '700', color: XR_COLOR.focus, minWidth: px(84) }]}>{e.label}</Text>
               {e.detail ? <Text style={[FONT.body, textStyle, { flex: 1 }]}>{e.detail}</Text> : null}
             </View>
           ))}
@@ -286,7 +290,7 @@ function BlockView({ block, index, question, resolveMedia, onMediaSettled }: {
       /* A chart's accessible contract is its data summary — rendered as a
          labelled series list until a chart surface earns the pixels. */
       return (
-        <View style={{ backgroundColor: XR_SURFACE.card, borderRadius: 8, padding: 18, gap: 9 }}>
+        <View style={{ backgroundColor: XR_SURFACE.card, borderRadius: px(8), padding: px(18), gap: px(9) }}>
           {block.chart.title ? <Text style={[FONT.heading, textStyle]}>{block.chart.title}</Text> : null}
           {block.chart.series.map((s, i) => (
             <Text key={i} style={[FONT.body, textStyle]}>
@@ -297,7 +301,7 @@ function BlockView({ block, index, question, resolveMedia, onMediaSettled }: {
       );
     case 'audio':
       return (
-        <View style={{ backgroundColor: XR_SURFACE.card, borderRadius: 8, padding: 20, gap: 9 }}>
+        <View style={{ backgroundColor: XR_SURFACE.card, borderRadius: px(8), padding: px(20), gap: px(9) }}>
           <Text style={[FONT.muted, textStyle]}>▶ {block.source.caption ?? 'Audio'}</Text>
           {block.source.transcript ? (
             <Text style={[FONT.muted, textStyle]}>{block.source.transcript}</Text>
@@ -310,7 +314,7 @@ function BlockView({ block, index, question, resolveMedia, onMediaSettled }: {
       /* Evidence, not pixels — the region resolves to the capture's own
          image through the media map, never re-OCR'd. */
       return (
-        <View style={{ backgroundColor: XR_SURFACE.card, borderRadius: 8, padding: 20, gap: 9 }}>
+        <View style={{ backgroundColor: XR_SURFACE.card, borderRadius: px(8), padding: px(20), gap: px(9) }}>
           <Text style={FONT.muted}>WORKSHEET · {block.evidenceRegionId}</Text>
           {question.media?.length ? (
             <MediaFrame
@@ -326,7 +330,7 @@ function BlockView({ block, index, question, resolveMedia, onMediaSettled }: {
          the marker keeps the block visible in the stream while
          `board-focus` routes the actual drawing surface. */
       return (
-        <View style={{ backgroundColor: XR_SURFACE.frame, borderRadius: 8, padding: 28, alignItems: 'center' }}>
+        <View style={{ backgroundColor: XR_SURFACE.frame, borderRadius: px(8), padding: px(28), alignItems: 'center' }}>
           <Text style={FONT.muted}>Your board is beside this panel — work it out there.</Text>
         </View>
       );
@@ -393,7 +397,7 @@ export function XrQuestionContent({
   );
 
   return (
-    <View style={{ flex: 1, padding: 30, direction: rtl ? 'rtl' : 'ltr', gap: GAP, backgroundColor: XR_SURFACE.rail }}>
+    <View style={{ flex: 1, padding: px(30), direction: rtl ? 'rtl' : 'ltr', gap: GAP, backgroundColor: XR_SURFACE.rail }}>
       {/* The prompt lives here, not in Rive — it IS content, and content
           is this surface's job. */}
       <Text style={[FONT.prompt, textStyle]}>{question.prompt}</Text>

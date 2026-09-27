@@ -55,10 +55,14 @@ export const questionArtboardCenter = (r: QuestionArtboardRect): [number, number
 /** The hosted content surface's quad lives here, in carrier-local metres. */
 export const QUESTION_CONTENT_RECT_PANEL = questionArtboardToPanel(QUESTION_CONTENT_BAND);
 
-/** The texture page's pixel budget — 3× the artboard window. The px/m ratio
-    of the texture is what "crisp" means through headset optics; the fonts in
-    `XrQuestionContent` are scaled to match so physical sizes stay honest. */
+/** The texture page's pixel budget — 1.1× the artboard window, the largest
+    supersample that fits Android's 4 MB software-layer ceiling (see
+    `boardSurfacePixels`): 3× produced a 2850×2475 px layer on the Quest that
+    the renderer silently dropped, which is why the content window drew
+    nothing. The px/m ratio of the texture is what "crisp" means through
+    headset optics; the fonts in `XrQuestionContent` are scaled to match so
+    physical sizes stay honest. */
 export const questionSurfacePixels = {
-  width: QUESTION_CONTENT_BAND.w * 3,
-  height: QUESTION_CONTENT_BAND.h * 3,
+  width: QUESTION_CONTENT_BAND.w * 1.1,
+  height: QUESTION_CONTENT_BAND.h * 1.1,
 } as const;

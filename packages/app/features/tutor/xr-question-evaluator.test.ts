@@ -5,7 +5,7 @@
 
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { draftAnswerText } from './xr-question-evaluator.ts';
+import { draftAnswerText, evaluateXrAnswer } from './xr-question-evaluator.ts';
 import type { XrLearningQuestion } from '@acme/ui/xr';
 
 const question: XrLearningQuestion = {
@@ -43,4 +43,34 @@ test('structured interactions the wire cannot express return null — the honest
   assert.equal(draftAnswerText(question, { kind: 'ordering', order: ['a', 'b'] }), null);
   assert.equal(draftAnswerText(question, { kind: 'board', boardId: 'b' }), null);
   assert.equal(draftAnswerText(question, { kind: 'none' }), null);
+});
+
+/* These run against the web fork of `xr-local-tutor` — `xrLocalGrade` returns
+   null, which is exactly the "local model could not decide" path a build
+   without weights takes, so the escalation behaviour is what gets asserted. */
+
+test('an unreachable server resolves ungraded instead of trapping the flow in error', async () => {
+  const q: XrLearningQuestion = {
+    ...question,
+    evaluation: { kind: 'server-objective' },
+    evidence: { questionId: 'q1', revision: 'r1' },
+  };
+  /* fetch to API_URL will fail in a test run — the evaluator must resolve
+     honest feedback, never throw into `fail()`. */
+  const feedback = await evaluateXrAnswer(q, { kind: 'choices', selectedIds: ['b'] });
+  assert.equal(feedback.outcome, 'ungraded');
+  assert.equal(feedback.title, 'Answered');
+});
+
+test('coach-review without a local verdict resolves to review copy, not a verdict', async () => {
+  const q: XrLearningQuestion = { ...question, evaluation: { kind: 'coach-review' } };
+  const feedback = await evaluateXrAnswer(q, { kind: 'choices', selectedIds: ['b'] });
+  assert.equal(feedback.outcome, 'ungraded');
+  assert.equal(feedback.title, 'Sent for review');
+});
+
+test('ungraded questions never claim correctness', async () => {
+  const q: XrLearningQuestion = { ...question, evaluation: { kind: 'ungraded' } };
+  const feedback = await evaluateXrAnswer(q, { kind: 'text', text: '3/4' });
+  assert.equal(feedback.outcome, 'ungraded');
 });

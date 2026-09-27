@@ -72,6 +72,10 @@ export interface XrQuestionFlowState {
   status: string;
   /** Whether the hint sheet is open on the current question. */
   hintVisible: boolean;
+  /** The local tutor's hint when the question carries no authored one. */
+  generatedHint: string | null;
+  /** The local tutor is still writing — the sheet shows its thinking line. */
+  hintBusy: boolean;
 
   /** The first question arrives — enters at `loading-initial`. */
   loadInitial(question: XrLearningQuestion): void;
@@ -92,6 +96,9 @@ export interface XrQuestionFlowState {
   resolveSubmit(token: number, feedback: XrQuestionFeedback): boolean;
   /** Show the hint sheet on the current question. */
   showHint(): void;
+  /** The local tutor's generated hint lands here (or the honest empty). */
+  setGeneratedHint(text: string | null): void;
+  setHintBusy(busy: boolean): void;
   /** Feedback → back to the question with a clean draft — the "try again"
       a wrong answer owes the child. */
   retryAnswer(): void;
@@ -135,6 +142,8 @@ export const useXrQuestionFlow = create<XrQuestionFlowState>((set, get) => ({
   grabbed: false,
   status: '',
   hintVisible: false,
+  generatedHint: null,
+  hintBusy: false,
 
   loadInitial: (question) =>
     set({
@@ -143,6 +152,8 @@ export const useXrQuestionFlow = create<XrQuestionFlowState>((set, get) => ({
       answer: { kind: 'none' },
       feedback: null,
       hintVisible: false,
+      generatedHint: null,
+      hintBusy: false,
       phase: 'loading-initial',
       transitionToken: get().transitionToken + 1,
       status: '',
@@ -203,8 +214,13 @@ export const useXrQuestionFlow = create<XrQuestionFlowState>((set, get) => ({
 
   showHint: () => {
     const { phase, current } = get();
-    if (phase === 'idle' && current?.hint?.available) set({ hintVisible: true });
+    /* Every question has a hint path — authored text or the local tutor's,
+       so availability is "a question is loaded", not "a hint was authored". */
+    if (phase === 'idle' && current) set({ hintVisible: true });
   },
+
+  setGeneratedHint: (text) => set({ generatedHint: text, hintBusy: false }),
+  setHintBusy: (busy) => set({ hintBusy: busy }),
 
   retryAnswer: () => {
     const { phase, feedback } = get();
@@ -234,6 +250,8 @@ export const useXrQuestionFlow = create<XrQuestionFlowState>((set, get) => ({
         answer: { kind: 'none' },
         feedback: null,
         hintVisible: false,
+        generatedHint: null,
+        hintBusy: false,
         phase: 'entering',
       });
     } else {
@@ -258,6 +276,8 @@ export const useXrQuestionFlow = create<XrQuestionFlowState>((set, get) => ({
       grabbed: false,
       status: '',
       hintVisible: false,
+      generatedHint: null,
+      hintBusy: false,
     }),
 }));
 

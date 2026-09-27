@@ -655,7 +655,10 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
            thing that happens to this batch, and a sample that arrives during it
            belongs to the next frame rather than to a batch already gone. */
         pending.current = [];
-        web.current?.injectJavaScript(`window.__moyo.inject(${JSON.stringify(batch)});true;`);
+        if (__DEV__ && !web.current) console.log('[ink] flush dead — no webview ref');
+        web.current?.injectJavaScript(
+          `try{if(!window.ReactNativeWebView){throw new Error('no-rn-bridge')}else if(!window.__moyo||!window.__moyo.inject){window.ReactNativeWebView.postMessage(JSON.stringify({type:'moyo:xray',err:'shim-missing'}));}else{window.__moyo.inject(${JSON.stringify(batch)});}}catch(e){try{window.ReactNativeWebView.postMessage(JSON.stringify({type:'moyo:xray',err:'inject-threw:'+String(e&&e.message||e)}));}catch(_){}}true;`,
+        );
       }
       /* A held-back probe goes in here and nowhere else: the terminal sample it
          was waiting behind has just crossed, so the engine's session is closed
@@ -697,6 +700,7 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
       } catch {
         return;
       }
+      if (__DEV__) console.log('[ink] msg', message.type);
       switch (message.type) {
         case 'ready': {
           pageReady.current = true;
@@ -766,6 +770,9 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         */
         case 'moyo:xray': {
           if (__DEV__) console.log('[ink] xray', JSON.stringify(message));
+          /* A flush that found no shim means the page reloaded under us —
+             put it back rather than letting every later stroke go nowhere. */
+          if (message.err === 'shim-missing') web.current?.injectJavaScript(POINTER_SHIM);
           break;
         }
         case 'moyo:probe': {

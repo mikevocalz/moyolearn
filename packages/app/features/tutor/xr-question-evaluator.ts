@@ -24,6 +24,7 @@
  */
 
 import { API_URL } from '../../core/api-url.ts';
+import { xrLocalGrade } from './xr-local-tutor.ts';
 import type {
   XrAnswerDraft,
   XrLearningQuestion,
@@ -64,54 +65,101 @@ export function draftAnswerText(question: XrLearningQuestion, draft: XrAnswerDra
 /**
  * Resolve one submitted draft. `hintDepth` mirrors the 2D tutor's field —
  * the XR flow's hint sheet counts uses the same way.
+ *
+ * LOCAL FIRST, ESCALATE ON DIFFICULTY. The on-device tutor (`xr-local-tutor`)
+ * marks every answer it can express as text; `null` from it means "could not
+ * decide", and only then does the question's own evaluation kind choose the
+ * next reader — `server-objective` climbs to `/api/tutor/evaluate`, review
+ * kinds fall back to honest review copy. A headset that cannot reach the
+ * server resolves `ungraded` rather than trapping the flow in `error`: the
+ * next question is always one NEXT press away.
  */
 export async function evaluateXrAnswer(
   question: XrLearningQuestion,
   draft: XrAnswerDraft,
   hintDepth = 0,
 ): Promise<XrQuestionFeedback> {
-  /* Evaluation kind is the question's own contract — see question-contract. */
-  if (question.evaluation.kind === 'ungraded') {
-    return { outcome: 'ungraded', title: 'Noted', body: 'Your answer was recorded.' };
-  }
-  if (question.evaluation.kind === 'coach-review' || question.evaluation.kind === 'teacher-review') {
-    return {
-      outcome: 'ungraded',
-      title: 'Sent for review',
-      body: 'Your tutor will look at this with you.',
-    };
-  }
   const answer = draftAnswerText(question, draft);
-  if (answer === null || !question.evidence) {
-    return {
-      outcome: 'ungraded',
-      title: 'Answered',
-      body: 'This one is reviewed by your tutor, not auto-checked.',
-    };
-  }
-  try {
-    const response = await fetch(`${API_URL}/api/tutor/evaluate`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        problem: question.prompt,
-        answer,
-        hintDepth,
-        evidence: question.evidence,
-      }),
-    });
-    if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
-    const result = (await response.json()) as EvaluateResponse;
-    /* `null` — the server could not resolve it. Not a wrong answer; the
-       honest state is "unresolved", which the panel renders as ungraded. */
-    if (result.isCorrect === null) {
-      return { outcome: 'ungraded', title: 'Reviewed', body: 'Natalie will go through this one with you.' };
+
+  /* The on-device marker reads everything that has a text form first.
+     `ungraded` questions still take the verdict's BODY — the outcome stays
+     'ungraded' because the question's contract forbids claiming correctness —
+     so a child gets real feedback text instead of "recorded". */
+  const local = answer === null ? null : await xrLocalGrade(question, answer);
+
+  switch (question.evaluation.kind) {
+    case 'ungraded':
+      return {
+        outcome: 'ungraded',
+        title: 'Noted',
+        body: local?.body ?? 'Your answer was recorded.',
+      };
+    case 'coach-review':
+    case 'teacher-review':
+      /* Review kinds were "the tutor checks" by default — now the local
+         marker grades when it can, and the tutor only sees what the device
+         genuinely could not decide. */
+      if (local) {
+        return {
+          outcome: local.outcome,
+          title: local.outcome === 'correct' ? 'Correct' : 'Not quite',
+          body: local.body,
+        };
+      }
+      return {
+        outcome: 'ungraded',
+        title: 'Sent for review',
+        body: 'Natalie will look at this one with you.',
+      };
+    case 'server-objective': {
+      if (local) {
+        return {
+          outcome: local.outcome,
+          title: local.outcome === 'correct' ? 'Correct' : 'Not quite',
+          body: local.body,
+        };
+      }
+      /* Local could not decide — the question escalates to the server, its
+         authored route. */
+      if (answer === null || !question.evidence) {
+        return {
+          outcome: 'ungraded',
+          title: 'Answered',
+          body: 'This one is reviewed by your tutor, not auto-checked.',
+        };
+      }
+      try {
+        const response = await fetch(`${API_URL}/api/tutor/evaluate`, {
+          method: 'POST',
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            problem: question.prompt,
+            answer,
+            hintDepth,
+            evidence: question.evidence,
+          }),
+        });
+        if (!response.ok) throw new Error(`HTTP ${String(response.status)}`);
+        const result = (await response.json()) as EvaluateResponse;
+        /* `null` — the server could not resolve it. Not a wrong answer; the
+           honest state is "unresolved", which the panel renders as ungraded. */
+        if (result.isCorrect === null) {
+          return { outcome: 'ungraded', title: 'Reviewed', body: 'Natalie will go through this one with you.' };
+        }
+        return result.isCorrect
+          ? { outcome: 'correct', title: 'Correct', body: 'That is right — well done.' }
+          : { outcome: 'incorrect', title: 'Not quite', body: 'Have another look — you can retry.' };
+      } catch {
+        /* The headset cannot reach the server — resolve ungraded with honest
+           copy so `submit` lands in `feedback` and NEXT stays live, instead of
+           an error phase that swallows every command. */
+        return {
+          outcome: 'ungraded',
+          title: 'Answered',
+          body: 'I could not check that one just now — we will look at it together later.',
+        };
+      }
     }
-    return result.isCorrect
-      ? { outcome: 'correct', title: 'Correct', body: 'That is right — well done.' }
-      : { outcome: 'incorrect', title: 'Not quite', body: 'Have another look — you can retry.' };
-  } catch {
-    throw new Error('evaluation-unreachable');
   }
 }

@@ -33,9 +33,12 @@ import {
   XR_FIXTURE_SEQUENCE,
 } from '@acme/ui/xr';
 import {
+  answerReady,
   useXrQuestionFlow,
 } from '@acme/app/features/tutor/xr-question.store.ts';
 import { evaluateXrAnswer } from '@acme/app/features/tutor/xr-question-evaluator.ts';
+import { xrLocalHint } from '@acme/app/features/tutor/xr-local-tutor.ts';
+import { xrVoiceSession } from './xr-voice-session.ts';
 import { XrQuestionPanel } from './xr-question-panel';
 import { XrLayoutProbe } from './xr-layout-probe';
 import type { QuestionChromeHandlers } from './question-chrome-bind';
@@ -132,13 +135,31 @@ const questionHandlers: QuestionChromeHandlers = {
     const flow = useXrQuestionFlow.getState();
     const { current, answer } = flow;
     const token = flow.submit();
-    if (token === null || !current) return;
+    if (token === null || !current) {
+      /* A silent no-op reads as a dead button — say why nothing happened. */
+      if (flow.phase === 'idle' && !answerReady(answer)) {
+        useXrQuestionFlow.setState({ status: 'Pick or say an answer first.' });
+      }
+      return;
+    }
     void evaluateXrAnswer(current, answer)
       .then((feedback) => useXrQuestionFlow.getState().resolveSubmit(token, feedback))
       .catch(() => useXrQuestionFlow.getState().fail('Could not check that answer — try again'));
   },
   onNext: () => {
     const flow = useXrQuestionFlow.getState();
+    /* An error phase cannot `beginExit` — treat NEXT there as "move on past
+       the broken question" rather than a dead button. */
+    if (flow.phase === 'error') {
+      const index = xrQuestionProbe.getState().sequenceIndex + 1;
+      if (index >= XR_FIXTURE_SEQUENCE.length) {
+        useXrQuestionFlow.getState().fail('That is the whole fixture sequence.');
+        return;
+      }
+      flow.reset();
+      loadFixture(index);
+      return;
+    }
     flow.beginExit();
     later(EXIT_MS, () => {
       const s = useXrQuestionFlow.getState();
@@ -164,8 +185,23 @@ const questionHandlers: QuestionChromeHandlers = {
     });
   },
   onSkip: () => questionHandlers.onNext(),
-  onHint: () => useXrQuestionFlow.getState().showHint(),
-  onVoice: () => useXrQuestionFlow.setState({ status: 'Voice input is not wired in this probe yet' }),
+  onHint: () => {
+    const flow = useXrQuestionFlow.getState();
+    flow.showHint();
+    const question = flow.current;
+    /* Authored text wins; every other question asks the on-device tutor.
+       `generatedHint` is cleared per question, so an unanswered `null` does
+       not re-trigger a generation loop while the sheet sits open. */
+    if (!question || question.hint?.text || flow.generatedHint !== null || flow.hintBusy) return;
+    const questionId = question.id;
+    useXrQuestionFlow.getState().setHintBusy(true);
+    void xrLocalHint(question).then((text: string | null) => {
+      const s = useXrQuestionFlow.getState();
+      if (s.current?.id !== questionId) return;
+      s.setGeneratedHint(text ?? 'Try reading the question once more, slowly.');
+    });
+  },
+  onVoice: () => xrVoiceSession.getState().toggle(),
   onBoard: () => useXrQuestionFlow.setState({ status: 'The board is beside you — draw there' }),
   onRetry: () => {
     const s = useXrQuestionFlow.getState();

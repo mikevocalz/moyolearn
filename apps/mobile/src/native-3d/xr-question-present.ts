@@ -59,7 +59,7 @@ export function questionPresentationOf(
   question: XrLearningQuestion | null,
   state: Pick<
     XrQuestionFlowState,
-    'phase' | 'answer' | 'feedback' | 'hintVisible' | 'grabbed' | 'status'
+    'phase' | 'answer' | 'feedback' | 'hintVisible' | 'generatedHint' | 'hintBusy' | 'grabbed' | 'status'
   >,
 ): QuestionChromePresentation {
   const choiceLabels = (question?.choices ?? []).map((c) => c.label);
@@ -85,9 +85,11 @@ export function questionPresentationOf(
     questionTotal: question?.progress?.total ?? 0,
     answerValid: answerReady(state.answer),
     answerText: question ? answerTextOf(question, state as XrQuestionFlowState) : '',
-    hintAvailable: question?.hint?.available ?? false,
+    /* Every loaded question can produce a hint — authored text wins, the
+       on-device tutor generates the rest, so the button is never dead. */
+    hintAvailable: question !== null,
     hintVisible: state.hintVisible,
-    hintText: question?.hint?.text ?? '',
+    hintText: question?.hint?.text ?? state.generatedHint ?? (state.hintBusy ? 'Thinking…' : ''),
     submitLabel: 'SUBMIT',
     continueLabel: 'NEXT',
     skipLabel: 'SKIP',

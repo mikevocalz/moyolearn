@@ -406,8 +406,17 @@ export const boardComposition = {
  * texture at this × the display density and draws it through a software canvas,
  * the pointer injection scales rays by it, and the polyline fallback maps page
  * coordinates through it. All three move together because all three read this.
+ *
+ * THE 4 MB CEILING. `MoyoTexturePaint` draws the hosted view through a software
+ * layer, and Android refuses a software layer whose bitmap exceeds
+ * `getScaledMaximumDrawingCacheSize()` — 4,096,000 B on the Quest — which is
+ * 1,024,000 physical px, or 655,360 dp² at density 1.25. The old 1400×875 page
+ * produced a 1750×1094 px (7.66 MB) layer that the renderer silently dropped —
+ * the pump ran, the canvas locked, and nothing ever reached the texture.
+ * 1008×630 keeps the exact 16:10 so the texture maps without a stretch and the
+ * pointer scale never skews a stroke.
  */
-export const boardSurfacePixels = { width: 1400, height: 875 } as const;
+export const boardSurfacePixels = { width: 1008, height: 630 } as const;
 
 /**
  * The paper's own stack, in metres, from the surface outwards.
