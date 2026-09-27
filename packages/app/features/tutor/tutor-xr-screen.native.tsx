@@ -436,7 +436,8 @@ function BoardScene() {
     behind it had the real board all along. `useBoardRaster` already refuses to
     fire without an engine handle, which is the condition that actually matters.
   */
-  const raster = useBoardRaster(readEngine, store, !boardTextureBound, strokeOpen);
+  // Start the first export after the WebView editor has mounted and attached.
+  const raster = useBoardRaster(readEngine, store, !boardTextureBound && phase.kind === 'ready', strokeOpen);
   const pendingInk = useMemo(() => uncoveredRecords(store, raster.covered), [store, raster.covered]);
   const inkSlot = worldSlot('center', workspaceHead, placement.rotation[1]);
   const inkOffset = xrRotateY([0, BOARD_MEDIA.centerY, BOARD_MEDIA.z], inkSlot.yaw);
