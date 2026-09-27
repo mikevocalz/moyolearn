@@ -26,6 +26,7 @@ import {
   hasOpenXRSupport,
   isPico,
   isQuest,
+  isVisionOS,
 } from '@reactvision/react-viro/dist/components/Utilities/ViroPlatform';
 import { spatialEligibility, type XrEligibility } from './xr-capability.ts';
 
@@ -37,6 +38,7 @@ export function currentXrEligibility(): XrEligibility {
   */
   return spatialEligibility({
     hasOpenXrModule: hasOpenXRSupport,
-    isHeadset: isQuest || isPico,
+    isHeadset: isQuest || isPico || isVisionOS,
+    isVisionOS,
   });
 }
