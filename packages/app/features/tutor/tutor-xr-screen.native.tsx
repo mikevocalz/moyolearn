@@ -14,6 +14,9 @@ import { StyleSheet, View } from 'react-native';
 import {
   ViroAmbientLight,
   ViroARScene,
+  ViroScene,
+  ViroNode,
+  isVisionOS,
   ViroController,
   ViroDirectionalLight,
   ViroTrackingStateConstants,
@@ -35,6 +38,11 @@ import {
 import { View as UiView } from '@acme/ui/primitives';
 import {
   BoardTextureHost,
+  XrBoardInk,
+  uncoveredRecords,
+  panelMediaArea,
+  worldSlot,
+  xrRotateY,
   XrTriPanel,
   XrBoardSurface,
   XR_COLOR,
@@ -78,6 +86,8 @@ import { useXrVoice } from './xr-voice.native.ts';
 
 /** This presentation's id, so its own strokes are not echoed back at it. */
 const PRESENTATION_ID = 'tutor-xr';
+const VISIONOS = isVisionOS();
+const BOARD_MEDIA = panelMediaArea('boardPanel');
 
 /** How many turns the spatial panel shows. See its header for why it is small. */
 const CHAT_WINDOW = 4;
@@ -138,7 +148,7 @@ const active: {
    * `getCameraOrientationAsync` goes through `VRTCameraModule` and works on
    * every build, which is why placement hangs off it rather than off the event.
    */
-  scene: ViroARScene | null;
+  scene: ViroARScene | ViroScene | null;
 } = {
   engine: null,
   session: null,
@@ -359,7 +369,7 @@ function BoardScene() {
   const [surfaceTimedOut, setSurfaceTimedOut] = useState(false);
   const textureReady = useXrSession((s) => s.boardTextureBound);
   useEffect(() => {
-    if (textureReady) return;
+    if (textureReady || VISIONOS) return;
     const timer = setTimeout(() => setSurfaceTimedOut(true), 10000);
     return () => clearTimeout(timer);
   }, [textureReady]);
@@ -417,6 +427,8 @@ function BoardScene() {
     not bound, this pair IS the board and nothing about it changes.
   */
   const boardTextureBound = useXrSession((s) => s.boardTextureBound);
+  // Vision Pro draws the raster plus current ink; Android may use its live view texture.
+  const boardDrawable = boardTextureBound || VISIONOS;
   /*
     THE PICTURE DOES NOT NEED A SERVER SESSION, and gating it on one is why the
     centre panel showed a placeholder instead of the child's board: under local
@@ -426,6 +438,14 @@ function BoardScene() {
     fire without an engine handle, which is the condition that actually matters.
   */
   const raster = useBoardRaster(readEngine, store, !boardTextureBound, strokeOpen);
+  const pendingInk = useMemo(() => uncoveredRecords(store, raster.covered), [store, raster.covered]);
+  const inkSlot = worldSlot('center', workspaceHead, placement.rotation[1]);
+  const inkOffset = xrRotateY([0, BOARD_MEDIA.centerY, BOARD_MEDIA.z], inkSlot.yaw);
+  const inkWorldPosition: [number, number, number] = [
+    inkSlot.position[0] + inkOffset[0],
+    inkSlot.position[1] + inkOffset[1],
+    inkSlot.position[2] + inkOffset[2],
+  ];
 
   const natalieAngle = ((NATALIE_AZIMUTH_DEG - placement.rotation[1]) * Math.PI) / 180;
   const nataliePosition: [number, number, number] = [
@@ -447,7 +467,7 @@ function BoardScene() {
     child just drew.
   */
   const voice = useXrVoice({
-    enabled: composedState === 'ready' && boardTextureBound,
+    enabled: composedState === 'ready' && boardDrawable,
     onUtterance: (text) => {
       const engine = active.engine;
       const owner = active.session;
@@ -606,7 +626,7 @@ function BoardScene() {
           boardUri={raster.uri}
           boardLive={boardTextureBound}
           controlSize={minHitSize(2.6, false, band)}
-          boardTitle={!boardTextureBound ? (surfaceTimedOut ? 'Board unavailable — return to lesson' : 'Connecting your board…') : problem ?? 'Your board'}
+          boardTitle={!boardDrawable ? (surfaceTimedOut ? 'Board unavailable — return to lesson' : 'Connecting your board…') : problem ?? 'Your board'}
           chatRows={chatRows.map((row) => ({
             id: row.id,
             text: row.text,
@@ -623,7 +643,7 @@ function BoardScene() {
                 only this label to tell them they are being listened to.
               */
               text: askError ? 'Could not send — try again' : askLabel,
-              disabled: composedState !== 'ready' || asking || !boardTextureBound || voice.phase.kind === 'transcribing' || voice.phase.kind === 'starting',
+              disabled: composedState !== 'ready' || asking || !boardDrawable || voice.phase.kind === 'transcribing' || voice.phase.kind === 'starting',
               emphasis: true,
               active: voice.phase.kind === 'listening',
               onPress: () => { setAskError(false); voice.toggle(); },
@@ -632,7 +652,7 @@ function BoardScene() {
               id: 'pen',
               face: 'pen',
               text: 'Pen',
-              disabled: composedState !== 'ready' || !boardTextureBound,
+              disabled: composedState !== 'ready' || !boardDrawable,
               active: tool === 'draw',
               onPress: () => {
                 useXrSession.getState().setTool('draw');
@@ -643,7 +663,7 @@ function BoardScene() {
               id: 'mark',
               face: 'highlighter',
               text: 'Highlighter',
-              disabled: composedState !== 'ready' || !boardTextureBound,
+              disabled: composedState !== 'ready' || !boardDrawable,
               active: tool === 'highlight',
               onPress: () => {
                 useXrSession.getState().setTool('highlight');
@@ -654,7 +674,7 @@ function BoardScene() {
               id: 'erase',
               face: 'eraser',
               text: 'Eraser',
-              disabled: composedState !== 'ready' || !boardTextureBound,
+              disabled: composedState !== 'ready' || !boardDrawable,
               active: tool === 'eraser',
               onPress: () => {
                 useXrSession.getState().setTool('eraser');
@@ -664,7 +684,7 @@ function BoardScene() {
             {
               id: 'ink',
               text: `Ink: ${ink}`,
-              disabled: composedState !== 'ready' || !boardTextureBound,
+              disabled: composedState !== 'ready' || !boardDrawable,
               swatchColor: ink,
               onPress: () => {
                 /* Cycles the pen colour: the spatial panel has no room for a
@@ -680,9 +700,9 @@ function BoardScene() {
                 }
               },
             },
-            { id: 'undo', face: 'undo', text: 'Undo', disabled: composedState !== 'ready' || !boardTextureBound, onPress: () => active.engine?.undo() },
+            { id: 'undo', face: 'undo', text: 'Undo', disabled: composedState !== 'ready' || !boardDrawable, onPress: () => active.engine?.undo() },
             { id: 'clear', face: 'clear', text: confirmClear ? 'Confirm clear' : 'Clear board',
-              disabled: composedState !== 'ready' || !boardTextureBound, active: confirmClear,
+              disabled: composedState !== 'ready' || !boardDrawable, active: confirmClear,
               onPress: () => {
                 if (confirmClear) active.engine?.clear();
                 setConfirmClear(!confirmClear);
@@ -710,11 +730,21 @@ function BoardScene() {
         `handleSurfaceInput` above is what declines them when the mapping is
         measured wrong.
       */}
+      {VISIONOS && !boardTextureBound && active.head !== null ? (
+        <ViroNode position={inkWorldPosition} rotation={[0, inkSlot.yaw, 0]} ignoreEventHandling>
+          <XrBoardInk
+            store={pendingInk}
+            width={BOARD_MEDIA.width}
+            height={BOARD_MEDIA.height}
+            onSkippedCount={useXrSession.getState().setSkipped}
+          />
+        </ViroNode>
+      ) : null}
       {active.head !== null ? (
         <XrBoardSurface
           headPosition={workspaceHead}
           headYawDeg={placement.rotation[1]}
-          enabled={composedState === 'ready' && boardTextureBound && inkLands}
+          enabled={composedState === 'ready' && boardDrawable && inkLands}
           onSurfaceInput={handleSurfaceInput}
           termination={termination}
         />
@@ -747,6 +777,17 @@ function BoardScene() {
     takes `onTrackingUpdated` with it, because it reports tracking of a room
     only the AR root is looking at.
   */
+  if (VISIONOS) {
+    return (
+      <ViroScene
+        ref={(scene) => { active.scene = scene; }}
+        onTrackingUpdated={handleTrackingUpdated}
+        onCameraTransformUpdate={handleCameraTransform}
+      >
+        {content}
+      </ViroScene>
+    );
+  }
   return (
     <ViroARScene
       ref={(scene) => {
@@ -946,6 +987,12 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
       Fail closed, and the closed direction here is the primer — the one screen
       that explains itself.
     */
+    // The visionOS mixed space requests world and accessory sensing through ARKit.
+    // The AR camera permission check here belongs to the Quest/PICO AR scene.
+    if (VISIONOS) {
+      advance({ kind: 'preparing' });
+      return;
+    }
     void checkPermissions([...SPATIAL_PERMISSIONS]).then(
       (result) => {
         if (!live) return;
