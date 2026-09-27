@@ -15,6 +15,7 @@
 // SOT: packages/app/features/tutor/tutor-xr-entry.native.tsx
 // SOT-KEYWORDS: tutor xr route learner stack protected native lazy spatial whiteboard
 
+import { loadTutorBoardPanel, loadTutorQuestionPanel } from '../../src/native-3d/tutor-panel-loader';
 import { useCallback, useEffect } from 'react';
 import { Stack, useRouter } from 'expo-router';
 import { TutorXrEntry, useAppSession, useXrSession } from '@acme/app';
@@ -74,6 +75,8 @@ export default function TutorXrRoute() {
           would be a second rule about what a child may send.
         */
         onAsk={queueAsk}
+        loadBoardPanel={loadTutorBoardPanel}
+        loadQuestionPanel={loadTutorQuestionPanel}
       />
     </>
   );

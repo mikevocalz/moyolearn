@@ -14,10 +14,11 @@
  *      packages/ui/xr/question-chrome-layout.ts
  * SOT-KEYWORDS: xr question probe route deep link hosted content questionlive settled pose floor origin
  */
+import { xrVoiceSession } from '../src/native-3d/xr-voice-session';
 import React, { useEffect, useMemo } from 'react';
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
-import { Platform, StyleSheet, Text, View } from 'react-native';
+import { AppState, Platform, StyleSheet, Text, View } from 'react-native';
 import { Asset } from 'expo-asset';
 import { File } from 'expo-file-system';
 import {
@@ -134,6 +135,12 @@ export default function XrQuestionProbeRoute() {
 
   useEffect(() => {
     let alive = true;
+    const unsubscribeQuestion = useXrQuestionFlow.subscribe((state, previous) => {
+      if (state.current !== previous.current) xrVoiceSession.getState().cancel();
+    });
+    const appState = AppState.addEventListener('change', (state) => {
+      if (state !== 'active') xrVoiceSession.getState().cancel();
+    });
     void (async () => {
       const asset = Asset.fromModule(require('../assets/rive/moyo_learning_question.riv'));
       await asset.downloadAsync();
@@ -164,6 +171,9 @@ export default function XrQuestionProbeRoute() {
     });
     return () => {
       alive = false;
+      unsubscribeQuestion();
+      appState.remove();
+      xrVoiceSession.getState().cancel();
     };
   }, []);
 

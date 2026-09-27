@@ -14,11 +14,8 @@
 // before a feature needs the grant and by the feature itself as a last line, so
 // there is exactly one rule about when this app raises a system dialog.
 //
-// IT NEVER CLAIMS A GRANT IT DID NOT OBTAIN. iOS raises its own microphone
-// prompt at first capture and exposes no API this side can call; recording that
-// as `granted` would make the checklist lie to a guardian, so it stays
-// `undetermined` and the OS asks when it needs to. Same reasoning as poke-xr's
-// requester, which this is modelled on.
+// iOS and visionOS use the installed AudioManager's explicit recording
+// permission API. Starting AudioRecorder alone does not request this grant.
 //
 // Privacy posture: this module ASKS. It requests only the key it was handed,
 // writes only a status to the persisted store, opens no capture session, reads
@@ -62,7 +59,11 @@ async function requestOne(key: PermissionKey): Promise<PermissionState> {
         On a PICO the app runs as a normal Android package, so this is the same
         system dialog a phone shows, rendered by the headset's 2D overlay.
       */
-      if (Platform.OS !== 'android') return 'undetermined';
+      if (Platform.OS !== 'android') {
+        const { AudioManager } = await import('react-native-audio-api');
+        const status = await AudioManager.requestRecordingPermissions();
+        return status === 'Granted' ? 'granted' : status === 'Denied' ? 'denied' : 'undetermined';
+      }
       return askAndroid(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
     }
     case 'camera': {
@@ -91,28 +92,16 @@ async function requestOne(key: PermissionKey): Promise<PermissionState> {
   }
 }
 
-export function usePermissionRequester(): PermissionRequester {
-  const setStatus = usePermissions((s) => s.setStatus);
+/** Shared by hooks and the module-owned XR question recorder. */
+export async function requestNativePermission(key: PermissionKey): Promise<PermissionState> {
+  let state: PermissionState;
+  try { state = await requestOne(key); } catch { state = 'undetermined'; }
+  usePermissions.getState().setStatus(key, state);
+  return state;
+}
 
-  const request = useCallback(
-    async (key: PermissionKey): Promise<PermissionState> => {
-      /*
-        A throw here is a permission we could not read, which is NOT a refusal.
-        Recording it as denied would send a guardian to a Settings page to fix
-        something they never broke, so an unreadable answer stays undetermined
-        and the next attempt asks again.
-      */
-      let state: PermissionState;
-      try {
-        state = await requestOne(key);
-      } catch {
-        state = 'undetermined';
-      }
-      setStatus(key, state);
-      return state;
-    },
-    [setStatus],
-  );
+export function usePermissionRequester(): PermissionRequester {
+  const request = requestNativePermission;
 
   const requestAll = useCallback(
     async (keys: readonly PermissionKey[]) => {

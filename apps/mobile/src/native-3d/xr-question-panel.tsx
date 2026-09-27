@@ -56,6 +56,9 @@ export interface XrQuestionPanelProps {
   bound: boolean;
   /** Panel face opacity 0..1 — the chrome's art stays full-strength. */
   opacity?: number;
+  enabled?: boolean;
+  movable?: boolean;
+  content?: React.ReactNode;
   resetKey?: number;
   onCarrierRelease(pose: { position: [number, number, number]; rotation: [number, number, number] }): void;
   onGrab(grabbed: boolean): void;
@@ -72,6 +75,9 @@ export function XrQuestionPanel({
   grabbed,
   bound,
   opacity = 1,
+  enabled = true,
+  movable = true,
+  content,
   resetKey = 0,
   onCarrierRelease,
   onGrab,
@@ -117,6 +123,8 @@ export function XrQuestionPanel({
     try {
       const next = await carrierNode.current?.getTransformAsync();
       if (mounted.current && next) onCarrierRelease({ position: next.position, rotation: next.rotation });
+    } catch {
+      // A lost controller must release the input gate.
     } finally {
       if (mounted.current) onGrab(false);
     }
@@ -170,7 +178,7 @@ export function XrQuestionPanel({
           position={[0, 0, 0]}
           /* 2× the artboard — the header micro-labels survive headset optics. */
           resolution={{ width: 2560, height: 1600 }}
-          input={{ panelWorld, enabled: !grabbed, resetKey }}
+          input={{ panelWorld, enabled: enabled && !grabbed, resetKey }}
           onError={(error) => onChromeError?.(`Question controls unavailable: ${error.message}`)}
           onRuntimeReady={(rt) => {
             runtime.current = rt;
@@ -194,14 +202,15 @@ export function XrQuestionPanel({
             plane with the artboard surface and the two z-fight, which is
             what the "text fading in and out" was. */}
         <ViroNode position={[contentCentre[0], contentCentre[1], 0.002]}>
-          <ViroQuad
+          {content ?? <ViroQuad
             width={QUESTION_CONTENT_RECT_PANEL.width}
             height={QUESTION_CONTENT_RECT_PANEL.height}
             materials={[bound ? 'moyoQuestionLive' : 'xrQuestionEmpty']}
             ignoreEventHandling
-          />
+          />}
         </ViroNode>
       </ViroNode>
+      {movable ? <>
       <ViroQuad
         position={[gripWorld.position[0], gripWorld.position[1], gripWorld.position[2]]}
         rotation={[0, gripWorld.yawDeg, 0]}
@@ -218,7 +227,7 @@ export function XrQuestionPanel({
              and `grabbed` never clears, every `enabled: !grabbed` gate in
              the scene stays shut and the whole board goes silent. */
           if (state === 1) {
-            if (owner.current !== null) void finishGrab();
+            if (owner.current !== null || grabbed) return;
             owner.current = sourceId;
             onGrab(true);
             runtime.current?.setBoolean('grabbed', true);
@@ -246,6 +255,7 @@ export function XrQuestionPanel({
         ignoreEventHandling
         style={{ fontSize: 28, color: '#112d44', textAlign: 'center', textAlignVertical: 'center' }}
       />
+      </> : null}
     </ViroNode>
   );
 }

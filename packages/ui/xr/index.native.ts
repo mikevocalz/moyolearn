@@ -192,3 +192,10 @@ export type {
   QuestionContentProps,
   QuestionMediaResolver,
 } from './QuestionContent.types.ts';
+
+export type { BoardChromeHandlers, BoardChromePresentation } from './board-chrome.types.ts';
+export { questionPages } from './question-pages.ts';
+export { boardCommandEnabled } from './board-chrome-commands.ts';
+export { bindBoardChrome, type BoardChromeBinding } from './board-chrome-bind.ts';
+export { bindQuestionChrome, type QuestionChromeHandlers, type QuestionChromePresentation, type QuestionChromeBinding } from './question-chrome-bind.ts';
+export { xrCaptionRows } from './caption-rows.ts';

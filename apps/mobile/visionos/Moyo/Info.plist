@@ -2,6 +2,8 @@
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Lets you ask Natalie questions about your lesson and your board.</string>
 	<key>NSAccessoryTrackingUsageDescription</key>
 	<string>Tracks a connected spatial stylus so you can point and draw in your scene.</string>
 	<key>NSHandsTrackingUsageDescription</key>

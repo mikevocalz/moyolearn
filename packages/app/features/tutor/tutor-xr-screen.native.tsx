@@ -9,12 +9,13 @@
 // SOT-KEYWORDS: xr live whiteboard controller tutor voice session native
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { AppState, StyleSheet, View } from 'react-native';
 import {
   ViroAmbientLight,
   ViroARScene,
   ViroScene,
   ViroNode,
+  ViroQuad,
   isVisionOS,
   ViroController,
   ViroDirectionalLight,
@@ -26,6 +27,8 @@ import {
 } from '@reactvision/react-viro';
 import {
   Button,
+  countImages,
+  MAX_TUTOR_IMAGES,
   Text,
   WhiteboardBoard,
   type WhiteboardCalibration,
@@ -38,9 +41,15 @@ import { View as UiView } from '@acme/ui/primitives';
 import {
   BoardTextureHost,
   XrBoardInk,
+  XrBoardLive,
+  XrBoardRaster,
+  CONTENT_RECT_PANEL,
+  type BoardChromeHandlers,
   uncoveredRecords,
   panelMediaArea,
   worldSlot,
+  questionPages,
+  xrCaptionRows,
   xrRotateY,
   XrTriPanel,
   XrBoardSurface,
@@ -55,7 +64,6 @@ import {
   type BoardTextureBinding,
   type XrHeadPose,
   type XrVector3,
-  type XrChatRow,
   type XrSurfaceInput,
 } from '@acme/ui/xr';
 import { buttonSizeForBand } from '../capture';
@@ -74,7 +82,8 @@ import { useBoardRaster } from './board-raster.native.ts';
    Viro object nothing on a web resolver's path may name. */
 import { XrNatalie } from './XrNatalie.native.tsx';
 import { useTutorStore } from './tutor.store.ts';
-import type { TutorXrScreenProps } from './tutor-xr-screen.types.ts';
+import type { ComponentType } from 'react';
+import type { TutorXrQuestionPanelProps, TutorXrBoardPanelProps, TutorXrScreenProps } from './tutor-xr-screen.types.ts';
 import { SPATIAL_PERMISSIONS, spatialPermissionsGranted } from './xr-capability.ts';
 /* Bare specifier, so the `.native` fork is what a native bundle resolves and
    nothing on a web resolver's path ever names the renderer. */
@@ -88,8 +97,6 @@ const PRESENTATION_ID = 'tutor-xr';
 const VISIONOS = isVisionOS();
 const BOARD_MEDIA = panelMediaArea('boardPanel');
 
-/** How many turns the spatial panel shows. See its header for why it is small. */
-const CHAT_WINDOW = 4;
 
 /**
  * The live objects the scene needs and cannot be handed as props.
@@ -105,10 +112,12 @@ const CHAT_WINDOW = 4;
  * is a full-immersion route, and a second would be a second headset.
  */
 const active: {
+  QuestionPanel: ComponentType<TutorXrQuestionPanelProps> | null;
+  BoardPanel: ComponentType<TutorXrBoardPanelProps> | null;
   engine: WhiteboardHandle | null;
   session: BoardSession | null;
   onExit: () => void;
-  onAsk: (png: string | null) => void;
+  onAsk: (png: string | null, spoken?: string) => void;
   /**
    * THE LAST CALIBRATION VERDICT, and it is here rather than in the store
    * because it is never rendered from — the phase is.
@@ -149,6 +158,8 @@ const active: {
    */
   scene: ViroARScene | ViroScene | null;
 } = {
+  QuestionPanel: null,
+  BoardPanel: null,
   engine: null,
   session: null,
   onExit: () => undefined,
@@ -347,6 +358,11 @@ function handleCameraTransform(transform: { position: XrVector3; forward: XrVect
 }
 
 function BoardScene() {
+  const [foreground, setForeground] = useState(AppState.currentState === 'active');
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => setForeground(state === 'active'));
+    return () => subscription.remove();
+  }, []);
   const phase = useXrSession((s) => s.phase);
   const placement = useXrSession((s) => s.placement);
   const workspaceHead = useMemo((): [number, number, number] => {
@@ -363,7 +379,14 @@ function BoardScene() {
   const terminatePointer = (source: number, cancel: boolean) => {
     setTermination((last) => ({ source, cancel, revision: (last?.revision ?? 0) + 1 }));
   };
-  const [confirmClear, setConfirmClear] = useState(false);
+  const confirmClear = useXrSession((s) => s.clearArmed);
+  const setConfirmClear = useXrSession((s) => s.setClearArmed);
+  const history = useXrSession((s) => s.boardHistory);
+  const paletteOpen = useXrSession((s) => s.paletteOpen);
+  const [chromeFailed, setChromeFailed] = useState(false);
+  const BoardPanel = chromeFailed ? null : active.BoardPanel;
+  const [questionFailed, setQuestionFailed] = useState(false);
+  const QuestionPanel = questionFailed ? null : active.QuestionPanel;
   const [askError, setAskError] = useState(false);
   const [surfaceTimedOut, setSurfaceTimedOut] = useState(false);
   const textureReady = useXrSession((s) => s.boardTextureBound);
@@ -376,7 +399,7 @@ function BoardScene() {
     if (!confirmClear) return;
     const timer = setTimeout(() => setConfirmClear(false), 5000);
     return () => clearTimeout(timer);
-  }, [confirmClear]);
+  }, [confirmClear, setConfirmClear]);
   const tool = useXrSession((s) => s.tool);
   const ink = useXrSession((s) => s.ink);
   const asking = useXrSession((s) => s.asking);
@@ -384,7 +407,10 @@ function BoardScene() {
   const revision = useXrSession((s) => s.revision);
 
   const messages = useTutorStore((s) => s.messages);
+  const tutorThinking = useTutorStore((s) => s.state.kind === "thinking");
   const problem = useTutorStore((s) => s.problem);
+  const skill = useTutorStore((s) => s.skillTitle);
+  const attachmentsFull = useTutorStore((s) => countImages(s.attachments) >= MAX_TUTOR_IMAGES);
 
   const session = active.session;
 
@@ -437,7 +463,7 @@ function BoardScene() {
     fire without an engine handle, which is the condition that actually matters.
   */
   // The editor attach bumps revision, so the first export can begin after it mounts.
-  const raster = useBoardRaster(readEngine, store, !boardTextureBound, strokeOpen);
+  const raster = useBoardRaster(readEngine, store, !boardTextureBound && foreground, strokeOpen);
   const pendingInk = useMemo(() => uncoveredRecords(store, raster.covered), [store, raster.covered]);
   const inkSlot = worldSlot('center', workspaceHead, placement.rotation[1]);
   const inkOffset = xrRotateY([0, BOARD_MEDIA.centerY, BOARD_MEDIA.z], inkSlot.yaw);
@@ -467,18 +493,22 @@ function BoardScene() {
     child just drew.
   */
   const voice = useXrVoice({
-    enabled: composedState === 'ready' && boardDrawable,
+    enabled: foreground && composedState === 'ready' && boardDrawable,
     onUtterance: (text) => {
       const engine = active.engine;
       const owner = active.session;
       if (!engine || useXrSession.getState().asking) return;
+      if (attachmentsFull) { active.onAsk(null, text); return; }
       setAskError(false);
       useXrSession.getState().setAsking(true);
       void engine.exportPng().then((png) => {
         if (active.engine !== engine || active.session !== owner) return;
+        active.onAsk(png, text);
+      }).catch(() => {
+        if (active.engine !== engine || active.session !== owner) return;
         useXrSession.getState().queueSay(text);
-        active.onAsk(png);
-      }).catch(() => setAskError(true)).finally(() => {
+        setAskError(true);
+      }).finally(() => {
         if (active.engine === engine) useXrSession.getState().setAsking(false);
       });
     },
@@ -515,12 +545,7 @@ function BoardScene() {
   */
   const inkLands = !(phase.kind === 'interrupted' && phase.reason === 'calibration-failed');
 
-  const chatRows: readonly XrChatRow[] = messages.slice(-CHAT_WINDOW).map((message) => ({
-    id: message.id,
-    role: message.role,
-    text: message.text,
-    attachments: message.attachments?.length,
-  }));
+  const chatRows = useMemo(() => xrCaptionRows(messages, TUTOR_NAME), [messages]);
 
   /*
     A RAY ON THE PAPER IS A POINTER IN THE ENGINE.
@@ -575,6 +600,35 @@ function BoardScene() {
     separate is what makes changing it a one-line move rather than a re-indent
     of the whole tree.
   */
+  const canEdit = foreground && composedState === 'ready' && boardDrawable && inkLands;
+  const canAsk = canEdit && !asking && voice.phase.kind !== 'starting' && voice.phase.kind !== 'transcribing';
+  const boardHandlers: BoardChromeHandlers = {
+    onTool(next) {
+      if (!canEdit) return;
+      setConfirmClear(false);
+      useXrSession.getState().setTool(next);
+      active.engine?.setTool(next);
+    },
+    onInk(next) {
+      if (!canEdit) return;
+      setConfirmClear(false);
+      useXrSession.getState().setInk(next);
+      active.engine?.setInk(next);
+      if (tool === 'eraser') {
+        useXrSession.getState().setTool('draw');
+        active.engine?.setTool('draw');
+      }
+    },
+    onPalette(open) { if (canEdit) useXrSession.getState().setPaletteOpen(open); },
+    onUndo() { if (canEdit && history.canUndo) { setConfirmClear(false); active.engine?.undo(); } },
+    onRedo() { if (canEdit && history.canRedo) { setConfirmClear(false); active.engine?.redo(); } },
+    onClear() {
+      if (!canEdit || !history.hasMarks) return;
+      if (confirmClear) active.engine?.clear();
+      setConfirmClear(!confirmClear);
+    },
+    onAsk() { if (canAsk) { setConfirmClear(false); setAskError(false); voice.toggle(); } },
+  };
   const content = (
     <>
       {/*
@@ -609,7 +663,7 @@ function BoardScene() {
         y = 0 is the ground she stands on. Her yaw is the composition's own —
         the board already faces the child, and she stands in its frame.
       */}
-      <XrNatalie key={avatarAttempt} position={nataliePosition} rotationY={placement.rotation[1]} onStatus={setAvatarStatus} />
+      <XrNatalie key={avatarAttempt} active={foreground && composedState === "ready"} listening={voice.phase.kind === "listening"} processing={asking || tutorThinking || voice.phase.kind === "transcribing"} position={nataliePosition} rotationY={placement.rotation[1]} onStatus={setAvatarStatus} />
       {/*
         THE FLANKS, ON THE ARC: tools left, the conversation right — each its
         own draggable `PremiumXRMediaPanel`, poke-xr's component vendored whole.
@@ -619,6 +673,46 @@ function BoardScene() {
       */}
       {active.head !== null ? (
         <XrTriPanel
+          leftPanel={QuestionPanel ? <QuestionPanel
+            slot={worldSlot('left', workspaceHead, placement.rotation[1])}
+            question={problem} skill={skill} enabled={foreground && composedState === 'ready'}
+            busy={asking || tutorThinking || voice.phase.kind === 'starting' || voice.phase.kind === 'transcribing'}
+            listening={voice.phase.kind === 'listening'} status={askError ? 'Could not send — try again' : askLabel}
+            hasMarks={history.hasMarks && !attachmentsFull} onVoice={boardHandlers.onAsk}
+            onBoard={() => { void placeFromHead(); }} onError={() => setQuestionFailed(true)}
+            onHint={() => {
+              if (asking || tutorThinking) return;
+              useXrSession.getState().queueSay('Please give me a hint for the current problem without giving away the answer.');
+            }}
+            onSubmit={() => {
+              const engine = active.engine;
+              const owner = active.session;
+              if (!engine || useXrSession.getState().asking) return;
+              useXrSession.getState().setAsking(true);
+              setAskError(false);
+              void engine.exportPng().then((png) => {
+                if (active.engine === engine && active.session === owner) active.onAsk(png);
+              }).catch(() => { if (active.engine === engine) setAskError(true); })
+                .finally(() => { if (active.engine === engine) useXrSession.getState().setAsking(false); });
+            }}
+          /> : undefined}
+          centerPanel={BoardPanel ? <BoardPanel
+            slot={inkSlot} bound={boardTextureBound} enabled={canEdit}
+            termination={termination} onSurfaceInput={handleSurfaceInput}
+            onError={() => setChromeFailed(true)} handlers={boardHandlers}
+            presentation={{ tool, ink, ...history, asking: !canAsk,
+              paletteOpen, clearArmed: confirmClear, grabbed: false, reducedMotion: true,
+              status: askError ? 'Could not send — try again' : !canEdit ? 'Waiting for your board…' : askLabel }}
+            content={<>
+              <ViroQuad width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height}
+                materials={[XR_MATERIAL.paper]} ignoreEventHandling />
+              {boardTextureBound ? <XrBoardLive width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height} /> : <>
+                <XrBoardRaster uri={raster.uri} width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height} />
+                <XrBoardInk store={pendingInk} width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height}
+                  onSkippedCount={useXrSession.getState().setSkipped} />
+              </>}
+            </>}
+          /> : undefined}
           headPosition={workspaceHead}
           headYawDeg={placement.rotation[1]}
           tutorName={avatarStatus === 'loading' ? 'Natalie · loading' : avatarStatus === 'failed' ? 'Natalie · audio & captions' : TUTOR_NAME}
@@ -627,12 +721,16 @@ function BoardScene() {
           boardLive={boardTextureBound}
           controlSize={minHitSize(2.6, false, band)}
           boardTitle={!boardDrawable ? (surfaceTimedOut ? 'Board unavailable — return to lesson' : 'Connecting your board…') : problem ?? 'Your board'}
-          chatRows={chatRows.map((row) => ({
-            id: row.id,
-            text: row.text,
-            label: row.role === 'tutor' ? TUTOR_NAME : 'You',
-          }))}
+          questionRows={[
+            { id: 'lesson-label', text: 'Your lesson', emphasis: true },
+            ...questionPages(problem || 'Ask Natalie about your work.', 16, 1).map((text, i) => ({ id: `problem-${i}`, text })),
+            { id: 'hint', text: 'Ask for a hint', disabled: composedState !== 'ready' || asking || tutorThinking,
+              onPress: () => useXrSession.getState().queueSay('Please give me a hint for the current problem without giving away the answer.') },
+          ]}
+          chatRows={chatRows}
           controlRows={[
+            { id: 'exit', text: 'Back to lesson', onPress: () => active.onExit() },
+            { id: 'recenter', text: 'Recenter workspace', onPress: () => { void placeFromHead(); } },
             {
               id: 'ask',
               face: 'ask',
@@ -646,70 +744,22 @@ function BoardScene() {
               disabled: composedState !== 'ready' || asking || !boardDrawable || voice.phase.kind === 'transcribing' || voice.phase.kind === 'starting',
               emphasis: true,
               active: voice.phase.kind === 'listening',
-              onPress: () => { setAskError(false); voice.toggle(); },
+              onPress: boardHandlers.onAsk,
             },
-            {
-              id: 'pen',
-              face: 'pen',
-              text: 'Pen',
-              disabled: composedState !== 'ready' || !boardDrawable,
-              active: tool === 'draw',
-              onPress: () => {
-                useXrSession.getState().setTool('draw');
-                active.engine?.setTool('draw');
-              },
-            },
-            {
-              id: 'mark',
-              face: 'highlighter',
-              text: 'Highlighter',
-              disabled: composedState !== 'ready' || !boardDrawable,
-              active: tool === 'highlight',
-              onPress: () => {
-                useXrSession.getState().setTool('highlight');
-                active.engine?.setTool('highlight');
-              },
-            },
-            {
-              id: 'erase',
-              face: 'eraser',
-              text: 'Eraser',
-              disabled: composedState !== 'ready' || !boardDrawable,
-              active: tool === 'eraser',
-              onPress: () => {
-                useXrSession.getState().setTool('eraser');
-                active.engine?.setTool('eraser');
-              },
-            },
-            {
-              id: 'ink',
-              text: `Ink: ${ink}`,
-              disabled: composedState !== 'ready' || !boardDrawable,
-              swatchColor: ink,
-              onPress: () => {
-                /* Cycles the pen colour: the spatial panel has no room for a
-                   swatch grid, and a child changing colour wants one press. */
-                const order = ['black', 'blue', 'red', 'green'] as const;
-                const at = order.indexOf(ink as (typeof order)[number]);
-                const next = order[(at + 1) % order.length] ?? 'black';
-                useXrSession.getState().setInk(next);
-                active.engine?.setInk(next);
-                if (tool === 'eraser') {
-                  active.engine?.setTool('draw');
-                  useXrSession.getState().setTool('draw');
-                }
-              },
-            },
-            { id: 'undo', face: 'undo', text: 'Undo', disabled: composedState !== 'ready' || !boardDrawable, onPress: () => active.engine?.undo() },
-            { id: 'clear', face: 'clear', text: confirmClear ? 'Confirm clear' : 'Clear board',
-              disabled: composedState !== 'ready' || !boardDrawable, active: confirmClear,
-              onPress: () => {
-                if (confirmClear) active.engine?.clear();
-                setConfirmClear(!confirmClear);
+            ...(!BoardPanel ? [
+              { id: 'pen', face: 'pen' as const, text: 'Pen', active: tool === 'draw', disabled: !canEdit, onPress: () => boardHandlers.onTool('draw') },
+              { id: 'mark', face: 'highlighter' as const, text: 'Highlighter', active: tool === 'highlight', disabled: !canEdit, onPress: () => boardHandlers.onTool('highlight') },
+              { id: 'erase', face: 'eraser' as const, text: 'Eraser', active: tool === 'eraser', disabled: !canEdit, onPress: () => boardHandlers.onTool('eraser') },
+              { id: 'ink', text: `Ink: ${ink}`, swatchColor: ink, disabled: !canEdit, onPress: () => {
+                const inks = ['black', 'blue', 'red', 'green', 'yellow', 'orange', 'violet'] as const;
+                boardHandlers.onInk(inks[(inks.indexOf(ink as typeof inks[number]) + 1) % inks.length] ?? 'black');
               } },
+              { id: 'undo', face: 'undo' as const, text: 'Undo', disabled: !canEdit || !history.canUndo, onPress: boardHandlers.onUndo },
+              { id: 'redo', face: 'redo' as const, text: 'Redo', disabled: !canEdit || !history.canRedo, onPress: boardHandlers.onRedo },
+              { id: 'clear', face: 'clear' as const, text: confirmClear ? 'Confirm clear' : 'Clear board',
+                disabled: !canEdit || !history.hasMarks, active: confirmClear, onPress: boardHandlers.onClear },
+            ] : []),
             ...(confirmClear ? [{ id: 'cancel-clear', text: 'Keep my work', onPress: () => setConfirmClear(false) }] : []),
-            { id: 'recenter', text: 'Recenter workspace', onPress: () => { void placeFromHead(); } },
-            { id: 'exit', text: 'Back to lesson', onPress: () => active.onExit() },
             ...(avatarStatus === 'failed' ? [{ id: 'retry-avatar', text: 'Reload Natalie', onPress: () => { setAvatarStatus('loading'); setAvatarAttempt((n) => n + 1); } }] : []),
 
           ]}
@@ -730,7 +780,7 @@ function BoardScene() {
         `handleSurfaceInput` above is what declines them when the mapping is
         measured wrong.
       */}
-      {VISIONOS && !boardTextureBound && active.head !== null ? (
+      {!BoardPanel && VISIONOS && !boardTextureBound && active.head !== null ? (
         <ViroNode position={inkWorldPosition} rotation={[0, inkSlot.yaw, 0]} ignoreEventHandling>
           <XrBoardInk
             store={pendingInk}
@@ -740,11 +790,11 @@ function BoardScene() {
           />
         </ViroNode>
       ) : null}
-      {active.head !== null ? (
+      {!BoardPanel && active.head !== null ? (
         <XrBoardSurface
           headPosition={workspaceHead}
           headYawDeg={placement.rotation[1]}
-          enabled={composedState === 'ready' && boardDrawable && inkLands}
+          enabled={canEdit}
           onSurfaceInput={handleSurfaceInput}
           termination={termination}
         />
@@ -786,11 +836,33 @@ function BoardScene() {
 /** Stable, for the same constructor-capture reason. */
 const INITIAL_SCENE = { scene: BoardScene };
 
-export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorXrScreenProps) {
+export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoardPanel, loadQuestionPanel }: TutorXrScreenProps) {
   const sessionId = useTutorStore((s) => s.sessionId);
   const phase = useXrSession((s) => s.phase);
   const advance = useXrSession((s) => s.advance);
   const bumpRevision = useXrSession((s) => s.bumpRevision);
+
+  useEffect(() => {
+    let alive = true;
+    active.BoardPanel = null;
+    if (loadBoardPanel) void loadBoardPanel().then((Panel) => {
+      if (!alive) return;
+      active.BoardPanel = Panel;
+      bumpRevision();
+    }).catch(() => { /* The complete native toolbar remains available. */ });
+    return () => { alive = false; active.BoardPanel = null; };
+  }, [loadBoardPanel, bumpRevision]);
+
+  useEffect(() => {
+    let alive = true;
+    active.QuestionPanel = null;
+    if (loadQuestionPanel) void loadQuestionPanel().then((Panel) => {
+      if (!alive) return;
+      active.QuestionPanel = Panel;
+      bumpRevision();
+    }).catch(() => { /* The native lesson controls remain available. */ });
+    return () => { alive = false; active.QuestionPanel = null; };
+  }, [loadQuestionPanel, bumpRevision]);
 
   const engine = useRef<WhiteboardHandle>(null);
 

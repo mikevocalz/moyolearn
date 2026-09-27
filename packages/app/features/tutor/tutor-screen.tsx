@@ -9,7 +9,7 @@
 // SOT: docs/pack/24-homework-capture-spec.md §5 · docs/pack/23-tutorstage-handoff.md §3 · docs/pack/18-tutor-ai-stack.md §3
 // SOT-KEYWORDS: tutor screen capture handoff tutorstage session coach stream age band next problem
 
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { useRouter } from 'solito/navigation';
 import {
   TutorStage,
@@ -805,6 +805,9 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     router.push('/tutor-xr');
   }, [beginXrEntry, router, xrEntering]);
 
+  const sendXrSpeech = useRef(handleSend);
+  useLayoutEffect(() => { sendXrSpeech.current = handleSend; });
+
   const [boardOpen, setBoardOpen] = useState(false);
   const handleAskBoard = useCallback(
     (png: string | null) => {
@@ -822,7 +825,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       setAsking(true);
       void boardImageUri(png)
         .then((uri) => {
-          if (uri === null) return;
+          if (uri === null) throw new Error('Board image unavailable');
           const id = `${Date.now()}-${(stagedSeq.current += 1)}-board.png`;
           sendWhenStaged.current = { id, fromBoard: true };
           addAttachment({
@@ -835,6 +838,12 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
             name: 'Whiteboard',
             mimeType: 'image/png',
           });
+        })
+        .catch(() => {
+          // Keep the spoken question usable if saving its board image fails.
+          const said = spokenWithBoard.current;
+          spokenWithBoard.current = '';
+          if (said) sendXrSpeech.current(said);
         })
         .finally(() => setAsking(false));
     },
@@ -850,32 +859,20 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     Claiming it clears it, so a re-render cannot send the same board twice.
   */
   useEffect(() => {
-    if (pendingXrAsk === null) return;
-    const png = takeXrAsk();
-    if (png !== null) handleAskBoard(png);
-  }, [handleAskBoard, pendingXrAsk, takeXrAsk]);
-
-  /*
-    A SPOKEN QUESTION FROM THE HEADSET, WHICH IS THE OTHER HALF OF ASK.
-
-    Claimed before the board so the transcript is already in hand when the
-    staging effect above fires — the spatial route queues both in that order,
-    and pairing them here means the tutor gets one turn rather than a mute
-    picture followed by a subject-less sentence.
-
-    With no board in flight it sends on its own: a child can talk without
-    having drawn anything.
-  */
-  useEffect(() => {
-    if (pendingXrSay === null) return;
+    if (pendingXrAsk === null && pendingXrSay === null) return;
+    // Claim the pair in one effect before asynchronous image staging. Separate
+    // effects could send speech first, then submit a second, silent board turn.
+    if (asking) return;
+    if (pendingXrAsk !== null && countImages(attachments) >= MAX_TUTOR_IMAGES) return;
     const said = takeXrSay();
-    if (said === null) return;
-    if (sendWhenStaged.current !== null || useXrSession.getState().pendingAsk !== null) {
-      spokenWithBoard.current = said;
-      return;
+    const png = takeXrAsk();
+    if (png !== null) {
+      spokenWithBoard.current = said ?? '';
+      handleAskBoard(png);
+    } else if (said !== null) {
+      sendXrSpeech.current(said);
     }
-    handleSend(said);
-  }, [pendingXrSay, takeXrSay]);
+  }, [asking, attachments, handleAskBoard, pendingXrAsk, pendingXrSay, takeXrAsk, takeXrSay]);
 
   /*
     NO PROBLEM IS STILL A PLACE.

@@ -64,6 +64,7 @@ export function XrBoardRaster({ uri, width, height }: XrBoardRasterProps) {
         of the texture memory on every settle — on a headset, per raster.
       */
       mipmap={false}
+      ignoreEventHandling
     />
   );
 }

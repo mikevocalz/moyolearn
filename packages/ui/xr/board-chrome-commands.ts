@@ -83,3 +83,15 @@ export function inkToRive(ink: WhiteboardInk): number {
   const i = (INK_IDS as readonly string[]).indexOf(ink);
   return i < 0 ? 0 : i;
 }
+
+/** Native intents can arrive after a frame dims: enforce availability in JS too. */
+export function boardCommandEnabled(intent: BoardChromeIntent, state: {
+  grabbed: boolean; asking: boolean; canUndo: boolean; canRedo: boolean; hasMarks: boolean;
+}): boolean {
+  if (state.grabbed || intent.kind === 'none') return false;
+  if (intent.kind === 'undo') return state.canUndo;
+  if (intent.kind === 'redo') return state.canRedo;
+  if (intent.kind === 'clear') return state.hasMarks;
+  if (intent.kind === 'askNatalie') return !state.asking;
+  return true;
+}

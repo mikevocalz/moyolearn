@@ -28,7 +28,8 @@
 //      docs/decisions/adr-117-spatial-whiteboard-bridge.md (moyo.2 amendment)
 // SOT-KEYWORDS: natalie xr viro 3d object avatar bones morph face idle spatial glb presence
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { Viro3DObject, ViroNode } from '@reactvision/react-viro';
 import { IdleEngine, type IdleInputs } from '@acme/avatar';
 import { natalieMorphs, type NatalieMorph } from '@acme/ui/xr';
@@ -72,14 +73,18 @@ export interface XrNatalieProps {
      stature at slot distance, so callers dial it per scene rather than
      trusting the authored measure. */
   heightCm?: number;
+  active?: boolean;
+  listening?: boolean;
+  processing?: boolean;
   onStatus?: (status: 'loading' | 'ready' | 'failed') => void;
 }
 
 
-export function XrNatalie({ position, rotationY, heightCm = 175, onStatus }: XrNatalieProps) {
+export function XrNatalie({ position, rotationY, heightCm = 175, onStatus, active = true, listening = false, processing = false }: XrNatalieProps) {
   const model = useRef<Viro3DObject>(null);
-  const loaded = useRef(false);
-  const failed = useRef(false);
+  const [ready, setReady] = useState(false);
+  const signals = useRef({ active, listening, processing });
+  useLayoutEffect(() => { signals.current = { active, listening, processing }; }, [active, listening, processing]);
   /*
     WHERE THE CHILD PUT HER, kept apart from where the composition placed her.
     Viro's drag MOVES THE DRAGGED NODE, and this node's position is a prop — so
@@ -91,6 +96,10 @@ export function XrNatalie({ position, rotationY, heightCm = 175, onStatus }: XrN
   const dragFrom = useRef<[number, number, number] | null>(null);
 
   useEffect(() => {
+    if (!ready) return;
+    let foreground = AppState.currentState === "active";
+    const appState = AppState.addEventListener("change", (state) => { foreground = state === "active"; });
+    let morphBusy = false;
     let timer: ReturnType<typeof setInterval> | null = null;
     let cancelled = false;
 
@@ -137,7 +146,7 @@ export function XrNatalie({ position, rotationY, heightCm = 175, onStatus }: XrN
 
       timer = setInterval(() => {
         const handleNow = model.current;
-        if (handleNow === null) return;
+        if (handleNow === null || !foreground || !signals.current.active) return;
         const now = Date.now();
         const dt = Math.min((now - lastTick) / 1000, 0.1);
         lastTick = now;
@@ -147,8 +156,8 @@ export function XrNatalie({ position, rotationY, heightCm = 175, onStatus }: XrN
         const inputs: IdleInputs = {
           speechActive: speaking,
           speechGap: false,
-          processing: false,
-          partnerSpeaking: false,
+          processing: signals.current.processing,
+          partnerSpeaking: signals.current.listening,
           partnerPauseEvent: false,
           partnerF0Falling: false,
           timeUntilOnset: onset ?? Number.POSITIVE_INFINITY,
@@ -173,12 +182,16 @@ export function XrNatalie({ position, rotationY, heightCm = 175, onStatus }: XrN
           if (sample.active) shape.jawOpen = sample.shape.jawOpen ?? 0;
         }
         const morphs = natalieMorphs(viroFace(shape), previousMorphs);
-        if (morphs !== previousMorphs) {
-          previousMorphs = morphs;
-          handleNow.setMorphTargetWeights(
-            morphs.map((entry) => entry.target),
-            morphs.map((entry) => entry.weight),
-          );
+        if (morphs !== previousMorphs && !morphBusy) {
+          morphBusy = true;
+          void Promise.resolve().then(() => {
+            if (cancelled || !foreground || !signals.current.active) return;
+            return handleNow.setMorphTargetWeights(
+              morphs.map((entry) => entry.target), morphs.map((entry) => entry.weight),
+            );
+          }).then(() => { previousMorphs = morphs; })
+            .catch(() => { /* A transient bridge failure retries the next frame. */ })
+            .finally(() => { morphBusy = false; });
         }
 
         /* THE BODY — only when the seam and the skeleton both answered. */
@@ -201,20 +214,13 @@ export function XrNatalie({ position, rotationY, heightCm = 175, onStatus }: XrN
       }, TICK_MS);
     };
 
-    /* Poll for load: onLoadEnd sets the flag; effects cannot await a prop. */
-    const waitForLoad = setInterval(() => {
-      if (failed.current) { clearInterval(waitForLoad); return; }
-      if (!loaded.current) return;
-      clearInterval(waitForLoad);
-      void start();
-    }, 100);
-
+    void start();
     return () => {
       cancelled = true;
-      clearInterval(waitForLoad);
+      appState.remove();
       if (timer !== null) clearInterval(timer);
     };
-  }, []);
+  }, [ready]);
 
   /*
     DRAGGABLE, like the panels. `FixedDistance` keeps her at the radius the ray
@@ -237,21 +243,12 @@ export function XrNatalie({ position, rotationY, heightCm = 175, onStatus }: XrN
       ]}
       rotation={[0, rotationY, 0]}
       dragType="FixedDistance"
-      onDrag={(to: [number, number, number]) => {
-        /* The renderer reports where it moved the node to; the delta from the
-           first report of a gesture is what the child actually dragged. */
-        if (dragFrom.current === null) dragFrom.current = to;
-        const from = dragFrom.current;
-        setDragOffset(([x, y, z]) => [
-          x + (to[0] - from[0]),
-          y + (to[1] - from[1]),
-          z + (to[2] - from[2]),
-        ]);
-        dragFrom.current = to;
-      }}
+      onDrag={(to: [number, number, number]) => { dragFrom.current = to; }}
       onClickState={(state: number) => {
-        /* CLICK_UP ends the gesture, so the next grab measures from scratch. */
-        if (state === 2) dragFrom.current = null;
+        if (state !== 2 && state !== 3) return;
+        const to = dragFrom.current;
+        dragFrom.current = null;
+        if (to) setDragOffset([to[0] - position[0], to[1] - position[1], to[2] - position[2]]);
       }}
     >
       <Viro3DObject
@@ -259,18 +256,17 @@ export function XrNatalie({ position, rotationY, heightCm = 175, onStatus }: XrN
         source={NATALIE_GLB}
         type="GLB"
         onLoadStart={() => {
-          loaded.current = false;
+          setReady(false);
           onStatus?.('loading');
           if (__DEV__) console.log('[natalie-xr] model load started');
         }}
         onLoadEnd={() => {
-          loaded.current = true;
+          setReady(true);
           onStatus?.('ready');
           if (__DEV__) console.log('[natalie-xr] model load ENDED — she should be visible');
         }}
         onError={(event) => {
-          failed.current = true;
-          loaded.current = false;
+          setReady(false);
           onStatus?.('failed');
           /* Absence is the contract, but a silent absence is undebuggable. */
           console.log('[natalie-xr] model FAILED to load', JSON.stringify(event?.nativeEvent ?? {}));

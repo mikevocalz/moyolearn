@@ -492,6 +492,8 @@ type Props = {
   reduceMotion?: boolean;
   debug?: boolean;
   alwaysShowRail?: boolean;
+  /** A new caption resets the viewport without remounting its native panel. */
+  scrollResetKey?: string | number;
   /** Use SLOTS[s].yaw instead of the TILT table. Default false. */
   useSlotYaw?: boolean;
   /**
@@ -553,6 +555,7 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
   reduceMotion = false,
   debug = false,
   alwaysShowRail = false,
+  scrollResetKey,
   useSlotYaw = false,
   worldPlacement,
   scrollOnSwipe = true,
@@ -792,6 +795,10 @@ export const PremiumXRMediaPanel: React.FC<Props> = ({
   };
 
   // ── Scroll ──────────────────────────────────────────────────────────────
+  useEffect(() => {
+    if (scrollResetKey !== undefined && store.getState().scrollTop !== 0) store.setState({ scrollTop: 0 });
+  }, [scrollResetKey, store]);
+
   const maxScroll = Math.max(0, rows.length - visibleRows);
   const atTop = scrollTop <= 0;
   const atEnd = scrollTop >= maxScroll;
