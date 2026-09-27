@@ -164,7 +164,7 @@ index ac8c43c..70d9ff6 100644
 +} | void>;
  export default withViroVisionOS;
 diff --git a/dist/plugins/withViroVisionOS.js b/dist/plugins/withViroVisionOS.js
-index 3ea05b4..3263f8c 100644
+index 3ea05b4..b122b68 100644
 --- a/dist/plugins/withViroVisionOS.js
 +++ b/dist/plugins/withViroVisionOS.js
 @@ -75,9 +75,8 @@ function isPkgInstalled(projectRoot, pkg) {
@@ -178,7 +178,7 @@ index 3ea05b4..3263f8c 100644
              if (pkgJson.name === RNVISION_PKG)
                  return name;
          }
-@@ -138,36 +137,16 @@ for (const ext of VIRO_ASSET_EXTS) {
+@@ -138,35 +137,22 @@ for (const ext of VIRO_ASSET_EXTS) {
    }
  }
  
@@ -186,7 +186,7 @@ index 3ea05b4..3263f8c 100644
 -// about it, and \`const path = require('path')\` at the top of a Metro config is close to
 -// universal. A second \`const path\` in the same scope is a SyntaxError that nothing catches until
 -// the bundler runs — which no native build does, so it survives every compile and fails on launch.
--const viroNodePath = require('path');
+ const viroNodePath = require('path');
 -const { getPlatformResolver: viroGetPlatformResolver } = require('${RNVISION_PLATFORMS_PKG}');
 -const viroPlatformResolver = viroGetPlatformResolver({
 -  platformNameMap: { visionos: '${rnVisionSpecifier}' },
@@ -203,27 +203,30 @@ index 3ea05b4..3263f8c 100644
 -// Expo dev server applies tsconfig paths, nothing is rewritten at all.
 +const viroPreviousResolver = config.resolver.resolveRequest;
  config.resolver.resolveRequest = (context, moduleName, platform) => {
--  try {
++  const visionOS = platform === 'visionos' || context.customResolverOptions?.platformExtension === 'visionos';
++  let name = moduleName;
++  if (visionOS && (name === 'react-native' || name.startsWith('react-native/'))) {
++    name = '${rnVisionSpecifier}' + name.slice('react-native'.length);
++  }
++  const resolve = (requestedName) => viroPreviousResolver
++    ? viroPreviousResolver(context, requestedName, platform)
++    : context.resolveRequest(context, requestedName, platform);
+   try {
 -    return viroPlatformResolver(context, moduleName, platform);
--  } catch (error) {
++    return resolve(name);
+   } catch (error) {
 -    if (!moduleName.startsWith('@/')) throw error;
 -    return viroPlatformResolver(
 -      context,
 -      viroNodePath.resolve(__dirname, moduleName.slice(2)),
 -      platform
 -    );
-+  const visionOS = platform === 'visionos' || context.customResolverOptions?.platformExtension === 'visionos';
-+  let name = moduleName;
-+  if (visionOS && (name === 'react-native' || name.startsWith('react-native/'))) {
-+    name = '${rnVisionSpecifier}' + name.slice('react-native'.length);
++    if (!name.startsWith('@/')) throw error;
++    return resolve(viroNodePath.resolve(__dirname, name.slice(2)));
    }
-+  return viroPreviousResolver
-+    ? viroPreviousResolver(context, name, platform)
-+    : context.resolveRequest(context, name, platform);
  };
  `;
- const withVisionOSMetroConfig = (config) => (0, config_plugins_1.withDangerousMod)(config, [
-@@ -186,7 +165,8 @@ const withVisionOSMetroConfig = (config) => (0, config_plugins_1.withDangerousMo
+@@ -186,7 +172,8 @@ const withVisionOSMetroConfig = (config) => (0, config_plugins_1.withDangerousMo
              // wrong here: a config patched by an older version of this plugin keeps whatever that
              // version got wrong forever, and the block is ours to own from the marker to the export.
              const start = metro.indexOf(METRO_MARKER);
@@ -233,7 +236,7 @@ index 3ea05b4..3263f8c 100644
              if (end === -1) {
                  config_plugins_1.WarningAggregator.addWarningIOS("withViroVisionOS", "metro.config.js carries the visionOS block but no `module.exports = config;` after " +
                      "it — left as is, so nothing is cut in half. Re-add the export and prebuild again.");
-@@ -195,7 +175,7 @@ const withVisionOSMetroConfig = (config) => (0, config_plugins_1.withDangerousMo
+@@ -195,7 +182,7 @@ const withVisionOSMetroConfig = (config) => (0, config_plugins_1.withDangerousMo
              metro = metro.slice(0, start) + patch.replace(/^\n/, "") + "\n" + metro.slice(end);
          }
          else {
@@ -242,7 +245,7 @@ index 3ea05b4..3263f8c 100644
          }
          fs_1.default.writeFileSync(metroPath, metro, "utf-8");
          return newConfig;
-@@ -204,9 +184,10 @@ const withVisionOSMetroConfig = (config) => (0, config_plugins_1.withDangerousMo
+@@ -204,9 +191,10 @@ const withVisionOSMetroConfig = (config) => (0, config_plugins_1.withDangerousMo
  // ─── 3. visionos/Podfile — ViroKit + ViroReact + post_install ────────────────
  const VIRO_PODS = `
    ${PODFILE_MARKER}
@@ -256,7 +259,7 @@ index 3ea05b4..3263f8c 100644
  // These lines are injected INSIDE the existing post_install block (before the closing `end`).
  // If no post_install block exists they are injected as a new one.
  const POST_INSTALL_CONTENT = `
-@@ -298,18 +279,13 @@ const withVisionOSPodfile = (config) => (0, config_plugins_1.withDangerousMod)(c
+@@ -298,18 +286,13 @@ const withVisionOSPodfile = (config) => (0, config_plugins_1.withDangerousMod)(c
          // reactNativePath configuration fixes, because it happens while the Podfile is being read.
          const rnVisionSpecifier = resolveRNVisionSpecifier(projectRoot);
          podfile = podfile.replace(/"@[a-z0-9-]+\/react-native-visionos\/scripts\/react_native_pods\.rb"/g, `"${rnVisionSpecifier}/scripts/react_native_pods.rb"`);
@@ -280,7 +283,7 @@ index 3ea05b4..3263f8c 100644
          }
          // ── 3c. Inject post_install content ──
          if (!podfile.includes(`# ${PODFILE_MARKER}: fmt consteval fix`)) {
-@@ -521,6 +497,7 @@ const withVisionOSInfoPlist = (config) => (0, config_plugins_1.withDangerousMod)
+@@ -521,6 +504,7 @@ const withVisionOSInfoPlist = (config) => (0, config_plugins_1.withDangerousMod)
                  "NSHandsTrackingUsageDescription",
                  "Lets you point at and select objects in your scene with your hands.",
              ],
@@ -288,7 +291,7 @@ index 3ea05b4..3263f8c 100644
          ];
          for (const [key, description] of usageKeys) {
              if (withUsage.includes(`<key>${key}</key>`))
-@@ -772,12 +749,12 @@ const withVisionOSIconFonts = (config) => (0, config_plugins_1.withDangerousMod)
+@@ -772,12 +756,12 @@ const withVisionOSIconFonts = (config) => (0, config_plugins_1.withDangerousMod)
          return newConfig;
      },
  ]);
@@ -670,7 +673,7 @@ index 61ca445..c1cbc61 100644
  end
 +
 diff --git a/plugins/withViroVisionOS.ts b/plugins/withViroVisionOS.ts
-index b00c3f1..591139b 100644
+index b00c3f1..a78ff66 100644
 --- a/plugins/withViroVisionOS.ts
 +++ b/plugins/withViroVisionOS.ts
 @@ -82,14 +82,8 @@ function isPkgInstalled(projectRoot: string, pkg: string): boolean {
@@ -689,7 +692,7 @@ index b00c3f1..591139b 100644
        if (pkgJson.name === RNVISION_PKG) return name;
      } catch {
        // not installed under this name
-@@ -161,36 +155,16 @@ for (const ext of VIRO_ASSET_EXTS) {
+@@ -161,35 +155,22 @@ for (const ext of VIRO_ASSET_EXTS) {
    }
  }
  
@@ -697,7 +700,7 @@ index b00c3f1..591139b 100644
 -// about it, and \`const path = require('path')\` at the top of a Metro config is close to
 -// universal. A second \`const path\` in the same scope is a SyntaxError that nothing catches until
 -// the bundler runs — which no native build does, so it survives every compile and fails on launch.
--const viroNodePath = require('path');
+ const viroNodePath = require('path');
 -const { getPlatformResolver: viroGetPlatformResolver } = require('${RNVISION_PLATFORMS_PKG}');
 -const viroPlatformResolver = viroGetPlatformResolver({
 -  platformNameMap: { visionos: '${rnVisionSpecifier}' },
@@ -714,27 +717,30 @@ index b00c3f1..591139b 100644
 -// Expo dev server applies tsconfig paths, nothing is rewritten at all.
 +const viroPreviousResolver = config.resolver.resolveRequest;
  config.resolver.resolveRequest = (context, moduleName, platform) => {
--  try {
++  const visionOS = platform === 'visionos' || context.customResolverOptions?.platformExtension === 'visionos';
++  let name = moduleName;
++  if (visionOS && (name === 'react-native' || name.startsWith('react-native/'))) {
++    name = '${rnVisionSpecifier}' + name.slice('react-native'.length);
++  }
++  const resolve = (requestedName) => viroPreviousResolver
++    ? viroPreviousResolver(context, requestedName, platform)
++    : context.resolveRequest(context, requestedName, platform);
+   try {
 -    return viroPlatformResolver(context, moduleName, platform);
--  } catch (error) {
++    return resolve(name);
+   } catch (error) {
 -    if (!moduleName.startsWith('@/')) throw error;
 -    return viroPlatformResolver(
 -      context,
 -      viroNodePath.resolve(__dirname, moduleName.slice(2)),
 -      platform
 -    );
-+  const visionOS = platform === 'visionos' || context.customResolverOptions?.platformExtension === 'visionos';
-+  let name = moduleName;
-+  if (visionOS && (name === 'react-native' || name.startsWith('react-native/'))) {
-+    name = '${rnVisionSpecifier}' + name.slice('react-native'.length);
++    if (!name.startsWith('@/')) throw error;
++    return resolve(viroNodePath.resolve(__dirname, name.slice(2)));
    }
-+  return viroPreviousResolver
-+    ? viroPreviousResolver(context, name, platform)
-+    : context.resolveRequest(context, name, platform);
  };
  `;
- 
-@@ -217,7 +191,8 @@ const withVisionOSMetroConfig: ConfigPlugin = (config) =>
+@@ -217,7 +198,8 @@ const withVisionOSMetroConfig: ConfigPlugin = (config) =>
          // wrong here: a config patched by an older version of this plugin keeps whatever that
          // version got wrong forever, and the block is ours to own from the marker to the export.
          const start = metro.indexOf(METRO_MARKER);
@@ -744,7 +750,7 @@ index b00c3f1..591139b 100644
          if (end === -1) {
            WarningAggregator.addWarningIOS(
              "withViroVisionOS",
-@@ -229,8 +204,8 @@ const withVisionOSMetroConfig: ConfigPlugin = (config) =>
+@@ -229,8 +211,8 @@ const withVisionOSMetroConfig: ConfigPlugin = (config) =>
          metro = metro.slice(0, start) + patch.replace(/^\n/, "") + "\n" + metro.slice(end);
        } else {
          metro = metro.replace(
@@ -755,7 +761,7 @@ index b00c3f1..591139b 100644
          );
        }
  
-@@ -243,9 +218,10 @@ const withVisionOSMetroConfig: ConfigPlugin = (config) =>
+@@ -243,9 +225,10 @@ const withVisionOSMetroConfig: ConfigPlugin = (config) =>
  
  const VIRO_PODS = `
    ${PODFILE_MARKER}
@@ -769,7 +775,7 @@ index b00c3f1..591139b 100644
  
  // These lines are injected INSIDE the existing post_install block (before the closing `end`).
  // If no post_install block exists they are injected as a new one.
-@@ -365,23 +341,12 @@ const withVisionOSPodfile: ConfigPlugin = (config) =>
+@@ -365,23 +348,12 @@ const withVisionOSPodfile: ConfigPlugin = (config) =>
          `"${rnVisionSpecifier}/scripts/react_native_pods.rb"`
        );
  
@@ -798,7 +804,7 @@ index b00c3f1..591139b 100644
        }
  
        // ── 3c. Inject post_install content ──
-@@ -676,6 +641,7 @@ const withVisionOSInfoPlist: ConfigPlugin = (config) =>
+@@ -676,6 +648,7 @@ const withVisionOSInfoPlist: ConfigPlugin = (config) =>
            "NSHandsTrackingUsageDescription",
            "Lets you point at and select objects in your scene with your hands.",
          ],
@@ -806,7 +812,7 @@ index b00c3f1..591139b 100644
        ];
        for (const [key, description] of usageKeys) {
          if (withUsage.includes(`<key>${key}</key>`)) continue;
-@@ -1015,13 +981,13 @@ const withVisionOSIconFonts: ConfigPlugin = (config) =>
+@@ -1015,13 +988,13 @@ const withVisionOSIconFonts: ConfigPlugin = (config) =>
      },
    ]);
  
