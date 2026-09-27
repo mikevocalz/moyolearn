@@ -436,8 +436,8 @@ function BoardScene() {
     behind it had the real board all along. `useBoardRaster` already refuses to
     fire without an engine handle, which is the condition that actually matters.
   */
-  // Start the first export after the WebView editor has mounted and attached.
-  const raster = useBoardRaster(readEngine, store, !boardTextureBound && phase.kind === 'ready', strokeOpen);
+  // The editor attach bumps revision, so the first export can begin after it mounts.
+  const raster = useBoardRaster(readEngine, store, !boardTextureBound, strokeOpen);
   const pendingInk = useMemo(() => uncoveredRecords(store, raster.covered), [store, raster.covered]);
   const inkSlot = worldSlot('center', workspaceHead, placement.rotation[1]);
   const inkOffset = xrRotateY([0, BOARD_MEDIA.centerY, BOARD_MEDIA.z], inkSlot.yaw);
@@ -1061,12 +1061,14 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
     const selection = useXrSession.getState();
     handle.setTool(selection.tool);
     handle.setInk(selection.ink);
+    // A pending first raster may have found no engine; retry once attachment completes.
+    bumpRevision();
     return () => {
       handle.injectPointer({ phase: 'cancel', x: 0, y: 0 });
       active.engine = null;
       detach();
     };
-  }, [ready, session, engineGeneration]);
+  }, [ready, session, engineGeneration, bumpRevision]);
 
   /*
     THE BOARD BECOMES DRAWABLE WHEN THE ENGINE AND THE SCENE ARE BOTH THERE,
