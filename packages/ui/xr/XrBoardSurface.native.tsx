@@ -20,7 +20,6 @@ const POINTER_STANDOFF = 0.002;
 function sourceId(source: unknown): number { return typeof source === 'number' ? source : 0; }
 export function XrBoardSurface({ headPosition, headYawDeg, enabled, termination, onSurfaceInput, anchor: anchorOverride, area: areaOverride }: XrBoardSurfaceProps) {
   const stroke = useRef(new BoardPointer());
-  const stylus = useRef(new SpatialStylusBoardInput(stroke.current));
   const downHit = useRef<XrVector3>([0, 0, 0]);
   const pointer = useRef<ViroQuad | null>(null);
   const emit = useRef(onSurfaceInput);
@@ -67,12 +66,14 @@ export function XrBoardSurface({ headPosition, headYawDeg, enabled, termination,
     const module = NativeModules.VRTVisionOSModule;
     if (!enabled || module?.isVisionOS !== true) return;
 
+    const stylus = new SpatialStylusBoardInput(stroke.current);
     // The pen and the controller share BoardPointer, so neither can take over
     // the other's line. The native sample is already in this scene's world space.
     const subscription = new NativeEventEmitter(module).addListener(
       'onSpatialStylus',
-      (frame: SpatialStylusFrame) => {
-        const sample = stylus.current.handle(frame, {
+      (event: object) => {
+        const frame = event as SpatialStylusFrame;
+        const sample = stylus.handle(frame, {
           position: anchor.position, yawDeg: anchor.yaw,
           width: area.width, height: area.height, plane,
         });
@@ -81,7 +82,7 @@ export function XrBoardSurface({ headPosition, headYawDeg, enabled, termination,
     );
     return () => {
       subscription.remove();
-      const sample = stylus.current.reset();
+      const sample = stylus.reset();
       if (sample) emit.current(sample);
     };
   }, [enabled, anchor, area.width, area.height, plane]);
