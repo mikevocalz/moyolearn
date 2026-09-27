@@ -26,18 +26,28 @@ export function XrBoardSurface({ headPosition, headYawDeg, enabled, termination,
   useLayoutEffect(() => { emit.current = onSurfaceInput; }, [onSurfaceInput]);
   const defaultArea = panelMediaArea('boardPanel');
   const area = areaOverride ?? defaultArea;
+  const overrideX = anchorOverride?.position[0];
+  const overrideY = anchorOverride?.position[1];
+  const overrideZ = anchorOverride?.position[2];
+  const overrideYaw = anchorOverride?.yawDeg;
+  const headX = anchorOverride ? 0 : headPosition[0];
+  const headY = anchorOverride ? 0 : headPosition[1];
+  const headZ = anchorOverride ? 0 : headPosition[2];
+  const placementYaw = anchorOverride ? 0 : headYawDeg;
+  // Parent panels create fresh prop objects during voice/chrome updates. Only
+  // a real placement change may tear down an in-progress stroke.
   const anchor = useMemo(() => {
-    if (anchorOverride) {
-      const p = anchorOverride.position;
-      return { position: [p[0], p[1], p[2]] as [number, number, number], yaw: anchorOverride.yawDeg };
+    if (overrideX !== undefined && overrideY !== undefined && overrideZ !== undefined && overrideYaw !== undefined) {
+      const p = [overrideX, overrideY, overrideZ];
+      return { position: [p[0], p[1], p[2]] as [number, number, number], yaw: overrideYaw };
     }
-    const slot = worldSlot('center', headPosition, headYawDeg);
+    const slot = worldSlot('center', [headX, headY, headZ], placementYaw);
     const offset = xrRotateY([0, defaultArea.centerY, defaultArea.z], slot.yaw);
     return {
       position: slot.position.map((n, i) => n + offset[i]!) as [number, number, number],
       yaw: slot.yaw,
     };
-  }, [anchorOverride, headPosition, headYawDeg, defaultArea.centerY, defaultArea.z]);
+  }, [overrideX, overrideY, overrideZ, overrideYaw, headX, headY, headZ, placementYaw, defaultArea.centerY, defaultArea.z]);
   const plane = useMemo(() => xrDragPlane({
     position: anchor.position, yawDeg: anchor.yaw, scale: 1,
     offset: POINTER_STANDOFF, width: area.width, height: area.height,
@@ -56,7 +66,7 @@ export function XrBoardSurface({ headPosition, headYawDeg, enabled, termination,
     const sample = stroke.current.cancel();
     if (sample) emit.current(sample);
     restPointer();
-  }, [enabled, anchor, restPointer]);
+  }, [enabled, anchor, area.width, area.height, restPointer]);
   useEffect(() => {
     if (!termination) return;
     const sample = stroke.current.finish(termination.source, termination.cancel);
