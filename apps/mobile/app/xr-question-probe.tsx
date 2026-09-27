@@ -14,6 +14,7 @@
  *      packages/ui/xr/question-chrome-layout.ts
  * SOT-KEYWORDS: xr question probe route deep link hosted content questionlive settled pose floor origin
  */
+import { xrVoiceSession } from '../src/native-3d/xr-voice-session';
 import React, { useEffect, useMemo } from 'react';
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
@@ -164,6 +165,7 @@ export default function XrQuestionProbeRoute() {
     });
     return () => {
       alive = false;
+      xrVoiceSession.getState().cancel();
     };
   }, []);
 

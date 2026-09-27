@@ -8,6 +8,8 @@
 // SOT: packages/app/features/tutor/tutor-xr-screen.native.tsx
 // SOT-KEYWORDS: tutor xr screen props types platform neutral no viro
 
+import type { ComponentType, ReactNode } from 'react';
+import type { BoardChromeHandlers, BoardChromePresentation, XrSurfaceInput } from '@acme/ui/xr';
 import type { AgeBand } from '../capture/age-band.ts';
 
 export interface TutorXrScreenProps {
@@ -15,6 +17,38 @@ export interface TutorXrScreenProps {
   /** Leaving the headset. The route pops; the session keeps running. */
   onExit: () => void;
   /** The existing export-and-submit path, unchanged. */
-  onAsk: (png: string | null) => void;
+  onAsk: (png: string | null, spoken?: string) => void;
   asking?: boolean;
+  /** Loaded only inside XR; native assets and Rive stay out of the web entry. */
+  loadQuestionPanel?: () => Promise<ComponentType<TutorXrQuestionPanelProps> | null>;
+  loadBoardPanel?: () => Promise<ComponentType<TutorXrBoardPanelProps> | null>;
+}
+
+/** Production host contract: one engine, one calibrated content rectangle. */
+export interface TutorXrBoardPanelProps {
+  slot: { position: readonly [number, number, number]; yaw: number };
+  bound: boolean;
+  enabled: boolean;
+  content: ReactNode;
+  termination?: { source: number; cancel: boolean; revision: number };
+  onSurfaceInput(sample: XrSurfaceInput): void;
+  handlers: BoardChromeHandlers;
+  presentation: BoardChromePresentation;
+  onError(): void;
+}
+
+export interface TutorXrQuestionPanelProps {
+  slot: { position: readonly [number, number, number]; yaw: number };
+  question: string;
+  skill: string;
+  enabled: boolean;
+  busy: boolean;
+  listening: boolean;
+  status: string;
+  hasMarks: boolean;
+  onVoice(): void;
+  onHint(): void;
+  onSubmit(): void;
+  onBoard(): void;
+  onError(): void;
 }

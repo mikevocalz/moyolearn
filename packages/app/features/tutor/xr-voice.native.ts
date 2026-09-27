@@ -2,6 +2,7 @@
 // One recorder per XR presentation. Async permission and transcription work is
 // invalidated on interruption or exit, so neither can revive a departed lesson.
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { AudioRecorder } from 'react-native-audio-api';
 import { usePermissionRequester } from '../permissions/permission-request';
 import { usePermissions } from '../permissions/permissions.store.ts';
@@ -27,7 +28,7 @@ export function useXrVoice({ onUtterance, enabled }: XrVoiceOptions): XrVoice {
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const generation = useRef(0);
   const available = useRef(enabled);
-  useLayoutEffect(() => { available.current = enabled; }, [enabled]);
+  useLayoutEffect(() => { available.current = enabled && AppState.currentState === "active"; }, [enabled]);
   const utterance = useRef(onUtterance);
   useLayoutEffect(() => { utterance.current = onUtterance; }, [onUtterance]);
   const { request } = usePermissionRequester();
@@ -74,7 +75,7 @@ export function useXrVoice({ onUtterance, enabled }: XrVoiceOptions): XrVoice {
       if (micStatus !== 'granted') {
         const permission = await request('microphone');
         if (!current()) return;
-        if (permission === 'denied' || permission === 'blocked') {
+        if (permission !== 'granted') {
           update({ kind: 'blocked', reason: 'permission' });
           return;
         }
@@ -106,15 +107,29 @@ export function useXrVoice({ onUtterance, enabled }: XrVoiceOptions): XrVoice {
   }, [start, stop]);
 
   useEffect(() => {
+    available.current = enabled && AppState.currentState === "active";
     const lifetime = generation;
-    return () => {
+    const cancel = () => {
       lifetime.current++;
       clearTimer();
       const instance = recorder.current;
       recorder.current = null;
       if (instance) void instance.stop().catch(() => undefined);
     };
-  }, [enabled, clearTimer]);
+    const subscription = AppState.addEventListener('change', (state) => {
+      available.current = enabled && state === 'active';
+      if (!available.current) { cancel(); update({ kind: 'idle' }); }
+    });
+    return () => {
+      subscription.remove();
+      available.current = false;
+      lifetime.current++;
+      clearTimer();
+      const instance = recorder.current;
+      recorder.current = null;
+      if (instance) void instance.stop().catch(() => undefined);
+    };
+  }, [enabled, clearTimer, update]);
 
   return { phase, toggle };
 }

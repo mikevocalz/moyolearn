@@ -14,6 +14,9 @@ import { worldSlot } from './world-slot.ts';
 import type { XrTriPanelProps } from './XrTriPanel.types.ts';
 
 export function XrTriPanel({
+  centerPanel,
+  leftPanel,
+  questionRows,
   headPosition,
   headYawDeg,
   boardUri,
@@ -31,11 +34,11 @@ export function XrTriPanel({
 
   return (
     <>
-      <PremiumXRMediaPanel
-        title="Tools"
+      {leftPanel ?? <PremiumXRMediaPanel
+        title={questionRows ? "Lesson & tools" : "Tools"}
         controlSize={controlSize}
         imageSource={{ uri: placeholderUri }}
-        rows={[...controlRows]}
+        rows={[...controlRows, ...(questionRows ?? [])]}
         size="toolsCard"
         /* No art column: these panels are a list, and a media strip would take
            the width the rows read in. */
@@ -43,7 +46,7 @@ export function XrTriPanel({
         worldPlacement={left}
         draggable={false}
         animate={false}
-      />
+      />}
       {/*
         THE BOARD, IN A PANEL. `mediaFraction={1}` gives the child's paper the
         whole body — the poke-xr clamp opened at both ends for exactly this —
@@ -51,7 +54,7 @@ export function XrTriPanel({
         real board rather than a second rendering of it. Wider than the flanks
         because it is the thing being worked on.
       */}
-      <PremiumXRMediaPanel
+      {centerPanel ?? <PremiumXRMediaPanel
         title={boardTitle}
         mediaMaterial={boardLive ? XR_MATERIAL.boardLive : undefined}
         imageSource={{ uri: boardUri ?? placeholderUri }}
@@ -61,11 +64,11 @@ export function XrTriPanel({
         worldPlacement={centre}
         draggable={false}
         animate={false}
-      />
+      />}
       <PremiumXRMediaPanel
         title={tutorName}
         imageSource={{ uri: placeholderUri }}
-        rows={[...chatRows]}
+        rows={[...(leftPanel ? controlRows : []), ...chatRows]}
         size="portraitCard"
         mediaFraction={0}
         worldPlacement={right}

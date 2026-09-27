@@ -6,6 +6,8 @@
 // SOT: packages/ui/xr/XrTriPanel.native.tsx
 // SOT-KEYWORDS: xr tri panel props types platform neutral no viro slots arc
 
+import type { ReactNode } from 'react';
+
 /** A row in a `PremiumXRMediaPanel` list — poke-xr's shape, restated. */
 export interface XrPanelRow {
   id: string;
@@ -24,6 +26,9 @@ export interface XrPanelRow {
 }
 
 export interface XrTriPanelProps {
+  centerPanel?: ReactNode;
+  leftPanel?: ReactNode;
+  questionRows?: readonly XrPanelRow[];
   /** The board, as the engine's own PNG. Null until the first raster lands. */
   boardUri: string | null;
   boardLive: boolean;

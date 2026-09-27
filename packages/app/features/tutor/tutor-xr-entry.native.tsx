@@ -12,17 +12,31 @@
 // SOT: packages/app/features/tutor/tutor-xr-screen.native.tsx
 // SOT-KEYWORDS: tutor xr entry lazy loader native viro suspense route boundary
 
-import { Suspense, lazy } from 'react';
+import { Component, Suspense, lazy, type ReactNode } from 'react';
 import { View } from '@acme/ui/primitives';
-import { Text } from '@acme/ui';
+import { Button, Text } from '@acme/ui';
 import type { TutorXrScreenProps } from './tutor-xr-screen.types.ts';
 
 const TutorXrScreen = lazy(async () => ({
   default: (await import('./tutor-xr-screen.native.tsx')).TutorXrScreen,
 }));
 
+class XrEntryBoundary extends Component<{ onExit(): void; children: ReactNode }, { failed: boolean }> {
+  state = { failed: false };
+  static getDerivedStateFromError() { return { failed: true }; }
+  render() {
+    if (this.state.failed) return <View className="flex-1 items-center justify-center bg-surface gap-stack p-group">
+      <Text variant="body">Your spatial workspace could not open.</Text>
+      <Text variant="caption" tone="muted">Your lesson and working are still saved.</Text>
+      <Button title="Back to lesson" onPress={this.props.onExit} />
+    </View>;
+    return this.props.children;
+  }
+}
+
 export function TutorXrEntry(props: TutorXrScreenProps) {
   return (
+    <XrEntryBoundary onExit={props.onExit}>
     <Suspense
       fallback={
         /*
@@ -35,10 +49,12 @@ export function TutorXrEntry(props: TutorXrScreenProps) {
           <Text variant="caption" tone="muted">
             Your working is saved. Nothing is lost if you go back.
           </Text>
+          <Button title="Back to lesson" onPress={props.onExit} />
         </View>
       }
     >
       <TutorXrScreen {...props} />
     </Suspense>
+    </XrEntryBoundary>
   );
 }

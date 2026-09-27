@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react';
 /**
  * The Rive-framed digital board — ONE spatial object: Rive chrome (frame +
  * toolbar + palette) wrapped around the live Quickdraw quad, inside the
@@ -71,6 +72,10 @@ export interface RiveBoardPanelProps {
   /** Panel face opacity 0..1 — multiplies the chrome's translucent fills;
       icons, text and accents stay full-strength. Defaults to authored. */
   opacity?: number;
+  enabled?: boolean;
+  movable?: boolean;
+  content?: ReactNode;
+  termination?: { source: number; cancel: boolean; revision: number };
   resetKey?: number;
   /** Persisted carrier pose on release — same contract as the probe grip. */
   onCarrierRelease(pose: { position: [number, number, number]; rotation: [number, number, number] }): void;
@@ -94,6 +99,10 @@ export function RiveBoardPanel({
   grabbed,
   bound,
   opacity = 1,
+  enabled = bound,
+  movable = true,
+  content,
+  termination,
   resetKey = 0,
   onCarrierRelease,
   onGrab,
@@ -157,6 +166,8 @@ export function RiveBoardPanel({
     try {
       const next = await carrierNode.current?.getTransformAsync();
       if (mounted.current && next) onCarrierRelease({ position: next.position, rotation: next.rotation });
+    } catch {
+      // A disconnected controller cannot leave the panel permanently grabbed.
     } finally {
       if (mounted.current) onGrab(false);
     }
@@ -214,7 +225,7 @@ export function RiveBoardPanel({
             /* 2× the artboard — micro-labels stay crisp at arm's length in
                the headset; the quad is 1.2 m wide and text lives at fs9. */
             resolution={{ width: 2496, height: 1560 }}
-            input={{ panelWorld, enabled: !grabbed, resetKey }}
+            input={{ panelWorld, enabled: enabled && !grabbed, resetKey }}
             onError={(error) => onChromeError?.(`Board controls unavailable: ${error.message}`)}
             onRuntimeReady={(rt) => {
               runtime.current = rt;
@@ -240,7 +251,7 @@ export function RiveBoardPanel({
             drew for the same state.
           */}
           <ViroNode position={[...contentCentre]}>
-            {bound ? (
+            {content ?? (bound ? (
               <XrBoardLive width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height} />
             ) : (
               <ViroQuad
@@ -249,10 +260,11 @@ export function RiveBoardPanel({
                 materials={['xrBoardEmpty']}
                 ignoreEventHandling
               />
-            )}
+            ))}
           </ViroNode>
         </ViroNode>
         {/* The grip — carrier child at a world pose, the probe's own trick. */}
+        {movable ? <>
         <ViroQuad
           position={[gripWorld.position[0], gripWorld.position[1], gripWorld.position[2]]}
           rotation={[0, gripWorld.yawDeg, 0]}
@@ -269,7 +281,7 @@ export function RiveBoardPanel({
                and `grabbed` never clears, every `enabled: !grabbed` gate in
                the scene stays shut and the whole board goes silent. */
             if (state === 1) {
-              if (owner.current !== null) void finishGrab();
+              if (owner.current !== null || grabbed) return;
               owner.current = sourceId;
               onGrab(true);
               runtime.current?.setBoolean('grabbed', true);
@@ -297,6 +309,7 @@ export function RiveBoardPanel({
           ignoreEventHandling
           style={{ fontSize: 28, color: '#112d44', textAlign: 'center', textAlignVertical: 'center' }}
         />
+        </> : null}
       </ViroNode>
       {/*
         THE INPUT PLANE IS A SIBLING, WORLD-ANCHORED. It is invisible, so it
@@ -310,7 +323,8 @@ export function RiveBoardPanel({
         headYawDeg={0}
         anchor={{ position: contentAnchor.position, yawDeg: contentAnchor.yawDeg }}
         area={{ width: CONTENT_RECT_PANEL.width, height: CONTENT_RECT_PANEL.height }}
-        enabled={bound && !grabbed}
+        enabled={enabled && !grabbed}
+        termination={termination}
         onSurfaceInput={onSurfaceInput}
       />
     </>

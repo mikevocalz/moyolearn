@@ -14,11 +14,10 @@
  * SOT-KEYWORDS: xr voice session store audio recorder whisper transcribe permission microphone spatial
  */
 
-import { PermissionsAndroid } from 'react-native';
 import { AudioRecorder } from 'react-native-audio-api';
 import { createStore } from 'zustand/vanilla';
-import { transcribe } from '@acme/app/features/capture/transcribe.ts';
-import { usePermissions } from '@acme/app/features/permissions/permissions.store.ts';
+import { transcribe } from '@acme/app/features/capture/transcribe.native.ts';
+import { requestNativePermission } from '@acme/app/features/permissions/permission-request.native.ts';
 import { useXrQuestionFlow } from '@acme/app/features/tutor/xr-question.store.ts';
 
 export type XrVoiceSessionPhase = 'idle' | 'starting' | 'listening' | 'transcribing' | 'blocked';
@@ -29,6 +28,7 @@ export const xrVoiceSession = createStore<{
   phase: XrVoiceSessionPhase;
   toggle(): void;
   stop(): Promise<void>;
+  cancel(): void;
 }>()((set, get) => {
   /* Recorder + timer are module-private — they are handles, not state a
      panel should ever render. */
@@ -48,7 +48,8 @@ export const xrVoiceSession = createStore<{
     recorder = null;
     clearTimer();
     const run = generation;
-    const current = () => generation === run;
+    const questionId = useXrQuestionFlow.getState().current?.id;
+    const current = () => generation === run && useXrQuestionFlow.getState().current?.id === questionId;
     set({ phase: 'transcribing' });
     status('Writing down what you said…');
     try {
@@ -76,32 +77,17 @@ export const xrVoiceSession = createStore<{
   };
 
   const start = async () => {
-    if (get().phase === 'starting' || get().phase === 'listening') return;
+    if (!['idle', 'blocked'].includes(get().phase)) return;
     const run = ++generation;
     const current = () => generation === run;
     set({ phase: 'starting' });
     let instance: AudioRecorder | null = null;
     try {
-      /* Same rule as `permission-request.native.ts`: a manifest entry is not
-         a grant. Ask once, record the OS's real answer in the persisted
-         store, and never claim a grant we did not obtain. */
-      const result = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.RECORD_AUDIO);
-      usePermissions.getState().setStatus(
-        'microphone',
-        result === PermissionsAndroid.RESULTS.GRANTED
-          ? 'granted'
-          : result === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN
-            ? 'blocked'
-            : 'denied',
-      );
-      if (result !== PermissionsAndroid.RESULTS.GRANTED) {
-        if (!current()) return;
+      const permission = await requestNativePermission('microphone');
+      if (!current()) return;
+      if (permission !== 'granted') {
         set({ phase: 'blocked' });
-        status(
-          result === PermissionsAndroid.RESULTS.NEVER_ASK_AGAIN
-            ? 'The microphone is off in Settings — ask a grown-up to turn it on.'
-            : 'I need the microphone to hear your answer.',
-        );
+        status('Microphone permission is needed to hear your answer.');
         return;
       }
       instance = new AudioRecorder();
@@ -136,5 +122,13 @@ export const xrVoiceSession = createStore<{
       else void start();
     },
     stop,
+    cancel: () => {
+      generation++;
+      clearTimer();
+      const instance = recorder;
+      recorder = null;
+      if (instance) void instance.stop().catch(() => undefined);
+      set({ phase: 'idle' });
+    },
   };
 });

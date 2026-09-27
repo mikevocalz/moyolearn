@@ -369,7 +369,7 @@ interface XrSessionState {
   setClearArmed(armed: boolean): void;
   bumpRevision(): void;
   /** The spatial rail exported a board. `null` is an empty board and is dropped. */
-  queueAsk(png: string | null): void;
+  queueAsk(png: string | null, spoken?: string): void;
   /** The tutor screen claims it. Reading it clears it, so it cannot send twice. */
   takeAsk(): string | null;
   /** The spatial route transcribed a question. Empty text is dropped. */
@@ -426,11 +426,15 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
   setTool: (tool) => set({ tool }),
   setInk: (ink) => set({ ink }),
   setAsking: (asking) => set({ asking }),
-  setBoardHistory: (boardHistory) => set({ boardHistory }),
+  setBoardHistory: (boardHistory) => {
+    const previous = get().boardHistory;
+    if (previous.canUndo === boardHistory.canUndo && previous.canRedo === boardHistory.canRedo && previous.hasMarks === boardHistory.hasMarks) return;
+    set({ boardHistory });
+  },
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
   setClearArmed: (clearArmed) => set({ clearArmed }),
   bumpRevision: () => set((state) => ({ revision: state.revision + 1 })),
-  queueAsk: (png) => set({ pendingAsk: png }),
+  queueAsk: (png, spoken) => set({ pendingAsk: png, ...(spoken === undefined ? {} : { pendingSay: spoken.trim() || null }) }),
   queueSay: (text) => {
     const trimmed = text.trim();
     if (trimmed.length > 0) set({ pendingSay: trimmed });
@@ -478,5 +482,8 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
       pendingSay: null,
       asking: false,
       boardTextureBound: false,
+      paletteOpen: false,
+      clearArmed: false,
+      boardHistory: { canUndo: false, canRedo: false, hasMarks: false },
     }),
 }));
