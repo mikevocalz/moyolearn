@@ -414,6 +414,9 @@ patchedDependencies:
   expo-router@57.0.15:
     hash: ff66019f9f6a629493ace94ff9b1dd29211dfce7b2cd26da19004fcbc576e52d
     path: patches/expo-router@57.0.15.patch
+  nitro-canvas-in-Vision:
+    hash: 771ba6a0441839b68e4ccb38e4ae81237fcec08481c0b5b1a4a0f6340eb566ab
+    path: patches/nitro-canvas-in-Vision.patch
   react-native-nitro-image:
     hash: 474820bf1e72aa5e1339fc2f0f5aa22df5f5645481a6f690dd3764c8f8c0723e
     path: patches/react-native-nitro-image.patch
@@ -605,7 +608,7 @@ importers:
         version: 1.47.0(react-native-svg@15.15.5(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       nitro-canvas-in-Vision:
         specifier: file:../../vendors/nitro-canvas-in-Vision-0.0.2-rive.4.tgz
-        version: file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4.tgz(react-native-nitro-modules@0.37.1(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4.tgz(patch_hash=771ba6a0441839b68e4ccb38e4ae81237fcec08481c0b5b1a4a0f6340eb566ab)(react-native-nitro-modules@0.37.1(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react:
         specifier: 19.3.0
         version: 19.3.0
@@ -22224,7 +22227,7 @@ snapshots:
 
   nf3@0.3.24: {}
 
-  nitro-canvas-in-Vision@file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4.tgz(react-native-nitro-modules@0.37.1(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  nitro-canvas-in-Vision@file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4.tgz(patch_hash=771ba6a0441839b68e4ccb38e4ae81237fcec08481c0b5b1a4a0f6340eb566ab)(react-native-nitro-modules@0.37.1(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       react: 19.3.0
       react-native: 0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0)

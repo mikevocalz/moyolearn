@@ -7,7 +7,7 @@ on:
       - 'apps/mobile/**'
       - 'packages/app/features/tutor/**'
       - 'packages/ui/xr/**'
-      - 'patches/@reactvision*'
+      - 'patches/**'
       - 'vendors/**'
       - 'tooling/*visionos*'
       - 'package.json'
@@ -30,6 +30,8 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
+      - name: Check native build cache behavior
+        run: node --test tooling/visionos-build-cache.test.mjs
       - name: Verify Apple SDKs
         run: |
           xcodebuild -version

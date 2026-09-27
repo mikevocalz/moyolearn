@@ -63,6 +63,7 @@
       "react-server-dom-webpack": "19.3.0"
     },
     "patchedDependencies": {
+      "nitro-canvas-in-Vision": "patches/nitro-canvas-in-Vision.patch",
       "@seshuk/payload-storage-bunny@3.0.0": "patches/@seshuk__payload-storage-bunny@3.0.0.patch",
       "react-native-nitro-image": "patches/react-native-nitro-image.patch",
       "react-native-vision-camera": "patches/react-native-vision-camera.patch",
