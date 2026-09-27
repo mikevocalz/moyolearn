@@ -60,7 +60,7 @@ export function spatialStylusHit(
     ];
   } else {
     const head = frame.headPosition;
-    if (!frame.primaryPressed || !head || !finite(head)) return null;
+    if (!(frame.primaryPressed || frame.secondaryPressed) || !head || !finite(head)) return null;
     const ray = diff(tip, head);
     const denominator = dot(ray, planeNormal);
     if (Math.abs(denominator) < 1e-6) return null;
@@ -92,7 +92,7 @@ export class SpatialStylusBoardInput {
     if (!frame?.tracked || !frame.position || !finite(frame.position)) return this.reset();
 
     const touching = onPaper(frame.position, board);
-    const pressed = frame.primaryPressed || (frame.tipPressed && touching);
+    const pressed = frame.primaryPressed || frame.secondaryPressed || (frame.tipPressed && touching);
     if (!pressed) {
       this.held = false;
       this.blocked = false;
