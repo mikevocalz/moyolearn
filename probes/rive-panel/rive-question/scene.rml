@@ -31,6 +31,13 @@
         <Stroke thickness="3" cap="round" join="round"><SolidColor colorValue="FFFFC168" /></Stroke>
       </Shape>
     </Node>
+    <Node name="Status frame">
+      <Shape name="Status card">
+        <Rectangle x="1030" y="634" width="420" height="216" cornerRadiusTL="4" />
+        <Fill><SolidColor colorValue="F20E1420" /></Fill>
+        <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="66FFC168" /></Stroke>
+      </Shape>
+    </Node>
     <Node id="0:208" opacity="0" name="Feedback">
       <Shape name="Fb rule">
         <Rectangle x="1030" y="552" width="420" height="1" />
@@ -63,11 +70,7 @@
     </Node>
     <Node id="0:213" opacity="0" name="Hint card">
       <DataBindContext sourcePathIds="0:40-0:164" propertyKey="18" converterId="0:63" />
-      <Shape name="Hint frame">
-        <Rectangle x="1030" y="698" width="420" height="88" cornerRadiusTL="4" />
-        <Fill><SolidColor colorValue="F20E1420" /></Fill>
-        <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="66FFC168" /></Stroke>
-      </Shape>
+
       <Text name="Hint tag" x="834" y="662" wrapValue="noWrap">
         <TextStylePaint id="0:364" fontSize="14.25" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFFFC168" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:364" text="HINT" />
@@ -89,11 +92,7 @@
       </Text>
     </Node>
     <Node id="0:212" opacity="0" name="Error chip">
-      <Shape name="Err frame">
-        <Rectangle x="1030" y="698" width="420" height="88" cornerRadiusTL="4" />
-        <Fill><SolidColor colorValue="F21A1210" /></Fill>
-        <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="99EC9787" /></Stroke>
-      </Shape>
+
       <Text name="Err tag" x="834" y="662" wrapValue="noWrap">
         <TextStylePaint id="0:368" fontSize="14.25" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFEC9787" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:368" text="FAULT" />

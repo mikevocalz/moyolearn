@@ -8,6 +8,8 @@ const inside = (p: Point) => finite(p) && p.u >= 0 && p.u <= 1 && p.v >= 0 && p.
 export class BoardPointer {
   private last: Point | null = null;
   get active() { return this.last !== null; }
+  /** The id the stroke was opened under — button or ray, whatever the down event carried. */
+  get source() { return this.last?.source ?? null; }
   owns(source: number) { return this.last?.source === source; }
   begin(point: Point): XrSurfaceInput | null {
     if (this.last || !inside(point)) return null;

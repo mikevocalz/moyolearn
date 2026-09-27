@@ -89,7 +89,7 @@ export function questionPresentationOf(
        on-device tutor generates the rest, so the button is never dead. */
     hintAvailable: question !== null,
     hintVisible: state.hintVisible,
-    hintText: question?.hint?.text ?? state.generatedHint ?? (state.hintBusy ? 'Thinking…' : ''),
+    hintText: question?.hint?.text ?? state.generatedHint ?? (state.hintBusy ? 'Thinking...' : ''),
     submitLabel: 'SUBMIT',
     continueLabel: 'NEXT',
     skipLabel: 'SKIP',

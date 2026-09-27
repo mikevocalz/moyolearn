@@ -205,3 +205,19 @@
 [10:39:49.023] rive  viewport 1280x800 @1x
 [10:39:49.112] rive  wrote ./build/moyo_learning_question.png
 [10:52:12.224] rive  verified (0 bytes, 155ms, 0 errors, 0 warnings)
+[10:57:19.450] rive  built build/moyo_learning_question.riv (165071 bytes, 156ms, 0 errors, 0 warnings)
+[10:57:19.454] rive  showing LearningQuestion [1/1]
+[10:57:19.455] rive  viewport 1280x800 @1x
+[10:57:19.539] rive  wrote ./build/moyo_learning_question.png
+[11:20:37.937] rive  verified (0 bytes, 149ms, 0 errors, 0 warnings)
+[11:21:25.320] rive  built build/moyo_learning_question.riv (165012 bytes, 149ms, 0 errors, 0 warnings)
+[11:21:25.550] rive  built build/moyo_learning_question.riv (165012 bytes, 131ms, 0 errors, 0 warnings)
+[11:21:25.555] rive  showing LearningQuestion [1/1]
+[11:21:25.556] rive  viewport 1280x800 @1x
+[11:21:25.631] rive  wrote ./build/moyo_learning_question.png
+[11:22:10.171] rive  built build/moyo_learning_question.riv (165091 bytes, 153ms, 0 errors, 0 warnings)
+[11:22:10.174] rive  showing LearningQuestion [1/1]
+[11:22:10.175] rive  viewport 1280x800 @1x
+[11:22:10.268] rive  wrote ./build/moyo_learning_question.png
+[11:22:21.880] rive  verified (0 bytes, 134ms, 0 errors, 0 warnings)
+[11:22:22.050] rive  built build/moyo_learning_question.riv (165012 bytes, 130ms, 0 errors, 0 warnings)

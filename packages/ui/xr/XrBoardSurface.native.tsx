@@ -93,8 +93,15 @@ export function XrBoardSurface({ headPosition, headYawDeg, enabled, termination,
           }
         }}
         onDrag={(position, source) => {
-          const id = sourceId(source);
-          if (!stroke.current.owns(id)) return;
+          /* `onClickState` reports the BUTTON (A = 5, grip = 9), `onDrag`
+             reports the RAY the button rides (right controller = 1) — a
+             button-opened stroke owns 5, so checking `owns(1)` drops every
+             move and the stroke collapses to a dot. The renderer only emits
+             drags for the owning ray anyway, so while a stroke is open a drag
+             IS that stroke's — keep the move under the owner's id so the
+             begin/move/end stream carries one consistent source. */
+          const id = stroke.current.source;
+          if (id === null) return;
           const hit = xrDragHit(position, downHit.current, plane.planePoint);
           send(stroke.current.move(sampleOf(hit, id)));
           if (!stroke.current.active) restPointer();
