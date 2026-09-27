@@ -77,6 +77,7 @@ export function XrTriPanel({
         /* The conversation is the surface that genuinely needs the rail — it is
            the only one that outgrows its panel. */
         alwaysShowRail
+        scrollResetKey={chatRows[0]?.id}
       />
     </>
   );

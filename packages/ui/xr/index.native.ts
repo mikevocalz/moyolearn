@@ -198,3 +198,4 @@ export { questionPages } from './question-pages.ts';
 export { boardCommandEnabled } from './board-chrome-commands.ts';
 export { bindBoardChrome, type BoardChromeBinding } from './board-chrome-bind.ts';
 export { bindQuestionChrome, type QuestionChromeHandlers, type QuestionChromePresentation, type QuestionChromeBinding } from './question-chrome-bind.ts';
+export { xrCaptionRows } from './caption-rows.ts';

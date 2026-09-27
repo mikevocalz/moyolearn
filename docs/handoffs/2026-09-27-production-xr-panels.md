@@ -16,7 +16,7 @@ The learner `tutor-xr` route now loads the authored board and question chrome on
 | Back to lesson | Exit the XR route while retaining the lesson |
 | Reload Natalie | Retry a failed model load; voice and captions remain available |
 
-The question panel displays the current tutor problem as a conversation. It does not fabricate multiple-choice answers, assignment sequencing or grading evidence. The structured question evaluator remains the separate, existing evidence-checked path. Long problem text is paged, and the native fallback and conversation rail retain full text instead of silently truncating turns.
+The question panel displays the current tutor problem as a conversation. It does not fabricate multiple-choice answers, assignment sequencing or grading evidence. The structured question evaluator remains the separate, existing evidence-checked path. Long problem text is paged, and the native fallback and conversation rail retain full text instead of silently truncating turns. The newest caption appears first; older turns stay below it.
 
 ## Lifecycle and rendering
 
@@ -33,7 +33,7 @@ The question panel displays the current tutor problem as a conversation. It does
 ## Verified in the Linux workspace
 
 - App, UI and mobile TypeScript checks.
-- 158 XR geometry, input, command binding, pagination and question-flow/evaluator tests.
+- 159 XR geometry, input, command binding, pagination and question-flow/evaluator tests.
 - UI lint and targeted app/mobile lint: no errors (existing import-order/probe warnings remain).
 - `git diff --check` and visionOS permission plist parsing.
 

@@ -39,7 +39,7 @@ export interface XrTriPanelProps {
   headPosition: readonly [number, number, number];
   /** The child's facing about Y, in degrees. The whole arc turns with them. */
   headYawDeg: number;
-  /** Oldest first. The right panel scrolls them; the caller does not window. */
+  /** Display order. Production puts the newest caption first, retaining older turns below. */
   chatRows: readonly XrPanelRow[];
   /** What the rail offers, as readable lines on the left panel. */
   controlRows: readonly XrPanelRow[];

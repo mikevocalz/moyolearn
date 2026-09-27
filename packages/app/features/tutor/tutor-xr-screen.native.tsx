@@ -49,6 +49,7 @@ import {
   panelMediaArea,
   worldSlot,
   questionPages,
+  xrCaptionRows,
   xrRotateY,
   XrTriPanel,
   XrBoardSurface,
@@ -63,7 +64,6 @@ import {
   type BoardTextureBinding,
   type XrHeadPose,
   type XrVector3,
-  type XrChatRow,
   type XrSurfaceInput,
 } from '@acme/ui/xr';
 import { buttonSizeForBand } from '../capture';
@@ -545,12 +545,7 @@ function BoardScene() {
   */
   const inkLands = !(phase.kind === 'interrupted' && phase.reason === 'calibration-failed');
 
-  const chatRows: readonly XrChatRow[] = messages.map((message) => ({
-    id: message.id,
-    role: message.role,
-    text: message.text,
-    attachments: message.attachments?.length,
-  }));
+  const chatRows = useMemo(() => xrCaptionRows(messages, TUTOR_NAME), [messages]);
 
   /*
     A RAY ON THE PAPER IS A POINTER IN THE ENGINE.
@@ -732,10 +727,7 @@ function BoardScene() {
             { id: 'hint', text: 'Ask for a hint', disabled: composedState !== 'ready' || asking || tutorThinking,
               onPress: () => useXrSession.getState().queueSay('Please give me a hint for the current problem without giving away the answer.') },
           ]}
-          chatRows={chatRows.flatMap((row) => [
-            { id: `${row.id}-speaker`, text: row.role === 'tutor' ? TUTOR_NAME : 'You', emphasis: true },
-            ...questionPages(row.text, 16, 1).map((text, i) => ({ id: `${row.id}-${i}`, text })),
-          ])}
+          chatRows={chatRows}
           controlRows={[
             { id: 'exit', text: 'Back to lesson', onPress: () => active.onExit() },
             { id: 'recenter', text: 'Recenter workspace', onPress: () => { void placeFromHead(); } },
