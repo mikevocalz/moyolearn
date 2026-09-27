@@ -84,7 +84,9 @@ export class SpatialStylusBoardInput {
   private blocked = false;
   private lastPressure = 1;
 
-  constructor(private readonly pointer: BoardPointer) {}
+  private readonly pointer: BoardPointer;
+
+  constructor(pointer: BoardPointer) { this.pointer = pointer; }
 
   handle(frame: SpatialStylusFrame, board: SpatialBoardGeometry): XrSurfaceInput | null {
     if (!frame?.tracked || !frame.position || !finite(frame.position)) return this.reset();
