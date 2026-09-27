@@ -172,12 +172,15 @@ export const useXrQuestionFlow = create<XrQuestionFlowState>((set, get) => ({
   toggleChoice: (choiceId) => {
     const { phase, answer, current } = get();
     if (phase !== 'idle' || !current) return;
+    const prev = answer.kind === 'choices' ? answer.selectedIds : [];
     const selected =
-      answer.kind === 'choices'
-        ? answer.selectedIds.includes(choiceId)
-          ? answer.selectedIds.filter((id) => id !== choiceId)
-          : [...answer.selectedIds, choiceId]
-        : [choiceId];
+      current.interaction === 'multi-select'
+        ? prev.includes(choiceId)
+          ? prev.filter((id) => id !== choiceId)
+          : [...prev, choiceId]
+        : prev.includes(choiceId) && prev.length === 1
+          ? []
+          : [choiceId];
     set({ answer: { kind: 'choices', selectedIds: selected } });
   },
 

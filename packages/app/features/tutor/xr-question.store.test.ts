@@ -134,3 +134,30 @@ test('answerReady discriminates the draft union honestly', () => {
   assert.equal(answerReady({ kind: 'text', text: '42' }), true);
   assert.equal(answerReady({ kind: 'board', boardId: 'b' }), true);
 });
+
+test('toggleChoice keeps a single selection on multiple-choice questions', () => {
+  reset();
+  state().loadInitial(question('q1'));
+  useXrQuestionFlow.setState({ phase: 'idle' });
+  state().toggleChoice('a');
+  state().toggleChoice('b');
+  let answer = state().answer;
+  assert.equal(answer.kind, 'choices');
+  assert.deepEqual(answer.kind === 'choices' ? answer.selectedIds : null, ['b']);
+  /* Re-tapping the lone selection clears it back to no answer. */
+  state().toggleChoice('b');
+  answer = state().answer;
+  assert.equal(answer.kind, 'choices');
+  assert.deepEqual(answer.kind === 'choices' ? answer.selectedIds : null, []);
+});
+
+test('toggleChoice still accumulates on multi-select questions', () => {
+  reset();
+  state().loadInitial(question('q1', { interaction: 'multi-select' }));
+  useXrQuestionFlow.setState({ phase: 'idle' });
+  state().toggleChoice('a');
+  state().toggleChoice('b');
+  const answer = state().answer;
+  assert.equal(answer.kind, 'choices');
+  assert.deepEqual(answer.kind === 'choices' ? answer.selectedIds : null, ['a', 'b']);
+});

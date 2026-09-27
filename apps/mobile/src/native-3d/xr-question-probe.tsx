@@ -36,7 +36,8 @@ import {
   answerReady,
   useXrQuestionFlow,
 } from '@acme/app/features/tutor/xr-question.store.ts';
-import { evaluateXrAnswer } from '@acme/app/features/tutor/xr-question-evaluator.ts';
+import { draftAnswerText, evaluateXrAnswer } from '@acme/app/features/tutor/xr-question-evaluator.ts';
+import { useTutorStore } from '@acme/app/features/tutor/tutor.store.ts';
 import { xrLocalHint } from '@acme/app/features/tutor/xr-local-tutor.ts';
 import { xrVoiceSession } from './xr-voice-session.ts';
 import { XrQuestionPanel } from './xr-question-panel';
@@ -112,6 +113,10 @@ const loadFixture = (index: number) => {
   }
   flow.loadInitial(current);
   flow.stageNext(next);
+  /* The question is also the tutor session's problem — every coach turn
+     (Ask Natalie, the spoken verdict on submit) posts `problem` and the
+     route refuses a turn without one. */
+  useTutorStore.getState().start(current.prompt);
   xrQuestionProbe.setState({ sequenceIndex: index, contentReady: false });
   openInitialEntrance();
 };
@@ -143,7 +148,20 @@ const questionHandlers: QuestionChromeHandlers = {
       return;
     }
     void evaluateXrAnswer(current, answer)
-      .then((feedback) => useXrQuestionFlow.getState().resolveSubmit(token, feedback))
+      .then((feedback) => {
+        useXrQuestionFlow.getState().resolveSubmit(token, feedback);
+        /* Natalie speaks the verdict through the same signed coach stream Ask
+           Natalie uses — the only path that carries a server-signed voice tag.
+           An unreachable tutor API degrades to text-only on the panel rather
+           than an error, and the turn stays inside the coach's safety plane. */
+        const spoken = draftAnswerText(current, answer);
+        void useTutorStore
+          .getState()
+          .coach(
+            `The learner answered "${spoken ?? 'nothing'}" to "${current.prompt}". The verdict shown on their panel is ${feedback.outcome}: "${feedback.title}. ${feedback.body}" Say that verdict aloud to them in one or two short sentences, in your own words.`,
+          )
+          .catch(() => undefined);
+      })
       .catch(() => useXrQuestionFlow.getState().fail('Could not check that answer — try again'));
   },
   onNext: () => {

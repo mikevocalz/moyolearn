@@ -135,3 +135,31 @@
 [09:52:57.948] rive  showing LearningQuestion [1/1]
 [09:52:57.949] rive  viewport 1280x800 @1x
 [09:52:58.012] rive  wrote build/feedback-style2.png
+[10:08:03.974] rive  verified (0 bytes, 157ms, 0 errors, 0 warnings)
+[10:08:08.377] rive  built build/moyo_learning_question.riv (165071 bytes, 134ms, 0 errors, 0 warnings)
+[10:08:08.381] rive  showing LearningQuestion [1/1]
+[10:08:08.381] rive  viewport 1280x800 @1x
+[10:08:08.526] rive  wrote ./build/moyo_learning_question.png
+[10:08:13.006] rive  verified (0 bytes, 133ms, 0 errors, 0 warnings)
+[10:14:03.613] rive  built build/moyo_learning_question.riv (165071 bytes, 162ms, 0 errors, 0 warnings)
+[10:14:03.615] rive  data: phase = 5
+[10:14:03.617] rive  showing LearningQuestion [1/1]
+[10:14:03.617] rive  viewport 1280x800 @1x
+[10:14:03.692] rive  wrote ./build/moyo_learning_question.png
+[10:14:19.033] rive  built build/moyo_learning_question.riv (165071 bytes, 135ms, 0 errors, 0 warnings)
+[10:14:19.034] rive  data: phase = 5
+[10:14:19.034] rive  data: feedbackTitle = Nice work
+[10:14:19.034] rive  data: feedbackBody = Correct — 1/2.
+[10:14:19.034] rive  data: answerText = 1/2
+[10:14:19.034] rive  data: hintText = Halve the parts first
+[10:14:19.035] rive  showing LearningQuestion [1/1]
+[10:14:19.036] rive  viewport 1280x800 @1x
+[10:14:19.085] rive  wrote ./build/moyo_learning_question.png
+[10:16:01.464] rive  built build/moyo_learning_question.riv (165151 bytes, 153ms, 0 errors, 0 warnings)
+[10:16:01.466] rive  data: phase = 5
+[10:16:01.466] rive  data: feedbackTitle = Nice work
+[10:16:01.466] rive  data: feedbackBody = Correct — 1/2.
+[10:16:01.466] rive  data: answerText = 1/2
+[10:16:01.467] rive  showing LearningQuestion [1/1]
+[10:16:01.467] rive  viewport 1280x800 @1x
+[10:16:01.543] rive  wrote ./build/moyo_learning_question.png

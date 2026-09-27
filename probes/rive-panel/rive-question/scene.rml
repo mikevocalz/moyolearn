@@ -32,31 +32,36 @@
       </Shape>
     </Node>
     <Node id="0:208" opacity="0" name="Feedback">
+      <Shape name="Fb card">
+        <Rectangle x="1030" y="590" width="420" height="124" cornerRadiusTL="4" />
+        <Fill><SolidColor colorValue="F20E1420" /></Fill>
+        <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="55E9F4FA" /></Stroke>
+      </Shape>
       <Shape name="Fb rule">
-        <Rectangle x="1030" y="640" width="420" height="1" />
+        <Rectangle x="1030" y="552" width="420" height="1" />
         <Fill><SolidColor colorValue="2BE9F4FA" /></Fill>
       </Shape>
-      <Text name="Fb tag" x="820" y="650" wrapValue="noWrap">
+      <Text name="Fb tag" x="820" y="558" wrapValue="noWrap">
         <TextStylePaint id="0:361" fontSize="14.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:361" text="RESULT" />
       </Text>
       <Shape id="0:209" name="Acc correct" opacity="0">
-        <Rectangle x="822" y="682" width="4" height="44" />
+        <Rectangle x="822" y="594" width="4" height="44" />
         <Fill><SolidColor colorValue="FF5EEAD4" /></Fill>
       </Shape>
       <Shape id="0:210" name="Acc incorrect" opacity="0">
-        <Rectangle x="822" y="682" width="4" height="44" />
+        <Rectangle x="822" y="594" width="4" height="44" />
         <Fill><SolidColor colorValue="FFEC9787" /></Fill>
       </Shape>
       <Shape id="0:211" name="Acc ungraded" opacity="0">
-        <Rectangle x="822" y="682" width="4" height="44" />
+        <Rectangle x="822" y="594" width="4" height="44" />
         <Fill><SolidColor colorValue="FFFFC168" /></Fill>
       </Shape>
-      <Text name="Fb title" x="838" y="672" width="400" sizingValue="fixed" wrapValue="noWrap">
+      <Text name="Fb title" x="838" y="580" width="400" sizingValue="fixed" wrapValue="noWrap">
         <TextStylePaint id="0:362" fontSize="24" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:362" text=""><DataBindContext sourcePathIds="0:40-0:121" propertyKey="268" /></TextValueRun>
       </Text>
-      <Text name="Fb body" x="838" y="698" width="392" sizingValue="fixed" wrapValue="wrap">
+      <Text name="Fb body" x="838" y="608" width="392" sizingValue="fixed" wrapValue="wrap">
         <TextStylePaint id="0:363" fontSize="18" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="800" name="Weight" /><Fill><SolidColor colorValue="FFFFFFFF" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:363" text=""><DataBindContext sourcePathIds="0:40-0:122" propertyKey="268" /></TextValueRun>
       </Text>
@@ -73,17 +78,17 @@
         <TextValueRun styleId="0:364" text="HINT" />
       </Text>
       <Text name="Hint text" x="834" y="682" width="392" sizingValue="fixed" wrapValue="wrap">
-        <TextStylePaint id="0:365" fontSize="20" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:365" fontSize="20" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFFFFFFF" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:365" text=""><DataBindContext sourcePathIds="0:40-0:116" propertyKey="268" /></TextValueRun>
       </Text>
     </Node>
     <Node id="0:214" opacity="0" name="Answer chip">
       <DataBindContext sourcePathIds="0:40-0:162" propertyKey="18" converterId="0:63" />
-      <Text name="Ans tag" x="820" y="630" wrapValue="noWrap">
+      <Text name="Ans tag" x="820" y="542" wrapValue="noWrap">
         <TextStylePaint id="0:366" fontSize="14.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:366" text="ANSWER" />
       </Text>
-      <Text name="Ans text" x="890" y="626" width="350" sizingValue="fixed" wrapValue="noWrap">
+      <Text name="Ans text" x="890" y="538" width="350" sizingValue="fixed" wrapValue="noWrap">
         <TextStylePaint id="0:367" fontSize="18" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:367" text=""><DataBindContext sourcePathIds="0:40-0:114" propertyKey="268" /></TextValueRun>
       </Text>
@@ -682,7 +687,7 @@
       <Fill><SolidColor colorValue="14101820" /></Fill>
       <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="40E9F4FA" /></Stroke>
     </Shape>
-    <Text name="Locale" x="1135" y="43" width="100" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
+    <Text name="Locale" x="1135" y="27" width="100" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
       <TextStylePaint id="0:400" fontSize="15" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:400" text=""><DataBindContext sourcePathIds="0:40-0:104" propertyKey="268" /></TextValueRun>
     </Text>
