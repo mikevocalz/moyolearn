@@ -51,11 +51,16 @@ const bind = (prop, key) => `<DataBindContext sourcePathIds="${VM}-${P[prop].id}
 // bool prop -> numeric opacity needs ToNumber converter (0:63)
 const bindOp = (prop) => `<DataBindContext sourcePathIds="${VM}-${P[prop].id}" propertyKey="18" converterId="0:63" />`;
 
+/* Headset legibility: authored sizes land ~1 px ≈ 1.1 mm at the slot
+   distance, so every authored size runs through this multiplier. One knob —
+   the whole artboard's text scales together. */
+const TEXT_SCALE = 1.5;
+
 function styleXml(fs, color, weight, ls = 0) {
   const sid = id();
   return {
     sid,
-    xml: `<TextStylePaint id="${sid}" fontSize="${fs}"${ls ? ` letterSpacing="${ls}"` : ""} fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="${weight}" name="Weight" /><Fill><SolidColor colorValue="${color}" /></Fill></TextStylePaint>`,
+    xml: `<TextStylePaint id="${sid}" fontSize="${fs * TEXT_SCALE}"${ls ? ` letterSpacing="${ls}"` : ""} fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="${weight}" name="Weight" /><Fill><SolidColor colorValue="${color}" /></Fill></TextStylePaint>`,
   };
 }
 
@@ -323,8 +328,8 @@ brackets("Window brackets", WIN.x, WIN.y, WIN.x1, WIN.y1, 26, AMBER, 2);
 brackets("Panel brackets", 8, 8, 1272, 792, 40, "B3FFC168", 2.5);
 
 // ---------- spine / micro labels ----------
-push(`    <Text name="Spine L" x="16" y="410" rotation="-90"><TextStylePaint id="${id()}" fontSize="10" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="${TEXT_FAINT}" /></Fill></TextStylePaint><TextValueRun text="MOYO // LEARN" /></Text>`);
-push(`    <Text name="Spine R" x="1264" y="390" rotation="90"><TextStylePaint id="${id()}" fontSize="10" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="${TEXT_FAINT}" /></Fill></TextStylePaint><TextValueRun text="QUESTION" /></Text>`);
+push(`    <Text name="Spine L" x="16" y="410" rotation="-90"><TextStylePaint id="${id()}" fontSize="15" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="${TEXT_FAINT}" /></Fill></TextStylePaint><TextValueRun text="MOYO // LEARN" /></Text>`);
+push(`    <Text name="Spine R" x="1264" y="390" rotation="90"><TextStylePaint id="${id()}" fontSize="15" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="${TEXT_FAINT}" /></Fill></TextStylePaint><TextValueRun text="QUESTION" /></Text>`);
 
 // ---------- bands (unbound, near-opaque) ----------
 push(`    <Shape name="Footer band"><PointsPath isClosed="true"><StraightVertex x="0" y="${FOOT}" /><StraightVertex x="${W}" y="${FOOT}" /><StraightVertex x="${W}" y="780" /><StraightVertex x="1260" y="800" /><StraightVertex x="20" y="800" /><StraightVertex x="0" y="780" /></PointsPath><Fill><SolidColor colorValue="${BAND}" /></Fill></Shape>`);

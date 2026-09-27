@@ -73,3 +73,18 @@
 [13:10:55.476] rive  showing LearningQuestion [1/1]
 [13:11:07.292] rive  built build/moyo_learning_question.riv (165029 bytes, 157ms, 0 errors, 0 warnings)
 [13:38:29.597] rive  verified (0 bytes, 156ms, 0 errors, 0 warnings)
+[14:23:23.674] rive  verified (0 bytes, 187ms, 0 errors, 0 warnings)
+[14:23:41.617] rive  built build/moyo_learning_question.riv (165071 bytes, 139ms, 0 errors, 0 warnings)
+[14:23:49.212] rive  built build/moyo_learning_question.riv (165071 bytes, 174ms, 0 errors, 0 warnings)
+[14:23:49.216] rive  showing LearningQuestion [1/1]
+[14:23:49.216] rive  viewport 1280x800 @1x
+[14:23:49.296] rive  wrote ./build/moyo_learning_question.png
+[15:25:14.635] rive  verified (0 bytes, 157ms, 0 errors, 0 warnings)
+[15:25:14.971] rive  built build/moyo_learning_question.riv (165071 bytes, 241ms, 0 errors, 0 warnings)
+[15:25:14.976] rive  showing LearningQuestion [1/1]
+[15:25:14.977] rive  viewport 1280x800 @1x
+[15:25:15.066] rive  wrote /tmp/q-rest.png
+[15:25:15.297] rive  built build/moyo_learning_question.riv (165071 bytes, 143ms, 0 errors, 0 warnings)
+[15:25:15.300] rive  showing LearningQuestion [1/1]
+[15:25:15.300] rive  viewport 1280x800 @1x
+[15:25:15.341] rive  wrote /tmp/q-click.png

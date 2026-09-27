@@ -127,13 +127,16 @@ export function XrQuestionPanel({
     ViroMaterials.createMaterials({
       xrQuestionGrip: { diffuseColor: '#ffc168', lightingModel: 'Constant' },
       xrQuestionEmpty: { diffuseColor: '#112d44', lightingModel: 'Constant' },
+      /* The opaque slab behind the whole face — the chrome's own fills can
+         stay translucent without the room ever showing through. */
+      xrQuestionBacking: { diffuseColor: '#0a1524', lightingModel: 'Constant' },
     });
     return () => {
       mounted.current = false;
       binding.current?.dispose();
       binding.current = null;
       runtime.current = null;
-      ViroMaterials.deleteMaterials(['xrQuestionGrip', 'xrQuestionEmpty']);
+      ViroMaterials.deleteMaterials(['xrQuestionGrip', 'xrQuestionEmpty', 'xrQuestionBacking']);
     };
   }, []);
 
@@ -150,6 +153,16 @@ export function XrQuestionPanel({
   return (
     <ViroNode ref={carrierNode} position={[...carrierPose.position]} rotation={[...carrierPose.rotation]}>
       <ViroNode position={[slot.position[0], slot.position[1], slot.position[2]]} rotation={[0, slot.yaw, 0]}>
+        {/* Full-size opaque backing — the face reads solid whatever
+            `uiOpacity` or a translucent fill decides. 1 mm behind so it
+            never intersects the chrome's own ray hit region. */}
+        <ViroQuad
+          position={[0, 0, -0.001]}
+          width={QUESTION_PANEL_WIDTH_M}
+          height={QUESTION_PANEL_HEIGHT_M}
+          materials={['xrQuestionBacking']}
+          ignoreEventHandling
+        />
         <ViroRivePanel
           source={source}
           width={QUESTION_PANEL_WIDTH_M}
@@ -176,9 +189,11 @@ export function XrQuestionPanel({
             binding.current.push(present(presented.current));
           }}
         />
-        {/* The hosted content window — the questionLive texture sits 0.5 mm
-            proud of the face, inside the artboard's transparent hole. */}
-        <ViroNode position={[...contentCentre]}>
+        {/* The hosted content window — the questionLive texture must sit
+            in FRONT of the chrome face: at the chrome's own z it shares a
+            plane with the artboard surface and the two z-fight, which is
+            what the "text fading in and out" was. */}
+        <ViroNode position={[contentCentre[0], contentCentre[1], 0.002]}>
           <ViroQuad
             width={QUESTION_CONTENT_RECT_PANEL.width}
             height={QUESTION_CONTENT_RECT_PANEL.height}
@@ -207,15 +222,22 @@ export function XrQuestionPanel({
       />
       <ViroText
         text={grabbed ? 'Moving panel' : 'Hold to move'}
-        position={[gripWorld.position[0], gripWorld.position[1] + 0.008, gripWorld.position[2]]}
+        /* VROTextFormatter's Center places the BASELINE on the node, not the
+           optical middle — the label reads high in the pill by ~cap/2. Dropping
+           the Y by that amount centres the glyphs, not their line box. */
+        position={[
+          gripWorld.position[0] + Math.sin((gripWorld.yawDeg * Math.PI) / 180) * 0.012,
+          gripWorld.position[1] - 0.025,
+          gripWorld.position[2] + Math.cos((gripWorld.yawDeg * Math.PI) / 180) * 0.012,
+        ]}
         rotation={[0, gripWorld.yawDeg, 0]}
-        width={2.4}
-        height={0.36}
+        width={3.36}
+        height={0.5}
         scale={[0.25, 0.25, 0.25]}
         maxLines={1}
         textClipMode="ClipToBounds"
         ignoreEventHandling
-        style={{ fontSize: 20, color: '#112d44', textAlign: 'center', textAlignVertical: 'center' }}
+        style={{ fontSize: 28, color: '#112d44', textAlign: 'center', textAlignVertical: 'center' }}
       />
     </ViroNode>
   );

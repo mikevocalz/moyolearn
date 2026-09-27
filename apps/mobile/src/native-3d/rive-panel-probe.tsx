@@ -91,8 +91,8 @@ export function RivePanelProbe({ bytes, initialPose, resetKey = 0, opacity = 1 }
         } else if (state === 2 && sourceId === owner.current) void finish();
       }} />
     <ViroText text={grabbed ? 'Moving panel' : 'Hold to move'} position={[0, -0.48, 0.016]}
-      width={2.4} height={0.36} scale={[0.25, 0.25, 0.25]} maxLines={1} textClipMode="ClipToBounds" ignoreEventHandling style={{ fontSize: 20, color: '#112d44', textAlign: 'center', textAlignVertical: 'center' }} />
+      width={3.36} height={0.5} scale={[0.25, 0.25, 0.25]} maxLines={1} textClipMode="ClipToBounds" ignoreEventHandling style={{ fontSize: 28, color: '#112d44', textAlign: 'center', textAlignVertical: 'center' }} />
     <ViroText text={`Selected in Rive: ${count}/4`} position={[0, -0.64, 0]}
-      width={4.8} height={0.48} scale={[0.25, 0.25, 0.25]} ignoreEventHandling style={{ fontSize: 20, color: '#ffffff', textAlign: 'center' }} />
+      width={6.72} height={0.67} scale={[0.25, 0.25, 0.25]} ignoreEventHandling style={{ fontSize: 28, color: '#ffffff', textAlign: 'center' }} />
   </ViroNode>;
 }

@@ -4,7 +4,7 @@
     <Node id="0:215" opacity="0" name="Grabbed">
       <DataBindContext sourcePathIds="0:40-0:172" propertyKey="18" converterId="0:63" />
       <Text name="Grab status" x="540" y="18" width="200" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
-        <TextStylePaint id="0:360" fontSize="11" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFFFC168" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:360" fontSize="16.5" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFFFC168" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:360" text="MOVING PANEL" />
       </Text>
       <Shape name="Grab corners">
@@ -37,7 +37,7 @@
         <Fill><SolidColor colorValue="2BE9F4FA" /></Fill>
       </Shape>
       <Text name="Fb tag" x="820" y="650" wrapValue="noWrap">
-        <TextStylePaint id="0:361" fontSize="9.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:361" fontSize="14.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:361" text="RESULT" />
       </Text>
       <Shape id="0:209" name="Acc correct" opacity="0">
@@ -53,11 +53,11 @@
         <Fill><SolidColor colorValue="FFFFC168" /></Fill>
       </Shape>
       <Text name="Fb title" x="838" y="672" width="400" sizingValue="fixed" wrapValue="noWrap">
-        <TextStylePaint id="0:362" fontSize="16" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:362" fontSize="24" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:362" text=""><DataBindContext sourcePathIds="0:40-0:121" propertyKey="268" /></TextValueRun>
       </Text>
       <Text name="Fb body" x="838" y="698" width="392" sizingValue="fixed" wrapValue="wrap">
-        <TextStylePaint id="0:363" fontSize="12" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:363" fontSize="18" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:363" text=""><DataBindContext sourcePathIds="0:40-0:122" propertyKey="268" /></TextValueRun>
       </Text>
     </Node>
@@ -69,22 +69,22 @@
         <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="66FFC168" /></Stroke>
       </Shape>
       <Text name="Hint tag" x="834" y="662" wrapValue="noWrap">
-        <TextStylePaint id="0:364" fontSize="9.5" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFFFC168" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:364" fontSize="14.25" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFFFC168" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:364" text="HINT" />
       </Text>
       <Text name="Hint text" x="834" y="682" width="392" sizingValue="fixed" wrapValue="wrap">
-        <TextStylePaint id="0:365" fontSize="12" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:365" fontSize="18" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:365" text=""><DataBindContext sourcePathIds="0:40-0:116" propertyKey="268" /></TextValueRun>
       </Text>
     </Node>
     <Node id="0:214" opacity="0" name="Answer chip">
       <DataBindContext sourcePathIds="0:40-0:162" propertyKey="18" converterId="0:63" />
       <Text name="Ans tag" x="820" y="630" wrapValue="noWrap">
-        <TextStylePaint id="0:366" fontSize="9.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:366" fontSize="14.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:366" text="ANSWER" />
       </Text>
       <Text name="Ans text" x="890" y="626" width="350" sizingValue="fixed" wrapValue="noWrap">
-        <TextStylePaint id="0:367" fontSize="12" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:367" fontSize="18" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:367" text=""><DataBindContext sourcePathIds="0:40-0:114" propertyKey="268" /></TextValueRun>
       </Text>
     </Node>
@@ -95,15 +95,15 @@
         <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="99EC9787" /></Stroke>
       </Shape>
       <Text name="Err tag" x="834" y="662" wrapValue="noWrap">
-        <TextStylePaint id="0:368" fontSize="9.5" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFEC9787" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:368" fontSize="14.25" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FFEC9787" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:368" text="FAULT" />
       </Text>
       <Text name="Err text" x="834" y="682" width="300" sizingValue="fixed" wrapValue="noWrap">
-        <TextStylePaint id="0:369" fontSize="12" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:369" fontSize="18" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:369" text=""><DataBindContext sourcePathIds="0:40-0:123" propertyKey="268" /></TextValueRun>
       </Text>
       <Text name="Err code" x="1140" y="682" width="86" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
-        <TextStylePaint id="0:370" fontSize="12" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFEC9787" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:370" fontSize="18" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFEC9787" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:370" text="0"><DataBindContext sourcePathIds="0:40-0:140" propertyKey="268" converterId="0:61" /></TextValueRun>
       </Text>
     </Node>
@@ -228,7 +228,7 @@
         </Shape>
       </Node>
       <Text name="Loader tag" x="-80" y="112" width="160" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
-        <TextStylePaint id="0:371" fontSize="9.5" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:371" fontSize="14.25" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:371" text="CONTENT // SYNC" />
       </Text>
     </Node>
@@ -264,11 +264,11 @@
     </Node>
     <Node id="0:207" name="Choices">
       <Text name="Interaction tag" x="820" y="64" wrapValue="noWrap">
-        <TextStylePaint id="0:372" fontSize="10" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:372" fontSize="15" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:372" text=""><DataBindContext sourcePathIds="0:40-0:107" propertyKey="268" /></TextValueRun>
       </Text>
       <Text name="Max tag" x="1140" y="64" width="100" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
-        <TextStylePaint id="0:373" fontSize="9.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:373" fontSize="14.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:373" text="MAX·06" />
       </Text>
       <Node id="0:219" name="ChoiceVis 0">
@@ -280,11 +280,11 @@
             <Fill><SolidColor colorValue="FFFFC168" /></Fill>
           </Shape>
           <Text name="Idx 0" x="844" y="113" wrapValue="noWrap">
-            <TextStylePaint id="0:374" fontSize="11" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+            <TextStylePaint id="0:374" fontSize="16.5" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
             <TextValueRun styleId="0:374" text="01" />
           </Text>
           <Text name="Label 0" x="884" y="111" width="336" sizingValue="fixed" wrapValue="noWrap">
-            <TextStylePaint id="0:375" fontSize="15" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+            <TextStylePaint id="0:375" fontSize="22.5" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
             <TextValueRun styleId="0:375" text=""><DataBindContext sourcePathIds="0:40-0:108" propertyKey="268" /></TextValueRun>
           </Text>
           <Shape name="Cell 0">
@@ -315,11 +315,11 @@
             <Fill><SolidColor colorValue="FFFFC168" /></Fill>
           </Shape>
           <Text name="Idx 1" x="844" y="205" wrapValue="noWrap">
-            <TextStylePaint id="0:376" fontSize="11" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+            <TextStylePaint id="0:376" fontSize="16.5" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
             <TextValueRun styleId="0:376" text="02" />
           </Text>
           <Text name="Label 1" x="884" y="203" width="336" sizingValue="fixed" wrapValue="noWrap">
-            <TextStylePaint id="0:377" fontSize="15" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+            <TextStylePaint id="0:377" fontSize="22.5" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
             <TextValueRun styleId="0:377" text=""><DataBindContext sourcePathIds="0:40-0:109" propertyKey="268" /></TextValueRun>
           </Text>
           <Shape name="Cell 1">
@@ -350,11 +350,11 @@
             <Fill><SolidColor colorValue="FFFFC168" /></Fill>
           </Shape>
           <Text name="Idx 2" x="844" y="297" wrapValue="noWrap">
-            <TextStylePaint id="0:378" fontSize="11" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+            <TextStylePaint id="0:378" fontSize="16.5" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
             <TextValueRun styleId="0:378" text="03" />
           </Text>
           <Text name="Label 2" x="884" y="295" width="336" sizingValue="fixed" wrapValue="noWrap">
-            <TextStylePaint id="0:379" fontSize="15" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+            <TextStylePaint id="0:379" fontSize="22.5" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
             <TextValueRun styleId="0:379" text=""><DataBindContext sourcePathIds="0:40-0:110" propertyKey="268" /></TextValueRun>
           </Text>
           <Shape name="Cell 2">
@@ -385,11 +385,11 @@
             <Fill><SolidColor colorValue="FFFFC168" /></Fill>
           </Shape>
           <Text name="Idx 3" x="844" y="389" wrapValue="noWrap">
-            <TextStylePaint id="0:380" fontSize="11" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+            <TextStylePaint id="0:380" fontSize="16.5" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
             <TextValueRun styleId="0:380" text="04" />
           </Text>
           <Text name="Label 3" x="884" y="387" width="336" sizingValue="fixed" wrapValue="noWrap">
-            <TextStylePaint id="0:381" fontSize="15" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+            <TextStylePaint id="0:381" fontSize="22.5" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
             <TextValueRun styleId="0:381" text=""><DataBindContext sourcePathIds="0:40-0:111" propertyKey="268" /></TextValueRun>
           </Text>
           <Shape name="Cell 3">
@@ -420,11 +420,11 @@
             <Fill><SolidColor colorValue="FFFFC168" /></Fill>
           </Shape>
           <Text name="Idx 4" x="844" y="481" wrapValue="noWrap">
-            <TextStylePaint id="0:382" fontSize="11" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+            <TextStylePaint id="0:382" fontSize="16.5" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
             <TextValueRun styleId="0:382" text="05" />
           </Text>
           <Text name="Label 4" x="884" y="479" width="336" sizingValue="fixed" wrapValue="noWrap">
-            <TextStylePaint id="0:383" fontSize="15" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+            <TextStylePaint id="0:383" fontSize="22.5" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
             <TextValueRun styleId="0:383" text=""><DataBindContext sourcePathIds="0:40-0:112" propertyKey="268" /></TextValueRun>
           </Text>
           <Shape name="Cell 4">
@@ -455,11 +455,11 @@
             <Fill><SolidColor colorValue="FFFFC168" /></Fill>
           </Shape>
           <Text name="Idx 5" x="844" y="573" wrapValue="noWrap">
-            <TextStylePaint id="0:384" fontSize="11" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+            <TextStylePaint id="0:384" fontSize="16.5" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
             <TextValueRun styleId="0:384" text="06" />
           </Text>
           <Text name="Label 5" x="884" y="571" width="336" sizingValue="fixed" wrapValue="noWrap">
-            <TextStylePaint id="0:385" fontSize="15" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+            <TextStylePaint id="0:385" fontSize="22.5" letterSpacing="0.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
             <TextValueRun styleId="0:385" text=""><DataBindContext sourcePathIds="0:40-0:113" propertyKey="268" /></TextValueRun>
           </Text>
           <Shape name="Cell 5">
@@ -490,11 +490,11 @@
       </Shape>
     </Node>
     <Text name="Panel tag" x="604" y="765" wrapValue="noWrap">
-      <TextStylePaint id="0:386" fontSize="9.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:386" fontSize="14.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:386" text="XR PANEL // LRN-01" />
     </Text>
     <Text name="Btn label LISTEN" x="48" y="764" width="108" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
-      <TextStylePaint id="0:387" fontSize="11.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:387" fontSize="17.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:387" text=""><DataBindContext sourcePathIds="0:40-0:120" propertyKey="268" /></TextValueRun>
     </Text>
     <Shape name="Btn frame LISTEN">
@@ -515,7 +515,7 @@
       <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
     </Shape>
     <Text name="Btn label HINT" x="168" y="764" width="108" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
-      <TextStylePaint id="0:388" fontSize="11.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:388" fontSize="17.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:388" text=""><DataBindContext sourcePathIds="0:40-0:115" propertyKey="268" /></TextValueRun>
     </Text>
     <Shape id="0:217" name="HintDim" opacity="0">
@@ -541,7 +541,7 @@
       <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
     </Shape>
     <Text name="Btn label BOARD" x="288" y="764" width="108" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
-      <TextStylePaint id="0:389" fontSize="11.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:389" fontSize="17.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:389" text="BOARD" />
     </Text>
     <Shape name="Btn frame BOARD">
@@ -562,7 +562,7 @@
       <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
     </Shape>
     <Text name="Btn label RETRY" x="408" y="764" width="108" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
-      <TextStylePaint id="0:390" fontSize="11.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:390" fontSize="17.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:390" text="RETRY" />
     </Text>
     <Shape name="Btn frame RETRY">
@@ -583,7 +583,7 @@
       <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
     </Shape>
     <Text name="Btn label SKIP" x="818" y="764" width="108" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
-      <TextStylePaint id="0:391" fontSize="11.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:391" fontSize="17.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:391" text=""><DataBindContext sourcePathIds="0:40-0:119" propertyKey="268" /></TextValueRun>
     </Text>
     <Shape name="Btn frame SKIP">
@@ -604,7 +604,7 @@
       <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
     </Shape>
     <Text name="Btn label SUBMIT" x="938" y="764" width="150" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
-      <TextStylePaint id="0:392" fontSize="11.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FF0A0D12" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:392" fontSize="17.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FF0A0D12" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:392" text=""><DataBindContext sourcePathIds="0:40-0:117" propertyKey="268" /></TextValueRun>
     </Text>
     <Shape name="Btn frame SUBMIT">
@@ -624,7 +624,7 @@
       <Fill><SolidColor colorValue="0DFFFFFF" /></Fill>
     </Shape>
     <Text name="Btn label NEXT" x="1100" y="764" width="140" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
-      <TextStylePaint id="0:393" fontSize="11.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:393" fontSize="17.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:393" text=""><DataBindContext sourcePathIds="0:40-0:118" propertyKey="268" /></TextValueRun>
     </Text>
     <Shape name="Btn frame NEXT">
@@ -650,7 +650,7 @@
       <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="66FFC168" /></Stroke>
     </Shape>
     <Text name="Subject" x="48" y="22" width="140" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
-      <TextStylePaint id="0:394" fontSize="12" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:394" fontSize="18" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:394" text=""><DataBindContext sourcePathIds="0:40-0:101" propertyKey="268" /></TextValueRun>
     </Text>
     <Shape name="Subject underline">
@@ -658,23 +658,23 @@
       <Fill><SolidColor colorValue="FFFFC168" /></Fill>
     </Shape>
     <Text name="Skill" x="200" y="31" wrapValue="noWrap">
-      <TextStylePaint id="0:395" fontSize="10" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:395" fontSize="15" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:395" text=""><DataBindContext sourcePathIds="0:40-0:102" propertyKey="268" /></TextValueRun>
     </Text>
     <Text name="Zone tag" x="580" y="40" width="120" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
-      <TextStylePaint id="0:396" fontSize="10" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:396" fontSize="15" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:396" text="Q-PANEL // LRN" />
     </Text>
     <Text name="Status tag" x="760" y="24" wrapValue="noWrap">
-      <TextStylePaint id="0:397" fontSize="9" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:397" fontSize="13.5" letterSpacing="2.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:397" text="STATUS" />
     </Text>
     <Text name="Status" x="760" y="40" wrapValue="noWrap">
-      <TextStylePaint id="0:398" fontSize="11" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:398" fontSize="16.5" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:398" text=""><DataBindContext sourcePathIds="0:40-0:123" propertyKey="268" /></TextValueRun>
     </Text>
     <Text name="Progress" x="980" y="36" width="130" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
-      <TextStylePaint id="0:399" fontSize="12" letterSpacing="1" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:399" fontSize="18" letterSpacing="1" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:399" text=""><DataBindContext sourcePathIds="0:40-0:103" propertyKey="268" /></TextValueRun>
     </Text>
     <Shape name="Locale chip">
@@ -683,15 +683,15 @@
       <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="40E9F4FA" /></Stroke>
     </Shape>
     <Text name="Locale" x="1135" y="43" width="100" sizingValue="fixed" alignValue="center" wrapValue="noWrap">
-      <TextStylePaint id="0:400" fontSize="10" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:400" fontSize="15" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF9FB4BE" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:400" text=""><DataBindContext sourcePathIds="0:40-0:104" propertyKey="268" /></TextValueRun>
     </Text>
     <Text name="Cam tag" x="48" y="66" wrapValue="noWrap">
-      <TextStylePaint id="0:401" fontSize="9.5" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:401" fontSize="14.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF5E7683" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:401" text="CAM·02 // CONTENT" />
     </Text>
     <Text name="Win dims" x="680" y="66" width="120" sizingValue="fixed" alignValue="right" wrapValue="noWrap">
-      <TextStylePaint id="0:402" fontSize="9.5" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+      <TextStylePaint id="0:402" fontSize="14.25" letterSpacing="1.5" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
       <TextValueRun styleId="0:402" text="760×660" />
     </Text>
     <Shape name="Window brackets">
@@ -740,8 +740,8 @@
       </PointsPath>
       <Stroke thickness="2.5" cap="round" join="round"><SolidColor colorValue="B3FFC168" /></Stroke>
     </Shape>
-    <Text name="Spine L" x="16" y="410" rotation="-90"><TextStylePaint id="0:403" fontSize="10" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint><TextValueRun text="MOYO // LEARN" /></Text>
-    <Text name="Spine R" x="1264" y="390" rotation="90"><TextStylePaint id="0:404" fontSize="10" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint><TextValueRun text="QUESTION" /></Text>
+    <Text name="Spine L" x="16" y="410" rotation="-90"><TextStylePaint id="0:403" fontSize="15" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint><TextValueRun text="MOYO // LEARN" /></Text>
+    <Text name="Spine R" x="1264" y="390" rotation="90"><TextStylePaint id="0:404" fontSize="15" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint><TextValueRun text="QUESTION" /></Text>
     <Shape name="Footer band"><PointsPath isClosed="true"><StraightVertex x="0" y="746" /><StraightVertex x="1280" y="746" /><StraightVertex x="1280" y="780" /><StraightVertex x="1260" y="800" /><StraightVertex x="20" y="800" /><StraightVertex x="0" y="780" /></PointsPath><Fill><SolidColor colorValue="F00E1420" /></Fill></Shape>
     <Shape name="Header band"><PointsPath isClosed="true"><StraightVertex x="20" y="0" /><StraightVertex x="1260" y="0" /><StraightVertex x="1280" y="20" /><StraightVertex x="1280" y="64" /><StraightVertex x="0" y="64" /><StraightVertex x="0" y="20" /></PointsPath><Fill><SolidColor colorValue="F00E1420" /></Fill></Shape>
     <Shape name="Header rule">

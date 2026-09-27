@@ -53,7 +53,25 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
    */
   private var settled = false
   private var attempts = 0
+  private var pumpTicks = 0
   private val retryBind = Runnable { bindIfReady() }
+  private val pumpFrame = object : Runnable {
+    override fun run() {
+      val bound = texture ?: return
+      val page = pages.firstOrNull() ?: return
+      if (com.viro.core.MoyoTexturePaint.paint(bound, page) && pumpTicks == 0) {
+        android.util.Log.i("MoyoBoardTexture", "texture paint streaming")
+      }
+      pumpTicks += 1
+      postDelayed(this, PUMP_MS)
+    }
+  }
+
+  private companion object {
+    /* 20 fps: cheap enough for a software canvas, fast enough that a board
+       stroke lands inside one controller blink. */
+    const val PUMP_MS = 50L
+  }
 
   // ---------------------------------------------------------------------------
   // Props
@@ -136,10 +154,13 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
 
     removeCallbacks(retryBind)
     val reason = bind(material)
-    // Viro creates its Activity and registers materials asynchronously. These
-    // are transient readiness failures, not proof the bridge is unavailable.
-    if (reason in setOf("no-viro-view", "no-material-manager", "material-not-registered") && ++attempts < 30) {
-      postDelayed(retryBind, 150L)
+    // Viro creates its Activity and registers materials asynchronously, and on
+    // Horizon OS the VR-activity hop can outlast any fixed budget — a headset
+    // wake, a Guardian dialog, a focus fight. These are transient readiness
+    // failures, not proof the bridge is unavailable, so they retry while `live`
+    // holds; `release` and `live=false` are the only exits.
+    if (reason in setOf("no-viro-view", "no-material-manager", "material-not-registered")) {
+      postDelayed(retryBind, if (++attempts < 30) 150L else 500L)
       return
     }
     settled = true
@@ -213,6 +234,16 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
       removeView(page)
     }
     created.attachView(page)
+    /*
+      The sink only repaints when the window it lives in runs a draw
+      traversal, and on ViroViewOpenXR there is no SurfaceView for the
+      compositor — OpenXR owns the display — so that traversal can be
+      starved for the whole session. The pump is the drawing driver: the
+      page is painted straight into the texture's surface every 50 ms while
+      bound, which is also why a stale first frame can never sit.
+    */
+    pumpTicks = 0
+    postDelayed(pumpFrame, PUMP_MS)
     return null
   }
 
@@ -236,6 +267,7 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
 
   fun release() {
     removeCallbacks(retryBind)
+    removeCallbacks(pumpFrame)
     settled = false
     attempts = 0
     val page = pages.firstOrNull()

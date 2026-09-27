@@ -77,6 +77,9 @@ export interface XrQuestionFlowState {
   loadInitial(question: XrLearningQuestion): void;
   /** Prefetch lands in the `next` buffer; never disturbs `current`. */
   stageNext(question: XrLearningQuestion | null): void;
+  /** Critical content is ready — the loader yields to the entrance. The
+      `loading-next` midpoint stays with `commitNext`, which owns the swap. */
+  beginEntrance(): void;
   /** Entrance finished — the panel is interactive. */
   arrive(): void;
   /** A Rive select/toggle on the bounded choice rail. */
@@ -146,6 +149,10 @@ export const useXrQuestionFlow = create<XrQuestionFlowState>((set, get) => ({
     }),
 
   stageNext: (question) => set({ next: question }),
+
+  beginEntrance: () => {
+    if (get().phase === 'loading-initial') set({ phase: 'entering' });
+  },
 
   arrive: () => {
     if (get().phase === 'entering') set({ phase: 'idle' });

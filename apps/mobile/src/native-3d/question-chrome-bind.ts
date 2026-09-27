@@ -119,6 +119,7 @@ export function bindQuestionChrome(
       runtime.getNumber('command'),
       runtime.getNumber('commandArg'),
     );
+    if (__DEV__ && intent.kind !== 'none') console.log('[question-chrome] command', intent.kind, intent.kind === 'selectChoice' || intent.kind === 'toggleChoice' ? intent.index : '');
     /* Acknowledge before dispatch: a throwing handler must not leave the
        press armed for a phantom replay on the next unrelated bump. */
     runtime.setNumber('command', 0);

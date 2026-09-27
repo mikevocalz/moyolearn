@@ -32,12 +32,15 @@ import {
   QUESTION_CONTENT_BAND,
   XR_MATERIAL,
   XrQuestionContent,
+  boardSurfacePixels,
   questionSurfacePixels,
   resolveQuestionLayout,
   spatialSpacing,
 } from '@acme/ui/xr';
+import { WhiteboardBoard } from '@acme/ui';
 import { useXrQuestionFlow } from '@acme/app/features/tutor/xr-question.store.ts';
 import { XrQuestionProbe, xrQuestionProbe } from '../src/native-3d/xr-question-probe';
+import { xrLayoutEngine, xrLayoutProbe } from '../src/native-3d/xr-layout-probe';
 
 interface Placed {
   head: readonly [number, number, number];
@@ -76,6 +79,10 @@ function Scene({ bytes }: { bytes: ArrayBuffer }) {
                   latched.current = true;
                   const yawDeg2 = (Math.atan2(-fx, -fz) * 180) / Math.PI;
                   store.setState({ placed: { head: [x, y, z], yawDeg: yawDeg2 } });
+                  /* The board surface binds only once the renderer is alive —
+                     `xrLayoutProbe.placed` is that flag, same as the layout
+                     probe's own route. */
+                  xrLayoutProbe.setState({ placed: { head: [x, y, z], yawDeg: yawDeg2 } });
                   if (__DEV__) console.log('[xr-question-probe] placing from settled pose', current.pos);
                   return;
                 }
@@ -106,6 +113,9 @@ export default function XrQuestionProbeRoute() {
   const bytes = useStore(store, (state) => state.bytes);
   const error = useStore(store, (state) => state.error);
   const bound = useStore(xrQuestionProbe, (s) => s.bound);
+  /* The centre board's two gates — same reads the layout route makes. */
+  const placed = useStore(xrLayoutProbe, (s) => s.placed);
+  const engineReady = useStore(xrLayoutProbe, (s) => s.engineReady);
 
   /* The flow store feeds BOTH sides: the chrome's presentation in the
      scene, and this hosted surface — one question, two renderers. */
@@ -129,10 +139,28 @@ export default function XrQuestionProbeRoute() {
       await asset.downloadAsync();
       if (!asset.localUri) throw new Error('The question chrome file was not downloaded');
       const data = await new File(asset.localUri).arrayBuffer();
-      if (alive) xrQuestionProbe.setState({ chromeBytes: data });
+      if (alive) {
+        xrQuestionProbe.setState({ chromeBytes: data });
+        store.setState({ bytes: data });
+      }
     })().catch((reason) => {
       if (__DEV__) console.warn('[xr-question-probe] chrome asset unavailable:', reason);
       if (alive) store.setState({ error: String(reason) });
+    });
+    /*
+      The centre board's chrome is OPTIONAL — a missing or stale build must
+      not gate the composition. Its absence selects the tray fallback, which
+      is the honest state the board already keeps.
+    */
+    void (async () => {
+      const asset = Asset.fromModule(require('../assets/rive/moyo_board_chrome.riv'));
+      await asset.downloadAsync();
+      if (!asset.localUri) throw new Error('The board chrome file was not downloaded');
+      const data = await new File(asset.localUri).arrayBuffer();
+      if (alive) xrLayoutProbe.setState({ chromeBytes: data });
+    })().catch((reason) => {
+      if (__DEV__) console.warn('[xr-question-probe] board chrome asset unavailable:', reason);
+      if (alive) xrLayoutProbe.setState({ chromeFailed: true });
     });
     return () => {
       alive = false;
@@ -144,11 +172,11 @@ export default function XrQuestionProbeRoute() {
     [bytes],
   );
 
-  if (Platform.OS !== 'android' || error) {
+  if (Platform.OS !== 'android' || error || !bytes) {
     return (
       <View style={{ flex: 1, padding: 32, backgroundColor: '#112d44' }}>
         <Text style={{ color: '#ffffff', fontSize: 22 }}>
-          {Platform.OS !== 'android' ? 'This probe uses the Android native surfaces.' : error}
+          {Platform.OS !== 'android' ? 'This probe uses the Android native surfaces.' : error ?? 'Loading question chrome…'}
         </Text>
       </View>
     );
@@ -190,6 +218,36 @@ export default function XrQuestionProbeRoute() {
           <View style={{ flex: 1 }} />
         )}
       </BoardTextureHost>
+      {/*
+        THE CENTRE BOARD — the same parked `WhiteboardBoard` the layout
+        probe hosts; the question route keeps it so the arc is questions
+        left / board centre / Natalie right, not the question alone.
+      */}
+      <BoardTextureHost
+        style={styles.engine}
+        material={XR_MATERIAL.boardLive}
+        pageWidth={boardSurfacePixels.width}
+        pageHeight={boardSurfacePixels.height}
+        live={engineReady && placed !== null}
+        onBound={(binding) => {
+          if (__DEV__) console.log('[xr-question-probe] board binding', binding);
+          xrLayoutProbe.setState({ bound: binding.bound, boundReason: binding.reason });
+        }}
+      >
+        <WhiteboardBoard
+          ref={(handle) => {
+            xrLayoutEngine.current = handle;
+          }}
+          onReady={() => xrLayoutProbe.setState({ engineReady: true })}
+          onHistory={(history) =>
+            xrLayoutProbe.setState({
+              canUndo: history.canUndo,
+              canRedo: history.canRedo,
+              hasMarks: history.marks > 0,
+            })
+          }
+        />
+      </BoardTextureHost>
       {!bound && (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }} pointerEvents="none">
           <Text style={{ color: '#ffffff' }}>Binding question surface…</Text>
@@ -201,6 +259,14 @@ export default function XrQuestionProbeRoute() {
 
 const styles = StyleSheet.create({
   /* Parked, not hidden — same reason the board's engine is parked. */
+  engine: {
+    position: 'absolute',
+    left: -boardSurfacePixels.width - spatialSpacing.md,
+    top: 0,
+    width: boardSurfacePixels.width,
+    height: boardSurfacePixels.height,
+    opacity: 0,
+  },
   surface: {
     position: 'absolute',
     left: -questionSurfacePixels.width - spatialSpacing.md,

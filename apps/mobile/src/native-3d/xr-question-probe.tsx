@@ -30,7 +30,6 @@ import {
   QUESTION_PANEL_HEIGHT_M,
   fixtureById,
   spatialSpacing,
-  worldSlot,
   XR_FIXTURE_SEQUENCE,
 } from '@acme/ui/xr';
 import {
@@ -38,12 +37,16 @@ import {
 } from '@acme/app/features/tutor/xr-question.store.ts';
 import { evaluateXrAnswer } from '@acme/app/features/tutor/xr-question-evaluator.ts';
 import { XrQuestionPanel } from './xr-question-panel';
+import { XrLayoutProbe } from './xr-layout-probe';
 import type { QuestionChromeHandlers } from './question-chrome-bind';
 import { questionPresentationOf } from './xr-question-present';
 
 /** Choreography halves of the Rive contract — exit dwell / entrance dwell. */
 const EXIT_MS = 550;
 const ENTRANCE_MS = 900;
+/* The yellow loader's minimum face time once content is proven — long
+   enough to read as an entrance, short enough not to feel stuck. */
+const LOADER_DWELL_MS = 450;
 
 /*
  * Probe-local state — what the flow store does not own: whether the hosted
@@ -71,6 +74,30 @@ const later = (ms: number, fn: () => void) => {
   transitionTimer = setTimeout(fn, ms);
 };
 
+/*
+  The loader is the readiness gate, not a timer alone: the entrance starts
+  only once the hosted texture has bound (the probe's one critical surface),
+  then holds for the loader's dwell before the entrance plays.
+*/
+const openInitialEntrance = () => {
+  const whenBound = () =>
+    later(LOADER_DWELL_MS, () => {
+      const s = useXrQuestionFlow.getState();
+      if (s.phase !== 'loading-initial') return;
+      s.beginEntrance();
+      later(ENTRANCE_MS, () => useXrQuestionFlow.getState().arrive());
+    });
+  if (xrQuestionProbe.getState().bound) {
+    whenBound();
+    return;
+  }
+  const unsub = xrQuestionProbe.subscribe((s) => {
+    if (!s.bound) return;
+    unsub();
+    whenBound();
+  });
+};
+
 /** Load the fixture at `sequenceIndex` and stage the one after it. */
 const loadFixture = (index: number) => {
   const flow = useXrQuestionFlow.getState();
@@ -83,6 +110,7 @@ const loadFixture = (index: number) => {
   flow.loadInitial(current);
   flow.stageNext(next);
   xrQuestionProbe.setState({ sequenceIndex: index, contentReady: false });
+  openInitialEntrance();
 };
 
 /**
@@ -117,7 +145,18 @@ const questionHandlers: QuestionChromeHandlers = {
       if (s.phase !== 'exiting' && s.phase !== 'loading-next') return;
       if (s.next) {
         s.commitNext();
-        later(ENTRANCE_MS, () => useXrQuestionFlow.getState().arrive());
+        later(ENTRANCE_MS, () => {
+          useXrQuestionFlow.getState().arrive();
+          /* The committed question is now current — stage the fixture
+             after it so the following Next never waits on a fetch the
+             probe does not have. */
+          const index = xrQuestionProbe.getState().sequenceIndex + 1;
+          xrQuestionProbe.setState({ sequenceIndex: index });
+          const upcoming = fixtureById(XR_FIXTURE_SEQUENCE[index + 1] ?? '');
+          useXrQuestionFlow.getState().stageNext(upcoming ?? null);
+        });
+      } else if (xrQuestionProbe.getState().sequenceIndex >= XR_FIXTURE_SEQUENCE.length - 1) {
+        s.fail('That is the whole fixture sequence.');
       } else {
         /* Nothing staged — hold the hidden midpoint while the feed lands. */
         s.toLoadingNext();
@@ -130,7 +169,7 @@ const questionHandlers: QuestionChromeHandlers = {
   onBoard: () => useXrQuestionFlow.setState({ status: 'The board is beside you — draw there' }),
   onRetry: () => {
     const s = useXrQuestionFlow.getState();
-    if (s.phase === 'error') s.retry();
+    if (s.phase === 'error') loadFixture(xrQuestionProbe.getState().sequenceIndex);
     else s.retryAnswer();
   },
 };
@@ -160,39 +199,58 @@ export function XrQuestionProbe({
   const chromeBytes = useStore(xrQuestionProbe, (s) => s.chromeBytes);
 
   const flow = useStore(useXrQuestionFlow);
-  const centre = worldSlot('center', head, yawDeg);
-  const gripY = centre.position[1] - QUESTION_PANEL_HEIGHT_M / 2 - spatialSpacing.sm - 0.045;
-
-  if (!chromeBytes || chromeFailed) {
-    /* No chrome bytes yet (or a dead runtime) — the carrier still exists so
-       the surface can land, and the status surfaces honestly. */
-    return (
-      <ViroNode position={[centre.position[0], centre.position[1], centre.position[2]]} rotation={[0, centre.yaw, 0]} />
-    );
-  }
 
   const presentation = {
     ...questionPresentationOf(flow.current, flow),
     status: flow.status || (bound ? '' : boundReason ?? 'Preparing content…'),
   };
 
+  /*
+    The question panel is the LEFT seat of the proven arc — `XrLayoutProbe`
+    still owns the centre board and Natalie on the right; only the lesson
+    panel is swapped for `XrQuestionPanel` through `renderLeft`. The slot
+    pose arrives from the composition, so the panel can never drift from
+    the arc it replaces the lesson on.
+  */
   return (
-    <XrQuestionPanel
-      chromeBytes={chromeBytes}
-      slot={{ position: [centre.position[0], centre.position[1], centre.position[2]], yaw: centre.yaw }}
-      carrier={panelOffset}
-      grabbed={grabbed}
-      bound={bound}
-      opacity={0.8}
+    <XrLayoutProbe
+      bytes={null}
+      head={head}
+      yawDeg={yawDeg}
       resetKey={resetKey}
-      onCarrierRelease={(pose) => xrQuestionProbe.setState({ panelOffset: pose })}
-      onGrab={(v) => xrQuestionProbe.setState({ grabbed: v })}
-      handlers={questionHandlers}
-      presentation={presentation}
-      gripWorld={{ position: [centre.position[0], gripY, centre.position[2]], yawDeg: centre.yaw }}
-      onChromeError={(message) => {
-        if (__DEV__) console.warn('[xr-question-probe]', message);
-        xrQuestionProbe.setState({ chromeFailed: true });
+      natalieHeightCm={190}
+      renderLeft={(left) => {
+        if (!chromeBytes || chromeFailed) {
+          /* No chrome bytes yet (or a dead runtime) — keep the carrier so
+             the surface can still land. */
+          return (
+            <ViroNode
+              position={[left.position[0], left.position[1], left.position[2]]}
+              rotation={[0, left.yaw, 0]}
+            />
+          );
+        }
+        const gripY = left.position[1] - QUESTION_PANEL_HEIGHT_M / 2 - spatialSpacing.sm - 0.045;
+        return (
+          <XrQuestionPanel
+            chromeBytes={chromeBytes}
+            slot={{ position: [left.position[0], left.position[1], left.position[2]], yaw: left.yaw }}
+            carrier={panelOffset}
+            grabbed={grabbed}
+            bound={bound}
+            opacity={0.8}
+            resetKey={resetKey}
+            onCarrierRelease={(pose) => xrQuestionProbe.setState({ panelOffset: pose })}
+            onGrab={(v) => xrQuestionProbe.setState({ grabbed: v })}
+            handlers={questionHandlers}
+            presentation={presentation}
+            gripWorld={{ position: [left.position[0], gripY, left.position[2]], yawDeg: left.yaw }}
+            onChromeError={(message) => {
+              if (__DEV__) console.warn('[xr-question-probe]', message);
+              xrQuestionProbe.setState({ chromeFailed: true });
+            }}
+          />
+        );
       }}
     />
   );

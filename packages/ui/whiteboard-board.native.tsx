@@ -291,7 +291,9 @@ document.addEventListener('pointerdown',guard,true);
 };
 W.inject=function(b){
 var el=board();
-if(!el)return;
+if(!el){post({type:'moyo:xray',board:false});return;}
+if(!W.xrayed){W.xrayed=true;var rr=el.getBoundingClientRect();
+post({type:'moyo:xray',board:true,l:rr.left,t:rr.top,w:rr.width,h:rr.height,vw:window.innerWidth,vh:window.innerHeight,x:b.length?b[0][1]:-1,y:b.length?b[0][2]:-1,ed:!!el.editor});}
 lock();
 for(var i=0;i<b.length;i++){
 var s=b[i];
@@ -646,6 +648,7 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
     const frame = useRef<number | null>(null);
     const flushPointers = useCallback(() => {
       frame.current = null;
+      if (__DEV__) console.log('[ink] flush n=', pending.current.length);
       if (pending.current.length > 0) {
         const batch = pending.current;
         /* A fresh array before the injection, not after: the send is the last
@@ -761,6 +764,10 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
           out: the prediction cannot be formed, so the run says so rather than
           measuring against a surface that does not exist.
         */
+        case 'moyo:xray': {
+          if (__DEV__) console.log('[ink] xray', JSON.stringify(message));
+          break;
+        }
         case 'moyo:probe': {
           const run = probe.current;
           if (run === null) break;

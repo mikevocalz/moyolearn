@@ -68,11 +68,15 @@ export interface XrNatalieProps {
   position: [number, number, number];
   /** Yaw only — she stands upright, turned to face the child. */
   rotationY: number;
+  /* Rendered height in cm — the GLB is 1.673 m at scale 1. VR undersells
+     stature at slot distance, so callers dial it per scene rather than
+     trusting the authored measure. */
+  heightCm?: number;
   onStatus?: (status: 'loading' | 'ready' | 'failed') => void;
 }
 
 
-export function XrNatalie({ position, rotationY, onStatus }: XrNatalieProps) {
+export function XrNatalie({ position, rotationY, heightCm = 175, onStatus }: XrNatalieProps) {
   const model = useRef<Viro3DObject>(null);
   const loaded = useRef(false);
   const failed = useRef(false);
@@ -222,10 +226,10 @@ export function XrNatalie({ position, rotationY, onStatus }: XrNatalieProps) {
   return (
     <ViroNode
       /* The GLB measures 1.673 m (POSITION bounds, audited 2026-09-26). Target
-         1.75 m on the floor-anchored scene — a true 1.70 still read short in
-         the headset (VR undersells stature at slot distance), so the rendered
-         height lands just over the ask rather than under it. */
-      scale={[175 / 167.3, 175 / 167.3, 175 / 167.3]}
+         height is a prop — a true 1.70 still read short in the headset (VR
+         undersells stature at slot distance), so the default lands just over
+         the ask rather than under it. */
+      scale={[heightCm / 167.3, heightCm / 167.3, heightCm / 167.3]}
       position={[
         position[0] + dragOffset[0],
         position[1] + dragOffset[1],

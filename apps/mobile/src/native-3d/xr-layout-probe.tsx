@@ -179,12 +179,19 @@ export function XrLayoutProbe({
   head,
   yawDeg,
   resetKey = 0,
+  renderLeft,
+  natalieHeightCm,
 }: {
-  bytes: ArrayBuffer;
+  bytes: ArrayBuffer | null;
   head: readonly [number, number, number];
   yawDeg: number;
   /* Controller reconnect remounts the Rive panel — same latch as the probe. */
   resetKey?: number;
+  /* Replaces the left slot's lesson panel — the question probe mounts its
+     `XrQuestionPanel` there instead of `RivePanelProbe`. Receives the
+     resolved left-slot pose so the override cannot drift from the arc. */
+  renderLeft?: (slot: { position: XrVector3; yaw: number }) => React.ReactNode;
+  natalieHeightCm?: number;
 }) {
   const bound = useStore(xrLayoutProbe, (s) => s.bound);
   const boundReason = useStore(xrLayoutProbe, (s) => s.boundReason);
@@ -269,7 +276,11 @@ export function XrLayoutProbe({
 
   return (
     <>
-      <RivePanelProbe bytes={bytes} initialPose={rivePose} resetKey={resetKey} opacity={0.8} />
+      {renderLeft
+        ? renderLeft({ position: left.position, yaw: left.yaw })
+        : bytes
+          ? <RivePanelProbe bytes={bytes} initialPose={rivePose} resetKey={resetKey} opacity={0.8} />
+          : null}
       {chrome && chromeBytes ? (
         <RiveBoardPanel
           chromeBytes={chromeBytes}
@@ -385,15 +396,21 @@ export function XrLayoutProbe({
         />
         <ViroText
           text={grabbed ? 'Moving board' : 'Hold to move'}
-          position={[centre.position[0], gripCenterY + 0.008, centre.position[2]]}
+          /* Baseline sits on the node (VROTextFormatter Center quirk) — drop
+             ~cap/2 so the glyphs centre in the pill, not the line box. */
+          position={[
+            centre.position[0] + Math.sin((centre.yaw * Math.PI) / 180) * 0.012,
+            gripCenterY - 0.025,
+            centre.position[2] + Math.cos((centre.yaw * Math.PI) / 180) * 0.012,
+          ]}
           rotation={[0, centre.yaw, 0]}
-          width={2.4}
-          height={0.36}
+          width={3.36}
+          height={0.5}
           scale={[0.25, 0.25, 0.25]}
           maxLines={1}
           textClipMode="ClipToBounds"
           ignoreEventHandling
-          style={{ fontSize: 20, color: '#112d44', textAlign: 'center', textAlignVertical: 'center' }}
+          style={{ fontSize: 28, color: '#112d44', textAlign: 'center', textAlignVertical: 'center' }}
         />
       </ViroNode>
       )}
@@ -406,6 +423,7 @@ export function XrLayoutProbe({
       <XrNatalie
         position={[right.position[0], 0, right.position[2]]}
         rotationY={right.yaw}
+        heightCm={natalieHeightCm}
         onStatus={(status) => xrLayoutProbe.setState({ natalieStatus: status })}
       />
     </>

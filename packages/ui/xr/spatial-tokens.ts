@@ -49,11 +49,17 @@ export const spatialDistance = {
 /**
  * Rendered glyph height. `body` is the floor for anything a child has to READ —
  * a hint, a tutor's sentence — as opposed to glance at.
+ *
+ * The ranges sit a third above the layout system's defaults on purpose: a key
+ * on this composition is never smaller than the 4° target floor — 0.105 m at
+ * the board's distance — and a label held under 2° beside its own key reads as
+ * ornament, not instruction. Measured on the Quest 3S panel build: 0.05 m body
+ * text was legible at 1.5 m only with effort; 0.07 m is read at a glance.
  */
 export const spatialType = {
-  caption: { min: 0.025, max: 0.035 },
-  body: { min: 0.04, max: 0.055 },
-  title: { min: 0.07, max: 0.11 },
+  caption: { min: 0.035, max: 0.049 },
+  body: { min: 0.055, max: 0.075 },
+  title: { min: 0.1, max: 0.15 },
 } as const;
 
 /**

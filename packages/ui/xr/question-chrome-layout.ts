@@ -55,9 +55,10 @@ export const questionArtboardCenter = (r: QuestionArtboardRect): [number, number
 /** The hosted content surface's quad lives here, in carrier-local metres. */
 export const QUESTION_CONTENT_RECT_PANEL = questionArtboardToPanel(QUESTION_CONTENT_BAND);
 
-/** The texture page's pixel budget — 2× the artboard window, same rule as
-    the panel resolution: micro-labels must survive headset optics. */
+/** The texture page's pixel budget — 3× the artboard window. The px/m ratio
+    of the texture is what "crisp" means through headset optics; the fonts in
+    `XrQuestionContent` are scaled to match so physical sizes stay honest. */
 export const questionSurfacePixels = {
-  width: QUESTION_CONTENT_BAND.w * 2,
-  height: QUESTION_CONTENT_BAND.h * 2,
+  width: QUESTION_CONTENT_BAND.w * 3,
+  height: QUESTION_CONTENT_BAND.h * 3,
 } as const;

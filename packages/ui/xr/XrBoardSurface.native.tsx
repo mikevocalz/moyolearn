@@ -65,7 +65,17 @@ export function XrBoardSurface({ headPosition, headYawDeg, enabled, termination,
     <ViroNode position={anchor.position} rotation={[0, anchor.yaw, 0]}>
       <ViroQuad ref={pointer} position={[0, 0, POINTER_STANDOFF]}
         width={area.width} height={area.height} materials={[XR_MATERIAL.pointer]}
-        dragType="FixedToPlane" dragPlane={plane}
+        /*
+          `dragTransform="none"` is the half of the drag contract this quad was
+          missing. `FixedToPlane` asks Viro to compute the ray/plane hit every
+          frame, but without it Viro also MOVES the quad to that hit — so the
+          input plane travels with the controller, every drag report resolves
+          to the point the press started on, and `move()` never advances past
+          the `begin`. That is why a stroke arrived as begin+end at identical
+          coordinates and the board stayed blank.
+        */
+        dragType="FixedToPlane" dragTransform="none" dragPlane={plane}
+        highAccuracyEvents
         onClickState={(state, position, source) => {
           const id = sourceId(source);
           /* Draw-path evidence: a CLICK_DOWN line here proves the ray hit the
