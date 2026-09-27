@@ -4753,7 +4753,7 @@ packages:
 
   '@reactvision/react-viro@file:vendors/reactvision-react-viro-3.0.1-moyo.1.tgz':
     resolution: {integrity: sha512-NtnWgo8rMVMsepcVjtpx0ZXqzQ0OSsgy4ln2J0RRflSqABGYi+sak/1v6wggju7r0sAybwRDwxTBV+JMEsi0hQ==, tarball: file:vendors/reactvision-react-viro-3.0.1-moyo.1.tgz}
-    version: 3.0.1-moyo.0
+    version: 3.0.1-moyo.1
     engines: {react-native: '>=0.86.0 <0.87.0'}
     peerDependencies:
       '@reactvision/react-native-visionos': '>=0.86.0 <0.87.0'
