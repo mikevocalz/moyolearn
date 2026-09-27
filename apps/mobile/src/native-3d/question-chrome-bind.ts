@@ -112,6 +112,9 @@ export function bindQuestionChrome(
   handlers: QuestionChromeHandlers,
 ): QuestionChromeBinding {
   let lastSeq = runtime.getNumber('commandSeq');
+  /* DIAG: `revision` is pushed last on every push — a native `vm change`
+     ack proves the write crossed the bridge and the advance saw it. */
+  runtime.observeNumber('revision', (v) => console.log('[question-chrome] revision ack', v));
   runtime.observeNumber('commandSeq', (seq) => {
     if (seq === lastSeq) return;
     lastSeq = seq;
@@ -179,6 +182,16 @@ export function bindQuestionChrome(
       runtime.setNumber('errorCode', state.errorCode);
       runtime.setNumber('uiOpacity', state.uiOpacity ?? 1);
       runtime.setNumber('revision', runtime.getNumber('revision') + 1);
+      /* DIAG: what JS believes the chrome should show — paired with the
+         `revision ack` above this splits store-truth from render-truth. */
+      console.log(
+        '[question-chrome] push',
+        'phase', state.phase,
+        'sel', state.selectedChoices.join('|'),
+        'hint', state.hintVisible,
+        'hintText', JSON.stringify(state.hintText.slice(0, 28)),
+        'qid-readback', runtime.getString('questionId'),
+      );
     },
     dispose() {
       runtime.observeNumber('commandSeq', undefined);

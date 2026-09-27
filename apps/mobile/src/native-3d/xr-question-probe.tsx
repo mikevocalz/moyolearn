@@ -142,8 +142,9 @@ const questionHandlers: QuestionChromeHandlers = {
     if (id) useXrQuestionFlow.getState().selectChoice(id);
   },
   onToggleChoice: (index) => {
-    const { current } = useXrQuestionFlow.getState();
+    const { current, phase } = useXrQuestionFlow.getState();
     const id = current?.choices?.[index]?.id;
+    console.log('[question-probe] toggleChoice', index, 'phase', phase, 'id', id);
     if (id) useXrQuestionFlow.getState().toggleChoice(id);
   },
   onSubmit: () => {
@@ -215,6 +216,7 @@ const questionHandlers: QuestionChromeHandlers = {
   onSkip: () => questionHandlers.onNext(),
   onHint: () => {
     const flow = useXrQuestionFlow.getState();
+    console.log('[question-probe] onHint phase', flow.phase, 'current', flow.current?.id);
     flow.showHint();
     const question = flow.current;
     /* Authored text wins; every other question asks the on-device tutor.
