@@ -71,13 +71,14 @@ import './materials';
 import { XrRoundedQuad } from '../XrRoundedQuad.native.tsx';
 import { XrKey } from '../XrPlate.native.tsx';
 import { spatialCorners } from '../spatial-tokens.ts';
-import { BOARD_ASPECT } from '../board-layout.ts';
 import { inkMaterial } from '../spatial-materials.native.ts';
 import type { WhiteboardInk } from '../../whiteboard.types.ts';
 import { ViroIcon } from './ViroIcon';
 import { type ButtonFaceId } from './button-faces/faces';
 import { useInstanceStore, useStore } from './use-instance-store';
-import { panelSize, spatialSpacing, SLOTS, type PanelSlot } from './spatialTokens';
+import { spatialSpacing, SLOTS, type PanelSlot } from './spatialTokens';
+import { SIZES, HEADER_H, MEDIA_ART_Z } from './panel-media-area.ts';
+export { SIZES, HEADER_H, panelMediaArea } from './panel-media-area.ts';
 
 type ViroAnimationDict = Parameters<typeof ViroAnimations.registerAnimations>[0];
 type Vec3 = [number, number, number];
@@ -206,25 +207,8 @@ const TITLE_TOP_MARGIN = 0.072;
 // ═══════════════════════════════════════════════════════════════════════════
 // LAYOUT TOKENS (meters, head-relative)
 // ═══════════════════════════════════════════════════════════════════════════
-export const SIZES = {
-  /* The two side sizes are added for MoyoLearn's three-panel arc: a wide
-     centre needs narrower flanks or the composition leaves the comfort cone.
-     Same token source as the originals (`panelSize`), so nothing is invented. */
-  compactCard: panelSize.compactCard, // 0.45 × 0.28
-  standardCard: panelSize.standardCard, // 0.70 × 0.42
-  /* 9:16 portrait — the shape a tool list and a conversation actually want,
-     and what the flanks of MoyoLearn's arc are. */
-  portraitCard: { width: 0.62, height: 1.1 },
-  toolsCard: { width: 0.9, height: 1.42 },
-  /* The board: wide enough to write across, at the arc's radius. */
-  boardPanel: { width: 0.9 + spatialCorners.panel * 2, height: 0.9 * BOARD_ASPECT.h / BOARD_ASPECT.w + 0.16 + spatialCorners.panel * 2 },
-  widePanel: panelSize.widePanel, // 1.70 × 0.90
-  theaterPanel: panelSize.theaterPanel, // 2.40 × 1.35
-} as const;
-
 const HAIR = spatialSpacing.xs; // 0.025
 
-export const HEADER_H = 0.16;
 const HEADER_PAD = 0.04; // left inset for the title, right inset for the chip
 const CLOSE = 0.11;
 
@@ -244,7 +228,7 @@ const Z = {
   backing: 0.0,
   plate: 0.004,
   header: 0.004,
-  art: 0.004,
+  art: MEDIA_ART_Z,
   band: 0.006,
   rule: 0.008,
   railChannel: 0.008,
@@ -255,31 +239,6 @@ const Z = {
   railThumb: 0.014,
   debug: 0.002,
 } as const;
-
-/**
- * Where the media fills a panel, in the panel's own frame.
- *
- * THE SURFACE A CHILD DRAWS ON IS THIS RECTANGLE, and only this component knows
- * where it is — the header steals `HEADER_H` off the top, so the body's centre
- * is NOT the panel's centre. `XrBoardSurface` puts its pointer quad here rather
- * than recomputing it, because a pointer plane that disagrees with the art by
- * the header's half-height is ink that lands 8 cm above the child's aim.
- *
- * Only meaningful at `mediaFraction={1}` — the full-bleed board — which is the
- * one configuration anything draws on.
- */
-export function panelMediaArea(size: keyof typeof SIZES): {
-  width: number;
-  height: number;
-  /** Offset from the panel's centre, along its own +Y. */
-  centerY: number;
-  /** The art plane's depth along the panel's own +Z. */
-  z: number;
-} {
-  const { width, height } = SIZES[size];
-  const inset = size === 'boardPanel' ? spatialCorners.panel : 0;
-  return { width: width - inset * 2, height: height - HEADER_H - inset * 2, centerY: -HEADER_H / 2, z: Z.art };
-}
 
 
 // ═══════════════════════════════════════════════════════════════════════════

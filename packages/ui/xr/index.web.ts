@@ -34,6 +34,9 @@ export {
    would put Viro on the web resolver's path. See `web-condition.test.ts`. */
 /* Names, not renderers — see `material-names.ts`. */
 export { XR_MATERIAL, inkMaterial } from './material-names.ts';
+/* Shared placement math has no renderer dependency. */
+export { worldSlot, xrRotateY } from './world-slot.ts';
+export { panelMediaArea } from './premium/panel-media-area.ts';
 
 export type { XrRailProps } from './XrRail.types.ts';
 export type { XrBoardTrayProps } from './XrBoardTray.types.ts';

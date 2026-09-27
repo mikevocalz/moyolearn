@@ -95,6 +95,13 @@ const LIB0_WEBCRYPTO_NATIVE = path.resolve(
 const upstreamResolveRequest = config.resolver.resolveRequest;
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // The visionOS fork bundles React's 19.2.3 renderer; mobile uses 19.3.
+  // Route every React entry (including jsx-runtime) to the same matching copy.
+  const visionOS = platform === "visionos" || context.customResolverOptions?.platformExtension === "visionos";
+  if (visionOS && (moduleName === "react" || moduleName.startsWith("react/"))) {
+    const entry = "react-visionos" + moduleName.slice("react".length);
+    return { type: "sourceFile", filePath: require.resolve(entry) };
+  }
   const vendored = VENDORED_NAVIGATION[moduleName];
   if (vendored) {
     return { type: "sourceFile", filePath: require.resolve(vendored) };
@@ -148,6 +155,38 @@ config.resolver.assetExts = Array.from(
 // transformer chain. cssEntryFile must stay a relative path string; Uniwind
 // rejects path.resolve/path.join here, and the file's directory is what
 // Tailwind treats as the scan root (hence the @source lines in global.css).
+
+// viro-visionos — visionOS platform resolver
+
+// Viro loads these through `require()`, and Metro treats anything not in assetExts as source.
+// Without this, `<ViroLightingEnvironment source={require('./env.hdr')} />` fails the bundle with
+// "Unable to resolve ./env.hdr" before a single frame is drawn — which is a confusing first
+// experience for a file that is plainly an asset.
+// Without visionos in resolver.platforms, Metro never tries a module's `.native.js` variant on
+// this platform, so any package shipping one silently resolves to its **web** build. expo-asset is
+// how this surfaces: its web AssetSourceResolver returns an empty uri, and every require()'d image
+// reaches the native side with no URL at all.
+config.resolver.platforms = [...new Set([...(config.resolver.platforms ?? []), 'visionos'])];
+
+const VIRO_ASSET_EXTS = ['glb', 'gltf', 'hdr', 'obj', 'mtl', 'vrx'];
+for (const ext of VIRO_ASSET_EXTS) {
+  if (!config.resolver.assetExts.includes(ext)) {
+    config.resolver.assetExts.push(ext);
+  }
+}
+
+const viroPreviousResolver = config.resolver.resolveRequest;
+config.resolver.resolveRequest = (context, moduleName, platform) => {
+  const visionOS = platform === 'visionos' || context.customResolverOptions?.platformExtension === 'visionos';
+  let name = moduleName;
+  if (visionOS && (name === 'react-native' || name.startsWith('react-native/'))) {
+    name = '@reactvision/react-native-visionos' + name.slice('react-native'.length);
+  }
+  return viroPreviousResolver
+    ? viroPreviousResolver(context, name, platform)
+    : context.resolveRequest(context, name, platform);
+};
+
 module.exports = withUniwindConfig(config, {
   cssEntryFile: "./global.css",
   dtsFile: "./uniwind-types.d.ts",

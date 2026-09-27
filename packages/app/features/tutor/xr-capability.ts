@@ -57,6 +57,8 @@ export interface XrRuntimeFacts {
   hasOpenXrModule: boolean;
   /** This DEVICE is a headset the spatial navigator is verified on. */
   isHeadset: boolean;
+  /** Vision Pro uses Viro's ImmersiveSpace backend, not the OpenXR module. */
+  isVisionOS?: boolean;
 }
 
 /** Eligible, or the reason it is not — the same reasons the screen renders. */
@@ -67,10 +69,8 @@ export type XrEligibility =
 /**
  * Whether this binary on this device can open the spatial board at all.
  *
- * THE THREE FACTS, IN THE ORDER A FAILURE MATTERS. The renderer has to be
- * linked, the OpenXR module has to be in this build, and the device has to be a
- * headset — and the first two are the same answer to a child ("this app was not
- * built for it"), which is why they share a reason.
+ * The Viro scene module must be linked. Quest and PICO also need OpenXR;
+ * Vision Pro uses Viro's ImmersiveSpace instead.
  *
  * `isARSupportedOnDevice()` is deliberately NOT consulted, although the
  * installed fork exports it. It answers the ARCore/ARKit question, and this
@@ -79,13 +79,10 @@ export type XrEligibility =
  * cannot open this board, and ADR-117 records handheld AR as out of scope; a
  * gate that said yes there would put a child in a scene with no way to draw.
  *
- * PICO reads as `device-not-eligible` today even though the fork supports it,
- * because `isPico` is not re-exported from the package root — only `isQuest` and
- * `hasOpenXRSupport` are. That is the fail-closed direction and it is a fact
- * about the package's entry point, not a decision about the hardware.
  */
 export function spatialEligibility(runtime: XrRuntimeFacts): XrEligibility {
   if (!canOpenSpatialBoard()) return 'no-xr-runtime';
+  if (runtime.isVisionOS) return 'eligible';
   if (!runtime.hasOpenXrModule) return 'no-xr-runtime';
   if (!runtime.isHeadset) return 'device-not-eligible';
   return 'eligible';
@@ -94,7 +91,9 @@ export function spatialEligibility(runtime: XrRuntimeFacts): XrEligibility {
 /**
  * What the spatial board asks the headset for, and nothing else.
  *
- * CAMERA ONLY. Passthrough is the whole reason — the board has to sit in the
+ * Quest/PICO camera only. Vision Pro requests world and accessory tracking
+ * through ARKit as the immersive scene opens.
+ * Passthrough is the whole reason — the board has to sit in the
  * child's room rather than in a void — and the runtime's other three
  * permissions have no part in it: the microphone belongs to the tutor's voice
  * and is asked for on the surface that uses it, and storage and location are

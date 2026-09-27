@@ -1,9 +1,8 @@
 'use client';
 // The existing lesson in space: one BoardSession and one audioQueue owner.
-// Quickdraw stays in a native WebView. BoardTextureHost attaches that view to
-// Viro's live material, rendered by XrTriPanel; XrBoardSurface forwards owned
-// controller strokes into that same editor. Raster output is a visible recovery
-// preview only: handwriting waits for the live bridge and calibration.
+// Quickdraw stays in a native WebView. Android binds it to a Viro live texture;
+// Vision Pro displays its raster with current ink layered above it. Both send
+// calibrated spatial pointer samples to that same editor.
 // The navigator captures its initial scene, so scene state comes from stores
 // and active runtime handles. Workspace placement is latched until Recenter.
 // SOT: board-session.ts · XrTriPanel.native.tsx · modules/board-texture
@@ -14,6 +13,9 @@ import { StyleSheet, View } from 'react-native';
 import {
   ViroAmbientLight,
   ViroARScene,
+  ViroScene,
+  ViroNode,
+  isVisionOS,
   ViroController,
   ViroDirectionalLight,
   ViroTrackingStateConstants,
@@ -35,6 +37,11 @@ import {
 import { View as UiView } from '@acme/ui/primitives';
 import {
   BoardTextureHost,
+  XrBoardInk,
+  uncoveredRecords,
+  panelMediaArea,
+  worldSlot,
+  xrRotateY,
   XrTriPanel,
   XrBoardSurface,
   XR_COLOR,
@@ -78,6 +85,8 @@ import { useXrVoice } from './xr-voice.native.ts';
 
 /** This presentation's id, so its own strokes are not echoed back at it. */
 const PRESENTATION_ID = 'tutor-xr';
+const VISIONOS = isVisionOS();
+const BOARD_MEDIA = panelMediaArea('boardPanel');
 
 /** How many turns the spatial panel shows. See its header for why it is small. */
 const CHAT_WINDOW = 4;
@@ -138,7 +147,7 @@ const active: {
    * `getCameraOrientationAsync` goes through `VRTCameraModule` and works on
    * every build, which is why placement hangs off it rather than off the event.
    */
-  scene: ViroARScene | null;
+  scene: ViroARScene | ViroScene | null;
 } = {
   engine: null,
   session: null,
@@ -359,7 +368,7 @@ function BoardScene() {
   const [surfaceTimedOut, setSurfaceTimedOut] = useState(false);
   const textureReady = useXrSession((s) => s.boardTextureBound);
   useEffect(() => {
-    if (textureReady) return;
+    if (textureReady || VISIONOS) return;
     const timer = setTimeout(() => setSurfaceTimedOut(true), 10000);
     return () => clearTimeout(timer);
   }, [textureReady]);
@@ -417,6 +426,8 @@ function BoardScene() {
     not bound, this pair IS the board and nothing about it changes.
   */
   const boardTextureBound = useXrSession((s) => s.boardTextureBound);
+  // Vision Pro draws the raster plus current ink; Android may use its live view texture.
+  const boardDrawable = boardTextureBound || VISIONOS;
   /*
     THE PICTURE DOES NOT NEED A SERVER SESSION, and gating it on one is why the
     centre panel showed a placeholder instead of the child's board: under local
@@ -425,7 +436,16 @@ function BoardScene() {
     behind it had the real board all along. `useBoardRaster` already refuses to
     fire without an engine handle, which is the condition that actually matters.
   */
+  // The editor attach bumps revision, so the first export can begin after it mounts.
   const raster = useBoardRaster(readEngine, store, !boardTextureBound, strokeOpen);
+  const pendingInk = useMemo(() => uncoveredRecords(store, raster.covered), [store, raster.covered]);
+  const inkSlot = worldSlot('center', workspaceHead, placement.rotation[1]);
+  const inkOffset = xrRotateY([0, BOARD_MEDIA.centerY, BOARD_MEDIA.z], inkSlot.yaw);
+  const inkWorldPosition: [number, number, number] = [
+    inkSlot.position[0] + inkOffset[0],
+    inkSlot.position[1] + inkOffset[1],
+    inkSlot.position[2] + inkOffset[2],
+  ];
 
   const natalieAngle = ((NATALIE_AZIMUTH_DEG - placement.rotation[1]) * Math.PI) / 180;
   const nataliePosition: [number, number, number] = [
@@ -447,7 +467,7 @@ function BoardScene() {
     child just drew.
   */
   const voice = useXrVoice({
-    enabled: composedState === 'ready' && boardTextureBound,
+    enabled: composedState === 'ready' && boardDrawable,
     onUtterance: (text) => {
       const engine = active.engine;
       const owner = active.session;
@@ -606,7 +626,7 @@ function BoardScene() {
           boardUri={raster.uri}
           boardLive={boardTextureBound}
           controlSize={minHitSize(2.6, false, band)}
-          boardTitle={!boardTextureBound ? (surfaceTimedOut ? 'Board unavailable — return to lesson' : 'Connecting your board…') : problem ?? 'Your board'}
+          boardTitle={!boardDrawable ? (surfaceTimedOut ? 'Board unavailable — return to lesson' : 'Connecting your board…') : problem ?? 'Your board'}
           chatRows={chatRows.map((row) => ({
             id: row.id,
             text: row.text,
@@ -623,7 +643,7 @@ function BoardScene() {
                 only this label to tell them they are being listened to.
               */
               text: askError ? 'Could not send — try again' : askLabel,
-              disabled: composedState !== 'ready' || asking || !boardTextureBound || voice.phase.kind === 'transcribing' || voice.phase.kind === 'starting',
+              disabled: composedState !== 'ready' || asking || !boardDrawable || voice.phase.kind === 'transcribing' || voice.phase.kind === 'starting',
               emphasis: true,
               active: voice.phase.kind === 'listening',
               onPress: () => { setAskError(false); voice.toggle(); },
@@ -632,7 +652,7 @@ function BoardScene() {
               id: 'pen',
               face: 'pen',
               text: 'Pen',
-              disabled: composedState !== 'ready' || !boardTextureBound,
+              disabled: composedState !== 'ready' || !boardDrawable,
               active: tool === 'draw',
               onPress: () => {
                 useXrSession.getState().setTool('draw');
@@ -643,7 +663,7 @@ function BoardScene() {
               id: 'mark',
               face: 'highlighter',
               text: 'Highlighter',
-              disabled: composedState !== 'ready' || !boardTextureBound,
+              disabled: composedState !== 'ready' || !boardDrawable,
               active: tool === 'highlight',
               onPress: () => {
                 useXrSession.getState().setTool('highlight');
@@ -654,7 +674,7 @@ function BoardScene() {
               id: 'erase',
               face: 'eraser',
               text: 'Eraser',
-              disabled: composedState !== 'ready' || !boardTextureBound,
+              disabled: composedState !== 'ready' || !boardDrawable,
               active: tool === 'eraser',
               onPress: () => {
                 useXrSession.getState().setTool('eraser');
@@ -664,7 +684,7 @@ function BoardScene() {
             {
               id: 'ink',
               text: `Ink: ${ink}`,
-              disabled: composedState !== 'ready' || !boardTextureBound,
+              disabled: composedState !== 'ready' || !boardDrawable,
               swatchColor: ink,
               onPress: () => {
                 /* Cycles the pen colour: the spatial panel has no room for a
@@ -680,9 +700,9 @@ function BoardScene() {
                 }
               },
             },
-            { id: 'undo', face: 'undo', text: 'Undo', disabled: composedState !== 'ready' || !boardTextureBound, onPress: () => active.engine?.undo() },
+            { id: 'undo', face: 'undo', text: 'Undo', disabled: composedState !== 'ready' || !boardDrawable, onPress: () => active.engine?.undo() },
             { id: 'clear', face: 'clear', text: confirmClear ? 'Confirm clear' : 'Clear board',
-              disabled: composedState !== 'ready' || !boardTextureBound, active: confirmClear,
+              disabled: composedState !== 'ready' || !boardDrawable, active: confirmClear,
               onPress: () => {
                 if (confirmClear) active.engine?.clear();
                 setConfirmClear(!confirmClear);
@@ -710,11 +730,21 @@ function BoardScene() {
         `handleSurfaceInput` above is what declines them when the mapping is
         measured wrong.
       */}
+      {VISIONOS && !boardTextureBound && active.head !== null ? (
+        <ViroNode position={inkWorldPosition} rotation={[0, inkSlot.yaw, 0]} ignoreEventHandling>
+          <XrBoardInk
+            store={pendingInk}
+            width={BOARD_MEDIA.width}
+            height={BOARD_MEDIA.height}
+            onSkippedCount={useXrSession.getState().setSkipped}
+          />
+        </ViroNode>
+      ) : null}
       {active.head !== null ? (
         <XrBoardSurface
           headPosition={workspaceHead}
           headYawDeg={placement.rotation[1]}
-          enabled={composedState === 'ready' && boardTextureBound && inkLands}
+          enabled={composedState === 'ready' && boardDrawable && inkLands}
           onSurfaceInput={handleSurfaceInput}
           termination={termination}
         />
@@ -723,30 +753,22 @@ function BoardScene() {
   );
 
   /*
-    THE ROOT STAYS `ViroARScene`, AND THE CASE AGAINST IT WAS NEVER ACTUALLY RUN.
-
-    For a run of builds this scene drew nothing in the headset and the root was
-    the leading suspect. `ViroARScene` is the MIXED-REALITY root — anchors,
-    `ViroARPlane`, passthrough — and the package's guide does say a
-    fully-virtual scene is rooted in `ViroScene` (`QUEST_SETUP` §4, and the
-    "pure VR vs mixed-reality root" pitfall in §Common pitfalls).
-
-    None of that is why nothing drew. Every one of those builds threw
-    `ReferenceError: Property 'ViroNode' doesn't exist` on the first render of
-    this component — a probe block used `ViroNode` without importing it — so
-    the tree never mounted and the only thing left drawing was the reticle the
-    renderer draws for itself. The root, the backdrop sphere, the floor and the
-    material re-registration were all diagnosed against a scene that was
-    throwing, so none of them is evidence for anything.
-
-    It stays on the evidence there is: the Danger Room scene renders on this
-    renderer, on headset hardware, from a `ViroARScene` root with
-    `passthroughEnabled` and hdr/bloom/pbr all off — which is the navigator
-    config below. If the board is still absent now the tree mounts, the root is
-    the next thing to move: `ViroScene`, passed as `vrInitialScene`. That swap
-    takes `onTrackingUpdated` with it, because it reports tracking of a room
-    only the AR root is looking at.
+    Quest and PICO use the mixed-reality ViroARScene. Viro's visionOS
+    CompositorServices backend excludes VRTARScene and mounts a ViroScene
+    through ViroXRSceneNavigator instead. Both roots share this content and
+    its board-space pointer mapping.
   */
+  if (VISIONOS) {
+    return (
+      <ViroScene
+        ref={(scene) => { active.scene = scene; }}
+        onTrackingUpdated={handleTrackingUpdated}
+        onCameraTransformUpdate={handleCameraTransform}
+      >
+        {content}
+      </ViroScene>
+    );
+  }
   return (
     <ViroARScene
       ref={(scene) => {
@@ -946,6 +968,12 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
       Fail closed, and the closed direction here is the primer — the one screen
       that explains itself.
     */
+    // The visionOS mixed space requests world and accessory sensing through ARKit.
+    // The AR camera permission check here belongs to the Quest/PICO AR scene.
+    if (VISIONOS) {
+      advance({ kind: 'preparing' });
+      return;
+    }
     void checkPermissions([...SPATIAL_PERMISSIONS]).then(
       (result) => {
         if (!live) return;
@@ -1033,12 +1061,14 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false }: TutorX
     const selection = useXrSession.getState();
     handle.setTool(selection.tool);
     handle.setInk(selection.ink);
+    // A pending first raster may have found no engine; retry once attachment completes.
+    bumpRevision();
     return () => {
       handle.injectPointer({ phase: 'cancel', x: 0, y: 0 });
       active.engine = null;
       detach();
     };
-  }, [ready, session, engineGeneration]);
+  }, [ready, session, engineGeneration, bumpRevision]);
 
   /*
     THE BOARD BECOMES DRAWABLE WHEN THE ENGINE AND THE SCENE ARE BOTH THERE,
