@@ -9,7 +9,7 @@
 // nothing else: it is `Platform.constants` and one `NativeModules` lookup, read
 // once at module load, and it links no renderer by being evaluated.
 //
-// QUEST OR PICO. The fork supports both — `ViroPlatform` exports `isQuest` AND
+// QUEST, PICO OR VISION PRO. The fork supports all three — `ViroPlatform` exports `isQuest` AND
 // `isPico`, and it carries a PICO xRMode — but only `isQuest` and
 // `hasOpenXRSupport` reach the package root, so an `isQuest`-only gate reported
 // `device-not-eligible` on a PICO 4 Ultra that can run this scene. Verified
