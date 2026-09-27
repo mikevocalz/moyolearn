@@ -9,6 +9,7 @@ import com.facebook.react.ReactActivity
 import com.facebook.react.ReactActivityDelegate
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.fabricEnabled
 import com.facebook.react.defaults.DefaultReactActivityDelegate
+import com.facebook.react.modules.core.DeviceEventManagerModule
 import com.facebook.react.runtime.ReactHostImpl
 
 /**
@@ -150,6 +151,21 @@ class VRActivity : ReactActivity() {
         // each VR session piles up across re-entries and stale VRTComponents
         // intercept hit-tested viewTags with dead ReactContexts, breaking
         // onClick / onHover until you press dozens of times.
+        //
+        // Tell JS the immersive activity is gone before unloading the
+        // surface. Horizon can finish VRActivity directly (Meta-button quit
+        // confirm, OS reclaim) without exitVRScene() running, so this emit
+        // is the only signal that clears VRQuestNavigatorBridge's vrActive
+        // flag on that path — without it the AppState relaunch resurrects
+        // VR on the next foreground edge and the user has to quit
+        // repeatedly.
+        try {
+            reactHost?.currentReactContext
+                ?.getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter::class.java)
+                ?.emit("VRLauncher.vrDestroyed", null)
+        } catch (t: Throwable) {
+            android.util.Log.w("VRActivity", "emit VRLauncher.vrDestroyed failed", t)
+        }
         try {
             reactDelegate?.unloadApp()
         } catch (t: Throwable) {
