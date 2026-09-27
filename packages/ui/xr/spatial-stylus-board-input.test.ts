@@ -37,6 +37,17 @@ test('side button projects the head-through-tip ray onto the floating board', ()
   assert.equal(spatialStylusHit({ ...frame, headPosition: null }, board), null);
 });
 
+test('secondary side button draws in air with pressure', () => {
+  const secondary = { ...frame, primaryPressed: false, secondaryPressed: true };
+  const pointer = new BoardPointer();
+  const input = new SpatialStylusBoardInput(pointer);
+  assert.ok(spatialStylusHit(secondary, board));
+  const began = input.handle(secondary, board);
+  assert.equal(began?.phase, 'begin');
+  assert.equal(began?.pressure, 0.65);
+  assert.equal(input.handle({ ...secondary, secondaryPressed: false }, board)?.phase, 'end');
+});
+
 test('tip contact uses its real position, while an unpressed tip cannot draw in air', () => {
   const tip: SpatialStylusFrame = {
     ...frame, position: [0.12, 0.04, -1.496],
