@@ -60,7 +60,7 @@ function styleXml(fs, color, weight, ls = 0) {
   const sid = id();
   return {
     sid,
-    xml: `<TextStylePaint id="${sid}" fontSize="${fs * TEXT_SCALE}"${ls ? ` letterSpacing="${ls}"` : ""} fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="${weight}" name="Weight" /><Fill><SolidColor colorValue="${color}" /></Fill></TextStylePaint>`,
+    xml: `<TextStylePaint id="${sid}" fontSize="${Math.round(fs * TEXT_SCALE * 1000) / 1000}"${ls ? ` letterSpacing="${ls}"` : ""} fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="${weight}" name="Weight" /><Fill><SolidColor colorValue="${color}" /></Fill></TextStylePaint>`,
   };
 }
 
@@ -161,37 +161,43 @@ textEl({ name: "Grab status", x: 540, y: 18, w: 200, align: "center", fs: 11, co
 brackets("Grab corners", 14, 14, 1266, 786, 34, AMBER, 3, "      ");
 push(`    </Node>`);
 
+/* One bordered card wraps the whole status column — ANSWER/RESULT/HINT/FAULT
+   all render inside it. It is drawn FIRST so the gated texts sit on top of
+   its fill, and it is always visible: the user expects the frame to stay
+   even when no layer inside is lit. y 526..742 encloses the cluster. */
+push(`    <Node name="Status frame">`);
+rectShape({ name: "Status card", x: 1030, y: 634, w: 420, h: 216, fill: "F20E1420", stroke: "66FFC168", sw: 1, cr: 4, indent: "      " });
+push(`    </Node>`);
+
 // ---------- feedback strip (right col, above footer) ----------
 push(`    <Node id="${ID.feedback}" opacity="0" name="Feedback">`);
-rectShape({ name: "Fb rule", x: 1030, y: FB - 8, w: 420, h: 1, fill: HAIR, indent: "      " });
-textEl({ name: "Fb tag", x: CX.x, y: FB + 2, fs: 9.5, color: TEXT_FAINT, ls: 2, str: "RESULT", indent: "      " });
-rectShape({ name: "Acc correct", x: CX.x + 2, y: FB + 34, w: 4, h: 44, fill: CORRECT, shapeId: ID.accC, opacity: 0, indent: "      " });
-rectShape({ name: "Acc incorrect", x: CX.x + 2, y: FB + 34, w: 4, h: 44, fill: WRONG, shapeId: ID.accI, opacity: 0, indent: "      " });
-rectShape({ name: "Acc ungraded", x: CX.x + 2, y: FB + 34, w: 4, h: 44, fill: AMBER, shapeId: ID.accU, opacity: 0, indent: "      " });
-textEl({ name: "Fb title", x: CX.x + 18, y: FB + 24, w: 400, fs: 16, color: TEXT_HI, weight: 700, ls: 0.5, prop: "feedbackTitle", indent: "      " });
-textEl({ name: "Fb body", x: CX.x + 18, y: FB + 50, w: 392, fs: 12, color: TEXT_MID, prop: "feedbackBody", wrap: "wrap", indent: "      " });
+rectShape({ name: "Fb rule", x: 1030, y: 552, w: 420, h: 1, fill: HAIR, indent: "      " });
+textEl({ name: "Fb tag", x: CX.x, y: 558, fs: 9.5, color: TEXT_HI, weight: 700, ls: 2, str: "RESULT", indent: "      " });
+rectShape({ name: "Acc correct", x: CX.x + 2, y: 594, w: 4, h: 44, fill: CORRECT, shapeId: ID.accC, opacity: 0, indent: "      " });
+rectShape({ name: "Acc incorrect", x: CX.x + 2, y: 594, w: 4, h: 44, fill: WRONG, shapeId: ID.accI, opacity: 0, indent: "      " });
+rectShape({ name: "Acc ungraded", x: CX.x + 2, y: 594, w: 4, h: 44, fill: AMBER, shapeId: ID.accU, opacity: 0, indent: "      " });
+textEl({ name: "Fb title", x: CX.x + 18, y: 580, w: 400, fs: 16, color: TEXT_HI, weight: 700, ls: 0.5, prop: "feedbackTitle", indent: "      " });
+textEl({ name: "Fb body", x: CX.x + 18, y: 608, w: 392, fs: 12, color: "FFFFFFFF", weight: 800, prop: "feedbackBody", wrap: "wrap", indent: "      " });
 push(`    </Node>`);
 
 // ---------- hint card (bool-bound) ----------
 push(`    <Node id="${ID.hintCard}" opacity="0" name="Hint card">`);
 push(`      ${bindOp("hintVisible")}`);
-rectShape({ name: "Hint frame", x: 1030, y: 698, w: 420, h: 88, fill: "F20E1420", stroke: "66FFC168", sw: 1, cr: 4, indent: "      " });
 textEl({ name: "Hint tag", x: CX.x + 14, y: 662, fs: 9.5, color: AMBER, ls: 2.5, str: "HINT", indent: "      " });
-textEl({ name: "Hint text", x: CX.x + 14, y: 682, w: 392, fs: 12, color: TEXT_MID, prop: "hintText", wrap: "wrap", indent: "      " });
+textEl({ name: "Hint text", x: CX.x + 14, y: 682, w: 392, fs: 40 / 3, color: "FFFFFFFF", weight: 700, prop: "hintText", wrap: "wrap", indent: "      " });
 push(`    </Node>`);
 
 // ---------- answer chip (bool-bound) ----------
 push(`    <Node id="${ID.answerChip}" opacity="0" name="Answer chip">`);
 push(`      ${bindOp("answerValid")}`);
-textEl({ name: "Ans tag", x: CX.x, y: 630, fs: 9.5, color: TEXT_FAINT, ls: 2, str: "ANSWER", indent: "      " });
-textEl({ name: "Ans text", x: CX.x + 70, y: 626, w: 350, fs: 12, color: TEXT_HI, prop: "answerText", indent: "      " });
+textEl({ name: "Ans tag", x: CX.x, y: 542, fs: 9.5, color: TEXT_HI, weight: 700, ls: 2, str: "ANSWER", indent: "      " });
+textEl({ name: "Ans text", x: CX.x + 70, y: 538, w: 350, fs: 12, color: TEXT_HI, weight: 700, prop: "answerText", indent: "      " });
 push(`    </Node>`);
 
 // ---------- error chip ----------
 push(`    <Node id="${ID.errChip}" opacity="0" name="Error chip">`);
-rectShape({ name: "Err frame", x: 1030, y: 698, w: 420, h: 88, fill: "F21A1210", stroke: "99EC9787", sw: 1, cr: 4, indent: "      " });
 textEl({ name: "Err tag", x: CX.x + 14, y: 662, fs: 9.5, color: WRONG, ls: 2.5, str: "FAULT", indent: "      " });
-textEl({ name: "Err text", x: CX.x + 14, y: 682, w: 300, fs: 12, color: TEXT_MID, prop: "status", indent: "      " });
+textEl({ name: "Err text", x: CX.x + 14, y: 682, w: 300, fs: 12, color: TEXT_HI, weight: 700, prop: "status", indent: "      " });
 {
   const st = styleXml(12, WRONG, 700);
   push(`      <Text name="Err code" x="1140" y="682" width="86" sizingValue="fixed" alignValue="right" wrapValue="noWrap">`);
@@ -319,7 +325,9 @@ textEl({ name: "Status tag", x: 760, y: 24, fs: 9, color: TEXT_FAINT, ls: 2.5, s
 textEl({ name: "Status", x: 760, y: 40, fs: 11, color: TEXT_MID, ls: 1.5, prop: "status" });
 textEl({ name: "Progress", x: 980, y: 36, w: 130, align: "right", fs: 12, color: TEXT_HI, weight: 700, ls: 1, prop: "progressLabel" });
 rectShape({ name: "Locale chip", x: 1185, y: 36, w: 100, h: 26, fill: "14101820", stroke: "40E9F4FA", sw: 1, cr: 3 });
-textEl({ name: "Locale", x: 1135, y: 43, w: 100, align: "center", fs: 10, color: TEXT_MID, ls: 2, prop: "localeLabel" });
+/* Chip spans y 23..49; the text sits at 27 so the glyphs stay inside it —
+   authoring at 43 put the cap-height below the chip's bottom edge. */
+textEl({ name: "Locale", x: 1135, y: 27, w: 100, align: "center", fs: 10, color: TEXT_MID, ls: 2, prop: "localeLabel" });
 
 // ---------- window deco ----------
 textEl({ name: "Cam tag", x: 48, y: 66, fs: 9.5, color: TEXT_DIM, ls: 2, str: "CAM·02 // CONTENT" });

@@ -221,3 +221,5 @@
 [11:22:10.268] rive  wrote ./build/moyo_learning_question.png
 [11:22:21.880] rive  verified (0 bytes, 134ms, 0 errors, 0 warnings)
 [11:22:22.050] rive  built build/moyo_learning_question.riv (165012 bytes, 130ms, 0 errors, 0 warnings)
+[11:56:52.261] rive  verified (0 bytes, 155ms, 0 errors, 0 warnings)
+[11:56:52.437] rive  built build/moyo_learning_question.riv (165012 bytes, 133ms, 0 errors, 0 warnings)

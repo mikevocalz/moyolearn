@@ -213,11 +213,18 @@ export function XrQuestionPanel({
         dragTransform="parent"
         onDrag={() => {}}
         onClickState={(state: number, _position: number[], sourceId: number) => {
-          if (state === 1 && owner.current === null) {
+          /* Any terminal event from the owner ends the grab — not just
+             CLICK_UP. If the up is lost (cancel, capture stolen mid-drag)
+             and `grabbed` never clears, every `enabled: !grabbed` gate in
+             the scene stays shut and the whole board goes silent. */
+          if (state === 1) {
+            if (owner.current !== null) void finishGrab();
             owner.current = sourceId;
             onGrab(true);
             runtime.current?.setBoolean('grabbed', true);
-          } else if (state === 2 && sourceId === owner.current) void finishGrab();
+          } else if (owner.current !== null && (state === 2 || state === 3) && sourceId === owner.current) {
+            void finishGrab();
+          }
         }}
       />
       <ViroText
