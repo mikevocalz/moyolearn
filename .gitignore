@@ -41,3 +41,6 @@ apps/web/public/natalie/
 
 # Generated from the pinned pdfjs-dist package by the web build.
 apps/web/public/pdfjs/
+
+# Reproducible visionOS renderer build cache
+.cache/visionos/

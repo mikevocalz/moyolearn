@@ -4,7 +4,7 @@
 // WHAT THIS IS AND IS NOT. It is not a drawing engine and it holds no state:
 // Quickdraw remains the only thing that decides what a stroke is, how the
 // eraser behaves, and what a diff means. This reads the document those
-// decisions produce and emits one `ViroPolyline` per stroke record. One
+// decisions produce and emits one geometry per stroke record (a triangle mesh on visionOS). One
 // document, two presentations — the 2D pane renders it with the engine's own
 // canvas, the headset renders it with ViroCore.
 //
@@ -39,7 +39,8 @@
 // SOT-KEYWORDS: xr board ink polyline viro stroke record quickdraw page space surface metres renderer skipped
 
 import { useEffect, useMemo } from 'react';
-import { ViroPolyline } from '@reactvision/react-viro';
+import { ViroGeometry, ViroPolyline, isVisionOS } from '@reactvision/react-viro';
+import { strokeMesh } from './stroke-mesh.ts';
 import { inkMaterial } from './spatial-materials.native.ts';
 import { strokeOf, type StrokeGeometry } from './stroke-of.ts';
 import { boardLayer, boardSurfacePixels } from './spatial-tokens.ts';
@@ -68,6 +69,14 @@ function pageToSurface(x: number, y: number, width: number, height: number): [nu
        never be hidden by a picture of the board taken before they drew it. */
     boardLayer.ink,
   ];
+}
+
+function MetalStroke({ stroke, width, height }: { stroke: StrokeGeometry; width: number; height: number }) {
+  const mesh = useMemo(() => strokeMesh(
+    stroke.points.map(point => pageToSurface(point.x, point.y, width, height)),
+    (stroke.width / boardSurfacePixels.width) * width,
+  ), [stroke, width, height]);
+  return <ViroGeometry {...mesh} opacity={stroke.opacity} materials={[inkMaterial(stroke.colourId)]} />;
 }
 
 export function XrBoardInk({ store, width, height, onSkippedCount }: XrBoardInkProps) {
@@ -103,7 +112,9 @@ export function XrBoardInk({ store, width, height, onSkippedCount }: XrBoardInkP
 
   return (
     <>
-      {strokes.map((stroke) => (
+      {strokes.map((stroke) => isVisionOS() ? (
+        <MetalStroke key={stroke.id} stroke={stroke} width={width} height={height} />
+      ) : (
         <ViroPolyline
           key={stroke.id}
           points={stroke.points.map((point) => pageToSurface(point.x, point.y, width, height))}

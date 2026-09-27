@@ -9,7 +9,10 @@
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "visionos:pods": "cd visionos && pod install",
+    "visionos:build": "xcodebuild -workspace visionos/Moyo.xcworkspace -scheme Moyo -configuration Debug -destination \"generic/platform=visionOS Simulator\" CODE_SIGNING_ALLOWED=NO build",
+    "visionos:prepare": "node ../../tooling/prepare-visionos.mjs"
   },
   "dependencies": {
     "@acme/app": "workspace:*",
@@ -69,7 +72,8 @@
     "three": "catalog:",
     "typegpu": "0.12.5",
     "uniwind": "catalog:",
-    "zustand": "catalog:"
+    "zustand": "catalog:",
+    "react-visionos": "npm:react@19.2.3"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",
@@ -80,7 +84,10 @@
     "eslint-config-expo": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
-    "unplugin-typegpu": "0.12.3"
+    "unplugin-typegpu": "0.12.3",
+    "@reactvision/react-native-visionos": "0.86.4",
+    "@react-native-community/cli": "20.1.0",
+    "@callstack/out-of-tree-platforms": "0.77.0"
   },
   "private": true,
   "expo": {

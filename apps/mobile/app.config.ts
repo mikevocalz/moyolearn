@@ -331,6 +331,7 @@ const config: ExpoConfig = {
       */
       { android: { xRMode: ['AR', 'QUEST'] } },
     ],
+    ['@reactvision/react-viro/plugins/withViroVisionOS', { applyCompatibilityPatches: false }],
     /*
       Nitro-backed fetch: Cronet on Android, URLSession on iOS, so HTTP/2 and
       HTTP/3-over-QUIC and connection reuse come from the platform rather than

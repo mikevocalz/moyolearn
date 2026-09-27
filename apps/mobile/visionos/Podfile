@@ -1,0 +1,97 @@
+# visionOS requires source builds; iOS-only precompiled Expo pods have no xros slice.
+ENV['EXPO_USE_PRECOMPILED_MODULES'] = '0'
+ENV['RNS_GAMMA_ENABLED'] ||= '1'
+require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), 'scripts/autolinking')
+
+# Resolve react_native_pods.rb with node to allow for hoisting
+require Pod::Executable.execute_command('node', ['-p',
+  'require.resolve(
+    "@reactvision/react-native-visionos/scripts/react_native_pods.rb",
+    {paths: [process.argv[1]]},
+  )', __dir__]).strip
+
+# ViroReactUI.podspec pins visionos 26.0 — ViroKit calls
+# LayerRenderer.Frame.queryDrawables() and Drawable.computeProjection(viewIndex:)
+# with no availability fallback. min_visionos_version_supported is lower, and
+# CocoaPods then refuses the pod with "required a higher minimum deployment
+# target". 26.0 is the number the ViroReact setup guide documents.
+platform :visionos, '26.0'
+
+# # viro-visionos: build React Native from source — no xros slice is published
+ENV['RCT_USE_PREBUILT_RNCORE'] ||= '0'
+ENV['RCT_USE_RN_DEP'] ||= '0'
+prepare_react_native_project!
+
+linkage = ENV['USE_FRAMEWORKS']
+if linkage != nil
+  Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green
+  use_frameworks! :linkage => linkage.to_sym
+end
+
+target 'Moyo' do
+  use_expo_modules!
+  config = use_native_modules!
+  config[:reactNativePath] = File.dirname(Pod::Executable.execute_command('node', ['-p', 'require.resolve("@reactvision/react-native-visionos/package.json", {paths: [process.argv[1]]})', __dir__]).strip)
+
+  use_react_native!(
+    :path => config[:reactNativePath],
+    # An absolute path to your application root.
+    :app_path => "#{Pod::Config.instance.installation_root}/.."
+  )
+
+  target 'MoyoTests' do
+    inherit! :complete
+    # Pods for testing
+  end
+
+  post_install do |installer|
+    # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
+    react_native_post_install(
+      installer,
+      config[:reactNativePath],
+      :mac_catalyst_enabled => false
+    )
+
+    # # viro-visionos: UIKit back into every pod's prefix header
+    # CocoaPods writes each pod's -prefix.pch from a case on the platform name that knows
+    # :ios, :tvos and :osx but not visionOS, so on xros the pch falls through with nothing but
+    # Foundation. Pods that reach for a UIKit type without importing UIKit compile on iOS purely
+    # because the pch handed it over, and fail here. The __OBJC__ guard is CocoaPods' own, so the
+    # C and C++ sources in those same pods are untouched.
+    Dir.glob("#{installer.sandbox.root}/Target Support Files/*/*-prefix.pch").each do |pch|
+      content = File.read(pch)
+      next if content.include?('UIKit/UIKit.h')
+      patched = content.sub("#import <Foundation/Foundation.h>",
+                            "#import <Foundation/Foundation.h>\n#import <UIKit/UIKit.h>")
+      next if patched == content
+      FileUtils.chmod('u+w', pch)
+      File.write(pch, patched)
+    end
+    # # viro-visionos: fmt consteval fix for Apple Clang 16
+    fmt_base_h = "#{installer.sandbox.root}/fmt/include/fmt/base.h"
+    if File.exist?(fmt_base_h)
+      content = File.read(fmt_base_h)
+      patched = content.gsub('#  define FMT_CONSTEVAL consteval', '#  define FMT_CONSTEVAL constexpr')
+      if patched != content
+        FileUtils.chmod('u+w', fmt_base_h)
+        File.write(fmt_base_h, patched)
+      end
+    end
+    # # viro-visionos: C++20 + Hermes JSI headers for all targets
+    hermes_jsi_path = "#{installer.sandbox.root}/hermes-engine/API/jsi"
+    installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |cfg|
+        cfg.build_settings['CLANG_CXX_LANGUAGE_STANDARD'] = 'c++20'
+        existing = cfg.build_settings['HEADER_SEARCH_PATHS'] || '$(inherited)'
+        cfg.build_settings['HEADER_SEARCH_PATHS'] = "#{existing} \"#{hermes_jsi_path}\""
+      end
+    end
+  end
+
+  # viro-visionos
+  viro_root = File.dirname(Pod::Executable.execute_command('node', ['-p', 'require.resolve("@reactvision/react-viro/package.json", {paths: [process.argv[1]]})', __dir__]).strip)
+  pod 'ViroKit',     :path => "#{viro_root}/ios/dist/ViroRendererVisionOS/"
+  pod 'ViroReact',   :path => "#{viro_root}/ios", :modular_headers => true
+  pod 'ViroReactUI', :path => "#{viro_root}/ios"
+end
+
