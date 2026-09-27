@@ -102,11 +102,21 @@ const openInitialEntrance = () => {
   });
 };
 
+/* A question renders in the learner's language or it is the language being
+   taught — a science question in Spanish to an English-speaking learner is a
+   fixture-matrix artefact, not a lesson. Foreign-language rows survive only
+   when the subject itself is a language. */
+const LEARNER_SEQUENCE = XR_FIXTURE_SEQUENCE.filter((id) => {
+  const q = fixtureById(id);
+  if (!q) return false;
+  return q.questionLocale === q.uiLocale || q.subject === 'world-language';
+});
+
 /** Load the fixture at `sequenceIndex` and stage the one after it. */
 const loadFixture = (index: number) => {
   const flow = useXrQuestionFlow.getState();
-  const current = fixtureById(XR_FIXTURE_SEQUENCE[index] ?? '');
-  const next = fixtureById(XR_FIXTURE_SEQUENCE[index + 1] ?? '');
+  const current = fixtureById(LEARNER_SEQUENCE[index] ?? '');
+  const next = fixtureById(LEARNER_SEQUENCE[index + 1] ?? '');
   if (!current) {
     flow.fail('Question sequence finished');
     return;
@@ -170,7 +180,7 @@ const questionHandlers: QuestionChromeHandlers = {
        the broken question" rather than a dead button. */
     if (flow.phase === 'error') {
       const index = xrQuestionProbe.getState().sequenceIndex + 1;
-      if (index >= XR_FIXTURE_SEQUENCE.length) {
+      if (index >= LEARNER_SEQUENCE.length) {
         useXrQuestionFlow.getState().fail('That is the whole fixture sequence.');
         return;
       }
@@ -191,10 +201,10 @@ const questionHandlers: QuestionChromeHandlers = {
              probe does not have. */
           const index = xrQuestionProbe.getState().sequenceIndex + 1;
           xrQuestionProbe.setState({ sequenceIndex: index });
-          const upcoming = fixtureById(XR_FIXTURE_SEQUENCE[index + 1] ?? '');
+          const upcoming = fixtureById(LEARNER_SEQUENCE[index + 1] ?? '');
           useXrQuestionFlow.getState().stageNext(upcoming ?? null);
         });
-      } else if (xrQuestionProbe.getState().sequenceIndex >= XR_FIXTURE_SEQUENCE.length - 1) {
+      } else if (xrQuestionProbe.getState().sequenceIndex >= LEARNER_SEQUENCE.length - 1) {
         s.fail('That is the whole fixture sequence.');
       } else {
         /* Nothing staged — hold the hidden midpoint while the feed lands. */

@@ -217,9 +217,10 @@ export const useXrQuestionFlow = create<XrQuestionFlowState>((set, get) => ({
 
   showHint: () => {
     const { phase, current } = get();
-    /* Every question has a hint path — authored text or the local tutor's,
-       so availability is "a question is loaded", not "a hint was authored". */
-    if (phase === 'idle' && current) set({ hintVisible: true });
+    /* A hint is meaningful in every phase a learner can be in — puzzling over
+       the question, re-reading after a wrong answer, everywhere a question is
+       on the panel. The only true gate is "nothing loaded". */
+    if (current && phase !== 'error') set({ hintVisible: true });
   },
 
   setGeneratedHint: (text) => set({ generatedHint: text, hintBusy: false }),

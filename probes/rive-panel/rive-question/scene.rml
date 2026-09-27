@@ -32,11 +32,6 @@
       </Shape>
     </Node>
     <Node id="0:208" opacity="0" name="Feedback">
-      <Shape name="Fb card">
-        <Rectangle x="1030" y="590" width="420" height="124" cornerRadiusTL="4" />
-        <Fill><SolidColor colorValue="F20E1420" /></Fill>
-        <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="55E9F4FA" /></Stroke>
-      </Shape>
       <Shape name="Fb rule">
         <Rectangle x="1030" y="552" width="420" height="1" />
         <Fill><SolidColor colorValue="2BE9F4FA" /></Fill>
