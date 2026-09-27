@@ -1,9 +1,8 @@
 'use client';
 // The existing lesson in space: one BoardSession and one audioQueue owner.
-// Quickdraw stays in a native WebView. BoardTextureHost attaches that view to
-// Viro's live material, rendered by XrTriPanel; XrBoardSurface forwards owned
-// controller strokes into that same editor. Raster output is a visible recovery
-// preview only: handwriting waits for the live bridge and calibration.
+// Quickdraw stays in a native WebView. Android binds it to a Viro live texture;
+// Vision Pro displays its raster with current ink layered above it. Both send
+// calibrated spatial pointer samples to that same editor.
 // The navigator captures its initial scene, so scene state comes from stores
 // and active runtime handles. Workspace placement is latched until Recenter.
 // SOT: board-session.ts · XrTriPanel.native.tsx · modules/board-texture
@@ -753,29 +752,10 @@ function BoardScene() {
   );
 
   /*
-    THE ROOT STAYS `ViroARScene`, AND THE CASE AGAINST IT WAS NEVER ACTUALLY RUN.
-
-    For a run of builds this scene drew nothing in the headset and the root was
-    the leading suspect. `ViroARScene` is the MIXED-REALITY root — anchors,
-    `ViroARPlane`, passthrough — and the package's guide does say a
-    fully-virtual scene is rooted in `ViroScene` (`QUEST_SETUP` §4, and the
-    "pure VR vs mixed-reality root" pitfall in §Common pitfalls).
-
-    None of that is why nothing drew. Every one of those builds threw
-    `ReferenceError: Property 'ViroNode' doesn't exist` on the first render of
-    this component — a probe block used `ViroNode` without importing it — so
-    the tree never mounted and the only thing left drawing was the reticle the
-    renderer draws for itself. The root, the backdrop sphere, the floor and the
-    material re-registration were all diagnosed against a scene that was
-    throwing, so none of them is evidence for anything.
-
-    It stays on the evidence there is: the Danger Room scene renders on this
-    renderer, on headset hardware, from a `ViroARScene` root with
-    `passthroughEnabled` and hdr/bloom/pbr all off — which is the navigator
-    config below. If the board is still absent now the tree mounts, the root is
-    the next thing to move: `ViroScene`, passed as `vrInitialScene`. That swap
-    takes `onTrackingUpdated` with it, because it reports tracking of a room
-    only the AR root is looking at.
+    Quest and PICO use the mixed-reality ViroARScene. Viro's visionOS
+    CompositorServices backend excludes VRTARScene and mounts a ViroScene
+    through ViroXRSceneNavigator instead. Both roots share this content and
+    its board-space pointer mapping.
   */
   if (VISIONOS) {
     return (
