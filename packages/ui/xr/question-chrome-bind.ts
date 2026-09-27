@@ -6,10 +6,8 @@
  * directions. It names no store and no evaluator — the probe route and the
  * tutor scene each bind it to their own handlers.
  *
- * JS → RIVE (presentation): `push` writes the whole snapshot every time —
- * tap cadence, not frame cadence, and a diff mask is one more place for a
- * property to silently go stale. `revision` bumps on every push so the
- * artboard's data-driven states always see an edge.
+ * JS → RIVE: push accepts a complete snapshot; the shared writer sends
+ * only changed properties and advances revision once per changed snapshot.
  *
  * RIVE → JS (intent): control listeners write `command` + `commandArg` and
  * bump `commandSeq`; the observer on `commandSeq` is the edge detector,
@@ -21,6 +19,7 @@
  * SOT-KEYWORDS: xr rive question chrome bind command observe dispatch view model zustand bridge
  */
 
+import { chromePresentation } from './chrome-presentation.ts';
 import type { ChromeRuntime } from './chrome-runtime.types.ts';
 import { decodeQuestionCommand } from './question-commands.ts';
 import { MAX_RIVE_CHOICES, type QuestionInteraction } from './question-contract.ts';
@@ -108,6 +107,7 @@ export function bindQuestionChrome(
   runtime: ChromeRuntime,
   handlers: QuestionChromeHandlers,
 ): QuestionChromeBinding {
+  const presentation = chromePresentation(runtime);
   let lastSeq = runtime.getNumber('commandSeq');
   let current: QuestionChromePresentation | null = null;
   let disposed = false;
@@ -145,47 +145,47 @@ export function bindQuestionChrome(
     push(state) {
       if (disposed) return;
       current = state;
-      runtime.setString('questionId', state.questionId);
-      runtime.setString('subjectLabel', state.subjectLabel);
-      runtime.setString('skillLabel', state.skillLabel);
-      runtime.setString('progressLabel', state.progressLabel);
-      runtime.setString('localeLabel', state.localeLabel);
-      runtime.setString('interactionLabel', state.interactionLabel);
-      runtime.setNumber('interactionKind', INTERACTION_KIND[state.interaction]);
-      runtime.setNumber('choiceCount', Math.min(state.choiceLabels.length, MAX_RIVE_CHOICES));
+      presentation.setString('questionId', state.questionId);
+      presentation.setString('subjectLabel', state.subjectLabel);
+      presentation.setString('skillLabel', state.skillLabel);
+      presentation.setString('progressLabel', state.progressLabel);
+      presentation.setString('localeLabel', state.localeLabel);
+      presentation.setString('interactionLabel', state.interactionLabel);
+      presentation.setNumber('interactionKind', INTERACTION_KIND[state.interaction]);
+      presentation.setNumber('choiceCount', Math.min(state.choiceLabels.length, MAX_RIVE_CHOICES));
       for (let i = 0; i < MAX_RIVE_CHOICES; i++) {
-        runtime.setString(`choice${i}Label`, state.choiceLabels[i] ?? '');
-        runtime.setBoolean(`choice${i}Visible`, i < state.choiceLabels.length);
-        runtime.setBoolean(`choice${i}Selected`, state.selectedChoices.includes(i));
+        presentation.setString(`choice${i}Label`, state.choiceLabels[i] ?? '');
+        presentation.setBoolean(`choice${i}Visible`, i < state.choiceLabels.length);
+        presentation.setBoolean(`choice${i}Selected`, state.selectedChoices.includes(i));
       }
-      runtime.setNumber('phase', state.phase);
-      runtime.setNumber('questionNumber', state.questionNumber);
-      runtime.setNumber('questionTotal', state.questionTotal);
-      runtime.setBoolean('answerValid', state.answerValid);
-      runtime.setString('answerText', state.answerText);
-      runtime.setBoolean('hintAvailable', state.hintAvailable);
-      runtime.setBoolean('hintVisible', state.hintVisible);
-      runtime.setString('hintLabel', state.hintLabel);
-      runtime.setString('hintText', state.hintText);
-      runtime.setString('submitLabel', state.submitLabel);
-      runtime.setString('continueLabel', state.continueLabel);
-      runtime.setString('skipLabel', state.skipLabel);
-      runtime.setString('listenLabel', state.listenLabel);
-      runtime.setString('feedbackTitle', state.feedbackTitle);
-      runtime.setString('feedbackBody', state.feedbackBody);
-      runtime.setBoolean('correct', state.correct);
-      runtime.setBoolean('incorrect', state.incorrect);
-      runtime.setBoolean('ungraded', state.ungraded);
-      runtime.setBoolean('answered', state.answered);
-      runtime.setBoolean('loading', state.loading);
-      runtime.setBoolean('submitting', state.submitting);
-      runtime.setBoolean('disabled', state.disabled);
-      runtime.setBoolean('grabbed', state.grabbed);
-      runtime.setBoolean('reducedMotion', state.reducedMotion);
-      runtime.setString('status', state.status);
-      runtime.setNumber('errorCode', state.errorCode);
-      runtime.setNumber('uiOpacity', state.uiOpacity ?? 1);
-      runtime.setNumber('revision', runtime.getNumber('revision') + 1);
+      presentation.setNumber('phase', state.phase);
+      presentation.setNumber('questionNumber', state.questionNumber);
+      presentation.setNumber('questionTotal', state.questionTotal);
+      presentation.setBoolean('answerValid', state.answerValid);
+      presentation.setString('answerText', state.answerText);
+      presentation.setBoolean('hintAvailable', state.hintAvailable);
+      presentation.setBoolean('hintVisible', state.hintVisible);
+      presentation.setString('hintLabel', state.hintLabel);
+      presentation.setString('hintText', state.hintText);
+      presentation.setString('submitLabel', state.submitLabel);
+      presentation.setString('continueLabel', state.continueLabel);
+      presentation.setString('skipLabel', state.skipLabel);
+      presentation.setString('listenLabel', state.listenLabel);
+      presentation.setString('feedbackTitle', state.feedbackTitle);
+      presentation.setString('feedbackBody', state.feedbackBody);
+      presentation.setBoolean('correct', state.correct);
+      presentation.setBoolean('incorrect', state.incorrect);
+      presentation.setBoolean('ungraded', state.ungraded);
+      presentation.setBoolean('answered', state.answered);
+      presentation.setBoolean('loading', state.loading);
+      presentation.setBoolean('submitting', state.submitting);
+      presentation.setBoolean('disabled', state.disabled);
+      presentation.setBoolean('grabbed', state.grabbed);
+      presentation.setBoolean('reducedMotion', state.reducedMotion);
+      presentation.setString('status', state.status);
+      presentation.setNumber('errorCode', state.errorCode);
+      presentation.setNumber('uiOpacity', state.uiOpacity ?? 1);
+      presentation.commit();
 
     },
     dispose() {

@@ -7,15 +7,16 @@ import type { ChromeRuntime } from './chrome-runtime.types.ts';
 
 function runtime() {
   const numbers = new Map<string, number>();
+  const writes: string[] = [];
   const observers = new Map<string, ((value: number) => void) | undefined>();
   const api: ChromeRuntime = {
     getNumber: (key) => numbers.get(key) ?? 0,
-    setNumber: (key, value) => { numbers.set(key, value); },
-    setBoolean: () => {}, setString: () => {},
+    setNumber: (key, value) => { numbers.set(key, value); writes.push(key); },
+    setBoolean: (key) => { writes.push(key); }, setString: (key) => { writes.push(key); },
     observeNumber: (key, callback) => { observers.set(key, callback); },
   };
   let sequence = 0;
-  return { api, observers, command(value: number, arg = 0) {
+  return { api, observers, writes, command(value: number, arg = 0) {
     api.setNumber('command', value); api.setNumber('commandArg', arg);
     observers.get('commandSeq')?.(++sequence);
     assert.equal(api.getNumber('command'), 0, 'acknowledge before calling application code');
@@ -34,6 +35,9 @@ test('Rive board commands reach the engine verbs, including all inks and voice o
     onRedo: () => calls.push('redo'), onClear: () => calls.push('clear'), onAsk: () => calls.push('ask'),
   });
   binding.push(board);
+  const initialWrites = rt.writes.length;
+  binding.push({ ...board });
+  assert.equal(rt.writes.length, initialWrites, 'board revisions with unchanged controls do not cross the native bridge');
   for (const id of [1,2,3,4,5,6,7,8,10,11,12,13,14,15,16,17]) rt.command(id);
   assert.deepEqual(calls, [['tool','draw'],['tool','highlight'],['tool','eraser'],['palette',true],
     'undo','redo','clear','ask', ...['black','blue','red','green','yellow','orange','violet'].map(v=>['ink',v]), ['palette',false]]);
@@ -79,6 +83,9 @@ test('question controls dispatch every footer action and reject busy or out-of-r
     grabbed:false, reducedMotion:true, status:'', errorCode:0,
   };
   binding.push(state);
+  const initialWrites = rt.writes.length;
+  binding.push({ ...state, choiceLabels: [...state.choiceLabels], selectedChoices: [] });
+  assert.equal(rt.writes.length, initialWrites);
   for (let id=1;id<=9;id++) rt.command(id,1);
   assert.deepEqual(calls,[['select',1],['toggle',1],'submit','next','hint','voice','board','retry','skip']);
   calls.length=0;

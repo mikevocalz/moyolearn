@@ -22,6 +22,7 @@ The question panel displays the current tutor problem as a conversation. It does
 
 - The Rive frame, visible paper, and input surface use the same content rectangle. Android live textures and Vision Pro raster/ink presentation stay separate.
 - Missing Rive assets/runtime fall back to native lesson and drawing controls.
+- Identical panel presentations generate no native property writes or revision bumps.
 - Bindings acknowledge commands before dispatch; replayed sequences, unavailable history actions, busy submissions and post-disposal callbacks cannot trigger those actions.
 - Speech and its board image are queued atomically and claimed together. Image export/staging failures preserve speech.
 - Recording permission is explicitly requested on Apple platforms using the installed AudioManager API. The visionOS app has a microphone purpose string.
@@ -38,7 +39,7 @@ The question panel displays the current tutor problem as a conversation. It does
 
 ## Native verification still required
 
-No Xcode build, headset interaction run, frame-time profiling, or physical Logitech Muse test was performed here. Smoothness cannot be certified by the JavaScript checks.
+The full Android Metro export did not produce a completed bundle in this session and is not counted as a pass. No Xcode build, headset interaction run, frame-time profiling, or physical Logitech Muse test was performed here. Smoothness cannot be certified by the JavaScript checks.
 
 The vendored `nitro-canvas-in-Vision@0.0.2-rive.4` implements `RivePanelFactory` only on Android. Its `createRiveCanvasRuntime` requires SurfaceTexture; its Apple code implements a canvas surface, not a Rive producer. Therefore production intentionally loads Rive only on Android. Vision Pro receives complete native lesson/drawing controls and the raster/ink board. Actual Rive-on-Metal is still a separate native implementation requirement.
 

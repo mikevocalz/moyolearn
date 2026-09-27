@@ -6,8 +6,8 @@
  *
  * JS → RIVE (presentation): `push` writes the view-model properties the
  * chrome reads. Written whole on every store change rather than diffed field
- * by field — the writes happen at button-tap cadence, not frame cadence, and
- * a diff mask is one more place for a property to silently go stale.
+ * by field — the native writer sends only changed properties and bumps revision once.
+ * Document changes with identical chrome state cause no native writes.
  *
  * RIVE → JS (intent): the artboard's control listeners write `command` and
  * bump `commandSeq`; the `observeNumber` on `commandSeq` is the edge detector.
@@ -20,6 +20,7 @@
  * SOT-KEYWORDS: xr rive board chrome bind command observe dispatch view model zustand bridge
  */
 
+import { chromePresentation } from './chrome-presentation.ts';
 import type { ChromeRuntime } from './chrome-runtime.types.ts';
 import { boardCommandEnabled, decodeBoardCommand, inkToRive, toolToRive } from './board-chrome-commands.ts';
 
@@ -40,6 +41,7 @@ export interface BoardChromeBinding {
  * the last press.
  */
 export function bindBoardChrome(runtime: ChromeRuntime, handlers: BoardChromeHandlers): BoardChromeBinding {
+  const presentation = chromePresentation(runtime);
   let lastSeq = runtime.getNumber('commandSeq');
   let current: BoardChromePresentation | null = null;
   let disposed = false;
@@ -67,19 +69,19 @@ export function bindBoardChrome(runtime: ChromeRuntime, handlers: BoardChromeHan
     push(state) {
       if (disposed) return;
       current = state;
-      runtime.setNumber('tool', toolToRive(state.tool));
-      runtime.setNumber('ink', inkToRive(state.ink));
-      runtime.setBoolean('canUndo', state.canUndo);
-      runtime.setBoolean('canRedo', state.canRedo);
-      runtime.setBoolean('asking', state.asking);
-      runtime.setBoolean('hasMarks', state.hasMarks);
-      runtime.setBoolean('paletteOpen', state.paletteOpen);
-      runtime.setBoolean('clearArmed', state.clearArmed);
-      runtime.setBoolean('grabbed', state.grabbed);
-      runtime.setBoolean('reducedMotion', state.reducedMotion);
-      runtime.setString('status', state.status);
-      runtime.setNumber('uiOpacity', state.uiOpacity ?? 1);
-      runtime.setNumber('revision', runtime.getNumber('revision') + 1);
+      presentation.setNumber('tool', toolToRive(state.tool));
+      presentation.setNumber('ink', inkToRive(state.ink));
+      presentation.setBoolean('canUndo', state.canUndo);
+      presentation.setBoolean('canRedo', state.canRedo);
+      presentation.setBoolean('asking', state.asking);
+      presentation.setBoolean('hasMarks', state.hasMarks);
+      presentation.setBoolean('paletteOpen', state.paletteOpen);
+      presentation.setBoolean('clearArmed', state.clearArmed);
+      presentation.setBoolean('grabbed', state.grabbed);
+      presentation.setBoolean('reducedMotion', state.reducedMotion);
+      presentation.setString('status', state.status);
+      presentation.setNumber('uiOpacity', state.uiOpacity ?? 1);
+      presentation.commit();
     },
     dispose() {
       disposed = true;
