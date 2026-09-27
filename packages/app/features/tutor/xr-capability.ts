@@ -57,6 +57,8 @@ export interface XrRuntimeFacts {
   hasOpenXrModule: boolean;
   /** This DEVICE is a headset the spatial navigator is verified on. */
   isHeadset: boolean;
+  /** Vision Pro uses Viro's ImmersiveSpace backend, not the OpenXR module. */
+  isVisionOS?: boolean;
 }
 
 /** Eligible, or the reason it is not — the same reasons the screen renders. */
@@ -86,6 +88,7 @@ export type XrEligibility =
  */
 export function spatialEligibility(runtime: XrRuntimeFacts): XrEligibility {
   if (!canOpenSpatialBoard()) return 'no-xr-runtime';
+  if (runtime.isVisionOS) return 'eligible';
   if (!runtime.hasOpenXrModule) return 'no-xr-runtime';
   if (!runtime.isHeadset) return 'device-not-eligible';
   return 'eligible';
