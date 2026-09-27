@@ -123,12 +123,14 @@ export const xrVoiceSession = createStore<{
     },
     stop,
     cancel: () => {
+      const wasRecording = ['starting', 'listening', 'transcribing'].includes(get().phase);
       generation++;
       clearTimer();
       const instance = recorder;
       recorder = null;
       if (instance) void instance.stop().catch(() => undefined);
       set({ phase: 'idle' });
+      if (wasRecording) status('Microphone stopped. Press LISTEN to start again.');
     },
   };
 });
