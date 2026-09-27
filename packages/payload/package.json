@@ -30,6 +30,7 @@
     "@types/pg": "catalog:",
     "eslint": "catalog:",
     "eslint-config-expo": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "@types/react": "catalog:"
   }
 }

@@ -150,7 +150,7 @@ const tmp = mkdtempSync(join(tmpdir(), 'skia-graphite-headers-'));
 try {
   const tarball = join(tmp, 'headers.tgz');
   writeFileSync(tarball, bytes);
-  execFileSync('tar', ['-xzf', tarball, '-C', tmp]);
+  execFileSync('tar', ['--no-same-owner', '-xzf', tarball, '-C', tmp]);
   const src = join(tmp, 'packages', 'skia', 'cpp');
   rmSync(join(skia, 'cpp', 'dawn'), { recursive: true, force: true });
   cpSync(join(src, 'dawn'), join(skia, 'cpp', 'dawn'), { recursive: true });

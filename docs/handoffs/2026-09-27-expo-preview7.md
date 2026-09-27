@@ -20,12 +20,22 @@ setLastUnhandledLink callback path has been removed; applying that old patch to
 58 would target a removed API. Physical cold-boot deep-link behavior remains a
 device acceptance gate, not a conclusion from source inspection.
 
-This supersedes the version-bump portion of #71. It does not automatically
-supersede every change in #67: that PR also carries auth/toolchain pins, docs,
-declarations and hook fixes that need separate current-main reconciliation.
-Do not import its old override block wholesale or suppress native peer warnings
+This supersedes #71 and selectively reconciles #67 as recorded below.
+Do not import the old override block wholesale or suppress native peer warnings
 as a substitute for compilation.
 
 The Expo Modules visionOS platform port remains separate. A newer v2 runtime
 does not itself establish xros support. Native CocoaPods/Gradle builds and
 Quest/Pico/Apple runtime verification are required before release acceptance.
+
+## Reconciliation of PR 67
+
+The hook-order repair, effect-based avatar ref update and generated idle fold
+flag are already on current main. The refreshed lockfile already has one
+Better Auth Core 1.7.2 and Better Fetch 1.3.1, so no extra overrides are needed.
+Carries the missing direct Payload React types declaration and aligns Tiptap
+menu extensions with the existing Core/PM 3.27.1 to resolve their peer mismatch.
+Does not carry old Expo/React/RN/Viro downgrades, warning suppressions or an
+unrelated forced ESLint family upgrade. Historical rollback/dependency reports
+remain available on PR 67 rather than being presented as current findings.
+Native Pods and device checks remain explicit gates in this replacement.
