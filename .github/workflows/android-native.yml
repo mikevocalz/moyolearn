@@ -1,0 +1,36 @@
+name: Android native
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  quest:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: pnpm install --frozen-lockfile
+      - name: Install pinned native toolchain
+        run: |
+          "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;28.2.13676358' 'cmake;3.22.1'
+      - name: Assemble Quest debug app
+        working-directory: apps/mobile/android
+        run: bash gradlew :app:assembleQuestDebug --stacktrace --max-workers=2 -PreactNativeArchitectures=arm64-v8a
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: android-native-diagnostics
+          path: |
+            apps/mobile/android/build/reports
+            apps/mobile/android/app/build/reports
+          if-no-files-found: ignore
