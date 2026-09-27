@@ -37,7 +37,7 @@
         <Fill><SolidColor colorValue="2BE9F4FA" /></Fill>
       </Shape>
       <Text name="Fb tag" x="820" y="650" wrapValue="noWrap">
-        <TextStylePaint id="0:361" fontSize="14.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:361" fontSize="14.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:361" text="RESULT" />
       </Text>
       <Shape id="0:209" name="Acc correct" opacity="0">
@@ -80,7 +80,7 @@
     <Node id="0:214" opacity="0" name="Answer chip">
       <DataBindContext sourcePathIds="0:40-0:162" propertyKey="18" converterId="0:63" />
       <Text name="Ans tag" x="820" y="630" wrapValue="noWrap">
-        <TextStylePaint id="0:366" fontSize="14.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="FF3D5560" /></Fill></TextStylePaint>
+        <TextStylePaint id="0:366" fontSize="14.25" letterSpacing="2" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFE9F4FA" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:366" text="ANSWER" />
       </Text>
       <Text name="Ans text" x="890" y="626" width="350" sizingValue="fixed" wrapValue="noWrap">

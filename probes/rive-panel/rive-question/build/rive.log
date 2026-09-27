@@ -119,3 +119,19 @@
 [09:30:56.134] rive  showing LearningQuestion [1/1]
 [09:30:56.134] rive  viewport 1280x800 @1x
 [09:30:56.224] rive  wrote build/feedback-style.png
+[09:52:57.723] rive  verified (0 bytes, 150ms, 0 errors, 0 warnings)
+[09:52:57.944] rive  built build/moyo_learning_question.riv (165071 bytes, 132ms, 0 errors, 0 warnings)
+[09:52:57.946] rive  data: phase = 5
+[09:52:57.946] rive  data: answered = true
+[09:52:57.946] rive  data: correct = true
+[09:52:57.946] rive  data: uiOpacity = 1
+[09:52:57.946] rive  data: feedbackTitle = Nice work
+[09:52:57.946] rive  data: feedbackBody = 1/2 is correct — you matched the numerator.
+[09:52:57.946] rive  data: answerText = 1/2
+[09:52:57.946] rive  data: answerValid = true
+[09:52:57.946] rive  data: prompt = Which fraction is shaded?
+[09:52:57.946] rive  data: questionNumber = 2
+[09:52:57.946] rive  data: questionTotal = 5
+[09:52:57.948] rive  showing LearningQuestion [1/1]
+[09:52:57.949] rive  viewport 1280x800 @1x
+[09:52:58.012] rive  wrote build/feedback-style2.png
