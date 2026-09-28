@@ -1,0 +1,37 @@
+name: iOS native
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  simulator:
+    runs-on: macos-26
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Resolve native dependencies
+        working-directory: apps/mobile/ios
+        run: |
+          set -o pipefail
+          pod install --repo-update 2>&1 | tee "$RUNNER_TEMP/moyo-pods.log"
+      - name: Build iOS Simulator app
+        working-directory: apps/mobile/ios
+        run: |
+          set -o pipefail
+          xcodebuild -workspace Moyo.xcworkspace -scheme Moyo -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/moyo-derived" CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/moyo-ios-build.log"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-native-diagnostics
+          path: |
+            ${{ runner.temp }}/moyo-pods.log
+            ${{ runner.temp }}/moyo-ios-build.log
+            apps/mobile/ios/Podfile.lock
+          if-no-files-found: ignore
