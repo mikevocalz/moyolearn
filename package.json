@@ -68,7 +68,8 @@
       "react-native-vision-camera": "patches/react-native-vision-camera.patch",
       "expo-router@57.0.15": "patches/expo-router@57.0.15.patch",
       "expo-horizon-core@57.0.2": "patches/expo-horizon-core@57.0.2.patch",
-      "@reactvision/react-viro@3.0.1-moyo.1": "patches/@reactvision__react-viro@3.0.1-moyo.1.patch"
+      "@reactvision/react-viro@3.0.1-moyo.1": "patches/@reactvision__react-viro@3.0.1-moyo.1.patch",
+      "nitro-canvas-in-Vision@0.0.2-rive.4": "patches/nitro-canvas-in-Vision@0.0.2.patch"
     },
     "supportedArchitectures": {
       "cpu": [
