@@ -16,7 +16,8 @@
   "dependencies": {
     "@acme/safety": "workspace:*",
     "@acme/student-model": "workspace:*",
-    "server-only": "catalog:"
+    "server-only": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",

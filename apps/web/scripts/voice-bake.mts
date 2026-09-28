@@ -1,5 +1,5 @@
 // The deploy-time bake (doc 32 §3 Path B): renders every baked set piece with
-// Eleven v3 and uploads it to Bunny under the signed-read regime, so the S4
+// Eleven v4 and uploads it to Bunny under the signed-read regime, so the S4
 // scripts are ON the CDN before any crisis moment could ask for them — the
 // serving path never live-renders a crisis piece (`bakedServePlan`), which
 // makes THIS script the only thing standing between "cache" and "text-only"
@@ -19,7 +19,7 @@ nextEnv.loadEnvConfig(resolve(dirname(fileURLToPath(import.meta.url)), '../../..
 // After env, so the egress and the signer see their keys. `server-only`
 // resolves via the react-server condition configured in the script runner.
 const { BAKED_PIECE_IDS, BAKED_PIECES, voiceEgress } = await import('@acme/voice');
-const { bakedClipCacheState, storeBakedClip, storeBakedAlignment } = await import('../lib/voice-baked');
+const { bakedClipCacheState, storeBakedClip } = await import('../lib/voice-baked');
 
 let baked = 0;
 let cachedAlready = 0;
@@ -44,16 +44,10 @@ for (const id of BAKED_PIECE_IDS) {
     continue;
   }
 
-  const stored = await storeBakedClip(id, clip.bytes, clip.contentType);
+  const stored = await storeBakedClip(id, clip.bytes, clip.contentType, clip.alignment);
   if (!stored) {
     failed += 1;
     console.error(`  FAILED   ${id} — Bunny upload did not land`);
-    continue;
-  }
-  const alignmentStored = await storeBakedAlignment(id, clip.alignment);
-  if (!alignmentStored) {
-    failed += 1;
-    console.error(`  FAILED   ${id} — alignment upload did not land`);
     continue;
   }
   baked += 1;

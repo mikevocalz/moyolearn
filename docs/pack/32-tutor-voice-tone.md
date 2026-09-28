@@ -1,4 +1,6 @@
 # Tutor Voice & Tone — one voice, two render paths, an enumerated tone palette
+
+> **2026-09-28 implementation amendment:** the v4 upgrade uses `eleven_v4` for both paths, the existing Natalie voice ID, HTTP Text-to-Dialogue, and Stability/Similarity plus trusted tags. This supersedes the historical Flash/v3 model and speed/style choices below. The nine tones, one-voice rule and S4 cache-only behavior still apply. See [v4 migration and release verification](../voice-v4-upgrade.md); account compatibility, a complete v4 bake and child-pacing listening approval are release gates, not completed claims.
 **Doc 32 · Moyo platform pack · Date:** Aug 27, 2026
 **Decision (Mike's, binding):** the tutor speaks with **one ElevenLabs voice and nothing else** — the same voice in text-chat playback and in the 3D embodiment, so the tutor is *familiar*: one voice, one person, everywhere. Tone is a first-class system, not a TTS afterthought, because the audio is paired with NVIDIA Audio2Face-3D + Audio2Emotion — **the face is driven by the audio, so flat audio is a dead face.**
 **Builds on:** doc 07 (sentence-window pipeline), doc 18 (AI stack; amended below), doc 19 (no emotion-recognition of the child; anti-dependency), doc 24 (≤2s latency bar), doc 31 (bands, S-ladder, fixed S4 scripts).

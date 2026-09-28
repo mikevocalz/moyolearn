@@ -63,7 +63,6 @@
       "react-server-dom-webpack": "19.3.0"
     },
     "patchedDependencies": {
-      "nitro-canvas-in-Vision": "patches/nitro-canvas-in-Vision.patch",
       "@seshuk/payload-storage-bunny@3.0.0": "patches/@seshuk__payload-storage-bunny@3.0.0.patch",
       "react-native-nitro-image": "patches/react-native-nitro-image.patch",
       "react-native-vision-camera": "patches/react-native-vision-camera.patch",
@@ -81,7 +80,8 @@
       "expo-router": "patches/expo-router.patch",
       "expo-font": "patches/expo-font.patch",
       "expo": "patches/expo.patch",
-      "expo-constants": "patches/expo-constants.patch"
+      "expo-constants": "patches/expo-constants.patch",
+      "nitro-canvas-in-Vision@0.0.2-rive.4": "patches/nitro-canvas-in-Vision.patch"
     },
     "supportedArchitectures": {
       "cpu": [

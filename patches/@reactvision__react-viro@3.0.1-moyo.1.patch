@@ -828,3 +828,11 @@ index b00c3f1..a78ff66 100644
      withVisionOSCompatShims,   // 6. components/compat/ BlurView + LinearGradient
      withVisionOSInfoPlist,     // 7. Info.plist: allow multiple scenes (ImmersiveSpace)
      withVisionOSAppDelegate,   // 8. AppDelegate.swift: Expo entry point + imports
+diff --git a/android/viro_renderer/build.gradle b/android/viro_renderer/build.gradle
+--- a/android/viro_renderer/build.gradle
++++ b/android/viro_renderer/build.gradle
+@@ -20,3 +20,3 @@
+ dependencies {
+-    api files('viro_renderer-release.aar')
++    api files(rootProject.findProperty('moyoViroRendererAar') ?: 'viro_renderer-release.aar')
+ }

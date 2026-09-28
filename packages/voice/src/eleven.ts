@@ -1,46 +1,20 @@
-// The voice egress — the sole path to ElevenLabs, and the only file in the
-// repository that reads ELEVENLABS_API_KEY (doc 32; same posture as
-// `packages/inference` is for Anthropic, enforced by
-// `tooling/check-voice-egress.mjs`).
-//
-// WHAT MAY REACH THIS FILE'S PAYLOAD, structurally: Natalie's own output —
-// already screened sentence-by-sentence by the Safety Plane and verified by
-// the route as server-emitted (`apps/web/lib/voice-utterance.ts`) — and the
-// frozen baked scripts in `baked.ts`. Nothing learner-authored has an import
-// path here, and the egress check keeps `features/` and the learner-message
-// modules from ever acquiring one.
-//
-// EVERY failure is text-only, never an error. Doc 32 §2 hard rule 1: degraded
-// mode is text-only, not a substitute voice and not an error surface — to a
-// six-year-old a different voice is a different person, and an error screen is
-// worse than silence beside words they can still read. The single exception is
-// an unknown tone, which THROWS (`UnknownTone`): the palette is closed, a
-// caller holding a tenth tone is a bug, and a bug is not a degradation.
-// SOT: docs/pack/32-tutor-voice-tone.md §2 §3 §5 · tooling/check-voice-egress.mjs
-// SOT-KEYWORDS: voice egress elevenlabs flash stream previous text stitching baked v3 audio tags api key sole text only degradation budget debit
+// SOT: docs/voice-v4-upgrade.md; docs/pack/32-tutor-voice-tone.md
+// SOT-KEYWORDS: voice egress v4 dialogue streaming timestamps cancellation budget
+// Sole ElevenLabs credential reader and voice egress. Only authenticated,
+// signed Safety Plane output or frozen baked scripts may reach synthesis.
+// Failure keeps the existing text; it never substitutes another voice.
 import 'server-only';
+import { z } from 'zod';
 import type { VoiceBand } from '@acme/student-model';
 import { BAKED_PIECES, type BakedPieceId } from './baked.ts';
-import {
-  estimatedUsdFor,
-  sharedVoiceBudgetLedger,
-  voiceBudgetStateFor,
-  voiceDayKey,
-  type VoiceBudgetLedger,
-} from './budget.ts';
+import { estimatedUsdFor, sharedVoiceBudgetLedger, VOICE_BUDGETS, voiceDayKey, type VoiceBudgetLedger } from './budget.ts';
 import { liveFaceConfigured, renderFace, type A2fTransport, type FacePerformance } from './a2f.ts';
-import { voiceRegistry, type VoiceRegistry } from './registry.ts';
-import { TONE_PALETTE, assertTone, voiceSettingsFor } from './tones.ts';
+import { voiceRegistry, VOICE_OUTPUT_FORMAT, type VoiceRegistry } from './registry.ts';
+import { TONE_PALETTE, assertTone, voiceSettingsFor, voiceTagsFor } from './tones.ts';
+import { alignmentSchema } from './schemas.ts';
 
 const API_BASE = 'https://api.elevenlabs.io';
-
-/**
- * The stream endpoint's output format. 64kbps mp3 is the budget-conscious
- * choice for speech over a chat surface; the baked path below uses 128 because
- * those clips render once and play forever.
- */
-const LIVE_OUTPUT_FORMAT = 'mp3_44100_64';
-const BAKED_OUTPUT_FORMAT = 'mp3_44100_128';
+const REQUEST_TIMEOUT_MS = 30_000;
 
 /**
  * What speaking a sentence resolves to. The degraded arm carries a reason for
@@ -99,9 +73,10 @@ export interface SpeakSentenceInput {
 }
 
 export interface VoiceEgress {
+  checkConfiguration(): Promise<VoiceConfigurationCheck>;
   speakSentence(input: SpeakSentenceInput): Promise<SpokenSentence>;
   /**
-   * Renders one baked set piece with Eleven v3 — the bake job's call, made at
+   * Renders one baked set piece with Eleven v4 — the bake job's call, made at
    * deploy or on first use for non-crisis pieces. It is NOT on any live turn
    * and takes no learner id: a baked render is an operations cost, not a
    * child's spend.
@@ -109,180 +84,152 @@ export interface VoiceEgress {
   renderBakedClip(id: BakedPieceId): Promise<BakedClip>;
 }
 
-/** Injectable for tests; production uses global fetch. */
-export type VoiceTransport = (url: string, init: RequestInit) => Promise<Response>;
+export interface VoiceConfigurationCheck {
+  readonly configured: boolean;
+  readonly modelAvailable: boolean;
+  readonly voiceCategory: string | null;
+  readonly fineTuningState: string | null;
+}
 
+/** Injectable; credentials never leave this module except to ElevenLabs. */
+export type VoiceTransport = (url: string, init: RequestInit) => Promise<Response>;
 export interface VoiceEgressOptions {
   readonly transport?: VoiceTransport;
-  /** The Audio2Face host, injectable for tests. Omitted: `AUDIO2FACE_URL` or no face. */
   readonly faceTransport?: A2fTransport;
   readonly registry?: VoiceRegistry | null;
   readonly ledger?: VoiceBudgetLedger;
-  /** Injected for tests; production reads the wall clock. */
   readonly now?: () => Date;
 }
+const apiKey = (): string | null => process.env.ELEVENLABS_API_KEY || null;
+const unavailable = (): SpokenSentence => ({ kind: 'text-only', reason: 'voice-unavailable' });
+const timestampResponseSchema = z.object({
+  audio_base64: z.string().min(1),
+  alignment: alignmentSchema.nullish(),
+  normalized_alignment: alignmentSchema.nullish(),
+});
+const modelsSchema = z.array(z.object({ model_id: z.string(), can_do_text_to_speech: z.boolean() }));
+const voiceSchema = z.object({
+  category: z.string().nullish(),
+  fine_tuning: z.object({ state: z.record(z.string(), z.string()).optional() }).nullish(),
+});
 
-/** The API key, read here and nowhere else, and never logged. */
-const apiKey = (): string | null => process.env.ELEVENLABS_API_KEY ?? null;
+/** Neutralize prose delivery tags before adding trusted ones. Preserve numeric
+ * intervals, indices and symbolic math (e.g. [0, 1], a[i], [x + y]). Only the
+ * provider copy changes; signed text and displayed captions remain exact. */
+const literalText = (text: string): string => text.replace(/\[([a-z][a-z -]+)\]/gi, '($1)');
+const synthesisText = (text: string, tone: string, band: VoiceBand): string =>
+  `${voiceTagsFor(tone, band).join(' ')} ${literalText(text)}`;
+const requestSignal = (signal?: AbortSignal): AbortSignal =>
+  signal ? AbortSignal.any([signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]) : AbortSignal.timeout(REQUEST_TIMEOUT_MS);
 
 export function createVoiceEgress(options: VoiceEgressOptions = {}): VoiceEgress {
-  const transport: VoiceTransport = options.transport ?? ((url, init) => fetch(url, init));
+  const transport = options.transport ?? fetch;
   const ledger = options.ledger ?? sharedVoiceBudgetLedger();
   const now = options.now ?? (() => new Date());
-  // `?? voiceRegistry()` would defeat a test passing `registry: null`, and a
-  // null registry is a real state (no voice asset configured -> text-only).
   const registry = 'registry' in options ? (options.registry ?? null) : voiceRegistry();
 
   return {
-    async speakSentence(input) {
-      // The refusal, before any I/O: a tone outside the closed palette is a
-      // bug in the caller, not a degradation to soften.
-      const tone = assertTone(input.tone);
-
+    async checkConfiguration() {
+      const missing: VoiceConfigurationCheck = { configured: false, modelAvailable: false, voiceCategory: null, fineTuningState: null };
       const key = apiKey();
-      if (registry === null || key === null) return { kind: 'text-only', reason: 'no-voice-configured' };
-
-      // Pre-call, like the inference gateway: a learner past the voice ceiling
-      // gets no provider call at all. Silent by design — the shed order is
-      // "voice degrades to text before tutoring degrades at all", and the
-      // child keeps the words either way.
-      const day = voiceDayKey(now());
-      const state = voiceBudgetStateFor(await ledger.read(input.learnerId, day), input.band);
-      if (state.kind === 'spent') return { kind: 'text-only', reason: 'voice-budget-spent' };
-
-      let response: Response;
+      if (!key || !registry) return missing;
       try {
-        response = await transport(
-          `${API_BASE}/v1/text-to-speech/${registry.voiceId}/stream?output_format=${LIVE_OUTPUT_FORMAT}`,
-          {
-            method: 'POST',
-            headers: { 'xi-api-key': key, 'content-type': 'application/json' },
-            body: JSON.stringify({
-              // v3 reads the palette's audio tags; the MAC covers `input.text`
-              // as the client sent it, and the tags are the server's own.
-              text: `${TONE_PALETTE[tone].bakedTags.join('')} ${input.text}`,
-              model_id: registry.liveModelId,
-              // Flash carries emotion through the text itself (the tone's live
-              // recipe is settings + the writing); tags would be spoken aloud.
-              voice_settings: voiceSettingsFor(tone, input.band),
-              ...(input.previousText !== undefined && input.previousText.length > 0
-                ? { previous_text: input.previousText }
-                : {}),
-            }),
-            signal: input.signal ?? null,
-          },
-        );
-      } catch {
-        return { kind: 'text-only', reason: 'voice-unavailable' };
-      }
+        const init = { headers: { 'xi-api-key': key }, signal: requestSignal() };
+        const [models, voice] = await Promise.all([
+          transport(`${API_BASE}/v1/models`, init),
+          transport(`${API_BASE}/v1/voices/${encodeURIComponent(registry.voiceId)}`, init),
+        ]);
+        if (!models.ok || !voice.ok) {
+          await Promise.allSettled([models.body?.cancel(), voice.body?.cancel()]);
+          return { ...missing, configured: true };
+        }
+        const modelData = modelsSchema.safeParse(await models.json());
+        const voiceData = voiceSchema.safeParse(await voice.json());
+        return {
+          configured: true,
+          modelAvailable: modelData.success && modelData.data.some((model) => model.model_id === registry.liveModelId && model.can_do_text_to_speech),
+          voiceCategory: voiceData.success ? voiceData.data.category ?? null : null,
+          fineTuningState: voiceData.success ? voiceData.data.fine_tuning?.state?.[registry.liveModelId] ?? null : null,
+        };
+      } catch { return { ...missing, configured: true }; }
+    },
 
-      if (!response.ok || response.body === null) {
-        /*
-          The body is CANCELLED, not just dropped. Under undici an unconsumed
-          body keeps its socket checked out of the pool until GC, and this
-          branch is the high-volume one: a 429 or 5xx during a provider outage
-          means every sentence of every turn for every learner opens a
-          connection nobody drains, so the leak is worst exactly when the
-          provider is already struggling. `void` because a cancel that fails
-          has nothing to add to a request that already failed.
-        */
-        void response.body?.cancel().catch(() => undefined);
-        return { kind: 'text-only', reason: 'voice-unavailable' };
-      }
-
-      /*
-        Debited at dispatch, characters known up front — the provider bills the
-        request whether or not the child listens to the end, so waiting for the
-        stream to drain would only undercount abandoned turns. Fire-and-forget:
-        a slow ledger write must not sit between a sentence and its sound.
-      */
-      const chars = input.text.length;
-      void ledger.record(input.learnerId, day, chars, estimatedUsdFor(chars)).catch(() => undefined);
-
-      const contentType = response.headers.get('content-type') ?? 'audio/mpeg';
-
-      /*
-        THE FACE, when a host is configured. The stream is drained to bytes —
-        a sentence is a few tens of KB — and the SAME bytes go to A2F and back
-        to the client, so the frames cannot belong to different audio than the
-        one that plays. The emotion is the tone's, specified (doc 32 §4), never
-        inferred from anyone but Natalie. Any failure is the audio alone.
-      */
-      if (options.faceTransport !== undefined || liveFaceConfigured()) {
-        const audio = new Uint8Array(await new Response(response.body).arrayBuffer());
-        const face = await renderFace(
-          audio,
-          contentType,
-          TONE_PALETTE[tone].a2f,
-          options.faceTransport !== undefined ? { transport: options.faceTransport } : {},
-        );
-        if (face !== null) return { kind: 'performance', contentType, audio, face };
-        return { kind: 'audio', contentType, stream: new Response(audio).body as ReadableStream<Uint8Array> };
-      }
-
-      return { kind: 'audio', contentType, stream: response.body };
+    async speakSentence(input) {
+      const tone = assertTone(input.tone);
+      const key = apiKey();
+      if (!registry || !key) return { kind: 'text-only', reason: 'no-voice-configured' };
+      if (input.signal?.aborted || !input.text.trim()) return unavailable();
+      const text = synthesisText(input.text, tone, input.band);
+      // HTTP dialogue's documented reliable limit includes tags. Never truncate
+      // a signed sentence into a different lesson; keep its full text onscreen.
+      if (text.length > 2000) return unavailable();
+      const signal = requestSignal(input.signal);
+      try {
+        // Atomic reservation includes the incoming request, so concurrent
+        // prefetches cannot both consume the last remaining budget.
+        const reserved = await ledger.reserve(input.learnerId, voiceDayKey(now()), text.length,
+          estimatedUsdFor(text.length), VOICE_BUDGETS[input.band].dailyUsdCeiling);
+        if (!reserved) return { kind: 'text-only', reason: 'voice-budget-spent' };
+        if (signal.aborted) return unavailable();
+        const response = await transport(`${API_BASE}/v1/text-to-dialogue/stream?output_format=${VOICE_OUTPUT_FORMAT}`, {
+          method: 'POST', headers: { 'xi-api-key': key, 'content-type': 'application/json' }, signal,
+          body: JSON.stringify({
+            inputs: [{ text, voice_id: registry.voiceId }],
+            model_id: registry.liveModelId,
+            settings: voiceSettingsFor(tone, input.band),
+            ...(input.previousText ? { previous_text: literalText(input.previousText).slice(-100) } : {}),
+          }),
+        });
+        const contentType = response.headers.get('content-type')?.split(';')[0]?.trim();
+        if (!response.ok || !response.body || contentType !== 'audio/mpeg' || signal.aborted) {
+          await response.body?.cancel().catch(() => undefined);
+          return unavailable();
+        }
+        // Existing clients decode a whole sentence. Keep that contract and feed
+        // A2F the exact returned bytes; no playback-rate or face-clock changes.
+        if (options.faceTransport !== undefined || liveFaceConfigured()) {
+          const audio = new Uint8Array(await response.arrayBuffer());
+          if (!audio.length || signal.aborted) return unavailable();
+          const face = await renderFace(audio, contentType, TONE_PALETTE[tone].a2f,
+            { transport: options.faceTransport, signal });
+          if (signal.aborted) return unavailable();
+          if (face) return { kind: 'performance', contentType, audio, face };
+          return { kind: 'audio', contentType, stream: new Response(audio).body! };
+        }
+        return { kind: 'audio', contentType, stream: response.body };
+      } catch { return unavailable(); }
     },
 
     async renderBakedClip(id) {
       const key = apiKey();
-      if (registry === null || key === null) return { kind: 'text-only' };
-
+      if (!registry || !key) return { kind: 'text-only' };
       const piece = BAKED_PIECES[id];
-      // v3 takes its emotional direction as audio tags, prepended HERE by the
-      // egress from the tone's recipe — never authored into a script, so the
-      // S4 wording stays exactly the published protocol text.
-      const tagged = `${TONE_PALETTE[piece.tone].bakedTags.join('')} ${piece.text}`;
-
-      let response: Response;
+      const band: VoiceBand = id === 's4-young' ? 'k-2' : '6-8';
+      const text = synthesisText(piece.text, piece.tone, band);
+      if (text.length > 2000) return { kind: 'text-only' };
       try {
-        response = await transport(
-          `${API_BASE}/v1/text-to-speech/${registry.voiceId}/with-timestamps?output_format=${BAKED_OUTPUT_FORMAT}`,
-          {
-            method: 'POST',
-            headers: { 'xi-api-key': key, 'content-type': 'application/json' },
-            body: JSON.stringify({ text: tagged, model_id: registry.bakedModelId }),
-          },
-        );
-      } catch {
-        return { kind: 'text-only' };
-      }
-
-      if (!response.ok) {
-        // Same reason as the streaming path above: an abandoned error body
-        // holds its socket open.
-        void response.body?.cancel().catch(() => undefined);
-        return { kind: 'text-only' };
-      }
-
-      const payload = (await response.json()) as {
-        audio_base64: string;
-        alignment: BakedAlignment | undefined;
-      };
-
-      if (!payload.alignment) return { kind: 'text-only' };
-
-      const bytes = Uint8Array.from(atob(payload.audio_base64), (c) => c.charCodeAt(0));
-
-      return {
-        kind: 'audio',
-        contentType: 'audio/mpeg',
-        bytes,
-        alignment: payload.alignment,
-      };
+        const response = await transport(`${API_BASE}/v1/text-to-dialogue/with-timestamps?output_format=${VOICE_OUTPUT_FORMAT}`, {
+          method: 'POST', headers: { 'xi-api-key': key, 'content-type': 'application/json' }, signal: requestSignal(),
+          body: JSON.stringify({ inputs: [{ text, voice_id: registry.voiceId }], model_id: registry.bakedModelId,
+            settings: voiceSettingsFor(piece.tone, band) }),
+        });
+        if (!response.ok) {
+          await response.body?.cancel().catch(() => undefined);
+          return { kind: 'text-only' };
+        }
+        const parsed = timestampResponseSchema.safeParse(await response.json());
+        if (!parsed.success) return { kind: 'text-only' };
+        const alignment = parsed.data.normalized_alignment ?? parsed.data.alignment;
+        if (!alignment) return { kind: 'text-only' };
+        const bytes = Uint8Array.from(atob(parsed.data.audio_base64), (c) => c.charCodeAt(0));
+        if (!bytes.length) return { kind: 'text-only' };
+        return { kind: 'audio', contentType: 'audio/mpeg', bytes, alignment };
+      } catch { return { kind: 'text-only' }; }
     },
   };
 }
 
 let shared: VoiceEgress | undefined;
-
-/**
- * The process-wide egress. A singleton for the reason the inference gateway is
- * one: the ledger is the counter, and an egress per call site would be a
- * budget per call site. Built on first use so a process that never speaks
- * never needs the credential; the ledger is late-bound through
- * `sharedVoiceBudgetLedger`.
- */
 export function voiceEgress(): VoiceEgress {
-  shared ??= createVoiceEgress();
-  return shared;
+  return shared ??= createVoiceEgress();
 }

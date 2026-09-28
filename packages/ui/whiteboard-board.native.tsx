@@ -855,9 +855,9 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
         page is not up — a stroke replayed a second late would land under a hand
         that has already moved on.
 
-        This appends and schedules; it never sends. The frame is booked only
-        when none is outstanding, so an arbitrary number of samples costs at
-        most one crossing per frame no matter how fast the device produces them.
+        Moves share one crossing per frame. Boundaries flush immediately so
+        the initial dot and release do not wait another frame, and queued
+        moves always reach the engine before their terminal event.
       */
       injectPointer: (sample) => {
         if (!pageReady.current) return;
@@ -875,7 +875,12 @@ export const WhiteboardBoard = forwardRef<WhiteboardHandle, WhiteboardBoardProps
              not a missing value, and must reach the engine as one. */
           sample.pressure ?? null,
         ]);
-        if (frame.current === null) frame.current = requestAnimationFrame(flushPointers);
+        if (sample.phase !== 'move' || pending.current.length >= 256) {
+          if (frame.current !== null) cancelAnimationFrame(frame.current);
+          flushPointers();
+        } else if (frame.current === null) {
+          frame.current = requestAnimationFrame(flushPointers);
+        }
       },
       clear: () => bridgeRef.current?.post({ type: 'clear' }),
       calibrate,

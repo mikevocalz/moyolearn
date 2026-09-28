@@ -17,7 +17,9 @@ export class BoardPointer {
     return { ...point, phase: 'begin' };
   }
   move(point: Point): XrSurfaceInput | null {
-    if (!this.owns(point.source) || !finite(point)) return null;
+    if (!this.owns(point.source)) return null;
+    // Invalid tracking is a discontinuity, not a sample to bridge across.
+    if (!finite(point)) return this.finish(point.source);
     // Keep the valid segment. Never clamp off-paper movement along its edge,
     // and never bridge to a later reentry while the trigger is still held.
     if (!inside(point)) return this.finish(point.source);

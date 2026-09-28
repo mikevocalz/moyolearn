@@ -364,6 +364,22 @@ project(":expo") {
     }
 }
 `;
+const PRECISION_RENDERER = `
+// Moyo: pin the source-verified precision drawing renderer.
+ext.moyoViroRendererAar = rootProject.file('../../../vendors/viro-renderer-034d3b9.aar')
+if (!moyoViroRendererAar.isFile()) {
+    throw new GradleException('Pinned Moyo controller renderer is missing')
+}
+def rendererDigest = java.security.MessageDigest.getInstance('SHA-256')
+moyoViroRendererAar.withInputStream { stream ->
+    byte[] buffer = new byte[65536]
+    int count
+    while ((count = stream.read(buffer)) != -1) rendererDigest.update(buffer, 0, count)
+}
+if (rendererDigest.digest().encodeHex().toString() != '08c22843d1311cbc52ae973b8a97dd8186a86c72d3682312a50a00c198506a3b') {
+    throw new GradleException('Pinned Moyo controller renderer checksum mismatch')
+}
+`;
 function withExpoDeviceFlavors(config) {
   return withProjectBuildGradle(config, mod => {
     // Expo now owns this dimension; do not apply the no-dimension fallback.
@@ -375,6 +391,11 @@ function withExpoDeviceFlavors(config) {
       const anchor = 'apply plugin: "expo-root-project"';
       if (!mod.modResults.contents.includes(anchor)) throw new Error('Expo root plugin anchor missing');
       mod.modResults.contents = mod.modResults.contents.replace(anchor, EXPO_DEVICE_FLAVORS + '\n' + anchor);
+    }
+    if (!mod.modResults.contents.includes('// Moyo: pin the source-verified precision drawing renderer.')) {
+      const anchor = 'apply plugin: "expo-root-project"';
+      if (!mod.modResults.contents.includes(anchor)) throw new Error('Expo root plugin anchor missing');
+      mod.modResults.contents = mod.modResults.contents.replace(anchor, PRECISION_RENDERER + '\n' + anchor);
     }
     return mod;
   });
