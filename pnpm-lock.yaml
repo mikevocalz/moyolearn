@@ -372,6 +372,9 @@ overrides:
   react-server-dom-webpack: 19.3.0
 
 patchedDependencies:
+  '@sentry/react-native@7.11.0':
+    hash: a28a647e2b7cf420a95cb586a65a92c83a85395f4a6e096d6ae439373e2210ee
+    path: patches/@sentry__react-native@7.11.0.patch
   '@reactvision/react-viro@3.0.1-moyo.1':
     hash: 3820fc787d7c09d09a20e015988af862482716d831895e73b571cf979277b985
     path: patches/@reactvision__react-viro@3.0.1-moyo.1.patch
@@ -545,7 +548,7 @@ importers:
         version: file:vendors/reactvision-react-viro-3.0.1-moyo.1.tgz(patch_hash=3820fc787d7c09d09a20e015988af862482716d831895e73b571cf979277b985)(@reactvision/react-native-visionos@0.86.4(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(@types/react@19.3.0)(expo@58.0.0-preview.8)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
       '@sentry/react-native':
         specifier: ~7.11.0
-        version: 7.11.0(expo@58.0.0-preview.8)(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 7.11.0(patch_hash=a28a647e2b7cf420a95cb586a65a92c83a85395f4a6e096d6ae439373e2210ee)(expo@58.0.0-preview.8)(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.103.1(react@19.3.0)
@@ -16601,7 +16604,7 @@ snapshots:
       '@sentry/conventions': 0.16.0
       '@sentry/core': 10.75.0
 
-  '@sentry/react-native@7.11.0(expo@58.0.0-preview.8)(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)':
+  '@sentry/react-native@7.11.0(patch_hash=a28a647e2b7cf420a95cb586a65a92c83a85395f4a6e096d6ae439373e2210ee)(expo@58.0.0-preview.8)(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)':
     dependencies:
       '@sentry/babel-plugin-component-annotate': 4.8.0
       '@sentry/browser': 10.37.0
