@@ -94,8 +94,9 @@ export async function speakTutorSentence(
   headers: Headers,
   input: SpokenSentenceInput,
   ports: VoicePorts,
+  signal?: AbortSignal,
 ): Promise<VoiceTurnOutcome> {
-  return protectedOperation(auth, headers, async (ctx) => voiceOutcome(input, ctx, ports));
+  return protectedOperation(auth, headers, async (ctx) => voiceOutcome(input, ctx, ports, signal));
 }
 
 /**
@@ -108,6 +109,7 @@ export async function voiceOutcome(
   input: SpokenSentenceInput,
   ctx: ProtectedCtx,
   ports: VoicePorts,
+  signal?: AbortSignal,
 ): Promise<VoiceTurnOutcome> {
   const verified = ports.verifyUtterance(
     { text: input.text, previousText: input.previousText ?? null, tone: input.tone },
@@ -121,6 +123,7 @@ export async function voiceOutcome(
     // The band is server-resolved for the same reason the coach's is (doc 07
     // §3 layer 1) — here it also picks the band modulation and the voice
     // budget, neither of which a client may choose.
+    if (signal?.aborted) return { kind: 'text-only' };
     const band = await ports.loadGradeBand(ctx);
     return await ports.speak({
       learnerId: ctx.learnerId,
@@ -128,6 +131,7 @@ export async function voiceOutcome(
       tone: input.tone,
       text: input.text,
       previousText: input.previousText,
+      signal,
     });
   } catch {
     // Voice is a garnish on words the child already has. ANY failure past

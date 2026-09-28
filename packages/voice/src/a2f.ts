@@ -122,6 +122,7 @@ function isPerformance(value: unknown): value is FacePerformance {
 }
 
 export interface RenderFaceOptions {
+  readonly signal?: AbortSignal;
   readonly transport?: A2fTransport;
   readonly timeoutMs?: number;
 }
@@ -142,7 +143,7 @@ export async function renderFace(
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), options.timeoutMs ?? A2F_TIMEOUT_MS);
   try {
-    const response = await transport({ audio, contentType, emotion, signal: controller.signal });
+    const response = await transport({ audio, contentType, emotion, signal: options.signal ? AbortSignal.any([controller.signal, options.signal]) : controller.signal });
     if (!response.ok) {
       void response.body?.cancel().catch(() => undefined);
       return null;

@@ -68,6 +68,7 @@ export async function POST(request: NextRequest) {
         loadGradeBand,
         speak: speakSentenceViaEgress,
       },
+      request.signal,
     );
   } catch (error) {
     if (error instanceof Error) reportRouteError(error);

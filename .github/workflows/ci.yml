@@ -49,7 +49,8 @@ jobs:
   #      produced a deployable artifact" step below is the regression guard that keeps
   #      them correct — it fails the run instead of shipping an empty deploy.
   #
-  #   2. No web application has a `test` task — `test` is a no-op in web, web-vite,
+  #   2. Web tests cover the voice cache; they do not boot built output. `test`
+  #      remains a no-op in web-vite,
   #      admin-vite, storybook, mobile, @acme/art, @acme/assets, @acme/config and
   #      @acme/theme. Before this job, nothing in CI ever executed the built output.
   #      Booting the server and asserting real rendered HTML is the first behavioural
