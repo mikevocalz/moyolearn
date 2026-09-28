@@ -1,0 +1,15 @@
+diff --git a/apple/RNGestureHandlerButton.mm b/apple/RNGestureHandlerButton.mm
+index 994b3d38f1535099eff29519adb708f9a319835d..8d54f5a7116e16c8f7d87f7041f32d5833a69995 100644
+--- a/apple/RNGestureHandlerButton.mm
++++ b/apple/RNGestureHandlerButton.mm
+@@ -480,7 +480,9 @@ static CATransform3D RNGHCenterScaleTransform(NSRect bounds, CGFloat scale)
+ // Duration of a single frame at the current screen's max refresh rate, in ms.
+ - (NSTimeInterval)minFrameDurationMs
+ {
+-#if !TARGET_OS_OSX
++#if TARGET_OS_VISION
++  NSInteger maxFps = 90;
++#elif !TARGET_OS_OSX
+   UIScreen *screen = self.window.screen ?: UIScreen.mainScreen;
+   NSInteger maxFps = screen.maximumFramesPerSecond;
+ #else

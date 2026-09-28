@@ -19,7 +19,8 @@ pnpm --filter mobile visionos:build
 pinned `mikevocalz/virocore` sources, copies the framework and matching shaders
 into the installed Viro package, and runs CocoaPods. Run it again after installing
 dependencies: the vendor archive omits that framework. Build output is cached
-under `.cache/visionos` and is not committed.
+under `.cache/visionos` and is not committed. Its cache key includes the pinned
+source, Xcode build, and both SDK versions; missing shader output invalidates it.
 
 Open `Moyo.xcworkspace` for device signing; select your development team and Vision
 Pro. Start Metro with `pnpm --filter mobile dev`; Debug loads JS from Metro. Pair
@@ -51,3 +52,27 @@ not applied to SDK 58; Moyo uses pnpm patches. Source/JS tests do not establish
 native compatibility or stylus focus behavior.
 
 Guide: https://viro-community.readme.io/docs/visionos-setup-guide
+
+## Native CI
+
+The `visionOS native` workflow runs on macOS 26 for relevant pull requests and
+can be started manually. It builds ViroKit, resolves pods, and runs Xcode
+`build-for-testing` for the app and native test bundle. This compiles tests; it
+does **not** execute them or certify headset behavior. Preparation logs, build
+logs, the generated CocoaPods lockfile, and Xcode results are kept as workflow
+artifacts, including failed runs.
+
+## Apple Rive work still outstanding
+
+There are two missing implementations, not just a platform flag:
+
+1. `nitro-canvas-in-Vision` needs an Apple Rive producer and Nitro registration.
+   The native runtime currently supports the Android SurfaceTexture route only.
+2. Viro's Apple `VRTMaterialManager.createTexture2D` only loads images; it does
+   not recognize the `canvasSource` descriptor. Its Metal consumer must retain
+   IOSurfaces across rendering and synchronize producer/consumer GPU work.
+
+The pnpm Apple canvas patch fixes the existing IOSurface allocation API, C
+bridge visibility, invalid dimension handling, and use-after-disposal calls.
+It does not supply either missing renderer implementation. Production retains
+native fallback controls until that complete path passes native validation.

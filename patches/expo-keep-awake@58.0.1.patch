@@ -1,0 +1,22 @@
+diff --git a/ios/KeepAwakeModule.swift b/ios/KeepAwakeModule.swift
+index 835b4f12ed54e81c28c07cc90f50686dd384d832..7130e7c95f6521af892d9e77e7dfeb0463a15e17 100644
+--- a/ios/KeepAwakeModule.swift
++++ b/ios/KeepAwakeModule.swift
+@@ -25,7 +25,7 @@ public final class KeepAwakeModule: Module {
+     }
+ 
+     AsyncFunction("isActivated") { () -> Bool in
+-      #if os(iOS) || os(tvOS)
++      #if os(iOS) || os(tvOS) || os(visionOS)
+       return DispatchQueue.main.sync {
+         return UIApplication.shared.isIdleTimerDisabled
+       }
+@@ -49,7 +49,7 @@ public final class KeepAwakeModule: Module {
+ }
+ 
+ private func setActivated(_ activated: Bool) {
+-  #if os(iOS) || os(tvOS)
++  #if os(iOS) || os(tvOS) || os(visionOS)
+   DispatchQueue.main.async {
+     UIApplication.shared.isIdleTimerDisabled = activated
+   }

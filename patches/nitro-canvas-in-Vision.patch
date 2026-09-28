@@ -1,0 +1,309 @@
+diff --git a/cpp/CanvasInViroCore.cpp b/cpp/CanvasInViroCore.cpp
+--- a/cpp/CanvasInViroCore.cpp
++++ b/cpp/CanvasInViroCore.cpp
+@@ -1,4 +1,5 @@
+ #include "CanvasInViroCore.h"
++#include <cmath>
+ 
+ namespace nitrocanvasinVision {
+ 
+@@ -24,6 +25,7 @@
+ 
+ std::shared_ptr<CanvasInViroCore> CanvasInViroCore::allocate(int width, int height,
+                                                               bool sRGB, BackingRoute route) {
++    if (width <= 0 || height <= 0) return nullptr;
+     int id = nextId();
+     auto core = std::shared_ptr<CanvasInViroCore>(
+         new CanvasInViroCore(id, width, height, sRGB, route));
+@@ -33,10 +35,15 @@
+ }
+ 
+ std::shared_ptr<CanvasInViroCore> CanvasInViroCore::lookup(int id) {
+-    std::lock_guard<std::mutex> lock(registryMutex());
+-    auto it = registry().find(id);
+-    if (it == registry().end()) return nullptr;
+-    return it->second.lock();
++    std::shared_ptr<CanvasInViroCore> core;
++    {
++        std::lock_guard<std::mutex> lock(registryMutex());
++        auto it = registry().find(id);
++        if (it == registry().end()) return nullptr;
++        core = it->second.lock();
++    }
++    // Release the registry lock before potentially dropping the last owner.
++    return core && !core->isDisposed() ? core : nullptr;
+ }
+ 
+ CanvasInViroCore::CanvasInViroCore(int id, int width, int height, bool sRGB, BackingRoute route)
+@@ -65,51 +72,55 @@
+ }
+ 
+ void CanvasInViroCore::submitFrame(const SharedHandlePayload &payload) {
++    std::lock_guard<std::mutex> lock(_payloadMutex);
+     if (_disposed.load(std::memory_order_acquire)) return;
+-    {
+-        std::lock_guard<std::mutex> lock(_payloadMutex);
+-        _payload = payload;
+-    }
++    if (payload.width != width() || payload.height != height()) return;
++    _payload = payload;
+     _frameSeq.fetch_add(1, std::memory_order_release);
+ }
+ 
+ void CanvasInViroCore::markDirty() {
++    std::lock_guard<std::mutex> lock(_payloadMutex);
+     if (_disposed.load(std::memory_order_acquire)) return;
++    if (_payload.width != width() || _payload.height != height()) return;
+     _frameSeq.fetch_add(1, std::memory_order_release);
+ }
+ 
+ std::optional<SharedHandlePayload> CanvasInViroCore::consumeIfDirty() {
++    std::lock_guard<std::mutex> lock(_payloadMutex);
+     if (_disposed.load(std::memory_order_acquire)) return std::nullopt;
+-
+-    uint64_t frame    = _frameSeq.load(std::memory_order_acquire);
+-    uint64_t consumed = _consumedSeq.load(std::memory_order_relaxed);
+-    if (frame == consumed) return std::nullopt;
+-
+-    SharedHandlePayload out;
+-    {
+-        std::lock_guard<std::mutex> lock(_payloadMutex);
+-        out = _payload;
+-    }
++    const uint64_t frame = _frameSeq.load(std::memory_order_acquire);
++    if (frame == _consumedSeq.load(std::memory_order_relaxed)) return std::nullopt;
+     _consumedSeq.store(frame, std::memory_order_release);
+-    return out;
++    // A resize invalidates the old handle until the producer publishes its
++    // replacement. Never pair old storage with new dimensions.
++    if (_payload.width != width() || _payload.height != height()) return std::nullopt;
++    return _payload;
+ }
+ 
+ void CanvasInViroCore::resize(int width, int height) {
+-    _width.store(width,  std::memory_order_relaxed);
++    std::lock_guard<std::mutex> lock(_payloadMutex);
++    if (_disposed.load(std::memory_order_acquire) || width <= 0 || height <= 0) return;
++    if (width == this->width() && height == this->height()) return;
++    _width.store(width, std::memory_order_relaxed);
+     _height.store(height, std::memory_order_relaxed);
++    _payload = {};
+     _frameSeq.fetch_add(1, std::memory_order_release);
+ }
+ 
+ void CanvasInViroCore::dispatchInput(PointerPhase phase, float uvX, float uvY) {
++    if (!std::isfinite(uvX) || !std::isfinite(uvY)) return;
++    if (phase != PointerPhase::Down && phase != PointerPhase::Move && phase != PointerPhase::Up) return;
++    std::lock_guard<std::mutex> lock(_inputMutex);
+     if (_disposed.load(std::memory_order_acquire)) return;
+     InputEvent ev { phase, uvX, uvY, _inputSeq.fetch_add(1, std::memory_order_relaxed) };
+-    std::lock_guard<std::mutex> lock(_inputMutex);
+     _inputQueue.push_back(ev);
+ }
+ 
+ std::vector<InputEvent> CanvasInViroCore::drainInputs() {
+     std::vector<InputEvent> out;
+     std::lock_guard<std::mutex> lock(_inputMutex);
++    if (_disposed.load(std::memory_order_acquire)) return out;
+     out.swap(_inputQueue);
+     return out;
+ }
+diff --git a/cpp/CanvasInViroCore.h b/cpp/CanvasInViroCore.h
+--- a/cpp/CanvasInViroCore.h
++++ b/cpp/CanvasInViroCore.h
+@@ -46,8 +46,9 @@
+ };
+ 
+ // submitFrame() and consumeIfDirty() may run on different threads (producer
+-// GPU submission vs Viro render). They sync via _frameSeq / _consumedSeq;
+-// _payloadMutex covers the payload swap. Input queue is mutex-protected.
++// GPU submission vs Viro render). _payloadMutex protects both payload and
++// sequence publication/consumption, including resize and disposal checks.
++// Input sequence assignment and queue insertion share _inputMutex.
+ class CanvasInViroCore {
+ public:
+     static std::shared_ptr<CanvasInViroCore> allocate(int width, int height,
+@@ -73,7 +74,8 @@
+     // Latest payload if changed since the previous call.
+     std::optional<SharedHandlePayload> consumeIfDirty();
+ 
+-    // Bumps frame seq so any in-flight consumer payload with stale dims is dropped.
++    // Invalidates the stored payload until a matching replacement is submitted.
++    // Already consumed GPU handles still require platform lifetime synchronization.
+     void resize(int width, int height);
+ 
+     void dispatchInput(PointerPhase phase, float uvX, float uvY);
+diff --git a/NitroCanvasInVision.podspec b/NitroCanvasInVision.podspec
+index 4ff71892..2935e0eb 100644
+--- a/NitroCanvasInVision.podspec
++++ b/NitroCanvasInVision.podspec
+@@ -19,9 +19,15 @@ Pod::Spec.new do |s|
+     # Autolinking/Registration (Objective-C++)
+     "ios/**/*.{m,mm}",
+     # Implementation (C++ objects)
+-    "cpp/**/*.{hpp,cpp}",
++    "cpp/**/*.{h,hpp,cpp}",
+   ]
+ 
++  # Swift imports the pure-C facade through this pod's generated module.
++  # The C++ registry header remains private; it is not a Swift API.
++  s.public_header_files = ['cpp/CanvasInViroCBridge.h']
++  s.private_header_files = ['cpp/CanvasInViroCore.h']
++  s.frameworks = ['IOSurface', 'CoreVideo']
++
+   load 'nitrogen/generated/ios/NitroCanvasInVision+autolinking.rb'
+   add_nitrogen_files(s)
+ 
+diff --git a/ios/HybridCanvasSurface.swift b/ios/HybridCanvasSurface.swift
+index 3a914d3f..0ad22a41 100644
+--- a/ios/HybridCanvasSurface.swift
++++ b/ios/HybridCanvasSurface.swift
+@@ -1,4 +1,5 @@
+ import Foundation
++import CoreVideo
+ import IOSurface
+ import NitroModules
+ 
+@@ -11,9 +12,9 @@ class HybridCanvasSurface: HybridCanvasSurfaceSpec {
+     private var disposed = false
+ 
+     // Strong ref so the IOSurface outlives any producer wrapper.
+-    private var liveIOSurface: IOSurface
++    private var liveIOSurface: IOSurfaceRef
+ 
+-    init(width: Int, height: Int, sRGB: Bool, iosurface: IOSurface,
++    init(width: Int, height: Int, sRGB: Bool, iosurface: IOSurfaceRef,
+          route: CanvasBackingRoute) {
+         self.pixelWidth    = width
+         self.pixelHeight   = height
+@@ -37,6 +38,7 @@ class HybridCanvasSurface: HybridCanvasSurfaceSpec {
+     var route: CanvasBackingRoute { storedRoute }
+ 
+     func markDirty() throws {
++        try requireLive()
+         publishCurrentHandle()
+     }
+ 
+@@ -47,12 +49,14 @@ class HybridCanvasSurface: HybridCanvasSurfaceSpec {
+     }
+ 
+     func getIOSurfaceID() throws -> Double {
++        try requireLive()
+         // Stable for the lifetime of the IOSurface; the peer (Dawn) recovers
+         // an IOSurfaceRef via IOSurfaceLookup(id).
+         return Double(IOSurfaceGetID(liveIOSurface))
+     }
+ 
+     func submitFrame(pixels: ArrayBuffer) throws {
++        try requireLive()
+         let expected = pixelWidth * pixelHeight * 4
+         guard Int(pixels.size) >= expected else {
+             throw NSError(domain: "nitro-canvas-in-Vision", code: -3,
+@@ -61,7 +65,10 @@ class HybridCanvasSurface: HybridCanvasSurfaceSpec {
+         }
+ 
+         let surface = liveIOSurface
+-        IOSurfaceLock(surface, [], nil)
++        guard IOSurfaceLock(surface, [], nil) == 0 else {
++            throw NSError(domain: "nitro-canvas-in-Vision", code: -7,
++                          userInfo: [NSLocalizedDescriptionKey: "Cannot lock canvas IOSurface for writing."])
++        }
+         defer { IOSurfaceUnlock(surface, [], nil) }
+ 
+         // IOSurface here is kCVPixelFormatType_32BGRA; JS submits RGBA8. Swizzle on
+@@ -87,16 +94,22 @@ class HybridCanvasSurface: HybridCanvasSurfaceSpec {
+     }
+ 
+     func resize(width: Double, height: Double) throws {
++        try requireLive()
++        guard width.isFinite, height.isFinite,
++              width > 0, height > 0, width <= 16384, height <= 16384 else {
++            throw NSError(domain: "nitro-canvas-in-Vision", code: -6,
++                          userInfo: [NSLocalizedDescriptionKey: "Canvas dimensions must be finite, positive, and at most 16384 pixels."])
++        }
+         let newW = max(1, Int(width))
+         let newH = max(1, Int(height))
+         let bpe = 4
+-        let bpr = IOSurface.minimumRowBytes(forWidth: newW, bytesPerElement: bpe)
+-        let props: [IOSurfacePropertyKey: Any] = [
+-            .width: newW, .height: newH,
+-            .bytesPerElement: bpe, .bytesPerRow: bpr,
+-            .pixelFormat: Int(kCVPixelFormatType_32BGRA),
++        let bpr = IOSurfaceAlignProperty(kIOSurfaceBytesPerRow, newW * bpe)
++        let props: [CFString: Any] = [
++            kIOSurfaceWidth: newW, kIOSurfaceHeight: newH,
++            kIOSurfaceBytesPerElement: bpe, kIOSurfaceBytesPerRow: bpr,
++            kIOSurfacePixelFormat: Int(kCVPixelFormatType_32BGRA),
+         ]
+-        guard let newSurface = IOSurface(properties: props) else {
++        guard let newSurface = IOSurfaceCreate(props as CFDictionary) else {
+             throw NSError(domain: "nitro-canvas-in-Vision", code: -2)
+         }
+         liveIOSurface = newSurface
+@@ -107,6 +120,7 @@ class HybridCanvasSurface: HybridCanvasSurfaceSpec {
+     }
+ 
+     func dispatchInput(phase: PointerPhase, uvX: Double, uvY: Double) throws {
++        try requireLive()
+         let civPhase: CIVPhase
+         switch phase {
+         case .down: civPhase = CIV_PHASE_DOWN
+@@ -120,6 +134,13 @@ class HybridCanvasSurface: HybridCanvasSurfaceSpec {
+         disposeSurface()
+     }
+ 
++    private func requireLive() throws {
++        guard !disposed else {
++            throw NSError(domain: "nitro-canvas-in-Vision", code: -4,
++                          userInfo: [NSLocalizedDescriptionKey: "Canvas surface is disposed."])
++        }
++    }
++
+     private func disposeSurface() {
+         if disposed { return }
+         disposed = true
+diff --git a/ios/HybridCanvasSurfaceFactory.swift b/ios/HybridCanvasSurfaceFactory.swift
+index a9f56715..b809af08 100644
+--- a/ios/HybridCanvasSurfaceFactory.swift
++++ b/ios/HybridCanvasSurfaceFactory.swift
+@@ -1,24 +1,31 @@
+ import Foundation
++import CoreVideo
+ import IOSurface
+ import NitroModules
+ 
+ class HybridCanvasSurfaceFactory: HybridCanvasSurfaceFactorySpec {
+     func create(width: Double, height: Double, scale: Double,
+                 sRGB: Bool, androidRoute: CanvasBackingRoute) throws -> any HybridCanvasSurfaceSpec {
++        guard width.isFinite, height.isFinite, scale.isFinite,
++              width > 0, height > 0, scale > 0,
++              (width * scale).isFinite, (height * scale).isFinite,
++              width * scale <= 16384, height * scale <= 16384 else {
++            throw NSError(domain: "nitro-canvas-in-Vision", code: -6,
++                          userInfo: [NSLocalizedDescriptionKey: "Canvas dimensions must be finite, positive, and at most 16384 pixels after scaling."])
++        }
+         let pixelWidth  = max(1, Int(width  * scale))
+         let pixelHeight = max(1, Int(height * scale))
+ 
+         let bytesPerElement = 4
+-        let bytesPerRow = IOSurface.minimumRowBytes(forWidth: pixelWidth,
+-                                                    bytesPerElement: bytesPerElement)
+-        let props: [IOSurfacePropertyKey: Any] = [
+-            .width:           pixelWidth,
+-            .height:          pixelHeight,
+-            .bytesPerElement: bytesPerElement,
+-            .bytesPerRow:     bytesPerRow,
+-            .pixelFormat:     Int(kCVPixelFormatType_32BGRA),
++        let bytesPerRow = IOSurfaceAlignProperty(kIOSurfaceBytesPerRow, pixelWidth * bytesPerElement)
++        let props: [CFString: Any] = [
++            kIOSurfaceWidth:           pixelWidth,
++            kIOSurfaceHeight:          pixelHeight,
++            kIOSurfaceBytesPerElement: bytesPerElement,
++            kIOSurfaceBytesPerRow:     bytesPerRow,
++            kIOSurfacePixelFormat:     Int(kCVPixelFormatType_32BGRA),
+         ]
+-        guard let iosurface = IOSurface(properties: props) else {
++        guard let iosurface = IOSurfaceCreate(props as CFDictionary) else {
+             throw NSError(domain: "nitro-canvas-in-Vision", code: -1, userInfo: [
+                 NSLocalizedDescriptionKey: "Failed to allocate IOSurface \(pixelWidth)x\(pixelHeight)"
+             ])

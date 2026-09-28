@@ -28,11 +28,15 @@ public final class ReservedRegionsModule: Module {
   @JS
   func query() async -> [ReservedRegionRecord] {
     await MainActor.run {
+#if os(iOS)
       guard #available(iOS 27.1, *), let view = UIWindow.keyRootView else { return [] }
       let regions =
         view.reservedRegions(kind: .division, options: [.includeInactive])
         + view.reservedRegions(kind: .occlusion, options: [.includeInactive])
       return regions.map { ReservedRegionRecord(region: $0) }
+#else
+      return []
+#endif
     }
   }
 }

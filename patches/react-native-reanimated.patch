@@ -1,0 +1,20 @@
+diff --git a/apple/reanimated/apple/keyboardObserver/REAKeyboardEventObserver.mm b/apple/reanimated/apple/keyboardObserver/REAKeyboardEventObserver.mm
+index 17d0dbd3a562475718f5445ba61b6ee79113d609..41a6fb33fde353ce154729454a92d6d3d2dc071d 100644
+--- a/apple/reanimated/apple/keyboardObserver/REAKeyboardEventObserver.mm
++++ b/apple/reanimated/apple/keyboardObserver/REAKeyboardEventObserver.mm
+@@ -192,8 +192,13 @@ typedef NS_ENUM(NSUInteger, KeyboardState) { // NOLINT(performance-enum-size,cpp
+    to the window coordinate space in order to support Slide Over and Stage Manager on
+    iPadOS.
+    */
+-  beginFrame = [window convertRect:beginFrame fromCoordinateSpace:window.screen.coordinateSpace];
+-  endFrame = [window convertRect:endFrame fromCoordinateSpace:window.screen.coordinateSpace];
++#if TARGET_OS_VISION
++  id<UICoordinateSpace> screenCoordinateSpace = window.windowScene.coordinateSpace;
++#else
++  id<UICoordinateSpace> screenCoordinateSpace = window.screen.coordinateSpace;
++#endif
++  beginFrame = [window convertRect:beginFrame fromCoordinateSpace:screenCoordinateSpace];
++  endFrame = [window convertRect:endFrame fromCoordinateSpace:screenCoordinateSpace];
+ 
+   /*
+    In some cases, such as when the user has enabled "prefer cross-fade transitions" or

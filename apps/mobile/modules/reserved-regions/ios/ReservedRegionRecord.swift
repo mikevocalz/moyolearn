@@ -15,6 +15,7 @@ struct ReservedRegionRecord {
   var active: Bool
 }
 
+#if os(iOS)
 @available(iOS 27.1, *)
 extension ReservedRegionRecord {
   init(region: UIView.ReservedRegion) {
@@ -29,3 +30,4 @@ extension ReservedRegionRecord {
     )
   }
 }
+#endif

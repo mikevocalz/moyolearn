@@ -1,7 +1,29 @@
 # visionOS requires source builds; iOS-only precompiled Expo pods have no xros slice.
 ENV['EXPO_USE_PRECOMPILED_MODULES'] = '0'
-ENV['RNS_GAMMA_ENABLED'] ||= '1'
+ENV['RNS_GAMMA_ENABLED'] = '0'
+ENV['MOYO_VISIONOS_BUILD'] = '1'
 require File.join(File.dirname(`node --print "require.resolve('expo/package.json')"`), 'scripts/autolinking')
+
+# # viro-visionos: declare visionOS on every resolved podspec
+# Upstream Expo and most RN libraries do not list visionos in their podspec
+# `platforms`, and Expo's autolinking manager drops any package whose podspec
+# does not support the target platform (`supports_platform?`). Rather than one
+# pnpm patch per podspec, inject the platform once at the single choke point
+# every linker funnels through — `Specification.from_file` serves Expo
+# autolinking, RN autolinking, and explicit `pod` declarations alike.
+# Deployment target matches `platform :visionos, '26.0'` below.
+module VisionOSPodspecPlatform
+  def from_file(path, *)
+    spec = super
+    platforms = spec.attributes_hash['platforms'] ||= {}
+    unless platforms.key?('visionos')
+      spec.visionos.deployment_target = '26.0'
+      spec.instance_variable_set(:@available_platforms, nil)
+    end
+    spec
+  end
+end
+Pod::Specification.singleton_class.prepend(VisionOSPodspecPlatform)
 
 # Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
@@ -29,7 +51,20 @@ if linkage != nil
 end
 
 target 'Moyo' do
-  use_expo_modules!
+  # # viro-visionos: the XR app surface does not load these modules. Each is
+  # either iOS-only API surface that cannot compile for xros, or OTA/telemetry
+  # plumbing the unsigned headset build never exercises. If a JS import later
+  # reaches one at runtime, the fix is to re-add the pod here and port its
+  # visionOS compile gaps — not to stub the JS.
+  use_expo_modules!(exclude: [
+    '@expo/ui', '@expo/dom-webview', '@nandorojo/galeria',
+    'expo-document-picker', 'expo-drag-drop-content-view', 'expo-glass-effect',
+    'expo-image', 'expo-image-manipulator', 'expo-image-picker',
+    'expo-paste-input', 'expo-screen-capture', 'expo-secure-store',
+    'expo-web-browser', 'expo-background-task', 'expo-task-manager',
+    'expo-horizon-core', 'expo-updates', 'expo-updates-interface',
+    'expo-eas-client',
+  ])
   config = use_native_modules!
   config[:reactNativePath] = File.dirname(Pod::Executable.execute_command('node', ['-p', 'require.resolve("@reactvision/react-native-visionos/package.json", {paths: [process.argv[1]]})', __dir__]).strip)
 
