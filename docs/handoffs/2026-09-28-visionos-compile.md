@@ -45,6 +45,9 @@ xcodebuild -workspace Moyo.xcworkspace -scheme Moyo -configuration Debug \
 The device build is unsigned (`CODE_SIGNING_ALLOWED=NO`). It has never been
 installed on hardware.
 
+**Bundled** — a visionOS JS bundle builds and the `.visionos.*` siblings win.
+See blocker 1 below for the exact command; it is not `expo export`.
+
 **Simulator verified** — nothing is. This machine has the visionOS 27.0 SDK
 (`xcodebuild -showsdks` lists `xros27.0` and `xrsimulator27.0`) but no visionOS
 simulator *runtime*: `xcrun simctl list runtimes` shows only iOS 27.1 and
@@ -172,23 +175,82 @@ starting from 7,703 dirty entries. Both completed checkout →
 
 ## Open blockers, in the order they block
 
-### 1. Metro cannot produce a visionOS bundle
+### 1. Nothing — the bundle builds, and `.visionos.*` files now win
 
-This is what stands between "compiles" and "runs".
+Two separate bugs, both fixed, both worth keeping written down.
+
+**The bundle could not be built at all**, and the command everyone reached for
+was the wrong one. `expo export --platform visionos` is rejected outright
+(`Unsupported platform "visionos"`), and `expo export:embed --platform visionos`
+dies in `getSupportPackageForPlatform` before touching app code. Neither is what
+the app uses. The fork reports itself as iOS —
+`@reactvision/react-native-visionos/React/Base/RCTConstants.m:10` sets
+`RCTPlatformName = @"ios"` — and carries visionOS as a resolver *option*:
+`RCTBundleURLProvider.mm:471` appends `resolver.platformExtension=visionos`
+under `#if TARGET_OS_VISION`, and `scripts/react-native-xcode.sh:158-160` does
+the same for release. The real command is:
 
 ```
-FAILED: Unable to resolve module react-native/setup-env from
-node_modules/@expo/metro-runtime/build/location/install.native.js
+cd apps/mobile
+MOYO_VISIONOS_BUILD=1 node \
+  ../../node_modules/@reactvision/react-native-visionos/cli.js bundle \
+  --platform ios --resolver-option "platformExtension=visionos" --dev false \
+  --entry-file /abs/path/to/node_modules/expo-router/entry.js \
+  --bundle-output out.jsbundle --assets-dest out-assets
 ```
 
-`apps/mobile/metro.config.js:182-183` rewrites every `react-native/*` specifier
-onto `@reactvision/react-native-visionos` when `platform === 'visionos'`, and
-the fork ships no `setup-env`. There is also a version skew to settle: the fork
-resolved at 0.86.4 against `react-native` 0.88.0-rc.2, and `pnpm install`
-reported `@react-native/community-cli-plugin 0.86.2` wanting
-`@react-native/metro-config@0.86.2` against 0.88.0-rc.2. Narrowing the rewrite
-to exclude specifiers the fork does not carry is a smaller and more honest fix
-than a shim.
+(The entry file must be an absolute path; a relative one resolves against the
+wrong root and fails with `The resource /Users/node_modules/... was not found`.)
+
+It failed on `Unable to resolve module react-native/setup-env`. Root cause is a
+version skew, not a fork packaging bug: `react-native/setup-env` and
+`react-native/asset-registry` were added in 0.87/0.88, the fork is on the 0.86
+line (package 0.86.4, `reactNativeUpstreamVersion` 0.86.3), and upstream
+`react-native@0.86.3` has no such `exports` keys either. `@expo/metro-runtime`
+targets 0.88 and imports a name the 0.86 tree never had.
+
+Both are now redirected **into** the fork at their 0.86 names
+(`Libraries/Core/InitializeCore`, `Libraries/Image/AssetRegistry`), not excluded
+from the rewrite. Excluding them would have resolved — the 0.88 files are on
+disk — and bought the bundle a second React Native environment and a second
+asset registry against a binary linking the fork's native runtime. A registry
+the native side does not read returns `undefined` from `getAssetByID` for every
+image: blank images, no error. `asset-registry` would have been the next
+failure regardless, since `@expo/metro-config` puts that literal specifier in
+`transformer.assetRegistryPath`.
+
+**`.visionos.*` files did not resolve.** Nothing in `metro/src` or
+`metro-resolver/src` reads `platformExtension`, and Expo's
+`constructPlatformExtensions` keys off `platform`. Since the runtime asks for
+`platform=ios`, Metro picked `hearts-gpu.tsx` and `KeyboardProvider.tsx` — both
+of which import a module visionOS does not autolink. **Every `.visionos.tsx` in
+this repo was dead code**, and the WebGPU splash fix committed in `5be01ec6` did
+nothing. The resolver now swaps in a `visionos` → `ios` → `native` → bare
+extension list on the visionOS path, mirroring `PLATFORM_EXTENSIONS` in
+`@expo/config/build/paths/extensions.js`.
+
+Verified against the real bundle's sourcemap, 8,669 sources:
+
+```
+react-native-webgpu:               17   (lazy chains only)
+react-native-keyboard-controller:  61
+visionos variants resolved:        components/KeyboardProvider.visionos.tsx
+                                   components/splash/hearts-gpu.visionos.tsx
+hearts-gpu:                        hearts-gpu.visionos.tsx        (.tsx absent)
+KeyboardProvider:                  KeyboardProvider.visionos.tsx  (.tsx absent)
+bare node_modules/react-native/:   0
+```
+
+The 17 WebGPU modules reach the graph only through `React.lazy` /
+`await import()` in `tutor-avatar-3d.native.tsx` and `webgpu-smoke.tsx`, on
+routes reachable only by `moyo://` deep link. In the graph, never evaluated.
+The 61 keyboard-controller modules are safe for a different reason:
+`specs/NativeKeyboardController.js` uses `TurboModuleRegistry.get`, which
+returns null, not `getEnforcing`, which throws. There is no `getEnforcing` in
+its `lib/module/` at all.
+
+A plain `--platform ios` bundle still builds; the change is confined to the
+`visionOS &&` branch.
 
 ### 2. Nothing — the device build is green
 

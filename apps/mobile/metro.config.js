@@ -228,18 +228,53 @@ const VISIONOS_FORK_ENTRY_FALLBACKS = {
     '@reactvision/react-native-visionos/Libraries/Image/AssetRegistry',
 };
 
+/*
+  `.visionos.*` siblings, which Metro does not resolve on its own here.
+
+  The fork reports itself as iOS at runtime — `RCTConstants.m:10` sets
+  `RCTPlatformName = @"ios"` — and carries visionOS only as a resolver OPTION:
+  `RCTBundleURLProvider.mm:471` appends `resolver.platformExtension=visionos`
+  under `#if TARGET_OS_VISION`, and `scripts/react-native-xcode.sh:158-160`
+  passes the same flag when bundling for release. So the bundle everything
+  actually loads is built at `--platform ios`, not `--platform visionos`.
+
+  Nothing in `metro/src` or `metro-resolver/src` reads `platformExtension`, and
+  Expo's own `constructPlatformExtensions` keys off `platform`. Left alone,
+  Metro therefore picks `hearts-gpu.tsx` over `hearts-gpu.visionos.tsx` and
+  `KeyboardProvider.tsx` over `KeyboardProvider.visionos.tsx` — and both of
+  those import a native module visionOS does not autolink
+  (react-native-webgpu, react-native-keyboard-controller), so the app throws
+  `TurboModuleRegistry.getEnforcing` on its first frame. The `.visionos.tsx`
+  files are not belt-and-braces; without this they are dead code.
+
+  The extension list mirrors what Expo builds for tvos and macos in
+  `@expo/config/build/paths/extensions.js` (`PLATFORM_EXTENSIONS`): the target's
+  own tag first, then the platform it falls back to, then `native`, then bare.
+  visionOS is not in that table, which is why it is spelled out here.
+*/
+const VISIONOS_SOURCE_EXTS = ['visionos', 'ios', 'native'].flatMap((tag) =>
+  config.resolver.sourceExts.map((ext) => `${tag}.${ext}`),
+).concat(config.resolver.sourceExts);
+
 const viroPreviousResolver = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   const visionOS = platform === 'visionos' || context.customResolverOptions?.platformExtension === 'visionos';
   let name = moduleName;
-  if (visionOS && (name === 'react-native' || name.startsWith('react-native/'))) {
-    name =
-      VISIONOS_FORK_ENTRY_FALLBACKS[name] ??
-      '@reactvision/react-native-visionos' + name.slice('react-native'.length);
+  let resolverContext = context;
+  if (visionOS) {
+    if (name === 'react-native' || name.startsWith('react-native/')) {
+      name =
+        VISIONOS_FORK_ENTRY_FALLBACKS[name] ??
+        '@reactvision/react-native-visionos' + name.slice('react-native'.length);
+    }
+    // The tags are already folded into the extension list, so Metro must not
+    // also prepend `.ios.`/`.native.` of its own — that would ask for
+    // `foo.ios.visionos.tsx`, which nothing is named.
+    resolverContext = { ...context, sourceExts: VISIONOS_SOURCE_EXTS, preferNativePlatform: false };
   }
   return viroPreviousResolver
-    ? viroPreviousResolver(context, name, platform)
-    : context.resolveRequest(context, name, platform);
+    ? viroPreviousResolver(resolverContext, name, platform)
+    : resolverContext.resolveRequest(resolverContext, name, platform);
 };
 
 module.exports = withUniwindConfig(config, {
