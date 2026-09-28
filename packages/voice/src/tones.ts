@@ -20,104 +20,92 @@
 //      no-emotion-recognition-of-minors decision stands with zero exceptions,
 //      and this sentence is its CI-reviewable form on the voice path.
 //
-// Tone is STRUCTURED METADATA beside the reply, never inline in the text —
-// Flash (v2 family) would speak a bracketed tag or a stage direction aloud.
-// The live recipe is therefore voice settings; only the baked path (Eleven v3)
-// gets audio tags, and those are prepended by the egress, never authored into
-// a script.
+// Tone remains trusted metadata. Both v4 paths use server-authored audio tags
+// and the documented Stability/Similarity settings; v4 has no speed/style dial.
 // SOT: docs/pack/32-tutor-voice-tone.md §4 · docs/pack/19 (anti-dependency) · docs/pack/31 §3
 // SOT-KEYWORDS: tone palette closed versioned nine warm teacher no intimacy lesson state band modulation voice settings audio tags a2f emotion
 import type { VoiceBand } from '@acme/student-model';
 
 /**
  * Bumped when any recipe changes. Doc 32 §2: settings are versioned like
- * prompts — changing stability/style/speed is a voice change and goes through
+ * prompts — changing stability/similarity/tags is a voice change and goes through
  * review with an eval listen, not a config tweak.
  */
-export const TONE_PALETTE_VERSION = 2;
+export const TONE_PALETTE_VERSION = 3;
 
 /** The face's target, for the baked A2F pipeline. `neutral` carries no dial. */
 export type A2fEmotion =
   | { readonly emotion: 'neutral' }
   | { readonly emotion: 'joy' | 'concern' | 'warmth'; readonly intensity: 'low' | 'med' | 'high' };
 
-/**
- * The live path's voice settings, before band modulation. ElevenLabs' dials:
- * `stability` (higher = steadier), `style` (higher = more expressive) and
- * `speed` (1 is the voice's natural rate).
- */
+/** v4 Text-to-Dialogue settings (not legacy voice_settings). */
 export interface LiveRecipe {
   readonly stability: number;
-  readonly style: number;
-  readonly speed: number;
+  readonly similarity: number;
 }
 
 export interface ToneRecipe {
   /** The pedagogical moment — LESSON state, never the child's affect. */
   readonly moment: string;
   readonly live: LiveRecipe;
-  /** Eleven v3 audio tags, baked path only. Flash would read these aloud. */
+  /** Trusted audio tags shared by live and baked v4 synthesis. */
   readonly bakedTags: readonly string[];
   readonly a2f: A2fEmotion;
 }
 
-/**
- * Doc 32 §4's table, one entry per row. The live numbers are the v1 pinned
- * settings implementing each row's prose recipe ("slight slow", "brighter",
- * "slow, level") — they are the versioned artifact, not tuning suggestions.
- */
+/** Nine lesson registers. Similarity stays fixed to preserve Natalie's identity. */
 export const TONE_PALETTE = Object.freeze({
   'warm-open': {
     moment: 'session start, return',
-    live: { stability: 0.5, style: 0.35, speed: 0.95 },
+    live: { stability: 0.5, similarity: 0.75 },
     bakedTags: ['[warmly]'],
     a2f: { emotion: 'joy', intensity: 'low' },
   },
   'thinking-together': {
     moment: 'working a step',
-    live: { stability: 0.65, style: 0.2, speed: 1 },
+    live: { stability: 0.65, similarity: 0.75 },
     bakedTags: ['[thoughtful]'],
     a2f: { emotion: 'neutral' },
   },
   'gentle-after-miss': {
     moment: 'wrong answer',
-    live: { stability: 0.6, style: 0.25, speed: 0.92 },
+    live: { stability: 0.6, similarity: 0.75 },
     bakedTags: ['[gently]'],
     a2f: { emotion: 'concern', intensity: 'low' },
   },
   'naming-the-mistake': {
     moment: 'misconception named (doc 31)',
-    live: { stability: 0.7, style: 0.15, speed: 1 },
+    live: { stability: 0.7, similarity: 0.75 },
     bakedTags: ['[matter-of-fact]'],
     a2f: { emotion: 'neutral' },
   },
   'quiet-encourage': {
     moment: 'frustration detected from lesson state',
-    live: { stability: 0.6, style: 0.3, speed: 0.9 },
+    live: { stability: 0.6, similarity: 0.75 },
     bakedTags: ['[encouraging]'],
     a2f: { emotion: 'warmth', intensity: 'low' },
   },
   'celebrate-small': {
     moment: 'step landed',
-    live: { stability: 0.45, style: 0.45, speed: 1.02 },
+    live: { stability: 0.45, similarity: 0.75 },
     bakedTags: ['[happy]'],
     a2f: { emotion: 'joy', intensity: 'med' },
   },
   'celebrate-big': {
     moment: 'skill mastered',
-    live: { stability: 0.4, style: 0.6, speed: 1.05 },
+    live: { stability: 0.4, similarity: 0.75 },
     bakedTags: ['[excited]'],
     a2f: { emotion: 'joy', intensity: 'high' },
   },
   'calm-refocus': {
     moment: 'off-topic / S1-S2 redirect',
-    live: { stability: 0.7, style: 0.15, speed: 0.95 },
+    live: { stability: 0.7, similarity: 0.75 },
     bakedTags: ['[calm]'],
     a2f: { emotion: 'neutral' },
   },
   'safety-serious': {
     moment: 'S3 deflection; S4 handoff (fixed scripts only at S4)',
-    live: { stability: 0.8, style: 0.1, speed: 0.85 },
+    live: { stability: 0.8, similarity: 0.75 },
     bakedTags: ['[softly]', '[serious]'],
     a2f: { emotion: 'concern', intensity: 'med' },
   },
@@ -137,7 +125,7 @@ export const TONES = Object.freeze(Object.keys(TONE_PALETTE)) as readonly ToneKe
 export const DEFAULT_TONE: ToneKey = 'thinking-together';
 export const OPENING_TONE: ToneKey = 'warm-open';
 
-export const isTone = (value: string): value is ToneKey => value in TONE_PALETTE;
+export const isTone = (value: string): value is ToneKey => Object.hasOwn(TONE_PALETTE, value);
 
 /** Thrown on an unknown tone. The palette is closed; there is no coercion. */
 export class UnknownTone extends Error {
@@ -161,42 +149,19 @@ export function assertTone(value: string): ToneKey {
   return value;
 }
 
-/**
- * Doc 32 §4's band modulation — it MULTIPLIES the palette rather than
- * duplicating it. K-2 shifts everything slower and more melodic (for K-2 the
- * voice is the primary interface — a six-year-old can't read the chat); 3-5
- * slightly slow; 6-8 neutral; 9-12 natural adult register, style pulled DOWN
- * because a teen hears performed enthusiasm as condescension — the same
- * failure as complexity, inverted.
- */
-/*
-  v2 (2026-09-03, Mike on the Duo: "she's speaking so fast — how can you speak
-  fast to a child"): K-2 and 3-5 pulled down hard. 0.88 x a 1.0 recipe was
-  still a newsreader to a six-year-old; a reading teacher runs nearer 0.75 of
-  adult conversational rate. The floor is the provider's 0.7, and the working
-  tone (`thinking-together`, speed 1) lands at 0.76 for K-2.
-*/
-const BAND_MODULATION: Record<VoiceBand, { readonly speed: number; readonly style: number }> = {
-  'k-2': { speed: 0.76, style: 1.25 },
-  '3-5': { speed: 0.86, style: 1.1 },
-  '6-8': { speed: 1, style: 1 },
-  '9-12': { speed: 1, style: 0.7 },
+/** Delivery intent, not a numeric rate guarantee. K-2 pacing needs listening
+ * approval before release: v4 removed the old 0.76 speed control. */
+const BAND_TAGS: Record<VoiceBand, readonly string[]> = {
+  'k-2': ['[slowly]', '[clearly]'],
+  '3-5': ['[slowly]'],
+  '6-8': [],
+  '9-12': ['[matter-of-fact]'],
 };
 
-const clamp = (value: number, lo: number, hi: number): number =>
-  Math.min(hi, Math.max(lo, value));
+export function voiceSettingsFor(tone: string, _band: VoiceBand): LiveRecipe {
+  return { ...TONE_PALETTE[assertTone(tone)].live };
+}
 
-/**
- * The settings one utterance renders with: tone recipe x band modulation.
- * Speed clamps to ElevenLabs' accepted range; style to [0, 1]. Refuses an
- * unknown tone — see `assertTone`.
- */
-export function voiceSettingsFor(tone: string, band: VoiceBand): LiveRecipe {
-  const recipe = TONE_PALETTE[assertTone(tone)].live;
-  const modulation = BAND_MODULATION[band];
-  return {
-    stability: recipe.stability,
-    style: clamp(recipe.style * modulation.style, 0, 1),
-    speed: clamp(recipe.speed * modulation.speed, 0.7, 1.2),
-  };
+export function voiceTagsFor(tone: string, band: VoiceBand): readonly string[] {
+  return [...TONE_PALETTE[assertTone(tone)].bakedTags, ...BAND_TAGS[band]];
 }

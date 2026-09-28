@@ -2,7 +2,7 @@
 // repo that holds the ElevenLabs credential, exactly as @acme/inference is the
 // only one holding Anthropic's. Server-side only.
 //
-// One voice everywhere; two render paths (Flash v2.5 live, Eleven v3 baked); a
+// One voice everywhere; two render paths (Eleven v4 live and baked); a
 // closed nine-entry tone palette, band-modulated; a per-learner daily voice
 // budget whose exhaustion is silent text-only, never an error at a child.
 //
@@ -22,12 +22,13 @@ export {
   assertTone,
   isTone,
   voiceSettingsFor,
+  voiceTagsFor,
 } from './src/tones.ts';
 export type { A2fEmotion, LiveRecipe, ToneKey, ToneRecipe } from './src/tones.ts';
 export { BAKED_MODEL_ID, LIVE_MODEL_ID, voiceRegistry } from './src/registry.ts';
 export type { VoiceRegistry } from './src/registry.ts';
 export {
-  FLASH_USD_PER_CHAR,
+  V4_USD_PER_CHAR,
   VOICE_BUDGETS,
   estimatedUsdFor,
   inMemoryVoiceLedger,
@@ -41,12 +42,12 @@ export {
   BAKED_PIECES,
   BAKED_PIECE_IDS,
   BAKED_VERSION,
-  bakedAlignmentObjectKey,
-  bakedObjectKey,
+  bakedBundlePrefix,
+  bakedManifestSchema,
   bakedServePlan,
   isBakedPieceId,
 } from './src/baked.ts';
-export type { BakedPiece, BakedPieceId, BakedServePlan } from './src/baked.ts';
+export type { BakedManifest, BakedPiece, BakedPieceId, BakedServePlan } from './src/baked.ts';
 export { createVoiceEgress, voiceEgress } from './src/eleven.ts';
 export {
   A2F_TIMEOUT_MS,

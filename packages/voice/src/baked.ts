@@ -1,10 +1,8 @@
 // The baked set pieces — doc 32 §3 Path B, enumerated.
 //
-// Everything Eleven v3 will ever render, listed here as data: greetings,
-// celebrations, and ALL S4 safety scripts. v3 is the higher-fidelity model and
-// explicitly not realtime, so every piece is rendered ONCE (at deploy, or on
-// first use for the non-crisis pieces), cached on Bunny under the signed-read
-// regime, and replayed forever. There is no per-session render.
+// v4 audio and its timing are published together in a manifest. Each generation
+// has an immutable audio digest, and each voice/recipe has a distinct namespace.
+// Failed publication leaves the preceding complete generation intact.
 //
 // The S4 entries are `S4_SCRIPTS` ITSELF — imported, not copied, so the audio
 // is rendered from the exact frozen, human-written strings doc 31 §3.2
@@ -16,10 +14,14 @@
 // SOT: docs/pack/32-tutor-voice-tone.md §3 · packages/safety/src/crisis.ts · docs/pack/31 §3.2
 // SOT-KEYWORDS: baked set pieces eleven v3 s4 scripts frozen cached bunny never live render crisis greetings celebrations serve plan
 import { S4_SCRIPTS } from '@acme/safety';
-import type { ToneKey } from './tones.ts';
+import { createHash } from 'node:crypto';
+import { z } from 'zod';
+import { TONE_PALETTE, TONE_PALETTE_VERSION, voiceTagsFor, type ToneKey } from './tones.ts';
+import { voiceRegistry, VOICE_OUTPUT_FORMAT, type VoiceRegistry } from './registry.ts';
+import { alignmentSchema } from './schemas.ts';
 
 /** Bumped when any piece's text, tone, or voice identity changes, so a stale cache cannot serve the old wording. */
-export const BAKED_VERSION = 3;
+export const BAKED_VERSION = 4;
 
 export interface BakedPiece {
   readonly text: string;
@@ -67,19 +69,25 @@ export type BakedPieceId = keyof typeof BAKED_PIECES;
 
 export const BAKED_PIECE_IDS = Object.freeze(Object.keys(BAKED_PIECES)) as readonly BakedPieceId[];
 
-export const isBakedPieceId = (value: string): value is BakedPieceId => value in BAKED_PIECES;
+export const isBakedPieceId = (value: string): value is BakedPieceId => Object.hasOwn(BAKED_PIECES, value);
 
-/**
- * Where a piece's audio lives, relative to the media prefix. Versioned in the
- * PATH so a version bump is a cache miss rather than a purge.
- */
-export function bakedObjectKey(id: BakedPieceId): string {
-  return `voice/baked/v${BAKED_VERSION}/${id}.mp3`;
+/** Includes the actual licensed asset and synthesis recipe, never a generic
+ * version-only key that could replay a previous voice after configuration changes. */
+export function bakedBundlePrefix(id: BakedPieceId, registry: VoiceRegistry | null = voiceRegistry()): string | null {
+  if (!registry) return null;
+  const fingerprint = createHash('sha256').update(JSON.stringify({
+    registry, palette: TONE_PALETTE, paletteVersion: TONE_PALETTE_VERSION,
+    piece: BAKED_PIECES[id], tags: voiceTagsFor(BAKED_PIECES[id].tone, id === 's4-young' ? 'k-2' : '6-8'),
+    format: VOICE_OUTPUT_FORMAT, version: BAKED_VERSION,
+  })).digest('hex');
+  return `voice/baked/v${BAKED_VERSION}/${fingerprint}/${id}`;
 }
 
-export function bakedAlignmentObjectKey(id: BakedPieceId): string {
-  return `voice/baked/v${BAKED_VERSION}/${id}.json`;
-}
+export const bakedManifestSchema = z.object({
+  audioDigest: z.string().regex(/^[a-f0-9]{64}$/),
+  alignment: alignmentSchema,
+});
+export type BakedManifest = z.infer<typeof bakedManifestSchema>;
 
 export type BakedServePlan = 'serve-cache' | 'render-then-cache' | 'text-only';
 

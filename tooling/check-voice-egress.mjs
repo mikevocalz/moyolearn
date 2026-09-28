@@ -53,6 +53,7 @@ const ALLOWED_IMPORTERS = [
   'apps/web/lib/voice-utterance.ts',
   'apps/web/lib/budget-ledger.repository.ts',
   'apps/web/scripts/voice-bake.mts',
+  'apps/web/scripts/voice-check.mts',
 ];
 
 /**

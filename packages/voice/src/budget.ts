@@ -37,20 +37,17 @@ export interface VoiceLedgerDay {
  * only repositories touch the database, and this package must not be able to.
  */
 export interface VoiceBudgetLedger {
+  reserve(learnerId: string, day: string, chars: number, usd: number, ceiling: number): Promise<boolean>;
   read(learnerId: string, day: string): Promise<VoiceLedgerDay>;
   /** Adds one utterance's characters and cost. Charged at dispatch. */
   record(learnerId: string, day: string, chars: number, usd: number): Promise<void>;
 }
 
-/**
- * Flash v2.5's per-character price, as modelled for the v1 budget. Derived
- * from the current Creator-tier credit price with Flash's half-credit-per-
- * character rate; doc 32 §5 notes pricing moves often and pins it at PR — a
- * change here is a budget review, not a constant tweak.
- */
-export const FLASH_USD_PER_CHAR = 0.00011;
-
-export const estimatedUsdFor = (chars: number): number => chars * FLASH_USD_PER_CHAR;
+/** Standard v4 API rate, checked 2026-09-28: $0.08 / 1,000 characters.
+ * Excludes temporary launch discounts and account-specific agreements.
+ * https://elevenlabs.io/pricing/api */
+export const V4_USD_PER_CHAR = 0.00008;
+export const estimatedUsdFor = (chars: number): number => chars * V4_USD_PER_CHAR;
 
 /**
  * Doc 32 §5: the budget is PER BAND, because K-2 runs voice-on-by-default —
@@ -96,6 +93,12 @@ export function inMemoryVoiceLedger(): VoiceBudgetLedger {
   const key = (learnerId: string, day: string): string => `${learnerId} ${day}`;
 
   return {
+    reserve: async (learnerId, day, chars, usd, ceiling) => {
+      const current = days.get(key(learnerId, day)) ?? { chars: 0, usd: 0 };
+      if (current.usd + usd > ceiling) return false;
+      days.set(key(learnerId, day), { chars: current.chars + chars, usd: current.usd + usd });
+      return true;
+    },
     read: async (learnerId, day) => days.get(key(learnerId, day)) ?? { chars: 0, usd: 0 },
     record: async (learnerId, day, chars, usd) => {
       const current = days.get(key(learnerId, day)) ?? { chars: 0, usd: 0 };
@@ -142,6 +145,7 @@ export function sharedVoiceBudgetLedger(): VoiceBudgetLedger {
   };
 
   return {
+    reserve: (learnerId, day, chars, usd, ceiling) => active().reserve(learnerId, day, chars, usd, ceiling),
     read: (learnerId, day) => active().read(learnerId, day),
     record: (learnerId, day, chars, usd) => active().record(learnerId, day, chars, usd),
   };

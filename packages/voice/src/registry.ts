@@ -1,70 +1,23 @@
-// The voice registry — doc 32 §2: "the voice is an asset, not a call".
-//
-// ONE voice ID — Natalie — pinned here as `{ voiceId, modelId per path,
-// version }`. The same ElevenLabs voice ID renders under both models, which is
-// what makes one-voice-everywhere possible; the per-band, per-tone settings
-// half of the registry lives in `tones.ts` because it is reviewable data and
-// this half is deployment configuration.
-//
-// The voice ID comes from the environment rather than from source: it is not a
-// secret the way the API key is, but it IS an asset with a rights review
-// attached (doc 32 §2, PR-119), and an asset does not get committed before the
-// review that licenses it. A deployment without it has NO voice — the registry
-// returns null and every caller degrades to text-only, never to a substitute
-// voice, because to a six-year-old a different voice is a different person.
-// SOT: docs/pack/32-tutor-voice-tone.md §2 §3
-// SOT-KEYWORDS: voice registry natalie voice id flash v2.5 eleven v3 one voice everywhere text only degraded
+// SOT: docs/voice-v4-upgrade.md; docs/pack/32-tutor-voice-tone.md
+// SOT-KEYWORDS: voice registry v4 natalie asset identity
+// One licensed Natalie voice asset, rendered with the same model everywhere.
+// v4 changes the synthesis model, not the voice ID. PVC assets may require
+// v4 fine-tuning in ElevenLabs; never replace the voice to conceal a failure.
 import 'server-only';
 
-/**
- * Live streams on Flash v2.5; baked set pieces render on v3.
- *
- * I set BOTH to v3 an hour ago to stop Natalie's identity changing mid-session,
- * and it silenced her: the live path POSTs to `/v1/text-to-speech/{voice}/stream`
- * (see eleven.ts:141) and **v3 is explicitly not a realtime model** — ElevenLabs'
- * own guidance says so, and the comment I overwrote said so too. One model
- * everywhere is right in principle and unavailable on this endpoint.
- *
- * So the identity problem is real and still open, and this is NOT the fix for
- * it — it is a revert to a path that speaks. The two honest ways to close it,
- * for a decision when a demo is not hours away:
- *   a) Flash on BOTH paths — one model, streaming intact, baked pieces lose v3's
- *      expressiveness.
- *   b) v3 on both, live moved OFF the streaming endpoint — one model, the voice
- *      Mike picked, materially worse first-word latency.
- * What must NOT stand is the status quo where a baked piece can land inside a
- * live turn: that is where the voice audibly changes. Keeping baked pieces out
- * of live turns is the cheaper mitigation until (a) or (b) is chosen.
- *
- * SPEC-002 (doc 32 §3) stays open on that decision.
- *
- * DECIDED 2026-09-24: v3 on both paths (b), and the premise that v3 must
- * leave the streaming endpoint is not true any more — measured that day,
- * `POST /v1/text-to-speech/{voice}/stream` with `model_id: eleven_v3` and
- * the app's own `voice_settings` answered 200 `audio/mpeg`, same as Flash.
- * One model, one voice, the streaming path intact; first-word latency is the
- * cost, and the product owner chose expressiveness over it ("expressive!!").
- * The live path now also prepends the tone's audio tags, which v3 reads and
- * Flash ignored.
- */
-export const LIVE_MODEL_ID = 'eleven_v3';
-export const BAKED_MODEL_ID = 'eleven_v3';
+export const VOICE_OUTPUT_FORMAT = 'mp3_44100_128';
+export const LIVE_MODEL_ID = 'eleven_v4';
+export const BAKED_MODEL_ID = LIVE_MODEL_ID;
 
 export interface VoiceRegistry {
   readonly voiceId: string;
   readonly liveModelId: typeof LIVE_MODEL_ID;
   readonly bakedModelId: typeof BAKED_MODEL_ID;
-  /** Bumped with any settings change, alongside `TONE_PALETTE_VERSION`. */
   readonly version: number;
 }
 
-/**
- * The registry, or null when no voice is configured. Null is a STATE, not an
- * error: doc 32 §2 hard rule 1 makes degraded mode text-only, so the absence
- * of the asset must be representable without anything throwing at a child.
- */
 export function voiceRegistry(): VoiceRegistry | null {
-  const voiceId = process.env.ELEVENLABS_VOICE_ID;
+  const voiceId = process.env.ELEVENLABS_VOICE_ID?.trim();
   if (!voiceId) return null;
-  return { voiceId, liveModelId: LIVE_MODEL_ID, bakedModelId: BAKED_MODEL_ID, version: 1 };
+  return { voiceId, liveModelId: LIVE_MODEL_ID, bakedModelId: BAKED_MODEL_ID, version: 2 };
 }

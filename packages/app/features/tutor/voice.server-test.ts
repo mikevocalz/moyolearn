@@ -94,3 +94,18 @@ describe('the voice boundary (doc 32)', () => {
     assert.deepEqual(outcome, { kind: 'text-only' });
   });
 });
+
+
+it('forwards request cancellation separately from the signed utterance', async () => {
+  const controller = new AbortController();
+  let calls = 0;
+  const ports = portsWith({ speak: async (input) => {
+    calls += 1;
+    assert.equal(input.signal, controller.signal);
+    return { kind: 'text-only' };
+  } });
+  await voiceOutcome(INPUT, CTX, ports, controller.signal);
+  controller.abort();
+  await voiceOutcome(INPUT, CTX, ports, controller.signal);
+  assert.equal(calls, 1);
+});

@@ -117,6 +117,22 @@ interface VoiceBudgetRow {
  */
 export function durableVoiceBudgetLedger(): VoiceBudgetLedger {
   return {
+    // Reserve before dispatch in one statement. Concurrent sentence prefetches
+    // serialize at the learner-day row; no provider call holds a database lock.
+    reserve: async (learnerId, day, chars, usd, ceiling) =>
+      withEdu(async (client: EduClient) => {
+        const { rowCount } = await client.query(
+          `insert into edu.inference_budget (learner_id, day, voice_chars, voice_usd)
+                select $1, $2::date, $3, $4 where $4::numeric <= $5::numeric
+           on conflict (learner_id, day) do update
+                   set voice_chars = edu.inference_budget.voice_chars + excluded.voice_chars,
+                       voice_usd = edu.inference_budget.voice_usd + excluded.voice_usd
+                 where edu.inference_budget.voice_usd + excluded.voice_usd <= $5::numeric
+           returning learner_id`,
+          [learnerId, day, chars, usd, ceiling],
+        );
+        return rowCount === 1;
+      }),
     read: async (learnerId: string, day: string): Promise<VoiceLedgerDay> =>
       withEdu(async (client: EduClient) => {
         const { rows } = await client.query<VoiceBudgetRow>(
