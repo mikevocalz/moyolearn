@@ -2,7 +2,7 @@
   "name": "moyo",
   "version": "0.1.0",
   "private": true,
-  "description": "Moyo \u2014 AI tutoring that helps children learn it by heart. Universal Expo + Next.js (Payload) monorepo.",
+  "description": "Moyo — AI tutoring that helps children learn it by heart. Universal Expo + Next.js (Payload) monorepo.",
   "license": "MIT",
   "packageManager": "pnpm@10.32.1",
   "engines": {
@@ -52,9 +52,9 @@
       "@expo/dom-webview": "58.0.0",
       "@payloadcms/plugin-cloud-storage": "4.0.0-canary.33",
       "@payloadcms/translations": "4.0.0-canary.33",
-      "expo-asset": "58.0.3",
-      "expo-file-system": "58.0.0",
-      "expo-modules-core": "58.0.3",
+      "expo-asset": "58.0.8",
+      "expo-file-system": "58.0.3",
+      "expo-modules-core": "58.0.8",
       "lightningcss": "1.30.1",
       "react": "19.3.0",
       "react-dom": "19.3.0",
@@ -69,7 +69,20 @@
       "react-native-vision-camera": "patches/react-native-vision-camera.patch",
       "expo-router@57.0.15": "patches/expo-router@57.0.15.patch",
       "expo-horizon-core@57.0.2": "patches/expo-horizon-core@57.0.2.patch",
-      "@reactvision/react-viro@3.0.1-moyo.1": "patches/@reactvision__react-viro@3.0.1-moyo.1.patch"
+      "@reactvision/react-viro@3.0.1-moyo.1": "patches/@reactvision__react-viro@3.0.1-moyo.1.patch",
+      "expo-modules-jsi": "patches/expo-modules-jsi.patch",
+      "react-native-worklets": "patches/react-native-worklets.patch",
+      "react-native-webgpu@0.10.2": "patches/react-native-webgpu@0.10.2.patch",
+      "expo-modules-autolinking@58.0.5": "patches/expo-modules-autolinking@58.0.5.patch",
+      "expo-modules-core": "patches/expo-modules-core.patch",
+      "react-native-screens": "patches/react-native-screens.patch",
+      "react-native-reanimated": "patches/react-native-reanimated.patch",
+      "react-native-gesture-handler": "patches/react-native-gesture-handler.patch",
+      "expo-keep-awake@58.0.1": "patches/expo-keep-awake@58.0.1.patch",
+      "expo-router": "patches/expo-router.patch",
+      "expo-font": "patches/expo-font.patch",
+      "expo": "patches/expo.patch",
+      "expo-constants": "patches/expo-constants.patch"
     },
     "supportedArchitectures": {
       "cpu": [

@@ -1,0 +1,65 @@
+diff --git a/ios/Toolbar/RouterToolbarHostView.swift b/ios/Toolbar/RouterToolbarHostView.swift
+index b10810d4207786561e53aa93e77cfa0adb2d8d3f..4487dad712e0ec7c6e1b7dbd7688eacf9b3fbf51 100644
+--- a/ios/Toolbar/RouterToolbarHostView.swift
++++ b/ios/Toolbar/RouterToolbarHostView.swift
+@@ -80,6 +80,7 @@ class RouterToolbarHostView: RouterViewWithLogger, LinkPreviewMenuUpdatable {
+             )
+             // Otherwise, the menu items will be reversed in the toolbar
+             item.preferredMenuElementOrder = .fixed
++#if !os(visionOS)
+             if #available(iOS 26.0, *) {
+               if let hidesSharedBackground = menu.hidesSharedBackground {
+                 item.hidesSharedBackground = hidesSharedBackground
+@@ -88,6 +89,7 @@ class RouterToolbarHostView: RouterViewWithLogger, LinkPreviewMenuUpdatable {
+                 item.sharesBackground = sharesBackground
+               }
+             }
++#endif
+             if let titleStyle = menu.titleStyle {
+               RouterFontUtils.setTitleStyle(fromConfig: titleStyle, for: item)
+             }
+diff --git a/ios/Toolbar/RouterToolbarItemView.swift b/ios/Toolbar/RouterToolbarItemView.swift
+index b54fc86db46e567809cb70994dcb3f44f6b87333..69421ca15680a6114a7be2c2738bb559d4e9b6b8 100644
+--- a/ios/Toolbar/RouterToolbarItemView.swift
++++ b/ios/Toolbar/RouterToolbarItemView.swift
+@@ -113,7 +113,12 @@ class RouterToolbarItemView: RouterViewWithLogger {
+         return
+       }
+ 
++#if os(visionOS)
++      currentBarButtonItem = nil
++      return
++#else
+       item = controller.navigationItem.searchBarPlacementBarButtonItem
++#endif
+     } else {
+       // Normal button - apply content properties during initial creation
+       applyContentProperties(to: item)
+@@ -160,16 +165,19 @@ class RouterToolbarItemView: RouterViewWithLogger {
+   }
+ 
+   private func applyCommonProperties(to item: UIBarButtonItem) {
++#if !os(visionOS)
+     if #available(iOS 26.0, *) {
+       item.hidesSharedBackground = hidesSharedBackground
+       item.sharesBackground = sharesBackground
+     }
++#endif
+     item.style = barButtonItemStyle ?? .plain
+     item.width = width.map { CGFloat($0) } ?? 0
+     item.isSelected = selected
+     item.accessibilityLabel = routerAccessibilityLabel
+     item.accessibilityHint = routerAccessibilityHint
+     item.isEnabled = !disabled
++#if !os(visionOS)
+     if #available(iOS 26.0, *) {
+       if let badgeConfig = badgeConfiguration {
+         var badge = UIBarButtonItem.Badge.indicator()
+@@ -199,6 +207,7 @@ class RouterToolbarItemView: RouterViewWithLogger {
+         item.badge = nil
+       }
+     }
++#endif
+   }
+ 
+   required init(appContext: AppContext? = nil) {

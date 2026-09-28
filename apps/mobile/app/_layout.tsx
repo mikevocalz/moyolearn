@@ -15,7 +15,7 @@ import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
-import { KeyboardProvider } from "react-native-keyboard-controller";
+import { KeyboardProvider } from "../components/KeyboardProvider";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { LogBox } from 'react-native';
 import { assertApiOriginConfigured } from '@acme/app/core/api-url';

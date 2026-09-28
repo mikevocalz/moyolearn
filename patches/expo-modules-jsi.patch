@@ -1,0 +1,56 @@
+diff --git a/apple/Package.swift b/apple/Package.swift
+index 5b77e0f55849c7e485ea4f757ae7b0f3ceb68845..34e26a59f0ffcb07ca4b91ea829efebe637d88f3 100644
+--- a/apple/Package.swift
++++ b/apple/Package.swift
+@@ -67,6 +67,7 @@ let package = Package(
+     .iOS("16.4"),
+     .tvOS("16.4"),
+     .macOS("13.4"),
++    .visionOS("26.0"),
+   ],
+   products: [
+     .library(
+diff --git a/apple/scripts/build-xcframework.sh b/apple/scripts/build-xcframework.sh
+index 7d74514eeb4593147338544a1bb77daf6eb31dd0..7f82b698cb1e14fb9e08d40afa0c9ab5186b50dc 100755
+--- a/apple/scripts/build-xcframework.sh
++++ b/apple/scripts/build-xcframework.sh
+@@ -127,6 +127,8 @@ platform_destination() {
+     appletvsimulator) echo "tvOS Simulator" ;;
+     macosx)           echo "macOS" ;;
+     maccatalyst)      echo "macOS,variant=Mac Catalyst" ;;
++    xros)             echo "visionOS" ;;
++    xrsimulator)      echo "visionOS Simulator" ;;
+     *)
+       log "error: Unsupported platform: $1"
+       exit 1
+@@ -145,6 +147,8 @@ platform_slice_id() {
+     appletvsimulator) echo "tvos-arm64_x86_64-simulator" ;;
+     macosx)           echo "macos-arm64_x86_64" ;;
+     maccatalyst)      echo "ios-arm64_x86_64-maccatalyst" ;;
++    xros)             echo "xros-arm64" ;;
++    xrsimulator)      echo "xros-arm64_x86_64-simulator" ;;
+     *)
+       log "error: No slice mapping for platform: $1"
+       exit 1
+diff --git a/apple/scripts/xcframework-helpers.sh b/apple/scripts/xcframework-helpers.sh
+index 851f0428e24339bcbf7b19ecc60c06f5dc85037b..85fdd52c43d4b8f82ade108c97b32468ea7155e2 100644
+--- a/apple/scripts/xcframework-helpers.sh
++++ b/apple/scripts/xcframework-helpers.sh
+@@ -67,6 +67,8 @@ EXPO_MODULES_JSI_KNOWN_SLICES=(
+   "tvos-arm64|tvos||arm64"
+   "tvos-arm64_x86_64-simulator|tvos|simulator|arm64 x86_64"
+   "macos-arm64_x86_64|macos||arm64 x86_64"
++  "xros-arm64|xros||arm64"
++  "xros-arm64_x86_64-simulator|xros|simulator|arm64 x86_64"
+ )
+ 
+ # Slice IDs the xcframework must always declare, even when only a subset has
+@@ -80,6 +82,8 @@ EXPO_MODULES_JSI_REQUIRED_SLICE_IDS=(
+   "tvos-arm64"
+   "tvos-arm64_x86_64-simulator"
+   "macos-arm64_x86_64"
++  "xros-arm64"
++  "xros-arm64_x86_64-simulator"
+ )
+ 
+ # xcframework_slice_descriptor SLICE_ID

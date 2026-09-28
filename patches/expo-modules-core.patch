@@ -1,0 +1,312 @@
+diff --git a/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift b/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift
+index 32f0510766c9df236fd38e719994455c7830c4b2..c6a323ce23ca612756c23b59ad860ce56752d630 100644
+--- a/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift
++++ b/ios/AppDelegates/ExpoAppDelegateSubscriberManager.swift
+@@ -4,7 +4,7 @@ import Foundation
+ @MainActor
+ @preconcurrency
+ public class ExpoAppDelegateSubscriberManager: NSObject {
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+ 
+   @objc
+   public static func application(
+@@ -67,7 +67,7 @@ public class ExpoAppDelegateSubscriberManager: NSObject {
+ 
+   // MARK: - Responding to App Life-Cycle Events
+ 
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+ 
+   @objc
+   public static func applicationDidBecomeActive(_ application: UIApplication) {
+@@ -143,7 +143,7 @@ public class ExpoAppDelegateSubscriberManager: NSObject {
+ 
+   // MARK: - Responding to Environment Changes
+ 
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+ 
+   @objc
+   public static func applicationDidReceiveMemoryWarning(_ application: UIApplication) {
+@@ -158,7 +158,7 @@ public class ExpoAppDelegateSubscriberManager: NSObject {
+ 
+   // MARK: - Downloading Data in the Background
+ 
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+   @objc
+   public static func application(
+     _ application: UIApplication,
+@@ -206,7 +206,7 @@ public class ExpoAppDelegateSubscriberManager: NSObject {
+       .forEach { $0.application?(application, didFailToRegisterForRemoteNotificationsWithError: error) }
+   }
+ 
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+   @objc
+   public static func application(
+     _ application: UIApplication,
+@@ -277,7 +277,7 @@ public class ExpoAppDelegateSubscriberManager: NSObject {
+       }
+   }
+ 
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+   @objc
+   public static func application(
+     _ application: UIApplication,
+@@ -437,7 +437,7 @@ public class ExpoAppDelegateSubscriberManager: NSObject {
+ #endif
+ 
+   // MARK: - Opening a URL-Specified Resource
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+ 
+   @objc
+   public static func application(_ app: UIApplication, open url: URL, options: [UIApplication.OpenURLOptionsKey: Any] = [:]) -> Bool {
+diff --git a/ios/Core/AppContext.swift b/ios/Core/AppContext.swift
+index 9ec8c521582e8091aa7237ae109e72d2e7e1b76f..bd590ed2d3218336c830e432ee5949fe96e2f6a9 100644
+--- a/ios/Core/AppContext.swift
++++ b/ios/Core/AppContext.swift
+@@ -312,7 +312,7 @@ public final class AppContext: NSObject, EXAppContextProtocol, @unchecked Sendab
+    Starts listening to `UIApplication` notifications.
+    */
+   private func listenToClientAppNotifications() {
+-    #if os(iOS) || os(tvOS)
++    #if os(iOS) || os(tvOS) || os(visionOS)
+     let notifications = [
+       UIApplication.willEnterForegroundNotification,
+       UIApplication.didBecomeActiveNotification,
+@@ -337,7 +337,7 @@ public final class AppContext: NSObject, EXAppContextProtocol, @unchecked Sendab
+   @objc
+   private func handleClientAppNotification(_ notification: Notification) {
+     switch notification.name {
+-    #if os(iOS) || os(tvOS)
++    #if os(iOS) || os(tvOS) || os(visionOS)
+     case UIApplication.willEnterForegroundNotification:
+       moduleRegistry.post(event: .appEntersForeground)
+     case UIApplication.didBecomeActiveNotification:
+diff --git a/ios/Core/Convertibles/Convertibles+Color.swift b/ios/Core/Convertibles/Convertibles+Color.swift
+index b98ff1726c27edcd5c843e55d510985d24736e76..a1980e9dac37fd6529b32a4002ec0f496cc85e81 100644
+--- a/ios/Core/Convertibles/Convertibles+Color.swift
++++ b/ios/Core/Convertibles/Convertibles+Color.swift
+@@ -46,7 +46,7 @@ extension UIColor: Convertible {
+         let highContrastLightColor = try appearances["highContrastLight"].map({ try UIColor.convert(from: $0) })
+         let highContrastDarkColor = try appearances["highContrastDark"].map({ try UIColor.convert(from: $0) })
+ 
+-        #if os(iOS) || os(tvOS)
++        #if os(iOS) || os(tvOS) || os(visionOS)
+         let color = UIColor { (traitCollection: UITraitCollection) -> UIColor in
+           if traitCollection.userInterfaceStyle == .dark {
+             if traitCollection.accessibilityContrast == .high, let highContrastDarkColor {
+diff --git a/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift b/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift
+index d1981e490b9e0bbb066f404cb3990458a08d21ca..41a4f51baabb520977b6c9df9b475faa4750a85a 100644
+--- a/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift
++++ b/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift
+@@ -89,7 +89,7 @@ extension ExpoSwiftUI {
+ 
+       shadowNodeProxy.objectWillChange.send()
+ 
+-      #if os(iOS) || os(tvOS)
++      #if os(iOS) || os(tvOS) || os(visionOS)
+       // Hosting controller has white background by default,
+       // but we always want it to be transparent.
+       hostingController.view.backgroundColor = .clear
+@@ -203,7 +203,7 @@ extension ExpoSwiftUI {
+       }
+       let frame = self.bounds
+       view.frame = frame
+-        #if os(iOS) || os(tvOS)
++        #if os(iOS) || os(tvOS) || os(visionOS)
+         view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
+         #elseif os(macOS)
+         view.autoresizingMask = [.width, .height]
+@@ -235,7 +235,7 @@ extension ExpoSwiftUI {
+         parentController.addChild(hostingController)
+         #endif
+         addSubview(hostingController.view)
+-        #if os(iOS) || os(tvOS)
++        #if os(iOS) || os(tvOS) || os(visionOS)
+         hostingController.didMove(toParent: parentController)
+         #endif
+         setupHostingViewConstraints()
+diff --git a/ios/Core/Views/SwiftUI/SwiftUIVirtualViewObjCDev.mm b/ios/Core/Views/SwiftUI/SwiftUIVirtualViewObjCDev.mm
+index b7717e6c919359874ddd1843ee27554cd50a264d..2f62c5e686e0b8014e303c80887ae8d6d1ab568c 100644
+--- a/ios/Core/Views/SwiftUI/SwiftUIVirtualViewObjCDev.mm
++++ b/ios/Core/Views/SwiftUI/SwiftUIVirtualViewObjCDev.mm
+@@ -100,14 +100,14 @@ static std::unordered_map<std::string, expo::ExpoViewComponentDescriptor<>::Flav
+     static const auto defaultProps = std::make_shared<const expo::SwiftUIViewProps>();
+     _props = defaultProps;
+     self.hidden = YES;
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+     self.userInteractionEnabled = NO;
+ #endif
+   }
+   return self;
+ }
+ 
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+ - (void)didMoveToSuperview
+ {
+   [super didMoveToSuperview];
+@@ -129,7 +129,7 @@ static std::unordered_map<std::string, expo::ExpoViewComponentDescriptor<>::Flav
+                 self.componentName ?: NSStringFromClass([self class]), (long)self.tag);
+   }
+ }
+-#endif // TARGET_OS_IOS || TARGET_OS_TV
++#endif // TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+ 
+ #if TARGET_OS_OSX
+ - (NSInteger)tag
+diff --git a/ios/Interfaces/FaceDetector/EXFaceDetectorManagerInterface.h b/ios/Interfaces/FaceDetector/EXFaceDetectorManagerInterface.h
+index faf34a7397a3bd8a86966ab62ab4cdc78fb00b74..1cec2483e86c4349102e9aa937e272b3afb2844f 100644
+--- a/ios/Interfaces/FaceDetector/EXFaceDetectorManagerInterface.h
++++ b/ios/Interfaces/FaceDetector/EXFaceDetectorManagerInterface.h
+@@ -4,7 +4,7 @@
+ #import <AVFoundation/AVFoundation.h>
+ 
+ @protocol EXFaceDetectorManagerInterface
+-#if !TARGET_OS_TV
++#if !TARGET_OS_TV && !TARGET_OS_VISION
+ - (void)setSessionQueue:(dispatch_queue_t)sessionQueue;
+ - (void)setIsEnabled:(BOOL)enabled;
+ - (void)setOnFacesDetected:(void (^)(NSArray<NSDictionary *> *))onFacesDetected;
+@@ -15,5 +15,5 @@
+ - (void)maybeStartFaceDetectionOnSession:(AVCaptureSession *)session withPreviewLayer:(AVCaptureVideoPreviewLayer *)previewLayer;
+ - (void)maybeStartFaceDetectionOnSession:(AVCaptureSession *)session withPreviewLayer:(AVCaptureVideoPreviewLayer *)previewLayer mirrored:(BOOL) mirrored;
+ - (void)stopFaceDetection;
+-#endif
++#endif // !TARGET_OS_TV && !TARGET_OS_VISION
+ @end
+diff --git a/ios/Legacy/EXUtilities.m b/ios/Legacy/EXUtilities.m
+index fa9a01f8b14df98651dbd80dc7a63442f2fb7ebf..1f30d1fe6b3c4859a68c9b37f35c7f7f0b42349f 100644
+--- a/ios/Legacy/EXUtilities.m
++++ b/ios/Legacy/EXUtilities.m
+@@ -40,14 +40,33 @@ EX_REGISTER_MODULE();
+ 
+ - (UIViewController *)currentViewController
+ {
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+   id<EXUtilService> utilService = [_moduleRegistry getSingletonModuleForName:@"Util"];
+ 
+   if (utilService != nil) {
+     return [utilService currentViewController];
+   }
+ 
++#if TARGET_OS_VISION
++  UIWindow *keyWindow = nil;
++  for (UIScene *scene in [UIApplication sharedApplication].connectedScenes) {
++    if (![scene isKindOfClass:[UIWindowScene class]]) {
++      continue;
++    }
++    for (UIWindow *window in ((UIWindowScene *)scene).windows) {
++      if (window.isKeyWindow) {
++        keyWindow = window;
++        break;
++      }
++    }
++    if (keyWindow != nil) {
++      break;
++    }
++  }
++  UIViewController *controller = keyWindow.rootViewController;
++#else
+   UIViewController *controller = [[[UIApplication sharedApplication] keyWindow] rootViewController];
++#endif
+   UIViewController *presentedController = controller.presentedViewController;
+ 
+   while (presentedController && ![presentedController isBeingDismissed]) {
+diff --git a/ios/Legacy/Services/EXReactNativeAdapter.mm b/ios/Legacy/Services/EXReactNativeAdapter.mm
+index b1d0f5988d61b7346500ac65fcb7714903ce4398..c246f135ffd58f54040fd211d4db845b290edca2 100644
+--- a/ios/Legacy/Services/EXReactNativeAdapter.mm
++++ b/ios/Legacy/Services/EXReactNativeAdapter.mm
+@@ -303,7 +303,7 @@ EX_REGISTER_MODULE();
+ 
+ - (BOOL)isApplicationStateBackground
+ {
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+   return RCTSharedApplication().applicationState == UIApplicationStateBackground;
+ #elif TARGET_OS_OSX
+   return RCTSharedApplication().isHidden;
+@@ -312,7 +312,7 @@ EX_REGISTER_MODULE();
+ 
+ - (BOOL)isApplicationStateActive
+ {
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+   return RCTSharedApplication().applicationState == UIApplicationStateActive;
+ #elif TARGET_OS_OSX
+   return RCTSharedApplication().isActive;
+diff --git a/ios/Platform/Platform.h b/ios/Platform/Platform.h
+index 6ba9841dbd3a46bc0e62fc86d8301233f762a18c..b26d5e846390c4bfe89a3242f573c2b683f6765a 100644
+--- a/ios/Platform/Platform.h
++++ b/ios/Platform/Platform.h
+@@ -1,6 +1,6 @@
+ // Copyright 2024-present 650 Industries. All rights reserved.
+ 
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+ 
+ #import <UIKit/UIKit.h>
+ 
+diff --git a/ios/Utilities/ConstantsProvider.swift b/ios/Utilities/ConstantsProvider.swift
+index 372d855472d852d356a15840b5d862e5219ce4a9..0b9e2787a2dbdba5129c68812f5208df46bd7723 100644
+--- a/ios/Utilities/ConstantsProvider.swift
++++ b/ios/Utilities/ConstantsProvider.swift
+@@ -57,7 +57,7 @@ private func getStatusBarHeight() -> Double {
+ 
+ @MainActor
+ private func getSystemFontNames() -> [String] {
+-  #if os(iOS) || os(tvOS)
++  #if os(iOS) || os(tvOS) || os(visionOS)
+   let familyNames = UIFont.familyNames
+   var fontNames = Set<String>()
+ 
+@@ -80,7 +80,7 @@ private func getSystemFontNames() -> [String] {
+ 
+ @MainActor
+ private func getDeviceName() -> String {
+-  #if os(iOS) || os(tvOS)
++  #if os(iOS) || os(tvOS) || os(visionOS)
+   return UIDevice.current.name
+   #elseif os(macOS)
+   return ProcessInfo.processInfo.hostName
+diff --git a/ios/Utilities/SceneGeometry.swift b/ios/Utilities/SceneGeometry.swift
+index 3cb0cfe0866491c2876309b1e9d93971e143ea5a..d00b5325c43e79755aa5661c1caa2be08ced2108 100644
+--- a/ios/Utilities/SceneGeometry.swift
++++ b/ios/Utilities/SceneGeometry.swift
+@@ -1,6 +1,6 @@
+ // Copyright 2026-present 650 Industries. All rights reserved.
+ 
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+ 
+ import UIKit
+ 
+diff --git a/ios/Utilities/Utilities.swift b/ios/Utilities/Utilities.swift
+index ada48093d9bf3a2e3f1cca5adb7d4c4238ab5005..986e0184be1ceb1f28370d328626445fee4625b5 100644
+--- a/ios/Utilities/Utilities.swift
++++ b/ios/Utilities/Utilities.swift
+@@ -144,7 +144,7 @@ public struct Utilities {
+    */
+   @MainActor
+   public static func keyWindow() -> UIWindow? {
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+     return SceneGeometry.keyWindow()
+ #elseif os(macOS)
+     return NSApplication.shared.keyWindow
+@@ -153,7 +153,7 @@ public struct Utilities {
+ 
+   nonisolated public func currentViewController() -> UIViewController? {
+     return MainActor.assumeIsolated {
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+       var controller = Utilities.keyWindow()?.rootViewController
+ 
+       while let presentedController = controller?.presentedViewController, !presentedController.isBeingDismissed {

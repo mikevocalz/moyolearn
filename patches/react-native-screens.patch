@@ -1,0 +1,77 @@
+diff --git a/ios/bridging/RNSReactBaseView.h b/ios/bridging/RNSReactBaseView.h
+index 5fad6068b7ae846658af5ecd3520110618be0a15..2ac7b6c3b85aa73398b80cdc086cf6722963b39c 100644
+--- a/ios/bridging/RNSReactBaseView.h
++++ b/ios/bridging/RNSReactBaseView.h
+@@ -1,5 +1,7 @@
+ #pragma once
+ 
++#import <UIKit/UIKit.h>
++
+ // Hide C++ symbols from C compiler used when building Swift module
+ #if defined(__cplusplus)
+ 
+diff --git a/ios/conversion/RNSConversions-SplitView.mm b/ios/conversion/RNSConversions-SplitView.mm
+index faa1153e22a34a59856aa9c00da6f54fac662de2..f255929f70f7608bf4f11e61ea017b807b46db94 100644
+--- a/ios/conversion/RNSConversions-SplitView.mm
++++ b/ios/conversion/RNSConversions-SplitView.mm
+@@ -11,9 +11,17 @@ UISplitViewControllerSplitBehavior SplitViewPreferredSplitBehaviorFromHostProp(
+ 
+   switch (splitBehavior) {
+     case Displace:
++#if TARGET_OS_VISION
++      return UISplitViewControllerSplitBehaviorTile;
++#else
+       return UISplitViewControllerSplitBehaviorDisplace;
++#endif
+     case Overlay:
++#if TARGET_OS_VISION
++      return UISplitViewControllerSplitBehaviorAutomatic;
++#else
+       return UISplitViewControllerSplitBehaviorOverlay;
++#endif
+     case Tile:
+       return UISplitViewControllerSplitBehaviorTile;
+     case Automatic:
+@@ -46,13 +54,21 @@ UISplitViewControllerDisplayMode SplitViewPreferredDisplayModeFromHostProp(
+     case OneBesideSecondary:
+       return UISplitViewControllerDisplayModeOneBesideSecondary;
+     case OneOverSecondary:
++#if TARGET_OS_VISION
++      return UISplitViewControllerDisplayModeOneBesideSecondary;
++#else
+       return UISplitViewControllerDisplayModeOneOverSecondary;
++#endif
+     case TwoBesideSecondary:
+       return UISplitViewControllerDisplayModeTwoBesideSecondary;
+     case TwoOverSecondary:
+-      return UISplitViewControllerDisplayModeTwoOverSecondary;
+     case TwoDisplaceSecondary:
+-      return UISplitViewControllerDisplayModeTwoDisplaceSecondary;
++#if TARGET_OS_VISION
++      return UISplitViewControllerDisplayModeTwoBesideSecondary;
++#else
++      return displayMode == TwoOverSecondary ? UISplitViewControllerDisplayModeTwoOverSecondary
++                                             : UISplitViewControllerDisplayModeTwoDisplaceSecondary;
++#endif
+     case Automatic:
+     default:
+       return UISplitViewControllerDisplayModeAutomatic;
+@@ -101,14 +117,18 @@ std::string UISplitViewControllerDisplayModeToString(UISplitViewControllerDispla
+       return "secondaryOnly";
+     case UISplitViewControllerDisplayModeOneBesideSecondary:
+       return "oneBesideSecondary";
++#if !TARGET_OS_VISION
+     case UISplitViewControllerDisplayModeOneOverSecondary:
+       return "oneOverSecondary";
++#endif
+     case UISplitViewControllerDisplayModeTwoBesideSecondary:
+       return "twoBesideSecondary";
++#if !TARGET_OS_VISION
+     case UISplitViewControllerDisplayModeTwoOverSecondary:
+       return "twoOverSecondary";
+     case UISplitViewControllerDisplayModeTwoDisplaceSecondary:
+       return "twoDisplaceSecondary";
++#endif
+     case UISplitViewControllerDisplayModeAutomatic:
+     default:
+       return "automatic";

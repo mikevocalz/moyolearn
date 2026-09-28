@@ -1,0 +1,13 @@
+diff --git a/ios/FontUtils.swift b/ios/FontUtils.swift
+index 5c975dc01af7ed780906f2701b43fc585f04b949..fc393494d812bd3c59e10dcfa925c50c49884149 100644
+--- a/ios/FontUtils.swift
++++ b/ios/FontUtils.swift
+@@ -38,7 +38,7 @@ internal func queryCustomNativeFonts() -> [String] {
+ 
+   // [2] Retrieve font names by family names
+   return fontFamilyNames.flatMap { fontFamilyName in
+-  #if os(iOS) || os(tvOS)
++  #if os(iOS) || os(tvOS) || os(visionOS)
+     return UIFont.fontNames(forFamilyName: fontFamilyName)
+   #elseif os(macOS)
+     return NSFontManager.shared.availableMembers(ofFontFamily: fontFamilyName)?.compactMap { $0[0] as? String } ?? []

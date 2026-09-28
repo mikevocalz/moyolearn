@@ -1,0 +1,20 @@
+diff --git a/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m b/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m
+index e12efe950115d9a69a454c5f29d04a1d475622a9..6078050565bf51ddfcba077087b3802ca4a958ee 100644
+--- a/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m
++++ b/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m
+@@ -75,6 +75,7 @@ static dispatch_once_t onceToken;
+   return NO;
+ }
+ 
++#if !TARGET_OS_VISION
+ - (void)application:(UIApplication *)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
+ {
+   SEL selector = @selector(application:performFetchWithCompletionHandler:);
+@@ -107,6 +108,7 @@ static dispatch_once_t onceToken;
+     }
+   }
+ }
++#endif
+ 
+ - (BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray<id<UIUserActivityRestoring>> * _Nullable))restorationHandler
+ {

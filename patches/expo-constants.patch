@@ -1,0 +1,43 @@
+diff --git a/ios/EXConstantsObjC/EXConstantsInstallationIdProvider.m b/ios/EXConstantsObjC/EXConstantsInstallationIdProvider.m
+index 457c53d474e409e91f781902aa4abc4f0dd2dabc..afd948c18433ee9affd48e5cec6f5db0832835ed 100644
+--- a/ios/EXConstantsObjC/EXConstantsInstallationIdProvider.m
++++ b/ios/EXConstantsObjC/EXConstantsInstallationIdProvider.m
+@@ -8,7 +8,7 @@ static NSString * const kEXDeviceInstallationUUIDLegacyKey = @"EXDeviceInstallUU
+ 
+ - (NSString *)getOrCreateInstallationId
+ {
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+   NSString *installationId = [self getInstallationId];
+   if (installationId) {
+     return installationId;
+diff --git a/ios/EXConstantsObjC/EXConstantsService.m b/ios/EXConstantsObjC/EXConstantsService.m
+index f79eaae77b93b49bed5ded8498b64db71f3dd7dc..d21258bf2ffad1af7210c7eb949c2417d74bb8a3 100644
+--- a/ios/EXConstantsObjC/EXConstantsService.m
++++ b/ios/EXConstantsObjC/EXConstantsService.m
+@@ -67,14 +67,14 @@ EX_REGISTER_MODULE();
+     statusBarSize = [UIApplication sharedApplication].statusBarFrame.size;
+   }];
+   return MIN(statusBarSize.width, statusBarSize.height);
+-#elif TARGET_OS_OSX || TARGET_OS_TV
++#elif TARGET_OS_OSX || TARGET_OS_TV || TARGET_OS_VISION
+   return 0;
+ #endif
+ }
+ 
+ - (NSArray<NSString *> *)systemFontNames
+ {
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+   NSArray<NSString *> *familyNames = [UIFont familyNames];
+   NSMutableArray<NSString *> *fontNames = [NSMutableArray array];
+   for (NSString *familyName in familyNames) {
+@@ -101,7 +101,7 @@ EX_REGISTER_MODULE();
+ 
+ + (NSString *)deviceName
+ {
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+   return [UIDevice currentDevice].name;
+ #elif TARGET_OS_OSX
+   return [NSHost currentHost].localizedName;
