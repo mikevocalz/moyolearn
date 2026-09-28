@@ -355,6 +355,52 @@ blank panel. That is the designed fail-safe, not a fix. Three edits:
 
 Stale prose also at `nitro-canvas-in-Vision/docs/PROMPT-A-REPORT.md:65,116`.
 
+### 4. The fence cannot be implemented without an ABI v3
+
+The Apple consumer now exists — `virocore` `bc2f8612` adds
+`ios/ViroKit/VROExternalSurfaceTextureImpl.mm` and puts both it and
+`VROExternalSurfaceTexture.cpp` into the ViroKit-iOS and ViroKitVisionOS
+targets. `xcodebuild -target ViroKitVisionOS -sdk xros` produces
+`libViroKitVisionOS.a`, and `nm` shows the undefined reference and the
+definition sharing one mangled name.
+
+`VRO_METAL=1` turned out to be set only on the two xros configurations — iOS
+`ViroKit` builds at `VRO_METAL=0` and does link, so the `.mm` carries a
+non-Metal branch that defines the symbol and returns `nullptr`. Without it,
+adding the shared `.cpp` to the iOS target would have broken that link. The
+`CVOpenGLESTextureCache` route it names is unwritten.
+
+**The GPU fence is not implemented and cannot be against ABI v2.** `fenceFd`
+carries an `MTLSharedEvent` signaled value, but `NitroCanvasSharedTextureHandle`
+has no `MTLSharedEventHandle`, no mach port and no event name — and an
+`MTLSharedEvent` cannot be rebuilt from a value alone. There is no
+`MTLSharedEvent` anywhere in virocore. **Sampling can race a producer still
+writing the surface.** This is the same class of bug the ABI work was meant to
+close, one layer further down: v2 fixed the layout disagreement, it did not
+give Apple a reachable event.
+
+Closing it means a v3 bump and symbol rename per the header's own contract,
+carrying an `MTLSharedEventHandle` (or a mach port) across the boundary. The
+wait belongs on `VRODriverVisionOS::getFrameCommandBuffer()` before the first
+eye encoder opens, as `[commandBuffer encodeWaitForEvent:event
+value:handle.fenceFd]` — GPU-side, not `waitUntilSignaledValue:`, which would
+stall the render thread. The producer half is also missing:
+`nitro-canvas-in-Vision/ios/HybridCanvasSurface.swift:109-116` still discards
+`syncFd`.
+
+### 5. Nothing calls any of it
+
+`VROExternalSurfaceTexture::updateFromHandle` still has no caller on any
+platform. The registry patch supplies one on Android once applied; the visionOS
+per-frame call site, and the `canvasSource` material parsing in
+`VRTMaterialManager`, are unwritten. Every piece of the path now exists and
+compiles, and none of it runs.
+
+Two pbxproj oddities found while registering: `VRODriverVisionOS.mm` and
+`VROVideoTextureCacheMetal.cpp` each have an orphaned `PBXBuildFile` and
+`PBXFileReference` pair wired into no Sources phase. Pre-existing, not
+replicated.
+
 ## Not started
 
 Input (Logitech Muse accessory-tracking entitlement, `GCStylus` against the
