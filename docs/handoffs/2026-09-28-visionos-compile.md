@@ -17,23 +17,33 @@ metro bundle shared texture abi iosurface rive viro nitro canvas
 
 Three words are used deliberately below and they are not interchangeable.
 
-**Compiled** — the app built for visionOS Simulator. Verified:
+**Compiled** — both visionOS targets built. Verified:
 
 ```
-** BUILD SUCCEEDED **
+** BUILD SUCCEEDED **   -destination 'generic/platform=visionOS Simulator'
 Moyo.app/Moyo   LC_BUILD_VERSION  VISIONOSSIMULATOR  minos 26.0  sdk 27.0
                 architectures: x86_64 arm64
 Moyo.debug.dylib  207,675,184 bytes
+
+** BUILD SUCCEEDED **   -destination 'generic/platform=visionOS'
+Moyo.app/Moyo   LC_BUILD_VERSION  VISIONOS           minos 26.0  sdk 27.0
+                architecture: arm64 (non-fat)
 ```
 
-Command:
+Commands, from `apps/mobile/visionos`:
 
 ```
-cd apps/mobile/visionos
 xcodebuild -workspace Moyo.xcworkspace -scheme Moyo -configuration Debug \
   -destination 'generic/platform=visionOS Simulator' \
   CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO build
+
+xcodebuild -workspace Moyo.xcworkspace -scheme Moyo -configuration Debug \
+  -destination 'generic/platform=visionOS' \
+  CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO build
 ```
+
+The device build is unsigned (`CODE_SIGNING_ALLOWED=NO`). It has never been
+installed on hardware.
 
 **Simulator verified** — nothing is. This machine has the visionOS 27.0 SDK
 (`xcodebuild -showsdks` lists `xros27.0` and `xrsimulator27.0`) but no visionOS
@@ -180,20 +190,15 @@ reported `@react-native/community-cli-plugin 0.86.2` wanting
 to exclude specifiers the fork does not carry is a smaller and more honest fix
 than a shim.
 
-### 2. The unsigned device build has no confirmed result
+### 2. Nothing — the device build is green
 
-The first attempt failed on
-`fatal error: module map file '.../Pods/Headers/Public/DoubleConversion/DoubleConversion.modulemap' not found`.
-That was collateral: the `visionos:prepare` verification runs executed
-`pod install` twice while `xcodebuild` was reading `Pods/Headers`. **Do not
-record this as a visionOS compile failure.** Re-run on a quiet tree:
-
-```
-cd apps/mobile/visionos
-xcodebuild -workspace Moyo.xcworkspace -scheme Moyo -configuration Debug \
-  -destination 'generic/platform=visionOS' \
-  CODE_SIGNING_ALLOWED=NO COMPILER_INDEX_STORE_ENABLE=NO build
-```
+Kept here because the first attempt failed and the reason is worth remembering.
+It died on
+`fatal error: module map file '.../Pods/Headers/Public/DoubleConversion/DoubleConversion.modulemap' not found`,
+which was collateral: the `visionos:prepare` verification runs executed
+`pod install` twice while `xcodebuild` was reading `Pods/Headers`. Re-run on a
+quiet tree, it succeeded. **Never record that failure as a visionOS compile
+problem.**
 
 ### 3. The Apple Rive → Viro path
 
@@ -256,13 +261,37 @@ the panel renders blank rather than writing a mismatched struct. Since virocore
 must stay dlsym-only, a copied header plus a runtime size check is the only
 design that holds — no codegen, no build coupling.
 
-**That implementation was in flight when the session ended and does not
-compile.** `std::optional` is used without `<optional>` at
-`nitro-canvas-in-Vision/cpp/CanvasInViroCore.h:88` and
-`CanvasInViroCBridge.cpp:2`, and there is a return-type mismatch at
-`CanvasInViroCore.cpp:142` (returning `SharedHandlePayload` from a function
-declared `int`). Check `git status` in `/Users/mikevocalz/nitro-canvas-in-Vision`
-and `/Users/mikevocalz/virocore` before trusting anything there.
+**That header is now written, adopted on both sides, and committed:**
+`nitro-canvas-in-Vision` `85372af` on `decax9-three-panel`, `virocore`
+`8ee071b5` on `pico-support`. Neither is pushed.
+
+`-fdump-record-layouts` gives byte-identical dumps on all four targets —
+`armv7a-linux-androideabi`, `aarch64-linux-android`, `arm64-apple-ios` and
+`arm64-apple-xros` — at `[sizeof=48, dsize=48, align=8]` with `fenceFd` at
+offset 40. The producer compiles under `-Wall -Wextra` with zero diagnostics on
+three targets, `llvm-nm` shows `nitro_canvas_lookup_v2` as the only exported
+entry point (v1 was deleted, not kept alongside — it had no callers left), and
+a host harness poisoning the caller's struct with `0xAB` confirms the guard
+writes nothing when `structSize` or `abiVersion` disagree.
+
+One thing the plan got wrong: there are **no `handle.sRGB` reads in virocore**
+to convert. The only `sRGB` hits are the struct field itself and
+`VROExternalSurfaceTexture::_sRGB`, an unrelated class member from its own
+constructor.
+
+**Required follow-up before that path lights up.**
+`patches/virocore-v2.55.0-nitro-canvas-untracked.patch` still targets the
+deleted symbol, so applying it as-is gets a `dlsym` miss and a permanently
+blank panel. That is the designed fail-safe, not a fix. Three edits:
+
+- `:55` — `dlsym(handle, "nitro_canvas_lookup")` → `"nitro_canvas_lookup_v2"`
+- `:139-141` — `LookupFn = bool (*)(int, VROSharedTextureHandle *)` →
+  `NitroCanvasLookupFn` from the shared header
+- `:100-102` — set `handle.structSize = sizeof(handle)` and
+  `handle.abiVersion = NITRO_CANVAS_ABI_VERSION` before the call, or the guard
+  refuses every frame
+
+Stale prose also at `nitro-canvas-in-Vision/docs/PROMPT-A-REPORT.md:65,116`.
 
 ## Not started
 

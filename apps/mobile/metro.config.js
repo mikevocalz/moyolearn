@@ -175,12 +175,67 @@ for (const ext of VIRO_ASSET_EXTS) {
   }
 }
 
+/*
+  `react-native/*` entry points the visionOS fork is too old to publish.
+
+  The rewrite below has to send every `react-native/*` specifier at
+  `@reactvision/react-native-visionos`: the visionOS binary links the fork's
+  native runtime, so a second copy of React Native's JavaScript would stand up
+  its own BatchedBridge, NativeModules and asset registry against a native side
+  that never sees them. One JS runtime per native runtime, or nothing composes.
+
+  What breaks that is a version skew. The fork is on the 0.86 line — package
+  version 0.86.4, `reactNativeUpstreamVersion` 0.86.3 — while this app's
+  `react-native` is 0.88.0-rc.2, and 0.87/0.88 added public entry points the
+  older tree does not have at all. Its `src/` holds only `private/` and
+  `types/`, and its `exports` map has no key for either of these:
+
+    react-native/setup-env
+      The side-effectful environment bootstrap (global timers, console,
+      symbolicated stack traces). `@expo/metro-runtime/build/location/
+      install.native.js` imports it on line 4, so the visionOS bundle died on
+      "Unable to resolve module react-native/setup-env" before Metro had
+      finished walking Expo's own runtime. 0.86 ships that code at
+      `Libraries/Core/InitializeCore`; both files are the same one-line
+      `require('.../private/setup/setUpDefaultReactNativeEnvironment').default()`,
+      and in 0.88 InitializeCore has been reduced to a deprecated shim over
+      setup-env, so the redirect points at the older name for the same module.
+
+    react-native/asset-registry
+      The 0.88 home of registerAsset/getAssetByID, and the literal value of
+      `transformer.assetRegistryPath` in `@expo/metro-config`, which means the
+      asset transformer emits this specifier into every image module. On 0.86 it
+      is `Libraries/Image/AssetRegistry`, a re-export of
+      `@react-native/assets-registry/registry` — the same two functions.
+
+  Both are redirected INTO the fork rather than excluded from the rewrite and
+  left to fall through to `react-native`. Falling through would resolve — the
+  0.88 files are on disk — and would silently buy the bundle a second React
+  Native environment and a second asset registry. A registry that is not the one
+  the native side reads returns undefined from `getAssetByID` for every
+  `require()`d image, which shows up as blank images and not as an error.
+
+  Keeping `Libraries/Image/AssetRegistry` inside the fork is also why the 0.88
+  AssetRegistry alias further up this file is a no-op on visionOS: this resolver
+  is installed last, so it rewrites the specifier before that alias ever sees it,
+  and both the alias's deep importers and the transformer's `asset-registry`
+  specifier converge on the fork's single copy.
+*/
+const VISIONOS_FORK_ENTRY_FALLBACKS = {
+  'react-native/setup-env':
+    '@reactvision/react-native-visionos/Libraries/Core/InitializeCore',
+  'react-native/asset-registry':
+    '@reactvision/react-native-visionos/Libraries/Image/AssetRegistry',
+};
+
 const viroPreviousResolver = config.resolver.resolveRequest;
 config.resolver.resolveRequest = (context, moduleName, platform) => {
   const visionOS = platform === 'visionos' || context.customResolverOptions?.platformExtension === 'visionos';
   let name = moduleName;
   if (visionOS && (name === 'react-native' || name.startsWith('react-native/'))) {
-    name = '@reactvision/react-native-visionos' + name.slice('react-native'.length);
+    name =
+      VISIONOS_FORK_ENTRY_FALLBACKS[name] ??
+      '@reactvision/react-native-visionos' + name.slice('react-native'.length);
   }
   return viroPreviousResolver
     ? viroPreviousResolver(context, name, platform)
