@@ -2,7 +2,7 @@
   "name": "moyo",
   "version": "0.1.0",
   "private": true,
-  "description": "Moyo — AI tutoring that helps children learn it by heart. Universal Expo + Next.js (Payload) monorepo.",
+  "description": "Moyo \u2014 AI tutoring that helps children learn it by heart. Universal Expo + Next.js (Payload) monorepo.",
   "license": "MIT",
   "packageManager": "pnpm@10.32.1",
   "engines": {
@@ -72,7 +72,6 @@
       "@reactvision/react-viro@3.0.1-moyo.1": "patches/@reactvision__react-viro@3.0.1-moyo.1.patch",
       "expo-modules-jsi": "patches/expo-modules-jsi.patch",
       "react-native-worklets": "patches/react-native-worklets.patch",
-      "react-native-webgpu@0.10.2": "patches/react-native-webgpu@0.10.2.patch",
       "expo-modules-autolinking@58.0.5": "patches/expo-modules-autolinking@58.0.5.patch",
       "expo-modules-core": "patches/expo-modules-core.patch",
       "react-native-screens": "patches/react-native-screens.patch",
