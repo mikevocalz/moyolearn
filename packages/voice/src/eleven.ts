@@ -88,7 +88,27 @@ export interface VoiceConfigurationCheck {
   readonly configured: boolean;
   readonly modelAvailable: boolean;
   readonly voiceCategory: string | null;
+  /**
+   * `fine_tuning.state[liveModelId]` — informational only, and `null` is the
+   * expected reading for v4. ElevenLabs keys that map by FINE-TUNABLE model,
+   * and `/v1/models` reports `can_be_finetuned: false` for `eleven_v4`,
+   * `eleven_v4_turbo` and `eleven_v3` (true only for the multilingual_v2,
+   * turbo_v2*, flash_v2* and multilingual_sts_v2 family). No voice on any
+   * account can report a v4 state, so this field cannot gate readiness. See
+   * `liveModelFineTunable`.
+   */
   readonly fineTuningState: string | null;
+  /** Whether the live model is fine-tunable at all, per `/v1/models`. */
+  readonly liveModelFineTunable: boolean;
+  /**
+   * Whether one real request to the live synthesis path returned audio. This is
+   * the readiness signal; the metadata above cannot be one. `/v1/models` is a
+   * read and answers fine while synthesis is refused — an unpaid invoice
+   * surfaces only here, as `payment_issue`.
+   */
+  readonly synthesisOk: boolean;
+  /** Provider error `code` when synthesis is refused. Never a key or voice id. */
+  readonly synthesisError: string | null;
 }
 
 /** Injectable; credentials never leave this module except to ElevenLabs. */
@@ -107,7 +127,8 @@ const timestampResponseSchema = z.object({
   alignment: alignmentSchema.nullish(),
   normalized_alignment: alignmentSchema.nullish(),
 });
-const modelsSchema = z.array(z.object({ model_id: z.string(), can_do_text_to_speech: z.boolean() }));
+const modelsSchema = z.array(z.object({ model_id: z.string(), can_do_text_to_speech: z.boolean(), can_be_finetuned: z.boolean().nullish() }));
+const providerErrorSchema = z.object({ detail: z.object({ code: z.string().nullish(), status: z.string().nullish() }).nullish() });
 const voiceSchema = z.object({
   category: z.string().nullish(),
   fine_tuning: z.object({ state: z.record(z.string(), z.string()).optional() }).nullish(),
@@ -122,6 +143,51 @@ const synthesisText = (text: string, tone: string, band: VoiceBand): string =>
 const requestSignal = (signal?: AbortSignal): AbortSignal =>
   signal ? AbortSignal.any([signal, AbortSignal.timeout(REQUEST_TIMEOUT_MS)]) : AbortSignal.timeout(REQUEST_TIMEOUT_MS);
 
+/**
+ * The readiness probe: one real request down the live synthesis path.
+ *
+ * Metadata cannot answer "is v4 ready for this voice". `/v1/models` is a read
+ * and keeps answering `can_do_text_to_speech: true` while the account is
+ * refused at synthesis — an unpaid invoice shows up only as a 401
+ * `payment_issue` on a TTS call, and nowhere in the model or voice documents.
+ * So the check spends the smallest possible request rather than inferring.
+ *
+ * It costs one short sentence of characters, off any learner budget, for the
+ * same reason `renderBakedClip` takes no learner id: a readiness check is an
+ * operations cost, not a child's spend. The body is cancelled as soon as the
+ * first chunk proves audio is flowing, so nothing is buffered or decoded.
+ */
+const PROBE_TEXT = 'Ready.';
+async function probeSynthesis(
+  key: string,
+  registry: VoiceRegistry,
+  transport: VoiceTransport = fetch,
+): Promise<{ ok: boolean; error: string | null }> {
+  const text = synthesisText(PROBE_TEXT, 'warm-open', '6-8');
+  try {
+    const response = await transport(`${API_BASE}/v1/text-to-dialogue/stream?output_format=${VOICE_OUTPUT_FORMAT}`, {
+      method: 'POST',
+      headers: { 'xi-api-key': key, 'content-type': 'application/json' },
+      signal: requestSignal(),
+      body: JSON.stringify({ inputs: [{ text, voice_id: registry.voiceId }], model_id: registry.liveModelId,
+        settings: voiceSettingsFor('warm-open', '6-8') }),
+    });
+    if (!response.ok) {
+      const parsed = providerErrorSchema.safeParse(await response.json().catch(() => null));
+      const detail = parsed.success ? parsed.data.detail : null;
+      return { ok: false, error: detail?.code ?? detail?.status ?? `http-${response.status}` };
+    }
+    const reader = response.body?.getReader();
+    if (!reader) return { ok: false, error: 'no-audio-stream' };
+    const first = await reader.read();
+    await reader.cancel().catch(() => undefined);
+    const bytes = first.value?.byteLength ?? 0;
+    return bytes > 0 ? { ok: true, error: null } : { ok: false, error: 'empty-audio-stream' };
+  } catch {
+    return { ok: false, error: 'unreachable' };
+  }
+}
+
 export function createVoiceEgress(options: VoiceEgressOptions = {}): VoiceEgress {
   const transport = options.transport ?? fetch;
   const ledger = options.ledger ?? sharedVoiceBudgetLedger();
@@ -130,7 +196,7 @@ export function createVoiceEgress(options: VoiceEgressOptions = {}): VoiceEgress
 
   return {
     async checkConfiguration() {
-      const missing: VoiceConfigurationCheck = { configured: false, modelAvailable: false, voiceCategory: null, fineTuningState: null };
+      const missing: VoiceConfigurationCheck = { configured: false, modelAvailable: false, voiceCategory: null, fineTuningState: null, liveModelFineTunable: false, synthesisOk: false, synthesisError: null };
       const key = apiKey();
       if (!key || !registry) return missing;
       try {
@@ -145,11 +211,16 @@ export function createVoiceEgress(options: VoiceEgressOptions = {}): VoiceEgress
         }
         const modelData = modelsSchema.safeParse(await models.json());
         const voiceData = voiceSchema.safeParse(await voice.json());
+        const liveModel = modelData.success ? modelData.data.find((model) => model.model_id === registry.liveModelId) : undefined;
+        const probe = await probeSynthesis(key, registry, transport);
         return {
           configured: true,
-          modelAvailable: modelData.success && modelData.data.some((model) => model.model_id === registry.liveModelId && model.can_do_text_to_speech),
+          modelAvailable: Boolean(liveModel?.can_do_text_to_speech),
           voiceCategory: voiceData.success ? voiceData.data.category ?? null : null,
           fineTuningState: voiceData.success ? voiceData.data.fine_tuning?.state?.[registry.liveModelId] ?? null : null,
+          liveModelFineTunable: Boolean(liveModel?.can_be_finetuned),
+          synthesisOk: probe.ok,
+          synthesisError: probe.error,
         };
       } catch { return { ...missing, configured: true }; }
     },
