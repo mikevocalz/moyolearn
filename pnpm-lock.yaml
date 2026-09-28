@@ -367,7 +367,7 @@ overrides:
   lightningcss: 1.30.1
   react: 19.3.0
   react-dom: 19.3.0
-  nitro-canvas-in-Vision: file:./vendors/nitro-canvas-in-Vision-0.0.2-rive.4.tgz
+  nitro-canvas-in-Vision: file:./vendors/nitro-canvas-in-Vision-0.0.2-rive.4-clean.tgz
   react-native: 0.88.0-rc.2
   react-server-dom-webpack: 19.3.0
 
@@ -613,8 +613,8 @@ importers:
         specifier: 'catalog:'
         version: 1.47.0(react-native-svg@15.15.5(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       nitro-canvas-in-Vision:
-        specifier: file:../../vendors/nitro-canvas-in-Vision-0.0.2-rive.4.tgz
-        version: file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4.tgz(patch_hash=192b92aa36b0a683f2cff2526a9346a6bf5b6ea1106d32931254b318b5a1b25b)(react-native-nitro-modules@0.37.1(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        specifier: file:../../vendors/nitro-canvas-in-Vision-0.0.2-rive.4-clean.tgz
+        version: file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4-clean.tgz(patch_hash=192b92aa36b0a683f2cff2526a9346a6bf5b6ea1106d32931254b318b5a1b25b)(react-native-nitro-modules@0.37.1(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react:
         specifier: 19.3.0
         version: 19.3.0
@@ -9727,8 +9727,8 @@ packages:
   nf3@0.3.24:
     resolution: {integrity: sha512-HxLK4bo+5jNsEETZp4w3tJblHOA9MCBY14IN9nZJJV8JDxt9yNIYxuBuLMjTAR5GFa3HL61+8VQDUrXv3/C8fw==}
 
-  nitro-canvas-in-Vision@file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4.tgz:
-    resolution: {integrity: sha512-dTSvE10YqqpegviyTJwp79Vu59ZmMbkGdxWoTrWsMjAoq7D5XBDFbJX1vY9/+lCEbmFlqm4eGM2ZI1nGmt5CGA==, tarball: file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4.tgz}
+  nitro-canvas-in-Vision@file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4-clean.tgz:
+    resolution: {integrity: sha512-QojAbgKYJxVfyXkKZUTamUYSAxWXXz6i1ZjbMbn9RA4gPRjHo40WeILGHz9ShIMTF8wNxK7/0YPFP8Yl4jTB2A==, tarball: file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4-clean.tgz}
     version: 0.0.2-rive.4
     peerDependencies:
       react: 19.3.0
@@ -22239,7 +22239,7 @@ snapshots:
 
   nf3@0.3.24: {}
 
-  nitro-canvas-in-Vision@file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4.tgz(patch_hash=192b92aa36b0a683f2cff2526a9346a6bf5b6ea1106d32931254b318b5a1b25b)(react-native-nitro-modules@0.37.1(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  nitro-canvas-in-Vision@file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4-clean.tgz(patch_hash=192b92aa36b0a683f2cff2526a9346a6bf5b6ea1106d32931254b318b5a1b25b)(react-native-nitro-modules@0.37.1(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       react: 19.3.0
       react-native: 0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0)
