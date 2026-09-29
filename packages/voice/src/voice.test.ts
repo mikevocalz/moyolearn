@@ -562,10 +562,45 @@ describe('v4 dialogue contracts and failures', () => {
     assert.ok(original?.startsWith('voice/baked/v4/'));
     assert.equal(bakedManifestSchema.safeParse({ audioDigest: '../other', alignment }).success, false);
   });
-  it('reports account model access and PVC fine-tuning without exposing identifiers', async () => {
-    const egress = createVoiceEgress({ registry: REGISTRY, transport: async (url) => Response.json(url.endsWith('/models')
-      ? [{ model_id: 'eleven_v4', can_do_text_to_speech: true }]
-      : { category: 'professional', fine_tuning: { state: { eleven_v4: 'fine_tuned' } } }) });
-    assert.deepEqual(await egress.checkConfiguration(), { configured: true, modelAvailable: true, voiceCategory: 'professional', fineTuningState: 'fine_tuned' });
+  it('reports readiness from a real synthesis probe, not from fine-tuning metadata', async () => {
+    // What the live account actually returns: v4 is not a fine-tunable model, so
+    // the voice carries no v4 state and never will. Readiness comes from the probe.
+    const models = [{ model_id: 'eleven_v4', can_do_text_to_speech: true, can_be_finetuned: false }];
+    const voice = { category: 'professional', fine_tuning: { state: { eleven_turbo_v2: 'fine_tuned' } } };
+    const route = (onSynthesis: () => Response) => async (url: string) =>
+      url.endsWith('/models') ? Response.json(models) : url.includes('/text-to-dialogue/') ? onSynthesis() : Response.json(voice);
+
+    const ok = createVoiceEgress({ registry: REGISTRY, transport: route(() => new Response(new Uint8Array([1, 2, 3]))) });
+    assert.deepEqual(await ok.checkConfiguration(), { configured: true, modelAvailable: true, voiceCategory: 'professional',
+      fineTuningState: null, liveModelFineTunable: false, synthesisOk: true, synthesisError: null });
+
+    // An unpaid invoice is invisible to /v1/models and /v1/voices; only synthesis
+    // refuses. This is the case the old fine-tuning gate could not have caught.
+    const unpaid = createVoiceEgress({ registry: REGISTRY, transport: route(() => Response.json(
+      { detail: { code: 'payment_issue', status: 'payment_issue' } }, { status: 401 })) });
+    const refused = await unpaid.checkConfiguration();
+    assert.equal(refused.modelAvailable, true);
+    assert.equal(refused.synthesisOk, false);
+    assert.equal(refused.synthesisError, 'payment_issue');
+
+    // A 200 with no audio is not readiness either.
+    const silent = createVoiceEgress({ registry: REGISTRY, transport: route(() => new Response(new Uint8Array())) });
+    const empty = await silent.checkConfiguration();
+    assert.equal(empty.synthesisOk, false);
+    assert.equal(empty.synthesisError, 'empty-audio-stream');
+
+    // A fine-tunable future live model surfaces as such instead of going unchecked.
+    const tunable = createVoiceEgress({ registry: REGISTRY, transport: async (url) => url.endsWith('/models')
+      ? Response.json([{ model_id: 'eleven_v4', can_do_text_to_speech: true, can_be_finetuned: true }])
+      : url.includes('/text-to-dialogue/') ? new Response(new Uint8Array([1])) : Response.json(voice) });
+    assert.equal((await tunable.checkConfiguration()).liveModelFineTunable, true);
+  });
+
+  it('reports an unconfigured account without probing synthesis', async () => {
+    let calls = 0;
+    const egress = createVoiceEgress({ registry: null, transport: async () => { calls += 1; return new Response(''); } });
+    assert.deepEqual(await egress.checkConfiguration(), { configured: false, modelAvailable: false, voiceCategory: null,
+      fineTuningState: null, liveModelFineTunable: false, synthesisOk: false, synthesisError: null });
+    assert.equal(calls, 0);
   });
 });
