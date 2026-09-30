@@ -1,37 +1,84 @@
-// Fold and camera geometry for the current window, from the `ReservedRegions`
-// local Expo module (iOS 27.1+; every other platform and version answers []).
+// Fold and camera geometry for the current window.
 //
-// Re-queried on every window size change: UIKit publishes no change event for
-// reserved regions, and every fold, unfold, rotation and Split View resize
-// changes the window, so the window is the signal.
-// SOT: apps/mobile/modules/reserved-regions/ios/ReservedRegionsModule.swift
-// SOT-KEYWORDS: reserved regions hook fold division occlusion iphone duo native
+// Apple: the local ReservedRegions module is an Expo Modules 2 Swift module and
+// remains reachable through Expo's native-module compatibility lookup.
+// Android: SDK 58's Modules 2 runtime exposes the @ExpoModule object through
+// globalThis.expoV2.modules, so this file intentionally does NOT route Android
+// through the legacy ModuleDefinition bridge.
+//
+// Android also emits a native "changed" event from WindowInfoTracker. Window
+// dimensions are still a dependency because Activity/configuration replacement
+// can create a new native window even when JavaScript survives the transition.
+//
+// SOT: apps/mobile/modules/reserved-regions
+// SOT-KEYWORDS: reserved regions hook folding feature windowmanager expo modules v2 hinge posture native
 import { requireOptionalNativeModule } from 'expo';
 import { useEffect, useState } from 'react';
 import { useWindowDimensions } from 'react-native';
 import type { ReservedRegion } from './reserved-regions.types';
 
-export type { ReservedRegion };
+export type {
+  FoldOcclusionType,
+  FoldOrientation,
+  FoldState,
+  ReservedRegion,
+} from './reserved-regions.types';
+
+interface NativeSubscription {
+  remove(): void;
+}
 
 interface ReservedRegionsNative {
   query(): Promise<ReservedRegion[]>;
+  addListener?(
+    eventName: 'changed',
+    listener: (regions: ReservedRegion[]) => void,
+  ): NativeSubscription;
 }
 
-const native = requireOptionalNativeModule<ReservedRegionsNative>('ReservedRegions');
+interface ExpoModulesV2Global {
+  expoV2?: {
+    modules?: {
+      ReservedRegions?: ReservedRegionsNative;
+    };
+  };
+}
+
+const legacyNative = requireOptionalNativeModule<ReservedRegionsNative>('ReservedRegions');
 const NONE: readonly ReservedRegion[] = [];
+
+function nativeModule(): ReservedRegionsNative | null {
+  const modulesV2 = (globalThis as typeof globalThis & ExpoModulesV2Global).expoV2;
+  return modulesV2?.modules?.ReservedRegions ?? legacyNative;
+}
 
 export function useReservedRegions(): readonly ReservedRegion[] {
   const { width, height } = useWindowDimensions();
   const [regions, setRegions] = useState<readonly ReservedRegion[]>(NONE);
 
   useEffect(() => {
+    const native = nativeModule();
     if (!native) return;
+
     let live = true;
-    void native.query().then((next) => {
+    const accept = (next: ReservedRegion[]) => {
       if (live) setRegions(next);
+    };
+
+    // Snapshot first: iOS has no reserved-region change event, and on Android
+    // this also rebinds the WindowInfoTracker Flow after Activity replacement.
+    void native.query().then(accept).catch(() => {
+      if (live) setRegions(NONE);
     });
+
+    // Modules 2 event observation hooks start native Flow collection only while
+    // this listener exists. On iOS addListener is absent, so window dimensions
+    // remain the signal exactly as before.
+    const subscription = native.addListener?.('changed', accept);
+
     return () => {
       live = false;
+      subscription?.remove();
     };
   }, [width, height]);
 
