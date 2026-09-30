@@ -1,7 +1,7 @@
 {
   "name": "reserved-regions",
-  "version": "0.1.0",
-  "description": "Reads UIKit's reserved regions (fold division, camera occlusion) for the app window on iOS 27.1+.",
+  "version": "0.2.0",
+  "description": "Native fold and occlusion geometry for Moyo: UIKit reserved regions on iOS and Jetpack WindowManager FoldingFeature on Android.",
   "private": true,
-  "platforms": ["ios"]
+  "platforms": ["ios", "android"]
 }
