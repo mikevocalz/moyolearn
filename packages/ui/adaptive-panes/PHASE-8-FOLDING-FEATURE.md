@@ -87,6 +87,21 @@ boundary.
 
 A flat, non-separating flexible fold does **not** rearrange the panes.
 
+## Inspector behavior
+
+Expo Router's `SplitView.Inspector` is a supplementary surface that slides in
+from the trailing edge. Android follows that same semantic contract in
+`AdaptivePanes.Inspector`:
+
+- overlay, never a fourth tiled column
+- logical trailing edge, including RTL
+- `showInspector` gates the authored inspector
+- width capped to the trailing physical region on a separating vertical fold
+- hidden state stays mounted/frozen so local state and render surfaces survive
+
+The inspector uses the same normalized fold geometry as the main pane planner,
+so there is no second hinge implementation to keep in sync.
+
 ## Tabletop and book posture
 
 `foldLayoutFromRegions()` derives:
