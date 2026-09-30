@@ -80,6 +80,32 @@ space** below `expanded` — it is not rendered zero-width. Collapse is decided
 by **width class, never device type** (doc 37 §3.2): a folded foldable is a
 phone, a resized window is whatever width it currently is.
 
+### Native fold geometry
+
+Width class decides **which** panes may be visible. Native fold geometry decides
+**where** an already-visible boundary should land.
+
+The shared `useReservedRegions()` capability feeds this host on native:
+
+- iOS 27.1+: UIKit reserved `division` / `occlusion` regions.
+- Android: Jetpack WindowManager `WindowInfoTracker` / `FoldingFeature`
+  through the local `ReservedRegions` **Expo Modules 2** module.
+
+For a separating vertical fold, AdaptivePanes prefers to put a pane boundary on
+the physical hinge and reserves a fully occluding hinge's width so content never
+straddles it. The fold layer never changes the visibility policy or silently
+chooses which product pane to hide. A flat non-separating fold leaves the
+width-class composition alone.
+
+Android posture metadata is also normalized for screen-specific layouts:
+`HALF_OPENED + HORIZONTAL` becomes `tabletop`, and
+`HALF_OPENED + VERTICAL` becomes `book`. AdaptivePanes does not globally
+turn tabletop into a top/bottom composition because which content belongs above
+or below the hinge is a product decision for each screen.
+
+WindowManager does not expose a continuous hinge angle, so the shared type
+deliberately has no fake angle field. See `PHASE-8-FOLDING-FEATURE.md`.
+
 Diagnostics: more than two `AdaptivePanes.Column` **throws**, foreign children
 warn, zero children warn and fall back to the detail pane.
 
