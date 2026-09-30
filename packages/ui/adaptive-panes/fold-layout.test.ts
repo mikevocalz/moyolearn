@@ -3,6 +3,7 @@ import test from 'node:test';
 import {
   foldLayoutFromRegions,
   foldLayoutsFromRegions,
+  foldLayoutsIntersectingRow,
   resolveTrailingInspectorLayout,
   resolveVerticalFoldPanePlan,
   resolveVerticalMultiFoldPanePlan,
@@ -254,6 +255,22 @@ test('preserves and sorts multiple vertical hinges for trifold-aware consumers',
   assert.equal(folds[1]?.x, 700);
 });
 
+
+test('filters off-row folds before primary hinge selection', () => {
+  const offRow: FoldLayout = { ...verticalFold, x: -100, width: 20 };
+  const inRow: FoldLayout = { ...verticalFold, x: 300, width: 20 };
+
+  assert.deepEqual(
+    foldLayoutsIntersectingRow([offRow, inRow], 600).map((fold) => fold.x),
+    [300],
+  );
+});
+
+test('keeps an in-row zero-width separating crease', () => {
+  const crease: FoldLayout = { ...verticalFold, x: 300, width: 0 };
+
+  assert.deepEqual(foldLayoutsIntersectingRow([crease], 600), [crease]);
+});
 
 test('maps three panes one-per-region across two separating vertical hinges', () => {
   const first: FoldLayout = { ...verticalFold, x: 320, width: 16 };

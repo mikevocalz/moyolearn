@@ -41,6 +41,7 @@ import { PaneDivider } from './PaneDivider';
 import { usePaneEdges } from './pane-edges';
 import { useFoldLayouts } from './use-fold-layout';
 import {
+  foldLayoutsIntersectingRow,
   resolveTrailingInspectorLayout,
   resolveVerticalFoldPanePlan,
   resolveVerticalMultiFoldPanePlan,
@@ -185,7 +186,8 @@ function AdaptivePanesNavigator({
   const rowRef = useRef<ElementRef<typeof NativeView> | null>(null);
   const rowWidth = rowGeometry.width;
   const paneEdges = usePaneEdges();
-  const foldLayouts = useFoldLayouts(rowGeometry.windowX);
+  const windowFoldLayouts = useFoldLayouts(rowGeometry.windowX);
+  const foldLayouts = foldLayoutsIntersectingRow(windowFoldLayouts, rowWidth);
   const primaryFoldLayout = foldLayouts[0] ?? null;
 
   const all = Children.toArray(children);
@@ -718,6 +720,7 @@ export {
 export {
   foldLayoutFromRegions,
   foldLayoutsFromRegions,
+  foldLayoutsIntersectingRow,
   resolveTrailingInspectorLayout,
   resolveVerticalFoldPanePlan,
   resolveVerticalMultiFoldPanePlan,

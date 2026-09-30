@@ -62,6 +62,21 @@ export interface VerticalMultiFoldPanePlanInput {
   paneMinWidth: number;
 }
 
+export function foldLayoutsIntersectingRow(
+  folds: readonly FoldLayout[],
+  rowWidth: number | null,
+): FoldLayout[] {
+  if (rowWidth === null) return [];
+
+  return folds.filter((fold) => {
+    const foldEnd = fold.x + Math.max(0, fold.width);
+    // A zero-width separating crease is still a real boundary when it falls
+    // inside the row. Folds wholly before/after a nested row are irrelevant to
+    // that row and must not participate in primary-hinge selection.
+    return fold.x < rowWidth && (fold.width === 0 ? fold.x > 0 : foldEnd > 0);
+  });
+}
+
 /**
  * Normalize the current physical division into the pane row's local coordinates.
  *
@@ -358,14 +373,8 @@ export function resolveTrailingInspectorLayout({
   let availableWidth = rowWidth ?? preferredWidth;
 
   if (rowWidth !== null) {
-    const vertical = folds
-      .filter(
-        (fold) =>
-          fold.separating &&
-          fold.orientation === 'vertical' &&
-          fold.x < rowWidth &&
-          fold.x + fold.width > 0,
-      )
+    const vertical = foldLayoutsIntersectingRow(folds, rowWidth)
+      .filter((fold) => fold.separating && fold.orientation === 'vertical')
       .sort((a, b) => a.x - b.x);
 
     if (vertical.length > 0) {
