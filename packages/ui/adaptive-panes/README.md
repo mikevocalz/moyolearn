@@ -42,11 +42,11 @@ widest-first for resolution; nothing else in the module names a number.
 | `medium` | 600 |
 | `expanded` | 840 |
 | `large` | 1200 |
+| `extraLarge` | 1600 |
 
 **A second width system exists on purpose**: `packages/ui/size-class.constants.ts`
 splits `compact|regular` at 768 dp for one-column/two-column decisions —
-TutorStage and DashboardShell hold that line. These four bands decide how many
-panes tile; the 768 split decides screen composition. Do not merge them.
+TutorStage and DashboardShell hold that line. These five bands decide how many panes tile; the 768 split decides screen composition. Do not merge them.
 
 Pane widths come from `--container-pane-*` tokens in `packages/theme/tokens.ts`,
 so panes are sized by `w-pane-primary` and friends rather than arbitrary values.
@@ -61,6 +61,7 @@ tested in `pane-overrides.test.ts`).
 
 | Size class | primary | supplementary | inspector | detail |
 |---|---|---|---|---|
+| extraLarge | full | — | yes | flex |
 | large | full | — | yes | flex |
 | expanded | full | — | yes | flex |
 | medium | narrow rail | — | no | flex |
@@ -70,6 +71,7 @@ tested in `pane-overrides.test.ts`).
 
 | Size class | primary | supplementary | inspector | detail |
 |---|---|---|---|---|
+| extraLarge | full | yes | yes | flex |
 | large | full | yes | yes | flex |
 | expanded | narrow rail | yes | no | flex |
 | medium | hidden | yes | no | flex |
@@ -93,7 +95,10 @@ The shared `useReservedRegions()` capability feeds this host on native:
 
 For a separating vertical fold, AdaptivePanes prefers to put a pane boundary on
 the physical hinge and reserves a fully occluding hinge's width so content never
-straddles it. The fold layer never changes the visibility policy or silently
+straddles it. When two or more separating vertical hinges are present and the
+screen has three authored panes, the planner chooses the hinge pair that maps
+primary, supplementary and detail one-per-physical-region. This is the trifold
+path; the native bridge preserves every `FoldingFeature`, never only hinge #1. The fold layer never changes the visibility policy or silently
 chooses which product pane to hide. A flat non-separating fold leaves the
 width-class composition alone.
 
@@ -116,8 +121,8 @@ column.
 - LTR: enters from the right.
 - RTL: enters from the left.
 - `showInspector` must be true for the authored inspector and its toggle to be active.
-- On a separating vertical fold, its width is capped to the trailing physical
-  display region so the drawer cannot cover the hinge or cross onto the other
+- On separating vertical folds, its width is capped to the trailingmost physical
+  display region so the drawer cannot cover any hinge or cross onto another
   display.
 - Hiding the inspector moves it offscreen but leaves its subtree mounted/frozen,
   preserving local state and expensive native/GPU surfaces.
@@ -378,5 +383,5 @@ runnable under plain node.
 
 Its `RESPONSIVE_SCREEN_BREAKPOINT = 1024` single boolean and its practice of
 rendering different subtrees per size class were both rejected: this module uses
-four window size classes and keeps ONE tree, so panes survive rotation and
+five window size classes and keeps ONE tree, so panes survive rotation and
 multi-window resize with scroll position, selection and search intact.
