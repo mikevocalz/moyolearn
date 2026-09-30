@@ -1,0 +1,33 @@
+plugins {
+  id 'com.android.library'
+  id 'expo-module-gradle-plugin'
+}
+
+group = 'com.moyolearn'
+version = '0.2.0'
+
+/*
+ * Expo Modules 2.0, not the legacy ModuleDefinition bridge.
+ *
+ * SDK 58's Android v2 compiler discovers @ExpoModule / @JS / @Event /
+ * @Record declarations at compile time and exposes them through
+ * globalThis.expoV2.modules.
+ */
+expoModule {
+  canBePublished false
+  v2 true
+}
+
+android {
+  namespace "com.moyolearn.reservedregions"
+  defaultConfig {
+    versionCode 2
+    versionName "0.2.0"
+  }
+}
+
+dependencies {
+  // Stable WindowManager line as of SDK 58 beta. WindowInfoTracker supplies
+  // FoldingFeature bounds, orientation, state, occlusion and isSeparating.
+  implementation "androidx.window:window:1.5.1"
+}
