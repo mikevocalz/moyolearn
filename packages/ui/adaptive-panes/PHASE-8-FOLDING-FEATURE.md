@@ -68,8 +68,8 @@ That catches:
 
 ## AdaptivePanes behavior
 
-`AdaptivePanes` still uses the four Moyo width classes to decide **which**
-panes may be visible.
+`AdaptivePanes` uses Moyo's five current width classes — compact, medium,
+expanded, large and extraLarge — to decide **which** panes may be visible.
 
 A separating **vertical** fold then decides **where** an already-visible pane
 boundary lands:
@@ -78,7 +78,9 @@ boundary lands:
    the trailing region when both leading panes fit.
 2. Otherwise put primary on the leading region and supplementary + detail on the
    trailing region when that still defends the detail minimum.
-3. If neither arrangement fits, keep the existing width-class composition.
+3. On a two-hinge/trifold layout with three authored panes, choose the usable
+   hinge pair that maps primary, supplementary and detail one-per-region.
+4. If no honest arrangement fits, keep the existing width-class composition.
    The fold layer never silently chooses which product pane to hide.
 
 For a fully occluding hinge, its physical width is inserted as layout space.
@@ -96,7 +98,7 @@ from the trailing edge. Android follows that same semantic contract in
 - overlay, never a fourth tiled column
 - logical trailing edge, including RTL
 - `showInspector` gates the authored inspector
-- width capped to the trailing physical region on a separating vertical fold
+- width capped to the trailingmost physical region across separating vertical folds
 - hidden state stays mounted/frozen so local state and render surfaces survive
 
 The inspector uses the same normalized fold geometry as the main pane planner,
@@ -134,9 +136,9 @@ suite:
 
 `packages/ui/adaptive-panes/fold-layout.test.ts`
 
-It covers tabletop detection, flat dual-screen separation, UIKit orientation
-inference, hinge snapping, the two three-pane placement strategies, and the
-non-separating fallback.
+It covers tabletop detection, compact-height navigation behavior, flat dual-screen
+separation, UIKit orientation inference, single-hinge snapping, trifold three-pane
+placement, trailing-region inspector constraints, and the non-separating fallback.
 
 Device verification still matters. Run the Android Studio foldable emulator
 posture controls and at least one physical foldable before calling a specific
