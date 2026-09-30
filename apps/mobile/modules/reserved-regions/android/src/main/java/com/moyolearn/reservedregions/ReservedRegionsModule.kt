@@ -10,6 +10,8 @@ import io.github.expo.modules.v2.JS
 import io.github.expo.modules.v2.Module
 import io.github.expo.modules.v2.Record
 import io.github.expo.modules.v2.react.currentActivity
+import io.github.expo.modules.v2.react.reactContextOrNull
+import com.facebook.react.bridge.LifecycleEventListener
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -61,6 +63,30 @@ class ReservedRegionsModule : Module() {
   private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
   private var collectionJob: Job? = null
   private var observedActivity: Activity? = null
+  private var lifecycleRegistered = false
+
+  /*
+   * A JS listener can outlive the Activity's foreground stint, so event
+   * observation and host lifecycle are two separate gates. React Native's host
+   * lifecycle is already available through the Modules 2 React context; using
+   * it avoids a second AndroidX lifecycle dependency and, more importantly,
+   * stops WindowInfoTracker from retaining/collecting against a paused Activity.
+   */
+  private val lifecycleListener = object : LifecycleEventListener {
+    override fun onHostResume() {
+      if (onChanged.isObserved) {
+        currentActivity?.let(::observe)
+      }
+    }
+
+    override fun onHostPause() {
+      pauseCollection()
+    }
+
+    override fun onHostDestroy() {
+      pauseCollection()
+    }
+  }
 
   /**
    * JavaScript subscribes as:
@@ -98,6 +124,11 @@ class ReservedRegionsModule : Module() {
   }
 
   private fun startObserving() {
+    val reactContext = reactContextOrNull
+    if (reactContext != null && !lifecycleRegistered) {
+      reactContext.addLifecycleEventListener(lifecycleListener)
+      lifecycleRegistered = true
+    }
     currentActivity?.let(::observe)
   }
 
@@ -118,10 +149,18 @@ class ReservedRegionsModule : Module() {
     }
   }
 
-  private fun stopObserving() {
+  private fun pauseCollection() {
     collectionJob?.cancel()
     collectionJob = null
     observedActivity = null
+  }
+
+  private fun stopObserving() {
+    pauseCollection()
+    if (lifecycleRegistered) {
+      reactContextOrNull?.removeLifecycleEventListener(lifecycleListener)
+      lifecycleRegistered = false
+    }
   }
 }
 
