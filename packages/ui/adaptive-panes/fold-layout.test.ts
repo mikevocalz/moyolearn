@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   foldLayoutFromRegions,
+  resolveTrailingInspectorLayout,
   resolveVerticalFoldPanePlan,
   type FoldLayout,
 } from './fold-layout.ts';
@@ -140,4 +141,53 @@ test('does not rearrange a flat continuous non-separating fold', () => {
   });
 
   assert.equal(plan, null);
+});
+
+
+test('inspector overlays from the trailing physical region without crossing hinge', () => {
+  assert.deepEqual(
+    resolveTrailingInspectorLayout({
+      fold: verticalFold,
+      rowWidth: 880,
+      preferredWidth: 280,
+      isRTL: false,
+    }),
+    {
+      width: 280,
+      edge: 'right',
+      closedX: 300,
+    },
+  );
+});
+
+test('inspector width is capped when the trailing fold region is narrower', () => {
+  assert.deepEqual(
+    resolveTrailingInspectorLayout({
+      fold: { ...verticalFold, x: 650, width: 30 },
+      rowWidth: 880,
+      preferredWidth: 280,
+      isRTL: false,
+    }),
+    {
+      width: 200,
+      edge: 'right',
+      closedX: 220,
+    },
+  );
+});
+
+test('RTL inspector uses the logical trailing edge and stays left of the hinge', () => {
+  assert.deepEqual(
+    resolveTrailingInspectorLayout({
+      fold: verticalFold,
+      rowWidth: 880,
+      preferredWidth: 280,
+      isRTL: true,
+    }),
+    {
+      width: 280,
+      edge: 'left',
+      closedX: -300,
+    },
+  );
 });
