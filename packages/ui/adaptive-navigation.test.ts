@@ -19,6 +19,7 @@ test('Android compact windows use bottom navigation', () => {
     resolveAdaptiveNavigationPlacement({
       platform: 'android',
       sizeClass: 'compact',
+      heightDp: 800,
       folds: [],
       isRTL: false,
     }),
@@ -36,6 +37,7 @@ test('Android tabletop posture keeps navigation on the bottom even at expanded w
   const placement = resolveAdaptiveNavigationPlacement({
     platform: 'android',
     sizeClass: 'expanded',
+    heightDp: 800,
     folds: [tabletop],
     isRTL: false,
   });
@@ -48,6 +50,7 @@ test('Android regular foldables and tablets use logical-start rail', () => {
     resolveAdaptiveNavigationPlacement({
       platform: 'android',
       sizeClass: 'expanded',
+      heightDp: 800,
       folds: [],
       isRTL: false,
     }).position,
@@ -57,6 +60,7 @@ test('Android regular foldables and tablets use logical-start rail', () => {
     resolveAdaptiveNavigationPlacement({
       platform: 'android',
       sizeClass: 'expanded',
+      heightDp: 800,
       folds: [],
       isRTL: true,
     }).position,
@@ -93,6 +97,7 @@ test('ordinary iPad-width Apple windows use a logical leading sidebar', () => {
     resolveAdaptiveNavigationPlacement({
       platform: 'ios',
       sizeClass: 'expanded',
+      heightDp: 800,
       folds: [],
       isRTL: false,
     }).position,
@@ -102,6 +107,7 @@ test('ordinary iPad-width Apple windows use a logical leading sidebar', () => {
     resolveAdaptiveNavigationPlacement({
       platform: 'ios',
       sizeClass: 'expanded',
+      heightDp: 800,
       folds: [],
       isRTL: true,
     }).position,
@@ -122,8 +128,22 @@ test('any tabletop hinge wins even on a multi-hinge device', () => {
   const placement = resolveAdaptiveNavigationPlacement({
     platform: 'android',
     sizeClass: 'large',
+    heightDp: 800,
     folds: [vertical, tabletop],
     isRTL: false,
   });
+  assert.equal(placement.position, 'bottom');
+});
+
+
+test('Android compact-height landscape stays on bottom navigation at wide width', () => {
+  const placement = resolveAdaptiveNavigationPlacement({
+    platform: 'android',
+    sizeClass: 'expanded',
+    heightDp: 420,
+    folds: [],
+    isRTL: false,
+  });
+  assert.equal(placement.kind, 'bottom-medium');
   assert.equal(placement.position, 'bottom');
 });
