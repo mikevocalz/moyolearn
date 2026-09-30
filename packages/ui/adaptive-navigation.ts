@@ -1,0 +1,132 @@
+import type { WindowSizeClass } from './adaptive-panes/constants';
+import type { FoldLayout } from './adaptive-panes/fold-layout';
+
+export type AdaptiveNavigationKind =
+  | 'bottom-compact'
+  | 'bottom-medium'
+  | 'rail-collapsed'
+  | 'rail-expanded'
+  | 'apple-hardware-rail'
+  | 'apple-sidebar';
+
+export interface HardwareEdgeColumn {
+  edge: 'left' | 'right';
+  width: number;
+}
+
+export interface AdaptiveNavigationPlacement {
+  kind: AdaptiveNavigationKind;
+  position: 'bottom' | 'left' | 'right';
+  rail: boolean;
+  expanded: boolean;
+  /** Physical column width when Apple has reserved an outer-edge control column. */
+  hardwareWidth: number;
+}
+
+export interface ResolveAdaptiveNavigationPlacementInput {
+  platform: 'android' | 'ios' | 'other';
+  sizeClass: WindowSizeClass;
+  folds: readonly FoldLayout[];
+  hardwareEdge?: HardwareEdgeColumn | null;
+  isRTL: boolean;
+}
+
+function logicalStart(isRTL: boolean): 'left' | 'right' {
+  return isRTL ? 'right' : 'left';
+}
+
+/**
+ * Primary shell navigation policy.
+ *
+ * Android follows Material 3 Adaptive navigation semantics:
+ * - compact -> short bottom navigation
+ * - tabletop / compact-height analogue -> short medium bottom navigation
+ * - otherwise -> start-edge wide rail
+ * - extra-large -> expanded wide rail
+ *
+ * Apple is deliberately different:
+ * - a Duo-style reserved hardware column wins and remains PHYSICAL, not logical
+ * - ordinary compact iPhone -> bottom
+ * - regular-width iPad/tablet -> leading sidebar
+ *
+ * Fold posture comes from the Expo Modules 2 WindowManager bridge. Multiple
+ * folds are accepted so a trifold is not collapsed to "hinge #1".
+ */
+export function resolveAdaptiveNavigationPlacement({
+  platform,
+  sizeClass,
+  folds,
+  hardwareEdge,
+  isRTL,
+}: ResolveAdaptiveNavigationPlacementInput): AdaptiveNavigationPlacement {
+  const tabletop = folds.some((fold) => fold.posture === 'tabletop');
+
+  if (platform === 'ios') {
+    if (hardwareEdge && hardwareEdge.width > 0) {
+      return {
+        kind: 'apple-hardware-rail',
+        position: hardwareEdge.edge,
+        rail: true,
+        expanded: false,
+        hardwareWidth: hardwareEdge.width,
+      };
+    }
+
+    if (sizeClass === 'compact') {
+      return {
+        kind: 'bottom-compact',
+        position: 'bottom',
+        rail: false,
+        expanded: false,
+        hardwareWidth: 0,
+      };
+    }
+
+    return {
+      kind: 'apple-sidebar',
+      position: logicalStart(isRTL),
+      rail: true,
+      expanded: sizeClass === 'extraLarge',
+      hardwareWidth: 0,
+    };
+  }
+
+  if (platform === 'android') {
+    if (sizeClass === 'compact') {
+      return {
+        kind: 'bottom-compact',
+        position: 'bottom',
+        rail: false,
+        expanded: false,
+        hardwareWidth: 0,
+      };
+    }
+
+    if (tabletop) {
+      return {
+        kind: 'bottom-medium',
+        position: 'bottom',
+        rail: false,
+        expanded: false,
+        hardwareWidth: 0,
+      };
+    }
+
+    const expanded = sizeClass === 'extraLarge';
+    return {
+      kind: expanded ? 'rail-expanded' : 'rail-collapsed',
+      position: logicalStart(isRTL),
+      rail: true,
+      expanded,
+      hardwareWidth: 0,
+    };
+  }
+
+  return {
+    kind: sizeClass === 'compact' ? 'bottom-compact' : 'rail-collapsed',
+    position: sizeClass === 'compact' ? 'bottom' : logicalStart(isRTL),
+    rail: sizeClass !== 'compact',
+    expanded: false,
+    hardwareWidth: 0,
+  };
+}
