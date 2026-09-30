@@ -173,3 +173,60 @@ export function resolveVerticalFoldPanePlan({
 
   return null;
 }
+
+
+export interface TrailingInspectorLayout {
+  width: number;
+  edge: 'left' | 'right';
+  /** Translation that parks the inspector fully beyond its trailing edge. */
+  closedX: number;
+}
+
+export interface TrailingInspectorLayoutInput {
+  fold: FoldLayout | null;
+  rowWidth: number | null;
+  preferredWidth: number;
+  isRTL: boolean;
+}
+
+/**
+ * Match SplitView.Inspector's trailing-edge overlay semantics while respecting
+ * a separating vertical fold.
+ *
+ * The inspector never becomes another tiled column. It overlays the detail
+ * surface from the logical trailing edge, and on a foldable its maximum width
+ * is the physical region on that trailing side so it cannot cover the hinge or
+ * spill into the opposite display.
+ */
+export function resolveTrailingInspectorLayout({
+  fold,
+  rowWidth,
+  preferredWidth,
+  isRTL,
+}: TrailingInspectorLayoutInput): TrailingInspectorLayout {
+  const edge: 'left' | 'right' = isRTL ? 'left' : 'right';
+  let availableWidth = rowWidth ?? preferredWidth;
+
+  if (
+    fold?.separating &&
+    fold.orientation === 'vertical' &&
+    rowWidth !== null
+  ) {
+    const foldStart = Math.min(Math.max(0, fold.x), rowWidth);
+    const foldEnd = Math.min(
+      rowWidth,
+      Math.max(foldStart, fold.x + fold.width),
+    );
+    availableWidth = isRTL ? foldStart : rowWidth - foldEnd;
+  }
+
+  const width = Math.max(0, Math.min(preferredWidth, availableWidth));
+  // Twenty dp clears the shadow/edge completely instead of leaving a sliver.
+  const travel = width + 20;
+
+  return {
+    width,
+    edge,
+    closedX: isRTL ? -travel : travel,
+  };
+}
