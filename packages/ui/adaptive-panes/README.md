@@ -106,6 +106,23 @@ or below the hinge is a product decision for each screen.
 WindowManager does not expose a continuous hinge angle, so the shared type
 deliberately has no fake angle field. See `PHASE-8-FOLDING-FEATURE.md`.
 
+### Inspector parity
+
+`AdaptivePanes.Inspector` intentionally mirrors Expo Router's
+`SplitView.Inspector` interaction model on Android: it is a supplementary
+**overlay** that slides in from the logical trailing edge, not another tiled
+column.
+
+- LTR: enters from the right.
+- RTL: enters from the left.
+- `showInspector` must be true for the authored inspector and its toggle to be active.
+- On a separating vertical fold, its width is capped to the trailing physical
+  display region so the drawer cannot cover the hinge or cross onto the other
+  display.
+- Hiding the inspector moves it offscreen but leaves its subtree mounted/frozen,
+  preserving local state and expensive native/GPU surfaces.
+
+
 Diagnostics: more than two `AdaptivePanes.Column` **throws**, foreign children
 warn, zero children warn and fall back to the detail pane.
 
