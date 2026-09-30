@@ -39,6 +39,8 @@ import { AdaptivePanesContext } from './context';
 import { useSplitViewBack } from './use-split-view-back';
 import { PaneDivider } from './PaneDivider';
 import { usePaneEdges } from './pane-edges';
+import { useFoldLayout } from './use-fold-layout';
+import { resolveVerticalFoldPanePlan } from './fold-layout';
 import { DetailSlot } from './detail-slot';
 import {
   DEFAULT_PRIMARY_WIDTH,
@@ -181,6 +183,7 @@ function AdaptivePanesNavigator({
   */
   const [rowWidth, setRowWidth] = useState<number | null>(null);
   const paneEdges = usePaneEdges();
+  const foldLayout = useFoldLayout(paneEdges);
 
   const all = Children.toArray(children);
   const columns = all.filter(
@@ -366,6 +369,36 @@ function AdaptivePanesNavigator({
         );
 
   /*
+    A SEPARATING VERTICAL HINGE IS A LAYOUT BOUNDARY, not another breakpoint.
+
+    Window-size classes still decide WHICH panes are allowed. Native fold
+    geometry only decides WHERE an already-visible pane boundary lands. That
+    distinction keeps a folded phone, split-screen window and ordinary tablet
+    on the same policy while preventing a pane from straddling a physical
+    hinge.
+
+    The pure planner never hides content. It first tries to keep primary +
+    supplementary together on the leading physical region with detail on the
+    trailing region. If that cannot fit, it can put primary on the first region
+    and supplementary + detail on the second. If neither is usable we preserve
+    the width-class layout rather than choosing product content here.
+  */
+  const foldPlan = resolveVerticalFoldPanePlan({
+    fold: collapsed ? null : foldLayout,
+    rowWidth,
+    primaryVisible: Boolean(columns[0] && visible.primary),
+    supplementaryVisible: Boolean(columns[1] && visible.supplementary),
+    detailVisible: visible.detail,
+    primaryWidth: openPrimaryWidth,
+    supplementaryWidth: openSupplementaryWidth,
+    detailMinWidth: Math.max(PRIMARY_WIDTH_MIN, detailFloor),
+    paneMinWidth: PRIMARY_WIDTH_MIN,
+  });
+  const effectivePrimaryWidth = foldPlan?.primaryWidth ?? openPrimaryWidth;
+  const effectiveSupplementaryWidth =
+    foldPlan?.supplementaryWidth ?? openSupplementaryWidth;
+
+  /*
     WHICH PANE ABSORBS THE WINDOW. Normally the detail pane, which is why the
     leading panes are all a fixed token width. Hide the detail — the tutor
     session's "Natalie" control does exactly that — and something else has to,
@@ -409,7 +442,7 @@ function AdaptivePanesNavigator({
             <>
               <CollapsiblePane
                 open={visible.primary}
-                width={collapsed ? collapsedWidth : openPrimaryWidth}
+                width={collapsed ? collapsedWidth : effectivePrimaryWidth}
                 fill={fillPane === 'primary'}
               >
                 <Aside className="flex-1">
@@ -419,8 +452,17 @@ function AdaptivePanesNavigator({
               {/* No divider collapsed: there is nothing on the other side of
                   it to drag against, and a grab handle on the screen edge is a
                   control that cannot do anything. */}
-              {!collapsed && visible.primary ? (
-                <PaneDivider width={openPrimaryWidth} />
+              {!collapsed && visible.primary && foldPlan?.splitAfter !== 'primary' ? (
+                <PaneDivider width={effectivePrimaryWidth} />
+              ) : null}
+              {!collapsed &&
+              foldPlan?.splitAfter === 'primary' &&
+              foldPlan.gapWidth > 0 ? (
+                <View
+                  style={{ width: foldPlan.gapWidth }}
+                  pointerEvents="none"
+                  aria-hidden
+                />
               ) : null}
             </>
           ) : null}
@@ -429,17 +471,30 @@ function AdaptivePanesNavigator({
             <CollapsiblePane
               open={visible.supplementary}
               width={
-                collapsed ? collapsedWidth : openSupplementaryWidth
+                collapsed ? collapsedWidth : effectiveSupplementaryWidth
               }
               fill={fillPane === 'supplementary'}
               className={
-                !collapsed && visible.supplementary ? `border-r ${PANE_DIVIDER}` : undefined
+                !collapsed &&
+                visible.supplementary &&
+                foldPlan?.splitAfter !== 'supplementary'
+                  ? `border-r ${PANE_DIVIDER}`
+                  : undefined
               }
             >
               <Section className="flex-1">
                 <PaneContent open={visible.supplementary}>{columns[1]}</PaneContent>
               </Section>
             </CollapsiblePane>
+          ) : null}
+          {!collapsed &&
+          foldPlan?.splitAfter === 'supplementary' &&
+          foldPlan.gapWidth > 0 ? (
+            <View
+              style={{ width: foldPlan.gapWidth }}
+              pointerEvents="none"
+              aria-hidden
+            />
           ) : null}
 
           {/*
@@ -582,6 +637,14 @@ export {
   isCollapsed,
   type WindowSizeClass,
 } from './constants';
+export {
+  foldLayoutFromRegions,
+  resolveVerticalFoldPanePlan,
+  type FoldLayout,
+  type FoldPosture,
+  type VerticalFoldPanePlan,
+  type VerticalFoldPanePlanInput,
+} from './fold-layout';
 
 // Pane chrome — composable pieces the host arranges, exported for direct use
 // by feature screens and Storybook.
