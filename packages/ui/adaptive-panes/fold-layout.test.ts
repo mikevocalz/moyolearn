@@ -91,7 +91,7 @@ test('uses the hinge as supplementary/detail boundary when both leading panes fi
     primaryVisible: true,
     supplementaryVisible: true,
     detailVisible: true,
-    primaryWidth: 112,
+    primaryWidth: 200,
     supplementaryWidth: 294,
     detailMinWidth: 264,
     paneMinWidth: 160,
@@ -99,8 +99,8 @@ test('uses the hinge as supplementary/detail boundary when both leading panes fi
 
   assert.deepEqual(plan, {
     splitAfter: 'supplementary',
-    primaryWidth: 112,
-    supplementaryWidth: 318,
+    primaryWidth: 200,
+    supplementaryWidth: 230,
     gapWidth: 20,
   });
 });
