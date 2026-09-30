@@ -63,6 +63,25 @@ test('keeps a flat dual-screen hinge separating and converts window x to pane-ro
   assert.equal(fold?.posture, 'flat');
 });
 
+test('preserves negative local x for a hinge left of an offset pane row', () => {
+  const region: ReservedRegion = {
+    kind: 'division',
+    x: 20,
+    y: 0,
+    width: 24,
+    height: 900,
+    margins,
+    active: true,
+    orientation: 'vertical',
+    state: 'flat',
+    occlusionType: 'full',
+    separating: true,
+  };
+
+  const fold = foldLayoutFromRegions([region], 80);
+  assert.equal(fold?.x, -60);
+});
+
 test('infers orientation for UIKit division regions without Android metadata', () => {
   const region: ReservedRegion = {
     kind: 'division',
@@ -160,6 +179,22 @@ test('inspector overlays from the trailing physical region without crossing hing
       width: 280,
       edge: 'right',
       closedX: 300,
+    },
+  );
+});
+
+test('inspector ignores a separating hinge that is completely outside the pane row', () => {
+  assert.deepEqual(
+    resolveTrailingInspectorLayout({
+      folds: [{ ...verticalFold, x: -120, width: 20 }],
+      rowWidth: 600,
+      preferredWidth: 280,
+      isRTL: true,
+    }),
+    {
+      width: 280,
+      edge: 'left',
+      closedX: -300,
     },
   );
 });

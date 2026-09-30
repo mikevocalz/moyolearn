@@ -98,7 +98,10 @@ export function foldLayoutsFromRegions(
         separating:
           (region.separating ?? region.active) ||
           region.occlusionType === 'full',
-        x: Math.max(0, region.x - windowOriginX),
+        // Preserve negative local x values: a fold can sit completely to the
+        // left of a nested pane row. Clamping it to zero would turn an off-row
+        // hinge into a phantom hinge on the row's leading edge.
+        x: region.x - windowOriginX,
         y: region.y,
         width: Math.max(0, region.width),
         height: Math.max(0, region.height),
@@ -356,7 +359,13 @@ export function resolveTrailingInspectorLayout({
 
   if (rowWidth !== null) {
     const vertical = folds
-      .filter((fold) => fold.separating && fold.orientation === 'vertical')
+      .filter(
+        (fold) =>
+          fold.separating &&
+          fold.orientation === 'vertical' &&
+          fold.x < rowWidth &&
+          fold.x + fold.width > 0,
+      )
       .sort((a, b) => a.x - b.x);
 
     if (vertical.length > 0) {
