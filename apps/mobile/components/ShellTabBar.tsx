@@ -110,6 +110,7 @@ import {
 } from '@acme/ui';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import { haptics } from '@acme/ui/haptics';
+import { NativeShellRail } from './NativeShellRail';
 
 // `--spacing-nav-rail`, read from the token so the rail's JS width and its
 // class stay one number. `px-2` on the bottom bar, in points.
@@ -537,6 +538,43 @@ export function ShellTabBar({
       </Pressable>
     );
   });
+
+  /*
+    Android rail mode is a REAL Material 3 WideNavigationRail from Compose.
+    Expo Router still owns the route state and the tab scene; Compose owns only
+    the platform navigation chrome. The raised learner Snap destination moves
+    into the rail header, which is Material's primary-action position.
+  */
+  if (Platform.OS === 'android' && rail) {
+    const nativeItems = items.flatMap((item) => {
+      const index = state.routes.findIndex((route) => route.name === item.name);
+      if (index === -1) return [];
+      const route = state.routes[index]!;
+      const selected = state.index === index;
+      const onPress = () => {
+        const event = emitter.emit({
+          type: 'tabPress',
+          target: route.key,
+          canPreventDefault: true,
+        });
+        if (!selected && !event.defaultPrevented) {
+          if (!reducedMotion) haptics.selection();
+          navigateToTab(route.key);
+        }
+      };
+
+      return [{
+        key: route.key,
+        label: item.label,
+        selected,
+        raised: item.raised,
+        Icon: item.Icon,
+        onPress,
+      }];
+    });
+
+    return <NativeShellRail items={nativeItems} expanded={railExpanded} />;
+  }
 
   if (rail) {
     /*
