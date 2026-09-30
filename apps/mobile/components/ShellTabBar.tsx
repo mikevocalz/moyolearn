@@ -3,13 +3,14 @@
 // shadow) while each shell declares only its items — doc 36 §5's "one product,
 // different door" as a component contract.
 //
-// TWO FORMS, ONE ITEM LIST (doc 02 §2.1, measured on the WINDOW not the
-// device): compact (<600dp) renders the bottom bar; medium and wider render a
-// vertical RAIL on the trailing edge. The shell layouts flip
-// `tabBarPosition` to 'right' at the same threshold, so react-navigation's own
-// BottomTabView turns its container to `flexDirection: 'row'` and the rail is a
-// real flex sibling of the scene — no absolute overlay, no scene padding to
-// keep in sync. Structure taken from poke-xr's PokeballTabBar (one component,
+// ADAPTIVE FORMS, ONE ITEM LIST. Window size + native fold posture decide the
+// presentation: compact Android and tabletop posture use the bottom bar;
+// ordinary Android tablets/foldables use a logical-start Material rail;
+// extra-large Android windows use the expanded labeled rail. Apple hardware
+// columns stay physical while ordinary regular-width Apple windows use their
+// leading sidebar convention. Expo Router remains the route owner in every form.
+// The custom bottom form keeps the existing single item-list structure; Android
+// rail mode delegates its chrome to Expo Router's built-in Material renderer.
 // `if (rail) return <column/>` before the row return, emphasis slot kept in the
 // middle of the item order); its `position:absolute` + `sceneStyle.paddingRight`
 // compensation is deliberately NOT taken, because that repo's header is a
@@ -57,16 +58,10 @@
 // foreign hue dropped on a plum bar; selection is a state OF the chrome, so it
 // takes the chrome's hue. Label weight is the second, non-colour cue.
 //
-// DEFERRED — doc 02 §2.3 hinge awareness. Moving nav to a VERTICAL edge is the
-// part of §2.3 that lands today: a bottom bar spanning a Surface Duo would
-// straddle the hinge, a rail on either side structurally cannot. The rest of §2.3 —
-// snapping the pane split to the hinge, refusing to straddle it, and the
-// tabletop (HALF_OPENED + HORIZONTAL) posture that docks actions to the lower
-// half — needs the hinge RECTANGLE in window coordinates, which JS cannot
-// derive from width at all. BLOCKER: the `androidx.window` `WindowInfoTracker`
-// / `FoldingFeature` native module costed and deliberately not built in
-// packages/ui/adaptive-panes/PHASE-8-FOLDING-FEATURE.md. Until it exists this
-// component classes the window it is given and makes no hinge claim.
+// HINGE AWARENESS IS NATIVE. Jetpack WindowManager FoldingFeature geometry and
+// posture arrive through the local Expo Modules 2 ReservedRegions module. The
+// shell and AdaptivePanes consume the same normalized folds, so navigation and
+// content cannot disagree about book/tabletop/separating-hinge state.
 //
 // Mobbin (structure only — pulled again for the native-selection pass):
 // BeReal raised centre camera, selection by tint with no container
@@ -92,92 +87,123 @@
 // `expo-router/build/react-navigation/bottom-tabs` because the older
 // `react-navigation` entry did not carry them; 58 added an `exports` map, so
 // that deep path is no longer resolvable and the public entry is the answer.
-import type { BottomTabBarProps } from 'expo-router/js-tabs';
+import { BottomTabBar, type BottomTabBarProps } from 'expo-router/js-tabs';
 import type { ComponentType, ReactNode } from 'react';
+import { I18nManager, Platform, useWindowDimensions, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { navChrome } from '@acme/theme';
-import { PaneEdgesContext, useReducedMotion, useWindowSizeClass, type PaneEdges } from '@acme/ui';
+import {
+  PaneEdgesContext,
+  foldLayoutsFromRegions,
+  resolveAdaptiveNavigationPlacement,
+  useReducedMotion,
+  useReservedRegions,
+  useWindowSizeClass,
+  type AdaptiveNavigationPlacement,
+  type HardwareEdgeColumn,
+  type PaneEdges,
+} from '@acme/ui';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import { haptics } from '@acme/ui/haptics';
 
 // `--spacing-nav-rail`, read from the token so the rail's JS width and its
 // class stay one number. `px-2` on the bottom bar, in points.
 const NAV_RAIL_WIDTH = parseInt(navChrome.rail, 10);
+const NAV_RAIL_EXPANDED_WIDTH = parseInt(navChrome.railExpanded, 10);
 const BAR_GUTTER = 8;
 
 /**
- * Where the navigator must DOCK the bar, for the same window the bar itself
- * classes. Exported so the five shell layouts cannot drift from the component:
- * a layout that said `left` while the bar still drew a horizontal row would put
- * a full-width bottom bar in a 112dp column, and nothing would have failed.
- *
- * `right`, and this is a deliberate departure from Material, which start-aligns
- * its navigation rail. Stated plainly so nobody "corrects" it back: the product
- * owner chose the trailing edge. It is defensible on this product's own layout
- * rather than on the platform convention — AdaptivePanes puts its primary pane
- * on the LEADING edge, so a leading rail stacks two navigation columns against
- * each other on exactly the tablet widths where both are visible, and the rail
- * ends up separated from the content it navigates by a second list. On the
- * trailing edge the shell's nav and the screen's own pane sit on opposite sides
- * of the content, which is also where a tablet held two-handed puts the thumb.
- *
- * What it does NOT change is the doc 02 §2.3 property: a bottom bar spanning a
- * dual-screen device straddles the hinge, and a rail on EITHER vertical edge
- * cannot, because it lives entirely within one half.
- */
-export function useShellTabBarPosition(): 'bottom' | 'right' {
-  const column = useHardwareEdgeColumn();
-  const sizeClass = useWindowSizeClass();
-  if (column > 0) return 'right';
-  return sizeClass === 'compact' ? 'bottom' : 'right';
-}
-
-/**
- * The width of a system-reserved column on the trailing edge, or 0.
- *
- * iPhone Duo's closed outer display reports a right safe-area inset of 84pt
- * for the full height — the camera, clock and wifi live in that column
- * vertically — and UIKit relocates ITS bars into that column rather than
- * shrinking them into what is left (Settings' bottom toolbar button sits there
- * on the simulator). A custom bar only knows "avoid the inset", which left our
- * bottom bar crowded into 382pt with the raised Snap slab off-centre. So when
- * the trailing inset is a column, the bar becomes the rail and lives in it.
- *
- * 64 as the floor: a notched iPhone in landscape reports 44–59 on the side
- * holding the notch, and that is a cutout to avoid, not a column to occupy.
+ * A full-height system-reserved outer-edge column, if the current Apple
+ * window exposes one. Unlike logical leading/trailing navigation, this edge is
+ * PHYSICAL: Duo keeps its controls on the hardware edge rather than mirroring
+ * them when the language direction changes.
  */
 export const HARDWARE_EDGE_COLUMN_MIN = 64;
+
+export function useHardwareEdgeColumnInfo(): HardwareEdgeColumn | null {
+  const { left, right } = useSafeAreaInsets();
+  if (Platform.OS !== 'ios') return null;
+  const leftColumn = left >= HARDWARE_EDGE_COLUMN_MIN ? left : 0;
+  const rightColumn = right >= HARDWARE_EDGE_COLUMN_MIN ? right : 0;
+
+  if (leftColumn === 0 && rightColumn === 0) return null;
+  if (leftColumn > rightColumn) return { edge: 'left', width: leftColumn };
+  return { edge: 'right', width: rightColumn };
+}
+
+/** Backward-compatible numeric reader for callers that only need the width. */
 export function useHardwareEdgeColumn(): number {
-  const { right } = useSafeAreaInsets();
-  return right >= HARDWARE_EDGE_COLUMN_MIN ? right : 0;
+  return useHardwareEdgeColumnInfo()?.width ?? 0;
 }
 
 /**
- * Tells every pane row under the shell that the rail owns the trailing edge.
- * Wrap the shell's `<Tabs>` in it: with the rail in the hardware column, a
- * row that also insets for that column ends a dead 84 dp short of the rail —
- * the rail never covers a pane, and nothing may sit between them either.
+ * One shell-navigation decision for the whole role tree.
+ *
+ * Android follows Material 3 Adaptive semantics using the SAME WindowManager
+ * data as AdaptivePanes: compact -> bottom, tabletop -> bottom, otherwise a
+ * logical-start rail, with extra-large windows getting the expanded wide rail.
+ *
+ * Apple first honours a physical Duo-style hardware column. Ordinary compact
+ * iPhone windows stay bottom; regular-width iPad/tablet windows use a leading
+ * sidebar. The route tree never changes — only its presentation does.
  */
-const LEADING_ONLY: PaneEdges = ['left'];
+export function useShellNavigationPlacement(): AdaptiveNavigationPlacement {
+  const sizeClass = useWindowSizeClass();
+  const { height } = useWindowDimensions();
+  const regions = useReservedRegions();
+  const folds = foldLayoutsFromRegions(regions);
+  const hardwareEdge = useHardwareEdgeColumnInfo();
+  const platform =
+    Platform.OS === 'android' ? 'android' : Platform.OS === 'ios' ? 'ios' : 'other';
+
+  return resolveAdaptiveNavigationPlacement({
+    platform,
+    sizeClass,
+    heightDp: height,
+    folds,
+    hardwareEdge,
+    isRTL: I18nManager.isRTL,
+  });
+}
+
+/** Compatibility seam for layouts that only need React Navigation's position. */
+export function useShellTabBarPosition(): 'bottom' | 'left' | 'right' {
+  return useShellNavigationPlacement().position;
+}
+
+/**
+ * Tells every AdaptivePanes row which physical safe-area edge remains its own.
+ * If an Apple hardware column is occupied by shell navigation, the pane must
+ * not inset for that same column a second time.
+ */
+const LEFT_ONLY: PaneEdges = ['left'];
+const RIGHT_ONLY: PaneEdges = ['right'];
 const BOTH_EDGES: PaneEdges = ['left', 'right'];
+
 export function ShellPaneEdges({ children }: { children: ReactNode }) {
-  const column = useHardwareEdgeColumn();
-  return (
-    <PaneEdgesContext value={column > 0 ? LEADING_ONLY : BOTH_EDGES}>{children}</PaneEdgesContext>
-  );
+  const column = useHardwareEdgeColumnInfo();
+  const edges =
+    column?.edge === 'right'
+      ? LEFT_ONLY
+      : column?.edge === 'left'
+        ? RIGHT_ONLY
+        : BOTH_EDGES;
+
+  return <PaneEdgesContext value={edges}>{children}</PaneEdgesContext>;
 }
 
 export interface ShellTabItem {
   /** The route name inside the shell's (tabs) group. */
   name: string;
   label: string;
-  Icon: ComponentType<{ size?: number; className?: string }>;
+  Icon: ComponentType<{ size?: number; className?: string; color?: ColorValue }>;
   /** The Speechify slot: rendered as a raised rounded-square slab. At most one. */
   raised?: boolean;
 }
 
 interface ShellTabBarProps extends BottomTabBarProps {
   items: ShellTabItem[];
+  placement: AdaptiveNavigationPlacement;
   /**
    * Hot shells pass the learner's band so item height clears the band's target
    * token; Cool shells omit it and get the adult 44.
@@ -197,25 +223,28 @@ interface ShellTabBarProps extends BottomTabBarProps {
 
 export function ShellTabBar({
   state,
+  descriptors,
   emitter,
   navigateToTab,
+  insets: tabInsets,
   items,
+  placement,
   targetClass,
   raisedTargetClass,
 }: ShellTabBarProps) {
   const insets = useSafeAreaInsets();
   /*
-    The FOUR-band hook, not the binary `useSizeClass`. Both read the window and
-    both are foldable-honest, but they answer different questions and
-    adaptive-panes/constants.ts says so in as many words: the binary 768 split
-    decides one column vs two, while these four bands own the progression whose
-    collapse rule is "step to a rail, then drop". Doc 02 §2.1 puts the rail
-    threshold at 600, so the 768 hook would leave a 700dp window on a phone's
-    bottom bar — the exact defect being fixed.
+    The FIVE-band hook, not the binary `useSizeClass`. Both read the window,
+    but they answer different questions: the binary 768 split decides one-column
+    vs two-column composition while compact/medium/expanded/large/extraLarge
+    drives pane count and navigation presentation. Height and fold posture are
+    then layered on top so a wide tabletop or compact-height landscape window
+    correctly stays on bottom navigation.
   */
-  const sizeClass = useWindowSizeClass();
-  const column = useHardwareEdgeColumn();
-  const rail = sizeClass !== 'compact' || column > 0;
+  const rail = placement.rail;
+  const railExpanded = placement.expanded;
+  const column = placement.hardwareWidth;
+  const railEdge = placement.position === 'left' ? 'left' : 'right';
   const minTarget = targetClass ?? 'min-h-target-adult';
   const raisedTarget = raisedTargetClass ?? '';
   /*
@@ -316,11 +345,21 @@ export function ShellTabBar({
           */
           className={
             rail
-              ? 'items-center active:opacity-80'
+              ? railExpanded
+                ? 'w-full px-inset active:opacity-80'
+                : 'items-center active:opacity-80'
               : 'flex-1 self-start -mt-nav-raise items-center active:opacity-80'
           }
         >
-          <View className={rail ? 'items-stretch gap-0.5 py-stack' : 'items-center gap-0.5'}>
+          <View
+            className={
+              railExpanded
+                ? 'w-full flex-row items-center gap-element py-stack'
+                : rail
+                  ? 'items-center gap-0.5 py-stack'
+                  : 'items-center gap-0.5'
+            }
+          >
             <View
               /*
                 ROUNDED SQUARE, not a circle. The kit's own emphasis slot
@@ -352,10 +391,15 @@ export function ShellTabBar({
                 the one control on the bar that is an ACTION rather than a
                 destination.
               */
-              className={`${rail ? 'w-full' : 'w-nav-raised'} h-nav-raised ${raisedTarget} items-center justify-center rounded-md border-2 border-on-surface-footer bg-nav-cta shadow-card`}
+              className={`w-nav-raised h-nav-raised ${raisedTarget} items-center justify-center rounded-md border-2 border-on-surface-footer bg-nav-cta shadow-card`}
             >
               <item.Icon size={30} className="text-on-nav-cta" />
             </View>
+            {railExpanded ? (
+              <Text className="text-label font-bold text-on-surface-footer">
+                {item.label}
+              </Text>
+            ) : null}
             {/*
               NO visible label under this one slot, deliberately. Every other item
               needs its label — an icon alone is ambiguous at 24px — but the raised
@@ -442,7 +486,13 @@ export function ShellTabBar({
           device required to be 72. Our SMALLEST band (adult, 44) is already above
           Material's 32, so the band is always the binding constraint.
         */}
-        <View className={`${minTarget} self-center items-center justify-center gap-0.5 px-inset-tight py-1`}>
+        <View
+          className={`${minTarget} ${
+            railExpanded
+              ? 'w-full flex-row items-center justify-start gap-element px-inset py-2'
+              : 'self-center items-center justify-center gap-0.5 px-inset-tight py-1'
+          }`}
+        >
           {/*
             The indicator — the only thing that changes shape between states, and
             the padding is on BOTH states so selecting a tab cannot shift the
@@ -486,6 +536,68 @@ export function ShellTabBar({
       </Pressable>
     );
   });
+
+  /*
+    ANDROID MATERIAL RAIL — supported SDK-58 path.
+
+    Expo Router's JS-tabs implementation already contains React Navigation's
+    Material sidebar renderer. Use it instead of redrawing Material by hand.
+    WindowManager still decides WHEN this presentation is appropriate; Router
+    still owns route state/history; BottomTabBar owns the Material rail chrome.
+
+    The learner's Snap action keeps its product identity by wrapping only its
+    icon in the raised Moyo slab. It remains a normal top-level destination, so
+    TalkBack order, selection semantics and predictive-back behavior stay with
+    the navigator rather than a second native navigation owner.
+  */
+  if (Platform.OS === 'android' && rail) {
+    const materialDescriptors = Object.fromEntries(
+      state.routes.map((route) => {
+        const descriptor = descriptors[route.key]!;
+        const item = items.find((candidate) => candidate.name === route.name);
+
+        return [
+          route.key,
+          {
+            ...descriptor,
+            options: {
+              ...descriptor.options,
+              tabBarPosition: placement.position,
+              tabBarVariant: 'material' as const,
+              tabBarLabelPosition: railExpanded ? ('beside-icon' as const) : ('below-icon' as const),
+              tabBarStyle: [
+                descriptor.options.tabBarStyle,
+                {
+                  width: railExpanded ? NAV_RAIL_EXPANDED_WIDTH : NAV_RAIL_WIDTH,
+                },
+              ],
+              tabBarIcon: item
+                ? ({ color, size }: { color: ColorValue; size: number }) =>
+                    item.raised ? (
+                      <View className="h-nav-raised w-nav-raised items-center justify-center rounded-md border-2 border-on-surface-footer bg-nav-cta shadow-card">
+                        <item.Icon size={Math.max(size, 30)} color={color} />
+                      </View>
+                    ) : (
+                      <item.Icon size={size} color={color} />
+                    )
+                : descriptor.options.tabBarIcon,
+            },
+          },
+        ];
+      }),
+    ) as typeof descriptors;
+
+    return (
+      <BottomTabBar
+        state={state}
+        descriptors={materialDescriptors}
+        emitter={emitter}
+        navigateToTab={navigateToTab}
+        insets={tabInsets}
+      />
+    );
+  }
+
 
   if (rail) {
     /*
@@ -536,14 +648,27 @@ export function ShellTabBar({
         style={
           column > 0
             ? { paddingTop: insets.top, paddingBottom: insets.bottom, width: column }
-            : {
-                paddingTop: insets.top,
-                paddingBottom: insets.bottom,
-                paddingRight: insets.right,
-                width: NAV_RAIL_WIDTH + insets.right,
-              }
+            : railEdge === 'left'
+              ? {
+                  paddingTop: insets.top,
+                  paddingBottom: insets.bottom,
+                  paddingLeft: insets.left,
+                  width:
+                    (railExpanded ? NAV_RAIL_EXPANDED_WIDTH : NAV_RAIL_WIDTH) +
+                    insets.left,
+                }
+              : {
+                  paddingTop: insets.top,
+                  paddingBottom: insets.bottom,
+                  paddingRight: insets.right,
+                  width:
+                    (railExpanded ? NAV_RAIL_EXPANDED_WIDTH : NAV_RAIL_WIDTH) +
+                    insets.right,
+                }
         }
-        className="flex-col items-stretch justify-center gap-1 border-l-2 border-on-surface-footer bg-surface-footer"
+        className={`flex-col items-stretch justify-center gap-1 ${
+          railEdge === 'left' ? 'border-r-2' : 'border-l-2'
+        } border-on-surface-footer bg-surface-footer`}
       >
         {rendered}
       </View>

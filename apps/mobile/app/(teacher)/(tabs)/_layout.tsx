@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { GraduationCap, Home, ListChecks, User } from '@acme/ui/icons';
 import { ShellHeader } from '../../../components/ShellHeader';
-import { ShellPaneEdges, ShellTabBar, useShellTabBarPosition, type ShellTabItem } from '../../../components/ShellTabBar';
+import { ShellPaneEdges, ShellTabBar, useShellNavigationPlacement, type ShellTabItem } from '../../../components/ShellTabBar';
 
 /**
  * Teacher tabs. Doc 36 §3.3 defines NO teacher tab set — it makes the
@@ -30,15 +30,15 @@ const TITLES: Record<string, string> = {
 
 export default function TeacherTabs() {
   // Doc 02 §2.1: bottom nav under 600dp, rail from 600 up.
-  const tabBarPosition = useShellTabBarPosition();
+  const navigationPlacement = useShellNavigationPlacement();
   return (
     <ShellPaneEdges>
     <Tabs
       screenOptions={{
         header: () => <ShellHeader titles={TITLES} fallback="Home" />,
-        tabBarPosition,
+        tabBarPosition: navigationPlacement.position,
       }}
-      tabBar={(props) => <ShellTabBar {...props} items={ITEMS} />}
+      tabBar={(props) => <ShellTabBar {...props} items={ITEMS} placement={navigationPlacement} />}
     >
       <Tabs.Screen name="teacher-home" options={{ title: 'Home' }} />
       <Tabs.Screen name="classes" options={{ title: 'Classes' }} />

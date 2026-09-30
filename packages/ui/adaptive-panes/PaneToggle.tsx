@@ -5,7 +5,7 @@
 //   sidebar collapse affordance in the pane chrome, not the content). Structure only.
 // SOT: ./pane-overrides.ts (precedence) · ./README.md
 // SOT-KEYWORDS: pane toggle show hide override size class control
-import { useWindowDimensions } from 'react-native';
+import { I18nManager, useWindowDimensions } from 'react-native';
 import { MotionView } from '../motion';
 import { Pressable } from '../tw';
 import { Text } from '../primitives';
@@ -120,7 +120,17 @@ export function PaneToggle({
 
   if (!canToggle) return null;
 
-  const Icon = visible ? ICONS[pane].close : ICONS[pane].open;
+  const logicalIcons =
+    pane === 'primary'
+      ? I18nManager.isRTL
+        ? { open: PanelRightOpen, close: PanelRightClose }
+        : ICONS.primary
+      : pane === 'inspector' || pane === 'detail'
+        ? I18nManager.isRTL
+          ? { open: PanelLeftOpen, close: PanelLeftClose }
+          : ICONS.inspector
+        : ICONS.supplementary;
+  const Icon = visible ? logicalIcons.close : logicalIcons.open;
 
   /*
     TWO GROUNDS, ONE CONTROL — and the pair of tokens has to follow the ground

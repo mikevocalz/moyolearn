@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Calendar, FileText, User, Users } from '@acme/ui/icons';
 import { ShellHeader } from '../../../components/ShellHeader';
-import { ShellPaneEdges, ShellTabBar, useShellTabBarPosition, type ShellTabItem } from '../../../components/ShellTabBar';
+import { ShellPaneEdges, ShellTabBar, useShellNavigationPlacement, type ShellTabItem } from '../../../components/ShellTabBar';
 
 /**
  * Tutor tabs — doc 36 §3.3: Today (sessions timeline) · Learners (my roster →
@@ -24,15 +24,15 @@ const TITLES: Record<string, string> = {
 
 export default function TutorTabs() {
   // Doc 02 §2.1: bottom nav under 600dp, rail from 600 up.
-  const tabBarPosition = useShellTabBarPosition();
+  const navigationPlacement = useShellNavigationPlacement();
   return (
     <ShellPaneEdges>
     <Tabs
       screenOptions={{
         header: () => <ShellHeader titles={TITLES} fallback="Today" />,
-        tabBarPosition,
+        tabBarPosition: navigationPlacement.position,
       }}
-      tabBar={(props) => <ShellTabBar {...props} items={ITEMS} />}
+      tabBar={(props) => <ShellTabBar {...props} items={ITEMS} placement={navigationPlacement} />}
     >
       <Tabs.Screen name="tutor-today" options={{ title: 'Today' }} />
       <Tabs.Screen name="session-prep" options={{ title: 'Learners' }} />

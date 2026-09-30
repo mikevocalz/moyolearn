@@ -2,7 +2,7 @@ import { Tabs } from 'expo-router';
 import { Camera, Compass, Home, Star, TrendingUp, User } from '@acme/ui/icons';
 import { useAppSession } from '@acme/app';
 import { ShellHeader } from '../../../components/ShellHeader';
-import { ShellPaneEdges, ShellTabBar, useShellTabBarPosition, type ShellTabItem } from '../../../components/ShellTabBar';
+import { ShellPaneEdges, ShellTabBar, useShellNavigationPlacement, type ShellTabItem } from '../../../components/ShellTabBar';
 
 /**
  * The band-adaptive learner tab bar — doc 36 §3.1's exact table. The band comes
@@ -80,7 +80,7 @@ const TITLES: Record<string, string> = {
 export default function LearnerTabs() {
   const { activeContext } = useAppSession();
   const band: Band = activeContext.gradeBand ?? 'teen';
-  const tabBarPosition = useShellTabBarPosition();
+  const navigationPlacement = useShellNavigationPlacement();
   const items = BAND_ITEMS[band];
   const visible = new Set(items.map((item) => item.name));
 
@@ -92,12 +92,13 @@ export default function LearnerTabs() {
         // Doc 02 §2.1: bottom nav under 600dp, rail from 600 up. The navigator
         // turns its own container to `flexDirection: 'row'` for `right`, so the
         // rail is a real flex sibling of the scene — no overlay, no scene inset.
-        tabBarPosition,
+        tabBarPosition: navigationPlacement.position,
       }}
       tabBar={(props) => (
         <ShellTabBar
           {...props}
           items={items}
+          placement={navigationPlacement}
           targetClass={BAND_TARGET[band]}
           raisedTargetClass={BAND_RAISED_TARGET[band]}
         />

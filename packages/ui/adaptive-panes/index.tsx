@@ -21,13 +21,13 @@
  */
 import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Freeze } from 'react-freeze';
-import { useWindowDimensions } from 'react-native';
+import { I18nManager, useWindowDimensions } from 'react-native';
 import { useStore } from 'zustand';
 import { View } from '../tw';
 import { Aside, Main, Section } from '../primitives';
 import { SafeArea } from '../SafeArea';
 import { MotionView } from '../motion';
-import { isCollapsed, PANE_WIDTH_CLASS } from './constants';
+import { isCollapsed } from './constants';
 import { resolvePaneVisibility } from './pane-overrides';
 import { CollapsiblePane } from './CollapsiblePane';
 import { PaneToggle } from './PaneToggle';
@@ -39,6 +39,12 @@ import { AdaptivePanesContext } from './context';
 import { useSplitViewBack } from './use-split-view-back';
 import { PaneDivider } from './PaneDivider';
 import { usePaneEdges } from './pane-edges';
+import { useFoldLayouts } from './use-fold-layout';
+import {
+  resolveTrailingInspectorLayout,
+  resolveVerticalFoldPanePlan,
+  resolveVerticalMultiFoldPanePlan,
+} from './fold-layout';
 import { DetailSlot } from './detail-slot';
 import {
   DEFAULT_PRIMARY_WIDTH,
@@ -68,13 +74,6 @@ function AdaptivePanesInspector({ children }: { children?: ReactNode }) {
  * hierarchy.
  */
 const PANE_DIVIDER = 'border-border/15';
-
-/**
- * Travel for the inspector drawer, in dp. Must clear the pane's own width
- * (w-pane-inspector is 20rem, and metro sets rem:14, so 280) or the drawer
- * would sit half on screen when closed.
- */
-const INSPECTOR_TRAVEL = 300;
 
 /**
  * A pane that is on screen renders; a pane that is not stays MOUNTED and stops
@@ -181,6 +180,8 @@ function AdaptivePanesNavigator({
   */
   const [rowWidth, setRowWidth] = useState<number | null>(null);
   const paneEdges = usePaneEdges();
+  const foldLayouts = useFoldLayouts(paneEdges);
+  const primaryFoldLayout = foldLayouts[0] ?? null;
 
   const all = Children.toArray(children);
   const columns = all.filter(
@@ -366,6 +367,79 @@ function AdaptivePanesNavigator({
         );
 
   /*
+    A SEPARATING VERTICAL HINGE IS A LAYOUT BOUNDARY, not another breakpoint.
+
+    Window-size classes still decide WHICH panes are allowed. Native fold
+    geometry only decides WHERE an already-visible pane boundary lands. That
+    distinction keeps a folded phone, split-screen window and ordinary tablet
+    on the same policy while preventing a pane from straddling a physical
+    hinge.
+
+    The pure planner never hides content. It first tries to keep primary +
+    supplementary together on the leading physical region with detail on the
+    trailing region. If that cannot fit, it can put primary on the first region
+    and supplementary + detail on the second. If neither is usable we preserve
+    the width-class layout rather than choosing product content here.
+  */
+  const multiFoldPlan = collapsed
+    ? null
+    : resolveVerticalMultiFoldPanePlan({
+        folds: foldLayouts,
+        rowWidth,
+        primaryVisible: Boolean(columns[0] && visible.primary),
+        supplementaryVisible: Boolean(columns[1] && visible.supplementary),
+        detailVisible: visible.detail,
+        primaryWidth: openPrimaryWidth,
+        supplementaryWidth: openSupplementaryWidth,
+        detailMinWidth: Math.max(PRIMARY_WIDTH_MIN, detailFloor),
+        paneMinWidth: PRIMARY_WIDTH_MIN,
+      });
+
+  const foldPlan = multiFoldPlan
+    ? null
+    : resolveVerticalFoldPanePlan({
+        fold: collapsed ? null : primaryFoldLayout,
+        rowWidth,
+        primaryVisible: Boolean(columns[0] && visible.primary),
+        supplementaryVisible: Boolean(columns[1] && visible.supplementary),
+        detailVisible: visible.detail,
+        primaryWidth: openPrimaryWidth,
+        supplementaryWidth: openSupplementaryWidth,
+        detailMinWidth: Math.max(PRIMARY_WIDTH_MIN, detailFloor),
+        paneMinWidth: PRIMARY_WIDTH_MIN,
+      });
+
+  const effectivePrimaryWidth =
+    multiFoldPlan?.primaryWidth ?? foldPlan?.primaryWidth ?? openPrimaryWidth;
+  const effectiveSupplementaryWidth =
+    multiFoldPlan?.supplementaryWidth ??
+    foldPlan?.supplementaryWidth ??
+    openSupplementaryWidth;
+
+  const gapAfterPrimary =
+    multiFoldPlan?.gapAfterPrimary ??
+    (foldPlan?.splitAfter === 'primary' ? foldPlan.gapWidth : 0);
+  const gapAfterSupplementary =
+    multiFoldPlan?.gapAfterSupplementary ??
+    (foldPlan?.splitAfter === 'supplementary' ? foldPlan.gapWidth : 0);
+
+  /*
+    SPLITVIEW.INSPECTOR PARITY ON ANDROID.
+
+    Expo Router's native inspector is an overlay that slides in from the
+    logical trailing edge; it is not a fourth tiled column. Keep that exact
+    contract here. On a separating vertical fold, cap the drawer to the
+    physical trailing region so an open inspector cannot cover the hinge or
+    spill onto the other display. RTL flips both the edge and slide direction.
+  */
+  const inspectorLayout = resolveTrailingInspectorLayout({
+    folds: collapsed ? [] : foldLayouts,
+    rowWidth,
+    preferredWidth: PANE_WIDTH_DP.inspector,
+    isRTL: I18nManager.isRTL,
+  });
+
+  /*
     WHICH PANE ABSORBS THE WINDOW. Normally the detail pane, which is why the
     leading panes are all a fixed token width. Hide the detail — the tutor
     session's "Natalie" control does exactly that — and something else has to,
@@ -409,7 +483,7 @@ function AdaptivePanesNavigator({
             <>
               <CollapsiblePane
                 open={visible.primary}
-                width={collapsed ? collapsedWidth : openPrimaryWidth}
+                width={collapsed ? collapsedWidth : effectivePrimaryWidth}
                 fill={fillPane === 'primary'}
               >
                 <Aside className="flex-1">
@@ -419,8 +493,15 @@ function AdaptivePanesNavigator({
               {/* No divider collapsed: there is nothing on the other side of
                   it to drag against, and a grab handle on the screen edge is a
                   control that cannot do anything. */}
-              {!collapsed && visible.primary ? (
-                <PaneDivider width={openPrimaryWidth} />
+              {!collapsed && visible.primary && gapAfterPrimary === 0 ? (
+                <PaneDivider width={effectivePrimaryWidth} />
+              ) : null}
+              {!collapsed && gapAfterPrimary > 0 ? (
+                <View
+                  style={{ width: gapAfterPrimary }}
+                  pointerEvents="none"
+                  aria-hidden
+                />
               ) : null}
             </>
           ) : null}
@@ -429,17 +510,28 @@ function AdaptivePanesNavigator({
             <CollapsiblePane
               open={visible.supplementary}
               width={
-                collapsed ? collapsedWidth : openSupplementaryWidth
+                collapsed ? collapsedWidth : effectiveSupplementaryWidth
               }
               fill={fillPane === 'supplementary'}
               className={
-                !collapsed && visible.supplementary ? `border-r ${PANE_DIVIDER}` : undefined
+                !collapsed &&
+                visible.supplementary &&
+                gapAfterSupplementary === 0
+                  ? `border-r ${PANE_DIVIDER}`
+                  : undefined
               }
             >
               <Section className="flex-1">
                 <PaneContent open={visible.supplementary}>{columns[1]}</PaneContent>
               </Section>
             </CollapsiblePane>
+          ) : null}
+          {!collapsed && gapAfterSupplementary > 0 ? (
+            <View
+              style={{ width: gapAfterSupplementary }}
+              pointerEvents="none"
+              aria-hidden
+            />
           ) : null}
 
           {/*
@@ -513,7 +605,7 @@ function AdaptivePanesNavigator({
                     {columnCount === 2 ? (
                       <PaneToggle pane="supplementary" columnCount={columnCount} />
                     ) : null}
-                    {inspectorPane ? (
+                    {showInspector && inspectorPane ? (
                       <PaneToggle pane="inspector" columnCount={columnCount} />
                     ) : null}
                   </>
@@ -546,8 +638,14 @@ function AdaptivePanesNavigator({
           <MotionView
             pointerEvents={inspectorOpen ? 'auto' : 'none'}
             aria-hidden={!inspectorOpen}
-            className={`absolute bottom-0 right-0 top-0 ${PANE_WIDTH_CLASS.inspector} border-l ${PANE_DIVIDER} bg-surface shadow-overlay`}
-            animate={{ x: inspectorOpen ? 0 : INSPECTOR_TRAVEL }}
+            className={`absolute bottom-0 top-0 ${
+              inspectorLayout.edge === 'right' ? 'border-l' : 'border-r'
+            } ${PANE_DIVIDER} bg-surface shadow-overlay`}
+            style={{
+              width: inspectorLayout.width,
+              ...(inspectorLayout.edge === 'right' ? { right: 0 } : { left: 0 }),
+            }}
+            animate={{ x: inspectorOpen ? 0 : inspectorLayout.closedX }}
             transition={{ type: 'spring', damping: 32, stiffness: 140, mass: 1.1 }}
           >
             <Aside className="flex-1">
@@ -582,6 +680,21 @@ export {
   isCollapsed,
   type WindowSizeClass,
 } from './constants';
+export {
+  foldLayoutFromRegions,
+  foldLayoutsFromRegions,
+  resolveTrailingInspectorLayout,
+  resolveVerticalFoldPanePlan,
+  resolveVerticalMultiFoldPanePlan,
+  type FoldLayout,
+  type FoldPosture,
+  type TrailingInspectorLayout,
+  type TrailingInspectorLayoutInput,
+  type VerticalFoldPanePlan,
+  type VerticalFoldPanePlanInput,
+  type VerticalMultiFoldPanePlan,
+  type VerticalMultiFoldPanePlanInput,
+} from './fold-layout';
 
 // Pane chrome — composable pieces the host arranges, exported for direct use
 // by feature screens and Storybook.

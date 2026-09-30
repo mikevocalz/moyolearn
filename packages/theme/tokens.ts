@@ -757,15 +757,16 @@ export const contentWidths = {
 
 /**
  * Doc 02 §2.1 window width classes — lower bound of each class, inclusive, in
- * dp. The Material 3 Adaptive bands under the doc's own names (`large`, not
- * androidx's `extraLarge`). TS-only export (not emitted to CSS): consumers are
+ * dp. These now mirror Android's five current width bands through
+ * `extraLarge` so tablets, desktop windows and connected displays do not
+ * plateau at the 1200dp policy. TS-only export (not emitted to CSS): consumers are
  * layout policy modules that compare numbers, starting with
  * `packages/ui/adaptive-panes/constants.ts`.
  *
  * TWO WIDTH SYSTEMS COEXIST, deliberately — see
  * `packages/ui/size-class.constants.ts` for the other one: a binary
  * `compact|regular` split at 768 that TutorStage and DashboardShell hold the
- * line on. These four-band classes drive multi-pane layouts; the 768 split
+ * line on. These five-band classes drive multi-pane layouts; the 768 split
  * drives one-column/two-column decisions. Do not merge them by nudging numbers.
  */
 export const widthClassMinDp = {
@@ -773,6 +774,7 @@ export const widthClassMinDp = {
   medium: 600,
   expanded: 840,
   large: 1200,
+  extraLarge: 1600,
 } as const;
 
 export type WidthClassName = keyof typeof widthClassMinDp;
@@ -973,6 +975,10 @@ export const navChrome = {
     carry selection on its own.
   */
   rail: '80px',
+  // Expanded wide rail for desktop-class / extra-large windows. Material 3
+  // allows 220–360dp; 240 keeps Moyo labels comfortably readable without
+  // turning primary navigation into a second content pane.
+  railExpanded: '240px',
   raised: '64px',
   // Keep most of the camera button seated in the bar, with a small lift.
   raise: '16px',

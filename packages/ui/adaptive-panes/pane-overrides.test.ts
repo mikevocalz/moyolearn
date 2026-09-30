@@ -22,6 +22,7 @@ const CAN_SHOW: Record<string, readonly TogglablePane[]> = {
   medium: ['primary'],
   expanded: PANES,
   large: PANES,
+  extraLarge: PANES,
 };
 
 describe('resolvePaneVisibility — no overrides', () => {

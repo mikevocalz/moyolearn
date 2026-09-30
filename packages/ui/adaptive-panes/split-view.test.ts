@@ -21,6 +21,7 @@ describe('windowSizeClassForWidth', () => {
     assert.equal(windowSizeClassForWidth(WINDOW_SIZE_CLASS_MIN_WIDTH_DP.medium), 'medium');
     assert.equal(windowSizeClassForWidth(WINDOW_SIZE_CLASS_MIN_WIDTH_DP.expanded), 'expanded');
     assert.equal(windowSizeClassForWidth(WINDOW_SIZE_CLASS_MIN_WIDTH_DP.large), 'large');
+    assert.equal(windowSizeClassForWidth(WINDOW_SIZE_CLASS_MIN_WIDTH_DP.extraLarge), 'extraLarge');
   });
 
   it('treats each boundary as inclusive-lower, so 1dp below belongs to the band under it', () => {
@@ -30,6 +31,8 @@ describe('windowSizeClassForWidth', () => {
     assert.equal(windowSizeClassForWidth(840), 'expanded');
     assert.equal(windowSizeClassForWidth(1199), 'expanded');
     assert.equal(windowSizeClassForWidth(1200), 'large');
+    assert.equal(windowSizeClassForWidth(1599), 'large');
+    assert.equal(windowSizeClassForWidth(1600), 'extraLarge');
   });
 });
 

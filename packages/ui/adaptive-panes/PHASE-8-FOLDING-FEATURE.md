@@ -1,85 +1,145 @@
-# Phase 8 proposal — hinge awareness via `WindowInfoTracker` / `FoldingFeature`
+# Phase 8 — native fold awareness
 
-**Proposal only. No code was written for this, by instruction.**
+**Implemented on Android with Expo Modules 2 + Jetpack WindowManager.**
 
-## What exists today
+## What changed
 
-Pane placement is driven entirely by `useWindowDimensions()` width in dp, mapped
-to the Material 3 width classes. That is correct for phones, tablets, desktop
-windowing and split-screen. It is *blind* to one thing: on a foldable, part of
-the window may be physically occluded or angled.
+The original width-class layout is still the base policy. That remains correct for
+ordinary phones, tablets, desktop windowing, rotation, and Android multi-window.
 
-An unfolded Pixel Fold or Galaxy Z Fold reports a single wide window. We happily
-render a sidebar + detail into it. Neither we nor React Native know that a hinge
-runs down the middle of that window, so a pane boundary can land on the fold and
-a detail pane can straddle it.
+The missing physical-display signal now comes from the existing
+`ReservedRegions` capability:
 
-## What the native seam would buy
+- **iOS 27.1+** — UIKit reserved `division` / `occlusion` regions.
+- **Android** — Jetpack WindowManager `WindowInfoTracker` /
+  `FoldingFeature`, normalized to a `division` region.
 
-`androidx.window.layout.WindowInfoTracker` emits a `WindowLayoutInfo` stream of
-`DisplayFeature`s. The one that matters is `FoldingFeature`, which carries:
+The Android implementation lives at:
 
-- `bounds` — the hinge rectangle **in window coordinates**, which is the piece
-  we cannot derive from JS at all
-- `orientation` — `VERTICAL` / `HORIZONTAL`
-- `state` — `FLAT` / `HALF_OPENED`
-- `occlusionType` — `NONE` / `FULL`
-- `isSeparating`
+`apps/mobile/modules/reserved-regions/android/`
 
-Concretely it enables three things:
+and is an **Expo Modules 2** module, not a legacy `ModuleDefinition` module:
 
-1. **Snap the pane split to the hinge.** Instead of `w-pane-primary`, the leading
-   pane takes the width of the hinge's leading edge, so the divider *is* the
-   fold. This is the single biggest visual win and is impossible to fake from
-   width alone.
-2. **Avoid straddling.** When `isSeparating` is true and a pane would span the
-   hinge, choose a different arrangement rather than splitting content across a
-   physical seam.
-3. **Tabletop posture.** `HALF_OPENED` + `HORIZONTAL` is the laptop-style
-   posture; the convention is content above the fold, controls below. For the
-   schedule calendar that is a genuinely better layout: grid on top, booking
-   controls on the bottom half.
+- `expoModule { v2 true }`
+- `@ExpoModule(name = "ReservedRegions")`
+- `@JS suspend fun query()`
+- `@Event val onChanged`
+- `@Record` payloads
 
-## Cost
+SDK 58 exposes the Android module through
+`globalThis.expoV2.modules.ReservedRegions`. The shared UI hook keeps the
+existing iOS module path and consumes Android v2 directly.
 
-- A new Android native module: a `TurboModule` or Expo module wrapping
-  `WindowInfoTracker.getOrCreate(activity).windowLayoutInfo(activity)`, which is
-  a Kotlin `Flow` bound to activity lifecycle, bridged to JS as an event
-  emitter. Adds `androidx.window:window` (~ a few hundred KB).
-- Lifecycle correctness is the real cost, not the API surface: the flow must be
-  collected on `STARTED` and cancelled on `STOPPED`, and re-emit on
-  configuration change. Getting this wrong leaks an activity reference.
-- Testing requires either physical foldables or the Android Studio foldable
-  emulators with posture controls. Neither is in this project's current loop, so
-  it would ship largely unverified — the same objection that kept the scroll-sync
-  Reanimated work out of Phase 6.
-- iOS parity is nil. It becomes a permanently Android-only branch in a module
-  whose entire selling point is a byte-identical call site.
+## Native data
 
-## Where it belongs
+WindowManager contributes the data that JavaScript cannot derive from width:
 
-**Upstream in `react-native-screens`, not in this app.**
+- `bounds` — hinge/fold rectangle in application-window coordinates
+- `orientation` — vertical / horizontal
+- `state` — flat / half-opened
+- `occlusionType` — none / full
+- `isSeparating` — whether the feature creates two logical display regions
 
-Reasons:
+The native record is converted from px to dp before crossing the bridge, so all
+consumers stay in React Native layout units.
 
-1. It is not app logic. Hinge geometry is a platform capability, exactly like the
-   window size class, and every adaptive Android app needs the identical binding.
-2. `react-native-screens` already owns the Android windowing seam and already
-   ships the unwired C++ (`RNSSplitScreenShadowNode`, `…ComponentDescriptor`,
-   `…State`). If `split/` ever gains a real Android implementation, hinge
-   awareness belongs inside it, and an app-level module would then be duplicate
-   machinery competing with the native one.
-3. Solving it here means every consumer of this pattern re-solves it, each with
-   their own lifecycle bugs.
+**There is deliberately no hinge-angle field.** WindowManager's
+`FoldingFeature` does not expose a continuous angle. Moyo uses posture and
+geometry rather than inventing an angle from vendor-specific sensors.
 
-## Recommendation
+## Live changes
 
-Do not build it in this app. The width-class layout is correct on every device
-including foldables — it is merely *unaware* of the hinge, which is a polish
-gap, not a correctness bug. If foldables become a target, the right first move is
-an upstream issue on `react-native-screens` proposing `FoldingFeature` plumbed
-through the existing gamma window seam, since that is where the Android split
-implementation would have to live anyway.
+Android does not poll `Dimensions` for posture.
 
-Interim mitigation available with zero native code: keep pane widths tokenised
-(already true), so if a hinge binding ever arrives, only `constants.ts` changes.
+The Modules 2 event's `onStartObserving` hook begins collecting
+`WindowInfoTracker.windowLayoutInfo(activity)`; `onStopObserving` cancels the
+Flow when the last JS listener disappears. The UI hook also calls `query()`
+when the RN window dimensions change so a configuration change can rebind the
+Flow to a replacement Activity.
+
+That catches:
+
+- fold / unfold
+- flat ↔ half-opened transitions
+- book posture
+- tabletop posture
+- dual-screen separating hinges
+- rotation / multi-window changes
+
+## AdaptivePanes behavior
+
+`AdaptivePanes` uses Moyo's five current width classes — compact, medium,
+expanded, large and extraLarge — to decide **which** panes may be visible.
+
+A separating **vertical** fold then decides **where** an already-visible pane
+boundary lands:
+
+1. Prefer primary + supplementary on the leading physical region and detail on
+   the trailing region when both leading panes fit.
+2. Otherwise put primary on the leading region and supplementary + detail on the
+   trailing region when that still defends the detail minimum.
+3. On a two-hinge/trifold layout with three authored panes, choose the usable
+   hinge pair that maps primary, supplementary and detail one-per-region.
+4. If no honest arrangement fits, keep the existing width-class composition.
+   The fold layer never silently chooses which product pane to hide.
+
+For a fully occluding hinge, its physical width is inserted as layout space.
+The draggable divider is suppressed when the physical hinge itself is the pane
+boundary.
+
+A flat, non-separating flexible fold does **not** rearrange the panes.
+
+## Inspector behavior
+
+Expo Router's `SplitView.Inspector` is a supplementary surface that slides in
+from the trailing edge. Android follows that same semantic contract in
+`AdaptivePanes.Inspector`:
+
+- overlay, never a fourth tiled column
+- logical trailing edge, including RTL
+- `showInspector` gates the authored inspector
+- width capped to the trailingmost physical region across separating vertical folds
+- hidden state stays mounted/frozen so local state and render surfaces survive
+
+The inspector uses the same normalized fold geometry as the main pane planner,
+so there is no second hinge implementation to keep in sync.
+
+## Tabletop and book posture
+
+`foldLayoutFromRegions()` derives:
+
+- `halfOpened + horizontal` → `tabletop`
+- `halfOpened + vertical` → `book`
+- otherwise → `flat`
+
+AdaptivePanes does not globally turn a horizontal/tabletop fold into a vertical
+stack because the semantic assignment is screen-specific. A media screen may
+want content above / controls below; a tutor screen may want lesson above /
+composer below. Those surfaces can consume the exported posture signal without
+adding another native bridge.
+
+## Dependency policy
+
+Android uses stable:
+
+`androidx.window:window:1.5.1`
+
+The experimental WindowManager 1.6 Window Area APIs are not pulled into this
+core hinge path. Secondary/rear-display presentation should be a separate
+capability because it has a different lifecycle and hardware-availability
+contract from fold geometry.
+
+## Tests
+
+Pure geometry stays outside React Native and runs in the existing Node test
+suite:
+
+`packages/ui/adaptive-panes/fold-layout.test.ts`
+
+It covers tabletop detection, compact-height navigation behavior, flat dual-screen
+separation, UIKit orientation inference, single-hinge snapping, trifold three-pane
+placement, trailing-region inspector constraints, and the non-separating fallback.
+
+Device verification still matters. Run the Android Studio foldable emulator
+posture controls and at least one physical foldable before calling a specific
+hardware matrix certified.

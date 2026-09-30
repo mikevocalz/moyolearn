@@ -42,11 +42,11 @@ widest-first for resolution; nothing else in the module names a number.
 | `medium` | 600 |
 | `expanded` | 840 |
 | `large` | 1200 |
+| `extraLarge` | 1600 |
 
 **A second width system exists on purpose**: `packages/ui/size-class.constants.ts`
 splits `compact|regular` at 768 dp for one-column/two-column decisions —
-TutorStage and DashboardShell hold that line. These four bands decide how many
-panes tile; the 768 split decides screen composition. Do not merge them.
+TutorStage and DashboardShell hold that line. These five bands decide how many panes tile; the 768 split decides screen composition. Do not merge them.
 
 Pane widths come from `--container-pane-*` tokens in `packages/theme/tokens.ts`,
 so panes are sized by `w-pane-primary` and friends rather than arbitrary values.
@@ -61,6 +61,7 @@ tested in `pane-overrides.test.ts`).
 
 | Size class | primary | supplementary | inspector | detail |
 |---|---|---|---|---|
+| extraLarge | full | — | yes | flex |
 | large | full | — | yes | flex |
 | expanded | full | — | yes | flex |
 | medium | narrow rail | — | no | flex |
@@ -70,6 +71,7 @@ tested in `pane-overrides.test.ts`).
 
 | Size class | primary | supplementary | inspector | detail |
 |---|---|---|---|---|
+| extraLarge | full | yes | yes | flex |
 | large | full | yes | yes | flex |
 | expanded | narrow rail | yes | no | flex |
 | medium | hidden | yes | no | flex |
@@ -79,6 +81,52 @@ At `compact` exactly one pane renders. The inspector occupies **no layout
 space** below `expanded` — it is not rendered zero-width. Collapse is decided
 by **width class, never device type** (doc 37 §3.2): a folded foldable is a
 phone, a resized window is whatever width it currently is.
+
+### Native fold geometry
+
+Width class decides **which** panes may be visible. Native fold geometry decides
+**where** an already-visible boundary should land.
+
+The shared `useReservedRegions()` capability feeds this host on native:
+
+- iOS 27.1+: UIKit reserved `division` / `occlusion` regions.
+- Android: Jetpack WindowManager `WindowInfoTracker` / `FoldingFeature`
+  through the local `ReservedRegions` **Expo Modules 2** module.
+
+For a separating vertical fold, AdaptivePanes prefers to put a pane boundary on
+the physical hinge and reserves a fully occluding hinge's width so content never
+straddles it. When two or more separating vertical hinges are present and the
+screen has three authored panes, the planner chooses the hinge pair that maps
+primary, supplementary and detail one-per-physical-region. This is the trifold
+path; the native bridge preserves every `FoldingFeature`, never only hinge #1. The fold layer never changes the visibility policy or silently
+chooses which product pane to hide. A flat non-separating fold leaves the
+width-class composition alone.
+
+Android posture metadata is also normalized for screen-specific layouts:
+`HALF_OPENED + HORIZONTAL` becomes `tabletop`, and
+`HALF_OPENED + VERTICAL` becomes `book`. AdaptivePanes does not globally
+turn tabletop into a top/bottom composition because which content belongs above
+or below the hinge is a product decision for each screen.
+
+WindowManager does not expose a continuous hinge angle, so the shared type
+deliberately has no fake angle field. See `PHASE-8-FOLDING-FEATURE.md`.
+
+### Inspector parity
+
+`AdaptivePanes.Inspector` intentionally mirrors Expo Router's
+`SplitView.Inspector` interaction model on Android: it is a supplementary
+**overlay** that slides in from the logical trailing edge, not another tiled
+column.
+
+- LTR: enters from the right.
+- RTL: enters from the left.
+- `showInspector` must be true for the authored inspector and its toggle to be active.
+- On separating vertical folds, its width is capped to the trailingmost physical
+  display region so the drawer cannot cover any hinge or cross onto another
+  display.
+- Hiding the inspector moves it offscreen but leaves its subtree mounted/frozen,
+  preserving local state and expensive native/GPU surfaces.
+
 
 Diagnostics: more than two `AdaptivePanes.Column` **throws**, foreign children
 warn, zero children warn and fall back to the detail pane.
@@ -335,5 +383,5 @@ runnable under plain node.
 
 Its `RESPONSIVE_SCREEN_BREAKPOINT = 1024` single boolean and its practice of
 rendering different subtrees per size class were both rejected: this module uses
-four window size classes and keeps ONE tree, so panes survive rotation and
+five window size classes and keeps ONE tree, so panes survive rotation and
 multi-window resize with scroll position, selection and search intact.
