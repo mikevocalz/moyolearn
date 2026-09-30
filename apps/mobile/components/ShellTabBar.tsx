@@ -122,6 +122,7 @@ export const HARDWARE_EDGE_COLUMN_MIN = 64;
 
 export function useHardwareEdgeColumnInfo(): HardwareEdgeColumn | null {
   const { left, right } = useSafeAreaInsets();
+  if (Platform.OS !== 'ios') return null;
   const leftColumn = left >= HARDWARE_EDGE_COLUMN_MIN ? left : 0;
   const rightColumn = right >= HARDWARE_EDGE_COLUMN_MIN ? right : 0;
 
