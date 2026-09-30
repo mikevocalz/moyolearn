@@ -29,7 +29,7 @@
   "scripts": {
     "lint": "eslint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test 'audio/**/*.test.ts' 'adaptive-panes/*.test.ts' 'xr/*.test.ts' 'stage-board/*.test.ts'"
+    "test": "node --test 'audio/**/*.test.ts' 'adaptive-navigation.test.ts' 'adaptive-panes/*.test.ts' 'xr/*.test.ts' 'stage-board/*.test.ts'"
   },
   "dependencies": {
     "@acme/theme": "workspace:*",
