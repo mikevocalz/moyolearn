@@ -73,7 +73,7 @@ export function foldLayoutFromRegions(
     occlusionType: region.occlusionType,
     // Android tells us directly. UIKit's active division is the equivalent
     // signal; an inactive zero-width Duo division must not rearrange panes.
-    separating: region.separating ?? region.active,
+    separating: (region.separating ?? region.active) || region.occlusionType === 'full',
     x: Math.max(0, region.x - leadingInset),
     y: region.y,
     width: Math.max(0, region.width),
