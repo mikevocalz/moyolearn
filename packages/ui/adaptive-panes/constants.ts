@@ -8,7 +8,7 @@
  *
  * TWO WIDTH SYSTEMS COEXIST IN THIS PACKAGE, deliberately:
  *
- * - THIS module's four bands (compact/medium/expanded/large) decide how many
+ * - THIS module's five bands (compact/medium/expanded/large/extraLarge) decide how many
  *   panes tile beside each other.
  * - `../size-class.constants.ts`'s binary `compact|regular` split at 768 dp
  *   decides one-column vs two-column composition. TutorStage and
@@ -16,7 +16,7 @@
  *   is not this module's ("step to a rail, then drop").
  *
  * They answer different questions and are kept apart on purpose — merging them
- * would force every two-state consumer through a four-state matrix.
+ * would force every two-state consumer through a five-state matrix.
  *
  * @see https://developer.android.com/develop/ui/compose/layouts/adaptive/use-window-size-classes
  */
