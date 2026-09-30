@@ -28,6 +28,7 @@ import { widthClassMinDp } from '@acme/theme';
  * theme token; only the ordering is owned here.
  */
 export const WINDOW_SIZE_CLASS_MIN_WIDTH_DP = {
+  extraLarge: widthClassMinDp.extraLarge,
   large: widthClassMinDp.large,
   expanded: widthClassMinDp.expanded,
   medium: widthClassMinDp.medium,
@@ -38,6 +39,7 @@ export type WindowSizeClass = keyof typeof WINDOW_SIZE_CLASS_MIN_WIDTH_DP;
 
 /** Widest-first, so the first match wins. */
 export const WINDOW_SIZE_CLASSES_BY_WIDTH = [
+  'extraLarge',
   'large',
   'expanded',
   'medium',
@@ -99,6 +101,7 @@ export interface PaneVisibility {
 }
 
 const VISIBILITY_TWO_COLUMN: Record<WindowSizeClass, PaneVisibility> = {
+  extraLarge: { primary: true, supplementary: false, inspector: true, detail: true, primaryNarrow: false },
   large: { primary: true, supplementary: false, inspector: true, detail: true, primaryNarrow: false },
   expanded: { primary: true, supplementary: false, inspector: true, detail: true, primaryNarrow: false },
   medium: { primary: true, supplementary: false, inspector: false, detail: true, primaryNarrow: true },
@@ -106,6 +109,7 @@ const VISIBILITY_TWO_COLUMN: Record<WindowSizeClass, PaneVisibility> = {
 };
 
 const VISIBILITY_THREE_COLUMN: Record<WindowSizeClass, PaneVisibility> = {
+  extraLarge: { primary: true, supplementary: true, inspector: true, detail: true, primaryNarrow: false },
   large: { primary: true, supplementary: true, inspector: true, detail: true, primaryNarrow: false },
   // Sidebar collapses to the narrow rail first, supplementary is kept because
   // it is the pane that actually drives the detail route.
