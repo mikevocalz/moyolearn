@@ -5,6 +5,7 @@ import {
   foldLayoutsFromRegions,
   resolveTrailingInspectorLayout,
   resolveVerticalFoldPanePlan,
+  resolveVerticalMultiFoldPanePlan,
   type FoldLayout,
 } from './fold-layout.ts';
 import type { ReservedRegion } from '../reserved-regions.types.ts';
@@ -148,7 +149,7 @@ test('does not rearrange a flat continuous non-separating fold', () => {
 test('inspector overlays from the trailing physical region without crossing hinge', () => {
   assert.deepEqual(
     resolveTrailingInspectorLayout({
-      fold: verticalFold,
+      folds: [verticalFold],
       rowWidth: 880,
       preferredWidth: 280,
       isRTL: false,
@@ -164,7 +165,7 @@ test('inspector overlays from the trailing physical region without crossing hing
 test('inspector width is capped when the trailing fold region is narrower', () => {
   assert.deepEqual(
     resolveTrailingInspectorLayout({
-      fold: { ...verticalFold, x: 650, width: 30 },
+      folds: [{ ...verticalFold, x: 650, width: 30 }],
       rowWidth: 880,
       preferredWidth: 280,
       isRTL: false,
@@ -180,7 +181,7 @@ test('inspector width is capped when the trailing fold region is narrower', () =
 test('RTL inspector uses the logical trailing edge and stays left of the hinge', () => {
   assert.deepEqual(
     resolveTrailingInspectorLayout({
-      fold: verticalFold,
+      folds: [verticalFold],
       rowWidth: 880,
       preferredWidth: 280,
       isRTL: true,
@@ -214,4 +215,69 @@ test('preserves and sorts multiple vertical hinges for trifold-aware consumers',
   assert.equal(folds.length, 2);
   assert.equal(folds[0]?.x, 350);
   assert.equal(folds[1]?.x, 700);
+});
+
+
+test('maps three panes one-per-region across two separating vertical hinges', () => {
+  const first: FoldLayout = { ...verticalFold, x: 320, width: 16 };
+  const second: FoldLayout = { ...verticalFold, x: 660, width: 20 };
+
+  assert.deepEqual(
+    resolveVerticalMultiFoldPanePlan({
+      folds: [second, first],
+      rowWidth: 1000,
+      primaryVisible: true,
+      supplementaryVisible: true,
+      detailVisible: true,
+      primaryWidth: 300,
+      supplementaryWidth: 300,
+      detailMinWidth: 220,
+      paneMinWidth: 160,
+    }),
+    {
+      primaryWidth: 320,
+      supplementaryWidth: 324,
+      gapAfterPrimary: 16,
+      gapAfterSupplementary: 20,
+    },
+  );
+});
+
+test('multi-hinge planner declines when the authored shape has fewer than three panes', () => {
+  const first: FoldLayout = { ...verticalFold, x: 320, width: 16 };
+  const second: FoldLayout = { ...verticalFold, x: 660, width: 20 };
+
+  assert.equal(
+    resolveVerticalMultiFoldPanePlan({
+      folds: [first, second],
+      rowWidth: 1000,
+      primaryVisible: true,
+      supplementaryVisible: false,
+      detailVisible: true,
+      primaryWidth: 300,
+      supplementaryWidth: 300,
+      detailMinWidth: 220,
+      paneMinWidth: 160,
+    }),
+    null,
+  );
+});
+
+test('inspector stays inside the trailingmost physical region on a trifold', () => {
+  const first: FoldLayout = { ...verticalFold, x: 300, width: 20 };
+  const second: FoldLayout = { ...verticalFold, x: 700, width: 20 };
+
+  assert.deepEqual(
+    resolveTrailingInspectorLayout({
+      folds: [first, second],
+      rowWidth: 880,
+      preferredWidth: 280,
+      isRTL: false,
+    }),
+    {
+      width: 160,
+      edge: 'right',
+      closedX: 180,
+    },
+  );
 });
