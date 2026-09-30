@@ -28,8 +28,8 @@ android {
 
 dependencies {
   // This module references React Native's LifecycleEventListener directly.
-  // The app owns the runtime; Gradle resolves this to the app's RN version.
-  compileOnly 'com.facebook.react:react-android'
+  // Gradle resolves this to the same react-android artifact/version as the app.
+  implementation 'com.facebook.react:react-android'
 
   // Stable WindowManager line as of SDK 58 beta. WindowInfoTracker supplies
   // FoldingFeature bounds, orientation, state, occlusion and isSeparating.
