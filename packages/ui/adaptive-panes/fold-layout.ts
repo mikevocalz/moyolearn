@@ -62,8 +62,23 @@ export interface VerticalMultiFoldPanePlanInput {
   paneMinWidth: number;
 }
 
+export function foldLayoutsIntersectingRow(
+  folds: readonly FoldLayout[],
+  rowWidth: number | null,
+): FoldLayout[] {
+  if (rowWidth === null) return [];
+
+  return folds.filter((fold) => {
+    const foldEnd = fold.x + Math.max(0, fold.width);
+    // A zero-width separating crease is still a real boundary when it falls
+    // inside the row. Folds wholly before/after a nested row are irrelevant to
+    // that row and must not participate in primary-hinge selection.
+    return fold.x < rowWidth && (fold.width === 0 ? fold.x > 0 : foldEnd > 0);
+  });
+}
+
 /**
- * Normalize the current physical division into content coordinates.
+ * Normalize the current physical division into the pane row's local coordinates.
  *
  * UIKit's division region does not carry Android's explicit orientation/state,
  * so those two values are inferred conservatively. Android metadata always wins
@@ -71,7 +86,7 @@ export interface VerticalMultiFoldPanePlanInput {
  */
 export function foldLayoutsFromRegions(
   regions: readonly ReservedRegion[],
-  leadingInset = 0,
+  windowOriginX = 0,
 ): FoldLayout[] {
   return regions
     .filter((candidate) => candidate.kind === 'division')
@@ -98,7 +113,10 @@ export function foldLayoutsFromRegions(
         separating:
           (region.separating ?? region.active) ||
           region.occlusionType === 'full',
-        x: Math.max(0, region.x - leadingInset),
+        // Preserve negative local x values: a fold can sit completely to the
+        // left of a nested pane row. Clamping it to zero would turn an off-row
+        // hinge into a phantom hinge on the row's leading edge.
+        x: region.x - windowOriginX,
         y: region.y,
         width: Math.max(0, region.width),
         height: Math.max(0, region.height),
@@ -120,9 +138,9 @@ export function foldLayoutsFromRegions(
  */
 export function foldLayoutFromRegions(
   regions: readonly ReservedRegion[],
-  leadingInset = 0,
+  windowOriginX = 0,
 ): FoldLayout | null {
-  return foldLayoutsFromRegions(regions, leadingInset)[0] ?? null;
+  return foldLayoutsFromRegions(regions, windowOriginX)[0] ?? null;
 }
 
 /**
@@ -355,7 +373,7 @@ export function resolveTrailingInspectorLayout({
   let availableWidth = rowWidth ?? preferredWidth;
 
   if (rowWidth !== null) {
-    const vertical = folds
+    const vertical = foldLayoutsIntersectingRow(folds, rowWidth)
       .filter((fold) => fold.separating && fold.orientation === 'vertical')
       .sort((a, b) => a.x - b.x);
 

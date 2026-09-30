@@ -15,7 +15,7 @@ struct ReservedRegionRecord {
   var active: Bool
 }
 
-#if os(iOS)
+#if os(iOS) && MOYO_HAS_UIKIT_RESERVED_REGIONS
 @available(iOS 27.1, *)
 extension ReservedRegionRecord {
   init(region: UIView.ReservedRegion) {

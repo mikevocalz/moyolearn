@@ -19,9 +19,9 @@
  * SOT-KEYWORDS: adaptive panes split view navigator list detail column inspector host
  *               pane toggle collapse expand controls
  */
-import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { Children, createContext, isValidElement, type ElementRef, type ReactNode, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Freeze } from 'react-freeze';
-import { I18nManager, useWindowDimensions } from 'react-native';
+import { I18nManager, View as NativeView, type LayoutChangeEvent, useWindowDimensions } from 'react-native';
 import { useStore } from 'zustand';
 import { View } from '../tw';
 import { Aside, Main, Section } from '../primitives';
@@ -41,6 +41,7 @@ import { PaneDivider } from './PaneDivider';
 import { usePaneEdges } from './pane-edges';
 import { useFoldLayouts } from './use-fold-layout';
 import {
+  foldLayoutsIntersectingRow,
   resolveTrailingInspectorLayout,
   resolveVerticalFoldPanePlan,
   resolveVerticalMultiFoldPanePlan,
@@ -178,9 +179,15 @@ function AdaptivePanesNavigator({
     beside a rail or inside a sheet — and a pane wider than its row would
     overflow rather than fit.
   */
-  const [rowWidth, setRowWidth] = useState<number | null>(null);
+  const [rowGeometry, setRowGeometry] = useState<{
+    width: number | null;
+    windowX: number | null;
+  }>({ width: null, windowX: null });
+  const rowRef = useRef<ElementRef<typeof NativeView> | null>(null);
+  const rowWidth = rowGeometry.width;
   const paneEdges = usePaneEdges();
-  const foldLayouts = useFoldLayouts(paneEdges);
+  const windowFoldLayouts = useFoldLayouts(rowGeometry.windowX);
+  const foldLayouts = foldLayoutsIntersectingRow(windowFoldLayouts, rowWidth);
   const primaryFoldLayout = foldLayouts[0] ?? null;
 
   const all = Children.toArray(children);
@@ -456,20 +463,50 @@ function AdaptivePanesNavigator({
   return (
     <AdaptivePanesContext value={store}>
       <SafeArea edges={paneEdges} className="flex-1">
-        <View
-          className="flex-1 flex-row"
+        <NativeView
+          ref={rowRef}
+          style={{ flex: 1, flexDirection: 'row' }}
           /*
             Measured at EVERY width, not only while collapsed. The stored width
             is what the next collapse opens the pane to; measuring only in the
             compact band meant a host that was resized while expanded (a Duo
             unfold, Split View, a rail appearing) collapsed to the width it had
             last seen when compact — stale by exactly the change that mattered.
+
+            The native fold rectangle is WINDOW-relative, so width alone is not
+            enough. A pane host can sit beside a rail or inside another
+            horizontally offset container. measureInWindow gives this row's
+            actual window origin; until that value is known we deliberately
+            disable hinge snapping instead of applying window coordinates to
+            row-local layout math.
           */
-          onLayout={(event: { nativeEvent: { layout: { width: number } } }) => {
+          onLayout={(event: LayoutChangeEvent) => {
             const laid = event.nativeEvent.layout.width;
-            setRowWidth((current) =>
-              current !== null && Math.abs(laid - current) <= 1 ? current : laid,
-            );
+            const commitGeometry = (windowX: number | null) => {
+              setRowGeometry((current) => {
+                const width =
+                  current.width !== null && Math.abs(laid - current.width) <= 1
+                    ? current.width
+                    : laid;
+                const sameWindowX =
+                  (current.windowX === null && windowX === null) ||
+                  (current.windowX !== null &&
+                    windowX !== null &&
+                    Math.abs(windowX - current.windowX) <= 1);
+
+                return width === current.width && sameWindowX
+                  ? current
+                  : { width, windowX };
+              });
+            };
+
+            // Publish width immediately, but clear any stale absolute origin.
+            // The second commit below re-enables fold snapping with the fresh
+            // row-local coordinate conversion.
+            commitGeometry(null);
+            rowRef.current?.measureInWindow((windowX) => {
+              commitGeometry(windowX);
+            });
           }}
         >
           {/*
@@ -615,7 +652,7 @@ function AdaptivePanesNavigator({
             <PaneContent open={visible.detail}>{detailPane}</PaneContent>
             </Main>
           </CollapsiblePane>
-        </View>
+        </NativeView>
 
         {/*
           The inspector is a DRAWER, not a fourth column. It overlays the trailing
@@ -683,6 +720,7 @@ export {
 export {
   foldLayoutFromRegions,
   foldLayoutsFromRegions,
+  foldLayoutsIntersectingRow,
   resolveTrailingInspectorLayout,
   resolveVerticalFoldPanePlan,
   resolveVerticalMultiFoldPanePlan,
