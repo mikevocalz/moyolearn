@@ -87,7 +87,7 @@
 // that deep path is no longer resolvable and the public entry is the answer.
 import { BottomTabBar, type BottomTabBarProps } from 'expo-router/js-tabs';
 import type { ComponentType, ReactNode } from 'react';
-import { I18nManager, Platform } from 'react-native';
+import { I18nManager, Platform, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { navChrome } from '@acme/theme';
 import {
@@ -146,6 +146,7 @@ export function useHardwareEdgeColumn(): number {
  */
 export function useShellNavigationPlacement(): AdaptiveNavigationPlacement {
   const sizeClass = useWindowSizeClass();
+  const { height } = useWindowDimensions();
   const regions = useReservedRegions();
   const folds = foldLayoutsFromRegions(regions);
   const hardwareEdge = useHardwareEdgeColumnInfo();
@@ -155,6 +156,7 @@ export function useShellNavigationPlacement(): AdaptiveNavigationPlacement {
   return resolveAdaptiveNavigationPlacement({
     platform,
     sizeClass,
+    heightDp: height,
     folds,
     hardwareEdge,
     isRTL: I18nManager.isRTL,
