@@ -49,6 +49,8 @@ import {
   PRIMARY_WIDTH_MIN,
 } from './resize';
 import type { AdaptivePanesProps, SplitNavigableColumn } from './types';
+import { useReservedRegions } from '../reserved-regions';
+import { foldLayoutFromRegions, resolveVerticalFoldPanePlan } from './fold-layout';
 
 /**
  * Markers, not renderers. Children are matched by type identity, exactly as
@@ -151,6 +153,7 @@ function AdaptivePanesNavigator({
   // Only the first frame's fallback for a collapsed pane's width — the row's
   // own measurement replaces it as soon as there is one. See `collapsedWidth`.
   const { width: windowWidth } = useWindowDimensions();
+  const reservedRegions = useReservedRegions();
 
   // PER-INSTANCE store, held in a ref (the kit's vanilla-store pattern —
   // see ../use-instance-store.ts): each mounted host scopes its own column,
@@ -182,6 +185,10 @@ function AdaptivePanesNavigator({
     overflow rather than fit.
   */
   const [rowWidth, setRowWidth] = useState<number | null>(null);
+  // The row is the direct child of SafeArea. Its layout x is therefore the
+  // leading safe-area inset in window coordinates; keep it in a ref so the
+  // rowWidth state update is the one render that commits both measurements.
+  const rowLeadingInsetRef = useRef(0);
   const paneEdges = usePaneEdges();
   const foldLayout = useFoldLayout(paneEdges);
 
@@ -339,7 +346,7 @@ function AdaptivePanesNavigator({
   // The trailing pane's floor is its ROW SHARE, not its token: the token is
   // what it collapses through, the share is what it may never drop under.
   const detailFloor = visible.detail && rowWidth !== null ? rowWidth * DETAIL_ROW_SHARE_MIN : 0;
-  const openPrimaryWidth =
+  const basePrimaryWidth =
     rowWidth === null || railStep || !visible.primary
       ? wantedPrimaryWidth
       : Math.max(
@@ -360,13 +367,59 @@ function AdaptivePanesNavigator({
     keeps PRIMARY_WIDTH_MIN as its own floor so a very narrow row degrades
     to three narrow panes rather than one that vanished.
   */
-  const openSupplementaryWidth =
+  const baseSupplementaryWidth =
     rowWidth === null || !visible.detail || !visible.primary
       ? wantedSupplementaryWidth
       : Math.max(
           PRIMARY_WIDTH_MIN,
-          Math.min(wantedSupplementaryWidth, rowWidth - openPrimaryWidth - detailFloor),
+          Math.min(wantedSupplementaryWidth, rowWidth - basePrimaryWidth - detailFloor),
         );
+
+  /*
+    NATIVE FOLD BOUNDARY, SAME TREE.
+
+    Android's WindowInfoTracker gives us the FoldingFeature in WINDOW
+    coordinates. The local Expo Modules 2 bridge normalizes that into the same
+    ReservedRegion shape iOS uses, and fold-layout.ts turns it into a numeric
+    plan for THIS row.
+
+    Crucially, this does not introduce an Android navigator. It moves one of the
+    boundaries already authored above until that boundary lands exactly on the
+    physical fold, and inserts only the physical hinge width as empty space.
+    The children stay mounted at the same React positions, so crossing a fold
+    does not reset selection, drafts, scroll positions or a WebGPU surface.
+  */
+  const fold = foldLayoutFromRegions(
+    reservedRegions,
+    rowLeadingInsetRef.current,
+  );
+  const verticalFoldPlan = collapsed
+    ? null
+    : resolveVerticalFoldPanePlan({
+        fold,
+        rowWidth,
+        primaryVisible: visible.primary,
+        supplementaryVisible: Boolean(visible.supplementary && columns[1]),
+        detailVisible: visible.detail,
+        primaryWidth: basePrimaryWidth,
+        supplementaryWidth: baseSupplementaryWidth,
+        detailMinWidth:
+          rowWidth === null
+            ? PANE_WIDTH_DP.detail
+            : Math.max(PANE_WIDTH_DP.detail, rowWidth * DETAIL_ROW_SHARE_MIN),
+        paneMinWidth: PRIMARY_WIDTH_MIN,
+      });
+
+  const openPrimaryWidth =
+    verticalFoldPlan?.primaryWidth ?? basePrimaryWidth;
+  const openSupplementaryWidth =
+    verticalFoldPlan?.supplementaryWidth ?? baseSupplementaryWidth;
+  const hingeAfterPrimary =
+    verticalFoldPlan?.splitAfter === 'primary' ? verticalFoldPlan.gapWidth : 0;
+  const hingeAfterSupplementary =
+    verticalFoldPlan?.splitAfter === 'supplementary'
+      ? verticalFoldPlan.gapWidth
+      : 0;
 
   /*
     A SEPARATING VERTICAL HINGE IS A LAYOUT BOUNDARY, not another breakpoint.
@@ -424,8 +477,9 @@ function AdaptivePanesNavigator({
             unfold, Split View, a rail appearing) collapsed to the width it had
             last seen when compact — stale by exactly the change that mattered.
           */
-          onLayout={(event: { nativeEvent: { layout: { width: number } } }) => {
-            const laid = event.nativeEvent.layout.width;
+          onLayout={(event: { nativeEvent: { layout: { x: number; width: number } } }) => {
+            const { x, width: laid } = event.nativeEvent.layout;
+            rowLeadingInsetRef.current = x;
             setRowWidth((current) =>
               current !== null && Math.abs(laid - current) <= 1 ? current : laid,
             );
@@ -486,6 +540,12 @@ function AdaptivePanesNavigator({
                 <PaneContent open={visible.supplementary}>{columns[1]}</PaneContent>
               </Section>
             </CollapsiblePane>
+            {hingeAfterSupplementary > 0 ? (
+              <View
+                aria-hidden
+                style={{ width: hingeAfterSupplementary, flexShrink: 0 }}
+              />
+            ) : null}
           ) : null}
           {!collapsed &&
           foldPlan?.splitAfter === 'supplementary' &&
@@ -632,6 +692,13 @@ export {
   type AdaptivePanesStore,
 } from './store';
 export { useWindowSizeClass, windowSizeClassForWidth } from './use-window-size-class';
+export {
+  foldLayoutFromRegions,
+  resolveVerticalFoldPanePlan,
+  type FoldLayout,
+  type FoldPosture,
+  type VerticalFoldPanePlan,
+} from './fold-layout';
 export {
   WINDOW_SIZE_CLASS_MIN_WIDTH_DP,
   isCollapsed,
