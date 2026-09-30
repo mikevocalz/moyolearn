@@ -42,6 +42,26 @@ export interface VerticalFoldPanePlanInput {
   paneMinWidth: number;
 }
 
+
+export interface VerticalMultiFoldPanePlan {
+  primaryWidth: number;
+  supplementaryWidth: number;
+  gapAfterPrimary: number;
+  gapAfterSupplementary: number;
+}
+
+export interface VerticalMultiFoldPanePlanInput {
+  folds: readonly FoldLayout[];
+  rowWidth: number | null;
+  primaryVisible: boolean;
+  supplementaryVisible: boolean;
+  detailVisible: boolean;
+  primaryWidth: number;
+  supplementaryWidth: number;
+  detailMinWidth: number;
+  paneMinWidth: number;
+}
+
 /**
  * Normalize the current physical division into content coordinates.
  *
@@ -120,7 +140,7 @@ export function foldLayoutFromRegions(
  * width-class layout instead of silently hiding a pane.
  */
 export function resolveVerticalFoldPanePlan({
-  fold,
+  folds,
   rowWidth,
   primaryVisible,
   supplementaryVisible,
@@ -199,6 +219,109 @@ export function resolveVerticalFoldPanePlan({
 }
 
 
+/**
+ * Trifold / multi-hinge planner.
+ *
+ * AdaptivePanes can author at most three tiled panes (primary,
+ * supplementary, detail), so when at least two separating vertical hinges are
+ * present we choose the pair that best maps those three panes one-per-physical
+ * region. This prevents any of the three from straddling either hinge.
+ *
+ * Two-pane layouts still use the single-hinge planner; with only two authored
+ * panes there is no honest way to avoid two distinct hinge gaps without
+ * inventing a fourth internal content region.
+ */
+export function resolveVerticalMultiFoldPanePlan({
+  folds,
+  rowWidth,
+  primaryVisible,
+  supplementaryVisible,
+  detailVisible,
+  primaryWidth,
+  supplementaryWidth,
+  detailMinWidth,
+  paneMinWidth,
+}: VerticalMultiFoldPanePlanInput): VerticalMultiFoldPanePlan | null {
+  if (
+    rowWidth === null ||
+    !primaryVisible ||
+    !supplementaryVisible ||
+    !detailVisible
+  ) {
+    return null;
+  }
+
+  const vertical = folds
+    .filter(
+      (fold) =>
+        fold.separating &&
+        fold.orientation === 'vertical' &&
+        fold.x > 0 &&
+        fold.x < rowWidth,
+    )
+    .sort((a, b) => a.x - b.x);
+
+  if (vertical.length < 2) return null;
+
+  let best:
+    | (VerticalMultiFoldPanePlan & { score: number })
+    | null = null;
+
+  for (let firstIndex = 0; firstIndex < vertical.length - 1; firstIndex += 1) {
+    for (let secondIndex = firstIndex + 1; secondIndex < vertical.length; secondIndex += 1) {
+      const first = vertical[firstIndex]!;
+      const second = vertical[secondIndex]!;
+
+      const firstStart = Math.max(0, Math.min(rowWidth, first.x));
+      const firstEnd = Math.max(
+        firstStart,
+        Math.min(rowWidth, first.x + first.width),
+      );
+      const secondStart = Math.max(firstEnd, Math.min(rowWidth, second.x));
+      const secondEnd = Math.max(
+        secondStart,
+        Math.min(rowWidth, second.x + second.width),
+      );
+
+      const firstRegion = firstStart;
+      const secondRegion = secondStart - firstEnd;
+      const thirdRegion = rowWidth - secondEnd;
+
+      if (
+        firstRegion < paneMinWidth ||
+        secondRegion < paneMinWidth ||
+        thirdRegion < detailMinWidth
+      ) {
+        continue;
+      }
+
+      const score =
+        Math.abs(firstRegion - primaryWidth) +
+        Math.abs(secondRegion - supplementaryWidth);
+
+      if (best === null || score < best.score) {
+        best = {
+          primaryWidth: firstRegion,
+          supplementaryWidth: secondRegion,
+          gapAfterPrimary: firstEnd - firstStart,
+          gapAfterSupplementary: secondEnd - secondStart,
+          score,
+        };
+      }
+    }
+  }
+
+  if (!best) return null;
+
+  return {
+    primaryWidth: best.primaryWidth,
+    supplementaryWidth: best.supplementaryWidth,
+    gapAfterPrimary: best.gapAfterPrimary,
+    gapAfterSupplementary: best.gapAfterSupplementary,
+  };
+}
+
+
 export interface TrailingInspectorLayout {
   width: number;
   edge: 'left' | 'right';
@@ -207,7 +330,7 @@ export interface TrailingInspectorLayout {
 }
 
 export interface TrailingInspectorLayoutInput {
-  fold: FoldLayout | null;
+  folds: readonly FoldLayout[];
   rowWidth: number | null;
   preferredWidth: number;
   isRTL: boolean;
@@ -231,17 +354,24 @@ export function resolveTrailingInspectorLayout({
   const edge: 'left' | 'right' = isRTL ? 'left' : 'right';
   let availableWidth = rowWidth ?? preferredWidth;
 
-  if (
-    fold?.separating &&
-    fold.orientation === 'vertical' &&
-    rowWidth !== null
-  ) {
-    const foldStart = Math.min(Math.max(0, fold.x), rowWidth);
-    const foldEnd = Math.min(
-      rowWidth,
-      Math.max(foldStart, fold.x + fold.width),
-    );
-    availableWidth = isRTL ? foldStart : rowWidth - foldEnd;
+  if (rowWidth !== null) {
+    const vertical = folds
+      .filter((fold) => fold.separating && fold.orientation === 'vertical')
+      .sort((a, b) => a.x - b.x);
+
+    if (vertical.length > 0) {
+      if (isRTL) {
+        const first = vertical[0]!;
+        availableWidth = Math.min(Math.max(0, first.x), rowWidth);
+      } else {
+        const last = vertical[vertical.length - 1]!;
+        const foldEnd = Math.min(
+          rowWidth,
+          Math.max(0, last.x + last.width),
+        );
+        availableWidth = Math.max(0, rowWidth - foldEnd);
+      }
+    }
   }
 
   const width = Math.max(0, Math.min(preferredWidth, availableWidth));
