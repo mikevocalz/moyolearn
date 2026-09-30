@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   foldLayoutFromRegions,
+  foldLayoutsFromRegions,
   resolveTrailingInspectorLayout,
   resolveVerticalFoldPanePlan,
   type FoldLayout,
@@ -190,4 +191,27 @@ test('RTL inspector uses the logical trailing edge and stays left of the hinge',
       closedX: -300,
     },
   );
+});
+
+
+test('preserves and sorts multiple vertical hinges for trifold-aware consumers', () => {
+  const right: ReservedRegion = {
+    kind: 'division',
+    x: 700,
+    y: 0,
+    width: 12,
+    height: 900,
+    margins,
+    active: true,
+    orientation: 'vertical',
+    state: 'flat',
+    occlusionType: 'full',
+    separating: true,
+  };
+  const left: ReservedRegion = { ...right, x: 350 };
+
+  const folds = foldLayoutsFromRegions([right, left]);
+  assert.equal(folds.length, 2);
+  assert.equal(folds[0]?.x, 350);
+  assert.equal(folds[1]?.x, 700);
 });
