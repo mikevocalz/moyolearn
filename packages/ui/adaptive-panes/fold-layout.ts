@@ -49,36 +49,60 @@ export interface VerticalFoldPanePlanInput {
  * so those two values are inferred conservatively. Android metadata always wins
  * when present.
  */
+export function foldLayoutsFromRegions(
+  regions: readonly ReservedRegion[],
+  leadingInset = 0,
+): FoldLayout[] {
+  return regions
+    .filter((candidate) => candidate.kind === 'division')
+    .map((region) => {
+      const orientation: FoldOrientation =
+        region.orientation ?? (region.height >= region.width ? 'vertical' : 'horizontal');
+      const state: FoldState = region.state ?? 'flat';
+      const posture: FoldPosture =
+        state === 'halfOpened'
+          ? orientation === 'horizontal'
+            ? 'tabletop'
+            : 'book'
+          : 'flat';
+
+      return {
+        orientation,
+        state,
+        posture,
+        occlusionType: region.occlusionType,
+        // Android tells us directly. UIKit's active division is the equivalent
+        // signal; an inactive zero-width Duo division must not rearrange panes.
+        // FULL occlusion is always treated as separating even if a vendor emits
+        // an inconsistent isSeparating value.
+        separating:
+          (region.separating ?? region.active) ||
+          region.occlusionType === 'full',
+        x: Math.max(0, region.x - leadingInset),
+        y: region.y,
+        width: Math.max(0, region.width),
+        height: Math.max(0, region.height),
+      };
+    })
+    .sort((a, b) => {
+      if (a.orientation === b.orientation) {
+        return a.orientation === 'vertical' ? a.x - b.x : a.y - b.y;
+      }
+      // Stable deterministic ordering for mixed-orientation reports.
+      return a.orientation === 'vertical' ? -1 : 1;
+    });
+}
+
+/**
+ * Backward-compatible single-fold view for consumers whose layout can currently
+ * place only one boundary. New capability decisions (navigation posture,
+ * trifold region modelling) should use foldLayoutsFromRegions().
+ */
 export function foldLayoutFromRegions(
   regions: readonly ReservedRegion[],
   leadingInset = 0,
 ): FoldLayout | null {
-  const region = regions.find((candidate) => candidate.kind === 'division');
-  if (!region) return null;
-
-  const orientation: FoldOrientation =
-    region.orientation ?? (region.height >= region.width ? 'vertical' : 'horizontal');
-  const state: FoldState = region.state ?? 'flat';
-  const posture: FoldPosture =
-    state === 'halfOpened'
-      ? orientation === 'horizontal'
-        ? 'tabletop'
-        : 'book'
-      : 'flat';
-
-  return {
-    orientation,
-    state,
-    posture,
-    occlusionType: region.occlusionType,
-    // Android tells us directly. UIKit's active division is the equivalent
-    // signal; an inactive zero-width Duo division must not rearrange panes.
-    separating: (region.separating ?? region.active) || region.occlusionType === 'full',
-    x: Math.max(0, region.x - leadingInset),
-    y: region.y,
-    width: Math.max(0, region.width),
-    height: Math.max(0, region.height),
-  };
+  return foldLayoutsFromRegions(regions, leadingInset)[0] ?? null;
 }
 
 /**
