@@ -1,27 +1,27 @@
 'use client';
 // Native fold geometry adapter for AdaptivePanes.
 //
-// ReservedRegions already normalizes iOS reserved regions and Android
-// FoldingFeature into one shape. This hook only translates WINDOW coordinates
-// to the pane row's SAFE-AREA content coordinates.
-// SOT-KEYWORDS: fold layout safe area hinge adaptive panes native
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+// ReservedRegions normalizes iOS reserved regions and Android FoldingFeature
+// into one WINDOW-coordinate shape. AdaptivePanes measures its own row origin
+// in that same coordinate space, and this hook converts every fold into row-
+// local coordinates. Until the row origin is known, returning no folds is safer
+// than snapping content to a window-relative x value.
+// SOT-KEYWORDS: fold layout window origin hinge adaptive panes native
 import { useReservedRegions } from '../reserved-regions';
 import { foldLayoutFromRegions, foldLayoutsFromRegions } from './fold-layout';
-import type { PaneEdges } from './pane-edges';
 
-export function useFoldLayouts(edges: PaneEdges) {
+export function useFoldLayouts(rowWindowX: number | null) {
   const regions = useReservedRegions();
-  const insets = useSafeAreaInsets();
-  const leadingInset = edges.includes('left') ? insets.left : 0;
 
-  return foldLayoutsFromRegions(regions, leadingInset);
+  return rowWindowX === null
+    ? []
+    : foldLayoutsFromRegions(regions, rowWindowX);
 }
 
-export function useFoldLayout(edges: PaneEdges) {
+export function useFoldLayout(rowWindowX: number | null) {
   const regions = useReservedRegions();
-  const insets = useSafeAreaInsets();
-  const leadingInset = edges.includes('left') ? insets.left : 0;
 
-  return foldLayoutFromRegions(regions, leadingInset);
+  return rowWindowX === null
+    ? null
+    : foldLayoutFromRegions(regions, rowWindowX);
 }

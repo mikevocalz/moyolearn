@@ -40,10 +40,10 @@ test('normalizes an Android half-opened horizontal fold as tabletop posture', ()
   });
 });
 
-test('keeps a flat dual-screen hinge separating and converts window x to safe content x', () => {
+test('keeps a flat dual-screen hinge separating and converts window x to pane-row local x', () => {
   const region: ReservedRegion = {
     kind: 'division',
-    x: 420,
+    x: 430,
     y: 0,
     width: 24,
     height: 900,
@@ -55,8 +55,10 @@ test('keeps a flat dual-screen hinge separating and converts window x to safe co
     separating: true,
   };
 
-  const fold = foldLayoutFromRegions([region], 12);
-  assert.equal(fold?.x, 408);
+  // The row starts 80dp into the window (for example beside a rail).
+  // A window-space hinge at x=430 must therefore land at local x=350.
+  const fold = foldLayoutFromRegions([region], 80);
+  assert.equal(fold?.x, 350);
   assert.equal(fold?.separating, true);
   assert.equal(fold?.posture, 'flat');
 });

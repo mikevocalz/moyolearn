@@ -63,7 +63,7 @@ export interface VerticalMultiFoldPanePlanInput {
 }
 
 /**
- * Normalize the current physical division into content coordinates.
+ * Normalize the current physical division into the pane row's local coordinates.
  *
  * UIKit's division region does not carry Android's explicit orientation/state,
  * so those two values are inferred conservatively. Android metadata always wins
@@ -71,7 +71,7 @@ export interface VerticalMultiFoldPanePlanInput {
  */
 export function foldLayoutsFromRegions(
   regions: readonly ReservedRegion[],
-  leadingInset = 0,
+  windowOriginX = 0,
 ): FoldLayout[] {
   return regions
     .filter((candidate) => candidate.kind === 'division')
@@ -98,7 +98,7 @@ export function foldLayoutsFromRegions(
         separating:
           (region.separating ?? region.active) ||
           region.occlusionType === 'full',
-        x: Math.max(0, region.x - leadingInset),
+        x: Math.max(0, region.x - windowOriginX),
         y: region.y,
         width: Math.max(0, region.width),
         height: Math.max(0, region.height),
@@ -120,9 +120,9 @@ export function foldLayoutsFromRegions(
  */
 export function foldLayoutFromRegions(
   regions: readonly ReservedRegion[],
-  leadingInset = 0,
+  windowOriginX = 0,
 ): FoldLayout | null {
-  return foldLayoutsFromRegions(regions, leadingInset)[0] ?? null;
+  return foldLayoutsFromRegions(regions, windowOriginX)[0] ?? null;
 }
 
 /**
