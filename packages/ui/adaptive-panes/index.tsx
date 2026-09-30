@@ -39,8 +39,12 @@ import { AdaptivePanesContext } from './context';
 import { useSplitViewBack } from './use-split-view-back';
 import { PaneDivider } from './PaneDivider';
 import { usePaneEdges } from './pane-edges';
-import { useFoldLayout } from './use-fold-layout';
-import { resolveTrailingInspectorLayout, resolveVerticalFoldPanePlan } from './fold-layout';
+import { useFoldLayouts } from './use-fold-layout';
+import {
+  resolveTrailingInspectorLayout,
+  resolveVerticalFoldPanePlan,
+  resolveVerticalMultiFoldPanePlan,
+} from './fold-layout';
 import { DetailSlot } from './detail-slot';
 import {
   DEFAULT_PRIMARY_WIDTH,
@@ -176,7 +180,8 @@ function AdaptivePanesNavigator({
   */
   const [rowWidth, setRowWidth] = useState<number | null>(null);
   const paneEdges = usePaneEdges();
-  const foldLayout = useFoldLayout(paneEdges);
+  const foldLayouts = useFoldLayouts(paneEdges);
+  const primaryFoldLayout = foldLayouts[0] ?? null;
 
   const all = Children.toArray(children);
   const columns = all.filter(
@@ -376,20 +381,47 @@ function AdaptivePanesNavigator({
     and supplementary + detail on the second. If neither is usable we preserve
     the width-class layout rather than choosing product content here.
   */
-  const foldPlan = resolveVerticalFoldPanePlan({
-    fold: collapsed ? null : foldLayout,
-    rowWidth,
-    primaryVisible: Boolean(columns[0] && visible.primary),
-    supplementaryVisible: Boolean(columns[1] && visible.supplementary),
-    detailVisible: visible.detail,
-    primaryWidth: openPrimaryWidth,
-    supplementaryWidth: openSupplementaryWidth,
-    detailMinWidth: Math.max(PRIMARY_WIDTH_MIN, detailFloor),
-    paneMinWidth: PRIMARY_WIDTH_MIN,
-  });
-  const effectivePrimaryWidth = foldPlan?.primaryWidth ?? openPrimaryWidth;
+  const multiFoldPlan = collapsed
+    ? null
+    : resolveVerticalMultiFoldPanePlan({
+        folds: foldLayouts,
+        rowWidth,
+        primaryVisible: Boolean(columns[0] && visible.primary),
+        supplementaryVisible: Boolean(columns[1] && visible.supplementary),
+        detailVisible: visible.detail,
+        primaryWidth: openPrimaryWidth,
+        supplementaryWidth: openSupplementaryWidth,
+        detailMinWidth: Math.max(PRIMARY_WIDTH_MIN, detailFloor),
+        paneMinWidth: PRIMARY_WIDTH_MIN,
+      });
+
+  const foldPlan = multiFoldPlan
+    ? null
+    : resolveVerticalFoldPanePlan({
+        fold: collapsed ? null : primaryFoldLayout,
+        rowWidth,
+        primaryVisible: Boolean(columns[0] && visible.primary),
+        supplementaryVisible: Boolean(columns[1] && visible.supplementary),
+        detailVisible: visible.detail,
+        primaryWidth: openPrimaryWidth,
+        supplementaryWidth: openSupplementaryWidth,
+        detailMinWidth: Math.max(PRIMARY_WIDTH_MIN, detailFloor),
+        paneMinWidth: PRIMARY_WIDTH_MIN,
+      });
+
+  const effectivePrimaryWidth =
+    multiFoldPlan?.primaryWidth ?? foldPlan?.primaryWidth ?? openPrimaryWidth;
   const effectiveSupplementaryWidth =
-    foldPlan?.supplementaryWidth ?? openSupplementaryWidth;
+    multiFoldPlan?.supplementaryWidth ??
+    foldPlan?.supplementaryWidth ??
+    openSupplementaryWidth;
+
+  const gapAfterPrimary =
+    multiFoldPlan?.gapAfterPrimary ??
+    (foldPlan?.splitAfter === 'primary' ? foldPlan.gapWidth : 0);
+  const gapAfterSupplementary =
+    multiFoldPlan?.gapAfterSupplementary ??
+    (foldPlan?.splitAfter === 'supplementary' ? foldPlan.gapWidth : 0);
 
   /*
     SPLITVIEW.INSPECTOR PARITY ON ANDROID.
@@ -401,7 +433,7 @@ function AdaptivePanesNavigator({
     spill onto the other display. RTL flips both the edge and slide direction.
   */
   const inspectorLayout = resolveTrailingInspectorLayout({
-    fold: collapsed ? null : foldLayout,
+    folds: collapsed ? [] : foldLayouts,
     rowWidth,
     preferredWidth: PANE_WIDTH_DP.inspector,
     isRTL: I18nManager.isRTL,
@@ -461,14 +493,12 @@ function AdaptivePanesNavigator({
               {/* No divider collapsed: there is nothing on the other side of
                   it to drag against, and a grab handle on the screen edge is a
                   control that cannot do anything. */}
-              {!collapsed && visible.primary && foldPlan?.splitAfter !== 'primary' ? (
+              {!collapsed && visible.primary && gapAfterPrimary === 0 ? (
                 <PaneDivider width={effectivePrimaryWidth} />
               ) : null}
-              {!collapsed &&
-              foldPlan?.splitAfter === 'primary' &&
-              foldPlan.gapWidth > 0 ? (
+              {!collapsed && gapAfterPrimary > 0 ? (
                 <View
-                  style={{ width: foldPlan.gapWidth }}
+                  style={{ width: gapAfterPrimary }}
                   pointerEvents="none"
                   aria-hidden
                 />
@@ -486,7 +516,7 @@ function AdaptivePanesNavigator({
               className={
                 !collapsed &&
                 visible.supplementary &&
-                foldPlan?.splitAfter !== 'supplementary'
+                gapAfterSupplementary === 0
                   ? `border-r ${PANE_DIVIDER}`
                   : undefined
               }
@@ -496,11 +526,9 @@ function AdaptivePanesNavigator({
               </Section>
             </CollapsiblePane>
           ) : null}
-          {!collapsed &&
-          foldPlan?.splitAfter === 'supplementary' &&
-          foldPlan.gapWidth > 0 ? (
+          {!collapsed && gapAfterSupplementary > 0 ? (
             <View
-              style={{ width: foldPlan.gapWidth }}
+              style={{ width: gapAfterSupplementary }}
               pointerEvents="none"
               aria-hidden
             />
@@ -654,14 +682,18 @@ export {
 } from './constants';
 export {
   foldLayoutFromRegions,
+  foldLayoutsFromRegions,
   resolveTrailingInspectorLayout,
   resolveVerticalFoldPanePlan,
+  resolveVerticalMultiFoldPanePlan,
   type FoldLayout,
   type FoldPosture,
   type TrailingInspectorLayout,
   type TrailingInspectorLayoutInput,
   type VerticalFoldPanePlan,
   type VerticalFoldPanePlanInput,
+  type VerticalMultiFoldPanePlan,
+  type VerticalMultiFoldPanePlanInput,
 } from './fold-layout';
 
 // Pane chrome — composable pieces the host arranges, exported for direct use
