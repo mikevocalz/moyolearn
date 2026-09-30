@@ -80,7 +80,7 @@ new file mode 100644
 +    ),
 +    header = headerSlotView?.let { slot -> { slot.renderSlot() } }
 +  ) {
-+    Children(filter = { !isSlotView(it) })
++    Children(UIComposableScope(), filter = { !isSlotView(it) })
 +  }
 +}
 +
