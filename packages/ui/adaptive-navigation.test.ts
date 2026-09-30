@@ -72,6 +72,7 @@ test('Android extra-large desktop windows get an expanded wide rail', () => {
   const placement = resolveAdaptiveNavigationPlacement({
     platform: 'android',
     sizeClass: 'extraLarge',
+    heightDp: 900,
     folds: [],
     isRTL: false,
   });
@@ -83,6 +84,7 @@ test('Apple hardware column is physical and does not mirror in RTL', () => {
   const placement = resolveAdaptiveNavigationPlacement({
     platform: 'ios',
     sizeClass: 'compact',
+    heightDp: 800,
     folds: [],
     hardwareEdge: { edge: 'left', width: 84 },
     isRTL: true,
