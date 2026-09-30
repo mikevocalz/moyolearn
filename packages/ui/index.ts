@@ -116,6 +116,7 @@ export { NavDrawerButton, type NavDrawerButtonProps } from './NavDrawerButton';
 export { useAppForm, withForm, useFieldContext, useFormContext, useFormStore } from './form';
 
 export { SafeArea, type SafeAreaProps } from './SafeArea';
+export * from './adaptive-navigation';
 export {
   useReservedRegions,
   type FoldOcclusionType,
