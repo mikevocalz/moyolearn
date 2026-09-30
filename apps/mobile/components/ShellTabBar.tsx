@@ -3,13 +3,12 @@
 // shadow) while each shell declares only its items — doc 36 §5's "one product,
 // different door" as a component contract.
 //
-// TWO FORMS, ONE ITEM LIST (doc 02 §2.1, measured on the WINDOW not the
-// device): compact (<600dp) renders the bottom bar; medium and wider render a
-// vertical RAIL on the trailing edge. The shell layouts flip
-// `tabBarPosition` to 'right' at the same threshold, so react-navigation's own
-// BottomTabView turns its container to `flexDirection: 'row'` and the rail is a
-// real flex sibling of the scene — no absolute overlay, no scene padding to
-// keep in sync. Structure taken from poke-xr's PokeballTabBar (one component,
+// ADAPTIVE FORMS, ONE ITEM LIST. Window size + native fold posture decide the
+// presentation: compact Android and tabletop posture use the bottom bar;
+// ordinary Android tablets/foldables use a logical-start Material rail;
+// extra-large Android windows use the expanded labeled rail. Apple hardware
+// columns stay physical while ordinary regular-width Apple windows use their
+// leading sidebar convention. Expo Router remains the route owner in every form. Structure taken from poke-xr's PokeballTabBar (one component,
 // `if (rail) return <column/>` before the row return, emphasis slot kept in the
 // middle of the item order); its `position:absolute` + `sceneStyle.paddingRight`
 // compensation is deliberately NOT taken, because that repo's header is a
@@ -57,18 +56,12 @@
 // foreign hue dropped on a plum bar; selection is a state OF the chrome, so it
 // takes the chrome's hue. Label weight is the second, non-colour cue.
 //
-// DEFERRED — doc 02 §2.3 hinge awareness. Moving nav to a VERTICAL edge is the
-// part of §2.3 that lands today: a bottom bar spanning a Surface Duo would
-// straddle the hinge, a rail on either side structurally cannot. The rest of §2.3 —
-// snapping the pane split to the hinge, refusing to straddle it, and the
-// tabletop (HALF_OPENED + HORIZONTAL) posture that docks actions to the lower
-// half — needs the hinge RECTANGLE in window coordinates, which JS cannot
-// derive from width at all. BLOCKER: the `androidx.window` `WindowInfoTracker`
-// / `FoldingFeature` native module costed and deliberately not built in
-// packages/ui/adaptive-panes/PHASE-8-FOLDING-FEATURE.md. Until it exists this
-// component classes the window it is given and makes no hinge claim.
+// HINGE AWARENESS IS NATIVE. Jetpack WindowManager FoldingFeature geometry and
+// posture arrive through the local Expo Modules 2 ReservedRegions module. The
+// shell and AdaptivePanes consume the same normalized folds, so navigation and
+// content cannot disagree about book/tabletop/separating-hinge state.
 //
-// Mobbin (structure only — pulled again for the native-selection pass):
+// // Mobbin (structure only — pulled again for the native-selection pass):
 // BeReal raised centre camera, selection by tint with no container
 //   (mobbin.com/screens/b83a2290-0e42-457c-b7c1-8768a1cb1bef) ·
 // Vivino raised centre camera, active item in a hugging pill
@@ -92,7 +85,7 @@
 // `expo-router/build/react-navigation/bottom-tabs` because the older
 // `react-navigation` entry did not carry them; 58 added an `exports` map, so
 // that deep path is no longer resolvable and the public entry is the answer.
-import type { BottomTabBarProps } from 'expo-router/js-tabs';
+import { BottomTabBar, type BottomTabBarProps } from 'expo-router/js-tabs';
 import type { ComponentType, ReactNode } from 'react';
 import { I18nManager, Platform } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -110,7 +103,6 @@ import {
 } from '@acme/ui';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import { haptics } from '@acme/ui/haptics';
-import { NativeShellRail } from './NativeShellRail';
 
 // `--spacing-nav-rail`, read from the token so the rail's JS width and its
 // class stay one number. `px-2` on the bottom bar, in points.
@@ -199,7 +191,7 @@ export interface ShellTabItem {
   /** The route name inside the shell's (tabs) group. */
   name: string;
   label: string;
-  Icon: ComponentType<{ size?: number; className?: string }>;
+  Icon: ComponentType<{ size?: number; className?: string; color?: any }>;
   /** The Speechify slot: rendered as a raised rounded-square slab. At most one. */
   raised?: boolean;
 }
@@ -226,8 +218,10 @@ interface ShellTabBarProps extends BottomTabBarProps {
 
 export function ShellTabBar({
   state,
+  descriptors,
   emitter,
   navigateToTab,
+  insets: tabInsets,
   items,
   placement,
   targetClass,
@@ -540,41 +534,66 @@ export function ShellTabBar({
   });
 
   /*
-    Android rail mode is a REAL Material 3 WideNavigationRail from Compose.
-    Expo Router still owns the route state and the tab scene; Compose owns only
-    the platform navigation chrome. The raised learner Snap destination moves
-    into the rail header, which is Material's primary-action position.
+    ANDROID MATERIAL RAIL — supported SDK-58 path.
+
+    Expo Router's JS-tabs implementation already contains React Navigation's
+    Material sidebar renderer. Use it instead of redrawing Material by hand.
+    WindowManager still decides WHEN this presentation is appropriate; Router
+    still owns route state/history; BottomTabBar owns the Material rail chrome.
+
+    The learner's Snap action keeps its product identity by wrapping only its
+    icon in the raised Moyo slab. It remains a normal top-level destination, so
+    TalkBack order, selection semantics and predictive-back behavior stay with
+    the navigator rather than a second native navigation owner.
   */
   if (Platform.OS === 'android' && rail) {
-    const nativeItems = items.flatMap((item) => {
-      const index = state.routes.findIndex((route) => route.name === item.name);
-      if (index === -1) return [];
-      const route = state.routes[index]!;
-      const selected = state.index === index;
-      const onPress = () => {
-        const event = emitter.emit({
-          type: 'tabPress',
-          target: route.key,
-          canPreventDefault: true,
-        });
-        if (!selected && !event.defaultPrevented) {
-          if (!reducedMotion) haptics.selection();
-          navigateToTab(route.key);
-        }
-      };
+    const materialDescriptors = Object.fromEntries(
+      state.routes.map((route) => {
+        const descriptor = descriptors[route.key]!;
+        const item = items.find((candidate) => candidate.name === route.name);
 
-      return [{
-        key: route.key,
-        label: item.label,
-        selected,
-        raised: item.raised,
-        Icon: item.Icon,
-        onPress,
-      }];
-    });
+        return [
+          route.key,
+          {
+            ...descriptor,
+            options: {
+              ...descriptor.options,
+              tabBarPosition: placement.position,
+              tabBarVariant: 'material' as const,
+              tabBarLabelPosition: railExpanded ? ('beside-icon' as const) : ('below-icon' as const),
+              tabBarStyle: [
+                descriptor.options.tabBarStyle,
+                {
+                  width: railExpanded ? NAV_RAIL_EXPANDED_WIDTH : NAV_RAIL_WIDTH,
+                },
+              ],
+              tabBarIcon: item
+                ? ({ color, size }: { color: any; size: number }) =>
+                    item.raised ? (
+                      <View className="h-nav-raised w-nav-raised items-center justify-center rounded-md border-2 border-on-surface-footer bg-nav-cta shadow-card">
+                        <item.Icon size={Math.max(size, 30)} color={color} />
+                      </View>
+                    ) : (
+                      <item.Icon size={size} color={color} />
+                    )
+                : descriptor.options.tabBarIcon,
+            },
+          },
+        ];
+      }),
+    ) as typeof descriptors;
 
-    return <NativeShellRail items={nativeItems} expanded={railExpanded} />;
+    return (
+      <BottomTabBar
+        state={state}
+        descriptors={materialDescriptors}
+        emitter={emitter}
+        navigateToTab={navigateToTab}
+        insets={tabInsets}
+      />
+    );
   }
+
 
   if (rail) {
     /*
