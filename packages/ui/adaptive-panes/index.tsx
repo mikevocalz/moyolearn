@@ -19,7 +19,7 @@
  * SOT-KEYWORDS: adaptive panes split view navigator list detail column inspector host
  *               pane toggle collapse expand controls
  */
-import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { Children, createContext, isValidElement, type ElementRef, type ReactNode, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Freeze } from 'react-freeze';
 import { I18nManager, View as NativeView, type LayoutChangeEvent, useWindowDimensions } from 'react-native';
 import { useStore } from 'zustand';
@@ -182,7 +182,7 @@ function AdaptivePanesNavigator({
     width: number | null;
     windowX: number | null;
   }>({ width: null, windowX: null });
-  const rowRef = useRef<NativeView | null>(null);
+  const rowRef = useRef<ElementRef<typeof NativeView> | null>(null);
   const rowWidth = rowGeometry.width;
   const paneEdges = usePaneEdges();
   const foldLayouts = useFoldLayouts(rowGeometry.windowX);
