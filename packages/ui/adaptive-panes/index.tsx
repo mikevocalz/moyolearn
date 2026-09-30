@@ -27,7 +27,7 @@ import { View } from '../tw';
 import { Aside, Main, Section } from '../primitives';
 import { SafeArea } from '../SafeArea';
 import { MotionView } from '../motion';
-import { isCollapsed, PANE_WIDTH_CLASS } from './constants';
+import { isCollapsed } from './constants';
 import { resolvePaneVisibility } from './pane-overrides';
 import { CollapsiblePane } from './CollapsiblePane';
 import { PaneToggle } from './PaneToggle';
@@ -577,7 +577,7 @@ function AdaptivePanesNavigator({
                     {columnCount === 2 ? (
                       <PaneToggle pane="supplementary" columnCount={columnCount} />
                     ) : null}
-                    {inspectorPane ? (
+                    {showInspector && inspectorPane ? (
                       <PaneToggle pane="inspector" columnCount={columnCount} />
                     ) : null}
                   </>
