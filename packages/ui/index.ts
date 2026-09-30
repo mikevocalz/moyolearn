@@ -116,7 +116,13 @@ export { NavDrawerButton, type NavDrawerButtonProps } from './NavDrawerButton';
 export { useAppForm, withForm, useFieldContext, useFormContext, useFormStore } from './form';
 
 export { SafeArea, type SafeAreaProps } from './SafeArea';
-export { useReservedRegions, type ReservedRegion } from './reserved-regions';
+export {
+  useReservedRegions,
+  type FoldOcclusionType,
+  type FoldOrientation,
+  type FoldState,
+  type ReservedRegion,
+} from './reserved-regions';
 export { KeyboardAwareScroll, type KeyboardAwareScrollProps } from './keyboard-aware';
 export { KeyboardSticky, type KeyboardStickyProps } from './keyboard-aware';
 export { SegmentedControl, type SegmentedControlProps, type SegmentedOption } from './SegmentedControl';
