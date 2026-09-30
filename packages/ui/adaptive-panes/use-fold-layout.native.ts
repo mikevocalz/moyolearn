@@ -7,8 +7,16 @@
 // SOT-KEYWORDS: fold layout safe area hinge adaptive panes native
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useReservedRegions } from '../reserved-regions';
-import { foldLayoutFromRegions } from './fold-layout';
+import { foldLayoutFromRegions, foldLayoutsFromRegions } from './fold-layout';
 import type { PaneEdges } from './pane-edges';
+
+export function useFoldLayouts(edges: PaneEdges) {
+  const regions = useReservedRegions();
+  const insets = useSafeAreaInsets();
+  const leadingInset = edges.includes('left') ? insets.left : 0;
+
+  return foldLayoutsFromRegions(regions, leadingInset);
+}
 
 export function useFoldLayout(edges: PaneEdges) {
   const regions = useReservedRegions();
