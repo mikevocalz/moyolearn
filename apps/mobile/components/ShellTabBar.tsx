@@ -8,7 +8,9 @@
 // ordinary Android tablets/foldables use a logical-start Material rail;
 // extra-large Android windows use the expanded labeled rail. Apple hardware
 // columns stay physical while ordinary regular-width Apple windows use their
-// leading sidebar convention. Expo Router remains the route owner in every form. Structure taken from poke-xr's PokeballTabBar (one component,
+// leading sidebar convention. Expo Router remains the route owner in every form.
+// The custom bottom form keeps the existing single item-list structure; Android
+// rail mode delegates its chrome to Expo Router's built-in Material renderer.
 // `if (rail) return <column/>` before the row return, emphasis slot kept in the
 // middle of the item order); its `position:absolute` + `sceneStyle.paddingRight`
 // compensation is deliberately NOT taken, because that repo's header is a
@@ -61,7 +63,7 @@
 // shell and AdaptivePanes consume the same normalized folds, so navigation and
 // content cannot disagree about book/tabletop/separating-hinge state.
 //
-// // Mobbin (structure only — pulled again for the native-selection pass):
+// Mobbin (structure only — pulled again for the native-selection pass):
 // BeReal raised centre camera, selection by tint with no container
 //   (mobbin.com/screens/b83a2290-0e42-457c-b7c1-8768a1cb1bef) ·
 // Vivino raised centre camera, active item in a hugging pill
@@ -87,7 +89,7 @@
 // that deep path is no longer resolvable and the public entry is the answer.
 import { BottomTabBar, type BottomTabBarProps } from 'expo-router/js-tabs';
 import type { ComponentType, ReactNode } from 'react';
-import { I18nManager, Platform, useWindowDimensions } from 'react-native';
+import { I18nManager, Platform, useWindowDimensions, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { navChrome } from '@acme/theme';
 import {
@@ -193,7 +195,7 @@ export interface ShellTabItem {
   /** The route name inside the shell's (tabs) group. */
   name: string;
   label: string;
-  Icon: ComponentType<{ size?: number; className?: string; color?: any }>;
+  Icon: ComponentType<{ size?: number; className?: string; color?: ColorValue }>;
   /** The Speechify slot: rendered as a raised rounded-square slab. At most one. */
   raised?: boolean;
 }
@@ -231,13 +233,12 @@ export function ShellTabBar({
 }: ShellTabBarProps) {
   const insets = useSafeAreaInsets();
   /*
-    The FOUR-band hook, not the binary `useSizeClass`. Both read the window and
-    both are foldable-honest, but they answer different questions and
-    adaptive-panes/constants.ts says so in as many words: the binary 768 split
-    decides one column vs two, while these four bands own the progression whose
-    collapse rule is "step to a rail, then drop". Doc 02 §2.1 puts the rail
-    threshold at 600, so the 768 hook would leave a 700dp window on a phone's
-    bottom bar — the exact defect being fixed.
+    The FIVE-band hook, not the binary `useSizeClass`. Both read the window,
+    but they answer different questions: the binary 768 split decides one-column
+    vs two-column composition while compact/medium/expanded/large/extraLarge
+    drives pane count and navigation presentation. Height and fold posture are
+    then layered on top so a wide tabletop or compact-height landscape window
+    correctly stays on bottom navigation.
   */
   const rail = placement.rail;
   const railExpanded = placement.expanded;
@@ -570,7 +571,7 @@ export function ShellTabBar({
                 },
               ],
               tabBarIcon: item
-                ? ({ color, size }: { color: any; size: number }) =>
+                ? ({ color, size }: { color: ColorValue; size: number }) =>
                     item.raised ? (
                       <View className="h-nav-raised w-nav-raised items-center justify-center rounded-md border-2 border-on-surface-footer bg-nav-cta shadow-card">
                         <item.Icon size={Math.max(size, 30)} color={color} />
