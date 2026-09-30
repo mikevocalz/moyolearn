@@ -1,0 +1,277 @@
+diff --git a/android/src/main/java/expo/modules/ui/NavigationRailView.kt b/android/src/main/java/expo/modules/ui/NavigationRailView.kt
+new file mode 100644
+--- /dev/null
++++ b/android/src/main/java/expo/modules/ui/NavigationRailView.kt
+@@ -0,0 +1,109 @@
++package expo.modules.ui
++
++import android.graphics.Color
++import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
++import androidx.compose.material3.WideNavigationRail
++import androidx.compose.material3.WideNavigationRailDefaults
++import androidx.compose.material3.WideNavigationRailItem
++import androidx.compose.material3.WideNavigationRailItemDefaults
++import androidx.compose.material3.WideNavigationRailValue
++import androidx.compose.material3.contentColorFor
++import androidx.compose.material3.rememberWideNavigationRailState
++import androidx.compose.runtime.Composable
++import androidx.compose.runtime.LaunchedEffect
++import androidx.compose.ui.graphics.Color as ComposeColor
++import expo.modules.kotlin.records.Field
++import expo.modules.kotlin.records.Record
++import expo.modules.kotlin.types.OptimizedRecord
++import expo.modules.kotlin.views.ComposeProps
++import expo.modules.kotlin.views.FunctionalComposableScope
++import expo.modules.kotlin.views.OptimizedComposeProps
++
++@OptimizedComposeProps
++data class WideNavigationRailProps(
++  val expanded: Boolean = false,
++  val containerColor: Color? = null,
++  val contentColor: Color? = null,
++  val modifiers: ModifierList = emptyList()
++) : ComposeProps
++
++@OptimizedComposeProps
++data class WideNavigationRailItemProps(
++  val selected: Boolean = false,
++  val railExpanded: Boolean = false,
++  val enabled: Boolean = true,
++  val colors: NavigationBarItemColors = NavigationBarItemColors(),
++  val modifiers: ModifierList = emptyList()
++) : ComposeProps
++
++@OptIn(ExperimentalMaterial3ExpressiveApi::class)
++@Composable
++fun FunctionalComposableScope.WideNavigationRailContent(props: WideNavigationRailProps) {
++  val modifier = ModifierRegistry.applyModifiers(
++    props.modifiers,
++    appContext,
++    composableScope,
++    globalEventDispatcher
++  )
++  val state = rememberWideNavigationRailState(
++    initialValue = if (props.expanded) {
++      WideNavigationRailValue.Expanded
++    } else {
++      WideNavigationRailValue.Collapsed
++    }
++  )
++
++  LaunchedEffect(props.expanded) {
++    if (props.expanded) {
++      state.expand()
++    } else {
++      state.collapse()
++    }
++  }
++
++  val defaultColors = WideNavigationRailDefaults.colors()
++  val containerColor = props.containerColor.composeOrNull ?: defaultColors.containerColor
++  val contentColor = props.contentColor.composeOrNull ?: contentColorFor(containerColor)
++  val headerSlotView = findChildSlotView(view, "header")
++
++  WideNavigationRail(
++    modifier = modifier,
++    state = state,
++    colors = WideNavigationRailDefaults.colors(
++      containerColor = containerColor,
++      contentColor = contentColor
++    ),
++    header = headerSlotView?.let { slot -> { slot.renderSlot() } }
++  ) {
++    Children(filter = { !isSlotView(it) })
++  }
++}
++
++@OptIn(ExperimentalMaterial3ExpressiveApi::class)
++@Composable
++fun FunctionalComposableScope.WideNavigationRailItemContent(
++  props: WideNavigationRailItemProps,
++  onClick: () -> Unit
++) {
++  val iconSlotView = findChildSlotView(view, "icon")
++  val labelSlotView = findChildSlotView(view, "label")
++  val modifier = ModifierRegistry.applyModifiers(
++    props.modifiers,
++    appContext,
++    composableScope,
++    globalEventDispatcher
++  )
++
++  WideNavigationRailItem(
++    selected = props.selected,
++    onClick = onClick,
++    icon = { iconSlotView?.renderSlot() },
++    label = labelSlotView?.let { slot -> { slot.renderSlot() } },
++    railExpanded = props.railExpanded,
++    modifier = modifier,
++    enabled = props.enabled,
++    colors = WideNavigationRailItemDefaults.colors(
++      selectedIconColor = props.colors.selectedIconColor.composeOrNull ?: ComposeColor.Unspecified,
++      selectedTextColorTopIconPosition = props.colors.selectedTextColor.composeOrNull ?: ComposeColor.Unspecified,
++      selectedTextColorStartIconPosition = props.colors.selectedTextColor.composeOrNull ?: ComposeColor.Unspecified,
++      selectedIndicatorColor = props.colors.selectedIndicatorColor.composeOrNull ?: ComposeColor.Unspecified,
++      unselectedIconColor = props.colors.unselectedIconColor.composeOrNull ?: ComposeColor.Unspecified,
++      unselectedTextColor = props.colors.unselectedTextColor.composeOrNull ?: ComposeColor.Unspecified,
++      disabledIconColor = props.colors.disabledIconColor.composeOrNull ?: ComposeColor.Unspecified,
++      disabledTextColor = props.colors.disabledTextColor.composeOrNull ?: ComposeColor.Unspecified
++    )
++  )
++}
+diff --git a/android/src/main/java/expo/modules/ui/ExpoUIModule.kt b/android/src/main/java/expo/modules/ui/ExpoUIModule.kt
+--- a/android/src/main/java/expo/modules/ui/ExpoUIModule.kt
++++ b/android/src/main/java/expo/modules/ui/ExpoUIModule.kt
+@@ -319,6 +319,18 @@ class ExpoUIModule : Module() {
+       }
+     }
+ 
++    ExpoUIView<WideNavigationRailProps>("WideNavigationRailView") {
++      Content { props ->
++        WideNavigationRailContent(props)
++      }
++    }
++
++    ExpoUIView<WideNavigationRailItemProps>("WideNavigationRailItemView") {
++      val onButtonPressed by Event<Unit>()
++
++      Content { props ->
++        WideNavigationRailItemContent(props) { onButtonPressed(Unit) }
++      }
++    }
++
+     ExpoUIView<SpacerProps>("SpacerView") {
+       Content { props ->
+         SpacerContent(props)
+diff --git a/src/jetpack-compose/NavigationRail/index.tsx b/src/jetpack-compose/NavigationRail/index.tsx
+new file mode 100644
+--- /dev/null
++++ b/src/jetpack-compose/NavigationRail/index.tsx
+@@ -0,0 +1,142 @@
++import { requireNativeView } from 'expo';
++import { type ColorValue } from 'react-native';
++
++import { type NavigationBarItemColors } from '../NavigationBar';
++import { type ModifierConfig, type ViewEvent } from '../../types';
++import { createViewModifierEventListener } from '../modifiers';
++
++type SlotProps = {
++  children: React.ReactNode;
++};
++
++type NativeSlotViewProps = {
++  slotName: string;
++  children: React.ReactNode;
++};
++
++export interface WideNavigationRailProps {
++  /** Whether the Material wide rail is expanded into its labeled desktop form. */
++  expanded?: boolean;
++  containerColor?: ColorValue;
++  contentColor?: ColorValue;
++  modifiers?: ModifierConfig[];
++  children?: React.ReactNode;
++}
++
++export interface WideNavigationRailItemProps {
++  selected: boolean;
++  /** Must match the parent rail's expanded state for Material's item animation. */
++  railExpanded?: boolean;
++  onClick?: () => void;
++  enabled?: boolean;
++  colors?: NavigationBarItemColors;
++  modifiers?: ModifierConfig[];
++  children?: React.ReactNode;
++}
++
++type NativeWideNavigationRailItemProps = Omit<WideNavigationRailItemProps, 'onClick'> &
++  ViewEvent<'onButtonPressed', void>;
++
++const WideNavigationRailNativeView: React.ComponentType<WideNavigationRailProps> =
++  requireNativeView('ExpoUI', 'WideNavigationRailView');
++
++const WideNavigationRailItemNativeView: React.ComponentType<NativeWideNavigationRailItemProps> =
++  requireNativeView('ExpoUI', 'WideNavigationRailItemView');
++
++const SlotNativeView: React.ComponentType<NativeSlotViewProps> = requireNativeView(
++  'ExpoUI',
++  'SlotView'
++);
++
++function transformRailProps(props: WideNavigationRailProps): WideNavigationRailProps {
++  const { modifiers, ...restProps } = props;
++  return {
++    modifiers,
++    ...(modifiers ? createViewModifierEventListener(modifiers) : undefined),
++    ...restProps,
++  };
++}
++
++function transformRailItemProps(
++  props: WideNavigationRailItemProps
++): NativeWideNavigationRailItemProps {
++  const { modifiers, onClick, ...restProps } = props;
++  return {
++    modifiers,
++    ...(modifiers ? createViewModifierEventListener(modifiers) : undefined),
++    ...restProps,
++    onButtonPressed: () => onClick?.(),
++  };
++}
++
++function WideNavigationRailHeader(props: SlotProps) {
++  return <SlotNativeView slotName="header">{props.children}</SlotNativeView>;
++}
++
++function WideNavigationRailItemIcon(props: SlotProps) {
++  return <SlotNativeView slotName="icon">{props.children}</SlotNativeView>;
++}
++
++function WideNavigationRailItemLabel(props: SlotProps) {
++  return <SlotNativeView slotName="label">{props.children}</SlotNativeView>;
++}
++
++function WideNavigationRailComponent(props: WideNavigationRailProps) {
++  const { children, ...restProps } = props;
++  return (
++    <WideNavigationRailNativeView {...transformRailProps(restProps)}>
++      {children}
++    </WideNavigationRailNativeView>
++  );
++}
++
++function WideNavigationRailItemComponent(props: WideNavigationRailItemProps) {
++  const { children, ...restProps } = props;
++  return (
++    <WideNavigationRailItemNativeView {...transformRailItemProps(restProps)}>
++      {children}
++    </WideNavigationRailItemNativeView>
++  );
++}
++
++/**
++ * Material 3 Expressive wide navigation rail for tablets, foldables and
++ * desktop-class Android windows.
++ */
++export const WideNavigationRail = Object.assign(WideNavigationRailComponent, {
++  Header: WideNavigationRailHeader,
++});
++
++/**
++ * A destination inside WideNavigationRail.
++ */
++export const WideNavigationRailItem = Object.assign(WideNavigationRailItemComponent, {
++  Icon: WideNavigationRailItemIcon,
++  Label: WideNavigationRailItemLabel,
++});
+diff --git a/src/jetpack-compose/index.ts b/src/jetpack-compose/index.ts
+--- a/src/jetpack-compose/index.ts
++++ b/src/jetpack-compose/index.ts
+@@ -49,6 +49,7 @@ export * from './ToggleButton';
+ export * from './Shape';
+ export * from './ModalBottomSheet';
+ export * from './NavigationBar';
++export * from './NavigationRail';
+ export * from './Carousel';
+ export {
+   HorizontalPager,
