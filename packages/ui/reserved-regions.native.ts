@@ -14,7 +14,7 @@
 // SOT-KEYWORDS: reserved regions hook folding feature windowmanager expo modules v2 hinge posture native
 import { requireOptionalNativeModule } from 'expo';
 import { useEffect, useState } from 'react';
-import { useWindowDimensions } from 'react-native';
+import { Platform, useWindowDimensions } from 'react-native';
 import type { ReservedRegion } from './reserved-regions.types';
 
 export type {
@@ -72,9 +72,13 @@ export function useReservedRegions(): readonly ReservedRegion[] {
     });
 
     // Modules 2 event observation hooks start native Flow collection only while
-    // this listener exists. On iOS addListener is absent, so window dimensions
-    // remain the signal exactly as before.
-    const subscription = native.addListener?.('changed', accept);
+    // this Android listener exists. iOS deliberately does not subscribe: UIKit
+    // exposes no reserved-region change event, so window dimensions remain the
+    // signal there exactly as before.
+    const subscription =
+      Platform.OS === 'android'
+        ? native.addListener?.('changed', accept)
+        : undefined;
 
     return () => {
       live = false;
