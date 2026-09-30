@@ -140,7 +140,7 @@ export function foldLayoutFromRegions(
  * width-class layout instead of silently hiding a pane.
  */
 export function resolveVerticalFoldPanePlan({
-  folds,
+  fold,
   rowWidth,
   primaryVisible,
   supplementaryVisible,
@@ -346,7 +346,7 @@ export interface TrailingInspectorLayoutInput {
  * spill into the opposite display.
  */
 export function resolveTrailingInspectorLayout({
-  fold,
+  folds,
   rowWidth,
   preferredWidth,
   isRTL,
