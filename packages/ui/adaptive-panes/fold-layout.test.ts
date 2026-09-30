@@ -1,0 +1,143 @@
+import assert from 'node:assert/strict';
+import test from 'node:test';
+import {
+  foldLayoutFromRegions,
+  resolveVerticalFoldPanePlan,
+  type FoldLayout,
+} from './fold-layout.ts';
+import type { ReservedRegion } from '../reserved-regions.types.ts';
+
+const margins = { top: 0, left: 0, bottom: 0, right: 0 };
+
+test('normalizes an Android half-opened horizontal fold as tabletop posture', () => {
+  const region: ReservedRegion = {
+    kind: 'division',
+    x: 0,
+    y: 390,
+    width: 800,
+    height: 4,
+    margins,
+    active: true,
+    orientation: 'horizontal',
+    state: 'halfOpened',
+    occlusionType: 'none',
+    separating: true,
+  };
+
+  assert.deepEqual(foldLayoutFromRegions([region]), {
+    orientation: 'horizontal',
+    state: 'halfOpened',
+    posture: 'tabletop',
+    occlusionType: 'none',
+    separating: true,
+    x: 0,
+    y: 390,
+    width: 800,
+    height: 4,
+  });
+});
+
+test('keeps a flat dual-screen hinge separating and converts window x to safe content x', () => {
+  const region: ReservedRegion = {
+    kind: 'division',
+    x: 420,
+    y: 0,
+    width: 24,
+    height: 900,
+    margins,
+    active: true,
+    orientation: 'vertical',
+    state: 'flat',
+    occlusionType: 'full',
+    separating: true,
+  };
+
+  const fold = foldLayoutFromRegions([region], 12);
+  assert.equal(fold?.x, 408);
+  assert.equal(fold?.separating, true);
+  assert.equal(fold?.posture, 'flat');
+});
+
+test('infers orientation for UIKit division regions without Android metadata', () => {
+  const region: ReservedRegion = {
+    kind: 'division',
+    x: 430,
+    y: 0,
+    width: 6,
+    height: 900,
+    margins,
+    active: true,
+  };
+
+  assert.equal(foldLayoutFromRegions([region])?.orientation, 'vertical');
+});
+
+const verticalFold: FoldLayout = {
+  orientation: 'vertical',
+  state: 'flat',
+  posture: 'flat',
+  occlusionType: 'full',
+  separating: true,
+  x: 430,
+  y: 0,
+  width: 20,
+  height: 900,
+};
+
+test('uses the hinge as supplementary/detail boundary when both leading panes fit', () => {
+  const plan = resolveVerticalFoldPanePlan({
+    fold: verticalFold,
+    rowWidth: 880,
+    primaryVisible: true,
+    supplementaryVisible: true,
+    detailVisible: true,
+    primaryWidth: 112,
+    supplementaryWidth: 294,
+    detailMinWidth: 264,
+    paneMinWidth: 160,
+  });
+
+  assert.deepEqual(plan, {
+    splitAfter: 'supplementary',
+    primaryWidth: 112,
+    supplementaryWidth: 318,
+    gapWidth: 20,
+  });
+});
+
+test('uses the hinge as primary boundary when two leading panes cannot fit on the first region', () => {
+  const plan = resolveVerticalFoldPanePlan({
+    fold: verticalFold,
+    rowWidth: 880,
+    primaryVisible: true,
+    supplementaryVisible: true,
+    detailVisible: true,
+    primaryWidth: 340,
+    supplementaryWidth: 294,
+    detailMinWidth: 264,
+    paneMinWidth: 160,
+  });
+
+  assert.deepEqual(plan, {
+    splitAfter: 'primary',
+    primaryWidth: 430,
+    supplementaryWidth: 166,
+    gapWidth: 20,
+  });
+});
+
+test('does not rearrange a flat continuous non-separating fold', () => {
+  const plan = resolveVerticalFoldPanePlan({
+    fold: { ...verticalFold, separating: false, occlusionType: 'none' },
+    rowWidth: 880,
+    primaryVisible: true,
+    supplementaryVisible: false,
+    detailVisible: true,
+    primaryWidth: 320,
+    supplementaryWidth: 294,
+    detailMinWidth: 264,
+    paneMinWidth: 160,
+  });
+
+  assert.equal(plan, null);
+});
