@@ -27,16 +27,20 @@ public final class ReservedRegionsModule: Module {
   */
   @JS
   func query() async -> [ReservedRegionRecord] {
-    await MainActor.run {
-#if os(iOS)
+#if os(iOS) && MOYO_HAS_UIKIT_RESERVED_REGIONS
+    return await MainActor.run {
       guard #available(iOS 27.1, *), let view = UIWindow.keyRootView else { return [] }
       let regions =
         view.reservedRegions(kind: .division, options: [.includeInactive])
         + view.reservedRegions(kind: .occlusion, options: [.includeInactive])
       return regions.map { ReservedRegionRecord(region: $0) }
-#else
-      return []
-#endif
     }
+#else
+    // Xcode/iOS SDKs before 27.1 do not declare UIView.ReservedRegion at all,
+    // so an @available check alone cannot make a static reference compile.
+    // The podspec enables MOYO_HAS_UIKIT_RESERVED_REGIONS only when the
+    // installed SDK actually contains the API.
+    return []
+#endif
   }
 }
