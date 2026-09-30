@@ -21,7 +21,7 @@
  */
 import { Children, createContext, isValidElement, type ReactNode, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
 import { Freeze } from 'react-freeze';
-import { useWindowDimensions } from 'react-native';
+import { I18nManager, useWindowDimensions } from 'react-native';
 import { useStore } from 'zustand';
 import { View } from '../tw';
 import { Aside, Main, Section } from '../primitives';
@@ -40,7 +40,7 @@ import { useSplitViewBack } from './use-split-view-back';
 import { PaneDivider } from './PaneDivider';
 import { usePaneEdges } from './pane-edges';
 import { useFoldLayout } from './use-fold-layout';
-import { resolveVerticalFoldPanePlan } from './fold-layout';
+import { resolveTrailingInspectorLayout, resolveVerticalFoldPanePlan } from './fold-layout';
 import { DetailSlot } from './detail-slot';
 import {
   DEFAULT_PRIMARY_WIDTH,
@@ -70,13 +70,6 @@ function AdaptivePanesInspector({ children }: { children?: ReactNode }) {
  * hierarchy.
  */
 const PANE_DIVIDER = 'border-border/15';
-
-/**
- * Travel for the inspector drawer, in dp. Must clear the pane's own width
- * (w-pane-inspector is 20rem, and metro sets rem:14, so 280) or the drawer
- * would sit half on screen when closed.
- */
-const INSPECTOR_TRAVEL = 300;
 
 /**
  * A pane that is on screen renders; a pane that is not stays MOUNTED and stops
@@ -399,6 +392,22 @@ function AdaptivePanesNavigator({
     foldPlan?.supplementaryWidth ?? openSupplementaryWidth;
 
   /*
+    SPLITVIEW.INSPECTOR PARITY ON ANDROID.
+
+    Expo Router's native inspector is an overlay that slides in from the
+    logical trailing edge; it is not a fourth tiled column. Keep that exact
+    contract here. On a separating vertical fold, cap the drawer to the
+    physical trailing region so an open inspector cannot cover the hinge or
+    spill onto the other display. RTL flips both the edge and slide direction.
+  */
+  const inspectorLayout = resolveTrailingInspectorLayout({
+    fold: collapsed ? null : foldLayout,
+    rowWidth,
+    preferredWidth: PANE_WIDTH_DP.inspector,
+    isRTL: I18nManager.isRTL,
+  });
+
+  /*
     WHICH PANE ABSORBS THE WINDOW. Normally the detail pane, which is why the
     leading panes are all a fixed token width. Hide the detail — the tutor
     session's "Natalie" control does exactly that — and something else has to,
@@ -601,8 +610,14 @@ function AdaptivePanesNavigator({
           <MotionView
             pointerEvents={inspectorOpen ? 'auto' : 'none'}
             aria-hidden={!inspectorOpen}
-            className={`absolute bottom-0 right-0 top-0 ${PANE_WIDTH_CLASS.inspector} border-l ${PANE_DIVIDER} bg-surface shadow-overlay`}
-            animate={{ x: inspectorOpen ? 0 : INSPECTOR_TRAVEL }}
+            className={`absolute bottom-0 top-0 ${
+              inspectorLayout.edge === 'right' ? 'border-l' : 'border-r'
+            } ${PANE_DIVIDER} bg-surface shadow-overlay`}
+            style={{
+              width: inspectorLayout.width,
+              ...(inspectorLayout.edge === 'right' ? { right: 0 } : { left: 0 }),
+            }}
+            animate={{ x: inspectorOpen ? 0 : inspectorLayout.closedX }}
             transition={{ type: 'spring', damping: 32, stiffness: 140, mass: 1.1 }}
           >
             <Aside className="flex-1">
@@ -639,9 +654,12 @@ export {
 } from './constants';
 export {
   foldLayoutFromRegions,
+  resolveTrailingInspectorLayout,
   resolveVerticalFoldPanePlan,
   type FoldLayout,
   type FoldPosture,
+  type TrailingInspectorLayout,
+  type TrailingInspectorLayoutInput,
   type VerticalFoldPanePlan,
   type VerticalFoldPanePlanInput,
 } from './fold-layout';
