@@ -26,6 +26,8 @@ export interface AdaptiveNavigationPlacement {
 export interface ResolveAdaptiveNavigationPlacementInput {
   platform: 'android' | 'ios' | 'other';
   sizeClass: WindowSizeClass;
+  /** Current window height in dp/points. Android compact height is <480dp. */
+  heightDp: number;
   folds: readonly FoldLayout[];
   hardwareEdge?: HardwareEdgeColumn | null;
   isRTL: boolean;
@@ -40,7 +42,7 @@ function logicalStart(isRTL: boolean): 'left' | 'right' {
  *
  * Android follows Material 3 Adaptive navigation semantics:
  * - compact -> short bottom navigation
- * - tabletop / compact-height analogue -> short medium bottom navigation
+ * - tabletop or compact height (<480dp) -> short medium bottom navigation
  * - otherwise -> start-edge wide rail
  * - extra-large -> expanded wide rail
  *
@@ -55,6 +57,7 @@ function logicalStart(isRTL: boolean): 'left' | 'right' {
 export function resolveAdaptiveNavigationPlacement({
   platform,
   sizeClass,
+  heightDp,
   folds,
   hardwareEdge,
   isRTL,
@@ -102,7 +105,7 @@ export function resolveAdaptiveNavigationPlacement({
       };
     }
 
-    if (tabletop) {
+    if (tabletop || heightDp < 480) {
       return {
         kind: 'bottom-medium',
         position: 'bottom',
