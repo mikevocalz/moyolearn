@@ -115,7 +115,7 @@ export function TutorSpecsAuthoringScene() {
             [0.48, -0.36, 0.08],
           ]}
           thickness={0.008}
-          materials="moyo-specs-rail"
+          materials="moyoRail"
         />
       </ViroNode>
     </ViroSpecsScene>
