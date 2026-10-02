@@ -16,6 +16,14 @@ export { XrBoardRaster } from './XrBoardRaster.native.tsx';
 export { XrBoardLive } from './XrBoardLive.native.tsx';
 export { BoardTextureHost } from './BoardTextureHost.native.tsx';
 export { XrTriPanel } from './XrTriPanel.native.tsx';
+export {
+  MoyoSpecsTutorRoom,
+  compileMoyoSpecsTutorRoom,
+} from './MoyoSpecsTutorRoom.native.tsx';
+export type {
+  MoyoSpecsCompiledScene,
+  MoyoSpecsTutorRoomProps,
+} from './MoyoSpecsTutorRoom.types.ts';
 export { XrBoardSurface } from './XrBoardSurface.native.tsx';
 export { XrBoardTray } from './XrBoardTray.native.tsx';
 export { worldSlot, xrRotateY, type XrWorldPose } from './world-slot.ts';
