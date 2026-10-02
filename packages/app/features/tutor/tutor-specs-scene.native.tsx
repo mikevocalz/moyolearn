@@ -15,10 +15,24 @@
 import type { ReactNode } from 'react';
 import {
   Viro3DObject,
+  ViroAnimations,
   ViroNode,
   ViroPolyline,
   ViroText,
 } from '@reactvision/react-viro';
+
+ViroAnimations.registerAnimations({
+  moyoSpecsTutorPulse: {
+    properties: {
+      scaleX: 1.04,
+      scaleY: 1.04,
+      scaleZ: 1.04,
+      opacity: 0.92,
+    },
+    duration: 650,
+    easing: 'EaseInEaseOut',
+  },
+});
 
 // eslint-disable-next-line @typescript-eslint/no-require-imports
 const NATALIE_GLB = require('@acme/avatar/assets/natalie-viro.glb');
@@ -46,6 +60,7 @@ export function TutorSpecsAuthoringScene() {
           viroTag="moyo-specs-title"
           text="Moyo Tutor Room"
           position={[0, 0.42, 0]}
+          animation={{ name: 'moyoSpecsTutorPulse', run: true, loop: true }}
         />
 
         <ViroNode
@@ -70,6 +85,8 @@ export function TutorSpecsAuthoringScene() {
             source={NATALIE_GLB}
             type="GLB"
             scale={[0.82, 0.82, 0.82]}
+            onClick={() => undefined}
+            onDrag={() => undefined}
           />
         </ViroNode>
 
