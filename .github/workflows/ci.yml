@@ -29,6 +29,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Validate SPECS Tutor Room authoring contract
+        run: pnpm check:specs
       # --continue: without it turbo kills every sibling task on the first
       # failure, and each one then prints a bare ELIFECYCLE with no output. A
       # single missing eslint.config.mjs read as nine broken packages that way
