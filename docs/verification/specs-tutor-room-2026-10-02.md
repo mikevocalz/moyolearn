@@ -39,6 +39,7 @@ After the public Viro SPECS stack lands:
 - viro #32 — animation + AR facade
 - viro #33 — cross-platform Platform Lab
 - viro #34 — build-time static compiler
+- viro #35 — generated Lens Studio host
 
 the local marker can be replaced by the public export without changing the
 child scene.
@@ -50,7 +51,8 @@ Once the Viro release candidate is vendored into Moyo:
 ```bash
 viro-specs compile \
   --entry packages/app/features/tutor/tutor-specs-scene.native.tsx \
-  --out build/moyo-tutor-room.specs.json
+  --out "/path/to/Viro Specs Platform Lab/Assets/ViroSpecs/generated/MoyoTutorRoomGenerated.ts" \
+  --format lens-ts
 ```
 
 Then sync that manifest into the already-validated SPECS 27 Lens project and
@@ -58,3 +60,8 @@ run the CLAD/LEAF loop.
 
 The only remaining acceptance after simulator validation is physical-device
 certification.
+
+
+The generated component applies the scene through the validated runtime hosts,
+enables Natalie select/drag intent through SIK, plays the title pulse through
+Lens AnimationPlayer, and presents the focus rail through VolumetricLine.
