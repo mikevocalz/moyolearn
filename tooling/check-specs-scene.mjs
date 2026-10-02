@@ -52,3 +52,7 @@ if (!source.includes("ViroAnimations.registerAnimations")) {
 if (!source.includes('onClick={() => undefined}') || !source.includes('onDrag={() => undefined}')) {
   throw new Error('Specs authoring scene must exercise select and drag interaction intent.');
 }
+
+if (!source.includes('materials="moyoRail"')) {
+  throw new Error('Specs authoring focus rail must use the registered moyoRail material.');
+}
