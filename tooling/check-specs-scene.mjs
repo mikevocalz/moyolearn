@@ -45,3 +45,10 @@ if (!source.includes('thickness={0.008}')) {
 }
 
 console.log('Moyo SPECS Tutor Room authoring contract: PASS');
+
+if (!source.includes("ViroAnimations.registerAnimations")) {
+  throw new Error('Specs authoring scene must exercise static Viro animation compilation.');
+}
+if (!source.includes('onClick={() => undefined}') || !source.includes('onDrag={() => undefined}')) {
+  throw new Error('Specs authoring scene must exercise select and drag interaction intent.');
+}
