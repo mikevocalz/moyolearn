@@ -25,6 +25,7 @@ import type { XrBoardInkProps } from './XrBoardInk.types.ts';
 import type { XrBoardRasterProps } from './XrBoardRaster.types.ts';
 import type { XrBoardLiveProps } from './XrBoardLive.types.ts';
 import type { XrTriPanelProps } from './XrTriPanel.types.ts';
+import type { MoyoSpecsTutorRoomProps } from './MoyoSpecsTutorRoom.types.ts';
 import type { XrBoardSurfaceProps } from './XrBoardSurface.types.ts';
 import type { BoardTextureHostProps } from './BoardTextureHost.types.ts';
 import type { XrChatPanelProps } from './XrChatPanel.types.ts';
@@ -47,6 +48,12 @@ export function XrBoardLive(_props: XrBoardLiveProps) {
 }
 export function XrTriPanel(_props: XrTriPanelProps) {
   return null;
+}
+export function MoyoSpecsTutorRoom(_props: MoyoSpecsTutorRoomProps) {
+  return null;
+}
+export function compileMoyoSpecsTutorRoom(_props: MoyoSpecsTutorRoomProps): never {
+  throw new Error('Moyo SPECS Tutor Room export is native/Lens-only.');
 }
 export function XrBoardSurface(_props: XrBoardSurfaceProps) {
   return null;
