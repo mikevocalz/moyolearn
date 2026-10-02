@@ -21,6 +21,8 @@ export {
   XrBoardRaster,
   XrBoardLive,
   XrTriPanel,
+  MoyoSpecsTutorRoom,
+  compileMoyoSpecsTutorRoom,
   XrBoardSurface,
   probePremiumImports,
   BoardTextureHost,
@@ -44,6 +46,10 @@ export type { XrBoardInkProps } from './XrBoardInk.types.ts';
 export type { XrBoardRasterProps } from './XrBoardRaster.types.ts';
 export type { XrBoardLiveProps } from './XrBoardLive.types.ts';
 export type { XrTriPanelProps, XrPanelRow } from './XrTriPanel.types.ts';
+export type {
+  MoyoSpecsCompiledScene,
+  MoyoSpecsTutorRoomProps,
+} from './MoyoSpecsTutorRoom.types.ts';
 export type { XrBoardSurfaceProps } from './XrBoardSurface.types.ts';
 export type {
   BoardTextureBinding,
