@@ -209,8 +209,8 @@ catalog:
   # `src/routes` + createFileRoute + routeTree.gen.ts are the same artefacts in
   # both — the SPA fallback (Lane B) is a plugin swap, not a rewrite. Start's
   # vite peer is `>=7.0.0`, which is why the `vite` entry below is 7.x.
-  "@tanstack/react-router": 1.170.38
-  "@tanstack/react-start": 1.168.56
+  "@tanstack/react-router": 1.170.41
+  "@tanstack/react-start": 1.168.60
   "@legendapp/list": 3.3.11
   "@legendapp/motion": 2.5.3
   date-fns: 4.4.0
