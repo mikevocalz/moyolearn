@@ -1,3 +1,13 @@
+diff --git a/android/viro_renderer/build.gradle b/android/viro_renderer/build.gradle
+index ef3d303..fb77427 100644
+--- a/android/viro_renderer/build.gradle
++++ b/android/viro_renderer/build.gradle
+@@ -1,4 +1,2 @@
+ configurations.maybeCreate("default")
+-artifacts.add("default", file('viro_renderer-release.aar'))
+-
+-
++artifacts.add("default", file(rootProject.findProperty('moyoViroRendererAar') ?: 'viro_renderer-release.aar'))
 diff --git a/components/VisionOS/ViroVisionOSModule.ts b/components/VisionOS/ViroVisionOSModule.ts
 index 8cbe6c9..19dafb1 100644
 --- a/components/VisionOS/ViroVisionOSModule.ts
@@ -131,20 +141,20 @@ index 7a286c9..7c0a7a0 100644
  const NOT_SUPPORTED = {
      supported: false,
 diff --git a/dist/index.d.ts b/dist/index.d.ts
-index d2e33cf..c0f610c 100644
+index 847cb06..8689e1b 100644
 --- a/dist/index.d.ts
 +++ b/dist/index.d.ts
-@@ -116,3 +116,5 @@ export type { VRModuleOpenXRType, ViroPassthroughStyle, ViroHapticHand, ViroTrac
+@@ -111,3 +111,5 @@ export type { VRModuleOpenXRType, ViroCaptureResult, ViroPassthroughStyle };
  export type { ImmersiveSpaceStyle, ViroInputTuning, ViroSharedSpaceState, } from "./components/VisionOS/ViroVisionOSModule";
- export type { StudioSceneResponse, StudioAsset, StudioAnimation, StudioCollisionBinding, StudioSceneFunction, StudioSceneMeta, StudioProjectMeta, StudioSceneNavigatorHandle, StudioSceneNavigatorProps, StudioApiError, StudioApiErrorFields, } from "./components/Studio";
+ export type { StudioSceneResponse, StudioAsset, StudioAnimation, StudioCollisionBinding, StudioSceneFunction, StudioSceneMeta, StudioProjectMeta, StudioSceneNavigatorHandle, StudioSceneNavigatorProps, StudioApiError, StudioApiErrorFields, StudioColocationErrorCode, StudioColocationOptions, StudioColocationRoom, StudioColocationState, } from "./components/Studio";
  export { isStudioApiError } from "./components/Studio";
 +
 +export { subscribeSpatialStylus, type ViroSpatialStylusSample } from "./components/VisionOS/ViroVisionOSModule";
 diff --git a/dist/index.js b/dist/index.js
-index 0218197..9df9831 100644
+index 6102d1a..8ba4a07 100644
 --- a/dist/index.js
 +++ b/dist/index.js
-@@ -244,3 +244,5 @@ const react_native_1 = require("react-native");
+@@ -235,3 +235,5 @@ const react_native_1 = require("react-native");
  react_native_1.AppRegistry.registerComponent("VRQuestScene", () => ViroQuestEntryPoint_1.ViroQuestEntryPoint);
  var Studio_2 = require("./components/Studio");
  Object.defineProperty(exports, "isStudioApiError", { enumerable: true, get: function () { return Studio_2.isStudioApiError; } });
@@ -307,10 +317,10 @@ index 3ea05b4..b122b68 100644
      withVisionOSInfoPlist, // 7. Info.plist: allow multiple scenes (ImmersiveSpace)
      withVisionOSAppDelegate, // 8. AppDelegate.swift: Expo entry point + imports
 diff --git a/index.ts b/index.ts
-index 18ae9c3..4f70942 100644
+index bc79486..2620b08 100644
 --- a/index.ts
 +++ b/index.ts
-@@ -652,3 +652,5 @@ export type {
+@@ -620,3 +620,5 @@ export type {
  } from "./components/Studio";
  
  export { isStudioApiError } from "./components/Studio";
@@ -828,11 +838,3 @@ index b00c3f1..a78ff66 100644
      withVisionOSCompatShims,   // 6. components/compat/ BlurView + LinearGradient
      withVisionOSInfoPlist,     // 7. Info.plist: allow multiple scenes (ImmersiveSpace)
      withVisionOSAppDelegate,   // 8. AppDelegate.swift: Expo entry point + imports
-diff --git a/android/viro_renderer/build.gradle b/android/viro_renderer/build.gradle
---- a/android/viro_renderer/build.gradle
-+++ b/android/viro_renderer/build.gradle
-@@ -20,3 +20,3 @@
- dependencies {
--    api files('viro_renderer-release.aar')
-+    api files(rootProject.findProperty('moyoViroRendererAar') ?: 'viro_renderer-release.aar')
- }
