@@ -149,3 +149,117 @@ test('Android compact-height landscape stays on bottom navigation at wide width'
   assert.equal(placement.kind, 'bottom-medium');
   assert.equal(placement.position, 'bottom');
 });
+
+test('Android rail starts exactly at the 600dp medium boundary', () => {
+  assert.equal(
+    resolveAdaptiveNavigationPlacement({
+      platform: 'android',
+      sizeClass: 'medium',
+      heightDp: 800,
+      folds: [],
+      isRTL: false,
+    }).kind,
+    'rail-collapsed',
+  );
+});
+
+test('Android 599dp remains compact bottom navigation', () => {
+  assert.equal(
+    resolveAdaptiveNavigationPlacement({
+      platform: 'android',
+      sizeClass: 'compact',
+      heightDp: 800,
+      folds: [],
+      isRTL: false,
+    }).kind,
+    'bottom-compact',
+  );
+});
+
+test('Android 480dp is rail-eligible while 479dp stays on bottom navigation', () => {
+  assert.equal(
+    resolveAdaptiveNavigationPlacement({
+      platform: 'android',
+      sizeClass: 'expanded',
+      heightDp: 480,
+      folds: [],
+      isRTL: false,
+    }).kind,
+    'rail-collapsed',
+  );
+  assert.equal(
+    resolveAdaptiveNavigationPlacement({
+      platform: 'android',
+      sizeClass: 'expanded',
+      heightDp: 479,
+      folds: [],
+      isRTL: false,
+    }).kind,
+    'bottom-medium',
+  );
+});
+
+test('Android 1600dp is the inclusive boundary for the expanded rail', () => {
+  assert.equal(
+    resolveAdaptiveNavigationPlacement({
+      platform: 'android',
+      sizeClass: 'large',
+      heightDp: 900,
+      folds: [],
+      isRTL: false,
+    }).kind,
+    'rail-collapsed',
+  );
+  assert.equal(
+    resolveAdaptiveNavigationPlacement({
+      platform: 'android',
+      sizeClass: 'extraLarge',
+      heightDp: 900,
+      folds: [],
+      isRTL: false,
+    }).kind,
+    'rail-expanded',
+  );
+});
+
+test('Android book posture keeps rail navigation on the logical start edge', () => {
+  const book: FoldLayout = {
+    orientation: 'vertical',
+    state: 'halfOpened',
+    posture: 'book',
+    separating: true,
+    x: 430,
+    y: 0,
+    width: 20,
+    height: 900,
+  };
+
+  const placement = resolveAdaptiveNavigationPlacement({
+    platform: 'android',
+    sizeClass: 'expanded',
+    heightDp: 900,
+    folds: [book],
+    isRTL: false,
+  });
+
+  assert.equal(placement.kind, 'rail-collapsed');
+  assert.equal(placement.position, 'left');
+});
+
+test('Android tabletop wins over height/width rail eligibility', () => {
+  const tabletopAt480: FoldLayout = {
+    ...tabletop,
+    y: 400,
+  };
+
+  const placement = resolveAdaptiveNavigationPlacement({
+    platform: 'android',
+    sizeClass: 'extraLarge',
+    heightDp: 480,
+    folds: [tabletopAt480],
+    isRTL: true,
+  });
+
+  assert.equal(placement.kind, 'bottom-medium');
+  assert.equal(placement.position, 'bottom');
+});
