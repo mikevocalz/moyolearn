@@ -1,0 +1,13 @@
+diff --git a/android/viro_renderer/build.gradle b/android/viro_renderer/build.gradle
+index 21c54d6..62f424b 100644
+--- a/android/viro_renderer/build.gradle
++++ b/android/viro_renderer/build.gradle
+@@ -17,7 +17,7 @@ android {
+ }
+ 
+ dependencies {
+-    api files('viro_renderer-release.aar')
++    api files(rootProject.findProperty('moyoViroRendererAar') ?: 'viro_renderer-release.aar')
+ }
+ 
+ // AGP 8.12+ refuses to bundle a library AAR that carries direct local .aar

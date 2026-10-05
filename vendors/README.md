@@ -4,9 +4,15 @@ Tarballs that cannot come from a registry. Committed on purpose — the `file:`
 protocol pins a path, so CI and every collaborator must resolve the same
 artefact (redraw.dev/docs/installation).
 
-## `@reactvision/react-viro` 3.0.2 + Moyo patch stack
+## `@reactvision/react-viro` 3.0.2-moyo.1 (fork tarball)
 
-`@reactvision/react-viro@3.0.2` is the upstream release baseline; Moyo-specific visionOS/stylus changes and the selected upstream-next fixes are carried as a patch-package overlay.
+`reactvision-react-viro-3.0.2-moyo.1.tgz` is packed from the mikevocalz/viro
+fork — upstream 3.0.2 integrated plus the full Moyo surface (visionOS/stylus,
+`ViroRivePanel`, morph/skeleton APIs, `isPico`, Studio/colocation). The public
+npm 3.0.2 was tried first and rejected: it carries none of the Moyo overlay,
+and typecheck fails across `apps/mobile` and `packages/ui` without it. The
+patch-package overlay shrank accordingly — only the `moyoViroRendererAar`
+gradle hook remains, because that is a MoyoLearn-repo concern, not a fork one.
 pinned through `pnpm.overrides` in the root `package.json` and registered as a
 config plugin in `apps/mobile/app.config.ts`. It carries the visionOS podspec
 work and the AR path the spatial board needs.
@@ -73,9 +79,14 @@ binary, so it is a JS-only change from there.
 
 ## ReactVision parity
 
-The Moyo app now targets the public `@reactvision/react-viro@3.0.2` release rather than a stale vendored 3.0.1 tarball. The patch overlay is intentionally separate from the release so the upstream baseline can be verified independently.
+The Moyo app now targets the `3.0.2-moyo.1` fork tarball rather than the stale
+vendored 3.0.1 — the same upstream 3.0.2 release line, with the Moyo overlay
+integrated at the source. The patch overlay that remains is intentionally
+separate so the upstream baseline can be verified independently.
 
-Included post-3.0.2 upstream-next patches:
+Post-3.0.2 upstream-next candidates (JS-side hunks ride the patch overlay on
+the `upstream-next` branch; Java-side hunks need a renderer AAR rebuild from
+the fork — see the parity doc):
 - ReactVision/viro #555 — mid-list active-camera attachment
 - ReactVision/viro #556 — iOS ObjectDetector bridge registration
 - ReactVision/viro #557 — Quest relaunch-loop fix
