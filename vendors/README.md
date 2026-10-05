@@ -4,9 +4,9 @@ Tarballs that cannot come from a registry. Committed on purpose — the `file:`
 protocol pins a path, so CI and every collaborator must resolve the same
 artefact (redraw.dev/docs/installation).
 
-## `@reactvision/react-viro` 3.0.0-moyo.3 (the spatial whiteboard + avatar bones)
+## `@reactvision/react-viro` 3.0.2 + Moyo patch stack
 
-`reactvision-react-viro-3.0.0-moyo.3.tgz` is our fork of ReactVision's Viro,
+`@reactvision/react-viro@3.0.2` is the upstream release baseline; Moyo-specific visionOS/stylus changes and the selected upstream-next fixes are carried as a patch-package overlay.
 pinned through `pnpm.overrides` in the root `package.json` and registered as a
 config plugin in `apps/mobile/app.config.ts`. It carries the visionOS podspec
 work and the AR path the spatial board needs.
@@ -69,3 +69,17 @@ pnpm add -w "redraw@file:./vendors/redraw-<ver>.tgz" \
 Then swap the one import in `apps/mobile/components/splash/MoyoSplash.tsx`
 (marked `REDRAW HAND-OFF`) and rebuild — the native side is already in the
 binary, so it is a JS-only change from there.
+
+
+## ReactVision parity
+
+The Moyo app now targets the public `@reactvision/react-viro@3.0.2` release rather than a stale vendored 3.0.1 tarball. The patch overlay is intentionally separate from the release so the upstream baseline can be verified independently.
+
+Included post-3.0.2 upstream-next patches:
+- ReactVision/viro #555 — mid-list active-camera attachment
+- ReactVision/viro #556 — iOS ObjectDetector bridge registration
+- ReactVision/viro #557 — Quest relaunch-loop fix
+
+ReactVision/viro #554 (function-region pinning) is **not** included yet because it depends on the matching ViroCore change; it remains a separate follow-up until both sides are released/validated together.
+
+ViroCore fixes shipped by the 3.0.2 release line include the renderer fixes from #397, #398 and #399. Post-release ViroCore #403, #404 and #405 remain upstream-next and require a renderer rebuild before they can safely be consumed by the app.
