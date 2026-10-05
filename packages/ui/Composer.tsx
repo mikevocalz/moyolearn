@@ -37,6 +37,7 @@
 
 import { useCallback, useState } from 'react';
 import type { LayoutChangeEvent } from 'react-native';
+import { Keyboard } from 'react-native';
 import { targets } from '@acme/theme';
 import { Menu } from './Menu';
 import { View, Text, Pressable, Textarea } from './primitives';
@@ -400,7 +401,11 @@ export function Composer({
   const autoGrow = useAutoGrow(value, Number.parseInt(targets.floor, 10));
 
   const handleSubmit = useCallback(() => {
-    if (canSend) onSend();
+    if (!canSend) return;
+    // Submit ends the typing turn — the field keeps focus on the platform
+    // convention otherwise, and a multiline native field never blurs on send.
+    Keyboard.dismiss();
+    onSend();
   }, [canSend, onSend]);
 
 
