@@ -46,6 +46,14 @@ const TITLES: Record<string, string> = {
   '/family': 'Family',
 };
 
+export const unstable_settings = {
+  /* When a pushed stack route's rebuilt state reseeds this tab set (guardian
+     stack's initialRouteName is `(drawer)`), hardware back must land on the
+     home tab — not whatever the file-sorted linking config picks first
+     (observed: 'alerts'). */
+  initialRouteName: 'family-home',
+};
+
 export default function GuardianTabs() {
   // Doc 02 §2.1: bottom nav under 600dp, rail from 600 up.
   const navigationPlacement = useShellNavigationPlacement();

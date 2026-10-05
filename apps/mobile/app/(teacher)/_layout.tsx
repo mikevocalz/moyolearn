@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { useAppSession } from '@acme/app';
 import { RoleScope } from '@acme/ui';
+import { ShellBackRail } from '../../components/ShellBackRail';
 import { ShellHeader } from '../../components/ShellHeader';
 
 /**
@@ -15,12 +16,20 @@ const TITLES: Record<string, string> = {
   '/conference': 'Conferences',
 };
 
+export const unstable_settings = {
+  /* Cross-context pushes (e.g. `/classes/x` from a tab) rebuild this
+     navigator's state; without an initial route the pushed screen is the
+     stack's only entry and hardware back exits the app. */
+  initialRouteName: '(drawer)',
+};
+
 export default function TeacherShell() {
   const { activeContext } = useAppSession();
   const isTeacher = activeContext.kind === 'teacher';
 
   return (
     <RoleScope role="teacher" className="flex-1">
+    <ShellBackRail>
       <Stack
         screenOptions={{
           header: ({ navigation, back }) => (
@@ -53,6 +62,7 @@ export default function TeacherShell() {
           <Stack.Screen name="assign/[assignmentId]" options={{ title: 'Assignment' }} />
         </Stack.Protected>
       </Stack>
+    </ShellBackRail>
     </RoleScope>
   );
 }

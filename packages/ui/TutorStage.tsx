@@ -998,26 +998,30 @@ export function TutorStage({
                   above her body and never over her face or her captions.
                 */}
                 {detailOpen && detailActions ? (
-                  <View className="absolute right-group top-group">
+                  <View className="absolute right-inset-hair top-inset-hair">
                     {/*
-                      THE MARK ALONE IN HERE, because this slot is a corner and the
-                      rail is a row.
+                      THE MARK ALONE IN HERE, at the pane's own corner — the slot
+                      is `inset-hair` (the hairline tier whose only job is keeping
+                      a border-adjacent control off the border), not `group`:
+                      `group` pulled a 56dp square far enough into the pane to sit
+                      over her face.
 
-                      `XrBoardButton` deliberately does not know which of the two it
-                      is drawn in — a control that picks its own placement ends up in
-                      both — so the SLOT says what it can afford. Her pane sizes the
-                      control by the band's target, which is 72dp for a K–2 learner,
-                      and a labelled pill at that height in an upper corner over her
-                      body is a block of chrome on top of the tutor.
-
-                      The label is what goes, not the target: the glyph stays a full
-                      72dp press for the same six-year-old, and `aria-label` carries
-                      the words it no longer prints.
+                      `XrBoardButton` deliberately does not know which of the two
+                      slots it is drawn in, so the slot says what it can afford —
+                      and this slot cannot afford the band's 56dp target: an
+                      overlay at that size is a block of chrome on the tutor, not
+                      a control beside content. The pane copy steps down to `sm`
+                      (44dp, the adult floor and still a token), glyph only;
+                      `aria-label` carries the words it no longer prints.
                     */}
                     {isValidElement(detailActions)
-                      ? cloneElement(detailActions as React.ReactElement<{ showLabel?: boolean }>, {
-                          showLabel: false,
-                        })
+                      ? cloneElement(
+                          detailActions as React.ReactElement<{
+                            showLabel?: boolean;
+                            size?: 'sm' | 'md' | 'lg' | 'xl';
+                          }>,
+                          { showLabel: false, size: 'sm' },
+                        )
                       : detailActions}
                   </View>
                 ) : null}

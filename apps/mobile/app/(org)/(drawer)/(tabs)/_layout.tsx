@@ -34,6 +34,12 @@ const TITLES: Record<string, string> = {
   '/safety': 'Safety',
 };
 
+export const unstable_settings = {
+  /* Seeded-state landing tab when a pushed route's rebuilt navigator state
+     reseeds this tab set — see the guardian (tabs) layout. */
+  initialRouteName: 'overview',
+};
+
 export default function OrgTabs() {
   // Doc 02 §2.1: bottom nav under 600dp, rail from 600 up.
   const navigationPlacement = useShellNavigationPlacement();
@@ -47,8 +53,7 @@ export default function OrgTabs() {
       tabBar={(props) => <ShellTabBar {...props} items={ITEMS} placement={navigationPlacement} railAlignment="top" hasOverflowDrawer={DRAWER_EXTRAS.length > 0} />}
     >
       <Tabs.Screen name="overview" options={{ title: 'Overview' }} />
-      {/* The calendar draws its own header inside its safe area. */}
-      <Tabs.Screen name="schedule" options={{ title: 'Schedule', headerShown: false }} />
+      <Tabs.Screen name="schedule" options={{ title: 'Schedule' }} />
       <Tabs.Screen name="inbox" options={{ title: 'Inbox' }} />
       <Tabs.Screen name="safety" options={{ title: 'Safety' }} />
     </Tabs>

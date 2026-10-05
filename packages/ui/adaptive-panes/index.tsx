@@ -19,10 +19,12 @@
  * SOT-KEYWORDS: adaptive panes split view navigator list detail column inspector host
  *               pane toggle collapse expand controls
  */
-import { Children, createContext, isValidElement, type ElementRef, type ReactNode, useContext, useEffect, useImperativeHandle, useRef, useState } from 'react';
+import { Children, createContext, isValidElement, type ElementRef, type ReactNode, useContext, useEffect, useId, useImperativeHandle, useRef, useState } from 'react';
 import { Freeze } from 'react-freeze';
-import { I18nManager, View as NativeView, type LayoutChangeEvent, useWindowDimensions } from 'react-native';
+import { I18nManager, View as NativeView, type LayoutChangeEvent, useColorScheme, useWindowDimensions } from 'react-native';
 import { useStore } from 'zustand';
+// Concrete color for the row's painted ground — see the comment at the row.
+import { semantic } from '@acme/theme';
 import { View } from '../tw';
 import { Aside, Main, Section } from '../primitives';
 import { SafeArea } from '../SafeArea';
@@ -33,6 +35,8 @@ import { CollapsiblePane } from './CollapsiblePane';
 import { PaneToggle } from './PaneToggle';
 import { PANE_WIDTH_DP } from './pane-widths';
 import { usePaneOverrideStore } from './pane-overrides.store';
+import { clearPaneControls, publishPaneControls, usePaneControlsStore } from './pane-controls.store';
+import { usePaneRouteKey } from './use-pane-route-key';
 import { useWindowSizeClass } from './use-window-size-class';
 import { createAdaptivePanesStore, type AdaptivePanesStore } from './store';
 import { AdaptivePanesContext } from './context';
@@ -184,6 +188,7 @@ function AdaptivePanesNavigator({
     windowX: number | null;
   }>({ width: null, windowX: null });
   const rowRef = useRef<ElementRef<typeof NativeView> | null>(null);
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   const rowWidth = rowGeometry.width;
   const paneEdges = usePaneEdges();
   const windowFoldLayouts = useFoldLayouts(rowGeometry.windowX);
@@ -305,6 +310,51 @@ function AdaptivePanesNavigator({
   */
   const inspectorPane = inspectors[0] ?? null;
   const inspectorOpen = Boolean(showInspector && inspectorPane && visible.inspector);
+
+  /*
+    THE TOGGLE ROW'S CHROME LIVES IN THE SHELL HEADER when one is mounted.
+    `paneControls` still decides WHETHER this host exposes toggles; WHERE they
+    render is decided by `headerConsumers` — ShellHeader registers itself and
+    draws the same `PaneToggle`s from this registration, so a host under a
+    navigator header gets one row in the bar instead of a second row inside
+    the pane. No consumer (web pages, Storybook) keeps the in-pane row exactly
+    as before.
+
+    Publishing runs on EVERY render, deliberately unmemoized, keyed by the
+    host screen's own `route.key` — never the global pathname, which belongs
+    to whatever is focused and would republish wrongly the moment a blurred
+    (mounted, possibly frozen) host re-rendered. The key belongs to the
+    screen instance, so it cannot drift: the header shows the controls only
+    on that screen's bar, a refocused screen's entry is still sitting in the
+    map untouched, and an unmount cleanup keyed to the same `route.key` can
+    never retract a different host's registration.
+
+    A host with NO route (Storybook, overlays — the fork returns null) has no
+    header that could ever claim its controls, so it keeps its in-pane row even
+    while a consumer exists.
+  */
+  const controlsOwner = useId();
+  const routeKey = usePaneRouteKey();
+  const headerConsumer =
+    routeKey !== null &&
+    usePaneControlsStore((state) => state.headerConsumers > 0);
+  useEffect(() => {
+    if (paneControls && !collapsed && routeKey !== null) {
+      publishPaneControls(routeKey, {
+        owner: controlsOwner,
+        columnCount,
+        inspector: Boolean(showInspector && inspectorPane),
+      });
+    } else if (routeKey !== null) {
+      clearPaneControls(routeKey, controlsOwner);
+    }
+  });
+  useEffect(
+    () => () => {
+      if (routeKey !== null) clearPaneControls(routeKey, controlsOwner);
+    },
+    [routeKey, controlsOwner],
+  );
 
   /*
     An explicit `primaryWidthDp` REPLACES the rail step, it does not compete
@@ -465,7 +515,19 @@ function AdaptivePanesNavigator({
       <SafeArea edges={paneEdges} className="flex-1">
         <NativeView
           ref={rowRef}
-          style={{ flex: 1, flexDirection: 'row' }}
+          /*
+            The row must own a painted ground. Panes are transparent — hosts
+            don't set a bg — so nothing painted the window: on Android the
+            LIGHT windowBackground bled through and dark-mode ink sat on it
+            washed out. `surface` resolved in JS because NativeView is the
+            raw View (rowRef needs measureInWindow); the className engine
+            only wraps ../tw primitives.
+          */
+          style={{
+            flex: 1,
+            flexDirection: 'row',
+            backgroundColor: semantic.surface[scheme],
+          }}
           /*
             Measured at EVERY width, not only while collapsed. The stored width
             is what the next collapse opens the pane to; measuring only in the
@@ -618,8 +680,9 @@ function AdaptivePanesNavigator({
             {/*
               THE ROW STAYS, ONLY ITS BUTTONS GO. Collapsed, the toggles have
               nothing to toggle — one pane is the whole window and hiding it
-              would empty the screen — but this element cannot be the thing that
-              disappears.
+              would empty the screen — and under a mounted header consumer they
+              live in the shell header instead (see the registration above) —
+              but this element cannot be the thing that disappears.
 
               Measured: with `{paneControls && !collapsed ? <View/> : null}`
               here, the detail pane below it remounted on every collapse and
@@ -633,10 +696,12 @@ function AdaptivePanesNavigator({
             {paneControls ? (
               <View
                 className={
-                  collapsed ? undefined : 'flex-row items-center gap-element px-inset py-1'
+                  collapsed || headerConsumer
+                    ? undefined
+                    : 'flex-row items-center justify-end gap-element px-inset py-1'
                 }
               >
-                {collapsed ? null : (
+                {collapsed || headerConsumer ? null : (
                   <>
                     <PaneToggle pane="primary" columnCount={columnCount} />
                     {columnCount === 2 ? (
@@ -743,6 +808,12 @@ export { PaneEdgesContext, usePaneEdges, type PaneEdges } from './pane-edges';
 export { PaneListHeader, type PaneListHeaderProps } from './PaneListHeader';
 export { PaneSearchBar, type PaneSearchBarProps } from './PaneSearchBar';
 export { PaneToggle, type PaneToggleProps } from './PaneToggle';
+export {
+  usePaneControlsStore,
+  publishPaneControls,
+  clearPaneControls,
+  type PaneControlsRegistration,
+} from './pane-controls.store';
 export { SidebarSection, type SidebarSectionProps } from './SidebarSection';
 export { SwipeableRow, type SwipeableRowProps, ACTION_WIDTH } from './SwipeableRow';
 export { usePaneVisibility } from './use-pane-visibility';

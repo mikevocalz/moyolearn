@@ -76,6 +76,13 @@ export function CollapsiblePane({ width, open, fill, children, className }: Coll
     The inner child holds the measured width too, which is what keeps a 3D
     canvas in a fill pane from being resized during the animation at all: the
     clip moves, the content does not.
+
+    `grow` rides with `shrink`, not alone: RN's Yoga defaults flexShrink to 0
+    (the web's is 1), so `grow` could only ever ADD to the basis — when the
+    row tightened (a sibling pane opened, the Duo folded) the pane kept its
+    old grown width, overflowed its share, and the content column clipped
+    mid-glyph at the rail. With `shrink` the basis gives back the space the
+    row reclaims, and onLayout re-measures the smaller share as usual.
   */
   const [measured, setMeasured] = useState<number | null>(null);
   const [grown, setGrown] = useState(false);
@@ -84,7 +91,18 @@ export function CollapsiblePane({ width, open, fill, children, className }: Coll
   // grown width with the tween already running to 0 — the snap this whole
   // measurement dance exists to avoid. A render-phase update on own state is
   // React's answer to "a prop invalidated some state" and costs no extra paint.
-  if (grown && !(open && fill)) setGrown(false);
+  //
+  // `measured` dies with it: the value is only truthful for the grown epoch
+  // that produced it, and `open`/`fill` flicker false for a frame whenever the
+  // host recomputes (a sibling pane toggling, a fold). Kept, a stale width is
+  // what `contentWidth` then animates to AND pins the inner view at — the pane
+  // overflows its real share and the centred column is clipped mid-glyph (the
+  // Duo's report-detail slide under the rail). Cleared, the reopen falls back
+  // to the token and `grow` + onLayout re-measure the real space immediately.
+  if (grown && !(open && fill)) {
+    setGrown(false);
+    setMeasured(null);
+  }
   const contentWidth = fill ? (measured ?? width) : width;
   return (
     <MotionView
@@ -103,7 +121,7 @@ export function CollapsiblePane({ width, open, fill, children, className }: Coll
             }
           : undefined
       }
-      className={`overflow-hidden ${grown ? 'grow' : ''} ${className ?? ''}`}
+      className={`overflow-hidden ${grown ? 'grow shrink' : ''} ${className ?? ''}`}
     >
       {/*
         Clipping only hides a collapsed pane from SIGHT. Its children keep their

@@ -77,6 +77,12 @@ const TITLES: Record<string, string> = {
   '/you': 'You',
 };
 
+export const unstable_settings = {
+  /* Seeded-state landing tab when a pushed route's rebuilt navigator state
+     reseeds this tab set — see the guardian (tabs) layout. */
+  initialRouteName: 'today',
+};
+
 export default function LearnerTabs() {
   const { activeContext } = useAppSession();
   const band: Band = activeContext.gradeBand ?? 'teen';

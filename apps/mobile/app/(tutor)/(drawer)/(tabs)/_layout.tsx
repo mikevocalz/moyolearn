@@ -29,6 +29,12 @@ const TITLES: Record<string, string> = {
   '/tutor-profile': 'You',
 };
 
+export const unstable_settings = {
+  /* Seeded-state landing tab when a pushed route's rebuilt navigator state
+     reseeds this tab set — see the guardian (tabs) layout. */
+  initialRouteName: 'tutor-today',
+};
+
 export default function TutorTabs() {
   // Doc 02 §2.1: bottom nav under 600dp, rail from 600 up.
   const navigationPlacement = useShellNavigationPlacement();
