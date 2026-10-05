@@ -15,6 +15,7 @@ import type { XrTriPanelProps } from './XrTriPanel.types.ts';
 
 export function XrTriPanel({
   centerPanel,
+  quickdrawPanel,
   leftPanel,
   questionRows,
   headPosition,
@@ -54,7 +55,7 @@ export function XrTriPanel({
         real board rather than a second rendering of it. Wider than the flanks
         because it is the thing being worked on.
       */}
-      {centerPanel ?? <PremiumXRMediaPanel
+      {quickdrawPanel ?? centerPanel ?? <PremiumXRMediaPanel
         title={boardTitle}
         mediaMaterial={boardLive ? XR_MATERIAL.boardLive : undefined}
         imageSource={{ uri: boardUri ?? placeholderUri }}
