@@ -560,6 +560,8 @@ export {
   useAppSession,
   useSetContext,
   RoleSwitcher,
+  getAuthMode,
+  type AuthMode,
   ContextSwitcher,
   ScopeSwitcher,
   shellForRole,

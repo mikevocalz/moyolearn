@@ -14,12 +14,13 @@ const tabletop: FoldLayout = {
   height: 0,
 };
 
-test('Android compact windows use bottom navigation', () => {
+test('Android compact phone-width windows use bottom navigation', () => {
   assert.deepEqual(
     resolveAdaptiveNavigationPlacement({
       platform: 'android',
       sizeClass: 'compact',
       heightDp: 800,
+      widthDp: 390,
       folds: [],
       isRTL: false,
     }),
@@ -33,11 +34,38 @@ test('Android compact windows use bottom navigation', () => {
   );
 });
 
+test('a single panel of a wide foldable keeps the right rail', () => {
+  // One Surface Duo panel is 540×720dp — compact width class, but it is a
+  // foldable half-screen, not a phone. The rail stays; the bottom bar is for
+  // clamshell covers and portrait phones (<480dp).
+  const duoPanel = resolveAdaptiveNavigationPlacement({
+    platform: 'android',
+    sizeClass: 'compact',
+    heightDp: 720,
+    widthDp: 540,
+    folds: [],
+    isRTL: false,
+  });
+  assert.equal(duoPanel.position, 'right');
+  assert.equal(duoPanel.rail, true);
+
+  const coverDisplay = resolveAdaptiveNavigationPlacement({
+    platform: 'android',
+    sizeClass: 'compact',
+    heightDp: 800,
+    widthDp: 390,
+    folds: [],
+    isRTL: false,
+  });
+  assert.equal(coverDisplay.kind, 'bottom-compact');
+});
+
 test('Android tabletop posture keeps navigation on the bottom even at expanded width', () => {
   const placement = resolveAdaptiveNavigationPlacement({
     platform: 'android',
     sizeClass: 'expanded',
     heightDp: 800,
+      widthDp: 900,
     folds: [tabletop],
     isRTL: false,
   });
@@ -45,22 +73,26 @@ test('Android tabletop posture keeps navigation on the bottom even at expanded w
   assert.equal(placement.position, 'bottom');
 });
 
-test('Android regular foldables and tablets use logical-start rail', () => {
+test('Android regular foldables and tablets use a physical right-edge rail', () => {
+  // Like the iPhone Duo's hardware column, the Android rail stays on the
+  // physical edge and does not mirror under RTL.
   assert.equal(
     resolveAdaptiveNavigationPlacement({
       platform: 'android',
       sizeClass: 'expanded',
       heightDp: 800,
+      widthDp: 900,
       folds: [],
       isRTL: false,
     }).position,
-    'left',
+    'right',
   );
   assert.equal(
     resolveAdaptiveNavigationPlacement({
       platform: 'android',
       sizeClass: 'expanded',
       heightDp: 800,
+      widthDp: 900,
       folds: [],
       isRTL: true,
     }).position,
@@ -73,6 +105,7 @@ test('Android extra-large desktop windows get an expanded wide rail', () => {
     platform: 'android',
     sizeClass: 'extraLarge',
     heightDp: 900,
+      widthDp: 1700,
     folds: [],
     isRTL: false,
   });
@@ -85,6 +118,7 @@ test('Apple hardware column is physical and does not mirror in RTL', () => {
     platform: 'ios',
     sizeClass: 'compact',
     heightDp: 800,
+      widthDp: 900,
     folds: [],
     hardwareEdge: { edge: 'left', width: 84 },
     isRTL: true,
@@ -100,6 +134,7 @@ test('ordinary iPad-width Apple windows use a logical leading sidebar', () => {
       platform: 'ios',
       sizeClass: 'expanded',
       heightDp: 800,
+      widthDp: 900,
       folds: [],
       isRTL: false,
     }).position,
@@ -110,6 +145,7 @@ test('ordinary iPad-width Apple windows use a logical leading sidebar', () => {
       platform: 'ios',
       sizeClass: 'expanded',
       heightDp: 800,
+      widthDp: 900,
       folds: [],
       isRTL: true,
     }).position,
@@ -131,6 +167,7 @@ test('any tabletop hinge wins even on a multi-hinge device', () => {
     platform: 'android',
     sizeClass: 'large',
     heightDp: 800,
+      widthDp: 900,
     folds: [vertical, tabletop],
     isRTL: false,
   });
@@ -143,6 +180,7 @@ test('Android compact-height landscape stays on bottom navigation at wide width'
     platform: 'android',
     sizeClass: 'expanded',
     heightDp: 420,
+      widthDp: 900,
     folds: [],
     isRTL: false,
   });

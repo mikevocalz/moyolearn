@@ -99,6 +99,7 @@ export default function LearnerTabs() {
           {...props}
           items={items}
           placement={navigationPlacement}
+          railAlignment="top"
           targetClass={BAND_TARGET[band]}
           raisedTargetClass={BAND_RAISED_TARGET[band]}
         />

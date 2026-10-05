@@ -31,7 +31,7 @@ export default function OrgShell() {
         }}
       >
         <Stack.Protected guard={isOrg}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
         </Stack.Protected>
       </Stack>
     </RoleScope>

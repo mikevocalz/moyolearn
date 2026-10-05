@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Bell, Calendar, LayoutGrid, Shield } from '@acme/ui/icons';
-import { ShellHeader } from '../../../components/ShellHeader';
-import { ShellPaneEdges, ShellTabBar, useShellNavigationPlacement, type ShellTabItem } from '../../../components/ShellTabBar';
+import { ShellHeader } from '../../../../components/ShellHeader';
+import { ShellPaneEdges, ShellTabBar, useShellNavigationPlacement, type ShellTabItem } from '../../../../components/ShellTabBar';
 
 /**
  * Org companion tabs — doc 36 §3.4: Overview · Schedule · Inbox · Safety. The
@@ -20,6 +20,13 @@ const ITEMS: ShellTabItem[] = [
   { name: 'safety', label: 'Safety', Icon: Shield },
 ];
 
+/*
+  The drawer's list — empty today: every org destination already holds a
+  rail slot, so nothing overflows and the footer menu button stays hidden.
+  A future group-level stack route lands here.
+*/
+export const DRAWER_EXTRAS: ShellTabItem[] = [];
+
 const TITLES: Record<string, string> = {
   '/overview': 'Overview',
   '/schedule': 'Schedule',
@@ -37,7 +44,7 @@ export default function OrgTabs() {
         header: () => <ShellHeader titles={TITLES} fallback="Overview" />,
         tabBarPosition: navigationPlacement.position,
       }}
-      tabBar={(props) => <ShellTabBar {...props} items={ITEMS} placement={navigationPlacement} />}
+      tabBar={(props) => <ShellTabBar {...props} items={ITEMS} placement={navigationPlacement} railAlignment="top" hasOverflowDrawer={DRAWER_EXTRAS.length > 0} />}
     >
       <Tabs.Screen name="overview" options={{ title: 'Overview' }} />
       {/* The calendar draws its own header inside its safe area. */}

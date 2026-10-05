@@ -37,7 +37,7 @@ export default function GuardianShell() {
       }}
     >
       <Stack.Protected guard={isGuardian}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
         <Stack.Screen name="memory" />
         <Stack.Screen name="ai-activity" />
         {/* A stack route, not a tab — ADR-101 keeps calendar one push away

@@ -37,7 +37,7 @@ export default function TeacherShell() {
         }}
       >
         <Stack.Protected guard={isTeacher}>
-          <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+          <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
           {/* A stack route, not a tab — ADR-102 demotes Conferences out of the
               tab set (it does not outrank FD-23's class/assignment loop);
               reachable from Home, keeps its screen. */}

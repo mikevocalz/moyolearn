@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
-import { GraduationCap, Home, ListChecks, User } from '@acme/ui/icons';
-import { ShellHeader } from '../../../components/ShellHeader';
-import { ShellPaneEdges, ShellTabBar, useShellNavigationPlacement, type ShellTabItem } from '../../../components/ShellTabBar';
+import { GraduationCap, Home, ListChecks, Plus, User, Video } from '@acme/ui/icons';
+import { ShellHeader } from '../../../../components/ShellHeader';
+import { ShellPaneEdges, ShellTabBar, useShellNavigationPlacement, type ShellTabItem } from '../../../../components/ShellTabBar';
 
 /**
  * Teacher tabs. Doc 36 §3.3 defines NO teacher tab set — it makes the
@@ -21,6 +21,18 @@ const ITEMS: ShellTabItem[] = [
   { name: 'you', label: 'You', Icon: User },
 ];
 
+/*
+  The drawer's list — ADR-102's demoted destinations: real screens that hold
+  no rail slot. The `classes/`, `students/` and `assign/` id routes all take
+  params so they cannot be bare entries; `assign/new` and `conference` are
+  the param-free ones. The (drawer) layout imports this list; the rail reads
+  it for the footer button, so the two cannot drift.
+*/
+export const DRAWER_EXTRAS: ShellTabItem[] = [
+  { name: 'conference', label: 'Conferences', Icon: Video },
+  { name: 'assign/new', label: 'New assignment', Icon: Plus },
+];
+
 const TITLES: Record<string, string> = {
   '/teacher-home': 'Home',
   '/classes': 'Classes',
@@ -38,7 +50,7 @@ export default function TeacherTabs() {
         header: () => <ShellHeader titles={TITLES} fallback="Home" />,
         tabBarPosition: navigationPlacement.position,
       }}
-      tabBar={(props) => <ShellTabBar {...props} items={ITEMS} placement={navigationPlacement} />}
+      tabBar={(props) => <ShellTabBar {...props} items={ITEMS} placement={navigationPlacement} railAlignment="top" hasOverflowDrawer={DRAWER_EXTRAS.length > 0} />}
     >
       <Tabs.Screen name="teacher-home" options={{ title: 'Home' }} />
       <Tabs.Screen name="classes" options={{ title: 'Classes' }} />

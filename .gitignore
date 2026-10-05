@@ -44,3 +44,7 @@ apps/web/public/pdfjs/
 
 # Reproducible visionOS renderer build cache
 .cache/visionos/
+
+# Harness scratch space. ALL transient output, logs and intermediate files go here —
+# never the repo root. Created by STEP-1 Stage 6.2; nothing here is ever durable.
+.scratch/

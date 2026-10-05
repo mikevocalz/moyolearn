@@ -62,6 +62,14 @@ export function useReservedRegions(): readonly ReservedRegion[] {
 
     let live = true;
     const accept = (next: ReservedRegion[]) => {
+      // TEMP-DEBUG (hardware validation): bridged dp values, remove after Duo validation.
+      if (__DEV__) {
+        console.debug(
+          '[ReservedRegions] regions=',
+          JSON.stringify(next.map(({ kind, x, y, width: w, height: h, orientation, state, occlusionType, separating }) =>
+            ({ kind, x, y, w, h, orientation, state, occlusionType, separating }))),
+        );
+      }
       if (live) setRegions(next);
     };
 

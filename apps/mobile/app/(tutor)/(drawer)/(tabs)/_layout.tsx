@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
 import { Calendar, FileText, User, Users } from '@acme/ui/icons';
-import { ShellHeader } from '../../../components/ShellHeader';
-import { ShellPaneEdges, ShellTabBar, useShellNavigationPlacement, type ShellTabItem } from '../../../components/ShellTabBar';
+import { ShellHeader } from '../../../../components/ShellHeader';
+import { ShellPaneEdges, ShellTabBar, useShellNavigationPlacement, type ShellTabItem } from '../../../../components/ShellTabBar';
 
 /**
  * Tutor tabs — doc 36 §3.3: Today (sessions timeline) · Learners (my roster →
@@ -14,6 +14,13 @@ const ITEMS: ShellTabItem[] = [
   { name: 'notes', label: 'Notes', Icon: FileText },
   { name: 'tutor-profile', label: 'You', Icon: User },
 ];
+
+/*
+  The drawer's list — empty today: every tutor destination already holds a
+  rail slot, so nothing overflows and the footer menu button stays hidden.
+  A future group-level stack route lands here.
+*/
+export const DRAWER_EXTRAS: ShellTabItem[] = [];
 
 const TITLES: Record<string, string> = {
   '/tutor-today': 'Today',
@@ -32,7 +39,7 @@ export default function TutorTabs() {
         header: () => <ShellHeader titles={TITLES} fallback="Today" />,
         tabBarPosition: navigationPlacement.position,
       }}
-      tabBar={(props) => <ShellTabBar {...props} items={ITEMS} placement={navigationPlacement} />}
+      tabBar={(props) => <ShellTabBar {...props} items={ITEMS} placement={navigationPlacement} railAlignment="top" hasOverflowDrawer={DRAWER_EXTRAS.length > 0} />}
     >
       <Tabs.Screen name="tutor-today" options={{ title: 'Today' }} />
       <Tabs.Screen name="session-prep" options={{ title: 'Learners' }} />

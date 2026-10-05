@@ -1,7 +1,7 @@
 import { Tabs } from 'expo-router';
-import { Bell, FileText, Home, Users } from '@acme/ui/icons';
-import { ShellHeader } from '../../../components/ShellHeader';
-import { ShellPaneEdges, ShellTabBar, useShellNavigationPlacement, type ShellTabItem } from '../../../components/ShellTabBar';
+import { Bell, CalendarDays, FileText, Home, LineChart, Sparkles, Users } from '@acme/ui/icons';
+import { ShellHeader } from '../../../../components/ShellHeader';
+import { ShellPaneEdges, ShellTabBar, useShellNavigationPlacement, type ShellTabItem } from '../../../../components/ShellTabBar';
 
 /**
  * Guardian tabs — doc 36 §3.2: Home · Reports · Alerts · Family, adopted by
@@ -26,6 +26,19 @@ const ITEMS: ShellTabItem[] = [
   { name: 'family', label: 'Family', Icon: Users },
 ];
 
+/*
+  The drawer's list — the group's STACK routes, exactly the destinations that
+  are real but hold no rail slot (ADR-101: calendar is "one push away", not a
+  tab). `reports/[sessionId]` takes a param so it cannot be a bare entry. The
+  (drawer) layout imports this single list for its content and the rail reads
+  it for the footer button, so the two cannot drift.
+*/
+export const DRAWER_EXTRAS: ShellTabItem[] = [
+  { name: 'memory', label: 'Memory & Data', Icon: Sparkles },
+  { name: 'ai-activity', label: 'AI Activity', Icon: LineChart },
+  { name: 'calendar', label: 'Calendar', Icon: CalendarDays },
+];
+
 const TITLES: Record<string, string> = {
   '/family-home': 'Home',
   '/reports': 'Reports',
@@ -43,7 +56,7 @@ export default function GuardianTabs() {
         header: () => <ShellHeader titles={TITLES} fallback="Home" />,
         tabBarPosition: navigationPlacement.position,
       }}
-      tabBar={(props) => <ShellTabBar {...props} items={ITEMS} placement={navigationPlacement} />}
+      tabBar={(props) => <ShellTabBar {...props} items={ITEMS} placement={navigationPlacement} railAlignment="top" hasOverflowDrawer={DRAWER_EXTRAS.length > 0} />}
     >
       <Tabs.Screen name="family-home" options={{ title: 'Home' }} />
       <Tabs.Screen name="reports" options={{ title: 'Reports' }} />
