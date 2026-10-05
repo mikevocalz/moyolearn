@@ -836,8 +836,6 @@ diff --git a/android/viro_renderer/build.gradle b/android/viro_renderer/build.gr
 -    api files('viro_renderer-release.aar')
 +    api files(rootProject.findProperty('moyoViroRendererAar') ?: 'viro_renderer-release.aar')
  }
-
-# ReactVision/viro upstream PR #555
 diff --git a/CHANGELOG.md b/CHANGELOG.md
 index 3fefff6f..062655c0 100644
 --- a/CHANGELOG.md
@@ -1979,8 +1977,6 @@ index 4774cec4..d167ec74 100644
      "ts-node": "^10.9.2",
      "typescript": "^5.3.0",
 
-
-# ReactVision/viro upstream PR #556
 diff --git a/CHANGELOG.md b/CHANGELOG.md
 index 65ee58ca..fdd5ccf7 100644
 --- a/CHANGELOG.md
@@ -2531,8 +2527,6 @@ index 00000000..1bfdeb99
 +fi
 +exit $status
 
-
-# ReactVision/viro upstream PR #557
 diff --git a/CHANGELOG.md b/CHANGELOG.md
 index 65ee58ca..8aa89f95 100644
 --- a/CHANGELOG.md
@@ -6394,4 +6388,3 @@ index b245f157..8d614aa8 100644
 +
      return config;
    });
- 
