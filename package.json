@@ -2,7 +2,7 @@
   "name": "moyo",
   "version": "0.1.0",
   "private": true,
-  "description": "Moyo \u2014 AI tutoring that helps children learn it by heart. Universal Expo + Next.js (Payload) monorepo.",
+  "description": "Moyo — AI tutoring that helps children learn it by heart. Universal Expo + Next.js (Payload) monorepo.",
   "license": "MIT",
   "packageManager": "pnpm@10.32.1",
   "engines": {
@@ -47,7 +47,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@reactvision/react-viro": "file:./vendors/reactvision-react-viro-3.0.1-moyo.1.tgz",
+      "@reactvision/react-viro": "3.0.2",
       "@viro-external/core": "file:./vendors/viro-external-core-0.1.0.tgz",
       "@viro-external/media": "file:./vendors/viro-external-media-0.1.0.tgz",
       "@viro-external/ui": "file:./vendors/viro-external-ui-0.1.0.tgz",
@@ -73,7 +73,6 @@
       "react-native-vision-camera": "patches/react-native-vision-camera.patch",
       "expo-router@57.0.15": "patches/expo-router@57.0.15.patch",
       "expo-horizon-core@57.0.2": "patches/expo-horizon-core@57.0.2.patch",
-      "@reactvision/react-viro@3.0.1-moyo.1": "patches/@reactvision__react-viro@3.0.1-moyo.1.patch",
       "expo-modules-jsi": "patches/expo-modules-jsi.patch",
       "react-native-worklets": "patches/react-native-worklets.patch",
       "expo-modules-autolinking@58.0.5": "patches/expo-modules-autolinking@58.0.5.patch",
@@ -86,7 +85,8 @@
       "expo-font": "patches/expo-font.patch",
       "expo": "patches/expo.patch",
       "expo-constants": "patches/expo-constants.patch",
-      "nitro-canvas-in-Vision@0.0.2-rive.4": "patches/nitro-canvas-in-Vision.patch"
+      "nitro-canvas-in-Vision@0.0.2-rive.4": "patches/nitro-canvas-in-Vision.patch",
+      "@reactvision/react-viro@3.0.2": "patches/@reactvision__react-viro@3.0.2.patch"
     },
     "supportedArchitectures": {
       "cpu": [
