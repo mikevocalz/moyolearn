@@ -27,6 +27,8 @@ export interface XrPanelRow {
 
 export interface XrTriPanelProps {
   centerPanel?: ReactNode;
+  /** Dedicated native QuickDraw surface; preferred over the generic center panel. */
+  quickdrawPanel?: ReactNode;
   leftPanel?: ReactNode;
   questionRows?: readonly XrPanelRow[];
   /** The board, as the engine's own PNG. Null until the first raster lands. */
