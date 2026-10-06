@@ -1,6 +1,7 @@
 import { Stack } from 'expo-router';
 import { useAppSession } from '@acme/app';
 import { RoleScope } from '@acme/ui';
+import { ShellBackRail } from '../../components/ShellBackRail';
 import { ShellHeader } from '../../components/ShellHeader';
 
 /**
@@ -15,12 +16,22 @@ const TITLES: Record<string, string> = {
   '/calendar': 'Calendar',
 };
 
+export const unstable_settings = {
+  /* The LINKING-side twin of the Stack's initialRouteName below: it is what
+     expo-router's path→state resolution reads when a cross-context push
+     (`router.push('/reports/x')` from a tab) rebuilds this navigator's state.
+     Without it the pushed screen is the stack's only entry — hardware back
+     exits the app. */
+  initialRouteName: '(drawer)',
+};
+
 export default function GuardianShell() {
   const { activeContext } = useAppSession();
   const isGuardian = activeContext.kind === 'guardian';
 
   return (
     <RoleScope role="guardian" className="flex-1">
+    <ShellBackRail>
     <Stack
       screenOptions={{
         header: ({ navigation, back }) => (
@@ -37,7 +48,7 @@ export default function GuardianShell() {
       }}
     >
       <Stack.Protected guard={isGuardian}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
         <Stack.Screen name="memory" />
         <Stack.Screen name="ai-activity" />
         {/* A stack route, not a tab — ADR-101 keeps calendar one push away
@@ -46,6 +57,7 @@ export default function GuardianShell() {
         <Stack.Screen name="reports/[sessionId]" options={{ title: 'Report' }} />
       </Stack.Protected>
     </Stack>
+    </ShellBackRail>
     </RoleScope>
   );
 }

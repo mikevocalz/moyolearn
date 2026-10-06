@@ -7,7 +7,7 @@
 // There WAS a `.native.tsx` fork here that drew a second bar in a second dialect
 // — centred title, `border-border` instead of the `on-surface-header` pair, a
 // decorative accent strip under it — with zero call sites. It is deleted: a
-// dead rival header is how a shell ends up with two chromes, and CLAUDE.md's
+// dead rival header is how a shell ends up with two chromes, and CONTRIBUTING.md's
 // "never invent a second way" is the rule it was standing on. `AppHeaderTheme`
 // stays because `tenant-brand` reads the same pastel names.
 // SOT: apps/web/components/site/SiteChrome.tsx ·

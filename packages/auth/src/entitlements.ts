@@ -65,7 +65,7 @@ export interface Entitlements {
   canPractise: boolean;
   /** Plan limits, zeroed when nothing is paying. */
   limits: PlanLimits;
-  /** Show the paywall — never on a learner surface (CLAUDE.md), decided by the caller. */
+  /** Show the paywall — never on a learner surface (CONTRIBUTING.md), decided by the caller. */
   shouldOfferUpgrade: boolean;
 }
 

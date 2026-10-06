@@ -8,7 +8,7 @@
 // `?problem=` is a CREATION argument only. A request that names a problem for a
 // session that already exists is answered with the existing thread unchanged —
 // the alternative lets a reload silently rewrite what the session was about.
-// SOT: CLAUDE.md §The block · docs/pack/23-tutorstage-handoff.md
+// SOT: CONTRIBUTING.md §The block · docs/pack/23-tutorstage-handoff.md
 // SOT-KEYWORDS: tutor session api route resume cross-device protected operation open create
 import { NextRequest, NextResponse, after } from 'next/server';
 import { closeSession, openSession } from '@acme/app/server';

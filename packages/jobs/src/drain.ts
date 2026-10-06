@@ -148,7 +148,7 @@ const DEFAULT_BATCH_SIZE = 25;
  * says the two unions are correlated. Binding the queue name to a type parameter
  * resolves `JobHandlers[Q]` to `JobHandler<Q>` and `Job<JobPayload<Q>>` to the
  * matching row shape at the point the pair is created, so the drain loop can
- * hold a list of these without a cast and without `any` — which CLAUDE.md bans
+ * hold a list of these without a cast and without `any` — which CONTRIBUTING.md bans
  * outright and which would, here, be banning exactly the mistake it prevents:
  * handing a `{ day }` payload to the distiller.
  */

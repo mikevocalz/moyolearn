@@ -2,7 +2,7 @@
 
 ## Result
 
-22 documents exercised through the **production browser reader**, real PDF.js worker, local page rendering, and Tesseract. This is coverage of specific cases, not proof of all possible inputs or production OCR accuracy. Raw observations are in `results.json`; timings are one warm local Chrome 152 run, not performance benchmarks. The source PDFs and derivatives stay in ignored `.codex/pdf-qa/sources/`, not in Git.
+22 documents exercised through the **production browser reader**, real PDF.js worker, local page rendering, and Tesseract. This is coverage of specific cases, not proof of all possible inputs or production OCR accuracy. Raw observations are in `results.json`; timings are one warm local Chrome 152 run, not performance benchmarks. The source PDFs and derivatives stay in ignored `.scratch/pdf-qa/sources/`, not in Git.
 
 **Release-blocking accuracy gaps remain:** mixed text/image pages can omit image questions; blur can change operators; stacked fractions lose spatial meaning; handwriting is unreliable. A returned `text` or `ocr` status means extraction ran, not that its answer is correct. Every page needs source review. These tests do not establish safe automatic grading.
 
@@ -74,10 +74,10 @@ Each unchecked item needs its own fixture, expected transcription/regions, and a
 Run from repository root with Node 24 and `pnpm install` already complete. Downloads need network access; OCR may fetch its language/model assets. Python dependencies are isolated in the ignored QA directory.
 
 ```sh
-uv venv .codex/pdf-qa/venv
-uv pip install --python .codex/pdf-qa/venv/bin/python pypdf==6.19.0 reportlab==5.0.1 pillow==12.3.0
-.codex/pdf-qa/venv/bin/python scripts/qa/pdf/download-sources.py
-.codex/pdf-qa/venv/bin/python scripts/qa/pdf/build-fixtures.py
+uv venv .scratch/pdf-qa/venv
+uv pip install --python .scratch/pdf-qa/venv/bin/python pypdf==6.19.0 reportlab==5.0.1 pillow==12.3.0
+.scratch/pdf-qa/venv/bin/python scripts/qa/pdf/download-sources.py
+.scratch/pdf-qa/venv/bin/python scripts/qa/pdf/build-fixtures.py
 node apps/web/scripts/copy-pdf-assets.mjs
 node scripts/qa/pdf/serve.mjs
 ```

@@ -11,7 +11,7 @@
 // The tenant predicate is applied HERE, on every read and every write, because
 // this is the last layer before the database — a filter that lives any further
 // up is a filter a future caller can forget.
-// SOT: CLAUDE.md §The block · docs/decisions/adr-109-family-household-object.md · docs/pack/28-crm-spec.md §2
+// SOT: CONTRIBUTING.md §The block · docs/decisions/adr-109-family-household-object.md · docs/pack/28-crm-spec.md §2
 // SOT-KEYWORDS: families repository payload crm household contacts learner refs tenant org upsert
 import 'server-only';
 import { getPayload } from 'payload';

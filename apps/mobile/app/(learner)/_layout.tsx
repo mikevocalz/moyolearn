@@ -17,6 +17,13 @@ const TITLES: Record<string, string> = {
   '/plan': 'My Plan',
 };
 
+export const unstable_settings = {
+  /* Cross-context pushes (e.g. `/plan` from a tab) rebuild this navigator's
+     state; without an initial route the pushed screen is the stack's only
+     entry and hardware back exits the app. */
+  initialRouteName: '(tabs)',
+};
+
 export default function LearnerShell() {
   const { activeContext } = useAppSession();
   const isLearner = activeContext.kind === 'learner';

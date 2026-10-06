@@ -13,7 +13,7 @@
 // `edu.distill` instead, and `after()` drains that queue once the answer is
 // already on its way back. The service still owns the algebra, unchanged — what
 // moved is when it runs, not what it does.
-// SOT: CLAUDE.md §The block · docs/pack/19-learning-outcomes-spec.md §3 · docs/pack/12-systems-design-prompt.md §4 §5 · docs/design/jobs.md §2.1
+// SOT: CONTRIBUTING.md §The block · docs/pack/19-learning-outcomes-spec.md §3 · docs/pack/12-systems-design-prompt.md §4 §5 · docs/design/jobs.md §2.1
 // SOT-KEYWORDS: tutor evaluate api route protected operation server transcript edu educational store student model distill queue async after close
 import { NextRequest, NextResponse, after } from 'next/server';
 import { evaluateTutorTurn, type TutorTurnPorts } from '@acme/app/server';

@@ -23,7 +23,7 @@
 // shell (`apps/mobile/app/settings.tsx` says why it sits outside the groups),
 // so a guardian-managed child can arrive here. They get the reason and the
 // destination, not a disabled button: a control that exists and refuses reads
-// as something the child did wrong, and CLAUDE.md forbids that register on a
+// as something the child did wrong, and CONTRIBUTING.md forbids that register on a
 // learner surface.
 //
 // NO PERSUASION ANYWHERE. There is no "are you sure", no streak count, no offer
@@ -31,7 +31,7 @@
 // it holds harder here: a screen that talks a parent out of deleting has
 // decided the account matters more than they do.
 // Mobbin: https://mobbin.com/screens/a007812c-a55d-48df-92a0-867af316a4a3 (Bloomberg — what goes is stated in full BEFORE the confirm field, and the field is the last thing on the page) · https://mobbin.com/screens/9ba54fb6-92a9-4bf3-839a-c18beafef0e8 (OpenPhone — a "What you can do instead" block that offers the smaller action without hiding the larger one) · https://mobbin.com/screens/5fb5cf13-994f-44c0-8746-0cd65283cc84 (South China Morning Post — what is NOT deleted by this action is named, not implied) · https://mobbin.com/screens/54bebb78-abbd-4c93-a9d1-24f393dc6caf (Plex — the typed word and the destructive button sit together, with no cancel styled as the safe default). Structure only.
-// SOT: docs/38-front-door-and-flow.md §5A FD-26 · docs/pack/31-grade-voice-safety-incidents.md §4.1 · CLAUDE.md §Children's surfaces
+// SOT: docs/38-front-door-and-flow.md §5A FD-26 · docs/pack/31-grade-voice-safety-incidents.md §4.1 · CONTRIBUTING.md §Children's surfaces
 // SOT-KEYWORDS: account deletion screen fd-26 delete account confirm consequence list learner guardian withdraw consent apple 5.1.1
 import { useEffect } from 'react';
 import { useRouter } from 'solito/navigation';

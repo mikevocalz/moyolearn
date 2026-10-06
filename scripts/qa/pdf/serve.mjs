@@ -2,7 +2,7 @@
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { createServer } from 'vite';
-const root = resolve('.codex/pdf-qa');
+const root = resolve('.scratch/pdf-qa');
 await mkdir(root, { recursive: true });
 await writeFile(
   `${root}/index.html`,

@@ -6,7 +6,7 @@
 // Pure and without `'use client'` for the same reason `stage-change.ts` is —
 // the logic with judgement calls in it is the part that earns a test.
 // SOT: docs/pack/28-ops-dashboard-spec.md §2 §5 (Zustand: visible columns,
-//   density, across sessions) · CLAUDE.md (UI · state)
+//   density, across sessions) · CONTRIBUTING.md (UI · state)
 // SOT-KEYWORDS: ops prefs density column visibility durable view zustand pure
 
 /** The two row heights the dial already defines — cool 44px, hot/roomy 64px.

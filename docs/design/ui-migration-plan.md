@@ -2,7 +2,7 @@
 
 **Date:** Aug 26, 2026 · **Status:** PROPOSED. Nothing here has been executed.
 **Measured by:** `pnpm ui:sweep` (`tooling/ui-sweep.mjs`), node_modules excluded
-**Constrained by:** `CLAUDE.md` §UI, §"Patterns are law", §Delivery
+**Constrained by:** `CONTRIBUTING.md` §UI, §"Patterns are law", §Delivery
 
 ---
 
@@ -142,7 +142,7 @@ So there is a real fork here, and it is a design decision, not a refactor:
   and it must be reviewed as a visual change, not slipped in as a refactor.
 - **(b)** Add a `responsive: false` opt-out and preserve current rendering
   exactly. Zero visual risk, but it institutionalises the drift and gives the
-  codebase two ways to spell a title — which `CLAUDE.md` §"Patterns are law"
+  codebase two ways to spell a title — which `CONTRIBUTING.md` §"Patterns are law"
   explicitly forbids.
 
 I lean (a), because (b) is the thing the rule was written to prevent. But (a)
@@ -207,7 +207,7 @@ an alignment in ways that mostly do not repeat.
 Promoting a long tail into variants goes wrong in three specific ways:
 
 1. **Variant explosion.** Encoding even half of 113 strings as variants gives a
-   `Text` API nobody can hold in their head. `CLAUDE.md` §UI says *"Check for an
+   `Text` API nobody can hold in their head. `CONTRIBUTING.md` §UI says *"Check for an
    existing component before creating one"* — that rule only functions if the
    existing component is legible. A 40-variant `Text` is not searchable; people
    will write `className` anyway, and now there are two ways to do it, which is
@@ -273,7 +273,7 @@ while writing this changed my read on three of the five.
 
 ### 3a. Arbitrary Tailwind values — ~11 across 9 files
 
-`CLAUDE.md` §UI: *"no `p-[13px]`"*. Straightforward rule, but the instances
+`CONTRIBUTING.md` §UI: *"no `p-[13px]`"*. Straightforward rule, but the instances
 split into three unlike groups:
 
 - **Sub-pixel craft inside the kit** — `translate-x-[3px]`/`translate-y-[3px]`
@@ -458,7 +458,7 @@ for deletion.** "No external consumer" means "not currently imported from
 `packages/app` or `apps/*`" — it does not mean dead. Deleting a component that
 the kit itself renders would break the kit; deleting one with a story would
 break Storybook and remove documented, working UI that a future feature is
-supposed to find. `CLAUDE.md` §UI's *"Check for an existing component before
+supposed to find. `CONTRIBUTING.md` §UI's *"Check for an existing component before
 creating one"* only works if the component is still there to be found. Any step
 proposed here says this explicitly, and any future reader of the inventory
 should read this paragraph before acting on that "33".
@@ -480,7 +480,7 @@ Narrowing therefore means one of:
 
 Option (b) is genuinely defensible and is the zero-risk answer. Option (a) is a
 real improvement — a smaller public surface makes the index scannable, which is
-the whole reason `CLAUDE.md` points at it — but it touches build tooling.
+the whole reason `CONTRIBUTING.md` points at it — but it touches build tooling.
 
 ### Blast radius, verification, revert
 

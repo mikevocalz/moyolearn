@@ -180,7 +180,7 @@ Both rejections are contrast failures, measured against `surface` light
 Moyo's brand colours are a fill language — electric yellow and hot pink are
 surfaces that carry `on-*` ink, which is exactly why `on-primary` and
 `on-accent` exist. Neither survives as body text on paper. Emphasis therefore
-comes from weight rather than hue, which is also what CLAUDE.md asks for:
+comes from weight rather than hue, which is also what CONTRIBUTING.md asks for:
 hierarchy from size, weight and space.
 
 ### `Banner` considered and rejected

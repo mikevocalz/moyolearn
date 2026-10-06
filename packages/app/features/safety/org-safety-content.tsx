@@ -25,7 +25,7 @@
 //     server-marked `me`), the picker below is fed from it, and the service
 //     re-checks any posted `assigneeId` against the same member read before
 //     writing — so "assign to me" is picking yourself from server truth, not
-//     posting identity from a client (CLAUDE.md §The block holds), and a
+//     posting identity from a client (CONTRIBUTING.md §The block holds), and a
 //     fabricated id gets the swept-record 404. Unassign posts an explicit
 //     `null`, which needs no roster to clear.
 //   · TIMELINE + TRIAGE NOTE — the queue projection now carries each row's

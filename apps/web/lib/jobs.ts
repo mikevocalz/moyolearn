@@ -338,7 +338,7 @@ export function enqueueDistillation(transcriptId: string): Promise<string | null
  * Doc 34 §4 step 2's one model call, composed here so the service stays
  * gateway-agnostic. `classify` is the classifier-tier door — the routing table
  * owns which model answers (`summary-narrative` → the small model), and a
- * feature never names one (CLAUDE.md §Children's surfaces: no model calls from
+ * feature never names one (CONTRIBUTING.md §Children's surfaces: no model calls from
  * features; the gateway is the boundary).
  */
 const summaryNarrativeModel: NarrativeModel = async (payload) => {

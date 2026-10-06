@@ -319,6 +319,6 @@ widening at the server-function boundary is asserted to the adapter's own
 `SerializableRecord` transport brand) · all dependencies referenced as `catalog:`,
 with no catalog entry added or changed · one shared Payload config, no collections
 defined here, no migration step added (deployment §5.2) · doc references:
-`CLAUDE.md`, `docs/deploy/moyo-vercel-deployment.md` §1/§2.5/§3.1/§3.2/§5.2/§6/§8,
+`CONTRIBUTING.md`, `docs/deploy/moyo-vercel-deployment.md` §1/§2.5/§3.1/§3.2/§5.2/§6/§8,
 `docs/deploy/moyo-district-tenancy.md` §5/§6, `docs/site/adr-001-ssr-lane.md`,
 `docs/site/adr-003-payload-admin-on-tanstack.md`.

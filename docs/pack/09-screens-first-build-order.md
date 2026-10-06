@@ -75,12 +75,11 @@ Brief satisfied (docs 04/05/06 format: Job/Research/Layout/Design/Copy/A11y/Metr
 - S5 Parent Home → screens: "parental controls dashboard with child profile and activity" (ios)
 - S16 Paywall → flows: "subscription paywall with free trial timeline and plan comparison" (ios)
 
-**The working method (from the reference videos, formalized):**
-1. *Claude-design discipline* ("Claude Design Builds Beautiful $10,000 Websites — NO AI Slop," Jack Roberts): every screen is built through the frontend-design skill's two-pass process — plan (tokens, layout ASCII, signature) → self-critique against the generic default → build → screenshot-critique. No screen ships from a single generation.
-2. *Mobbin-as-reference* ("Claude + Mobbin is a Design CHEAT CODE," Tae Online HD): references are pulled **before** generation and given to the design pass as structural evidence — the model designs from real shipped patterns instead of hallucinated ones, then restyles entirely in our tokens.
-3. *Agent workflow* ("The Fastest Way… AI Agents," Calum Johnson): the per-screen loop (brief → references → plan → build → critique → screenshot in PR) is written so an agent can run it end-to-end; doc 05/04 briefs are the prompts.
-4. *Auth plugins* ("10 Better Auth plugins…," Dreams of Code): folded into doc 06 §10.
-(Videos identified by title/channel metadata; their subjects — the Mobbin workflow, the no-slop design discipline, the plugin roster — are what's encoded here.)
+**The working method:**
+1. *Two-pass design discipline:* every screen goes through plan (tokens, layout, signature) → self-critique against the generic default → build → screenshot-critique. No screen ships from a single draft.
+2. *Mobbin-as-reference:* references are pulled **before** design work and given to the design pass as structural evidence — screens are built from real shipped patterns, then restyled entirely in our tokens.
+3. *Per-screen loop:* brief → references → plan → build → critique → screenshot in PR, run end-to-end per screen; doc 05/04 briefs are the inputs.
+4. *Auth plugins:* folded into doc 06 §10.
 
 ## 6. Sources (adds to the pack's registers)
 Duolingo path redesign: blog.duolingo.com "new Duolingo home screen design" (Nov 2022 launch, guided path rationale, practice-in-path, mixed-concept ordering); Luis von Ahn launch post ("practice is progress"); duoplanet review (spaced-repetition framing, tree-veteran backlash); Duolingo proficiency whitepaper (2024, post-redesign STAMP 4S outcomes: Intermediate Mid overall). Better Auth client/Protected-route facts: verified registers in docs 05/06.

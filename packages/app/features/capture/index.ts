@@ -1,5 +1,5 @@
 // Capture feature barrel.
-// SOT: CLAUDE.md ("Features import a domain's index.ts — never a deep path")
+// SOT: CONTRIBUTING.md ("Features import a domain's index.ts — never a deep path")
 // SOT-KEYWORDS: capture feature barrel screen store age band
 
 export { CaptureScreen } from './screen';

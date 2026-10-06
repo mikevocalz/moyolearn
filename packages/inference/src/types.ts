@@ -113,7 +113,7 @@ export interface InferenceUsage {
  * Two values are excluded rather than handled, and both for the same reason:
  * they describe features this gateway does not enable. `tool_use` cannot happen
  * because no tools are declared — a tool argument is the classic route by which
- * an identity re-enters a payload that CLAUDE.md forbids it from entering, so
+ * an identity re-enters a payload that CONTRIBUTING.md forbids it from entering, so
  * the absence is structural. `compaction` cannot happen because a coaching turn
  * is one system half and one message and never approaches a context window.
  * Either arriving means the transport is not the one this file thinks it is.

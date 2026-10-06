@@ -31,7 +31,7 @@ export default function TutorShell() {
       }}
     >
       <Stack.Protected guard={isEducator}>
-        <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen name="(drawer)" options={{ headerShown: false }} />
       </Stack.Protected>
     </Stack>
     </RoleScope>

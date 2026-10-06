@@ -1,74 +1,22 @@
 # Platform Role UX Audit
 
-SOT: build prompt (role-to-experience inventory, mobile + web)
-SOT-KEYWORDS: platform audit role route experience mobile web skills mcp
+SOT: role-to-experience inventory, mobile + web
+SOT-KEYWORDS: platform audit role route experience mobile web
 
 This audit inventories the current route-to-experience mapping for the Moyo universal app (Expo + Next.js App Router). It does not modify code; all facts below were verified against the working tree.
 
 ---
 
-## 1. Skills and tools inventory
+## 1. Repository facts verified
 
-### 1.1 Installed Expo and Callstack skills
-
-| skill | source | skillPath | lock hash / version |
-|-------|--------|-----------|---------------------|
-| `expo-overview` | `expo/skills` (GitHub) | `plugins/expo/skills/expo-overview/SKILL.md` | `266daf319fc497e4f65ec7fc2d03d9f1331b0ca87aff446103cd3f938bdcdc0c` |
-| `expo-router` | `expo/skills` (GitHub) | `plugins/expo/skills/expo-router/SKILL.md` | `b5baa66d0024536b1410136b05e83d749fb5a1c8b72326b5096193c03523361c` |
-| `expo-design-system` | `expo/skills` (GitHub) | `plugins/expo/skills/expo-design-system/SKILL.md` | `926d79a5c2246a6dd57400089b4a72d2c67c1dd49c5a1cfe6cab807a49cd1aba` |
-| `expo-native-ui` | `expo/skills` (GitHub) | `plugins/expo/skills/expo-native-ui/SKILL.md` | `3bebacbb5882f72f89322391b2b82f643cea15c0e2b3e27c39659969a6addd75` |
-| `expo-animation` | `expo/skills` (GitHub) | `plugins/expo/skills/expo-animation/SKILL.md` | `55d68c0a4507340b9f1da38337884ab2958c1b051197600e628151fb3cceb077` |
-| `expo-data-fetching` | `expo/skills` (GitHub) | `plugins/expo/skills/expo-data-fetching/SKILL.md` | `422197195d96fd32036f92001cebd1590caf6445ba338aabc0c0b0cff5fa8977` |
-| `react-navigation` | `callstackincubator/agent-skills` (GitHub) | `skills/react-navigation/SKILL.md` | `f09111c137b0bac6e43ff5ff57297afc93ae51583797acf779733ace4d1ced60` |
-| `react-native-best-practices` | `callstackincubator/agent-skills` (GitHub) | `skills/react-native-best-practices/SKILL.md` | `4b2b9561ff7b4b9d15ff76d2dd2a6191e3cdc7f36c06d171e377bfefcbcb2bfb` |
-| `react-native-testing` | `callstack/react-native-testing-library` (GitHub) | `skills/react-native-testing/SKILL.md` | `bb30ad4660a42c71178c91d7a3f2e88556add9dba2213ee26f099dbe352fd649` |
-| `agent-device` | `callstack/agent-device` (GitHub) | `skills/agent-device/SKILL.md` | `0a673fe5ec24469f6ad35596cdf40f9d33076b78d0a929742d9e1de83f97d231` |
-| `dogfood` | `callstack/agent-device` (GitHub) | `skills/dogfood/SKILL.md` | `8e6dfbff0633e355210ce7ae109cb39a3e1347946b6e92aaa607271154526b6b` |
-
-Source of truth: `/Users/mikevocalz/MoyoLearn/skills-lock.json` (version `1`).
-
-### 1.2 Missing Codex/Cursor/Claude-only skills
-
-| skill | why it is not installed |
-|-------|-------------------------|
-| `personal-context` | Not listed in `skills-lock.json`; the workspace is configured for Expo/Callstack tooling, not the Codex/Cursor/Claude skill pack. |
-| `vercel:nextjs` | Not in `skills-lock.json`; Next.js patterns are handled by in-repo docs (`CLAUDE.md`, `docs/pack/`) and the `vercel` MCP server. |
-| `vercel:react-best-practices` | Not in `skills-lock.json`; React conventions are enforced by `CLAUDE.md` and repo lint scripts. |
-| `vercel:agent-browser` | Not in `skills-lock.json`; browser QA is not pre-configured; `argent` and `mobile-mcp` cover mobile/Chromium surfaces. |
-| `vercel:agent-browser-verify` | Not in `skills-lock.json`; visual verification is not part of the locked skill set. |
-| `vercel:verification` | Not in `skills-lock.json`; deployments are not currently skill-driven. |
-| `vercel:next-cache-components` | Not in `skills-lock.json`; Next.js cache strategy is not yet a dedicated skill dependency. |
-
-### 1.3 Available MCP servers
-
-| server | substitution / use |
-|--------|--------------------|
-| `vercel` | Can substitute for the missing `vercel:*` skills (deployments, domains, edge config, cache). |
-| `mobbin` | Design reference discovery (already cited in Mobbin URLs inside components). |
-| `argent` | iOS/Android simulator and Chromium (CDP) QA, gesture testing, and flows. |
-| `supabase` | Postgres/data queries where the `expo-data-fetching` skill is not enough. |
-| `payload` | CMS/admin introspection; only one explicitly configured in `.mcp.json`. |
-| `mobile-mcp` | Additional mobile device interaction layer. |
-| `stripe` | Payments / subscriptions for plan/billing surfaces. |
-| `revenuecat` | In-app subscription and entitlement verification. |
-| `viro` | AR/VR previews if capture ever moves into AR. |
-| `serena` | Project memory / context management. |
-| `headroom` | Design system / component guidance. |
-
-Server list verified by `mcp_list_servers`; `.mcp.json` only configures `payload`.
-
----
-
-## 2. Repository facts verified
-
-### 2.1 Mobile `apps/mobile/app` route groups and shells
+### 1.1 Mobile `apps/mobile/app` route groups and shells
 
 - Route group folders: `(learner)`, `(guardian)`, `(tutor)`, `(org)`.
 - `apps/mobile/app/index.tsx:30-52` is the dispatcher. It resolves `bootRole` from `resolveBootRole(session, getLastShellRole())`, swaps `activeContext` in an effect, and redirects to `SHELL_ROOTS[shell]`.
 - `apps/mobile/app/_layout.tsx:27-74` mounts providers (`SessionProvider`, `AppQueryProvider`, `BottomSheetModalProvider`, `BookingSheet`, `AttachSheet`, `AudioRecorderSheet`, `VideoNoteSheet`, `UploadQueueProvider`, `UrlSheet`, `Toaster`).
 - `apps/mobile/app/+not-found.tsx:11-13` silently redirects to `/` for role-mismatched deep links (doc 36 §4.4).
 
-### 2.2 Web `apps/web/app` Next.js App Router route groups
+### 1.2 Web `apps/web/app` Next.js App Router route groups
 
 - `(site)` — public + authenticated role pages. `apps/web/app/(site)/layout.tsx:19-40` wraps `SiteHeader`, `SiteFooter`, `SessionProvider`, `AppQueryProvider`.
 - `(auth)` — `/login`, `/login/[org]`, `/onboarding`, `/onboarding/[flow]`, `/handoff`. No `SiteHeader`/`SiteFooter` (`apps/web/app/(auth)/layout.tsx:13-28`).
@@ -77,21 +25,21 @@ Server list verified by `mcp_list_servers`; `.mcp.json` only configures `payload
 - `(ops)` — `/ops` business dashboard. Own root layout, no `SiteHeader`/`SiteFooter` (`apps/web/app/(ops)/layout.tsx:7-39`).
 - `(payload)` — Payload admin catch-all at `/admin/[[...segments]]` and `/payload-api`.
 
-### 2.3 `packages/app/features` universal screen organization
+### 1.3 `packages/app/features` universal screen organization
 
 - Solito pattern: each feature has `screen.tsx` (anchor), `screen.native.tsx`, `screen.web.tsx`.
 - Shared business logic lives in `.data.ts`, `.store.ts`, `.service.ts` files in the same feature folder.
 - Barrel re-exports in `packages/app/index.ts:7-354`.
 - Meaningful universal screens: `home`, `explore`, `capture`, `tutor`, `progress`, `practice`, `plan`, `schedule`, `session-prep`, `notifications`, `settings`, `profile`, `ai-activity`, `memory`, `family-calendar`, `reports`, `report`, `summary/draft-queue`, `onboarding`, `safety`, `ops`.
 
-### 2.4 `packages/ui` `AdaptivePanes` / `TwoPaneShell` / `SplitView` status
+### 1.4 `packages/ui` `AdaptivePanes` / `TwoPaneShell` / `SplitView` status
 
 - `TwoPaneShell` lives in `packages/ui/TwoPaneShell.tsx:142-186` and is the auth/marketing split shell (login/onboarding). It is layout-only, not navigation.
 - `AdaptivePanes` is the shared list-detail navigator in `packages/ui/adaptive-panes/index.tsx:72-254`. It supports one or two columns plus an inspector drawer. It is exported from `packages/ui/index.ts:118-123`.
 - `SplitView` is not directly used; `AdaptivePanes` replaced the former `expo-router` `unstable-split-view` because it is still alpha (`packages/ui/adaptive-panes/index.tsx:3-12`).
 - `useAdaptivePaneSelection` is null-safe outside a host (`packages/app/features/summary/reports-content.tsx:45-47`).
 
-### 2.5 Onboarding, capture, upload, and safety infrastructure
+### 1.5 Onboarding, capture, upload, and safety infrastructure
 
 - Onboarding: `packages/app/features/onboarding` with flows for `learner`, `guardian`, `tutor`, `teacher`, `business`, plus consent and handoff code redemption.
 - Capture: `packages/app/features/capture` with photo, file, text, voice entry modes, age-band labels, OCR review, privacy strip EXIF, and `capture.store.ts`.
@@ -100,7 +48,7 @@ Server list verified by `mcp_list_servers`; `.mcp.json` only configures `payload
 
 ---
 
-## 3. Route-to-experience inventory
+## 2. Route-to-experience inventory
 
 | role/permission | mobile route + source component | web route + source component | intended user job | current phone navigation entry | current tablet navigation / pane behavior | current web navigation / layout | state coverage | production status | exact action | a11y / child-safety concerns |
 |-----------------|--------------------------------|------------------------------|-------------------|-------------------------------|------------------------------------------|--------------------------------|----------------|-------------------|--------------|------------------------------|
@@ -138,7 +86,7 @@ Server list verified by `mcp_list_servers`; `.mcp.json` only configures `payload
 
 ---
 
-## 4. Role × task coverage map
+## 3. Role × task coverage map
 
 Legend: `●` full / `◐` partial / `○` missing / `×` not applicable.
 
@@ -163,9 +111,9 @@ Notes:
 
 ---
 
-## 5. Findings and recommendations
+## 4. Findings and recommendations
 
-### 5.1 Top issues (ordered by impact)
+### 4.1 Top issues (ordered by impact)
 
 1. **SiteFooter on authenticated `(site)` surfaces exposes dev/admin links.** `apps/web/components/site/SiteFooter.tsx:9-13` lists `Storybook`, `Payload admin`, `README`. These appear under learner/guardian/tutor pages and are a trust and child-safety issue.
 2. **Role model is missing staff, scheduler, school, and district roles.** `packages/app/providers/session/types.ts:7-9` only has five `RoleKind`s. The 10-role coverage map cannot be implemented without extending `RoleKind` and membership resolution.
@@ -180,7 +128,7 @@ Notes:
 11. **Mobile `app/settings.tsx` redirects anon to `/` but web `(site)/settings` has no equivalent anon guard in the table.** `apps/mobile/app/settings.tsx:9-10` shows the guard; web settings relies on `SessionProvider` only.
 12. **`family-home` and `home` are named differently across platforms.** Mobile uses `family-home` as the guardian landing; web uses `/` with `HomeContent` picking `ParentHomeContent`. Deep links may diverge.
 
-### 5.2 Proposed implementation sequence (vertical slices)
+### 4.2 Proposed implementation sequence (vertical slices)
 
 1. **Slice A — Authenticated chrome clean-up.** Remove dev links from `SiteFooter`; add role-specific footers or hide footer for signed-in users. (Child-safety highest.)
 2. **Slice B — Family surface.** Split `Family` tab into a real `FamilyScreen`; keep `Settings` as a separate destination. (Unblocks job 7.)
@@ -192,23 +140,8 @@ Notes:
 
 ---
 
-## 6. Missing skills and blocked deliverables
+## 5. Evidence checklist
 
-| missing skill | what it blocks |
-|---------------|----------------|
-| `personal-context` | Persistent agent memory of user/project context; currently unmet. `serena` MCP can be used instead. |
-| `vercel:nextjs` | Next.js 16 App Router, edge runtime, and route group best-practice guidance for web surfaces. In-repo docs and `vercel` MCP can substitute. |
-| `vercel:react-best-practices` | Vercel-specific React optimization patterns (e.g., RSC boundaries). `CLAUDE.md` and lint scripts currently enforce repo patterns. |
-| `vercel:agent-browser` | Automated web browser QA and end-to-end flows. `argent` (Chromium CDP) and `mobile-mcp` can cover some of this. |
-| `vercel:agent-browser-verify` | Visual regression and screenshot verification of web builds. `argent-screenshot-diff` can be used if configured. |
-| `vercel:verification` | Deployment verification and smoke tests. `vercel` MCP + manual QA currently. |
-| `vercel:next-cache-components` | Next.js cache-component strategy and ISR optimization for role-gated pages. Not yet needed because all pages are dynamic or client-rendered. |
-
----
-
-## 7. Evidence checklist
-
-- `skills-lock.json` — installed skill list and hashes.
 - `apps/mobile/app/index.tsx:30-52` — dispatcher.
 - `apps/mobile/app/_layout.tsx:27-74` — mobile provider stack.
 - `apps/mobile/app/(learner)/(tabs)/_layout.tsx:22-45` — learner age-band tabs.

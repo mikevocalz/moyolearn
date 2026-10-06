@@ -34,7 +34,7 @@ export function kindForMime(mimeType: string): MediaKind {
 /**
  * One verdict per file. A discriminated union rather than an errors array,
  * so a row cannot simultaneously claim a kind and a rejection — the invalid
- * combination is unrepresentable (CLAUDE.md §Types).
+ * combination is unrepresentable (CONTRIBUTING.md §Types).
  */
 export type FileVerdict =
   | { readonly ok: true; readonly file: CandidateFile; readonly kind: MediaKind }

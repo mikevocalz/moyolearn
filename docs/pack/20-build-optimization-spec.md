@@ -1,21 +1,16 @@
 # Build & Size Optimization — small Android, iOS, and web builds, driven by the shops' own skills
 **Doc 20 · Moyo platform pack · Date:** Aug 21, 2026
-**Scope:** (A) wire Callstack's and Margelo's agent skills into the repo so every agent session optimizes from their playbooks, not vibes; (B) per-platform size budgets with CI ratchets; (C) adopt `react-native-runtimes` for the one surface that earns it. Constraint carried forward from doc 18: **zero model weights in the app binary** — the capability manager downloads everything; nothing here relaxes that.
+**Scope:** (A) adopt Callstack's and Margelo's published optimization playbooks as the build standard, not vibes; (B) per-platform size budgets with CI ratchets; (C) adopt `react-native-runtimes` for the one surface that earns it. Constraint carried forward from doc 18: **zero model weights in the app binary** — the capability manager downloads everything; nothing here relaxes that.
 
 ---
 
-## Part A — The skills become part of the repo (agents optimize from the source)
-1. **Callstack `agent-skills`** ([repo](https://github.com/callstackincubator/agent-skills)) — install via the Claude Code marketplace, verified commands:
-   ```
-   /plugin marketplace add callstackincubator/agent-skills
-   /plugin install react-native-best-practices@callstack-agent-skills
-   /plugin install github-actions@callstack-agent-skills
-   ```
+## Part A — The playbooks become the build standard
+1. **Callstack `agent-skills`** ([repo](https://github.com/callstackincubator/agent-skills)) — `react-native-best-practices` and `github-actions` from that repo:
    `react-native-best-practices` is distilled from [The Ultimate Guide to React Native Optimization](https://www.callstack.com/ebooks/the-ultimate-guide-to-react-native-optimization) and its references are organized exactly along our axes: `js-*.md` (profiling, FPS, re-renders, lists, state, animations), `native-*.md` (iOS/Android profiling, TTI, memory, Turbo Modules), **`bundle-*.md` (bundle analysis, tree shaking, R8, app-size breakdown via Emerge Tools / Ruler)**. The `github-actions` skill covers simulator/emulator build-artifact workflows for CI. Companion runnable examples: [callstack/optimization-best-practices](https://github.com/callstack/optimization-best-practices) (React Compiler setup, dedicated RN SDKs vs web polyfills, R8 shrinking).
 2. **Margelo `react-native-skills`** ([repo](https://github.com/margelo/react-native-skills)) — `npx skills add margelo/react-native-skills`, then pick from the interactive selector. The catalog is chosen at install time (interactive), so exact skill names are pinned at PR-58, not from this doc.
 3. **`react-native-runtimes` ships its own skill** in-repo at [`skills/react-native-runtimes`](https://github.com/margelo/react-native-runtimes/tree/main/skills/react-native-runtimes) — installed alongside the library in Part C.
 4. **Web side:** Callstack's own README recommends pairing with [Vercel's react-best-practices skills](https://github.com/vercel-labs/agent-skills/tree/react-best-practices/skills/react-best-practices) (40+ React/Next rules) — that covers the Next 16 half of "small builds."
-5. **CLAUDE.md rule (add to the repo):** *"Before any performance, bundle, or app-size work, load the installed `react-native-best-practices` skill (and the Vercel react skills for web routes). Size-affecting PRs must state which skill reference they followed."* Skills over folklore.
+5. **CONTRIBUTING.md rule (add to the repo):** *"Before any performance, bundle, or app-size work, load the installed `react-native-best-practices` skill (and the Vercel react skills for web routes). Size-affecting PRs must state which skill reference they followed."* Skills over folklore.
 
 ## Part B — Size discipline per platform, enforced by ratchet
 **Budgets are starting lines, the ratchet is the law:** CI fails any PR that grows a platform's install/first-load size beyond threshold without an explicit, reviewed override. Baselines set at PR-59; starting targets — Android ≤ 25 MB download (per-device, post-split), iOS ≤ 35 MB App Store download, web ≤ 170 KB gzipped first-load JS on marketing routes and a budgeted app-shell per authed route. Honest numbers for a New-Arch Hermes app with a 3D avatar kept *out* of the binary; tightened as baselines prove better.
@@ -33,7 +28,7 @@
 - **Adoption posture:** the library is young (0.x) — behind a feature flag, verified with the doc-15 release-build profiling discipline before default-on; each extra runtime costs memory, so it's the chat surface first, the 3D avatar route as the *only* candidate second, and nothing else without profiler evidence.
 
 ## PRs
-- **PR-58 · Skills wiring:** marketplace add + installs, Margelo selector run, Vercel web skills, CLAUDE.md rule.
+- **PR-58 · Skills wiring:** marketplace add + installs, Margelo selector run, Vercel web skills, CONTRIBUTING.md rule.
 - **PR-59 · Size baseline + CI ratchet:** AAB/IPA/first-load measurements, diff gates, Expo Atlas artifact job.
 - **PR-60 · Android pass:** R8 + resource shrink + keep-rules, ABI trim, WebP sweep.
 - **PR-61 · iOS pass:** thinning/strip/dSYM flow, framework audit.

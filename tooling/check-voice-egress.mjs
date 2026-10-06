@@ -115,7 +115,7 @@ for (const rootRel of SCAN_ROOTS) {
     /*
       Rule 2 — who may import the egress. `import type` is exempt: a type-only
       import is erased at build time and can carry neither the credential nor a
-      call path to it, and CLAUDE.md (§The block) makes it the REQUIRED way for
+      call path to it, and CONTRIBUTING.md (§The block) makes it the REQUIRED way for
       a cross-boundary shape like `BakedAlignment` to travel — banning it here
       would force the shape to be hand-copied, which is the drift doc 32's wall
       does not need. The runtime edge stays as walled as ever.

@@ -14,7 +14,7 @@ import 'server-only';
 // count of anything, because it selects four columns of one row. An unknown slug
 // resolves to null rather than an error, so probing it tells an attacker only
 // whether a district they can already name is a customer.
-// SOT: CLAUDE.md §The block (public-read carve-out) · docs/pack/06-auth-onboarding-spec.md §5
+// SOT: CONTRIBUTING.md §The block (public-read carve-out) · docs/pack/06-auth-onboarding-spec.md §5
 // SOT-KEYWORDS: org branding public read login district logo unauthenticated service
 
 /** The whole of what an unauthenticated caller may learn about a district. */

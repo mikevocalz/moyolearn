@@ -73,7 +73,7 @@ export const SessionSummaries: CollectionConfig = {
       through `apps/web/lib/summary.repository.ts`, which resolves ACTIVE
       guardianships before it queries, tutors see their org's draft queue, and
       the teacher-share door authenticates on the token hash, not a session.
-      Identity is never a parameter (CLAUDE.md §The block), so none of that can
+      Identity is never a parameter (CONTRIBUTING.md §The block), so none of that can
       be a static rule here.
     */
     read: ({ req }) => Boolean(req.user),

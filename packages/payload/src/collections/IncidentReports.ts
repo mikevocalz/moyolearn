@@ -63,7 +63,7 @@ export const IncidentReports: CollectionConfig = {
       Authenticated only at the collection level, and everything that actually
       matters is one layer up. Guardians see own-learner rows where
       `guardianVisible`; staff see org-scoped queues. Both need the acting
-      identity, and identity is never a parameter (CLAUDE.md §The block) — so the
+      identity, and identity is never a parameter (CONTRIBUTING.md §The block) — so the
       scoping lives in `apps/web/lib/incident.repository.ts`, which resolves
       guardianships before it queries and cannot be expressed as a static rule
       here.

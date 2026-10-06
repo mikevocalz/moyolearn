@@ -1,7 +1,7 @@
 // Conference Room domain model — the server-authoritative aggregate for
 // education meetings. This file holds types only; policy decisions live in
 // conference.policy.ts so they can be tested without a database.
-// SOT: Conference Room brief §safeguarding · CLAUDE.md (The block)
+// SOT: Conference Room brief §safeguarding · CONTRIBUTING.md (The block)
 // SOT-KEYWORDS: conference domain type participant policy guardian admit safety join grant
 
 import type { MembershipRole } from '@acme/auth/membership';

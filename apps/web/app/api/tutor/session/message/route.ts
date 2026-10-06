@@ -10,7 +10,7 @@
 // stranger's id resolves to nothing and this route answers 404 — the same
 // answer a genuinely missing session gets, so the endpoint cannot be used to
 // discover which session ids exist.
-// SOT: CLAUDE.md §The block · docs/pack/23-tutorstage-handoff.md
+// SOT: CONTRIBUTING.md §The block · docs/pack/23-tutorstage-handoff.md
 // SOT-KEYWORDS: tutor session message api route append turn attachment protected operation
 import { NextRequest, NextResponse } from 'next/server';
 import { addMessage, SessionNotFound, type StoredAttachment } from '@acme/app/server';

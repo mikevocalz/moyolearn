@@ -6,7 +6,7 @@
  * geometric ratio (a percentage, an aspect-ratio, a stacking order, a container
  * breakpoint). Tailwind has no utility for "the node cards need a gutter wider
  * than the globe's own disc", and writing it as `w-[26%]` would be exactly the
- * arbitrary value CLAUDE.md bans. No colour, font, radius, border width, shadow,
+ * arbitrary value CONTRIBUTING.md bans. No colour, font, radius, border width, shadow,
  * duration or spacing step is spelled here — those arrive as token classes on
  * the elements or as `var()`s from `.moyo-site`.
  *

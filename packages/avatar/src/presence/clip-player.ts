@@ -20,7 +20,7 @@
  * per frame: the working quaternions and vectors are owned by the player,
  * and `three`'s slerp writes in place.
  *
- * SOT: .claude/skills/pose-compositor/SKILL.md · tools/retarget_staystill.mjs
+ * SOT: docs/decisions/adr-113-body-motion-layer.md · tools/retarget_staystill.mjs
  * SOT-KEYWORDS: clip player layer one retarget staystill exclusive twins slerp loop
  */
 import * as THREE from 'three';

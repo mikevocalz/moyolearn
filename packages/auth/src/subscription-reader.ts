@@ -84,7 +84,7 @@ export async function readSubscriptions(
  * `subscriptionFor` needs all of them in hand to answer.
  *
  * The org ids are DERIVED from the user id through the membership table, never
- * accepted from the caller (CLAUDE.md · The block) — an org id in a request body
+ * accepted from the caller (CONTRIBUTING.md · The block) — an org id in a request body
  * is an org id an attacker picks.
  */
 export async function readSessionSubscriptions(

@@ -379,7 +379,7 @@ nothing pre-selected.
 | `site.start.cta` | Start learning | Primary button | `button` |
 | `site.start.secondary` | Run a school or a tutoring business? Talk to us. | Secondary text link to chapter 07 — a link, never a second card | `button` |
 | `site.start.legal` | After the 30-day free trial, the family plan renews monthly at $11 (early bird) or $15.99 (regular) until you cancel. Cancel anytime in the app. | The auto-renewal disclosure, at AA contrast in real text — never the faintest type on the page | `legal` |
-| `site.start.learner.note` | Prices and plans live with the grown-ups. Your child never sees a price in Moyo. | One caption, doubling as a differentiator (CLAUDE.md: no paywall on a learner surface, ever) | `caption` |
+| `site.start.learner.note` | Prices and plans live with the grown-ups. Your child never sees a price in Moyo. | One caption, doubling as a differentiator (CONTRIBUTING.md: no paywall on a learner surface, ever) | `caption` |
 
 **Rejected — do not ship:**
 

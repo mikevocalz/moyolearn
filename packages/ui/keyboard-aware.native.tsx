@@ -19,8 +19,15 @@ import { css } from './html/css';
  * Lives in the kit so screens compose it from `@acme/ui` rather than importing
  * the library, matching every other primitive here.
  */
+// Same default-off indicator rule as tw's ScrollView — this is a ScrollView
+// with keyboard tracking, not a reason to paint a track.
+const KeyboardAwareBase = (
+  props: React.ComponentProps<typeof KeyboardAwareScrollView> & {
+    ref?: React.Ref<React.ComponentRef<typeof KeyboardAwareScrollView>>;
+  },
+) => <KeyboardAwareScrollView showsVerticalScrollIndicator={false} {...props} />;
 export const KeyboardAwareScroll = css(
-  Animated.createAnimatedComponent(KeyboardAwareScrollView),
+  Animated.createAnimatedComponent(KeyboardAwareBase),
   'KeyboardAwareScroll',
 );
 

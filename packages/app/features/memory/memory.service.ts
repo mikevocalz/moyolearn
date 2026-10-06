@@ -16,7 +16,7 @@
 // watching it come back next week.
 //
 // WHAT THE CALLER MAY NAME. A fact id, and nothing else. The learner is
-// `ctx.learnerId` (CLAUDE.md §The block), the tag is read off the row that was
+// `ctx.learnerId` (CONTRIBUTING.md §The block), the tag is read off the row that was
 // actually deleted rather than accepted from the client, and the delete is
 // scoped by both — so the worst a hostile id can do is name a fact belonging to
 // somebody else and delete nothing.

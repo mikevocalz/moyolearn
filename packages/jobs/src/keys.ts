@@ -42,7 +42,7 @@ export interface JobPayloads {
    * learner — keying on the learner would collapse two transcripts from the same
    * child in the same minute into one job and silently lose the second one's
    * facts. The learner id is read off the row by the handler, which is also what
-   * keeps identity out of a client-reachable value (CLAUDE.md §The block).
+   * keeps identity out of a client-reachable value (CONTRIBUTING.md §The block).
    */
   readonly 'edu.distill': { readonly transcriptId: string };
   /**
@@ -66,7 +66,7 @@ export interface JobPayloads {
    * payload that carried extracted evidence would be a copy of that material in
    * `jobs.job`, outside the retention sweep and outside the erasure cascade.
    * The learner id is read off the session row by the handler — identity never
-   * rides a queue (CLAUDE.md §The block).
+   * rides a queue (CONTRIBUTING.md §The block).
    */
   readonly 'summary.generate': { readonly sessionId: string };
 }

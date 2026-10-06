@@ -5,7 +5,7 @@
 // SOT: docs/pack/11-architectural-guardrails.md §3
 // SOT-KEYWORDS: payload cms content collections repository backend
 
-// Generated types are the source of truth for collection shapes (CLAUDE.md
+// Generated types are the source of truth for collection shapes (CONTRIBUTING.md
 // §Types). Re-exported so repositories can name them without a deep path.
 // `Class` and `Assignment` are the teacher.classes / teacher.assign rows; the
 // app-side domain shapes (`TeacherClass`, `Assignment` in @acme/app/server)

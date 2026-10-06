@@ -11,13 +11,15 @@ import "../src/telemetry";
 import "../src/executorch";
 
 import { Stack } from "expo-router";
+import { DarkTheme, DefaultTheme, ThemeProvider } from "expo-router/react-navigation";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
 
 import { BottomSheetModalProvider } from "@gorhom/bottom-sheet";
 import { KeyboardProvider } from "../components/KeyboardProvider";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { LogBox } from 'react-native';
+import { LogBox, useColorScheme } from 'react-native';
+import { semantic } from '@acme/theme';
 import { assertApiOriginConfigured } from '@acme/app/core/api-url';
 import { withUniwind } from "uniwind";
 import { AppQueryProvider, SafeAreaProvider, SessionProvider , AccountSheet, AttachSheet, AudioRecorderSheet, CameraSheet, SwitchProfileSheet, UrlSheet, VideoNoteSheet, UploadQueueProvider } from "@acme/app";
@@ -92,8 +94,23 @@ LogBox.ignoreAllLogs(true);
 assertApiOriginConfigured();
 
 export default function RootLayout() {
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+  /*
+    The navigation theme's `background` is the card/scene ground for EVERY
+    stack and tab container — the colour a transparent route's pixels fall
+    back to. It defaulted to light, so any screen that did not paint its own
+    surface (AdaptivePanes' row, pushed stack routes) rendered dark-mode ink
+    over a light scene: white-on-white. Pointed at `surface` so the ground
+    follows the scheme; screens that paint their own ground are unaffected.
+  */
+  const base = scheme === 'dark' ? DarkTheme : DefaultTheme;
+  const navTheme = {
+    ...base,
+    colors: { ...base.colors, background: semantic.surface[scheme] },
+  };
   return (
     <GestureRoot className="flex-1">
+      <ThemeProvider value={navTheme}>
       {/* Follows the system theme; without this the bar is unstyled and its
           icons can vanish against a matching surface. */}
       <StatusBar style="auto" />
@@ -183,6 +200,7 @@ export default function RootLayout() {
         </BottomSheetModalProvider>
       </SafeAreaProvider>
       </KeyboardProvider>
+      </ThemeProvider>
     </GestureRoot>
   );
 }

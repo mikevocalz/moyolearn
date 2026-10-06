@@ -16,7 +16,7 @@ promotable but should be left exactly where it is.
 `typeScale`), `tooling/check-barrels.mjs`. Call-site counts are over `packages/**` and
 `apps/**` with `node_modules` excluded.
 
-**Governing rule (CLAUDE.md, "Patterns are law"):** *new shared logic gets globalized
+**Governing rule (CONTRIBUTING.md, "Patterns are law"):** *new shared logic gets globalized
 into the registry or a service — never copied into a second feature.* Everything here
 is an application of that one sentence. Promotion is not a reward for a component being
 good; it is the remedy for a pattern that has already been copied.
@@ -90,7 +90,7 @@ prop is inert. `packages/ui/tv.ts` registers the ramp names in tailwind-merge's
 last, so `text-display-sm` is dropped every time in favour of `text-2xl`.
 
 This is a copy-paste lineage. One screen was written this way and eighteen inherited it,
-which is the exact failure mode CLAUDE.md's "never copied into a second feature" clause
+which is the exact failure mode CONTRIBUTING.md's "never copied into a second feature" clause
 exists to prevent. The `display-sm` prop is a fossil of whatever the first screen
 originally looked like.
 
@@ -261,7 +261,7 @@ exports" is true and dangerously phrased; the accurate phrasing is "33 exports t
 public without needing to be."
 
 The proposal is to **stop advertising them on the public barrel**, so that
-`packages/ui/index.ts` — which CLAUDE.md designates as *the* component index that gets
+`packages/ui/index.ts` — which CONTRIBUTING.md designates as *the* component index that gets
 checked before any UI is built — describes what a feature author may actually use. Every
 name on it that a feature author will never legitimately call is noise in the one file
 whose entire job is to be scanned.
@@ -390,7 +390,7 @@ one is the *expected* count for these, not a warning sign.
 *Correctly placed, second consumer imminent.* `Dialog` and `LoadingSkeleton` are
 generic UI with one adopter so far.
 
-CLAUDE.md's rule does not say "promote things used by more than one feature." It says
+CONTRIBUTING.md's rule does not say "promote things used by more than one feature." It says
 new shared logic must never be **copied into a second feature**. The trigger is
 duplication, not headcount. A genuinely one-screen component that lives next to its one
 screen is following the rule perfectly; a one-screen component in the kit is at worst

@@ -28,7 +28,7 @@
  * the asset silently, and on this rig a bone that does not resolve moves
  * nothing while every test still passes.
  *
- * SOT: .claude/skills/pose-compositor/references/ownership.md · packages/avatar/rig-manifest.json
+ * SOT: docs/decisions/adr-113-body-motion-layer.md · packages/avatar/rig-manifest.json
  * SOT-KEYWORDS: pose compositor joint ownership layer owner modulator deform bone conflict build error
  */
 

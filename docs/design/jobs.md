@@ -140,7 +140,7 @@ nobody can justify is a number that drifts.
 The `payroll.*` and `safety.alert.*` names, and their relative priorities, are
 already committed in `docs/design/seq-pay-run.md` §*Queue topology and shed
 order*. They are reproduced rather than renamed: a second naming scheme for the
-same queue is the exact failure CLAUDE.md's *patterns are law* rule exists to
+same queue is the exact failure CONTRIBUTING.md's *patterns are law* rule exists to
 prevent.
 
 ### 2.1 · What each queue actually does, and what it attaches to

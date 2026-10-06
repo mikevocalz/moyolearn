@@ -3,7 +3,7 @@
  *
  * The globe cannot use a Tailwind class — WebGL wants a number, not a
  * `className` — and the alternative everyone reaches for is a hex literal in
- * the scene file, which is precisely what `CLAUDE.md` bans and what
+ * the scene file, which is precisely what `CONTRIBUTING.md` bans and what
  * `docs/site/tokens.md` exists to prevent. So the scene resolves
  * `--color-moyo-sun` from the `.moyo-site` scope at material-build time and
  * hands three the value the stylesheet is already using. Change

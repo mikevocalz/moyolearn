@@ -16,7 +16,7 @@ import 'server-only';
 //
 // THE SUBJECT IS A BRANDED TYPE. Nothing here takes a string id: a
 // `DeletionSubject` can only be minted inside `planAccountDeletion`, from the
-// ownership these functions resolved off `ctx`. That is CLAUDE.md's "identity
+// ownership these functions resolved off `ctx`. That is CONTRIBUTING.md's "identity
 // is never a parameter" made checkable by the compiler rather than by review,
 // which on a deletion path is the difference that matters.
 //

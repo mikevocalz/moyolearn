@@ -1,7 +1,7 @@
 /**
  * /terms — Moyo's terms of service.
  *
- * SOT: .claude/skills/ux-copy/SKILL.md · apps/web-vite/src/copy/content-pages.ts
+ * SOT: apps/web-vite/src/copy/content-pages.ts
  * SOT-KEYWORDS: route terms page legal terms of service content page web-vite
  */
 import { createFileRoute } from '@tanstack/react-router';

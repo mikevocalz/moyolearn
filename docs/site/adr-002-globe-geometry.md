@@ -320,7 +320,7 @@ verified at 0 / 0.5 / 1 → 0 / 2 / 4 cards.
   still a kit primitive; this one has no semantics to lose.
 - **`src/globe/globe.css` exists.** Tailwind has no token for "the card sits in
   the top-left quadrant of a square stage", and `left-[8%]` is the arbitrary
-  value `CLAUDE.md` bans. Every colour, spacing, shadow, radius and duration in
+  value `CONTRIBUTING.md` bans. Every colour, spacing, shadow, radius and duration in
   that file is a `var()` onto a Moyo token; only pure geometry (percentages,
   `aspect-ratio`, a container-query breakpoint) is literal.
 - **French Guiana is a documented special case.** UN M49 files it under France,
@@ -382,6 +382,6 @@ three/R3F/topojson symbol was read out of the installed `.d.ts` or source before
 it was imported, and each is cited in the Options table and in the file headers ·
 no new dependencies; `zustand` and `@types/three` were already in the
 `pnpm-workspace.yaml` catalog and were added to `apps/web-vite` as `catalog:` ·
-doc references: `CLAUDE.md`, `docs/site/adr-001-ssr-lane.md`,
+doc references: `CONTRIBUTING.md`, `docs/site/adr-001-ssr-lane.md`,
 `docs/site/tokens.md`, `docs/site/copy-deck.md` §5 and §12 F-01,
 `docs/site/mobbin/globe.md`, `docs/site/globe-api.md`.

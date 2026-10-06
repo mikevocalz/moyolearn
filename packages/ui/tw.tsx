@@ -65,7 +65,20 @@ export const Pressable = css(ButtonBase, 'Pressable');
 export const TextInput = css(InputBase, 'TextInput');
 
 // Behavioral, not semantic — RNW renders an overflow <div>.
-export const ScrollView = css(RNScrollView, 'ScrollView', {
+// Indicators default OFF: Android's bar draws over content and the kit's
+// scrollers all carry `showsVerticalScrollIndicator={false}` already (the
+// capture column and report panes were painting stray tracks). A call site
+// that wants one can still pass `={true}` — props spread after the default.
+const ScrollViewBase = (
+  props: React.ComponentProps<typeof RNScrollView> & { ref?: React.Ref<RNScrollView> },
+) => (
+  <RNScrollView
+    showsVerticalScrollIndicator={false}
+    showsHorizontalScrollIndicator={false}
+    {...props}
+  />
+);
+export const ScrollView = css(ScrollViewBase, 'ScrollView', {
   contentContainerClassName: 'contentContainerStyle',
 }) as React.FC<
   React.ComponentProps<typeof RNScrollView> & CN & { contentContainerClassName?: string }

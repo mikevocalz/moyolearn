@@ -17,7 +17,7 @@
 // If this never runs, the Block does not fall open — `resolveHostTenant`
 // answers `unresolved` for any district host and every district request is
 // refused. Loud and confined to the subdomains, instead of silent and everywhere.
-// SOT: CLAUDE.md §The block · docs/deploy/moyo-district-tenancy.md §4 §5
+// SOT: CONTRIBUTING.md §The block · docs/deploy/moyo-district-tenancy.md §4 §5
 // SOT-KEYWORDS: tenancy wiring host tenant reader register instrumentation organizations repository block
 import 'server-only';
 import { setTenantOrgReader, setOrgKindReader } from '@acme/app/server';

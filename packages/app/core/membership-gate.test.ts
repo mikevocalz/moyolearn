@@ -83,7 +83,7 @@ describe('membership gate — the role step of doc 11 §3', () => {
 
   it('never carries plan, price, or upgrade copy — a role refusal is not a paywall', async () => {
     // The message crosses the wire, and a learner surface is downstream of every
-    // wire (CLAUDE.md · Children's surfaces). A refusal that mentioned a plan
+    // wire (CONTRIBUTING.md · Children's surfaces). A refusal that mentioned a plan
     // would also be lying: no purchase changes a role.
     const denied = await withMembership(IN_ORG, ['owner'], holding(null), spy().operation).catch(
       (error: Error) => error,

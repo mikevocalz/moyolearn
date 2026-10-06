@@ -16,7 +16,7 @@
 //
 // `tutorTurnFor` takes a learner id where the old constant took nothing. It is
 // the BUDGET key and nothing else: it is read from `ProtectedCtx` at the
-// service boundary per CLAUDE.md, it is closed over rather than passed on, and
+// service boundary per CONTRIBUTING.md, it is closed over rather than passed on, and
 // `TutorPrompt` still has no field it could travel in.
 //
 // The photograph is closed over for the same reason, and it is why nothing

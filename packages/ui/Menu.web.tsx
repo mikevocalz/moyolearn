@@ -10,7 +10,7 @@ import type { MenuProps } from './Menu.types';
  * for free, with the correct semantics — no state, no listeners, no focus trap
  * to get wrong.
  */
-export function Menu({ children, actions, onAction, title, placement = 'down', className }: MenuProps) {
+export function Menu({ children, actions, onAction, title, triggerLabel, placement = 'down', className }: MenuProps) {
   return (
     /*
       `open:z-50` on the DETAILS, not just on the panel.
@@ -42,7 +42,7 @@ export function Menu({ children, actions, onAction, title, placement = 'down', c
         its contents either way — and the keyboard path (focus the summary,
         Enter) was never affected.
       */}
-      <summary className="cursor-pointer list-none">
+      <summary aria-label={triggerLabel} className="cursor-pointer list-none">
         <View className="pointer-events-none">{children}</View>
       </summary>
       {/* `isolate` so the panel's own children stack against the panel rather
