@@ -47,7 +47,7 @@
   },
   "pnpm": {
     "overrides": {
-      "@reactvision/react-viro": "file:./vendors/reactvision-react-viro-3.0.2-moyo.1.tgz",
+      "@reactvision/react-viro": "file:./vendors/reactvision-react-viro-3.0.2-moyo.2.tgz",
       "@viro-external/core": "file:./vendors/viro-external-core-0.1.0.tgz",
       "@viro-external/media": "file:./vendors/viro-external-media-0.1.0.tgz",
       "@viro-external/ui": "file:./vendors/viro-external-ui-0.1.0.tgz",
@@ -86,7 +86,7 @@
       "expo": "patches/expo.patch",
       "expo-constants": "patches/expo-constants.patch",
       "nitro-canvas-in-Vision@0.0.2-rive.4": "patches/nitro-canvas-in-Vision.patch",
-      "@reactvision/react-viro@3.0.2-moyo.1": "patches/@reactvision__react-viro@3.0.2-moyo.1.patch"
+      "@reactvision/react-viro@3.0.2-moyo.2": "patches/@reactvision__react-viro@3.0.2-moyo.2.patch"
     },
     "supportedArchitectures": {
       "cpu": [

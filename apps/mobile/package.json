@@ -24,7 +24,7 @@
     "@expo/ui": "~58.0.8",
     "@gorhom/bottom-sheet": "catalog:",
     "@react-navigation/native": "catalog:",
-    "@reactvision/react-viro": "3.0.2-moyo.1",
+    "@reactvision/react-viro": "3.0.2-moyo.2",
     "@sentry/react-native": "~7.11.0",
     "@tanstack/react-query": "catalog:",
     "expo": "catalog:",
