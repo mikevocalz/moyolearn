@@ -8,7 +8,11 @@ import { hasVisionOSBuild, visionOSBuildKey } from './visionos-build-cache.mjs';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const mobile = join(root, 'apps/mobile');
 const require = createRequire(join(mobile, 'package.json'));
-const coreCommit = 'd4e098408a7f2a2ea4eda134ba8702a41179a228';
+// virocore c09855d2 is the first build whose VROColocationBridge carries the
+// studio-session entry points (setStudioSessionBaseUrl:accessToken:clientTag:,
+// setCloudAnchorProjectId:) that VRTStudioModule.mm in 3.0.2-moyo.1 calls. The
+// previous pin predates them, so every visionOS compile of that file failed.
+const coreCommit = 'c09855d225e47d7c9e0b999a5ab096034b3372cc';
 function run(command, args, cwd, capture = false) {
   const result = spawnSync(command, args, { cwd, stdio: capture ? ['ignore', 'pipe', 'inherit'] : 'inherit', encoding: 'utf8' });
   if (result.error) throw result.error;
