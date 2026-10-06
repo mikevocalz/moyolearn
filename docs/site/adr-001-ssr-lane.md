@@ -158,5 +158,5 @@ Zustand-only (no component state introduced) · tokens-only (`bg-surface`,
 `packages/theme/theme.css`) · no invented APIs (every Start/Router symbol cited
 above was read out of the installed `.d.ts` before it was imported) · all new
 dependencies declared once in the `pnpm-workspace.yaml` catalog and referenced as
-`catalog:` · doc references: `CLAUDE.md`, `packages/ui/index.ts`,
+`catalog:` · doc references: `CONTRIBUTING.md`, `packages/ui/index.ts`,
 `packages/ui/html/css.web.tsx`, `apps/storybook/.storybook/main.ts`.

@@ -49,7 +49,7 @@ const DISC_SHADOW = 26;
 /**
  * `fillToken` → the `fill` value. Written as a `var()` and not as a Tailwind
  * class because SVG `fill` is not in the utility set this theme emits, and a
- * hex here would be exactly the raw value `CLAUDE.md` bans. The custom-property
+ * hex here would be exactly the raw value `CONTRIBUTING.md` bans. The custom-property
  * name comes from the same helper the WebGL tiers use, so both read the same
  * variable.
  */

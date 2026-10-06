@@ -15,7 +15,7 @@ Status: inventory only, **except** the motion vocabulary, which ships — see
 
 ## The rule this inventory applies
 
-`CLAUDE.md`: *"Check for an existing component before creating one. Extend or
+`CONTRIBUTING.md`: *"Check for an existing component before creating one. Extend or
 compose; never duplicate a near-identical component."* A site-local component is
 justified only when one of three things is true:
 
@@ -138,7 +138,7 @@ Two rules a chapter cannot break without breaking the system:
 
 ## Conventions for anything built here
 
-- Header block per file with `SOT:` and `SOT-KEYWORDS:` (`CLAUDE.md`).
+- Header block per file with `SOT:` and `SOT-KEYWORDS:` (`CONTRIBUTING.md`).
 - Zustand only if state is needed at all — never `useState`.
 - Tokens only. A hex, a `px`, or an arbitrary value in a site component is a lint
   failure, and `docs/site/tokens.md` is where a missing value gets added.

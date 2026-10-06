@@ -17,7 +17,7 @@ import type { CollectionConfig } from 'payload';
 // gets overwritten on its next run.
 //
 // `orgId` is the tenant boundary. It is written from `ctx` at the service layer
-// and never accepted from client input (CLAUDE.md · The block).
+// and never accepted from client input (CONTRIBUTING.md · The block).
 // SOT: docs/pack/28-crm-spec.md §2 (object model) · §3 (pipeline) · §6 (health)
 // SOT-KEYWORDS: leads crm pipeline stage family tenant org ops collection wall
 

@@ -12,7 +12,7 @@
 // Exhaustion is SILENT. It is not an error, not a `CoachEvent`, and never a
 // surface: the egress returns `text-only`, the route answers 204, and the
 // child keeps reading the same words they would have heard. A limit a child
-// can see is a limit a child is being blamed with (CLAUDE.md §Children's
+// can see is a limit a child is being blamed with (CONTRIBUTING.md §Children's
 // surfaces), and text-only IS the product's stated degraded mode (doc 32 §2).
 //
 // Same port-and-seam shape as `packages/inference/src/budget.ts`, for the same

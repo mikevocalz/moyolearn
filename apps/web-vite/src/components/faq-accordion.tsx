@@ -7,7 +7,7 @@
  * Etsy (expandable list) all keep the question prominent and the answer
  * secondary.
  *
- * SOT: .claude/skills/mobbin-pass/SKILL.md
+ * SOT: apps/web-vite/src/copy/content-pages.ts
  * SOT-KEYWORDS: faq accordion disclosure question answer chevron web-vite
  */
 'use client';

@@ -4,7 +4,7 @@
 **Measured by:** `pnpm ui:sweep` (`tooling/ui-sweep.mjs`) · re-run it before trusting any figure below
 **Scope:** `packages/app`, `packages/ui`, `apps` — `.ts` and `.tsx`, excluding `node_modules`, `.next`, `dist`, `.expo`
 
-This report measures the "UI" and "Patterns are law" sections of `CLAUDE.md` against
+This report measures the "UI" and "Patterns are law" sections of `CONTRIBUTING.md` against
 what the code actually does. It proposes nothing; the migration plan is a separate
 document and is gated on approval.
 
@@ -134,7 +134,7 @@ the variant enforces. The rest are shape, not type: `rounded-[6px]`, `rounded-[1
 
 **5 · Hardcoded `text-white` / `text-black` — 5 hits / 1 file / 5 product.** All five
 are `selectedTitle: 'text-white'` in
-`packages/app/features/schedule/accent-classes.ts`. Named explicitly in `CLAUDE.md`,
+`packages/app/features/schedule/accent-classes.ts`. Named explicitly in `CONTRIBUTING.md`,
 confined to one file, and an inverse tone token (`text-text-inverse`, exposed as
 `tone="inverse"` on both `Heading` and `Text`) already exists. Smallest, most
 contained item in the report.
@@ -197,7 +197,7 @@ components are used inside `packages/ui` and the finding is about what the barre
 should expose.
 
 <!--
-What this is: the measured state of UI drift against the CLAUDE.md UI rules.
+What this is: the measured state of UI drift against the CONTRIBUTING.md UI rules.
 Why it exists: the type-scale override numbers are large enough to be misread as one
 problem; the Heading/Text repetition split is the whole point of the document.
 Source of truth: `pnpm ui:sweep` (tooling/ui-sweep.mjs). If a figure here disagrees

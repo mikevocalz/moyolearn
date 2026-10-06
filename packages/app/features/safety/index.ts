@@ -13,7 +13,7 @@
 // `import 'server-only'` and its callers are routes, which reach it through
 // `@acme/app/server`; a value export here would put it on a mobile bundle's
 // import graph.
-// SOT: docs/pack/31-grade-voice-safety-incidents.md §4.2 §5 · docs/design/route-audit-36.md §1 · CLAUDE.md (The block)
+// SOT: docs/pack/31-grade-voice-safety-incidents.md §4.2 §5 · docs/design/route-audit-36.md §1 · CONTRIBUTING.md (The block)
 // SOT-KEYWORDS: safety index barrel domain public-api incident guardian triage queue screen org mobile
 export type {
   GuardianIncidentView,

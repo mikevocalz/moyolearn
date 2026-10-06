@@ -37,7 +37,13 @@ const PANE_WIDTH = {
 export function CollapsiblePane({ width, open, fill, children, className }: CollapsiblePaneProps) {
   const [measured, setMeasured] = useState<number | null>(null);
   const [grown, setGrown] = useState(false);
-  if (grown && !(open && fill)) setGrown(false);
+  // `measured` is only truthful for the grown epoch that produced it — when
+  // `open`/`fill` flicker during a host recompute the stale width would be
+  // what the pane animates to and pins its content at. See the shared file.
+  if (grown && !(open && fill)) {
+    setGrown(false);
+    setMeasured(null);
+  }
   const contentWidth = fill ? (measured ?? width) : width;
   const target = open ? contentWidth : 0;
 
@@ -51,7 +57,12 @@ export function CollapsiblePane({ width, open, fill, children, className }: Coll
   }, [paneWidth, target, open, fill]);
 
   // The animated width is the flex BASIS once grown, and `grow` absorbs the
-  // remainder — the same handoff the shared file describes.
+  // remainder — the same handoff the shared file describes. `shrink` is the
+  // other half RN needs: flexShrink defaults to 0 in Yoga, not the web's 1,
+  // so without it the basis can only ever GROW — when the row tightens (a
+  // sibling pane opens, the Duo folds) the pane kept its old grown width,
+  // overflowed its share, and the detail column clipped mid-glyph at the
+  // rail. With shrink the basis gives back the space the row reclaims.
   const style = useAnimatedStyle(() => ({ width: paneWidth.value }));
 
   return (
@@ -65,7 +76,7 @@ export function CollapsiblePane({ width, open, fill, children, className }: Coll
             }
           : undefined
       }
-      className={`overflow-hidden ${grown ? 'grow' : ''} ${className ?? ''}`}
+      className={`overflow-hidden ${grown ? 'grow shrink' : ''} ${className ?? ''}`}
     >
       <View
         style={grown ? undefined : { width: contentWidth }}

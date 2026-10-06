@@ -16,6 +16,12 @@ export interface MenuProps {
   /** Heading shown at the top of the menu. */
   title?: string;
   /**
+   * Accessible name for the trigger. Required when `children` is icon-only —
+   * the trigger's own control is what assistive tech lands on, and an icon
+   * gives it nothing to announce.
+   */
+  triggerLabel?: string;
+  /**
    * Which way the panel opens, on web. Native draws a system sheet and ignores
    * it.
    *

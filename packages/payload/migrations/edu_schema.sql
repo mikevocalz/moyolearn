@@ -156,7 +156,7 @@ CREATE TABLE IF NOT EXISTS "edu"."knowledge_graph" (
 
   -- Variant fields. Every one is nullable at the column level and made mandatory
   -- per-kind by `knowledge_graph_variant_shape` below, which is the SQL spelling
-  -- of the discriminated union in `facts.ts` — CLAUDE.md §Types: invalid state
+  -- of the discriminated union in `facts.ts` — CONTRIBUTING.md §Types: invalid state
   -- combinations must be unrepresentable, not merely unusual.
   --
   -- The columns mirror what each CONSTRUCTOR consumes, which is not always what

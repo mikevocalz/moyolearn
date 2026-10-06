@@ -2,8 +2,9 @@
 // Native text-input bridge: preserve explicit source-entry correction settings.
 // SOT-KEYWORDS: native input expo autocorrect capitalization homework source
 import { useEffect } from 'react';
-import { View as RNView } from 'react-native';
+import { Platform, View as RNView } from 'react-native';
 import { Host, TextInput as BaseExpoTextInput, useNativeState } from '@expo/ui';
+import { padding } from '@expo/ui/jetpack-compose/modifiers';
 import { targets } from '@acme/theme';
 import { css } from './css';
 
@@ -104,6 +105,13 @@ export function NativeInput({
 }: NativeInputProps) {
   const state = useNativeState(value ?? '');
 
+  // Vertical centring for an auto-grow multiline field: the symmetric inset is
+  // half of what the band floor leaves around one line of text. Font metrics
+  // make a Compose line ≈1.3× the size; an off-by-a-dp estimate is invisible —
+  // the number only has to centre, not to be exact.
+  const floor = Math.max(HOST_MIN_HEIGHT, minHeight ?? 0);
+  const centrePad = Math.max(0, Math.round((floor - (fontSize ?? 16) * 1.3) / 2));
+
   // Adopt external changes — a parent clearing a query, a form reset. Compared
   // first so a JS write never echoes back over text the user is mid-way through
   // typing; writes from JS reach the UI thread asynchronously.
@@ -169,6 +177,30 @@ export function NativeInput({
           returnKeyType={returnKeyType}
           multiline={multiline}
           numberOfLines={numberOfLines}
+          /*
+            A multiline Compose field TOP-aligns its text — fine while the host
+            is exactly one line tall, wrong once the band floor stretches it:
+            the placeholder sits on the frame's top edge while every sibling
+            key is centred. The host cannot centre it for us: under
+            `matchContents` its Layout measures the field UNSPECIFIED, so a
+            wrapContentHeight modifier sees an infinite max and degenerates to
+            wrap — confirmed on device — and HostView places children at
+            (0,0) with no alignment prop.
+
+            So the centring has to happen INSIDE the field: symmetric vertical
+            padding of (floor − line-height)/2 puts one line in the middle of
+            the band, and because the padding stays symmetric it keeps text
+            centred as the field wraps to more lines. Gated on the auto-grow
+            shape (no `numberOfLines`): a numbered field is a fixed content
+            box — the labelled Textarea — where top alignment is correct.
+            Android-only: the config type is Compose's, and SwiftUI fields
+            already centre.
+          */
+          modifiers={
+            multiline && !numberOfLines && Platform.OS === 'android'
+              ? [padding(0, centrePad, 0, centrePad)]
+              : undefined
+          }
           testID={ariaLabel}
           textStyle={{ color, fontSize }}
         />

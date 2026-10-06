@@ -11,7 +11,7 @@
 // It returns a generator rather than taking a callback so the transport owns
 // framing: the same stream serves SSE on web and whatever native uses later,
 // and neither one gets to see a chunk the plane has not passed.
-// SOT: docs/pack/18-tutor-ai-stack.md §3 · docs/pack/29-shipaton-plan.md §3 · docs/pack/12-systems-design-prompt.md §5 · CLAUDE.md §The block
+// SOT: docs/pack/18-tutor-ai-stack.md §3 · docs/pack/29-shipaton-plan.md §3 · docs/pack/12-systems-design-prompt.md §5 · CONTRIBUTING.md §The block
 // SOT-KEYWORDS: coach service tutor turn stream protected operation safety plane pedagogy contract fail closed unavailable paused refusal safety event guardian visible learner flags
 import 'server-only';
 import type { Auth, LearnerFlags } from '@acme/auth/server';
@@ -286,7 +286,7 @@ export async function* coachStream(
       The learner id reaches the gateway as the BUDGET key and stops there — it
       is not a field of `TutorPrompt`, so there is no shape it could travel to
       the provider in. It comes from `ctx` like every other identity on this
-      path (CLAUDE.md §The block); a turn whose budget key was a parameter would
+      path (CONTRIBUTING.md §The block); a turn whose budget key was a parameter would
       be a turn a client could spend someone else's day on.
     */
     const modelGenerator = withLearnerBriefStream(

@@ -26,7 +26,7 @@
 // bearer — the face call and `/api/health`'s probe alike. Both the URL and
 // the token are read in this file and nowhere else, and the health route
 // reports only `configured` / `reachable`, never either value.
-// SOT: docs/decisions/adr-112-live-audio2face.md · .claude/skills/audio2face-live/SKILL.md · docs/pack/32 §3
+// SOT: docs/decisions/adr-112-live-audio2face.md · docs/pack/32-tutor-voice-tone.md §3
 // SOT-KEYWORDS: audio2face a2f client blendshape frames fps names emotion gpu host egress fail open no face bearer token health probe
 import 'server-only';
 import type { A2fEmotion } from './tones.ts';

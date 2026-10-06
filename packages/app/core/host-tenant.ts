@@ -25,9 +25,9 @@
 // is a lookup outage quietly becoming a scoping change.
 //
 // Pure and I/O-free like the gates beside it: the database read is a port, and
-// the only real implementation is `loadTenantOrgId` in apps/web (CLAUDE.md ·
+// the only real implementation is `loadTenantOrgId` in apps/web (CONTRIBUTING.md ·
 // only repositories touch @acme/payload).
-// SOT: docs/deploy/moyo-district-tenancy.md §4 §5 §10 · docs/pack/11-architectural-guardrails.md §3 · CLAUDE.md §The block
+// SOT: docs/deploy/moyo-district-tenancy.md §4 §5 §10 · docs/pack/11-architectural-guardrails.md §3 · CONTRIBUTING.md §The block
 // SOT-KEYWORDS: host tenant block org scoping district subdomain authoritative intersect fail closed protected operation resolver registry
 
 import { MEMBERSHIP_ROLES } from '@acme/auth/membership';
@@ -49,7 +49,7 @@ export type LoadTenantOrgId = (slug: string) => Promise<string | null>;
  * What the request host says about tenancy. Three outcomes, not a nullable
  * string, because "no district was named" and "a district was named and does
  * not exist" call for opposite behaviour and an `orgId | null` cannot tell them
- * apart (CLAUDE.md · invalid combinations unrepresentable).
+ * apart (CONTRIBUTING.md · invalid combinations unrepresentable).
  */
 export type HostTenant =
   /** `app.` / `admin.` / the apex / dev / a preview URL: scope by session, as before. */

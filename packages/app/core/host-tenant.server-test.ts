@@ -17,7 +17,7 @@
 // `.server-test.ts` because the Block imports `@acme/auth/server`. The `Auth`
 // stub is real here — unlike the mock-mode tests beside it, this path calls
 // `auth.api.getSession`, so the stub answers that one method and nothing else.
-// SOT: docs/deploy/moyo-district-tenancy.md §5 §10 · docs/pack/11-architectural-guardrails.md §3 · CLAUDE.md §The block
+// SOT: docs/deploy/moyo-district-tenancy.md §5 §10 · docs/pack/11-architectural-guardrails.md §3 · CONTRIBUTING.md §The block
 // SOT-KEYWORDS: host tenant server test district cross-tenant forged claim preview vercel admin app unscoped read intersect protected operation
 
 import assert from 'node:assert/strict';

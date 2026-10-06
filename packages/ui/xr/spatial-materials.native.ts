@@ -21,7 +21,7 @@ import { XR_SURFACE as chrome } from './xr-colors.ts';
 import { XR_MATERIAL, inkMaterial } from './material-names.ts';
 
 /*
-  THE COLOURS COME FROM THE TOKEN FILE, not from this one. `CLAUDE.md` §UI: no
+  THE COLOURS COME FROM THE TOKEN FILE, not from this one. `CONTRIBUTING.md` §UI: no
   hex literals, and if a token does not exist it gets added to
   `packages/theme/tokens.ts`. The first pass here carried the spatial design
   system's stock palette (`#1a1d24`, `#7dd3fc`, `#22262f`) — generic headset-demo

@@ -6,7 +6,7 @@
  * snapshot-tested without touching layout. Every string follows the Moyo voice:
  * warm, plain, specific; sentence case; contractions yes; no legal theater.
  *
- * SOT: .claude/skills/ux-copy/SKILL.md · .claude/skills/cognitive-load-conversion/SKILL.md
+ * SOT: docs/38-front-door-and-flow.md §6 voice & glossary
  *      docs/site/copy-deck.md §10
  * SOT-KEYWORDS: copy content pages safety privacy terms about contact faq footer
  */

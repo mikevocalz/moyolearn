@@ -11,7 +11,7 @@
 // same reason: an eraser that computed the prefix itself would be a second
 // opinion about where the bytes are, and the failure mode of a wrong opinion
 // here is deleting somebody else's child's files.
-// SOT: CLAUDE.md §The block · packages/app/features/media/presign.rules.ts
+// SOT: CONTRIBUTING.md §The block · packages/app/features/media/presign.rules.ts
 // SOT-KEYWORDS: bunny presign repository storage upload credential env erase forget everything learner media prefix scope
 import 'server-only';
 import { learnerMediaScope } from '@acme/app/features/media/presign.rules.ts';

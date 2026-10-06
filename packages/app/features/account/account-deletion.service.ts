@@ -32,7 +32,7 @@
 // open question for counsel. So held reports are NOT deleted here and the count
 // travels back in the receipt: retaining is the fail-closed direction, and the
 // confirmation copy says so rather than letting a parent believe otherwise.
-// SOT: docs/38-front-door-and-flow.md §5A FD-26 · docs/pack/06-auth-onboarding-spec.md §2 §6 · docs/pack/07-security-child-ai-safety-spec.md §4 · docs/release/app-store-readiness.md §3 · CLAUDE.md §The block
+// SOT: docs/38-front-door-and-flow.md §5A FD-26 · docs/pack/06-auth-onboarding-spec.md §2 §6 · docs/pack/07-security-child-ai-safety-spec.md §4 · docs/release/app-store-readiness.md §3 · CONTRIBUTING.md §The block
 // SOT-KEYWORDS: account deletion fd-26 erasure cascade guardian managed learner ward legal hold protected operation 5.1.1 apple app store coppa withdraw consent
 import 'server-only';
 import type { Auth } from '@acme/auth/server';
@@ -47,7 +47,7 @@ export type { ErasedMedia };
  * from `planAccountDeletion`, which only ever names ids it found in the
  * ownership the session resolved.
  *
- * Identity is never a parameter (CLAUDE.md §The block), and on a deletion path
+ * Identity is never a parameter (CONTRIBUTING.md §The block), and on a deletion path
  * "never" wants to be checked by the compiler rather than by review: a string
  * cannot be passed where a subject is expected, so no future route can hand a
  * repository an id that arrived in a request body.

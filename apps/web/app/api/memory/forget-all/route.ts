@@ -8,7 +8,7 @@
 //
 // IT READS NO BODY. Not "it validates the body" — it never calls `request.json`.
 // There is nothing a caller could legitimately say: the learner is
-// `ctx.learnerId` (CLAUDE.md §The block), and a request that could name whose
+// `ctx.learnerId` (CONTRIBUTING.md §The block), and a request that could name whose
 // record to destroy would be the worst-shaped endpoint in a children's product.
 // The absence is the security property, so it is stated rather than left to be
 // noticed.

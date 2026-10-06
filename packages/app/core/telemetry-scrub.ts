@@ -86,7 +86,7 @@ const REQUEST_FIELDS_DROPPED = ['data', 'cookies', 'headers', 'query_string', 'e
 /**
  * Top-level bags with no safe subset.
  *
- * `user` is identity by definition and CLAUDE.md puts it out of reach of every
+ * `user` is identity by definition and CONTRIBUTING.md puts it out of reach of every
  * log line. `extra` is free-form and typed `unknown` by the SDK, so anything at
  * all can be in it. `server_name` is a hostname that adds nothing a release tag
  * does not.

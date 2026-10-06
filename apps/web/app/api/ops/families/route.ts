@@ -1,7 +1,7 @@
 // GET /api/ops/families — the org's household rows (ADR-109), each with the
 // stage rollup over its leads. The derivation this route used to serve
 // retired when doc 28 §2's Family object landed as a collection.
-// SOT: docs/pack/28-crm-spec.md §2 · docs/decisions/adr-109-family-household-object.md · CLAUDE.md (The block)
+// SOT: docs/pack/28-crm-spec.md §2 · docs/decisions/adr-109-family-household-object.md · CONTRIBUTING.md (The block)
 // SOT-KEYWORDS: ops api families household rollup crm protected operation route
 import { NextRequest, NextResponse } from 'next/server';
 import {

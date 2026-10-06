@@ -1,6 +1,6 @@
 // GET /api/ops/leads — cursor-paginated CRM pipeline for the ops surfaces.
 // POST /api/ops/leads — create a lead at the pipeline's first stage.
-// SOT: docs/pack/28-crm-spec.md §2–§3 · CLAUDE.md (The block)
+// SOT: docs/pack/28-crm-spec.md §2–§3 · CONTRIBUTING.md (The block)
 // SOT-KEYWORDS: ops api leads cursor pagination create crm protected operation route
 import { NextRequest, NextResponse } from 'next/server';
 import {

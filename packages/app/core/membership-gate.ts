@@ -60,7 +60,7 @@ export class MembershipDenied extends Error {
  * A session with NO org refuses without reading the port at all: a role is a
  * role IN an organisation, so a guardian or learner session has nothing to look
  * up and the answer is already no. Identity comes off `ctx` on both sides of
- * the port — never off input (CLAUDE.md · The block).
+ * the port — never off input (CONTRIBUTING.md · The block).
  */
 export async function withMembership<R>(
   ctx: ProtectedCtx,

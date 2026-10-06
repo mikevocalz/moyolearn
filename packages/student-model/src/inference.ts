@@ -9,7 +9,7 @@
 //
 // The retrieval key is `context.learnerId` from the plane's `IdentityContext`,
 // which doc 07 §3 layer 1 requires be server-injected. Nothing here accepts a
-// learner id from a caller, so there is no argument to get wrong — the CLAUDE.md
+// learner id from a caller, so there is no argument to get wrong — the CONTRIBUTING.md
 // rule ("identity is never a parameter, never from an AI tool argument") is a
 // property of the signature rather than a thing to remember.
 //

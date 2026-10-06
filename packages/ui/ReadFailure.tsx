@@ -8,7 +8,7 @@
 // This is the split made structural: `EmptyState` may only claim an answered
 // zero, and anything else routes here.
 //
-// Composed over `EmptyState` rather than forked from it (CLAUDE.md §UI): same
+// Composed over `EmptyState` rather than forked from it (CONTRIBUTING.md §UI): same
 // centred icon/title/description bones, plus the two things a failure owes and
 // an empty state must not have — a visible NOT-LOADED marker so the state is
 // legible before the copy is read, and a retry that re-runs the read in place.

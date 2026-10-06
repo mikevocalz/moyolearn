@@ -6,7 +6,7 @@
 // second kind does not, which is why it lives in a file with no Viro import and
 // the web fork can answer with the same values.
 //
-// Both kinds come from `packages/theme/tokens.ts`. `CLAUDE.md` §UI: no hex
+// Both kinds come from `packages/theme/tokens.ts`. `CONTRIBUTING.md` §UI: no hex
 // literals, and a missing token gets added to that file. The first pass here
 // carried the spatial design system's stock palette — generic headset-demo
 // colours that had never met Moyo's — which is the drift a spatial surface is

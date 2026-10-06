@@ -2,7 +2,7 @@
 // Screens live in features/* (Solito pattern); add domains alongside them.
 // A feature that owns an index.ts is re-exported through it, never past it —
 // deep paths make the sub-barrel invisible to search, which is how duplicates start.
-// SOT: CLAUDE.md ("Features import a domain's index.ts — never a deep path")
+// SOT: CONTRIBUTING.md ("Features import a domain's index.ts — never a deep path")
 // SOT-KEYWORDS: app package index barrel public-api screens features
 export { HomeScreen } from './features/home/screen';
 export { LearnerTodayScreen } from './features/home/learner-today-screen';
@@ -560,6 +560,8 @@ export {
   useAppSession,
   useSetContext,
   RoleSwitcher,
+  getAuthMode,
+  type AuthMode,
   ContextSwitcher,
   ScopeSwitcher,
   shellForRole,

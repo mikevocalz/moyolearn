@@ -44,7 +44,7 @@ import { protectedOperation, type ProtectedCtx } from '../../core/protected-oper
  *
  * Which learners those are is the repository's question: identity comes from
  * `ctx` and the guardianship rows are a Payload read, so resolving them here
- * would put a collection query in a service (CLAUDE.md §The block). The
+ * would put a collection query in a service (CONTRIBUTING.md §The block). The
  * repository returns the ward ids alongside the rows so the projection can prove
  * the scoping rather than assume it.
  */
@@ -205,7 +205,7 @@ export type LoadIncidentStaff = (orgId: string) => Promise<readonly IncidentStaf
  * A roster row on the wire. `me` is decided by the SERVER against `ctx`, so
  * "assign to me" on a client is picking a server-marked row from a
  * server-verified roster — not posting its own identity, which is the move
- * CLAUDE.md §The block bans and the reason assignment was deferred until this
+ * CONTRIBUTING.md §The block bans and the reason assignment was deferred until this
  * read existed.
  */
 export interface StaffRosterEntry extends IncidentStaffMember {

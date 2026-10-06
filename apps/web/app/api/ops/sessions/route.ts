@@ -1,5 +1,5 @@
 // GET /api/ops/sessions — today's scheduled human sessions for the ops hero.
-// SOT: docs/decisions/adr-110-sessions-object.md · CLAUDE.md (The block)
+// SOT: docs/decisions/adr-110-sessions-object.md · CONTRIBUTING.md (The block)
 // SOT-KEYWORDS: ops api sessions today hero protected operation route
 import { NextRequest, NextResponse } from 'next/server';
 import {

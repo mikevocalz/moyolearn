@@ -5,7 +5,7 @@ Paste-ready. Angle brackets are the only thing to fill in. Each one is built so 
 ---
 
 ## 1 · Session start
-> Read `CLAUDE.md`. We're working on `<area>`.
+> Read `CONTRIBUTING.md`. We're working on `<area>`.
 > Before writing anything: `grep -rl "SOT-KEYWORDS:.*<term>" packages apps` to find the relevant files, open only the matches, and tell me the pattern you found and the file you'd extend.
 > Do not read directories to get oriented. Do not write code in this message.
 

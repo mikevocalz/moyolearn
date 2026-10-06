@@ -1,18 +1,17 @@
 'use client';
-// Controller rays and spatial styli share the board panel's world placement.
+// Controller rays take the board panel's world placement; the spatial stylus
+// moved to the screen's `MusePenInput` bridge, which feeds the same funnel.
 // Viro FixedToPlane drag reports the moved quad centre, so preserve the initial
 // grab offset before converting into the engine's normalized viewport.
 // SOT: premium/PremiumXRMediaPanel.tsx · surface-drag.ts · board-pointer.ts
-// SOT-KEYWORDS: xr board controller muse stylus input drawing pointer ownership drag
+// SOT-KEYWORDS: xr board controller input drawing pointer ownership drag
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef } from 'react';
-import { NativeEventEmitter, NativeModules } from 'react-native';
 import { ViroClickStateTypes, ViroNode, ViroQuad } from '@reactvision/react-viro';
 import { panelMediaArea } from './premium/PremiumXRMediaPanel.tsx';
 import { XR_MATERIAL } from './spatial-materials.native.ts';
 import { xrDragHit, xrDragPlane, xrSurfaceLocal } from './surface-drag.ts';
 import { worldSlot, xrRotateY } from './world-slot.ts';
 import { BoardPointer } from './board-pointer.ts';
-import { SpatialStylusBoardInput, SPATIAL_STYLUS_SOURCE, type SpatialStylusFrame } from './spatial-stylus-board-input.ts';
 import type { XrVector3, XrSurfaceInput } from './XrPanel.types.ts';
 import type { XrBoardSurfaceProps } from './XrBoardSurface.types.ts';
 
@@ -72,30 +71,13 @@ export function XrBoardSurface({ headPosition, headYawDeg, enabled, termination,
     const sample = stroke.current.finish(termination.source, termination.cancel);
     if (sample) { emit.current(sample); restPointer(); }
   }, [termination, restPointer]);
-  useEffect(() => {
-    const module = NativeModules.VRTVisionOSModule;
-    if (!enabled || module?.isVisionOS !== true) return;
-
-    const stylus = new SpatialStylusBoardInput(stroke.current);
-    // The pen and the controller share BoardPointer, so neither can take over
-    // the other's line. The native sample is already in this scene's world space.
-    const subscription = new NativeEventEmitter(module).addListener(
-      'onSpatialStylus',
-      (event: object) => {
-        const frame = event as SpatialStylusFrame;
-        const sample = stylus.handle(frame, {
-          position: anchor.position, yawDeg: anchor.yaw,
-          width: area.width, height: area.height, plane,
-        });
-        if (sample) emit.current(sample);
-      },
-    );
-    return () => {
-      subscription.remove();
-      const sample = stylus.reset();
-      if (sample) emit.current(sample);
-    };
-  }, [enabled, anchor, area.width, area.height, plane]);
+  /*
+    THE STYLUS NO LONGER SUBSCRIBES HERE. The screen mounts `MusePenInput` —
+    the viro-external bridge over the same `onSpatialStylus` stream — and runs
+    `SpatialStylusBoardInput` at the input funnel, so the pen's ownership is
+    arbitrated against the controller's at the place both streams meet rather
+    than inside one of them. This quad stays ray-only.
+  */
   if (!enabled) return null;
   return (
     <ViroNode position={anchor.position} rotation={[0, anchor.yaw, 0]}>
@@ -137,7 +119,7 @@ export function XrBoardSurface({ headPosition, headYawDeg, enabled, termination,
              IS that stroke's — keep the move under the owner's id so the
              begin/move/end stream carries one consistent source. */
           const id = stroke.current.source;
-          if (id === null || id === SPATIAL_STYLUS_SOURCE) return;
+          if (id === null) return;
           const hit = xrDragHit(position, downHit.current, plane.planePoint);
           send(stroke.current.move(sampleOf(hit, id)));
           if (!stroke.current.active) restPointer();

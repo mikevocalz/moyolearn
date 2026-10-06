@@ -4,7 +4,7 @@
 // `bunny-stream-sign.ts`, which is pure. This file supplies environment and
 // nothing else, so the logic stays testable without a `server-only` barrier
 // around it.
-// SOT: CLAUDE.md §The block · packages/app/features/media/retention.ts
+// SOT: CONTRIBUTING.md §The block · packages/app/features/media/retention.ts
 // SOT-KEYWORDS: bunny stream repository video tus signature env retention sweep delete expiry
 import 'server-only';
 import type { CreateStreamVideo, SignStreamUpload } from '@acme/app/server';

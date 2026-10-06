@@ -37,6 +37,15 @@ export { XR_MATERIAL, inkMaterial } from './material-names.ts';
 /* Shared placement math has no renderer dependency. */
 export { worldSlot, xrRotateY } from './world-slot.ts';
 export { panelMediaArea } from './premium/panel-media-area.ts';
+/* Pen arbitration and plane geometry are pure — no renderer in any of them. */
+export { BoardPointer } from './board-pointer.ts';
+export { xrDragPlane, xrSurfaceLocal, type XrDragPlane } from './surface-drag.ts';
+export {
+  SpatialStylusBoardInput,
+  SPATIAL_STYLUS_SOURCE,
+  type SpatialBoardGeometry,
+  type SpatialStylusFrame,
+} from './spatial-stylus-board-input.ts';
 
 export type { XrRailProps } from './XrRail.types.ts';
 export type { XrBoardTrayProps } from './XrBoardTray.types.ts';

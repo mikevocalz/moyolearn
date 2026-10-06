@@ -19,7 +19,7 @@ Primitive scale names are documented lies kept for class-name stability: `burgun
 
 - Surfaces: `surface` / `surface-raised` / `surface-sunken` (Surface is a token family, deliberately not a component).
 - Text: `text` / `text-muted` / `text-inverse`. Primary/accent: `primary`/`primary-pressed`/`on-primary`, `accent`/`accent-pressed` (hand-tuned `#E3307E`; `ember[600]` measured 4.25:1, below AA) / `on-accent`.
-- Borders are ink, not grey ("the outline IS the design"): `border` / `border-strong` / `border-soft` (80%) / `border-faint` (10%). Borders are structure, never emphasis (CLAUDE.md).
+- Borders are ink, not grey ("the outline IS the design"): `border` / `border-strong` / `border-soft` (80%) / `border-faint` (10%). Borders are structure, never emphasis (CONTRIBUTING.md).
 - Shadows: hard offset slabs `4px 4px 0 0 var(--color-border-strong)` — no blur, ever. Radius: single `control` 0.375rem, tool-enforced.
 
 ## Role accent (doc 36 §5 — implemented)

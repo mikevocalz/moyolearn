@@ -2,7 +2,7 @@
 from pathlib import Path
 from subprocess import run
 from hashlib import sha256
-root=Path('.codex/pdf-qa/sources');root.mkdir(parents=True,exist_ok=True)
+root=Path('.scratch/pdf-qa/sources');root.mkdir(parents=True,exist_ok=True)
 sources=[
  ('handwritten-fractions','https://hayutineducation.com/uploads/application/files/lower-level-math-supplements.pdf','ee92fbdd080946e2887ac5655a2477f96399ed77f2d7d056f7ee8271720c2ef2'),
  ('grade5-fractions','https://www.mathworksheets.com/5th-grade/MathWorksheetsGrade5_2_23.pdf','ffeae2edf88b297e6ede01241c77a9e7b84cdc5dd999ff5ff6075c76b30c7253')]

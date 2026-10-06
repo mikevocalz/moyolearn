@@ -10,7 +10,7 @@
 // PURE TYPES, importable by the guardian screen, the tutor queue, the service
 // and the tests alike. Identity is deliberately absent from every shape — the
 // learner a report belongs to comes from `ctx` at the service boundary and
-// from the row at the repository (CLAUDE.md §The block).
+// from the row at the repository (CONTRIBUTING.md §The block).
 //
 // Two axes, two fields (§2.4): `MasteryMovement` carries movement (before →
 // after) AND position (`gradePosition`) as separate values because conflating

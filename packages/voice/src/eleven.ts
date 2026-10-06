@@ -53,7 +53,7 @@ export type BakedClip =
 export interface SpeakSentenceInput {
   /**
    * The BUDGET key and nothing else, read from `ProtectedCtx` at the service
-   * boundary per CLAUDE.md. It is not part of the TTS payload and there is no
+   * boundary per CONTRIBUTING.md. It is not part of the TTS payload and there is no
    * field it could travel to the provider in.
    */
   readonly learnerId: string;

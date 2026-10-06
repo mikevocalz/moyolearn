@@ -7,7 +7,7 @@
 // `tier` prop: guardian routes may only pass `family` (enforced by a
 // route-level type, doc 38 §5 FD-13 — deliberately not a runtime check), and
 // this component may NEVER mount on a learner surface, any tier, any state
-// (doc 05 · PW-03b · CLAUDE.md children's surfaces).
+// (doc 05 · PW-03b · CONTRIBUTING.md children's surfaces).
 // Selection shares RoleChoiceCard's pattern (J §2 row 6): radio semantics,
 // role-accent underlay + ring from the enclosing RoleScope, check chip, weight
 // — never colour alone. Sanctioned role-accent consumer (check-role-accent).

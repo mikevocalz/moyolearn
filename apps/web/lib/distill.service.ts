@@ -8,7 +8,7 @@
 // work the learner is not waiting for." This function is that work, moved.
 //
 // WHERE IDENTITY COMES FROM, since this is the one place in the codebase where
-// it does not come from a session. CLAUDE.md forbids identity as a parameter —
+// it does not come from a session. CONTRIBUTING.md forbids identity as a parameter —
 // "never from client input, never from an AI tool argument". A job has no
 // session by construction: the child whose turn it was may have closed the app
 // an hour ago. So the learner id is read off `edu.transcripts.learner_id`, which

@@ -36,7 +36,7 @@ export type LoadSubscriptions = (ctx: ProtectedCtx) => Promise<SubscriptionState
  * Refusal carries the capability and the reference it was judged against so a
  * route can map it and an audit line can name it — and carries NO price, plan
  * name, or upgrade copy. The message crosses the wire, and a learner surface is
- * downstream of every wire (CLAUDE.md · Children's surfaces).
+ * downstream of every wire (CONTRIBUTING.md · Children's surfaces).
  *
  * 402, not 403: "your plan does not include this" is a different fact from "you
  * may not do this", and a guardian or ops surface needs to tell them apart to
@@ -63,7 +63,7 @@ export class CapabilityDenied extends Error {
  * an org operation against the acting guardian's personal card, a lapsed family
  * plan would lock a paid-up organisation out of its own dashboard.
  *
- * Both halves come off `ctx`, never off input (CLAUDE.md · The block).
+ * Both halves come off `ctx`, never off input (CONTRIBUTING.md · The block).
  */
 export function billingReferenceFor(ctx: ProtectedCtx): string {
   return ctx.orgId ?? ctx.learnerId;

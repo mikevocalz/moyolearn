@@ -1,7 +1,7 @@
 /**
  * /faq — Frequently asked questions.
  *
- * SOT: .claude/skills/ux-copy/SKILL.md · apps/web-vite/src/copy/content-pages.ts
+ * SOT: apps/web-vite/src/copy/content-pages.ts
  * SOT-KEYWORDS: route faq page questions answers content page web-vite
  */
 import { createFileRoute } from '@tanstack/react-router';

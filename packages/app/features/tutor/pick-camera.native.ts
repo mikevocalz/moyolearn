@@ -7,7 +7,7 @@ import { useCameraStore } from '../capture/camera.store.ts';
  *
  * This was `expo-image-picker`'s `launchCameraAsync`: the OS camera app, with
  * no edge overlay, no framing hints, no age-band shutter and no crop. That made
- * it a second camera (CLAUDE.md, "never invent a second way") and the worse one
+ * it a second camera (CONTRIBUTING.md, "never invent a second way") and the worse one
  * — a child pointing the raw OS camera at a worksheet hands the on-device OCR
  * exactly the picture it reads worst.
  *

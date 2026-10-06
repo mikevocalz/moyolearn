@@ -5,7 +5,7 @@
 // cascade is invisible until afterwards). That preview is a pure predicate over
 // provenance, so the alternative to this file is the screen re-deriving the same
 // rule locally, which is precisely the "second way to do something that already
-// has a way" CLAUDE.md bans — and the copy would be the one that drifts.
+// has a way" CONTRIBUTING.md bans — and the copy would be the one that drifts.
 //
 // So the cascade predicates get a subpath, and the main barrel keeps everything
 // the client has no business holding: the retrieval path, the prompt assembly,

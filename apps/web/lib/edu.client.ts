@@ -28,7 +28,7 @@ import type { QueryResult, QueryResultRow } from 'pg';
 /**
  * What a parameter to an edu query may be.
  *
- * Enumerated rather than left as `unknown[]`, which CLAUDE.md §Types bans and
+ * Enumerated rather than left as `unknown[]`, which CONTRIBUTING.md §Types bans and
  * which would also be a lie: `pg` serialises exactly these. `readonly string[]`
  * is here for `derived_from`, the provenance array the erasure cascade walks.
  */

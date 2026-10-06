@@ -1,6 +1,6 @@
 // MMKV, instance id `capture`. Its reads are synchronous, so the first render
 // already knows whether the learner has a problem in flight — no flash of a
-// generated one. (CLAUDE.md: persistence is MMKV, state is Zustand.)
+// generated one. (CONTRIBUTING.md: persistence is MMKV, state is Zustand.)
 import { createMMKV } from 'react-native-mmkv';
 import type { ProblemStorage } from './problem-storage.shared.ts';
 

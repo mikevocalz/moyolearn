@@ -47,7 +47,7 @@ const isGuardianAlert = (
  *
  * Which learners those are is the repository's question, not this service's:
  * identity comes from `ctx` and the guardianship rows are a Payload read, so
- * resolving them here would put a collection query in a service (CLAUDE.md
+ * resolving them here would put a collection query in a service (CONTRIBUTING.md
  * §The block).
  */
 export type LoadGuardianSafetyEvents = (ctx: ProtectedCtx) => Promise<readonly SafetyEvent[]>;

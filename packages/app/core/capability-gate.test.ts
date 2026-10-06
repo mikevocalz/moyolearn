@@ -71,7 +71,7 @@ describe('server capability gate', () => {
 
   it('never carries plan or price copy into the refusal', async () => {
     // The message crosses the wire, and a learner surface is downstream of every
-    // wire (CLAUDE.md · Children's surfaces).
+    // wire (CONTRIBUTING.md · Children's surfaces).
     const denied = await withCapability(GUARDIAN, 'write', loading([]), spy().operation).catch(
       (error: Error) => error,
     );
