@@ -107,6 +107,12 @@ export function TutorSpecsAuthoringScene() {
           />
         </ViroNode>
 
+        {/*
+          `moyoRail` is `XR_MATERIAL.rail` — a name already registered through
+          `ViroMaterials.createMaterials` in `packages/ui/xr/spatial-materials.
+          native.ts`. It stays a string literal here because the SPECS compiler
+          parses this source statically rather than executing it.
+        */}
         <ViroPolyline
           viroTag="moyo-specs-focus-rail"
           points={[

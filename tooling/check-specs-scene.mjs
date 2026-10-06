@@ -44,8 +44,6 @@ if (!source.includes('thickness={0.008}')) {
   throw new Error('Specs authoring scene must preserve the 8mm focus rail thickness.');
 }
 
-console.log('Moyo SPECS Tutor Room authoring contract: PASS');
-
 if (!source.includes("ViroAnimations.registerAnimations")) {
   throw new Error('Specs authoring scene must exercise static Viro animation compilation.');
 }
@@ -56,3 +54,5 @@ if (!source.includes('onClick={() => undefined}') || !source.includes('onDrag={(
 if (!source.includes('materials="moyoRail"')) {
   throw new Error('Specs authoring focus rail must use the registered moyoRail material.');
 }
+
+console.log('Moyo SPECS Tutor Room authoring contract: PASS');
