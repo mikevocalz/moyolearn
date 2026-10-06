@@ -9,14 +9,22 @@ the same public Viro JSX that the shipping spatial tutor already relies on.
 
 ## Scene contents
 
-The scene contains only the first portable Viro/SPECS component set:
+The scene contains the first portable Viro/SPECS component set:
 
-- `ViroARScene`
+- `ViroARScene` on Quest/PICO, `ViroScene` on visionOS — the same root split
+  the shipping tutor uses, because the CompositorServices backend has no
+  `VRTARScene`
 - `ViroNode`
 - `ViroText`
 - `Viro3DObject` using Moyo's existing Natalie XR GLB
 - `ViroPolyline`
 - normal `onClick` and `onDrag` callbacks
+
+It also mounts the renderer-side plumbing those callbacks and materials
+require on ViroCore, matching `tutor-xr-screen.native.tsx`:
+
+- `ViroController`, so controller rays deliver `onClick`/`onDrag`
+- `ViroAmbientLight` + `ViroDirectionalLight`, so Natalie's PBR materials are lit
 
 There is no Specs/Lens Studio API in Moyo application code and no duplicate
 tutoring state.
