@@ -4,7 +4,7 @@
 // One component for both `/login` and `/login/[org]`: the branded route resolves
 // an organization and passes it in, and everything else is identical. Two files
 // would have meant two forms, and the second one would have missed the next fix.
-// SOT: docs/pack/06-auth-onboarding-spec.md §5 §7 · docs/pack/37-onboarding-dual-pane.md §3.1 · CLAUDE.md (UI)
+// SOT: docs/pack/06-auth-onboarding-spec.md §5 §7 · docs/pack/37-onboarding-dual-pane.md §3.1 · CONTRIBUTING.md (UI)
 // SOT-KEYWORDS: login sign-in co-branded district org lockup auth form web two-pane autofill
 import { useRouter } from 'next/navigation';
 import {

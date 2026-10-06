@@ -20,10 +20,10 @@
 // grouping (LAT-2) waits on attribution.
 //
 // WHAT IT MAY NEVER CARRY. No `learnerId`, no `orgId`, no `userId`, no email,
-// no message or transcript text (CLAUDE.md · The block; slo.md §3.1). `ctxKind`
+// no message or transcript text (CONTRIBUTING.md · The block; slo.md §3.1). `ctxKind`
 // is a four-value enumeration DERIVED from the context; it is the closest this
 // record comes to identity and it is deliberately not identifying.
-// SOT: docs/pack/12-systems-design-prompt.md §7 · docs/design/slo.md §2.1 · §7 W-1 · CLAUDE.md (The block)
+// SOT: docs/pack/12-systems-design-prompt.md §7 · docs/design/slo.md §2.1 · §7 W-1 · CONTRIBUTING.md (The block)
 // SOT-KEYWORDS: block telemetry operation record op resource action ctx kind latency outcome structured sink attributed auth mode
 
 import type { Capability } from '@acme/auth/entitlements';
@@ -68,7 +68,7 @@ export type RecordedAction = OperationAction | 'unspecified';
  * What an operation IS. Grouped into one object rather than three sibling
  * options because the three are meaningless apart — a record with `op` and no
  * `resource` is not a partially attributed operation, it is a broken one, and
- * CLAUDE.md asks for unrepresentable invalid combinations rather than
+ * CONTRIBUTING.md asks for unrepresentable invalid combinations rather than
  * optional-prop soup.
  */
 export interface OperationDescriptor {

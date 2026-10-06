@@ -407,7 +407,7 @@ elements · likely failure and prevention. Plus the one message.
    charge; in-app cancel one tap from Billing) · §2.2 (**early-bird eligibility
    must be a real, stated limit — first N founding families or a hard printed
    date — never a fake countdown**) · doc 33 §7.11 FR-11.2 (business tiers
-   structurally invisible to guardians) · CLAUDE.md (no price on a learner
+   structurally invisible to guardians) · CONTRIBUTING.md (no price on a learner
    surface, ever).
 3. **Pattern adopted:** [Reflect](https://mobbin.com/sites/sections/e42c8789-8709-4d25-8778-8f18b6cb3719)
    — model stated in plain words *before* the number, billing condition small and

@@ -17,7 +17,7 @@
 //   · NEVER STACKED. The store hands out one slot; a second tip mounted in the
 //     same moment renders nothing and stays un-taught for next time.
 //   · NOT NAGGING. It appears once per device and dismissing it is one tap.
-//     On a learner surface that matters more than anywhere else (CLAUDE.md
+//     On a learner surface that matters more than anywhere else (CONTRIBUTING.md
 //     §Children's surfaces): it never re-asks, never counts down, and carries
 //     no action but "I read it".
 //
@@ -41,7 +41,7 @@
 // dimmed backdrop, which is the modal stacking doc 37 §4 forbids)
 // Structure only. The slab border, the hard offset shadow, the spacing tiers and
 // the type ramp are docs 02/08.
-// SOT: docs/pack/37-onboarding-dual-pane.md §1.2 §4 · CLAUDE.md (Children's surfaces)
+// SOT: docs/pack/37-onboarding-dual-pane.md §1.2 §4 · CONTRIBUTING.md (Children's surfaces)
 // SOT-KEYWORDS: coach mark tip contextual onboarding once dismissible non modal caret anchor teach at point of use
 
 import { useEffect } from 'react';

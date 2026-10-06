@@ -10,7 +10,7 @@
 // radius only via `rounded-control` (or `rounded-full`, which is a deliberate
 // pill and a different shape decision). Containers — cards, sheets, panels —
 // are unaffected and keep their own radii.
-// SOT: CLAUDE.md §UI · docs/pack/08-visual-hierarchy-spacing-spec.md §2
+// SOT: CONTRIBUTING.md §UI · docs/pack/08-visual-hierarchy-spacing-spec.md §2
 // SOT-KEYWORDS: check controls radius gate lint consistency button input composer
 
 import { readFileSync, readdirSync } from 'node:fs';

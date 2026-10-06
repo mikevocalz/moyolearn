@@ -19,7 +19,7 @@ Two corollaries the documents assert themselves:
 
 - The digest at rank 3 defers to rank 1 and 2 explicitly — "where this digest and the pack disagree, the pack wins" (`docs/design/overhaul-v2/00-binding-decisions.md:4`).
 - ADRs in `docs/decisions/` are not in the four-rank list but supersede rank 1 where they say so and name the doc they contradict. `docs/decisions/adr-107-learner-pane-ban-reaffirmed.md:76` and `:162` do exactly that. Treat a signed ADR that names its contradicted doc as senior to that doc's sentence, and nothing more.
-- The repo's own always-on rules sit under `CLAUDE.md` §UI and §Children's surfaces (`CLAUDE.md:31-40`) and restate a subset of the below. They are enforced, not advisory.
+- The repo's own always-on rules sit under `CONTRIBUTING.md` §UI and §Children's surfaces (`CONTRIBUTING.md:31-40`) and restate a subset of the below. They are enforced, not advisory.
 
 ---
 
@@ -84,7 +84,7 @@ Source: `docs/pack/36-role-navigation-flows.md:71-85`; enforcement `tooling/chec
 
 One neubrutalist system — paper, ink borders, slab shadows, type ramp, spacing all invariant — plus exactly one themed token, `--role-accent`, and its 24% underlay (`docs/pack/36-role-navigation-flows.md:72`).
 
-**One accent moment per screen.** The doc 08 budget applies to the role accent identically (`docs/pack/36-role-navigation-flows.md:85`). Doc 08's own phrasing: one display moment and one highlighter accent per screen (`docs/pack/08-visual-hierarchy-spacing-spec.md:84`), restated as a repo-wide rule at `CLAUDE.md:35`.
+**One accent moment per screen.** The doc 08 budget applies to the role accent identically (`docs/pack/36-role-navigation-flows.md:85`). Doc 08's own phrasing: one display moment and one highlighter accent per screen (`docs/pack/08-visual-hierarchy-spacing-spec.md:84`), restated as a repo-wide rule at `CONTRIBUTING.md:35`.
 
 ### 2.2 Allowlisted slots — the complete list
 
@@ -122,7 +122,7 @@ Doc 36 specified fixed lightness/chroma with rotated hue so ink-on-accent passes
 
 ## 3 · TOKEN LAW
 
-Source of values: `packages/theme/tokens.ts`. Documented at `docs/design/overhaul-v2/I-token-system.md`, which "documents, never defines" (`docs/design/overhaul-v2/I-token-system.md:3`). Use these identifiers verbatim; no raw values downstream (`CLAUDE.md:32`).
+Source of values: `packages/theme/tokens.ts`. Documented at `docs/design/overhaul-v2/I-token-system.md`, which "documents, never defines" (`docs/design/overhaul-v2/I-token-system.md:3`). Use these identifiers verbatim; no raw values downstream (`CONTRIBUTING.md:32`).
 
 ### 3.1 Control radius — one, tool-enforced
 
@@ -175,7 +175,7 @@ targets.young = '72px'   ~2cm, NN/g 4× finding — Hot, K–2 primary actions
                                                         packages/theme/tokens.ts:864-870
 ```
 
-PX not rem, deliberately: the mobile bundler sets `polyfills.rem = 14`, which shipped the adult band at 38.5 and the K–2 band at 63 while CI asserted the design intent at rem-16 (`packages/theme/tokens.ts:849-862`). Consumed as `min-h-target-*` (`docs/design/overhaul-v2/I-token-system.md:54`). Target size is a function of the signed-in child, not a hardcode (`docs/pack/08-visual-hierarchy-spacing-spec.md:54`; `CLAUDE.md:34`).
+PX not rem, deliberately: the mobile bundler sets `polyfills.rem = 14`, which shipped the adult band at 38.5 and the K–2 band at 63 while CI asserted the design intent at rem-16 (`packages/theme/tokens.ts:849-862`). Consumed as `min-h-target-*` (`docs/design/overhaul-v2/I-token-system.md:54`). Target size is a function of the signed-in child, not a hardcode (`docs/pack/08-visual-hierarchy-spacing-spec.md:54`; `CONTRIBUTING.md:34`).
 
 Nav chrome geometry, also px (`packages/theme/tokens.ts:909-942`): `navChrome.rail` 80px · `navChrome.raised` 64px (the learner Snap slab) · `navChrome.raise` 58px (how far it breaks above the bar) · `navChrome.indicator` 40px, square in both bar and rail. There is deliberately no separate indicator height token — shipping one undercut the K–2 band to 54.7dp on device (`packages/theme/tokens.ts:898-907`).
 
@@ -234,7 +234,7 @@ Separate from the accent, each role claims one brand pastel for its shell chrome
 
 ### 3.7 Semantic marks that outrank hue
 
-`highlighter` / `highlighter-underlay` (attention, and needs-attention in the learner shell), `ballpoint`, `redpen`, `grade` (`packages/theme/tokens.ts:296-302`). Borders are ink — `border` / `border-strong` / `border-soft` / `border-faint` — and are structure, never emphasis (`docs/design/overhaul-v2/I-token-system.md:22`; `CLAUDE.md:35`). Hierarchy comes from size step → weight step → `gap-group` isolation → semantic color, in that order (`docs/pack/08-visual-hierarchy-spacing-spec.md:84`).
+`highlighter` / `highlighter-underlay` (attention, and needs-attention in the learner shell), `ballpoint`, `redpen`, `grade` (`packages/theme/tokens.ts:296-302`). Borders are ink — `border` / `border-strong` / `border-soft` / `border-faint` — and are structure, never emphasis (`docs/design/overhaul-v2/I-token-system.md:22`; `CONTRIBUTING.md:35`). Hierarchy comes from size step → weight step → `gap-group` isolation → semantic color, in that order (`docs/pack/08-visual-hierarchy-spacing-spec.md:84`).
 
 `MasteryBar` law: track ink @ 12%, fill grade-green, and struggling renders highlighter, not red, "because in a school-supplies language red pen means 'marked wrong,' and a child's overall progress is never 'wrong'" (`docs/pack/08-visual-hierarchy-spacing-spec.md:125`).
 
@@ -281,9 +281,9 @@ A child never types an email or password — the learner path is code redemption
 
 All nine are at `docs/pack/33-moyo-learn-prd.md:158-167`. The ones the reset can violate by accident:
 
-- **No engagement mechanics** — "streaks-as-pressure, variable rewards, FOMO notifications" (`docs/pack/33-moyo-learn-prd.md:165`). Reinforced by the metric law: no engagement-farming metrics anywhere, no DAU maximization, no session-length-up goals, no streak retention; "Time-in-app going *down* while mastery goes up is success" (`docs/pack/33-moyo-learn-prd.md:183`). Repo rule: no shame copy, no guilt notifications, no late-night pushes (`CLAUDE.md:39`).
+- **No engagement mechanics** — "streaks-as-pressure, variable rewards, FOMO notifications" (`docs/pack/33-moyo-learn-prd.md:165`). Reinforced by the metric law: no engagement-farming metrics anywhere, no DAU maximization, no session-length-up goals, no streak retention; "Time-in-app going *down* while mastery goes up is success" (`docs/pack/33-moyo-learn-prd.md:183`). Repo rule: no shame copy, no guilt notifications, no late-night pushes (`CONTRIBUTING.md:39`).
 - **No answer mode. Not a toggle, not a premium tier. Ever.** (`docs/pack/33-moyo-learn-prd.md:162`).
-- **No prices on learner surfaces** — PW-03b carries "no prices, no purchase controls, no store links" and "a child is never shown a purchase prompt" (`docs/38-front-door-and-flow.md:477`); the entitlement table's learner column is "Nothing" for every paid state (`docs/38-front-door-and-flow.md:462-469`); "learner surfaces contain no purchase language at all" (`docs/38-front-door-and-flow.md:489`); repo-wide: "No paywall, price, or upgrade prompt may render on a learner surface. Ever." (`CLAUDE.md:38`). Business tiers are never rendered to guardians, structurally (`docs/design/overhaul-v2/00-binding-decisions.md:44`).
+- **No prices on learner surfaces** — PW-03b carries "no prices, no purchase controls, no store links" and "a child is never shown a purchase prompt" (`docs/38-front-door-and-flow.md:477`); the entitlement table's learner column is "Nothing" for every paid state (`docs/38-front-door-and-flow.md:462-469`); "learner surfaces contain no purchase language at all" (`docs/38-front-door-and-flow.md:489`); repo-wide: "No paywall, price, or upgrade prompt may render on a learner surface. Ever." (`CONTRIBUTING.md:38`). Business tiers are never rendered to guardians, structurally (`docs/design/overhaul-v2/00-binding-decisions.md:44`).
 - No learner-to-learner social — no DMs, feeds, or friend graphs (`docs/pack/33-moyo-learn-prd.md:159`).
 - No emotion recognition of minors, permanent, not deferred (`docs/pack/33-moyo-learn-prd.md:161`).
 - Children's audio never leaves the device; on-device STT only (`docs/pack/33-moyo-learn-prd.md:160`).
@@ -570,7 +570,7 @@ Everything the binding documents explicitly defer, leave `[decision]`/`[verify]`
 
 | Open item | What is deferred | Deferred by |
 |---|---|---|
-| 8 Mobbin flows never inspected | "Khan ×2, Duolingo ×2, Google homework, Quizlet scan, ChatGPT Voice ×2" — the plugin was down; these are the closest comparators to the learner loop | `docs/design/overhaul-v2/B-deliverable-status.md:23`, `:55` |
+| 8 Mobbin flows never inspected | "Khan ×2, Duolingo ×2, Google homework, Quizlet scan, ChatGPT Voice ×2" — uninspected; these are the closest comparators to the learner loop | `docs/design/overhaul-v2/B-deliverable-status.md:23`, `:55` |
 | Journey maps beyond the front door | Deliverable L is PARTIAL; the five `seq-*.md` files "are service sequences, not user journeys" — core learner loop, guardian weekly, tutor day, org ops absent | `docs/design/overhaul-v2/B-deliverable-status.md:21` |
 | One unified screen ID scheme | FD-*/PW-* exist; product screens use provisional `role:screen` IDs that "are placeholders, not the scheme" | `docs/design/overhaul-v2/B-deliverable-status.md:13`, `:52`; `docs/design/overhaul-v2/F-journey-maps.md:11` |
 | Tenant axis | Deliverable D/E PARTIAL — "Tenant axis absent from every doc (code has it: `packages/theme/tenant.ts`)"; E later adds it, B's row is stale | `docs/design/overhaul-v2/B-deliverable-status.md:15` |
@@ -670,7 +670,7 @@ Same shape for color: `docs/pack/02-adaptive-screens-design-spec.md:167-173` giv
 
 `docs/design/reset/00-repo-baseline.md:32-35` records the overlaps: `NatalieDock` → `packages/ui/TutorPresence.tsx` (364 lines, **extend**); `Manipulative` → `packages/ui/LearningCanvas.tsx` (21 lines, **build inside** — it is the mount point, the new work is the renderer); `OutcomeDots` → `packages/ui/MasteryBar.tsx` (109 lines, **extend**); `StatusHero` → `packages/ui/Banner.tsx` + `StatCard.tsx` (**decide before building**).
 
-Two binding rules make this non-optional: "Check for an existing component before creating one. Extend or compose; never duplicate a near-identical component" (`CLAUDE.md:33`), and the alias table's "A PR introducing any left-column name as a new component is a defect" (`docs/design/overhaul-v2/J-component-plan.md:16`).
+Two binding rules make this non-optional: "Check for an existing component before creating one. Extend or compose; never duplicate a near-identical component" (`CONTRIBUTING.md:33`), and the alias table's "A PR introducing any left-column name as a new component is a defect" (`docs/design/overhaul-v2/J-component-plan.md:16`).
 
 `StatusHero` is the sharpest case. `Banner` owns the tone set `info | warning | incident | offline` (`packages/ui/Banner.tsx:15`, mapped at `:51-58`), and doc 31 forbids a second severity language — severity is a `border-left` and a pill, never a flooded frame (`docs/pack/31-grade-voice-safety-incidents.md:133`). A status hero with its own tones creates the second system.
 
@@ -692,7 +692,7 @@ A multi-node MissionPath on learner Home collides with all three.
 
 ### C-14 · Artwork vs the one-accent-moment budget
 
-Not a contradiction, a budget the art has to be designed inside. One display moment and one highlighter accent per screen (`docs/pack/08-visual-hierarchy-spacing-spec.md:84`; `CLAUDE.md:35`), Hot screens ≥40% empty canvas (`docs/pack/08-visual-hierarchy-spacing-spec.md:43`), and the role accent's own budget on top (`docs/pack/36-role-navigation-flows.md:85`). A saturated Scene spends the screen's attention budget before any UI does.
+Not a contradiction, a budget the art has to be designed inside. One display moment and one highlighter accent per screen (`docs/pack/08-visual-hierarchy-spacing-spec.md:84`; `CONTRIBUTING.md:35`), Hot screens ≥40% empty canvas (`docs/pack/08-visual-hierarchy-spacing-spec.md:43`), and the role accent's own budget on top (`docs/pack/36-role-navigation-flows.md:85`). A saturated Scene spends the screen's attention budget before any UI does.
 
 Gap to close: `tooling/check-contrast.mjs` has no text-over-artwork pairs yet (`docs/design/reset/00-repo-baseline.md:46`). Text on art is currently ungated.
 

@@ -60,7 +60,7 @@ export interface ComposerProps {
   onSend: () => void;
   placeholder?: string;
   disabled?: boolean;
-  /** Touch target comes from the age band, never a hardcoded size (CLAUDE.md §UI). */
+  /** Touch target comes from the age band, never a hardcoded size (CONTRIBUTING.md §UI). */
   size?: 'sm' | 'md' | 'lg' | 'xl';
   /**
    * Attachments staged for the next turn. Rendered above the field so a child

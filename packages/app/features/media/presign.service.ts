@@ -12,7 +12,7 @@ import 'server-only';
 // The key is built here from `ctx`, so a caller cannot write into another
 // learner's folder by asking nicely — the same reason `orgId` is never a
 // parameter anywhere else in this codebase.
-// SOT: docs/decisions/bunny-storage-presign-spike.md · CLAUDE.md §The block
+// SOT: docs/decisions/bunny-storage-presign-spike.md · CONTRIBUTING.md §The block
 // SOT-KEYWORDS: presign upload media bunny storage service short-lived credential
 import type { ProtectedCtx } from '../../core/protected-operation.ts';
 import { MAX_BYTES, type MediaKind, type PresignResult } from './media.types.ts';

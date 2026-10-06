@@ -6,7 +6,7 @@
 // existed only in Markdown, which meant "the priority ladder" was a thing a
 // reader could check and a program could not. This file is the same table with
 // `as const satisfies`, so the names, the bands and the shed order are derived
-// types — CLAUDE.md §Types: derived, never hand-written.
+// types — CONTRIBUTING.md §Types: derived, never hand-written.
 //
 // THE `status` FIELD IS THE POINT OF THIS FILE. Doc 12 §6 asks for fourteen
 // queues; five of them have real work today — the three original ones plus doc

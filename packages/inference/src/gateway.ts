@@ -14,7 +14,7 @@
 // at all, and a caller physically cannot read text out of an ended session.
 // Doc 12 §7 and doc 07's break-nudge are the same control, and this is the type
 // where that pays off.
-// SOT: docs/design/inference-gateway.md §5 §6 §7 · docs/pack/12-systems-design-prompt.md §3 §7 §9.3 · CLAUDE.md §Children's surfaces
+// SOT: docs/design/inference-gateway.md §5 §6 §7 · docs/pack/12-systems-design-prompt.md §3 §7 §9.3 · CONTRIBUTING.md §Children's surfaces
 // SOT-KEYWORDS: inference gateway egress tutor turn classify budget debit routing adapter session complete nudge
 import 'server-only';
 import { anthropicAdapter } from './anthropic.ts';
@@ -56,7 +56,7 @@ export type TutorTurn =
 
 /**
  * Identity arrives as a value read from `ProtectedCtx` at the service boundary,
- * per CLAUDE.md. It is the BUDGET key and nothing else — it is not on
+ * per CONTRIBUTING.md. It is the BUDGET key and nothing else — it is not on
  * `InferencePayload`, and there is no path from here to the payload that could
  * put it there.
  */
@@ -109,7 +109,7 @@ export function createInferenceGateway(options: GatewayOptions): InferenceGatewa
           than a branch in the UX: hitting the DOLLAR ceiling before the turn
           cap means a turn is costing far more than `capacity.md` predicts,
           which is an operations problem. The child sees the same end-of-session
-          summary either way — CLAUDE.md §Children's surfaces, and a surface
+          summary either way — CONTRIBUTING.md §Children's surfaces, and a surface
           that varied on spend would be a surface that leaked a price.
 
           No learner id in the line. It is the budget key, and an operations log

@@ -1,5 +1,5 @@
 // The three role dimensions for session membership: education, organisation, and conference.
-// SOT: docs/pack/06-auth-onboarding-spec.md §1 · CLAUDE.md (The block)
+// SOT: docs/pack/06-auth-onboarding-spec.md §1 · CONTRIBUTING.md (The block)
 // SOT-KEYWORDS: session role education organization conference mapping membership
 
 import { isMembershipRole, type MembershipRole } from '@acme/auth/membership';

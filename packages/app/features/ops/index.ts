@@ -1,5 +1,5 @@
 // @acme/app · ops domain public API — features import THIS, never a deep path.
-// SOT: CLAUDE.md (The block)
+// SOT: CONTRIBUTING.md (The block)
 // SOT-KEYWORDS: ops index barrel domain public-api dashboard crm leads families enrollment
 export { OpsScreen } from './screen';
 export { OpsDashboardContent, type OpsDashboardContentProps } from './ops-dashboard-content';

@@ -13,7 +13,7 @@
 --
 -- The learner-facing consequence of these numbers is SILENCE, never a surface:
 -- a spent voice day renders as text-only chat, which is doc 32 §2's stated
--- degraded mode. No screen renders either column (CLAUDE.md §Children's
+-- degraded mode. No screen renders either column (CONTRIBUTING.md §Children's
 -- surfaces).
 -- SOT: docs/pack/32-tutor-voice-tone.md §5 §6 · packages/voice/src/budget.ts · apps/web/lib/budget-ledger.repository.ts
 -- SOT-KEYWORDS: voice budget columns chars usd additive shed order text only retention same row

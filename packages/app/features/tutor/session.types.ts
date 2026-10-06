@@ -7,9 +7,9 @@
 //
 // Identity is deliberately absent from every shape here. `learnerAuthId` comes
 // from `ctx` at the service boundary and never travels as a parameter
-// (CLAUDE.md §The block) — a session a client can name is a session a client
+// (CONTRIBUTING.md §The block) — a session a client can name is a session a client
 // can name someone else's.
-// SOT: docs/pack/23-tutorstage-handoff.md · CLAUDE.md §The block
+// SOT: docs/pack/23-tutorstage-handoff.md · CONTRIBUTING.md §The block
 // SOT-KEYWORDS: tutor session message conversation persistence cross-device resume sync
 import type { TutorAttachmentKind } from '@acme/ui';
 import type { SessionBudgetState } from '@acme/inference';
@@ -57,7 +57,7 @@ export interface TutorSessionSnapshot {
    * Every device that resolves the thread resolves the allowance with it.
    *
    * `SessionBudgetState` carries no turn counts on its terminal arm and no
-   * money on any of them — CLAUDE.md §Children's surfaces forbids a price
+   * money on any of them — CONTRIBUTING.md §Children's surfaces forbids a price
    * rendering on a learner surface, and a field that isn't there cannot.
    */
   budget: SessionBudgetState;

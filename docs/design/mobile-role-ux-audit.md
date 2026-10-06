@@ -4,31 +4,9 @@ Audit for the mobile/tablet UX architecture build. Facts were verified against t
 
 ---
 
-## 1. Skills installed
+## 1. Repository facts verified
 
-These skills are recorded in `skills-lock.json` and present in `.agents/skills/`.
-
-| Skill | Source package | SKILL.md | Version / hash | Notes |
-|---|---|---|---|---|
-| `expo-overview` | `expo/skills` | `plugins/expo/skills/expo-overview/SKILL.md` | v1.0.0, hash `266daf…cdcdc0c` |  |
-| `expo-router` | `expo/skills` | `plugins/expo/skills/expo-router/SKILL.md` | v1.0.1, hash `b5baa6…523361c` |  |
-| `expo-design-system` | `expo/skills` | `plugins/expo/skills/expo-design-system/SKILL.md` | v1.0.0, hash `926d79…9cd1aba` |  |
-| `expo-native-ui` | `expo/skills` | `plugins/expo/skills/expo-native-ui/SKILL.md` | v1.1.1, hash `3bebac…6addd75` |  |
-| `expo-animation` | `expo/skills` | `plugins/expo/skills/expo-animation/SKILL.md` | v1.0.0, hash `55d68c…3ceb077` |  |
-| `expo-data-fetching` | `expo/skills` | `plugins/expo/skills/expo-data-fetching/SKILL.md` | v1.0.0, hash `422197…5fa8977` |  |
-| `react-navigation` | `callstackincubator/agent-skills` | `skills/react-navigation/SKILL.md` | no version in front matter, hash `f09111…4d1ced60` |  |
-| `react-native-best-practices` | `callstackincubator/agent-skills` | `skills/react-native-best-practices/SKILL.md` | no version in front matter, hash `4b2b95…cbcb2bfb` |  |
-| `react-native-testing` | `callstack/react-native-testing-library` | `skills/react-native-testing/SKILL.md` | no version in front matter, hash `bb30ad…52fd649` |  |
-| `agent-device` | `callstack/agent-device` | `skills/agent-device/SKILL.md` | no version in front matter, hash `0a673f…3f97d231` |  |
-| `dogfood` | `callstack/agent-device` | `skills/dogfood/SKILL.md` | no version in front matter, hash `8e6dfb…4526b6b` |  |
-
-**Not installed / skipped:** None of the requested skills are missing. The `skills-lock.json` hashes are the only commit-like identifiers available; the source type is `github` and no explicit tag or commit is stored.
-
----
-
-## 2. Repository facts verified
-
-### 2.1 `apps/mobile/app` route structure and group layouts
+### 1.1 `apps/mobile/app` route structure and group layouts
 
 - **Root layout** `apps/mobile/app/_layout.tsx` mounts providers (Gesture, Keyboard, SafeArea, BottomSheet, AppQuery, Session, global sheets, Toaster). Every modal/sheet is hoisted here because nested Gorhom modals do not render inside split layouts.
 - **Dispatcher** `apps/mobile/app/index.tsx` reads `useAppSession`, resolves `bootRole` from `resolveBootRole` / `getLastShellRole`, swaps `activeContext` in an effect, and redirects to one of the `SHELL_ROOTS` defined in `packages/app/providers/session/shell.ts:34`.
@@ -46,7 +24,7 @@ These skills are recorded in `skills-lock.json` and present in `.agents/skills/`
   - `+not-found.tsx` → silent redirect to `/` (doc 36 §4.4)
 - **No `(public)` group exists yet** for the auth screens described in `docs/38-front-door-and-flow.md` §2. Onboarding is the only non-shell route currently wired.
 
-### 2.2 `packages/app/features` screen/flow organization
+### 1.2 `packages/app/features` screen/flow organization
 
 `packages/app/index.ts` is the public barrel. Shared screens are organized by feature:
 
@@ -69,7 +47,7 @@ These skills are recorded in `skills-lock.json` and present in `.agents/skills/`
 - `onboarding` — `OnboardingScreen`, `OnboardingFlowScreen`, per-role flow stores (`guardian`, `learner`, `tutor`, `business`, `teacher`).
 - `editor`, `media`, `trial`, `paywall`, `error` — supporting surfaces.
 
-### 2.3 Role shells and how guards are applied
+### 1.3 Role shells and how guards are applied
 
 - `packages/app/providers/session/types.ts:7` defines `RoleKind = 'learner' | 'guardian' | 'tutor' | 'teacher' | 'owner'`.
 - `shellForRole` in `packages/app/providers/session/shell.ts:17` maps `teacher` → `tutor` shell, `owner` → `org` shell; `anon` → `null`.
@@ -79,7 +57,7 @@ These skills are recorded in `skills-lock.json` and present in `.agents/skills/`
   2. **Navigational protection** — `Stack.Protected` from `expo-router` with a boolean guard. If the guard becomes false, the route is purged from history and deep links drop to `+not-found` (silent redirect to `/`).
 - **Dispatcher/boot logic** lives in `apps/mobile/app/index.tsx`; it never shows a picker wall; it uses `last-used` role and falls back to first available.
 
-### 2.4 Onboarding and adaptive pane / SplitView work
+### 1.4 Onboarding and adaptive pane / SplitView work
 
 - **Onboarding** `apps/mobile/app/onboarding/index.tsx` and `[flow].tsx` load `OnboardingScreen` / `OnboardingFlowScreen`. `packages/app/features/onboarding/flow/flow.ts:14` maps `guardian | learner | tutor | owner | teacher` to S21–S25 sequences. The mobile app currently has only the generic persona picker (`OnboardingContent` in `packages/app/features/onboarding/onboarding-content.tsx`) and thin flow wrappers; the actual per-role step content is in `packages/app/features/onboarding/{guardian,learner,tutor,business,teacher}/`.
 - **Handoff** `apps/mobile/app/handoff.tsx` is the learner device entry for `moyo://handoff?code=…`; on success it pushes to `/onboarding/learner`.
@@ -88,7 +66,7 @@ These skills are recorded in `skills-lock.json` and present in `.agents/skills/`
   - `packages/app/features/summary/draft-queue-pane-content.tsx` — tutor `SummaryQueuePaneScreen` (Notes queue | Draft detail).
 - `TwoPaneShell` exists in `packages/ui/TwoPaneShell.tsx` for auth/marketing brand+form layout, but it is not used by any `apps/mobile/app` route yet.
 
-### 2.5 Shared components, stores, and services
+### 1.5 Shared components, stores, and services
 
 - **Components index** `packages/ui/index.ts` exposes `RoleScope`, `AdaptivePanes`, `TwoPaneShell`, `TutorStage`, `SessionToolbar`, `DataTable`, `DashboardShell`, `SafeArea`, `BottomSheet`, `CoachMark`, `LoadingSkeleton`, `EmptyState`, etc.
 - **Stores** (Zustand) of note:
@@ -98,7 +76,7 @@ These skills are recorded in `skills-lock.json` and present in `.agents/skills/`
   - `packages/app/features/summary/summary.service.ts`, `packages/app/features/safety/incidents.service.ts`, `packages/app/features/ops/ops.service.ts`, `packages/app/features/onboarding/handoff/handoff.client.ts`.
 - **Query layer** `packages/app/providers/query-provider.ts` uses React Query with `createQueryClient`.
 
-### 2.6 Fixtures or demo-only surfaces
+### 1.6 Fixtures or demo-only surfaces
 
 - `packages/app/fixtures/personas.ts` provides `PERSONAS` for dev/test/mock sessions.
 - `packages/app/features/home/student-home.data.ts`, `tutor-today.data.ts`, `parent-home.data.ts` supply static demo rows.
@@ -109,7 +87,7 @@ These skills are recorded in `skills-lock.json` and present in `.agents/skills/`
 
 ---
 
-## 3. Route-to-experience inventory
+## 2. Route-to-experience inventory
 
 | role/permission boundary | route path and layout file | source screen/feature component | intended user job | current phone navigation entry | current tablet navigation entry / pane behavior | state coverage | status | recommended action | accessibility / child-safety notes |
 |---|---|---|---|---|---|---|---|---|---|
@@ -153,7 +131,7 @@ These skills are recorded in `skills-lock.json` and present in `.agents/skills/`
 
 ---
 
-## 4. Role × task coverage map
+## 3. Role × task coverage map
 
 | Role | begin/resume learning | upload/capture homework | start AI tutor session | find/book/join/manage human tutor session | view assignments and due work | view progress and evidence | manage children and permissions | teach/manage classes and learners | operate scheduling/attendance/messages/incidents/billing/staff | view school/district outcomes and interventions |
 |---|---|---|---|---|---|---|---|---|---|---|
@@ -170,7 +148,7 @@ These skills are recorded in `skills-lock.json` and present in `.agents/skills/`
 
 ---
 
-## 5. Findings and next-step recommendations
+## 4. Findings and next-step recommendations
 
 Ordered by severity / impact on shipping the mobile/tablet UX architecture.
 

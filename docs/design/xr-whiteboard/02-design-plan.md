@@ -8,7 +8,7 @@ motion on, and the list of borrowed defaults that have to come out before this
 reads as Moyo.
 Why it exists: every colour this feature draws with is a hex literal inside
 `packages/ui/xr/spatial-materials.native.ts`, outside the token file that
-`CLAUDE.md` §UI says holds all of them. Some of those literals are Tailwind's
+`CONTRIBUTING.md` §UI says holds all of them. Some of those literals are Tailwind's
 stock palette. A spatial surface that nobody ever compares against the 2D
 product drifts into looking like a generic headset demo, and the drift is
 already measurable — this file is where it gets named and answered.
@@ -178,7 +178,7 @@ most-used colours are framework defaults, and the product's own language is
 plum / lagoon / flame / sun over cream-to-black `ink` neutrals. The dark chrome
 values should come from the `ink` and `plum` ramps that already carry chrome
 everywhere else, and the hexes should live in `packages/theme/tokens.ts` like
-every other colour in this repo — `CLAUDE.md` §UI says no raw values, and the
+every other colour in this repo — `CONTRIBUTING.md` §UI says no raw values, and the
 token file's own header says no hex exists outside it. A spatial token block
 next to `board-*` is the shape that already has precedent.
 

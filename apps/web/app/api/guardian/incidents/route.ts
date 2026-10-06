@@ -14,7 +14,7 @@
 //
 // No paywall, price or upgrade prompt is reachable from what this returns, and
 // the operation runs at the free `practise` floor deliberately: doc 05 §1.2 and
-// CLAUDE.md both forbid a lapsed card standing between a family and a safety
+// CONTRIBUTING.md both forbid a lapsed card standing between a family and a safety
 // record about their own child.
 // SOT: docs/pack/31-grade-voice-safety-incidents.md §4.1 §4.2 §5.2 · packages/app/features/safety/incidents.service.ts
 // SOT-KEYWORDS: guardian incidents api route acknowledge protected operation own learner guardian visible

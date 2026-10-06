@@ -20,7 +20,7 @@
 
 import { create } from 'zustand';
 // Type-only, so `server-only` never reaches a bundle — the same seam
-// `tutor.store.ts` uses to name `CoachEvent` (CLAUDE.md §The block).
+// `tutor.store.ts` uses to name `CoachEvent` (CONTRIBUTING.md §The block).
 import type { GuardianSafetyStatus } from './safety-status.service';
 import { CONSENTS } from './ai-activity.data';
 import { ApiError, getJson } from '../../core/api-fetch.ts';

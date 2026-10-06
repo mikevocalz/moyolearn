@@ -2,7 +2,7 @@
 // §13 generators: `pnpm gen domain <name>` / `pnpm gen feature <name>` / `pnpm gen component <Name>`
 // The generator IS the pattern (doc 11 §1): a shape that is emitted can't be
 // mistyped, which is stronger than any rule written down and hoped for.
-// SOT: docs/pack/11-architectural-guardrails.md §1, §3, §6 · CLAUDE.md
+// SOT: docs/pack/11-architectural-guardrails.md §1, §3, §6 · CONTRIBUTING.md
 // SOT-KEYWORDS: generator scaffold domain feature component sot-header server-only block
 // ponytail: plain node script, no generator framework — templates live inline.
 import { mkdirSync, writeFileSync, existsSync } from 'node:fs';
@@ -25,7 +25,7 @@ const write = (path, content) => {
 };
 
 /**
- * The SOT header every emitted file carries (CLAUDE.md · doc 11 §8).
+ * The SOT header every emitted file carries (CONTRIBUTING.md · doc 11 §8).
  * `SOT-KEYWORDS` is the grep target that lets an agent find this file without
  * reading the directory — the single biggest token saving in the method.
  */

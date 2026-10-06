@@ -16,7 +16,7 @@
 // upgrade prompt. Showing one to a paying customer because the network was slow
 // is the failure the old default was protecting against, and it is avoided by
 // withholding the upsell rather than by handing over the feature.
-// SOT: docs/pack/06-auth-onboarding-spec.md §4 · CLAUDE.md (Children's surfaces)
+// SOT: docs/pack/06-auth-onboarding-spec.md §4 · CONTRIBUTING.md (Children's surfaces)
 // SOT-KEYWORDS: permission gate decision entitlement capability loaded pending fallback learner paywall
 
 import type { ActiveContextKind } from '../session/types';
@@ -51,7 +51,7 @@ export function gateDecision({ loaded, allowed, contextKind, hasPending }: GateI
 
   if (allowed) return 'children';
 
-  // CLAUDE.md: no paywall, price, or upgrade prompt may render on a learner
+  // CONTRIBUTING.md: no paywall, price, or upgrade prompt may render on a learner
   // surface. Ever. A fallback is a caller's argument, so this is the only place
   // that can refuse to render one on the child's side of the app.
   return isLearner ? 'nothing' : 'fallback';

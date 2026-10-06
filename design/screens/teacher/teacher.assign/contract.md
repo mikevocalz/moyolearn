@@ -43,5 +43,5 @@ state_owner: "[add] assignment draft store (assign.store [add], Zustand + MMKV p
 
 **Notes:**
 - This screen is J4's `intervention/assign` node and the producer end of J1's missing arrival signal — the assignments object and learner-side surfacing (learner.plan) must ship together or publish is a lie.
-- No engagement-pressure mechanics propagate to learners from here: due-work surfacing on learner.plan is calm listing, no shame copy, no late-night pushes (doc 33 non-goal 7; CLAUDE.md children's-surfaces rules).
+- No engagement-pressure mechanics propagate to learners from here: due-work surfacing on learner.plan is calm listing, no shame copy, no late-night pushes (doc 33 non-goal 7; CONTRIBUTING.md children's-surfaces rules).
 - ≤5-destination law holds: Assign earns its tab because create-and-track is the teacher's second daily loop (G §1.5 derivation); per-class status lives in teacher.classes, not duplicated here beyond the jump link.

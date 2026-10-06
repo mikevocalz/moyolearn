@@ -9,7 +9,7 @@
 // (doc 31 §4.1) and `learnerMediaScope`, the timing to the fact that the
 // cascade is transactional and synchronous.
 //
-// NO SHAME, NO RETENTION PLAY. CLAUDE.md forbids engagement-pressure copy on a
+// NO SHAME, NO RETENTION PLAY. CONTRIBUTING.md forbids engagement-pressure copy on a
 // children's surface, and a deletion screen is where that rule gets tested:
 // "Are you sure? You'll lose all your progress" is the industry default and it
 // is exactly the guilt wording the rule names. So there is no "we'll miss
@@ -24,7 +24,7 @@
 // promise about a schedule that does not exist. What IS provable is stated:
 // the live records go on confirm, and the one documented delay is a school
 // account's uploads on `MEDIA_TTL_DAYS`.
-// SOT: docs/38-front-door-and-flow.md §5A FD-26 · docs/pack/31-grade-voice-safety-incidents.md §4.1 · CLAUDE.md §Children's surfaces
+// SOT: docs/38-front-door-and-flow.md §5A FD-26 · docs/pack/31-grade-voice-safety-incidents.md §4.1 · CONTRIBUTING.md §Children's surfaces
 // SOT-KEYWORDS: account deletion copy fd-26 confirm consequence list kept removed learner cannot delete guardian withdraw plain language
 import { MEDIA_TTL_DAYS } from '../media/retention.ts';
 

@@ -8,7 +8,7 @@
  * uploaded" is one prefix per kind and nothing else. A hand-written union plus a
  * separately hand-written list is how a fourth kind ships with a folder no
  * forget-everything ever walks, so the type is derived from the list rather than
- * declared beside it (CLAUDE.md §Types).
+ * declared beside it (CONTRIBUTING.md §Types).
  */
 export const MEDIA_KINDS = ['image', 'audio', 'document'] as const;
 

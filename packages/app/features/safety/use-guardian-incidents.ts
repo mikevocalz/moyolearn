@@ -6,7 +6,7 @@
 // re-derived here.
 //
 // The ack posts `{incidentId}` and NOTHING else — the acknowledging identity
-// comes from `ctx` and the clock from the server (CLAUDE.md §The block). No
+// comes from `ctx` and the clock from the server (CONTRIBUTING.md §The block). No
 // optimistic update on purpose: `guardianAcknowledged` is a line in an
 // append-only safety timeline, and showing it before the door accepted the
 // write is the contract's "never silently" failure. The route answers the

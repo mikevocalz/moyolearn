@@ -14,7 +14,7 @@ weights on 2025-09-24 and deprecated the hosted endpoint in April 2026. The
 constraint that made "baked only" right has moved; this records the delta
 (SPEC-002) rather than silently obeying the stale scope.
 SOT: packages/voice/src/a2f.ts · packages/voice/src/eleven.ts · packages/app/features/tutor/tutor-audio.ts
-     packages/avatar/src/presence/humano.ts · docs/pack/32-tutor-voice-tone.md §3 · .claude/skills/audio2face-live/SKILL.md
+     packages/avatar/src/presence/humano.ts · docs/pack/32-tutor-voice-tone.md §3
 SOT-KEYWORDS: adr audio2face a2f audio2emotion a2e live face blendshape frames performance envelope licence gpu host cost fallback spec-002
 -->
 

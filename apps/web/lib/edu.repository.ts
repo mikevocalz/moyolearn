@@ -192,7 +192,7 @@ const FACT_PROJECTION = `fact_id, learner_id, kind, skill_id, skill_title, tag, 
 /**
  * The learner's whole model, for the tutoring read path.
  *
- * `ctx.learnerId` and never a parameter — CLAUDE.md §The block: identity comes
+ * `ctx.learnerId` and never a parameter — CONTRIBUTING.md §The block: identity comes
  * from the protected boundary, so a caller cannot ask this for somebody else's
  * child by passing a different string.
  *
@@ -571,7 +571,7 @@ export interface QuestionToIssue {
 /**
  * Records the question the server just asked, so the answer can be graded.
  *
- * Identity comes off `ctx` and never off the argument, which is CLAUDE.md
+ * Identity comes off `ctx` and never off the argument, which is CONTRIBUTING.md
  * §The block's rule and is load-bearing here rather than stylistic: the row
  * written is the row `withCurrentEduEvidence` will later match a learner
  * against, so a caller able to name the owner could issue a question in

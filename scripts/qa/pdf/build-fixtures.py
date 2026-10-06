@@ -3,7 +3,7 @@ from io import BytesIO
 from pypdf import PdfReader, PdfWriter
 from reportlab.pdfgen import canvas
 from PIL import Image, ImageDraw, ImageFilter
-root=Path('.codex/pdf-qa/sources')
+root=Path('.scratch/pdf-qa/sources')
 def save(name,w):
  with (root/f'{name}.pdf').open('wb') as f:w.write(f)
 def subset(source,name,indices):

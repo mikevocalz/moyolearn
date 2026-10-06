@@ -11,7 +11,7 @@
 // optimistically, and the query key is invalidated once the server settles.
 // Two optimistic systems over the same rows is how a row ends up showing a
 // stage nobody chose — so the reducer below never fetches and never caches.
-// SOT: docs/pack/28-crm-spec.md §3 (pipeline) · CLAUDE.md (The block)
+// SOT: docs/pack/28-crm-spec.md §3 (pipeline) · CONTRIBUTING.md (The block)
 // SOT-KEYWORDS: ops write stage change reducer optimistic action invalidate crm
 import type { Lead, Stage } from './ops.data';
 

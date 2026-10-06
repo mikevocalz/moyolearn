@@ -12,15 +12,14 @@ on a payment decision — it is blocked on shipping FD-26.
 
 ## How this was produced
 
-`npx expo prebuild --platform ios --clean` ran in a scratch git worktree at
-`/private/tmp/claude-501/-Users-mikevocalz/c1b3c2d3-f6a4-424b-be82-f48c7f4949e8/scratchpad/ios-scan`,
-never inside the repo. It exited 0. `bash ~/.claude/skills/app-store-approval/scripts/run_all.sh`
-then ran against that generated `ios/` directory, and every finding below is traced back to the
-source file that produces the behaviour — `apps/mobile/app.config.ts`, a config plugin, or a
-`packages/*` module. Nothing cites a generated file as its cause.
+`npx expo prebuild --platform ios --clean` ran in a scratch git worktree, never inside the
+repo, and exited 0. The App Review checklist then ran against that generated `ios/` directory,
+and every finding below is traced back to the source file that produces the behaviour —
+`apps/mobile/app.config.ts`, a config plugin, or a `packages/*` module. Nothing cites a
+generated file as its cause.
 
 The prebuild ran against committed `6e5707b`. Every JS finding was read from the **working tree**,
-which at audit time carried uncommitted XR changes from other agents in
+which at audit time carried uncommitted XR changes in
 `packages/app/features/tutor/xr-*`, `packages/ui/xr/*` and `apps/mobile/app/(learner)/*`. Re-check
 the XR findings (RISK FLAG 10) once those land.
 

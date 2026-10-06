@@ -3,7 +3,7 @@
 <!--
 What it is: every string a child can see or hear on the spatial whiteboard,
 collected from the source with its file and line, the context it appears in, the
-reason it is worded that way, and the audit against `CLAUDE.md`'s children's-
+reason it is worded that way, and the audit against `CONTRIBUTING.md`'s children's-
 surface rules and `tooling/check-copy-law.mjs`.
 Why it exists: the spatial surface writes its strings as literals at the point
 they render — inside a `ViroText`, inside a rail key's `label` prop — with no
@@ -15,7 +15,7 @@ Nothing here edits code; every fix is a proposal with a file and a line.
 SOT: packages/ui/xr/XrRail.native.tsx · packages/ui/xr/XrPanel.native.tsx ·
      packages/ui/xr/XrChatPanel.native.tsx · packages/ui/xr/XrOrnaments.native.tsx ·
      packages/ui/XrBoardButton.tsx · packages/app/features/tutor/tutor-xr-entry.tsx ·
-     packages/ui/Whiteboard.tsx · CLAUDE.md · tooling/check-copy-law.mjs
+     packages/ui/Whiteboard.tsx · CONTRIBUTING.md · tooling/check-copy-law.mjs
 SOT-KEYWORDS: xr copy strings learner surface k-2 reading level rail labels
               recenter leave assurance fidelity polyline pressure draw highlight
 -->
@@ -24,7 +24,7 @@ Status: draft, unreviewed by a child · Date: 2026-09-13 · Branch: `feat/spatia
 
 ## §1 The rules these strings were checked against
 
-**`CLAUDE.md` §Children's surfaces.** No paywall, price or upgrade prompt on a
+**`CONTRIBUTING.md` §Children's surfaces.** No paywall, price or upgrade prompt on a
 learner surface, ever. No engagement-pressure mechanics aimed at minors — no
 shame copy, no guilt notifications, no late-night pushes.
 

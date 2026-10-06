@@ -1,4 +1,4 @@
-# CLAUDE.md — Moyo
+# Contributing — Moyo
 
 Rules, not architecture. Specs live in `docs/pack/`; read them when planning, not when coding.
 
@@ -47,4 +47,5 @@ Rules, not architecture. Specs live in `docs/pack/`; read them when planning, no
 ## Delivery
 - Finish the feature. No stubs, no "next steps" handoffs, no half-wired paths.
 - Work on a branch per feature or iteration.
-- **Git:** read status and history freely. Never run `reset --hard`, `checkout --force`, `rebase`, `clean`, or force-push unless I name that exact command in the request.
+- **Git:** read status and history freely. Never run `reset --hard`, `checkout --force`, `rebase`, `clean`, or force-push without explicit approval.
+

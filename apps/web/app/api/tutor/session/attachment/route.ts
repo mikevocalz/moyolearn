@@ -12,7 +12,7 @@
 // `expiresAt` is accepted from the client and then FLOORED at the product's
 // seven-day media window in the service — a caller may declare a shorter life
 // for its object, never a longer one.
-// SOT: CLAUDE.md §The block · packages/app/features/media/retention.ts
+// SOT: CONTRIBUTING.md §The block · packages/app/features/media/retention.ts
 // SOT-KEYWORDS: tutor session attachment api route patch upload url storage key retention
 import { NextRequest, NextResponse } from 'next/server';
 import { attachUploadedMedia, SessionNotFound } from '@acme/app/server';

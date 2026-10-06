@@ -139,7 +139,7 @@ export interface InferenceUsage {
  * `Message.stop_reason`, narrowed to the values a tutoring or classification
  * turn can produce. `tool_use` is absent because the gateway declares no tools:
  * a tool argument is the classic route by which an identity re-enters a payload
- * that CLAUDE.md forbids it from entering.
+ * that CONTRIBUTING.md forbids it from entering.
  */
 export type InferenceStop =
   | 'end_turn'
@@ -523,7 +523,7 @@ second is the important one:
 
 1. A dollar cap is not a thing a session-length nudge can be phrased around. "Great work
    today" is a sentence about effort; "$0.43" is a sentence about a customer.
-2. **CLAUDE.md §Children's surfaces: no paywall, price, or upgrade prompt may render on a
+2. **CONTRIBUTING.md §Children's surfaces: no paywall, price, or upgrade prompt may render on a
    learner surface. Ever.** A budget that surfaces as spend has put a price in front of a
    child. The dollar ceiling exists and is enforced — it is simply not the thing the
    learner sees, and the learner-facing copy has no branch that mentions it.
@@ -556,7 +556,7 @@ the gateway is the only egress, so a debit there is a debit on every call by con
   prices it against `ModelProfile` and debits. Charged even when the plane returned
   `blocked`, because the tokens were spent.
 - **Identity:** `learnerId` comes from `ProtectedCtx` at the service boundary, per
-  CLAUDE.md. The budget key is never a parameter, and the gateway reads it from the same
+  CONTRIBUTING.md. The budget key is never a parameter, and the gateway reads it from the same
   `IdentityContext` that `withLearnerBriefStream` closes over — the same value that never
   reaches the payload.
 

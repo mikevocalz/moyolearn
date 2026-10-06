@@ -19,7 +19,7 @@
 //   record, doc 07 §3 layer 1. That is the operational store and it belongs in
 //   `payload`; moving it to `edu` would put an account attribute in the
 //   educational store because it happens to be read by a tutoring turn.
-// SOT: CLAUDE.md §The block · docs/pack/19-learning-outcomes-spec.md §3 · apps/web/lib/edu.repository.ts
+// SOT: CONTRIBUTING.md §The block · docs/pack/19-learning-outcomes-spec.md §3 · apps/web/lib/edu.repository.ts
 // SOT-KEYWORDS: student model repository payload grade band fact decoder retention sweep separation edu cutover
 import 'server-only';
 import { getPayload } from 'payload';

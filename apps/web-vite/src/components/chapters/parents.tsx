@@ -198,7 +198,7 @@ export function ParentsChapter() {
 
         {/*
           The letter, per Zellerfeld: a narrow rail on the left carrying the
-          report's spec sheet (Claude's margin metadata), and the article's own
+          report's spec sheet (its margin metadata), and the article's own
           measure on the right. On a phone the rail simply stacks above — the
           emptiness is a wide-screen formality, not a layout dependency.
         */}

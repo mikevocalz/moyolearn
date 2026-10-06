@@ -23,7 +23,7 @@ import { withEdu, type EduClient } from './edu.client';
  * honest: `edu_schema.sql`'s `transcripts_turns_shape` CHECK rejects any array
  * element carrying a key outside `SessionTurn`'s, so a row that exists is a row
  * whose turns have that shape. Re-validating here would be a second, weaker copy
- * of a constraint the store already enforces — and the alternative CLAUDE.md
+ * of a constraint the store already enforces — and the alternative CONTRIBUTING.md
  * bans outright (`unknown`, then a hand-written guard) would be exactly that.
  */
 interface TranscriptRow {

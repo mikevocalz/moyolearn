@@ -72,7 +72,7 @@ export type LoadBlockedTags = (ctx: ProtectedCtx) => Promise<readonly string[]>;
  *
  * Grouped, it is unrepresentable. There is no way to distil without saying where
  * a guardian's erasures are read from, because the type that turns distillation
- * on is the type that carries the reader. CLAUDE.md §Types: invalid combinations
+ * on is the type that carries the reader. CONTRIBUTING.md §Types: invalid combinations
  * must be unrepresentable, not merely unusual.
  */
 export interface DistillationPorts {

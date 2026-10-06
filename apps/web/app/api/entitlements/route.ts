@@ -7,7 +7,7 @@
 // Nothing here decides anything. The client uses this to choose what to SHOW;
 // every operation that costs money is refused independently inside its own
 // `protectedOperation` (packages/app/core/capability-gate.ts).
-// SOT: docs/pack/06-auth-onboarding-spec.md §4 · CLAUDE.md (The block)
+// SOT: docs/pack/06-auth-onboarding-spec.md §4 · CONTRIBUTING.md (The block)
 // SOT-KEYWORDS: entitlements api subscriptions plan protected operation route store
 import { NextRequest, NextResponse } from 'next/server';
 import { protectedOperation } from '@acme/app/server';

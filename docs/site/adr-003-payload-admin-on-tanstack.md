@@ -277,6 +277,6 @@ no `any` (the one unavoidable widening at the server-function boundary is
 asserted to the adapter's own `SerializableRecord` transport brand, not to `any`) ·
 all new dependencies declared once in the `pnpm-workspace.yaml` catalog and
 referenced as `catalog:` · one shared Payload config, no collections defined
-here, no migration step added (deployment §5.2) · doc references: `CLAUDE.md`,
+here, no migration step added (deployment §5.2) · doc references: `CONTRIBUTING.md`,
 `docs/deploy/moyo-vercel-deployment.md` §1/§3.1/§3.2/§5.2,
 `docs/deploy/moyo-district-tenancy.md` §2/§5/§6, `docs/site/adr-001-ssr-lane.md`.

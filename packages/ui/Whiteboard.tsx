@@ -78,7 +78,7 @@ export interface WhiteboardProps {
   /** A board the learner already started. Read once, at mount. */
   snapshot?: WhiteboardSnapshot;
   /**
-   * Touch target comes from the age band, never a hardcoded size (CLAUDE.md
+   * Touch target comes from the age band, never a hardcoded size (CONTRIBUTING.md
    * §UI). `buttonSizeForBand` produces it; a K–2 learner gets 72dp keys here
    * exactly as they do on the composer.
    */
@@ -586,7 +586,7 @@ export const Whiteboard = forwardRef<WhiteboardHandle, WhiteboardProps>(function
             /*
               SELECTED IS INVERTED INK, NOT THE ACCENT. It was `bg-highlighter`,
               which put a teal tile next to the yellow ask — two accents in one
-              tray on a screen whose rule is one (CLAUDE.md §UI), and it dressed
+              tray on a screen whose rule is one (CONTRIBUTING.md §UI), and it dressed
               a MODE as the primary action. `TutorStage` makes the same call
               about Natalie's mark: the highlighter treatment belongs to the
               thing you press to make something happen. A pressed key is the

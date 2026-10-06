@@ -104,7 +104,7 @@ else, so in the headset the word is the whole control.
    word. Her body is not in the scene; ADR-111's avatar is a WebGPU surface and
    is not ported into Viro.
 6. **Did I break something?** Nothing on this surface may shame, and nothing
-   does. `CLAUDE.md` §Children's surfaces is the rule; `04-copy.md` §1 is the
+   does. `CONTRIBUTING.md` §Children's surfaces is the rule; `04-copy.md` §1 is the
    audit against it.
 
 ### §3.2 Grades 3–5 (`child`)

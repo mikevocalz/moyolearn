@@ -1,7 +1,7 @@
 # ADR-116 — Compression formats are chosen per runtime, not per asset
 
 **Status:** accepted · **Date:** 2026-09-11
-**SOT:** `.claude/skills/asset-optimize/SKILL.md` · `audit/motion/realism-2026-09-10.md`
+**SOT:** `audit/motion/realism-2026-09-10.md`
 
 ## Context
 

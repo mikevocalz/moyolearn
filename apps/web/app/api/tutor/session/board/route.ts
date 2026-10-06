@@ -15,7 +15,7 @@
 // resolves to nothing and this answers 404 — the same answer a genuinely
 // missing session gets, so the endpoint cannot be used to discover which ids
 // exist.
-// SOT: CLAUDE.md §The block · packages/app/features/tutor/board-doc.ts
+// SOT: CONTRIBUTING.md §The block · packages/app/features/tutor/board-doc.ts
 // SOT-KEYWORDS: tutor session board api route yjs whiteboard persist cross-device merge
 import { NextRequest, NextResponse } from 'next/server';
 import { readBoardUpdate, saveBoardUpdate, SessionNotFound } from '@acme/app/server';

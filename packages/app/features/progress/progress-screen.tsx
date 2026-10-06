@@ -42,7 +42,7 @@ function masteryState(mastery: number): 'steady' | 'needs-attention' {
  * `Heading` sizes from its `size` variant, not its `level` — level is the tag.
  * Both this and the page title were rendering at the default `display-md`, so
  * "Your progress", "Practiced" and "More to explore" came out identical and the
- * page had no hierarchy at all. One display moment per screen (CLAUDE.md §UI):
+ * page had no hierarchy at all. One display moment per screen (CONTRIBUTING.md §UI):
  * the title keeps it, sections step down to `title`.
  */
 function SectionHeading({ children }: { children: React.ReactNode }) {

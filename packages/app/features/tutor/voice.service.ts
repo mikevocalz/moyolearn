@@ -17,14 +17,14 @@
 // as the coach service takes its stores. `tooling/check-voice-egress.mjs` fails
 // the build the day a feature imports the egress directly; the `BakedAlignment`
 // SHAPE travels as a type-only import, which the check exempts because a type
-// is erased at build time and CLAUDE.md (§The block) routes cross-boundary
+// is erased at build time and CONTRIBUTING.md (§The block) routes cross-boundary
 // shapes exactly that way.
 //
 // Every degraded outcome is `text-only` and the route answers it 204: no
 // error surface, no substitute voice, the child keeps the words (doc 32 §2).
 // `refused` exists for a payload that does not verify — a state no legitimate
 // client produces — and is the one arm that is not a degradation.
-// SOT: docs/pack/32-tutor-voice-tone.md §2 §3 · apps/web/lib/voice-utterance.ts · CLAUDE.md §The block
+// SOT: docs/pack/32-tutor-voice-tone.md §2 §3 · apps/web/lib/voice-utterance.ts · CONTRIBUTING.md §The block
 // SOT-KEYWORDS: voice service speak sentence verify utterance tag baked piece ports protected operation text only refused
 import 'server-only';
 import type { Auth } from '@acme/auth/server';
@@ -59,7 +59,7 @@ export type SpeakResult =
 
 /**
  * The live render path. `learnerId` is the BUDGET key, read from `ctx` at this
- * boundary per CLAUDE.md — never from the request.
+ * boundary per CONTRIBUTING.md — never from the request.
  */
 export type SpeakSentence = (input: {
   learnerId: string;

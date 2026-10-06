@@ -4,7 +4,7 @@
 // Reads four columns of one row and nothing else. That narrowness is the
 // security argument for the public carve-out in `org.service`: the query cannot
 // widen into learner or pipeline data because it does not know how to.
-// SOT: CLAUDE.md §The block · docs/pack/06-auth-onboarding-spec.md §5 · docs/deploy/moyo-district-tenancy.md §4
+// SOT: CONTRIBUTING.md §The block · docs/pack/06-auth-onboarding-spec.md §5 · docs/deploy/moyo-district-tenancy.md §4
 // SOT-KEYWORDS: org organizations repository payload branding login district public host tenant slug resolve
 import 'server-only';
 import { getPayload } from 'payload';
