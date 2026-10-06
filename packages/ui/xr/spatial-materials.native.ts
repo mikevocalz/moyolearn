@@ -187,6 +187,19 @@ const SURFACE_MATERIALS = {
     lightingModel: 'Constant',
     blendMode: 'Alpha',
   },
+  /*
+    `QuickDrawSpatialSurface` renders with this material for the frames
+    between its mount and the adapter's `mount()` returning the live material
+    name. An unregistered name resolves to nothing — the quad renders
+    untextured for those frames and the missing-material warning fires — so
+    the placeholder is registered here with the rest. The value is the same
+    dark the panel backings use, so the gap reads as the panel's face rather
+    than as a white flash.
+  */
+  quickdraw_spatial_placeholder: {
+    diffuseColor: '#0a1524',
+    lightingModel: 'Constant',
+  },
 } as const;
 
 /*

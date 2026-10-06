@@ -323,6 +323,24 @@ interface XrSessionState {
   paletteOpen: boolean;
   /** Clear was pressed once in XR — the second press empties the board. */
   clearArmed: boolean;
+  /**
+   * The board panel's persisted drag pose — the carrier node's transform
+   * after the last grip release. `null` is identity: the panel sits at its
+   * layout slot. Persisted here rather than in the panel because the scene
+   * remounts on tracking blinks and lazy loads — a pose a child's hand earned
+   * must survive that.
+   */
+  boardCarrier: { position: [number, number, number]; rotation: [number, number, number] } | null;
+  /** Same contract as `boardCarrier`, for the question panel's carrier. */
+  questionCarrier: { position: [number, number, number]; rotation: [number, number, number] } | null;
+  /**
+   * True while the board's grip is held. Read at input dispatch — a stroke
+   * must not open on a panel that is moving, and the chrome dims its
+   * affordances while it is.
+   */
+  boardGrabbed: boolean;
+  /** Same contract as `boardGrabbed`, for the question panel's grip. */
+  questionGrabbed: boolean;
 
   beginEntry(): void;
   /**
@@ -367,6 +385,11 @@ interface XrSessionState {
   setBoardHistory(history: { canUndo: boolean; canRedo: boolean; hasMarks: boolean }): void;
   setPaletteOpen(open: boolean): void;
   setClearArmed(armed: boolean): void;
+  /** Persisted carrier pose on grip release; `null` restores the slot. */
+  setBoardCarrier(pose: { position: [number, number, number]; rotation: [number, number, number] } | null): void;
+  setQuestionCarrier(pose: { position: [number, number, number]; rotation: [number, number, number] } | null): void;
+  setBoardGrabbed(grabbed: boolean): void;
+  setQuestionGrabbed(grabbed: boolean): void;
   bumpRevision(): void;
   /** The spatial rail exported a board. `null` is an empty board and is dropped. */
   queueAsk(png: string | null, spoken?: string): void;
@@ -395,6 +418,10 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
   boardHistory: { canUndo: false, canRedo: false, hasMarks: false },
   paletteOpen: false,
   clearArmed: false,
+  boardCarrier: null,
+  questionCarrier: null,
+  boardGrabbed: false,
+  questionGrabbed: false,
   revision: 0,
 
   beginEntry: () => set({ entering: true }),
@@ -433,6 +460,10 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
   },
   setPaletteOpen: (paletteOpen) => set({ paletteOpen }),
   setClearArmed: (clearArmed) => set({ clearArmed }),
+  setBoardCarrier: (boardCarrier) => set({ boardCarrier }),
+  setQuestionCarrier: (questionCarrier) => set({ questionCarrier }),
+  setBoardGrabbed: (boardGrabbed) => set({ boardGrabbed }),
+  setQuestionGrabbed: (questionGrabbed) => set({ questionGrabbed }),
   bumpRevision: () => set((state) => ({ revision: state.revision + 1 })),
   queueAsk: (png, spoken) => set({ pendingAsk: png, ...(spoken === undefined ? {} : { pendingSay: spoken.trim() || null }) }),
   queueSay: (text) => {
@@ -484,6 +515,13 @@ export const useXrSession = create<XrSessionState>((set, get) => ({
       boardTextureBound: false,
       paletteOpen: false,
       clearArmed: false,
+      /* A grab cannot outlive the scene that held it — the release event dies
+         with the navigator, so a flag left standing would keep the next
+         session's input gate shut. The carrier POSE deliberately survives:
+         it is the child's arrangement of the room, the same reason
+         `placement` is not reset here. */
+      boardGrabbed: false,
+      questionGrabbed: false,
       boardHistory: { canUndo: false, canRedo: false, hasMarks: false },
     }),
 }));

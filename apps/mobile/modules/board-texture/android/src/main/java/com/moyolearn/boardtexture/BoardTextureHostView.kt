@@ -1,6 +1,8 @@
 package com.moyolearn.boardtexture
 
 import android.content.Context
+import android.os.Handler
+import android.os.Looper
 import android.view.View
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.PixelUtil
@@ -54,6 +56,20 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
   private var settled = false
   private var attempts = 0
   private var pumpTicks = 0
+  /* The last bind verdict — logged once per change so a persistent block is
+     visible in logcat without a 150 ms echo of the same line. */
+  private var lastBindReason: String? = null
+  /*
+    The retry and pump loops ride the MAIN LOOPER, not `postDelayed` on this
+    view. A View's queue drains into `mRunQueue` the moment it detaches from a
+    window — and on a headset the host's window (MainActivity's, on the 2D
+    panel display) can sit detached or stopped for the entire immersive
+    session while the renderer lives in `VRActivity`'s window. View-posted
+    retries would silently stop the first time the window blinked, leaving
+    the bind loop dead with no log and no `onBound` — the dead board that
+    produced this change.
+  */
+  private val mainHandler = Handler(Looper.getMainLooper())
   private val retryBind = Runnable { bindIfReady() }
   private val pumpFrame = object : Runnable {
     override fun run() {
@@ -63,7 +79,7 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
         android.util.Log.i("MoyoBoardTexture", "texture paint streaming")
       }
       pumpTicks += 1
-      postDelayed(this, PUMP_MS)
+      mainHandler.postDelayed(this, PUMP_MS)
     }
   }
 
@@ -144,27 +160,52 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
   // ---------------------------------------------------------------------------
 
   private fun bindIfReady() {
-    if (settled || !live || !isAttachedToWindow || pages.isEmpty()) {
+    if (settled || !live) {
       return
     }
-    val material = materialName ?: return
-    if (pageWidthDp <= 0.0 || pageHeightDp <= 0.0) {
-      return
-    }
+    /*
+      EVERY NOT-READY STATE IS RETRYABLE, including the preconditions. A page
+      that is not attached yet, a material prop that has not landed, a zero
+      size, a renderer that does not exist in this window — on a headset each
+      of those arrives on its own clock (the immersive `VRActivity` mounts
+      after the engine reports ready), and returning early here with no
+      scheduled retry was the silent death: `onBound` never fired, the scene
+      stayed unbound, and the board declined every stroke for the session.
 
-    removeCallbacks(retryBind)
-    val reason = bind(material)
-    // Viro creates its Activity and registers materials asynchronously, and on
-    // Horizon OS the VR-activity hop can outlast any fixed budget — a headset
-    // wake, a Guardian dialog, a focus fight. These are transient readiness
-    // failures, not proof the bridge is unavailable, so they retry while `live`
-    // holds; `release` and `live=false` are the only exits.
-    if (reason in setOf("no-viro-view", "no-material-manager", "material-not-registered")) {
-      postDelayed(retryBind, if (++attempts < 30) 150L else 500L)
+      `isAttachedToWindow` is deliberately NOT a precondition: the page is
+      re-parented into the sink inside the renderer's window, so a host whose
+      own window is detached still binds correctly.
+    */
+    val material = materialName
+    val reason = when {
+      pages.isEmpty() -> "no-page"
+      material == null -> "no-material-prop"
+      pageWidthDp <= 0.0 || pageHeightDp <= 0.0 -> "zero-size"
+      else -> bind(material)
+    }
+    /*
+      `texture-failed` is the one definitive answer — the constructor threw,
+      so the bridge is absent from this binary and retrying cannot help.
+      Everything else is transient readiness and retries while `live` holds;
+      `release` and `live=false` are the only exits.
+    */
+    if (reason != null) {
+      if (reason.startsWith("texture-failed")) {
+        settled = true
+        lastBindReason = null
+        onBound(BoardTextureBinding(bound = false, reason = reason))
+        return
+      }
+      if (reason != lastBindReason) {
+        lastBindReason = reason
+        android.util.Log.i("MoyoBoardTexture", "bind waiting: $reason")
+      }
+      mainHandler.postDelayed(retryBind, if (++attempts < 30) 150L else 500L)
       return
     }
+    lastBindReason = null
     settled = true
-    onBound(BoardTextureBinding(bound = reason == null, reason = reason))
+    onBound(BoardTextureBinding(bound = true, reason = null))
   }
 
   /** Returns null when the board is on the material, else why it is not. */
@@ -243,7 +284,7 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
       bound, which is also why a stale first frame can never sit.
     */
     pumpTicks = 0
-    postDelayed(pumpFrame, PUMP_MS)
+    mainHandler.postDelayed(pumpFrame, PUMP_MS)
     return null
   }
 
@@ -266,8 +307,9 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
   }
 
   fun release() {
-    removeCallbacks(retryBind)
-    removeCallbacks(pumpFrame)
+    mainHandler.removeCallbacks(retryBind)
+    mainHandler.removeCallbacks(pumpFrame)
+    lastBindReason = null
     settled = false
     attempts = 0
     val page = pages.firstOrNull()

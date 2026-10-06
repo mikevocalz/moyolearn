@@ -54,6 +54,23 @@ import { bindBoardChrome, type BoardChromeHandlers, type BoardChromePresentation
 const GRIP_W = 0.65;
 const GRIP_H = 0.09;
 
+/*
+  The panel's materials are registered AT MODULE SCOPE, not in a mount
+  effect. A `materials={['xrBoardBacking']}` lookup runs when the geometry
+  commits — before any effect fires — so an effect-registered name renders
+  missing for its first frames, and the `deleteMaterials` cleanup meant a
+  remount (a chrome error latch, a navigator reload, a dev double-effect)
+  deleted the names out from under quads still drawing them. Registration is
+  idempotent and process-global; the names stay registered for the session.
+*/
+ViroMaterials.createMaterials({
+  xrBoardGrip: { diffuseColor: '#ffc168', lightingModel: 'Constant' },
+  xrBoardEmpty: { diffuseColor: '#112d44', lightingModel: 'Constant' },
+  /* The opaque slab behind the whole face — the chrome's own fills can
+     stay translucent without the room ever showing through. */
+  xrBoardBacking: { diffuseColor: '#0a1524', lightingModel: 'Constant' },
+});
+
 /* The content window's centre in panel-local metres — computed once from the
    same artboard rect the RML draws. */
 const contentCentre = artboardCenter(CONTENT_BAND);
@@ -175,19 +192,11 @@ export function RiveBoardPanel({
 
   useEffect(() => {
     mounted.current = true;
-    ViroMaterials.createMaterials({
-      xrBoardGrip: { diffuseColor: '#ffc168', lightingModel: 'Constant' },
-      xrBoardEmpty: { diffuseColor: '#112d44', lightingModel: 'Constant' },
-      /* The opaque slab behind the whole face — the chrome's own fills can
-         stay translucent without the room ever showing through. */
-      xrBoardBacking: { diffuseColor: '#0a1524', lightingModel: 'Constant' },
-    });
     return () => {
       mounted.current = false;
       binding.current?.dispose();
       binding.current = null;
       runtime.current = null;
-      ViroMaterials.deleteMaterials(['xrBoardGrip', 'xrBoardEmpty', 'xrBoardBacking']);
     };
   }, []);
 

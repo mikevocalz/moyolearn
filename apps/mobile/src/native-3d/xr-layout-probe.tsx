@@ -63,6 +63,16 @@ const GRIP_W = 0.65;
 const GRIP_H = 0.09;
 
 /*
+  Module scope for the reason `rive-board-panel` registers its own there:
+  a quad's material lookup runs at commit, ahead of any effect, and a
+  `deleteMaterials` on unmount pulls the name out from under quads still
+  drawing it. Registration is idempotent and session-lifetime.
+*/
+ViroMaterials.createMaterials({
+  xrProbeGrip: { diffuseColor: '#ffc168', lightingModel: 'Constant' },
+});
+
+/*
  * Probe state lives at module scope rather than in the route component: the
  * scene renders inside the navigator's own tree, and one JS VM backs both —
  * so a module store is the seam the 2D host writes through (bound, engine
@@ -236,13 +246,6 @@ export function XrLayoutProbe({
 
   const boardGroup = useRef<ViroNode>(null);
   const grabOwner = useRef<number | null>(null);
-
-  useEffect(() => {
-    ViroMaterials.createMaterials({
-      xrProbeGrip: { diffuseColor: '#ffc168', lightingModel: 'Constant' },
-    });
-    return () => ViroMaterials.deleteMaterials(['xrProbeGrip']);
-  }, []);
 
   const finishDrag = async () => {
     grabOwner.current = null;

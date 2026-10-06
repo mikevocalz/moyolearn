@@ -43,6 +43,20 @@ import { bindQuestionChrome, type QuestionChromeHandlers, type QuestionChromePre
 const GRIP_W = 0.65;
 const GRIP_H = 0.09;
 
+/*
+  Registered AT MODULE SCOPE for the same reason as `rive-board-panel`'s —
+  a geometry's `materials` lookup runs at commit, ahead of any effect, and a
+  `deleteMaterials` on unmount pulls the names out from under quads still
+  drawing them. Registration is idempotent; the names stay for the session.
+*/
+ViroMaterials.createMaterials({
+  xrQuestionGrip: { diffuseColor: '#ffc168', lightingModel: 'Constant' },
+  xrQuestionEmpty: { diffuseColor: '#112d44', lightingModel: 'Constant' },
+  /* The opaque slab behind the whole face — the chrome's own fills can
+     stay translucent without the room ever showing through. */
+  xrQuestionBacking: { diffuseColor: '#0a1524', lightingModel: 'Constant' },
+});
+
 const contentCentre = questionArtboardCenter(QUESTION_CONTENT_BAND);
 
 export interface XrQuestionPanelProps {
@@ -132,19 +146,11 @@ export function XrQuestionPanel({
 
   useEffect(() => {
     mounted.current = true;
-    ViroMaterials.createMaterials({
-      xrQuestionGrip: { diffuseColor: '#ffc168', lightingModel: 'Constant' },
-      xrQuestionEmpty: { diffuseColor: '#112d44', lightingModel: 'Constant' },
-      /* The opaque slab behind the whole face — the chrome's own fills can
-         stay translucent without the room ever showing through. */
-      xrQuestionBacking: { diffuseColor: '#0a1524', lightingModel: 'Constant' },
-    });
     return () => {
       mounted.current = false;
       binding.current?.dispose();
       binding.current = null;
       runtime.current = null;
-      ViroMaterials.deleteMaterials(['xrQuestionGrip', 'xrQuestionEmpty', 'xrQuestionBacking']);
     };
   }, []);
 

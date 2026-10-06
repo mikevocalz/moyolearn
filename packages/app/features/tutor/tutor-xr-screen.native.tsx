@@ -52,6 +52,7 @@ import {
   XrBoardRaster,
   CONTENT_RECT_PANEL,
   type BoardChromeHandlers,
+  contentAnchorWorld,
   uncoveredRecords,
   boardLayer,
   panelMediaArea,
@@ -408,13 +409,6 @@ function BoardScene() {
   const [questionFailed, setQuestionFailed] = useState(false);
   const QuestionPanel = questionFailed ? null : active.QuestionPanel;
   const [askError, setAskError] = useState(false);
-  const [surfaceTimedOut, setSurfaceTimedOut] = useState(false);
-  const textureReady = useXrSession((s) => s.boardTextureBound);
-  useEffect(() => {
-    if (textureReady || VISIONOS) return;
-    const timer = setTimeout(() => setSurfaceTimedOut(true), 10000);
-    return () => clearTimeout(timer);
-  }, [textureReady]);
   useEffect(() => {
     if (!confirmClear) return;
     const timer = setTimeout(() => setConfirmClear(false), 5000);
@@ -472,8 +466,8 @@ function BoardScene() {
     not bound, this pair IS the board and nothing about it changes.
   */
   const boardTextureBound = useXrSession((s) => s.boardTextureBound);
-  // Vision Pro draws the raster plus current ink; Android may use its live view texture.
-  const boardDrawable = boardTextureBound || VISIONOS;
+  const boardCarrier = useXrSession((s) => s.boardCarrier);
+  const boardGrabbed = useXrSession((s) => s.boardGrabbed);
   /*
     THE PICTURE DOES NOT NEED A SERVER SESSION, and gating it on one is why the
     centre panel showed a placeholder instead of the child's board: under local
@@ -486,6 +480,22 @@ function BoardScene() {
   const raster = useBoardRaster(readEngine, store, !boardTextureBound && foreground, strokeOpen);
   const pendingInk = useMemo(() => uncoveredRecords(store, raster.covered), [store, raster.covered]);
   const inkSlot = worldSlot('center', workspaceHead, placement.rotation[1]);
+  /*
+    THE ANCHOR THE PANEL'S OWN SURFACE USES — `contentAnchorWorld(slot,
+    carrier)`: the paper's centre after the carrier's drag transform, the same
+    call `RiveBoardPanel` makes for its `XrBoardSurface`. The stylus geometry
+    reads it too, so a board a child has MOVED still takes pen ink on its new
+    face — a stylus plane pinned to the slot would measure hits on the air
+    where the paper used to be. The `0.002` standoff matches the surface's
+    `POINTER_STANDOFF`.
+  */
+  const boardContentAnchor = contentAnchorWorld(inkSlot, {
+    position: boardCarrier?.position ?? [0, 0, 0],
+    yawDeg: boardCarrier?.rotation[1] ?? 0,
+  });
+  /* The visionOS fallback keeps its media-area rect — it only renders when
+     the Rive panel is absent, i.e. in the `XrTriPanel` composition where the
+     paper is the media card. */
   const inkOffset = xrRotateY([0, BOARD_MEDIA.centerY, BOARD_MEDIA.z], inkSlot.yaw);
   const inkWorldPosition: [number, number, number] = [
     inkSlot.position[0] + inkOffset[0],
@@ -513,7 +523,9 @@ function BoardScene() {
     child just drew.
   */
   const voice = useXrVoice({
-    enabled: foreground && composedState === 'ready' && boardDrawable,
+    /* The microphone and `exportPng` ask the ENGINE, not the texture — the
+       raster board answers Ask the same whether or not the live view bound. */
+    enabled: foreground && composedState === 'ready',
     onUtterance: (text) => {
       const engine = active.engine;
       const owner = active.session;
@@ -595,20 +607,20 @@ function BoardScene() {
   */
   const stylusBoard = useMemo<SpatialBoardGeometry>(
     () => ({
-      position: inkWorldPosition,
-      yawDeg: inkSlot.yaw,
-      width: BOARD_MEDIA.width,
-      height: BOARD_MEDIA.height,
+      position: boardContentAnchor.position,
+      yawDeg: boardContentAnchor.yawDeg,
+      width: CONTENT_RECT_PANEL.width,
+      height: CONTENT_RECT_PANEL.height,
       plane: xrDragPlane({
-        position: inkWorldPosition,
-        yawDeg: inkSlot.yaw,
+        position: boardContentAnchor.position,
+        yawDeg: boardContentAnchor.yawDeg,
         scale: 1,
         offset: 0.002,
-        width: BOARD_MEDIA.width,
-        height: BOARD_MEDIA.height,
+        width: CONTENT_RECT_PANEL.width,
+        height: CONTENT_RECT_PANEL.height,
       }),
     }),
-    [inkWorldPosition, inkSlot.yaw],
+    [boardContentAnchor],
   );
   useEffect(
     () => () => {
@@ -629,6 +641,25 @@ function BoardScene() {
   */
   const strokeSource = useRef<number | null>(null);
   const handleSurfaceInput = (sample: XrSurfaceInput) => {
+    /*
+      A PANEL IN THE HAND DOES NOT DRAW. The ray surface unmounts while
+      `boardGrabbed` (its `enabled` gate), but the stylus path enters here
+      directly — so this is where pen samples meet the same gate. An open
+      stroke is cancelled, not left hanging — the same move the `inkLands`
+      gate below makes.
+    */
+    if (boardGrabbed) {
+      if (!drawing.current) return;
+      drawing.current = false;
+      strokeSource.current = null;
+      quickdrawAdapter.dispatchSurface({
+        phase: 'cancel',
+        u: sample.u,
+        v: sample.v,
+        source: sample.source,
+      });
+      return;
+    }
     /*
       A MEASURED-WRONG MAPPING STOPS THE INK AT THE SEAM, and it has to stop
       here rather than in the panel: `XrPanel` draws in `interrupted` on purpose
@@ -675,7 +706,15 @@ function BoardScene() {
     separate is what makes changing it a one-line move rather than a re-indent
     of the whole tree.
   */
-  const canEdit = foreground && composedState === 'ready' && boardDrawable && inkLands;
+  /*
+    The raster presentation draws without the live texture — `injectPointer`
+    writes to the engine either way, and `XrBoardInk` lands the stroke on the
+    paper while it is in flight. `boardTextureBound` selects WHICH picture the
+    paper shows, never whether ink is accepted — gating the surface on it left
+    an unbound board dead on exactly the devices where the bind can still be
+    retrying.
+  */
+  const canEdit = foreground && composedState === 'ready' && inkLands;
   const canAsk = canEdit && !asking && voice.phase.kind !== 'starting' && voice.phase.kind !== 'transcribing';
   const boardHandlers: BoardChromeHandlers = {
     onTool(next) {
@@ -794,7 +833,7 @@ function BoardScene() {
             termination={termination} onSurfaceInput={handleSurfaceInput}
             onError={() => setChromeFailed(true)} handlers={boardHandlers}
             presentation={{ tool, ink, ...history, asking: !canAsk,
-              paletteOpen, clearArmed: confirmClear, grabbed: false, reducedMotion: true,
+              paletteOpen, clearArmed: confirmClear, grabbed: boardGrabbed, reducedMotion: true,
               status: askError ? 'Could not send — try again' : !canEdit ? 'Waiting for your board…' : askLabel }}
             content={<>
               <ViroQuad width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height}
@@ -824,7 +863,7 @@ function BoardScene() {
           boardUri={raster.uri}
           boardLive={boardTextureBound}
           controlSize={minHitSize(2.6, false, band)}
-          boardTitle={!boardDrawable ? (surfaceTimedOut ? 'Board unavailable — return to lesson' : 'Connecting your board…') : problem ?? 'Your board'}
+          boardTitle={composedState === 'ready' ? (problem ?? 'Your board') : 'Connecting your board…'}
           questionRows={[
             { id: 'lesson-label', text: 'Your lesson', emphasis: true },
             ...questionPages(problem || 'Ask Natalie about your work.', 16, 1).map((text, i) => ({ id: `problem-${i}`, text })),
@@ -845,7 +884,7 @@ function BoardScene() {
                 only this label to tell them they are being listened to.
               */
               text: askError ? 'Could not send — try again' : askLabel,
-              disabled: composedState !== 'ready' || asking || !boardDrawable || voice.phase.kind === 'transcribing' || voice.phase.kind === 'starting',
+              disabled: composedState !== 'ready' || asking || voice.phase.kind === 'transcribing' || voice.phase.kind === 'starting',
               emphasis: true,
               active: voice.phase.kind === 'listening',
               onPress: boardHandlers.onAsk,
