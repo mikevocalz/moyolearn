@@ -202,6 +202,7 @@ function AdaptivePanesNavigator({
   const inspectors = all.filter(
     (child) => isValidElement(child) && child.type === AdaptivePanesInspector,
   );
+  const inspectorPane = inspectors[0] ?? null;
 
   if (columns.length > 2) {
     throw new Error('There can only be two AdaptivePanes.Column in the AdaptivePanes.');
@@ -231,6 +232,55 @@ function AdaptivePanesNavigator({
    * `supplementary` in the two-pane shape is clamped to `primary` at render.
    */
   useImperativeHandle(ref, () => ({ show: setColumn }), [setColumn]);
+
+  /*
+    THE TOGGLE ROW'S CHROME LIVES IN THE SHELL HEADER when one is mounted.
+    `paneControls` still decides WHETHER this host exposes toggles; WHERE they
+    render is decided by `headerConsumers` — ShellHeader registers itself and
+    draws the same `PaneToggle`s from this registration, so a host under a
+    navigator header gets one row in the bar instead of a second row inside
+    the pane. No consumer (web pages, Storybook) keeps the in-pane row exactly
+    as before.
+
+    Publishing runs on EVERY render, deliberately unmemoized, keyed by the
+    host screen's own `route.key` — never the global pathname, which belongs
+    to whatever is focused and would republish wrongly the moment a blurred
+    (mounted, possibly frozen) host re-rendered. The key belongs to the
+    screen instance, so it cannot drift: the header shows the controls only
+    on that screen's bar, a refocused screen's entry is still sitting in the
+    map untouched, and an unmount cleanup keyed to the same `route.key` can
+    never retract a different host's registration.
+
+    A host with NO route (Storybook, overlays — the fork returns null) has no
+    header that could ever claim its controls, so it keeps its in-pane row even
+    while a consumer exists.
+
+    These hooks sit above the empty-children early return on purpose — a hook
+    after it would run in a different order on the render that takes it.
+    `headerConsumers` is subscribed unconditionally for the same reason; the
+    `routeKey` guard only gates whether the subscription's value is used.
+  */
+  const controlsOwner = useId();
+  const routeKey = usePaneRouteKey();
+  const headerConsumers = usePaneControlsStore((state) => state.headerConsumers > 0);
+  const headerConsumer = routeKey !== null && headerConsumers;
+  useEffect(() => {
+    if (paneControls && !collapsed && routeKey !== null) {
+      publishPaneControls(routeKey, {
+        owner: controlsOwner,
+        columnCount,
+        inspector: Boolean(showInspector && inspectorPane),
+      });
+    } else if (routeKey !== null) {
+      clearPaneControls(routeKey, controlsOwner);
+    }
+  });
+  useEffect(
+    () => () => {
+      if (routeKey !== null) clearPaneControls(routeKey, controlsOwner);
+    },
+    [routeKey, controlsOwner],
+  );
 
   // Same diagnostics on every platform, so a call site misbehaves identically.
   if (all.length !== columns.length + inspectors.length) {
@@ -308,53 +358,7 @@ function AdaptivePanesNavigator({
     class and the override decide whether it is slid OPEN, and `PaneContent`
     freezes it while it is not.
   */
-  const inspectorPane = inspectors[0] ?? null;
   const inspectorOpen = Boolean(showInspector && inspectorPane && visible.inspector);
-
-  /*
-    THE TOGGLE ROW'S CHROME LIVES IN THE SHELL HEADER when one is mounted.
-    `paneControls` still decides WHETHER this host exposes toggles; WHERE they
-    render is decided by `headerConsumers` — ShellHeader registers itself and
-    draws the same `PaneToggle`s from this registration, so a host under a
-    navigator header gets one row in the bar instead of a second row inside
-    the pane. No consumer (web pages, Storybook) keeps the in-pane row exactly
-    as before.
-
-    Publishing runs on EVERY render, deliberately unmemoized, keyed by the
-    host screen's own `route.key` — never the global pathname, which belongs
-    to whatever is focused and would republish wrongly the moment a blurred
-    (mounted, possibly frozen) host re-rendered. The key belongs to the
-    screen instance, so it cannot drift: the header shows the controls only
-    on that screen's bar, a refocused screen's entry is still sitting in the
-    map untouched, and an unmount cleanup keyed to the same `route.key` can
-    never retract a different host's registration.
-
-    A host with NO route (Storybook, overlays — the fork returns null) has no
-    header that could ever claim its controls, so it keeps its in-pane row even
-    while a consumer exists.
-  */
-  const controlsOwner = useId();
-  const routeKey = usePaneRouteKey();
-  const headerConsumer =
-    routeKey !== null &&
-    usePaneControlsStore((state) => state.headerConsumers > 0);
-  useEffect(() => {
-    if (paneControls && !collapsed && routeKey !== null) {
-      publishPaneControls(routeKey, {
-        owner: controlsOwner,
-        columnCount,
-        inspector: Boolean(showInspector && inspectorPane),
-      });
-    } else if (routeKey !== null) {
-      clearPaneControls(routeKey, controlsOwner);
-    }
-  });
-  useEffect(
-    () => () => {
-      if (routeKey !== null) clearPaneControls(routeKey, controlsOwner);
-    },
-    [routeKey, controlsOwner],
-  );
 
   /*
     An explicit `primaryWidthDp` REPLACES the rail step, it does not compete
