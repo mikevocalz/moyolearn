@@ -50,3 +50,21 @@ diff --git a/dist/plugins/withViroIos.js b/dist/plugins/withViroIos.js
  /**
   * Resolve the on-disk `@reactvision/react-viro/ios` directory as a path
   * relative to the iOS project root (where the Podfile lives).
+diff --git a/dist/plugins/withViroVisionOS.js b/dist/plugins/withViroVisionOS.js
+--- a/dist/plugins/withViroVisionOS.js
++++ b/dist/plugins/withViroVisionOS.js
+@@ -35,6 +35,14 @@
+ import { withDangerousMod, withPlugins, WarningAggregator, } from "@expo/config-plugins";
+ import fs from "fs";
+ import path from "path";
++// Node evaluates this compiled file as ESM — a CommonJS package whose sources
++// still use `import` — so the CommonJS __dirname and require() it was authored
++// against do not exist at runtime. Recreate them from import.meta; every use
++// below is a real filesystem path or a builtin module, never caller-relative.
++import { createRequire } from "module";
++import { fileURLToPath } from "url";
++const __dirname = path.dirname(fileURLToPath(import.meta.url));
++const require = createRequire(import.meta.url);
+ // ─── Constants ────────────────────────────────────────────────────────────────
+ const PODFILE_MARKER = "# viro-visionos";
+ const METRO_MARKER = "// viro-visionos";
