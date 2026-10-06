@@ -52,6 +52,7 @@ export type {
   WhiteboardHandle,
   WhiteboardHistory,
   WhiteboardInk,
+  WhiteboardPointerSample,
   WhiteboardSnapshot,
   WhiteboardTool,
 } from './whiteboard.types.ts';

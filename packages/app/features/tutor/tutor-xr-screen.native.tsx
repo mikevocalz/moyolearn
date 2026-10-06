@@ -5,8 +5,12 @@
 // calibrated spatial pointer samples to that same editor.
 // The navigator captures its initial scene, so scene state comes from stores
 // and active runtime handles. Workspace placement is latched until Recenter.
+// The live board's quad is the viro-external `QuickDrawSpatialSurface` mounted
+// on `quickdrawAdapter`, and every spatial pointer — controller ray and Muse
+// pen alike — reaches the engine through its `dispatchPointer` seam.
 // SOT: board-session.ts · XrTriPanel.native.tsx · modules/board-texture
-// SOT-KEYWORDS: xr live whiteboard controller tutor voice session native
+//      quickdraw-spatial-adapter.ts · @viro-external/ui
+// SOT-KEYWORDS: xr live whiteboard controller muse stylus tutor voice session native
 
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState, StyleSheet, View } from 'react-native';
@@ -38,18 +42,23 @@ import {
   type WhiteboardHandle,
 } from '@acme/ui';
 import { View as UiView } from '@acme/ui/primitives';
+import { MusePenInput, QuickDrawSpatialSurface } from '@viro-external/ui';
 import {
+  BoardPointer,
   BoardTextureHost,
+  SpatialStylusBoardInput,
+  SPATIAL_STYLUS_SOURCE,
   XrBoardInk,
-  XrBoardLive,
   XrBoardRaster,
   CONTENT_RECT_PANEL,
   type BoardChromeHandlers,
   uncoveredRecords,
+  boardLayer,
   panelMediaArea,
   worldSlot,
   questionPages,
   xrCaptionRows,
+  xrDragPlane,
   xrRotateY,
   XrTriPanel,
   XrBoardSurface,
@@ -62,6 +71,7 @@ import {
   spatialDistance,
   spatialSpacing,
   type BoardTextureBinding,
+  type SpatialBoardGeometry,
   type XrHeadPose,
   type XrVector3,
   type XrSurfaceInput,
@@ -90,6 +100,7 @@ import { SPATIAL_PERMISSIONS, spatialPermissionsGranted } from './xr-capability.
 import { currentXrEligibility } from './xr-eligibility';
 import { panelStateOf, useXrSession, type XrPhase } from './xr-session.store.ts';
 import { useXrVoice } from './xr-voice.native.ts';
+import { createMoyoQuickDrawAdapter } from './quickdraw-spatial-adapter.ts';
 
 
 /** This presentation's id, so its own strokes are not echoed back at it. */
@@ -171,6 +182,15 @@ const active: {
 
 /** The engine handle, as a stable reader — see `strokeOpen` in `BoardScene`. */
 const readEngine = () => active.engine;
+
+/*
+  THE VIRO-EXTERNAL SURFACE'S ADAPTER, ONE PER PROCESS. Created at module
+  level because the scene that mounts `QuickDrawSpatialSurface` is captured by
+  the navigator's constructor — an adapter built in a render would be the one
+  the constructor never sees. Its verbs are late reads of `active`, so it is
+  correct before the engine attaches and after it goes away.
+*/
+const quickdrawAdapter = createMoyoQuickDrawAdapter(readEngine, () => active.session);
 
 /**
  * A 1×1 transparent PNG. The side panels are text lists, and their media column
@@ -559,6 +579,55 @@ function BoardScene() {
     Nothing on this path touches React state. A pointer arrives at display rate;
     the document moves at stroke rate, when the engine reports the change.
   */
+  /*
+    THE PEN'S ARBITER — the input that used to subscribe inside
+    `XrBoardSurface`. The viro-external `MusePenInput` bridge owns the stylus
+    subscription now, so this turns its frames into the same `XrSurfaceInput`
+    stream the controller rays produce, and `handleSurfaceInput` below is the
+    single funnel every spatial pointer crosses — which is also where the
+    stroke ownership between pen and ray is now enforced.
+  */
+  const stylus = useRef<SpatialStylusBoardInput | null>(null);
+  /*
+    The same anchor `XrBoardSurface` computes for itself — slot position plus
+    the media area's own offset, rotated into the panel's yaw — so a pen hit
+    and a ray hit resolve to the same `(u, v)` on the same paper.
+  */
+  const stylusBoard = useMemo<SpatialBoardGeometry>(
+    () => ({
+      position: inkWorldPosition,
+      yawDeg: inkSlot.yaw,
+      width: BOARD_MEDIA.width,
+      height: BOARD_MEDIA.height,
+      plane: xrDragPlane({
+        position: inkWorldPosition,
+        yawDeg: inkSlot.yaw,
+        scale: 1,
+        offset: 0.002,
+        width: BOARD_MEDIA.width,
+        height: BOARD_MEDIA.height,
+      }),
+    }),
+    [inkWorldPosition, inkSlot.yaw],
+  );
+  useEffect(
+    () => () => {
+      /* Unmount mid-stroke closes it — the engine must not hold a line whose
+         end never arrives. */
+      const sample = stylus.current?.reset();
+      if (sample) quickdrawAdapter.dispatchSurface(sample);
+    },
+    [],
+  );
+
+  /*
+    THE DEVICE LATCH. `drawing` says a stroke is open; `strokeSource` says WHO
+    opened it. Both inputs funnel here — a ray through `XrBoardSurface`, the
+    pen through `MusePenInput` — and without the latch a pen sample could join
+    a stroke a controller opened mid-line, which is the ownership rule
+    `BoardPointer` used to enforce inside the surface.
+  */
+  const strokeSource = useRef<number | null>(null);
   const handleSurfaceInput = (sample: XrSurfaceInput) => {
     /*
       A MEASURED-WRONG MAPPING STOPS THE INK AT THE SEAM, and it has to stop
@@ -577,21 +646,27 @@ function BoardScene() {
     if (!inkLands) {
       if (!drawing.current) return;
       drawing.current = false;
-      active.engine?.injectPointer({
+      strokeSource.current = null;
+      quickdrawAdapter.dispatchSurface({
         phase: 'cancel',
-        x: sample.u * boardSurfacePixels.width,
-        y: sample.v * boardSurfacePixels.height,
+        u: sample.u,
+        v: sample.v,
+        source: sample.source,
       });
       return;
     }
-    if (sample.phase === 'begin') drawing.current = true;
-    else if (sample.phase !== 'move') drawing.current = false;
-    active.engine?.injectPointer({
-      phase: sample.phase,
-      x: sample.u * boardSurfacePixels.width,
-      y: sample.v * boardSurfacePixels.height,
-      pressure: sample.pressure,
-    });
+    if (sample.phase === 'begin') {
+      if (strokeSource.current !== null && strokeSource.current !== sample.source) return;
+      strokeSource.current = sample.source;
+      drawing.current = true;
+    } else if (sample.phase === 'move') {
+      if (strokeSource.current !== null && strokeSource.current !== sample.source) return;
+    } else {
+      if (strokeSource.current !== null && strokeSource.current !== sample.source) return;
+      strokeSource.current = null;
+      drawing.current = false;
+    }
+    quickdrawAdapter.dispatchSurface(sample);
   };
 
   /*
@@ -652,6 +727,24 @@ function BoardScene() {
           // Vendored ViroCore ControllerStatus: DISCONNECTED=4, ERROR=5.
           if ((status === 4 || status === 5) && typeof source === 'number') terminatePointer(source, true);
         }} />
+      {/*
+        THE MUSE PEN, THROUGH THE VIRO-EXTERNAL BRIDGE. `MusePenInput`
+        subscribes to the fork's `onSpatialStylus` stream — the same native
+        frames `XrBoardSurface` used to listen for itself — and hands them to
+        the board's own stylus arbiter, whose samples enter at the same funnel
+        as the controller rays. Inert where no stylus exists (Android/PICO);
+        live on visionOS.
+      */}
+      <MusePenInput
+        enabled={canEdit}
+        onSample={(frame) => {
+          const input =
+            stylus.current ??
+            (stylus.current = new SpatialStylusBoardInput(new BoardPointer()));
+          const sample = input.handle(frame, stylusBoard);
+          if (sample) handleSurfaceInput(sample);
+        }}
+      />
       <ViroAmbientLight color="#ffffff" intensity={600} />
       <ViroDirectionalLight color="#ffffff" direction={[0, -1, -0.5]} intensity={800} />
       {/*
@@ -706,11 +799,22 @@ function BoardScene() {
             content={<>
               <ViroQuad width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height}
                 materials={[XR_MATERIAL.paper]} ignoreEventHandling />
-              {boardTextureBound ? <XrBoardLive width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height} /> : <>
+              {boardTextureBound ? (
+                <QuickDrawSpatialSurface
+                  adapter={quickdrawAdapter}
+                  width={CONTENT_RECT_PANEL.width}
+                  height={CONTENT_RECT_PANEL.height}
+                  pageWidth={boardSurfacePixels.width}
+                  pageHeight={boardSurfacePixels.height}
+                  movable={false}
+                  interactive={canEdit}
+                  position={[0, 0, boardLayer.raster]}
+                />
+              ) : (<>
                 <XrBoardRaster uri={raster.uri} width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height} />
                 <XrBoardInk store={pendingInk} width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height}
                   onSkippedCount={useXrSession.getState().setSkipped} />
-              </>}
+              </>)}
             </>}
           /> : undefined}
           headPosition={workspaceHead}

@@ -19,6 +19,17 @@ export { XrTriPanel } from './XrTriPanel.native.tsx';
 export { XrBoardSurface } from './XrBoardSurface.native.tsx';
 export { XrBoardTray } from './XrBoardTray.native.tsx';
 export { worldSlot, xrRotateY, type XrWorldPose } from './world-slot.ts';
+/* Pen ownership and plane geometry, exported for the screen that hosts
+   `MusePenInput` — the stylus listener used to live inside `XrBoardSurface`;
+   the viro-external bridge moved it to the screen that funnels all input. */
+export { BoardPointer } from './board-pointer.ts';
+export { xrDragPlane, xrSurfaceLocal, type XrDragPlane } from './surface-drag.ts';
+export {
+  SpatialStylusBoardInput,
+  SPATIAL_STYLUS_SOURCE,
+  type SpatialBoardGeometry,
+  type SpatialStylusFrame,
+} from './spatial-stylus-board-input.ts';
 export { probePremiumImports } from './premium/probe.ts';
 export type { XrTriPanelProps, XrPanelRow } from './XrTriPanel.types.ts';
 export type { XrBoardSurfaceProps } from './XrBoardSurface.types.ts';
