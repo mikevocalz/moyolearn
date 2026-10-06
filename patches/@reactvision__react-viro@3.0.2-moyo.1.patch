@@ -11,3 +11,42 @@ index 21c54d6..62f424b 100644
  }
  
  // AGP 8.12+ refuses to bundle a library AAR that carries direct local .aar
+diff --git a/dist/plugins/withViro.js b/dist/plugins/withViro.js
+--- a/dist/plugins/withViro.js
++++ b/dist/plugins/withViro.js
+@@ -1,5 +1,5 @@
+-import { withViroAndroid } from "./withViroAndroid";
+-import { withViroIos } from "./withViroIos";
++import { withViroAndroid } from "./withViroAndroid.js";
++import { withViroIos } from "./withViroIos.js";
+ const CAMERA_USAGE = "Allow $(PRODUCT_NAME) to use your camera";
+ const MICROPHONE_USAGE = "Allow $(PRODUCT_NAME) to use your microphone";
+ const READ_PHOTOS_USAGE = "Allow $(PRODUCT_NAME) to access your photos";
+diff --git a/dist/plugins/withViroAndroid.js b/dist/plugins/withViroAndroid.js
+--- a/dist/plugins/withViroAndroid.js
++++ b/dist/plugins/withViroAndroid.js
+@@ -1,8 +1,8 @@
+ import { AndroidConfig, withAndroidManifest, withAppBuildGradle, withDangerousMod, withGradleProperties, withProjectBuildGradle, withSettingsGradle, } from "@expo/config-plugins";
+ import fs from "fs";
+ import path from "path";
+-import { insertLinesHelper } from "./util/insertLinesHelper";
+-import { assertMetaVrGlassesXrMode, resolveMetaDefaultDeviceTargets } from "./metaTargeting";
++import { insertLinesHelper } from "./util/insertLinesHelper.js";
++import { assertMetaVrGlassesXrMode, resolveMetaDefaultDeviceTargets } from "./metaTargeting.js";
+ let viroPluginConfig = ["AR", "GVR"];
+ const withBranchAndroid = (config) => {
+     // Directly edit MainApplication.java
+diff --git a/dist/plugins/withViroIos.js b/dist/plugins/withViroIos.js
+--- a/dist/plugins/withViroIos.js
++++ b/dist/plugins/withViroIos.js
+@@ -1,8 +1,8 @@
+ import { withDangerousMod, withPlugins, withXcodeProject, } from "@expo/config-plugins";
+ import fs from "fs";
+ import path from "path";
+-import { insertLinesHelper } from "./util/insertLinesHelper";
+-import { DEFAULTS } from "./withViro";
++import { insertLinesHelper } from "./util/insertLinesHelper.js";
++import { DEFAULTS } from "./withViro.js";
+ /**
+  * Resolve the on-disk `@reactvision/react-viro/ios` directory as a path
+  * relative to the iOS project root (where the Podfile lives).
