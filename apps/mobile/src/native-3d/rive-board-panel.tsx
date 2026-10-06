@@ -239,6 +239,9 @@ export function RiveBoardPanel({
             /* 2× the artboard — micro-labels stay crisp at arm's length in
                the headset; the quad is 1.2 m wide and text lives at fs9. */
             resolution={{ width: 2496, height: 1560 }}
+            /* Same rule as the question panel: Alpha blend lets sub-1
+               texture alpha show the room; "None" is the 100% face. */
+            blendMode="None"
             input={{ panelWorld, enabled: enabled && !grabbed, resetKey }}
             onError={(error) => onChromeError?.(`Board controls unavailable: ${error.message}`)}
             onRuntimeReady={(rt) => {

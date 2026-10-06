@@ -76,11 +76,19 @@ test('the neck/head split matches the 2D writer', () => {
 
 test('withArmsDown drops the arms about their shoulders and leaves the spine alone', () => {
   /*
-    The T-pose correction, pinned: both upper-arm rests rotate by ARM_DROP_RAD
-    about their own positions — the left negative, the right positive — while
-    the spine, chest, neck and head matrices pass through untouched.
+    The T-pose correction, pinned. The arm's direction is its +Y column, so a
+    T-pose rest is a Yaw-free basis with that column along ±X: left arm's Y
+    points +X (Rz(−90°) basis), right arm's −X. The writer rotates each about
+    dir×down by the shortfall to ARM_DROP_RAD — for horizontal arms that is
+    the whole 68°, reproducing the fixed world-Z result.
   */
   const rest = standingRest();
+  const leftTPose: number[] = [0, -1, 0, 0, 1, 0, 0, 0, 0, 0, 1, 0, -0.18, 1.33, 0, 1];
+  const rightTPose: number[] = [0, 1, 0, 0, -1, 0, 0, 0, 0, 0, 1, 0, 0.18, 1.33, 0, 1];
+  for (let i = 0; i < 16; i++) {
+    rest[4 * 16 + i] = leftTPose[i] as number;
+    rest[5 * 16 + i] = rightTPose[i] as number;
+  }
   const corrected = withArmsDown(rest);
   for (let i = 0; i < 4; i++) {
     assert.deepEqual(bone(corrected, i), bone(rest, i), `bone ${i} moved`);
@@ -90,13 +98,28 @@ test('withArmsDown drops the arms about their shoulders and leaves the spine alo
   /* The shoulders did not translate. */
   assert.equal(left[13], bone(rest, 4)[13]);
   assert.equal(right[13], bone(rest, 5)[13]);
-  /* The basis rotated: column-major Rz(θ) puts cos(θ) in m[0], ±sin in m[1]/m[4]. */
-  const cos = Math.cos(ARM_DROP_RAD);
+  /*
+    The arm's Y column (its direction) lands at ARM_DROP_RAD below horizontal:
+    dir = (cos·dir₀ + rotation): for a +X arm rotating about −Z, dirY =
+    −sin(68°); for −X about +Z the same −sin.
+  */
   const sin = Math.sin(ARM_DROP_RAD);
-  assert.ok(Math.abs((left[0] ?? 0) - cos) < 1e-9 && Math.abs((left[1] ?? 0) - -sin) < 1e-9);
-  assert.ok(Math.abs((right[0] ?? 0) - cos) < 1e-9 && Math.abs((right[1] ?? 0) - sin) < 1e-9);
+  assert.ok(Math.abs((left[5] ?? 0) - -sin) < 1e-9, `left arm drop ${left[5]}`);
+  assert.ok(Math.abs((right[5] ?? 0) - -sin) < 1e-9, `right arm drop ${right[5]}`);
   /* And the correction composes: a still frame still returns the (corrected) rest. */
   assert.deepEqual(spatialPose(corrected, STILL), corrected);
+});
+
+test('withArmsDown is a no-op on arms already at the hang', () => {
+  /* A rest pose with arms already below the drop target must not be
+     double-dropped — the correction is calibrated, not blind. */
+  const rest = standingRest();
+  const hanging: number[] = [1, 0, 0, 0, 0, -1, 0, 0, 0, 0, -1, 0, 0.18, 1.33, 0, 1];
+  for (let i = 0; i < 16; i++) {
+    rest[4 * 16 + i] = hanging[i] as number;
+    rest[5 * 16 + i] = hanging[i] as number;
+  }
+  assert.deepEqual(withArmsDown(rest), rest);
 });
 
 test('deltas compose against rest, never against the previous frame', () => {

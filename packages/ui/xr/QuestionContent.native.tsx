@@ -38,11 +38,14 @@ const PAGE_SCALE = 1.1 / 3;
 const px = (n: number): number => Math.round(n * PAGE_SCALE * 10) / 10;
 
 const FONT = {
-  prompt: { fontSize: px(72), fontWeight: '700', color: XR_COLOR.onPanel } as TextStyle,
-  body: { fontSize: px(54), fontWeight: '600', color: XR_COLOR.onPanel } as TextStyle,
-  muted: { fontSize: px(42), fontWeight: '600', color: XR_COLOR.onPanelMuted } as TextStyle,
-  heading: { fontSize: px(64), fontWeight: '700', color: XR_COLOR.onPanel } as TextStyle,
-  mono: { fontSize: px(46), fontWeight: '600', fontFamily: 'monospace', color: XR_COLOR.onPanel } as TextStyle,
+  /* Explicit lineHeight — the software layer uses the font's own metrics
+     otherwise, and Hermes/FreeType leading is what stacked text "all over
+     the place" looked like on the panel. */
+  prompt: { fontSize: px(72), lineHeight: px(84), fontWeight: '700', color: XR_COLOR.onPanel } as TextStyle,
+  body: { fontSize: px(54), lineHeight: px(66), fontWeight: '600', color: XR_COLOR.onPanel } as TextStyle,
+  muted: { fontSize: px(42), lineHeight: px(54), fontWeight: '600', color: XR_COLOR.onPanelMuted } as TextStyle,
+  heading: { fontSize: px(64), lineHeight: px(76), fontWeight: '700', color: XR_COLOR.onPanel } as TextStyle,
+  mono: { fontSize: px(46), lineHeight: px(60), fontWeight: '600', fontFamily: 'monospace', color: XR_COLOR.onPanel } as TextStyle,
 };
 
 const GAP = px(18);
@@ -76,6 +79,10 @@ function MediaFrame({ source, resolved, onSettled, style }: {
       alignItems: 'center',
       justifyContent: 'center',
       minHeight: px(144),
+      /* A tall image must not eat the whole content band — cap it so the
+         rest of the page still composes. Absolute value, not a percent: the
+         parent column's height is auto, so Yoga would drop a % cap. */
+      maxHeight: px(1090),
     }, style]}>
       {resolved ? (
         <Image
@@ -186,11 +193,11 @@ function BlockView({ block, index, question, resolveMedia, onMediaSettled }: {
         <View style={{ gap: px(12), direction: rtl ? 'rtl' : 'ltr' }}>
           {block.items.map((item, i) => (
             <View key={i} style={{ flexDirection: 'row', gap: px(15), alignItems: 'flex-start' }}>
-              <Text style={[FONT.body, { minWidth: px(36), color: XR_COLOR.onPanelMuted }]}>
+              <Text style={[FONT.body, { minWidth: px(36), flexShrink: 0, color: XR_COLOR.onPanelMuted }]}>
                 {/* Semantic markers — localized numerals, not literal glyphs. */}
                 {block.style === 'numbered' ? `${numeral(i + 1, question.questionLocale)}.` : '▪'}
               </Text>
-              <Text style={[FONT.body, textStyle, { flex: 1 }]}>{item}</Text>
+              <Text style={[FONT.body, textStyle, { flex: 1, flexShrink: 1 }]}>{item}</Text>
             </View>
           ))}
         </View>
@@ -339,12 +346,50 @@ function BlockView({ block, index, question, resolveMedia, onMediaSettled }: {
 
 /** Split a paged layout's blocks into pages at block boundaries. */
 function pagesOf(blocks: readonly QuestionContentBlock[]): readonly (readonly QuestionContentBlock[])[] {
-  /* A rough per-page budget in block count — the surface paginates on
-     whole blocks, never slices one. */
-  const PAGE_BUDGET = 4;
-  const pages: QuestionContentBlock[][] = [];
-  for (let i = 0; i < blocks.length; i += PAGE_BUDGET) pages.push(blocks.slice(i, i + PAGE_BUDGET));
-  return pages.length > 0 ? pages : [[]];
+  /*
+    A per-page budget in ESTIMATED VERTICAL PIXELS, not block count — the
+    old `4 blocks` budget put a passage + a list + an image on one page and
+    the overflow clipped at the texture edge, which read as scattered text.
+    Whole blocks only: a block is never sliced, so a single oversize block
+    gets its own page.
+  */
+  const PAGE_HEIGHT = px(1980);           // the texture's authored height
+  const CHROME_RESERVE = px(72) + px(54) + px(60); // prompt + supporting + pager row
+  const PAGE_BUDGET = PAGE_HEIGHT - CHROME_RESERVE;
+  const CHARS_PER_LINE = 60;              // body width / ~0.5·fontSize
+  const blockCost = (b: QuestionContentBlock): number => {
+    const textLines = (t: string, cpl: number) =>
+      Math.max(1, Math.ceil(t.length / cpl));
+    switch (b.type) {
+      case 'text': return textLines(b.text, CHARS_PER_LINE) * px(66) + GAP;
+      case 'heading': return px(84) + GAP;
+      case 'list': return b.items.reduce((n, item) => n + textLines(item, CHARS_PER_LINE), 0) * px(66) + b.items.length * px(12) + GAP;
+      case 'passage': return textLines(b.text, CHARS_PER_LINE - 8) * px(66) + px(40) + (b.title ? px(76) : 0) + GAP;
+      case 'quote': return textLines(b.text, CHARS_PER_LINE - 4) * px(66) + px(24) + GAP;
+      case 'code': return (b.code.split('\n').length || 1) * px(60) + px(36) + GAP;
+      case 'image': case 'map': case 'video': case 'diagram':
+        return px(480) + GAP;
+      case 'image-grid': return Math.ceil(b.items.length / (b.columns ?? 2)) * px(360) + GAP;
+      case 'table': return (b.rows.length + 1) * px(66) + px(24) + GAP;
+      case 'timeline': return b.events.length * px(66) + GAP;
+      case 'equation': return px(180) + GAP;
+      case 'chart': return (b.chart.series.length + 1) * px(66) + px(36) + GAP;
+      case 'audio': case 'document-region': case 'board': return px(160) + GAP;
+      default: return px(200) + GAP;
+    }
+  };
+  const pages: QuestionContentBlock[][] = [[]];
+  let used = 0;
+  for (const block of blocks) {
+    const cost = blockCost(block);
+    if (used + cost > PAGE_BUDGET && pages[pages.length - 1]!.length > 0) {
+      pages.push([]);
+      used = 0;
+    }
+    pages[pages.length - 1]!.push(block);
+    used += cost;
+  }
+  return pages;
 }
 
 export function XrQuestionContent({
@@ -397,7 +442,7 @@ export function XrQuestionContent({
   );
 
   return (
-    <View style={{ flex: 1, padding: px(30), direction: rtl ? 'rtl' : 'ltr', gap: GAP, backgroundColor: XR_SURFACE.rail }}>
+    <View style={{ flex: 1, padding: px(30), direction: rtl ? 'rtl' : 'ltr', gap: GAP, backgroundColor: XR_SURFACE.rail, overflow: 'hidden' }}>
       {/* The prompt lives here, not in Rive — it IS content, and content
           is this surface's job. */}
       <Text style={[FONT.prompt, textStyle]}>{question.prompt}</Text>
@@ -406,7 +451,7 @@ export function XrQuestionContent({
       ) : null}
       {split ? (
         <View style={{ flexDirection: rtl ? 'row-reverse' : 'row', gap: GAP, flex: 1 }}>
-          <View style={{ flex: 1 }}>{ordered.filter((b) => b.type === layout.focus).map(blockView)}</View>
+          <View style={{ flex: 1, gap: GAP }}>{ordered.filter((b) => b.type === layout.focus).map(blockView)}</View>
           <View style={{ flex: 1, gap: GAP }}>{ordered.filter((b) => b.type !== layout.focus).map(blockView)}</View>
         </View>
       ) : (

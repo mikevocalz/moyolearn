@@ -31,13 +31,6 @@
         <Stroke thickness="3" cap="round" join="round"><SolidColor colorValue="FFFFC168" /></Stroke>
       </Shape>
     </Node>
-    <Node name="Status frame">
-      <Shape name="Status card">
-        <Rectangle x="1030" y="634" width="420" height="216" cornerRadiusTL="4" />
-        <Fill><SolidColor colorValue="F20E1420" /></Fill>
-        <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="66FFC168" /></Stroke>
-      </Shape>
-    </Node>
     <Node id="0:208" opacity="0" name="Feedback">
       <Shape name="Fb rule">
         <Rectangle x="1030" y="552" width="420" height="1" />
@@ -103,6 +96,13 @@
         <TextStylePaint id="0:370" fontSize="18" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="700" name="Weight" /><Fill><SolidColor colorValue="FFEC9787" /></Fill></TextStylePaint>
         <TextValueRun styleId="0:370" text="0"><DataBindContext sourcePathIds="0:40-0:140" propertyKey="268" converterId="0:61" /></TextValueRun>
       </Text>
+    </Node>
+    <Node name="Status frame">
+      <Shape name="Status card">
+        <Rectangle x="1030" y="634" width="420" height="216" cornerRadiusTL="4" />
+        <Fill><SolidColor colorValue="F20E1420" /></Fill>
+        <Stroke thickness="1" cap="round" join="round"><SolidColor colorValue="66FFC168" /></Stroke>
+      </Shape>
     </Node>
     <Node id="0:200" opacity="0" name="Loader" x="420" y="410">
       <Shape name="Track"><Ellipse x="0" y="0" width="176" height="176" /><Stroke thickness="1.2" cap="round" join="round"><SolidColor colorValue="22E9F4FA" /></Stroke></Shape>

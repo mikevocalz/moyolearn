@@ -161,14 +161,6 @@ textEl({ name: "Grab status", x: 540, y: 18, w: 200, align: "center", fs: 11, co
 brackets("Grab corners", 14, 14, 1266, 786, 34, AMBER, 3, "      ");
 push(`    </Node>`);
 
-/* One bordered card wraps the whole status column — ANSWER/RESULT/HINT/FAULT
-   all render inside it. It is drawn FIRST so the gated texts sit on top of
-   its fill, and it is always visible: the user expects the frame to stay
-   even when no layer inside is lit. y 526..742 encloses the cluster. */
-push(`    <Node name="Status frame">`);
-rectShape({ name: "Status card", x: 1030, y: 634, w: 420, h: 216, fill: "F20E1420", stroke: "66FFC168", sw: 1, cr: 4, indent: "      " });
-push(`    </Node>`);
-
 // ---------- feedback strip (right col, above footer) ----------
 push(`    <Node id="${ID.feedback}" opacity="0" name="Feedback">`);
 rectShape({ name: "Fb rule", x: 1030, y: 552, w: 420, h: 1, fill: HAIR, indent: "      " });
@@ -205,6 +197,16 @@ textEl({ name: "Err text", x: CX.x + 14, y: 682, w: 300, fs: 12, color: TEXT_HI,
   push(`        <TextValueRun styleId="${st.sid}" text="0"><DataBindContext sourcePathIds="${VM}-${P.errorCode.id}" propertyKey="268" converterId="0:61" /></TextValueRun>`);
   push(`      </Text>`);
 }
+push(`    </Node>`);
+
+/* One bordered card wraps the whole status column — ANSWER/RESULT/HINT/FAULT
+   all render inside it. RML siblings draw FRONT-TO-BACK, so it is emitted
+   AFTER the gated texts it underlays: emitted before them it painted its
+   95%-opaque fill over every one and they read at ~10% in the headset. It
+   is always visible: the frame stays even when no layer inside is lit.
+   y 526..742 encloses the cluster. */
+push(`    <Node name="Status frame">`);
+rectShape({ name: "Status card", x: 1030, y: 634, w: 420, h: 216, fill: "F20E1420", stroke: "66FFC168", sw: 1, cr: 4, indent: "      " });
 push(`    </Node>`);
 
 // ---------- entrance loader (window center 420,410) ----------

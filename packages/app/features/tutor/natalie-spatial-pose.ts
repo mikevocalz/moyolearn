@@ -106,6 +106,20 @@ function rotationZ(rad: number): Mat4 {
   return [c, s, 0, 0, -s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 }
 
+/** Rodrigues rotation about a unit axis, column-major. */
+function rotationAxisAngle(axis: readonly [number, number, number], rad: number): Mat4 {
+  const [x, y, z] = axis;
+  const c = Math.cos(rad);
+  const s = Math.sin(rad);
+  const t = 1 - c;
+  return [
+    c + x * x * t, y * x * t + z * s, z * x * t - y * s, 0,
+    x * y * t - z * s, c + y * y * t, z * y * t + x * s, 0,
+    x * z * t + y * s, y * z * t - x * s, c + z * z * t, 0,
+    0, 0, 0, 1,
+  ];
+}
+
 /** T(p)·R·T(−p)·M — rotate a world matrix about its own translation. */
 function rotateAbout(world: Mat4, rotation: Mat4): number[] {
   const px = at(world, 12);
@@ -162,34 +176,60 @@ export function spatialPose(rest: Mat4, frame: SpatialIdleView): number[] {
 }
 
 /*
-  How far the loaded T-pose drops to a natural hang, in radians — 68° off
-  horizontal leaves a soft bend at the shoulder rather than a plumb arm glued
-  to her side. Mirrored across the body: the left arm extends +X, the right −X.
+  How far below horizontal the arms should hang, in radians — 68° leaves a
+  soft bend at the shoulder rather than a plumb arm glued to her side. The
+  correction rotates each arm by however much ITS measured direction is short
+  of that elevation, about the axis perpendicular to the arm and gravity —
+  so a rig that is already mid-pose is not double-dropped, and the answer no
+  longer depends on the model's world yaw (a fixed world-Z rotation pitches a
+  yawed arm forward, not down).
 */
 export const ARM_DROP_RAD = (68 * Math.PI) / 180;
 const ARM_LEFT_INDEX = 4;
 const ARM_RIGHT_INDEX = 5;
+const DOWN: readonly [number, number, number] = [0, -1, 0];
 
 /**
  * The rest payload with the T-pose corrected — call it ONCE on the matrices
  * `getSkeletonBoneTransforms` returns, before handing them to `spatialPose`.
- * The model's node rest pose holds both arms straight out (what the headset
- * renders without bone writes); the GLB's skin bind pose has them down. A
- * fixed world-Z rotation about each shoulder's rest position closes the gap —
- * children (forearm, hand, fingers) follow the write because the native call
- * recurses.
+ * The bone's +Y column is the arm's direction (Blender convention — verified
+ * against the shipped skin): rotate it about `dir × down` by the shortfall to
+ * ARM_DROP_RAD of drop. Children (forearm, hand, fingers) follow the write
+ * because the native call recurses.
  */
 export function withArmsDown(rest: Mat4): number[] {
   if (rest.length !== SPATIAL_POSE_BONES.length * 16) {
     throw new RangeError('withArmsDown: rest must hold 16 floats per pose bone');
   }
   const out = rest.slice() as number[];
-  const corrected = (index: number, rad: number) => {
-    const m = rotateAbout(rest.slice(index * 16, index * 16 + 16), rotationZ(rad));
-    for (let i = 0; i < 16; i++) out[index * 16 + i] = at(m, i);
+  const corrected = (index: number) => {
+    const m = rest.slice(index * 16, index * 16 + 16);
+    const dx = at(m, 4);
+    const dy = at(m, 5);
+    const dz = at(m, 6);
+    const len = Math.hypot(dx, dy, dz);
+    if (len < 1e-6) return;
+    const dir: [number, number, number] = [dx / len, dy / len, dz / len];
+    const axis: [number, number, number] = [
+      dir[1] * DOWN[2] - dir[2] * DOWN[1],
+      dir[2] * DOWN[0] - dir[0] * DOWN[2],
+      dir[0] * DOWN[1] - dir[1] * DOWN[0],
+    ];
+    const axisLen = Math.hypot(axis[0], axis[1], axis[2]);
+    if (axisLen < 1e-4) return;
+    axis[0] /= axisLen;
+    axis[1] /= axisLen;
+    axis[2] /= axisLen;
+    /* Current drop below horizontal, and the shortfall to the target. A rig
+       already hanging is left alone rather than swept past vertical. */
+    const dropNow = Math.asin(Math.min(1, Math.max(-1, -dir[1])));
+    const shortfall = ARM_DROP_RAD - dropNow;
+    if (shortfall <= 0) return;
+    const rotated = rotateAbout(m, rotationAxisAngle(axis, shortfall));
+    for (let i = 0; i < 16; i++) out[index * 16 + i] = at(rotated, i);
   };
-  corrected(ARM_LEFT_INDEX, -ARM_DROP_RAD);
-  corrected(ARM_RIGHT_INDEX, ARM_DROP_RAD);
+  corrected(ARM_LEFT_INDEX);
+  corrected(ARM_RIGHT_INDEX);
   return out;
 }
 

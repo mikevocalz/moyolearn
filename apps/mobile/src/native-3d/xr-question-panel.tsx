@@ -189,6 +189,10 @@ export function XrQuestionPanel({
           position={[0, 0, 0]}
           /* 2× the artboard — the header micro-labels survive headset optics. */
           resolution={{ width: 2560, height: 1600 }}
+          /* The bridge's default blend is Alpha, which composites every
+             sub-1 texture alpha against the passthrough room. "None" writes
+             the face opaque — the requested 100% panel. */
+          blendMode="None"
           input={{ panelWorld, enabled: enabled && !grabbed, resetKey }}
           onError={(error) => onChromeError?.(`Question controls unavailable: ${error.message}`)}
           onRuntimeReady={(rt) => {

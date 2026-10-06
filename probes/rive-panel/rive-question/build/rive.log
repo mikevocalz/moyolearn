@@ -223,3 +223,66 @@
 [11:22:22.050] rive  built build/moyo_learning_question.riv (165012 bytes, 130ms, 0 errors, 0 warnings)
 [11:56:52.261] rive  verified (0 bytes, 155ms, 0 errors, 0 warnings)
 [11:56:52.437] rive  built build/moyo_learning_question.riv (165012 bytes, 133ms, 0 errors, 0 warnings)
+[13:50:31.004] rive  built build/moyo_learning_question.riv (165012 bytes, 157ms, 0 errors, 0 warnings)
+[13:50:31.005] rive  data: hintVisible = true
+[13:50:31.006] rive  data: hintAvailable = true
+[13:50:31.006] rive  data: hintText = Try counting in groups of two.
+[13:50:31.006] rive  showing LearningQuestion [1/1]
+[13:50:31.007] rive  viewport 1280x800 @1x
+[13:50:31.108] rive  wrote /tmp/q_hint.png
+[13:51:47.326] rive  built build/moyo_learning_question.riv (165012 bytes, 148ms, 0 errors, 0 warnings)
+[13:51:47.328] rive  data: hintVisible = true
+[13:51:47.328] rive  data: hintAvailable = true
+[13:51:47.328] rive  data: hintText = Try counting in groups of two.
+[13:51:47.329] rive  showing LearningQuestion [1/1]
+[13:51:47.330] rive  viewport 1280x800 @1x
+[13:51:47.478] rive  wrote /tmp/q_hint2.png
+[13:52:18.231] rive  built build/moyo_learning_question.riv (165012 bytes, 208ms, 0 errors, 0 warnings)
+[13:52:18.233] rive  data: hintVisible = true
+[13:52:18.233] rive  data: hintAvailable = true
+[13:52:18.233] rive  data: hintText = Try counting in groups of two.
+[13:52:18.235] rive  showing LearningQuestion [1/1]
+[13:52:23.610] rive  built build/moyo_learning_question.riv (165012 bytes, 133ms, 0 errors, 0 warnings)
+[13:52:23.611] rive  data: hintVisible = true
+[13:52:23.611] rive  data: hintAvailable = true
+[13:52:23.611] rive  data: hintText = Try counting in groups of two.
+[13:52:23.612] rive  showing LearningQuestion [1/1]
+[13:52:34.377] rive  built build/moyo_learning_question.riv (165012 bytes, 137ms, 0 errors, 0 warnings)
+[13:52:34.379] rive  data: grabbed = true
+[13:52:34.380] rive  showing LearningQuestion [1/1]
+[13:52:34.380] rive  viewport 1280x800 @1x
+[13:52:34.433] rive  wrote /tmp/q_grab.png
+[13:53:29.296] rive  built build/moyo_learning_question.riv (165007 bytes, 233ms, 0 errors, 0 warnings)
+[13:53:29.300] rive  data: hintText = Try counting in groups of two.
+[13:53:29.304] rive  showing LearningQuestion [1/1]
+[13:53:29.305] rive  viewport 1280x800 @1x
+[13:53:29.430] rive  wrote /tmp/q_hint3.png
+[13:53:55.374] rive  built build/moyo_learning_question.riv (164993 bytes, 154ms, 0 errors, 0 warnings)
+[13:53:55.377] rive  data: hintText = Try counting in groups of two.
+[13:53:55.379] rive  showing LearningQuestion [1/1]
+[13:53:55.380] rive  viewport 1280x800 @1x
+[13:53:55.459] rive  wrote /tmp/q_hint4.png
+[13:56:08.870] rive  built build/moyo_learning_question.riv (164993 bytes, 149ms, 0 errors, 0 warnings)
+[13:56:08.872] rive  data: hintText = Try counting in groups of two.
+[13:56:08.873] rive  showing LearningQuestion [1/1]
+[13:56:08.874] rive  viewport 1280x800 @1x
+[13:56:08.930] rive  wrote /tmp/q_red.png
+[13:57:13.157] error   scene.rml:82:1  [rml] duplicate id "0:365"; every authored id must be unique
+[13:57:13.157] rive  build failed (0 bytes, 130ms, 1 errors, 0 warnings)
+[13:57:20.150] rive  built build/moyo_learning_question.riv (165125 bytes, 151ms, 0 errors, 0 warnings)
+[13:57:20.154] rive  showing LearningQuestion [1/1]
+[13:57:20.155] rive  viewport 1280x800 @1x
+[13:57:20.197] rive  wrote /tmp/q_probe.png
+[13:58:46.252] rive  built build/moyo_learning_question.riv (165125 bytes, 152ms, 0 errors, 0 warnings)
+[13:58:46.257] rive  showing LearningQuestion [1/1]
+[14:00:41.697] rive  built build/moyo_learning_question.riv (165012 bytes, 150ms, 0 errors, 0 warnings)
+[14:00:41.699] rive  data: hintVisible = true
+[14:00:41.699] rive  data: hintAvailable = true
+[14:00:41.699] rive  data: hintText = Try counting in groups of two.
+[14:00:41.699] rive  data: answerValid = true
+[14:00:41.699] rive  data: answerText = 1/2
+[14:00:41.699] rive  data: feedbackBody = Nice work.
+[14:00:41.699] rive  data: feedbackTitle = Correct
+[14:00:41.701] rive  showing LearningQuestion [1/1]
+[14:00:41.702] rive  viewport 1280x800 @1x
+[14:00:41.791] rive  wrote /tmp/q_fixed.png
