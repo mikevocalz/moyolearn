@@ -156,6 +156,7 @@ test('Android rail starts exactly at the 600dp medium boundary', () => {
       platform: 'android',
       sizeClass: 'medium',
       heightDp: 800,
+      widthDp: 600,
       folds: [],
       isRTL: false,
     }).kind,
@@ -163,12 +164,26 @@ test('Android rail starts exactly at the 600dp medium boundary', () => {
   );
 });
 
-test('Android 599dp remains compact bottom navigation', () => {
+test('Android 599dp compact width still keeps the rail', () => {
+  // Compact width class alone no longer means the bottom bar: a 599dp window
+  // is wider than a phone, so only a genuinely narrow window (<480dp) drops.
   assert.equal(
     resolveAdaptiveNavigationPlacement({
       platform: 'android',
       sizeClass: 'compact',
       heightDp: 800,
+      widthDp: 599,
+      folds: [],
+      isRTL: false,
+    }).kind,
+    'rail-collapsed',
+  );
+  assert.equal(
+    resolveAdaptiveNavigationPlacement({
+      platform: 'android',
+      sizeClass: 'compact',
+      heightDp: 800,
+      widthDp: 479,
       folds: [],
       isRTL: false,
     }).kind,
@@ -182,6 +197,7 @@ test('Android 480dp is rail-eligible while 479dp stays on bottom navigation', ()
       platform: 'android',
       sizeClass: 'expanded',
       heightDp: 480,
+      widthDp: 900,
       folds: [],
       isRTL: false,
     }).kind,
@@ -192,6 +208,7 @@ test('Android 480dp is rail-eligible while 479dp stays on bottom navigation', ()
       platform: 'android',
       sizeClass: 'expanded',
       heightDp: 479,
+      widthDp: 900,
       folds: [],
       isRTL: false,
     }).kind,
@@ -205,6 +222,7 @@ test('Android 1600dp is the inclusive boundary for the expanded rail', () => {
       platform: 'android',
       sizeClass: 'large',
       heightDp: 900,
+      widthDp: 1599,
       folds: [],
       isRTL: false,
     }).kind,
@@ -215,6 +233,7 @@ test('Android 1600dp is the inclusive boundary for the expanded rail', () => {
       platform: 'android',
       sizeClass: 'extraLarge',
       heightDp: 900,
+      widthDp: 1600,
       folds: [],
       isRTL: false,
     }).kind,
@@ -222,7 +241,7 @@ test('Android 1600dp is the inclusive boundary for the expanded rail', () => {
   );
 });
 
-test('Android book posture keeps rail navigation on the logical start edge', () => {
+test('Android book posture keeps rail navigation on the physical right edge', () => {
   const book: FoldLayout = {
     orientation: 'vertical',
     state: 'halfOpened',
@@ -234,16 +253,21 @@ test('Android book posture keeps rail navigation on the logical start edge', () 
     height: 900,
   };
 
-  const placement = resolveAdaptiveNavigationPlacement({
-    platform: 'android',
-    sizeClass: 'expanded',
-    heightDp: 900,
-    folds: [book],
-    isRTL: false,
-  });
+  // The rail is physical like the Apple hardware column — it does not mirror
+  // under RTL.
+  for (const isRTL of [false, true]) {
+    const placement = resolveAdaptiveNavigationPlacement({
+      platform: 'android',
+      sizeClass: 'expanded',
+      heightDp: 900,
+      widthDp: 900,
+      folds: [book],
+      isRTL,
+    });
 
-  assert.equal(placement.kind, 'rail-collapsed');
-  assert.equal(placement.position, 'left');
+    assert.equal(placement.kind, 'rail-collapsed');
+    assert.equal(placement.position, 'right');
+  }
 });
 
 test('Android tabletop wins over height/width rail eligibility', () => {
@@ -256,6 +280,7 @@ test('Android tabletop wins over height/width rail eligibility', () => {
     platform: 'android',
     sizeClass: 'extraLarge',
     heightDp: 480,
+    widthDp: 1600,
     folds: [tabletopAt480],
     isRTL: true,
   });

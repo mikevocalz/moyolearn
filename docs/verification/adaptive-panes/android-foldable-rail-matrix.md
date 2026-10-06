@@ -17,7 +17,7 @@ The adaptive contract tests cover:
 - Android compact-height landscape
 - Android tabletop posture
 - Android book posture geometry
-- logical-start rail and RTL mirroring
+- physical right-edge rail (no RTL mirroring)
 - physical Apple hardware columns
 - window-space → pane-row-local fold conversion
 - off-row hinge filtering
@@ -41,8 +41,8 @@ CI cannot prove hinge behavior, touchability around the hinge, visual alignment,
 | Android dual-screen | FLAT + separating hinge | panes never straddle the hinge |
 | Android foldable | fold → unfold → fold | route, selected pane, scroll/draft state survive |
 | Android foldable | rotate while folded/unfolded | rail/bottom policy follows current window size |
-| Android tablet | medium/expanded | logical-start Material rail |
-| Android tablet | RTL | rail mirrors to logical end |
+| Android tablet | medium/expanded | physical right-edge Material rail |
+| Android tablet | RTL | rail stays on the physical right edge |
 | Android large/desktop window | >=1600dp | expanded labeled rail |
 | Android compact landscape | height <480dp | bottom navigation, even when width is wide |
 | Android foldable + inspector | book/trifold | inspector stays inside the trailing physical region |
