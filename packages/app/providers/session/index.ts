@@ -1,6 +1,7 @@
 export { SessionProvider, useAppSession, useSetContext } from './session';
 export { authClient } from './live';
 export { RoleSwitcher } from './role-switcher';
+export { getAuthMode, type AuthMode } from './auth-mode';
 export { ContextSwitcher, roleNoun } from './context-switcher';
 export { ScopeSwitcher } from './scope-switcher';
 export type { AppSession, AppUser, ActiveContext, ActiveContextKind, Membership, RoleKind } from './types';

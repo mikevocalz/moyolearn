@@ -149,7 +149,7 @@ grep -rnE "^[[:space:]]*(//|\*|/\*)[[:space:]]*.*\b(used to|it was|previously|th
 | `packages/app/providers/entitlements/gate-decision.test.ts:1` | // The client gate's unloaded branch, which used to render the CHILDREN — so with |
 | `packages/app/features/home/parent-home-content.tsx:205` | * that used to be missing everywhere is the split at the bottom: "waiting for |
 | `packages/app/features/home/student-home-content.tsx:15` | // The due-work read now has a visible failure. It used to be destructured for |
-| `packages/app/features/capture/CameraSheet.native.tsx:10` | // first (CLAUDE.md, "never invent a second way") — it was the worse one, on the |
+| `packages/app/features/capture/CameraSheet.native.tsx:10` | // first (CONTRIBUTING.md, "never invent a second way") — it was the worse one, on the |
 | `packages/app/features/capture/age-band.ts:223` | * This used to collapse to the plane's two-value register instead, which threw |
 | `packages/app/features/capture/upload-phase.test.ts:27` | // The P0 this file exists for: failed > 0 && online used to fall through |
 | `packages/app/features/capture/ocr-web.ts:7` | //    problems it is good. On handwriting it is poor — it was trained on print, |

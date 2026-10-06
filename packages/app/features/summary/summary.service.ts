@@ -22,7 +22,7 @@ import 'server-only';
 // model call that might pass the lint on flattery the second time. Only a
 // safety screen that fails EVEN the deterministic copy stops publication, and
 // that stop is a logged `suppressed` row, never a silent absence.
-// SOT: docs/pack/34-session-summary-reports.md §3 §4 §5 · docs/pack/08-visual-hierarchy-spacing-spec.md · CLAUDE.md §The block
+// SOT: docs/pack/34-session-summary-reports.md §3 §4 §5 · docs/pack/08-visual-hierarchy-spacing-spec.md · CONTRIBUTING.md §The block
 // SOT-KEYWORDS: summary service pipeline generate guardian report view teacher share token draft queue approve suppress viewed loop
 import { createHash, randomBytes } from 'node:crypto';
 import type { Auth } from '@acme/auth/server';
@@ -118,7 +118,7 @@ export type LoadSummaryQueue = () => Promise<readonly SessionSummaryReport[]>;
 /**
  * One narrative completion. Wrapped by the composition root around
  * `gateway.classify('summary-narrative', …)` — the classifier-tier cell, never
- * a frontier call and never a direct SDK import (CLAUDE.md §Children's
+ * a frontier call and never a direct SDK import (CONTRIBUTING.md §Children's
  * surfaces applies to every model call, and the gateway is the one door).
  */
 export type NarrativeModel = (payload: {

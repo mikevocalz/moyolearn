@@ -7,7 +7,7 @@ referenced here where a shared surface (the header, the skip link, the document
 outline) had to be measured to judge these six.
 Every number below is measured off the BUILT page under `vite preview`, not read
 off the source.
-SOT: .claude/skills/accessibility-review · docs/site/tokens.md
+SOT: docs/site/tokens.md
      docs/site/motion-matrix.md · docs/site/critique/landing-chapters-03-09.md
 SOT-KEYWORDS: a11y accessibility wcag 2.2 aa reflow 320 heading-order landmarks
               contrast targets reduced-motion site chapters web-vite

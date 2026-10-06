@@ -1,7 +1,7 @@
 /**
  * /privacy — Moyo's privacy policy.
  *
- * SOT: .claude/skills/ux-copy/SKILL.md · apps/web-vite/src/copy/content-pages.ts
+ * SOT: apps/web-vite/src/copy/content-pages.ts
  * SOT-KEYWORDS: route privacy page data policy legal content page web-vite
  */
 import { createFileRoute } from '@tanstack/react-router';

@@ -2,7 +2,7 @@
 // Barrel-completeness check — fails if a module exists but no entry point reaches it.
 // An unexported component is invisible to the "search before you build" rule, so it
 // gets rebuilt as a duplicate: this check is the mechanical catch for that slop (doc 11 §8).
-// SOT: docs/pack/11-architectural-guardrails.md §8 · CLAUDE.md ("packages/ui/index.ts is the component index")
+// SOT: docs/pack/11-architectural-guardrails.md §8 · CONTRIBUTING.md ("packages/ui/index.ts is the component index")
 // SOT-KEYWORDS: barrel completeness index orphan export check duplicate-component
 // ponytail: walks relative re-export edges only — a bundler-grade resolver is not needed
 // to answer "is this file reachable from the package's public API".

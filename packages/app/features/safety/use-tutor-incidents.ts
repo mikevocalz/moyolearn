@@ -5,7 +5,7 @@
 // here.
 //
 // The append mutation posts `{incidentId, note}` and NOTHING identifying —
-// the actor comes from `ctx` on the server (CLAUDE.md §The block). No
+// the actor comes from `ctx` on the server (CONTRIBUTING.md §The block). No
 // optimistic update on purpose: the timeline is an audit trail, and a line
 // shown before the append-only door accepted it would be a line the record
 // might not hold. On failure the composer's text survives in the screen's own

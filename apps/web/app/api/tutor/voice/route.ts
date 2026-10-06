@@ -17,7 +17,7 @@
 //         one clock. Only when a face host is configured;
 //   204 — text-only. Budget spent, voice unconfigured, vendor down: all the
 //         same silence, because a child keeps reading either way and none of
-//         those states is theirs to see (doc 32 §2, CLAUDE.md §Children's
+//         those states is theirs to see (doc 32 §2, CONTRIBUTING.md §Children's
 //         surfaces);
 //   403 — the payload did not verify. No legitimate client produces this.
 // SOT: docs/pack/32-tutor-voice-tone.md §2 §3 · apps/web/lib/voice-utterance.ts

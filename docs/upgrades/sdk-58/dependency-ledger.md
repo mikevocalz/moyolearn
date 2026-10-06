@@ -184,7 +184,7 @@ version isolation, and every Argent run.
 
 # Web verification, 2026-09-17 — and one regression it caught
 
-Three subagents, web only. Every claim below was re-run first-hand before being repeated.
+Three independent passes, web only. Every claim below was re-run first-hand before being repeated.
 
 ## better-auth 1.7.5 broke `account` inserts — reverted
 

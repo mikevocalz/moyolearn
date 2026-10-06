@@ -94,7 +94,14 @@ export function Schedule({
   return (
     // Recessed canvas: the grid card is surface-raised, so a deeper ground is
     // what makes it read as a floating sheet rather than a bordered box.
-    <Dial temperature="cool">
+    /*
+      `flex-1` is LOAD-BEARING here, per Dial's own contract: it renders a real
+      View, so without it the chain scene → Dial → Container → ScheduleGrid
+      breaks and the `flex-1`s below collapse — the grid compressed to a 5px
+      border line and the whole body vanished on the Duo while the controls
+      row (intrinsic height) survived.
+    */
+    <Dial temperature="cool" className="flex-1">
       <Container
         // Inside a split pane the PANE is the measure constraint, so a second cap
         // on top of it just leaves dead space to the right — collapsing the

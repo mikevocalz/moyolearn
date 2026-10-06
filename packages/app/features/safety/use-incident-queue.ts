@@ -13,7 +13,7 @@
 // triage on the web rail view — `useTriageIncident` below is that view's
 // mutation. It posts only what the PATCH validates (`incidentId` plus the
 // lifecycle fields) and NEVER the actor: identity is not client input
-// (CLAUDE.md §The block), the audit line's actor comes from `ctx` server-side.
+// (CONTRIBUTING.md §The block), the audit line's actor comes from `ctx` server-side.
 //
 // NO OPTIMISTIC UPDATE, deliberately — the same rule as the tutor note append:
 // a triage move is an audit-trail write, and a row shown moved before the

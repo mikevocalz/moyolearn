@@ -1,5 +1,5 @@
 // GET /api/ops/leads/:id — one CRM record, for the route-based lead detail.
-// SOT: design/screens/org/org.crm/contract.md · docs/pack/28-crm-spec.md §2 · CLAUDE.md (The block)
+// SOT: design/screens/org/org.crm/contract.md · docs/pack/28-crm-spec.md §2 · CONTRIBUTING.md (The block)
 // SOT-KEYWORDS: ops api lead detail record crm protected operation route
 import { NextRequest, NextResponse } from 'next/server';
 import {

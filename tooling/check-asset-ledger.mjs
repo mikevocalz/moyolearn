@@ -11,7 +11,7 @@
 //
 // The licence DOCUMENT never enters the repository. `evidence` is a reference
 // to wherever invoices are held.
-// SOT: packages/avatar/src/assets.ts `AssetRights` · .claude/skills/motion-retarget
+// SOT: packages/avatar/src/assets.ts `AssetRights` · docs/decisions/adr-113-body-motion-layer.md
 // SOT-KEYWORDS: asset ledger rights licence check gate avatar manifest provenance
 import { readFileSync } from 'node:fs';
 

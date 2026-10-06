@@ -9,7 +9,7 @@
 // `subjectLearnerId` IS in the body and is CHECKED rather than trusted: the
 // service intersects it with the caller's own active wards, so a report about a
 // child the caller has no relationship with is not a report, it is a write into
-// somebody else's record. Identity is never a parameter (CLAUDE.md §The block);
+// somebody else's record. Identity is never a parameter (CONTRIBUTING.md §The block);
 // the SUBJECT is a parameter, so it is a parameter that gets verified.
 //
 // An anonymous submission drops the reporter id in the ROW, not merely in the

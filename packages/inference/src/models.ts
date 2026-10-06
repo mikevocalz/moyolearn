@@ -13,7 +13,7 @@
 // hand-built request cannot smuggle one past either. Two guards, one fact.
 //
 // Prices are list USD per million tokens and exist for the budget in §7, not
-// for display: CLAUDE.md forbids a price rendering on a learner surface, and a
+// for display: CONTRIBUTING.md forbids a price rendering on a learner surface, and a
 // number that never leaves this package cannot.
 // SOT: docs/design/inference-gateway.md §2.2 §3 · docs/pack/18-tutor-ai-stack.md §2 · docs/pack/12-systems-design-prompt.md §7
 // SOT-KEYWORDS: model profile capability effort adaptive thinking cache prefix price routing frontier haiku

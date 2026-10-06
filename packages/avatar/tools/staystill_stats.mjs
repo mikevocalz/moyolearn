@@ -35,7 +35,7 @@
   labelled l_aro clips sweep 122-144 deg of this yaw while l_pho (look at
   phone, no head turn) stays inside 13 deg.
 
-  SOT: packages/avatar/src/idle/config.ts · .claude/skills/life-layer/SKILL.md
+  SOT: packages/avatar/src/idle/config.ts · docs/decisions/adr-113-body-motion-layer.md
   SOT-KEYWORDS: staystill stats weight shift interval duration sway bvh lafan distributions look around gaze head yaw rate
 */
 import { execFileSync, spawnSync } from 'node:child_process';

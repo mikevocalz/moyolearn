@@ -16,7 +16,7 @@
 | `queries/<name>.keys.ts` | *"single source of truth for keys"* | globalization, client cache |
 | `index.ts` | *"Public API — nothing deep-imported from outside"* | module boundary |
 
-Plus the generator **refuses to overwrite an existing file**. So the pattern isn't documented-and-hoped-for; it's *emitted*, which is stronger than any CLAUDE.md sentence.
+Plus the generator **refuses to overwrite an existing file**. So the pattern isn't documented-and-hoped-for; it's *emitted*, which is stronger than any CONTRIBUTING.md sentence.
 
 **Therefore this doc adds three things only:** (a) the missing shared primitive every service calls, (b) lint rules that turn those header comments from requests into build errors, (c) the working discipline that keeps quality from decaying across sessions. No new architecture, no new dependencies.
 
@@ -71,7 +71,7 @@ Payload admin UI · Stripe hosted Checkout & Billing Portal · Better Auth endpo
 
 ## 8. The discipline layer — how quality survives session 40
 **Anti-forgetting** (the agent starts every session blank; these are the memory):
-- `CLAUDE.md` — rules only, short, in the repo root. Architecture lives in this pack, not there.
+- `CONTRIBUTING.md` — rules only, short, in the repo root. Architecture lives in this pack, not there.
 - **SOT header + keywords** in every file; **grep-first** before reading anything (the biggest token saving in the method).
 - **The generator** — scaffold, never hand-roll; the pattern can't be mistyped if it's emitted.
 - **Lint + `turbo typecheck`** — the rules that survive a context window.
@@ -81,8 +81,8 @@ Payload admin UI · Stripe hosted Checkout & Billing Portal · Better Auth endpo
 | Slop | Caught by |
 |---|---|
 | Hallucinated API/package | no-invented-APIs rule + `turbo typecheck` + catalog single-version |
-| Placeholder / stub / "TODO: implement" | definition of done; delivery rule in CLAUDE.md |
-| Narrating comments | review; CLAUDE.md comment policy (decisions only) |
+| Placeholder / stub / "TODO: implement" | definition of done; delivery rule in CONTRIBUTING.md |
+| Narrating comments | review; CONTRIBUTING.md comment policy (decisions only) |
 | Duplicate component or type | white-lie prompt (§9) + barrel index + generator refusing to overwrite |
 | Raw values / off-token styling | spacing + token lint |
 | `any`, `@ts-expect-error` | ESLint + strict base |
@@ -100,7 +100,7 @@ Payload admin UI · Stripe hosted Checkout & Billing Portal · Better Auth endpo
 - **Git guardrail:** the agent may read status/history; `reset --hard`, `checkout --force`, `rebase`, `clean`, and force-push require you naming the command.
 
 ## 10. PRs (revised — no new framework, no `domain-services` package)
-- **PR-26 · Agent surface (Wave 1, first):** `CLAUDE.md`, `PROMPTS.md`, SOT headers across existing modules, grep-first rule, generator emits SOT header + `server-only` + block skeleton, barrel-completeness check.
+- **PR-26 · Agent surface (Wave 1, first):** `CONTRIBUTING.md`, `PROMPTS.md`, SOT headers across existing modules, grep-first rule, generator emits SOT header + `server-only` + block skeleton, barrel-completeness check.
 - **PR-27 · Enforcement (Wave 1):** the six lint rules in §6 on the existing eslint config, wired into `turbo lint`.
 - **PR-24 · Core primitives (Wave 3, with real auth):** `packages/app/core/protected-operation.ts`, `OperationContext`, typed error mapping, audit write path, typed fetch wrapper (§2.3).
 - **PR-25 · Registry (Wave 3):** `packages/app/permissions` as plans/resources/permissions/nav/copy with derived types; Payload collection + field access as layer two.

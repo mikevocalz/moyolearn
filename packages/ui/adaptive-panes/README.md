@@ -346,11 +346,67 @@ State is Zustand. There is no `useState` in this module.
 
 ## Verification status
 
-The policy modules are `node --test`ed (`pnpm --filter @acme/ui test`). The
-divider's drag, the pane transitions and focus traversal between panes are
-implemented but **unverified on a device in this promotion pass** — the module
-was proven on Android at its old path; re-verification on iOS/web devices is
-owed before §0's "working everywhere" is claimed.
+The policy modules are `node --test`ed (`pnpm --filter @acme/ui test`).
+Physical Android foldable behavior was verified on a **Surface Duo** on
+2026-10-05 — hinge-snapped panes in book posture, fold/unfold state
+continuity, the Material edge rail, and pushed-route back affordances.
+The run record with raw `FoldingFeature` captures is
+`docs/verification/adaptive-panes/surface-duo-run-2026-10-05.md`.
+iOS and web devices are still owed the same pass before §0's
+"working everywhere" is claimed there.
+
+## Making the Android foldable + rail path work — the full wiring
+
+This is the checklist for reproducing the Duo-verified setup. There is no
+expo-router SplitView patch and none is needed: SplitView is iOS-only in
+SDK 58, so on Android this module IS the SplitView-equivalent renderer —
+the pieces below are what make it receive real hinge data and sit inside
+the shell correctly.
+
+1. **Native fold data** — `apps/mobile/modules/reserved-regions` is a local
+   Expo Modules 2 module (the conventional `modules/` dir — autolinking picks
+   it up, no package.json entry needed). It bridges Jetpack WindowManager's
+   `WindowInfoTracker` → `FoldingFeature` into `ReservedRegion` records and
+   emits a `"changed"` event. JS side: `useReservedRegions()` in
+   `reserved-regions.native.ts` queries it once per window-size change and
+   subscribes on Android only. Requires a **dev-client / production build** —
+   Expo Go ships no local modules.
+2. **Geometry conversion** — `use-fold-layout.native.ts` converts window-space
+   regions to pane-row-local coordinates (`foldLayoutsFromRegions`). The row
+   origin must be measured before folds apply; until then the host returns no
+   folds rather than snapping to window-x. (#82 — window-vs-row was THE bug.)
+3. **Rail policy** — `ShellTabBar` renders the Material rail at medium+ width
+   on edge placements; below that it is bottom navigation. The rail is part of
+   the `(drawer)/(tabs)` composition — pushed routes that render OUTSIDE that
+   group have no rail at all (see 5).
+4. **Pushed-route stack seeding** — every role group layout
+   (`(guardian)`, `(teacher)`, `(org)`, `(tutor)` groups, `(learner)`) sets
+   `unstable_settings.initialRouteName` so a cross-context push reseeds the
+   shell underneath the pushed screen, AND each `(tabs)` layout sets
+   `initialRouteName` to its home tab so a seeded stack's hardware-back lands
+   on Home, not the alphabetically-first tab. Without both, a compact-width
+   card tap pushes a screen with no way back and Back exits the app.
+5. **Back affordance on pushed routes** — `apps/mobile/components/
+   ShellBackRail.tsx` renders on edge-rail layouts when the route has no
+   `(tabs)` segment: a rail-width column with Back anchored above the
+   menu-button slot, navigating to the parent path via `replace` so it works
+   even when the navigator reports no poppable history.
+6. **Two-pane collapse correctness** — `CollapsiblePane` animates width only;
+   its inner child re-wraps on real layout. `measured` must be invalidated in
+   the same render-phase reset that drops `grown`, or a one-frame visibility
+   flicker during fold/toggle recomputes poisons the pane with a stale width
+   forever (detail content offset + clipped mid-glyph — the "bleeding into
+   the left pane" symptom).
+7. **Scrollbar policy** — `tw.tsx`'s ScrollView primitive defaults
+   `showsVerticalScrollIndicator={false}`; screen-level ScrollViews should
+   never opt back in without a reason.
+8. **Verifying on hardware** — `cmd device_state state 0..3` overrides the
+   Duo through CLOSED / HALF_OPENED / OPENED / FOLDED and drives the REAL
+   `FoldingFeature` pipeline (the module logs every feature to logcat tag
+   `ReservedRegions`, TEMP-DEBUG). `wm size` only exercises width classes —
+   it cannot produce a `separating` hinge.
+
+## Testing
 
 ## Testing
 

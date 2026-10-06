@@ -36,7 +36,7 @@ export interface AccentClasses {
    * resolves to ink[950] in BOTH themes. The block beneath it is a saturated
    * accent that does not change between light and dark, so its foreground must
    * not either: `text-text-inverse` would flip with the theme and be wrong half
-   * the time, and raw `text-white` (which this replaces) is banned by CLAUDE.md
+   * the time, and raw `text-white` (which this replaces) is banned by CONTRIBUTING.md
    * and shipped under AA on three accents — white on the 500 step measured
    * ember 3.44, sky 4.32, gold 4.46 against the 4.5 body-text bar.
    *

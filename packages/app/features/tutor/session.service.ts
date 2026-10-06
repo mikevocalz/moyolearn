@@ -5,7 +5,7 @@
 // zustand store is a cache of it. This file is what makes "finish it in the
 // car" true: the same learner, on any device, resolves the SAME open session.
 //
-// Identity is absent from every input shape on purpose (CLAUDE.md §The block).
+// Identity is absent from every input shape on purpose (CONTRIBUTING.md §The block).
 // `sessionId` is the one client-supplied handle, and it is never trusted on its
 // own — every port is scoped by `ctx.learnerId` at the repository, so naming
 // someone else's session resolves to nothing rather than to their homework.
@@ -13,7 +13,7 @@
 // Ports are injected rather than imported: only repositories touch Payload, and
 // a service that reached for one directly would drag the whole CMS into the
 // mobile bundle the moment a feature imported it.
-// SOT: docs/pack/23-tutorstage-handoff.md · CLAUDE.md §The block
+// SOT: docs/pack/23-tutorstage-handoff.md · CONTRIBUTING.md §The block
 // SOT-KEYWORDS: tutor session service conversation persistence cross-device resume attachment retention protected operation
 import 'server-only';
 import { randomUUID } from 'node:crypto';
@@ -165,7 +165,7 @@ export async function openSession(
     /*
       Read from the gateway, which is the only thing that counts turns, using
       the learner id from `ctx` — the budget key is never a parameter
-      (CLAUDE.md §The block). This is a read: it debits nothing, and it opens no
+      (CONTRIBUTING.md §The block). This is a read: it debits nothing, and it opens no
       socket to a provider.
     */
     const budget = await gateway.budgetState(ctx.learnerId);

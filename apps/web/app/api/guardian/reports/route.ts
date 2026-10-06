@@ -8,7 +8,7 @@
 // gets an empty list rather than an error, because "you have no reports" and
 // "you may see no reports" must be indistinguishable from outside.
 //
-// Free `practise` floor: doc 05 §1.2 and CLAUDE.md — a lapsed card never
+// Free `practise` floor: doc 05 §1.2 and CONTRIBUTING.md — a lapsed card never
 // stands between a family and the record of their child's learning.
 // SOT: docs/pack/34-session-summary-reports.md §5 · packages/app/features/summary/summary.service.ts
 // SOT-KEYWORDS: guardian reports api route family feed cards summary list protected operation

@@ -34,7 +34,7 @@ directly:
 | `packages/app/features/capture/read-attachment.native.ts` | attachment reading |
 | `apps/mobile/src/executorch.native.ts` / `.ts` | platform-forked bootstrap |
 
-CLAUDE.md is unambiguous about which way this resolves: *"verify the pattern
+CONTRIBUTING.md is unambiguous about which way this resolves: *"verify the pattern
 exists before using it; never invent a second way to do something that already
 has a way."* A second router beside `packages/inference` would be exactly that.
 
@@ -82,4 +82,4 @@ Zustand store, not in `routing.ts`.
 
 Zustand-only for the new scheduling state · no invented APIs — every seam cites a
 repo file · the existing pattern wins over the brief's parallel structure, per
-CLAUDE.md.
+CONTRIBUTING.md.

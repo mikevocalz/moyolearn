@@ -7,7 +7,7 @@
 // overlay, no "closer / steady / light / glare" hints, no age-band shutter, no
 // crop. A child photographing a worksheet that way hands the OCR exactly the
 // picture it reads worst, so the second camera was not merely a duplicate of the
-// first (CLAUDE.md, "never invent a second way") — it was the worse one, on the
+// first (CONTRIBUTING.md, "never invent a second way") — it was the worse one, on the
 // surface where reading the page matters most.
 //
 // A SHEET RATHER THAN THE ROUTE. `CaptureScreen` ends by navigating, and

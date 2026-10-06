@@ -63,7 +63,7 @@ export const SafetyEvents: CollectionConfig = {
       extended is not retention. Guardian scoping happens in
       `apps/web/lib/safety-event.repository.ts`, which resolves the acting
       guardian's active guardianships before it queries — identity is never a
-      parameter (CLAUDE.md §The block), so it cannot be expressed here.
+      parameter (CONTRIBUTING.md §The block), so it cannot be expressed here.
     */
     update: () => false,
   },

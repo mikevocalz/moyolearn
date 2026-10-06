@@ -5,7 +5,8 @@
 //
 // ADAPTIVE FORMS, ONE ITEM LIST. Window size + native fold posture decide the
 // presentation: compact Android and tabletop posture use the bottom bar;
-// ordinary Android tablets/foldables use a logical-start Material rail;
+// ordinary Android tablets/foldables use a Material rail on the PHYSICAL right
+// edge — like the iPhone Duo's hardware column it does not mirror under RTL;
 // extra-large Android windows use the expanded labeled rail. Apple hardware
 // columns stay physical while ordinary regular-width Apple windows use their
 // leading sidebar convention. Expo Router remains the route owner in every form.
@@ -88,10 +89,16 @@
 // `react-navigation` entry did not carry them; 58 added an `exports` map, so
 // that deep path is no longer resolvable and the public entry is the answer.
 import { BottomTabBar, type BottomTabBarProps } from 'expo-router/js-tabs';
-import type { ComponentType, ReactNode } from 'react';
-import { I18nManager, Platform, useWindowDimensions, type ColorValue } from 'react-native';
+import type { DrawerContentComponentProps } from 'expo-router/drawer';
+import {
+  CommonActions,
+  DrawerActions,
+  useNavigation,
+} from 'expo-router/react-navigation';
+import { type ComponentType, type ReactNode } from 'react';
+import { I18nManager, Platform, useColorScheme, useWindowDimensions, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { navChrome } from '@acme/theme';
+import { navChrome, semantic } from '@acme/theme';
 import {
   PaneEdgesContext,
   foldLayoutsFromRegions,
@@ -105,11 +112,28 @@ import {
 } from '@acme/ui';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import { haptics } from '@acme/ui/haptics';
+import { Menu as MenuIcon, X as XIcon } from '@acme/ui/icons';
+import { getAuthMode, RoleSwitcher } from '@acme/app';
 
 // `--spacing-nav-rail`, read from the token so the rail's JS width and its
 // class stay one number. `px-2` on the bottom bar, in points.
 const NAV_RAIL_WIDTH = parseInt(navChrome.rail, 10);
 const NAV_RAIL_EXPANDED_WIDTH = parseInt(navChrome.railExpanded, 10);
+const NAV_RAIL_RAISED = parseInt(navChrome.raised, 10);
+const NAV_INDICATOR_SIZE = parseInt(navChrome.indicator, 10);
+/*
+  The top bar's measured block: `min-h-14` is 56 and `border-b-2` adds its own
+  2, so the rail's top-anchored items start under the header's bottom rule
+  instead of beside it. There is no height token — the header owns the number.
+*/
+const SHELL_HEADER_BLOCK = 58;
+/*
+  Height the rail reserves at its foot for the menu slot — the 44 adult
+  touch-target plus a breath of space. Chrome-flat by request: no rule, no
+  fill. The bar's `paddingBottom` clears exactly this so items never stack
+  under it.
+*/
+const NAV_MENU_ZONE = 60;
 const BAR_GUTTER = 8;
 
 /**
@@ -141,7 +165,7 @@ export function useHardwareEdgeColumn(): number {
  *
  * Android follows Material 3 Adaptive semantics using the SAME WindowManager
  * data as AdaptivePanes: compact -> bottom, tabletop -> bottom, otherwise a
- * logical-start rail, with extra-large windows getting the expanded wide rail.
+ * right-edge rail, with extra-large windows getting the expanded wide rail.
  *
  * Apple first honours a physical Duo-style hardware column. Ordinary compact
  * iPhone windows stay bottom; regular-width iPad/tablet windows use a leading
@@ -149,7 +173,7 @@ export function useHardwareEdgeColumn(): number {
  */
 export function useShellNavigationPlacement(): AdaptiveNavigationPlacement {
   const sizeClass = useWindowSizeClass();
-  const { height } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const regions = useReservedRegions();
   const folds = foldLayoutsFromRegions(regions);
   const hardwareEdge = useHardwareEdgeColumnInfo();
@@ -160,6 +184,7 @@ export function useShellNavigationPlacement(): AdaptiveNavigationPlacement {
     platform,
     sizeClass,
     heightDp: height,
+    widthDp: width,
     folds,
     hardwareEdge,
     isRTL: I18nManager.isRTL,
@@ -205,6 +230,21 @@ interface ShellTabBarProps extends BottomTabBarProps {
   items: ShellTabItem[];
   placement: AdaptiveNavigationPlacement;
   /**
+   * Where the rail's item cluster sits vertically. `center` is the historical
+   * look — the cluster floats mid-rail. `top` pins the first item under the
+   * header's bottom rule, so the column reads chrome-then-destinations like
+   * the web rail's brand row does.
+   */
+  railAlignment?: 'top' | 'center';
+  /**
+   * Whether this shell's tabs sit inside a navigator-level `expo-router`
+   * Drawer holding the shell's off-rail destinations. When set, the rail
+   * carries a footer menu button that dispatches `DrawerActions.openDrawer()`
+   * — the button only exists when there ARE extra screens, and the drawer
+   * itself is owned by the shell's (drawer) layout, never drawn here.
+   */
+  hasOverflowDrawer?: boolean;
+  /**
    * Hot shells pass the learner's band so item height clears the band's target
    * token; Cool shells omit it and get the adult 44.
    */
@@ -229,10 +269,13 @@ export function ShellTabBar({
   insets: tabInsets,
   items,
   placement,
+  railAlignment = 'center',
   targetClass,
   raisedTargetClass,
+  hasOverflowDrawer = false,
 }: ShellTabBarProps) {
   const insets = useSafeAreaInsets();
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   /*
     The FIVE-band hook, not the binary `useSizeClass`. Both read the window,
     but they answer different questions: the binary 768 split decides one-column
@@ -261,6 +304,12 @@ export function ShellTabBar({
     not get buzzed for navigating.
   */
   const reducedMotion = useReducedMotion();
+  /*
+    The tabs navigation — the drawer's child. `openDrawer` dispatched here is
+    not an action a tab router handles, so it bubbles to the Drawer ancestor,
+    which is exactly where the shell's overflow drawer lives.
+  */
+  const navigation = useNavigation();
 
   const rendered = items.map((item) => {
     const index = state.routes.findIndex((route) => route.name === item.name);
@@ -551,8 +600,24 @@ export function ShellTabBar({
     the navigator rather than a second native navigation owner.
   */
   if (Platform.OS === 'android' && rail) {
+    /*
+      The Material renderer ships its own theme colours (white card, platform
+      border, tinted active pill). Recolour it with the same tokens the custom
+      rail paints by className — surface-footer chrome, on-surface-footer ink
+      and rule, nav-selected indicator — so the rail is the SAME colour on
+      every platform. Token values are resolved per scheme the way xr-colors.ts
+      already does; the hex stays in the token file, not here.
+    */
+    const railSurface = semantic['surface-footer'][scheme];
+    const railInk = semantic['on-surface-footer'][scheme];
+    const railSelected = semantic['nav-selected'][scheme];
+    const railOnSelected = semantic['on-nav-selected'][scheme];
+    const railOnCta = semantic['on-nav-cta'][scheme];
+
+
+
     const materialDescriptors = Object.fromEntries(
-      state.routes.map((route) => {
+      state.routes.map((route, routeIndex) => {
         const descriptor = descriptors[route.key]!;
         const item = items.find((candidate) => candidate.name === route.name);
 
@@ -565,36 +630,197 @@ export function ShellTabBar({
               tabBarPosition: placement.position,
               tabBarVariant: 'material' as const,
               tabBarLabelPosition: railExpanded ? ('beside-icon' as const) : ('below-icon' as const),
+              tabBarActiveTintColor: railOnSelected,
+              tabBarInactiveTintColor: railInk,
+              /*
+                Material's stock active treatment is a fill across the whole
+                item cell. The house treatment is the icon-hugging indicator —
+                painted inside tabBarIcon below — so the cell itself stays
+                transparent and the rail matches the custom one exactly.
+              */
+              tabBarActiveBackgroundColor: 'transparent',
+              tabBarInactiveBackgroundColor: 'transparent',
               tabBarStyle: [
                 descriptor.options.tabBarStyle,
                 {
+                  /*
+                    The bar lives INSIDE a wrapper that also holds the menu
+                    overlay, so it must claim the wrapper's height itself
+                    (`top/bottom` on a non-absolute child only offset, they do
+                    not stretch). Bottom padding clears the menu zone so a
+                    short window can never stack items under it.
+                  */
+                  flex: 1,
+                  paddingBottom:
+                    insets.bottom + (hasOverflowDrawer ? NAV_MENU_ZONE : 0),
                   width: railExpanded ? NAV_RAIL_EXPANDED_WIDTH : NAV_RAIL_WIDTH,
+                  backgroundColor: railSurface,
+                  borderColor: railInk,
+                  // The renderer's edge rule is a hairline; the house rail
+                  // draws the same 2px ink rule the custom rail does.
+                  borderLeftWidth: placement.position === 'right' ? 2 : 0,
+                  borderRightWidth: placement.position === 'left' ? 2 : 0,
+                  /*
+                    The Material rail pads each side by 12 + inset; with the
+                    item's own 10px padding that leaves ~52dp for a one-line
+                    label, so two-word destinations ellipsise ("My St…"). The
+                    inset half is load-bearing (it clears the physical screen
+                    edge); the 12 spacing half is not. Drop the spacing, keep
+                    the inset, and the 96 rail fits the full label again.
+                  */
+                  paddingStart: placement.position === 'left' ? insets.left : 0,
+                  paddingEnd: placement.position === 'right' ? insets.right : 0,
+                  ...(railAlignment === 'top'
+                    ? { paddingTop: insets.top + SHELL_HEADER_BLOCK }
+                    : {}),
                 },
               ],
+              /*
+                The stock 10px side padding is what actually cut "My St…":
+                the rail is the 80 narrow variant, its inner column keeps
+                `insets.right`, and a `text-label` at the hot dial needs the
+                full column width. The cell content is centered (40px
+                indicator, centered one-line label), so side padding buys
+                nothing — zero it and the label gets all ~70dp. Vertical
+                padding tracks the custom rail's `py-1` (4) / `py-stack`
+                (~10–14) rhythm instead of Material's flat 10.
+
+                Material's sidebar column has no `justifyContent` hook and its
+                content view always stacks from the top — so `center` is
+                rebuilt here: `marginTop: 'auto'` on the first item and
+                `marginBottom: 'auto'` on the last (Yoga honours auto margins;
+                they absorb the free space on their own side) pins the whole
+                cluster to the middle without dividing the rail's height
+                between items the way `flex: 1` would. `top` needs nothing —
+                the renderer's stack-from-top IS that mode; only the container
+                padding is raised so the first item clears the header.
+              */
+              tabBarItemStyle: [
+                descriptor.options.tabBarItemStyle,
+                {
+                  paddingHorizontal: 0,
+                  paddingVertical: item?.raised ? 10 : 4,
+                  marginVertical: 1,
+                  ...(railAlignment === 'center' && routeIndex === 0
+                    ? { marginTop: 'auto' as const }
+                    : {}),
+                  ...(railAlignment === 'center' &&
+                  routeIndex === state.routes.length - 1
+                    ? { marginBottom: 'auto' as const }
+                    : {}),
+                },
+              ],
+              /*
+                TabBarIcon wraps every icon in a FIXED 24dp box whose contents
+                are absolutely centered — our 40px indicator painted 8px into
+                the label slot (which is why a selected label looked sheared
+                at the top) and the 64px Snap slab overflowed the item cell's
+                `overflow: hidden` ripple clip and lost its cap. The wrapper
+                must be the same size as the thing it draws.
+              */
+              tabBarIconStyle: item?.raised
+                ? { width: NAV_RAIL_RAISED, height: NAV_RAIL_RAISED }
+                : { width: NAV_INDICATOR_SIZE, height: NAV_INDICATOR_SIZE },
+              /*
+                The icon slot re-draws the custom rail's selected state exactly:
+                `h-nav-indicator` square with `rounded-control`, `nav-selected`
+                fill only when focused, `on-nav-selected` glyph on top, resting
+                glyphs in the chrome ink. The raised Snap slab is identical to
+                the custom rail's — `nav-cta` paper, `on-nav-cta` ink, and its
+                glyph colour never follows the row tint.
+              */
               tabBarIcon: item
-                ? ({ color, size }: { color: ColorValue; size: number }) =>
+                ? ({ focused, size }: { focused: boolean; color: ColorValue; size: number }) =>
                     item.raised ? (
                       <View className="h-nav-raised w-nav-raised items-center justify-center rounded-md border-2 border-on-surface-footer bg-nav-cta shadow-card">
-                        <item.Icon size={Math.max(size, 30)} color={color} />
+                        <item.Icon size={Math.max(size, 30)} color={railOnCta} />
                       </View>
                     ) : (
-                      <item.Icon size={size} color={color} />
+                      <View
+                        className={`aspect-square h-nav-indicator items-center justify-center rounded-control ${
+                          focused ? 'bg-nav-selected' : ''
+                        }`}
+                      >
+                        <item.Icon
+                          size={size}
+                          className={focused ? 'text-on-nav-selected' : 'text-on-surface-footer'}
+                        />
+                      </View>
                     )
                 : descriptor.options.tabBarIcon,
+              /*
+                The label is the house `text-label` style with the weight cue —
+                semibold resting, bold selected — instead of Material's fixed
+                10pt medium. Selection is still never colour-only (WCAG 1.4.1).
+                `item.label` is the ITEMS copy, not the route title, so the rail
+                says exactly what the bottom bar would. `mt-0.5` is the custom
+                rail's `gap-0.5` between icon and label. The raised Snap slab
+                carries NO caption in the collapsed rail — a word under a 64px
+                raised element reads as a stray word, and Material's own
+                FAB-in-a-bar carries none either; expanded rail shows it bold
+                beside the slab.
+              */
+              tabBarLabel: item
+                ? item.raised && !railExpanded
+                  ? () => null
+                  : ({ focused }: { focused: boolean }) => (
+                      <Text
+                        numberOfLines={1}
+                        className={`text-label mt-0.5 ${item.raised || focused ? 'font-bold' : 'font-semibold'} text-on-surface-footer`}
+                      >
+                        {item.label}
+                      </Text>
+                    )
+                : descriptor.options.tabBarLabel,
             },
           },
         ];
       }),
     ) as typeof descriptors;
 
+    /*
+      The rail's overflow slot — the same place the web DashboardShell rail
+      keeps its footer control, but it only exists when the shell HAS an
+      overflow drawer (`hasOverflowDrawer`). Material's renderer only draws
+      route items inside its column, so the slot is an overlay pinned to the
+      rail's foot, chrome-flat by request — no rule, no fill — and the bar's
+      `paddingBottom` keeps the item column clear of it. The button opens the
+      navigator-level `expo-router` Drawer (declared by the shell's (drawer)
+      layout); nothing here draws the drawer itself.
+    */
     return (
-      <BottomTabBar
-        state={state}
-        descriptors={materialDescriptors}
-        emitter={emitter}
-        navigateToTab={navigateToTab}
-        insets={tabInsets}
-      />
+      <View style={{ alignSelf: 'stretch' }}>
+        <BottomTabBar
+          state={state}
+          descriptors={materialDescriptors}
+          emitter={emitter}
+          navigateToTab={navigateToTab}
+          insets={tabInsets}
+        />
+        {hasOverflowDrawer ? (
+          <View
+            pointerEvents="box-none"
+            style={{
+              position: 'absolute',
+              bottom: insets.bottom,
+              end: 0,
+              width: railExpanded ? NAV_RAIL_EXPANDED_WIDTH : NAV_RAIL_WIDTH,
+            }}
+          >
+            <Pressable
+              role="button"
+              aria-label="Open menu"
+              onPress={() => {
+                if (!reducedMotion) haptics.selection();
+                navigation.dispatch(DrawerActions.openDrawer());
+              }}
+              className={`${minTarget} w-full items-center justify-center active:opacity-70`}
+            >
+              <MenuIcon size={24} className="text-on-surface-footer" />
+            </Pressable>
+          </View>
+        ) : null}
+      </View>
     );
   }
 
@@ -650,7 +876,10 @@ export function ShellTabBar({
             ? { paddingTop: insets.top, paddingBottom: insets.bottom, width: column }
             : railEdge === 'left'
               ? {
-                  paddingTop: insets.top,
+                  paddingTop:
+                    railAlignment === 'top'
+                      ? insets.top + SHELL_HEADER_BLOCK
+                      : insets.top,
                   paddingBottom: insets.bottom,
                   paddingLeft: insets.left,
                   width:
@@ -658,7 +887,10 @@ export function ShellTabBar({
                     insets.left,
                 }
               : {
-                  paddingTop: insets.top,
+                  paddingTop:
+                    railAlignment === 'top'
+                      ? insets.top + SHELL_HEADER_BLOCK
+                      : insets.top,
                   paddingBottom: insets.bottom,
                   paddingRight: insets.right,
                   width:
@@ -666,11 +898,32 @@ export function ShellTabBar({
                     insets.right,
                 }
         }
-        className={`flex-col items-stretch justify-center gap-1 ${
+        className={`flex-col items-stretch ${
+          railAlignment === 'top' ? 'justify-start' : 'justify-center'
+        } gap-1 ${
           railEdge === 'left' ? 'border-r-2' : 'border-l-2'
         } border-on-surface-footer bg-surface-footer`}
       >
         {rendered}
+        {/*
+          The overflow drawer's footer button — `marginTop: auto` pins it to
+          the rail's foot regardless of the cluster's alignment, the same slot
+          the Material branch overlays. Chrome-flat, like the web rail's.
+        */}
+        {hasOverflowDrawer ? (
+          <Pressable
+            role="button"
+            aria-label="Open menu"
+            onPress={() => {
+              if (!reducedMotion) haptics.selection();
+              navigation.dispatch(DrawerActions.openDrawer());
+            }}
+            style={{ marginTop: 'auto', marginBottom: insets.bottom }}
+            className={`${minTarget} w-full items-center justify-center active:opacity-70`}
+          >
+            <MenuIcon size={24} className="text-on-surface-footer" />
+          </Pressable>
+        ) : null}
       </View>
     );
   }
@@ -739,6 +992,72 @@ export function ShellTabBar({
       */}
       <View className="absolute inset-x-0 bottom-0 top-nav-raise border-t-2 border-on-surface-footer bg-surface-footer" />
       {rendered}
+    </View>
+  );
+}
+
+/**
+ * The navigator-level drawer's content — `expo-router` `Drawer` owns the
+ * panel, the scrim, and the slide animation; this only paints what is inside:
+ * the "More" header with an explicit close and one row per off-rail
+ * destination. Painted in the FOOTER's chrome (`surface-footer` /
+ * `on-surface-footer`), not the tenant sidebar's, because it is opened by the
+ * rail's own footer control and reads as the rail's overflow.
+ *
+ * Items are Stack-level routes ABOVE the drawer (memory, ai-activity, …), so
+ * `CommonActions.navigate` must bubble up: the drawer router does not know
+ * them, which is exactly why they are extras and not rail items.
+ */
+export function ShellDrawerContent({
+  items,
+  navigation,
+}: DrawerContentComponentProps & { items: ShellTabItem[] }) {
+  const insets = useSafeAreaInsets();
+  return (
+    <View
+      role="menu"
+      aria-label="More destinations"
+      className="flex-1 bg-surface-footer"
+      style={{ paddingTop: insets.top }}
+    >
+      <View className="h-14 flex-row items-center justify-between gap-element border-b-2 border-on-surface-footer px-inset-tight">
+        <Text className="text-label font-bold text-on-surface-footer">More</Text>
+        <Pressable
+          role="button"
+          aria-label="Close menu"
+          onPress={() => navigation.dispatch(DrawerActions.closeDrawer())}
+          className="min-h-target-adult min-w-target-adult items-center justify-center rounded-control border-2 border-text bg-text active:opacity-70"
+        >
+          <XIcon size={20} className="text-surface" />
+        </Pressable>
+      </View>
+      {items.map((item) => (
+        <Pressable
+          key={item.name}
+          role="menuitem"
+          aria-label={item.label}
+          onPress={() => {
+            navigation.dispatch(DrawerActions.closeDrawer());
+            navigation.dispatch(CommonActions.navigate({ name: item.name }));
+          }}
+          className="min-h-target-adult flex-row items-center gap-element px-inset-tight active:bg-nav-selected"
+        >
+          <item.Icon size={20} className="text-on-surface-footer" />
+          <Text className="text-label font-semibold text-on-surface-footer">
+            {item.label}
+          </Text>
+        </Pressable>
+      ))}
+      {/*
+        The dev persona switcher's original home was this drawer (doc 36's
+        removal is why personas became unreachable on device). The mode gate
+        matches RoleSwitcher's own so live builds keep no stray border strip.
+      */}
+      {getAuthMode() === 'live' ? null : (
+        <View style={{ marginTop: 'auto' }} className="border-t-2 border-on-surface-footer">
+          <RoleSwitcher />
+        </View>
+      )}
     </View>
   );
 }

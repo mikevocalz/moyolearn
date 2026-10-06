@@ -5,7 +5,7 @@
  * read through `var()` or a pure geometric ratio — a percentage, an
  * aspect-ratio, a container-query breakpoint. Tailwind has no token for "the
  * card sits in the top-left quadrant of a square stage", and expressing it as
- * `left-[8%]` would be exactly the arbitrary value `CLAUDE.md` bans. Nothing
+ * `left-[8%]` would be exactly the arbitrary value `CONTRIBUTING.md` bans. Nothing
  * here names a colour, a font, a radius, a border width, a shadow or a duration
  * that is not a token; those all come from `packages/theme/tokens.ts` through
  * `.moyo-site`.

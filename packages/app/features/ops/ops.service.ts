@@ -5,7 +5,7 @@ import 'server-only';
 // The rows come from the `leads` collection through a repository port. This file
 // owns the read model — cursor semantics, the filter shape, the response
 // envelope, the tenant guard — and knows nothing about Payload; `leads.repository`
-// in apps/web is the only place that does (CLAUDE.md · The block).
+// in apps/web is the only place that does (CONTRIBUTING.md · The block).
 // SOT: docs/pack/28-crm-spec.md §2–§3
 // SOT-KEYWORDS: ops service leads cursor pagination filter sort server-only crm repository
 import type { ProtectedCtx } from '../../core/protected-operation.ts';
@@ -171,7 +171,7 @@ const compare = (a: Lead, b: Lead, field: LeadSortField): number => {
  *
  * Identity is never a parameter: `orgId` arrives on `ctx` at the route's
  * `protectedOperation` boundary and is applied by the repository, never accepted
- * from the client (CLAUDE.md · The block). A session with no org resolves to an
+ * from the client (CONTRIBUTING.md · The block). A session with no org resolves to an
  * empty page rather than an unscoped read — an ops dashboard that fails open is
  * a cross-tenant leak.
  *

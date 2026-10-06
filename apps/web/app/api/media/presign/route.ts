@@ -3,7 +3,7 @@
 // This is the only authenticated step in an upload. Everything after it happens
 // between the client and Bunny, which is the point: the bytes never pass through
 // here, so a 200MB video is not a serverless timeout.
-// SOT: docs/decisions/bunny-storage-presign-spike.md · CLAUDE.md §The block
+// SOT: docs/decisions/bunny-storage-presign-spike.md · CONTRIBUTING.md §The block
 // SOT-KEYWORDS: media presign api route upload bunny protected operation
 import { NextRequest, NextResponse } from 'next/server';
 import { presignUpload, PresignRejected, protectedOperation, type MediaKind } from '@acme/app/server';
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       DELIBERATELY AT THE `practise` FLOOR, stated rather than inherited.
 
       This is the learner's path: `features/media/queued-uploader.ts` drains a
-      child's homework photos and voice answers through here. CLAUDE.md forbids a
+      child's homework photos and voice answers through here. CONTRIBUTING.md forbids a
       paywall on a learner surface, and a capability check that can refuse would
       be one — the child would lose the picture of the problem they are stuck on
       because an adult's card expired.

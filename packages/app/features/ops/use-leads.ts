@@ -7,7 +7,7 @@
 //   URL search params  sort + filters + view — the shareable state
 //   Zustand          durable view prefs nobody would paste into Slack
 //
-// SOT: docs/pack/28-crm-spec.md §3 · CLAUDE.md (UI · state) · packages/app/core/api-fetch.ts
+// SOT: docs/pack/28-crm-spec.md §3 · CONTRIBUTING.md (UI · state) · packages/app/core/api-fetch.ts
 // SOT-KEYWORDS: ops leads hook query cursor pagination pacer debounce searchparams api error retry
 import { useMemo } from 'react';
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';

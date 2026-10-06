@@ -18,7 +18,7 @@ import type { CollectionConfig } from 'payload';
 // ON CONFLICT on the same pair. The uniqueness is what makes both idempotent.
 //
 // `orgId` is the tenant boundary. It is written from `ctx` at the service layer
-// and never accepted from client input (CLAUDE.md · The block).
+// and never accepted from client input (CONTRIBUTING.md · The block).
 // SOT: docs/pack/28-crm-spec.md §2 · docs/decisions/adr-109-family-household-object.md
 // SOT-KEYWORDS: families crm household guardian contact learner ref pointer
 //               tenant org ops collection wall upsert

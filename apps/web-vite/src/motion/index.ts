@@ -11,7 +11,7 @@
  * and `isReducedMotion` live at `@/stores/perf-store` and are imported from
  * there — by this lane, by the globe, by everything. Re-exporting them here
  * would give one thing two import paths, which is the second-way-to-do-it that
- * CLAUDE.md forbids, and it is how the store came to exist twice in the first
+ * CONTRIBUTING.md forbids, and it is how the store came to exist twice in the first
  * place.
  *
  * The type re-exports are erased at build time, so a chapter gets full

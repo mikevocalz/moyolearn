@@ -25,8 +25,8 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_NATIVE_3D: process.env.NEXT_PUBLIC_NATIVE_3D ?? '1',
   },
-  // Next 16.3 writes `AGENTS.md` and `CLAUDE.md` into apps/web on every `dev`
-  // boot. This repo keeps one hand-written CLAUDE.md at the root, and generated
+  // Next 16.3 writes `AGENTS.md` and `CONTRIBUTING.md` into apps/web on every `dev`
+  // boot. This repo keeps one hand-written CONTRIBUTING.md at the root, and generated
   // agent files landing next to it are both noise and a thing that gets
   // committed by accident.
   agentRules: false,

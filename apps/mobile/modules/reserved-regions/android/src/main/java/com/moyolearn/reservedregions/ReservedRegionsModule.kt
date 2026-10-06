@@ -1,6 +1,7 @@
 package com.moyolearn.reservedregions
 
 import android.app.Activity
+import android.util.Log
 import androidx.window.layout.FoldingFeature
 import androidx.window.layout.WindowInfoTracker
 import androidx.window.layout.WindowLayoutInfo
@@ -171,6 +172,15 @@ private fun WindowLayoutInfo.toRecords(activity: Activity): List<ReservedRegionR
     .filterIsInstance<FoldingFeature>()
     .map { feature ->
       val bounds = feature.bounds
+
+      // TEMP-DEBUG (hardware validation): raw px FoldingFeature values, remove after Duo validation.
+      Log.d(
+        "ReservedRegions",
+        "FoldingFeature raw px bounds=[${bounds.left},${bounds.top},${bounds.right},${bounds.bottom}] " +
+          "size=${bounds.width()}x${bounds.height()} " +
+          "orientation=${feature.orientation} state=${feature.state} " +
+          "occlusion=${feature.occlusionType} separating=${feature.isSeparating} density=$density",
+      )
 
       ReservedRegionRecord(
         kind = "division",

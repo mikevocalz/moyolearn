@@ -1,7 +1,7 @@
 // S27 fixture data — the student model as a guardian would read it.
 //
 // The shape is `DerivedFact` from `@acme/student-model/pure`, the client-safe
-// entry point, imported type-only (CLAUDE.md: cross-boundary types travel as
+// entry point, imported type-only (CONTRIBUTING.md: cross-boundary types travel as
 // type-only imports). That matters more here than convenience: S27's entire
 // claim is that the guardian sees the same rows the tutor's prompt sees, and a
 // second view-model hand-written for the screen is how those two quietly drift

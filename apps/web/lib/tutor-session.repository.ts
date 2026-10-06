@@ -12,7 +12,7 @@
 // messages collection with a join per read, and the conversation is always
 // loaded and rendered as one document anyway. If it ever bites, the fix is an
 // optimistic-concurrency column here — not a retry in the client.
-// SOT: CLAUDE.md §The block · docs/pack/23-tutorstage-handoff.md
+// SOT: CONTRIBUTING.md §The block · docs/pack/23-tutorstage-handoff.md
 // SOT-KEYWORDS: tutor session repository payload messages append attachment patch cross-device
 import 'server-only';
 import { getPayload } from 'payload';
@@ -48,7 +48,7 @@ async function withPayload<T>(fn: (payload: Awaited<ReturnType<typeof getPayload
   JSON as it comes back out of the column.
 
   Payload generates a json field as a union that includes `unknown[]`, which is
-  not something the rest of the codebase is allowed to hold (CLAUDE.md §Types).
+  not something the rest of the codebase is allowed to hold (CONTRIBUTING.md §Types).
   Naming the shape once here means exactly one cast at the database edge and a
   decoder that is ordinary typed code from that point on.
 */

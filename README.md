@@ -8,8 +8,8 @@ child (parents, tutors, teachers) measurably better at helping them.
 Universal monorepo: **Expo (iOS/Android) + Next.js (web + Payload CMS)** sharing screens via
 **Solito** and a **Uniwind** UI kit, with **Storybook** for the components.
 
-> Specs live in `docs/pack/` — start with `00-START-HERE.md`. Working rules for agents and
-> humans are in `CLAUDE.md`; prompt templates are in `PROMPTS.md`.
+> Specs live in `docs/pack/` — start with `00-START-HERE.md`. Working rules are in
+> `CONTRIBUTING.md`.
 >
 > The name **Moyo** (Swahili: *heart*) is pending trademark clearance — see doc 02,
 > Addendum B. Class 41 conflict analysis is required before brand spend.

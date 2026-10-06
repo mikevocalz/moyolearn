@@ -1,7 +1,7 @@
 /**
  * /safety — Moyo's child-safety posture.
  *
- * SOT: .claude/skills/ux-copy/SKILL.md · apps/web-vite/src/copy/content-pages.ts
+ * SOT: apps/web-vite/src/copy/content-pages.ts
  * SOT-KEYWORDS: route safety page child guardrails ai content page web-vite
  */
 import { createFileRoute } from '@tanstack/react-router';

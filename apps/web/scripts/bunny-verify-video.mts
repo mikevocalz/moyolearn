@@ -24,7 +24,7 @@ console.log('2. signed · expires in', cred.expire - Math.floor(Date.now() / 100
   which proves the transport but tells you nothing about the pipeline.
 */
 const { readFileSync, existsSync } = await import('node:fs');
-const fixture = process.env.VERIFY_VIDEO_PATH ?? '/private/tmp/claude-501/-Users-mikevocalz/b3d5b448-9a9e-4203-89e7-a1c9bc060e49/scratchpad/real.mp4';
+const fixture = process.env.VERIFY_VIDEO_PATH ?? '.scratch/real.mp4';
 if (!existsSync(fixture)) {
   console.log('   no fixture at', fixture, '— generate one with:');
   console.log('   ffmpeg -f lavfi -i testsrc=duration=2:size=320x240:rate=15 -c:v libx264 -pix_fmt yuv420p -y', fixture);

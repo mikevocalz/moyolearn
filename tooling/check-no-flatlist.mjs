@@ -10,7 +10,7 @@
 //
 // SectionList and VirtualizedList are the same import with a different name,
 // and FlashList is the same decision made twice; all four fail here.
-// SOT: CLAUDE.md §Patterns are law · packages/ui/VirtualList.tsx
+// SOT: CONTRIBUTING.md §Patterns are law · packages/ui/VirtualList.tsx
 // SOT-KEYWORDS: flatlist legendlist virtual list gate banned sectionlist flashlist
 import { execSync } from 'node:child_process';
 

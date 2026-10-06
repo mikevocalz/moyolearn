@@ -1,6 +1,6 @@
 // GET  /api/ops/families/:familyId — one household record with its leads.
 // PATCH /api/ops/families/:familyId — replace the household's contact list.
-// SOT: design/screens/org/org.crm/contract.md · docs/decisions/adr-109-family-household-object.md · CLAUDE.md (The block)
+// SOT: design/screens/org/org.crm/contract.md · docs/decisions/adr-109-family-household-object.md · CONTRIBUTING.md (The block)
 // SOT-KEYWORDS: ops api family detail record household contacts crm protected operation route
 import { NextRequest, NextResponse } from 'next/server';
 import {

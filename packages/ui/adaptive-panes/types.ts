@@ -96,8 +96,13 @@ export interface AdaptivePanesProps {
    */
   supplementaryWidthDp?: number;
   /**
-   * Whether the host draws its OWN row of `PaneToggle`s above the detail pane.
-   * Defaults to true, which is where every pane surface gets its controls.
+   * Whether this host exposes `PaneToggle`s at all. Defaults to true, which is
+   * how every pane surface gets its controls.
+   *
+   * Placement is not the host's decision: while a header consumer is mounted
+   * (`pane-controls.store` — the mobile `ShellHeader`), the toggles render in
+   * the bar and this host draws only an empty slot in the pane chrome; without
+   * one the in-pane row renders as before.
    *
    * A host sets it false only when the controls are mounted somewhere better
    * for that screen — the tutor session puts them in `SessionToolbar`, because

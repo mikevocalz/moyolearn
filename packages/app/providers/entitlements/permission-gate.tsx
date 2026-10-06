@@ -10,7 +10,7 @@
 // Mobbin: not applicable — this renders no surface of its own. It shows the
 // children it is given, or the `fallback` a caller supplies; every screen it
 // gates carries its own references.
-// SOT: docs/pack/06-auth-onboarding-spec.md §4 · CLAUDE.md (Children's surfaces)
+// SOT: docs/pack/06-auth-onboarding-spec.md §4 · CONTRIBUTING.md (Children's surfaces)
 // SOT-KEYWORDS: permission gate entitlement capability paywall learner upgrade
 
 import type { ReactNode } from 'react';

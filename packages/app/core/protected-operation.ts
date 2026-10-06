@@ -76,7 +76,7 @@ export interface ProtectedOperationOptions {
    *
    * Defaulting to `write` was the other candidate and is wrong here: it would
    * put a lapsed family card between a child and their practice, which doc 05
-   * §1.2 and CLAUDE.md both forbid outright.
+   * §1.2 and CONTRIBUTING.md both forbid outright.
    */
   requires?: Capability;
   /**

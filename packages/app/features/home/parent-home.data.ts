@@ -12,7 +12,7 @@
 //    parent they are behind on work they cannot do.
 //  · `NEEDS_ATTENTION` — two hardcoded lines rendered in danger red. "Jordan
 //    skipped 2 AI practice sessions" is engagement-pressure copy about a minor
-//    (CLAUDE.md §Children's surfaces), and "Maya's invoice is due Friday" is a
+//    (CONTRIBUTING.md §Children's surfaces), and "Maya's invoice is due Friday" is a
 //    payment nag; neither is an emergency, and danger red on a family surface
 //    means something happened to a child. Real attention has a real channel —
 //    incidents reach the guardian through doc 31's ladder and render on

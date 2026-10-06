@@ -1,5 +1,5 @@
 // POST /api/ops/leads/:id/stage — move a lead along the pipeline.
-// SOT: docs/pack/28-crm-spec.md §3 · CLAUDE.md (The block)
+// SOT: docs/pack/28-crm-spec.md §3 · CONTRIBUTING.md (The block)
 // SOT-KEYWORDS: ops api lead stage write pipeline protected operation route
 import { NextRequest, NextResponse } from 'next/server';
 import {

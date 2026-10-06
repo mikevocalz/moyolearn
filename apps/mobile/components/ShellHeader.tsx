@@ -51,10 +51,22 @@
 //               back button switch profile band young child
 
 import { usePathname } from 'expo-router';
-import { SafeArea, Avatar, MoyoLearnLogo, RoleScope } from '@acme/ui';
+import { useContext, useEffect } from 'react';
+// Vendored copy, not @react-navigation/core: expo-router 58 ships its own
+// react-navigation and the contexts must be the same objects the app's
+// navigators provide (see use-pane-route-key.native.ts).
+import { NavigationRouteContext } from 'expo-router/react-navigation';
+import {
+  SafeArea,
+  Avatar,
+  MoyoLearnLogo,
+  RoleScope,
+  PaneToggle,
+  usePaneControlsStore,
+  usePaneEdges,
+} from '@acme/ui';
 import { ChevronLeft } from '@acme/ui/icons';
 import { Header } from '@acme/ui/primitives';
-import { usePaneEdges } from '@acme/ui';
 import { useHardwareEdgeColumn } from './ShellTabBar';
 import { Pressable, Text, View } from '@acme/ui/tw';
 import {
@@ -146,6 +158,38 @@ export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: She
   const paneEdges = usePaneEdges();
   const railOwnsEdge = column > 0 && !paneEdges.includes('right');
 
+  /*
+    THE PANE TOGGLES LIVE HERE, not in the pane chrome. A mounted AdaptivePanes
+    host publishes which toggles exist (`pane-controls.store`) under its screen's
+    own `route.key`, and this bar — the registered consumer — draws the same
+    `PaneToggle`s the in-pane row used to draw, beside the avatar where every
+    other shell control already is. Headers render inside the screen's
+    NavigationProvider, so this bar's NavigationRouteContext IS the host's —
+    comparing keys shows the controls on exactly the screen that owns them,
+    and a blurred screen's mounted entry can never leak into another bar.
+
+    Mounting marks this bar a consumer — the host reads it and skips its own
+    in-pane row, the same "one mount site per control" rule `paneControls={false}`
+    encodes in TutorStage. Refcounted, not boolean: every screen descriptor owns
+    a header instance and blurred ones stay mounted, so unmounting one bar must
+    not unregister the consumer for the rest.
+  */
+  const headerRoute = useContext(NavigationRouteContext);
+  const paneControls = usePaneControlsStore((state) =>
+    headerRoute ? (state.entries[headerRoute.key] ?? null) : null,
+  );
+  const showPaneControls = paneControls !== null;
+  useEffect(() => {
+    usePaneControlsStore.setState((state) => ({
+      headerConsumers: state.headerConsumers + 1,
+    }));
+    return () => {
+      usePaneControlsStore.setState((state) => ({
+        headerConsumers: Math.max(0, state.headerConsumers - 1),
+      }));
+    };
+  }, []);
+
   return (
     <RoleScope role={role}>
     {/*
@@ -208,6 +252,22 @@ export function ShellHeader({ titles, fallback, canGoBack = false, onBack }: She
         <Text className="flex-1 text-title-lg font-bold text-on-surface-header" numberOfLines={1}>
           {titles[pathname] ?? fallback}
         </Text>
+        {/*
+          The registered host's toggles — the same controls the in-pane row
+          drew, moved to the bar. Icon-only: they stand beside the avatar, and
+          a labelled pair this close to the title would crowd it.
+        */}
+        {showPaneControls ? (
+          <View className="flex-row items-center gap-element">
+            <PaneToggle pane="primary" columnCount={paneControls.columnCount} />
+            {paneControls.columnCount === 2 ? (
+              <PaneToggle pane="supplementary" columnCount={paneControls.columnCount} />
+            ) : null}
+            {paneControls.inspector ? (
+              <PaneToggle pane="inspector" columnCount={paneControls.columnCount} />
+            ) : null}
+          </View>
+        ) : null}
         {showAvatar ? (
           <Pressable
             aria-label={avatarLabel}

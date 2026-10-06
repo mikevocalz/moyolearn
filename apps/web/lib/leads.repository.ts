@@ -9,7 +9,7 @@
 // The tenant predicate is applied HERE, on every read and every write, because
 // this is the last layer before the database — a filter that lives any further
 // up is a filter a future caller can forget.
-// SOT: CLAUDE.md §The block · docs/pack/28-crm-spec.md §2–§3 · docs/pack/19-learning-outcomes-spec.md §5
+// SOT: CONTRIBUTING.md §The block · docs/pack/28-crm-spec.md §2–§3 · docs/pack/19-learning-outcomes-spec.md §5
 // SOT-KEYWORDS: leads repository payload crm ops pipeline stage tenant org suppression
 import 'server-only';
 import { getPayload } from 'payload';

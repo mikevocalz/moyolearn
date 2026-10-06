@@ -8,7 +8,7 @@
 // An unknown slug renders the plain sign-in rather than a 404: a mistyped or
 // stale district link is far likelier than an attack, and a broken login helps
 // nobody. The lookup is a public read by design — see org.service.ts.
-// SOT: docs/pack/06-auth-onboarding-spec.md §5 §7 · CLAUDE.md §The block
+// SOT: docs/pack/06-auth-onboarding-spec.md §5 §7 · CONTRIBUTING.md §The block
 // SOT-KEYWORDS: login district branded org slug server component co-branded auth
 import type { Metadata } from 'next';
 import { orgBrandingFor } from '@acme/app/server';
