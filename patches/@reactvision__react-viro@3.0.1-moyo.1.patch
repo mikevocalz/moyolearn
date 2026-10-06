@@ -839,25 +839,52 @@ diff --git a/android/viro_renderer/build.gradle b/android/viro_renderer/build.gr
 diff --git a/components/CanvasPanel/useCanvasPanel.ts b/components/CanvasPanel/useCanvasPanel.ts
 --- a/components/CanvasPanel/useCanvasPanel.ts
 +++ b/components/CanvasPanel/useCanvasPanel.ts
-@@ -15,6 +15,8 @@
+@@ -3,7 +3,7 @@
+ import { createStore } from "zustand/vanilla";
+ import { AppState } from "react-native";
+ import type { CanvasProducer, CanvasSurface } from "nitro-canvas-in-Vision";
+-import { requireNitroCanvas } from "./nitroCanvas";
++import { requireNitroCanvas } from "nitro-canvas-in-Vision";
+ import { ViroMaterials } from "../Material/ViroMaterials";
+ 
+ export type CanvasPanelOpts<P extends CanvasProducer> = {
+@@ -15,6 +15,12 @@
    lightingModel?: "Constant" | "Lambert" | "Blinn" | "Phong" | "PBR";
    fallbackColor?: string;
    materialName?: string;
-+  /** "None" renders the texture fully opaque; default is the bridge's Alpha. */
++  /**
++   * Material blend mode. Defaults to the bridge's Alpha, which composites
++   * the surface's alpha against the scene behind — the see-through panel
++   * look on headsets. "None" renders the texture fully opaque.
++   */
 +  blendMode?: "None" | "Alpha" | "Add" | "Subtract" | "Multiply" | "Screen";
    /** Producer initialized; native Surface/frame readiness is exposed by the runtime. */
    onReady?: (state: CanvasPanelState<P>) => void;
    onError?: (error: Error) => void;
-@@ -38,7 +40,7 @@
+@@ -38,7 +44,8 @@
    latest.current = opts;
    const updateClock = React.useRef<(() => void) | null>(null);
    const { resolution: { width, height }, sRGB = true, androidRoute = "ahb",
 -    materialName: override, lightingModel = "Constant", fallbackColor = "#ffffff" } = opts;
-+    materialName: override, lightingModel = "Constant", fallbackColor = "#ffffff", blendMode } = opts;
++    materialName: override, lightingModel = "Constant", fallbackColor = "#ffffff",
++    blendMode } = opts;
  
    React.useEffect(() => {
      let alive = true;
-@@ -91,6 +93,7 @@
+@@ -55,6 +62,12 @@
+       if (!resource || surfaceDisposed) return;
+       surfaceDisposed = true;
+       resource.surface.dispose();
++    };
++    let producerDisposed = false;
++    const disposeProducer = () => {
++      if (!resource || producerDisposed) return;
++      producerDisposed = true;
++      resource.producer.dispose();
+     };
+     const cancelFrame = () => {
+       if (frame !== null) cancelAnimationFrame(frame);
+@@ -91,6 +104,7 @@
        ViroMaterials.createMaterials({ [materialName]: {
          diffuseTexture: requireNitroCanvas().canvasSource(surface),
          diffuseColor: fallbackColor, lightingModel,
@@ -865,7 +892,55 @@ diff --git a/components/CanvasPanel/useCanvasPanel.ts b/components/CanvasPanel/u
        } });
        store.setState({ resource });
        void Promise.resolve().then(() => {
-@@ -129,7 +132,7 @@
+@@ -99,18 +113,36 @@
+         if (!alive) return;
+         attached = true;
+         syncClock();
+-        latest.current.onReady?.(resource!);
+-      }).catch(report).finally(() => {
++        try {
++          latest.current.onReady?.(resource!);
++        } catch (error) { report(error); }
++      }).catch((error) => {
++        // Attach failed: the producer owns no valid frame surface, so retire
++        // the whole resource rather than render a dead canvasSource. If the
++        // component already unmounted, the finally block below owns disposal.
++        if (!alive) return;
++        report(error);
++        attached = false;
++        cancelFrame();
++        resource?.producer.setActive?.(false);
++        store.setState({ resource: null });
++        if (resource) {
++          try { disposeProducer(); } finally {
++            ViroMaterials.deleteMaterials([resource.materialName]);
++            disposeSurface();
++          }
++        }
++      }).finally(() => {
+         settled = true;
+         // A late attach must retire its own resources before its surface is released.
+         if (!alive) {
+-          try { producer.dispose(); } finally { disposeSurface(); }
++          try { disposeProducer(); } finally { disposeSurface(); }
+         }
+       });
+     } catch (error) {
+       settled = true;
+       if (resource) {
+-        try { resource.producer.dispose(); } finally { disposeSurface(); }
++        try { disposeProducer(); } finally { disposeSurface(); }
+       }
+       report(error);
+     }
+@@ -123,13 +155,13 @@
+       store.setState({ resource: null });
+       if (resource) {
+         resource.producer.setActive?.(false);
+-        try { resource.producer.dispose(); } finally {
++        try { disposeProducer(); } finally {
+           ViroMaterials.deleteMaterials([resource.materialName]);
+           if (settled) disposeSurface();
          }
        }
      };
@@ -914,7 +989,21 @@ diff --git a/dist/components/CanvasPanel/useCanvasPanel.js b/dist/components/Can
      React.useEffect(() => {
          let alive = true;
          let attached = false;
-@@ -114,6 +114,7 @@
+@@ -68,6 +68,13 @@
+             surfaceDisposed = true;
+             resource.surface.dispose();
+         };
++        let producerDisposed = false;
++        const disposeProducer = () => {
++            if (!resource || producerDisposed)
++                return;
++            producerDisposed = true;
++            resource.producer.dispose();
++        };
+         const cancelFrame = () => {
+             if (frame !== null)
+                 cancelAnimationFrame(frame);
+@@ -114,6 +121,7 @@
              ViroMaterials_1.ViroMaterials.createMaterials({ [materialName]: {
                      diffuseTexture: (0, nitroCanvas_1.requireNitroCanvas)().canvasSource(surface),
                      diffuseColor: fallbackColor, lightingModel,
@@ -922,7 +1011,67 @@ diff --git a/dist/components/CanvasPanel/useCanvasPanel.js b/dist/components/Can
                  } });
              store.setState({ resource });
              void Promise.resolve().then(() => {
-@@ -168,7 +169,7 @@
+@@ -124,13 +132,38 @@
+                     return;
+                 attached = true;
+                 syncClock();
+-                latest.current.onReady?.(resource);
+-            }).catch(report).finally(() => {
++                try {
++                    latest.current.onReady?.(resource);
++                }
++                catch (error) {
++                    report(error);
++                }
++            }).catch((error) => {
++                // Attach failed: the producer owns no valid frame surface, so retire
++                // the whole resource rather than render a dead canvasSource. If the
++                // component already unmounted, the finally block below owns disposal.
++                if (!alive)
++                    return;
++                report(error);
++                attached = false;
++                cancelFrame();
++                resource?.producer.setActive?.(false);
++                store.setState({ resource: null });
++                if (resource) {
++                    try {
++                        disposeProducer();
++                    }
++                    finally {
++                        ViroMaterials_1.ViroMaterials.deleteMaterials([resource.materialName]);
++                        disposeSurface();
++                    }
++                }
++            }).finally(() => {
+                 settled = true;
+                 // A late attach must retire its own resources before its surface is released.
+                 if (!alive) {
+                     try {
+-                        producer.dispose();
++                        disposeProducer();
+                     }
+                     finally {
+                         disposeSurface();
+@@ -142,7 +175,7 @@
+             settled = true;
+             if (resource) {
+                 try {
+-                    resource.producer.dispose();
++                    disposeProducer();
+                 }
+                 finally {
+                     disposeSurface();
+@@ -159,7 +192,7 @@
+             if (resource) {
+                 resource.producer.setActive?.(false);
+                 try {
+-                    resource.producer.dispose();
++                    disposeProducer();
+                 }
+                 finally {
+                     ViroMaterials_1.ViroMaterials.deleteMaterials([resource.materialName]);
+@@ -168,7 +201,7 @@
                  }
              }
          };
