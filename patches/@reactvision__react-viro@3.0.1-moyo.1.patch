@@ -836,3 +836,140 @@ diff --git a/android/viro_renderer/build.gradle b/android/viro_renderer/build.gr
 -    api files('viro_renderer-release.aar')
 +    api files(rootProject.findProperty('moyoViroRendererAar') ?: 'viro_renderer-release.aar')
  }
+diff --git a/components/CanvasPanel/useCanvasPanel.ts b/components/CanvasPanel/useCanvasPanel.ts
+--- a/components/CanvasPanel/useCanvasPanel.ts
++++ b/components/CanvasPanel/useCanvasPanel.ts
+@@ -15,6 +15,8 @@
+   lightingModel?: "Constant" | "Lambert" | "Blinn" | "Phong" | "PBR";
+   fallbackColor?: string;
+   materialName?: string;
++  /** "None" renders the texture fully opaque; default is the bridge's Alpha. */
++  blendMode?: "None" | "Alpha" | "Add" | "Subtract" | "Multiply" | "Screen";
+   /** Producer initialized; native Surface/frame readiness is exposed by the runtime. */
+   onReady?: (state: CanvasPanelState<P>) => void;
+   onError?: (error: Error) => void;
+@@ -38,7 +40,7 @@
+   latest.current = opts;
+   const updateClock = React.useRef<(() => void) | null>(null);
+   const { resolution: { width, height }, sRGB = true, androidRoute = "ahb",
+-    materialName: override, lightingModel = "Constant", fallbackColor = "#ffffff" } = opts;
++    materialName: override, lightingModel = "Constant", fallbackColor = "#ffffff", blendMode } = opts;
+ 
+   React.useEffect(() => {
+     let alive = true;
+@@ -91,6 +93,7 @@
+       ViroMaterials.createMaterials({ [materialName]: {
+         diffuseTexture: requireNitroCanvas().canvasSource(surface),
+         diffuseColor: fallbackColor, lightingModel,
++        ...(blendMode ? { blendMode } : null),
+       } });
+       store.setState({ resource });
+       void Promise.resolve().then(() => {
+@@ -129,7 +132,7 @@
+         }
+       }
+     };
+-  }, [width, height, sRGB, androidRoute, override, lightingModel, fallbackColor, opts.resourceKey]);
++  }, [width, height, sRGB, androidRoute, override, lightingModel, fallbackColor, blendMode, opts.resourceKey]);
+ 
+   React.useEffect(() => { updateClock.current?.(); }, [opts.autoTick]);
+   return state;
+diff --git a/components/ViroRivePanel.tsx b/components/ViroRivePanel.tsx
+--- a/components/ViroRivePanel.tsx
++++ b/components/ViroRivePanel.tsx
+@@ -31,6 +31,8 @@
+   lightingModel?: "Constant" | "Lambert" | "Blinn" | "Phong" | "PBR";
+   fallbackColor?: string;
+   materialName?: string;
++  /** "None" renders the panel face fully opaque — see `useCanvasPanel`. */
++  blendMode?: "None" | "Alpha" | "Add" | "Subtract" | "Multiply" | "Screen";
+   onReady?: () => void;
+   onError?: (error: Error) => void;
+   autoTick?: boolean;
+@@ -68,6 +70,7 @@
+     lightingModel,
+     fallbackColor,
+     materialName,
++    blendMode,
+     onReady,
+     onError,
+     autoTick,
+@@ -94,6 +97,7 @@
+     lightingModel,
+     fallbackColor,
+     materialName,
++    blendMode,
+     onReady: ({ producer }) => {
+       const value = producer.runtime;
+       runtime.current = value && "panel" in value ? value.panel as RivePanel : null;
+diff --git a/dist/components/CanvasPanel/useCanvasPanel.js b/dist/components/CanvasPanel/useCanvasPanel.js
+--- a/dist/components/CanvasPanel/useCanvasPanel.js
++++ b/dist/components/CanvasPanel/useCanvasPanel.js
+@@ -49,7 +49,7 @@
+     const latest = React.useRef(opts);
+     latest.current = opts;
+     const updateClock = React.useRef(null);
+-    const { resolution: { width, height }, sRGB = true, androidRoute = "ahb", materialName: override, lightingModel = "Constant", fallbackColor = "#ffffff" } = opts;
++    const { resolution: { width, height }, sRGB = true, androidRoute = "ahb", materialName: override, lightingModel = "Constant", fallbackColor = "#ffffff", blendMode } = opts;
+     React.useEffect(() => {
+         let alive = true;
+         let attached = false;
+@@ -114,6 +114,7 @@
+             ViroMaterials_1.ViroMaterials.createMaterials({ [materialName]: {
+                     diffuseTexture: (0, nitroCanvas_1.requireNitroCanvas)().canvasSource(surface),
+                     diffuseColor: fallbackColor, lightingModel,
++                    ...(blendMode ? { blendMode } : null),
+                 } });
+             store.setState({ resource });
+             void Promise.resolve().then(() => {
+@@ -168,7 +169,7 @@
+                 }
+             }
+         };
+-    }, [width, height, sRGB, androidRoute, override, lightingModel, fallbackColor, opts.resourceKey]);
++    }, [width, height, sRGB, androidRoute, override, lightingModel, fallbackColor, blendMode, opts.resourceKey]);
+     React.useEffect(() => { updateClock.current?.(); }, [opts.autoTick]);
+     return state;
+ }
+diff --git a/dist/components/CanvasPanel/useCanvasPanel.d.ts b/dist/components/CanvasPanel/useCanvasPanel.d.ts
+--- a/dist/components/CanvasPanel/useCanvasPanel.d.ts
++++ b/dist/components/CanvasPanel/useCanvasPanel.d.ts
+@@ -11,6 +11,7 @@
+     lightingModel?: "Constant" | "Lambert" | "Blinn" | "Phong" | "PBR";
+     fallbackColor?: string;
+     materialName?: string;
++    blendMode?: "None" | "Alpha" | "Add" | "Subtract" | "Multiply" | "Screen";
+     /** Producer initialized; native Surface/frame readiness is exposed by the runtime. */
+     onReady?: (state: CanvasPanelState<P>) => void;
+     onError?: (error: Error) => void;
+diff --git a/dist/components/ViroRivePanel.js b/dist/components/ViroRivePanel.js
+--- a/dist/components/ViroRivePanel.js
++++ b/dist/components/ViroRivePanel.js
+@@ -41,7 +41,7 @@
+ const ViroQuad_1 = require("./ViroQuad");
+ const useCanvasPanel_1 = require("./CanvasPanel/useCanvasPanel");
+ exports.ViroRivePanel = React.forwardRef(function ViroRivePanel(props, ref) {
+-    const { init, source, input, onRuntimeReady, width, height, position = [0, 1.45, -2.0], rotation, resolution = { width: 1024, height: 1024 }, sRGB, androidRoute = "surface-texture", lightingModel, fallbackColor, materialName, onReady, onError, autoTick, } = props;
++    const { init, source, input, onRuntimeReady, width, height, position = [0, 1.45, -2.0], rotation, resolution = { width: 1024, height: 1024 }, sRGB, androidRoute = "surface-texture", lightingModel, fallbackColor, materialName, blendMode, onReady, onError, autoTick, } = props;
+     const runtime = React.useRef(null);
+     React.useEffect(() => () => { runtime.current = null; }, [source, init]);
+     const ready = React.useRef(onRuntimeReady);
+@@ -64,6 +64,7 @@
+         lightingModel,
+         fallbackColor,
+         materialName,
++        blendMode,
+         onReady: ({ producer }) => {
+             const value = producer.runtime;
+             runtime.current = value && "panel" in value ? value.panel : null;
+diff --git a/dist/components/ViroRivePanel.d.ts b/dist/components/ViroRivePanel.d.ts
+--- a/dist/components/ViroRivePanel.d.ts
++++ b/dist/components/ViroRivePanel.d.ts
+@@ -20,6 +20,7 @@
+     lightingModel?: "Constant" | "Lambert" | "Blinn" | "Phong" | "PBR";
+     fallbackColor?: string;
+     materialName?: string;
++    blendMode?: "None" | "Alpha" | "Add" | "Subtract" | "Multiply" | "Screen";
+     onReady?: () => void;
+     onError?: (error: Error) => void;
+     autoTick?: boolean;
