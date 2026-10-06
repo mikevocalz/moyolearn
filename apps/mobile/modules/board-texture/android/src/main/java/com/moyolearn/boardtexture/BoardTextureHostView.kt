@@ -1,12 +1,21 @@
 package com.moyolearn.boardtexture
 
 import android.content.Context
+import android.graphics.Rect
 import android.os.Handler
 import android.os.Looper
+import android.os.SystemClock
 import android.view.View
+import android.view.ViewGroup
+import android.view.ViewParent
+import android.widget.FrameLayout
 import com.facebook.react.bridge.ReactContext
 import com.facebook.react.uimanager.PixelUtil
+import com.facebook.react.uimanager.UIManagerHelper
+import com.facebook.react.uimanager.common.UIManagerType
 import com.viro.core.AndroidViewTexture
+import com.viro.core.ViroView
+import com.viromedia.bridge.component.VRT3DSceneNavigator
 import com.viromedia.bridge.module.MaterialManager
 import expo.modules.kotlin.AppContext
 import expo.modules.kotlin.viewevent.EventDispatcher
@@ -46,6 +55,17 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
   private var pageWidthDp = 0.0
   private var pageHeightDp = 0.0
   private var live = false
+  /*
+    The React tag of the mounted `ViroVRSceneNavigator`, handed down from
+    `VRQuestNavigatorBridge` in JavaScript. On a headset the renderer lives in
+    `VRActivity`'s window — a different decorView than the one this view can
+    see — but BOTH activities share one Fabric UIManager, so the tag resolves
+    to the live native view from here. `0` means unset; the window walk in
+    `findViroView` remains the fallback for inline (AR) mounts where no bridge
+    tag exists.
+  */
+  private var navigatorTag = 0
+  private var lastResolveMiss = -1
 
   /**
    * Whether an attempt with every input present has already been made and
@@ -71,22 +91,95 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
   */
   private val mainHandler = Handler(Looper.getMainLooper())
   private val retryBind = Runnable { bindIfReady() }
-  private val pumpFrame = object : Runnable {
+
+  /*
+    The page is painted into the texture when the page says it changed, not on
+    a clock. A WebView under `enableSlowWholeDocumentDraw` calls `invalidate()`
+    for every committed compositor frame, and that call climbs the parent chain
+    — through [DirtyTrackingContainer] — whether or not the sink's window ever
+    runs a draw traversal. Each paint is a full software raster of the page,
+    so the previous unconditional 50 ms pump kept the main thread rasterising
+    an unchanged document at 20 Hz for the entire session and starved the XR
+    render loop below its frame budget. `MIN_PAINT_MS` is the ceiling, not the
+    rate: a stroking document invalidates continuously, and that burst must not
+    become a 60 Hz raster.
+  */
+  private var paintContainer: DirtyTrackingContainer? = null
+  private var dirty = false
+  private var lastPaintMs = -MIN_PAINT_MS
+  private var paintScheduled = false
+
+  private val paintIfDirty = Runnable {
+    paintScheduled = false
+    if (!dirty) return@Runnable
+    dirty = false
+    paintNow()
+  }
+
+  /*
+    The catch-up for the cases invalidation cannot see: `View.invalidate` is a
+    no-op while the page's window is detached (`mAttachInfo == null`), so an
+    engine change that lands during a detach blink, a texture surface that was
+    recreated, or cursor state the renderer never committed would otherwise sit
+    unpainted until `live` dropped. One frame a second — the keepalive is not
+    the driver.
+  */
+  private val keepalive = object : Runnable {
     override fun run() {
-      val bound = texture ?: return
-      val page = pages.firstOrNull() ?: return
-      if (com.viro.core.MoyoTexturePaint.paint(bound, page) && pumpTicks == 0) {
-        android.util.Log.i("MoyoBoardTexture", "texture paint streaming")
-      }
-      pumpTicks += 1
-      mainHandler.postDelayed(this, PUMP_MS)
+      if (texture == null) return
+      paintNow()
+      mainHandler.postDelayed(this, KEEPALIVE_MS)
+    }
+  }
+
+  private fun markDirty() {
+    if (!live || texture == null) return
+    dirty = true
+    if (paintScheduled) return
+    paintScheduled = true
+    val wait = MIN_PAINT_MS - (SystemClock.uptimeMillis() - lastPaintMs)
+    if (wait > 0L) mainHandler.postDelayed(paintIfDirty, wait) else mainHandler.post(paintIfDirty)
+  }
+
+  private fun paintNow() {
+    val bound = texture ?: return
+    val root = paintContainer ?: return
+    lastPaintMs = SystemClock.uptimeMillis()
+    if (com.viro.core.MoyoTexturePaint.paint(bound, root) && pumpTicks == 0) {
+      android.util.Log.i("MoyoBoardTexture", "texture paint streaming")
+    }
+    pumpTicks += 1
+  }
+
+  /*
+    THE DIRTY TAP. The sink reparents whatever `attachView` is given, so the
+    page goes in wrapped: every `invalidate()` the WebView posts climbs through
+    this container and lands in [markDirty] on the way to a traversal that may
+    never run. The wrapper is transparent to layout — a FrameLayout measured
+    at the texture's size lays the page out at exactly the same pixels the
+    direct attach produced.
+  */
+  private class DirtyTrackingContainer(context: Context) : FrameLayout(context) {
+    var onDirty: (() -> Unit)? = null
+
+    @Deprecated("Deprecated by the platform but still called on the invalidation path.")
+    override fun invalidateChildInParent(location: IntArray?, dirty: Rect?): ViewParent? {
+      onDirty?.invoke()
+      @Suppress("DEPRECATION")
+      return super.invalidateChildInParent(location, dirty)
+    }
+
+    override fun onDescendantInvalidated(child: View, target: View) {
+      onDirty?.invoke()
+      super.onDescendantInvalidated(child, target)
     }
   }
 
   private companion object {
-    /* 20 fps: cheap enough for a software canvas, fast enough that a board
-       stroke lands inside one controller blink. */
-    const val PUMP_MS = 50L
+    /* 30 fps ceiling on streamed repaints — paint latency under a moving
+       stroke without letting invalidation bursts raster at compositor rate. */
+    const val MIN_PAINT_MS = 33L
+    const val KEEPALIVE_MS = 1000L
   }
 
   // ---------------------------------------------------------------------------
@@ -105,6 +198,13 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
 
   fun setPageHeight(dp: Double) {
     pageHeightDp = dp
+    bindIfReady()
+  }
+
+  fun setNavigatorTag(tag: Int) {
+    if (navigatorTag == tag) return
+    navigatorTag = tag
+    android.util.Log.i("MoyoBoardTexture", "navigatorTag=$tag")
     bindIfReady()
   }
 
@@ -139,7 +239,7 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
       on top of it at the same size, which is a caller error rather than a
       layout to support.
     */
-    if (index == 0) boundTexture.attachView(child) else addView(child)
+    if (index == 0) attachPageToTexture(boundTexture, child) else addView(child)
   }
 
   fun pageCount(): Int = pages.size
@@ -153,6 +253,8 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
       return
     }
     texture?.detachView()
+    paintContainer?.removeView(child)
+    paintContainer = null
   }
 
   // ---------------------------------------------------------------------------
@@ -208,9 +310,47 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
     onBound(BoardTextureBinding(bound = true, reason = null))
   }
 
+  /*
+    THE RENDERER, BY NAME RATHER THAN BY PROXIMITY. `findViroView` asks the
+    window graph, which on this hardware means hoping the tracked activity
+    list saw `VRActivity` and that its decorView still holds the surface —
+    both true today, both assumptions. The bridge tag is the navigator's own
+    handoff: the same viewTag `VRModuleOpenXR.recenterTracking` resolves for
+    panel-side calls. `resolveView` answers the `VRTVRSceneNavigator`
+    FrameLayout itself, whose `getViroView()` is the renderer — no window
+    involved at all.
+  */
+  private fun viroViewFromNavigatorTag(): ViroView? {
+    if (navigatorTag <= 0) {
+      return null
+    }
+    val reactContext = appContext.reactContext as? ReactContext ?: return null
+    val uiManager = UIManagerHelper.getUIManager(reactContext, UIManagerType.FABRIC)
+    val resolved = runCatching { uiManager?.resolveView(navigatorTag) }.getOrNull() ?: run {
+      if (lastResolveMiss != navigatorTag) {
+        lastResolveMiss = navigatorTag
+        android.util.Log.i("MoyoBoardTexture", "navigatorTag=$navigatorTag resolveView=null")
+      }
+      return null
+    }
+    if (lastResolveMiss != -navigatorTag) {
+      lastResolveMiss = -navigatorTag
+      android.util.Log.i(
+        "MoyoBoardTexture",
+        "navigatorTag=$navigatorTag resolved=${resolved.javaClass.name}"
+      )
+    }
+    if (resolved is ViroView) {
+      return resolved
+    }
+    (resolved as? VRT3DSceneNavigator)?.viroView?.let { return it }
+    return resolved.firstViroDescendant()
+  }
+
   /** Returns null when the board is on the material, else why it is not. */
   private fun bind(material: String): String? {
-    val viroView = findViroView(appContext.currentActivity) ?: return "no-viro-view"
+    val viroView = viroViewFromNavigatorTag() ?: findViroView(appContext.currentActivity)
+      ?: return "no-viro-view"
     /*
       `appContext.reactContext` is typed as a plain Android `Context` and IS the
       React one at runtime; the cast is where that stops being an assumption.
@@ -274,18 +414,29 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
     if (page.parent === this) {
       removeView(page)
     }
-    created.attachView(page)
+    attachPageToTexture(created, page)
     /*
       The sink only repaints when the window it lives in runs a draw
       traversal, and on ViroViewOpenXR there is no SurfaceView for the
       compositor — OpenXR owns the display — so that traversal can be
-      starved for the whole session. The pump is the drawing driver: the
-      page is painted straight into the texture's surface every 50 ms while
-      bound, which is also why a stale first frame can never sit.
+      starved for the whole session. The dirty tap is the drawing driver:
+      the page's own invalidation decides when a frame is repainted, the
+      keepalive covers what invalidation cannot see, and the first paint is
+      queued immediately so a stale first frame can never sit.
     */
     pumpTicks = 0
-    mainHandler.postDelayed(pumpFrame, PUMP_MS)
+    lastPaintMs = -MIN_PAINT_MS
+    markDirty()
+    mainHandler.postDelayed(keepalive, KEEPALIVE_MS)
     return null
+  }
+
+  private fun attachPageToTexture(texture: AndroidViewTexture, page: View) {
+    val container = DirtyTrackingContainer(context)
+    container.onDirty = { markDirty() }
+    container.addView(page)
+    paintContainer = container
+    texture.attachView(container)
   }
 
   /**
@@ -308,12 +459,17 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
 
   fun release() {
     mainHandler.removeCallbacks(retryBind)
-    mainHandler.removeCallbacks(pumpFrame)
+    mainHandler.removeCallbacks(paintIfDirty)
+    mainHandler.removeCallbacks(keepalive)
     lastBindReason = null
     settled = false
     attempts = 0
+    paintScheduled = false
+    dirty = false
     val page = pages.firstOrNull()
     texture?.detachView()
+    paintContainer?.removeView(page)
+    paintContainer = null
     texture?.dispose()
     texture = null
     if (page != null && page.parent == null) {

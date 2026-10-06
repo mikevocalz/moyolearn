@@ -56,7 +56,7 @@ project(":expo") {
 }
 
 // Moyo: pin the source-verified precision drawing renderer.
-ext.moyoViroRendererAar = rootProject.file('../../../vendors/viro-renderer-034d3b9.aar')
+ext.moyoViroRendererAar = rootProject.file('../../../vendors/viro-renderer-5ee1ac83.aar')
 if (!moyoViroRendererAar.isFile()) {
     throw new GradleException('Pinned Moyo controller renderer is missing')
 }
@@ -66,7 +66,7 @@ moyoViroRendererAar.withInputStream { stream ->
     int count
     while ((count = stream.read(buffer)) != -1) rendererDigest.update(buffer, 0, count)
 }
-if (rendererDigest.digest().encodeHex().toString() != '08c22843d1311cbc52ae973b8a97dd8186a86c72d3682312a50a00c198506a3b') {
+if (rendererDigest.digest().encodeHex().toString() != '378f9d227a29bad3c1256fc84f2ba58eef5dac0690a2d45d44b267674eaf4609') {
     throw new GradleException('Pinned Moyo controller renderer checksum mismatch')
 }
 

@@ -68,6 +68,16 @@ class BoardTextureModule : Module() {
         view.setLive(live)
       }
 
+      /*
+        The mounted `ViroVRSceneNavigator`'s React tag, published by
+        `VRQuestNavigatorBridge` — the renderer's cross-activity address on
+        headsets, where the ViroView lives in VRActivity's window and window
+        walking is a guess this prop makes unnecessary.
+      */
+      Prop("navigatorTag") { view: BoardTextureHostView, tag: Int ->
+        view.setNavigatorTag(tag)
+      }
+
       OnViewDestroys { view: BoardTextureHostView ->
         view.release()
       }

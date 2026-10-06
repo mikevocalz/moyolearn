@@ -1,11 +1,11 @@
 {
   "name": "mobile",
   "main": "expo-router/entry",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "scripts": {
     "dev": "expo start",
     "android": "expo run:android",
-    "android:xr": "ORG_GRADLE_PROJECT_reactNativeArchitectures=arm64-v8a expo run:android --device",
+    "android:xr": "ORG_GRADLE_PROJECT_reactNativeArchitectures=arm64-v8a expo run:android --variant picoDebug --device",
     "ios": "expo run:ios",
     "web": "expo start --web",
     "lint": "expo lint",

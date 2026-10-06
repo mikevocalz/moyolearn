@@ -23,8 +23,9 @@
 // SOT-KEYWORDS: board texture host native view expo requireNativeView webview parent hand-off
 
 import { requireNativeView } from 'expo';
-import { useEffect, type ComponentType } from 'react';
+import { useEffect, useState, type ComponentType } from 'react';
 import { Platform, View, type NativeSyntheticEvent } from 'react-native';
+import { VRQuestNavigatorBridge } from '@reactvision/react-viro';
 import type { BoardTextureBinding, BoardTextureHostProps } from './BoardTextureHost.types.ts';
 
 interface NativeProps {
@@ -32,6 +33,16 @@ interface NativeProps {
   pageWidth: number;
   pageHeight: number;
   live: boolean;
+  /**
+   * The mounted `ViroVRSceneNavigator`'s React tag, published by
+   * `VRQuestNavigatorBridge`. On a headset the renderer lives in `VRActivity`'s
+   * window — separate from the tree this host can see — but both activities
+   * share one Fabric UIManager, so the native side can resolve the tag to the
+   * navigator and ask it for its `ViroView` directly. `0` means unset; the
+   * native view then falls back to walking windows, which is the only path an
+   * inline (non-XR-activity) mount has.
+   */
+  navigatorTag: number;
   onBound?: (event: NativeSyntheticEvent<BoardTextureBinding>) => void;
   style?: BoardTextureHostProps['style'];
   pointerEvents?: 'none';
@@ -59,6 +70,13 @@ export function BoardTextureHost({
   useEffect(() => {
     if (live && NativeBoardTexture === null) onBound?.({ bound: false, reason: 'native-module-unavailable' });
   }, [live, onBound]);
+  /*
+    `onViewTag` replays the current value immediately, so a navigator that
+    mounted before this host still answers. `null` becomes `0` — the native
+    side reads that as "no tag to resolve" and keeps the window-walk fallback.
+  */
+  const [navigatorTag, setNavigatorTag] = useState(0);
+  useEffect(() => VRQuestNavigatorBridge.onViewTag((tag) => setNavigatorTag(tag ?? 0)), []);
   if (NativeBoardTexture === null) {
     return (
       <View style={style} pointerEvents="none">
@@ -80,6 +98,7 @@ export function BoardTextureHost({
       pageWidth={pageWidth}
       pageHeight={pageHeight}
       live={live}
+      navigatorTag={navigatorTag}
       onBound={(event) => onBound?.(event.nativeEvent)}
     >
       {children}

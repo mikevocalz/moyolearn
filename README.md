@@ -5,8 +5,12 @@
 AI tutoring that helps children get a better education — and makes the humans around each
 child (parents, tutors, teachers) measurably better at helping them.
 
-Universal monorepo: **Expo (iOS/Android) + Next.js (web + Payload CMS)** sharing screens via
-**Solito** and a **Uniwind** UI kit, with **Storybook** for the components.
+Universal monorepo: **Expo (iOS/Android/visionOS/Quest/PICO) + Next.js (web + Payload CMS)**
+sharing screens via **Solito** and a **Uniwind** UI kit, with **Storybook** for the components.
+The tutor is embodied: **Natalie**, a 3D avatar rendered by a vendored **ReactVision/Viro**
+fork, teaches at a spatial whiteboard on XR targets and falls back to flat surfaces elsewhere.
+Every learner-facing model call crosses the **Safety Plane** (`packages/safety`) — crisis ladder,
+firewall, incident log — and identity comes from `ctx`, never from input.
 
 > Specs live in `docs/pack/` — start with `00-START-HERE.md`. Working rules are in
 > `CONTRIBUTING.md`.
@@ -20,17 +24,33 @@ Universal monorepo: **Expo (iOS/Android) + Next.js (web + Payload CMS)** sharing
 apps/
   mobile      Expo app (expo-router) — renders screens from packages/app
   web         Next.js app — (site) route group + (payload) Payload admin/API
+  web-vite    TanStack Start web build
+  admin-vite  TanStack Start ops console (Payload UI)
   storybook   Storybook (react-vite + react-native-web) for packages/ui
 packages/
   app         Shared screens (Solito pattern: screen.tsx / .native.tsx / .web.tsx) + providers
-  ui          Universal UI kit — @expo/html-elements + @expo/ui + Uniwind, SolitoImage-based Image
+  ui          Universal UI kit — @expo/html-elements + @expo/ui + Uniwind, SolitoImage-based Image,
+              plus ui/xr: spatial boards, panels, rails, question chrome, Natalie morphs
   theme       Design tokens + theme.css (light/dark via data-theme)
   assets      Shared fonts (see Type below) and brand images, all OFL
-  payload     Payload config (Users + Media collections, postgres adapter)
+  payload     Payload config — collections, hooks, the erasure cascade (versions stay OFF)
+  auth        Better Auth wiring
+  avatar      Natalie's rig manifest, morph targets, presence layers
+  voice       ElevenLabs TTS + Audio2Face → viseme scheduling
+  inference   Model gateway (Anthropic) with per-operation budgets
+  student-model  mastery, evaluation, erasure — the learner's model of record
+  safety      The Safety Plane — crisis ladder, firewall, incidents
+  secure      Platform-secure storage and session primitives
+  jobs        pg-boss queues
+  art         Art/asset registry (check-art-registry.mjs enforces it)
   config      Shared tsconfig/eslint presets, boundary rules, and the local lint rules
+apps/mobile/
+  modules     Local Expo modules — board-texture (ink surface host), reserved-regions
+  src/native-3d  XR scene wiring over packages/ui/xr + the vendored Viro fork
 tooling/
   generators  pnpm gen domain <name> | feature <name> | component <Name>
-  check-barrels.mjs  fails the build on a module no entry point reaches
+  check-*.mjs ~25 repo invariants the build enforces — barrels, copy law, contrast,
+              joint ownership, store separation, versions-off, and the rest
 ```
 
 ## Type

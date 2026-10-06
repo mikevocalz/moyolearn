@@ -76,6 +76,8 @@ internal fun View.findViroView(activity: Activity?): ViroView? {
   return null
 }
 
+internal fun View.firstViroDescendant(): ViroView? = firstViroView()
+
 private fun View.firstViroView(): ViroView? {
   if (this is ViroView) {
     return this

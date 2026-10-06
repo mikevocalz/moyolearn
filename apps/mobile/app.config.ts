@@ -14,8 +14,16 @@ const config: ExpoConfig = {
   // Source of truth is apps/mobile/package.json "version" — keep the two in sync by hand.
   // (Not read dynamically: runtimeVersion policy 'appVersion' derives OTA runtime versions
   // from this field, so it must stay a literal the config loader can resolve without I/O.)
-  version: '1.0.0',
+  version: '1.1.0',
   orientation: 'default',
+  /*
+    The New Architecture, STATED for the one reader that still asks. RN 0.88
+    has no old architecture — `ExpoConfig` no longer types this field — but
+    `@expo-pico/core`'s `withPicoNewArchCheck` reads the raw config value and
+    warns on its absence. The `ExpoConfig` cast at the bottom of the object
+    lets the field ship without lying to the type system.
+  */
+  newArchEnabled: true,
   icon: './assets/images/icon.png',
   userInterfaceStyle: 'automatic',
   ios: {
@@ -313,6 +321,16 @@ const config: ExpoConfig = {
         targetDevices: ['pico-4', 'pico-4-ultra'],
         handTracking: true,
         passthrough: true,
+        /*
+          PPS identity, ENV-FED like `horizonAppId` above — `PICO_APP_ID` in
+          `.env.local` is the channel the plugin's own warning names, and it
+          only reaches the manifest if this reads it. Empty stays empty: PPS
+          features (account/IAP) are unused today, so the diagnostics warning
+          is informational until a PPS call ships.
+        */
+        platformService: {
+          picoAppId: process.env.PICO_APP_ID,
+        },
       },
     ],
     [
@@ -477,6 +495,6 @@ const config: ExpoConfig = {
     codeSigningCertificate: './certs/certificate.pem',
     codeSigningMetadata: { keyid: 'main', alg: 'rsa-v1_5-sha256' },
   },
-};
+} as ExpoConfig;
 
 export default config;

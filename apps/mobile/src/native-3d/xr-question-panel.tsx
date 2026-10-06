@@ -131,7 +131,12 @@ export function XrQuestionPanel({
   );
 
   const finishGrab = async () => {
-    if (owner.current === null) return;
+    if (owner.current === null) {
+      // `grabbed` lives in the session store and survives a remount; the
+      // owner ref does not. Clear it anyway or the panel stays input-dead.
+      if (grabbed) onGrab(false);
+      return;
+    }
     owner.current = null;
     runtime.current?.setBoolean('grabbed', false);
     try {
@@ -237,7 +242,12 @@ export function XrQuestionPanel({
             owner.current = sourceId;
             onGrab(true);
             runtime.current?.setBoolean('grabbed', true);
-          } else if (owner.current !== null && (state === 2 || state === 3) && sourceId === owner.current) {
+          } else if (owner.current !== null && (state === 2 || state === 3)) {
+            /* Any terminal click state ends the grab, regardless of source.
+               The old `sourceId === owner.current` guard left `grabbed` stuck
+               true whenever the release arrived on a different source than the
+               press — and `enabled && !grabbed` then kept every Rive button on
+               the panel dead for the rest of the session. */
             void finishGrab();
           }
         }}

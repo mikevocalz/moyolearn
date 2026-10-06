@@ -99,6 +99,7 @@ import { SPATIAL_PERMISSIONS, spatialPermissionsGranted } from './xr-capability.
 /* Bare specifier, so the `.native` fork is what a native bundle resolves and
    nothing on a web resolver's path ever names the renderer. */
 import { currentXrEligibility } from './xr-eligibility';
+import { isPico, isQuest } from '@reactvision/react-viro/dist/components/Utilities/ViroPlatform';
 import { panelStateOf, useXrSession, type XrPhase } from './xr-session.store.ts';
 import { useXrVoice } from './xr-voice.native.ts';
 import { createMoyoQuickDrawAdapter } from './quickdraw-spatial-adapter.ts';
@@ -159,6 +160,17 @@ const active: {
    */
   head: XrHeadPose | null;
   /**
+   * WHEN THE LAST CREDIBLE POSE ARRIVED, in `Date.now()` ms.
+   *
+   * On a headset this IS the foreground signal: `AppState` tracks the paused
+   * MainActivity and reads `background` for the whole immersive session, so
+   * gating `canEdit`/voice on it locks a live session out. A renderer pushing
+   * head poses is by definition running — and when the session pauses (headset
+   * off, OS overlay) the pose stream stops with it, which is exactly the
+   * backgrounding the AppState check was written for.
+   */
+  lastPoseAt: number;
+  /**
    * The scene itself, for the one thing only it can answer: where the head is.
    *
    * `onCameraTransformUpdate` is SILENT ON A HEADSET — `notifyCameraTransform`
@@ -178,6 +190,7 @@ const active: {
   onAsk: () => undefined,
   inkAligned: true,
   head: null,
+  lastPoseAt: 0,
   scene: null,
 };
 
@@ -336,6 +349,7 @@ async function placeFromHead(): Promise<void> {
       return;
     }
     active.head = pose;
+    active.lastPoseAt = Date.now();
     if (__DEV__) console.log('[tutor-xr] placing from camera pull', pose.position);
     useXrSession.getState().setPlacement(placeInFrontOf(pose, BOARD_PLACE));
   } catch {
@@ -376,14 +390,53 @@ function handleCameraTransform(transform: { position: XrVector3; forward: XrVect
   */
   if (!isCredibleHeadPose(pose)) return;
   active.head = pose;
+  active.lastPoseAt = Date.now();
+  /*
+    ON OPENXR THE TRACKING EVENT IS NEVER NORMAL. `VROSceneRendererOpenXR`
+    attaches the AR scene for passthrough but has no tracking-state plumbing —
+    the delegate is replayed the scene's default `Unavailable` once at attach
+    and nothing ever again, which latches `interrupted` for the whole session
+    while the pose stream itself proves the runtime is tracking. A credible
+    head pose IS the renderer's verdict on this backend, so it ends the
+    interruption the missing NORMAL would have. Calibration interruptions are
+    the engine's to end — `readyOrInterrupted` re-reads `active.inkAligned`
+    and keeps them. ARCore and visionOS keep the strict path: there the event
+    is plumbed and a real loss must not be masked by a still-moving pose.
+  */
+  if (isQuest || isPico) {
+    const { advance, phase } = useXrSession.getState();
+    if (
+      phase.kind === 'interrupted' &&
+      (phase.reason === 'tracking-lost' || phase.reason === 'tracking-limited')
+    ) {
+      advance(readyOrInterrupted());
+    }
+  }
 }
 
 function BoardScene() {
-  const [foreground, setForeground] = useState(AppState.currentState === 'active');
+  const [appForeground, setForeground] = useState(AppState.currentState === 'active');
   useEffect(() => {
     const subscription = AppState.addEventListener('change', (state) => setForeground(state === 'active'));
     return () => subscription.remove();
   }, []);
+  /*
+    AppState answers about MAINACTIVITY, which is paused for the whole
+    immersive session on a headset — `background` while the child is standing
+    in the scene. The session's own pose stream is the honest signal here: a
+    renderer producing head poses is running, and a paused session stops
+    producing them. `poseAlive` flips within ~1.5 s of the stream stopping,
+    which is the backgrounding this gate exists for.
+  */
+  const [poseAlive, setPoseAlive] = useState(false);
+  useEffect(() => {
+    const timer = setInterval(
+      () => setPoseAlive(active.lastPoseAt !== 0 && Date.now() - active.lastPoseAt < 1500),
+      500,
+    );
+    return () => clearInterval(timer);
+  }, []);
+  const foreground = appForeground || poseAlive;
   const phase = useXrSession((s) => s.phase);
   const placement = useXrSession((s) => s.placement);
   const workspaceHead = useMemo((): [number, number, number] => {
@@ -716,6 +769,13 @@ function BoardScene() {
   */
   const canEdit = foreground && composedState === 'ready' && inkLands;
   const canAsk = canEdit && !asking && voice.phase.kind !== 'starting' && voice.phase.kind !== 'transcribing';
+  useEffect(() => {
+    if (__DEV__) {
+      console.log(
+        `[tutor-xr] gates foreground=${foreground} phase=${phase.kind} composed=${composedState} inkLands=${inkLands} bound=${boardTextureBound} canEdit=${canEdit}`,
+      );
+    }
+  }, [foreground, phase.kind, composedState, inkLands, boardTextureBound, canEdit]);
   const boardHandlers: BoardChromeHandlers = {
     onTool(next) {
       if (!canEdit) return;

@@ -177,7 +177,12 @@ export function RiveBoardPanel({
   );
 
   const finishGrab = async () => {
-    if (owner.current === null) return;
+    if (owner.current === null) {
+      // `grabbed` persists in the session store across remounts while the
+      // owner ref resets — clear it anyway or every input gate stays shut.
+      if (grabbed) onGrab(false);
+      return;
+    }
     owner.current = null;
     runtime.current?.setBoolean('grabbed', false);
     try {
@@ -294,7 +299,11 @@ export function RiveBoardPanel({
               owner.current = sourceId;
               onGrab(true);
               runtime.current?.setBoolean('grabbed', true);
-            } else if (owner.current !== null && (state === 2 || state === 3) && sourceId === owner.current) {
+            } else if (owner.current !== null && (state === 2 || state === 3)) {
+              /* Terminal click state ends the grab on any source — the old
+                 `sourceId === owner.current` guard could strand `grabbed`
+                 true when the release arrived on another source, leaving
+                 every `enabled && !grabbed` input gate shut permanently. */
               void finishGrab();
             }
           }}

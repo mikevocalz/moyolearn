@@ -80,8 +80,7 @@ const AZIMUTH_DEG = 34; // side panels, turn from dead-ahead
   Symmetric now. The old 44 vs 30 split existed because poke-xr's left panel was
   a wide reading surface and its right was a model; here both flanks are the
   same 9:16 card, so they sit at the same angle either side of the board.
-  34 deg clears the 1.4 m centre panel and the 0.62 m flank with 4 deg to spare
-  at this radius.
+  34 deg clears the centre panel and the 0.85 m flank at this radius.
 */
 const PANEL_AZIMUTH_DEG = 34;
 const TOE_DEG = 3; // extra inward face so sides wrap, not slab sideways

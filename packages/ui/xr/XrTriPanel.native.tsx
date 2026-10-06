@@ -44,7 +44,11 @@ export function XrTriPanel({
            the width the rows read in. */
         mediaFraction={0}
         worldPlacement={left}
-        draggable={false}
+        draggable
+        /* No snap — release keeps the accumulated dragOffset. Snapping would
+           tween the root to a raw SLOTS position and lose the workspace-head
+           offset that `worldPlacement` carries. */
+        snapOnRelease={false}
         animate={false}
       />}
       {/*
@@ -72,7 +76,8 @@ export function XrTriPanel({
         size="portraitCard"
         mediaFraction={0}
         worldPlacement={right}
-        draggable={false}
+        draggable
+        snapOnRelease={false}
         animate={false}
         /* The conversation is the surface that genuinely needs the rail — it is
            the only one that outgrows its panel. */

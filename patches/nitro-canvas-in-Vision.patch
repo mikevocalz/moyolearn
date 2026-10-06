@@ -307,3 +307,27 @@ index a9f56715..b809af08 100644
              throw NSError(domain: "nitro-canvas-in-Vision", code: -1, userInfo: [
                  NSLocalizedDescriptionKey: "Failed to allocate IOSurface \(pixelWidth)x\(pixelHeight)"
              ])
+diff --git a/src/viroreact/CanvasInViroInput.ts b/src/viroreact/CanvasInViroInput.ts
+--- a/src/viroreact/CanvasInViroInput.ts
++++ b/src/viroreact/CanvasInViroInput.ts
+@@ -148,9 +148,19 @@
+         } else if (state === CLICK_UP) {
+           // A release is reported where the ray now is, which may be off the
+           // quad; a missing or off-plane hit ends the gesture as a cancel.
++          const upPoint = fromWorld(position)
++          console.log('[canvas-input] up', upPoint ? `${upPoint.uv[0].toFixed(3)},${upPoint.uv[1].toFixed(3)} inside=${upPoint.inside}` : 'null', 'captured', capture.capturedSource === source)
+           if (capture.capturedSource === source) {
+-            emit(capture.up(source, fromWorld(position)))
++            emit(capture.up(source, upPoint))
+             pressRef.current = null
++          } else if (capture.capturedSource !== null) {
++            // OpenXR maps a hand's pinch and grab onto different source IDs
++            // over one ray, so a release can legally arrive on a source that
++            // did not open the press. Cancel the capture rather than dropping
++            // it — a swallowed up leaves capturedSource set and every later
++            // press on this panel dead.
++            emit(capture.cancel(capture.capturedSource))
++            pressRef.current = null
+           }
+         }
+       },

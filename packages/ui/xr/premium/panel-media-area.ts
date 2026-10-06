@@ -11,7 +11,10 @@ export const MEDIA_ART_Z = 0.004;
 export const SIZES = {
   compactCard: panelSize.compactCard,
   standardCard: panelSize.standardCard,
-  portraitCard: { width: 0.62, height: 1.1 },
+  /* 0.85: the conversation column wraps hard at 0.62 — chat rows are text,
+     and text needs width. On the 2.6 m arc at 34° azimuth the inner edge still
+     clears the centre board's outer edge by ~14°. */
+  portraitCard: { width: 0.85, height: 1.1 },
   toolsCard: { width: 0.9, height: 1.42 },
   boardPanel: {
     width: 0.9 + spatialCorners.panel * 2,
