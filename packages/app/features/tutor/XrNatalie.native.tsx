@@ -38,6 +38,7 @@ import { viroFace } from './natalie-viro-targets.ts';
 import {
   SPATIAL_POSE_BONES,
   spatialPose,
+  withArmsDown,
   type SpatialIdleView,
 } from './natalie-spatial-pose';
 
@@ -57,21 +58,21 @@ const NATALIE_GLB = require('@acme/avatar/assets/natalie-viro.glb');
 const TICK_MS = 33;
 
 /*
-  Off until the rest-pose read and the pose math are confirmed on device. When
-  false she stands in her loaded rest pose with a live face — which is the
-  correct thing to ship while the idle body is unverified, and the isolation
-  that tells render-correctness apart from pose-correctness.
+  On: the pose writer names the skin's DEF-* deform joints — the only names the
+  XR cut's 63-joint skin exposes (verified against the GLB's skin table, and
+  the reason the earlier torso/chest/neck/head reads returned nothing). The
+  loaded rest pose is a T-pose, so the one-time `withArmsDown` correction lands
+  on the rest read before the idle deltas ever compose on top of it.
 */
-const BODY_DRIVE_ENABLED = false;
+const BODY_DRIVE_ENABLED = true;
 
 export interface XrNatalieProps {
   /** Her feet, in world metres. The screen derives it from the child's head. */
   position: [number, number, number];
   /** Yaw only — she stands upright, turned to face the child. */
   rotationY: number;
-  /* Rendered height in cm — the GLB is 1.673 m at scale 1. VR undersells
-     stature at slot distance, so callers dial it per scene rather than
-     trusting the authored measure. */
+  /* Rendered height in cm — the GLB is 1.673 m at scale 1, so the default is
+     her real stature: 5'6", no taller. */
   heightCm?: number;
   active?: boolean;
   listening?: boolean;
@@ -80,7 +81,7 @@ export interface XrNatalieProps {
 }
 
 
-export function XrNatalie({ position, rotationY, heightCm = 175, onStatus, active = true, listening = false, processing = false }: XrNatalieProps) {
+export function XrNatalie({ position, rotationY, heightCm = 168, onStatus, active = true, listening = false, processing = false }: XrNatalieProps) {
   const model = useRef<Viro3DObject>(null);
   const [ready, setReady] = useState(false);
   const signals = useRef({ active, listening, processing });
@@ -126,15 +127,13 @@ export function XrNatalie({ position, rotationY, heightCm = 175, onStatus, activ
           const legible = settled && SPATIAL_POSE_BONES.every((_, i) => matrices[i * 16] !== 0 || matrices[i * 16 + 1] !== 0 || matrices[i * 16 + 2] !== 0);
           if (__DEV__) console.log('[natalie-xr] rest pose read:', settled ? 'ok' : 'wrong-length', 'legible:', legible, 'first-row:', matrices.slice(0, 4));
           /*
-            BONE DRIVING IS GATED OFF UNTIL THE REST POSE IS PROVEN ON DEVICE.
-            A wrong bone-world matrix does not fail — it scales or shears the mesh
-            into a wall of geometry ("all I can see is her eyes"). She renders in
-            her loaded rest pose first; the idle body turns on only once the rest
-            read is confirmed sane in the headset. Face morphs stay live — they
-            are clamped 0..1 and cannot deform geometry scale.
+            The legibility gate is the fail-loud half of the contract: a
+            skeleton that cannot name the pose bones leaves her in the loaded
+            pose with a live face rather than writing garbage world matrices —
+            which is the failure that once sheared her into a wall of geometry.
           */
-          if (legible && BODY_DRIVE_ENABLED) {
-            restPose = matrices;
+          if (legible) {
+            restPose = withArmsDown(matrices);
             bonesLive = true;
           }
         }
@@ -231,10 +230,8 @@ export function XrNatalie({ position, rotationY, heightCm = 175, onStatus, activ
   */
   return (
     <ViroNode
-      /* The GLB measures 1.673 m (POSITION bounds, audited 2026-09-26). Target
-         height is a prop — a true 1.70 still read short in the headset (VR
-         undersells stature at slot distance), so the default lands just over
-         the ask rather than under it. */
+      /* The GLB measures 1.673 m (POSITION bounds, audited 2026-09-26), so
+         heightCm/167.3 lands her at real stature — 168 cm ≈ 5'6" by default. */
       scale={[heightCm / 167.3, heightCm / 167.3, heightCm / 167.3]}
       position={[
         position[0] + dragOffset[0],

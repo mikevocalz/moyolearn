@@ -46,8 +46,27 @@ export interface SpatialIdleView {
   nodPitch: number;
 }
 
-/** The bones this writer owns, in the order the payload is packed. */
-export const SPATIAL_POSE_BONES = ['torso', 'chest', 'neck', 'head'] as const;
+/*
+  The bones this writer owns, in the order the payload is packed.
+
+  They are DEFORM bones, not the Rigify control names the list carried before:
+  `VROGetSkeleton` resolves names against the glTF skin's joint table, which
+  holds `DEF-*` entries only — asking for `torso`/`chest`/`neck`/`head` returned
+  empty matrices, so the rest-pose read could never prove out and the body
+  drive never ran. The DEF spine chain maps the same way: `DEF-spine` is the
+  pelvis the sway translates, `.003` is the chest, `.005` the neck, `.006` the
+  head. The upper arms are in the list so `withArmsDown` can leave the loaded
+  T-pose — the GLB's node rest pose, not its bind pose, which has the arms
+  already at her sides.
+*/
+export const SPATIAL_POSE_BONES = [
+  'DEF-spine',
+  'DEF-spine.003',
+  'DEF-spine.005',
+  'DEF-spine.006',
+  'DEF-upper_arm.L',
+  'DEF-upper_arm.R',
+] as const;
 
 /** The neck/head share of one rotation — `body-frame.ts`'s numbers, restated. */
 const NECK_SHARE = 0.4;
@@ -78,6 +97,13 @@ function rotationXY(pitch: number, yaw: number): Mat4 {
   const sy = Math.sin(yaw);
   /* R = Ry·Rx, column-major. */
   return [cy, 0, -sy, 0, sy * sp, cp, cy * sp, 0, sy * cp, -sp, cy * cp, 0, 0, 0, 0, 1];
+}
+
+/** Rotation about the world Z axis — the axis that lowers a T-posed arm. */
+function rotationZ(rad: number): Mat4 {
+  const c = Math.cos(rad);
+  const s = Math.sin(rad);
+  return [c, s, 0, 0, -s, c, 0, 0, 0, 0, 1, 0, 0, 0, 0, 1];
 }
 
 /** T(p)·R·T(−p)·M — rotate a world matrix about its own translation. */
@@ -111,7 +137,9 @@ export function spatialPose(rest: Mat4, frame: SpatialIdleView): number[] {
   if (rest.length !== SPATIAL_POSE_BONES.length * 16) {
     throw new RangeError('spatialPose: rest must hold 16 floats per pose bone');
   }
-  const out = new Array<number>(rest.length);
+  /* Every bone is written — the arm entries (and any future static bones) ride
+     the rest pose unchanged rather than leaving holes in the payload. */
+  const out = rest.slice() as number[];
 
   const bone = (index: number): Mat4 => rest.slice(index * 16, index * 16 + 16);
   const write = (index: number, m: readonly number[]) => {
@@ -130,6 +158,38 @@ export function spatialPose(rest: Mat4, frame: SpatialIdleView): number[] {
   write(2, rotateAbout(bone(2), rotationXY(pitch * NECK_SHARE, yaw * NECK_SHARE)));
   write(3, rotateAbout(bone(3), rotationXY(pitch * HEAD_SHARE, yaw * HEAD_SHARE)));
 
+  return out;
+}
+
+/*
+  How far the loaded T-pose drops to a natural hang, in radians — 68° off
+  horizontal leaves a soft bend at the shoulder rather than a plumb arm glued
+  to her side. Mirrored across the body: the left arm extends +X, the right −X.
+*/
+export const ARM_DROP_RAD = (68 * Math.PI) / 180;
+const ARM_LEFT_INDEX = 4;
+const ARM_RIGHT_INDEX = 5;
+
+/**
+ * The rest payload with the T-pose corrected — call it ONCE on the matrices
+ * `getSkeletonBoneTransforms` returns, before handing them to `spatialPose`.
+ * The model's node rest pose holds both arms straight out (what the headset
+ * renders without bone writes); the GLB's skin bind pose has them down. A
+ * fixed world-Z rotation about each shoulder's rest position closes the gap —
+ * children (forearm, hand, fingers) follow the write because the native call
+ * recurses.
+ */
+export function withArmsDown(rest: Mat4): number[] {
+  if (rest.length !== SPATIAL_POSE_BONES.length * 16) {
+    throw new RangeError('withArmsDown: rest must hold 16 floats per pose bone');
+  }
+  const out = rest.slice() as number[];
+  const corrected = (index: number, rad: number) => {
+    const m = rotateAbout(rest.slice(index * 16, index * 16 + 16), rotationZ(rad));
+    for (let i = 0; i < 16; i++) out[index * 16 + i] = at(m, i);
+  };
+  corrected(ARM_LEFT_INDEX, -ARM_DROP_RAD);
+  corrected(ARM_RIGHT_INDEX, ARM_DROP_RAD);
   return out;
 }
 

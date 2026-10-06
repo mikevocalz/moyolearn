@@ -6,10 +6,12 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import {
+  ARM_DROP_RAD,
   SPATIAL_POSE_BONES,
   identityRest,
   mat4Multiply,
   spatialPose,
+  withArmsDown,
   type SpatialIdleView,
 } from './natalie-spatial-pose.ts';
 
@@ -70,6 +72,31 @@ test('the neck/head split matches the 2D writer', () => {
   const headYaw = Math.acos(bone(pose, 3)[0] ?? 1);
   assert.ok(Math.abs(neckYaw - 0.2 * 0.4) < 1e-9, `neck got ${neckYaw}`);
   assert.ok(Math.abs(headYaw - 0.2 * 0.6) < 1e-9, `head got ${headYaw}`);
+});
+
+test('withArmsDown drops the arms about their shoulders and leaves the spine alone', () => {
+  /*
+    The T-pose correction, pinned: both upper-arm rests rotate by ARM_DROP_RAD
+    about their own positions — the left negative, the right positive — while
+    the spine, chest, neck and head matrices pass through untouched.
+  */
+  const rest = standingRest();
+  const corrected = withArmsDown(rest);
+  for (let i = 0; i < 4; i++) {
+    assert.deepEqual(bone(corrected, i), bone(rest, i), `bone ${i} moved`);
+  }
+  const left = bone(corrected, 4);
+  const right = bone(corrected, 5);
+  /* The shoulders did not translate. */
+  assert.equal(left[13], bone(rest, 4)[13]);
+  assert.equal(right[13], bone(rest, 5)[13]);
+  /* The basis rotated: column-major Rz(θ) puts cos(θ) in m[0], ±sin in m[1]/m[4]. */
+  const cos = Math.cos(ARM_DROP_RAD);
+  const sin = Math.sin(ARM_DROP_RAD);
+  assert.ok(Math.abs((left[0] ?? 0) - cos) < 1e-9 && Math.abs((left[1] ?? 0) - -sin) < 1e-9);
+  assert.ok(Math.abs((right[0] ?? 0) - cos) < 1e-9 && Math.abs((right[1] ?? 0) - sin) < 1e-9);
+  /* And the correction composes: a still frame still returns the (corrected) rest. */
+  assert.deepEqual(spatialPose(corrected, STILL), corrected);
 });
 
 test('deltas compose against rest, never against the previous frame', () => {

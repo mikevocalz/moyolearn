@@ -284,7 +284,7 @@ export function XrQuestionProbe({
       head={head}
       yawDeg={yawDeg}
       resetKey={resetKey}
-      natalieHeightCm={190}
+      natalieHeightCm={168}
       renderLeft={(left) => {
         if (!chromeBytes || chromeFailed) {
           /* No chrome bytes yet (or a dead runtime) — keep the carrier so
@@ -304,7 +304,7 @@ export function XrQuestionProbe({
             carrier={panelOffset}
             grabbed={grabbed}
             bound={bound}
-            opacity={0.8}
+            opacity={1}
             resetKey={resetKey}
             onCarrierRelease={(pose) => xrQuestionProbe.setState({ panelOffset: pose })}
             onGrab={(v) => xrQuestionProbe.setState({ grabbed: v })}
