@@ -238,9 +238,11 @@ function AdaptivePanesNavigator({
       'Only AdaptivePanes.Column and AdaptivePanes.Inspector components are allowed as direct children of AdaptivePanes.',
     );
   }
-  if (columns.length + inspectors.length === 0) {
+  // An empty host renders only its detail, but that return waits until after
+  // the last hook below, so the hook order never changes between renders.
+  const empty = columns.length + inspectors.length === 0;
+  if (empty) {
     console.warn('No AdaptivePanes.Column and AdaptivePanes.Inspector found in AdaptivePanes.');
-    return detail ?? <DetailSlot />;
   }
 
   // The detail pane: supplied content wins; the router's <Slot /> is the
@@ -335,11 +337,10 @@ function AdaptivePanesNavigator({
   */
   const controlsOwner = useId();
   const routeKey = usePaneRouteKey();
-  const headerConsumer =
-    routeKey !== null &&
-    usePaneControlsStore((state) => state.headerConsumers > 0);
+  const hasHeaderConsumer = usePaneControlsStore((state) => state.headerConsumers > 0);
+  const headerConsumer = routeKey !== null && hasHeaderConsumer;
   useEffect(() => {
-    if (paneControls && !collapsed && routeKey !== null) {
+    if (paneControls && !collapsed && !empty && routeKey !== null) {
       publishPaneControls(routeKey, {
         owner: controlsOwner,
         columnCount,
@@ -509,6 +510,8 @@ function AdaptivePanesNavigator({
     : visible.supplementary && columns[1]
       ? 'supplementary'
       : 'primary';
+
+  if (empty) return detailPane;
 
   return (
     <AdaptivePanesContext value={store}>
