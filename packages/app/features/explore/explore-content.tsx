@@ -12,8 +12,8 @@ import { CATEGORIES, FEATURED, CARDS, useExplore } from './explore.store';
 export function ExploreContent() {
   const { query, category, setQuery, setCategory } = useExplore();
   const router = useRouter();
-  const { activeContext, status } = useAppSession();
-  const showChemistry = status !== 'loading' && (activeContext.gradeBand === 'teen' || activeContext.gradeBand === 'adult');
+  const { status } = useAppSession();
+  const showScience = status !== 'loading' && activeContext.kind === 'learner';
   const visible = CARDS.filter(
     (card) =>
       (category === 'All' || card.category === category) &&
@@ -60,20 +60,20 @@ export function ExploreContent() {
         </ScrollView>
       </FadeIn>
 
-      {/* This is a working advanced chemistry lesson, not a decorative resource card. */}
-      {showChemistry ? (
+      {/* A real multi-subject lab, with a separate advanced molecular engine. */}
+      {showScience ? (
         <FadeIn delay={120}>
           <Section className="gap-element">
             <Text variant="label" tone="muted">Science lab</Text>
             <PressScale
               className="w-full gap-element rounded-card border-2 border-border bg-surface-raised p-5 shadow-card"
-              aria-label="Open the Chemistry Lab"
-              onPress={() => router.push('/chemistry-lab')}
+              aria-label="Open Moyo Science Lab"
+              onPress={() => router.push('/science-lab')}
             >
               <TWText className="text-base font-semibold text-text">
-                Chemistry Lab · Molecules and electrons
+                Moyo Science Lab · Explore four sciences
               </TWText>
-              <Text tone="muted">Make a prediction, then test it with QDK molecular calculations.</Text>
+              <Text tone="muted">Hands-on chemistry, biology, physics and Earth science experiments. Predict, observe and explain.</Text>
               <Text variant="label">Explore chemistry →</Text>
             </PressScale>
           </Section>
