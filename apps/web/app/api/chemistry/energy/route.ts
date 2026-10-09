@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
   try {
     return await protectedOperation(auth, request.headers, async (ctx) => {
       const band = await loadGradeBand(ctx);
-      if (band !== 'teen' && band !== 'adult') {
+      if (band !== '6-8' && band !== '9-12') {
         return NextResponse.json({ error: 'Activity unavailable for this age band' }, { status: 403 });
       }
 
