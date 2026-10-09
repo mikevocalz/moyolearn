@@ -5,10 +5,15 @@ import { Heart, Eye } from '@acme/ui/icons';
 import { Section, View, Text as TWText, ScrollView, Pressable } from '@acme/ui/tw';
 import { Heading, PressScale, SearchBar, Text, FadeIn, ScaleIn } from '@acme/ui';
 import { WELL, INK } from '../home/home.data';
+import { useRouter } from 'solito/navigation';
+import { useAppSession } from '../../providers/session';
 import { CATEGORIES, FEATURED, CARDS, useExplore } from './explore.store';
 
 export function ExploreContent() {
   const { query, category, setQuery, setCategory } = useExplore();
+  const router = useRouter();
+  const { activeContext, status } = useAppSession();
+  const showChemistry = status !== 'loading' && (activeContext.gradeBand === 'teen' || activeContext.gradeBand === 'adult');
   const visible = CARDS.filter(
     (card) =>
       (category === 'All' || card.category === category) &&
@@ -54,6 +59,26 @@ export function ExploreContent() {
           })}
         </ScrollView>
       </FadeIn>
+
+      {/* This is a working advanced chemistry lesson, not a decorative resource card. */}
+      {showChemistry ? (
+        <FadeIn delay={120}>
+          <Section className="gap-element">
+            <Text variant="label" tone="muted">Science lab</Text>
+            <PressScale
+              className="w-full gap-element rounded-card border-2 border-border bg-surface-raised p-5 shadow-card"
+              aria-label="Open the Chemistry Lab"
+              onPress={() => router.push('/chemistry-lab')}
+            >
+              <TWText className="text-base font-semibold text-text">
+                Chemistry Lab · Molecules and electrons
+              </TWText>
+              <Text tone="muted">Make a prediction, then test it with QDK molecular calculations.</Text>
+              <Text variant="label">Explore chemistry →</Text>
+            </PressScale>
+          </Section>
+        </FadeIn>
+      ) : null}
 
       {/* Featured rail */}
       <FadeIn delay={140}>
