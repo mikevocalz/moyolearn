@@ -29,7 +29,7 @@ function ChoiceRow<T extends string | number>({
 }: {
   label: string;
   options: readonly T[];
-  selected: T;
+  selected: T | null;
   choose: (value: T) => void;
 }) {
   return (
@@ -130,7 +130,11 @@ function BalanceReaction() {
   const atoms = Object.keys(counts.reactants);
 
   const changeCoefficient = (index: number, amount: number) => {
-    setCoefficients((old) => old.map((value, i) => i === index ? Math.max(1, Math.min(6, value + amount)) : value) as unknown as Coefficients);
+    setCoefficients((old): Coefficients => [
+      index === 0 ? Math.max(1, Math.min(6, old[0] + amount)) : old[0],
+      index === 1 ? Math.max(1, Math.min(6, old[1] + amount)) : old[1],
+      index === 2 ? Math.max(1, Math.min(6, old[2] + amount)) : old[2],
+    ]);
     setChecked(false);
   };
 
@@ -214,10 +218,10 @@ function PhotosynthesisExplorer({ ageBand }: { ageBand: AgeBand }) {
       <Text>Try giving a green plant light, water, and carbon dioxide. Predict what happens when something is missing.</Text>
       <Card className="gap-stack">
         <TWText className="text-xl text-text">🌱</TWText>
-        <ChoiceRow label="Sunlight" options={['Off', 'On'] as const} selected={light ? 'On' : 'Off'} choose={(v) => change(setLight, light)} />
-        <ChoiceRow label="Water" options={['Off', 'On'] as const} selected={water ? 'On' : 'Off'} choose={(v) => change(setWater, water)} />
+        <ChoiceRow label="Sunlight" options={['Off', 'On'] as const} selected={light ? 'On' : 'Off'} choose={() => change(setLight, light)} />
+        <ChoiceRow label="Water" options={['Off', 'On'] as const} selected={water ? 'On' : 'Off'} choose={() => change(setWater, water)} />
         {ageBand !== 'young' ? (
-          <ChoiceRow label="Carbon dioxide (CO₂)" options={['Off', 'On'] as const} selected={carbonDioxide ? 'On' : 'Off'} choose={(v) => change(setCarbonDioxide, carbonDioxide)} />
+          <ChoiceRow label="Carbon dioxide (CO₂)" options={['Off', 'On'] as const} selected={carbonDioxide ? 'On' : 'Off'} choose={() => change(setCarbonDioxide, carbonDioxide)} />
         ) : null}
       </Card>
       <Button variant="primary" title="Run plant experiment" onPress={() => setRan(true)} />
@@ -239,7 +243,7 @@ function PhotosynthesisExplorer({ ageBand }: { ageBand: AgeBand }) {
 function GeneticsExplorer() {
   const [first, setFirst] = useState<Genotype>('Aa');
   const [second, setSecond] = useState<Genotype>('Aa');
-  const [prediction, setPrediction] = useState(0.5);
+  const [prediction, setPrediction] = useState<number | null>(null);
   const [ran, setRan] = useState(false);
   const distribution = offspringProbabilities(first, second);
   return (
@@ -249,9 +253,9 @@ function GeneticsExplorer() {
       <Card className="gap-stack">
         <ChoiceRow label="Parent 1 genotype" options={GENOTYPES} selected={first} choose={(value) => { setFirst(value); setRan(false); }} />
         <ChoiceRow label="Parent 2 genotype" options={GENOTYPES} selected={second} choose={(value) => { setSecond(value); setRan(false); }} />
-        <ChoiceRow label="My prediction for aa (%)" options={[0,25,50,75,100] as const} selected={Math.round(prediction * 100)} choose={(value) => { setPrediction(value / 100); setRan(false); }} />
+        <ChoiceRow label="My prediction for aa (%)" options={[0,25,50,75,100] as const} selected={prediction === null ? null : Math.round(prediction * 100)} choose={(value) => { setPrediction(value / 100); setRan(false); }} />
       </Card>
-      <Button variant="primary" title="Test inheritance prediction" onPress={() => setRan(true)} />
+      <Button variant="primary" title="Test inheritance prediction" disabled={prediction === null} onPress={() => setRan(true)} />
       {ran ? (
         <Card className="gap-stack">
           <Heading level={3} size="title">Possible combinations</Heading>
@@ -279,7 +283,7 @@ export function PhysicsExperiment({ ageBand }: { ageBand: AgeBand }) {
   const [initialVelocity, setInitialVelocity] = useState(2);
   const [acceleration, setAcceleration] = useState(1);
   const [seconds, setSeconds] = useState(4);
-  const [prediction, setPrediction] = useState<'more' | 'less' | null>(null);
+  const [prediction, setPrediction] = useState<'more' | 'less' | 'same' | null>(null);
   const [ran, setRan] = useState(false);
   const reset = (callback: () => void) => { callback(); setRan(false); };
   const result = motionAtTime(initialVelocity, acceleration, seconds);
@@ -294,7 +298,7 @@ export function PhysicsExperiment({ ageBand }: { ageBand: AgeBand }) {
         <ChoiceRow label="Acceleration (m/s²)" options={[0, 1, 2] as const} selected={acceleration} choose={(value) => reset(() => setAcceleration(value))} />
         <ChoiceRow label="Time (seconds)" options={[2, 4, 6] as const} selected={seconds} choose={(value) => reset(() => setSeconds(value))} />
       </Card>
-      <ChoiceRow label="If acceleration doubles, distance will…" options={['more', 'less'] as const} selected={prediction ?? 'more'} choose={(value) => { setPrediction(value); setRan(false); }} />
+      <ChoiceRow label="If acceleration doubles, distance will…" options={['more', 'less', 'same'] as const} selected={prediction} choose={(value) => { setPrediction(value); setRan(false); }} />
       <Button variant="primary" title="Run cart experiment" disabled={prediction === null} onPress={() => setRan(true)} />
       {ran ? (
         <Card className="gap-stack">
@@ -304,7 +308,7 @@ export function PhysicsExperiment({ ageBand }: { ageBand: AgeBand }) {
             <View className="h-full rounded-full bg-primary" style={{ width: `${Math.min(100, result.meters / 65 * 100)}%` }} />
           </View>
           <Text>With twice the acceleration: {compared.meters.toFixed(1)} m over the same time.</Text>
-          <Text>{compared.meters > result.meters && prediction === 'more' || compared.meters < result.meters && prediction === 'less'
+          <Text>{(compared.meters > result.meters && prediction === 'more') || (compared.meters < result.meters && prediction === 'less') || (compared.meters === result.meters && prediction === 'same')
             ? 'Your prediction matches this idealized model. Why does time matter?'
             : 'Compare the two distances. What stayed the same, and what changed?'}</Text>
           <Text variant="caption" tone="muted">
@@ -345,7 +349,7 @@ export function EarthExperiment({ ageBand }: { ageBand: AgeBand }) {
         <ChoiceRow
           label="My prediction"
           options={['June', 'December', 'same'] as const}
-          selected={prediction ?? 'June'}
+          selected={prediction}
           choose={(value) => { setPrediction(value); setRan(false); }}
         />
       </Card>
