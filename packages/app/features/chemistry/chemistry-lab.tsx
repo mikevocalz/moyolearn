@@ -34,12 +34,15 @@ const MOLECULES = [
 ] as const;
 
 async function readEnergy(moleculeId: MoleculeId): Promise<EnergyReading> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 30_000);
+  try {
   const response = await fetch(`${API_URL}/api/chemistry/energy`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ moleculeId }),
-    signal: AbortSignal.timeout(30_000),
+    signal: controller.signal,
   });
   if (!response.ok) throw new Error('Unable to run the chemistry calculation');
   const result = (await response.json()) as EnergyReading;
@@ -53,6 +56,9 @@ async function readEnergy(moleculeId: MoleculeId): Promise<EnergyReading> {
     throw new Error('Invalid chemistry result');
   }
   return result;
+  } finally {
+    clearTimeout(timeout);
+  }
 }
 
 export function ChemistryLabScreen() {

@@ -77,7 +77,10 @@ export async function POST(request: NextRequest) {
 
       return NextResponse.json(parsed.data, { headers: { 'Cache-Control': 'no-store' } });
     }, { requires: 'practise', telemetry: { op: 'chemistry.energy', resource: 'chemistry', action: 'read' } });
-  } catch {
+  } catch (error) {
+    if (error instanceof Error && error.message === 'Unauthenticated') {
+      return NextResponse.json({ error: 'Sign in to access the chemistry lab' }, { status: 401 });
+    }
     return NextResponse.json({ error: 'Chemistry lab is unavailable' }, { status: 503 });
   }
 }
