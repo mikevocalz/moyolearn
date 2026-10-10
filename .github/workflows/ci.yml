@@ -29,12 +29,18 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
+      - name: Module exports and protected learner routes
+        run: node --test tooling/check-barrels.test.mjs tooling/learner-routes.test.mjs
+      - name: Prepare avatar assets for repository guards
+        run: node apps/web/scripts/copy-avatar-assets.mjs
+      - name: Repository guards and workspace lint
+        run: pnpm lint
       # --continue: without it turbo kills every sibling task on the first
       # failure, and each one then prints a bare ELIFECYCLE with no output. A
       # single missing eslint.config.mjs read as nine broken packages that way
       # (docs/issues/2026-09-13-turbo-lint-failures.md). The run still exits
       # non-zero, so this reports more without gating less.
-      - run: pnpm exec turbo run build typecheck lint test --continue
+      - run: pnpm exec turbo run build typecheck test --continue
 
   # Per-application build + artifact + runtime coverage.
   #
@@ -122,6 +128,8 @@ jobs:
           fi
           echo "ok  $ARTIFACT ($(wc -c < "$ARTIFACT" | tr -d ' ') bytes)"
           if [ -n "${CONTAINS:-}" ]; then
+            # These template variables belong to JavaScript, not the shell.
+            # shellcheck disable=SC2016
             node -e 'const fs=require("fs");const [f,s]=process.argv.slice(1);if(!fs.readFileSync(f,"utf8").includes(s)){console.log(`::error::${f} is missing the expected content ${JSON.stringify(s)}`);process.exit(1)}console.log(`ok  ${f} contains ${JSON.stringify(s)}`)' "$ARTIFACT" "$CONTAINS"
           fi
 

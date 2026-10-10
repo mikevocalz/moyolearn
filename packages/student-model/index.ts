@@ -71,6 +71,6 @@ export {
   resolves a learner's band, and `planeRegisterFor` is the only sanctioned way
   to turn one into the Safety Plane's two-value policy register.
 */
-export { asVoiceBand, planeRegisterFor, BAND_EXAMPLES, BAND_FRAMES, VOICE_BANDS } from './src/voice-band.ts';
+export { asVoiceBand, readVoiceBand, planeRegisterFor, BAND_EXAMPLES, BAND_FRAMES, VOICE_BANDS } from './src/voice-band.ts';
 export type { BandExample, VoiceBand } from './src/voice-band.ts';
 export type { BriefLookup, ModelCall, ModelStreamCall, TutorPrompt } from './src/inference.ts';

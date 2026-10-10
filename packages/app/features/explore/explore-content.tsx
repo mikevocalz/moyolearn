@@ -5,10 +5,15 @@ import { Heart, Eye } from '@acme/ui/icons';
 import { Section, View, Text as TWText, ScrollView, Pressable } from '@acme/ui/tw';
 import { Heading, PressScale, SearchBar, Text, FadeIn, ScaleIn } from '@acme/ui';
 import { WELL, INK } from '../home/home.data';
+import { useRouter } from 'solito/navigation';
+import { useAppSession } from '../../providers/session';
 import { CATEGORIES, FEATURED, CARDS, useExplore } from './explore.store';
 
 export function ExploreContent() {
   const { query, category, setQuery, setCategory } = useExplore();
+  const router = useRouter();
+  const { activeContext, status } = useAppSession();
+  const showScience = status !== 'loading' && activeContext.kind === 'learner';
   const visible = CARDS.filter(
     (card) =>
       (category === 'All' || card.category === category) &&
@@ -54,6 +59,26 @@ export function ExploreContent() {
           })}
         </ScrollView>
       </FadeIn>
+
+      {/* A real multi-subject lab, with a separate advanced molecular engine. */}
+      {showScience ? (
+        <FadeIn delay={120}>
+          <Section className="gap-element">
+            <Text variant="label" tone="muted">Science lab</Text>
+            <PressScale
+              className="w-full gap-element rounded-card border-2 border-border bg-surface-raised p-5 shadow-card"
+              aria-label="Open Moyo Science Lab"
+              onPress={() => router.push('/science-lab')}
+            >
+              <TWText className="text-base font-semibold text-text">
+                Moyo Science Lab · Explore four sciences
+              </TWText>
+              <Text tone="muted">Hands-on chemistry, biology, physics and Earth science experiments. Predict, observe and explain.</Text>
+              <Text variant="label">Open Science Lab →</Text>
+            </PressScale>
+          </Section>
+        </FadeIn>
+      ) : null}
 
       {/* Featured rail */}
       <FadeIn delay={140}>

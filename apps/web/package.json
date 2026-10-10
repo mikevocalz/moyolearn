@@ -19,7 +19,7 @@
     "bunny:verify:video": "tsx scripts/bunny-verify-video.mts",
     "tutor:verify": "tsx scripts/tutor-check.mts",
     "sweep:verify": "tsx scripts/sweep-verify.mts",
-    "test": "pnpm voice:test",
+    "test": "pnpm voice:test && node --conditions=react-server --import tsx --test lib/chemistry-request.test.ts",
     "voice:test": "node --conditions=react-server --import tsx --test lib/voice-baked.test.ts",
     "voice:check": "node --conditions=react-server --import tsx scripts/voice-check.mts",
     "voice:bake": "NODE_OPTIONS=--conditions=react-server tsx scripts/voice-bake.mts",
