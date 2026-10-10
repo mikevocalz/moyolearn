@@ -6,7 +6,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { z } from 'zod';
 import { protectedOperation } from '@acme/app/server';
 import { auth } from '@/lib/auth';
-import { loadGradeBand } from '@/lib/student-model.repository';
+import { loadAssignedGradeBand } from '@/lib/student-model.repository';
 import { fetchChemistryWorker, readChemistryJson } from '@/lib/chemistry-request';
 
 export const dynamic = 'force-dynamic';
@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
 
   try {
     return await protectedOperation(auth, request.headers, async (ctx) => {
-      const band = await loadGradeBand(ctx);
+      const band = await loadAssignedGradeBand(ctx);
       if (band !== '6-8' && band !== '9-12') {
         return NextResponse.json({ error: 'Activity unavailable for this age band' }, { status: 403 });
       }

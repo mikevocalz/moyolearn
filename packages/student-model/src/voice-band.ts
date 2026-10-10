@@ -281,7 +281,12 @@ const FALLBACK: VoiceBand = '9-12';
  * does not have one.
  */
 export function asVoiceBand(value: string | null | undefined): VoiceBand {
+  return readVoiceBand(value) ?? FALLBACK;
+}
+
+/** A recorded band, without a voice-register fallback that could grant access. */
+export function readVoiceBand(value: string | null | undefined): VoiceBand | null {
   if (value === 'young') return 'k-2';
   if (value === 'older') return FALLBACK;
-  return (VOICE_BANDS as readonly string[]).includes(value ?? '') ? (value as VoiceBand) : FALLBACK;
+  return (VOICE_BANDS as readonly string[]).includes(value ?? '') ? (value as VoiceBand) : null;
 }
