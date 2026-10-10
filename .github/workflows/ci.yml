@@ -29,8 +29,8 @@ jobs:
           node-version-file: .nvmrc
           cache: pnpm
       - run: pnpm install --frozen-lockfile
-      - name: Barrel export regression
-        run: node --test tooling/check-barrels.test.mjs
+      - name: Module exports and protected learner routes
+        run: node --test tooling/check-barrels.test.mjs tooling/learner-routes.test.mjs
       - name: Prepare avatar assets for repository guards
         run: node apps/web/scripts/copy-avatar-assets.mjs
       - name: Repository guards and workspace lint

@@ -211,7 +211,7 @@ function PhotosynthesisExplorer({ ageBand }: { ageBand: AgeBand }) {
   const [ran, setRan] = useScienceValue(false);
   const ready = photosynthesisReady(light, water, carbonDioxide);
   const change = (set: (value: boolean) => void, value: boolean) => {
-    set(!value); setRan(false);
+    set(value); setRan(false);
   };
   return (
     <View className="gap-stack">
@@ -219,10 +219,10 @@ function PhotosynthesisExplorer({ ageBand }: { ageBand: AgeBand }) {
       <Text>Try giving a green plant light, water, and carbon dioxide. Predict what happens when something is missing.</Text>
       <Card className="gap-stack">
         <TWText className="text-xl text-text">🌱</TWText>
-        <ChoiceRow label="Sunlight" options={['Off', 'On'] as const} selected={light ? 'On' : 'Off'} choose={() => change(setLight, light)} />
-        <ChoiceRow label="Water" options={['Off', 'On'] as const} selected={water ? 'On' : 'Off'} choose={() => change(setWater, water)} />
+        <ChoiceRow label="Sunlight" options={['Off', 'On'] as const} selected={light ? 'On' : 'Off'} choose={(value) => change(setLight, value === 'On')} />
+        <ChoiceRow label="Water" options={['Off', 'On'] as const} selected={water ? 'On' : 'Off'} choose={(value) => change(setWater, value === 'On')} />
         {ageBand !== 'young' ? (
-          <ChoiceRow label="Carbon dioxide (CO₂)" options={['Off', 'On'] as const} selected={carbonDioxide ? 'On' : 'Off'} choose={() => change(setCarbonDioxide, carbonDioxide)} />
+          <ChoiceRow label="Carbon dioxide (CO₂)" options={['Off', 'On'] as const} selected={carbonDioxide ? 'On' : 'Off'} choose={(value) => change(setCarbonDioxide, value === 'On')} />
         ) : null}
       </Card>
       <Button variant="primary" title="Run plant experiment" onPress={() => setRan(true)} />

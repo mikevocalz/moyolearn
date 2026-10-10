@@ -18,7 +18,7 @@ export function ScienceLabScreen() {
   const { activeContext, status } = useAppSession();
   const router = useRouter();
   const [subject, setSubject] = useScienceValue<ScienceSubject>('chemistry');
-  const ageBand: AgeBand = activeContext.gradeBand ?? 'teen';
+  const ageBand: AgeBand = activeContext.gradeBand ?? 'young';
   const scale = bandScaleFor(ageBand);
   const advanced = ageBand === 'teen' || ageBand === 'adult';
 

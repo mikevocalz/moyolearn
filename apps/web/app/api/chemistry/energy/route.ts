@@ -7,6 +7,7 @@ import { z } from 'zod';
 import { protectedOperation } from '@acme/app/server';
 import { auth } from '@/lib/auth';
 import { loadGradeBand } from '@/lib/student-model.repository';
+import { fetchChemistryWorker, readChemistryJson } from '@/lib/chemistry-request';
 
 export const dynamic = 'force-dynamic';
 
@@ -24,11 +25,12 @@ const WorkerResult = z.object({
 });
 
 export async function POST(request: NextRequest) {
-  if (Number(request.headers.get('content-length') ?? 0) > 512) {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 413 });
+  const json = await readChemistryJson(request);
+  if (!json.ok) {
+    return NextResponse.json({ error: 'Invalid request' }, { status: json.tooLarge ? 413 : 400 });
   }
 
-  const body = RequestSchema.safeParse(await request.json().catch(() => null));
+  const body = RequestSchema.safeParse(json.value);
   if (!body.success) {
     return NextResponse.json({ error: 'Choose a supported molecular structure' }, { status: 400 });
   }
@@ -57,16 +59,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Chemistry service configuration is invalid' }, { status: 503 });
       }
 
-      const worker = await fetch(new URL('/v1/chemistry/energy', origin), {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-Chemistry-Worker-Token': token,
-        },
-        body: JSON.stringify(body.data),
-        cache: 'no-store',
-        signal: AbortSignal.timeout(25_000),
-      });
+      const worker = await fetchChemistryWorker(origin, token, body.data.moleculeId);
       if (!worker.ok) {
         return NextResponse.json({ error: 'Chemistry calculation is unavailable' }, { status: 503 });
       }
