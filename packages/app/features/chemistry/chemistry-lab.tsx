@@ -6,44 +6,30 @@
 // SOT: docs/compute/qdk-chemistry.md
 // SOT-KEYWORDS: chemistry lab quantum qdk molecule hydrogen scf electron bond prediction
 
-import { useScienceValue } from '../science/use-science-value';
-import { Button, Card, Container, FadeIn, Heading, PressScale, Text } from '@acme/ui';
+import { useEffect, useRef } from 'react';
+import { Button, Card, Container, FadeIn, Heading, PressScale, Text, useInstanceStore, useStore } from '@acme/ui';
 import { ScrollView, Section, View, Text as TWText } from '@acme/ui/tw';
 import { useAppSession } from '../../providers/session';
 import { API_URL } from '../../core/api-url';
 import { useIsOnline } from '../../core/use-is-online';
 
-type MoleculeId = 'h2-equilibrium' | 'h2-stretched';
-type Prediction = 'equilibrium' | 'stretched';
-type EnergyReading = {
-  moleculeId: MoleculeId;
-  energyHartree: number;
-  method: 'Hartree-Fock/SCF';
-  basis: 'sto-3g';
-  computeEngine: 'Microsoft QDK/Chemistry';
-  note: string;
-};
-type RunState =
-  | { kind: 'idle' }
-  | { kind: 'running' }
-  | { kind: 'failed' }
-  | { kind: 'ready'; equilibrium: EnergyReading; stretched: EnergyReading };
+import {
+  calculateChemistryRun, cancelChemistryRun, chooseChemistryPrediction,
+  type ChemistryState, type EnergyReading, type MoleculeId, type Prediction, type RunState,
+} from './chemistry-run';
 
 const MOLECULES = [
   { id: 'h2-equilibrium', title: 'A · Closer hydrogen atoms', distance: '0.74 Å' },
   { id: 'h2-stretched', title: 'B · Farther hydrogen atoms', distance: '1.50 Å' },
 ] as const;
 
-async function readEnergy(moleculeId: MoleculeId): Promise<EnergyReading> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 30_000);
-  try {
+async function readEnergy(moleculeId: MoleculeId, signal: AbortSignal): Promise<EnergyReading> {
   const response = await fetch(`${API_URL}/api/chemistry/energy`, {
     method: 'POST',
     credentials: 'include',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ moleculeId }),
-    signal: controller.signal,
+    signal,
   });
   if (!response.ok) throw new Error('Unable to run the chemistry calculation');
   const result = (await response.json()) as EnergyReading;
@@ -57,30 +43,20 @@ async function readEnergy(moleculeId: MoleculeId): Promise<EnergyReading> {
     throw new Error('Invalid chemistry result');
   }
   return result;
-  } finally {
-    clearTimeout(timeout);
-  }
 }
 
 export function ChemistryLabScreen() {
   const { activeContext, status } = useAppSession();
   const online = useIsOnline();
-  const [prediction, setPrediction] = useScienceValue<Prediction | null>(null);
-  const [run, setRun] = useScienceValue<RunState>({ kind: 'idle' });
+  const store = useInstanceStore<ChemistryState>(() => ({ prediction: null, run: { kind: 'idle' } }));
+  const prediction = useStore(store, (state) => state.prediction);
+  const run = useStore(store, (state) => state.run);
+  const active = useRef<AbortController | null>(null);
+  useEffect(() => () => cancelChemistryRun(active), []);
   const ageBand = activeContext.gradeBand;
 
-  const calculate = async () => {
-    if (!prediction || !online || run.kind === 'running') return;
-    setRun({ kind: 'running' });
-    try {
-      const [equilibrium, stretched] = await Promise.all([
-        readEnergy('h2-equilibrium'),
-        readEnergy('h2-stretched'),
-      ]);
-      setRun({ kind: 'ready', equilibrium, stretched });
-    } catch {
-      setRun({ kind: 'failed' });
-    }
+  const calculate = () => {
+    if (online) void calculateChemistryRun(store, active, readEnergy);
   };
 
   return (
@@ -98,10 +74,7 @@ export function ChemistryLabScreen() {
             <ChemistryExperiment
               online={online}
               prediction={prediction}
-              onPredict={(choice) => {
-                setPrediction(choice);
-                setRun({ kind: 'idle' });
-              }}
+              onPredict={(choice) => chooseChemistryPrediction(store, active, choice)}
               run={run}
               onCalculate={calculate}
             />

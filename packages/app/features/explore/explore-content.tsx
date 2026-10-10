@@ -74,7 +74,7 @@ export function ExploreContent() {
                 Moyo Science Lab · Explore four sciences
               </TWText>
               <Text tone="muted">Hands-on chemistry, biology, physics and Earth science experiments. Predict, observe and explain.</Text>
-              <Text variant="label">Explore chemistry →</Text>
+              <Text variant="label">Open Science Lab →</Text>
             </PressScale>
           </Section>
         </FadeIn>
