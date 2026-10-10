@@ -22,7 +22,9 @@ export async function readChemistryJson(request: Request): Promise<JsonResult> {
       if (done) break;
       bytes += value.byteLength;
       if (bytes > limit) {
-        await reader.cancel().catch(() => undefined);
+        // A cloned/tee'd body may wait for another reader's cancellation.
+        // Start cleanup without delaying the oversized-request response.
+        void reader.cancel().catch(() => undefined);
         return { ok: false, tooLarge: true };
       }
       chunks.push(value);

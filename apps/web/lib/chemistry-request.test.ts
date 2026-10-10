@@ -43,6 +43,22 @@ test('does not trust an understated or malformed Content-Length', async () => {
   }
 });
 
+test('rejects promptly when stream cancellation cannot finish until another consumer closes', async (t) => {
+  const [body, retained] = new ReadableStream<Uint8Array>({
+    start(controller) { controller.enqueue(new Uint8Array(513)); },
+  }).tee();
+  t.after(() => retained.cancel());
+  const init: RequestInit & { duplex: 'half' } = {
+    method: 'POST', duplex: 'half', body,
+  };
+  let timer: ReturnType<typeof setTimeout> | undefined;
+  t.after(() => clearTimeout(timer));
+  const deadline = new Promise<never>((_resolve, reject) => {
+    timer = setTimeout(() => reject(new Error('body rejection waited for cancellation')), 1000);
+  });
+  assert.deepEqual(await Promise.race([readChemistryJson(new Request('http://localhost', init)), deadline]), { ok: false, tooLarge: true });
+});
+
 test('accepts valid JSON at the exact 512-byte boundary', async () => {
   const json = JSON.stringify({ moleculeId: 'h2-equilibrium' });
   const body = ' '.repeat(512 - encoder.encode(json).byteLength) + json;
