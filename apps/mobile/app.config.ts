@@ -288,7 +288,7 @@ const config: ExpoConfig = {
       'expo-horizon-core',
       {
         horizonAppId: process.env.HORIZON_APP_ID ?? '',
-        supportedDevices: 'quest2|questpro|quest3|quest3s',
+        supportedDevices: 'quest2|questpro|quest3|quest3s|vrglasses',
         defaultWidth: '1024dp',
         defaultHeight: '640dp',
         disableVrHeadtracking: false,
@@ -347,7 +347,22 @@ const config: ExpoConfig = {
         QUEST is the OpenXR path and a PICO is an OpenXR headset; the fork's own
         `ViroXRSceneNavigator` routes `isQuest || isPico` down it.
       */
-      { android: { xRMode: ['AR', 'QUEST'] } },
+      {
+        /*
+          THE STUDIO LINK. `provider: 'reactvision'` plus the project/api-key
+          pair is what `VRTStudioModule` reads back at runtime: the plugin bakes
+          them into the manifest as `RVProjectId`/`RVApiKey`, and
+          `StudioSceneNavigator` fetches against them without a prop. Same
+          wiring the sibling apps (nyc-mon, Harlem-Might) already carry. The
+          values are public client config — `EXPO_PUBLIC_*` lands in the
+          bundle — and live in the gitignored `.env`, not the repository.
+        */
+        provider: 'reactvision',
+        rvApiKey: process.env.EXPO_PUBLIC_REACTVISION_API_KEY,
+        rvProjectId: process.env.EXPO_PUBLIC_REACTVISION_PROJECT_ID,
+        rvEndpoint: process.env.EXPO_PUBLIC_REACTVISION_ENDPOINT,
+        android: { xRMode: ['AR', 'QUEST'] },
+      },
     ],
     ['@reactvision/react-viro/plugins/withViroVisionOS', { applyCompatibilityPatches: false }],
     /*

@@ -16,6 +16,7 @@
 
 import { AudioRecorder } from 'react-native-audio-api';
 import { createStore } from 'zustand/vanilla';
+import { playXrStatusCue, type XrStatusCue } from '@acme/ui/xr';
 import { transcribe } from '@acme/app/features/capture/transcribe.native.ts';
 import { requestNativePermission } from '@acme/app/features/permissions/permission-request.native.ts';
 import { useXrQuestionFlow } from '@acme/app/features/tutor/xr-question.store.ts';
@@ -27,6 +28,8 @@ const MAX_SECONDS = 60;
 export const xrVoiceSession = createStore<{
   phase: XrVoiceSessionPhase;
   toggle(): void;
+  press(): void;
+  release(): void;
   stop(): Promise<void>;
   cancel(): void;
 }>()((set, get) => {
@@ -35,8 +38,15 @@ export const xrVoiceSession = createStore<{
   let recorder: AudioRecorder | null = null;
   let timer: ReturnType<typeof setTimeout> | null = null;
   let generation = 0;
+  let releasedDuringStart: number | null = null;
 
-  const status = (text: string) => useXrQuestionFlow.setState({ status: text });
+  /* Status is audio: the text stays in the flow store for the transcript
+     draft, but the panel no longer reads it — the cue is what the child
+     actually perceives. */
+  const status = (text: string, cue?: XrStatusCue) => {
+    useXrQuestionFlow.setState({ status: text });
+    if (cue) playXrStatusCue(cue);
+  };
   const clearTimer = () => {
     if (timer !== null) clearTimeout(timer);
     timer = null;
@@ -64,14 +74,15 @@ export const xrVoiceSession = createStore<{
            `answerText` and SUBMIT marks it like any typed answer. */
         useXrQuestionFlow.getState().setTextAnswer(text);
         useXrQuestionFlow.setState({ status: `Heard: “${text}”` });
+        playXrStatusCue('submit');
       } else {
         set({ phase: 'blocked' });
-        status('I did not catch that — press LISTEN and try again.');
+        status('I did not catch that — press LISTEN and try again.', 'error');
       }
     } catch {
       if (current()) {
         set({ phase: 'blocked' });
-        status('The microphone did not answer — press LISTEN to try again.');
+        status('The microphone did not answer — press LISTEN to try again.', 'error');
       }
     }
   };
@@ -79,6 +90,7 @@ export const xrVoiceSession = createStore<{
   const start = async () => {
     if (!['idle', 'blocked'].includes(get().phase)) return;
     const run = ++generation;
+    releasedDuringStart = null;
     const current = () => generation === run;
     set({ phase: 'starting' });
     let instance: AudioRecorder | null = null;
@@ -87,7 +99,7 @@ export const xrVoiceSession = createStore<{
       if (!current()) return;
       if (permission !== 'granted') {
         set({ phase: 'blocked' });
-        status('Microphone permission is needed to hear your answer.');
+        status('Microphone permission is needed to hear your answer.', 'error');
         return;
       }
       instance = new AudioRecorder();
@@ -99,18 +111,23 @@ export const xrVoiceSession = createStore<{
       }
       if (started.status === 'error') {
         set({ phase: 'blocked' });
-        status('The microphone did not answer — press LISTEN to try again.');
+        status('The microphone did not answer — press LISTEN to try again.', 'error');
         return;
       }
       recorder = instance;
       set({ phase: 'listening' });
-      status('Listening — press LISTEN again when you are done.');
-      timer = setTimeout(() => void stop(), MAX_SECONDS * 1000);
+      status('Listening — release to send.', 'askStart');
+      if (releasedDuringStart === run) {
+        releasedDuringStart = null;
+        void stop();
+      } else {
+        timer = setTimeout(() => void stop(), MAX_SECONDS * 1000);
+      }
     } catch {
       if (instance) void instance.stop().catch(() => undefined);
       if (current()) {
         set({ phase: 'blocked' });
-        status('The microphone did not answer — press LISTEN to try again.');
+        status('The microphone did not answer — press LISTEN to try again.', 'error');
       }
     }
   };
@@ -121,16 +138,29 @@ export const xrVoiceSession = createStore<{
       if (get().phase === 'listening') void stop();
       else void start();
     },
+    press: () => {
+      if (__DEV__) console.log('[xr-voice] press, phase', get().phase);
+      void start();
+    },
+    release: () => {
+      if (__DEV__) console.log('[xr-voice] release, phase', get().phase);
+      if (get().phase === 'starting') {
+        releasedDuringStart = generation;
+        return;
+      }
+      void stop();
+    },
     stop,
     cancel: () => {
       const wasRecording = ['starting', 'listening', 'transcribing'].includes(get().phase);
       generation++;
+      releasedDuringStart = null;
       clearTimer();
       const instance = recorder;
       recorder = null;
       if (instance) void instance.stop().catch(() => undefined);
       set({ phase: 'idle' });
-      if (wasRecording) status('Microphone stopped. Press LISTEN to start again.');
+      if (wasRecording) status('Microphone stopped. Press LISTEN to start again.', 'tool');
     },
   };
 });

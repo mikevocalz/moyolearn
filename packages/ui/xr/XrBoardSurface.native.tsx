@@ -118,6 +118,7 @@ export function XrBoardSurface({ headPosition, headYawDeg, enabled, termination,
              drags for the owning ray anyway, so while a stroke is open a drag
              IS that stroke's — keep the move under the owner's id so the
              begin/move/end stream carries one consistent source. */
+          if (__DEV__) console.log('[XrBoardSurface] drag', position, 'src', source);
           const id = stroke.current.source;
           if (id === null) return;
           const hit = xrDragHit(position, downHit.current, plane.planePoint);

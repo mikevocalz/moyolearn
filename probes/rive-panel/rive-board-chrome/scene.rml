@@ -2473,11 +2473,33 @@
               <DataBindContext sourcePathIds="0:40-0:135" propertyKey="636" direction="true" />
             </BindablePropertyNumber>
           </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="18">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:522">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:522" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
         </StateMachineListenerSingle>
         <StateMachineListenerSingle targetId="0:247" listenerTypeValue="down" name="down askNatalie">
           <ListenerViewModelChange>
             <BindablePropertyNumber propertyValue="1">
               <DataBindContext sourcePathIds="0:40-0:135" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange>
+            <BindablePropertyNumber propertyValue="8">
+              <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
+            </BindablePropertyNumber>
+          </ListenerViewModelChange>
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:520">
+            <BindablePropertyNumber>
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:520" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
             </BindablePropertyNumber>
           </ListenerViewModelChange>
         </StateMachineListenerSingle>
@@ -2487,16 +2509,14 @@
               <DataBindContext sourcePathIds="0:40-0:135" propertyKey="636" direction="true" />
             </BindablePropertyNumber>
           </ListenerViewModelChange>
-        </StateMachineListenerSingle>
-        <StateMachineListenerSingle targetId="0:247" listenerTypeValue="click" name="command askNatalie">
           <ListenerViewModelChange>
-            <BindablePropertyNumber propertyValue="8">
+            <BindablePropertyNumber propertyValue="18">
               <DataBindContext sourcePathIds="0:40-0:112" propertyKey="636" direction="true" />
             </BindablePropertyNumber>
           </ListenerViewModelChange>
-          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:507">
+          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="0:521">
             <BindablePropertyNumber>
-              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:507" converterId="0:60" />
+              <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" id="0:521" converterId="0:60" />
               <DataBindContext sourcePathIds="0:40-0:113" propertyKey="636" direction="true" />
             </BindablePropertyNumber>
           </ListenerViewModelChange>

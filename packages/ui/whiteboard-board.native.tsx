@@ -297,11 +297,26 @@ post({type:'moyo:xray',board:true,l:rr.left,t:rr.top,w:rr.width,h:rr.height,vw:w
 lock();
 for(var i=0;i<b.length;i++){
 var s=b[i];
-if(s[0]===3){abort(el,s[1],s[2]);continue;}
+if(s[0]===3){abort(el,s[1],s[2]);W.l=null;continue;}
 var t=T[s[0]];
 if(!t)continue;
-if(s[0]===0)W.down=true;else if(s[0]===2)W.down=false;
+if(s[0]===0){W.down=true;}else if(s[0]===2){W.down=false;}
+/*
+  A controller ray reports at frame rate — on a 30fps headset that is one
+  sample per ~33ms, tens of CSS px apart on a fast stroke. The engine's
+  streamline can smooth jitter but cannot invent curvature between samples
+  that sparse, so injected ink used to read polygonal. Upsample long gaps
+  into ~10px steps: the spine the freehand outline walks becomes dense
+  enough to bend. Capped at 8 events per sample — event dispatch is cheap,
+  but a fast flick must not turn into a queue of its own.
+*/
+if(s[0]===1&&W.down&&W.l){
+var dx=s[1]-W.l[0],dy=s[2]-W.l[1],gap=Math.sqrt(dx*dx+dy*dy);
+if(gap>12){var n=Math.min(8,Math.floor(gap/10));
+for(var k=1;k<n;k++)point(el,'pointermove',W.l[0]+dx*k/n,W.l[1]+dy*k/n,s[3],1);}
+}
 point(el,t,s[1],s[2],s[3],s[0]<2?1:0);
+if(s[0]<2)W.l=[s[1],s[2]];else W.l=null;
 }
 };
 W.probe=function(p){

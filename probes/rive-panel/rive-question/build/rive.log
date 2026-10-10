@@ -286,3 +286,75 @@
 [14:00:41.701] rive  showing LearningQuestion [1/1]
 [14:00:41.702] rive  viewport 1280x800 @1x
 [14:00:41.791] rive  wrote /tmp/q_fixed.png
+[15:07:40.548] rive  verified (0 bytes, 147ms, 0 errors, 0 warnings)
+[15:07:44.182] rive  built build/moyo_learning_question.riv (165264 bytes, 134ms, 0 errors, 0 warnings)
+[16:38:44.570] rive  built build/moyo_learning_question.riv (166343 bytes, 177ms, 0 errors, 0 warnings)
+[16:39:29.458] rive  built build/moyo_learning_question.riv (166343 bytes, 153ms, 0 errors, 0 warnings)
+[16:39:29.461] rive  data: phase = 2
+[16:39:29.461] rive  data: choiceCount = 3
+[16:39:29.461] rive  data: choice0Visible = true
+[16:39:29.461] rive  data: choice1Visible = true
+[16:39:29.461] rive  data: choice2Visible = true
+[16:39:29.461] rive  data: choice0Label = First answer
+[16:39:29.461] rive  data: choice1Label = Second answer
+[16:39:29.461] rive  data: choice2Label = Third answer
+[16:39:29.463] rive  showing LearningQuestion [1/1]
+[16:39:29.463] rive  viewport 1280x800 @1x
+[16:39:29.524] rive  wrote build/idle.png
+[16:39:29.810] rive  built build/moyo_learning_question.riv (166343 bytes, 137ms, 0 errors, 0 warnings)
+[16:39:29.811] rive  data: phase = 2
+[16:39:29.811] rive  data: choiceCount = 3
+[16:39:29.811] rive  data: choice0Visible = true
+[16:39:29.811] rive  data: choice1Visible = true
+[16:39:29.811] rive  data: choice2Visible = true
+[16:39:29.811] rive  data: choice0Selected = true
+[16:39:29.811] rive  data: choice0Label = First answer
+[16:39:29.811] rive  data: choice1Label = Second answer
+[16:39:29.811] rive  data: choice2Label = Third answer
+[16:39:29.812] rive  showing LearningQuestion [1/1]
+[16:39:29.812] rive  viewport 1280x800 @1x
+[16:39:29.851] rive  wrote build/choice-selected.png
+[16:39:30.110] rive  built build/moyo_learning_question.riv (166343 bytes, 136ms, 0 errors, 0 warnings)
+[16:39:30.112] rive  data: phase = 2
+[16:39:30.113] rive  showing LearningQuestion [1/1]
+[16:39:30.113] rive  viewport 1280x800 @1x
+[16:39:30.151] rive  wrote build/listen-hover.png
+[16:39:30.487] rive  built build/moyo_learning_question.riv (166343 bytes, 135ms, 0 errors, 0 warnings)
+[16:39:30.488] rive  data: phase = 2
+[16:39:30.489] rive  showing LearningQuestion [1/1]
+[16:39:30.489] rive  viewport 1280x800 @1x
+[16:39:30.527] rive  wrote build/listen-down.png
+[16:39:40.992] rive  built build/moyo_learning_question.riv (166343 bytes, 164ms, 0 errors, 0 warnings)
+[16:39:40.995] rive  data: phase = 2
+[16:39:40.997] rive  showing LearningQuestion [1/1]
+[16:39:40.998] rive  viewport 1280x800 @1x
+[16:39:41.131] rive  wrote build/listen-hover-settle.png
+[16:40:04.018] rive  built build/moyo_learning_question.riv (166343 bytes, 155ms, 0 errors, 0 warnings)
+[16:40:04.021] rive  data: phase = 2
+[16:40:04.022] rive  showing LearningQuestion [1/1]
+[16:40:04.023] rive  viewport 1280x800 @1x
+[16:40:04.099] rive  wrote build/listen-hover-2s.png
+[16:40:24.474] rive  built build/moyo_learning_question.riv (166262 bytes, 151ms, 0 errors, 0 warnings)
+[16:40:24.475] rive  data: phase = 2
+[16:40:24.477] rive  showing LearningQuestion [1/1]
+[16:40:24.477] rive  viewport 1280x800 @1x
+[16:40:24.580] rive  wrote build/listen-hover-fixed.png
+[16:40:24.843] rive  built build/moyo_learning_question.riv (166262 bytes, 138ms, 0 errors, 0 warnings)
+[16:40:24.845] rive  data: phase = 2
+[16:40:24.846] rive  showing LearningQuestion [1/1]
+[16:40:24.846] rive  viewport 1280x800 @1x
+[16:40:24.890] rive  wrote build/listen-down-fixed.png
+[16:40:55.354] rive  built build/moyo_learning_question.riv (166262 bytes, 152ms, 0 errors, 0 warnings)
+[16:40:55.356] rive  data: phase = 2
+[16:40:55.358] rive  showing LearningQuestion [1/1]
+[16:40:55.358] rive  viewport 1280x800 @1x
+[16:40:55.429] rive  wrote build/hover-reset.png
+[16:40:55.680] rive  built build/moyo_learning_question.riv (166262 bytes, 136ms, 0 errors, 0 warnings)
+[16:40:55.681] rive  data: phase = 2
+[16:40:55.682] rive  showing LearningQuestion [1/1]
+[16:40:55.682] rive  viewport 1280x800 @1x
+[16:40:55.740] rive  wrote build/release-reset.png
+[16:42:16.087] rive  verified (0 bytes, 148ms, 0 errors, 0 warnings)
+[16:42:16.383] rive  built (166262 bytes, 139ms, 0 errors, 0 warnings)
+[16:42:16.384] rive  no Tests scripts found. A script qualifies by returning the Tests protocol, not by filename.
+[16:42:16.384] rive    no protocol scripts in this project at all

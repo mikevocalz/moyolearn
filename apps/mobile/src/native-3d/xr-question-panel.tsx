@@ -205,6 +205,7 @@ export function XrQuestionPanel({
               onNext: () => dispatch.current.onNext(),
               onHint: () => dispatch.current.onHint(),
               onVoice: () => dispatch.current.onVoice(),
+              onVoiceEnd: () => dispatch.current.onVoiceEnd?.(),
               onBoard: () => dispatch.current.onBoard(),
               onRetry: () => dispatch.current.onRetry(),
               onSkip: () => dispatch.current.onSkip(),

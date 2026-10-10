@@ -11,6 +11,7 @@ test('every footer verb decodes to the intent it names', () => {
   assert.deepEqual(decodeQuestionCommand(QUESTION_COMMAND.next, 0), { kind: 'next' });
   assert.deepEqual(decodeQuestionCommand(QUESTION_COMMAND.requestHint, 0), { kind: 'requestHint' });
   assert.deepEqual(decodeQuestionCommand(QUESTION_COMMAND.startVoice, 0), { kind: 'startVoice' });
+  assert.deepEqual(decodeQuestionCommand(QUESTION_COMMAND.releaseVoice, 0), { kind: 'releaseVoice' });
   assert.deepEqual(decodeQuestionCommand(QUESTION_COMMAND.openBoard, 0), { kind: 'openBoard' });
   assert.deepEqual(decodeQuestionCommand(QUESTION_COMMAND.retry, 0), { kind: 'retry' });
   assert.deepEqual(decodeQuestionCommand(QUESTION_COMMAND.skip, 0), { kind: 'skip' });
@@ -31,7 +32,7 @@ test('choice commands carry a validated row index', () => {
 });
 
 test('anything outside the vocabulary decodes to none', () => {
-  for (const bad of [-1, 10, 99, Number.NaN, Infinity]) {
+  for (const bad of [-1, 11, 99, Number.NaN, Infinity]) {
     assert.deepEqual(decodeQuestionCommand(bad, 0), { kind: 'none' }, `command ${bad}`);
   }
   assert.deepEqual(decodeQuestionCommand(QUESTION_COMMAND.none, 0), { kind: 'none' });

@@ -49,6 +49,7 @@ import {
 import type { WhiteboardHandle, WhiteboardInk, WhiteboardTool } from '@acme/ui';
 import { XrNatalie } from '@acme/app/features/tutor/XrNatalie.native.tsx';
 import { useTutorStore } from '@acme/app/features/tutor/tutor.store.ts';
+import { playXrStatusCue } from '@acme/ui/xr';
 import { RivePanelProbe, type PanelPose } from './rive-panel-probe';
 import { RiveBoardPanel } from './rive-board-panel';
 import type { BoardChromeHandlers } from './board-chrome-bind';
@@ -136,6 +137,7 @@ const setInk = (ink: WhiteboardInk) => {
    production Ask lands on, minus the microphone. Shared by the tray and the
    Rive chrome so both buttons do the same thing, not two similar things. */
 const askNatalie = () => {
+  playXrStatusCue('askStart');
   xrLayoutProbe.setState({ asking: true });
   useTutorStore
     .getState()
@@ -153,25 +155,31 @@ const askNatalie = () => {
 */
 const boardChromeHandlers: BoardChromeHandlers = {
   onTool: (tool) => {
+    playXrStatusCue('tool');
     setTool(tool);
     xrLayoutProbe.setState({ clearArmed: false });
   },
   onInk: (ink) => {
+    playXrStatusCue('tool');
     setInk(ink);
     setTool('draw');
     xrLayoutProbe.setState({ paletteOpen: false, clearArmed: false });
   },
   onPalette: (open) => xrLayoutProbe.setState({ paletteOpen: open, clearArmed: false }),
   onUndo: () => {
+    playXrStatusCue('tool');
     xrLayoutEngine.current?.undo();
     xrLayoutProbe.setState({ clearArmed: false });
   },
   onRedo: () => {
+    playXrStatusCue('tool');
     xrLayoutEngine.current?.redo();
     xrLayoutProbe.setState({ clearArmed: false });
   },
   onClear: () => {
     if (!xrLayoutProbe.getState().clearArmed) {
+      /* The first press only arms — it is a warning, and it sounds like one. */
+      playXrStatusCue('armed');
       xrLayoutProbe.setState({ clearArmed: true });
       return;
     }
@@ -182,6 +190,7 @@ const boardChromeHandlers: BoardChromeHandlers = {
     xrLayoutProbe.setState({ clearArmed: false });
     askNatalie();
   },
+  onAskEnd: () => playXrStatusCue('askEnd'),
 };
 
 export function XrLayoutProbe({
@@ -204,7 +213,6 @@ export function XrLayoutProbe({
   natalieHeightCm?: number;
 }) {
   const bound = useStore(xrLayoutProbe, (s) => s.bound);
-  const boundReason = useStore(xrLayoutProbe, (s) => s.boundReason);
   const engineReady = useStore(xrLayoutProbe, (s) => s.engineReady);
   const grabbed = useStore(xrLayoutProbe, (s) => s.grabbed);
   const boardOffset = useStore(xrLayoutProbe, (s) => s.boardOffset);
@@ -308,7 +316,9 @@ export function XrLayoutProbe({
             clearArmed,
             grabbed,
             reducedMotion: false,
-            status: bound ? '' : boundReason ?? 'Waiting for the board…',
+            /* Status is audio now — `playXrStatusCue` voices bind/tool/ask
+               transitions; the chrome's status field stays empty. */
+            status: '',
           }}
           gripWorld={{ position: [centre.position[0], chromeGripY, centre.position[2]], yawDeg: centre.yaw }}
           onChromeError={(message) => {

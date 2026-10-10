@@ -275,9 +275,10 @@ for (let i = 0; i < 6; i++) {
   rectShape({ name: `Sel ${i}`, x: 826, y: cy, w: 4, h: 56, fill: AMBER, opacity: 0, pre: bindOp(`choice${i}Selected`), indent: "          " });
   textEl({ name: `Idx ${i}`, x: 844, y: cy - 9, fs: 11, color: TEXT_DIM, ls: 1.5, str: `0${i + 1}`, indent: "          " });
   textEl({ name: `Label ${i}`, x: 884, y: cy - 11, w: 336, fs: 15, color: TEXT_HI, weight: 700, ls: 0.5, prop: `choice${i}Label`, indent: "          " });
+  rectShape({ name: `Down ${i}`, x: 1030, y: cy, w: 420, h: 84, fill: "40FFC168", stroke: "CCFFC168", sw: 2, cr: 6, opacity: 0, shapeId: downIds[i], indent: "          " });
+  rectShape({ name: `Hov ${i}`, x: 1030, y: cy, w: 420, h: 84, fill: "24FFFFFF", stroke: "99E9F4FA", sw: 1.5, cr: 6, opacity: 0, shapeId: hovIds[i], indent: "          " });
+  rectShape({ name: `Selected surface ${i}`, x: 1030, y: cy, w: 420, h: 84, fill: "24FFC168", stroke: "CCFFC168", sw: 2, cr: 6, opacity: 0, pre: bindOp(`choice${i}Selected`), indent: "          " });
   rectShape({ name: `Cell ${i}`, x: 1030, y: cy, w: 420, h: 84, fill: "F2101820", stroke: "38E9F4FA", sw: 1, cr: 6, indent: "          " });
-  rectShape({ name: `Hov ${i}`, x: 1030, y: cy, w: 420, h: 84, fill: "12FFFFFF", cr: 6, opacity: 0, shapeId: hovIds[i], indent: "          " });
-  rectShape({ name: `Down ${i}`, x: 1030, y: cy, w: 420, h: 84, fill: "26FFC168", cr: 6, opacity: 0, shapeId: downIds[i], indent: "          " });
   rectShape({ name: `Hit ${i}`, x: 1030, y: cy, w: 420, h: 84, fill: "0DFFFFFF", cr: 6, shapeId: hitIds[i], indent: "          " });
   push(`        </Node>`);
   push(`      </Node>`);
@@ -305,6 +306,8 @@ for (let i = 0; i < BTNS.length; i++) {
   if (b.name === "HINT") {
     rectShape({ name: "HintDim", x: b.cx, y: 773, w: b.w, h: 34, fill: "990A0D12", cr: 4, opacity: 0, shapeId: ID.hintDim, pre: `<DataBindContext sourcePathIds="${VM}-${P.hintAvailable.id}" propertyKey="18" converterId="0:64" />`, indent: "    " });
   }
+  rectShape({ name: `Btn down ${b.name}`, x: b.cx, y: 773, w: b.w, h: 34, fill: b.primary ? "660A0D12" : "55FFC168", stroke: b.primary ? "FF0A0D12" : "FFFFC168", sw: 2, cr: 4, opacity: 0, shapeId: btnDown[i] });
+  rectShape({ name: `Btn hov ${b.name}`, x: b.cx, y: 773, w: b.w, h: 34, fill: b.primary ? "4DFFFFFF" : "40FFFFFF", stroke: b.primary ? "FF0A0D12" : "FFE9F4FA", sw: 2, cr: 4, opacity: 0, shapeId: btnHov[i] });
   if (b.primary) {
     rectShape({ name: `Btn frame ${b.name}`, x: b.cx, y: 773, w: b.w, h: 34, fill: AMBER, cr: 4 });
   } else if (b.name === "NEXT") {
@@ -312,8 +315,6 @@ for (let i = 0; i < BTNS.length; i++) {
   } else {
     rectShape({ name: `Btn frame ${b.name}`, x: b.cx, y: 773, w: b.w, h: 34, fill: "1A101820", stroke: "55E9F4FA", sw: 1, cr: 4 });
   }
-  rectShape({ name: `Btn hov ${b.name}`, x: b.cx, y: 773, w: b.w, h: 34, fill: "12FFFFFF", cr: 4, opacity: 0, shapeId: btnHov[i] });
-  rectShape({ name: `Btn down ${b.name}`, x: b.cx, y: 773, w: b.w, h: 34, fill: "2EFFC168", cr: 4, opacity: 0, shapeId: btnDown[i] });
   rectShape({ name: `Btn hit ${b.name}`, x: b.cx, y: 773, w: b.w, h: 34, fill: "0DFFFFFF", cr: 4, shapeId: btnHit[i] });
 }
 
@@ -323,8 +324,6 @@ textEl({ name: "Subject", x: 48, y: 22, w: 140, align: "center", fs: 12, color: 
 rectShape({ name: "Subject underline", x: 118, y: 52, w: 56, h: 2, fill: AMBER });
 textEl({ name: "Skill", x: 200, y: 31, fs: 10, color: TEXT_DIM, ls: 2, prop: "skillLabel" });
 textEl({ name: "Zone tag", x: 580, y: 40, w: 120, align: "center", fs: 10, color: TEXT_FAINT, ls: 2.5, str: "Q-PANEL // LRN" });
-textEl({ name: "Status tag", x: 760, y: 24, fs: 9, color: TEXT_FAINT, ls: 2.5, str: "STATUS" });
-textEl({ name: "Status", x: 760, y: 40, fs: 11, color: TEXT_MID, ls: 1.5, prop: "status" });
 textEl({ name: "Progress", x: 980, y: 36, w: 130, align: "right", fs: 12, color: TEXT_HI, weight: 700, ls: 1, prop: "progressLabel" });
 rectShape({ name: "Locale chip", x: 1185, y: 36, w: 100, h: 26, fill: "14101820", stroke: "40E9F4FA", sw: 1, cr: 3 });
 /* Chip spans y 23..49; the text sits at 27 so the glyphs stay inside it —
@@ -546,9 +545,24 @@ for (let i = 0; i < BTNS.length; i++) {
   lpush(`          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="${db}"><BindablePropertyNumber><DataBindContext sourcePathIds="${VM}-${P.commandSeq.id}" propertyKey="636" id="${db}" converterId="0:60" /><DataBindContext sourcePathIds="${VM}-${P.commandSeq.id}" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>`);
   lpush(`          <ListenerNumberChange inputId="${FX}" value="${100 + fxIdx}" />`);
   lpush(`        </StateMachineListenerSingle>`);
-  lpush(`        <StateMachineListenerSingle targetId="${btnHit[i]}" listenerTypeValue="up" name="up btn ${b.name}"><ListenerNumberChange inputId="${FX}" value="${fxIdx}" /></StateMachineListenerSingle>`);
+  /* LISTEN is push-to-talk: `down` already sent startVoice — `up` and `exit`
+     (ray leaves the button while held) each send releaseVoice + a seq bump
+     so the binding's edge detector fires. Every other button stays tap-only. */
+  const ptt = b.cmd === 6 || b.cmd === 8; /* LISTEN and RETRY both reach voice */
+  const releaseCmd = (edge) => {
+    if (!ptt) return;
+    lpush(`        <StateMachineListenerSingle targetId="${btnHit[i]}" listenerTypeValue="${edge}" name="${edge} btn ${b.name}">`);
+    lpush(`          <ListenerViewModelChange><BindablePropertyNumber propertyValue="10"><DataBindContext sourcePathIds="${VM}-${P.command.id}" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>`);
+    const db2 = id();
+    lpush(`          <ListenerViewModelChange fromViewModelProperty="true" fromDataBindId="${db2}"><BindablePropertyNumber><DataBindContext sourcePathIds="${VM}-${P.commandSeq.id}" propertyKey="636" id="${db2}" converterId="0:60" /><DataBindContext sourcePathIds="${VM}-${P.commandSeq.id}" propertyKey="636" direction="true" /></BindablePropertyNumber></ListenerViewModelChange>`);
+    lpush(`          <ListenerNumberChange inputId="${FX}" value="${edge === "up" ? fxIdx : 0}" />`);
+    lpush(`        </StateMachineListenerSingle>`);
+  };
+  releaseCmd("up");
+  if (!ptt) lpush(`        <StateMachineListenerSingle targetId="${btnHit[i]}" listenerTypeValue="up" name="up btn ${b.name}"><ListenerNumberChange inputId="${FX}" value="${fxIdx}" /></StateMachineListenerSingle>`);
   lpush(`        <StateMachineListenerSingle targetId="${btnHit[i]}" listenerTypeValue="enter" name="enter btn ${b.name}"><ListenerNumberChange inputId="${FX}" value="${fxIdx}" /></StateMachineListenerSingle>`);
-  lpush(`        <StateMachineListenerSingle targetId="${btnHit[i]}" listenerTypeValue="exit" name="exit btn ${b.name}"><ListenerNumberChange inputId="${FX}" value="0" /></StateMachineListenerSingle>`);
+  releaseCmd("exit");
+  if (!ptt) lpush(`        <StateMachineListenerSingle targetId="${btnHit[i]}" listenerTypeValue="exit" name="exit btn ${b.name}"><ListenerNumberChange inputId="${FX}" value="0" /></StateMachineListenerSingle>`);
 }
 push(`      </StateMachineLayer>`);
 // FX layer
@@ -556,7 +570,7 @@ push(`      <StateMachineLayer name="FX">`);
 push(`        <EntryState x="0" y="0"><StateTransition stateToId="${fxStateId.fxIdle}" /></EntryState>`);
 push(`        <AnyState x="0" y="-140">`);
 for (const s of FX_STATES) {
-  push(`          <StateTransition stateToId="${fxStateId[s.k]}" duration="90"><TransitionNumberCondition inputId="${FX}" opValue="equal" value="${s.v}" /></StateTransition>`);
+  push(`          <StateTransition stateToId="${fxStateId[s.k]}" duration="0"><TransitionNumberCondition inputId="${FX}" opValue="equal" value="${s.v}" /></StateTransition>`);
 }
 push(`        </AnyState>`);
 push(`        <ExitState x="0" y="140" />`);

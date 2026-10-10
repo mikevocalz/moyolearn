@@ -29,6 +29,8 @@ export const BOARD_COMMAND = {
   /** Selecting ink i writes `inkBase + i` — 10..16 for the seven inks. */
   inkBase: 10,
   closePalette: 17,
+  /** The Ask button's up/exit edge — push-to-talk, not tap-toggle. */
+  releaseAsk: 18,
 } as const;
 
 /** What a decoded command asks the application to do. */
@@ -41,7 +43,8 @@ export type BoardChromeIntent =
   | { kind: 'undo' }
   | { kind: 'redo' }
   | { kind: 'clear' }
-  | { kind: 'askNatalie' };
+  | { kind: 'askNatalie' }
+  | { kind: 'releaseAsk' };
 
 /* The ink order is `BOARD_INKS`' — the swatch row and the palette row name the
    same colours in the same order or the child learns two names for red. */
@@ -64,6 +67,7 @@ export function decodeBoardCommand(command: number): BoardChromeIntent {
     case BOARD_COMMAND.redo: return { kind: 'redo' };
     case BOARD_COMMAND.clear: return { kind: 'clear' };
     case BOARD_COMMAND.askNatalie: return { kind: 'askNatalie' };
+    case BOARD_COMMAND.releaseAsk: return { kind: 'releaseAsk' };
     default: break;
   }
   const inkIndex = command - BOARD_COMMAND.inkBase;
@@ -86,12 +90,15 @@ export function inkToRive(ink: WhiteboardInk): number {
 
 /** Native intents can arrive after a frame dims: enforce availability in JS too. */
 export function boardCommandEnabled(intent: BoardChromeIntent, state: {
-  grabbed: boolean; asking: boolean; canUndo: boolean; canRedo: boolean; hasMarks: boolean;
+  grabbed: boolean; asking: boolean; canUndo: boolean; canRedo: boolean; hasMarks: boolean; clearArmed?: boolean;
 }): boolean {
   if (state.grabbed || intent.kind === 'none') return false;
   if (intent.kind === 'undo') return state.canUndo;
   if (intent.kind === 'redo') return state.canRedo;
-  if (intent.kind === 'clear') return state.hasMarks;
+  /* `|| clearArmed` — the second press of the two-step must land even if
+     `hasMarks` is a frame stale or the count never reached the chrome;
+     an armed clear that cannot commit reads as a dead button. */
+  if (intent.kind === 'clear') return state.hasMarks || state.clearArmed === true;
   if (intent.kind === 'askNatalie') return !state.asking;
   return true;
 }

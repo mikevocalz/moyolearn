@@ -47,6 +47,8 @@ export interface TutorXrQuestionPanelProps {
   status: string;
   hasMarks: boolean;
   onVoice(): void;
+  /** LISTEN/RETRY up-or-exit edge — push-to-talk pairs down/up. */
+  onVoiceEnd?(): void;
   onHint(): void;
   onSubmit(): void;
   onBoard(): void;

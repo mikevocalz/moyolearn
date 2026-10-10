@@ -31,6 +31,10 @@ export {
   type SpatialStylusFrame,
 } from './spatial-stylus-board-input.ts';
 export { probePremiumImports } from './premium/probe.ts';
+export { XrStudioSceneHost } from './XrStudioSceneHost.native.tsx';
+export { studioConnection, xrStudioSceneId, XR_STUDIO_SCENES } from './studio-config.ts';
+export type { XrStudioSceneHostProps } from './XrStudioSceneHost.types.ts';
+export type { StudioConnection, XrStudioSceneKey } from './studio-config.ts';
 export type { XrTriPanelProps, XrPanelRow } from './XrTriPanel.types.ts';
 export type { XrBoardSurfaceProps } from './XrBoardSurface.types.ts';
 export {
@@ -210,3 +214,4 @@ export { boardCommandEnabled } from './board-chrome-commands.ts';
 export { bindBoardChrome, type BoardChromeBinding } from './board-chrome-bind.ts';
 export { bindQuestionChrome, type QuestionChromeHandlers, type QuestionChromePresentation, type QuestionChromeBinding } from './question-chrome-bind.ts';
 export { xrCaptionRows } from './caption-rows.ts';
+export { playXrStatusCue, type XrStatusCue } from './xr-status-audio.native.ts';

@@ -27,6 +27,7 @@ export {
   XrChatPanel,
   XrQuestionLine,
   XrPlacementControls,
+  XrStudioSceneHost,
 } from './unsupported.web.tsx';
 /* The prop types come from `.types.ts` files, never from the `.native` files
    that implement them. A type-only re-export is erased at build, but the
@@ -216,3 +217,9 @@ export { boardCommandEnabled } from './board-chrome-commands.ts';
 export { bindBoardChrome, type BoardChromeBinding } from './board-chrome-bind.ts';
 export { bindQuestionChrome, type QuestionChromeHandlers, type QuestionChromePresentation, type QuestionChromeBinding } from './question-chrome-bind.ts';
 export { xrCaptionRows } from './caption-rows.ts';
+export { playXrStatusCue, type XrStatusCue } from './xr-status-audio.ts';
+/* The Studio connection reads env only — no renderer anywhere in it — so it
+   is one of the pure things this entry point is allowed to answer. */
+export { studioConnection, xrStudioSceneId, XR_STUDIO_SCENES } from './studio-config.ts';
+export type { XrStudioSceneHostProps } from './XrStudioSceneHost.types.ts';
+export type { StudioConnection, XrStudioSceneKey } from './studio-config.ts';

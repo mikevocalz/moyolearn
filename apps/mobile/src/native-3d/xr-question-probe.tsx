@@ -13,25 +13,26 @@
  * TIMING SEAM: Rive does not call JS back when a state machine animation
  * finishes, so `beginExit`'s exit dwell and the entrance dwell are wall
  * timers matched to the `QuestionFlow` transitions (`EXIT_MS`,
- * `ENTRANCE_MS`). They are the choreography's half of the contract — if
- * the RML's transition durations change, these change with it.
+ * `ENTRANCE_MS`). The timer helpers live in `./xr-question-probe-transitions`
+ * so the bound-texture timeout and the distinct initial/exit timers can be
+ * unit-tested without pulling in the Viro/JSX surface.
  *
  * SOT: packages/app/features/tutor/xr-question.store.ts ·
  *      packages/app/features/tutor/xr-question-evaluator.ts ·
- *      packages/ui/xr/question-fixtures.ts · ./xr-question-panel.tsx
+ *      packages/ui/xr/question-fixtures.ts · ./xr-question-panel.tsx ·
+ *      ./xr-question-probe-store.ts · ./xr-question-probe-transitions.ts
  * SOT-KEYWORDS: xr question probe scene fixture sequence flow store evaluator transition timers
  */
 
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { useStore } from 'zustand';
-import { createStore } from 'zustand/vanilla';
 import { ViroNode } from '@reactvision/react-viro';
 import {
   QUESTION_PANEL_HEIGHT_M,
   fixtureById,
   spatialSpacing,
   XR_FIXTURE_SEQUENCE,
-} from '@acme/ui/xr';
+ playXrStatusCue } from '@acme/ui/xr';
 import {
   answerReady,
   useXrQuestionFlow,
@@ -44,63 +45,14 @@ import { XrQuestionPanel } from './xr-question-panel';
 import { XrLayoutProbe } from './xr-layout-probe';
 import type { QuestionChromeHandlers } from './question-chrome-bind';
 import { questionPresentationOf } from './xr-question-present';
-
-/** Choreography halves of the Rive contract — exit dwell / entrance dwell. */
-const EXIT_MS = 550;
-const ENTRANCE_MS = 900;
-/* The yellow loader's minimum face time once content is proven — long
-   enough to read as an entrance, short enough not to feel stuck. */
-const LOADER_DWELL_MS = 450;
-
-/*
- * Probe-local state — what the flow store does not own: whether the hosted
- * texture bound, the carrier's persisted drag, and which fixture index the
- * sequence is on.
- */
-export const xrQuestionProbe = createStore(() => ({
-  bound: false,
-  boundReason: null as string | null,
-  contentReady: false,
-  grabbed: false,
-  panelOffset: null as {
-    position: [number, number, number];
-    rotation: [number, number, number];
-  } | null,
-  /** Index into XR_FIXTURE_SEQUENCE — the current question's place. */
-  sequenceIndex: 0,
-  chromeFailed: false,
-  chromeBytes: null as ArrayBuffer | null,
-}));
-
-let transitionTimer: ReturnType<typeof setTimeout> | null = null;
-const later = (ms: number, fn: () => void) => {
-  if (transitionTimer) clearTimeout(transitionTimer);
-  transitionTimer = setTimeout(fn, ms);
-};
-
-/*
-  The loader is the readiness gate, not a timer alone: the entrance starts
-  only once the hosted texture has bound (the probe's one critical surface),
-  then holds for the loader's dwell before the entrance plays.
-*/
-const openInitialEntrance = () => {
-  const whenBound = () =>
-    later(LOADER_DWELL_MS, () => {
-      const s = useXrQuestionFlow.getState();
-      if (s.phase !== 'loading-initial') return;
-      s.beginEntrance();
-      later(ENTRANCE_MS, () => useXrQuestionFlow.getState().arrive());
-    });
-  if (xrQuestionProbe.getState().bound) {
-    whenBound();
-    return;
-  }
-  const unsub = xrQuestionProbe.subscribe((s) => {
-    if (!s.bound) return;
-    unsub();
-    whenBound();
-  });
-};
+import { xrQuestionProbe } from './xr-question-probe-store';
+import {
+  openInitialEntrance,
+  scheduleExit,
+  scheduleNextEntrance,
+  clearAllTransitionTimers,
+} from './xr-question-probe-transitions';
+export { xrQuestionProbe } from './xr-question-probe-store';
 
 /* A question renders in the learner's language or it is the language being
    taught — a science question in Spanish to an English-speaking learner is a
@@ -190,12 +142,12 @@ const questionHandlers: QuestionChromeHandlers = {
       return;
     }
     flow.beginExit();
-    later(EXIT_MS, () => {
+    scheduleExit(() => {
       const s = useXrQuestionFlow.getState();
       if (s.phase !== 'exiting' && s.phase !== 'loading-next') return;
       if (s.next) {
         s.commitNext();
-        later(ENTRANCE_MS, () => {
+        scheduleNextEntrance(() => {
           useXrQuestionFlow.getState().arrive();
           /* The committed question is now current — stage the fixture
              after it so the following Next never waits on a fetch the
@@ -231,7 +183,14 @@ const questionHandlers: QuestionChromeHandlers = {
       s.setGeneratedHint(text ?? 'Try reading the question once more, slowly.');
     });
   },
-  onVoice: () => xrVoiceSession.getState().toggle(),
+  onVoice: () => {
+    playXrStatusCue('askStart');
+    xrVoiceSession.getState().press();
+  },
+  onVoiceEnd: () => {
+    playXrStatusCue('askEnd');
+    xrVoiceSession.getState().release();
+  },
   onBoard: () => useXrQuestionFlow.setState({ status: 'The board is beside you — draw there' }),
   onRetry: () => {
     const s = useXrQuestionFlow.getState();
@@ -252,13 +211,20 @@ export function XrQuestionProbe({
   /* First mount arms the sequence — the route's bytes may land later, but
      the question is ready either way; the loader covers the gap. */
   const started = useRef(false);
-  if (!started.current) {
-    started.current = true;
-    loadFixture(0);
-  }
+  useEffect(() => {
+    if (!started.current) {
+      started.current = true;
+      loadFixture(0);
+    }
+    /* Module-scope transition timers must not outlive the probe surface —
+       clearing them on unmount prevents stale callbacks from mutating the
+       flow store after the scene is gone. */
+    return () => {
+      clearAllTransitionTimers();
+    };
+  }, []);
 
   const bound = useStore(xrQuestionProbe, (s) => s.bound);
-  const boundReason = useStore(xrQuestionProbe, (s) => s.boundReason);
   const grabbed = useStore(xrQuestionProbe, (s) => s.grabbed);
   const panelOffset = useStore(xrQuestionProbe, (s) => s.panelOffset);
   const chromeFailed = useStore(xrQuestionProbe, (s) => s.chromeFailed);
@@ -268,7 +234,8 @@ export function XrQuestionProbe({
 
   const presentation = {
     ...questionPresentationOf(flow.current, flow),
-    status: flow.status || (bound ? '' : boundReason ?? 'Preparing content…'),
+    /* Status is audio — earcons carry every transition; the panel reads none. */
+    status: '',
   };
 
   /*

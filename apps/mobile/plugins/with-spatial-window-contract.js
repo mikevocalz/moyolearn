@@ -25,6 +25,27 @@ function assertMetaConfiguration(config, metaTarget) {
     throw new Error('Meta spatial apps require the expo-horizon-core config plugin');
   }
 }
+function preserveMetaSupportedDevices(manifest, options) {
+  const app = manifest.manifest.application?.[0];
+  const supportedDevices = app?.['meta-data']?.find(
+    item => item.$?.['android:name'] === 'com.oculus.supportedDevices',
+  );
+  if (!supportedDevices) {
+    throw new Error('expo-horizon-core: com.oculus.supportedDevices missing after prebuild');
+  }
+  if (supportedDevices.$['android:value'] !== options.supportedDevices) {
+    throw new Error(
+      `expo-horizon-core: supportedDevices must stay ${options.supportedDevices}, got ${supportedDevices.$['android:value'] ?? 'missing'}`,
+    );
+  }
+
+  // Viro also declares this metadata in the main source set. The Horizon
+  // flavor is authoritative for Meta builds, so make that precedence explicit
+  // instead of replacing either plugin's manifest.
+  AndroidConfig.Manifest.ensureToolsAvailable(manifest);
+  supportedDevices.$['tools:replace'] = 'android:value';
+  return manifest;
+}
 function withSpatialWindowContract(config, { metaTarget = false } = {}) {
   assertMetaConfiguration(config, metaTarget);
   // Register first in app.config so this dangerous mod runs after other writers.
@@ -36,6 +57,10 @@ function withSpatialWindowContract(config, { metaTarget = false } = {}) {
       const file = path.join(root, flavor, 'AndroidManifest.xml');
       if (!fs.existsSync(file)) throw new Error(`${name}: missing ${flavor} manifest after prebuild`);
       const manifest = await AndroidConfig.Manifest.readAndroidManifestAsync(file);
+      if (name === 'expo-horizon-core') {
+        preserveMetaSupportedDevices(manifest, entry[1] ?? {});
+        await AndroidConfig.Manifest.writeAndroidManifestAsync(file, manifest);
+      }
       validateWindow(manifest, entry[1] ?? {}, name);
       if (config.orientation === 'default') validateDefaultOrientation(manifest, false);
     }
@@ -50,3 +75,4 @@ module.exports = withSpatialWindowContract;
 module.exports.validateWindow = validateWindow;
 module.exports.validateDefaultOrientation = validateDefaultOrientation;
 module.exports.assertMetaConfiguration = assertMetaConfiguration;
+module.exports.preserveMetaSupportedDevices = preserveMetaSupportedDevices;

@@ -93,6 +93,8 @@ export interface QuestionChromeHandlers {
   onNext(): void;
   onHint(): void;
   onVoice(): void;
+  /** The LISTEN button's up/exit edge — push-to-talk pairs down/up. */
+  onVoiceEnd?(): void;
   onBoard(): void;
   onRetry(): void;
   onSkip(): void;
@@ -122,6 +124,11 @@ export function bindQuestionChrome(
        press armed for a phantom replay on the next unrelated bump. */
     runtime.setNumber('command', 0);
     if (disposed || !current || current.grabbed) return;
+    /* A release edge must ALWAYS reach the handler — gates below would
+       swallow it (e.g. `submitting` flipped mid-hold) and leave the mic
+       hot until the recorder's own timeout. */
+    if (intent.kind === 'releaseVoice') { handlers.onVoiceEnd?.(); return; }
+    if (typeof __DEV__ !== 'undefined' && __DEV__) console.log('[chrome] question cmd', intent.kind, 'loading:', current.loading, 'submitting:', current.submitting, 'disabled:', current.disabled);
     if (intent.kind === 'selectChoice' || intent.kind === 'toggleChoice') {
       if (current.disabled || current.submitting || intent.index >= Math.min(current.choiceLabels.length, MAX_RIVE_CHOICES)) return;
     }

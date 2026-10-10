@@ -103,6 +103,7 @@ import { isPico, isQuest } from '@reactvision/react-viro/dist/components/Utiliti
 import { panelStateOf, useXrSession, type XrPhase } from './xr-session.store.ts';
 import { useXrVoice } from './xr-voice.native.ts';
 import { createMoyoQuickDrawAdapter } from './quickdraw-spatial-adapter.ts';
+import { playXrStatusCue } from '@acme/ui/xr';
 
 
 /** This presentation's id, so its own strokes are not echoed back at it. */
@@ -488,6 +489,8 @@ function BoardScene() {
     can be closed if the board stops accepting ink half way through one.
   */
   const drawing = useRef(false);
+  /* Pending rAF id for the coalesced revision bump — see `handleChange`. */
+  const revisionTick = useRef<number | null>(null);
   /* Read through a stable function rather than passed as a value: the hook's
      effect must not re-run because a ref's contents moved, and `active.engine`
      is set by an effect in the screen above rather than by a render. */
@@ -776,15 +779,24 @@ function BoardScene() {
       );
     }
   }, [foreground, phase.kind, composedState, inkLands, boardTextureBound, canEdit]);
+  /*
+    STATUS IS HEARD. The chrome's `status` fields stay empty — a bound board
+    chimes ready, a failed ask plays the low error pair, and the tool/ask
+    handlers cue themselves. A headset reads this faster than it reads text.
+  */
+  useEffect(() => { if (askError) playXrStatusCue('error'); }, [askError]);
+  useEffect(() => { if (boardTextureBound) playXrStatusCue('ready'); }, [boardTextureBound]);
   const boardHandlers: BoardChromeHandlers = {
     onTool(next) {
       if (!canEdit) return;
+      playXrStatusCue('tool');
       setConfirmClear(false);
       useXrSession.getState().setTool(next);
       active.engine?.setTool(next);
     },
     onInk(next) {
       if (!canEdit) return;
+      playXrStatusCue('tool');
       setConfirmClear(false);
       useXrSession.getState().setInk(next);
       active.engine?.setInk(next);
@@ -794,14 +806,20 @@ function BoardScene() {
       }
     },
     onPalette(open) { if (canEdit) useXrSession.getState().setPaletteOpen(open); },
-    onUndo() { if (canEdit && history.canUndo) { setConfirmClear(false); active.engine?.undo(); } },
-    onRedo() { if (canEdit && history.canRedo) { setConfirmClear(false); active.engine?.redo(); } },
+    onUndo() { if (canEdit && history.canUndo) { playXrStatusCue('tool'); setConfirmClear(false); active.engine?.undo(); } },
+    onRedo() { if (canEdit && history.canRedo) { playXrStatusCue('tool'); setConfirmClear(false); active.engine?.redo(); } },
     onClear() {
       if (!canEdit || !history.hasMarks) return;
+      /* Arm gets the warn cue — the second tap destroys, and a ray cannot
+         read a confirm row as safely as it can hear one. */
+      if (!confirmClear) playXrStatusCue('armed');
       if (confirmClear) active.engine?.clear();
       setConfirmClear(!confirmClear);
     },
-    onAsk() { if (canAsk) { setConfirmClear(false); setAskError(false); voice.toggle(); } },
+    /* Hold-to-talk: the Rive Ask button sends `askNatalie` on down and
+       `releaseAsk` on up/exit — press starts the recorder, release sends. */
+    onAsk() { if (canAsk) { playXrStatusCue('askStart'); setConfirmClear(false); setAskError(false); voice.press(); } },
+    onAskEnd() { playXrStatusCue('askEnd'); voice.release(); },
   };
   const content = (
     <>
@@ -869,8 +887,9 @@ function BoardScene() {
             slot={worldSlot('left', workspaceHead, placement.rotation[1])}
             question={problem} skill={skill} enabled={foreground && composedState === 'ready'}
             busy={asking || tutorThinking || voice.phase.kind === 'starting' || voice.phase.kind === 'transcribing'}
-            listening={voice.phase.kind === 'listening'} status={askError ? 'Could not send — try again' : askLabel}
+            listening={voice.phase.kind === 'listening'} status={''}
             hasMarks={history.hasMarks && !attachmentsFull} onVoice={boardHandlers.onAsk}
+            onVoiceEnd={boardHandlers.onAskEnd}
             onBoard={() => { void placeFromHead(); }} onError={() => setQuestionFailed(true)}
             onHint={() => {
               if (asking || tutorThinking) return;
@@ -894,7 +913,9 @@ function BoardScene() {
             onError={() => setChromeFailed(true)} handlers={boardHandlers}
             presentation={{ tool, ink, ...history, asking: !canAsk,
               paletteOpen, clearArmed: confirmClear, grabbed: boardGrabbed, reducedMotion: true,
-              status: askError ? 'Could not send — try again' : !canEdit ? 'Waiting for your board…' : askLabel }}
+              /* Status is audio — `playXrStatusCue` voices the transitions
+                 this line used to print. */
+              status: '' }}
             content={<>
               <ViroQuad width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height}
                 materials={[XR_MATERIAL.paper]} ignoreEventHandling />
@@ -1068,6 +1089,8 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
   }, [loadQuestionPanel, bumpRevision]);
 
   const engine = useRef<WhiteboardHandle>(null);
+  /* Pending rAF id for the coalesced revision bump — see `handleChange`. */
+  const revisionTick = useRef<number | null>(null);
 
   /*
     THE SAME DOCUMENT THE 2D SCREEN WAS USING. `acquireBoardSession` hands back
@@ -1383,13 +1406,20 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
     (diff: WhiteboardDiff, source: WhiteboardDiffSource) => {
       session.change(PRESENTATION_ID, diff, source);
       /*
-        AND TELL THE SCENE THE DOCUMENT MOVED. `revision` is normally bumped by
-        the document's own observer, which only exists when there is a server
-        session. Without one the board still changes — the child is drawing —
-        and nothing re-took the picture, so the centre panel froze on its first
-        raster. The engine reporting a diff is the honest signal either way.
+        AND TELL THE SCENE THE DOCUMENT MOVED — ONCE PER FRAME, NOT ONCE PER
+        DIFF. A stroke reports a diff per pointer sample, and each bump
+        re-reads the whole document snapshot for the ink layer: letting every
+        diff through starved the JS event queue so badly the renderer's drag
+        events coalesced entire strokes into single points. The revision is a
+        "re-take the picture" signal — the same answer is right whether the
+        frame carried one diff or thirty.
       */
-      useXrSession.getState().bumpRevision();
+      if (revisionTick.current === null) {
+        revisionTick.current = requestAnimationFrame(() => {
+          revisionTick.current = null;
+          useXrSession.getState().bumpRevision();
+        });
+      }
     },
     [session],
   );

@@ -23,6 +23,8 @@ export const QUESTION_COMMAND = {
   openBoard: 7,
   retry: 8,
   skip: 9,
+  /** The LISTEN button's up/exit edge — push-to-talk, not tap-toggle. */
+  releaseVoice: 10,
 } as const;
 
 /** What a decoded command asks the application to do. */
@@ -34,6 +36,7 @@ export type QuestionChromeIntent =
   | { readonly kind: 'next' }
   | { readonly kind: 'requestHint' }
   | { readonly kind: 'startVoice' }
+  | { readonly kind: 'releaseVoice' }
   | { readonly kind: 'openBoard' }
   | { readonly kind: 'retry' }
   | { readonly kind: 'skip' };
@@ -55,6 +58,7 @@ export function decodeQuestionCommand(command: number, commandArg: number): Ques
     case QUESTION_COMMAND.next: return { kind: 'next' };
     case QUESTION_COMMAND.requestHint: return { kind: 'requestHint' };
     case QUESTION_COMMAND.startVoice: return { kind: 'startVoice' };
+    case QUESTION_COMMAND.releaseVoice: return { kind: 'releaseVoice' };
     case QUESTION_COMMAND.openBoard: return { kind: 'openBoard' };
     case QUESTION_COMMAND.retry: return { kind: 'retry' };
     case QUESTION_COMMAND.skip: return { kind: 'skip' };

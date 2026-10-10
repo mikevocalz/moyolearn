@@ -19,7 +19,7 @@ export async function loadTutorQuestionPanel() {
   if (!asset.localUri) throw new Error('Question controls could not be loaded');
   const bytes = await new File(asset.localUri).arrayBuffer();
   function TutorQuestionPanel(props: TutorXrQuestionPanelProps) {
-    const pages = useMemo(() => questionPages(props.question || 'Ask Natalie about your work.'), [props.question]);
+    const pages = useMemo(() => questionPages(props.question || 'Ask Natalie about your work.', 48, 14), [props.question]);
     const [paging, setPaging] = useState({ question: props.question, page: 0 });
     const page = paging.question === props.question ? Math.min(paging.page, pages.length - 1) : 0;
     const turnPage = (delta: number) => setPaging({ question: props.question, page: (page + delta + pages.length) % pages.length });
@@ -53,17 +53,19 @@ export async function loadTutorQuestionPanel() {
       }} onChromeError={props.onError}
       presentation={{ ...presentation, answerValid: props.hasMarks && !props.busy,
         disabled: !props.enabled, submitting: props.busy, reducedMotion: true,
-        progressLabel: `Page ${page + 1} / ${pages.length}`, submitLabel: 'ASK BOARD',
-        continueLabel: 'NEXT PAGE', skipLabel: 'PREVIOUS', listenLabel: props.listening ? 'SEND' : 'LISTEN' }}
+        progressLabel: `${page + 1} / ${pages.length}`, submitLabel: 'ASK BOARD',
+        continueLabel: pages.length > 1 ? 'PAGE ↓' : '', skipLabel: pages.length > 1 ? 'PAGE ↑' : '',
+        listenLabel: props.listening ? 'RELEASE' : 'HOLD TO TALK' }}
       handlers={{ onSelectChoice: noop, onToggleChoice: noop,
         onSubmit: () => { if (!props.busy && props.hasMarks) props.onSubmit(); },
-        onVoice: props.onVoice, onHint: () => { if (!props.busy) props.onHint(); },
+        onVoice: props.onVoice, onVoiceEnd: props.onVoiceEnd,
+        onHint: () => { if (!props.busy) props.onHint(); },
         onBoard: props.onBoard, onNext: () => turnPage(1), onSkip: () => turnPage(-1), onRetry: props.onVoice }}
       content={<ViroText text={pages[page] ?? ''}
         width={(QUESTION_CONTENT_RECT_PANEL.width - 0.06) / 0.25}
         height={(QUESTION_CONTENT_RECT_PANEL.height - 0.06) / 0.25}
-        scale={[0.25, 0.25, 0.25]} maxLines={12} textClipMode="ClipToBounds" ignoreEventHandling
-        style={{ fontSize: 22, color: '#e9f4fa', textAlign: 'left', textAlignVertical: 'top' }} />}
+        scale={[0.25, 0.25, 0.25]} maxLines={14} textClipMode="ClipToBounds" ignoreEventHandling
+        style={{ fontSize: 20, color: '#e9f4fa', textAlign: 'left', textAlignVertical: 'top' }} />}
     />;
   }
   return TutorQuestionPanel;

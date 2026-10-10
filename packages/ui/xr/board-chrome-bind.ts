@@ -52,7 +52,14 @@ export function bindBoardChrome(runtime: ChromeRuntime, handlers: BoardChromeHan
     /* Acknowledge before dispatch: a handler that throws must not leave the
        press armed for a phantom replay on the next unrelated bump. */
     runtime.setNumber('command', 0);
-    if (disposed || !current || !boardCommandEnabled(intent, current)) return;
+    if (disposed || !current) return;
+    /* A release edge must ALWAYS reach the handler — the `asking` gate
+       below flips on press-down and would swallow the up, leaving the mic
+       hot until the recorder's own timeout. */
+    if (intent.kind === 'releaseAsk') { handlers.onAskEnd?.(); return; }
+    const enabled = boardCommandEnabled(intent, current);
+    if (typeof __DEV__ !== 'undefined' && __DEV__) console.log('[chrome] board cmd', intent.kind, 'enabled:', enabled, 'hasMarks:', current.hasMarks, 'clearArmed:', current.clearArmed);
+    if (!enabled) return;
     switch (intent.kind) {
       case 'tool': handlers.onTool(intent.tool); break;
       case 'ink': handlers.onInk(intent.ink); break;

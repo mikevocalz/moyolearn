@@ -298,3 +298,18 @@
 [14:24:22.407] rive  showing BoardChrome [1/1]
 [14:24:22.407] rive  viewport 1248x780 @1x
 [14:24:22.500] rive  wrote ./build/moyo_board_chrome.png
+[15:07:46.289] rive  built build/moyo_board_chrome.riv (163358 bytes, 120ms, 0 errors, 0 warnings)
+[16:39:12.267] rive  built build/moyo_board_chrome.riv (163358 bytes, 135ms, 0 errors, 0 warnings)
+[16:39:12.269] rive  data: tool = 0
+[16:39:12.270] rive  showing BoardChrome [1/1]
+[16:39:12.270] rive  viewport 1248x780 @1x
+[16:39:12.369] rive  wrote build/tool-pen.png
+[16:39:13.009] rive  built build/moyo_board_chrome.riv (163358 bytes, 116ms, 0 errors, 0 warnings)
+[16:39:13.011] rive  data: tool = 1
+[16:39:13.011] rive  showing BoardChrome [1/1]
+[16:39:13.012] rive  viewport 1248x780 @1x
+[16:39:13.052] rive  wrote build/tool-mark.png
+[16:39:13.567] rive  built build/moyo_board_chrome.riv (163358 bytes, 125ms, 0 errors, 0 warnings)
+[16:39:13.569] rive  showing BoardChrome [1/1]
+[16:39:13.569] rive  viewport 1248x780 @1x
+[16:39:13.613] rive  wrote build/hover-pen.png

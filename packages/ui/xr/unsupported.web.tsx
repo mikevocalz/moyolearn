@@ -29,6 +29,7 @@ import type { XrBoardSurfaceProps } from './XrBoardSurface.types.ts';
 import type { BoardTextureHostProps } from './BoardTextureHost.types.ts';
 import type { XrChatPanelProps } from './XrChatPanel.types.ts';
 import type { XrQuestionLineProps, XrPlacementControlsProps } from './XrOrnaments.types.ts';
+import type { XrStudioSceneHostProps } from './XrStudioSceneHost.types.ts';
 
 export function XrPanel(_props: XrPanelProps) {
   return null;
@@ -71,5 +72,8 @@ export function XrQuestionLine(_props: XrQuestionLineProps) {
   return null;
 }
 export function XrPlacementControls(_props: XrPlacementControlsProps) {
+  return null;
+}
+export function XrStudioSceneHost(_props: XrStudioSceneHostProps) {
   return null;
 }

@@ -15,6 +15,16 @@
  * SOT-KEYWORDS: xr question probe route deep link hosted content questionlive settled pose floor origin
  */
 import { xrVoiceSession } from '../src/native-3d/xr-voice-session';
+import { playXrStatusCue ,
+  BoardTextureHost,
+  QUESTION_CONTENT_BAND,
+  XR_MATERIAL,
+  XrQuestionContent,
+  boardSurfacePixels,
+  questionSurfacePixels,
+  resolveQuestionLayout,
+  spatialSpacing,
+} from '@acme/ui/xr';
 import React, { useEffect, useMemo } from 'react';
 import { useStore } from 'zustand';
 import { createStore } from 'zustand/vanilla';
@@ -28,16 +38,6 @@ import {
   ViroDirectionalLight,
   ViroXRSceneNavigator,
 } from '@reactvision/react-viro';
-import {
-  BoardTextureHost,
-  QUESTION_CONTENT_BAND,
-  XR_MATERIAL,
-  XrQuestionContent,
-  boardSurfacePixels,
-  questionSurfacePixels,
-  resolveQuestionLayout,
-  spatialSpacing,
-} from '@acme/ui/xr';
 import { WhiteboardBoard } from '@acme/ui';
 import { useXrQuestionFlow } from '@acme/app/features/tutor/xr-question.store.ts';
 import { XrQuestionProbe, xrQuestionProbe } from '../src/native-3d/xr-question-probe';
@@ -215,6 +215,8 @@ export default function XrQuestionProbeRoute() {
           if (__DEV__) console.log('[xr-question-probe] content binding', binding);
           xrQuestionProbe.setState({ bound: binding.bound, boundReason: binding.reason });
         }}
+        /* Status is heard, not read — binding transitions are earcons, and
+           the chrome's status field stays empty by contract. */
       >
         {current && layout ? (
           <XrQuestionContent
@@ -241,7 +243,10 @@ export default function XrQuestionProbeRoute() {
         live={engineReady && placed !== null}
         onBound={(binding) => {
           if (__DEV__) console.log('[xr-question-probe] board binding', binding);
+          const was = xrLayoutProbe.getState().bound;
           xrLayoutProbe.setState({ bound: binding.bound, boundReason: binding.reason });
+          /* Transitions only — a re-bind after release does not re-chime. */
+          if (binding.bound !== was) playXrStatusCue(binding.bound ? 'ready' : 'error');
         }}
       >
         <WhiteboardBoard

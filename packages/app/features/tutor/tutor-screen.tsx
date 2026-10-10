@@ -61,6 +61,7 @@ import { useUploadQueue, setUploadReporter } from '../media';
 import { patchAttachment, postMessage } from './session.client.ts';
 import { useXrSession } from './xr-session.store.ts';
 import { canOpenSpatialBoard } from './xr-capability.ts';
+import { MetaSpatialTutorLayout } from './meta-spatial-tutor-layout';
 
 export interface TutorScreenProps {
   ageBand?: AgeBand;
@@ -945,7 +946,10 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   const stageState = state.kind === 'retry' && !presenceLive ? PRESENCE_STATE : state;
 
   return (
-    <>
+    <MetaSpatialTutorLayout
+      workspace={workbench}
+      renderMain={(workspaceSpatial) => (
+        <>
     <TutorStage
       state={stageState}
       /*
@@ -1020,7 +1024,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
         inside the workbench now, and passing both would draw the problem twice
         in the same column.
       */
-      board={workPane ? workbench : undefined}
+      board={!workspaceSpatial && workPane ? workbench : undefined}
       /*
         AND THE SAME BOARD WHERE THERE IS NO COLUMN FOR IT. ADR-107's first
         amendment exempts this screen from the pane ban on the condition that
@@ -1085,7 +1089,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
       read and write the same stored snapshot — which is what makes a learner
       who unfolds the device mid-working find their working still there.
     */}
-    {workPane ? null : (
+    {workspaceSpatial || workPane ? null : (
       <WhiteboardSheet
         open={boardOpen}
         onClose={() => setBoardOpen(false)}
@@ -1094,6 +1098,8 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
         {workbench}
       </WhiteboardSheet>
     )}
-    </>
+        </>
+      )}
+    />
   );
 }

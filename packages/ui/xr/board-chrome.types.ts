@@ -35,5 +35,7 @@ export interface BoardChromeHandlers {
   /** Pressed once arms `clearArmed`; pressed while armed clears. */
   onClear(): void;
   onAsk(): void;
+  /** The Ask button's up/exit edge — push-to-talk pairs down/up. */
+  onAskEnd?(): void;
 }
 

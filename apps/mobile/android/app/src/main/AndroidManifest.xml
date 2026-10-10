@@ -9,6 +9,7 @@
   <uses-permission android:name="com.oculus.permission.HAND_TRACKING"/>
   <uses-permission android:name="com.oculus.permission.USE_SCENE"/>
   <uses-permission android:name="horizonos.permission.HEADSET_CAMERA"/>
+  <uses-permission android:name="horizonos.permission.IMPORT_EXPORT_IOT_MAP_DATA"/>
   <uses-permission android:name="horizonos.permission.USE_ANCHOR_API"/>
   <uses-feature android:name="android.hardware.camera"/>
   <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" tools:replace="required"/>
@@ -52,10 +53,6 @@
         <category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD"/>
       </intent-filter>
       <meta-data android:name="com.oculus.vr.focusaware" android:value="true"/>
-      <!-- Android XR: OpenXR apps always launch in unmanaged Full Space;
-           panels are stationary so no boundary recommendation is made. -->
-      <property android:name="android.window.PROPERTY_XR_ACTIVITY_START_MODE" android:value="XR_ACTIVITY_START_MODE_FULL_SPACE_UNMANAGED"/>
-      <property android:name="android.window.PROPERTY_XR_BOUNDARY_TYPE_RECOMMENDED" android:value="XR_BOUNDARY_TYPE_NO_RECOMMENDATION"/>
     </activity>
   </application>
 </manifest>

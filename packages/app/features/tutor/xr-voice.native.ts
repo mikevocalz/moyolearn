@@ -27,6 +27,7 @@ export function useXrVoice({ onUtterance, enabled }: XrVoiceOptions): XrVoice {
   const recorder = useRef<AudioRecorder | null>(null);
   const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const generation = useRef(0);
+  const releasedDuringStart = useRef<number | null>(null);
   const available = useRef(enabled);
   useLayoutEffect(() => { available.current = enabled && AppState.currentState === "active"; }, [enabled]);
   const utterance = useRef(onUtterance);
@@ -68,6 +69,7 @@ export function useXrVoice({ onUtterance, enabled }: XrVoiceOptions): XrVoice {
     // create two recorders while the OS permission dialog is opening.
     if (!available.current || !['idle', 'blocked'].includes(phaseRef.current.kind)) return;
     const run = ++generation.current;
+    releasedDuringStart.current = null;
     const current = () => generation.current === run && available.current;
     update({ kind: 'starting' });
     let instance: AudioRecorder | null = null;
@@ -93,7 +95,12 @@ export function useXrVoice({ onUtterance, enabled }: XrVoiceOptions): XrVoice {
       }
       recorder.current = instance;
       update({ kind: 'listening' });
-      timeout.current = setTimeout(() => void stop(), MAX_SECONDS * 1000);
+      if (releasedDuringStart.current === run) {
+        releasedDuringStart.current = null;
+        void stop();
+      } else {
+        timeout.current = setTimeout(() => void stop(), MAX_SECONDS * 1000);
+      }
     } catch {
       if (instance) void instance.stop().catch(() => undefined);
       if (current()) update({ kind: 'blocked', reason: 'device' });
@@ -106,11 +113,26 @@ export function useXrVoice({ onUtterance, enabled }: XrVoiceOptions): XrVoice {
     else void start();
   }, [start, stop]);
 
+  const press = useCallback(() => {
+    if (!available.current) return;
+    void start();
+  }, [start]);
+
+  const release = useCallback(() => {
+    if (!available.current) return;
+    if (phaseRef.current.kind === 'starting') {
+      releasedDuringStart.current = generation.current;
+      return;
+    }
+    void stop();
+  }, [stop]);
+
   useEffect(() => {
     available.current = enabled && AppState.currentState === "active";
     const lifetime = generation;
     const cancel = () => {
       lifetime.current++;
+      releasedDuringStart.current = null;
       clearTimer();
       const instance = recorder.current;
       recorder.current = null;
@@ -124,6 +146,7 @@ export function useXrVoice({ onUtterance, enabled }: XrVoiceOptions): XrVoice {
       subscription.remove();
       available.current = false;
       lifetime.current++;
+      releasedDuringStart.current = null;
       clearTimer();
       const instance = recorder.current;
       recorder.current = null;
@@ -131,5 +154,5 @@ export function useXrVoice({ onUtterance, enabled }: XrVoiceOptions): XrVoice {
     };
   }, [enabled, clearTimer, update]);
 
-  return { phase, toggle };
+  return { phase, toggle, press, release };
 }

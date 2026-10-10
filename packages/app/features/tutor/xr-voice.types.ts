@@ -21,4 +21,12 @@ export interface XrVoice {
   phase: XrVoicePhase;
   /** Press to start listening; press again to stop and send. */
   toggle: () => void;
+  /** Long-press down edge — start listening now. */
+  press: () => void;
+  /**
+   * Long-press up/cancel edge — stop and send. Releasing before the
+   * recorder finished opening ('starting') cancels it, so a quick tap can
+   * never leave the mic hot or the phase stuck.
+   */
+  release: () => void;
 }

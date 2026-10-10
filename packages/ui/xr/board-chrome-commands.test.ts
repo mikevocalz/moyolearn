@@ -17,6 +17,7 @@ test('every control decodes to the verb the tray already owns', () => {
   assert.deepEqual(decodeBoardCommand(BOARD_COMMAND.redo), { kind: 'redo' });
   assert.deepEqual(decodeBoardCommand(BOARD_COMMAND.clear), { kind: 'clear' });
   assert.deepEqual(decodeBoardCommand(BOARD_COMMAND.askNatalie), { kind: 'askNatalie' });
+  assert.deepEqual(decodeBoardCommand(BOARD_COMMAND.releaseAsk), { kind: 'releaseAsk' });
 });
 
 test('ink selection is the palette index — all seven, in the tray order', () => {
@@ -28,9 +29,9 @@ test('ink selection is the palette index — all seven, in the tray order', () =
 });
 
 test('a malformed command is a dead button, never a wrong action', () => {
-  /* 17 is `closePalette` — deliberate overlap made impossible by the artboard
-     only ever emitting ink indices 0..6; 17.5 and beyond-17 are malformed. */
-  for (const bad of [-1, 9, 18, 17.5, Number.NaN, Infinity]) {
+  /* 17 is `closePalette`, 18 `releaseAsk` — deliberate overlap made impossible
+     by the artboard only ever emitting ink indices 0..6; the rest is malformed. */
+  for (const bad of [-1, 9, 19, 17.5, Number.NaN, Infinity]) {
     assert.deepEqual(decodeBoardCommand(bad), { kind: 'none' }, `command ${bad}`);
   }
   assert.deepEqual(decodeBoardCommand(BOARD_COMMAND.none), { kind: 'none' });

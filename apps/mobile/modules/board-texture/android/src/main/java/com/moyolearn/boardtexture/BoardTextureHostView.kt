@@ -432,11 +432,45 @@ class BoardTextureHostView(context: Context, appContext: AppContext) :
   }
 
   private fun attachPageToTexture(texture: AndroidViewTexture, page: View) {
+    prepareWebViewsForSoftwareRaster(page)
     val container = DirtyTrackingContainer(context)
     container.onDirty = { markDirty() }
     container.addView(page)
     paintContainer = container
     texture.attachView(container)
+  }
+
+  /*
+    The dirty tap only works while the WebView is in slow whole-document mode.
+    Its contract is that every committed compositor frame posts invalidate(),
+    which climbs through the sink container into markDirty — that is the paint
+    driver. Without the call a hardware WebView invalidates almost never, so
+    the texture keeps a stale frame and strokes raster only on the 1 Hz
+    keepalive — the "input lands, nothing draws" state. It also changes what
+    page.draw(canvas) captures: the ink canvas is a GPU-composited layer, and
+    the software raster cannot see inside it in fast mode.
+  */
+  private fun prepareWebViewsForSoftwareRaster(view: View) {
+    if (view is android.webkit.WebView) {
+      /*
+        `enableSlowWholeDocumentDraw()` is a hidden SDK method — greylisted,
+        so reflection reaches it on every build that matters here. It is the
+        one call that makes a hardware WebView raster its whole document into
+        a software canvas AND post invalidate() per compositor commit.
+      */
+      try {
+        val enable = android.webkit.WebView::class.java.getMethod("enableSlowWholeDocumentDraw")
+        enable.invoke(view)
+      } catch (error: Throwable) {
+        android.util.Log.w("MoyoBoardTexture", "slow whole-document draw unavailable: ${error.message}")
+      }
+      return
+    }
+    if (view is android.view.ViewGroup) {
+      for (i in 0 until view.childCount) {
+        prepareWebViewsForSoftwareRaster(view.getChildAt(i))
+      }
+    }
   }
 
   /**
