@@ -1,11 +1,12 @@
 'use client';
+// Mobbin: https://mobbin.com/screens/ef8768f5-c6be-4611-b8e1-7a8316e89294 (Liven: explicit prediction before checking) · https://mobbin.com/screens/93499943-b5af-4860-a9b2-23740d190ccd (Nibble: evidence beside the checked choice) · https://mobbin.com/screens/2507813e-baef-446e-a511-c2c22887fe88 (Alan: result and explanation). Structural audit; kit tokens supply styling.
 // An age-appropriate bridge from a student's bond-length hypothesis to a real
 // QDK/Chemistry electronic-structure calculation. Shared by Expo and Next.js.
 // Calculation is explicitly classical; there is no claim of quantum-hardware access.
 // SOT: docs/compute/qdk-chemistry.md
 // SOT-KEYWORDS: chemistry lab quantum qdk molecule hydrogen scf electron bond prediction
 
-import { useState } from 'react';
+import { useScienceValue } from '../science/use-science-value';
 import { Button, Card, Container, FadeIn, Heading, PressScale, Text } from '@acme/ui';
 import { ScrollView, Section, View, Text as TWText } from '@acme/ui/tw';
 import { useAppSession } from '../../providers/session';
@@ -64,8 +65,8 @@ async function readEnergy(moleculeId: MoleculeId): Promise<EnergyReading> {
 export function ChemistryLabScreen() {
   const { activeContext, status } = useAppSession();
   const online = useIsOnline();
-  const [prediction, setPrediction] = useState<Prediction | null>(null);
-  const [run, setRun] = useState<RunState>({ kind: 'idle' });
+  const [prediction, setPrediction] = useScienceValue<Prediction | null>(null);
+  const [run, setRun] = useScienceValue<RunState>({ kind: 'idle' });
   const ageBand = activeContext.gradeBand;
 
   const calculate = async () => {

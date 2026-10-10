@@ -12,7 +12,7 @@ import { CATEGORIES, FEATURED, CARDS, useExplore } from './explore.store';
 export function ExploreContent() {
   const { query, category, setQuery, setCategory } = useExplore();
   const router = useRouter();
-  const { status } = useAppSession();
+  const { activeContext, status } = useAppSession();
   const showScience = status !== 'loading' && activeContext.kind === 'learner';
   const visible = CARDS.filter(
     (card) =>

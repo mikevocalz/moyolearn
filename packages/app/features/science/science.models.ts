@@ -46,7 +46,7 @@ export function reactionCounts(id: ReactionId, coefficients: Coefficients): {
   const species = REACTIONS[id].species;
   const left: Record<string, number> = {};
   const right: Record<string, number> = {};
-  for (let i = 0; i < 3; i += 1) {
+  for (const i of [0, 1, 2] as const) {
     const compound = species[i];
     const count = coefficients[i];
     // The UI only permits 1..6; non-finite or fractional values are never valid.

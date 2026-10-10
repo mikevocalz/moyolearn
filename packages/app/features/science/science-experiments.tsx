@@ -1,10 +1,11 @@
 'use client';
+// Mobbin: https://mobbin.com/screens/ef8768f5-c6be-4611-b8e1-7a8316e89294 (Liven: question, explicit choice, check action) · https://mobbin.com/screens/93499943-b5af-4860-a9b2-23740d190ccd (Nibble: explanation with checked response) · https://mobbin.com/screens/2507813e-baef-446e-a511-c2c22887fe88 (Alan: result explanation after selection). Structural audit; kit tokens supply styling.
 // Active, prediction-led science experiences: the engine provides observations,
 // while the student must supply the explanation. No LLM bypass or false simulations.
 // SOT: docs/compute/moyo-science-lab.md
 // SOT-KEYWORDS: science experiments chemistry atoms balance biology genetics photosynthesis physics acceleration daylight
 
-import { useState } from 'react';
+import { useScienceValue } from './use-science-value';
 import { Button, Card, Heading, PressScale, Text } from '@acme/ui';
 import { Section, View, Text as TWText } from '@acme/ui/tw';
 import type { AgeBand } from '../capture/age-band';
@@ -62,9 +63,9 @@ function Observation({ heading, message }: { heading: string; message: string })
 }
 
 function WaterBuilder({ ageBand }: { ageBand: AgeBand }) {
-  const [h, setH] = useState(1);
-  const [o, setO] = useState(1);
-  const [checked, setChecked] = useState(false);
+  const [h, setH] = useScienceValue(1);
+  const [o, setO] = useScienceValue(1);
+  const [checked, setChecked] = useScienceValue(false);
   const scale = bandScaleFor(ageBand);
 
   const update = (element: 'H' | 'O', change: number) => {
@@ -121,10 +122,10 @@ function WaterBuilder({ ageBand }: { ageBand: AgeBand }) {
 }
 
 function BalanceReaction() {
-  const [reaction, setReaction] = useState<ReactionId>('water');
-  const [coefficients, setCoefficients] = useState<Coefficients>([1, 1, 1]);
-  const [checked, setChecked] = useState(false);
-  const [hint, setHint] = useState(false);
+  const [reaction, setReaction] = useScienceValue<ReactionId>('water');
+  const [coefficients, setCoefficients] = useScienceValue<Coefficients>([1, 1, 1]);
+  const [checked, setChecked] = useScienceValue(false);
+  const [hint, setHint] = useScienceValue(false);
   const data = REACTIONS[reaction];
   const counts = reactionCounts(reaction, coefficients);
   const atoms = Object.keys(counts.reactants);
@@ -204,10 +205,10 @@ export function ChemistryExperiment({ ageBand }: { ageBand: AgeBand }) {
 }
 
 function PhotosynthesisExplorer({ ageBand }: { ageBand: AgeBand }) {
-  const [light, setLight] = useState(false);
-  const [water, setWater] = useState(true);
-  const [carbonDioxide, setCarbonDioxide] = useState(true);
-  const [ran, setRan] = useState(false);
+  const [light, setLight] = useScienceValue(false);
+  const [water, setWater] = useScienceValue(true);
+  const [carbonDioxide, setCarbonDioxide] = useScienceValue(true);
+  const [ran, setRan] = useScienceValue(false);
   const ready = photosynthesisReady(light, water, carbonDioxide);
   const change = (set: (value: boolean) => void, value: boolean) => {
     set(!value); setRan(false);
@@ -241,10 +242,10 @@ function PhotosynthesisExplorer({ ageBand }: { ageBand: AgeBand }) {
 }
 
 function GeneticsExplorer() {
-  const [first, setFirst] = useState<Genotype>('Aa');
-  const [second, setSecond] = useState<Genotype>('Aa');
-  const [prediction, setPrediction] = useState<number | null>(null);
-  const [ran, setRan] = useState(false);
+  const [first, setFirst] = useScienceValue<Genotype>('Aa');
+  const [second, setSecond] = useScienceValue<Genotype>('Aa');
+  const [prediction, setPrediction] = useScienceValue<number | null>(null);
+  const [ran, setRan] = useScienceValue(false);
   const distribution = offspringProbabilities(first, second);
   return (
     <View className="gap-stack">
@@ -280,11 +281,11 @@ export function BiologyExperiment({ ageBand }: { ageBand: AgeBand }) {
 }
 
 export function PhysicsExperiment({ ageBand }: { ageBand: AgeBand }) {
-  const [initialVelocity, setInitialVelocity] = useState(2);
-  const [acceleration, setAcceleration] = useState(1);
-  const [seconds, setSeconds] = useState(4);
-  const [prediction, setPrediction] = useState<'more' | 'less' | 'same' | null>(null);
-  const [ran, setRan] = useState(false);
+  const [initialVelocity, setInitialVelocity] = useScienceValue(2);
+  const [acceleration, setAcceleration] = useScienceValue(1);
+  const [seconds, setSeconds] = useScienceValue(4);
+  const [prediction, setPrediction] = useScienceValue<'more' | 'less' | 'same' | null>(null);
+  const [ran, setRan] = useScienceValue(false);
   const reset = (callback: () => void) => { callback(); setRan(false); };
   const result = motionAtTime(initialVelocity, acceleration, seconds);
   const compared = motionAtTime(initialVelocity, acceleration * 2, seconds);
@@ -292,7 +293,7 @@ export function PhysicsExperiment({ ageBand }: { ageBand: AgeBand }) {
   return (
     <View className="gap-stack">
       <Heading level={2} size="title">Motion lab · Rolling a cart</Heading>
-      <Text>Set a cart's starting speed, acceleration and time. Predict how greater acceleration changes the distance travelled.</Text>
+      <Text>Set a cart’s starting speed, acceleration and time. Predict how greater acceleration changes the distance travelled.</Text>
       <Card className="gap-stack">
         <ChoiceRow label="Starting speed (m/s)" options={[0, 2, 4] as const} selected={initialVelocity} choose={(value) => reset(() => setInitialVelocity(value))} />
         <ChoiceRow label="Acceleration (m/s²)" options={[0, 1, 2] as const} selected={acceleration} choose={(value) => reset(() => setAcceleration(value))} />
@@ -324,9 +325,9 @@ export function PhysicsExperiment({ ageBand }: { ageBand: AgeBand }) {
 }
 
 export function EarthExperiment({ ageBand }: { ageBand: AgeBand }) {
-  const [latitude, setLatitude] = useState(40);
-  const [prediction, setPrediction] = useState<'June' | 'December' | 'same' | null>(null);
-  const [ran, setRan] = useState(false);
+  const [latitude, setLatitude] = useScienceValue(40);
+  const [prediction, setPrediction] = useScienceValue<'June' | 'December' | 'same' | null>(null);
+  const [ran, setRan] = useScienceValue(false);
   const june = approximateDaylightHours(latitude, 'june');
   const december = approximateDaylightHours(latitude, 'december');
   const predicted = june > december + 0.1 ? 'June' : december > june + 0.1 ? 'December' : 'same';

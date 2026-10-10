@@ -9,7 +9,7 @@
 import { readFileSync, readdirSync, lstatSync, existsSync } from 'node:fs';
 import { join, dirname, relative, resolve } from 'node:path';
 
-const ROOT = resolve(import.meta.dirname, '..');
+const ROOT = process.argv[2] ? resolve(process.argv[2]) : resolve(import.meta.dirname, '..');
 
 /** Packages to check, with the entry points declared in their package.json `exports`. */
 const PACKAGES = ['packages/ui', 'packages/app'];
@@ -71,7 +71,17 @@ const entryPoints = (pkgDir) => {
   const found = new Set();
   const collect = (value) => {
     if (typeof value === 'string' && value.startsWith('.')) {
-      for (const hit of resolveSpecifier(join(pkgDir, 'package.json'), value)) found.add(hit);
+      if (value.includes('*')) {
+        // Export patterns expose files directly, including native/web forks
+        // that do not need a static re-export from the web barrel.
+        const pattern = new RegExp(`^${value.slice(2).split('*')
+          .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('(.+)')}$`);
+        for (const file of walk(pkgDir)) {
+          if (pattern.test(relative(pkgDir, file))) found.add(file);
+        }
+      } else {
+        for (const hit of resolveSpecifier(join(pkgDir, 'package.json'), value)) found.add(hit);
+      }
     } else if (value && typeof value === 'object') Object.values(value).forEach(collect);
   };
   collect(manifest.exports ?? {});

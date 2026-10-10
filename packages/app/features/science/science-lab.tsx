@@ -1,10 +1,11 @@
 'use client';
+// Mobbin: https://mobbin.com/screens/2306c931-4af9-46dc-a075-702324d08c8c (Finimize: subject cards with title and question) · https://mobbin.com/screens/70b8d72d-a668-4245-9fae-414c07c3aba2 (Speechify: grouped learning topics) · https://mobbin.com/screens/fe5eb7ad-82cf-497c-8c39-2a63c7085828 (Ahead: selected topic and continue action). Structural audit; kit tokens supply styling.
 // Moyo Science Lab: a real subject hub, not a menu of external simulation iframes.
 // All activities share the app's design tokens and work on web, native and tablets.
 // SOT: docs/compute/moyo-science-lab.md
 // SOT-KEYWORDS: science lab subjects chemistry biology physics earth cross-platform learner curriculum
 
-import { useState } from 'react';
+import { useScienceValue } from './use-science-value';
 import { useRouter } from 'solito/navigation';
 import { Button, Card, Container, FadeIn, Heading, PressScale, Text } from '@acme/ui';
 import { View, ScrollView, Section, Text as TWText } from '@acme/ui/tw';
@@ -16,7 +17,7 @@ import { ChemistryExperiment, BiologyExperiment, PhysicsExperiment, EarthExperim
 export function ScienceLabScreen() {
   const { activeContext, status } = useAppSession();
   const router = useRouter();
-  const [subject, setSubject] = useState<ScienceSubject>('chemistry');
+  const [subject, setSubject] = useScienceValue<ScienceSubject>('chemistry');
   const ageBand: AgeBand = activeContext.gradeBand ?? 'teen';
   const scale = bandScaleFor(ageBand);
   const advanced = ageBand === 'teen' || ageBand === 'adult';
