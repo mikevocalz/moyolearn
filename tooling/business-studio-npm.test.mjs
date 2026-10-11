@@ -1,6 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { packageReceipt, updateCatalog, fetchReceipt, validateManifestTargets, validateLockedTargets, validateSavedReceipt, TARGETS } from './business-studio-npm.mjs';
 const sample = (name, version = '1.2.3') => ({ name, version, dist: {
@@ -61,7 +62,7 @@ test('ready dependency PRs verify without branch writes', () => {
   assert.match(workflow, /types: \[opened, synchronize, reopened, ready_for_review\]/);
   assert.match(workflow, /if: github\.event\.pull_request\.draft &&/);
   assert.match(workflow, /if: \$\{\{ !github\.event\.pull_request\.draft \|\|/);
-  assert.equal((workflow.match(/uses: actions\/checkout@v4/g) ?? []).length, 3);
+  assert.equal((workflow.match(/uses: actions\/checkout@[a-f0-9]{40}/g) ?? []).length, 3);
   assert.equal((workflow.match(/persist-credentials: false/g) ?? []).length, 3);
 });
 
@@ -137,4 +138,31 @@ test('committed receipt rejects missing, duplicate and wrongly admitted packages
     assert.throws(() => validateSavedReceipt(saved, receipts, updateCatalog(yaml, receipts).changes));
   }
   assert.throws(() => validateSavedReceipt(null, receipts, []), /envelope/);
+});
+
+
+test('dependency refresh uses immutable official action references', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/business-studio-npm.yml', import.meta.url), 'utf8');
+  const actions = [...workflow.matchAll(/uses: ([^\n]+)/g)].map((match) => match[1]);
+  assert.equal(actions.length, 7);
+  for (const action of actions) assert.match(action, /^actions\/(?:checkout|setup-node|upload-artifact)@[a-f0-9]{40} # v4/);
+});
+
+test('a rejected regenerated candidate stops before commit or push', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/business-studio-npm.yml', import.meta.url), 'utf8');
+  const refresh = workflow.split('  refresh:\n')[1].split('  verify:\n')[0];
+  const regenerate = refresh.indexOf('run: corepack pnpm install --lockfile-only');
+  const check = refresh.indexOf('run: node tooling/business-studio-npm.mjs --check');
+  const commit = refresh.indexOf('name: Commit the exact catalog');
+  assert.ok(regenerate >= 0 && regenerate < check && check < commit);
+  assert.doesNotMatch(refresh.slice(regenerate, commit), /checkout|working-directory|continue-on-error/);
+  const checkRun = refresh.slice(check).split('\n')[0].slice('run: '.length);
+  const commitRun = refresh.slice(commit).match(/run: \|\n((?: {10}.+\n)+)/)[1].replace(/^ {10}/gm, '');
+  // Execute the actual gate/publication shell under Actions' fail-fast behavior.
+  // Only external commands are substituted; no repository/network write occurs.
+  const command = `node() { printf 'candidate rejected\\n'; return 42; }\ngit() { printf 'UNEXPECTED PUBLICATION\\n'; }\ngh() { printf 'UNEXPECTED AUTH\\n'; }\n${checkRun}\n${commitRun}`;
+  const result = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', command], { encoding: 'utf8' });
+  assert.equal(result.status, 42);
+  assert.match(result.stdout, /candidate rejected/);
+  assert.doesNotMatch(result.stdout, /UNEXPECTED/);
 });

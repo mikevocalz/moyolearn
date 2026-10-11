@@ -1,0 +1,95 @@
+{
+  "schema": 1,
+  "generatedAt": "2026-10-11",
+  "generation": "CocoaPods 1.17.0 in the repository native workflows; copied byte-for-byte from checksum-verified artifacts.",
+  "nativeInputComparison": {
+    "sourceHead": "0b3cdf42013e91a193a7c4e41711d8c876cb72dc",
+    "targetHead": "935d674e495d73d706a19e57c30e8ee3f3f64691",
+    "sourceTree": "750e74cb1bee867c2b3982e9400f2148f9a49496",
+    "targetTree": "1e33feb066edea1b5daa99adbc63e0657cb52faf",
+    "mobileRuntimeSnapshotCount": 1450,
+    "mobileRuntimeClosureSha256": "20b49f602fa4c22b7328c5d0d1d584afe76c27c3f30cb87f2f3712874a71b6b3",
+    "workspaceImporters": [
+      "apps/mobile",
+      "packages/app",
+      "packages/auth",
+      "packages/avatar",
+      "packages/inference",
+      "packages/safety",
+      "packages/secure",
+      "packages/student-model",
+      "packages/theme",
+      "packages/ui",
+      "packages/voice"
+    ],
+    "byteIdenticalPaths": [
+      "apps/mobile",
+      "patches",
+      "vendors",
+      "tooling/enable-skia-graphite.mjs",
+      "tooling/prepare-visionos.mjs",
+      "tooling/visionos-build-cache.mjs",
+      ".npmrc",
+      ".github/workflows/ios-native.yml",
+      ".github/workflows/visionos.yml",
+      "apps/mobile/package.json",
+      "packages/app/package.json",
+      "packages/auth/package.json",
+      "packages/avatar/package.json",
+      "packages/inference/package.json",
+      "packages/safety/package.json",
+      "packages/secure/package.json",
+      "packages/student-model/package.json",
+      "packages/theme/package.json",
+      "packages/ui/package.json",
+      "packages/voice/package.json"
+    ],
+    "rootBuildAndPatchConfigEqual": true
+  },
+  "ios": {
+    "sourceHead": "935d674e495d73d706a19e57c30e8ee3f3f64691",
+    "runUrl": "https://github.com/mikevocalz/moyolearn/actions/runs/38177921584",
+    "artifactId": 11718672836,
+    "artifactSha256": "b0ef495492ce3020f82006cdfcf436271116688aece807606424e5de613d664b",
+    "lockPath": "apps/mobile/ios/Podfile.lock",
+    "lockSha256": "81da5da458c817f8d27173181293133da9a3e4e15d6e2b434ff9efaa84a8f839",
+    "podfileSha1": "428ee1321913311e87e87074f90f66a2577a8087",
+    "versions": {
+      "RNReanimated": "4.7.1",
+      "RNWorklets": "0.13.0",
+      "RNGestureHandler": "3.3.0",
+      "react-native-skia": "2.14.0",
+      "react-native-webgpu": "0.13.1"
+    },
+    "compileResult": "BUILD SUCCEEDED",
+    "corroboratingArtifact": {
+      "sourceHead": "0b3cdf42013e91a193a7c4e41711d8c876cb72dc",
+      "artifactId": 11717563899,
+      "artifactSha256": "dbeea316441a0f5c1837df293497bd4dcf5ca26d3ba9d0a3a5b1928378068126",
+      "lockBytesIdentical": true
+    }
+  },
+  "visionos": {
+    "sourceHead": "0b3cdf42013e91a193a7c4e41711d8c876cb72dc",
+    "runId": 38180560828,
+    "jobId": 114592034394,
+    "artifactId": 11718738064,
+    "artifactSha256": "652c7d533a265a2b58113e2cac49b06115ab5e83fe7d0cd3a849e4050d18bb8a",
+    "lockPath": "apps/mobile/visionos/Podfile.lock",
+    "lockSha256": "2a8f6944fd97b31513385d00f197370795faabf690b70a792f0c5e4928c8e344",
+    "buildLogResult": "TEST BUILD SUCCEEDED",
+    "runUrl": "https://github.com/mikevocalz/moyolearn/actions/runs/38180560828",
+    "podfileSha1": "afde17076075bbabb5ec84d1263d1c9437b0834b",
+    "versions": {
+      "RNReanimated": "4.7.1",
+      "RNWorklets": "0.13.0",
+      "RNGestureHandler": "3.3.0"
+    }
+  },
+  "notes": [
+    "The native input comparison covers all 1,450 reachable mobile runtime snapshots and package integrity metadata, plus native configuration, manifests, patches and installer inputs.",
+    "Existing iOS precompiled Expo modules intentionally strip bundled codec pod dependencies, as recorded by the generated pod log.",
+    "The visionOS Podfile computes absolute Viro package paths; the generated lock retains the runner paths without hand edits. Run visionos:prepare to resolve paths for a different checkout.",
+    "The native versions/admission were unchanged by subsequent workflow hardening, the missing-directory safeguard, root guard backport and documentation-only main integration. Final-head checks remain required."
+  ]
+}
