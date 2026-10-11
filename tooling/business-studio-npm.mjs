@@ -18,8 +18,11 @@ export function packageReceipt(name, data, checkedAt) {
     throw new Error(`${name}: latest did not resolve to an exact stable version`);
   }
   if (data.deprecated) throw new Error(`${name}: latest is deprecated`);
-  if (!/^sha512-[A-Za-z0-9+/]+=*$/.test(data.dist?.integrity ?? '')) {
-    throw new Error(`${name}: missing SHA-512 distribution integrity`);
+  const integrity = data.dist?.integrity ?? '';
+  const digest = integrity.startsWith('sha512-') ? integrity.slice(7) : '';
+  const decoded = Buffer.from(digest, 'base64');
+  if (!/^[A-Za-z0-9+/]{86}==$/.test(digest) || decoded.byteLength !== 64 || decoded.toString('base64') !== digest) {
+    throw new Error(`${name}: invalid SHA-512 distribution integrity`);
   }
   const tarball = new URL(data.dist.tarball);
   if (tarball.origin !== 'https://registry.npmjs.org' || tarball.username || tarball.password) {
