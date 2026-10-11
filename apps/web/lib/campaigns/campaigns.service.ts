@@ -30,7 +30,7 @@ export async function loadCampaignSettings(auth: Auth, headers: Headers) {
 }
 export type CampaignSettings = Exclude<Awaited<ReturnType<typeof loadCampaignSettings>>, { state: 'denied' }>;
 
-export async function createCampaignDraft(auth: Auth, headers: Headers, document: CampaignDocument) {
+export async function createCampaignDraft(auth: Auth, headers: Headers, document: CampaignDocument): Promise<Awaited<ReturnType<typeof createMailcheapDraft>>> {
   try {
     return await protectedOperation(auth, headers, async (ctx) => {
       if (ctx.isLearner || !ctx.orgId) throw new MailcheapError('Only a business owner may create a marketing draft.', 403);
@@ -40,7 +40,8 @@ export async function createCampaignDraft(auth: Auth, headers: Headers, document
       return createMailcheapDraft(connection, document, html);
     }, {
       requires: 'write', requiresMembership: ['owner'],
-      telemetry: { op: 'campaigns.create-draft', resource: 'campaigns', action: 'create' },
+      // OperationAction names the resource effect; the op distinguishes draft creation.
+      telemetry: { op: 'campaigns.create-draft', resource: 'campaigns', action: 'write' },
     });
   } catch (error) {
     if (error instanceof MembershipDenied || error instanceof HostTenantDenied) {
