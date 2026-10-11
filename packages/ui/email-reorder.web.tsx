@@ -12,7 +12,7 @@ import { Text } from './Text';
 import { useInstanceStore, useStore } from './use-instance-store';
 import { readEmailRows, watchEmailInteraction } from './html/email-document.web';
 // Without the extension Turbopack selects this .web.tsx file recursively.
-import { resolveEmailDrag, validRows, type EmailDrag } from './email-reorder.ts';
+import { emailMoveFeedback, resolveEmailDrag, validRows, type EmailDrag } from './email-reorder.ts';
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 type ReorderContext = {
@@ -30,7 +30,7 @@ export function EmailReorderGroup({ ids, revision, disabled, onMove, children }:
   const scope = useId();
   const active = useRef<EmailDrag | null>(null);
   const current = useRef({ ids, revision, disabled, onMove });
-  const store = useInstanceStore(() => ({ cancellation: 0, announcement: '' }));
+  const store = useInstanceStore(() => ({ cancellation: 0, moveCount: 0, announcement: '' }));
   const feedback = useStore(store, (state) => state);
   const cancel = useCallback(() => {
     active.current = null;
@@ -62,7 +62,7 @@ export function EmailReorderGroup({ ids, revision, disabled, onMove, children }:
     const move = resolveEmailDrag(snapshot, source, token, latest.revision, canceled, readEmailRows(scope, latest.ids), x, y);
     if (!move) return;
     latest.onMove(move.source, move.index);
-    store.setState({ announcement: `Email block moved to position ${move.index + 1}.` });
+    store.setState((state) => emailMoveFeedback(state.moveCount, move.index));
   };
 
   return <Context.Provider value={{ scope, revision, disabled, cancellation: feedback.cancellation, begin, finish, abort }}>
