@@ -11,7 +11,8 @@ import { Section, View } from './primitives';
 import { Text } from './Text';
 import { useInstanceStore, useStore } from './use-instance-store';
 import { readEmailRows, watchEmailInteraction } from './html/email-document.web';
-import { resolveEmailDrag, validRows, type EmailDrag } from './email-reorder';
+// Without the extension Turbopack selects this .web.tsx file recursively.
+import { resolveEmailDrag, validRows, type EmailDrag } from './email-reorder.ts';
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 type ReorderContext = {

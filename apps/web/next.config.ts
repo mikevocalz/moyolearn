@@ -70,6 +70,7 @@ const nextConfig: NextConfig = {
     optimizePackageImports: [
       '@acme/ui',
       '@acme/app',
+      'react-native-gesture-handler',
       '@tanstack/react-table',
       '@tanstack/react-form',
       '@tanstack/react-virtual',
@@ -110,6 +111,7 @@ const nextConfig: NextConfig = {
     'expo',
     'react-native',
     'react-native-web',
+    'react-native-gesture-handler',
     'react-native-enriched-html',
     'solito',
   ],
@@ -122,6 +124,10 @@ const nextConfig: NextConfig = {
   turbopack: {
     resolveAlias: {
       'react-native': 'react-native-web',
+      // RNGH's compiled ESM files name native .js siblings explicitly. Its
+      // shipped TS source lets this resolver select the actual .web forks.
+      // Never replace native modules with empty shims to silence build errors.
+      'react-native-gesture-handler': 'react-native-gesture-handler/src/index.ts',
     },
     resolveExtensions: [
       '.web.tsx', '.web.ts', '.web.js',
@@ -139,7 +145,7 @@ const nextConfig: NextConfig = {
   string | boolean` (@sentry/nextjs 10.71.0,
   build/types/config/types.d.ts:533) — the wrapper adds a same-origin rewrite
   that proxies envelopes through this deployment, so no CSP/DNS third-party
-  fetch is left for an extension to block.
+  fetch is left for the extension to block.
 
   Source maps upload only when `SENTRY_AUTH_TOKEN` exists (CI), so a local
   `pnpm --filter web build` neither fails nor phones home. `SENTRY_ORG` and

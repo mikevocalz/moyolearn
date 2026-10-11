@@ -6,7 +6,8 @@
 import { Button } from './Button';
 import { IsolatedEmailDocument, downloadEmailDocument } from './html/email-document.web';
 export { EmailBlockFrame, EmailReorderGroup } from './email-reorder.web';
-export { reorderEmailItems } from './email-reorder';
+// Explicit extension: the web fork is the component, not this pure reducer.
+export { reorderEmailItems } from './email-reorder.ts';
 export function EmailCanvas(props: { html: string; compact: boolean; showImages: boolean }) {
   return <IsolatedEmailDocument {...props} />;
 }
