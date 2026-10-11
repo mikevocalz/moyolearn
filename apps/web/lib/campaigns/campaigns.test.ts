@@ -176,3 +176,23 @@ test('near-limit editable downloads remain restorable without pretty-print infla
   assert.ok(new TextEncoder().encode(download).length <= MAX_DOCUMENT_BYTES);
   assert.deepEqual(parseEditableDocument(download), document);
 });
+
+for (const bytes of [new Uint8Array([0xff]), new Uint8Array([0xe2, 0x82])]) {
+  test(`malformed UTF-8 ${[...bytes]} is rejected as client input before draft creation`, async () => {
+    let calls = 0;
+    const response = await campaignResponse(new Request('https://business.example/api/business/campaigns', {
+      method: 'POST', headers: { origin: 'https://business.example', 'content-type': 'application/json' }, body: bytes,
+    }), async () => { calls += 1; return { id, url: `https://mail.example.com/campaigns/${id}` }; });
+    assert.equal(response.status, 400);
+    assert.equal(calls, 0);
+    assert.match(await response.text(), /valid UTF-8/);
+  });
+}
+test('UTF-8 multibyte characters survive stream chunk boundaries', async () => {
+  const bytes = new TextEncoder().encode('learning 🌱');
+  const stream = new ReadableStream({ start(controller) {
+    for (const byte of bytes) controller.enqueue(new Uint8Array([byte]));
+    controller.close();
+  } });
+  assert.equal(await readBoundedBody(stream, MAX_DOCUMENT_BYTES), 'learning 🌱');
+});
