@@ -93,6 +93,7 @@ function copyDawnHeaders(source, destination) {
   rmSync(join(destination, 'dawn/wire'), { recursive: true, force: true });
   const table = join(destination, 'dawn/dawn_proc_table.h');
   writeFileSync(table, readFileSync(table, 'utf8').replaceAll('#include "dawn/webgpu.h"', '#include "webgpu/webgpu.h"'));
+  mkdirSync(join(destination, 'webgpu'), { recursive: true });
   for (const name of ['webgpu.h', 'webgpu_cpp.h']) {
     copyFileSync(join(destination, 'dawn', name), join(destination, 'webgpu', name));
     rmSync(join(destination, 'dawn', name));

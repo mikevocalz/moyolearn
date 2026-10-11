@@ -100,3 +100,13 @@ test('download failure cannot publish a current admission stamp', async (t) => {
 test('checksum verifier rejects modified header archive bytes', () => {
   assert.throws(() => verifyHeaderArchive(Buffer.from('tampered headers')), /checksum mismatch/);
 });
+
+test('normalizes generated headers without optional upstream webgpu shims', async (t) => {
+  const f = fixture(t);
+  rmSync(join(f.root, 'node_modules/react-native-webgpu-dawn/include/webgpu'), { recursive: true });
+  await f.run();
+  assert.equal(readFileSync(join(f.skia, 'cpp/dawn/include/webgpu/webgpu.h'), 'utf8'), 'fresh dawn/webgpu.h');
+  assert.equal(readFileSync(join(f.skia, 'cpp/dawn/include/webgpu/webgpu_cpp.h'), 'utf8'), 'fresh dawn/webgpu_cpp.h');
+  assert.equal(existsSync(join(f.skia, 'cpp/dawn/include/dawn/webgpu.h')), false);
+  assert.equal(readFileSync(join(f.skia, 'libs/.graphite-admission.json'), 'utf8'), JSON.stringify(ADMISSION));
+});

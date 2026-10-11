@@ -17,7 +17,7 @@ Existing Expo/React Native preview SDK pins and unrelated packages are not globa
 - `node tooling/business-studio-npm.mjs --write` writes exact catalog pins and a versioned evidence receipt. It does not install anything.
 - `corepack pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile` regenerates resolution. Then a real cold-cache install, patches, typecheck, lint, web builds and device builds are mandatory.
 
-The workflow may commit only to the same-repository `chore/business-studio-latest-npm` draft branch, never main or another PR, with no force push. It uses the built-in GitHub token and never reads application/provider secrets. Concurrent branch changes reject the push. It commits only catalog, pnpm lock and npm receipt after successful resolution. Standard CI must be rerun on the resulting head: GitHub-token commits do not themselves trigger a new workflow run. A lock-only resolution is not a native compilation or peer-compatibility proof.
+The workflow may commit only to the same-repository `chore/business-studio-latest-npm` draft branch, never main or another PR, with no force push. It uses the built-in GitHub token and never reads application/provider secrets. Concurrent branch changes reject the push. It commits only catalog, pnpm lock and npm receipt after successful resolution and a fresh `--check` of that regenerated candidate, before any commit or push. The post-push check remains a second registry observation. All referenced Actions are pinned to verified official commit SHAs; checkout retains the current v4 security backports and credential persistence stays disabled. Standard CI must be rerun on the resulting head: GitHub-token commits do not themselves trigger a new workflow run. A lock-only resolution is not a native compilation or peer-compatibility proof.
 
 ## Merge gates
 
@@ -40,4 +40,18 @@ WebGPU 0.13.1 moves Dawn binaries and headers into `react-native-webgpu-dawn@154
 
 Private Graphite headers come from the SHA-256-pinned [upstream header release](https://github.com/wcandillon/react-native-skia/releases/tag/skia-graphite-m154_8037_58a). Its Skia submodule commit matches the 154.3 publisher. The [renderer-to-binary Skia comparison](https://github.com/google/skia/compare/9f9e6beb751091ef69163d2b4fdcd1e711b594ac...2466dcf3937437e217e7f284afe0e1aae15891ce) contains a Ganesh-internal change, not a changed Graphite/public header interface. Exact admission values and checksum are in the installer, not inferred from a milestone string.
 
-`node --test tooling/enable-skia-graphite.test.mjs` covers unknown combinations, mismatched header source/patches, missing ABIs, cold/warm cache invalidation and checksum/download failures without network calls. Separate cold and warm staging checks used integrity-verified npm artifacts and the checksum-verified real header archive; all copied Dawn libraries matched their owner bytes. Neither check proves native compile/link success. Current-head Android/iOS/visionOS builds and regenerated CocoaPods locks remain required.
+`node --test tooling/enable-skia-graphite.test.mjs` covers unknown combinations, mismatched header source/patches, missing ABIs, absent optional upstream header-shim directories, cold/warm cache invalidation and checksum/download failures without network calls. Separate cold and warm staging checks used integrity-verified npm artifacts and the checksum-verified real header archive; all copied Dawn libraries matched their owner bytes. Neither check proves native compile/link success. Current-head Android/iOS/visionOS builds and regenerated CocoaPods locks remain required.
+
+
+Workflow pin provenance (verified 2026-10-11): [checkout v4 security backport](https://github.com/actions/checkout/commit/11d5960a326750d5838078e36cf38b85af677262), [setup-node v4.4.0](https://github.com/actions/setup-node/releases/tag/v4.4.0), and [upload-artifact v4.6.2](https://github.com/actions/upload-artifact/releases/tag/v4.6.2). Regression coverage rejects mutable refs and proves a failing candidate check prevents the publication shell from invoking authentication, commit or push.
+
+
+## Regenerated CocoaPods locks and native verification
+
+Both tracked CocoaPods locks are copied unchanged from SHA-256-verified native workflow artifacts. The iOS lock comes from the successful #93 build and is byte-identical to #94's independently generated lock. The visionOS lock comes from #94's successful simulator test-build; its native configuration and 1,450-package mobile runtime closure match #93. Exact run/artifact IDs, digests, Podfile checksums and versions are recorded in `native-lock-provenance.json`.
+
+The locks retain CocoaPods 1.17.0 output, including existing precompiled-Expo dependency normalization and the visionOS Podfile's absolute Viro package paths. No generated version or checksum was edited manually. These are compile/build-for-testing results, not physical-device or executed on-device test evidence.
+
+Android's earlier runs ended with runner shutdown/SIGTERM during native compilation, without a compiler error or a proven host-resource cause. The native workflow now wraps the unchanged assembly command in a 30-second timestamp/memory/disk/process-name-and-RSS heartbeat. It preserves the command, flags and exit status and forwards interruption; it never logs environment values or full command arguments. The final-head native gate is still required.
+
+The shared wildcard-export barrel-checker regression and truthful review-time canvas reference annotations are backported unchanged from #90's reviewed commit `8f69044a0b576407d70cd67369084e9c49fab671`. They repair root guards without importing the Science feature or adding a native module to a web barrel.
