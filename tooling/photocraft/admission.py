@@ -16,14 +16,22 @@ TARGETS = ("host", "aarch64-apple-ios", "aarch64-apple-ios-sim", "aarch64-linux-
 CRATES = ("photocraft-doc", "photocraft-ops", "photocraft-compose", "photocraft-raster", "photocraft-paint", "photocraft-io", "photocraft-psd", "photocraft-engine")
 MANIFEST_DIRS = ("doc", "ops", "compose", "raster", "paint", "io", "psd", "engine")
 REPOSITORY = "https://github.com/storytold/photocraft"
+SOURCE_INPUTS = ("Cargo.toml", "Cargo.lock", "crates", ".cargo", "build.rs",
+                 "rust-toolchain", "rust-toolchain.toml", "LICENSE-MIT", "LICENSE-APACHE", "NOTICE")
 
 
 def source_pin(lock: dict) -> str:
-    entries = [entry for entry in lock.get("sources", []) if entry.get("name") == "PhotoCraft"]
+    if not isinstance(lock, dict) or not isinstance(lock.get("sources"), list):
+        raise ValueError("Source lock must contain a sources array")
+    if any(not isinstance(entry, dict) for entry in lock["sources"]):
+        raise ValueError("Every source pin must be an object")
+    entries = [entry for entry in lock["sources"] if entry.get("name") == "PhotoCraft"]
     if len(entries) != 1:
         raise ValueError("Expected exactly one PhotoCraft source pin")
     entry = entries[0]
-    if entry.get("repository") != REPOSITORY or not re.fullmatch(r"[0-9a-f]{40}", entry.get("commit", "")):
+    commit = entry.get("commit")
+    if (entry.get("repository") != REPOSITORY or not isinstance(commit, str)
+            or not re.fullmatch(r"[0-9a-f]{40}", commit)):
         raise ValueError("PhotoCraft must use the reviewed repository and immutable commit")
     if entry.get("license") != "MIT OR Apache-2.0":
         raise ValueError("Re-review the changed PhotoCraft license")
@@ -55,7 +63,13 @@ def inspect_source(root: Path, pin: str) -> dict:
     actual = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
     if actual != pin:
         raise ValueError("Checkout does not match the reviewed source pin")
-    subprocess.run(["git", "diff", "--exit-code", "HEAD", "--", "Cargo.toml", "Cargo.lock", "crates", "LICENSE-MIT", "LICENSE-APACHE", "NOTICE"], cwd=root, check=True, stdout=subprocess.DEVNULL)
+    subprocess.run(["git", "diff", "--exit-code", "HEAD", "--", *SOURCE_INPUTS], cwd=root, check=True, stdout=subprocess.DEVNULL)
+    # git diff misses untracked (including ignored) Cargo configuration and source.
+    untracked = subprocess.check_output(
+        ["git", "ls-files", "--others", "-z", "--", *SOURCE_INPUTS], cwd=root
+    )
+    if untracked:
+        raise ValueError("Unreviewed untracked PhotoCraft build inputs; use a clean pinned checkout")
     manifest = tomllib.loads((root / "Cargo.toml").read_text())
     toolchain = workspace_contract(manifest)
     for directory, expected in zip(MANIFEST_DIRS, CRATES, strict=True):
@@ -79,20 +93,25 @@ def main() -> int:
     parser.add_argument("--target", required=True, choices=TARGETS)
     parser.add_argument("--inspect-only", action="store_true")
     args = parser.parse_args()
-    pin = source_pin(json.loads(args.lock.read_text()))
-    report = inspect_source(args.source, pin)
-    report.update(target=args.target, status="source-verified", applicationBridge="not-linked", gpuInterop="not-validated", commands=[])
+    report = dict(repository=REPOSITORY, target=args.target, status="verifying-source",
+                  applicationBridge="not-linked", gpuInterop="not-validated", commands=[])
     args.output.parent.mkdir(parents=True, exist_ok=True)
-    if args.inspect_only:
-        args.output.write_text(json.dumps(report, indent=2) + "\n")
-        print(report["toolchain"])
-        return 0
+    # Invalidate previous evidence before source verification can fail or be interrupted.
+    args.output.write_text(json.dumps(report, indent=2) + "\n")
+    owned_fixture = None
     try:
+        pin = source_pin(json.loads(args.lock.read_text()))
+        report.update(inspect_source(args.source, pin))
+        report["status"] = "source-verified"
+        if args.inspect_only:
+            print(report["toolchain"])
+            return 0
         if args.target == "host":
             fixture = args.source / "crates/engine/tests/moyo_studio_admission.rs"
             fixture.parent.mkdir(parents=True, exist_ok=True)
             # Never replace any upstream test or accept source-provided harness code.
             with fixture.open("x") as destination:
+                owned_fixture = fixture
                 destination.write(Path(__file__).with_name("moyo_studio_admission.rs").read_text())
         for index, command in enumerate(build_commands(args.target)):
             log = args.output.with_suffix(f".{index}.log")
@@ -103,13 +122,22 @@ def main() -> int:
                 raise RuntimeError(f"Admission failed: {' '.join(command)}; inspect {log.name}")
         report["status"] = "build-checks-passed"
         return 0
-    except (OSError, subprocess.SubprocessError, RuntimeError) as error:
+    except (OSError, subprocess.SubprocessError, RuntimeError, ValueError, KeyError) as error:
         report["status"] = "failed"
         report["error"] = str(error)
         print(str(error), file=sys.stderr)
         return 1
     finally:
-        args.output.write_text(json.dumps(report, indent=2) + "\n")
+        try:
+            # Clean up only the file created by this invocation, even after Cargo fails.
+            if owned_fixture is not None:
+                owned_fixture.unlink(missing_ok=True)
+        except OSError as error:
+            report["status"] = "failed"
+            report["error"] = f"Fixture cleanup failed: {error}"
+            raise
+        finally:
+            args.output.write_text(json.dumps(report, indent=2) + "\n")
 
 
 if __name__ == "__main__":
