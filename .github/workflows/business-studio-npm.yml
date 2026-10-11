@@ -4,6 +4,7 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'tooling/business-studio-npm*'
+      - 'tooling/enable-skia-graphite*'
       - '**/package.json'
       - 'package.json'
       - 'pnpm-workspace.yaml'
@@ -23,7 +24,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
-      - run: node --test tooling/business-studio-npm.test.mjs
+      - run: node --test tooling/business-studio-npm.test.mjs tooling/enable-skia-graphite.test.mjs
   refresh:
     # Only the explicitly requested dependency branch can write its own pins.
     # Never use pull_request_target, a fork checkout, main, or a force push.

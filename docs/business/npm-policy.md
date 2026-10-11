@@ -4,7 +4,7 @@ Requested October 11, 2026. Base: PR #92. This change adds a live npm resolver, 
 
 ## Version policy
 
-Resolve `https://registry.npmjs.org/<package>/latest`; validate the package name, stable exact semver, absence of deprecation, registry tarball origin, and SHA-512 integrity. Pin that exact version in the existing default pnpm catalog and regenerate `pnpm-lock.yaml`. Do not put the mutable string `latest` into package manifests. No nightly/canary substitutions, silent downgrade, guessed version or search-result-only verification. Registry failure is a blocker, never a successful empty report.
+Resolve `https://registry.npmjs.org/<package>/latest`; validate the package name, stable exact semver, absence of deprecation, registry tarball origin, and canonical 64-byte SHA-512 integrity. Pin that exact version in the existing default pnpm catalog and regenerate `pnpm-lock.yaml`. Do not put the mutable string `latest` into package manifests. No nightly/canary substitutions, silent downgrade, guessed version or search-result-only verification. Registry failure is a blocker, never a successful empty report.
 
 Scope: Gesture Handler, Reanimated, Worklets, Skia, React Native WebGPU, TypeGPU and the existing Graphite platform binary packages. The deprecated `react-native-wgpu` alias must not be introduced. Every installed target must use the default catalog in all workspace dependency manifests; direct pins, named catalogs, or overrides that bypass the catalog fail the freshness gate. Root overrides may reference the exact default catalog to keep optional peers on one audited version. The resolved lockfile is checked for older duplicate copies too. Packages absent from both manifests and the catalog are recorded as candidates only, not installed speculatively. Existing mobile WebGPU and TypeGPU dependencies are catalog-managed targets, not candidates. PhotoCraft and Mailcheap are source repositories, not invented npm packages. Preserve their reviewed commit pins and licensing checks.
 
@@ -13,7 +13,7 @@ Existing Expo/React Native preview SDK pins and unrelated packages are not globa
 ## Commands
 
 - `node --test tooling/business-studio-npm.test.mjs` tests the resolver without network calls or package installation.
-- `node tooling/business-studio-npm.mjs --check` queries npm and fails on stale installed catalog targets.
+- `node tooling/business-studio-npm.mjs --check` queries npm and fails on stale installed catalog targets, older resolved copies, or committed receipt evidence that differs from the registry/catalog.
 - `node tooling/business-studio-npm.mjs --write` writes exact catalog pins and a versioned evidence receipt. It does not install anything.
 - `corepack pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile` regenerates resolution. Then a real cold-cache install, patches, typecheck, lint, web builds and device builds are mandatory.
 
@@ -30,3 +30,14 @@ The workflow may commit only to the same-repository `chore/business-studio-lates
 Current validation uses the repository Node 24.19.0 runtime, dependency-free resolver and manifest-coverage contracts, and a direct npm registry receipt. Catalog and lockfile refreshes include existing mobile WebGPU and TypeGPU dependencies and Graphite platform binaries. Worklets is forced through its existing catalog because Expo optional-peer resolution otherwise installs 0.10.x alongside Reanimated 4.7.x, which requires 0.13.x. Full current-head CI and native builds remain mandatory.
 
 Engineering ownership: dependency/native compatibility, UI/accessibility, Rust/FFI, GPU, security and QA. Use repository CONTRIBUTING, the React best-practices skill and Software Mansion's current migration guidance. Required project references remain expo/skills, mattpocock/skills, Argent/agent-device, coreyhaines31/marketingskills, pbakaus/impeccable and petergyang/no-ai-slop. Device-tool or skill naming is not evidence of a successful test.
+
+
+## Shared Dawn admission for Graphite 154.3
+
+WebGPU 0.13.1 moves Dawn binaries and headers into `react-native-webgpu-dawn@154.3.0`. The old postinstall copied from WebGPU's removed `libs/android` layout and stamped `dawn-chrome-m154`, which the native single-Dawn guard correctly rejected against `chrome-m154a`.
+
+`tooling/enable-skia-graphite.mjs` now verifies the exact renderer/WebGPU/Graphite/Dawn package identities and source metadata before staging anything. It copies the shared owner's actual four Android ABI libraries and generated Dawn headers, normalizes header locations like upstream, and invalidates old platform copy caches. An admission stamp is written only after successful staging; warm installs refresh owner files rather than trusting destination existence. The existing native single-Dawn guard is unchanged.
+
+Private Graphite headers come from the SHA-256-pinned [upstream header release](https://github.com/wcandillon/react-native-skia/releases/tag/skia-graphite-m154_8037_58a). Its Skia submodule commit matches the 154.3 publisher. The [renderer-to-binary Skia comparison](https://github.com/google/skia/compare/9f9e6beb751091ef69163d2b4fdcd1e711b594ac...2466dcf3937437e217e7f284afe0e1aae15891ce) contains a Ganesh-internal change, not a changed Graphite/public header interface. Exact admission values and checksum are in the installer, not inferred from a milestone string.
+
+`node --test tooling/enable-skia-graphite.test.mjs` covers unknown combinations, mismatched header source/patches, missing ABIs, cold/warm cache invalidation and checksum/download failures without network calls. Separate cold and warm staging checks used integrity-verified npm artifacts and the checksum-verified real header archive; all copied Dawn libraries matched their owner bytes. Neither check proves native compile/link success. Current-head Android/iOS/visionOS builds and regenerated CocoaPods locks remain required.

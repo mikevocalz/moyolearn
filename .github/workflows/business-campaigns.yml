@@ -25,4 +25,4 @@ jobs:
           node-version-file: .nvmrc
       # No provider connection or workspace install needed. The full existing
       # CI still owns framework typechecking, builds, and native regressions.
-      - run: node --test apps/web/lib/campaigns/*.test.ts
+      - run: node --test apps/web/lib/campaigns/*.test.ts apps/web/lib/campaigns/*.test.mjs

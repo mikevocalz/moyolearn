@@ -20,7 +20,7 @@
     "tutor:verify": "tsx scripts/tutor-check.mts",
     "sweep:verify": "tsx scripts/sweep-verify.mts",
     "test": "pnpm voice:test && pnpm campaigns:test",
-    "campaigns:test": "node --test lib/campaigns/*.test.ts",
+    "campaigns:test": "node --test lib/campaigns/*.test.ts lib/campaigns/*.test.mjs",
     "voice:test": "node --conditions=react-server --import tsx --test lib/voice-baked.test.ts",
     "voice:check": "node --conditions=react-server --import tsx scripts/voice-check.mts",
     "voice:bake": "NODE_OPTIONS=--conditions=react-server tsx scripts/voice-bake.mts",
