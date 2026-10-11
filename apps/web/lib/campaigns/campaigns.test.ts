@@ -165,3 +165,14 @@ test('native fetch rejects a real redirect without hitting its destination', asy
     assert.equal(redirected, 0);
   } finally { server.closeAllConnections(); await new Promise<void>((resolve) => server.close(() => resolve())); }
 });
+
+test('near-limit editable downloads remain restorable without pretty-print inflation', async () => {
+  const { serializeEditableDocument } = await import('./document.ts');
+  const document = { ...newDocument(), blocks: Array.from({ length: 30 }, (_, index) => ({
+    id: `image-${index}`, kind: 'image' as const, src: `https://example.com/${'a'.repeat(2_000)}`, alt: 'a'.repeat(75),
+  })) };
+  assert.ok(new TextEncoder().encode(JSON.stringify(document, null, 2)).length > MAX_DOCUMENT_BYTES);
+  const download = serializeEditableDocument(document);
+  assert.ok(new TextEncoder().encode(download).length <= MAX_DOCUMENT_BYTES);
+  assert.deepEqual(parseEditableDocument(download), document);
+});
