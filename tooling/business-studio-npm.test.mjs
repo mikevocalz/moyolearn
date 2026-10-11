@@ -1,5 +1,6 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import { packageReceipt, updateCatalog, fetchReceipt, TARGETS } from './business-studio-npm.mjs';
 const sample = (name, version = '1.2.3') => ({ name, version, dist: {
   integrity: 'sha512-YWJjZA==', tarball: `https://registry.npmjs.org/${name}/-/package.tgz`,
@@ -50,4 +51,15 @@ test('queries latest with redirects forbidden and preserves peer requirements', 
   }, 'now');
   assert.equal(result.version, '1.2.3');
   assert.deepEqual(result.peerDependencies, { react: '^19' });
+});
+
+// A ready pull request must validate a stable head instead of generating a
+// timestamp-only commit whose Actions checks cannot start from GITHUB_TOKEN.
+test('ready dependency PRs verify without branch writes', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/business-studio-npm.yml', import.meta.url), 'utf8');
+  assert.match(workflow, /types: \[opened, synchronize, reopened, ready_for_review\]/);
+  assert.match(workflow, /if: github\.event\.pull_request\.draft &&/);
+  assert.match(workflow, /if: \$\{\{ !github\.event\.pull_request\.draft \|\|/);
+  assert.equal((workflow.match(/uses: actions\/checkout@v4/g) ?? []).length, 3);
+  assert.equal((workflow.match(/persist-credentials: false/g) ?? []).length, 3);
 });

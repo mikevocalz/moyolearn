@@ -1,6 +1,7 @@
 name: Business studio latest npm
 on:
   pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'tooling/business-studio-npm*'
       - 'pnpm-workspace.yaml'
@@ -15,6 +16,8 @@ jobs:
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
@@ -22,7 +25,7 @@ jobs:
   refresh:
     # Only the explicitly requested dependency branch can write its own pins.
     # Never use pull_request_target, a fork checkout, main, or a force push.
-    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'chore/business-studio-latest-npm'
+    if: github.event.pull_request.draft && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'chore/business-studio-latest-npm'
     needs: contracts
     permissions:
       contents: write
@@ -59,12 +62,14 @@ jobs:
           path: artifacts/business-studio/npm-latest.json
           if-no-files-found: warn
   verify:
-    if: github.event.pull_request.head.ref != 'chore/business-studio-latest-npm'
+    if: ${{ !github.event.pull_request.draft || github.event.pull_request.head.ref != 'chore/business-studio-latest-npm' || github.event.pull_request.head.repo.full_name != github.repository }}
     needs: contracts
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version-file: .nvmrc
