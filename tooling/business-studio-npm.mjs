@@ -1,7 +1,7 @@
 // Latest means the npm registry's stable latest tag, resolved before installation.
 // SOT: docs/business/npm-policy.md
 // SOT-KEYWORDS: business studio dependency npm latest catalog evidence
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, glob } from 'node:fs/promises';
 import { pathToFileURL } from 'node:url';
 
 export const TARGETS = Object.freeze([
@@ -62,6 +62,47 @@ export function updateCatalog(source, receipts) {
   return { source: lines.join('\n'), changes };
 }
 
+// Every installed target must resolve through the audited default catalog.
+// Direct pins and overrides otherwise bypass freshness even when the receipt
+// correctly names npm latest. Peer ranges do not install packages by themselves.
+export function validateManifestTargets(manifests, catalog) {
+  for (const { path, manifest } of manifests) {
+    for (const field of ['dependencies', 'devDependencies', 'optionalDependencies']) {
+      for (const [name, specifier] of Object.entries(manifest[field] ?? {})) {
+        if (!TARGETS.includes(name)) continue;
+        const entry = catalog.find((item) => item.name === name);
+        if (specifier !== 'catalog:' || !entry?.installed) {
+          throw new Error(`${path}: ${name} must use an existing default catalog entry, not ${specifier}`);
+        }
+      }
+    }
+    for (const [selector, specifier] of Object.entries(manifest.pnpm?.overrides ?? {})) {
+      if (TARGETS.some((name) => selector.split('>').some((part) => part.trim() === name || part.trim().startsWith(`${name}@`)))) {
+        if (path === 'package.json' && TARGETS.includes(selector) && specifier === 'catalog:' && catalog.some((entry) => entry.name === selector && entry.installed)) continue;
+        throw new Error(`${path}: override ${selector} bypasses studio catalog freshness`);
+      }
+    }
+  }
+}
+
+// Frozen installs detect catalog/manifest drift, but they can still install
+// an older optional peer alongside the exact latest version. Audit the resolved
+// package section as well so all installed copies obey the same admission.
+export function validateLockedTargets(source, receipts) {
+  const packages = source.split('\npackages:\n')[1]?.split('\nsnapshots:\n')[0];
+  if (!packages) throw new Error('pnpm lockfile package section not found');
+  for (const line of packages.split('\n')) {
+    const match = /^  (?:'([^']+)'|"([^"]+)"|([^\s:]+)):$/.exec(line);
+    if (!match) continue;
+    const key = match[1] ?? match[2] ?? match[3];
+    for (const receipt of receipts) {
+      if (key.startsWith(`${receipt.name}@`) && key !== `${receipt.name}@${receipt.version}`) {
+        throw new Error(`${receipt.name}: lockfile contains nonlatest installed copy ${key}`);
+      }
+    }
+  }
+}
+
 export async function fetchReceipt(name, fetcher = fetch, now = new Date().toISOString()) {
   const response = await fetcher(`https://registry.npmjs.org/${encodeURIComponent(name)}/latest`, {
     redirect: 'error', headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(15_000),
@@ -90,6 +131,11 @@ export async function main(args = process.argv.slice(2)) {
   const receipts = await Promise.all(TARGETS.map((name) => fetchReceipt(name, fetch, checkedAt)));
   const source = await readFile('pnpm-workspace.yaml', 'utf8');
   const result = updateCatalog(source, receipts);
+  const manifests = [];
+  for await (const path of glob(['package.json', 'apps/*/package.json', 'packages/*/package.json'])) {
+    manifests.push({ path, manifest: JSON.parse(await readFile(path, 'utf8')) });
+  }
+  validateManifestTargets(manifests, result.changes);
   const report = { schema: 1, checkedAt, tag: 'latest', packages: receipts, catalog: result.changes };
   console.log(JSON.stringify(report, null, 2));
   await mkdir('artifacts/business-studio', { recursive: true });
@@ -99,6 +145,7 @@ export async function main(args = process.argv.slice(2)) {
     await mkdir('docs/business', { recursive: true });
     await writeFile('docs/business/npm-latest.lock.json', JSON.stringify(report, null, 2) + '\n');
   } else {
+    validateLockedTargets(await readFile('pnpm-lock.yaml', 'utf8'), receipts);
     const outdated = result.changes.filter((item) => item.installed && item.previous !== item.latest);
     if (outdated.length) throw new Error(`Not latest: ${outdated.map((item) => `${item.name} ${item.previous} -> ${item.latest}`).join(', ')}`);
   }

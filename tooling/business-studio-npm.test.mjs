@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { packageReceipt, updateCatalog, fetchReceipt, TARGETS } from './business-studio-npm.mjs';
+import { packageReceipt, updateCatalog, fetchReceipt, validateManifestTargets, validateLockedTargets, TARGETS } from './business-studio-npm.mjs';
 const sample = (name, version = '1.2.3') => ({ name, version, dist: {
   integrity: 'sha512-YWJjZA==', tarball: `https://registry.npmjs.org/${name}/-/package.tgz`,
 } });
@@ -62,4 +62,42 @@ test('ready dependency PRs verify without branch writes', () => {
   assert.match(workflow, /if: \$\{\{ !github\.event\.pull_request\.draft \|\|/);
   assert.equal((workflow.match(/uses: actions\/checkout@v4/g) ?? []).length, 3);
   assert.equal((workflow.match(/persist-credentials: false/g) ?? []).length, 3);
+});
+
+const manifest = (dependencies, extra = {}) => [{ path: 'apps/mobile/package.json', manifest: { dependencies, ...extra } }];
+const targetCatalog = [{ name: 'react-native-webgpu', installed: true }];
+test('installed direct pins cannot masquerade as absent candidates', () => {
+  assert.throws(() => validateManifestTargets(manifest({ 'react-native-webgpu': '0.10.2' }), []), /must use an existing default catalog/);
+});
+test('catalog targets require catalog declarations in every dependency field', () => {
+  for (const field of ['dependencies', 'devDependencies', 'optionalDependencies']) {
+    assert.throws(() => validateManifestTargets(manifest({}, { [field]: { 'react-native-webgpu': '0.10.2' } }), targetCatalog));
+  }
+});
+test('catalog references need a resolved default catalog entry', () => {
+  assert.throws(() => validateManifestTargets(manifest({ 'react-native-webgpu': 'catalog:' }), []));
+  assert.doesNotThrow(() => validateManifestTargets(manifest({ 'react-native-webgpu': 'catalog:' }), targetCatalog));
+});
+test('overrides cannot silently replace an audited target', () => {
+  for (const selector of ['react-native-webgpu', 'react-native-webgpu@0.13.1', 'other>react-native-webgpu', 'other@1>react-native-webgpu@0.13.1']) {
+    assert.throws(() => validateManifestTargets(manifest({}, { pnpm: { overrides: { [selector]: '0.10.2' } } }), targetCatalog), /bypasses/);
+  }
+});
+test('unrelated dependencies and noninstalling peer ranges are allowed', () => {
+  assert.doesNotThrow(() => validateManifestTargets(manifest({ react: 'catalog:' }, { peerDependencies: { 'react-native-webgpu': '*' } }), []));
+});
+
+test('root catalog overrides preserve single-version admission', () => {
+  assert.doesNotThrow(() => validateManifestTargets([{ path: 'package.json', manifest: { pnpm: { overrides: { 'react-native-webgpu': 'catalog:' } } } }], targetCatalog));
+  assert.throws(() => validateManifestTargets(manifest({}, { pnpm: { overrides: { 'react-native-webgpu': 'catalog:' } } }), targetCatalog));
+});
+test('resolved older optional peers cannot bypass latest admission', () => {
+  const receipts = [{ name: 'react-native-worklets', version: '0.13.0' }];
+  const lock = "lockfileVersion: '9.0'\npackages:\n  react-native-worklets@0.13.0:\n    resolution: {}\n  react-native-worklets@0.10.2:\n    resolution: {}\nsnapshots:\n";
+  assert.throws(() => validateLockedTargets(lock, receipts), /nonlatest installed copy/);
+  assert.doesNotThrow(() => validateLockedTargets(lock.replace('  react-native-worklets@0.10.2:\n    resolution: {}\n', ''), receipts));
+});
+test('lock admission handles scoped quoted package names and invalid envelopes', () => {
+  assert.throws(() => validateLockedTargets('not a lockfile', []), /package section/);
+  assert.throws(() => validateLockedTargets("\npackages:\n  '@shopify/react-native-skia@2.12.0':\n    resolution: {}\nsnapshots:\n", [{ name: '@shopify/react-native-skia', version: '2.14.0' }]), /nonlatest/);
 });
