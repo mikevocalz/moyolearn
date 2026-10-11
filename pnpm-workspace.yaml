@@ -281,12 +281,10 @@ catalog:
 
   # tooling
   typescript: ~6.0.3
-  # Dev-only, and used by exactly one package: @acme/avatar's shader probe
-  # bundles its materials for a headless browser (esbuild) and drives that
-  # browser (playwright). Neither reaches a shipped bundle — the probe is a
-  # compile gate, not a runtime path — but they belong in the catalog like
-  # everything else so there is still one declared version.
+  # Dev-only probes: avatar shader compilation/browser rendering and the
+  # business studio DOM gesture regression. None reaches a shipped bundle.
   esbuild: 0.28.2
+  jsdom: 30.1.2
   playwright: 1.63.0
   "@types/react": ~19.3.0
   # Must stay on the Node major `engines.node` (>=24.15.0 <26) actually allows —

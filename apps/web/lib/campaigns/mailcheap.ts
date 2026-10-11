@@ -48,6 +48,13 @@ export async function readBoundedBody(body: ReadableStream<Uint8Array> | null, l
   const decoder = new TextDecoder('utf-8', { fatal: true });
   let bytes = 0;
   let result = '';
+  const decode = (value?: Uint8Array) => {
+    try { return decoder.decode(value, { stream: value !== undefined }); }
+    catch {
+      void reader.cancel().catch(() => undefined);
+      throw new CampaignInputError('The request body is not valid UTF-8.');
+    }
+  };
   try {
     while (true) {
       const part = await reader.read();
@@ -57,9 +64,9 @@ export async function readBoundedBody(body: ReadableStream<Uint8Array> | null, l
         void reader.cancel().catch(() => undefined);
         throw new CampaignInputError('The request exceeds the permitted size.');
       }
-      result += decoder.decode(part.value, { stream: true });
+      result += decode(part.value);
     }
-    return result + decoder.decode();
+    return result + decode();
   } finally { reader.releaseLock(); }
 }
 

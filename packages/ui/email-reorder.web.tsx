@@ -107,7 +107,9 @@ export function EmailBlockFrame({ id, label, disabled, children }: {
       if (event.canceled) scheduleOnRN(abort, id, token.get());
     },
   });
-  const style = useAnimatedStyle(() => ({ transform: [{ translateY: offset.get() }] }));
+  // Turbopack does not run the Worklets Babel plugin on web, so Reanimated
+  // needs explicit dependencies to mount and subscribe to the shared value.
+  const style = useAnimatedStyle(() => ({ transform: [{ translateY: offset.get() }] }), [offset]);
   return <Section nativeID={`${group.scope}-${id}`} aria-label={label} className="gap-element rounded-card border border-border p-inset">
     <AnimatedView style={style} className="gap-group">
       <GestureDetector gesture={pan} touchAction="none" userSelect="none">

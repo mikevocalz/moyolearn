@@ -45,7 +45,9 @@
   },
   "devDependencies": {
     "pg-boss": "catalog:",
-    "turbo": "catalog:"
+    "turbo": "catalog:",
+    "esbuild": "catalog:",
+    "jsdom": "catalog:"
   },
   "pnpm": {
     "overrides": {
