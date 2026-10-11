@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "inspectedOn": "2026-10-11",
+  "sources": [
+    {
+      "name": "Mailcheap",
+      "repository": "https://github.com/marclou/mailcheap",
+      "commit": "67d13b028a6ecae9ec56d49c4b2db58019217eba",
+      "license": "MIT",
+      "integration": "server-side draft API; no upstream source vendored",
+      "files": [
+        "LICENSE",
+        "app/api/v1/campaigns/route.js",
+        "lib/render-email.js"
+      ]
+    },
+    {
+      "name": "PhotoCraft",
+      "repository": "https://github.com/storytold/photocraft",
+      "commit": "fa2fe1c90fa77235d648a2d21428491593e1c2d9",
+      "license": "MIT OR Apache-2.0",
+      "integration": "native engine adaptation design; not yet linked or shipped",
+      "files": [
+        "Cargo.toml",
+        "crates/gpu/Cargo.toml",
+        "apps/photocraft-web/Cargo.toml",
+        "LICENSE-MIT",
+        "NOTICE"
+      ],
+      "brandAssets": "Excluded; not covered by the code license"
+    }
+  ]
+}

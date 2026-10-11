@@ -18,13 +18,14 @@
       "default": "./haptics.web.ts"
     },
     "./xr": {
-    "react-native": "./xr/index.native.ts",
-    "default": "./xr/index.web.ts"
-  },
-  "./icons": {
+      "react-native": "./xr/index.native.ts",
+      "default": "./xr/index.web.ts"
+    },
+    "./icons": {
       "react-native": "./icons.native.tsx",
       "default": "./icons.web.ts"
-    }
+    },
+    "./email-canvas": "./email-canvas.tsx"
   },
   "scripts": {
     "lint": "eslint",

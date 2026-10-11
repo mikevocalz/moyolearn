@@ -1,0 +1,28 @@
+name: Business campaign contracts
+on:
+  pull_request:
+    paths:
+      - 'apps/web/lib/campaigns/**'
+      - 'apps/web/components/business/**'
+      - 'packages/ui/email-canvas.tsx'
+      - '.github/workflows/business-campaigns.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'apps/web/lib/campaigns/**'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      # No provider connection or workspace install needed. The full existing
+      # CI still owns framework typechecking, builds, and native regressions.
+      - run: node --test apps/web/lib/campaigns/*.test.ts apps/web/lib/campaigns/*.test.mjs
