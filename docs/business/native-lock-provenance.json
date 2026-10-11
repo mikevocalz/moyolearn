@@ -91,5 +91,27 @@
     "Existing iOS precompiled Expo modules intentionally strip bundled codec pod dependencies, as recorded by the generated pod log.",
     "The visionOS Podfile computes absolute Viro package paths; the generated lock retains the runner paths without hand edits. Run visionos:prepare to resolve paths for a different checkout.",
     "The native versions/admission were unchanged by subsequent workflow hardening, the missing-directory safeguard, root guard backport and documentation-only main integration. Final-head checks remain required."
-  ]
+  ],
+  "finalNativeInputAudit": {
+    "codeRevision": "b1754768fec8012eb7d2da17ea88c70a204ef3ba",
+    "lockRegenerationComplete": true,
+    "comparisonBase": "935d674e495d73d706a19e57c30e8ee3f3f64691",
+    "unchanged": [
+      "mobile source, manifests, Podfiles and configuration",
+      "native package versions and complete pnpm lock",
+      "patches and vendored native source",
+      "iOS/visionOS workflows and preparation scripts",
+      "Dawn/Graphite source identities, archive digest and staged artifact content"
+    ],
+    "generatedOutputsChanged": [
+      "apps/mobile/ios/Podfile.lock",
+      "apps/mobile/visionos/Podfile.lock"
+    ],
+    "otherNativeToolingChanges": [
+      "Installer creates the destination webgpu directory before copying the same admitted headers; cold/warm and missing-directory contracts pass.",
+      "Android resource-heartbeat wrapper retains the exact assembly command, flags and exit gate; signal/exit contracts pass."
+    ],
+    "remainingGate": "Terminal native builds on the final published head, including these reviewed tooling changes. This audit is not a final-head build-success claim.",
+    "followupScope": "Subsequent documentation-only clarification does not change any native input or generated lock byte."
+  }
 }
