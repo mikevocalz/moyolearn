@@ -1,9 +1,10 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
+import { createHash } from 'node:crypto';
 import { packageReceipt, updateCatalog, fetchReceipt, validateManifestTargets, validateLockedTargets, TARGETS } from './business-studio-npm.mjs';
 const sample = (name, version = '1.2.3') => ({ name, version, dist: {
-  integrity: 'sha512-YWJjZA==', tarball: `https://registry.npmjs.org/${name}/-/package.tgz`,
+  integrity: `sha512-${createHash('sha512').update('registry metadata fixture').digest('base64')}`, tarball: `https://registry.npmjs.org/${name}/-/package.tgz`,
 } });
 const receipts = TARGETS.map((name) => packageReceipt(name, sample(name), '2026-10-11T00:00:00Z'));
 const yaml = `packages:\n  - apps/*\ncatalog:\n  react-native-reanimated: 1.0.0 # retain this\n  "react-native-gesture-handler": 1.0.0\n  'react-native-worklets': 1.0.0\n  react: 19.0.0\n  expo: 58.0.0-preview.8\nother:\n  typegpu: 0.0.1\n`;
@@ -101,3 +102,16 @@ test('lock admission handles scoped quoted package names and invalid envelopes',
   assert.throws(() => validateLockedTargets('not a lockfile', []), /package section/);
   assert.throws(() => validateLockedTargets("\npackages:\n  '@shopify/react-native-skia@2.12.0':\n    resolution: {}\nsnapshots:\n", [{ name: '@shopify/react-native-skia', version: '2.14.0' }]), /nonlatest/);
 });
+
+for (const integrity of [
+  'sha512-YWJjZA==',
+  sample('x').dist.integrity.slice(0, -1),
+  `${sample('x').dist.integrity}=`,
+  `${sample('x').dist.integrity.slice(0, -3)}B==`,
+  `sha512-${Buffer.alloc(65).toString('base64')}`,
+]) {
+  test(`rejects noncanonical or wrong-length SHA-512 integrity ${integrity}`, () => {
+    const data = sample('x'); data.dist.integrity = integrity;
+    assert.throws(() => packageReceipt('x', data, 'now'), /invalid SHA-512/);
+  });
+}
