@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { createHash } from 'node:crypto';
-import { packageReceipt, updateCatalog, fetchReceipt, validateManifestTargets, validateLockedTargets, TARGETS } from './business-studio-npm.mjs';
+import { packageReceipt, updateCatalog, fetchReceipt, validateManifestTargets, validateLockedTargets, validateSavedReceipt, TARGETS } from './business-studio-npm.mjs';
 const sample = (name, version = '1.2.3') => ({ name, version, dist: {
   integrity: `sha512-${createHash('sha512').update('registry metadata fixture').digest('base64')}`, tarball: `https://registry.npmjs.org/${name}/-/package.tgz`,
 } });
@@ -115,3 +115,26 @@ for (const integrity of [
     assert.throws(() => packageReceipt('x', data, 'now'), /invalid SHA-512/);
   });
 }
+
+const savedEvidence = () => ({ schema: 1, tag: 'latest', checkedAt: '2026-10-11T00:00:00Z', packages: structuredClone(receipts), catalog: updateCatalog(yaml, receipts).changes });
+test('committed receipt matches live evidence without rewriting historical pins', () => {
+  assert.doesNotThrow(() => validateSavedReceipt(savedEvidence(), receipts, updateCatalog(updateCatalog(yaml, receipts).source, receipts).changes));
+});
+for (const field of ['version', 'registry', 'integrity', 'tarball']) {
+  test(`committed receipt detects tampered ${field}`, () => {
+    const saved = savedEvidence(); saved.packages[0][field] = 'tampered';
+    assert.throws(() => validateSavedReceipt(saved, receipts, saved.catalog), /does not match/);
+  });
+}
+test('committed receipt rejects missing, duplicate and wrongly admitted packages', () => {
+  for (const change of [
+    (saved) => { saved.packages.pop(); },
+    (saved) => { saved.packages[1] = saved.packages[0]; },
+    (saved) => { saved.catalog[0].installed = false; },
+    (saved) => { saved.packages[0].peerDependencies = { react: 'incorrect' }; },
+  ]) {
+    const saved = savedEvidence(); change(saved);
+    assert.throws(() => validateSavedReceipt(saved, receipts, updateCatalog(yaml, receipts).changes));
+  }
+  assert.throws(() => validateSavedReceipt(null, receipts, []), /envelope/);
+});

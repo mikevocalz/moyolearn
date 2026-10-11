@@ -106,6 +106,33 @@ export function validateLockedTargets(source, receipts) {
   }
 }
 
+// The committed evidence must describe the same packages as today's registry
+// and catalog. Historical previous pins and timestamps may differ, package
+// identity, distribution integrity and requirements may not.
+export function validateSavedReceipt(saved, receipts, catalog) {
+  if (saved?.schema !== 1 || saved.tag !== 'latest' || typeof saved.checkedAt !== 'string' || !Number.isFinite(Date.parse(saved.checkedAt)) || !Array.isArray(saved.packages) || !Array.isArray(saved.catalog)) {
+    throw new Error('Invalid committed npm receipt envelope');
+  }
+  if (saved.packages.length !== receipts.length || new Set(saved.packages.map((item) => item.name)).size !== receipts.length || saved.catalog.length !== catalog.length || new Set(saved.catalog.map((item) => item.name)).size !== catalog.length) {
+    throw new Error('Committed npm receipt has missing or duplicate targets');
+  }
+  const requirements = (value) => {
+    if (!value || typeof value !== 'object' || Array.isArray(value) || Object.values(value).some((item) => typeof item !== 'string')) throw new Error('Invalid package requirements in npm receipt');
+    return Object.entries(value).sort(([a], [b]) => a.localeCompare(b));
+  };
+  for (const live of receipts) {
+    const entry = saved.packages.find((item) => item.name === live.name);
+    if (!entry || entry.checkedAt !== saved.checkedAt || entry.tag !== 'latest' || ['version', 'registry', 'integrity', 'tarball'].some((field) => entry[field] !== live[field]) || JSON.stringify(requirements(entry.peerDependencies)) !== JSON.stringify(requirements(live.peerDependencies)) || JSON.stringify(requirements(entry.engines)) !== JSON.stringify(requirements(live.engines))) {
+      throw new Error(`${live.name}: committed npm receipt does not match registry evidence`);
+    }
+    const recorded = saved.catalog.find((item) => item.name === live.name);
+    const current = catalog.find((item) => item.name === live.name);
+    if (!recorded || !current || recorded.latest !== current.latest || recorded.installed !== current.installed || !(recorded.previous === null || typeof recorded.previous === 'string')) {
+      throw new Error(`${live.name}: committed npm receipt does not match catalog admission`);
+    }
+  }
+}
+
 export async function fetchReceipt(name, fetcher = fetch, now = new Date().toISOString()) {
   const response = await fetcher(`https://registry.npmjs.org/${encodeURIComponent(name)}/latest`, {
     redirect: 'error', headers: { Accept: 'application/json' }, signal: AbortSignal.timeout(15_000),
@@ -149,6 +176,7 @@ export async function main(args = process.argv.slice(2)) {
     await writeFile('docs/business/npm-latest.lock.json', JSON.stringify(report, null, 2) + '\n');
   } else {
     validateLockedTargets(await readFile('pnpm-lock.yaml', 'utf8'), receipts);
+    validateSavedReceipt(JSON.parse(await readFile('docs/business/npm-latest.lock.json', 'utf8')), receipts, result.changes);
     const outdated = result.changes.filter((item) => item.installed && item.previous !== item.latest);
     if (outdated.length) throw new Error(`Not latest: ${outdated.map((item) => `${item.name} ${item.previous} -> ${item.latest}`).join(', ')}`);
   }
