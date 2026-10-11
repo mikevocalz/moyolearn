@@ -205,7 +205,13 @@ export const RAIL_BY_ROLE: Record<RailKind, NavGroup[]> = {
     // utility-bar avatar menu (G §4 no-duplication law: a rail You would
     // duplicate the account menu's Profile & settings entry).
   ],
-  owner: ORG_RAIL,
+  // Owner-only campaign pilot; its server service enforces the same wall.
+  // Staff access needs a marketing-specific permission, not a shared admin key.
+  owner: [
+    ...ORG_RAIL.slice(0, 2),
+    { title: 'Marketing', items: [{ label: 'Campaigns', href: '/campaigns' }] },
+    ...ORG_RAIL.slice(2),
+  ],
   staff: ORG_RAIL,
   // ADR-103: exists-only interim rail. /academics is pulled — it resolves to
   // InstitutionPlaceholderScreen, a designed dead end (school.academics,

@@ -1,5 +1,5 @@
-# QDK worker HTTP/security contract tests. No private tokens or heavy numerical wheels
-# are necessary: the actual QDK solver is mocked only in contract tests.
+# Lightweight QDK HTTP/security contracts and a separate real numerical smoke test.
+# Neither job needs private worker tokens or deployed infrastructure.
 name: QDK Chemistry Contracts
 on:
   pull_request:
@@ -9,12 +9,17 @@ on:
       - 'packages/app/features/chemistry/**'
       - '.github/workflows/qdk-chemistry.yml'
   workflow_dispatch:
+permissions:
+  contents: read
+
 jobs:
   worker-contracts:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -31,6 +36,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
