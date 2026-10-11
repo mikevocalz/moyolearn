@@ -58,6 +58,6 @@ Payment authorization, recurring collection terms, cancellation/refund policy, c
 
 ## Review and delivery gates
 
-This documentation deliverable is ready for design review when its source links, existing-versus-proposed inventory and invariants have been checked and the PR records actual verification. It is not a claim that a payment system shipped.
+This documentation deliverable is ready for design review when its source links, existing-versus-proposed inventory and invariants have been checked and the PR records actual verification. Identify the exact reviewed commit and attach the checks/results for that revision, explicitly distinguishing passed, failed, blocked and not-run checks. Results from an earlier head do not satisfy this gate; recheck changed claims and links after every follow-up edit, and report any remaining verification blocker on the reviewed head. It is not a claim that a payment system shipped.
 
 Each implementation slice must pass cold-cache `pnpm typecheck`, relevant unit/integration/permission and failure/retry tests, applicable lint/build checks, and affected UI/device checks. Retain [billing authorization tests](../../packages/auth/src/billing.test.ts), CRM-wall/store-separation/version checks, and add a transactional/provider-sandbox harness for the new financial effects. Unit arithmetic, mocked provider success and a green documentation check alone cannot establish financial or physical-device correctness.
