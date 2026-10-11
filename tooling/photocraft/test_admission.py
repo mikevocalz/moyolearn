@@ -23,7 +23,7 @@ class AdmissionTest(unittest.TestCase):
         self.assertEqual(workspace_contract({"workspace": {"package": {"license": "MIT OR Apache-2.0", "rust-version": "1.95"}}}), "1.95")
     def test_moving_toolchain(self):
         with self.assertRaises(ValueError): workspace_contract({"workspace": {"package": {"license": "MIT OR Apache-2.0", "rust-version": "nightly"}}})
-    def test_all_targets_are_locked_and_cpu_only(self):
+    def test_all_targets_are_locked_and_select_engine_crates(self):
         for target in TARGETS:
             command = build_commands(target)[0]
             self.assertIn("--locked", command)

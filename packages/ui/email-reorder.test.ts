@@ -43,3 +43,14 @@ test('reorder preserves IDs, values, input and item object identity', () => {
 test('invalid/no-op movement preserves array identity', () => {
   for (const [source, index] of [['a', 0], ['missing', 1], ['a', -1], ['a', 3], ['a', 1.5]] as const) assert.equal(reorderEmailItems(rows, source, index), rows);
 });
+
+test('repeated moves to the same position produce distinct accessible feedback', async () => {
+  const { emailMoveFeedback } = await import('./email-reorder.ts');
+  const first = emailMoveFeedback(0, 1);
+  const second = emailMoveFeedback(first.moveCount, 1);
+  assert.equal(first.moveCount, 1);
+  assert.equal(second.moveCount, 2);
+  assert.notEqual(first.announcement, second.announcement);
+  assert.match(first.announcement, /position 2/);
+  assert.match(second.announcement, /position 2/);
+});

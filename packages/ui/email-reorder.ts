@@ -42,3 +42,10 @@ export function resolveEmailDrag(drag: EmailDrag | null, source: string, token: 
   if (index === null || index === currentRows.findIndex((row) => row.id === source)) return null;
   return { source, index };
 }
+
+// Include a monotonically increasing move number so repeated destinations
+// still change the live-region text and are announced by assistive technology.
+export function emailMoveFeedback(previousCount: number, index: number) {
+  const moveCount = previousCount + 1;
+  return { moveCount, announcement: `Move ${moveCount} completed. Email block is now at position ${index + 1}.` };
+}
