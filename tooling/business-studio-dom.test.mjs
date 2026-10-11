@@ -102,16 +102,34 @@ test('semantic animated refs, repeated releases, cancellations and move controls
   const { document } = window;
   const state = () => JSON.parse(JSON.stringify(window.reorderProbe.getState()));
   const feedback = () => document.querySelector('[aria-live="polite"]').textContent;
-  const pointer = (node, type, y) => node.dispatchEvent(new window.PointerEvent(type, {
-    bubbles: true, cancelable: true, pointerId: 1, pointerType: 'mouse', isPrimary: true,
+  const pointer = (node, type, y, pointerId = 1, pointerType = 'mouse') => node.dispatchEvent(new window.PointerEvent(type, {
+    bubbles: true, cancelable: true, pointerId, pointerType, isPrimary: pointerId === 1,
     button: 0, buttons: type === 'pointerup' || type === 'pointercancel' ? 0 : 1, clientX: 50, clientY: y,
   }));
   async function drag(source, cancellation) {
     const handle = document.querySelector(`[aria-label^="Drag ${source}."]`);
     const animated = handle.closest('section').firstElementChild;
-    pointer(handle, 'pointerdown', 20);
-    pointer(handle, 'pointermove', 40);
+    const send = (type, y, id = 1) => pointer(handle, type, y, id, cancellation === 'extra' ? 'touch' : 'mouse');
+    send('pointerdown', 20);
+    send('pointermove', 40);
     await pause();
+    if (cancellation === 'extra') {
+      // The first touch is already ACTIVE. The second touch goes down/up
+      // without a move; only then does the original touch move and release.
+      // GH3's web onPointerAdd must cancel immediately at maxPointers: 1.
+      send('pointermove', 60);
+      await until(() => animated.style.transform === 'translateY(20px)', 'the first touch is active before another touch is added');
+      send('pointerdown', 45, 2);
+      await until(() => animated.style.transform === 'translateY(0px)', 'second touch down immediately cancels the active pan');
+      send('pointerup', 45, 2);
+      await pause();
+      send('pointermove', 560);
+      send('pointermove', 570);
+      send('pointerup', 570);
+      await pause();
+      assert.equal(animated.style.transform, 'translateY(0px)', 'second touch cancels before the original release');
+      return;
+    }
     // GH3 emits a boundary transition before tracking outside movement.
     pointer(handle, 'pointermove', 560);
     pointer(handle, 'pointermove', 570);
@@ -140,6 +158,8 @@ test('semantic animated refs, repeated releases, cancellations and move controls
     await drag('beta');
     assert.deepEqual(state(), { ids: ['gamma', 'alpha', 'beta'], moves: ['alpha:2', 'beta:2'] });
     assert.notEqual(feedback(), firstFeedback, 'same-destination releases announce independently');
+    await drag('gamma', 'extra');
+    assert.deepEqual(state(), { ids: ['gamma', 'alpha', 'beta'], moves: ['alpha:2', 'beta:2'] }, 'a stationary second touch followed by the original release commits nothing');
     await drag('gamma', 'escape');
     await drag('gamma', 'pointer');
     assert.deepEqual(state(), { ids: ['gamma', 'alpha', 'beta'], moves: ['alpha:2', 'beta:2'] });
