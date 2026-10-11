@@ -6,8 +6,8 @@
 import { useEffect, useMemo, useRef } from 'react';
 import { Button, Heading, Text, TextField, useInstanceStore, useStore } from '@acme/ui';
 import { Textarea, View, Link } from '@acme/ui/primitives';
-import { DownloadEmailDocument, EmailBlockFrame, EmailCanvas } from '@acme/ui/email-canvas';
-import { BLOCK_KINDS, MAX_BLOCKS, draftReceipt, jsonObject, moveBefore, moveBlock, newBlock, newDocument, parseDocument, parseEditableDocument, readJson, type CampaignBlock, type CampaignDocument } from '@/lib/campaigns/document';
+import { DownloadEmailDocument, EmailBlockFrame, EmailCanvas, EmailReorderGroup, reorderEmailItems } from '@acme/ui/email-canvas';
+import { BLOCK_KINDS, MAX_BLOCKS, draftReceipt, jsonObject, moveBlock, newBlock, newDocument, parseDocument, parseEditableDocument, readJson, type CampaignBlock, type CampaignDocument } from '@/lib/campaigns/document';
 import { renderCampaign } from '@/lib/campaigns/render';
 import { emailTheme } from '@/lib/campaigns/theme';
 import type { CampaignSettings } from '@/lib/campaigns/campaigns.service';
@@ -121,13 +121,19 @@ export function CampaignStudio({ settings }: { settings: CampaignSettings }) {
           const current = store.getState().document;
           if (current.blocks.length < MAX_BLOCKS) change({ ...current, blocks: [...current.blocks, newBlock(kind, crypto.randomUUID())] });
         }} />)}</View>
-        {state.document.blocks.map((block, index) => <EmailBlockFrame key={block.id} id={block.id} label={`${index + 1}: ${block.kind}`} disabled={state.pending} onMoveBefore={(id, target) => change(moveBefore(store.getState().document, id, target))}>
+        <EmailReorderGroup ids={state.document.blocks.map((block) => block.id)} revision={JSON.stringify(state.document)} disabled={state.pending} onMove={(source, index) => {
+          const current = store.getState().document;
+          const blocks = reorderEmailItems(current.blocks, source, index);
+          if (blocks !== current.blocks) change({ ...current, blocks: [...blocks] });
+        }}>
+        {state.document.blocks.map((block, index) => <EmailBlockFrame key={block.id} id={block.id} label={`${index + 1}: ${block.kind}`} disabled={state.pending}>
           <View className="gap-group"><BlockFields block={block} disabled={state.pending} update={updateBlock} /><View className="flex-row flex-wrap gap-element">
             <Button title="Move up" aria-label={`Move ${block.kind} ${index + 1} up`} variant="ghost" disabled={state.pending || index === 0} onPress={() => change(moveBlock(store.getState().document, block.id, -1))} />
             <Button title="Move down" aria-label={`Move ${block.kind} ${index + 1} down`} variant="ghost" disabled={state.pending || index === state.document.blocks.length - 1} onPress={() => change(moveBlock(store.getState().document, block.id, 1))} />
             <Button title="Remove" aria-label={`Remove ${block.kind} ${index + 1}`} variant="ghost" disabled={state.pending || state.document.blocks.length === 1} onPress={() => change({ ...store.getState().document, blocks: store.getState().document.blocks.filter((item) => item.id !== block.id) })} />
           </View></View>
         </EmailBlockFrame>)}
+        </EmailReorderGroup>
       </View>
       <View className="min-w-0 flex-1 gap-group"><Heading level={2} size="title">Design preview</Heading><View className="flex-row flex-wrap gap-element"><Button title={state.compact ? 'Show desktop width' : 'Show phone width'} variant="outline" onPress={() => store.setState({ compact: !store.getState().compact })} /><Button title={state.showImages ? 'Hide remote images' : 'Load remote images'} variant="ghost" onPress={() => store.setState({ showImages: !store.getState().showImages })} /></View><Text tone="muted">Remote images are blocked until you load them. Inbox preview text and personalized unsubscribe links are applied by Mailcheap. This is not an email-client compatibility test.</Text>
         {preview.error ? <Text>{preview.error}</Text> : <EmailCanvas html={preview.html} compact={state.compact} showImages={state.showImages} />}

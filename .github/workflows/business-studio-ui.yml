@@ -1,0 +1,24 @@
+name: Business studio semantic gestures
+on:
+  pull_request:
+    paths:
+      - 'apps/web/components/business/**'
+      - 'packages/ui/email*'
+      - 'packages/ui/html/email*'
+      - 'tooling/check-business-studio-ui*'
+      - '.github/workflows/business-studio-ui.yml'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: node --test packages/ui/email*.test.ts tooling/check-business-studio-ui.test.mjs
+      - run: node tooling/check-business-studio-ui.mjs
+      - run: node --test apps/web/lib/campaigns/*.test.ts
+      - run: node tooling/business-studio-npm.mjs --check
