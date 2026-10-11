@@ -99,6 +99,11 @@ function readDocument(source: string, draft: boolean) {
 // Editable saves may contain unfinished fields; exported email may not.
 export function parseDocument(source: string) { return readDocument(source, false); }
 export function parseEditableDocument(source: string) { return readDocument(source, true); }
+// Downloads use the same bounded representation accepted by restore. Pretty
+// printing can push a valid near-limit document over the restore byte budget.
+export function serializeEditableDocument(document: ReturnType<typeof parseDocument>): string {
+  return JSON.stringify(parseEditableDocument(JSON.stringify(document)));
+}
 export type CampaignDocument = ReturnType<typeof parseDocument>;
 export type CampaignBlock = CampaignDocument['blocks'][number];
 

@@ -4,6 +4,8 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'tooling/business-studio-npm*'
+      - '**/package.json'
+      - 'package.json'
       - 'pnpm-workspace.yaml'
       - 'pnpm-lock.yaml'
       - 'docs/business/npm*'

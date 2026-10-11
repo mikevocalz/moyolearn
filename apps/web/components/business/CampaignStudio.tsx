@@ -7,7 +7,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import { Button, Heading, Text, TextField, useInstanceStore, useStore } from '@acme/ui';
 import { Textarea, View, Link } from '@acme/ui/primitives';
 import { DownloadEmailDocument, EmailBlockFrame, EmailCanvas } from '@acme/ui/email-canvas';
-import { BLOCK_KINDS, MAX_BLOCKS, draftReceipt, jsonObject, moveBefore, moveBlock, newBlock, newDocument, parseDocument, parseEditableDocument, readJson, type CampaignBlock, type CampaignDocument } from '@/lib/campaigns/document';
+import { BLOCK_KINDS, MAX_BLOCKS, draftReceipt, jsonObject, moveBefore, moveBlock, newBlock, newDocument, parseDocument, parseEditableDocument, readJson, serializeEditableDocument, type CampaignBlock, type CampaignDocument } from '@/lib/campaigns/document';
 import { renderCampaign } from '@/lib/campaigns/render';
 import { emailTheme } from '@/lib/campaigns/theme';
 import type { CampaignSettings } from '@/lib/campaigns/campaigns.service';
@@ -100,7 +100,7 @@ export function CampaignStudio({ settings }: { settings: CampaignSettings }) {
         const current = store.getState(); const next = current.future[0]; if (!next || current.pending) return;
         store.setState({ document: next, history: [...current.history.slice(-49), current.document], future: current.future.slice(1), dirty: true, created: false });
       }} />
-      <DownloadEmailDocument title="Download editable document" content={JSON.stringify(state.document, null, 2)} filename="moyo-newsletter.json" disabled={state.pending} />
+      <DownloadEmailDocument title="Download editable document" content={serializeEditableDocument(state.document)} filename="moyo-newsletter.json" disabled={state.pending} />
       <Button title="Restore editable document" variant="outline" disabled={state.pending} onPress={() => store.setState({ importing: !store.getState().importing })} />
       <Button title={state.created ? 'Draft created' : state.receipt ? 'Create new Mailcheap draft' : 'Create Mailcheap draft'} loading={state.pending} disabled={settings.state !== 'ready' || !!preview.error || state.uncertain || state.created} onPress={() => void createDraft()} />
     </View>
