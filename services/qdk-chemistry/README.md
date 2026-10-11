@@ -29,10 +29,11 @@ The worker must remain private (bind to loopback locally, private service addres
 
 ```sh
 python -m unittest discover -s . -p 'test_*.py'
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 python smoke_solver.py
 curl -s http://127.0.0.1:8029/health
 ```
 
-Use the authenticated web/mobile Chemistry Lab to run two real calculations and compare the result. The first request may be slower because the QDK solver must initialize. Failure displays a retry state, not a fake energy. The test suite stubs the solver solely to exercise HTTP and authorization contracts.
+Use the authenticated web/mobile Chemistry Lab to run two real calculations and compare the result. The first request may be slower because the QDK solver must initialize. Failure displays a retry state, not a fake energy. The HTTP suite stubs the solver solely to exercise authorization and response contracts. The separate `smoke_solver.py` and CI solver job execute the installed QDK engine for both geometries without mocks, checking known HF/STO-3G total molecular energies (including nuclear repulsion) and their ordering. Neither check proves that a deployed worker or physical learner device is configured.
 
 ## Deliberate bounds
 

@@ -7,7 +7,7 @@
 // ponytail: walks relative re-export edges only — a bundler-grade resolver is not needed
 // to answer "is this file reachable from the package's public API".
 import { readFileSync, readdirSync, lstatSync, existsSync } from 'node:fs';
-import { join, dirname, relative, resolve } from 'node:path';
+import { join, dirname, relative, resolve, sep } from 'node:path';
 
 const ROOT = process.argv[2] ? resolve(process.argv[2]) : resolve(import.meta.dirname, '..');
 
@@ -77,7 +77,7 @@ const entryPoints = (pkgDir) => {
         const pattern = new RegExp(`^${value.slice(2).split('*')
           .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')).join('(.+)')}$`);
         for (const file of walk(pkgDir)) {
-          if (pattern.test(relative(pkgDir, file))) found.add(file);
+          if (pattern.test(relative(pkgDir, file).split(sep).join('/'))) found.add(file);
         }
       } else {
         for (const hit of resolveSpecifier(join(pkgDir, 'package.json'), value)) found.add(hit);

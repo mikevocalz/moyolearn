@@ -2,7 +2,7 @@
 
 ## What ships in this PR
 
-The learner's **Subjects → Chemistry Lab** activity runs on Expo and Next.js for the teen/adult grade bands. A learner predicts whether hydrogen atoms 0.74 Å or 1.50 Å apart give a lower electronic energy, then triggers two real QDK/Chemistry Hartree–Fock calculations. The results return with units, method, basis, and provenance. The follow-up asks for a physical explanation rather than supplying one. If computation fails, **no** synthetic result appears.
+The learner's **Subjects → Chemistry Lab** activity runs on Expo and Next.js for the teen/adult grade bands. A learner predicts whether hydrogen atoms 0.74 Å or 1.50 Å apart give a lower total molecular energy, then triggers two real QDK/Chemistry Hartree–Fock calculations. The results return with units, method, basis, and provenance. The follow-up asks for a physical explanation rather than supplying one. If computation fails, **no** synthetic result appears.
 
 This is an *advanced, guided computational chemistry experiment*, not a general reaction simulator. The SCF solver is a **classical** electronic-structure calculation provided by Microsoft's QDK/Chemistry. We do not claim an orbital visualization, quantum hardware execution, quantum advantage, chemical-accuracy certification, or fully general molecular simulation.
 

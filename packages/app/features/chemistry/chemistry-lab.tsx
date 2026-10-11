@@ -106,7 +106,7 @@ function ChemistryExperiment({
           <Heading level={1} size="display-sm">Why does bond length matter?</Heading>
           <Text tone="muted">
             Hydrogen has two atoms and two electrons. Explore how their separation
-            changes a calculated electronic energy.
+            changes a calculated total molecular energy.
           </Text>
         </Section>
       </FadeIn>
@@ -132,7 +132,7 @@ function ChemistryExperiment({
 
       <Section className="gap-stack">
         <Heading level={2} size="title">2. Make a prediction</Heading>
-        <Text>Which arrangement do you think will have the lower electronic energy?</Text>
+        <Text>Which arrangement do you think will have the lower total molecular energy?</Text>
         <View className="gap-element">
           <PressScale
             className={`rounded-card border-2 border-border p-4 ${prediction === 'equilibrium' ? 'bg-primary' : 'bg-surface-raised'}`}
@@ -157,7 +157,7 @@ function ChemistryExperiment({
         </View>
         <Button
           variant="primary"
-          title={run.kind === 'running' ? 'Calculating electronic energies…' : 'Test my prediction with QDK'}
+          title={run.kind === 'running' ? 'Calculating total molecular energies…' : 'Test my prediction with QDK'}
           disabled={!online || !prediction || run.kind === 'running'}
           onPress={() => { void onCalculate(); }}
         />
@@ -190,7 +190,7 @@ function ChemistryExperiment({
               </TWText>
               <Text tone="muted">
                 These are calculated values for the same molecule using the same approximation.
-                They are not experimental measurements or quantum-computer results.
+                They include electronic energy and nuclear repulsion. They are not experimental measurements or quantum-computer results.
               </Text>
             </Card>
             <Heading level={3} size="title">What do you notice?</Heading>

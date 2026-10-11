@@ -80,7 +80,7 @@ export function ScienceLabScreen() {
                 <FadeIn>
                   <Card className="gap-stack">
                     <Text variant="label" tone="muted">ADVANCED MOLECULAR COMPUTING</Text>
-                    <Heading level={2} size="title">From atoms to electronic energies</Heading>
+                    <Heading level={2} size="title">From atoms to total molecular energies</Heading>
                     <Text tone="muted">
                       Use Microsoft QDK/Chemistry to compare calculated energies
                       for two hydrogen bond lengths. This is a classical scientific
