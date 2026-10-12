@@ -25,9 +25,10 @@ import 'server-only';
 import { getPayload } from 'payload';
 import config from '@payload-config';
 import type { StudentModelFact } from '@acme/payload';
-import { asVoiceBand } from '@acme/app/server';
+import { asVoiceBand, readVoiceBand } from '@acme/app/server';
 import type {
   LoadGradeBand,
+  VoiceBand,
   SaveGradeBand,
   DerivedFact,
   MasteryFact,
@@ -132,11 +133,20 @@ export function factFromDoc(doc: StudentModelFact): DerivedFact | null {
  * next to it — which is not — has no fallback at all.
  */
 export const loadGradeBand: LoadGradeBand = async (ctx) => {
+  return asVoiceBand(await readStoredGradeBand(ctx));
+};
+
+/** Access decisions require a recorded band; the voice fallback is not eligibility. */
+export async function loadAssignedGradeBand(ctx: Parameters<LoadGradeBand>[0]): Promise<VoiceBand | null> {
+  return readVoiceBand(await readStoredGradeBand(ctx));
+}
+
+async function readStoredGradeBand(ctx: Parameters<LoadGradeBand>[0]) {
   return withPayload(async (payload) => {
     const user = await payload.findByID({ collection: 'users', id: ctx.learnerId }).catch(() => null);
-    return asVoiceBand((user as { gradeBand?: string } | null)?.gradeBand);
+    return (user as { gradeBand?: string } | null)?.gradeBand;
   });
-};
+}
 
 /** The write half of `loadGradeBand`. Doc 07 §3 layer 1's band, persisted. */
 export const saveGradeBand: SaveGradeBand = async (ctx, gradeBand) => {

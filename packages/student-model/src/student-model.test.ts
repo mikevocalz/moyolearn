@@ -37,6 +37,7 @@ import {
 } from './inference.ts';
 import {
   asVoiceBand,
+  readVoiceBand,
   planeRegisterFor,
   BAND_EXAMPLES,
   BAND_FRAMES,
@@ -524,6 +525,20 @@ test('an unreadable band falls back rather than guessing a young register', () =
   // the old build is a band rather than a fallback.
   assert.equal(asVoiceBand('young'), 'k-2');
   assert.equal(asVoiceBand('older'), '9-12');
+});
+
+test('an absent or unreadable profile band cannot inherit advanced activity eligibility', () => {
+  for (const stored of [undefined, null, '', 'undergrad', 'teen', '6–8']) {
+    const band = readVoiceBand(stored);
+    assert.equal(band, null);
+    assert.equal(band === '6-8' || band === '9-12', false);
+  }
+});
+
+test('recorded bands retain their eligibility and legacy migration without the fallback', () => {
+  for (const band of VOICE_BANDS) assert.equal(readVoiceBand(band), band);
+  assert.equal(readVoiceBand('young'), 'k-2');
+  assert.equal(readVoiceBand('older'), '9-12');
 });
 
 test('the preamble carries the band frame and its few-shots into the prompt', () => {

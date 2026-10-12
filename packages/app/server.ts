@@ -261,7 +261,7 @@ export {
   the app package importing prompt assembly to decode a string. The mapping of
   the two pre-doc-31 values is part of the read, so it travels with it.
 */
-export { asVoiceBand, VOICE_BANDS, type VoiceBand } from '@acme/student-model';
+export { asVoiceBand, readVoiceBand, VOICE_BANDS, type VoiceBand } from '@acme/student-model';
 /*
   Doc 32's voice turn. Exported beside the coach service because they are two
   halves of one wire: the coach route mints the utterance tag each chunk frame

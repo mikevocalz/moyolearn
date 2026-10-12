@@ -596,3 +596,8 @@ export {
 } from './core/tenant-theme';
 export { ThemeProvider, useResolvedBrand, type ThemeProviderProps } from './providers/theme';
 export { type OrgBranding } from './features/org';
+
+// Cross-platform, guided chemistry experiment backed by the private QDK worker.
+export { ChemistryLabScreen } from './features/chemistry/chemistry-lab';
+
+export { ScienceLabScreen } from './features/science';
