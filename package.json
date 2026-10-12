@@ -45,7 +45,9 @@
   },
   "devDependencies": {
     "pg-boss": "catalog:",
-    "turbo": "catalog:"
+    "turbo": "catalog:",
+    "esbuild": "catalog:",
+    "jsdom": "catalog:"
   },
   "pnpm": {
     "overrides": {
@@ -66,7 +68,8 @@
       "react-dom": "19.3.0",
       "nitro-canvas-in-Vision": "file:./vendors/nitro-canvas-in-Vision-0.0.2-rive.4-clean.tgz",
       "react-native": "0.88.0-rc.2",
-      "react-server-dom-webpack": "19.3.0"
+      "react-server-dom-webpack": "19.3.0",
+      "react-native-worklets": "catalog:"
     },
     "patchedDependencies": {
       "@sentry/react-native@7.11.0": "patches/@sentry__react-native@7.11.0.patch",
