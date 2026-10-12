@@ -23,9 +23,16 @@ jobs:
       - name: Install pinned native toolchain
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;28.2.13676358' 'cmake;3.22.1'
+      - name: Test real CMake and Ninja pool scheduling
+        run: python3 tooling/test-native-compile-pools.py --cmake "$ANDROID_HOME/cmake/3.22.1/bin/cmake" --ninja "$ANDROID_HOME/cmake/3.22.1/bin/ninja"
       - name: Assemble Quest debug app
         working-directory: apps/mobile/android
-        run: bash gradlew :app:assembleQuestDebug --stacktrace --max-workers=2 -PreactNativeArchitectures=arm64-v8a '-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g'
+        env:
+          ORG_GRADLE_PROJECT_moyoNativeJobPool: '2'
+        run: bash "$GITHUB_WORKSPACE/tooling/run-with-resource-heartbeat.sh" bash gradlew :app:assembleQuestDebug --stacktrace --max-workers=1 --no-parallel -PreactNativeArchitectures=arm64-v8a '-Dorg.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g'
+      - name: Verify generated native compile and link pools
+        if: always()
+        run: node tooling/verify-native-compile-pools.mjs
       - uses: actions/upload-artifact@v4
         if: always()
         with:
