@@ -62,6 +62,12 @@ export function verifyNativeCompilePools(root = ROOT) {
   if (!files.some((file) => file.startsWith(`${skia}${sep}.cxx${sep}`))) {
     throw new Error('native-pools: missing generated Skia arm64 Debug build.ninja');
   }
+  // AGP 9.2.1 maps questDebug to the Debug optimization tag. Require the app
+  // explicitly so a future staging-path change cannot silently evade this gate.
+  const app = realpathSync(join(root, 'apps/mobile/android/app'));
+  if (!files.some((file) => file.startsWith(`${app}${sep}.cxx${sep}`))) {
+    throw new Error('native-pools: missing generated application arm64 Debug build.ninja');
+  }
   const counts = files.reduce((total, file) => {
     const result = verifyBuildNinja(file);
     return { compile: total.compile + result.compile, link: total.link + result.link };
