@@ -1,0 +1,5 @@
+# The chemistry engine runs in a separate Python environment, never in Expo/Next.js.
+fastapi>=0.115,<1
+uvicorn>=0.30,<1
+qdk-chemistry[all]>=2.2,<2.3
+httpx>=0.27,<1

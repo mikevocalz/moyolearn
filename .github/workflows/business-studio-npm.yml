@@ -4,6 +4,14 @@ on:
     types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - 'tooling/business-studio-npm*'
+      - 'tooling/enable-skia-graphite*'
+      - 'tooling/run-with-resource-heartbeat*'
+      - 'tooling/check-barrels*'
+      - 'tooling/*native-compile-pools*'
+      - 'tooling/fixtures/expo-58.0.8-publisher-ninja.json'
+      - 'tooling/fixtures/expo-updates-58.0.10-publisher-ninja.json'
+      - 'apps/mobile/android/build.gradle'
+      - '.github/workflows/android-native.yml'
       - '**/package.json'
       - 'package.json'
       - 'pnpm-workspace.yaml'
@@ -17,13 +25,13 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, including official security backports
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .nvmrc
-      - run: node --test tooling/business-studio-npm.test.mjs
+      - run: node --test tooling/business-studio-npm.test.mjs tooling/enable-skia-graphite.test.mjs tooling/run-with-resource-heartbeat.test.mjs tooling/check-barrels.test.mjs tooling/verify-native-compile-pools.test.mjs
   refresh:
     # Only the explicitly requested dependency branch can write its own pins.
     # Never use pull_request_target, a fork checkout, main, or a force push.
@@ -34,11 +42,11 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, including official security backports
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .nvmrc
       - run: corepack enable
@@ -46,6 +54,8 @@ jobs:
         run: node tooling/business-studio-npm.mjs --write
       - name: Regenerate lock without running package lifecycle scripts
         run: corepack pnpm install --lockfile-only --ignore-scripts --no-frozen-lockfile
+      - name: Validate the regenerated candidate before any commit or push
+        run: node tooling/business-studio-npm.mjs --check
       - name: Commit the exact catalog, lock and registry receipt to this draft only
         env:
           GH_TOKEN: ${{ github.token }}
@@ -57,7 +67,7 @@ jobs:
           git push origin HEAD:refs/heads/chore/business-studio-latest-npm
       - name: Recheck against registry latest (not cached search results)
         run: node tooling/business-studio-npm.mjs --check
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         if: always()
         with:
           name: business-studio-npm-receipt
@@ -69,10 +79,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4, including official security backports
         with:
           persist-credentials: false
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .nvmrc
       - run: node tooling/business-studio-npm.mjs --check

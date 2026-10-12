@@ -95,6 +95,8 @@ export default function LearnerShell() {
         */}
         <Stack.Screen name="tutor-xr" options={{ headerShown: false }} />
         <Stack.Screen name="plan" />
+        <Stack.Screen name="science-lab" />
+        <Stack.Screen name="chemistry-lab" />
       </Stack.Protected>
     </Stack>
     </Dial>

@@ -1,9 +1,11 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { packageReceipt, updateCatalog, fetchReceipt, validateManifestTargets, validateLockedTargets, TARGETS } from './business-studio-npm.mjs';
+import { spawnSync } from 'node:child_process';
+import { createHash } from 'node:crypto';
+import { packageReceipt, updateCatalog, fetchReceipt, validateManifestTargets, validateLockedTargets, validateSavedReceipt, TARGETS } from './business-studio-npm.mjs';
 const sample = (name, version = '1.2.3') => ({ name, version, dist: {
-  integrity: 'sha512-YWJjZA==', tarball: `https://registry.npmjs.org/${name}/-/package.tgz`,
+  integrity: `sha512-${createHash('sha512').update('registry metadata fixture').digest('base64')}`, tarball: `https://registry.npmjs.org/${name}/-/package.tgz`,
 } });
 const receipts = TARGETS.map((name) => packageReceipt(name, sample(name), '2026-10-11T00:00:00Z'));
 const yaml = `packages:\n  - apps/*\ncatalog:\n  react-native-reanimated: 1.0.0 # retain this\n  "react-native-gesture-handler": 1.0.0\n  'react-native-worklets': 1.0.0\n  react: 19.0.0\n  expo: 58.0.0-preview.8\nother:\n  typegpu: 0.0.1\n`;
@@ -60,7 +62,7 @@ test('ready dependency PRs verify without branch writes', () => {
   assert.match(workflow, /types: \[opened, synchronize, reopened, ready_for_review\]/);
   assert.match(workflow, /if: github\.event\.pull_request\.draft &&/);
   assert.match(workflow, /if: \$\{\{ !github\.event\.pull_request\.draft \|\|/);
-  assert.equal((workflow.match(/uses: actions\/checkout@v4/g) ?? []).length, 3);
+  assert.equal((workflow.match(/uses: actions\/checkout@[a-f0-9]{40}/g) ?? []).length, 3);
   assert.equal((workflow.match(/persist-credentials: false/g) ?? []).length, 3);
 });
 
@@ -100,4 +102,67 @@ test('resolved older optional peers cannot bypass latest admission', () => {
 test('lock admission handles scoped quoted package names and invalid envelopes', () => {
   assert.throws(() => validateLockedTargets('not a lockfile', []), /package section/);
   assert.throws(() => validateLockedTargets("\npackages:\n  '@shopify/react-native-skia@2.12.0':\n    resolution: {}\nsnapshots:\n", [{ name: '@shopify/react-native-skia', version: '2.14.0' }]), /nonlatest/);
+});
+
+for (const integrity of [
+  'sha512-YWJjZA==',
+  sample('x').dist.integrity.slice(0, -1),
+  `${sample('x').dist.integrity}=`,
+  `${sample('x').dist.integrity.slice(0, -3)}B==`,
+  `sha512-${Buffer.alloc(65).toString('base64')}`,
+]) {
+  test(`rejects noncanonical or wrong-length SHA-512 integrity ${integrity}`, () => {
+    const data = sample('x'); data.dist.integrity = integrity;
+    assert.throws(() => packageReceipt('x', data, 'now'), /invalid SHA-512/);
+  });
+}
+
+const savedEvidence = () => ({ schema: 1, tag: 'latest', checkedAt: '2026-10-11T00:00:00Z', packages: structuredClone(receipts), catalog: updateCatalog(yaml, receipts).changes });
+test('committed receipt matches live evidence without rewriting historical pins', () => {
+  assert.doesNotThrow(() => validateSavedReceipt(savedEvidence(), receipts, updateCatalog(updateCatalog(yaml, receipts).source, receipts).changes));
+});
+for (const field of ['version', 'registry', 'integrity', 'tarball']) {
+  test(`committed receipt detects tampered ${field}`, () => {
+    const saved = savedEvidence(); saved.packages[0][field] = 'tampered';
+    assert.throws(() => validateSavedReceipt(saved, receipts, saved.catalog), /does not match/);
+  });
+}
+test('committed receipt rejects missing, duplicate and wrongly admitted packages', () => {
+  for (const change of [
+    (saved) => { saved.packages.pop(); },
+    (saved) => { saved.packages[1] = saved.packages[0]; },
+    (saved) => { saved.catalog[0].installed = false; },
+    (saved) => { saved.packages[0].peerDependencies = { react: 'incorrect' }; },
+  ]) {
+    const saved = savedEvidence(); change(saved);
+    assert.throws(() => validateSavedReceipt(saved, receipts, updateCatalog(yaml, receipts).changes));
+  }
+  assert.throws(() => validateSavedReceipt(null, receipts, []), /envelope/);
+});
+
+
+test('dependency refresh uses immutable official action references', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/business-studio-npm.yml', import.meta.url), 'utf8');
+  const actions = [...workflow.matchAll(/uses: ([^\n]+)/g)].map((match) => match[1]);
+  assert.equal(actions.length, 7);
+  for (const action of actions) assert.match(action, /^actions\/(?:checkout|setup-node|upload-artifact)@[a-f0-9]{40} # v4/);
+});
+
+test('a rejected regenerated candidate stops before commit or push', () => {
+  const workflow = readFileSync(new URL('../.github/workflows/business-studio-npm.yml', import.meta.url), 'utf8');
+  const refresh = workflow.split('  refresh:\n')[1].split('  verify:\n')[0];
+  const regenerate = refresh.indexOf('run: corepack pnpm install --lockfile-only');
+  const check = refresh.indexOf('run: node tooling/business-studio-npm.mjs --check');
+  const commit = refresh.indexOf('name: Commit the exact catalog');
+  assert.ok(regenerate >= 0 && regenerate < check && check < commit);
+  assert.doesNotMatch(refresh.slice(regenerate, commit), /checkout|working-directory|continue-on-error/);
+  const checkRun = refresh.slice(check).split('\n')[0].slice('run: '.length);
+  const commitRun = refresh.slice(commit).match(/run: \|\n((?: {10}.+\n)+)/)[1].replace(/^ {10}/gm, '');
+  // Execute the actual gate/publication shell under Actions' fail-fast behavior.
+  // Only external commands are substituted; no repository/network write occurs.
+  const command = `node() { printf 'candidate rejected\\n'; return 42; }\ngit() { printf 'UNEXPECTED PUBLICATION\\n'; }\ngh() { printf 'UNEXPECTED AUTH\\n'; }\n${checkRun}\n${commitRun}`;
+  const result = spawnSync('bash', ['-e', '-o', 'pipefail', '-c', command], { encoding: 'utf8' });
+  assert.equal(result.status, 42);
+  assert.match(result.stdout, /candidate rejected/);
+  assert.doesNotMatch(result.stdout, /UNEXPECTED/);
 });

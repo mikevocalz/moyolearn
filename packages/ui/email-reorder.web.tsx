@@ -29,7 +29,7 @@ export function EmailReorderGroup({ ids, revision, disabled, onMove, children }:
 }) {
   const scope = useId();
   const active = useRef<EmailDrag | null>(null);
-  const current = useRef({ ids, revision, disabled, onMove });
+  const current = useRef({ ids: [...ids], revision, disabled, onMove });
   const store = useInstanceStore(() => ({ cancellation: 0, moveCount: 0, announcement: '' }));
   const feedback = useStore(store, (state) => state);
   const cancel = useCallback(() => {
@@ -37,9 +37,14 @@ export function EmailReorderGroup({ ids, revision, disabled, onMove, children }:
     store.setState((state) => ({ cancellation: state.cancellation + 1 }));
   }, [store]);
   useLayoutEffect(() => {
-    current.current = { ids, revision, disabled, onMove };
-    cancel();
-  }, [ids, revision, disabled, onMove, cancel]);
+    const previous = current.current;
+    // Parent renders may create equal ID arrays and fresh callbacks. Keep the
+    // latest committed callback without invalidating an unchanged transaction.
+    const changed = previous.revision !== revision || previous.disabled !== disabled
+      || previous.ids.length !== ids.length || previous.ids.some((id, index) => id !== ids[index]);
+    current.current = { ids: [...ids], revision, disabled, onMove };
+    if (changed) cancel();
+  });
   useEffect(() => watchEmailInteraction(cancel), [cancel]);
   useEffect(() => () => { active.current = null; }, []);
 
@@ -107,7 +112,9 @@ export function EmailBlockFrame({ id, label, disabled, children }: {
       if (event.canceled) scheduleOnRN(abort, id, token.get());
     },
   });
-  const style = useAnimatedStyle(() => ({ transform: [{ translateY: offset.get() }] }));
+  // Turbopack does not run the Worklets Babel plugin on web, so Reanimated
+  // needs explicit dependencies to mount and subscribe to the shared value.
+  const style = useAnimatedStyle(() => ({ transform: [{ translateY: offset.get() }] }), [offset]);
   return <Section nativeID={`${group.scope}-${id}`} aria-label={label} className="gap-element rounded-card border border-border p-inset">
     <AnimatedView style={style} className="gap-group">
       <GestureDetector gesture={pan} touchAction="none" userSelect="none">

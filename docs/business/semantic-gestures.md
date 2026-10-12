@@ -1,6 +1,6 @@
 # Campaign Studio: semantic UI and current gestures
 
-Stack: #92 Campaign Studio -> #93 latest-npm admission -> this change. Uses the registry-resolved catalog and lockfile from #93. Never restore its old Reanimated/Skia pins to make this build. No new npm dependency is introduced.
+Stack: #92 Campaign Studio -> #93 latest-npm admission -> this change. Uses the registry-resolved catalog and lockfile from #93. Never restore its old Reanimated/Skia pins to make this build. The DOM regression adds jsdom as a dev-only dependency and reuses the catalog esbuild version; neither is part of the application runtime.
 
 ## Implemented scope
 
@@ -18,7 +18,9 @@ The generated newsletter retains real HTML text, links, image alternatives and i
 
 ## Tests and merge gates
 
-Local: 25 geometry/transaction/document-policy tests and 11 source-guard tests. Node 22.16.0 with type stripping is not the repository's required Node runtime. These tests do not simulate Gesture Handler or prove browser/native rendering. The workflow reruns them, the existing campaign contracts and live latest-npm check on the repo Node version.
+Dependency-free campaign, npm-admission, geometry/transaction/document-policy and source-guard contracts run on the repository Node version. `node --test tooling/business-studio-dom.test.mjs` additionally bundles the actual semantic components, Gesture Handler 3 and Reanimated web runtime without the Worklets Babel plugin. It checks host-ref forwarding, shared-value transforms, consecutive releases with distinct announcements, Escape/pointer cancellation, a stationary second touch during an active pan, focused semantic move-button activation and recovery afterward. The semantic workflow runs this regression after a frozen install.
+
+The DOM test uses deterministic row rectangles and pointer-capture/ResizeObserver shims because jsdom has no layout engine. It does not verify physical pointer capture, real keyboard-generated click defaults, actual CSS geometry, an authenticated owner route, a browser or a device. The original mount failure was reproduced before adding explicit `[offset]` dependencies to `useAnimatedStyle`; Turbopack does not apply the Worklets Babel plugin. The second-touch regression first observes an active translated row, then adds a second touch without moving it, observes immediate cancellation, lifts that second touch, and moves/releases the original touch. It asserts zero reorder commits and successful later drags. GH3 3.3.0 web `PanGestureHandler.onPointerAdd` cancels an active pan as soon as its tracked pointer count exceeds `maxPointers: 1`; it does not need a subsequent move event. React 19's ref-as-prop path through the existing semantic CSS wrapper reaches the actual host element in the fixture, so no replacement UI primitive is needed.
 
 Blocking: cold-cache semantic TSX typecheck/lint/build, actual browser drag/keyboard/touch/trackpad/resize/blur checks, screen-reader announcements, text-selection preservation, and native-build regressions. The standalone document primitive must be reviewed separately from the composite source guard. There is no auto-scroll during drag: scrolling cancels safely; use keyboard moves for an off-screen destination.
 
@@ -32,3 +34,6 @@ Use repository CONTRIBUTING, current React best-practices, Software Mansion's Ge
 - https://docs.swmansion.com/react-native-worklets/docs/threading/scheduleOnRN/
 
 Required project skills/tooling references remain expo/skills, mattpocock/skills, Argent/agent-device, coreyhaines31/marketingskills, pbakaus/impeccable, petergyang/no-ai-slop and the tailored mikevocalz-foldable-layouts policy in PR #91. Native physical-right rails and web navigation are different contracts; do not impose a native rail on the web shell. Ownership: UI/accessibility, gestures/runtime, email security, QA/browser and native compatibility. A named skill is not a claimed executed device test.
+
+- https://react.dev/blog/2024/12/05/react-19#ref-as-a-prop
+- https://docs.swmansion.com/react-native-reanimated/docs/guides/web-support/#web-without-the-babel-plugin
