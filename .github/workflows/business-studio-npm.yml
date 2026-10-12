@@ -8,6 +8,7 @@ on:
       - 'tooling/run-with-resource-heartbeat*'
       - 'tooling/check-barrels*'
       - 'tooling/*native-compile-pools*'
+      - 'tooling/fixtures/expo-58.0.8-publisher-ninja.json'
       - 'apps/mobile/android/build.gradle'
       - '.github/workflows/android-native.yml'
       - '**/package.json'
