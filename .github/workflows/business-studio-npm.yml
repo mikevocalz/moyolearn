@@ -7,6 +7,8 @@ on:
       - 'tooling/enable-skia-graphite*'
       - 'tooling/run-with-resource-heartbeat*'
       - 'tooling/check-barrels*'
+      - 'tooling/*native-compile-pools*'
+      - 'apps/mobile/android/build.gradle'
       - '.github/workflows/android-native.yml'
       - '**/package.json'
       - 'package.json'
@@ -27,7 +29,7 @@ jobs:
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
         with:
           node-version-file: .nvmrc
-      - run: node --test tooling/business-studio-npm.test.mjs tooling/enable-skia-graphite.test.mjs tooling/run-with-resource-heartbeat.test.mjs tooling/check-barrels.test.mjs
+      - run: node --test tooling/business-studio-npm.test.mjs tooling/enable-skia-graphite.test.mjs tooling/run-with-resource-heartbeat.test.mjs tooling/check-barrels.test.mjs tooling/verify-native-compile-pools.test.mjs
   refresh:
     # Only the explicitly requested dependency branch can write its own pins.
     # Never use pull_request_target, a fork checkout, main, or a force push.

@@ -73,6 +73,31 @@ if (rendererDigest.digest().encodeHex().toString() != '08c22843d1311cbc52ae973b8
 apply plugin: "expo-root-project"
 apply plugin: "com.facebook.react.rootproject"
 
+// CI's 16 GiB runner cannot sustain multiple unbounded Ninja compiler pools.
+// This opt-in changes scheduling only; local builds retain their existing defaults.
+// SOT-KEYWORDS: android native ci memory ninja compile link pool
+def moyoNativeJobPool = providers.gradleProperty('moyoNativeJobPool').orNull
+if (moyoNativeJobPool != null) {
+    if (moyoNativeJobPool != '2') {
+        throw new GradleException('moyoNativeJobPool supports only the reviewed CI depth of 2')
+    }
+    subprojects { sub ->
+        ['com.android.application', 'com.android.library'].each { pluginId ->
+            sub.plugins.withId(pluginId) {
+                // Libraries may replace their argument list in their own DSL.
+                // Append at AGP's supported finalization point, before variants.
+                sub.extensions.getByName('androidComponents').finalizeDsl { androidDsl ->
+                    androidDsl.defaultConfig.externalNativeBuild.cmake.arguments.addAll([
+                        '-DCMAKE_JOB_POOLS=moyo_native=2',
+                        '-DCMAKE_JOB_POOL_COMPILE=moyo_native',
+                        '-DCMAKE_JOB_POOL_LINK=moyo_native'
+                    ])
+                }
+            }
+        }
+    }
+}
+
 // expo-pico-core: subprojects missing-dim fallback
 subprojects { sub ->
     if (sub.path == ":expo") return

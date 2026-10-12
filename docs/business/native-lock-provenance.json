@@ -90,19 +90,11 @@
     "The native input comparison covers all 1,450 reachable mobile runtime snapshots and package integrity metadata, plus native configuration, manifests, patches and installer inputs.",
     "Existing iOS precompiled Expo modules intentionally strip bundled codec pod dependencies, as recorded by the generated pod log.",
     "The visionOS Podfile computes absolute Viro package paths; the generated lock retains the runner paths without hand edits. Run visionos:prepare to resolve paths for a different checkout.",
-    "The native versions/admission were unchanged by subsequent workflow hardening, the missing-directory safeguard, root guard backport and documentation-only main integration. Final-head checks remain required."
+    "The native dependency/Podfile inputs and generated lock bytes remain unchanged by the recorded installer safeguard, root guard backport, Android diagnostics/scheduling and documentation-only main integration. Final-head checks remain required."
   ],
-  "finalNativeInputAudit": {
-    "codeRevision": "b1754768fec8012eb7d2da17ea88c70a204ef3ba",
+  "postArtifactNativeInputAudit": {
     "lockRegenerationComplete": true,
     "comparisonBase": "935d674e495d73d706a19e57c30e8ee3f3f64691",
-    "unchanged": [
-      "mobile source, manifests, Podfiles and configuration",
-      "native package versions and complete pnpm lock",
-      "patches and vendored native source",
-      "iOS/visionOS workflows and preparation scripts",
-      "Dawn/Graphite source identities, archive digest and staged artifact content"
-    ],
     "generatedOutputsChanged": [
       "apps/mobile/ios/Podfile.lock",
       "apps/mobile/visionos/Podfile.lock"
@@ -112,6 +104,45 @@
       "Android resource-heartbeat wrapper retains the exact assembly command, flags and exit gate; signal/exit contracts pass."
     ],
     "remainingGate": "Terminal native builds on the final published head, including these reviewed tooling changes. This audit is not a final-head build-success claim.",
-    "followupScope": "Subsequent documentation-only clarification does not change any native input or generated lock byte."
+    "followupScope": "Later Android scheduling and documentation changes do not alter CocoaPods declarations, admitted native versions or generated lock bytes; final-head native compilation remains required.",
+    "auditedCodeRevision": "b1754768fec8012eb7d2da17ea88c70a204ef3ba",
+    "subsequentAndroidSchedulingRepair": {
+      "scope": "Opt-in CI build scheduling only; CocoaPods dependency declarations and both generated lock bytes remain unchanged.",
+      "evidenceRunUrl": "https://github.com/mikevocalz/moyolearn/actions/runs/38184772229/job/114604642675",
+      "observedMemoryMiB": {
+        "total": 15989,
+        "used": 15729,
+        "available": 260,
+        "swapTotal": 3071,
+        "swapUsed": 3071
+      },
+      "profile": "Gradle max-workers=1 and no-parallel; one shared compile/link Ninja pool with depth 2.",
+      "preserved": [
+        "assembleQuestDebug task",
+        "arm64-v8a architecture",
+        "6 GiB Java heap",
+        "dependency versions",
+        "native build success/failure gate"
+      ],
+      "limitation": "Memory pressure is observed; the exact host termination mechanism remains unproven.",
+      "localValidation": {
+        "cmakeVersion": "3.22.1",
+        "ninjaVersion": "1.11.1.git.kitware.jobserver-1",
+        "unboundedCompilerPeak": 7,
+        "boundedCompilerPeak": 2,
+        "identicalExecutableOutput": "21",
+        "verifiedCompilerEdges": 7,
+        "verifiedLinkerEdges": 2,
+        "scope": "Real host C++ fixture and Node contracts; full Gradle/mobile compilation remains an exact-final-head CI gate."
+      }
+    },
+    "unchangedAtAuditedRevision": [
+      "mobile source, manifests, Podfiles and configuration",
+      "native package versions and complete pnpm lock",
+      "patches and vendored native source",
+      "iOS/visionOS workflows and preparation scripts",
+      "Dawn/Graphite source identities, archive digest and staged artifact content"
+    ],
+    "podInputsRemainUnchangedAfterSchedulingRepair": true
   }
 }
