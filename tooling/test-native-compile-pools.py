@@ -66,14 +66,16 @@ sys.exit(result.returncode)
             results[mode] = {**json.loads(state.read_text()), "output": output}
             if mode == "bounded":
                 verifier = (Path(__file__).parent / "verify-native-compile-pools.mjs").resolve().as_uri()
-                program = f"import {{ verifyBuildNinja }} from {json.dumps(verifier)}; console.log(JSON.stringify(verifyBuildNinja(process.argv[1])));"
-                checked = subprocess.check_output(["node", "--input-type=module", "-e", program, str(build / "build.ninja")], text=True)
-                results[mode]["verifiedEdges"] = json.loads(checked)
+                program = f"import {{ inspectBuildProvenance, verifyBuildNinja }} from {json.dumps(verifier)}; console.log(JSON.stringify({{ edges: verifyBuildNinja(process.argv[1]), provenance: inspectBuildProvenance(process.argv[2], process.argv[1]) }}));"
+                checked = subprocess.check_output(["node", "--input-type=module", "-e", program, str(build / "build.ninja"), str(root)], text=True)
+                results[mode]["verifiedEdges"] = json.loads(checked)["edges"]
+                results[mode]["provenance"] = json.loads(checked)["provenance"]
         assert results["unbounded"]["output"] == results["bounded"]["output"] == "21\n", results
         assert results["unbounded"]["peak"] > 2, results
         assert results["bounded"]["peak"] == 2, results
         assert results["bounded"]["active"] == results["unbounded"]["active"] == 0, results
         assert results["bounded"]["verifiedEdges"] == {"compile": 7, "link": 2}, results
+        assert results["bounded"]["provenance"] == {"kind": "current", "buildDirectory": "bounded", "sourceDirectory": "source"}, results
         print(json.dumps(results, indent=2))
 
 

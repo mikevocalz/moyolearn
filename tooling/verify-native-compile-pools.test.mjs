@@ -3,34 +3,94 @@
 // SOT-KEYWORDS: android native ci memory ninja compile link pool tests
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
+import { gunzipSync } from 'node:zlib';
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, symlinkSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { findBuildNinjas, verifyBuildNinja, verifyNativeCompilePools } from './verify-native-compile-pools.mjs';
+import { findBuildNinjas, inspectBuildProvenance, inspectNativeCompilePools, verifyBuildNinja, verifyNativeCompilePools } from './verify-native-compile-pools.mjs';
 
 const tooling = dirname(fileURLToPath(import.meta.url));
 const compileEdge = 'build CMakeFiles/rnskia.dir/test.cpp.o: CXX_COMPILER__rnskia_Debug test.cpp\n  pool = moyo_native\n';
 const linkEdge = 'build librnskia.so: CXX_SHARED_LIBRARY_LINKER__rnskia_Debug CMakeFiles/rnskia.dir/test.cpp.o\n  pool = moyo_native\n';
+function currentBuild(directory, source) {
+  mkdirSync(join(directory, 'CMakeFiles'), { recursive: true });
+  writeFileSync(join(directory, 'build.ninja'), `cmake_ninja_workdir = ${directory}/\n${compileEdge}\n${linkEdge}`);
+  writeFileSync(join(directory, 'CMakeFiles/rules.ninja'), 'pool moyo_native\n  depth = 2\n');
+  writeFileSync(join(directory, 'CMakeCache.txt'), `CMAKE_CACHEFILE_DIR:INTERNAL=${directory}\nCMAKE_HOME_DIRECTORY:INTERNAL=${source}\nCMAKE_JOB_POOLS:UNINITIALIZED=moyo_native=2\n`);
+}
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'moyo-native-pool-test-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const skia = join(root, 'node_modules/@shopify/react-native-skia/android');
   const generated = join(skia, '.cxx/Debug/hash/arm64-v8a');
-  mkdirSync(join(generated, 'CMakeFiles'), { recursive: true });
+  currentBuild(generated, skia);
   const build = join(generated, 'build.ninja'); const rules = join(generated, 'CMakeFiles/rules.ninja');
-  writeFileSync(build, `${compileEdge}\n${linkEdge}`);
-  writeFileSync(rules, 'pool moyo_native\n  depth = 2\n');
   const app = join(root, 'apps/mobile/android/app/.cxx/Debug/questHash/arm64-v8a');
-  mkdirSync(join(app, 'CMakeFiles'), { recursive: true });
+  currentBuild(app, join(root, 'apps/mobile/android/app'));
   const appBuild = join(app, 'build.ninja');
-  writeFileSync(appBuild, `${compileEdge}\n${linkEdge}`);
-  writeFileSync(join(app, 'CMakeFiles/rules.ninja'), 'pool moyo_native\n  depth = 2\n');
   return { root, skia, build, rules, appBuild };
 }
 test('accepts generated compiler and linker edges sharing one depth-2 pool', (t) => {
   const f = fixture(t); const result = verifyNativeCompilePools(f.root);
   assert.equal(result.compile, 2); assert.equal(result.link, 2); assert.equal(result.files.length, 2);
+});
+function publishedExpo(f) {
+  const published = JSON.parse(readFileSync(join(tooling, 'fixtures/expo-58.0.8-publisher-ninja.json'), 'utf8'));
+  const module = join(f.root, 'node_modules/expo-modules-core/android');
+  const old = join(module, '.cxx/Debug/632a03m1/arm64-v8a');
+  for (const [name, data] of Object.entries(published.files)) {
+    mkdirSync(dirname(join(old, name)), { recursive: true });
+    writeFileSync(join(old, name), gunzipSync(Buffer.from(data, 'base64')));
+  }
+  const current = join(module, '.cxx/Debug/currentHost/arm64-v8a');
+  currentBuild(current, module);
+  return { old, current, published };
+}
+test('records exact npm-published foreign output only beside a fully verified current Expo build', (t) => {
+  const f = fixture(t); const expo = publishedExpo(f);
+  const result = verifyNativeCompilePools(f.root);
+  assert.equal(result.files.length, 3); assert.equal(result.builds.length, 4);
+  const foreign = result.builds.find((build) => build.provenance?.kind === 'published-foreign');
+  assert.equal(foreign.provenance.source, expo.published.source);
+  assert.equal(foreign.provenance.integrity, expo.published.integrity);
+  assert.deepEqual(foreign.pools.declarations, []);
+  assert.ok(result.builds.some((build) => build.module.includes('expo-modules-core') && build.provenance?.kind === 'current' && build.edges.compile > 0));
+});
+test('published foreign files cannot substitute for actual current Expo output', (t) => {
+  const f = fixture(t); const expo = publishedExpo(f); rmSync(expo.current, { recursive: true });
+  assert.throws(() => verifyNativeCompilePools(f.root), /no verified current build of the same module/);
+});
+test('published foreign files cannot mask an unbounded current Expo compiler', (t) => {
+  const f = fixture(t); const expo = publishedExpo(f); const file = join(expo.current, 'build.ninja');
+  writeFileSync(file, readFileSync(file, 'utf8').replace('  pool = moyo_native\n', ''));
+  assert.throws(() => verifyNativeCompilePools(f.root), /unbounded/);
+});
+for (const name of ['build.ninja', 'CMakeFiles/rules.ninja', 'CMakeCache.txt']) test(`changed published ${name} fails closed`, (t) => {
+  const f = fixture(t); const expo = publishedExpo(f); const file = join(expo.old, name);
+  writeFileSync(file, `${readFileSync(file, 'utf8')}\n# changed\n`);
+  assert.throws(() => verifyNativeCompilePools(f.root), /unrecognized foreign/);
+});
+test('missing and malformed current cache provenance fail closed', (t) => {
+  const f = fixture(t); const cache = join(dirname(f.build), 'CMakeCache.txt');
+  rmSync(cache); assert.throws(() => verifyNativeCompilePools(f.root), /CMakeCache/);
+  writeFileSync(cache, 'CMAKE_CACHEFILE_DIR:INTERNAL=\n');
+  assert.throws(() => inspectBuildProvenance(f.root, f.build), /malformed CMAKE_CACHEFILE_DIR/);
+});
+test('current Ninja and cache directories must agree and source must belong to this checkout', (t) => {
+  const f = fixture(t); const cache = join(dirname(f.build), 'CMakeCache.txt');
+  writeFileSync(cache, `CMAKE_CACHEFILE_DIR:INTERNAL=${dirname(f.build)}\nCMAKE_HOME_DIRECTORY:INTERNAL=/foreign/source\n`);
+  assert.throws(() => inspectBuildProvenance(f.root, f.build), /source is outside/);
+  writeFileSync(cache, `CMAKE_CACHEFILE_DIR:INTERNAL=${f.root}/different\nCMAKE_HOME_DIRECTORY:INTERNAL=${f.skia}\n`);
+  assert.throws(() => inspectBuildProvenance(f.root, f.build), /directories disagree/);
+});
+test('diagnostics retain every module and observed pool settings even after an earlier failure', (t) => {
+  const f = fixture(t); publishedExpo(f); writeFileSync(f.rules, 'pool moyo_native\n  depth = 3\n');
+  const report = inspectNativeCompilePools(f.root);
+  assert.equal(report.builds.length, 4); assert.ok(report.errors.length > 0);
+  assert.ok(report.builds.some((build) => build.pools.declarations.includes('pool moyo_native\n  depth = 3\n')));
+  assert.ok(report.builds.every((build) => Array.isArray(build.pools.cachePoolSettings)));
+  assert.ok(report.builds.some((build) => build.module.includes('expo-modules-core') && build.edges?.compile === 1));
 });
 for (const depth of [1, 3, 20]) test(`rejects a different pool depth ${depth}`, (t) => {
   const f = fixture(t); writeFileSync(f.rules, `pool moyo_native\n  depth = ${depth}\n`);
