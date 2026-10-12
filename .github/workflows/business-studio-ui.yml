@@ -1,0 +1,51 @@
+name: Business studio semantic gestures
+on:
+  pull_request:
+    paths:
+      - 'apps/web/components/business/**'
+      - 'packages/ui/email*'
+      - 'packages/ui/html/**'
+      - 'packages/ui/primitives/**'
+      - 'packages/ui/tw.tsx'
+      - 'packages/ui/Text.tsx'
+      - 'packages/ui/tv.ts'
+      - 'packages/ui/rn-globals-shim.ts'
+      - 'packages/ui/use-hydrated.ts'
+      - 'packages/ui/use-instance-store.ts'
+      - 'tooling/check-business-studio-ui*'
+      - 'tooling/business-studio-dom.test.mjs'
+      - 'package.json'
+      - 'pnpm-workspace.yaml'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/business-studio-ui.yml'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: node --test packages/ui/email*.test.ts tooling/check-business-studio-ui.test.mjs
+      - run: node tooling/check-business-studio-ui.mjs
+      - run: node --test apps/web/lib/campaigns/*.test.ts
+      - run: node tooling/business-studio-npm.mjs --check
+  dom-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: node --test tooling/business-studio-dom.test.mjs
