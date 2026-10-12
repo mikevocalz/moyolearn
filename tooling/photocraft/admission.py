@@ -116,7 +116,11 @@ def main() -> int:
         for index, command in enumerate(build_commands(args.target)):
             log = args.output.with_suffix(f".{index}.log")
             with log.open("w") as stream:
-                result = subprocess.run(command, cwd=args.source, stdout=stream, stderr=subprocess.STDOUT, timeout=1800, check=False)
+                try:
+                    result = subprocess.run(command, cwd=args.source, stdout=stream, stderr=subprocess.STDOUT, timeout=1800, check=False)
+                except subprocess.TimeoutExpired:
+                    report["commands"].append({"argv": command, "exitCode": None, "timedOut": True, "log": log.name})
+                    raise
             report["commands"].append({"argv": command, "exitCode": result.returncode, "log": log.name})
             if result.returncode:
                 raise RuntimeError(f"Admission failed: {' '.join(command)}; inspect {log.name}")

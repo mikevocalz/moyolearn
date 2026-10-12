@@ -12,6 +12,8 @@ import subprocess
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
+import admission
 
 SCRIPT = Path(__file__).with_name("admission.py").resolve()
 
@@ -140,6 +142,39 @@ class AdmissionExecutionTest(unittest.TestCase):
         self.cargo(0)
         retry = self.run_cli()
         self.assertEqual(retry.returncode, 0, retry.stderr)
+
+    def test_timeouts_record_failed_command_log_and_preserve_cleanup(self):
+        real_run = subprocess.run
+        for operation in ("check", "test"):
+            with self.subTest(operation=operation):
+                def timeout_command(command, **kwargs):
+                    if command[:2] == ["cargo", operation]:
+                        self.assertEqual(kwargs["timeout"], 1800)
+                        kwargs["stdout"].write("timed-out compiler process fixture\n")
+                        raise subprocess.TimeoutExpired(command, kwargs["timeout"])
+                    return real_run(command, **kwargs)
+
+                argv = [str(SCRIPT), "--source", str(self.source), "--lock", str(self.lock),
+                        "--output", str(self.output), "--target", "host"]
+                with patch.dict(os.environ, self.env, clear=True), patch.object(sys, "argv", argv), \
+                        patch.object(admission.subprocess, "run", side_effect=timeout_command):
+                    self.assertEqual(admission.main(), 1)
+                report = self.report()
+                self.assertEqual(report["status"], "failed")
+                expected_count = 1 if operation == "check" else 2
+                self.assertEqual(len(report["commands"]), expected_count)
+                failed = report["commands"][-1]
+                self.assertEqual(failed["argv"], admission.build_commands("host")[expected_count - 1])
+                self.assertIsNone(failed["exitCode"])
+                self.assertIs(failed["timedOut"], True)
+                self.assertEqual(failed["log"], f"result.{expected_count - 1}.log")
+                self.assertIn("timed-out compiler process fixture", (self.output.parent / failed["log"]).read_text())
+                self.assertTrue(all(command["exitCode"] == 0 for command in report["commands"][:-1]))
+                self.assertFalse(self.fixture.exists())
+                retry = self.run_cli()
+                self.assertEqual(retry.returncode, 0, retry.stderr)
+                self.assertEqual(self.report()["status"], "build-checks-passed")
+                self.assertTrue(all("timedOut" not in command for command in self.report()["commands"]))
 
     def test_existing_upstream_fixture_is_never_replaced_or_removed(self):
         self.fixture.parent.mkdir(parents=True)
