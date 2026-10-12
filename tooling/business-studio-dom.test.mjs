@@ -6,7 +6,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { createRequire } from 'node:module';
-import { resolve } from 'node:path';
+import { matchesGlob, resolve } from 'node:path';
+import { readFileSync } from 'node:fs';
 import { build } from 'esbuild';
 import { JSDOM, VirtualConsole } from 'jsdom';
 
@@ -15,7 +16,7 @@ const root = resolve(import.meta.dirname, '..');
 const moduleRoot = (name) => resolve(require.resolve(`${name}/package.json`), '..');
 const file = (path) => JSON.stringify(resolve(root, path));
 const entry = `
-  import React, { useCallback, useEffect, useRef } from 'react';
+  import React, { useEffect, useRef } from 'react';
   import { createRoot } from 'react-dom/client';
   import Animated, { useAnimatedStyle, useSharedValue } from 'react-native-reanimated';
   import { EmailReorderGroup, EmailBlockFrame } from ${file('packages/ui/email-reorder.web.tsx')};
@@ -32,15 +33,16 @@ const entry = `
     return <AnimatedView ref={ref} nativeID="ref-probe" style={style}><Text>Ref probe</Text></AnimatedView>;
   }
   function ReorderProbe() {
-    const store = useInstanceStore(() => ({ ids: ['alpha', 'beta', 'gamma'], moves: [] }));
-    const { ids } = useStore(store, (state) => state);
-    const move = useCallback((source, index) => store.setState((state) => ({
+    const store = useInstanceStore(() => ({ ids: ['alpha', 'beta', 'gamma'], moves: [], callbackTags: [], unrelated: 0, revision: 0, disabled: false }));
+    const { ids, unrelated, revision, disabled } = useStore(store, (state) => state);
+    const move = (source, index) => store.setState((state) => ({
       ids: reorderEmailItems(state.ids.map(id => ({ id })), source, index).map(item => item.id),
       moves: [...state.moves, source + ':' + index],
-    })), [store]);
+      callbackTags: [...state.callbackTags, unrelated],
+    }));
     useEffect(() => { window.reorderProbe = store; }, [store]);
-    return <EmailReorderGroup ids={ids} revision={ids.join(',')} disabled={false} onMove={move}>
-      {ids.map((id, index) => <EmailBlockFrame key={id} id={id} label={id} disabled={false}>
+    return <EmailReorderGroup ids={[...ids]} revision={String(revision)} disabled={disabled} onMove={move}>
+      {ids.map((id, index) => <EmailBlockFrame key={id} id={id} label={id} disabled={disabled}>
         <Text>{id}</Text>
         <Pressable accessibilityLabel={'Move ' + id + ' up'} disabled={index === 0} onPress={() => move(id, index - 1)}><Text>Move up</Text></Pressable>
         <Pressable accessibilityLabel={'Move ' + id + ' down'} disabled={index === ids.length - 1} onPress={() => move(id, index + 1)}><Text>Move down</Text></Pressable>
@@ -63,8 +65,9 @@ test('semantic animated refs, repeated releases, cancellations and move controls
   // Match Next's web forks and absence of the Worklets Babel plugin. No native
   // modules or application components are mocked by this bundle.
   const result = await build({
+    absWorkingDir: root,
     stdin: { contents: entry, loader: 'jsx', resolveDir: root },
-    bundle: true, write: false, platform: 'browser', format: 'iife', jsx: 'automatic',
+    bundle: true, write: false, metafile: true, platform: 'browser', format: 'iife', jsx: 'automatic',
     resolveExtensions: ['.web.tsx', '.web.ts', '.web.jsx', '.web.js', '.tsx', '.ts', '.jsx', '.js', '.json'],
     conditions: ['browser', 'import', 'default'],
     nodePaths: [resolve(root, 'node_modules')],
@@ -78,6 +81,15 @@ test('semantic animated refs, repeated releases, cancellations and move controls
     },
     define: { 'process.env.NODE_ENV': '"development"', global: 'globalThis', __DEV__: 'true' },
   });
+  // Keep the workflow coupled to the actual local bundle dependency graph,
+  // including semantic primitives reached through platform forks/barrels.
+  const workflow = readFileSync(resolve(root, '.github/workflows/business-studio-ui.yml'), 'utf8');
+  const pullRequest = workflow.match(/^  pull_request:\r?\n([\s\S]*?)(?=^  \S|^\S|(?![\s\S]))/m)?.[1] ?? '';
+  const paths = pullRequest.match(/^    paths:\r?\n([\s\S]*?)(?=^    \S|(?![\s\S]))/m)?.[1] ?? '';
+  const filters = [...paths.matchAll(/^      - '([^']+)'\r?$/gm)].map((match) => match[1]);
+  const localInputs = Object.keys(result.metafile.inputs).filter((path) => path.startsWith('packages/') || path.startsWith('apps/'));
+  assert.ok(localInputs.length > 0, 'the real bundle records its local dependencies');
+  assert.deepEqual(localInputs.filter((path) => !filters.some((filter) => matchesGlob(path, filter))), [], 'workflow must trigger for every bundled local source');
   const errors = [];
   const virtualConsole = new VirtualConsole();
   virtualConsole.on('jsdomError', (error) => errors.push(error.message));
@@ -100,13 +112,14 @@ test('semantic animated refs, repeated releases, cancellations and move controls
   });
   const { window } = dom;
   const { document } = window;
-  const state = () => JSON.parse(JSON.stringify(window.reorderProbe.getState()));
+  const snapshot = () => JSON.parse(JSON.stringify(window.reorderProbe.getState()));
+  const state = () => { const { ids, moves } = snapshot(); return { ids, moves }; };
   const feedback = () => document.querySelector('[aria-live="polite"]').textContent;
   const pointer = (node, type, y, pointerId = 1, pointerType = 'mouse') => node.dispatchEvent(new window.PointerEvent(type, {
     bubbles: true, cancelable: true, pointerId, pointerType, isPrimary: pointerId === 1,
     button: 0, buttons: type === 'pointerup' || type === 'pointercancel' ? 0 : 1, clientX: 50, clientY: y,
   }));
-  async function drag(source, cancellation) {
+  async function drag(source, cancellation, whileActive) {
     const handle = document.querySelector(`[aria-label^="Drag ${source}."]`);
     const animated = handle.closest('section').firstElementChild;
     const send = (type, y, id = 1) => pointer(handle, type, y, id, cancellation === 'extra' ? 'touch' : 'mouse');
@@ -134,6 +147,7 @@ test('semantic animated refs, repeated releases, cancellations and move controls
     pointer(handle, 'pointermove', 560);
     pointer(handle, 'pointermove', 570);
     await until(() => animated.style.transform === 'translateY(530px)', 'drag updates the host transform');
+    if (whileActive) await whileActive({ handle, animated });
     if (cancellation === 'escape') {
       window.dispatchEvent(new window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
       await pause();
@@ -177,6 +191,44 @@ test('semantic animated refs, repeated releases, cancellations and move controls
     await drag('gamma');
     assert.deepEqual(state().ids, ['alpha', 'beta', 'gamma']);
     assert.equal(state().moves.length, 5, 'reordering recovers after cancellation and button moves');
+    await drag('alpha', undefined, async ({ handle, animated }) => {
+      window.reorderProbe.setState({ unrelated: 1 });
+      await pause();
+      assert.equal(animated.style.transform, 'translateY(530px)', 'fresh equal IDs and a new callback do not cancel an active gesture');
+      pointer(handle, 'pointermove', 575);
+      await until(() => animated.style.transform === 'translateY(535px)', 'the gesture continues after the unrelated parent render');
+    });
+    assert.equal(state().moves.length, 6, 'unrelated parent render still permits one release commit');
+    assert.equal(snapshot().callbackTags.at(-1), 1, 'release uses the newest committed callback');
+    const invalidations = [
+      ['ID order', { ids: ['alpha', 'gamma', 'beta'] }],
+      ['ID value', { ids: ['alpha', 'delta', 'gamma'] }],
+      ['ID count', { ids: ['alpha', 'beta'] }],
+      ['document revision', { revision: 1 }],
+      ['disabled state', { disabled: true }],
+    ];
+    for (const [reason, update] of invalidations) {
+      window.reorderProbe.setState({ ids: ['alpha', 'beta', 'gamma'], revision: 0, disabled: false });
+      await pause();
+      await drag('alpha', undefined, async ({ animated }) => {
+        window.reorderProbe.setState(update);
+        await until(() => animated.style.transform === 'translateY(0px)', reason + ' immediately cancels translation');
+      });
+      assert.equal(state().moves.length, 6, reason + ' prevents a release commit');
+    }
+    // Both arrays collide under a NUL-delimited join; ID values must still
+    // invalidate the transaction without relying on a delimiter convention.
+    window.reorderProbe.setState({ ids: ['alpha', 'beta\u0000gamma', 'delta'], revision: 0, disabled: false });
+    await pause();
+    await drag('alpha', undefined, async ({ animated }) => {
+      window.reorderProbe.setState({ ids: ['alpha', 'beta', 'gamma\u0000delta'] });
+      await until(() => animated.style.transform === 'translateY(0px)', 'delimiter-colliding IDs still cancel');
+    });
+    assert.equal(state().moves.length, 6, 'delimiter-colliding IDs prevent a release commit');
+    window.reorderProbe.setState({ ids: ['alpha', 'beta', 'gamma'] });
+    await pause();
+    await drag('alpha');
+    assert.equal(state().moves.length, 7, 'the next valid gesture recovers after all prop invalidations');
     assert.deepEqual(errors, []);
   } finally {
     dom.window.close();
