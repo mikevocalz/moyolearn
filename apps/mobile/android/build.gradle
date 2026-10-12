@@ -70,9 +70,6 @@ if (rendererDigest.digest().encodeHex().toString() != '08c22843d1311cbc52ae973b8
     throw new GradleException('Pinned Moyo controller renderer checksum mismatch')
 }
 
-apply plugin: "expo-root-project"
-apply plugin: "com.facebook.react.rootproject"
-
 // CI's 16 GiB runner cannot sustain multiple unbounded Ninja compiler pools.
 // This opt-in changes scheduling only; local builds retain their existing defaults.
 // SOT-KEYWORDS: android native ci memory ninja compile link pool
@@ -97,6 +94,11 @@ if (moyoNativeJobPool != null) {
         }
     }
 }
+
+// React's root plugin eagerly evaluates :app. Register finalizeDsl callbacks
+// first, otherwise AGP 9 rejects registration after the app DSL is finalized.
+apply plugin: "expo-root-project"
+apply plugin: "com.facebook.react.rootproject"
 
 // expo-pico-core: subprojects missing-dim fallback
 subprojects { sub ->

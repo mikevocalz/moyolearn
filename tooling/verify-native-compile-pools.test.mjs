@@ -21,11 +21,16 @@ function fixture(t) {
   const build = join(generated, 'build.ninja'); const rules = join(generated, 'CMakeFiles/rules.ninja');
   writeFileSync(build, `${compileEdge}\n${linkEdge}`);
   writeFileSync(rules, 'pool moyo_native\n  depth = 2\n');
-  return { root, skia, build, rules };
+  const app = join(root, 'apps/mobile/android/app/.cxx/Debug/questHash/arm64-v8a');
+  mkdirSync(join(app, 'CMakeFiles'), { recursive: true });
+  const appBuild = join(app, 'build.ninja');
+  writeFileSync(appBuild, `${compileEdge}\n${linkEdge}`);
+  writeFileSync(join(app, 'CMakeFiles/rules.ninja'), 'pool moyo_native\n  depth = 2\n');
+  return { root, skia, build, rules, appBuild };
 }
 test('accepts generated compiler and linker edges sharing one depth-2 pool', (t) => {
   const f = fixture(t); const result = verifyNativeCompilePools(f.root);
-  assert.equal(result.compile, 1); assert.equal(result.link, 1); assert.equal(result.files.length, 1);
+  assert.equal(result.compile, 2); assert.equal(result.link, 2); assert.equal(result.files.length, 2);
 });
 for (const depth of [1, 3, 20]) test(`rejects a different pool depth ${depth}`, (t) => {
   const f = fixture(t); writeFileSync(f.rules, `pool moyo_native\n  depth = ${depth}\n`);
@@ -49,7 +54,11 @@ test('cannot pass from only a pool declaration or missing Skia output', (t) => {
 test('walks workspace links once and ignores other architectures', (t) => {
   const f = fixture(t); symlinkSync(f.root, join(f.root, 'loop'));
   const other = join(f.skia, '.cxx/Debug/hash/x86_64'); mkdirSync(other); writeFileSync(join(other, 'build.ninja'), 'not this gate');
-  assert.deepEqual(findBuildNinjas(f.root), [f.build]);
+  assert.deepEqual(findBuildNinjas(f.root), [f.appBuild, f.build].sort());
+});
+test('requires the application Debug output used by AGP for questDebug', (t) => {
+  const f = fixture(t); rmSync(f.appBuild);
+  assert.throws(() => verifyNativeCompilePools(f.root), /missing generated application/);
 });
 test('CI opts into supported CMake pools and retains task, ABI, heap and strict gates', () => {
   const workflow = readFileSync(join(tooling, '../.github/workflows/android-native.yml'), 'utf8');
@@ -63,4 +72,17 @@ test('CI opts into supported CMake pools and retains task, ABI, heap and strict 
   assert.match(gradle, /cmake\.arguments\.addAll/);
   for (const option of ['-DCMAKE_JOB_POOLS=moyo_native=2', '-DCMAKE_JOB_POOL_COMPILE=moyo_native', '-DCMAKE_JOB_POOL_LINK=moyo_native']) assert.ok(gradle.includes(option));
   assert.match(gradle, /\['com.android.application', 'com.android.library'\]/);
+});
+test('registers pool callbacks before root plugins can eagerly finalize the app DSL', () => {
+  const gradle = readFileSync(join(tooling, '../apps/mobile/android/build.gradle'), 'utf8');
+  const assertOrder = (source) => {
+    const callback = source.indexOf("getByName('androidComponents').finalizeDsl");
+    assert.ok(callback >= 0);
+    for (const plugin of ['expo-root-project', 'com.facebook.react.rootproject']) {
+      assert.ok(source.indexOf(`apply plugin: "${plugin}"`) > callback, `${plugin} must follow pool registration`);
+    }
+  };
+  assertOrder(gradle);
+  const eagerPlugin = 'apply plugin: "com.facebook.react.rootproject"';
+  assert.throws(() => assertOrder(`${eagerPlugin}\n${gradle.replace(eagerPlugin, '')}`), /must follow pool registration/);
 });
