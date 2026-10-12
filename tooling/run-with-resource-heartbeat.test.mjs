@@ -68,6 +68,6 @@ for (const [signal, status] of [['SIGTERM', 143], ['SIGINT', 130]]) test(`${sign
 test('rejects a missing command and keeps the workflow assembly gate intact', () => {
   assert.equal(spawnSync('bash', [script]).status, 64);
   const workflow = readFileSync(join(tooling, '../.github/workflows/android-native.yml'), 'utf8');
-  assert.match(workflow, /run: bash "\$GITHUB_WORKSPACE\/tooling\/run-with-resource-heartbeat\.sh" bash gradlew :app:assembleQuestDebug --stacktrace --max-workers=2 -PreactNativeArchitectures=arm64-v8a '-Dorg\.gradle\.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g'/);
+  assert.match(workflow, /run: bash "\$GITHUB_WORKSPACE\/tooling\/run-with-resource-heartbeat\.sh" bash gradlew :app:assembleQuestDebug --stacktrace --max-workers=1 --no-parallel -PreactNativeArchitectures=arm64-v8a '-Dorg\.gradle\.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g'/);
   assert.doesNotMatch(workflow, /continue-on-error/);
 });
