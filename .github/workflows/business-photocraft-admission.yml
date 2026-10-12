@@ -1,0 +1,98 @@
+name: Business PhotoCraft engine admission
+on:
+  pull_request:
+    paths:
+      - 'tooling/photocraft/**'
+      - 'docs/business/photocraft*'
+      - 'docs/business/upstream-lock.json'
+      - '.github/workflows/business-photocraft-admission.yml'
+permissions:
+  contents: read
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: python -m unittest discover -s tooling/photocraft -v
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+      - run: node tooling/business-studio-npm.mjs --check
+  engine:
+    needs: contracts
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - { target: host, runner: ubuntu-latest }
+          - { target: wasm32-unknown-unknown, runner: ubuntu-latest }
+          - { target: aarch64-linux-android, runner: ubuntu-latest }
+          - { target: aarch64-apple-ios, runner: macos-14 }
+          - { target: aarch64-apple-ios-sim, runner: macos-14 }
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 40
+    env:
+      CARGO_TERM_COLOR: never
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Read the existing reviewed source pin
+        id: pin
+        run: |
+          python - <<'PY'
+          import json, os, sys
+          sys.path.insert(0, 'tooling/photocraft')
+          from admission import source_pin
+          pin = source_pin(json.load(open('docs/business/upstream-lock.json')))
+          with open(os.environ['GITHUB_OUTPUT'], 'a') as out: out.write(f'commit={pin}\n')
+          PY
+      - uses: actions/checkout@v4
+        with:
+          repository: storytold/photocraft
+          ref: ${{ steps.pin.outputs.commit }}
+          path: .admission/photocraft
+          persist-credentials: false
+      - name: Verify immutable source, manifests, lock and notices
+        id: source
+        run: |
+          TOOLCHAIN=$(python tooling/photocraft/admission.py --source .admission/photocraft --lock docs/business/upstream-lock.json --output artifacts/photocraft/source.json --target '${{ matrix.target }}' --inspect-only)
+          echo "toolchain=$TOOLCHAIN" >> "$GITHUB_OUTPUT"
+      - name: Install the source-declared Rust toolchain and compile target
+        env:
+          TOOLCHAIN: ${{ steps.source.outputs.toolchain }}
+          TARGET: ${{ matrix.target }}
+        run: |
+          rustup toolchain install "$TOOLCHAIN" --profile minimal
+          rustup override set "$TOOLCHAIN" --path .admission/photocraft
+          if [ "$TARGET" != 'host' ]; then rustup target add "$TARGET" --toolchain "$TOOLCHAIN"; fi
+      - name: Discover Android NDK compiler (compile checks, not an APK)
+        if: matrix.target == 'aarch64-linux-android'
+        run: |
+          python - <<'PY'
+          import os, pathlib
+          sdk = pathlib.Path(os.environ.get('ANDROID_HOME', os.environ.get('ANDROID_SDK_ROOT', '')))
+          compilers = list(sdk.glob('ndk/*/toolchains/llvm/prebuilt/linux-x86_64/bin/aarch64-linux-android26-clang'))
+          if not compilers: raise SystemExit('No installed Android NDK compiler; admission is blocked')
+          compiler = max(compilers, key=lambda p: tuple(int(part) for part in p.relative_to(sdk).parts[1].split('.')))
+          values = {'CC_aarch64_linux_android': compiler, 'CXX_aarch64_linux_android': compiler.with_name('aarch64-linux-android26-clang++'), 'AR_aarch64_linux_android': compiler.with_name('llvm-ar'), 'CARGO_TARGET_AARCH64_LINUX_ANDROID_LINKER': compiler}
+          with open(os.environ['GITHUB_ENV'], 'a') as out:
+              for name, value in values.items(): out.write(f'{name}={value}\n')
+          PY
+      - name: Compile selected engine crates and run host integration fixtures
+        run: python tooling/photocraft/admission.py --source .admission/photocraft --lock docs/business/upstream-lock.json --output artifacts/photocraft/result.json --target '${{ matrix.target }}'
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: photocraft-admission-${{ matrix.target }}
+          path: artifacts/photocraft/
+          if-no-files-found: warn
