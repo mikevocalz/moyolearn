@@ -10,10 +10,10 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 const POOL = 'moyo_native';
 const SKIP = new Set(['.git', '.gradle', '.next', '.turbo', 'Pods', 'artifacts', 'vendors']);
-// Expo 58.0.8's integrity-verified npm tarball contains publisher .cxx debris.
-// Exclude only these exact three files, and only beside a verified current build
+// These integrity-verified npm tarballs contain publisher .cxx debris.
+// Exclude only each exact three-file set, beside a verified current build
 // of the same module. Foreign or modified output otherwise remains a hard error.
-const PUBLISHED_EXPO = {
+const PUBLISHED_NINJA = [{
   source: 'https://registry.npmjs.org/expo-modules-core/-/expo-modules-core-58.0.8.tgz',
   integrity: 'sha512-hRXU9H3ano63giLGF/TVJ9JUSt3f2BKnLp5bwiGP3fvcAlnswssgtpOLzVFs4YuskVOvAMnb18TiPWW7n7EKHg==',
   files: {
@@ -21,7 +21,15 @@ const PUBLISHED_EXPO = {
     'CMakeFiles/rules.ninja': 'c3a02060c7dcade029c5b395aa74b70d7b8f0de2df3af889f5e787039cef425d',
     'CMakeCache.txt': '8b6e444cf4d28ca5c99155f244bac5c25e4690c841ba0a63bf4e05a6384edc7c',
   },
-};
+}, {
+  source: 'https://registry.npmjs.org/expo-updates/-/expo-updates-58.0.10.tgz',
+  integrity: 'sha512-1VyCfmjXmOApRsPwuAECqQ+pMcF2WbooKwFThXoKeNJE+LYzdfzD/SUbhnEchgT46ahjEJMUThff3M3ZMnDzxg==',
+  files: {
+    'build.ninja': '1df8aa04c578e762297330129f4e550925bdbca7d2c92ecf3e26282952a15835',
+    'CMakeFiles/rules.ninja': '13b4b71ba2d5c6b2807c02c8eca1efbf8e554f41332022515fdac3ff3c19f86c',
+    'CMakeCache.txt': 'def8598fe1027f7d0e4f813a9c2b0a8a5c9580138b43ce09ed595d2d1622085d',
+  },
+}];
 const inside = (root, path) => path === root || path.startsWith(`${root}${sep}`);
 const canonical = (path) => existsSync(path) ? realpathSync(path) : resolve(path);
 
@@ -52,10 +60,10 @@ export function inspectBuildProvenance(root, buildFile) {
   if (inside(base, canonical(buildDirectory)) || inside(base, canonical(sourceDirectory))) {
     throw new Error(`${buildFile}: mismatched current-checkout build provenance`);
   }
-  const knownPublisher = Object.entries(PUBLISHED_EXPO.files).every(([name, digest]) =>
-    createHash('sha256').update(readFileSync(join(directory, name))).digest('hex') === digest);
+  const knownPublisher = PUBLISHED_NINJA.find((artifact) => Object.entries(artifact.files).every(([name, digest]) =>
+    createHash('sha256').update(readFileSync(join(directory, name))).digest('hex') === digest));
   if (!knownPublisher) throw new Error(`${buildFile}: unrecognized foreign generated output`);
-  return { kind: 'published-foreign', reason: 'Exact npm-published files record another checkout, not this build', ...PUBLISHED_EXPO };
+  return { kind: 'published-foreign', reason: 'Exact npm-published files record another checkout, not this build', ...knownPublisher };
 }
 
 function poolMetadata(buildFile) {

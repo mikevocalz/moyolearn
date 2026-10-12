@@ -35,10 +35,10 @@ test('accepts generated compiler and linker edges sharing one depth-2 pool', (t)
   const f = fixture(t); const result = verifyNativeCompilePools(f.root);
   assert.equal(result.compile, 2); assert.equal(result.link, 2); assert.equal(result.files.length, 2);
 });
-function publishedExpo(f) {
-  const published = JSON.parse(readFileSync(join(tooling, 'fixtures/expo-58.0.8-publisher-ninja.json'), 'utf8'));
-  const module = join(f.root, 'node_modules/expo-modules-core/android');
-  const old = join(module, '.cxx/Debug/632a03m1/arm64-v8a');
+function publishedExpo(f, updates = false) {
+  const published = JSON.parse(readFileSync(join(tooling, updates ? 'fixtures/expo-updates-58.0.10-publisher-ninja.json' : 'fixtures/expo-58.0.8-publisher-ninja.json'), 'utf8'));
+  const module = join(f.root, updates ? 'node_modules/expo-updates/android' : 'node_modules/expo-modules-core/android');
+  const old = join(module, `.cxx/Debug/${updates ? '38204d1n' : '632a03m1'}/arm64-v8a`);
   for (const [name, data] of Object.entries(published.files)) {
     mkdirSync(dirname(join(old, name)), { recursive: true });
     writeFileSync(join(old, name), gunzipSync(Buffer.from(data, 'base64')));
@@ -56,6 +56,28 @@ test('records exact npm-published foreign output only beside a fully verified cu
   assert.equal(foreign.provenance.integrity, expo.published.integrity);
   assert.deepEqual(foreign.pools.declarations, []);
   assert.ok(result.builds.some((build) => build.module.includes('expo-modules-core') && build.provenance?.kind === 'current' && build.edges.compile > 0));
+});
+test('verifies current output for both published Expo modules in one full candidate inventory', (t) => {
+  const f = fixture(t); publishedExpo(f); publishedExpo(f, true);
+  const result = verifyNativeCompilePools(f.root);
+  assert.equal(result.files.length, 4); assert.equal(result.builds.length, 6);
+  assert.equal(result.builds.filter((build) => build.provenance.kind === 'published-foreign').length, 2);
+  assert.equal(result.compile, 4); assert.equal(result.link, 4);
+});
+test('current Core output cannot satisfy the published Updates module requirement', (t) => {
+  const f = fixture(t); publishedExpo(f); const updates = publishedExpo(f, true);
+  rmSync(updates.current, { recursive: true });
+  assert.throws(() => verifyNativeCompilePools(f.root), /expo-updates.*no verified current build of the same module/);
+});
+test('published Updates output cannot mask a missing pool in its current build', (t) => {
+  const f = fixture(t); publishedExpo(f); const updates = publishedExpo(f, true);
+  writeFileSync(join(updates.current, 'CMakeFiles/rules.ninja'), '');
+  assert.throws(() => verifyNativeCompilePools(f.root), /depth-2/);
+});
+test('an unknown foreign artifact remains an error alongside both known artifacts and valid current builds', (t) => {
+  const f = fixture(t); publishedExpo(f); const updates = publishedExpo(f, true);
+  const file = join(updates.old, 'build.ninja'); writeFileSync(file, `${readFileSync(file, 'utf8')}\n# unknown\n`);
+  assert.throws(() => verifyNativeCompilePools(f.root), /unrecognized foreign/);
 });
 test('published foreign files cannot substitute for actual current Expo output', (t) => {
   const f = fixture(t); const expo = publishedExpo(f); rmSync(expo.current, { recursive: true });
