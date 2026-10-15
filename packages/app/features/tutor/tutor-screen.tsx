@@ -146,8 +146,9 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
 
   const startedProblem = useRef<string | null>(null);
   useEffect(() => {
-    if (startedProblem.current === problem) return;
-    startedProblem.current = problem;
+    const key = String(problemIsReading) + ':' + (problem ?? '');
+    if (startedProblem.current === key) return;
+    startedProblem.current = key;
     start(problem, problemIsReading);
   }, [problem, problemIsReading, start]);
 
@@ -978,7 +979,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     if (!nextQuestion) return;
     const nextPrompt = questionForTutor(nextQuestion, advanced);
     audioQueue.stop();
-    startedProblem.current = nextPrompt;
+    startedProblem.current = 'true:' + nextPrompt;
     setProblem(nextPrompt, true);
     // The new question needs its own visible turn AND its own coach request:
     // an effect gated on first-session opening must not swallow question 2.
