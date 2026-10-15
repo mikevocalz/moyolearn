@@ -1,4 +1,4 @@
-import type { CollectionConfig } from 'payload';
+import type { Access, CollectionConfig } from 'payload';
 
 /**
  * Server-side access control for the AI Control Center. The current User
@@ -11,8 +11,11 @@ export function isAiModelAdministrator(user: { email?: string | null } | null | 
   return allowlist.split(',').map((entry) => entry.trim().toLowerCase()).filter(Boolean).includes(email);
 }
 
-const seniorAdminOnly = ({ req }: { req: { user?: { email?: string | null } | null } }): boolean =>
-  isAiModelAdministrator(req.user, process.env.MOYO_AI_ADMIN_EMAILS);
+const seniorAdminOnly: Access = ({ req }) =>
+  isAiModelAdministrator(
+    { email: typeof req.user?.email === 'string' ? req.user.email : undefined },
+    process.env.MOYO_AI_ADMIN_EMAILS,
+  );
 
 export const AiModelRoutes: CollectionConfig = {
   slug: 'ai-model-routes',
