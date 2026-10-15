@@ -1,5 +1,5 @@
 'use client';
-// CaptureScreen — the six-stage homework-capture journey plus its terminal
+// CaptureScreen — the seven-stage homework-capture journey plus its terminal
 // success surface.
 //
 // The media layer underneath (queue, TUS, presign, retry, EXIF stripping)
@@ -549,8 +549,9 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
       setStep('read-verify');
       return;
     }
-    // Files with no readable image skip straight to context.
-    setStep('add-context');
+    // Empty/unsupported reads still require question review; never pretend a scan worked.
+    setVerifiedText('');
+    setStep('review-questions');
   };
 
   const beginUpload = () => {
