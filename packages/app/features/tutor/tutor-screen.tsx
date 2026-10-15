@@ -13,6 +13,8 @@ import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react
 import { useRouter } from 'solito/navigation';
 import {
   TutorStage,
+  Button,
+  Text,
   WhiteboardSheet,
   XrBoardButton,
   hasWorkPane,
@@ -22,7 +24,10 @@ import {
   useReducedMotion,
   type ResolvedTutorPresence,
 } from '@acme/ui';
+import { View } from '@acme/ui/primitives';
 import { useCaptureStore } from '../capture';
+import { useWorksheetStore } from '../capture/worksheet.store';
+import { questionForTutor } from '../capture/worksheet-questions.ts';
 import { buttonSizeForBand, type AgeBand } from '../capture';
 import { countImages, MAX_TUTOR_IMAGES } from '@acme/ui';
 import { useAppSession } from '../../providers/session';
@@ -90,7 +95,12 @@ type NextProblem = 'idle' | 'loading' | 'empty' | 'error';
 const PRESENCE_STATE = { kind: 'presence' } as const;
 
 export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
-  const { activeContext } = useAppSession();
+  const { activeContext, user } = useAppSession();
+  const learnerId = activeContext.kind === 'learner'
+    ? (activeContext.learnerId ?? user?.id ?? '')
+    : '';
+  const worksheet = useWorksheetStore((s) => s.current);
+  const restoreWorksheet = useWorksheetStore((s) => s.restore);
   // Resolve the learner's presentation band from the session before rendering.
   // No implicit `teen` fallback: an unknown band is treated as the adult (9-12)
   // register so a missed context does not hand a high-schooler a childish shell.
@@ -101,6 +111,15 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   // Mirrored alongside the text, not derived from it: by the time the tutor has
   // the string, a photographed problem and a served one look the same.
   const problemIsReading = useCaptureStore((s) => s.problemIsReading);
+  useEffect(() => {
+    if (learnerId) restoreWorksheet(learnerId);
+  }, [learnerId, restoreWorksheet]);
+  const worksheetQuestion = worksheet?.questions[worksheet.currentIndex];
+  const activeWorksheet =
+    worksheet?.ownerId === learnerId && worksheetQuestion && problemIsReading &&
+    questionForTutor(worksheetQuestion, worksheet).trim() === problem?.trim()
+      ? worksheet
+      : null;
   const {
     state,
     start,
@@ -216,7 +235,12 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     answers it from `ctx`. Nothing about identity travels.
   */
   const [resumed, setResumed] = useState(false);
+  // A problem changes when the learner advances the worksheet. Hydration must
+  // happen once on entry, not re-fetch a stale session after every next press.
+  const hydratedOnce = useRef(false);
   useEffect(() => {
+    if (hydratedOnce.current) return;
+    hydratedOnce.current = true;
     /*
       A FAILURE FROM A PREVIOUS VISIT IS NOT THIS VISIT'S STATE.
 
@@ -944,6 +968,23 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   */
   const stageState = state.kind === 'retry' && !presenceLive ? PRESENCE_STATE : state;
 
+  const moveToNextWorksheetQuestion = () => {
+    if (!activeWorksheet || !learnerId || state.kind === 'thinking') return;
+    const advanced = useWorksheetStore.getState().advance(learnerId);
+    if (!advanced) return;
+    const nextQuestion = advanced.questions[advanced.currentIndex];
+    if (!nextQuestion) return;
+    const nextPrompt = questionForTutor(nextQuestion, advanced);
+    audioQueue.stop();
+    setProblem(nextPrompt, true);
+    // The new question needs its own visible turn AND its own coach request:
+    // an effect gated on first-session opening must not swallow question 2.
+    useTutorStore.getState().start(nextPrompt, true);
+    void useTutorStore.getState().coach(
+      'Please help me begin this question, one step at a time. Ask what I have tried, without giving the answer.',
+    );
+  };
+
   return (
     <>
     <TutorStage
@@ -954,12 +995,33 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
         the pane is open. It is absent entirely on a device that cannot open one.
       */
       detailActions={
-        <XrBoardButton
-          size={buttonSizeForBand(ageBand)}
-          entering={xrEntering}
-          available={canOpenSpatialBoard()}
-          onPress={handleOpenXr}
-        />
+        <View className="flex-row flex-wrap items-center gap-element">
+          {activeWorksheet ? (
+            <View className="flex-row items-center gap-element">
+              <Text variant="caption" tone="muted">
+                Question {activeWorksheet.currentIndex + 1} of {activeWorksheet.questions.length}
+              </Text>
+              {activeWorksheet.currentIndex + 1 < activeWorksheet.questions.length ? (
+                <Button
+                  title="Next question"
+                  aria-label={'Move to question ' + (activeWorksheet.currentIndex + 2)}
+                  variant="outline"
+                  size="sm"
+                  disabled={state.kind === 'thinking'}
+                  onPress={moveToNextWorksheetQuestion}
+                />
+              ) : (
+                <Text variant="caption" tone="muted">Last question</Text>
+              )}
+            </View>
+          ) : null}
+          <XrBoardButton
+            size={buttonSizeForBand(ageBand)}
+            entering={xrEntering}
+            available={canOpenSpatialBoard()}
+            onPress={handleOpenXr}
+          />
+        </View>
       }
       /*
         The header names the SESSION now that the rail names the tutor (doc 23
