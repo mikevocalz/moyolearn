@@ -3,7 +3,7 @@
 // Corrections stay learner-authored. Nothing here authorizes grading.
 import { useInstanceStore, useStore, Button, Dialog, Image, Text, Textarea } from '@acme/ui';
 import { ScrollView, View } from '@acme/ui/tw';
-import { extractWorksheetQuestions, type WorksheetQuestion } from './worksheet-questions.ts';
+import { extractWorksheetQuestions, MAX_WORKSHEET_QUESTIONS, type WorksheetQuestion } from './worksheet-questions.ts';
 import type { CapturePage } from './types.ts';
 import { buttonSizeForBand, type AgeBand } from './age-band.ts';
 
@@ -115,6 +115,28 @@ export function WorksheetReview({
               <Text variant="body" className="text-text">{question.text || 'Needs correction'}</Text>
               <View className="flex-row flex-wrap gap-element">
                 <Button
+                  title="Earlier"
+                  variant="ghost"
+                  size="sm"
+                  disabled={i === 0}
+                  onPress={() => store.setState((s) => {
+                    const reordered = [...s.questions];
+                    [reordered[i - 1], reordered[i]] = [reordered[i]!, reordered[i - 1]!];
+                    return { questions: reordered };
+                  })}
+                />
+                <Button
+                  title="Later"
+                  variant="ghost"
+                  size="sm"
+                  disabled={i === questions.length - 1}
+                  onPress={() => store.setState((s) => {
+                    const reordered = [...s.questions];
+                    [reordered[i], reordered[i + 1]] = [reordered[i + 1]!, reordered[i]!];
+                    return { questions: reordered };
+                  })}
+                />
+                <Button
                   title="Correct"
                   variant="outline"
                   size="sm"
@@ -134,7 +156,7 @@ export function WorksheetReview({
             </View>
           ))}
         </View>
-        <Button title="Add a missing question" variant="outline" size={size} fullWidth onPress={addMissing} />
+        <Button title="Add a missing question" variant="outline" size={size} fullWidth disabled={questions.length >= MAX_WORKSHEET_QUESTIONS} onPress={addMissing} />
         <Button
           title={'Confirm ' + questions.length + ' questions'}
           variant="highlighter"
