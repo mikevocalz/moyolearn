@@ -10,6 +10,8 @@ async function loadWhisper() {
   }).catch(() => pipeline('automatic-speech-recognition', 'Xenova/whisper-tiny'));
 }
 
+const languageName = { en: 'english', es: 'spanish', fr: 'french', zh: 'chinese', ar: 'arabic' } as const;
+
 let whisper: ReturnType<typeof loadWhisper> | undefined;
 
 export async function transcribe(uri: string, locale?: string): Promise<string> {
@@ -21,7 +23,7 @@ export async function transcribe(uri: string, locale?: string): Promise<string> 
       throw error;
     });
     const recognize = await whisper;
-    const output = (await recognize(uri, language ? { language } : {})) as
+    const output = (await recognize(uri, language ? { language: languageName[language], task: 'transcribe' } : { task: 'transcribe' })) as
       | { text?: string }
       | Array<{ text?: string }>;
     const text = Array.isArray(output) ? output[0]?.text : output.text;
