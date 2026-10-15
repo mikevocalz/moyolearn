@@ -1,5 +1,5 @@
 'use client';
-// CaptureScreen — the six-stage homework-capture journey plus its terminal
+// CaptureScreen — the seven-stage homework-capture journey plus its terminal
 // success surface.
 //
 // The media layer underneath (queue, TUS, presign, retry, EXIF stripping)
@@ -23,6 +23,10 @@
 import { useEffect, useMemo } from 'react';
 import { KeyboardAwareScroll } from '@acme/ui';
 import { useRouter } from 'solito/navigation';
+import { useAppSession } from '../../providers/session';
+import { useWorksheetStore } from './worksheet.store';
+import { WorksheetReview } from './worksheet-review';
+import { questionForTutor, type WorksheetQuestion } from './worksheet-questions.ts';
 import { pickFile } from '../editor/pick-file';
 import { pickNoteImage } from '../schedule/pick-note-image';
 import {
@@ -269,6 +273,8 @@ function SuccessView({
   isExample,
   onStart,
   onReset,
+  questionCount,
+  startError,
 }: {
   ageBand: AgeBand;
   pages: CapturePage[];
@@ -276,6 +282,8 @@ function SuccessView({
   isExample: boolean;
   onStart: () => void;
   onReset: () => void;
+  questionCount: number;
+  startError: string | null;
 }) {
   const size = buttonSizeForBand(ageBand);
   const title =
@@ -291,6 +299,9 @@ function SuccessView({
         </Text>
       ) : null}
       <Text className="font-sans text-title font-bold text-text">{title}</Text>
+      <Text variant="label" tone="muted">
+        {new Date().toLocaleDateString()} · {questionCount} {questionCount === 1 ? 'question' : 'questions'} checked
+      </Text>
       <Text className="font-sans text-body text-text">
         {ageBand === 'young'
           ? `We keep your photo for ${MEDIA_TTL_DAYS} days, then delete it. The words we read stay to help your tutor.`
@@ -310,7 +321,8 @@ function SuccessView({
             ))}
         </View>
       ) : null}
-      <Button title="Start with Natalie" variant="highlighter" size={size} fullWidth onPress={onStart} />
+      {startError ? <Text variant="body" className="text-danger">{startError}</Text> : null}
+      <Button title="Start question 1 with Natalie" variant="highlighter" size={size} fullWidth onPress={onStart} disabled={questionCount === 0} />
       <Button
         title="Start over"
         variant="outline"
@@ -408,6 +420,10 @@ const readFileForReview = readDocumentEvidenceAt;
 
 export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureScreenProps) {
   const router = useRouter();
+  const { user, activeContext } = useAppSession();
+  // The route is learner-scoped; never accept a learner id from a worksheet upload.
+  const learnerId = activeContext.kind === 'learner' ? (activeContext.learnerId ?? user?.id ?? '') : '';
+  const beginWorksheet = useWorksheetStore((state) => state.begin);
   const { setProblem } = useCaptureStore();
   const labels = captureLabelsForBand(ageBand);
 
@@ -415,6 +431,9 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
   const [mode, setMode] = useCaptureValue<CaptureMode | null>(null);
   const [pages, setPages] = useCaptureValue<CapturePage[]>([]);
   const [verifiedText, setVerifiedText] = useCaptureValue('');
+  const [questions, setQuestions] = useCaptureValue<WorksheetQuestion[]>([]);
+  const [instructions, setInstructions] = useCaptureValue('');
+  const [startError, setStartError] = useCaptureValue<string | null>(null);
   const [reviewIndex, setReviewIndex] = useCaptureValue(0);
   const [pageReadings, setPageReadings] = useCaptureValue<Record<string, string>>({});
   const [recording, setRecording] = useCaptureValue<VoiceRecording | null>(null);
@@ -437,6 +456,9 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
     setReviewIndex(0);
     setPageReadings({});
     setVerifiedText('');
+    setQuestions([]);
+    setInstructions('');
+    setStartError(null);
     setRecording(null);
     setTyped('');
     setContext({ subject: '', assignment: '', dueDate: '', stuck: '' });
@@ -527,8 +549,9 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
       setStep('read-verify');
       return;
     }
-    // Files with no readable image skip straight to context.
-    setStep('add-context');
+    // Empty/unsupported reads still require question review; never pretend a scan worked.
+    setVerifiedText('');
+    setStep('review-questions');
   };
 
   const beginUpload = () => {
@@ -541,19 +564,29 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
   };
 
   const startWithNatalie = () => {
-    // The subject AddContext just collected travels with the problem —
-    // downstream attribution needs it (contract note: the confirm exit must
-    // carry subject context to learner.tutor).
-    const fullProblem = [context.subject, context.assignment, context.stuck, verifiedText]
-      .filter(Boolean)
-      .join('\n\n');
-    /*
-      A reading, even though the child has just reviewed it on the way here.
-      The review screen can only offer them what the recogniser produced, and
-      the recogniser's charset has no `÷` or `×` — so the operator a child would
-      most want to correct is the one they were never shown to correct.
-    */
-    setProblem(fullProblem.trim() || verifiedText, pages.length > 0 || recording !== null);
+    if (!learnerId) {
+      setStartError('Sign in to save and start your worksheet.');
+      return;
+    }
+    if (!context.subject.trim() || questions.length === 0) {
+      setStartError('Choose a subject and verify the questions before starting.');
+      return;
+    }
+    const subject = context.subject.trim();
+    const worksheet = beginWorksheet({
+      id: newId(),
+      ownerId: learnerId,
+      subject,
+      title: context.assignment.trim() || subject + ' worksheet',
+      instructions,
+      createdAt: new Date().toISOString(),
+      questions,
+    });
+    const first = worksheet.questions[0];
+    if (!first) return;
+    // A confirmed transcription is STILL an unverified source for grading.
+    // Send exactly the first question; the remaining work stays in the queue.
+    setProblem(questionForTutor(first, { subject, instructions }), true);
     router.push('/tutor');
   };
 
@@ -647,7 +680,29 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
             </Heading>
             <Text className="font-sans text-body text-text-muted">{labels.prompt}</Text>
           </View>
-          <CaptureEntryRow ageBand={ageBand} onSelect={(m) => void chooseMode(m)} />
+          <View className="gap-element">
+            <Text variant="label" className="font-semibold text-text">1. Choose a subject</Text>
+            <View className="flex-row flex-wrap gap-element">
+              {['Math', 'Reading', 'Writing', 'Science', 'History', 'Other'].map((subject) => (
+                <Button
+                  key={subject}
+                  title={subject}
+                  size="sm"
+                  variant={context.subject === subject ? 'highlighter' : 'outline'}
+                  onPress={() => setContext({ ...context, subject })}
+                  aria-label={'Choose ' + subject}
+                />
+              ))}
+            </View>
+          </View>
+          <View className="gap-element">
+            <Text variant="label" className="font-semibold text-text">2. Add your work</Text>
+            {context.subject ? (
+              <CaptureEntryRow ageBand={ageBand} onSelect={(m) => void chooseMode(m)} />
+            ) : (
+              <Text variant="body" tone="muted">Choose a subject first, then scan or attach your homework.</Text>
+            )}
+          </View>
         </ScrollView>
       );
     }
@@ -810,7 +865,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
           if (reviewIndex + 1 < pages.length) setReviewIndex(reviewIndex + 1);
           else {
             setVerifiedText(pages.map((p, i) => `${p.kind === 'file' ? `File ${i + 1}: ${p.name ?? 'Document'}` : `Page ${i + 1}`}:\n${next[p.id] ?? '[Needs review]'}`).join('\n\n'));
-            setStep('add-context');
+            setStep('review-questions');
           }
         };
         const onCancel = () => setStep('review-pages');
@@ -831,7 +886,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
             initialText={typed}
             onConfirm={(text) => {
               setVerifiedText(text);
-              setStep('add-context');
+              setStep('review-questions');
             }}
             onCancel={() => setStep('capture')}
           />
@@ -845,7 +900,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
             recording={recording}
             onConfirm={(text) => {
               setVerifiedText(text);
-              setStep('add-context');
+              setStep('review-questions');
             }}
             onCancel={() => setStep('capture')}
           />
@@ -853,6 +908,27 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
       }
 
       return null;
+    }
+
+    if (step === 'review-questions') {
+      return (
+        <WorksheetReview
+          text={verifiedText}
+          pages={pages}
+          subject={context.subject}
+          ageBand={ageBand}
+          onBack={() => {
+            setReviewIndex(0);
+            setPageReadings({});
+            setStep('read-verify');
+          }}
+          onConfirm={(confirmed, directions) => {
+            setQuestions(confirmed);
+            setInstructions(directions);
+            setStep('add-context');
+          }}
+        />
+      );
     }
 
     if (step === 'add-context') {
@@ -879,6 +955,8 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
         isExample={isExample}
         onStart={startWithNatalie}
         onReset={reset}
+        questionCount={questions.length}
+        startError={startError}
       />
     );
   };

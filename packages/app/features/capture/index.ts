@@ -5,6 +5,9 @@
 export { CaptureScreen } from './screen';
 export { CaptureTip, type CaptureTipProps } from './capture-tip';
 export { useCaptureStore } from './capture.store';
+export { useWorksheetStore } from './worksheet.store';
+export { questionForTutor, extractWorksheetQuestions } from './worksheet-questions.ts';
+export type { WorksheetQuestion } from './worksheet-questions.ts';
 export { asAgeBand, bandScaleFor, buttonSizeForBand, captureLabelsForBand } from './age-band';
 export type { AgeBand, BandScale } from './age-band';
 export type { CaptureMode, CapturePhoto, CaptureStep } from './types';

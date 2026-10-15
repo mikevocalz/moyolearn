@@ -372,8 +372,8 @@ export const useTutorStore = create<TutorState>((set, get) => ({
           resuming a conversation does not staple a duplicate to the top.
         */
         messages:
-          p && s.messages.length === 0
-            ? [{ id: `problem-${Date.now()}`, role: 'tutor' as const, text: p }]
+          p && (s.messages.length === 0 || s.problem !== p)
+            ? [...s.messages, { id: `problem-${Date.now()}`, role: 'tutor' as const, text: p }]
             : s.messages,
         skillTitle,
         mastery,
