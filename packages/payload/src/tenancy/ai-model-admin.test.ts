@@ -9,14 +9,17 @@ test('model admin access is fail closed without a trusted allowlist', () => {
   assert.equal(isAiModelAdministrator({ email: 'OWNER@example.com' }, 'other@example.com, owner@example.com'), true);
 });
 
-test('Qwen is a single disabled or evaluation-only admin choice, never live', () => {
+test('one Qwen candidate is available for evaluation, never active learner routing', () => {
   assert.equal(AiModelRoutes.versions, false);
   const fallback = AiModelRoutes.fields.find((f) => 'name' in f && f.name === 'fallbackModel');
-  assert.ok(fallback && 'options' in fallback);
-  if (!fallback || !('options' in fallback)) return;
-  assert.deepEqual(fallback.options?.map((item) => typeof item === 'string' ? item : item.value), ['none', 'qwen3.8-max']);
+  assert.equal(fallback?.type, 'select');
+  if (fallback?.type !== 'select') return;
+  const fallbackOptions = Array.isArray(fallback.options) ? fallback.options : [];
+  assert.deepEqual(fallbackOptions.map((item) => typeof item === 'string' ? item : item.value), ['none', 'qwen3.8-max']);
+
   const mode = AiModelRoutes.fields.find((f) => 'name' in f && f.name === 'mode');
-  assert.ok(mode && 'options' in mode);
-  if (!mode || !('options' in mode)) return;
-  assert.deepEqual(mode.options?.map((item) => typeof item === 'string' ? item : item.value), ['disabled', 'evaluation-only']);
+  assert.equal(mode?.type, 'select');
+  if (mode?.type !== 'select') return;
+  const modeOptions = Array.isArray(mode.options) ? mode.options : [];
+  assert.deepEqual(modeOptions.map((item) => typeof item === 'string' ? item : item.value), ['disabled', 'evaluation-only']);
 });
