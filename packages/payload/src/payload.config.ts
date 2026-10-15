@@ -29,6 +29,7 @@ import { TutorEngagements } from './collections/TutorEngagements';
 import { Classes } from './collections/Classes';
 import { Assignments } from './collections/Assignments';
 import { AssignmentCompletions } from './collections/AssignmentCompletions';
+import { AiModelRoutes } from './collections/AiModelRoutes';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverURL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -159,6 +160,8 @@ export default buildConfig({
     // completion is a fact ABOUT an assignment, keyed by pointer like every
     // other cross-collection reference here.
     AssignmentCompletions,
+    // Senior-admin evaluation preferences; no production inference integration.
+    AiModelRoutes,
     // Doc 28 §2's household object (ADR-109), beside the pipeline rows that
     // point into it: a lead's `familyId` is a text pointer to this collection,
     // and its `learnerRefs` are text pointers OUT of the Operations Cloud —
