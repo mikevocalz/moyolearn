@@ -6,18 +6,34 @@
 // this file only gives it a shell-owned front door. Doc 37 §2 adds the
 // one-time "what happens next" card at the top of the feed after onboarding
 // completes — a feed card, never a modal, dismissed once and gone for good.
+//
+// PR #100 puts the family header above the feed: the child switcher fed by the
+// real wards read (GET /api/guardian/wards, active guardianships only, never
+// the parent-home fixture), the "Upload work for <child>" entry beside it, and
+// the active child's recent homework under both. The switcher writes
+// `family.store`; everything below reads it, so one selection scopes the whole
+// screen (doc 36 §3.2).
 // Mobbin: Garmin Connect activity-feed cards (mobbin.com/screens/31580095-08ba-4849-b5dd-23554d4cf6e0) ·
 // Oura Today feed (mobbin.com/screens/bce8101b-5be9-4cef-a9c7-e7a9d88d12c6) ·
 // Skillshare resume-first hero (mobbin.com/screens/eaa37d84-6ac3-44d2-a888-35e0198919db) ·
 // Uxcel Teams — post-onboarding guidance persists as a dismissible dashboard
-// card, not a blocking dialog (mobbin.com/flows/d2d155b4-cc57-4346-9f94-c8b5c5f6af72)
-// SOT: docs/pack/36-role-navigation-flows.md §3.2 · docs/pack/34-session-summary-reports.md · docs/pack/37-onboarding-dual-pane.md §2
-// SOT-KEYWORDS: guardian home screen family feed shell landing children cards whats next
+// card, not a blocking dialog (mobbin.com/flows/d2d155b4-cc57-4346-9f94-c8b5c5f6af72) ·
+// Acorns — You/Kid switcher pinned at the top of home re-scopes every section below (mobbin.com/screens/96c15ebb-251f-4261-b474-b4cf3c74d36a)
+// SOT: docs/pack/36-role-navigation-flows.md §3.2 · docs/pack/34-session-summary-reports.md · docs/pack/37-onboarding-dual-pane.md §2 · docs/work/pr-100/contract.md §Routes
+// SOT-KEYWORDS: guardian home screen family feed shell landing children cards whats next switcher wards homework upload
 
-import { ScrollView, Text as TWText, View } from '@acme/ui/tw';
-import { Button, Card, Container, FadeIn } from '@acme/ui';
+import { useRouter } from 'solito/navigation';
+import { ScrollView, Section, Text as TWText, View } from '@acme/ui/tw';
+import { Button, Card, Container, FadeIn, Text } from '@acme/ui';
 import { useGuardianWhatsNext } from '../onboarding/guardian/whats-next.store';
+import { useActiveChild } from '../family/family.store';
+import { GUARDIAN_UPLOAD_PATH } from '../homework/guardian-assign-sheet';
+import { GuardianFamilyHeader } from '../homework/guardian-family-header';
+import { GuardianHomeworkTimeline } from '../homework/guardian-homework-timeline';
 import { ParentHomeContent } from './parent-home-content';
+
+/** The home feed shows the newest few worksheets; the route shows them all. */
+const HOME_TIMELINE_LIMIT = 3;
 
 export function GuardianHomeScreen() {
   return (
@@ -25,10 +41,39 @@ export function GuardianHomeScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <Container width="detail" className="py-4 pb-48">
           <WhatsNextCard />
+          <FamilyHeader />
           <ParentHomeContent />
         </Container>
       </ScrollView>
     </View>
+  );
+}
+
+/**
+ * The switcher, the upload entry, and the active child's newest homework.
+ * The wards read and its failure states live in GuardianFamilyHeader, shared
+ * with the /homework route.
+ */
+function FamilyHeader() {
+  const router = useRouter();
+  const child = useActiveChild();
+
+  return (
+    <FadeIn>
+      <Section className="mb-7 gap-group">
+        <GuardianFamilyHeader child={child} />
+        <Section className="gap-stack">
+          <Text variant="label" tone="muted">Homework</Text>
+          <GuardianHomeworkTimeline
+            learnerAuthId={child?.id}
+            childName={child?.name}
+            limit={HOME_TIMELINE_LIMIT}
+            onSeeAll={() => router.push('/homework')}
+            onUpload={() => router.push(GUARDIAN_UPLOAD_PATH)}
+          />
+        </Section>
+      </Section>
+    </FadeIn>
   );
 }
 

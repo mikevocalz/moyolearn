@@ -25,7 +25,7 @@ Erasure: both learner collections join `SUBJECT_COLLECTIONS` in `apps/web/lib/ac
 
 ## Routes (B1 owns the handlers; B2, B3, B4, B5 consume)
 
-All under `protectedOperation`. The ward check is `loadGuardianWards(ctx)` and the target learner must be in it, or equal `ctx.learnerId`.
+All under `protectedOperation`. List endpoints return bare arrays, never a wrapper object. The ward check is `loadGuardianWards(ctx)` and the target learner must be in it, or equal `ctx.learnerId`.
 
 | Method and path | Body / query | Returns |
 | --- | --- | --- |
@@ -35,7 +35,7 @@ All under `protectedOperation`. The ward check is `loadGuardianWards(ctx)` and t
 | `POST /api/homework/submissions/[submissionId]/questions/[questionId]/revise` | `ReviseQuestionInput` | `HomeworkQuestionView` |
 | `POST /api/homework/submissions/[submissionId]/start` | `StartSubmissionInput` | `HomeworkSubmissionView` |
 | `POST /api/homework/submissions/[submissionId]/advance` | `AdvanceInput` | `AdvanceResult`; `409 { error: 'stale-cursor', current: AdvanceResult }` |
-| `GET /api/guardian/wards` | | `{ learnerAuthId, displayName, gradeBand }[]` from active guardianships |
+| `GET /api/guardian/wards` | | bare `{ learnerAuthId, displayName, gradeBand }[]` from active guardianships; `gradeBand` is `VoiceBand` (`k-2`, `3-5`, `6-8`, `9-12`) from `packages/student-model/src/voice-band.ts` |
 | `POST /api/guardian/practice-sets` | `{ submissionId }` | `PracticeSetView` (draft) |
 | `POST /api/guardian/practice-sets/[practiceSetId]/approve` | | `PracticeSetView` |
 | `GET /api/guardian/practice-sets/[practiceSetId]/print?mode=sheet\|key` | | HTML, same headers as the report print route |
