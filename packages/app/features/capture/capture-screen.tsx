@@ -422,7 +422,7 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
   const router = useRouter();
   const { user, activeContext } = useAppSession();
   // The route is learner-scoped; never accept a learner id from a worksheet upload.
-  const learnerId = activeContext?.learnerId ?? user?.id ?? '';
+  const learnerId = activeContext.kind === 'learner' ? (activeContext.learnerId ?? user?.id ?? '') : '';
   const beginWorksheet = useWorksheetStore((state) => state.begin);
   const { setProblem } = useCaptureStore();
   const labels = captureLabelsForBand(ageBand);
