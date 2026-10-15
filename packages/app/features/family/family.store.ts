@@ -16,24 +16,31 @@
 // a fixture id — switching into a learner identity that is not theirs. An empty
 // list removes that outright.
 //
-// `setChildren` is the seam the real guardianship query writes through.
-// It has no caller yet: `/api/family/learners` exports POST only, so no
-// guardian children read exists to wire. Until one does, surfaces render their
-// "no children yet" state, which is true, instead of a fabricated family.
-// SOT: docs/design/overhaul-v2/J-component-plan.md §2 row 10 · design/screens/guardian/guardian.family/contract.md · docs/pack/36-role-navigation-flows.md §3.2
-// SOT-KEYWORDS: family store children selected learner active child switcher guardian g-8 zustand
+// `setChildren` is the data seam. PR #100 gives it its first caller:
+// `GuardianHomeScreen` writes the result of `useGuardianWards` (GET
+// /api/guardian/wards, active guardianships only) through it, so `id` is the
+// ward's `learnerAuthId` and `name` is the server's `displayName`. The type
+// lives here now, not in the parent-home fixture file, because the fixture is
+// no longer the thing that defines what a child record is.
+// SOT: docs/design/overhaul-v2/J-component-plan.md §2 row 10 · design/screens/guardian/guardian.family/contract.md · docs/pack/36-role-navigation-flows.md §3.2 · docs/work/pr-100/contract.md §Routes
+// SOT-KEYWORDS: family store children selected learner active child switcher guardian g-8 zustand wards
 
 import { create } from 'zustand';
-import type { ChildSummary } from '../home/parent-home.data';
+import type { AgeBand } from '../capture/age-band';
 
-export type { ChildSummary };
+/** One ward as every guardian surface sees it. `id` is the learner's auth id. */
+export interface ChildSummary {
+  id: string;
+  name: string;
+  gradeBand: AgeBand;
+}
 
 interface FamilyState {
   children: ChildSummary[];
   /** The child every per-child surface is scoped to; null before a selection. */
   selectedLearnerId: string | null;
   selectLearner: (learnerId: string) => void;
-  /** The data seam: the real children query writes here; the fixture only seeds it. */
+  /** The data seam: the wards query writes here. */
   setChildren: (children: ChildSummary[]) => void;
 }
 
@@ -60,4 +67,12 @@ export const useFamilyStore = create<FamilyState>((set) => ({
  */
 export function useActiveLearnerId(): string | undefined {
   return useFamilyStore((s) => s.selectedLearnerId ?? s.children[0]?.id);
+}
+
+/** The active child's record, for surfaces that need the name as well as the id. */
+export function useActiveChild(): ChildSummary | undefined {
+  return useFamilyStore((s) => {
+    const id = s.selectedLearnerId ?? s.children[0]?.id;
+    return id === undefined ? undefined : s.children.find((c) => c.id === id);
+  });
 }

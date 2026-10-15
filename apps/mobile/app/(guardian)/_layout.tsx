@@ -14,6 +14,8 @@ const TITLES: Record<string, string> = {
   '/memory': 'Memory & Data',
   '/ai-activity': 'AI Activity',
   '/calendar': 'Calendar',
+  '/homework': 'Homework',
+  '/upload': 'Upload work',
 };
 
 export const unstable_settings = {
@@ -55,6 +57,11 @@ export default function GuardianShell() {
             from Home/Family so Reports and Alerts hold the tab slots. */}
         <Stack.Screen name="calendar" />
         <Stack.Screen name="reports/[sessionId]" options={{ title: 'Report' }} />
+        {/* PR #100: the ward's dated homework, and the guardian's door into
+            the capture flow (the learner shell's /capture is behind its own
+            guard, so a guardian needs this one). */}
+        <Stack.Screen name="homework" />
+        <Stack.Screen name="upload" />
       </Stack.Protected>
     </Stack>
     </ShellBackRail>
