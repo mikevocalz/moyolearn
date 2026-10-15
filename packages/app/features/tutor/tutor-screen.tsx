@@ -26,8 +26,7 @@ import {
 } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
 import { useCaptureStore } from '../capture';
-import { useWorksheetStore } from '../capture/worksheet.store';
-import { questionForTutor } from '../capture/worksheet-questions.ts';
+import { useWorksheetStore, questionForTutor } from '../capture';
 import { buttonSizeForBand, type AgeBand } from '../capture';
 import { countImages, MAX_TUTOR_IMAGES } from '@acme/ui';
 import { useAppSession } from '../../providers/session';
@@ -145,7 +144,10 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   const windowClass = useWindowSizeClass();
   const reducedMotion = useReducedMotion();
 
+  const startedProblem = useRef<string | null>(null);
   useEffect(() => {
+    if (startedProblem.current === problem) return;
+    startedProblem.current = problem;
     start(problem, problemIsReading);
   }, [problem, problemIsReading, start]);
 
@@ -976,6 +978,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     if (!nextQuestion) return;
     const nextPrompt = questionForTutor(nextQuestion, advanced);
     audioQueue.stop();
+    startedProblem.current = nextPrompt;
     setProblem(nextPrompt, true);
     // The new question needs its own visible turn AND its own coach request:
     // an effect gated on first-session opening must not swallow question 2.
