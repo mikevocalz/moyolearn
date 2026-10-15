@@ -1,4 +1,5 @@
 'use client';
+// Mobbin: https://mobbin.com/screens/9c8e39a1-23fe-4f31-8d45-cda3c44e3ccc (Google photo homework entry and camera prompt) · https://mobbin.com/screens/2c66cb2e-4d24-4048-a31f-e096aebc990a (Quizlet numbered study sequence) · https://mobbin.com/screens/eb2dfe9f-185e-4fdc-887c-611714a660bc (Brilliant problem focus and accessible progression).
 // Review the detected QUESTIONS, not merely a page-sized OCR textarea.
 // Corrections stay learner-authored. Nothing here authorizes grading.
 import { useInstanceStore, useStore, Button, Dialog, Image, Text, Textarea } from '@acme/ui';
