@@ -21,6 +21,7 @@
 // SOT: docs/work/pr-100/contract.md §Routes · docs/design/homework-end-to-end-2026.md §Screen contract (Parent Daily Work) · docs/design/mobbin/homework-timeline.md
 // SOT-KEYWORDS: guardian homework timeline dated list outcomes words subject title question count
 
+import { useRouter } from 'solito/navigation';
 import {
   Button,
   Card,
@@ -157,6 +158,7 @@ export function GuardianHomeworkTimeline({
  * hints, 1 still working on it." arrives in one swipe.
  */
 function TimelineRow({ row }: { row: HomeworkSubmissionSummary }) {
+  const router = useRouter();
   const lines = outcomeLines(row.outcomes);
   const outcomesSentence = lines.map((l) => l.text).join(', ');
   return (
@@ -188,6 +190,15 @@ function TimelineRow({ row }: { row: HomeworkSubmissionSummary }) {
       ) : (
         <TWText className="text-sm text-text-muted">Not started</TWText>
       )}
+      {row.subject.trim().toLowerCase() === 'math' ? (
+        <Button
+          title="Review math practice"
+          variant="outline"
+          className="self-start"
+          aria-label={`Review math practice for ${row.title}`}
+          onPress={() => router.push(`/homework/${encodeURIComponent(row.submissionId)}/practice`)}
+        />
+      ) : null}
     </Card>
   );
 }

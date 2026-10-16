@@ -71,8 +71,7 @@ export function PracticePreview({ submissionId }: PracticePreviewProps) {
             Practice sheet
           </Heading>
           <Text tone="muted">
-            New problems on the skills this homework needed help with. Read them first. Nothing prints until you
-            approve the set.
+            Create math practice from this homework. Review the problems and answers before approving a printable set.
           </Text>
 
           {set === null ? (
@@ -122,6 +121,7 @@ export function PracticePreview({ submissionId }: PracticePreviewProps) {
                     title="Print practice sheet"
                     onPress={() => print.mutate({ set, mode: 'sheet' })}
                     loading={print.isPending && print.variables?.mode === 'sheet'}
+                    disabled={print.isPending}
                     fullWidth
                   />
                   <Button
@@ -129,6 +129,7 @@ export function PracticePreview({ submissionId }: PracticePreviewProps) {
                     variant="outline"
                     onPress={() => print.mutate({ set, mode: 'key' })}
                     loading={print.isPending && print.variables?.mode === 'key'}
+                    disabled={print.isPending}
                     fullWidth
                   />
                 </View>
@@ -138,7 +139,7 @@ export function PracticePreview({ submissionId }: PracticePreviewProps) {
                     title="Approve this set"
                     onPress={() => approve.mutate(set.practiceSetId)}
                     loading={approve.isPending}
-                    disabled={set.items.length === 0}
+                    disabled={set.items.length === 0 || draft.isPending}
                     fullWidth
                   />
                   <Button
@@ -149,6 +150,7 @@ export function PracticePreview({ submissionId }: PracticePreviewProps) {
                       draft.mutate();
                     }}
                     loading={draft.isPending}
+                    disabled={approve.isPending}
                   />
                 </View>
               )}
