@@ -6,6 +6,8 @@ export { CaptureScreen } from './screen';
 export { CaptureTip, type CaptureTipProps } from './capture-tip';
 export { useCaptureStore } from './capture.store';
 export { useWorksheetStore } from './worksheet.store';
+export { currentPrompt, outcomeForAdvance, questionIndexForPrompt } from './worksheet-cache.ts';
+export type { WorksheetSyncStatus } from './worksheet-cache.ts';
 export { questionForTutor, extractWorksheetQuestions } from './worksheet-questions.ts';
 export type { WorksheetQuestion } from './worksheet-questions.ts';
 export { asAgeBand, bandScaleFor, buttonSizeForBand, captureLabelsForBand } from './age-band';

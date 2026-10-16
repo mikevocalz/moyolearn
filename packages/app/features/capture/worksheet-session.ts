@@ -1,6 +1,7 @@
-// Device-local continuity for a learner's verified question order.
-// This is NOT the authoritative grading/evidence record; server persistence
-// and guardian visibility are a separate backend contract.
+// The v1 device-only worksheet (`capture-worksheet-v1:<ownerId>`). Nothing
+// writes it any more: `worksheet-cache.ts` reads it once, creates the server
+// submission from it, and removes the key. The writers stay because the v1
+// tests pin the shape the migration has to accept.
 import type { ProblemStorage } from './problem-storage.shared.ts';
 import type { WorksheetQuestion } from './worksheet-questions.ts';
 import { MAX_WORKSHEET_QUESTIONS } from './worksheet-questions.ts';

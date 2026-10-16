@@ -25,8 +25,13 @@ import { KeyboardAwareScroll } from '@acme/ui';
 import { useRouter } from 'solito/navigation';
 import { useAppSession } from '../../providers/session';
 import { useWorksheetStore } from './worksheet.store';
+import { currentPrompt } from './worksheet-cache.ts';
+import { useActiveLearnerId } from '../family/family.store';
+import { homeworkClient } from '../homework/homework.client.ts';
+import { homeworkTimelineQueryKey } from '../homework/use-homework-timeline';
+import { useQueryClient } from '@tanstack/react-query';
 import { WorksheetReview } from './worksheet-review';
-import { questionForTutor, type WorksheetQuestion } from './worksheet-questions.ts';
+import type { WorksheetQuestion } from './worksheet-questions.ts';
 import { pickFile } from '../editor/pick-file';
 import { pickNoteImage } from '../schedule/pick-note-image';
 import {
@@ -275,6 +280,8 @@ function SuccessView({
   onReset,
   questionCount,
   startError,
+  starting,
+  forWard,
 }: {
   ageBand: AgeBand;
   pages: CapturePage[];
@@ -284,6 +291,9 @@ function SuccessView({
   onReset: () => void;
   questionCount: number;
   startError: string | null;
+  starting: boolean;
+  /** A guardian saving the worksheet for a child, who starts it on their own device. */
+  forWard: boolean;
 }) {
   const size = buttonSizeForBand(ageBand);
   const title =
@@ -322,7 +332,14 @@ function SuccessView({
         </View>
       ) : null}
       {startError ? <Text variant="body" className="text-danger">{startError}</Text> : null}
-      <Button title="Start question 1 with Natalie" variant="highlighter" size={size} fullWidth onPress={onStart} disabled={questionCount === 0} />
+      <Button
+        title={starting ? 'Saving…' : forWard ? 'Save for your child' : 'Start question 1 with Natalie'}
+        variant="highlighter"
+        size={size}
+        fullWidth
+        onPress={onStart}
+        disabled={questionCount === 0 || starting}
+      />
       <Button
         title="Start over"
         variant="outline"
@@ -423,7 +440,12 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
   const { user, activeContext } = useAppSession();
   // The route is learner-scoped; never accept a learner id from a worksheet upload.
   const learnerId = activeContext.kind === 'learner' ? (activeContext.learnerId ?? user?.id ?? '') : '';
+  // A guardian uploads for the child selected in the family switcher. The server
+  // accepts the ward only for an active guardianship; this id is a request, not a grant.
+  const activeWardId = useActiveLearnerId();
+  const wardId = activeContext.kind === 'guardian' ? (activeWardId ?? '') : '';
   const beginWorksheet = useWorksheetStore((state) => state.begin);
+  const queryClient = useQueryClient();
   const { setProblem } = useCaptureStore();
   const labels = captureLabelsForBand(ageBand);
 
@@ -446,6 +468,10 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
   });
   const [editingId, setEditingId] = useCaptureValue<string | null>(null);
   const [uploadIds, setUploadIds] = useCaptureValue<string[] | null>(null);
+  // Minted once per worksheet and reused by every retry, so a create whose
+  // response was lost cannot become a second submission.
+  const [submissionId, setSubmissionId] = useCaptureValue(newId());
+  const [starting, setStarting] = useCaptureValue(false);
   const size = buttonSizeForBand(ageBand);
   const transferRows = useTransferTray((s) => s.rows);
 
@@ -464,6 +490,8 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
     setContext({ subject: '', assignment: '', dueDate: '', stuck: '' });
     setEditingId(null);
     setUploadIds(null);
+    setSubmissionId(newId());
+    setStarting(false);
   };
 
   const chooseMode = async (selected: CaptureMode) => {
@@ -563,9 +591,12 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
     setStep('upload-process');
   };
 
-  const startWithNatalie = () => {
-    if (!learnerId) {
-      setStartError('Sign in to save and start your worksheet.');
+  const startWithNatalie = async () => {
+    if (starting) return;
+    if (!learnerId && !wardId) {
+      setStartError(activeContext.kind === 'guardian'
+        ? 'Choose a child before uploading their worksheet.'
+        : 'Sign in to save and start your worksheet.');
       return;
     }
     if (!context.subject.trim() || questions.length === 0) {
@@ -573,21 +604,52 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
       return;
     }
     const subject = context.subject.trim();
-    const worksheet = beginWorksheet({
-      id: newId(),
-      ownerId: learnerId,
+    const createdAt = new Date();
+    const pad = (n: number) => String(n).padStart(2, '0');
+    const input = {
+      submissionId,
       subject,
       title: context.assignment.trim() || subject + ' worksheet',
       instructions,
-      createdAt: new Date().toISOString(),
-      questions,
-    });
-    const first = worksheet.questions[0];
-    if (!first) return;
-    // A confirmed transcription is STILL an unverified source for grading.
-    // Send exactly the first question; the remaining work stays in the queue.
-    setProblem(questionForTutor(first, { subject, instructions }), true);
-    router.push('/tutor');
+      localDate: `${String(createdAt.getFullYear())}-${pad(createdAt.getMonth() + 1)}-${pad(createdAt.getDate())}`,
+      // Crops need a storage key and pixel size; capture pages carry neither yet,
+      // so the questions go up as confirmed text only.
+      questions: questions.map((q) => ({
+        clientId: q.id,
+        sourcePage: q.sourcePage,
+        sourceNumber: q.sourceNumber,
+        text: q.text,
+        confidence: null,
+        crop: null,
+      })),
+      ...(wardId ? { forLearnerAuthId: wardId } : {}),
+    };
+    setStartError(null);
+    setStarting(true);
+    try {
+      if (wardId) {
+        // The guardian is not the one being tutored, so nothing lands in this
+        // device's worksheet cache; the child's devices read it from the server.
+        await homeworkClient.createSubmission(input);
+        await queryClient.invalidateQueries({ queryKey: homeworkTimelineQueryKey(wardId) });
+        router.push('/homework');
+        return;
+      }
+      const view = await beginWorksheet(learnerId, input);
+      await queryClient.invalidateQueries({ queryKey: homeworkTimelineQueryKey(learnerId) });
+      const prompt = currentPrompt(view);
+      const first = view.questions[view.currentIndex];
+      if (prompt === null || !first) return;
+      // A confirmed transcription is STILL an unverified source for grading.
+      // Send exactly the current question; the rest stays on the server's cursor.
+      // The tutor screen links its session to the submission once it has one.
+      setProblem(prompt, true, { questionId: first.questionId, revision: first.currentRevision });
+      router.push('/tutor');
+    } catch {
+      setStartError('Your worksheet was not saved. Check your connection and try again.');
+    } finally {
+      setStarting(false);
+    }
   };
 
   // Enqueue captured media once the upload step is reached.
@@ -953,10 +1015,12 @@ export function CaptureScreen({ ageBand = 'teen', isExample = false }: CaptureSc
         pages={pages}
         context={context}
         isExample={isExample}
-        onStart={startWithNatalie}
+        onStart={() => void startWithNatalie()}
         onReset={reset}
         questionCount={questions.length}
         startError={startError}
+        starting={starting}
+        forWard={wardId.length > 0}
       />
     );
   };
