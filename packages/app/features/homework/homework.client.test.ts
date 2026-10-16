@@ -50,6 +50,19 @@ test('a 200 advance returns the new cursor; a dropped connection stays a transpo
   await assert.rejects(offline.advance('s', move), (e: unknown) => e instanceof TypeError);
 });
 
+test('discovery lists the signed-in learner without passing an identity parameter', async () => {
+  const seen: { url: string; init: RequestInit }[] = [];
+  const client = createHomeworkClient(async (url, init) => {
+    seen.push({ url, init });
+    return json(200, []);
+  }, 'https://api.test');
+  assert.deepEqual(await client.listSubmissions(), []);
+  assert.deepEqual(seen, [{
+    url: 'https://api.test/api/homework/submissions',
+    init: { credentials: 'include' },
+  }]);
+});
+
 test('native practice printing fetches fresh authorized HTML without sending cached answers', async () => {
   const seen: { url: string; init: RequestInit }[] = [];
   const html = '<!doctype html><title>Approved practice sheet</title>';

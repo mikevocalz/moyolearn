@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
+import { QueryClient, QueryObserver } from '@tanstack/react-query';
+import { homeworkTimelineOptions, homeworkTimelineQueryKey } from './use-homework-timeline.ts';
 import type { HomeworkSubmissionSummary, QuestionOutcome } from './homework.types.ts';
 import {
   OUTCOME_ORDER,
@@ -37,6 +39,25 @@ const row = (
   outcomes: { ...zero, ...outcomes },
   tutorSessionId: null,
   createdAt: `${localDate}T20:00:00.000Z`,
+});
+
+test('switching children never shows the previous child’s rows while the new request is pending', async (t) => {
+  const client = new QueryClient({ defaultOptions: { queries: { retry: false, staleTime: Infinity } } });
+  client.setQueryData(homeworkTimelineQueryKey('ward-1'), [row('first-child-work', '2026-10-16')]);
+  let finish: ((response: Response) => void) | undefined;
+  const response = new Promise<Response>((resolve) => { finish = resolve; });
+  t.mock.method(globalThis, 'fetch', () => response);
+  const observer = new QueryObserver(client, homeworkTimelineOptions('ward-1'));
+  const unsubscribe = observer.subscribe(() => {});
+  t.after(() => { unsubscribe(); client.clear(); });
+  assert.equal(observer.getCurrentResult().data?.[0]?.submissionId, 'first-child-work');
+
+  observer.setOptions(homeworkTimelineOptions('ward-2'));
+  assert.equal(observer.getCurrentResult().data, undefined);
+  assert.equal(observer.getCurrentResult().isPending, true);
+  finish!(new Response('[]', { headers: { 'Content-Type': 'application/json' } }));
+  const loaded = await observer.refetch();
+  assert.deepEqual(loaded.data, []);
 });
 
 test('groups by localDate and keeps the server order inside and across groups', () => {
