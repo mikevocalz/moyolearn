@@ -591,7 +591,7 @@ export interface HomeworkSubmission {
   createdByAuthId: string;
   subject: string;
   title: string;
-  instructions: string;
+  instructions?: string | null;
   localDate: string;
   status: 'reviewing' | 'ready' | 'in-progress' | 'complete' | 'abandoned';
   pipelineStatus: 'pending' | 'extracting' | 'extracted' | 'failed';

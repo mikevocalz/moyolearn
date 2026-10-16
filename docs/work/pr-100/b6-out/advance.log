@@ -1,0 +1,11 @@
+adv 0 (solved-independently): 200 {"currentIndex":1,"currentQuestionId":"9fde9fc3-ea13-4fdd-973e-0d9af8827070","status":"in-progress"}
+adv 1 (supported-with-hints): 200 {"currentIndex":2,"currentQuestionId":"98d11282-b5f4-40c2-a2f8-ec39669ea633","status":"in-progress"}
+adv 2 (attempted): 200 {"currentIndex":3,"currentQuestionId":"f30517dd-5f3f-487f-a21d-d7bfbf37d9a2","status":"in-progress"}
+adv 3 (skipped): 200 {"currentIndex":4,"currentQuestionId":"dcf32497-dfa6-404c-81f1-390ea5cc6501","status":"in-progress"}
+adv 4 (supported-with-hints): 200 {"currentIndex":5,"currentQuestionId":"bde5acd6-394b-4638-9c09-f5b19efa98cf","status":"in-progress"}
+STALE replay of adv 3 (cursor now 5): 409 {"error":"stale-cursor","current":{"currentIndex":5,"currentQuestionId":"bde5acd6-394b-4638-9c09-f5b19efa98cf","status":"in-progress"}}
+adv 5 (unresolved): 200 {"currentIndex":6,"currentQuestionId":"89a3d368-447a-462d-8ad5-af62864a3b13","status":"in-progress"}
+adv 6 (attempted): 200 {"currentIndex":7,"currentQuestionId":"6ea12452-051c-46fe-80ca-334d7b1aa87b","status":"in-progress"}
+adv 7 (supported-with-hints): 200 {"currentIndex":8,"currentQuestionId":"bdd678eb-baef-4af6-9c88-556bae31b7e4","status":"in-progress"}
+adv 8 (solved-independently): 200 {"currentIndex":9,"currentQuestionId":"f333a0c8-3581-42f3-9ec4-50dee6f727e4","status":"in-progress"}
+adv 9 (attempted): 200 {"currentIndex":9,"currentQuestionId":"f333a0c8-3581-42f3-9ec4-50dee6f727e4","status":"complete"}

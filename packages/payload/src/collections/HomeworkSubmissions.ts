@@ -66,7 +66,9 @@ export const HomeworkSubmissions: CollectionConfig = {
     { name: 'createdByAuthId', type: 'text', required: true, index: true },
     { name: 'subject', type: 'text', required: true },
     { name: 'title', type: 'text', required: true },
-    { name: 'instructions', type: 'textarea', required: true, defaultValue: '' },
+    // Not `required`: Payload's required check refuses '', and most worksheets
+    // carry no instructions. The column is NOT NULL DEFAULT '' (homework_additive.sql).
+    { name: 'instructions', type: 'textarea', defaultValue: '' },
     // The learner's local calendar date, `YYYY-MM-DD`. Text, not `date`: the
     // guardian timeline groups by the day the child worked, and a timestamp
     // would move that day across a timezone.
