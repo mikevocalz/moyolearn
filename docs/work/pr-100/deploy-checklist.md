@@ -11,7 +11,7 @@ Branch `feat/homework-worksheet-question-flow-20261015`, head `c8bc8a1a` plus B6
 - [x] **Sentry scrub invariants.** `node tooling/check-sentry-invariants.mjs`: `1936 files clean (PII off, no replay, traces 0, tags lawful, offline silent)`, exit 0.
 - [x] **No Session Replay on child surfaces.** The same check bans every replay integration on every surface, and passed. `git grep -nE "replayIntegration|Replay|mobileReplay"` over apps and packages matched only comments and unrelated identifiers (`telemetry-options.ts` comment, `practice.store.ts` "Replays the open set", `jobs/boss.ts` dead-letter comment).
 - [x] **Typecheck after B6 fixes.** `pnpm --filter ./packages/payload --filter ./apps/web typecheck`: both `Done`.
-- [ ] **Full root typecheck and app tests after B6 fixes.** Not rerun. B6 changed one Payload field, one repository line and one test file; only the payload and web typechecks and the payload tests were rerun.
+- [x] **Full root typecheck and app tests after B6 fixes.** Run by the integrator on 3fdfb8b2's tree: `pnpm typecheck` 19/19 tasks; `packages/app` 637 + 126 pass, `packages/student-model` 125 pass, `packages/payload` 24 pass (16 DB-backed skipped without a URL), 0 failures.
 - [x] **API end to end on a real server.** `apps/web` dev on port 3100 against `pr100_e2e`, live Better Auth sessions: create, revise, start, ten advances with one 409, close, drain, guardian print with ten rows, practice set draft, approve, sheet and key, and cross-family 404s. Output in `b6.md` step 3.
 - [ ] **iOS dev client built with expo-print and expo-sharing.** Not done. `pod install` failed; exact error in `b6.md` step 4.
 - [ ] **Device walk-through (iPhone Duo, iPad).** Not run, blocked by the item above.
