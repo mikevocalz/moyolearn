@@ -1,14 +1,24 @@
 // Print-only, evidence-derived family handouts. No LLM-generated questions,
 // no invented outcomes, and no exposure of raw tutor transcripts.
 // The browser's native print dialog can print or Save as PDF.
+//
+// Worksheet rows print as a table: order, source number, outcome in words,
+// attempts, hints. Meaning never rides on colour, so a grayscale printer and
+// a screen reader get the same facts. Outcome words avoid "correct" and
+// "solved" because a photographed page is never graded (ADR-119).
+// SOT: docs/work/pr-100/contract.md §Report · docs/pack/34-session-summary-reports.md §2.3
+// SOT-KEYWORDS: printable report worksheet outcome table print css page break grayscale escape
 import type { GuardianSummaryView } from '@acme/app/server';
+
+type PrintableRow = GuardianSummaryView['problems'][number]['rows'][number];
+type HomeworkDetail = NonNullable<PrintableRow['homework']>;
 
 export type PrintableMode = 'report' | 'practice';
 const escapeHtml = (value: string): string =>
   value.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
-function questionText(row: GuardianSummaryView['problems'][number]['rows'][number]): string {
+function questionText(row: PrintableRow): string {
   return row.question.kind === 'expired'
     ? 'Source no longer available'
     : row.question.kind === 'crop'
@@ -22,6 +32,35 @@ const statusLabel: Record<string, string> = {
   'still-working': 'Still working',
 };
 
+const outcomeLabel: Record<HomeworkDetail['outcome'], string> = {
+  'solved-independently': 'Finished without hints',
+  'supported-with-hints': 'Finished with hints',
+  attempted: 'Attempted, still open',
+  unresolved: 'Still working',
+  skipped: 'Skipped',
+  unattempted: 'Not started',
+};
+
+const plural = (n: number, one: string, many: string): string => String(n) + ' ' + (n === 1 ? one : many);
+
+function worksheetTable(rows: readonly { row: PrintableRow; detail: HomeworkDetail }[]): string {
+  const sorted = [...rows].sort((a, b) => a.detail.orderIndex - b.detail.orderIndex);
+  return '<table class="worksheet"><caption>Worksheet questions in the order they were worked</caption>' +
+    '<thead><tr><th scope="col">Order</th><th scope="col">Source</th><th scope="col">Question</th>' +
+    '<th scope="col">Outcome</th><th scope="col">Attempts</th><th scope="col">Hints</th></tr></thead><tbody>' +
+    sorted.map(({ row, detail }) =>
+      '<tr><th scope="row">' + String(detail.orderIndex + 1) + '</th>' +
+      '<td>' + (detail.sourceNumber === null
+        ? 'Page ' + String(detail.sourcePage) + ', unnumbered'
+        : 'Page ' + String(detail.sourcePage) + ', no. ' + String(detail.sourceNumber)) + '</td>' +
+      '<td class="question-text">' + escapeHtml(questionText(row)) + '</td>' +
+      '<td>' + escapeHtml(outcomeLabel[detail.outcome]) + '</td>' +
+      '<td>' + plural(row.attempts, 'attempt', 'attempts') + '</td>' +
+      '<td>' + plural(detail.hintsUsed, 'hint', 'hints') + '</td></tr>',
+    ).join('') +
+    '</tbody></table>';
+}
+
 export function printReportHtml(report: GuardianSummaryView, mode: PrintableMode): string {
   const date = report.publishedAt && !Number.isNaN(Date.parse(report.publishedAt))
     ? new Date(report.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
@@ -33,9 +72,12 @@ export function printReportHtml(report: GuardianSummaryView, mode: PrintableMode
   const review = rows.filter(({ row }) =>
     row.status === 'still-working' || row.status === 'solved-with-help',
   );
-  const shown = practice ? review : rows;
+  const worksheetRows = practice
+    ? []
+    : rows.flatMap(({ row }) => (row.homework ? [{ row, detail: row.homework }] : []));
+  const shown = practice ? review : rows.filter(({ row }) => !row.homework);
   const subjectLabels = report.workedOn.map((item) => item.parentLabel).slice(0, 3);
-  const problemMarkup = shown.length
+  const articleMarkup = shown.length
     ? shown.map(({ subject, row }, i) =>
       '<article class="question">' +
       '<div class="question-head"><span>' + (i + 1) + '. ' + escapeHtml(subject) + '</span>' +
@@ -48,6 +90,9 @@ export function printReportHtml(report: GuardianSummaryView, mode: PrintableMode
           escapeHtml(row.childAnswer ?? 'Not recorded') + '</p>') +
       '</article>',
     ).join('')
+    : '';
+  const problemMarkup = worksheetRows.length || articleMarkup
+    ? (worksheetRows.length ? worksheetTable(worksheetRows) : '') + articleMarkup
     : '<p>No suitable questions are available for this printable sheet.</p>';
 
   const heading = practice ? 'Follow-up practice worksheet' : 'Tutoring session report';
@@ -64,10 +109,22 @@ export function printReportHtml(report: GuardianSummaryView, mode: PrintableMode
     '.question-text{font-size:17px;white-space:pre-wrap;margin:12px 0}.answer-lines{font-size:12px;color:#625b50}' +
     '.line{height:38px;border-bottom:1px solid #bbb}.student-answer{background:#f6f3ee;padding:10px}' +
     '.note{background:#f7f3eb;padding:12px;margin-top:20px}.toolbar{display:flex;justify-content:flex-end;gap:8px;margin:8px 0 25px}' +
-    'button{padding:10px 18px;border:1px solid #777;border-radius:8px;background:#fff;cursor:pointer}' +
-    '@media print{body{padding:0;max-width:none}.toolbar{display:none!important}}' +
+    '.toolbar{align-items:center;justify-content:space-between}.toolbar p{margin:0;color:#4a443b}' +
+    'button{min-height:44px;padding:10px 18px;border:1px solid #5c564c;border-radius:8px;background:#fff;color:#201e1b;font:inherit;cursor:pointer}' +
+    'button:focus-visible{outline:3px solid #201e1b;outline-offset:2px}' +
+    'table.worksheet{width:100%;border-collapse:collapse;margin:8px 0 16px;font-size:13px}' +
+    'table.worksheet caption{text-align:left;font-size:12px;color:#4a443b;margin-bottom:6px}' +
+    'table.worksheet th,table.worksheet td{border:1px solid #8a8378;padding:6px 8px;text-align:left;vertical-align:top}' +
+    'table.worksheet thead th{background:#fff;border-bottom:2px solid #201e1b}' +
+    'table.worksheet td.question-text{font-size:14px;margin:0}' +
+    '@media print{body{padding:0;max-width:none;font-size:12pt}.toolbar{display:none!important}' +
+    'h1,h2{break-after:avoid;page-break-after:avoid}' +
+    'table.worksheet thead{display:table-header-group}' +
+    'table.worksheet tr,.question,.note{break-inside:avoid;page-break-inside:avoid}' +
+    'p{orphans:3;widows:3}}' +
     '</style></head><body>' +
-    '<div class="toolbar"><button type="button" onclick="window.print()">Print / Save as PDF</button></div>' +
+    '<header class="toolbar"><p>Print or save as PDF from your browser</p>' +
+    '<button type="button" onclick="window.print()">Print / Save as PDF</button></header>' +
     '<p class="eyebrow">Moyo Learn · Family learning record</p><h1>' + escapeHtml(heading) + '</h1>' +
     '<p class="meta">' + escapeHtml(date) + (subjectLabels.length ? ' · ' + escapeHtml(subjectLabels.join(', ')) : '') + '</p>' +
     (practice

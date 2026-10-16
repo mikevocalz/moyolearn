@@ -144,3 +144,27 @@ DO $$ BEGIN
     EXECUTE 'DELETE FROM payload.incident_reports WHERE expires_at < now() AND legal_hold IS NULL';
   END IF;
 END $$;
+
+/*
+  Homework source crops (ADR-124, PR #100 contract decision 4): an UPDATE, not a
+  DELETE, and the only statement in this file that keeps the row.
+
+  `homework_questions.crop` is the photograph of the child's page the question
+  was read from. It gets `MEDIA_TTL_DAYS` — seven days from capture, the
+  shortest window in the product (`packages/app/features/media/retention.ts`)
+  — stamped into `crop_expires_at` when the row is written. The confirmed TEXT
+  is the learner's record of work and has no clock: it goes with the account
+  cascade and nothing else. So when the image's week is up, the column is
+  nulled and the row stands, which is the "corrected text outlives the image"
+  decision made a predicate. The partial index
+  `homework_questions_live_crop_idx` covers exactly this WHERE.
+
+  GUARDED with `to_regclass` for the reason the header records: this file runs
+  as one string in one implicit transaction, and a database that has not had
+  `homework_additive.sql` applied must be a no-op here, not a broken sweep.
+*/
+DO $$ BEGIN
+  IF to_regclass('payload.homework_questions') IS NOT NULL THEN
+    EXECUTE 'UPDATE payload.homework_questions SET crop = NULL WHERE crop_expires_at < now() AND crop IS NOT NULL';
+  END IF;
+END $$;

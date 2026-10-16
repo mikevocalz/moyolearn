@@ -235,6 +235,45 @@ export {
   type TeacherShareView,
 } from './features/summary/summary.service';
 export { extractEvidence, type EvidencedTurn, type MasteryFactEvidence } from './features/summary/evidence';
+
+/*
+  ADR-124 — server-owned homework. Beside the summaries because both share
+  `LoadGuardianWards` and the report reads these rows. Port types travel with
+  the values so `apps/web/lib/homework.repository.ts` binds them by name.
+*/
+export {
+  advanceHomeworkSubmission,
+  assertCanActFor,
+  createHomeworkSubmission,
+  guardianWards,
+  homeworkSubmission,
+  HomeworkConflict,
+  HomeworkInputInvalid,
+  HomeworkNotFound,
+  listHomeworkSubmissions,
+  reviseHomeworkQuestion,
+  startHomeworkSubmission,
+  type AdvanceHomeworkSubmission,
+  type AdvanceOutcome,
+  type ApprovePracticeSet,
+  type CreateHomeworkSubmission,
+  type CreatePracticeSet,
+  type CreateSubmissionOutcome,
+  type HomeworkEvidence,
+  type HomeworkPorts,
+  type IssueHomeworkEvidence,
+  type ListHomeworkSubmissions,
+  type LoadHomeworkSubmission,
+  type LoadPracticeSet,
+  type LoadSubmissionOwner,
+  type LoadWardProfile,
+  type NewQuestionRow,
+  type NewSubmissionRow,
+  type ReviseHomeworkQuestion,
+  type StartHomeworkSubmission,
+  type WardProfile,
+} from './features/homework/homework.service';
+export type * from './features/homework/homework.types';
 export type {
   EvidenceRef,
   MasteryMovement,

@@ -39,3 +39,40 @@ test('follow-up worksheet only contains questions that needed help', () => {
   assert.match(html, /not a new graded exam/);
   assert.match(html, /Show your steps here/);
 });
+
+const worksheetReport = {
+  ...report,
+  problems: [
+    {
+      subject: 'Math',
+      rows: [
+        {
+          status: 'still-working',
+          question: { kind: 'text', text: '<script>alert("rev")</script> 7 x 8' },
+          childAnswer: null,
+          attempts: 3,
+          homework: { orderIndex: 1, sourcePage: 1, sourceNumber: 4, outcome: 'attempted', hintsUsed: 2 },
+        },
+        {
+          status: 'solved-independently',
+          question: { kind: 'text', text: '6 x 7' },
+          childAnswer: null,
+          attempts: 1,
+          homework: { orderIndex: 0, sourcePage: 1, sourceNumber: null, outcome: 'solved-independently', hintsUsed: 0 },
+        },
+      ],
+    },
+  ],
+} as unknown as GuardianSummaryView;
+
+test('worksheet rows print order, source number, outcome words, attempts and hints, escaped', () => {
+  const html = printReportHtml(worksheetReport, 'report');
+  assert.doesNotMatch(html, /<script>alert\("rev"\)/);
+  assert.match(html, /&lt;script&gt;alert\(&quot;rev&quot;\)&lt;\/script&gt; 7 x 8/);
+  assert.match(html, /Print or save as PDF from your browser/);
+  assert.match(html, /<th scope="row">1<\/th><td>Page 1, unnumbered<\/td><td class="question-text">6 x 7<\/td><td>Finished without hints<\/td><td>1 attempt<\/td><td>0 hints<\/td>/);
+  assert.match(html, /<th scope="row">2<\/th><td>Page 1, no\. 4<\/td>.*<td>Attempted, still open<\/td><td>3 attempts<\/td><td>2 hints<\/td>/);
+  assert.doesNotMatch(html, /Student response/, 'a worksheet row has no recorded answer to print');
+  assert.match(html, /page-break-inside:avoid/);
+  assert.match(html, /thead\{display:table-header-group\}/);
+});
