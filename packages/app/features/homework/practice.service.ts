@@ -1,3 +1,4 @@
+import 'server-only';
 // Guardian practice sets: draft from a submission, approve, load for print.
 //
 // Every entry runs under `protectedOperation`, and the caller is the guardian
