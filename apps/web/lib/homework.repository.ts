@@ -122,7 +122,7 @@ function submissionView(row: HomeworkSubmission, questions: readonly HomeworkQue
     createdByAuthId: row.createdByAuthId,
     subject: row.subject,
     title: row.title,
-    instructions: row.instructions,
+    instructions: row.instructions ?? '',
     localDate: row.localDate,
     status: row.status,
     pipelineStatus: row.pipelineStatus,

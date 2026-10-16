@@ -1742,13 +1742,13 @@ test(
         await c.query(
           `insert into payload.homework_submissions
              (submission_id, learner_auth_id, created_by_auth_id, subject, title, local_date, current_question_id)
-           values ($1, $2, $3, 'Math', 'Sheet', '2026-10-15', $1 || '-q')`,
+           values ($1::text, $2, $3, 'Math', 'Sheet', '2026-10-15', $1::text || '-q')`,
           [sub, learnerId, createdBy],
         );
         await c.query(
           `insert into payload.homework_questions
              (question_id, submission_id, learner_auth_id, order_index, source_page, current_revision, text)
-           values ($1 || '-q', $1, $2, 0, 1, 'r1', '1/2 + 1/4')`,
+           values ($1::text || '-q', $1::text, $2, 0, 1, 'r1', '1/2 + 1/4')`,
           [sub, learnerId],
         );
       }

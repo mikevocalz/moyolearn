@@ -1,0 +1,38 @@
+✔ the budget survives a restart — a second connection reads the first one’s turns (90.928042ms)
+(node:14207) DeprecationWarning: Calling client.query() when the client is already executing a query is deprecated and will be removed in pg@9.0. Use async/await or an external async flow control mechanism instead.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+✔ two concurrent writers cannot lose a turn (25.412166ms)
+✔ the retention window is generated, not chosen by the writer (10.586291ms)
+✔ erasure cascade leaves nothing behind, including version tables (48.183667ms)
+✔ transcript sweep erases expired transcripts and every fact they are the sole source of (60.042541ms)
+✔ the sweep spans the edu schema — transcripts, derived facts and their vectors (26.646208ms)
+✔ erasure spans the tutoring write path: a distilled model written to edu is swept whole (26.705333ms)
+✔ an erased interest does not come back: distillation reads the blocked tag, not just the deleted row (23.020417ms)
+✔ erasing one session takes the beliefs it alone supports and its vectors, and trims the rest (29.169375ms)
+✔ forget everything empties every edu table for one learner and touches no other learner (29.042792ms)
+✔ the transcript TTL sweep does not touch a session summary that outlives it (13.914459ms)
+✔ forget everything takes the session summaries with it, and only this learner’s (16.641084ms)
+✔ the sweep nulls an expired homework crop and keeps the question (11.710875ms)
+✔ a guardian erasure takes their uploads for a ward and their practice sets, and nothing else (18.13625ms)
+✔ the sweep refuses a legal-hold row and takes the expired one beside it (45.27025ms)
+✔ a held row that has not expired is left alone for the same reason (16.543916ms)
+▶ a reserved tenant key is refused
+  ✔ refuses every name on the list, naming it (0.520417ms)
+  ✔ covers the three hosts the app itself serves — the collision that takes a surface down (0.122833ms)
+✔ a reserved tenant key is refused (1.286ms)
+▶ the hostname shape is enforced
+  ✔ refuses characters no DNS label may carry (0.170125ms)
+  ✔ refuses a leading or trailing hyphen (0.063542ms)
+  ✔ refuses more than 63 characters (0.08475ms)
+  ✔ refuses an empty or missing key (0.054792ms)
+  ✔ accepts the keys real districts use (0.071334ms)
+  ✔ states the same label rule the read side applies (0.087167ms)
+✔ the hostname shape is enforced (1.248583ms)
+ℹ tests 24
+ℹ suites 2
+ℹ pass 24
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 373.636
