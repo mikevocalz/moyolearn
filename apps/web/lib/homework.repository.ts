@@ -467,7 +467,10 @@ export const advanceSubmission: AdvanceHomeworkSubmission = async (learnerAuthId
         await payload.db.rollbackTransaction(transactionID);
         return { kind: 'not-found' };
       }
-      if (Number(row.currentIndex) !== input.expectedIndex) {
+      // A finished worksheet keeps its cursor on the last question, so a repeat
+      // advance would pass the index check and overwrite that question's outcome.
+      // Answering `stale` hands the client the completed row to reconcile to.
+      if (row.status === 'complete' || Number(row.currentIndex) !== input.expectedIndex) {
         await payload.db.rollbackTransaction(transactionID);
         return { kind: 'stale', current: advanceResult(row) };
       }
