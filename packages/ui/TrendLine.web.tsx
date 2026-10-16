@@ -1,7 +1,7 @@
 'use client';
 // PLATFORM FORK — the ops trend line on web, drawn with plain DOM SVG.
 //
-// Not Skia here: @shopify/react-native-skia on web needs CanvasKit WASM loaded
+// Not Skia here: react-native-skia on web needs CanvasKit WASM loaded
 // through WithSkiaWeb, which is a lot of bytes for one polyline, and doc 27 §3
 // puts the web dashboards on a DOM renderer anyway. Not Recharts either — a
 // single series with no legend, no tooltip axis and no second measure is a

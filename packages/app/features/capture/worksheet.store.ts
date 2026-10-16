@@ -1,44 +1,14 @@
 'use client';
-// One current worksheet in memory; its device copy is keyed to the learner.
-// This is question navigation, not graded progress or a guardian report.
+// The worksheet cache bound to this device's storage and the real homework
+// routes. The behaviour lives in `worksheet-cache.ts`; this file only wires
+// MMKV (native, id `capture`) or localStorage (web) and the fetch client.
+// SOT: docs/work/pr-100/contract.md §Client · packages/app/features/capture/worksheet-cache.ts
+// SOT-KEYWORDS: homework worksheet store zustand mmkv cache cursor
 import { create } from 'zustand';
+import { homeworkClient } from '../homework/homework.client.ts';
 import { problemStorage } from './problem-storage';
-import {
-  advanceWorksheet,
-  clearWorksheet,
-  readWorksheet,
-  writeWorksheet,
-  type WorksheetSession,
-} from './worksheet-session.ts';
+import { worksheetStateCreator, type WorksheetState } from './worksheet-cache.ts';
 
-interface WorksheetState {
-  current: WorksheetSession | null;
-  restore: (ownerId: string) => WorksheetSession | null;
-  begin: (value: Omit<WorksheetSession, 'schemaVersion' | 'currentIndex'>) => WorksheetSession;
-  advance: (ownerId: string) => WorksheetSession | null;
-  clear: (ownerId: string) => void;
-}
-
-export const useWorksheetStore = create<WorksheetState>((set) => ({
-  current: null,
-  restore: (ownerId) => {
-    const current = readWorksheet(problemStorage, ownerId);
-    set({ current });
-    return current;
-  },
-  begin: (input) => {
-    const current: WorksheetSession = { ...input, schemaVersion: 1, currentIndex: 0 };
-    writeWorksheet(problemStorage, current);
-    set({ current });
-    return current;
-  },
-  advance: (ownerId) => {
-    const next = advanceWorksheet(problemStorage, ownerId);
-    if (next !== null) set({ current: next });
-    return next;
-  },
-  clear: (ownerId) => {
-    clearWorksheet(problemStorage, ownerId);
-    set({ current: null });
-  },
-}));
+export const useWorksheetStore = create<WorksheetState>()(
+  worksheetStateCreator({ storage: problemStorage, client: homeworkClient }),
+);

@@ -25,8 +25,8 @@ import {
   type ResolvedTutorPresence,
 } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
-import { useCaptureStore } from '../capture';
-import { useWorksheetStore, questionForTutor } from '../capture';
+import { useCaptureStore , useWorksheetStore, currentPrompt, isCurrentWorksheetQuestion, outcomeForAdvance, questionIndexForPrompt } from '../capture';
+import type { HomeworkSubmissionView } from '../homework/homework.types.ts';
 import { buttonSizeForBand, type AgeBand } from '../capture';
 import { countImages, MAX_TUTOR_IMAGES } from '@acme/ui';
 import { useAppSession } from '../../providers/session';
@@ -35,19 +35,6 @@ import { API_URL, recommendedTutorPresenceFor } from './tutor-constants.ts';
 import { TutorAvatar } from './tutor-avatar';
 import { markTurnSent, noteKeystroke, setRecording } from './tutor-cues';
 import { audioQueue } from './tutor-audio';
-
-/**
- * The breath between her sentences, per band, milliseconds. A six-year-old
- * needs the full stop to land before the next sentence starts; a teen hears
- * the same pause as slow. Voice RATE is the server's (doc 32 band modulation);
- * this is the silence between rates.
- */
-const SENTENCE_PAUSE_MS: Record<AgeBand, number> = {
-  young: 750,
-  child: 600,
-  teen: 450,
-  adult: 350,
-};
 import { pickNoteImage } from '../schedule/pick-note-image';
 import { pickCamera } from './pick-camera';
 import { TutorOpening } from './tutor-opening';
@@ -65,6 +52,19 @@ import { useUploadQueue, setUploadReporter } from '../media';
 import { patchAttachment, postMessage } from './session.client.ts';
 import { useXrSession } from './xr-session.store.ts';
 import { canOpenSpatialBoard } from './xr-capability.ts';
+
+/**
+ * The breath between her sentences, per band, milliseconds. A six-year-old
+ * needs the full stop to land before the next sentence starts; a teen hears
+ * the same pause as slow. Voice RATE is the server's (doc 32 band modulation);
+ * this is the silence between rates.
+ */
+const SENTENCE_PAUSE_MS: Record<AgeBand, number> = {
+  young: 750,
+  child: 600,
+  teen: 450,
+  adult: 350,
+};
 
 export interface TutorScreenProps {
   ageBand?: AgeBand;
@@ -99,7 +99,11 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     ? (activeContext.learnerId ?? user?.id ?? '')
     : '';
   const worksheet = useWorksheetStore((s) => s.current);
+  const worksheetOwner = useWorksheetStore((s) => s.ownerId);
+  const worksheetSync = useWorksheetStore((s) => s.status);
   const restoreWorksheet = useWorksheetStore((s) => s.restore);
+  const hydrateWorksheet = useWorksheetStore((s) => s.hydrate);
+  const linkWorksheetSession = useWorksheetStore((s) => s.start);
   // Resolve the learner's presentation band from the session before rendering.
   // No implicit `teen` fallback: an unknown band is treated as the adult (9-12)
   // register so a missed context does not hand a high-schooler a childish shell.
@@ -110,13 +114,20 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   // Mirrored alongside the text, not derived from it: by the time the tutor has
   // the string, a photographed problem and a served one look the same.
   const problemIsReading = useCaptureStore((s) => s.problemIsReading);
+  const problemEvidence = useCaptureStore((s) => s.problemEvidence);
   useEffect(() => {
-    if (learnerId) restoreWorksheet(learnerId);
-  }, [learnerId, restoreWorksheet]);
-  const worksheetQuestion = worksheet?.questions[worksheet.currentIndex];
+    if (!learnerId) return;
+    // The device copy first, synchronously, so the question bar paints with the
+    // problem; then the server's cursor, which also flushes moves made offline.
+    restoreWorksheet(learnerId);
+    void hydrateWorksheet(learnerId);
+  }, [learnerId, restoreWorksheet, hydrateWorksheet]);
+  const worksheetPrompt = worksheet ? currentPrompt(worksheet) : null;
+  // Prompt equality alone conflates two identical worksheet questions; the
+  // evidence handle resolves the cursor's real question when wording repeats.
   const activeWorksheet =
-    worksheet?.ownerId === learnerId && worksheetQuestion && problemIsReading &&
-    questionForTutor(worksheetQuestion, worksheet).trim() === problem?.trim()
+    worksheet && worksheetOwner === learnerId && worksheetPrompt !== null && problemIsReading &&
+    isCurrentWorksheetQuestion(worksheet, problem, problemEvidence)
       ? worksheet
       : null;
   const {
@@ -901,6 +912,43 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     }
   }, [asking, attachments, handleAskBoard, pendingXrAsk, pendingXrSay, takeXrAsk, takeXrSay]);
 
+  const presentWorksheetQuestion = useCallback((view: HomeworkSubmissionView) => {
+    const nextQuestion = view.questions[view.currentIndex];
+    const nextPrompt = currentPrompt(view);
+    if (!nextQuestion || nextPrompt === null) return;
+    audioQueue.stop();
+    startedProblem.current = 'true:' + nextPrompt;
+    setProblem(nextPrompt, true, { questionId: nextQuestion.questionId, revision: nextQuestion.currentRevision });
+    // The new question needs its own visible turn AND its own coach request:
+    // an effect gated on first-session opening must not swallow question 2.
+    useTutorStore.getState().start(nextPrompt, true);
+    void useTutorStore.getState().coach(
+      'Please help me begin this question, one step at a time. Ask what I have tried, without giving the answer.',
+    );
+  }, [setProblem]);
+
+  /*
+    Another device moved the cursor, so this one's 409 or hydrate brought the
+    server's position back. Wait for an in-flight turn to settle, then move to
+    the server's question. Matching prompts prevent a refreshed outcome from
+    restarting the current question.
+  */
+  useEffect(() => {
+    if (!worksheet || worksheetOwner !== learnerId || !problemIsReading || worksheetPrompt === null) return;
+    if (worksheetPrompt.trim() === problem?.trim()) return;
+    if (questionIndexForPrompt(worksheet, problem) < 0) return;
+    if (state.kind === 'thinking') return;
+    presentWorksheetQuestion(worksheet);
+  }, [worksheet, worksheetOwner, learnerId, problemIsReading, worksheetPrompt, problem, state.kind, presentWorksheetQuestion]);
+
+  // Keep worksheet hooks above every opening-state return so resume cannot
+  // change the hook order when a problem becomes available.
+  const activeSubmissionId = activeWorksheet?.submissionId;
+  const linkedSessionId = activeWorksheet?.tutorSessionId;
+  useEffect(() => {
+    if (activeSubmissionId && sessionId && linkedSessionId !== sessionId) void linkWorksheetSession(sessionId);
+  }, [activeSubmissionId, sessionId, linkedSessionId, linkWorksheetSession]);
+
   /*
     NO PROBLEM IS STILL A PLACE.
 
@@ -972,21 +1020,27 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   const stageState = state.kind === 'retry' && !presenceLive ? PRESENCE_STATE : state;
 
   const moveToNextWorksheetQuestion = () => {
-    if (!activeWorksheet || !learnerId || state.kind === 'thinking') return;
-    const advanced = useWorksheetStore.getState().advance(learnerId);
-    if (!advanced) return;
-    const nextQuestion = advanced.questions[advanced.currentIndex];
-    if (!nextQuestion) return;
-    const nextPrompt = questionForTutor(nextQuestion, advanced);
-    audioQueue.stop();
-    startedProblem.current = 'true:' + nextPrompt;
-    setProblem(nextPrompt, true);
-    // The new question needs its own visible turn AND its own coach request:
-    // an effect gated on first-session opening must not swallow question 2.
-    useTutorStore.getState().start(nextPrompt, true);
-    void useTutorStore.getState().coach(
-      'Please help me begin this question, one step at a time. Ask what I have tried, without giving the answer.',
-    );
+    if (!activeWorksheet || !learnerId || state.kind === 'thinking' || activeWorksheet.status === 'complete') return;
+    const tutor = useTutorStore.getState();
+    // Turns since this question's own bubble; earlier questions' turns are theirs.
+    let bubble = -1;
+    tutor.messages.forEach((m, i) => {
+      if (m.id.startsWith('problem-') && m.text.trim() === worksheetPrompt?.trim()) bubble = i;
+    });
+    const learnerTurns = tutor.messages.slice(bubble + 1).filter((m) => m.role === 'learner').length;
+    // Read before `start` resets the hint ladder for the next question.
+    const hintsUsed = tutor.hintDepth;
+    const outcome = outcomeForAdvance({
+      learnerTurns,
+      hintDepth: hintsUsed,
+      evaluatedCorrect: tutor.lastOutcome === 'correct',
+    });
+    // The local cursor moves before the request leaves; the server's answer
+    // lands in the store as confirmed, reconciled or still pending.
+    void useWorksheetStore.getState().advance({ outcome, attempts: learnerTurns, hintsUsed, misconceptionTags: [] });
+    const advanced = useWorksheetStore.getState().current;
+    if (!advanced || advanced.status === 'complete') return;
+    presentWorksheetQuestion(advanced);
   };
 
   return (
@@ -1005,7 +1059,9 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
               <Text variant="caption" tone="muted">
                 Question {activeWorksheet.currentIndex + 1} of {activeWorksheet.questions.length}
               </Text>
-              {activeWorksheet.currentIndex + 1 < activeWorksheet.questions.length ? (
+              {activeWorksheet.status === 'complete' ? (
+                <Text variant="caption" tone="muted">Worksheet finished</Text>
+              ) : activeWorksheet.currentIndex + 1 < activeWorksheet.questions.length ? (
                 <Button
                   title="Next question"
                   aria-label={'Move to question ' + (activeWorksheet.currentIndex + 2)}
@@ -1015,8 +1071,22 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
                   onPress={moveToNextWorksheetQuestion}
                 />
               ) : (
-                <Text variant="caption" tone="muted">Last question</Text>
+                <Button
+                  title="Finish worksheet"
+                  aria-label="Finish this worksheet"
+                  variant="outline"
+                  size="sm"
+                  disabled={state.kind === 'thinking'}
+                  onPress={moveToNextWorksheetQuestion}
+                />
               )}
+              {worksheetSync === 'pending' ? (
+                <Text variant="caption" tone="muted">Saved on this device. It syncs when you are back online.</Text>
+              ) : worksheetSync === 'reconciled' ? (
+                <Text variant="caption" tone="muted">Picked up where your other device left off.</Text>
+              ) : worksheetSync === 'error' ? (
+                <Text variant="caption" tone="muted">Not saved yet. Your place is kept on this device.</Text>
+              ) : null}
             </View>
           ) : null}
           <XrBoardButton

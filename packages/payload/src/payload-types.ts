@@ -81,6 +81,9 @@ export interface Config {
     safetyEvents: SafetyEvent;
     incidentReports: IncidentReport;
     sessionSummaries: SessionSummary;
+    homeworkSubmissions: HomeworkSubmission;
+    homeworkQuestions: HomeworkQuestion;
+    homeworkPracticeSets: HomeworkPracticeSet;
     organizations: Organization;
     enrollments: Enrollment;
     tutorEngagements: TutorEngagement;
@@ -111,6 +114,9 @@ export interface Config {
     safetyEvents: SafetyEventsSelect<false> | SafetyEventsSelect<true>;
     incidentReports: IncidentReportsSelect<false> | IncidentReportsSelect<true>;
     sessionSummaries: SessionSummariesSelect<false> | SessionSummariesSelect<true>;
+    homeworkSubmissions: HomeworkSubmissionsSelect<false> | HomeworkSubmissionsSelect<true>;
+    homeworkQuestions: HomeworkQuestionsSelect<false> | HomeworkQuestionsSelect<true>;
+    homeworkPracticeSets: HomeworkPracticeSetsSelect<false> | HomeworkPracticeSetsSelect<true>;
     organizations: OrganizationsSelect<false> | OrganizationsSelect<true>;
     enrollments: EnrollmentsSelect<false> | EnrollmentsSelect<true>;
     tutorEngagements: TutorEngagementsSelect<false> | TutorEngagementsSelect<true>;
@@ -576,6 +582,117 @@ export interface SessionSummary {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homeworkSubmissions".
+ */
+export interface HomeworkSubmission {
+  id: number;
+  submissionId: string;
+  learnerAuthId: string;
+  createdByAuthId: string;
+  subject: string;
+  title: string;
+  instructions?: string | null;
+  localDate: string;
+  status: 'reviewing' | 'ready' | 'in-progress' | 'complete' | 'abandoned';
+  pipelineStatus: 'pending' | 'extracting' | 'extracted' | 'failed';
+  pipelineError?: string | null;
+  currentIndex: number;
+  currentQuestionId: string;
+  tutorSessionId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homeworkQuestions".
+ */
+export interface HomeworkQuestion {
+  id: number;
+  questionId: string;
+  submissionId: string;
+  learnerAuthId: string;
+  orderIndex: number;
+  sourcePage: number;
+  sourceNumber?: number | null;
+  currentRevision: string;
+  text: string;
+  revisions:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  crop?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  cropExpiresAt?: string | null;
+  outcome:
+    | 'unattempted'
+    | 'skipped'
+    | 'attempted'
+    | 'supported-with-hints'
+    | 'solved-independently'
+    | 'unresolved';
+  attempts: number;
+  hintsUsed: number;
+  misconceptionTags:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  startedAt?: string | null;
+  completedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homeworkPracticeSets".
+ */
+export interface HomeworkPracticeSet {
+  id: number;
+  practiceSetId: string;
+  submissionId: string;
+  learnerAuthId: string;
+  guardianAuthId: string;
+  status: 'draft' | 'approved';
+  seed: string;
+  targetedTags:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  items:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "organizations".
  */
 export interface Organization {
@@ -923,6 +1040,18 @@ export interface PayloadLockedDocument {
         value: number | SessionSummary;
       } | null)
     | ({
+        relationTo: 'homeworkSubmissions';
+        value: number | HomeworkSubmission;
+      } | null)
+    | ({
+        relationTo: 'homeworkQuestions';
+        value: number | HomeworkQuestion;
+      } | null)
+    | ({
+        relationTo: 'homeworkPracticeSets';
+        value: number | HomeworkPracticeSet;
+      } | null)
+    | ({
         relationTo: 'organizations';
         value: number | Organization;
       } | null)
@@ -1257,6 +1386,68 @@ export interface SessionSummariesSelect<T extends boolean = true> {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homeworkSubmissions_select".
+ */
+export interface HomeworkSubmissionsSelect<T extends boolean = true> {
+  submissionId?: T;
+  learnerAuthId?: T;
+  createdByAuthId?: T;
+  subject?: T;
+  title?: T;
+  instructions?: T;
+  localDate?: T;
+  status?: T;
+  pipelineStatus?: T;
+  pipelineError?: T;
+  currentIndex?: T;
+  currentQuestionId?: T;
+  tutorSessionId?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homeworkQuestions_select".
+ */
+export interface HomeworkQuestionsSelect<T extends boolean = true> {
+  questionId?: T;
+  submissionId?: T;
+  learnerAuthId?: T;
+  orderIndex?: T;
+  sourcePage?: T;
+  sourceNumber?: T;
+  currentRevision?: T;
+  text?: T;
+  revisions?: T;
+  crop?: T;
+  cropExpiresAt?: T;
+  outcome?: T;
+  attempts?: T;
+  hintsUsed?: T;
+  misconceptionTags?: T;
+  startedAt?: T;
+  completedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homeworkPracticeSets_select".
+ */
+export interface HomeworkPracticeSetsSelect<T extends boolean = true> {
+  practiceSetId?: T;
+  submissionId?: T;
+  learnerAuthId?: T;
+  guardianAuthId?: T;
+  status?: T;
+  seed?: T;
+  targetedTags?: T;
+  items?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "organizations_select".
  */
 export interface OrganizationsSelect<T extends boolean = true> {
@@ -1493,6 +1684,9 @@ export interface CollectionQueryWidget {
       | 'safetyEvents'
       | 'incidentReports'
       | 'sessionSummaries'
+      | 'homeworkSubmissions'
+      | 'homeworkQuestions'
+      | 'homeworkPracticeSets'
       | 'organizations'
       | 'enrollments'
       | 'tutorEngagements'
@@ -1539,6 +1733,9 @@ export interface ActivityWidget {
           | 'safetyEvents'
           | 'incidentReports'
           | 'sessionSummaries'
+          | 'homeworkSubmissions'
+          | 'homeworkQuestions'
+          | 'homeworkPracticeSets'
           | 'organizations'
           | 'enrollments'
           | 'tutorEngagements'

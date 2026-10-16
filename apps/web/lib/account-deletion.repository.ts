@@ -102,6 +102,19 @@ const SUBJECT_COLLECTIONS = [
   { collection: 'assignment-completions', fields: ['learnerAuthId'] },
   { collection: 'handoff-codes', fields: ['learnerAuthId', 'guardianAuthId'] },
   /*
+    ADR-124's homework rows. None carries an `expires_at`, so like
+    `sessionSummaries` this cascade is their only deleter. Questions go before
+    the submission that groups them, content-before-links as the header says.
+    A submission a guardian uploaded for a ward is the WARD's row
+    (`learnerAuthId`), and the uploader's own deletion takes it too
+    (`createdByAuthId`): a parent erasing their account does not leave their
+    photograph of a child's page filed under the child. Practice sets name
+    both the learner and the approving guardian for the same reason.
+  */
+  { collection: 'homeworkQuestions', fields: ['learnerAuthId'] },
+  { collection: 'homeworkSubmissions', fields: ['learnerAuthId', 'createdByAuthId'] },
+  { collection: 'homeworkPracticeSets', fields: ['learnerAuthId', 'guardianAuthId'] },
+  /*
     Consents and guardianships close the loop the creation path opened:
     `create-managed-learner.ts` writes exactly these two rows after the user,
     and its rollback deletes the user when either fails. Deleting them here is
@@ -270,6 +283,28 @@ export const eraseSubjectPayload: EraseSubjectPayload = async (_ctx, subject) =>
     const summaries = await deleteOwned(payload, 'sessionSummaries', {
       learnerAuthId: { equals: subject.authId },
     });
+
+    /*
+      Questions of worksheets this subject uploaded FOR A WARD. Those rows carry
+      the ward's `learnerAuthId`, so the registry's `homeworkQuestions` entry
+      misses them, while its `homeworkSubmissions` entry takes the parent row by
+      `createdByAuthId`. Without this step the guardian's erasure would leave
+      the photographed questions, crops included, pointing at a submission that
+      no longer exists.
+    */
+    const uploaded = await payload.find({
+      collection: 'homeworkSubmissions',
+      where: { createdByAuthId: { equals: subject.authId } },
+      select: { submissionId: true },
+      pagination: false,
+      depth: 0,
+    });
+    const uploadedIds = uploaded.docs.map((doc) => doc.submissionId);
+    if (uploadedIds.length > 0) {
+      rows += await deleteOwned(payload, 'homeworkQuestions', {
+        submissionId: { in: uploadedIds },
+      });
+    }
 
     for (const { collection, fields } of SUBJECT_COLLECTIONS) {
       rows += await deleteOwned(payload, collection, ownedBy(subject, fields));

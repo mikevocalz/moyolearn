@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// Complete @shopify/react-native-skia's Graphite backend with one reviewed Dawn.
+// Complete react-native-skia's Graphite backend with one reviewed Dawn.
 // SOT: upstream skia gitHead 6a53dcd8b63b739f60613dbed61475f6b3c1d9e5;
 // docs/decisions/adr-121-gpu-device-topology.md.
 // SOT-KEYWORDS: skia graphite dawn webgpu postinstall headers provenance cache
@@ -13,9 +13,9 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 // The 154.3.0 Graphite and shared-Dawn npm artifacts were published from the
 // same upstream commit. Dawn's own metadata records both its source and patches.
 export const ADMISSION = Object.freeze({
-  renderer: '2.14.0', version: '154.3.0', skia: 'm154_8037_58c',
+  renderer: '3.6.1', version: '154.3.0', skia: 'm154_8037_58c',
   dawnCommit: '3d786993a7ded64c4ebb4884b9b079db9ad0e580',
-  dawnTag: 'chrome-m154a', webgpu: '0.13.1',
+  dawnTag: 'chrome-m154a', webgpu: '0.16.0',
   patches: ['metal-maccatalyst.patch', 'tint-looprange-function-variable.patch'],
   // This release and the 154.3.0 publisher both use Skia commit 2466dcf3937437e217e7f284afe0e1aae15891ce.
   // Only its three private Graphite headers are used; Dawn comes from the npm package.
@@ -36,7 +36,7 @@ function packageAt(root, name) {
 }
 
 export function inspectPackages(root) {
-  const renderer = packageAt(root, '@shopify/react-native-skia');
+  const renderer = packageAt(root, 'react-native-skia');
   const webgpu = packageAt(root, 'react-native-webgpu');
   const dawn = packageAt(root, 'react-native-webgpu-dawn');
   const graphite = GRAPHITE_PACKAGES.map((name) => packageAt(root, name));
@@ -104,7 +104,7 @@ function copyDawnHeaders(source, destination) {
 // fetchHeaders is injected only by offline filesystem contract tests; the CLI
 // always downloads and verifies the pinned upstream archive above.
 export async function enableSkiaGraphite({ root = ROOT, fetchHeaders = fetchPrivateHeaders } = {}) {
-  const skia = join(root, 'node_modules/@shopify/react-native-skia');
+  const skia = join(root, 'node_modules/react-native-skia');
   if (!existsSync(skia)) return 'skia-graphite: renderer absent, nothing to mark';
   const { dawn, graphite } = inspectPackages(root);
   const libs = join(skia, 'libs');

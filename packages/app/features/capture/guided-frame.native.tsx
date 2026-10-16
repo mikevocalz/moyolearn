@@ -3,11 +3,12 @@
 // SOT: docs/pack/24-homework-capture-spec.md §2
 // SOT-KEYWORDS: guidedframe camera capture takephoto visioncamera native age band skia realtime hints
 
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, StyleSheet } from 'react-native';
+import type { LayoutChangeEvent } from 'react-native';
 import { useDerivedValue, useSharedValue } from 'react-native-reanimated';
-import { Canvas, Rect } from '@shopify/react-native-skia';
-import type { SkSize } from '@shopify/react-native-skia';
+import { Canvas, Rect } from 'react-native-skia';
+import type { SkSize } from 'react-native-skia';
 import {
   Camera,
   useCameraDevice,
@@ -39,6 +40,18 @@ export function GuidedFrame({
   const photoOutput = usePhotoOutput();
   const cameraRef = useRef<CameraRef>(null);
   const canvasSize = useSharedValue<SkSize>({ width: 0, height: 0 });
+  // react-native-skia 3.x dropped `onSize`; the canvas reports its layout like
+  // any view, on the JS thread. The guide rect still reads a shared value, so
+  // write the layout into it here.
+  const onCanvasLayout = useCallback(
+    (event: LayoutChangeEvent) => {
+      canvasSize.value = {
+        width: event.nativeEvent.layout.width,
+        height: event.nativeEvent.layout.height,
+      };
+    },
+    [canvasSize],
+  );
   const [active, setActive] = useState(AppState.currentState === 'active');
   const [busy, setBusy] = useState(false);
   const [captureError, setCaptureError] = useState(false);
@@ -180,7 +193,7 @@ export function GuidedFrame({
         style={StyleSheet.absoluteFill}
       />
       <View className="absolute inset-0 pointer-events-none">
-        <Canvas style={StyleSheet.absoluteFill} onSize={canvasSize}>
+        <Canvas style={StyleSheet.absoluteFill} onLayout={onCanvasLayout}>
           <Rect
             x={guideX}
             y={guideY}

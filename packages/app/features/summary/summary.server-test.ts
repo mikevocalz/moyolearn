@@ -31,6 +31,11 @@ import {
   type SummarySessionRow,
 } from './summary.service.ts';
 import type { SessionSummaryReport } from './summary.types.ts';
+import type {
+  HomeworkQuestionView,
+  HomeworkSubmissionView,
+  QuestionOutcome,
+} from '../homework/homework.types.ts';
 
 const OPENED = '2026-08-27T10:00:00.000Z';
 const CLOSED = '2026-08-27T10:20:00.000Z';
@@ -239,5 +244,171 @@ describe('doc 34 §5 — the by-id ownership question', () => {
 
   it('refuses not-found the same way it refuses not-yours', () => {
     assert.equal(guardianSummaryFrom(null, ['learner_1']), null);
+  });
+});
+
+// ── PR #100: worksheet sessions ──────────────────────────────────────────────
+
+const REVISION_TEXT = 'Maya has 3/8 of a pizza and eats 1/8. How much is left?';
+const OCR_TEXT = 'Maya has 3/B of a pizza';
+
+const question = (
+  orderIndex: number,
+  outcome: QuestionOutcome,
+  over: Partial<HomeworkQuestionView> = {},
+): HomeworkQuestionView => ({
+  questionId: `q_${String(orderIndex)}`,
+  orderIndex,
+  sourcePage: 1,
+  sourceNumber: orderIndex + 1,
+  currentRevision: 'r2',
+  text: `${REVISION_TEXT} (${String(orderIndex)})`,
+  revisions: [
+    { revision: 'r1', text: OCR_TEXT, author: 'ocr', confidence: 0.6, createdAt: OPENED },
+    { revision: 'r2', text: `${REVISION_TEXT} (${String(orderIndex)})`, author: 'learner', confidence: null, createdAt: OPENED },
+  ],
+  crop: null,
+  outcome,
+  attempts: 2,
+  hintsUsed: outcome === 'supported-with-hints' ? 1 : 0,
+  misconceptionTags: [],
+  startedAt: OPENED,
+  completedAt: null,
+  ...over,
+});
+
+const OUTCOMES: readonly QuestionOutcome[] = [
+  'solved-independently',
+  'supported-with-hints',
+  'attempted',
+  'unresolved',
+  'skipped',
+  'unattempted',
+];
+
+const submission = (questions: readonly HomeworkQuestionView[]): HomeworkSubmissionView => ({
+  submissionId: 'sub_1',
+  learnerAuthId: 'learner_1',
+  createdByAuthId: 'learner_1',
+  subject: 'Math',
+  title: 'Fractions worksheet',
+  instructions: 'Show your work.',
+  localDate: '2026-08-27',
+  status: 'complete',
+  pipelineStatus: 'extracted',
+  pipelineError: null,
+  currentIndex: questions.length - 1,
+  currentQuestionId: questions.at(-1)?.questionId ?? '',
+  tutorSessionId: 'sess_1',
+  questions,
+  createdAt: OPENED,
+  updatedAt: CLOSED,
+});
+
+function worksheetPorts(
+  sheet: HomeworkSubmissionView,
+  prompts: string[],
+  saved: SessionSummaryReport[],
+): GenerateSummaryPorts {
+  return {
+    ...ports(async (payload) => {
+      prompts.push(payload.system, payload.message);
+      return { text: CLEAN_COPY, model: 'test-classifier' };
+    }, saved),
+    // A homework session's problem is the current question's text.
+    loadSession: async () => ({ ...session, problem: sheet.questions[0]?.text ?? '' }),
+    loadEvidenceTurns: async () => [],
+    loadHomeworkForSession: async (ctx, sessionId) => {
+      assert.equal(ctx.learnerId, 'learner_1', 'identity must come from the session row');
+      return sessionId === 'sess_1' ? sheet : null;
+    },
+  };
+}
+
+describe('PR #100 §Report — one row per worksheet question', () => {
+  it('maps each outcome to the contract status, with attempts and no answer', async () => {
+    const saved: SessionSummaryReport[] = [];
+    const sheet = submission(OUTCOMES.map((outcome, i) => question(i, outcome)));
+    await generateSessionSummary('sess_1', worksheetPorts(sheet, [], saved));
+
+    const rows = saved[0]?.problems ?? [];
+    assert.equal(rows.length, OUTCOMES.length);
+    assert.deepEqual(
+      rows.map((row) => row.status),
+      [
+        'solved-independently',
+        'solved-with-help',
+        'still-working',
+        'still-working',
+        'still-working',
+        'still-working',
+      ],
+    );
+    for (const [i, row] of rows.entries()) {
+      assert.equal(row.questionRef.kind, 'homework-question');
+      assert.equal(row.childAnswer, null, 'a worksheet row quoted an answer nobody recorded');
+      assert.equal(row.attempts, 2);
+      assert.equal(row.submittedIncorrect, false);
+      assert.equal(row.homework?.outcome, OUTCOMES[i]);
+      assert.equal(row.homework?.sourceNumber, i + 1);
+    }
+    assert.deepEqual(saved[0]?.facts, {
+      durationMin: 20,
+      attempted: 4,
+      solvedIndependently: 1,
+      solvedWithHelp: 1,
+    });
+  });
+
+  it('never puts a revision or the session problem text into the narrative prompt', async () => {
+    const saved: SessionSummaryReport[] = [];
+    const prompts: string[] = [];
+    const sheet = submission([
+      question(0, 'supported-with-hints', { misconceptionTags: ['adds-denominators'] }),
+      question(1, 'attempted'),
+    ]);
+    await generateSessionSummary('sess_1', worksheetPorts(sheet, prompts, saved));
+
+    assert.ok(prompts.length > 0, 'the narrative model was never called');
+    const prompt = prompts.join('\n');
+    for (const q of sheet.questions) {
+      for (const revision of q.revisions) {
+        assert.ok(!prompt.includes(revision.text), `revision text reached the prompt: ${revision.text}`);
+      }
+    }
+    assert.ok(!prompt.includes('pizza'), 'question wording reached the prompt');
+  });
+
+  it('derives block 6 from tags and counts, and the lint passes it', async () => {
+    const saved: SessionSummaryReport[] = [];
+    const sheet = submission([
+      question(0, 'supported-with-hints', { misconceptionTags: ['adds-denominators', 'Score 100%'] }),
+      question(1, 'unresolved'),
+    ]);
+    await generateSessionSummary('sess_1', worksheetPorts(sheet, [], saved));
+
+    const nextUp = saved[0]?.nextUp ?? '';
+    assert.equal(
+      nextUp,
+      'Next session goes back over adds denominators, starting with the question still open on this worksheet.',
+    );
+    assert.doesNotMatch(nextUp, /score|grade|%|\d/i);
+  });
+
+  it('states the worksheet counts as the headline when no graded turn named a skill', async () => {
+    const saved: SessionSummaryReport[] = [];
+    const sheet = submission([question(0, 'solved-independently'), question(1, 'supported-with-hints')]);
+    await generateSessionSummary('sess_1', worksheetPorts(sheet, [], saved));
+    assert.equal(saved[0]?.headline, 'Worked through 2 worksheet questions: 1 without hints, 1 with hints.');
+  });
+
+  it('reports a session with no worksheet exactly as before', async () => {
+    const saved: SessionSummaryReport[] = [];
+    await generateSessionSummary('sess_1', {
+      ...ports(async () => ({ text: CLEAN_COPY, model: 'test-classifier' }), saved),
+      loadHomeworkForSession: async () => null,
+    });
+    assert.ok(saved[0]?.problems.every((row) => row.questionRef.kind !== 'homework-question'));
+    assert.equal(saved[0]?.nextUp, 'Next session picks Fractions back up.');
   });
 });

@@ -29,6 +29,9 @@ import { TutorEngagements } from './collections/TutorEngagements';
 import { Classes } from './collections/Classes';
 import { Assignments } from './collections/Assignments';
 import { AssignmentCompletions } from './collections/AssignmentCompletions';
+import { HomeworkSubmissions } from './collections/HomeworkSubmissions';
+import { HomeworkQuestions } from './collections/HomeworkQuestions';
+import { HomeworkPracticeSets } from './collections/HomeworkPracticeSets';
 
 const dirname = path.dirname(fileURLToPath(import.meta.url));
 const serverURL = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
@@ -137,6 +140,16 @@ export default buildConfig({
       `tooling/check-crm-wall.mjs` enforces that on the module graph.
     */
     SessionSummaries,
+    /*
+      ADR-124 — the captured worksheet, its questions and the guardian's
+      practice sets. Beside the summaries because they share the retention
+      class (no `expiresAt`, erased by the account cascade) and because the
+      report reads `homeworkQuestions` for its per-question rows. Learner data
+      on the Loop A side of the wall: the CRM never reads them.
+    */
+    HomeworkSubmissions,
+    HomeworkQuestions,
+    HomeworkPracticeSets,
     // Operations Cloud (doc 28). Kept apart from the Loop A collections above
     // on purpose: business data and learning data never blend, and the schema
     // is where that wall is real rather than a convention.

@@ -87,15 +87,13 @@ export function FamilyScreen() {
                 }}
                 className="w-full rounded-card border-2 border-border bg-surface-raised p-4"
                 outerClassName="w-full"
-                aria-label={`${child.name}, ${child.gradeBand}, ${child.status}`}
+                aria-label={`${child.name}, ${child.gradeBand}`}
               >
                 <View className="flex-row items-center gap-stack">
                   <Avatar name={child.name} size="md" />
                   <View className="flex-1 gap-0.5">
                     <TWText className="text-base font-semibold text-text">{child.name}</TWText>
-                    <TWText className="text-sm text-text-muted">
-                      {child.gradeBand} · {child.status}
-                    </TWText>
+                    <TWText className="text-sm text-text-muted">{child.gradeBand}</TWText>
                   </View>
                   <ArrowRight size={18} className="text-text-muted" />
                 </View>

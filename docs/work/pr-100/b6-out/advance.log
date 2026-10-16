@@ -1,0 +1,11 @@
+adv 0 (solved-independently): 200 {"currentIndex":1,"currentQuestionId":"00000000-0000-4000-8000-000000000001","status":"in-progress"}
+adv 1 (supported-with-hints): 200 {"currentIndex":2,"currentQuestionId":"00000000-0000-4000-8000-000000000002","status":"in-progress"}
+adv 2 (attempted): 200 {"currentIndex":3,"currentQuestionId":"00000000-0000-4000-8000-000000000003","status":"in-progress"}
+adv 3 (skipped): 200 {"currentIndex":4,"currentQuestionId":"00000000-0000-4000-8000-000000000004","status":"in-progress"}
+adv 4 (supported-with-hints): 200 {"currentIndex":5,"currentQuestionId":"00000000-0000-4000-8000-000000000005","status":"in-progress"}
+STALE replay of adv 3 (cursor now 5): 409 {"error":"stale-cursor","current":{"currentIndex":5,"currentQuestionId":"00000000-0000-4000-8000-000000000005","status":"in-progress"}}
+adv 5 (unresolved): 200 {"currentIndex":6,"currentQuestionId":"00000000-0000-4000-8000-000000000006","status":"in-progress"}
+adv 6 (attempted): 200 {"currentIndex":7,"currentQuestionId":"00000000-0000-4000-8000-000000000007","status":"in-progress"}
+adv 7 (supported-with-hints): 200 {"currentIndex":8,"currentQuestionId":"00000000-0000-4000-8000-000000000008","status":"in-progress"}
+adv 8 (solved-independently): 200 {"currentIndex":9,"currentQuestionId":"00000000-0000-4000-8000-000000000009","status":"in-progress"}
+adv 9 (attempted): 200 {"currentIndex":9,"currentQuestionId":"00000000-0000-4000-8000-000000000009","status":"complete"}

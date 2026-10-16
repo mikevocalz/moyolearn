@@ -1671,3 +1671,127 @@ test(
     }
   },
 );
+
+/*
+  ADR-124 — HOMEWORK ROWS, both retention halves.
+
+  1. THE CROP HAS A CLOCK AND THE TEXT DOES NOT. `sweep.sql` nulls
+     `homework_questions.crop` once `crop_expires_at` passes and keeps the row;
+     a crop still inside its week is the control, so a null proves the
+     predicate and not a blanket wipe.
+
+  2. THE ACCOUNT CASCADE TAKES ALL THREE TABLES, AND ONLY THIS FAMILY'S. The
+     statements mirror `eraseSubjectPayload` (account-deletion.repository.ts):
+     questions under submissions the subject uploaded for a ward, then each
+     `SUBJECT_COLLECTIONS` entry by its fields. Erasing the GUARDIAN must take
+     the photograph they uploaded of the ward's page, its questions included,
+     and the practice set they drafted; a bystander learner's row stays.
+*/
+test(
+  'the sweep nulls an expired homework crop and keeps the question',
+  { skip: url ? false : 'no DATABASE_URL' },
+  async () => {
+    const { default: pg } = await import('pg');
+    const c = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+    await c.connect();
+    const stamp = `homework-crop-${randomUUID()}`;
+    const learner = `${stamp}-learner`;
+    const crop = '{"storageKey":"k","width":10,"height":10}';
+    try {
+      await c.query(
+        `insert into payload.homework_questions
+           (question_id, submission_id, learner_auth_id, order_index, source_page, current_revision, text, crop, crop_expires_at)
+         values ($1, $3, $4, 0, 1, 'r1', '1/2 + 1/4', $5::jsonb, now() - interval '1 hour'),
+                ($2, $3, $4, 1, 1, 'r1', '3/4 - 1/8', $5::jsonb, now() + interval '6 days')`,
+        [`${stamp}-old`, `${stamp}-new`, `${stamp}-sub`, learner, crop],
+      );
+
+      await applySweepSql(c);
+
+      const { rows } = await c.query(
+        'select question_id, crop is null as gone from payload.homework_questions where learner_auth_id = $1 order by order_index',
+        [learner],
+      );
+      assert.equal(rows.length, 2, 'the sweep deleted a homework question; it may only null the crop');
+      assert.equal(rows[0].gone, true, 'an expired crop survived the sweep');
+      assert.equal(rows[1].gone, false, 'control failed: a crop inside its seven days was nulled');
+    } finally {
+      await c.query('delete from payload.homework_questions where learner_auth_id = $1', [learner]);
+      await c.end();
+    }
+  },
+);
+
+test(
+  'a guardian erasure takes their uploads for a ward and their practice sets, and nothing else',
+  { skip: url ? false : 'no DATABASE_URL' },
+  async () => {
+    const { default: pg } = await import('pg');
+    const c = new pg.Client({ connectionString: url, ssl: { rejectUnauthorized: false } });
+    await c.connect();
+    const stamp = `homework-erasure-${randomUUID()}`;
+    const guardian = `${stamp}-guardian`;
+    const ward = `${stamp}-ward`;
+    const bystander = `${stamp}-bystander`;
+    const learners = [guardian, ward, bystander];
+    try {
+      for (const [sub, learnerId, createdBy] of [
+        [`${stamp}-uploaded`, ward, guardian],
+        [`${stamp}-bystander`, bystander, bystander],
+      ]) {
+        await c.query(
+          `insert into payload.homework_submissions
+             (submission_id, learner_auth_id, created_by_auth_id, subject, title, local_date, current_question_id)
+           values ($1::text, $2, $3, 'Math', 'Sheet', '2026-10-15', $1::text || '-q')`,
+          [sub, learnerId, createdBy],
+        );
+        await c.query(
+          `insert into payload.homework_questions
+             (question_id, submission_id, learner_auth_id, order_index, source_page, current_revision, text)
+           values ($1::text || '-q', $1::text, $2, 0, 1, 'r1', '1/2 + 1/4')`,
+          [sub, learnerId],
+        );
+      }
+      await c.query(
+        `insert into payload.homework_practice_sets (practice_set_id, submission_id, learner_auth_id, guardian_auth_id, seed)
+         values ($1, $2, $3, $4, 's')`,
+        [`${stamp}-ps`, `${stamp}-uploaded`, ward, guardian],
+      );
+
+      // eraseSubjectPayload for the guardian, statement for statement.
+      await c.query(
+        `delete from payload.homework_questions where submission_id in
+           (select submission_id from payload.homework_submissions where created_by_auth_id = $1)`,
+        [guardian],
+      );
+      await c.query('delete from payload.homework_questions where learner_auth_id = $1', [guardian]);
+      await c.query(
+        'delete from payload.homework_submissions where learner_auth_id = $1 or created_by_auth_id = $1',
+        [guardian],
+      );
+      await c.query(
+        'delete from payload.homework_practice_sets where learner_auth_id = $1 or guardian_auth_id = $1',
+        [guardian],
+      );
+
+      const left = await c.query(
+        `select
+           (select count(*)::int from payload.homework_submissions where learner_auth_id = $1) subs,
+           (select count(*)::int from payload.homework_questions where learner_auth_id = $1) questions,
+           (select count(*)::int from payload.homework_practice_sets where learner_auth_id = $1) sets`,
+        [ward],
+      );
+      assert.deepEqual(left.rows[0], { subs: 0, questions: 0, sets: 0 }, 'a guardian upload outlived the guardian erasure');
+      const kept = await c.query(
+        'select count(*)::int n from payload.homework_questions where learner_auth_id = $1',
+        [bystander],
+      );
+      assert.equal(kept.rows[0].n, 1, 'the guardian erasure reached another family');
+    } finally {
+      await c.query('delete from payload.homework_practice_sets where learner_auth_id = any($1)', [learners]);
+      await c.query('delete from payload.homework_questions where learner_auth_id = any($1)', [learners]);
+      await c.query('delete from payload.homework_submissions where learner_auth_id = any($1)', [learners]);
+      await c.end();
+    }
+  },
+);

@@ -6,7 +6,7 @@ import { pathToFileURL } from 'node:url';
 
 export const TARGETS = Object.freeze([
   'react-native-gesture-handler', 'react-native-reanimated', 'react-native-worklets',
-  '@shopify/react-native-skia', 'react-native-webgpu', 'typegpu',
+  'react-native-skia', 'react-native-webgpu', 'typegpu',
   'react-native-skia-graphite-android', 'react-native-skia-graphite-apple-ios',
   'react-native-skia-graphite-apple-macos',
 ]);
