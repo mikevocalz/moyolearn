@@ -910,6 +910,43 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     }
   }, [asking, attachments, handleAskBoard, pendingXrAsk, pendingXrSay, takeXrAsk, takeXrSay]);
 
+  const presentWorksheetQuestion = useCallback((view: HomeworkSubmissionView) => {
+    const nextQuestion = view.questions[view.currentIndex];
+    const nextPrompt = currentPrompt(view);
+    if (!nextQuestion || nextPrompt === null) return;
+    audioQueue.stop();
+    startedProblem.current = 'true:' + nextPrompt;
+    setProblem(nextPrompt, true, { questionId: nextQuestion.questionId, revision: nextQuestion.currentRevision });
+    // The new question needs its own visible turn AND its own coach request:
+    // an effect gated on first-session opening must not swallow question 2.
+    useTutorStore.getState().start(nextPrompt, true);
+    void useTutorStore.getState().coach(
+      'Please help me begin this question, one step at a time. Ask what I have tried, without giving the answer.',
+    );
+  }, [setProblem]);
+
+  /*
+    Another device moved the cursor, so this one's 409 or hydrate brought the
+    server's position back. Wait for an in-flight turn to settle, then move to
+    the server's question. Matching prompts prevent a refreshed outcome from
+    restarting the current question.
+  */
+  useEffect(() => {
+    if (!worksheet || worksheetOwner !== learnerId || !problemIsReading || worksheetPrompt === null) return;
+    if (worksheetPrompt.trim() === problem?.trim()) return;
+    if (questionIndexForPrompt(worksheet, problem) < 0) return;
+    if (state.kind === 'thinking') return;
+    presentWorksheetQuestion(worksheet);
+  }, [worksheet, worksheetOwner, learnerId, problemIsReading, worksheetPrompt, problem, state.kind, presentWorksheetQuestion]);
+
+  // Keep worksheet hooks above every opening-state return so resume cannot
+  // change the hook order when a problem becomes available.
+  const activeSubmissionId = activeWorksheet?.submissionId;
+  const linkedSessionId = activeWorksheet?.tutorSessionId;
+  useEffect(() => {
+    if (activeSubmissionId && sessionId && linkedSessionId !== sessionId) void linkWorksheetSession(sessionId);
+  }, [activeSubmissionId, sessionId, linkedSessionId, linkWorksheetSession]);
+
   /*
     NO PROBLEM IS STILL A PLACE.
 
@@ -980,21 +1017,6 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   */
   const stageState = state.kind === 'retry' && !presenceLive ? PRESENCE_STATE : state;
 
-  const presentWorksheetQuestion = (view: HomeworkSubmissionView) => {
-    const nextQuestion = view.questions[view.currentIndex];
-    const nextPrompt = currentPrompt(view);
-    if (!nextQuestion || nextPrompt === null) return;
-    audioQueue.stop();
-    startedProblem.current = 'true:' + nextPrompt;
-    setProblem(nextPrompt, true, { questionId: nextQuestion.questionId, revision: nextQuestion.currentRevision });
-    // The new question needs its own visible turn AND its own coach request:
-    // an effect gated on first-session opening must not swallow question 2.
-    useTutorStore.getState().start(nextPrompt, true);
-    void useTutorStore.getState().coach(
-      'Please help me begin this question, one step at a time. Ask what I have tried, without giving the answer.',
-    );
-  };
-
   const moveToNextWorksheetQuestion = () => {
     if (!activeWorksheet || !learnerId || state.kind === 'thinking' || activeWorksheet.status === 'complete') return;
     const tutor = useTutorStore.getState();
@@ -1018,28 +1040,6 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     if (!advanced || advanced.status === 'complete') return;
     presentWorksheetQuestion(advanced);
   };
-
-  /*
-    Another device moved the cursor, so this one's 409 or hydrate brought the
-    server's position back. The problem on screen is still one of this
-    worksheet's questions, just not the current one: move to the server's.
-  */
-  const serverQuestionIndex = worksheet?.currentIndex ?? -1;
-  useEffect(() => {
-    if (!worksheet || worksheetOwner !== learnerId || !problemIsReading || worksheetPrompt === null) return;
-    if (worksheetPrompt.trim() === problem?.trim()) return;
-    if (questionIndexForPrompt(worksheet, problem) < 0) return;
-    if (useTutorStore.getState().state.kind === 'thinking') return;
-    presentWorksheetQuestion(worksheet);
-    // Keyed on the cursor, not the view: a refreshed outcome must not restart the question.
-  }, [serverQuestionIndex, worksheet?.submissionId, worksheetOwner, learnerId, problemIsReading]);
-
-  // The report reads the submission through its tutor session, so link them once both exist.
-  const activeSubmissionId = activeWorksheet?.submissionId;
-  const linkedSessionId = activeWorksheet?.tutorSessionId;
-  useEffect(() => {
-    if (activeSubmissionId && sessionId && linkedSessionId !== sessionId) void linkWorksheetSession(sessionId);
-  }, [activeSubmissionId, sessionId, linkedSessionId, linkWorksheetSession]);
 
   return (
     <>

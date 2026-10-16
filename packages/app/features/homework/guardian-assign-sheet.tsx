@@ -192,16 +192,17 @@ export function GuardianAssignSheet({ child }: GuardianAssignSheetProps) {
             instead of landing on a card under it. The page is not dimmed,
             because the switcher beside the trigger is the context the parent
             is checking against.
+            The backdrop is a sibling: wrapping the dialog would nest every
+            action inside a button on web and break its HTML semantics.
           */}
-          <Pressable aria-label="Close" onPress={close} className="flex-1">
+          <View className="flex-1">
+            <Pressable aria-label="Close" onPress={close} className="absolute inset-0" />
             {placement ? (
               <View
                 role="dialog"
                 aria-modal
                 aria-label={title}
                 accessibilityViewIsModal
-                // A press inside the panel must not reach the click-away layer.
-                onStartShouldSetResponder={() => true}
                 style={{
                   left: placement.left,
                   top: placement.top,
@@ -230,7 +231,7 @@ export function GuardianAssignSheet({ child }: GuardianAssignSheetProps) {
                 {body}
               </View>
             ) : null}
-          </Pressable>
+          </View>
         </Modal>
       )}
     </View>

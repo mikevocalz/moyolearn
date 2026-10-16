@@ -20,6 +20,8 @@ jobs:
           distribution: temurin
           java-version: '17'
       - run: pnpm install --frozen-lockfile
+      - name: Verify Expo Android publication metadata
+        run: node --test tooling/expo-android-publication.test.mjs
       - name: Install pinned native toolchain
         run: |
           "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" 'ndk;28.2.13676358' 'cmake;3.22.1'
