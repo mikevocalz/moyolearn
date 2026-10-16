@@ -76,11 +76,41 @@ Found and fixed a native print authorization gap: native used cached practice
 answers while web rechecked approval and active guardianship. Native now fetches
 fresh HTML from the same authenticated print route before creating a PDF.
 Client/HTML tests passed 14/14 and server authorization tests passed 3/3.
-Root cold-cache typecheck passed 19/19 with zero cache hits. Code review is pending.
+Root cold-cache typecheck passed 19/19 with zero cache hits. CodeRabbit review
+completed with zero findings.
 
 Native build attempt: CocoaPods 1.17.0, Node 24.22.0. Changed only the permissions
 of `~/.netrc` from 0644 to 0600 to satisfy CocoaPods; its contents were not read.
 Pod installation proceeded past that failure but stopped unpacking React Native
 with `No space left on device`. The volume reported 348 MiB free. Session-created
-partial Pods are being removed; no original checkout or unrelated cache is being
-deleted. Native build and UI checks remain blocked.
+partial Pods were removed; no original checkout or unrelated cache was deleted.
+Native build and UI checks remain blocked.
+
+## Published checkpoint
+
+- `6826e741`: plan and phase-0 verification handoff.
+- `5ca71779`: architecture audit, corrected motion guidance and 18-scenario
+  adaptive acceptance inventory. Pushed on `finish/pr-completion-20261016`.
+- `583dc68d`: native practice-export authorization fix and its handoff. Pushed
+  directly to #123's existing branch
+  `feat/homework-end-to-end-blockers-20261015`; GitHub confirmed the new head.
+  CodeRabbit completed that code review with zero findings. The PR description
+  now records the fix and the current disk-space blocker.
+
+The partial Pods directory and coordination worktree's root `node_modules` have
+been removed. The last disk reading was 931 MiB free. Original working copies,
+unrelated caches and production data were preserved.
+
+At the published #123 head, GitHub CI/native builds were still running.
+GitGuardian reported two findings in older commit `3fdfb8b2`, in
+`docs/work/pr-100/b6-out/denial.log` and `sub-view.json`. Its check also failed on
+the preceding PR head. The reported category is Generic High Entropy Secret;
+the inspected files contain scratch-run identifiers. The exact detector spans
+were not available through the check API, so the incidents have not been
+dismissed or claimed resolved. Do not bypass the check.
+
+No GitHub PR has been merged. Phase 0 is complete; phase 1's source-audit slice
+and one independent phase-9 security fix are committed. Phases 2–8, the rest of
+phase 9, runtime acceptance and final integration remain open. Native verification
+needs disk capacity before another install/build attempt. The wider queue also
+still requires the implementation and external evidence listed in the plan.
