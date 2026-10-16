@@ -67,7 +67,7 @@ catalog:
   react-native-enriched-html: 1.1.1
   react-native-gesture-handler: 3.3.0
   react-native-reanimated: 4.7.1
-  react-native-webgpu: 0.13.1
+  react-native-webgpu: 0.16.0
   typegpu: 0.12.7
   react-native-safe-area-context: ~5.9.1
   react-native-screens: ~4.28.0

@@ -15,7 +15,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 export const ADMISSION = Object.freeze({
   renderer: '2.14.0', version: '154.3.0', skia: 'm154_8037_58c',
   dawnCommit: '3d786993a7ded64c4ebb4884b9b079db9ad0e580',
-  dawnTag: 'chrome-m154a', webgpu: '0.13.1',
+  dawnTag: 'chrome-m154a', webgpu: '0.16.0',
   patches: ['metal-maccatalyst.patch', 'tint-looprange-function-variable.patch'],
   // This release and the 154.3.0 publisher both use Skia commit 2466dcf3937437e217e7f284afe0e1aae15891ce.
   // Only its three private Graphite headers are used; Dawn comes from the npm package.
