@@ -61,6 +61,7 @@ export default function GuardianShell() {
             the capture flow (the learner shell's /capture is behind its own
             guard, so a guardian needs this one). */}
         <Stack.Screen name="homework" />
+        <Stack.Screen name="homework/[submissionId]/practice" options={{ title: 'Practice sheet' }} />
         <Stack.Screen name="upload" />
       </Stack.Protected>
     </Stack>

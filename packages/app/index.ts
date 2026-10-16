@@ -8,6 +8,7 @@ export { HomeScreen } from './features/home/screen';
 export { LearnerTodayScreen } from './features/home/learner-today-screen';
 export { LearnerHubContent } from './features/home/learner-hub-content';
 export { GuardianHomeScreen } from './features/home/guardian-home-screen';
+export { PracticePreview } from './features/homework/practice-preview';
 export { FamilyScreen } from './features/home/family-screen';
 // Family seam (G-8 fix): the store every per-child guardian surface reads, and
 // the chip row that writes it (J §2 row 10).
