@@ -25,8 +25,7 @@ import {
   type ResolvedTutorPresence,
 } from '@acme/ui';
 import { View } from '@acme/ui/primitives';
-import { useCaptureStore } from '../capture';
-import { useWorksheetStore, currentPrompt, outcomeForAdvance, questionIndexForPrompt } from '../capture';
+import { useCaptureStore , useWorksheetStore, currentPrompt, isCurrentWorksheetQuestion, outcomeForAdvance, questionIndexForPrompt } from '../capture';
 import type { HomeworkSubmissionView } from '../homework/homework.types.ts';
 import { buttonSizeForBand, type AgeBand } from '../capture';
 import { countImages, MAX_TUTOR_IMAGES } from '@acme/ui';
@@ -36,19 +35,6 @@ import { API_URL, recommendedTutorPresenceFor } from './tutor-constants.ts';
 import { TutorAvatar } from './tutor-avatar';
 import { markTurnSent, noteKeystroke, setRecording } from './tutor-cues';
 import { audioQueue } from './tutor-audio';
-
-/**
- * The breath between her sentences, per band, milliseconds. A six-year-old
- * needs the full stop to land before the next sentence starts; a teen hears
- * the same pause as slow. Voice RATE is the server's (doc 32 band modulation);
- * this is the silence between rates.
- */
-const SENTENCE_PAUSE_MS: Record<AgeBand, number> = {
-  young: 750,
-  child: 600,
-  teen: 450,
-  adult: 350,
-};
 import { pickNoteImage } from '../schedule/pick-note-image';
 import { pickCamera } from './pick-camera';
 import { TutorOpening } from './tutor-opening';
@@ -66,6 +52,19 @@ import { useUploadQueue, setUploadReporter } from '../media';
 import { patchAttachment, postMessage } from './session.client.ts';
 import { useXrSession } from './xr-session.store.ts';
 import { canOpenSpatialBoard } from './xr-capability.ts';
+
+/**
+ * The breath between her sentences, per band, milliseconds. A six-year-old
+ * needs the full stop to land before the next sentence starts; a teen hears
+ * the same pause as slow. Voice RATE is the server's (doc 32 band modulation);
+ * this is the silence between rates.
+ */
+const SENTENCE_PAUSE_MS: Record<AgeBand, number> = {
+  young: 750,
+  child: 600,
+  teen: 450,
+  adult: 350,
+};
 
 export interface TutorScreenProps {
   ageBand?: AgeBand;
@@ -115,6 +114,7 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
   // Mirrored alongside the text, not derived from it: by the time the tutor has
   // the string, a photographed problem and a served one look the same.
   const problemIsReading = useCaptureStore((s) => s.problemIsReading);
+  const problemEvidence = useCaptureStore((s) => s.problemEvidence);
   useEffect(() => {
     if (!learnerId) return;
     // The device copy first, synchronously, so the question bar paints with the
@@ -123,9 +123,11 @@ export function TutorScreen({ ageBand: ageBandProp }: TutorScreenProps) {
     void hydrateWorksheet(learnerId);
   }, [learnerId, restoreWorksheet, hydrateWorksheet]);
   const worksheetPrompt = worksheet ? currentPrompt(worksheet) : null;
+  // Prompt equality alone conflates two identical worksheet questions; the
+  // evidence handle resolves the cursor's real question when wording repeats.
   const activeWorksheet =
     worksheet && worksheetOwner === learnerId && worksheetPrompt !== null && problemIsReading &&
-    worksheetPrompt.trim() === problem?.trim()
+    isCurrentWorksheetQuestion(worksheet, problem, problemEvidence)
       ? worksheet
       : null;
   const {

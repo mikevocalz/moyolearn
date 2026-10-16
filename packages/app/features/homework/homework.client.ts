@@ -22,6 +22,7 @@ import type {
   AdvanceResult,
   CreateSubmissionInput,
   HomeworkQuestionView,
+  HomeworkSubmissionSummary,
   HomeworkSubmissionView,
   ReviseQuestionInput,
   StartSubmissionInput,
@@ -42,6 +43,8 @@ export class StaleCursorError extends Error {
 
 export interface HomeworkClient {
   createSubmission: (input: CreateSubmissionInput) => Promise<HomeworkSubmissionView>;
+  /** The current learner's server-owned worksheets, newest first; no identity argument. */
+  listSubmissions: () => Promise<HomeworkSubmissionSummary[]>;
   getSubmission: (submissionId: string) => Promise<HomeworkSubmissionView>;
   reviseQuestion: (
     submissionId: string,
@@ -119,6 +122,7 @@ export function createHomeworkClient(
 
   return {
     createSubmission: (input) => send(submissions, input),
+    listSubmissions: () => send(submissions),
     getSubmission: (submissionId) => send(`${submissions}/${segment(submissionId)}`),
     reviseQuestion: (submissionId, questionId, input) =>
       send(`${submissions}/${segment(submissionId)}/questions/${segment(questionId)}/revise`, input),

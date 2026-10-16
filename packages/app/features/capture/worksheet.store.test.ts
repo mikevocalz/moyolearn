@@ -10,7 +10,7 @@ import { ApiError } from '../../core/api-fetch.ts';
 import { StaleCursorError, type HomeworkClient } from '../homework/homework.client.ts';
 import type { AdvanceResult, HomeworkSubmissionView } from '../homework/homework.types.ts';
 import type { ProblemStorage } from './problem-storage.shared.ts';
-import { worksheetKeyFor, worksheetStateCreator, outcomeForAdvance, currentPrompt } from './worksheet-cache.ts';
+import { worksheetKeyFor, worksheetStateCreator, outcomeForAdvance, currentPrompt, isCurrentWorksheetQuestion } from './worksheet-cache.ts';
 import { writeWorksheet } from './worksheet-session.ts';
 
 function fakeStorage(): ProblemStorage & { values: Map<string, string> } {
@@ -25,7 +25,7 @@ function fakeStorage(): ProblemStorage & { values: Map<string, string> } {
 
 function fakeServer() {
   const rows = new Map<string, HomeworkSubmissionView>();
-  const net = { online: true, advanceCalls: 0 };
+  const net = { online: true, advanceCalls: 0, listCalls: 0, learnerId: 'learner-1', actorId: 'learner-1' };
   const reach = () => { if (!net.online) throw new TypeError('Failed to fetch'); };
   const cursor = (v: HomeworkSubmissionView): AdvanceResult =>
     ({ currentIndex: v.currentIndex, currentQuestionId: v.currentQuestionId, status: v.status });
@@ -37,8 +37,8 @@ function fakeServer() {
       const at = '2026-10-15T12:00:00.000Z';
       const view: HomeworkSubmissionView = {
         submissionId: input.submissionId,
-        learnerAuthId: input.forLearnerAuthId ?? 'learner-1',
-        createdByAuthId: 'learner-1',
+        learnerAuthId: input.forLearnerAuthId ?? net.learnerId,
+        createdByAuthId: net.actorId,
         subject: input.subject,
         title: input.title,
         instructions: input.instructions,
@@ -70,6 +70,29 @@ function fakeServer() {
       };
       rows.set(view.submissionId, view);
       return view;
+    },
+    listSubmissions: async () => {
+      reach();
+      net.listCalls += 1;
+      return [...rows.values()]
+        .filter((view) => view.learnerAuthId === net.learnerId)
+        .reverse()
+        .map((view) => ({
+          submissionId: view.submissionId,
+          learnerAuthId: view.learnerAuthId,
+          subject: view.subject,
+          title: view.title,
+          localDate: view.localDate,
+          status: view.status,
+          questionCount: view.questions.length,
+          currentIndex: view.currentIndex,
+          outcomes: {
+            unattempted: 0, skipped: 0, attempted: 0,
+            'supported-with-hints': 0, 'solved-independently': 0, unresolved: 0,
+          },
+          tutorSessionId: view.tutorSessionId,
+          createdAt: view.createdAt,
+        }));
     },
     getSubmission: async (id) => {
       reach();
@@ -190,10 +213,88 @@ test('a sibling learner on the same device never sees or moves another learner�
   assert.equal(store.getState().restore('learner-2'), null);
   assert.equal(await store.getState().advance(step), 'idle');
   assert.equal(server.net.advanceCalls, 0);
+  server.net.learnerId = 'learner-2';
   await store.getState().begin('learner-2', input('sub-2'));
   assert.equal(store.getState().restore('learner-1')?.submissionId, 'sub-1');
   assert.ok(storage.values.has(worksheetKeyFor('learner-1')));
   assert.ok(storage.values.has(worksheetKeyFor('learner-2')));
+});
+
+test('an empty device discovers a guardian-assigned worksheet and the server cursor', async () => {
+  const { server } = setup();
+  server.net.actorId = 'guardian-1';
+  await server.client.createSubmission({ ...input('ward-sheet'), forLearnerAuthId: 'learner-1' });
+  server.net.actorId = 'learner-1';
+  server.moveElsewhere('ward-sheet', 1);
+
+  const fresh = createStore(worksheetStateCreator({ storage: fakeStorage(), client: server.client }));
+  const view = await fresh.getState().hydrate('learner-1');
+  assert.equal(view?.submissionId, 'ward-sheet');
+  assert.equal(view?.currentIndex, 1);
+  assert.equal(fresh.getState().status, 'confirmed');
+  assert.equal(server.net.listCalls, 1);
+});
+
+test('a cache miss chooses the open worksheet and leaves finished work alone', async () => {
+  const { server } = setup();
+  await server.client.createSubmission(input('active-sheet'));
+  await server.client.createSubmission(input('finished-sheet'));
+  const finished = server.rows.get('finished-sheet')!;
+  server.rows.set(finished.submissionId, { ...finished, status: 'complete' });
+  const fresh = createStore(worksheetStateCreator({ storage: fakeStorage(), client: server.client }));
+  assert.equal((await fresh.getState().hydrate('learner-1'))?.submissionId, 'active-sheet');
+
+  server.rows.set('active-sheet', { ...server.rows.get('active-sheet')!, status: 'complete' });
+  const other = createStore(worksheetStateCreator({ storage: fakeStorage(), client: server.client }));
+  assert.equal(await other.getState().hydrate('learner-1'), null);
+  assert.equal(other.getState().status, 'idle');
+});
+
+test('offline discovery waits without inventing a worksheet or losing another learner’s cache', async () => {
+  const { server, storage, store } = setup();
+  server.net.online = false;
+  assert.equal(await store.getState().hydrate('learner-1'), null);
+  assert.equal(store.getState().status, 'pending');
+  assert.equal(storage.getString(worksheetKeyFor('learner-1')), undefined);
+  assert.equal(server.net.listCalls, 0);
+});
+
+test('a late hydrate cannot replace a sibling’s selected worksheet', async () => {
+  const { server, storage } = setup();
+  const view = await server.client.createSubmission(input('remote-sheet'));
+  let finish: (result: HomeworkSubmissionView) => void = () => {};
+  const pending = new Promise<HomeworkSubmissionView>((resolve) => { finish = resolve; });
+  let requested = 0;
+  const client = { ...server.client, getSubmission: async () => { requested += 1; return pending; } };
+  const fresh = createStore(worksheetStateCreator({ storage, client }));
+  const loading = fresh.getState().hydrate('learner-1');
+  for (let attempt = 0; attempt < 5 && requested === 0; attempt += 1) await Promise.resolve();
+  assert.equal(requested, 1);
+  fresh.getState().restore('learner-2');
+  finish(view);
+  await loading;
+  assert.equal(fresh.getState().ownerId, 'learner-2');
+  assert.equal(fresh.getState().current, null);
+  assert.equal(storage.getString(worksheetKeyFor('learner-1')), undefined);
+});
+
+test('clearing an owner while discovery is in flight cannot resurrect their worksheet', async () => {
+  const { server, storage } = setup();
+  const view = await server.client.createSubmission(input('erased-sheet'));
+  let finish: (result: HomeworkSubmissionView) => void = () => {};
+  const pending = new Promise<HomeworkSubmissionView>((resolve) => { finish = resolve; });
+  let requested = 0;
+  const client = { ...server.client, getSubmission: async () => { requested += 1; return pending; } };
+  const fresh = createStore(worksheetStateCreator({ storage, client }));
+  const loading = fresh.getState().hydrate('learner-1');
+  for (let attempt = 0; attempt < 5 && requested === 0; attempt += 1) await Promise.resolve();
+  assert.equal(requested, 1);
+  fresh.getState().clear('learner-1');
+  finish(view);
+  await loading;
+  assert.equal(fresh.getState().status, 'idle');
+  assert.equal(fresh.getState().current, null);
+  assert.equal(storage.getString(worksheetKeyFor('learner-1')), undefined);
 });
 
 test('a v1 worksheet migrates once, keeps its place, and the v1 key is removed', async () => {
@@ -231,4 +332,23 @@ test('a photographed page never records solved-independently without a verdict',
   assert.equal(outcomeForAdvance({ learnerTurns: 1, hintDepth: 2, evaluatedCorrect: false }), 'supported-with-hints');
   assert.equal(outcomeForAdvance({ learnerTurns: 1, hintDepth: 1, evaluatedCorrect: true }), 'supported-with-hints');
   assert.equal(outcomeForAdvance({ learnerTurns: 1, hintDepth: 0, evaluatedCorrect: true }), 'solved-independently');
+});
+
+test('identical question wording still requires the server question identity', async () => {
+  const { store } = setup();
+  const view = await store.getState().begin('learner-1', input('repeated-sheet'));
+  const questions = view.questions.map((question) => ({ ...question, sourceNumber: 1, text: '2 + 2 =' }));
+  const repeated = { ...view, questions, currentIndex: 1, currentQuestionId: questions[1]!.questionId };
+  const prompt = currentPrompt(repeated)!;
+  assert.equal(prompt, currentPrompt({ ...repeated, currentIndex: 0 }));
+  assert.equal(isCurrentWorksheetQuestion(repeated, prompt, {
+    questionId: questions[0]!.questionId, revision: questions[0]!.currentRevision,
+  }), false);
+  assert.equal(isCurrentWorksheetQuestion(repeated, prompt, {
+    questionId: questions[1]!.questionId, revision: questions[1]!.currentRevision,
+  }), true);
+  assert.equal(isCurrentWorksheetQuestion(repeated, prompt, null), false);
+  assert.equal(isCurrentWorksheetQuestion(repeated, prompt, {
+    questionId: questions[1]!.questionId, revision: 'superseded',
+  }), false);
 });

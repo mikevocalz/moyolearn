@@ -12,19 +12,18 @@
 // SOT: docs/work/pr-100/contract.md §Routes · packages/app/features/summary/use-reports.ts
 // SOT-KEYWORDS: homework timeline hook query submissions learner guardian dated list
 
-import { keepPreviousData, useQuery } from '@tanstack/react-query';
+import { queryOptions, useQuery } from '@tanstack/react-query';
 import { getJson } from '../../core/api-fetch.ts';
 import type { HomeworkSubmissionSummary } from './homework.types.ts';
 
 export const homeworkTimelineQueryKey = (learnerAuthId: string) =>
   ['homework-timeline', learnerAuthId] as const;
 
-export function useHomeworkTimeline(learnerAuthId: string | undefined) {
+export function homeworkTimelineOptions(learnerAuthId: string | undefined) {
   const learner = learnerAuthId ?? '';
-  const enabled = learner.length > 0;
-  const { data, isPending, error, refetch } = useQuery({
+  return queryOptions({
     queryKey: homeworkTimelineQueryKey(learner),
-    enabled,
+    enabled: learner.length > 0,
     queryFn: async ({ signal }) => {
       const body = await getJson<
         HomeworkSubmissionSummary[] | { submissions: HomeworkSubmissionSummary[] }
@@ -33,12 +32,17 @@ export function useHomeworkTimeline(learnerAuthId: string | undefined) {
       // the same reason as in use-guardian-wards.ts.
       return Array.isArray(body) ? body : body.submissions;
     },
-    placeholderData: keepPreviousData,
+    // A different query key means a different child, not another page of the
+    // same feed. Keep that child's loading state instead of showing a sibling.
   });
+}
+
+export function useHomeworkTimeline(learnerAuthId: string | undefined) {
+  const { data, isPending, error, refetch } = useQuery(homeworkTimelineOptions(learnerAuthId));
   return {
     submissions: data ?? [],
     /** Pending only while enabled; a disabled query is "nothing to load". */
-    loading: enabled && isPending,
+    loading: Boolean(learnerAuthId) && isPending,
     error: error ?? null,
     retry: () => {
       void refetch();
