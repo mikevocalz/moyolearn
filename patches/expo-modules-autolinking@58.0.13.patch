@@ -1,0 +1,15 @@
+diff --git a/scripts/ios/autolinking_manager.rb b/scripts/ios/autolinking_manager.rb
+index c844890b8a21f624ce4d35aeb0ac0645fb1338e7..85efdca3043738a3fbdd98a6df2a8b084fd3f3fd 100644
+--- a/scripts/ios/autolinking_manager.rb
++++ b/scripts/ios/autolinking_manager.rb
+@@ -290,8 +290,8 @@ module Expo
+         raise "Undefined platform for target #{@target_definition.name}, make sure to call `platform` method globally or inside the target"
+       end
+ 
+-      # The declared platform must be iOS, macOS or tvOS, others are not supported.
+-      unless ['iOS', 'macOS', 'tvOS'].include?(platform_name)
++      # visionOS uses the same Apple module discovery path; podspec support remains authoritative.
++      unless ['iOS', 'macOS', 'tvOS', 'visionOS'].include?(platform_name)
+         raise "Target #{@target_definition.name} is dedicated to #{platform_name} platform, which is not supported by Expo Modules"
+       end
+     end

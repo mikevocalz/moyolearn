@@ -31,7 +31,6 @@
     "@anthropic-ai/sdk": "catalog:",
     "@huggingface/transformers": "4.2.0",
     "@reactvision/react-viro": "3.0.0-moyo.4",
-    "@shopify/react-native-skia": "catalog:",
     "@tanstack/react-pacer": "catalog:",
     "@tanstack/react-query": "catalog:",
     "@tanstack/react-table": "catalog:",
@@ -72,7 +71,8 @@
     "tesseract.js": "^7.0.0",
     "tus-js-client": "4.3.1",
     "yjs": "catalog:",
-    "zustand": "catalog:"
+    "zustand": "catalog:",
+    "react-native-skia": "catalog:"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",

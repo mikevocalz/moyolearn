@@ -95,6 +95,21 @@ const LIB0_WEBCRYPTO_NATIVE = path.resolve(
 const upstreamResolveRequest = config.resolver.resolveRequest;
 
 config.resolver.resolveRequest = (context, moduleName, platform) => {
+  // react-native-graph still imports the pre-fork scoped name, while the app
+  // moved to the unscoped continuation (react-native-skia@3.x). pnpm can keep
+  // an npm: alias on disk for typecheck, but Metro must not bundle the alias
+  // directory as a second module: both copies register the SkiaView native
+  // component and the app dies on "Tried to register two views with the same
+  // name SkiaView". Rewrite the specifier before resolution so every spelling
+  // lands on the same files.
+  if (
+    moduleName === "@shopify/react-native-skia" ||
+    moduleName.startsWith("@shopify/react-native-skia/")
+  ) {
+    moduleName =
+      "react-native-skia" +
+      moduleName.slice("@shopify/react-native-skia".length);
+  }
   // The visionOS fork bundles React's 19.2.3 renderer; mobile uses 19.3.
   // Route every React entry (including jsx-runtime) to the same matching copy.
   const visionOS = platform === "visionos" || context.customResolverOptions?.platformExtension === "visionos";

@@ -149,7 +149,7 @@ export function inspectNativeCompilePools(root = ROOT) {
   }
   // AGP 9.2.1 maps questDebug to the Debug optimization tag. Require the app
   // explicitly so a future staging-path change cannot silently evade this gate.
-  for (const [name, path] of [['Skia', 'node_modules/@shopify/react-native-skia/android'], ['application', 'apps/mobile/android/app']]) {
+  for (const [name, path] of [['Skia', 'node_modules/react-native-skia/android'], ['application', 'apps/mobile/android/app']]) {
     const directory = join(root, path);
     if (!existsSync(directory) || !verified.some((file) => file.startsWith(`${realpathSync(directory)}${sep}.cxx${sep}`))) {
       errors.push(`native-pools: missing generated ${name} arm64 Debug build.ninja with verified current pools`);

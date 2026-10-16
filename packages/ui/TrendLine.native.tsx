@@ -2,7 +2,7 @@
 // PLATFORM FORK — the trend line on native, via react-native-graph.
 //
 // Doc 27 §2: react-native-graph is the scalpel, not the toolbox. Its whole
-// install list (reanimated + gesture-handler + @shopify/react-native-skia) was
+// install list (reanimated + gesture-handler + react-native-skia) was
 // already in this app, so it adds no native dependency, and it buys the one
 // thing a hand-drawn path cannot — a 120fps Skia scrub gesture over the series.
 // Bars, pies and real axes are NOT its job; those go to Victory Native.

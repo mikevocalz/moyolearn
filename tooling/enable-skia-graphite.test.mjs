@@ -13,7 +13,7 @@ function fixture(t) {
   t.after(() => rmSync(root, { recursive: true, force: true }));
   const write = (path, content) => { mkdirSync(join(root, path, '..'), { recursive: true }); writeFileSync(join(root, path), content); };
   const pkg = (name, data) => write(`node_modules/${name}/package.json`, JSON.stringify({ name, ...data }));
-  pkg('@shopify/react-native-skia', { version: ADMISSION.renderer });
+  pkg('react-native-skia', { version: ADMISSION.renderer });
   pkg('react-native-webgpu', { version: ADMISSION.webgpu, dawn: ADMISSION.dawnTag, dependencies: { 'react-native-webgpu-dawn': ADMISSION.version } });
   pkg('react-native-webgpu-dawn', { version: ADMISSION.version, dawn: { skia: ADMISSION.skia, commit: ADMISSION.dawnCommit, patches: ADMISSION.patches } });
   for (const suffix of ['android', 'apple-ios', 'apple-macos']) pkg(`react-native-skia-graphite-${suffix}`, { version: ADMISSION.version, skia: { version: ADMISSION.skia, graphite: true } });
@@ -32,7 +32,7 @@ function fixture(t) {
     return path;
   };
   return { root, write, pkg, fetchHeaders, fetches: () => fetches,
-    skia: join(root, 'node_modules/@shopify/react-native-skia'),
+    skia: join(root, 'node_modules/react-native-skia'),
     run: () => enableSkiaGraphite({ root, fetchHeaders }) };
 }
 
@@ -70,7 +70,7 @@ test('stages exact owner binaries and normalizes headers like upstream', async (
   for (const abi of ABIS) assert.equal(readFileSync(join(f.root, `node_modules/react-native-skia-graphite-android/libs/${abi}/libwebgpu_dawn.so`), 'utf8'), `shared ${abi}`);
 });
 test('old marker and existing headers cannot preserve stale copy caches', async (t) => {
-  const f = fixture(t); const prefix = 'node_modules/@shopify/react-native-skia';
+  const f = fixture(t); const prefix = 'node_modules/react-native-skia';
   f.write(`${prefix}/libs/.graphite`, 'm154'); f.write(`${prefix}/libs/.dawn-version`, 'dawn-chrome-m154');
   f.write(`${prefix}/cpp/dawn/include/dawn/native/MetalBackend.h`, 'stale');
   f.write(`${prefix}/cpp/skia/src/gpu/graphite/ContextOptionsPriv.h`, 'stale');
@@ -81,7 +81,7 @@ test('old marker and existing headers cannot preserve stale copy caches', async 
 });
 test('warm rerun refreshes stale Dawn headers and shared libraries without redownload', async (t) => {
   const f = fixture(t); await f.run();
-  f.write('node_modules/@shopify/react-native-skia/cpp/dawn/include/dawn/native/MetalBackend.h', 'stale');
+  f.write('node_modules/react-native-skia/cpp/dawn/include/dawn/native/MetalBackend.h', 'stale');
   f.write('node_modules/react-native-skia-graphite-android/libs/arm64-v8a/libwebgpu_dawn.so', 'stale');
   await f.run(); assert.equal(f.fetches(), 1);
   assert.equal(readFileSync(join(f.skia, 'cpp/dawn/include/dawn/native/MetalBackend.h'), 'utf8'), 'fresh dawn/native/MetalBackend.h');
