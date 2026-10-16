@@ -88,5 +88,32 @@ Native builds/device walkthroughs, crop metadata/retention integration, the
 missing-grade-band decision, production migration and the wider acceptance
 matrix remain open. The Business npm freshness gate separately reports WebGPU
 0.16.0 against the current 0.13.1 admission. Its native compatibility and source
-provenance must be reviewed before changing that pin. GitGuardian's two older
-artifact findings remain unresolved.
+provenance must be reviewed before changing that pin.
+
+## Update — GitGuardian resolved, later same day
+
+The two artifact findings are resolved. They were synthetic Better Auth
+test-user IDs committed in the b6-out scratch evidence, not credentials. HEAD
+was redacted in `6cfa3802`; because the findings lived inside the commit that
+introduced the files, the user approved rewriting that commit
+(`3fdfb8b2` → `500daa15`) and replaying the branch. The force-with-lease push
+landed as `3b43f1ad`; GitGuardian now passes on the rewritten head and no
+`4CbuJ`/`R5BrP` token remains anywhere in the branch range. The final tree is
+byte-identical to the pre-rewrite head.
+
+Follow-on checkpoints today:
+
+- `f6293715` — guardian practice route connected on web and native
+  (`pr123-practice-route-20261016.md`).
+- `bd8b76dc` — cold-device worksheet discovery, child-switch isolation and
+  duplicate-question identity (`pr123-cache-and-identity-20261016.md`).
+- `3b43f1ad` — committed pod install results for `expo-print`/`expo-sharing`.
+
+Native notes: `node_modules` was wiped by an earlier cleanup after `pod
+install`, which first produced a missing `rnexecutorch/Error.h` compile error
+and then missing Dawn/Skia xcframework slices; both were restaged by reinstall
+plus `pod install` under Homebrew's CocoaPods 1.17.0
+(`/opt/homebrew/bin/pod`). `/usr/local/bin/pod` is 1.16.2 on system Ruby 2.6 —
+it lacks `filter_map`, emits `[Expo-precompiled]` config-read failures and
+generates a source-build Pods project; do not use it. An arm64-only simulator
+build is running against the restored configuration.
