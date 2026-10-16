@@ -57,6 +57,14 @@ const COMPARISON = /\b(other (kids|children|students)|classmates?|peers?|than mo
 /** No grade predictions. */
 const PREDICTION = /\b(will (get|earn|score)|headed for|on track for) (an? [A-F][+-]?|a [0-9]{2,3})\b|\bpredict/i;
 
+/**
+ * Grade vocabulary in block 6. A next step names work to do; a mark, a score
+ * or a pass/fail verdict is the B-plus machine again, and a worksheet session
+ * has no graded answer to stand on (ADR-119).
+ */
+const GRADE_WORDS =
+  /\b(grades?|graded|grading|scores?|scored|percent|pass(?:ed|ing)?|fail(?:ed|ing|s)?)\b|\b[A-F][+-]?\s*(?:grade|student)\b|%/i;
+
 const NARRATIVE_FIELDS = (candidate: NarrativeCandidate): readonly [string, string][] => [
   ['headline', candidate.headline],
   ...candidate.workedOn.map(
@@ -122,6 +130,9 @@ export function lintNarrative(
       if (match) flag(rule, field, `"${match[0]}"`);
     }
   }
+
+  const gradeWord = GRADE_WORDS.exec(candidate.nextUp);
+  if (gradeWord) flag('grade-speak', 'nextUp', `"${gradeWord[0]}"`);
 
   // ── Numeric claims must be evidenced ───────────────────────────────────────
   const numbers = evidencedNumbers(evidence);

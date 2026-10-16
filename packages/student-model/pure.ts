@@ -41,3 +41,15 @@ export type { ExactMathResult } from './src/exact-math.ts';
 export { parseMathExpression, validateMathExpression, EXACT_MATH_LIMITS } from './src/math-expression.ts';
 export { inferSkillTitle, firstHint, secondHint, generatePracticeProblem, pickNextSkill } from './src/skills.ts';
 export type { NextProblem, NextProblemSource } from './src/skills.ts';
+export {
+  PRACTICE_SKILL_TAGS,
+  PRACTICE_SKILL_LABELS,
+  isPracticeSkillTag,
+  defaultTagsForBand,
+  generatePracticeSet,
+} from './src/practice-generator.ts';
+export type { GeneratedItem, GeneratePracticeSetInput, PracticeSkillTag } from './src/practice-generator.ts';
+export { checkPracticeItem, verifyPracticeItems, PRACTICE_CHECKER_VERSION } from './src/practice-checker.ts';
+export type { DroppedPracticeItem, PracticeCheck, VerifiedPracticeItem } from './src/practice-checker.ts';
+export { VOICE_BANDS, readVoiceBand } from './src/voice-band.ts';
+export type { VoiceBand } from './src/voice-band.ts';
