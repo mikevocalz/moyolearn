@@ -106,12 +106,16 @@ PODS:
     - RNWorklets
   - ExpoPasteInput (1.0.0):
     - ExpoModulesCore
+  - ExpoPrint (58.0.6):
+    - ExpoModulesCore
   - ExpoRouter (58.0.9):
     - ExpoModulesCore
     - RNScreens
   - ExpoScreenCapture (58.0.3):
     - ExpoModulesCore
   - ExpoSecureStore (58.0.0):
+    - ExpoModulesCore
+  - ExpoSharing (58.0.18):
     - ExpoModulesCore
   - ExpoSplashScreen (58.0.1):
     - ExpoModulesCore
@@ -2824,9 +2828,11 @@ DEPENDENCIES:
   - ExpoModulesWorklets (from `../../../node_modules/expo-modules-core/ExpoModulesWorklets.podspec`)
   - ExpoModulesWorkletsAdapter (from `../../../node_modules/expo-modules-core`)
   - ExpoPasteInput (from `../../../node_modules/expo-paste-input/ios`)
+  - ExpoPrint (from `../../../node_modules/expo-print/ios/ExpoPrint.podspec`)
   - ExpoRouter (from `../../../node_modules/expo-router/ios`)
   - ExpoScreenCapture (from `../../../node_modules/expo-screen-capture/ios`)
   - ExpoSecureStore (from `../../../node_modules/expo-secure-store/ios`)
+  - ExpoSharing (from `../../../node_modules/expo-sharing/ios`)
   - ExpoSplashScreen (from `../../../node_modules/expo-splash-screen/ios`)
   - ExpoSystemUI (from `../../../node_modules/expo-system-ui/ios`)
   - ExpoTaskManager (from `../../../node_modules/expo-task-manager/ios`)
@@ -3010,12 +3016,16 @@ EXTERNAL SOURCES:
     :path: "../../../node_modules/expo-modules-core"
   ExpoPasteInput:
     :path: "../../../node_modules/expo-paste-input/ios"
+  ExpoPrint:
+    :podspec: "../../../node_modules/expo-print/ios/ExpoPrint.podspec"
   ExpoRouter:
     :path: "../../../node_modules/expo-router/ios"
   ExpoScreenCapture:
     :path: "../../../node_modules/expo-screen-capture/ios"
   ExpoSecureStore:
     :path: "../../../node_modules/expo-secure-store/ios"
+  ExpoSharing:
+    :path: "../../../node_modules/expo-sharing/ios"
   ExpoSplashScreen:
     :path: "../../../node_modules/expo-splash-screen/ios"
   ExpoSystemUI:
@@ -3275,14 +3285,16 @@ SPEC CHECKSUMS:
   ExpoKeepAwake: 0801399831e0e381072a70c81bd3fb6b56db42ff
   ExpoLinking: dbbbf861b46f63b7218807fbe20763535aa8649d
   ExpoLogBox: b05bcc6d0bba1e823e23106da8d315a5910b9ec5
-  ExpoModulesCore: ae46e424514aa466e9b6a49b07a14c906c273233
+  ExpoModulesCore: 7279eefbbc28623c029c6f56da75cf8e69b5f247
   ExpoModulesJSI: 6760431ff15112a98dd7d05b13eb01d535427b21
   ExpoModulesWorklets: 5c06ba01a85b59ad8a45dbe68c09b3b4660177f0
   ExpoModulesWorkletsAdapter: c8c5f2f1a6c3dd558ea8791497b24c2408c12052
   ExpoPasteInput: e8eba5274ad513ba3e02ceb71ad6524bf2e46ce1
+  ExpoPrint: ee06a6102329efc07f84332ab66ced3ed1819d76
   ExpoRouter: 3334bb7f88a861dd591b3f42b1650912ac80e4dd
   ExpoScreenCapture: 78fac4a9ffa00b435a63223c0f9743f62f24bc78
   ExpoSecureStore: 5b305232d1425f81bdae0dde50b9a78be5f010bd
+  ExpoSharing: 88eb499abe8cd38a20af8f87638c951104cf022c
   ExpoSplashScreen: ffaf80c17808dfeaaa7cfed540b9baaeed774bc5
   ExpoSystemUI: e22151bc6f6f321d021ea0026c561db5fea4deef
   ExpoTaskManager: 560be688c59d2dd8e48b10c69d7b493be79a4943
@@ -3347,11 +3359,11 @@ SPEC CHECKSUMS:
   React-Mapbuffer: f896cd9f155f595a5a9278d9a307bf9012f50e1e
   React-microtasksnativemodule: b2d4c6a226ba432b2a45afa0bf49ab84d89a2b21
   React-mutationobservernativemodule: 34629c19f87813e576f9753e362114cb05a1110d
-  react-native-executorch: 36b891beed188891903aea1e2426b08f84d7633b
+  react-native-executorch: 054647e267e889f04108130819a701af00dc78fb
   react-native-keyboard-controller: d5682988ef16bd7d6a3c3423768b88f1da1b3a72
   react-native-safe-area-context: 949375a80dca43886b96574e6c97a0c5b37a479c
   react-native-skia: 0c2cef8251ea13c198beeba1bcc25284e84294af
-  react-native-webgpu: 289b85111f347439e5c51ff44b96ba67c593eabe
+  react-native-webgpu: fd352a85a872320dd758cf7f744f277691d8b0e2
   react-native-webview: 3a3d1fd130d39e4dcabeebe89e6b245478ee177e
   React-NativeModulesApple: d893b80dcb70309012e9a687292f0b459c00ad03
   React-networking: f217767c2b57c7cf8fbbcdb2a3bd3996b527bbc3
@@ -3391,7 +3403,7 @@ SPEC CHECKSUMS:
   ReactCommon: 35f9d5c72cb90cbb55855e6706a6b1e14aa1ae02
   ReactNativeDependencies: 41b6b90f61b089403ad5421898b600ea8cc883ed
   ReactNativeEnrichedHtml: fd3f1c9778d3fea40b3dad937b5d58e3f95ec237
-  ReservedRegions: d52e52b86795dd50203cd6e15d5b4622c3d83598
+  ReservedRegions: b3b91c8174532b66a1cb81980862dfa1aac1981f
   RNAudioAPI: f94568a3aad3efe139f1efe0ac1dd73f92c63b87
   RNCMaskedView: 89bb912716973f9715102cfe932f3ca6793b21f9
   RNGestureHandler: e19fcf39b0212e0eb8bc7ca1e645500eb492f6be
