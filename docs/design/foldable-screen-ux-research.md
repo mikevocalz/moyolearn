@@ -1,5 +1,10 @@
 # Moyo Learn — foldable UI/UX research and screen implementation plan
 
+<!-- What: adaptive screen requirements and the evidence needed to implement them. -->
+<!-- Why: navigation hardware identity and pane geometry must remain independent. -->
+<!-- SOT: AGENTS.md; pinned mikevocalz-foldable-layouts; packages/ui/adaptive-navigation.ts. -->
+<!-- SOT-KEYWORDS: foldable adaptive research navigation acceptance matrix -->
+
 Status: research-backed engineering specification; no runtime changes or device validation claimed.
 
 ## Evidence and required skills
@@ -15,7 +20,7 @@ Read `AGENTS.md` and the pinned `mikevocalz-foldable-layouts` skill first. Also 
 
 ## Non-negotiable navigation contract
 
-Native ordinary phone: existing bottom tabs. Native foldable even folded-cover, tablet and headset: physical RIGHT rail even in RTL and compact windows. Web: persistent header and compact bottom tabs, no side rail. Hardware identity and transient window width must not be conflated. Preserve Expo Router ownership, AdaptivePanes, SplitView.Inspector, Zustand, semantic UI and Kinetrell. Do not add a second navigation framework or a generic leading rail.
+Native ordinary phone: existing bottom tabs. Native foldable even folded-cover, tablet and headset: physical RIGHT rail even in RTL and compact windows. Web: persistent header and compact bottom tabs, no side rail. Hardware identity and transient window width must not be conflated. Preserve Expo Router ownership, AdaptivePanes, SplitView.Inspector, Zustand and semantic UI. Product motion uses `@legendapp/motion` through `packages/ui/motion.tsx`; marketing uses the existing GSAP/Lenis adapters. Kinetrell is not installed and is not an adoption decision in this specification. Do not add a second navigation framework or a generic leading rail.
 
 ## Design roster and review ownership
 
@@ -44,6 +49,52 @@ These are review roles, not assertions that people have been assigned.
 ## ArrangementView adoption decision
 
 `react-native-arrangement-view` is a candidate **implementation adapter** for related primary/secondary content, never the router or a replacement for AdaptivePanes. Inspect the exact installed/available version, its installation guide, native Expo development-build requirements, iOS/Android support, props and callbacks, lifecycle and Fabric compatibility before adding it. No guessed API names. Compare against Expo SDK 58 `@expo/ui` Apple-native arrangement support; avoid double ownership of one pane. Feature-gate native support and retain current AdaptivePanes as the fallback. For web use semantic responsive layouts. For XR preserve Viro's compositor ownership.
+
+The 2026-10-16 baseline inspection found no `react-native-arrangement-view`
+dependency in the workspace catalog or mobile manifest. The frozen install
+resolved `@expo/ui` 58.0.8, which exports `NavigationSplitView`; the presence of
+that component does not prove fold-geometry or ArrangementView compatibility.
+Expo is pinned to `58.0.0-preview.8` and React Native to `0.88.0-rc.2`.
+Retain the existing pane implementation. Adding the candidate library remains
+blocked on version-specific API, lifecycle and native-build evidence.
+
+## Baseline acceptance matrix (2026-10-16)
+
+`node --test packages/ui/adaptive-navigation.test.ts
+packages/ui/adaptive-panes/fold-layout.test.ts
+packages/ui/adaptive-panes/split-view.test.ts` passed 50 tests. Several navigation
+tests assert behavior that conflicts with the current product contract. A green
+test run therefore does not establish contract compliance.
+
+“Partial” below means a pure unit test covers part of the scenario; the complete
+scenario remains unverified. No browser, simulator or physical-device acceptance
+was performed for this audit.
+
+| Required scenario | Baseline evidence | Status |
+| --- | --- | --- |
+| Ordinary phone resized wide | Resolver classifies Android by width; input has no stable hardware-family discriminator. | Fails contract |
+| Narrow foldable cover without an active hinge | Existing cover test expects bottom tabs at 390dp. | Fails contract |
+| Same cover in RTL | Same width-based bottom-tab branch; RTL cannot restore a right rail. | Fails contract |
+| Tablet/headset window resized narrow | Apple compact branch and narrow Android branch select bottom tabs; family is unavailable. | Fails contract |
+| Unknown capability later resolves to foldable | No capability input/state exists in the navigation resolver. | Unverified |
+| Phone-width web on foldable | Native resolver is not evidence for the web header/tab host. | Unverified |
+| Wide/intermediate web | Browser header/menu rendering not exercised. | Unverified |
+| Vertical occluding hinge | Unit tests cover Android normalization and pane boundary placement. | Partial |
+| Zero-width separating fold | Unit test preserves an in-row separating crease. | Partial |
+| Flat non-separating crease | Unit test does not rearrange content for this crease. | Partial |
+| Horizontal tabletop hinge | Existing navigation test expects bottom navigation at expanded width. | Fails contract |
+| Multiple features and offset host | Unit tests cover multiple vertical hinges, off-row filtering and local x conversion. | Partial |
+| Inspector in book posture and RTL | Unit tests constrain logical trailing Inspector geometry; rendered frames/session identity untested. | Partial |
+| Large text/keyboard in narrow segment | No rendered reachability evidence. | Unverified |
+| Fold during form/media/call/camera/game | Store test preserves selection across column changes and resize; resources/focus/scroll untested. | Partial |
+| Background/resume/activity replacement | No lifecycle execution evidence. | Unverified |
+| Reduced motion/pointer/screen reader | No interaction or assistive-technology evidence. | Unverified |
+| Regenerated native configuration | No prebuild/native-config validation in this audit. | Unverified |
+
+Apple tablet navigation also currently returns a logical leading sidebar.
+Implementation must fix these policy conflicts and replace the contradictory
+test expectations together, using a verified capability source. An absent hinge
+event or viewport width must not be used to invent a hardware family.
 
 ## Required UX review and acceptance
 

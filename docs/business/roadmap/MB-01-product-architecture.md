@@ -83,3 +83,39 @@ Individual MB PRs must remain draft until their **implementation**, test evidenc
 ## Ownership and review
 
 Architecture (principal/staff), Better Auth/security, Payload/Postgres, native/web UI and accessibility, fintech/reconciliation, release QA and independent reviewer. Load root `AGENTS.md`, `CONTRIBUTING.md`, relevant expo/skills, mattpocock/skills, marketingskills, impeccable, no-ai-slop, repo-pinned foldable skill and specialist skills **before modifying runtime**. Preserve existing Legend Motion; do not presume Kinetrell is installed. No merge, auto-merge, deployment or price changes without explicit approval.
+
+## Source audit (2026-10-16)
+
+The ownership paths above were inspected against main `a6afe659`. The organization
+collection uses its slug as the tenant key and offers `tutoring`, `school` and
+`district` kinds. `protected-operation.ts` resolves host context before membership
+and subscription gates. Lead/family repositories constrain reads by `ctx.orgId`
+and combine record IDs with that predicate for individual lookups.
+
+The audit also identifies gaps for the dependent implementation PRs:
+
+- `business` is absent from both `RESERVED_ORG_SLUGS` in
+  `packages/payload/src/tenancy/org-slug.ts` and `NON_TENANT_HOSTS` in
+  `packages/auth/src/host-tenant.ts`. Before enabling a public Business hostname,
+  inventory existing organization slugs and deployed host mappings, handle any
+  collision explicitly, then update both policies with regression coverage.
+- `packages/app/features/ops/ops.data.ts` still contains revenue fixture data.
+  MB-16 must replace the real reporting path with reconciled committed events;
+  the fixture is not a financial source.
+- Family creation currently supports an `(orgId, name)` upsert in
+  `apps/web/lib/families.repository.ts`. That existing convenience must not become
+  proof of a guardian relationship or authorization to bill a learner. MB-06/09
+  must use verified identity links for those actions.
+- `check-crm-wall.mjs` checks reachability of the incident system.
+  `check-store-separation.mjs` restricts direct educational-store access to
+  repositories. Passing those checks does not prove every commercial service is
+  denied every learning-data repository; MB-05 requires negative service/API tests.
+- A district reference on an organization is data, not a cross-school access
+  grant. Scope and permission checks remain required for each institutional read.
+
+Verification: cold-cache `pnpm typecheck --force` passed all 19 tasks;
+`pnpm --filter @acme/auth test` passed 127 tests; CRM wall, store separation,
+version-table and auth-bypass checks passed. These results validate the inspected
+baseline, not the future business implementation. No provider, production data,
+device or payment action was performed. Evidence and remaining skill-source gaps
+are recorded in `docs/work/pr-completion-handoff.md`.
