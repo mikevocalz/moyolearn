@@ -14,7 +14,7 @@
 // No identity in any body. `forLearnerAuthId` names the ward on a guardian
 // upload; the server accepts it only for an active guardianship.
 // SOT: docs/work/pr-100/contract.md §Routes · packages/app/features/homework/homework.types.ts · packages/app/core/api-fetch.ts
-// SOT-KEYWORDS: homework client fetch submission create start advance revise stale cursor 409 reconcile
+// SOT-KEYWORDS: homework client fetch submission create start advance revise stale cursor 409 reconcile practice print authorization
 import { ApiError } from '../../core/api-fetch.ts';
 import { API_URL } from '../../core/api-url.ts';
 import type {
@@ -26,6 +26,7 @@ import type {
   ReviseQuestionInput,
   StartSubmissionInput,
 } from './homework.types.ts';
+import type { PracticeSheetMode } from './practice-sheet-html.ts';
 
 /** The advance route refused because the cursor moved since `expectedIndex` was read. */
 export class StaleCursorError extends Error {
@@ -71,6 +72,31 @@ async function readStaleCursor(response: Response): Promise<AdvanceResult | null
 }
 
 const segment = (id: string) => encodeURIComponent(id);
+
+export const practicePrintPath = (practiceSetId: string, mode: PracticeSheetMode): string =>
+  `/api/guardian/practice-sets/${segment(practiceSetId)}/print?mode=${mode}`;
+
+/**
+ * Native printing uses the same fresh guardianship and approval check as web.
+ * A cached preview is not authority to export a key after access is revoked.
+ */
+export async function loadPracticePrintHtml(
+  practiceSetId: string,
+  mode: PracticeSheetMode,
+  fetchPort: FetchPort = (url, init) => fetch(url, init),
+  baseUrl: string = API_URL,
+): Promise<string> {
+  const response = await fetchPort(`${baseUrl}${practicePrintPath(practiceSetId, mode)}`, {
+    credentials: 'include',
+    cache: 'no-store',
+    redirect: 'error',
+  });
+  if (!response.ok) throw new ApiError(response.status);
+  if (response.headers.get('content-type')?.split(';')[0]?.trim().toLowerCase() !== 'text/html') {
+    throw new Error('Expected practice print HTML');
+  }
+  return response.text();
+}
 
 export function createHomeworkClient(
   fetchPort: FetchPort = (url, init) => fetch(url, init),
