@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 import { ApiError } from '../../core/api-fetch.ts';
-import { createHomeworkClient, StaleCursorError } from './homework.client.ts';
+import { createHomeworkClient, loadPracticePrintHtml, StaleCursorError } from './homework.client.ts';
 import type { AdvanceInput } from './homework.types.ts';
 
 const move: AdvanceInput = {
@@ -48,4 +48,38 @@ test('a 200 advance returns the new cursor; a dropped connection stays a transpo
   assert.deepEqual(await ok.advance('s', move), { currentIndex: 1, currentQuestionId: 'q2', status: 'in-progress' });
   const offline = createHomeworkClient(async () => { throw new TypeError('Failed to fetch'); }, '');
   await assert.rejects(offline.advance('s', move), (e: unknown) => e instanceof TypeError);
+});
+
+test('native practice printing fetches fresh authorized HTML without sending cached answers', async () => {
+  const seen: { url: string; init: RequestInit }[] = [];
+  const html = '<!doctype html><title>Approved practice sheet</title>';
+  const result = await loadPracticePrintHtml('set/1', 'key', async (url, init) => {
+    seen.push({ url, init });
+    return new Response(html, { headers: { 'Content-Type': 'text/html; charset=utf-8' } });
+  }, 'https://api.test');
+  assert.equal(result, html);
+  assert.deepEqual(seen, [{
+    url: 'https://api.test/api/guardian/practice-sets/set%2F1/print?mode=key',
+    init: { credentials: 'include', cache: 'no-store', redirect: 'error' },
+  }]);
+});
+
+test('native practice printing refuses revoked, signed-out, missing and unapproved sets', async () => {
+  for (const status of [401, 403, 404, 409, 500]) {
+    await assert.rejects(
+      loadPracticePrintHtml('set-1', 'sheet', async () => json(status, { error: 'refused' }), ''),
+      (error: Error) => error instanceof ApiError && error.status === status,
+    );
+  }
+});
+
+test('native practice printing never falls back to cached content when offline or given non-HTML', async () => {
+  await assert.rejects(
+    loadPracticePrintHtml('set-1', 'key', async () => { throw new TypeError('offline'); }, ''),
+    TypeError,
+  );
+  await assert.rejects(
+    loadPracticePrintHtml('set-1', 'key', async () => json(200, { error: 'unexpected response' }), ''),
+    /Expected practice print HTML/,
+  );
 });

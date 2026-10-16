@@ -52,7 +52,7 @@ All under `protectedOperation`. List endpoints return bare arrays, never a wrapp
 
 ## Practice sets (B5 owns)
 
-Generator: deterministic templates per skill tag, seeded. Checker: `packages/student-model/src/exact-math.ts:checkExactMath`. Every item's `answer` is verified by the checker before the set is saved; a failing item is dropped and logged. HTML for sheet and key comes from one pure module in `packages/app/features/homework/practice-sheet-html.ts`, used by the web print route and by `expo-print` on native, then `expo-sharing`.
+Generator: deterministic templates per skill tag, seeded. Checker: `packages/student-model/src/exact-math.ts:checkExactMath`. Every item's `answer` is verified by the checker before the set is saved; a failing item is dropped and logged. HTML for sheet and key comes from one pure module in `packages/app/features/homework/practice-sheet-html.ts`, rendered by the authenticated print route. Native fetches that route before `expo-print` and `expo-sharing`, so every export rechecks active guardianship and approval rather than trusting the cached preview.
 
 ## File ownership
 

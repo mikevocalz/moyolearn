@@ -4,10 +4,10 @@
 // SOT: docs/work/pr-100/contract.md §Routes · apps/web/app/api/guardian/practice-sets/[practiceSetId]/print/route.ts
 // SOT-KEYWORDS: practice print web route window open sheet key
 import { API_URL } from '../../core/api-url.ts';
+import { practicePrintPath } from './homework.client.ts';
 import type { PrintPracticeSet } from './practice-print.types.ts';
 
-export const practicePrintPath = (practiceSetId: string, mode: 'sheet' | 'key'): string =>
-  `/api/guardian/practice-sets/${encodeURIComponent(practiceSetId)}/print?mode=${mode}`;
+export { practicePrintPath } from './homework.client.ts';
 
 export const printPracticeSet: PrintPracticeSet = async (set, mode) => {
   if (typeof window === 'undefined') return 'unavailable';
