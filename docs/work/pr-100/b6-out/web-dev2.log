@@ -1,0 +1,25 @@
+▲ Next.js 16.3.5 (Turbopack)
+- Local:         http://localhost:3100
+- Network:       http://192.168.1.27:3100
+- Environments: .env.local
+✓ Ready in 369ms
+[@sentry/nextjs] Importing `withSentryConfig` from `@sentry/nextjs` is deprecated and will stop working in v11. Import it from `@sentry/nextjs/config` instead:
+  import { withSentryConfig } from '@sentry/nextjs/config';
+✓ Running next.config.ts took 498ms
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+- Experiments (use with caution):
+  · clientTraceMetadata
+  ✓ globalNotFound
+  ✓ inlineCss
+  · optimizePackageImports
+  ✓ turbopackRustReactCompiler
+  ⨯ turbopackServerFastRefresh
+
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+ GET /api/auth/ok 200 in 1094ms (next.js: 957ms, proxy.ts: 56ms, application-code: 81ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+[20:15:43] [33mWARN[39m: [36mNo email adapter provided. Email will be written to console. More info at https://payloadcms.com/docs/email/overview.[39m
+{"evt":"op","op":"homework.submission.create","resource":"homeworkSubmissions","action":"write","ctxKind":"guardian","capability":"practise","latencyMs":155,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions 201 in 1531ms (next.js: 901ms, proxy.ts: 378ms, application-code: 252ms)
+[?25h

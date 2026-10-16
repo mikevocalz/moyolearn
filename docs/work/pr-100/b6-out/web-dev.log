@@ -1,0 +1,210 @@
+▲ Next.js 16.3.5 (Turbopack)
+- Local:         http://localhost:3100
+- Network:       http://192.168.1.27:3100
+- Environments: .env.local
+✓ Ready in 294ms
+[@sentry/nextjs] Importing `withSentryConfig` from `@sentry/nextjs` is deprecated and will stop working in v11. Import it from `@sentry/nextjs/config` instead:
+  import { withSentryConfig } from '@sentry/nextjs/config';
+✓ Running next.config.ts took 401ms
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+- Experiments (use with caution):
+  · clientTraceMetadata
+  ✓ globalNotFound
+  ✓ inlineCss
+  · optimizePackageImports
+  ✓ turbopackRustReactCompiler
+  ⨯ turbopackServerFastRefresh
+
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+ GET /api/auth/ok 200 in 856ms (next.js: 756ms, proxy.ts: 48ms, application-code: 51ms)
+ POST /api/auth/sign-in/email 200 in 144ms (next.js: 6ms, proxy.ts: 3ms, application-code: 135ms)
+ POST /api/auth/sign-in/email 200 in 87ms (next.js: 1.9ms, proxy.ts: 1.8ms, application-code: 83ms)
+ POST /api/auth/sign-in/email 200 in 86ms (next.js: 1.9ms, proxy.ts: 1.9ms, application-code: 82ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+[20:12:13] [33mWARN[39m: [36mNo email adapter provided. Email will be written to console. More info at https://payloadcms.com/docs/email/overview.[39m
+{"evt":"op","op":"homework.submission.create","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":188,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions 201 in 1208ms (next.js: 720ms, proxy.ts: 210ms, application-code: 277ms)
+{"evt":"op","op":"homework.submission.create","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":13,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions 200 in 25ms (next.js: 1.9ms, proxy.ts: 6ms, application-code: 16ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+{"evt":"op","op":"homework.submission.read","resource":"homeworkSubmissions","action":"read","ctxKind":"learner","capability":"practise","latencyMs":17,"outcome":"ok","authMode":"session","attributed":true}
+ GET /api/homework/submissions/00000000-0000-4000-8000-000000000010 200 in 3.0s (next.js: 3.0s, proxy.ts: 7ms, application-code: 22ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/questions/00000000-0000-4000-8000-000000000002/revise 400 in 2.8s (next.js: 2.8s, proxy.ts: 6ms, application-code: 7ms)
+{"evt":"op","op":"homework.question.revise","resource":"homeworkQuestions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":60,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/questions/00000000-0000-4000-8000-000000000002/revise 200 in 90ms (next.js: 15ms, proxy.ts: 10ms, application-code: 65ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+(node:15948) ExperimentalWarning: localStorage is not available because --localstorage-file was not provided.
+(Use `node --trace-warnings ...` to show where the warning was created)
+{"evt":"op","op":"unattributed","resource":"unattributed","action":"unspecified","ctxKind":"learner","capability":"practise","latencyMs":20,"outcome":"ok","authMode":"session","attributed":false}
+ GET /api/tutor/session?problem=1%2F2%20%2B%201%2F4 200 in 1192ms (next.js: 1153ms, proxy.ts: 7ms, application-code: 32ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+{"evt":"op","op":"homework.submission.start","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":6,"outcome":"error","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/start 400 in 2.4s (next.js: 2.4s, proxy.ts: 5ms, application-code: 13ms)
+{"evt":"op","op":"homework.submission.start","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":30,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/start 200 in 57ms (next.js: 14ms, proxy.ts: 9ms, application-code: 34ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":20,"outcome":"error","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 400 in 3.1s (next.js: 3.0s, proxy.ts: 19ms, application-code: 34ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":65,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 409 in 166ms (next.js: 68ms, proxy.ts: 27ms, application-code: 72ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":13,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 409 in 28ms (next.js: 4ms, proxy.ts: 8ms, application-code: 16ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":10,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 409 in 41ms (next.js: 23ms, proxy.ts: 5ms, application-code: 13ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":9,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 409 in 23ms (next.js: 7ms, proxy.ts: 5ms, application-code: 11ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":11,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 409 in 22ms (next.js: 3ms, proxy.ts: 5ms, application-code: 13ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":10,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 409 in 22ms (next.js: 3ms, proxy.ts: 6ms, application-code: 12ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":14,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 409 in 26ms (next.js: 3ms, proxy.ts: 5ms, application-code: 17ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":15,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 409 in 30ms (next.js: 4ms, proxy.ts: 7ms, application-code: 19ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":15,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 409 in 29ms (next.js: 4ms, proxy.ts: 7ms, application-code: 18ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":12,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 409 in 25ms (next.js: 3ms, proxy.ts: 7ms, application-code: 15ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":105,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 200 in 143ms (next.js: 8ms, proxy.ts: 23ms, application-code: 112ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":45,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 200 in 59ms (next.js: 3ms, proxy.ts: 8ms, application-code: 48ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":44,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 200 in 57ms (next.js: 3ms, proxy.ts: 7ms, application-code: 47ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":50,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 200 in 64ms (next.js: 4ms, proxy.ts: 6ms, application-code: 54ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":42,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 200 in 55ms (next.js: 4ms, proxy.ts: 6ms, application-code: 44ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":12,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 409 in 27ms (next.js: 3ms, proxy.ts: 8ms, application-code: 16ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":57,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 200 in 70ms (next.js: 4ms, proxy.ts: 6ms, application-code: 60ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":57,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 200 in 74ms (next.js: 4ms, proxy.ts: 8ms, application-code: 63ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":44,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 200 in 61ms (next.js: 5ms, proxy.ts: 10ms, application-code: 47ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":77,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 200 in 94ms (next.js: 5ms, proxy.ts: 8ms, application-code: 81ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":39,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 200 in 54ms (next.js: 5ms, proxy.ts: 7ms, application-code: 42ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":29,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 409 in 50ms (next.js: 8ms, proxy.ts: 10ms, application-code: 33ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+{"evt":"op","op":"tutor.session.close","resource":"tutorSessions","action":"write","ctxKind":"learner","capability":"practise","latencyMs":88,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/tutor/session 200 in 116ms (next.js: 12ms, proxy.ts: 10ms, application-code: 95ms)
+ POST /api/jobs/drain 200 in 1315ms (next.js: 1275ms, proxy.ts: 2ms, application-code: 38ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+{"evt":"op","op":"summary.guardian.report","resource":"sessionSummaries","action":"read","ctxKind":"guardian","capability":"practise","latencyMs":65,"outcome":"ok","authMode":"session","attributed":true}
+ GET /api/guardian/reports/00000000-0000-4000-8000-000000000037/print?mode=report 200 in 3.8s (next.js: 3.7s, proxy.ts: 19ms, application-code: 84ms)
+{"evt":"op","op":"homework.practice.draft","resource":"homeworkPracticeSets","action":"write","ctxKind":"guardian","capability":"practise","latencyMs":194,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/guardian/practice-sets 200 in 1147ms (next.js: 939ms, proxy.ts: 8ms, application-code: 201ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+{"evt":"op","op":"homework.practice.print","resource":"homeworkPracticeSets","action":"read","ctxKind":"guardian","capability":"practise","latencyMs":26,"outcome":"error","authMode":"session","attributed":true}
+ GET /api/guardian/practice-sets/00000000-0000-4000-8000-000000000025/print?mode=key 409 in 3.2s (next.js: 3.1s, proxy.ts: 6ms, application-code: 33ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+{"evt":"op","op":"homework.practice.approve","resource":"homeworkPracticeSets","action":"write","ctxKind":"guardian","capability":"practise","latencyMs":38,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/guardian/practice-sets/00000000-0000-4000-8000-000000000025/approve 200 in 2.6s (next.js: 2.6s, proxy.ts: 6ms, application-code: 42ms)
+{"evt":"op","op":"homework.practice.print","resource":"homeworkPracticeSets","action":"read","ctxKind":"guardian","capability":"practise","latencyMs":8,"outcome":"ok","authMode":"session","attributed":true}
+ GET /api/guardian/practice-sets/00000000-0000-4000-8000-000000000025/print?mode=sheet 200 in 25ms (next.js: 8ms, proxy.ts: 6ms, application-code: 11ms)
+{"evt":"op","op":"homework.practice.print","resource":"homeworkPracticeSets","action":"read","ctxKind":"guardian","capability":"practise","latencyMs":10,"outcome":"ok","authMode":"session","attributed":true}
+ GET /api/guardian/practice-sets/00000000-0000-4000-8000-000000000025/print?mode=key 200 in 22ms (next.js: 4ms, proxy.ts: 6ms, application-code: 12ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+{"evt":"op","op":"homework.submission.read","resource":"homeworkSubmissions","action":"read","ctxKind":"guardian","capability":"practise","latencyMs":10,"outcome":"error","authMode":"session","attributed":true}
+ GET /api/homework/submissions/00000000-0000-4000-8000-000000000010 404 in 36ms (next.js: 14ms, proxy.ts: 8ms, application-code: 14ms)
+{"evt":"op","op":"homework.submission.list","resource":"homeworkSubmissions","action":"read","ctxKind":"guardian","capability":"practise","latencyMs":9,"outcome":"error","authMode":"session","attributed":true}
+ GET /api/homework/submissions?learner=auth_test_learner 404 in 33ms (next.js: 13ms, proxy.ts: 7ms, application-code: 13ms)
+{"evt":"op","op":"homework.practice.print","resource":"homeworkPracticeSets","action":"read","ctxKind":"guardian","capability":"practise","latencyMs":10,"outcome":"ok","authMode":"session","attributed":true}
+ GET /api/guardian/practice-sets/00000000-0000-4000-8000-000000000025/print?mode=key 404 in 26ms (next.js: 6ms, proxy.ts: 7ms, application-code: 13ms)
+{"evt":"op","op":"homework.practice.print","resource":"homeworkPracticeSets","action":"read","ctxKind":"guardian","capability":"practise","latencyMs":16,"outcome":"ok","authMode":"session","attributed":true}
+ GET /api/guardian/practice-sets/00000000-0000-4000-8000-000000000025/print?mode=sheet 404 in 34ms (next.js: 6ms, proxy.ts: 9ms, application-code: 19ms)
+{"evt":"op","op":"homework.practice.approve","resource":"homeworkPracticeSets","action":"write","ctxKind":"guardian","capability":"practise","latencyMs":17,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/guardian/practice-sets/00000000-0000-4000-8000-000000000025/approve 404 in 36ms (next.js: 7ms, proxy.ts: 7ms, application-code: 21ms)
+{"evt":"op","op":"homework.practice.draft","resource":"homeworkPracticeSets","action":"write","ctxKind":"guardian","capability":"practise","latencyMs":14,"outcome":"ok","authMode":"session","attributed":true}
+ POST /api/guardian/practice-sets 404 in 33ms (next.js: 8ms, proxy.ts: 7ms, application-code: 18ms)
+{"evt":"op","op":"summary.guardian.report","resource":"sessionSummaries","action":"read","ctxKind":"guardian","capability":"practise","latencyMs":26,"outcome":"ok","authMode":"session","attributed":true}
+ GET /api/guardian/reports/00000000-0000-4000-8000-000000000037/print?mode=report 404 in 49ms (next.js: 11ms, proxy.ts: 8ms, application-code: 30ms)
+{"evt":"op","op":"homework.submission.advance","resource":"homeworkSubmissions","action":"write","ctxKind":"guardian","capability":"practise","latencyMs":21,"outcome":"error","authMode":"session","attributed":true}
+ POST /api/homework/submissions/00000000-0000-4000-8000-000000000010/advance 404 in 53ms (next.js: 10ms, proxy.ts: 15ms, application-code: 27ms)
+{"evt":"op","op":"homework.practice.print","resource":"homeworkPracticeSets","action":"read","ctxKind":"learner","capability":"practise","latencyMs":21,"outcome":"ok","authMode":"session","attributed":true}
+ GET /api/guardian/practice-sets/00000000-0000-4000-8000-000000000025/print?mode=key 404 in 55ms (next.js: 10ms, proxy.ts: 18ms, application-code: 27ms)
+{"evt":"op","op":"homework.submission.read","resource":"homeworkSubmissions","action":"read","ctxKind":"guardian","capability":"practise","latencyMs":56,"outcome":"ok","authMode":"session","attributed":true}
+ GET /api/homework/submissions/00000000-0000-4000-8000-000000000010 200 in 87ms (next.js: 6ms, proxy.ts: 17ms, application-code: 64ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+{"evt":"op","op":"guardian.wards.list","resource":"guardianships","action":"read","ctxKind":"guardian","capability":"practise","latencyMs":36,"outcome":"ok","authMode":"session","attributed":true}
+ GET /api/guardian/wards 200 in 1252ms (next.js: 1198ms, proxy.ts: 10ms, application-code: 44ms)
+{"evt":"op","op":"guardian.wards.list","resource":"guardianships","action":"read","ctxKind":"guardian","capability":"practise","latencyMs":22,"outcome":"ok","authMode":"session","attributed":true}
+ GET /api/guardian/wards 200 in 48ms (next.js: 4ms, proxy.ts: 18ms, application-code: 26ms)
+{"evt":"op","op":"homework.submission.create","resource":"homeworkSubmissions","action":"write","ctxKind":"guardian","capability":"practise","latencyMs":14,"outcome":"error","authMode":"session","attributed":true}
+[b6-debug] Error [ValidationError]: The following field is invalid: Instructions
+    at async (lib/homework.repository.ts:333:26)
+    at async createSubmissionFor (../../packages/app/features/homework/homework.service.ts:378:19)
+    at async protectedOperation (../../packages/app/core/protected-operation.ts:350:20)
+    at async POST (app/api/homework/submissions/route.ts:12:21)
+  331 |       const first = row.questions[0];
+  332 |       if (!first) throw new Error('A submission needs at least one question');
+> 333 |       const submission = await payload.create({
+      |                          ^
+  334 |         collection: 'homeworkSubmissions',
+  335 |         data: {
+  336 |           submissionId: row.submissionId, {
+  data: {
+    id: undefined,
+    collection: 'homeworkSubmissions',
+    errors: [ [Object] ],
+    global: undefined
+  },
+  isOperational: true,
+  isPublic: true,
+  status: 400,
+  [cause]: {
+    id: undefined,
+    collection: 'homeworkSubmissions',
+    errors: [ [Object] ],
+    global: undefined
+  }
+}
+ POST /api/homework/submissions 500 in 179ms (next.js: 10ms, proxy.ts: 9ms, application-code: 160ms)
+{"evt":"op","op":"homework.submission.create","resource":"homeworkSubmissions","action":"write","ctxKind":"guardian","capability":"practise","latencyMs":7,"outcome":"error","authMode":"session","attributed":true}
+ POST /api/homework/submissions 404 in 32ms (next.js: 3ms, proxy.ts: 19ms, application-code: 10ms)
+<claude-code-hint v="1" type="plugin" value="stripe@claude-plugins-official" />
+{"evt":"op","op":"homework.submission.create","resource":"homeworkSubmissions","action":"write","ctxKind":"guardian","capability":"practise","latencyMs":49,"outcome":"error","authMode":"session","attributed":true}
+[b6-debug] Error [ValidationError]: The following field is invalid: Instructions
+    at async (lib/homework.repository.ts:333:26)
+    at async createSubmissionFor (../../packages/app/features/homework/homework.service.ts:378:19)
+    at async protectedOperation (../../packages/app/core/protected-operation.ts:350:20)
+    at async POST (app/api/homework/submissions/route.ts:12:21)
+  331 |       const first = row.questions[0];
+  332 |       if (!first) throw new Error('A submission needs at least one question');
+> 333 |       const submission = await payload.create({
+      |                          ^
+  334 |         collection: 'homeworkSubmissions',
+  335 |         data: {
+  336 |           submissionId: row.submissionId, {
+  data: {
+    id: undefined,
+    collection: 'homeworkSubmissions',
+    errors: [ [Object] ],
+    global: undefined
+  },
+  isOperational: true,
+  isPublic: true,
+  status: 400,
+  [cause]: {
+    id: undefined,
+    collection: 'homeworkSubmissions',
+    errors: [ [Object] ],
+    global: undefined
+  }
+}
+ POST /api/homework/submissions 500 in 1123ms (next.js: 864ms, proxy.ts: 31ms, application-code: 228ms)
+[?25h

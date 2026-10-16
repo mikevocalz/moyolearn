@@ -1,0 +1,3 @@
+{"n":10,"detected":"10","cardsRendered":10,"domNodes":160,"mountCommits":1,"mountMsMedian":19.7,"reorderCommits":1,"reorderMsMedian":12.21,"reorderClicked":true,"jsdomErrors":0,"mountMsRuns":[34.98,19.7,23.98,18.1,18.24]}
+{"n":25,"detected":"25","cardsRendered":25,"domNodes":370,"mountCommits":1,"mountMsMedian":34.83,"reorderCommits":1,"reorderMsMedian":24.04,"reorderClicked":true,"jsdomErrors":0,"mountMsRuns":[33.84,39.2,34.67,35.53,34.83]}
+{"n":50,"detected":"50","cardsRendered":50,"domNodes":720,"mountCommits":1,"mountMsMedian":64.04,"reorderCommits":1,"reorderMsMedian":45.46,"reorderClicked":true,"jsdomErrors":0,"mountMsRuns":[64.57,62.96,63.06,64.39,64.04]}
