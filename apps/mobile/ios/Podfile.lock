@@ -1832,7 +1832,7 @@ PODS:
     - ReactCommon/turbomodule/core
     - ReactNativeDependencies
     - Yoga
-  - react-native-webgpu (0.13.1):
+  - react-native-webgpu (0.16.0):
     - hermes-engine
     - RCTRequired
     - RCTTypeSafety
@@ -3363,7 +3363,7 @@ SPEC CHECKSUMS:
   react-native-keyboard-controller: d5682988ef16bd7d6a3c3423768b88f1da1b3a72
   react-native-safe-area-context: 949375a80dca43886b96574e6c97a0c5b37a479c
   react-native-skia: 0c2cef8251ea13c198beeba1bcc25284e84294af
-  react-native-webgpu: fd352a85a872320dd758cf7f744f277691d8b0e2
+  react-native-webgpu: 1d70f991e6bae3b424d75345e75e8ea365804d60
   react-native-webview: 3a3d1fd130d39e4dcabeebe89e6b245478ee177e
   React-NativeModulesApple: d893b80dcb70309012e9a687292f0b459c00ad03
   React-networking: f217767c2b57c7cf8fbbcdb2a3bd3996b527bbc3
