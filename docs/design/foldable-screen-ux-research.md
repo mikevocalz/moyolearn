@@ -10,13 +10,14 @@ Status: research-backed engineering specification; no runtime changes or device 
 ## Evidence and required skills
 
 Read `AGENTS.md` and the pinned `mikevocalz-foldable-layouts` skill first. Also load FloWritesCode/fwc-swiftui-skills (`swiftui-iphone-duo`, reference.md), Expo skills, mattpocock/skills, Argent/agent-device, pbakaus/impeccable, petergyang/no-ai-slop, and the existing repository's UI/accessibility/testing instructions. Apply SwiftUI guidance to Apple-native adapters, not directly to React Native views. Research sources:
-- https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo
-- https://developer.apple.com/videos/play/tech-talks/111463/
-- https://developer.android.com/develop/adaptive-apps/guides/foldables/learn-about-foldables
-- https://developer.android.com/develop/adaptive-apps/guides/get-started-with-adaptive-apps
-- https://android-developers.googleblog.com/2023/06/detecting-if-device-is-foldable-tablet.html
-- https://thiagobrez.github.io/react-native-arrangement-view/index.html
-- https://thiagobrez.github.io/react-native-arrangement-view/guide/installation
+
+- <https://developer.apple.com/design/human-interface-guidelines/designing-for-iphone-duo>
+- <https://developer.apple.com/videos/play/tech-talks/111463/>
+- <https://developer.android.com/develop/adaptive-apps/guides/foldables/learn-about-foldables>
+- <https://developer.android.com/develop/adaptive-apps/guides/get-started-with-adaptive-apps>
+- <https://android-developers.googleblog.com/2023/06/detecting-if-device-is-foldable-tablet.html>
+- <https://thiagobrez.github.io/react-native-arrangement-view/index.html>
+- <https://thiagobrez.github.io/react-native-arrangement-view/guide/installation>
 
 ## Non-negotiable navigation contract
 

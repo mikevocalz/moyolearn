@@ -114,3 +114,12 @@ and one independent phase-9 security fix are committed. Phases 2–8, the rest o
 phase 9, runtime acceptance and final integration remain open. Native verification
 needs disk capacity before another install/build attempt. The wider queue also
 still requires the implementation and external evidence listed in the plan.
+
+## Markdown lint correction
+
+Fixed the reported MD032/MD034 warnings in the foldable research document by
+separating the source list from its paragraph and formatting URLs as autolinks.
+Fixed the MB-01 table delimiter spacing for compact-style MD060.
+Ran markdownlint-cli2 0.20.0 (markdownlint 0.40.0) with MD032, MD034 and compact
+MD060 enabled against both documents and this handoff: zero errors.
+`git diff --check` also passed.

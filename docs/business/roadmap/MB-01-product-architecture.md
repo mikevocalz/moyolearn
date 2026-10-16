@@ -16,7 +16,7 @@ An independent `apps/business` deployment, a second CRM, an independent `Tenants
 ## Source-of-truth ownership
 
 | Concern | Existing owner | Never duplicate |
-|---|---|---|
+| --- | --- | --- |
 | Identity / memberships | `packages/auth`: Better Auth, active context, `host-tenant.ts` | user IDs, organization IDs, sessions |
 | Organization | `packages/payload/src/collections/Organizations.ts` (`slug` is tenant key; `kind` currently tutoring, school, district) | separate Tenants or Districts |
 | CRM | `Leads`, `Families`, `packages/app/features/ops`, `apps/web/lib/leads.repository.ts` | duplicated contacts/opportunities |
