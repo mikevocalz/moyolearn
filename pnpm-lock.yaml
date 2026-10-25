@@ -363,10 +363,13 @@ catalogs:
 
 overrides:
   '@reactvision/react-viro': file:./vendors/reactvision-react-viro-3.0.1-moyo.1.tgz
-  '@viro-external/core': file:./vendors/viro-external-core-0.1.0.tgz
-  '@viro-external/media': file:./vendors/viro-external-media-0.1.0.tgz
-  '@viro-external/ui': file:./vendors/viro-external-ui-0.1.0.tgz
-  '@viro-external/xr-contract': file:./vendors/viro-external-xr-contract-0.3.0.tgz
+  '@viro-external/core': file:./vendors/viro-external-core-0.1.0-4dc2775.tgz
+  '@viro-external/media': file:./vendors/viro-external-media-0.1.0-4dc2775.tgz
+  '@viro-external/meta-layout': file:./vendors/viro-external-meta-layout-0.1.0-4dc2775.tgz
+  '@viro-external/native-panels': file:./vendors/viro-external-native-panels-0.1.0-4dc2775.tgz
+  '@viro-external/spatial-panels': file:./vendors/viro-external-spatial-panels-0.1.0-4dc2775.tgz
+  '@viro-external/ui': file:./vendors/viro-external-ui-0.1.0-4dc2775.tgz
+  '@viro-external/xr-contract': file:./vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz
   '@expo-pico/core': file:./vendors/expo-pico-core-1.0.0.tgz
   '@expo/dom-webview': 58.0.0
   '@payloadcms/plugin-cloud-storage': 4.0.0-canary.33
@@ -1087,17 +1090,23 @@ importers:
         specifier: 'catalog:'
         version: 8.21.3(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       '@viro-external/core':
-        specifier: file:../../vendors/viro-external-core-0.1.0.tgz
-        version: file:vendors/viro-external-core-0.1.0.tgz(e316e38b85b31ecfd4bb73c389732efb)
+        specifier: file:../../vendors/viro-external-core-0.1.0-4dc2775.tgz
+        version: file:vendors/viro-external-core-0.1.0-4dc2775.tgz(a8362a136e4df0b8370d2bbfb5f27e85)
       '@viro-external/media':
-        specifier: file:../../vendors/viro-external-media-0.1.0.tgz
-        version: file:vendors/viro-external-media-0.1.0.tgz(e316e38b85b31ecfd4bb73c389732efb)
+        specifier: file:../../vendors/viro-external-media-0.1.0-4dc2775.tgz
+        version: file:vendors/viro-external-media-0.1.0-4dc2775.tgz(e316e38b85b31ecfd4bb73c389732efb)
+      '@viro-external/meta-layout':
+        specifier: file:../../vendors/viro-external-meta-layout-0.1.0-4dc2775.tgz
+        version: file:vendors/viro-external-meta-layout-0.1.0-4dc2775.tgz(@viro-external/xr-contract@file:vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz)
+      '@viro-external/native-panels':
+        specifier: file:../../vendors/viro-external-native-panels-0.1.0-4dc2775.tgz
+        version: file:vendors/viro-external-native-panels-0.1.0-4dc2775.tgz(b7570a0e56be18b86c23f47c5f6b2a87)
       '@viro-external/ui':
-        specifier: file:../../vendors/viro-external-ui-0.1.0.tgz
-        version: file:vendors/viro-external-ui-0.1.0.tgz(a4f767c07dd3d52a97a51c95cfc2232b)
+        specifier: file:../../vendors/viro-external-ui-0.1.0-4dc2775.tgz
+        version: file:vendors/viro-external-ui-0.1.0-4dc2775.tgz(967462d8216429c6983f63fe45ecc7aa)
       '@viro-external/xr-contract':
-        specifier: file:../../vendors/viro-external-xr-contract-0.3.0.tgz
-        version: file:vendors/viro-external-xr-contract-0.3.0.tgz
+        specifier: file:../../vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz
+        version: file:vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz
       '@xmldom/xmldom':
         specifier: 0.9.12
         version: 0.9.12
@@ -1155,6 +1164,9 @@ importers:
       react-native-nitro-fetch:
         specifier: 1.6.2
         version: 1.6.2(react-native-nitro-modules@0.37.1(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.0(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react-native-nitro-modules:
+        specifier: 'catalog:'
+        version: 0.37.1(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-reanimated:
         specifier: 'catalog:'
         version: 4.7.1(patch_hash=978b0108c991de643f838b3faa0d32f53df3e9c7ff1f1a4e50f389a36c09b0c8)(react-native-worklets@0.13.0(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -3152,16 +3164,9 @@ packages:
   '@expo/metro@58.0.0-rc.0':
     resolution: {integrity: sha512-9ZXNH/rppKQcoW0ycTSQqnKcjuYnutWf/6YkfAh1PBeWs+W1Nuc2uMTRM0qWNc9btbD4iHZKovru3gJqMgFzFQ==}
 
-  '@expo/osascript@2.7.1':
-    resolution: {integrity: sha512-Zn03EX6In7ts2lPUW2ESUSkEhEWQN1qqsiXjadtZMJOuZRkMiAg1ZQHuvz9DjByDWNJ2pBwAGyrts9lj9k389g==}
-    engines: {node: '>=12'}
-
   '@expo/osascript@2.8.0':
     resolution: {integrity: sha512-2/qLBfNuOB6gYPRK1wjuUR4S0AtaUW0BzfUPPFnwobGNsM8YL3QiKVe/qmJGsmkR08DsQ7V3iVGIY+VOT7Lw1Q==}
     engines: {node: '>=12'}
-
-  '@expo/package-manager@1.13.1':
-    resolution: {integrity: sha512-y/K+CaYYpZpNGZhSX4HyLT/vyIunFjNfyoxNysPBCefeLKI/VCx6f9LNPzrxayr3rCYO5bl9O8H+HRQK265Nkg==}
 
   '@expo/package-manager@1.14.0':
     resolution: {integrity: sha512-7oMddE1oOCzniK8LnjB0VDUAgFKiyicnvZEl7vIP/xe6wzhqTGB71BV/EMaBxRnDlGezCi9LE9HLDXNgiGSi2g==}
@@ -6455,8 +6460,8 @@ packages:
     peerDependencies:
       react: 19.3.0
 
-  '@viro-external/core@file:vendors/viro-external-core-0.1.0.tgz':
-    resolution: {integrity: sha512-oBl9n+VxzR92n+jpzi21liAzFnA1RHsJ6zxiFJbl1AbXjqF18AC1SXyibnwSG8tmSCEXglP8G1XpF4FV0uR4/A==, tarball: file:vendors/viro-external-core-0.1.0.tgz}
+  '@viro-external/core@file:vendors/viro-external-core-0.1.0-4dc2775.tgz':
+    resolution: {integrity: sha512-7T1vC1VF83E9R7kDNwl9eRjkrcwnmvwo0nuty+rKuy04lIFdBHIRGwUTdJ3VyXMOn+eo0gM1fdpIDIrDzNtH9Q==, tarball: file:vendors/viro-external-core-0.1.0-4dc2775.tgz}
     version: 0.1.0
     peerDependencies:
       '@reactvision/react-viro': '>=3.0.1-moyo.0 <4.0.0'
@@ -6467,27 +6472,50 @@ packages:
       '@viro-external/splat-pass':
         optional: true
 
-  '@viro-external/media@file:vendors/viro-external-media-0.1.0.tgz':
-    resolution: {integrity: sha512-KAzuy4xNpnLEJGwg8qHAUyVcemBAReqoWG90g8Spo6hCVR999FLlNgOvS4dRz07CkLT4EEEe2Ci2uQ9eekBflw==, tarball: file:vendors/viro-external-media-0.1.0.tgz}
+  '@viro-external/media@file:vendors/viro-external-media-0.1.0-4dc2775.tgz':
+    resolution: {integrity: sha512-N+jNn7t6Cre7li45UiD3MvCu124ePlKM+A7xZyOOELWYYiYSsQC6LfEJC6HR5u8nUfBW5xSvOskt8FvBkyvKNA==, tarball: file:vendors/viro-external-media-0.1.0-4dc2775.tgz}
     version: 0.1.0
     peerDependencies:
       '@reactvision/react-viro': '>=3.0.1-moyo.0 <4.0.0'
       react: 19.3.0
       react-native: 0.88.0-rc.2
 
-  '@viro-external/ui@file:vendors/viro-external-ui-0.1.0.tgz':
-    resolution: {integrity: sha512-l/HfnW90fWzts2K/HGpkukcRB4SFoin6hqkrB4s0OVqSPZIpOd0Td5rBIuiJn5Ak5sjXTRIjWowTwRnfnfbW7g==, tarball: file:vendors/viro-external-ui-0.1.0.tgz}
+  '@viro-external/meta-layout@file:vendors/viro-external-meta-layout-0.1.0-4dc2775.tgz':
+    resolution: {integrity: sha512-85ltV1NNmCbLEWuNWt1fJQx8rDpgs+gWhD8AWeB1v2u9Jy4xQIE1UlHreKYVLDyPP86FPaEbS7348pQYClnoRQ==, tarball: file:vendors/viro-external-meta-layout-0.1.0-4dc2775.tgz}
+    version: 0.1.0
+    peerDependencies:
+      '@viro-external/xr-contract': 0.3.0
+
+  '@viro-external/native-panels@file:vendors/viro-external-native-panels-0.1.0-4dc2775.tgz':
+    resolution: {integrity: sha512-64pQdsUrl1AWgt1k16KkHInnDdt+ZAnOSOGjRu9Lum4u44G2WmeaGQFlL9WYDE5rGLNfLBc3bygw0hliRPcK6g==, tarball: file:vendors/viro-external-native-panels-0.1.0-4dc2775.tgz}
+    version: 0.1.0
+    peerDependencies:
+      '@reactvision/react-viro': '>=3.0.3-moyo.1 <4.0.0'
+      '@viro-external/ui': 0.1.0
+      nitro-core: '*'
+      react: 19.3.0
+      react-native: 0.88.0-rc.2
+      react-native-nitro-modules: '*'
+    peerDependenciesMeta:
+      nitro-core:
+        optional: true
+      react-native-nitro-modules:
+        optional: true
+
+  '@viro-external/ui@file:vendors/viro-external-ui-0.1.0-4dc2775.tgz':
+    resolution: {integrity: sha512-hJtb/5jq7NQ8vtibf4I0ClkwoWQdVp7NAfgCNe5JoeVhrxxu5P2gsd3LtF7TXT5ROPklFpEf21aIqKc9+i02NA==, tarball: file:vendors/viro-external-ui-0.1.0-4dc2775.tgz}
     version: 0.1.0
     peerDependencies:
       '@reactvision/react-viro': '>=3.0.1-moyo.0 <4.0.0'
       '@viro-external/core': 0.1.0
       '@viro-external/media': 0.1.0
+      '@viro-external/meta-layout': 0.1.0
       '@viro-external/xr-contract': 0.3.0
       react: 19.3.0
       react-native: 0.88.0-rc.2
 
-  '@viro-external/xr-contract@file:vendors/viro-external-xr-contract-0.3.0.tgz':
-    resolution: {integrity: sha512-CPXESdKGVMSuXyoyWZB187ck9Z5kr+wQyEM5MfKKvLZTP3OxZptt+cXQTunNzceqfoq9fppZ9bp4DTAoDzLiRg==, tarball: file:vendors/viro-external-xr-contract-0.3.0.tgz}
+  '@viro-external/xr-contract@file:vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz':
+    resolution: {integrity: sha512-xqMTR1aEqRPr6a/zguAaHaW93lyGIIb7GRXPLqxJlm+Pcu53lwNiL7rmc3n0+06P1mjBn+PW355vLWdvsCCsUQ==, tarball: file:vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz}
     version: 0.3.0
     engines: {node: '>=22.13.0'}
 
@@ -12447,6 +12475,24 @@ packages:
       use-sync-external-store:
         optional: true
 
+  zustand@5.0.16:
+    resolution: {integrity: sha512-Uv7e327ihlCfayfja3hDc0M64Upev1LWBKpRobdK4NyovDDPeeX4imWXc/wzC1yc6fkYPoAY/ncKVPAs2jrtQw==}
+    engines: {node: '>=12.20.0'}
+    peerDependencies:
+      '@types/react': '>=18.0.0'
+      immer: '>=9.0.6'
+      react: 19.3.0
+      use-sync-external-store: '>=1.2.0'
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+      immer:
+        optional: true
+      react:
+        optional: true
+      use-sync-external-store:
+        optional: true
+
 snapshots:
 
   2g@0.4.4(typescript@6.0.3):
@@ -13606,13 +13652,13 @@ snapshots:
       '@expo/env': 2.4.2
       '@expo/image-utils': 0.11.4(typescript@6.0.3)
       '@expo/inline-modules': 0.1.6(typescript@6.0.3)
-      '@expo/json-file': 11.0.1
+      '@expo/json-file': 11.2.0
       '@expo/log-box': 57.0.3(@expo/dom-webview@58.0.0)(expo@57.0.15)(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@expo/metro': 56.0.0
       '@expo/metro-config': 57.0.9(expo@57.0.15)(typescript@6.0.3)
       '@expo/metro-file-map': 57.0.1
-      '@expo/osascript': 2.7.1
-      '@expo/package-manager': 1.13.1
+      '@expo/osascript': 2.8.0
+      '@expo/package-manager': 1.14.0
       '@expo/plist': 0.8.1
       '@expo/prebuild-config': 57.0.13(typescript@6.0.3)
       '@expo/require-utils': 57.0.4(typescript@6.0.3)
@@ -13987,7 +14033,7 @@ snapshots:
     dependencies:
       '@expo/config-plugins': 57.0.8(typescript@6.0.3)
       '@expo/config-types': 57.0.2
-      '@expo/json-file': 11.0.1
+      '@expo/json-file': 11.2.0
       '@expo/require-utils': 57.0.4(typescript@6.0.3)
       deepmerge: 4.3.1
       getenv: 2.0.0
@@ -14457,24 +14503,9 @@ snapshots:
       - supports-color
       - utf-8-validate
 
-  '@expo/osascript@2.7.1':
-    dependencies:
-      '@expo/spawn-async': 1.8.0
-    optional: true
-
   '@expo/osascript@2.8.0':
     dependencies:
       '@expo/spawn-async': 1.8.0
-
-  '@expo/package-manager@1.13.1':
-    dependencies:
-      '@expo/json-file': 11.0.1
-      '@expo/spawn-async': 1.8.0
-      chalk: 4.1.2
-      npm-package-arg: 11.0.3
-      ora: 3.4.0
-      resolve-workspace-root: 2.0.1
-    optional: true
 
   '@expo/package-manager@1.14.0':
     dependencies:
@@ -14504,7 +14535,7 @@ snapshots:
       '@expo/config-plugins': 57.0.8(typescript@6.0.3)
       '@expo/config-types': 57.0.2
       '@expo/image-utils': 0.11.4(typescript@6.0.3)
-      '@expo/json-file': 11.0.1
+      '@expo/json-file': 11.2.0
       '@react-native/normalize-colors': 0.86.2
       debug: 4.4.3
       expo-modules-autolinking: 57.0.10(typescript@6.0.3)
@@ -18246,28 +18277,59 @@ snapshots:
       '@use-gesture/core': 10.3.1
       react: 19.3.0
 
-  '@viro-external/core@file:vendors/viro-external-core-0.1.0.tgz(e316e38b85b31ecfd4bb73c389732efb)':
+  '@viro-external/core@file:vendors/viro-external-core-0.1.0-4dc2775.tgz(a8362a136e4df0b8370d2bbfb5f27e85)':
+    dependencies:
+      '@reactvision/react-viro': file:vendors/reactvision-react-viro-3.0.1-moyo.1.tgz(patch_hash=3820fc787d7c09d09a20e015988af862482716d831895e73b571cf979277b985)(@reactvision/react-native-visionos@0.86.4(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(@types/react@19.3.0)(expo@58.0.0-preview.8)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
+      react: 19.3.0
+      react-native: 0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
+      zustand: 5.0.16(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
+    transitivePeerDependencies:
+      - '@types/react'
+      - immer
+      - use-sync-external-store
+
+  '@viro-external/media@file:vendors/viro-external-media-0.1.0-4dc2775.tgz(e316e38b85b31ecfd4bb73c389732efb)':
     dependencies:
       '@reactvision/react-viro': file:vendors/reactvision-react-viro-3.0.1-moyo.1.tgz(patch_hash=3820fc787d7c09d09a20e015988af862482716d831895e73b571cf979277b985)(@reactvision/react-native-visionos@0.86.4(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(@types/react@19.3.0)(expo@58.0.0-preview.8)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
       react: 19.3.0
       react-native: 0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
 
-  '@viro-external/media@file:vendors/viro-external-media-0.1.0.tgz(e316e38b85b31ecfd4bb73c389732efb)':
+  '@viro-external/meta-layout@file:vendors/viro-external-meta-layout-0.1.0-4dc2775.tgz(@viro-external/xr-contract@file:vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz)':
     dependencies:
+      '@viro-external/xr-contract': file:vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz
+
+  '@viro-external/native-panels@file:vendors/viro-external-native-panels-0.1.0-4dc2775.tgz(b7570a0e56be18b86c23f47c5f6b2a87)':
+    dependencies:
+      '@quickdrawjs/core': 0.2.0
       '@reactvision/react-viro': file:vendors/reactvision-react-viro-3.0.1-moyo.1.tgz(patch_hash=3820fc787d7c09d09a20e015988af862482716d831895e73b571cf979277b985)(@reactvision/react-native-visionos@0.86.4(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(@types/react@19.3.0)(expo@58.0.0-preview.8)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
+      '@viro-external/ui': file:vendors/viro-external-ui-0.1.0-4dc2775.tgz(967462d8216429c6983f63fe45ecc7aa)
       react: 19.3.0
       react-native: 0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
+      zustand: 5.0.16(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
+    optionalDependencies:
+      react-native-nitro-modules: 0.37.1(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+    transitivePeerDependencies:
+      - '@types/react'
+      - immer
+      - use-sync-external-store
 
-  '@viro-external/ui@file:vendors/viro-external-ui-0.1.0.tgz(a4f767c07dd3d52a97a51c95cfc2232b)':
+  '@viro-external/ui@file:vendors/viro-external-ui-0.1.0-4dc2775.tgz(967462d8216429c6983f63fe45ecc7aa)':
     dependencies:
+      '@quickdrawjs/core': 0.2.0
       '@reactvision/react-viro': file:vendors/reactvision-react-viro-3.0.1-moyo.1.tgz(patch_hash=3820fc787d7c09d09a20e015988af862482716d831895e73b571cf979277b985)(@reactvision/react-native-visionos@0.86.4(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(@types/react@19.3.0)(expo@58.0.0-preview.8)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
-      '@viro-external/core': file:vendors/viro-external-core-0.1.0.tgz(e316e38b85b31ecfd4bb73c389732efb)
-      '@viro-external/media': file:vendors/viro-external-media-0.1.0.tgz(e316e38b85b31ecfd4bb73c389732efb)
-      '@viro-external/xr-contract': file:vendors/viro-external-xr-contract-0.3.0.tgz
+      '@viro-external/core': file:vendors/viro-external-core-0.1.0-4dc2775.tgz(a8362a136e4df0b8370d2bbfb5f27e85)
+      '@viro-external/media': file:vendors/viro-external-media-0.1.0-4dc2775.tgz(e316e38b85b31ecfd4bb73c389732efb)
+      '@viro-external/meta-layout': file:vendors/viro-external-meta-layout-0.1.0-4dc2775.tgz(@viro-external/xr-contract@file:vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz)
+      '@viro-external/xr-contract': file:vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz
       react: 19.3.0
       react-native: 0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
+      zustand: 5.0.16(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
+    transitivePeerDependencies:
+      - '@types/react'
+      - immer
+      - use-sync-external-store
 
-  '@viro-external/xr-contract@file:vendors/viro-external-xr-contract-0.3.0.tgz': {}
+  '@viro-external/xr-contract@file:vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz': {}
 
   '@vitejs/plugin-react@6.1.1(babel-plugin-react-compiler@1.0.0)(vite@8.3.0(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.77.4)(terser@5.46.0)(tsx@4.22.4)(yaml@2.8.2))':
     dependencies:
@@ -25651,6 +25713,12 @@ snapshots:
       react: 19.3.0
 
   zustand@5.0.15(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0)):
+    optionalDependencies:
+      '@types/react': 19.3.0
+      react: 19.3.0
+      use-sync-external-store: 1.6.0(react@19.3.0)
+
+  zustand@5.0.16(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0)):
     optionalDependencies:
       '@types/react': 19.3.0
       react: 19.3.0

@@ -49,6 +49,7 @@ import {
   type XrVector3,
 } from '@acme/ui/xr';
 import { bindBoardChrome, type BoardChromeHandlers, type BoardChromePresentation } from './board-chrome-bind';
+import { NativeRiveChrome, chromeBindings, useNativeRiveEnabled } from './native-rive-chrome';
 
 /** The grip bar — same affordance as the Rive probe's, same amber. */
 const GRIP_W = 0.65;
@@ -112,6 +113,8 @@ export function RiveBoardPanel({
   gripWorld,
   onChromeError,
 }: RiveBoardPanelProps) {
+  /* Round 2 device validation: off unless asked for AND native-panels is linked. */
+  const nativeRive = useNativeRiveEnabled();
   const carrierNode = useRef<ViroNode>(null);
   const runtime = useRef<RivePanel | null>(null);
   const binding = useRef<ReturnType<typeof bindBoardChrome> | null>(null);
@@ -217,6 +220,19 @@ export function RiveBoardPanel({
             materials={['xrBoardBacking']}
             ignoreEventHandling
           />
+          {nativeRive ? (
+            /* Round 2 `nativeRive`: ViroCore's Rive producer. Draws the chrome
+               from `bindings`; its toolbar takes no input (native-rive-chrome.tsx). */
+            <NativeRiveChrome
+              source={source}
+              width={PANEL_WIDTH_M}
+              height={PANEL_HEIGHT_M}
+              position={[0, 0, 0]}
+              resolution={{ width: 2496, height: 1560 }}
+              bindings={chromeBindings(present(presentation))}
+              onError={(error) => onChromeError?.(`Board controls unavailable: ${error.message}`)}
+            />
+          ) : (
           <ViroRivePanel
             source={source}
             width={PANEL_WIDTH_M}
@@ -242,6 +258,7 @@ export function RiveBoardPanel({
               binding.current.push(present(presented.current));
             }}
           />
+          )}
           {/*
             The live board texture — `XrBoardLive`, the same quad the media
             panel binds — sits at `boardLayer.raster` (0.5 mm) off this node,

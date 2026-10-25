@@ -3,9 +3,25 @@ import { loadProjectEnv } from '@expo/env';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { palette } from '@acme/theme';
+import { openxrRenderQualityFromEnv } from './plugins/openxr-render-quality.js';
 
 const appDir = dirname(fileURLToPath(import.meta.url));
 loadProjectEnv(join(appDir, '../..'), { silent: true, force: true });
+
+/*
+  OPENXR RENDER QUALITY, PER DEVICE-PASS CELL. Unset (the default) leaves the
+  Viro plugin options below exactly as they were. A Baseline/Candidate cell sets
+  it from the environment at prebuild, for example:
+
+    MOYO_OPENXR_EYE_BUFFER_SCALE=1.5 MOYO_OPENXR_FOVEATION=low \
+    MOYO_OPENXR_FOVEATION_DYNAMIC=true MOYO_OPENXR_REFRESH_RATE=highest \
+      npx expo prebuild --platform android --clean
+
+  which becomes `android.openxr: { eyeBufferScale: 1.5, foveation: { level:
+  'low', dynamic: true }, displayRefreshRate: 'highest' }`. Only viro
+  3.0.3-moyo.1 and later read it; see plugins/openxr-render-quality.js.
+*/
+const openxr = openxrRenderQualityFromEnv(process.env);
 
 const config: ExpoConfig = {
   name: 'Moyo',
@@ -329,7 +345,7 @@ const config: ExpoConfig = {
         QUEST is the OpenXR path and a PICO is an OpenXR headset; the fork's own
         `ViroXRSceneNavigator` routes `isQuest || isPico` down it.
       */
-      { android: { xRMode: ['AR', 'QUEST'] } },
+      { android: { xRMode: ['AR', 'QUEST'], ...(openxr ? { openxr } : null) } },
     ],
     ['@reactvision/react-viro/plugins/withViroVisionOS', { applyCompatibilityPatches: false }],
     /*
