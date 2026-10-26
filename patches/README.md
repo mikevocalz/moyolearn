@@ -71,6 +71,12 @@ appcompat, so a release build failed in `verify<Variant>Resources` with
 `AAPT: error: style attribute 'attr/colorPrimary ... not found`. Debug builds
 skip that task, so this did not show up until `assemblePicoRelease`. Each shim
 now declares `androidx.appcompat:appcompat:1.7.0`, the version React Native
-0.88 pins, so it adds no second copy to the app. The same patch also carries
+0.88 pins, so it adds no second copy to the app.
+
+The same shims disable every `bundle*Aar` task, because AGP refuses to publish
+an AAR that wraps a local `.aar`. That also caught
+`bundle<Variant>LocalLintAar`, which only feeds lint, so the app's
+`lintVitalAnalyze<Variant>` failed on a missing `out.aar`. The filter now
+leaves `*LocalLintAar` enabled; both shims build it. The same patch also carries
 the visionOS module changes and the `moyoViroRendererAar` override that were
 already in it.
