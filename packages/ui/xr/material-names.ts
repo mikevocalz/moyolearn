@@ -15,6 +15,8 @@
 /** Names, so nothing string-literals a material at a call site. */
 export const XR_MATERIAL = {
   paper: 'moyoPaper',
+  /** Moyo mango on the spinner's white art — every loading spinner in a scene. */
+  spinner: 'moyoSpinner',
   frame: 'moyoFrame',
   rail: 'moyoRail',
   card: 'moyoCard',

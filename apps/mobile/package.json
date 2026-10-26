@@ -10,6 +10,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
+    "test": "node --test 'src/spatial/*.test.ts'",
     "visionos:pods": "cd visionos && pod install",
     "visionos:build": "xcodebuild -workspace visionos/Moyo.xcworkspace -scheme Moyo -configuration Debug -destination \"generic/platform=visionOS Simulator\" CODE_SIGNING_ALLOWED=NO build",
     "visionos:prepare": "node ../../tooling/prepare-visionos.mjs"
@@ -23,6 +24,8 @@
     "@expo/metro-runtime": "~58.0.8",
     "@expo/ui": "~58.0.8",
     "@gorhom/bottom-sheet": "catalog:",
+    "@metavr/layout-compat": "catalog:",
+    "@metavr/layout-window-compat": "catalog:",
     "@react-navigation/native": "catalog:",
     "@reactvision/react-viro": "3.0.1-moyo.0",
     "@sentry/react-native": "~7.11.0",

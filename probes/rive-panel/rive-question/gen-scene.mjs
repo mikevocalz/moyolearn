@@ -1,8 +1,11 @@
 // gen-scene.mjs — emits scene.rml for the LearningQuestion artboard (1280x800).
 // Run: node gen-scene.mjs > scene.rml
 // Contract: view model `Question`, state machine `QuestionFlow`, phases 0-11.
-// Same HMI language as BoardChrome: 0A0D12 face bound to uiOpacity, F00E1420
-// unbound text bands, FFC168 amber, hairline E9F4FA-family strokes.
+// Same HMI language as BoardChrome: 0A0D12 face bound to uiOpacity, opaque
+// 0E1420 text bands, FFC168 amber, hairline E9F4FA-family strokes.
+// Legibility floor: every text colour clears 7:1 (WCAG relative luminance)
+// against the opaque fill it sits on, and every fill behind text is opaque —
+// passthrough must never show through a glyph's background.
 
 const A = [];
 const push = (s) => A.push(s);
@@ -40,9 +43,14 @@ const P = {};
 const FX = "0:600"; // SM number input: 0 none, 1..6 hover choice, 101..106 down choice, 7..13 hover btn, 107..113 down btn
 
 // ---------- palette ----------
-const FACE = "FF0A0D12", BAND = "F00E1420", EDGE = "3DE9F4FA", HAIR = "2BE9F4FA";
-const AMBER = "FFFFC168", TEXT_HI = "FFE9F4FA", TEXT_MID = "FF9FB4BE";
-const TEXT_DIM = "FF5E7683", TEXT_FAINT = "FF3D5560";
+const FACE = "FF0A0D12", BAND = "FF0E1420", EDGE = "3DE9F4FA", HAIR = "2BE9F4FA";
+const AMBER = "FFFFC168", TEXT_HI = "FFE9F4FA", TEXT_MID = "FFC8D6DD";
+/* On the 0E1420 band / 0A0D12 face: TEXT_HI 16.5/17.4, TEXT_MID 12.4/13.1,
+   TEXT_DIM 10.8/11.4, TEXT_FAINT 8.6/9.0. */
+const TEXT_DIM = "FFB8C9D1", TEXT_FAINT = "FF9FB4BE";
+/* Opaque stand-ins for the old translucent fills, precomputed over what they
+   sat on so the look holds: F2101820 over the face, 1FFFC168 over the band. */
+const CELL = "FF10171F", AMBER_TINT = "FF2B2929";
 const CORRECT = "FF5EEAD4", WRONG = "FFEC9787", YELLOW = "FFFFE14D", MANGO = "FFF4A629";
 
 // ---------- helpers ----------
@@ -65,9 +73,9 @@ function styleXml(fs, color, weight, ls = 0) {
 }
 
 function textEl(o) {
-  const { name, x, y, fs, color, weight = 600, ls = 0, str = "", prop, w, h, align, wrap = "noWrap", indent = "    " } = o;
+  const { name, x, y, fs, color, weight = 600, ls = 0, str = "", prop, w, h, align, wrap = "noWrap", overflow, indent = "    " } = o;
   const st = styleXml(fs, color, weight, ls);
-  const attrs = `${w ? ` width="${w}" sizingValue="fixed"` : ""}${h ? ` height="${h}"` : ""}${align ? ` alignValue="${align}"` : ""}`;
+  const attrs = `${w ? ` width="${w}" sizingValue="fixed"` : ""}${h ? ` height="${h}"` : ""}${align ? ` alignValue="${align}"` : ""}${overflow ? ` overflowValue="${overflow}"` : ""}`;
   push(`${indent}<Text name="${name}" x="${x}" y="${y}"${attrs} wrapValue="${wrap}">`);
   push(`${indent}  ${st.xml}`);
   if (prop) {
@@ -157,50 +165,43 @@ push(`    <LayoutComponentStyle id="0:5" />`);
 // ---------- topmost: grabbed overlay ----------
 push(`    <Node id="${ID.grabbed}" opacity="0" name="Grabbed">`);
 push(`      ${bindOp("grabbed")}`);
-textEl({ name: "Grab status", x: 540, y: 18, w: 200, align: "center", fs: 11, color: AMBER, ls: 2.5, str: "MOVING PANEL", indent: "      " });
+textEl({ name: "Grab status", x: 430, y: 63, w: 220, align: "center", fs: 11, color: AMBER, ls: 2.5, str: "MOVING PANEL", indent: "      " });
 brackets("Grab corners", 14, 14, 1266, 786, 34, AMBER, 3, "      ");
-push(`    </Node>`);
-
-/* One bordered card wraps the whole status column — ANSWER/RESULT/HINT/FAULT
-   all render inside it. It is drawn FIRST so the gated texts sit on top of
-   its fill, and it is always visible: the user expects the frame to stay
-   even when no layer inside is lit. y 526..742 encloses the cluster. */
-push(`    <Node name="Status frame">`);
-rectShape({ name: "Status card", x: 1030, y: 634, w: 420, h: 216, fill: "F20E1420", stroke: "66FFC168", sw: 1, cr: 4, indent: "      " });
 push(`    </Node>`);
 
 // ---------- feedback strip (right col, above footer) ----------
 push(`    <Node id="${ID.feedback}" opacity="0" name="Feedback">`);
-rectShape({ name: "Fb rule", x: 1030, y: 552, w: 420, h: 1, fill: HAIR, indent: "      " });
-textEl({ name: "Fb tag", x: CX.x, y: 558, fs: 9.5, color: TEXT_HI, weight: 700, ls: 2, str: "RESULT", indent: "      " });
-rectShape({ name: "Acc correct", x: CX.x + 2, y: 594, w: 4, h: 44, fill: CORRECT, shapeId: ID.accC, opacity: 0, indent: "      " });
-rectShape({ name: "Acc incorrect", x: CX.x + 2, y: 594, w: 4, h: 44, fill: WRONG, shapeId: ID.accI, opacity: 0, indent: "      " });
-rectShape({ name: "Acc ungraded", x: CX.x + 2, y: 594, w: 4, h: 44, fill: AMBER, shapeId: ID.accU, opacity: 0, indent: "      " });
-textEl({ name: "Fb title", x: CX.x + 18, y: 580, w: 400, fs: 16, color: TEXT_HI, weight: 700, ls: 0.5, prop: "feedbackTitle", indent: "      " });
-textEl({ name: "Fb body", x: CX.x + 18, y: 608, w: 392, fs: 12, color: "FFFFFFFF", weight: 800, prop: "feedbackBody", wrap: "wrap", indent: "      " });
+rectShape({ name: "Fb rule", x: 1030, y: 568, w: 392, h: 1, fill: HAIR, indent: "      " });
+textEl({ name: "Fb tag", x: CX.x + 14, y: 572, fs: 10, color: TEXT_HI, weight: 700, ls: 2, str: "RESULT", indent: "      " });
+rectShape({ name: "Acc correct", x: CX.x + 16, y: 624, w: 4, h: 64, fill: CORRECT, shapeId: ID.accC, opacity: 0, indent: "      " });
+rectShape({ name: "Acc incorrect", x: CX.x + 16, y: 624, w: 4, h: 64, fill: WRONG, shapeId: ID.accI, opacity: 0, indent: "      " });
+rectShape({ name: "Acc ungraded", x: CX.x + 16, y: 624, w: 4, h: 64, fill: AMBER, shapeId: ID.accU, opacity: 0, indent: "      " });
+textEl({ name: "Fb title", x: CX.x + 28, y: 588, w: 378, fs: 52 / 3, color: TEXT_HI, weight: 700, ls: 0.5, prop: "feedbackTitle", indent: "      " });
+textEl({ name: "Fb body", x: CX.x + 28, y: 620, w: 378, fs: 40 / 3, color: "FFFFFFFF", weight: 800, prop: "feedbackBody", wrap: "wrap", indent: "      " });
 push(`    </Node>`);
 
 // ---------- hint card (bool-bound) ----------
 push(`    <Node id="${ID.hintCard}" opacity="0" name="Hint card">`);
 push(`      ${bindOp("hintVisible")}`);
-textEl({ name: "Hint tag", x: CX.x + 14, y: 662, fs: 9.5, color: AMBER, ls: 2.5, str: "HINT", indent: "      " });
-textEl({ name: "Hint text", x: CX.x + 14, y: 682, w: 392, fs: 40 / 3, color: "FFFFFFFF", weight: 700, prop: "hintText", wrap: "wrap", indent: "      " });
+textEl({ name: "Hint tag", x: CX.x + 14, y: 674, fs: 10, color: AMBER, ls: 2.5, str: "HINT", indent: "      " });
+textEl({ name: "Hint text", x: CX.x + 14, y: 693, w: 392, fs: 38 / 3, color: "FFFFFFFF", weight: 700, prop: "hintText", wrap: "wrap", indent: "      " });
 push(`    </Node>`);
 
 // ---------- answer chip (bool-bound) ----------
 push(`    <Node id="${ID.answerChip}" opacity="0" name="Answer chip">`);
 push(`      ${bindOp("answerValid")}`);
-textEl({ name: "Ans tag", x: CX.x, y: 542, fs: 9.5, color: TEXT_HI, weight: 700, ls: 2, str: "ANSWER", indent: "      " });
-textEl({ name: "Ans text", x: CX.x + 70, y: 538, w: 350, fs: 12, color: TEXT_HI, weight: 700, prop: "answerText", indent: "      " });
+textEl({ name: "Ans tag", x: CX.x + 14, y: 540, fs: 10, color: TEXT_HI, weight: 700, ls: 2, str: "ANSWER", indent: "      " });
+textEl({ name: "Ans text", x: CX.x + 112, y: 535, w: 294, fs: 44 / 3, color: TEXT_HI, weight: 700, prop: "answerText", overflow: "ellipsis", indent: "      " });
 push(`    </Node>`);
 
 // ---------- error chip ----------
 push(`    <Node id="${ID.errChip}" opacity="0" name="Error chip">`);
-textEl({ name: "Err tag", x: CX.x + 14, y: 662, fs: 9.5, color: WRONG, ls: 2.5, str: "FAULT", indent: "      " });
-textEl({ name: "Err text", x: CX.x + 14, y: 682, w: 300, fs: 12, color: TEXT_HI, weight: 700, prop: "status", indent: "      " });
+textEl({ name: "Err tag", x: CX.x + 14, y: 674, fs: 10, color: WRONG, ls: 2.5, str: "FAULT", indent: "      " });
+textEl({ name: "Err text", x: CX.x + 14, y: 693, w: 392, fs: 38 / 3, color: TEXT_HI, weight: 700, prop: "status", wrap: "wrap", indent: "      " });
 {
-  const st = styleXml(12, WRONG, 700);
-  push(`      <Text name="Err code" x="1140" y="682" width="86" sizingValue="fixed" alignValue="right" wrapValue="noWrap">`);
+  /* On the FAULT tag's line, not the message's — a wrapped message ran under it. */
+  const st = styleXml(10, WRONG, 700, 2);
+  push(`      <Text name="Err code" x="1066" y="674" width="160" sizingValue="fixed" alignValue="right" wrapValue="noWrap">`);
   push(`        ${st.xml}`);
   push(`        <TextValueRun styleId="${st.sid}" text="0"><DataBindContext sourcePathIds="${VM}-${P.errorCode.id}" propertyKey="268" converterId="0:61" /></TextValueRun>`);
   push(`      </Text>`);
@@ -249,7 +250,7 @@ arcSegs(62, -8, 8, 4);
 push(`          <Stroke thickness="3.5" cap="round" join="round"><SolidColor colorValue="${WRONG}" /></Stroke>`);
 push(`        </Shape>`);
 push(`      </Node>`);
-textEl({ name: "Loader tag", x: -80, y: 112, w: 160, align: "center", fs: 9.5, color: TEXT_DIM, ls: 2.5, str: "CONTENT // SYNC", indent: "      " });
+textEl({ name: "Loader tag", x: -120, y: 110, w: 240, align: "center", fs: 12, color: TEXT_DIM, ls: 2.5, str: "CONTENT // SYNC", indent: "      " });
 push(`    </Node>`);
 
 // ---------- skeleton placeholders (inside window) ----------
@@ -263,20 +264,20 @@ push(`    </Node>`);
 
 // ---------- choices column ----------
 push(`    <Node id="${ID.choices}" name="Choices">`);
-textEl({ name: "Interaction tag", x: CX.x, y: 64, fs: 10, color: TEXT_DIM, ls: 2.5, prop: "interactionLabel", indent: "      " });
-textEl({ name: "Max tag", x: 1140, y: 64, w: 100, align: "right", fs: 9.5, color: TEXT_FAINT, ls: 2, str: "MAX·06", indent: "      " });
+textEl({ name: "Interaction tag", x: CX.x, y: 59, w: 320, fs: 12, color: TEXT_DIM, ls: 2, prop: "interactionLabel", overflow: "ellipsis", indent: "      " });
+textEl({ name: "Max tag", x: 1140, y: 61, w: 100, align: "right", fs: 10, color: TEXT_FAINT, ls: 2, str: "MAX·06", indent: "      " });
 for (let i = 0; i < 6; i++) {
   const cy = ROW.y0 + i * ROW.pitch + ROW.h / 2;
   push(`      <Node id="${visId[i]}" name="ChoiceVis ${i}">`);
   push(`        ${bindOp(`choice${i}Visible`)}`);
   push(`        <Node id="${rowId[i]}" name="Choice ${i}">`);
   rectShape({ name: `Sel ${i}`, x: 826, y: cy, w: 4, h: 56, fill: AMBER, opacity: 0, pre: bindOp(`choice${i}Selected`), indent: "          " });
-  textEl({ name: `Idx ${i}`, x: 844, y: cy - 9, fs: 11, color: TEXT_DIM, ls: 1.5, str: `0${i + 1}`, indent: "          " });
-  textEl({ name: `Label ${i}`, x: 884, y: cy - 11, w: 336, fs: 15, color: TEXT_HI, weight: 700, ls: 0.5, prop: `choice${i}Label`, indent: "          " });
-  rectShape({ name: `Cell ${i}`, x: 1030, y: cy, w: 420, h: 84, fill: "F2101820", stroke: "38E9F4FA", sw: 1, cr: 6, indent: "          " });
+  textEl({ name: `Idx ${i}`, x: 842, y: cy - 14, fs: 44 / 3, color: TEXT_DIM, ls: 1.5, str: `0${i + 1}`, indent: "          " });
+  textEl({ name: `Label ${i}`, x: 892, y: cy - 18, w: 332, fs: 56 / 3, color: TEXT_HI, weight: 700, ls: 0.5, prop: `choice${i}Label`, overflow: "ellipsis", indent: "          " });
   rectShape({ name: `Hov ${i}`, x: 1030, y: cy, w: 420, h: 84, fill: "12FFFFFF", cr: 6, opacity: 0, shapeId: hovIds[i], indent: "          " });
   rectShape({ name: `Down ${i}`, x: 1030, y: cy, w: 420, h: 84, fill: "26FFC168", cr: 6, opacity: 0, shapeId: downIds[i], indent: "          " });
-  rectShape({ name: `Hit ${i}`, x: 1030, y: cy, w: 420, h: 84, fill: "0DFFFFFF", cr: 6, shapeId: hitIds[i], indent: "          " });
+  rectShape({ name: `Cell ${i}`, x: 1030, y: cy, w: 420, h: 84, fill: CELL, stroke: "38E9F4FA", sw: 1, cr: 6, indent: "          " });
+  rectShape({ name: `Hit ${i}`, x: 1030, y: cy, w: 420, h: 84, fill: CELL, cr: 6, shapeId: hitIds[i], indent: "          " });
   push(`        </Node>`);
   push(`      </Node>`);
 }
@@ -284,65 +285,75 @@ push(`    </Node>`);
 
 // ---------- footer buttons + veil ----------
 const BTNS = [
-  { name: "LISTEN", cmd: 6, prop: "listenLabel", cx: 102, w: 108 },
-  { name: "HINT", cmd: 5, prop: "hintLabel", cx: 222, w: 108 },
-  { name: "BOARD", cmd: 7, str: "BOARD", cx: 342, w: 108 },
-  { name: "RETRY", cmd: 8, str: "RETRY", cx: 462, w: 108 },
-  { name: "SKIP", cmd: 9, prop: "skipLabel", cx: 872, w: 108 },
-  { name: "SUBMIT", cmd: 3, prop: "submitLabel", cx: 1013, w: 150, primary: true },
-  { name: "NEXT", cmd: 4, prop: "continueLabel", cx: 1170, w: 140 },
+  { name: "LISTEN", cmd: 6, prop: "listenLabel", cx: 110, w: 124 },
+  { name: "HINT", cmd: 5, prop: "hintLabel", cx: 242, w: 124 },
+  { name: "BOARD", cmd: 7, str: "BOARD", cx: 374, w: 124 },
+  { name: "RETRY", cmd: 8, str: "RETRY", cx: 506, w: 124 },
+  { name: "SKIP", cmd: 9, prop: "skipLabel", cx: 868, w: 120 },
+  { name: "SUBMIT", cmd: 3, prop: "submitLabel", cx: 1020, w: 168, primary: true },
+  { name: "NEXT", cmd: 4, prop: "continueLabel", cx: 1176, w: 128 },
 ];
 push(`    <Node id="${ID.veil}" name="Disabled veil" opacity="0">`);
 push(`      ${bindOp("disabled")}`);
 rectShape({ name: "Veil", x: 640, y: 773, w: 1280, h: 54, fill: "A60A0D12", indent: "      " });
 push(`    </Node>`);
-textEl({ name: "Panel tag", x: 604, y: 765, fs: 9.5, color: TEXT_FAINT, ls: 2, str: "XR PANEL // LRN-01" });
+textEl({ name: "Panel tag", x: 588, y: 763, w: 200, align: "center", fs: 11, color: TEXT_FAINT, ls: 2, str: "XR PANEL // LRN-01" });
 for (let i = 0; i < BTNS.length; i++) {
   const b = BTNS[i];
-  textEl({ name: `Btn label ${b.name}`, x: b.cx - b.w / 2, y: 764, w: b.w, align: "center", fs: 11.5, color: b.primary ? "FF0A0D12" : TEXT_HI, weight: 700, ls: 2, prop: b.prop, str: b.str });
+  textEl({ name: `Btn label ${b.name}`, x: b.cx - b.w / 2, y: 759, w: b.w, align: "center", fs: 44 / 3, color: b.primary ? "FF0A0D12" : TEXT_HI, weight: 700, ls: 1.5, prop: b.prop, str: b.str });
   if (b.name === "HINT") {
-    rectShape({ name: "HintDim", x: b.cx, y: 773, w: b.w, h: 34, fill: "990A0D12", cr: 4, opacity: 0, shapeId: ID.hintDim, pre: `<DataBindContext sourcePathIds="${VM}-${P.hintAvailable.id}" propertyKey="18" converterId="0:64" />`, indent: "    " });
+    rectShape({ name: "HintDim", x: b.cx, y: 773, w: b.w, h: 42, fill: "990A0D12", cr: 4, opacity: 0, shapeId: ID.hintDim, pre: `<DataBindContext sourcePathIds="${VM}-${P.hintAvailable.id}" propertyKey="18" converterId="0:64" />`, indent: "    " });
   }
+  rectShape({ name: `Btn hov ${b.name}`, x: b.cx, y: 773, w: b.w, h: 42, fill: "12FFFFFF", cr: 4, opacity: 0, shapeId: btnHov[i] });
+  rectShape({ name: `Btn down ${b.name}`, x: b.cx, y: 773, w: b.w, h: 42, fill: "2EFFC168", cr: 4, opacity: 0, shapeId: btnDown[i] });
   if (b.primary) {
-    rectShape({ name: `Btn frame ${b.name}`, x: b.cx, y: 773, w: b.w, h: 34, fill: AMBER, cr: 4 });
+    rectShape({ name: `Btn frame ${b.name}`, x: b.cx, y: 773, w: b.w, h: 42, fill: AMBER, cr: 4 });
   } else if (b.name === "NEXT") {
-    rectShape({ name: `Btn frame ${b.name}`, x: b.cx, y: 773, w: b.w, h: 34, fill: "1FFFC168", stroke: "99FFC168", sw: 1, cr: 4 });
+    rectShape({ name: `Btn frame ${b.name}`, x: b.cx, y: 773, w: b.w, h: 42, fill: AMBER_TINT, stroke: "99FFC168", sw: 1, cr: 4 });
   } else {
-    rectShape({ name: `Btn frame ${b.name}`, x: b.cx, y: 773, w: b.w, h: 34, fill: "1A101820", stroke: "55E9F4FA", sw: 1, cr: 4 });
+    rectShape({ name: `Btn frame ${b.name}`, x: b.cx, y: 773, w: b.w, h: 42, fill: BAND, stroke: "55E9F4FA", sw: 1, cr: 4 });
   }
-  rectShape({ name: `Btn hov ${b.name}`, x: b.cx, y: 773, w: b.w, h: 34, fill: "12FFFFFF", cr: 4, opacity: 0, shapeId: btnHov[i] });
-  rectShape({ name: `Btn down ${b.name}`, x: b.cx, y: 773, w: b.w, h: 34, fill: "2EFFC168", cr: 4, opacity: 0, shapeId: btnDown[i] });
-  rectShape({ name: `Btn hit ${b.name}`, x: b.cx, y: 773, w: b.w, h: 34, fill: "0DFFFFFF", cr: 4, shapeId: btnHit[i] });
+  rectShape({ name: `Btn hit ${b.name}`, x: b.cx, y: 773, w: b.w, h: 42, fill: BAND, cr: 4, shapeId: btnHit[i] });
 }
 
 // ---------- header texts ----------
-rectShape({ name: "Subject chip", x: 118, y: 34, w: 140, h: 32, fill: "1FFFC168", stroke: "66FFC168", sw: 1, cr: 3 });
-textEl({ name: "Subject", x: 48, y: 22, w: 140, align: "center", fs: 12, color: TEXT_HI, weight: 700, ls: 3, prop: "subjectLabel" });
-rectShape({ name: "Subject underline", x: 118, y: 52, w: 56, h: 2, fill: AMBER });
-textEl({ name: "Skill", x: 200, y: 31, fs: 10, color: TEXT_DIM, ls: 2, prop: "skillLabel" });
-textEl({ name: "Zone tag", x: 580, y: 40, w: 120, align: "center", fs: 10, color: TEXT_FAINT, ls: 2.5, str: "Q-PANEL // LRN" });
-textEl({ name: "Status tag", x: 760, y: 24, fs: 9, color: TEXT_FAINT, ls: 2.5, str: "STATUS" });
-textEl({ name: "Status", x: 760, y: 40, fs: 11, color: TEXT_MID, ls: 1.5, prop: "status" });
-textEl({ name: "Progress", x: 980, y: 36, w: 130, align: "right", fs: 12, color: TEXT_HI, weight: 700, ls: 1, prop: "progressLabel" });
-rectShape({ name: "Locale chip", x: 1185, y: 36, w: 100, h: 26, fill: "14101820", stroke: "40E9F4FA", sw: 1, cr: 3 });
-/* Chip spans y 23..49; the text sits at 27 so the glyphs stay inside it —
+/* Text before chip: the first child draws in front, and the chip is opaque. */
+textEl({ name: "Subject", x: 48, y: 15, w: 152, align: "center", fs: 15, color: TEXT_HI, weight: 700, ls: 2, prop: "subjectLabel", overflow: "ellipsis" });
+rectShape({ name: "Subject chip", x: 124, y: 31, w: 152, h: 40, fill: AMBER_TINT, stroke: "66FFC168", sw: 1, cr: 3 });
+rectShape({ name: "Subject underline", x: 124, y: 53, w: 56, h: 2, fill: AMBER });
+textEl({ name: "Skill", x: 214, y: 20, w: 316, fs: 14, color: TEXT_DIM, ls: 1, prop: "skillLabel", overflow: "ellipsis" });
+textEl({ name: "Zone tag", x: 250, y: 64, w: 170, align: "center", fs: 9.5, color: TEXT_FAINT, ls: 2, str: "Q-PANEL // LRN" });
+textEl({ name: "Status tag", x: 540, y: 5, fs: 11, color: TEXT_FAINT, ls: 2.5, str: "STATUS" });
+textEl({ name: "Status", x: 540, y: 26, w: 430, fs: 44 / 3, color: TEXT_MID, ls: 1, prop: "status", overflow: "ellipsis" });
+textEl({ name: "Progress", x: 980, y: 16, w: 140, align: "right", fs: 16, color: TEXT_HI, weight: 700, ls: 1, prop: "progressLabel" });
+/* Chip spans y 14..50; the text box starts at 19 so the glyphs stay inside it —
    authoring at 43 put the cap-height below the chip's bottom edge. */
-textEl({ name: "Locale", x: 1135, y: 27, w: 100, align: "center", fs: 10, color: TEXT_MID, ls: 2, prop: "localeLabel" });
+textEl({ name: "Locale", x: 1133, y: 19, w: 104, align: "center", fs: 12, color: TEXT_MID, ls: 1.5, prop: "localeLabel" });
+rectShape({ name: "Locale chip", x: 1185, y: 32, w: 104, h: 36, fill: BAND, stroke: "99E9F4FA", sw: 1, cr: 3 });
 
 // ---------- window deco ----------
-textEl({ name: "Cam tag", x: 48, y: 66, fs: 9.5, color: TEXT_DIM, ls: 2, str: "CAM·02 // CONTENT" });
-textEl({ name: "Win dims", x: 680, y: 66, w: 120, align: "right", fs: 9.5, color: TEXT_FAINT, ls: 1.5, str: "760×660" });
+textEl({ name: "Cam tag", x: 48, y: 64, fs: 9.5, color: TEXT_DIM, ls: 2, str: "CAM·02 // CONTENT" });
+textEl({ name: "Win dims", x: 680, y: 64, w: 120, align: "right", fs: 9.5, color: TEXT_FAINT, ls: 1.5, str: "760×660" });
 brackets("Window brackets", WIN.x, WIN.y, WIN.x1, WIN.y1, 26, AMBER, 2);
 brackets("Panel brackets", 8, 8, 1272, 792, 40, "B3FFC168", 2.5);
 
 // ---------- spine / micro labels ----------
-push(`    <Text name="Spine L" x="16" y="410" rotation="-90"><TextStylePaint id="${id()}" fontSize="15" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="${TEXT_FAINT}" /></Fill></TextStylePaint><TextValueRun text="MOYO // LEARN" /></Text>`);
-push(`    <Text name="Spine R" x="1264" y="390" rotation="90"><TextStylePaint id="${id()}" fontSize="15" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="${TEXT_FAINT}" /></Fill></TextStylePaint><TextValueRun text="QUESTION" /></Text>`);
+push(`    <Text name="Spine L" x="10" y="420" rotation="-90"><TextStylePaint id="${id()}" fontSize="18" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="${TEXT_FAINT}" /></Fill></TextStylePaint><TextValueRun text="MOYO // LEARN" /></Text>`);
+push(`    <Text name="Spine R" x="1270" y="370" rotation="90"><TextStylePaint id="${id()}" fontSize="18" letterSpacing="3" fontAssetId="0:30" familyName="Space Grotesk" styleName="SemiBold"><TextStyleAxis tag="2003265652" axisValue="600" name="Weight" /><Fill><SolidColor colorValue="${TEXT_FAINT}" /></Fill></TextStylePaint><TextValueRun text="QUESTION" /></Text>`);
 
 // ---------- bands (unbound, near-opaque) ----------
 push(`    <Shape name="Footer band"><PointsPath isClosed="true"><StraightVertex x="0" y="${FOOT}" /><StraightVertex x="${W}" y="${FOOT}" /><StraightVertex x="${W}" y="780" /><StraightVertex x="1260" y="800" /><StraightVertex x="20" y="800" /><StraightVertex x="0" y="780" /></PointsPath><Fill><SolidColor colorValue="${BAND}" /></Fill></Shape>`);
 push(`    <Shape name="Header band"><PointsPath isClosed="true"><StraightVertex x="20" y="0" /><StraightVertex x="1260" y="0" /><StraightVertex x="1280" y="20" /><StraightVertex x="1280" y="64" /><StraightVertex x="0" y="64" /><StraightVertex x="0" y="20" /></PointsPath><Fill><SolidColor colorValue="${BAND}" /></Fill></Shape>`);
 rectShape({ name: "Header rule", x: 640, y: 64, w: 1280, h: 1, fill: HAIR });
+
+/* One bordered card wraps the whole status column — ANSWER/RESULT/HINT/FAULT
+   all render inside it. The first child draws in FRONT, so the card sits here,
+   behind every gated text (it used to be first, which put its 95%-opaque fill
+   over the very texts it frames). Always visible: the frame stays even when
+   no layer inside is lit. y 526..742 encloses the cluster. */
+push(`    <Node name="Status frame">`);
+rectShape({ name: "Status card", x: 1030, y: 634, w: 420, h: 216, fill: BAND, stroke: "66FFC168", sw: 1, cr: 4, indent: "      " });
+push(`    </Node>`);
 
 // ---------- panel edge + face ----------
 push(`    <Shape name="Panel edge">`);

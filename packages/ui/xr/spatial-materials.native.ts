@@ -16,7 +16,7 @@
 
 import { ViroMaterials } from '@reactvision/react-viro';
 import { COLOR_IDS, THEMES } from '@quickdrawjs/core';
-import { semantic } from '@acme/theme';
+import { palette, semantic } from '@acme/theme';
 import { XR_SURFACE as chrome } from './xr-colors.ts';
 import { XR_MATERIAL, inkMaterial } from './material-names.ts';
 
@@ -116,6 +116,10 @@ const SURFACE_MATERIALS = {
     diffuseColor: `${semantic['surface-sunken'].dark}80`,
     lightingModel: 'Constant',
     blendMode: 'Alpha',
+  },
+  [XR_MATERIAL.spinner]: {
+    diffuseColor: palette.sun[400],
+    lightingModel: 'Constant',
   },
   [XR_MATERIAL.focusRing]: {
     diffuseColor: chrome.focus,

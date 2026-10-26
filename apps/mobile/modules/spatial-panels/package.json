@@ -1,0 +1,7 @@
+{
+  "name": "spatial-panels",
+  "version": "1.0.0",
+  "description": "Opens a registered React Native component as its own headset panel (a second Activity on the app's one ReactHost). Declared in the pico flavor only.",
+  "private": true,
+  "platforms": ["android"]
+}

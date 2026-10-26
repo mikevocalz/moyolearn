@@ -30,9 +30,9 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import { Viro3DObject, ViroNode } from '@reactvision/react-viro';
+import { Viro3DObject, ViroAnimations, ViroNode, ViroSpinner } from '@reactvision/react-viro';
 import { IdleEngine, type IdleInputs } from '@acme/avatar';
-import { natalieMorphs, type NatalieMorph } from '@acme/ui/xr';
+import { XR_MATERIAL, natalieMorphs, type NatalieMorph } from '@acme/ui/xr';
 import { audioQueue } from './tutor-audio';
 import { viroFace } from './natalie-viro-targets.ts';
 import {
@@ -80,9 +80,47 @@ export interface XrNatalieProps {
 }
 
 
-export function XrNatalie({ position, rotationY, heightCm = 175, onStatus, active = true, listening = false, processing = false }: XrNatalieProps) {
+/** 5'6", and the number the scene draws her at. */
+const NATALIE_HEIGHT_CM = 167.6;
+
+/*
+  SHE STANDS ON THE FLOOR, ALWAYS. With `trackingOrigin="floor"` world y = 0 is
+  the real floor, and her node's origin is her feet. Dragging is on the floor
+  plane, so no grab can lift her, and the release keeps y at 0.
+*/
+const FLOOR_PLANE: { planePoint: [number, number, number]; planeNormal: [number, number, number]; maxDistance: number } = {
+  planePoint: [0, 0, 0],
+  planeNormal: [0, 1, 0],
+  maxDistance: 10,
+};
+
+/*
+  HER ARRIVAL. While the GLB loads, a spinner lies flat on the floor where she
+  will stand; when it lands she grows up out of it. The node's origin is her
+  feet, so scaling it reads as rising from the floor, not swelling in mid-air.
+  Animated from 0.01, never 0: a zero scale is a degenerate matrix, and the
+  fork culls prop-zero nodes for good (memory: viro fork opacity rules).
+*/
+ViroAnimations.registerAnimations({
+  natalieHidden: { properties: { scaleX: 0.01, scaleY: 0.01, scaleZ: 0.01 }, duration: 1 },
+  natalieArrive: { properties: { scaleX: 1, scaleY: 1, scaleZ: 1 }, duration: 700, easing: 'EaseOut' },
+});
+/** About her shoulder width, flat on the floor. */
+const ARRIVAL_SPINNER_SCALE = 0.45;
+/* The spinner IS the placement animation, so it plays this long AFTER the
+   model loads. Timed from mount it was spent while the immersive session was
+   still opening, and a cached GLB finished before anyone could see it. */
+const ARRIVAL_SPIN_MS = 2500;
+
+export function XrNatalie({ position, rotationY, heightCm = NATALIE_HEIGHT_CM, onStatus, active = true, listening = false, processing = false }: XrNatalieProps) {
   const model = useRef<Viro3DObject>(null);
   const [ready, setReady] = useState(false);
+  const [arrived, setArrived] = useState(false);
+  useEffect(() => {
+    if (!ready) { setArrived(false); return; }
+    const timer = setTimeout(() => setArrived(true), ARRIVAL_SPIN_MS);
+    return () => clearTimeout(timer);
+  }, [ready]);
   const signals = useRef({ active, listening, processing });
   useLayoutEffect(() => { signals.current = { active, listening, processing }; }, [active, listening, processing]);
   /*
@@ -236,21 +274,29 @@ export function XrNatalie({ position, rotationY, heightCm = 175, onStatus, activ
          undersells stature at slot distance), so the default lands just over
          the ask rather than under it. */
       scale={[heightCm / 167.3, heightCm / 167.3, heightCm / 167.3]}
-      position={[
-        position[0] + dragOffset[0],
-        position[1] + dragOffset[1],
-        position[2] + dragOffset[2],
-      ]}
+      position={[position[0] + dragOffset[0], 0, position[2] + dragOffset[2]]}
       rotation={[0, rotationY, 0]}
-      dragType="FixedDistance"
+      dragType="FixedToPlane"
+      dragPlane={FLOOR_PLANE}
       onDrag={(to: [number, number, number]) => { dragFrom.current = to; }}
       onClickState={(state: number) => {
         if (state !== 2 && state !== 3) return;
         const to = dragFrom.current;
         dragFrom.current = null;
-        if (to) setDragOffset([to[0] - position[0], to[1] - position[1], to[2] - position[2]]);
+        if (to) setDragOffset([to[0] - position[0], 0, to[2] - position[2]]);
       }}
     >
+      <ViroSpinner
+        type="light"
+        materials={[XR_MATERIAL.spinner]}
+        visible={!arrived}
+        ignoreEventHandling
+        /* Flat on the floor, a hair above it so it never z-fights the room. */
+        position={[0, 0.005, 0]}
+        rotation={[-90, 0, 0]}
+        scale={[ARRIVAL_SPINNER_SCALE, ARRIVAL_SPINNER_SCALE, ARRIVAL_SPINNER_SCALE]}
+      />
+      <ViroNode animation={{ name: arrived ? 'natalieArrive' : 'natalieHidden', run: true }}>
       <Viro3DObject
         ref={model}
         source={NATALIE_GLB}
@@ -281,6 +327,7 @@ export function XrNatalie({ position, rotationY, heightCm = 175, onStatus, activ
         */
         highAccuracyEvents={false}
       />
+      </ViroNode>
     </ViroNode>
   );
 }
