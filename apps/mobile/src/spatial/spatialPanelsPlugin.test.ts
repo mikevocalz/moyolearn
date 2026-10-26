@@ -14,9 +14,10 @@ function meta(element: { 'meta-data': { $: Record<string, string> }[] }): Map<st
 
 // PICO OS 5 reuses the caller's 2D window for a same-package activity whose
 // pico.vr.position equals the task root's. MainActivity declares none.
+// "far" keeps the main window's window type; "near" would make it a popup.
 test('the panel declares a pico.vr.position, so PICO OS 5 opens it in its own window', () => {
   const values = meta(plugin.panelActivityElement(OPTIONS));
-  assert.equal(values.get('pico.vr.position'), 'near');
+  assert.equal(values.get('pico.vr.position'), 'far');
 });
 
 test('the panel size the module reads is WxH in dp', () => {
@@ -26,6 +27,6 @@ test('the panel size the module reads is WxH in dp', () => {
 test('the committed pico manifest matches the plugin', () => {
   const xml = readFileSync(new URL('../../android/app/src/pico/AndroidManifest.xml', import.meta.url), 'utf8');
   const panel = xml.slice(xml.indexOf(plugin.PANEL_ACTIVITY));
-  assert.match(panel, /android:name="pico\.vr\.position" android:value="near"/);
+  assert.match(panel, /android:name="pico\.vr\.position" android:value="far"/);
   assert.doesNotMatch(xml.slice(0, xml.indexOf(plugin.PANEL_ACTIVITY)), /pico\.vr\.position/);
 });
