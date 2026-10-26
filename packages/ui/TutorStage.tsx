@@ -28,6 +28,7 @@
 // SOT-KEYWORDS: tutorstage s9 tutor session state union hot dial learner thread first live turn work in turn
 
 import { cloneElement, isValidElement, useCallback, useState } from 'react';
+import { useWindowDimensions } from 'react-native';
 import { AdaptivePanes } from './adaptive-panes';
 import { isCollapsed } from './adaptive-panes/constants';
 import { PaneToggle } from './adaptive-panes/PaneToggle';
@@ -73,8 +74,20 @@ const CONVERSATION_PANE_DP = 380;
  * their balance. It is the conversation pane's 380 plus the tray's own inset,
  * so a line of working and a full control row both fit without the board
  * becoming the screen.
+ *
+ * 420 IS THE FLOOR, NOT THE WIDTH. On a wide window the conversation sits at
+ * its 40% row floor, so a fixed 420 left the board the narrowest column on a
+ * 1440 laptop (576 / 420 / 444). The board now matches the conversation's
+ * share, but only out of width Natalie doesn't need: the 20% floor
+ * `AdaptivePanes` defends for her left 256dp on the Quest's 1280dp panel and
+ * clipped her figure. She keeps `NATALIE_PANE_MIN_DP` first.
  */
 const BOARD_PANE_DP = 420;
+const BOARD_WINDOW_SHARE = 0.4;
+/** The conversation's row floor in `AdaptivePanes` (40%). */
+const PRIMARY_WINDOW_SHARE = 0.4;
+/** Her full standing figure, centred, with the pane's padding. */
+const NATALIE_PANE_MIN_DP = 340;
 
 /** A spoken or written turn from the tutor. */
 export interface Utterance {
@@ -546,6 +559,16 @@ export function TutorStage({
     this screen is simply the first that asks both.
   */
   const windowClass = useWindowSizeClass();
+  const { width: windowWidth } = useWindowDimensions();
+  const boardPaneDp = Math.max(
+    BOARD_PANE_DP,
+    Math.round(
+      Math.min(
+        windowWidth * BOARD_WINDOW_SHARE,
+        windowWidth * (1 - PRIMARY_WINDOW_SHARE) - NATALIE_PANE_MIN_DP,
+      ),
+    ),
+  );
 
   /*
     `auto` is a request, not a presentation. It is normally answered at the
@@ -910,7 +933,7 @@ export function TutorStage({
             /* The board's column is wider than the token, and Natalie still
                absorbs what is left — a portrait fills an alcove happily, and
                the board is the one that needed the extra measure. */
-            supplementaryWidthDp={BOARD_PANE_DP}
+            supplementaryWidthDp={boardPaneDp}
             detail={
               /*
                 SHE IS THE WHOLE PANE, centred in it. A figure hugging the

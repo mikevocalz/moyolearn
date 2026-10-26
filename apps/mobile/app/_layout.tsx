@@ -22,11 +22,13 @@ import { LogBox, useColorScheme } from 'react-native';
 import { semantic } from '@acme/theme';
 import { assertApiOriginConfigured } from '@acme/app/core/api-url';
 import { withUniwind } from "uniwind";
-import { AppQueryProvider, SafeAreaProvider, SessionProvider , AccountSheet, AttachSheet, AudioRecorderSheet, CameraSheet, SwitchProfileSheet, UrlSheet, VideoNoteSheet, UploadQueueProvider } from "@acme/app";
+import { AppQueryProvider, SafeAreaProvider, SessionProvider , useAskPermissionsOnLaunch, AccountSheet, AttachSheet, AudioRecorderSheet, CameraSheet, SwitchProfileSheet, UrlSheet, VideoNoteSheet, UploadQueueProvider } from "@acme/app";
 import { BookingSheet } from "../components/BookingSheet";
 import { ShellHeader } from "../components/ShellHeader";
 import { Toaster } from "@acme/ui";
 import { MoyoSplash } from "../components/splash/MoyoSplash";
+import { metaWindows } from "../src/spatial/metaWindows";
+import { SpatialWindowHost } from "../src/spatial/SpatialWindowHost";
 import "../global.css";
 
 
@@ -94,6 +96,8 @@ LogBox.ignoreAllLogs(true);
 assertApiOriginConfigured();
 
 export default function RootLayout() {
+  // Every runtime permission is asked as the app loads, not at first use.
+  useAskPermissionsOnLaunch();
   const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
   /*
     The navigation theme's `background` is the card/scene ground for EVERY
@@ -132,6 +136,13 @@ export default function RootLayout() {
           <AppQueryProvider>
             <SessionProvider>
               {/*
+                The app's only Meta spatial scene; a fragment off the quest
+                flavor. The main window stays the activity. Every promoted
+                window (today the shell rail) renders from SpatialWindowHost at
+                the surface origin, so presses inside it complete.
+              */}
+              <metaWindows.SceneProvider>
+              {/*
                 A Stack, not a `<Slot>`. Slot renders the focused child and
                 nothing else, which is why every root-level route — Settings,
                 Editor settings, the dev hatch — arrived with no app bar and no
@@ -163,6 +174,8 @@ export default function RootLayout() {
                     barless is how it stayed the one surface with no way out. */}
                 <Stack.Screen name="onboarding/dev" options={{ headerShown: true }} />
               </Stack>
+              <SpatialWindowHost />
+              </metaWindows.SceneProvider>
             </SessionProvider>
             {/*
               Mounted at the ROOT, directly under the provider. A Gorhom modal

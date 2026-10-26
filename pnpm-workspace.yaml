@@ -215,6 +215,11 @@ catalog:
   "@tanstack/react-start": 1.168.60
   "@legendapp/list": 3.3.11
   "@legendapp/motion": 2.5.3
+  # Meta VR Layout SDK JS halves, quest flavor only (apps/mobile
+  # src/spatial/metaWindows.ts). Same pins as Harlem Might's lockfile; the
+  # native AARs come from the metavrx BOM in android/app/build.gradle.
+  "@metavr/layout-compat": 1.0.0
+  "@metavr/layout-window-compat": 1.0.0
   date-fns: 4.4.0
   zustand: 5.0.15
   zod: 4.6.5

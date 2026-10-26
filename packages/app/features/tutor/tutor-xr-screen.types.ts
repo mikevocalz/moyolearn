@@ -26,6 +26,8 @@ export interface TutorXrScreenProps {
 
 /** Production host contract: one engine, one calibrated content rectangle. */
 export interface TutorXrBoardPanelProps {
+  /** The panel's Rive runtime is up — the arc can stop showing spinners. */
+  onReady?: () => void;
   slot: { position: readonly [number, number, number]; yaw: number };
   bound: boolean;
   enabled: boolean;
@@ -35,9 +37,17 @@ export interface TutorXrBoardPanelProps {
   handlers: BoardChromeHandlers;
   presentation: BoardChromePresentation;
   onError(): void;
+  /**
+   * Where the board's own grip left it: the carrier offset from `slot`, once
+   * per release that moved. The board moves alone; the screen adds this to
+   * anything it anchors on the paper outside the panel (the stylus plane).
+   */
+  onMoved?(offset: readonly [number, number, number]): void;
 }
 
 export interface TutorXrQuestionPanelProps {
+  /** The panel's Rive runtime is up — the arc can stop showing spinners. */
+  onReady?: () => void;
   slot: { position: readonly [number, number, number]; yaw: number };
   question: string;
   skill: string;

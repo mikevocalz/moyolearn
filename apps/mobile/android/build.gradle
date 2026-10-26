@@ -55,8 +55,13 @@ project(":expo") {
     }
 }
 
-// Moyo: pin the source-verified precision drawing renderer.
-ext.moyoViroRendererAar = rootProject.file('../../../vendors/viro-renderer-034d3b9.aar')
+// Moyo: pin the source-verified precision drawing renderer: virocore 9d6ab4e
+// (branch fix/moyo-right-eye-depth-clear) = 034d3b9 + 5926ef52 (depth writes
+// on before each eye's depth clear) + panel sharpness fixes:
+// 65227bc mipmapped, anisotropic sampling of external surfaces (Rive, views);
+// 8ff603b 1.3x eye buffers, LOW foveation; 872a2a2 premultiplied eye-buffer
+// alpha over passthrough; 9d6ab4e sRGB decode curve for OES/YCbCr.
+ext.moyoViroRendererAar = rootProject.file('../../../vendors/viro-renderer-73c6a92.aar')
 if (!moyoViroRendererAar.isFile()) {
     throw new GradleException('Pinned Moyo controller renderer is missing')
 }
@@ -66,7 +71,7 @@ moyoViroRendererAar.withInputStream { stream ->
     int count
     while ((count = stream.read(buffer)) != -1) rendererDigest.update(buffer, 0, count)
 }
-if (rendererDigest.digest().encodeHex().toString() != '08c22843d1311cbc52ae973b8a97dd8186a86c72d3682312a50a00c198506a3b') {
+if (rendererDigest.digest().encodeHex().toString() != '0042247de15da8a93baf3035b1e16b849398886a1d8c5abe5e55c536d50cfe23') {
     throw new GradleException('Pinned Moyo controller renderer checksum mismatch')
 }
 

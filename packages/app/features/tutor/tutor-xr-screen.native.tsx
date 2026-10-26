@@ -56,6 +56,9 @@ import {
   boardLayer,
   panelMediaArea,
   worldSlot,
+  workspaceHeadOf,
+  addOffset,
+  ZERO_OFFSET,
   questionPages,
   xrCaptionRows,
   xrDragPlane,
@@ -125,6 +128,10 @@ const BOARD_MEDIA = panelMediaArea('boardPanel');
 const active: {
   QuestionPanel: ComponentType<TutorXrQuestionPanelProps> | null;
   BoardPanel: ComponentType<TutorXrBoardPanelProps> | null;
+  /* Settled = the Rive runtime answered, or its loader gave up. The arc stays
+     behind spinners until both are, so no panel pops in half-built. */
+  boardSettled: boolean;
+  questionSettled: boolean;
   engine: WhiteboardHandle | null;
   session: BoardSession | null;
   onExit: () => void;
@@ -171,6 +178,8 @@ const active: {
 } = {
   QuestionPanel: null,
   BoardPanel: null,
+  boardSettled: false,
+  questionSettled: false,
   engine: null,
   session: null,
   onExit: () => undefined,
@@ -313,6 +322,15 @@ function handleTrackingUpdated(state: ViroTrackingState): void {
  * the runtime saying it knows where the room is is exactly when it can also
  * say where the head is.
  */
+const PANEL_WAIT_CAP_MS = 8000;
+
+/** A Rive panel answered (or gave up): one fewer reason to keep the arc hidden. */
+function settlePanel(which: 'board' | 'question'): void {
+  if (which === 'board') active.boardSettled = true;
+  else active.questionSettled = true;
+  useXrSession.getState().bumpRevision();
+}
+
 async function placeFromHead(): Promise<void> {
   const scene = active.scene;
   if (scene === null) return;
@@ -385,14 +403,19 @@ function BoardScene() {
   }, []);
   const phase = useXrSession((s) => s.phase);
   const placement = useXrSession((s) => s.placement);
-  const workspaceHead = useMemo((): [number, number, number] => {
-    const yaw = placement.rotation[1] * Math.PI / 180;
-    return [
-      placement.position[0] + Math.sin(yaw) * BOARD_PLACE.distanceM,
-      placement.position[1] + BOARD_PLACE.dropM,
-      placement.position[2] + Math.cos(yaw) * BOARD_PLACE.distanceM,
-    ];
-  }, [placement]);
+  const workspaceHead = useMemo(
+    () => workspaceHeadOf(placement, BOARD_PLACE.distanceM, BOARD_PLACE.dropM),
+    [placement],
+  );
+  /*
+    THE BOARD MOVES ALONE. Its panel owns the drag (the kit's `useCarrierDrag`)
+    and re-anchors its own ray plane; this keeps the landed offset only for the
+    one anchor that lives outside the panel, the stylus plane, so pen and ray
+    resolve to the same paper after a move. Keyed by the slot it was measured
+    from: a recenter re-places the board and drops the offset, exactly as the
+    panel does with the same key.
+  */
+  const [boardMove, setBoardMove] = useState<{ key: string; offset: XrVector3 }>({ key: '', offset: ZERO_OFFSET });
   const [avatarStatus, setAvatarStatus] = useState<'loading' | 'ready' | 'failed'>('loading');
   const [avatarAttempt, setAvatarAttempt] = useState(0);
   const [termination, setTermination] = useState<{ source: number; cancel: boolean; revision: number }>();
@@ -407,6 +430,14 @@ function BoardScene() {
   const BoardPanel = chromeFailed ? null : active.BoardPanel;
   const [questionFailed, setQuestionFailed] = useState(false);
   const QuestionPanel = questionFailed ? null : active.QuestionPanel;
+  /* ponytail: 8 s cap so a runtime that never answers cannot hide the workspace. */
+  const [panelWaitExpired, setPanelWaitExpired] = useState(false);
+  useEffect(() => {
+    const timer = setTimeout(() => setPanelWaitExpired(true), PANEL_WAIT_CAP_MS);
+    return () => clearTimeout(timer);
+  }, []);
+  const panelsLoading = !panelWaitExpired
+    && ((!active.boardSettled && !chromeFailed) || (!active.questionSettled && !questionFailed));
   const [askError, setAskError] = useState(false);
   const [surfaceTimedOut, setSurfaceTimedOut] = useState(false);
   const textureReady = useXrSession((s) => s.boardTextureBound);
@@ -472,8 +503,6 @@ function BoardScene() {
     not bound, this pair IS the board and nothing about it changes.
   */
   const boardTextureBound = useXrSession((s) => s.boardTextureBound);
-  // Vision Pro draws the raster plus current ink; Android may use its live view texture.
-  const boardDrawable = boardTextureBound || VISIONOS;
   /*
     THE PICTURE DOES NOT NEED A SERVER SESSION, and gating it on one is why the
     centre panel showed a placeholder instead of the child's board: under local
@@ -484,14 +513,25 @@ function BoardScene() {
   */
   // The editor attach bumps revision, so the first export can begin after it mounts.
   const raster = useBoardRaster(readEngine, store, !boardTextureBound && foreground, strokeOpen);
+  /*
+    DRAWABLE ON EITHER PRESENTATION. Bound, the child draws on the engine's own
+    texture. Unbound (a refused or not-yet-answered bind), the raster plus
+    `XrBoardInk` IS the board, and the ray still reaches the same engine
+    through `handleSurfaceInput`, so it takes ink as soon as the first picture
+    exists. Gating on the bind alone left a board that never bound with every
+    control disabled and "Waiting for your board…" forever.
+  */
+  const boardDrawable = boardTextureBound || VISIONOS || raster.uri !== null;
   const pendingInk = useMemo(() => uncoveredRecords(store, raster.covered), [store, raster.covered]);
   const inkSlot = worldSlot('center', workspaceHead, placement.rotation[1]);
+  const inkSlotKey = `${inkSlot.position.join(',')}|${inkSlot.yaw}`;
+  const boardOffset = boardMove.key === inkSlotKey ? boardMove.offset : ZERO_OFFSET;
   const inkOffset = xrRotateY([0, BOARD_MEDIA.centerY, BOARD_MEDIA.z], inkSlot.yaw);
-  const inkWorldPosition: [number, number, number] = [
+  const inkWorldPosition: [number, number, number] = addOffset(boardOffset, [
     inkSlot.position[0] + inkOffset[0],
     inkSlot.position[1] + inkOffset[1],
     inkSlot.position[2] + inkOffset[2],
-  ];
+  ]) as [number, number, number];
 
   const natalieAngle = ((NATALIE_AZIMUTH_DEG - placement.rotation[1]) * Math.PI) / 180;
   const nataliePosition: [number, number, number] = [
@@ -629,6 +669,7 @@ function BoardScene() {
   */
   const strokeSource = useRef<number | null>(null);
   const handleSurfaceInput = (sample: XrSurfaceInput) => {
+    if (__DEV__ && sample.phase !== 'move') console.log('[xr-ink]', sample.phase, 'lands', inkLands, 'src', sample.source, 'held', strokeSource.current, 'uv', sample.u.toFixed(2), sample.v.toFixed(2));
     /*
       A MEASURED-WRONG MAPPING STOPS THE INK AT THE SEAM, and it has to stop
       here rather than in the panel: `XrPanel` draws in `interrupted` on purpose
@@ -679,6 +720,7 @@ function BoardScene() {
   const canAsk = canEdit && !asking && voice.phase.kind !== 'starting' && voice.phase.kind !== 'transcribing';
   const boardHandlers: BoardChromeHandlers = {
     onTool(next) {
+      if (__DEV__) console.log('[xr-btn] tool', next, 'canEdit', canEdit);
       if (!canEdit) return;
       setConfirmClear(false);
       useXrSession.getState().setTool(next);
@@ -758,14 +800,16 @@ function BoardScene() {
       */}
       <XrNatalie key={avatarAttempt} active={foreground && composedState === "ready"} listening={voice.phase.kind === "listening"} processing={asking || tutorThinking || voice.phase.kind === "transcribing"} position={nataliePosition} rotationY={placement.rotation[1]} onStatus={setAvatarStatus} />
       {/*
-        THE FLANKS, ON THE ARC: tools left, the conversation right — each its
-        own draggable `PremiumXRMediaPanel`, poke-xr's component vendored whole.
+        THE FLANKS, ON THE ARC: tools left, the conversation right. Every
+        panel's grip moves that panel alone, the board included; Natalie and
+        the other panels stay where they are.
         Placed in WORLD space from the child's head rather than parented to it,
         because the board between them does world-space ray maths and two frames
         in one scene is ink that lands slightly wrong.
       */}
       {active.head !== null ? (
         <XrTriPanel
+          loading={panelsLoading}
           leftPanel={QuestionPanel ? <QuestionPanel
             slot={worldSlot('left', workspaceHead, placement.rotation[1])}
             question={problem} skill={skill} enabled={foreground && composedState === 'ready'}
@@ -773,6 +817,7 @@ function BoardScene() {
             listening={voice.phase.kind === 'listening'} status={askError ? 'Could not send — try again' : askLabel}
             hasMarks={history.hasMarks && !attachmentsFull} onVoice={boardHandlers.onAsk}
             onBoard={() => { void placeFromHead(); }} onError={() => setQuestionFailed(true)}
+            onReady={() => settlePanel('question')}
             onHint={() => {
               if (asking || tutorThinking) return;
               useXrSession.getState().queueSay('Please give me a hint for the current problem without giving away the answer.');
@@ -793,6 +838,8 @@ function BoardScene() {
             slot={inkSlot} bound={boardTextureBound} enabled={canEdit}
             termination={termination} onSurfaceInput={handleSurfaceInput}
             onError={() => setChromeFailed(true)} handlers={boardHandlers}
+            onReady={() => settlePanel('board')}
+            onMoved={(offset) => setBoardMove({ key: inkSlotKey, offset })}
             presentation={{ tool, ink, ...history, asking: !canAsk,
               paletteOpen, clearArmed: confirmClear, grabbed: false, reducedMotion: true,
               status: askError ? 'Could not send — try again' : !canEdit ? 'Waiting for your board…' : askLabel }}
@@ -949,22 +996,32 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
   useEffect(() => {
     let alive = true;
     active.BoardPanel = null;
+    active.boardSettled = !loadBoardPanel;
     if (loadBoardPanel) void loadBoardPanel().then((Panel) => {
       if (!alive) return;
       active.BoardPanel = Panel;
+      if (Panel === null) active.boardSettled = true;
       bumpRevision();
-    }).catch(() => { /* The complete native toolbar remains available. */ });
+    }).catch(() => {
+      /* The complete native toolbar remains available. */
+      if (alive) settlePanel('board');
+    });
     return () => { alive = false; active.BoardPanel = null; };
   }, [loadBoardPanel, bumpRevision]);
 
   useEffect(() => {
     let alive = true;
     active.QuestionPanel = null;
+    active.questionSettled = !loadQuestionPanel;
     if (loadQuestionPanel) void loadQuestionPanel().then((Panel) => {
       if (!alive) return;
       active.QuestionPanel = Panel;
+      if (Panel === null) active.questionSettled = true;
       bumpRevision();
-    }).catch(() => { /* The native lesson controls remain available. */ });
+    }).catch(() => {
+      /* The native lesson controls remain available. */
+      if (alive) settlePanel('question');
+    });
     return () => { alive = false; active.QuestionPanel = null; };
   }, [loadQuestionPanel, bumpRevision]);
 
@@ -1105,6 +1162,19 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
     check, and re-running it when the phase moves is how a screen ends up asking
     for the camera again after the child has answered.
   */
+  /*
+    THE SCENE WAITS FOR THE CAMERA ANSWER ON QUEST AND PICO. There the
+    navigator does not render the scene: it launches `VRActivity`, which takes
+    the display, and unmounting the navigator does not finish it. Mounted at
+    `preparing` before `checkPermissions` answered, a fresh install (camera
+    not yet granted) opened the scene, then fell back to the primer in the 2D
+    activity BEHIND it: the child saw a board that never became drawable and
+    no way to grant the camera. Measured on a Quest 3S, 2026-10-14: phase
+    `permission-required`, `android.permission.CAMERA` granted=false, the
+    WebView engine ready, `BoardTextureHost live=false`. So the scene opens
+    only once the camera is known granted. visionOS needs no Android grant.
+  */
+  const [spatialGranted, setSpatialGranted] = useState(VISIONOS);
   useEffect(() => {
     let live = true;
     /*
@@ -1153,11 +1223,9 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
     void checkPermissions([...SPATIAL_PERMISSIONS]).then(
       (result) => {
         if (!live) return;
-        advance(
-          spatialPermissionsGranted(result)
-            ? { kind: 'preparing' }
-            : { kind: 'permission-required' },
-        );
+        const granted = spatialPermissionsGranted(result);
+        if (granted) setSpatialGranted(true);
+        advance(granted ? { kind: 'preparing' } : { kind: 'permission-required' });
       },
       () => {
         if (live) advance({ kind: 'permission-required' });
@@ -1176,11 +1244,9 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
   const handleGrant = useCallback(() => {
     void requestRequiredPermissions([...SPATIAL_PERMISSIONS]).then(
       (result) => {
-        advance(
-          spatialPermissionsGranted(result)
-            ? { kind: 'preparing' }
-            : { kind: 'unsupported', reason: 'permission-declined' },
-        );
+        const granted = spatialPermissionsGranted(result);
+        if (granted) setSpatialGranted(true);
+        advance(granted ? { kind: 'preparing' } : { kind: 'unsupported', reason: 'permission-declined' });
       },
       () => advance({ kind: 'unsupported', reason: 'permission-declined' }),
     );
@@ -1367,10 +1433,11 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
     route is still there, which reads as a crash rather than as leaving.
   */
   const immersive =
-    phase.kind === 'preparing' ||
-    phase.kind === 'ready' ||
-    phase.kind === 'interrupted' ||
-    phase.kind === 'exiting';
+    spatialGranted &&
+    (phase.kind === 'preparing' ||
+      phase.kind === 'ready' ||
+      phase.kind === 'interrupted' ||
+      phase.kind === 'exiting');
 
   /*
     THE BOARD IS PLACED FROM A SETTLED HEAD, NOT A CREDIBLE ONE — and the
@@ -1454,6 +1521,13 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
             branch, which has no real room in it to show.
           */
           passthroughEnabled
+          /*
+            Floor origin, so y = 0 is the real floor. The default "eye" origin
+            put Natalie's feet (placed at y = 0) at eye level on a Quest 3S —
+            measured: eye Y ≈ 0, floor 1.05 m below. Panels place off the head
+            pose either way, so only the floor-standing things move.
+          */
+          trackingOrigin="floor"
 
           onExitViro={handleExit}
           style={StyleSheet.absoluteFill}
