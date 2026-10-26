@@ -3,11 +3,17 @@
 // carry it and `SpatialPanels.isAvailable` is false there. Quest gets its rail
 // window from Meta's layout SDK instead (src/spatial/metaWindows.ts).
 //
-// PICO's window container ignores `<layout>` and sizes an activity from its
-// `pico.spatial.windowcontainer.*` meta-data, read at install time and cached
-// per package (schema dumped from PICO's own store2d.apk; see the digivision
-// with-pico-compat plugin). Both are written: `<layout>` for launchers that
-// only read that.
+// PICO OS 5 (PICO 4 Ultra, 5.15.7) puts a same-package activity on the
+// caller's 2D window unless the two activities' `pico.vr.position` meta-data
+// differ (services.jar ExtActivityStartControllerImpl.getReusedDisplayId; the
+// multi-display allowlist next to it holds only PICO's own browser and
+// streaming apps). MainActivity declares none, so the panel declares "near"
+// and gets a window of its own instead of covering the main one. OS 5 reads
+// neither `<layout>` (system apps only) nor `pico.spatial.windowcontainer.*`
+// (PICO OS 6 Spatial SDK keys) for a third-party app's size; the module passes
+// the size as launch options instead (PicoPanelLaunchOptions.kt), read from
+// the `defaultsize` key below. `<layout>` and the OS 6 keys stay for OS 6 and
+// for launchers that read `<layout>`.
 //
 // A finalized mod so it runs after @expo-pico/core writes the pico manifest.
 // SOT: Harlem Might apps/mobile/modules/spatial-panels/app.plugin.js
@@ -18,6 +24,7 @@ const { join } = require('node:path');
 const { AndroidConfig, withFinalizedMod } = require('expo/config-plugins');
 
 const ACTIVITY = 'com.moyolearn.spatialpanels.SpatialPanelActivity';
+const PANEL_POSITION = 'near';
 
 function parseDp(label, value) {
   const match = /^(\d+)dp$/.exec(String(value));
@@ -35,6 +42,8 @@ function panelActivityElement(options) {
   const height = parseDp('defaultHeight', options.defaultHeight);
   const size = `${width}x${height}`;
   const meta = [
+    // Differs from MainActivity's (none), so PICO OS 5 opens a new window.
+    ['pico.vr.position', PANEL_POSITION],
     ['pico.spatial.windowcontainer.id', 'SpatialPanel'],
     ['pico.spatial.windowcontainer.defaultsize', size],
     ['pico.spatial.WindowContainer.size', size],

@@ -55,7 +55,7 @@ class SpatialPanelsModule : Module() {
       val activity = appContext.currentActivity ?: throw NoLaunchingActivityException(name)
       val bundle = Bundle()
       for ((key, value) in props) bundle.putString(key, value)
-      activity.startActivity(SpatialPanelActivity.intent(activity, name, bundle))
+      activity.startActivity(SpatialPanelActivity.intent(activity, name, bundle), PicoPanelLaunchOptions.bundle(activity))
     }.runOnQueue(Queues.MAIN)
 
     AsyncFunction("closePanel") { name: String ->

@@ -16,10 +16,10 @@ import com.facebook.react.interfaces.fabric.ReactSurface
  * runtime and stores.
  *
  * Declared in the pico flavor manifest only (the `spatial-panels` config
- * plugin writes it), in its own task. PICO's window container sizes it from
- * the activity's `pico.spatial.windowcontainer.*` meta-data, with `<layout>`
- * kept for launchers that read only that. The OS picks where it opens; the
- * app cannot pin it to the main panel's edge.
+ * plugin writes it), in its own task. PICO OS 5 gives it its own 2D window
+ * only because its `pico.vr.position` differs from MainActivity's; the size
+ * comes from the launch options ([PicoPanelLaunchOptions]). The OS picks where
+ * it opens; the app cannot pin it to the main panel's edge.
  *
  * Deliberately not a `ReactActivity`: ReactHost tracks a single current
  * activity, asserts in `onHostPause` when a different one pauses, and moves
