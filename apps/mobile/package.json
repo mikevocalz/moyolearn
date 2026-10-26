@@ -49,6 +49,7 @@
     "expo-web-browser": "catalog:",
     "lucide-react-native": "catalog:",
     "nitro-canvas-in-Vision": "0.0.2-rive.4",
+    "nitro-core": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-native": "catalog:",

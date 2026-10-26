@@ -59,7 +59,7 @@
       "@viro-external/spatial-panels": "file:./vendors/viro-external-spatial-panels-0.1.0-4dc2775.tgz",
       "@viro-external/ui": "file:./vendors/viro-external-ui-0.1.0-4dc2775.tgz",
       "@viro-external/xr-contract": "file:./vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz",
-      "@expo-pico/core": "file:./vendors/expo-pico-core-1.0.0.tgz",
+      "@expo-pico/core": "file:./vendors/expo-pico-core-1.0.0-nitro-v1.tgz",
       "@expo/dom-webview": "58.0.0",
       "@payloadcms/plugin-cloud-storage": "4.0.0-canary.33",
       "@payloadcms/translations": "4.0.0-canary.33",
@@ -69,16 +69,18 @@
       "lightningcss": "1.30.1",
       "react": "19.3.0",
       "react-dom": "19.3.0",
-      "nitro-canvas-in-Vision": "file:./vendors/nitro-canvas-in-Vision-0.0.2-rive.4-clean.tgz",
+      "nitro-canvas-in-Vision": "file:./vendors/nitro-canvas-in-Vision-0.0.2-rive.4-nitro-v1.tgz",
       "react-native": "0.88.0-rc.2",
       "react-server-dom-webpack": "19.3.0",
-      "react-native-worklets": "catalog:"
+      "react-native-worklets": "catalog:",
+      "react-native-mmkv": "file:./vendors/react-native-mmkv-4.3.2-nitro-v1.tgz",
+      "react-native-nitro-fetch": "file:./vendors/react-native-nitro-fetch-1.6.2-nitro-v1.tgz",
+      "react-native-nitro-image": "file:./vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz",
+      "react-native-vision-camera": "file:./vendors/react-native-vision-camera-5.2.3-nitro-v1.0.tgz"
     },
     "patchedDependencies": {
       "@sentry/react-native@7.11.0": "patches/@sentry__react-native@7.11.0.patch",
       "@seshuk/payload-storage-bunny@3.0.0": "patches/@seshuk__payload-storage-bunny@3.0.0.patch",
-      "react-native-nitro-image": "patches/react-native-nitro-image.patch",
-      "react-native-vision-camera": "patches/react-native-vision-camera.patch",
       "expo-router@57.0.15": "patches/expo-router@57.0.15.patch",
       "expo-horizon-core@57.0.2": "patches/expo-horizon-core@57.0.2.patch",
       "@reactvision/react-viro@3.0.1-moyo.1": "patches/@reactvision__react-viro@3.0.1-moyo.1.patch",
@@ -93,8 +95,7 @@
       "expo-router": "patches/expo-router.patch",
       "expo-font": "patches/expo-font.patch",
       "expo": "patches/expo.patch",
-      "expo-constants": "patches/expo-constants.patch",
-      "nitro-canvas-in-Vision@0.0.2-rive.4": "patches/nitro-canvas-in-Vision.patch"
+      "expo-constants": "patches/expo-constants.patch"
     },
     "supportedArchitectures": {
       "cpu": [

@@ -98,3 +98,42 @@ Two of them are not live yet:
   It is an Expo module, and Expo autolinking would compile its Kotlin, which
   needs viro 3.0.3-moyo.1's renderer classes. Add it as a dependency in the
   same change that moves the app to that viro.
+
+## Nitro V1 ports (`*-nitro-v1*.tgz`)
+
+The app runs Nitro Modules 1.0 alpha (`react-native-nitro-modules`,
+`nitro-core` and `nitrogen` at `1.0.0-alpha.nightly.100.g107f6fc66597`, set in
+the `pnpm-workspace.yaml` catalog). No Nitro library on npm targets V1 yet, so
+each one below is our port, packed from a `nitro-v1` branch under
+`~/nitro-v1-ports/<repo>`. `pnpm.overrides` in the root `package.json` points
+each package name at its tarball. Every tarball is newer than the commit it was
+packed from.
+
+| Tarball | Port commit | sha256 |
+| --- | --- | --- |
+| `react-native-mmkv-4.3.2-nitro-v1.tgz` | react-native-mmkv `ecb01694709e9305cc53c9b882bb9f9474fe77b8` | `b060b7531aa1cfc901da6408de38de232e161d1eeb0e1c32454fe2ba0cc70735` |
+| `react-native-nitro-fetch-1.6.2-nitro-v1.tgz` | react-native-nitro-fetch `5341e3fb29045a8a39150171e19733f5d2f9c142` | `7234e18c49360c43f9d11e7f730f108eae97a40737c6afe69c51bf692d307d70` |
+| `react-native-nitro-image-0.15.2-nitro-v1.tgz` | react-native-nitro-image `8bdac279abde39a9b5fa15ddec1819111867a089` | `9d46659698e506c58a9a9b479acb1e7288da1f61b72e2a0eecc52dcaedb1ef94` |
+| `nitro-canvas-in-Vision-0.0.2-rive.4-nitro-v1.tgz` | nitro-canvas-in-Vision `f3393b6331caafa0f6a1113dbedda85369f47598` | `63ec01adc7cee19b3f6cd15fb7b6154d45970d1757cd8300087b5b5d08f8db9e` |
+| `expo-pico-core-1.0.0-nitro-v1.tgz` | expo-pico `13b799e230eaba5ec1812e8b301ac0ce0f9e10cc` | `eab4590b762533e2f31f59ba61a9a61077b4747ff851cd2f3132a22387bddebd` |
+| `react-native-vision-camera-5.2.3-nitro-v1.0.tgz` | react-native-vision-camera `19f6845ba90bbd9f3723394c66215f0ff5b5787d` | `33320156b896358ecc2798e546dd425f4df48ef550ce4bf4bab26588cdf9f146` |
+
+Three patches were deleted with this move because their changes are inside the
+ports: `react-native-nitro-image.patch` and `react-native-vision-camera.patch`
+(the `com/facebook/react/viewmanagers` source exclusion and `compileOnly`
+react-android) and `nitro-canvas-in-Vision.patch` (the C++ is byte-identical in
+the port and the Swift edits are carried over).
+
+`react-native-nitro-image` is declared directly by `@acme/app` at
+`0.15.2-nitro-v1.0`. Without that, pnpm resolved vision-camera's dependency on
+it from the registry (stock 0.15.2, Nitro 0.37) and the override never applied.
+`@acme/secure` and `@acme/ui` declare `react-native-nitro-modules` and
+`nitro-core` because they import `react-native-mmkv`; with the runtime
+undeclared, pnpm kept a stale 0.37.1 for mmkv's optional peer in those two
+workspaces.
+
+All ports peer `react-native >=0.88.0`, which 0.88.0-rc.2 does not satisfy
+under semver. pnpm warns and installs; nothing enforces it.
+
+To recut one: commit on the port's `nitro-v1` branch, `npm pack` from the
+package directory, copy the tarball here, update the override and this table.
