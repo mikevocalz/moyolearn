@@ -39,7 +39,7 @@ import type { ReactNode } from 'react';
  *      packages/ui/xr/XrBoardSurface.native.tsx · ./board-chrome-bind.ts
  * SOT-KEYWORDS: xr rive board chrome panel composition carrier content rect input arbitration live texture grip drag
  */
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { ViroMaterials, ViroNode, ViroQuad, ViroRivePanel, ViroText } from '@reactvision/react-viro';
 import { worldMatrix, type RivePanel, type RiveCanvasOptions } from 'nitro-canvas-in-Vision';
 import {
@@ -139,8 +139,11 @@ export function RiveBoardPanel({
      established pattern here (`XrBoardSurface.emit`). */
   const dispatch = useRef(handlers);
   const presented = useRef(presentation);
-  dispatch.current = handlers;
-  presented.current = presentation;
+  /* Synced after commit, before the passive effects below read them. */
+  useLayoutEffect(() => {
+    dispatch.current = handlers;
+    presented.current = presentation;
+  });
 
   const base = carrier?.position ?? ZERO_OFFSET;
   const rotation = carrier?.rotation ?? ZERO_OFFSET;

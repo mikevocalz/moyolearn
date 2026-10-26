@@ -29,7 +29,7 @@
  * SOT-KEYWORDS: xr rive question panel composition carrier content window learning question grip drag
  */
 
-import React, { useEffect, useMemo, useRef } from 'react';
+import React, { useEffect, useLayoutEffect, useMemo, useRef } from 'react';
 import { ViroMaterials, ViroNode, ViroQuad, ViroRivePanel, ViroText } from '@reactvision/react-viro';
 import { worldMatrix, type RivePanel, type RiveCanvasOptions } from 'nitro-canvas-in-Vision';
 import {
@@ -101,8 +101,11 @@ export function XrQuestionPanel({
   /* Handlers/presentation change every render; the binding installs once. */
   const dispatch = useRef(handlers);
   const presented = useRef(presentation);
-  dispatch.current = handlers;
-  presented.current = presentation;
+  /* Synced after commit, before the passive effects below read them. */
+  useLayoutEffect(() => {
+    dispatch.current = handlers;
+    presented.current = presentation;
+  });
 
   const base = carrier?.position ?? ZERO_OFFSET;
   const rotation = carrier?.rotation ?? ZERO_OFFSET;
