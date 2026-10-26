@@ -384,7 +384,7 @@ overrides:
   react-native-mmkv: file:./vendors/react-native-mmkv-4.3.2-nitro-v1.tgz
   react-native-nitro-fetch: file:./vendors/react-native-nitro-fetch-1.6.2-nitro-v1.tgz
   react-native-nitro-image: file:./vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz
-  react-native-vision-camera: file:./vendors/react-native-vision-camera-5.2.3-nitro-v1.0.tgz
+  react-native-vision-camera: file:./vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz
 
 patchedDependencies:
   '@reactvision/react-viro@3.0.1-moyo.1':
@@ -1187,8 +1187,8 @@ importers:
         specifier: 'catalog:'
         version: 15.15.5(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-vision-camera:
-        specifier: file:../../vendors/react-native-vision-camera-5.2.3-nitro-v1.0.tgz
-        version: file:vendors/react-native-vision-camera-5.2.3-nitro-v1.0.tgz(14a42498750de501671b17118716be79)
+        specifier: file:../../vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz
+        version: file:vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz(14a42498750de501671b17118716be79)
       react-native-worklets:
         specifier: 0.13.0
         version: 0.13.0(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -10811,8 +10811,8 @@ packages:
       react: 19.3.0
       react-native: 0.88.0-rc.2
 
-  react-native-vision-camera@file:vendors/react-native-vision-camera-5.2.3-nitro-v1.0.tgz:
-    resolution: {integrity: sha512-xihjG+FOJ8qCElK1qfhbGEO+6lxWeZjXWvOId15j21ByHus0IltatC3NLPhtuBp4soAUMuLxllzQUeRW/8T0Kw==, tarball: file:vendors/react-native-vision-camera-5.2.3-nitro-v1.0.tgz}
+  react-native-vision-camera@file:vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz:
+    resolution: {integrity: sha512-xihjG+FOJ8qCElK1qfhbGEO+6lxWeZjXWvOId15j21ByHus0IltatC3NLPhtuBp4soAUMuLxllzQUeRW/8T0Kw==, tarball: file:vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz}
     version: 5.2.3-nitro-v1.0
     peerDependencies:
       nitro-core: '*'
@@ -23789,7 +23789,7 @@ snapshots:
       react: 19.3.0
       react-native: 0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0)
 
-  react-native-vision-camera@file:vendors/react-native-vision-camera-5.2.3-nitro-v1.0.tgz(14a42498750de501671b17118716be79):
+  react-native-vision-camera@file:vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz(14a42498750de501671b17118716be79):
     dependencies:
       react: 19.3.0
       react-native: 0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0-rc.2(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)

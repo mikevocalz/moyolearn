@@ -117,7 +117,7 @@ packed from.
 | `react-native-nitro-image-0.15.2-nitro-v1.tgz` | [mikevocalz/react-native-nitro-image-nitro-v1](https://github.com/mikevocalz/react-native-nitro-image-nitro-v1/tree/nitro-v1) `8bdac279abde39a9b5fa15ddec1819111867a089` | `9d46659698e506c58a9a9b479acb1e7288da1f61b72e2a0eecc52dcaedb1ef94` |
 | `nitro-canvas-in-Vision-0.0.2-rive.4-nitro-v1.tgz` | [mikevocalz/nitro-canvas-in-Vision-nitro-v1](https://github.com/mikevocalz/nitro-canvas-in-Vision-nitro-v1/tree/nitro-v1) `f3393b6331caafa0f6a1113dbedda85369f47598` | `63ec01adc7cee19b3f6cd15fb7b6154d45970d1757cd8300087b5b5d08f8db9e` |
 | `expo-pico-core-1.0.0-nitro-v1.tgz` | [mikevocalz/expo-pico](https://github.com/mikevocalz/expo-pico/tree/nitro-v1) `13b799e230eaba5ec1812e8b301ac0ce0f9e10cc` | `eab4590b762533e2f31f59ba61a9a61077b4747ff851cd2f3132a22387bddebd` |
-| `react-native-vision-camera-5.2.3-nitro-v1.0.tgz` | [mikevocalz/react-native-vision-camera-nitro-v1](https://github.com/mikevocalz/react-native-vision-camera-nitro-v1/tree/nitro-v1) `19f6845ba90bbd9f3723394c66215f0ff5b5787d` | `33320156b896358ecc2798e546dd425f4df48ef550ce4bf4bab26588cdf9f146` |
+| `react-native-vision-camera-5.2.3-nitro-v1.tgz` | [mikevocalz/react-native-vision-camera-nitro-v1](https://github.com/mikevocalz/react-native-vision-camera-nitro-v1/tree/nitro-v1) `19f6845ba90bbd9f3723394c66215f0ff5b5787d` | `33320156b896358ecc2798e546dd425f4df48ef550ce4bf4bab26588cdf9f146` |
 
 Three patches were deleted with this move because their changes are inside the
 ports: `react-native-nitro-image.patch` and `react-native-vision-camera.patch`

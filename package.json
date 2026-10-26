@@ -76,7 +76,7 @@
       "react-native-mmkv": "file:./vendors/react-native-mmkv-4.3.2-nitro-v1.tgz",
       "react-native-nitro-fetch": "file:./vendors/react-native-nitro-fetch-1.6.2-nitro-v1.tgz",
       "react-native-nitro-image": "file:./vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz",
-      "react-native-vision-camera": "file:./vendors/react-native-vision-camera-5.2.3-nitro-v1.0.tgz"
+      "react-native-vision-camera": "file:./vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz"
     },
     "patchedDependencies": {
       "@sentry/react-native@7.11.0": "patches/@sentry__react-native@7.11.0.patch",
