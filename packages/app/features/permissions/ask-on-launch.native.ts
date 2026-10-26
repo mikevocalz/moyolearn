@@ -31,6 +31,19 @@ function isQuest(): boolean {
 }
 
 let asked = false;
+let settle: () => void = () => {};
+const settled = new Promise<void>((resolve) => {
+  settle = resolve;
+});
+
+/**
+ * Resolves once the launch prompts are answered. A PICO panel window opens
+ * centered in front of the main window, over the dialog, so the spatial
+ * panels wait for this before they open.
+ */
+export function whenLaunchPermissionsAsked(): Promise<void> {
+  return settled;
+}
 
 export function useAskPermissionsOnLaunch(): void {
   useEffect(() => {
@@ -38,19 +51,26 @@ export function useAskPermissionsOnLaunch(): void {
     if (asked) return;
     asked = true;
     void (async () => {
-      const { statuses } = usePermissions.getState();
-      for (const key of PERMISSION_KEYS) {
-        if (canAsk(statuses[key])) await requestNativePermission(key);
-      }
-      if (isQuest()) {
-        for (const permission of QUEST_PERMISSIONS) {
-          try {
-            await PermissionsAndroid.request(permission as Parameters<typeof PermissionsAndroid.request>[0]);
-          } catch {
-            /* An OS that does not know the key has nothing to ask. */
-          }
-        }
+      try {
+        await askAll();
+      } finally {
+        settle();
       }
     })();
   }, []);
+}
+
+async function askAll(): Promise<void> {
+  const { statuses } = usePermissions.getState();
+  for (const key of PERMISSION_KEYS) {
+    if (canAsk(statuses[key])) await requestNativePermission(key);
+  }
+  if (!isQuest()) return;
+  for (const permission of QUEST_PERMISSIONS) {
+    try {
+      await PermissionsAndroid.request(permission as Parameters<typeof PermissionsAndroid.request>[0]);
+    } catch {
+      /* An OS that does not know the key has nothing to ask. */
+    }
+  }
 }

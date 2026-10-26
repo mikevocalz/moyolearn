@@ -220,6 +220,7 @@ export { FamilyCalendarScreen } from './features/family-calendar/screen';
 export {
   PermissionChecklist,
   useAskPermissionsOnLaunch,
+  whenLaunchPermissionsAsked,
   usePermissions,
   usePermissionRequester,
   PERMISSION_KEYS,

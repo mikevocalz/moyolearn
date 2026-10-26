@@ -8,7 +8,7 @@
 
 export { usePermissions } from './permissions.store.ts';
 export { usePermissionRequester } from './permission-request';
-export { useAskPermissionsOnLaunch } from './ask-on-launch';
+export { useAskPermissionsOnLaunch, whenLaunchPermissionsAsked } from './ask-on-launch';
 export { PermissionChecklist } from './permission-checklist.tsx';
 export {
   PERMISSION_KEYS,

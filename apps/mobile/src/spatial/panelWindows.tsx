@@ -4,7 +4,7 @@
 // SOT-KEYWORDS: pico spatial panel window host activity rail
 import { useEffect, useRef } from 'react';
 import { AppRegistry } from 'react-native';
-import { SafeAreaProvider } from '@acme/app';
+import { SafeAreaProvider, whenLaunchPermissionsAsked } from '@acme/app';
 import { View } from '@acme/ui/tw';
 import { spatialPanels } from '../../modules/spatial-panels';
 import type { MetaWindowPlacement } from './metaWindowTypes';
@@ -96,10 +96,17 @@ export function PanelWindowHost() {
       const name = componentFor(label);
       AppRegistry.registerComponent(name, () => SpatialPanelRoot);
       apply(label, { type: 'requested' });
-      spatialPanels.openPanel(name, { [LABEL_PROP]: label }).catch((error: Error) => {
-        console.warn(`[panelWindows] ${label} panel did not open: ${error.message}`);
-        apply(label, { type: 'failed' });
-      });
+      // PICO opens a panel centered in front of the main window, which would
+      // cover the launch permission dialog; open once those are answered.
+      whenLaunchPermissionsAsked()
+        .then(() => {
+          if (!requested.current.has(label)) return;
+          return spatialPanels.openPanel(name, { [LABEL_PROP]: label });
+        })
+        .catch((error: Error) => {
+          console.warn(`[panelWindows] ${label} panel did not open: ${error.message}`);
+          apply(label, { type: 'failed' });
+        });
     }
     for (const label of requested.current) {
       if (labels.has(label)) continue;
