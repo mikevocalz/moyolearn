@@ -104,6 +104,7 @@ import { currentXrEligibility } from './xr-eligibility';
 import { panelStateOf, useXrSession, type XrPhase } from './xr-session.store.ts';
 import { useXrVoice } from './xr-voice.native.ts';
 import { createMoyoQuickDrawAdapter } from './quickdraw-spatial-adapter.ts';
+import { NativeBoardPaper, mirrorToNativeBoard, useNativeBoardEnabled } from './native-board.native.tsx';
 
 
 /** This presentation's id, so its own strokes are not echoed back at it. */
@@ -403,6 +404,8 @@ function BoardScene() {
   }, []);
   const phase = useXrSession((s) => s.phase);
   const placement = useXrSession((s) => s.placement);
+  /* Round 2 device validation: off unless asked for AND native-panels is linked. */
+  const nativeBoard = useNativeBoardEnabled();
   const workspaceHead = useMemo(
     () => workspaceHeadOf(placement, BOARD_PLACE.distanceM, BOARD_PLACE.dropM),
     [placement],
@@ -688,12 +691,9 @@ function BoardScene() {
       if (!drawing.current) return;
       drawing.current = false;
       strokeSource.current = null;
-      quickdrawAdapter.dispatchSurface({
-        phase: 'cancel',
-        u: sample.u,
-        v: sample.v,
-        source: sample.source,
-      });
+      const cancel = { phase: 'cancel' as const, u: sample.u, v: sample.v, source: sample.source };
+      quickdrawAdapter.dispatchSurface(cancel);
+      mirrorToNativeBoard(cancel);
       return;
     }
     if (sample.phase === 'begin') {
@@ -708,6 +708,9 @@ function BoardScene() {
       drawing.current = false;
     }
     quickdrawAdapter.dispatchSurface(sample);
+    /* Round 2 `nativeBoard`: the same sample, to the native paper's document.
+       A no-op while that board has never mounted (`native-board.native.tsx`). */
+    mirrorToNativeBoard(sample);
   };
 
   /*
@@ -717,6 +720,19 @@ function BoardScene() {
     of the whole tree.
   */
   const canEdit = foreground && composedState === 'ready' && boardDrawable && inkLands;
+  /* The WebView board, the default paper and the native board's fallback. */
+  const webViewBoard = (
+    <QuickDrawSpatialSurface
+      adapter={quickdrawAdapter}
+      width={CONTENT_RECT_PANEL.width}
+      height={CONTENT_RECT_PANEL.height}
+      pageWidth={boardSurfacePixels.width}
+      pageHeight={boardSurfacePixels.height}
+      movable={false}
+      interactive={canEdit}
+      position={[0, 0, boardLayer.raster]}
+    />
+  );
   const canAsk = canEdit && !asking && voice.phase.kind !== 'starting' && voice.phase.kind !== 'transcribing';
   const boardHandlers: BoardChromeHandlers = {
     onTool(next) {
@@ -846,18 +862,14 @@ function BoardScene() {
             content={<>
               <ViroQuad width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height}
                 materials={[XR_MATERIAL.paper]} ignoreEventHandling />
-              {boardTextureBound ? (
-                <QuickDrawSpatialSurface
-                  adapter={quickdrawAdapter}
+              {boardTextureBound ? (nativeBoard ? (
+                <NativeBoardPaper
                   width={CONTENT_RECT_PANEL.width}
                   height={CONTENT_RECT_PANEL.height}
-                  pageWidth={boardSurfacePixels.width}
-                  pageHeight={boardSurfacePixels.height}
-                  movable={false}
-                  interactive={canEdit}
                   position={[0, 0, boardLayer.raster]}
+                  fallback={webViewBoard}
                 />
-              ) : (<>
+              ) : webViewBoard) : (<>
                 <XrBoardRaster uri={raster.uri} width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height} />
                 <XrBoardInk store={pendingInk} width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height}
                   onSkippedCount={useXrSession.getState().setSkipped} />

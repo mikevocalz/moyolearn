@@ -52,10 +52,13 @@
   "pnpm": {
     "overrides": {
       "@reactvision/react-viro": "file:./vendors/reactvision-react-viro-3.0.1-moyo.1.tgz",
-      "@viro-external/core": "file:./vendors/viro-external-core-0.1.0.tgz",
-      "@viro-external/media": "file:./vendors/viro-external-media-0.1.0.tgz",
-      "@viro-external/ui": "file:./vendors/viro-external-ui-0.1.0.tgz",
-      "@viro-external/xr-contract": "file:./vendors/viro-external-xr-contract-0.3.0.tgz",
+      "@viro-external/core": "file:./vendors/viro-external-core-0.1.0-4dc2775.tgz",
+      "@viro-external/media": "file:./vendors/viro-external-media-0.1.0-4dc2775.tgz",
+      "@viro-external/meta-layout": "file:./vendors/viro-external-meta-layout-0.1.0-4dc2775.tgz",
+      "@viro-external/native-panels": "file:./vendors/viro-external-native-panels-0.1.0-4dc2775.tgz",
+      "@viro-external/spatial-panels": "file:./vendors/viro-external-spatial-panels-0.1.0-4dc2775.tgz",
+      "@viro-external/ui": "file:./vendors/viro-external-ui-0.1.0-4dc2775.tgz",
+      "@viro-external/xr-contract": "file:./vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz",
       "@expo-pico/core": "file:./vendors/expo-pico-core-1.0.0.tgz",
       "@expo/dom-webview": "58.0.0",
       "@payloadcms/plugin-cloud-storage": "4.0.0-canary.33",

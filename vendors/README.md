@@ -69,3 +69,32 @@ pnpm add -w "redraw@file:./vendors/redraw-<ver>.tgz" \
 Then swap the one import in `apps/mobile/components/splash/MoyoSplash.tsx`
 (marked `REDRAW HAND-OFF`) and rebuild — the native side is already in the
 binary, so it is a JS-only change from there.
+
+## `@viro-external/*` at viro-external `4dc2775`
+
+The seven `viro-external-*-4dc2775.tgz` files are `pnpm pack` output of
+mikevocalz/viro-external branch `feat/native-whiteboard-rive-panels` at
+`4dc2775d3a07a3f9267b9e8db201fe3edda51287` (clean tree), packed 2026-10-25.
+`pnpm.overrides` in the root `package.json` points every `@viro-external/*`
+name at them. The older unsuffixed tarballs are what `main` used before.
+
+| Tarball | sha256 |
+| --- | --- |
+| `viro-external-core-0.1.0-4dc2775.tgz` | `d5641912a3c8fa6b7de84b14506ae777071f616715bbf4b8373d25789510b4a7` |
+| `viro-external-media-0.1.0-4dc2775.tgz` | `d1e16969473154fbe195746b1351316ca8ef336123c8f4b0034ed92e5a8dd64f` |
+| `viro-external-meta-layout-0.1.0-4dc2775.tgz` | `874d2db8963b90197a8f95abdd9e3b33a80e9e4f1080cd1109530ae17433c5d4` |
+| `viro-external-native-panels-0.1.0-4dc2775.tgz` | `d8d6248a573597dce32b8797987c5e353336535db0cb825ffe0e3185ca0845a9` |
+| `viro-external-spatial-panels-0.1.0-4dc2775.tgz` | `3e1d3a7d3a69d86ab1acd24148e92ed165f62f8b05b986be4892a657cb2a30c6` |
+| `viro-external-ui-0.1.0-4dc2775.tgz` | `d9139af42ac8822211587bd7715a1ff9c8b3833ccde6ccbdef0359b33a96dc61` |
+| `viro-external-xr-contract-0.3.0-4dc2775.tgz` | `ed18283a2019bda2698d4db5b5b9f7ba9b4609fe3ea68def340730d12f39c892` |
+
+Two of them are not live yet:
+
+- **native-panels** is a dependency of `@acme/app` for its JavaScript, but
+  its Android library is excluded from autolinking unless `MOYO_NATIVE_PANELS=1`
+  (`apps/mobile/react-native.config.js` says why: Nitro 1.0 headers and viro
+  3.0.3-moyo.1's `CanvasSurfaces`).
+- **spatial-panels** is vendored and overridden but nothing depends on it.
+  It is an Expo module, and Expo autolinking would compile its Kotlin, which
+  needs viro 3.0.3-moyo.1's renderer classes. Add it as a dependency in the
+  same change that moves the app to that viro.
