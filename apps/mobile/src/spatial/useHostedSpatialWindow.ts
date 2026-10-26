@@ -9,7 +9,8 @@ import { useSpatialWindowHostStore } from './spatialWindowHost.store';
 /**
  * Asks for `content` to show in its own OS window, rendered by
  * {@linkcode SpatialWindowHost}: a Meta spatial window on quest builds, a
- * second Activity panel on pico builds (see `spatialWindows.ts`).
+ * second Activity panel on pico builds, or the main window's left strip for a
+ * window Quest attaches to that edge (see `spatialWindows.ts`).
  *
  * Returns the window's placement. Render the in-window fallback yourself
  * whenever it is not `spatial`: `pending` while the OS places it, `dropped`

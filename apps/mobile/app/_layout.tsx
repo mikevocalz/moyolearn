@@ -29,6 +29,7 @@ import { Toaster } from "@acme/ui";
 import { MoyoSplash } from "../components/splash/MoyoSplash";
 import { metaWindows } from "../src/spatial/metaWindows";
 import { SpatialWindowHost } from "../src/spatial/SpatialWindowHost";
+import { PicoMainFrame } from "../src/spatial/panelWindows";
 import "../global.css";
 
 
@@ -132,6 +133,12 @@ export default function RootLayout() {
           route that presents one. It must also be INSIDE GestureHandlerRootView
           — the sheet is gesture-driven and will not respond without it.
         */}
+        {/*
+          On the pico build the main window is a transparent strip holding
+          the shell rail, then the main panel; everything below draws in the
+          panel. A pass-through elsewhere (src/spatial/panelWindows.tsx).
+        */}
+        <PicoMainFrame>
         <BottomSheetModalProvider>
           <AppQueryProvider>
             <SessionProvider>
@@ -211,6 +218,7 @@ export default function RootLayout() {
             <MoyoSplash />
           </AppQueryProvider>
         </BottomSheetModalProvider>
+        </PicoMainFrame>
       </SafeAreaProvider>
       </KeyboardProvider>
       </ThemeProvider>

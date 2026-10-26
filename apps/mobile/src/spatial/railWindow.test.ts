@@ -5,12 +5,13 @@ import { createRequire } from 'node:module';
 import { dirname, join } from 'node:path';
 import {
   OUTWARD_FAR_EDGE_DP,
+  PICO_RAIL_STRIP_WIDTH_DP,
   RAIL_WINDOW_DP,
   outwardWindowGapDp,
   railWindow,
   railWindowHeightDp,
 } from './railWindow.ts';
-import { panelLaunchSizeDp } from './panelWindowsCore.ts';
+import { ATTACHED_WINDOW_GAP_DP, attachedWindowFrame, panelLaunchSizeDp } from './panelWindowsCore.ts';
 
 const require = createRequire(import.meta.url);
 const { resolveAnchor } = require(
@@ -117,5 +118,46 @@ describe('one rail geometry on every spatial platform', () => {
     assert.equal(RAIL_WINDOW_DP.width, 80);
     assert.ok(RAIL_WINDOW_DP.cornerRadius > 0);
     assert.ok(railWindow(5).windowHeight < 720);
+  });
+});
+
+describe('the PICO in-window rail strip', () => {
+  it('draws the rail at the Quest window size for every shell', () => {
+    for (const items of [3, 4, 5, 6, 7]) {
+      const quest = railWindow(items);
+      const frame = attachedWindowFrame(quest);
+      assert.ok(frame, 'the Quest rail is attached outside the left edge');
+      assert.equal(frame.edge, 'left');
+      assert.equal(frame.widthDp, quest.windowWidth);
+      assert.equal(frame.heightDp, quest.windowHeight);
+    }
+  });
+
+  it('keeps the Quest gap: flush, as the anchor pins the edges with no offset', () => {
+    const quest = railWindow(5);
+    assert.equal(quest.offset, undefined);
+    assert.equal(attachedWindowFrame(quest)?.gapDp, ATTACHED_WINDOW_GAP_DP);
+    assert.equal(ATTACHED_WINDOW_GAP_DP, 0);
+  });
+
+  it('reserves exactly the rail plus the gap', () => {
+    assert.equal(PICO_RAIL_STRIP_WIDTH_DP, RAIL_WINDOW_DP.width + ATTACHED_WINDOW_GAP_DP);
+    assert.equal(attachedWindowFrame(railWindow(5))?.stripWidthDp, PICO_RAIL_STRIP_WIDTH_DP);
+  });
+
+  it('rounds the rail and the main panel with the one window radius', () => {
+    assert.equal(RAIL_WINDOW_DP.cornerRadius, 12.25);
+  });
+
+  it('is shorter than the PICO main panel, so it centres beside it', () => {
+    // The PICO OS 5 main panel: 1600x900px at 200dpi, 720dp tall.
+    for (const items of [3, 4, 5, 6, 7]) assert.ok(railWindow(items).windowHeight < 720);
+  });
+
+  it('leaves floating windows as their own panels', () => {
+    const floating = { ...railWindow(5), label: 'detail', anchor: { parent: 'right', child: 'left' } } as const;
+    assert.equal(attachedWindowFrame(floating), null);
+    assert.equal(attachedWindowFrame({ ...railWindow(5), anchor: 'center' }), null);
+    assert.equal(attachedWindowFrame({ ...railWindow(5), offset: { z: 1 } }), null);
   });
 });

@@ -1,7 +1,5 @@
 package com.moyolearn.spatialpanels
 
-import android.content.ComponentName
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -30,13 +28,7 @@ class SpatialPanelsModule : Module() {
   // false on mobile and quest builds (quest uses Meta's layout SDK instead). Resolved once: the manifest cannot change
   // while the app runs.
   private val isAvailable: Boolean by lazy {
-    val context = appContext.reactContext ?: return@lazy false
-    try {
-      context.packageManager.getActivityInfo(ComponentName(context, SpatialPanelActivity::class.java), 0)
-      return@lazy true
-    } catch (_: PackageManager.NameNotFoundException) {
-      return@lazy false
-    }
+    appContext.reactContext?.declaresSpatialPanelActivity() ?: false
   }
 
   override fun definition() = ModuleDefinition {

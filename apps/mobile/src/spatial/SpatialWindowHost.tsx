@@ -22,7 +22,9 @@ import { useSpatialWindowHostStore } from './spatialWindowHost.store';
  * origin; a surface whose window is dropped draws its own in-window fallback
  * (see `useHostedSpatialWindow`).
  *
- * On pico builds the same store drives `PanelWindowHost`, which opens each
+ * On pico builds the same store drives `PanelWindowHost` and `PicoMainFrame`:
+ * windows Quest attaches outside the main window's left edge (the rail) draw
+ * in the main window's own strip, and `PanelWindowHost` opens each other
  * window as its own Activity panel instead. Renders nothing where neither
  * backend is linked.
  */

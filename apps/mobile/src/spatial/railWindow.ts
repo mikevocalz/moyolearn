@@ -3,6 +3,7 @@
 // SOT-KEYWORDS: spatial rail window size anchor quest navigation
 import { navChrome, radius, targets } from '@acme/theme';
 import type { MetaWindowProps } from './metaWindowTypes.ts';
+import { ATTACHED_WINDOW_GAP_DP } from './panelWindowsCore.ts';
 
 /**
  * Where Horizon OS 207 puts the far edge of a window attached OUTSIDE the
@@ -93,3 +94,10 @@ export function railWindow(itemCount: number): MetaWindowProps {
     anchor: { parent: 'left', child: 'right' },
   };
 }
+
+/**
+ * The strip a pico build's main window reserves left of its main panel for the
+ * rail: the rail window's width plus the Quest gap. Fixed, so the main panel
+ * does not move when the rail mounts.
+ */
+export const PICO_RAIL_STRIP_WIDTH_DP = RAIL_WINDOW_DP.width + ATTACHED_WINDOW_GAP_DP;

@@ -278,7 +278,8 @@ interface ShellTabBarProps extends BottomTabBarProps {
 /**
  * Places the shell's navigation. On a quest build the rail asks for its own
  * Horizon window outside the main window's physical left edge (Harlem Might's
- * spatial rail); on a pico build, for its own panel, which PICO places. While
+ * spatial rail); on a pico build, for the strip left of the main panel in
+ * the main window itself (`PicoMainFrame`), at the same size and gap. While
  * that window is pending or dropped, and on every other build, the in-window
  * rail or bottom bar draws as before. Once the rail window shows, the main
  * window reserves nothing for it.

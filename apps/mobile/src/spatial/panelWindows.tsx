@@ -2,13 +2,15 @@
 // its content from the shared window store on the app's one ReactHost.
 // SOT: modules/spatial-panels · src/spatial/panelWindowsCore.ts
 // SOT-KEYWORDS: pico spatial panel window host activity rail
-import { useEffect, useRef } from 'react';
-import { AppRegistry } from 'react-native';
+import { useEffect, useRef, type ReactNode } from 'react';
+import { AppRegistry, useColorScheme } from 'react-native';
+import { semantic } from '@acme/theme';
 import { SafeAreaProvider, whenLaunchPermissionsAsked } from '@acme/app';
 import { View } from '@acme/ui/tw';
 import { spatialPanels } from '../../modules/spatial-panels';
 import type { MetaWindowPlacement } from './metaWindowTypes';
-import { panelLaunchSizeDp, usePanelPlacementStore } from './panelWindowsCore';
+import { attachedWindowFrame, panelLaunchSizeDp, usePanelPlacementStore } from './panelWindowsCore';
+import { PICO_RAIL_STRIP_WIDTH_DP, RAIL_WINDOW_DP } from './railWindow';
 import { useSpatialWindowHostStore } from './spatialWindowHost.store';
 
 /*
@@ -22,6 +24,12 @@ import { useSpatialWindowHostStore } from './spatialWindowHost.store';
   multi-window launch: a second Activity in its own task, which PICO places in
   its own window container. The OS chooses where that panel opens; unlike the
   quest rail it cannot be pinned to the main panel's left edge.
+
+  So a window Quest ATTACHES outside the main window's left edge (the shell
+  rail) is not a panel here. `PicoMainFrame` draws it inside the main
+  activity's own window, in a transparent strip left of the main panel, at the
+  Quest window's size and gap; it moves with the main panel because it is the
+  main panel's window. Only floating windows open as their own panels.
 */
 
 const PREFIX = 'MoyoSpatialPanel.';
@@ -89,7 +97,9 @@ export function PanelWindowHost() {
   }, [apply]);
 
   useEffect(() => {
-    const labels = new Set(Object.keys(windows));
+    const labels = new Set(
+      Object.keys(windows).filter((label) => attachedWindowFrame(windows[label]!.window) == null),
+    );
     for (const label of labels) {
       if (requested.current.has(label)) continue;
       requested.current.add(label);
@@ -118,4 +128,69 @@ export function PanelWindowHost() {
   }, [windows, apply]);
 
   return null;
+}
+
+/**
+ * The pico build's main window: a transparent strip on the left holding every
+ * window Quest attaches outside the main window's left edge, then the main
+ * panel with its own rounded surface. The strip is always reserved, so the
+ * panel never shifts when the rail mounts or unmounts. Elsewhere it renders
+ * `children` unchanged.
+ */
+export function PicoMainFrame({ children }: { children: ReactNode }) {
+  const scheme = useColorScheme() === 'dark' ? 'dark' : 'light';
+  if (!linked) return <>{children}</>;
+  return (
+    <View className="flex-1 flex-row" style={{ backgroundColor: 'transparent' }}>
+      <AttachedWindowStrip />
+      <View
+        className="flex-1"
+        style={{
+          backgroundColor: semantic.surface[scheme],
+          borderRadius: RAIL_WINDOW_DP.cornerRadius,
+          borderCurve: 'continuous',
+          overflow: 'hidden',
+        }}
+      >
+        {children}
+      </View>
+    </View>
+  );
+}
+
+function AttachedWindowStrip() {
+  const windows = useSpatialWindowHostStore((state) => state.windows);
+  const apply = usePanelPlacementStore((state) => state.apply);
+  const attached = Object.values(windows).flatMap((entry) => {
+    const frame = attachedWindowFrame(entry.window);
+    return frame ? [{ ...entry, frame }] : [];
+  });
+  const labels = attached.map((entry) => entry.window.label).join('\n');
+
+  // Drawn in this window as soon as it mounts: report it placed, so the
+  // surface that asked stops drawing its in-window fallback.
+  useEffect(() => {
+    const placed = labels === '' ? [] : labels.split('\n');
+    for (const label of placed) apply(label, { type: 'opened' });
+    return () => {
+      for (const label of placed) apply(label, { type: 'closed', reason: 'app' });
+    };
+  }, [labels, apply]);
+
+  return (
+    <View
+      pointerEvents="box-none"
+      className="h-full flex-col items-end justify-center"
+      style={{ width: PICO_RAIL_STRIP_WIDTH_DP, backgroundColor: 'transparent' }}
+    >
+      {attached.map(({ window, content, frame }) => (
+        <View
+          key={window.label}
+          style={{ width: frame.widthDp, height: frame.heightDp, marginRight: frame.gapDp }}
+        >
+          {content}
+        </View>
+      ))}
+    </View>
+  );
 }

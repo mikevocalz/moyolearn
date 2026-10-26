@@ -5,7 +5,8 @@ import { spatialWindows } from './spatialWindows';
 
 /**
  * Quest (Meta's layout SDK: a window attached outside the main window's left
- * edge) and pico (a second Activity panel the OS places). Everywhere else the
+ * edge) and pico (the same rail in a strip of the main activity's window, left
+ * of the main panel). Everywhere else the
  * rail stays in the main window.
  */
 export const spatialRailBuild: boolean = spatialWindows.linked;
