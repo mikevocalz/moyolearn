@@ -1,6 +1,6 @@
 // The hook every draggable XR panel moves its own carrier with.
 //
-// Bind `nodeRef` and `position` to the panel's outermost `ViroNode`, feed the
+// Bind `bindNode` (as the ref) and `position` to the panel's outermost `ViroNode`, feed the
 // grip's report-only `onDrag` into `drag`, and call `grab` / `release` from the
 // grip's click states. During the drag the carrier is written natively, so the
 // scene does not re-render; `release` commits once. `grabbed` is React state on
@@ -12,7 +12,7 @@
 // SOT: packages/ui/xr/carrier-drag.ts
 // SOT-KEYWORDS: xr carrier drag hook setNativeProps grip release commit panel independent
 
-import { useCallback, useRef, useState, type RefObject } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import type { XrVector3 } from './XrPanel.types.ts';
 import {
   ZERO_OFFSET,
@@ -41,7 +41,8 @@ export interface CarrierDragOptions {
 }
 
 export interface CarrierDrag {
-  nodeRef: RefObject<CarrierNode | null>;
+  /** Ref callback for the carrier node; stable across renders. */
+  bindNode(node: CarrierNode | null): void;
   /** Committed offset only — what the release render derives from. */
   offset: XrVector3;
   /** `base + offset`, for the carrier node's `position` prop. */
@@ -69,10 +70,16 @@ export function useCarrierDrag({
 
   /* Latest values for callbacks fired by the renderer between renders. */
   const latest = useRef({ base, offset, resetKey, enabled, onGrab, onCommit });
-  latest.current = { base, offset, resetKey, enabled, onGrab, onCommit };
+  useLayoutEffect(() => {
+    latest.current = { base, offset, resetKey, enabled, onGrab, onCommit };
+  });
   const inFlight = useRef<CarrierGrab | null>(null);
   const grabbedRef = useRef(false);
   const keyAtGrab = useRef<string | number | undefined>(resetKey);
+
+  const bindNode = useCallback((node: CarrierNode | null) => {
+    nodeRef.current = node;
+  }, []);
 
   const grab = useCallback(() => {
     if (grabbedRef.current) return;
@@ -116,5 +123,5 @@ export function useCarrierDrag({
     }
   }, []);
 
-  return { nodeRef, offset, position: carrierPosition(base, offset), grabbed, grab, drag, release };
+  return { bindNode, offset, position: carrierPosition(base, offset), grabbed, grab, drag, release };
 }

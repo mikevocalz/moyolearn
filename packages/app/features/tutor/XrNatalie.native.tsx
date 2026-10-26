@@ -117,9 +117,10 @@ export function XrNatalie({ position, rotationY, heightCm = NATALIE_HEIGHT_CM, o
   const [ready, setReady] = useState(false);
   const [arrived, setArrived] = useState(false);
   useEffect(() => {
-    if (!ready) { setArrived(false); return; }
+    if (!ready) return;
     const timer = setTimeout(() => setArrived(true), ARRIVAL_SPIN_MS);
-    return () => clearTimeout(timer);
+    /* Losing the model drops the arrival too, so the next load replays it. */
+    return () => { clearTimeout(timer); setArrived(false); };
   }, [ready]);
   const signals = useRef({ active, listening, processing });
   useLayoutEffect(() => { signals.current = { active, listening, processing }; }, [active, listening, processing]);

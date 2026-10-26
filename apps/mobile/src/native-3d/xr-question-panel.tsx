@@ -179,7 +179,7 @@ export function XrQuestionPanel({
 
   return (
     <ViroNode
-      ref={(node: ViroNode | null) => { carrierDrag.nodeRef.current = node; }}
+      ref={(node: ViroNode | null) => carrierDrag.bindNode(node)}
       position={carrierDrag.position}
       rotation={[rotation[0], rotation[1], rotation[2]]}
     >
