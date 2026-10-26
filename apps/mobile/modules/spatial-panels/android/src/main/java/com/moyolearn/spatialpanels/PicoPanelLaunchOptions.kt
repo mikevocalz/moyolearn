@@ -2,8 +2,6 @@ package com.moyolearn.spatialpanels
 
 import android.app.Activity
 import android.app.ActivityOptions
-import android.content.ComponentName
-import android.content.pm.PackageManager
 import android.os.Bundle
 import android.util.DisplayMetrics
 
@@ -19,42 +17,25 @@ import android.util.DisplayMetrics
  * `AppRecord.initSize`; framework.jar and services.jar on a PICO 4 Ultra,
  * OS 5.15.7). Width and height must both be positive and must differ.
  *
- * The size is the panel's `pico.spatial.windowcontainer.defaultsize` meta-data
- * ("80x472", dp), converted at the launching window's density: the new panel's
- * display gets the same per-app density as the main one.
+ * The dp size comes from JS (the same window props Quest opens at) and is
+ * converted at the launching window's density: the new panel's display gets
+ * the same per-app density as the main one.
  */
 internal object PicoPanelLaunchOptions {
   private const val PICO_DATA = "pico:activity.data"
   private const val WIDTH = "override_app_width"
   private const val HEIGHT = "override_app_height"
-  private const val SIZE_META = "pico.spatial.windowcontainer.defaultsize"
 
-  /** Null when the manifest declares no usable size; PICO's default size applies then. */
-  fun bundle(source: Activity): Bundle? {
-    val sizeDp = declaredSizeDp(source) ?: return null
+  fun bundle(source: Activity, widthDp: Int, heightDp: Int): Bundle {
+    require(widthDp > 0 && heightDp > 0) { "Panel size must be positive, got ${widthDp}x$heightDp dp." }
     val density = source.resources.displayMetrics.densityDpi
-    val width = sizeDp.first * density / DisplayMetrics.DENSITY_DEFAULT
-    val height = sizeDp.second * density / DisplayMetrics.DENSITY_DEFAULT
-    if (width <= 0 || height <= 0 || width == height) return null
+    val width = widthDp * density / DisplayMetrics.DENSITY_DEFAULT
+    val height = heightDp * density / DisplayMetrics.DENSITY_DEFAULT
+    require(width != height) { "PICO ignores a square override size (${width}x$height px)." }
     val data = Bundle().apply {
       putInt(WIDTH, width)
       putInt(HEIGHT, height)
     }
     return ActivityOptions.makeBasic().toBundle().apply { putBundle(PICO_DATA, data) }
-  }
-
-  private fun declaredSizeDp(source: Activity): Pair<Int, Int>? {
-    val info =
-      try {
-        source.packageManager.getActivityInfo(
-          ComponentName(source, SpatialPanelActivity::class.java),
-          PackageManager.GET_META_DATA,
-        )
-      } catch (_: PackageManager.NameNotFoundException) {
-        return null
-      }
-    val value = info.metaData?.getString(SIZE_META) ?: return null
-    val match = Regex("""^(\d+)x(\d+)$""").matchEntire(value) ?: return null
-    return match.groupValues[1].toInt() to match.groupValues[2].toInt()
   }
 }

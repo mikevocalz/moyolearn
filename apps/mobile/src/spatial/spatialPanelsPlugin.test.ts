@@ -23,7 +23,7 @@ test('the panel declares a pico.vr.position, so PICO OS 5 opens it in its own wi
   assert.notEqual(position, 'near');
 });
 
-test('the panel size the module reads is WxH in dp', () => {
+test('the OS 6 window-container size is WxH in dp', () => {
   assert.equal(meta(plugin.panelActivityElement(OPTIONS)).get('pico.spatial.windowcontainer.defaultsize'), '80x472');
 });
 

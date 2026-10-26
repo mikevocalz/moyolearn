@@ -46,7 +46,7 @@ class SpatialPanelsModule : Module() {
 
     Property("isAvailable") { isAvailable }
 
-    AsyncFunction("openPanel") { name: String, props: Map<String, String> ->
+    AsyncFunction("openPanel") { name: String, props: Map<String, String>, widthDp: Int, heightDp: Int ->
       if (!isAvailable) {
         throw PanelUnavailableException()
       }
@@ -55,7 +55,7 @@ class SpatialPanelsModule : Module() {
       val activity = appContext.currentActivity ?: throw NoLaunchingActivityException(name)
       val bundle = Bundle()
       for ((key, value) in props) bundle.putString(key, value)
-      activity.startActivity(SpatialPanelActivity.intent(activity, name, bundle), PicoPanelLaunchOptions.bundle(activity))
+      activity.startActivity(SpatialPanelActivity.intent(activity, name, bundle), PicoPanelLaunchOptions.bundle(activity, widthDp, heightDp))
     }.runOnQueue(Queues.MAIN)
 
     AsyncFunction("closePanel") { name: String ->

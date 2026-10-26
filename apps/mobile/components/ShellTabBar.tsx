@@ -672,9 +672,9 @@ function ShellTabBarView({
     insets (a floating window has no cutouts), no edge rule (there is no
     content beside it to divide from), and never Material's renderer, whose
     column stacks from the top and sizes itself. Items sit in fixed slots.
-    On quest the window is exactly `railWindow()`'s size. PICO's panel is
-    fixed at install for the tallest shell, so the column fills it and
-    centres the slots.
+    The window is exactly `railWindow()`'s size on Quest and PICO alike, and
+    the rail draws its own rounded corners from the same spec, so the shape
+    matches where the OS does not round the window (PICO OS 5).
   */
   if (xr) {
     return (
@@ -687,6 +687,9 @@ function ShellTabBarView({
             rendered.filter((item) => item !== null).length + (hasOverflowDrawer ? 1 : 0),
           ),
           paddingVertical: RAIL_WINDOW_DP.padding,
+          borderRadius: RAIL_WINDOW_DP.cornerRadius,
+          borderCurve: 'continuous',
+          overflow: 'hidden',
         }}
         className="flex-1 flex-col items-stretch justify-center bg-surface-footer"
       >

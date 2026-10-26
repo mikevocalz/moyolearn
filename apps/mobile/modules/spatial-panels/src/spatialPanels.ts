@@ -9,7 +9,7 @@ type Events = {
 
 declare class NativeSpatialPanels extends NativeModule<Events> {
   readonly isAvailable: boolean;
-  openPanel(name: string, props: Record<string, string>): Promise<void>;
+  openPanel(name: string, props: Record<string, string>, widthDp: number, heightDp: number): Promise<void>;
   closePanel(name: string): Promise<void>;
 }
 
@@ -23,11 +23,11 @@ export const spatialPanels: SpatialPanels = {
   get isAvailable() {
     return native?.isAvailable ?? false;
   },
-  openPanel(name, props = {}) {
+  openPanel(name, size, props = {}) {
     if (!native) {
       return Promise.reject(new Error(`Cannot open panel ${name}: the SpatialPanels module is not linked on this platform.`));
     }
-    return native.openPanel(name, props);
+    return native.openPanel(name, props, size.widthDp, size.heightDp);
   },
   closePanel(name) {
     return native ? native.closePanel(name) : Promise.resolve();

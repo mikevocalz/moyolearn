@@ -1,7 +1,7 @@
 // Geometry and placement of the shell rail's own Horizon window.
 // SOT: packages/theme/tokens.ts (navChrome, targets) · Harlem Might docs/spatial-layout/adr/0005
 // SOT-KEYWORDS: spatial rail window size anchor quest navigation
-import { navChrome, targets } from '@acme/theme';
+import { navChrome, radius, targets } from '@acme/theme';
 import type { MetaWindowProps } from './metaWindowTypes.ts';
 
 /**
@@ -29,9 +29,19 @@ function px(value: string): number {
   return Number.parseFloat(value);
 }
 
+/** rem tokens resolve at 14 on device (NativeWind's native rem). */
+const DEVICE_REM_DP = 14;
+
+function remDp(value: string): number {
+  if (!value.endsWith('rem')) throw new Error(`Expected a rem token, got ${value}.`);
+  return Number.parseFloat(value) * DEVICE_REM_DP;
+}
+
 /**
- * The rail window's geometry in dp, from `@acme/theme`'s px tokens (rem
- * tokens resolve at 14 on device, so none are used here).
+ * The rail window's geometry in dp, from `@acme/theme`'s tokens: px tokens
+ * as written, the one rem token (the radius) at the device's 14dp rem. Every
+ * spatial platform reads this one spec: Quest through `railWindow()`, PICO
+ * through the same props (`panelLaunchSizeDp` in panelWindowsCore.ts).
  *
  * - width: the collapsed rail, `navChrome.rail`.
  * - item: one fixed slot per destination, `targets.young`. The tallest item
@@ -46,6 +56,16 @@ export const RAIL_WINDOW_DP = (() => {
     width,
     item: px(targets.young),
     padding: (width - px(navChrome.indicator)) / 2,
+    /*
+      The rail's corner radius, drawn by the rail's own content on every
+      platform. Horizon OS rounds a window in its chrome and the Meta layout
+      SDK takes no radius; PICO OS 5 rounds third-party windows not at all
+      (AppRecord.sIsSupportRoundedCorner is an allowlist of PICO packages),
+      but it composites a window's alpha, so the rounded content over a
+      transparent window is the same shape on both. `radius.sheet`, the
+      window-surface radius.
+    */
+    cornerRadius: remDp(radius.sheet),
   };
 })();
 

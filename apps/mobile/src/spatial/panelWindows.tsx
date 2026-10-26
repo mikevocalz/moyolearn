@@ -8,7 +8,7 @@ import { SafeAreaProvider, whenLaunchPermissionsAsked } from '@acme/app';
 import { View } from '@acme/ui/tw';
 import { spatialPanels } from '../../modules/spatial-panels';
 import type { MetaWindowPlacement } from './metaWindowTypes';
-import { usePanelPlacementStore } from './panelWindowsCore';
+import { panelLaunchSizeDp, usePanelPlacementStore } from './panelWindowsCore';
 import { useSpatialWindowHostStore } from './spatialWindowHost.store';
 
 /*
@@ -101,7 +101,9 @@ export function PanelWindowHost() {
       whenLaunchPermissionsAsked()
         .then(() => {
           if (!requested.current.has(label)) return;
-          return spatialPanels.openPanel(name, { [LABEL_PROP]: label });
+          const entry = useSpatialWindowHostStore.getState().windows[label];
+          if (!entry) return;
+          return spatialPanels.openPanel(name, panelLaunchSizeDp(entry.window), { [LABEL_PROP]: label });
         })
         .catch((error: Error) => {
           console.warn(`[panelWindows] ${label} panel did not open: ${error.message}`);

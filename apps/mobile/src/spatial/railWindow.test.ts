@@ -10,6 +10,7 @@ import {
   railWindow,
   railWindowHeightDp,
 } from './railWindow.ts';
+import { panelLaunchSizeDp } from './panelWindowsCore.ts';
 
 const require = createRequire(import.meta.url);
 const { resolveAnchor } = require(
@@ -100,5 +101,21 @@ describe('the PICO rail panel', () => {
       manifest,
       new RegExp(`android:defaultWidth="${RAIL_WINDOW_DP.width}dp" android:defaultHeight="${railWindowHeightDp(6)}dp"`),
     );
+  });
+});
+
+describe('one rail geometry on every spatial platform', () => {
+  it('opens the PICO panel at exactly the Quest window size for every shell', () => {
+    for (const items of [3, 4, 5, 6, 7]) {
+      const quest = railWindow(items);
+      const pico = panelLaunchSizeDp(quest);
+      assert.deepEqual(pico, { widthDp: quest.windowWidth, heightDp: quest.windowHeight });
+    }
+  });
+
+  it('is a rounded rail shorter than the main window', () => {
+    assert.equal(RAIL_WINDOW_DP.width, 80);
+    assert.ok(RAIL_WINDOW_DP.cornerRadius > 0);
+    assert.ok(railWindow(5).windowHeight < 720);
   });
 });

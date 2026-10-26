@@ -15,8 +15,8 @@
 // PICO hides on any click outside it. OS 5 reads
 // neither `<layout>` (system apps only) nor `pico.spatial.windowcontainer.*`
 // (PICO OS 6 Spatial SDK keys) for a third-party app's size; the module passes
-// the size as launch options instead (PicoPanelLaunchOptions.kt), read from
-// the `defaultsize` key below. `<layout>` and the OS 6 keys stay for OS 6 and
+// the size JS opens the window at as launch options instead
+// (PicoPanelLaunchOptions.kt). `<layout>` and the OS 6 keys stay for OS 6 and
 // for launchers that read `<layout>`.
 //
 // A finalized mod so it runs after @expo-pico/core writes the pico manifest.

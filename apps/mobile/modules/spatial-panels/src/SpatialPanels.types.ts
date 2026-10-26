@@ -24,11 +24,13 @@ export interface SpatialPanels {
    * is on screen. Opening a name that is already open does nothing; update
    * what it shows through shared state.
    *
+   * @param size The panel's size in dp. On PICO OS 5 it is the only way to
+   *   size a third-party window (launch options read at creation).
    * @param props Initial props, delivered to the component as strings.
    * @throws When {@linkcode SpatialPanels.isAvailable} is false, or the app has
    *   no current activity to launch from.
    */
-  openPanel(name: string, props?: Record<string, string>): Promise<void>;
+  openPanel(name: string, size: PanelSizeDp, props?: Record<string, string>): Promise<void>;
 
   /**
    * Closes the panel showing `name`. Resolves without effect when none is
@@ -41,4 +43,10 @@ export interface SpatialPanels {
 
   /** Called each time a panel closes, with {@linkcode PanelClosedEvent.reason}. */
   addOnPanelClosedListener(listener: (event: PanelClosedEvent) => void): EventSubscription;
+}
+
+/** A panel's size in dp. */
+export interface PanelSizeDp {
+  widthDp: number;
+  heightDp: number;
 }

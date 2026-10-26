@@ -2,6 +2,9 @@ package com.moyolearn.spatialpanels
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.Color
+import android.graphics.PixelFormat
+import android.graphics.drawable.ColorDrawable
 import android.os.Bundle
 import android.util.Log
 import android.view.ViewGroup
@@ -44,8 +47,15 @@ class SpatialPanelActivity : ComponentActivity() {
     }
     componentName = name
 
+    // Transparent outside the content: PICO OS 5 composites the window's
+    // alpha (and rounds no third-party window), so the rail's own rounded
+    // shape is the panel's shape, not a pale rectangle from the app theme.
+    window.setFormat(PixelFormat.TRANSLUCENT)
+    window.setBackgroundDrawable(ColorDrawable(Color.TRANSPARENT))
+
     val created = host.createSurface(this, name, intent.getBundleExtra(EXTRA_PROPS))
     val view = checkNotNull(created.view) { "ReactHost.createSurface returned a surface without a view." }
+    view.setBackgroundColor(Color.TRANSPARENT)
     setContentView(
       view,
       ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT),

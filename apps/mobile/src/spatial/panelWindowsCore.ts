@@ -3,7 +3,7 @@
 // SOT: modules/spatial-panels · src/spatial/panelWindows.tsx
 // SOT-KEYWORDS: pico spatial panel window placement store rail
 import { create } from 'zustand';
-import type { MetaWindowPlacement } from './metaWindowTypes.ts';
+import type { MetaWindowPlacement, MetaWindowProps } from './metaWindowTypes.ts';
 
 /** What the panel module reports about a label. */
 export type PanelEvent =
@@ -45,3 +45,15 @@ export const usePanelPlacementStore = create<PanelPlacementState>((set) => ({
   apply: (label, event) =>
     set((state) => ({ placements: { ...state.placements, [label]: panelPlacementAfter(event) } })),
 }));
+
+/**
+ * The PICO panel's launch size in dp: the hosted window's own
+ * `windowWidth` x `windowHeight`, the numbers the Quest window opens at, so
+ * the two platforms cannot drift.
+ */
+export function panelLaunchSizeDp(window: Pick<MetaWindowProps, 'windowWidth' | 'windowHeight'>): {
+  widthDp: number;
+  heightDp: number;
+} {
+  return { widthDp: Math.round(window.windowWidth), heightDp: Math.round(window.windowHeight) };
+}
