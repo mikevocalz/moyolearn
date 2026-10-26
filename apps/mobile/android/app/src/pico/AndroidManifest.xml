@@ -36,12 +36,6 @@
     <meta-data android:name="com.pico.xrMode" android:value="pico-os5"/>
     <meta-data android:name="pvr.app.type" android:value="mr"/>
     <activity android:name=".VRActivity" tools:node="merge">
-      <intent-filter>
-        <action android:name="android.intent.action.MAIN"/>
-        <category android:name="com.pico.intent.category.VR"/>
-        <category android:name="com.picovr.intent.category.VR"/>
-        <category android:name="org.khronos.openxr.intent.category.IMMERSIVE_HMD"/>
-      </intent-filter>
       <meta-data android:name="com.pico.spatial.mode" android:value="full-space"/>
       <meta-data android:name="pvr.app.type" android:value="vr"/>
     </activity>

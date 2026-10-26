@@ -243,30 +243,24 @@ function withViroDebugVariants(config) {
 }
 
 /**
- * Tells a PICO that `VRActivity` is the immersive one.
+ * Keeps `VRActivity` out of every headset launcher, so the app has ONE tile.
  *
- * Viro's plugin writes ONE category onto the generated `VRActivity`:
- * `com.oculus.intent.category.VR`. That is Meta's, and a PICO does not know it —
- * the categories PICO OS and any OpenXR loader enumerate immersive activities by
- * are `com.pico.intent.category.VR` (and the pre-namespace-migration
- * `com.picovr.intent.category.VR`) plus Khronos'
- * `org.khronos.openxr.intent.category.IMMERSIVE_HMD`.
+ * Viro's plugin gives the generated `VRActivity` an intent-filter with action
+ * MAIN and `com.oculus.intent.category.VR`, and `@expo-pico/core` adds the PICO
+ * and Khronos immersive categories to it. PICO's library lists every activity
+ * that answers MAIN with one of those categories, so a PICO 4 Ultra showed two
+ * MoyoLearn tiles, and the second one opened a black immersive activity with
+ * no scene behind it.
  *
- * Additive: the Oculus category stays, so one APK is still immersive on both.
- * Idempotent, because prebuild runs more than once.
- *
- * The names are taken from `@expo-pico/core`'s LAUNCHER_CATEGORIES rather than
- * typed from memory — that package is where this platform's manifest facts live
- * for this workspace, and `withPicoOpenXrLoader` from the same package writes
- * the other half (see `app.config.ts`).
+ * `VRActivity` is `exported="false"` and only ever starts from Viro's
+ * `VRLauncher` by explicit intent, which needs no filter. On a PICO 4 Ultra the
+ * OpenXR session still reaches FOCUSED with no filter at all (see
+ * docs/validation/2026-10-device-pass.md), so this strips every filter on it
+ * rather than moving the categories elsewhere. app.config.ts lists this plugin
+ * before `@expo-pico/core` and Viro, so it runs after both (ADR-118, plugin
+ * order). Idempotent; prebuild runs more than once.
  */
-const PICO_VR_CATEGORIES = [
-  'com.pico.intent.category.VR',
-  'com.picovr.intent.category.VR',
-  'org.khronos.openxr.intent.category.IMMERSIVE_HMD',
-];
-
-function withPicoVrActivityCategories(config) {
+function withVrActivityOffTheLauncher(config) {
   return withAndroidManifest(config, (manifestConfig) => {
     const application = manifestConfig.modResults.manifest.application?.[0];
     const vrActivity = application?.activity?.find(
@@ -274,23 +268,11 @@ function withPicoVrActivityCategories(config) {
     );
     if (!vrActivity) {
       throw new Error(
-        'with-viro-android-linkage: no .VRActivity in the manifest, so the PICO ' +
-          'launcher categories had nowhere to go. Check that the Viro plugin still ' +
-          "has QUEST in its android.xRMode — without it there is no VR activity at all.",
+        'with-viro-android-linkage: no .VRActivity in the manifest. Check that the Viro ' +
+          'plugin still has QUEST in its android.xRMode; without it there is no VR activity.',
       );
     }
-    const filter = vrActivity['intent-filter']?.[0];
-    if (!filter) {
-      throw new Error(
-        'with-viro-android-linkage: .VRActivity has no intent-filter to add the PICO ' +
-          'categories to.',
-      );
-    }
-    const categories = (filter.category ??= []);
-    for (const name of PICO_VR_CATEGORIES) {
-      if (categories.some((entry) => entry.$?.['android:name'] === name)) continue;
-      categories.push({ $: { 'android:name': name } });
-    }
+    delete vrActivity['intent-filter'];
     return manifestConfig;
   });
 }
@@ -403,6 +385,6 @@ function withExpoDeviceFlavors(config) {
 
 module.exports = function withViroAndroidLinkage(config) {
   return withHeadtrackingOnHeadsetsOnly(
-    withExpoDeviceFlavors(withPicoVrActivityCategories(withViroCppRuntime(withViroDebugVariants(withViroFlavorStrategy(withViroSettingsPaths(config)))))),
+    withExpoDeviceFlavors(withVrActivityOffTheLauncher(withViroCppRuntime(withViroDebugVariants(withViroFlavorStrategy(withViroSettingsPaths(config)))))),
   );
 };
