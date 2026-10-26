@@ -7,11 +7,12 @@
 // caller's 2D window unless the two activities' `pico.vr.position` meta-data
 // differ (services.jar ExtActivityStartControllerImpl.getReusedDisplayId; the
 // multi-display allowlist next to it holds only PICO's own browser and
-// streaming apps). MainActivity declares none, so the panel declares "far"
-// and gets a window of its own instead of covering the main one. "far" is
-// not one of the names AppManagerUtils.convertPositionToWindowType maps, so
-// the panel keeps MainActivity's window type (3002); "near" maps to 2002, a
-// popup type PICO hides on any click outside it. OS 5 reads
+// streaming apps). An activity without the key gets "far"
+// (ExtActivityInfoImpl), so MainActivity is "far" and the panel declares
+// "rail" to get a window of its own instead of covering the main one. "rail"
+// is not a name AppManagerUtils.convertPositionToWindowType maps, so the panel
+// keeps MainActivity's window type (3002); "near" maps to 2002, a popup type
+// PICO hides on any click outside it. OS 5 reads
 // neither `<layout>` (system apps only) nor `pico.spatial.windowcontainer.*`
 // (PICO OS 6 Spatial SDK keys) for a third-party app's size; the module passes
 // the size as launch options instead (PicoPanelLaunchOptions.kt), read from
@@ -27,7 +28,7 @@ const { join } = require('node:path');
 const { AndroidConfig, withFinalizedMod } = require('expo/config-plugins');
 
 const ACTIVITY = 'com.moyolearn.spatialpanels.SpatialPanelActivity';
-const PANEL_POSITION = 'far';
+const PANEL_POSITION = 'rail';
 
 function parseDp(label, value) {
   const match = /^(\d+)dp$/.exec(String(value));
