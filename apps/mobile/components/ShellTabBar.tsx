@@ -506,7 +506,8 @@ function ShellTabBarView({
                 the one control on the bar that is an ACTION rather than a
                 destination.
               */
-              className={`w-nav-raised h-nav-raised ${raisedTarget} items-center justify-center rounded-md border-2 border-on-surface-footer bg-nav-cta shadow-card`}
+              style={xr ? { borderRadius: RAIL_WINDOW_DP.cornerRadius, borderCurve: 'continuous' } : undefined}
+              className={`w-nav-raised h-nav-raised ${raisedTarget} items-center justify-center ${xr ? '' : 'rounded-md'} border-2 border-on-surface-footer bg-nav-cta shadow-card`}
             >
               <item.Icon size={30} className="text-on-nav-cta" />
             </View>
@@ -628,9 +629,13 @@ function ShellTabBarView({
             against Material's 32, and the width comes from `px-inset-tight`
             rather than Material's fixed 64, which would leave 16 a side inside a
             96 rail and overhang a three-tab K–2 bottom bar.
+
+            In the spatial rail window the indicator is a circle and the raised
+            slab takes the rail's own corner radius: selection reads rounded on
+            every headset, matching the rounded rail around it.
           */}
           <View
-            className={`aspect-square h-nav-indicator items-center justify-center rounded-control ${
+            className={`aspect-square h-nav-indicator items-center justify-center ${xr ? 'rounded-full' : 'rounded-control'} ${
               focused ? 'bg-nav-selected' : 'hover:bg-surface-sunken'
             }`}
           >
