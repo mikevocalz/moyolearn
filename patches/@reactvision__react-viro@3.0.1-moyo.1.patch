@@ -828,11 +828,37 @@ index b00c3f1..a78ff66 100644
      withVisionOSCompatShims,   // 6. components/compat/ BlurView + LinearGradient
      withVisionOSInfoPlist,     // 7. Info.plist: allow multiple scenes (ImmersiveSpace)
      withVisionOSAppDelegate,   // 8. AppDelegate.swift: Expo entry point + imports
+diff --git a/android/react_viro/build.gradle b/android/react_viro/build.gradle
+index a117c4d..e7e1f8d 100644
+--- a/android/react_viro/build.gradle
++++ b/android/react_viro/build.gradle
+@@ -18,6 +18,11 @@ android {
+ 
+ dependencies {
+     api files('react_viro-release.aar')
++    // The AAR's resources use appcompat theme attributes (colorPrimary,
++    // dialogCornerRadius, buttonBarButtonStyle). Release variants run
++    // verify<Variant>Resources against this module's own classpath, which
++    // has no appcompat without this line. Version is React Native's pin.
++    implementation 'androidx.appcompat:appcompat:1.7.0'
+ }
+ 
+ // Same AGP 8.12+ bundleAar guard as viro_renderer — see that build.gradle.
 diff --git a/android/viro_renderer/build.gradle b/android/viro_renderer/build.gradle
+index 21c54d6..4d1ed8a 100644
 --- a/android/viro_renderer/build.gradle
 +++ b/android/viro_renderer/build.gradle
-@@ -20,3 +20,3 @@
+@@ -17,7 +17,12 @@ android {
+ }
+ 
  dependencies {
 -    api files('viro_renderer-release.aar')
 +    api files(rootProject.findProperty('moyoViroRendererAar') ?: 'viro_renderer-release.aar')
++    // The AAR's resources use appcompat theme attributes (colorPrimary,
++    // dialogCornerRadius, buttonBarButtonStyle). Release variants run
++    // verify<Variant>Resources against this module's own classpath, which
++    // has no appcompat without this line. Version is React Native's pin.
++    implementation 'androidx.appcompat:appcompat:1.7.0'
  }
+ 
+ // AGP 8.12+ refuses to bundle a library AAR that carries direct local .aar

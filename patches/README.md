@@ -61,3 +61,16 @@ Enables `android.buildFeatures.buildConfig` explicitly. The module declares
 `META_HORIZON_APP_ID` in `defaultConfig`, but AGP 9 disables BuildConfig generation
 by default and otherwise rejects the module during configuration. Remove this
 patch when the upstream module enables the feature itself.
+
+## `@reactvision/react-viro@3.0.1-moyo.1`: appcompat on the two Android shims
+
+The `react_viro` and `viro_renderer` Gradle modules are thin wrappers around
+prebuilt AARs whose resources use appcompat theme attributes (`colorPrimary`,
+`dialogCornerRadius`, `buttonBarButtonStyle`). Neither module declared
+appcompat, so a release build failed in `verify<Variant>Resources` with
+`AAPT: error: style attribute 'attr/colorPrimary ... not found`. Debug builds
+skip that task, so this did not show up until `assemblePicoRelease`. Each shim
+now declares `androidx.appcompat:appcompat:1.7.0`, the version React Native
+0.88 pins, so it adds no second copy to the app. The same patch also carries
+the visionOS module changes and the `moyoViroRendererAar` override that were
+already in it.
