@@ -92,8 +92,9 @@ Two of them are not live yet:
 
 - **native-panels** is a dependency of `@acme/app` for its JavaScript, but
   its Android library is excluded from autolinking unless `MOYO_NATIVE_PANELS=1`
-  (`apps/mobile/react-native.config.js` says why: Nitro 1.0 headers and viro
-  3.0.3-moyo.1's `CanvasSurfaces`).
+  (`apps/mobile/react-native.config.js` says why: its Kotlin needs viro
+  3.0.3-moyo.1's `CanvasSurfaces`. Nitro stopped being a reason when the app
+  moved to Nitro 1.0).
 - **spatial-panels** is vendored and overridden but nothing depends on it.
   It is an Expo module, and Expo autolinking would compile its Kotlin, which
   needs viro 3.0.3-moyo.1's renderer classes. Add it as a dependency in the
