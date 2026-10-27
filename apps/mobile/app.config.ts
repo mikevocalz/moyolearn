@@ -331,6 +331,18 @@ const config: ExpoConfig = {
         passthrough: true,
       },
     ],
+    /*
+      The shell rail's own panel on PICO, pico flavor only. Meta's layout SDK,
+      which gives quest its rail window, gates on the
+      `horizonos.software.horizon_os` system feature and Horizon's
+      VolumetricWindowManager (HorizonSpatialCapability in the AAR), so on a
+      PICO it would only ever fall back inline. PICO gets a second Activity in
+      its own task instead. Fixed size, read once at install: 80dp is
+      `navChrome.rail` and 472dp is `railWindowHeightDp(6)`, the tallest shell
+      (five destinations plus the menu slot). src/spatial/railWindow.test.ts
+      holds the two in step.
+    */
+    ['./modules/spatial-panels/app.plugin.js', { defaultWidth: '80dp', defaultHeight: '472dp' }],
     [
       '@reactvision/react-viro',
       /*

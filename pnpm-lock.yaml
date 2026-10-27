@@ -33,6 +33,12 @@ catalogs:
     '@legendapp/motion':
       specifier: 2.5.3
       version: 2.5.3
+    '@metavr/layout-compat':
+      specifier: 1.0.0
+      version: 1.0.0
+    '@metavr/layout-window-compat':
+      specifier: 1.0.0
+      version: 1.0.0
     '@payloadcms/db-postgres':
       specifier: 4.0.0-canary.33
       version: 4.0.0-canary.33
@@ -560,6 +566,12 @@ importers:
       '@gorhom/bottom-sheet':
         specifier: 'catalog:'
         version: 5.2.14(@types/react@19.3.0)(react-native-gesture-handler@3.4.0(patch_hash=2e24fb43ee497884d37b7c0f905b9ed28945e85cc97009125dd51268e60c27d7)(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-reanimated@4.7.1(patch_hash=978b0108c991de643f838b3faa0d32f53df3e9c7ff1f1a4e50f389a36c09b0c8)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      '@metavr/layout-compat':
+        specifier: 'catalog:'
+        version: 1.0.0(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      '@metavr/layout-window-compat':
+        specifier: 'catalog:'
+        version: 1.0.0(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@react-navigation/native':
         specifier: 'catalog:'
         version: 7.4.1(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -3804,6 +3816,18 @@ packages:
 
   '@mediapipe/tasks-vision@0.10.17':
     resolution: {integrity: sha512-CZWV/q6TTe8ta61cZXjfnnHsfWIdFhms03M9T7Cnd5y2mdpylJM0rF1qRq+wsQVRMLz1OYPVEBU9ph2Bx8cxrg==}
+
+  '@metavr/layout-compat@1.0.0':
+    resolution: {integrity: sha512-GK42zUeXXVYC7nEtAUnzN+Vb8qrAZCdrAGHAmUwpopIRTTk6OUyNJ/64Iwug1h88hOGjo24CrgECJwJ54xGeJA==}
+    peerDependencies:
+      react: 19.3.0
+      react-native: 0.88.0-rc.2
+
+  '@metavr/layout-window-compat@1.0.0':
+    resolution: {integrity: sha512-XAIgsDVaJA90X2tp1CRmepfnLGT2b29zgmVZLRAHPhvUgBdp/hCppbW9U2QBJ7ktkTVfATA6S/OyKP2Gzo+3vw==}
+    peerDependencies:
+      react: 19.3.0
+      react-native: 0.88.0-rc.2
 
   '@modelcontextprotocol/core@2.0.0':
     resolution: {integrity: sha512-pJCEwGG7Lfr/+PQp9ZTwKXNeO5wzbfKL7H3MYpCorM4oFBoQrdjnBgEoqG+RjhsvS1FKrDbKux+M1HhlnGWqcA==}
@@ -15094,6 +15118,17 @@ snapshots:
       react: 19.3.0
 
   '@mediapipe/tasks-vision@0.10.17': {}
+
+  '@metavr/layout-compat@1.0.0(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)':
+    dependencies:
+      react: 19.3.0
+      react-native: 0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0)
+
+  '@metavr/layout-window-compat@1.0.0(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)':
+    dependencies:
+      '@metavr/layout-compat': 1.0.0(react-native@0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react: 19.3.0
+      react-native: 0.88.0-rc.2(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0)
 
   '@modelcontextprotocol/core@2.0.0':
     dependencies:

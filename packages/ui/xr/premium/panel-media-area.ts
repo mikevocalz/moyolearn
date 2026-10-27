@@ -11,7 +11,10 @@ export const MEDIA_ART_Z = 0.004;
 export const SIZES = {
   compactCard: panelSize.compactCard,
   standardCard: panelSize.standardCard,
-  portraitCard: { width: 0.62, height: 1.1 },
+  /* Natalie's conversation. 0.62 wrapped her turns three words a line on a
+     Quest 3S; at 1.0 the inner edge still clears the board by ~0.5 m on the
+     2.6 m arc (34° slot, 37° yaw). */
+  portraitCard: { width: 1.0, height: 1.1 },
   toolsCard: { width: 0.9, height: 1.42 },
   boardPanel: {
     width: 0.9 + spatialCorners.panel * 2,
