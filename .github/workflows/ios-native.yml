@@ -54,7 +54,7 @@ jobs:
         working-directory: apps/mobile/ios
         run: |
           set -o pipefail
-          xcodebuild -project Moyo.xcodeproj -scheme Moyo -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/moyo-derived" ARCHS=arm64 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/moyo-ios-build.log"
+          xcodebuild -project Moyo.xcodeproj -scheme Moyo -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/moyo-derived" -IDEBuildingContinueBuildingAfterErrors=YES ARCHS=arm64 CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/moyo-ios-build.log"
       - name: Summarize build errors
         if: failure()
         run: grep -E "error:|\*\* BUILD" "$RUNNER_TEMP/moyo-ios-build.log" | sort -u | head -80 || true
