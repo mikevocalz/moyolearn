@@ -25,9 +25,16 @@ module.exports = {
     'react-native-keyboard-controller': visionOS ? { platforms: { ios: null } } : {},
     'react-native-pulsar': visionOS ? { platforms: { ios: null } } : {},
     'react-native-webgpu': visionOS ? { platforms: { ios: null } } : {},
-    // AVCaptureVideoPreviewLayer, AVMetadataObject and the focus/exposure modes
-    // VisionCamera builds on are unavailable in the visionOS SDK.
+    // apps/mobile lists these so the iOS SwiftPM build links them (see
+    // tooling/ios-spm.mjs). visionOS linked none of them before that and does
+    // not now. VisionCamera's AVCaptureVideoPreviewLayer and focus/exposure modes
+    // and Skia's UIScreen are unavailable in the visionOS SDK; the other three
+    // have never been built for it.
     'react-native-vision-camera': visionOS ? { platforms: { ios: null } } : {},
+    '@shopify/react-native-skia': visionOS ? { platforms: { ios: null } } : {},
+    'react-native-audio-api': visionOS ? { platforms: { ios: null } } : {},
+    'react-native-enriched-html': visionOS ? { platforms: { ios: null } } : {},
+    '@react-native-masked-view/masked-view': visionOS ? { platforms: { ios: null } } : {},
     '@viro-external/native-panels': nativePanels ? {} : { platforms: { android: null, ios: null } },
   },
 };

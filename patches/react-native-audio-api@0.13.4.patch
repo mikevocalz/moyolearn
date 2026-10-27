@@ -3,7 +3,7 @@ new file mode 100644
 index 0000000000000000000000000000000000000000..97cbd06d9fb31ed9e1d15aad70d7d0d6d5b75c2a
 --- /dev/null
 +++ b/Package.swift
-@@ -0,0 +1,259 @@
+@@ -0,0 +1,263 @@
 +// swift-tools-version: 6.0
 +// SwiftPM manifest for react-native-audio-api 0.13.4, for React Native's SwiftPM
 +// autolinking. The package ships only RNAudioAPI.podspec. This file reproduces
@@ -72,6 +72,10 @@ index 0000000000000000000000000000000000000000..97cbd06d9fb31ed9e1d15aad70d7d0d6
 +    ".",
 +    "common/cpp",
 +    "ios",
++    // The iOS sources include their siblings by bare name (<AudioEngine.h>,
++    // <NativeAudioPlayer.h>), which CocoaPods resolved through its header map.
++    "ios/audioapi/ios/core",
++    "ios/audioapi/ios/system",
 +    "common/cpp/audioapi/external/include",
 +    "common/cpp/audioapi/external/include/opus",
 +    "common/cpp/audioapi/external/include/vorbis",
