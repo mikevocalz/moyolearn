@@ -6,8 +6,9 @@ It shares Moyo's Expo Router entry and opens Viro's existing ImmersiveSpace.
 
 ## Build on a Mac
 
-Use Xcode with the visionOS 26.5 SDK (the ReactVision guide specifies Xcode 26.6),
-CocoaPods, Node and the repository's pinned pnpm version.
+Use Xcode 27.1 or later, CocoaPods, Node and the repository's pinned pnpm
+version. The Nitro V1 packages declare swift-tools-version 6.4, which Xcode 26
+cannot read.
 
 ```sh
 pnpm install --frozen-lockfile
@@ -41,10 +42,35 @@ exit/reentry, and persisted strokes after the raster refresh.
 - The native sources, package patch, geometry and setup are checked in. No
   Interaxon LibMuse binaries are used; those SDKs target EEG headbands.
 
+## React Native and Nitro V1
+
+ReactVision publishes nothing newer than `@reactvision/react-native-visionos`
+0.86.4, and Nitro V1 needs React Native 0.88. The app therefore uses
+`vendors/reactvision-react-native-visionos-0.88.0-moyo.0.tgz`, a port of the
+fork's visionOS changes onto react-native 0.88.0. Its history is on the
+`0.88-moyo` branch of mikevocalz/react-native-visionos.
+
+iOS links Nitro V1 with `react-native spm`. That needs React Native's prebuilt
+React.xcframework and Expo's precompiled frameworks, and neither ships a
+visionOS slice. visionOS keeps building React Native and Expo from source with
+CocoaPods, and the port links the SwiftPM-only libraries (anything whose
+package.json declares `swiftpmConfig`) next to the pods:
+
+- Autolinking leaves out their podspecs, which carry metadata only.
+- `pod install` writes `build/generated/autolinking/libs/<SwiftName>` links, a
+  header-only `ReactNative` package in `build/xcframeworks` made from the
+  pods' headers, and an `Autolinked` package. The Moyo target links the
+  `Autolinked` product; that reference lives in `Moyo.xcodeproj`.
+- Codegen writes `build/generated/ios/Package.swift` with the `ReactAppHeaders`
+  product the Nitro packages include spec headers from.
+
+The library packages are the same `Package.swift` files iOS builds. Run
+`pod install` again after adding or removing a Nitro library.
+
 ## Validation still required
 
-This project has not been compiled with Xcode or run on Vision Pro. ReactVision's
-verified stack is Expo 57 / RN visionOS 0.86.4; Moyo uses Expo 58 / mobile RN 0.88.
+This project has not run on Vision Pro. ReactVision's verified stack is Expo 57
+/ RN visionOS 0.86.4; Moyo uses Expo 58 with the 0.88 port above.
 The visionOS fork is installed alongside mobile RN. CocoaPods and runtime
 compatibility of Moyo's other native dependencies still need the Mac build above.
 Old version-specific patch-package patches from the SDK 57 guide are deliberately
@@ -55,7 +81,7 @@ Guide: https://viro-community.readme.io/docs/visionos-setup-guide
 
 ## Native CI
 
-The `visionOS native` workflow runs on macOS 26 for relevant pull requests and
+The `visionOS native` workflow runs on the `xcode-27` runner for relevant pull requests and
 can be started manually. It builds ViroKit, resolves pods, and runs Xcode
 `build-for-testing` for the app and native test bundle. This compiles tests; it
 does **not** execute them or certify headset behavior. Preparation logs, build
