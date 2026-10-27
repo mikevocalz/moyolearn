@@ -214,7 +214,7 @@ new file mode 100644
 index 0000000..af5cea0
 --- /dev/null
 +++ b/react-native-spm-prefix.h
-@@ -0,0 +1,10 @@
+@@ -0,0 +1,15 @@
 +// AUTO-SCAFFOLDED by react-native spm scaffold — mirrors CocoaPods' default
 +// prefix header so ObjC sources that rely on an implicit Foundation/UIKit
 +// import compile under SPM (which has no prefix-header mechanism). Safe to
@@ -223,6 +223,11 @@ index 0000000..af5cea0
 +#import <Foundation/Foundation.h>
 +#if __has_include(<UIKit/UIKit.h>)
 +#import <UIKit/UIKit.h>
++#endif
++// The public KeyboardControllerViewManager subclasses RCTViewManager in the
++// generated -Swift.h, which the ObjC sources import before any React header.
++#if __has_include(<React/RCTViewManager.h>)
++#import <React/RCTViewManager.h>
 +#endif
 +#endif
 diff --git a/spm/base/module.modulemap b/spm/base/module.modulemap
@@ -261,3 +266,22 @@ index 0000000..b21bda2
 +// The Fabric view managers import this React header with quotes, which
 +// CocoaPods resolved through header maps. SwiftPM has none, so forward it.
 +#import <React/RCTFabricComponentsPlugins.h>
+diff --git a/ios/views/KeyboardControllerViewManager.swift b/ios/views/KeyboardControllerViewManager.swift
+--- a/ios/views/KeyboardControllerViewManager.swift
++++ b/ios/views/KeyboardControllerViewManager.swift
+@@ -1,10 +1,12 @@
+ @objc(KeyboardControllerViewManager)
+-class KeyboardControllerViewManager: RCTViewManager {
+-  override class func requiresMainQueueSetup() -> Bool {
++// public: the RCT_EXTERN_MODULE category lives in the separate ReactNativeKeyboardControllerObjC
++// target, and Release builds hide internal Swift classes from other targets.
++public class KeyboardControllerViewManager: RCTViewManager {
++  override public class func requiresMainQueueSetup() -> Bool {
+     return false
+   }
+ 
+-  override func view() -> (KeyboardControllerView) {
++  override public func view() -> UIView {
+     return KeyboardControllerView(frame: CGRect.zero, bridge: bridge)
+   }
+ 
