@@ -94,7 +94,8 @@
       "expo-router": "patches/expo-router.patch",
       "expo-font": "patches/expo-font.patch",
       "expo": "patches/expo.patch",
-      "expo-constants": "patches/expo-constants.patch"
+      "expo-constants": "patches/expo-constants.patch",
+      "react-native-webview@14.0.1": "patches/react-native-webview@14.0.1.patch"
     },
     "supportedArchitectures": {
       "cpu": [
