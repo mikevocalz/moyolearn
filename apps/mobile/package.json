@@ -106,6 +106,16 @@
         "buildFromSource": [
           ".*"
         ]
+      },
+      "ios": {
+        "exclude": [
+          "expo-updates",
+          "expo-updates-interface",
+          "expo-structured-headers",
+          "expo-manifests",
+          "expo-eas-client",
+          "expo-json-utils"
+        ]
       }
     }
   }
