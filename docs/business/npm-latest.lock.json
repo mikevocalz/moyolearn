@@ -1,16 +1,16 @@
 {
   "schema": 1,
-  "checkedAt": "2026-10-11T20:56:28.218Z",
+  "checkedAt": "2026-10-27T00:37:37.865Z",
   "tag": "latest",
   "packages": [
     {
       "name": "react-native-gesture-handler",
-      "version": "3.3.0",
+      "version": "3.4.0",
       "tag": "latest",
-      "checkedAt": "2026-10-11T20:56:28.218Z",
+      "checkedAt": "2026-10-27T00:37:37.865Z",
       "registry": "https://registry.npmjs.org/react-native-gesture-handler/latest",
-      "integrity": "sha512-ZCTlJ09nE3GPbm7J74lvwpxmx1TQ/7MDlHZNLARVYTN82k21mJUJ7BmI9eWjEi8eevHiAudI5O1Cpnt0rJfoJA==",
-      "tarball": "https://registry.npmjs.org/react-native-gesture-handler/-/react-native-gesture-handler-3.3.0.tgz",
+      "integrity": "sha512-jBg4ZWDvegeaZ4OHq9oxVOS/Qa6pV+LhtsUExothyhWxqzG0Lkg7kl2ztemPj/pnJxkq9j/+6wAw3jZGwdssww==",
+      "tarball": "https://registry.npmjs.org/react-native-gesture-handler/-/react-native-gesture-handler-3.4.0.tgz",
       "peerDependencies": {
         "react": "*",
         "react-native": "*"
@@ -21,7 +21,7 @@
       "name": "react-native-reanimated",
       "version": "4.7.1",
       "tag": "latest",
-      "checkedAt": "2026-10-11T20:56:28.218Z",
+      "checkedAt": "2026-10-27T00:37:37.865Z",
       "registry": "https://registry.npmjs.org/react-native-reanimated/latest",
       "integrity": "sha512-HviDFSZ6V4KTRsrLS6hRbBJ4j63l/L8a5az0EoWdJwaMLYnBNyYISTDxwXpEYkMbAbLzCMCviIdiOxXHYQWcNA==",
       "tarball": "https://registry.npmjs.org/react-native-reanimated/-/react-native-reanimated-4.7.1.tgz",
@@ -34,12 +34,12 @@
     },
     {
       "name": "react-native-worklets",
-      "version": "0.13.0",
+      "version": "0.13.1",
       "tag": "latest",
-      "checkedAt": "2026-10-11T20:56:28.218Z",
+      "checkedAt": "2026-10-27T00:37:37.865Z",
       "registry": "https://registry.npmjs.org/react-native-worklets/latest",
-      "integrity": "sha512-1OrhAeAKaZF4XrBa4YbPQbKzNOpjh52HDlId8e6ete1OCHNdAlrQHzG4gznJ225EAj3dgQXHViJvK51M9B52jQ==",
-      "tarball": "https://registry.npmjs.org/react-native-worklets/-/react-native-worklets-0.13.0.tgz",
+      "integrity": "sha512-sX55Vx89/Y9uJmvAbAGoHXBZvCWXtYPGWPJ9Z9yl0h76mP9A10ULlSrixzGqBFLXeQMBpIpyJEhWpzXP7GG6YA==",
+      "tarball": "https://registry.npmjs.org/react-native-worklets/-/react-native-worklets-0.13.1.tgz",
       "peerDependencies": {
         "react": "*",
         "@babel/core": "*",
@@ -52,7 +52,7 @@
       "name": "@shopify/react-native-skia",
       "version": "2.14.0",
       "tag": "latest",
-      "checkedAt": "2026-10-11T20:56:28.218Z",
+      "checkedAt": "2026-10-27T00:37:37.865Z",
       "registry": "https://registry.npmjs.org/%40shopify%2Freact-native-skia/latest",
       "integrity": "sha512-mzizcTeUAgvam+m1BsxTs+K8ujUXkzoCmwumUhV5NWcoImmKJiWUMfQYgw2OOt1p6qpr7+G5pPOELAmNzZRvlw==",
       "tarball": "https://registry.npmjs.org/@shopify/react-native-skia/-/react-native-skia-2.14.0.tgz",
@@ -66,12 +66,12 @@
     },
     {
       "name": "react-native-webgpu",
-      "version": "0.13.1",
+      "version": "0.19.1",
       "tag": "latest",
-      "checkedAt": "2026-10-11T20:56:28.218Z",
+      "checkedAt": "2026-10-27T00:37:37.865Z",
       "registry": "https://registry.npmjs.org/react-native-webgpu/latest",
-      "integrity": "sha512-UT49A9vLw3dn7oUM3y4/+JNZ7gz/qQFUF8PZCq3vDQGl+H0+UPFfC2hOpP8ShHDuPzbC1cEE+JyM/SIMpZiA5Q==",
-      "tarball": "https://registry.npmjs.org/react-native-webgpu/-/react-native-webgpu-0.13.1.tgz",
+      "integrity": "sha512-OKxYSg6Tql5UnW6IQPWqWvi48BQJJU/Ge8mVFLWkUxVjv/Oc5qsqDP5OBUCzaFyH2nNegUbpnYcfnfGG3Qa5+A==",
+      "tarball": "https://registry.npmjs.org/react-native-webgpu/-/react-native-webgpu-0.19.1.tgz",
       "peerDependencies": {
         "react": "*",
         "react-native": ">=0.81.0",
@@ -82,12 +82,12 @@
     },
     {
       "name": "typegpu",
-      "version": "0.12.7",
+      "version": "0.12.9",
       "tag": "latest",
-      "checkedAt": "2026-10-11T20:56:28.218Z",
+      "checkedAt": "2026-10-27T00:37:37.865Z",
       "registry": "https://registry.npmjs.org/typegpu/latest",
-      "integrity": "sha512-aFMKw8Pwl/kcUvUgrzwdzjmnqAp6Zl62cogcaBy5RI0Ky1W7mHhC+E/2MAg+KExnY+a0w9oQJtB3gvNAaB2EmQ==",
-      "tarball": "https://registry.npmjs.org/typegpu/-/typegpu-0.12.7.tgz",
+      "integrity": "sha512-Li2L4XRWabARzB9CaCqd0bTdFk88uu6dZiU03OPDksmLJmHaQztZW592y/TQJ9TjGiJmVcsx+UB9OtmEIMRp9w==",
+      "tarball": "https://registry.npmjs.org/typegpu/-/typegpu-0.12.9.tgz",
       "peerDependencies": {},
       "engines": {
         "node": ">=12.20.0"
@@ -95,34 +95,34 @@
     },
     {
       "name": "react-native-skia-graphite-android",
-      "version": "154.3.0",
+      "version": "157.0.0",
       "tag": "latest",
-      "checkedAt": "2026-10-11T20:56:28.218Z",
+      "checkedAt": "2026-10-27T00:37:37.865Z",
       "registry": "https://registry.npmjs.org/react-native-skia-graphite-android/latest",
-      "integrity": "sha512-jJ1X3gLikN4TJdVhZ2xuxHOvvfC8cYr+QN14baKUUBY4B3CgfMrLr4XuqzPDNX0chizO6AXIrzc83AIq9Al3xQ==",
-      "tarball": "https://registry.npmjs.org/react-native-skia-graphite-android/-/react-native-skia-graphite-android-154.3.0.tgz",
+      "integrity": "sha512-/FFq+Lw7xBk2cQVRwp49NZCbn71tUxdIYAQjbbcfGH6n+HODEgSbw4VRcGzH5L6VgbFOR7Ee+an1/VvExoSVbg==",
+      "tarball": "https://registry.npmjs.org/react-native-skia-graphite-android/-/react-native-skia-graphite-android-157.0.0.tgz",
       "peerDependencies": {},
       "engines": {}
     },
     {
       "name": "react-native-skia-graphite-apple-ios",
-      "version": "154.3.0",
+      "version": "157.0.0",
       "tag": "latest",
-      "checkedAt": "2026-10-11T20:56:28.218Z",
+      "checkedAt": "2026-10-27T00:37:37.865Z",
       "registry": "https://registry.npmjs.org/react-native-skia-graphite-apple-ios/latest",
-      "integrity": "sha512-kRWLw7Vq9I9LwbFLUbKLbhPYan/s23oFpuUNcfEB5BabCBRuD8Y6bpzd4Qb3YjxBXgONnYX65tzweM52a38vqg==",
-      "tarball": "https://registry.npmjs.org/react-native-skia-graphite-apple-ios/-/react-native-skia-graphite-apple-ios-154.3.0.tgz",
+      "integrity": "sha512-5QWJOWQD+NdGt7ANfuWIOxKasyeglJVuBLFEKoBkaiaSYF7/uUv9hJQMtLXGyCxGNHeithnA+EqdS4/1eC89MA==",
+      "tarball": "https://registry.npmjs.org/react-native-skia-graphite-apple-ios/-/react-native-skia-graphite-apple-ios-157.0.0.tgz",
       "peerDependencies": {},
       "engines": {}
     },
     {
       "name": "react-native-skia-graphite-apple-macos",
-      "version": "154.3.0",
+      "version": "157.0.0",
       "tag": "latest",
-      "checkedAt": "2026-10-11T20:56:28.218Z",
+      "checkedAt": "2026-10-27T00:37:37.865Z",
       "registry": "https://registry.npmjs.org/react-native-skia-graphite-apple-macos/latest",
-      "integrity": "sha512-9xyaGQs7zPSh5rfFdnble/ESZkqCfCQb/4QbytcWkr062hlxaWet1SlcMvHndfXNVjXS3ARn8E5SPIlWxN9K/Q==",
-      "tarball": "https://registry.npmjs.org/react-native-skia-graphite-apple-macos/-/react-native-skia-graphite-apple-macos-154.3.0.tgz",
+      "integrity": "sha512-dqyfEa2cJVELKv/GFLa7VqsJiY5RQ9DSjSQRv6K3vz2czRykqleYet0GObG+yP3MNtv5A7cY4AuUo0+9XoZUPw==",
+      "tarball": "https://registry.npmjs.org/react-native-skia-graphite-apple-macos/-/react-native-skia-graphite-apple-macos-157.0.0.tgz",
       "peerDependencies": {},
       "engines": {}
     }
@@ -130,8 +130,8 @@
   "catalog": [
     {
       "name": "react-native-gesture-handler",
-      "previous": "3.3.0",
-      "latest": "3.3.0",
+      "previous": "3.4.0",
+      "latest": "3.4.0",
       "installed": true
     },
     {
@@ -142,8 +142,8 @@
     },
     {
       "name": "react-native-worklets",
-      "previous": "0.13.0",
-      "latest": "0.13.0",
+      "previous": "0.13.1",
+      "latest": "0.13.1",
       "installed": true
     },
     {
@@ -154,32 +154,32 @@
     },
     {
       "name": "react-native-webgpu",
-      "previous": "0.10.2",
-      "latest": "0.13.1",
+      "previous": "0.19.1",
+      "latest": "0.19.1",
       "installed": true
     },
     {
       "name": "typegpu",
-      "previous": "0.12.5",
-      "latest": "0.12.7",
+      "previous": "0.12.9",
+      "latest": "0.12.9",
       "installed": true
     },
     {
       "name": "react-native-skia-graphite-android",
-      "previous": "154.2.0",
-      "latest": "154.3.0",
+      "previous": "157.0.0",
+      "latest": "157.0.0",
       "installed": true
     },
     {
       "name": "react-native-skia-graphite-apple-ios",
-      "previous": "154.2.0",
-      "latest": "154.3.0",
+      "previous": "157.0.0",
+      "latest": "157.0.0",
       "installed": true
     },
     {
       "name": "react-native-skia-graphite-apple-macos",
-      "previous": "154.2.0",
-      "latest": "154.3.0",
+      "previous": "157.0.0",
+      "latest": "157.0.0",
       "installed": true
     }
   ]

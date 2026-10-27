@@ -69,10 +69,10 @@ catalog:
   nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
   nitrogen: 1.0.0-alpha.nightly.100.g107f6fc66597
   react-native-enriched-html: 1.1.1
-  react-native-gesture-handler: 3.3.0
+  react-native-gesture-handler: 3.4.0
   react-native-reanimated: 4.7.1
-  react-native-webgpu: 0.13.1
-  typegpu: 0.12.7
+  react-native-webgpu: 0.19.1
+  typegpu: 0.12.9
   react-native-safe-area-context: ~5.9.1
   react-native-screens: ~4.28.0
   # Declared explicitly even though react-native-screens already pulls it in:
@@ -80,7 +80,7 @@ catalog:
   # phantom dependency that disappears the day screens changes its own tree.
   # The version is the one screens resolves, so nothing new is installed.
   react-freeze: 1.0.4
-  react-native-worklets: 0.13.0
+  react-native-worklets: 0.13.1
   react-native-vision-camera: 5.2.3
   # HELD AT 0.9.3 — 0.10.2 is published and is an API break, not a bump.
   # 0.10 splits the flat export into subpaths (`react-native-executorch/cv`,
@@ -103,9 +103,9 @@ catalog:
   # Held with it: the fetcher registers into executorch's runtime.
   react-native-executorch-expo-resource-fetcher: 0.9.1
   "@shopify/react-native-skia": 2.14.0
-  react-native-skia-graphite-android: 154.3.0
-  react-native-skia-graphite-apple-ios: 154.3.0
-  react-native-skia-graphite-apple-macos: 154.3.0
+  react-native-skia-graphite-android: 157.0.0
+  react-native-skia-graphite-apple-ios: 157.0.0
+  react-native-skia-graphite-apple-macos: 157.0.0
   "@react-navigation/native": 7.4.1
   solito: 5.0.0
   lucide-react: 1.47.0
