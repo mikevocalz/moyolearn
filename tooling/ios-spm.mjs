@@ -13,7 +13,7 @@
 // Usage: EXPO_PRECOMPILED_MODULES_PATH=<dir> node tooling/ios-spm.mjs
 // SOT-KEYWORDS: ios swiftpm spm nitro v1 expo prebuild cng xcodeproj deintegrate
 import { spawnSync } from 'node:child_process';
-import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, readdirSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -62,6 +62,21 @@ if (existsSync(executorch)) {
         'https://github.com/software-mansion-labs/opencv-rne.git', checkout], root);
     }
     cpSync(join(checkout, 'opencv2.xcframework'), opencv, { recursive: true });
+    // The pod's frameworks are macOS-style deep bundles whose Versions/Current
+    // symlinks git stored as plain directories. CocoaPods linked them statically and
+    // never copied them; SwiftPM embeds a binary target, and Xcode rejects a deep
+    // bundle on iOS ("expected Info.plist at the root level"). Rebuild each slice
+    // as the shallow layout iOS uses: binary, Headers and Info.plist at the root.
+    for (const slice of readdirSync(opencv)) {
+      const framework = join(opencv, slice, 'opencv2.framework');
+      if (!existsSync(join(framework, 'Resources/Info.plist'))) continue;
+      cpSync(join(framework, 'Resources/Info.plist'), join(framework, 'Info.plist'));
+      rmSync(join(framework, 'Resources'), { recursive: true, force: true });
+      rmSync(join(framework, 'Versions'), { recursive: true, force: true });
+    }
+    for (const junk of ['.DS_Store']) {
+      rmSync(join(opencv, junk), { force: true });
+    }
   }
   const libs = join(executorch, 'libs');
   const layout = {
