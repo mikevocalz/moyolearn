@@ -61,22 +61,26 @@ if (existsSync(executorch)) {
       run('git', ['clone', '--quiet', '--depth', '1', '--branch', '4.11.0',
         'https://github.com/software-mansion-labs/opencv-rne.git', checkout], root);
     }
-    cpSync(join(checkout, 'opencv2.xcframework'), opencv, { recursive: true });
-    // The pod's frameworks are macOS-style deep bundles whose Versions/Current
-    // symlinks git stored as plain directories. CocoaPods linked them statically and
-    // never copied them; SwiftPM embeds a binary target, and Xcode rejects a deep
-    // bundle on iOS ("expected Info.plist at the root level"). Rebuild each slice
-    // as the shallow layout iOS uses: binary, Headers and Info.plist at the root.
-    for (const slice of readdirSync(opencv)) {
-      const framework = join(opencv, slice, 'opencv2.framework');
-      if (!existsSync(join(framework, 'Resources/Info.plist'))) continue;
-      cpSync(join(framework, 'Resources/Info.plist'), join(framework, 'Info.plist'));
-      rmSync(join(framework, 'Resources'), { recursive: true, force: true });
-      rmSync(join(framework, 'Versions'), { recursive: true, force: true });
+    // The pod ships static frameworks (macOS-style deep bundles whose Versions/
+    // symlinks git stored as directories). CocoaPods only linked them. A framework
+    // binary target is embedded instead, and Xcode 27.1 fails embedding a static
+    // one ("Injecting stub binary into codeless framework", then an empty lipo).
+    // Repackage each slice as a static-library XCFramework, which SwiftPM links
+    // and never embeds. Headers keep the <opencv2/...> include path.
+    const staging = join(root, '.cache/opencv2-library');
+    rmSync(staging, { recursive: true, force: true });
+    const args = ['-create-xcframework'];
+    const source = join(checkout, 'opencv2.xcframework');
+    for (const slice of readdirSync(source)) {
+      const framework = join(source, slice, 'opencv2.framework');
+      if (!existsSync(join(framework, 'opencv2'))) continue;
+      const out = join(staging, slice);
+      mkdirSync(join(out, 'include'), { recursive: true });
+      cpSync(join(framework, 'opencv2'), join(out, 'libopencv2.a'));
+      cpSync(join(framework, 'Headers'), join(out, 'include', 'opencv2'), { recursive: true });
+      args.push('-library', join(out, 'libopencv2.a'), '-headers', join(out, 'include'));
     }
-    for (const junk of ['.DS_Store']) {
-      rmSync(join(opencv, junk), { force: true });
-    }
+    run('xcodebuild', [...args, '-output', opencv], root);
   }
   const libs = join(executorch, 'libs');
   const layout = {
