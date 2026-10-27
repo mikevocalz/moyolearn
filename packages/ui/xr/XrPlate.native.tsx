@@ -66,6 +66,8 @@ export type XrPoint = [number, number, number];
  * within a hair.
  */
 const KEY_INSET = spatialSpacing.xs / 3;
+/** ViroText's line box over its font size — the room a line needs to survive ClipToBounds. */
+const LINE_HEIGHT_FACTOR = 1.25;
 const KEY_RING = spatialSpacing.xs / 6;
 
 export interface XrLabelProps {
@@ -280,7 +282,11 @@ export function XrKey({
   const box = { width: width - KEY_INSET * 2, height: height - KEY_INSET * 2 };
   /* A chipped key is a sample over a colour NAME, so its label takes the
      caption step — `body` at this width would clip "Purple". */
-  const labelStep: SpatialTypeStep = chip ? 'caption' : 'body';
+  /* A key shorter than a body LINE gets caption too: ViroText with
+     ClipToBounds drops a line that does not fit rather than cropping it, so a
+     body label on a 7 cm list row rendered as a blank grey bar. */
+  const labelStep: SpatialTypeStep =
+    chip || box.height < spatialTextHeight.body * LINE_HEIGHT_FACTOR ? 'caption' : 'body';
   const labelHeight = chip ? spatialTextHeight.caption : box.height;
   const chipHeight = spatialTextHeight.caption;
   /* Sample over name, centred as one group — what the flex column's

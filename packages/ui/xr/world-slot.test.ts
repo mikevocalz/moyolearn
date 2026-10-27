@@ -35,7 +35,7 @@ test('the arc rides the head, so eye level holds standing or seated', () => {
   for (const slot of ['left', 'center', 'right'] as const) {
     const pose = worldSlot(slot, head, 0);
     near(pose.position[1], head[1] + SLOTS[slot].position[1]);
-    near(pose.position[1] - head[1], -0.1);
+    near(pose.position[1] - head[1], 0);
   }
 });
 

@@ -229,6 +229,30 @@ dependencies {
     implementation project(':expo-pico-core')
 }
 
+// Meta VR Layout SDK (quest only)
+// Hand-written: expo-horizon-core 57.0.2 has no `metaLayoutSdk` option. This
+// is the block ~/expo-pico/packages/expo-horizon-quest/plugin/src/
+// withQuestMetaLayout.ts writes, the same one Harlem Might ships. Versions come
+// from the BOM. The autolinked @metavr/* projects declare their AARs as `api`,
+// so the group is excluded from every pico and mobile classpath, and the stub
+// source set keeps the shared PackageList compiling there.
+dependencies {
+    questImplementation platform("com.meta.metavrx:metavrx-bom:1.2026.0.0")
+    questImplementation "com.meta.metavrx.layout:layout-react-compat"
+    questImplementation "com.meta.metavrx.layout:layout-window-react-compat"
+}
+configurations.configureEach { c ->
+    if (!c.name.startsWith("quest") && (c.name.endsWith("CompileClasspath") || c.name.endsWith("RuntimeClasspath"))) {
+        c.exclude group: "com.meta.metavrx.layout"
+    }
+}
+android.productFlavors.configureEach { flavor ->
+    if (flavor.name != "quest") {
+        android.sourceSets.maybeCreate(flavor.name).java.srcDirs += "src/metaLayoutStub/java"
+    }
+}
+// end Meta VR Layout SDK
+
 
 // expo-pico-core: PICO Platform Service SDK (com.pico.pps:*) deps
 //

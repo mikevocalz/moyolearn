@@ -36,6 +36,9 @@ export {
 export { XR_MATERIAL, inkMaterial } from './material-names.ts';
 /* Shared placement math has no renderer dependency. */
 export { worldSlot, xrRotateY } from './world-slot.ts';
+export { dragStep, movePlacement, workspaceHeadOf, WORKSPACE_DRAG_MAX_STEP_M } from './workspace-drag.ts';
+export { addOffset, carrierPosition, ZERO_OFFSET } from './carrier-drag.ts';
+export { useCarrierDrag, type CarrierDrag, type CarrierDragOptions, type CarrierNode } from './use-carrier-drag.ts';
 export { panelMediaArea } from './premium/panel-media-area.ts';
 /* Pen arbitration and plane geometry are pure — no renderer in any of them. */
 export { BoardPointer } from './board-pointer.ts';
