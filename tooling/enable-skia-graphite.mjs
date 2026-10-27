@@ -3,24 +3,29 @@
 // SOT: upstream skia gitHead 6a53dcd8b63b739f60613dbed61475f6b3c1d9e5;
 // docs/decisions/adr-121-gpu-device-topology.md.
 // SOT-KEYWORDS: skia graphite dawn webgpu postinstall headers provenance cache
-import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { copyFileSync, cpSync, existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 
-// The 154.3.0 Graphite and shared-Dawn npm artifacts were published from the
+// The 157.0.0 Graphite and shared-Dawn npm artifacts were published from the
 // same upstream commit. Dawn's own metadata records both its source and patches.
 export const ADMISSION = Object.freeze({
-  renderer: '2.14.0', version: '154.3.0', skia: 'm154_8037_58c',
-  dawnCommit: '3d786993a7ded64c4ebb4884b9b079db9ad0e580',
-  dawnTag: 'chrome-m154a', webgpu: '0.13.1',
-  patches: ['metal-maccatalyst.patch', 'tint-looprange-function-variable.patch'],
-  // This release and the 154.3.0 publisher both use Skia commit 2466dcf3937437e217e7f284afe0e1aae15891ce.
-  // Only its three private Graphite headers are used; Dawn comes from the npm package.
-  headersUrl: 'https://github.com/wcandillon/react-native-skia/releases/download/skia-graphite-m154_8037_58a/skia-graphite-headers-skia-graphite-m154_8037_58a.tar.gz',
-  headersSha256: '3914793c10cb14949d038e37c0607d5ad7fa29f54f453329f03bc70ae020bf34',
+  renderer: '2.14.0', version: '157.0.0', skia: 'm157',
+  dawnCommit: 'ada567700e13aecf7989d78b21f7d330b522ea80',
+  dawnTag: 'chrome-m157', webgpu: '0.19.1',
+  patches: ['metal-maccatalyst.patch', 'vulkan-fifo-three-images-android.patch'],
+  // No m157 header release exists, so the three private Graphite headers come
+  // straight from Skia at the externals/skia commit of the 157.0.0 publisher
+  // (react-native-skia gitHead 15be4cf71b04d64f0db47e2e8f8ef0f41d5a0517).
+  // Dawn comes from the npm package.
+  headersBaseUrl: 'https://raw.githubusercontent.com/google/skia/b94213a11b3a2edadfae89f0c57a7f4ab72772c9/src/gpu/graphite/',
+  headersSha256: Object.freeze({
+    'ContextOptionsPriv.h': 'f801bcda10ea519d50983d312a06bd809cb01031c9d4f852e0dcdb8db6323274',
+    'ResourceTypes.h': '1822b5e90d4202026225cdf5aa1bd89bbc09d4aad57ee84357be98771ecbb10e',
+    'TextureProxyView.h': '2287d9848e01fa42f9a5e9894ccd3d73c6979e0272d1ae46fe24d3b7ce01362d',
+  }),
 });
 export const ABIS = ['arm64-v8a', 'armeabi-v7a', 'x86', 'x86_64'];
 const GRAPHITE_PACKAGES = ['react-native-skia-graphite-android', 'react-native-skia-graphite-apple-ios', 'react-native-skia-graphite-apple-macos'];
@@ -69,20 +74,20 @@ export function inspectPackages(root) {
   return { renderer, dawn, graphite };
 }
 
-export function verifyHeaderArchive(bytes) {
+export function verifyHeader(name, bytes) {
   const actual = createHash('sha256').update(bytes).digest('hex');
-  if (actual !== ADMISSION.headersSha256) throw new Error(`skia-graphite: header checksum mismatch (${actual})`);
+  if (actual !== ADMISSION.headersSha256[name]) throw new Error(`skia-graphite: header checksum mismatch for ${name} (${actual})`);
 }
 
 async function fetchPrivateHeaders(destination) {
-  const response = await fetch(ADMISSION.headersUrl, { signal: AbortSignal.timeout(60_000) });
-  if (!response.ok) throw new Error(`skia-graphite: header download failed (${response.status})`);
-  const bytes = Buffer.from(await response.arrayBuffer());
-  verifyHeaderArchive(bytes);
-  const tarball = join(destination, 'headers.tgz');
-  writeFileSync(tarball, bytes);
-  execFileSync('tar', ['--no-same-owner', '-xzf', tarball, '-C', destination]);
-  return join(destination, 'packages/skia/cpp/skia/src/gpu/graphite');
+  for (const name of GRAPHITE_HEADERS) {
+    const response = await fetch(`${ADMISSION.headersBaseUrl}${name}`, { signal: AbortSignal.timeout(60_000) });
+    if (!response.ok) throw new Error(`skia-graphite: header download failed for ${name} (${response.status})`);
+    const bytes = Buffer.from(await response.arrayBuffer());
+    verifyHeader(name, bytes);
+    writeFileSync(join(destination, name), bytes);
+  }
+  return destination;
 }
 
 function copyDawnHeaders(source, destination) {
@@ -102,7 +107,7 @@ function copyDawnHeaders(source, destination) {
 }
 
 // fetchHeaders is injected only by offline filesystem contract tests; the CLI
-// always downloads and verifies the pinned upstream archive above.
+// always downloads and verifies the pinned upstream headers above.
 export async function enableSkiaGraphite({ root = ROOT, fetchHeaders = fetchPrivateHeaders } = {}) {
   const skia = join(root, 'node_modules/@shopify/react-native-skia');
   if (!existsSync(skia)) return 'skia-graphite: renderer absent, nothing to mark';
