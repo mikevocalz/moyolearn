@@ -1,8 +1,57 @@
+diff --git a/ios/Expo/ExpoReactNativeFactory.swift b/ios/Expo/ExpoReactNativeFactory.swift
+--- a/ios/Expo/ExpoReactNativeFactory.swift
++++ b/ios/Expo/ExpoReactNativeFactory.swift
+@@ -32,7 +32,7 @@
+   }
+ 
+   // `RCTBundleConfiguration` is only available in react-native 0.84+, so it doesn't exist yet on react-native-macos.
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+   private var _bundleConfiguration: RCTBundleConfiguration?
+ 
+   public override var bundleConfiguration: RCTBundleConfiguration {
+@@ -121,14 +121,14 @@
+       }
+     }
+ 
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+     adoptInfoPlistMetroPort()
+ #endif
+ 
+     let rootView: UIView
+     if let factory = self.rootViewFactory as? ExpoReactRootViewFactory {
+       // bundleConfiguration is only accepted in react-native 0.84+
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+       let bundleConfiguration = ExpoBundleConfiguration.configuration(
+         bundleURL: withBundleURL ?? configuration?.bundleURLBlock()
+       )
+@@ -150,7 +150,7 @@
+       )
+ #endif
+     } else {
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+       let bundleConfiguration = ExpoBundleConfiguration.configuration(
+         bundleURL: withBundleURL ?? configuration?.bundleURLBlock()
+       )
+diff --git a/ios/ExpoObjC/AppDelegates/EXBundleConfiguration.mm b/ios/ExpoObjC/AppDelegates/EXBundleConfiguration.mm
+--- a/ios/ExpoObjC/AppDelegates/EXBundleConfiguration.mm
++++ b/ios/ExpoObjC/AppDelegates/EXBundleConfiguration.mm
+@@ -2,7 +2,7 @@
+ 
+ #import <Expo/EXBundleConfiguration.h>
+ 
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+ 
+ @implementation EXBundleConfiguration {
+   NSURL *_bundleURL;
 diff --git a/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m b/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m
-index e12efe950115d9a69a454c5f29d04a1d475622a9..6078050565bf51ddfcba077087b3802ca4a958ee 100644
 --- a/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m
 +++ b/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m
-@@ -75,6 +75,7 @@ static dispatch_once_t onceToken;
+@@ -75,6 +75,7 @@
    return NO;
  }
  
@@ -10,7 +59,7 @@ index e12efe950115d9a69a454c5f29d04a1d475622a9..6078050565bf51ddfcba077087b3802c
  - (void)application:(UIApplication *)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
  {
    SEL selector = @selector(application:performFetchWithCompletionHandler:);
-@@ -107,6 +108,7 @@ static dispatch_once_t onceToken;
+@@ -107,6 +108,7 @@
      }
    }
  }
@@ -18,3 +67,155 @@ index e12efe950115d9a69a454c5f29d04a1d475622a9..6078050565bf51ddfcba077087b3802c
  
  - (BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray<id<UIUserActivityRestoring>> * _Nullable))restorationHandler
  {
+diff --git a/ios/ExpoObjC/AppDelegates/EXReactRootViewFactory.mm b/ios/ExpoObjC/AppDelegates/EXReactRootViewFactory.mm
+--- a/ios/ExpoObjC/AppDelegates/EXReactRootViewFactory.mm
++++ b/ios/ExpoObjC/AppDelegates/EXReactRootViewFactory.mm
+@@ -23,7 +23,7 @@
+   return self;
+ }
+ 
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+ - (UIView *)viewWithModuleName:(NSString *)moduleName
+              initialProperties:(nullable NSDictionary *)initialProperties
+                  launchOptions:(nullable NSDictionary *)launchOptions
+diff --git a/ios/ExpoObjC/include/Expo/EXBundleConfiguration.h b/ios/ExpoObjC/include/Expo/EXBundleConfiguration.h
+--- a/ios/ExpoObjC/include/Expo/EXBundleConfiguration.h
++++ b/ios/ExpoObjC/include/Expo/EXBundleConfiguration.h
+@@ -7,7 +7,7 @@
+ 
+ NS_ASSUME_NONNULL_BEGIN
+ 
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+ 
+ NS_SWIFT_NAME(ExpoBundleConfiguration)
+ @interface EXBundleConfiguration : RCTBundleConfiguration
+diff --git a/ios/ExpoObjC/include/Expo/EXReactRootViewFactory.h b/ios/ExpoObjC/include/Expo/EXReactRootViewFactory.h
+--- a/ios/ExpoObjC/include/Expo/EXReactRootViewFactory.h
++++ b/ios/ExpoObjC/include/Expo/EXReactRootViewFactory.h
+@@ -24,7 +24,7 @@
+ /**
+  Calls super `viewWithModuleName:initialProperties:launchOptions:` from `RCTRootViewFactory`.
+  */
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+ - (UIView *)superViewWithModuleName:(NSString *)moduleName
+                   initialProperties:(nullable NSDictionary *)initialProperties
+                       launchOptions:(nullable NSDictionary *)launchOptions
+diff --git a/scripts/spm/manifests.js b/scripts/spm/manifests.js
+--- a/scripts/spm/manifests.js
++++ b/scripts/spm/manifests.js
+@@ -868,6 +868,10 @@
+   }
+ ) {
+   const { targetDeps, pkgDeps } = sourceDependencies(react, codegenPkgPath, jsiHeadersPkgPath);
++  for (const lib of manifest.autolinkedLibs ?? []) {
++    pkgDeps.push(`.package(name: "${lib.name}", path: "${escapeSwiftString(lib.path)}")`);
++    targetDeps.push(`.product(name: "${lib.name}", package: "${lib.name}")`);
++  }
+   const { manifest: linked, partlyProvidedPackages } = withoutSatisfiedProducts(
+     manifest,
+     satisfiedDependencies
+@@ -1012,6 +1016,7 @@
+     iosDeploymentTarget = null,
+     spmPackages = [],
+     sources = scanAppleSources(moduleRoot),
++    autolinkedLibs = [],
+   },
+   emitContext
+ ) {
+@@ -1020,11 +1025,14 @@
+     product,
+     srcRel: path.relative(moduleRoot, srcDir),
+     excludes: sources.ignoredDirs,
+-    iosDeploymentTarget,
++    iosDeploymentTarget: autolinkedLibs.reduce(
++      (floor, lib) => raiseFloor(floor, lib.iosFloor),
++      iosDeploymentTarget
++    ),
+     hasPrivacyManifest: fs.existsSync(path.join(srcDir, PRIVACY_MANIFEST)),
+     packages: spmPackages.map(documentedPackage),
+   });
+-  return emitPackage(manifest, moduleRoot, emitContext);
++  return emitPackage({ ...manifest, autolinkedLibs }, moduleRoot, emitContext);
+ }
+ 
+ module.exports = {
+diff --git a/scripts/spm/plugin.js b/scripts/spm/plugin.js
+--- a/scripts/spm/plugin.js
++++ b/scripts/spm/plugin.js
+@@ -587,11 +587,41 @@
+   }
+   if (!sources.hasSources) return null;
+   return emitPureSwiftSourcePackage(
+-    { moduleRoot, product: podName, iosDeploymentTarget, spmPackages, sources },
++    {
++      moduleRoot,
++      product: podName,
++      iosDeploymentTarget,
++      spmPackages,
++      sources,
++      autolinkedLibs: autolinkedLibDependencies(podspec.dependencies, emitContext.libsDir),
++    },
+     emitContext
+   );
+ }
+ 
++/**
++ * The podspec dependencies React Native autolinked as SwiftPM packages, by the
++ * libs/<name> alias it writes for each (react-native/scripts/spm/
++ * generate-spm-autolinking.js). CocoaPods links such a dependency for the module
++ * (expo-router's `add_dependency(s, "RNScreens")`); without it a pure-Swift module
++ * that imports the library fails with "Unable to resolve module dependency".
++ * Only aliases whose manifest exports a library of the same name are used.
++ */
++function autolinkedLibDependencies(podDependencies, libsDir) {
++  if (libsDir == null) return [];
++  const names = new Set((podDependencies ?? []).map((dep) => dep.split('/')[0]));
++  return [...names].filter((name) => {
++    const manifest = path.join(libsDir, name, 'Package.swift');
++    if (!fs.existsSync(manifest)) return false;
++    return fs.readFileSync(manifest, 'utf8').includes(`.library(name: "${name}"`);
++  }).map((name) => {
++    // The dependent package cannot sit below the library's iOS floor.
++    const text = fs.readFileSync(path.join(libsDir, name, 'Package.swift'), 'utf8');
++    const iosFloor = text.match(/\.iOS\("([0-9.]+)"\)/)?.[1] ?? null;
++    return { name, path: path.join(libsDir, name), iosFloor };
++  });
++}
++
+ /**
+  * Pass 2 — invariant source modules. They compile against the generated
+  * headers/module-interface tree and leave runtime linking entirely to RN.
+@@ -1050,7 +1080,13 @@
+     cacheDir: artifactCacheDir,
+     matchBuildFromSource,
+     dumpManifest: manifestDumper(),
+-    sourceContext: { react, outDir, codegenPkgPath, jsiHeadersPkgPath },
++    sourceContext: {
++      react,
++      outDir,
++      codegenPkgPath,
++      jsiHeadersPkgPath,
++      libsDir: path.join(outputDir, 'libs'),
++    },
+   };
+   // A pod a buildFromSource pattern matches is linked precompiled when no source route takes
+   // it, as ExpoModulesCore never is. Linking one changes what pass 2 decides — a sibling pod's
+diff --git a/scripts/spm/podspec.js b/scripts/spm/podspec.js
+--- a/scripts/spm/podspec.js
++++ b/scripts/spm/podspec.js
+@@ -126,7 +126,11 @@
+ function podspecDependencies(text) {
+   const deps = [];
+   for (const { text: line } of podspecBodyLines(text)) {
+-    const match = line.match(/\.dependency\s+['"]([^'"]+)['"]/);
++    // `add_dependency(s, 'Pod')` is React Native's helper (cocoapods/utils.rb); expo-router
++    // declares RNScreens through it.
++    const match =
++      line.match(/\.dependency\s+['"]([^'"]+)['"]/) ??
++      line.match(/\badd_dependency\(\s*\w+\s*,\s*['"]([^'"]+)['"]/);
+     if (match) deps.push(match[1]);
+   }
+   return deps;

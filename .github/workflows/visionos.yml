@@ -21,7 +21,9 @@ concurrency:
 jobs:
   native:
     name: visionOS simulator build
-    runs-on: macos-26
+    # Nitro V1 Swift packages declare swift-tools-version 6.4, which needs Xcode 27.
+    # `xcode-27` is the GitHub-hosted preview image whose default Xcode is 27.1.
+    runs-on: xcode-27
     timeout-minutes: 90
     steps:
       - uses: actions/checkout@v4
@@ -35,6 +37,7 @@ jobs:
       - name: Verify Apple SDKs
         run: |
           xcodebuild -version
+          swift --version
           xcrun --sdk xros --show-sdk-version
           xcrun --sdk xrsimulator --show-sdk-version
       - run: pnpm install --frozen-lockfile
