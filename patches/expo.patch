@@ -19,7 +19,7 @@ index e12efe9..6078050 100644
  - (BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray<id<UIUserActivityRestoring>> * _Nullable))restorationHandler
  {
 diff --git a/scripts/spm/manifests.js b/scripts/spm/manifests.js
-index c42928b..d9334eb 100644
+index c42928b..694ca52 100644
 --- a/scripts/spm/manifests.js
 +++ b/scripts/spm/manifests.js
 @@ -868,6 +868,10 @@ function emitPackage(
@@ -41,7 +41,15 @@ index c42928b..d9334eb 100644
    },
    emitContext
  ) {
-@@ -1024,7 +1029,7 @@ function emitPureSwiftSourcePackage(
+@@ -1020,11 +1025,14 @@ function emitPureSwiftSourcePackage(
+     product,
+     srcRel: path.relative(moduleRoot, srcDir),
+     excludes: sources.ignoredDirs,
+-    iosDeploymentTarget,
++    iosDeploymentTarget: autolinkedLibs.reduce(
++      (floor, lib) => raiseFloor(floor, lib.iosFloor),
++      iosDeploymentTarget
++    ),
      hasPrivacyManifest: fs.existsSync(path.join(srcDir, PRIVACY_MANIFEST)),
      packages: spmPackages.map(documentedPackage),
    });
@@ -51,10 +59,10 @@ index c42928b..d9334eb 100644
  
  module.exports = {
 diff --git a/scripts/spm/plugin.js b/scripts/spm/plugin.js
-index 00a7c98..f754489 100644
+index 00a7c98..95ec647 100644
 --- a/scripts/spm/plugin.js
 +++ b/scripts/spm/plugin.js
-@@ -587,11 +587,36 @@ function emitSourceModule(identity, hasManifest, emitContext, dumpManifest) {
+@@ -587,11 +587,41 @@ function emitSourceModule(identity, hasManifest, emitContext, dumpManifest) {
    }
    if (!sources.hasSources) return null;
    return emitPureSwiftSourcePackage(
@@ -86,13 +94,18 @@ index 00a7c98..f754489 100644
 +    const manifest = path.join(libsDir, name, 'Package.swift');
 +    if (!fs.existsSync(manifest)) return false;
 +    return fs.readFileSync(manifest, 'utf8').includes(`.library(name: "${name}"`);
-+  }).map((name) => ({ name, path: path.join(libsDir, name) }));
++  }).map((name) => {
++    // The dependent package cannot sit below the library's iOS floor.
++    const text = fs.readFileSync(path.join(libsDir, name, 'Package.swift'), 'utf8');
++    const iosFloor = text.match(/\.iOS\("([0-9.]+)"\)/)?.[1] ?? null;
++    return { name, path: path.join(libsDir, name), iosFloor };
++  });
 +}
 +
  /**
   * Pass 2 — invariant source modules. They compile against the generated
   * headers/module-interface tree and leave runtime linking entirely to RN.
-@@ -1050,7 +1075,13 @@ module.exports = function expoSpmPlugin(context) {
+@@ -1050,7 +1080,13 @@ module.exports = function expoSpmPlugin(context) {
      cacheDir: artifactCacheDir,
      matchBuildFromSource,
      dumpManifest: manifestDumper(),
