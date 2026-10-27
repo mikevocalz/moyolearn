@@ -3,7 +3,7 @@ new file mode 100644
 index 0000000000000000000000000000000000000000..f52ec804fe191d4e7597fd06c374a929a465ec5c
 --- /dev/null
 +++ b/Package.swift
-@@ -0,0 +1,50 @@
+@@ -0,0 +1,52 @@
 +// swift-tools-version: 6.0
 +// SwiftPM manifest for @react-native-masked-view/masked-view 0.3.2, for React
 +// Native's SwiftPM autolinking. The package ships only RNCMaskedView.podspec.
@@ -44,7 +44,9 @@ index 0000000000000000000000000000000000000000..f52ec804fe191d4e7597fd06c374a929
 +                "ios/RNCMaskedView.m",
 +                "ios/RNCMaskedViewManager.m",
 +            ],
-+            publicHeadersPath: "ios",
++            // ios/ holds RNCMaskedView.xcodeproj, and SwiftPM rejects an umbrella header
++            // with a directory beside it.
++            publicHeadersPath: "spm/public",
 +            cSettings: [
 +                .headerSearchPath("ios"),
 +                .headerSearchPath("."),
@@ -58,14 +60,15 @@ diff --git a/package.json b/package.json
 index 3695fa62524b2cbf2d98295a4321cfa845ef8459..1dfb6050218c9122bbf1cb2a5f52ed65a9c462df 100644
 --- a/package.json
 +++ b/package.json
-@@ -30,7 +30,9 @@
+@@ -30,7 +30,10 @@
      "ios",
      "js",
      "types",
 -    "RNCMaskedView.podspec"
 +    "RNCMaskedView.podspec",
 +    "Package.swift",
-+    "react-native-spm-prefix.h"
++    "react-native-spm-prefix.h",
++    "spm"
    ],
    "devDependencies": {
      "@react-native/eslint-config": "^0.76.1",
@@ -95,3 +98,10 @@ index 0000000000000000000000000000000000000000..af5cea0557f2f4aa957419f0fc3f250f
 +#import <UIKit/UIKit.h>
 +#endif
 +#endif
+diff --git a/spm/public/RNCMaskedView.h b/spm/public/RNCMaskedView.h
+new file mode 100644
+--- /dev/null
++++ b/spm/public/RNCMaskedView.h
+@@ -0,0 +1,2 @@
++// Umbrella placeholder for the target. Nothing imports it: React Native finds
++// RNCMaskedViewManager by class name at runtime.

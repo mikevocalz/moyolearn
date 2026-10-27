@@ -25,6 +25,9 @@ module.exports = {
     'react-native-keyboard-controller': visionOS ? { platforms: { ios: null } } : {},
     'react-native-pulsar': visionOS ? { platforms: { ios: null } } : {},
     'react-native-webgpu': visionOS ? { platforms: { ios: null } } : {},
+    // AVCaptureVideoPreviewLayer, AVMetadataObject and the focus/exposure modes
+    // VisionCamera builds on are unavailable in the visionOS SDK.
+    'react-native-vision-camera': visionOS ? { platforms: { ios: null } } : {},
     '@viro-external/native-panels': nativePanels ? {} : { platforms: { android: null, ios: null } },
   },
 };

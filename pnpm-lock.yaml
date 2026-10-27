@@ -401,7 +401,7 @@ overrides:
 
 patchedDependencies:
   '@react-native-masked-view/masked-view@0.3.2':
-    hash: a00816ac286e82ffe22ac5977ef0f3a34ba2a9f5cec240c9397dde306600ca75
+    hash: df22d01b7d19c67dfa713fbde9767e1f5d850e365a6b35a611e2b655cd04c0c4
     path: patches/@react-native-masked-view__masked-view@0.3.2.patch
   '@reactvision/react-viro@3.0.1-moyo.1':
     hash: d4a49157b5f6a4915a76ae878525547881a579c5fdb8db9c6e77148dce304bdf
@@ -606,7 +606,7 @@ importers:
         version: 1.0.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@react-native-masked-view/masked-view':
         specifier: 'catalog:'
-        version: 0.3.2(patch_hash=a00816ac286e82ffe22ac5977ef0f3a34ba2a9f5cec240c9397dde306600ca75)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 0.3.2(patch_hash=df22d01b7d19c67dfa713fbde9767e1f5d850e365a6b35a611e2b655cd04c0c4)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@react-navigation/native':
         specifier: 'catalog:'
         version: 7.4.1(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -15520,7 +15520,7 @@ snapshots:
       - typescript
       - utf-8-validate
 
-  '@react-native-masked-view/masked-view@0.3.2(patch_hash=a00816ac286e82ffe22ac5977ef0f3a34ba2a9f5cec240c9397dde306600ca75)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)':
+  '@react-native-masked-view/masked-view@0.3.2(patch_hash=df22d01b7d19c67dfa713fbde9767e1f5d850e365a6b35a611e2b655cd04c0c4)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)':
     dependencies:
       react: 19.3.0
       react-native: 0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
@@ -19825,7 +19825,7 @@ snapshots:
       '@expo/ui': 57.0.12(@babel/core@7.29.7)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(expo@58.0.19)(react-dom@19.3.0(react@19.3.0))(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@radix-ui/react-slot': 1.2.3(@types/react@19.3.0)(react@19.3.0)
       '@radix-ui/react-tabs': 1.1.13(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@react-native-masked-view/masked-view': 0.3.2(patch_hash=a00816ac286e82ffe22ac5977ef0f3a34ba2a9f5cec240c9397dde306600ca75)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      '@react-native-masked-view/masked-view': 0.3.2(patch_hash=df22d01b7d19c67dfa713fbde9767e1f5d850e365a6b35a611e2b655cd04c0c4)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       client-only: 0.0.1
       color: 4.2.3
       debug: 4.4.3
@@ -19872,7 +19872,7 @@ snapshots:
       '@expo/schema-utils': 58.0.2
       '@radix-ui/react-slot': 1.2.3(@types/react@19.3.0)(react@19.3.0)
       '@radix-ui/react-tabs': 1.1.13(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
-      '@react-native-masked-view/masked-view': 0.3.2(patch_hash=a00816ac286e82ffe22ac5977ef0f3a34ba2a9f5cec240c9397dde306600ca75)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      '@react-native-masked-view/masked-view': 0.3.2(patch_hash=df22d01b7d19c67dfa713fbde9767e1f5d850e365a6b35a611e2b655cd04c0c4)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@react-native/normalize-colors': 0.88.0
       client-only: 0.0.1
       expo: 58.0.19(patch_hash=c5196dfcbf2edbb816d786342140f6881d8e8f2362bc3af13d9435a5c3f461da)(828b74627af3a6b2e327d27edfba810d)
