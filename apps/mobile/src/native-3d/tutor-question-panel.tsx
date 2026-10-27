@@ -2,12 +2,20 @@ import { useMemo, useState } from 'react';
 import { Asset } from 'expo-asset';
 import { File } from 'expo-file-system';
 import { ViroText } from '@reactvision/react-viro';
-import { QUESTION_CONTENT_RECT_PANEL, questionPages, type XrLearningQuestion } from '@acme/ui/xr';
+import {
+  QUESTION_CONTENT_RECT_PANEL,
+  QUESTION_PANEL_HEIGHT_M,
+  questionPages,
+  spatialSpacing,
+  type XrLearningQuestion,
+} from '@acme/ui/xr';
 import type { TutorXrQuestionPanelProps } from '@acme/app/features/tutor/tutor-xr-screen.types.ts';
 import { XrQuestionPanel } from './xr-question-panel';
 import { questionPresentationOf } from './xr-question-present';
 
 const noop = () => {};
+/* Half the grip bar's height (xr-question-panel GRIP_H). */
+const GRIP_HALF_H = 0.045;
 export async function loadTutorQuestionPanel() {
   // Metro requires a static asset reference.
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -32,11 +40,27 @@ export async function loadTutorQuestionPanel() {
       phase: 'idle', answer: { kind: 'none' }, feedback: null, hintVisible: false,
       generatedHint: null, hintBusy: false, grabbed: false, status: props.status,
     });
+    /*
+      THIS FLANK MOVES ALONE. `XrQuestionPanel` owns its carrier offset (the
+      kit's `useCarrierDrag`); its Rive input maps rays through the committed
+      carrier pose it renders, so chrome and hits stay together. A recenter
+      (a new slot) drops the offset.
+    */
+    const [grabbed, setGrabbed] = useState(false);
     return <XrQuestionPanel
-      chromeBytes={bytes} slot={props.slot} carrier={null} grabbed={false} bound={false}
-      enabled={props.enabled} movable={false} onCarrierRelease={noop} onGrab={noop}
-      gripWorld={{ position: [0, 0, 0], yawDeg: 0 }} onChromeError={props.onError}
-      presentation={{ ...presentation, answerValid: props.hasMarks && !props.busy,
+      chromeBytes={bytes} slot={props.slot} grabbed={false} bound={false} carrier={null}
+      enabled={props.enabled} movable onCarrierRelease={noop} onGrab={setGrabbed}
+      gripWorld={{
+        position: [
+          props.slot.position[0],
+          props.slot.position[1] - QUESTION_PANEL_HEIGHT_M / 2 - spatialSpacing.sm - GRIP_HALF_H,
+          props.slot.position[2],
+        ],
+        yawDeg: props.slot.yaw,
+      }}
+      onChromeError={props.onError}
+      onReady={props.onReady}
+      presentation={{ ...presentation, grabbed, answerValid: props.hasMarks && !props.busy,
         disabled: !props.enabled, submitting: props.busy, reducedMotion: true,
         progressLabel: `Page ${page + 1} / ${pages.length}`, submitLabel: 'ASK BOARD',
         continueLabel: 'NEXT PAGE', skipLabel: 'PREVIOUS', listenLabel: props.listening ? 'SEND' : 'LISTEN' }}

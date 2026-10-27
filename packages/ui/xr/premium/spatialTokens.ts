@@ -85,7 +85,10 @@ const AZIMUTH_DEG = 34; // side panels, turn from dead-ahead
 */
 const PANEL_AZIMUTH_DEG = 34;
 const TOE_DEG = 3; // extra inward face so sides wrap, not slab sideways
-const SLOT_Y = -0.1; // just below eye level (head-relative; see XrTriPanel)
+/* Panel centres sit AT the eye line of the head pose the scene opens with
+   (placed once from the settled pose, not followed). With the floor origin
+   that pose is the child's real eye height, while Natalie stands on y = 0. */
+const SLOT_Y = 0;
 
 const rad = (d: number) => (d * Math.PI) / 180;
 const onArc = (

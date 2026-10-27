@@ -219,6 +219,8 @@ export { FamilyCalendarScreen } from './features/family-calendar/screen';
    feature that needs a grant asks the same way the checklist does. */
 export {
   PermissionChecklist,
+  useAskPermissionsOnLaunch,
+  whenLaunchPermissionsAsked,
   usePermissions,
   usePermissionRequester,
   PERMISSION_KEYS,

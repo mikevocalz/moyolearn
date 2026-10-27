@@ -63,10 +63,10 @@ catalog:
   react-native-mmkv: 4.3.2
   react-native-nitro-modules: 0.37.1
   react-native-enriched-html: 1.1.1
-  react-native-gesture-handler: 3.3.0
+  react-native-gesture-handler: 3.4.0
   react-native-reanimated: 4.7.1
-  react-native-webgpu: 0.13.1
-  typegpu: 0.12.7
+  react-native-webgpu: 0.19.1
+  typegpu: 0.12.9
   react-native-safe-area-context: ~5.9.1
   react-native-screens: ~4.28.0
   # Declared explicitly even though react-native-screens already pulls it in:
@@ -74,7 +74,7 @@ catalog:
   # phantom dependency that disappears the day screens changes its own tree.
   # The version is the one screens resolves, so nothing new is installed.
   react-freeze: 1.0.4
-  react-native-worklets: 0.13.0
+  react-native-worklets: 0.13.1
   react-native-vision-camera: 5.2.3
   # HELD AT 0.9.3 — 0.10.2 is published and is an API break, not a bump.
   # 0.10 splits the flat export into subpaths (`react-native-executorch/cv`,
@@ -97,9 +97,9 @@ catalog:
   # Held with it: the fetcher registers into executorch's runtime.
   react-native-executorch-expo-resource-fetcher: 0.9.1
   "@shopify/react-native-skia": 2.14.0
-  react-native-skia-graphite-android: 154.3.0
-  react-native-skia-graphite-apple-ios: 154.3.0
-  react-native-skia-graphite-apple-macos: 154.3.0
+  react-native-skia-graphite-android: 157.0.0
+  react-native-skia-graphite-apple-ios: 157.0.0
+  react-native-skia-graphite-apple-macos: 157.0.0
   "@react-navigation/native": 7.4.1
   solito: 5.0.0
   lucide-react: 1.47.0
@@ -215,6 +215,11 @@ catalog:
   "@tanstack/react-start": 1.168.60
   "@legendapp/list": 3.3.11
   "@legendapp/motion": 2.5.3
+  # Meta VR Layout SDK JS halves, quest flavor only (apps/mobile
+  # src/spatial/metaWindows.ts). Same pins as Harlem Might's lockfile; the
+  # native AARs come from the metavrx BOM in android/app/build.gradle.
+  "@metavr/layout-compat": 1.0.0
+  "@metavr/layout-window-compat": 1.0.0
   date-fns: 4.4.0
   zustand: 5.0.15
   zod: 4.6.5

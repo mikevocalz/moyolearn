@@ -6,7 +6,7 @@ import assert from 'node:assert/strict';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { ADMISSION, ABIS, enableSkiaGraphite, verifyHeaderArchive } from './enable-skia-graphite.mjs';
+import { ADMISSION, ABIS, enableSkiaGraphite, verifyHeader } from './enable-skia-graphite.mjs';
 
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'moyo-graphite-test-'));
@@ -41,7 +41,7 @@ test('absent renderer keeps web-only installation a no-op', async (t) => {
   assert.match(await f.run(), /absent/); assert.equal(f.fetches(), 0);
 });
 test('rejects unknown package combinations before publishing a marker', async (t) => {
-  const f = fixture(t); f.pkg('react-native-webgpu-dawn', { version: '154.2.0', dawn: {} });
+  const f = fixture(t); f.pkg('react-native-webgpu-dawn', { version: '154.3.0', dawn: {} });
   await assert.rejects(f.run(), /unreviewed/);
   assert.equal(existsSync(join(f.skia, 'libs/.dawn-version')), false); assert.equal(f.fetches(), 0);
 });
@@ -50,7 +50,7 @@ test('rejects differing Dawn source patches', async (t) => {
   await assert.rejects(f.run(), /unreviewed/);
 });
 test('rejects Graphite source identity different from shared Dawn', async (t) => {
-  const f = fixture(t); f.pkg('react-native-skia-graphite-apple-ios', { version: ADMISSION.version, skia: { version: 'm154', graphite: true } });
+  const f = fixture(t); f.pkg('react-native-skia-graphite-apple-ios', { version: ADMISSION.version, skia: { version: 'm154_8037_58c', graphite: true } });
   await assert.rejects(f.run(), /unreviewed/);
 });
 test('requires every Android source artifact before publishing', async (t) => {
@@ -63,7 +63,7 @@ test('rejects stale Dawn headers despite current package metadata', async (t) =>
 });
 test('stages exact owner binaries and normalizes headers like upstream', async (t) => {
   const f = fixture(t); await f.run();
-  assert.equal(readFileSync(join(f.skia, 'libs/.dawn-version'), 'utf8'), 'dawn-chrome-m154a');
+  assert.equal(readFileSync(join(f.skia, 'libs/.dawn-version'), 'utf8'), 'dawn-chrome-m157');
   assert.equal(readFileSync(join(f.skia, 'cpp/dawn/include/webgpu/webgpu.h'), 'utf8'), 'fresh dawn/webgpu.h');
   assert.equal(existsSync(join(f.skia, 'cpp/dawn/include/dawn/webgpu.h')), false);
   assert.equal(readFileSync(join(f.skia, 'cpp/dawn/include/dawn/dawn_proc_table.h'), 'utf8'), '#include "webgpu/webgpu.h"');
@@ -97,8 +97,8 @@ test('download failure cannot publish a current admission stamp', async (t) => {
   assert.equal(existsSync(join(f.skia, 'libs/.graphite-admission.json')), false);
   assert.equal(existsSync(join(f.skia, 'libs/.dawn-version')), false);
 });
-test('checksum verifier rejects modified header archive bytes', () => {
-  assert.throws(() => verifyHeaderArchive(Buffer.from('tampered headers')), /checksum mismatch/);
+test('checksum verifier rejects modified header bytes', () => {
+  assert.throws(() => verifyHeader('ResourceTypes.h', Buffer.from('tampered header')), /checksum mismatch/);
 });
 
 test('normalizes generated headers without optional upstream webgpu shims', async (t) => {
