@@ -3,7 +3,7 @@ new file mode 100644
 index 0000000000000000000000000000000000000000..97cbd06d9fb31ed9e1d15aad70d7d0d6d5b75c2a
 --- /dev/null
 +++ b/Package.swift
-@@ -0,0 +1,263 @@
+@@ -0,0 +1,278 @@
 +// swift-tools-version: 6.0
 +// SwiftPM manifest for react-native-audio-api 0.13.4, for React Native's SwiftPM
 +// autolinking. The package ships only RNAudioAPI.podspec. This file reproduces
@@ -94,16 +94,31 @@ index 0000000000000000000000000000000000000000..97cbd06d9fb31ed9e1d15aad70d7d0d6
 +    ("RN_AUDIO_API_ENABLE_WORKLETS", "1"),
 +]
 +
++// react-native-executorch compiles its own copy of the pffft C library. CocoaPods
++// linked both as static libraries, where the linker took only what it needed;
++// SwiftPM merges each package into one object, so the two copies collide
++// ("15 duplicate symbols"). Rename this package's copy at compile time.
++let pffftSymbols = [
++    "cfftf1_ps", "cffti1_ps", "pffft_aligned_free", "pffft_aligned_malloc",
++    "pffft_cplx_finalize", "pffft_cplx_preprocess", "pffft_destroy_setup",
++    "pffft_new_setup", "pffft_simd_size", "pffft_transform", "pffft_transform_internal",
++    "pffft_transform_ordered", "pffft_zconvolve_accumulate", "pffft_zreorder",
++    "validate_pffft_simd",
++]
++let renamedPffft = pffftSymbols.map { ($0, "rnaudioapi_\($0)") }
++
 +let prefixHeader = ["-include", "react-native-spm-prefix.h"]
 +
 +let cSettings: [CSetting] =
 +    headerPaths.map { .headerSearchPath($0) }
 +    + defines.map { .define($0.0, to: $0.1) }
++    + renamedPffft.map { .define($0.0, to: $0.1) }
 +    + [.unsafeFlags(prefixHeader)]
 +
 +let cxxSettings: [CXXSetting] =
 +    headerPaths.map { .headerSearchPath($0) }
 +    + defines.map { .define($0.0, to: $0.1) }
++    + renamedPffft.map { .define($0.0, to: $0.1) }
 +    + [
 +        .define("FOLLY_NO_CONFIG"),
 +        // FOLLY_NO_CONFIG skips folly-config.h, which is where React Native turns coroutines off.

@@ -14,7 +14,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 export const ADMISSION = Object.freeze({
   renderer: '2.14.0', version: '157.0.0', skia: 'm157',
   dawnCommit: 'ada567700e13aecf7989d78b21f7d330b522ea80',
-  dawnTag: 'chrome-m157', webgpu: '0.19.1',
+  dawnTag: 'chrome-m157', webgpu: '0.19.2',
   patches: ['metal-maccatalyst.patch', 'vulkan-fifo-three-images-android.patch'],
   // No m157 header release exists, so the three private Graphite headers come
   // straight from Skia at the externals/skia commit of the 157.0.0 publisher

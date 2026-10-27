@@ -298,8 +298,8 @@ catalogs:
       specifier: 0.21.2
       version: 0.21.2
     react-native-webgpu:
-      specifier: 0.19.1
-      version: 0.19.1
+      specifier: 0.19.2
+      version: 0.19.2
     react-native-webview:
       specifier: 14.0.1
       version: 14.0.1
@@ -452,7 +452,7 @@ patchedDependencies:
     hash: bbd923009cf67cb3cc7617f7322b90d0c467de861125b81251470f70e63afa97
     path: patches/expo-task-manager@58.0.12.patch
   react-native-audio-api@0.13.4:
-    hash: bc0cdcabea414ebc23547c332f85236c690edb2ff459b7d46987000ed185c425
+    hash: 3751309ccf237aba1e31a43f239af9e625f12b66739b5b9abd9960886dc80f26
     path: patches/react-native-audio-api@0.13.4.patch
   react-native-enriched-html@1.1.1:
     hash: d48bde26daa9d3c03bdb9d9febd2609088b9eadac36bd4d6aa4fc4d7b78541d1
@@ -702,7 +702,7 @@ importers:
         version: 0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
       react-native-audio-api:
         specifier: 'catalog:'
-        version: 0.13.4(patch_hash=bc0cdcabea414ebc23547c332f85236c690edb2ff459b7d46987000ed185c425)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 0.13.4(patch_hash=3751309ccf237aba1e31a43f239af9e625f12b66739b5b9abd9960886dc80f26)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-enriched-html:
         specifier: 'catalog:'
         version: 1.1.1(patch_hash=d48bde26daa9d3c03bdb9d9febd2609088b9eadac36bd4d6aa4fc4d7b78541d1)(@floating-ui/dom@1.8.0)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -753,7 +753,7 @@ importers:
         version: 0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react-native-webgpu:
         specifier: 'catalog:'
-        version: 0.19.1(675f005f5c7bd37d86a9ed8acf738b1e)
+        version: 0.19.2(675f005f5c7bd37d86a9ed8acf738b1e)
       react-native-webview:
         specifier: 'catalog:'
         version: 14.0.1(patch_hash=d5f40c2a43072b00490f4d2491850816ba34c1748b3989270322eb01443bd800)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -1216,7 +1216,7 @@ importers:
         version: 0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
       react-native-audio-api:
         specifier: 'catalog:'
-        version: 0.13.4(patch_hash=bc0cdcabea414ebc23547c332f85236c690edb2ff459b7d46987000ed185c425)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 0.13.4(patch_hash=3751309ccf237aba1e31a43f239af9e625f12b66739b5b9abd9960886dc80f26)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-enriched-html:
         specifier: 'catalog:'
         version: 1.1.1(patch_hash=d48bde26daa9d3c03bdb9d9febd2609088b9eadac36bd4d6aa4fc4d7b78541d1)(@floating-ui/dom@1.8.0)(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -10819,8 +10819,8 @@ packages:
   react-native-webgpu-dawn@157.0.0:
     resolution: {integrity: sha512-HRquN2/995ZvcxiKDTiCwk3CduOYg9g3AK4yyoPrfMt5qUBbS6SefCpXE5mksvY4YaFrj2PqrtUuY2K1NkXsmQ==}
 
-  react-native-webgpu@0.19.1:
-    resolution: {integrity: sha512-OKxYSg6Tql5UnW6IQPWqWvi48BQJJU/Ge8mVFLWkUxVjv/Oc5qsqDP5OBUCzaFyH2nNegUbpnYcfnfGG3Qa5+A==}
+  react-native-webgpu@0.19.2:
+    resolution: {integrity: sha512-u+kJxyEUs2SKuphvNpkkyAltUwkWG5lIfB2moclr8GVxsDr/jsCS0iAe1va1IuHe6TafjtMHqYjQY8c/0H4AlQ==}
     peerDependencies:
       react: 19.3.0
       react-native: 0.88.0
@@ -22599,7 +22599,7 @@ snapshots:
 
   react-is@19.2.7: {}
 
-  react-native-audio-api@0.13.4(patch_hash=bc0cdcabea414ebc23547c332f85236c690edb2ff459b7d46987000ed185c425)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  react-native-audio-api@0.13.4(patch_hash=3751309ccf237aba1e31a43f239af9e625f12b66739b5b9abd9960886dc80f26)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       react: 19.3.0
       react-native: 0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
@@ -22816,7 +22816,7 @@ snapshots:
 
   react-native-webgpu-dawn@157.0.0: {}
 
-  react-native-webgpu@0.19.1(675f005f5c7bd37d86a9ed8acf738b1e):
+  react-native-webgpu@0.19.2(675f005f5c7bd37d86a9ed8acf738b1e):
     dependencies:
       react: 19.3.0
       react-native: 0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
