@@ -30,7 +30,7 @@ jobs:
           rn=$(node -p "require('./node_modules/react-native/package.json').version")
           xcode=$(xcodebuild -version | head -1 | tr ' ' '-')
           echo "key=expo-xcframeworks-$rn-$xcode-${{ hashFiles('tooling/expo-prebuilds/**', 'patches/expo-task-manager@*.patch') }}" >> "$GITHUB_OUTPUT"
-      - uses: actions/cache@v4
+      - uses: actions/cache/restore@v4
         id: expo-cache
         with:
           path: .cache/expo-xcframeworks
@@ -40,6 +40,12 @@ jobs:
         run: |
           set -o pipefail
           tooling/expo-prebuilds/build.sh "$RUNNER_TEMP/expo-work" "$EXPO_PRECOMPILED_MODULES_PATH" 2>&1 | tee "$RUNNER_TEMP/expo-prebuild.log"
+      # Saved right away, not in a post step, so a later app build failure keeps it.
+      - uses: actions/cache/save@v4
+        if: steps.expo-cache.outputs.cache-hit != 'true'
+        with:
+          path: .cache/expo-xcframeworks
+          key: ${{ steps.expo-key.outputs.key }}
       - name: Generate ios/ and resolve SwiftPM packages
         run: |
           set -o pipefail
