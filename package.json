@@ -95,7 +95,8 @@
       "expo-font": "patches/expo-font.patch",
       "expo": "patches/expo.patch",
       "expo-constants": "patches/expo-constants.patch",
-      "react-native-webview@14.0.1": "patches/react-native-webview@14.0.1.patch"
+      "react-native-webview@14.0.1": "patches/react-native-webview@14.0.1.patch",
+      "react-native-svg@15.16.0": "patches/react-native-svg@15.16.0.patch"
     },
     "supportedArchitectures": {
       "cpu": [

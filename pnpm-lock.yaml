@@ -435,6 +435,9 @@ patchedDependencies:
   react-native-screens:
     hash: d3ae7bb5ebbdf60c9ba644dbc32c7f79ee8bdde7f03a29071f465dbd1fe6eca5
     path: patches/react-native-screens.patch
+  react-native-svg@15.16.0:
+    hash: c0bab4c112f2596a04c8bf9d9d3fed286b473703600f74dae3d04dc61fe190df
+    path: patches/react-native-svg@15.16.0.patch
   react-native-webview@14.0.1:
     hash: 42705c59627d0028a9e837908343fedb4af8a16435e9568b94198498e6139a41
     path: patches/react-native-webview@14.0.1.patch
@@ -629,7 +632,7 @@ importers:
         version: 58.0.6(expo@58.0.19)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))
       lucide-react-native:
         specifier: 'catalog:'
-        version: 1.47.0(react-native-svg@15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 1.47.0(react-native-svg@15.16.0(patch_hash=c0bab4c112f2596a04c8bf9d9d3fed286b473703600f74dae3d04dc61fe190df)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       nitro-canvas-in-Vision:
         specifier: file:../../vendors/nitro-canvas-in-Vision-0.0.2-rive.4-nitro-v1.tgz
         version: file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -680,7 +683,7 @@ importers:
         version: 4.30.0(patch_hash=d3ae7bb5ebbdf60c9ba644dbc32c7f79ee8bdde7f03a29071f465dbd1fe6eca5)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-svg:
         specifier: 'catalog:'
-        version: 15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 15.16.0(patch_hash=c0bab4c112f2596a04c8bf9d9d3fed286b473703600f74dae3d04dc61fe190df)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-web:
         specifier: 'catalog:'
         version: 0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -1131,7 +1134,7 @@ importers:
         version: 1.47.0(react@19.3.0)
       lucide-react-native:
         specifier: 'catalog:'
-        version: 1.47.0(react-native-svg@15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 1.47.0(react-native-svg@15.16.0(patch_hash=c0bab4c112f2596a04c8bf9d9d3fed286b473703600f74dae3d04dc61fe190df)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       nitro-core:
         specifier: 'catalog:'
         version: 1.0.0-alpha.nightly.100.g107f6fc66597
@@ -1188,7 +1191,7 @@ importers:
         version: 157.0.0
       react-native-svg:
         specifier: 'catalog:'
-        version: 15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 15.16.0(patch_hash=c0bab4c112f2596a04c8bf9d9d3fed286b473703600f74dae3d04dc61fe190df)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-vision-camera:
         specifier: file:../../vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz
         version: file:vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz(900a24f2aa0dd4e642321209d08ac0fc)
@@ -1599,7 +1602,7 @@ importers:
         version: 1.47.0(react@19.3.0)
       lucide-react-native:
         specifier: 'catalog:'
-        version: 1.47.0(react-native-svg@15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 1.47.0(react-native-svg@15.16.0(patch_hash=c0bab4c112f2596a04c8bf9d9d3fed286b473703600f74dae3d04dc61fe190df)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       nitro-core:
         specifier: 'catalog:'
         version: 1.0.0-alpha.nightly.100.g107f6fc66597
@@ -1632,7 +1635,7 @@ importers:
         version: 5.10.1(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-svg:
         specifier: 'catalog:'
-        version: 15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 15.16.0(patch_hash=c0bab4c112f2596a04c8bf9d9d3fed286b473703600f74dae3d04dc61fe190df)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-webview:
         specifier: 'catalog:'
         version: 14.0.1(patch_hash=42705c59627d0028a9e837908343fedb4af8a16435e9568b94198498e6139a41)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -1647,7 +1650,7 @@ importers:
         version: 2.0.8(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       sonner-native:
         specifier: 'catalog:'
-        version: 0.27.0(69ccdad32eed9b4dba5da250aa6b98b7)
+        version: 0.27.0(312231c59f91561610b2fedd7402120b)
       tailwind-merge:
         specifier: 'catalog:'
         version: 3.7.0
@@ -15766,9 +15769,7 @@ snapshots:
       metro-runtime: 0.87.1
     transitivePeerDependencies:
       - '@babel/core'
-      - bufferutil
       - supports-color
-      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 
@@ -21337,17 +21338,17 @@ snapshots:
     dependencies:
       yallist: 3.1.1
 
-  lucide-react-native@1.47.0(react-native-svg@15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  lucide-react-native@1.47.0(react-native-svg@15.16.0(patch_hash=c0bab4c112f2596a04c8bf9d9d3fed286b473703600f74dae3d04dc61fe190df)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       react: 19.3.0
       react-native: 0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
-      react-native-svg: 15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react-native-svg: 15.16.0(patch_hash=c0bab4c112f2596a04c8bf9d9d3fed286b473703600f74dae3d04dc61fe190df)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
-  lucide-react-native@1.47.0(react-native-svg@15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  lucide-react-native@1.47.0(react-native-svg@15.16.0(patch_hash=c0bab4c112f2596a04c8bf9d9d3fed286b473703600f74dae3d04dc61fe190df)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       react: 19.3.0
       react-native: 0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0)
-      react-native-svg: 15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react-native-svg: 15.16.0(patch_hash=c0bab4c112f2596a04c8bf9d9d3fed286b473703600f74dae3d04dc61fe190df)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
   lucide-react@1.47.0(react@19.3.0):
     dependencies:
@@ -23072,14 +23073,14 @@ snapshots:
 
   react-native-skia-graphite-apple-macos@157.0.0: {}
 
-  react-native-svg@15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  react-native-svg@15.16.0(patch_hash=c0bab4c112f2596a04c8bf9d9d3fed286b473703600f74dae3d04dc61fe190df)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       css-select: 5.2.2
       css-tree: 1.1.3
       react: 19.3.0
       react-native: 0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
 
-  react-native-svg@15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  react-native-svg@15.16.0(patch_hash=c0bab4c112f2596a04c8bf9d9d3fed286b473703600f74dae3d04dc61fe190df)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       css-select: 5.2.2
       css-tree: 1.1.3
@@ -23879,7 +23880,7 @@ snapshots:
     dependencies:
       atomic-sleep: 1.0.0
 
-  sonner-native@0.27.0(69ccdad32eed9b4dba5da250aa6b98b7):
+  sonner-native@0.27.0(312231c59f91561610b2fedd7402120b):
     dependencies:
       react: 19.3.0
       react-native: 0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
@@ -23887,7 +23888,7 @@ snapshots:
       react-native-reanimated: 4.7.1(patch_hash=978b0108c991de643f838b3faa0d32f53df3e9c7ff1f1a4e50f389a36c09b0c8)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-safe-area-context: 5.10.1(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-screens: 4.30.0(patch_hash=d3ae7bb5ebbdf60c9ba644dbc32c7f79ee8bdde7f03a29071f465dbd1fe6eca5)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
-      react-native-svg: 15.16.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react-native-svg: 15.16.0(patch_hash=c0bab4c112f2596a04c8bf9d9d3fed286b473703600f74dae3d04dc61fe190df)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-worklets: 0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
   sonner@1.7.4(react-dom@19.3.0(react@19.3.0))(react@19.3.0):
