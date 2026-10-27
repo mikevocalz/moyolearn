@@ -1,5 +1,5 @@
 diff --git a/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m b/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m
-index e12efe950115d9a69a454c5f29d04a1d475622a9..6078050565bf51ddfcba077087b3802ca4a958ee 100644
+index e12efe9..6078050 100644
 --- a/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m
 +++ b/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m
 @@ -75,6 +75,7 @@ static dispatch_once_t onceToken;
@@ -18,3 +18,109 @@ index e12efe950115d9a69a454c5f29d04a1d475622a9..6078050565bf51ddfcba077087b3802c
  
  - (BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray<id<UIUserActivityRestoring>> * _Nullable))restorationHandler
  {
+diff --git a/scripts/spm/manifests.js b/scripts/spm/manifests.js
+index c42928b..d9334eb 100644
+--- a/scripts/spm/manifests.js
++++ b/scripts/spm/manifests.js
+@@ -868,6 +868,10 @@ function emitPackage(
+   }
+ ) {
+   const { targetDeps, pkgDeps } = sourceDependencies(react, codegenPkgPath, jsiHeadersPkgPath);
++  for (const lib of manifest.autolinkedLibs ?? []) {
++    pkgDeps.push(`.package(name: "${lib.name}", path: "${escapeSwiftString(lib.path)}")`);
++    targetDeps.push(`.product(name: "${lib.name}", package: "${lib.name}")`);
++  }
+   const { manifest: linked, partlyProvidedPackages } = withoutSatisfiedProducts(
+     manifest,
+     satisfiedDependencies
+@@ -1012,6 +1016,7 @@ function emitPureSwiftSourcePackage(
+     iosDeploymentTarget = null,
+     spmPackages = [],
+     sources = scanAppleSources(moduleRoot),
++    autolinkedLibs = [],
+   },
+   emitContext
+ ) {
+@@ -1024,7 +1029,7 @@ function emitPureSwiftSourcePackage(
+     hasPrivacyManifest: fs.existsSync(path.join(srcDir, PRIVACY_MANIFEST)),
+     packages: spmPackages.map(documentedPackage),
+   });
+-  return emitPackage(manifest, moduleRoot, emitContext);
++  return emitPackage({ ...manifest, autolinkedLibs }, moduleRoot, emitContext);
+ }
+ 
+ module.exports = {
+diff --git a/scripts/spm/plugin.js b/scripts/spm/plugin.js
+index 00a7c98..f754489 100644
+--- a/scripts/spm/plugin.js
++++ b/scripts/spm/plugin.js
+@@ -587,11 +587,36 @@ function emitSourceModule(identity, hasManifest, emitContext, dumpManifest) {
+   }
+   if (!sources.hasSources) return null;
+   return emitPureSwiftSourcePackage(
+-    { moduleRoot, product: podName, iosDeploymentTarget, spmPackages, sources },
++    {
++      moduleRoot,
++      product: podName,
++      iosDeploymentTarget,
++      spmPackages,
++      sources,
++      autolinkedLibs: autolinkedLibDependencies(podspec.dependencies, emitContext.libsDir),
++    },
+     emitContext
+   );
+ }
+ 
++/**
++ * The podspec dependencies React Native autolinked as SwiftPM packages, by the
++ * libs/<name> alias it writes for each (react-native/scripts/spm/
++ * generate-spm-autolinking.js). CocoaPods links such a dependency for the module
++ * (expo-router's `add_dependency(s, "RNScreens")`); without it a pure-Swift module
++ * that imports the library fails with "Unable to resolve module dependency".
++ * Only aliases whose manifest exports a library of the same name are used.
++ */
++function autolinkedLibDependencies(podDependencies, libsDir) {
++  if (libsDir == null) return [];
++  const names = new Set((podDependencies ?? []).map((dep) => dep.split('/')[0]));
++  return [...names].filter((name) => {
++    const manifest = path.join(libsDir, name, 'Package.swift');
++    if (!fs.existsSync(manifest)) return false;
++    return fs.readFileSync(manifest, 'utf8').includes(`.library(name: "${name}"`);
++  }).map((name) => ({ name, path: path.join(libsDir, name) }));
++}
++
+ /**
+  * Pass 2 — invariant source modules. They compile against the generated
+  * headers/module-interface tree and leave runtime linking entirely to RN.
+@@ -1050,7 +1075,13 @@ module.exports = function expoSpmPlugin(context) {
+     cacheDir: artifactCacheDir,
+     matchBuildFromSource,
+     dumpManifest: manifestDumper(),
+-    sourceContext: { react, outDir, codegenPkgPath, jsiHeadersPkgPath },
++    sourceContext: {
++      react,
++      outDir,
++      codegenPkgPath,
++      jsiHeadersPkgPath,
++      libsDir: path.join(outputDir, 'libs'),
++    },
+   };
+   // A pod a buildFromSource pattern matches is linked precompiled when no source route takes
+   // it, as ExpoModulesCore never is. Linking one changes what pass 2 decides — a sibling pod's
+diff --git a/scripts/spm/podspec.js b/scripts/spm/podspec.js
+index 44117ae..9b9496e 100644
+--- a/scripts/spm/podspec.js
++++ b/scripts/spm/podspec.js
+@@ -126,7 +126,11 @@ function xcconfigLinkerFlags(text) {
+ function podspecDependencies(text) {
+   const deps = [];
+   for (const { text: line } of podspecBodyLines(text)) {
+-    const match = line.match(/\.dependency\s+['"]([^'"]+)['"]/);
++    // `add_dependency(s, 'Pod')` is React Native's helper (cocoapods/utils.rb); expo-router
++    // declares RNScreens through it.
++    const match =
++      line.match(/\.dependency\s+['"]([^'"]+)['"]/) ??
++      line.match(/\badd_dependency\(\s*\w+\s*,\s*['"]([^'"]+)['"]/);
+     if (match) deps.push(match[1]);
+   }
+   return deps;
