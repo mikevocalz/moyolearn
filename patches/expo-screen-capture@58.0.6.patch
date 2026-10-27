@@ -1,0 +1,10 @@
+diff --git a/ios/AnimatedBlurEffectView.swift b/ios/AnimatedBlurEffectView.swift
+index 76553c1..ea3246b 100644
+--- a/ios/AnimatedBlurEffectView.swift
++++ b/ios/AnimatedBlurEffectView.swift
+@@ -1,3 +1,5 @@
++import UIKit
++
+ class AnimatedBlurEffectView: UIVisualEffectView {
+   private let blurIntensity: CGFloat
+   private let blurStyle: UIBlurEffect.Style

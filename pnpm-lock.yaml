@@ -408,6 +408,9 @@ patchedDependencies:
   expo-horizon-core@57.0.2:
     hash: 172e3c7ecbafcb16ab5522eaf4fc571bc8c52ba4b2b988817f8870b0f805353a
     path: patches/expo-horizon-core@57.0.2.patch
+  expo-image-picker@58.0.10:
+    hash: 66f39c65c43199eb37bb4080e6446a4cc3c589614fa04947eda0559cff5b9994
+    path: patches/expo-image-picker@58.0.10.patch
   expo-keep-awake@58.0.3:
     hash: 9f6f3747e90884e26f328525e7ca66bee694a0974ecbb39a7e02b9333adaa406
     path: patches/expo-keep-awake@58.0.3.patch
@@ -426,6 +429,9 @@ patchedDependencies:
   expo-router@57.0.15:
     hash: ff66019f9f6a629493ace94ff9b1dd29211dfce7b2cd26da19004fcbc576e52d
     path: patches/expo-router@57.0.15.patch
+  expo-screen-capture@58.0.6:
+    hash: 618315c03651265615e039e7b421316acacd1586a5652e6d86db62cd4e7f28e9
+    path: patches/expo-screen-capture@58.0.6.patch
   expo-task-manager@58.0.12:
     hash: bbd923009cf67cb3cc7617f7322b90d0c467de861125b81251470f70e63afa97
     path: patches/expo-task-manager@58.0.12.patch
@@ -620,7 +626,7 @@ importers:
         version: 58.0.26(patch_hash=127fed0aebca698044bf11e2c2fcb16a614dc1e8876a5020c39e247d615bc6ac)(2f81de8bf0d626d6451657bf20b81a5f)
       expo-screen-capture:
         specifier: 'catalog:'
-        version: 58.0.6(expo@58.0.19)(react@19.3.0)
+        version: 58.0.6(patch_hash=618315c03651265615e039e7b421316acacd1586a5652e6d86db62cd4e7f28e9)(expo@58.0.19)(react@19.3.0)
       expo-secure-store:
         specifier: 'catalog:'
         version: 58.0.2(expo@58.0.19)
@@ -1137,7 +1143,7 @@ importers:
         version: 58.0.15(expo@58.0.19)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       expo-image-picker:
         specifier: 'catalog:'
-        version: 58.0.10(expo@58.0.19)
+        version: 58.0.10(patch_hash=66f39c65c43199eb37bb4080e6446a4cc3c589614fa04947eda0559cff5b9994)(expo@58.0.19)
       fflate:
         specifier: 0.8.2
         version: 0.8.2
@@ -1470,7 +1476,7 @@ importers:
     dependencies:
       expo-screen-capture:
         specifier: 'catalog:'
-        version: 58.0.6(expo@58.0.19)(react@19.3.0)
+        version: 58.0.6(patch_hash=618315c03651265615e039e7b421316acacd1586a5652e6d86db62cd4e7f28e9)(expo@58.0.19)(react@19.3.0)
       expo-secure-store:
         specifier: 'catalog:'
         version: 58.0.2(expo@58.0.19)
@@ -19850,7 +19856,7 @@ snapshots:
       react: 19.3.0
       react-native: 0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
 
-  expo-image-picker@58.0.10(expo@58.0.19):
+  expo-image-picker@58.0.10(patch_hash=66f39c65c43199eb37bb4080e6446a4cc3c589614fa04947eda0559cff5b9994)(expo@58.0.19):
     dependencies:
       expo: 58.0.19(patch_hash=51964604d9d9845d83fc7864d4236e7a9695e906fa653d8acdebd0556c7e2de4)(828b74627af3a6b2e327d27edfba810d)
       expo-image-loader: 58.0.3(expo@58.0.19)
@@ -20086,7 +20092,7 @@ snapshots:
       - '@types/react-dom'
     optional: true
 
-  expo-screen-capture@58.0.6(expo@58.0.19)(react@19.3.0):
+  expo-screen-capture@58.0.6(patch_hash=618315c03651265615e039e7b421316acacd1586a5652e6d86db62cd4e7f28e9)(expo@58.0.19)(react@19.3.0):
     dependencies:
       expo: 58.0.19(patch_hash=51964604d9d9845d83fc7864d4236e7a9695e906fa653d8acdebd0556c7e2de4)(@babel/core@7.29.7)(@expo/dom-webview@58.0.2)(@expo/metro-runtime@58.0.15)(expo-router@58.0.26)(react-dom@19.3.0(react@19.3.0))(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native-webview@14.0.1(patch_hash=d5f40c2a43072b00490f4d2491850816ba34c1748b3989270322eb01443bd800)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(typescript@6.0.3)
       react: 19.3.0
