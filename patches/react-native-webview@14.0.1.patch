@@ -1,6 +1,6 @@
 diff --git a/Package.swift b/Package.swift
 new file mode 100644
-index 0000000..eafce17
+index 0000000..014190b
 --- /dev/null
 +++ b/Package.swift
 @@ -0,0 +1,54 @@
@@ -52,7 +52,7 @@ index 0000000..eafce17
 +            ],
 +            publicHeadersPath: "apple",
 +            cSettings: [.headerSearchPath("apple"), .headerSearchPath("."), .unsafeFlags(["-include", "react-native-spm-prefix.h"])],
-+            cxxSettings: [.headerSearchPath("apple"), .headerSearchPath("."), .unsafeFlags(["-include", "react-native-spm-prefix.h"]), .unsafeFlags(["-DFOLLY_NO_CONFIG", "-DFOLLY_MOBILE=1", "-DFOLLY_USE_LIBCPP=1", "-Wno-comma", "-Wno-shorten-64-to-32", "-DRCT_NEW_ARCH_ENABLED=1"]), .define("DEBUG", .when(configuration: .debug)), .define("NDEBUG", .when(configuration: .release))],
++            cxxSettings: [.headerSearchPath("apple"), .headerSearchPath("."), .unsafeFlags(["-include", "react-native-spm-prefix.h"]), .unsafeFlags(["-DFOLLY_NO_CONFIG", "-DFOLLY_CFG_NO_COROUTINES=1", "-DFOLLY_MOBILE=1", "-DFOLLY_USE_LIBCPP=1", "-Wno-comma", "-Wno-shorten-64-to-32", "-DRCT_NEW_ARCH_ENABLED=1"]), .define("DEBUG", .when(configuration: .debug)), .define("NDEBUG", .when(configuration: .release))],
 +            linkerSettings: [.linkedFramework("UIKit"), .linkedFramework("Foundation"), .linkedFramework("CoreGraphics")]
 +        ),
 +    ],
