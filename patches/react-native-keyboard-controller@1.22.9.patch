@@ -1,0 +1,252 @@
+diff --git a/.build/.buildSystem_debug b/.build/.buildSystem_debug
+new file mode 100644
+index 0000000..c337257
+--- /dev/null
++++ b/.build/.buildSystem_debug
+@@ -0,0 +1 @@
++swiftbuild
+\ No newline at end of file
+diff --git a/.build/CACHEDIR.TAG b/.build/CACHEDIR.TAG
+new file mode 100644
+index 0000000..b7ab0d8
+--- /dev/null
++++ b/.build/CACHEDIR.TAG
+@@ -0,0 +1,4 @@
++Signature: 8a477f597d28d172789f06886806bc55
++# This file is a cache directory tag created by (Swift Package Manager).
++# For information about cache directory tags, see:
++#.   http://www.brynosaurus.com/cachedir/
+\ No newline at end of file
+diff --git a/Package.swift b/Package.swift
+new file mode 100644
+index 0000000..feec389
+--- /dev/null
++++ b/Package.swift
+@@ -0,0 +1,170 @@
++// swift-tools-version: 6.0
++// Hand-written split of react-native-keyboard-controller for React Native's
++// SwiftPM autolinking. `react-native spm scaffold` emits one target, which
++// SwiftPM cannot build because the package mixes Swift and Objective-C(++).
++//
++// The dependency runs both ways in the CocoaPods build (one module), so it is
++// cut into three targets:
++//   KeyboardControllerBase      ObjC events and categories the Swift code calls,
++//                               plus the KeyboardController class declaration.
++//   react_native_keyboard_controller
++//                               every Swift source. The module keeps the pod's
++//                               name, so the ObjC++ files' existing
++//                               "react_native_keyboard_controller-Swift.h"
++//                               import resolves unchanged.
++//   ReactNativeKeyboardControllerObjC
++//                               the TurboModule, the Fabric views and the shared
++//                               C++ shadow nodes. It defines KeyboardController,
++//                               which the Swift target only references; the
++//                               symbol resolves when the app links all three.
++//
++// Package references are relative to the autolinking symlink at
++// ios/build/generated/autolinking/libs/<name>, like every scaffolded manifest.
++
++import PackageDescription
++
++let reactHeaders: [Target.Dependency] = [
++    .product(name: "ReactHeaders", package: "ReactNative"),
++    .product(name: "ReactNativeHeaders", package: "ReactNative"),
++    .product(name: "ReactNativeDependenciesHeaders", package: "ReactNative"),
++    .product(name: "ReactAppHeaders", package: "React-GeneratedCode"),
++]
++
++let objcHeaderPaths: [String] = [
++    ".", "ios", "ios/events", "ios/objc", "ios/views",
++    "common/cpp", "common/cpp/react/renderer/components/RNKC",
++]
++
++let prefixHeader = ["-include", "react-native-spm-prefix.h"]
++
++let package = Package(
++    name: "react-native-keyboard-controller",
++    platforms: [.iOS("17.0")],
++    products: [
++        .library(
++            name: "react-native-keyboard-controller",
++            targets: ["KeyboardControllerBase", "react_native_keyboard_controller", "ReactNativeKeyboardControllerObjC"]
++        ),
++    ],
++    dependencies: [
++        .package(name: "ReactNative", path: "../../../../xcframeworks"),
++        .package(name: "React-GeneratedCode", path: "../../../ios"),
++    ],
++    targets: [
++        .target(
++            name: "KeyboardControllerBase",
++            dependencies: reactHeaders,
++            path: ".",
++            sources: [
++                "ios/events/FocusedInputLayoutChangedEvent.m",
++                "ios/events/FocusedInputSelectionChangedEvent.m",
++                "ios/events/FocusedInputTextChangedEvent.m",
++                "ios/events/KeyboardMoveEvent.m",
++                "ios/objc/NSObject+SafeKVC.m",
++                "ios/objc/RCTUIManager+LayoutAnimationManager.m",
++                "ios/objc/TextInput+DelegateManager.m",
++            ],
++            publicHeadersPath: "spm/base",
++            cSettings: objcHeaderPaths.map { .headerSearchPath($0) } + [.unsafeFlags(prefixHeader)],
++            linkerSettings: [.linkedFramework("UIKit"), .linkedFramework("Foundation")]
++        ),
++        .target(
++            name: "react_native_keyboard_controller",
++            dependencies: reactHeaders + ["KeyboardControllerBase"],
++            path: ".",
++            sources: [
++                "ios/animations/KeyboardAnimation.swift",
++                "ios/animations/SpringAnimation.swift",
++                "ios/animations/TimingAnimation.swift",
++                "ios/core/KeyboardControllerConfiguration.swift",
++                "ios/core/UIUtils.swift",
++                "ios/delegates/KCTextInputCompositeDelegate.swift",
++                "ios/events/KeyboardEventEmitterPayload.swift",
++                "ios/extensions/CGFloat.swift",
++                "ios/extensions/Date.swift",
++                "ios/extensions/Notification.swift",
++                "ios/extensions/NSObject.swift",
++                "ios/extensions/String.swift",
++                "ios/extensions/UIApplication.swift",
++                "ios/extensions/UIKeyboardType.swift",
++                "ios/extensions/UIResponder.swift",
++                "ios/extensions/UIScrollView.swift",
++                "ios/extensions/UITextInput.swift",
++                "ios/extensions/UIView.swift",
++                "ios/extensions/UIWindow.swift",
++                "ios/interactive/InvisibleInputAccessoryView.swift",
++                "ios/interactive/KeyboardAreaExtender.swift",
++                "ios/interactive/KeyboardOffsetProvider.swift",
++                "ios/KeyboardBackdropController.swift",
++                "ios/KeyboardControllerModuleImpl.swift",
++                "ios/observers/FocusedInputObserver.swift",
++                "ios/observers/movement/KeyboardEventsIgnorer.swift",
++                "ios/observers/movement/KeyboardTrackingView.swift",
++                "ios/observers/movement/KeyboardViewLocator.swift",
++                "ios/observers/movement/observer/KeyboardMovementObserver.swift",
++                "ios/observers/movement/observer/KeyboardMovementObserver+Animation.swift",
++                "ios/observers/movement/observer/KeyboardMovementObserver+Interactive.swift",
++                "ios/observers/movement/observer/KeyboardMovementObserver+Lifecycle.swift",
++                "ios/observers/movement/observer/KeyboardMovementObserver+Listeners.swift",
++                "ios/observers/movement/observer/KeyboardMovementObserver+Watcher.swift",
++                "ios/protocols/TextInput.swift",
++                "ios/swizzling/UIResponderSwizzle.swift",
++                "ios/traversal/FocusedInputHolder.swift",
++                "ios/traversal/KeyboardView.swift",
++                "ios/traversal/ViewHierarchyNavigator.swift",
++                "ios/views/KeyboardControllerViewManager.swift",
++                "ios/views/KeyboardExtenderContainerView.swift",
++            ],
++            swiftSettings: [
++                .define("KEYBOARD_CONTROLLER_NEW_ARCH_ENABLED"),
++                .swiftLanguageMode(.v5),
++                // The pod compiles as one module with a bridging header, so the
++                // Swift files never import React or the ObjC helpers by name.
++                .unsafeFlags([
++                    "-Xfrontend", "-import-module", "-Xfrontend", "React",
++                    "-Xfrontend", "-import-module", "-Xfrontend", "KeyboardControllerBase",
++                ]),
++            ],
++            linkerSettings: [.linkedFramework("UIKit"), .linkedFramework("Foundation"), .linkedFramework("QuartzCore")]
++        ),
++        .target(
++            name: "ReactNativeKeyboardControllerObjC",
++            dependencies: reactHeaders + ["KeyboardControllerBase", "react_native_keyboard_controller"],
++            path: ".",
++            sources: [
++                "ios/KeyboardControllerModule.mm",
++                "ios/views/ClippingScrollViewDecoratorViewManager.mm",
++                "ios/views/KeyboardBackgroundViewManager.mm",
++                "ios/views/KeyboardControllerView.mm",
++                "ios/views/KeyboardControllerViewManager.mm",
++                "ios/views/KeyboardExtenderManager.mm",
++                "ios/views/KeyboardGestureAreaManager.mm",
++                "ios/views/KeyboardToolbarGroupViewManager.mm",
++                "ios/views/OverKeyboardViewManager.mm",
++                "common/cpp/react/renderer/components/RNKC/RNKCClippingScrollViewDecoratorViewShadowNode.cpp",
++                "common/cpp/react/renderer/components/RNKC/RNKCKeyboardBackgroundViewShadowNode.cpp",
++                "common/cpp/react/renderer/components/RNKC/RNKCKeyboardControllerViewShadowNode.cpp",
++                "common/cpp/react/renderer/components/RNKC/RNKCKeyboardExtenderShadowNode.cpp",
++                "common/cpp/react/renderer/components/RNKC/RNKCKeyboardGestureAreaShadowNode.cpp",
++                "common/cpp/react/renderer/components/RNKC/RNKCKeyboardToolbarGroupViewShadowNode.cpp",
++                "common/cpp/react/renderer/components/RNKC/RNKCOverKeyboardViewShadowNode.cpp",
++                "common/cpp/react/renderer/components/RNKC/RNKCOverKeyboardViewState.cpp",
++            ],
++            publicHeadersPath: "spm/objc",
++            cSettings: objcHeaderPaths.map { .headerSearchPath($0) } + [.unsafeFlags(prefixHeader)],
++            cxxSettings: objcHeaderPaths.map { .headerSearchPath($0) } + [
++                .define("RCT_NEW_ARCH_ENABLED", to: "1"),
++                .define("FOLLY_NO_CONFIG"),
++                .define("FOLLY_MOBILE", to: "1"),
++                .define("FOLLY_USE_LIBCPP", to: "1"),
++                .define("DEBUG", .when(configuration: .debug)),
++                .define("NDEBUG", .when(configuration: .release)),
++                // GENERATED_MODULEMAP_DIR holds the Swift target's generated
++                // "react_native_keyboard_controller-Swift.h".
++                .unsafeFlags(prefixHeader + ["-I${GENERATED_MODULEMAP_DIR}", "-Wno-comma", "-Wno-shorten-64-to-32"]),
++            ],
++            linkerSettings: [.linkedFramework("UIKit"), .linkedFramework("Foundation"), .linkedFramework("CoreGraphics")]
++        ),
++    ],
++    cxxLanguageStandard: .cxx20
++)
+diff --git a/package.json b/package.json
+index 585285b..45b74fa 100644
+--- a/package.json
++++ b/package.json
+@@ -200,5 +200,8 @@
+       }
+     }
+   },
+-  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e"
++  "packageManager": "yarn@1.22.22+sha512.a6b2f7906b721bba3d67d4aff083df04dad64c399707841b7acf00f6b133b7ac24255f2652fa22ae3534329dc6180534e98d17432037ff6fd140556e2bb3137e",
++  "swiftpmConfig": {
++    "name": "react-native-keyboard-controller"
++  }
+ }
+diff --git a/react-native-spm-prefix.h b/react-native-spm-prefix.h
+new file mode 100644
+index 0000000..af5cea0
+--- /dev/null
++++ b/react-native-spm-prefix.h
+@@ -0,0 +1,10 @@
++// AUTO-SCAFFOLDED by react-native spm scaffold — mirrors CocoaPods' default
++// prefix header so ObjC sources that rely on an implicit Foundation/UIKit
++// import compile under SPM (which has no prefix-header mechanism). Safe to
++// delete + regenerate via `npx react-native spm scaffold`.
++#ifdef __OBJC__
++#import <Foundation/Foundation.h>
++#if __has_include(<UIKit/UIKit.h>)
++#import <UIKit/UIKit.h>
++#endif
++#endif
+diff --git a/spm/base/module.modulemap b/spm/base/module.modulemap
+new file mode 100644
+index 0000000..cc1d986
+--- /dev/null
++++ b/spm/base/module.modulemap
+@@ -0,0 +1,13 @@
++// The Objective-C pieces the Swift sources call into. Listed one by one so the
++// Fabric views under ios/views (C++ headers) stay out of the Swift-facing module.
++module KeyboardControllerBase {
++  header "../../ios/KeyboardControllerModule-Header.h"
++  header "../../ios/events/KeyboardMoveEvent.h"
++  header "../../ios/events/FocusedInputLayoutChangedEvent.h"
++  header "../../ios/events/FocusedInputSelectionChangedEvent.h"
++  header "../../ios/events/FocusedInputTextChangedEvent.h"
++  header "../../ios/objc/NSObject+SafeKVC.h"
++  header "../../ios/objc/RCTUIManager+LayoutAnimationManager.h"
++  header "../../ios/objc/TextInput+DelegateManager.h"
++  export *
++}
+diff --git a/spm/objc/ReactNativeKeyboardControllerObjC.h b/spm/objc/ReactNativeKeyboardControllerObjC.h
+new file mode 100644
+index 0000000..a0105cb
+--- /dev/null
++++ b/spm/objc/ReactNativeKeyboardControllerObjC.h
+@@ -0,0 +1,2 @@
++// Umbrella placeholder for the ObjC++ target. Nothing imports it: React Native
++// finds the component views and the module by class name at runtime.
