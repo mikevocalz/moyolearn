@@ -6,8 +6,12 @@ permissions:
   contents: read
 jobs:
   simulator:
-    runs-on: macos-26
-    timeout-minutes: 60
+    # Nitro 1.0 is SwiftPM-only on Apple and its manifest needs swift-tools 6.4,
+    # which ships with Xcode 27.1. The xcode-27 image defaults to 27.1.
+    runs-on: xcode-27
+    timeout-minutes: 180
+    env:
+      EXPO_PRECOMPILED_MODULES_PATH: ${{ github.workspace }}/.cache/expo-xcframeworks
     steps:
       - uses: actions/checkout@v4
       - uses: pnpm/action-setup@v4
@@ -15,23 +19,48 @@ jobs:
         with:
           node-version-file: .nvmrc
           cache: pnpm
+      - name: Toolchain
+        run: |
+          xcodebuild -version
+          swift --version
       - run: pnpm install --frozen-lockfile
-      - name: Resolve native dependencies
-        working-directory: apps/mobile/ios
+      - name: Expo XCFramework cache key
+        id: expo-key
+        run: |
+          rn=$(node -p "require('./node_modules/react-native/package.json').version")
+          xcode=$(xcodebuild -version | head -1 | tr ' ' '-')
+          echo "key=expo-xcframeworks-$rn-$xcode-${{ hashFiles('tooling/expo-prebuilds/**', 'patches/expo-task-manager@*.patch') }}" >> "$GITHUB_OUTPUT"
+      - uses: actions/cache@v4
+        id: expo-cache
+        with:
+          path: .cache/expo-xcframeworks
+          key: ${{ steps.expo-key.outputs.key }}
+      - name: Build Expo XCFrameworks (expo/expo et prebuild)
+        if: steps.expo-cache.outputs.cache-hit != 'true'
         run: |
           set -o pipefail
-          pod install --repo-update 2>&1 | tee "$RUNNER_TEMP/moyo-pods.log"
+          tooling/expo-prebuilds/build.sh "$RUNNER_TEMP/expo-work" "$EXPO_PRECOMPILED_MODULES_PATH" 2>&1 | tee "$RUNNER_TEMP/expo-prebuild.log"
+      - name: Generate ios/ and resolve SwiftPM packages
+        run: |
+          set -o pipefail
+          node tooling/ios-spm.mjs 2>&1 | tee "$RUNNER_TEMP/moyo-spm.log"
       - name: Build iOS Simulator app
         working-directory: apps/mobile/ios
         run: |
           set -o pipefail
-          xcodebuild -workspace Moyo.xcworkspace -scheme Moyo -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/moyo-derived" CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/moyo-ios-build.log"
+          xcodebuild -project Moyo.xcodeproj -scheme Moyo -configuration Debug -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' -derivedDataPath "$RUNNER_TEMP/moyo-derived" CODE_SIGNING_ALLOWED=NO build 2>&1 | tee "$RUNNER_TEMP/moyo-ios-build.log"
+      - name: Summarize build errors
+        if: failure()
+        run: grep -E "error:|\*\* BUILD" "$RUNNER_TEMP/moyo-ios-build.log" | sort -u | head -80 || true
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: ios-native-diagnostics
           path: |
-            ${{ runner.temp }}/moyo-pods.log
+            ${{ runner.temp }}/expo-prebuild.log
+            ${{ runner.temp }}/expo-work/expo/packages/prebuild-errors-*.log
+            ${{ runner.temp }}/moyo-spm.log
             ${{ runner.temp }}/moyo-ios-build.log
-            apps/mobile/ios/Podfile.lock
+            apps/mobile/ios/build/generated/autolinking/Package.swift
+            apps/mobile/ios/build/generated/autolinking/autolinking.json
           if-no-files-found: ignore
