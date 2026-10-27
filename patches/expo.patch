@@ -1,8 +1,57 @@
+diff --git a/ios/Expo/ExpoReactNativeFactory.swift b/ios/Expo/ExpoReactNativeFactory.swift
+--- a/ios/Expo/ExpoReactNativeFactory.swift
++++ b/ios/Expo/ExpoReactNativeFactory.swift
+@@ -32,7 +32,7 @@
+   }
+ 
+   // `RCTBundleConfiguration` is only available in react-native 0.84+, so it doesn't exist yet on react-native-macos.
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+   private var _bundleConfiguration: RCTBundleConfiguration?
+ 
+   public override var bundleConfiguration: RCTBundleConfiguration {
+@@ -121,14 +121,14 @@
+       }
+     }
+ 
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+     adoptInfoPlistMetroPort()
+ #endif
+ 
+     let rootView: UIView
+     if let factory = self.rootViewFactory as? ExpoReactRootViewFactory {
+       // bundleConfiguration is only accepted in react-native 0.84+
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+       let bundleConfiguration = ExpoBundleConfiguration.configuration(
+         bundleURL: withBundleURL ?? configuration?.bundleURLBlock()
+       )
+@@ -150,7 +150,7 @@
+       )
+ #endif
+     } else {
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+       let bundleConfiguration = ExpoBundleConfiguration.configuration(
+         bundleURL: withBundleURL ?? configuration?.bundleURLBlock()
+       )
+diff --git a/ios/ExpoObjC/AppDelegates/EXBundleConfiguration.mm b/ios/ExpoObjC/AppDelegates/EXBundleConfiguration.mm
+--- a/ios/ExpoObjC/AppDelegates/EXBundleConfiguration.mm
++++ b/ios/ExpoObjC/AppDelegates/EXBundleConfiguration.mm
+@@ -2,7 +2,7 @@
+ 
+ #import <Expo/EXBundleConfiguration.h>
+ 
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+ 
+ @implementation EXBundleConfiguration {
+   NSURL *_bundleURL;
 diff --git a/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m b/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m
-index e12efe9..6078050 100644
 --- a/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m
 +++ b/ios/ExpoObjC/AppDelegates/EXLegacyAppDelegateWrapper.m
-@@ -75,6 +75,7 @@ static dispatch_once_t onceToken;
+@@ -75,6 +75,7 @@
    return NO;
  }
  
@@ -10,7 +59,7 @@ index e12efe9..6078050 100644
  - (void)application:(UIApplication *)application performFetchWithCompletionHandler:(void (^)(UIBackgroundFetchResult))completionHandler
  {
    SEL selector = @selector(application:performFetchWithCompletionHandler:);
-@@ -107,6 +108,7 @@ static dispatch_once_t onceToken;
+@@ -107,6 +108,7 @@
      }
    }
  }
@@ -18,11 +67,46 @@ index e12efe9..6078050 100644
  
  - (BOOL)application:(UIApplication *)application continueUserActivity:(NSUserActivity *)userActivity restorationHandler:(void (^)(NSArray<id<UIUserActivityRestoring>> * _Nullable))restorationHandler
  {
+diff --git a/ios/ExpoObjC/AppDelegates/EXReactRootViewFactory.mm b/ios/ExpoObjC/AppDelegates/EXReactRootViewFactory.mm
+--- a/ios/ExpoObjC/AppDelegates/EXReactRootViewFactory.mm
++++ b/ios/ExpoObjC/AppDelegates/EXReactRootViewFactory.mm
+@@ -23,7 +23,7 @@
+   return self;
+ }
+ 
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+ - (UIView *)viewWithModuleName:(NSString *)moduleName
+              initialProperties:(nullable NSDictionary *)initialProperties
+                  launchOptions:(nullable NSDictionary *)launchOptions
+diff --git a/ios/ExpoObjC/include/Expo/EXBundleConfiguration.h b/ios/ExpoObjC/include/Expo/EXBundleConfiguration.h
+--- a/ios/ExpoObjC/include/Expo/EXBundleConfiguration.h
++++ b/ios/ExpoObjC/include/Expo/EXBundleConfiguration.h
+@@ -7,7 +7,7 @@
+ 
+ NS_ASSUME_NONNULL_BEGIN
+ 
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+ 
+ NS_SWIFT_NAME(ExpoBundleConfiguration)
+ @interface EXBundleConfiguration : RCTBundleConfiguration
+diff --git a/ios/ExpoObjC/include/Expo/EXReactRootViewFactory.h b/ios/ExpoObjC/include/Expo/EXReactRootViewFactory.h
+--- a/ios/ExpoObjC/include/Expo/EXReactRootViewFactory.h
++++ b/ios/ExpoObjC/include/Expo/EXReactRootViewFactory.h
+@@ -24,7 +24,7 @@
+ /**
+  Calls super `viewWithModuleName:initialProperties:launchOptions:` from `RCTRootViewFactory`.
+  */
+-#if TARGET_OS_IOS || TARGET_OS_TV
++#if TARGET_OS_IOS || TARGET_OS_TV || TARGET_OS_VISION
+ - (UIView *)superViewWithModuleName:(NSString *)moduleName
+                   initialProperties:(nullable NSDictionary *)initialProperties
+                       launchOptions:(nullable NSDictionary *)launchOptions
 diff --git a/scripts/spm/manifests.js b/scripts/spm/manifests.js
-index c42928b..694ca52 100644
 --- a/scripts/spm/manifests.js
 +++ b/scripts/spm/manifests.js
-@@ -868,6 +868,10 @@ function emitPackage(
+@@ -868,6 +868,10 @@
    }
  ) {
    const { targetDeps, pkgDeps } = sourceDependencies(react, codegenPkgPath, jsiHeadersPkgPath);
@@ -33,7 +117,7 @@ index c42928b..694ca52 100644
    const { manifest: linked, partlyProvidedPackages } = withoutSatisfiedProducts(
      manifest,
      satisfiedDependencies
-@@ -1012,6 +1016,7 @@ function emitPureSwiftSourcePackage(
+@@ -1012,6 +1016,7 @@
      iosDeploymentTarget = null,
      spmPackages = [],
      sources = scanAppleSources(moduleRoot),
@@ -41,7 +125,7 @@ index c42928b..694ca52 100644
    },
    emitContext
  ) {
-@@ -1020,11 +1025,14 @@ function emitPureSwiftSourcePackage(
+@@ -1020,11 +1025,14 @@
      product,
      srcRel: path.relative(moduleRoot, srcDir),
      excludes: sources.ignoredDirs,
@@ -59,10 +143,9 @@ index c42928b..694ca52 100644
  
  module.exports = {
 diff --git a/scripts/spm/plugin.js b/scripts/spm/plugin.js
-index 00a7c98..95ec647 100644
 --- a/scripts/spm/plugin.js
 +++ b/scripts/spm/plugin.js
-@@ -587,11 +587,41 @@ function emitSourceModule(identity, hasManifest, emitContext, dumpManifest) {
+@@ -587,11 +587,41 @@
    }
    if (!sources.hasSources) return null;
    return emitPureSwiftSourcePackage(
@@ -105,7 +188,7 @@ index 00a7c98..95ec647 100644
  /**
   * Pass 2 — invariant source modules. They compile against the generated
   * headers/module-interface tree and leave runtime linking entirely to RN.
-@@ -1050,7 +1080,13 @@ module.exports = function expoSpmPlugin(context) {
+@@ -1050,7 +1080,13 @@
      cacheDir: artifactCacheDir,
      matchBuildFromSource,
      dumpManifest: manifestDumper(),
@@ -121,10 +204,9 @@ index 00a7c98..95ec647 100644
    // A pod a buildFromSource pattern matches is linked precompiled when no source route takes
    // it, as ExpoModulesCore never is. Linking one changes what pass 2 decides — a sibling pod's
 diff --git a/scripts/spm/podspec.js b/scripts/spm/podspec.js
-index 44117ae..9b9496e 100644
 --- a/scripts/spm/podspec.js
 +++ b/scripts/spm/podspec.js
-@@ -126,7 +126,11 @@ function xcconfigLinkerFlags(text) {
+@@ -126,7 +126,11 @@
  function podspecDependencies(text) {
    const deps = [];
    for (const { text: line } of podspecBodyLines(text)) {
