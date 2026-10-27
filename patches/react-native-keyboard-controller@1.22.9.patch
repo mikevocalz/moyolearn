@@ -19,10 +19,10 @@ index 0000000..b7ab0d8
 \ No newline at end of file
 diff --git a/Package.swift b/Package.swift
 new file mode 100644
-index 0000000..feec389
+index 0000000..fdc57cc
 --- /dev/null
 +++ b/Package.swift
-@@ -0,0 +1,170 @@
+@@ -0,0 +1,172 @@
 +// swift-tools-version: 6.0
 +// Hand-written split of react-native-keyboard-controller for React Native's
 +// SwiftPM autolinking. `react-native spm scaffold` emits one target, which
@@ -180,6 +180,8 @@ index 0000000..feec389
 +            cxxSettings: objcHeaderPaths.map { .headerSearchPath($0) } + [
 +                .define("RCT_NEW_ARCH_ENABLED", to: "1"),
 +                .define("FOLLY_NO_CONFIG"),
++                // FOLLY_NO_CONFIG skips folly-config.h, which is where React Native turns coroutines off.
++                .define("FOLLY_CFG_NO_COROUTINES", to: "1"),
 +                .define("FOLLY_MOBILE", to: "1"),
 +                .define("FOLLY_USE_LIBCPP", to: "1"),
 +                .define("DEBUG", .when(configuration: .debug)),
