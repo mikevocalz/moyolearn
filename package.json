@@ -52,6 +52,7 @@
   "pnpm": {
     "overrides": {
       "@reactvision/react-viro": "file:./vendors/reactvision-react-viro-3.0.1-moyo.1.tgz",
+      "@reactvision/react-native-visionos": "file:./vendors/reactvision-react-native-visionos-0.88.0-moyo.0.tgz",
       "@viro-external/core": "file:./vendors/viro-external-core-0.1.0-4dc2775.tgz",
       "@viro-external/media": "file:./vendors/viro-external-media-0.1.0-4dc2775.tgz",
       "@viro-external/meta-layout": "file:./vendors/viro-external-meta-layout-0.1.0-4dc2775.tgz",
