@@ -13,7 +13,7 @@
 // Usage: EXPO_PRECOMPILED_MODULES_PATH=<dir> node tooling/ios-spm.mjs
 // SOT-KEYWORDS: ios swiftpm spm nitro v1 expo prebuild cng xcodeproj deintegrate
 import { spawnSync } from 'node:child_process';
-import { existsSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -45,6 +45,35 @@ try {
   run('npx', ['expo', 'prebuild', '--platform', 'ios', '--clean', '--no-install'], mobile);
 } finally {
   writeFileSync(metroPath, metro);
+}
+
+// react-native-executorch's Package.swift (patches/react-native-executorch@*.patch)
+// links binaries CocoaPods used to fetch or pass through OTHER_LDFLAGS. Put them
+// where the manifest reads them. See the comment at the top of that manifest.
+const executorch = join(root, 'node_modules/react-native-executorch/third-party/ios');
+if (existsSync(executorch)) {
+  const opencv = join(executorch, 'opencv2.xcframework');
+  if (!existsSync(join(opencv, 'Info.plist'))) {
+    // The `opencv-rne` pod the podspec depends on (~> 4.11.0); its only release.
+    const checkout = join(root, '.cache/opencv-rne-4.11.0');
+    if (!existsSync(join(checkout, 'opencv2.xcframework/Info.plist'))) {
+      rmSync(checkout, { recursive: true, force: true });
+      run('git', ['clone', '--quiet', '--depth', '1', '--branch', '4.11.0',
+        'https://github.com/software-mansion-labs/opencv-rne.git', checkout], root);
+    }
+    cpSync(join(checkout, 'opencv2.xcframework'), opencv, { recursive: true });
+  }
+  const libs = join(executorch, 'libs');
+  const layout = {
+    iphoneos: 'pthreadpool/physical-arm64-release/libpthreadpool.a',
+    iphonesimulator: 'pthreadpool/simulator-arm64-debug/libpthreadpool.a',
+  };
+  for (const [sdk, pthreadpool] of Object.entries(layout)) {
+    const dir = join(executorch, 'spm-libs', sdk);
+    mkdirSync(dir, { recursive: true });
+    cpSync(join(libs, pthreadpool), join(dir, 'libpthreadpool.a'));
+    cpSync(join(libs, 'cpuinfo/libcpuinfo.a'), join(dir, 'libcpuinfo.a'));
+  }
 }
 
 run('npx', ['react-native', 'spm', 'add', '--deintegrate', '--yes'], mobile);

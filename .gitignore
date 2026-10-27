@@ -64,3 +64,4 @@ apps/mobile/modules/*/android/build/
 
 # Expo XCFrameworks built by tooling/expo-prebuilds/build.sh (CI cache)
 .cache/expo-xcframeworks/
+.cache/opencv-rne-4.11.0/
