@@ -393,6 +393,9 @@ patchedDependencies:
   '@reactvision/react-viro@3.0.1-moyo.1':
     hash: d4a49157b5f6a4915a76ae878525547881a579c5fdb8db9c6e77148dce304bdf
     path: patches/@reactvision__react-viro@3.0.1-moyo.1.patch
+  '@sentry/react-native@8.32.0':
+    hash: f0507b4f5b1c20a58179e1baa7b2e2eb0c584dbe0248248abde73e6c43a27605
+    path: patches/@sentry__react-native@8.32.0.patch
   '@seshuk/payload-storage-bunny@3.0.0':
     hash: 41c645cbfcf05153ce0ba0f8f326033d40e9e1b37cfac8f289b90763d4cbc1c5
     path: patches/@seshuk__payload-storage-bunny@3.0.0.patch
@@ -584,7 +587,7 @@ importers:
         version: file:vendors/reactvision-react-viro-3.0.1-moyo.1.tgz(patch_hash=d4a49157b5f6a4915a76ae878525547881a579c5fdb8db9c6e77148dce304bdf)(@reactvision/react-native-visionos@0.86.4(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(@types/react@19.3.0)(expo@58.0.19)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
       '@sentry/react-native':
         specifier: 8.32.0
-        version: 8.32.0(@babel/core@7.29.7)(@expo/config-types@58.0.3)(@expo/config@58.0.8(typescript@6.0.3))(@expo/env@2.5.3)(@react-navigation/native@7.4.1(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(dotenv@17.4.2)(expo-router@58.0.26)(expo-updates@58.0.18(expo@58.0.19)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(expo@58.0.19)(metro-config@0.87.1)(metro-resolver@0.87.1)(metro@0.87.1)(open@11.0.1)(promise@8.3.0)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(rollup@4.63.0)(webpack@5.108.4(esbuild@0.28.2))
+        version: 8.32.0(patch_hash=f0507b4f5b1c20a58179e1baa7b2e2eb0c584dbe0248248abde73e6c43a27605)(@babel/core@7.29.7)(@expo/config-types@58.0.3)(@expo/config@58.0.8(typescript@6.0.3))(@expo/env@2.5.3)(@react-navigation/native@7.4.1(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(dotenv@17.4.2)(expo-router@58.0.26)(expo-updates@58.0.18(expo@58.0.19)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(expo@58.0.19)(metro-config@0.87.1)(metro-resolver@0.87.1)(metro@0.87.1)(open@11.0.1)(promise@8.3.0)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(rollup@4.63.0)(webpack@5.108.4(esbuild@0.28.2))
       '@tanstack/react-query':
         specifier: 'catalog:'
         version: 5.103.1(react@19.3.0)
@@ -16430,7 +16433,7 @@ snapshots:
       '@sentry/conventions': 0.16.0
       '@sentry/core': 10.75.0
 
-  '@sentry/react-native@8.32.0(@babel/core@7.29.7)(@expo/config-types@58.0.3)(@expo/config@58.0.8(typescript@6.0.3))(@expo/env@2.5.3)(@react-navigation/native@7.4.1(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(dotenv@17.4.2)(expo-router@58.0.26)(expo-updates@58.0.18(expo@58.0.19)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(expo@58.0.19)(metro-config@0.87.1)(metro-resolver@0.87.1)(metro@0.87.1)(open@11.0.1)(promise@8.3.0)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(rollup@4.63.0)(webpack@5.108.4(esbuild@0.28.2))':
+  '@sentry/react-native@8.32.0(patch_hash=f0507b4f5b1c20a58179e1baa7b2e2eb0c584dbe0248248abde73e6c43a27605)(@babel/core@7.29.7)(@expo/config-types@58.0.3)(@expo/config@58.0.8(typescript@6.0.3))(@expo/env@2.5.3)(@react-navigation/native@7.4.1(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(dotenv@17.4.2)(expo-router@58.0.26)(expo-updates@58.0.18(expo@58.0.19)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(expo@58.0.19)(metro-config@0.87.1)(metro-resolver@0.87.1)(metro@0.87.1)(open@11.0.1)(promise@8.3.0)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(rollup@4.63.0)(webpack@5.108.4(esbuild@0.28.2))':
     dependencies:
       '@sentry/browser': 10.76.2
       '@sentry/bundler-plugins': 10.76.2(rollup@4.63.0)(webpack@5.108.4(esbuild@0.28.2))
