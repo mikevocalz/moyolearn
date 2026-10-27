@@ -80,7 +80,7 @@
     "@acme/config": "workspace:*",
     "@callstack/out-of-tree-platforms": "0.77.0",
     "@react-native-community/cli": "20.1.0",
-    "@reactvision/react-native-visionos": "0.86.4",
+    "@reactvision/react-native-visionos": "0.88.0-moyo.0",
     "@tailwindcss/postcss": "catalog:",
     "@types/react": "catalog:",
     "babel-plugin-react-compiler": "catalog:",
