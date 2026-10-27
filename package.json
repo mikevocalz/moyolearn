@@ -99,7 +99,8 @@
       "react-native-svg@15.16.0": "patches/react-native-svg@15.16.0.patch",
       "react-native-pulsar@1.7.0": "patches/react-native-pulsar@1.7.0.patch",
       "react-native-executorch@0.9.3": "patches/react-native-executorch@0.9.3.patch",
-      "react-native-keyboard-controller@1.22.9": "patches/react-native-keyboard-controller@1.22.9.patch"
+      "react-native-keyboard-controller@1.22.9": "patches/react-native-keyboard-controller@1.22.9.patch",
+      "expo-task-manager@58.0.12": "patches/expo-task-manager@58.0.12.patch"
     },
     "supportedArchitectures": {
       "cpu": [
