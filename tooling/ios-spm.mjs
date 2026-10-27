@@ -95,7 +95,58 @@ if (existsSync(executorch)) {
   }
 }
 
+// react-native-audio-api's Package.swift (patches/react-native-audio-api@*.patch)
+// links the FFmpeg XCFrameworks and the Ogg/Opus/Vorbis static libraries that the
+// podspec's prepare_command downloads. SwiftPM runs no such step, so run the
+// package's own script here. It skips what is already in place, and it reports a
+// failed download without failing, so check the files the manifest links.
+const audioApi = join(root, 'node_modules/react-native-audio-api');
+if (existsSync(audioApi)) {
+  run('bash', ['scripts/download-prebuilt-binaries.sh', 'ios'], audioApi);
+  const external = join(audioApi, 'common/cpp/audioapi/external');
+  const required = [
+    ...['libavcodec', 'libavformat', 'libavutil', 'libswresample'].map(
+      (name) => `ffmpeg_ios/${name}.xcframework/Info.plist`,
+    ),
+    ...['iphoneos', 'iphonesimulator'].flatMap((sdk) =>
+      ['libopusfile', 'libopus', 'libogg', 'libvorbis', 'libvorbisenc', 'libvorbisfile'].map(
+        (lib) => `${sdk}/${lib}.a`,
+      ),
+    ),
+  ];
+  const absent = required.filter((file) => !existsSync(join(external, file)));
+  if (absent.length > 0) {
+    console.error(`react-native-audio-api binaries missing after download: ${absent.join(', ')}`);
+    process.exit(1);
+  }
+}
+
 run('npx', ['react-native', 'spm', 'add', '--deintegrate', '--yes'], mobile);
+
+// `react-native spm add` links only the app's direct dependencies. CocoaPods went
+// through Expo's autolinking, which also finds native packages that workspace
+// packages (packages/app, packages/ui) depend on. A package found there but not
+// here builds fine and then throws "native module could not be found" at launch,
+// so fail now and name it. The fix is a direct dependency in apps/mobile.
+const expoLinked = spawnSync(
+  'node',
+  [join(root, 'node_modules/expo-modules-autolinking/bin/expo-modules-autolinking.js'), 'react-native-config', '--platform', 'ios', '--json'],
+  { cwd: mobile, encoding: 'utf8', maxBuffer: 64 * 1024 * 1024 },
+);
+if (expoLinked.status !== 0) {
+  console.error(expoLinked.stderr);
+  process.exit(expoLinked.status ?? 1);
+}
+const spmLinked = JSON.parse(
+  readFileSync(join(mobile, 'ios/build/generated/autolinking/autolinking.json'), 'utf8'),
+).dependencies;
+const missing = Object.entries(JSON.parse(expoLinked.stdout).dependencies)
+  .filter(([name, dep]) => dep.platforms?.ios && !spmLinked[name])
+  .map(([name]) => name);
+if (missing.length > 0) {
+  console.error(`Not linked into the SwiftPM app (add to apps/mobile/package.json): ${missing.join(', ')}`);
+  process.exit(1);
+}
 
 // What is left of the Podfile after deintegration installs nothing.
 for (const leftover of ['Podfile', 'Podfile.lock', 'Podfile.properties.json', 'Pods']) {

@@ -1,0 +1,107 @@
+diff --git a/Package.swift b/Package.swift
+new file mode 100644
+index 0000000000000000000000000000000000000000..f52ec804fe191d4e7597fd06c374a929a465ec5c
+--- /dev/null
++++ b/Package.swift
+@@ -0,0 +1,52 @@
++// swift-tools-version: 6.0
++// SwiftPM manifest for @react-native-masked-view/masked-view 0.3.2, for React
++// Native's SwiftPM autolinking. The package ships only RNCMaskedView.podspec.
++//
++// It compiles what the podspec compiles: source_files "ios/**/*.{h,m}", which is
++// two Objective-C files (a paper view manager and its RCTView subclass). The pod
++// declares no frameworks, defines or flags of its own; install_modules_dependencies
++// adds only the React dependencies and RCT_NEW_ARCH_ENABLED for C++, and this
++// package has no C++.
++//
++// The package, product and target are named RNCMaskedView (package.json
++// swiftpmConfig), the podspec's name. Package references are relative to the
++// autolinking symlink at ios/build/generated/autolinking/libs/RNCMaskedView.
++
++import PackageDescription
++
++let package = Package(
++    name: "RNCMaskedView",
++    platforms: [.iOS("17.0")],
++    products: [
++        .library(name: "RNCMaskedView", targets: ["RNCMaskedView"]),
++    ],
++    dependencies: [
++        .package(name: "ReactNative", path: "../../../../xcframeworks"),
++        .package(name: "React-GeneratedCode", path: "../../../ios"),
++    ],
++    targets: [
++        .target(
++            name: "RNCMaskedView",
++            dependencies: [
++                .product(name: "ReactHeaders", package: "ReactNative"),
++                .product(name: "ReactNativeHeaders", package: "ReactNative"),
++                .product(name: "ReactNativeDependenciesHeaders", package: "ReactNative"),
++                .product(name: "ReactAppHeaders", package: "React-GeneratedCode"),
++            ],
++            path: ".",
++            sources: [
++                "ios/RNCMaskedView.m",
++                "ios/RNCMaskedViewManager.m",
++            ],
++            // ios/ holds RNCMaskedView.xcodeproj, and SwiftPM rejects an umbrella header
++            // with a directory beside it.
++            publicHeadersPath: "spm/public",
++            cSettings: [
++                .headerSearchPath("ios"),
++                .headerSearchPath("."),
++                .unsafeFlags(["-include", "react-native-spm-prefix.h"]),
++            ],
++            linkerSettings: [.linkedFramework("UIKit"), .linkedFramework("Foundation")]
++        ),
++    ]
++)
+diff --git a/package.json b/package.json
+index 3695fa62524b2cbf2d98295a4321cfa845ef8459..1dfb6050218c9122bbf1cb2a5f52ed65a9c462df 100644
+--- a/package.json
++++ b/package.json
+@@ -30,7 +30,10 @@
+     "ios",
+     "js",
+     "types",
+-    "RNCMaskedView.podspec"
++    "RNCMaskedView.podspec",
++    "Package.swift",
++    "react-native-spm-prefix.h",
++    "spm"
+   ],
+   "devDependencies": {
+     "@react-native/eslint-config": "^0.76.1",
+@@ -53,5 +55,8 @@
+   "publishConfig": {
+     "access": "public"
+   },
+-  "packageManager": "yarn@1.22.22+sha256.c17d3797fb9a9115bf375e31bfd30058cac6bc9c3b8807a3d8cb2094794b51ca"
++  "packageManager": "yarn@1.22.22+sha256.c17d3797fb9a9115bf375e31bfd30058cac6bc9c3b8807a3d8cb2094794b51ca",
++  "swiftpmConfig": {
++    "name": "RNCMaskedView"
++  }
+ }
+diff --git a/react-native-spm-prefix.h b/react-native-spm-prefix.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..af5cea0557f2f4aa957419f0fc3f250fd55dbaf5
+--- /dev/null
++++ b/react-native-spm-prefix.h
+@@ -0,0 +1,10 @@
++// AUTO-SCAFFOLDED by react-native spm scaffold — mirrors CocoaPods' default
++// prefix header so ObjC sources that rely on an implicit Foundation/UIKit
++// import compile under SPM (which has no prefix-header mechanism). Safe to
++// delete + regenerate via `npx react-native spm scaffold`.
++#ifdef __OBJC__
++#import <Foundation/Foundation.h>
++#if __has_include(<UIKit/UIKit.h>)
++#import <UIKit/UIKit.h>
++#endif
++#endif
+diff --git a/spm/public/RNCMaskedView.h b/spm/public/RNCMaskedView.h
+new file mode 100644
+--- /dev/null
++++ b/spm/public/RNCMaskedView.h
+@@ -0,0 +1,2 @@
++// Umbrella placeholder for the target. Nothing imports it: React Native finds
++// RNCMaskedViewManager by class name at runtime.

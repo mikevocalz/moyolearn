@@ -70,8 +70,10 @@ catalog:
   nitrogen: 1.0.0-alpha.nightly.100.g107f6fc66597
   react-native-enriched-html: 1.1.1
   react-native-gesture-handler: 3.4.0
+  # expo-router imports it; listed so the iOS SwiftPM build links it (see tooling/ios-spm.mjs).
+  "@react-native-masked-view/masked-view": 0.3.2
   react-native-reanimated: 4.7.1
-  react-native-webgpu: 0.19.1
+  react-native-webgpu: 0.19.2
   typegpu: 0.12.9
   react-native-safe-area-context: ~5.10.1
   react-native-screens: ~4.30.0
