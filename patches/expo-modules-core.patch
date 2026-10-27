@@ -100,6 +100,15 @@ diff --git a/ios/Core/Convertibles/Convertibles+Color.swift b/ios/Core/Convertib
 diff --git a/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift b/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift
 --- a/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift
 +++ b/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift
+@@ -67,7 +67,7 @@
+       self.contentView = ContentView(props: props)
+       let rootView = AnyView(contentView)
+       self.props = props
+-      #if os(iOS) || os(tvOS)
++      #if os(iOS) || os(tvOS) || os(visionOS)
+       let controller: UIHostingController<AnyView> = AppearanceTrackingHostingController(rootView: rootView)
+       #else
+       let controller = UIHostingController(rootView: rootView)
 @@ -93,7 +93,7 @@
  
        shadowNodeProxy.objectWillChange.send()
@@ -135,6 +144,15 @@ diff --git a/ios/Core/Views/SwiftUI/SwiftUIHostingView.swift b/ios/Core/Views/Sw
      // A child added during a transition after its parent appeared never appears, so it gets no safe area (#51288).
      // TODO: Workaround for https://github.com/software-mansion/react-native-screens/pull/4997, remove once it ships.
      private func forwardAppearanceIfMissed(parentController: UIViewController) {
+@@ -299,7 +299,7 @@
+   }
+ }
+ 
+-#if os(iOS) || os(tvOS)
++#if os(iOS) || os(tvOS) || os(visionOS)
+ // Records whether UIKit forwarded appearance, so `HostingView` can forward it when UIKit misses it.
+ private final class AppearanceTrackingHostingController: UIHostingController<AnyView> {
+   private(set) var isAppearing = false
 diff --git a/ios/Core/Views/SwiftUI/SwiftUIVirtualViewObjCDev.mm b/ios/Core/Views/SwiftUI/SwiftUIVirtualViewObjCDev.mm
 --- a/ios/Core/Views/SwiftUI/SwiftUIVirtualViewObjCDev.mm
 +++ b/ios/Core/Views/SwiftUI/SwiftUIVirtualViewObjCDev.mm
