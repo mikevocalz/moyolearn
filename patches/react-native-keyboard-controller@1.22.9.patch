@@ -19,7 +19,7 @@ index 0000000..b7ab0d8
 \ No newline at end of file
 diff --git a/Package.swift b/Package.swift
 new file mode 100644
-index 0000000..fdc57cc
+index 0000000..12147d4
 --- /dev/null
 +++ b/Package.swift
 @@ -0,0 +1,172 @@
@@ -56,7 +56,7 @@ index 0000000..fdc57cc
 +]
 +
 +let objcHeaderPaths: [String] = [
-+    ".", "ios", "ios/events", "ios/objc", "ios/views",
++    ".", "spm/objc-shims", "ios", "ios/events", "ios/objc", "ios/views",
 +    "common/cpp", "common/cpp/react/renderer/components/RNKC",
 +]
 +
@@ -252,3 +252,12 @@ index 0000000..a0105cb
 @@ -0,0 +1,2 @@
 +// Umbrella placeholder for the ObjC++ target. Nothing imports it: React Native
 +// finds the component views and the module by class name at runtime.
+diff --git a/spm/objc-shims/RCTFabricComponentsPlugins.h b/spm/objc-shims/RCTFabricComponentsPlugins.h
+new file mode 100644
+index 0000000..b21bda2
+--- /dev/null
++++ b/spm/objc-shims/RCTFabricComponentsPlugins.h
+@@ -0,0 +1,3 @@
++// The Fabric view managers import this React header with quotes, which
++// CocoaPods resolved through header maps. SwiftPM has none, so forward it.
++#import <React/RCTFabricComponentsPlugins.h>
