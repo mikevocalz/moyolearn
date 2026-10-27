@@ -5026,7 +5026,7 @@ packages:
         optional: true
 
   '@reactvision/react-native-visionos@file:vendors/reactvision-react-native-visionos-0.88.0-moyo.0.tgz':
-    resolution: {integrity: sha512-11v0XfTqSQSEMoYQgUQzV9fkJw0z42dph458kdPdLvpdSeGwdnbeNwy/uasWg2mjFzeRY56hWMLmCByQKB2b2A==, tarball: file:vendors/reactvision-react-native-visionos-0.88.0-moyo.0.tgz}
+    resolution: {integrity: sha512-7dQoKqJDY/nSjxKO2HwAy/u/iRGDF/9H8PX+WEGyP0hm2H1iRNsL8L8emTBRlJD8b74ZVaZZLyIOoobxzmobBw==, tarball: file:vendors/reactvision-react-native-visionos-0.88.0-moyo.0.tgz}
     version: 0.88.0-moyo.0
     engines: {node: ^22.13.0 || ^24.3.0 || >= 26.0.0}
     hasBin: true
