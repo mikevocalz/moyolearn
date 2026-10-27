@@ -15,7 +15,9 @@
   "dependencies": {
     "expo-screen-capture": "catalog:",
     "expo-secure-store": "catalog:",
+    "nitro-core": "catalog:",
     "react-native-mmkv": "catalog:",
+    "react-native-nitro-modules": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {

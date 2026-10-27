@@ -76,13 +76,14 @@ function boardSession(): QuickDrawBoardSession {
 
 /*
   NATIVE-PANELS IS REQUIRED, NOT IMPORTED. Its sources are TypeScript written
-  against Nitro 1.0 and viro 3.0.3-moyo.1, and this app has Nitro 0.37.1 and
-  viro 3.0.1-moyo.1, so `tsc` reports 20 errors inside the package
-  (`hasHybridClass`, `dispose`, the `nitro-core` types, `ViroRivePanel`'s
-  `bindings`). A `require` keeps those sources out of this package's
-  typecheck, types the one value used at the boundary, and evaluates the module
-  only when the native board first mounts, which never happens with the switch
-  off or the package unlinked.
+  against viro 3.0.3-moyo.1, and this app has viro 3.0.1-moyo.1, so `tsc`
+  reports 5 errors inside the package, all `ViroRivePanel` props the older viro
+  does not declare (`cornerRadius`, `blendMode`, `bindings`). The Nitro errors
+  are gone now that both sides run Nitro 1.0. A `require` keeps those sources
+  out of this package's typecheck, types the one value used at the boundary,
+  and evaluates the module only when the native board first mounts, which
+  never happens with the switch off or the package unlinked. Replace it with an
+  import in the change that moves the app to viro 3.0.3-moyo.1.
 */
 let useRendererHook: UseBoardRenderer | null = null;
 function whiteboardRenderer(): UseBoardRenderer {

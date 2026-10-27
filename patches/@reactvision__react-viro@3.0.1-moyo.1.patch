@@ -828,11 +828,51 @@ index b00c3f1..a78ff66 100644
      withVisionOSCompatShims,   // 6. components/compat/ BlurView + LinearGradient
      withVisionOSInfoPlist,     // 7. Info.plist: allow multiple scenes (ImmersiveSpace)
      withVisionOSAppDelegate,   // 8. AppDelegate.swift: Expo entry point + imports
+diff --git a/android/react_viro/build.gradle b/android/react_viro/build.gradle
+index a117c4d..48e6b54 100644
+--- a/android/react_viro/build.gradle
++++ b/android/react_viro/build.gradle
+@@ -18,11 +18,16 @@ android {
+ 
+ dependencies {
+     api files('react_viro-release.aar')
++    // The AAR's resources use appcompat theme attributes (colorPrimary,
++    // dialogCornerRadius, buttonBarButtonStyle). Release variants run
++    // verify<Variant>Resources against this module's own classpath, which
++    // has no appcompat without this line. Version is React Native's pin.
++    implementation 'androidx.appcompat:appcompat:1.7.0'
+ }
+ 
+ // Same AGP 8.12+ bundleAar guard as viro_renderer — see that build.gradle.
+ afterEvaluate {
+     tasks.matching {
+-        it.name.startsWith('bundle') && it.name.endsWith('Aar')
++        it.name.startsWith('bundle') && it.name.endsWith('Aar') && !it.name.endsWith('LocalLintAar')
+     }.configureEach { enabled = false }
+ }
 diff --git a/android/viro_renderer/build.gradle b/android/viro_renderer/build.gradle
+index 21c54d6..517fe8c 100644
 --- a/android/viro_renderer/build.gradle
 +++ b/android/viro_renderer/build.gradle
-@@ -20,3 +20,3 @@
+@@ -17,7 +17,12 @@ android {
+ }
+ 
  dependencies {
 -    api files('viro_renderer-release.aar')
 +    api files(rootProject.findProperty('moyoViroRendererAar') ?: 'viro_renderer-release.aar')
++    // The AAR's resources use appcompat theme attributes (colorPrimary,
++    // dialogCornerRadius, buttonBarButtonStyle). Release variants run
++    // verify<Variant>Resources against this module's own classpath, which
++    // has no appcompat without this line. Version is React Native's pin.
++    implementation 'androidx.appcompat:appcompat:1.7.0'
+ }
+ 
+ // AGP 8.12+ refuses to bundle a library AAR that carries direct local .aar
+@@ -26,6 +31,6 @@ dependencies {
+ // task for every variant. Fixes 'hasLocalAarDeps' evaluation failure.
+ afterEvaluate {
+     tasks.matching {
+-        it.name.startsWith('bundle') && it.name.endsWith('Aar')
++        it.name.startsWith('bundle') && it.name.endsWith('Aar') && !it.name.endsWith('LocalLintAar')
+     }.configureEach { enabled = false }
  }

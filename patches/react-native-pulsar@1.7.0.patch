@@ -1,0 +1,80 @@
+diff --git a/Package.swift b/Package.swift
+new file mode 100644
+index 0000000..bfbf512
+--- /dev/null
++++ b/Package.swift
+@@ -0,0 +1,59 @@
++// swift-tools-version: 6.0
++// SwiftPM manifest for react-native-pulsar, for React Native's SwiftPM
++// autolinking. Written by hand: `react-native spm scaffold` gave one target with
++// no public headers and no haptics engine, and SwiftPM rejected it.
++//
++// Under CocoaPods the bridge (ios/Haptics.mm) links the PulsarHaptics pod 1.4.0
++// (pulsar_ios_pod_version in Pulsar.podspec). That pod is
++// software-mansion-labs/pulsar-ios at tag 1.4.0, which is also a Swift package
++// whose module is "Pulsar". This manifest depends on that tag, so the bridge
++// runs against the same Swift code. Its generated "Pulsar-Swift.h" is found
++// through GENERATED_MODULEMAP_DIR, the bridge's second #if branch.
++//
++// The package, product and target are named RNPulsar (package.json
++// swiftpmConfig) so they cannot collide with the dependency's "Pulsar".
++// Path references are relative to ios/build/generated/autolinking/libs/RNPulsar.
++
++import PackageDescription
++
++let package = Package(
++    name: "RNPulsar",
++    platforms: [.iOS("17.0")],
++    products: [
++        .library(name: "RNPulsar", targets: ["RNPulsar"]),
++    ],
++    dependencies: [
++        .package(name: "ReactNative", path: "../../../../xcframeworks"),
++        .package(name: "React-GeneratedCode", path: "../../../ios"),
++        .package(url: "https://github.com/software-mansion-labs/pulsar-ios.git", exact: "1.4.0"),
++    ],
++    targets: [
++        .target(
++            name: "RNPulsar",
++            dependencies: [
++                .product(name: "ReactHeaders", package: "ReactNative"),
++                .product(name: "ReactNativeHeaders", package: "ReactNative"),
++                .product(name: "ReactNativeDependenciesHeaders", package: "ReactNative"),
++                .product(name: "ReactAppHeaders", package: "React-GeneratedCode"),
++                .product(name: "Pulsar", package: "pulsar-ios"),
++            ],
++            path: "ios",
++            exclude: ["LICENSE"],
++            sources: ["Haptics.mm"],
++            publicHeadersPath: ".",
++            cxxSettings: [
++                .define("RCT_NEW_ARCH_ENABLED", to: "1"),
++                .define("DEBUG", .when(configuration: .debug)),
++                .define("NDEBUG", .when(configuration: .release)),
++                .unsafeFlags(["-I${GENERATED_MODULEMAP_DIR}"]),
++            ],
++            linkerSettings: [
++                .linkedFramework("UIKit"),
++                .linkedFramework("Foundation"),
++                .linkedFramework("AVFoundation"),
++                .linkedFramework("CoreHaptics"),
++            ]
++        ),
++    ],
++    cxxLanguageStandard: .cxx20
++)
+diff --git a/package.json b/package.json
+index fbd4576..f42c0f3 100644
+--- a/package.json
++++ b/package.json
+@@ -162,5 +162,8 @@
+     "languages": "kotlin-objc",
+     "type": "turbo-module",
+     "version": "0.54.3"
++  },
++  "swiftpmConfig": {
++    "name": "RNPulsar"
+   }
+-}
+\ No newline at end of file
++}

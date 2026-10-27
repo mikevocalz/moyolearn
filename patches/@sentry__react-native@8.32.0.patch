@@ -1,0 +1,32 @@
+diff --git a/Package.swift b/Package.swift
+index 354c139..23205eb 100644
+--- a/Package.swift
++++ b/Package.swift
+@@ -78,9 +78,13 @@ let reactNativeHeaderProducts: [Target.Dependency] = [
+ // `sentry_cocoa_version` in RNSentry.podspec. The checksum is the SHA256 of the
+ // archive, which is what both `pod install` and SwiftPM verify.
+ let sentryCocoaVersion = "9.31.0"
+-let sentryCocoaChecksum = "86dde13e6145ea3049ee2eb0b07ccb66e137a4d3af0d0dfe0b9d895f80b43237"
++// Moyo: the dynamic build (Sentry-Dynamic.xcframework.zip). Xcode 27.1 embeds a
++// static framework binary target by stripping it and injecting a stub binary, and
++// that step runs `lipo -create` with no inputs and fails the app build. A dynamic
++// framework embeds normally. Checksum: the release asset's published SHA-256.
++let sentryCocoaChecksum = "53b938aab7f1e3cb0728a7cacdf379ad232c051e39fb4e4ef7b18b31f04b46b6"
+ 
+-let sentryCocoa: Target.Dependency = "Sentry"
++let sentryCocoa: Target.Dependency = "Sentry-Dynamic"
+ 
+ let rnSentryDependencies: [Target.Dependency] =
+     ["RNSentrySwift", "RNSentryCpp", sentryCocoa] + reactNativeHeaderProducts
+@@ -97,9 +101,9 @@ let package = Package(
+     ],
+     targets: [
+         .binaryTarget(
+-            name: "Sentry",
++            name: "Sentry-Dynamic",
+             url: "https://github.com/getsentry/sentry-cocoa/releases/download/"
+-                + "\(sentryCocoaVersion)/Sentry.xcframework.zip",
++                + "\(sentryCocoaVersion)/Sentry-Dynamic.xcframework.zip",
+             checksum: sentryCocoaChecksum
+         ),
+         // SwiftPM cannot mix Swift with Objective-C(++) in one target, so the

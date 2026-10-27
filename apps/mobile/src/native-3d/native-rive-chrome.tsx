@@ -12,10 +12,11 @@
  * to the chrome. That is enough to compare chrome image quality and frame cost
  * between the two Rive producers on a headset.
  *
- * The package is `require`d, not imported: its sources target Nitro 1.0 and
- * viro 3.0.3-moyo.1, so importing them would put 20 type errors from a
- * dependency into this app's typecheck. See `native-board.native.tsx` in
- * packages/app/features/tutor for the same boundary.
+ * The package is `require`d, not imported: its sources target viro
+ * 3.0.3-moyo.1, so importing them would put 5 type errors from a dependency
+ * (`ViroRivePanel` props this app's viro lacks) into this app's typecheck. See
+ * `native-board.native.tsx` in packages/app/features/tutor for the same
+ * boundary.
  *
  * SOT: ./rive-board-panel.tsx · @acme/app/features/tutor/device-validation-flags.ts
  * SOT-KEYWORDS: native rive chrome viro native rive panel round 2 bindings

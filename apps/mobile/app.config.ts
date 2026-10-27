@@ -383,6 +383,9 @@ const config: ExpoConfig = {
     // Must follow the line above: it is the same requirement, and Dawn's use of
     // AHardwareBuffer will not compile below API 26. See the plugin's header.
     './plugins/with-webgpu-min-sdk',
+    // Viro excludes arm64 from the iOS simulator, where ExecutorchLib has only arm64.
+    // Viro is not linked on iPhone; see the plugin's header.
+    './plugins/with-ios-simulator-arm64',
     [
       'expo-build-properties',
       {
