@@ -1,0 +1,333 @@
+diff --git a/Package.swift b/Package.swift
+new file mode 100644
+index 0000000000000000000000000000000000000000..97cbd06d9fb31ed9e1d15aad70d7d0d6d5b75c2a
+--- /dev/null
++++ b/Package.swift
+@@ -0,0 +1,259 @@
++// swift-tools-version: 6.0
++// SwiftPM manifest for react-native-audio-api 0.13.4, for React Native's SwiftPM
++// autolinking. The package ships only RNAudioAPI.podspec. This file reproduces
++// what that podspec builds with its defaults (FFmpeg on, static external libs
++// on, worklets on because react-native-worklets 0.13.1 passes its >= 0.7.0
++// check):
++//
++//   Sources      common/cpp/audioapi/**/*.{cpp,c} and ios/audioapi/**/*.{m,mm}.
++//                Two podspec subspecs set per-file flags, which SwiftPM cannot,
++//                so each becomes something SwiftPM can express:
++//                  - audioapi_dsp compiles dsp/**/*.cpp with -O3: the
++//                    RNAudioAPIDSP target, with the same defines, header paths
++//                    and dependencies as RNAudioAPI so the shared headers see
++//                    the same configuration;
++//                  - miniaudio_impl compiles utils/MiniaudioImplementation.cpp
++//                    with "-x objective-c++": spm/MiniaudioImplementation.mm
++//                    includes that file, so it compiles as Objective-C++.
++//   Defines      RCT_NEW_ARCH_ENABLED, AUDIOAPI_VERSION, HAVE_ACCELERATE and
++//                RN_AUDIO_API_ENABLE_WORKLETS, from OTHER_CFLAGS and
++//                GCC_PREPROCESSOR_DEFINITIONS, so C, Objective-C and C++ all get
++//                them. The folly defines match the other hand-written manifests.
++//   Headers      The pod's header_dir mappings put common/cpp/audioapi and
++//                ios/audioapi under <audioapi/...>; here that is common/cpp and
++//                ios on the search path. external/include (plus its opus and
++//                vorbis folders) and external/include_ffmpeg are the pod's
++//                HEADER_SEARCH_PATHS.
++//   Worklets     s.dependency 'RNWorklets' becomes the RNWorklets package, at
++//                the sibling autolinking symlink as in react-native-reanimated's
++//                manifest. package.json swiftpmConfig.dependencies names it too.
++//   Binaries     prepare_command downloads release v3.1.0 of
++//                software-mansion-labs/rn-audio-libs. Nothing runs it under
++//                SwiftPM, so tooling/ios-spm.mjs runs
++//                scripts/download-prebuilt-binaries.sh before `react-native spm`
++//                resolves packages. It fills common/cpp/audioapi/external/ with
++//                  - ffmpeg_ios/lib{avcodec,avformat,avutil,swresample}.xcframework,
++//                    dynamic frameworks (s.ios.vendored_frameworks), linked here
++//                    as binary targets, which also embeds them in the app;
++//                  - <PLATFORM_NAME>/lib{opusfile,opus,ogg,vorbis,vorbisenc,
++//                    vorbisfile}.a, which the pod force-loads through
++//                    OTHER_LDFLAGS. Same flags here.
++//   Frameworks   Accelerate, AVFoundation and MediaPlayer (s.ios.frameworks).
++//
++// The package and product are named RNAudioAPI (package.json swiftpmConfig), the
++// podspec's name. Package references are relative to the autolinking symlink at
++// ios/build/generated/autolinking/libs/RNAudioAPI.
++
++import Foundation
++import PackageDescription
++
++// Absolute, because linker flags are not resolved against the package directory.
++let packageDir = URL(fileURLWithPath: #filePath).deletingLastPathComponent().path
++let externalDir = "\(packageDir)/common/cpp/audioapi/external"
++
++let staticExternalLibs = ["libopusfile", "libopus", "libogg", "libvorbis", "libvorbisenc", "libvorbisfile"]
++let ffmpegFrameworks = ["libavcodec", "libavformat", "libavutil", "libswresample"]
++
++let dependencies: [Target.Dependency] = [
++    .product(name: "ReactHeaders", package: "ReactNative"),
++    .product(name: "ReactNativeHeaders", package: "ReactNative"),
++    .product(name: "ReactNativeDependenciesHeaders", package: "ReactNative"),
++    .product(name: "ReactAppHeaders", package: "React-GeneratedCode"),
++    .product(name: "RNWorklets", package: "RNWorklets"),
++]
++
++let headerPaths: [String] = [
++    ".",
++    "common/cpp",
++    "ios",
++    "common/cpp/audioapi/external/include",
++    "common/cpp/audioapi/external/include/opus",
++    "common/cpp/audioapi/external/include/vorbis",
++    "common/cpp/audioapi/external/include_ffmpeg",
++]
++
++let ffmpegTargets: [Target] = ffmpegFrameworks.map {
++    .binaryTarget(name: $0, path: "common/cpp/audioapi/external/ffmpeg_ios/\($0).xcframework")
++}
++let ffmpegDependencies: [Target.Dependency] = ffmpegFrameworks.map { .target(name: $0) }
++
++let defines: [(String, String)] = [
++    ("RCT_NEW_ARCH_ENABLED", "1"),
++    ("AUDIOAPI_VERSION", "0.13.4"),
++    ("HAVE_ACCELERATE", "1"),
++    ("RN_AUDIO_API_ENABLE_WORKLETS", "1"),
++]
++
++let prefixHeader = ["-include", "react-native-spm-prefix.h"]
++
++let cSettings: [CSetting] =
++    headerPaths.map { .headerSearchPath($0) }
++    + defines.map { .define($0.0, to: $0.1) }
++    + [.unsafeFlags(prefixHeader)]
++
++let cxxSettings: [CXXSetting] =
++    headerPaths.map { .headerSearchPath($0) }
++    + defines.map { .define($0.0, to: $0.1) }
++    + [
++        .define("FOLLY_NO_CONFIG"),
++        // FOLLY_NO_CONFIG skips folly-config.h, which is where React Native turns coroutines off.
++        .define("FOLLY_CFG_NO_COROUTINES", to: "1"),
++        .define("FOLLY_MOBILE", to: "1"),
++        .define("FOLLY_USE_LIBCPP", to: "1"),
++        .define("DEBUG", .when(configuration: .debug)),
++        .define("NDEBUG", .when(configuration: .release)),
++        .unsafeFlags(prefixHeader + ["-Wno-comma", "-Wno-shorten-64-to-32"]),
++    ]
++
++let package = Package(
++    name: "RNAudioAPI",
++    platforms: [.iOS("17.0")],
++    products: [
++        .library(name: "RNAudioAPI", targets: ["RNAudioAPI"]),
++    ],
++    dependencies: [
++        .package(name: "ReactNative", path: "../../../../xcframeworks"),
++        .package(name: "React-GeneratedCode", path: "../../../ios"),
++        .package(name: "RNWorklets", path: "../RNWorklets"),
++    ],
++    targets: ffmpegTargets + [
++        .target(
++            name: "RNAudioAPIDSP",
++            dependencies: dependencies,
++            path: ".",
++            sources: [
++                "common/cpp/audioapi/dsp/Convolver.cpp",
++                "common/cpp/audioapi/dsp/FFT.cpp",
++                "common/cpp/audioapi/dsp/VectorMath.cpp",
++                "common/cpp/audioapi/dsp/WaveShaper.cpp",
++                "common/cpp/audioapi/dsp/WsolaTimeStretcher.cpp",
++            ],
++            publicHeadersPath: "spm/dsp",
++            cxxSettings: cxxSettings + [.unsafeFlags(["-O3"])],
++            linkerSettings: [.linkedFramework("Accelerate")]
++        ),
++        .target(
++            name: "RNAudioAPI",
++            dependencies: dependencies + ["RNAudioAPIDSP"] + ffmpegDependencies,
++            path: ".",
++            sources: [
++                "common/cpp/audioapi/core/analysis/AnalyserNode.cpp",
++                "common/cpp/audioapi/core/AudioContext.cpp",
++                "common/cpp/audioapi/core/AudioNode.cpp",
++                "common/cpp/audioapi/core/AudioParam.cpp",
++                "common/cpp/audioapi/core/BaseAudioContext.cpp",
++                "common/cpp/audioapi/core/destinations/AudioDestinationNode.cpp",
++                "common/cpp/audioapi/core/effects/BiquadFilterNode.cpp",
++                "common/cpp/audioapi/core/effects/ConvolverNode.cpp",
++                "common/cpp/audioapi/core/effects/DelayNode.cpp",
++                "common/cpp/audioapi/core/effects/GainNode.cpp",
++                "common/cpp/audioapi/core/effects/IIRFilterNode.cpp",
++                "common/cpp/audioapi/core/effects/PeriodicWave.cpp",
++                "common/cpp/audioapi/core/effects/StereoPannerNode.cpp",
++                "common/cpp/audioapi/core/effects/WaveShaperNode.cpp",
++                "common/cpp/audioapi/core/effects/WorkletNode.cpp",
++                "common/cpp/audioapi/core/effects/WorkletProcessingNode.cpp",
++                "common/cpp/audioapi/core/inputs/AudioRecorder.cpp",
++                "common/cpp/audioapi/core/OfflineAudioContext.cpp",
++                "common/cpp/audioapi/core/sources/AudioBufferBaseSourceNode.cpp",
++                "common/cpp/audioapi/core/sources/AudioBufferQueueSourceNode.cpp",
++                "common/cpp/audioapi/core/sources/AudioBufferSourceNode.cpp",
++                "common/cpp/audioapi/core/sources/AudioFileSourceNode.cpp",
++                "common/cpp/audioapi/core/sources/AudioScheduledSourceNode.cpp",
++                "common/cpp/audioapi/core/sources/ConstantSourceNode.cpp",
++                "common/cpp/audioapi/core/sources/MediaElementAudioSourceNode.cpp",
++                "common/cpp/audioapi/core/sources/OscillatorNode.cpp",
++                "common/cpp/audioapi/core/sources/RecorderAdapterNode.cpp",
++                "common/cpp/audioapi/core/sources/StreamerNode.cpp",
++                "common/cpp/audioapi/core/sources/WorkletSourceNode.cpp",
++                "common/cpp/audioapi/core/utils/AudioDecoding.cpp",
++                "common/cpp/audioapi/core/utils/AudioFileConcatenator.cpp",
++                "common/cpp/audioapi/core/utils/AudioFileWriter.cpp",
++                "common/cpp/audioapi/core/utils/AudioGraphManager.cpp",
++                "common/cpp/audioapi/core/utils/AudioRecorderCallback.cpp",
++                "common/cpp/audioapi/core/utils/buffer/BufferProcessorBase.cpp",
++                "common/cpp/audioapi/core/utils/buffer/QueueBufferProcessor.cpp",
++                "common/cpp/audioapi/core/utils/buffer/SingleBufferProcessor.cpp",
++                "common/cpp/audioapi/core/utils/decoding/SeekDecoderDaemon.cpp",
++                "common/cpp/audioapi/core/utils/param/ParamControlQueue.cpp",
++                "common/cpp/audioapi/core/utils/param/ParamRenderQueue.cpp",
++                "common/cpp/audioapi/core/utils/RotatingFileWriter.cpp",
++                "common/cpp/audioapi/core/utils/worklets/WorkletsRunner.cpp",
++                "common/cpp/audioapi/dsp/r8brain/fft/pffft_double.c",
++                "common/cpp/audioapi/events/AudioEventHandlerRegistry.cpp",
++                "common/cpp/audioapi/HostObjects/analysis/AnalyserNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/AudioContextHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/AudioNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/AudioParamHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/BaseAudioContextHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/effects/BiquadFilterNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/effects/ConvolverNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/effects/DelayNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/effects/GainNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/effects/IIRFilterNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/effects/StereoPannerNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/effects/WaveShaperNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/events/AudioEventHandlerRegistryHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/inputs/AudioRecorderHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/OfflineAudioContextHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/sources/AudioBufferBaseSourceNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/sources/AudioBufferHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/sources/AudioBufferQueueSourceNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/sources/AudioBufferSourceNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/sources/AudioFileSourceNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/sources/AudioScheduledSourceNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/sources/ConstantSourceNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/sources/OscillatorNodeHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/utils/AudioDecoderHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/utils/AudioFileUtilsHostObject.cpp",
++                "common/cpp/audioapi/HostObjects/utils/JsEnumParser.cpp",
++                "common/cpp/audioapi/jsi/JsiHostObject.cpp",
++                "common/cpp/audioapi/jsi/JsiPromise.cpp",
++                "common/cpp/audioapi/jsi/JsiUtils.cpp",
++                "common/cpp/audioapi/jsi/RuntimeLifecycleMonitor.cpp",
++                "common/cpp/audioapi/libs/ffmpeg/FFmpegDecoding.cpp",
++                "common/cpp/audioapi/libs/miniaudio/decoders/libopus/miniaudio_libopus.c",
++                "common/cpp/audioapi/libs/miniaudio/decoders/libvorbis/miniaudio_libvorbis.c",
++                "common/cpp/audioapi/libs/miniaudio/MiniAudioDecoding.cpp",
++                "common/cpp/audioapi/libs/pffft/pffft.c",
++                "common/cpp/audioapi/utils/AudioFileProperties.cpp",
++                "common/cpp/audioapi/utils/CircularOverflowableAudioArray.cpp",
++                "common/cpp/audioapi/utils/events/BufferingStateDispatcher.cpp",
++                "common/cpp/audioapi/utils/events/PositionChangedDispatcher.cpp",
++                "ios/audioapi/ios/AudioAPIModule.mm",
++                "ios/audioapi/ios/core/IOSAudioPlayer.mm",
++                "ios/audioapi/ios/core/IOSAudioRecorder.mm",
++                "ios/audioapi/ios/core/NativeAudioPlayer.m",
++                "ios/audioapi/ios/core/NativeAudioRecorder.m",
++                "ios/audioapi/ios/core/utils/FileOptions.mm",
++                "ios/audioapi/ios/core/utils/IOSFileWriter.mm",
++                "ios/audioapi/ios/core/utils/IOSRecorderCallback.mm",
++                "ios/audioapi/ios/core/utils/IOSRotatingFileWriter.mm",
++                "ios/audioapi/ios/core/utils/OwnedAudioBufferList.mm",
++                "ios/audioapi/ios/system/AudioEngine.mm",
++                "ios/audioapi/ios/system/AudioSessionManager.mm",
++                "ios/audioapi/ios/system/notification/NotificationRegistry.mm",
++                "ios/audioapi/ios/system/notification/PlaybackNotification.mm",
++                "ios/audioapi/ios/system/SystemNotificationManager.mm",
++                "spm/MiniaudioImplementation.mm",
++            ],
++            publicHeadersPath: "spm/public",
++            cSettings: cSettings,
++            cxxSettings: cxxSettings,
++            linkerSettings: [
++                .linkedFramework("UIKit"),
++                .linkedFramework("Foundation"),
++                .linkedFramework("Accelerate"),
++                .linkedFramework("AVFoundation"),
++                .linkedFramework("MediaPlayer"),
++                // miniaudio's Core Audio backend imports these. CocoaPods linked
++                // them through clang module auto-linking; named here so the link
++                // does not depend on that.
++                .linkedFramework("AudioToolbox"),
++                .linkedFramework("CoreAudio"),
++                .unsafeFlags(staticExternalLibs.map { "-Wl,-force_load,\(externalDir)/${PLATFORM_NAME}/\($0).a" }),
++            ]
++        ),
++    ],
++    cxxLanguageStandard: .cxx20
++)
+diff --git a/package.json b/package.json
+index 210d1d49300d60e8b64f0bbd822cd5cd23d77552..71e5c4156d08cc3fda7bd78286a8370df7a8097a 100644
+--- a/package.json
++++ b/package.json
+@@ -22,6 +22,9 @@
+     "android/",
+     "ios",
+     "RNAudioAPI.podspec",
++    "Package.swift",
++    "react-native-spm-prefix.h",
++    "spm",
+     "metro-config",
+     "!ios/build",
+     "!android/build",
+@@ -182,5 +185,11 @@
+   },
+   "dependencies": {
+     "semver": "^7.7.3"
++  },
++  "swiftpmConfig": {
++    "name": "RNAudioAPI",
++    "dependencies": [
++      "react-native-worklets"
++    ]
+   }
+ }
+diff --git a/react-native-spm-prefix.h b/react-native-spm-prefix.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..af5cea0557f2f4aa957419f0fc3f250fd55dbaf5
+--- /dev/null
++++ b/react-native-spm-prefix.h
+@@ -0,0 +1,10 @@
++// AUTO-SCAFFOLDED by react-native spm scaffold — mirrors CocoaPods' default
++// prefix header so ObjC sources that rely on an implicit Foundation/UIKit
++// import compile under SPM (which has no prefix-header mechanism). Safe to
++// delete + regenerate via `npx react-native spm scaffold`.
++#ifdef __OBJC__
++#import <Foundation/Foundation.h>
++#if __has_include(<UIKit/UIKit.h>)
++#import <UIKit/UIKit.h>
++#endif
++#endif
+diff --git a/spm/MiniaudioImplementation.mm b/spm/MiniaudioImplementation.mm
+new file mode 100644
+index 0000000000000000000000000000000000000000..e173ee4160a6b352c4118c5c51fb3c9ae0ff8c13
+--- /dev/null
++++ b/spm/MiniaudioImplementation.mm
+@@ -0,0 +1,4 @@
++// Compiles miniaudio's implementation as Objective-C++. The podspec does this with
++// a per-file "-x objective-c++" on the .cpp (its miniaudio_impl subspec); SwiftPM
++// has no per-file flags, and a .mm file gets the same language mode.
++#include "../common/cpp/audioapi/utils/MiniaudioImplementation.cpp"
+diff --git a/spm/dsp/RNAudioAPIDSP.h b/spm/dsp/RNAudioAPIDSP.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..b3967f8b9f411b759c72874ab907660b949d1b7a
+--- /dev/null
++++ b/spm/dsp/RNAudioAPIDSP.h
+@@ -0,0 +1 @@
++// Umbrella placeholder for the RNAudioAPIDSP target. Nothing imports it.
+diff --git a/spm/public/RNAudioAPI.h b/spm/public/RNAudioAPI.h
+new file mode 100644
+index 0000000000000000000000000000000000000000..831e325019886cdb24e68593283dc8934b536556
+--- /dev/null
++++ b/spm/public/RNAudioAPI.h
+@@ -0,0 +1,3 @@
++// Umbrella placeholder for the RNAudioAPI target. Nothing imports it: the
++// TurboModule is found by name at runtime and the C++ headers are reached through
++// header search paths.
