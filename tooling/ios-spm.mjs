@@ -148,6 +148,23 @@ if (missing.length > 0) {
   process.exit(1);
 }
 
+// CocoaPods defined RCT_NEW_ARCH_ENABLED for every pod; SwiftPM defines nothing.
+// A package whose sources guard their Fabric code with it and whose manifest does
+// not define it compiles that code out: its component views register a provider
+// with a null constructor and the app dies on the first render
+// (EXC_BAD_ACCESS at 0x0 in ComponentDescriptorRegistry::add).
+const guardsNewArch = (dir) =>
+  spawnSync('grep', ['-rlq', 'RCT_NEW_ARCH_ENABLED', ...['ios', 'apple', 'cpp', 'common'].map((d) => join(dir, d)).filter(existsSync)]).status === 0;
+const undefinedNewArch = Object.keys(spmLinked).filter((name) => {
+  const dir = join(root, 'node_modules', name);
+  const manifest = join(dir, 'Package.swift');
+  return existsSync(manifest) && guardsNewArch(dir) && !readFileSync(manifest, 'utf8').includes('RCT_NEW_ARCH_ENABLED');
+});
+if (undefinedNewArch.length > 0) {
+  console.error(`Package.swift must define RCT_NEW_ARCH_ENABLED: ${undefinedNewArch.join(', ')}`);
+  process.exit(1);
+}
+
 // What is left of the Podfile after deintegration installs nothing.
 for (const leftover of ['Podfile', 'Podfile.lock', 'Podfile.properties.json', 'Pods']) {
   rmSync(join(mobile, 'ios', leftover), { recursive: true, force: true });

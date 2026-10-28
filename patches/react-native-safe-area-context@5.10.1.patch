@@ -1,0 +1,19 @@
+diff --git a/Package.swift b/Package.swift
+index 5ed439fa3695fc012f65bdcd8aa95b8ceaa7b83e..99d7599139eccd16c974984c47c15d6a740f5d86 100644
+--- a/Package.swift
++++ b/Package.swift
+@@ -29,10 +29,14 @@ let package = Package(
+             sources: ["ios", "common/cpp"],
+             publicHeadersPath: "ios",
+             cSettings: [
++                // Its Fabric and TurboModule code sits behind RCT_NEW_ARCH_ENABLED, which
++                // CocoaPods set and SwiftPM does not.
++                .define("RCT_NEW_ARCH_ENABLED", to: "1"),
+                 .headerSearchPath("common/cpp"),
+                 .headerSearchPath("ios"),
+             ],
+             cxxSettings: [
++                .define("RCT_NEW_ARCH_ENABLED", to: "1"),
+                 .headerSearchPath("common/cpp"),
+                 .headerSearchPath("ios"),
+                 .define("DEBUG", .when(configuration: .debug)),
