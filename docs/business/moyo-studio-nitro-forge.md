@@ -97,6 +97,53 @@ Every release publishes an honest capabilities matrix keyed by engine, NitroForg
 - New core APIs require integration tests for all supported platforms and formats. A newer ArtCraft PR does not become a promise that the feature is present in the NitroForge SDK.
 - No downstream repo copies or patches arbitrary ArtCraft engine sources independently. Any engine fix enters NitroForge upstream sync or an explicit reviewed NitroForge patch with a plan to upstream it.
 
+## One cross-platform UI foundation: Expo UI, adaptive native views and Tailwind
+
+**Non-negotiable source sharing.** NitroForge stays in its **own repository**, but optional editor UI and Moyo's reusable editor controls must consume **the exact same shared component implementations**, not visually similar forks. Extract product-neutral components into the independently versioned NitroForge UI foundation, then make `@acme/ui` in Moyo compose/re-export those implementations with Moyo-specific theme/semantics. The independently publishable editor UI may depend on the shared foundation; the headless Rust engine SDK must never depend on React, Expo, Tailwind, Moyo, or a UI renderer.
+
+### What already exists in Moyo (verified from source)
+
+- `@expo/ui` Universal `Host` + `RNHostView` are already used in `packages/ui/FieldGroup.native.tsx`, `List.native.tsx`, `Collapsible.native.tsx` and `NativeSlot.native.tsx` to blend **SwiftUI-backed iOS native controls and Jetpack Compose-backed Android native controls** with shared React Native content. Reuse these **actual adapters**, not a WebView or imitation UI.
+- `@metavr/layout-compat` and `@metavr/layout-window-compat` are already installed in `apps/mobile/package.json`. Assess their exact supported native adaptive APIs and license/packaging constraints before extracting or asserting live usage; keep Meta layout compatibility in a narrowly tested platform adapter.
+- `packages/ui/adaptive-panes/`, `adaptive-navigation.ts`, `reserved-regions.native.ts` and `apps/mobile/modules/reserved-regions` already form a shared adaptive layout system with Expo Modules 2, Android Jetpack WindowManager `FoldingFeature`, Apple reserved regions, explicit hinge boundaries and inspector panes. The current `AdaptivePanes` implementation works across native and web and **does not use** Expo Router's alpha `unstable-split-view` renderer. Reuse the existing behavior and tested semantics.
+- Styling is **Tailwind CSS v4**, with `packages/theme/tokens.ts` as source of truth, generating `theme.css` for web and `theme-native.css` for mobile. `packages/ui/tw.tsx` currently uses **Uniwind on native** and **react-native-css on Next.js web** (Uniwind is not the Next.js styling runtime in this repository). It wraps `@expo/html-elements` so web gets semantic HTML and native gets React Native views. Reuse the same tokens, semantic component API and `className` styling boundary; do not introduce another CSS-in-JS system or copy raw web HTML into React Native screens.
+
+### Proposed public packages in independent NitroForge repo
+
+| Package | Responsibility |
+| --- | --- |
+| `@nitro-forge/native-ui` | Platform-neutral semantic primitives using `@expo/ui` Universal `Host`/`RNHostView` on iOS/Android and matching accessible web implementations; shared toolbars, inputs, menus, lists, property fields, accessible focus and shortcuts |
+| `@nitro-forge/adaptive-layout` | Extracted adaptive pane, Inspector, window-size/space budgeting, hinge/posture/reserved-region geometry, keyboard/safe-area and optional verified Meta compatibility adapters |
+| `@nitro-forge/editor-ui` | Optional ready-to-use document/spreadsheet/slide/image editor UI built exclusively from these same primitives: command ribbon, canvas, layer tree, formula bar, slide list, timeline, inspector |
+| `@nitro-forge/core`, `@nitro-forge/*forge` | Independent headless engines and runtime transports; no UI dependency; apps may build a fully custom UI against the same engine contracts |
+
+Dependencies flow one way: **NitroForge headless engine → runtime adapter → optional editor UI → consuming app**. `@nitro-forge/editor-ui` uses `@nitro-forge/native-ui` and `@nitro-forge/adaptive-layout`; Moyo `@acme/ui` uses the same shared foundation with Moyo-owned styles and routes. The shared foundation must **not** import Moyo packages, themes, tenant state, or business APIs. Extract neutral code in small backwards-compatible PRs, with public API and behavioral regression tests. Avoid copying proprietary or license-incompatible code.
+
+### Responsive and adaptive is required on every surface, including web
+
+| Environment | Expected editor behavior |
+| --- | --- |
+| Native phone | Compact single work area; touch-first toolbar and contextual sheets, virtual keyboard avoidance, full editing functionality accessible without desktop hover |
+| Native tablet / iPad | Multi-pane canvas + object list + inspector when usable space permits; Pencil and hardware keyboard; flexible split-screen and Stage Manager resizing |
+| Native Android tablet / foldable (Surface Duo, book, tabletop, future multi-hinge) | Jetpack WindowManager + verified Meta layout-capability signals; pane boundaries never cross active hinges/occlusions; preserve stable document and input state on posture/rotation/resizing |
+| Web, phone width | Responsive shared editor; accessible compact toolbar, one primary pane, touch input, header/bottom navigation per host; no native right rail on web |
+| Web, tablet and desktop | Responsive Tailwind-based multi-pane work area, pointer/keyboard shortcuts, resizable inspector and toolbars; SSR-safe hydration and meaningful mouse/trackpad behavior |
+| XR/spatial where supported | Shared editor operation contract inside the host's Viro/spatial panel adapter; runtime capability gates rather than assuming 2D window sizing or unsupported Expo controls |
+
+Use the **actual measured container and usable region**, not device name or fixed initial screen dimensions. Keep stable selection, undo history, edit sessions and scroll position across compact ↔ wide, orientation, split-screen, viewport segments and fold changes. The host owns global navigation policy; the NitroForge editor owns only inner workspace pane composition. Preserve Moyo's existing physical-right native foldable navigation and web header/menu policy, without imposing Moyo's global navigation shell on third-party SDK users.
+
+Apply **shared Tailwind class recipes, semantic design tokens, responsive variants, density/text scaling, dark/light mode and reduced-motion options** through an injectable theme adapter. No hardcoded color/spacing values or app-brand assets inside NitroForge. `@expo/ui` native components are not CSS DOM nodes; translate Tailwind-derived design tokens to supported native control properties/modifiers rather than promising web CSS classes style every SwiftUI/Compose property identically. Respect the platform-native presentation while keeping one semantic API and one token source. For editor document/canvas rendering, prefer Skia/Graphite and the reviewed engine adapter, not HTML `canvas` assumptions on native.
+
+### Verification and release gates
+
+- Storybook/visual fixtures for the *same components* at narrow/wide sizes; browser rendering at phone/tablet/desktop; HTML semantics, focus, screen reader, keyboard/IME and pointer behavior.
+- iOS/Android build + simulator + physical device verification of Expo UI native `Host` nesting, Compose measurement constraints (do not put a lazy native list inside an unbounded scroll parent), events and accessibility.
+- Surface Duo hinge/book/tabletop/RTL tests, multiple fold/occlusion fixtures, iPad split window and Pencil input, resize and navigation continuity. A simulated fold fixture is not evidence of real hardware performance.
+- Verify Tailwind token parity between Uniwind/native and Next.js/react-native-css/web, SSR/hydration, touch targets, text scale, responsive layout and motion reduction.
+- Release tested `@nitro-forge/native-ui` and `@nitro-forge/adaptive-layout` versions to all consuming apps; Moyo and other apps upgrade via dependency PRs/CI rather than copying changes.
+
+**Status:** design requirement only; no components have been extracted, no standalone NitroForge packages published, and no native/tablet/web QA from this document alone.
+
 ## Cross-platform composition
 
 | Layer | Native iOS / Android | Web |
