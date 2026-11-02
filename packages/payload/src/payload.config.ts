@@ -4,6 +4,7 @@ import { fileURLToPath } from 'node:url';
 import { buildConfig } from 'payload';
 import type { PayloadRequest } from 'payload';
 import sharp from 'sharp';
+import { sharpTransformer } from '@payloadcms/transformer-sharp';
 import { mcpPlugin } from '@payloadcms/plugin-mcp';
 import { bunnyStorage } from '@seshuk/payload-storage-bunny';
 import { Users } from './collections/Users';
@@ -188,7 +189,9 @@ export default buildConfig({
   cors: [serverURL],
   csrf: [serverURL],
   secret: process.env.PAYLOAD_SECRET || '',
-  sharp,
+  // Payload 4 moves image processing out of core. Keep dynamic transforms off
+  // for learner uploads so arbitrary URL parameters cannot trigger resizing.
+  upload: { transformers: [sharpTransformer({ sharp })] },
   plugins: [
     /*
       Admin-panel uploads go to Bunny, not to local disk.
