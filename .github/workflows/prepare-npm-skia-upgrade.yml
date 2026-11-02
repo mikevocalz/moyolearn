@@ -37,6 +37,8 @@ jobs:
         run: node tooling/migrate-skia-v3.mjs --write
       - name: Resolve exact npm pins and regenerate lockfile
         run: pnpm install --no-frozen-lockfile
+      - name: Audit all remaining npm package pins
+        run: node tooling/audit-npm-latest.mjs --write
       - name: Check migration output
         run: |
           node tooling/migrate-skia-v3.mjs --check
@@ -46,6 +48,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -u
+          git add docs/architecture/npm-latest-audit-2026-11-02.md
           if ! git diff --cached --quiet; then
             git commit -m "chore(deps): regenerate npm lockfile and rewrite Skia v3 imports"
             git push origin HEAD:upgrade/npm-latest-skia-v3-2026-11-02
