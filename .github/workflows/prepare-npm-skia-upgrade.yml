@@ -1,0 +1,61 @@
+name: Prepare npm upgrade and Skia v3 migration
+
+# Scoped to the single draft branch: never upgrades or deploys main.
+on:
+  push:
+    branches:
+      - upgrade/npm-latest-skia-v3-2026-11-02
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: npm-skia-v3-prepare
+  cancel-in-progress: false
+
+jobs:
+  prepare:
+    if: github.repository == 'mikevocalz/moyolearn' && github.ref == 'refs/heads/upgrade/npm-latest-skia-v3-2026-11-02'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: true
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10.32.1
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24.22.1'
+          cache: pnpm
+      - name: Validate Skia import migration script
+        run: node --test tooling/migrate-skia-v3.test.mjs
+      - name: Migrate tracked JS/TS import paths to Skia v3
+        run: node tooling/migrate-skia-v3.mjs --write
+      - name: Resolve exact npm pins and regenerate lockfile
+        run: pnpm install --no-frozen-lockfile
+      - name: Check migration output
+        run: |
+          node tooling/migrate-skia-v3.mjs --check
+          git diff --check
+      - name: Commit generated import migration and frozen lockfile
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -u
+          if ! git diff --cached --quiet; then
+            git commit -m "chore(deps): regenerate npm lockfile and rewrite Skia v3 imports"
+            git push origin HEAD:upgrade/npm-latest-skia-v3-2026-11-02
+          fi
+      - name: Run migration-branch tests and type checks
+        run: |
+          pnpm --filter @acme/auth test
+          pnpm --filter @acme/payload typecheck
+          pnpm --filter @acme/app typecheck
+          pnpm --filter mobile typecheck
+
+# No deploy or merge. Auth migration, native builds and child/tenant
+# security gates are required before any production cutover.
