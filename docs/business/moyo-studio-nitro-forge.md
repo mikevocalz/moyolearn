@@ -14,7 +14,7 @@ The first-party product is **Moyo Studio**, one consistent workspace containing 
 
 ## Reusable engine boundary
 
-The previously discussed **Nitro-Forge** components are intended as reusable, Moyo-independent packages, with Moyo-specific UI, tenancy, storage and permissions outside those packages:
+The previously discussed **Nitro-Forge** components are maintained and released from a **separate independent repository, outside the Moyo monorepo**. Moyo depends on their published, versioned artifacts as any other application would. NitroForge owns the reusable engines, Rust/JS bindings, cross-platform tests and release metadata. Moyo owns only Moyo-specific UI, tenancy, storage and permissions. The independent repository has not yet been provisioned:
 
 | Standalone package (proposed) | Candidate engine(s) | Moyo surface |
 | --- | --- | --- |
@@ -29,6 +29,73 @@ The previously discussed **Nitro-Forge** components are intended as reusable, Mo
 Repositories must be audited, separately commit-pinned and licensed before code is copied or linked. A GitHub README is not a tested ABI. These proposed package names do **not** imply that npm packages, mobile bridges or compatible command APIs exist. Source admission and runtime linkage are distinct gates. PhotoCraft already has an immutable reviewed source pin in docs/business/upstream-lock.json; do not silently update it or reinterpret its compile-only PR #95 as a working editor.
 
 Retain upstream copyright and LICENSE/NOTICE/ATTRIBUTION requirements and audit transitive crates, dictionaries, codecs, fonts and assets before shipping. Do not reuse ArtCraft trademarks, logos or branding in Moyo.
+
+## Independent repository, distribution and upstream synchronization
+
+**Hard separation:** NitroForge must be a distinct Git repository, CI pipeline, package release and issue tracker, ideally under a dedicated project organization. Do not put the NitroForge source of truth in `packages/app`, `packages/ui` or Moyo's existing `packages/art` registry. Moyo may temporarily retain its immutable PhotoCraft source-admission history, but future upstream pin changes and adapter implementations belong in NitroForge; Moyo consumes released builds.
+
+Proposed standalone repository layout (to be created separately; not present in this PR):
+
+```text
+nitroforge/
+  crates/
+    engine-core/           # reviewed typed façade, document/revision/undo contracts
+    engine-photocraft/     # pinned and audited upstream integration
+    engine-wordcraft/
+    engine-gridcraft/
+    engine-deckcraft/
+    ffi/                   # narrow versioned C ABI, handle ownership and cancellation
+    wasm/                  # browser-facing engine adapters
+  packages/
+    core/                  # @nitro-forge/core
+    react-native/          # @nitro-forge/react-native; Nitro codegen + Expo config
+    web/                   # @nitro-forge/web; worker/WASM loader
+    pixforge/              # @nitro-forge/pixforge
+    quillforge/
+    gridforge/
+    deckforge/
+    folioforge/
+    reelforge/
+    beatforge/
+  examples/
+    expo-playground/       # app-agnostic iOS/Android integration tests
+    web-playground/        # web reference application
+  tooling/
+    upstream/              # pin watcher, review reports, changelog classification
+    licenses/              # notices and dependency audit
+  .github/workflows/
+    upstream-watch.yml
+    native-wasm-ci.yml
+    publish.yml
+  upstream.lock.json
+  compatibility.json
+```
+
+The `@nitro-forge` namespace is illustrative until the registry scope is verified/reserved. Each engine adapter is optional and can be installed independently. Branding, app accounts, content models, database and Moyo design tokens must not be runtime dependencies of the SDK. Rust crates are separately versioned where necessary; release packages include verified iOS/Android bindings and web WASM artifacts, with compatible toolchains and integrity metadata.
+
+### Keep up with frequent ArtCraft changes safely
+
+1. **Detect:** in the independent NitroForge repository, poll or receive permitted upstream GitHub webhook events for each exact ArtCraft repository. Track merged PRs, commits, tags and license changes. Watch *merged* commits, not unmerged PR heads. An independent project's Actions workflow does not automatically receive upstream `push` events; use polling or a separately configured GitHub App/webhook for event-driven checks.
+2. **Classify:** compare the locked commit with the latest approved upstream target, map changes to affected engine crates and identify ABI changes, new capabilities, migrations, licensing/asset notices, security fixes and feature flags.
+3. **Propose:** create a NitroForge update PR with a reproducible immutable SHA pin, upstream PR links, a generated change report, compatibility metadata and machine-readable feature declarations. The updater must never silently rewrite production pins.
+4. **Test:** compile Rust for host, iOS, Android and WASM; execute engine fixtures, editable-document round-trips and conversion tests; verify Nitro/Expo native linking, wasm execution, Skia image output, memory/resource lifetime, accessibility and relevant device test suites. Handle release-blocking security/license changes explicitly.
+5. **Release:** after successful checks and review, publish a new semver NitroForge release with per-platform artifacts, provenance, supported architecture/runtime matrix, feature list, migration notes and changelog. New upstream functionality is *available* only when the adapter exposes and verifies it.
+6. **Propagate:** configure Renovate/Dependabot or an equivalent release bot in each consumer (Moyo, NYC-MON, DVNT, Pa'Casa, Harlem Might). It opens PRs against **NitroForge package versions**, not ArtCraft source. Run each app's own CI/device tests before approving rollout.
+7. **Roll back:** retain prior release artifacts and per-application lockfiles. Canary one app first, then widen adoption when evidence supports parity; halt rollout and revert the consumer dependency if an integration or document migration fails.
+
+All consumers have the **same upstream SDK release stream**, but not necessarily the same installed version on the same day. For strict fleet-wide consistency, maintain a tested compatibility baseline and coordinate synchronized version-bump PRs; do not force an incompatible upgrade into production. Security backports may require patch releases on supported branches. The system must report *available, tested, released, adopted* separately. Updating a pinned SHA or passing `cargo check` does not establish feature parity.
+
+### Versioned engine capability manifest
+
+Every release publishes an honest capabilities matrix keyed by engine, NitroForge version, upstream commit, ABI schema, supported OS/architectures and validated editing operations. Consuming apps use this manifest to enable tools or show supported fallbacks. Moyo, NYC-MON and DVNT can each provide completely different user interfaces over the exact same SDK APIs.
+
+### API ownership and compatibility
+
+- NitroForge API contracts are application-neutral: session creation, validated operations, revision-aware execution, render, import/export, document history, cancellation and release.
+- SemVer governs source/binary compatibility and documented behavior; freeze a versioned FFI schema and validate bridge compatibility before accepting upstream refactors.
+- Consumers supply file streams, authorization decisions, workspace identity and persistence callbacks; NitroForge must never access their database or OAuth tokens directly.
+- New core APIs require integration tests for all supported platforms and formats. A newer ArtCraft PR does not become a promise that the feature is present in the NitroForge SDK.
+- No downstream repo copies or patches arbitrary ArtCraft engine sources independently. Any engine fix enters NitroForge upstream sync or an explicit reviewed NitroForge patch with a plan to upstream it.
 
 ## Cross-platform composition
 
@@ -57,7 +124,7 @@ Each adapter exposes only an allowlisted, domain-specific operation surface, not
 - export(session, revision, approved format and options) -> derived immutable file bytes
 - cancel(jobId); close(session) -> deterministic resource cleanup
 
-The actual ABI and Nitro HybridObject interface must be implemented and generated from verified current toolchain APIs. JS must never receive raw native pointers as numbers. Engine history owns undo/redo: one edit corresponds to one history unit. Do not keep a second editable document in Zustand. Preserve document identity, selection intent and edit sessions across fold/unfold and host resizing. Restore or fail explicitly after OS-driven activity recreation; no untested continuity claims.
+The actual ABI and Nitro HybridObject interface must be implemented inside the independent NitroForge repository and generated from verified current toolchain APIs. JS must never receive raw native pointers as numbers. Engine history owns undo/redo: one edit corresponds to one history unit. Do not keep a second editable document in Zustand. Preserve document identity, selection intent and edit sessions across fold/unfold and host resizing. Restore or fail explicitly after OS-driven activity recreation; no untested continuity claims.
 
 ## Storage, collaboration and Connected Apps
 
@@ -69,7 +136,7 @@ The actual ABI and Nitro HybridObject interface must be implemented and generate
 
 ## First vertical slice: Moyo Design
 
-Build on the admitted PhotoCraft engine, without introducing an alternative editor engine. Success requires an actual linked source-pinned Rust adapter, not a mock renderer:
+Consume a separately released NitroForge PixForge integration built from the admitted PhotoCraft engine, without introducing an alternative editor engine or copying it into Moyo. Success requires an actual linked source-pinned Rust adapter, not a mock renderer:
 
 1. Create and open a native editable design document, add a raster layer, place an image, paint a stroke and transform one object using Moyo controls.
 2. Undo, redo and reopen the serialized editable source without losing layer structure. Export a PNG to a business-owned asset; exported image is not the editable source of truth.
@@ -96,4 +163,4 @@ Any first release may limit features to verified operations. It must not imply t
 - Product: shared semantic UI, screen reader/IME/Pencil input, right-rail foldable layout and web header rules, reduced motion and keyboard shortcuts.
 - Release: per-platform measurements and real-device evidence, not source compilation or mock tests alone.
 
-This document decides the architecture and initial vertical slice. It creates **no editor UI, Rust binding, package, installed dependency, end-user route or deployed service**. Implementation should proceed as individually complete, reviewable feature PRs with working engine proof and the repository's established test gates.
+This document decides the Moyo consumption architecture and initial vertical slice. It creates **no independent NitroForge repository, engine source, editor UI, Rust binding, package, installed dependency, end-user route or deployed service**. Implementation should proceed as individually complete, reviewable feature PRs with working engine proof and the repository's established test gates.
