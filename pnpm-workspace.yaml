@@ -37,9 +37,9 @@ catalog:
   "@anthropic-ai/sdk": 0.126.0
   react: 19.3.0
   react-dom: 19.3.0
-  react-native: 0.88.0
+  react-native: 0.88.1
   react-native-web: 0.21.2
-  expo: 58.0.19
+  expo: 58.0.22
   "@expo/metro-runtime": ~58.0.15
   expo-build-properties: ~58.0.11
   expo-font: ~58.0.10
@@ -104,7 +104,7 @@ catalog:
   # Its own release train, which is why the numbers do not match the line above.
   # Held with it: the fetcher registers into executorch's runtime.
   react-native-executorch-expo-resource-fetcher: 0.9.1
-  "@shopify/react-native-skia": 2.14.0
+  react-native-skia: 3.8.1
   react-native-skia-graphite-android: 157.0.0
   react-native-skia-graphite-apple-ios: 157.0.0
   react-native-skia-graphite-apple-macos: 157.0.0
@@ -176,7 +176,7 @@ catalog:
   react-native-webview: 14.0.1
 
   # web
-  next: 16.3.5
+  next: 16.4.3
   nextjs-toploader: 3.9.17
 
   # styling (Uniwind — Tailwind 4 only; uniwind pins @tailwindcss/node to the
@@ -244,15 +244,14 @@ catalog:
   # leak this catches isn't server actions — it's Payload credentials and
   # inference keys ending up readable inside an app binary.
   server-only: 0.0.1
-  payload: 4.0.0-canary.33
-  "@payloadcms/db-postgres": 4.0.0-canary.33
-  "@payloadcms/next": 4.0.0-canary.33
-  "@payloadcms/plugin-mcp": 4.0.0-canary.33
-  "@payloadcms/ui": 4.0.0-canary.33
-  # The super admin's mount (ADR-003). Its `payload` peer is an EXACT pin —
-  # `4.0.0-canary.33`, not a range — so this line and the `payload` line above
-  # move together or install fails outright rather than drifting.
-  "@payloadcms/tanstack-start": 4.0.0-canary.33
+  payload: 4.0.0-beta.6
+  "@payloadcms/db-postgres": 4.0.0-beta.6
+  "@payloadcms/next": 4.0.0-beta.6
+  "@payloadcms/plugin-mcp": 4.0.0-beta.6
+  "@payloadcms/ui": 4.0.0-beta.6
+  # Upgrade the complete Payload 4 beta family atomically, including the
+  # TanStack admin integration and the matching @payloadcms/next package.
+  "@payloadcms/tanstack-start": 4.0.0-beta.6
   graphql: 16.14.2 # payload peers ^16
   pg: 8.23.0
   # The job runner (doc 12 §6 · docs/design/jobs.md). Same Postgres, `jobs`
@@ -260,23 +259,15 @@ catalog:
   # exactly — one driver in the workspace, not two, so the queue and the
   # repositories cannot disagree about how a timestamp comes back.
   pg-boss: 12.33.0
-  # HELD AT 1.7.2 — 1.7.5 is published and breaks this schema, not the code.
-  # `packages/payload/migrations/better_auth_tables.sql` is verbatim 1.7.2
-  # `better-auth generate` output: `account."issuer"` is `text not null` with no
-  # default, and there is a unique index on (issuer, accountId). 1.7.5 stopped
-  # writing that column, so every insert into `account` fails — signup and OAuth
-  # linking with it. Taking 1.7.5 means regenerating the DDL with its CLI and
-  # migrating the column and index away per the 1.7 upgrade guide, against a
-  # disposable database. That is a schema change, not a version bump.
-  better-auth: 1.7.2
-  "@better-auth/expo": 1.7.2
-  "@better-auth/stripe": 1.7.2
-  # The Better Auth CLI, and yes it is called `auth`. `@better-auth/cli` was
-  # renamed to the bare `auth` package at v1.6 and the old name stops at 1.4.22,
-  # so "install the CLI matching better-auth@1.7.1" means this line and not that
-  # one. Same version as `better-auth` above on purpose: it generates the DDL for
-  # the adapter shipped in that exact release.
-  auth: 1.7.2
+  # Migration branch only: Better Auth 1.7.15 requires an audited cleanup of
+  # old better_auth.account.issuer NOT NULL and (issuer, accountId) unique index.
+  # The Payload adapter must become authoritative before production cutover.
+  # Do not merge without a disposable-DB migration rehearsal and role/billing tests.
+  better-auth: 1.7.15
+  "@better-auth/expo": 1.7.15
+  "@better-auth/stripe": 1.7.15
+  # Keep the Better Auth CLI on the same exact release.
+  auth: 1.7.15
   stripe: 22.6.2
   sharp: 0.35.4
   "@types/pg": 8.23.1
@@ -306,7 +297,7 @@ catalog:
   "@types/react-dom": ^19.3.0
   eslint: ^9.39.2
   eslint-config-expo: ~58.0.3
-  eslint-config-next: 16.3.5
+  eslint-config-next: 16.4.3
   "@eslint/eslintrc": ^3.3.7
   storybook: 10.6.0
   "@storybook/react-vite": 10.6.0
