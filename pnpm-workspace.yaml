@@ -252,6 +252,7 @@ catalog:
   # Upgrade the complete Payload 4 beta family atomically, including the
   # TanStack admin integration and the matching @payloadcms/next package.
   "@payloadcms/tanstack-start": 4.0.0-beta.6
+  "@payloadcms/transformer-sharp": 4.0.0-beta.6
   graphql: 16.14.2 # payload peers ^16
   pg: 8.23.0
   # The job runner (doc 12 §6 · docs/design/jobs.md). Same Postgres, `jobs`
@@ -270,7 +271,7 @@ catalog:
   # Keep the Better Auth CLI on the same exact release.
   auth: 1.7.15
   stripe: 22.6.2
-  sharp: 0.35.4
+  sharp: 0.35.5
   "@types/pg": 8.23.1
 
   # observability (doc 12 §7 · docs/design/slo.md). Two SDKs, one release train
