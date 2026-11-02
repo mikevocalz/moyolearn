@@ -22,7 +22,8 @@
     "sharp": "catalog:",
     "@seshuk/payload-storage-bunny": "3.0.0",
     "@delmaredigital/payload-better-auth": "catalog:",
-    "better-auth": "catalog:"
+    "better-auth": "catalog:",
+    "@payloadcms/transformer-sharp": "catalog:"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",
