@@ -263,6 +263,7 @@ catalog:
   # old better_auth.account.issuer NOT NULL and (issuer, accountId) unique index.
   # The Payload adapter must become authoritative before production cutover.
   # Do not merge without a disposable-DB migration rehearsal and role/billing tests.
+  "@delmaredigital/payload-better-auth": 0.40.0-next.0
   better-auth: 1.7.15
   "@better-auth/expo": 1.7.15
   "@better-auth/stripe": 1.7.15
