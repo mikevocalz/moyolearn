@@ -15,9 +15,10 @@
   },
   "scripts": {
     "lint": "eslint",
-    "test": "node --experimental-strip-types --test src/*.test.ts",
+    "test": "node --experimental-strip-types --test src/*.test.ts && node --test scripts/payload-adapter-preflight.test.mjs",
     "email:proof": "node --experimental-strip-types scripts/auth-email-proof.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "auth:adapter:preflight": "node scripts/payload-adapter-preflight.mjs"
   },
   "dependencies": {
     "@better-auth/expo": "catalog:",
