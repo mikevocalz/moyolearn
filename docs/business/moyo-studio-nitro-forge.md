@@ -14,7 +14,7 @@ The first-party product is **Moyo Studio**, one consistent workspace containing 
 
 ## Reusable engine boundary
 
-The previously discussed **Nitro-Forge** components are maintained and released from a **separate independent repository, outside the Moyo monorepo**. Moyo depends on their published, versioned artifacts as any other application would. NitroForge owns the reusable engines, Rust/JS bindings, cross-platform tests and release metadata. Moyo owns only Moyo-specific UI, tenancy, storage and permissions. The independent repository has not yet been provisioned:
+The previously discussed **Nitro-Forge** components are maintained and released from a **separate independent repository, outside the Moyo monorepo**. Moyo depends on their published, versioned artifacts as any other application would. NitroForge owns the reusable engines, Rust/JS bindings, cross-platform tests and release metadata. Moyo owns only Moyo-specific UI, tenancy, storage and permissions. The independent repository is now [mikevocalz/nitro-forge](https://github.com/mikevocalz/nitro-forge). It already has the seven **Ignition** engines Prism, Cadence, Splice, Folio, Pitch, Tally and Quill; preserve these public APIs rather than replacing/renaming them as an unreviewed ArtCraft drop-in. Work to target Skia v3 Graphite/Expo 58 and a shared Studio UI is in [draft NitroForge PR #1](https://github.com/mikevocalz/nitro-forge/pull/1). The source and native bindings are not yet validated.
 
 | Standalone package (proposed) | Candidate engine(s) | Moyo surface |
 | --- | --- | --- |
@@ -212,4 +212,4 @@ Any first release may limit features to verified operations. It must not imply t
 - Product: shared semantic UI, screen reader/IME/Pencil input, right-rail foldable layout and web header rules, reduced motion and keyboard shortcuts.
 - Release: per-platform measurements and real-device evidence, not source compilation or mock tests alone.
 
-This document decides the Moyo consumption architecture and initial vertical slice. It creates **no independent NitroForge repository, engine source, editor UI, Rust binding, package, installed dependency, end-user route or deployed service**. Implementation should proceed as individually complete, reviewable feature PRs with working engine proof and the repository's established test gates.
+This document decides the Moyo consumption architecture and initial vertical slice. NitroForge now lives in its own GitHub repository and has seven original Ignition engines, but this document does not create any new editor UI, native Rust binding, published SDK package, installed Moyo dependency, end-user route or deployed service. The independent NitroForge source of truth is in that repository. Implementation should proceed as individually complete, reviewable feature PRs with working engine proof and the repository's established test gates.
