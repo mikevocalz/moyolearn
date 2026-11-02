@@ -31,7 +31,7 @@ module.exports = {
     // and Skia's UIScreen are unavailable in the visionOS SDK; the other three
     // have never been built for it.
     'react-native-vision-camera': visionOS ? { platforms: { ios: null } } : {},
-    '@shopify/react-native-skia': visionOS ? { platforms: { ios: null } } : {},
+    'react-native-skia': visionOS ? { platforms: { ios: null } } : {},
     'react-native-audio-api': visionOS ? { platforms: { ios: null } } : {},
     'react-native-enriched-html': visionOS ? { platforms: { ios: null } } : {},
     '@react-native-masked-view/masked-view': visionOS ? { platforms: { ios: null } } : {},

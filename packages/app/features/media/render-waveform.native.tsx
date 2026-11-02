@@ -9,7 +9,7 @@
 // image that does not match the live meter would read as a different control.
 // SOT: packages/ui/audio/Waveform.tsx
 // SOT-KEYWORDS: waveform render png skia native voice note inline editor
-import { Group, Rect, drawAsImage } from '@shopify/react-native-skia';
+import { Group, Rect, drawAsImage } from 'react-native-skia';
 import { File, Paths } from 'expo-file-system';
 import { BAR_COUNT, MIN_BAR, barHeight } from '@acme/ui';
 import type { RenderWaveform, RenderedWaveform } from './render-waveform.types.ts';

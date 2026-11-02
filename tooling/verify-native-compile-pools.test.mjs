@@ -22,7 +22,7 @@ function currentBuild(directory, source) {
 function fixture(t) {
   const root = mkdtempSync(join(tmpdir(), 'moyo-native-pool-test-'));
   t.after(() => rmSync(root, { recursive: true, force: true }));
-  const skia = join(root, 'node_modules/@shopify/react-native-skia/android');
+  const skia = join(root, 'node_modules/react-native-skia/android');
   const generated = join(skia, '.cxx/Debug/hash/arm64-v8a');
   currentBuild(generated, skia);
   const build = join(generated, 'build.ninja'); const rules = join(generated, 'CMakeFiles/rules.ninja');

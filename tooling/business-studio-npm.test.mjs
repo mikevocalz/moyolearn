@@ -101,7 +101,7 @@ test('resolved older optional peers cannot bypass latest admission', () => {
 });
 test('lock admission handles scoped quoted package names and invalid envelopes', () => {
   assert.throws(() => validateLockedTargets('not a lockfile', []), /package section/);
-  assert.throws(() => validateLockedTargets("\npackages:\n  '@shopify/react-native-skia@2.12.0':\n    resolution: {}\nsnapshots:\n", [{ name: '@shopify/react-native-skia', version: '2.14.0' }]), /nonlatest/);
+  assert.throws(() => validateLockedTargets("\npackages:\n  'react-native-skia@2.12.0':\n    resolution: {}\nsnapshots:\n", [{ name: 'react-native-skia', version: '2.14.0' }]), /nonlatest/);
 });
 
 for (const integrity of [

@@ -6,8 +6,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { AppState, StyleSheet } from 'react-native';
 import { useDerivedValue, useSharedValue } from 'react-native-reanimated';
-import { Canvas, Rect } from '@shopify/react-native-skia';
-import type { SkSize } from '@shopify/react-native-skia';
+import { Canvas, Rect } from 'react-native-skia';
+import type { SkSize } from 'react-native-skia';
 import {
   Camera,
   useCameraDevice,
