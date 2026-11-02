@@ -97,6 +97,8 @@ Every release publishes an honest capabilities matrix keyed by engine, NitroForg
 - New core APIs require integration tests for all supported platforms and formats. A newer ArtCraft PR does not become a promise that the feature is present in the NitroForge SDK.
 - No downstream repo copies or patches arbitrary ArtCraft engine sources independently. Any engine fix enters NitroForge upstream sync or an explicit reviewed NitroForge patch with a plan to upstream it.
 
+See also **[NitroForge Suite Design Specification](./nitroforge-suite-design-spec.md)** for the Affinity-inspired, independently branded unified suite experience, shared dockable/snap rails, Mobbin research references, responsive component anatomy, cross-editor manifests and interaction release gates. This spec is proposal-only; it does not claim runtime implementation.
+
 ## One cross-platform UI foundation: Expo UI, adaptive native views and Tailwind
 
 **Non-negotiable source sharing.** NitroForge stays in its **own repository**, but optional editor UI and Moyo's reusable editor controls must consume **the exact same shared component implementations**, not visually similar forks. Extract product-neutral components into the independently versioned NitroForge UI foundation, then make `@acme/ui` in Moyo compose/re-export those implementations with Moyo-specific theme/semantics. The independently publishable editor UI may depend on the shared foundation; the headless Rust engine SDK must never depend on React, Expo, Tailwind, Moyo, or a UI renderer.
