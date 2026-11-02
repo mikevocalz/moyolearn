@@ -69,52 +69,52 @@ Payload 4, its adapter, Nitro alpha and other native forks require compatible re
 | @vitejs/plugin-react | 6.1.1 | Unknown | Registry lookup failed |
 | @vitejs/plugin-rsc | 0.5.35 | Unknown | Registry lookup failed |
 | @xmldom/xmldom | 0.9.12 | Unknown | Registry lookup failed |
-| auth | 1.7.15 | Unknown | Registry lookup failed |
+| auth | 1.7.15 | 1.7.15 | Current |
 | babel-plugin-react-compiler | 1.0.0 | Unknown | Registry lookup failed |
 | better-auth | 1.7.15 | 1.7.15 | Current |
-| date-fns | 4.4.0 | Unknown | Registry lookup failed |
+| date-fns | 4.4.0 | 4.4.0 | Current |
 | esbuild | 0.28.2 | 0.28.2 | Current |
 | eslint | ^9.39.2 | 10.14.0 | Review upgrade |
-| eslint-config-expo | ~58.0.3 | 58.0.4 | Review upgrade |
+| eslint-config-expo | ~58.0.3 | Unknown | Registry lookup failed |
 | eslint-config-next | 16.4.3 | 16.4.4 | Review upgrade |
 | expo | 58.0.22 | 58.0.22 | Current |
 | expo-asset | 58.0.18 | 58.0.19 | Review upgrade |
 | expo-background-task | ~58.0.11 | Unknown | Registry lookup failed |
-| expo-build-properties | ~58.0.11 | Unknown | Registry lookup failed |
+| expo-build-properties | ~58.0.11 | 58.0.12 | Review upgrade |
 | expo-document-picker | ~58.0.4 | 58.0.4 | Review upgrade |
 | expo-drag-drop-content-view | 0.9.2 | Unknown | Registry lookup failed |
 | expo-file-system | 58.0.11 | 58.0.13 | Review upgrade |
-| expo-font | ~58.0.10 | Unknown | Registry lookup failed |
+| expo-font | ~58.0.10 | 58.0.11 | Review upgrade |
 | expo-horizon-core | 57.0.2 | Unknown | Registry lookup failed |
-| expo-image | ~58.0.17 | Unknown | Registry lookup failed |
+| expo-image | ~58.0.17 | 58.0.18 | Review upgrade |
 | expo-image-manipulator | ~58.0.15 | 58.0.16 | Review upgrade |
-| expo-image-picker | ~58.0.10 | Unknown | Registry lookup failed |
-| expo-linking | ~58.0.14 | Unknown | Registry lookup failed |
+| expo-image-picker | ~58.0.10 | 58.0.10 | Review upgrade |
+| expo-linking | ~58.0.14 | 58.0.15 | Review upgrade |
 | expo-paste-input | 0.2.2 | Unknown | Registry lookup failed |
-| expo-router | ~58.0.26 | Unknown | Registry lookup failed |
+| expo-router | ~58.0.26 | 58.0.29 | Review upgrade |
 | expo-screen-capture | ~58.0.6 | Unknown | Registry lookup failed |
 | expo-secure-store | ~58.0.2 | 58.0.2 | Review upgrade |
-| expo-splash-screen | ~58.0.11 | Unknown | Registry lookup failed |
-| expo-status-bar | ~58.0.4 | Unknown | Registry lookup failed |
-| expo-system-ui | ~58.0.6 | Unknown | Registry lookup failed |
+| expo-splash-screen | ~58.0.11 | 58.0.12 | Review upgrade |
+| expo-status-bar | ~58.0.4 | 58.0.4 | Review upgrade |
+| expo-system-ui | ~58.0.6 | 58.0.7 | Review upgrade |
 | expo-task-manager | ~58.0.12 | Unknown | Registry lookup failed |
-| expo-updates | ~58.0.18 | Unknown | Registry lookup failed |
+| expo-updates | ~58.0.18 | 58.0.20 | Review upgrade |
 | expo-web-browser | ~58.0.6 | 58.0.7 | Review upgrade |
-| fflate | 0.8.2 | 0.8.3 | Review upgrade |
-| graphql | 16.14.2 | 17.0.2 | Review upgrade |
+| fflate | 0.8.2 | Unknown | Registry lookup failed |
+| graphql | 16.14.2 | Unknown | Registry lookup failed |
 | gsap | 3.15.0 | 3.15.0 | Current |
 | jsdom | 30.1.2 | 30.1.3 | Review upgrade |
-| lenis | 1.3.26 | Unknown | Registry lookup failed |
+| lenis | 1.3.26 | 1.3.27 | Review upgrade |
 | lucide-react | 1.47.0 | 1.66.0 | Review upgrade |
 | lucide-react-native | 1.47.0 | Unknown | Registry lookup failed |
 | next | 16.4.3 | 16.4.4 | Review upgrade |
 | nextjs-toploader | 3.9.17 | Unknown | Registry lookup failed |
 | nitro | 3.0.260610-beta | Unknown | Registry lookup failed |
 | nitro-canvas-in-Vision | 0.0.2-rive.4 | Unknown | Registry lookup failed |
-| nitro-core | 1.0.0-alpha.nightly.100.g107f6fc66597 | Unknown | Registry lookup failed |
-| nitrogen | 1.0.0-alpha.nightly.100.g107f6fc66597 | Unknown | Registry lookup failed |
+| nitro-core | 1.0.0-alpha.nightly.120.g33ef045b96c0 | Unknown | Registry lookup failed |
+| nitrogen | 1.0.0-alpha.nightly.120.g33ef045b96c0 | Unknown | Registry lookup failed |
 | payload | 4.0.0-beta.6 | 3.92.1 | Special track: Payload 4 beta family |
-| pdfjs-dist | 6.3.289 | Unknown | Registry lookup failed |
+| pdfjs-dist | 6.3.289 | 6.5.438 | Review upgrade |
 | pg | 8.23.0 | 8.23.1 | Review upgrade |
 | pg-boss | 12.33.0 | 12.38.0 | Review upgrade |
 | playwright | 1.63.0 | 1.64.1 | Review upgrade |
@@ -128,43 +128,43 @@ Payload 4, its adapter, Nitro alpha and other native forks require compatible re
 | react-native-enriched-html | 1.1.1 | Unknown | Registry lookup failed |
 | react-native-executorch | 0.9.3 | Unknown | Registry lookup failed |
 | react-native-executorch-expo-resource-fetcher | 0.9.1 | Unknown | Registry lookup failed |
-| react-native-gesture-handler | 3.4.0 | Unknown | Registry lookup failed |
+| react-native-gesture-handler | 3.4.0 | 3.4.0 | Current |
 | react-native-graph | 1.4.0 | Unknown | Registry lookup failed |
 | react-native-keyboard-controller | 1.22.9 | Unknown | Registry lookup failed |
 | react-native-mmkv | 4.3.2 | Unknown | Registry lookup failed |
 | react-native-nitro-fetch | 1.6.2 | Unknown | Registry lookup failed |
 | react-native-nitro-image | 0.15.2-nitro-v1.0 | Unknown | Registry lookup failed |
-| react-native-nitro-modules | 1.0.0-alpha.nightly.100.g107f6fc66597 | Unknown | Registry lookup failed |
+| react-native-nitro-modules | 1.0.0-alpha.nightly.120.g33ef045b96c0 | 0.37.1 | Special track: Nitro alpha / vendored forks |
 | react-native-pulsar | 1.7.0 | Unknown | Registry lookup failed |
 | react-native-reanimated | 4.7.1 | 4.7.1 | Current |
-| react-native-safe-area-context | ~5.10.1 | Unknown | Registry lookup failed |
-| react-native-screens | ~4.30.0 | Unknown | Registry lookup failed |
+| react-native-safe-area-context | ~5.10.1 | 5.11.0 | Review upgrade |
+| react-native-screens | ~4.30.0 | 4.30.1 | Review upgrade |
 | react-native-skia | 3.8.1 | Unknown | Registry lookup failed |
 | react-native-skia-graphite-android | 157.0.0 | Unknown | Registry lookup failed |
 | react-native-skia-graphite-apple-ios | 157.0.0 | Unknown | Registry lookup failed |
 | react-native-skia-graphite-apple-macos | 157.0.0 | Unknown | Registry lookup failed |
-| react-native-svg | 15.16.0 | Unknown | Registry lookup failed |
+| react-native-svg | 15.16.0 | 15.16.0 | Current |
 | react-native-vision-camera | 5.2.3 | Unknown | Registry lookup failed |
 | react-native-web | 0.21.2 | 0.21.4 | Review upgrade |
 | react-native-webgpu | 0.19.2 | Unknown | Registry lookup failed |
 | react-native-webview | 14.0.1 | Unknown | Registry lookup failed |
 | react-native-worklets | 0.13.1 | 0.13.1 | Current |
 | react-native-youtube-bridge | 2.2.3 | Unknown | Registry lookup failed |
-| server-only | 0.0.1 | 0.0.1 | Current |
+| server-only | 0.0.1 | Unknown | Registry lookup failed |
 | sharp | 0.35.5 | 0.35.5 | Current |
 | solito | 5.0.0 | Unknown | Registry lookup failed |
 | sonner | 2.0.8 | 2.0.8 | Current |
-| sonner-native | 0.27.0 | Unknown | Registry lookup failed |
+| sonner-native | 0.27.0 | 0.27.0 | Current |
 | storybook | 10.6.0 | 10.6.5 | Review upgrade |
 | stripe | 22.6.2 | 23.1.0 | Review upgrade |
 | tailwind-merge | 3.7.0 | 3.7.0 | Current |
-| tailwind-variants | 3.3.1 | Unknown | Registry lookup failed |
+| tailwind-variants | 3.3.1 | 4.0.1 | Review upgrade |
 | tailwindcss | 4.3.3 | 4.3.3 | Current |
 | tesseract.js | ^7.0.0 | 7.0.0 | Review upgrade |
 | three | 0.186.0 | 0.187.0 | Review upgrade |
 | topojson-client | 3.1.0 | 3.1.0 | Current |
 | turbo | 2.10.13 | 2.11.10 | Review upgrade |
-| tus-js-client | 4.3.1 | 4.3.1 | Current |
+| tus-js-client | 4.3.1 | Unknown | Registry lookup failed |
 | typegpu | 0.12.9 | Unknown | Registry lookup failed |
 | typescript | ~6.0.3 | 7.0.2 | Review upgrade |
 | uniwind | 1.12.0 | Unknown | Registry lookup failed |

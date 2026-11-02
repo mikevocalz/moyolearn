@@ -229,8 +229,8 @@ catalogs:
       specifier: 3.0.260610-beta
       version: 3.0.260610-beta
     nitro-core:
-      specifier: 1.0.0-alpha.nightly.100.g107f6fc66597
-      version: 1.0.0-alpha.nightly.100.g107f6fc66597
+      specifier: 1.0.0-alpha.nightly.120.g33ef045b96c0
+      version: 1.0.0-alpha.nightly.120.g33ef045b96c0
     payload:
       specifier: 4.0.0-beta.6
       version: 4.0.0-beta.6
@@ -271,8 +271,8 @@ catalogs:
       specifier: 1.22.9
       version: 1.22.9
     react-native-nitro-modules:
-      specifier: 1.0.0-alpha.nightly.100.g107f6fc66597
-      version: 1.0.0-alpha.nightly.100.g107f6fc66597
+      specifier: 1.0.0-alpha.nightly.120.g33ef045b96c0
+      version: 1.0.0-alpha.nightly.120.g33ef045b96c0
     react-native-pulsar:
       specifier: 1.7.0
       version: 1.7.0
@@ -597,7 +597,7 @@ importers:
         version: link:../../packages/ui
       '@expo-pico/core':
         specifier: file:../../vendors/expo-pico-core-1.0.0-nitro-v1.tgz
-        version: file:vendors/expo-pico-core-1.0.0-nitro-v1.tgz(expo@58.0.22)(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: file:vendors/expo-pico-core-1.0.0-nitro-v1.tgz(expo@58.0.22)(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@expo/metro-runtime':
         specifier: ~58.0.15
         version: 58.0.15(@expo/log-box@58.0.14)(expo@58.0.22)(react-dom@19.3.0(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -693,10 +693,10 @@ importers:
         version: 1.47.0(react-native-svg@15.16.0(patch_hash=948b8ae7afaadc59224f6cc301c627b3d205307f2ebba21f1eb6101776e2779d)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       nitro-canvas-in-Vision:
         specifier: file:../../vendors/nitro-canvas-in-Vision-0.0.2-rive.4-nitro-v1.tgz
-        version: file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       nitro-core:
         specifier: 'catalog:'
-        version: 1.0.0-alpha.nightly.100.g107f6fc66597
+        version: 1.0.0-alpha.nightly.120.g33ef045b96c0
       react:
         specifier: 19.3.0
         version: 19.3.0
@@ -726,16 +726,16 @@ importers:
         version: 1.22.9(patch_hash=3f37f8ad49733e0e33299f037827e2a01c2f06a4dfbf487b925b86a4e42a04f7)(react-native-reanimated@4.7.1(patch_hash=978b0108c991de643f838b3faa0d32f53df3e9c7ff1f1a4e50f389a36c09b0c8)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-mmkv:
         specifier: file:../../vendors/react-native-mmkv-4.3.2-nitro-v1.tgz
-        version: file:vendors/react-native-mmkv-4.3.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: file:vendors/react-native-mmkv-4.3.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-nitro-fetch:
         specifier: file:../../vendors/react-native-nitro-fetch-1.6.2-nitro-v1.tgz
-        version: file:vendors/react-native-nitro-fetch-1.6.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: file:vendors/react-native-nitro-fetch-1.6.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-nitro-image:
         specifier: file:../../vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz
-        version: file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-nitro-modules:
         specifier: 'catalog:'
-        version: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-pulsar:
         specifier: 'catalog:'
         version: 1.7.0(patch_hash=439d2914418d23c5f20c9c9b2ebadbd570c482aeddbb6444d77e42eed85027d0)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -756,7 +756,7 @@ importers:
         version: 15.16.0(patch_hash=948b8ae7afaadc59224f6cc301c627b3d205307f2ebba21f1eb6101776e2779d)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-vision-camera:
         specifier: file:../../vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz
-        version: file:vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-image@file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: file:vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-image@file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-web:
         specifier: 'catalog:'
         version: 0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -1171,7 +1171,7 @@ importers:
         version: file:vendors/viro-external-meta-layout-0.1.0-4dc2775.tgz(@viro-external/xr-contract@file:vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz)
       '@viro-external/native-panels':
         specifier: file:../../vendors/viro-external-native-panels-0.1.0-4dc2775.tgz
-        version: file:vendors/viro-external-native-panels-0.1.0-4dc2775.tgz(c9694dde907acce5f26dd6f33aed8550)
+        version: file:vendors/viro-external-native-panels-0.1.0-4dc2775.tgz(94ab1612887171a8f53152bd1e41e74c)
       '@viro-external/ui':
         specifier: file:../../vendors/viro-external-ui-0.1.0-4dc2775.tgz
         version: file:vendors/viro-external-ui-0.1.0-4dc2775.tgz(78121062fb18f9c8c77908883e04b631)
@@ -1207,7 +1207,7 @@ importers:
         version: 1.47.0(react-native-svg@15.16.0(patch_hash=948b8ae7afaadc59224f6cc301c627b3d205307f2ebba21f1eb6101776e2779d)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       nitro-core:
         specifier: 'catalog:'
-        version: 1.0.0-alpha.nightly.100.g107f6fc66597
+        version: 1.0.0-alpha.nightly.120.g33ef045b96c0
       pdfjs-dist:
         specifier: 6.3.289
         version: 6.3.289
@@ -1234,16 +1234,16 @@ importers:
         version: 3.4.0(patch_hash=2e24fb43ee497884d37b7c0f905b9ed28945e85cc97009125dd51268e60c27d7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-mmkv:
         specifier: file:../../vendors/react-native-mmkv-4.3.2-nitro-v1.tgz
-        version: file:vendors/react-native-mmkv-4.3.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: file:vendors/react-native-mmkv-4.3.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-nitro-fetch:
         specifier: file:../../vendors/react-native-nitro-fetch-1.6.2-nitro-v1.tgz
-        version: file:vendors/react-native-nitro-fetch-1.6.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: file:vendors/react-native-nitro-fetch-1.6.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-nitro-image:
         specifier: file:../../vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz
-        version: file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-nitro-modules:
         specifier: 'catalog:'
-        version: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-reanimated:
         specifier: 'catalog:'
         version: 4.7.1(patch_hash=978b0108c991de643f838b3faa0d32f53df3e9c7ff1f1a4e50f389a36c09b0c8)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -1267,7 +1267,7 @@ importers:
         version: 15.16.0(patch_hash=948b8ae7afaadc59224f6cc301c627b3d205307f2ebba21f1eb6101776e2779d)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-vision-camera:
         specifier: file:../../vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz
-        version: file:vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz(428cb0474ba5e08851d0d216909a4663)
+        version: file:vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz(38e4de29923f44f105c972a05b30d927)
       react-native-worklets:
         specifier: 0.13.1
         version: 0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -1546,7 +1546,7 @@ importers:
         version: 58.0.2(expo@58.0.22)
       nitro-core:
         specifier: 'catalog:'
-        version: 1.0.0-alpha.nightly.100.g107f6fc66597
+        version: 1.0.0-alpha.nightly.120.g33ef045b96c0
       react:
         specifier: 19.3.0
         version: 19.3.0
@@ -1555,10 +1555,10 @@ importers:
         version: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
       react-native-mmkv:
         specifier: file:../../vendors/react-native-mmkv-4.3.2-nitro-v1.tgz
-        version: file:vendors/react-native-mmkv-4.3.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: file:vendors/react-native-mmkv-4.3.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-nitro-modules:
         specifier: 'catalog:'
-        version: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       zod:
         specifier: 'catalog:'
         version: 4.6.5
@@ -1687,7 +1687,7 @@ importers:
         version: 1.47.0(react-native-svg@15.16.0(patch_hash=948b8ae7afaadc59224f6cc301c627b3d205307f2ebba21f1eb6101776e2779d)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       nitro-core:
         specifier: 'catalog:'
-        version: 1.0.0-alpha.nightly.100.g107f6fc66597
+        version: 1.0.0-alpha.nightly.120.g33ef045b96c0
       react-freeze:
         specifier: 'catalog:'
         version: 1.0.4(react@19.3.0)
@@ -1702,10 +1702,10 @@ importers:
         version: 1.4.0(react-native-reanimated@4.7.1(patch_hash=978b0108c991de643f838b3faa0d32f53df3e9c7ff1f1a4e50f389a36c09b0c8)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-mmkv:
         specifier: file:../../vendors/react-native-mmkv-4.3.2-nitro-v1.tgz
-        version: file:vendors/react-native-mmkv-4.3.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: file:vendors/react-native-mmkv-4.3.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-nitro-modules:
         specifier: 'catalog:'
-        version: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+        version: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-pulsar:
         specifier: 'catalog:'
         version: 1.7.0(patch_hash=439d2914418d23c5f20c9c9b2ebadbd570c482aeddbb6444d77e42eed85027d0)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -10032,8 +10032,8 @@ packages:
       react-native-nitro-modules:
         optional: true
 
-  nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597:
-    resolution: {integrity: sha512-of0bdyLBEL0qjz5xB+BqJhx9w4smvwEzUo4okAH/gO7Dc29PurnzW3LBKcRlZzRo54pW2z12c6E7hOKbAoavcw==}
+  nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0:
+    resolution: {integrity: sha512-HJLx09kp/mgG4v81WdxQ50ymuh4uS1vhD4OTyjRX+FNVS0K6i1picnUiLzfkr0qFwcDAkfTdXmYtaKO7j+hZEg==}
 
   nitro@3.0.260610-beta:
     resolution: {integrity: sha512-KPb4L5yaF/Rx/xoGMpgHRJvZhbhGiqbRKOwwPLCH9jKTKTsEUHLjnJas85AeCzaswqa8Wi52eQBtRsODC4PS0Q==}
@@ -10844,8 +10844,8 @@ packages:
       react-native-nitro-modules:
         optional: true
 
-  react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597:
-    resolution: {integrity: sha512-zcPVSeq49HZDuuxBZmVsHT1urwx7mU5MzPKOb6ytVqKsnzTcpT1Y1F/UeJAOkwvlrxLIUrVTrEqyJr8IQ7c1JA==}
+  react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0:
+    resolution: {integrity: sha512-WEnHB+KAasRxq4rSH82IwECTaVAaNq3dFREOlHQ2Fp+RpPsBGMfbvWRUcLAyJIgwDo2Uqb1mpGd5ryzShLcA6A==}
     peerDependencies:
       react: 19.3.0
       react-native: 0.88.1
@@ -13837,14 +13837,14 @@ snapshots:
 
   '@expo-google-fonts/material-symbols@0.4.24': {}
 
-  '@expo-pico/core@file:vendors/expo-pico-core-1.0.0-nitro-v1.tgz(expo@58.0.22)(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)':
+  '@expo-pico/core@file:vendors/expo-pico-core-1.0.0-nitro-v1.tgz(expo@58.0.22)(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)':
     dependencies:
       expo: 58.0.22(patch_hash=c5196dfcbf2edbb816d786342140f6881d8e8f2362bc3af13d9435a5c3f461da)(@babel/core@7.29.7)(@expo/dom-webview@58.0.2)(@expo/metro-runtime@58.0.15)(expo-router@58.0.26)(react-dom@19.3.0(react@19.3.0))(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native-webview@14.0.1(patch_hash=d5f40c2a43072b00490f4d2491850816ba34c1748b3989270322eb01443bd800)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(typescript@6.0.3)
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0)
-      react-native-nitro-modules: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react-native-nitro-modules: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
     optionalDependencies:
-      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
+      nitro-core: 1.0.0-alpha.nightly.120.g33ef045b96c0
 
   '@expo/cli@58.1.18(@expo/dom-webview@58.0.2)(@expo/metro-runtime@58.0.15)(expo-constants@58.0.14)(expo-font@58.0.11(patch_hash=b0608b477c19d44a6903048025d5cc115f32a2892e9d1d67e5b50aabbf5353cf)(expo@58.0.22)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(expo-router@58.0.26)(expo@58.0.22)(react-dom@19.3.0(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(typescript@6.0.3)':
     dependencies:
@@ -18256,7 +18256,7 @@ snapshots:
     dependencies:
       '@viro-external/xr-contract': file:vendors/viro-external-xr-contract-0.3.0-4dc2775.tgz
 
-  '@viro-external/native-panels@file:vendors/viro-external-native-panels-0.1.0-4dc2775.tgz(c9694dde907acce5f26dd6f33aed8550)':
+  '@viro-external/native-panels@file:vendors/viro-external-native-panels-0.1.0-4dc2775.tgz(94ab1612887171a8f53152bd1e41e74c)':
     dependencies:
       '@quickdrawjs/core': 0.2.0
       '@reactvision/react-viro': file:vendors/reactvision-react-viro-3.0.1-moyo.1.tgz(patch_hash=d4a49157b5f6a4915a76ae878525547881a579c5fdb8db9c6e77148dce304bdf)(@reactvision/react-native-visionos@0.86.4(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(@types/react@19.3.0)(expo@58.0.22)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
@@ -18265,8 +18265,8 @@ snapshots:
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
       zustand: 5.0.16(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
     optionalDependencies:
-      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
-      react-native-nitro-modules: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      nitro-core: 1.0.0-alpha.nightly.120.g33ef045b96c0
+      react-native-nitro-modules: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
     transitivePeerDependencies:
       - '@types/react'
       - immer
@@ -22426,15 +22426,15 @@ snapshots:
 
   nf3@0.3.24: {}
 
-  nitro-canvas-in-Vision@file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  nitro-canvas-in-Vision@file:vendors/nitro-canvas-in-Vision-0.0.2-rive.4-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0)
     optionalDependencies:
-      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
-      react-native-nitro-modules: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      nitro-core: 1.0.0-alpha.nightly.120.g33ef045b96c0
+      react-native-nitro-modules: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
-  nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597: {}
+  nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0: {}
 
   nitro@3.0.260610-beta(@electric-sql/pglite@0.5.4)(chokidar@5.0.0)(dotenv@17.4.2)(drizzle-orm@0.45.2(@electric-sql/pglite@0.5.4)(@opentelemetry/api@1.9.1)(@types/pg@8.23.1)(kysely@0.29.4)(pg@8.23.0))(idb-keyval@6.3.0)(jiti@2.7.0)(lru-cache@11.5.3)(rollup@4.63.0)(vite@8.3.0(@types/node@24.13.3)(esbuild@0.28.2)(jiti@2.7.0)(sass@1.77.4)(terser@5.46.0)(tsx@4.23.15)(yaml@2.8.2)):
     dependencies:
@@ -23483,67 +23483,67 @@ snapshots:
       react-native-is-edge-to-edge: 1.3.1(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-reanimated: 4.7.1(patch_hash=978b0108c991de643f838b3faa0d32f53df3e9c7ff1f1a4e50f389a36c09b0c8)(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
-  react-native-mmkv@file:vendors/react-native-mmkv-4.3.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  react-native-mmkv@file:vendors/react-native-mmkv-4.3.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
     optionalDependencies:
-      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
-      react-native-nitro-modules: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      nitro-core: 1.0.0-alpha.nightly.120.g33ef045b96c0
+      react-native-nitro-modules: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
-  react-native-mmkv@file:vendors/react-native-mmkv-4.3.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  react-native-mmkv@file:vendors/react-native-mmkv-4.3.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0)
     optionalDependencies:
-      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
-      react-native-nitro-modules: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      nitro-core: 1.0.0-alpha.nightly.120.g33ef045b96c0
+      react-native-nitro-modules: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
-  react-native-nitro-fetch@file:vendors/react-native-nitro-fetch-1.6.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  react-native-nitro-fetch@file:vendors/react-native-nitro-fetch-1.6.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
       web-streams-polyfill: 4.3.0
     optionalDependencies:
-      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
-      react-native-nitro-modules: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      nitro-core: 1.0.0-alpha.nightly.120.g33ef045b96c0
+      react-native-nitro-modules: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-worklets: 0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
-  react-native-nitro-fetch@file:vendors/react-native-nitro-fetch-1.6.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  react-native-nitro-fetch@file:vendors/react-native-nitro-fetch-1.6.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-worklets@0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0)
       web-streams-polyfill: 4.3.0
     optionalDependencies:
-      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
-      react-native-nitro-modules: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      nitro-core: 1.0.0-alpha.nightly.120.g33ef045b96c0
+      react-native-nitro-modules: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       react-native-worklets: 0.13.1(patch_hash=e3388dc08e03cd3ddf3e8e730730a0a572dcc83515bf7c9c2f3167d7af0990d1)(@babel/core@7.29.7)(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
-  react-native-nitro-image@file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  react-native-nitro-image@file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
     optionalDependencies:
-      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
-      react-native-nitro-modules: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      nitro-core: 1.0.0-alpha.nightly.120.g33ef045b96c0
+      react-native-nitro-modules: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
-  react-native-nitro-image@file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  react-native-nitro-image@file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0)
     optionalDependencies:
-      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
-      react-native-nitro-modules: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      nitro-core: 1.0.0-alpha.nightly.120.g33ef045b96c0
+      react-native-nitro-modules: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
-  react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
-      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
+      nitro-core: 1.0.0-alpha.nightly.120.g33ef045b96c0
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
 
-  react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
-      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
+      nitro-core: 1.0.0-alpha.nightly.120.g33ef045b96c0
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0)
 
@@ -23651,23 +23651,23 @@ snapshots:
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0)
 
-  react-native-vision-camera@file:vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz(428cb0474ba5e08851d0d216909a4663):
+  react-native-vision-camera@file:vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz(38e4de29923f44f105c972a05b30d927):
     dependencies:
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
-      react-native-nitro-image: file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react-native-nitro-image: file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
     optionalDependencies:
-      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
-      react-native-nitro-modules: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      nitro-core: 1.0.0-alpha.nightly.120.g33ef045b96c0
+      react-native-nitro-modules: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.1(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
-  react-native-vision-camera@file:vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-image@file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
+  react-native-vision-camera@file:vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-image@file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0):
     dependencies:
       react: 19.3.0
       react-native: 0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0)
-      react-native-nitro-image: file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      react-native-nitro-image: file:vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz(nitro-core@1.0.0-alpha.nightly.120.g33ef045b96c0)(react-native-nitro-modules@1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
     optionalDependencies:
-      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
-      react-native-nitro-modules: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      nitro-core: 1.0.0-alpha.nightly.120.g33ef045b96c0
+      react-native-nitro-modules: 1.0.0-alpha.nightly.120.g33ef045b96c0(react-native@0.88.1(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
   react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0):
     dependencies:
