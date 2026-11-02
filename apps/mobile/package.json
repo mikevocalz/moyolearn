@@ -30,7 +30,6 @@
     "@react-navigation/native": "catalog:",
     "@reactvision/react-viro": "3.0.1-moyo.0",
     "@sentry/react-native": "8.32.0",
-    "@shopify/react-native-skia": "catalog:",
     "@tanstack/react-query": "catalog:",
     "expo": "catalog:",
     "expo-asset": "58.0.18",
@@ -83,7 +82,8 @@
     "three": "catalog:",
     "typegpu": "catalog:",
     "uniwind": "catalog:",
-    "zustand": "catalog:"
+    "zustand": "catalog:",
+    "react-native-skia": "catalog:"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",
