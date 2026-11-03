@@ -281,5 +281,15 @@
       "orchestrator": "3ececf63174ba6c3ca0afa3a60bd2463d30ea53c3f67ed17fc574d41a0475c60"
     },
     "limitations": "Finite computer-assisted DEV gravity-tilt cursor using temporary test authority; not native Muse6DoF, calibrated force, a production pen provider or process-restart persistence proof."
+  },
+  "afterNativeApkUpgrade": {
+    "apkSha256": "56908ab8b8f317c84c5649717f0a3f5eb2c21bdef48d20cb640887eabec415b3",
+    "dataPreservingInstall": true,
+    "applicationRelaunched": true,
+    "savedBoardRestored": true,
+    "marks": 1,
+    "recordsExactlyEqual": true,
+    "recordSha256": "f40d03b202b7830a562359ee34cb821463de170b607dc032c2ad3e594c85a758",
+    "scope": "Saved mark rechecked after replacement APK install and app relaunch; not a headset reboot test"
   }
 }

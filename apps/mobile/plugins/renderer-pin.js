@@ -1,4 +1,4 @@
-const pin = require('../../../vendors/viro-renderer-82ad61e74.provenance.json');
+const pin = require('../../../vendors/viro-renderer-0ea780701.provenance.json');
 const rendererPath = `../../../vendors/${pin.file}`;
 const rendererSha256 = pin.aar_sha256;
 /** Refresh only the unique renderer owner and its immediately associated digest guard. */

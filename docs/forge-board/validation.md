@@ -725,3 +725,41 @@ hand-assisted positioning is not substituted. Runtime enumeration has reported
 75 extensions including a dedicated Logitech interaction extension; profile
 binding work is ongoing, with no native Muse pose result yet. Extension presence
 alone is not a working pose measurement or a production input provider.
+
+
+### Dedicated Logitech profile: actual runtime trial
+
+Quest's read-only runtime enumeration returned 75 extensions, including
+`XR_LOGITECH_mx_ink_stylus_interaction` v1. Renderer source `0ea780701`
+enables this extension only when advertised and suggests the dedicated profile;
+its actual suggestion returned `XR_SUCCESS` (0). The installed APK SHA256 is
+`56908ab8b8f317c84c5649717f0a3f5eb2c21bdef48d20cb640887eabec415b3`.
+
+The user confirmed seeing the native yellow target and performing the Touch
+positive control followed by a two-second Muse hold/release. Both hands reported
+`dedicatedProfile=0` in all 15 native observations per hand in the retained
+10:47:43–10:48:18 window. Runtime profiles included generic/simple and Oculus
+Touch; these do not identify Muse. Actual Touch down/up/click events reached
+the controller and target. No dedicated Muse pose, tracked model, or ray was
+established. Native Quest Stylus registration remains a separate discriminator
+from generic Bluetooth/CDM pairing; no firmware action or unpair is authorized
+by this evidence. See [redacted trial receipt](evidence/quest-dedicated-logitech-profile-trial.json).
+
+
+### Quest native Stylus registration: two actual failures
+
+The normal Settings > Devices > Stylus page offered only “Pair stylus”.
+The user confirmed Muse blinking green beside the awake Quest. The first
+attempt retained the pairing header after a 20-second wait; the subsequent
+actual UI explicitly showed “Stylus pairing failed”, Cancel and Try again.
+Root selected Try again and obtained a fresh user confirmation of green
+blinking. A 19,138ms header-dismissal wait was followed by another actual
+“Stylus pairing failed” result. Root cancelled the pairing flow and returned
+to Moyo; existing bond/data were preserved.
+
+These are native Stylus registration failures, distinct from successful
+generic Bluetooth/CDM transport and finite test-role HID telemetry. Together
+with the dedicated-profile trial, they leave the requested native Muse 6DoF
+model and ray unestablished on this Quest. No hand-assisted pose, decorative
+tracked-model claim, firmware update, or universal compatibility conclusion
+is substituted. [Privacy-safe native pairing receipt](evidence/quest-native-stylus-pairing-trial.json).

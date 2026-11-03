@@ -29,13 +29,13 @@ test('foreign digest guards before and after the owned block remain byte-identic
  assert.throws(()=>updateRendererPin(owned.replace('moyoViroRendererAar.withInputStream','foreign.withInputStream')),/renderer-owned input stream/);
 });
 test('renderer provenance checksum matches exact candidate archive and retains baseline proof',()=>{
- const pin=require(path.join(root,'vendors/viro-renderer-82ad61e74.provenance.json'));
+ const pin=require(path.join(root,'vendors/viro-renderer-0ea780701.provenance.json'));
  const sha=(p)=>crypto.createHash('sha256').update(fs.readFileSync(path.join(root,'vendors',p))).digest('hex');
  assert.equal(sha(pin.file),rendererSha256);assert.equal(sha(pin.baseline_file),pin.original_aar_sha256);
  assert.deepEqual(pin.changed_members,['jni/arm64-v8a/libviro_renderer.so']);
- assert.equal(pin.source_commit,'82ad61e74549073a9dc8ba95ede70f0f854889fc');
- assert.equal(pin.source_baseline,'73c6a923fb63b71a1059fd241cf347e15898fd2d');
- assert.equal(pin.defined_symbols_before,pin.defined_symbols_after);
+ assert.equal(pin.source_commit,'0ea78070138a3357858af5d702e8fdbb095d0e6a');
+ assert.equal(pin.source_baseline,'82ad61e74549073a9dc8ba95ede70f0f854889fc');
+ assert.ok(pin.defined_symbols_after>=pin.defined_symbols_before);
  assert.deepEqual(pin.missing_jni_symbols,[]);assert.deepEqual(pin.missing_strong_symbols,[]);assert.deepEqual(pin.new_undefined_symbols,[]);
  assert.deepEqual(pin.needed_before,pin.needed_after);assert.ok(pin.load_alignments.every(n=>n>=16384));
 });

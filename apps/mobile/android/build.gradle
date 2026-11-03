@@ -61,7 +61,7 @@ project(":expo") {
 // 65227bc mipmapped, anisotropic sampling of external surfaces (Rive, views);
 // 8ff603b 1.3x eye buffers, LOW foveation; 872a2a2 premultiplied eye-buffer
 // alpha over passthrough; 9d6ab4e sRGB decode curve for OES/YCbCr.
-ext.moyoViroRendererAar = rootProject.file('../../../vendors/viro-renderer-82ad61e74.aar')
+ext.moyoViroRendererAar = rootProject.file('../../../vendors/viro-renderer-0ea780701.aar')
 if (!moyoViroRendererAar.isFile()) {
     throw new GradleException('Pinned Moyo controller renderer is missing')
 }
@@ -71,7 +71,7 @@ moyoViroRendererAar.withInputStream { stream ->
     int count
     while ((count = stream.read(buffer)) != -1) rendererDigest.update(buffer, 0, count)
 }
-if (rendererDigest.digest().encodeHex().toString() != 'f85b0ef23b7ae5facce0000e99b2b74d5fd6e5aff4f3f20d89307b61bc749a87') {
+if (rendererDigest.digest().encodeHex().toString() != '184e39d034cf22eb0b45f056d0258234b31e61d07454fdf7a4f1405816f4a1b5') {
     throw new GradleException('Pinned Moyo controller renderer checksum mismatch')
 }
 

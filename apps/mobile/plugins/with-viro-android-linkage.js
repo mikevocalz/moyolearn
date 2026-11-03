@@ -354,7 +354,7 @@ project(":expo") {
 }
 `;
 const PRECISION_RENDERER = `
-// Moyo: pin the source-verified precision drawing renderer:82ad61e74 atop73c6a92
+// Moyo: pin the source-verified precision drawing renderer:0ea780701 atop82ad61e74
 // KHR simple-controller bindings; no Muse pressure/pose protocol.
 // (branch fix/moyo-right-eye-depth-clear) = 034d3b9 + 5926ef52 (depth writes
 // on before each eye's depth clear) + panel sharpness fixes:

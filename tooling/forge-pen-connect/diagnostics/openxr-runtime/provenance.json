@@ -1,0 +1,45 @@
+{
+  "scope": "Standalone self-target public OpenXR runtime-extension enumeration diagnostic; not a Moyo runtime replacement",
+  "apk": {
+    "file": "vendors/muse-openxr-runtime-probe-6c8f6dc6.apk",
+    "sha256": "6c8f6dc6acba7ed03f0737f4ace0510220cbe34bba4a624533b2c44fcf5e4823",
+    "byteLength": 11027067
+  },
+  "sourceHashes": {
+    "probe.cpp": "a1b35aaa91afee07b35632ae625f581ac67d82f4b76eb8b98d49690169c0f54b",
+    "AndroidManifest.xml": "8914ebb91e6022adf7e71500c43dbbcea272b8ec17891d6eb0ee4f42b590a56a",
+    "src/com/moyolearn/musexrprobe/RuntimeProbe.java": "38c97fce37c736f24ec7ef5cd42240d7af865da6893a7bb0b680ff7378aa07ea"
+  },
+  "abi": "arm64-v8a",
+  "packagedLibraries": {
+    "lib/arm64-v8a/libc++_shared.so": {
+      "byteLength": 9236352,
+      "sha256": "ab4e6c71b96b851de45a8a9bd86369e7dbc2130a44b3b4520564be94847910f2"
+    },
+    "lib/arm64-v8a/libmusexrprobe.so": {
+      "byteLength": 95832,
+      "sha256": "da9d088d2ff568b2f67b665178d3ceb92a1e51eb0396c4fdac7c331618aa2212"
+    },
+    "lib/arm64-v8a/libopenxr_loader.so": {
+      "byteLength": 1662344,
+      "sha256": "50d699172cac4b5dabe0b02bc2a478d49073411778c11eead1dd0d605211da1e"
+    }
+  },
+  "loaderProvenance": {
+    "sourceArtifact": "vendors/viro-renderer-82ad61e74.aar",
+    "member": "jni/arm64-v8a/libopenxr_loader.so",
+    "sha256": "50d699172cac4b5dabe0b02bc2a478d49073411778c11eead1dd0d605211da1e",
+    "byteIdenticalToMoyoLoader": true,
+    "rebuiltLoaderFromSource": false
+  },
+  "buildDescription": "Local existing Android SDK/JDK and NDK28 compile/package the reviewed JNI wrapper against public OpenXR Android headers. Package the unchanged pinned Moyo loader and required NDK libc++_shared alongside the arm64 wrapper. Signing is local/outside retained sources; no signing files or credentials are copied.",
+  "authority": {
+    "uiAutomationUsed": false,
+    "appPermissionsDeclared": false,
+    "rootOrHiddenApiUsed": false,
+    "runtimeInstanceCreated": false,
+    "xrSessionCreated": false,
+    "actionsOrInputRequested": false
+  },
+  "privateSigningMaterialRetained": false
+}

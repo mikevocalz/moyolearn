@@ -66,7 +66,7 @@ function GenericInputScene() {
           onClick={(position, source) => record('target-click', { position, source })} />
         <ViroText position={[0, 0, 0.01]} width={1.65} height={1.1} color="#111111" ignoreEventHandling
           style={{ fontSize: 8, textAlign: 'center', textAlignVertical: 'center' }}
-          text={`PUBLIC GENERIC INPUT TEST\nAim at this target. Press and release the Muse TIP.\nKeep Touch controllers still.\n\nStatus events: ${statusEvents}\nController events: ${controllerEvents}\nTarget events: ${targetEvents}\n\n${last.slice(0, 120)}\n\nGeneric events; Muse identity and pressure remain unverified.`} />
+          text={`NATIVE STYLUS TRACKING TEST\nKeep Touch controllers still while moving Muse.\nNative diagnostics check the Logitech profile and tracked poses.\n\nStatus events: ${statusEvents}\nController events: ${controllerEvents}\nTarget events: ${targetEvents}\n\n${last.slice(0, 120)}\n\nTip force is diagnostic-only in this build. Muse tracking remains unverified.`} />
       </ViroNode>
     </ViroScene>
   );
@@ -74,7 +74,7 @@ function GenericInputScene() {
 
 const INITIAL_SCENE = { scene: GenericInputScene };
 
-/** Development-only public OpenXR controller fallback probe, without board or pen protocol ownership. */
+/** Development-only native stylus/profile check; does not own board or pen protocol state. */
 export default function XrMuseInputProbeRoute() {
   const router = useRouter();
   if (!__DEV__) return <Redirect href="/" />;
