@@ -52,22 +52,30 @@ ignores that result.
 
 For final `0.1.0-moyo.6` artifacts:
 
-- Nightly100 Nitrogen generation passed.
+- Nightly100 Nitrogen generation and frozen dependency restore passed.
 - Three actual installed adapter tests passed; mobile TypeScript passed.
-- `:nitro-forge_bluetooth-v1:externalNativeBuildDebug` passed with the shared
-  depth-2 pool. The actual arm64 library required `libNitroModules.so`, fbjni,
-  jsi and reactnative. Its unstripped SHA256 was
+- The bounded arm64 Quest build passed in 15m39s (1516 tasks). Command from
+  `apps/mobile/android`, with Android SDK environment variables set:
+  `ORG_GRADLE_PROJECT_moyoNativeJobPool=2 ./gradlew :nitro-forge_bluetooth-v1:externalNativeBuildDebug :app:assembleQuestDebug -PreactNativeArchitectures=arm64-v8a --max-workers=1 --no-parallel`.
+- APK: `apps/mobile/android/app/build/outputs/apk/quest/debug/app-quest-debug.apk`.
+  SHA256: `8429b165dea3dde7b22c642cfcab6345731ac47e2b713c632932dad20078d35e`.
+  ZIP inspection found arm64 only, one `libNitroForgeBluetoothV1.so`, one
+  `libNitroModules.so`, and the Bluetooth package/implementation classes in dex.
+  The installed host runtime and lock select only nightly100.
+- Actual APK manifest inspection confirmed SCAN/CONNECT, legacy Bluetooth
+  permissions capped at API30, the established 1024x640dp window, and unchanged
+  unspecified MainActivity orientation. No privileged Bluetooth permission.
+- Actual Bluetooth arm64 ELF links NitroModules, fbjni, jsi and reactnative;
+  exports JNI_OnLoad; and uses 16KiB LOAD alignment. Unstripped SHA256:
   `4804cf7b134fa0b80f8787bfc6b8b66354e39ed2f2aa6c74e83619d1f798f9e6`.
-- The combined Quest APK build did not finish: an unrelated existing package's
-  CMake source disappeared when root node_modules was removed during the run.
-  The previously compiled Bluetooth ELF was also in that removed tree.
-  Restore frozen dependencies and rerun the bounded build before claiming a
-  packaged or installed Bluetooth transport.
-- No physical Bluetooth scan, connection or Muse input was verified here.
+- The generated native pool verifier passed: 932 compile and 31 link edges in
+  20 arm64 Debug builds. An obsolete unbounded app cache was preserved outside
+  the project at `/tmp/moyo-app-unbounded-cxx-1i4p4x69`; the current bounded app
+  cache and all APK outputs remain in place.
+- No physical Bluetooth scan, connection or Muse input was verified by this
+  build agent. Those results must be recorded separately from this build proof.
 
-Recovery preserves app intermediates: run `pnpm install --frozen-lockfile` at
-repository root after dependency deletion has stopped. From
-`apps/mobile/android`, set Android SDK environment variables and
-`ORG_GRADLE_PROJECT_moyoNativeJobPool=2`, then run
-`./gradlew :nitro-forge_bluetooth-v1:externalNativeBuildDebug :app:assembleQuestDebug -PreactNativeArchitectures=arm64-v8a --max-workers=1 --no-parallel`.
-Do not run clean or prebuild for this recovery.
+An earlier combined build stopped when dependency source files disappeared;
+its cause was not established. Frozen restore and the final bounded build above
+completed successfully without clean or prebuild. App intermediates and the
+previous APK were preserved during recovery.

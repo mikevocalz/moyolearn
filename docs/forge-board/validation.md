@@ -20,7 +20,10 @@ from physical-device interaction evidence.
 | Device PNG save | PASS on installed Quest with updated development JS | Created `MoyoExports` through the system folder picker, granted that folder, wrote/read back the PNG, then independently pulled the saved file |
 | Connection/export/frame follow-up contracts | PASS, 20 tests | PNG saver 6, pen verification 2, resized content geometry 3, installed Bluetooth artifact 3, window contract 6 |
 | Actual Forge and pen controller integration | PASS, 4 tests | `pnpm --filter @acme/app test:forge` |
-| Native Rive loading, full Forge preview, pen hardware, iOS/iPadOS/Duo | NOT RUN | No source-test result is counted as hardware support |
+| Quest Bluetooth follow-up APK/install | PASS | Final `assembleQuestDebug`, 15m39s, 1516 tasks; Meta CLI `adb install -r` returned Success |
+| Physical Muse Bluetooth link | PASS, GATT link only | Actual updated app displayed `Connected to Logitech Muse` and `Bluetooth linked`; native pen pressure/6DoF remain unverified |
+| Physical resize appearance | User-reported PASS | User resized the middle content and answered “Looks correct”; geometry tests are separate from that visual report |
+| Native Rive loading, full Forge preview, pen pressure/pose/haptics, iOS/iPadOS/Duo | NOT RUN | No source-test result is counted as hardware support |
 
 The Quest 3S selected through Argent is serial `340YC10GC3014S`, Android API 34.
 The user authorized installation. Argent's reinstall action uninstalls first and
@@ -70,3 +73,33 @@ install -r` after the APK is verified. Launch/discovery/interaction use Argent.
   being built separately from drawing validation.
 - This install does not enable the gated Forge backend or prove Muse hardware
   tracking, native Rive loading or Skia v3 rendering in Moyo.
+
+## Bluetooth follow-up installation
+
+- Current APK: same Quest debug path, 338 MiB, SHA-256
+  `8429b165dea3dde7b22c642cfcab6345731ac47e2b713c632932dad20078d35e`.
+- Final native build passed in 15m39s with 1516 tasks after frozen dependency
+  restoration. Native pool verification passed: 932 compiler and 31 linker edges
+  across 20 arm64 Debug builds. The superseded unbounded app CMake cache was
+  moved intact outside the active tree; current bounded outputs were retained.
+- Packaged arm64 only, one Bluetooth library and one NitroModules runtime.
+  DEX contains the Bluetooth package and implementation; actual APK manifest
+  contains SCAN/CONNECT and retains 1024x640dp with unspecified orientation.
+- Meta CLI update install used `-r` and returned Success. No uninstall or app-data
+  clearing. The updated app loaded the fixture and completed its snapshot-ready
+  handshake using the refreshed Metro development bundle (HTTP 200).
+- The physical app reached native scanning and then displayed
+  `Connected to Logitech Muse. Native pen input must still be verified.`
+  and `Bluetooth linked. Waiting for compatible pen input; pressure and spatial
+  tracking remain unverified.` Closing that dialog leaves the established link
+  owned by the mounted screen. This is a Bluetooth transport result, not a Muse
+  Android drawing driver or proof of pressure/position input.
+- Android's GATT Client Map independently showed one connection for
+  `com.moyolearn.app`. Its bonded-device list was empty. InputReader exposed no
+  Logitech/Muse input device or Bluetooth stylus source at that point. These
+  observations motivate actual service, notification and system-bond diagnosis;
+  a registered client is not sufficient proof of a working input provider.
+- The user then clarified that the goal is working pen input and pressed its
+  button. The supplied Downloads/musefiles SDK was inspected: its README,
+  Interaxon license, EEG example and PDF pages 10/12 identify Muse headbands,
+  not Logitech's pen. No binaries from that SDK were installed or executed.
