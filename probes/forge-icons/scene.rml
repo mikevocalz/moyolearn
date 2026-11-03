@@ -1,0 +1,1286 @@
+<Rive version="1" kind="fragment">
+<Artboard id="0:8" name="ForgePen" x="0" y="0" width="24" height="24" clip="true" isComponent="true" styleId="0:9" defaultStateMachineId="0:10" viewModelId="0:1" viewModelInstanceId="0:2">
+<LayoutComponentStyle id="0:9">
+</LayoutComponentStyle>
+<Node name="Presentation" id="0:120">
+<DataBindContext sourcePathIds="0:1-0:7" propertyKey="18" id="0:68">
+</DataBindContext>
+<Node id="0:12" name="Filled" opacity="0">
+<Shape name="pen-filled-0" id="0:75">
+<PointsPath isClosed="false" id="0:71">
+<StraightVertex x="15.4" y="5.3" id="0:69">
+</StraightVertex>
+<StraightVertex x="18.8" y="8.7" id="0:70">
+</StraightVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:74">
+<SolidColor colorValue="FFFFFFFF" id="0:73">
+<DataBindContext sourcePathIds="0:1-0:6" propertyKey="37" id="0:72">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+<Shape name="pen-filled-1" id="0:89">
+<PointsPath isClosed="true" id="0:85">
+<StraightVertex x="3.2" y="20.8" id="0:76">
+</StraightVertex>
+<StraightVertex x="5.3" y="13" id="0:77">
+</StraightVertex>
+<CubicDetachedVertex x="16.7" y="1.8" inRotation="0" inDistance="0" outRotation="-0.7753974966" outDistance="0.6543818842" id="0:78">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="18.45" y="1.0853571071" inRotation="3.1415926536" inDistance="0.6543818842" outRotation="0" outDistance="0.6543818842" id="0:79">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="20.2" y="1.8" inRotation="-2.366195157" inDistance="0.6543818842" outRotation="0" outDistance="0" id="0:80">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="22.2" y="3.8" inRotation="0" inDistance="0" outRotation="0.7953988302" outDistance="0.6543818842" id="0:81">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="22.9146428929" y="5.55" inRotation="-1.5707963268" inDistance="0.6543818842" outRotation="1.5707963268" outDistance="0.6543818842" id="0:82">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="22.2" y="7.3" inRotation="-0.7953988302" inDistance="0.6543818842" outRotation="0" outDistance="0" id="0:83">
+</CubicDetachedVertex>
+<StraightVertex x="10.9" y="18.6" id="0:84">
+</StraightVertex>
+</PointsPath>
+<Fill fillRule="evenOdd" id="0:88">
+<SolidColor colorValue="FF18202D" id="0:87">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:86">
+</DataBindContext>
+</SolidColor>
+</Fill>
+</Shape>
+</Node>
+<Node id="0:11" name="Outline" opacity="1">
+<Shape name="pen-outline-0" id="0:96">
+<PointsPath isClosed="false" id="0:92">
+<StraightVertex x="4" y="21" id="0:90">
+</StraightVertex>
+<StraightVertex x="20" y="21" id="0:91">
+</StraightVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:95">
+<SolidColor colorValue="FF18202D" id="0:94">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:93">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+<Shape name="pen-outline-1" id="0:103">
+<PointsPath isClosed="false" id="0:99">
+<StraightVertex x="14.5" y="6.5" id="0:97">
+</StraightVertex>
+<StraightVertex x="17.5" y="9.5" id="0:98">
+</StraightVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:102">
+<SolidColor colorValue="FF18202D" id="0:101">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:100">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+<Shape name="pen-outline-2" id="0:119">
+<PointsPath isClosed="true" id="0:115">
+<StraightVertex x="4.5" y="19" id="0:104">
+</StraightVertex>
+<StraightVertex x="10" y="17.5" id="0:105">
+</StraightVertex>
+<CubicDetachedVertex x="20" y="7.5" inRotation="0" inDistance="0" outRotation="-0.7751933733" outDistance="0.3734728592" id="0:106">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="20.5568898219" y="6.5504167861" inRotation="1.8359973113" inDistance="0.3734728592" outRotation="-1.3055953423" outDistance="0.3734728592" id="0:107">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="20.5568898219" y="5.4495832139" inRotation="1.3055953423" inDistance="0.3734728592" outRotation="-1.8359973113" outDistance="0.3734728592" id="0:108">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="20" y="4.5" inRotation="0.7751933733" inDistance="0.3734728592" outRotation="0" outDistance="0" id="0:109">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="19.5" y="4" inRotation="0" inDistance="0" outRotation="-2.3459897001" outDistance="0.3734728592" id="0:110">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="18.5504167861" y="3.4431101781" inRotation="0.2652009845" inDistance="0.3734728592" outRotation="-2.8763916691" outDistance="0.3734728592" id="0:111">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="17.4495832139" y="3.4431101781" inRotation="-0.2652009845" inDistance="0.3734728592" outRotation="2.8763916691" outDistance="0.3734728592" id="0:112">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="16.5" y="4" inRotation="-0.7956029535" inDistance="0.3734728592" outRotation="0" outDistance="0" id="0:113">
+</CubicDetachedVertex>
+<StraightVertex x="6.5" y="14" id="0:114">
+</StraightVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:118">
+<SolidColor colorValue="FF18202D" id="0:117">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:116">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+</Node>
+</Node>
+<StateMachine id="0:10" name="ForgeIconStates">
+<StateMachineLayer name="Selection" id="0:67">
+<AnyState x="300" y="-180" id="0:17">
+</AnyState>
+<ExitState x="600" y="-180" id="0:18">
+</ExitState>
+<EntryState x="0" y="0" id="0:20">
+<StateTransition stateToId="0:15" id="0:19">
+</StateTransition>
+</EntryState>
+<AnimationState id="0:15" x="240" y="0" animationId="0:13">
+<StateTransition stateToId="0:16" duration="0" enableEarlyExit="true" id="0:31">
+<TransitionViewModelCondition opValue="equal" id="0:25">
+<TransitionPropertyViewModelComparator id="0:23">
+<BindablePropertyBoolean id="0:22">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:21">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:24">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:30">
+<TransitionPropertyViewModelComparator id="0:28">
+<BindablePropertyBoolean id="0:27">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:26">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:29">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:16" duration="140" enableEarlyExit="true" id="0:43">
+<CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1" id="0:32">
+</CubicEaseInterpolator>
+<TransitionViewModelCondition opValue="equal" id="0:37">
+<TransitionPropertyViewModelComparator id="0:35">
+<BindablePropertyBoolean id="0:34">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:33">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:36">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:42">
+<TransitionPropertyViewModelComparator id="0:40">
+<BindablePropertyBoolean id="0:39">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:38">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:41">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+<AnimationState id="0:16" x="500" y="0" animationId="0:14">
+<StateTransition stateToId="0:15" duration="0" enableEarlyExit="true" id="0:54">
+<TransitionViewModelCondition opValue="equal" id="0:48">
+<TransitionPropertyViewModelComparator id="0:46">
+<BindablePropertyBoolean id="0:45">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:44">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:47">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:53">
+<TransitionPropertyViewModelComparator id="0:51">
+<BindablePropertyBoolean id="0:50">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:49">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:52">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:15" duration="140" enableEarlyExit="true" id="0:66">
+<CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1" id="0:55">
+</CubicEaseInterpolator>
+<TransitionViewModelCondition opValue="equal" id="0:60">
+<TransitionPropertyViewModelComparator id="0:58">
+<BindablePropertyBoolean id="0:57">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:56">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:59">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:65">
+<TransitionPropertyViewModelComparator id="0:63">
+<BindablePropertyBoolean id="0:62">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:61">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:64">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+</StateMachineLayer>
+</StateMachine>
+<LinearAnimation id="0:13" name="Outline" duration="1" fps="60">
+<KeyedObject objectId="0:11" id="0:123">
+<KeyedProperty propertyKey="18" id="0:122">
+<KeyFrameDouble frame="0" value="1" id="0:121">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:12" id="0:126">
+<KeyedProperty propertyKey="18" id="0:125">
+<KeyFrameDouble frame="0" value="0" id="0:124">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+<LinearAnimation id="0:14" name="Filled" duration="1" fps="60">
+<KeyedObject objectId="0:11" id="0:129">
+<KeyedProperty propertyKey="18" id="0:128">
+<KeyFrameDouble frame="0" value="0" id="0:127">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:12" id="0:132">
+<KeyedProperty propertyKey="18" id="0:131">
+<KeyFrameDouble frame="0" value="1" id="0:130">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+</Artboard>
+<Artboard id="0:134" name="ForgeHighlighter" x="48" y="0" width="24" height="24" clip="true" isComponent="true" styleId="0:135" defaultStateMachineId="0:136" viewModelId="0:1" viewModelInstanceId="0:2">
+<LayoutComponentStyle id="0:135">
+</LayoutComponentStyle>
+<Node name="Presentation" id="0:253">
+<DataBindContext sourcePathIds="0:1-0:7" propertyKey="18" id="0:194">
+</DataBindContext>
+<Node id="0:138" name="Filled" opacity="0">
+<Shape name="highlighter-filled-0" id="0:201">
+<PointsPath isClosed="false" id="0:197">
+<StraightVertex x="2" y="22" id="0:195">
+</StraightVertex>
+<StraightVertex x="22" y="22" id="0:196">
+</StraightVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:200">
+<SolidColor colorValue="FF18202D" id="0:199">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:198">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+<Shape name="highlighter-filled-1" id="0:216">
+<PointsPath isClosed="true" id="0:212">
+<StraightVertex x="12" y="6" id="0:202">
+</StraightVertex>
+<CubicDetachedVertex x="14.8" y="3.2" inRotation="0" inDistance="0" outRotation="-0.8110343943" outDistance="0.3626712849" id="0:203">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="15.7158725456" y="2.6501399902" inRotation="2.8712478555" inDistance="0.3626712849" outRotation="-0.2703447981" outDistance="0.3626712849" id="0:204">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="16.7841274544" y="2.6501399902" inRotation="-2.8712478555" inDistance="0.3626712849" outRotation="0.2703447981" outDistance="0.3626712849" id="0:205">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="17.7" y="3.2" inRotation="-2.3305582593" inDistance="0.3626712849" outRotation="0" outDistance="0" id="0:206">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="20.8" y="6.3" inRotation="0" inDistance="0" outRotation="0.7597619325" outDistance="0.3626712849" id="0:207">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="21.3498600098" y="7.2158725456" inRotation="-1.8411411249" inDistance="0.3626712849" outRotation="1.3004515287" outDistance="0.3626712849" id="0:208">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="21.3498600098" y="8.2841274544" inRotation="-1.3004515287" inDistance="0.3626712849" outRotation="1.8411411249" outDistance="0.3626712849" id="0:209">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="20.8" y="9.2" inRotation="-0.7597619325" inDistance="0.3626712849" outRotation="0" outDistance="0" id="0:210">
+</CubicDetachedVertex>
+<StraightVertex x="18" y="12" id="0:211">
+</StraightVertex>
+</PointsPath>
+<Fill fillRule="evenOdd" id="0:215">
+<SolidColor colorValue="FF18202D" id="0:214">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:213">
+</DataBindContext>
+</SolidColor>
+</Fill>
+</Shape>
+<Shape name="highlighter-filled-2" id="0:226">
+<PointsPath isClosed="true" id="0:222">
+<StraightVertex x="2" y="16" id="0:217">
+</StraightVertex>
+<StraightVertex x="12" y="6" id="0:218">
+</StraightVertex>
+<StraightVertex x="18" y="12" id="0:219">
+</StraightVertex>
+<StraightVertex x="8" y="22" id="0:220">
+</StraightVertex>
+<StraightVertex x="2" y="22" id="0:221">
+</StraightVertex>
+</PointsPath>
+<Fill fillRule="evenOdd" id="0:225">
+<SolidColor colorValue="FF18202D" id="0:224">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:223">
+</DataBindContext>
+</SolidColor>
+</Fill>
+</Shape>
+</Node>
+<Node id="0:137" name="Outline" opacity="1">
+<Shape name="highlighter-outline-0" id="0:233">
+<PointsPath isClosed="false" id="0:229">
+<StraightVertex x="2" y="22" id="0:227">
+</StraightVertex>
+<StraightVertex x="22" y="22" id="0:228">
+</StraightVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:232">
+<SolidColor colorValue="FF18202D" id="0:231">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:230">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+<Shape name="highlighter-outline-1" id="0:242">
+<PointsPath isClosed="false" id="0:238">
+<StraightVertex x="12" y="7" id="0:234">
+</StraightVertex>
+<StraightVertex x="15" y="4" id="0:235">
+</StraightVertex>
+<StraightVertex x="20" y="9" id="0:236">
+</StraightVertex>
+<StraightVertex x="17" y="12" id="0:237">
+</StraightVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:241">
+<SolidColor colorValue="FF18202D" id="0:240">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:239">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+<Shape name="highlighter-outline-2" id="0:252">
+<PointsPath isClosed="true" id="0:248">
+<StraightVertex x="3" y="16" id="0:243">
+</StraightVertex>
+<StraightVertex x="12" y="7" id="0:244">
+</StraightVertex>
+<StraightVertex x="17" y="12" id="0:245">
+</StraightVertex>
+<StraightVertex x="8" y="21" id="0:246">
+</StraightVertex>
+<StraightVertex x="3" y="21" id="0:247">
+</StraightVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:251">
+<SolidColor colorValue="FF18202D" id="0:250">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:249">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+</Node>
+</Node>
+<StateMachine id="0:136" name="ForgeIconStates">
+<StateMachineLayer name="Selection" id="0:193">
+<AnyState x="300" y="-180" id="0:143">
+</AnyState>
+<ExitState x="600" y="-180" id="0:144">
+</ExitState>
+<EntryState x="0" y="0" id="0:146">
+<StateTransition stateToId="0:141" id="0:145">
+</StateTransition>
+</EntryState>
+<AnimationState id="0:141" x="240" y="0" animationId="0:139">
+<StateTransition stateToId="0:142" duration="0" enableEarlyExit="true" id="0:157">
+<TransitionViewModelCondition opValue="equal" id="0:151">
+<TransitionPropertyViewModelComparator id="0:149">
+<BindablePropertyBoolean id="0:148">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:147">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:150">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:156">
+<TransitionPropertyViewModelComparator id="0:154">
+<BindablePropertyBoolean id="0:153">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:152">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:155">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:142" duration="140" enableEarlyExit="true" id="0:169">
+<CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1" id="0:158">
+</CubicEaseInterpolator>
+<TransitionViewModelCondition opValue="equal" id="0:163">
+<TransitionPropertyViewModelComparator id="0:161">
+<BindablePropertyBoolean id="0:160">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:159">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:162">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:168">
+<TransitionPropertyViewModelComparator id="0:166">
+<BindablePropertyBoolean id="0:165">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:164">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:167">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+<AnimationState id="0:142" x="500" y="0" animationId="0:140">
+<StateTransition stateToId="0:141" duration="0" enableEarlyExit="true" id="0:180">
+<TransitionViewModelCondition opValue="equal" id="0:174">
+<TransitionPropertyViewModelComparator id="0:172">
+<BindablePropertyBoolean id="0:171">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:170">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:173">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:179">
+<TransitionPropertyViewModelComparator id="0:177">
+<BindablePropertyBoolean id="0:176">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:175">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:178">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:141" duration="140" enableEarlyExit="true" id="0:192">
+<CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1" id="0:181">
+</CubicEaseInterpolator>
+<TransitionViewModelCondition opValue="equal" id="0:186">
+<TransitionPropertyViewModelComparator id="0:184">
+<BindablePropertyBoolean id="0:183">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:182">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:185">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:191">
+<TransitionPropertyViewModelComparator id="0:189">
+<BindablePropertyBoolean id="0:188">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:187">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:190">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+</StateMachineLayer>
+</StateMachine>
+<LinearAnimation id="0:139" name="Outline" duration="1" fps="60">
+<KeyedObject objectId="0:137" id="0:256">
+<KeyedProperty propertyKey="18" id="0:255">
+<KeyFrameDouble frame="0" value="1" id="0:254">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:138" id="0:259">
+<KeyedProperty propertyKey="18" id="0:258">
+<KeyFrameDouble frame="0" value="0" id="0:257">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+<LinearAnimation id="0:140" name="Filled" duration="1" fps="60">
+<KeyedObject objectId="0:137" id="0:262">
+<KeyedProperty propertyKey="18" id="0:261">
+<KeyFrameDouble frame="0" value="0" id="0:260">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:138" id="0:265">
+<KeyedProperty propertyKey="18" id="0:264">
+<KeyFrameDouble frame="0" value="1" id="0:263">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+</Artboard>
+<Artboard id="0:267" name="ForgeEraser" x="96" y="0" width="24" height="24" clip="true" isComponent="true" styleId="0:268" defaultStateMachineId="0:269" viewModelId="0:1" viewModelInstanceId="0:2">
+<LayoutComponentStyle id="0:268">
+</LayoutComponentStyle>
+<Node name="Presentation" id="0:392">
+<DataBindContext sourcePathIds="0:1-0:7" propertyKey="18" id="0:327">
+</DataBindContext>
+<Node id="0:271" name="Filled" opacity="0">
+<Shape name="eraser-filled-0" id="0:334">
+<PointsPath isClosed="false" id="0:330">
+<StraightVertex x="11" y="21" id="0:328">
+</StraightVertex>
+<StraightVertex x="21" y="21" id="0:329">
+</StraightVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:333">
+<SolidColor colorValue="FF18202D" id="0:332">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:331">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+<Shape name="eraser-filled-1" id="0:341">
+<PointsPath isClosed="false" id="0:337">
+<StraightVertex x="10" y="8" id="0:335">
+</StraightVertex>
+<StraightVertex x="16" y="14" id="0:336">
+</StraightVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:340">
+<SolidColor colorValue="FFFFFFFF" id="0:339">
+<DataBindContext sourcePathIds="0:1-0:6" propertyKey="37" id="0:338">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+<Shape name="eraser-filled-2" id="0:358">
+<PointsPath isClosed="true" id="0:354">
+<StraightVertex x="2.4" y="14.4" id="0:342">
+</StraightVertex>
+<CubicDetachedVertex x="13.5" y="3.3" inRotation="0" inDistance="0" outRotation="-0.7753974966" outDistance="0.7852582611" id="0:343">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="15.6" y="2.4424285286" inRotation="3.1415926536" inDistance="0.7852582611" outRotation="0" outDistance="0.7852582611" id="0:344">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="17.7" y="3.3" inRotation="-2.366195157" inDistance="0.7852582611" outRotation="0" outDistance="0" id="0:345">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="20.8" y="6.4" inRotation="0" inDistance="0" outRotation="0.7953988302" outDistance="0.7852582611" id="0:346">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="21.6575714714" y="8.5" inRotation="-1.5707963268" inDistance="0.7852582611" outRotation="1.5707963268" outDistance="0.7852582611" id="0:347">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="20.8" y="10.6" inRotation="-0.7953988302" inDistance="0.7852582611" outRotation="0" outDistance="0" id="0:348">
+</CubicDetachedVertex>
+<StraightVertex x="10.6" y="21" id="0:349">
+</StraightVertex>
+<StraightVertex x="6.9" y="21" id="0:350">
+</StraightVertex>
+<CubicDetachedVertex x="2.4" y="16.5" inRotation="0" inDistance="0" outRotation="-2.3461938234" outDistance="0.3926291305" id="0:351">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="1.9712142643" y="15.45" inRotation="1.5707963268" inDistance="0.3926291305" outRotation="-1.5707963268" outDistance="0.3926291305" id="0:352">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="2.4" y="14.4" inRotation="2.3461938234" inDistance="0.3926291305" outRotation="0" outDistance="0" id="0:353">
+</CubicDetachedVertex>
+</PointsPath>
+<Fill fillRule="evenOdd" id="0:357">
+<SolidColor colorValue="FF18202D" id="0:356">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:355">
+</DataBindContext>
+</SolidColor>
+</Fill>
+</Shape>
+</Node>
+<Node id="0:270" name="Outline" opacity="1">
+<Shape name="eraser-outline-0" id="0:365">
+<PointsPath isClosed="false" id="0:361">
+<StraightVertex x="10" y="21" id="0:359">
+</StraightVertex>
+<StraightVertex x="21" y="21" id="0:360">
+</StraightVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:364">
+<SolidColor colorValue="FF18202D" id="0:363">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:362">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+<Shape name="eraser-outline-1" id="0:372">
+<PointsPath isClosed="false" id="0:368">
+<StraightVertex x="11" y="7.5" id="0:366">
+</StraightVertex>
+<StraightVertex x="17" y="13.5" id="0:367">
+</StraightVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:371">
+<SolidColor colorValue="FF18202D" id="0:370">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:369">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+<Shape name="eraser-outline-2" id="0:391">
+<PointsPath isClosed="true" id="0:387">
+<StraightVertex x="3.7" y="14.7" id="0:373">
+</StraightVertex>
+<CubicDetachedVertex x="13.6" y="4.8" inRotation="0" inDistance="0" outRotation="-0.7956029535" outDistance="0.4979638123" id="0:374">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="14.8661109518" y="4.0574802375" inRotation="2.8763916691" inDistance="0.4979638123" outRotation="-0.2652009845" outDistance="0.4979638123" id="0:375">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="16.3338890482" y="4.0574802375" inRotation="-2.8763916691" inDistance="0.4979638123" outRotation="0.2652009845" outDistance="0.4979638123" id="0:376">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="17.6" y="4.8" inRotation="-2.3459897001" inDistance="0.4979638123" outRotation="0" outDistance="0" id="0:377">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="19.6" y="6.8" inRotation="0" inDistance="0" outRotation="0.7751933733" outDistance="0.4979638123" id="0:378">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="20.3425197625" y="8.0661109518" inRotation="-1.8359973113" inDistance="0.4979638123" outRotation="1.3055953423" outDistance="0.4979638123" id="0:379">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="20.3425197625" y="9.5338890482" inRotation="-1.3055953423" inDistance="0.4979638123" outRotation="1.8359973113" outDistance="0.4979638123" id="0:380">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="19.6" y="10.8" inRotation="-0.7751933733" inDistance="0.4979638123" outRotation="0" outDistance="0" id="0:381">
+</CubicDetachedVertex>
+<StraightVertex x="9.6" y="20.8" id="0:382">
+</StraightVertex>
+<StraightVertex x="7.4" y="20.8" id="0:383">
+</StraightVertex>
+<CubicDetachedVertex x="3.7" y="17.1" inRotation="0" inDistance="0" outRotation="-2.3544643829" outDistance="0.4498489358" id="0:384">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="3.2041594579" y="15.9" inRotation="1.5707963268" inDistance="0.4498489358" outRotation="-1.5707963268" outDistance="0.4498489358" id="0:385">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="3.7" y="14.7" inRotation="2.3544643829" inDistance="0.4498489358" outRotation="0" outDistance="0" id="0:386">
+</CubicDetachedVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:390">
+<SolidColor colorValue="FF18202D" id="0:389">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:388">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+</Node>
+</Node>
+<StateMachine id="0:269" name="ForgeIconStates">
+<StateMachineLayer name="Selection" id="0:326">
+<AnyState x="300" y="-180" id="0:276">
+</AnyState>
+<ExitState x="600" y="-180" id="0:277">
+</ExitState>
+<EntryState x="0" y="0" id="0:279">
+<StateTransition stateToId="0:274" id="0:278">
+</StateTransition>
+</EntryState>
+<AnimationState id="0:274" x="240" y="0" animationId="0:272">
+<StateTransition stateToId="0:275" duration="0" enableEarlyExit="true" id="0:290">
+<TransitionViewModelCondition opValue="equal" id="0:284">
+<TransitionPropertyViewModelComparator id="0:282">
+<BindablePropertyBoolean id="0:281">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:280">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:283">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:289">
+<TransitionPropertyViewModelComparator id="0:287">
+<BindablePropertyBoolean id="0:286">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:285">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:288">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:275" duration="140" enableEarlyExit="true" id="0:302">
+<CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1" id="0:291">
+</CubicEaseInterpolator>
+<TransitionViewModelCondition opValue="equal" id="0:296">
+<TransitionPropertyViewModelComparator id="0:294">
+<BindablePropertyBoolean id="0:293">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:292">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:295">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:301">
+<TransitionPropertyViewModelComparator id="0:299">
+<BindablePropertyBoolean id="0:298">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:297">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:300">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+<AnimationState id="0:275" x="500" y="0" animationId="0:273">
+<StateTransition stateToId="0:274" duration="0" enableEarlyExit="true" id="0:313">
+<TransitionViewModelCondition opValue="equal" id="0:307">
+<TransitionPropertyViewModelComparator id="0:305">
+<BindablePropertyBoolean id="0:304">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:303">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:306">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:312">
+<TransitionPropertyViewModelComparator id="0:310">
+<BindablePropertyBoolean id="0:309">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:308">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:311">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:274" duration="140" enableEarlyExit="true" id="0:325">
+<CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1" id="0:314">
+</CubicEaseInterpolator>
+<TransitionViewModelCondition opValue="equal" id="0:319">
+<TransitionPropertyViewModelComparator id="0:317">
+<BindablePropertyBoolean id="0:316">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:315">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:318">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:324">
+<TransitionPropertyViewModelComparator id="0:322">
+<BindablePropertyBoolean id="0:321">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:320">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:323">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+</StateMachineLayer>
+</StateMachine>
+<LinearAnimation id="0:272" name="Outline" duration="1" fps="60">
+<KeyedObject objectId="0:270" id="0:395">
+<KeyedProperty propertyKey="18" id="0:394">
+<KeyFrameDouble frame="0" value="1" id="0:393">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:271" id="0:398">
+<KeyedProperty propertyKey="18" id="0:397">
+<KeyFrameDouble frame="0" value="0" id="0:396">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+<LinearAnimation id="0:273" name="Filled" duration="1" fps="60">
+<KeyedObject objectId="0:270" id="0:401">
+<KeyedProperty propertyKey="18" id="0:400">
+<KeyFrameDouble frame="0" value="0" id="0:399">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:271" id="0:404">
+<KeyedProperty propertyKey="18" id="0:403">
+<KeyFrameDouble frame="0" value="1" id="0:402">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+</Artboard>
+<Artboard id="0:406" name="ForgeUndo" x="144" y="0" width="24" height="24" clip="true" isComponent="true" styleId="0:407" defaultStateMachineId="0:408" viewModelId="0:1" viewModelInstanceId="0:2">
+<LayoutComponentStyle id="0:407">
+</LayoutComponentStyle>
+<Node name="Presentation" id="0:508">
+<DataBindContext sourcePathIds="0:1-0:7" propertyKey="18" id="0:466">
+</DataBindContext>
+<Node id="0:410" name="Filled" opacity="0">
+<Shape name="undo-filled-0" id="0:488">
+<PointsPath isClosed="true" id="0:484">
+<StraightVertex x="2" y="12" id="0:467">
+</StraightVertex>
+<StraightVertex x="11" y="3" id="0:468">
+</StraightVertex>
+<StraightVertex x="11" y="8" id="0:469">
+</StraightVertex>
+<CubicDetachedVertex x="15" y="8" inRotation="0" inDistance="0" outRotation="0" outDistance="2.1217319187" id="0:470">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="20.6568542495" y="10.3431457505" inRotation="-2.3561944902" inDistance="2.1217319187" outRotation="0.7853981634" outDistance="2.1217319187" id="0:471">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="23" y="16" inRotation="-1.5707963268" inDistance="2.1217319187" outRotation="1.5707963268" outDistance="2.1217319187" id="0:472">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="20.6568542495" y="21.6568542495" inRotation="-0.7853981634" inDistance="2.1217319187" outRotation="2.3561944902" outDistance="2.1217319187" id="0:473">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="15" y="24" inRotation="0" inDistance="2.1217319187" outRotation="0" outDistance="0" id="0:474">
+</CubicDetachedVertex>
+<StraightVertex x="12" y="24" id="0:475">
+</StraightVertex>
+<StraightVertex x="12" y="20" id="0:476">
+</StraightVertex>
+<CubicDetachedVertex x="15" y="20" inRotation="0" inDistance="0" outRotation="0" outDistance="1.0608659594" id="0:477">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="17.8284271247" y="18.8284271247" inRotation="2.3561944902" inDistance="1.0608659594" outRotation="-0.7853981634" outDistance="1.0608659594" id="0:478">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="19" y="16" inRotation="1.5707963268" inDistance="1.0608659594" outRotation="-1.5707963268" outDistance="1.0608659594" id="0:479">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="17.8284271247" y="13.1715728753" inRotation="0.7853981634" inDistance="1.0608659594" outRotation="-2.3561944902" outDistance="1.0608659594" id="0:480">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="15" y="12" inRotation="0" inDistance="1.0608659594" outRotation="0" outDistance="0" id="0:481">
+</CubicDetachedVertex>
+<StraightVertex x="11" y="12" id="0:482">
+</StraightVertex>
+<StraightVertex x="11" y="17" id="0:483">
+</StraightVertex>
+</PointsPath>
+<Fill fillRule="evenOdd" id="0:487">
+<SolidColor colorValue="FF18202D" id="0:486">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:485">
+</DataBindContext>
+</SolidColor>
+</Fill>
+</Shape>
+</Node>
+<Node id="0:409" name="Outline" opacity="1">
+<Shape name="undo-outline-0" id="0:499">
+<PointsPath isClosed="false" id="0:495">
+<StraightVertex x="5" y="12" id="0:489">
+</StraightVertex>
+<CubicDetachedVertex x="15" y="12" inRotation="0" inDistance="0" outRotation="0" outDistance="1.4586906941" id="0:490">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="18.8890872965" y="13.6109127035" inRotation="-2.3561944902" inDistance="1.4586906941" outRotation="0.7853981634" outDistance="1.4586906941" id="0:491">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="20.5" y="17.5" inRotation="-1.5707963268" inDistance="1.4586906941" outRotation="1.5707963268" outDistance="1.4586906941" id="0:492">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="18.8890872965" y="21.3890872965" inRotation="-0.7853981634" inDistance="1.4586906941" outRotation="2.3561944902" outDistance="1.4586906941" id="0:493">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="15" y="23" inRotation="0" inDistance="1.4586906941" outRotation="0" outDistance="0" id="0:494">
+</CubicDetachedVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:498">
+<SolidColor colorValue="FF18202D" id="0:497">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:496">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+<Shape name="undo-outline-1" id="0:507">
+<PointsPath isClosed="false" id="0:503">
+<StraightVertex x="10" y="7" id="0:500">
+</StraightVertex>
+<StraightVertex x="5" y="12" id="0:501">
+</StraightVertex>
+<StraightVertex x="10" y="17" id="0:502">
+</StraightVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:506">
+<SolidColor colorValue="FF18202D" id="0:505">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:504">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+</Node>
+</Node>
+<StateMachine id="0:408" name="ForgeIconStates">
+<StateMachineLayer name="Selection" id="0:465">
+<AnyState x="300" y="-180" id="0:415">
+</AnyState>
+<ExitState x="600" y="-180" id="0:416">
+</ExitState>
+<EntryState x="0" y="0" id="0:418">
+<StateTransition stateToId="0:413" id="0:417">
+</StateTransition>
+</EntryState>
+<AnimationState id="0:413" x="240" y="0" animationId="0:411">
+<StateTransition stateToId="0:414" duration="0" enableEarlyExit="true" id="0:429">
+<TransitionViewModelCondition opValue="equal" id="0:423">
+<TransitionPropertyViewModelComparator id="0:421">
+<BindablePropertyBoolean id="0:420">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:419">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:422">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:428">
+<TransitionPropertyViewModelComparator id="0:426">
+<BindablePropertyBoolean id="0:425">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:424">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:427">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:414" duration="140" enableEarlyExit="true" id="0:441">
+<CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1" id="0:430">
+</CubicEaseInterpolator>
+<TransitionViewModelCondition opValue="equal" id="0:435">
+<TransitionPropertyViewModelComparator id="0:433">
+<BindablePropertyBoolean id="0:432">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:431">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:434">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:440">
+<TransitionPropertyViewModelComparator id="0:438">
+<BindablePropertyBoolean id="0:437">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:436">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:439">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+<AnimationState id="0:414" x="500" y="0" animationId="0:412">
+<StateTransition stateToId="0:413" duration="0" enableEarlyExit="true" id="0:452">
+<TransitionViewModelCondition opValue="equal" id="0:446">
+<TransitionPropertyViewModelComparator id="0:444">
+<BindablePropertyBoolean id="0:443">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:442">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:445">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:451">
+<TransitionPropertyViewModelComparator id="0:449">
+<BindablePropertyBoolean id="0:448">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:447">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:450">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:413" duration="140" enableEarlyExit="true" id="0:464">
+<CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1" id="0:453">
+</CubicEaseInterpolator>
+<TransitionViewModelCondition opValue="equal" id="0:458">
+<TransitionPropertyViewModelComparator id="0:456">
+<BindablePropertyBoolean id="0:455">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:454">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:457">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:463">
+<TransitionPropertyViewModelComparator id="0:461">
+<BindablePropertyBoolean id="0:460">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:459">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:462">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+</StateMachineLayer>
+</StateMachine>
+<LinearAnimation id="0:411" name="Outline" duration="1" fps="60">
+<KeyedObject objectId="0:409" id="0:511">
+<KeyedProperty propertyKey="18" id="0:510">
+<KeyFrameDouble frame="0" value="1" id="0:509">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:410" id="0:514">
+<KeyedProperty propertyKey="18" id="0:513">
+<KeyFrameDouble frame="0" value="0" id="0:512">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+<LinearAnimation id="0:412" name="Filled" duration="1" fps="60">
+<KeyedObject objectId="0:409" id="0:517">
+<KeyedProperty propertyKey="18" id="0:516">
+<KeyFrameDouble frame="0" value="0" id="0:515">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:410" id="0:520">
+<KeyedProperty propertyKey="18" id="0:519">
+<KeyFrameDouble frame="0" value="1" id="0:518">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+</Artboard>
+<Artboard id="0:522" name="ForgeRedo" x="192" y="0" width="24" height="24" clip="true" isComponent="true" styleId="0:523" defaultStateMachineId="0:524" viewModelId="0:1" viewModelInstanceId="0:2">
+<LayoutComponentStyle id="0:523">
+</LayoutComponentStyle>
+<Node name="Presentation" id="0:624">
+<DataBindContext sourcePathIds="0:1-0:7" propertyKey="18" id="0:582">
+</DataBindContext>
+<Node id="0:526" name="Filled" opacity="0">
+<Shape name="redo-filled-0" id="0:604">
+<PointsPath isClosed="true" id="0:600">
+<StraightVertex x="22" y="12" id="0:583">
+</StraightVertex>
+<StraightVertex x="13" y="3" id="0:584">
+</StraightVertex>
+<StraightVertex x="13" y="8" id="0:585">
+</StraightVertex>
+<CubicDetachedVertex x="9" y="8" inRotation="0" inDistance="0" outRotation="3.1415926536" outDistance="2.1217319187" id="0:586">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="3.3431457505" y="10.3431457505" inRotation="-0.7853981634" inDistance="2.1217319187" outRotation="2.3561944902" outDistance="2.1217319187" id="0:587">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="1" y="16" inRotation="-1.5707963268" inDistance="2.1217319187" outRotation="1.5707963268" outDistance="2.1217319187" id="0:588">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="3.3431457505" y="21.6568542495" inRotation="-2.3561944902" inDistance="2.1217319187" outRotation="0.7853981634" outDistance="2.1217319187" id="0:589">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="9" y="24" inRotation="3.1415926536" inDistance="2.1217319187" outRotation="0" outDistance="0" id="0:590">
+</CubicDetachedVertex>
+<StraightVertex x="12" y="24" id="0:591">
+</StraightVertex>
+<StraightVertex x="12" y="20" id="0:592">
+</StraightVertex>
+<CubicDetachedVertex x="9" y="20" inRotation="0" inDistance="0" outRotation="3.1415926536" outDistance="1.0608659594" id="0:593">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="6.1715728753" y="18.8284271247" inRotation="0.7853981634" inDistance="1.0608659594" outRotation="-2.3561944902" outDistance="1.0608659594" id="0:594">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="5" y="16" inRotation="1.5707963268" inDistance="1.0608659594" outRotation="-1.5707963268" outDistance="1.0608659594" id="0:595">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="6.1715728753" y="13.1715728753" inRotation="2.3561944902" inDistance="1.0608659594" outRotation="-0.7853981634" outDistance="1.0608659594" id="0:596">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="9" y="12" inRotation="3.1415926536" inDistance="1.0608659594" outRotation="0" outDistance="0" id="0:597">
+</CubicDetachedVertex>
+<StraightVertex x="13" y="12" id="0:598">
+</StraightVertex>
+<StraightVertex x="13" y="17" id="0:599">
+</StraightVertex>
+</PointsPath>
+<Fill fillRule="evenOdd" id="0:603">
+<SolidColor colorValue="FF18202D" id="0:602">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:601">
+</DataBindContext>
+</SolidColor>
+</Fill>
+</Shape>
+</Node>
+<Node id="0:525" name="Outline" opacity="1">
+<Shape name="redo-outline-0" id="0:615">
+<PointsPath isClosed="false" id="0:611">
+<StraightVertex x="19" y="12" id="0:605">
+</StraightVertex>
+<CubicDetachedVertex x="9" y="12" inRotation="0" inDistance="0" outRotation="3.1415926536" outDistance="1.4586906941" id="0:606">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="5.1109127035" y="13.6109127035" inRotation="-0.7853981634" inDistance="1.4586906941" outRotation="2.3561944902" outDistance="1.4586906941" id="0:607">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="3.5" y="17.5" inRotation="-1.5707963268" inDistance="1.4586906941" outRotation="1.5707963268" outDistance="1.4586906941" id="0:608">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="5.1109127035" y="21.3890872965" inRotation="-2.3561944902" inDistance="1.4586906941" outRotation="0.7853981634" outDistance="1.4586906941" id="0:609">
+</CubicDetachedVertex>
+<CubicDetachedVertex x="9" y="23" inRotation="3.1415926536" inDistance="1.4586906941" outRotation="0" outDistance="0" id="0:610">
+</CubicDetachedVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:614">
+<SolidColor colorValue="FF18202D" id="0:613">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:612">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+<Shape name="redo-outline-1" id="0:623">
+<PointsPath isClosed="false" id="0:619">
+<StraightVertex x="14" y="7" id="0:616">
+</StraightVertex>
+<StraightVertex x="19" y="12" id="0:617">
+</StraightVertex>
+<StraightVertex x="14" y="17" id="0:618">
+</StraightVertex>
+</PointsPath>
+<Stroke thickness="2.35" cap="round" join="round" id="0:622">
+<SolidColor colorValue="FF18202D" id="0:621">
+<DataBindContext sourcePathIds="0:1-0:5" propertyKey="37" id="0:620">
+</DataBindContext>
+</SolidColor>
+</Stroke>
+</Shape>
+</Node>
+</Node>
+<StateMachine id="0:524" name="ForgeIconStates">
+<StateMachineLayer name="Selection" id="0:581">
+<AnyState x="300" y="-180" id="0:531">
+</AnyState>
+<ExitState x="600" y="-180" id="0:532">
+</ExitState>
+<EntryState x="0" y="0" id="0:534">
+<StateTransition stateToId="0:529" id="0:533">
+</StateTransition>
+</EntryState>
+<AnimationState id="0:529" x="240" y="0" animationId="0:527">
+<StateTransition stateToId="0:530" duration="0" enableEarlyExit="true" id="0:545">
+<TransitionViewModelCondition opValue="equal" id="0:539">
+<TransitionPropertyViewModelComparator id="0:537">
+<BindablePropertyBoolean id="0:536">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:535">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:538">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:544">
+<TransitionPropertyViewModelComparator id="0:542">
+<BindablePropertyBoolean id="0:541">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:540">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:543">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:530" duration="140" enableEarlyExit="true" id="0:557">
+<CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1" id="0:546">
+</CubicEaseInterpolator>
+<TransitionViewModelCondition opValue="equal" id="0:551">
+<TransitionPropertyViewModelComparator id="0:549">
+<BindablePropertyBoolean id="0:548">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:547">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:550">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:556">
+<TransitionPropertyViewModelComparator id="0:554">
+<BindablePropertyBoolean id="0:553">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:552">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:555">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+<AnimationState id="0:530" x="500" y="0" animationId="0:528">
+<StateTransition stateToId="0:529" duration="0" enableEarlyExit="true" id="0:568">
+<TransitionViewModelCondition opValue="equal" id="0:562">
+<TransitionPropertyViewModelComparator id="0:560">
+<BindablePropertyBoolean id="0:559">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:558">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:561">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:567">
+<TransitionPropertyViewModelComparator id="0:565">
+<BindablePropertyBoolean id="0:564">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:563">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="true" id="0:566">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+<StateTransition stateToId="0:529" duration="140" enableEarlyExit="true" id="0:580">
+<CubicEaseInterpolator x1="0.23" y1="1" x2="0.32" y2="1" id="0:569">
+</CubicEaseInterpolator>
+<TransitionViewModelCondition opValue="equal" id="0:574">
+<TransitionPropertyViewModelComparator id="0:572">
+<BindablePropertyBoolean id="0:571">
+<DataBindContext sourcePathIds="0:1-0:3" propertyKey="634" id="0:570">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:573">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+<TransitionViewModelCondition opValue="equal" id="0:579">
+<TransitionPropertyViewModelComparator id="0:577">
+<BindablePropertyBoolean id="0:576">
+<DataBindContext sourcePathIds="0:1-0:4" propertyKey="634" id="0:575">
+</DataBindContext>
+</BindablePropertyBoolean>
+</TransitionPropertyViewModelComparator>
+<TransitionValueBooleanComparator value="false" id="0:578">
+</TransitionValueBooleanComparator>
+</TransitionViewModelCondition>
+</StateTransition>
+</AnimationState>
+</StateMachineLayer>
+</StateMachine>
+<LinearAnimation id="0:527" name="Outline" duration="1" fps="60">
+<KeyedObject objectId="0:525" id="0:627">
+<KeyedProperty propertyKey="18" id="0:626">
+<KeyFrameDouble frame="0" value="1" id="0:625">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:526" id="0:630">
+<KeyedProperty propertyKey="18" id="0:629">
+<KeyFrameDouble frame="0" value="0" id="0:628">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+<LinearAnimation id="0:528" name="Filled" duration="1" fps="60">
+<KeyedObject objectId="0:525" id="0:633">
+<KeyedProperty propertyKey="18" id="0:632">
+<KeyFrameDouble frame="0" value="0" id="0:631">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+<KeyedObject objectId="0:526" id="0:636">
+<KeyedProperty propertyKey="18" id="0:635">
+<KeyFrameDouble frame="0" value="1" id="0:634">
+</KeyFrameDouble>
+</KeyedProperty>
+</KeyedObject>
+</LinearAnimation>
+</Artboard>
+<ComponentAsset artboardId="0:8" name="Forge pen" id="0:133">
+</ComponentAsset>
+<ComponentAsset artboardId="0:134" name="Forge highlighter" id="0:266">
+</ComponentAsset>
+<ComponentAsset artboardId="0:267" name="Forge eraser" id="0:405">
+</ComponentAsset>
+<ComponentAsset artboardId="0:406" name="Forge undo" id="0:521">
+</ComponentAsset>
+<ComponentAsset artboardId="0:522" name="Forge redo" id="0:637">
+</ComponentAsset>
+<ViewModel id="0:1" name="ForgeIcon" defaultInstanceId="0:2">
+<ViewModelPropertyBoolean id="0:3" name="selected">
+</ViewModelPropertyBoolean>
+<ViewModelPropertyBoolean id="0:4" name="reducedMotion">
+</ViewModelPropertyBoolean>
+<ViewModelPropertyColor id="0:5" name="color">
+</ViewModelPropertyColor>
+<ViewModelPropertyColor id="0:6" name="surfaceColor">
+</ViewModelPropertyColor>
+<ViewModelPropertyNumber id="0:7" name="opacity">
+</ViewModelPropertyNumber>
+<ViewModelInstance id="0:2" name="Default" exports="true">
+<ViewModelInstanceBoolean viewModelPropertyId="0:3" propertyValue="false" id="0:638">
+</ViewModelInstanceBoolean>
+<ViewModelInstanceBoolean viewModelPropertyId="0:4" propertyValue="false" id="0:639">
+</ViewModelInstanceBoolean>
+<ViewModelInstanceColor viewModelPropertyId="0:5" propertyValue="FF18202D" id="0:640">
+</ViewModelInstanceColor>
+<ViewModelInstanceColor viewModelPropertyId="0:6" propertyValue="FFFFFFFF" id="0:641">
+</ViewModelInstanceColor>
+<ViewModelInstanceNumber viewModelPropertyId="0:7" propertyValue="1" id="0:642">
+</ViewModelInstanceNumber>
+</ViewModelInstance>
+</ViewModel>
+</Rive>
