@@ -63,6 +63,33 @@ An ordinary process listing identifies `vendor.oculus.hardware.sensors@1.0-servi
 
 The official Meta updater’s shipped JavaScript requests latest-build metadata using a device serial. Anonymous requests, including a fresh anonymous Chrome session, return error `1357012` without a build or image URL. The attempted browser REA capture is partial because target policy fails; it is not a complete REA network receipt. No matching operating-system image or HAL implementation has been acquired for offline analysis.
 
+## A nearby-build sensor implementation is now available offline
+
+A subsequent read-only init/VINTF inspection confirms that the installed service configuration names `/odm/bin/hw/vendor.oculus.hardware.sensors@1.0-service`. The companion-library directory is listable, but attempts to pull `libdevicesensors.so` and `libxrcontrollertal.so` also return permission denied. No access bypass occurred.
+
+An offline archive for build `4069240007800610` supplies the sensor service and companion libraries. The installed build is `4069240020600610`: binary equivalence is unproven. Only enough of the archive was downloaded to recover its ODM operations. The reconstructed ODM image matches the payload-manifest SHA-256; this establishes internal consistency, not authenticated Meta provenance. The complete ZIP and OTA signature were not verified. Downloaded device binaries were never executed or flashed.
+
+The nearby init configuration matches the installed text, and VINTF matches ignoring trailing newlines. This identifies a relevant candidate without proving that its native implementation matches. See the [acquisition receipt](evidence/quest-nearby-hal-acquisition.json) for source, hashes, tools and limits. Native analysis of its discovery path remains separate from the exact installed-binary findings above.
+
+## Nearby-build discovery uses structured Pulsar records
+
+Actual REA Ghidra function analysis traces `syncboss_input_enumerate_advertising_devices` into the Pulsar manager and its worker. The worker requires an idle internal wireless mode, starts DMM, waits 250 ms, converts cached advertisement records, and stops DMM. These are static observations; none of these functions or mode changes were invoked on the headset.
+
+The advertisement handler processes structured 44-byte Pulsar records and separates scanning and DMM records by an internal field. It deduplicates records by an extracted identifier and retains at most 32. Conversion maps registered vendor type/subtype information into controller records. This inspected path is not an Android BLE scan by device name or HID service UUID. It does not establish that Muse emits the required Pulsar format or that the installed newer build is identical.
+
+| Function observation | REA evidence |
+| --- | --- |
+| Export delegates to Pulsar manager | `ev_8e704e9ee94286264e5435894a55a14a1894fd6d5c2bc37df0c63bb419ac358a` |
+| Manager dispatches enumeration worker | `ev_ac7e90b745187b62364a5ebcfee3d5a0a7f512909a4c702176c619c0ede93920` |
+| Structured advertisement handler | `ev_59f35e5d8006995b874402bc0342a576ebcdc5707f25108695cbcea533cc1593` |
+| Vendor type conversion | `ev_bded75b4de46b3f60b2e71b356943cb9fbc574c19d3cc9c7259cb83b00266fa0` |
+| Enumeration/DMM worker | `ev_8dbaa3f82903d7e916dd3410abebef22d7ee7d8672fc58ccbc91019f39437b7b` |
+| Registered type-info lookup | `ev_2b52e021dc0482bbda2b05835585b0f2f1adbf5e7ee4ef68eefd3e6cd6bf174e` |
+
+The registered Coulee path asserts SyncBoss hardware type 9 and uses a registered type-info lookup. Those internal identifiers do not identify Muse or a USB product ID. Evidence: `ev_20f1044fc95fdd6229518fe683ed1c1604d5ef7795e88d36f8a4937e6a48c341`, `ev_3e0b1a376b3483a82f4cb2a7d7710747c1ed2dd3cab124fdd9a3e78c92e3f649`.
+
+The analyzed nearby `libsyncboss.so` SHA-256 is `886d6fb3f2c635c7173bdf243e3a6c244e3ba69b5532c53bc21eeec0b4f441dc`. This narrows the native integration requirement to the radio/provider path, without recovering a Muse initialization sequence or demonstrating native Muse pose. Bluetooth bonding, accepted OpenXR bindings and rendering a pen mesh do not by themselves supply that missing provider result.
+
 ## Native tracking clues do not yet establish Muse pose
 
 Two recovered runtime functions narrow the interpretation of existing code. The handedness heuristic consumes stored orientation and translation; it does not generate a pen pose. Evidence: `ev_e5155e503de64f1bd1a27871184ca524afbcd260714f09e0b85403e945cb7859`, selector `FUN_00db6ca0`.
@@ -72,6 +99,16 @@ A separate classification treats SDK model values 9000 through 9999 as a Coulee 
 The CMS model table separately names internal values 3 `STYLUS_PROTO`, 8 `COULEE`, and 11 `COBALT`. These names do not identify an observed Muse advertisement or USB identifier. Evidence: `ev_079000e34b6ebb64286679fc60de7e741077bd23565d8841e6dbb1db44b96ba5`, `ev_7f85cbbf5bd804734b9250c39c8f498a2660b8c4eec09903a7d40d78956348e0`, and type/model mapping `ev_fb6c9bf55b841a64aa9f4a1765be2f213940a3854f6877a7c34ab93085c30801`.
 
 Offline analysis of the report’s vendor-defined 64-bit fields suggests a timestamp-related layout. That remains a hypothesis because the actual usage differs from the referenced documented usage. It does not establish position, orientation, or a pose decoder. Evidence: `ev_db98c89805da23c86a8ee65744b4431a6af5d49bf5186a62282b2d0d56c2632a`.
+
+A separate REA pass on the accessible `libvrapiimpl.so` retained stylus-profile strings and cross-references, but function analysis failed for the selected code reference; other references were data. It establishes no alternate provider behavior. This bounded gap remains unresolved rather than being treated as hidden Muse support. Evidence: `ev_e564728fb556e6159ee96a9fe564e8e211848ed4fc6651afcec551e5ac2ac813`.
+
+## Optical tracking prerequisites
+
+Apple documents Muse position and rotation tracking as a combination of Vision Pro cameras and accessory sensors. Its spatial-accessory preparation workflow requires a model with LED geometry and IMU alignment. This is evidence that raw Bluetooth IMU reports alone do not supply the absolute-position measurement needed for this architecture. [Apple WWDC25](https://developer.apple.com/videos/play/wwdc2025/289/), [Apple accessory preparation](https://developer.apple.com/documentation/ARKit/preparing-spatial-accessories-for-tracking-in-your-visionos-app).
+
+Muse and MX Ink are separate products targeting Vision Pro and Quest respectively. NVIDIA maps Muse to the MX Ink OpenXR profile when a compatible streaming client supplies its inputs; that profile mapping does not establish native Quest recognition or tracking. [Logitech Muse](https://www.logitech.com/en-us/shop/p/muse-for-apple-vision-pro.914-000099), [Logitech MX Ink](https://logitech.github.io/mxink/), [NVIDIA CloudXR](https://docs.nvidia.com/cloudxr-sdk/latest/usr_guide/cloudxr_runtime/controller_hand_tracking.html).
+
+The local `musefiles` downloads contain Interaxon/choosemuse EEG-headband libraries, not a Logitech pen SDK. Quest 3/3S expose RGB cameras through Meta's public camera API, so custom optical tracking is a separate possible research route. Whether those frames reveal Muse's LEDs, and whether their geometry and synchronization can support calibrated pose, remain unmeasured. This does not establish the native Muse provider required here. [Meta camera API](https://developers.meta.com/vr/blog/new-era-mixed-reality-passthrough-camera-api-machine-learning-computer-vision/).
 
 ## Artifact identity and analysis boundaries
 
