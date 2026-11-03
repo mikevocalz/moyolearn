@@ -93,14 +93,26 @@ export function ForgeBoardProbe() {
     return () => cleanup?.();
   }, [resetVersion, state]);
 
-  const onReady = () => {
+  const onReady = async () => {
     const current = resources.current;
     const engine = board.current;
     if (!current || !engine || current.generation !== generation) return;
     stopRemote.current?.();
     engine.loadSnapshot(current.doc.snapshot());
     stopRemote.current = current.doc.onRemote((diff) => engine.applyDiff(diff));
-    state.setState({ ready: true });
+    // The response follows restoration on the bridge, so readiness means the
+    // mounted editor has processed the fixture snapshot, not merely loaded HTML.
+    try {
+      await engine.getSnapshot();
+      if (resources.current !== current || board.current !== engine ||
+          state.getState().surfaceVersion !== surfaceVersion) return;
+      state.setState({ ready: true });
+    } catch {
+      if (resources.current === current && board.current === engine &&
+          state.getState().surfaceVersion === surfaceVersion) {
+        state.setState({ ready: false, error: 'Test surface could not become ready. Reopen this engineering route to retry.' });
+      }
+    }
   };
   const onChange = (diff: WhiteboardDiff, source: WhiteboardDiffSource) => {
     const current = resources.current;
@@ -156,7 +168,7 @@ export function ForgeBoardProbe() {
       <Text variant="heading" testID="forge-probe-title">Forge board validation</Text>
       <Text variant="caption">Isolated development fixture. Synthetic samples do not validate pen hardware. Reload the surface after synthetic input to resume touch drawing.</Text>
       <View className="flex-row flex-wrap gap-element">
-        <Button title="Add test stroke" aria-label="Add test stroke, synthetic pressure" size="sm" disabled={!ready} onPress={() => { if (board.current) injectProbeStroke(board.current); }} />
+        <Button title="Add test stroke" aria-label="Add test stroke, synthetic pressure" size="sm" disabled={!ready} onPress={() => { if (state.getState().ready && board.current) injectProbeStroke(board.current); }} />
         <Button title="Redo test edit" size="sm" variant="outline" disabled={!ready || !canRedo} onPress={() => resources.current?.doc.redo()} />
         <Button title="Save test board" size="sm" disabled={!ready} onPress={() => { void save(); }} />
         <Button title="Export test PNG" size="sm" variant="outline" disabled={!ready || exporting} onPress={() => { void exportPng(); }} />
@@ -164,6 +176,7 @@ export function ForgeBoardProbe() {
         <Button title="Reset test board" size="sm" variant="danger" disabled={!ready} onPress={reset} />
       </View>
       <View className="flex-row flex-wrap gap-element">
+        <Text variant="caption" testID="forge-probe-ready">Surface: {ready ? 'ready' : 'opening'}</Text>
         <Text variant="caption" testID="forge-probe-marks">Marks: {marks}</Text>
         <Text variant="caption" testID="forge-probe-undo">Can undo: {canUndo ? 'yes' : 'no'}</Text>
         <Text variant="caption" testID="forge-probe-redo">Can redo: {canRedo ? 'yes' : 'no'}</Text>
