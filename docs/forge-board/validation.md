@@ -763,3 +763,18 @@ with the dedicated-profile trial, they leave the requested native Muse 6DoF
 model and ray unestablished on this Quest. No hand-assisted pose, decorative
 tracked-model claim, firmware update, or universal compatibility conclusion
 is substituted. [Privacy-safe native pairing receipt](evidence/quest-native-stylus-pairing-trial.json).
+
+
+## Experimental optical prototype
+
+The isolated Camera2 APK `com.moyolearn.museopticalprobe` is built and installed. Source: `tooling/forge-pen-connect/diagnostics/optical-camera/`; rebuild with `python3 tooling/forge-pen-connect/diagnostics/optical-camera/build.py` using the existing local SDK 36/JDK 17. OpenCV Android4.12.0 is SHA-pinned and confined to this APK; Moyo dependencies, manifests, renderer AAR and window settings are unchanged. Its default 20-second mode retains unclassified bright-blob statistics, not images. Optional ArUco mode requires an explicitly entered marker ID and measured black-square size; it reports calibrated camera-relative MARKER pose only.
+
+Actual Image timestamps must match CaptureResult timestamps. Pose requires a declared REALTIME clock, image age at most 500 ms/future at most 5 ms, known calibration/crop and verified unrotated/stabilization-off/unit-zoom output. Missing data clears pose. PnP rejects behind-camera points, excessive reprojection error and planar ambiguity. Review corrected nonzero pre-correction-origin handling and added independent regression cases. Camera resources close on stop/background/deadline, including late-open callbacks. Controls scroll within the diagnostic window.
+
+Thirteen TS geometry/presentation tests and mobile typechecking passed; three pure-Java calibration/blob/freshness suites, Android build/signature checks and peer review passed. The final compiled Java/OpenCV backend ran on Quest under REA with synthetic inputs: recovered depth 0.2999999715 m for a 0.3 m target, rejected frontal ambiguity and decoded generated ID 7. This verifies actual Android backend execution, not camera or pen tracking. See the [receipt](evidence/quest-optical-compute-prototype.json).
+
+The optional [printable ID 0 target](assets/muse-optical-marker-0.svg) is generated and independently decoded using OpenCV 4.12.0. Nominal black-square size is 40 mm at 100% print scale; the user must measure the printed square. No attachment or pen-tip calibration is assumed. The user has not yet confirmed whether a printed marker is acceptable.
+
+Moyo now has calibrated stereo/rigid-pose helpers, a session/loss/freshness gate and an imperative pen-proxy/ray renderer sink. The sink is not mounted or fed a camera source: it refuses output until the capture-time camera-to-Viro transform is established. Camera2 REALTIME uses BOOTTIME; OpenXR timespec conversion uses MONOTONIC, so direct timestamp casting or JS receipt-time head pose is invalid. Physical camera capture/calibration remains pending because the headset's last inspected screen is Enter passcode. No live Muse optical pose, spatial model/ray or pen drawing is claimed.
+
+Primary references: [Meta's pinned Camera2 keys](https://github.com/meta-quest/Meta-Passthrough-Camera-API-Samples/blob/f079db625e3bb60a811d4f36f6af200cb83e330b/app/src/main/java/com/oculus/camerademo/QuestCameraHelpers.kt), [Android calibration](https://developer.android.com/reference/android/hardware/camera2/CameraCharacteristics), [ArUco detection](https://docs.opencv.org/4.12.0/d5/dae/tutorial_aruco_detection.html), [PnP/IPPE square](https://docs.opencv.org/4.12.0/d5/d1f/calib3d_solvePnP.html).

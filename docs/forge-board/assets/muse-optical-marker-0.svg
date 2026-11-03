@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="210mm" height="297mm" viewBox="0 0 210 297">
+<rect width="210" height="297" fill="white"/>
+<g font-family="sans-serif" fill="black" text-anchor="middle">
+<text x="105" y="20" font-size="5">Optional Muse optical tracking target</text>
+<text x="105" y="28" font-size="3.5">ArUco DICT_4X4_50 - ID 0</text>
+<text x="105" y="105" font-size="3.5">Black square: 40 mm at 100% print scale</text>
+<text x="105" y="113" font-size="3.5">Measure the printed black square before entering its size.</text>
+<text x="105" y="121" font-size="3.5">Keep a white border. Attach rigidly only if using marker mode.</text>
+<text x="105" y="155" font-size="3.5">Check line below: 100 mm</text>
+</g>
+<g transform="translate(85 45) scale(6.666666666666667)" fill="black" shape-rendering="crispEdges"><rect x="0" y="0" width="1" height="1"/><rect x="1" y="0" width="1" height="1"/><rect x="2" y="0" width="1" height="1"/><rect x="3" y="0" width="1" height="1"/><rect x="4" y="0" width="1" height="1"/><rect x="5" y="0" width="1" height="1"/><rect x="0" y="1" width="1" height="1"/><rect x="2" y="1" width="1" height="1"/><rect x="5" y="1" width="1" height="1"/><rect x="0" y="2" width="1" height="1"/><rect x="1" y="2" width="1" height="1"/><rect x="3" y="2" width="1" height="1"/><rect x="5" y="2" width="1" height="1"/><rect x="0" y="3" width="1" height="1"/><rect x="1" y="3" width="1" height="1"/><rect x="2" y="3" width="1" height="1"/><rect x="5" y="3" width="1" height="1"/><rect x="0" y="4" width="1" height="1"/><rect x="1" y="4" width="1" height="1"/><rect x="2" y="4" width="1" height="1"/><rect x="4" y="4" width="1" height="1"/><rect x="5" y="4" width="1" height="1"/><rect x="0" y="5" width="1" height="1"/><rect x="1" y="5" width="1" height="1"/><rect x="2" y="5" width="1" height="1"/><rect x="3" y="5" width="1" height="1"/><rect x="4" y="5" width="1" height="1"/><rect x="5" y="5" width="1" height="1"/></g><path d="M55 165 H155 M55 162 V168 M155 162 V168" stroke="black" stroke-width="0.3"/>
+</svg>
