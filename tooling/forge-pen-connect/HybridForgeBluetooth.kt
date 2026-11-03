@@ -6,6 +6,8 @@ import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothDevice
 import android.bluetooth.BluetoothGatt
 import android.bluetooth.BluetoothGattCallback
+import android.bluetooth.BluetoothGattCharacteristic
+import android.bluetooth.BluetoothGattDescriptor
 import android.bluetooth.BluetoothManager
 import android.bluetooth.BluetoothProfile
 import android.bluetooth.le.BluetoothLeScanner
@@ -25,6 +27,7 @@ import com.margelo.nitro.forgebluetooth.HybridForgeBluetoothSpec
 import org.json.JSONArray
 import org.json.JSONObject
 import java.util.concurrent.ConcurrentHashMap
+import java.util.concurrent.atomic.AtomicLong
 
 /**
  * First-party Android BLE central; shares no Nitro v0 code.
@@ -53,6 +56,9 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
   private var scanner: BluetoothLeScanner? = null
   private var scanCallback: ScanCallback? = null
   private var activeAttempt: GattConnectionAttempt? = null
+  private val connectionGeneration = AtomicLong(0)
+  private val diagnosticSequence = AtomicLong(0)
+  @Volatile private var lastDiagnostics: GattDiagnosticsSession? = null
   @Volatile private var linked = false
   @Volatile private var scanFailure: String? = null
   @Volatile private var disposed = false
@@ -157,7 +163,7 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
     val seen = discovered[deviceId]
       ?: return Promise.rejected(IllegalArgumentException("Connect only to a device returned by the last BLE scan"))
     disconnect()
-    val attempt = GattConnectionAttempt()
+    val attempt = GattConnectionAttempt(connectionGeneration.incrementAndGet())
     synchronized(lock) { activeAttempt = attempt }
     val timeout = Runnable {
       // Settled successful links stay alive; only a pending owner can time out.
@@ -183,6 +189,7 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
           } else false
         }
         if (!owned) {
+          attempt.diagnostics?.close("Stale GATT callback")
           gatt.close()
           return
         }
@@ -199,11 +206,39 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
             if (activeAttempt === attempt) { activeAttempt = null; linked = false }
           }
           main.removeCallbacks(timeout)
+          attempt.diagnostics?.close("GATT disconnected, status $status")
           gatt.close()
           if (attempt.settled.compareAndSet(false, true)) {
             attempt.promise.reject(IllegalStateException("Bluetooth GATT connection failed, status " + status))
           }
         }
+      }
+      override fun onServicesDiscovered(gatt: BluetoothGatt, status: Int) {
+        if (isCurrentAttempt(attempt, gatt)) attempt.diagnostics?.onServices(gatt, status)
+      }
+      override fun onCharacteristicRead(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray, status: Int) {
+        if (isCurrentAttempt(attempt, gatt)) attempt.diagnostics?.onRead(gatt, characteristic, status, value)
+      }
+      @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
+      override fun onCharacteristicRead(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
+        if (Build.VERSION.SDK_INT < 33 && isCurrentAttempt(attempt, gatt)) attempt.diagnostics?.onRead(gatt, characteristic, status, characteristic.value ?: byteArrayOf())
+      }
+      override fun onDescriptorRead(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int, value: ByteArray) {
+        if (isCurrentAttempt(attempt, gatt)) attempt.diagnostics?.onDescriptorRead(gatt, descriptor, status, value)
+      }
+      @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
+      override fun onDescriptorRead(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
+        if (Build.VERSION.SDK_INT < 33 && isCurrentAttempt(attempt, gatt)) attempt.diagnostics?.onDescriptorRead(gatt, descriptor, status, descriptor.value ?: byteArrayOf())
+      }
+      override fun onDescriptorWrite(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
+        if (isCurrentAttempt(attempt, gatt)) attempt.diagnostics?.onDescriptorWrite(gatt, descriptor, status)
+      }
+      override fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, value: ByteArray) {
+        if (isCurrentAttempt(attempt, gatt)) attempt.diagnostics?.onNotification(gatt, characteristic, value)
+      }
+      @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
+      override fun onCharacteristicChanged(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic) {
+        if (Build.VERSION.SDK_INT < 33 && isCurrentAttempt(attempt, gatt)) attempt.diagnostics?.onNotification(gatt, characteristic, characteristic.value ?: byteArrayOf())
       }
     }
     try {
@@ -234,6 +269,7 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
       current
     }
     if (old != null) {
+      old.diagnostics?.close("Bluetooth connection closed")
       old.timeout?.let { main.removeCallbacks(it) }
       if (old.settled.compareAndSet(false, true)) {
         old.promise.reject(IllegalStateException("Bluetooth connection cancelled"))
@@ -246,6 +282,36 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
       }
     }
   }
+
+  private fun isCurrentAttempt(attempt: GattConnectionAttempt, gatt: BluetoothGatt): Boolean {
+    return synchronized(lock) { !disposed && linked && activeAttempt === attempt && attempt.gatt === gatt }
+  }
+
+  private fun diagnosticSession(): GattDiagnosticsSession {
+    return synchronized(lock) {
+      val attempt = activeAttempt
+      val gatt = attempt?.gatt
+      check(!disposed && linked && attempt != null && gatt != null) { "Connect a real GATT device first" }
+      val existing = attempt.diagnostics
+      if (existing != null) existing else {
+        val session = GattDiagnosticsSession(gatt, context(), attempt.generation, main, diagnosticSequence)
+        attempt.diagnostics = session
+        lastDiagnostics = session
+        session
+      }
+    }
+  }
+
+  override fun discoverGattServices(): Promise<String> = diagnosticSession().discover()
+  override fun readGattCharacteristic(characteristicKey: String): Promise<String> = diagnosticSession().read(characteristicKey)
+  override fun readGattDescriptor(descriptorKey: String): Promise<String> = diagnosticSession().readDescriptor(descriptorKey)
+  override fun setGattNotification(characteristicKey: String, enabled: Boolean): Promise<String> = diagnosticSession().setNotification(characteristicKey, enabled)
+  override fun getGattDiagnosticsJson(): String {
+    val session = if (isConnected()) diagnosticSession() else lastDiagnostics
+    return session?.snapshot() ?: "{\"version\":1,\"connected\":false,\"connectionGeneration\":0,\"bondState\":-1,\"snapshotTimeMs\":0,\"capturing\":false,\"blocked\":false,\"servicesState\":\"idle\",\"services\":[],\"operation\":null,\"subscriptions\":[],\"events\":[],\"totalNotifications\":0,\"lastSequence\":0}"
+  }
+  override fun requestBond(): Promise<String> = diagnosticSession().requestBond()
+  override fun stopGattDiagnostics() { lastDiagnostics?.stop() }
 
   override fun isConnected(): Boolean = linked && !disposed
 

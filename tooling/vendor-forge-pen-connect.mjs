@@ -2,7 +2,7 @@
 // Build reviewed private source artifacts; generated bindings must match the host.
 import { execFileSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, symlinkSync } from 'node:fs';
+import { mkdtempSync, mkdirSync, readFileSync, writeFileSync, symlinkSync, readdirSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -16,14 +16,14 @@ const repository = process.argv[2] ? resolve(process.argv[2]) : join(temporary, 
 if (!process.argv[2]) run('git', ['clone', '--no-checkout', 'git@github.com:mikevocalz/nitro-forge.git', repository]);
 const provenance = {};
 mkdirSync(join(root, 'vendors'), { recursive: true });
-for (const name of Object.keys(pins)) {
+for (const name of Object.keys(pins).filter((name) => !process.argv.includes('--bluetooth-only') || name === 'bluetooth-v1')) {
   const commit = execFileSync('git', ['rev-parse', `${pins[name]}^{commit}`], { cwd: repository, encoding: 'utf8' }).trim();
   const archive = execFileSync('git', ['archive', commit, `packages/${name}`], { cwd: repository, maxBuffer: 20 * 1024 * 1024 });
   execFileSync('tar', ['-x', '-C', temporary], { input: archive });
   const directory = join(temporary, 'packages', name);
   const manifestPath = join(directory, 'package.json');
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-  manifest.version = '0.1.0-moyo.6';
+  manifest.version = name === 'bluetooth-v1' ? '0.1.0-moyo.8' : '0.1.0-moyo.6';
   manifest.moyoSource = { repository: 'mikevocalz/nitro-forge', commit };
   if (name === 'pen-connect') {
     const path = join(directory, 'src/android-ble.native.ts');
@@ -45,12 +45,27 @@ for (const name of Object.keys(pins)) {
         if (manifest[field]?.[dependency]) manifest[field][dependency] = nitro;
       }
     }
-    const kotlinPath = join(directory, 'android/src/main/java/com/margelo/nitro/forgebluetooth/ble/HybridForgeBluetooth.kt');
-    writeFileSync(kotlinPath, readFileSync(join(root, 'tooling/forge-pen-connect/HybridForgeBluetooth.kt')));
-    writeFileSync(join(directory, 'android/src/main/java/com/margelo/nitro/forgebluetooth/ble/GattConnectionAttempt.kt'), readFileSync(join(root, 'tooling/forge-pen-connect/GattConnectionAttempt.kt')));
+    for (const file of readdirSync(join(root, 'tooling/forge-pen-connect')).filter((file) => file.endsWith('.kt'))) {
+      writeFileSync(join(directory, 'android/src/main/java/com/margelo/nitro/forgebluetooth/ble', file), readFileSync(join(root, 'tooling/forge-pen-connect', file)));
+    }
+    const testDirectory = join(directory, 'android/src/test/java/com/margelo/nitro/forgebluetooth/ble');
+    mkdirSync(testDirectory, { recursive: true });
+    for (const file of readdirSync(join(root, 'tooling/forge-pen-connect/tests'))) {
+      writeFileSync(join(testDirectory, file), readFileSync(join(root, 'tooling/forge-pen-connect/tests', file)));
+    }
     const specPath = join(directory, 'src/specs/ForgeBluetooth.nitro.ts');
     const spec = readFileSync(specPath, 'utf8').replace('export declare class ForgeBluetooth extends HybridObject {', 'export declare class ForgeBluetooth extends HybridObject {\n  constructor();');
-    writeFileSync(specPath, spec);
+    const diagnosticSpec = spec.replace('  isConnected(): boolean;', `  isConnected(): boolean;
+  /** Actual discovered attributes only; no vendor protocol or input decoding. */
+  discoverGattServices(): Promise<string>;
+  readGattCharacteristic(characteristicKey: string): Promise<string>;
+  readGattDescriptor(descriptorKey: string): Promise<string>;
+  setGattNotification(characteristicKey: string, enabled: boolean): Promise<string>;
+  getGattDiagnosticsJson(): string;
+  stopGattDiagnostics(): void;
+  /** Explicit OS pairing of this selected device; resolves only actual BONDED. */
+  requestBond(): Promise<string>;`);
+    writeFileSync(specPath, diagnosticSpec);
     delete manifest.type; // RN CLI loads react-native.config.js as CommonJS.
     // PR20 has no Android Gradle entry; retain this explicit consumer adaptation.
     writeFileSync(join(directory, 'android', 'build.gradle'), readFileSync(join(root, 'tooling/forge-pen-connect/build.gradle')));

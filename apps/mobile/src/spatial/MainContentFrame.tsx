@@ -18,7 +18,7 @@ export function MainContentFrame({ children, overlay = false }: { children: Reac
   const bounds = useStore(state, (s) => s);
   // The immersive renderer owns its full native surface; this is the flat app's middle panel.
   const immersive = pathname.endsWith('/tutor-xr') || [
-    '/xr-layout-probe', '/xr-question-probe', '/rive-panel-probe', '/device-validation-probe',
+    '/xr-layout-probe', '/xr-question-probe', '/rive-panel-probe', '/device-validation-probe', '/xr-muse-input-probe',
   ].includes(pathname);
   const framed = metaWindows.linked && !immersive;
   const frame = framed ? fitMainContent(bounds.width, bounds.height) : null;

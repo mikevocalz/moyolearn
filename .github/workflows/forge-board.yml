@@ -35,7 +35,7 @@ jobs:
       - name: Actual pinned Forge encoder, binding and scene compiler
         run: pnpm --filter @acme/app test:forge
       - name: Pen input verification
-        run: node --test packages/app/features/tutor/forge-pen-verification.test.ts
+        run: node --test packages/app/features/tutor/forge-pen-verification.test.ts packages/app/features/tutor/forge-pen-diagnostics.test.ts
       - name: Device PNG write, cancellation and verification
         run: node --test packages/app/features/tutor/forge-board-export.test.ts
       - name: Installed Bluetooth artifact contract

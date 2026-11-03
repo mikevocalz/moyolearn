@@ -12,6 +12,7 @@ import { writeSavedForgeBoard } from '@acme/app/features/tutor/forge-board-stora
 import { FORGE_PROBE_STORAGE_ID, injectProbeStroke, probeMarkCount, restoreProbeDocument } from './model';
 import { useForgePenConnection } from '@acme/app/features/tutor/forge-pen-connection.native.tsx';
 import { useForgeBoardExport } from '@acme/app/features/tutor/forge-board-export-ui.native.tsx';
+import { useForgePenDiagnostics } from '@acme/app/features/tutor/forge-pen-diagnostics.native.tsx';
 
 interface ProbeState {
   generation: number;
@@ -36,6 +37,7 @@ interface ProbeResources {
 /** Production Whiteboard and Yjs history on an isolated persistent fixture. */
 export function ForgeBoardProbe() {
   const penConnection = useForgePenConnection(false);
+  const penDiagnostics = useForgePenDiagnostics(penConnection.readDiagnostics);
   const boardExport = useForgeBoardExport();
   const stateRef = useRef<StoreApi<ProbeState> | null>(null);
   if (stateRef.current === null) stateRef.current = createStore<ProbeState>(() => ({
@@ -172,6 +174,7 @@ export function ForgeBoardProbe() {
       <Text variant="heading" testID="forge-probe-title">Forge board validation</Text>
       <Text variant="caption">Isolated development fixture. Synthetic samples do not validate pen hardware. Reload the surface after synthetic input to resume touch drawing.</Text>
       <View className="flex-row flex-wrap gap-element">
+        <Button title="Pen Bluetooth diagnostics" size="sm" variant="outline" onPress={penDiagnostics.open} />
         <Button title="Connect pen" size="sm" onPress={penConnection.open} />
         <Button title="Disconnect pen" size="sm" variant="outline" onPress={penConnection.disconnect} />
         <Button title="Add test stroke" aria-label="Add test stroke, synthetic pressure" size="sm" disabled={!ready} onPress={() => { if (state.getState().ready && board.current) injectProbeStroke(board.current); }} />
@@ -195,6 +198,7 @@ export function ForgeBoardProbe() {
         {current ? <Whiteboard key={`${generation}:${surfaceVersion}`} ref={board} history={current.doc} size="sm" onChange={onChange} onReady={onReady} /> : null}
       </View>
       {penConnection.dialog}
+      {penDiagnostics.dialog}
       {boardExport.feedback}
       {png === 'PNG preview ready' && pngUri.current ? <Image source={{ uri: pngUri.current }} style={{ width: 96, height: 54 }} contentFit="contain" accessibilityLabel="Exported test board PNG" /> : null}
     </View>

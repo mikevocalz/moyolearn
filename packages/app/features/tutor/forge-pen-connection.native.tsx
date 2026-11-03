@@ -10,6 +10,7 @@ import {
   visionOSMusePort, type PenConnectionController,
 } from '@nitro-forge/pen-connect/native';
 import { canVerifyMuseFrame, type MuseVerificationFrame } from './forge-pen-verification';
+import type { ForgePenDiagnosticsPort } from './forge-pen-diagnostics';
 
 /** Owns one user-initiated pen connection; drawing remains in the existing Muse input owner. */
 export function useForgePenConnection(visionOS: boolean) {
@@ -20,6 +21,7 @@ export function useForgePenConnection(visionOS: boolean) {
   const available = useStore(state, (s) => s.available);
   const error = useStore(state, (s) => s.error);
   const controller = useRef<PenConnectionController | null>(null);
+  const nativeDiagnostics = useRef<ForgePenDiagnosticsPort | null>(null);
   const openSettings = useRef<(() => void) | undefined>(undefined);
   const initialize = useCallback(() => {
     if (controller.current) return;
@@ -29,6 +31,7 @@ export function useForgePenConnection(visionOS: boolean) {
         const NativeBluetooth = getForgeBluetooth();
         if (!NativeBluetooth) throw new Error('Bluetooth connection is unavailable in this app build.');
         const native = new NativeBluetooth();
+        nativeDiagnostics.current = native;
         openSettings.current = () => native.openBluetoothSettings();
         controller.current = createPenConnectionController(createAndroidBlePenPort(native));
       } else throw new Error('Pen pairing is unavailable on this platform.');
@@ -55,6 +58,7 @@ export function useForgePenConnection(visionOS: boolean) {
       subscription.remove();
       controller.current?.dispose();
       controller.current = null;
+      nativeDiagnostics.current = null;
       openSettings.current = undefined;
     };
   }, []);
@@ -76,5 +80,6 @@ export function useForgePenConnection(visionOS: boolean) {
       </View>
     </Modal>
   );
-  return { open, disconnect, verifyMuse, dialog };
+  const readDiagnostics = useCallback(() => nativeDiagnostics.current, []);
+  return { open, disconnect, verifyMuse, dialog, readDiagnostics };
 }

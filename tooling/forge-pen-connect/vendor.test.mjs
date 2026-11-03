@@ -1,7 +1,10 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { stripTypeScriptTypes } from 'node:module';
+import { stripTypeScriptTypes, createRequire } from 'node:module';
+import { createHash } from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { fileURLToPath } from 'node:url';
 
 // Exercise the actual vendored adapter while substituting only the OS boundary.
 const path = new URL('../../node_modules/@nitro-forge/pen-connect/src/android-ble.native.ts', import.meta.url);
@@ -53,4 +56,26 @@ test('closing during connection cancels the pending native GATT attempt immediat
   await assert.rejects(connecting, /cancelled/);
   port.cancelScan();
   assert.equal(disconnects, 1, 'repeated cancellation does not close an unrelated link');
+});
+
+
+test('consumed Bluetooth archive matches frozen lock integrity and every installed source byte', () => {
+  const require = createRequire(import.meta.url);
+  const { parse } = require('yaml');
+  const root = new URL('../../', import.meta.url);
+  const receipt = JSON.parse(readFileSync(new URL('vendors/forge-source-lock.json', root), 'utf8'))['bluetooth-v1'];
+  const archive = new URL(`vendors/${receipt.file}`, root);
+  const bytes = readFileSync(archive);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), receipt.sha256);
+  const lock = parse(readFileSync(new URL('pnpm-lock.yaml', root), 'utf8'));
+  const entry = Object.values(lock.packages).find((value) => value.resolution?.tarball === `file:vendors/${receipt.file}`);
+  assert.ok(entry, 'archive must be present in frozen dependency lock');
+  assert.equal(entry.resolution.integrity, `sha512-${createHash('sha512').update(bytes).digest('base64')}`);
+  const names = execFileSync('tar', ['-tzf', fileURLToPath(archive)], { encoding: 'utf8' }).trim().split('\n');
+  for (const name of names.filter((name) => !name.endsWith('/'))) {
+    assert.ok(name.startsWith('package/') && !name.split('/').includes('..'));
+    const expected = execFileSync('tar', ['-xOf', fileURLToPath(archive), name]);
+    const installed = readFileSync(new URL(`node_modules/@nitro-forge/bluetooth-v1/${name.slice(8)}`, root));
+    assert.ok(expected.equals(installed), `installed source must match packed bytes: ${name}`);
+  }
 });

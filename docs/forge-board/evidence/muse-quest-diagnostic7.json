@@ -1,0 +1,380 @@
+{
+  "scope": "Physical Quest 3S, Android API 34; Logitech Muse tip diagnosis",
+  "apkSha256": "152c0334d4558964ffd6a7cd99948b134b25899adc7571703f9df55ad4b46879",
+  "bondState": 12,
+  "gattConnected": true,
+  "servicesState": "ready",
+  "inventoryTruncated": false,
+  "services": [
+    {
+      "characteristics": [
+        {
+          "descriptors": [
+            {
+              "key": "00001801-0000-1000-8000-00805f9b34fb/1/00002a05-0000-1000-8000-00805f9b34fb/3/00002902-0000-1000-8000-00805f9b34fb/0",
+              "permissions": 0,
+              "uuid": "00002902-0000-1000-8000-00805f9b34fb"
+            }
+          ],
+          "instanceId": 3,
+          "key": "00001801-0000-1000-8000-00805f9b34fb/1/00002a05-0000-1000-8000-00805f9b34fb/3",
+          "permissions": 0,
+          "properties": 32,
+          "uuid": "00002a05-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [],
+          "instanceId": 6,
+          "key": "00001801-0000-1000-8000-00805f9b34fb/1/00002b29-0000-1000-8000-00805f9b34fb/6",
+          "permissions": 0,
+          "properties": 10,
+          "uuid": "00002b29-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [],
+          "instanceId": 8,
+          "key": "00001801-0000-1000-8000-00805f9b34fb/1/00002b2a-0000-1000-8000-00805f9b34fb/8",
+          "permissions": 0,
+          "properties": 2,
+          "uuid": "00002b2a-0000-1000-8000-00805f9b34fb"
+        }
+      ],
+      "instanceId": 1,
+      "key": "00001801-0000-1000-8000-00805f9b34fb/1",
+      "type": 0,
+      "uuid": "00001801-0000-1000-8000-00805f9b34fb"
+    },
+    {
+      "characteristics": [
+        {
+          "descriptors": [],
+          "instanceId": 11,
+          "key": "00001800-0000-1000-8000-00805f9b34fb/9/00002a00-0000-1000-8000-00805f9b34fb/11",
+          "permissions": 0,
+          "properties": 2,
+          "uuid": "00002a00-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [],
+          "instanceId": 13,
+          "key": "00001800-0000-1000-8000-00805f9b34fb/9/00002a01-0000-1000-8000-00805f9b34fb/13",
+          "permissions": 0,
+          "properties": 2,
+          "uuid": "00002a01-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [],
+          "instanceId": 15,
+          "key": "00001800-0000-1000-8000-00805f9b34fb/9/00002a04-0000-1000-8000-00805f9b34fb/15",
+          "permissions": 0,
+          "properties": 2,
+          "uuid": "00002a04-0000-1000-8000-00805f9b34fb"
+        }
+      ],
+      "instanceId": 9,
+      "key": "00001800-0000-1000-8000-00805f9b34fb/9",
+      "type": 0,
+      "uuid": "00001800-0000-1000-8000-00805f9b34fb"
+    },
+    {
+      "characteristics": [
+        {
+          "descriptors": [],
+          "instanceId": 18,
+          "key": "e277e685-64cb-4a32-bf65-8766e708a037/16/e3ab6c3d-3e94-7a2c-db59-b8b91723cad4/18",
+          "permissions": 0,
+          "properties": 2,
+          "uuid": "e3ab6c3d-3e94-7a2c-db59-b8b91723cad4"
+        },
+        {
+          "descriptors": [],
+          "instanceId": 20,
+          "key": "e277e685-64cb-4a32-bf65-8766e708a037/16/3c7f9bdc-3bcb-a75f-c969-9bbd7f058f2b/20",
+          "permissions": 0,
+          "properties": 10,
+          "uuid": "3c7f9bdc-3bcb-a75f-c969-9bbd7f058f2b"
+        },
+        {
+          "descriptors": [],
+          "instanceId": 22,
+          "key": "e277e685-64cb-4a32-bf65-8766e708a037/16/8640382c-df0a-4e46-9cab-36c05467949e/22",
+          "permissions": 0,
+          "properties": 2,
+          "uuid": "8640382c-df0a-4e46-9cab-36c05467949e"
+        }
+      ],
+      "instanceId": 16,
+      "key": "e277e685-64cb-4a32-bf65-8766e708a037/16",
+      "type": 0,
+      "uuid": "e277e685-64cb-4a32-bf65-8766e708a037"
+    },
+    {
+      "characteristics": [
+        {
+          "descriptors": [
+            {
+              "key": "0000180f-0000-1000-8000-00805f9b34fb/23/00002a19-0000-1000-8000-00805f9b34fb/25/00002902-0000-1000-8000-00805f9b34fb/0",
+              "permissions": 0,
+              "uuid": "00002902-0000-1000-8000-00805f9b34fb"
+            },
+            {
+              "key": "0000180f-0000-1000-8000-00805f9b34fb/23/00002a19-0000-1000-8000-00805f9b34fb/25/00002904-0000-1000-8000-00805f9b34fb/1",
+              "permissions": 0,
+              "uuid": "00002904-0000-1000-8000-00805f9b34fb"
+            }
+          ],
+          "instanceId": 25,
+          "key": "0000180f-0000-1000-8000-00805f9b34fb/23/00002a19-0000-1000-8000-00805f9b34fb/25",
+          "permissions": 0,
+          "properties": 18,
+          "uuid": "00002a19-0000-1000-8000-00805f9b34fb"
+        }
+      ],
+      "instanceId": 23,
+      "key": "0000180f-0000-1000-8000-00805f9b34fb/23",
+      "type": 0,
+      "uuid": "0000180f-0000-1000-8000-00805f9b34fb"
+    },
+    {
+      "characteristics": [
+        {
+          "descriptors": [],
+          "instanceId": 30,
+          "key": "0000180a-0000-1000-8000-00805f9b34fb/28/00002a24-0000-1000-8000-00805f9b34fb/30",
+          "permissions": 0,
+          "properties": 2,
+          "uuid": "00002a24-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [],
+          "instanceId": 32,
+          "key": "0000180a-0000-1000-8000-00805f9b34fb/28/00002a29-0000-1000-8000-00805f9b34fb/32",
+          "permissions": 0,
+          "properties": 2,
+          "uuid": "00002a29-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [],
+          "instanceId": 34,
+          "key": "0000180a-0000-1000-8000-00805f9b34fb/28/00002a50-0000-1000-8000-00805f9b34fb/34",
+          "permissions": 0,
+          "properties": 2,
+          "uuid": "00002a50-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [],
+          "instanceId": 36,
+          "key": "0000180a-0000-1000-8000-00805f9b34fb/28/00002a25-0000-1000-8000-00805f9b34fb/36",
+          "permissions": 0,
+          "properties": 2,
+          "uuid": "00002a25-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [],
+          "instanceId": 38,
+          "key": "0000180a-0000-1000-8000-00805f9b34fb/28/00002a26-0000-1000-8000-00805f9b34fb/38",
+          "permissions": 0,
+          "properties": 2,
+          "uuid": "00002a26-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [],
+          "instanceId": 40,
+          "key": "0000180a-0000-1000-8000-00805f9b34fb/28/00002a28-0000-1000-8000-00805f9b34fb/40",
+          "permissions": 0,
+          "properties": 2,
+          "uuid": "00002a28-0000-1000-8000-00805f9b34fb"
+        }
+      ],
+      "instanceId": 28,
+      "key": "0000180a-0000-1000-8000-00805f9b34fb/28",
+      "type": 0,
+      "uuid": "0000180a-0000-1000-8000-00805f9b34fb"
+    },
+    {
+      "characteristics": [
+        {
+          "descriptors": [
+            {
+              "key": "8d53dc1d-1db7-4cd3-868b-8a527460aa84/41/da2e7828-fbce-4e01-ae9e-261174997c48/43/00002902-0000-1000-8000-00805f9b34fb/0",
+              "permissions": 0,
+              "uuid": "00002902-0000-1000-8000-00805f9b34fb"
+            }
+          ],
+          "instanceId": 43,
+          "key": "8d53dc1d-1db7-4cd3-868b-8a527460aa84/41/da2e7828-fbce-4e01-ae9e-261174997c48/43",
+          "permissions": 0,
+          "properties": 20,
+          "uuid": "da2e7828-fbce-4e01-ae9e-261174997c48"
+        }
+      ],
+      "instanceId": 41,
+      "key": "8d53dc1d-1db7-4cd3-868b-8a527460aa84/41",
+      "type": 0,
+      "uuid": "8d53dc1d-1db7-4cd3-868b-8a527460aa84"
+    },
+    {
+      "characteristics": [
+        {
+          "descriptors": [],
+          "instanceId": 47,
+          "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4e-0000-1000-8000-00805f9b34fb/47",
+          "permissions": 0,
+          "properties": 6,
+          "uuid": "00002a4e-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [
+            {
+              "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4d-0000-1000-8000-00805f9b34fb/49/00002902-0000-1000-8000-00805f9b34fb/0",
+              "permissions": 0,
+              "uuid": "00002902-0000-1000-8000-00805f9b34fb"
+            },
+            {
+              "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4d-0000-1000-8000-00805f9b34fb/49/00002908-0000-1000-8000-00805f9b34fb/1",
+              "permissions": 0,
+              "uuid": "00002908-0000-1000-8000-00805f9b34fb"
+            }
+          ],
+          "instanceId": 49,
+          "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4d-0000-1000-8000-00805f9b34fb/49",
+          "permissions": 0,
+          "properties": 18,
+          "uuid": "00002a4d-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [
+            {
+              "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4d-0000-1000-8000-00805f9b34fb/53/00002908-0000-1000-8000-00805f9b34fb/0",
+              "permissions": 0,
+              "uuid": "00002908-0000-1000-8000-00805f9b34fb"
+            }
+          ],
+          "instanceId": 53,
+          "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4d-0000-1000-8000-00805f9b34fb/53",
+          "permissions": 0,
+          "properties": 14,
+          "uuid": "00002a4d-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [
+            {
+              "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4d-0000-1000-8000-00805f9b34fb/56/00002908-0000-1000-8000-00805f9b34fb/0",
+              "permissions": 0,
+              "uuid": "00002908-0000-1000-8000-00805f9b34fb"
+            }
+          ],
+          "instanceId": 56,
+          "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4d-0000-1000-8000-00805f9b34fb/56",
+          "permissions": 0,
+          "properties": 14,
+          "uuid": "00002a4d-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [
+            {
+              "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4d-0000-1000-8000-00805f9b34fb/59/00002908-0000-1000-8000-00805f9b34fb/0",
+              "permissions": 0,
+              "uuid": "00002908-0000-1000-8000-00805f9b34fb"
+            }
+          ],
+          "instanceId": 59,
+          "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4d-0000-1000-8000-00805f9b34fb/59",
+          "permissions": 0,
+          "properties": 10,
+          "uuid": "00002a4d-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [
+            {
+              "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4d-0000-1000-8000-00805f9b34fb/62/00002908-0000-1000-8000-00805f9b34fb/0",
+              "permissions": 0,
+              "uuid": "00002908-0000-1000-8000-00805f9b34fb"
+            }
+          ],
+          "instanceId": 62,
+          "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4d-0000-1000-8000-00805f9b34fb/62",
+          "permissions": 0,
+          "properties": 10,
+          "uuid": "00002a4d-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [
+            {
+              "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4d-0000-1000-8000-00805f9b34fb/65/00002908-0000-1000-8000-00805f9b34fb/0",
+              "permissions": 0,
+              "uuid": "00002908-0000-1000-8000-00805f9b34fb"
+            }
+          ],
+          "instanceId": 65,
+          "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4d-0000-1000-8000-00805f9b34fb/65",
+          "permissions": 0,
+          "properties": 10,
+          "uuid": "00002a4d-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [],
+          "instanceId": 68,
+          "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4b-0000-1000-8000-00805f9b34fb/68",
+          "permissions": 0,
+          "properties": 2,
+          "uuid": "00002a4b-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [],
+          "instanceId": 70,
+          "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4a-0000-1000-8000-00805f9b34fb/70",
+          "permissions": 0,
+          "properties": 2,
+          "uuid": "00002a4a-0000-1000-8000-00805f9b34fb"
+        },
+        {
+          "descriptors": [],
+          "instanceId": 72,
+          "key": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4c-0000-1000-8000-00805f9b34fb/72",
+          "permissions": 0,
+          "properties": 4,
+          "uuid": "00002a4c-0000-1000-8000-00805f9b34fb"
+        }
+      ],
+      "instanceId": 45,
+      "key": "00001812-0000-1000-8000-00805f9b34fb/45",
+      "type": 0,
+      "uuid": "00001812-0000-1000-8000-00805f9b34fb"
+    }
+  ],
+  "blockedRead": {
+    "characteristicKey": "00001812-0000-1000-8000-00805f9b34fb/45/00002a4b-0000-1000-8000-00805f9b34fb/68",
+    "kind": "error",
+    "reason": "Android requires signature/privileged BLUETOOTH_PRIVILEGED for this HID characteristic"
+  },
+  "systemHidHost": {
+    "state": "CONNECTED",
+    "policy": "ALLOWED",
+    "kernelNode": "0005:046D:D11E.0001"
+  },
+  "androidInputReader": {
+    "logitechInputDeviceFound": false
+  },
+  "penReports": {
+    "receivedByApp": 0,
+    "tipPressureVerified": false,
+    "poseVerified": false,
+    "note": "HID report access was denied. Zero received reports does not establish that the pen transmits no data."
+  },
+  "genericXrFallback": {
+    "result": "inconclusive; physical target/tip test pending",
+    "diagnostic8Session": "VISIBLE, shouldRender=0; no focused rendered test established",
+    "integrationGap": "Renderer generic simple-controller bindings rejected by runtime: trigger/value is unsupported for khr/simple_controller",
+    "note": "Zero events do not establish that Muse has no supported runtime path."
+  },
+  "writes": {
+    "hidReportWrites": false,
+    "hidDescriptorWrites": false,
+    "privilegedPermissionAdded": false,
+    "hiddenApiUsed": false
+  },
+  "sources": {
+    "android14GattService": "https://android.googlesource.com/platform/packages/modules/Bluetooth/+/refs/tags/android-14.0.0_r1/android/app/src/com/android/bluetooth/gatt/GattService.java"
+  }
+}
