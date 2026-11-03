@@ -47,6 +47,6 @@ jobs:
       - name: App and toolbar types
         run: pnpm --filter @acme/app --filter @acme/ui --filter mobile typecheck
       - name: Preserve headset window contract
-        run: node --test apps/mobile/plugins/__tests__/spatial-window-contract.test.cjs
+        run: node --test apps/mobile/plugins/__tests__/spatial-window-contract.test.cjs apps/mobile/plugins/__tests__/quest-immersive-activity.test.cjs
       - name: Quest middle content fits resized hosts
         run: node --test apps/mobile/src/spatial/main-content-geometry.test.ts

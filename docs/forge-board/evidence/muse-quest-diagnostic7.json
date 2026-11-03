@@ -363,10 +363,18 @@
     "note": "HID report access was denied. Zero received reports does not establish that the pen transmits no data."
   },
   "genericXrFallback": {
-    "result": "inconclusive; physical target/tip test pending",
+    "result": "XR rendering restored; valid generic bindings and physical tip test pending",
     "diagnostic8Session": "VISIBLE, shouldRender=0; no focused rendered test established",
     "integrationGap": "Renderer generic simple-controller bindings rejected by runtime: trigger/value is unsupported for khr/simple_controller",
-    "note": "Zero events do not establish that Muse has no supported runtime path."
+    "note": "Zero events do not establish that Muse has no supported runtime path.",
+    "userObservation": "App visible, white screen, no yellow target",
+    "questActivityFix": {
+      "apkSha256": "830bcc164bbe3eef4175c01dace3599267dcf25a8ea09d4a60bff6c01a38407f",
+      "install": "data-preserving update succeeded",
+      "runtime": "FOCUSED, shouldRender=1, viewsValid=1, layerCount=1",
+      "nativeCameraCallback": true,
+      "targetInDeviceCapture": true
+    }
   },
   "writes": {
     "hidReportWrites": false,
@@ -376,5 +384,6 @@
   },
   "sources": {
     "android14GattService": "https://android.googlesource.com/platform/packages/modules/Bluetooth/+/refs/tags/android-14.0.0_r1/android/app/src/com/android/bluetooth/gatt/GattService.java"
-  }
+  },
+  "picoComparison": "User did not confirm strokes or pressure on Pico; Bluetooth connection alone is not input evidence."
 }

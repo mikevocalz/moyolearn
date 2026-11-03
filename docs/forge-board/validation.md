@@ -27,7 +27,8 @@ from physical-device interaction evidence.
 | Diagnostic8 artifact, parser and verification contracts | PASS, 11 tests (main agent final run) | `node --test tooling/forge-pen-connect/vendor.test.mjs packages/app/features/tutor/forge-pen-diagnostics.test.ts packages/app/features/tutor/forge-pen-verification.test.ts` |
 | Diagnostic8 app/UI/mobile types | PASS | `pnpm --filter @acme/app --filter @acme/ui --filter mobile typecheck` |
 | Diagnostic8 APK build/install | PASS | 24s, 1523 tasks; main agent data-preserving `adb install -r` returned Success; no new tip proof |
-| Generic public XR input fallback | PENDING physical validation | Scene entry was launched; no confirmed target/profile/controller or pen frames yet |
+| Quest immersive classification/focus | PASS on physical Quest | VRActivity reached FOCUSED with valid rendered views and real native camera callback; [retained evidence](evidence/quest-immersive-classification.json) |
+| Generic public XR input fallback | PENDING target/controller/pen validation | Immersive focus is confirmed; target visibility and controller/pen input remain unverified |
 | Physical resize appearance | User-reported PASS | User resized the middle content and answered “Looks correct”; geometry tests are separate from that visual report |
 | Native Rive loading, full Forge preview, pen pose/haptics, iOS/iPadOS/Duo | NOT RUN | No source-test result is counted as hardware support |
 
@@ -147,9 +148,11 @@ has SHA-256 `30138db88625e7618ce54b84f0681d8dc8cc98095e3cdbf29ced66981546d291`.
   SecurityException escapes. This is consistent with the later rejection;
   the private flag was not inspected or modified, and this result is not proof
   of another peripheral restriction.
-- Generic XR fallback testing remains pending. The main agent observed bundle
+- At that initial stage, generic XR fallback testing remained pending. The main agent observed bundle
   HTTP 200 and `RunningVRQuestScene(rootTag11)`, establishing scene entry only.
-  No target/profile/controller frames or real pen frame has been confirmed.
+  No target/profile/controller frames or real pen frame was confirmed at that stage.
+  The subsequent activity-classification repair and physical focus result are
+  recorded below; they still do not establish Muse input.
 
 The verified hardware result is pairing and discovery. A working Muse tip or
 pressure driver has not been demonstrated on this Quest.
@@ -211,3 +214,43 @@ runtime also rejected the renderer's `khr/simple_controller` binding because
 `trigger/value` is not valid for that profile. This is an integration gap, not
 evidence that Muse hardware cannot supply input. Physical target visibility,
 actual tip events and an accepted runtime input profile remain unverified.
+
+
+## Quest immersive activity classification repair
+
+The initial XR probe was not a passing immersive-input test. The observed
+VRActivity was top-resumed, visible and drawn, but remained in a multi-window
+task. OpenXR reached VISIBLE with `shouldRender:0`, never FOCUSED. The headset
+showed the flat cream panel and Moyo shell rail. This does not establish a
+controller or pen frame.
+
+The existing PICO duplicate-tile workaround deleted every VRActivity intent
+filter from the shared manifest. The merged Quest manifest consequently lacked
+any immersive identifier. Meta's [hybrid activity setup](https://developers.meta.com/horizon/documentation/spatial-sdk/hybrid-apps-overview/)
+requires an activity intent-filter category identifying panel versus immersive
+activities. The durable repair merges a Quest-flavor-only private action plus
+DEFAULT and `com.oculus.intent.category.VR`. It adds neither MAIN nor LAUNCHER to
+VRActivity; the shared/PICO stripping behavior remains intact.
+
+- The generated Quest overlay and final merged/APK manifests contain the new
+  private VR filter. VRActivity remains non-exported and retains its existing
+  focus-aware metadata and orientation. MainActivity retains its original
+  launcher/deeplink filters, unspecified orientation and 1024x640dp layout.
+  Shared-main and PICO manifest bytes were unchanged by the overlay merge.
+- Configuration/window tests passed: 10 total. Three pure merge/regression tests
+  run in CI alongside the six existing window-contract tests. The separate
+  generated/merged-manifest assertion ran and passed locally; it is explicitly
+  skipped when a checkout has not generated those Android outputs.
+- Incremental Quest assembly passed in 21 seconds without prebuild or dependency
+  relink. The APK at the existing Quest debug path has SHA-256
+  `830bcc164bbe3eef4175c01dace3599267dcf25a8ea09d4a60bff6c01a38407f`.
+- The main agent's data-preserving `adb install -r` returned Success for that APK.
+  The next physical run reached OpenXR FOCUSED (state 5) with `shouldRender:1`,
+  `viewsValid:1` and `layerCount:1` under PID 12627. The main agent also observed
+  the real first-native-camera-transform callback. This confirms immersive
+  classification and rendering focus after the category repair; it does not
+  establish target visibility or a controller/pen input frame.
+- [Retained focus evidence](evidence/quest-immersive-classification.json) records
+  the actual manifest classification, runtime values and log hash. MainActivity's
+  1024x640dp/unspecified contract remains unchanged. Target visibility, controller
+  profiles/frames and Muse tip/pressure/pose remain unverified.

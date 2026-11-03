@@ -11,11 +11,15 @@ import {
 function GenericInputScene() {
   const state = useMemo(() => createStore(() => ({
     statusEvents: 0, controllerEvents: 0, targetEvents: 0, last: 'No generic controller events received.',
+    targetPosition: [0, 0, -1.5] as [number, number, number],
+    targetRotation: [0, 0, 0] as [number, number, number],
   })), []);
   const statusEvents = useStore(state, (s) => s.statusEvents);
   const controllerEvents = useStore(state, (s) => s.controllerEvents);
   const targetEvents = useStore(state, (s) => s.targetEvents);
   const last = useStore(state, (s) => s.last);
+  const targetPosition = useStore(state, (s) => s.targetPosition);
+  const targetRotation = useStore(state, (s) => s.targetRotation);
   const cameraSeen = useRef(false);
   const record = (kind: 'status' | 'controller-click-state' | 'controller-click' | 'target-click-state' | 'target-click', fields: object) => {
     const event = { kind, wallTimeMs: Date.now(), monotonicMs: performance.now(), ...fields };
@@ -35,16 +39,28 @@ function GenericInputScene() {
   return (
     <ViroScene onCameraTransformUpdate={(camera) => {
       if (cameraSeen.current) return;
+      const { position, forward, rotation } = camera.cameraTransform;
+      if (![...position, ...forward, ...rotation].every(Number.isFinite)) return;
+      const forwardLength = Math.hypot(...forward);
+      if (forwardLength < 0.000001) return;
+      const measuredTarget: [number, number, number] = [
+        position[0] + forward[0] / forwardLength * 1.5,
+        position[1] + forward[1] / forwardLength * 1.5,
+        position[2] + forward[2] / forwardLength * 1.5,
+      ];
       cameraSeen.current = true;
-      console.log('[MUSE-XR-PROBE]', JSON.stringify({ kind: 'first-native-camera-transform', wallTimeMs: Date.now(), monotonicMs: performance.now(), camera }));
+      state.setState({ targetPosition: measuredTarget, targetRotation: [...rotation] });
+      console.log('[MUSE-XR-PROBE]', JSON.stringify({ kind: 'first-native-camera-transform', wallTimeMs: Date.now(), monotonicMs: performance.now(), camera,
+        reference: 'measured-head-camera-once', targetPosition: measuredTarget, targetRotation: rotation, distanceMeters: 1.5,
+      }));
     }}>
       <ViroAmbientLight color="#FFFFFF" intensity={500} />
       <ViroController controllerVisibility reticleVisibility
         onControllerStatus={(status, source) => record('status', { status, source })}
         onClickState={(clickState, position, source) => record('controller-click-state', { clickState, position, source })}
         onClick={(position, source) => record('controller-click', { position, source })} />
-      {/* Eye origin is the public session reference contract, not a measured pen pose. */}
-      <ViroNode position={[0, 0, -1.5]}>
+      {/* The first valid head camera anchors this target once; it is not a measured pen pose. */}
+      <ViroNode position={targetPosition} rotation={targetRotation}>
         <ViroQuad width={1.8} height={1.2} materials="moyo_muse_generic_probe_target"
           onClickState={(clickState, position, source) => record('target-click-state', { clickState, position, source })}
           onClick={(position, source) => record('target-click', { position, source })} />

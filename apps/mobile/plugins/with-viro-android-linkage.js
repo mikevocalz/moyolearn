@@ -71,6 +71,7 @@
  *               settings.gradle projectDir monorepo hoisted node-linker pico
  *               config-plugin prebuild react_viro viro_renderer
  */
+const { mergeQuestImmersiveActivity } = require('./quest-immersive-activity');
 const fs = require('node:fs');
 const path = require('node:path');
 const {
@@ -256,7 +257,9 @@ function withViroDebugVariants(config) {
  * `VRLauncher` by explicit intent, which needs no filter. On a PICO 4 Ultra the
  * OpenXR session still reaches FOCUSED with no filter at all (see
  * docs/validation/2026-10-device-pass.md), so this strips every filter on it
- * rather than moving the categories elsewhere. app.config.ts lists this plugin
+ * rather than moving the categories elsewhere in the shared manifest. Quest
+ * independently receives a private VR identifier in its flavor overlay.
+ * app.config.ts lists this plugin
  * before `@expo-pico/core` and Viro, so it runs after both (ADR-118, plugin
  * order). Idempotent; prebuild runs more than once.
  */
@@ -323,6 +326,9 @@ function withHeadtrackingOnHeadsetsOnly(config) {
         ...features.filter(entry => entry.$?.['android:name'] !== HEADTRACKING),
         { $: { 'android:name': HEADTRACKING, 'android:required': 'true', 'android:version': '1' } },
       ];
+      // PICO keeps its shared no-launcher-filter behavior. Quest independently
+      // identifies its private immersive activity without changing the panel.
+      mergeQuestImmersiveActivity(questManifest, modConfig.android?.package);
       await AndroidConfig.Manifest.writeAndroidManifestAsync(manifestPath, questManifest);
       return modConfig;
     },
