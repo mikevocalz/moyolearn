@@ -13,6 +13,8 @@ import { FORGE_PROBE_STORAGE_ID, injectProbeStroke, probeMarkCount, restoreProbe
 import { useForgePenConnection } from '@acme/app/features/tutor/forge-pen-connection.native.tsx';
 import { useForgeBoardExport } from '@acme/app/features/tutor/forge-board-export-ui.native.tsx';
 import { useForgePenDiagnostics } from '@acme/app/features/tutor/forge-pen-diagnostics.native.tsx';
+import { createMuseTelemetryController, type MuseTelemetryController } from './muse-telemetry';
+import { MuseTelemetryView } from './muse-telemetry-view';
 
 interface ProbeState {
   generation: number;
@@ -36,6 +38,8 @@ interface ProbeResources {
 
 /** Production Whiteboard and Yjs history on an isolated persistent fixture. */
 export function ForgeBoardProbe() {
+  const museTelemetry = useRef<MuseTelemetryController | null>(null);
+  if (museTelemetry.current === null) museTelemetry.current = createMuseTelemetryController();
   const penConnection = useForgePenConnection(false);
   const penDiagnostics = useForgePenDiagnostics(penConnection.readDiagnostics);
   const boardExport = useForgeBoardExport();
@@ -173,6 +177,7 @@ export function ForgeBoardProbe() {
       <Stack.Screen options={{ title: 'Forge board validation', headerShown: false }} />
       <Text variant="heading" testID="forge-probe-title">Forge board validation</Text>
       <Text variant="caption">Isolated development fixture. Synthetic samples do not validate pen hardware. Reload the surface after synthetic input to resume touch drawing.</Text>
+      <MuseTelemetryView controller={museTelemetry.current} />
       <View className="flex-row flex-wrap gap-element">
         <Button title="Pen Bluetooth diagnostics" size="sm" variant="outline" onPress={penDiagnostics.open} />
         <Button title="Connect pen" size="sm" onPress={penConnection.open} />

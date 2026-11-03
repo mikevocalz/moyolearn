@@ -540,5 +540,110 @@ device JSON passed: canonical 31,283 bytes, SHA256
 Clipping in rendered display frames did not truncate that raw JSON evidence.
 Inspection was restored after the test. User confirmation arrived after this
 baseline capture window, so the unchanged control prefix is not treated as a
-negative button-press trial. A held-tip trial is separate and remains pending.
+negative button-press trial. A later controlled held-tip trial is recorded separately below.
 These reads still use temporary test authority, not normal production HID access.
+
+A controlled held-tip/release trial produced a positive result. The user
+confirmed the tip was held before capture began, then was asked to release it
+during capture. All 100 report reads succeeded with 65-byte payloads. Samples
+0–63 had known control prefix `6464000005`; samples 64–99 changed to
+`0000000005`, with the first released sample observed at 16,103ms. This
+correlates the physical tip with descriptor Button1 at payload byte 0 and its
+associated force field at byte 1: both raw values changed 100→0. It does not
+establish force calibration, analog resolution, tracked pose, other button
+mappings, normal production HID access or drawing integration.
+
+[Redacted positive held-tip evidence](evidence/muse-hid-held-tip-trial.json)
+retains only the known control-prefix segments and timing, not unknown vendor
+or raw IMU packet values. REA evidence
+`ev_47baa201883a0d12aa8adf2b9b3e2090aef0946d760e105d438983ca66581229`
+matched the complete raw terminal JSON to the device result exactly, canonical
+SHA256 `1141d4b515b2eeccf00d01e6dafcc5853a042b240992e401d2a49f61252708b3`.
+The unchanged test APK used temporary named UiAutomation authority, performed
+no CCCD/feature/vendor/firmware writes, and inspection was restored afterward.
+The subsequent near-tip button trials are recorded separately below.
+
+Two subsequent controlled trials correlated the remaining near-tip controls.
+The user held the round button before capture and confirmed keeping it held
+throughout, without switching to oval. All 100 successful 65-byte reports had
+known prefix `0000000007`, compared with baseline `0000000005`: descriptor
+Button3 at payload byte 4 bit 1 was set. This trial establishes held correlation,
+not a round-button release edge.
+
+For oval, the user confirmed holding it before capture and releasing during
+capture. All 100 65-byte reads succeeded: 54 samples had prefix `0000646405`,
+one had `0000121205` at 13,583ms, then 45 had `0000000005` beginning at 13,831ms.
+Descriptor Button4 at payload byte 2 and its associated force at byte 3 therefore
+correlated with the controlled oval action, with measured raw 100→18→0.
+Together with the separate tip trial, all three physical controls now have
+observed descriptor-field correlations under temporary test authority. This
+does not establish calibrated pressure, analog resolution, normal production
+HID access, tracked pose, or drawing integration.
+
+[Redacted button-trial evidence](evidence/muse-hid-near-tip-button-trials.json)
+preserves both complete raw-capture integrity receipts: round REA
+`ev_f09eb8da87fbd94fb46bcc1973f09751483f65f881c959c95c5489e52743e361`,
+canonical SHA256 `10bbbb68d158d2b844cb19874d25baf21937692fa5ef94fb2315619678340c3c`;
+oval REA `ev_2facd76a6dfacbf270acbcbc60ab0e77326857d32a160f1d83e11fe6c1968874`,
+canonical SHA256 `75646e3e11975d5225ecd5d43a2248f337122655a4a16562c358cc5dc7e3f608`.
+Inspection was restored after each capture. The test APK was unchanged and
+performed no CCCD, feature, vendor or firmware writes. Unknown vendor packet
+values and raw IMU samples remain unpublished.
+
+The finite Moyo DEV viewer was exercised with actual test-reader data. During
+the first run, Moyo recorded LIVE at 71 accepted samples and the user confirmed
+that displayed values changed. The source capture contained tip raw values
+0/1/18/100 and oval 0/3/4/5. The host delivered 97 samples, then its setup-based
+deadline expired; restored inspection showed Unavailable 97/100 and retained
+last tip/force 18. The source collector's 100 samples are not relabeled as
+100 delivered Moyo samples for this run.
+
+After fixing the host deadline to actual polling-start plus 40 seconds, a final
+run delivered 100/100 samples with zero gaps. The viewer acknowledged sequence 99,
+phase completed, and a successful finish. Physical accessibility inspection
+showed Captured/historical 100/100 with all last values released/zero. This final
+run was a released baseline; the positive changing-value observation belongs
+to the first run. [Redacted live-viewer evidence](evidence/quest-muse-live-viewer.json)
+retains the distinct receipts. Independent canonical comparison subsequently passed for both complete
+100-sample source captures. This is temporary test telemetry displayed
+in Moyo, not normal production HID access or board drawing.
+
+A timing audit found manual inspection-restoration overruns relative to the
+user's 60-second limit. Local pause-receipt to restored-accessibility receipt
+mtime intervals were approximately 67.775s for oval, 83.773s for the first viewer
+run, and 85.493s for the final viewer run. These are approximate observation
+intervals, not exact service lifecycle timestamps. They exceed the requested
+limit and must not be described as compliant 60-second pauses. The live HID
+polling windows themselves remained about 24.85 seconds with the bounded
+test-reader deadline; 85 seconds was not 85 seconds of HID reading. Automatic
+restoration on completion, error, cancellation and watchdog now replaces manual
+orchestration; its separate physical completion-path proof is recorded below.
+
+Canonical verification matched the first source capture to REA
+`ev_e1b8692b66b5cd114343ea08bdc858a0034748504e7f687993eba9bd5ec21ebc`,
+SHA256 `a682a220f8d5d5bf47cca02ced97f01397882b2081bb7d224519417fe4bf4f52`.
+That verifies all 100 source records, while Moyo delivery remains only 97.
+The final source capture matched REA
+`ev_7948dc28bdff0cecce6937963edfb198ffd17067a0b1ec107a1a2af4da236029`,
+SHA256 `68e61e547158bcf30020b25342c6bbf187375ef05752e4f11032ffab8651f2fa`.
+Its 100 successful 65-byte records and source sequence 99's known prefix
+`0000000005` exactly matched the final completed Moyo acknowledgement: 100
+accepted samples, zero gaps, sequence 99 and all mapped values released/zero.
+Physical accessibility evidence independently showed Captured/historical 100/100.
+The first run remains the user-confirmed changing-value demonstration; the
+final run establishes complete end-to-end baseline delivery. Unknown vendor
+packet fields and raw IMU values are not published. The later automatic-restoration physical proof is recorded below.
+
+Automatic scoped restoration passed a subsequent hands-off physical run. The
+orchestrator completed a 100-sample, zero-gap viewer capture and acknowledged
+restored android-devtools inspection after 33,876.573ms, within the approved
+60,000ms window. This duration comes from the orchestrator's elapsed-time
+receipt through restoration acknowledgement, not the earlier approximate
+filesystem-mtime method. The collector APK pin was verified against the
+operator-pulled installed APK.
+[Redacted automatic-restoration evidence](evidence/quest-automatic-inspection-restore.json)
+retains the source hashes, timing, completed viewer acknowledgement and scope.
+The earlier three manual overruns remain documented. This physical run verifies
+normal completion; error/cancel/watchdog handling is implemented and covered
+by host tests, rather than being relabeled as physically exercised here.
+The final root checks passed mobile typecheck, 10 viewer tests and 21 host tests.

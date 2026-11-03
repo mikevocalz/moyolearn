@@ -69,7 +69,7 @@
   "trialInterpretation": {
     "userPressConfirmationWithinCaptureWindow": false,
     "negativeButtonTrialEstablished": false,
-    "note": "User confirmation arrived after this baseline window. Constant control bytes are not evidence that presses were ignored. Held-tip trial remains separate/pending."
+    "note": "User confirmation arrived after this baseline window. Constant control bytes are not evidence that presses were ignored. A later controlled held-tip trial is recorded separately in muse-hid-held-tip-trial.json."
   },
   "inspectionRestored": true,
   "restoredInspectionSha256": "473c6862d5159c84149292b68078ca5d0a8252b40e1cd210246ce4e6c503141e",

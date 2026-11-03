@@ -1,0 +1,139 @@
+{
+  "scope": "Controlled physical near-tip round and oval button trials under temporary test-only Bluetooth HID report READ authority",
+  "testOnly": true,
+  "productionAccess": false,
+  "inputProducer": false,
+  "instrumentationApkSha256": "753d9214a51cad2daeed4b90e21447564178e777fd97cc0fb15767c7283a54d3",
+  "descriptorSha256": "4708e62215883a297c88be41600d2ddea20345ecfbe41213db47f7d6778b3405",
+  "permissionScope": "Temporary public UiAutomation named BLUETOOTH_CONNECT and BLUETOOTH_PRIVILEGED; not production Moyo UID access",
+  "trials": [
+    {
+      "physicalControl": "round",
+      "completed": true,
+      "samples": 100,
+      "allStatus0Length65": true,
+      "pollingStartWallTimeMs": 1793715584992,
+      "actualPollingWindowMs": 24872,
+      "controlledAction": "User held round before capture and confirmed holding it throughout; no switch to oval",
+      "knownPrefixSegments": [
+        {
+          "prefix": "0000000007",
+          "startSample": 0,
+          "endSample": 99,
+          "count": 100
+        }
+      ],
+      "descriptorCorrelation": {
+        "usage": "Button3",
+        "payloadByte": 4,
+        "bit": 1,
+        "observedBit": 1,
+        "comparisonBaselineByteHex": "05",
+        "releaseEdgeObserved": false
+      },
+      "rawIntegrity": {
+        "reaEvidenceId": "ev_f09eb8da87fbd94fb46bcc1973f09751483f65f881c959c95c5489e52743e361",
+        "rawTerminalJSONDeepEqualDeviceJSON": true,
+        "canonicalJSONSHA256": "10bbbb68d158d2b844cb19874d25baf21937692fa5ef94fb2315619678340c3c",
+        "deviceFileSHA256": "42c1c1551ba9f8a63506a735dfb605a027cbb68870403157ce3f0271308b084e",
+        "verificationReceiptSha256": "3b9e30ed8be54e675bd16e74e2f845c797f1e082447b15bf3ccfb69acd43f87e"
+      },
+      "inspectionRestored": true,
+      "restoredInspectionSha256": "473c6862d5159c84149292b68078ca5d0a8252b40e1cd210246ce4e6c503141e"
+    },
+    {
+      "physicalControl": "oval",
+      "completed": true,
+      "samples": 100,
+      "allStatus0Length65": true,
+      "pollingStartWallTimeMs": 1793715676186,
+      "actualPollingWindowMs": 24857,
+      "controlledAction": "User held oval before capture and confirmed release during capture",
+      "knownPrefixSegments": [
+        {
+          "prefix": "0000646405",
+          "startSample": 0,
+          "endSample": 53,
+          "startElapsedMs": 84,
+          "firstWallTimeMs": 1793715676270,
+          "button4Raw": 100,
+          "button4ForceRaw": 100,
+          "count": 54
+        },
+        {
+          "prefix": "0000121205",
+          "startSample": 54,
+          "endSample": 54,
+          "startElapsedMs": 13583,
+          "firstWallTimeMs": 1793715689769,
+          "button4Raw": 18,
+          "button4ForceRaw": 18,
+          "count": 1
+        },
+        {
+          "prefix": "0000000005",
+          "startSample": 55,
+          "endSample": 99,
+          "startElapsedMs": 13831,
+          "firstWallTimeMs": 1793715690016,
+          "button4Raw": 0,
+          "button4ForceRaw": 0,
+          "count": 45
+        }
+      ],
+      "descriptorCorrelation": {
+        "usage": "Button4 and its nested force field",
+        "payloadBytes": [
+          2,
+          3
+        ],
+        "rawHeldIntermediateReleased": [
+          100,
+          18,
+          0
+        ],
+        "releaseFirstObservedElapsedMs": 13831
+      },
+      "rawIntegrity": {
+        "reaEvidenceId": "ev_2facd76a6dfacbf270acbcbc60ab0e77326857d32a160f1d83e11fe6c1968874",
+        "rawTerminalJSONDeepEqualDeviceJSON": true,
+        "canonicalJSONSHA256": "75646e3e11975d5225ecd5d43a2248f337122655a4a16562c358cc5dc7e3f608",
+        "deviceFileSHA256": "9f8ea7cc01768c42de4e0e7b573defcafd1ae82d3135ecf93f4c988d830f9b19",
+        "verificationReceiptSha256": "0d0b89d44c1e25b2cb28217b472e6c0277bc535031db7341a2f80555688572a4"
+      },
+      "inspectionRestored": true,
+      "restoredInspectionSha256": "473c6862d5159c84149292b68078ca5d0a8252b40e1cd210246ce4e6c503141e"
+    }
+  ],
+  "combinedPhysicalMapping": [
+    {
+      "physicalControl": "tip",
+      "payloadFields": "Button1 byte0 and associated force byte1",
+      "evidence": "muse-hid-held-tip-trial.json"
+    },
+    {
+      "physicalControl": "round near-tip button",
+      "payloadFields": "Button3 byte4 bit1",
+      "scope": "Held correlation; no release edge in round trial"
+    },
+    {
+      "physicalControl": "oval near-tip button",
+      "payloadFields": "Button4 byte2 and associated force byte3",
+      "scope": "Controlled hold/release transition100\u219218\u21920"
+    }
+  ],
+  "limitations": {
+    "calibratedForceEstablished": false,
+    "analogResolutionEstablished": false,
+    "productionHidAccessEstablished": false,
+    "trackedPoseEstablished": false,
+    "drawingIntegrationEstablished": false
+  },
+  "writes": {
+    "cccd": false,
+    "feature": false,
+    "vendor": false,
+    "firmware": false
+  },
+  "privacy": "Only descriptor-defined five-byte control prefixes and aggregate observations retained. Unknown vendor payloads, raw IMU samples, addresses, serials and private paths omitted."
+}

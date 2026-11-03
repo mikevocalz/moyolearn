@@ -1,0 +1,40 @@
+{
+  "scope": "Hands-off physical Quest completion-path verification of automatic scoped inspection restoration",
+  "outcome": "completed",
+  "success": true,
+  "error": null,
+  "collectorIdentity": {
+    "apkSha256": "753d9214a51cad2daeed4b90e21447564178e777fd97cc0fb15767c7283a54d3",
+    "sourceSha256": "a5b0df9d262a613db22c59e813b04dccdae595b57f65ad123933c8c6c55cd420",
+    "installerIdentity": "operator-attested installed APK pull"
+  },
+  "collectorLaunched": true,
+  "captureCompleted": true,
+  "restoration": {
+    "acknowledged": true,
+    "withinApprovedWindow": true,
+    "elapsedMs": 33876.572875000005,
+    "source": "android-devtools"
+  },
+  "approvedMaximumPauseMs": 60000,
+  "timingBasis": "Orchestrator-measured elapsed time through acknowledged android-devtools restoration, unlike earlier approximate receipt-mtime audit",
+  "viewerFinishAcknowledgement": {
+    "accepted": true,
+    "phase": "completed",
+    "samples": 100,
+    "lastSequence": 99,
+    "missingSequences": 0
+  },
+  "earlierManualOverrunsErased": false,
+  "physicalPathsVerified": [
+    "normal completion"
+  ],
+  "otherPathScope": "Completion/error/cancel/watchdog restoration is implemented and covered by host tests; this receipt physically verifies normal completion only.",
+  "productionHidAccessEstablished": false,
+  "sourceHashes": {
+    "orchestrator-result.json": "f3df940a69fa5feafa006686721e4f831db885349a84b55bb7e010c2fe17fe7e",
+    "bridge.jsonl": "525550ef2ed1fa71f4ebc42502e39adaad49cdd91a6f011468cc8765b55ed83e",
+    "restored-inspection.json": "17fd2062b89a12790b6ac82750d31d9607f62e08226c85ac75a113ce152762ca"
+  },
+  "privacy": "No addresses, session nonces, raw vendor/IMU payloads, private paths, process IDs or environment retained"
+}

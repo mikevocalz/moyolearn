@@ -1,0 +1,6 @@
+<manifest xmlns:android="http://schemas.android.com/apk/res/android" package="com.moyolearn.museprobe">
+ <uses-sdk android:minSdkVersion="33" android:targetSdkVersion="34" />
+ <application android:label="Muse HID Test Only" android:debuggable="true" android:allowBackup="false" />
+ <instrumentation android:name=".MuseDescriptorInstrumentation" android:targetPackage="com.moyolearn.museprobe" android:label="Read-only Muse descriptor diagnostic" />
+ <instrumentation android:name=".MuseLiveReadInstrumentation" android:targetPackage="com.moyolearn.museprobe" android:label="Read-only Muse live report diagnostic" />
+</manifest>
