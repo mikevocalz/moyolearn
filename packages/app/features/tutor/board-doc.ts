@@ -44,6 +44,12 @@ export type BoardOrigin = 'local' | 'remote' | 'restore';
 /** The board's records live under one key, so a doc can grow other maps later. */
 const RECORDS = 'records';
 
+/** The local author's available history actions, reported by {@link BoardDoc.onHistory}. */
+export interface BoardHistory {
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
+}
+
 export interface BoardDoc {
   readonly doc: Y.Doc;
   /**
@@ -77,6 +83,12 @@ export interface BoardDoc {
    * echo rule cannot be switched off by a caller passing the wrong flag.
    */
   onRecords(listener: (diff: WhiteboardDiff, origin: BoardOrigin) => void): () => void;
+  /**
+   * Reports local history availability immediately and after Yjs has updated
+   * its undo/redo stacks. Record observers run before that update and must not
+   * be used to decide whether a history action is enabled.
+   */
+  onHistory(listener: (history: BoardHistory) => void): () => void;
   /** Undo the LOCAL author's last change, never a collaborator's. */
   undo(): void;
   /**
@@ -118,6 +130,19 @@ export function createBoardDoc(): BoardDoc {
 
   const listeners = new Set<(diff: WhiteboardDiff) => void>();
   const recordListeners = new Set<(diff: WhiteboardDiff, origin: BoardOrigin) => void>();
+  const historyListeners = new Set<(history: BoardHistory) => void>();
+  const history = (): BoardHistory => ({ canUndo: undoManager.canUndo(), canRedo: undoManager.canRedo() });
+  let previousHistory = history();
+  const reportHistory = () => {
+    const next = history();
+    if (next.canUndo === previousHistory.canUndo && next.canRedo === previousHistory.canRedo) return;
+    previousHistory = next;
+    for (const listener of historyListeners) listener(next);
+  };
+  undoManager.on('stack-item-added', reportHistory);
+  undoManager.on('stack-item-popped', reportHistory);
+  undoManager.on('stack-item-updated', reportHistory);
+  undoManager.on('stack-cleared', reportHistory);
 
   /*
     ONE PATH FROM DOCUMENT TO CANVAS, and local edits take it too.
@@ -212,6 +237,11 @@ export function createBoardDoc(): BoardDoc {
       recordListeners.add(listener);
       return () => recordListeners.delete(listener);
     },
+    onHistory(listener) {
+      historyListeners.add(listener);
+      listener(history());
+      return () => { historyListeners.delete(listener); };
+    },
     undo() {
       undoManager.undo();
     },
@@ -228,6 +258,11 @@ export function createBoardDoc(): BoardDoc {
       records.unobserve(observer);
       listeners.clear();
       recordListeners.clear();
+      historyListeners.clear();
+      undoManager.off('stack-item-added', reportHistory);
+      undoManager.off('stack-item-popped', reportHistory);
+      undoManager.off('stack-item-updated', reportHistory);
+      undoManager.off('stack-cleared', reportHistory);
       undoManager.destroy();
       doc.destroy();
     },
