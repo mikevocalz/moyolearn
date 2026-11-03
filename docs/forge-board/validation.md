@@ -17,6 +17,9 @@ from physical-device interaction evidence.
 | Owning Forge native build | PASS | [Draft PR #22](https://github.com/mikevocalz/nitro-forge/pull/22); full Android lab APK and real arm64 ELF DT_NEEDED `libNitroModules.so` |
 | Isolated MMKV fixture model | PASS, 3 tests | `node --test apps/mobile/src/forge-board-probe/model.test.ts` |
 | Moyo Quest APK/install | PASS | `:app:assembleQuestDebug`, 26m17s, 1492 tasks; `adb -s 340YC10GC3014S install -r` returned Success |
+| Device PNG save | PASS on installed Quest with updated development JS | Created `MoyoExports` through the system folder picker, granted that folder, wrote/read back the PNG, then independently pulled the saved file |
+| Connection/export/frame follow-up contracts | PASS, 20 tests | PNG saver 6, pen verification 2, resized content geometry 3, installed Bluetooth artifact 3, window contract 6 |
+| Actual Forge and pen controller integration | PASS, 4 tests | `pnpm --filter @acme/app test:forge` |
 | Native Rive loading, full Forge preview, pen hardware, iOS/iPadOS/Duo | NOT RUN | No source-test result is counted as hardware support |
 
 The Quest 3S selected through Argent is serial `340YC10GC3014S`, Android API 34.
@@ -40,11 +43,28 @@ install -r` after the APK is verified. Launch/discovery/interaction use Argent.
   were present in the physical Quest accessibility tree. A stale Metro file map
   initially returned HTTP 500; restarting our Metro with a cleared cache restored
   successful bundling and launch.
-- The first recorded drawing/export run did not pass: mark-count and PNG waits
-  were unmet. Synthetic input did reach the document (including two marks on one
-  attempt), but that does not prove the complete flow. The fixture now exposes
-  an explicit surface-ready status after a snapshot bridge round trip. Two
-  unchanged passing runs, save/reopen and export remain outstanding.
+- The first recorded drawing/export runs did not pass: tap acknowledgments did
+  not establish delivery. Argent's Quest screen-sharing input agent repeatedly
+  aborted with SIGABRT; discovery remained available through its independent
+  Android accessibility service. No 1280-pixel scaling defect was established.
+  The failed recordings are not passing E2E evidence.
+- With that insufficiency established, Meta CLI ADB input used fresh accessibility
+  bounds. One synthetic stroke produced `Marks: 1` and undo availability. The
+  explicit `Surface: ready` status follows a snapshot bridge round trip.
+- The production Undo button then produced `Marks: 0` and `Can redo: yes` on
+  device. Redo activation and save/reopen remain unverified; their source tests
+  are separate from this incomplete physical path.
+- Device save wrote `/sdcard/MoyoExports/moyo-board-2026-11-03T02-52-22-833Z.png`.
+  The app verified the saved bytes before success. Independent Meta CLI pull
+  confirmed a 444x344 RGBA PNG, SHA-256
+  `0f2d37b18527fbf8a6d815c2226bf816d3161aac3261c4300e9fe373c28195c5`.
+  Visual inspection shows black ink on light gridded paper. This is synthetic
+  board input and file persistence proof, not Muse hardware input proof.
+- The user connected Muse to the Mac by USB. Read-only descriptors identify
+  `LogiNApp`, vendor `046D`, product `D11E`, with two CDC ACM serial interfaces.
+  No serial port was opened and no firmware or settings command was sent.
+  The descriptor version is not treated as a verified firmware version or a
+  Bluetooth/Quest tracking capability.
 - Bluetooth radio inspection found it on with no bonded devices. The user then
   requested the Forge PR #20 Bluetooth connection flow; its Moyo integration is
   being built separately from drawing validation.

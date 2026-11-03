@@ -24,6 +24,7 @@ export function MainContentFrame({ children, overlay = false }: { children: Reac
   const frame = framed ? fitMainContent(bounds.width, bounds.height) : null;
   return (
     <View
+      testID={framed ? (overlay ? 'quest-overlay-frame-host' : 'quest-content-frame-host') : undefined}
       pointerEvents={overlay ? 'box-none' : 'auto'}
       onLayout={({ nativeEvent: { layout } }) => {
         if (layout.width !== state.getState().width || layout.height !== state.getState().height) state.setState({ width: layout.width, height: layout.height });
@@ -32,7 +33,9 @@ export function MainContentFrame({ children, overlay = false }: { children: Reac
         ? { position: 'absolute', inset: 0, overflow: framed ? 'hidden' : 'visible' }
         : { flex: 1, overflow: framed ? 'hidden' : 'visible', backgroundColor: framed ? semantic.surface[scheme] : undefined }}
     >
-      <View pointerEvents={overlay ? 'box-none' : 'auto'} style={frame
+      <View
+        testID={framed ? (overlay ? 'quest-overlay-frame-surface' : 'quest-content-frame-surface') : undefined}
+        pointerEvents={overlay ? 'box-none' : 'auto'} style={frame
         ? { position: 'absolute', ...frame, overflow: 'hidden', backgroundColor: overlay ? 'transparent' : semantic.surface[scheme] }
         : { flex: 1, opacity: framed ? 0 : 1 }}>
         {children}

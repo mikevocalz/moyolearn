@@ -47,3 +47,27 @@ a rescan. Device labels use the real advertising name, then cached name, then
 an explicit unnamed label with an address suffix; unnamed real advertisements
 are not silently discarded. Permission revocation while reading an address
 ignores that result.
+
+## Verification recorded on 2026-11-02
+
+For final `0.1.0-moyo.6` artifacts:
+
+- Nightly100 Nitrogen generation passed.
+- Three actual installed adapter tests passed; mobile TypeScript passed.
+- `:nitro-forge_bluetooth-v1:externalNativeBuildDebug` passed with the shared
+  depth-2 pool. The actual arm64 library required `libNitroModules.so`, fbjni,
+  jsi and reactnative. Its unstripped SHA256 was
+  `4804cf7b134fa0b80f8787bfc6b8b66354e39ed2f2aa6c74e83619d1f798f9e6`.
+- The combined Quest APK build did not finish: an unrelated existing package's
+  CMake source disappeared when root node_modules was removed during the run.
+  The previously compiled Bluetooth ELF was also in that removed tree.
+  Restore frozen dependencies and rerun the bounded build before claiming a
+  packaged or installed Bluetooth transport.
+- No physical Bluetooth scan, connection or Muse input was verified here.
+
+Recovery preserves app intermediates: run `pnpm install --frozen-lockfile` at
+repository root after dependency deletion has stopped. From
+`apps/mobile/android`, set Android SDK environment variables and
+`ORG_GRADLE_PROJECT_moyoNativeJobPool=2`, then run
+`./gradlew :nitro-forge_bluetooth-v1:externalNativeBuildDebug :app:assembleQuestDebug -PreactNativeArchitectures=arm64-v8a --max-workers=1 --no-parallel`.
+Do not run clean or prebuild for this recovery.
