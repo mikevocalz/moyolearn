@@ -140,3 +140,9 @@ The remaining work concerns actual native Muse support:
 - Demonstrate genuine Muse native pose and corresponding application input with measured runtime evidence
 
 No exact radio filter, Muse initialization sequence, or safe native Muse fix has been recovered from the accessible artifacts. Neither the scan timeouts nor static model strings answer these questions. The [finite diagnostic drawing evidence](evidence/quest-muse-motion-cursor.json) remains a separate 2D tilt-cursor result.
+
+## Fresh USB-connected pen examination
+
+At the user's renewed USB request, REA recorded fresh host probes of the attached `046d:d11e` pen. The current 141-byte configuration still contains two CDC control/data pairs and no HID interface. During a 60.085-second capture, the user confirmed presses while both channels were active; both received zero bytes. Original baud and modem settings were restored. Ordinary serial open and DTR assertion were explicit control effects; no application payload commands were sent.
+
+A separate standard USB GET_STATUS request succeeded. A bounded BOS header request stalled without returning bytes; it was not retried, cleared or followed by guessed vendor requests. This verifies current USB communication but recovers neither a firmware image nor an input initialization protocol. Silence under these conditions does not prove that documented initialization could never enable data. The [fresh USB receipt](evidence/muse-usb-fresh-controls.json) retains REA IDs and exact limits without device serial identifiers.

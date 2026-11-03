@@ -1,0 +1,103 @@
+{
+  "scope": "Fresh user-requested USB examination on Mac; REA capture-process records the owned host probes, not internal Muse firmware execution.",
+  "usbIdentity": {
+    "vendorId": "046d",
+    "productId": "d11e",
+    "productName": "LogiNApp",
+    "configurationCount": 1
+  },
+  "descriptor": {
+    "bytes": 141,
+    "sha256": "0ea485583304c75c26598437ee972c04d3a7f3e94b5b3e4c6d512800f0fa1e9e",
+    "configuration": 1,
+    "interfaces": [
+      {
+        "number": 0,
+        "class": 2,
+        "subclass": 2,
+        "alternate": 0
+      },
+      {
+        "number": 1,
+        "class": 10,
+        "subclass": 0,
+        "alternate": 0
+      },
+      {
+        "number": 2,
+        "class": 2,
+        "subclass": 2,
+        "alternate": 0
+      },
+      {
+        "number": 3,
+        "class": 10,
+        "subclass": 0,
+        "alternate": 0
+      }
+    ],
+    "hidInterfacePresent": false
+  },
+  "controlTrial": {
+    "userConfirmedPressesDuringActiveCapture": true,
+    "durationSeconds": 60.08486754099431,
+    "channels": [
+      {
+        "channel": 1,
+        "bytes": 0,
+        "originalBaud": [
+          9600,
+          9600
+        ],
+        "termiosRestored": true,
+        "modemFlagsRestored": true
+      },
+      {
+        "channel": 2,
+        "bytes": 0,
+        "originalBaud": [
+          9600,
+          9600
+        ],
+        "termiosRestored": true,
+        "modemFlagsRestored": true
+      }
+    ],
+    "applicationPayloadWrites": 0,
+    "controlEffects": "Ordinary serial open, raw termios preserving baud, DTR assertion, restoration and close; not entirely passive."
+  },
+  "standardRequests": {
+    "getStatus": {
+      "result": "success",
+      "bytes": 2,
+      "selfPowered": true,
+      "remoteWakeupEnabled": true
+    },
+    "bosHeader": {
+      "result": "pipe stalled",
+      "iorReturn": "0xe000404f",
+      "bytes": 0
+    },
+    "normalDeviceOpenUsed": false,
+    "deviceReset": false,
+    "setConfiguration": false,
+    "vendorOrClassRequests": false,
+    "clearStall": false
+  },
+  "reaEvidence": {
+    "configuration": "ev_6f943f08a5d97445a778585a581b677224e0cb7f0c6a41057f756340a84b8ab0",
+    "serialCapture": "ev_4da0761d70ef3d56f1ad3adf021c18030a894651ddbb8c76fe2e78a58c4414f6",
+    "standardRequests": "ev_ffce668b1c7b075ee3bf6402a67dca742f6cd1bf085fd89eb769aac163d1de06"
+  },
+  "cleanup": {
+    "ownedProcessGroupsVerified": true,
+    "serialSettingsRestored": true,
+    "unverifiedPlatformObservationsUntouched": true
+  },
+  "limits": [
+    "No USB application input arrived under these capture conditions; this does not establish that USB input is impossible after documented initialization.",
+    "No firmware image, command protocol, native position or orientation was recovered.",
+    "BOS stall is a request result, not proof of every possible vendor capability.",
+    "No guessed payloads, baud changes, bootloader entry, device reset or firmware writes were attempted."
+  ]
+}
