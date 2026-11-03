@@ -1,0 +1,59 @@
+{
+  "scope": "First physical DEV gravity-tilt cursor attempt; application surface-identity rejection before accepted input, not a hardware-negative trial",
+  "mode": "gravity-direction tilt cursor; not yaw/position/6DoF",
+  "firstAttempt": {
+    "outcome": "error",
+    "success": false,
+    "collectorLaunched": true,
+    "captureCompleted": false,
+    "reportsForwardedToMoyo": 0,
+    "bridgeError": "DEV viewer rejected the LIVE session",
+    "restoration": {
+      "acknowledged": true,
+      "withinApprovedWindow": true,
+      "elapsedMs": 9457.37675,
+      "source": "android-devtools"
+    },
+    "collectorIdentity": {
+      "apkSha256": "753d9214a51cad2daeed4b90e21447564178e777fd97cc0fb15767c7283a54d3",
+      "sourceSha256": "a5b0df9d262a613db22c59e813b04dccdae595b57f65ad123933c8c6c55cd420",
+      "installerIdentity": "operator-attested installed APK pull"
+    }
+  },
+  "diagnosis": {
+    "armed": true,
+    "boardPresent": true,
+    "calibrationPresent": true,
+    "canStart": false,
+    "dimensions": {
+      "height": 351.20001220703125,
+      "width": 988
+    },
+    "sameFacade": false
+  },
+  "sourceCorrection": {
+    "status": "implemented and peer-reviewed",
+    "surfaceIdentity": "Mounted board generation plus surfaceVersion token; current imperative facade resolved per dispatch",
+    "calibrationCompletion": "Checks mounted generation/version and readiness rather than facade object equality",
+    "safety": "Actual mount replacement rejects input; background cancellation cannot target a new mount"
+  },
+  "validation": {
+    "motionControllerTests": 6,
+    "mountedSurfaceRegressionTests": 3,
+    "gravityTiltMathTests": 5,
+    "finiteTelemetryTests": 10,
+    "mobileTypecheck": "passed",
+    "diffCheck": "passed"
+  },
+  "physicalRetry": {
+    "status": "pending",
+    "actualTiltInkEstablished": false,
+    "hardwareFailureEstablished": false
+  },
+  "sourceHashes": {
+    "orchestratorResult": "85ce53c3e0fef130a5b51b9dc5bfee949446c0d581b14a6b0f7ac71fa43638d9",
+    "bridgeReceipt": "1890826e620737c56ed44de525ab5190b8ea3dc2708e4fb882515e8e8f00fd24",
+    "facadeDiagnostic": "43a9da11cd83e146dc48c24e140dc344788d00b62625d30363b4d314a38f2b6b"
+  },
+  "privacy": "No addresses, logical device IDs, session nonces, process IDs, private paths or unknown vendor payloads retained"
+}

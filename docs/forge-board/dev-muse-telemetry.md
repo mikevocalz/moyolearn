@@ -1,7 +1,7 @@
 # Finite Muse diagnostic viewer
 
 The existing development-only Forge board probe displays mapped control values
-from a separate temporary test reader. It does not emit Whiteboard/Yjs input,
+from a separate temporary test reader. The default telemetry viewer does not emit Whiteboard/Yjs input,
 change the normal pen connection controller, or establish production readiness.
 No position or orientation fields are decoded. Native resources remain owned by
 the external collector and host bridge.
@@ -70,3 +70,41 @@ completion, error, cancellation or watchdog. A separate
 [physical completion-path receipt](evidence/quest-automatic-inspection-restore.json)
 records acknowledged restoration at 33,876.573ms, below the approved 60-second
 window. Earlier manual overruns remain part of the validation record.
+
+## Opt-in DEV gravity-tilt cursor
+
+The separate `muse-motion-bridge` component ref is available only after the user
+selects Tilt cursor mode and passes Calibrate & enable tilt on the mounted board.
+Calibration supplies the actual engine-client dimensions; the cursor overlay
+uses that same size inside LearningCanvas's existing border. The smaller motion
+control set preserves paper space without changing the app window contract.
+
+Measured acceleration direction controls two screen axes relative to the first
+stable sample. The round-button rising edge or Recenter action resets the
+gravity reference. This is a gravity-tilt cursor, not yaw/6DoF positioning;
+dynamic acceleration cannot always be distinguished from gravity. Magnitude
+rejection catches some contaminated samples. No translation is integrated.
+
+Actual tip presses drive the existing Whiteboard pointer seam, whose user diffs
+flow into the same Yjs document and gesture-history owner. Force is the measured
+descriptor raw value divided by its declared maximum100, not calibrated force.
+Only an actual measured tip release commits a stroke. Gaps, rejected motion,
+recenter, expired/lost capture, backgrounding, and mode exit cancel unfinished
+input and require a measured release before drawing again. Last cursor values
+are retained; no release report is fabricated. Exiting mode drains the pointer
+bridge and reloads the surface from the same document to restore normal touch.
+
+`museMotionBridge.current` exposes `kind: 'muse-motion-bridge'`, telemetry `state`,
+and the same start/ingest/finish methods. It validates telemetry before motion;
+the motion controller independently reuses the finite validator. It retains
+sample/cursor/pointer counters for physical QA. No normal pen-ready state or
+production Bluetooth permission is changed.
+
+Six controller/adapter tests include a temporary QuickDraw Store feeding real
+Yjs edits/undo/redo, held-tip gap cancellation, in-batch sequence holes, finite
+session cancellation and measured release. Five gravity-math and ten telemetry
+tests cover the remaining pure behavior. These are model/source checks;
+physical tilt-to-ink validation remains pending. The first physical start was
+rejected by a changing imperative-facade identity, now corrected with a mounted
+generation/version token. Three surface regression tests cover that correction;
+see [the first-attempt receipt](evidence/quest-muse-motion-cursor.json).

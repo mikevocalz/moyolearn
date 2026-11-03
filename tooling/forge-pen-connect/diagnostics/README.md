@@ -71,7 +71,10 @@ gapCount. Repeated cumulative snapshots are not replayed. The collector run cann
 change mid-session. These checks prove contract consistency, not cryptographic
 hardware identity; the nonce is session correlation, not native authentication.
 
-Sampling transport is about 1 Hz, with a fixed 40-second host forwarding deadline.
+Host snapshot polling defaults to 1000ms. A motion-mode configuration may set
+`pollingIntervalMs` between 250 and 1000ms; subprocess time adds latency, and
+this does not increase the collector's maximum four measured reads per second.
+The fixed 40-second host forwarding deadline remains independent of polling rate.
 Viewer expiry is independent and no later than polling start plus 40 seconds or
 actual collector wall start plus 40 seconds. A fresh final snapshot after the planned 25-second sampling
 window is forwarded before immediate completion, within that global bound. End/transport failure attempts finishSession; failed cleanup is

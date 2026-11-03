@@ -20,6 +20,28 @@ function fixture(samples = [sample(0)]) {
 const config = { deviceId: 'test-only-device', port: 8081, metaCliPath: '/never/executed/metavr', argentPath: '/never/executed/argent',
   installedCollectorApkPath: '/never/read/apk', armTimeMs: arm, sessionId: nonce, controllerExpression: 'unitController' };
 
+test('faster motion polling forwards new samples once and keeps its rate bounded', async () => {
+  for (const pollingIntervalMs of [0, 249, 1001, 250.5, '250']) {
+    assert.throws(() => validateConfig({ ...config, pollingIntervalMs }), /pollingIntervalMs/);
+  }
+  let now = 100100, reads = 0;
+  const delivered = [], sleeps = [];
+  const snapshots = [fixture(), fixture(), { ...fixture([sample(0), sample(1, 100600)]), completed: true }];
+  const result = await runBridge({ ...config, pollingIntervalMs: 250 }, {
+    monotonicNow: () => now - 100100, wallNow: () => now,
+    sleep: async (duration) => { sleeps.push(duration); now += duration; }, log() {},
+    readCapture: async () => JSON.stringify(snapshots[reads++]),
+    evaluate: async (method, payload) => {
+      if (method === 'ingestCapture') delivered.push(...payload.samples.map((s) => s.sequence));
+      return method === 'probe' ? { ready: true, now } : { accepted: true, now };
+    },
+  });
+  assert.deepEqual(sleeps, [250, 250]);
+  assert.deepEqual(delivered, [0, 1]);
+  assert.equal(result.reason, 'collector-completed');
+  assert.equal(result.gapCount, 0);
+});
+
 test('valid actual-map/reference schema yields opaque telemetry only', () => {
   const c = fixture(); const v = validateCapture(c, arm, 100200); const m = sessionMetadata(c, nonce, arm, 100200);
   const next = freshEnvelope(v, m, { lastObservedSequence: -1, gapCount: 0 }, 100200);

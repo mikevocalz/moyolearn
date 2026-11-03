@@ -15,6 +15,9 @@ export function validateConfig(config) {
   }
   if (!Number.isSafeInteger(config.armTimeMs) || config.armTimeMs < 1) throw new Error('Require preflight app armTimeMs');
   if (!/^[a-zA-Z0-9_-]{16,128}$/.test(config.sessionId ?? '')) throw new Error('Require fresh session nonce');
+  if (config.pollingIntervalMs !== undefined && (!Number.isInteger(config.pollingIntervalMs) || config.pollingIntervalMs < 250 || config.pollingIntervalMs > 1000)) {
+    throw new Error('Require pollingIntervalMs between250 and1000');
+  }
   evaluationExpression(config.controllerExpression, 'probe');
   return config;
 }
@@ -57,6 +60,7 @@ export async function runBridge(config, io) {
   validateConfig(config);
   const end = io.monotonicNow() + 40000;
   const remaining = () => Math.max(0, end - io.monotonicNow());
+  const pollingIntervalMs = config.pollingIntervalMs ?? 1000;
   let session, lastNow, cursor = { lastObservedSequence: -1, gapCount: 0 }, forwarded = 0, reason = 'deadline';
   const probe = await io.evaluate('probe', undefined, Math.min(4000, remaining()));
   if (probe.ready !== true || !Number.isSafeInteger(probe.now)) throw new Error('DEV viewer is not ready');
@@ -69,12 +73,12 @@ export async function runBridge(config, io) {
       try { raw = await io.readCapture(Math.min(3000, remaining())); }
       catch (error) {
         // A not-yet-created private file is expected before the collector is ready.
-        if (!session && /No such file|does not exist/.test(String(error))) { await io.sleep(Math.min(1000, remaining())); continue; }
+        if (!session && /No such file|does not exist/.test(String(error))) { await io.sleep(Math.min(pollingIntervalMs, remaining())); continue; }
         throw error;
       }
       const deviceNow = io.wallNow() + deviceClockOffset;
       const validated = validateCapture(JSON.parse(raw), config.armTimeMs, deviceNow);
-      if (validated.kind === 'waiting') { await io.sleep(Math.min(1000, remaining())); continue; }
+      if (validated.kind === 'waiting') { await io.sleep(Math.min(pollingIntervalMs, remaining())); continue; }
       if (!session) {
         session = sessionMetadata(validated.capture, config.sessionId, config.armTimeMs, deviceNow);
         const started = await io.evaluate('startSession', session, Math.min(3000, remaining()));
@@ -94,7 +98,7 @@ export async function runBridge(config, io) {
       }
       cursor = next.cursor;
       if (validated.capture.completed === true) { reason = 'collector-completed'; break; }
-      await io.sleep(Math.min(1000, remaining()));
+      await io.sleep(Math.min(pollingIntervalMs, remaining()));
     }
   } catch (error) {
     reason = 'error';

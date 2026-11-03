@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { AppState } from 'react-native';
 import { Stack } from 'expo-router';
 import { useStore } from 'zustand';
 import { createStore, type StoreApi } from 'zustand/vanilla';
@@ -15,6 +16,9 @@ import { useForgeBoardExport } from '@acme/app/features/tutor/forge-board-export
 import { useForgePenDiagnostics } from '@acme/app/features/tutor/forge-pen-diagnostics.native.tsx';
 import { createMuseTelemetryController, type MuseTelemetryController } from './muse-telemetry';
 import { MuseTelemetryView } from './muse-telemetry-view';
+import { createMuseMotionController } from './muse-motion';
+import { MuseMotionCursor, MuseMotionStatus } from './muse-motion-view';
+import { createCalibratedMotionSurface, resolveCalibratedMotionSurface, type CalibratedMotionSurface } from './muse-motion-surface';
 
 interface ProbeState {
   generation: number;
@@ -28,6 +32,7 @@ interface ProbeState {
   png: string;
   exporting: boolean;
   error: string | null;
+  motionMode: boolean;
 }
 interface ProbeResources {
   generation: number;
@@ -47,7 +52,7 @@ export function ForgeBoardProbe() {
   if (stateRef.current === null) stateRef.current = createStore<ProbeState>(() => ({
     generation: 0, resetVersion: 0, surfaceVersion: 0, ready: false,
     marks: 0, canUndo: false, canRedo: false, persistence: 'Opening test board',
-    png: 'No PNG exported', exporting: false, error: null,
+    png: 'No PNG exported', exporting: false, error: null, motionMode: false,
   }));
   const state = stateRef.current;
   const generation = useStore(state, (s) => s.generation);
@@ -61,8 +66,28 @@ export function ForgeBoardProbe() {
   const png = useStore(state, (s) => s.png);
   const exporting = useStore(state, (s) => s.exporting);
   const error = useStore(state, (s) => s.error);
+  const motionMode = useStore(state, (s) => s.motionMode);
   const resources = useRef<ProbeResources | null>(null);
   const board = useRef<WhiteboardHandle>(null);
+  const motionSurface = useRef<CalibratedMotionSurface|null>(null);
+  const museMotion = useRef<ReturnType<typeof createMuseMotionController>|null>(null);
+  if(museMotion.current===null)museMotion.current=createMuseMotionController(()=>resolveCalibratedMotionSurface(motionSurface.current,()=>{
+    const current=state.getState();
+    return {generation:current.generation,surfaceVersion:current.surfaceVersion,ready:current.ready,foreground:AppState.currentState==='active',handle:board.current};
+  }));
+  const motionCursor=useStore(museMotion.current.state,(s)=>s.cursor);
+  const motionPhase=useStore(museMotion.current.state,(s)=>s.phase);
+  const motionCalibration=useRef(false);
+  const motionExit=useRef(false);
+  const museMotionBridge=useRef<{
+    kind:'muse-motion-bridge';state:MuseTelemetryController['state'];
+    startSession(input:unknown):boolean;ingestCapture(input:unknown):boolean;finishSession(id:string):boolean;
+  }|null>(null);
+  if(museMotionBridge.current===null)museMotionBridge.current={kind:'muse-motion-bridge',state:museTelemetry.current.state,
+    startSession(input){if(!museMotion.current?.canStart()||!museTelemetry.current?.startSession(input))return false;const accepted=museMotion.current.startSession(input);if(!accepted)museTelemetry.current.finishSession(museTelemetry.current.state.getState().sessionId??'');return accepted;},
+    ingestCapture(input){return museTelemetry.current?.ingestCapture(input)===true&&museMotion.current?.ingestCapture(input)===true;},
+    finishSession(id){const a=museTelemetry.current?.finishSession(id),b=museMotion.current?.finishSession(id);return a===true&&b===true;},
+  };
   const stopRemote = useRef<(() => void) | null>(null);
   const pngUri = useRef<string | null>(null);
 
@@ -90,6 +115,7 @@ export function ForgeBoardProbe() {
         persistence: restored ? 'Restored test board' : 'Test board ready', error: null,
       });
       cleanup = () => {
+        museMotion.current?.disarm(); motionSurface.current=null;
         stopRemote.current?.();
         stopRemote.current = null;
         stopRecords();
@@ -123,6 +149,22 @@ export function ForgeBoardProbe() {
         state.setState({ ready: false, error: 'Test surface could not become ready. Reopen this engineering route to retry.' });
       }
     }
+  };
+  const enableMotion = async () => {
+    const engine=board.current;if(!engine?.calibrate||!state.getState().ready||motionCalibration.current||museMotion.current?.state.getState().phase==='live')return;
+    const calibratedGeneration=state.getState().generation,calibratedVersion=state.getState().surfaceVersion;
+    motionCalibration.current=true;
+    try {
+      const result=await engine.calibrate();
+      if(!state.getState().motionMode||AppState.currentState!=='active')return;
+      if(!result.ok||!state.getState().ready||state.getState().generation!==calibratedGeneration||state.getState().surfaceVersion!==calibratedVersion)throw new Error('Board calibration did not pass. Reload the surface and retry.');
+      const a=result.points[0],b=result.points.find((p)=>a&&p.u!==a.u),c=result.points.find((p)=>a&&p.v!==a.v);
+      if(!a||!b||!c)throw new Error('The board did not report its measured surface.');
+      const width=(b.expected.x-a.expected.x)/(b.u-a.u),height=(c.expected.y-a.expected.y)/(c.v-a.v);
+      if(!Number.isFinite(width)||!Number.isFinite(height)||width<=0||height<=0)throw new Error('The board surface is unavailable.');
+      motionSurface.current=createCalibratedMotionSurface(calibratedGeneration,calibratedVersion,width,height);museMotion.current?.arm();
+    }catch(error){state.setState({error:error instanceof Error?error.message:'Tilt cursor could not start.'});}
+    finally{motionCalibration.current=false;}
   };
   const onChange = (diff: WhiteboardDiff, source: WhiteboardDiffSource) => {
     const current = resources.current;
@@ -177,8 +219,14 @@ export function ForgeBoardProbe() {
       <Stack.Screen options={{ title: 'Forge board validation', headerShown: false }} />
       <Text variant="heading" testID="forge-probe-title">Forge board validation</Text>
       <Text variant="caption">Isolated development fixture. Synthetic samples do not validate pen hardware. Reload the surface after synthetic input to resume touch drawing.</Text>
-      <MuseTelemetryView controller={museTelemetry.current} />
+      {!motionMode?<MuseTelemetryView controller={museTelemetry.current} />:<MuseMotionStatus controller={museMotion.current} />}
       <View className="flex-row flex-wrap gap-element">
+        <Button title={motionMode?'Exit tilt mode':'Tilt cursor mode'} size="sm" onPress={()=>{if(motionExit.current)return;museMotion.current?.disarm();motionSurface.current=null;if(motionMode){motionExit.current=true;const engine=board.current,mount=state.getState();void (async()=>{try{await engine?.getSnapshot();}catch{state.setState({error:'Surface input could not drain before reload. Check the retained board.'});}finally{if(state.getState().generation===mount.generation&&state.getState().surfaceVersion===mount.surfaceVersion)reloadSurface();state.setState({motionMode:false});motionExit.current=false;}})();}else state.setState({motionMode:true});}} />
+        {motionMode?<>
+          <Button title="Calibrate & enable tilt" size="sm" disabled={!ready||motionPhase==='live'} onPress={()=>{void enableMotion();}} />
+          <Button title="Recenter tilt cursor" size="sm" variant="outline" onPress={()=>museMotion.current?.recenter()} />
+          <Button title="Disconnect pen" size="sm" variant="outline" onPress={()=>{museMotion.current?.disarm();penConnection.disconnect();}} />
+        </>:<>
         <Button title="Pen Bluetooth diagnostics" size="sm" variant="outline" onPress={penDiagnostics.open} />
         <Button title="Connect pen" size="sm" onPress={penConnection.open} />
         <Button title="Disconnect pen" size="sm" variant="outline" onPress={penConnection.disconnect} />
@@ -189,6 +237,7 @@ export function ForgeBoardProbe() {
         <Button title="Preview test PNG" size="sm" variant="outline" disabled={!ready || exporting} onPress={() => { void exportPng(); }} />
         <Button title="Reload test surface" size="sm" variant="outline" disabled={!ready} onPress={reloadSurface} />
         <Button title="Reset test board" size="sm" variant="danger" disabled={!ready} onPress={reset} />
+        </>}
       </View>
       <View className="flex-row flex-wrap gap-element">
         <Text variant="caption" testID="forge-probe-ready">Surface: {ready ? 'ready' : 'opening'}</Text>
@@ -199,8 +248,9 @@ export function ForgeBoardProbe() {
         <Text variant="caption" testID="forge-probe-png">{png}</Text>
       </View>
       {error ? <Text tone="danger" testID="forge-probe-error">{error}</Text> : null}
-      <View className="flex-1" testID="forge-probe-board">
+      <View className="relative flex-1" testID="forge-probe-board" onLayout={()=>{museMotion.current?.disarm();motionSurface.current=null;}}>
         {current ? <Whiteboard key={`${generation}:${surfaceVersion}`} ref={board} history={current.doc} size="sm" onChange={onChange} onReady={onReady} /> : null}
+        {motionMode&&motionCursor&&motionSurface.current?<MuseMotionCursor controller={museMotion.current} width={motionSurface.current.width} height={motionSurface.current.height} />:null}
       </View>
       {penConnection.dialog}
       {penDiagnostics.dialog}

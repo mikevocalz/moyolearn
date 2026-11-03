@@ -647,3 +647,21 @@ The earlier three manual overruns remain documented. This physical run verifies
 normal completion; error/cancel/watchdog handling is implemented and covered
 by host tests, rather than being relabeled as physically exercised here.
 The final root checks passed mobile typecheck, 10 viewer tests and 21 host tests.
+
+The first physical gravity-tilt cursor attempt forwarded zero reports to Moyo
+because the application rejected session start. A diagnostic showed armed mode,
+a present board and calibration 988×351.2 client pixels, but `sameFacade:false`
+and `canStart:false`. Whiteboard recreated its imperative facade on rerender;
+the underlying engine had not changed. This was an application identity-guard
+failure before accepted input, not evidence that Muse stopped reporting or
+that physical drawing failed. Automatic inspection restoration was acknowledged
+in 9,457.377ms, within the approved window.
+
+The source correction uses a mounted generation/surfaceVersion token and
+resolves the current facade for each pointer dispatch. Calibration completion
+checks that same mount; real mount changes remain fail-closed. Six motion,
+three surface-regression, five gravity-math and ten telemetry tests passed,
+with mobile typecheck and diff check.
+[Redacted first motion attempt](evidence/quest-muse-motion-cursor.json) keeps
+the failed attempt and source correction distinct. The physical retry and
+actual tilt-to-ink validation remain pending.
