@@ -23,7 +23,7 @@ for (const name of Object.keys(pins).filter((name) => !process.argv.includes('--
   const directory = join(temporary, 'packages', name);
   const manifestPath = join(directory, 'package.json');
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-  manifest.version = name === 'bluetooth-v1' ? '0.1.0-moyo.8' : '0.1.0-moyo.6';
+  manifest.version = name === 'bluetooth-v1' ? '0.1.0-moyo.15' : '0.1.0-moyo.9';
   manifest.moyoSource = { repository: 'mikevocalz/nitro-forge', commit };
   if (name === 'pen-connect') {
     const path = join(directory, 'src/android-ble.native.ts');
@@ -35,7 +35,13 @@ for (const name of Object.keys(pins).filter((name) => !process.argv.includes('--
     source = source.replace('  let scanGeneration = 0;', '  let scanGeneration = 0;\n  let connectionGeneration = 0;\n  let pendingConnection: number | undefined;');
     source = source.replace('      ++scanGeneration;\n      cancelPending?.();', '      ++scanGeneration;\n      if (pendingConnection !== undefined) {\n        pendingConnection = undefined;\n        ++connectionGeneration;\n        native.disconnect();\n      }\n      cancelPending?.();');
     source = source.replace('      if (!(await native.connect(id))) throw new Error("Bluetooth GATT connection failed.");', '      const generation = ++connectionGeneration;\n      pendingConnection = generation;\n      try {\n        if (!(await native.connect(id))) throw new Error("Bluetooth GATT connection failed.");\n        if (generation !== connectionGeneration) throw new Error("Bluetooth connection cancelled.");\n      } finally {\n        if (pendingConnection === generation) pendingConnection = undefined;\n      }');
+    source = source.replace('            id: d.id, name: d.name,', '            id: d.id, name: d.name,\n            ...(typeof d.bonded === "boolean" ? { bonded: d.bonded } : {}),');
+    const typesPath = join(directory, 'src/types.ts');
+    writeFileSync(typesPath, readFileSync(typesPath, 'utf8').replace('  readonly rssi?: number;', '  readonly rssi?: number;\n  readonly bonded?: boolean;'));
     writeFileSync(path, source);
+    for (const file of ['types.ts', 'android-ble.native.ts', 'controller.ts', 'PenConnectionDialog.native.tsx']) {
+      writeFileSync(join(directory, 'src', file), readFileSync(join(root, 'tooling/forge-pen-connect/portable/src', file)));
+    }
   }
   if (name === 'bluetooth-v1') {
     // The transport is Android-only; regenerate against the host runtime.
@@ -48,6 +54,8 @@ for (const name of Object.keys(pins).filter((name) => !process.argv.includes('--
     for (const file of readdirSync(join(root, 'tooling/forge-pen-connect')).filter((file) => file.endsWith('.kt'))) {
       writeFileSync(join(directory, 'android/src/main/java/com/margelo/nitro/forgebluetooth/ble', file), readFileSync(join(root, 'tooling/forge-pen-connect', file)));
     }
+    const manifestXml = join(directory, 'android/src/main/AndroidManifest.xml');
+    writeFileSync(manifestXml, readFileSync(manifestXml, 'utf8').replace('<manifest xmlns:android="http://schemas.android.com/apk/res/android">', '<manifest xmlns:android="http://schemas.android.com/apk/res/android">\n  <uses-feature android:name="android.software.companion_device_setup" android:required="false" />'));
     const testDirectory = join(directory, 'android/src/test/java/com/margelo/nitro/forgebluetooth/ble');
     mkdirSync(testDirectory, { recursive: true });
     for (const file of readdirSync(join(root, 'tooling/forge-pen-connect/tests'))) {
@@ -59,12 +67,18 @@ for (const name of Object.keys(pins).filter((name) => !process.argv.includes('--
   /** Actual discovered attributes only; no vendor protocol or input decoding. */
   discoverGattServices(): Promise<string>;
   readGattCharacteristic(characteristicKey: string): Promise<string>;
+  /** Explicit documented ASA 1.1 host session negotiation, after current version READ. */
+  configureSpatialAccessoryHost(): Promise<string>;
   readGattDescriptor(descriptorKey: string): Promise<string>;
   setGattNotification(characteristicKey: string, enabled: boolean): Promise<string>;
   getGattDiagnosticsJson(): string;
   stopGattDiagnostics(): void;
   /** Explicit OS pairing of this selected device; resolves only actual BONDED. */
-  requestBond(): Promise<string>;`);
+  requestBond(): Promise<string>;
+  isSystemChooserAvailable(): boolean;
+  chooseMuseWithSystem(): Promise<string>;
+  cancelSystemChooser(): void;
+  listAssociatedMuseDevices(): Promise<string>;`);
     writeFileSync(specPath, diagnosticSpec);
     delete manifest.type; // RN CLI loads react-native.config.js as CommonJS.
     // PR20 has no Android Gradle entry; retain this explicit consumer adaptation.
@@ -79,7 +93,7 @@ for (const name of Object.keys(pins).filter((name) => !process.argv.includes('--
   writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   run('pnpm', ['pack', '--pack-destination', join(root, 'vendors')], directory);
   const file = `nitro-forge-${name}-${manifest.version}.tgz`;
-  provenance[name] = { ...manifest.moyoSource, file, sha256: createHash('sha256').update(readFileSync(join(root, 'vendors', file))).digest('hex'), ...(name === 'bluetooth-v1' ? { nitrogen: nitro, runtime: nitro, android: 'BLE GATT only; Quest Muse input protocol unavailable' } : {}) };
+  provenance[name] = { ...manifest.moyoSource, file, sha256: createHash('sha256').update(readFileSync(join(root, 'vendors', file))).digest('hex'), ...(name === 'bluetooth-v1' ? { nitrogen: nitro, runtime: nitro, android: 'BLE GATT diagnostics with explicit documented ASA host negotiation; Muse input unverified' } : {}) };
 }
 const lockPath = join(root, 'vendors', 'forge-source-lock.json');
 writeFileSync(lockPath, `${JSON.stringify({ ...JSON.parse(readFileSync(lockPath, 'utf8')), ...provenance }, null, 2)}\n`);

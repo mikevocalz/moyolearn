@@ -28,7 +28,8 @@ from physical-device interaction evidence.
 | Diagnostic8 app/UI/mobile types | PASS | `pnpm --filter @acme/app --filter @acme/ui --filter mobile typecheck` |
 | Diagnostic8 APK build/install | PASS | 24s, 1523 tasks; main agent data-preserving `adb install -r` returned Success; no new tip proof |
 | Quest immersive classification/focus | PASS on physical Quest | VRActivity reached FOCUSED with valid rendered views and real native camera callback; [retained evidence](evidence/quest-immersive-classification.json) |
-| Generic public XR input fallback | PENDING target/controller/pen validation | Immersive focus is confirmed; target visibility and controller/pen input remain unverified |
+| Generic public XR Touch/target route | PASS, user-confirmed Touch positive control |8 controller/8 target events with focused rendered views; no Muse identity inferred |
+| Muse tip input through generic XR | NOT VERIFIED in two bounded trials |3 tip presses before restart and 3 after restart produced no new controller/target callbacks |
 | Physical resize appearance | User-reported PASS | User resized the middle content and answered “Looks correct”; geometry tests are separate from that visual report |
 | Native Rive loading, full Forge preview, pen pose/haptics, iOS/iPadOS/Duo | NOT RUN | No source-test result is counted as hardware support |
 
@@ -165,7 +166,8 @@ HID restrictions, retry protected reads or create an input provider. The hardwar
 diagnosis above was captured on 7. The main agent has now installed 8 using
 Meta CLI `adb install -r`, which returned Success without uninstall or app-data
 clearing. No protected channel was retried and no new tip/pressure proof was
-obtained from this update. Generic physical XR input validation remains pending.
+obtained from this update. At that installation stage, physical XR input
+validation was still pending; the later Touch/Muse trials are recorded below.
 
 - Native source templates, JVM test source and Gradle template match the 8 archive
   byte-for-byte (9 template files checked). Both mobile/app dependency pins and
@@ -252,8 +254,9 @@ VRActivity; the shared/PICO stripping behavior remains intact.
   establish target visibility or a controller/pen input frame.
 - [Retained focus evidence](evidence/quest-immersive-classification.json) records
   the actual manifest classification, runtime values and log hash. MainActivity's
-  1024x640dp/unspecified contract remains unchanged. Target visibility, controller
-  profiles/frames and Muse tip/pressure/pose remain unverified.
+  1024x640dp/unspecified contract remains unchanged. At this classification-only
+  stage, target/controller and Muse input were not verified; the subsequent
+  renderer and physical trials below provide the later results.
 
 
 ## Generic simple-controller renderer intake
@@ -292,8 +295,157 @@ protocol. The previous 73c6 AAR is retained unchanged.
   pending target. No wake, unlock, PIN or boundary action was attempted by the
   reviewing agent.
 
-The new renderer is built and installed. Accepted interaction profiles,
-controller frames and physical Muse tip/pressure input remain pending an awake,
-unlocked hardware test. The earlier successful immersive-focus/camera result
-was obtained with the previous renderer and is not reused as proof of this
-candidate's input behavior.
+The new renderer is built and installed. The awake follow-up below confirms
+accepted profiles and a user-identified Touch positive control through this
+candidate. Muse tip/pressure input remains unverified. The earlier camera-only
+result is not reused as proof of controller or pen input.
+
+
+## Focused Touch positive control and bounded Muse tip trial
+
+The new renderer APK (`30d96e69...6266b`) resumed after the user woke/unlocked the
+headset. The user confirmed the positive-control input was a Quest Touch
+controller. The probe recorded 8 controller events and 8 target events; its last
+Touch target click was timestamp 1793680169073 with source value 1. These real
+callbacks establish the generic controller/target route, not Muse identity.
+
+The runtime logged right-hand `/interaction_profiles/oculus/touch_controller`
+and later both-hand `/interaction_profiles/khr/simple_controller`. An accepted
+interaction-profile name does not identify the Bluetooth pen. The last recorded
+Touch click precedes the later simple-profile transition; it is not relabeled
+as a Muse or simple-profile event.
+
+For the next bounded trial the user pressed the Muse tip three times. Baseline
+and after-state remained exactly 8 controller/8 target events, with the same last
+Touch timestamp. OpenXR continued FOCUSED with `shouldRender:1`, `viewsValid:1`
+and `layerCount:1` in 80 focused frame samples. The log also contains one initial
+VISIBLE rendered frame before those focused samples, with no `shouldRender:0`
+sample. Thus the later Muse tip trial was
+not invalidated by the earlier sleeping/keyguard or unfocused-panel condition,
+but it produced no new app event attributable to the Muse tip. No pressure or
+Muse pose was verified.
+
+[Retained trial evidence](evidence/quest-touch-muse-tip-trial.json) includes bounded
+counts/profile transitions and source hashes, omitting raw room coordinates,
+logical device IDs and Bluetooth addresses. Zero new app events in this window
+does not establish universal hardware incompatibility or that no OS component
+receives data.
+
+The user subsequently reported restarting Muse. One fresh read-only post-restart
+snapshot at 04:32:05UTC still found the pen bonded and HidHost CONNECTED(state 2),
+with native HID `ready:F`, 0 reports/0 drops and no Logitech/Muse device or stylus
+source in InputReader. This confirms current transport connectivity, not an
+independently captured off/on transition. No new pairing, protected GATT reads or
+writes were performed by the reviewing agent.
+
+The user then confirmed three more Muse tip presses after restarting, with the
+Touch controllers held still. The second after-state again remained exactly
+8 controller/8 target events and last Touch timestamp 1793680169073. Its runtime
+window contains 54 FOCUSED rendered-frame samples (`state:5`, `shouldRender:1`,
+`viewsValid:1`, `layerCount:1`), ending at epoch 1793680389.290. Both counter deltas
+are zero. This is a second bounded, connected, focused trial with no new public
+probe callback from the user's Muse tip presses. It does not establish a global
+hardware incompatibility or identify the underlying OS/runtime cause, and no
+pressure or Muse pose was verified.
+
+The final Touch follow-up delivered source 3 DOWN to the controller and target
+handlers at 1793680449768/1793680449774, then unmounted the scene at
+1793680449970. Pinned renderer source defines source 3 as `BackButton`
+(left Menu/right B); its DOWN callback invokes Android back handling, whose
+Quest entry point calls `onExitViro` and exits VRActivity. Own activity events
+recorded an `app-request` finish and MainActivity resume. A fresh PID query
+still returned 15278, and the retained own-package crash-buffer query was empty.
+This matches the back-exit path, with no retained evidence of a native crash;
+it does not establish which physical button was pressed. The attempt is not a
+completed source 1 trigger-cycle control and does not alter either prior Muse
+trial. The development probe now returns to `/forge-board-probe` when entered
+without navigation history, avoiding the observed unhandled `GO_BACK` warning.
+This navigation fallback passed mobile typecheck; no new hardware trial was run.
+
+Read-only Quest CDM inspection found two real associations owned by
+`com.moyolearn.app`, IDs1 and2, both named Logitech Muse and approved at
+00:43:58/00:44:02EST on November3. Each OS record retained an actual BLE scan
+selection. The later application chooser receipt, generation23, reported
+`cancelled` with `discovery_timeout`; it had no association ID or activity result.
+That later timeout does not erase the earlier OS associations. The dump does not
+establish which request generation created either association. Association alone
+proves neither Bluetooth bonding nor available pen input.
+
+Android14's public CDM source documents `onAssociationCreated` as an independent
+success callback and permits it without first opening approval UI. Artifact13
+only retained that callback's info and waited for `Activity.RESULT_OK`, so it
+could lose a genuine success. Artifact14's shared verified completion fix is in
+progress; this is source diagnosis, not physical validation of the fix.
+[Redacted association evidence](evidence/quest-cdm-association-callback.json)
+retains only own-app records and source hashes.
+
+Native 14's independent association callback was physically validated on Quest:
+association 3 completed through `association-callback`, retaining a null activity
+result code, and the normal application reached a real GATT link. Android bond
+state then changed 10→11→12. Discovery completed successfully with 7 services.
+These are transport and OS-pairing observations, not verified pen input.
+
+Normal public ASAS reads returned status 0: accessory version `0200010100`;
+a 67-byte UTI value with prefix `42` followed by 66 bytes containing
+`com.logitech.muse.y577`, `com.logitech.muse`, and
+`com.apple.spatial-stylus`; and host version `00010100`. Under the current Apple
+R32 Update1 major-byte-first tables, the measured version bytes describe 0.1,
+with a one-byte zero feature set. They are unsupported by the current strict 1.1
+host policy. No host negotiation write was performed, and these bytes are not
+reinterpreted as 1.0 without matching protocol evidence.
+
+The user confirmed pressing the chooser action again, which explicitly releases
+the previous link; the observed disconnect is not attributed to a timeout.
+[Redacted public-path evidence](evidence/quest-public-asa14.json) records the
+actual callbacks, bond transitions, read payloads and source hashes. Separate
+UiAutomation descriptor instrumentation, if run, uses test-only authority and
+must not be reported as normal production app access. Artifact 15 remains held;
+no installation or live-context change was performed by this reviewing agent.
+
+A subsequent read-only OS snapshot found Muse bonded as a Low Energy device
+and HidHost CONNECTED, while native HID remained `ready:F` with zero reports
+and zero drops. InputReader still contained no Logitech/Muse input device.
+This preserves the distinction between a connected transport and working input.
+Two separate test-only descriptor-reader attempts failed before BLE operations
+because UiAutomationService was already registered. This is an instrumentation
+ownership/setup failure, not evidence of a Muse hardware or protocol failure.
+Neither attempt returned HID descriptor bytes; no descriptor or tip/pressure
+decoding is claimed.
+
+On artifact 14 connection generation 3, standard Device Information reads all
+returned GATT status 0: model Muse, manufacturer Logi, firmware 2.9.8
+(`2A26`, hex `322e392e38`), software 45.41337.3074452168 (`2A28`), and
+PnP USB vendor 046D/product D11E. Serial-number data is deliberately omitted.
+
+During a bounded 50-second Android `getevent -lt` capture, the user confirmed
+three tip presses and three presses of each near-tip button, with Touch
+controllers held still. Meta CLI returned exit 124 from the timeout and included
+stdout in its error result: four input-device enumerations and no event lines.
+The redirected file was empty because of that CLI error-handling path; its
+empty contents alone are not negative input evidence. The subsequent OS
+snapshot still showed HidHost connected, native HID `ready:F`, zero reports
+and zero drops. These observations do not establish global hardware
+incompatibility or verified button/pressure decoding.
+
+The user declined stopping the existing automation service, so the separate
+test-only HID descriptor reader remains blocked by UiAutomation ownership.
+No HID descriptor bytes or host-negotiation writes have been obtained.
+The artifact 14 capture above is separate from the later artifact 15 installation;
+installation completion is not asserted by this receipt.
+
+Latest physical status: artifact 15 installed successfully with replacement
+installation and preserved application data (APK SHA256 prefix `780f0d20`).
+Portable 9 loaded, and the explicit association-history action returned two
+device rows deduplicated from three owned OS associations: association 3 was
+currently bonded, association 2 was not. Neither row carried RSSI or a nearby
+availability claim.
+
+Explicitly reconnecting the selected, currently bonded association 3 produced
+controller state `linked`, detail `awaiting-native-input`, and native
+`connected:true` in connection generation 1. `systemChooser` remained null;
+recovery did not open another chooser. Installed history selection and GATT
+reconnect passed, while pressure, pose and tip input remain unverified.
+[Redacted artifact 15 evidence](evidence/quest-history-reconnect15.json) keeps
+the physical history/reconnect receipt separate from the artifact 14 input trial.
+The separate test-only descriptor APK was removed successfully. Inspection
+remained active as requested by the user; no HID descriptor bytes were obtained.

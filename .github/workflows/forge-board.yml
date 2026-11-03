@@ -42,6 +42,8 @@ jobs:
         run: node --test packages/app/features/tutor/forge-board-export.test.ts
       - name: Installed Bluetooth artifact contract
         run: node --test tooling/forge-pen-connect/vendor.test.mjs
+      - name: System pen selection and cancellation
+        run: node --test tooling/forge-pen-connect/portable/tests/system-chooser.test.ts
       - name: Keyboard history uses the same document
         run: node --test packages/ui/whiteboard-history.test.ts
       - name: Isolated fixture persistence

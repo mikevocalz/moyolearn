@@ -2,6 +2,7 @@
 export interface ForgePenDiagnosticsPort {
   discoverGattServices(): Promise<string>;
   requestBond(): Promise<string>;
+  configureSpatialAccessoryHost(): Promise<string>;
   readGattCharacteristic(characteristicKey: string): Promise<string>;
   readGattDescriptor(descriptorKey: string): Promise<string>;
   setGattNotification(characteristicKey: string, enabled: boolean): Promise<string>;

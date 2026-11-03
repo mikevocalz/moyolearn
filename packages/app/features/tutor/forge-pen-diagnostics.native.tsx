@@ -85,7 +85,7 @@ export function useForgePenDiagnostics(readPort: () => ForgePenDiagnosticsPort |
     state.setState({ visible: true, error: null });
     try { refresh(); } catch (error) { state.setState({ error: error instanceof Error ? error.message : 'Bluetooth diagnostics are unavailable.' }); }
   }, [refresh, state]);
-  const run = useCallback((kind: 'discover' | 'bond' | 'read' | 'descriptor' | 'enable' | 'disable', key = '') => {
+  const run = useCallback((kind: 'discover' | 'bond' | 'initialize' | 'read' | 'descriptor' | 'enable' | 'disable', key = '') => {
     if (state.getState().busy) return;
     state.setState({ busy: true, error: null });
     queue.current = queue.current.then(async () => {
@@ -94,6 +94,7 @@ export function useForgePenDiagnostics(readPort: () => ForgePenDiagnosticsPort |
         if (!snapshot.connected) throw new Error('The Bluetooth link is disconnected.');
         if (kind === 'discover') await port.discoverGattServices();
         else if (kind === 'bond') await port.requestBond();
+        else if (kind === 'initialize') await port.configureSpatialAccessoryHost();
         else if (kind === 'read') await port.readGattCharacteristic(key);
         else if (kind === 'descriptor') await port.readGattDescriptor(key);
         else {
@@ -128,10 +129,12 @@ export function useForgePenDiagnostics(readPort: () => ForgePenDiagnosticsPort |
           <Button title="Close diagnostics" onPress={close} />
           {view.snapshot?.bondState === 10 ? <Button title="Pair with Quest" disabled={view.busy || !view.snapshot.connected} onPress={() => run('bond')} /> : null}
           <Button title="Discover services" disabled={view.busy || !view.snapshot?.connected} onPress={() => run('discover')} />
+          <Button title="Initialize spatial session" disabled={view.busy || !view.snapshot?.connected || view.snapshot.blocked === true} onPress={() => run('initialize')} />
           <Button title="Capture Muse tip for 120 seconds" disabled={view.capturing || !view.snapshot?.connected} onPress={capture} />
           <Button title="Stop capture" disabled={!view.capturing} onPress={() => { stopCapture(); stopNative(); releaseNotifications(); }} />
         </View>
         <Text>Pair with Quest opens Android's own pairing prompt for this connected device. Bluetooth bonding alone does not verify pen input.</Text>
+        <Text>Initialize spatial session writes the documented host version after you read the accessory version on this connection. Optional features remain off. This does not verify Muse input or tracking.</Text>
         <Text testID="forge-pen-diagnostic-status">Link: {view.snapshot ? (view.snapshot.connected ? 'connected' : 'disconnected') : 'not observed'} · Native bond state: {view.snapshot?.bondState ?? 'not reported'} · Services: {view.snapshot?.servicesState ?? 'unknown'} · Notifications: {view.snapshot?.totalNotifications ?? 'not reported'} · Sequence: {view.snapshot?.lastSequence ?? 'not reported'} · Generation: {view.snapshot?.connectionGeneration ?? 'not reported'} · Polling: {view.capturing ? 'active' : 'stopped'} · Native capture: {view.snapshot?.nativeCapturing === null || !view.snapshot ? 'not reported' : String(view.snapshot.nativeCapturing)} · Blocked: {view.snapshot?.blocked === null || !view.snapshot ? 'not reported' : String(view.snapshot.blocked)}</Text>
         {view.snapshot?.inventoryTruncated ? <Text tone="danger">The native or displayed service inventory was truncated. Unlisted data has not been inspected.</Text> : null}
         {view.error ? <Text tone="danger" selectable>{view.error}</Text> : null}

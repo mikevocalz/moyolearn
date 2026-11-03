@@ -84,8 +84,8 @@
     "typegpu": "catalog:",
     "uniwind": "catalog:",
     "zustand": "catalog:",
-    "@nitro-forge/bluetooth-v1": "file:../../vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.8.tgz",
-    "@nitro-forge/pen-connect": "file:../../vendors/nitro-forge-pen-connect-0.1.0-moyo.6.tgz"
+    "@nitro-forge/bluetooth-v1": "file:../../vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.15.tgz",
+    "@nitro-forge/pen-connect": "file:../../vendors/nitro-forge-pen-connect-0.1.0-moyo.9.tgz"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",

@@ -10,6 +10,7 @@ internal sealed class GattDiagnosticOperation(val kind: String, val key: String?
   var timeout: Runnable? = null
   class Discover : GattDiagnosticOperation("discover", null)
   class Read(val characteristic: BluetoothGattCharacteristic, key: String) : GattDiagnosticOperation("read", key)
+  class ConfigureSpatialHost(val characteristic: BluetoothGattCharacteristic, key: String, val bytes: ByteArray) : GattDiagnosticOperation("configure-spatial-host", key)
   class ReadDescriptor(val descriptor: BluetoothGattDescriptor, key: String) : GattDiagnosticOperation("read-descriptor", key)
   class Subscribe(val characteristic: BluetoothGattCharacteristic, val descriptor: BluetoothGattDescriptor,
     val characteristicKey: String, val enabled: Boolean, val mode: String) : GattDiagnosticOperation("subscribe", characteristicKey)

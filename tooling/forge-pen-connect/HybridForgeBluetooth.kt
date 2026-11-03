@@ -14,12 +14,14 @@ import android.bluetooth.le.BluetoothLeScanner
 import android.bluetooth.le.ScanCallback
 import android.bluetooth.le.ScanResult
 import android.bluetooth.le.ScanSettings
+import android.companion.CompanionDeviceManager
 import android.content.Intent
 import android.provider.Settings
 import android.content.Context
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Handler
+import android.os.SystemClock
 import android.os.Looper
 import com.margelo.nitro.NitroModules
 import com.margelo.nitro.core.Promise
@@ -35,7 +37,7 @@ import java.util.concurrent.atomic.AtomicLong
  * Requires OS Bluetooth permissions requested by the React Native host first.
  *
  * Never connects to a caller-supplied arbitrary address: connect accepts
- * ONLY devices actually received from the latest foreground scan.
+ * ONLY devices actually received from the latest foreground scan or current OS-bonded BLE selection.
  */
 @SuppressLint("MissingPermission")
 class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
@@ -49,12 +51,15 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
       } catch (_: Throwable) { false }
   }
 
-  private data class Seen(val device: BluetoothDevice, val name: String, val rssi: Int)
+  private data class Seen(val device: BluetoothDevice, val name: String, val rssi: Int?, val bonded: Boolean, val advertisement: ScanAdvertisementMetadata? = null, val selectionSource: String? = null, val associationId: Int? = null)
   private val lock = Any()
   private val discovered = ConcurrentHashMap<String, Seen>()
   private val main = Handler(Looper.getMainLooper())
   private var scanner: BluetoothLeScanner? = null
   private var scanCallback: ScanCallback? = null
+  private var scanPolicy = ScanDiscoveryPolicy()
+  @Volatile private var systemChooser: CompanionMuseChooser? = null
+  private val chooserGeneration = AtomicLong(0)
   private var activeAttempt: GattConnectionAttempt? = null
   private val connectionGeneration = AtomicLong(0)
   private val diagnosticSequence = AtomicLong(0)
@@ -81,6 +86,90 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
     }
   }
 
+  override fun isSystemChooserAvailable(): Boolean = !disposed &&
+    context().packageManager.hasSystemFeature(PackageManager.FEATURE_COMPANION_DEVICE_SETUP) &&
+    context().getSystemService(CompanionDeviceManager::class.java) != null
+
+  override fun chooseMuseWithSystem(): Promise<String> {
+    val result = Promise<String>()
+    val generation = synchronized(lock) { chooserGeneration.incrementAndGet() }
+    main.post {
+      try {
+        check(!disposed && chooserGeneration.get() == generation) { "System chooser request cancelled before launch" }
+        check(isSystemChooserAvailable()) { "System companion-device chooser unavailable" }
+        requirePermission(false)
+        stopScan()
+        systemChooser?.cancel("Replaced by a new system chooser request")
+        val reactContext = NitroModules.applicationContext ?: throw IllegalStateException("React context unavailable")
+        lateinit var request: CompanionMuseChooser
+        request = CompanionMuseChooser(reactContext, main, generation) { device, scan, associationId ->
+          check(!disposed && systemChooser === request && chooserGeneration.get() == generation) { "Stale system chooser selection" }
+          val id = device.address
+          val name = scan?.scanRecord?.deviceName?.takeIf { it.isNotBlank() } ?: device.name?.takeIf { it.isNotBlank() }
+            ?: throw IllegalStateException("System selection has no actual device name")
+          val bonded = device.bondState == BluetoothDevice.BOND_BONDED
+          val seen = Seen(device, name, scan?.rssi, bonded, scan?.toAdvertisementMetadata())
+          // The OS-selected actual object joins this owner's bounded candidate set.
+          synchronized(lock) {
+            check(!disposed && systemChooser === request && chooserGeneration.get() == generation) { "Stale system chooser selection" }
+            if (discovered.size >= 50 && !discovered.containsKey(id)) discovered.keys.sorted().lastOrNull()?.let { discovered.remove(it) }
+            discovered[id] = seen
+          }
+          val json = JSONObject().put("id", id).put("name", name).put("bonded", bonded)
+            .put("selectionSource", "companion-device-manager")
+          associationId?.let { json.put("associationId", it) }
+          scan?.let { json.put("rssi", it.rssi) }
+          json.toString()
+        }
+        synchronized(lock) {
+          check(!disposed && chooserGeneration.get() == generation) { "System chooser cancelled before publication" }
+          systemChooser = request
+        }
+        request.start().then { result.resolve(it) }.catch { result.reject(it) }
+      } catch (error: Exception) { result.reject(error) }
+    }
+    return result
+  }
+
+  override fun cancelSystemChooser() {
+    val old = synchronized(lock) { chooserGeneration.incrementAndGet(); systemChooser }
+    main.post { old?.cancel("System chooser cancelled by application") }
+  }
+
+  override fun listAssociatedMuseDevices(): Promise<String> {
+    val result = Promise<String>()
+    val pending = synchronized(lock) { Pair(chooserGeneration.incrementAndGet(), systemChooser) }
+    val generation = pending.first
+    main.post {
+      try {
+        pending.second?.cancel("Replaced by an explicit association history request")
+        check(!disposed && chooserGeneration.get() == generation) { "Association history request cancelled" }
+        check(Build.VERSION.SDK_INT >= 33) { "Association history selection requires Android13 or newer; use the normal system chooser" }
+        check(isSystemChooserAvailable()) { "System companion-device service unavailable" }
+        requirePermission(false)
+        stopScan()
+        val owned = CompanionAssociationHistory(context()).listMuse()
+        val array = JSONArray()
+        synchronized(lock) {
+          check(!disposed && chooserGeneration.get() == generation) { "Stale association history result" }
+          for (candidate in owned) {
+            val device = candidate.device
+            val id = device.address
+            val bonded = device.bondState == BluetoothDevice.BOND_BONDED
+            if (discovered.size >= 50 && !discovered.containsKey(id)) discovered.keys.sorted().lastOrNull()?.let { discovered.remove(it) }
+            discovered[id] = Seen(device, candidate.name, null, bonded, null, "association-history", candidate.associationId)
+            val item = JSONObject().put("id", id).put("name", candidate.name).put("bonded", bonded)
+              .put("selectionSource", "association-history")
+            candidate.associationId?.let { item.put("associationId", it) }
+            array.put(item)
+          }
+        }
+        result.resolve(array.toString())
+      } catch (error: Exception) { result.reject(error) }
+    }
+    return result
+  }
+
   override fun openBluetoothSettings() {
     val intent = Intent(Settings.ACTION_BLUETOOTH_SETTINGS).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
     context().startActivity(intent)
@@ -93,6 +182,7 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
   }
 
   override fun startScan() {
+    cancelSystemChooser()
     check(!disposed) { "ForgeBluetooth has been disposed" }
     requirePermission(true)
     requirePermission(false)
@@ -101,7 +191,16 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
     stopScan()
     discovered.clear()
     scanFailure = null
+    // Bonded peripherals may already be connected to the OS and not advertise.
+    // Seed only actual public adapter objects, never caller-supplied addresses.
+    for (device in bt.bondedDevices.sortedBy { it.address }.take(50)) {
+      if (device.type != BluetoothDevice.DEVICE_TYPE_LE && device.type != BluetoothDevice.DEVICE_TYPE_DUAL) continue
+      val id = device.address
+      val name = device.name?.takeIf { it.isNotBlank() } ?: "Unnamed bonded Bluetooth device (" + id.takeLast(5) + ")"
+      discovered[id] = Seen(device, name, null, true)
+    }
     val current = bt.bluetoothLeScanner ?: throw IllegalStateException("BLE scanner unavailable")
+    val policy = ScanDiscoveryPolicy()
     val callback = object : ScanCallback() {
       override fun onScanResult(callbackType: Int, result: ScanResult) {
         if (disposed) return
@@ -110,18 +209,41 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
         val advertisedName = result.scanRecord?.deviceName?.takeIf { it.isNotBlank() }
         val cachedName = try { device.name?.takeIf { it.isNotBlank() } } catch (_: SecurityException) { null }
         val name = advertisedName ?: cachedName ?: "Unnamed Bluetooth device (" + id.takeLast(5) + ")"
+        val advertisement = result.toAdvertisementMetadata()
+        val bonded = try { device.bondState == BluetoothDevice.BOND_BONDED } catch (_: SecurityException) { return }
         synchronized(lock) {
           // A stopped scan can still have queued binder callbacks. Only the
           // current scanner may add candidates to the current selection set.
-          if (!disposed && scanCallback === this && id.isNotBlank() && discovered.size < 50) {
-            discovered[id] = Seen(device, name, result.rssi)
+          if (!disposed && scanCallback === this && id.isNotBlank() && (discovered.size < 50 || discovered.containsKey(id))) {
+            discovered[id] = Seen(device, name, result.rssi, bonded, advertisement)
           }
         }
       }
       override fun onScanFailed(errorCode: Int) {
-        synchronized(lock) {
-          if (!disposed && scanCallback === this) {
+        val retry = synchronized(lock) {
+          if (disposed || scanCallback !== this) return
+          if (policy.retryLegacyAfterFailure(errorCode)) true else {
             scanFailure = "Android Bluetooth scan failed, code " + errorCode
+            false
+          }
+        }
+        if (retry) {
+          val owner = this
+          main.post {
+            if (!synchronized(lock) { !disposed && scanCallback === owner && scanner === current }) return@post
+            try {
+              current.stopScan(owner)
+              if (!synchronized(lock) { !disposed && scanCallback === owner && scanner === current }) return@post
+              val fallback = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+                .setLegacy(true).build()
+              current.startScan(null, fallback, owner)
+              // Cancellation may race the Binder call; stop only this callback.
+              if (!synchronized(lock) { !disposed && scanCallback === owner && scanner === current }) current.stopScan(owner)
+            } catch (error: Exception) {
+              synchronized(lock) {
+                if (!disposed && scanCallback === owner) scanFailure = error.message ?: "Legacy scan fallback failed"
+              }
+            }
           }
         }
       }
@@ -129,8 +251,11 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
     synchronized(lock) {
       scanner = current
       scanCallback = callback
+      scanPolicy = policy
     }
-    current.startScan(null, ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY).build(), callback)
+    val settings = ScanSettings.Builder().setScanMode(ScanSettings.SCAN_MODE_LOW_LATENCY)
+      .setLegacy(false).build()
+    current.startScan(null, settings, callback)
   }
 
   override fun stopScan() {
@@ -150,7 +275,12 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
   override fun getDevicesJson(): String {
     val array = JSONArray()
     for ((id, seen) in discovered.entries.sortedBy { it.key }.take(50)) {
-      array.put(JSONObject().put("id", id).put("name", seen.name).put("rssi", seen.rssi))
+      val item = JSONObject().put("id", id).put("name", seen.name).put("bonded", seen.bonded)
+      seen.selectionSource?.let { item.put("selectionSource", it) }
+      seen.associationId?.let { item.put("associationId", it) }
+      seen.rssi?.let { item.put("rssi", it) }
+      seen.advertisement?.appendTo(item, SystemClock.elapsedRealtimeNanos())
+      array.put(item)
     }
     return array.toString()
   }
@@ -162,6 +292,13 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
     requirePermission(false)
     val seen = discovered[deviceId]
       ?: return Promise.rejected(IllegalArgumentException("Connect only to a device returned by the last BLE scan"))
+    if (seen.bonded && seen.device.bondState != BluetoothDevice.BOND_BONDED) {
+      return Promise.rejected(IllegalArgumentException("Selected device is no longer OS bonded; scan again"))
+    }
+    val actualBonded = seen.device.bondState == BluetoothDevice.BOND_BONDED
+    if (!ScanAdvertisementMetadata.canConnect(seen.advertisement?.connectable, actualBonded)) {
+      return Promise.rejected(IllegalArgumentException("Selected advertisement is not connectable and is not OS bonded. Put the pen in pairing mode and select a fresh connectable advertisement."))
+    }
     disconnect()
     val attempt = GattConnectionAttempt(connectionGeneration.incrementAndGet())
     synchronized(lock) { activeAttempt = attempt }
@@ -229,6 +366,9 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
       @Suppress("DEPRECATION", "OVERRIDE_DEPRECATION")
       override fun onDescriptorRead(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
         if (Build.VERSION.SDK_INT < 33 && isCurrentAttempt(attempt, gatt)) attempt.diagnostics?.onDescriptorRead(gatt, descriptor, status, descriptor.value ?: byteArrayOf())
+      }
+      override fun onCharacteristicWrite(gatt: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) {
+        if (isCurrentAttempt(attempt, gatt)) attempt.diagnostics?.onCharacteristicWrite(gatt, characteristic, status)
       }
       override fun onDescriptorWrite(gatt: BluetoothGatt, descriptor: BluetoothGattDescriptor, status: Int) {
         if (isCurrentAttempt(attempt, gatt)) attempt.diagnostics?.onDescriptorWrite(gatt, descriptor, status)
@@ -303,12 +443,20 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
   }
 
   override fun discoverGattServices(): Promise<String> = diagnosticSession().discover()
+  override fun configureSpatialAccessoryHost(): Promise<String> = diagnosticSession().configureSpatialAccessoryHost()
   override fun readGattCharacteristic(characteristicKey: String): Promise<String> = diagnosticSession().read(characteristicKey)
   override fun readGattDescriptor(descriptorKey: String): Promise<String> = diagnosticSession().readDescriptor(descriptorKey)
   override fun setGattNotification(characteristicKey: String, enabled: Boolean): Promise<String> = diagnosticSession().setNotification(characteristicKey, enabled)
   override fun getGattDiagnosticsJson(): String {
     val session = if (isConnected()) diagnosticSession() else lastDiagnostics
-    return session?.snapshot() ?: "{\"version\":1,\"connected\":false,\"connectionGeneration\":0,\"bondState\":-1,\"snapshotTimeMs\":0,\"capturing\":false,\"blocked\":false,\"servicesState\":\"idle\",\"services\":[],\"operation\":null,\"subscriptions\":[],\"events\":[],\"totalNotifications\":0,\"lastSequence\":0}"
+    val json = session?.snapshot() ?: "{\"version\":1,\"connected\":false,\"connectionGeneration\":0,\"bondState\":-1,\"snapshotTimeMs\":0,\"capturing\":false,\"blocked\":false,\"servicesState\":\"idle\",\"services\":[],\"operation\":null,\"subscriptions\":[],\"events\":[],\"totalNotifications\":0,\"lastSequence\":0}"
+    val configuration = synchronized(lock) {
+      JSONObject().put("requestedLegacyOnly", scanPolicy.requestedLegacyOnly)
+        .put("fallbackUsed", scanPolicy.fallbackUsed)
+        .put("fallbackError", scanPolicy.fallbackError ?: JSONObject.NULL)
+    }
+    return JSONObject(json).put("scanConfiguration", configuration)
+      .put("systemChooser", systemChooser?.let { JSONObject(it.snapshot()) } ?: JSONObject.NULL).toString()
   }
   override fun requestBond(): Promise<String> = diagnosticSession().requestBond()
   override fun stopGattDiagnostics() { lastDiagnostics?.stop() }
@@ -318,6 +466,7 @@ class HybridForgeBluetooth : HybridForgeBluetoothSpec() {
   override fun dispose() {
     if (disposed) return
     disposed = true
+    cancelSystemChooser()
     disconnect()
     discovered.clear()
     super.dispose()

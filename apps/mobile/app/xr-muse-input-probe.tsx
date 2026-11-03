@@ -79,7 +79,10 @@ export default function XrMuseInputProbeRoute() {
   const router = useRouter();
   if (!__DEV__) return <Redirect href="/" />;
   if (Platform.OS !== 'android') return <View><Text>This input probe runs on an Android XR headset.</Text></View>;
-  return <ViroXRSceneNavigator vrInitialScene={INITIAL_SCENE} onExitViro={() => router.back()}
+  return <ViroXRSceneNavigator vrInitialScene={INITIAL_SCENE} onExitViro={() => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/forge-board-probe');
+  }}
     trackingOrigin="eye" handTrackingEnabled={false} hdrEnabled={false} pbrEnabled={false} bloomEnabled={false}
     style={{ flex: 1 }} />;
 }

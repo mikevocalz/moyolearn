@@ -610,11 +610,11 @@ importers:
         specifier: 'catalog:'
         version: 1.0.0(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
       '@nitro-forge/bluetooth-v1':
-        specifier: file:../../vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.8.tgz
-        version: file:vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.8.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))
+        specifier: file:../../vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.15.tgz
+        version: file:vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.15.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))
       '@nitro-forge/pen-connect':
-        specifier: file:../../vendors/nitro-forge-pen-connect-0.1.0-moyo.6.tgz
-        version: file:vendors/nitro-forge-pen-connect-0.1.0-moyo.6.tgz(@types/react@19.3.0)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
+        specifier: file:../../vendors/nitro-forge-pen-connect-0.1.0-moyo.9.tgz
+        version: file:vendors/nitro-forge-pen-connect-0.1.0-moyo.9.tgz(@types/react@19.3.0)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
       '@react-native-masked-view/masked-view':
         specifier: 'catalog:'
         version: 0.3.2(patch_hash=df22d01b7d19c67dfa713fbde9767e1f5d850e365a6b35a611e2b655cd04c0c4)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
@@ -1151,14 +1151,14 @@ importers:
         specifier: 4.2.0
         version: 4.2.0
       '@nitro-forge/bluetooth-v1':
-        specifier: file:../../vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.8.tgz
-        version: file:vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.8.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))
+        specifier: file:../../vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.15.tgz
+        version: file:vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.15.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))
       '@nitro-forge/board':
         specifier: file:../../vendors/nitro-forge-board-0.1.0-moyo.1.tgz
         version: file:vendors/nitro-forge-board-0.1.0-moyo.1.tgz(65af5a9a89683b8fe03ab3c2b2c8e856)
       '@nitro-forge/pen-connect':
-        specifier: file:../../vendors/nitro-forge-pen-connect-0.1.0-moyo.6.tgz
-        version: file:vendors/nitro-forge-pen-connect-0.1.0-moyo.6.tgz(@types/react@19.3.0)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
+        specifier: file:../../vendors/nitro-forge-pen-connect-0.1.0-moyo.9.tgz
+        version: file:vendors/nitro-forge-pen-connect-0.1.0-moyo.9.tgz(@types/react@19.3.0)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
       '@reactvision/react-viro':
         specifier: file:../../vendors/reactvision-react-viro-3.0.1-moyo.1.tgz
         version: file:vendors/reactvision-react-viro-3.0.1-moyo.1.tgz(patch_hash=d4a49157b5f6a4915a76ae878525547881a579c5fdb8db9c6e77148dce304bdf)(@reactvision/react-native-visionos@0.86.4(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(@types/react@19.3.0)(expo@58.0.19)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
@@ -4011,9 +4011,9 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@nitro-forge/bluetooth-v1@file:vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.8.tgz':
-    resolution: {integrity: sha512-kG/WxvUU3Bh32DFUV2EqYCBsLr0Amoo7O/FE4NUSCvT56oOz6pGENV71NtH+R6h1/jciJJO2aH5Jf8GvoIv5vA==, tarball: file:vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.8.tgz}
-    version: 0.1.0-moyo.8
+  '@nitro-forge/bluetooth-v1@file:vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.15.tgz':
+    resolution: {integrity: sha512-4KFmqfgGmPUmGSxqSViydgvEN/E3B37CmTFtRVjKVp2zVmcjy6AePf8GCXI66a7pJG3ePKyx63pHhv47UX7o/w==, tarball: file:vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.15.tgz}
+    version: 0.1.0-moyo.15
     peerDependencies:
       nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
       react-native: 0.88.0
@@ -4060,9 +4060,9 @@ packages:
       react-native-svg:
         optional: true
 
-  '@nitro-forge/pen-connect@file:vendors/nitro-forge-pen-connect-0.1.0-moyo.6.tgz':
-    resolution: {integrity: sha512-f3M/xb5LTOP8p+mk8k9Fw1CAiTmZNpx1CfJYPw3D1FYDnKWP1Ur8xFTyFCrysJasROb0/MAPnmHNB8LUU3lYjA==, tarball: file:vendors/nitro-forge-pen-connect-0.1.0-moyo.6.tgz}
-    version: 0.1.0-moyo.6
+  '@nitro-forge/pen-connect@file:vendors/nitro-forge-pen-connect-0.1.0-moyo.9.tgz':
+    resolution: {integrity: sha512-WYaSDEdaC9NpCHEPqcVEcNSerNxb+x3aS7dTyCe1MA8KzytaDnCV4UHQ62sr7YVXW1rM2flrVfVy89E1ScRPsA==, tarball: file:vendors/nitro-forge-pen-connect-0.1.0-moyo.9.tgz}
+    version: 0.1.0-moyo.9
     peerDependencies:
       react: 19.3.0
       react-native: 0.88.0
@@ -14811,7 +14811,7 @@ snapshots:
   '@next/swc-win32-x64-msvc@16.3.5':
     optional: true
 
-  '@nitro-forge/bluetooth-v1@file:vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.8.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))':
+  '@nitro-forge/bluetooth-v1@file:vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.15.tgz(nitro-core@1.0.0-alpha.nightly.100.g107f6fc66597)(react-native-nitro-modules@1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))':
     dependencies:
       nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
       react-native: 0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
@@ -14834,7 +14834,7 @@ snapshots:
       react: 19.3.0
       react-native-svg: 15.16.0(patch_hash=948b8ae7afaadc59224f6cc301c627b3d205307f2ebba21f1eb6101776e2779d)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
-  '@nitro-forge/pen-connect@file:vendors/nitro-forge-pen-connect-0.1.0-moyo.6.tgz(@types/react@19.3.0)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))':
+  '@nitro-forge/pen-connect@file:vendors/nitro-forge-pen-connect-0.1.0-moyo.9.tgz(@types/react@19.3.0)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))':
     dependencies:
       zustand: 5.0.16(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
     optionalDependencies:
@@ -15847,7 +15847,9 @@ snapshots:
       metro-runtime: 0.87.1
     transitivePeerDependencies:
       - '@babel/core'
+      - bufferutil
       - supports-color
+      - utf-8-validate
 
   '@react-native/normalize-colors@0.74.89': {}
 

@@ -36,6 +36,7 @@ internal class GattDiagnosticsSession(
   private val descriptors = LinkedHashMap<String, BluetoothGattDescriptor>()
   private val subscriptions = LinkedHashMap<String, String>()
   private val events = GattDiagnosticEventBuffer(generation, sequence)
+  private var spatialVersion: Pair<BluetoothGattCharacteristic, ByteArray>? = null
   private var totalNotifications = 0L
   private var bondRequest: GattBondRequest? = null
   @Volatile private var cached = JSONObject().put("version", 1).put("connected", true)
@@ -77,6 +78,7 @@ internal class GattDiagnosticsSession(
   private fun fail(op: GattDiagnosticOperation, message: String, status: Int? = null, cause: Exception? = null) {
     if (gate.active !== op) return
     op.timeout?.let { main.removeCallbacks(it) }
+    if (cause != null && op is GattDiagnosticOperation.ConfigureSpatialHost) gate.quarantine(op)
     if (cause == null) gate.finish(op) else gate.startFailed(op, cause)
     if (op is GattDiagnosticOperation.Discover) servicesState = "error"
     event("error", op.key, status, message = message)
@@ -125,6 +127,7 @@ internal class GattDiagnosticsSession(
     val op = GattDiagnosticOperation.Discover()
     return begin(op) {
       capturing = true
+      spatialVersion = null
       servicesState = "discovering"
       gatt.discoverServices()
     }
@@ -142,6 +145,44 @@ internal class GattDiagnosticsSession(
         .then { result.resolve(it) }.catch { result.reject(it) }
     }
     return result
+  }
+
+  /** Only the documented volatile ASA 1.1 host negotiation, never arbitrary writes. */
+  fun configureSpatialAccessoryHost(): Promise<String> {
+    val result = Promise<String>()
+    owner {
+      try {
+        val version = spatialVersion ?: throw IllegalStateException("Read the current Apple Spatial Accessory Version successfully first")
+        check(servicesState == "ready" && characteristics.values.any { it === version.first }) { "Discover and read the current accessory version first" }
+        val service = version.first.service
+        val host = service.getCharacteristic(UUID.fromString("3c7f9bdc-3bcb-a75f-c969-9bbd7f058f2b"))
+          ?: throw IllegalArgumentException("Current ASA service has no Host Version characteristic")
+        check(host.properties and BluetoothGattCharacteristic.PROPERTY_WRITE != 0) { "Host Version does not support acknowledged WRITE" }
+        val key = characteristics.entries.firstOrNull { it.value === host }?.key
+          ?: throw IllegalArgumentException("Host Version is not in the current discovered inventory")
+        val bytes = SpatialAccessoryVersionPolicy.createHostVersion(version.second)
+        val op = GattDiagnosticOperation.ConfigureSpatialHost(host, key, bytes)
+        begin(op) {
+          if (Build.VERSION.SDK_INT >= 33) gatt.writeCharacteristic(host, bytes, BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT) == BluetoothStatusCodes.SUCCESS
+          else writeLegacyCharacteristic(host, bytes)
+        }.then { result.resolve(it) }.catch { result.reject(it) }
+      } catch (error: Exception) { result.reject(error) }
+    }
+    return result
+  }
+
+  @Suppress("DEPRECATION")
+  private fun writeLegacyCharacteristic(characteristic: BluetoothGattCharacteristic, bytes: ByteArray): Boolean {
+    characteristic.writeType = BluetoothGattCharacteristic.WRITE_TYPE_DEFAULT
+    characteristic.value = bytes
+    return gatt.writeCharacteristic(characteristic)
+  }
+
+  fun onCharacteristicWrite(source: BluetoothGatt, characteristic: BluetoothGattCharacteristic, status: Int) = owner {
+    val op = gate.active as? GattDiagnosticOperation.ConfigureSpatialHost ?: return@owner
+    if (!connected || source !== gatt || op.characteristic !== characteristic) return@owner
+    event("spatial-host-write", op.key, status, op.bytes, message = "Documented ASA host session negotiation; does not verify input")
+    if (status == BluetoothGatt.GATT_SUCCESS) finish(op) else fail(op, "ASA Host Version write failed, status $status", status)
   }
 
   fun readDescriptor(key: String): Promise<String> {
@@ -197,6 +238,7 @@ internal class GattDiagnosticsSession(
     val op = gate.active as? GattDiagnosticOperation.Discover
     if (!connected || source !== gatt || op == null) return@owner
     if (status != BluetoothGatt.GATT_SUCCESS) { fail(op, "Service discovery failed, status $status", status); return@owner }
+    spatialVersion = null
     characteristics.clear(); descriptors.clear(); inventory = JSONArray(); inventoryTruncated = false
     val allServices = source.services
     if (allServices.size > 64) inventoryTruncated = true
@@ -236,6 +278,10 @@ internal class GattDiagnosticsSession(
       val op = gate.active as? GattDiagnosticOperation.Read ?: return@owner
       if (!connected || source !== gatt || op.characteristic !== characteristic) return@owner
       event("read", op.key, status, bytes, actual)
+      if (characteristic.service.uuid == UUID.fromString("e277e685-64cb-4a32-bf65-8766e708a037") &&
+          characteristic.uuid == UUID.fromString("e3ab6c3d-3e94-7a2c-db59-b8b91723cad4")) {
+        spatialVersion = if (status == BluetoothGatt.GATT_SUCCESS && actual < 512) Pair(characteristic, bytes.copyOf()) else null
+      }
       if (status == BluetoothGatt.GATT_SUCCESS) finish(op) else fail(op, "Characteristic read failed, status $status", status)
     }
   }
@@ -310,7 +356,7 @@ internal class GattDiagnosticsSession(
 
   fun close(reason: String) = owner {
     if (!connected) return@owner
-    connected = false; capturing = false
+    connected = false; capturing = false; spatialVersion = null
     bondRequest?.cancel(reason)
     gate.active?.let { fail(it, reason) }
     subscriptions.clear()

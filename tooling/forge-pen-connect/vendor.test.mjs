@@ -79,3 +79,19 @@ test('consumed Bluetooth archive matches frozen lock integrity and every install
     assert.ok(expected.equals(installed), `installed source must match packed bytes: ${name}`);
   }
 });
+
+test('actual adapter preserves OS-bonded selection without fabricating an RSSI', async () => {
+  const native = {
+    startScan() {}, stopScan() {}, getScanError: () => '',
+    getDevicesJson: () => JSON.stringify([
+      { id: 'actual-bonded', name: 'Actual bonded peripheral', bonded: true },
+      { id: 'actual-scan', name: 'Actual advertiser', bonded: false, rssi: -61 },
+    ]),
+  };
+  const devices = await createAndroidBlePenPort(native, { scanDurationMs: 500 }).scan();
+  assert.deepEqual(devices, [
+    { id: 'actual-bonded', name: 'Actual bonded peripheral', bonded: true },
+    { id: 'actual-scan', name: 'Actual advertiser', bonded: false, rssi: -61 },
+  ]);
+  assert.equal(Object.hasOwn(devices[0], 'rssi'), false);
+});
