@@ -5,6 +5,9 @@ on:
       - 'packages/app/features/tutor/*board*'
       - 'packages/ui/ForgeBoardIcon.tsx'
       - 'packages/ui/Whiteboard.tsx'
+      - 'packages/ui/whiteboard-*'
+      - 'apps/mobile/app/forge-board-probe.tsx'
+      - 'apps/mobile/src/forge-board-probe/**'
       - 'vendors/*forge*'
       - 'pnpm-lock.yaml'
       - '.github/workflows/forge-board.yml'
@@ -27,6 +30,8 @@ jobs:
         run: pnpm --filter @acme/app test:forge
       - name: Keyboard history uses the same document
         run: node --test packages/ui/whiteboard-history.test.ts
+      - name: Isolated fixture persistence
+        run: node --test apps/mobile/src/forge-board-probe/model.test.ts
       - name: App and toolbar types
         run: pnpm --filter @acme/app --filter @acme/ui typecheck
       - name: Preserve headset window contract

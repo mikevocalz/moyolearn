@@ -10,7 +10,7 @@
     "web": "expo start --web",
     "lint": "expo lint",
     "typecheck": "tsc --noEmit",
-    "test": "node --test 'src/spatial/*.test.ts'",
+    "test": "node --test 'src/spatial/*.test.ts' 'src/forge-board-probe/*.test.ts'",
     "visionos:pods": "cd visionos && pod install",
     "visionos:build": "xcodebuild -workspace visionos/Moyo.xcworkspace -scheme Moyo -configuration Debug -destination \"generic/platform=visionOS Simulator\" CODE_SIGNING_ALLOWED=NO build",
     "visionos:prepare": "node ../../tooling/prepare-visionos.mjs"
