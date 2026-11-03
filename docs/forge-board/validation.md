@@ -254,3 +254,46 @@ VRActivity; the shared/PICO stripping behavior remains intact.
   the actual manifest classification, runtime values and log hash. MainActivity's
   1024x640dp/unspecified contract remains unchanged. Target visibility, controller
   profiles/frames and Muse tip/pressure/pose remain unverified.
+
+
+## Generic simple-controller renderer intake
+
+The source-reviewed candidate from owning fork [PR 116](https://github.com/mikevocalz/virocore/pull/116)
+is commit `82ad61e74549073a9dc8ba95ede70f0f854889fc`, based exactly on
+`73c6a923fb63b71a1059fd241cf347e15898fd2d`. It adds public KHR simple-controller
+suggested bindings; it does not add a Muse driver, pressure decoder or pose
+protocol. The previous 73c6 AAR is retained unchanged.
+
+- Candidate: `vendors/viro-renderer-82ad61e74.aar`, SHA-256
+  `f85b0ef23b7ae5facce0000e99b2b74d5fd6e5aff4f3f20d89307b61bc749a87`.
+  [Provenance/build recipe](../../vendors/viro-renderer-82ad61e74.provenance.json)
+  records the source baseline, commands, inputs and ABI evidence.
+- Intake independently compared both ZIPs: the only changed member is
+  `jni/arm64-v8a/libviro_renderer.so`. Owning-source validation retained all 9749
+  defined exports, introduced no undefined imports, and retained DT_NEEDED,
+  SONAME and 16KiB LOAD alignment. All other AAR members remain byte-identical.
+- The durable config plugin now refreshes an existing renderer pin as well as
+  first generating it. The refresh requires a unique owned field, owned input
+  stream and its associated checksum guard; foreign guards before/after it
+  remain unchanged. Thirteen pin/classification/window regressions pass, and
+  CI includes the pin tests. Peer source review passed.
+- The bounded incremental Quest build passed in 30 seconds with 1515 tasks
+  (66 executed, 1449 up to date). The packaged arm64 renderer SHA-256 is
+  `8a0e6d02f4d1bd7dffd55a880c800c3634058d412582fbfbbc1d8a19dc6880a5`,
+  exactly matching the verified candidate. APK SHA-256:
+  `30d96e691213625571c01327cfc0f0a49dff39f9dfe4023973bb2accb926266b`.
+  Actual APK inspection retained the private Quest VR identifier and
+  MainActivity's 1024x640dp/unspecified window contract.
+- The main agent's data-preserving `adb install -r` returned Success. The next
+  launch wait did not establish a resumed activity or rendering failure. Its
+  startup log showed package-replaced/background task initialization without
+  MainActivity/ReactHost lifecycle or a fatal renderer error. Read-only OS
+  snapshots then showed Asleep and keyguard showing, with MainActivity only a
+  pending target. No wake, unlock, PIN or boundary action was attempted by the
+  reviewing agent.
+
+The new renderer is built and installed. Accepted interaction profiles,
+controller frames and physical Muse tip/pressure input remain pending an awake,
+unlocked hardware test. The earlier successful immersive-focus/camera result
+was obtained with the previous renderer and is not reused as proof of this
+candidate's input behavior.

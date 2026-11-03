@@ -12,6 +12,8 @@ on:
       - 'apps/mobile/src/forge-board-probe/**'
       - 'apps/mobile/src/spatial/MainContentFrame.tsx'
       - 'apps/mobile/src/spatial/main-content-geometry*'
+      - 'apps/mobile/plugins/**'
+      - 'vendors/viro-renderer*'
       - 'tooling/forge-pen-connect/**'
       - 'tooling/vendor-forge-pen-connect.mjs'
       - 'vendors/*forge*'
@@ -47,6 +49,6 @@ jobs:
       - name: App and toolbar types
         run: pnpm --filter @acme/app --filter @acme/ui --filter mobile typecheck
       - name: Preserve headset window contract
-        run: node --test apps/mobile/plugins/__tests__/spatial-window-contract.test.cjs apps/mobile/plugins/__tests__/quest-immersive-activity.test.cjs
+        run: node --test apps/mobile/plugins/__tests__/spatial-window-contract.test.cjs apps/mobile/plugins/__tests__/quest-immersive-activity.test.cjs apps/mobile/plugins/__tests__/renderer-pin.test.cjs
       - name: Quest middle content fits resized hosts
         run: node --test apps/mobile/src/spatial/main-content-geometry.test.ts

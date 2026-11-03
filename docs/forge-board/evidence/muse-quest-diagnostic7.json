@@ -363,7 +363,7 @@
     "note": "HID report access was denied. Zero received reports does not establish that the pen transmits no data."
   },
   "genericXrFallback": {
-    "result": "XR rendering restored; valid generic bindings and physical tip test pending",
+    "result": "XR rendering restored and target confirmed; binding fix installed, final input test pending headset wake/unlock",
     "diagnostic8Session": "VISIBLE, shouldRender=0; no focused rendered test established",
     "integrationGap": "Renderer generic simple-controller bindings rejected by runtime: trigger/value is unsupported for khr/simple_controller",
     "note": "Zero events do not establish that Muse has no supported runtime path.",
@@ -373,7 +373,17 @@
       "install": "data-preserving update succeeded",
       "runtime": "FOCUSED, shouldRender=1, viewsValid=1, layerCount=1",
       "nativeCameraCallback": true,
-      "targetInDeviceCapture": true
+      "targetInDeviceCapture": true,
+      "userConfirmedYellowTarget": true
+    },
+    "genericBindingFix": {
+      "sourcePullRequest": "https://github.com/mikevocalz/virocore/pull/116",
+      "sourceCommit": "82ad61e74549073a9dc8ba95ede70f0f854889fc",
+      "apkSha256": "30d96e691213625571c01327cfc0f0a49dff39f9dfe4023973bb2accb926266b",
+      "install": "data-preserving update succeeded",
+      "runtimeAcceptance": "pending awake/unlocked hardware test",
+      "touchControl": "earlier press overlapped reload; not scored",
+      "museTip": "not verified"
     }
   },
   "writes": {

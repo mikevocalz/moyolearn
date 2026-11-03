@@ -65,8 +65,8 @@ function GenericInputScene() {
           onClickState={(clickState, position, source) => record('target-click-state', { clickState, position, source })}
           onClick={(position, source) => record('target-click', { position, source })} />
         <ViroText position={[0, 0, 0.01]} width={1.65} height={1.1} color="#111111" ignoreEventHandling
-          style={{ fontSize: 22, textAlign: 'center', textAlignVertical: 'center' }}
-          text={`PUBLIC GENERIC INPUT TEST\nAim at this target. Press and release the Muse TIP.\nKeep Touch controllers still.\n\nStatus events: ${statusEvents}\nController events: ${controllerEvents}\nTarget events: ${targetEvents}\n\n${last}\n\nThese are generic controller events, not verified Muse identity or pressure.`} />
+          style={{ fontSize: 8, textAlign: 'center', textAlignVertical: 'center' }}
+          text={`PUBLIC GENERIC INPUT TEST\nAim at this target. Press and release the Muse TIP.\nKeep Touch controllers still.\n\nStatus events: ${statusEvents}\nController events: ${controllerEvents}\nTarget events: ${targetEvents}\n\n${last.slice(0, 120)}\n\nGeneric events; Muse identity and pressure remain unverified.`} />
       </ViroNode>
     </ViroScene>
   );
