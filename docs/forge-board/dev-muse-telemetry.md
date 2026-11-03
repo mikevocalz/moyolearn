@@ -104,7 +104,9 @@ Six controller/adapter tests include a temporary QuickDraw Store feeding real
 Yjs edits/undo/redo, held-tip gap cancellation, in-batch sequence holes, finite
 session cancellation and measured release. Five gravity-math and ten telemetry
 tests cover the remaining pure behavior. These are model/source checks;
-physical tilt-to-ink validation remains pending. The first physical start was
+physical testing subsequently completed a real stroke and saved/reopened it
+through actual route unmount/remount with exactly equal document records. This
+remains a finite computer-assisted DEV tilt cursor, not native Muse6DoF. The first physical start was
 rejected by a changing imperative-facade identity, now corrected with a mounted
 generation/version token. Three surface regression tests cover that correction;
 see [the first-attempt receipt](evidence/quest-muse-motion-cursor.json).

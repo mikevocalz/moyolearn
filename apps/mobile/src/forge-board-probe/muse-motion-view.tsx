@@ -9,11 +9,11 @@ export function MuseMotionStatus({controller}:{controller:MuseMotionController})
   const state=useStore(controller.state,(s)=>s);
   useEffect(()=>{const timer=setInterval(controller.tick,250);return()=>{clearInterval(timer);controller.disarm();};},[controller]);
   useEffect(()=>{const listener=AppState.addEventListener('change',(next)=>{if(next!=='active')controller.disarm();});return()=>listener.remove();},[controller]);
-  return <Text variant="caption" numberOfLines={1} testID="muse-motion-status">Tilt cursor · {state.phase} · {state.reason} · samples {state.samples} · down/move/up/cancel {state.pointerDown}/{state.pointerMove}/{state.pointerUp}/{state.pointerCancel}</Text>;
+  return <Text variant="caption" numberOfLines={1} testID="muse-motion-status">Tilt cursor · {state.phase==='live'?'LIVE':state.phase==='unavailable'?'CAPTURE ENDED':state.phase.toUpperCase()} · {state.reason} · samples {state.samples} · down/move/up/cancel {state.pointerDown}/{state.pointerMove}/{state.pointerUp}/{state.pointerCancel}</Text>;
 }
 export function MuseMotionCursor({controller,width,height}:{controller:MuseMotionController;width:number;height:number}) {
-  const cursor=useStore(controller.state,(s)=>s.cursor),enabled=useStore(controller.state,(s)=>s.enabled),drawing=useStore(controller.state,(s)=>s.drawing);
-  if(!enabled||!cursor)return null;
+  const cursor=useStore(controller.state,(s)=>s.cursor),enabled=useStore(controller.state,(s)=>s.enabled),drawing=useStore(controller.state,(s)=>s.drawing),phase=useStore(controller.state,(s)=>s.phase);
+  if(!enabled||!cursor||phase!=='live')return null;
   // LearningCanvas is the first Whiteboard child, with border-2 and no padding.
   // The calibrated client size excludes that border and excludes the toolbar.
   return <View pointerEvents="none" style={{position:'absolute',left:2,top:2,width,height,overflow:'hidden'}}>

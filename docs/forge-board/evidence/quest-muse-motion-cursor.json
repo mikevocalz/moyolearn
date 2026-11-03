@@ -46,8 +46,12 @@
     "diffCheck": "passed"
   },
   "physicalRetry": {
-    "status": "pending",
-    "actualTiltInkEstablished": false,
+    "status": "Completed real gravity-tilt stroke retained and saved; exact route-unmount/remount record equality passed",
+    "actualTiltInkEstablished": true,
+    "completedStrokeRetained": true,
+    "savedReopenEstablished": true,
+    "processRestartPersistenceTested": false,
+    "nativeMuse6DoFEstablished": false,
     "hardwareFailureEstablished": false
   },
   "sourceHashes": {
@@ -55,5 +59,227 @@
     "bridgeReceipt": "1890826e620737c56ed44de525ab5190b8ea3dc2708e4fb882515e8e8f00fd24",
     "facadeDiagnostic": "43a9da11cd83e146dc48c24e140dc344788d00b62625d30363b4d314a38f2b6b"
   },
-  "privacy": "No addresses, logical device IDs, session nonces, process IDs, private paths or unknown vendor payloads retained"
+  "privacy": "No addresses, logical device IDs, session nonces, process IDs, private paths or unknown vendor payloads retained",
+  "correctedRetry": {
+    "adapterSessionAccepted": true,
+    "deliveredSamples": 100,
+    "gapCount": 0,
+    "captureCompleted": true,
+    "allStatus0Length65": true,
+    "knownControlPrefix": {
+      "hex": "0000000005",
+      "matchingSampleCount": 100
+    },
+    "firstAccelerationGroupRawRanges": {
+      "x": [
+        -1170,
+        -1131
+      ],
+      "y": [
+        1084,
+        1104
+      ],
+      "z": [
+        1351,
+        1385
+      ]
+    },
+    "liveSnapshots": [
+      {
+        "samples": 26,
+        "phase": "live"
+      },
+      {
+        "samples": 87,
+        "phase": "live"
+      }
+    ],
+    "finalMotionState": {
+      "cursor": {
+        "u": 0.48894697183249924,
+        "v": 0.49674687843768606
+      },
+      "cursorChanges": 100,
+      "drawing": false,
+      "enabled": true,
+      "needsTipRelease": true,
+      "phase": "unavailable",
+      "pointerCancel": 0,
+      "pointerDown": 0,
+      "pointerMove": 0,
+      "pointerUp": 0,
+      "reason": "Capture completed; last cursor retained",
+      "samples": 100
+    },
+    "actualBoardMarks": 0,
+    "canUndo": false,
+    "canRedo": false,
+    "userReported": "Cursor moved; no ink",
+    "interpretation": "Complete real telemetry delivery and cursor updates passed after the surface-token fix. Only near-stationary acceleration variation and inactive tip/button fields were captured; controlled physical tilt-to-cursor correlation and real ink are not established.",
+    "restoration": {
+      "acknowledged": true,
+      "withinApprovedWindow": true,
+      "elapsedMs": 34008.98875,
+      "source": "android-devtools"
+    },
+    "sourceHashes": {
+      "capture": "1fde7d2cbf3dc4762b95fae80e18ad056f4797bb2185f5d50063b55ca8d559ba",
+      "final": "158a835c0b6e6fcae6bc701b379a88eeaa3d1ba309598848ffccf367af876203",
+      "during": "61a7ff62a49464af9a651fc3b05d5e7eaa32c40c6479a47b222ea132c736ec1c",
+      "duringLater": "a1613996630a686db6d4be9bd301d05139301ab3bc7787c268e9047e8a128b62",
+      "orchestrator": "a3062c59bafffa8ec52478d5bdf4302a71b46960b5b7714fbc01d7040234feab"
+    }
+  },
+  "heldTipTrial": {
+    "userConfirmedRealInkVisible": true,
+    "duringCapture": {
+      "motion": {
+        "cursor": {
+          "u": 0.4928678434907725,
+          "v": 0.478722190344558
+        },
+        "cursorChanges": 42,
+        "drawing": false,
+        "enabled": true,
+        "needsTipRelease": true,
+        "phase": "live",
+        "pointerCancel": 0,
+        "pointerDown": 0,
+        "pointerMove": 0,
+        "pointerUp": 0,
+        "reason": "Hold still to center, then release tip",
+        "samples": 42
+      },
+      "now": 1793719862537,
+      "telemetry": {
+        "lastSequence": 41,
+        "lastWallTimeMs": 1793719861837,
+        "missingSequences": 0,
+        "phase": "live",
+        "reason": "Measured external test telemetry",
+        "samples": 42,
+        "values": {
+          "oval": 0,
+          "ovalForce": 0,
+          "roundHeld": false,
+          "tip": 100,
+          "tipForce": 100
+        }
+      }
+    },
+    "final": {
+      "canRedo": false,
+      "canUndo": true,
+      "marks": 0,
+      "motion": {
+        "cursor": {
+          "u": 0.36785196565606604,
+          "v": 0.46241653730239374
+        },
+        "cursorChanges": 100,
+        "drawing": false,
+        "enabled": true,
+        "needsTipRelease": true,
+        "phase": "unavailable",
+        "pointerCancel": 1,
+        "pointerDown": 1,
+        "pointerMove": 27,
+        "pointerUp": 0,
+        "reason": "Capture completed; last cursor retained",
+        "samples": 100
+      },
+      "now": 1793719879658,
+      "records": {}
+    },
+    "captureCompleted": true,
+    "restoration": {
+      "acknowledged": true,
+      "withinApprovedWindow": true,
+      "elapsedMs": 33648.156417,
+      "source": "android-devtools"
+    },
+    "interpretation": "Real transient ink was seen and actual pointerdown1/move27 were emitted. No measured pointerup arrived before finite capture completion; cancellation1 removed the unfinished stroke, leaving0 marks. User release after the deadline is not converted to a fabricated report or saved stroke.",
+    "completedStrokeRetained": false,
+    "savedReopenEstablished": false,
+    "sourceHashes": {
+      "during": "24af84b88c6e7a24831c8622c16950af6cfdb1b0dca9cce257ea2dba82871c02",
+      "after": "2b540be00f4821af2b79197e5453833380e6d7fdfec9043a41b2df57354585a9",
+      "orchestrator": "54ae21b771e00e0285cb998d7ecae3c178cf1a0955105d93bbc485b0284acbd7"
+    }
+  },
+  "cursorAvailabilityCorrection": {
+    "status": "source implemented",
+    "behavior": "Colored cursor appears only during LIVE; unavailable/completed retains values internally but hides the cursor and displays CAPTURE ENDED",
+    "reason": "A historical blue cursor could be mistaken for an active capture",
+    "physicalValidation": "Final accessibility receipt shows CAPTURE ENDED; final phase unavailable hides colored cursor through the checked render guard."
+  },
+  "completedStrokeTrial": {
+    "sourceCaptureCompleted": true,
+    "sourceSamples": 100,
+    "allStatus0Length65": true,
+    "duringMotionState": {
+      "cursor": {
+        "u": 0.7727274631046948,
+        "v": 0
+      },
+      "cursorChanges": 19,
+      "drawing": false,
+      "enabled": true,
+      "needsTipRelease": false,
+      "phase": "live",
+      "pointerCancel": 0,
+      "pointerDown": 1,
+      "pointerMove": 9,
+      "pointerUp": 1,
+      "reason": "Tilt to aim; tip draws; round recenters",
+      "samples": 22
+    },
+    "finalMotionState": {
+      "cursor": {
+        "u": 0.6933052331264634,
+        "v": 0.7786202889710028
+      },
+      "cursorChanges": 96,
+      "drawing": false,
+      "enabled": true,
+      "needsTipRelease": true,
+      "phase": "unavailable",
+      "pointerCancel": 0,
+      "pointerDown": 1,
+      "pointerMove": 9,
+      "pointerUp": 1,
+      "reason": "Capture completed; last cursor retained",
+      "samples": 100
+    },
+    "finalMarks": 1,
+    "canUndoBeforeReopen": true,
+    "actualMeasuredReleaseCommitted": true,
+    "userConfirmedInkRemained": "User reply occurred before final endpoint; final state and accessibility receipt independently establish retention after capture ended",
+    "restoration": {
+      "acknowledged": true,
+      "withinApprovedWindow": true,
+      "elapsedMs": 33940.571292,
+      "source": "android-devtools"
+    },
+    "saveAndReopen": {
+      "savedThroughActualProbeButton": true,
+      "probeUnmountedBetween": true,
+      "beforeMarks": 1,
+      "afterMarks": 1,
+      "recordsExactlyEqual": true,
+      "recordSha256": "f40d03b202b7830a562359ee34cb821463de170b607dc032c2ad3e594c85a758",
+      "scope": "Actual route unmount/remount and saved MMKV reader; not a process-restart test"
+    },
+    "sourceHashes": {
+      "during": "4e065e6b1c29f08256070117c21cf4c75a9c48fd5456bca9e45940b0d17365b0",
+      "ended": "1939c1b1a0d60dcb5b6a34ec031d6714490807dedcc2b64dbd28757c48432fea",
+      "reopened": "e52318d96ab175cbb939abb4b74f69cb9c13b724b025a6806b1b84b2d75107f6",
+      "sourceCapture": "186faeda4cfac28bca6602f964a63e52e504fdff87227a3483cb8c07512c150e",
+      "reopenVerification": "76de4b57c6549c4381677f366b7d7c64085231a1565c963e86a036643c40ebea",
+      "routeLeft": "105779516f94f64452c1a213b8d3578248c94da9bc6d7be492885ff6da172fed",
+      "finalAccessibility": "b421f797f84a9f294e0f453986e6684beb3133d420efaaba5231fda0cb1772b2",
+      "orchestrator": "3ececf63174ba6c3ca0afa3a60bd2463d30ea53c3f67ed17fc574d41a0475c60"
+    },
+    "limitations": "Finite computer-assisted DEV gravity-tilt cursor using temporary test authority; not native Muse6DoF, calibrated force, a production pen provider or process-restart persistence proof."
+  }
 }

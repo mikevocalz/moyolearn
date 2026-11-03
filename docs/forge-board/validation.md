@@ -665,3 +665,63 @@ with mobile typecheck and diff check.
 [Redacted first motion attempt](evidence/quest-muse-motion-cursor.json) keeps
 the failed attempt and source correction distinct. The physical retry and
 actual tilt-to-ink validation remain pending.
+
+The corrected motion adapter accepted a complete physical 100/100, zero-gap
+telemetry session and restored inspection automatically in 34,008.989ms. Actual
+Moyo state was LIVE at 26 and 87 samples; final state retained 100 cursor changes
+with zero pointer-down/move/up/cancel events and zero document marks. The user
+reported cursor movement but no ink. All 100 captured control prefixes were
+`0000000005`; the first acceleration group's signed raw ranges were
+X −1170…−1131, Y 1084…1104 and Z 1351…1385. These near-stationary variations can
+produce cursor jitter. This proves corrected stream acceptance and cursor
+updates, not a controlled physical tilt-to-cursor correlation or drawing.
+
+The [motion receipt](evidence/quest-muse-motion-cursor.json) retains this retry
+separately from the first application-start rejection. No actual tip press was
+present in this report window, so no ignored-press or hardware-failure claim is
+made. A controlled held-tip drawing trial remains pending; no real ink has yet
+been established by the motion adapter.
+
+A subsequent held-tip motion trial produced real transient ink, confirmed by
+the user. During LIVE sample 42, measured tip/force were 100 while the initial
+release safety gate remained active. The final controller recorded one
+pointer-down, 27 moves, zero pointer-ups and one cancellation. The user released
+after the finite capture deadline, so the unfinished stroke was cancelled;
+the authoritative document ended with zero marks (`canUndo:true` does not prove
+a completed retained stroke). Inspection restored automatically in 33,648.156ms.
+This proves actual visible transient ink through the existing engine seam,
+not a saved/reopened stroke. An in-window measured release remains necessary
+to commit ink; no release was fabricated at capture completion.
+
+The historical blue cursor had remained visible after the session ended, making
+the instruction to act when it appeared ambiguous. A focused UI correction now
+renders the colored cursor only during LIVE and displays CAPTURE ENDED after
+unavailability/completion while retaining the last measured values internally.
+That UI correction still awaits physical validation. No source motion or
+transport behavior was changed by this availability-only UI patch.
+
+The next short-stroke trial completed a real gravity-tilt drawing gesture.
+Actual LIVE state at 22 samples recorded one down, nine moves and one measured
+up, with zero cancels and one authoritative Yjs mark. Final state after 100
+samples retained the same 1/9/1/0 pointer counts and one mark. Physical
+accessibility showed CAPTURE ENDED and marks 1. The user's confirmation that
+ink remained arrived before the final endpoint; final state and accessibility
+receipts independently establish retention after the capture ended. Automatic
+inspection restoration was acknowledged in 33,940.571ms.
+
+The actual Save test board action succeeded. The route was then left for Today,
+with the probe confirmed unmounted, and reopened through the saved MMKV reader.
+Before and after contained exactly one identical completed stroke; record
+SHA256 `f40d03b202b7830a562359ee34cb821463de170b607dc032c2ad3e594c85a758`.
+This is route-unmount/remount persistence, not a process-restart test. The
+[redacted motion evidence](evidence/quest-muse-motion-cursor.json) preserves
+the successful trial separately from the first guard failure and the earlier
+late-release cancellation. No unknown vendor or raw IMU packet data is published.
+
+The result proves a finite, computer-assisted DEV gravity-tilt cursor can create
+and preserve actual strokes through the existing board/document pipeline. It
+does not satisfy the user's current requirement for native Muse 6DoF pose, and
+hand-assisted positioning is not substituted. Runtime enumeration has reported
+75 extensions including a dedicated Logitech interaction extension; profile
+binding work is ongoing, with no native Muse pose result yet. Extension presence
+alone is not a working pose measurement or a production input provider.
