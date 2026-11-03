@@ -101,7 +101,7 @@
     "unverifiedProcessesLeftUntouched": true,
     "machineWideCleanupClaim": false
   },
-  "conclusion": "No unsolicited CDC bytes were observed from either opened port in this 60.081-second, baud-preserving, explicit-DTR trial while the user confirmed the requested presses. No USB/BLE-wide incompatibility or absent pen input is established. The BLE HID report map and raw tip report layout remain unknown.",
+  "conclusion": "No unsolicited CDC bytes were observed from either opened port in this 60.081-second, baud-preserving, explicit-DTR trial while the user confirmed the requested presses. No USB/BLE-wide incompatibility or absent pen input is established. At the time of this CDC capture, the BLE HID report map and raw tip layout were unknown. A subsequent separate test-only descriptor read is recorded in muse-hid-test-descriptor-read.json.",
   "limitations": [
     "Opening CDC ports and asserting DTR changes control state; no application commands or firmware payloads were sent.",
     "Human confirmation of presses is not a measured pen event.",

@@ -471,7 +471,8 @@ evidence IDs, executable/scenario/capture hashes and the safe 141-byte raw
 configuration. REA verified its owned process group; three other platform
 process observations remained unverified and were left untouched. No
 machine-wide cleanup or termination of unrelated processes is claimed.
-The actual BLE HID report map and raw tip report layout remain unknown.
+At that stage, the BLE HID report map and raw tip layout were still unknown;
+the later test-only descriptor read below supersedes the map-availability gap.
 Portable 10's dialog correction is evaluated separately in the physical UI replay below.
 
 Portable 10's dialog fix passed physical Quest accessibility inspection using
@@ -490,3 +491,54 @@ later state does not erase the earlier successful association-3 reconnect
 receipt, but it is not evidence of present availability or working pen input.
 The separate HID test remains blocked while inspection stays active; the user
 previously declined stopping that service, and no new permission is inferred.
+
+A subsequent, explicitly approved test-only descriptor read completed on the
+actual Muse. Normal public setup first produced association 4 and actual bond
+state 10→11→12. With only the scoped Quest inspection services temporarily
+paused, the separate instrumentation adopted named BLUETOOTH_CONNECT and
+BLUETOOTH_PRIVILEGED authority through public UiAutomation. This authority did
+not transfer to the production Moyo app UID. Inspection was restored and a
+successful accessibility inspection was recorded; no exact pause duration is
+claimed without matching clock evidence.
+
+The test returned successful GATT connection/discovery, one actual 457-byte
+HID Report Map, and six actual Report Reference descriptors, all status 0.
+The retained [raw report map](evidence/muse-hid-report-map.bin) has SHA256
+`4708e62215883a297c88be41600d2ddea20345ecfbe41213db47f7d6778b3405`.
+[Redacted test-only read evidence](evidence/muse-hid-test-descriptor-read.json)
+preserves the measured map length/status, six reference values and instance
+IDs, named permission scope and source hashes. Attribute permission bitmasks
+were not recorded in this receipt. No CCCD, feature, vendor or firmware writes
+were performed, and no notifications or raw tip input packets were captured.
+This establishes descriptor availability under temporary test authority, not
+normal production HID access, measured pressure/pose, or working pen input.
+Actual descriptor-field analysis remains separate from runtime input proof.
+
+Our offline parser decoded the actual HID map under REA evidence
+`ev_6ba8ab510b1b2882ceb21d237a1de97a01ff6b4957bbe5839a4883b695d11b88`.
+REA records execution of our parser, not an independent HID semantic decode or
+pen input event. The [redacted decoded descriptor](evidence/muse-hid-decoded.json)
+defines input report 2 as 65 payload bytes, excluding any report-ID framing.
+The first four bytes define two button values and their associated force
+fields; byte 4 holds button/touch bits. The remainder defines three acceleration
+XYZ groups, three angular-velocity XYZ groups, and three vendor 64-bit fields
+whose semantics remain unknown. No Digitizer TipPressure usage or tracked-pose
+field was established, and button usages are not yet mapped to physical controls.
+
+A separate temporary test-only live READ baseline completed 100 successful
+65-byte input-report reads, with 100 distinct complete reports. All first-five
+byte prefixes were `0000000005`. Feature report 2 was read once as eight zero
+bytes; no feature, CCCD or vendor writes were performed. The raw reports are
+not published because they contain unknown vendor fields and IMU samples.
+[Redacted baseline evidence](evidence/muse-hid-live-read-baseline.json) retains
+measured counts, the known-prefix aggregate, descriptor layout and source hashes.
+
+REA evidence `ev_1ea45b1f2e68ed2e510528a7847a62158cdd3c2dc4c7a4774a8b9e335ff790d6`
+preserved all 100 samples in raw capture data. Exact deep comparison with the
+device JSON passed: canonical 31,283 bytes, SHA256
+`58517911773fac97a729c573565d5d8dc828a4ca9e0bfa43b17c17575ce7034f`.
+Clipping in rendered display frames did not truncate that raw JSON evidence.
+Inspection was restored after the test. User confirmation arrived after this
+baseline capture window, so the unchanged control prefix is not treated as a
+negative button-press trial. A held-tip trial is separate and remains pending.
+These reads still use temporary test authority, not normal production HID access.
