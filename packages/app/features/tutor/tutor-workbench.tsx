@@ -158,6 +158,7 @@ export function TutorWorkbench({
       <Whiteboard
         ref={board}
         snapshot={session.initialSnapshot}
+        history={session.doc}
         size={buttonSizeForBand(ageBand)}
         onAsk={onAsk}
         asking={asking}

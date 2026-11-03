@@ -104,7 +104,7 @@ import { currentXrEligibility } from './xr-eligibility';
 import { panelStateOf, useXrSession, type XrPhase } from './xr-session.store.ts';
 import { useXrVoice } from './xr-voice.native.ts';
 import { createMoyoQuickDrawAdapter } from './quickdraw-spatial-adapter.ts';
-import { NativeBoardPaper, mirrorToNativeBoard, useNativeBoardEnabled } from './native-board.native.tsx';
+import { NativeBoardPaper, useNativeBoardEnabled } from './native-board.native.tsx';
 
 
 /** This presentation's id, so its own strokes are not echoed back at it. */
@@ -404,7 +404,7 @@ function BoardScene() {
   }, []);
   const phase = useXrSession((s) => s.phase);
   const placement = useXrSession((s) => s.placement);
-  /* Round 2 device validation: off unless asked for AND native-panels is linked. */
+  /* Forge preview is opt-in and requires the linked native backend. */
   const nativeBoard = useNativeBoardEnabled();
   const workspaceHead = useMemo(
     () => workspaceHeadOf(placement, BOARD_PLACE.distanceM, BOARD_PLACE.dropM),
@@ -693,7 +693,6 @@ function BoardScene() {
       strokeSource.current = null;
       const cancel = { phase: 'cancel' as const, u: sample.u, v: sample.v, source: sample.source };
       quickdrawAdapter.dispatchSurface(cancel);
-      mirrorToNativeBoard(cancel);
       return;
     }
     if (sample.phase === 'begin') {
@@ -708,9 +707,6 @@ function BoardScene() {
       drawing.current = false;
     }
     quickdrawAdapter.dispatchSurface(sample);
-    /* Round 2 `nativeBoard`: the same sample, to the native paper's document.
-       A no-op while that board has never mounted (`native-board.native.tsx`). */
-    mirrorToNativeBoard(sample);
   };
 
   /*
@@ -753,8 +749,8 @@ function BoardScene() {
       }
     },
     onPalette(open) { if (canEdit) useXrSession.getState().setPaletteOpen(open); },
-    onUndo() { if (canEdit && history.canUndo) { setConfirmClear(false); active.engine?.undo(); } },
-    onRedo() { if (canEdit && history.canRedo) { setConfirmClear(false); active.engine?.redo(); } },
+    onUndo() { if (canEdit && history.canUndo) { setConfirmClear(false); session?.doc.undo(); } },
+    onRedo() { if (canEdit && history.canRedo) { setConfirmClear(false); session?.doc.redo(); } },
     onClear() {
       if (!canEdit || !history.hasMarks) return;
       if (confirmClear) active.engine?.clear();
@@ -862,8 +858,9 @@ function BoardScene() {
             content={<>
               <ViroQuad width={CONTENT_RECT_PANEL.width} height={CONTENT_RECT_PANEL.height}
                 materials={[XR_MATERIAL.paper]} ignoreEventHandling />
-              {boardTextureBound ? (nativeBoard ? (
+              {boardTextureBound ? (nativeBoard && session && foreground ? (
                 <NativeBoardPaper
+                  doc={session.doc}
                   width={CONTENT_RECT_PANEL.width}
                   height={CONTENT_RECT_PANEL.height}
                   position={[0, 0, boardLayer.raster]}
@@ -1157,6 +1154,10 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
     document mutates in place and must never become React state.
   */
   useEffect(() => session.doc.onRecords(() => bumpRevision()), [bumpRevision, session]);
+  useEffect(() => session.doc.onHistory((history) => {
+    const state = useXrSession.getState();
+    state.setBoardHistory({ ...history, hasMarks: state.boardHistory.hasMarks });
+  }), [session]);
 
   /*
     STEP ONE: WHY THIS BINARY ON THIS DEVICE COULD NOT OPEN A BOARD IN SPACE.
@@ -1416,15 +1417,14 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
   );
 
   /*
-    The engine's own undo/redo availability, into the session store for the
-    Rive chrome's disabled keys — pushed off `listenHistory`, so batch ends
-    that emit no diff still land. See `boardHistory` on the store.
+    The engine reports the visible mark count. History belongs to Yjs so
+    restoring a renderer cannot replace the learner's undo/redo availability.
   */
   const handleHistory = useCallback((history: WhiteboardHistory) => {
     useXrSession
       .getState()
-      .setBoardHistory({ canUndo: history.canUndo, canRedo: history.canRedo, hasMarks: history.marks > 0 });
-  }, []);
+      .setBoardHistory({ canUndo: session.doc.canUndo(), canRedo: session.doc.canRedo(), hasMarks: history.marks > 0 });
+  }, [session]);
 
   /*
     WHAT IS ON SCREEN IS THE PHASE, AND THE RENDERER IS NOT ALWAYS PART OF IT.
@@ -1592,6 +1592,7 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
       >
         <WhiteboardBoard
           ref={engine}
+          history={session.doc}
           onChange={handleChange}
           onReady={handleReady}
           onCalibration={handleCalibration}

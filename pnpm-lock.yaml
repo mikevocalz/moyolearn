@@ -398,6 +398,8 @@ overrides:
   react-native-nitro-fetch: file:./vendors/react-native-nitro-fetch-1.6.2-nitro-v1.tgz
   react-native-nitro-image: file:./vendors/react-native-nitro-image-0.15.2-nitro-v1.tgz
   react-native-vision-camera: file:./vendors/react-native-vision-camera-5.2.3-nitro-v1.tgz
+  '@nitro-forge/board': file:./vendors/nitro-forge-board-0.1.0-moyo.1.tgz
+  '@nitro-forge/icons': file:./vendors/nitro-forge-icons-0.1.0-moyo.1.tgz
 
 patchedDependencies:
   '@react-native-masked-view/masked-view@0.3.2':
@@ -1142,6 +1144,9 @@ importers:
       '@huggingface/transformers':
         specifier: 4.2.0
         version: 4.2.0
+      '@nitro-forge/board':
+        specifier: file:../../vendors/nitro-forge-board-0.1.0-moyo.1.tgz
+        version: file:vendors/nitro-forge-board-0.1.0-moyo.1.tgz(65af5a9a89683b8fe03ab3c2b2c8e856)
       '@reactvision/react-viro':
         specifier: file:../../vendors/reactvision-react-viro-3.0.1-moyo.1.tgz
         version: file:vendors/reactvision-react-viro-3.0.1-moyo.1.tgz(patch_hash=d4a49157b5f6a4915a76ae878525547881a579c5fdb8db9c6e77148dce304bdf)(@reactvision/react-native-visionos@0.86.4(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(@types/react@19.3.0)(expo@58.0.19)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
@@ -1302,6 +1307,9 @@ importers:
       eslint-config-expo:
         specifier: 'catalog:'
         version: 58.0.3(eslint@9.39.5(jiti@2.7.0))(typescript@6.0.3)
+      tsx:
+        specifier: 4.22.4
+        version: 4.22.4
       typescript:
         specifier: 'catalog:'
         version: 6.0.3
@@ -1631,6 +1639,9 @@ importers:
       '@nandorojo/galeria':
         specifier: 3.0.3
         version: 3.0.3(expo@58.0.19)(react-dom@19.3.0(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+      '@nitro-forge/icons':
+        specifier: file:../../vendors/nitro-forge-icons-0.1.0-moyo.1.tgz
+        version: file:vendors/nitro-forge-icons-0.1.0-moyo.1.tgz(react-native-svg@15.16.0(patch_hash=948b8ae7afaadc59224f6cc301c627b3d205307f2ebba21f1eb6101776e2779d)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react@19.3.0)
       '@quickdrawjs/core':
         specifier: 'catalog:'
         version: 0.2.0
@@ -3987,6 +3998,47 @@ packages:
     engines: {node: '>= 10'}
     cpu: [x64]
     os: [win32]
+
+  '@nitro-forge/board@file:vendors/nitro-forge-board-0.1.0-moyo.1.tgz':
+    resolution: {integrity: sha512-RsuxHl1wwbHWdDVE8oSG/Ytgna14ojF24UgiHI2bTt1ZFeMVnvbvXK5XdVEC9j4cWcjU6O84QhdnWtfsCncNRQ==, tarball: file:vendors/nitro-forge-board-0.1.0-moyo.1.tgz}
+    version: 0.1.0-moyo.1
+    peerDependencies:
+      '@quickdrawjs/core': 0.2.0
+      '@reactvision/react-viro': '>=3.0.3-moyo.1 <4.0.0'
+      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
+      react: 19.3.0
+      react-native: 0.88.0
+      react-native-nitro-modules: 1.0.0-alpha.nightly.100.g107f6fc66597
+      react-native-skia: ^3.8.1
+      yjs: '>=13.6.32 <14'
+      zustand: '>=5.0.16 <6'
+    peerDependenciesMeta:
+      '@quickdrawjs/core':
+        optional: true
+      '@reactvision/react-viro':
+        optional: true
+      react:
+        optional: true
+      react-native:
+        optional: true
+      react-native-skia:
+        optional: true
+      yjs:
+        optional: true
+      zustand:
+        optional: true
+
+  '@nitro-forge/icons@file:vendors/nitro-forge-icons-0.1.0-moyo.1.tgz':
+    resolution: {integrity: sha512-pkBb05mxZUMLxoO8ckyQHYqn7HkET4LmOCPD8uq1/n9K9zzkEzSlP3x3S+VdObAWFRkF3CedymAoVRp1xd0Auw==, tarball: file:vendors/nitro-forge-icons-0.1.0-moyo.1.tgz}
+    version: 0.1.0-moyo.1
+    peerDependencies:
+      react: 19.3.0
+      react-native-svg: '>=15'
+    peerDependenciesMeta:
+      react:
+        optional: true
+      react-native-svg:
+        optional: true
 
   '@noble/ciphers@2.3.0':
     resolution: {integrity: sha512-Clu/xdfgVTf9o7ngLOURaxePwR0j8sjclKEtVij10/jGulwFsPWCvvRgG/XjUVf8Nei+jLG6uwyXzUTGY1DQrw==}
@@ -14725,6 +14777,23 @@ snapshots:
 
   '@next/swc-win32-x64-msvc@16.3.5':
     optional: true
+
+  '@nitro-forge/board@file:vendors/nitro-forge-board-0.1.0-moyo.1.tgz(65af5a9a89683b8fe03ab3c2b2c8e856)':
+    dependencies:
+      nitro-core: 1.0.0-alpha.nightly.100.g107f6fc66597
+      react-native-nitro-modules: 1.0.0-alpha.nightly.100.g107f6fc66597(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
+    optionalDependencies:
+      '@quickdrawjs/core': 0.2.0
+      '@reactvision/react-viro': file:vendors/reactvision-react-viro-3.0.1-moyo.1.tgz(patch_hash=d4a49157b5f6a4915a76ae878525547881a579c5fdb8db9c6e77148dce304bdf)(@reactvision/react-native-visionos@0.86.4(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(@types/react@19.3.0)(expo@58.0.19)(react-native-web@0.21.2(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
+      react: 19.3.0
+      react-native: 0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0)
+      yjs: 13.6.32
+      zustand: 5.0.15(@types/react@19.3.0)(react@19.3.0)(use-sync-external-store@1.6.0(react@19.3.0))
+
+  '@nitro-forge/icons@file:vendors/nitro-forge-icons-0.1.0-moyo.1.tgz(react-native-svg@15.16.0(patch_hash=948b8ae7afaadc59224f6cc301c627b3d205307f2ebba21f1eb6101776e2779d)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0))(react@19.3.0)':
+    optionalDependencies:
+      react: 19.3.0
+      react-native-svg: 15.16.0(patch_hash=948b8ae7afaadc59224f6cc301c627b3d205307f2ebba21f1eb6101776e2779d)(react-native@0.88.0(@babel/core@7.29.7)(@react-native-community/cli@20.1.0(typescript@6.0.3))(@react-native/metro-config@0.88.0(@babel/core@7.29.7))(@types/react@19.3.0)(react@19.3.0))(react@19.3.0)
 
   '@noble/ciphers@2.3.0': {}
 

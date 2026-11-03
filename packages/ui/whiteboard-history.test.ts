@@ -189,7 +189,7 @@ test('web gesture boundaries follow one primary pointer and end after the engine
   }), (callback) => queued.push(callback));
   gestures.begin({ pointerId: 2, isPrimary: false });
   gestures.begin({ pointerId: 2, button: 2 });
-  assert.deepEqual(order, []);
+  assert.equal(order.length, 0);
   gestures.begin({ pointerId: 1, isPrimary: true, button: 0 });
   gestures.begin({ pointerId: 2 });
   order.push('engine:down');
