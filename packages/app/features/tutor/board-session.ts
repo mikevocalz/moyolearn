@@ -135,6 +135,34 @@ function createSession(key: string, store: BoardPersistence): BoardSession {
     if (sessionId !== null) void store.pushRemote(sessionId, doc);
   };
 
+  // Yjs owns history and merges, so saving must follow the document rather
+  // than an engine callback. Otherwise undo, redo and a late peer merge can
+  // remain unsaved until the learner leaves the screen.
+  const stopSaving = doc.onRecords((_diff, origin) => {
+    if (origin === 'restore') return;
+    if (localTimer !== null) clearTimeout(localTimer);
+    localTimer = setTimeout(() => {
+      localTimer = null;
+      store.writeLocal(doc);
+    }, LOCAL_SAVE_MS);
+
+    // A peer merge needs a durable local copy, but does not start another
+    // network write. A pending local upload still includes the merged state.
+    if (origin !== 'local') return;
+    if (remoteTimer !== null) clearTimeout(remoteTimer);
+    remoteTimer = setTimeout(() => {
+      remoteTimer = null;
+      if (sessionId !== null) void store.pushRemote(sessionId, doc);
+    }, REMOTE_SAVE_MS);
+  });
+  doc.doc.on('destroy', () => {
+    stopSaving();
+    if (localTimer !== null) clearTimeout(localTimer);
+    if (remoteTimer !== null) clearTimeout(remoteTimer);
+    localTimer = null;
+    remoteTimer = null;
+  });
+
   return {
     key,
     doc,
@@ -184,13 +212,6 @@ function createSession(key: string, store: BoardPersistence): BoardSession {
         if (id !== presentationId) other.board.applyDiff(diff);
       }
 
-      if (localTimer !== null) clearTimeout(localTimer);
-      localTimer = setTimeout(() => store.writeLocal(doc), LOCAL_SAVE_MS);
-
-      if (remoteTimer !== null) clearTimeout(remoteTimer);
-      remoteTimer = setTimeout(() => {
-        if (sessionId !== null) void store.pushRemote(sessionId, doc);
-      }, REMOTE_SAVE_MS);
     },
 
     flush() {
