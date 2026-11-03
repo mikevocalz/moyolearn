@@ -612,3 +612,55 @@ privileged Bluetooth permission. Source peer review passed the ownership/API33
 checks. This is preparation/build proof only:15 was not installed or exercised
 on hardware by this build agent. The main agent's current physical phase remains
 on the separately retained14 build until an explicit install is recorded.
+
+## Portable10: bounded connection errors and reachable recovery actions
+
+Portable `0.1.0-moyo.10` replaces raw native exception stacks in the dialog with
+bounded, actionable messages. The render path also formats errors already stored
+before a JavaScript refresh. The body scrolls while the header and Close remain
+outside it; chooser/history actions are hidden while linked or ready. Native
+receipts retain the original diagnostic errors.
+
+This is a JavaScript-only update. Reproduce it with
+`node tooling/vendor-forge-pen-connect.mjs /path/to/nitro-forge --pen-connect-only`.
+That mode does not generate or repack Bluetooth15. The content-aware portable
+sync tool supports a before snapshot and then sync:
+
+```sh
+node tooling/sync-forge-pen-connect-installed.mjs /tmp/native-before.json --snapshot
+# Generate the portable archive and update the frozen dependency lock.
+node tooling/sync-forge-pen-connect-installed.mjs /tmp/native-before.json
+```
+
+Portable10 archive SHA256:
+`0c6815a5e183f91c76695a72af82d69dda1356f4057c92c5077289b341989928`.
+The final installed source bytes match the archive and lock integrity. Twelve
+portable tests, six adapter/archive integrity tests, app/mobile typechecks and
+frozen lock validation passed. A strict indexed-access error found during the
+app check was corrected with an explicit empty-string fallback.
+
+The native fingerprint includes Bluetooth15 and remained identical across all
+18,869 source/config files. Bluetooth15 archive SHA256 remains
+`1bda38f45277261455e5454abc3b5e023d749c7161f1999a5d7edb8ff90c3536`;
+the prepared APK15 remains
+`780f0d20b6366f63d3c534234f8bb406628c5dc6292ded07271f8e83b879f024`.
+No Gradle/NDK build, native package change, Metro stop, installation or device
+action was performed for this update. Physical dialog acceptance is separate.
+
+Portable10 physical UI replay was reviewed separately from Bluetooth acceptance.
+The main agent loaded an earlier captured Java error into isolated DEV controller
+state, then captured the actual Quest accessibility tree. The screen displayed
+the bounded friendly message; Close, Previously associated Muse, Choose Muse with
+Quest and Try again were visible and clickable within the frame. No Java stack
+was exposed. This validates rendering/recovery access for a replayed prior error,
+not a new OS failure or hardware event. The main agent removed that test state
+through the real history-load action. The redacted review receipt is
+`docs/forge-board/evidence/portable10-error-replay-review.json`.
+
+A separate read-only OS snapshot showed an empty bonded list and both remembered
+HID entries disconnected/not ready with zero reports. Its latest Muse identity
+bonded at08:08:16.048 and lost that same reported identity's bond at08:20:14.036
+with `SMP_DHKEY_CHK_FAIL` (headset local time, 2026-11-03). Thus current history
+entries reporting bonded:false were consistent with actual OS bond loss, rather
+than merely a historical address alias. No new pairing, connection or retry was
+performed by this review agent. Actual pen tip/pressure remains unverified.

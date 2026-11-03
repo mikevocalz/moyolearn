@@ -449,3 +449,44 @@ reconnect passed, while pressure, pose and tip input remain unverified.
 the physical history/reconnect receipt separate from the artifact 14 input trial.
 The separate test-only descriptor APK was removed successfully. Inspection
 remained active as requested by the user; no HID descriptor bytes were obtained.
+
+REA captured a public cached USB configuration query for the actual Muse
+(VID 046D/PID D11E). The probe returned status 0 and 141 bytes, SHA256
+`0ea485583304c75c26598437ee972c04d3a7f3e94b5b3e4c6d512800f0fa1e9e`.
+The inspected configuration contains two CDC control/data pairs and no USB HID
+interface. This is USB configuration metadata, not a BLE HID report map.
+
+A separate REA capture opened both CDC ports for 60.081 seconds while preserving
+their 9600-baud settings. It explicitly asserted normal DTR, so the operation
+was not purely passive: opening ports and the modem handshake changed control
+state. No application commands or firmware payloads were sent. The user
+confirmed three tip presses and three presses of each near-tip button while
+the cable stayed connected. Both ports received zero bytes. Termios and modem
+flags were restored on both ports, and the capture script exited 0. This is a
+bounded observation of absent unsolicited CDC data under those conditions; it
+does not establish that USB or BLE pen input is universally unavailable.
+
+[Redacted REA evidence](evidence/muse-usb-rea-capture.json) preserves both
+evidence IDs, executable/scenario/capture hashes and the safe 141-byte raw
+configuration. REA verified its owned process group; three other platform
+process observations remained unverified and were left untouched. No
+machine-wide cleanup or termination of unrelated processes is claimed.
+The actual BLE HID report map and raw tip report layout remain unknown.
+Portable 10's dialog correction is evaluated separately in the physical UI replay below.
+
+Portable 10's dialog fix passed physical Quest accessibility inspection using
+a development-only replay of the previously captured real Java
+`discovery_timeout` error. This was a UI replay, not a new OS timeout or hardware
+input trial. The dialog showed the bounded friendly message and scrollable
+body, with Close, Previously associated Muse, Choose Muse with Quest, and
+Try again all within the viewport. The raw Java stack was not displayed.
+[Redacted UI replay evidence](evidence/quest-portable10-error-replay.json)
+retains the relevant accessibility bounds and source hash.
+
+A subsequent actual `loadAssociatedDevices` call replaced the replay fixture
+state. Historical associations 3 and 2 then both reported `bonded:false`; no
+connection to their potentially stale rotating addresses was attempted. This
+later state does not erase the earlier successful association-3 reconnect
+receipt, but it is not evidence of present availability or working pen input.
+The separate HID test remains blocked while inspection stays active; the user
+previously declined stopping that service, and no new permission is inferred.

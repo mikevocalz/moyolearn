@@ -1,9 +1,10 @@
 import { useStore } from "zustand";
 import type { ReactElement, ReactNode } from "react";
 import {
-  ActivityIndicator, FlatList, Modal, Pressable, StyleSheet, Text, View,
+  ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, View,
 } from "react-native";
 import type { PenConnectionController } from "./controller";
+import { formatPenConnectionError } from "./controller";
 import type { PenConnectionState, PenDevice } from "./types";
 
 /**
@@ -35,7 +36,7 @@ const describe = (state: PenConnectionState): string => {
     case "connecting": return "Establishing a Bluetooth connection…";
     case "linked": return "Bluetooth linked. Waiting for compatible pen input; pressure and spatial tracking remain unverified.";
     case "ready": return "Connected — native pen input verified.";
-    case "error": return state.message;
+    case "error": return formatPenConnectionError(state.message);
   }
 };
 const stateAnimation = (state: PenConnectionState): "searching" | "pairing" | "linked" | "connected" | "error" => {
@@ -74,18 +75,19 @@ export function PenConnectionDialog({
               <Text style={styles.closeText}>Close</Text>
             </Pressable>
           </View>
+          <ScrollView style={{flexShrink:1}} contentContainerStyle={{paddingBottom:8}}>
           <View style={styles.animation} accessibilityLabel={state.kind === "ready" ? "Pen connection verified" : undefined}>
             {renderAnimation ? renderAnimation(phase) : busy
               ? <ActivityIndicator accessibilityLabel="Connecting" size="large" color="#8F7AFF" />
               : <Text style={styles.glyph}>{state.kind === "ready" ? "✓" : state.kind === "error" ? "!" : "✎"}</Text>}
           </View>
           <Text style={styles.description}>{describe(state)}</Text>
-          {controller.canLoadAssociatedDevices && state.kind !== "loading-associated" ? (
+          {controller.canLoadAssociatedDevices && state.kind !== "loading-associated" && state.kind !== "linked" && state.kind !== "ready" ? (
             <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => void controller.loadAssociatedDevices()}>
               <Text style={styles.secondaryLabel}>Previously associated Muse</Text>
             </Pressable>
           ) : null}
-          {controller.canChooseSystemDevice && state.kind !== "system-pairing" ? (
+          {controller.canChooseSystemDevice && state.kind !== "system-pairing" && state.kind !== "linked" && state.kind !== "ready" ? (
             <Pressable accessibilityRole="button" style={styles.secondary} onPress={() => void controller.chooseSystemDevice()}>
               <Text style={styles.secondaryLabel}>Choose Muse with Quest</Text>
             </Pressable>
@@ -99,9 +101,10 @@ export function PenConnectionDialog({
             </View>
           ) : null}
           {state.kind === "found" ? (
-            <FlatList style={styles.devices} data={[...state.devices]} keyExtractor={(item) => item.id}
-              renderItem={({item}) => <DeviceOption device={item} onPress={() => void controller.connect(item.id)} />}
-              ListEmptyComponent={<Text style={styles.detail}>{state.source === "association-history" ? "No previous Muse associations." : "No Bluetooth devices discovered."}</Text>} />
+            <View style={styles.devices}>
+              {state.devices.length ? state.devices.map((device) => <DeviceOption key={device.id} device={device} onPress={() => void controller.connect(device.id)} />)
+                : <Text style={styles.detail}>{state.source === "association-history" ? "No previous Muse associations." : "No Bluetooth devices discovered."}</Text>}
+            </View>
           ) : null}
           {state.kind === "idle" || state.kind === "error" ? (
             <Pressable accessibilityRole="button" style={styles.primary} onPress={() => void controller.begin()}>
@@ -131,6 +134,7 @@ export function PenConnectionDialog({
           {state.kind === "linked" ? (
             <Text style={styles.detail}>Connected to {state.device.name}. Native pen input must still be verified.</Text>
           ) : null}
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -149,7 +153,7 @@ const styles = StyleSheet.create({
   detail: {color:"#AAA9B8", fontSize:13, lineHeight:19},
   steps: {gap:8, padding:12, backgroundColor:"#25252D", borderRadius:12, marginBottom:14},
   step: {fontSize:14, color:"#F3F0FB", lineHeight:21},
-  devices: {maxHeight:220, marginBottom:12},
+  devices: {marginBottom:12},
   deviceOption: {borderColor:"#565263", borderWidth:1, borderRadius:12, marginBottom:8, minHeight:64, padding:12, justifyContent:"center"},
   deviceTitle: {color:"#FFFFFF", fontSize:16, fontWeight:"600", marginBottom:4},
   primary: {backgroundColor:"#7764D9", borderRadius:12, minHeight:48, alignItems:"center", justifyContent:"center", marginTop:8},

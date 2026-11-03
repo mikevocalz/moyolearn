@@ -16,14 +16,17 @@ const repository = process.argv[2] ? resolve(process.argv[2]) : join(temporary, 
 if (!process.argv[2]) run('git', ['clone', '--no-checkout', 'git@github.com:mikevocalz/nitro-forge.git', repository]);
 const provenance = {};
 mkdirSync(join(root, 'vendors'), { recursive: true });
-for (const name of Object.keys(pins).filter((name) => !process.argv.includes('--bluetooth-only') || name === 'bluetooth-v1')) {
+if (process.argv.includes('--bluetooth-only') && process.argv.includes('--pen-connect-only')) throw new Error('Select only one artifact mode');
+for (const name of Object.keys(pins).filter((name) =>
+  (!process.argv.includes('--bluetooth-only') || name === 'bluetooth-v1') &&
+  (!process.argv.includes('--pen-connect-only') || name === 'pen-connect'))) {
   const commit = execFileSync('git', ['rev-parse', `${pins[name]}^{commit}`], { cwd: repository, encoding: 'utf8' }).trim();
   const archive = execFileSync('git', ['archive', commit, `packages/${name}`], { cwd: repository, maxBuffer: 20 * 1024 * 1024 });
   execFileSync('tar', ['-x', '-C', temporary], { input: archive });
   const directory = join(temporary, 'packages', name);
   const manifestPath = join(directory, 'package.json');
   const manifest = JSON.parse(readFileSync(manifestPath, 'utf8'));
-  manifest.version = name === 'bluetooth-v1' ? '0.1.0-moyo.15' : '0.1.0-moyo.9';
+  manifest.version = name === 'bluetooth-v1' ? '0.1.0-moyo.15' : '0.1.0-moyo.10';
   manifest.moyoSource = { repository: 'mikevocalz/nitro-forge', commit };
   if (name === 'pen-connect') {
     const path = join(directory, 'src/android-ble.native.ts');

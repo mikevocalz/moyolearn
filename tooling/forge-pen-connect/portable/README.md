@@ -30,3 +30,8 @@ when the injected native transport supports reading current application-owned
 association records. These are labeled as history, omit historical RSSI, and
 require an explicit reconnect. They do not establish nearby availability,
 Bluetooth bonding, or pen input readiness.
+
+Portable artifact 10 bounds connection errors for the dialog while retaining
+native diagnostic receipts. Its body scrolls within the existing sheet, and
+chooser/history actions are hidden while linked or ready so recovery cannot
+accidentally replace a working link.

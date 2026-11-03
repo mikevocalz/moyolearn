@@ -3,7 +3,7 @@ import test from 'node:test';
 import { readFileSync } from 'node:fs';
 import { stripTypeScriptTypes } from 'node:module';
 import vm from 'node:vm';
-import { createPenConnectionController } from '../src/controller.ts';
+import { createPenConnectionController, formatPenConnectionError } from '../src/controller.ts';
 import type { BlePenPort } from '../src/types.ts';
 
 const deferred = <T>() => {
@@ -12,6 +12,15 @@ const deferred = <T>() => {
   return {promise, resolve};
 };
 const selected = {id:'actual-os-selection', name:'Logitech Muse', bonded:false};
+test('native Java errors become bounded recovery copy without exposing stack frames',()=>{
+  const raw='java.lang.IllegalStateException: discovery_timeout\n\tat com.margelo.nitro.forgebluetooth.ble.CompanionMuseChooser.cancel(CompanionMuseChooser.kt:155)';
+  assert.equal(formatPenConnectionError(new Error(raw)), 'Muse was not found before the search ended. Check pairing mode, try again, or choose Previously associated Muse.');
+  assert.equal(raw.includes('CompanionMuseChooser.kt:155'),true,'UI formatting does not mutate diagnostic input');
+  assert.equal(formatPenConnectionError(new Error('java.lang.IllegalStateException: Vendor failure\n\tat native.Frame(file:7)')),'Vendor failure');
+  const unknown=formatPenConnectionError('x'.repeat(500)+'\n at native.Frame');
+  assert.equal(unknown.length,178); assert.equal(unknown.includes('\n'),false);
+  assert.equal(formatPenConnectionError(''), 'Pen connection failed. Please try again.');
+});
 const flush = async () => { for (let i=0;i<8;i++) await Promise.resolve(); };
 function port(chooseDevice: NonNullable<BlePenPort['chooseDevice']>): BlePenPort {
   return {mode:'bluetooth-le', requestAccess:async()=>true, ensureEnabled:async()=>true,

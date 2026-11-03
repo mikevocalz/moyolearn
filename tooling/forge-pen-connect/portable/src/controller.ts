@@ -1,6 +1,18 @@
 import { createStore, type StoreApi } from "zustand/vanilla";
 import type { BlePenPort, PenConnectionPort, PenConnectionState, PenDevice, PenLink, PenVerification } from "./types";
 
+/** Bounded UI copy; the native diagnostic receipt retains the original error. */
+export function formatPenConnectionError(error: unknown): string {
+  const raw = error instanceof Error ? error.message : String(error);
+  if (/discovery_timeout|system chooser timed out/i.test(raw)) return "Muse was not found before the search ended. Check pairing mode, try again, or choose Previously associated Muse.";
+  if (/cancelled|canceled|declined/i.test(raw)) return "Pen connection was cancelled. You can try again when ready.";
+  if (/permission|securityexception/i.test(raw)) return "Bluetooth access is unavailable. Check the app's Bluetooth permissions and try again.";
+  if (/requires reconnect|reconnect before/i.test(raw)) return "The Bluetooth session ended. Disconnect and reconnect before trying again.";
+  const firstLine = (raw.split(/[\r\n]/, 1)[0] ?? "").replace(/^(?:Error:\s*)?(?:java\.[\w.]+(?:Exception|Error):\s*)?/i, "").trim();
+  const safe = firstLine.replace(/[\u0000-\u001f\u007f]/g, " ").replace(/\s+/g, " ");
+  return safe ? safe.length > 180 ? safe.slice(0, 177) + "…" : safe : "Pen connection failed. Please try again.";
+}
+
 export interface PenConnectionController {
   readonly state: StoreApi<PenConnectionState>;
   /** Show rationale and request a real OS permission only after a tap. */
@@ -34,8 +46,6 @@ export function createPenConnectionController(port: PenConnectionPort): PenConne
   let granted = false;
   const valid = (generation: number) => !disposed && generation === epoch;
   const transition = (next: PenConnectionState) => { if (!disposed) state.setState(next, true); };
-  const message = (error: unknown) =>
-    error instanceof Error ? error.message : String(error);
   const release = () => {
     unsubscribeLink?.();
     unsubscribeLink = undefined;
@@ -45,7 +55,7 @@ export function createPenConnectionController(port: PenConnectionPort): PenConne
     if (old !== undefined) void old.disconnect().catch(() => undefined);
   };
   const reportError = (generation: number, code: Extract<PenConnectionState, {kind:"error"}>["code"], error: unknown) => {
-    if (valid(generation)) transition({kind:"error",code,message:message(error)});
+    if (valid(generation)) transition({kind:"error",code,message:formatPenConnectionError(error)});
   };
   const doScan = async (generation: number, transport: BlePenPort) => {
     if (!valid(generation)) return;

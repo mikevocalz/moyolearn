@@ -1,0 +1,61 @@
+{
+  "kind": "physical-accessibility-replay-review",
+  "provenance": "Main agent replayed an earlier captured native error into an isolated DEV controller UI state. This did not represent a new OS failure, pairing, connection or pen event. Main agent removed the replay using the real loadAssociatedDevices action.",
+  "accessibilitySource": "android-devtools",
+  "sourceSha256": "1a63fc784f9a6a4cc0ccb301c8ea58a727a796cf59360ccfad3dc03b82d08a07",
+  "displayedMessage": "Muse was not found before the search ended. Check pairing mode, try again, or choose Previously associated Muse.",
+  "recoveryControls": [
+    {
+      "label": "Close pen connection dialog",
+      "frame": [
+        0.232,
+        0.082,
+        0.018,
+        0.029
+      ],
+      "clickable": true
+    },
+    {
+      "label": "Previously associated Muse",
+      "frame": [
+        0.1,
+        0.226,
+        0.15,
+        0.031
+      ],
+      "clickable": true
+    },
+    {
+      "label": "Choose Muse with Quest",
+      "frame": [
+        0.1,
+        0.262,
+        0.15,
+        0.031
+      ],
+      "clickable": true
+    },
+    {
+      "label": "Try again",
+      "frame": [
+        0.1,
+        0.298,
+        0.15,
+        0.031
+      ],
+      "clickable": true
+    }
+  ],
+  "physicalInputVerified": false,
+  "readOnlyOsSnapshot": {
+    "bondedDeviceCount": 0,
+    "rememberedHidHostEntries": 2,
+    "hidConnected": false,
+    "hidReady": false,
+    "reports": 0,
+    "latestMuseBondSuccessLocalTime": "2026-11-03 08:08:16.048",
+    "sameReportedIdentityBondLostLocalTime": "2026-11-03 08:20:14.036",
+    "failureReason": "SMP_DHKEY_CHK_FAIL",
+    "identifiersRedacted": true
+  }
+}

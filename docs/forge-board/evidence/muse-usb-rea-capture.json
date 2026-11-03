@@ -1,0 +1,112 @@
+{
+  "scope": "Physical Logitech Muse USB configuration and bounded CDC receive capture on macOS; not a BLE HID report-map capture",
+  "usbConfiguration": {
+    "storedEvidenceId": "ev_e5edfb545570ccbc267b3cc49f91dd6223fa95e241630687819a24aa60e794f7",
+    "provider": "REA process capture",
+    "providerVersion": "3",
+    "reaVersion": "6.7.0",
+    "startedAt": "2026-11-03T13:51:32.183Z",
+    "completedAt": "2026-11-03T13:51:32.378Z",
+    "captureFileSha256": "3fe8ae25c152996c8d28a41b4190167e6b95aa4e75d4a680627fb15d4768c189",
+    "scenarioSha256": "f131d6a654d04ad1b5b5819314d08106d82dc46f21c856a219cc0a75defba0a8",
+    "executableSha256": "45553c1171202a3ced9c28adb67ab4dcec911133c38c92aeb646f58517f9558a",
+    "exit": {
+      "code": 0,
+      "signal": 0,
+      "reason": "exited"
+    },
+    "ownedProcessGroup": "verified",
+    "source": "public IOUSBDeviceInterface.GetConfigurationDescriptorPtr index0; no USBDeviceOpen/DeviceRequest/port opens",
+    "vendorId": "046D",
+    "productId": "D11E",
+    "byteLength": 141,
+    "sha256": "0ea485583304c75c26598437ee972c04d3a7f3e94b5b3e4c6d512800f0fa1e9e",
+    "rawHex": "09028d00040100e032080b000202020000090400000102020000052400100105240102010424020205240600010705810310000a09040100020a0000000705820240000007050102400000080b020202020000090402000102020000052400100105240102010424020205240602030705830310000a09040300020a0000000705840240000007050202400000",
+    "configurationCountInspected": 1,
+    "interfaceClasses": [
+      2,
+      10,
+      2,
+      10
+    ],
+    "interpretation": "This 141-byte configuration contains two CDC control/data pairs and no USB HID interface. It is not a BLE report descriptor.",
+    "probeStatuses": {
+      "plugin": 0,
+      "query": 0,
+      "cachedConfiguration": 0
+    },
+    "usbDeviceOpenOrDeviceRequestPerformed": false
+  },
+  "cdcCapture": {
+    "storedEvidenceId": "ev_3082fab8f102da42e74dcdea00d2a123402e0b5c8ae97e74c73b81146110b0e6",
+    "provider": "REA process capture",
+    "providerVersion": "3",
+    "reaVersion": "6.7.0",
+    "startedAt": "2026-11-03T13:53:18.830Z",
+    "completedAt": "2026-11-03T13:54:19.300Z",
+    "captureFileSha256": "f4667e3a7888f464174ae92259c0cd09b1a6ba27cda3c3cd08d28345af12cb9b",
+    "scenarioSha256": "d11ae8b2dcf7aae029844fca0f5529d73baf5f326d6592abf253c6fe82b1f59d",
+    "executableSha256": "87d4df53fd91304be5bac391fb204643c36b7df2023c04a0953bcbc7d4fdf634",
+    "exit": {
+      "code": 0,
+      "signal": 0,
+      "reason": "exited"
+    },
+    "ownedProcessGroup": "verified",
+    "durationSeconds": 60.08145208300266,
+    "activePorts": 2,
+    "baudPreserved": 9600,
+    "applicationPayloadWrites": 0,
+    "controlPlaneOperations": "O_RDWR open, raw tty preserving baud, DTR assertion, best-effort restore and close",
+    "purelyPassive": false,
+    "explicitDtrHandshake": true,
+    "rtsExplicitlyChanged": false,
+    "firmwareWrites": false,
+    "ports": [
+      {
+        "label": "CDC1",
+        "bytesReceived": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "openMode": "O_RDWR|O_NONBLOCK|O_NOCTTY",
+        "termiosRestored": true,
+        "modemFlagsRestored": true,
+        "originalBaudConstants": [
+          9600,
+          9600
+        ],
+        "dtrAsserted": true
+      },
+      {
+        "label": "CDC2",
+        "bytesReceived": 0,
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "openMode": "O_RDWR|O_NONBLOCK|O_NOCTTY",
+        "termiosRestored": true,
+        "modemFlagsRestored": true,
+        "originalBaudConstants": [
+          9600,
+          9600
+        ],
+        "dtrAsserted": true
+      }
+    ],
+    "userInteraction": {
+      "userConfirmed": "Tip and both buttons pressed; USB stayed connected",
+      "requestedActions": "3 tip presses, 3 presses of each near-tip button; top button untouched",
+      "confirmationReceivedWhileCaptureActive": true,
+      "recordedAtMs": 1793714058160,
+      "scope": "Human confirmation is not a measured device event"
+    },
+    "unverifiedPlatformProcessObservations": 3,
+    "unverifiedProcessesLeftUntouched": true,
+    "machineWideCleanupClaim": false
+  },
+  "conclusion": "No unsolicited CDC bytes were observed from either opened port in this 60.081-second, baud-preserving, explicit-DTR trial while the user confirmed the requested presses. No USB/BLE-wide incompatibility or absent pen input is established. The BLE HID report map and raw tip report layout remain unknown.",
+  "limitations": [
+    "Opening CDC ports and asserting DTR changes control state; no application commands or firmware payloads were sent.",
+    "Human confirmation of presses is not a measured pen event.",
+    "REA process ownership verification is scoped to its capture group, not the whole machine. Three platform observations were unverified and left untouched.",
+    "Process trees are sampled; filesystem evidence is before/after snapshots, not syscall tracing; network activity and inherited environment were not observed."
+  ],
+  "privacy": "Device serial numbers, full REA environment, process IDs, device-node paths and private filesystem paths omitted"
+}

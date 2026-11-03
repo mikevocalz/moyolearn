@@ -80,6 +80,27 @@ test('consumed Bluetooth archive matches frozen lock integrity and every install
   }
 });
 
+test('consumed portable archive matches frozen lock integrity and every installed source byte', () => {
+  const require = createRequire(import.meta.url);
+  const { parse } = require('yaml');
+  const root = new URL('../../', import.meta.url);
+  const receipt = JSON.parse(readFileSync(new URL('vendors/forge-source-lock.json', root), 'utf8'))['pen-connect'];
+  const archive = new URL(`vendors/${receipt.file}`, root);
+  const bytes = readFileSync(archive);
+  assert.equal(createHash('sha256').update(bytes).digest('hex'), receipt.sha256);
+  const lock = parse(readFileSync(new URL('pnpm-lock.yaml', root), 'utf8'));
+  const entry = Object.values(lock.packages).find((value) => value.resolution?.tarball === `file:vendors/${receipt.file}`);
+  assert.ok(entry, 'archive must be present in frozen dependency lock');
+  assert.equal(entry.resolution.integrity, `sha512-${createHash('sha512').update(bytes).digest('base64')}`);
+  const names = execFileSync('tar', ['-tzf', fileURLToPath(archive)], { encoding: 'utf8' }).trim().split('\n');
+  for (const name of names.filter((name) => !name.endsWith('/'))) {
+    assert.ok(name.startsWith('package/') && !name.split('/').includes('..'));
+    const expected = execFileSync('tar', ['-xOf', fileURLToPath(archive), name]);
+    const installed = readFileSync(new URL(`node_modules/@nitro-forge/pen-connect/${name.slice(8)}`, root));
+    assert.ok(expected.equals(installed), `installed source must match packed bytes: ${name}`);
+  }
+});
+
 test('actual adapter preserves OS-bonded selection without fabricating an RSSI', async () => {
   const native = {
     startScan() {}, stopScan() {}, getScanError: () => '',
