@@ -10,6 +10,8 @@ import type { ProblemStorage } from '@acme/app/features/capture/problem-storage.
 import { BOARD_KEY } from '@acme/app/features/capture/problem-storage.shared.ts';
 import { writeSavedForgeBoard } from '@acme/app/features/tutor/forge-board-storage.ts';
 import { FORGE_PROBE_STORAGE_ID, injectProbeStroke, probeMarkCount, restoreProbeDocument } from './model';
+import { useForgePenConnection } from '@acme/app/features/tutor/forge-pen-connection.native.tsx';
+import { useForgeBoardExport } from '@acme/app/features/tutor/forge-board-export-ui.native.tsx';
 
 interface ProbeState {
   generation: number;
@@ -33,6 +35,8 @@ interface ProbeResources {
 
 /** Production Whiteboard and Yjs history on an isolated persistent fixture. */
 export function ForgeBoardProbe() {
+  const penConnection = useForgePenConnection(false);
+  const boardExport = useForgeBoardExport();
   const stateRef = useRef<StoreApi<ProbeState> | null>(null);
   if (stateRef.current === null) stateRef.current = createStore<ProbeState>(() => ({
     generation: 0, resetVersion: 0, surfaceVersion: 0, ready: false,
@@ -149,7 +153,7 @@ export function ForgeBoardProbe() {
       const result = await engine.exportPng();
       if (resources.current?.generation !== generation) return;
       pngUri.current = result;
-      state.setState({ png: result?.startsWith('data:image/png;base64,') ? 'PNG ready' : 'Board is empty' });
+      state.setState({ png: result?.startsWith('data:image/png;base64,') ? 'PNG preview ready' : 'Board is empty' });
     } catch {
       if (resources.current?.generation === generation) state.setState({ png: 'PNG export failed', error: 'Test PNG could not export. Try again.' });
     } finally {
@@ -168,10 +172,13 @@ export function ForgeBoardProbe() {
       <Text variant="heading" testID="forge-probe-title">Forge board validation</Text>
       <Text variant="caption">Isolated development fixture. Synthetic samples do not validate pen hardware. Reload the surface after synthetic input to resume touch drawing.</Text>
       <View className="flex-row flex-wrap gap-element">
+        <Button title="Connect pen" size="sm" onPress={penConnection.open} />
+        <Button title="Disconnect pen" size="sm" variant="outline" onPress={penConnection.disconnect} />
         <Button title="Add test stroke" aria-label="Add test stroke, synthetic pressure" size="sm" disabled={!ready} onPress={() => { if (state.getState().ready && board.current) injectProbeStroke(board.current); }} />
         <Button title="Redo test edit" size="sm" variant="outline" disabled={!ready || !canRedo} onPress={() => resources.current?.doc.redo()} />
         <Button title="Save test board" size="sm" disabled={!ready} onPress={() => { void save(); }} />
-        <Button title="Export test PNG" size="sm" variant="outline" disabled={!ready || exporting} onPress={() => { void exportPng(); }} />
+        <Button title="Save PNG to device" size="sm" variant="outline" disabled={!ready || boardExport.busy} onPress={() => { void boardExport.save(board.current); }} />
+        <Button title="Preview test PNG" size="sm" variant="outline" disabled={!ready || exporting} onPress={() => { void exportPng(); }} />
         <Button title="Reload test surface" size="sm" variant="outline" disabled={!ready} onPress={reloadSurface} />
         <Button title="Reset test board" size="sm" variant="danger" disabled={!ready} onPress={reset} />
       </View>
@@ -187,7 +194,9 @@ export function ForgeBoardProbe() {
       <View className="flex-1" testID="forge-probe-board">
         {current ? <Whiteboard key={`${generation}:${surfaceVersion}`} ref={board} history={current.doc} size="sm" onChange={onChange} onReady={onReady} /> : null}
       </View>
-      {png === 'PNG ready' && pngUri.current ? <Image source={{ uri: pngUri.current }} style={{ width: 96, height: 54 }} contentFit="contain" accessibilityLabel="Exported test board PNG" /> : null}
+      {penConnection.dialog}
+      {boardExport.feedback}
+      {png === 'PNG preview ready' && pngUri.current ? <Image source={{ uri: pngUri.current }} style={{ width: 96, height: 54 }} contentFit="contain" accessibilityLabel="Exported test board PNG" /> : null}
     </View>
   );
 }

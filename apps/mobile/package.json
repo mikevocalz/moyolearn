@@ -83,7 +83,9 @@
     "three": "catalog:",
     "typegpu": "catalog:",
     "uniwind": "catalog:",
-    "zustand": "catalog:"
+    "zustand": "catalog:",
+    "@nitro-forge/bluetooth-v1": "file:../../vendors/nitro-forge-bluetooth-v1-0.1.0-moyo.6.tgz",
+    "@nitro-forge/pen-connect": "file:../../vendors/nitro-forge-pen-connect-0.1.0-moyo.6.tgz"
   },
   "devDependencies": {
     "@acme/config": "workspace:*",

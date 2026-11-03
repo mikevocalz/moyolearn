@@ -13,5 +13,20 @@
     "commit": "3c79e3d4c2dbd0c42d7fdccea40eb0a7162b6c48",
     "file": "nitro-forge-icons-0.1.0-moyo.1.tgz",
     "sha256": "b3247c24f6eb4826ebe91d23859074f313ba586dc71ebc74afd799e8e45b84d6"
+  },
+  "bluetooth-v1": {
+    "repository": "mikevocalz/nitro-forge",
+    "commit": "c213f1ca3f1d604a27ccf922362f0de3e4605831",
+    "file": "nitro-forge-bluetooth-v1-0.1.0-moyo.6.tgz",
+    "sha256": "697101330ae7c29b7c49bb650561d145be9d3c5d604a39d6597584cd6d5493a2",
+    "nitrogen": "1.0.0-alpha.nightly.100.g107f6fc66597",
+    "runtime": "1.0.0-alpha.nightly.100.g107f6fc66597",
+    "android": "BLE GATT only; Quest Muse input protocol unavailable"
+  },
+  "pen-connect": {
+    "repository": "mikevocalz/nitro-forge",
+    "commit": "c213f1ca3f1d604a27ccf922362f0de3e4605831",
+    "file": "nitro-forge-pen-connect-0.1.0-moyo.6.tgz",
+    "sha256": "d02c31c56f7f4860ae7c7b45aefdcbf6657e11b1db1b4ea4b7d1915d0cf531df"
   }
 }

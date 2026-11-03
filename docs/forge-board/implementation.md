@@ -48,8 +48,10 @@ by the app; no pane/navigation rewrite is included.
 - PNG capture, Ask Natalie and OCR continue through the existing light-paper export.
 - Pen, highlighter and eraser remain the learner toolbar's established tool set.
   Pencil, selection, pan, shapes and text are not claimed as newly implemented.
-- Logitech Muse still uses the existing Viro stream. No extra BLE subscription or
-  EEG SDK was added. Pressure zero is retained in tested records. Actual pen axes,
+- Logitech Muse drawing still uses the existing Viro stream and one input
+  subscriber. The explicit PR #20 Bluetooth connection flow manages a separate
+  user-selected transport link, not another drawing stream or an EEG SDK.
+  Pressure zero is retained in tested records. Actual pen axes,
   tracking, reconnection and palm rejection require hardware interaction evidence.
 - The capture MMKV instance and capture/board keys remain global. Session disposal
   on persona changes does not establish account-scoped storage. Full isolation
@@ -77,3 +79,33 @@ multiple undo steps; completion restores the ordinary capture policy. Native
 WebView messages and web event handlers carry boundaries only, not another pen
 sample stream. Tests exercise real Yjs, QuickDraw store batches and the embedded
 page shim, including cancellation and same-task synthetic events.
+
+## Bluetooth connection and device PNG saving
+
+`tooling/vendor-forge-pen-connect.mjs` consumes Forge PR #20 at an immutable
+source pin, regenerates Bluetooth bindings at Moyo's exact Nitro nightly 100,
+and records consumer fixes and artifact hashes. The native Android module is
+autolinked independently of the gated Board renderer. See
+[the adaptation receipt](../../tooling/forge-pen-connect/README.md).
+
+The XR board and isolated development fixture expose Connect pen. The native
+dialog requests actual nearby-device permission, scans real advertisements and
+connects a selected device. A GATT link remains "linked"; Android does not claim
+verified Muse tracking from Bluetooth alone. The existing visionOS input stream
+can provide genuine tracking evidence without adding a second subscription.
+
+Save PNG to device exports through the existing board handle and opens the
+system folder picker. It writes the PNG to that selected folder, awaits the
+write and compares the saved bytes before reporting success. Cancellation and
+failure are separate outcomes; no private cache is presented as a device save.
+The fixture's PNG preview is explicitly separate. The selected rail indicator
+uses the existing rounded-control radius with its existing square dimensions.
+
+The Quest middle content now fits the established 1024:640 content ratio inside
+its measured host. Opaque letterboxing and matching sheet-host bounds prevent
+content below that surface from showing during resize. The OS window can still
+resize; its launch dimensions and orientation are unchanged. The promoted rail
+host retains its surface origin, and immersive XR routes keep their full native
+surface. Other headset geometry is not changed by the Quest-specific frame.
+The closed booking sheet remains mounted for draft continuity but is hidden,
+noninteractive and clipped while closed.

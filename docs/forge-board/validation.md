@@ -35,7 +35,18 @@ install -r` after the APK is verified. Launch/discovery/interaction use Argent.
   debug builds use the existing shared depth-2 pools.
 - Update install used `-r`; no uninstall, app-data clearing or permission reset.
 - USB reverse port 8081 established; Metro is running for this development build.
-- Argent launch/QA is blocked by the headset passcode lock screen. Unlock was
-  requested from the user. No passcode was requested, entered or bypassed.
+- After the user unlocked the headset, Argent successfully restarted Moyo and
+  opened `moyo://forge-board-probe`; the validation title and production toolbar
+  were present in the physical Quest accessibility tree. A stale Metro file map
+  initially returned HTTP 500; restarting our Metro with a cleared cache restored
+  successful bundling and launch.
+- The first recorded drawing/export run did not pass: mark-count and PNG waits
+  were unmet. Synthetic input did reach the document (including two marks on one
+  attempt), but that does not prove the complete flow. The fixture now exposes
+  an explicit surface-ready status after a snapshot bridge round trip. Two
+  unchanged passing runs, save/reopen and export remain outstanding.
+- Bluetooth radio inspection found it on with no bonded devices. The user then
+  requested the Forge PR #20 Bluetooth connection flow; its Moyo integration is
+  being built separately from drawing validation.
 - This install does not enable the gated Forge backend or prove Muse hardware
   tracking, native Rive loading or Skia v3 rendering in Moyo.

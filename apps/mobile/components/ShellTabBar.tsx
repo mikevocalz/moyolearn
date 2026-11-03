@@ -630,12 +630,11 @@ function ShellTabBarView({
             rather than Material's fixed 64, which would leave 16 a side inside a
             96 rail and overhang a three-tab K–2 bottom bar.
 
-            In the spatial rail window the indicator is a circle and the raised
-            slab takes the rail's own corner radius: selection reads rounded on
-            every headset, matching the rounded rail around it.
+            The spatial rail uses the same rounded-square indicator. The raised
+            action retains its established corner radius and dimensions.
           */}
           <View
-            className={`aspect-square h-nav-indicator items-center justify-center ${xr ? 'rounded-full' : 'rounded-control'} ${
+            className={`aspect-square h-nav-indicator items-center justify-center rounded-control ${
               focused ? 'bg-nav-selected' : 'hover:bg-surface-sunken'
             }`}
           >

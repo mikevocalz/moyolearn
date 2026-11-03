@@ -43,6 +43,9 @@ import {
 } from '@acme/ui';
 import { View as UiView } from '@acme/ui/primitives';
 import { MusePenInput, QuickDrawSpatialSurface } from '@viro-external/ui';
+import { useForgePenConnection } from './forge-pen-connection.native';
+import { useForgeBoardExport } from './forge-board-export-ui.native';
+import type { MuseVerificationFrame } from './forge-pen-verification';
 import {
   BoardPointer,
   BoardTextureHost,
@@ -136,6 +139,10 @@ const active: {
   engine: WhiteboardHandle | null;
   session: BoardSession | null;
   onExit: () => void;
+  onSavePng: () => void;
+  onConnectPen: () => void;
+  onDisconnectPen: () => void;
+  onMuseFrame: (frame: MuseVerificationFrame) => void;
   onAsk: (png: string | null, spoken?: string) => void;
   /**
    * THE LAST CALIBRATION VERDICT, and it is here rather than in the store
@@ -184,6 +191,10 @@ const active: {
   engine: null,
   session: null,
   onExit: () => undefined,
+  onSavePng: () => undefined,
+  onConnectPen: () => undefined,
+  onDisconnectPen: () => undefined,
+  onMuseFrame: () => undefined,
   onAsk: () => undefined,
   inkAligned: true,
   head: null,
@@ -792,6 +803,7 @@ function BoardScene() {
       <MusePenInput
         enabled={canEdit}
         onSample={(frame) => {
+          active.onMuseFrame(frame);
           const input =
             stylus.current ??
             (stylus.current = new SpatialStylusBoardInput(new BoardPointer()));
@@ -891,6 +903,9 @@ function BoardScene() {
           controlRows={[
             { id: 'exit', text: 'Back to lesson', onPress: () => active.onExit() },
             { id: 'recenter', text: 'Recenter workspace', onPress: () => { void placeFromHead(); } },
+            { id: 'save-png', text: 'Save PNG to device', disabled: !canEdit || !history.hasMarks, onPress: () => active.onSavePng() },
+            { id: 'connect-pen', text: 'Connect pen', onPress: () => active.onConnectPen() },
+            ...(!VISIONOS ? [{ id: 'disconnect-pen', text: 'Disconnect pen', onPress: () => active.onDisconnectPen() }] : []),
             {
               id: 'ask',
               face: 'ask',
@@ -997,6 +1012,18 @@ function BoardScene() {
 const INITIAL_SCENE = { scene: BoardScene };
 
 export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoardPanel, loadQuestionPanel }: TutorXrScreenProps) {
+  const penConnection = useForgePenConnection(VISIONOS);
+  const boardExport = useForgeBoardExport();
+  useEffect(() => {
+    active.onSavePng = () => { void boardExport.save(active.engine); };
+    return () => { active.onSavePng = () => undefined; };
+  }, [boardExport.save]);
+  useEffect(() => {
+    active.onConnectPen = penConnection.open;
+    active.onDisconnectPen = penConnection.disconnect;
+    active.onMuseFrame = penConnection.verifyMuse;
+    return () => { active.onConnectPen = () => undefined; active.onDisconnectPen = () => undefined; active.onMuseFrame = () => undefined; };
+  }, [penConnection.open, penConnection.disconnect, penConnection.verifyMuse]);
   const sessionId = useTutorStore((s) => s.sessionId);
   const phase = useXrSession((s) => s.phase);
   const advance = useXrSession((s) => s.advance);
@@ -1599,6 +1626,8 @@ export function TutorXrScreen({ ageBand, onExit, onAsk, asking = false, loadBoar
           onHistory={handleHistory}
         />
       </BoardTextureHost>
+      {penConnection.dialog}
+      {boardExport.feedback}
     </View>
   );
 }
