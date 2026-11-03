@@ -89,6 +89,23 @@ export interface BoardDoc {
    * be used to decide whether a history action is enabled.
    */
   onHistory(listener: (history: BoardHistory) => void): () => void;
+  /**
+   * Ends the current local history capture window after an input gesture
+   * completes. The next local edit starts a separate undo step even when two
+   * gestures finish within Yjs's normal capture timeout. Call at a completed
+   * engine batch, never for each pointer sample.
+   */
+  stopCapturing(): void;
+  /**
+   * Begins one owned input gesture. Its edits share one undo step even across
+   * long pauses. Repeated begin calls do not nest or replace the active gesture.
+   */
+  beginGesture(): void;
+  /**
+   * Finishes the active gesture after its final edit or cancellation removal.
+   * Restores Yjs's previous capture timeout; repeated end calls are harmless.
+   */
+  endGesture(): void;
   /** Undo the LOCAL author's last change, never a collaborator's. */
   undo(): void;
   /**
@@ -127,6 +144,14 @@ export function createBoardDoc(): BoardDoc {
     engine so it survives a reconnect and a restore.
   */
   const undoManager = new Y.UndoManager(records, { trackedOrigins: new Set<BoardOrigin>(['local']) });
+  let gestureActive = false;
+  let gestureCaptureTimeout = undoManager.captureTimeout;
+  const finishGesture = () => {
+    if (!gestureActive) return;
+    gestureActive = false;
+    undoManager.captureTimeout = gestureCaptureTimeout;
+    undoManager.stopCapturing();
+  };
 
   const listeners = new Set<(diff: WhiteboardDiff) => void>();
   const recordListeners = new Set<(diff: WhiteboardDiff, origin: BoardOrigin) => void>();
@@ -242,10 +267,25 @@ export function createBoardDoc(): BoardDoc {
       listener(history());
       return () => { historyListeners.delete(listener); };
     },
+    stopCapturing() {
+      undoManager.stopCapturing();
+    },
+    beginGesture() {
+      if (gestureActive) return;
+      gestureActive = true;
+      gestureCaptureTimeout = undoManager.captureTimeout;
+      undoManager.stopCapturing();
+      // Only an explicitly owned gesture disables time-based splitting. A
+      // stationary pen is still the same stroke when it starts moving again.
+      undoManager.captureTimeout = Infinity;
+    },
+    endGesture: finishGesture,
     undo() {
+      finishGesture();
       undoManager.undo();
     },
     redo() {
+      finishGesture();
       undoManager.redo();
     },
     canUndo() {
@@ -255,6 +295,7 @@ export function createBoardDoc(): BoardDoc {
       return undoManager.canRedo();
     },
     destroy() {
+      finishGesture();
       records.unobserve(observer);
       listeners.clear();
       recordListeners.clear();

@@ -4,6 +4,7 @@ import { runInNewContext } from 'node:vm';
 import { createBoardDoc } from '../app/features/tutor/board-doc.ts';
 import {
   handleWhiteboardHistoryKey,
+  createWhiteboardGestureHistory,
   whiteboardHistoryAction,
   WHITEBOARD_HISTORY_SHIM,
 } from './whiteboard-history.ts';
@@ -19,16 +20,20 @@ function keyEvent(overrides: Partial<Shortcut> = {}): Event & Shortcut {
   return event as Event & Shortcut;
 }
 
-function nativePage(onAction?: (action: 'undo' | 'redo') => void) {
+function nativePage(
+  onAction?: (action: 'undo' | 'redo') => void,
+  onGesture?: (action: 'begin' | 'end') => void,
+) {
   const events = new EventTarget();
   const registrations: { type: string; capture: boolean }[] = [];
-  const messages: { type: string; action: 'undo' | 'redo' }[] = [];
+  const messages: { type: string; action?: 'undo' | 'redo' | 'begin' | 'end' }[] = [];
   const window: Record<string, unknown> = {
     ReactNativeWebView: {
       postMessage(raw: string) {
         const message = JSON.parse(raw) as typeof messages[number];
         messages.push(message);
-        onAction?.(message.action);
+        if (message.type === 'moyo:history-action' && (message.action === 'undo' || message.action === 'redo')) onAction?.(message.action);
+        if (message.type === 'moyo:gesture-history' && (message.action === 'begin' || message.action === 'end')) onGesture?.(message.action);
       },
     },
   };
@@ -38,7 +43,7 @@ function nativePage(onAction?: (action: 'undo' | 'redo') => void) {
       events.addEventListener(type, listener, capture);
     },
   };
-  const install = () => runInNewContext(WHITEBOARD_HISTORY_SHIM, { window, document });
+  const install = () => runInNewContext(WHITEBOARD_HISTORY_SHIM, { window, document, queueMicrotask });
   install();
   return { events, window, messages, registrations, install };
 }
@@ -126,7 +131,12 @@ test('actual web handler stops the editor second undo and changes only the Yjs l
 test('embedded native shim installs once in capture phase and leaves standalone history alone', () => {
   const page = nativePage();
   page.install();
-  assert.deepEqual(page.registrations, [{ type: 'keydown', capture: true }]);
+  assert.deepEqual(page.registrations, [
+    { type: 'pointerdown', capture: true },
+    { type: 'pointerup', capture: true },
+    { type: 'pointercancel', capture: true },
+    { type: 'keydown', capture: true },
+  ]);
   let engineCalls = 0;
   page.events.addEventListener('keydown', () => { engineCalls += 1; });
   const event = keyEvent();
@@ -167,8 +177,99 @@ test('native managed mode can be toggled without reinstalling or arming spatial 
   page.events.dispatchEvent(event);
   assert.equal(event.defaultPrevented, false);
   assert.deepEqual(page.messages, [{ type: 'moyo:history-action', action: 'undo' }]);
-  assert.equal(page.registrations.length, 1);
+  assert.equal(page.registrations.length, 4);
   assert.equal(page.window.__moyo, undefined, 'keyboard routing must not arm or depend on the pointer camera guard');
+});
+
+test('web gesture boundaries follow one primary pointer and end after the engine final edit', () => {
+  const order: string[] = [];
+  const queued: (() => void)[] = [];
+  const gestures = createWhiteboardGestureHistory(() => ({
+    beginGesture: () => order.push('begin'), endGesture: () => order.push('end'),
+  }), (callback) => queued.push(callback));
+  gestures.begin({ pointerId: 2, isPrimary: false });
+  gestures.begin({ pointerId: 2, button: 2 });
+  assert.deepEqual(order, []);
+  gestures.begin({ pointerId: 1, isPrimary: true, button: 0 });
+  gestures.begin({ pointerId: 2 });
+  order.push('engine:down');
+  gestures.end({ pointerId: 2 });
+  assert.equal(queued.length, 0);
+  gestures.end({ pointerId: 1 });
+  order.push('engine:up');
+  assert.deepEqual(order, ['begin', 'engine:down', 'engine:up']);
+  for (const callback of queued) callback();
+  assert.deepEqual(order, ['begin', 'engine:down', 'engine:up', 'end']);
+  gestures.dispose();
+});
+
+test('web gesture owner is retained through a prop change and disposed once', () => {
+  const calls: string[] = [];
+  const first = { beginGesture: () => calls.push('first:begin'), endGesture: () => calls.push('first:end') };
+  const second = { beginGesture: () => calls.push('second:begin'), endGesture: () => calls.push('second:end') };
+  let current: typeof first | undefined;
+  const gestures = createWhiteboardGestureHistory(() => current);
+  gestures.begin({ pointerId: 1 });
+  assert.deepEqual(calls, []);
+  current = first;
+  gestures.begin({ pointerId: 1 });
+  current = second;
+  gestures.dispose();
+  gestures.dispose();
+  assert.deepEqual(calls, ['first:begin', 'first:end']);
+});
+
+test('native VM gesture capture posts begin before down and end after the engine terminal event', async () => {
+  const page = nativePage();
+  page.window.__moyoHistoryManaged = true;
+  const order: string[] = [];
+  const bridge = page.window.ReactNativeWebView as { postMessage(value: string): void };
+  const originalPost = bridge.postMessage;
+  bridge.postMessage = (raw) => {
+    const message = JSON.parse(raw) as { action: string };
+    order.push(message.action);
+    originalPost(raw);
+  };
+  page.events.addEventListener('pointerdown', () => order.push('engine:down'));
+  page.events.addEventListener('pointerup', () => order.push('engine:up'));
+  const pointer = (type: string, pointerId = 1) => {
+    const event = new Event(type);
+    Object.defineProperties(event, { pointerId: { value: pointerId }, isPrimary: { value: true }, button: { value: 0 } });
+    return event;
+  };
+  page.events.dispatchEvent(pointer('pointerdown'));
+  page.events.dispatchEvent(pointer('pointerup'));
+  assert.deepEqual(order, ['begin', 'engine:down', 'engine:up']);
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
+  assert.deepEqual(order, ['begin', 'engine:down', 'engine:up', 'end']);
+  assert.deepEqual(page.messages, [
+    { type: 'moyo:gesture-history', action: 'begin' },
+    { type: 'moyo:gesture-history', action: 'end' },
+  ]);
+});
+
+test('native gesture cancellation ends after removal and ignores other pointer ids', async () => {
+  const doc = createBoardDoc();
+  const page = nativePage(undefined, (action) => action === 'begin' ? doc.beginGesture() : doc.endGesture());
+  page.window.__moyoHistoryManaged = true;
+  const pointer = (type: string, pointerId: number) => {
+    const event = new Event(type);
+    Object.defineProperties(event, { pointerId: { value: pointerId }, isPrimary: { value: true }, button: { value: 0 } });
+    return event;
+  };
+  page.events.dispatchEvent(pointer('pointerdown', 1));
+  doc.applyDiff({ added: { canceled: { id: 'canceled' } } }, 'local');
+  page.events.dispatchEvent(pointer('pointercancel', 2));
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
+  assert.equal(page.messages.length, 1);
+  page.events.dispatchEvent(pointer('pointercancel', 1));
+  doc.applyDiff({ removed: { canceled: { id: 'canceled' } } }, 'local');
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
+  assert.deepEqual(page.messages.map(({ action }) => action), ['begin', 'end']);
+  assert.deepEqual(ids(doc), []);
+  doc.undo(); doc.redo();
+  assert.deepEqual(ids(doc), []);
+  doc.destroy();
 });
 
 test('native shim exempts text-editing and unrelated shortcuts without suppressing their events', () => {
@@ -192,4 +293,51 @@ test('native shim exempts text-editing and unrelated shortcuts without suppressi
   }
   assert.deepEqual(page.messages, []);
   assert.equal(passed, cases.length);
+});
+
+
+test('web same-stack pointer replacement settles the previous owner before beginning again', () => {
+  const doc = createBoardDoc();
+  const queued: (() => void)[] = [];
+  const gestures = createWhiteboardGestureHistory(() => doc, (callback) => queued.push(callback));
+  gestures.begin({ pointerId: 1 });
+  doc.applyDiff({ added: { first: { id: 'first' } } }, 'local');
+  gestures.end({ pointerId: 1 });
+  gestures.begin({ pointerId: 2 });
+  doc.applyDiff({ added: { second: { id: 'second' } } }, 'local');
+  for (const callback of queued.splice(0)) callback();
+  gestures.end({ pointerId: 2 });
+  for (const callback of queued) callback();
+  doc.undo();
+  assert.deepEqual(ids(doc), ['first']);
+  doc.undo();
+  assert.deepEqual(ids(doc), []);
+  gestures.dispose();
+  doc.destroy();
+});
+
+test('native same-stack pointer replacement cancels the stale queued end', async () => {
+  const doc = createBoardDoc();
+  const page = nativePage(undefined, (action) => action === 'begin' ? doc.beginGesture() : doc.endGesture());
+  page.window.__moyoHistoryManaged = true;
+  const pointer = (type: string, pointerId: number) => {
+    const event = new Event(type);
+    Object.defineProperties(event, { pointerId: { value: pointerId }, button: { value: 0 } });
+    return event;
+  };
+  page.events.dispatchEvent(pointer('pointerdown', 1));
+  doc.applyDiff({ added: { first: { id: 'first' } } }, 'local');
+  page.events.dispatchEvent(pointer('pointerup', 1));
+  page.events.dispatchEvent(pointer('pointerdown', 2));
+  doc.applyDiff({ added: { second: { id: 'second' } } }, 'local');
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
+  assert.deepEqual(page.messages.map(({ action }) => action), ['begin', 'end', 'begin']);
+  page.events.dispatchEvent(pointer('pointerup', 2));
+  await new Promise<void>((resolve) => queueMicrotask(resolve));
+  assert.deepEqual(page.messages.map(({ action }) => action), ['begin', 'end', 'begin', 'end']);
+  doc.undo();
+  assert.deepEqual(ids(doc), ['first']);
+  doc.undo();
+  assert.deepEqual(ids(doc), []);
+  doc.destroy();
 });
